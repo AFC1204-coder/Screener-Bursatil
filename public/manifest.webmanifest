@@ -1,0 +1,17 @@
+{
+  "name": "Weinstein Minervini Screener",
+  "short_name": "WM Screener",
+  "description": "Screener global de acciones por Weinstein + Minervini con datos diarios.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f14",
+  "theme_color": "#0b0f14",
+  "icons": [{
+    "src": "/icon.svg",
+    "sizes": "any",
+    "type": "image/svg+xml",
+    "purpose": "any maskable"
+  }]
+}

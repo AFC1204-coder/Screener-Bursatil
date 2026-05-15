@@ -1,0 +1,214 @@
+version: 1
+name: statsedge_market_leadership_rules
+purpose: >
+  Neutral research rules inspired by Weinstein/Minervini-style workflows.
+  These rules surface evidence and context. They are not investment advice.
+
+language_guardrails:
+  allowed:
+    - condicion_cumplida
+    - condicion_pendiente
+    - evidencia_positiva
+    - deterioro_observado
+    - riesgo_elevado
+    - dato_insuficiente
+    - proveedor_no_disponible
+  forbidden:
+    - comprar
+    - vender
+    - recomendacion
+    - senal_de_compra
+    - debes_entrar
+    - debes_salir
+
+market_condition:
+  indexes:
+    metrics:
+      - price_above_sma50
+      - price_above_sma200
+      - sma200_slope_pct
+      - distance_to_52w_high_pct
+      - return_1m_pct
+      - return_3m_pct
+  breadth:
+    metrics:
+      - pct_indexes_above_sma50
+      - pct_indexes_above_sma200
+      - pct_sectors_in_stage2
+      - pct_leaders_above_sma50
+      - new_highs_count_optional
+      - new_lows_count_optional
+  pressure:
+    metrics:
+      - distribution_like_days_20d
+      - failed_breakouts_20d
+      - leaders_losing_sma50_20d
+  labels:
+    constructive:
+      requires:
+        - pct_indexes_above_sma200 >= 60
+        - pct_sectors_in_stage2 >= 45
+        - leaders_losing_sma50_20d is not elevated
+    mixed:
+      requires:
+        - market_score between 45 and 65
+    defensive:
+      requires:
+        - pct_indexes_above_sma200 < 40
+        - distribution_like_days_20d elevated
+
+relative_strength:
+  required_percentiles:
+    - rs_global
+    - rs_country
+    - rs_sector
+    - rs_industry
+  benchmark_returns:
+    - rs_1m_vs_benchmark
+    - rs_3m_vs_benchmark
+    - rs_6m_vs_benchmark
+    - rs_12m_vs_benchmark
+  evidence:
+    leadership:
+      - rs_global >= 80
+      - rs_sector >= 70
+      - rs_3m_vs_benchmark > 0
+    early_improvement:
+      - rs_global_delta_since_snapshot > 5
+      - rs_sector_delta_since_snapshot > 5
+    weakening:
+      - rs_global_delta_since_snapshot < -8
+      - rs_3m_vs_benchmark < 0
+
+stage_structure:
+  stage2_evidence:
+    - price > sma50
+    - price > sma150
+    - price > sma200
+    - sma50 > sma150
+    - sma150 > sma200
+    - sma200_slope_pct > 0
+  caution:
+    - price < sma50
+    - sma200_slope_pct <= 0
+  stage4_evidence:
+    - price < sma200
+    - sma200_slope_pct < 0
+
+setup_quality:
+  near_pivot:
+    - distance_20d_high_pct >= -5
+    - distance_52w_high_pct >= -15
+    - extension_sma50_pct <= 15
+    - highs_spread_pct <= 10
+  pullback_sma50:
+    - price > sma200
+    - extension_sma50_pct between -4 and 9
+    - distance_52w_high_pct >= -30
+  extended_strong:
+    - extension_sma50_pct >= 18
+    - momentum_score >= 65
+    - rs_global >= 75
+  failed_setup:
+    - recent_breakout_attempt == true
+    - price_back_below_pivot == true
+    - downside_volume_expanded == true
+
+volume_demand:
+  metrics:
+    - avg_volume_20d
+    - relative_volume
+    - volume_surge_pct
+    - up_down_volume_ratio
+    - down_volume_pressure
+  positive_evidence:
+    - relative_volume >= 1.2
+    - volume_surge_pct >= 25
+    - up_down_volume_ratio >= 1.1
+  pressure_evidence:
+    - down_volume_pressure elevated
+    - up_down_volume_ratio < 0.8
+
+risk_adjusted:
+  metrics:
+    - volatility_63d
+    - downside_volatility_63d
+    - max_drawdown_63d
+    - return_to_vol_3m
+    - return_to_drawdown_3m
+  efficient_leadership:
+    - return_to_vol_3m >= 0.8
+    - return_to_drawdown_3m >= 1.5
+    - max_drawdown_63d <= 18
+  risk_elevated:
+    - volatility_63d > 70
+    - max_drawdown_63d > 32
+    - extension_sma50_pct > 30
+
+fundamental_evidence:
+  metrics:
+    - revenue_growth
+    - earnings_growth
+    - gross_margin
+    - operating_margin
+    - profit_margin
+    - roe
+    - roa
+    - debt_to_equity
+    - current_ratio
+  positive_evidence:
+    - revenue_growth > 15
+    - earnings_growth > 15
+    - operating_margin > 12
+    - roe > 12
+  caution:
+    - earnings_growth < 0
+    - revenue_growth < 0
+    - debt_to_equity very_high
+  missing_data_policy:
+    - show_sin_dato
+    - do_not_invent
+    - show_provider_status
+
+global_context:
+  compare_by:
+    - country
+    - region
+    - sector
+    - industry
+    - theme
+    - currency
+    - benchmark
+  required_conversions:
+    - market_cap_usd
+    - market_cap_eur
+    - avg_dollar_volume_usd
+    - avg_dollar_volume_eur
+
+watchlist_events:
+  neutral_alerts:
+    - enters_filter
+    - exits_filter
+    - rs_improves
+    - rs_weakens
+    - price_loses_sma50
+    - price_reclaims_sma50
+    - sector_rank_improves
+    - sector_rank_weakens
+    - relative_volume_spikes
+    - risk_adjusted_score_changes
+
+data_quality:
+  dimensions:
+    - price_history
+    - profile
+    - fundamentals
+    - ownership
+    - ipo_date
+    - sector_mapping
+    - tradingview_mapping
+  statuses:
+    - ok
+    - partial
+    - inferred
+    - unavailable
