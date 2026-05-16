@@ -1,5 +1,6 @@
 import { fetchYahooProfile, fetchYahooChart, fetchYahooCompanyExtras } from "@/lib/yahoo";
 import { fetchSecFundamentals, mergeSecGrowthMetrics } from "@/lib/sec";
+import { fetchFmpCompanyData } from "@/lib/fmp";
 import { externalLinks, inferTradingViewSymbol, isTradingViewWidgetBlocked } from "@/lib/symbols";
 
 const THEME_RULES = [
@@ -606,6 +607,38 @@ function mergeDerivedGrowthMetrics(base = {}, derived = {}) {
   return out;
 }
 
+function genericText(value = "") {
+  return ["", "-", "sin sector", "sin industria", "sin dato"].includes(String(value || "").trim().toLowerCase());
+}
+
+function mergeProfileFallback(profile = {}, fallback = {}) {
+  const out = { ...profile };
+  for (const key of ["name", "sector", "industry", "exchange", "currency", "ipoDate", "website", "country", "city", "businessSummary"]) {
+    if (genericText(out[key]) && !genericText(fallback[key])) out[key] = fallback[key];
+  }
+  for (const key of ["marketCap", "fullTimeEmployees"]) {
+    if (!Number.isFinite(out[key]) && Number.isFinite(fallback[key])) out[key] = fallback[key];
+    if (key === "marketCap" && (!out[key] || out[key] <= 0) && Number.isFinite(fallback[key])) out[key] = fallback[key];
+  }
+  return out;
+}
+
+function mergeObjectFallback(base = {}, fallback = {}) {
+  const out = { ...base };
+  for (const [key, value] of Object.entries(fallback || {})) {
+    if (key === "source") continue;
+    if (Array.isArray(value)) {
+      if (!Array.isArray(out[key]) || !out[key].length) out[key] = value;
+    } else if (Number.isFinite(value)) {
+      if (!Number.isFinite(out[key])) out[key] = value;
+    } else if ((out[key] === undefined || out[key] === null || out[key] === "") && value !== undefined && value !== null && value !== "") {
+      out[key] = value;
+    }
+  }
+  out.source = [base.source, fallback?.source].filter(Boolean).join(" + ") || base.source || fallback?.source || "";
+  return out;
+}
+
 export async function getCompanyBrief(symbol) {
   if (!symbol) throw new Error("Falta symbol");
   try {
@@ -656,13 +689,22 @@ export async function getCompanyBrief(symbol) {
       quoteSnapshot: {},
       ...profileResult,
     };
-    const [extrasResult, secResult] = await Promise.all([
+    const [extrasResult, secResult, fmpResult] = await Promise.all([
       fetchYahooCompanyExtras(symbol, profile).catch((error) => ({ extrasProviderError: error.message || "Proveedor no disponible" })),
       fetchSecFundamentals(symbol).catch((error) => ({ error: error.message || "SEC no disponible" })),
+      fetchFmpCompanyData(symbol).catch((error) => ({ fmpProviderError: error.message || "FMP no disponible" })),
     ]);
+    if (fmpResult.profile) {
+      Object.assign(profile, mergeProfileFallback(profile, fmpResult.profile));
+      if (fmpResult.profile.image) profile.fmpImage = fmpResult.profile.image;
+    }
+    if (fmpResult.growthMetrics) profile.growthMetrics = mergeObjectFallback(profile.growthMetrics, fmpResult.growthMetrics);
+    if (fmpResult.valuationMetrics) profile.valuationMetrics = mergeObjectFallback(profile.valuationMetrics, fmpResult.valuationMetrics);
+    if (fmpResult.quoteSnapshot) profile.quoteSnapshot = mergeObjectFallback(profile.quoteSnapshot, fmpResult.quoteSnapshot);
     if (!secResult.error) profile.growthMetrics = mergeSecGrowthMetrics(profile.growthMetrics, secResult);
     const yahooFinancialResults = mergeFinancialResults(profile.fundamentalsFinancialResults || profile.growthMetrics?.financialResults, extrasResult.financialResults);
-    const financialResults = mergeFinancialResults(yahooFinancialResults, secResult.financialResults);
+    const secFinancialResults = mergeFinancialResults(yahooFinancialResults, secResult.financialResults);
+    const financialResults = mergeFinancialResults(secFinancialResults, fmpResult.financialResults);
     profile.growthMetrics = mergeDerivedGrowthMetrics(profile.growthMetrics, deriveGrowthFromFinancialResults(financialResults));
     const theme = inferTheme(profile.sector, profile.industry, profile.businessSummary);
     const country = countryFromSymbol(symbol, profile.country);
@@ -745,13 +787,15 @@ export async function getCompanyBrief(symbol) {
         profileProviderError: profile.profileProviderError || null,
         extrasProviderError: extrasResult.extrasProviderError || null,
         secProviderError: secResult.error || null,
+        fmpProviderError: fmpResult.fmpProviderError || null,
         coverage,
         providers: {
           profile: "Yahoo Finance",
           chart: chart.meta?.fallbackReason ? `${chart.meta?.dataProvider || "Yahoo Finance"} · fallback: ${chart.meta.fallbackReason}` : chart.meta?.dataProvider || "Yahoo Finance",
           news: "Yahoo Finance search/news + Google News RSS fallback",
-          statements: "Yahoo quoteSummary statements",
+          statements: fmpResult.financialResults ? "Yahoo quoteSummary statements + FMP fallback" : "Yahoo quoteSummary statements",
           fundamentalsFallback: secResult.error ? "SEC EDGAR no aplicado" : "SEC EDGAR companyfacts",
+          fundamentalsApi: fmpResult.configured === false ? "FMP no configurado" : (fmpResult.fmpProviderError ? "FMP no disponible" : "FMP opcional"),
         },
       },
       updatedAt: new Date().toISOString(),

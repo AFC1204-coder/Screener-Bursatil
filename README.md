@@ -86,6 +86,8 @@ npm run supabase:schema
 
 - Yahoo Finance-style endpoints for charts, profiles, financial briefs and market data.
 - Stooq CSV as optional free historical chart fallback when `STOOQ_API_KEY` is configured.
+- Alpha Vantage as optional daily chart fallback when `ALPHA_VANTAGE_API_KEY` is configured.
+- Financial Modeling Prep as optional profile, ratios and statements fallback when `FMP_API_KEY` is configured.
 - NasdaqTrader public symbol directories for the US universe.
 - SEC EDGAR companyfacts as a free US fundamentals fallback.
 - TradingView official embed for charts.
