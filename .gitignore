@@ -10,6 +10,37 @@ yarn-error.log*
 pnpm-debug.log*
 .DS_Store
 
+# Local secrets and credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.mobileprovision
+*secret*
+*secrets*
+*credential*
+*credentials*
+*token*
+
+# Local data, exports and backups
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.backup
+*.bak
+*.csv
+*.xlsx
+*.xls
+*.parquet
+*.jsonl
+exports/
+backups/
+tmp/
+temp/
+
 # Private research material
 research/books/*
 !research/books/.gitkeep
