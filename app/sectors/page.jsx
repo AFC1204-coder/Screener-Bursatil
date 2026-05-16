@@ -139,21 +139,70 @@ function filterGroupsByStrength(groups = [], filter = "all") {
   return filtered;
 }
 
-function EmptySectorState({ favoritesCount }) {
-  return <section className="card emptyState">
-    <div className="sectionTitle"><h2>Sin mapa todavia</h2><span className="fine">Necesita un snapshot o favoritos con score</span></div>
-    <p className="muted">Guarda un snapshot desde el screener o usa favoritos como fallback.</p>
-    <div className="dataIssueGrid">
-      <div className="dataIssue"><b>1. Ejecuta screener</b><strong>Scan</strong><p>Carga universo, elige preset y pulsa Ejecutar.</p><span>Mejor con Balanceado, Lideres estrictos o Near Pivot.</span></div>
-      <div className="dataIssue"><b>2. Guarda snapshot</b><strong>Save</strong><p>Usa Guardar snapshot cuando aparezcan candidatas.</p><span>El mapa sectorial lee `statsedge.scans.v1`.</span></div>
-      <div className="dataIssue"><b>3. Fallback</b><strong>{favoritesCount}</strong><p>Favoritos disponibles para agrupar si no hay snapshot.</p><span>Un favorito sin snapshot tiene menos metricas.</span></div>
+function listText(items = []) {
+  return items?.length ? items.join(", ") : "-";
+}
+
+function sectorStateClass(value = "") {
+  const text = String(value).toLowerCase();
+  if (text.includes("bull") || text.includes("alc") || text.includes("construct")) return "bullish";
+  if (text.includes("bear") || text.includes("baj") || text.includes("debil") || text.includes("deterior")) return "bearish";
+  return "neutral";
+}
+
+function MarketSectorOverview({ data, error }) {
+  const sectors = data?.sectorTape || [];
+  const summary = data?.sectorSummary || {};
+  const sorted = [...sectors].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+  return <section className="sectorOverview">
+    <div className="sectionTitle">
+      <h2>Estado sectorial</h2>
+      <span className="fine">Mercado · 1D / 1W / 1M / 3M</span>
     </div>
-    <div className="controls">
-      <a className="btn btnPrimary" href="/">Ir al screener</a>
-      <a className="btn" href="/review?source=latest">Vista rapida</a>
-      <a className="btn" href="/research-desk">Ver Research Desk</a>
-      <a className="btn" href="/lists">Ver listas</a>
-    </div>
+
+    {!data && !error && <div className="dataNote">Cargando comparativa sectorial...</div>}
+    {error && <div className="dataNote">Proveedor no disponible: {error}</div>}
+
+    {!!sectors.length && <>
+      <div className="kpis">
+        <div className="kpi"><b>{num(data.marketScore)}</b><span>market score</span></div>
+        <div className="kpi"><b>{data.regime || "-"}</b><span>regimen</span></div>
+        <div className="kpi"><b>{num(summary.avgScore)}</b><span>score medio</span></div>
+        <div className="kpi"><b>{summary.above50 ?? "-"}/{summary.count ?? "-"}</b><span>sobre SMA50</span></div>
+        <div className="kpi"><b>{summary.best1m || "-"}</b><span>mejor 1M</span></div>
+        <div className="kpi"><b>{summary.worst1m || "-"}</b><span>peor 1M</span></div>
+      </div>
+
+      <div className="sectorPulse compact">
+        <div><b>Lideres</b><span>{listText(summary.leaders)}</span></div>
+        <div><b>Debiles</b><span>{listText(summary.laggards)}</span></div>
+      </div>
+
+      <div className="tableWrap sectorOverviewTable">
+        <table className="table sectorTapeTable">
+          <thead><tr>{["Sector", "ETF", "Estado", "Score", "W", "Etapa", "1D", "1W", "1M", "3M", "RS 1M", "SMA50", "SMA200", "Dist/Acc", "52w"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
+          <tbody>{sorted.map((sector) => <tr key={sector.symbol}>
+            <td><b>{sector.name}</b><br /><span className="fine">{sector.group}</span></td>
+            <td className="ticker">{sector.symbol}</td>
+            <td><i className={`sentimentPill ${sectorStateClass(sector.state?.bias || sector.state?.label)}`}>{sector.state?.label || "-"}</i></td>
+            <td className="ticker">{num(sector.score)}</td>
+            <td>{num(sector.weinsteinScore)}</td>
+            <td>{sector.stage30w || "-"}</td>
+            <td>{pct(sector.perf1d)}</td>
+            <td>{pct(sector.perf1w)}</td>
+            <td>{pct(sector.perf1m)}</td>
+            <td>{pct(sector.perf3m)}</td>
+            <td>{pct(sector.rs1m)}</td>
+            <td>{sector.price > sector.sma50 ? "Si" : "No"}</td>
+            <td>{sector.price > sector.sma200 ? "Si" : "No"}</td>
+            <td>{Number.isFinite(sector.distributionDays20) ? `${sector.distributionDays20}/${sector.accumulationDays20}` : "-"}</td>
+            <td>{pct(sector.distance52w)}</td>
+          </tr>)}</tbody>
+        </table>
+      </div>
+      <p className="fine sectorCoverageNote">Proxy inicial mediante ETFs sectoriales USA. La capa por snapshot cubre Europa, Hong Kong, Japon y el resto de mercados cuando hay resultados guardados.</p>
+    </>}
   </section>;
 }
 
@@ -179,6 +228,8 @@ export default function SectorsPage() {
   const [countryFilter, setCountryFilter] = useState("Todos");
   const [active, setActive] = useState("");
   const [scanId, setScanId] = useState("");
+  const [marketHealth, setMarketHealth] = useState(null);
+  const [marketHealthError, setMarketHealthError] = useState("");
 
   function reloadLocal() {
     const nextScans = safeRead(STORAGE_KEYS.scans, []);
@@ -189,6 +240,19 @@ export default function SectorsPage() {
   }
 
   useEffect(() => { reloadLocal(); }, []);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/market-health").then(async (response) => {
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+      return payload;
+    }).then((payload) => {
+      if (alive) setMarketHealth(payload);
+    }).catch((error) => {
+      if (alive) setMarketHealthError(error.message || "Sin respuesta");
+    });
+    return () => { alive = false; };
+  }, []);
 
   const selectedScan = useMemo(() => scans.find((scan) => scan.id === scanId) || scans[0] || null, [scans, scanId]);
   const snapshotRows = useMemo(() => cleanRows(selectedScan?.rows || []), [selectedScan]);
@@ -271,7 +335,7 @@ export default function SectorsPage() {
       </div>
     </section>
 
-    {!rows.length && <EmptySectorState favoritesCount={favorites.length} />}
+    {!rows.length && <MarketSectorOverview data={marketHealth} error={marketHealthError} />}
 
     {rows.length > 0 && <section className="sectorMapLayout">
       <div className="card">

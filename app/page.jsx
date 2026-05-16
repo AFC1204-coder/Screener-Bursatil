@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ChartPreferences from "@/app/ChartPreferences";
+import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { chartRangeBars, DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { syncFavoriteToCloud, syncScanToCloud } from "@/lib/cloudSyncClient";
 import { assetDomainForName, assetDomainForSymbol } from "@/lib/companyAssets";
 import { pct } from "@/lib/formatters";
-import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
-import { countryCode, externalLinks, isTradingViewWidgetBlocked, marketFlag, stockUrl } from "@/lib/symbols";
+import { safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { countryCode, countryName, externalLinks, isTradingViewWidgetBlocked, marketFlag, stockUrl } from "@/lib/symbols";
 
 const MARKET_META = {
   US: { name: "Estados Unidos", exchange: "NYSE / Nasdaq", region: "Norteamerica" },
@@ -43,7 +44,9 @@ const EUROPE = ["ES", "DE", "FR", "NL", "GB", "CH", "SE", "DK", "NO", "FI", "IT"
 const ASIA = ["JP", "HK", "SG", "TW", "KR", "IN", "CN"];
 const DEFAULT_MARKETS = ["US", ...EUROPE, "CA", ...ASIA, "AU", "BR", "MX"];
 const ALL_SYMBOLS_LIMIT = 999999;
-const QUALITY_DEFAULTS = { setupMode: "leader", requireStage2: true, requireSma200Up: false, requirePriceAboveSma50: false, requireRecentIpo: false, requireUpVolume: false, maxIpoAgeMonths: 60, minWeinsteinScore: 55, minMinerviniScore: 45, minMomentumScore: 25, minRiskScore: 30, minVolumeScore: 15, minLiquidityScore: 15, minRsRating: 55, minRsQualityScore: 0, minWeaknessScore: 50, minSectorScore: 0, minTotalScore: 0, minDataCoverageScore: 50, minTechnicalCoverageScore: 70, minFundamentalCoverageScore: 0, minAvgTurnover: 5000000, minLatestVolume: 100000, minLatestTurnover: 2000000, minRelativeVolume: 1.2, minVolumeSurgePct: 25, minUpDownVolRatio: .9, minVolumeEffectScore: 20, minShortFloatPct: 0, maxShortFloatPct: 999, minRiskRewardScore: 45, minReturnToVol3m: .35, minReturnToDrawdown3m: .8, maxDailyMove20dPct: 18, maxDailyRange20dPct: 22, maxRange63dPct: 85, maxVolatility63d: 85, maxDrawdown63d: 32 };
+const SCREENER_SESSION_VERSION = 1;
+const DEFAULT_STATUS = "Listo · Universo por defecto: EEUU + Europa + Asia/HK + Canada + Australia/LatAm";
+const QUALITY_DEFAULTS = { setupMode: "leader", requireStage2: true, requireSma200Up: false, requirePriceAboveSma50: false, requireRecentIpo: false, requireUpVolume: false, maxIpoAgeMonths: 60, minWeinsteinScore: 55, minMinerviniScore: 45, minMomentumScore: 25, minRiskScore: 30, minVolumeScore: 15, minLiquidityScore: 15, minRsRating: 55, minRsQualityScore: 0, minAdProxyScore: 0, minEpsGrowthProxyScore: 0, minWeaknessScore: 50, minSectorScore: 0, minTotalScore: 0, minDataCoverageScore: 50, minTechnicalCoverageScore: 70, minFundamentalCoverageScore: 0, minAvgTurnover: 5000000, minLatestVolume: 100000, minLatestTurnover: 2000000, minRelativeVolume: 1.2, minVolumeSurgePct: 25, minUpDownVolRatio: .9, minVolumeEffectScore: 20, minShortFloatPct: 0, maxShortFloatPct: 999, minRiskRewardScore: 45, minReturnToVol3m: .35, minReturnToDrawdown3m: .8, maxDailyMove20dPct: 18, maxDailyRange20dPct: 22, maxRange63dPct: 85, maxVolatility63d: 85, maxDrawdown63d: 32 };
 const PRESETS = {
   balanced: { name: "Balanceado", desc: "Weinstein + Minervini estandar", v: { ...QUALITY_DEFAULTS, minMarketCap: 300000000, minPrice: 3, minAvgVolume: 300000, maxDistance20dHigh: 10, maxDistance50dHigh: 18, maxDistance52w: 25, maxDistanceATH: 40, maxHighsSpreadPct: 15, minPerf3m: 10, minPerf6m: 20, minPerf12m: 30, maxExtensionSma50: 30, maxSymbols: ALL_SYMBOLS_LIMIT } },
   strict: { name: "Lideres estrictos", desc: "Muy selectivo", v: { ...QUALITY_DEFAULTS, setupMode: "leader", minMarketCap: 500000000, minPrice: 5, minAvgVolume: 500000, minAvgTurnover: 10000000, minLatestVolume: 250000, minLatestTurnover: 5000000, minUpDownVolRatio: 1, minVolumeEffectScore: 35, maxDistance20dHigh: 5, maxDistance50dHigh: 10, maxDistance52w: 15, maxDistanceATH: 25, maxHighsSpreadPct: 8, minPerf3m: 15, minPerf6m: 30, minPerf12m: 50, maxExtensionSma50: 25, maxDailyMove20dPct: 12, maxDailyRange20dPct: 16, maxRange63dPct: 55, maxVolatility63d: 60, maxDrawdown63d: 22, minWeinsteinScore: 75, minMinerviniScore: 65, minMomentumScore: 45, minRiskScore: 50, minVolumeScore: 30, minLiquidityScore: 35, minRsRating: 75, minSectorScore: 55, minTotalScore: 68, maxSymbols: ALL_SYMBOLS_LIMIT } },
@@ -71,6 +74,7 @@ const FILTER_GROUPS = [
   { title: "Cercania a maximos", fields: [{ key: "maxDistance20dHigh", label: "Max caida vs 20d", unit: "%", step: 1 }, { key: "maxDistance50dHigh", label: "Max caida vs 50d", unit: "%", step: 1 }, { key: "maxDistance52w", label: "Max caida vs 52w", unit: "%", step: 1 }, { key: "maxDistanceATH", label: "Max caida vs ATH", unit: "%", step: 1 }, { key: "maxHighsSpreadPct", label: "Highs spread max", unit: "%", step: 1 }, { key: "maxExtensionSma50", label: "Extension SMA50 max", unit: "%", step: 1 }] },
   { title: "Volatilidad / rango", fields: [{ key: "maxDailyMove20dPct", label: "Movimiento diario max 20d", unit: "%", step: 1, hint: "Mayor cambio absoluto cierre-cierre de las ultimas 20 sesiones." }, { key: "maxDailyRange20dPct", label: "Rango intradia max 20d", unit: "%", step: 1, hint: "Mayor rango high-low relativo al cierre en las ultimas 20 sesiones." }, { key: "maxRange63dPct", label: "Rango precio 63d max", unit: "%", step: 5, hint: "Amplitud high-low de los ultimos tres meses." }, { key: "maxVolatility63d", label: "Volatilidad anualizada max", unit: "%", step: 5 }, { key: "maxDrawdown63d", label: "Drawdown 3M max", unit: "%", step: 1 }] },
   { title: "Rentabilidad / riesgo", fields: [{ key: "minRsQualityScore", label: "RS Quality min", unit: "", step: 5 }, { key: "minRiskRewardScore", label: "Score rent/riesgo min", unit: "", step: 5 }, { key: "minReturnToVol3m", label: "Retorno 3M / volatilidad min", unit: "x", step: .1 }, { key: "minReturnToDrawdown3m", label: "Retorno 3M / drawdown min", unit: "x", step: .1 }] },
+  { title: "Ratings proxy", fields: [{ key: "minAdProxyScore", label: "A/D proxy min", unit: "", step: 5, hint: "Proxy 0-100 de acumulacion/distribucion usando up/down volume, volumen relativo y cierre con volumen." }, { key: "minEpsGrowthProxyScore", label: "EPS/Growth proxy min", unit: "", step: 5, hint: "Proxy 0-100 de crecimiento/calidad con beneficios, ventas, margenes y ROE si el proveedor devuelve datos." }] },
   { title: "Cobertura de datos", fields: [{ key: "minDataCoverageScore", label: "Cobertura total min", unit: "", step: 5 }, { key: "minTechnicalCoverageScore", label: "Cobertura tecnica min", unit: "", step: 5 }, { key: "minFundamentalCoverageScore", label: "Cobertura fundamental min", unit: "", step: 5 }] },
   { title: "Calidad minima", fields: [{ key: "minRsRating", label: "RS Rating min", unit: "", step: 5 }, { key: "minWeinsteinScore", label: "Weinstein min", unit: "", step: 5 }, { key: "minMinerviniScore", label: "Minervini min", unit: "", step: 5 }, { key: "minMomentumScore", label: "Momentum score min", unit: "", step: 5 }, { key: "minRiskScore", label: "Risk score min", unit: "", step: 5 }, { key: "minVolumeScore", label: "Volume score min", unit: "", step: 5 }, { key: "minLiquidityScore", label: "Liquidity score min", unit: "", step: 5 }, { key: "minSectorScore", label: "Fuerza grupo min", unit: "", step: 5 }, { key: "minTotalScore", label: "Composite V2 min", unit: "", step: 5 }] },
   { title: "Deterioro tecnico", fields: [{ key: "minWeaknessScore", label: "Deterioro min", unit: "", step: 5 }] },
@@ -102,6 +106,8 @@ const FILTER_FIELD_LAYERS = {
   maxExtensionSma50: ["proximity"],
   minRiskRewardScore: ["riskReward"],
   minRsQualityScore: ["riskReward"],
+  minAdProxyScore: ["volumeSurge"],
+  minEpsGrowthProxyScore: ["score"],
   minWeaknessScore: ["score"],
   minReturnToVol3m: ["riskReward"],
   minReturnToDrawdown3m: ["riskReward"],
@@ -148,6 +154,8 @@ const NEUTRAL_FIELD_VALUES = {
   maxExtensionSma50: 999,
   minRiskRewardScore: 0,
   minRsQualityScore: 0,
+  minAdProxyScore: 0,
+  minEpsGrowthProxyScore: 0,
   minWeaknessScore: 0,
   minReturnToVol3m: -999,
   minReturnToDrawdown3m: -999,
@@ -178,9 +186,9 @@ const EXECUTION_LAYERS = [
   { key: "momentum", label: "Momentum", detail: "3M, 6M, 12M, RS", count: 5 },
   { key: "proximity", label: "Cercania", detail: "maximos y extension", count: 7 },
   { key: "volatility", label: "Volatilidad", detail: "movimiento y rango", count: 5 },
-  { key: "score", label: "Scores", detail: "minimos composite", count: 5 },
+  { key: "score", label: "Scores", detail: "minimos composite", count: 6 },
   { key: "liquidity", label: "Liquidez", detail: "precio, cap, importe", count: 6 },
-  { key: "volumeSurge", label: "Volumen+", detail: "actividad objetiva", count: 7 },
+  { key: "volumeSurge", label: "Volumen+", detail: "actividad objetiva", count: 8 },
   { key: "shortInterest", label: "Short float", detail: "flota en corto", count: 2 },
   { key: "riskReward", label: "Rent/Riesgo", detail: "RS ajustado", count: 4 },
   { key: "coverage", label: "Cobertura", detail: "calidad minima de datos", count: 3 },
@@ -611,6 +619,49 @@ function scoreGrowthQuality(metrics = {}) {
   }
   return clamp(s);
 }
+function scoreEpsGrowthProxy(metrics = {}) {
+  const revenue = metrics.revenueGrowth;
+  const earnings = metrics.earningsGrowth;
+  const operating = metrics.operatingMargin;
+  const profit = metrics.profitMargin;
+  const roe = metrics.roe;
+  const roa = metrics.roa;
+  const debt = metrics.debtToEquity;
+  const current = metrics.currentRatio;
+  if (![revenue, earnings, operating, profit, roe, roa].some(Number.isFinite)) return null;
+  let s = 35;
+  if (gte(earnings, 50)) s += 24; else if (gte(earnings, 25)) s += 18; else if (gte(earnings, 10)) s += 11; else if (gte(earnings, 0)) s += 5; else if (Number.isFinite(earnings)) s -= 12;
+  if (gte(revenue, 30)) s += 18; else if (gte(revenue, 15)) s += 13; else if (gte(revenue, 5)) s += 7; else if (gte(revenue, 0)) s += 3; else if (Number.isFinite(revenue)) s -= 8;
+  if (gte(operating, 25)) s += 10; else if (gte(operating, 12)) s += 6; else if (lt(operating, 0)) s -= 7;
+  if (gte(profit, 18)) s += 8; else if (gte(profit, 8)) s += 5; else if (lt(profit, 0)) s -= 8;
+  if (gte(roe, 22)) s += 8; else if (gte(roe, 12)) s += 5;
+  if (gte(roa, 10)) s += 5; else if (gte(roa, 5)) s += 3;
+  if (Number.isFinite(debt)) {
+    if (debt <= 60) s += 4;
+    else if (debt > 180) s -= 5;
+  }
+  if (Number.isFinite(current) && current < .9) s -= 4;
+  return Math.round(clamp(s));
+}
+function scoreAdProxy(r = {}) {
+  let s = 45;
+  if (gte(r.upDownVolRatio, 2)) s += 20;
+  else if (gte(r.upDownVolRatio, 1.5)) s += 15;
+  else if (gte(r.upDownVolRatio, 1.15)) s += 9;
+  else if (Number.isFinite(r.upDownVolRatio) && r.upDownVolRatio < .75) s -= 15;
+  else if (Number.isFinite(r.upDownVolRatio) && r.upDownVolRatio < .95) s -= 8;
+  if (r.upVolume === true && gte(r.relativeVolume, 1.1)) s += 10;
+  if (r.upVolume === false && gte(r.relativeVolume, 1.2)) s -= 10;
+  if (gte(r.volumeSurgePct, 50) && gte(r.perf3m, 0)) s += 10;
+  else if (gte(r.volumeSurgePct, 20) && gte(r.perf3m, 0)) s += 6;
+  if (gte(r.relativeVolume, 1.5) && gte(r.distance20d, -8)) s += 8;
+  if (gte(r.distance52w, -15)) s += 7;
+  else if (Number.isFinite(r.distance52w) && r.distance52w < -35) s -= 7;
+  if (gt(r.price, r.sma50)) s += 5;
+  else if (Number.isFinite(r.price) && Number.isFinite(r.sma50)) s -= 5;
+  if (gt(r.maxDrawdown63d, 32)) s -= 6;
+  return Math.round(clamp(s));
+}
 function compositeLabel(score) {
   if (score >= 85) return "Elite";
   if (score >= 75) return "Leader";
@@ -649,7 +700,7 @@ function compositeNarrative(r) {
 }
 function benchmarkSymbolForRow(row = {}) {
   const text = `${row.theme || ""} ${row.sector || ""} ${row.industry || ""}`.toLowerCase();
-  if (/software|semis|fotonica|ia|ai|cloud|cyber|chip|technology/.test(text)) return "QQQ";
+  if (/\b(software|semis?|semiconductor|semiconductors|fotonica|ia|ai|cloud|cyber|chip|chips|technology)\b/.test(text)) return "QQQ";
   if (row.country && row.country !== "US") return "ACWI";
   return "SPY";
 }
@@ -873,6 +924,9 @@ function favoriteFromRow(row, marketHealth) {
       setupQualityScore: row.setupQualityScore,
       demandScore: row.demandScore,
       growthScore: row.growthScore,
+      adProxyScore: row.adProxyScore,
+      epsGrowthProxyScore: row.epsGrowthProxyScore,
+      ratingModel: row.ratingModel,
       weinsteinScore: row.weinsteinScore,
       minerviniScore: row.minerviniScore,
       momentumScore: row.momentumScore,
@@ -941,6 +995,9 @@ function chartPreviewBars(b, limit = 96) {
     const windowAvg = (n) => i >= n - 1 ? avg(asc.slice(i - n + 1, i + 1).map((x) => x.close)) : null;
     return {
       date: bar.date,
+      open: Number.isFinite(bar.open) ? bar.open : bar.close,
+      high: Number.isFinite(bar.high) ? bar.high : bar.close,
+      low: Number.isFinite(bar.low) ? bar.low : bar.close,
       close: bar.close,
       volume: Number.isFinite(bar.volume) ? bar.volume : 0,
       sma50: windowAvg(50),
@@ -1066,6 +1123,8 @@ function buildResearchRow(symbol, chart, profile = {}, requireLongHistory = fals
   row.riskRewardScore = scoreRiskReward(row);
   row.volumeEffectScore = scoreVolumeEffect(row);
   row.volumeEvidence = volumeEvidence(row);
+  row.adProxyScore = scoreAdProxy(row);
+  row.epsGrowthProxyScore = scoreEpsGrowthProxy(row.growthMetrics || {});
   row.volumeScore = scoreVolume(row);
   row.liquidityScore = scoreLiq(row);
   row.ipoCategory = ipoCat(row.ipoDate);
@@ -1125,6 +1184,8 @@ function filterRejectReason(row, set) {
   const minVolumeSurgePct = Number.isFinite(set.minVolumeSurgePct) ? set.minVolumeSurgePct : -999;
   const minShortFloatPct = Number.isFinite(set.minShortFloatPct) ? set.minShortFloatPct : 0;
   const maxShortFloatPct = Number.isFinite(set.maxShortFloatPct) ? set.maxShortFloatPct : 999;
+  const minAdProxyScore = Number.isFinite(set.minAdProxyScore) ? set.minAdProxyScore : 0;
+  const minEpsGrowthProxyScore = Number.isFinite(set.minEpsGrowthProxyScore) ? set.minEpsGrowthProxyScore : 0;
   if (!Number.isFinite(row.price) || row.price <= 0) return rejectReason("provider", "Precio no disponible", "price");
   if (!Number.isFinite(row.chartBarsCount) || row.chartBarsCount < minBars) return rejectReason("provider", `Historico insuficiente: ${Number.isFinite(row.chartBarsCount) ? row.chartBarsCount : 0}/${minBars} sesiones`, "chartBarsCount");
   if ((set.minPrice || 0) > 0 && lt(row.price, set.minPrice)) return rejectReason("liquidity", `Precio ${money(row.price, row.currency)} por debajo de ${money(set.minPrice, row.currency)}`, "minPrice");
@@ -1140,6 +1201,8 @@ function filterRejectReason(row, set) {
   if (minVolumeSurgePct > -999 && (!Number.isFinite(row.volumeSurgePct) || row.volumeSurgePct < minVolumeSurgePct)) return rejectReason("volumeSurge", `Volumen 5d ${pct(row.volumeSurgePct)} < ${pct(minVolumeSurgePct)}`, "minVolumeSurgePct");
   if ((set.minUpDownVolRatio || 0) > 0 && (!Number.isFinite(row.upDownVolRatio) || row.upDownVolRatio < set.minUpDownVolRatio)) return rejectReason("volumeSurge", `Up/Down volume ${ratioLabel(row.upDownVolRatio)} < ${ratioLabel(set.minUpDownVolRatio)}`, "minUpDownVolRatio");
   if ((set.minVolumeEffectScore || 0) > 0 && (!Number.isFinite(row.volumeEffectScore) || row.volumeEffectScore < set.minVolumeEffectScore)) return rejectReason("volumeSurge", `Volume Effect ${row.volumeEffectScore?.toFixed?.(0) || "sin dato"} < ${set.minVolumeEffectScore}`, "minVolumeEffectScore");
+  if (minAdProxyScore > 0 && (!Number.isFinite(row.adProxyScore) || row.adProxyScore < minAdProxyScore)) return rejectReason("volumeSurge", `A/D proxy ${row.adProxyScore?.toFixed?.(0) || "sin dato"} < ${minAdProxyScore}`, "minAdProxyScore");
+  if (minEpsGrowthProxyScore > 0 && (!Number.isFinite(row.epsGrowthProxyScore) || row.epsGrowthProxyScore < minEpsGrowthProxyScore)) return rejectReason("score", `EPS/Growth proxy ${row.epsGrowthProxyScore?.toFixed?.(0) || "sin dato"} < ${minEpsGrowthProxyScore}`, "minEpsGrowthProxyScore");
   if (minShortFloatPct > 0 && (!Number.isFinite(row.shortPercentOfFloat) || row.shortPercentOfFloat < minShortFloatPct)) return rejectReason("shortInterest", `Short float ${pct(row.shortPercentOfFloat)} < ${pct(minShortFloatPct)}`, "minShortFloatPct");
   if (maxShortFloatPct < 999 && (!Number.isFinite(row.shortPercentOfFloat) || row.shortPercentOfFloat > maxShortFloatPct)) return rejectReason("shortInterest", `Short float ${pct(row.shortPercentOfFloat)} > ${pct(maxShortFloatPct)}`, "maxShortFloatPct");
   if (set.requireUpVolume && row.upVolume !== true) return rejectReason("volumeSurge", "La ultima vela no cumple volumen en vela alcista", "requireUpVolume");
@@ -1175,7 +1238,8 @@ function filterRejectReason(row, set) {
   if (below(row.riskScore, set.minRiskScore)) return rejectReason("score", `Risk score ${row.riskScore?.toFixed?.(0)} < ${set.minRiskScore}`, "minRiskScore");
   if (below(row.volumeScore, set.minVolumeScore)) return rejectReason("score", `Volume score ${row.volumeScore?.toFixed?.(0)} < ${set.minVolumeScore}`, "minVolumeScore");
   if (below(row.liquidityScore, set.minLiquidityScore)) return rejectReason("score", `Liquidity score ${row.liquidityScore?.toFixed?.(0)} < ${set.minLiquidityScore}`, "minLiquidityScore");
-  if ((set.minRsRating || 0) > 0 && (!Number.isFinite(row.rsRating) || row.rsRating < (set.minRsRating || 0))) return rejectReason("momentum", `RS Rating ${Number.isFinite(row.rsRating) ? row.rsRating.toFixed(0) : "sin dato"} < ${set.minRsRating || 0}`, "minRsRating");
+  const rsPrimary = firstFinite(row.rsGlobalPct, row.rsRating);
+  if ((set.minRsRating || 0) > 0 && (!Number.isFinite(rsPrimary) || rsPrimary < (set.minRsRating || 0))) return rejectReason("momentum", `RS Global ${Number.isFinite(rsPrimary) ? rsPrimary.toFixed(0) : "sin dato"} < ${set.minRsRating || 0}`, "minRsRating");
   if (set.requireRecentIpo && !isRecentIpoDate(row.ipoDate, set.maxIpoAgeMonths || 60)) return rejectReason("ipo", `IPO no confirmada dentro de ${set.maxIpoAgeMonths || 60} meses`, "requireRecentIpo");
   if (mode === "nearPivot" && !(gte(row.distance20d, -set.maxDistance20dHigh) && lte(row.highsSpreadPct, set.maxHighsSpreadPct) && lte(row.extSma50, Math.min(set.maxExtensionSma50, 18)))) return rejectReason("mode", "No encaja en Near Pivot", "setupMode");
   if (mode === "pullback" && !(gt(row.price, row.sma200) && between(row.extSma50, -4, 9) && gte(row.distance52w, -30) && gte(row.perf6m, Math.max(8, set.minPerf6m * 0.7)))) return rejectReason("mode", "No encaja en Pullback SMA50", "setupMode");
@@ -1187,6 +1251,17 @@ function filterRejectReason(row, set) {
 
 function passesFilter(row, set) {
   return !filterRejectReason(row, set);
+}
+
+function splitByFilter(rows, set) {
+  const passed = [];
+  const rejections = [];
+  rows.forEach((row) => {
+    const reason = filterRejectReason(row, set);
+    if (reason) rejections.push({ symbol: row.symbol, ...reason });
+    else passed.push(row);
+  });
+  return { passed, rejections };
 }
 
 function applyPostFilters(list, set) {
@@ -1206,12 +1281,16 @@ async function analyze(symbol, set, benchmarks = {}) {
   return result.row;
 }
 
-async function analyzeCandidate(symbol, set, benchmarks = {}) {
+async function analyzeRawCandidate(symbol, set, benchmarks = {}) {
   const [chart, profile] = await Promise.all([
     getJson(`/api/chart?symbol=${encodeURIComponent(symbol)}`),
     getJson(`/api/profile?symbol=${encodeURIComponent(symbol)}`).catch(() => ({})),
   ]);
-  const row = buildResearchRow(symbol, chart, profile, set.setupMode !== "ipoRecent", benchmarks);
+  return buildResearchRow(symbol, chart, profile, set.setupMode !== "ipoRecent", benchmarks);
+}
+
+async function analyzeCandidate(symbol, set, benchmarks = {}) {
+  const row = await analyzeRawCandidate(symbol, set, benchmarks);
   const reason = filterRejectReason(row, set);
   if (reason) return { row: null, rejection: { symbol, ...reason } };
   return { row, rejection: null };
@@ -1262,13 +1341,23 @@ function sectorize(list) {
     const setupQualityScore = scoreSetupQuality(r);
     const demandScore = scoreDemandQuality(r);
     const growthScore = scoreGrowthQuality(r.growthMetrics || {});
+    const adProxyScore = Number.isFinite(r.adProxyScore) ? r.adProxyScore : scoreAdProxy(r);
+    const epsGrowthProxyScore = Number.isFinite(r.epsGrowthProxyScore) ? r.epsGrowthProxyScore : scoreEpsGrowthProxy(r.growthMetrics || {});
     const riskRewardScore = Number.isFinite(r.riskRewardScore) ? r.riskRewardScore : 45;
     const rsAnchor = Number.isFinite(r.rsGlobalPct) ? r.rsGlobalPct : (r.rsRating || 50);
     const rsQuality = scoreRsQuality({ ...r, riskRewardScore });
     const rsQualityScore = Number.isFinite(rsQuality?.rsQualityScore) ? rsQuality.rsQualityScore : rsAnchor;
-    const legacyTotalScore = r.weinsteinScore * .16 + r.minerviniScore * .18 + rsAnchor * .15 + rsQualityScore * .04 + r.momentumScore * .12 + sectorScore * .11 + r.riskScore * .06 + riskRewardScore * .06 + r.volumeScore * .05 + r.liquidityScore * .05 + ipoScore * .02;
-    const compositeScore = setupQualityScore * .2 + rsAnchor * .16 + rsQualityScore * .06 + demandScore * .14 + growthScore * .13 + sectorScore * .11 + riskRewardScore * .09 + r.riskScore * .06 + r.momentumScore * .03 + ipoScore * .02;
-    const scoredBase = { ...r, ...rsQuality, sectorScore, groupStrengthScore: sectorScore, ipoScore, setupQualityScore, demandScore, growthScore, legacyTotalScore, compositeScore, totalScore: compositeScore, compositeLabel: compositeLabel(compositeScore) };
+    const epsAnchor = Number.isFinite(epsGrowthProxyScore) ? epsGrowthProxyScore : growthScore;
+    const legacyTotalScore = r.weinsteinScore * .15 + r.minerviniScore * .17 + rsAnchor * .15 + rsQualityScore * .04 + r.momentumScore * .1 + sectorScore * .1 + r.riskScore * .05 + riskRewardScore * .06 + r.volumeScore * .04 + adProxyScore * .05 + epsAnchor * .07 + r.liquidityScore * .04 + ipoScore * .02;
+    const compositeScore = setupQualityScore * .17 + rsAnchor * .16 + rsQualityScore * .06 + demandScore * .1 + adProxyScore * .08 + growthScore * .08 + epsAnchor * .08 + sectorScore * .1 + riskRewardScore * .08 + r.riskScore * .05 + r.momentumScore * .02 + ipoScore * .02;
+    const ratingModel = {
+      version: "statsedge-transparent-v2",
+      rs: "Percentil global del universo analizado; fallback a RS benchmark si no hay muestra suficiente.",
+      adProxy: "Up/down volume, volumen relativo, volumen 5d y cierre con volumen.",
+      epsGrowthProxy: "Crecimiento de beneficios/ventas, margenes, ROE/ROA y balance si el proveedor devuelve datos.",
+      composite: "Setup + RS + demanda + crecimiento + grupo + rentabilidad/riesgo.",
+    };
+    const scoredBase = { ...r, ...rsQuality, sectorScore, groupStrengthScore: sectorScore, ipoScore, setupQualityScore, demandScore, growthScore, adProxyScore, epsGrowthProxyScore, ratingModel, legacyTotalScore, compositeScore, totalScore: compositeScore, compositeLabel: compositeLabel(compositeScore) };
     const scored = { ...scoredBase, ...scoreWeakness(scoredBase) };
     const story = compositeNarrative(scored);
     return { ...scored, compositeReasons: story.reasons, compositeRisks: story.risks };
@@ -1347,11 +1436,13 @@ function TradingViewPreviewChart({ row, chartSettings = DEFAULT_CHART_SETTINGS }
   const ref = useRef(null);
   const tvSymbol = row ? externalLinks(row.symbol, row.exchange).tradingViewSymbol : "";
   const blockedEmbed = row ? isTradingViewWidgetBlocked(row.symbol, tvSymbol) : false;
+  const nativeBars = row?.chartPreview || [];
+  const hasNativeChart = nativeBars.filter((bar) => Number.isFinite(bar?.close)).length >= 2;
   const interval = chartSettings?.interval || DEFAULT_CHART_SETTINGS.interval;
   const range = chartSettings?.range || DEFAULT_CHART_SETTINGS.range;
   const style = chartSettings?.style || DEFAULT_CHART_SETTINGS.style;
   useEffect(() => {
-    if (!ref.current || !tvSymbol || blockedEmbed) return;
+    if (!ref.current || !tvSymbol || blockedEmbed || hasNativeChart) return;
     const container = ref.current;
     container.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
     const script = document.createElement("script");
@@ -1377,17 +1468,12 @@ function TradingViewPreviewChart({ row, chartSettings = DEFAULT_CHART_SETTINGS }
       script.remove();
       container.innerHTML = "";
     };
-  }, [tvSymbol, blockedEmbed, interval, range, style]);
+  }, [tvSymbol, blockedEmbed, hasNativeChart, interval, range, style]);
   if (!row) return <div className="tvPreviewBox"><div className="previewEmpty">Sin dato</div></div>;
-  if (blockedEmbed) {
-    const links = externalLinks(row.symbol, row.exchange);
-    return <div className="tvPreviewBox tvPreviewFallback">
-      <MiniSparkline bars={chartPreviewForRange(row.chartPreview || [], range)} />
-      <div className="previewFallbackText">
-        <b>{row.symbol}</b>
-        <span>Widget embebido no disponible para {tvSymbol}. Se usa precio interno.</span>
-        <a className="btn btnSmall" href={links.tradingView} target="_blank" rel="noreferrer">Abrir TradingView</a>
-      </div>
+  const links = externalLinks(row.symbol, row.exchange);
+  if (hasNativeChart || blockedEmbed) {
+    return <div className="tvPreviewBox tvPreviewFallback tvPreviewNative">
+      <UniversalPriceChart bars={nativeBars} symbol={row.symbol} currency={row.currency} tradingViewUrl={links.tradingView} settings={chartSettings} height={520} />
     </div>;
   }
   return <div className="tvPreviewBox"><div className="tradingview-widget-container" ref={ref} /></div>;
@@ -1635,6 +1721,8 @@ function QuickPanel({ row }) {
       <span><b>Composite</b>{row.totalScore?.toFixed(0) || "-"}</span>
       <span><b>RS Global</b>{row.rsGlobalPct?.toFixed(0) || "-"}</span>
       <span><b>RS Quality</b>{row.rsQualityScore?.toFixed(0) || "-"}</span>
+      <span><b>A/D proxy</b>{row.adProxyScore?.toFixed(0) || "-"}</span>
+      <span><b>EPS proxy</b>{row.epsGrowthProxyScore?.toFixed(0) || "-"}</span>
       <span><b>Deterioro</b>{row.weaknessScore?.toFixed(0) || "-"}</span>
       <span><b>RS Pais</b>{row.rsCountryPct?.toFixed(0) || "-"}</span>
       <span><b>RS Sector</b>{row.rsSectorPct?.toFixed(0) || "-"}</span>
@@ -1672,11 +1760,15 @@ function QuickPanel({ row }) {
 function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = false, onSelectChart }) {
   const links = externalLinks(row.symbol, row.exchange);
   const compact = variant === "table";
+  const summary = variant === "search";
+  const showSparkline = !compact && !summary;
   const stage = stageLabel(row);
   const stageClass = stage === "Stage 2" ? "good" : stage === "Stage 4" ? "bad" : "neutral";
   const stats = compact
     ? [["Comp", row.totalScore?.toFixed(0) || "-"], ["RS G", row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"], ["Vol", row.volumeEffectScore?.toFixed(0) || "-"]]
-    : [["Precio", money(row.price, row.currency)], ["Composite", row.totalScore?.toFixed(0) || "-"], ["RS G", row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"], ["RSQ", row.rsQualityScore?.toFixed(0) || "-"], ["Vol eff", row.volumeEffectScore?.toFixed(0) || "-"], ["Short", pct(row.shortPercentOfFloat)], ["Imp 20d", amount(row.avgTurnover, row.currency)], ["Cob", row.dataCoverageScore?.toFixed(0) || "-"], ["Bench", row.benchmarkSymbol || "-"]];
+    : summary
+      ? [["Precio", money(row.price, row.currency)], ["Composite", row.totalScore?.toFixed(0) || "-"], ["RS G", row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"], ["A/D", row.adProxyScore?.toFixed(0) || "-"], ["EPS", row.epsGrowthProxyScore?.toFixed(0) || "-"], ["Bench", row.benchmarkSymbol || "-"]]
+      : [["Precio", money(row.price, row.currency)], ["Composite", row.totalScore?.toFixed(0) || "-"], ["RS G", row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"], ["RSQ", row.rsQualityScore?.toFixed(0) || "-"], ["Vol eff", row.volumeEffectScore?.toFixed(0) || "-"], ["Short", pct(row.shortPercentOfFloat)], ["Imp 20d", amount(row.avgTurnover, row.currency)], ["Cob", row.dataCoverageScore?.toFixed(0) || "-"], ["Bench", row.benchmarkSymbol || "-"]];
   return <div className={`stockPreview stockPreview-${variant}`}>
     <div className="previewTop">
       <div className="previewIdentity">
@@ -1688,7 +1780,7 @@ function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = false, on
       </div>
       <span className={`previewStage ${stageClass}`}>{stage}</span>
     </div>
-    <MiniSparkline bars={row.chartPreview || []} />
+    {showSparkline && <MiniSparkline bars={row.chartPreview || []} />}
     <div className="previewStats">
       {stats.map(([label, value]) => <span key={label}><b>{label}</b>{value}</span>)}
     </div>
@@ -1702,13 +1794,13 @@ function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = false, on
 }
 
 function SearchCandidateList({ candidates = [], activeSymbol = "", onPick }) {
-  if (!candidates.length) return null;
+  const secondary = candidates.filter((item) => !activeSymbol || item.symbol !== activeSymbol);
+  if (!secondary.length) return null;
   return <div className="searchCandidates">
     <div className="sectionTitle"><h2>Coincidencias</h2></div>
     <div className="searchCandidateGrid">
-      {candidates.map((item) => {
-        const active = activeSymbol && item.symbol === activeSymbol;
-        return <button type="button" className={`searchCandidate ${active ? "active" : ""}`} key={item.symbol} onClick={() => onPick?.(item)}>
+      {secondary.map((item) => {
+        return <button type="button" className="searchCandidate" key={item.symbol} onClick={() => onPick?.(item)}>
           <CompanyMark row={{ symbol: item.symbol, companyName: item.name, name: item.name, logoDomain: item.logoDomain, website: item.website }} />
           <span>
             <b>{item.symbol}</b>
@@ -1735,42 +1827,6 @@ function SearchScopeList({ items = [], onPick }) {
   </div>;
 }
 
-function SimilarStocks({ items = [], loading = false, onPick }) {
-  if (!items.length && !loading) return null;
-  return <section className="similarStrip">
-    <div className="sectionTitle">
-      <h2>Acciones similares</h2>
-      <span className="fine">Peers por industria, tematica y scan actual</span>
-    </div>
-    <div className="similarGrid">
-      {loading && <div className="similarCard mutedCard">Buscando peers...</div>}
-      {items.map((item) => <article className="similarCard" key={item.symbol}>
-        <div className="similarTop">
-          <CompanyMark row={{ symbol: item.symbol, companyName: item.name }} />
-          <div>
-            <a className="ticker" href={stockUrl(item.symbol)}>{item.symbol}</a>
-            <p>{item.name || item.companyName || item.symbol}</p>
-          </div>
-        </div>
-        <div className="similarMeta">
-          <span>{item.theme || item.sector || "Sin clasificar"}</span>
-          <span>{item.industry || item.country || "-"}</span>
-        </div>
-        <div className="similarScores">
-          {Number.isFinite(item.totalScore) && <span><b>Comp</b>{item.totalScore.toFixed(0)}</span>}
-          {Number.isFinite(item.rsRating) && <span><b>RS</b>{item.rsRating.toFixed(0)}</span>}
-          {Number.isFinite(item.perf3m) && <span><b>3M</b>{pct(item.perf3m)}</span>}
-          {!Number.isFinite(item.totalScore) && <span><b>Fuente</b>{item.source === "scan" ? "Scan" : "Peer map"}</span>}
-        </div>
-        <div className="similarActions">
-          {onPick && <button type="button" className="btn btnSmall btnPrimary" onClick={() => onPick(item)}>Analizar</button>}
-          <a className="btn btnSmall" href={stockUrl(item.symbol)}>Ficha</a>
-        </div>
-      </article>)}
-    </div>
-  </section>;
-}
-
 function compactTone(value, strongAt, weakBelow = null) {
   if (!Number.isFinite(value)) return "";
   if (value >= strongAt) return "good";
@@ -1783,6 +1839,16 @@ function CompactMetric({ label, value, tone = "" }) {
     <small>{label}</small>
     <b>{value ?? "-"}</b>
   </span>;
+}
+
+function CompactCountryFlag({ country }) {
+  const code = String(country || "").toUpperCase();
+  const safeCode = /^[A-Z]{2}$/.test(code) ? code : "XX";
+  return <span
+    className={`compactCountryFlag flag-${safeCode}`}
+    title={countryName(safeCode)}
+    aria-label={countryName(safeCode)}
+  />;
 }
 
 function CompactResultsTable({ rows = [], favoriteSymbols, onFavorite, onReview }) {
@@ -1811,13 +1877,12 @@ function CompactResultsTable({ rows = [], favoriteSymbols, onFavorite, onReview 
             <td className="rankCell">{i + 1}</td>
             <td className="compactSymbolCell">
               <a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a>
-              <span>{country || "-"}</span>
+              <CompactCountryFlag country={country} />
             </td>
             <td className="compactCompanyCell">
               <CompanyMark row={r} size="sm" />
               <span>
                 <b>{r.companyName || r.symbol}</b>
-                <em>{shortBusiness(r)}</em>
               </span>
             </td>
             <td className="compactSparkCell">
@@ -1860,13 +1925,13 @@ function CompactResultsTable({ rows = [], favoriteSymbols, onFavorite, onReview 
             <td>
               <div className="compactMetricGrid">
                 <CompactMetric label="Rel." value={Number.isFinite(r.relativeVolume) ? `${r.relativeVolume.toFixed(2)}x` : "-"} tone={compactTone(r.relativeVolume, 1.5)} />
-                <CompactMetric label="5d" value={pct(r.volumeSurgePct)} tone={compactTone(r.volumeSurgePct, 40)} />
+                <CompactMetric label="A/D" value={Number.isFinite(r.adProxyScore) ? r.adProxyScore.toFixed(0) : "-"} tone={compactTone(r.adProxyScore, 70, 40)} />
                 <CompactMetric label="Efecto" value={Number.isFinite(r.volumeEffectScore) ? r.volumeEffectScore.toFixed(0) : "-"} />
               </div>
             </td>
             <td className="compactScoreCell">
               <b>{Number.isFinite(r.totalScore) ? r.totalScore.toFixed(0) : "-"}</b>
-              <span>W {Number.isFinite(r.weinsteinScore) ? r.weinsteinScore.toFixed(0) : "-"} · M {Number.isFinite(r.minerviniScore) ? r.minerviniScore.toFixed(0) : "-"}</span>
+              <span>W {Number.isFinite(r.weinsteinScore) ? r.weinsteinScore.toFixed(0) : "-"} · EPS {Number.isFinite(r.epsGrowthProxyScore) ? r.epsGrowthProxyScore.toFixed(0) : "-"}</span>
             </td>
           </tr>;
         })}
@@ -1917,20 +1982,19 @@ function FilterArchitecturePanel({ filterLayers, viewLayers, useRegimeFilter, on
   return <section className="filterArchitecture">
     <div className="filterArchitectureHead">
       <div>
-        <span>Arquitectura del filtro</span>
-        <strong>{executionRuleActive}/{executionRuleTotal} reglas de ejecucion</strong>
+        <span>Filtro activo</span>
+        <strong>{executionRuleActive} de {executionRuleTotal} reglas</strong>
       </div>
-      <InfoHint text="Puertas corta acciones antes de ordenar. Contexto aplica filtros opcionales. Vista solo oculta resultados ya encontrados." />
     </div>
     <div className="filterLayerBlock">
-      <h3>Puertas</h3>
+      <h3>Núcleo</h3>
       {CORE_LAYER_KEYS.map((key) => {
         const layer = layerByKey[key];
         return <LayerControl key={key} active={filterLayers[key]} onClick={() => onToggleLayer(key)} label={layer.label} detail={layer.detail} countLabel={ruleCountLabel(layer.count)} />;
       })}
     </div>
     <div className="filterLayerBlock">
-      <h3>Contexto opcional</h3>
+      <h3>Adicionales</h3>
       {OPTIONAL_LAYER_KEYS.map((key) => {
         const layer = layerByKey[key];
         return <LayerControl key={key} active={filterLayers[key]} onClick={() => onToggleLayer(key)} label={layer.label} detail={layer.detail} countLabel={ruleCountLabel(layer.count)} />;
@@ -1938,7 +2002,7 @@ function FilterArchitecturePanel({ filterLayers, viewLayers, useRegimeFilter, on
       <LayerControl active={useRegimeFilter} onClick={onToggleRegime} label={REGIME_LAYER.label} detail={REGIME_LAYER.detail} countLabel={ruleCountLabel(REGIME_LAYER.count)} />
     </div>
     <details className="viewLayerMini">
-      <summary><span>Vista</span><em>{viewFiltersActive} activos</em></summary>
+      <summary><span>Vista de resultados</span><em>{viewFiltersActive} activos</em></summary>
       <div className="viewLayerBar">
         {VIEW_LAYERS.map((layer) => <LayerControl key={layer.key} active={viewLayers[layer.key]} onClick={() => onToggleViewLayer(layer.key)} label={layer.label} detail={layer.detail} countLabel="vista" />)}
       </div>
@@ -2111,7 +2175,7 @@ export default function Page() {
   const [rows, setRows] = useState([]);
   const [fail, setFail] = useState([]);
   const [diagnostics, setDiagnostics] = useState(null);
-  const [status, setStatus] = useState("Listo · Universo por defecto: EEUU + Europa + Asia/HK + Canada + Australia/LatAm");
+  const [status, setStatus] = useState(DEFAULT_STATUS);
   const [running, setRunning] = useState(false);
   const [themeFilter, setThemeFilter] = useState("Todos");
   const [sectorFilter, setSectorFilter] = useState("Todos");
@@ -2132,8 +2196,6 @@ export default function Page() {
   const [searchSymbol, setSearchSymbol] = useState("");
   const [searchCandidates, setSearchCandidates] = useState([]);
   const [searchResult, setSearchResult] = useState(null);
-  const [similarStocks, setSimilarStocks] = useState([]);
-  const [similarLoading, setSimilarLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const [activePreviewRow, setActivePreviewRow] = useState(null);
@@ -2142,10 +2204,93 @@ export default function Page() {
   const [quickReviewIndex, setQuickReviewIndex] = useState(0);
   const [chartSettings, setChartSettings] = useState(DEFAULT_CHART_SETTINGS);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   useEffect(() => {
     setFavoriteSymbols(new Set(safeRead(STORAGE_KEYS.favorites, []).map((x) => x.symbol)));
     setChartSettings(readChartSettings());
+    const session = safeRead(STORAGE_KEYS.screenerSession, null);
+    if (session?.version === SCREENER_SESSION_VERSION) {
+      setMarkets(Array.isArray(session.markets) && session.markets.length ? session.markets : DEFAULT_MARKETS);
+      setManual(session.manual || "");
+      setSettings(session.settings || PRESETS.balanced.v);
+      setPresetKey(session.presetKey || "balanced");
+      setUniverse(Array.isArray(session.universe) ? session.universe : []);
+      setRows(Array.isArray(session.rows) ? session.rows : []);
+      setFail(Array.isArray(session.fail) ? session.fail : []);
+      setDiagnostics(session.diagnostics || null);
+      setThemeFilter(session.themeFilter || "Todos");
+      setSectorFilter(session.sectorFilter || "Todos");
+      setIndustryFilter(session.industryFilter || "Todos");
+      setCountryFilter(session.countryFilter || "Todos");
+      setSectorStrength(session.sectorStrength || "Todos");
+      setIpo(session.ipo || "Todos");
+      setSort(session.sort || "totalScore");
+      setScanMode(session.scanMode || "all");
+      setBatchStart(Number.isFinite(session.batchStart) ? session.batchStart : 0);
+      setMarketHealth(session.marketHealth || null);
+      setUseRegimeFilter(session.useRegimeFilter !== false);
+      setFilterLayers(session.filterLayers || DEFAULT_FILTER_LAYERS);
+      setFieldRules(session.fieldRules || DEFAULT_FIELD_RULES);
+      setViewLayers(session.viewLayers || DEFAULT_VIEW_LAYERS);
+      setSearchSymbol(session.searchSymbol || "");
+      setSearchCandidates(Array.isArray(session.searchCandidates) ? session.searchCandidates : []);
+      setSearchResult(session.searchResult || null);
+      setQuickReviewRows(Array.isArray(session.quickReviewRows) ? session.quickReviewRows : []);
+      setQuickReviewIndex(Number.isFinite(session.quickReviewIndex) ? session.quickReviewIndex : 0);
+      setStatus(session.rows?.length ? `Sesión restaurada: ${session.rows.length} acciones en el screener.` : (session.status || DEFAULT_STATUS));
+    }
+    setSessionReady(true);
   }, []);
+
+  useEffect(() => {
+    if (!sessionReady) return;
+    const sessionPayload = {
+      version: SCREENER_SESSION_VERSION,
+      updatedAt: new Date().toISOString(),
+      markets,
+      manual,
+      settings,
+      presetKey,
+      universe,
+      rows,
+      fail,
+      diagnostics,
+      status,
+      themeFilter,
+      sectorFilter,
+      industryFilter,
+      countryFilter,
+      sectorStrength,
+      ipo,
+      sort,
+      scanMode,
+      batchStart,
+      marketHealth,
+      useRegimeFilter,
+      filterLayers,
+      fieldRules,
+      viewLayers,
+      searchSymbol,
+      searchCandidates,
+      searchResult,
+      quickReviewRows,
+      quickReviewIndex,
+    };
+    const saved = safeWrite(STORAGE_KEYS.screenerSession, sessionPayload);
+    if (!saved) {
+      safeWrite(STORAGE_KEYS.screenerSession, {
+        ...sessionPayload,
+        universe: [],
+        fail: [],
+        diagnostics: null,
+        searchCandidates: [],
+        quickReviewRows: [],
+        rows: rows.slice(0, 350),
+        storageNote: "Sesión compactada por límite de localStorage.",
+      });
+    }
+  }, [sessionReady, markets, manual, settings, presetKey, universe, rows, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, sort, scanMode, batchStart, marketHealth, useRegimeFilter, filterLayers, fieldRules, viewLayers, searchSymbol, searchCandidates, searchResult, quickReviewRows, quickReviewIndex]);
 
   function updateChartSettings(nextSettings) {
     setChartSettings(writeChartSettings(nextSettings));
@@ -2169,6 +2314,44 @@ export default function Page() {
   };
   const viewFiltersActive = VIEW_LAYERS.reduce((sum, layer) => sum + (viewLayers[layer.key] ? viewFilterCounts[layer.key] : 0), 0);
   const clear = () => { setRows([]); setFail([]); setDiagnostics(null); setErr(""); };
+  function resetScreenerSession() {
+    safeRemove(STORAGE_KEYS.screenerSession);
+    setMarkets(DEFAULT_MARKETS);
+    setManual("");
+    setSettings(PRESETS.balanced.v);
+    setPresetKey("balanced");
+    setUniverse([]);
+    setRows([]);
+    setFail([]);
+    setDiagnostics(null);
+    setStatus("Sesión reiniciada. Carga universo o ejecuta el screener cuando quieras.");
+    setRunning(false);
+    setThemeFilter("Todos");
+    setSectorFilter("Todos");
+    setIndustryFilter("Todos");
+    setCountryFilter("Todos");
+    setSectorStrength("Todos");
+    setIpo("Todos");
+    setSort("totalScore");
+    setErr("");
+    setScanMode("all");
+    setBatchStart(0);
+    setMarketHealth(null);
+    setUseRegimeFilter(true);
+    setFilterLayers(DEFAULT_FILTER_LAYERS);
+    setFieldRules(DEFAULT_FIELD_RULES);
+    setViewLayers(DEFAULT_VIEW_LAYERS);
+    setSearchSymbol("");
+    setSearchCandidates([]);
+    setSearchResult(null);
+    setSearchError("");
+    setSearchLoading(false);
+    setActivePreviewRow(null);
+    setActiveModalRow(null);
+    setQuickReviewRows([]);
+    setQuickReviewIndex(0);
+    setShowMobileFilters(false);
+  }
   const updateSetting = (key, value) => setSettings((prev) => {
     if (key === "setupMode" && value === "weakness") return { ...prev, ...PRESETS.weakness.v, maxSymbols: prev.maxSymbols || PRESETS.weakness.v.maxSymbols };
     return { ...prev, [key]: value };
@@ -2229,8 +2412,23 @@ export default function Page() {
   function resetSearchScopeState() {
     setSearchCandidates([]);
     setSearchResult(null);
-    setSimilarStocks([]);
     setSearchError("");
+  }
+  function clearSearch() {
+    setSearchSymbol("");
+    setSearchCandidates([]);
+    setSearchResult(null);
+    setSearchError("");
+    setSearchLoading(false);
+    setStatus("Buscador limpio.");
+  }
+  function updateSearchSymbol(value) {
+    setSearchSymbol(value);
+    if (!String(value || "").trim()) {
+      setSearchCandidates([]);
+      setSearchResult(null);
+      setSearchError("");
+    }
   }
   async function applySearchScope(item) {
     if (!item) return;
@@ -2289,7 +2487,7 @@ export default function Page() {
     event?.preventDefault?.();
     const query = searchSymbol.trim();
     if (!query) {
-      setSearchError("Introduce un ticker o el nombre de una empresa.");
+      clearSearch();
       return;
     }
     const tickerish = /^[A-Z0-9.^=-]{1,18}$/i.test(query) && !/\s/.test(query);
@@ -2371,16 +2569,17 @@ export default function Page() {
       setStatus("Cargando benchmarks RS: SPY / QQQ / ACWI...");
       const benchmarks = await loadBenchmarks();
       const symbols = selected(base);
-      let ok = [], bad = [], filterRejections = [];
+      let rawRows = [], bad = [], filterRejections = [];
       for (let i = 0; i < symbols.length; i++) {
         const s = symbols[i].symbol || symbols[i];
         setStatus(`Analizando ${i + 1}/${symbols.length}: ${s}`);
         try {
-          const result = await analyzeCandidate(s, activeSettings, benchmarks);
-          if (result.row) ok.push(result.row);
-          else if (result.rejection) filterRejections.push(result.rejection);
-          if (ok.length % 5 === 0) {
-            const partial = sortRowsForMode(applyPostFilters(regimeFiltered(sectorize(ok), mh, useRegimeFilter, activeSettings), activeSettings), activeSettings);
+          const row = await analyzeRawCandidate(s, activeSettings, benchmarks);
+          rawRows.push(row);
+          if (rawRows.length % 5 === 0) {
+            const partialSectorized = sectorize(rawRows);
+            const partialSplit = splitByFilter(partialSectorized, activeSettings);
+            const partial = sortRowsForMode(applyPostFilters(regimeFiltered(partialSplit.passed, mh, useRegimeFilter, activeSettings), activeSettings), activeSettings);
             setRows(partial);
           }
         } catch (e) {
@@ -2388,12 +2587,15 @@ export default function Page() {
         }
         await new Promise((r) => setTimeout(r, 65));
       }
-      const sectorized = sectorize(ok);
-      const regimeRejections = sectorized.map((row) => {
+      const sectorized = sectorize(rawRows);
+      const hardFilterSplit = splitByFilter(sectorized, activeSettings);
+      const ok = hardFilterSplit.passed;
+      filterRejections = hardFilterSplit.rejections;
+      const regimeRejections = ok.map((row) => {
         const reason = regimeRejectReason(row, mh, useRegimeFilter, activeSettings);
         return reason ? { symbol: row.symbol, ...reason } : null;
       }).filter(Boolean);
-      const afterRegime = sectorized.filter((row) => !regimeRejectReason(row, mh, useRegimeFilter, activeSettings));
+      const afterRegime = ok.filter((row) => !regimeRejectReason(row, mh, useRegimeFilter, activeSettings));
       const postRejections = afterRegime.map((row) => {
         const reason = postFilterRejectReason(row, activeSettings);
         return reason ? { symbol: row.symbol, ...reason } : null;
@@ -2402,7 +2604,7 @@ export default function Page() {
       setRows(final);
       setFail(bad);
       setDiagnostics(scanDiagnosticsSummary({ symbols, base, filterRejections, providerErrors: bad, regimeRejections, postRejections, passedBeforeContext: ok.length, finalRows: final }));
-      setStatus(`Completado: ${final.length} pasan ${PRESETS[presetKey].name} · ${setupModeLabel(activeSettings.setupMode)} · ${activeLayerLabel}. Analizados ${symbols.length}/${base.length}.`);
+      setStatus(`Completado: ${final.length} pasan ${PRESETS[presetKey].name} · RS Global sobre ${sectorized.length} acciones con datos · ${setupModeLabel(activeSettings.setupMode)} · ${activeLayerLabel}. Analizados ${symbols.length}/${base.length}.`);
     } catch (e) {
       setErr(e.message);
       setStatus("Error");
@@ -2513,8 +2715,8 @@ export default function Page() {
     setActiveModalRow(null);
   }
   function csv(filteredRows) {
-    const h = ["Rank", "Ticker", "Empresa", "Actividad ES", "Tema", "Pais", "Sector", "Industria", "IPO", "IPO Date", "IPO Age Months", "Benchmark", "Data Coverage", "Technical Coverage", "Fundamental Coverage", "Data Issues", "RS Rating", "RS Global", "RS Pais", "RS Sector", "RS Quality", "RS Stability", "Speculation Risk", "RS Quality Label", "Weakness Score", "Weakness Label", "Weakness Reasons", "RS Global Sample", "RS Pais Sample", "RS Sector Sample", "RS 3M", "RS 6M", "RS 12M", "Dist 20d", "Dist 50d", "Dist 52w", "Dist ATH", "Highs Spread", "3M", "6M", "12M", "SMA50", "Avg Volume 20d", "Latest Volume", "Avg Turnover 20d", "Latest Turnover", "UD Vol", "Rel Volume", "Volume Surge %", "Volume Effect Score", "Volume Evidence", "Short Float %", "Short Ratio", "Shares Short", "Float Shares", "Up Volume", "Max Daily Move 20d", "Max Daily Range 20d", "Avg Daily Range 20d", "Price Range 63d", "Volatility 63d", "Downside Vol 63d", "Max Drawdown 63d", "Return/Vol 3M", "Return/Drawdown 3M", "Risk/Reward Score", "Weinstein", "Minervini", "Momentum", "Risk", "Volume", "Liquidity", "Sector Score", "Setup Quality", "Demand", "Growth", "IPO Score", "Composite", "Legacy Total", "Composite Label", "Reasons", "Risks"];
-    const lines = filteredRows.map((r, i) => [i + 1, r.symbol, r.companyName, r.businessEs, r.theme, r.country, r.sector, r.industry, r.ipoCategory, r.ipoDate, r.ipoAgeMonths, r.benchmarkSymbol, r.dataCoverageScore, r.technicalCoverageScore, r.fundamentalCoverageScore, (r.dataCoverageIssues || []).join(" | "), r.rsRating, r.rsGlobalPct, r.rsCountryPct, r.rsSectorPct, r.rsQualityScore, r.rsStabilityScore, r.speculationRiskScore, r.rsQualityLabel, r.weaknessScore, r.weaknessLabel, (r.weaknessReasons || []).join(" | "), r.rsGlobalSample, r.rsCountrySample, r.rsSectorSample, r.rs3m, r.rs6m, r.rs12m, r.distance20d, r.distance50d, r.distance52w, r.distanceATH, r.highsSpreadPct, r.perf3m, r.perf6m, r.perf12m, r.extSma50, r.avgVolume, r.latestVolume, r.avgTurnover, r.latestTurnover, r.upDownVolRatio, r.relativeVolume, r.volumeSurgePct, r.volumeEffectScore, r.volumeEvidence, r.shortPercentOfFloat, r.shortRatio, r.sharesShort, r.floatShares, r.upVolume, r.maxDailyMove20dPct, r.maxDailyRange20dPct, r.avgDailyRange20dPct, r.range63dPct, r.volatility63d, r.downsideVolatility63d, r.maxDrawdown63d, r.returnToVol3m, r.returnToDrawdown3m, r.riskRewardScore, r.weinsteinScore, r.minerviniScore, r.momentumScore, r.riskScore, r.volumeScore, r.liquidityScore, r.sectorScore, r.setupQualityScore, r.demandScore, r.growthScore, r.ipoScore, r.totalScore, r.legacyTotalScore, r.compositeLabel, (r.compositeReasons || []).join(" | "), (r.compositeRisks || []).join(" | ")].map((v) => `"${String(v ?? "").replaceAll('"', '""')}"`).join(","));
+    const h = ["Rank", "Ticker", "Empresa", "Actividad ES", "Tema", "Pais", "Sector", "Industria", "IPO", "IPO Date", "IPO Age Months", "Benchmark", "Data Coverage", "Technical Coverage", "Fundamental Coverage", "Data Issues", "RS Rating", "RS Global", "RS Pais", "RS Sector", "RS Quality", "RS Stability", "Speculation Risk", "RS Quality Label", "Weakness Score", "Weakness Label", "Weakness Reasons", "RS Global Sample", "RS Pais Sample", "RS Sector Sample", "RS 3M", "RS 6M", "RS 12M", "Dist 20d", "Dist 50d", "Dist 52w", "Dist ATH", "Highs Spread", "3M", "6M", "12M", "SMA50", "Avg Volume 20d", "Latest Volume", "Avg Turnover 20d", "Latest Turnover", "UD Vol", "Rel Volume", "Volume Surge %", "Volume Effect Score", "A/D Proxy", "EPS/Growth Proxy", "Volume Evidence", "Short Float %", "Short Ratio", "Shares Short", "Float Shares", "Up Volume", "Max Daily Move 20d", "Max Daily Range 20d", "Avg Daily Range 20d", "Price Range 63d", "Volatility 63d", "Downside Vol 63d", "Max Drawdown 63d", "Return/Vol 3M", "Return/Drawdown 3M", "Risk/Reward Score", "Weinstein", "Minervini", "Momentum", "Risk", "Volume", "Liquidity", "Sector Score", "Setup Quality", "Demand", "Growth", "IPO Score", "Composite", "Legacy Total", "Composite Label", "Reasons", "Risks"];
+    const lines = filteredRows.map((r, i) => [i + 1, r.symbol, r.companyName, r.businessEs, r.theme, r.country, r.sector, r.industry, r.ipoCategory, r.ipoDate, r.ipoAgeMonths, r.benchmarkSymbol, r.dataCoverageScore, r.technicalCoverageScore, r.fundamentalCoverageScore, (r.dataCoverageIssues || []).join(" | "), r.rsRating, r.rsGlobalPct, r.rsCountryPct, r.rsSectorPct, r.rsQualityScore, r.rsStabilityScore, r.speculationRiskScore, r.rsQualityLabel, r.weaknessScore, r.weaknessLabel, (r.weaknessReasons || []).join(" | "), r.rsGlobalSample, r.rsCountrySample, r.rsSectorSample, r.rs3m, r.rs6m, r.rs12m, r.distance20d, r.distance50d, r.distance52w, r.distanceATH, r.highsSpreadPct, r.perf3m, r.perf6m, r.perf12m, r.extSma50, r.avgVolume, r.latestVolume, r.avgTurnover, r.latestTurnover, r.upDownVolRatio, r.relativeVolume, r.volumeSurgePct, r.volumeEffectScore, r.adProxyScore, r.epsGrowthProxyScore, r.volumeEvidence, r.shortPercentOfFloat, r.shortRatio, r.sharesShort, r.floatShares, r.upVolume, r.maxDailyMove20dPct, r.maxDailyRange20dPct, r.avgDailyRange20dPct, r.range63dPct, r.volatility63d, r.downsideVolatility63d, r.maxDrawdown63d, r.returnToVol3m, r.returnToDrawdown3m, r.riskRewardScore, r.weinsteinScore, r.minerviniScore, r.momentumScore, r.riskScore, r.volumeScore, r.liquidityScore, r.sectorScore, r.setupQualityScore, r.demandScore, r.growthScore, r.ipoScore, r.totalScore, r.legacyTotalScore, r.compositeLabel, (r.compositeReasons || []).join(" | "), (r.compositeRisks || []).join(" | ")].map((v) => `"${String(v ?? "").replaceAll('"', '""')}"`).join(","));
     const blob = new Blob([[h.join(","), ...lines].join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = "statsedge-screener.csv"; a.click(); URL.revokeObjectURL(url);
@@ -2531,33 +2733,6 @@ export default function Page() {
     return l.sort((a, b) => (b[sort] || 0) - (a[sort] || 0));
   }, [rows, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, sort, viewLayers]);
   const opportunities = useMemo(() => opportunityBuckets(filtered), [filtered]);
-  const similarFromScan = useMemo(() => {
-    if (!searchResult) return [];
-    const targetIndustry = String(searchResult.industry || "").toLowerCase();
-    const targetSector = String(searchResult.sector || "").toLowerCase();
-    const targetTheme = String(searchResult.theme || "").toLowerCase();
-    return rows
-      .filter((row) => row.symbol !== searchResult.symbol)
-      .map((row) => {
-        let peerScore = 0;
-        if (targetIndustry && String(row.industry || "").toLowerCase() === targetIndustry) peerScore += 70;
-        if (targetSector && String(row.sector || "").toLowerCase() === targetSector) peerScore += 35;
-        if (targetTheme && String(row.theme || "").toLowerCase() === targetTheme) peerScore += 25;
-        return { ...row, name: row.companyName, peerScore, source: "scan" };
-      })
-      .filter((row) => row.peerScore > 0)
-      .sort((a, b) => (b.peerScore + (b.totalScore || 0) / 3) - (a.peerScore + (a.totalScore || 0) / 3))
-      .slice(0, 8);
-  }, [rows, searchResult]);
-  const mergedSimilarStocks = useMemo(() => {
-    const map = new Map();
-    [...similarFromScan, ...similarStocks].forEach((item) => {
-      if (!item?.symbol || item.symbol === searchResult?.symbol) return;
-      const previous = map.get(item.symbol);
-      map.set(item.symbol, previous ? { ...item, ...previous, peerScore: Math.max(previous.peerScore || 0, item.peerScore || item.score || 0) } : item);
-    });
-    return [...map.values()].slice(0, 12);
-  }, [similarFromScan, similarStocks, searchResult]);
   useEffect(() => {
     if (!filtered.length) {
       if (activePreviewRow) setActivePreviewRow(null);
@@ -2567,33 +2742,6 @@ export default function Page() {
       setActivePreviewRow(filtered[0]);
     }
   }, [filtered, activePreviewRow]);
-  useEffect(() => {
-    if (!searchResult) {
-      setSimilarStocks([]);
-      return;
-    }
-    let alive = true;
-    async function loadSimilar() {
-      setSimilarLoading(true);
-      const qs = new URLSearchParams({
-        symbol: searchResult.symbol,
-        name: searchResult.companyName || searchResult.symbol,
-        sector: searchResult.sector || "",
-        industry: searchResult.industry || "",
-        theme: searchResult.theme || "",
-      });
-      try {
-        const data = await getJson(`/api/similar?${qs.toString()}`);
-        if (alive) setSimilarStocks(data.results || []);
-      } catch {
-        if (alive) setSimilarStocks([]);
-      } finally {
-        if (alive) setSimilarLoading(false);
-      }
-    }
-    loadSimilar();
-    return () => { alive = false; };
-  }, [searchResult]);
   const cleanOption = (value, emptyLabel) => value && value !== emptyLabel ? value : "";
   const themeOptions = useMemo(() => ["Todos", ...Array.from(new Set(rows.map((r) => cleanOption(r.theme, "General")).filter(Boolean))).sort()], [rows]);
   const sectorOptions = useMemo(() => ["Todos", ...Array.from(new Set(rows
@@ -2768,7 +2916,16 @@ export default function Page() {
     </div>
     {err && <div className="error">{err}</div>}
     
-    <div className="dashboardContainer">
+    <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}`}>
+      <button
+        type="button"
+        className="sidebarCollapseBtn"
+        onClick={() => setSidebarCollapsed((value) => !value)}
+        aria-label={sidebarCollapsed ? "Mostrar filtros" : "Ocultar filtros"}
+        aria-expanded={!sidebarCollapsed}
+      >
+        {sidebarCollapsed ? "Filtros" : "‹"}
+      </button>
       <aside className={`sidebar ${showMobileFilters ? "mobileOpen" : ""}`}>
         <div className="mobileSidebarHeader">
           <h2>Filtros</h2>
@@ -2878,20 +3035,16 @@ export default function Page() {
         <section className="searchCard" style={{ marginBottom: 20 }}>
           <div className="commandSearchPanel searchPanelBare">
               <form className="searchBar" onSubmit={runSearch} style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                <input className="input searchInput" value={searchSymbol} onChange={(e) => setSearchSymbol(e.target.value)} placeholder="Ticker, nombre, sector, subsector o pais..." />
+                <input className="input searchInput" value={searchSymbol} onChange={(e) => updateSearchSymbol(e.target.value)} placeholder="Ticker, nombre, sector, subsector o pais..." />
+                {(searchSymbol || searchCandidates.length || searchResult) && <button type="button" className="btn btnGhost" onClick={clearSearch}>Limpiar</button>}
                 <button className="btn btnPrimary" disabled={searchLoading}>{searchLoading ? "Buscando..." : "Buscar"}</button>
               </form>
               <SearchScopeList items={searchScopeItems} onPick={applySearchScope} />
-              <SearchCandidateList candidates={searchCandidates} activeSymbol={searchResult?.symbol} onPick={(item) => { setSearchSymbol(item.symbol); loadSearchResult(item.symbol, item); }} />
               {searchError && <div className="dataNote error" style={{ marginTop: 12 }}>{searchError}</div>}
-              {searchResult ? <div className="searchResult searchResultGrid" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 20, marginTop: 12 }}>
-                <PreviewCard row={searchResult} variant="large" onFavorite={addFavorite} isFavorite={favoriteSymbols.has(searchResult.symbol)} />
-                <div>
-                  <div className="sectionTitle"><h2>TradingView</h2></div>
-                  <TradingViewPreviewChart row={searchResult} chartSettings={chartSettings} />
-                </div>
+              {searchResult ? <div className="searchResult searchResultPrimary">
+                <PreviewCard row={searchResult} variant="search" onFavorite={addFavorite} isFavorite={favoriteSymbols.has(searchResult.symbol)} />
               </div> : null}
-              {searchResult && <SimilarStocks items={mergedSimilarStocks} loading={similarLoading} onPick={(item) => { setSearchSymbol(item.symbol); loadSearchResult(item.symbol, item); }} />}
+              <SearchCandidateList candidates={searchCandidates} activeSymbol={searchResult?.symbol} onPick={(item) => { setSearchSymbol(item.symbol); loadSearchResult(item.symbol, item); }} />
           </div>
         </section>
 
@@ -2923,6 +3076,7 @@ export default function Page() {
             <h2 style={{ fontSize: 13, margin: 0, fontWeight: 600, letterSpacing: '-0.01em' }}>{filtered.length} resultados</h2>
             <div className="controls">
               <button className="btn btnSmall btnGhost" onClick={() => { setViewLayers(DEFAULT_VIEW_LAYERS); setCountryFilter("Todos"); setThemeFilter("Todos"); setSectorFilter("Todos"); setIndustryFilter("Todos"); setSectorStrength("Todos"); setIpo("Todos"); }}>Reset</button>
+              <button className="btn btnSmall btnGhost" onClick={resetScreenerSession}>Reset sesión</button>
               <button className="btn btnSmall btnGhost" onClick={() => csv(filtered)}>↓ CSV</button>
               <button className="btn btnSmall btnPrimary" onClick={() => openReview(filtered)} disabled={!filtered.length}>Revisar</button>
               <button className="btn btnSmall" onClick={() => saveSnapshot(filtered)} disabled={!filtered.length}>Guardar</button>
@@ -2943,7 +3097,9 @@ export default function Page() {
             </select>
             <select className="select" style={{ width: "auto", padding: "4px 8px" }} value={sort} onChange={(e) => setSort(e.target.value)}>
               <option value="totalScore">Ordenar: Composite</option>
-              <option value="rsRating">Ordenar: RS Rating</option>
+              <option value="rsGlobalPct">Ordenar: RS Global</option>
+              <option value="adProxyScore">Ordenar: A/D proxy</option>
+              <option value="epsGrowthProxyScore">Ordenar: EPS/Growth proxy</option>
               <option value="volumeEffectScore">Ordenar: Volume Effect</option>
               <option value="avgTurnover">Ordenar: Importe 20d</option>
               <option value="shortPercentOfFloat">Ordenar: Short float</option>
@@ -2999,11 +3155,12 @@ export default function Page() {
               </div>
               <div className="reviewQueueList">
                 {modalReviewRows.map((row, index) => (
-                  <button
+                  <a
                     key={`${row.symbol}-${index}`}
-                    type="button"
+                    href={stockUrl(row.symbol)}
                     className={`reviewQueueItem ${index === modalReviewPosition ? "active" : ""}`}
-                    onClick={() => selectQuickReview(index, modalReviewRows)}
+                    aria-current={index === modalReviewPosition ? "true" : undefined}
+                    title={`Abrir ficha de ${row.symbol}`}
                   >
                     <CompanyMark row={row} size="sm" />
                     <span>
@@ -3011,7 +3168,7 @@ export default function Page() {
                       <em>{row.companyName || row.name || row.symbol}</em>
                     </span>
                     <i>{Number.isFinite(row.totalScore) ? Math.round(row.totalScore) : "-"}</i>
-                  </button>
+                  </a>
                 ))}
               </div>
             </aside>
@@ -3043,6 +3200,8 @@ export default function Page() {
                     <div className="profileRow"><span>Composite</span><b className="up">{activeModalRow.totalScore?.toFixed(0) || "-"}</b></div>
                     <div className="profileRow"><span>RS global</span><b>{activeModalRow.rsGlobalPct?.toFixed(0) || "-"}</b></div>
                     <div className="profileRow"><span>RS quality</span><b>{activeModalRow.rsQualityScore?.toFixed(0) || "-"}</b></div>
+                    <div className="profileRow"><span>A/D proxy</span><b>{activeModalRow.adProxyScore?.toFixed(0) || "-"}</b></div>
+                    <div className="profileRow"><span>EPS/Growth proxy</span><b>{activeModalRow.epsGrowthProxyScore?.toFixed(0) || "-"}</b></div>
                     <div className="profileRow"><span>Setup quality</span><b>{activeModalRow.setupQualityScore?.toFixed(0) || "-"}</b></div>
                     <div className="profileRow"><span>Growth</span><b>{activeModalRow.growthScore?.toFixed(0) || "-"}</b></div>
                     <div className="profileRow"><span>Rentabilidad/riesgo</span><b>{activeModalRow.riskRewardScore?.toFixed(0) || "-"}</b></div>

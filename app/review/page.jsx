@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import UniversalPriceChart from "@/app/UniversalPriceChart";
+import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { clamp, num, pct, ratio } from "@/lib/formatters";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { countryCode, externalLinks, isTradingViewWidgetBlocked, stockUrl } from "@/lib/symbols";
@@ -273,12 +275,22 @@ function TradingViewPanel({ row }) {
 }
 function ReviewChartPanel({ row, loading = false }) {
   const links = row ? externalLinks(row.symbol, row.exchange) : {};
-  const tvSymbol = links.tradingViewSymbol || "";
-  const useTradingView = row && tvSymbol && !isTradingViewWidgetBlocked(row.symbol, tvSymbol);
-  if (useTradingView) return <TradingViewPanel row={row} />;
   const bars = row?.chartPreview || [];
+  const reviewSettings = {
+    ...DEFAULT_CHART_SETTINGS,
+    range: "6M",
+    interval: "D",
+    style: "1",
+    scale: "price",
+    indicators: { ...DEFAULT_CHART_SETTINGS.indicators, rsLine: false },
+  };
+  if (bars.length > 1) {
+    return <div className="reviewChart reviewNativeChart">
+      <UniversalPriceChart bars={bars} symbol={row.symbol} currency={row.currency} tradingViewUrl={links.tradingView} settings={reviewSettings} height={520} />
+    </div>;
+  }
   return <div className="reviewChart">
-    {bars.length > 1 ? <MiniSparkline bars={bars} /> : <div className="previewEmpty">{loading ? "Cargando datos..." : "Sin grafico disponible"}</div>}
+    <div className="previewEmpty">{loading ? "Cargando datos..." : "Sin grafico disponible"}</div>
   </div>;
 }
 function objectiveStage(row = {}) {

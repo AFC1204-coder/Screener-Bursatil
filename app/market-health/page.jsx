@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
-import { countryCode, countryName, marketFlag, stockUrl } from "@/lib/symbols";
+import { stockUrl } from "@/lib/symbols";
 
 const dateFmt = (value) => {
   if (!value) return "-";
@@ -26,18 +26,6 @@ function safePct(value, fallback = 0) {
 
 function rowRs(row = {}) {
   return Number.isFinite(row.rsGlobalPct) ? row.rsGlobalPct : Number.isFinite(row.rsRating) ? row.rsRating : null;
-}
-function rowMetric(row = {}, key) {
-  const direct = row[key] ?? row.snapshot?.[key];
-  return Number.isFinite(direct) ? direct : null;
-}
-function avgMetric(rows = [], key) {
-  const values = rows.map((row) => rowMetric(row, key)).filter(Number.isFinite);
-  return values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
-}
-function avgValues(values = []) {
-  const xs = values.filter(Number.isFinite);
-  return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
 }
 function rowWeakness(row = {}) {
   if (Number.isFinite(row.weaknessScore)) return row.weaknessScore;
@@ -94,81 +82,6 @@ function summarizeGroups(rows = [], keyFn) {
     .slice(0, 8);
 }
 
-function rowCountry(row = {}) {
-  return row.country || row.snapshot?.country || (row.symbol ? countryCode(row.symbol) : "US");
-}
-
-function rowSector(row = {}) {
-  const sector = row.sector || row.snapshot?.sector;
-  if (sector && sector !== "Sin sector" && sector !== "Sin dato") return sector;
-  return row.theme || row.snapshot?.theme || "Sin sector";
-}
-
-function buildCountrySectorTape(rows = []) {
-  const map = new Map();
-  rows.forEach((row) => {
-    const country = rowCountry(row);
-    const sector = rowSector(row);
-    const key = `${country}::${sector}`;
-    const bucket = map.get(key) || { country, sector, rows: [] };
-    bucket.rows.push(row);
-    map.set(key, bucket);
-  });
-  return [...map.values()].map((bucket) => {
-    const sorted = [...bucket.rows].sort((a, b) => (rowMetric(b, "totalScore") ?? 0) - (rowMetric(a, "totalScore") ?? 0));
-    const avgTotal = avgMetric(bucket.rows, "totalScore");
-    const avgRs = avgValues(bucket.rows.map(rowRs));
-    const avgRsSector = avgMetric(bucket.rows, "rsSectorPct");
-    const avg3m = avgMetric(bucket.rows, "perf3m");
-    const avg6m = avgMetric(bucket.rows, "perf6m");
-    const stage2 = bucket.rows.filter(isStage2Like).length;
-    const nearHigh = bucket.rows.filter(isNearHigh).length;
-    const leaders = bucket.rows.filter((row) => (rowMetric(row, "totalScore") ?? 0) >= 70 || (rowRs(row) ?? 0) >= 75).length;
-    const pressure = bucket.rows.filter((row) => rowWeakness(row) >= 60 || deteriorationReasons(row).length >= 2).length;
-    const strength = Math.max(0, Math.min(100,
-      (avgTotal ?? 45) * .42
-      + (avgRs ?? 50) * .24
-      + (avgRsSector ?? 50) * .14
-      + Math.max(-20, Math.min(40, avg3m ?? 0)) * .32
-      + (bucket.rows.length ? stage2 / bucket.rows.length * 12 : 0)
-      + leaders * 2
-      - pressure * 1.5
-    ));
-    return {
-      ...bucket,
-      count: bucket.rows.length,
-      avgTotal,
-      avgRs,
-      avgRsSector,
-      avg3m,
-      avg6m,
-      stage2,
-      stage2Pct: bucket.rows.length ? stage2 / bucket.rows.length * 100 : null,
-      nearHigh,
-      nearHighPct: bucket.rows.length ? nearHigh / bucket.rows.length * 100 : null,
-      leaders,
-      pressure,
-      pressurePct: bucket.rows.length ? pressure / bucket.rows.length * 100 : null,
-      strength,
-      top: sorted.slice(0, 4),
-    };
-  }).sort((a, b) => (b.strength - a.strength) || (b.count - a.count) || String(a.sector).localeCompare(String(b.sector)));
-}
-
-function countrySectorCountries(tape = []) {
-  const map = new Map();
-  tape.forEach((item) => {
-    const bucket = map.get(item.country) || { code: item.country, count: 0, sectors: 0, strength: 0 };
-    bucket.count += item.count;
-    bucket.sectors += 1;
-    bucket.strength += item.strength;
-    map.set(item.country, bucket);
-  });
-  return [...map.values()]
-    .map((x) => ({ ...x, avgStrength: x.sectors ? x.strength / x.sectors : null }))
-    .sort((a, b) => (b.count - a.count) || ((b.avgStrength ?? 0) - (a.avgStrength ?? 0)));
-}
-
 function buildScanPulse(scans = []) {
   const scan = scans[0];
   const rows = Array.isArray(scan?.rows) ? scan.rows : [];
@@ -201,7 +114,6 @@ function buildScanPulse(scans = []) {
     pressurePct: rows.length ? (pressure / rows.length) * 100 : null,
     countries: summarizeGroups(rows, (row) => row.country),
     themes: summarizeGroups(rows, (row) => row.theme || row.sector),
-    countrySectors: buildCountrySectorTape(rows),
   };
 }
 
@@ -273,28 +185,8 @@ export default function MarketHealthPage() {
   const [news, setNews] = useState(null);
   const [social, setSocial] = useState(null);
   const [scanPulse, setScanPulse] = useState(null);
-  const [sectorCountry, setSectorCountry] = useState("Todos");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const countrySectorOptions = useMemo(() => countrySectorCountries(scanPulse?.countrySectors || []), [scanPulse]);
-  const countrySectorRows = useMemo(() => {
-    const rows = scanPulse?.countrySectors || [];
-    return sectorCountry === "Todos" ? rows : rows.filter((item) => item.country === sectorCountry);
-  }, [scanPulse, sectorCountry]);
-  const countrySectorSummary = useMemo(() => ({
-    count: countrySectorRows.length,
-    stocks: countrySectorRows.reduce((acc, item) => acc + item.count, 0),
-    avgStrength: avgValues(countrySectorRows.map((item) => item.strength)),
-    leader: countrySectorRows[0],
-    weakest: countrySectorRows.length ? [...countrySectorRows].sort((a, b) => a.strength - b.strength)[0] : null,
-  }), [countrySectorRows]);
-
-  useEffect(() => {
-    if (sectorCountry !== "Todos" && !countrySectorOptions.some((item) => item.code === sectorCountry)) {
-      setSectorCountry("Todos");
-    }
-  }, [countrySectorOptions, sectorCountry]);
 
   function refreshScanPulse() {
     setScanPulse(buildScanPulse(safeRead(STORAGE_KEYS.scans, [])));
@@ -335,37 +227,39 @@ export default function MarketHealthPage() {
 
   useEffect(() => { load(); }, []);
 
-  return <main className="page">
-    <section className="card hero">
-      <div className="heroTop">
-        <div>
-          <div className="badge">STATS EDGE · Market Health</div>
-          <h1>Salud de mercado</h1>
-          <p className="muted">Índices, sectores, titulares, pulso social y liderazgo del último snapshot.</p>
-        </div>
-        <div className="mobileActions">
-          <a className="btn" href="/">Volver al screener</a>
-          <button className="btn btnPrimary" onClick={load} disabled={loading}>{loading ? "Actualizando..." : "Actualizar"}</button>
-        </div>
+  return <main className="page marketHealthPage">
+    <section className="marketHealthHeader">
+      <div>
+        <span className="eyebrow">StatsEdge · Market Health</span>
+        <h1>Salud de mercado</h1>
+        <p>Índices, sectores, titulares y liderazgo del último snapshot.</p>
+      </div>
+      <div className="marketHealthActions">
+        <a className="btn" href="/">Screener</a>
+        <button className="btn btnPrimary" onClick={load} disabled={loading}>{loading ? "Actualizando..." : "Actualizar"}</button>
       </div>
     </section>
 
     {error && <section className="card error">{error}</section>}
 
     {data && <>
-      <section className={`card ${colorClass(data.regime?.color)}`}>
-        <div className="kpis">
-          <div className="kpi"><b>{num(data.marketScore)}</b><span>Market Score</span></div>
-          <div className="kpi"><b>{data.regime?.label || "-"}</b><span>Régimen</span></div>
-          <div className="kpi"><b>{pct(data.breadthProxy?.pctAbove50)}</b><span>Índices sobre SMA50</span></div>
-          <div className="kpi"><b>{pct(data.breadthProxy?.pctAbove200)}</b><span>Índices sobre SMA200</span></div>
+      <section className={`marketRegimePanel ${colorClass(data.regime?.color)}`}>
+        <div className="regimeLead">
+          <span>Régimen</span>
+          <strong>{data.regime?.label || "-"}</strong>
+          <p>{data.regime?.stance}</p>
         </div>
-        <p className="fine" style={{ marginTop: 10 }}>{data.regime?.stance}</p>
+        <div className="regimeMetrics">
+          <span><b>{num(data.marketScore)}</b><small>Market score</small></span>
+          <span><b>{pct(data.breadthProxy?.pctAbove50)}</b><small>SMA50</small></span>
+          <span><b>{pct(data.breadthProxy?.pctAbove200)}</b><small>SMA200</small></span>
+          <span><b>{data.breadthProxy?.indexes ?? "-"}</b><small>Índices</small></span>
+        </div>
       </section>
 
-      {data.weinsteinTape && <section className="card">
+      {data.weinsteinTape && <section className="card marketTapeCard">
         <div className="sectionTitle">
-          <h2>Weinstein tape <InfoHint text="Lectura operativa inspirada en Stan Weinstein: MM30 semanas, etapa probable, amplitud sectorial, volumen de distribución/acumulación y divergencias internas. Muestra evidencias, no señales de compra o venta." /></h2>
+          <h2>Weinstein tape</h2>
           <span className="fine">MM30 semanas · amplitud · volumen</span>
         </div>
         <div className="kpis">
@@ -439,9 +333,9 @@ export default function MarketHealthPage() {
       </section>
 
       {!!data.sectorTape?.length && <section className="card">
-        <div className="sectionTitle"><h2>Estado sectorial</h2><span className="fine">ETFs sectoriales · 1D / 1W / 1M / 3M</span></div>
+        <div className="sectionTitle"><h2>Amplitud sectorial</h2><a className="btnSmall" href="/sectors">Ver sectores</a></div>
         <div className="kpis">
-          <div className="kpi"><b>{num(data.sectorSummary?.avgScore)}</b><span>Score medio sectores</span></div>
+          <div className="kpi"><b>{num(data.sectorSummary?.avgScore)}</b><span>Score medio</span></div>
           <div className="kpi"><b>{data.sectorSummary?.above50 ?? "-"}/{data.sectorSummary?.count ?? "-"}</b><span>Sobre SMA50</span></div>
           <div className="kpi"><b>{data.sectorSummary?.best1m || "-"}</b><span>Mejor 1M</span></div>
           <div className="kpi"><b>{data.sectorSummary?.worst1m || "-"}</b><span>Peor 1M</span></div>
@@ -450,84 +344,7 @@ export default function MarketHealthPage() {
           <div><b>Lideres</b><span>{listText(data.sectorSummary?.leaders)}</span></div>
           <div><b>Debiles</b><span>{listText(data.sectorSummary?.laggards)}</span></div>
         </div>
-        {data.sectorTapeNote && <span className="fine">Fuente: ETFs sectoriales</span>}
-      </section>}
-
-      <section className="card">
-        <div className="sectionTitle">
-          <h2>Sector por país <InfoHint text="Comparativa local desde el último snapshot guardado del screener. Sirve para ver qué sectores concentran liderazgo dentro de cada bolsa cubierta por la app; si el snapshot es pequeño, la muestra también será limitada." /></h2>
-          <span className="fine">{scanPulse ? `${dateFmt(scanPulse.createdAt)} · ${scanPulse.count} acciones` : "Necesita snapshot local"}</span>
-        </div>
-        {scanPulse?.countrySectors?.length ? <>
-          <div className="sectorToolbar">
-            <label className="field">
-              <span>País</span>
-              <select className="select" value={sectorCountry} onChange={(event) => setSectorCountry(event.target.value)}>
-                <option value="Todos">🌐 Todos los países</option>
-                {countrySectorOptions.map((item) => <option key={item.code} value={item.code}>
-                  {marketFlag(item.code)} {item.code} · {countryName(item.code)} · {item.count} acciones
-                </option>)}
-              </select>
-            </label>
-            <span className="dataNote">Usa snapshot/favoritos para Europa, Hong Kong, Japón, Australia y resto de mercados cubiertos.</span>
-          </div>
-          <div className="kpis" style={{ marginTop: 12 }}>
-            <div className="kpi"><b>{countrySectorSummary.count}</b><span>sectores visibles</span></div>
-            <div className="kpi"><b>{countrySectorSummary.stocks}</b><span>acciones muestra</span></div>
-            <div className="kpi"><b>{num(countrySectorSummary.avgStrength)}</b><span>fuerza media</span></div>
-            <div className="kpi"><b>{countrySectorSummary.leader?.sector || "-"}</b><span>sector líder</span></div>
-            <div className="kpi"><b>{countrySectorSummary.weakest?.sector || "-"}</b><span>sector débil</span></div>
-            <div className="kpi"><b>{sectorCountry === "Todos" ? `${countrySectorOptions.length}` : `${marketFlag(sectorCountry)} ${sectorCountry}`}</b><span>países</span></div>
-          </div>
-          <div className="tableWrap" style={{ marginTop: 12 }}>
-            <table className="table">
-              <thead><tr>{["País", "Sector", "Acciones", "Fuerza", "Score", "RS", "RS sector", "3M", "6M", "Etapa 2", "Máximos", "Presión", "Top"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
-              <tbody>{countrySectorRows.slice(0, 36).map((item) => <tr key={`${item.country}-${item.sector}`}>
-                <td><span className="countryCell"><i>{marketFlag(item.country)}</i><b>{item.country}</b></span></td>
-                <td><b>{item.sector}</b><br /><span className="fine">{countryName(item.country)}</span></td>
-                <td className="ticker">{item.count}</td>
-                <td className="ticker">{num(item.strength)}</td>
-                <td>{num(item.avgTotal)}</td>
-                <td>{num(item.avgRs)}</td>
-                <td>{num(item.avgRsSector)}</td>
-                <td>{pct(item.avg3m)}</td>
-                <td>{pct(item.avg6m)}</td>
-                <td>{pctShare(item.stage2Pct)}</td>
-                <td>{pctShare(item.nearHighPct)}</td>
-                <td>{item.pressure}/{item.count}</td>
-                <td>{item.top.map((row) => <a className="ticker" href={stockUrl(row.symbol)} key={row.symbol}>{row.symbol}</a>).reduce((acc, link, index) => index ? [...acc, ", ", link] : [link], [])}</td>
-              </tr>)}</tbody>
-            </table>
-          </div>
-          {countrySectorRows.length > 36 && <p className="fine" style={{ marginTop: 10 }}>Mostrando los 36 sectores más fuertes del filtro actual.</p>}
-        </> : <p className="fine">Guarda un snapshot desde el screener para activar la comparativa sectorial por país.</p>}
-      </section>
-
-      {!!data.sectorTape?.length && <section className="card">
-        <div className="sectionTitle"><h2>Sector tape</h2><span className="fine">Ranking por valoración técnica y fuerza relativa vs SPY</span></div>
-        <div className="tableWrap">
-          <table className="table sectorTapeTable">
-            <thead><tr>{["Sector", "ETF", "Estado", "Score", "W Tape", "Etapa 30s", "1D", "1W", "1M", "3M", "RS 1M", "SMA50", "SMA200", "Dist/Acc", "52w", "Fecha"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
-            <tbody>{data.sectorTape.map((sector) => <tr key={sector.symbol}>
-              <td><b>{sector.name}</b><br /><span className="fine">{sector.group}</span></td>
-              <td className="ticker">{sector.symbol}</td>
-              <td><i className={`sentimentPill ${sentimentClass(sector.state?.bias)}`}>{sector.state?.label || "-"}</i></td>
-              <td className="ticker">{num(sector.score)}</td>
-              <td className="ticker">{num(sector.weinsteinScore)}</td>
-              <td>{sector.stage30w || "-"}</td>
-              <td>{pct(sector.perf1d)}</td>
-              <td>{pct(sector.perf1w)}</td>
-              <td>{pct(sector.perf1m)}</td>
-              <td>{pct(sector.perf3m)}</td>
-              <td>{pct(sector.rs1m)}</td>
-              <td>{sector.price > sector.sma50 ? "Sí" : "No"}</td>
-              <td>{sector.price > sector.sma200 ? "Sí" : "No"}</td>
-              <td>{Number.isFinite(sector.distributionDays20) ? `${sector.distributionDays20}/${sector.accumulationDays20}` : "-"}</td>
-              <td>{pct(sector.distance52w)}</td>
-              <td>{sector.lastDate}</td>
-            </tr>)}</tbody>
-          </table>
-        </div>
+        {data.sectorTapeNote && <span className="fine">Detalle operativo en Sectores.</span>}
       </section>}
 
       <section className="card">

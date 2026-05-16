@@ -6,6 +6,7 @@ import { externalLinks, inferTradingViewSymbol, isTradingViewWidgetBlocked } fro
 const THEME_RULES = [
   { key: "Semis / fotonica", re: /semiconductor|semiconductor equipment|integrated circuit|chip|wafer|photon|optic|laser|lithography|foundry/i, text: "Tiene exposicion a semiconductores, optica/fotonica, litografia, fabricacion de chips o infraestructura de computacion." },
   { key: "Internet / plataformas", re: /internet content|interactive media|communication services|online advertising|social network|social media|video game|gaming|multimedia|digital entertainment|streaming|e-commerce|marketplace|search|payments|fintech/i, text: "Opera en plataformas digitales, internet, publicidad online, gaming, contenidos, pagos digitales o ecosistemas de comercio y servicios." },
+  { key: "Inmobiliario / REIT", re: /real estate|reit|property|properties|residential|commercial real estate|shopping mall|leasing|landlord|homebuilding|property development/i, text: "Opera en activos inmobiliarios, promocion, alquileres, REITs, centros comerciales, oficinas, residencial o suelo." },
   { key: "Defensa / aeroespacial", re: /aerospace|defense|defence|military|missile|radar|satellite|space systems|aviation|homeland security/i, text: "Opera en defensa, aeroespacial, aviacion, satelites, sistemas criticos o ingenieria avanzada." },
   { key: "Software / IA", re: /\b(software|cloud|cyber|data|ai|artificial intelligence|analytics|platform|applications?|infrastructure|saas)\b/i, text: "Su negocio esta vinculado a software, cloud, datos, ciberseguridad, plataformas digitales, automatizacion o infraestructura de IA." },
   { key: "Energia / red", re: /electrical|power|grid|energy|uranium|nuclear|utility|solar|battery|renewable|transmission/i, text: "Esta expuesta a energia, electrificacion, red electrica, utilities, nuclear, renovables, baterias o infraestructura energetica." },
@@ -169,7 +170,7 @@ function highDist(bars, n) {
 }
 function benchmarkForProfile(symbol, profile, themeKey) {
   const text = `${themeKey || ""} ${profile.sector || ""} ${profile.industry || ""}`.toLowerCase();
-  if (/software|semis|fotonica|ia|ai|cloud|cyber|chip|technology/.test(text)) return "QQQ";
+  if (/\b(software|semis?|semiconductor|semiconductors|fotonica|ia|ai|cloud|cyber|chip|chips|technology)\b/.test(text)) return "QQQ";
   if (countryFromSymbol(symbol, profile.country) !== "Estados Unidos") return "ACWI";
   return "SPY";
 }
@@ -425,6 +426,7 @@ function investorAngleFor({ stage = {}, rs = {}, theme = {} }) {
 function compactChartBars(bars = []) {
   return (bars || []).slice(0, 520).reverse().map((bar) => ({
     date: bar.date,
+    open: Number.isFinite(bar.open) ? bar.open : null,
     close: Number.isFinite(bar.close) ? bar.close : null,
     high: Number.isFinite(bar.high) ? bar.high : null,
     low: Number.isFinite(bar.low) ? bar.low : null,
