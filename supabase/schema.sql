@@ -119,11 +119,98 @@ create table if not exists company_profiles (
   unique (owner_id, symbol)
 );
 
+create table if not exists universe_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  owner_id text not null default 'personal',
+  cache_key text not null,
+  markets text[] not null default '{}'::text[],
+  source text,
+  total_count integer not null default 0,
+  passed_count integer not null default 0,
+  excluded_count integer not null default 0,
+  quality_gate jsonb not null default '{}'::jsonb,
+  coverage jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (owner_id, cache_key)
+);
+
+create table if not exists universe_snapshot_symbols (
+  id uuid primary key default gen_random_uuid(),
+  owner_id text not null default 'personal',
+  snapshot_id uuid not null references universe_snapshots(id) on delete cascade,
+  symbol text not null,
+  name text,
+  country text,
+  market text,
+  source text,
+  instrument_type text,
+  passed boolean not null default true,
+  quality_gate jsonb not null default '{}'::jsonb,
+  coverage jsonb not null default '{}'::jsonb,
+  raw jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  unique (snapshot_id, symbol)
+);
+
+create table if not exists daily_bars (
+  id uuid primary key default gen_random_uuid(),
+  owner_id text not null default 'personal',
+  symbol text not null,
+  trade_date date not null,
+  open numeric,
+  high numeric,
+  low numeric,
+  close numeric,
+  adj_close numeric,
+  volume numeric,
+  currency text,
+  provider text,
+  raw jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  unique (owner_id, symbol, trade_date, provider)
+);
+
+create table if not exists fundamental_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  owner_id text not null default 'personal',
+  symbol text not null,
+  period_end date,
+  period_type text,
+  provider text,
+  currency text,
+  market_cap numeric,
+  metrics jsonb not null default '{}'::jsonb,
+  raw jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  unique (owner_id, symbol, period_end, period_type, provider)
+);
+
+create table if not exists provider_runs (
+  id uuid primary key default gen_random_uuid(),
+  owner_id text not null default 'personal',
+  provider text not null,
+  run_type text not null,
+  market text,
+  status text not null default 'started',
+  started_at timestamptz not null default now(),
+  finished_at timestamptz,
+  stats jsonb not null default '{}'::jsonb,
+  error text
+);
+
 create index if not exists scan_results_scan_id_idx on scan_results(scan_id);
 create index if not exists scan_results_symbol_idx on scan_results(owner_id, symbol);
 create index if not exists favorites_symbol_idx on favorites(owner_id, symbol);
 create index if not exists notes_symbol_idx on notes(owner_id, symbol);
 create index if not exists alerts_symbol_idx on alerts(owner_id, symbol);
+create index if not exists universe_snapshots_cache_idx on universe_snapshots(owner_id, cache_key, updated_at desc);
+create index if not exists universe_snapshot_symbols_snapshot_idx on universe_snapshot_symbols(snapshot_id, passed);
+create index if not exists universe_snapshot_symbols_symbol_idx on universe_snapshot_symbols(owner_id, symbol);
+create index if not exists daily_bars_symbol_date_idx on daily_bars(owner_id, symbol, trade_date desc);
+create index if not exists daily_bars_date_idx on daily_bars(owner_id, trade_date desc);
+create index if not exists fundamental_snapshots_symbol_idx on fundamental_snapshots(owner_id, symbol, period_end desc);
+create index if not exists provider_runs_idx on provider_runs(owner_id, provider, run_type, started_at desc);
 
 alter table scans enable row level security;
 alter table scan_results enable row level security;
@@ -132,6 +219,11 @@ alter table favorite_snapshots enable row level security;
 alter table notes enable row level security;
 alter table alerts enable row level security;
 alter table company_profiles enable row level security;
+alter table universe_snapshots enable row level security;
+alter table universe_snapshot_symbols enable row level security;
+alter table daily_bars enable row level security;
+alter table fundamental_snapshots enable row level security;
+alter table provider_runs enable row level security;
 
 -- The Next.js API uses SUPABASE_SERVICE_ROLE_KEY, which bypasses RLS.
 -- Do not expose the service role key in browser code.

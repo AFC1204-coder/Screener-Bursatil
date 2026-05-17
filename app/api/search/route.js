@@ -1,5 +1,6 @@
 import { searchYahooCompanies } from "@/lib/yahoo";
 import { searchCuratedCompanies } from "@/lib/universes";
+import { searchOpenFigiCompanies } from "@/lib/openfigi";
 
 function mergeResults(...groups) {
   const map = new Map();
@@ -23,9 +24,29 @@ export async function GET(request) {
     ]);
     const curatedResults = curated.status === "fulfilled" ? curated.value : [];
     const yahooResults = yahoo.status === "fulfilled" ? yahoo.value : [];
-    if (!curatedResults.length && !yahooResults.length && yahoo.status === "rejected") throw yahoo.reason;
-    const results = mergeResults(curatedResults, yahooResults);
-    return Response.json({ query, results });
+    let results = mergeResults(curatedResults, yahooResults);
+    const shouldResolve = !results.length || /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/i.test(String(query || "").trim());
+    let openFigiResults = [];
+    let openFigiError = "";
+    if (shouldResolve) {
+      try {
+        openFigiResults = await searchOpenFigiCompanies(query);
+        results = mergeResults(results, openFigiResults);
+      } catch (error) {
+        openFigiError = error.message || "OpenFIGI no disponible";
+      }
+    }
+    if (!results.length && yahoo.status === "rejected" && !openFigiResults.length) throw yahoo.reason;
+    return Response.json({
+      query,
+      results,
+      providers: {
+        curated: curatedResults.length,
+        yahoo: yahooResults.length,
+        openfigi: openFigiResults.length,
+        openfigiError: openFigiError || null,
+      },
+    });
   } catch (err) {
     return Response.json({ error: err.message || "Search provider unavailable" }, { status: 502 });
   }

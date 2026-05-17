@@ -8,6 +8,8 @@
     "supabase:schema": "node scripts/supabase-admin.mjs schema"
   },
   "dependencies": {
+    "@xmldom/xmldom": "^0.9.10",
+    "fflate": "^0.8.3",
     "lightweight-charts": "^5.2.0",
     "lucide-react": "latest",
     "next": "latest",

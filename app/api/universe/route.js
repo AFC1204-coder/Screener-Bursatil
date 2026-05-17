@@ -1,15 +1,22 @@
-import { getUniverse } from "@/lib/universes";
+import { getUniverseEngineSnapshot } from "@/lib/universeEngine";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const market = searchParams.get("market") || "US";
+  const marketParam = searchParams.get("market") || searchParams.get("markets") || "US";
+  const markets = marketParam.split(",").map((item) => item.trim().toUpperCase()).filter(Boolean);
+  const refresh = searchParams.get("refresh") === "1";
   try {
-    const universe = await getUniverse(market);
+    const snapshot = await getUniverseEngineSnapshot({ markets, refresh });
     return Response.json({
-      market,
-      count: universe.length,
-      source: market.toUpperCase() === "US" ? "NasdaqTrader public symbol directories" : "Curated + expanded Yahoo-format universe",
-      universe,
+      market: snapshot.markets.join(","),
+      count: snapshot.count,
+      totalBeforeGate: snapshot.totalBeforeGate,
+      excludedCount: snapshot.excludedCount,
+      source: snapshot.source,
+      qualityGate: snapshot.qualityGate,
+      coverage: snapshot.coverage,
+      cache: snapshot.cache,
+      universe: snapshot.universe,
     });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 502 });

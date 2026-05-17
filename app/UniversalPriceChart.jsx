@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CHART_RANGES, DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
+import { CHART_RANGES, DEFAULT_CHART_SETTINGS, normalizeChartInterval } from "@/lib/chartSettings";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
@@ -19,7 +19,7 @@ function safeNumber(value) {
 }
 
 function isIntradayInterval(interval = "") {
-  return ["1m", "5m", "15m", "30m", "1h", "4h"].includes(interval);
+  return ["1m", "5m", "15m", "30m", "1H", "4H"].includes(normalizeChartInterval(interval));
 }
 
 function timeFromBar(bar = {}) {
@@ -61,10 +61,10 @@ function weekKey(dateText = "") {
 }
 
 function aggregateRows(rows = [], interval = "D") {
-  if (interval === "D" || (isIntradayInterval(interval) && interval !== "4h")) return rows;
+  if (interval === "D" || (isIntradayInterval(interval) && interval !== "4H")) return rows;
   const groups = new Map();
   for (const row of rows) {
-    const key = interval === "4h" ? String(Math.floor(row.time / (4 * 60 * 60))) : interval === "M" ? row.date.slice(0, 7) : weekKey(row.date);
+    const key = interval === "4H" ? String(Math.floor(row.time / (4 * 60 * 60))) : interval === "M" ? row.date.slice(0, 7) : weekKey(row.date);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(row);
   }
@@ -126,6 +126,13 @@ function chartRangeRows(rows = [], rangeKey = DEFAULT_CHART_SETTINGS.range, inte
   return rows.slice(-Math.min(activeRange.bars, rows.length));
 }
 
+function shouldRequestRemoteBars(localRows = [], rangeKey = DEFAULT_CHART_SETTINGS.range, interval = DEFAULT_CHART_SETTINGS.interval) {
+  if (isIntradayInterval(interval)) return true;
+  const activeRange = CHART_RANGES.find((range) => range.key === rangeKey) || CHART_RANGES[3];
+  if (activeRange.key === "MAX" || activeRange.bars === Infinity) return localRows.length < 900;
+  return Number.isFinite(activeRange.bars) && localRows.length < activeRange.bars;
+}
+
 export default function UniversalPriceChart({
   bars = [],
   symbol = "",
@@ -142,11 +149,13 @@ export default function UniversalPriceChart({
   const [remote, setRemote] = useState({ bars: null, loading: false, error: "", meta: null });
   const [renderError, setRenderError] = useState("");
   const range = settings?.range || DEFAULT_CHART_SETTINGS.range;
-  const interval = settings?.interval || DEFAULT_CHART_SETTINGS.interval;
+  const interval = normalizeChartInterval(settings?.interval || DEFAULT_CHART_SETTINGS.interval);
   const style = settings?.style || DEFAULT_CHART_SETTINGS.style;
   const scale = settings?.scale || DEFAULT_CHART_SETTINGS.scale;
   const indicators = { ...DEFAULT_CHART_SETTINGS.indicators, ...(settings?.indicators || {}) };
-  const needsRemote = isIntradayInterval(interval);
+  const localRows = useMemo(() => normalizeRows(bars), [bars]);
+  const needsRemote = shouldRequestRemoteBars(localRows, range, interval);
+  const intraday = isIntradayInterval(interval);
 
   useEffect(() => {
     if (!needsRemote || !symbol) {
@@ -164,16 +173,16 @@ export default function UniversalPriceChart({
       })
       .catch((error) => {
         if (error.name === "AbortError") return;
-        setRemote({ bars: [], loading: false, error: error.message || "Proveedor intradia no disponible", meta: null });
+        setRemote({ bars: [], loading: false, error: error.message || "Proveedor de grafico no disponible", meta: null });
       });
     return () => controller.abort();
   }, [needsRemote, symbol, range, interval]);
 
   const rows = useMemo(() => {
-    const sourceBars = needsRemote ? (remote.bars || []) : bars;
-    const normalized = normalizeRows(sourceBars);
+    const remoteRows = normalizeRows(remote.bars || []);
+    const normalized = remoteRows.length ? remoteRows : intraday ? [] : localRows;
     return chartRangeRows(aggregateRows(normalized, interval), range, interval);
-  }, [bars, remote.bars, needsRemote, interval, range]);
+  }, [remote.bars, intraday, localRows, interval, range]);
   const rsLineData = useMemo(
     () => indicators.rsLine ? rsLineDataForRows(rows, relativeStrength, interval) : [],
     [rows, relativeStrength, interval, indicators.rsLine],
@@ -356,7 +365,7 @@ export default function UniversalPriceChart({
 
   if (rows.length < 2) {
     return <div className={`universalChart empty ${className}`}>
-      {remote.loading ? "Cargando intradia..." : remote.error ? `Proveedor intradia no disponible: ${remote.error}` : "Historico insuficiente"}
+      {remote.loading ? "Cargando historico..." : remote.error ? `Proveedor de grafico no disponible: ${remote.error}` : "Historico insuficiente"}
     </div>;
   }
 
@@ -371,9 +380,15 @@ export default function UniversalPriceChart({
         <span>RS</span>
         <b>{rsLineData.at(-1)?.value?.toFixed?.(1) || "-"}</b>
       </div>}
+      {indicators.rsLine && intraday && <div className="universalChartBadges muted" title="La linea RS se calcula con cierre diario y se oculta en intradia">
+        <span>RS</span>
+        <b>D</b>
+      </div>}
       {tradingViewUrl && <a className="priceTvLink" href={tradingViewUrl} target="_blank" rel="noreferrer">Abrir TradingView</a>}
     </div>
     <div className="universalChartCanvas" ref={containerRef} style={{ minHeight: height }} />
+    {remote.loading && needsRemote && !intraday && <p className="dataNote">Ampliando historico para este rango...</p>}
+    {remote.error && !intraday && <p className="dataNote">Historico ampliado no disponible: {remote.error}. Se muestra el historico local.</p>}
     {renderError && <p className="dataNote">{renderError}</p>}
   </div>;
 }

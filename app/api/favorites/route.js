@@ -59,6 +59,7 @@ function favoriteFromDb(row = {}) {
     alpha: finiteOrNull(row.performance?.alpha),
     currentState: row.current_state,
     error: row.error,
+    updatedAt: row.updated_at,
   };
 }
 

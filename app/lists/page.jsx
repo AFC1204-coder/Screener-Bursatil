@@ -34,28 +34,37 @@ function applyGroupFilter(rows, groupType, group) {
   return rows.filter((r) => String(r[groupType] || "") === group);
 }
 
-function MiniTable({ title, desc, rows, scoreKey = "totalScore" }) {
+function MiniTable({ title, desc, rows, scoreKey = "totalScore", collapsible = true }) {
+  const table = <div className="tableWrap">
+    <table className="table">
+      <thead><tr>{["Ticker", "Empresa", "Tema", "3M", "52w", "SMA50", "W", "M", "RSQ", "Weak", "Risk", "Total"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
+      <tbody>{rows.slice(0, 18).map((r) => <tr key={r.symbol}>
+        <td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a></td>
+        <td>{r.companyName || r.symbol}<br /><span className="fine">{shortBusiness(r)}</span></td>
+        <td><span className="pill">{r.theme || r.snapshot?.theme || "-"}</span></td>
+        <td>{pct(r.perf3m ?? r.snapshot?.perf3m)}</td>
+        <td>{pct(r.distance52w)}</td>
+        <td>{pct(r.extSma50)}</td>
+        <td>{num(r.weinsteinScore ?? r.snapshot?.weinsteinScore)}</td>
+        <td>{num(r.minerviniScore ?? r.snapshot?.minerviniScore)}</td>
+        <td>{num(r.rsQualityScore ?? r.snapshot?.rsQualityScore)}</td>
+        <td>{num(weaknessScore(r))}</td>
+        <td>{num(r.riskScore ?? r.snapshot?.riskScore)}</td>
+        <td className="ticker">{num(Number.isFinite(metricValue(r, scoreKey)) ? metricValue(r, scoreKey) : r.snapshot?.totalScore)}</td>
+      </tr>)}{!rows.length && <tr><td colSpan="12">Sin datos todavia.</td></tr>}</tbody>
+    </table>
+  </div>;
+
+  if (collapsible) {
+    return <details className="card listDisclosure" open>
+      <summary className="sectionTitle"><h2>{title}</h2><span className="fine">{desc}</span></summary>
+      {table}
+    </details>;
+  }
+
   return <section className="card">
     <div className="sectionTitle"><h2>{title}</h2><span className="fine">{desc}</span></div>
-    <div className="tableWrap">
-      <table className="table">
-        <thead><tr>{["Ticker", "Empresa", "Tema", "3M", "52w", "SMA50", "W", "M", "RSQ", "Weak", "Risk", "Total"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
-        <tbody>{rows.slice(0, 18).map((r) => <tr key={r.symbol}>
-          <td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a></td>
-          <td>{r.companyName || r.symbol}<br /><span className="fine">{shortBusiness(r)}</span></td>
-          <td><span className="pill">{r.theme || r.snapshot?.theme || "-"}</span></td>
-          <td>{pct(r.perf3m ?? r.snapshot?.perf3m)}</td>
-          <td>{pct(r.distance52w)}</td>
-          <td>{pct(r.extSma50)}</td>
-          <td>{num(r.weinsteinScore ?? r.snapshot?.weinsteinScore)}</td>
-          <td>{num(r.minerviniScore ?? r.snapshot?.minerviniScore)}</td>
-          <td>{num(r.rsQualityScore ?? r.snapshot?.rsQualityScore)}</td>
-          <td>{num(weaknessScore(r))}</td>
-          <td>{num(r.riskScore ?? r.snapshot?.riskScore)}</td>
-          <td className="ticker">{num(Number.isFinite(metricValue(r, scoreKey)) ? metricValue(r, scoreKey) : r.snapshot?.totalScore)}</td>
-        </tr>)}{!rows.length && <tr><td colSpan="12">Sin datos todavia.</td></tr>}</tbody>
-      </table>
-    </div>
+    {table}
   </section>;
 }
 
@@ -105,7 +114,7 @@ export default function ListsPage() {
     </section>
     <section className="card"><div className="kpis"><div className="kpi"><b>{rows.length}</b><span>acciones visibles</span></div><div className="kpi"><b>{favorites.length}</b><span>favoritos</span></div><div className="kpi"><b>{scans.length}</b><span>snapshots</span></div><div className="kpi"><b>{latest ? new Date(latest.createdAt).toLocaleDateString() : "-"}</b><span>ultimo scan</span></div></div></section>
     {filter.group && <section className="card status">Filtro activo: <b>{filter.groupType} = {filter.group}</b> · <a className="ticker" href="/lists">limpiar</a></section>}
-    <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} />
+    <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} collapsible={false} />
     <MiniTable title="Total Score Leaders" desc="Ranking principal" rows={leaders} />
     <MiniTable title="RS Quality Leaders" desc="RS alto con volatilidad/drawdown controlados" rows={rsQuality} scoreKey="rsQualityScore" />
     <MiniTable title="Deterioro tecnico" desc="Debilidad observable para evitar largos o estudiar cortos" rows={weakness} scoreKey="weaknessScore" />

@@ -25,6 +25,7 @@ npm run build
 ```
 
 The smoke test checks the main pages, core APIs, Yahoo-backed data endpoints and Supabase status.
+It also checks the Universe Engine snapshot path used for cached global universes.
 
 ## Environment
 
@@ -64,6 +65,8 @@ Tables:
 - `notes`
 - `alerts`
 - `company_profiles`
+- `universe_snapshots`
+- `universe_snapshot_symbols`
 
 Connector helpers:
 
@@ -81,15 +84,22 @@ npm run supabase:schema
 - `/research-desk` favorites and tracking
 - `/market-health` market regime dashboard
 - `/stock/[symbol]` company page
+- `/api/coverage` current vs target market coverage report
 
 ## Current Data Providers
 
 - Yahoo Finance-style endpoints for charts, profiles, financial briefs and market data.
 - Stooq CSV as optional free historical chart fallback when `STOOQ_API_KEY` is configured.
 - Alpha Vantage as optional daily chart fallback when `ALPHA_VANTAGE_API_KEY` is configured.
+- OpenFIGI as optional free symbol/ISIN/FIGI resolver when `OPENFIGI_API_KEY` is configured; it also works anonymously with tighter limits.
 - Financial Modeling Prep as optional profile, ratios and statements fallback when `FMP_API_KEY` is configured.
 - NasdaqTrader public symbol directories for the US universe.
+- HKEX Full List of Securities for the Hong Kong universe, filtered to investable HKD equities/REITs.
+- J-Quants for Japan universe data when `JQUANTS_API_KEY` or `JQUANTS_REFRESH_TOKEN` is configured.
 - SEC EDGAR companyfacts as a free US fundamentals fallback.
+- ASIC short position reports as a free official Australia short-interest proxy for `.AX` symbols.
+- Universe Engine snapshots with Quality Gate and coverage scoring, cached in Supabase when configured.
+- Coverage report API for measuring global coverage gaps before adding each provider.
 - TradingView official embed for charts.
 - Supabase for V1 persistence.
 - localStorage fallback remains available for resilience.

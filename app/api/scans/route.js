@@ -69,6 +69,7 @@ function scanFromDb(row, results = []) {
     id: row.local_id || row.id,
     cloudId: row.id,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
     name: row.name,
     preset: row.preset,
     settings: row.settings || {},

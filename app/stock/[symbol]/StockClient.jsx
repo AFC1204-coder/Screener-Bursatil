@@ -585,6 +585,41 @@ function valueTone(value) {
   return value > 0 ? "good" : value < 0 ? "bad" : "neutral";
 }
 
+function average(values = []) {
+  const valid = values.filter(Number.isFinite);
+  return valid.length ? valid.reduce((sum, value) => sum + value, 0) / valid.length : null;
+}
+
+function technicalSnapshotFromBars(bars = [], quote = {}) {
+  const rows = [...(bars || [])]
+    .map((bar) => ({
+      date: bar.date,
+      close: Number(bar.close),
+      high: Number(bar.high),
+      volume: Number(bar.volume),
+    }))
+    .filter((bar) => Number.isFinite(bar.close) && bar.close > 0)
+    .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+  const latest = rows.at(-1) || {};
+  const price = finiteValue(quote.price, latest.close);
+  const last50 = rows.slice(-50);
+  const last200 = rows.slice(-200);
+  const last252 = rows.slice(-252);
+  const sma50 = average(last50.map((row) => row.close));
+  const sma200 = average(last200.map((row) => row.close));
+  const avgVolume50 = average(last50.map((row) => row.volume));
+  const high52w = Math.max(...last252.map((row) => row.high).filter(Number.isFinite), 0);
+  return {
+    price,
+    sma50,
+    sma200,
+    distanceSma50: Number.isFinite(price) && Number.isFinite(sma50) && sma50 > 0 ? ((price / sma50) - 1) * 100 : null,
+    distanceSma200: Number.isFinite(price) && Number.isFinite(sma200) && sma200 > 0 ? ((price / sma200) - 1) * 100 : null,
+    relativeVolume50: Number.isFinite(latest.volume) && Number.isFinite(avgVolume50) && avgVolume50 > 0 ? latest.volume / avgVolume50 : null,
+    distance52w: Number.isFinite(price) && high52w > 0 ? ((price / high52w) - 1) * 100 : null,
+  };
+}
+
 function FundamentalMiniTable({ results = {}, currency = "", metrics = {}, sharesOutstanding = null }) {
   const annualSource = sortLatestFirst(results?.incomeAnnual || [])
     .filter((row) => row?.date && [row.revenue, row.netIncome, row.eps, row.revenueGrowthYoY, row.netIncomeGrowthYoY].some(Number.isFinite));
@@ -801,6 +836,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const v = data?.valuationMetrics || {};
   const q = data?.quoteSnapshot || {};
   const rs = data?.relativeStrength || {};
+  const technical = technicalSnapshotFromBars(data?.chartBars || [], q);
   const statementCurrency = data?.financialResults?.currency || g.financialCurrency || data?.currency || "";
   const stageTone = /etapa 2/i.test(data?.stage?.label || "") ? "good" : /etapa 4/i.test(data?.stage?.label || "") ? "bad" : "neutral";
   const dayTone = (q.dayChangePct || 0) >= 0 ? "up" : "down";
@@ -869,8 +905,14 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
         <aside className="stockIntelRail">
           <section className="terminalPanel stockResearchCard">
             <div className="sectionTitle">
-              <h2>Ficha rapida</h2>
+              <h2>Carta compacta</h2>
               <span className="fine">{rs.benchmarkSymbol ? `RS vs ${rs.benchmarkSymbol}` : "Resumen"}</span>
+            </div>
+            <div className="marketSmithStrip" aria-label="Resumen Weinstein Minervini compacto">
+              <MiniMetric label="RS Rating" value={fmt(rs.rating)} tone={(rs.rating || 0) >= 75 ? "good" : (rs.rating || 0) < 45 ? "bad" : ""} />
+              <MiniMetric label="Etapa" value={data.stage?.label || "Sin dato"} tone={stageTone} />
+              <MiniMetric label="Ventas YoY" value={pct(g.revenueGrowth)} tone={valueTone(g.revenueGrowth)} />
+              <MiniMetric label="Benef. YoY" value={pct(g.earningsGrowth)} tone={valueTone(g.earningsGrowth)} />
             </div>
             <div className="researchCardGrid">
               <div className="researchBlock">
@@ -878,8 +920,10 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
                 <div className="researchRows">
                   <span>Etapa</span><b className={stageTone}>{data.stage?.label || "Sin dato"}</b>
                   <span>RS Global</span><b className={(rs.rating || 0) >= 75 ? "good" : (rs.rating || 0) < 45 ? "bad" : ""}>{fmt(rs.rating)}</b>
+                  <span>MA50 / MA200</span><b className={valueTone(finiteValue(technical.distanceSma50, technical.distanceSma200))}>{pct(technical.distanceSma50)} / {pct(technical.distanceSma200)}</b>
+                  <span>Vol. rel 50d</span><b>{Number.isFinite(technical.relativeVolume50) ? `${technical.relativeVolume50.toFixed(1)}x` : "Sin dato"}</b>
                   <span>RS Quality</span><b>{fmt(rs.rsQualityScore)}</b>
-                  <span>Dist. 52w</span><b>{pct(rs.distance52w)}</b>
+                  <span>Dist. 52w</span><b>{pct(finiteValue(rs.distance52w, technical.distance52w))}</b>
                 </div>
               </div>
               <div className="researchBlock">

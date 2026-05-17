@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
+import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
 import { clamp, num, pct, ratio } from "@/lib/formatters";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { countryCode, externalLinks, isTradingViewWidgetBlocked, stockUrl } from "@/lib/symbols";
@@ -449,7 +450,22 @@ export default function ReviewPage() {
       : [favoriteFromRow(row), ...favorites].slice(0, 300);
     setFavorites(next);
     safeWrite(STORAGE_KEYS.favorites, next);
-    setStatus(favoriteSymbols.has(symbol) ? `${symbol} eliminado de favoritos locales` : `${symbol} guardado en favoritos locales`);
+    if (favoriteSymbols.has(symbol)) {
+      deleteFavoriteFromCloud({ symbol }).then((result) => {
+        if (result.configured === false) setStatus(`${symbol} eliminado de favoritos locales. Supabase no configurado.`);
+        else if (result.ok) setStatus(`${symbol} eliminado de favoritos y Supabase.`);
+        else setStatus(`${symbol} eliminado localmente. Supabase: ${result.message}`);
+      });
+      setStatus(`${symbol} eliminado de favoritos locales. Sincronizando Supabase...`);
+    } else {
+      const favorite = next.find((item) => String(item.symbol).toUpperCase() === symbol);
+      syncFavoriteToCloud(favorite).then((result) => {
+        if (result.configured === false) setStatus(`${symbol} guardado localmente. Supabase no configurado.`);
+        else if (result.ok) setStatus(`${symbol} guardado en favoritos y Supabase.`);
+        else setStatus(`${symbol} guardado localmente. Supabase: ${result.message}`);
+      });
+      setStatus(`${symbol} guardado en favoritos locales. Sincronizando Supabase...`);
+    }
   }
   function markReviewed(row = activeRow) {
     if (!row) return;

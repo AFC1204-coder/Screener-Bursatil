@@ -5,6 +5,20 @@ const ROOT = process.cwd();
 const ENV_FILES = [".env.local", ".env"];
 const SCHEMA_PATH = path.join(ROOT, "supabase", "schema.sql");
 const MANAGEMENT_API = "https://api.supabase.com/v1";
+const REQUIRED_TABLES = [
+  ["scans", "core"],
+  ["scan_results", "core"],
+  ["favorites", "core"],
+  ["favorite_snapshots", "core"],
+  ["notes", "core"],
+  ["alerts", "core"],
+  ["company_profiles", "core"],
+  ["universe_snapshots", "coverage-cache"],
+  ["universe_snapshot_symbols", "coverage-cache"],
+  ["daily_bars", "market-data-cache"],
+  ["fundamental_snapshots", "fundamentals-cache"],
+  ["provider_runs", "ops"],
+];
 
 function loadEnv() {
   for (const file of ENV_FILES) {
@@ -105,23 +119,34 @@ function failureMessage(result) {
   return result?.data?.message || result?.data?.hint || JSON.stringify(result?.data || {});
 }
 
+function tableStatus(result) {
+  if (result.ok) return "OK";
+  if (result.status === 404 || result.data?.code === "PGRST205") return "MISSING";
+  if (result.status === 401 || result.status === 403) return "PERMISSION";
+  return "WARN";
+}
+
 async function statusCommand(config) {
   printConfig(config);
   console.log("");
 
+  const tableResults = [];
   try {
-    const result = await restRequest(config, "scans?select=id&limit=1");
-    if (result.ok) {
-      console.log("OK Data API: public.scans accesible.");
-    } else if (result.status === 404 || result.data?.code === "PGRST205") {
-      console.log("PENDING Schema: public.scans no existe todavia.");
-      console.log(`Detail: ${failureMessage(result)}`);
-    } else if (result.status === 401 || result.status === 403) {
-      console.log("FAIL Data API: key o permisos invalidos.");
-      console.log(`Detail: ${failureMessage(result)}`);
-    } else {
-      console.log(`WARN Data API HTTP ${result.status}: ${failureMessage(result)}`);
+    for (const [table, area] of REQUIRED_TABLES) {
+      const result = await restRequest(config, `${table}?select=id&limit=1`);
+      tableResults.push({ table, area, result, status: tableStatus(result) });
     }
+    const missing = tableResults.filter((item) => item.status === "MISSING");
+    const permission = tableResults.filter((item) => item.status === "PERMISSION");
+    const warn = tableResults.filter((item) => item.status === "WARN");
+    console.log(`Data API tables: ${tableResults.filter((item) => item.status === "OK").length}/${REQUIRED_TABLES.length} OK.`);
+    for (const item of tableResults) {
+      const detail = item.status === "OK" ? "" : ` - ${failureMessage(item.result)}`;
+      console.log(`${item.status} ${item.area}: public.${item.table}${detail}`);
+    }
+    if (missing.length) console.log(`PENDING Schema: faltan ${missing.map((item) => item.table).join(", ")}.`);
+    if (permission.length) console.log(`FAIL Permissions: revisar service role key para ${permission.map((item) => item.table).join(", ")}.`);
+    if (warn.length) console.log(`WARN Data API: revisar ${warn.map((item) => item.table).join(", ")}.`);
   } catch (error) {
     console.log(`FAIL Data API: ${error.message}`);
   }

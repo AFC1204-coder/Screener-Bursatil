@@ -18,7 +18,19 @@ const apiChecks = [
     name: "Supabase status",
     path: "/api/supabase/status",
     provider: false,
-    check: (data) => typeof data.configured === "boolean",
+    check: (data) => typeof data.configured === "boolean" && typeof data.schemaReady === "boolean" && Array.isArray(data.tables),
+  },
+  {
+    name: "Data providers",
+    path: "/api/data-providers",
+    provider: false,
+    check: (data) => data.priority === "free-first" && Array.isArray(data.providers) && data.providers.some((item) => item.id === "openfigi"),
+  },
+  {
+    name: "Alerts",
+    path: "/api/alerts",
+    provider: false,
+    check: (data) => typeof data.configured === "boolean" && Array.isArray(data.alerts),
   },
   {
     name: "Search by company/ticker",
@@ -28,9 +40,33 @@ const apiChecks = [
   },
   {
     name: "Universe US",
-    path: "/api/universe?markets=US",
+    path: "/api/universe?market=US",
     provider: true,
     check: (data) => Number(data.count) > 100 && Array.isArray(data.universe),
+  },
+  {
+    name: "Universe Engine AU",
+    path: "/api/universe-engine?market=AU",
+    provider: true,
+    check: (data) => Number(data.count) > 100 && data.qualityGate?.enabled === true && data.coverage && Array.isArray(data.universe),
+  },
+  {
+    name: "Universe AU",
+    path: "/api/universe?market=AU",
+    provider: true,
+    check: (data) => Number(data.count) > 100 && Array.isArray(data.universe) && data.universe.some((item) => item.symbol === "CBA.AX"),
+  },
+  {
+    name: "Universe HK official",
+    path: "/api/universe-engine?market=HK&summary=1",
+    provider: true,
+    check: (data) => Number(data.count) > 500 && data.coverage?.bySource?.["HKEX Full List of Securities"] > 500,
+  },
+  {
+    name: "Coverage report",
+    path: "/api/coverage?markets=US,JP,HK,AU",
+    provider: true,
+    check: (data) => Number(data.summary?.current) > 100 && Array.isArray(data.markets) && data.markets.some((item) => item.market === "JP"),
   },
   {
     name: "Chart NVDA",
@@ -43,6 +79,12 @@ const apiChecks = [
     path: "/api/profile?symbol=NVDA",
     provider: true,
     check: (data) => Boolean(data.name || data.sector || data.industry),
+  },
+  {
+    name: "Short interest AU",
+    path: "/api/short-interest?symbol=CBA.AX",
+    provider: true,
+    check: (data) => data.available === true && data.symbol === "CBA.AX" && Number.isFinite(data.shortPercentOfIssued),
   },
   {
     name: "Company brief NVDA",

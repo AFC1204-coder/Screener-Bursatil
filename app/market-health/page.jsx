@@ -185,7 +185,7 @@ export default function MarketHealthPage() {
   const [news, setNews] = useState(null);
   const [social, setSocial] = useState(null);
   const [scanPulse, setScanPulse] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   function refreshScanPulse() {
@@ -241,6 +241,10 @@ export default function MarketHealthPage() {
     </section>
 
     {error && <section className="card error">{error}</section>}
+    {loading && !data && <section className="card">
+      <div className="sectionTitle"><h2>Cargando salud de mercado</h2><span className="fine">Índices, sectores y titulares</span></div>
+      <p className="fine">Actualizando lectura de mercado...</p>
+    </section>}
 
     {data && <>
       <section className={`marketRegimePanel ${colorClass(data.regime?.color)}`}>

@@ -1,6 +1,7 @@
 import { fetchYahooProfile, fetchYahooChart, fetchYahooCompanyExtras } from "@/lib/yahoo";
 import { fetchSecFundamentals, mergeSecGrowthMetrics } from "@/lib/sec";
 import { fetchFmpCompanyData } from "@/lib/fmp";
+import { fetchAsicShortInterest, mergeAsicShortInterest } from "@/lib/asicShort";
 import { externalLinks, inferTradingViewSymbol, isTradingViewWidgetBlocked } from "@/lib/symbols";
 
 const THEME_RULES = [
@@ -30,7 +31,7 @@ function inferTheme(sector = "", industry = "", summary = "") {
 function countryFromSymbol(symbol, profileCountry = "") {
   if (profileCountry) return profileCountry;
   const s = symbol.toUpperCase();
-  const map = [[".TO", "Canada"], [".MC", "España"], [".DE", "Alemania"], [".PA", "Francia"], [".AS", "Paises Bajos"], [".L", "Reino Unido"], [".SW", "Suiza"], [".ST", "Suecia"], [".CO", "Dinamarca"], [".OL", "Noruega"], [".HE", "Finlandia"], [".MI", "Italia"], [".BR", "Belgica"], [".LS", "Portugal"], [".VI", "Austria"], [".IR", "Irlanda"], [".T", "Japon"], [".HK", "Hong Kong"], [".SI", "Singapur"], [".AX", "Australia"], [".TW", "Taiwan"], [".KS", "Corea del Sur"], [".KQ", "Corea del Sur"], [".NS", "India"], [".BO", "India"], [".SS", "China"], [".SZ", "China"], [".SA", "Brasil"], [".MX", "Mexico"]];
+  const map = [[".TO", "Canada"], [".MC", "España"], [".DE", "Alemania"], [".F", "Alemania"], [".PA", "Francia"], [".AS", "Paises Bajos"], [".L", "Reino Unido"], [".SW", "Suiza"], [".ST", "Suecia"], [".CO", "Dinamarca"], [".OL", "Noruega"], [".HE", "Finlandia"], [".MI", "Italia"], [".BR", "Belgica"], [".LS", "Portugal"], [".VI", "Austria"], [".IR", "Irlanda"], [".T", "Japon"], [".HK", "Hong Kong"], [".SI", "Singapur"], [".AX", "Australia"], [".TW", "Taiwan"], [".KS", "Corea del Sur"], [".KQ", "Corea del Sur"], [".NS", "India"], [".BO", "India"], [".SS", "China"], [".SZ", "China"], [".SA", "Brasil"], [".MX", "Mexico"]];
   return map.find(([x]) => s.endsWith(x))?.[1] || "Estados Unidos";
 }
 function normalizeWebsite(url = "") {
@@ -648,7 +649,7 @@ export async function getCompanyBrief(symbol) {
       fetchYahooProfile(symbol).catch((error) => ({ profileProviderError: error.message || "Proveedor no disponible" })),
       fetchYahooChart(symbol).catch(() => ({ bars: [] })),
     ]);
-    const profile = {
+    let profile = {
       name: chart.meta?.longName || chart.meta?.shortName || symbol,
       marketCap: 0,
       sector: "Sin sector",
@@ -704,6 +705,8 @@ export async function getCompanyBrief(symbol) {
     if (fmpResult.valuationMetrics) profile.valuationMetrics = mergeObjectFallback(profile.valuationMetrics, fmpResult.valuationMetrics);
     if (fmpResult.quoteSnapshot) profile.quoteSnapshot = mergeObjectFallback(profile.quoteSnapshot, fmpResult.quoteSnapshot);
     if (!secResult.error) profile.growthMetrics = mergeSecGrowthMetrics(profile.growthMetrics, secResult);
+    const asicShort = await fetchAsicShortInterest(symbol).catch(() => null);
+    profile = mergeAsicShortInterest(profile, asicShort);
     const yahooFinancialResults = mergeFinancialResults(profile.fundamentalsFinancialResults || profile.growthMetrics?.financialResults, extrasResult.financialResults);
     const secFinancialResults = mergeFinancialResults(yahooFinancialResults, secResult.financialResults);
     const financialResults = mergeFinancialResults(secFinancialResults, fmpResult.financialResults);
@@ -782,6 +785,7 @@ export async function getCompanyBrief(symbol) {
       valuationMetrics: profile.valuationMetrics || {},
       quoteSnapshot: profile.quoteSnapshot || {},
       growthMetrics: profile.growthMetrics,
+      shortInterest: profile.shortInterest || null,
       earningsCalendar: extrasResult.earningsCalendar || null,
       financialResults,
       news: extrasResult.news || [],
@@ -798,6 +802,7 @@ export async function getCompanyBrief(symbol) {
           statements: fmpResult.financialResults ? "Yahoo quoteSummary statements + FMP fallback" : "Yahoo quoteSummary statements",
           fundamentalsFallback: secResult.error ? "SEC EDGAR no aplicado" : "SEC EDGAR companyfacts",
           fundamentalsApi: fmpResult.configured === false ? "FMP no configurado" : (fmpResult.fmpProviderError ? "FMP no disponible" : "FMP opcional"),
+          shortInterest: profile.shortInterest ? "ASIC short position reports" : "Yahoo quoteSummary / proveedor base",
         },
       },
       updatedAt: new Date().toISOString(),
