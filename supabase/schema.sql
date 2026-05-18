@@ -93,6 +93,7 @@ create table if not exists notes (
 create table if not exists alerts (
   id uuid primary key default gen_random_uuid(),
   owner_id text not null default 'personal',
+  local_id text not null,
   symbol text not null,
   alert_type text not null,
   operator text,
@@ -100,8 +101,29 @@ create table if not exists alerts (
   payload jsonb not null default '{}'::jsonb,
   status text not null default 'active',
   created_at timestamptz not null default now(),
-  triggered_at timestamptz
+  triggered_at timestamptz,
+  constraint alerts_owner_local_id_key unique (owner_id, local_id)
 );
+
+alter table alerts add column if not exists local_id text;
+update alerts set local_id = payload->>'localId' where local_id is null and payload ? 'localId';
+update alerts set local_id = id::text where local_id is null;
+with ranked_alerts as (
+  select id, local_id, row_number() over(partition by owner_id, local_id order by created_at desc, id desc) as duplicate_rank
+  from alerts
+  where local_id is not null
+)
+update alerts
+set local_id = ranked_alerts.local_id || ':' || alerts.id::text
+from ranked_alerts
+where alerts.id = ranked_alerts.id and ranked_alerts.duplicate_rank > 1;
+alter table alerts alter column local_id set not null;
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'alerts_owner_local_id_key') then
+    alter table alerts add constraint alerts_owner_local_id_key unique (owner_id, local_id);
+  end if;
+end $$;
 
 create table if not exists company_profiles (
   id uuid primary key default gen_random_uuid(),
@@ -199,11 +221,45 @@ create table if not exists provider_runs (
   error text
 );
 
+create table if not exists leaderboard_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  owner_id text not null default 'personal',
+  leaderboard_key text not null,
+  scope_type text not null default 'global',
+  scope_value text,
+  strategy text not null default 'momentum',
+  title text not null,
+  criteria jsonb not null default '{}'::jsonb,
+  item_count integer not null default 0,
+  source text,
+  generated_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (owner_id, leaderboard_key)
+);
+
+create table if not exists leaderboard_items (
+  id uuid primary key default gen_random_uuid(),
+  owner_id text not null default 'personal',
+  snapshot_id uuid not null references leaderboard_snapshots(id) on delete cascade,
+  rank_index integer not null,
+  symbol text not null,
+  company_name text,
+  country text,
+  sector text,
+  industry text,
+  theme text,
+  score numeric,
+  metrics jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  unique (snapshot_id, symbol)
+);
+
 create index if not exists scan_results_scan_id_idx on scan_results(scan_id);
 create index if not exists scan_results_symbol_idx on scan_results(owner_id, symbol);
 create index if not exists favorites_symbol_idx on favorites(owner_id, symbol);
 create index if not exists notes_symbol_idx on notes(owner_id, symbol);
 create index if not exists alerts_symbol_idx on alerts(owner_id, symbol);
+create index if not exists alerts_local_id_idx on alerts(owner_id, local_id);
 create index if not exists universe_snapshots_cache_idx on universe_snapshots(owner_id, cache_key, updated_at desc);
 create index if not exists universe_snapshot_symbols_snapshot_idx on universe_snapshot_symbols(snapshot_id, passed);
 create index if not exists universe_snapshot_symbols_symbol_idx on universe_snapshot_symbols(owner_id, symbol);
@@ -211,6 +267,9 @@ create index if not exists daily_bars_symbol_date_idx on daily_bars(owner_id, sy
 create index if not exists daily_bars_date_idx on daily_bars(owner_id, trade_date desc);
 create index if not exists fundamental_snapshots_symbol_idx on fundamental_snapshots(owner_id, symbol, period_end desc);
 create index if not exists provider_runs_idx on provider_runs(owner_id, provider, run_type, started_at desc);
+create index if not exists leaderboard_snapshots_key_idx on leaderboard_snapshots(owner_id, leaderboard_key, generated_at desc);
+create index if not exists leaderboard_items_snapshot_idx on leaderboard_items(snapshot_id, rank_index);
+create index if not exists leaderboard_items_symbol_idx on leaderboard_items(owner_id, symbol);
 
 alter table scans enable row level security;
 alter table scan_results enable row level security;
@@ -224,6 +283,8 @@ alter table universe_snapshot_symbols enable row level security;
 alter table daily_bars enable row level security;
 alter table fundamental_snapshots enable row level security;
 alter table provider_runs enable row level security;
+alter table leaderboard_snapshots enable row level security;
+alter table leaderboard_items enable row level security;
 
 -- The Next.js API uses SUPABASE_SERVICE_ROLE_KEY, which bypasses RLS.
 -- Do not expose the service role key in browser code.

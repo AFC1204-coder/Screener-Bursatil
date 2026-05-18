@@ -1,5 +1,7 @@
 # StatsEdge data providers
 
+Legal/commercial-use notes live in [`docs/data-licensing-audit.md`](./data-licensing-audit.md). Treat free market data as licensed input: cache internally, expose derived screener output, and validate display/redistribution rights before using any provider as a public product backbone.
+
 Free-first order for V1:
 
 1. Yahoo Finance-style endpoints: primary chart, quote, profile, news and fundamentals source.
@@ -54,6 +56,7 @@ Current universe expansion:
 - Australia uses ASIC short position reports plus the curated AU list. This is not the full ASX master list, but it expands practical AU coverage while retaining official short-interest metadata.
 - Hong Kong uses HKEX's public Full List of Securities workbook plus the curated list. StatsEdge keeps HKD equities and REITs, and drops ETFs, debt, warrants, CBBCs and non-HKD duplicate counters.
 - Japan uses J-Quants V2 `/equities/master` when `JQUANTS_API_KEY` is present, or legacy V1 `/listed/info` when `JQUANTS_REFRESH_TOKEN` is present. Without credentials it stays on the curated list.
+- J-Quants cache refresh is implemented via `/api/jobs/jquants-refresh`. It writes daily OHLCV into `daily_bars` and quarterly financial summary rows into `fundamental_snapshots`, capped by `limit` so we do not mass-fetch live data accidentally.
 - Other non-US markets still use curated Yahoo-format universes until their exchange/listing sources are wired.
 - `/api/coverage` reports current vs target coverage by market and turns this roadmap into measurable gaps.
 
@@ -65,11 +68,12 @@ Universe Engine, Quality Gate and cache:
 - The scanner Quality Gate rejects hydrated rows before ranking when they fail basic investability/data checks: price, history, market cap, liquidity and minimum coverage.
 - Supabase tables `universe_snapshots` and `universe_snapshot_symbols` cache snapshots by market set. If Supabase is missing or the tables are not applied, StatsEdge falls back to memory/build without blocking.
 - This cache is for research workflow acceleration, not for redistributing exchange data. Respect source terms, public endpoint rate limits and official dataset methodology labels.
+- Leaderboards use saved `scan_results` to expose only top derived candidates by country, sector, industry or theme. They should not return complete exchange universes or raw OHLCV datasets.
 
 Incremental free-source roadmap:
 
 1. Apply Supabase cache schema, then refresh universe snapshots daily.
-2. Configure `JQUANTS_API_KEY`, refresh Japan and start caching J-Quants OHLCV/fundamentals by batches.
+2. Configure `JQUANTS_API_KEY`, refresh Japan and run `/api/jobs/jquants-refresh?limit=25` to start caching J-Quants OHLCV/fundamentals by batches.
 3. Add SFC/HKEX short datasets. Scope: separate short positions from short-selling turnover.
 4. Add ESEF annual-report ingestion as a server-side annual fundamentals cache for European issuers. Scope: annual only first; avoid fragile quarter inference.
 5. Add exchange-specific Europe universe adapters, then evaluate premium global backbone if maintenance cost is too high.

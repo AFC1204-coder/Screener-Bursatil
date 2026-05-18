@@ -18,6 +18,9 @@ const THEME_RULES = [
 ];
 
 function clean(s = "") { return String(s).replace(/\s+/g, " ").replace(/\([^)]*\)/g, "").trim(); }
+function cleanBenchmarkSymbol(value = "") {
+  return String(value || "").trim().toUpperCase().replace(/\s+/g, "").slice(0, 24);
+}
 function firstSentences(s = "", max = 2) {
   const cleaned = clean(s);
   if (!cleaned) return "";
@@ -78,10 +81,17 @@ function sizeLabel(marketCap) {
 }
 function fmtCap(n) {
   if (!Number.isFinite(n) || n <= 0) return "";
-  if (n >= 1e12) return `${(n / 1e12).toFixed(2)} billones`;
-  if (n >= 1e9) return `${(n / 1e9).toFixed(1)} mil M`;
+  if (n >= 1e12) return `${(n / 1e12).toFixed(2)}T`;
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
   if (n >= 1e6) return `${(n / 1e6).toFixed(0)} M`;
   return String(Math.round(n));
+}
+function oldestBarDate(bars = []) {
+  const dates = (bars || [])
+    .map((bar) => String(bar.date || "").slice(0, 10))
+    .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
+    .sort();
+  return dates[0] || "";
 }
 function normalizeCurrency(currency = "") {
   const code = String(currency || "").trim().toUpperCase();
@@ -252,7 +262,7 @@ function rollingHighDistance(rows = [], index = 0, lookback = 252) {
   return Number.isFinite(high) && high > 0 ? ((current / high) - 1) * 100 : null;
 }
 
-function rollingRsRating(rows = [], index = 0) {
+function rollingRsRawScore(rows = [], index = 0) {
   const p3 = pctAt(rows, index, 63, "close");
   const p6 = pctAt(rows, index, 126, "close");
   const p12 = pctAt(rows, index, 252, "close");
@@ -270,8 +280,20 @@ function rollingRsRating(rows = [], index = 0) {
   const nearHighBonus = distance52w >= -5 ? 8 : distance52w >= -15 ? 4 : distance52w >= -25 ? 1 : -6;
   const price = rows[index]?.close;
   const trendBonus = (Number.isFinite(price) && Number.isFinite(s50) && price > s50 ? 4 : -4) + (Number.isFinite(slope) && slope > 0 ? 4 : -2);
-  const raw = 50 + (rs3m || 0) * .9 + (rs6m || 0) * .45 + (rs12m || 0) * .22 + nearHighBonus + trendBonus;
+  return 50 + (rs3m || 0) * .9 + (rs6m || 0) * .45 + (rs12m || 0) * .22 + nearHighBonus + trendBonus;
+}
+
+function rollingRsRating(rows = [], index = 0) {
+  const raw = rollingRsRawScore(rows, index);
   return Number.isFinite(raw) ? Math.round(clamp(raw, 1, 99)) : null;
+}
+
+function rsChartScoreFromRaw(raw, highMax = 99) {
+  if (!Number.isFinite(raw)) return null;
+  const leaderFloor = 93;
+  if (raw <= leaderFloor) return Number(clamp(raw, 1, leaderFloor).toFixed(2));
+  if (!Number.isFinite(highMax) || highMax <= leaderFloor + 0.001) return Number(clamp(raw, 1, 99).toFixed(2));
+  return Number(clamp(leaderFloor + ((raw - leaderFloor) / (highMax - leaderFloor)) * (99 - leaderFloor), 1, 99).toFixed(2));
 }
 
 function relativeStrengthSeriesFromBars(bars = [], benchmarkBars = []) {
@@ -305,13 +327,17 @@ function relativeStrengthSeriesFromBars(bars = [], benchmarkBars = []) {
       ...bar,
       rsLine,
       rsLineSma50: null,
+      rsRawScore: rollingRsRawScore(aligned, index),
       rsRating: rollingRsRating(aligned, index),
     };
   });
+  const chartRawMax = Math.max(...full.map((bar) => bar.rsRawScore).filter(Number.isFinite));
   const withSma = full.map((bar, index) => ({
     date: bar.date,
     rsLine: Number.isFinite(bar.rsLine) ? Number(bar.rsLine.toFixed(2)) : null,
     rsLineSma50: Number.isFinite(avgAt(full, index, 50, "rsLine")) ? Number(avgAt(full, index, 50, "rsLine").toFixed(2)) : null,
+    rsChartScore: rsChartScoreFromRaw(bar.rsRawScore, chartRawMax),
+    rsChartScoreSma50: rsChartScoreFromRaw(avgAt(full, index, 50, "rsRawScore"), chartRawMax),
     rsRating: bar.rsRating,
   })).filter((bar) => Number.isFinite(bar.rsLine));
   const points = withSma.slice(-260);
@@ -610,6 +636,55 @@ function mergeDerivedGrowthMetrics(base = {}, derived = {}) {
   return out;
 }
 
+function splitFactorAfterDate(date = "", splitEvents = []) {
+  const rowTime = dateTime(date);
+  if (!rowTime) return 1;
+  return (splitEvents || []).reduce((factor, event) => {
+    const splitTime = dateTime(event.date);
+    const ratioValue = Number(event.ratio);
+    return splitTime > rowTime && Number.isFinite(ratioValue) && ratioValue > 0 ? factor * ratioValue : factor;
+  }, 1);
+}
+
+function normalizeEpsRowForSplits(row = {}, splitEvents = [], sharesOutstanding = null) {
+  const eps = Number(row.eps);
+  const netIncome = Number(row.netIncome);
+  const shares = Number(sharesOutstanding);
+  const splitFactor = splitFactorAfterDate(row.date, splitEvents);
+  if (!Number.isFinite(eps) || eps === 0 || !Number.isFinite(netIncome) || !Number.isFinite(shares) || shares <= 0 || splitFactor <= 1.01) return row;
+
+  const impliedShares = Math.abs(netIncome / eps);
+  const adjustedEps = eps / splitFactor;
+  const adjustedImpliedShares = Math.abs(netIncome / adjustedEps);
+  if (!Number.isFinite(impliedShares) || !Number.isFinite(adjustedImpliedShares) || impliedShares <= 0 || adjustedImpliedShares <= 0) return row;
+
+  const currentGap = Math.abs(Math.log(shares / impliedShares));
+  const adjustedGap = Math.abs(Math.log(shares / adjustedImpliedShares));
+  if (currentGap > Math.log(Math.sqrt(splitFactor)) && adjustedGap + 0.25 < currentGap) {
+    return {
+      ...row,
+      eps: Number(adjustedEps.toFixed(4)),
+      epsSplitAdjusted: true,
+    };
+  }
+  return row;
+}
+
+function normalizeFinancialResultsForSplits(results = null, splitEvents = [], sharesOutstanding = null) {
+  if (!results || !Array.isArray(splitEvents) || !splitEvents.length) return results;
+  const adjustRows = (rows = []) => rows.map((row) => normalizeEpsRowForSplits(row, splitEvents, sharesOutstanding));
+  const incomeQuarterly = adjustRows(results.incomeQuarterly || []);
+  const incomeAnnual = adjustRows(results.incomeAnnual || []);
+  const latest = normalizeEpsRowForSplits(results.latest || {}, splitEvents, sharesOutstanding);
+  return {
+    ...results,
+    source: results.source ? `${results.source} + split-adjusted EPS` : "split-adjusted EPS",
+    incomeQuarterly,
+    incomeAnnual,
+    latest,
+  };
+}
+
 function genericText(value = "") {
   return ["", "-", "sin sector", "sin industria", "sin dato"].includes(String(value || "").trim().toLowerCase());
 }
@@ -642,7 +717,7 @@ function mergeObjectFallback(base = {}, fallback = {}) {
   return out;
 }
 
-export async function getCompanyBrief(symbol) {
+export async function getCompanyBrief(symbol, options = {}) {
   if (!symbol) throw new Error("Falta symbol");
   try {
     const [profileResult, chart] = await Promise.all([
@@ -708,17 +783,27 @@ export async function getCompanyBrief(symbol) {
     const asicShort = await fetchAsicShortInterest(symbol).catch(() => null);
     profile = mergeAsicShortInterest(profile, asicShort);
     const yahooFinancialResults = mergeFinancialResults(profile.fundamentalsFinancialResults || profile.growthMetrics?.financialResults, extrasResult.financialResults);
-    const secFinancialResults = mergeFinancialResults(yahooFinancialResults, secResult.financialResults);
-    const financialResults = mergeFinancialResults(secFinancialResults, fmpResult.financialResults);
+    const secFinancialResults = secResult.error
+      ? yahooFinancialResults
+      : mergeFinancialResults(secResult.financialResults, yahooFinancialResults);
+    const mergedFinancialResults = mergeFinancialResults(secFinancialResults, fmpResult.financialResults);
+    const financialResults = normalizeFinancialResultsForSplits(
+      mergedFinancialResults,
+      chart.meta?.splitEvents || [],
+      firstFinite(profile.valuationMetrics?.sharesOutstanding, profile.growthMetrics?.sharesOutstanding)
+    );
     profile.growthMetrics = mergeDerivedGrowthMetrics(profile.growthMetrics, deriveGrowthFromFinancialResults(financialResults));
     const theme = inferTheme(profile.sector, profile.industry, profile.businessSummary);
     const country = countryFromSymbol(symbol, profile.country);
     const summary = firstSentences(profile.businessSummary, 2);
-    const cap = fmtCap(profile.marketCap);
     const marketCapCurrency = normalizeCurrency(profile.currency);
     const marketCapUsd = await marketCapUsdInfo(profile.marketCap, marketCapCurrency).catch(() => null);
+    const listingChart = profile.ipoDate ? null : await fetchYahooChart(symbol, { range: "MAX" }).catch(() => null);
+    const listingDate = profile.ipoDate || oldestBarDate(listingChart?.bars || []);
+    const listingDateSource = profile.ipoDate ? "Proveedor perfil" : listingDate ? "Primera cotizacion historica disponible" : "";
     const stage = stageFromBars(chart.bars || []);
-    const benchmarkSymbol = benchmarkForProfile(symbol, profile, theme.key);
+    const requestedBenchmark = cleanBenchmarkSymbol(options.benchmarkSymbol);
+    const benchmarkSymbol = requestedBenchmark || benchmarkForProfile(symbol, profile, theme.key);
     const benchmarkChart = await fetchYahooChart(benchmarkSymbol).catch(() => ({ bars: [] }));
     const relativeStrength = {
       benchmarkSymbol,
@@ -758,7 +843,7 @@ export async function getCompanyBrief(symbol) {
       currency: profile.currency,
       marketCap: profile.marketCap,
       marketCapCurrency,
-      marketCapLabel: `${sizeLabel(profile.marketCap)}${cap ? ` (~${cap}${marketCapCurrency ? ` ${marketCapCurrency}` : ""})` : ""}`,
+      marketCapLabel: Number.isFinite(profile.marketCap) ? `${fmtCap(profile.marketCap)}${marketCapCurrency ? ` ${marketCapCurrency}` : ""}` : "Sin dato",
       marketCapUsd: marketCapUsd?.value ?? null,
       marketCapUsdLabel: marketCapUsd?.label || "",
       marketCapFx: marketCapUsd ? {
@@ -767,6 +852,8 @@ export async function getCompanyBrief(symbol) {
         source: marketCapUsd.source,
       } : null,
       ipoDate: profile.ipoDate,
+      listingDate,
+      listingDateSource,
       country,
       city: profile.city,
       employees: profile.fullTimeEmployees,
@@ -815,9 +902,10 @@ export async function getCompanyBrief(symbol) {
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const symbol = searchParams.get("symbol");
+  const benchmarkSymbol = searchParams.get("benchmark");
   if (!symbol) return Response.json({ error: "Falta symbol" }, { status: 400 });
   try {
-    return Response.json(await getCompanyBrief(symbol));
+    return Response.json(await getCompanyBrief(symbol, { benchmarkSymbol }));
   } catch (e) {
     return Response.json({ error: e.message || String(e) }, { status: 500 });
   }

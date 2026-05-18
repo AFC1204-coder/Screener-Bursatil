@@ -18,6 +18,8 @@ const REQUIRED_TABLES = [
   ["daily_bars", "market-data-cache"],
   ["fundamental_snapshots", "fundamentals-cache"],
   ["provider_runs", "ops"],
+  ["leaderboard_snapshots", "derived-products"],
+  ["leaderboard_items", "derived-products"],
 ];
 
 function loadEnv() {

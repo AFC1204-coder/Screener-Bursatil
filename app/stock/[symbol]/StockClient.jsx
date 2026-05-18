@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import ChartPreferences from "@/app/ChartPreferences";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
-import { CHART_RANGES, DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
+import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
+const rsFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
 const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
 const ratio = (n) => Number.isFinite(n) ? n.toFixed(2) : "Sin dato";
 const margin = (numerator, denominator) => Number.isFinite(numerator) && Number.isFinite(denominator) && denominator !== 0 ? pct((numerator / denominator) * 100) : "Sin dato";
@@ -77,190 +78,6 @@ function stockAccentStyle(data = {}, symbol = "") {
   };
 }
 
-function TradingViewChart({ symbol, settings = DEFAULT_CHART_SETTINGS }) {
-  const ref = useRef(null);
-  const interval = settings?.interval || DEFAULT_CHART_SETTINGS.interval;
-  const range = settings?.range || DEFAULT_CHART_SETTINGS.range;
-  const style = settings?.style || DEFAULT_CHART_SETTINGS.style;
-  useEffect(() => {
-    if (!ref.current || !symbol) return;
-    ref.current.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol,
-      interval,
-      range,
-      timezone: "Etc/UTC",
-      theme: "dark",
-      style,
-      locale: "es",
-      withdateranges: true,
-      hide_side_toolbar: false,
-      allow_symbol_change: true,
-      save_image: false,
-      calendar: false,
-      support_host: "https://www.tradingview.com",
-    });
-    ref.current.appendChild(script);
-    return () => { if (ref.current) ref.current.innerHTML = ""; };
-  }, [symbol, interval, range, style]);
-  return <div className="tvBox"><div className="tradingview-widget-container" ref={ref} /></div>;
-}
-
-function PriceFallbackChart({ bars = [], symbol, currency = "", reason = "", tradingViewUrl = "", settings = DEFAULT_CHART_SETTINGS }) {
-  const allRows = useMemo(() => (bars || [])
-    .filter((bar) => Number.isFinite(bar.close))
-    .sort((a, b) => new Date(a.date) - new Date(b.date)), [bars]);
-  if (!allRows.length) return <div className="priceFallback empty">Historico insuficiente</div>;
-  const activeRange = CHART_RANGES.find((range) => range.key === settings?.range) || CHART_RANGES[3];
-  const rows = allRows.slice(-Math.min(activeRange.bars, allRows.length));
-  const width = 960;
-  const height = 320;
-  const padX = 18;
-  const padTop = 18;
-  const padBottom = 36;
-  const priceValues = rows.flatMap((bar) => [bar.open, bar.high, bar.low, bar.close].filter(Number.isFinite));
-  const rawMin = Math.min(...priceValues);
-  const rawMax = Math.max(...priceValues);
-  const rawSpan = rawMax - rawMin || Math.max(Math.abs(rawMax), 1);
-  const min = rawMin - rawSpan * .08;
-  const max = rawMax + rawSpan * .08;
-  const span = max - min || Math.max(max, 1);
-  const x = (index) => padX + (index / Math.max(rows.length - 1, 1)) * (width - padX * 2);
-  const y = (value) => padTop + ((max - value) / span) * (height - padTop - padBottom);
-  const line = rows.map((bar, index) => `${index ? "L" : "M"}${x(index).toFixed(2)},${y(bar.close).toFixed(2)}`).join(" ");
-  const area = `${line} L${x(rows.length - 1).toFixed(2)},${height - padBottom} L${x(0).toFixed(2)},${height - padBottom} Z`;
-  const latest = rows[rows.length - 1];
-  const first = rows[0];
-  const change = first?.close ? ((latest.close / first.close) - 1) * 100 : null;
-  const maxVol = Math.max(...rows.map((bar) => bar.volume || 0), 1);
-  const positive = !Number.isFinite(change) || change >= 0;
-  const volumeWidth = Math.max(1, Math.min(6, ((width - padX * 2) / rows.length) * .42));
-  const chartStyle = settings?.style || DEFAULT_CHART_SETTINGS.style;
-  const candleWidth = Math.max(2, Math.min(9, ((width - padX * 2) / rows.length) * .56));
-  const canShowCandles = chartStyle === "1" && rows.some((bar) => Number.isFinite(bar.open) && Number.isFinite(bar.high) && Number.isFinite(bar.low));
-  const showArea = chartStyle === "3";
-  return <div className="priceFallback">
-    <div className="priceFallbackHead">
-      <div>
-        <span>{symbol}</span>
-        <b>{money(latest.close, currency)}</b>
-        <em className={positive ? "positive" : "negative"}>{pct(change)}</em>
-      </div>
-      <div className="priceFallbackTools">
-        {tradingViewUrl && <a className="priceTvLink" href={tradingViewUrl} target="_blank" rel="noreferrer">Abrir TradingView</a>}
-      </div>
-    </div>
-    <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Grafico de precio de ${symbol}`}>
-      <defs>
-        <linearGradient id={`area-${String(symbol).replace(/[^a-z0-9]/gi, "-")}`} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={positive ? "#d6ae5c" : "#ff7a7a"} stopOpacity=".3" />
-          <stop offset="100%" stopColor="#000" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {[0, 1, 2, 3].map((tick) => {
-        const yy = padTop + tick * ((height - padTop - padBottom) / 3);
-        const value = max - tick * (span / 3);
-        return <g key={tick}>
-          <line x1={padX} x2={width - padX} y1={yy} y2={yy} />
-          <text x={width - padX} y={yy - 5}>{money(value, currency)}</text>
-        </g>;
-      })}
-      {rows.map((bar, index) => {
-        const volHeight = Math.max(1, ((bar.volume || 0) / maxVol) * 46);
-        return <rect key={`${bar.date}-vol`} className="volumeBar" x={x(index) - volumeWidth / 2} y={height - padBottom - volHeight} width={volumeWidth} height={volHeight} />;
-      })}
-      {showArea && <path className="area" d={area} fill={`url(#area-${String(symbol).replace(/[^a-z0-9]/gi, "-")})`} />}
-      {canShowCandles ? rows.map((bar, index) => {
-        const open = Number.isFinite(bar.open) ? bar.open : bar.close;
-        const high = Number.isFinite(bar.high) ? bar.high : Math.max(open, bar.close);
-        const low = Number.isFinite(bar.low) ? bar.low : Math.min(open, bar.close);
-        const up = bar.close >= open;
-        const top = Math.min(y(open), y(bar.close));
-        const bodyHeight = Math.max(1, Math.abs(y(open) - y(bar.close)));
-        return <g key={`${bar.date}-candle`} className={up ? "candle positive" : "candle negative"}>
-          <line className="candleWick" x1={x(index)} x2={x(index)} y1={y(high)} y2={y(low)} />
-          <rect className="candleBody" x={x(index) - candleWidth / 2} y={top} width={candleWidth} height={bodyHeight} />
-        </g>;
-      }) : <path className={positive ? "line positive" : "line negative"} d={line} />}
-      <circle cx={x(rows.length - 1)} cy={y(latest.close)} r="4" />
-    </svg>
-    <div className="priceFallbackFoot">
-      <span>{rows[0]?.date || "-"}</span>
-      <span>{activeRange.label}</span>
-      <span>{latest.date || "-"}</span>
-    </div>
-    {reason && <p className="srOnly">{reason}</p>}
-  </div>;
-}
-
-function pathFromPoints(points = [], key, x, y) {
-  let open = false;
-  return points.map((point, index) => {
-    const value = point[key];
-    if (!Number.isFinite(value)) {
-      open = false;
-      return "";
-    }
-    const cmd = open ? "L" : "M";
-    open = true;
-    return `${cmd}${x(index).toFixed(2)},${y(value).toFixed(2)}`;
-  }).filter(Boolean).join(" ");
-}
-
-function RsLineChart({ series = {}, benchmarkSymbol = "" }) {
-  const points = (series?.points || []).filter((point) => Number.isFinite(point.rsLine));
-  if (points.length < 2) return <div className="dataNote">Historico insuficiente para graficar la linea RS.</div>;
-  const width = 760;
-  const height = 260;
-  const padX = 22;
-  const padTop = 26;
-  const padBottom = 42;
-  const values = points.flatMap((point) => [point.rsLine, point.rsLineSma50].filter(Number.isFinite));
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = max - min || Math.max(1, Math.abs(max) * .04);
-  const x = (index) => padX + (index / Math.max(1, points.length - 1)) * (width - padX * 2);
-  const y = (value) => padTop + ((max - value) / span) * (height - padTop - padBottom);
-  const first = points[0]?.rsLine;
-  const latest = points.at(-1)?.rsLine;
-  const up = !Number.isFinite(first) || !Number.isFinite(latest) || latest >= first;
-  const line = pathFromPoints(points, "rsLine", x, y);
-  const ma = pathFromPoints(points, "rsLineSma50", x, y);
-  const ratingPoints = points.filter((point) => Number.isFinite(point.rsRating));
-  return <div className="rsLineChart">
-    <div className="rsLineMeta">
-      <span><b>{Number.isFinite(series.latestLine) ? series.latestLine.toFixed(1) : "-"}</b><small>RS line vs {benchmarkSymbol || "benchmark"}</small></span>
-      <span><b>{Number.isFinite(series.latestRating) ? series.latestRating.toFixed(0) : "-"}</b><small>RS rating aprox.</small></span>
-      <span><b>{pct(series.trend21d)}</b><small>cambio 21d RS</small></span>
-      <span><b>{series.newHigh52w ? "Si" : "No"}</b><small>maximo RS 52w</small></span>
-    </div>
-    <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Linea de fuerza relativa vs ${benchmarkSymbol || "benchmark"}`}>
-      {[0, 1, 2, 3].map((tick) => {
-        const yy = padTop + tick * ((height - padTop - padBottom) / 3);
-        const value = max - tick * (span / 3);
-        return <g key={tick}>
-          <line className="rsGrid" x1={padX} x2={width - padX} y1={yy} y2={yy} />
-          <text x={width - padX} y={yy - 5}>{value.toFixed(1)}</text>
-        </g>;
-      })}
-      <path className={`rsArea ${up ? "up" : "down"}`} d={`${line} L${x(points.length - 1).toFixed(2)},${height - padBottom} L${x(0).toFixed(2)},${height - padBottom} Z`} />
-      {ma && <path className="rsMa" d={ma} />}
-      <path className={`rsLine ${up ? "up" : "down"}`} d={line} />
-      <circle className="rsLast" cx={x(points.length - 1)} cy={y(latest)} r="4" />
-    </svg>
-    <div className="rsLineFoot">
-      <span>{points[0]?.date || "-"}</span>
-      <span>{ratingPoints.length ? `${ratingPoints.length} puntos con rating aproximado` : "RS line normalizada"}</span>
-      <span>{points.at(-1)?.date || "-"}</span>
-    </div>
-    {series.note && <p className="fine">{series.note}</p>}
-  </div>;
-}
-
 function Metric({ label, value, tone = "" }) {
   return <div className={`metric ${tone}`.trim()}><span>{label}</span><b>{value}</b></div>;
 }
@@ -320,7 +137,7 @@ function EarningsSection({ calendar = {}, currency = "" }) {
   </section>;
 }
 
-function ResultsSection({ results = {}, currency = "", embedded = false }) {
+function ResultsSection({ results = {}, currency = "", embedded = false, snapshot = null }) {
   const [period, setPeriod] = useState("quarter");
   const [statement, setStatement] = useState("summary");
   const incomeQuarterly = results?.incomeQuarterly || [];
@@ -403,7 +220,8 @@ function ResultsSection({ results = {}, currency = "", embedded = false }) {
       { label: "Recompras", type: "money", get: (row) => row.cashflow.repurchaseOfStock },
     ],
   };
-  const tableRows = rowsByStatement[statement] || rowsByStatement.summary;
+  const isSnapshot = statement === "snapshot" && snapshot;
+  const tableRows = isSnapshot ? [] : rowsByStatement[statement] || rowsByStatement.summary;
   const candidateRows = tableRows.filter((row) => periods.some((periodRow) => Number.isFinite(row.get(periodRow))));
   const minValuesByStatement = statement === "summary" ? 4 : statement === "income" ? 3 : 1;
   const visiblePeriods = periods.filter((periodRow) => candidateRows.reduce((count, row) => count + (Number.isFinite(row.get(periodRow)) ? 1 : 0), 0) >= minValuesByStatement);
@@ -420,13 +238,14 @@ function ResultsSection({ results = {}, currency = "", embedded = false }) {
         <button type="button" className={period === "annual" ? "active" : ""} onClick={() => setPeriod("annual")}>Años</button>
       </div>
       <div>
+        {snapshot && <button type="button" className={statement === "snapshot" ? "active" : ""} onClick={() => setStatement("snapshot")}>Métricas</button>}
         <button type="button" className={statement === "summary" ? "active" : ""} onClick={() => setStatement("summary")}>Resumen</button>
         <button type="button" className={statement === "income" ? "active" : ""} onClick={() => setStatement("income")}>Resultados</button>
         <button type="button" className={statement === "balance" ? "active" : ""} onClick={() => setStatement("balance")}>Balance</button>
         <button type="button" className={statement === "cashflow" ? "active" : ""} onClick={() => setStatement("cashflow")}>Cash flow</button>
       </div>
     </div>
-    {visiblePeriods.length && visibleRows.length ? <div className="tableWrap statementMatrix">
+    {isSnapshot ? <div className="fundamentalSnapshotPane">{snapshot}</div> : visiblePeriods.length && visibleRows.length ? <div className="tableWrap statementMatrix">
       <table className="table">
         <thead><tr><th>Magnitud</th>{visiblePeriods.map((row) => <th key={`${period}-${row.date}`}>{row.date || "Sin dato"}</th>)}</tr></thead>
         <tbody>{visibleRows.map((row) => <tr key={`${statement}-${row.label}`}>
@@ -455,6 +274,41 @@ function FundamentalGroup({ title, children }) {
   </div>;
 }
 
+function FundamentalSnapshot({ data = {}, growth = {}, valuation = {}, quote = {}, calendar = {}, currency = "" }) {
+  const results = data.financialResults || {};
+  const latest = results.latest || {};
+  const balance = results.balanceQuarterly?.[0] || results.balanceAnnual?.[0] || {};
+  const cashflow = results.cashflowQuarterly?.[0] || results.cashflowAnnual?.[0] || {};
+  const displayCurrency = currency || data.currency || "Moneda no disponible";
+  const rows = [
+    ["Valoracion", "Capitalizacion", money(data.marketCap, data.marketCapCurrency || data.currency)],
+    ["Valoracion", "P/E fwd", ratio(finiteValue(valuation.forwardPe, valuation.forwardPE))],
+    ["Valoracion", "P/S", ratio(valuation.priceToSales)],
+    ["Valoracion", "EV/EBITDA", ratio(valuation.enterpriseToEbitda)],
+    ["Valoracion", "Div. yield", pct(valuation.dividendYield)],
+    ["Rentabilidad", "Margen bruto", pct(growth.grossMargin)],
+    ["Rentabilidad", "Margen operativo", pct(growth.operatingMargin)],
+    ["Rentabilidad", "Margen neto", pct(growth.profitMargin)],
+    ["Rentabilidad", "ROE", pct(growth.roe)],
+    ["Balance", "Deuda/Equity", ratio(growth.debtToEquity)],
+    ["Balance", "Current ratio", ratio(growth.currentRatio)],
+    ["Balance", "Caja", money(balance.cash ?? latest.cash, displayCurrency)],
+    ["Balance", "Deuda total", money(balance.totalDebt ?? latest.totalDebt, displayCurrency)],
+    ["Balance", "Free cash flow", money(cashflow.freeCashFlow ?? latest.freeCashFlow, displayCurrency)],
+    ["Estructura", "Acciones", fmt(valuation.sharesOutstanding || growth.sharesOutstanding)],
+    ["Estructura", "Short float", pct(growth.shortPercentOfFloat)],
+  ];
+  return <div className="tableWrap statementMatrix metricsStatementMatrix">
+    <table className="table">
+      <thead><tr><th>Métrica</th><th>Valor</th></tr></thead>
+      <tbody>{rows.map(([group, label, value]) => <tr key={`${group}-${label}`}>
+        <td>{label}</td>
+        <td>{value}</td>
+      </tr>)}</tbody>
+    </table>
+  </div>;
+}
+
 function CompactHolderList({ title, rows = [] }) {
   const visibleRows = (rows || []).filter(Boolean).slice(0, 5);
   return <div className="compactHolderList">
@@ -470,70 +324,9 @@ function CompactHolderList({ title, rows = [] }) {
 
 function FundamentalsPanel({ data = {}, growth = {}, valuation = {}, quote = {}, calendar = {}, currency = "" }) {
   const results = data.financialResults || {};
-  const latest = results.latest || {};
-  const balance = results.balanceQuarterly?.[0] || results.balanceAnnual?.[0] || {};
-  const cashflow = results.cashflowQuarterly?.[0] || results.cashflowAnnual?.[0] || {};
-  const priceTone = (quote.dayChangePct || 0) >= 0 ? "good" : "bad";
-  const earningsDate = calendar?.earningsDate || (calendar?.earningsStart && calendar?.earningsEnd ? `${calendar.earningsStart} / ${calendar.earningsEnd}` : "Sin dato");
   const displayCurrency = currency || data.currency || "Moneda no disponible";
   return <section className="card fundamentalsPanel">
-    <div className="sectionTitle">
-      <h2>Fundamentales</h2>
-      <span className="fine">{displayCurrency}</span>
-    </div>
-
-    <div className="fundamentalCondensedGrid">
-      <FundamentalGroup title="Crecimiento">
-        <MiniMetric label="Ventas" value={pct(growth.revenueGrowth)} tone={(growth.revenueGrowth || 0) >= 0 ? "good" : "bad"} />
-        <MiniMetric label="Benef." value={pct(growth.earningsGrowth)} tone={(growth.earningsGrowth || 0) >= 0 ? "good" : "bad"} />
-        <MiniMetric label="EPS est." value={money(calendar.epsEstimate, displayCurrency)} />
-        <MiniMetric label="Ventas est." value={money(calendar.revenueEstimate, displayCurrency)} />
-      </FundamentalGroup>
-
-      <FundamentalGroup title="Rentabilidad">
-        <MiniMetric label="Margen bruto" value={pct(growth.grossMargin)} />
-        <MiniMetric label="Margen op." value={pct(growth.operatingMargin)} />
-        <MiniMetric label="Margen neto" value={pct(growth.profitMargin)} />
-        <MiniMetric label="ROE" value={pct(growth.roe)} />
-      </FundamentalGroup>
-
-      <FundamentalGroup title="Balance">
-        <MiniMetric label="Deuda/Equity" value={ratio(growth.debtToEquity)} />
-        <MiniMetric label="Current ratio" value={ratio(growth.currentRatio)} />
-        <MiniMetric label="Caja" value={money(balance.cash ?? latest.cash, displayCurrency)} />
-        <MiniMetric label="Deuda" value={money(balance.totalDebt ?? latest.totalDebt, displayCurrency)} />
-      </FundamentalGroup>
-
-      <FundamentalGroup title="Valoracion">
-        <MiniMetric label="P/E fwd" value={ratio(valuation.forwardPe)} />
-        <MiniMetric label="P/S" value={ratio(valuation.priceToSales)} />
-        <MiniMetric label="EV/EBITDA" value={ratio(valuation.enterpriseToEbitda)} />
-        <MiniMetric label="Div. yield" value={pct(valuation.dividendYield)} />
-      </FundamentalGroup>
-
-      <FundamentalGroup title="Mercado">
-        <MiniMetric label="Precio" value={priceMoney(quote.price, data.currency)} />
-        <MiniMetric label="Dia" value={pct(quote.dayChangePct)} tone={priceTone} />
-        <MiniMetric label="Vol. 3M" value={fmt(valuation.averageVolume3m || quote.averageVolume3m)} />
-        <MiniMetric label="Acciones" value={fmt(valuation.sharesOutstanding || growth.sharesOutstanding)} />
-      </FundamentalGroup>
-
-      <FundamentalGroup title="Ownership">
-        <MiniMetric label="Inst." value={pct(growth.institutionalOwnership)} />
-        <MiniMetric label="Insider" value={pct(growth.insiderOwnership)} />
-        <MiniMetric label="Short float" value={pct(growth.shortPercentOfFloat)} />
-        <MiniMetric label="Short ratio" value={ratio(growth.shortRatio)} />
-      </FundamentalGroup>
-    </div>
-
-    <div className="fundamentalCalendarStrip">
-      <MiniMetric label="Resultados" value={earningsDate} />
-      <MiniMetric label="EPS growth est." value={pct(calendar.epsEstimateGrowth)} tone={(calendar.epsEstimateGrowth || 0) >= 0 ? "good" : "bad"} />
-      <MiniMetric label="Ventas growth est." value={pct(calendar.revenueEstimateGrowth)} tone={(calendar.revenueEstimateGrowth || 0) >= 0 ? "good" : "bad"} />
-      <MiniMetric label="FCF" value={money(cashflow.freeCashFlow ?? latest.freeCashFlow, displayCurrency)} />
-    </div>
-
-    <ResultsSection results={results} currency={displayCurrency} embedded />
+    <ResultsSection results={results} currency={displayCurrency} embedded snapshot={<FundamentalSnapshot data={data} growth={growth} valuation={valuation} quote={quote} calendar={calendar} currency={displayCurrency} />} />
 
     <div className="fundamentalHoldersCompact">
       <CompactHolderList title="Top funds" rows={growth.topFunds} />
@@ -580,6 +373,14 @@ function epsValue(row, sharesOutstanding) {
   return { value: null, derived: false };
 }
 
+function epsGrowth(row, sourceRows, index, compareOffset, sharesOutstanding) {
+  const providerGrowth = finiteValue(row?.epsGrowthYoY);
+  if (Number.isFinite(providerGrowth)) return providerGrowth;
+  const current = epsValue(row, sharesOutstanding).value;
+  const previous = epsValue(sourceRows[index + compareOffset], sharesOutstanding).value;
+  return calcGrowth(current, previous);
+}
+
 function valueTone(value) {
   if (!Number.isFinite(value)) return "";
   return value > 0 ? "good" : value < 0 ? "bad" : "neutral";
@@ -620,6 +421,12 @@ function technicalSnapshotFromBars(bars = [], quote = {}) {
   };
 }
 
+const BENCHMARK_OPTIONS = ["SPY", "QQQ", "ACWI", "IWM", "^GSPC", "^IXIC", "^N225", "^HSI", "^STOXX50E", "^AXJO"];
+
+function cleanBenchmarkSymbol(value = "") {
+  return String(value || "").trim().toUpperCase().replace(/\s+/g, "").slice(0, 24);
+}
+
 function FundamentalMiniTable({ results = {}, currency = "", metrics = {}, sharesOutstanding = null }) {
   const annualSource = sortLatestFirst(results?.incomeAnnual || [])
     .filter((row) => row?.date && [row.revenue, row.netIncome, row.eps, row.revenueGrowthYoY, row.netIncomeGrowthYoY].some(Number.isFinite));
@@ -632,27 +439,26 @@ function FundamentalMiniTable({ results = {}, currency = "", metrics = {}, share
   const compareOffset = useAnnual ? 1 : 4;
 
   if (!rows.length) {
-    return <div className="researchRows">
-      <span>Ventas</span><b>{pct(metrics.revenueGrowth)}</b>
-      <span>Benef.</span><b>{pct(metrics.earningsGrowth)}</b>
-      <span>Margen op.</span><b>{pct(metrics.operatingMargin)}</b>
-      <span>ROE</span><b>{pct(metrics.roe)}</b>
+    return <div className="researchMetricGrid">
+      <div className="researchMetric"><span>Ventas</span><b>{pct(metrics.revenueGrowth)}</b></div>
+      <div className="researchMetric"><span>EPS YoY</span><b>{pct(metrics.earningsGrowth)}</b></div>
+      <div className="researchMetric"><span>Margen op.</span><b>{pct(metrics.operatingMargin)}</b></div>
+      <div className="researchMetric"><span>ROE</span><b>{pct(metrics.roe)}</b></div>
     </div>;
   }
 
   return <div className="fundamentalMiniTable" aria-label="Historico fundamental compacto">
     <div className="fundamentalMiniRow head">
-      <span>Periodo</span>
+      <span>{useAnnual ? "Año" : "Per."}</span>
       <span>Ventas</span>
       <span>YoY</span>
       <span>EPS</span>
-      <span>Benef.</span>
-      <span>YoY</span>
+      <span>EPS YoY</span>
     </div>
     {rows.map((row, index) => {
       const revenueGrowth = rowGrowth(row, sourceRows, index, "revenue", "revenueGrowthYoY", compareOffset);
-      const netIncomeGrowth = rowGrowth(row, sourceRows, index, "netIncome", "netIncomeGrowthYoY", compareOffset);
       const eps = epsValue(row, sharesOutstanding);
+      const epsYoY = epsGrowth(row, sourceRows, index, compareOffset, sharesOutstanding);
       return <div className="fundamentalMiniRow" key={`${period}-${row.date}`}>
         <span>{compactPeriodLabel(row.date, period)}</span>
         <b>{money(row.revenue, currency)}</b>
@@ -660,8 +466,7 @@ function FundamentalMiniTable({ results = {}, currency = "", metrics = {}, share
         <b title={eps.derived ? "EPS aproximado: beneficio neto / acciones emitidas actuales" : undefined}>
           {ratio(eps.value)}{eps.derived && <small>calc.</small>}
         </b>
-        <b>{money(row.netIncome, currency)}</b>
-        <b className={valueTone(netIncomeGrowth)}>{pct(netIncomeGrowth)}</b>
+        <b className={valueTone(epsYoY)}>{pct(epsYoY)}</b>
       </div>;
     })}
   </div>;
@@ -766,9 +571,16 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const [social, setSocial] = useState(null);
   const [socialLoading, setSocialLoading] = useState(false);
   const [chartSettings, setChartSettings] = useState(DEFAULT_CHART_SETTINGS);
+  const [chartScope, setChartScope] = useState("global");
+  const [benchmarkDraft, setBenchmarkDraft] = useState("");
 
   function updateChartSettings(nextSettings) {
-    setChartSettings(writeChartSettings(nextSettings));
+    setChartSettings(writeChartSettings(nextSettings, { scope: chartScope, symbol }));
+  }
+
+  function updateChartScope(nextScope) {
+    setChartScope(nextScope);
+    setChartSettings(readChartSettings({ scope: nextScope, symbol }));
   }
 
   function loadSimilarFor(payload) {
@@ -801,12 +613,15 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       .finally(() => setSocialLoading(false));
   }
 
-  async function load() {
+  async function load({ benchmarkSymbol = "" } = {}) {
     if (!symbol) return;
     setLoading(true); setError("");
     setSimilar([]);
     try {
-      const r = await fetch(`/api/company-brief?symbol=${encodeURIComponent(symbol)}`);
+      const qs = new URLSearchParams({ symbol });
+      const benchmark = cleanBenchmarkSymbol(benchmarkSymbol);
+      if (benchmark) qs.set("benchmark", benchmark);
+      const r = await fetch(`/api/company-brief?${qs.toString()}`);
       const d = await r.json();
       if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
       setData(d);
@@ -820,15 +635,20 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   }
 
   useEffect(() => {
-    setChartSettings(readChartSettings());
+    const nextSettings = readChartSettings({ scope: chartScope, symbol });
+    setChartSettings(nextSettings);
     setLogoIndex(0);
     setLogoLoaded(false);
+    const savedBenchmark = cleanBenchmarkSymbol(nextSettings.benchmarks?.[symbol]);
     if (initialData) {
       loadSimilarFor(initialData);
       loadSocialFor(initialData);
+      if (savedBenchmark && savedBenchmark !== cleanBenchmarkSymbol(initialData.relativeStrength?.benchmarkSymbol)) {
+        load({ benchmarkSymbol: savedBenchmark });
+      }
       return;
     }
-    if (!initialError) load();
+    if (!initialError) load({ benchmarkSymbol: savedBenchmark });
   }, [symbol]);
   const logoCandidates = [data?.visual?.logoUrl, data?.visual?.clearbitLogoUrl].filter(Boolean);
   const logo = logoCandidates[logoIndex] || "";
@@ -836,17 +656,73 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const v = data?.valuationMetrics || {};
   const q = data?.quoteSnapshot || {};
   const rs = data?.relativeStrength || {};
+  const benchmarkOverride = cleanBenchmarkSymbol(chartSettings?.benchmarks?.[symbol]);
+  const activeBenchmark = benchmarkOverride || cleanBenchmarkSymbol(rs.benchmarkSymbol);
   const technical = technicalSnapshotFromBars(data?.chartBars || [], q);
   const statementCurrency = data?.financialResults?.currency || g.financialCurrency || data?.currency || "";
   const stageTone = /etapa 2/i.test(data?.stage?.label || "") ? "good" : /etapa 4/i.test(data?.stage?.label || "") ? "bad" : "neutral";
   const dayTone = (q.dayChangePct || 0) >= 0 ? "up" : "down";
   const nextEarnings = data?.earningsCalendar?.earningsDate || data?.earningsCalendar?.earningsStart || "Sin dato";
+  const listingDate = data?.ipoDate || data?.listingDate || "";
+  const listingLabel = data?.ipoDate ? "IPO" : data?.listingDate ? "Cotiza desde" : "IPO";
   const providerIssues = [
     data?.dataQuality?.profileProviderError ? `Perfil: ${data.dataQuality.profileProviderError}` : "",
     data?.dataQuality?.extrasProviderError ? `Extras: ${data.dataQuality.extrasProviderError}` : "",
     data?.dataQuality?.secProviderError ? `SEC: ${data.dataQuality.secProviderError}` : "",
   ].filter(Boolean).join(" · ");
   const compactProfile = data ? [data.sector, data.industry, data.country].filter(Boolean).join(" · ") : "";
+  useEffect(() => {
+    setBenchmarkDraft(activeBenchmark);
+  }, [activeBenchmark]);
+
+  function updateBenchmark(value) {
+    const nextBenchmark = cleanBenchmarkSymbol(value);
+    const benchmarks = { ...(chartSettings.benchmarks || {}) };
+    if (nextBenchmark) benchmarks[symbol] = nextBenchmark;
+    else delete benchmarks[symbol];
+    const nextSettings = writeChartSettings({ ...chartSettings, benchmarks }, { scope: chartScope, symbol });
+    setChartSettings(nextSettings);
+    load({ benchmarkSymbol: nextBenchmark });
+  }
+
+  const annualRowsForHero = sortLatestFirst(data?.financialResults?.incomeAnnual || []);
+  const quarterRowsForHero = sortLatestFirst(data?.financialResults?.incomeQuarterly || []);
+  const heroEpsRows = annualRowsForHero.length >= 2 ? annualRowsForHero : quarterRowsForHero;
+  const heroEpsCompareOffset = annualRowsForHero.length >= 2 ? 1 : 4;
+  const heroEpsYoY = heroEpsRows.length ? epsGrowth(heroEpsRows[0], heroEpsRows, 0, heroEpsCompareOffset, v.sharesOutstanding || g.sharesOutstanding) : g.earningsGrowth;
+  const stageShortLabel = (data?.stage?.label || "Sin dato").replace(/\s+probable$/i, "");
+  const compactResearchCard = data ? <section className="terminalPanel stockResearchCard stockResearchCardHero">
+    <div className="sectionTitle">
+      <h2>Carta compacta</h2>
+      <span className="fine">{rs.benchmarkSymbol ? `RS vs ${rs.benchmarkSymbol}` : "Resumen"}</span>
+    </div>
+    <div className="marketSmithStrip" aria-label="Resumen Weinstein Minervini compacto">
+      <MiniMetric label="RS Rating" value={rsFmt(rs.rating)} tone={(rs.rating || 0) >= 75 ? "good" : (rs.rating || 0) < 45 ? "bad" : ""} />
+      <MiniMetric label="Etapa" value={stageShortLabel} tone={stageTone} />
+      <MiniMetric label="Ventas YoY" value={pct(g.revenueGrowth)} tone={valueTone(g.revenueGrowth)} />
+      <MiniMetric label="EPS YoY" value={pct(heroEpsYoY)} tone={valueTone(heroEpsYoY)} />
+    </div>
+    <div className="heroCardMetrics" aria-label="Metricas clave compactas">
+      <div><span>MA50 / MA200</span><b className={valueTone(finiteValue(technical.distanceSma50, technical.distanceSma200))}>{pct(technical.distanceSma50)} / {pct(technical.distanceSma200)}</b></div>
+      <div><span>Vol. rel 50d</span><b>{Number.isFinite(technical.relativeVolume50) ? `${technical.relativeVolume50.toFixed(1)}x` : "Sin dato"}</b></div>
+      <div><span>RS Quality</span><b>{rsFmt(rs.rsQualityScore)}</b></div>
+      <div><span>EV/EBITDA</span><b>{ratio(v.enterpriseToEbitda)}</b></div>
+    </div>
+    <div className="heroCompanyBrief" aria-label="Resumen de negocio compacto">
+      <div className="heroCompanyBriefHead">
+        <span>Negocio</span>
+        <b>{data.theme || data.sector || "Sin clasificar"}</b>
+      </div>
+      <p>{data.summary || "Sin descripcion de negocio disponible."}</p>
+      <div className="heroCompanyFacts">
+        <div><span>Industria</span><b>{data.industry || "Sin dato"}</b></div>
+        <div><span>Cap.</span><b>{money(data.marketCap, data.marketCapCurrency || data.currency)}</b></div>
+        <div><span>Empleados</span><b>{fmt(data.employees)}</b></div>
+        <div><span>{listingLabel === "Cotiza desde" ? "Cotiza" : listingLabel}</span><b title={data.listingDateSource || ""}>{listingDate || "Sin dato"}</b></div>
+      </div>
+    </div>
+  </section> : null;
+
   return <main className="page stockPage">
     <section className="stockCommand" style={stockAccentStyle(data, symbol)}>
       <div className="stockCommandMain">
@@ -871,15 +747,16 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
               {data?.currency && <span className="stockQuoteCurrency">{data.currency}</span>}
               {Number.isFinite(q.dayChangePct) && <b className={dayTone}>{signedPriceMoney(q.dayChange)} ({pct(q.dayChangePct)})</b>}
             </div>
+            {data?.links?.official && (
+              <div className="stockHeroActions">
+                <a className="stockHeroLink" href={data.links.official} target="_blank" rel="noreferrer">
+                  Web oficial
+                </a>
+              </div>
+            )}
           </div>
         </div>
-        {data?.links?.official && (
-          <div className="stockHeroActions">
-            <a className="stockHeroLink" href={data.links.official} target="_blank" rel="noreferrer">
-              Web oficial
-            </a>
-          </div>
-        )}
+        {compactResearchCard && <div className="stockHeroCompactCard">{compactResearchCard}</div>}
       </div>
     </section>
 
@@ -891,7 +768,16 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           <div className="sectionTitle">
             <h2>Grafico</h2>
           </div>
-          <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={symbol} compact />
+          <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={symbol} scope={chartScope} onScopeChange={updateChartScope} compact />
+          <div className="chartBenchmarkControl">
+            <label htmlFor={`benchmark-${symbol}`}>Benchmark RS</label>
+            <input id={`benchmark-${symbol}`} list={`benchmark-options-${symbol}`} value={benchmarkDraft} onChange={(event) => setBenchmarkDraft(cleanBenchmarkSymbol(event.target.value))} onKeyDown={(event) => { if (event.key === "Enter") updateBenchmark(benchmarkDraft); }} placeholder={rs.benchmarkSymbol || "SPY"} disabled={loading} />
+            <datalist id={`benchmark-options-${symbol}`}>
+              {BENCHMARK_OPTIONS.map((item) => <option key={item} value={item} />)}
+            </datalist>
+            <button type="button" onClick={() => updateBenchmark(benchmarkDraft)} disabled={loading || !benchmarkDraft}>Aplicar</button>
+            <button type="button" onClick={() => updateBenchmark("")} disabled={loading || !benchmarkOverride}>Auto</button>
+          </div>
           <UniversalPriceChart
             bars={data.chartBars}
             symbol={symbol}
@@ -900,72 +786,9 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
             settings={chartSettings}
             relativeStrength={rs.series}
             benchmarkSymbol={rs.benchmarkSymbol}
+            height={600}
           />
         </div>
-        <aside className="stockIntelRail">
-          <section className="terminalPanel stockResearchCard">
-            <div className="sectionTitle">
-              <h2>Carta compacta</h2>
-              <span className="fine">{rs.benchmarkSymbol ? `RS vs ${rs.benchmarkSymbol}` : "Resumen"}</span>
-            </div>
-            <div className="marketSmithStrip" aria-label="Resumen Weinstein Minervini compacto">
-              <MiniMetric label="RS Rating" value={fmt(rs.rating)} tone={(rs.rating || 0) >= 75 ? "good" : (rs.rating || 0) < 45 ? "bad" : ""} />
-              <MiniMetric label="Etapa" value={data.stage?.label || "Sin dato"} tone={stageTone} />
-              <MiniMetric label="Ventas YoY" value={pct(g.revenueGrowth)} tone={valueTone(g.revenueGrowth)} />
-              <MiniMetric label="Benef. YoY" value={pct(g.earningsGrowth)} tone={valueTone(g.earningsGrowth)} />
-            </div>
-            <div className="researchCardGrid">
-              <div className="researchBlock">
-                <h3>Tecnico</h3>
-                <div className="researchRows">
-                  <span>Etapa</span><b className={stageTone}>{data.stage?.label || "Sin dato"}</b>
-                  <span>RS Global</span><b className={(rs.rating || 0) >= 75 ? "good" : (rs.rating || 0) < 45 ? "bad" : ""}>{fmt(rs.rating)}</b>
-                  <span>MA50 / MA200</span><b className={valueTone(finiteValue(technical.distanceSma50, technical.distanceSma200))}>{pct(technical.distanceSma50)} / {pct(technical.distanceSma200)}</b>
-                  <span>Vol. rel 50d</span><b>{Number.isFinite(technical.relativeVolume50) ? `${technical.relativeVolume50.toFixed(1)}x` : "Sin dato"}</b>
-                  <span>RS Quality</span><b>{fmt(rs.rsQualityScore)}</b>
-                  <span>Dist. 52w</span><b>{pct(finiteValue(rs.distance52w, technical.distance52w))}</b>
-                </div>
-              </div>
-              <div className="researchBlock">
-                <h3>Fundamental</h3>
-                <FundamentalMiniTable results={data.financialResults} currency={statementCurrency} metrics={g} sharesOutstanding={v.sharesOutstanding || g.sharesOutstanding} />
-              </div>
-              <div className="researchBlock">
-                <h3>Valoracion</h3>
-                <div className="researchRows">
-                  <span>Capitalizacion</span><b>{data.marketCapLabel || "Sin dato"}</b>
-                  <span>P/E fwd</span><b>{ratio(v.forwardPE)}</b>
-                  <span>EV/EBITDA</span><b>{ratio(v.enterpriseToEbitda)}</b>
-                  <span>Div. yield</span><b>{pct(v.dividendYield)}</b>
-                </div>
-              </div>
-              <div className="researchBlock">
-                <h3>Eventos</h3>
-                <div className="researchRows">
-                  <span>Resultados</span><b>{nextEarnings}</b>
-                  <span>Ex-div.</span><b>{data.earningsCalendar?.exDividendDate || "Sin dato"}</b>
-                  <span>Empleados</span><b>{fmt(data.employees)}</b>
-                  <span>IPO</span><b>{data.ipoDate || "Sin dato"}</b>
-                </div>
-                <div className="researchLinksCompact" aria-label="Referencias externas">
-                  {data.links?.yahooFinance && <a href={data.links.yahooFinance} target="_blank" rel="noreferrer">Yahoo</a>}
-                  {data.links?.googleFinance && <a href={data.links.googleFinance} target="_blank" rel="noreferrer">Google</a>}
-                </div>
-              </div>
-            </div>
-          </section>
-          <section className="terminalPanel businessPanel">
-            <div className="sectionTitle">
-              <h2>Negocio</h2>
-            </div>
-            <p className="leadText">{data.summary}</p>
-            <div className="businessMetaGrid">
-              <div className="summaryRow"><span>Tematica</span><span>{data.theme || "Sin dato"}</span></div>
-              <div className="summaryRow"><span>Sector</span><span>{data.sector || "Sin dato"}</span></div>
-              <div className="summaryRow"><span>Industria</span><span>{data.industry || "Sin dato"}</span></div>
-            </div>
-          </section>
-        </aside>
       </section>
 
       <SimilarStocks rows={similar} />
@@ -975,8 +798,8 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           <h2>Fuerza relativa</h2>
         </div>
         <div className="metricGrid rsMetricGrid">
-          <Metric label="RS Rating StatsEdge" value={fmt(rs.rating)} tone={(rs.rating || 0) >= 75 ? "good" : (rs.rating || 0) < 45 ? "bad" : "neutral"} />
-          <Metric label="RS Quality" value={fmt(rs.rsQualityScore)} tone={(rs.rsQualityScore || 0) >= 70 ? "good" : (rs.rsQualityScore || 0) < 45 ? "bad" : "neutral"} />
+          <Metric label="RS Rating StatsEdge" value={rsFmt(rs.rating)} tone={(rs.rating || 0) >= 75 ? "good" : (rs.rating || 0) < 45 ? "bad" : "neutral"} />
+          <Metric label="RS Quality" value={rsFmt(rs.rsQualityScore)} tone={(rs.rsQualityScore || 0) >= 70 ? "good" : (rs.rsQualityScore || 0) < 45 ? "bad" : "neutral"} />
           <Metric label="Spec Risk" value={fmt(rs.speculationRiskScore)} tone={(rs.speculationRiskScore || 0) >= 60 ? "warn" : "neutral"} />
           <Metric label="Volatilidad 63d" value={pct(rs.volatility63d)} tone={(rs.volatility63d || 0) >= 70 ? "warn" : "neutral"} />
           <Metric label="Drawdown 63d" value={pct(rs.maxDrawdown63d)} tone={(rs.maxDrawdown63d || 0) >= 25 ? "warn" : "neutral"} />

@@ -4,7 +4,7 @@ import { deleteFavoriteFromCloud, deleteScanFromCloud, getAlertsFromCloud, getCl
 import { num, pct } from "@/lib/formatters";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { activeAlerts, alertSummary, alertsFromScan, mergeAlerts, resolveAlert } from "@/lib/methodologyAlerts";
-import { checklistForRow, compactMethodologySnapshot, enrichRowsWithMethodology, summarizeMethodology } from "@/lib/methodologyEngine";
+import { checklistForRow, compactMethodologySnapshot, enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
 import { benchmarkForFavorite, externalLinks, stockUrl } from "@/lib/symbols";
 
 function uid() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
@@ -147,7 +147,7 @@ export default function ResearchDesk() {
     setSyncing(true);
     setStatus("Subiendo localStorage a Supabase...");
     try {
-      const result = await pushCloudState({ scans, favorites });
+      const result = await pushCloudState({ scans, favorites, alerts });
       await refreshCloudStatus(false);
       if (result.configured === false) setStatus("Supabase no configurado. No se ha subido nada.");
       else if (result.ok) setStatus(`Supabase actualizado: ${result.scansSaved} snapshots, ${result.favoritesSaved} favoritos y ${result.alertsSaved || 0} alertas.`);
@@ -211,9 +211,12 @@ export default function ResearchDesk() {
     try {
       const rows = JSON.parse(raw);
       const rawRows = Array.isArray(rows) ? rows : rows.rows || [];
-      const previousScan = scans.find((item) => Array.isArray(item.rows) && item.rows.length);
+      const manualSymbols = rawRows.map((row) => String(row.symbol || "").trim().toUpperCase()).filter(Boolean).sort().join(",");
+      const compatibilityContext = { preset: "manual", scanMode: "manual", markets: rows.markets || rows.market || [], universeKey: manualSymbols };
+      const compatibilityKey = snapshotCompatibilityKey(compatibilityContext);
+      const previousScan = findCompatiblePreviousScan(scans, compatibilityContext);
       const enrichedRows = enrichRowsWithMethodology(rawRows, previousScan?.rows || []);
-      const scan = { id: uid(), createdAt: new Date().toISOString(), name: `Snapshot manual · ${new Date().toLocaleString()}`, preset: "manual", marketRegime: market?.regime?.label || "sin dato", marketScore: market?.marketScore ?? null, methodologySummary: summarizeMethodology(enrichedRows, previousScan), rows: enrichedRows };
+      const scan = { id: uid(), createdAt: new Date().toISOString(), name: `Snapshot manual · ${new Date().toLocaleString()}`, preset: "manual", marketRegime: market?.regime?.label || "sin dato", marketScore: market?.marketScore ?? null, snapshotCompatibilityKey: compatibilityKey, comparison: { compatiblePrevious: Boolean(previousScan), previousScanId: previousScan?.id || null, previousScanDate: previousScan?.createdAt || null }, methodologySummary: summarizeMethodology(enrichedRows, previousScan), rows: enrichedRows };
       const generatedAlerts = alertsFromScan(scan);
       persistScans([scan, ...scans].slice(0, 50));
       persistAlerts(mergeAlerts(alerts, generatedAlerts).slice(0, 500));
@@ -222,7 +225,9 @@ export default function ResearchDesk() {
       syncScanToCloud(scan).then((result) => {
         if (result.configured !== false && result.ok) setStatus(`Snapshot guardado en local y Supabase: ${scan.rows.length} acciones`);
       });
-      syncAlertsToCloud(generatedAlerts);
+      syncAlertsToCloud(generatedAlerts).then((result) => {
+        if (result.ok && result.data?.alerts?.length) persistAlerts(mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), result.data.alerts).slice(0, 500));
+      });
     } catch {
       setStatus("JSON no valido");
     }
@@ -315,6 +320,7 @@ export default function ResearchDesk() {
     setStatus(`${alert.symbol} · alerta resuelta`);
     resolveAlertInCloud(nextAlert).then((result) => {
       if (result.configured !== false && !result.ok) setStatus(`Alerta resuelta localmente. Supabase: ${result.message}`);
+      else if (result.ok && result.data?.alerts?.length) persistAlerts(mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), result.data.alerts).slice(0, 500));
     });
   }
 

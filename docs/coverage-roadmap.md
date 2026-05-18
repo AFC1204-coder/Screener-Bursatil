@@ -15,6 +15,9 @@ Implemented:
 - Protected refresh job: `/api/jobs/universe-refresh`.
 - HKEX official universe adapter for Hong Kong using the public Full List of Securities workbook, filtered to HKD equities and REITs.
 - J-Quants universe adapter for Japan, active when `JQUANTS_API_KEY` or legacy `JQUANTS_REFRESH_TOKEN` is configured.
+- J-Quants cache adapter and protected refresh job: `/api/jobs/jquants-refresh` stores Japan OHLCV/fundamentals into Supabase in bounded batches.
+- Derived Leaderboards API: `/api/leaderboards` builds top lists by country, sector, industry or theme from saved scan results without exposing full raw universes.
+- Protected leaderboards refresh job: `/api/jobs/leaderboards-refresh` materializes default derived lists into Supabase.
 
 Operational blocker:
 
@@ -29,6 +32,7 @@ Acceptance criteria:
 - `/api/coverage` reports `cache.status=supabase` for the global market set.
 - Universe snapshots persist by market set.
 - `daily_bars` can store OHLCV by symbol/date/provider.
+- `leaderboard_snapshots` and `leaderboard_items` store derived top lists, not provider raw datasets.
 - Scans read cached bars first, then provider live only on cache miss/stale data.
 
 Implementation:
@@ -37,12 +41,34 @@ Implementation:
 2. Schedule `/api/jobs/universe-refresh` daily after market close windows.
 3. Add OHLCV writer around the existing chart provider chain.
 4. Change scanner hydration to prefer cached `daily_bars`.
+5. Schedule `/api/jobs/leaderboards-refresh` after scan snapshots are saved.
+6. After `JQUANTS_API_KEY` is configured, schedule `/api/jobs/jquants-refresh?limit=50&days=390` for Japan batches.
+
+## Derived leaderboards
+
+Leaderboards are product output, not a market-data feed. They read `scan_results`, de-duplicate symbols, apply minimum coverage/quality gates and expose only top candidates plus StatsEdge-derived metrics.
+
+Examples:
+
+- `/api/leaderboards?type=momentum&country=HK&limit=25`
+- `/api/leaderboards?type=stage2&country=JP&limit=25`
+- `/api/leaderboards?type=return6m&sector=Technology&limit=25`
+- `/api/leaderboards?type=momentum&groupBy=country&limit=10&groupsLimit=20`
+- `/api/leaderboards?type=rs&groupBy=sector&limit=10&groupsLimit=20`
+
+Default materialized lists:
+
+- `global-momentum`
+- `global-stage2`
+- `global-near-pivot`
+- `global-rs`
+- `global-growth-quality`
 
 ## Phase 2 - official/free universe sources
 
 Priority order:
 
-1. Japan: configure J-Quants V2 `equities/master` and refresh the JP snapshot.
+1. Japan: configure J-Quants V2, refresh the JP snapshot, then cache `/equities/bars/daily` and `/fins/summary` in batches.
 2. Hong Kong: HKEX securities list is integrated; keep monitoring file availability and terms.
 3. Europe core: Euronext, LSE, Xetra/Boerse Frankfurt, SIX, Nasdaq Nordic, BME.
 4. Australia: ASX master list if license permits; keep ASIC only as short-interest source.

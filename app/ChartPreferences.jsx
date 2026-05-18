@@ -1,14 +1,22 @@
 "use client";
 import { CHART_INTERVALS, CHART_RANGES, CHART_SCALE_MODES, CHART_STYLES, DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 
-export default function ChartPreferences({ settings, onChange, symbol = "", compact = false }) {
+export default function ChartPreferences({ settings, onChange, symbol = "", listId = "", scope = "global", onScopeChange, compact = false }) {
   const note = settings?.notes?.[symbol] || "";
   const indicators = { ...DEFAULT_CHART_SETTINGS.indicators, ...(settings?.indicators || {}) };
+  const scopes = [
+    { key: "global", label: "Global" },
+    symbol ? { key: "symbol", label: "Simbolo" } : null,
+    listId ? { key: "list", label: "Lista" } : null,
+  ].filter(Boolean);
   const update = (patch) => onChange?.({ ...settings, ...patch });
   const updateIndicators = (patch) => update({ indicators: { ...indicators, ...patch } });
   const updateNote = (value) => update({ notes: { ...(settings?.notes || {}), [symbol]: value } });
   return <div className={`chartPrefs ${compact ? "compact" : ""}`}>
     <div className="chartPrefsLine">
+      {scopes.length > 1 && <select aria-label="Preset de grafico" value={scope} onChange={(event) => onScopeChange?.(event.target.value)}>
+        {scopes.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+      </select>}
       <select aria-label="Rango" value={settings?.range || "1A"} onChange={(event) => update({ range: event.target.value })}>
         {CHART_RANGES.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
       </select>

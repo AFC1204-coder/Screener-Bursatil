@@ -1,4 +1,4 @@
-import { disabledPayload, finiteOrNull, supabaseConfig, supabaseRequest, textOrNull, toDate, toTimestamp } from "@/lib/supabaseServer";
+import { disabledPayload, finiteOrNull, requirePersistenceAuth, supabaseConfig, supabaseRequest, textOrNull, toDate, toTimestamp } from "@/lib/supabaseServer";
 
 function favoritePayload(favorite = {}, ownerId) {
   const performance = {
@@ -64,6 +64,8 @@ function favoriteFromDb(row = {}) {
 }
 
 export async function GET(req) {
+  const authError = requirePersistenceAuth(req);
+  if (authError) return authError;
   const config = supabaseConfig();
   if (!config.configured) return Response.json({ ...disabledPayload(), favorites: [] });
   const { searchParams } = new URL(req.url);
@@ -79,6 +81,8 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
+  const authError = requirePersistenceAuth(req);
+  if (authError) return authError;
   const config = supabaseConfig();
   if (!config.configured) return Response.json(disabledPayload());
   try {
@@ -97,6 +101,8 @@ export async function POST(req) {
 }
 
 export async function DELETE(req) {
+  const authError = requirePersistenceAuth(req);
+  if (authError) return authError;
   const config = supabaseConfig();
   if (!config.configured) return Response.json(disabledPayload());
   const { searchParams } = new URL(req.url);

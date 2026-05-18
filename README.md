@@ -37,7 +37,10 @@ Required for cloud persistence:
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 STATSEDGE_OWNER_ID=personal
+STATSEDGE_API_TOKEN=
 ```
+
+`STATSEDGE_API_TOKEN` is optional. When set, `/api/scans`, `/api/favorites`, and `/api/alerts` require the same value through `x-statsedge-token` or a bearer token. The client reads it from `localStorage["statsedge.persistenceToken.v1"]`.
 
 Optional admin connector:
 

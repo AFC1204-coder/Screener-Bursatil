@@ -1,13 +1,19 @@
-import { disabledPayload, finiteOrNull, supabaseConfig, supabaseRequest, textOrNull, toTimestamp } from "@/lib/supabaseServer";
+import { disabledPayload, finiteOrNull, requirePersistenceAuth, supabaseConfig, supabaseRequest, textOrNull, toTimestamp } from "@/lib/supabaseServer";
 
 function scanPayload(scan = {}, ownerId) {
   const rows = Array.isArray(scan.rows) ? scan.rows : [];
+  const settings = {
+    ...(scan.settings || {}),
+    snapshotCompatibilityKey: scan.snapshotCompatibilityKey || scan.settings?.snapshotCompatibilityKey || null,
+    methodologySummary: scan.methodologySummary || scan.settings?.methodologySummary || null,
+    comparison: scan.comparison || scan.settings?.comparison || null,
+  };
   return {
     owner_id: ownerId,
     local_id: textOrNull(scan.id) || crypto.randomUUID(),
     name: textOrNull(scan.name) || `Scan ${new Date().toLocaleString()}`,
     preset: textOrNull(scan.preset),
-    settings: scan.settings || {},
+    settings,
     market_score: finiteOrNull(scan.marketScore),
     market_regime: textOrNull(scan.marketRegime),
     row_count: rows.length,
@@ -73,6 +79,9 @@ function scanFromDb(row, results = []) {
     name: row.name,
     preset: row.preset,
     settings: row.settings || {},
+    snapshotCompatibilityKey: row.settings?.snapshotCompatibilityKey || null,
+    methodologySummary: row.settings?.methodologySummary || null,
+    comparison: row.settings?.comparison || null,
     marketScore: finiteOrNull(row.market_score),
     marketRegime: row.market_regime || "sin dato",
     rows: results
@@ -120,6 +129,8 @@ async function saveScan(scan, ownerId) {
 }
 
 export async function GET(req) {
+  const authError = requirePersistenceAuth(req);
+  if (authError) return authError;
   const config = supabaseConfig();
   if (!config.configured) return Response.json({ ...disabledPayload(), scans: [] });
   const { searchParams } = new URL(req.url);
@@ -147,6 +158,8 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
+  const authError = requirePersistenceAuth(req);
+  if (authError) return authError;
   const config = supabaseConfig();
   if (!config.configured) return Response.json(disabledPayload());
   try {
@@ -161,6 +174,8 @@ export async function POST(req) {
 }
 
 export async function DELETE(req) {
+  const authError = requirePersistenceAuth(req);
+  if (authError) return authError;
   const config = supabaseConfig();
   if (!config.configured) return Response.json(disabledPayload());
   const { searchParams } = new URL(req.url);

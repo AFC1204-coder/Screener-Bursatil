@@ -4,6 +4,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "test": "node scripts/smoke-test.mjs",
+    "test:symbols": "node --no-warnings scripts/symbol-mapping-test.mjs",
     "supabase:status": "node scripts/supabase-admin.mjs status",
     "supabase:schema": "node scripts/supabase-admin.mjs schema"
   },

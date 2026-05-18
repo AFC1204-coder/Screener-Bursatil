@@ -27,6 +27,18 @@ const apiChecks = [
     check: (data) => data.priority === "free-first" && Array.isArray(data.providers) && data.providers.some((item) => item.id === "openfigi"),
   },
   {
+    name: "J-Quants status",
+    path: "/api/jquants",
+    provider: false,
+    check: (data) => data.ok === true && data.provider === "J-Quants" && typeof data.configured === "boolean",
+  },
+  {
+    name: "Derived leaderboards",
+    path: "/api/leaderboards?type=momentum&limit=5",
+    provider: false,
+    check: (data) => data.ok === true && data.legalMode === "derived-signals-only" && (data.leaderboard || Array.isArray(data.leaderboards)),
+  },
+  {
     name: "Alerts",
     path: "/api/alerts",
     provider: false,

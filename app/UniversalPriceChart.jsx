@@ -18,6 +18,26 @@ function safeNumber(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+function clamp(n, min = 0, max = 99) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function rsLabelFormat(price) {
+  return String(Math.round(clamp(Number(price), 0, 99)));
+}
+
+function rsFallbackValue(point = {}) {
+  const rating = safeNumber(point.rsRating);
+  if (Number.isFinite(rating)) return clamp(Math.round(rating), 0, 99);
+  return null;
+}
+
+function normalizeRsLineValue(value, min, max) {
+  if (!Number.isFinite(value) || !Number.isFinite(min) || !Number.isFinite(max)) return null;
+  if (max - min < 0.001) return null;
+  return clamp(8 + ((value - min) / (max - min)) * 91, 1, 99);
+}
+
 function isIntradayInterval(interval = "") {
   return ["1m", "5m", "15m", "30m", "1H", "4H"].includes(normalizeChartInterval(interval));
 }
@@ -100,10 +120,13 @@ function rsLineDataForRows(rows = [], series = {}, interval = "D") {
     .map((point) => ({
       time: timeFromBar(point),
       date: String(point.date || "").slice(0, 10),
-      value: safeNumber(point.rsLine),
-      ma: safeNumber(point.rsLineSma50),
+      score: safeNumber(point.rsChartScore),
+      scoreMa: safeNumber(point.rsChartScoreSma50),
+      rawLine: safeNumber(point.rsLine),
+      rawMa: safeNumber(point.rsLineSma50),
+      fallback: rsFallbackValue(point),
     }))
-    .filter((point) => Number.isFinite(point.time) && Number.isFinite(point.value))
+    .filter((point) => Number.isFinite(point.time) && (Number.isFinite(point.score) || Number.isFinite(point.rawLine) || Number.isFinite(point.fallback)))
     .sort((a, b) => a.time - b.time);
   if (rows.length < 2 || points.length < 2) return [];
   const output = [];
@@ -114,9 +137,35 @@ function rsLineDataForRows(rows = [], series = {}, interval = "D") {
       last = points[cursor];
       cursor += 1;
     }
-    if (last) output.push({ time: row.time, value: last.value, ma: last.ma, date: row.date });
+    if (last) {
+      output.push({
+        time: row.time,
+        score: last.score,
+        scoreMa: last.scoreMa,
+        rawLine: last.rawLine,
+        rawMa: last.rawMa,
+        fallback: last.fallback,
+        date: row.date,
+      });
+    }
   }
-  return output.filter((point) => Number.isFinite(point.value));
+  const rawValues = output.map((point) => point.rawLine).filter(Number.isFinite);
+  const min = rawValues.length ? Math.min(...rawValues) : null;
+  const max = rawValues.length ? Math.max(...rawValues) : null;
+
+  return output
+    .map((point) => {
+      const value = point.score ?? normalizeRsLineValue(point.rawLine, min, max) ?? point.fallback;
+      return {
+        time: point.time,
+        value: Number.isFinite(value) ? Math.round(clamp(value, 0, 99)) : value,
+        ma: Number.isFinite(point.scoreMa ?? normalizeRsLineValue(point.rawMa, min, max))
+          ? Math.round(clamp(point.scoreMa ?? normalizeRsLineValue(point.rawMa, min, max), 0, 99))
+          : null,
+        date: point.date,
+      };
+    })
+    .filter((point) => Number.isFinite(point.value));
 }
 
 function chartRangeRows(rows = [], rangeKey = DEFAULT_CHART_SETTINGS.range, interval = DEFAULT_CHART_SETTINGS.interval) {
@@ -316,16 +365,17 @@ export default function UniversalPriceChart({
           priceLineVisible: false,
           lastValueVisible: true,
           priceScaleId: rsScaleId,
+          priceFormat: { type: "custom", formatter: rsLabelFormat },
           title: "RS",
         });
         rsSeries.setData(rsLineData.map((point) => ({ time: point.time, value: point.value })));
         rsSeries.createPriceLine?.({
-          price: 100,
+          price: 99,
           color: "rgba(96,165,250,.22)",
           lineStyle: 2,
           lineWidth: 1,
           axisLabelVisible: false,
-          title: "RS 100",
+          title: "RS 99",
         });
         const rsMa = rsLineData.filter((point) => Number.isFinite(point.ma)).map((point) => ({ time: point.time, value: point.ma }));
         if (rsMa.length > 1) {
@@ -335,6 +385,7 @@ export default function UniversalPriceChart({
             priceLineVisible: false,
             lastValueVisible: false,
             priceScaleId: rsScaleId,
+            priceFormat: { type: "custom", formatter: rsLabelFormat },
           });
           rsMaSeries.setData(rsMa);
         }
@@ -371,15 +422,13 @@ export default function UniversalPriceChart({
 
   return <div className={`universalChart ${className}`}>
     <div className="universalChartHead">
-      <div>
-        <span>{symbol}</span>
-        <b>{money(latest?.close, currency)}</b>
-        <em className={positive ? "positive" : "negative"}>{pct(change)}</em>
+      <div className="universalChartIdentity">
+        <span className="universalChartSymbol">{symbol}</span>
+        <div className="universalChartQuote">
+          <b>{money(latest?.close, currency)}</b>
+          <em className={positive ? "positive" : "negative"}>{pct(change)}</em>
+        </div>
       </div>
-      {rsLineData.length > 1 && <div className="universalChartBadges" title={`RS vs ${benchmarkSymbol || "benchmark"}`} aria-label={`RS vs ${benchmarkSymbol || "benchmark"}`}>
-        <span>RS</span>
-        <b>{rsLineData.at(-1)?.value?.toFixed?.(1) || "-"}</b>
-      </div>}
       {indicators.rsLine && intraday && <div className="universalChartBadges muted" title="La linea RS se calcula con cierre diario y se oculta en intradia">
         <span>RS</span>
         <b>D</b>

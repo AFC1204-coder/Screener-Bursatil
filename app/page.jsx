@@ -8,7 +8,7 @@ import { assetDomainForName, assetDomainForSymbol } from "@/lib/companyAssets";
 import { pct } from "@/lib/formatters";
 import { safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { alertsFromScan, mergeAlerts } from "@/lib/methodologyAlerts";
-import { compactMethodologySnapshot, enrichRowsWithMethodology, summarizeMethodology } from "@/lib/methodologyEngine";
+import { compactMethodologySnapshot, enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
 import { qualityGateForResearchRow } from "@/lib/qualityGate";
 import { countryCode, countryName, externalLinks, isTradingViewWidgetBlocked, marketFlag, stockUrl } from "@/lib/symbols";
 
@@ -1830,21 +1830,33 @@ function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = false, on
     : summary
       ? [["Precio", money(row.price, row.currency)], ["Composite", row.totalScore?.toFixed(0) || "-"], ["RS G", row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"], ["A/D", row.adProxyScore?.toFixed(0) || "-"], ["EPS", row.epsGrowthProxyScore?.toFixed(0) || "-"], ["Bench", row.benchmarkSymbol || "-"]]
       : [["Precio", money(row.price, row.currency)], ["Composite", row.totalScore?.toFixed(0) || "-"], ["RS G", row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"], ["RSQ", row.rsQualityScore?.toFixed(0) || "-"], ["Vol eff", row.volumeEffectScore?.toFixed(0) || "-"], ["Short", pct(row.shortPercentOfFloat)], ["Imp 20d", amount(row.avgTurnover, row.currency)], ["Cob", row.dataCoverageScore?.toFixed(0) || "-"], ["Bench", row.benchmarkSymbol || "-"]];
+  const summaryStats = [
+    ["Comp", row.totalScore?.toFixed(0) || "-"],
+    ["RS", row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"],
+    ["A/D", row.adProxyScore?.toFixed(0) || "-"],
+    ["EPS", row.epsGrowthProxyScore?.toFixed(0) || "-"],
+    ["Bench", row.benchmarkSymbol || "-"],
+  ];
   return <div className={`stockPreview stockPreview-${variant}`}>
     <div className="previewTop">
       <div className="previewIdentity">
         {!compact && <CompanyMark row={row} />}
         <span>
-        <a className="ticker" href={stockUrl(row.symbol)}>{row.symbol}</a>
-        {!compact && <span className="previewName">{row.companyName}</span>}
+          <a className="ticker" href={stockUrl(row.symbol)}>{row.symbol}</a>
+          {!compact && <span className="previewName">{row.companyName}</span>}
         </span>
       </div>
-      <span className={`previewStage ${stageClass}`}>{stage}</span>
+      {summary ? <div className="previewHeaderMeta">
+        <strong>{money(row.price, row.currency)}</strong>
+        <span className={`previewStage ${stageClass}`}>{stage}</span>
+      </div> : <span className={`previewStage ${stageClass}`}>{stage}</span>}
     </div>
     {showSparkline && <MiniSparkline bars={row.chartPreview || []} />}
-    <div className="previewStats">
+    {summary ? <div className="previewSummaryGrid">
+      {summaryStats.map(([label, value]) => <span className="previewSummaryStat" key={label}><b>{label}</b><em>{value}</em></span>)}
+    </div> : <div className="previewStats">
       {stats.map(([label, value]) => <span key={label}><b>{label}</b>{value}</span>)}
-    </div>
+    </div>}
     {!compact && <div className="previewActions">
       {onSelectChart && <button type="button" className="btn btnSmall btnPrimary" onClick={() => onSelectChart(row)}>Grafico</button>}
       <a className="btn btnSmall" href={stockUrl(row.symbol)}>Ficha</a>
@@ -2269,6 +2281,7 @@ export default function Page() {
   const [quickReviewRows, setQuickReviewRows] = useState([]);
   const [quickReviewIndex, setQuickReviewIndex] = useState(0);
   const [chartSettings, setChartSettings] = useState(DEFAULT_CHART_SETTINGS);
+  const [chartScope, setChartScope] = useState("global");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
@@ -2365,9 +2378,20 @@ export default function Page() {
     }
   }, [sessionReady, markets, manual, settings, presetKey, universe, rows, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, sort, scanMode, batchStart, scanBatchSize, resultPageSize, resultPage, marketHealth, useRegimeFilter, filterLayers, fieldRules, viewLayers, searchSymbol, searchCandidates, searchResult, quickReviewRows, quickReviewIndex]);
 
+  const chartListId = useMemo(() => `screener:${presetKey}:${markets.join(",")}`, [presetKey, markets]);
+
   function updateChartSettings(nextSettings) {
-    setChartSettings(writeChartSettings(nextSettings));
+    setChartSettings(writeChartSettings(nextSettings, { scope: chartScope, symbol: activeModalRow?.symbol, listId: chartListId }));
   }
+
+  function updateChartScope(nextScope) {
+    setChartScope(nextScope);
+    setChartSettings(readChartSettings({ scope: nextScope, symbol: activeModalRow?.symbol, listId: chartListId }));
+  }
+
+  useEffect(() => {
+    if (chartScope !== "global") setChartSettings(readChartSettings({ scope: chartScope, symbol: activeModalRow?.symbol, listId: chartListId }));
+  }, [chartScope, activeModalRow?.symbol, chartListId]);
 
   const activeSettings = useMemo(() => effectiveSettingsFromLayers(settings, filterLayers, fieldRules), [settings, filterLayers, fieldRules]);
   const activeLayerLabel = useMemo(() => layerStatusText(filterLayers, useRegimeFilter), [filterLayers, useRegimeFilter]);
@@ -2737,7 +2761,17 @@ export default function Page() {
       return;
     }
     const scans = safeRead(STORAGE_KEYS.scans, []);
-    const previousScan = scans.find((item) => Array.isArray(item.rows) && item.rows.length);
+    const compatibilityContext = {
+      preset: presetKey,
+      settings,
+      activeSettings,
+      filterLayers: { ...filterLayers, marketRegime: useRegimeFilter },
+      fieldRules,
+      markets,
+      scanMode,
+    };
+    const compatibilityKey = snapshotCompatibilityKey(compatibilityContext);
+    const previousScan = findCompatiblePreviousScan(scans, compatibilityContext);
     const enrichedRows = enrichRowsWithMethodology(currentRows, previousScan?.rows || []);
     const methodologySummary = summarizeMethodology(enrichedRows, previousScan);
     const eventTotal = Object.values(methodologySummary.eventCounts || {}).reduce((sum, value) => sum + value, 0);
@@ -2753,6 +2787,12 @@ export default function Page() {
       viewLayers,
       marketScore: marketHealth?.marketScore ?? null,
       marketRegime: marketHealth?.regime?.label || "sin dato",
+      snapshotCompatibilityKey: compatibilityKey,
+      comparison: {
+        compatiblePrevious: Boolean(previousScan),
+        previousScanId: previousScan?.id || null,
+        previousScanDate: previousScan?.createdAt || null,
+      },
       methodologySummary,
       rows: enrichedRows,
     };
@@ -2768,6 +2808,7 @@ export default function Page() {
     });
     syncAlertsToCloud(generatedAlerts).then((result) => {
       if (result.configured !== false && !result.ok) setStatus(`Snapshot guardado. Alertas solo locales: ${result.message}`);
+      else if (result.ok && result.data?.alerts?.length) safeWrite(STORAGE_KEYS.alerts, mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), result.data.alerts).slice(0, 500));
     });
   }
   function openReview(currentRows, startSymbol = "") {
@@ -3313,7 +3354,7 @@ export default function Page() {
             <div className="screenerReviewMain">
               <div className="profileGrid quickReviewGrid">
                 <div className="profileChartArea">
-                  <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={activeModalRow.symbol} compact />
+                  <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={activeModalRow.symbol} listId={chartListId} scope={chartScope} onScopeChange={updateChartScope} compact />
                   <div className="quickReviewChart">
                     <TradingViewPreviewChart row={activeModalRow} chartSettings={chartSettings} />
                   </div>
@@ -3349,7 +3390,7 @@ export default function Page() {
                       <h3>Volumen y riesgo</h3>
                       <span>Datos</span>
                     </div>
-                    <div className="profileRow"><span>Importe sesión</span><b>{amount(activeModalRow.latestTurnover, activeModalRow.currency)}</b></div>
+                    <div className="profileRow"><span>Volumen sesión</span><b>{amount(activeModalRow.latestTurnover, activeModalRow.currency)}</b></div>
                     <div className="profileRow"><span>Volumen 5d</span><b className={(activeModalRow.volumeSurgePct || 0) > 0 ? "up" : ""}>{pct(activeModalRow.volumeSurgePct)}</b></div>
                     <div className="profileRow"><span>Up/down ratio</span><b>{ratioLabel(activeModalRow.upDownVolRatio)}</b></div>
                     <div className="profileRow"><span>Short float</span><b>{pct(activeModalRow.shortPercentOfFloat)}</b></div>
