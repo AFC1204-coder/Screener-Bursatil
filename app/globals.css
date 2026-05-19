@@ -264,6 +264,7 @@ a{color:inherit;text-decoration:none}
 }
 .infoHint em{
   position:absolute;
+  display:none;
   right:0;
   top:calc(100% + 8px);
   z-index:20;
@@ -287,6 +288,7 @@ a{color:inherit;text-decoration:none}
 }
 .infoHint:hover em,
 .infoHint:focus em{
+  display:block;
   opacity:1;
   transform:translateY(0);
 }
@@ -1292,6 +1294,9 @@ a{color:inherit;text-decoration:none}
 .chartIndicators{
   position:relative;
 }
+.chartIndicators:not([open]) .chartIndicatorPanel{
+  display:none;
+}
 .chartIndicatorPanel{
   position:absolute;
   right:0;
@@ -1787,6 +1792,31 @@ a{color:inherit;text-decoration:none}
 .chartBenchmarkControl button:disabled,
 .chartBenchmarkControl input:disabled{
   opacity:.55;
+}
+.weeklyStageControls{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin:0 0 12px;
+}
+.weeklyStageControls label{
+  display:grid;
+  gap:5px;
+}
+.weeklyStageControls span{
+  color:var(--muted);
+  font-size:10px;
+  font-weight:780;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.weeklyStageControls .input{
+  height:34px;
+}
+@media (max-width:720px){
+  .weeklyStageControls{
+    grid-template-columns:1fr;
+  }
 }
 .stockIntelRail{
   display:grid;
@@ -3884,22 +3914,31 @@ a{color:inherit;text-decoration:none}
 .viewLayerBar .layerToggle{
   flex:0 0 auto;
 }
-.filterGroups{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:8px}
+.filterGroups{display:grid;grid-template-columns:1fr;gap:8px}
 .filterGroup{
-  padding:12px;
   border:1px solid rgba(255,255,255,.14);
   border-radius:var(--radius);
   background:rgba(255,255,255,.014);
+  overflow:hidden;
 }
 .filterGroupHead{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:8px;
-  margin:0 0 10px;
+  margin:0;
+  padding:11px 12px;
+  cursor:pointer;
+  list-style:none;
+}
+.filterGroupHead::-webkit-details-marker{
+  display:none;
+}
+.filterGroup[open] .filterGroupHead{
+  border-bottom:1px solid rgba(255,255,255,.1);
 }
 .filterGroup h3{
-  margin:0 0 10px;
+  margin:0;
   color:#f3d98b;
   font-size:12px;
   text-transform:uppercase;
@@ -3919,7 +3958,7 @@ a{color:inherit;text-decoration:none}
   font-weight:900;
   text-align:center;
 }
-.filterFields{display:grid;gap:7px}
+.filterFields{display:grid;gap:7px;padding:10px 12px 12px}
 .filterField{
   display:grid;
   grid-template-columns:minmax(0,1fr) minmax(98px,128px);
@@ -3934,16 +3973,18 @@ a{color:inherit;text-decoration:none}
   gap:8px;
   align-items:center;
   min-width:0;
+  cursor:pointer;
 }
 .filterFieldLabel span{
   min-width:0;
 }
 .ruleMiniToggle{
+  position:relative;
   width:24px;
   height:24px;
   display:grid;
   place-items:center;
-  border-radius:50%;
+  border-radius:5px;
   border:1px solid rgba(255,255,255,.22);
   background:rgba(255,255,255,.025);
   color:#e8dec2;
@@ -3952,18 +3993,28 @@ a{color:inherit;text-decoration:none}
   line-height:1;
   cursor:pointer;
 }
+.ruleMiniToggle input{
+  position:absolute;
+  inset:0;
+  margin:0;
+  opacity:0;
+  cursor:pointer;
+}
+.ruleMiniToggle span{
+  pointer-events:none;
+}
 .ruleMiniToggle.on{
   border-color:rgba(130,220,148,.58);
-  background:linear-gradient(180deg,rgba(77,180,112,.28),rgba(28,108,66,.22));
+  background:rgba(77,180,112,.22);
   color:#baf7c7;
-  box-shadow:0 0 0 1px rgba(130,220,148,.08),0 0 14px rgba(47,190,102,.12);
+  box-shadow:0 0 0 1px rgba(130,220,148,.08);
 }
 .ruleMiniToggle.off{
-  border-color:rgba(248,92,92,.44);
-  background:linear-gradient(180deg,rgba(166,48,48,.22),rgba(90,24,24,.18));
-  color:#ffaca4;
+  border-color:rgba(255,255,255,.14);
+  background:rgba(255,255,255,.018);
+  color:#8f8f8f;
 }
-.filterField.isOff .filterFieldLabel > span{
+.filterField.isOff .filterFieldLabel > span:not(.ruleMiniToggle):not(.infoHint){
   color:#9b817d;
 }
 .filterField.isOff .filterInputWrap{
@@ -4536,14 +4587,14 @@ body:after{
   margin-bottom:10px;
 }
 .filterGroups{
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  grid-template-columns:1fr;
   gap:6px;
 }
 .filterGroup{
-  padding:10px;
+  padding:0;
 }
 .filterGroupHead{
-  margin-bottom:8px;
+  margin-bottom:0;
 }
 .filterField{
   grid-template-columns:minmax(0,1fr) minmax(86px,112px);
@@ -5499,8 +5550,10 @@ h2{
 .compactSymbolCell .flag-JP{--flag:radial-gradient(circle at 50% 50%,#bc002d 0 24%,transparent 25%),linear-gradient(#f8fafc,#f8fafc);}
 .compactSymbolCell .flag-HK{--flag:radial-gradient(circle at 52% 50%,#f8fafc 0 10%,transparent 11%),linear-gradient(#de2910,#de2910);}
 .compactSymbolCell .flag-SG{--flag:linear-gradient(to bottom,#ef3340 0 50%,#f8fafc 50%);}
+.compactSymbolCell .flag-ZA{--flag:linear-gradient(135deg,#007a4d 0 30%,#ffb81c 30% 40%,#111827 40% 50%,#f8fafc 50% 58%,#001489 58% 78%,#de3831 78%);}
 .compactSymbolCell .flag-AU{--flag:linear-gradient(135deg,#012169,#012169 58%,#f8fafc 58% 62%,#c8102e 62% 66%,#012169 66%);}
 .compactSymbolCell .flag-TW{--flag:linear-gradient(90deg,#000095 0 42%,transparent 42%),linear-gradient(#fe0000,#fe0000);}
+.compactSymbolCell .flag-IL{--flag:radial-gradient(circle at 50% 50%,#2563eb 0 12%,transparent 13%),linear-gradient(to bottom,#f8fafc 0 18%,#2563eb 18% 28%,#f8fafc 28% 72%,#2563eb 72% 82%,#f8fafc 82%);}
 .compactSymbolCell .flag-KR{--flag:radial-gradient(circle at 50% 50%,#c60c30 0 13%,#003478 14% 24%,transparent 25%),linear-gradient(#f8fafc,#f8fafc);}
 .compactSymbolCell .flag-IN{--flag:linear-gradient(to bottom,#ff9933 0 33%,#f8fafc 33% 66%,#138808 66%);}
 .compactSymbolCell .flag-CN{--flag:radial-gradient(circle at 28% 34%,#ffde00 0 12%,transparent 13%),linear-gradient(#de2910,#de2910);}
@@ -10097,6 +10150,41 @@ body:before{
   min-width:0;
 }
 
+.stockPage .stockResearchCardHero{
+  position:relative;
+  overflow:hidden;
+}
+
+.stockPage .stockResearchCardHero::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.045),transparent 34%),
+    radial-gradient(circle at 92% 0%,rgba(59,130,246,.12),transparent 34%);
+  opacity:.72;
+}
+
+.stockPage .stockResearchCardHero > *{
+  position:relative;
+  z-index:1;
+}
+
+.stockPage .heroCardBenchmark{
+  position:absolute;
+  top:8px;
+  right:10px;
+  z-index:2;
+  color:var(--stock-muted);
+  font-size:8.5px;
+  font-weight:720;
+  letter-spacing:.1em;
+  line-height:1;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
 .stockPage .stockHeroActions{
   position:static;
   right:auto;
@@ -10115,9 +10203,9 @@ body:before{
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:1px;
   overflow:hidden;
-  border:1px solid var(--stock-line);
-  border-radius:8px;
-  background:var(--stock-line-soft);
+  border:1px solid rgba(148,163,184,.16);
+  border-radius:7px;
+  background:rgba(148,163,184,.1);
 }
 
 .stockPage .heroCardMetrics div{
@@ -10127,8 +10215,8 @@ body:before{
   flex-direction:column;
   justify-content:center;
   gap:3px;
-  padding:7px 8px;
-  background:#090a0c;
+  padding:6px 8px;
+  background:rgba(6,8,10,.76);
 }
 
 .stockPage .heroCardMetrics span{
@@ -10161,9 +10249,9 @@ body:before{
 .stockPage .heroCardMetrics b.neutral{color:#f3d98b}
 
 .stockPage .heroCompanyBrief{
-  margin-top:7px;
-  padding-top:7px;
-  border-top:1px solid var(--stock-line-soft);
+  margin-top:6px;
+  padding-top:6px;
+  border-top:1px solid rgba(148,163,184,.12);
 }
 
 .stockPage .heroCompanyBriefHead{
@@ -10196,10 +10284,10 @@ body:before{
 .stockPage .heroCompanyBrief p{
   display:-webkit-box;
   overflow:hidden;
-  margin:5px 0 7px;
+  margin:4px 0 6px;
   color:#aeb3bf;
-  font-size:11.5px;
-  line-height:1.35;
+  font-size:11px;
+  line-height:1.3;
   -webkit-box-orient:vertical;
   -webkit-line-clamp:2;
 }
@@ -10209,9 +10297,9 @@ body:before{
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:1px;
   overflow:hidden;
-  border:1px solid var(--stock-line);
-  border-radius:8px;
-  background:var(--stock-line-soft);
+  border:1px solid rgba(148,163,184,.16);
+  border-radius:7px;
+  background:rgba(148,163,184,.1);
 }
 
 .stockPage .heroCompanyFacts div{
@@ -10221,8 +10309,8 @@ body:before{
   flex-direction:column;
   justify-content:center;
   gap:3px;
-  padding:7px 8px;
-  background:#090a0c;
+  padding:6px 8px;
+  background:rgba(6,8,10,.76);
 }
 
 .stockPage .heroCompanyFacts span{
@@ -10276,34 +10364,24 @@ body:before{
 
   .stockPage .stockHeroCompactCard .stockResearchCard{
     height:100%;
-    padding:8px;
+    padding:17px 8px 8px;
     border-radius:9px;
-    background:linear-gradient(180deg,rgba(255,255,255,.018),rgba(255,255,255,.004)),#050607;
-  }
-
-  .stockPage .stockHeroCompactCard .stockResearchCard .sectionTitle{
-    min-height:18px;
-    margin-bottom:5px;
-    padding-bottom:5px;
-  }
-
-  .stockPage .stockHeroCompactCard .stockResearchCard .sectionTitle h2{
-    font-size:10px;
-    letter-spacing:.15em;
-  }
-
-  .stockPage .stockHeroCompactCard .stockResearchCard .sectionTitle .fine{
-    font-size:10px;
+    background:
+      linear-gradient(180deg,rgba(255,255,255,.024),rgba(255,255,255,.006)),
+      #050607;
   }
 
   .stockPage .stockHeroCompactCard .marketSmithStrip{
-    margin-bottom:6px;
-    border-radius:8px;
+    margin-bottom:5px;
+    border-color:rgba(148,163,184,.18);
+    border-radius:7px;
+    background:rgba(148,163,184,.1);
   }
 
   .stockPage .stockHeroCompactCard .marketSmithStrip .miniMetric{
-    min-height:40px;
-    padding:5px 6px;
+    min-height:37px;
+    padding:5px 7px;
+    background:rgba(6,8,10,.76);
   }
 
   .stockPage .stockHeroCompactCard .marketSmithStrip .miniMetric span{
@@ -10312,8 +10390,8 @@ body:before{
   }
 
   .stockPage .stockHeroCompactCard .marketSmithStrip .miniMetric b{
-    margin-top:3px;
-    font-size:13px;
+    margin-top:2px;
+    font-size:12.5px;
   }
 
   .stockPage .stockHeroCompactCard .heroCompanyBrief{
@@ -10508,5 +10586,434 @@ body:before{
 
   .stockPage .heroCompanyFacts b{
     font-size:10px;
+  }
+}
+
+/* Mobile deployment hardening: keep research surfaces inside the viewport. */
+html,
+body{
+  overflow-x:hidden;
+}
+
+.page{
+  padding-bottom:calc(118px + env(safe-area-inset-bottom));
+}
+
+.appTopBar{
+  padding-top:env(safe-area-inset-top);
+  min-height:calc(52px + env(safe-area-inset-top));
+}
+
+@media(max-width:760px){
+  .appTopBar{
+    min-height:calc(48px + env(safe-area-inset-top));
+    padding-inline:12px;
+  }
+
+  .page{
+    padding:14px 14px calc(128px + env(safe-area-inset-bottom));
+  }
+
+  .bottomNav{
+    bottom:max(8px,env(safe-area-inset-bottom));
+    width:calc(100vw - 24px);
+    min-height:54px;
+    padding:5px;
+    border-radius:16px;
+  }
+
+  .bottomNav .navItem{
+    min-height:44px;
+    border-radius:12px;
+  }
+
+  .infoHint em{
+    right:auto;
+    left:50%;
+    width:min(260px,calc(100vw - 28px));
+    transform:translate(-50%,-4px);
+  }
+
+  .infoHint:hover em,
+  .infoHint:focus em{
+    transform:translate(-50%,0);
+  }
+
+  .mobileChipRail,
+  .chartPrefsLine,
+  .chartBenchmarkControl,
+  .mobileActions{
+    max-width:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+
+  .mobileChipRail::-webkit-scrollbar,
+  .chartPrefsLine::-webkit-scrollbar,
+  .chartBenchmarkControl::-webkit-scrollbar,
+  .mobileActions::-webkit-scrollbar{
+    display:none;
+  }
+
+  .mobileChipRail{
+    gap:5px;
+    margin:8px 0 14px;
+    padding:0 0 3px;
+  }
+
+  .mobileChipRail button{
+    min-width:0;
+    min-height:30px;
+    padding:5px 7px;
+    font-size:10.5px;
+    letter-spacing:-.01em;
+  }
+
+  .mobileResultListHead{
+    align-items:flex-start;
+    gap:8px;
+  }
+
+  .mobileResultListHead > span{
+    max-width:128px;
+    line-height:1.25;
+  }
+
+  .mobileResultListHead div{
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:6px;
+  }
+
+  .stockPage .stockCommand{
+    margin-bottom:10px;
+    padding:10px 12px 11px;
+  }
+
+  .stockPage .stockHead{
+    grid-template-columns:48px minmax(0,1fr);
+    align-items:start;
+    gap:10px;
+  }
+
+  .stockPage .stockLogoPro{
+    width:48px;
+    height:48px;
+    border-radius:10px;
+  }
+
+  .stockPage .stockKicker{
+    margin-bottom:6px;
+    gap:0;
+    overflow:hidden;
+    white-space:nowrap;
+  }
+
+  .stockPage .stockKicker span{
+    min-width:0;
+    overflow:hidden;
+    font-size:10px;
+    letter-spacing:.12em;
+    text-overflow:ellipsis;
+  }
+
+  .stockPage .stockKicker span + span:before{
+    margin:0 6px;
+  }
+
+  .stockPage .stockTitleBlock h1{
+    font-size:34px;
+    line-height:.95;
+  }
+
+  .stockPage .stockCompanyName{
+    max-width:100%;
+    overflow:hidden;
+    font-size:16px;
+    line-height:1.12;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .stockPage .stockQuoteLine{
+    display:grid;
+    grid-template-columns:auto auto minmax(0,1fr);
+    align-items:end;
+    gap:4px 8px;
+    margin-top:8px;
+  }
+
+  .stockPage .stockQuoteLabel{
+    grid-column:1 / -1;
+    font-size:9px;
+    letter-spacing:.14em;
+  }
+
+  .stockPage .stockQuoteLine strong{
+    font-size:25px;
+    line-height:1;
+  }
+
+  .stockPage .stockQuoteCurrency{
+    font-size:13px;
+    line-height:1.05;
+  }
+
+  .stockPage .stockQuoteLine b{
+    display:none;
+  }
+
+  .stockPage .stockHeroLink{
+    min-height:28px;
+    padding:0 10px;
+    font-size:11px;
+  }
+
+  .stockPage .stockHeroCompactCard .stockResearchCard{
+    margin-top:8px;
+    padding:8px;
+  }
+
+  .stockPage .heroCardBenchmark{
+    top:8px;
+    right:9px;
+    font-size:8px;
+  }
+
+  .stockPage .stockHeroCompactCard .marketSmithStrip,
+  .stockPage .heroCardMetrics{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .stockPage .stockHeroCompactCard .marketSmithStrip .miniMetric,
+  .stockPage .heroCardMetrics div{
+    min-height:29px;
+    padding:5px 7px;
+  }
+
+  .stockPage .stockHeroCompactCard .marketSmithStrip .miniMetric span,
+  .stockPage .heroCardMetrics span{
+    font-size:7.5px;
+    letter-spacing:.1em;
+  }
+
+  .stockPage .stockHeroCompactCard .marketSmithStrip .miniMetric b,
+  .stockPage .heroCardMetrics b{
+    font-size:11.5px;
+  }
+
+  .stockPage .heroCompanyBrief{
+    display:none;
+  }
+
+  .stockPage .chartPanel{
+    padding:10px;
+  }
+
+  .stockPage .chartPanel .sectionTitle{
+    min-height:24px;
+    margin-bottom:8px;
+  }
+
+  .stockPage .chartPrefsLine{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:6px;
+    overflow:visible;
+    margin:0;
+    padding:0;
+  }
+
+  .stockPage .chartPrefs select,
+  .stockPage .chartPrefs .compactSeg,
+  .stockPage .chartPrefs .chartIndicators summary,
+  .stockPage .chartPrefs .chartNotes summary{
+    height:30px;
+    min-height:30px;
+    font-size:11px;
+  }
+
+  .stockPage .chartPrefs select{
+    width:100%;
+    min-width:0;
+    padding-right:22px;
+    padding-left:8px;
+  }
+
+  .stockPage .chartPrefs .compactSeg{
+    grid-column:span 2;
+    width:100%;
+    min-width:0;
+  }
+
+  .stockPage .chartPrefs .compactSeg button{
+    min-width:0;
+    padding:0 6px;
+  }
+
+  .stockPage .chartPrefs .chartIndicators,
+  .stockPage .chartPrefs .chartNotes{
+    min-width:0;
+  }
+
+  .stockPage .chartPrefs .chartIndicators summary,
+  .stockPage .chartPrefs .chartNotes summary{
+    width:100%;
+    justify-content:center;
+    overflow:hidden;
+    padding:0 8px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .stockPage .chartPrefs .chartIndicators summary{
+    font-size:10px;
+  }
+
+  .stockPage .chartPrefs .chartNotes summary{
+    font-size:10.5px;
+  }
+
+  .stockPage .chartBenchmarkControl{
+    flex-wrap:nowrap;
+    margin:4px -2px 8px;
+    padding:0 2px 4px;
+  }
+
+  .stockPage .chartBenchmarkControl label{
+    font-size:9px;
+  }
+
+  .stockPage .chartBenchmarkControl input{
+    flex-basis:80px;
+    width:80px;
+  }
+
+  .stockPage .chartNotes:not([open]) textarea{
+    display:none;
+  }
+
+  .stockPage .chartNotes textarea{
+    position:fixed;
+    left:14px;
+    right:14px;
+    top:calc(58px + env(safe-area-inset-top));
+    width:auto;
+    max-width:none;
+  }
+
+  .stockPage .universalChart{
+    min-height:0;
+    grid-template-rows:auto minmax(330px,auto);
+    gap:8px;
+    padding:8px;
+    overflow:hidden;
+  }
+
+  .stockPage .universalChartHead{
+    min-width:0;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:start;
+    gap:6px;
+    min-height:0;
+    padding:6px 4px 4px;
+  }
+
+  .stockPage .universalChartIdentity{
+    min-width:0;
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr);
+    align-items:baseline;
+    gap:8px;
+  }
+
+  .stockPage .universalChartSymbol{
+    font-size:21px;
+    letter-spacing:.03em;
+  }
+
+  .stockPage .universalChartQuote{
+    min-width:0;
+    flex-wrap:wrap;
+    gap:3px 7px;
+  }
+
+  .stockPage .universalChartQuote b{
+    max-width:158px;
+    overflow:hidden;
+    font-size:18px;
+    text-overflow:ellipsis;
+  }
+
+  .stockPage .universalChartQuote em{
+    font-size:11px;
+  }
+
+  .stockPage .universalChart .priceTvLink{
+    width:32px;
+    min-height:26px;
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+    padding:0;
+    border:1px solid var(--stock-line);
+    border-radius:7px;
+    background:#101116;
+    color:transparent;
+    font-size:0;
+  }
+
+  .stockPage .universalChart .priceTvLink::before{
+    content:"TV";
+    color:#d3d5dc;
+    font-size:10px;
+    font-weight:760;
+  }
+
+  .stockPage .universalChartCanvas{
+    min-height:clamp(330px,54vh,410px);
+    max-width:100%;
+    overflow:hidden;
+  }
+
+  .stockPage .statementMatrix{
+    margin-inline:-4px;
+    max-width:calc(100vw - 20px);
+  }
+
+  .stockPage .statementMatrix th,
+  .stockPage .statementMatrix td{
+    padding:12px 14px;
+    font-size:14px;
+  }
+
+  .stockPage .statementMatrix th{
+    font-size:11px;
+  }
+
+  .stockPage .statementMatrix th:first-child,
+  .stockPage .statementMatrix td:first-child{
+    min-width:160px;
+  }
+
+  .ipoRadarForm{
+    padding-bottom:24px;
+  }
+}
+
+@media(max-width:390px){
+  .bottomNav .navLabel{
+    display:none;
+  }
+
+  .stockPage .stockCommand{
+    padding-inline:10px;
+  }
+
+  .stockPage .universalChartQuote b{
+    max-width:136px;
   }
 }

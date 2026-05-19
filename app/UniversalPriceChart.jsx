@@ -22,20 +22,14 @@ function clamp(n, min = 0, max = 99) {
   return Math.max(min, Math.min(max, n));
 }
 
-function rsLabelFormat(price) {
-  return String(Math.round(clamp(Number(price), 0, 99)));
-}
-
 function rsFallbackValue(point = {}) {
   const rating = safeNumber(point.rsRating);
   if (Number.isFinite(rating)) return clamp(Math.round(rating), 0, 99);
   return null;
 }
 
-function normalizeRsLineValue(value, min, max) {
-  if (!Number.isFinite(value) || !Number.isFinite(min) || !Number.isFinite(max)) return null;
-  if (max - min < 0.001) return null;
-  return clamp(8 + ((value - min) / (max - min)) * 91, 1, 99);
+function rsLineFallbackValue(point = {}) {
+  return rsFallbackValue(point);
 }
 
 function isIntradayInterval(interval = "") {
@@ -120,13 +114,13 @@ function rsLineDataForRows(rows = [], series = {}, interval = "D") {
     .map((point) => ({
       time: timeFromBar(point),
       date: String(point.date || "").slice(0, 10),
-      score: safeNumber(point.rsChartScore),
-      scoreMa: safeNumber(point.rsChartScoreSma50),
       rawLine: safeNumber(point.rsLine),
       rawMa: safeNumber(point.rsLineSma50),
-      fallback: rsFallbackValue(point),
+      score: safeNumber(point.rsChartScore),
+      scoreMa: safeNumber(point.rsChartScoreSma50),
+      fallback: rsLineFallbackValue(point),
     }))
-    .filter((point) => Number.isFinite(point.time) && (Number.isFinite(point.score) || Number.isFinite(point.rawLine) || Number.isFinite(point.fallback)))
+    .filter((point) => Number.isFinite(point.time) && (Number.isFinite(point.score) || Number.isFinite(point.fallback)))
     .sort((a, b) => a.time - b.time);
   if (rows.length < 2 || points.length < 2) return [];
   const output = [];
@@ -140,28 +134,24 @@ function rsLineDataForRows(rows = [], series = {}, interval = "D") {
     if (last) {
       output.push({
         time: row.time,
-        score: last.score,
-        scoreMa: last.scoreMa,
         rawLine: last.rawLine,
         rawMa: last.rawMa,
+        score: last.score,
+        scoreMa: last.scoreMa,
         fallback: last.fallback,
         date: row.date,
       });
     }
   }
-  const rawValues = output.map((point) => point.rawLine).filter(Number.isFinite);
-  const min = rawValues.length ? Math.min(...rawValues) : null;
-  const max = rawValues.length ? Math.max(...rawValues) : null;
 
   return output
     .map((point) => {
-      const value = point.score ?? normalizeRsLineValue(point.rawLine, min, max) ?? point.fallback;
+      const value = point.score ?? point.fallback;
+      const ma = point.scoreMa;
       return {
         time: point.time,
-        value: Number.isFinite(value) ? Math.round(clamp(value, 0, 99)) : value,
-        ma: Number.isFinite(point.scoreMa ?? normalizeRsLineValue(point.rawMa, min, max))
-          ? Math.round(clamp(point.scoreMa ?? normalizeRsLineValue(point.rawMa, min, max), 0, 99))
-          : null,
+        value: Number.isFinite(value) ? Number(clamp(value, 0, 99).toFixed(2)) : value,
+        ma: Number.isFinite(ma) ? Number(ma.toFixed(2)) : null,
         date: point.date,
       };
     })
@@ -180,6 +170,12 @@ function shouldRequestRemoteBars(localRows = [], rangeKey = DEFAULT_CHART_SETTIN
   const activeRange = CHART_RANGES.find((range) => range.key === rangeKey) || CHART_RANGES[3];
   if (activeRange.key === "MAX" || activeRange.bars === Infinity) return localRows.length < 900;
   return Number.isFinite(activeRange.bars) && localRows.length < activeRange.bars;
+}
+
+function responsiveChartHeight(width = 0, requestedHeight = 460) {
+  if (width <= 440) return Math.max(330, Math.min(requestedHeight, 410));
+  if (width <= 760) return Math.max(360, Math.min(requestedHeight, 460));
+  return requestedHeight;
 }
 
 export default function UniversalPriceChart({
@@ -262,11 +258,12 @@ export default function UniversalPriceChart({
       if (cancelled || !containerRef.current) return;
       const container = containerRef.current;
       container.innerHTML = "";
-      const width = Math.max(container.clientWidth || 0, 320);
+      const width = Math.max(container.clientWidth || 0, 280);
+      const chartHeight = responsiveChartHeight(width, height);
 
       chart = createChart(container, {
         width,
-        height,
+        height: chartHeight,
         layout: {
           background: { color: "transparent" },
           textColor: "rgba(235, 235, 242, .72)",
@@ -365,17 +362,17 @@ export default function UniversalPriceChart({
           priceLineVisible: false,
           lastValueVisible: true,
           priceScaleId: rsScaleId,
-          priceFormat: { type: "custom", formatter: rsLabelFormat },
-          title: "RS",
+          priceFormat: { type: "price", precision: 2, minMove: 0.01 },
+          title: benchmarkSymbol ? `RS vs ${benchmarkSymbol}` : "RS vs benchmark",
         });
         rsSeries.setData(rsLineData.map((point) => ({ time: point.time, value: point.value })));
         rsSeries.createPriceLine?.({
-          price: 99,
+          price: 50,
           color: "rgba(96,165,250,.22)",
           lineStyle: 2,
           lineWidth: 1,
           axisLabelVisible: false,
-          title: "RS 99",
+          title: "RS 50",
         });
         const rsMa = rsLineData.filter((point) => Number.isFinite(point.ma)).map((point) => ({ time: point.time, value: point.ma }));
         if (rsMa.length > 1) {
@@ -385,7 +382,7 @@ export default function UniversalPriceChart({
             priceLineVisible: false,
             lastValueVisible: false,
             priceScaleId: rsScaleId,
-            priceFormat: { type: "custom", formatter: rsLabelFormat },
+            priceFormat: { type: "price", precision: 2, minMove: 0.01 },
           });
           rsMaSeries.setData(rsMa);
         }
@@ -396,8 +393,8 @@ export default function UniversalPriceChart({
 
       chart.timeScale().fitContent();
       resizeObserver = new ResizeObserver(([entry]) => {
-        const nextWidth = Math.floor(entry.contentRect.width);
-        if (nextWidth > 0) chart?.applyOptions({ width: nextWidth, height });
+        const nextWidth = Math.max(Math.floor(entry.contentRect.width), 280);
+        if (nextWidth > 0) chart?.applyOptions({ width: nextWidth, height: responsiveChartHeight(nextWidth, height) });
       });
       resizeObserver.observe(container);
     }
@@ -435,7 +432,7 @@ export default function UniversalPriceChart({
       </div>}
       {tradingViewUrl && <a className="priceTvLink" href={tradingViewUrl} target="_blank" rel="noreferrer">Abrir TradingView</a>}
     </div>
-    <div className="universalChartCanvas" ref={containerRef} style={{ minHeight: height }} />
+    <div className="universalChartCanvas" ref={containerRef} style={{ "--chart-target-height": `${height}px` }} />
     {remote.loading && needsRemote && !intraday && <p className="dataNote">Ampliando historico para este rango...</p>}
     {remote.error && !intraday && <p className="dataNote">Historico ampliado no disponible: {remote.error}. Se muestra el historico local.</p>}
     {renderError && <p className="dataNote">{renderError}</p>}
