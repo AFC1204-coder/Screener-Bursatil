@@ -697,7 +697,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const stageShortLabel = (data?.stage?.label || "Sin dato").replace(/\s+probable$/i, "");
   const compactResearchCard = data ? <section className="terminalPanel stockResearchCard stockResearchCardHero">
     <div className="marketSmithStrip" aria-label="Resumen Weinstein Minervini compacto">
-      <MiniMetric label="RS" value={rsFmt(rsUniverse)} tone={Number.isFinite(rsUniverse) && rsUniverse >= 75 ? "good" : Number.isFinite(rsUniverse) && rsUniverse < 45 ? "bad" : ""} />
+      <MiniMetric label="RS Universo" value={rsFmt(rsUniverse)} tone={Number.isFinite(rsUniverse) && rsUniverse >= 75 ? "good" : Number.isFinite(rsUniverse) && rsUniverse < 45 ? "bad" : ""} />
       <MiniMetric label="Etapa" value={stageShortLabel} tone={stageTone} />
       <MiniMetric label="Ventas YoY" value={pct(g.revenueGrowth)} tone={valueTone(g.revenueGrowth)} />
       <MiniMetric label="EPS YoY" value={pct(heroEpsYoY)} tone={valueTone(heroEpsYoY)} />

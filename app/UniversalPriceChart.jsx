@@ -18,20 +18,6 @@ function safeNumber(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-function clamp(n, min = 0, max = 99) {
-  return Math.max(min, Math.min(max, n));
-}
-
-function rsFallbackValue(point = {}) {
-  const rating = safeNumber(point.rsRating);
-  if (Number.isFinite(rating)) return clamp(Math.round(rating), 0, 99);
-  return null;
-}
-
-function rsLineFallbackValue(point = {}) {
-  return rsFallbackValue(point);
-}
-
 function isIntradayInterval(interval = "") {
   return ["1m", "5m", "15m", "30m", "1H", "4H"].includes(normalizeChartInterval(interval));
 }
@@ -116,11 +102,8 @@ function rsLineDataForRows(rows = [], series = {}, interval = "D") {
       date: String(point.date || "").slice(0, 10),
       rawLine: safeNumber(point.rsLine),
       rawMa: safeNumber(point.rsLineSma50),
-      score: safeNumber(point.rsChartScore),
-      scoreMa: safeNumber(point.rsChartScoreSma50),
-      fallback: rsLineFallbackValue(point),
     }))
-    .filter((point) => Number.isFinite(point.time) && (Number.isFinite(point.score) || Number.isFinite(point.fallback)))
+    .filter((point) => Number.isFinite(point.time) && Number.isFinite(point.rawLine))
     .sort((a, b) => a.time - b.time);
   if (rows.length < 2 || points.length < 2) return [];
   const output = [];
@@ -136,9 +119,6 @@ function rsLineDataForRows(rows = [], series = {}, interval = "D") {
         time: row.time,
         rawLine: last.rawLine,
         rawMa: last.rawMa,
-        score: last.score,
-        scoreMa: last.scoreMa,
-        fallback: last.fallback,
         date: row.date,
       });
     }
@@ -146,12 +126,10 @@ function rsLineDataForRows(rows = [], series = {}, interval = "D") {
 
   return output
     .map((point) => {
-      const value = point.score ?? point.fallback;
-      const ma = point.scoreMa;
       return {
         time: point.time,
-        value: Number.isFinite(value) ? Number(clamp(value, 0, 99).toFixed(2)) : value,
-        ma: Number.isFinite(ma) ? Number(ma.toFixed(2)) : null,
+        value: Number.isFinite(point.rawLine) ? Number(point.rawLine.toFixed(2)) : null,
+        ma: Number.isFinite(point.rawMa) ? Number(point.rawMa.toFixed(2)) : null,
         date: point.date,
       };
     })
@@ -363,16 +341,16 @@ export default function UniversalPriceChart({
           lastValueVisible: true,
           priceScaleId: rsScaleId,
           priceFormat: { type: "price", precision: 2, minMove: 0.01 },
-          title: benchmarkSymbol ? `RS vs ${benchmarkSymbol}` : "RS vs benchmark",
+          title: benchmarkSymbol ? `Rel vs ${benchmarkSymbol}` : "Rel vs benchmark",
         });
         rsSeries.setData(rsLineData.map((point) => ({ time: point.time, value: point.value })));
         rsSeries.createPriceLine?.({
-          price: 50,
+          price: 100,
           color: "rgba(96,165,250,.22)",
           lineStyle: 2,
           lineWidth: 1,
           axisLabelVisible: false,
-          title: "RS 50",
+          title: "Base 100",
         });
         const rsMa = rsLineData.filter((point) => Number.isFinite(point.ma)).map((point) => ({ time: point.time, value: point.ma }));
         if (rsMa.length > 1) {
