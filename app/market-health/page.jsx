@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
+import { metricShortLabel } from "@/lib/metricCatalog";
+import { rowRsBenchmark, rowRsPrimary, rowRsUniverse, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
 
 const dateFmt = (value) => {
@@ -25,18 +27,16 @@ function safePct(value, fallback = 0) {
 }
 
 function rowRs(row = {}) {
-  return Number.isFinite(row.rsGlobalPct) ? row.rsGlobalPct : Number.isFinite(row.rsRating) ? row.rsRating : null;
+  return rowRsPrimary(row);
+}
+function rowRsDisplay(row = {}) {
+  return rowRsUniverse(row) ?? rowRsBenchmark(row) ?? null;
+}
+function rowRsDisplayLabel(row = {}) {
+  return Number.isFinite(rowRsUniverse(row)) ? metricShortLabel("rsGlobalPct") : metricShortLabel("rsRating");
 }
 function rowWeakness(row = {}) {
-  if (Number.isFinite(row.weaknessScore)) return row.weaknessScore;
-  let score = 0;
-  const rs = rowRs(row) ?? 50;
-  if (rs < 45) score += 16;
-  if (Number.isFinite(row.distance52w) && row.distance52w < -30) score += 14;
-  if (Number.isFinite(row.perf3m) && row.perf3m < 0) score += 12;
-  if (Number.isFinite(row.extSma50) && row.extSma50 < -8) score += 10;
-  if ((row.riskScore ?? 50) < 35) score += 10;
-  return Math.max(0, Math.min(100, score));
+  return weaknessScore(row);
 }
 
 function isNearHigh(row = {}) {
@@ -50,8 +50,10 @@ function isStage2Like(row = {}) {
 function deteriorationReasons(row = {}) {
   const reasons = [];
   if (rowWeakness(row) >= 65) reasons.push("Deterioro alto");
-  if (Number.isFinite(row.rsGlobalPct) && row.rsGlobalPct < 40) reasons.push("RS global débil");
-  else if (!Number.isFinite(row.rsGlobalPct) && Number.isFinite(row.rsRating) && row.rsRating < 45) reasons.push("RS bajo");
+  const rsUniverse = rowRsUniverse(row);
+  const rsBenchmark = rowRsBenchmark(row);
+  if (Number.isFinite(rsUniverse) && rsUniverse < 40) reasons.push("RS Universo débil");
+  else if (!Number.isFinite(rsUniverse) && Number.isFinite(rsBenchmark) && rsBenchmark < 45) reasons.push("RS Bench bajo");
   if (Number.isFinite(row.price) && Number.isFinite(row.sma50) && row.price < row.sma50) reasons.push("Bajo SMA50");
   if (Number.isFinite(row.price) && Number.isFinite(row.sma200) && row.price < row.sma200) reasons.push("Bajo SMA200");
   if (Number.isFinite(row.distance52w) && row.distance52w < -30) reasons.push("Lejos de máximos");
@@ -88,16 +90,16 @@ function buildScanPulse(scans = []) {
   if (!scan || !rows.length) return null;
   const leaders = rows
     .filter((row) => (rowRs(row) || 0) >= 80 || (row.totalScore || 0) >= 75 || (isStage2Like(row) && isNearHigh(row)))
-    .sort((a, b) => ((b.rsGlobalPct || b.rsRating || 0) - (a.rsGlobalPct || a.rsRating || 0)) || ((b.totalScore || 0) - (a.totalScore || 0)))
+    .sort((a, b) => ((rowRs(b) || 0) - (rowRs(a) || 0)) || ((b.totalScore || 0) - (a.totalScore || 0)))
     .slice(0, 8);
   const deterioration = rows
     .map((row) => ({ ...row, deteriorationReasons: deteriorationReasons(row) }))
     .filter((row) => row.deteriorationReasons.length)
-    .sort((a, b) => (b.deteriorationReasons.length - a.deteriorationReasons.length) || ((a.rsGlobalPct || a.rsRating || 50) - (b.rsGlobalPct || b.rsRating || 50)))
+    .sort((a, b) => (b.deteriorationReasons.length - a.deteriorationReasons.length) || ((rowRs(a) || 50) - (rowRs(b) || 50)))
     .slice(0, 8);
   const nearHigh = rows.filter(isNearHigh).length;
   const stage2 = rows.filter(isStage2Like).length;
-  const rsLeader = rows.filter((row) => (rowRs(row) || 0) >= 80).length;
+  const rsLeader = rows.filter((row) => (rowRsUniverse(row) || 0) >= 80).length;
   const pressure = rows.filter((row) => deteriorationReasons(row).length >= 2).length;
   return {
     scan,
@@ -305,27 +307,33 @@ export default function MarketHealthPage() {
         {scanPulse ? <>
           <div className="kpis">
             <div className="kpi"><b>{scanPulse.count}</b><span>acciones snapshot</span></div>
-            <div className="kpi"><b>{pctShare(scanPulse.rsLeaderPct)}</b><span>RS global &gt;= 80</span></div>
+            <div className="kpi"><b>{pctShare(scanPulse.rsLeaderPct)}</b><span>{metricShortLabel("rsGlobalPct")} &gt;= 80</span></div>
             <div className="kpi"><b>{pctShare(scanPulse.nearHighPct)}</b><span>cerca de máximos 52s</span></div>
             <div className="kpi"><b>{pctShare(scanPulse.pressurePct)}</b><span>deterioro 2+ evidencias</span></div>
           </div>
           <div className="grid grid2" style={{ marginTop: 12 }}>
             <div className="evidencePanel">
               <h3>Liderazgo observado</h3>
-              {scanPulse.leaders.map((row) => <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
-                <span><b>{row.symbol}</b><small>{row.companyName || row.theme || "-"}</small></span>
-                <span><b>{row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"}</b><small>RS global</small></span>
-                <span><b>{row.totalScore?.toFixed(0) || "-"}</b><small>Composite</small></span>
-              </a>)}
+              {scanPulse.leaders.map((row) => {
+                const rs = rowRsDisplay(row);
+                return <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
+                  <span><b>{row.symbol}</b><small>{row.companyName || row.theme || "-"}</small></span>
+                  <span><b>{Number.isFinite(rs) ? rs.toFixed(0) : "-"}</b><small>{rowRsDisplayLabel(row)}</small></span>
+                  <span><b>{row.totalScore?.toFixed(0) || "-"}</b><small>{metricShortLabel("totalScore")}</small></span>
+                </a>;
+              })}
               {!scanPulse.leaders.length && <p className="fine">Sin liderazgo claro en el último snapshot.</p>}
             </div>
             <div className="evidencePanel">
               <h3>Deterioro a revisar</h3>
-              {scanPulse.deterioration.map((row) => <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
-                <span><b>{row.symbol}</b><small>{row.companyName || row.theme || "-"}</small></span>
-                <span><b>{row.deteriorationReasons.length}</b><small>evidencias</small></span>
-                <span><b>{row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"}</b><small>{row.deteriorationReasons.slice(0, 2).join(", ")}</small></span>
-              </a>)}
+              {scanPulse.deterioration.map((row) => {
+                const rs = rowRsDisplay(row);
+                return <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
+                  <span><b>{row.symbol}</b><small>{row.companyName || row.theme || "-"}</small></span>
+                  <span><b>{row.deteriorationReasons.length}</b><small>evidencias</small></span>
+                  <span><b>{Number.isFinite(rs) ? rs.toFixed(0) : "-"}</b><small>{row.deteriorationReasons.slice(0, 2).join(", ")}</small></span>
+                </a>;
+              })}
               {!scanPulse.deterioration.length && <p className="fine">Sin deterioro técnico relevante en el último snapshot.</p>}
             </div>
           </div>

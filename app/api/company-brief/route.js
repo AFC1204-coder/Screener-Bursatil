@@ -3,6 +3,9 @@ import { fetchSecFundamentals, mergeSecGrowthMetrics } from "@/lib/sec";
 import { fetchFmpCompanyData } from "@/lib/fmp";
 import { fetchAsicShortInterest, mergeAsicShortInterest } from "@/lib/asicShort";
 import { externalLinks, inferTradingViewSymbol, isTradingViewWidgetBlocked } from "@/lib/symbols";
+import { withProfileCache } from "@/lib/fundamentalsCache";
+import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer";
+import { weeklyStageForBars } from "@/lib/weeklyStage";
 
 const THEME_RULES = [
   { key: "Semis / fotonica", re: /semiconductor|semiconductor equipment|integrated circuit|chip|wafer|photon|optic|laser|lithography|foundry/i, text: "Tiene exposicion a semiconductores, optica/fotonica, litografia, fabricacion de chips o infraestructura de computacion." },
@@ -34,7 +37,7 @@ function inferTheme(sector = "", industry = "", summary = "") {
 function countryFromSymbol(symbol, profileCountry = "") {
   if (profileCountry) return profileCountry;
   const s = symbol.toUpperCase();
-  const map = [[".TO", "Canada"], [".MC", "España"], [".DE", "Alemania"], [".F", "Alemania"], [".PA", "Francia"], [".AS", "Paises Bajos"], [".L", "Reino Unido"], [".SW", "Suiza"], [".ST", "Suecia"], [".CO", "Dinamarca"], [".OL", "Noruega"], [".HE", "Finlandia"], [".MI", "Italia"], [".BR", "Belgica"], [".LS", "Portugal"], [".VI", "Austria"], [".IR", "Irlanda"], [".T", "Japon"], [".HK", "Hong Kong"], [".SI", "Singapur"], [".AX", "Australia"], [".TW", "Taiwan"], [".KS", "Corea del Sur"], [".KQ", "Corea del Sur"], [".NS", "India"], [".BO", "India"], [".SS", "China"], [".SZ", "China"], [".SA", "Brasil"], [".MX", "Mexico"]];
+  const map = [[".TO", "Canada"], [".MC", "España"], [".DE", "Alemania"], [".F", "Alemania"], [".PA", "Francia"], [".AS", "Paises Bajos"], [".L", "Reino Unido"], [".SW", "Suiza"], [".ST", "Suecia"], [".CO", "Dinamarca"], [".OL", "Noruega"], [".HE", "Finlandia"], [".MI", "Italia"], [".BR", "Belgica"], [".LS", "Portugal"], [".VI", "Austria"], [".IR", "Irlanda"], [".T", "Japon"], [".HK", "Hong Kong"], [".SI", "Singapur"], [".JO", "Sudafrica"], [".AX", "Australia"], [".TW", "Taiwan"], [".TA", "Israel"], [".KS", "Corea del Sur"], [".KQ", "Corea del Sur"], [".NS", "India"], [".BO", "India"], [".SS", "China"], [".SZ", "China"], [".SA", "Brasil"], [".MX", "Mexico"]];
   return map.find(([x]) => s.endsWith(x))?.[1] || "Estados Unidos";
 }
 function normalizeWebsite(url = "") {
@@ -123,15 +126,12 @@ async function marketCapUsdInfo(marketCap, currency = "") {
   return { value: null, label: "", rate: null, pair: direct || inverse || "", source: "Proveedor no disponible" };
 }
 function stageFromBars(bars = []) {
-  const avg = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
-  const sma = (n, o = 0) => bars.length >= n + o ? avg(bars.slice(o, o + n).map((x) => x.close)) : null;
-  if (bars.length < 210) return { label: "sin historico suficiente", detail: "No hay suficiente historico para estimar etapa con fiabilidad." };
-  const price = bars[0].close, s50 = sma(50), s150 = sma(150), s200 = sma(200), s200p = sma(200, 30);
-  const slope = s200 && s200p ? ((s200 / s200p) - 1) * 100 : null;
-  if (price > s50 && price > s150 && price > s200 && s50 > s150 && s150 > s200 && slope > 0) return { label: "Etapa 2 probable", detail: "Precio por encima de medias clave y media larga ascendiendo." };
-  if (price < s200 && slope < 0) return { label: "Etapa 4 probable", detail: "Precio bajo la media larga y media larga descendente." };
-  if (price > s200 && slope <= 0) return { label: "Transicion/base", detail: "Precio sobre media larga, pero la pendiente aun no confirma tendencia fuerte." };
-  return { label: "Neutral/mixta", detail: "La estructura de medias no confirma una etapa clara." };
+  const weekly = weeklyStageForBars(bars);
+  return {
+    label: weekly.label,
+    detail: weekly.detail,
+    weekly,
+  };
 }
 function avg(a) { return a.length ? a.reduce((x, y) => x + y, 0) / a.length : null; }
 function sma(bars, n, offset = 0) { return bars.length >= n + offset ? avg(bars.slice(offset, offset + n).map((x) => x.close)) : null; }
@@ -185,22 +185,39 @@ function benchmarkForProfile(symbol, profile, themeKey) {
   if (countryFromSymbol(symbol, profile.country) !== "Estados Unidos") return "ACWI";
   return "SPY";
 }
+
+function rsQualityLabelFor(rating, rsQualityScore, speculationRiskScore) {
+  return rating >= 80 && rsQualityScore >= 72 ? "RS limpio"
+    : rating >= 80 && speculationRiskScore >= 55 ? "RS volatil"
+      : rating >= 75 && rsQualityScore >= 62 ? "RS eficiente"
+        : speculationRiskScore >= 70 ? "Momentum especulativo"
+          : rating >= 60 ? "RS constructivo"
+            : "RS debil";
+}
+
 function relativeStrengthFromBars(bars = [], benchmarkBars = []) {
-  const price = bars[0]?.close;
-  const s50 = sma(bars, 50);
-  const s200 = sma(bars, 200);
-  const s200p = sma(bars, 200, 30);
+  const aligned = alignDailyWithBenchmark(bars, benchmarkBars);
+  const latestIndex = aligned.length - 1;
+  const price = aligned[latestIndex]?.close ?? bars[0]?.close;
+  const s50 = latestIndex >= 0 ? avgAt(aligned, latestIndex, 50, "close") : sma(bars, 50);
+  const s200 = latestIndex >= 0 ? avgAt(aligned, latestIndex, 200, "close") : sma(bars, 200);
+  const s200p = latestIndex >= 30 ? avgAt(aligned, latestIndex - 30, 200, "close") : sma(bars, 200, 30);
   const slope = s200 && s200p ? ((s200 / s200p) - 1) * 100 : null;
-  const p3 = perf(bars, 63), p6 = perf(bars, 126), p12 = perf(bars, 252);
-  const b3 = perf(benchmarkBars, 63), b6 = perf(benchmarkBars, 126), b12 = perf(benchmarkBars, 252);
+  const p3 = latestIndex >= 0 ? pctAt(aligned, latestIndex, 63, "close") : perf(bars, 63);
+  const p6 = latestIndex >= 0 ? pctAt(aligned, latestIndex, 126, "close") : perf(bars, 126);
+  const p12 = latestIndex >= 0 ? pctAt(aligned, latestIndex, 252, "close") : perf(bars, 252);
+  const b3 = latestIndex >= 0 ? pctAt(aligned, latestIndex, 63, "benchmarkClose") : perf(benchmarkBars, 63);
+  const b6 = latestIndex >= 0 ? pctAt(aligned, latestIndex, 126, "benchmarkClose") : perf(benchmarkBars, 126);
+  const b12 = latestIndex >= 0 ? pctAt(aligned, latestIndex, 252, "benchmarkClose") : perf(benchmarkBars, 252);
   const rs3m = Number.isFinite(p3) && Number.isFinite(b3) ? p3 - b3 : null;
   const rs6m = Number.isFinite(p6) && Number.isFinite(b6) ? p6 - b6 : null;
   const rs12m = Number.isFinite(p12) && Number.isFinite(b12) ? p12 - b12 : null;
-  const distance52w = highDist(bars, 252);
+  const distance52w = latestIndex >= 0 ? rollingHighDistance(aligned, latestIndex, 252) : highDist(bars, 252);
   const nearHighBonus = distance52w >= -5 ? 8 : distance52w >= -15 ? 4 : distance52w >= -25 ? 1 : -6;
   const trendBonus = (price > s50 ? 4 : -4) + (slope > 0 ? 4 : -2);
   const raw = 50 + (rs3m || 0) * .9 + (rs6m || 0) * .45 + (rs12m || 0) * .22 + nearHighBonus + trendBonus;
-  const rating = Math.round(Math.max(1, Math.min(99, raw)));
+  const compositeRating = latestIndex >= 0 ? rollingRsRating(aligned, latestIndex) : null;
+  const rating = Number.isFinite(compositeRating) ? compositeRating : Math.round(Math.max(1, Math.min(99, raw)));
   const volatility63d = annualizedVolatility(bars, 63);
   const maxDrawdown63d = maxDrawdown(bars, 63);
   let stability = 72;
@@ -224,7 +241,7 @@ function relativeStrengthFromBars(bars = [], benchmarkBars = []) {
     rsQualityScore,
     rsStabilityScore: clamp(stability),
     speculationRiskScore,
-    rsQualityLabel: rating >= 80 && rsQualityScore >= 72 ? "RS limpio" : rating >= 80 && speculationRiskScore >= 55 ? "RS volatil" : rating >= 75 && rsQualityScore >= 62 ? "RS eficiente" : speculationRiskScore >= 70 ? "Momentum especulativo" : rating >= 60 ? "RS constructivo" : "RS debil",
+    rsQualityLabel: rsQualityLabelFor(rating, rsQualityScore, speculationRiskScore),
     volatility63d,
     maxDrawdown63d,
     rs3m,
@@ -237,13 +254,18 @@ function relativeStrengthFromBars(bars = [], benchmarkBars = []) {
     benchmarkPerf6m: b6,
     benchmarkPerf12m: b12,
     distance52w,
-    note: "RS Rating aproximado calculado por StatsEdge; no equivale a ratings propietarios de MarketSurge.",
+    note: "RS Rating StatsEdge tipo MarketSmith: score 0-99 basado en fuerza relativa, momentum y postura tecnica. No es un percentil puro ni equivale a ratings propietarios de MarketSurge.",
   };
 }
 
 function pctAt(rows = [], index = 0, lookback = 1, key = "close") {
   const now = rows[index]?.[key];
   const then = rows[index - lookback]?.[key];
+  if (!Number.isFinite(now) || !Number.isFinite(then) || then === 0) return null;
+  return ((now / then) - 1) * 100;
+}
+
+function pctChangeBetween(now, then) {
   if (!Number.isFinite(now) || !Number.isFinite(then) || then === 0) return null;
   return ((now / then) - 1) * 100;
 }
@@ -262,13 +284,48 @@ function rollingHighDistance(rows = [], index = 0, lookback = 252) {
   return Number.isFinite(high) && high > 0 ? ((current / high) - 1) * 100 : null;
 }
 
+function scoreFromEdge(edgePct, sensitivity = 20) {
+  if (!Number.isFinite(edgePct)) return null;
+  const score = 50 + ((2 / Math.PI) * 49 * Math.atan(edgePct / sensitivity));
+  return clamp(score, 1, 99);
+}
+
+function weightedScore(parts = [], fallback = null) {
+  let total = 0;
+  let weightTotal = 0;
+  for (const [score, weight] of parts) {
+    if (!Number.isFinite(score) || !Number.isFinite(weight) || weight <= 0) continue;
+    total += score * weight;
+    weightTotal += weight;
+  }
+  return weightTotal > 0 ? total / weightTotal : fallback;
+}
+
+function rollingRelativeLinePositionScore(rows = [], index = 0, lookback = 252) {
+  const current = rows[index];
+  if (!current || !Number.isFinite(current.close) || !Number.isFinite(current.benchmarkClose) || current.benchmarkClose <= 0) return null;
+  const currentRatio = current.close / current.benchmarkClose;
+  const slice = rows.slice(Math.max(0, index + 1 - lookback), index + 1)
+    .map((row) => Number.isFinite(row.close) && Number.isFinite(row.benchmarkClose) && row.benchmarkClose > 0 ? row.close / row.benchmarkClose : null)
+    .filter(Number.isFinite);
+  if (slice.length < 20) return null;
+  const low = Math.min(...slice);
+  const high = Math.max(...slice);
+  if (!Number.isFinite(low) || !Number.isFinite(high) || high <= low) return null;
+  return clamp(1 + ((currentRatio - low) / (high - low)) * 98, 1, 99);
+}
+
 function rollingRsRawScore(rows = [], index = 0) {
+  const price = rows[index]?.close;
+  const p1 = pctAt(rows, index, 21, "close");
   const p3 = pctAt(rows, index, 63, "close");
   const p6 = pctAt(rows, index, 126, "close");
   const p12 = pctAt(rows, index, 252, "close");
+  const b1 = pctAt(rows, index, 21, "benchmarkClose");
   const b3 = pctAt(rows, index, 63, "benchmarkClose");
   const b6 = pctAt(rows, index, 126, "benchmarkClose");
   const b12 = pctAt(rows, index, 252, "benchmarkClose");
+  const rs1m = Number.isFinite(p1) && Number.isFinite(b1) ? p1 - b1 : null;
   const rs3m = Number.isFinite(p3) && Number.isFinite(b3) ? p3 - b3 : null;
   const rs6m = Number.isFinite(p6) && Number.isFinite(b6) ? p6 - b6 : null;
   const rs12m = Number.isFinite(p12) && Number.isFinite(b12) ? p12 - b12 : null;
@@ -277,10 +334,40 @@ function rollingRsRawScore(rows = [], index = 0) {
   const s200Prev = index >= 30 ? avgAt(rows, index - 30, 200, "close") : null;
   const slope = Number.isFinite(s200) && Number.isFinite(s200Prev) && s200Prev !== 0 ? ((s200 / s200Prev) - 1) * 100 : null;
   const distance52w = rollingHighDistance(rows, index, 252);
-  const nearHighBonus = distance52w >= -5 ? 8 : distance52w >= -15 ? 4 : distance52w >= -25 ? 1 : -6;
-  const price = rows[index]?.close;
-  const trendBonus = (Number.isFinite(price) && Number.isFinite(s50) && price > s50 ? 4 : -4) + (Number.isFinite(slope) && slope > 0 ? 4 : -2);
-  return 50 + (rs3m || 0) * .9 + (rs6m || 0) * .45 + (rs12m || 0) * .22 + nearHighBonus + trendBonus;
+  const priceVs50 = pctChangeBetween(price, s50);
+  const priceVs200 = pctChangeBetween(price, s200);
+  const maStackEdge = Number.isFinite(s50) && Number.isFinite(s200) ? pctChangeBetween(s50, s200) : null;
+
+  const relativeMomentumScore = weightedScore([
+    [scoreFromEdge(rs1m, 14), .10],
+    [scoreFromEdge(rs3m, 14), .24],
+    [scoreFromEdge(rs6m, 24), .26],
+    [scoreFromEdge(rs12m, 42), .40],
+  ], 50);
+  const absoluteMomentumScore = weightedScore([
+    [scoreFromEdge(p1, 16), .10],
+    [scoreFromEdge(p3, 20), .24],
+    [scoreFromEdge(p6, 34), .26],
+    [scoreFromEdge(p12, 65), .40],
+  ], 50);
+  const momentumScore = weightedScore([
+    [relativeMomentumScore, .78],
+    [absoluteMomentumScore, .22],
+  ], 50);
+  const relativeLinePositionScore = rollingRelativeLinePositionScore(rows, index, 252);
+  const technicalPostureScore = weightedScore([
+    [scoreFromEdge(priceVs50, 10), .24],
+    [scoreFromEdge(priceVs200, 28), .24],
+    [scoreFromEdge(maStackEdge, 12), .18],
+    [scoreFromEdge(slope, 4), .16],
+    [scoreFromEdge(Number.isFinite(distance52w) ? distance52w + 12 : null, 12), .18],
+  ], 50);
+
+  return weightedScore([
+    [momentumScore, .70],
+    [relativeLinePositionScore, .18],
+    [technicalPostureScore, .12],
+  ], 50);
 }
 
 function rollingRsRating(rows = [], index = 0) {
@@ -288,28 +375,48 @@ function rollingRsRating(rows = [], index = 0) {
   return Number.isFinite(raw) ? Math.round(clamp(raw, 1, 99)) : null;
 }
 
-function rsChartScoreFromRaw(raw, highMax = 99) {
+function rsChartScoreFromRaw(raw) {
   if (!Number.isFinite(raw)) return null;
-  const leaderFloor = 93;
-  if (raw <= leaderFloor) return Number(clamp(raw, 1, leaderFloor).toFixed(2));
-  if (!Number.isFinite(highMax) || highMax <= leaderFloor + 0.001) return Number(clamp(raw, 1, 99).toFixed(2));
-  return Number(clamp(leaderFloor + ((raw - leaderFloor) / (highMax - leaderFloor)) * (99 - leaderFloor), 1, 99).toFixed(2));
+  return Number(clamp(raw, 1, 99).toFixed(2));
+}
+
+function dailyBarsAscending(bars = []) {
+  return (bars || [])
+    .map((bar) => ({
+      date: String(bar.date || "").slice(0, 10),
+      time: dateTime(String(bar.date || "").slice(0, 10)),
+      close: Number(bar.close),
+      high: Number.isFinite(bar.high) ? bar.high : Number(bar.close),
+    }))
+    .filter((bar) => /^\d{4}-\d{2}-\d{2}$/.test(bar.date) && bar.time > 0 && Number.isFinite(bar.close) && bar.close > 0)
+    .sort((a, b) => a.time - b.time);
+}
+
+function alignDailyWithBenchmark(bars = [], benchmarkBars = []) {
+  const stockRows = dailyBarsAscending(bars);
+  const benchmarkRows = dailyBarsAscending(benchmarkBars);
+  const output = [];
+  let benchmarkIndex = 0;
+  let lastBenchmark = null;
+
+  for (const row of stockRows) {
+    while (benchmarkIndex < benchmarkRows.length && benchmarkRows[benchmarkIndex].time <= row.time) {
+      lastBenchmark = benchmarkRows[benchmarkIndex];
+      benchmarkIndex += 1;
+    }
+    if (lastBenchmark && daysApart(row.date, lastBenchmark.date) <= 10) {
+      output.push({
+        ...row,
+        benchmarkClose: lastBenchmark.close,
+        benchmarkDate: lastBenchmark.date,
+      });
+    }
+  }
+  return output;
 }
 
 function relativeStrengthSeriesFromBars(bars = [], benchmarkBars = []) {
-  const benchmarkByDate = new Map((benchmarkBars || [])
-    .filter((bar) => bar.date && Number.isFinite(bar.close) && bar.close > 0)
-    .map((bar) => [bar.date, bar.close]));
-  const aligned = (bars || [])
-    .filter((bar) => bar.date && Number.isFinite(bar.close) && bar.close > 0)
-    .map((bar) => ({
-      date: bar.date,
-      close: bar.close,
-      high: Number.isFinite(bar.high) ? bar.high : bar.close,
-      benchmarkClose: benchmarkByDate.get(bar.date),
-    }))
-    .filter((bar) => Number.isFinite(bar.benchmarkClose) && bar.benchmarkClose > 0)
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  const aligned = alignDailyWithBenchmark(bars, benchmarkBars);
 
   if (aligned.length < 20) {
     return {
@@ -331,16 +438,15 @@ function relativeStrengthSeriesFromBars(bars = [], benchmarkBars = []) {
       rsRating: rollingRsRating(aligned, index),
     };
   });
-  const chartRawMax = Math.max(...full.map((bar) => bar.rsRawScore).filter(Number.isFinite));
   const withSma = full.map((bar, index) => ({
     date: bar.date,
     rsLine: Number.isFinite(bar.rsLine) ? Number(bar.rsLine.toFixed(2)) : null,
     rsLineSma50: Number.isFinite(avgAt(full, index, 50, "rsLine")) ? Number(avgAt(full, index, 50, "rsLine").toFixed(2)) : null,
-    rsChartScore: rsChartScoreFromRaw(bar.rsRawScore, chartRawMax),
-    rsChartScoreSma50: rsChartScoreFromRaw(avgAt(full, index, 50, "rsRawScore"), chartRawMax),
+    rsChartScore: rsChartScoreFromRaw(bar.rsRawScore),
+    rsChartScoreSma50: rsChartScoreFromRaw(avgAt(full, index, 50, "rsRawScore")),
     rsRating: bar.rsRating,
   })).filter((bar) => Number.isFinite(bar.rsLine));
-  const points = withSma.slice(-260);
+  const points = withSma;
   const latest = points.at(-1) || {};
   const previous21 = points.at(-22) || {};
   const recentHigh = Math.max(...points.slice(-252).map((bar) => bar.rsLine).filter(Number.isFinite));
@@ -351,11 +457,13 @@ function relativeStrengthSeriesFromBars(bars = [], benchmarkBars = []) {
   return {
     points,
     alignedDays: aligned.length,
+    startDate: points[0]?.date || "",
+    endDate: latest.date || "",
     latestLine: latest.rsLine ?? null,
     latestRating: latest.rsRating ?? null,
     trend21d,
     newHigh52w: Number.isFinite(latest.rsLine) && Number.isFinite(recentHigh) ? latest.rsLine >= recentHigh * .995 : false,
-    note: "Linea RS StatsEdge = precio relativo vs benchmark normalizado a 100. Es aproximada y no equivale a ratings propietarios.",
+    note: "Linea relativa vs benchmark rebased a 100. No es el RS Global StatsEdge 0-99; ese score sale del universo de la web.",
   };
 }
 
@@ -460,6 +568,125 @@ function compactChartBars(bars = []) {
     volume: Number.isFinite(bar.volume) ? bar.volume : null,
   }));
 }
+function mergeLongAndRecentBars(longBars = [], recentBars = []) {
+  const cleanBars = (bars = []) => (bars || [])
+    .map((bar) => ({
+      ...bar,
+      date: String(bar.date || "").slice(0, 10),
+    }))
+    .filter((bar) => /^\d{4}-\d{2}-\d{2}$/.test(bar.date) && dateTime(bar.date) > 0 && Number.isFinite(bar.close) && bar.close > 0);
+  const long = cleanBars(longBars);
+  const recent = cleanBars(recentBars);
+  if (!recent.length) return long.sort((a, b) => dateTime(b.date) - dateTime(a.date));
+  if (!long.length) return recent.sort((a, b) => dateTime(b.date) - dateTime(a.date));
+
+  const recentStart = Math.min(...recent.map((bar) => dateTime(bar.date)).filter(Number.isFinite));
+  const byDate = new Map();
+  for (const bar of long) {
+    if (dateTime(bar.date) < recentStart) byDate.set(bar.date, bar);
+  }
+  for (const bar of recent) byDate.set(bar.date, bar);
+  return [...byDate.values()].sort((a, b) => dateTime(b.date) - dateTime(a.date));
+}
+function mergeChartHistory(longChart = {}, recentChart = {}) {
+  const bars = mergeLongAndRecentBars(longChart.bars || [], recentChart.bars || []);
+  return {
+    ...longChart,
+    bars,
+    meta: {
+      ...(longChart.meta || {}),
+      dataProvider: longChart.meta?.dataProvider || recentChart.meta?.dataProvider,
+      recentRange: recentChart.meta?.requestedRange || "",
+      recentInterval: recentChart.meta?.requestedInterval || "",
+    },
+  };
+}
+
+function scanMetric(row = {}, key = "") {
+  return firstFinite(row.raw?.[key], row.metrics?.[key], row[key]);
+}
+
+async function readUniverseRsSnapshot(symbol = "") {
+  const config = supabaseConfig();
+  const cleanSymbol = String(symbol || "").trim().toUpperCase();
+  if (!config.configured || !cleanSymbol) return null;
+  const rows = await supabaseRequest("scan_results", {
+    query: [
+      `owner_id=eq.${encodeURIComponent(config.ownerId)}`,
+      `symbol=eq.${encodeURIComponent(cleanSymbol)}`,
+      "select=created_at,scan_id,symbol,company_name,country,sector,industry,theme,total_score,weinstein_score,minervini_score,risk_score,rs_rating,metrics,raw",
+      "order=created_at.desc",
+      "limit=1",
+    ].join("&"),
+  });
+  const row = rows?.[0];
+  if (!row) return null;
+  const rsGlobalPct = firstFinite(row.raw?.rsGlobalPct, row.metrics?.rsGlobalPct);
+  if (!Number.isFinite(rsGlobalPct)) return null;
+  return {
+    source: "scan_results",
+    asOf: row.created_at || "",
+    scanId: row.scan_id || "",
+    symbol: row.symbol || cleanSymbol,
+    companyName: row.company_name || row.raw?.companyName || row.raw?.name || "",
+    country: row.country || row.raw?.country || "",
+    sector: row.sector || row.raw?.sector || "",
+    industry: row.industry || row.raw?.industry || "",
+    theme: row.theme || row.raw?.theme || "",
+    rsGlobalPct,
+    rsRating: firstFinite(row.raw?.rsRating, row.metrics?.rsRating, row.rs_rating),
+    rsCountryPct: firstFinite(row.raw?.rsCountryPct, row.metrics?.rsCountryPct),
+    rsSectorPct: firstFinite(row.raw?.rsSectorPct, row.metrics?.rsSectorPct),
+    rsGlobalSample: scanMetric(row, "rsGlobalSample"),
+    rsCountrySample: scanMetric(row, "rsCountrySample"),
+    rsSectorSample: scanMetric(row, "rsSectorSample"),
+    totalScore: firstFinite(row.raw?.totalScore, row.total_score),
+    weinsteinScore: firstFinite(row.raw?.weinsteinScore, row.weinstein_score),
+    minerviniScore: firstFinite(row.raw?.minerviniScore, row.minervini_score),
+    riskScore: firstFinite(row.raw?.riskScore, row.risk_score),
+  };
+}
+
+function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null) {
+  const benchmarkRating = benchmarkStrength.rating;
+  if (!universe || !Number.isFinite(universe.rsGlobalPct)) {
+    return {
+      ...benchmarkStrength,
+      benchmarkRating,
+      rsRating: benchmarkRating,
+      rsUniverseAvailable: false,
+      rsBenchmarkAvailable: Number.isFinite(benchmarkRating),
+      ratingSource: "benchmark-fallback",
+      rsGlobalPct: null,
+      rsCountryPct: null,
+      rsSectorPct: null,
+      universe: null,
+      note: "RS provisional calculado con benchmark porque no hay snapshot reciente del universo StatsEdge para este simbolo.",
+    };
+  }
+  const rating = universe.rsGlobalPct;
+  const rsQualityScore = clamp(rating * .68 + clamp(benchmarkStrength.rsStabilityScore ?? 72) * .32);
+  return {
+    ...benchmarkStrength,
+    rating,
+    benchmarkRating,
+    rsRating: benchmarkRating,
+    rsUniverseAvailable: true,
+    rsBenchmarkAvailable: Number.isFinite(benchmarkRating),
+    ratingSource: "universe",
+    rsGlobalPct: universe.rsGlobalPct,
+    rsCountryPct: universe.rsCountryPct,
+    rsSectorPct: universe.rsSectorPct,
+    rsGlobalSample: universe.rsGlobalSample,
+    rsCountrySample: universe.rsCountrySample,
+    rsSectorSample: universe.rsSectorSample,
+    rsQualityScore,
+    rsQualityLabel: rsQualityLabelFor(rating, rsQualityScore, benchmarkStrength.speculationRiskScore),
+    universe,
+    note: "RS Universo StatsEdge = percentil 0-99 calculado desde el universo de la web. RS Benchmark solo mide comparativa frente al benchmark asignado.",
+  };
+}
+
 function tradingViewEmbedInfo(symbol = "", tradingViewSymbol = "") {
   if (isTradingViewWidgetBlocked(symbol, tradingViewSymbol)) {
     return {
@@ -717,13 +944,25 @@ function mergeObjectFallback(base = {}, fallback = {}) {
   return out;
 }
 
+async function fetchProfileForCache(symbol) {
+  const profile = await fetchYahooProfile(symbol);
+  const asicShort = await fetchAsicShortInterest(symbol).catch(() => null);
+  return mergeAsicShortInterest(profile, asicShort);
+}
+
 export async function getCompanyBrief(symbol, options = {}) {
   if (!symbol) throw new Error("Falta symbol");
   try {
-    const [profileResult, chart] = await Promise.all([
-      fetchYahooProfile(symbol).catch((error) => ({ profileProviderError: error.message || "Proveedor no disponible" })),
-      fetchYahooChart(symbol).catch(() => ({ bars: [] })),
+    const [profileResult, longChart, recentChart] = await Promise.all([
+      withProfileCache(symbol, {
+        refresh: options.refreshProfile,
+        useCache: options.profileCache !== false,
+        maxAgeDays: options.profileMaxAgeDays,
+      }, fetchProfileForCache).catch((error) => ({ profileProviderError: error.message || "Proveedor no disponible" })),
+      fetchYahooChart(symbol, { range: "MAX" }).catch(() => ({ bars: [] })),
+      fetchYahooChart(symbol, { range: "5A" }).catch(() => ({ bars: [] })),
     ]);
+    const chart = mergeChartHistory(longChart, recentChart);
     let profile = {
       name: chart.meta?.longName || chart.meta?.shortName || symbol,
       marketCap: 0,
@@ -798,17 +1037,22 @@ export async function getCompanyBrief(symbol, options = {}) {
     const summary = firstSentences(profile.businessSummary, 2);
     const marketCapCurrency = normalizeCurrency(profile.currency);
     const marketCapUsd = await marketCapUsdInfo(profile.marketCap, marketCapCurrency).catch(() => null);
-    const listingChart = profile.ipoDate ? null : await fetchYahooChart(symbol, { range: "MAX" }).catch(() => null);
-    const listingDate = profile.ipoDate || oldestBarDate(listingChart?.bars || []);
+    const listingDate = profile.ipoDate || oldestBarDate(chart.bars || []);
     const listingDateSource = profile.ipoDate ? "Proveedor perfil" : listingDate ? "Primera cotizacion historica disponible" : "";
     const stage = stageFromBars(chart.bars || []);
     const requestedBenchmark = cleanBenchmarkSymbol(options.benchmarkSymbol);
     const benchmarkSymbol = requestedBenchmark || benchmarkForProfile(symbol, profile, theme.key);
-    const benchmarkChart = await fetchYahooChart(benchmarkSymbol).catch(() => ({ bars: [] }));
-    const relativeStrength = {
+    const [benchmarkLongChart, benchmarkRecentChart] = await Promise.all([
+      fetchYahooChart(benchmarkSymbol, { range: "MAX" }).catch(() => ({ bars: [] })),
+      fetchYahooChart(benchmarkSymbol, { range: "5A" }).catch(() => ({ bars: [] })),
+    ]);
+    const benchmarkChart = mergeChartHistory(benchmarkLongChart, benchmarkRecentChart);
+    const benchmarkStrength = {
       benchmarkSymbol,
       ...relativeStrengthFromBars(chart.bars || [], benchmarkChart.bars || []),
     };
+    const universeSnapshot = await readUniverseRsSnapshot(symbol).catch(() => null);
+    const relativeStrength = mergeUniverseRelativeStrength(benchmarkStrength, universeSnapshot);
     relativeStrength.series = relativeStrengthSeriesFromBars(chart.bars || [], benchmarkChart.bars || []);
     const website = normalizeWebsite(profile.website);
     const domain = assetDomainForSymbol(symbol, website);
@@ -881,9 +1125,10 @@ export async function getCompanyBrief(symbol, options = {}) {
         extrasProviderError: extrasResult.extrasProviderError || null,
         secProviderError: secResult.error || null,
         fmpProviderError: fmpResult.fmpProviderError || null,
+        fundamentalsCache: profile.fundamentalsCache || null,
         coverage,
         providers: {
-          profile: "Yahoo Finance",
+          profile: profile.fundamentalsCache?.hit ? "StatsEdge fundamental_snapshots cache" : "Yahoo Finance",
           chart: chart.meta?.fallbackReason ? `${chart.meta?.dataProvider || "Yahoo Finance"} · fallback: ${chart.meta.fallbackReason}` : chart.meta?.dataProvider || "Yahoo Finance",
           news: "Yahoo Finance search/news + Google News RSS fallback",
           statements: fmpResult.financialResults ? "Yahoo quoteSummary statements + FMP fallback" : "Yahoo quoteSummary statements",
@@ -903,9 +1148,15 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const symbol = searchParams.get("symbol");
   const benchmarkSymbol = searchParams.get("benchmark");
+  const profileMaxAgeDays = Number(searchParams.get("maxFundamentalsAgeDays") || searchParams.get("profileMaxAgeDays"));
   if (!symbol) return Response.json({ error: "Falta symbol" }, { status: 400 });
   try {
-    return Response.json(await getCompanyBrief(symbol, { benchmarkSymbol }));
+    return Response.json(await getCompanyBrief(symbol, {
+      benchmarkSymbol,
+      refreshProfile: searchParams.get("refresh") === "1" || searchParams.get("refreshProfile") === "1",
+      profileCache: searchParams.get("cache") !== "0",
+      profileMaxAgeDays: Number.isFinite(profileMaxAgeDays) ? profileMaxAgeDays : undefined,
+    }));
   } catch (e) {
     return Response.json({ error: e.message || String(e) }, { status: 500 });
   }

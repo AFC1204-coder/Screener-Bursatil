@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import ChartPreferences from "@/app/ChartPreferences";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
+import { metricShortLabel } from "@/lib/metricCatalog";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const rsFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
@@ -296,7 +297,7 @@ function FundamentalSnapshot({ data = {}, growth = {}, valuation = {}, quote = {
     ["Balance", "Deuda total", money(balance.totalDebt ?? latest.totalDebt, displayCurrency)],
     ["Balance", "Free cash flow", money(cashflow.freeCashFlow ?? latest.freeCashFlow, displayCurrency)],
     ["Estructura", "Acciones", fmt(valuation.sharesOutstanding || growth.sharesOutstanding)],
-    ["Estructura", "Short float", pct(growth.shortPercentOfFloat)],
+    ["Estructura", metricShortLabel("shortPercentOfFloat"), pct(growth.shortPercentOfFloat)],
   ];
   return <div className="tableWrap statementMatrix metricsStatementMatrix">
     <table className="table">
@@ -658,6 +659,9 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const rs = data?.relativeStrength || {};
   const benchmarkOverride = cleanBenchmarkSymbol(chartSettings?.benchmarks?.[symbol]);
   const activeBenchmark = benchmarkOverride || cleanBenchmarkSymbol(rs.benchmarkSymbol);
+  const rsUniverse = finiteValue(rs.rsGlobalPct);
+  const rsBenchmark = finiteValue(rs.benchmarkRating, rs.rsRating, rs.ratingSource === "benchmark-fallback" ? rs.rating : undefined);
+  const rsSourceLabel = Number.isFinite(rsUniverse) ? "RS Universo StatsEdge" : "RS Universo sin snapshot";
   const technical = technicalSnapshotFromBars(data?.chartBars || [], q);
   const statementCurrency = data?.financialResults?.currency || g.financialCurrency || data?.currency || "";
   const stageTone = /etapa 2/i.test(data?.stage?.label || "") ? "good" : /etapa 4/i.test(data?.stage?.label || "") ? "bad" : "neutral";
@@ -692,19 +696,15 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const heroEpsYoY = heroEpsRows.length ? epsGrowth(heroEpsRows[0], heroEpsRows, 0, heroEpsCompareOffset, v.sharesOutstanding || g.sharesOutstanding) : g.earningsGrowth;
   const stageShortLabel = (data?.stage?.label || "Sin dato").replace(/\s+probable$/i, "");
   const compactResearchCard = data ? <section className="terminalPanel stockResearchCard stockResearchCardHero">
-    <div className="sectionTitle">
-      <h2>Carta compacta</h2>
-      <span className="fine">{rs.benchmarkSymbol ? `RS vs ${rs.benchmarkSymbol}` : "Resumen"}</span>
-    </div>
     <div className="marketSmithStrip" aria-label="Resumen Weinstein Minervini compacto">
-      <MiniMetric label="RS Rating" value={rsFmt(rs.rating)} tone={(rs.rating || 0) >= 75 ? "good" : (rs.rating || 0) < 45 ? "bad" : ""} />
+      <MiniMetric label="RS" value={rsFmt(rsUniverse)} tone={Number.isFinite(rsUniverse) && rsUniverse >= 75 ? "good" : Number.isFinite(rsUniverse) && rsUniverse < 45 ? "bad" : ""} />
       <MiniMetric label="Etapa" value={stageShortLabel} tone={stageTone} />
       <MiniMetric label="Ventas YoY" value={pct(g.revenueGrowth)} tone={valueTone(g.revenueGrowth)} />
       <MiniMetric label="EPS YoY" value={pct(heroEpsYoY)} tone={valueTone(heroEpsYoY)} />
     </div>
     <div className="heroCardMetrics" aria-label="Metricas clave compactas">
-      <div><span>MA50 / MA200</span><b className={valueTone(finiteValue(technical.distanceSma50, technical.distanceSma200))}>{pct(technical.distanceSma50)} / {pct(technical.distanceSma200)}</b></div>
-      <div><span>Vol. rel 50d</span><b>{Number.isFinite(technical.relativeVolume50) ? `${technical.relativeVolume50.toFixed(1)}x` : "Sin dato"}</b></div>
+      <div><span>MA 50/200</span><b className={valueTone(finiteValue(technical.distanceSma50, technical.distanceSma200))}>{pct(technical.distanceSma50)} / {pct(technical.distanceSma200)}</b></div>
+      <div><span>Vol. 50d</span><b>{Number.isFinite(technical.relativeVolume50) ? `${technical.relativeVolume50.toFixed(1)}x` : "Sin dato"}</b></div>
       <div><span>RS Quality</span><b>{rsFmt(rs.rsQualityScore)}</b></div>
       <div><span>EV/EBITDA</span><b>{ratio(v.enterpriseToEbitda)}</b></div>
     </div>
@@ -770,7 +770,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           </div>
           <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={symbol} scope={chartScope} onScopeChange={updateChartScope} compact />
           <div className="chartBenchmarkControl">
-            <label htmlFor={`benchmark-${symbol}`}>Benchmark RS</label>
+            <label htmlFor={`benchmark-${symbol}`}>Comparar vs</label>
             <input id={`benchmark-${symbol}`} list={`benchmark-options-${symbol}`} value={benchmarkDraft} onChange={(event) => setBenchmarkDraft(cleanBenchmarkSymbol(event.target.value))} onKeyDown={(event) => { if (event.key === "Enter") updateBenchmark(benchmarkDraft); }} placeholder={rs.benchmarkSymbol || "SPY"} disabled={loading} />
             <datalist id={`benchmark-options-${symbol}`}>
               {BENCHMARK_OPTIONS.map((item) => <option key={item} value={item} />)}
@@ -798,8 +798,11 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           <h2>Fuerza relativa</h2>
         </div>
         <div className="metricGrid rsMetricGrid">
-          <Metric label="RS Rating StatsEdge" value={rsFmt(rs.rating)} tone={(rs.rating || 0) >= 75 ? "good" : (rs.rating || 0) < 45 ? "bad" : "neutral"} />
-          <Metric label="RS Quality" value={rsFmt(rs.rsQualityScore)} tone={(rs.rsQualityScore || 0) >= 70 ? "good" : (rs.rsQualityScore || 0) < 45 ? "bad" : "neutral"} />
+          <Metric label={metricShortLabel("rsGlobalPct")} value={rsFmt(rsUniverse)} tone={Number.isFinite(rsUniverse) && rsUniverse >= 75 ? "good" : Number.isFinite(rsUniverse) && rsUniverse < 45 ? "bad" : "neutral"} />
+          <Metric label={metricShortLabel("rsCountryPct")} value={rsFmt(rs.rsCountryPct)} tone={(rs.rsCountryPct || 0) >= 75 ? "good" : (rs.rsCountryPct || 0) < 45 ? "bad" : "neutral"} />
+          <Metric label={metricShortLabel("rsSectorPct")} value={rsFmt(rs.rsSectorPct)} tone={(rs.rsSectorPct || 0) >= 75 ? "good" : (rs.rsSectorPct || 0) < 45 ? "bad" : "neutral"} />
+          <Metric label={`${metricShortLabel("rsRating")} ${rs.benchmarkSymbol ? `(${rs.benchmarkSymbol})` : ""}`} value={rsFmt(rsBenchmark)} tone={Number.isFinite(rsBenchmark) && rsBenchmark >= 75 ? "good" : Number.isFinite(rsBenchmark) && rsBenchmark < 45 ? "bad" : "neutral"} />
+          <Metric label={metricShortLabel("rsQualityScore")} value={rsFmt(rs.rsQualityScore)} tone={(rs.rsQualityScore || 0) >= 70 ? "good" : (rs.rsQualityScore || 0) < 45 ? "bad" : "neutral"} />
           <Metric label="Spec Risk" value={fmt(rs.speculationRiskScore)} tone={(rs.speculationRiskScore || 0) >= 60 ? "warn" : "neutral"} />
           <Metric label="Volatilidad 63d" value={pct(rs.volatility63d)} tone={(rs.volatility63d || 0) >= 70 ? "warn" : "neutral"} />
           <Metric label="Drawdown 63d" value={pct(rs.maxDrawdown63d)} tone={(rs.maxDrawdown63d || 0) >= 25 ? "warn" : "neutral"} />

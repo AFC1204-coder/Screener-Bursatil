@@ -6,11 +6,10 @@ import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
 import { clamp, num, pct, ratio } from "@/lib/formatters";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { metricShortLabel } from "@/lib/metricCatalog";
+import { createFavoriteFromRow } from "@/lib/stockRows";
 import { countryCode, externalLinks, isTradingViewWidgetBlocked, stockUrl } from "@/lib/symbols";
 
-function uid() {
-  return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
 function value(row = {}, key) {
   return row[key] ?? row.snapshot?.[key] ?? null;
 }
@@ -185,6 +184,7 @@ async function hydrateReviewRow(row = {}, signal) {
   if (brief) {
     const technical = deriveTechnicalFromBars(brief.chartBars || []);
     const rs = brief.relativeStrength || {};
+    const benchmarkRating = rs.benchmarkRating ?? rs.rsRating ?? (rs.ratingSource === "benchmark-fallback" ? rs.rating : null);
     return cleanObject({
       ...technical,
       companyName: brief.name || row.companyName,
@@ -197,8 +197,10 @@ async function hydrateReviewRow(row = {}, signal) {
       logoDomain: brief.visual?.domain || row.logoDomain,
       website: brief.links?.official || row.website,
       benchmarkSymbol: rs.benchmarkSymbol || row.benchmarkSymbol,
-      rsRating: rs.rating ?? row.rsRating,
-      rsGlobalPct: rs.rating ?? row.rsGlobalPct,
+      rsRating: benchmarkRating ?? row.rsRating,
+      rsGlobalPct: rs.rsGlobalPct ?? row.rsGlobalPct,
+      rsCountryPct: rs.rsCountryPct ?? row.rsCountryPct,
+      rsSectorPct: rs.rsSectorPct ?? row.rsSectorPct,
       rsQualityScore: rs.rsQualityScore ?? row.rsQualityScore,
       speculationRiskScore: rs.speculationRiskScore ?? row.speculationRiskScore,
       rs3m: rs.rs3m ?? row.rs3m,
@@ -306,39 +308,19 @@ function objectiveStage(row = {}) {
   if (Number.isFinite(price) && Number.isFinite(sma200) && price > sma200) return "Precio > SMA200";
   return "Historico insuficiente";
 }
-function snapshotForFavorite(row = {}) {
-  const keys = ["totalScore", "compositeScore", "setupQualityScore", "demandScore", "growthScore", "weinsteinScore", "minerviniScore", "momentumScore", "riskScore", "riskRewardScore", "volumeScore", "volumeEffectScore", "volumeEvidence", "avgVolume", "latestVolume", "avgTurnover", "latestTurnover", "relativeVolume", "volumeSurgePct", "upDownVolRatio", "shortPercentOfFloat", "shortRatio", "sharesShort", "floatShares", "liquidityScore", "rsRating", "rsGlobalPct", "rsCountryPct", "rsSectorPct", "rsQualityScore", "weaknessScore", "weaknessLabel", "weaknessReasons", "sectorScore", "perf3m", "perf6m", "perf12m", "distance20d", "distance50d", "distance52w", "extSma50", "volatility63d", "maxDrawdown63d", "returnToVol3m", "returnToDrawdown3m", "theme", "businessEs"];
-  return Object.fromEntries(keys.map((key) => [key, value(row, key)]).filter(([, v]) => v !== undefined && v !== null));
-}
-function favoriteFromRow(row = {}) {
-  return {
-    id: uid(),
-    symbol: row.symbol,
-    companyName: row.companyName || row.symbol,
-    country: row.country || countryCode(row.symbol),
-    sector: row.sector,
-    industry: row.industry,
-    addedAt: new Date().toISOString(),
-    entryPrice: Number.isFinite(value(row, "price")) ? value(row, "price") : null,
-    lastPrice: Number.isFinite(value(row, "price")) ? value(row, "price") : null,
-    lastDate: row.lastDate || null,
-    source: "review",
-    notes: "",
-    snapshot: snapshotForFavorite(row),
-  };
-}
 function metricRows(row = {}) {
   return [
-    ["RS global", `p${num(value(row, "rsGlobalPct") ?? value(row, "rsRating"))}`],
-    ["RS pais", `p${num(value(row, "rsCountryPct"))}`],
-    ["RS sector", `p${num(value(row, "rsSectorPct"))}`],
+    [metricShortLabel("rsGlobalPct"), `p${num(value(row, "rsGlobalPct"))}`],
+    [metricShortLabel("rsRating"), `p${num(value(row, "rsRating"))}`],
+    [metricShortLabel("rsCountryPct"), `p${num(value(row, "rsCountryPct"))}`],
+    [metricShortLabel("rsSectorPct"), `p${num(value(row, "rsSectorPct"))}`],
     ["3M", pct(value(row, "perf3m"))],
     ["6M", pct(value(row, "perf6m"))],
     ["12M", pct(value(row, "perf12m"))],
     ["SMA50", pct(value(row, "extSma50"))],
     ["Vol rel 20d", ratio(value(row, "relativeVolume"))],
-    ["Volume effect", num(value(row, "volumeEffectScore"))],
-    ["Short float", pct(value(row, "shortPercentOfFloat"))],
+    [metricShortLabel("volumeEffectScore"), num(value(row, "volumeEffectScore"))],
+    [metricShortLabel("shortPercentOfFloat"), pct(value(row, "shortPercentOfFloat"))],
     ["Vol 63d", pct(value(row, "volatility63d"))],
     ["DD 63d", pct(Number.isFinite(value(row, "maxDrawdown63d")) ? -value(row, "maxDrawdown63d") : null)],
     ["R/Vol 3M", ratio(value(row, "returnToVol3m"))],
@@ -347,16 +329,16 @@ function metricRows(row = {}) {
 }
 function evidenceRows(row = {}) {
   return [
-    ["Estructura", objectiveStage(row)],
+    [metricShortLabel("stage"), objectiveStage(row)],
     ["Distancia 20d high", pct(value(row, "distance20d"))],
     ["Distancia 52w high", pct(value(row, "distance52w"))],
     ["Extension SMA50", pct(value(row, "extSma50"))],
     ["Highs spread", pct(value(row, "highsSpreadPct"))],
     ["Volumen relativo", ratio(value(row, "relativeVolume"))],
     ["Evidencia volumen", value(row, "volumeEvidence") || "-"],
-    ["Flota en corto", pct(value(row, "shortPercentOfFloat"))],
+    [metricShortLabel("shortPercentOfFloat"), pct(value(row, "shortPercentOfFloat"))],
     ["Benchmark", value(row, "benchmarkSymbol") || "-"],
-    ["Deterioro tecnico", num(value(row, "weaknessScore"))],
+    [metricShortLabel("weaknessScore"), num(value(row, "weaknessScore"))],
   ];
 }
 
@@ -447,7 +429,7 @@ export default function ReviewPage() {
     const symbol = row.symbol;
     const next = favoriteSymbols.has(symbol)
       ? favorites.filter((favorite) => String(favorite.symbol).toUpperCase() !== symbol)
-      : [favoriteFromRow(row), ...favorites].slice(0, 300);
+      : [createFavoriteFromRow(row, { source: "review" }), ...favorites].slice(0, 300);
     setFavorites(next);
     safeWrite(STORAGE_KEYS.favorites, next);
     if (favoriteSymbols.has(symbol)) {

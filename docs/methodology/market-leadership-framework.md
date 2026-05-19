@@ -45,10 +45,11 @@ Every stock should be comparable across:
 
 Required metrics:
 
-- `RS Global 1-99`
+- `RS Universo 1-99`
 - `RS Country 1-99`
-- `RS Sector 1-99`
+- `RS Grupo 1-99`
 - `RS Industry/Theme 1-99`
+- `RS Benchmark 1-99`
 - `RS 1M/3M/6M/12M vs benchmark`
 - `RS trend vs previous snapshot`
 
@@ -212,4 +213,3 @@ The app should not answer:
 - What should I buy?
 - What should I sell?
 - How much money should I make?
-

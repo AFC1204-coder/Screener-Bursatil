@@ -3,14 +3,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import ChartPreferences from "@/app/ChartPreferences";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { chartRangeBars, DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
-import { syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud } from "@/lib/cloudSyncClient";
+import { getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
 import { assetDomainForName, assetDomainForSymbol } from "@/lib/companyAssets";
 import { pct } from "@/lib/formatters";
 import { safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { metricShortLabel } from "@/lib/metricCatalog";
 import { alertsFromScan, mergeAlerts } from "@/lib/methodologyAlerts";
-import { compactMethodologySnapshot, enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
+import { enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
 import { qualityGateForResearchRow } from "@/lib/qualityGate";
+import { benchmarkSymbolForRow, enrichRelativePercentiles, rsBenchmarkValue, rsPrimaryValue, rsUniverseValue, scoreRelativeStrength, scoreRsQuality } from "@/lib/relativeStrength";
+import { setupPatternForBars } from "@/lib/setupPatterns";
+import { createFavoriteFromRow } from "@/lib/stockRows";
 import { countryCode, countryName, externalLinks, isTradingViewWidgetBlocked, marketFlag, stockUrl } from "@/lib/symbols";
+import { weeklyStageFields, weeklyStageForBars } from "@/lib/weeklyStage";
 
 const MARKET_META = {
   US: { name: "Estados Unidos", exchange: "NYSE / Nasdaq", region: "Norteamerica" },
@@ -34,26 +39,30 @@ const MARKET_META = {
   HK: { name: "Hong Kong", exchange: "HKEX", region: "Asia" },
   SG: { name: "Singapur", exchange: "SGX", region: "Asia" },
   AU: { name: "Australia", exchange: "ASX", region: "Oceania" },
+  ZA: { name: "Sudáfrica", exchange: "JSE", region: "África" },
   TW: { name: "Taiwán", exchange: "TWSE", region: "Asia" },
+  IL: { name: "Israel", exchange: "TASE", region: "Asia" },
   KR: { name: "Corea del Sur", exchange: "KRX / KOSDAQ", region: "Asia" },
   IN: { name: "India", exchange: "NSE / BSE", region: "Asia" },
   CN: { name: "China A", exchange: "Shanghai / Shenzhen", region: "Asia" },
   BR: { name: "Brasil", exchange: "B3", region: "LatAm" },
   MX: { name: "México", exchange: "BMV", region: "LatAm" },
 };
-const MARKET_ORDER = ["US", "ES", "DE", "FR", "NL", "GB", "CH", "SE", "DK", "NO", "FI", "IT", "BE", "PT", "AT", "IE", "CA", "JP", "HK", "SG", "TW", "KR", "IN", "CN", "AU", "BR", "MX"];
+const MARKET_ORDER = ["US", "ES", "DE", "FR", "NL", "GB", "CH", "SE", "DK", "NO", "FI", "IT", "BE", "PT", "AT", "IE", "CA", "JP", "HK", "SG", "TW", "KR", "IN", "IL", "CN", "AU", "ZA", "BR", "MX"];
 const MARKETS = MARKET_ORDER.map((code) => [code, MARKET_META[code].name]);
 const EUROPE = ["ES", "DE", "FR", "NL", "GB", "CH", "SE", "DK", "NO", "FI", "IT", "BE", "PT", "AT", "IE"];
-const ASIA = ["JP", "HK", "SG", "TW", "KR", "IN", "CN"];
-const DEFAULT_MARKETS = ["US", ...EUROPE, "CA", ...ASIA, "AU", "BR", "MX"];
+const ASIA = ["JP", "HK", "SG", "TW", "KR", "IN", "IL", "CN"];
+const DEFAULT_MARKETS = ["US", ...EUROPE, "CA", ...ASIA, "AU", "ZA", "BR", "MX"];
 const ALL_SYMBOLS_LIMIT = 999999;
 const SCREENER_SESSION_VERSION = 1;
 const RESULT_PAGE_SIZES = [50, 100];
 const DEFAULT_RESULT_PAGE_SIZE = 50;
 const SCAN_BATCH_SIZES = [50, 100];
 const DEFAULT_SCAN_BATCH_SIZE = 100;
-const DEFAULT_STATUS = "Listo · Universo por defecto: EEUU + Europa + Asia/HK + Canadá + Australia/LatAm";
-const QUALITY_DEFAULTS = { setupMode: "leader", requireStage2: true, requireSma200Up: false, requirePriceAboveSma50: false, requireRecentIpo: false, requireUpVolume: false, maxIpoAgeMonths: 60, minWeinsteinScore: 55, minMinerviniScore: 45, minMomentumScore: 25, minRiskScore: 30, minVolumeScore: 15, minLiquidityScore: 15, minRsRating: 55, minRsQualityScore: 0, minAdProxyScore: 0, minEpsGrowthProxyScore: 0, minWeaknessScore: 50, minSectorScore: 0, minTotalScore: 0, minDataCoverageScore: 50, minTechnicalCoverageScore: 70, minFundamentalCoverageScore: 0, minAvgTurnover: 5000000, minLatestVolume: 100000, minLatestTurnover: 2000000, minRelativeVolume: 1.2, minVolumeSurgePct: 25, minUpDownVolRatio: .9, minVolumeEffectScore: 20, minShortFloatPct: 0, maxShortFloatPct: 999, minRiskRewardScore: 45, minReturnToVol3m: .35, minReturnToDrawdown3m: .8, maxDailyMove20dPct: 18, maxDailyRange20dPct: 22, maxRange63dPct: 85, maxVolatility63d: 85, maxDrawdown63d: 32 };
+const DEFAULT_STATUS = "Listo · Universo por defecto: EEUU + Europa + Asia/HK + Canadá + Australia/África/LatAm";
+const SCREENER_FILTER_SETTING = { type: "screener_filters", key: "default" };
+const DEFAULT_PRICE_FRESHNESS_DAYS = 5;
+const QUALITY_DEFAULTS = { setupMode: "leader", requireStage2: true, requireSma200Up: false, requirePriceAboveSma50: false, requireRecentIpo: false, requireUpVolume: false, stageFastWeeks: 10, stageSlowWeeks: 30, stageSlopeWeeks: 10, maxIpoAgeMonths: 60, maxPriceFreshnessDays: DEFAULT_PRICE_FRESHNESS_DAYS, minWeinsteinScore: 55, minMinerviniScore: 45, minMomentumScore: 25, minRiskScore: 30, minVolumeScore: 15, minLiquidityScore: 15, minRsRating: 55, minRsBenchmarkRating: 0, minRsCountryPct: 0, minRsSectorPct: 0, minRsQualityScore: 0, minAdProxyScore: 0, minEpsGrowthProxyScore: 0, minWeaknessScore: 50, minSectorScore: 0, minTotalScore: 0, minDataCoverageScore: 50, minTechnicalCoverageScore: 70, minFundamentalCoverageScore: 0, minAvgTurnover: 5000000, minLatestVolume: 100000, minLatestTurnover: 2000000, minRelativeVolume: 1.2, minVolumeSurgePct: 25, minUpDownVolRatio: .9, minVolumeEffectScore: 20, minShortFloatPct: 0, maxShortFloatPct: 999, minRiskRewardScore: 45, minReturnToVol3m: .35, minReturnToDrawdown3m: .8, maxDailyMove20dPct: 18, maxDailyRange20dPct: 22, maxRange63dPct: 85, maxVolatility63d: 85, maxDrawdown63d: 32 };
 const PRESETS = {
   balanced: { name: "Balanceado", desc: "Weinstein + Minervini estandar", v: { ...QUALITY_DEFAULTS, minMarketCap: 300000000, minPrice: 3, minAvgVolume: 300000, maxDistance20dHigh: 10, maxDistance50dHigh: 18, maxDistance52w: 25, maxDistanceATH: 40, maxHighsSpreadPct: 15, minPerf3m: 10, minPerf6m: 20, minPerf12m: 30, maxExtensionSma50: 30, maxSymbols: ALL_SYMBOLS_LIMIT } },
   strict: { name: "Lideres estrictos", desc: "Muy selectivo", v: { ...QUALITY_DEFAULTS, setupMode: "leader", minMarketCap: 500000000, minPrice: 5, minAvgVolume: 500000, minAvgTurnover: 10000000, minLatestVolume: 250000, minLatestTurnover: 5000000, minUpDownVolRatio: 1, minVolumeEffectScore: 35, maxDistance20dHigh: 5, maxDistance50dHigh: 10, maxDistance52w: 15, maxDistanceATH: 25, maxHighsSpreadPct: 8, minPerf3m: 15, minPerf6m: 30, minPerf12m: 50, maxExtensionSma50: 25, maxDailyMove20dPct: 12, maxDailyRange20dPct: 16, maxRange63dPct: 55, maxVolatility63d: 60, maxDrawdown63d: 22, minWeinsteinScore: 75, minMinerviniScore: 65, minMomentumScore: 45, minRiskScore: 50, minVolumeScore: 30, minLiquidityScore: 35, minRsRating: 75, minSectorScore: 55, minTotalScore: 68, maxSymbols: ALL_SYMBOLS_LIMIT } },
@@ -76,14 +85,15 @@ const SETUP_MODES = [
 const FILTER_GROUPS = [
   { title: "Liquidez", fields: [{ key: "minPrice", label: "Precio min", unit: "", step: 1 }, { key: "minMarketCap", label: "Market cap min", unit: "M", scale: 1000000, step: 50 }, { key: "minAvgVolume", label: "Acciones/día 20d min", unit: "k", scale: 1000, step: 25, hint: "Media de acciones negociadas en las últimas 20 sesiones." }, { key: "minAvgTurnover", label: "Importe 20d min", unit: "M", scale: 1000000, step: 1, hint: "Precio x volumen medio 20d en moneda de cotización. En mercados no USD no convierte divisa." }] },
   { title: "Volumen objetivo", fields: [{ key: "minLatestVolume", label: "Acciones sesion min", unit: "k", scale: 1000, step: 25, hint: "Volumen de la ultima vela diaria." }, { key: "minLatestTurnover", label: "Importe sesion min", unit: "M", scale: 1000000, step: 1, hint: "Precio actual x volumen de la ultima sesion." }, { key: "minRelativeVolume", label: "Volumen hoy / media 20d min", unit: "x", step: .1 }, { key: "minVolumeSurgePct", label: "Volumen 5d vs tramo previo min", unit: "%", step: 5 }, { key: "minUpDownVolRatio", label: "Up/Down volume 50d min", unit: "x", step: .1 }, { key: "minVolumeEffectScore", label: "Volume Effect min", unit: "", step: 5, hint: "Score 0-100 basado en importe negociado, volumen relativo, aceleracion 5d y up/down volume." }] },
-  { title: "Short interest", fields: [{ key: "minShortFloatPct", label: "Short float min", unit: "%", step: 1, hint: "Porcentaje de la flota vendida en corto segun proveedor. Si no hay dato y esta regla esta activa, no pasa el filtro." }, { key: "maxShortFloatPct", label: "Short float max", unit: "%", step: 1, hint: "Util para evitar acciones con presion corta extrema si buscas largos mas limpios." }] },
+  { title: "Short interest", fields: [{ key: "minShortFloatPct", label: `${metricShortLabel("shortPercentOfFloat")} min`, unit: "%", step: 1, hint: "Porcentaje de la flota vendida en corto segun proveedor. Si no hay dato y esta regla esta activa, no pasa el filtro." }, { key: "maxShortFloatPct", label: `${metricShortLabel("shortPercentOfFloat")} max`, unit: "%", step: 1, hint: "Util para evitar acciones con presion corta extrema si buscas largos mas limpios." }] },
   { title: "Momentum", fields: [{ key: "minPerf3m", label: "Perf 3M min", unit: "%", step: 1 }, { key: "minPerf6m", label: "Perf 6M min", unit: "%", step: 1 }, { key: "minPerf12m", label: "Perf 12M min", unit: "%", step: 1 }] },
   { title: "Cercania a maximos", fields: [{ key: "maxDistance20dHigh", label: "Max caida vs 20d", unit: "%", step: 1 }, { key: "maxDistance50dHigh", label: "Max caida vs 50d", unit: "%", step: 1 }, { key: "maxDistance52w", label: "Max caida vs 52w", unit: "%", step: 1 }, { key: "maxDistanceATH", label: "Max caida vs ATH", unit: "%", step: 1 }, { key: "maxHighsSpreadPct", label: "Highs spread max", unit: "%", step: 1 }, { key: "maxExtensionSma50", label: "Extension SMA50 max", unit: "%", step: 1 }] },
   { title: "Volatilidad / rango", fields: [{ key: "maxDailyMove20dPct", label: "Movimiento diario max 20d", unit: "%", step: 1, hint: "Mayor cambio absoluto cierre-cierre de las ultimas 20 sesiones." }, { key: "maxDailyRange20dPct", label: "Rango intradia max 20d", unit: "%", step: 1, hint: "Mayor rango high-low relativo al cierre en las ultimas 20 sesiones." }, { key: "maxRange63dPct", label: "Rango precio 63d max", unit: "%", step: 5, hint: "Amplitud high-low de los ultimos tres meses." }, { key: "maxVolatility63d", label: "Volatilidad anualizada max", unit: "%", step: 5 }, { key: "maxDrawdown63d", label: "Drawdown 3M max", unit: "%", step: 1 }] },
-  { title: "Rentabilidad / riesgo", fields: [{ key: "minRsQualityScore", label: "RS Quality min", unit: "", step: 5 }, { key: "minRiskRewardScore", label: "Score rent/riesgo min", unit: "", step: 5 }, { key: "minReturnToVol3m", label: "Retorno 3M / volatilidad min", unit: "x", step: .1 }, { key: "minReturnToDrawdown3m", label: "Retorno 3M / drawdown min", unit: "x", step: .1 }] },
-  { title: "Ratings proxy", fields: [{ key: "minAdProxyScore", label: "A/D proxy min", unit: "", step: 5, hint: "Proxy 0-100 de acumulacion/distribucion usando up/down volume, volumen relativo y cierre con volumen." }, { key: "minEpsGrowthProxyScore", label: "EPS/Growth proxy min", unit: "", step: 5, hint: "Proxy 0-100 de crecimiento/calidad con beneficios, ventas, margenes y ROE si el proveedor devuelve datos." }] },
-  { title: "Cobertura de datos", fields: [{ key: "minDataCoverageScore", label: "Cobertura total min", unit: "", step: 5 }, { key: "minTechnicalCoverageScore", label: "Cobertura tecnica min", unit: "", step: 5 }, { key: "minFundamentalCoverageScore", label: "Cobertura fundamental min", unit: "", step: 5 }] },
-  { title: "Calidad mínima", fields: [{ key: "minRsRating", label: "RS Global min", unit: "", step: 5 }, { key: "minWeinsteinScore", label: "Weinstein min", unit: "", step: 5 }, { key: "minMinerviniScore", label: "Minervini min", unit: "", step: 5 }, { key: "minMomentumScore", label: "Momentum score min", unit: "", step: 5 }, { key: "minRiskScore", label: "Risk score min", unit: "", step: 5 }, { key: "minVolumeScore", label: "Volume score min", unit: "", step: 5 }, { key: "minLiquidityScore", label: "Liquidity score min", unit: "", step: 5 }, { key: "minSectorScore", label: "Fuerza grupo min", unit: "", step: 5 }, { key: "minTotalScore", label: "Composite min", unit: "", step: 5 }] },
+  { title: "Rentabilidad / riesgo", fields: [{ key: "minRiskRewardScore", label: "Score rent/riesgo min", unit: "", step: 5 }, { key: "minReturnToVol3m", label: "Retorno 3M / volatilidad min", unit: "x", step: .1 }, { key: "minReturnToDrawdown3m", label: "Retorno 3M / drawdown min", unit: "x", step: .1 }] },
+  { title: "Ratings proxy", fields: [{ key: "minAdProxyScore", label: `${metricShortLabel("adProxyScore")} min`, unit: "", step: 5, hint: "Proxy 0-100 de acumulacion/distribucion usando up/down volume, volumen relativo y cierre con volumen." }, { key: "minEpsGrowthProxyScore", label: `${metricShortLabel("epsGrowthProxyScore")} min`, unit: "", step: 5, hint: "Proxy 0-100 de crecimiento/calidad con beneficios, ventas, margenes y ROE si el proveedor devuelve datos." }] },
+  { title: "Cobertura de datos", fields: [{ key: "maxPriceFreshnessDays", label: "Precio fresco max", unit: "d", step: 1, hint: "Dias maximos desde la ultima vela diaria. Si el dato esta viejo, la accion no entra en rankings accionables." }, { key: "minDataCoverageScore", label: "Cobertura total min", unit: "", step: 5 }, { key: "minTechnicalCoverageScore", label: "Cobertura tecnica min", unit: "", step: 5 }, { key: "minFundamentalCoverageScore", label: "Cobertura fundamental min", unit: "", step: 5 }] },
+  { title: "Fuerza relativa", fields: [{ key: "minRsRating", label: `${metricShortLabel("rsGlobalPct")} min`, unit: "", step: 5 }, { key: "minRsBenchmarkRating", label: `${metricShortLabel("rsRating")} min`, unit: "", step: 5 }, { key: "minRsCountryPct", label: `${metricShortLabel("rsCountryPct")} min`, unit: "", step: 5 }, { key: "minRsSectorPct", label: `${metricShortLabel("rsSectorPct")} min`, unit: "", step: 5 }, { key: "minRsQualityScore", label: `${metricShortLabel("rsQualityScore")} min`, unit: "", step: 5 }, { key: "minSectorScore", label: "Fuerza grupo min", unit: "", step: 5 }] },
+  { title: "Scores tecnicos", fields: [{ key: "minWeinsteinScore", label: "Weinstein min", unit: "", step: 5 }, { key: "minMinerviniScore", label: "Minervini min", unit: "", step: 5 }, { key: "minMomentumScore", label: "Momentum score min", unit: "", step: 5 }, { key: "minRiskScore", label: "Risk score min", unit: "", step: 5 }, { key: "minVolumeScore", label: "Volume score min", unit: "", step: 5 }, { key: "minLiquidityScore", label: "Liquidity score min", unit: "", step: 5 }, { key: "minTotalScore", label: "Composite min", unit: "", step: 5 }] },
   { title: "Deterioro técnico", fields: [{ key: "minWeaknessScore", label: "Deterioro min", unit: "", step: 5 }] },
   { title: "IPO real", fields: [{ key: "maxIpoAgeMonths", label: "Edad IPO max", unit: "m", step: 6 }] },
 ];
@@ -112,7 +122,7 @@ const FILTER_FIELD_LAYERS = {
   maxHighsSpreadPct: ["proximity"],
   maxExtensionSma50: ["proximity"],
   minRiskRewardScore: ["riskReward"],
-  minRsQualityScore: ["riskReward"],
+  minRsQualityScore: ["relativeStrength"],
   minAdProxyScore: ["volumeSurge"],
   minEpsGrowthProxyScore: ["score"],
   minWeaknessScore: ["score"],
@@ -123,17 +133,21 @@ const FILTER_FIELD_LAYERS = {
   maxRange63dPct: ["volatility"],
   maxVolatility63d: ["volatility"],
   maxDrawdown63d: ["volatility"],
+  maxPriceFreshnessDays: ["coverage"],
   minDataCoverageScore: ["coverage"],
   minTechnicalCoverageScore: ["coverage"],
   minFundamentalCoverageScore: ["coverage"],
-  minRsRating: ["momentum"],
+  minRsRating: ["relativeStrength"],
+  minRsBenchmarkRating: ["relativeStrength"],
+  minRsCountryPct: ["relativeStrength"],
+  minRsSectorPct: ["relativeStrength"],
   minWeinsteinScore: ["trend"],
   minMinerviniScore: ["trend"],
   minMomentumScore: ["momentum"],
   minRiskScore: ["proximity", "score"],
   minVolumeScore: ["score", "liquidity"],
   minLiquidityScore: ["liquidity"],
-  minSectorScore: ["score"],
+  minSectorScore: ["relativeStrength"],
   minTotalScore: ["score"],
   maxIpoAgeMonths: ["ipo"],
 };
@@ -171,10 +185,14 @@ const NEUTRAL_FIELD_VALUES = {
   maxRange63dPct: 999,
   maxVolatility63d: 999,
   maxDrawdown63d: 999,
+  maxPriceFreshnessDays: 999,
   minDataCoverageScore: 0,
   minTechnicalCoverageScore: 0,
   minFundamentalCoverageScore: 0,
   minRsRating: 0,
+  minRsBenchmarkRating: 0,
+  minRsCountryPct: 0,
+  minRsSectorPct: 0,
   minWeinsteinScore: 0,
   minMinerviniScore: 0,
   minMomentumScore: 0,
@@ -185,20 +203,21 @@ const NEUTRAL_FIELD_VALUES = {
   minTotalScore: 0,
   maxIpoAgeMonths: 999,
 };
-const DEFAULT_FILTER_LAYERS = { trend: true, momentum: true, proximity: true, volatility: true, score: true, liquidity: true, volumeSurge: false, shortInterest: false, riskReward: false, coverage: true, ipo: true };
+const DEFAULT_FILTER_LAYERS = { trend: true, momentum: true, relativeStrength: true, proximity: true, volatility: true, score: true, liquidity: true, volumeSurge: false, shortInterest: false, riskReward: false, coverage: true, ipo: true };
 const ALL_FILTER_LAYERS = { ...DEFAULT_FILTER_LAYERS, volumeSurge: true, riskReward: true };
 const REGIME_LAYER = { label: "Régimen", detail: "salud de mercado", count: 1 };
 const EXECUTION_LAYERS = [
   { key: "trend", label: "Trend", detail: "Stage / tendencia primaria", count: 3 },
-  { key: "momentum", label: "Momentum", detail: "3M, 6M, 12M, RS", count: 5 },
+  { key: "momentum", label: "Momentum", detail: "3M, 6M, 12M", count: 4 },
+  { key: "relativeStrength", label: "RS", detail: "universo, benchmark, pais y grupo", count: 6 },
   { key: "proximity", label: "Cercania", detail: "maximos y extension", count: 7 },
   { key: "volatility", label: "Volatilidad", detail: "movimiento y rango", count: 5 },
   { key: "score", label: "Scores", detail: "minimos composite", count: 6 },
   { key: "liquidity", label: "Liquidez", detail: "precio, cap, importe", count: 6 },
   { key: "volumeSurge", label: "Volumen+", detail: "actividad objetiva", count: 8 },
-  { key: "shortInterest", label: "Short float", detail: "flota en corto", count: 2 },
-  { key: "riskReward", label: "Rent/Riesgo", detail: "RS ajustado", count: 4 },
-  { key: "coverage", label: "Cobertura", detail: "calidad minima de datos", count: 3 },
+  { key: "shortInterest", label: metricShortLabel("shortPercentOfFloat"), detail: "flota en corto", count: 2 },
+  { key: "riskReward", label: "Rent/Riesgo", detail: "retorno contra riesgo", count: 3 },
+  { key: "coverage", label: "Cobertura", detail: "calidad minima de datos", count: 4 },
   { key: "ipo", label: "IPO", detail: "solo recientes reales", count: 2 },
 ];
 const DEFAULT_VIEW_LAYERS = { country: true, theme: true, sector: true, industry: true, sectorStrength: true, ipo: true };
@@ -350,10 +369,11 @@ function firstFinite(...values) {
   return null;
 }
 function rsGlobalValue(row = {}) {
-  return firstFinite(row.rsGlobalPct, row.rsRating);
+  return rsPrimaryValue(row);
 }
 function sortMetric(row = {}, key) {
-  if (key === "rsGlobalPct" || key === "rsRating") return rsGlobalValue(row) ?? 0;
+  if (key === "rsGlobalPct") return rsUniverseValue(row) ?? 0;
+  if (key === "rsRating") return rsBenchmarkValue(row) ?? 0;
   return firstFinite(row[key]) ?? 0;
 }
 function gt(value, threshold) { return Number.isFinite(value) && Number.isFinite(threshold) && value > threshold; }
@@ -396,54 +416,6 @@ function scoreRiskReward(r) {
   }
   if (gt(r.perf3m, 0)) s += 10;
   return clamp(s);
-}
-function scoreRsQuality(r) {
-  const rs = rsGlobalValue(r);
-  if (!Number.isFinite(rs)) return null;
-  let stability = 72;
-  if (Number.isFinite(r.volatility63d)) {
-    if (r.volatility63d <= 28) stability += 14;
-    else if (r.volatility63d <= 45) stability += 7;
-    else if (r.volatility63d <= 70) stability -= 3;
-    else if (r.volatility63d <= 105) stability -= 10;
-    else stability -= 17;
-  }
-  if (Number.isFinite(r.maxDrawdown63d)) {
-    if (r.maxDrawdown63d <= 10) stability += 10;
-    else if (r.maxDrawdown63d <= 18) stability += 4;
-    else if (r.maxDrawdown63d <= 32) stability -= 4;
-    else stability -= 12;
-  }
-  if (Number.isFinite(r.maxDailyMove20dPct)) {
-    if (r.maxDailyMove20dPct <= 6) stability += 5;
-    else if (r.maxDailyMove20dPct <= 10) stability += 2;
-    else if (r.maxDailyMove20dPct > 28) stability -= 12;
-    else if (r.maxDailyMove20dPct > 18) stability -= 6;
-  }
-  if (Number.isFinite(r.range63dPct)) {
-    if (r.range63dPct <= 45) stability += 4;
-    else if (r.range63dPct > 100) stability -= 8;
-  }
-  if (Number.isFinite(r.highsSpreadPct)) {
-    if (r.highsSpreadPct <= 8) stability += 6;
-    else if (r.highsSpreadPct > 22) stability -= 8;
-  }
-  if (Number.isFinite(r.extSma50) && r.extSma50 > 28) stability -= 8;
-  const quality = clamp(rs * .62 + clamp(stability) * .28 + (Number.isFinite(r.riskRewardScore) ? r.riskRewardScore : 45) * .1);
-  const speculationRiskScore = clamp(
-    Math.max(0, (Number.isFinite(r.volatility63d) ? r.volatility63d : 35) - 35) * .62 +
-    Math.max(0, Number.isFinite(r.maxDrawdown63d) ? r.maxDrawdown63d : 12) * .85 +
-    Math.max(0, (Number.isFinite(r.maxDailyMove20dPct) ? r.maxDailyMove20dPct : 8) - 10) * 1.35 +
-    Math.max(0, (Number.isFinite(r.range63dPct) ? r.range63dPct : 45) - 80) * .22 +
-    Math.max(0, (Number.isFinite(r.extSma50) ? r.extSma50 : 0) - 18) * .85 -
-    (Number.isFinite(r.liquidityScore) ? r.liquidityScore : 45) * .12
-  );
-  return {
-    rsQualityScore: quality,
-    rsStabilityScore: clamp(stability),
-    speculationRiskScore,
-    rsQualityLabel: rs >= 80 && quality >= 72 ? "RS limpio" : rs >= 80 && speculationRiskScore >= 55 ? "RS volátil" : rs >= 75 && quality >= 62 ? "RS eficiente" : speculationRiskScore >= 70 ? "Momentum especulativo" : rs >= 60 ? "RS constructivo" : "RS débil",
-  };
 }
 function scoreWeakness(r = {}) {
   let s = 0;
@@ -580,11 +552,17 @@ function scoreSetupQuality(r) {
   }
   if (lte(r.highsSpreadPct, 8)) s += 7;
   else if (lte(r.highsSpreadPct, 15)) s += 4;
+  if (r.vcpCandidate) s += 10;
+  if (r.breakoutAttempt) s += 6;
+  if (Number.isFinite(r.breakoutQualityScore)) s += Math.min(8, r.breakoutQualityScore * .08);
+  if (Number.isFinite(r.distanceToPivotPct) && r.distanceToPivotPct >= -5 && r.distanceToPivotPct <= 3) s += 5;
+  if (Number.isFinite(r.volumeDryUpRatio) && r.volumeDryUpRatio <= .85) s += 4;
+  if (r.failedBreakout) s -= 12;
   return clamp(s);
 }
 function scoreDemandQuality(r) {
   let s = 0;
-  const rs = firstFinite(r.rsGlobalPct, r.rsRating) ?? 50;
+  const rs = rsPrimaryValue(r) ?? 50;
   if (rs >= 90) s += 34;
   else if (rs >= 80) s += 29;
   else if (rs >= 70) s += 22;
@@ -688,12 +666,12 @@ function compositeNarrative(r) {
   const risks = [];
   const rsGlobal = rsGlobalValue(r) ?? 0;
   if (isStage2(r)) reasons.push("Stage 2 confirmado");
-  if (rsGlobal >= 85) reasons.push("RS global líder");
+  if (rsGlobal >= 85) reasons.push("RS Universo líder");
   else if (rsGlobal >= 80) reasons.push("RS líder");
   else if (rsGlobal >= 65) reasons.push("RS positivo");
   if ((r.rsQualityScore || 0) >= 72) reasons.push("RS calidad alta");
   if ((r.rsCountryPct || 0) >= 80) reasons.push("RS país fuerte");
-  if ((r.rsSectorPct || 0) >= 80) reasons.push("RS sectorial fuerte");
+  if ((r.rsSectorPct || 0) >= 80) reasons.push("RS Grupo fuerte");
   if ((r.sectorScore || 0) >= 70) reasons.push("Grupo fuerte");
   if ((r.growthScore || 0) >= 70) reasons.push("Crecimiento/calidad superior");
   if ((r.riskRewardScore || 0) >= 70) reasons.push("Rentabilidad/riesgo eficiente");
@@ -713,33 +691,6 @@ function compositeNarrative(r) {
   if (!risks.length) risks.push("Sin alerta principal");
   return { reasons: reasons.slice(0, 4), risks: risks.slice(0, 3) };
 }
-function benchmarkSymbolForRow(row = {}) {
-  const text = `${row.theme || ""} ${row.sector || ""} ${row.industry || ""}`.toLowerCase();
-  if (/\b(software|semis?|semiconductor|semiconductors|fotonica|ia|ai|cloud|cyber|chip|chips|technology)\b/.test(text)) return "QQQ";
-  if (row.country && row.country !== "US") return "ACWI";
-  return "SPY";
-}
-function scoreRelativeStrength(row, benchmarkBars = []) {
-  const bench3 = perf(benchmarkBars, 63);
-  const bench6 = perf(benchmarkBars, 126);
-  const bench12 = perf(benchmarkBars, 252);
-  const rs3m = Number.isFinite(row.perf3m) && Number.isFinite(bench3) ? row.perf3m - bench3 : null;
-  const rs6m = Number.isFinite(row.perf6m) && Number.isFinite(bench6) ? row.perf6m - bench6 : null;
-  const rs12m = Number.isFinite(row.perf12m) && Number.isFinite(bench12) ? row.perf12m - bench12 : null;
-  const nearHighBonus = gte(row.distance52w, -5) ? 8 : gte(row.distance52w, -15) ? 4 : gte(row.distance52w, -25) ? 1 : -6;
-  const trendBonus = (gt(row.price, row.sma50) ? 4 : -4) + (gt(row.sma200Slope, 0) ? 4 : -2);
-  const raw = 50 + (rs3m || 0) * .9 + (rs6m || 0) * .45 + (rs12m || 0) * .22 + nearHighBonus + trendBonus;
-  return {
-    rs3m,
-    rs6m,
-    rs12m,
-    benchmarkPerf3m: bench3,
-    benchmarkPerf6m: bench6,
-    benchmarkPerf12m: bench12,
-    rsRating: Math.round(clamp(raw, 1, 99)),
-  };
-}
-
 function usefulValue(value) {
   if (Number.isFinite(value)) return value !== 0;
   return value !== undefined && value !== null && value !== "";
@@ -750,9 +701,40 @@ function coveragePct(values = []) {
   return Math.round((values.filter(usefulValue).length / values.length) * 100);
 }
 
+function priceFreshnessForDate(lastDate = "", maxDays = DEFAULT_PRICE_FRESHNESS_DAYS) {
+  const limit = Number.isFinite(maxDays) && maxDays > 0 ? maxDays : DEFAULT_PRICE_FRESHNESS_DAYS;
+  const timestamp = Date.parse(lastDate);
+  if (!Number.isFinite(timestamp)) {
+    return {
+      priceFreshnessDays: null,
+      priceFreshnessMaxDays: limit,
+      priceFreshnessOk: false,
+      priceFreshnessLabel: "sin fecha",
+      priceFreshnessIssue: "precio sin fecha de cierre",
+    };
+  }
+  const days = Math.max(0, Math.floor((Date.now() - timestamp) / 86400000));
+  const ok = days <= limit;
+  return {
+    priceFreshnessDays: days,
+    priceFreshnessMaxDays: limit,
+    priceFreshnessOk: ok,
+    priceFreshnessLabel: days <= 2 ? "fresco" : ok ? "util" : "viejo",
+    priceFreshnessIssue: ok ? "" : `precio viejo: ${days}d > ${limit}d`,
+  };
+}
+
 function dataCoverageForRow(row = {}, profile = {}) {
   const gm = profile.growthMetrics || row.growthMetrics || {};
+  const freshness = row.priceFreshnessOk === undefined ? priceFreshnessForDate(row.lastDate) : {
+    priceFreshnessDays: row.priceFreshnessDays ?? null,
+    priceFreshnessMaxDays: row.priceFreshnessMaxDays ?? DEFAULT_PRICE_FRESHNESS_DAYS,
+    priceFreshnessOk: row.priceFreshnessOk === true,
+    priceFreshnessLabel: row.priceFreshnessLabel || (row.priceFreshnessOk ? "fresco" : "viejo"),
+    priceFreshnessIssue: row.priceFreshnessIssue || "",
+  };
   const technicalCoverageScore = coveragePct([
+    freshness.priceFreshnessOk ? 100 : null,
     Number.isFinite(row.chartBarsCount) && row.chartBarsCount >= 180 ? row.chartBarsCount : null,
     row.price,
     row.sma50,
@@ -814,12 +796,15 @@ function dataCoverageForRow(row = {}, profile = {}) {
     gm.insiderOwnership,
     gm.shortPercentOfFloat,
   ]);
-  const dataCoverageScore = Math.round(technicalCoverageScore * .68 + profileCoverageScore * .22 + fundamentalCoverageScore * .1);
+  const stalePenalty = freshness.priceFreshnessOk ? 0 : 18;
+  const dataCoverageScore = Math.max(0, Math.round(technicalCoverageScore * .68 + profileCoverageScore * .22 + fundamentalCoverageScore * .1 - stalePenalty));
   const issues = [];
+  if (!freshness.priceFreshnessOk) issues.push(freshness.priceFreshnessIssue || "precio no fresco");
   if (technicalCoverageScore < 70) issues.push("técnico parcial");
   if (profileCoverageScore < 55) issues.push("perfil parcial");
   if (fundamentalCoverageScore < 35) issues.push("fundamental parcial");
   return {
+    ...freshness,
     dataCoverageScore,
     technicalCoverageScore,
     profileCoverageScore,
@@ -827,63 +812,6 @@ function dataCoverageForRow(row = {}, profile = {}) {
     dataCoverageLabel: dataCoverageScore >= 80 ? "alta" : dataCoverageScore >= 60 ? "util" : dataCoverageScore >= 40 ? "parcial" : "baja",
     dataCoverageIssues: issues,
   };
-}
-
-function rsRawComposite(row = {}) {
-  const p3 = Number.isFinite(row.perf3m) ? row.perf3m : 0;
-  const p6 = Number.isFinite(row.perf6m) ? row.perf6m : 0;
-  const p12 = Number.isFinite(row.perf12m) ? row.perf12m : 0;
-  const rs3 = Number.isFinite(row.rs3m) ? row.rs3m : 0;
-  const rs6 = Number.isFinite(row.rs6m) ? row.rs6m : 0;
-  const rs12 = Number.isFinite(row.rs12m) ? row.rs12m : 0;
-  const nearHigh = Number.isFinite(row.distance52w) ? row.distance52w : -50;
-  const drawdown = Number.isFinite(row.maxDrawdown63d) ? row.maxDrawdown63d : 25;
-  return p3 * .38 + p6 * .24 + p12 * .14 + rs3 * .34 + rs6 * .18 + rs12 * .08 + nearHigh * .16 - drawdown * .12;
-}
-
-function percentileFromSorted(value, sorted = []) {
-  if (!Number.isFinite(value) || !sorted.length) return null;
-  if (sorted.length === 1) return 50;
-  let belowOrEqual = 0;
-  for (const item of sorted) {
-    if (item <= value) belowOrEqual += 1;
-    else break;
-  }
-  return Math.round(clamp((belowOrEqual / sorted.length) * 99, 1, 99));
-}
-
-function addScopedPercentile(rows, scopeFn, valueKey, outKey, sampleKey, minSample = 3) {
-  const groups = new Map();
-  rows.forEach((row) => {
-    const key = scopeFn(row) || "Sin grupo";
-    if (!groups.has(key)) groups.set(key, []);
-    if (Number.isFinite(row[valueKey])) groups.get(key).push(row[valueKey]);
-  });
-  groups.forEach((values, key) => groups.set(key, values.sort((a, b) => a - b)));
-  return rows.map((row) => {
-    const key = scopeFn(row) || "Sin grupo";
-    const sorted = groups.get(key) || [];
-    const sample = sorted.length;
-    return {
-      ...row,
-      [sampleKey]: sample,
-      [outKey]: sample >= minSample ? percentileFromSorted(row[valueKey], sorted) : null,
-    };
-  });
-}
-
-function enrichRelativePercentiles(list = []) {
-  if (!list.length) return list;
-  const withRaw = list.map((row) => ({ ...row, rsCompositeRaw: rsRawComposite(row) }));
-  const sortedGlobal = withRaw.map((row) => row.rsCompositeRaw).filter(Number.isFinite).sort((a, b) => a - b);
-  let rows = withRaw.map((row) => ({
-    ...row,
-    rsGlobalSample: sortedGlobal.length,
-    rsGlobalPct: percentileFromSorted(row.rsCompositeRaw, sortedGlobal),
-  }));
-  rows = addScopedPercentile(rows, (row) => row.country || countryCode(row.symbol), "rsCompositeRaw", "rsCountryPct", "rsCountrySample", 3);
-  rows = addScopedPercentile(rows, (row) => row.theme || row.sector, "rsCompositeRaw", "rsSectorPct", "rsSectorSample", 3);
-  return rows;
 }
 
 function regimeRejectReason(row, marketHealth, enabled, set = {}) {
@@ -936,109 +864,6 @@ function failureKind(reason = "") {
   if (text.includes("provider") || text.includes("proveedor") || text.includes("http")) return { key: "provider", title: "Proveedor no disponible", fix: "Reintentar, cachear respuesta o cubrir con proveedor secundario." };
   return { key: "other", title: "Otros datos incompletos", fix: "Revisar caso manual y normalizar símbolo/perfil." };
 }
-function favoriteFromRow(row, marketHealth) {
-  const methodologySnapshot = compactMethodologySnapshot(row);
-  return {
-    id: uid(),
-    symbol: row.symbol,
-    companyName: row.companyName || row.symbol,
-    country: row.country,
-    sector: row.sector,
-    industry: row.industry,
-    addedAt: new Date().toISOString(),
-    entryPrice: Number.isFinite(row.price) ? row.price : null,
-    lastPrice: Number.isFinite(row.price) ? row.price : null,
-    lastDate: row.lastDate || null,
-    source: "screener",
-    notes: "",
-    marketScore: marketHealth?.marketScore ?? null,
-    marketRegime: marketHealth?.regime?.label || "sin dato",
-    snapshot: {
-      ...methodologySnapshot,
-      totalScore: row.totalScore,
-      compositeScore: row.compositeScore,
-      compositeLabel: row.compositeLabel,
-      setupQualityScore: row.setupQualityScore,
-      demandScore: row.demandScore,
-      growthScore: row.growthScore,
-      adProxyScore: row.adProxyScore,
-      epsGrowthProxyScore: row.epsGrowthProxyScore,
-      ratingModel: row.ratingModel,
-      weinsteinScore: row.weinsteinScore,
-      minerviniScore: row.minerviniScore,
-      momentumScore: row.momentumScore,
-      riskScore: row.riskScore,
-      riskRewardScore: row.riskRewardScore,
-      volumeScore: row.volumeScore,
-      volumeEffectScore: row.volumeEffectScore,
-      volumeEvidence: row.volumeEvidence,
-      avgVolume: row.avgVolume,
-      latestVolume: row.latestVolume,
-      avgTurnover: row.avgTurnover,
-      latestTurnover: row.latestTurnover,
-      relativeVolume: row.relativeVolume,
-      volumeSurgePct: row.volumeSurgePct,
-      upDownVolRatio: row.upDownVolRatio,
-      shortPercentOfFloat: row.shortPercentOfFloat,
-      sharesPercentSharesOut: row.sharesPercentSharesOut,
-      shortRatio: row.shortRatio,
-      sharesShort: row.sharesShort,
-      floatShares: row.floatShares,
-      liquidityScore: row.liquidityScore,
-      rsRating: row.rsRating,
-      rsGlobalPct: row.rsGlobalPct,
-      rsCountryPct: row.rsCountryPct,
-      rsSectorPct: row.rsSectorPct,
-      rsQualityScore: row.rsQualityScore,
-      rsStabilityScore: row.rsStabilityScore,
-      speculationRiskScore: row.speculationRiskScore,
-      rsQualityLabel: row.rsQualityLabel,
-      dataCoverageScore: row.dataCoverageScore,
-      technicalCoverageScore: row.technicalCoverageScore,
-      fundamentalCoverageScore: row.fundamentalCoverageScore,
-      dataCoverageLabel: row.dataCoverageLabel,
-      dataCoverageIssues: row.dataCoverageIssues || [],
-      weaknessScore: row.weaknessScore,
-      weaknessLabel: row.weaknessLabel,
-      weaknessReasons: row.weaknessReasons || [],
-      rsGlobalSample: row.rsGlobalSample,
-      rsCountrySample: row.rsCountrySample,
-      rsSectorSample: row.rsSectorSample,
-      rs3m: row.rs3m,
-      rs6m: row.rs6m,
-      rs12m: row.rs12m,
-      benchmarkSymbol: row.benchmarkSymbol,
-      sectorScore: row.sectorScore,
-      stageState: methodologySnapshot.stageState,
-      stageLabel: methodologySnapshot.stageLabel,
-      riskState: methodologySnapshot.riskState,
-      dataQualityState: methodologySnapshot.dataQualityState,
-      ipoScore: row.ipoScore,
-      compositeReasons: row.compositeReasons || [],
-      compositeRisks: row.compositeRisks || [],
-      perf3m: row.perf3m,
-      perf6m: row.perf6m,
-      perf12m: row.perf12m,
-      volatility63d: row.volatility63d,
-      downsideVolatility63d: row.downsideVolatility63d,
-      maxDrawdown63d: row.maxDrawdown63d,
-      returnToVol3m: row.returnToVol3m,
-      returnToDrawdown3m: row.returnToDrawdown3m,
-      price: row.price,
-      sma50: row.sma50,
-      sma150: row.sma150,
-      sma200: row.sma200,
-      sma200Slope: row.sma200Slope,
-      distance20d: row.distance20d,
-      distance52w: row.distance52w,
-      extSma50: row.extSma50,
-      highsSpreadPct: row.highsSpreadPct,
-      theme: row.theme,
-      businessEs: row.businessEs,
-    },
-  };
-}
-
 function chartPreviewBars(b, limit = 96) {
   const asc = [...b].filter((x) => Number.isFinite(x.close)).reverse();
   const enriched = asc.map((bar, i) => {
@@ -1062,6 +887,7 @@ function chartPreviewForRange(bars = [], range = "1A") {
 }
 
 function stageLabel(r) {
+  if (r?.weeklyStageLabel) return r.weeklyStageLabel.replace(/\s+probable$/i, "");
   if (!r || !Number.isFinite(r.price) || !Number.isFinite(r.sma200)) return "Sin dato";
   if (gt(r.price, r.sma50) && gt(r.sma50, r.sma150) && gt(r.sma150, r.sma200) && gt(r.sma200Slope, 0)) return "Stage 2";
   if (lt(r.price, r.sma200) && lt(r.sma200Slope, 0)) return "Stage 4";
@@ -1070,6 +896,7 @@ function stageLabel(r) {
 }
 
 function isStage2(row) {
+  if (row?.weeklyStageState) return row.weeklyStageState === "stage2";
   if (![row.price, row.sma50, row.sma150, row.sma200].every(Number.isFinite)) return false;
   return gt(row.price, row.sma50) && gt(row.price, row.sma150) && gt(row.price, row.sma200) && gt(row.sma50, row.sma150) && gt(row.sma150, row.sma200) && gt(row.sma200Slope, 0);
 }
@@ -1084,7 +911,9 @@ function applyRelativeStrength(row, benchmarks = {}) {
   return { ...row, ...rs, benchmarkSymbol };
 }
 
-function buildResearchRow(symbol, chart, profile = {}, requireLongHistory = false, benchmarks = {}) {
+function buildResearchRow(symbol, chart, profile = {}, requireLongHistoryOrOptions = false, benchmarks = {}) {
+  const options = typeof requireLongHistoryOrOptions === "object" && requireLongHistoryOrOptions !== null ? requireLongHistoryOrOptions : { requireLongHistory: requireLongHistoryOrOptions };
+  const requireLongHistory = Boolean(options.requireLongHistory);
   const b = chart.bars || [];
   if (b.length < (requireLongHistory ? 180 : 20)) throw new Error("Historico insuficiente");
   const providerPrice = firstFinite(chart.meta?.regularMarketPrice, chart.meta?.regularMarketPreviousClose, chart.meta?.previousClose);
@@ -1112,6 +941,8 @@ function buildResearchRow(symbol, chart, profile = {}, requireLongHistory = fals
   const perf6m = perf(calcBars, 126);
   const perf12m = perf(calcBars, 252);
   const riskAdjusted = riskAdjustedStats(calcBars, perf3m);
+  const weeklyStage = weeklyStageForBars(calcBars, options);
+  const setupPattern = setupPatternForBars(calcBars);
   const row = {
     symbol,
     companyName: profile.name || chart.meta?.shortName || symbol,
@@ -1160,9 +991,12 @@ function buildResearchRow(symbol, chart, profile = {}, requireLongHistory = fals
     ...riskAdjusted,
     extSma50: s50 ? ((price / s50) - 1) * 100 : null,
     upDownVolRatio: udVol(calcBars, 50),
+    ...weeklyStageFields(weeklyStage),
+    ...setupPattern,
     lastDate: b[0]?.date,
     chartPreview: chartPreviewBars(calcBars),
   };
+  Object.assign(row, priceFreshnessForDate(row.lastDate));
   row.theme = theme(row.sector, row.industry);
   row.logoDomain = domainFromUrl(row.website);
   row.businessEs = actividadEs(row.companyName, row.sector, row.industry, row.theme, profile.businessSummary);
@@ -1188,8 +1022,9 @@ const REJECTION_META = {
   provider: { label: "Datos proveedor", stage: "Datos" },
   liquidity: { label: "Liquidez", stage: "Puerta" },
   coverage: { label: "Cobertura", stage: "Puerta" },
+  relativeStrength: { label: "Fuerza relativa", stage: "Score" },
   volumeSurge: { label: "Volumen objetivo", stage: "Opcional" },
-  shortInterest: { label: "Short float", stage: "Opcional" },
+  shortInterest: { label: metricShortLabel("shortPercentOfFloat"), stage: "Opcional" },
   riskReward: { label: "Rentabilidad/riesgo", stage: "Opcional" },
   volatility: { label: "Volatilidad/rango", stage: "Puerta" },
   trend: { label: "Tendencia", stage: "Puerta" },
@@ -1226,11 +1061,11 @@ function filterRejectReason(row, set) {
   const maxRange63dPct = Number.isFinite(set.maxRange63dPct) ? set.maxRange63dPct : 999;
   const maxVolatility63d = Number.isFinite(set.maxVolatility63d) ? set.maxVolatility63d : 999;
   const maxDrawdown63d = Number.isFinite(set.maxDrawdown63d) ? set.maxDrawdown63d : 999;
-  const minRsQualityScore = Number.isFinite(set.minRsQualityScore) ? set.minRsQualityScore : 0;
   const minWeaknessScore = Number.isFinite(set.minWeaknessScore) ? set.minWeaknessScore : 0;
   const minDataCoverageScore = Number.isFinite(set.minDataCoverageScore) ? set.minDataCoverageScore : 0;
   const minTechnicalCoverageScore = Number.isFinite(set.minTechnicalCoverageScore) ? set.minTechnicalCoverageScore : 0;
   const minFundamentalCoverageScore = Number.isFinite(set.minFundamentalCoverageScore) ? set.minFundamentalCoverageScore : 0;
+  const maxPriceFreshnessDays = Number.isFinite(set.maxPriceFreshnessDays) ? set.maxPriceFreshnessDays : 999;
   const minVolumeSurgePct = Number.isFinite(set.minVolumeSurgePct) ? set.minVolumeSurgePct : -999;
   const minShortFloatPct = Number.isFinite(set.minShortFloatPct) ? set.minShortFloatPct : 0;
   const maxShortFloatPct = Number.isFinite(set.maxShortFloatPct) ? set.maxShortFloatPct : 999;
@@ -1238,6 +1073,10 @@ function filterRejectReason(row, set) {
   const minEpsGrowthProxyScore = Number.isFinite(set.minEpsGrowthProxyScore) ? set.minEpsGrowthProxyScore : 0;
   if (!Number.isFinite(row.price) || row.price <= 0) return rejectReason("provider", "Precio no disponible", "price");
   if (!Number.isFinite(row.chartBarsCount) || row.chartBarsCount < minBars) return rejectReason("provider", `Historico insuficiente: ${Number.isFinite(row.chartBarsCount) ? row.chartBarsCount : 0}/${minBars} sesiones`, "chartBarsCount");
+  if (maxPriceFreshnessDays < 999) {
+    const freshness = priceFreshnessForDate(row.lastDate, maxPriceFreshnessDays);
+    if (!freshness.priceFreshnessOk) return rejectReason("coverage", `${freshness.priceFreshnessIssue}. Ultimo cierre: ${row.lastDate || "sin fecha"}`, "maxPriceFreshnessDays");
+  }
   if ((set.minPrice || 0) > 0 && lt(row.price, set.minPrice)) return rejectReason("liquidity", `Precio ${money(row.price, row.currency)} por debajo de ${money(set.minPrice, row.currency)}`, "minPrice");
   if ((set.minMarketCap || 0) > 0 && (!Number.isFinite(row.marketCap) || row.marketCap <= 0 || row.marketCap < set.minMarketCap)) return rejectReason("liquidity", `Capitalizacion ${cap(row.marketCap)} por debajo de ${cap(set.minMarketCap)}`, "minMarketCap");
   if ((set.minAvgVolume || 0) > 0 && (!Number.isFinite(row.avgVolume) || row.avgVolume < set.minAvgVolume)) return rejectReason("liquidity", `Volumen medio ${cap(row.avgVolume)} por debajo de ${cap(set.minAvgVolume)}`, "minAvgVolume");
@@ -1261,7 +1100,6 @@ function filterRejectReason(row, set) {
     return weak >= Math.max(35, minWeaknessScore) ? null : rejectReason("weakness", `Deterioro ${weak?.toFixed?.(0) || "sin dato"} < ${Math.max(35, minWeaknessScore)}`, "minWeaknessScore");
   }
   if ((set.minRiskRewardScore || 0) > 0 && (!Number.isFinite(row.riskRewardScore) || row.riskRewardScore < set.minRiskRewardScore)) return rejectReason("riskReward", `Score rent/riesgo ${row.riskRewardScore?.toFixed?.(0) || "sin dato"} < ${set.minRiskRewardScore}`, "minRiskRewardScore");
-  if (minRsQualityScore > 0 && (!Number.isFinite(row.rsQualityScore) || row.rsQualityScore < minRsQualityScore)) return rejectReason("riskReward", `RS Quality ${row.rsQualityScore?.toFixed?.(0) || "sin dato"} < ${minRsQualityScore}`, "minRsQualityScore");
   if (minReturnToVol3m > -999 && (!Number.isFinite(row.returnToVol3m) || row.returnToVol3m < minReturnToVol3m)) return rejectReason("riskReward", `Retorno/vol ${ratioLabel(row.returnToVol3m)} < ${ratioLabel(minReturnToVol3m)}`, "minReturnToVol3m");
   if (minReturnToDrawdown3m > -999 && (!Number.isFinite(row.returnToDrawdown3m) || row.returnToDrawdown3m < minReturnToDrawdown3m)) return rejectReason("riskReward", `Retorno/drawdown ${ratioLabel(row.returnToDrawdown3m)} < ${ratioLabel(minReturnToDrawdown3m)}`, "minReturnToDrawdown3m");
   if (maxDailyMove20dPct < 999 && (!Number.isFinite(row.maxDailyMove20dPct) || row.maxDailyMove20dPct > maxDailyMove20dPct)) return rejectReason("volatility", `Movimiento diario max 20d ${pct(row.maxDailyMove20dPct)} > ${pct(maxDailyMove20dPct)}`, "maxDailyMove20dPct");
@@ -1269,7 +1107,7 @@ function filterRejectReason(row, set) {
   if (maxRange63dPct < 999 && (!Number.isFinite(row.range63dPct) || row.range63dPct > maxRange63dPct)) return rejectReason("volatility", `Rango 63d ${pct(row.range63dPct)} > ${pct(maxRange63dPct)}`, "maxRange63dPct");
   if (maxVolatility63d < 999 && (!Number.isFinite(row.volatility63d) || row.volatility63d > maxVolatility63d)) return rejectReason("volatility", `Volatilidad ${pct(row.volatility63d)} > ${pct(maxVolatility63d)}`, "maxVolatility63d");
   if (maxDrawdown63d < 999 && (!Number.isFinite(row.maxDrawdown63d) || row.maxDrawdown63d > maxDrawdown63d)) return rejectReason("volatility", `Drawdown ${pct(row.maxDrawdown63d)} > ${pct(maxDrawdown63d)}`, "maxDrawdown63d");
-  if (set.requireStage2 && !isStage2(row)) return rejectReason("trend", "No cumple Stage 2 completo: precio y medias 50/150/200 alineadas con SMA200 ascendente", "requireStage2");
+  if (set.requireStage2 && !isStage2(row)) return rejectReason("trend", `No cumple Stage 2 con medias semanales ${row.weeklyFastWeeks || set.stageFastWeeks || 10}W/${row.weeklySlowWeeks || set.stageSlowWeeks || 30}W: ${row.weeklyStageLabel || "sin dato"}`, "requireStage2");
   if (set.requireSma200Up && !gt(row.sma200Slope, 0)) return rejectReason("trend", `Pendiente SMA200 ${pct(row.sma200Slope)} no es positiva`, "requireSma200Up");
   if (set.requirePriceAboveSma50 && !gt(row.price, row.sma50)) return rejectReason("trend", "Precio no esta por encima de SMA50", "requirePriceAboveSma50");
   if (!set.requireStage2 && !(gt(row.price, row.sma200) || gte(row.perf3m, set.minPerf3m))) return rejectReason("trend", "Sin Stage 2 estricto necesita precio sobre SMA200 o momentum 3M suficiente", "requireStage2");
@@ -1288,8 +1126,10 @@ function filterRejectReason(row, set) {
   if (below(row.riskScore, set.minRiskScore)) return rejectReason("score", `Risk score ${row.riskScore?.toFixed?.(0)} < ${set.minRiskScore}`, "minRiskScore");
   if (below(row.volumeScore, set.minVolumeScore)) return rejectReason("score", `Volume score ${row.volumeScore?.toFixed?.(0)} < ${set.minVolumeScore}`, "minVolumeScore");
   if (below(row.liquidityScore, set.minLiquidityScore)) return rejectReason("score", `Liquidity score ${row.liquidityScore?.toFixed?.(0)} < ${set.minLiquidityScore}`, "minLiquidityScore");
-  const rsPrimary = firstFinite(row.rsGlobalPct, row.rsRating);
-  if ((set.minRsRating || 0) > 0 && (!Number.isFinite(rsPrimary) || rsPrimary < (set.minRsRating || 0))) return rejectReason("momentum", `RS Global ${Number.isFinite(rsPrimary) ? rsPrimary.toFixed(0) : "sin dato"} < ${set.minRsRating || 0}`, "minRsRating");
+  const rsUniverse = rsUniverseValue(row);
+  if ((set.minRsRating || 0) > 0 && (!Number.isFinite(rsUniverse) || rsUniverse < (set.minRsRating || 0))) return rejectReason("relativeStrength", `${metricShortLabel("rsGlobalPct")} ${Number.isFinite(rsUniverse) ? rsUniverse.toFixed(0) : "sin dato"} < ${set.minRsRating || 0}`, "minRsRating");
+  const rsBenchmark = rsBenchmarkValue(row);
+  if ((set.minRsBenchmarkRating || 0) > 0 && (!Number.isFinite(rsBenchmark) || rsBenchmark < (set.minRsBenchmarkRating || 0))) return rejectReason("relativeStrength", `${metricShortLabel("rsRating")} ${Number.isFinite(rsBenchmark) ? rsBenchmark.toFixed(0) : "sin dato"} < ${set.minRsBenchmarkRating || 0}`, "minRsBenchmarkRating");
   if (set.requireRecentIpo && !isRecentIpoDate(row.ipoDate, set.maxIpoAgeMonths || 60)) return rejectReason("ipo", `IPO no confirmada dentro de ${set.maxIpoAgeMonths || 60} meses`, "requireRecentIpo");
   if (mode === "nearPivot" && !(gte(row.distance20d, -set.maxDistance20dHigh) && lte(row.highsSpreadPct, set.maxHighsSpreadPct) && lte(row.extSma50, Math.min(set.maxExtensionSma50, 18)))) return rejectReason("mode", "No encaja en Near Pivot", "setupMode");
   if (mode === "pullback" && !(gt(row.price, row.sma200) && between(row.extSma50, -4, 9) && gte(row.distance52w, -30) && gte(row.perf6m, Math.max(8, set.minPerf6m * 0.7)))) return rejectReason("mode", "No encaja en Pullback SMA50", "setupMode");
@@ -1320,9 +1160,11 @@ function applyPostFilters(list, set) {
 
 function postFilterRejectReason(row, set) {
   if (set.setupMode === "weakness") return (row.weaknessScore || 0) >= (set.minWeaknessScore || 0) ? null : rejectReason("weakness", `Deterioro ${(row.weaknessScore || 0).toFixed(0)} < ${set.minWeaknessScore || 0}`, "minWeaknessScore");
-  if ((set.minSectorScore || 0) > 0 && (!Number.isFinite(row.sectorScore) || row.sectorScore < set.minSectorScore)) return rejectReason("post", `Fuerza grupo ${row.sectorScore?.toFixed?.(0) || "sin dato"} < ${set.minSectorScore || 0}`, "minSectorScore");
-  if ((set.minTotalScore || 0) > 0 && (!Number.isFinite(row.totalScore) || row.totalScore < set.minTotalScore)) return rejectReason("post", `Composite ${row.totalScore?.toFixed?.(0) || "sin dato"} < ${set.minTotalScore || 0}`, "minTotalScore");
-  if ((set.minRsQualityScore || 0) > 0 && (!Number.isFinite(row.rsQualityScore) || row.rsQualityScore < set.minRsQualityScore)) return rejectReason("post", `RS Quality ${row.rsQualityScore?.toFixed?.(0) || "sin dato"} < ${set.minRsQualityScore || 0}`, "minRsQualityScore");
+  if ((set.minRsCountryPct || 0) > 0 && (!Number.isFinite(row.rsCountryPct) || row.rsCountryPct < set.minRsCountryPct)) return rejectReason("relativeStrength", `RS Pais ${row.rsCountryPct?.toFixed?.(0) || "sin dato"} < ${set.minRsCountryPct || 0}`, "minRsCountryPct");
+  if ((set.minRsSectorPct || 0) > 0 && (!Number.isFinite(row.rsSectorPct) || row.rsSectorPct < set.minRsSectorPct)) return rejectReason("relativeStrength", `${metricShortLabel("rsSectorPct")} ${row.rsSectorPct?.toFixed?.(0) || "sin dato"} < ${set.minRsSectorPct || 0}`, "minRsSectorPct");
+  if ((set.minRsQualityScore || 0) > 0 && (!Number.isFinite(row.rsQualityScore) || row.rsQualityScore < set.minRsQualityScore)) return rejectReason("relativeStrength", `RS Quality ${row.rsQualityScore?.toFixed?.(0) || "sin dato"} < ${set.minRsQualityScore || 0}`, "minRsQualityScore");
+  if ((set.minSectorScore || 0) > 0 && (!Number.isFinite(row.sectorScore) || row.sectorScore < set.minSectorScore)) return rejectReason("relativeStrength", `Fuerza grupo ${row.sectorScore?.toFixed?.(0) || "sin dato"} < ${set.minSectorScore || 0}`, "minSectorScore");
+  if ((set.minTotalScore || 0) > 0 && (!Number.isFinite(row.totalScore) || row.totalScore < set.minTotalScore)) return rejectReason("score", `Composite ${row.totalScore?.toFixed?.(0) || "sin dato"} < ${set.minTotalScore || 0}`, "minTotalScore");
   return null;
 }
 
@@ -1336,7 +1178,12 @@ async function analyzeRawCandidate(symbol, set, benchmarks = {}) {
     getJson(`/api/chart?symbol=${encodeURIComponent(symbol)}`),
     getJson(`/api/profile?symbol=${encodeURIComponent(symbol)}`).catch(() => ({})),
   ]);
-  return buildResearchRow(symbol, chart, profile, set.setupMode !== "ipoRecent", benchmarks);
+  return buildResearchRow(symbol, chart, profile, {
+    requireLongHistory: set.setupMode !== "ipoRecent",
+    stageFastWeeks: set.stageFastWeeks,
+    stageSlowWeeks: set.stageSlowWeeks,
+    stageSlopeWeeks: set.stageSlopeWeeks,
+  }, benchmarks);
 }
 
 async function analyzeCandidate(symbol, set, benchmarks = {}) {
@@ -1402,7 +1249,7 @@ function sectorize(list) {
     const compositeScore = setupQualityScore * .17 + rsAnchor * .16 + rsQualityScore * .06 + demandScore * .1 + adProxyScore * .08 + growthScore * .08 + epsAnchor * .08 + sectorScore * .1 + riskRewardScore * .08 + r.riskScore * .05 + r.momentumScore * .02 + ipoScore * .02;
     const ratingModel = {
       version: "statsedge-transparent-v2",
-      rs: "Percentil global del universo analizado; fallback a RS benchmark si no hay muestra suficiente.",
+      rs: "RS Universo es percentil del lote con muestra minima; RS Benchmark es fuerza frente a SPY/QQQ/ACWI.",
       adProxy: "Up/down volume, volumen relativo, volumen 5d y cierre con volumen.",
       epsGrowthProxy: "Crecimiento de beneficios/ventas, margenes, ROE/ROA y balance si el proveedor devuelve datos.",
       composite: "Setup + RS + demanda + crecimiento + grupo + rentabilidad/riesgo.",
@@ -1545,6 +1392,10 @@ function CompanyMark({ row = {}, size = "md" }) {
 
 function quickSetup(row) {
   if (!row) return "Sin dato";
+  if (row.failedBreakout) return "Fallo de breakout";
+  if (row.breakoutAttempt && gte(row.breakoutQualityScore, 55)) return "Breakout";
+  if (row.vcpCandidate) return "VCP / contraccion";
+  if (Number.isFinite(row.distanceToPivotPct) && between(row.distanceToPivotPct, -5, 3)) return "Zona de pivote";
   if (stageLabel(row) === "Stage 2" && gte(row.distance20d, -5) && lte(row.extSma50, 15)) return "Near pivot";
   if (stageLabel(row) === "Stage 2" && gte(row.extSma50, 18)) return "Fuerte extendida";
   if (gt(row.price, row.sma200) && between(row.extSma50, -4, 9)) return "Pullback SMA50";
@@ -1557,7 +1408,7 @@ function LeaderTape({ rows = [], activeRow, onSelect, onFavorite, favoriteSymbol
   const visible = rows.slice(0, 18);
   return <div className="leaderTape">
     <div className="leaderTapeHead">
-      <span>Symbol</span><span>{weaknessMode ? "Deterioro" : "Composite"}</span><span>RS</span><span>RSQ</span><span>Setup</span><span>Vol eff</span>
+      <span>Symbol</span><span>{weaknessMode ? metricShortLabel("weaknessScore") : metricShortLabel("totalScore")}</span><span>{metricShortLabel("rsGlobalPct")}</span><span>{metricShortLabel("rsQualityScore")}</span><span>Setup</span><span>{metricShortLabel("volumeEffectScore")}</span>
     </div>
     {visible.map((row) => {
       const active = activeRow?.symbol === row.symbol;
@@ -1587,7 +1438,7 @@ function opportunityBuckets(rows = []) {
     { key: "pivot", title: "Near Pivot", note: "Setup cercano", check: (r) => gte(r.distance20d, -5) && lte(r.extSma50, 15) && (rsGlobalValue(r) ?? 0) >= 60 && (r.riskScore || 0) >= 50 },
     { key: "stage2", title: "Stage 2 temprano", note: "Transición saludable", check: (r) => gt(r.price, r.sma200) && gte(r.sma200Slope, 0) && gte(r.distance52w, -35) && lte(r.extSma50, 18) && !isStage2(r) },
     { key: "pullback", title: "Pullback SMA50", note: "Descanso en tendencia", check: (r) => gt(r.price, r.sma200) && between(r.extSma50, -4, 9) && (rsGlobalValue(r) ?? 0) >= 55 },
-    { key: "rs", title: "RS Global", note: "Fuerza relativa", check: (r) => (rsGlobalValue(r) ?? 0) >= 75 && gte(r.distance52w, -25) },
+    { key: "rs", title: "RS Universo", note: "Percentil del lote", check: (r) => (rsUniverseValue(r) ?? 0) >= 75 && gte(r.distance52w, -25) },
     { key: "growth", title: "Growth Quality", note: "Crecimiento + margen", check: (r) => (r.growthScore || 0) >= 70 && (r.totalScore || 0) >= 64 },
     { key: "ipo", title: "IPO reales", note: "Últimos 5 años", check: (r) => isRecentIpoDate(r.ipoDate, 60) },
     { key: "extended", title: "Extendidas fuertes", note: "Extensión alta", check: (r) => gte(r.extSma50, 15) && (r.totalScore || 0) >= 70 && (rsGlobalValue(r) ?? 0) >= 65 },
@@ -1630,8 +1481,8 @@ function OpportunityMap({ buckets = [], onSelect }) {
 
 const SORT_LABELS = {
   totalScore: "Score",
-  rsGlobalPct: "RS Global",
-  rsRating: "RS Global",
+  rsGlobalPct: "RS Universo",
+  rsRating: "RS Benchmark",
   volumeEffectScore: "Volumen",
   avgTurnover: "Liquidez",
   shortPercentOfFloat: "Short %",
@@ -1659,15 +1510,15 @@ function MarketMiniTape({ marketHealth }) {
 function SetupChipRail({ rows = [], presetKey, setupMode, sort, onPreset, onMode, onSort }) {
   const counts = {
     stage2: rows.filter((row) => stageLabel(row) === "Stage 2").length,
-    trend: rows.filter((row) => (row.minerviniScore || 0) >= 65 && (rsGlobalValue(row) ?? 0) >= 65).length,
-    vcp: rows.filter((row) => gte(row.distance20d, -5) && lte(row.extSma50, 15) && lte(row.highsSpreadPct, 10)).length,
-    rs: rows.filter((row) => (rsGlobalValue(row) ?? 0) >= 75).length,
+    trend: rows.filter((row) => (row.minerviniScore || 0) >= 65 && (rsPrimaryValue(row) ?? 0) >= 65).length,
+    vcp: rows.filter((row) => row.vcpCandidate || (Number.isFinite(row.distanceToPivotPct) && between(row.distanceToPivotPct, -5, 3))).length,
+    rs: rows.filter((row) => (rsUniverseValue(row) ?? 0) >= 75).length,
   };
   const chips = [
     { key: "stage2", label: "Stage 2", count: counts.stage2, active: setupMode === "leader", action: () => onMode("leader") },
     { key: "trend", label: "Trend Template", count: counts.trend, active: presetKey === "strict", action: () => onPreset("strict") },
     { key: "vcp", label: "VCP", count: counts.vcp, active: setupMode === "nearPivot", action: () => onMode("nearPivot") },
-    { key: "rs", label: "RS Global", count: counts.rs, active: sort === "rsGlobalPct" || sort === "rsRating", action: () => onSort("rsGlobalPct") },
+    { key: "rs", label: "RS Universo", count: counts.rs, active: sort === "rsGlobalPct", action: () => onSort("rsGlobalPct") },
   ];
   return <div className="mobileChipRail">
     {chips.map((chip) => <button type="button" key={chip.key} className={chip.active ? "active" : ""} onClick={chip.action}>
@@ -1720,7 +1571,7 @@ function MobileResultRow({ row, onReview, onFavorite, isFavorite }) {
   </article>;
 }
 
-function MobileResultList({ rows = [], totalRows = rows.length, sort, onSort, onReview, onFavorite, favoriteSymbols, onSave, onCsv, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize }) {
+function MobileResultList({ rows = [], totalRows = rows.length, sort, onSort, onReview, onFavorite, favoriteSymbols, onSave, onCsv, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize }) {
   const start = totalRows ? ((page - 1) * pageSize) + 1 : 0;
   const end = totalRows ? Math.min(page * pageSize, totalRows) : 0;
   return <section className="mobileResultList">
@@ -1729,13 +1580,14 @@ function MobileResultList({ rows = [], totalRows = rows.length, sort, onSort, on
       <div>
         <select value={sort} onChange={(event) => onSort(event.target.value)} aria-label="Orden movil">
           <option value="totalScore">Score</option>
-          <option value="rsRating">RS</option>
+          <option value="rsGlobalPct">{metricShortLabel("rsGlobalPct")}</option>
+          <option value="rsRating">{metricShortLabel("rsRating")}</option>
           <option value="volumeEffectScore">Volumen</option>
           <option value="avgTurnover">Liquidez</option>
           <option value="weaknessScore">Deterioro</option>
         </select>
         <button type="button" onClick={onCsv} disabled={!rows.length}>CSV</button>
-        <button type="button" onClick={onSave} disabled={!rows.length} aria-label="Guardar snapshot de resultados">Guardar</button>
+        <button type="button" onClick={onSave} disabled={!rows.length || savingDisabled} aria-label="Guardar snapshot de resultados">Guardar</button>
         <button type="button" onClick={() => onReview()} disabled={!rows.length}>Revisar</button>
       </div>
     </div>
@@ -1779,14 +1631,14 @@ function QuickPanel({ row }) {
       </div>
     </div>
     <div className="quickMetricGrid">
-      <span><b>Composite</b>{row.totalScore?.toFixed(0) || "-"}</span>
-      <span><b>RS Global</b>{row.rsGlobalPct?.toFixed(0) || "-"}</span>
-      <span><b>RS Quality</b>{row.rsQualityScore?.toFixed(0) || "-"}</span>
-      <span><b>A/D proxy</b>{row.adProxyScore?.toFixed(0) || "-"}</span>
-      <span><b>EPS proxy</b>{row.epsGrowthProxyScore?.toFixed(0) || "-"}</span>
-      <span><b>Deterioro</b>{row.weaknessScore?.toFixed(0) || "-"}</span>
-      <span><b>RS Pais</b>{row.rsCountryPct?.toFixed(0) || "-"}</span>
-      <span><b>RS Sector</b>{row.rsSectorPct?.toFixed(0) || "-"}</span>
+      <span><b>{metricShortLabel("totalScore")}</b>{row.totalScore?.toFixed(0) || "-"}</span>
+      <span><b>{metricShortLabel("rsGlobalPct")}</b>{row.rsGlobalPct?.toFixed(0) || "-"}</span>
+      <span><b>{metricShortLabel("rsQualityScore")}</b>{row.rsQualityScore?.toFixed(0) || "-"}</span>
+      <span><b>{metricShortLabel("adProxyScore")}</b>{row.adProxyScore?.toFixed(0) || "-"}</span>
+      <span><b>{metricShortLabel("epsGrowthProxyScore")}</b>{row.epsGrowthProxyScore?.toFixed(0) || "-"}</span>
+      <span><b>{metricShortLabel("weaknessScore")}</b>{row.weaknessScore?.toFixed(0) || "-"}</span>
+      <span><b>{metricShortLabel("rsCountryPct")}</b>{row.rsCountryPct?.toFixed(0) || "-"}</span>
+      <span><b>{metricShortLabel("rsSectorPct")}</b>{row.rsSectorPct?.toFixed(0) || "-"}</span>
       <span><b>Setup</b>{row.setupQualityScore?.toFixed(0) || "-"}</span>
       <span><b>Growth</b>{row.growthScore?.toFixed(0) || "-"}</span>
       <span><b>Cobertura</b>{row.dataCoverageScore?.toFixed(0) || "-"}</span>
@@ -1797,9 +1649,9 @@ function QuickPanel({ row }) {
       <span><b>Vol 5d</b>{pct(row.volumeSurgePct)}</span>
       <span><b>Imp 20d</b>{amount(row.avgTurnover, row.currency)}</span>
       <span><b>Imp sesion</b>{amount(row.latestTurnover, row.currency)}</span>
-      <span><b>Vol Effect</b>{row.volumeEffectScore?.toFixed(0) || "-"}</span>
+      <span><b>{metricShortLabel("volumeEffectScore")}</b>{row.volumeEffectScore?.toFixed(0) || "-"}</span>
       <span><b>Up/Down</b>{ratioLabel(row.upDownVolRatio)}</span>
-      <span><b>Short float</b>{pct(row.shortPercentOfFloat)}</span>
+      <span><b>{metricShortLabel("shortPercentOfFloat")}</b>{pct(row.shortPercentOfFloat)}</span>
       <span><b>Short ratio</b>{ratioLabel(row.shortRatio)}</span>
       <span><b>Spec Risk</b>{row.speculationRiskScore?.toFixed(0) || "-"}</span>
       <span><b>DD 3M</b>{Number.isFinite(row.maxDrawdown63d) ? `${row.maxDrawdown63d.toFixed(1)}%` : "-"}</span>
@@ -1826,15 +1678,16 @@ function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = false, on
   const stage = stageLabel(row);
   const stageClass = stage === "Stage 2" ? "good" : stage === "Stage 4" ? "bad" : "neutral";
   const stats = compact
-    ? [["Comp", row.totalScore?.toFixed(0) || "-"], ["RS G", row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"], ["Vol", row.volumeEffectScore?.toFixed(0) || "-"]]
+    ? [[metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-"], [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-"], [metricShortLabel("volumeEffectScore"), row.volumeEffectScore?.toFixed(0) || "-"]]
     : summary
-      ? [["Precio", money(row.price, row.currency)], ["Composite", row.totalScore?.toFixed(0) || "-"], ["RS G", row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"], ["A/D", row.adProxyScore?.toFixed(0) || "-"], ["EPS", row.epsGrowthProxyScore?.toFixed(0) || "-"], ["Bench", row.benchmarkSymbol || "-"]]
-      : [["Precio", money(row.price, row.currency)], ["Composite", row.totalScore?.toFixed(0) || "-"], ["RS G", row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"], ["RSQ", row.rsQualityScore?.toFixed(0) || "-"], ["Vol eff", row.volumeEffectScore?.toFixed(0) || "-"], ["Short", pct(row.shortPercentOfFloat)], ["Imp 20d", amount(row.avgTurnover, row.currency)], ["Cob", row.dataCoverageScore?.toFixed(0) || "-"], ["Bench", row.benchmarkSymbol || "-"]];
+      ? [["Precio", money(row.price, row.currency)], [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-"], [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-"], [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-"], [metricShortLabel("adProxyScore"), row.adProxyScore?.toFixed(0) || "-"], [metricShortLabel("epsGrowthProxyScore"), row.epsGrowthProxyScore?.toFixed(0) || "-"], ["Bench", row.benchmarkSymbol || "-"]]
+      : [["Precio", money(row.price, row.currency)], [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-"], [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-"], [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-"], [metricShortLabel("rsQualityScore"), row.rsQualityScore?.toFixed(0) || "-"], [metricShortLabel("volumeEffectScore"), row.volumeEffectScore?.toFixed(0) || "-"], [metricShortLabel("shortPercentOfFloat"), pct(row.shortPercentOfFloat)], ["Imp 20d", amount(row.avgTurnover, row.currency)], ["Cob", row.dataCoverageScore?.toFixed(0) || "-"], ["Bench", row.benchmarkSymbol || "-"]];
   const summaryStats = [
-    ["Comp", row.totalScore?.toFixed(0) || "-"],
-    ["RS", row.rsGlobalPct?.toFixed(0) || row.rsRating?.toFixed(0) || "-"],
-    ["A/D", row.adProxyScore?.toFixed(0) || "-"],
-    ["EPS", row.epsGrowthProxyScore?.toFixed(0) || "-"],
+    [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-"],
+    [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-"],
+    [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-"],
+    [metricShortLabel("adProxyScore"), row.adProxyScore?.toFixed(0) || "-"],
+    [metricShortLabel("epsGrowthProxyScore"), row.epsGrowthProxyScore?.toFixed(0) || "-"],
     ["Bench", row.benchmarkSymbol || "-"],
   ];
   return <div className={`stockPreview stockPreview-${variant}`}>
@@ -1936,7 +1789,7 @@ function CompactResultsTable({ rows = [], favoriteSymbols, onFavorite, onReview,
       <tbody>
         {rows.map((r, i) => {
           const country = r.country || countryCode(r.symbol);
-          const rsValue = Number.isFinite(r.rsGlobalPct) ? r.rsGlobalPct : r.rsRating;
+          const rsValue = rsUniverseValue(r);
           const onOpen = () => onReview?.(r.symbol);
           return <tr key={r.symbol} onClick={(e) => { if (!e.target.closest("button, a")) onOpen(); }}>
             <td>
@@ -1978,9 +1831,9 @@ function CompactResultsTable({ rows = [], favoriteSymbols, onFavorite, onReview,
             </td>
             <td>
               <div className="compactMetricGrid">
-                <CompactMetric label="RS" value={Number.isFinite(rsValue) ? rsValue.toFixed(0) : "-"} tone={compactTone(rsValue, 75, 45)} />
-                <CompactMetric label="RSQ" value={Number.isFinite(r.rsQualityScore) ? r.rsQualityScore.toFixed(0) : "-"} tone={compactTone(r.rsQualityScore, 70, 40)} />
-                <CompactMetric label="Pais" value={Number.isFinite(r.rsCountryPct) ? r.rsCountryPct.toFixed(0) : "-"} />
+                <CompactMetric label={metricShortLabel("rsGlobalPct")} value={Number.isFinite(rsValue) ? rsValue.toFixed(0) : "-"} tone={compactTone(rsValue, 75, 45)} />
+                <CompactMetric label={metricShortLabel("rsSectorPct")} value={Number.isFinite(r.rsSectorPct) ? r.rsSectorPct.toFixed(0) : "-"} />
+                <CompactMetric label={metricShortLabel("rsQualityScore")} value={Number.isFinite(r.rsQualityScore) ? r.rsQualityScore.toFixed(0) : "-"} tone={compactTone(r.rsQualityScore, 70, 40)} />
               </div>
             </td>
             <td>
@@ -2020,13 +1873,14 @@ function FilterNumber({ field, value, onChange, active = true, inactiveReason = 
   const scale = field.scale || 1;
   const shown = Number.isFinite(value) ? value / scale : "";
   return <div className={`filterField ${active ? "isActive" : "isOff"}`}>
-    <span className="filterFieldLabel">
-      <button type="button" className={`ruleMiniToggle ${active ? "on" : "off"}`} aria-pressed={active} title={active ? "Quitar esta regla del filtro" : inactiveReason || "Activar esta regla"} onClick={onToggle}>
-        {active ? "✓" : "X"}
-      </button>
+    <label className="filterFieldLabel">
+      <span className={`ruleMiniToggle ${active ? "on" : "off"}`} title={active ? "Quitar esta regla del filtro" : inactiveReason || "Activar esta regla"}>
+        <input type="checkbox" checked={active} onChange={onToggle} aria-label={`${active ? "Quitar" : "Activar"} ${field.label}`} />
+        <span>{active ? "✓" : ""}</span>
+      </span>
       <span>{field.label}</span>
       {field.hint && <InfoHint text={field.hint} />}
-    </span>
+    </label>
     <div className="filterInputWrap">
       <input className="input" type="number" step={field.step || 1} value={shown} aria-label={field.label} onChange={(e) => onChange(field.key, (Number(e.target.value) || 0) * scale)} />
       {field.unit && <b>{field.unit}</b>}
@@ -2171,7 +2025,14 @@ function effectiveSettingsFromLayers(set, layers = DEFAULT_FILTER_LAYERS, fieldR
     next.minPerf6m = -100;
     next.minPerf12m = -100;
     next.minMomentumScore = 0;
+  }
+  if (!layers.relativeStrength) {
     next.minRsRating = 0;
+    next.minRsBenchmarkRating = 0;
+    next.minRsCountryPct = 0;
+    next.minRsSectorPct = 0;
+    next.minRsQualityScore = 0;
+    next.minSectorScore = 0;
   }
   if (!layers.proximity) {
     next.maxDistance20dHigh = 999;
@@ -2217,12 +2078,12 @@ function effectiveSettingsFromLayers(set, layers = DEFAULT_FILTER_LAYERS, fieldR
     next.maxShortFloatPct = 999;
   }
   if (!layers.riskReward) {
-    next.minRsQualityScore = 0;
     next.minRiskRewardScore = 0;
     next.minReturnToVol3m = -999;
     next.minReturnToDrawdown3m = -999;
   }
   if (!layers.coverage) {
+    next.maxPriceFreshnessDays = 999;
     next.minDataCoverageScore = 0;
     next.minTechnicalCoverageScore = 0;
     next.minFundamentalCoverageScore = 0;
@@ -2290,10 +2151,12 @@ export default function Page() {
     setChartSettings(readChartSettings());
     const session = safeRead(STORAGE_KEYS.screenerSession, null);
     if (session?.version === SCREENER_SESSION_VERSION) {
+      const restoredPresetKey = PRESETS[session.presetKey] ? session.presetKey : "balanced";
+      const restoredPreset = PRESETS[restoredPresetKey] || PRESETS.balanced;
       setMarkets(Array.isArray(session.markets) && session.markets.length ? session.markets : DEFAULT_MARKETS);
       setManual(session.manual || "");
-      setSettings(session.settings || PRESETS.balanced.v);
-      setPresetKey(session.presetKey || "balanced");
+      setSettings({ ...restoredPreset.v, ...(session.settings || {}) });
+      setPresetKey(restoredPresetKey);
       setUniverse(Array.isArray(session.universe) ? session.universe : []);
       setRows(Array.isArray(session.rows) ? session.rows : []);
       setFail(Array.isArray(session.fail) ? session.fail : []);
@@ -2312,8 +2175,8 @@ export default function Page() {
       setResultPage(Number.isFinite(session.resultPage) && session.resultPage > 0 ? session.resultPage : 1);
       setMarketHealth(session.marketHealth || null);
       setUseRegimeFilter(session.useRegimeFilter !== false);
-      setFilterLayers(session.filterLayers || DEFAULT_FILTER_LAYERS);
-      setFieldRules(session.fieldRules || DEFAULT_FIELD_RULES);
+      setFilterLayers({ ...DEFAULT_FILTER_LAYERS, ...(session.filterLayers || {}) });
+      setFieldRules({ ...DEFAULT_FIELD_RULES, ...(session.fieldRules || {}) });
       setViewLayers(session.viewLayers || DEFAULT_VIEW_LAYERS);
       setSearchSymbol(session.searchSymbol || "");
       setSearchCandidates(Array.isArray(session.searchCandidates) ? session.searchCandidates : []);
@@ -2468,6 +2331,83 @@ export default function Page() {
     if (neededLayers.length) setFilterLayers((prev) => ({ ...prev, ...Object.fromEntries(neededLayers.map((key) => [key, true])) }));
   };
   const toggleViewLayer = (key) => setViewLayers((prev) => ({ ...prev, [key]: !prev[key] }));
+  function currentFilterConfig() {
+    return {
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      markets,
+      manual,
+      presetKey,
+      settings,
+      useRegimeFilter,
+      filterLayers,
+      fieldRules,
+      viewLayers,
+      themeFilter,
+      sectorFilter,
+      industryFilter,
+      countryFilter,
+      sectorStrength,
+      ipo,
+      sort,
+      scanMode,
+      batchStart,
+      scanBatchSize,
+      resultPageSize,
+    };
+  }
+  function applyFilterConfig(config = {}) {
+    const nextPresetKey = PRESETS[config.presetKey] ? config.presetKey : "balanced";
+    const nextPreset = PRESETS[nextPresetKey] || PRESETS.balanced;
+    setMarkets(Array.isArray(config.markets) && config.markets.length ? config.markets : DEFAULT_MARKETS);
+    setManual(config.manual || "");
+    setPresetKey(nextPresetKey);
+    setSettings({ ...nextPreset.v, ...(config.settings || {}) });
+    setUseRegimeFilter(config.useRegimeFilter !== false);
+    setFilterLayers({ ...DEFAULT_FILTER_LAYERS, ...(config.filterLayers || {}) });
+    setFieldRules({ ...DEFAULT_FIELD_RULES, ...(config.fieldRules || {}) });
+    setViewLayers({ ...DEFAULT_VIEW_LAYERS, ...(config.viewLayers || {}) });
+    setThemeFilter(config.themeFilter || "Todos");
+    setSectorFilter(config.sectorFilter || "Todos");
+    setIndustryFilter(config.industryFilter || "Todos");
+    setCountryFilter(config.countryFilter || "Todos");
+    setSectorStrength(config.sectorStrength || "Todos");
+    setIpo(config.ipo || "Todos");
+    setSort(config.sort || (nextPreset.v.setupMode === "weakness" ? "weaknessScore" : "totalScore"));
+    setScanMode(config.scanMode || "batch");
+    setBatchStart(Number.isFinite(config.batchStart) ? config.batchStart : 0);
+    setScanBatchSize(SCAN_BATCH_SIZES.includes(config.scanBatchSize) ? config.scanBatchSize : DEFAULT_SCAN_BATCH_SIZE);
+    setResultPageSize(RESULT_PAGE_SIZES.includes(config.resultPageSize) ? config.resultPageSize : DEFAULT_RESULT_PAGE_SIZE);
+    setResultPage(1);
+    setUniverse([]);
+    clear();
+  }
+  async function saveFilterConfigToCloud() {
+    setStatus("Guardando filtros en Supabase...");
+    const result = await syncSettingToCloud({ ...SCREENER_FILTER_SETTING, value: currentFilterConfig() });
+    if (result.configured === false) setStatus("Filtros guardados en local. Supabase no configurado.");
+    else if (result.ok) setStatus("Filtros guardados en Supabase.");
+    else setStatus(`No se pudieron guardar filtros en Supabase: ${result.message}`);
+  }
+  async function loadFilterConfigFromCloud() {
+    setStatus("Cargando filtros desde Supabase...");
+    const result = await getSettingFromCloud(SCREENER_FILTER_SETTING.type, SCREENER_FILTER_SETTING.key);
+    if (result.configured === false) {
+      setStatus("Supabase no configurado. Se mantienen los filtros locales.");
+      return;
+    }
+    if (!result.ok) {
+      setStatus(`No se pudieron cargar filtros de Supabase: ${result.message}`);
+      return;
+    }
+    const value = result.data?.setting?.value;
+    if (!value) {
+      setStatus("No hay filtros guardados en Supabase todavia.");
+      return;
+    }
+    applyFilterConfig(value);
+    setStatus("Filtros cargados desde Supabase. Pulsa Cargar universo o Ejecutar.");
+  }
   async function loadMarketHealth() {
     setStatus("Actualizando salud de mercado...");
     try {
@@ -2714,7 +2654,7 @@ export default function Page() {
       setRows(final);
       setFail(bad);
       setDiagnostics(scanDiagnosticsSummary({ symbols, base, filterRejections, providerErrors: bad, regimeRejections, postRejections, passedBeforeContext: ok.length, finalRows: final }));
-      setStatus(`Completado: ${final.length} pasan ${PRESETS[presetKey].name} · RS Global sobre ${sectorized.length} acciones con datos · ${setupModeLabel(activeSettings.setupMode)} · ${activeLayerLabel}. Analizados ${symbols.length}/${base.length}.`);
+      setStatus(`Completado: ${final.length} pasan ${PRESETS[presetKey].name} · RS Universo sobre ${sectorized.length} acciones con datos · ${setupModeLabel(activeSettings.setupMode)} · ${activeLayerLabel}. Analizados ${symbols.length}/${base.length}.`);
     } catch (e) {
       setErr(e.message);
       setStatus("Error");
@@ -2744,7 +2684,7 @@ export default function Page() {
       setStatus(`${row.symbol} ya estaba en favoritos.`);
       return;
     }
-    const favorite = favoriteFromRow(row, marketHealth);
+    const favorite = createFavoriteFromRow(row, { source: "screener", marketHealth });
     const next = [favorite, ...favs].slice(0, 250);
     safeWrite(STORAGE_KEYS.favorites, next);
     setFavoriteSymbols(new Set(next.map((x) => x.symbol)));
@@ -2756,6 +2696,10 @@ export default function Page() {
     });
   }
   function saveSnapshot(currentRows) {
+    if (running) {
+      setStatus("Espera a que termine el scan antes de guardar el snapshot.");
+      return;
+    }
     if (!currentRows.length) {
       setStatus("Sin filas actuales para guardar snapshot.");
       return;
@@ -2854,8 +2798,8 @@ export default function Page() {
     setActiveModalRow(null);
   }
   function csv(filteredRows) {
-    const h = ["Rank", "Ticker", "Empresa", "Actividad ES", "Tema", "Pais", "Sector", "Industria", "IPO", "IPO Date", "IPO Age Months", "Benchmark", "Data Coverage", "Technical Coverage", "Fundamental Coverage", "Data Issues", "RS Rating", "RS Global", "RS Pais", "RS Sector", "RS Quality", "RS Stability", "Speculation Risk", "RS Quality Label", "Weakness Score", "Weakness Label", "Weakness Reasons", "RS Global Sample", "RS Pais Sample", "RS Sector Sample", "RS 3M", "RS 6M", "RS 12M", "Dist 20d", "Dist 50d", "Dist 52w", "Dist ATH", "Highs Spread", "3M", "6M", "12M", "SMA50", "Avg Volume 20d", "Latest Volume", "Avg Turnover 20d", "Latest Turnover", "UD Vol", "Rel Volume", "Volume Surge %", "Volume Effect Score", "A/D Proxy", "EPS/Growth Proxy", "Volume Evidence", "Short Float %", "Short Ratio", "Shares Short", "Float Shares", "Up Volume", "Max Daily Move 20d", "Max Daily Range 20d", "Avg Daily Range 20d", "Price Range 63d", "Volatility 63d", "Downside Vol 63d", "Max Drawdown 63d", "Return/Vol 3M", "Return/Drawdown 3M", "Risk/Reward Score", "Weinstein", "Minervini", "Momentum", "Risk", "Volume", "Liquidity", "Sector Score", "Setup Quality", "Demand", "Growth", "IPO Score", "Composite", "Legacy Total", "Composite Label", "Reasons", "Risks"];
-    const lines = filteredRows.map((r, i) => [i + 1, r.symbol, r.companyName, r.businessEs, r.theme, r.country, r.sector, r.industry, r.ipoCategory, r.ipoDate, r.ipoAgeMonths, r.benchmarkSymbol, r.dataCoverageScore, r.technicalCoverageScore, r.fundamentalCoverageScore, (r.dataCoverageIssues || []).join(" | "), r.rsRating, r.rsGlobalPct, r.rsCountryPct, r.rsSectorPct, r.rsQualityScore, r.rsStabilityScore, r.speculationRiskScore, r.rsQualityLabel, r.weaknessScore, r.weaknessLabel, (r.weaknessReasons || []).join(" | "), r.rsGlobalSample, r.rsCountrySample, r.rsSectorSample, r.rs3m, r.rs6m, r.rs12m, r.distance20d, r.distance50d, r.distance52w, r.distanceATH, r.highsSpreadPct, r.perf3m, r.perf6m, r.perf12m, r.extSma50, r.avgVolume, r.latestVolume, r.avgTurnover, r.latestTurnover, r.upDownVolRatio, r.relativeVolume, r.volumeSurgePct, r.volumeEffectScore, r.adProxyScore, r.epsGrowthProxyScore, r.volumeEvidence, r.shortPercentOfFloat, r.shortRatio, r.sharesShort, r.floatShares, r.upVolume, r.maxDailyMove20dPct, r.maxDailyRange20dPct, r.avgDailyRange20dPct, r.range63dPct, r.volatility63d, r.downsideVolatility63d, r.maxDrawdown63d, r.returnToVol3m, r.returnToDrawdown3m, r.riskRewardScore, r.weinsteinScore, r.minerviniScore, r.momentumScore, r.riskScore, r.volumeScore, r.liquidityScore, r.sectorScore, r.setupQualityScore, r.demandScore, r.growthScore, r.ipoScore, r.totalScore, r.legacyTotalScore, r.compositeLabel, (r.compositeReasons || []).join(" | "), (r.compositeRisks || []).join(" | ")].map((v) => `"${String(v ?? "").replaceAll('"', '""')}"`).join(","));
+    const h = ["Rank", "Ticker", "Empresa", "Actividad ES", "Tema", "Pais", "Sector", "Industria", "IPO", "IPO Date", "IPO Age Months", "Benchmark", "Last Price Date", "Price Freshness Days", "Price Freshness Label", "Price Freshness Issue", "Data Coverage", "Technical Coverage", "Fundamental Coverage", "Data Issues", "RS Benchmark", "RS Universo", "RS Pais", "RS Grupo", "RS Quality", "RS Stability", "Speculation Risk", "RS Quality Label", "Weakness Score", "Weakness Label", "Weakness Reasons", "RS Universo Sample", "RS Pais Sample", "RS Grupo Sample", "RS 3M", "RS 6M", "RS 12M", "Dist 20d", "Dist 50d", "Dist 52w", "Dist ATH", "Highs Spread", "3M", "6M", "12M", "SMA50", "Avg Volume 20d", "Latest Volume", "Avg Turnover 20d", "Latest Turnover", "UD Vol", "Rel Volume", "Volume Surge %", "Volume Effect Score", "A/D Proxy", "EPS/Growth Proxy", "Volume Evidence", "Short Float %", "Short Ratio", "Shares Short", "Float Shares", "Up Volume", "Max Daily Move 20d", "Max Daily Range 20d", "Avg Daily Range 20d", "Price Range 63d", "Volatility 63d", "Downside Vol 63d", "Max Drawdown 63d", "Return/Vol 3M", "Return/Drawdown 3M", "Risk/Reward Score", "Weinstein", "Minervini", "Momentum", "Risk", "Volume", "Liquidity", "Sector Score", "Setup Quality", "Demand", "Growth", "IPO Score", "Composite", "Legacy Total", "Composite Label", "Reasons", "Risks"];
+    const lines = filteredRows.map((r, i) => [i + 1, r.symbol, r.companyName, r.businessEs, r.theme, r.country, r.sector, r.industry, r.ipoCategory, r.ipoDate, r.ipoAgeMonths, r.benchmarkSymbol, r.lastDate, r.priceFreshnessDays, r.priceFreshnessLabel, r.priceFreshnessIssue, r.dataCoverageScore, r.technicalCoverageScore, r.fundamentalCoverageScore, (r.dataCoverageIssues || []).join(" | "), r.rsRating, r.rsGlobalPct, r.rsCountryPct, r.rsSectorPct, r.rsQualityScore, r.rsStabilityScore, r.speculationRiskScore, r.rsQualityLabel, r.weaknessScore, r.weaknessLabel, (r.weaknessReasons || []).join(" | "), r.rsGlobalSample, r.rsCountrySample, r.rsSectorSample, r.rs3m, r.rs6m, r.rs12m, r.distance20d, r.distance50d, r.distance52w, r.distanceATH, r.highsSpreadPct, r.perf3m, r.perf6m, r.perf12m, r.extSma50, r.avgVolume, r.latestVolume, r.avgTurnover, r.latestTurnover, r.upDownVolRatio, r.relativeVolume, r.volumeSurgePct, r.volumeEffectScore, r.adProxyScore, r.epsGrowthProxyScore, r.volumeEvidence, r.shortPercentOfFloat, r.shortRatio, r.sharesShort, r.floatShares, r.upVolume, r.maxDailyMove20dPct, r.maxDailyRange20dPct, r.avgDailyRange20dPct, r.range63dPct, r.volatility63d, r.downsideVolatility63d, r.maxDrawdown63d, r.returnToVol3m, r.returnToDrawdown3m, r.riskRewardScore, r.weinsteinScore, r.minerviniScore, r.momentumScore, r.riskScore, r.volumeScore, r.liquidityScore, r.sectorScore, r.setupQualityScore, r.demandScore, r.growthScore, r.ipoScore, r.totalScore, r.legacyTotalScore, r.compositeLabel, (r.compositeReasons || []).join(" | "), (r.compositeRisks || []).join(" | ")].map((v) => `"${String(v ?? "").replaceAll('"', '""')}"`).join(","));
     const blob = new Blob([[h.join(","), ...lines].join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = "statsedge-screener.csv"; a.click(); URL.revokeObjectURL(url);
@@ -2869,7 +2813,7 @@ export default function Page() {
     if (viewLayers.industry && industryFilter !== "Todos") l = l.filter((r) => r.industry === industryFilter);
     if (viewLayers.sectorStrength) l = l.filter((r) => passesSectorStrength(r, sectorStrength));
     if (viewLayers.ipo && ipo !== "Todos") l = l.filter((r) => r.ipoCategory === ipo);
-    return l.sort((a, b) => (b[sort] || 0) - (a[sort] || 0));
+    return l.sort((a, b) => sortMetric(b, sort) - sortMetric(a, sort));
   }, [rows, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, sort, viewLayers]);
   const totalResultPages = Math.max(1, Math.ceil(filtered.length / resultPageSize));
   const visibleResultPage = Math.min(resultPage, totalResultPages);
@@ -3105,6 +3049,10 @@ export default function Page() {
               {SETUP_MODES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
             </select>
           </label>
+          <div className="controls" style={{ marginTop: 12 }}>
+            <button className="btn btnSmall" onClick={saveFilterConfigToCloud} disabled={running}>Guardar filtros nube</button>
+            <button className="btn btnSmall btnGhost" onClick={loadFilterConfigFromCloud} disabled={running}>Cargar filtros nube</button>
+          </div>
         </div>
 
         <FilterArchitecturePanel
@@ -3121,6 +3069,11 @@ export default function Page() {
 
         <div className="sidebarGroup" style={{ marginBottom: 24 }}>
           <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Condiciones</span>
+          <div className="weeklyStageControls">
+            <label><span>Media rapida semanal</span><input className="input" type="number" min="2" max="80" step="1" value={settings.stageFastWeeks || 10} onChange={(event) => updateSetting("stageFastWeeks", Number(event.target.value) || 10)} /></label>
+            <label><span>Media lenta semanal</span><input className="input" type="number" min="3" max="120" step="1" value={settings.stageSlowWeeks || 30} onChange={(event) => updateSetting("stageSlowWeeks", Number(event.target.value) || 30)} /></label>
+            <label><span>Pendiente semanas</span><input className="input" type="number" min="2" max="40" step="1" value={settings.stageSlopeWeeks || 10} onChange={(event) => updateSetting("stageSlopeWeeks", Number(event.target.value) || 10)} /></label>
+          </div>
           <div className="filterSwitches">
             <FilterToggle active={settings.requireStage2} onClick={() => updateSetting("requireStage2", !settings.requireStage2)}>Stage 2</FilterToggle>
             <FilterToggle active={settings.requireUpVolume} onClick={() => updateSetting("requireUpVolume", !settings.requireUpVolume)}>Volumen en vela alcista</FilterToggle>
@@ -3132,10 +3085,10 @@ export default function Page() {
             <div className="filterGroups" style={{ marginTop: 16 }}>
               {FILTER_GROUPS.map((group) => {
                 const activeInGroup = group.fields.filter((field) => isFieldRuleActive(field, fieldRules, filterLayers)).length;
-                return <div className="filterGroup" key={group.title}>
-                  <div className="filterGroupHead"><h3>{group.title}</h3><span>{activeInGroup}/{group.fields.length}</span></div>
+                return <details className="filterGroup" key={group.title}>
+                  <summary className="filterGroupHead"><h3>{group.title}</h3><span>{activeInGroup}/{group.fields.length}</span></summary>
                   <div className="filterFields">{group.fields.map((field) => <FilterNumber key={field.key} field={field} value={settings[field.key]} onChange={updateSetting} active={isFieldRuleActive(field, fieldRules, filterLayers)} inactiveReason={inactiveFieldReason(field, fieldRules, filterLayers)} onToggle={() => toggleFieldRule(field)} />)}</div>
-                </div>;
+                </details>;
               })}
             </div>
             <div className="controls filterFooter" style={{ marginTop: 12 }}>
@@ -3228,6 +3181,7 @@ export default function Page() {
             favoriteSymbols={favoriteSymbols}
             onSave={() => saveSnapshot(filtered)}
             onCsv={() => csv(filtered)}
+            savingDisabled={running}
             page={visibleResultPage}
             pageSize={resultPageSize}
             totalPages={totalResultPages}
@@ -3244,7 +3198,7 @@ export default function Page() {
               <button className="btn btnSmall btnGhost" onClick={resetScreenerSession}>Reset sesión</button>
               <button className="btn btnSmall btnGhost" onClick={() => csv(filtered)}>↓ CSV</button>
               <button className="btn btnSmall btnPrimary" onClick={() => openReview(filtered)} disabled={!filtered.length}>Revisar</button>
-              <button className="btn btnSmall" onClick={() => saveSnapshot(filtered)} disabled={!filtered.length} aria-label="Guardar snapshot de resultados">Guardar</button>
+              <button className="btn btnSmall" onClick={() => saveSnapshot(filtered)} disabled={!filtered.length || running} aria-label="Guardar snapshot de resultados">Guardar</button>
             </div>
           </div>
           <div className="controls" style={{ marginBottom: 12 }}>
@@ -3262,12 +3216,13 @@ export default function Page() {
             </select>
             <select className="select" style={{ width: "auto", padding: "4px 8px" }} value={sort} onChange={(e) => setSort(e.target.value)}>
               <option value="totalScore">Ordenar: Composite</option>
-              <option value="rsGlobalPct">Ordenar: RS Global</option>
-              <option value="adProxyScore">Ordenar: A/D proxy</option>
-              <option value="epsGrowthProxyScore">Ordenar: EPS/Growth proxy</option>
+              <option value="rsGlobalPct">Ordenar: {metricShortLabel("rsGlobalPct")}</option>
+              <option value="rsRating">Ordenar: {metricShortLabel("rsRating")}</option>
+              <option value="adProxyScore">Ordenar: {metricShortLabel("adProxyScore")}</option>
+              <option value="epsGrowthProxyScore">Ordenar: {metricShortLabel("epsGrowthProxyScore")}</option>
               <option value="volumeEffectScore">Ordenar: Volume Effect</option>
               <option value="avgTurnover">Ordenar: Importe 20d</option>
-              <option value="shortPercentOfFloat">Ordenar: Short float</option>
+              <option value="shortPercentOfFloat">Ordenar: {metricShortLabel("shortPercentOfFloat")}</option>
               <option value="dataCoverageScore">Ordenar: Cobertura datos</option>
               <option value="weaknessScore">Ordenar: Deterioro</option>
             </select>
@@ -3375,11 +3330,11 @@ export default function Page() {
                       <span>Score</span>
                     </div>
                     <div className="profileRow"><span>Capitalización</span><b>{amount(activeModalRow.marketCap, activeModalRow.currency) || "-"}</b></div>
-                    <div className="profileRow"><span>Composite</span><b className="up">{activeModalRow.totalScore?.toFixed(0) || "-"}</b></div>
-                    <div className="profileRow"><span>RS global</span><b>{activeModalRow.rsGlobalPct?.toFixed(0) || "-"}</b></div>
-                    <div className="profileRow"><span>RS quality</span><b>{activeModalRow.rsQualityScore?.toFixed(0) || "-"}</b></div>
-                    <div className="profileRow"><span>A/D proxy</span><b>{activeModalRow.adProxyScore?.toFixed(0) || "-"}</b></div>
-                    <div className="profileRow"><span>EPS/Growth proxy</span><b>{activeModalRow.epsGrowthProxyScore?.toFixed(0) || "-"}</b></div>
+                    <div className="profileRow"><span>{metricShortLabel("totalScore")}</span><b className="up">{activeModalRow.totalScore?.toFixed(0) || "-"}</b></div>
+                    <div className="profileRow"><span>{metricShortLabel("rsGlobalPct")}</span><b>{activeModalRow.rsGlobalPct?.toFixed(0) || "-"}</b></div>
+                    <div className="profileRow"><span>{metricShortLabel("rsQualityScore")}</span><b>{activeModalRow.rsQualityScore?.toFixed(0) || "-"}</b></div>
+                    <div className="profileRow"><span>{metricShortLabel("adProxyScore")}</span><b>{activeModalRow.adProxyScore?.toFixed(0) || "-"}</b></div>
+                    <div className="profileRow"><span>{metricShortLabel("epsGrowthProxyScore")}</span><b>{activeModalRow.epsGrowthProxyScore?.toFixed(0) || "-"}</b></div>
                     <div className="profileRow"><span>Setup quality</span><b>{activeModalRow.setupQualityScore?.toFixed(0) || "-"}</b></div>
                     <div className="profileRow"><span>Growth</span><b>{activeModalRow.growthScore?.toFixed(0) || "-"}</b></div>
                     <div className="profileRow"><span>Rentabilidad/riesgo</span><b>{activeModalRow.riskRewardScore?.toFixed(0) || "-"}</b></div>
@@ -3393,7 +3348,7 @@ export default function Page() {
                     <div className="profileRow"><span>Volumen sesión</span><b>{amount(activeModalRow.latestTurnover, activeModalRow.currency)}</b></div>
                     <div className="profileRow"><span>Volumen 5d</span><b className={(activeModalRow.volumeSurgePct || 0) > 0 ? "up" : ""}>{pct(activeModalRow.volumeSurgePct)}</b></div>
                     <div className="profileRow"><span>Up/down ratio</span><b>{ratioLabel(activeModalRow.upDownVolRatio)}</b></div>
-                    <div className="profileRow"><span>Short float</span><b>{pct(activeModalRow.shortPercentOfFloat)}</b></div>
+                    <div className="profileRow"><span>{metricShortLabel("shortPercentOfFloat")}</span><b>{pct(activeModalRow.shortPercentOfFloat)}</b></div>
                     <div className="profileRow"><span>Drawdown 3M</span><b className="down">{Number.isFinite(activeModalRow.maxDrawdown63d) ? `${activeModalRow.maxDrawdown63d.toFixed(1)}%` : "-"}</b></div>
                     <div className="profileRow"><span>Volatilidad</span><b>{Number.isFinite(activeModalRow.volatility63d) ? `${activeModalRow.volatility63d.toFixed(1)}%` : "-"}</b></div>
                   </div>

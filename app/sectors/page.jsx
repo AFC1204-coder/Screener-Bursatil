@@ -1,122 +1,18 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { clamp, num, pct } from "@/lib/formatters";
+import { num, pct } from "@/lib/formatters";
+import { filterGroupsByStrength, groupRows, STRENGTH_FILTERS } from "@/lib/grouping";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
-import { countryCode, countryName, externalLinks, marketFlag, stockUrl } from "@/lib/symbols";
+import { metricShortLabel } from "@/lib/metricCatalog";
+import { favoriteToRow, normalizeStockRows, rowCountry, shortBusiness, weaknessScore } from "@/lib/stockRows";
+import { countryName, externalLinks, marketFlag, stockUrl } from "@/lib/symbols";
 
-const STRENGTH_FILTERS = [
-  ["all", "Todos"],
-  ["leaders", "Fuertes"],
-  ["constructive", "Constructivos"],
-  ["weak", "Debiles"],
-  ["veryWeak", "Muy debiles"],
-];
-function rowCountry(row = {}) {
-  return row.country || row.snapshot?.country || (row.symbol ? countryCode(row.symbol) : "US");
-}
-
-function rowScore(row = {}) {
-  return row.totalScore ?? row.snapshot?.totalScore ?? 0;
-}
-function weaknessScore(row = {}) {
-  const direct = row.weaknessScore ?? row.snapshot?.weaknessScore;
-  if (Number.isFinite(direct)) return direct;
-  let score = 0;
-  const rs = row.rsRating ?? row.snapshot?.rsRating ?? 50;
-  if (rs < 45) score += 16;
-  if (Number.isFinite(row.distance52w) && row.distance52w < -30) score += 14;
-  if (Number.isFinite(row.perf3m) && row.perf3m < 0) score += 12;
-  if (Number.isFinite(row.extSma50) && row.extSma50 < -8) score += 10;
-  if ((row.riskScore ?? row.snapshot?.riskScore ?? 50) < 35) score += 10;
-  return clamp(score);
-}
 function InfoHint({ text, tone = "" }) {
   if (!text) return null;
   return <span className={`infoHint ${tone}`} tabIndex="0" aria-label={text}>
     <span>i</span>
     <em>{text}</em>
   </span>;
-}
-function shortBusiness(row = {}) {
-  return [row.industry, row.sector, row.theme].filter((value, index, arr) => value && value !== "Sin industria" && value !== "Sin sector" && arr.indexOf(value) === index).slice(0, 3).join(" · ") || row.source || "";
-}
-
-function favoriteRows(favorites = []) {
-  return favorites.map((favorite) => ({
-    symbol: favorite.symbol,
-    companyName: favorite.companyName || favorite.symbol,
-    theme: favorite.snapshot?.theme || favorite.theme || "Favoritos",
-    sector: favorite.sector || "Sin sector",
-    industry: favorite.industry || "Sin industria",
-    businessEs: favorite.snapshot?.businessEs || favorite.notes || "",
-    totalScore: favorite.snapshot?.totalScore ?? null,
-    rsRating: favorite.snapshot?.rsRating ?? null,
-    weaknessScore: favorite.snapshot?.weaknessScore ?? null,
-    weinsteinScore: favorite.snapshot?.weinsteinScore ?? null,
-    minerviniScore: favorite.snapshot?.minerviniScore ?? null,
-    riskScore: favorite.snapshot?.riskScore ?? null,
-    perf3m: favorite.snapshot?.perf3m ?? null,
-    perf6m: favorite.snapshot?.perf6m ?? null,
-    perf12m: favorite.snapshot?.perf12m ?? null,
-    distance20d: favorite.snapshot?.distance20d ?? null,
-    distance52w: favorite.snapshot?.distance52w ?? null,
-    extSma50: favorite.snapshot?.extSma50 ?? null,
-    source: "favorite",
-  }));
-}
-
-function cleanRows(rows = []) {
-  return Array.from(new Map(rows.filter(Boolean).map((row) => [row.symbol, {
-    ...row,
-    theme: row.theme || row.snapshot?.theme || "Sin tematica",
-    sector: row.sector || "Sin sector",
-    industry: row.industry || "Sin industria",
-    companyName: row.companyName || row.name || row.symbol,
-  }])).values());
-}
-
-function avg(items, field) {
-  const values = items.map((row) => row[field]).filter(Number.isFinite);
-  return values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
-}
-
-function groupRows(rows, dimension) {
-  const map = new Map();
-  for (const row of rows) {
-    const key = row[dimension] || "Sin dato";
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push(row);
-  }
-  return [...map.entries()].map(([key, items]) => {
-    const sorted = [...items].sort((a, b) => rowScore(b) - rowScore(a));
-    const avgTotal = avg(items, "totalScore");
-    const avgRs = avg(items, "rsRating");
-    const avgWeaknessValues = items.map(weaknessScore).filter(Number.isFinite);
-    const avgWeakness = avgWeaknessValues.length ? avgWeaknessValues.reduce((a, b) => a + b, 0) / avgWeaknessValues.length : null;
-    const avg3m = avg(items, "perf3m");
-    const avg6m = avg(items, "perf6m");
-    const leaders = items.filter((row) => rowScore(row) >= 70 || (row.rsRating || 0) >= 75).length;
-    const nearPivot = items.filter((row) => (row.distance20d ?? -999) >= -5 && (row.riskScore || 0) >= 50).length;
-    const extended = items.filter((row) => (row.extSma50 ?? 0) >= 15 && rowScore(row) >= 70).length;
-    const weak = items.filter((row) => weaknessScore(row) >= 60).length;
-    const strength = clamp((avgTotal || 0) * .58 + (avgRs || 50) * .28 + clamp(avg3m || 0, -20, 40) * .35 + leaders * 4);
-    return {
-      key,
-      items: sorted,
-      count: items.length,
-      avgTotal,
-      avgRs,
-      avgWeakness,
-      avg3m,
-      avg6m,
-      leaders,
-      nearPivot,
-      extended,
-      weak,
-      strength,
-      top: sorted.slice(0, 5),
-    };
-  }).sort((a, b) => b.strength - a.strength);
 }
 
 function listHref(dimension, key) {
@@ -125,18 +21,6 @@ function listHref(dimension, key) {
 
 function dimensionLabel(dimension) {
   return { theme: "tematica", sector: "sector", industry: "industria" }[dimension] || dimension;
-}
-
-function filterGroupsByStrength(groups = [], filter = "all") {
-  const filtered = groups.filter((group) => {
-    if (filter === "leaders") return group.strength >= 70;
-    if (filter === "constructive") return group.strength >= 55 && group.strength < 70;
-    if (filter === "weak") return group.strength < 55;
-    if (filter === "veryWeak") return group.strength < 40;
-    return true;
-  });
-  if (filter === "weak" || filter === "veryWeak") return [...filtered].sort((a, b) => a.strength - b.strength);
-  return filtered;
 }
 
 function listText(items = []) {
@@ -181,7 +65,7 @@ function MarketSectorOverview({ data, error }) {
 
       <div className="tableWrap sectorOverviewTable">
         <table className="table sectorTapeTable">
-          <thead><tr>{["Sector", "ETF", "Estado", "Score", "W", "Etapa", "1D", "1W", "1M", "3M", "RS 1M", "SMA50", "SMA200", "Dist/Acc", "52w"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
+          <thead><tr>{["Sector", "ETF", "Estado", "Score", metricShortLabel("weinsteinScore"), metricShortLabel("stage"), "1D", "1W", "1M", "3M", "RS 1M", "SMA50", "SMA200", "Dist/Acc", "52w"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
           <tbody>{sorted.map((sector) => <tr key={sector.symbol}>
             <td><b>{sector.name}</b><br /><span className="fine">{sector.group}</span></td>
             <td className="ticker">{sector.symbol}</td>
@@ -211,8 +95,8 @@ function GroupCard({ group, active, onClick }) {
     <span className="groupCardTop"><b>{group.key}</b><em>{group.count} acciones</em></span>
     <span className="strengthBar"><i style={{ width: `${group.strength}%` }} /></span>
     <span className="groupStats">
-      <span><b>Score</b>{num(group.avgTotal)}</span>
-      <span><b>RS</b>{num(group.avgRs)}</span>
+      <span><b>{metricShortLabel("totalScore")}</b>{num(group.avgTotal)}</span>
+      <span><b>{metricShortLabel("rsGlobalPct")}</b>{num(group.avgRs)}</span>
       <span><b>3M</b>{pct(group.avg3m)}</span>
       <span><b>Debiles</b>{group.weak}</span>
     </span>
@@ -255,8 +139,8 @@ export default function SectorsPage() {
   }, []);
 
   const selectedScan = useMemo(() => scans.find((scan) => scan.id === scanId) || scans[0] || null, [scans, scanId]);
-  const snapshotRows = useMemo(() => cleanRows(selectedScan?.rows || []), [selectedScan]);
-  const fallbackRows = useMemo(() => cleanRows(favoriteRows(favorites)), [favorites]);
+  const snapshotRows = useMemo(() => normalizeStockRows(selectedScan?.rows || []), [selectedScan]);
+  const fallbackRows = useMemo(() => normalizeStockRows(favorites.map(favoriteToRow)), [favorites]);
   const baseRows = snapshotRows.length ? snapshotRows : fallbackRows;
   const countryOptions = useMemo(() => {
     const map = new Map();
@@ -352,14 +236,14 @@ export default function SectorsPage() {
           <div className="quickMetricGrid">
             <span><b>Grupo</b>{selected.key}</span>
             <span><b>Fuerza</b>{num(selected.strength)}</span>
-            <span><b>Score</b>{num(selected.avgTotal)}</span>
-            <span><b>RS</b>{num(selected.avgRs)}</span>
+            <span><b>{metricShortLabel("totalScore")}</b>{num(selected.avgTotal)}</span>
+            <span><b>{metricShortLabel("rsGlobalPct")}</b>{num(selected.avgRs)}</span>
             <span><b>3M</b>{pct(selected.avg3m)}</span>
             <span><b>6M</b>{pct(selected.avg6m)}</span>
             <span><b>Near pivot</b>{selected.nearPivot}</span>
             <span><b>Extendidas</b>{selected.extended}</span>
             <span><b>Deterioro</b>{selected.weak}</span>
-            <span><b>Weak medio</b>{num(selected.avgWeakness)}</span>
+            <span><b>Deterioro medio</b>{num(selected.avgWeakness)}</span>
           </div>
           <div className="controls" style={{ marginTop: 12 }}>
             <a className="btn btnPrimary" href={listHref(dimension, selected.key)}>Saltar a lista filtrada</a>
@@ -373,7 +257,7 @@ export default function SectorsPage() {
       <div className="sectionTitle"><h2>Lideres de {selected.key}</h2><span className="fine">{selected.items.length} acciones</span></div>
       <div className="tableWrap">
         <table className="table">
-          <thead><tr>{["Ticker", "Empresa", "País", "Temática", "Sector", "Industria", "RS", "Weak", "3M", "6M", "52w", "SMA50", "Weinstein", "Minervini", "Risk", "Total", "Acciones"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
+          <thead><tr>{["Ticker", "Empresa", "País", "Temática", "Sector", "Industria", metricShortLabel("rsGlobalPct"), metricShortLabel("weaknessScore"), "3M", "6M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("riskScore"), metricShortLabel("totalScore"), "Acciones"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
           <tbody>{selected.items.slice(0, 40).map((row) => <tr key={row.symbol}>
             <td><a className="ticker" href={stockUrl(row.symbol)}>{row.symbol}</a></td>
             <td>{row.companyName}<br /><span className="fine">{shortBusiness(row)}</span></td>
@@ -381,7 +265,7 @@ export default function SectorsPage() {
             <td><span className="pill">{row.theme}</span></td>
             <td>{row.sector || "Sin dato"}</td>
             <td>{row.industry || "Sin dato"}</td>
-            <td className="ticker">{num(row.rsRating)}</td>
+            <td className="ticker">{num(row.rsGlobalPct)}</td>
             <td>{num(weaknessScore(row))}</td>
             <td>{pct(row.perf3m)}</td>
             <td>{pct(row.perf6m)}</td>
