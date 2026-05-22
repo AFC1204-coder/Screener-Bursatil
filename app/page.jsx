@@ -1834,8 +1834,8 @@ function compactTone(value, strongAt, weakBelow = null) {
   return "";
 }
 
-function CompactMetric({ label, value, tone = "" }) {
-  return <span className={`compactMetric ${tone}`}>
+function CompactMetric({ label, value, tone = "", title = "" }) {
+  return <span className={`compactMetric ${tone}`} title={title || label}>
     <small>{label}</small>
     <b>{value ?? "-"}</b>
   </span>;
@@ -1851,12 +1851,29 @@ function CompactCountryFlag({ country }) {
   />;
 }
 
-function CompactResultsTable({ rows = [], favoriteSymbols, onFavorite, onReview }) {
-  const headers = ["★", "#", "Ticker", "Empresa", "Gráfico", "Setup", "RS", "Mom.", "Riesgo", "Volumen", "Score"];
+const SORTABLE_HEADERS = [
+  { label: "★",      key: null },
+  { label: "#",      key: null },
+  { label: "Ticker", key: null },
+  { label: "Empresa",key: null },
+  { label: "Gráfico",key: null },
+  { label: "Setup",  key: null },
+  { label: "RS",     key: "rsGlobalPct",     title: "Ordenar por RS Global" },
+  { label: "Mom.",   key: "perf3m",          title: "Ordenar por rendimiento 3M" },
+  { label: "Riesgo", key: "maxDrawdown63d",  title: "Ordenar por drawdown 3M" },
+  { label: "Volumen",key: "volumeEffectScore", title: "Ordenar por Volume Effect" },
+  { label: "Score",  key: "totalScore",      title: "Ordenar por Composite Score" },
+];
+
+function CompactResultsTable({ rows = [], favoriteSymbols, onFavorite, onReview, sort, onSort, universe = [] }) {
   return <div className="tableWrap compactTableWrap">
     <table className="table compactResultsTable">
       <thead>
-        <tr>{headers.map((h) => <th key={h}>{h}</th>)}</tr>
+        <tr>{SORTABLE_HEADERS.map((h) => {
+          if (!h.key) return <th key={h.label}>{h.label}</th>;
+          const active = sort === h.key;
+          return <th key={h.label} className={`sortableHeader ${active ? "sortActive" : ""}`} title={h.title} onClick={() => onSort?.(h.key)} style={{ cursor: "pointer" }}>{h.label}{active ? " ▼" : ""}</th>;
+        })}</tr>
       </thead>
       <tbody>
         {rows.map((r, i) => {
@@ -1903,39 +1920,44 @@ function CompactResultsTable({ rows = [], favoriteSymbols, onFavorite, onReview 
             </td>
             <td>
               <div className="compactMetricGrid">
-                <CompactMetric label="RS" value={Number.isFinite(rsValue) ? rsValue.toFixed(0) : "-"} tone={compactTone(rsValue, 75, 45)} />
-                <CompactMetric label="RSQ" value={Number.isFinite(r.rsQualityScore) ? r.rsQualityScore.toFixed(0) : "-"} tone={compactTone(r.rsQualityScore, 70, 40)} />
-                <CompactMetric label="Pais" value={Number.isFinite(r.rsCountryPct) ? r.rsCountryPct.toFixed(0) : "-"} />
+                <CompactMetric label="RS" value={Number.isFinite(rsValue) ? rsValue.toFixed(0) : "-"} tone={compactTone(rsValue, 75, 45)} title="RS Global (percentil en el universo)" />
+                <CompactMetric label="RSQ" value={Number.isFinite(r.rsQualityScore) ? r.rsQualityScore.toFixed(0) : "-"} tone={compactTone(r.rsQualityScore, 70, 40)} title="RS Quality: fortaleza relativa ajustada por estabilidad y drawdown" />
+                <CompactMetric label="País" value={Number.isFinite(r.rsCountryPct) ? r.rsCountryPct.toFixed(0) : "-"} title="RS País: percentil de fortaleza relativa vs el mercado local" />
               </div>
             </td>
             <td>
               <div className="compactMetricGrid">
-                <CompactMetric label="3M" value={pct(r.perf3m)} tone={compactTone(r.perf3m, 20, 0)} />
-                <CompactMetric label="6M" value={pct(r.perf6m)} tone={compactTone(r.perf6m, 35, 0)} />
-                <CompactMetric label="52w" value={pct(r.distance52w)} tone={compactTone(r.distance52w, -10, -35)} />
+                <CompactMetric label="3M" value={pct(r.perf3m)} tone={compactTone(r.perf3m, 20, 0)} title="Rendimiento últimos 3 meses" />
+                <CompactMetric label="6M" value={pct(r.perf6m)} tone={compactTone(r.perf6m, 35, 0)} title="Rendimiento últimos 6 meses" />
+                <CompactMetric label="52w" value={pct(r.distance52w)} tone={compactTone(r.distance52w, -10, -35)} title="Distancia al máximo de 52 semanas (negativo = por debajo)" />
               </div>
             </td>
             <td>
               <div className="compactMetricGrid">
-                <CompactMetric label="Ext." value={pct(r.extSma50)} />
-                <CompactMetric label="DD63" value={Number.isFinite(r.maxDrawdown63d) ? `${r.maxDrawdown63d.toFixed(1)}%` : "-"} />
-                <CompactMetric label="Short" value={pct(r.shortPercentOfFloat)} />
+                <CompactMetric label="Ext." value={pct(r.extSma50)} title="Extensión respecto a la SMA50 (% por encima/debajo)" />
+                <CompactMetric label="DD63" value={Number.isFinite(r.maxDrawdown63d) ? `${r.maxDrawdown63d.toFixed(1)}%` : "-"} title="Drawdown máximo en los últimos 63 días (3 meses)" />
+                <CompactMetric label="Short" value={pct(r.shortPercentOfFloat)} title="Short float: porcentaje del capital en posiciones cortas" />
               </div>
             </td>
             <td>
               <div className="compactMetricGrid">
-                <CompactMetric label="Rel." value={Number.isFinite(r.relativeVolume) ? `${r.relativeVolume.toFixed(2)}x` : "-"} tone={compactTone(r.relativeVolume, 1.5)} />
-                <CompactMetric label="A/D" value={Number.isFinite(r.adProxyScore) ? r.adProxyScore.toFixed(0) : "-"} tone={compactTone(r.adProxyScore, 70, 40)} />
-                <CompactMetric label="Efecto" value={Number.isFinite(r.volumeEffectScore) ? r.volumeEffectScore.toFixed(0) : "-"} />
+                <CompactMetric label="Rel." value={Number.isFinite(r.relativeVolume) ? `${r.relativeVolume.toFixed(2)}x` : "-"} tone={compactTone(r.relativeVolume, 1.5)} title="Volumen relativo: sesión actual vs media 20 días" />
+                <CompactMetric label="A/D" value={Number.isFinite(r.adProxyScore) ? r.adProxyScore.toFixed(0) : "-"} tone={compactTone(r.adProxyScore, 70, 40)} title="A/D Proxy: score 0-100 de acumulación/distribución basado en volumen alcista vs bajista" />
+                <CompactMetric label="Efecto" value={Number.isFinite(r.volumeEffectScore) ? r.volumeEffectScore.toFixed(0) : "-"} title="Volume Effect: score 0-100 de actividad objetiva (importe, volumen relativo, aceleración, up/down vol.)" />
               </div>
             </td>
             <td className="compactScoreCell">
               <b>{Number.isFinite(r.totalScore) ? r.totalScore.toFixed(0) : "-"}</b>
-              <span>W {Number.isFinite(r.weinsteinScore) ? r.weinsteinScore.toFixed(0) : "-"} · EPS {Number.isFinite(r.epsGrowthProxyScore) ? r.epsGrowthProxyScore.toFixed(0) : "-"}</span>
+              <span title="Weinstein Score · EPS/Growth Proxy">Wein. {Number.isFinite(r.weinsteinScore) ? r.weinsteinScore.toFixed(0) : "-"} · EPS {Number.isFinite(r.epsGrowthProxyScore) ? r.epsGrowthProxyScore.toFixed(0) : "-"}</span>
             </td>
           </tr>;
         })}
-        {!rows.length && <tr><td colSpan={headers.length} className="emptyResultsCell">Ejecuta un scan para ver resultados</td></tr>}
+        {!rows.length && <tr><td colSpan={SORTABLE_HEADERS.length} className="emptyResultsCell">
+          {universe.length === 0
+            ? <span>① Selecciona mercados en el sidebar&nbsp;→&nbsp;② Carga el universo&nbsp;→&nbsp;③ Ejecuta el screener</span>
+            : <span>Universo cargado ({universe.length} acciones) · Ejecuta el screener para ver resultados</span>
+          }
+        </td></tr>}
       </tbody>
     </table>
   </div>;
@@ -1947,7 +1969,7 @@ function FilterNumber({ field, value, onChange, active = true, inactiveReason = 
   return <div className={`filterField ${active ? "isActive" : "isOff"}`}>
     <span className="filterFieldLabel">
       <button type="button" className={`ruleMiniToggle ${active ? "on" : "off"}`} aria-pressed={active} title={active ? "Quitar esta regla del filtro" : inactiveReason || "Activar esta regla"} onClick={onToggle}>
-        {active ? "✓" : "X"}
+        {active ? "✓" : "–"}
       </button>
       <span>{field.label}</span>
       {field.hint && <InfoHint text={field.hint} />}
@@ -1968,7 +1990,7 @@ function FilterToggle({ active, onClick, children }) {
 
 function LayerControl({ active, onClick, label, detail, countLabel }) {
   return <button type="button" className={`layerToggle ${active ? "on" : "off"}`} aria-pressed={active} onClick={onClick}>
-    <span className="layerToggleState"><i>{active ? "✓" : "X"}</i><b>{active ? "Activo" : "Quitado"}</b></span>
+    <span className="layerToggleState"><i>{active ? "✓" : "–"}</i><b>{active ? "Activo" : "Quitado"}</b></span>
     <span className="layerToggleText"><strong>{label}</strong><small>{detail}</small></span>
     <span className="layerToggleCount">{countLabel}</span>
   </button>;
@@ -2030,7 +2052,7 @@ function FilterDiagnosticsPanel({ diagnostics, rowsCount, filteredCount, running
       <span><b>{diagnostics?.hardRejected ?? "-"}</b><em>filtros duros</em></span>
       <span><b>{diagnostics?.providerRejected ?? "-"}</b><em>datos</em></span>
       <span><b>{diagnostics?.regimeRejected ?? "-"}</b><em>regimen</em></span>
-      <span><b>{diagnostics?.postRejected ?? "-"}</b><em>post</em></span>
+      <span><b>{diagnostics?.postRejected ?? "-"}</b><em>ajuste</em></span>
       <span><b>{viewHidden}</b><em>vista</em></span>
     </div>
     {blocks.length ? <div className="diagnosticBlocks">
@@ -2166,6 +2188,17 @@ function effectiveSettingsFromLayers(set, layers = DEFAULT_FILTER_LAYERS, fieldR
   return next;
 }
 
+function ModalDialog({ onClose, className, children }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || el.open) return;
+    el.showModal();
+    return () => { if (el.open) el.close(); };
+  }, []);
+  return <dialog ref={ref} className={className} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>{children}</dialog>;
+}
+
 export default function Page() {
   const [markets, setMarkets] = useState(DEFAULT_MARKETS);
   const [manual, setManual] = useState("");
@@ -2206,6 +2239,13 @@ export default function Page() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const toastTimerRef = useRef(null);
+  const showToast = (msg) => {
+    setToastMsg(msg);
+    clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToastMsg(""), 4000);
+  };
   useEffect(() => {
     setFavoriteSymbols(new Set(safeRead(STORAGE_KEYS.favorites, []).map((x) => x.symbol)));
     setChartSettings(readChartSettings());
@@ -2304,6 +2344,11 @@ export default function Page() {
   const executionRuleActive = (useRegimeFilter ? REGIME_LAYER.count : 0) + EXECUTION_LAYERS.reduce((sum, layer) => sum + (filterLayers[layer.key] ? layer.count : 0), 0);
   const fineRuleTotal = FILTER_FIELDS.length;
   const fineRuleActive = FILTER_FIELDS.filter((field) => isFieldRuleActive(field, fieldRules, filterLayers)).length;
+  const isPresetModified = useMemo(() => {
+    const base = PRESETS[presetKey]?.v;
+    if (!base) return false;
+    return Object.keys(base).some((k) => settings[k] !== base[k]);
+  }, [settings, presetKey]);
   const viewFilterCounts = {
     country: countryFilter !== "Todos" ? 1 : 0,
     theme: themeFilter !== "Todos" ? 1 : 0,
@@ -2604,10 +2649,13 @@ export default function Page() {
       setRows(final);
       setFail(bad);
       setDiagnostics(scanDiagnosticsSummary({ symbols, base, filterRejections, providerErrors: bad, regimeRejections, postRejections, passedBeforeContext: ok.length, finalRows: final }));
-      setStatus(`Completado: ${final.length} pasan ${PRESETS[presetKey].name} · RS Global sobre ${sectorized.length} acciones con datos · ${setupModeLabel(activeSettings.setupMode)} · ${activeLayerLabel}. Analizados ${symbols.length}/${base.length}.`);
+      const completedMsg = `Completado: ${final.length} pasan ${PRESETS[presetKey].name} · RS Global sobre ${sectorized.length} acciones con datos · ${setupModeLabel(activeSettings.setupMode)} · ${activeLayerLabel}. Analizados ${symbols.length}/${base.length}.`;
+      setStatus(completedMsg);
+      showToast(`✓ Scan completado: ${final.length} acciones pasan los filtros`);
     } catch (e) {
       setErr(e.message);
-      setStatus("Error");
+      setStatus(`Error: ${e.message}`);
+      showToast(`Error en el scan: ${e.message}`);
     } finally {
       setRunning(false);
     }
@@ -2630,18 +2678,18 @@ export default function Page() {
   function addFavorite(row) {
     const favs = safeRead(STORAGE_KEYS.favorites, []);
     if (favs.some((f) => f.symbol === row.symbol)) {
-      setStatus(`${row.symbol} ya estaba en favoritos.`);
+      showToast(`${row.symbol} ya estaba en favoritos.`);
       return;
     }
     const favorite = favoriteFromRow(row, marketHealth);
     const next = [favorite, ...favs].slice(0, 250);
     safeWrite(STORAGE_KEYS.favorites, next);
     setFavoriteSymbols(new Set(next.map((x) => x.symbol)));
-    setStatus(`${row.symbol} guardado en favoritos locales. Sincronizando Supabase...`);
+    showToast(`★ ${row.symbol} añadido a favoritos`);
     syncFavoriteToCloud(favorite).then((result) => {
-      if (result.configured === false) setStatus(`${row.symbol} guardado localmente. Supabase no configurado.`);
-      else if (result.ok) setStatus(`${row.symbol} guardado en favoritos y Supabase.`);
-      else setStatus(`${row.symbol} guardado localmente. Supabase: ${result.message}`);
+      if (result.configured === false) showToast(`★ ${row.symbol} guardado (Supabase no configurado)`);
+      else if (result.ok) showToast(`★ ${row.symbol} guardado en favoritos y Supabase`);
+      else showToast(`★ ${row.symbol} guardado localmente · Supabase: ${result.message}`);
     });
   }
   function saveSnapshot(currentRows) {
@@ -2665,11 +2713,10 @@ export default function Page() {
     };
     const scans = safeRead(STORAGE_KEYS.scans, []);
     safeWrite(STORAGE_KEYS.scans, [scan, ...scans].slice(0, 50));
-    setStatus(`Snapshot guardado localmente: ${currentRows.length} acciones. Sincronizando Supabase...`);
+    showToast(`✓ Snapshot guardado: ${currentRows.length} acciones`);
     syncScanToCloud(scan).then((result) => {
-      if (result.configured === false) setStatus(`Snapshot guardado localmente: ${currentRows.length} acciones. Supabase no configurado.`);
-      else if (result.ok) setStatus(`Snapshot guardado: ${currentRows.length} acciones. Disponible en local y Supabase.`);
-      else setStatus(`Snapshot local guardado. Supabase: ${result.message}`);
+      if (result.ok) showToast(`✓ Snapshot guardado en local y Supabase (${currentRows.length} acc.)`);
+      else if (result.configured === false) showToast(`✓ Snapshot guardado localmente (Supabase no configurado)`);
     });
   }
   function openReview(currentRows, startSymbol = "") {
@@ -2938,7 +2985,9 @@ export default function Page() {
         </div>
         <div className="sidebarGroup" style={{ marginBottom: 24 }}>
           <label className="field" style={{ marginBottom: 12 }}>
-            <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estrategia Base</span>
+            <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Estrategia Base{isPresetModified && <span style={{ marginLeft: 6, color: '#facc15', fontSize: 10, fontWeight: 700 }} title="Los ajustes finos difieren del preset seleccionado">●mod</span>}
+            </span>
             <select className="select" value={presetKey} onChange={(e) => setPreset(e.target.value)}>
               {Object.entries(PRESETS).map(([k, p]) => <option key={k} value={k}>{p.name}</option>)}
             </select>
@@ -3071,6 +3120,10 @@ export default function Page() {
           />
         </section>
 
+        {toastMsg && (
+          <div className="statusToast" role="status" aria-live="polite">{toastMsg}</div>
+        )}
+
         <section className="desktopResultsSection" style={{ marginBottom: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <h2 style={{ fontSize: 13, margin: 0, fontWeight: 600, letterSpacing: '-0.01em' }}>{filtered.length} resultados</h2>
@@ -3082,9 +3135,9 @@ export default function Page() {
               <button className="btn btnSmall" onClick={() => saveSnapshot(filtered)} disabled={!filtered.length}>Guardar</button>
             </div>
           </div>
-          <div className="controls" style={{ marginBottom: 12 }}>
+          <div className="controls" style={{ marginBottom: 12, flexWrap: "wrap", gap: 6 }}>
             <select className="select" style={{ width: "auto", padding: "4px 8px" }} value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)}>
-              {countryOptions.map((x) => <option key={x} value={x}>{x === "Todos" ? "Pais: Todos" : x}</option>)}
+              {countryOptions.map((x) => <option key={x} value={x}>{x === "Todos" ? "País: Todos" : x}</option>)}
             </select>
             <select className="select" style={{ width: "auto", padding: "4px 8px" }} value={themeFilter} onChange={(e) => { setThemeFilter(e.target.value); setSectorFilter("Todos"); setIndustryFilter("Todos"); }}>
               {themeOptions.map((x) => <option key={x} value={x}>{x === "Todos" ? "Tema: Todos" : x}</option>)}
@@ -3095,6 +3148,13 @@ export default function Page() {
             <select className="select" style={{ width: "auto", padding: "4px 8px" }} value={industryFilter} onChange={(e) => setIndustryFilter(e.target.value)}>
               {industryOptions.map((x) => <option key={x} value={x}>{x === "Todos" ? "Subsector: Todos" : x}</option>)}
             </select>
+            <select className="select" style={{ width: "auto", padding: "4px 8px" }} value={sectorStrength} onChange={(e) => setSectorStrength(e.target.value)} title="Filtrar por fuerza del sector/tema">
+              <option value="Todos">Sector: Todos</option>
+              <option value="Fuertes">Sector: Fuerte</option>
+              <option value="Constructivos">Sector: Constructivo</option>
+              <option value="Debiles">Sector: Débil</option>
+            </select>
+            <span style={{ width: 1, background: "rgba(255,255,255,.12)", alignSelf: "stretch", margin: "0 4px" }} aria-hidden="true" />
             <select className="select" style={{ width: "auto", padding: "4px 8px" }} value={sort} onChange={(e) => setSort(e.target.value)}>
               <option value="totalScore">Ordenar: Composite</option>
               <option value="rsGlobalPct">Ordenar: RS Global</option>
@@ -3107,14 +3167,14 @@ export default function Page() {
               <option value="weaknessScore">Ordenar: Deterioro</option>
             </select>
           </div>
-      <CompactResultsTable rows={filtered} favoriteSymbols={favoriteSymbols} onFavorite={addFavorite} onReview={(symbol) => openReview(filtered, symbol)} />
+      <CompactResultsTable rows={filtered} favoriteSymbols={favoriteSymbols} onFavorite={addFavorite} onReview={(symbol) => openReview(filtered, symbol)} sort={sort} onSort={setSort} universe={universe} />
         </section>
       </main>
     </div>
     <footer className="footer" style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,.04)", paddingTop: 16, fontSize: 11, opacity: 0.5 }}>StatsEdge · Datos orientativos · {status}</footer>
     
     {activeModalRow && (
-      <dialog className="stockModal quickReviewModal" open onClick={(e) => { if (e.target === e.currentTarget) closeQuickReview(); }}>
+      <ModalDialog className="stockModal quickReviewModal" onClose={closeQuickReview}>
         <div className="stockModalInner quickReviewInner">
           <div className="profileHeader quickReviewHeader">
             <div className="profileHeaderLeft quickReviewTitleBlock">
@@ -3224,7 +3284,7 @@ export default function Page() {
             </div>
           </div>
         </div>
-      </dialog>
+      </ModalDialog>
     )}
   </main>;
 }

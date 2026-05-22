@@ -8123,3 +8123,32 @@ body:before{
     margin-top:18px;
   }
 }
+
+/* Status toast */
+.statusToast{
+  position:sticky;
+  top:60px;
+  z-index:200;
+  margin:0 0 12px;
+  padding:10px 14px;
+  border:1px solid rgba(37,99,235,.4);
+  border-radius:var(--radius);
+  background:rgba(37,99,235,.15);
+  color:#93c5fd;
+  font-size:13px;
+  font-weight:500;
+  animation:fadeIn .2s ease;
+  pointer-events:none;
+}
+
+/* Sortable table headers */
+.sortableHeader{
+  user-select:none;
+  white-space:nowrap;
+}
+.sortableHeader:hover{
+  color:#fafafa;
+}
+.sortActive{
+  color:var(--accent2);
+}
