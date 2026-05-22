@@ -2985,15 +2985,15 @@ export default function Page() {
         </div>
         <div className="sidebarGroup" style={{ marginBottom: 24 }}>
           <label className="field" style={{ marginBottom: 12 }}>
-            <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Estrategia Base{isPresetModified && <span style={{ marginLeft: 6, color: '#facc15', fontSize: 10, fontWeight: 700 }} title="Los ajustes finos difieren del preset seleccionado">●mod</span>}
+            <span className="sectionLabel" style={{ marginBottom: 0 }}>
+              Estrategia Base{isPresetModified && <span style={{ marginLeft: 6, color: 'var(--warning)', fontSize: 10, fontWeight: 700 }} title="Los ajustes finos difieren del preset seleccionado">●mod</span>}
             </span>
             <select className="select" value={presetKey} onChange={(e) => setPreset(e.target.value)}>
               {Object.entries(PRESETS).map(([k, p]) => <option key={k} value={k}>{p.name}</option>)}
             </select>
           </label>
           <label className="field">
-            <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filtro Técnico</span>
+            <span className="sectionLabel" style={{ marginBottom: 0 }}>Filtro Técnico</span>
             <select className="select" value={settings.setupMode || "leader"} onChange={(e) => { updateSetting("setupMode", e.target.value); if (e.target.value === "weakness") setSort("weaknessScore"); }}>
               {SETUP_MODES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
             </select>
@@ -3013,7 +3013,7 @@ export default function Page() {
         />
 
         <div className="sidebarGroup" style={{ marginBottom: 24 }}>
-          <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Condiciones</span>
+          <span className="sectionLabel">Condiciones</span>
           <div className="filterSwitches">
             <FilterToggle active={settings.requireStage2} onClick={() => updateSetting("requireStage2", !settings.requireStage2)}>Stage 2</FilterToggle>
             <FilterToggle active={settings.requireUpVolume} onClick={() => updateSetting("requireUpVolume", !settings.requireUpVolume)}>Volumen en vela alcista</FilterToggle>
@@ -3038,7 +3038,7 @@ export default function Page() {
         </div>
 
         <div className="sidebarGroup" style={{ marginBottom: 24 }}>
-          <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Mercados ({markets.length})</span>
+          <span className="sectionLabel">Mercados ({markets.length})</span>
           <div className="controls" style={{ marginBottom: 12, flexWrap: "wrap", gap: 6 }}>
             <button className="btn btnGhost btnSmall" onClick={() => marketPreset("global")}>Global</button>
             <button className="btn btnGhost btnSmall" onClick={() => marketPreset("us")}>EEUU</button>
@@ -3129,7 +3129,7 @@ export default function Page() {
             <h2 style={{ fontSize: 13, margin: 0, fontWeight: 600, letterSpacing: '-0.01em' }}>{filtered.length} resultados</h2>
             <div className="controls">
               <button className="btn btnSmall btnGhost" onClick={() => { setViewLayers(DEFAULT_VIEW_LAYERS); setCountryFilter("Todos"); setThemeFilter("Todos"); setSectorFilter("Todos"); setIndustryFilter("Todos"); setSectorStrength("Todos"); setIpo("Todos"); }}>Reset</button>
-              <button className="btn btnSmall btnGhost" onClick={resetScreenerSession}>Reset sesión</button>
+              <button className="btn btnSmall btnDanger" onClick={resetScreenerSession}>Reset sesión</button>
               <button className="btn btnSmall btnGhost" onClick={() => csv(filtered)}>↓ CSV</button>
               <button className="btn btnSmall btnPrimary" onClick={() => openReview(filtered)} disabled={!filtered.length}>Revisar</button>
               <button className="btn btnSmall" onClick={() => saveSnapshot(filtered)} disabled={!filtered.length}>Guardar</button>
