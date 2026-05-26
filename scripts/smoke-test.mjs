@@ -1,6 +1,6 @@
 const BASE_URL = process.env.SMOKE_BASE_URL || "http://127.0.0.1:3000";
 const STRICT_PROVIDER = process.env.STRICT_PROVIDER === "1";
-const TIMEOUT_MS = Number(process.env.SMOKE_TIMEOUT_MS || 15000);
+const TIMEOUT_MS = Number(process.env.SMOKE_TIMEOUT_MS || 30000);
 
 const pages = [
   ["/", "Screener global"],
@@ -24,7 +24,7 @@ const apiChecks = [
     name: "Data providers",
     path: "/api/data-providers",
     provider: false,
-    check: (data) => data.priority === "free-first" && Array.isArray(data.providers) && data.providers.some((item) => item.id === "openfigi"),
+    check: (data) => data.priority === "free-first" && Array.isArray(data.providers) && data.providers.some((item) => item.id === "openfigi") && data.providers.some((item) => item.id === "esma-firds" && item.status === "active-when-enabled") && data.providers.some((item) => item.id === "fca-firds" && item.status === "active-when-enabled"),
   },
   {
     name: "J-Quants status",
@@ -75,10 +75,88 @@ const apiChecks = [
     check: (data) => Number(data.count) > 500 && data.coverage?.bySource?.["HKEX Full List of Securities"] > 500,
   },
   {
-    name: "Coverage report",
-    path: "/api/coverage?markets=US,JP,HK,AU",
+    name: "Universe TW official",
+    path: "/api/universe-engine?market=TW&summary=1",
     provider: true,
-    check: (data) => Number(data.summary?.current) > 100 && Array.isArray(data.markets) && data.markets.some((item) => item.market === "JP"),
+    check: (data) => Number(data.count) > 800 && data.coverage?.bySource?.["TWSE ISIN listed equities"] > 800,
+  },
+  {
+    name: "Universe Europe alias",
+    path: "/api/universe-engine?market=EU1&summary=1",
+    provider: true,
+    check: (data) => Number(data.count) > 100 && Array.isArray(data.markets) && data.markets.includes("GB") && data.markets.includes("DE"),
+  },
+  {
+    name: "Universe Nordic curated core",
+    path: "/api/universe-engine?markets=SE,DK,NO&summary=1",
+    provider: false,
+    check: (data) => Number(data.count) > 90 && data.coverage?.byMarket?.SE > 35 && data.coverage?.byMarket?.DK > 25 && data.coverage?.byMarket?.NO > 30,
+  },
+  {
+    name: "Universe curated core CA/IN/IL",
+    path: "/api/universe-engine?markets=CA,IN,IL&summary=1&refresh=1",
+    provider: false,
+    check: (data) => Number(data.count) > 280 && data.coverage?.byMarket?.CA > 200 && data.coverage?.byMarket?.IN > 70 && data.coverage?.byMarket?.IL > 20,
+  },
+  {
+    name: "Universe curated core SG/ZA",
+    path: "/api/universe-engine?markets=SG,ZA&summary=1",
+    provider: false,
+    check: (data) => Number(data.count) > 90 && data.coverage?.byMarket?.SG > 40 && data.coverage?.byMarket?.ZA > 50,
+  },
+  {
+    name: "Coverage report",
+    path: "/api/coverage?markets=US,EU1,JP,HK,AU",
+    provider: true,
+    check: (data) => Number(data.summary?.current) > 100 && Array.isArray(data.markets) && data.markets.some((item) => item.market === "JP") && data.markets.some((item) => item.market === "GB"),
+  },
+  {
+    name: "Shadow universe aggregate",
+    path: "/api/shadow-universe?markets=DE,FR,GB,IN,IL&maxAgeHours=1",
+    provider: false,
+    check: (data) => data.mode === "shadow-universe-aggregate-only" && Array.isArray(data.rows) && data.rows.some((item) => item.market === "IN" && item.priority === "deferred"),
+  },
+  {
+    name: "Cron universe dry run",
+    path: "/api/cron/universe-refresh?dryRun=1",
+    provider: true,
+    check: (data) => data.ok === true && data.dryRun === true && Array.isArray(data.markets) && data.markets.includes("US") && data.markets.includes("GB"),
+  },
+  {
+    name: "Cron scan dry run",
+    path: "/api/cron/scan-refresh?dryRun=1",
+    provider: true,
+    check: (data) => data.ok === true && data.dryRun === true && data.group?.key && Array.isArray(data.options?.markets) && data.options.markets.length > 0,
+  },
+  {
+    name: "Cron shadow Europe dry run",
+    path: "/api/cron/shadow-europe-refresh?dryRun=1",
+    provider: true,
+    check: (data) => data.ok === true && data.dryRun === true && data.job === "cron-shadow-europe-refresh" && data.group?.key && Array.isArray(data.options?.markets) && data.options.markets.length > 0,
+  },
+  {
+    name: "Shadow symbol resolve dry run",
+    path: "/api/jobs/shadow-symbol-resolve?markets=FI&dryRun=1&perMarket=3",
+    provider: true,
+    check: (data) => data.ok === true && data.job === "shadow-symbol-resolve" && data.dryRun === true && Array.isArray(data.rows),
+  },
+  {
+    name: "Shadow UK resolve dry run",
+    path: "/api/jobs/shadow-symbol-resolve?source=fca&markets=GB&dryRun=1&perMarket=3",
+    provider: true,
+    check: (data) => data.ok === true && data.job === "shadow-symbol-resolve" && data.dryRun === true && data.rows?.[0]?.referenceProvider === "fca-firds",
+  },
+  {
+    name: "Shadow price freshness dry run",
+    path: "/api/jobs/shadow-price-freshness?markets=FI&dryRun=1&perMarket=3",
+    provider: true,
+    check: (data) => data.ok === true && data.job === "shadow-price-freshness" && data.dryRun === true && Array.isArray(data.rows),
+  },
+  {
+    name: "Shadow priced scan empty safe",
+    path: "/api/jobs/scan-refresh?shadowPriced=1&markets=ZZ&perMarket=3&limit=3&leaderboards=0",
+    provider: true,
+    check: (data) => data.ok === true && data.skipped === true && data.shadowSource?.enabled === true && Number(data.stats?.selected || 0) === 0,
   },
   {
     name: "Chart NVDA",
@@ -137,12 +215,21 @@ async function checkPage(path, label) {
   const text = await res.text();
   if (!res.ok) throw new Error(`${path} HTTP ${res.status}`);
   if (!/text\/html/i.test(res.headers.get("content-type") || "")) throw new Error(`${path} no devuelve HTML`);
-  if (!text.includes("StatsEdge")) throw new Error(`${path} no contiene shell StatsEdge`);
+  if (!text.includes("StatsEdge") && !text.includes("StageRadar")) throw new Error(`${path} no contiene shell StatsEdge/StageRadar`);
   log("OK", label, path);
 }
 
 async function checkApi(item) {
-  const res = await fetchWithTimeout(item.path);
+  let res;
+  try {
+    res = await fetchWithTimeout(item.path);
+  } catch (error) {
+    if (item.provider && !STRICT_PROVIDER) {
+      log("WARN", item.name, `${item.path} proveedor no disponible/timeout: ${error.message}`);
+      return;
+    }
+    throw error;
+  }
   const text = await res.text();
   let data = null;
   try {

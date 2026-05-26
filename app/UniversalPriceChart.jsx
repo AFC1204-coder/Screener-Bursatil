@@ -5,6 +5,7 @@ import { CHART_RANGES, DEFAULT_CHART_SETTINGS, normalizeChartInterval } from "@/
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
+const TRADING_DAY_SECONDS = 86400 * 7 / 5;
 const money = (n, currency = "") => {
   if (!Number.isFinite(n)) return "Sin dato";
   const value = Math.abs(n) >= 1000
@@ -16,6 +17,17 @@ const money = (n, currency = "") => {
 function safeNumber(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+function clamp(value, min = 1, max = 99) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, n));
+}
+
+function scoreFromEdge(edgePct, sensitivity = 40) {
+  if (!Number.isFinite(edgePct)) return null;
+  return clamp(50 + ((2 / Math.PI) * 49 * Math.atan(edgePct / sensitivity)), 1, 99);
 }
 
 function isIntradayInterval(interval = "") {
@@ -94,53 +106,15 @@ function movingAverage(rows = [], length = 50) {
   return output;
 }
 
-function rsLineDataForRows(rows = [], series = {}, interval = "D") {
-  if (isIntradayInterval(interval)) return [];
-  const points = (series?.points || [])
-    .map((point) => ({
-      time: timeFromBar(point),
-      date: String(point.date || "").slice(0, 10),
-      rawLine: safeNumber(point.rsLine),
-      rawMa: safeNumber(point.rsLineSma50),
-    }))
-    .filter((point) => Number.isFinite(point.time) && Number.isFinite(point.rawLine))
-    .sort((a, b) => a.time - b.time);
-  if (rows.length < 2 || points.length < 2) return [];
-  const output = [];
-  let cursor = 0;
-  let last = null;
-  for (const row of rows) {
-    while (cursor < points.length && points[cursor].time <= row.time) {
-      last = points[cursor];
-      cursor += 1;
-    }
-    if (last) {
-      output.push({
-        time: row.time,
-        rawLine: last.rawLine,
-        rawMa: last.rawMa,
-        date: row.date,
-      });
-    }
-  }
-
-  return output
-    .map((point) => {
-      return {
-        time: point.time,
-        value: Number.isFinite(point.rawLine) ? Number(point.rawLine.toFixed(2)) : null,
-        ma: Number.isFinite(point.rawMa) ? Number(point.rawMa.toFixed(2)) : null,
-        date: point.date,
-      };
-    })
-    .filter((point) => Number.isFinite(point.value));
-}
-
 function chartRangeRows(rows = [], rangeKey = DEFAULT_CHART_SETTINGS.range, interval = DEFAULT_CHART_SETTINGS.interval) {
   if (isIntradayInterval(interval)) return rows;
   const activeRange = CHART_RANGES.find((range) => range.key === rangeKey) || CHART_RANGES[3];
   if (activeRange.key === "MAX" || activeRange.bars === Infinity) return rows;
-  return rows.slice(-Math.min(activeRange.bars, rows.length));
+  const latestTime = rows.at(-1)?.time;
+  if (!Number.isFinite(latestTime)) return rows.slice(-Math.min(activeRange.bars, rows.length));
+  const cutoff = latestTime - (activeRange.bars * TRADING_DAY_SECONDS);
+  const filtered = rows.filter((row) => Number.isFinite(row.time) && row.time >= cutoff);
+  return filtered.length >= 2 ? filtered : rows.slice(-Math.min(activeRange.bars, rows.length));
 }
 
 function shouldRequestRemoteBars(localRows = [], rangeKey = DEFAULT_CHART_SETTINGS.range, interval = DEFAULT_CHART_SETTINGS.interval) {
@@ -156,6 +130,71 @@ function responsiveChartHeight(width = 0, requestedHeight = 460) {
   return requestedHeight;
 }
 
+function normalizeRsScoreSeries(series = null, visibleRows = []) {
+  const source = Array.isArray(series) ? series : Array.isArray(series?.points) ? series.points : [];
+  const start = visibleRows[0]?.time || 0;
+  const end = visibleRows.at(-1)?.time || Infinity;
+  return source
+    .map((point) => {
+      const value = safeNumber(point.rsRating ?? point.rs_rating ?? point.rsChartScore ?? point.rs_chart_score ?? point.rating ?? point.score ?? point.value);
+      const time = timeFromBar(point);
+      if (!Number.isFinite(value) || !Number.isFinite(time)) return null;
+      return {
+        time,
+        date: String(point.date || point.snapshotDate || point.snapshot_date || "").slice(0, 10),
+        value: Math.max(1, Math.min(99, Number(value.toFixed ? value.toFixed(2) : value))),
+      };
+    })
+    .filter((point) => point && point.time >= start && point.time <= end)
+    .sort((a, b) => a.time - b.time);
+}
+
+function normalizeBenchmarkLineSeries(series = null, visibleRows = []) {
+  const source = Array.isArray(series) ? series : Array.isArray(series?.points) ? series.points : [];
+  const start = visibleRows[0]?.time || 0;
+  const end = visibleRows.at(-1)?.time || Infinity;
+  const points = source
+    .map((point) => {
+      const value = safeNumber(point.rsLine ?? point.rs_line ?? point.relativeLine ?? point.relative_line);
+      const time = timeFromBar(point);
+      if (!Number.isFinite(value) || !Number.isFinite(time) || value <= 0) return null;
+      return {
+        time,
+        date: String(point.date || point.snapshotDate || point.snapshot_date || "").slice(0, 10),
+        value,
+      };
+    })
+    .filter((point) => point && point.time >= start && point.time <= end)
+    .sort((a, b) => a.time - b.time);
+  const base = points[0]?.value;
+  if (!Number.isFinite(base) || base <= 0) return [];
+  return points.map((point) => ({
+    ...point,
+    rawValue: Number(((point.value / base) * 100).toFixed(2)),
+    value: Number((Math.log(point.value / base) * 100).toFixed(2)),
+  }));
+}
+
+function rsVisibleRangeScore(points = []) {
+  if (!Array.isArray(points) || points.length < 2) return null;
+  const values = points.map((point) => safeNumber(point.rawValue)).filter((value) => Number.isFinite(value) && value > 0);
+  if (values.length < 2) return null;
+  const latest = values.at(-1);
+  const first = values[0];
+  if (!Number.isFinite(latest) || !Number.isFinite(first) || first <= 0) return null;
+  const changePct = ((latest / first) - 1) * 100;
+  const low = Math.min(...values);
+  const high = Math.max(...values);
+  const positionScore = high > low ? clamp(1 + ((latest - low) / (high - low)) * 98, 1, 99) : 50;
+  const edgeScore = scoreFromEdge(changePct, 40);
+  if (!Number.isFinite(edgeScore)) return null;
+  return {
+    score: Math.round(clamp(edgeScore, 1, 99)),
+    changePct,
+    positionScore,
+  };
+}
+
 export default function UniversalPriceChart({
   bars = [],
   symbol = "",
@@ -164,10 +203,13 @@ export default function UniversalPriceChart({
   tradingViewUrl = "",
   relativeStrength = null,
   benchmarkSymbol = "",
+  rsMainScore = null,
+  rsRatingSeries = [],
   className = "",
   height = 460,
 }) {
   const containerRef = useRef(null);
+  const rsBadgeRef = useRef(null);
   const chartRef = useRef(null);
   const [remote, setRemote] = useState({ bars: null, loading: false, error: "", meta: null });
   const [renderError, setRenderError] = useState("");
@@ -206,10 +248,28 @@ export default function UniversalPriceChart({
     const normalized = remoteRows.length ? remoteRows : intraday ? [] : localRows;
     return chartRangeRows(aggregateRows(normalized, interval), range, interval);
   }, [remote.bars, intraday, localRows, interval, range]);
-  const rsLineData = useMemo(
-    () => indicators.rsLine ? rsLineDataForRows(rows, relativeStrength, interval) : [],
-    [rows, relativeStrength, interval, indicators.rsLine],
+  const mainRsValue = safeNumber(rsMainScore);
+  const globalRsScoreData = useMemo(
+    () => indicators.rsLine && !intraday ? normalizeRsScoreSeries(rsRatingSeries, rows) : [],
+    [rows, rsRatingSeries, indicators.rsLine, intraday],
   );
+  const fallbackRsScoreData = useMemo(
+    () => indicators.rsLine && !intraday ? normalizeRsScoreSeries(relativeStrength, rows) : [],
+    [rows, relativeStrength, indicators.rsLine, intraday],
+  );
+  const rsScoreData = globalRsScoreData.length > 1 ? globalRsScoreData : fallbackRsScoreData;
+  const rsLineData = useMemo(
+    () => indicators.rsLine && !intraday ? normalizeBenchmarkLineSeries(relativeStrength, rows) : [],
+    [rows, relativeStrength, indicators.rsLine, intraday],
+  );
+  const visibleRangeRs = useMemo(() => rsVisibleRangeScore(rsLineData), [rsLineData]);
+  const latestGlobalRsScoreValue = globalRsScoreData.at(-1)?.value;
+  const latestGlobalSnapshotValue = Number.isFinite(latestGlobalRsScoreValue) ? latestGlobalRsScoreValue : Number.isFinite(mainRsValue) ? mainRsValue : rsScoreData.at(-1)?.value;
+  const latestVisibleRsValue = Number.isFinite(visibleRangeRs?.score) ? visibleRangeRs.score : latestGlobalSnapshotValue;
+  const hasRsLine = indicators.rsLine && !intraday && rsLineData.length > 1;
+  const rsPanelLabel = benchmarkSymbol ? `RS Line vs ${benchmarkSymbol}` : "RS Line";
+  const rangeLabel = (CHART_RANGES.find((item) => item.key === range)?.label || range || "").toUpperCase();
+  const mainChartHeightTarget = height;
 
   const latest = rows.at(-1);
   const first = rows[0];
@@ -236,8 +296,8 @@ export default function UniversalPriceChart({
       if (cancelled || !containerRef.current) return;
       const container = containerRef.current;
       container.innerHTML = "";
-      const width = Math.max(container.clientWidth || 0, 280);
-      const chartHeight = responsiveChartHeight(width, height);
+      let width = Math.max(container.clientWidth || 0, 280);
+      let chartHeight = responsiveChartHeight(width, mainChartHeightTarget);
 
       chart = createChart(container, {
         width,
@@ -332,47 +392,63 @@ export default function UniversalPriceChart({
         series.setData(smaSlow);
       }
 
-      if (rsLineData.length > 1) {
-        const rsScaleId = "rs-line";
+      let updateRsBadge = null;
+      if (hasRsLine) {
+        const rsScaleId = "rs-line-overlay";
         const rsSeries = chart.addSeries(LineSeries, {
-          color: "rgba(96,165,250,.9)",
+          color: "rgba(96,165,250,.92)",
           lineWidth: 2,
           priceLineVisible: false,
-          lastValueVisible: true,
+          lastValueVisible: false,
           priceScaleId: rsScaleId,
-          priceFormat: { type: "price", precision: 2, minMove: 0.01 },
-          title: benchmarkSymbol ? `Rel vs ${benchmarkSymbol}` : "Rel vs benchmark",
+          priceFormat: { type: "price", precision: 0, minMove: 1 },
+          title: "",
         });
         rsSeries.setData(rsLineData.map((point) => ({ time: point.time, value: point.value })));
         rsSeries.createPriceLine?.({
-          price: 100,
-          color: "rgba(96,165,250,.22)",
+          price: 0,
+          color: "rgba(96,165,250,.18)",
           lineStyle: 2,
           lineWidth: 1,
           axisLabelVisible: false,
-          title: "Base 100",
+          title: "RS base",
         });
-        const rsMa = rsLineData.filter((point) => Number.isFinite(point.ma)).map((point) => ({ time: point.time, value: point.ma }));
-        if (rsMa.length > 1) {
-          const rsMaSeries = chart.addSeries(LineSeries, {
-            color: "rgba(235,235,242,.34)",
-            lineWidth: 1,
-            priceLineVisible: false,
-            lastValueVisible: false,
-            priceScaleId: rsScaleId,
-            priceFormat: { type: "price", precision: 2, minMove: 0.01 },
-          });
-          rsMaSeries.setData(rsMa);
-        }
         chart.priceScale(rsScaleId).applyOptions({
-          scaleMargins: indicators.volume ? { top: 0.64, bottom: 0.19 } : { top: 0.72, bottom: 0.06 },
+          visible: false,
+          autoScale: true,
+          scaleMargins: indicators.volume ? { top: 0.56, bottom: 0.14 } : { top: 0.62, bottom: 0.06 },
         });
+        updateRsBadge = () => {
+          const badge = rsBadgeRef.current;
+          const latestRsPoint = rsLineData.at(-1);
+          if (!badge || !latestRsPoint) return;
+          const x = chart.timeScale().timeToCoordinate(latestRsPoint.time);
+          const y = rsSeries.priceToCoordinate(latestRsPoint.value);
+          if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            badge.style.opacity = "0";
+            return;
+          }
+          const nextX = container.offsetLeft + Math.min(Math.max(x + 8, 8), Math.max(8, width - 78));
+          const nextY = container.offsetTop + Math.min(Math.max(y - 13, 18), Math.max(18, chartHeight - 30));
+          badge.style.transform = `translate(${Math.round(nextX)}px, ${Math.round(nextY)}px)`;
+          badge.style.opacity = "1";
+        };
+        chart.timeScale().subscribeVisibleTimeRangeChange?.(() => requestAnimationFrame(updateRsBadge));
       }
 
       chart.timeScale().fitContent();
+      if (updateRsBadge) {
+        requestAnimationFrame(updateRsBadge);
+        window.setTimeout(updateRsBadge, 80);
+      }
       resizeObserver = new ResizeObserver(([entry]) => {
         const nextWidth = Math.max(Math.floor(entry.contentRect.width), 280);
-        if (nextWidth > 0) chart?.applyOptions({ width: nextWidth, height: responsiveChartHeight(nextWidth, height) });
+        if (nextWidth > 0) {
+          width = nextWidth;
+          chartHeight = responsiveChartHeight(nextWidth, mainChartHeightTarget);
+          chart?.applyOptions({ width, height: chartHeight });
+          if (updateRsBadge) requestAnimationFrame(updateRsBadge);
+        }
       });
       resizeObserver.observe(container);
     }
@@ -387,7 +463,7 @@ export default function UniversalPriceChart({
       chartRef.current = null;
       chart?.remove();
     };
-  }, [rows, style, positive, height, scale, interval, indicators.volume, indicators.rsLine, indicators.maFast, indicators.maFastLength, indicators.maSlow, indicators.maSlowLength, rsLineData, benchmarkSymbol]);
+  }, [rows, style, positive, mainChartHeightTarget, scale, interval, indicators.volume, indicators.maFast, indicators.maFastLength, indicators.maSlow, indicators.maSlowLength, hasRsLine, rsLineData]);
 
   if (rows.length < 2) {
     return <div className={`universalChart empty ${className}`}>
@@ -404,13 +480,29 @@ export default function UniversalPriceChart({
           <em className={positive ? "positive" : "negative"}>{pct(change)}</em>
         </div>
       </div>
+      <div className={`universalChartBadges ${Number.isFinite(latestGlobalSnapshotValue) ? "" : "muted"}`} title="RS global del snapshot activo. No cambia con el rango del grafico.">
+        <span>RS global</span>
+        <b>{Number.isFinite(latestGlobalSnapshotValue) ? latestGlobalSnapshotValue.toFixed(0) : "Sin dato"}</b>
+      </div>
       {indicators.rsLine && intraday && <div className="universalChartBadges muted" title="La linea RS se calcula con cierre diario y se oculta en intradia">
         <span>RS</span>
         <b>D</b>
       </div>}
       {tradingViewUrl && <a className="priceTvLink" href={tradingViewUrl} target="_blank" rel="noreferrer">Abrir TradingView</a>}
     </div>
-    <div className="universalChartCanvas" ref={containerRef} style={{ "--chart-target-height": `${height}px` }} />
+    <div className="universalChartCanvas" ref={containerRef} style={{ "--chart-target-height": `${mainChartHeightTarget}px` }} />
+    {hasRsLine && Number.isFinite(latestVisibleRsValue) && <div
+      ref={rsBadgeRef}
+      className="universalRsLineBadge"
+      title={Number.isFinite(visibleRangeRs?.changePct) ? `RS del rango ${rangeLabel}: ${visibleRangeRs.changePct.toFixed(1)}% vs benchmark.` : `RS del rango ${rangeLabel}`}
+    >
+      <span>RS {rangeLabel}</span>
+      <b>{latestVisibleRsValue.toFixed(0)}</b>
+    </div>}
+    {indicators.rsLine && !intraday && <div className={`universalRsInlineLegend ${hasRsLine ? "" : "muted"}`}>
+      <span>{rsPanelLabel}</span>
+      {!hasRsLine && <em>Sin serie relativa suficiente</em>}
+    </div>}
     {remote.loading && needsRemote && !intraday && <p className="dataNote">Ampliando historico para este rango...</p>}
     {remote.error && !intraday && <p className="dataNote">Historico ampliado no disponible: {remote.error}. Se muestra el historico local.</p>}
     {renderError && <p className="dataNote">{renderError}</p>}

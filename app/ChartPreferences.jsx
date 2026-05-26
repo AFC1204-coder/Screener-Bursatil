@@ -33,11 +33,21 @@ export default function ChartPreferences({ settings, onChange, symbol = "", list
           </button>
         ))}
       </div>
+      <button
+        type="button"
+        className={`btn btnSmall ${indicators.rsLine ? "btnActive" : "btnGhost"}`}
+        style={{ padding: "4px 10px", fontSize: 11, height: 32, display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600, borderRadius: "var(--radius)" }}
+        onClick={() => updateIndicators({ rsLine: !indicators.rsLine })}
+        title="Mostrar u ocultar RS Line y RS global"
+      >
+        <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: indicators.rsLine ? "var(--accent)" : "rgba(255,255,255,0.2)" }} />
+        RS
+      </button>
       <details className="chartIndicators">
         <summary>Indicadores</summary>
         <div className="chartIndicatorPanel">
           <label><input type="checkbox" checked={indicators.volume} onChange={(event) => updateIndicators({ volume: event.target.checked })} /> Volumen</label>
-          <label><input type="checkbox" checked={indicators.rsLine} onChange={(event) => updateIndicators({ rsLine: event.target.checked })} /> Relativa vs bench</label>
+          <label><input type="checkbox" checked={indicators.rsLine} onChange={(event) => updateIndicators({ rsLine: event.target.checked })} /> RS Line + RS global</label>
           <label><input type="checkbox" checked={indicators.maFast} onChange={(event) => updateIndicators({ maFast: event.target.checked })} /> Media 1</label>
           <input aria-label="Periodo media 1" type="number" min="2" max="400" value={indicators.maFastLength} onChange={(event) => updateIndicators({ maFastLength: event.target.value })} />
           <label><input type="checkbox" checked={indicators.maSlow} onChange={(event) => updateIndicators({ maSlow: event.target.checked })} /> Media 2</label>

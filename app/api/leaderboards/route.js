@@ -1,9 +1,10 @@
 import { buildGroupedLeaderboards, buildLeaderboard, DEFAULT_LEADERBOARD_SPECS, readMaterializedLeaderboard, readScanRows, writeMaterializedLeaderboards } from "@/lib/leaderboards";
+import { SCREENER_FILTER_QUERY_KEYS } from "@/lib/screenerFilters";
 import { requirePersistenceAuth } from "@/lib/supabaseServer";
 
 function paramsFromRequest(request) {
   const { searchParams } = new URL(request.url);
-  return {
+  const params = {
     key: searchParams.get("key") || searchParams.get("list") || "",
     title: searchParams.get("title") || "",
     strategy: searchParams.get("strategy") || searchParams.get("type") || "",
@@ -22,10 +23,16 @@ function paramsFromRequest(request) {
     minRs: searchParams.get("minRs") || "",
     minMarketCap: searchParams.get("minMarketCap") || "",
     minAvgTurnover: searchParams.get("minAvgTurnover") || "",
+    maxPriceFreshnessDays: searchParams.get("maxPriceFreshnessDays") || "",
     maxRows: searchParams.get("maxRows") || "",
     sinceDays: searchParams.get("sinceDays") || "",
     cache: searchParams.get("cache") !== "0",
   };
+  for (const key of SCREENER_FILTER_QUERY_KEYS) {
+    if (searchParams.has(key)) params[key] = searchParams.get(key);
+  }
+  if (searchParams.has("preset") && !params.filterPreset) params.filterPreset = searchParams.get("preset");
+  return params;
 }
 
 function apiPayload(payload = {}) {
@@ -52,9 +59,13 @@ function mergeSpecParams(spec, params) {
 export async function GET(request) {
   const params = paramsFromRequest(request);
   try {
-    if (params.cache && params.key && !params.groupBy) {
+    const hasScreenerFilterParams = SCREENER_FILTER_QUERY_KEYS.some((key) => params[key] !== undefined && params[key] !== "");
+    const canUseMaterialized = params.cache && params.key && !params.groupBy && !params.limit && !params.maxPriceFreshnessDays
+      && !params.minCoverageScore && !params.minTotalScore && !params.minRs && !params.minMarketCap && !params.minAvgTurnover
+      && !params.country && !params.sector && !params.industry && !params.theme && !params.scopeValue && !hasScreenerFilterParams;
+    if (canUseMaterialized) {
       const cached = await readMaterializedLeaderboard(params.key).catch(() => null);
-      if (cached) return Response.json(apiPayload({ configured: true, leaderboard: cached }));
+      if (cached?.criteria && Object.hasOwn(cached.criteria, "maxPriceFreshnessDays")) return Response.json(apiPayload({ configured: true, leaderboard: cached }));
     }
 
     const scanData = await readScanRows({ maxRows: params.maxRows, sinceDays: params.sinceDays });
@@ -92,7 +103,8 @@ export async function POST(request) {
     const specs = Array.isArray(body.specs) && body.specs.length ? body.specs : DEFAULT_LEADERBOARD_SPECS;
     const scanData = await readScanRows({ maxRows: body.maxRows, sinceDays: body.sinceDays });
     if (!scanData.configured) return Response.json(apiPayload({ ...scanData, saved: 0 }));
-    const leaderboards = specs.map((spec) => buildLeaderboard(scanData.rows, { limit: body.limit || 25, ...spec }));
+    const bodyFilters = Object.fromEntries(SCREENER_FILTER_QUERY_KEYS.filter((key) => body[key] !== undefined && body[key] !== "").map((key) => [key, body[key]]));
+    const leaderboards = specs.map((spec) => buildLeaderboard(scanData.rows, { limit: body.limit || 25, ...bodyFilters, ...spec }));
     const saved = await writeMaterializedLeaderboards(leaderboards);
     return Response.json(apiPayload({
       configured: true,

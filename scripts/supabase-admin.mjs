@@ -17,9 +17,14 @@ const REQUIRED_TABLES = [
   ["universe_snapshot_symbols", "coverage-cache"],
   ["daily_bars", "market-data-cache"],
   ["fundamental_snapshots", "fundamentals-cache"],
+  ["shadow_instruments", "shadow-universe"],
+  ["symbol_resolutions", "shadow-universe"],
   ["provider_runs", "ops"],
+  ["app_settings", "settings"],
   ["leaderboard_snapshots", "derived-products"],
   ["leaderboard_items", "derived-products"],
+  ["rs_weekly_snapshots", "derived-products"],
+  ["rs_weekly_items", "derived-products"],
 ];
 
 function loadEnv() {

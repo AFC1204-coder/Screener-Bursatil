@@ -34,7 +34,7 @@ Ejecutar schema remoto:
 npm run supabase:schema
 ```
 
-El conector no imprime claves. Solo muestra si existen, el project ref y el estado de `public.scans`.
+El conector no imprime claves. Solo muestra si existen, el project ref y el estado de las tablas esperadas, incluidas `shadow_instruments` y `symbol_resolutions`.
 
 ## Seguridad
 

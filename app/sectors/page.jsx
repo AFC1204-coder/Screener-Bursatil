@@ -163,7 +163,7 @@ export default function SectorsPage() {
     }
   }, [countryFilter, countryOptions]);
 
-  return <main className="page">
+  return <main className="page sectorsPage">
     <section className="card hero">
       <div className="heroTop">
         <div>

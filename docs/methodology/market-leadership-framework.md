@@ -45,13 +45,21 @@ Every stock should be comparable across:
 
 Required metrics:
 
-- `RS Universo 1-99`
-- `RS Country 1-99`
+- `RS 1-99`
+- `RS Pais 1-99`
 - `RS Grupo 1-99`
 - `RS Industry/Theme 1-99`
 - `RS Benchmark 1-99`
 - `RS 1M/3M/6M/12M vs benchmark`
 - `RS trend vs previous snapshot`
+
+Rules:
+
+- `RS` is the primary, stable metric shown by the product. It is a percentile inside the current analyzed universe and is null when the sample is below the minimum universe size. It must not be replaced by benchmark RS in labels, filters, or chart priority areas.
+- `RS Pais` and `RS Grupo` are scoped percentiles. They are null when the local scope has too few comparable stocks.
+- `RS Benchmark` is a 1-99 derived score from relative performance versus the selected benchmark plus price/trend posture. It is not a universe percentile and is secondary context.
+- The chart shows `RS` first when available. The benchmark line is a secondary price/benchmark ratio rebased to 100; it is visual evidence, not the same number as `RS` or `RS Benchmark`.
+- Composite and weakness logic may use an explicitly internal fallback (`RS`, then `RS Benchmark`) when a score needs continuity, but user-facing primary RS remains `RS` or `sin dato`.
 
 The app should not say "this is the best stock to buy." It should say "this stock ranks in the top X percentile for this universe."
 

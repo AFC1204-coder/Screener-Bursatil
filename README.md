@@ -40,16 +40,19 @@ STATSEDGE_OWNER_ID=personal
 STATSEDGE_API_TOKEN=
 ```
 
-`STATSEDGE_API_TOKEN` is optional. When set, `/api/scans`, `/api/favorites`, and `/api/alerts` require the same value through `x-statsedge-token` or a bearer token. The client reads it from `localStorage["statsedge.persistenceToken.v1"]`.
+`STATSEDGE_API_TOKEN` is optional. When set, `/api/scans`, `/api/favorites`, `/api/alerts`, and `/api/settings` require the same value through `x-statsedge-token` or a bearer token. The client reads it from `localStorage["statsedge.persistenceToken.v1"]`.
 
 Optional admin connector:
 
 ```bash
 SUPABASE_ACCESS_TOKEN=
 SUPABASE_PROJECT_REF=
+CRON_SECRET=
 ```
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_ACCESS_TOKEN` in browser code or with a `NEXT_PUBLIC_` prefix.
+
+`CRON_SECRET` protects the Vercel cron endpoints. Vercel calls them with `Authorization: Bearer $CRON_SECRET`; local development allows them without the secret.
 
 ## Supabase
 
@@ -70,6 +73,7 @@ Tables:
 - `company_profiles`
 - `universe_snapshots`
 - `universe_snapshot_symbols`
+- `app_settings`
 
 Connector helpers:
 
@@ -88,6 +92,9 @@ npm run supabase:schema
 - `/market-health` market regime dashboard
 - `/stock/[symbol]` company page
 - `/api/coverage` current vs target market coverage report
+- `/api/scan-coverage` materialized scan coverage/freshness report
+- `/api/cron/universe-refresh` protected daily universe refresh
+- `/api/cron/scan-refresh` protected rotating materialized scan refresh
 
 ## Current Data Providers
 
@@ -98,6 +105,9 @@ npm run supabase:schema
 - Financial Modeling Prep as optional profile, ratios and statements fallback when `FMP_API_KEY` is configured.
 - NasdaqTrader public symbol directories for the US universe.
 - HKEX Full List of Securities for the Hong Kong universe, filtered to investable HKD equities/REITs.
+- TWSE ISIN listed equities for the Taiwan universe, filtered to investable `.TW` common equities.
+- Curated core universes for Canada, India, Israel, Singapore and South Africa while full exchange bulk data remains license-sensitive.
+- Expanded curated Nordic cores for Sweden, Denmark and Norway; ESMA FIRDS is available as an opt-in Europe/EEA reference-universe adapter with capped OpenFIGI ISIN resolution.
 - J-Quants for Japan universe data when `JQUANTS_API_KEY` or `JQUANTS_REFRESH_TOKEN` is configured.
 - SEC EDGAR companyfacts as a free US fundamentals fallback.
 - ASIC short position reports as a free official Australia short-interest proxy for `.AX` symbols.

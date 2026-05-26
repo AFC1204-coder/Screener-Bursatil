@@ -184,7 +184,7 @@ async function hydrateReviewRow(row = {}, signal) {
   if (brief) {
     const technical = deriveTechnicalFromBars(brief.chartBars || []);
     const rs = brief.relativeStrength || {};
-    const benchmarkRating = rs.benchmarkRating ?? rs.rsRating ?? (rs.ratingSource === "benchmark-fallback" ? rs.rating : null);
+    const benchmarkRating = rs.benchmarkRating ?? rs.rsRating ?? null;
     return cleanObject({
       ...technical,
       companyName: brief.name || row.companyName,
@@ -210,6 +210,7 @@ async function hydrateReviewRow(row = {}, signal) {
       perf6m: rs.perf6m ?? technical.perf6m ?? row.perf6m,
       perf12m: rs.perf12m ?? technical.perf12m ?? row.perf12m,
       shortPercentOfFloat: brief.growthMetrics?.shortPercentOfFloat ?? row.shortPercentOfFloat,
+      relativeStrength: rs.series || null,
     });
   }
   const chart = await fetchJson(`/api/chart?symbol=${encodeURIComponent(symbol)}`, signal, 9000);
@@ -285,11 +286,11 @@ function ReviewChartPanel({ row, loading = false }) {
     interval: "D",
     style: "1",
     scale: "price",
-    indicators: { ...DEFAULT_CHART_SETTINGS.indicators, rsLine: false },
+    indicators: { ...DEFAULT_CHART_SETTINGS.indicators, rsLine: true },
   };
   if (bars.length > 1) {
     return <div className="reviewChart reviewNativeChart">
-      <UniversalPriceChart bars={bars} symbol={row.symbol} currency={row.currency} tradingViewUrl={links.tradingView} settings={reviewSettings} height={520} />
+      <UniversalPriceChart bars={bars} symbol={row.symbol} currency={row.currency} tradingViewUrl={links.tradingView} settings={reviewSettings} relativeStrength={row.relativeStrength} rsMainScore={row.rsGlobalPct} benchmarkSymbol={row.benchmarkSymbol} height={520} />
     </div>;
   }
   return <div className="reviewChart">

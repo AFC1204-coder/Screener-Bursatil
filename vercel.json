@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/universe-refresh",
+      "schedule": "10 21 * * *"
+    },
+    {
+      "path": "/api/cron/scan-refresh",
+      "schedule": "20 22 * * *"
+    },
+    {
+      "path": "/api/cron/shadow-europe-refresh",
+      "schedule": "50 22 * * *"
+    }
+  ]
+}

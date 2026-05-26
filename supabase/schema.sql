@@ -208,6 +208,51 @@ create table if not exists fundamental_snapshots (
   unique (owner_id, symbol, period_end, period_type, provider)
 );
 
+create table if not exists shadow_instruments (
+  id uuid primary key default gen_random_uuid(),
+  owner_id text not null default 'personal',
+  provider text not null,
+  market text not null,
+  isin text not null,
+  name text,
+  short_name text,
+  currency text,
+  cfi_code text,
+  issuer_lei text,
+  trading_venue text,
+  relevant_venue text,
+  relevant_authority text,
+  first_trade_date date,
+  termination_date date,
+  status text not null default 'reference',
+  quality_gate jsonb not null default '{}'::jsonb,
+  raw jsonb not null default '{}'::jsonb,
+  discovered_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (owner_id, provider, market, isin)
+);
+
+create table if not exists symbol_resolutions (
+  id uuid primary key default gen_random_uuid(),
+  owner_id text not null default 'personal',
+  provider text not null,
+  market text not null,
+  isin text not null,
+  symbol text not null,
+  name text,
+  exchange text,
+  exchange_code text,
+  figi text,
+  composite_figi text,
+  share_class_figi text,
+  confidence_score numeric,
+  status text not null default 'resolved',
+  data_freshness jsonb not null default '{}'::jsonb,
+  raw jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  unique (owner_id, provider, isin, symbol)
+);
+
 create table if not exists provider_runs (
   id uuid primary key default gen_random_uuid(),
   owner_id text not null default 'personal',
@@ -219,6 +264,16 @@ create table if not exists provider_runs (
   finished_at timestamptz,
   stats jsonb not null default '{}'::jsonb,
   error text
+);
+
+create table if not exists app_settings (
+  id uuid primary key default gen_random_uuid(),
+  owner_id text not null default 'personal',
+  setting_type text not null default 'general',
+  setting_key text not null default 'default',
+  value jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  unique (owner_id, setting_type, setting_key)
 );
 
 create table if not exists leaderboard_snapshots (
@@ -254,6 +309,52 @@ create table if not exists leaderboard_items (
   unique (snapshot_id, symbol)
 );
 
+create table if not exists rs_weekly_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  owner_id text not null default 'personal',
+  snapshot_date date not null,
+  week_key text not null,
+  engine_version text not null,
+  base_currency text not null default 'USD',
+  lookback_weeks integer[] not null default '{13,26,39,52}'::integer[],
+  weights jsonb not null default '{}'::jsonb,
+  min_sample integer not null default 20,
+  symbol_count integer not null default 0,
+  source text,
+  stats jsonb not null default '{}'::jsonb,
+  generated_at timestamptz not null default now(),
+  unique (owner_id, snapshot_date, engine_version, base_currency)
+);
+
+create table if not exists rs_weekly_items (
+  id uuid primary key default gen_random_uuid(),
+  owner_id text not null default 'personal',
+  snapshot_id uuid not null references rs_weekly_snapshots(id) on delete cascade,
+  snapshot_date date not null,
+  week_key text not null,
+  engine_version text not null,
+  base_currency text not null default 'USD',
+  rank_index integer not null,
+  symbol text not null,
+  company_name text,
+  country text,
+  sector text,
+  industry text,
+  theme text,
+  currency text,
+  normalized_currency text,
+  rs_rating numeric,
+  rs_raw numeric,
+  usd_close numeric,
+  local_close numeric,
+  fx_rate numeric,
+  fx_date date,
+  sample_size integer,
+  metrics jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  unique (snapshot_id, symbol)
+);
+
 create index if not exists scan_results_scan_id_idx on scan_results(scan_id);
 create index if not exists scan_results_symbol_idx on scan_results(owner_id, symbol);
 create index if not exists favorites_symbol_idx on favorites(owner_id, symbol);
@@ -266,11 +367,19 @@ create index if not exists universe_snapshot_symbols_symbol_idx on universe_snap
 create index if not exists daily_bars_symbol_date_idx on daily_bars(owner_id, symbol, trade_date desc);
 create index if not exists daily_bars_date_idx on daily_bars(owner_id, trade_date desc);
 create index if not exists fundamental_snapshots_symbol_idx on fundamental_snapshots(owner_id, symbol, period_end desc);
+create index if not exists shadow_instruments_market_idx on shadow_instruments(owner_id, provider, market, updated_at desc);
+create index if not exists shadow_instruments_isin_idx on shadow_instruments(owner_id, isin);
+create index if not exists symbol_resolutions_market_idx on symbol_resolutions(owner_id, provider, market, updated_at desc);
+create index if not exists symbol_resolutions_symbol_idx on symbol_resolutions(owner_id, symbol);
+create index if not exists symbol_resolutions_isin_idx on symbol_resolutions(owner_id, isin);
 create index if not exists provider_runs_idx on provider_runs(owner_id, provider, run_type, started_at desc);
+create index if not exists app_settings_key_idx on app_settings(owner_id, setting_type, setting_key, updated_at desc);
 create index if not exists leaderboard_snapshots_key_idx on leaderboard_snapshots(owner_id, leaderboard_key, generated_at desc);
 create index if not exists leaderboard_items_snapshot_idx on leaderboard_items(snapshot_id, rank_index);
 create index if not exists leaderboard_items_symbol_idx on leaderboard_items(owner_id, symbol);
-
+create index if not exists rs_weekly_snapshots_date_idx on rs_weekly_snapshots(owner_id, snapshot_date desc);
+create index if not exists rs_weekly_items_snapshot_idx on rs_weekly_items(snapshot_id, rank_index);
+create index if not exists rs_weekly_items_symbol_idx on rs_weekly_items(owner_id, symbol, snapshot_date desc);
 alter table scans enable row level security;
 alter table scan_results enable row level security;
 alter table favorites enable row level security;
@@ -282,9 +391,13 @@ alter table universe_snapshots enable row level security;
 alter table universe_snapshot_symbols enable row level security;
 alter table daily_bars enable row level security;
 alter table fundamental_snapshots enable row level security;
+alter table shadow_instruments enable row level security;
+alter table symbol_resolutions enable row level security;
 alter table provider_runs enable row level security;
+alter table app_settings enable row level security;
 alter table leaderboard_snapshots enable row level security;
 alter table leaderboard_items enable row level security;
-
+alter table rs_weekly_snapshots enable row level security;
+alter table rs_weekly_items enable row level security;
 -- The Next.js API uses SUPABASE_SERVICE_ROLE_KEY, which bypasses RLS.
 -- Do not expose the service role key in browser code.

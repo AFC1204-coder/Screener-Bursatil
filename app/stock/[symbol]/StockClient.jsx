@@ -7,6 +7,7 @@ import { metricShortLabel } from "@/lib/metricCatalog";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const rsFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
+const scoreFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
 const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
 const ratio = (n) => Number.isFinite(n) ? n.toFixed(2) : "Sin dato";
 const margin = (numerator, denominator) => Number.isFinite(numerator) && Number.isFinite(denominator) && denominator !== 0 ? pct((numerator / denominator) * 100) : "Sin dato";
@@ -81,6 +82,111 @@ function stockAccentStyle(data = {}, symbol = "") {
 
 function Metric({ label, value, tone = "" }) {
   return <div className={`metric ${tone}`.trim()}><span>{label}</span><b>{value}</b></div>;
+}
+
+function scoreTone(value, good = 75, bad = 45) {
+  if (!Number.isFinite(value)) return "neutral";
+  if (value >= good) return "good";
+  if (value < bad) return "bad";
+  return "neutral";
+}
+
+function riskTone(value, warn = 60) {
+  if (!Number.isFinite(value)) return "neutral";
+  return value >= warn ? "warn" : "neutral";
+}
+
+function sampleText(value) {
+  return Number.isFinite(value) ? `n=${Math.round(value)}` : "sin muestra";
+}
+
+function compactDate(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  return Number.isFinite(d.getTime()) ? d.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }) : "";
+}
+
+function compactBusinessTeaser(data = {}) {
+  const fallback = [data.sector, data.industry].filter(Boolean).join(" · ");
+  const summary = String(data.summary || "").replace(/\s+/g, " ").trim();
+  const usableSummary = summary && !/^Yahoo no ofrece/i.test(summary) ? summary : "";
+  const raw = String(usableSummary || data.short || fallback || "").replace(/\s+/g, " ").trim();
+  if (!raw || /^Yahoo no ofrece/i.test(raw)) return fallback || "Sin descripcion disponible";
+  if (raw.length <= 92) return raw;
+  const clipped = raw.slice(0, 89).replace(/\s+\S*$/, "").trim();
+  return clipped ? `${clipped}...` : raw.slice(0, 89);
+}
+
+function latestWeeklyRs(rs = {}) {
+  return Array.isArray(rs.globalRsSeries) ? rs.globalRsSeries.at(-1) : null;
+}
+
+function RsMetric({ label, value, detail = "", tone = "neutral", compact = false }) {
+  return <div className={`rsMetric ${tone} ${compact ? "compact" : ""}`.trim()}>
+    <span>{label}</span>
+    <b>{value}</b>
+    {detail && <small>{detail}</small>}
+  </div>;
+}
+
+function RsGroup({ title, subtitle = "", children }) {
+  return <div className="rsMetricGroup">
+    <div className="rsMetricGroupHead">
+      <span>{title}</span>
+      {subtitle && <em>{subtitle}</em>}
+    </div>
+    <div className="rsMetricGroupGrid">{children}</div>
+  </div>;
+}
+
+function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" }) {
+  const weekly = latestWeeklyRs(rs);
+  const weeklyScore = finiteValue(weekly?.rsRating);
+  const snapshotScore = finiteValue(rs.rsGlobalPct);
+  const globalScore = finiteValue(rsUniverse, weeklyScore, snapshotScore);
+  const globalSample = finiteValue(weekly?.sampleSize, rs.rsGlobalSample);
+  const globalDate = compactDate(weekly?.date || rs.universe?.asOf);
+  const benchmarkSymbol = rs.benchmarkSymbol || "benchmark";
+  const snapshotDate = compactDate(rs.universe?.asOf);
+  const countryDetail = [country, sampleText(rs.rsCountrySample)].filter(Boolean).join(" · ");
+  const groupSample = finiteValue(rs.rsSectorSample);
+  const groupDetail = `${sampleText(groupSample)}${groupSample && groupSample < 20 ? " · muestra baja" : ""}`;
+  const sourceLine = weekly
+    ? `RS global semanal USD · ${sampleText(globalSample)}${globalDate ? ` · ${globalDate}` : ""}`
+    : `RS global del ultimo scan${snapshotDate ? ` · ${snapshotDate}` : ""}`;
+
+  return <section className="card rsPanel">
+    <div className="sectionTitle rsPanelTitle">
+      <div>
+        <h2>Fuerza relativa</h2>
+        <p className="fine">{sourceLine}</p>
+      </div>
+      <span className="rsPanelBadge">{rs.ratingSource === "universe" || weekly ? "RS real" : "Sin snapshot"}</span>
+    </div>
+    <div className="rsPanelGrid">
+      <RsGroup title="Ranking" subtitle="percentil 1-99">
+        <RsMetric label="RS global" value={rsFmt(globalScore)} detail={sampleText(globalSample)} tone={scoreTone(globalScore)} />
+        <RsMetric label="RS pais" value={rsFmt(rs.rsCountryPct)} detail={countryDetail} tone={scoreTone(rs.rsCountryPct)} />
+        <RsMetric label="Grupo" value={rsFmt(rs.rsSectorPct)} detail={groupDetail} tone={scoreTone(rs.rsSectorPct)} />
+      </RsGroup>
+      <RsGroup title={`Benchmark ${benchmarkSymbol}`} subtitle="precio relativo">
+        <RsMetric label="RS bench" value={rsFmt(rsBenchmark)} detail="modelo tecnico" tone={scoreTone(rsBenchmark)} />
+        <RsMetric label="3M" value={pct(rs.rs3m)} detail="vs benchmark" tone={valueTone(rs.rs3m)} />
+        <RsMetric label="6M" value={pct(rs.rs6m)} detail="vs benchmark" tone={valueTone(rs.rs6m)} />
+        <RsMetric label="12M" value={pct(rs.rs12m)} detail="vs benchmark" tone={valueTone(rs.rs12m)} />
+      </RsGroup>
+      <RsGroup title="Calidad y riesgo" subtitle="datos tecnicos">
+        <RsMetric label="RS quality" value={scoreFmt(rs.rsQualityScore)} detail={rs.rsQualityLabel || "estabilidad"} tone={scoreTone(rs.rsQualityScore, 70, 45)} />
+        <RsMetric label="Riesgo tecnico" value={scoreFmt(rs.speculationRiskScore)} detail="0 bajo · 99 alto" tone={riskTone(rs.speculationRiskScore)} />
+        <RsMetric label="Volatilidad 63d" value={pct(rs.volatility63d)} detail="anualizada" tone={riskTone(rs.volatility63d, 70)} />
+        <RsMetric label="Drawdown 63d" value={pct(rs.maxDrawdown63d)} detail="maximo" tone={riskTone(rs.maxDrawdown63d, 25)} />
+      </RsGroup>
+      <RsGroup title="Precio" subtitle="contexto">
+        <RsMetric label="Perf 3M" value={pct(rs.perf3m)} detail="precio absoluto" tone={valueTone(rs.perf3m)} />
+        <RsMetric label="Dist. 52W high" value={pct(rs.distance52w)} detail="desde maximo" tone={Number.isFinite(rs.distance52w) && rs.distance52w >= -15 ? "good" : "neutral"} />
+      </RsGroup>
+    </div>
+  </section>;
 }
 
 function PeerLogo({ item }) {
@@ -659,9 +765,9 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const rs = data?.relativeStrength || {};
   const benchmarkOverride = cleanBenchmarkSymbol(chartSettings?.benchmarks?.[symbol]);
   const activeBenchmark = benchmarkOverride || cleanBenchmarkSymbol(rs.benchmarkSymbol);
-  const rsUniverse = finiteValue(rs.rsGlobalPct);
-  const rsBenchmark = finiteValue(rs.benchmarkRating, rs.rsRating, rs.ratingSource === "benchmark-fallback" ? rs.rating : undefined);
-  const rsSourceLabel = Number.isFinite(rsUniverse) ? "RS Universo StatsEdge" : "RS Universo sin snapshot";
+  const weeklyGlobalRs = latestWeeklyRs(rs);
+  const rsUniverse = finiteValue(weeklyGlobalRs?.rsRating, rs.rsGlobalPct);
+  const rsBenchmark = finiteValue(rs.benchmarkRating, rs.rsRating);
   const technical = technicalSnapshotFromBars(data?.chartBars || [], q);
   const statementCurrency = data?.financialResults?.currency || g.financialCurrency || data?.currency || "";
   const stageTone = /etapa 2/i.test(data?.stage?.label || "") ? "good" : /etapa 4/i.test(data?.stage?.label || "") ? "bad" : "neutral";
@@ -695,9 +801,10 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const heroEpsCompareOffset = annualRowsForHero.length >= 2 ? 1 : 4;
   const heroEpsYoY = heroEpsRows.length ? epsGrowth(heroEpsRows[0], heroEpsRows, 0, heroEpsCompareOffset, v.sharesOutstanding || g.sharesOutstanding) : g.earningsGrowth;
   const stageShortLabel = (data?.stage?.label || "Sin dato").replace(/\s+probable$/i, "");
+  const businessTeaser = compactBusinessTeaser(data);
   const compactResearchCard = data ? <section className="terminalPanel stockResearchCard stockResearchCardHero">
     <div className="marketSmithStrip" aria-label="Resumen Weinstein Minervini compacto">
-      <MiniMetric label="RS Universo" value={rsFmt(rsUniverse)} tone={Number.isFinite(rsUniverse) && rsUniverse >= 75 ? "good" : Number.isFinite(rsUniverse) && rsUniverse < 45 ? "bad" : ""} />
+      <MiniMetric label="RS" value={rsFmt(rsUniverse)} tone={Number.isFinite(rsUniverse) && rsUniverse >= 75 ? "good" : Number.isFinite(rsUniverse) && rsUniverse < 45 ? "bad" : ""} />
       <MiniMetric label="Etapa" value={stageShortLabel} tone={stageTone} />
       <MiniMetric label="Ventas YoY" value={pct(g.revenueGrowth)} tone={valueTone(g.revenueGrowth)} />
       <MiniMetric label="EPS YoY" value={pct(heroEpsYoY)} tone={valueTone(heroEpsYoY)} />
@@ -706,7 +813,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       <div><span>MA 50/200</span><b className={valueTone(finiteValue(technical.distanceSma50, technical.distanceSma200))}>{pct(technical.distanceSma50)} / {pct(technical.distanceSma200)}</b></div>
       <div><span>Vol. 50d</span><b>{Number.isFinite(technical.relativeVolume50) ? `${technical.relativeVolume50.toFixed(1)}x` : "Sin dato"}</b></div>
       <div><span>RS Quality</span><b>{rsFmt(rs.rsQualityScore)}</b></div>
-      <div><span>EV/EBITDA</span><b>{ratio(v.enterpriseToEbitda)}</b></div>
+      <div className="heroBusinessMetric"><span>Negocio</span><b title={businessTeaser}>{businessTeaser}</b></div>
     </div>
     <div className="heroCompanyBrief" aria-label="Resumen de negocio compacto">
       <div className="heroCompanyBriefHead">
@@ -785,6 +892,8 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
             tradingViewUrl={data.links?.tradingView}
             settings={chartSettings}
             relativeStrength={rs.series}
+            rsMainScore={rsUniverse}
+            rsRatingSeries={rs.globalRsSeries}
             benchmarkSymbol={rs.benchmarkSymbol}
             height={600}
           />
@@ -793,26 +902,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
 
       <SimilarStocks rows={similar} />
 
-      <section className="card">
-        <div className="sectionTitle">
-          <h2>Fuerza relativa</h2>
-        </div>
-        <div className="metricGrid rsMetricGrid">
-          <Metric label={metricShortLabel("rsGlobalPct")} value={rsFmt(rsUniverse)} tone={Number.isFinite(rsUniverse) && rsUniverse >= 75 ? "good" : Number.isFinite(rsUniverse) && rsUniverse < 45 ? "bad" : "neutral"} />
-          <Metric label={metricShortLabel("rsCountryPct")} value={rsFmt(rs.rsCountryPct)} tone={(rs.rsCountryPct || 0) >= 75 ? "good" : (rs.rsCountryPct || 0) < 45 ? "bad" : "neutral"} />
-          <Metric label={metricShortLabel("rsSectorPct")} value={rsFmt(rs.rsSectorPct)} tone={(rs.rsSectorPct || 0) >= 75 ? "good" : (rs.rsSectorPct || 0) < 45 ? "bad" : "neutral"} />
-          <Metric label={`${metricShortLabel("rsRating")} ${rs.benchmarkSymbol ? `(${rs.benchmarkSymbol})` : ""}`} value={rsFmt(rsBenchmark)} tone={Number.isFinite(rsBenchmark) && rsBenchmark >= 75 ? "good" : Number.isFinite(rsBenchmark) && rsBenchmark < 45 ? "bad" : "neutral"} />
-          <Metric label={metricShortLabel("rsQualityScore")} value={rsFmt(rs.rsQualityScore)} tone={(rs.rsQualityScore || 0) >= 70 ? "good" : (rs.rsQualityScore || 0) < 45 ? "bad" : "neutral"} />
-          <Metric label="Spec Risk" value={fmt(rs.speculationRiskScore)} tone={(rs.speculationRiskScore || 0) >= 60 ? "warn" : "neutral"} />
-          <Metric label="Volatilidad 63d" value={pct(rs.volatility63d)} tone={(rs.volatility63d || 0) >= 70 ? "warn" : "neutral"} />
-          <Metric label="Drawdown 63d" value={pct(rs.maxDrawdown63d)} tone={(rs.maxDrawdown63d || 0) >= 25 ? "warn" : "neutral"} />
-          <Metric label="RS 3M vs bench" value={pct(rs.rs3m)} tone={(rs.rs3m || 0) >= 0 ? "good" : "bad"} />
-          <Metric label="RS 6M vs bench" value={pct(rs.rs6m)} tone={(rs.rs6m || 0) >= 0 ? "good" : "bad"} />
-          <Metric label="RS 12M vs bench" value={pct(rs.rs12m)} tone={(rs.rs12m || 0) >= 0 ? "good" : "bad"} />
-          <Metric label="Perf 3M" value={pct(rs.perf3m)} tone={(rs.perf3m || 0) >= 0 ? "good" : "bad"} />
-          <Metric label="Dist. 52w high" value={pct(rs.distance52w)} tone={Number.isFinite(rs.distance52w) && rs.distance52w >= -15 ? "good" : "neutral"} />
-        </div>
-      </section>
+      <RelativeStrengthPanel rs={rs} rsUniverse={rsUniverse} rsBenchmark={rsBenchmark} country={data.country} />
 
       <FundamentalsPanel data={data} growth={g} valuation={v} quote={q} calendar={data.earningsCalendar} currency={statementCurrency} />
 

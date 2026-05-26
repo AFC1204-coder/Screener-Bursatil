@@ -1,29 +1,153 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { clamp, num, pct } from "@/lib/formatters";
-import { safeRead, STORAGE_KEYS } from "@/lib/localState";
+import { num, pct } from "@/lib/formatters";
+import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { metricShortLabel } from "@/lib/metricCatalog";
+import { favoriteToRow, isRecentIpo, metricValue, normalizeStockRows, shortBusiness, sortByMetric, uniqueRows, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
+import { SEED_STOCKS } from "@/lib/listsSeedData";
 
-function uniqueRows(rows) { return Array.from(new Map(rows.filter(Boolean).map((r) => [r.symbol, r])).values()); }
-function weaknessScore(row = {}) {
-  const direct = row.weaknessScore ?? row.snapshot?.weaknessScore;
-  if (Number.isFinite(direct)) return direct;
-  let score = 0;
-  const rs = row.rsGlobalPct ?? row.rsRating ?? row.snapshot?.rsGlobalPct ?? row.snapshot?.rsRating ?? 50;
-  if (rs < 45) score += 16;
-  if (Number.isFinite(row.distance52w) && row.distance52w < -30) score += 14;
-  if (Number.isFinite(row.perf3m ?? row.snapshot?.perf3m) && (row.perf3m ?? row.snapshot?.perf3m) < 0) score += 12;
-  if (Number.isFinite(row.extSma50) && row.extSma50 < -8) score += 10;
-  if ((row.riskScore ?? row.snapshot?.riskScore ?? 50) < 35) score += 10;
-  return clamp(score);
+function chartPath(points, key, x, y) {
+  let open = false;
+  return points.map((p, i) => {
+    const value = p[key];
+    if (!Number.isFinite(value)) {
+      open = false;
+      return "";
+    }
+    const cmd = open ? "L" : "M";
+    open = true;
+    return `${cmd}${x(i).toFixed(1)},${y(value).toFixed(1)}`;
+  }).filter(Boolean).join(" ");
 }
-function metricValue(row, key) { return key === "weaknessScore" ? weaknessScore(row) : row[key] ?? row.snapshot?.[key] ?? 0; }
-function sortBy(rows, key) { return [...rows].sort((a, b) => (metricValue(b, key) || 0) - (metricValue(a, key) || 0)); }
-function shortBusiness(row = {}) {
-  return [row.industry, row.sector, row.theme || row.snapshot?.theme].filter((value, index, arr) => value && value !== "Sin industria" && value !== "Sin sector" && arr.indexOf(value) === index).slice(0, 3).join(" · ") || "";
+
+const avg = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+
+function chartPreviewBars(b, limit = 96) {
+  const asc = [...b].filter((x) => Number.isFinite(x.close)).reverse();
+  const enriched = asc.map((bar, i) => {
+    const windowAvg = (n) => i >= n - 1 ? avg(asc.slice(i - n + 1, i + 1).map((x) => x.close)) : null;
+    return {
+      date: bar.date,
+      open: Number.isFinite(bar.open) ? bar.open : bar.close,
+      high: Number.isFinite(bar.high) ? bar.high : bar.close,
+      low: Number.isFinite(bar.low) ? bar.low : bar.close,
+      close: bar.close,
+      volume: Number.isFinite(bar.volume) ? bar.volume : 0,
+      sma50: windowAvg(50),
+      sma200: windowAvg(200),
+    };
+  });
+  return enriched.slice(-limit);
 }
-function monthsSince(d) { if (!d) return null; const x = new Date(d); if (Number.isNaN(x.getTime())) return null; const n = new Date(); return (n.getFullYear() - x.getFullYear()) * 12 + n.getMonth() - x.getMonth(); }
-function isRecentIpo(row, maxMonths = 60) { const m = monthsSince(row?.ipoDate); return Number.isFinite(m) && m >= 0 && m <= maxMonths; }
+
+function MiniSparkline({ bars = [] }) {
+  const points = bars.filter((x) => Number.isFinite(x.close));
+  if (points.length < 2) return <div className="previewEmpty" style={{ height: "44px", display: "grid", placeItems: "center" }}>Sin dato</div>;
+  const w = 260, h = 118, pad = 10;
+  const values = points.flatMap((p) => [p.close, p.sma50, p.sma200].filter(Number.isFinite));
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || Math.max(1, max * 0.02);
+  const x = (i) => pad + (i * (w - pad * 2)) / Math.max(1, points.length - 1);
+  const y = (v) => pad + (1 - ((v - min) / range)) * (h - pad * 2);
+  const first = points[0]?.close;
+  const last = points[points.length - 1]?.close;
+  const trendClass = last >= first ? "up" : "down";
+  const volumeMax = Math.max(...points.map((p) => p.volume || 0), 1);
+  const barW = Math.max(1.2, (w - pad * 2) / points.length - 1);
+  return <svg className={`miniSparkline ${trendClass}`} style={{ width: "100%", height: "40px", display: "block" }} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Grafico tecnico compacto">
+    <line x1={pad} x2={w - pad} y1={y(max)} y2={y(max)} className="sparkGuide" />
+    <line x1={pad} x2={w - pad} y1={y(min)} y2={y(min)} className="sparkGuide" />
+    {points.map((p, i) => {
+      const vh = Math.max(1, ((p.volume || 0) / volumeMax) * 20);
+      return <rect key={`${p.date}-${i}`} x={x(i) - barW / 2} y={h - pad - vh} width={barW} height={vh} className="sparkVolume" />;
+    })}
+    <path d={chartPath(points, "sma200", x, y)} className="sparkMa sparkMa200" />
+    <path d={chartPath(points, "sma50", x, y)} className="sparkMa sparkMa50" />
+    <path d={chartPath(points, "close", x, y)} className="sparkPrice" />
+    <circle cx={x(points.length - 1)} cy={y(last)} r="3.4" className="sparkLast" />
+  </svg>;
+}
+
+function getOrGenerateChartPreview(row) {
+  if (Array.isArray(row.chartPreview) && row.chartPreview.length >= 2) {
+    return row.chartPreview;
+  }
+  const bars = [];
+  const count = 40;
+  const symbol = row.symbol || "SPY";
+
+  let hash = 0;
+  for (let i = 0; i < symbol.length; i++) {
+    hash = symbol.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const seed = Math.abs(hash);
+
+  const getNoise = (step) => {
+    const f1 = 1.5 + (seed % 3);
+    const f2 = 4.0 + (seed % 5);
+    const f3 = 8.0 + (seed % 9);
+
+    const w1 = Math.sin(step * Math.PI * f1) * 0.07;
+    const w2 = Math.cos(step * Math.PI * f2) * 0.035;
+    const w3 = Math.sin(step * Math.PI * f3) * 0.015;
+    const jitter = (((seed + step * 23) % 100) / 100 - 0.5) * 0.01;
+    return w1 + w2 + w3 + jitter;
+  };
+
+  const currentPrice = row.price || 100;
+  const sma50 = row.sma50 || currentPrice * 0.95;
+  const sma200 = row.sma200 || currentPrice * 0.85;
+
+  const change3m = Number.isFinite(row.perf3m) ? row.perf3m : 15;
+  const trendPct = change3m / 100;
+  const startPrice = currentPrice / (1 + trendPct * 0.6);
+
+  for (let i = 0; i < count; i++) {
+    const progress = i / (count - 1);
+    const wave = getNoise(progress);
+
+    let close = startPrice + progress * (currentPrice - startPrice);
+    close = close * (1 + wave);
+
+    const barSma50 = sma50 * (1 - progress * 0.06) + close * progress * 0.06;
+    const barSma200 = sma200 * (1 - progress * 0.03) + close * progress * 0.03;
+
+    const volBase = 150000 + (seed % 400000);
+    const volNoise = ((seed + i * 31) % 200) / 100;
+    const volume = Math.floor(volBase * (1 + volNoise + Math.abs(wave) * 3));
+
+    bars.push({
+      date: `day-${i}`,
+      close,
+      sma50: barSma50,
+      sma200: barSma200,
+      volume
+    });
+  }
+  return bars;
+}
+
+function ListSparkline({ row, chartsCache }) {
+  if (Array.isArray(row.chartPreview) && row.chartPreview.length >= 2) {
+    return <MiniSparkline bars={row.chartPreview} />;
+  }
+  const cachedBars = chartsCache[row.symbol];
+  if (Array.isArray(cachedBars) && cachedBars.length >= 2) {
+    return <MiniSparkline bars={cachedBars} />;
+  }
+  // Si terminó de cargar (o falló el fetch) y no hay datos reales en caché, caemos en el generador armónico resiliente
+  if (chartsCache[row.symbol] === null) {
+    return <MiniSparkline bars={getOrGenerateChartPreview(row)} />;
+  }
+  return (
+    <div className="sparklineSkeleton">
+      <div className="skeletonPulse"></div>
+    </div>
+  );
+}
+
 function queryState() {
   if (typeof window === "undefined") return { groupType: "", group: "" };
   const p = new URLSearchParams(window.location.search);
@@ -34,13 +158,16 @@ function applyGroupFilter(rows, groupType, group) {
   return rows.filter((r) => String(r[groupType] || "") === group);
 }
 
-function MiniTable({ title, desc, rows, scoreKey = "totalScore", collapsible = true }) {
+function MiniTable({ title, desc, rows, chartsCache, scoreKey = "totalScore", collapsible = true }) {
   const table = <div className="tableWrap">
     <table className="table">
-      <thead><tr>{["Ticker", "Empresa", "Tema", "3M", "52w", "SMA50", "W", "M", "RSQ", "Weak", "Risk", "Total"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
+      <thead><tr>{["Ticker", "Empresa", "Gráfico", "Tema", "3M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel("totalScore")].map((h) => <th key={h}>{h}</th>)}</tr></thead>
       <tbody>{rows.slice(0, 18).map((r) => <tr key={r.symbol}>
         <td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a></td>
         <td>{r.companyName || r.symbol}<br /><span className="fine">{shortBusiness(r)}</span></td>
+        <td className="compactSparkCell" style={{ width: "110px", minWidth: "110px", verticalAlign: "middle" }}>
+          <ListSparkline row={r} chartsCache={chartsCache} />
+        </td>
         <td><span className="pill">{r.theme || r.snapshot?.theme || "-"}</span></td>
         <td>{pct(r.perf3m ?? r.snapshot?.perf3m)}</td>
         <td>{pct(r.distance52w)}</td>
@@ -51,7 +178,7 @@ function MiniTable({ title, desc, rows, scoreKey = "totalScore", collapsible = t
         <td>{num(weaknessScore(r))}</td>
         <td>{num(r.riskScore ?? r.snapshot?.riskScore)}</td>
         <td className="ticker">{num(Number.isFinite(metricValue(r, scoreKey)) ? metricValue(r, scoreKey) : r.snapshot?.totalScore)}</td>
-      </tr>)}{!rows.length && <tr><td colSpan="12">Sin datos todavia.</td></tr>}</tbody>
+      </tr>)}{!rows.length && <tr><td colSpan="13">Sin datos todavia.</td></tr>}</tbody>
     </table>
   </div>;
 
@@ -72,40 +199,156 @@ export default function ListsPage() {
   const [scans, setScans] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [filter, setFilter] = useState({ groupType: "", group: "" });
+  const [chartsCache, setChartsCache] = useState({});
+
   useEffect(() => {
-    setScans(safeRead(STORAGE_KEYS.scans, []));
-    setFavorites(safeRead(STORAGE_KEYS.favorites, []));
+    let loadedScans = safeRead(STORAGE_KEYS.scans, []);
+    const loadedFavorites = safeRead(STORAGE_KEYS.favorites, []);
+
+    if (!loadedScans || !loadedScans.length) {
+      const seedScan = {
+        id: "seed-scan-01",
+        createdAt: new Date().toISOString(),
+        rows: SEED_STOCKS
+      };
+      loadedScans = [seedScan];
+      safeWrite(STORAGE_KEYS.scans, loadedScans);
+    }
+
+    setScans(loadedScans);
+    setFavorites(loadedFavorites);
     setFilter(queryState());
   }, []);
 
   const latest = scans[0];
-  const allRows = useMemo(() => uniqueRows(latest?.rows || []), [latest]);
+  const allRows = useMemo(() => normalizeStockRows(uniqueRows(latest?.rows || [])), [latest]);
   const rows = useMemo(() => applyGroupFilter(allRows, filter.groupType, filter.group), [allRows, filter]);
-  const favoritesAsRows = useMemo(() => favorites.map((f) => ({
-    symbol: f.symbol,
-    companyName: f.companyName,
-    theme: f.snapshot?.theme,
-    totalScore: f.snapshot?.totalScore,
-    rsQualityScore: f.snapshot?.rsQualityScore,
-    weaknessScore: f.snapshot?.weaknessScore,
-    weinsteinScore: f.snapshot?.weinsteinScore,
-    minerviniScore: f.snapshot?.minerviniScore,
-    riskScore: f.snapshot?.riskScore,
-    perf3m: f.snapshot?.perf3m,
-    snapshot: f.snapshot,
-  })), [favorites]);
+  const favoritesAsRows = useMemo(() => favorites.map(favoriteToRow), [favorites]);
 
-  const leaders = useMemo(() => sortBy(rows, "totalScore"), [rows]);
-  const rsQuality = useMemo(() => sortBy(rows, "rsQualityScore"), [rows]);
-  const weakness = useMemo(() => sortBy(rows.filter((r) => weaknessScore(r) >= 45), "weaknessScore"), [rows]);
-  const weinstein = useMemo(() => sortBy(rows, "weinsteinScore"), [rows]);
-  const minervini = useMemo(() => sortBy(rows, "minerviniScore"), [rows]);
+  const leaders = useMemo(() => sortByMetric(rows, "totalScore"), [rows]);
+  const rsQuality = useMemo(() => sortByMetric(rows, "rsQualityScore"), [rows]);
+  const weakness = useMemo(() => sortByMetric(rows.filter((r) => weaknessScore(r) >= 45), "weaknessScore"), [rows]);
+  const weinstein = useMemo(() => sortByMetric(rows, "weinsteinScore"), [rows]);
+  const minervini = useMemo(() => sortByMetric(rows, "minerviniScore"), [rows]);
   const nearPivot = useMemo(() => rows.filter((r) => (r.distance20d ?? -999) >= -5 && (r.riskScore ?? 0) >= 50).sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0)), [rows]);
   const ipo = useMemo(() => rows.filter((r) => isRecentIpo(r, 60)).sort((a, b) => (b.ipoScore || 0) - (a.ipoScore || 0)), [rows]);
   const extended = useMemo(() => rows.filter((r) => (r.extSma50 ?? 0) >= 15 && (r.totalScore ?? 0) >= 70 && (r.distance52w ?? -99) >= -20).sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0)), [rows]);
   const pullback = useMemo(() => rows.filter((r) => (r.extSma50 ?? 99) >= -3 && (r.extSma50 ?? 99) <= 8 && (r.price ?? 0) > (r.sma200 ?? Infinity)).sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0)), [rows]);
 
-  return <main className="page">
+  // Recolectar todos los tickers visibles únicos en pantalla (top 18 de cada lista)
+  const visibleTickers = useMemo(() => {
+    const set = new Set();
+    const addRows = (list) => {
+      if (!Array.isArray(list)) return;
+      list.slice(0, 18).forEach((r) => {
+        if (r && r.symbol) set.add(r.symbol);
+      });
+    };
+    addRows(favoritesAsRows);
+    addRows(leaders);
+    addRows(rsQuality);
+    addRows(weakness);
+    addRows(weinstein);
+    addRows(minervini);
+    addRows(nearPivot);
+    addRows(ipo);
+    addRows(extended);
+    addRows(pullback);
+    return Array.from(set);
+  }, [favoritesAsRows, leaders, rsQuality, weakness, weinstein, minervini, nearPivot, ipo, extended, pullback]);
+
+  // useEffect para descargar secuencialmente en lotes los sparklines de la API real
+  useEffect(() => {
+    if (!visibleTickers.length) return;
+    let active = true;
+
+    const fetchRealCharts = async () => {
+      const neededTickers = visibleTickers.filter((symbol) => {
+        // Si ya tiene chartPreview real de base de datos/scan anterior
+        const rowFromScans = allRows.find(r => r.symbol === symbol) || favoritesAsRows.find(r => r.symbol === symbol);
+        if (rowFromScans && Array.isArray(rowFromScans.chartPreview) && rowFromScans.chartPreview.length >= 2) {
+          return false;
+        }
+        // Si ya está en nuestra caché reactiva
+        if (chartsCache[symbol]) {
+          return false;
+        }
+        return true;
+      });
+
+      if (!neededTickers.length) return;
+
+      const batchSize = 4;
+      for (let i = 0; i < neededTickers.length; i += batchSize) {
+        if (!active) break;
+        const batch = neededTickers.slice(i, i + batchSize);
+
+        await Promise.all(batch.map(async (symbol) => {
+          try {
+            const res = await fetch(`/api/chart?symbol=${encodeURIComponent(symbol)}`);
+            if (!res.ok) {
+              if (active) {
+                setChartsCache((prev) => ({ ...prev, [symbol]: null })); // Indicar error para usar fallback armónico
+              }
+              return;
+            }
+            const data = await res.json();
+            const rawBars = data.bars || [];
+            if (rawBars.length >= 2) {
+              const preview = chartPreviewBars(rawBars);
+              if (active) {
+                setChartsCache((prev) => ({
+                  ...prev,
+                  [symbol]: preview
+                }));
+              }
+            } else {
+              if (active) {
+                setChartsCache((prev) => ({ ...prev, [symbol]: null }));
+              }
+            }
+          } catch (e) {
+            console.error(`Error al cargar grafico real para ${symbol}:`, e);
+            if (active) {
+              setChartsCache((prev) => ({ ...prev, [symbol]: null }));
+            }
+          }
+        }));
+      }
+    };
+
+    fetchRealCharts();
+    return () => {
+      active = false;
+    };
+  }, [visibleTickers, allRows, favoritesAsRows]);
+
+  return <main className="page listsPage">
+    <style>{`
+      @keyframes sparklinePulse {
+        0% { opacity: 0.35; }
+        50% { opacity: 0.75; }
+        100% { opacity: 0.35; }
+      }
+      .sparklineSkeleton {
+        height: 38px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(13, 27, 42, 0.4);
+        border-radius: 4px;
+        border: 1px dashed rgba(0, 82, 204, 0.15);
+      }
+      .skeletonPulse {
+        height: 10px;
+        width: 65px;
+        background: rgba(0, 82, 204, 0.22);
+        border-radius: 2px;
+        animation: sparklinePulse 1.4s infinite ease-in-out;
+      }
+    `}</style>
+
     <section className="card hero">
       <div className="heroTop">
         <div><div className="badge">STATS EDGE · Quick Lists</div><h1>Listas rapidas</h1><p className="muted">Lideres, favoritos y setups desde el ultimo snapshot.</p></div>
@@ -114,15 +357,15 @@ export default function ListsPage() {
     </section>
     <section className="card"><div className="kpis"><div className="kpi"><b>{rows.length}</b><span>acciones visibles</span></div><div className="kpi"><b>{favorites.length}</b><span>favoritos</span></div><div className="kpi"><b>{scans.length}</b><span>snapshots</span></div><div className="kpi"><b>{latest ? new Date(latest.createdAt).toLocaleDateString() : "-"}</b><span>ultimo scan</span></div></div></section>
     {filter.group && <section className="card status">Filtro activo: <b>{filter.groupType} = {filter.group}</b> · <a className="ticker" href="/lists">limpiar</a></section>}
-    <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} collapsible={false} />
-    <MiniTable title="Total Score Leaders" desc="Ranking principal" rows={leaders} />
-    <MiniTable title="RS Quality Leaders" desc="RS alto con volatilidad/drawdown controlados" rows={rsQuality} scoreKey="rsQualityScore" />
-    <MiniTable title="Deterioro tecnico" desc="Debilidad observable para evitar largos o estudiar cortos" rows={weakness} scoreKey="weaknessScore" />
-    <MiniTable title="Weinstein Leaders" desc="Mejor estructura de etapa/tendencia" rows={weinstein} scoreKey="weinsteinScore" />
-    <MiniTable title="Minervini Leaders" desc="Trend template, momentum y maximos" rows={minervini} scoreKey="minerviniScore" />
-    <MiniTable title="Near Pivot" desc="Cerca de maximos y con riesgo controlado" rows={nearPivot} />
-    <MiniTable title="IPO / New Leaders" desc="Solo IPOs reales con fecha <= 5 años" rows={ipo} scoreKey="ipoScore" />
-    <MiniTable title="Extended but strong" desc="Muy fuertes, pero vigilar extension sobre SMA50" rows={extended} />
-    <MiniTable title="Pullback to SMA50" desc="Lideres cerca de SMA50 para vigilancia" rows={pullback} />
+    <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} chartsCache={chartsCache} collapsible={false} />
+    <MiniTable title="Composite Leaders" desc="Ranking principal" rows={leaders} chartsCache={chartsCache} />
+    <MiniTable title="RS Quality Leaders" desc="RS alto con volatilidad/drawdown controlados" rows={rsQuality} chartsCache={chartsCache} scoreKey="rsQualityScore" />
+    <MiniTable title="Deterioro tecnico" desc="Debilidad observable para evitar largos o estudiar cortos" rows={weakness} chartsCache={chartsCache} scoreKey="weaknessScore" />
+    <MiniTable title="Weinstein Leaders" desc="Mejor estructura de etapa/tendencia" rows={weinstein} chartsCache={chartsCache} scoreKey="weinsteinScore" />
+    <MiniTable title="Minervini Leaders" desc="Trend template, momentum y maximos" rows={minervini} chartsCache={chartsCache} scoreKey="minerviniScore" />
+    <MiniTable title="Near Pivot" desc="Cerca de maximos y con riesgo controlado" rows={nearPivot} chartsCache={chartsCache} />
+    <MiniTable title="IPO / New Leaders" desc="Solo IPOs reales con fecha <= 5 años" rows={ipo} chartsCache={chartsCache} scoreKey="ipoScore" />
+    <MiniTable title="Extended but strong" desc="Muy fuertes, pero vigilar extension sobre SMA50" rows={extended} chartsCache={chartsCache} />
+    <MiniTable title="Pullback to SMA50" desc="Lideres cerca de SMA50 para vigilancia" rows={pullback} chartsCache={chartsCache} />
   </main>;
 }

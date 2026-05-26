@@ -32,7 +32,7 @@ Use this file as the visual contract for StatsEdge / Global Tape UI work.
 Default table columns should stay close to:
 
 ```text
-Ticker | Chart | Price | Stage | RS Universo | RS Grupo | Setup | Demand | Risk | Composite
+Ticker | Chart | Price | Stage | RS | RS Grupo | Setup | Demand | Risk | Composite
 ```
 
 Advanced metrics belong in row details, hover panels, modals, CSV, or advanced filter groups.

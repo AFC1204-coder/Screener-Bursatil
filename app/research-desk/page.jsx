@@ -3,8 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { deleteFavoriteFromCloud, deleteScanFromCloud, getAlertsFromCloud, getCloudStatus, mergeByKey, pullCloudState, pushCloudState, resolveAlertInCloud, syncAlertsToCloud, syncFavoriteToCloud, syncFavoritesToCloud, syncScanToCloud } from "@/lib/cloudSyncClient";
 import { num, pct } from "@/lib/formatters";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { metricShortLabel } from "@/lib/metricCatalog";
 import { activeAlerts, alertSummary, alertsFromScan, mergeAlerts, resolveAlert } from "@/lib/methodologyAlerts";
-import { checklistForRow, compactMethodologySnapshot, enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
+import { checklistForRow, enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
+import { createFavoriteFromRow, shortBusiness } from "@/lib/stockRows";
 import { benchmarkForFavorite, externalLinks, stockUrl } from "@/lib/symbols";
 
 function uid() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
@@ -14,9 +16,6 @@ function InfoHint({ text, tone = "" }) {
     <span>i</span>
     <em>{text}</em>
   </span>;
-}
-function shortBusiness(row = {}) {
-  return [row.industry, row.sector, row.theme].filter((value, index, arr) => value && value !== "Sin industria" && value !== "Sin sector" && arr.indexOf(value) === index).slice(0, 3).join(" · ") || row.source || "";
 }
 function sortScans(rows = []) {
   return [...rows].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
@@ -55,57 +54,6 @@ async function quoteWithBars(symbol) {
   if (!bars.length) throw new Error("Sin dato");
   return { symbol, bars, price: bars[0].close, lastDate: bars[0].date, state: stateFromBars(bars) };
 }
-function favoriteFromRow(row, scan, market) {
-  const methodologySnapshot = compactMethodologySnapshot(row);
-  return {
-    id: uid(),
-    symbol: row.symbol,
-    companyName: row.companyName || row.symbol,
-    country: row.country,
-    sector: row.sector,
-    industry: row.industry,
-    addedAt: new Date().toISOString(),
-    entryPrice: Number.isFinite(row.price) ? row.price : null,
-    lastPrice: Number.isFinite(row.price) ? row.price : null,
-    lastDate: row.lastDate || null,
-    source: "scan",
-    notes: "",
-    marketScore: scan?.marketScore ?? market?.marketScore ?? null,
-    marketRegime: scan?.marketRegime || market?.regime?.label || "sin dato",
-    snapshot: {
-      ...methodologySnapshot,
-      totalScore: row.totalScore,
-      weinsteinScore: row.weinsteinScore,
-      minerviniScore: row.minerviniScore,
-      momentumScore: row.momentumScore,
-      riskScore: row.riskScore,
-      rsQualityScore: row.rsQualityScore,
-      speculationRiskScore: row.speculationRiskScore,
-      rsQualityLabel: row.rsQualityLabel,
-      weaknessScore: row.weaknessScore,
-      weaknessLabel: row.weaknessLabel,
-      weaknessReasons: row.weaknessReasons || [],
-      sectorScore: row.sectorScore,
-      riskState: methodologySnapshot.riskState,
-      dataQualityState: methodologySnapshot.dataQualityState,
-      price: row.price,
-      sma50: row.sma50,
-      sma150: row.sma150,
-      sma200: row.sma200,
-      sma200Slope: row.sma200Slope,
-      distance20d: row.distance20d,
-      distance52w: row.distance52w,
-      extSma50: row.extSma50,
-      highsSpreadPct: row.highsSpreadPct,
-      perf3m: row.perf3m,
-      perf6m: row.perf6m,
-      perf12m: row.perf12m,
-      theme: row.theme,
-      businessEs: row.businessEs,
-    },
-  };
-}
-
 export default function ResearchDesk() {
   const [scans, setScans] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -271,7 +219,7 @@ export default function ResearchDesk() {
       setStatus(`${row.symbol} ya esta en favoritos`);
       return;
     }
-    const fav = favoriteFromRow(row, selectedScan, market);
+    const fav = createFavoriteFromRow(row, { source: "scan", scan: selectedScan, market });
     persistFavs([fav, ...favorites]);
     setStatus(`${row.symbol} anadido a favoritos`);
     syncFavoriteToCloud(fav).then((result) => {
@@ -381,7 +329,7 @@ export default function ResearchDesk() {
   return <main className="page">
     <section className="card hero">
       <div className="heroTop">
-        <div><div className="badge">STATS EDGE · Research Desk</div><h1>Registro y favoritos</h1><p className="muted">Snapshots, watchlist, notas y seguimiento local-first.</p></div>
+        <div><div className="badge">STAGE RADAR · Research Desk</div><h1>Registro y favoritos</h1><p className="muted">Snapshots, watchlist, notas y seguimiento local-first.</p></div>
         <div className="mobileActions"><a className="btn" href="/">Screener</a><a className="btn" href="/review?source=favorites">Vista favoritos</a><a className="btn" href="/lists">Listas</a><a className="btn" href="/ipo-radar">IPO Radar</a><a className="btn" href="/market-health">Salud mercado</a><button className="btn btnPrimary" onClick={refreshFavorites} disabled={loading}>{loading ? "Actualizando..." : "Actualizar favoritos"}</button></div>
       </div>
     </section>
@@ -406,7 +354,7 @@ export default function ResearchDesk() {
           <button className="btn" onClick={loadMarket}>Actualizar benchmark</button>
           <button className="btn btnPrimary" onClick={importLatestScan}>Importar ultimo scan</button>
           <button className="btn" onClick={importManualSnapshot}>Snapshot manual</button>
-          <button className="btn" onClick={() => exportJson("statsedge-backup.json", { scans, favorites, exportedAt: new Date().toISOString() })}>Exportar backup</button>
+          <button className="btn" onClick={() => exportJson("stageradar-backup.json", { scans, favorites, exportedAt: new Date().toISOString() })}>Exportar backup</button>
           <button className="btn btnGhost" onClick={clearAll}>Borrar local</button>
         </div>
       </div>
@@ -444,7 +392,7 @@ export default function ResearchDesk() {
           <td className="ticker">{pct(f.alpha)}</td>
           <td>{f.currentState || "Sin dato"}</td>
           <td>{f.marketRegime || "-"}<br /><span className="fine">Score {num(f.marketScore)}</span></td>
-          <td>Tot {num(f.snapshot?.totalScore)} · RSQ {num(f.snapshot?.rsQualityScore)} · Weak {num(f.snapshot?.weaknessScore)} · W {num(f.snapshot?.weinsteinScore)}<br /><span className="fine">{checklist.map((item) => `${item.label}: ${item.status}`).join(" · ")}</span></td>
+          <td>{metricShortLabel("totalScore")} {num(f.snapshot?.totalScore)} · {metricShortLabel("rsQualityScore")} {num(f.snapshot?.rsQualityScore)} · {metricShortLabel("weaknessScore")} {num(f.snapshot?.weaknessScore)} · {metricShortLabel("weinsteinScore")} {num(f.snapshot?.weinsteinScore)}<br /><span className="fine">{checklist.map((item) => `${item.label}: ${item.status}`).join(" · ")}</span></td>
           <td><input className="input" value={f.notes || ""} onChange={(e) => persistFavs(favorites.map((x) => x.id === f.id ? { ...x, notes: e.target.value, updatedAt: new Date().toISOString() } : x))} onBlur={() => {
             const latest = safeRead(STORAGE_KEYS.favorites, []).find((item) => item.id === f.id || item.symbol === f.symbol);
             if (latest) syncFavoriteToCloud(latest);
@@ -459,7 +407,7 @@ export default function ResearchDesk() {
       <div className="card"><h2>Snapshot seleccionado</h2>{selectedScan ? <><div className="summaryRow"><span>{selectedScan.name}</span><span>{selectedRows.length} filas</span></div><div className="controls" style={{ marginTop: 10 }}><button className="btn" onClick={() => exportJson(`scan-${selectedScan.id}.json`, selectedScan)}>Exportar scan</button><button className="btn btnGhost" onClick={() => deleteScan(selectedScan.id)}>Eliminar scan</button><a className="btn" href="/review?source=latest">Vista rapida</a><a className="btn btnPrimary" href="/lists">Ver en listas</a></div></> : <p className="fine">Selecciona un snapshot del historial.</p>}</div>
     </section>
 
-    {selectedScan && <section className="card"><h2>Candidatas del snapshot</h2><div className="tableWrap"><table className="table"><thead><tr>{["★", "Ticker", "Empresa", "Tema", "Stage", "Cambios", "3M", "6M", "12M", "Weinstein", "Minervini", "RSQ", "Weak", "Risk", "Total", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{selectedRows.map((r) => <tr key={r.symbol}><td><button className="starBtn" onClick={() => favFromRow(r)}>★</button></td><td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a></td><td>{r.companyName}<br /><span className="fine">{shortBusiness(r)}</span></td><td><span className="pill">{r.theme}</span></td><td>{r.stageLabel || r.methodology?.stageState?.label || "-"}</td><td>{(r.methodologyEvents || []).slice(0, 2).map((event) => event.label).join(" · ") || "-"}</td><td>{pct(r.perf3m)}</td><td>{pct(r.perf6m)}</td><td>{pct(r.perf12m)}</td><td>{num(r.weinsteinScore)}</td><td>{num(r.minerviniScore)}</td><td>{num(r.rsQualityScore)}</td><td>{num(r.weaknessScore)}</td><td>{num(r.riskScore)}</td><td className="ticker">{num(r.totalScore)}</td><td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(r.symbol)}>Ficha</a><a className="btn btnSmall" href={externalLinks(r.symbol).tradingView} target="_blank" rel="noreferrer">TV</a></div></td></tr>)}</tbody></table></div></section>}
+    {selectedScan && <section className="card"><h2>Candidatas del snapshot</h2><div className="tableWrap"><table className="table"><thead><tr>{["★", "Ticker", "Empresa", "Tema", metricShortLabel("stage"), "Cambios", "3M", "6M", "12M", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel("totalScore"), "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{selectedRows.map((r) => <tr key={r.symbol}><td><button className="starBtn" onClick={() => favFromRow(r)}>★</button></td><td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a></td><td>{r.companyName}<br /><span className="fine">{shortBusiness(r)}</span></td><td><span className="pill">{r.theme}</span></td><td>{r.stageLabel || r.methodology?.stageState?.label || "-"}</td><td>{(r.methodologyEvents || []).slice(0, 2).map((event) => event.label).join(" · ") || "-"}</td><td>{pct(r.perf3m)}</td><td>{pct(r.perf6m)}</td><td>{pct(r.perf12m)}</td><td>{num(r.weinsteinScore)}</td><td>{num(r.minerviniScore)}</td><td>{num(r.rsQualityScore)}</td><td>{num(r.weaknessScore)}</td><td>{num(r.riskScore)}</td><td className="ticker">{num(r.totalScore)}</td><td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(r.symbol)}>Ficha</a><a className="btn btnSmall" href={externalLinks(r.symbol).tradingView} target="_blank" rel="noreferrer">TV</a></div></td></tr>)}</tbody></table></div></section>}
 
     <footer className="card footer">Local-first con sincronizacion opcional.</footer>
   </main>;

@@ -36,8 +36,10 @@ const COUNTRIES = [
   ["TW", "Taiwan"],
   ["KR", "Corea del Sur"],
   ["IN", "India"],
+  ["IL", "Israel"],
   ["CN", "China"],
   ["AU", "Australia"],
+  ["ZA", "Sudafrica"],
   ["BR", "Brasil"],
   ["MX", "Mexico"],
 ];
@@ -222,7 +224,7 @@ export default function IpoRadarPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "statsedge-ipo-radar.json";
+    a.download = "stageradar-ipo-radar.json";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -265,7 +267,7 @@ export default function IpoRadarPage() {
       return;
     }
     due.slice(0, 5).forEach((item) => {
-      new Notification(`StatsEdge IPO: ${item.companyName || item.symbol}`, {
+      new Notification(`StageRadar IPO: ${item.companyName || item.symbol}`, {
         body: `${STATUS_LABELS[item.status] || item.status} · ${dateLabel(alertDate(item))}`,
       });
     });
@@ -278,7 +280,7 @@ export default function IpoRadarPage() {
     <section className="card hero ipoHero">
       <div className="heroTop">
         <div>
-          <div className="badge">STATS EDGE · IPO RADAR</div>
+          <div className="badge">STAGE RADAR · IPO RADAR</div>
           <h1>Radar de IPOs</h1>
           <p className="muted">Lista local de candidatas pre-IPO, fechas estimadas y tickers que entraran al screener cuando empiecen a cotizar.</p>
         </div>

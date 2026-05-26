@@ -52,7 +52,7 @@ function deteriorationReasons(row = {}) {
   if (rowWeakness(row) >= 65) reasons.push("Deterioro alto");
   const rsUniverse = rowRsUniverse(row);
   const rsBenchmark = rowRsBenchmark(row);
-  if (Number.isFinite(rsUniverse) && rsUniverse < 40) reasons.push("RS Universo débil");
+  if (Number.isFinite(rsUniverse) && rsUniverse < 40) reasons.push("RS débil");
   else if (!Number.isFinite(rsUniverse) && Number.isFinite(rsBenchmark) && rsBenchmark < 45) reasons.push("RS Bench bajo");
   if (Number.isFinite(row.price) && Number.isFinite(row.sma50) && row.price < row.sma50) reasons.push("Bajo SMA50");
   if (Number.isFinite(row.price) && Number.isFinite(row.sma200) && row.price < row.sma200) reasons.push("Bajo SMA200");
@@ -130,49 +130,280 @@ function NewsSentimentIndex({ news, title = "News sentiment tape", sampleLabel =
   const dominant = news?.dominantSentiment || "neutral";
   const markerLeft = `${pessimism}%`;
 
-  return <div className="newsMoodPanel">
-    <div className="newsMoodTop">
+  return <div className="newsMoodPanel" style={{
+    background: "linear-gradient(180deg, #0d0d11 0%, #060608 100%)",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
+    borderRadius: "10px",
+    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.03)",
+    padding: "20px",
+    marginBottom: "16px"
+  }}>
+    <div className="newsMoodTop" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: "14px", alignItems: "center" }}>
       <div>
-        <span className="eyebrow">{title}</span>
-        <h3>{news?.regime || "Sin regimen de titulares"}</h3>
-        <p>{total ? `${total} ${sampleLabel} · dominante: ${dominant}.` : `Sin muestra suficiente.`}</p>
+        <span className="eyebrow" style={{ display: "block", color: "var(--muted)", fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.1em" }}>{title}</span>
+        <h3 style={{ margin: "6px 0 4px 0", color: "#ffffff", fontSize: "24px", fontWeight: "700" }}>{news?.regime || "Sin regimen de titulares"}</h3>
+        <p style={{ margin: 0, color: "var(--muted)", fontSize: "12px" }}>{total ? `${total} ${sampleLabel} · dominante: ${dominant}.` : `Sin muestra suficiente.`}</p>
       </div>
-      <div className="moodDial" style={{ "--mood": pessimism }}>
-        <b>{num(pessimism)}</b>
-        <span>pesimismo</span>
+      <div className="moodDial" style={{
+        width: "96px",
+        height: "96px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: "50%",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        background: `radial-gradient(circle at center, #060608 0% 57%, transparent 58%), conic-gradient(from -90deg, #ef4444 0% ${pessimism}%, rgba(255, 255, 255, 0.08) ${pessimism}% 100%)`,
+        boxShadow: "0 0 15px rgba(239, 68, 68, 0.08)",
+        flexShrink: 0
+      }}>
+        <b style={{ fontSize: "26px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{num(pessimism)}</b>
+        <span style={{ fontSize: "9px", color: "rgba(235, 235, 242, 0.4)", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: "2px" }}>pesimismo</span>
       </div>
     </div>
 
-    <div className="sentimentBars" aria-label="Distribucion de titulares por sentimiento">
-      <span className="bearish" style={{ width: `${bearishPct}%` }} />
-      <span className="neutral" style={{ width: `${neutralPct}%` }} />
-      <span className="bullish" style={{ width: `${bullishPct}%` }} />
+    <div className="sentimentBars" style={{
+      display: "flex",
+      height: "16px",
+      margin: "18px 0 12px",
+      overflow: "hidden",
+      border: "1px solid rgba(255, 255, 255, 0.06)",
+      borderRadius: "6px",
+      background: "#09090b",
+      boxShadow: "inset 0 1px 3px rgba(0,0,0,0.6)"
+    }} aria-label="Distribucion de titulares por sentimiento">
+      <span className="bearish" style={{ width: `${bearishPct}%`, background: "linear-gradient(90deg, #ef4444, #f87171)", transition: "width 0.4s ease" }} />
+      <span className="neutral" style={{ width: `${neutralPct}%`, background: "linear-gradient(90deg, #4b5563, #9ca3af)", transition: "width 0.4s ease" }} />
+      <span className="bullish" style={{ width: `${bullishPct}%`, background: "linear-gradient(90deg, #10b981, #34d399)", transition: "width 0.4s ease" }} />
     </div>
 
-    <div className="sentimentLegend">
-      <span><i className="bearish" /> Bajistas <b>{pctShare(bearishPct)}</b></span>
-      <span><i className="neutral" /> Neutrales <b>{pctShare(neutralPct)}</b></span>
-      <span><i className="bullish" /> Alcistas <b>{pctShare(bullishPct)}</b></span>
+    <div className="sentimentLegend" style={{ display: "flex", flexWrap: "wrap", gap: "8px 14px", color: "var(--soft)", fontSize: "12px" }}>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><i className="bearish" style={{ width: "9px", height: "9px", borderRadius: "2px", background: "#ef4444" }} /> Bajistas <b style={{ color: "#ffffff" }}>{pctShare(bearishPct)}</b></span>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><i className="neutral" style={{ width: "9px", height: "9px", borderRadius: "2px", background: "#6b7280" }} /> Neutrales <b style={{ color: "#ffffff" }}>{pctShare(neutralPct)}</b></span>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><i className="bullish" style={{ width: "9px", height: "9px", borderRadius: "2px", background: "#10b981" }} /> Alcistas <b style={{ color: "#ffffff" }}>{pctShare(bullishPct)}</b></span>
     </div>
 
-    <div className="contrarianGauge">
-      <div className="gaugeTrack">
-        <i style={{ left: markerLeft }} />
+    <div className="contrarianGauge" style={{ marginTop: "18px" }}>
+      <div className="gaugeTrack" style={{
+        position: "relative",
+        height: "8px",
+        borderRadius: "999px",
+        background: "linear-gradient(90deg, #10b981 0%, #4b5563 50%, #ef4444 100%)",
+        boxShadow: "inset 0 1px 2px rgba(0,0,0,0.5)"
+      }}>
+        <i style={{
+          position: "absolute",
+          top: "50%",
+          left: markerLeft,
+          width: "16px",
+          height: "16px",
+          border: "2px solid #09090b",
+          borderRadius: "50%",
+          background: "#ffffff",
+          transform: "translate(-50%, -50%)",
+          boxShadow: "0 0 8px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.5)",
+          transition: "left 0.4s ease"
+        }} />
       </div>
-      <div className="gaugeLabels">
+      <div className="gaugeLabels" style={{ display: "flex", justifyContent: "space-between", marginTop: "7px", color: "var(--muted)", fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.08em" }}>
         <span>Euforia</span>
         <span>Neutral</span>
         <span>Pesimismo</span>
       </div>
     </div>
 
-    <div className="moodMetrics">
-      <span><b>{num(optimism)}</b><small>Índice optimismo</small></span>
-      <span><b>{pctShare(Math.abs(spread))}</b><small>{spread >= 0 ? "Ventaja alcista" : "Ventaja bajista"}</small></span>
-      <span><b>{Number.isFinite(news?.avgScore) ? news.avgScore.toFixed(1) : "-"}</b><small>{scoreLabel}</small></span>
+    <div className="moodMetrics" style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(3, 1fr)",
+      gap: "1px",
+      marginTop: "18px",
+      borderRadius: "6px",
+      overflow: "hidden",
+      border: "1px solid rgba(255,255,255,0.06)",
+      background: "rgba(255,255,255,0.02)"
+    }}>
+      <span style={{ display: "flex", flexDirection: "column", padding: "12px", background: "#0d0d11", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+        <b style={{ fontSize: "20px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{num(optimism)}</b>
+        <small style={{ fontSize: "10px", color: "rgba(235,235,242,0.4)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "4px" }}>Índice optimismo</small>
+      </span>
+      <span style={{ display: "flex", flexDirection: "column", padding: "12px", background: "#0d0d11", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+        <b style={{ fontSize: "20px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{pctShare(Math.abs(spread))}</b>
+        <small style={{ fontSize: "10px", color: "rgba(235,235,242,0.4)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "4px" }}>{spread >= 0 ? "Ventaja alcista" : "Ventaja bajista"}</small>
+      </span>
+      <span style={{ display: "flex", flexDirection: "column", padding: "12px", background: "#0d0d11" }}>
+        <b style={{ fontSize: "20px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{Number.isFinite(news?.avgScore) ? news.avgScore.toFixed(1) : "-"}</b>
+        <small style={{ fontSize: "10px", color: "rgba(235,235,242,0.4)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "4px" }}>{scoreLabel}</small>
+      </span>
     </div>
   </div>;
 }
+
+function GlobalRegionsPanel({ rows = [] }) {
+  const REGIONS = [
+    {
+      key: "US",
+      name: "Estados Unidos",
+      flag: "🇺🇸",
+      benchmark: "S&P 500 (SPY)",
+      countries: ["US"],
+    },
+    {
+      key: "EU",
+      name: "Europa",
+      flag: "🇪🇺",
+      benchmark: "Euro Stoxx 50 (FEZ)",
+      countries: ["ES", "DE", "FR", "NL", "CH", "SE", "IT", "BE", "PT", "AT", "IE", "GB"],
+    },
+    {
+      key: "AS",
+      name: "Asia / Pacífico",
+      flag: "🇯🇵",
+      benchmark: "Nikkei 225 (TSE)",
+      countries: ["JP", "HK", "SG", "TW", "KR", "CN", "AU"],
+    },
+    {
+      key: "Global",
+      name: "Global / Emergentes",
+      flag: "🌐",
+      benchmark: "MSCI ACWI (ACWI)",
+      countries: [],
+    }
+  ];
+
+  const regionCards = REGIONS.map((region) => {
+    let filtered = [];
+    if (region.key === "Global") {
+      const otherCountries = new Set([
+        ...REGIONS[0].countries,
+        ...REGIONS[1].countries,
+        ...REGIONS[2].countries
+      ]);
+      filtered = rows.filter((r) => {
+        const code = r.country || "US";
+        return !otherCountries.has(code);
+      });
+    } else {
+      filtered = rows.filter((r) => region.countries.includes(r.country || "US"));
+    }
+
+    const total = filtered.length;
+    const above50 = filtered.filter((r) => (r.extSma50 ?? 0) >= 0).length;
+    const amplitudePct = total ? (above50 / total) * 100 : 0;
+    const validRs = filtered.map((r) => rowRsPrimary(r)).filter(Number.isFinite);
+    const avgRs = validRs.length ? validRs.reduce((s, v) => s + v, 0) / validRs.length : 50;
+
+    const leaders = [...filtered]
+      .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
+      .slice(0, 3);
+
+    let rsLabel = "Neutral";
+    let rsClass = "neutral";
+    if (avgRs >= 80) {
+      rsLabel = "Fuerte";
+      rsClass = "bullish";
+    } else if (avgRs <= 45) {
+      rsLabel = "Débil";
+      rsClass = "bearish";
+    }
+
+    return (
+      <div className="card regionCard" key={region.key} style={{
+        background: "linear-gradient(180deg, #0e0e12 0%, #060609 100%)",
+        border: "1px solid rgba(255, 255, 255, 0.06)",
+        borderRadius: "10px",
+        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.02)",
+        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+        padding: "20px",
+        position: "relative",
+        overflow: "hidden"
+      }}>
+        <div className="regionCardHead" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <div className="regionTitleWrap" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span className="regionFlag" style={{ fontSize: "24px" }}>{region.flag}</span>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "600", color: "#ebebf2" }}>{region.name}</h3>
+              <span className="fine muted" style={{ fontSize: "11px", color: "rgba(235, 235, 242, 0.45)" }}>{region.benchmark}</span>
+            </div>
+          </div>
+          <span className={`sentimentPill ${rsClass}`} style={{ fontSize: "11px", padding: "2px 8px" }}>{rsLabel}</span>
+        </div>
+
+        <div className="regionMetricsGrid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "14px", marginBottom: "14px" }}>
+          <div className="regionMetric" style={{ display: "flex", flexDirection: "column" }}>
+            <b style={{ fontSize: "18px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{pct(amplitudePct)}</b>
+            <span style={{ fontSize: "10px", color: "rgba(235,235,242,0.45)" }}>Amplitud (SMA50)</span>
+          </div>
+          <div className="regionMetric" style={{ display: "flex", flexDirection: "column" }}>
+            <b style={{ fontSize: "18px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{avgRs.toFixed(0)}</b>
+            <span style={{ fontSize: "10px", color: "rgba(235,235,242,0.45)" }}>RS Promedio</span>
+          </div>
+          <div className="regionMetric" style={{ display: "flex", flexDirection: "column" }}>
+            <b style={{ fontSize: "18px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{total}</b>
+            <span style={{ fontSize: "10px", color: "rgba(235,235,242,0.45)" }}>En snapshot</span>
+          </div>
+        </div>
+
+        <div className="regionLeadersSection">
+          <span className="eyebrow" style={{ display: "block", fontSize: "10px", fontWeight: "600", textTransform: "uppercase", color: "rgba(235,235,242,0.35)", letterSpacing: "0.05em", marginBottom: "8px" }}>Líderes de Mercado</span>
+          <div className="regionLeadersList" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {leaders.map((leader) => (
+              <a className="regionLeaderRow" href={stockUrl(leader.symbol)} key={leader.symbol} style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "8px 10px",
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.04)",
+                borderRadius: "6px",
+                textDecoration: "none",
+                transition: "all 0.2s ease",
+                cursor: "pointer"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(37, 99, 235, 0.08)";
+                e.currentTarget.style.borderColor = "rgba(37, 99, 235, 0.25)";
+                e.currentTarget.style.transform = "translateX(2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.02)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.04)";
+                e.currentTarget.style.transform = "none";
+              }}
+              >
+                <span className="leaderTickerWrap" style={{ display: "flex", flexDirection: "column", gap: "2px", maxWidth: "60%" }}>
+                  <b className="tickerLink" style={{ fontSize: "13px", color: "#2563eb" }}>{leader.symbol}</b>
+                  <small className="muted textTruncate" style={{ fontSize: "11px", color: "rgba(235, 235, 242, 0.45)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{leader.companyName || leader.symbol}</small>
+                </span>
+                <span className="leaderScoresWrap" style={{ display: "flex", gap: "10px" }}>
+                  <span className="leaderScore" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                    <small style={{ fontSize: "9px", color: "rgba(235,235,242,0.3)" }}>Comp</small>
+                    <b style={{ fontSize: "12px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{leader.totalScore?.toFixed(0) || "-"}</b>
+                  </span>
+                  <span className="leaderScore" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                    <small style={{ fontSize: "9px", color: "rgba(235,235,242,0.3)" }}>RS</small>
+                    <b style={{ fontSize: "12px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{rowRsPrimary(leader)?.toFixed(0) || "-"}</b>
+                  </span>
+                </span>
+              </a>
+            ))}
+            {!leaders.length && (
+              <p className="fine muted" style={{ textAlign: "center", padding: "8px 0", fontSize: "11px", color: "rgba(235,235,242,0.35)" }}>
+                Sin activos analizados en esta geografía.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  });
+
+  return (
+    <div className="grid grid2 globalRegionsGrid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
+      {regionCards}
+    </div>
+  );
+}
+
 
 function colorClass(color) {
   if (color === "green") return "btnActive";
@@ -232,7 +463,7 @@ export default function MarketHealthPage() {
   return <main className="page marketHealthPage">
     <section className="marketHealthHeader">
       <div>
-        <span className="eyebrow">StatsEdge · Market Health</span>
+        <span className="eyebrow">StageRadar · Market Health</span>
         <h1>Salud de mercado</h1>
         <p>Índices, sectores, titulares y liderazgo del último snapshot.</p>
       </div>
@@ -249,17 +480,136 @@ export default function MarketHealthPage() {
     </section>}
 
     {data && <>
-      <section className={`marketRegimePanel ${colorClass(data.regime?.color)}`}>
-        <div className="regimeLead">
-          <span>Régimen</span>
-          <strong>{data.regime?.label || "-"}</strong>
-          <p>{data.regime?.stance}</p>
+      <section className={`marketRegimePanel ${colorClass(data.regime?.color)}`} style={{
+        background: "linear-gradient(135deg, #0a0a0d 0%, #121217 100%)",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        borderLeft: `4px solid ${
+          data.regime?.color === "green" || data.regime?.color === "lime"
+            ? "#10b981"
+            : data.regime?.color === "amber"
+              ? "#f59e0b"
+              : data.regime?.color === "red"
+                ? "#ef4444"
+                : "#2563eb"
+        }`,
+        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.05)",
+        display: "grid",
+        gridTemplateColumns: "minmax(280px, .82fr) minmax(0, 1.18fr)",
+        gap: "1px",
+        overflow: "hidden",
+        borderRadius: "12px",
+        position: "relative",
+        marginBottom: "20px"
+      }}>
+        <div className="regimeLead" style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "24px",
+          padding: "24px 20px",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005))"
+        }}>
+          <div className="speedometer" style={{ width: "120px", height: "70px", position: "relative", flexShrink: 0 }}>
+            <svg viewBox="0 0 180 110" style={{ width: "100%", height: "100%" }}>
+              <defs>
+                <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#ef4444" />
+                  <stop offset="50%" stopColor="#f59e0b" />
+                  <stop offset="100%" stopColor="#10b981" />
+                </linearGradient>
+              </defs>
+              <path d="M 20,90 A 70,70 0 0,1 160,90" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="12" strokeLinecap="round" />
+              <path d="M 20,90 A 70,70 0 0,1 160,90" fill="none" stroke="url(#gaugeGradient)" strokeWidth="12" strokeLinecap="round" strokeDasharray="220" strokeDashoffset={220 - (Math.min(100, Math.max(0, data.marketScore ?? 50)) / 100) * 220} />
+              <g transform={`translate(90, 90) rotate(${(Math.min(100, Math.max(0, data.marketScore ?? 50)) / 100) * 180 - 90})`}>
+                <line x1="0" y1="0" x2="0" y2="-70" stroke="#2563eb" strokeWidth="5" strokeLinecap="round" filter="drop-shadow(0 0 4px rgba(37,99,235,0.6))" />
+                <circle cx="0" cy="0" r="8" fill="#ebebf2" />
+                <circle cx="0" cy="0" r="4" fill="#09090b" />
+              </g>
+              <text x="90" y="105" textAnchor="middle" fill="#ebebf2" fontSize="16" fontWeight="bold" fontFamily="'JetBrains Mono', monospace">{(data.marketScore ?? 50).toFixed(0)}</text>
+            </svg>
+          </div>
+          <div>
+            <span style={{
+              display: "block",
+              color: "var(--muted)",
+              fontSize: "10px",
+              fontWeight: "900",
+              letterSpacing: "0.13em",
+              textTransform: "uppercase"
+            }}>Régimen</span>
+            <strong style={{
+              display: "block",
+              marginTop: "4px",
+              color: "#ffffff",
+              fontSize: "26px",
+              fontWeight: "800",
+              lineHeight: "1.1",
+              letterSpacing: "-0.02em"
+            }}>{data.regime?.label || "-"}</strong>
+            <p style={{
+              margin: "6px 0 0 0",
+              color: "var(--soft)",
+              fontSize: "13px",
+              lineHeight: "1.45"
+            }}>{data.regime?.stance}</p>
+          </div>
         </div>
-        <div className="regimeMetrics">
-          <span><b>{num(data.marketScore)}</b><small>Market score</small></span>
-          <span><b>{pct(data.breadthProxy?.pctAbove50)}</b><small>SMA50</small></span>
-          <span><b>{pct(data.breadthProxy?.pctAbove200)}</b><small>SMA200</small></span>
-          <span><b>{data.breadthProxy?.indexes ?? "-"}</b><small>Índices</small></span>
+        <div className="regimeMetrics" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "1px", background: "rgba(255,255,255,0.06)" }}>
+          <span style={{
+            minHeight: "112px",
+            padding: "18px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.005))"
+          }}>
+            <b style={{ color: "#ffffff", fontSize: "32px", fontWeight: "800", letterSpacing: "-0.03em", fontFamily: "'JetBrains Mono', monospace" }}>{num(data.marketScore)}</b>
+            <small style={{ display: "block", color: "var(--muted)", fontSize: "10px", fontWeight: "900", letterSpacing: "0.13em", textTransform: "uppercase", marginTop: "2px" }}>Market score</small>
+            <div style={{ height: "4px", width: "100%", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden", marginTop: "8px" }}>
+              <div style={{ width: `${Math.min(100, Math.max(0, data.marketScore ?? 0))}%`, height: "100%", background: "linear-gradient(90deg, #ef4444, #10b981)", borderRadius: "2px" }} />
+            </div>
+          </span>
+          <span style={{
+            minHeight: "112px",
+            padding: "18px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.005))"
+          }}>
+            <b style={{ color: "#ffffff", fontSize: "32px", fontWeight: "800", letterSpacing: "-0.03em", fontFamily: "'JetBrains Mono', monospace" }}>{pct(data.breadthProxy?.pctAbove50)}</b>
+            <small style={{ display: "block", color: "var(--muted)", fontSize: "10px", fontWeight: "900", letterSpacing: "0.13em", textTransform: "uppercase", marginTop: "2px" }}>SMA50</small>
+            <div style={{ height: "4px", width: "100%", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden", marginTop: "8px" }}>
+              <div style={{ width: `${data.breadthProxy?.pctAbove50 || 0}%`, height: "100%", background: "#2563eb", borderRadius: "2px" }} />
+            </div>
+          </span>
+          <span style={{
+            minHeight: "112px",
+            padding: "18px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.005))"
+          }}>
+            <b style={{ color: "#ffffff", fontSize: "32px", fontWeight: "800", letterSpacing: "-0.03em", fontFamily: "'JetBrains Mono', monospace" }}>{pct(data.breadthProxy?.pctAbove200)}</b>
+            <small style={{ display: "block", color: "var(--muted)", fontSize: "10px", fontWeight: "900", letterSpacing: "0.13em", textTransform: "uppercase", marginTop: "2px" }}>SMA200</small>
+            <div style={{ height: "4px", width: "100%", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden", marginTop: "8px" }}>
+              <div style={{ width: `${data.breadthProxy?.pctAbove200 || 0}%`, height: "100%", background: "#10b981", borderRadius: "2px" }} />
+            </div>
+          </span>
+          <span style={{
+            minHeight: "112px",
+            padding: "18px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.005))"
+          }}>
+            <b style={{ color: "#ffffff", fontSize: "32px", fontWeight: "800", letterSpacing: "-0.03em", fontFamily: "'JetBrains Mono', monospace" }}>{data.breadthProxy?.indexes ?? "-"}</b>
+            <small style={{ display: "block", color: "var(--muted)", fontSize: "10px", fontWeight: "900", letterSpacing: "0.13em", textTransform: "uppercase", marginTop: "2px" }}>Índices</small>
+            <div style={{ height: "4px", width: "100%", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden", marginTop: "8px" }}>
+              <div style={{ width: "100%", height: "100%", background: "#a855f7", borderRadius: "2px" }} />
+            </div>
+          </span>
         </div>
       </section>
 
@@ -301,6 +651,14 @@ export default function MarketHealthPage() {
           <div><b>Tipo de liderazgo</b><span>Ofensivo Etapa 2: {data.weinsteinTape.offensiveStage2 ?? "-"} · Defensivo Etapa 2: {data.weinsteinTape.defensiveStage2 ?? "-"}</span></div>
         </div>
       </section>}
+
+      <section className="card">
+        <div className="sectionTitle">
+          <h2>Liderazgo y Fuerza Relativa Global</h2>
+          <span className="fine">Desglose de amplitud y líderes por regiones principales</span>
+        </div>
+        <GlobalRegionsPanel rows={scanPulse?.rows || []} />
+      </section>
 
       <section className="card">
         <div className="sectionTitle"><h2>Leadership pulse</h2><span className="fine">{scanPulse ? `Último snapshot · ${dateFmt(scanPulse.createdAt)} · ${scanPulse.marketRegime}` : "Sin snapshot local"}</span></div>
