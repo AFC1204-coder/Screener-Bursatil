@@ -46,3 +46,4 @@ research/books/*
 !research/books/.gitkeep
 research/notes/*
 !research/notes/.gitkeep
+.vercel
