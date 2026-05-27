@@ -1,4 +1,9 @@
 import { fetchYahooChart } from "@/lib/yahoo";
+import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
+
+const MARKET_HEALTH_CACHE_TYPE = "market_health_cache";
+const MARKET_HEALTH_CACHE_KEY = "default";
+const DEFAULT_MARKET_HEALTH_MAX_AGE_HOURS = 4;
 
 const INDEXES = [
   { symbol: "^GSPC", name: "S&P 500", weight: 30 },
@@ -36,6 +41,82 @@ function highLow(bars, n) {
 function distHigh(bars, n) { const { hi } = highLow(bars, n); return hi && bars[0]?.close ? ((bars[0].close / hi) - 1) * 100 : null; }
 function distLow(bars, n) { const { lo } = highLow(bars, n); return lo && bars[0]?.close ? ((bars[0].close / lo) - 1) * 100 : null; }
 function clamp(n, a = 0, b = 100) { return Math.max(a, Math.min(b, n)); }
+
+function ageHours(value = "") {
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) return null;
+  return Math.max(0, (Date.now() - time) / 3600000);
+}
+
+function annotateCache(payload = {}, cache = {}) {
+  const cachedAt = cache.cachedAt || payload.generatedAt || "";
+  return {
+    ...payload,
+    servedAt: new Date().toISOString(),
+    freshness: {
+      ...(payload.freshness || {}),
+      cacheHit: Boolean(cache.hit),
+      cacheStale: Boolean(cache.stale),
+      cachedAt,
+      cacheAgeHours: ageHours(cachedAt),
+      cacheMaxAgeHours: cache.maxAgeHours ?? DEFAULT_MARKET_HEALTH_MAX_AGE_HOURS,
+      fallbackError: cache.fallbackError || "",
+    },
+  };
+}
+
+async function readMarketHealthCache(options = {}) {
+  const config = supabaseConfig();
+  const maxAgeHours = Math.max(Number(options.maxAgeHours ?? DEFAULT_MARKET_HEALTH_MAX_AGE_HOURS), 0);
+  if (!config.configured) return { hit: false, maxAgeHours };
+  try {
+    const rows = await supabaseRequest("app_settings", {
+      query: {
+        owner_id: `eq.${config.ownerId}`,
+        setting_type: `eq.${MARKET_HEALTH_CACHE_TYPE}`,
+        setting_key: `eq.${MARKET_HEALTH_CACHE_KEY}`,
+        select: "value,updated_at",
+        limit: "1",
+      },
+    });
+    const row = rows?.[0] || null;
+    const payload = row?.value?.payload || null;
+    const cachedAt = row?.value?.cachedAt || row?.updated_at || payload?.generatedAt || "";
+    const hours = ageHours(cachedAt);
+    const fresh = Boolean(payload && hours !== null && hours <= maxAgeHours);
+    return {
+      hit: fresh,
+      stale: Boolean(payload && !fresh),
+      payload,
+      cachedAt,
+      maxAgeHours,
+    };
+  } catch (error) {
+    return { hit: false, maxAgeHours, error: error.message || "market health cache read failed" };
+  }
+}
+
+async function writeMarketHealthCache(payload = {}) {
+  const config = supabaseConfig();
+  if (!config.configured || !payload?.generatedAt) return { written: false };
+  const cachedAt = new Date().toISOString();
+  try {
+    await supabaseRpc("upsert_app_setting_newer_wins", {
+      p_owner_id: config.ownerId,
+      p_setting_type: MARKET_HEALTH_CACHE_TYPE,
+      p_setting_key: MARKET_HEALTH_CACHE_KEY,
+      p_value: {
+        version: 1,
+        cachedAt,
+        payload,
+      },
+      p_updated_at: cachedAt,
+    });
+    return { written: true, cachedAt };
+  } catch (error) {
+    return { written: false, error: error.message || "market health cache write failed" };
+  }
+}
 
 function weekKey(date = "") {
   const d = new Date(`${date}T00:00:00Z`);
@@ -332,7 +413,7 @@ function weinsteinTape(indexes = [], sectors = []) {
   };
 }
 
-export async function GET() {
+async function computeMarketHealth() {
   const indexResults = await Promise.allSettled(INDEXES.map((idx) => analyzeIndex(idx)));
   const results = indexResults.filter((result) => result.status === "fulfilled").map((result) => result.value);
   const failures = [];
@@ -352,7 +433,7 @@ export async function GET() {
   const above30w = results.filter((x) => x.price > x.sma30w).length;
   const positiveSlope = results.filter((x) => x.sma200Slope > 0).length;
   const nearHighs = results.filter((x) => x.distance52w >= -10).length;
-  return Response.json({
+  return {
     generatedAt: new Date().toISOString(),
     marketScore,
     regime: regime(marketScore),
@@ -374,5 +455,39 @@ export async function GET() {
     sectorTapeNote: "Proxy de sectores USA mediante ETFs SPDR. Es valoración técnica por precio, medias y fuerza relativa contra SPY; no es valoración fundamental.",
     failures,
     sectorFailures,
-  });
+  };
+}
+
+export async function GET(req) {
+  const { searchParams } = new URL(req.url);
+  const refresh = searchParams.get("refresh") === "1" || searchParams.get("cache") === "0";
+  const maxAgeParam = searchParams.get("maxAgeHours");
+  const maxAgeHours = maxAgeParam === null ? NaN : Number(maxAgeParam);
+  let cached = null;
+  if (!refresh) {
+    cached = await readMarketHealthCache({
+      maxAgeHours: Number.isFinite(maxAgeHours) ? maxAgeHours : undefined,
+    });
+    if (cached.hit && cached.payload) return Response.json(annotateCache(cached.payload, cached));
+  }
+  try {
+    const payload = await computeMarketHealth();
+    const cacheWrite = await writeMarketHealthCache(payload);
+    return Response.json(annotateCache(payload, {
+      hit: false,
+      stale: false,
+      cachedAt: cacheWrite.cachedAt || payload.generatedAt,
+      maxAgeHours: Number.isFinite(maxAgeHours) ? maxAgeHours : DEFAULT_MARKET_HEALTH_MAX_AGE_HOURS,
+    }));
+  } catch (error) {
+    if (cached?.payload) {
+      return Response.json(annotateCache(cached.payload, {
+        ...cached,
+        hit: false,
+        stale: true,
+        fallbackError: error.message || "live market health failed",
+      }));
+    }
+    return Response.json({ error: error.message || "No se pudo calcular salud de mercado" }, { status: 500 });
+  }
 }

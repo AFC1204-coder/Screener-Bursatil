@@ -6,7 +6,14 @@ import {
   screenerFilterRejectReason,
   screenerFiltersFromParams,
 } from "@/lib/screenerFilters";
+import { alertSyncSummary } from "@/app/api/alerts/route.js";
+import { favoriteDeleteSummary, favoriteSyncSummary } from "@/app/api/favorites/route.js";
+import { scanDeleteSummary, scanSyncSummary } from "@/app/api/scans/route.js";
+import { settingSyncSummary } from "@/app/api/settings/route.js";
+import { mergeAlertsWithTimestamps, mergeByKey, mergeFavoritesWithTombstones, mergeScansWithTombstones } from "@/lib/cloudSyncClient";
+import { buildLeaderboard } from "@/lib/leaderboards";
 import { qualityGateForResearchRow } from "@/lib/qualityGate";
+import { createFavoriteFromRow, favoriteToRow } from "@/lib/stockRows";
 import { isConfirmedStage2, stage2RejectDetail } from "@/lib/trendStructure";
 
 const BASE_FILTERS = {
@@ -280,6 +287,195 @@ function runParsingAndExactnessTests() {
   assert.deepEqual(result.rejections.map((row) => row.symbol), ["RS98"]);
 }
 
+function scanResultFromRow(row, createdAt = "2026-05-25T10:00:00.000Z") {
+  return {
+    symbol: row.symbol,
+    company_name: row.companyName,
+    country: row.country,
+    sector: row.sector,
+    industry: row.industry,
+    theme: row.theme,
+    total_score: row.totalScore,
+    weinstein_score: row.weinsteinScore,
+    minervini_score: row.minerviniScore,
+    risk_score: row.riskScore,
+    rs_rating: row.rsGlobalPct ?? row.rsRating,
+    created_at: createdAt,
+    metrics: { ...row },
+    raw: { ...row },
+  };
+}
+
+function runLeaderboardSnapshotContractTests() {
+  const benchmarkOnly = baseRow({
+    symbol: "BENCH99",
+    rsGlobalPct: null,
+    rsRating: 99,
+    totalScore: 96,
+  });
+  const globalLeader = baseRow({
+    symbol: "GLOBAL99",
+    rsGlobalPct: 99,
+    rsRating: 30,
+    totalScore: 90,
+  });
+  const globalLag = baseRow({
+    symbol: "GLOBAL98",
+    rsGlobalPct: 98,
+    rsRating: 99,
+    totalScore: 95,
+  });
+  const rows = [benchmarkOnly, globalLeader, globalLag].map(scanResultFromRow);
+
+  const topRs = buildLeaderboard(rows, {
+    strategy: "rs",
+    minRs: 99,
+    maxPriceFreshnessDays: 999,
+    minCoverageScore: 0,
+    limit: 10,
+  });
+  assert.deepEqual(topRs.items.map((item) => item.symbol), ["GLOBAL99"], "Top RS must rank by RS global only, never benchmark fallback");
+
+  const filteredComposite = buildLeaderboard(rows, {
+    strategy: "composite",
+    minRsRating: 99,
+    maxPriceFreshnessDays: 999,
+    minCoverageScore: 0,
+    limit: 10,
+  });
+  assert.deepEqual(filteredComposite.items.map((item) => item.symbol), ["GLOBAL99"], "leaderboard screener minRsRating must remain a hard RS global contract");
+}
+
+function runCloudMergeContractTests() {
+  const remoteFavs = [{ symbol: "NVDA", notes: "nube", updatedAt: "2026-05-25T10:00:00.000Z" }];
+  const localFavs = [{ symbol: "NVDA", notes: "local viejo", updatedAt: "2026-05-24T10:00:00.000Z" }];
+  const mergedRemoteWins = mergeByKey(remoteFavs, localFavs, (favorite) => favorite.symbol);
+  assert.equal(mergedRemoteWins[0].notes, "nube", "cloud merge must keep the newest favorite snapshot by updatedAt");
+
+  const mergedLocalWins = mergeByKey(remoteFavs, [{ symbol: "NVDA", notes: "local nuevo", updatedAt: "2026-05-26T10:00:00.000Z" }], (favorite) => favorite.symbol);
+  assert.equal(mergedLocalWins[0].notes, "local nuevo", "cloud merge must keep the local favorite when it is newer");
+
+  const scans = mergeByKey(
+    [{ id: "scan-1", rows: [1], updatedAt: "2026-05-25T10:00:00.000Z" }],
+    [{ id: "scan-1", rows: [1, 2], updatedAt: "2026-05-26T10:00:00.000Z" }],
+    (scan) => scan.id,
+  );
+  assert.deepEqual(scans[0].rows, [1, 2], "snapshot merge must not replace newer local rows with older cloud rows");
+}
+
+function runFavoriteSyncContractTests() {
+  const stale = favoriteSyncSummary(
+    [{ symbol: "NVDA", updated_at: "2026-05-26T10:00:00.000Z" }],
+    [{ symbol: "nvda", updated_at: "2026-05-25T10:00:00.000Z" }],
+  );
+  assert.deepEqual(stale, { saved: 0, returned: 1, skippedStale: 1 }, "favorite RPC summary must mark older local writes as skipped");
+
+  const equal = favoriteSyncSummary(
+    [{ symbol: "MSFT", updated_at: "2026-05-26T10:00:00.000Z" }],
+    [{ symbol: "MSFT", updated_at: "2026-05-26T10:00:00.000Z" }],
+  );
+  assert.deepEqual(equal, { saved: 1, returned: 1, skippedStale: 0 }, "equal timestamps are accepted so idempotent retries stay safe");
+
+  const duplicatePayload = favoriteSyncSummary(
+    [{ symbol: "ASML", updated_at: "2026-05-26T10:00:00.000Z" }],
+    [
+      { symbol: "ASML", updated_at: "2026-05-25T10:00:00.000Z" },
+      { symbol: "ASML", updated_at: "2026-05-27T10:00:00.000Z" },
+    ],
+  );
+  assert.deepEqual(duplicatePayload, { saved: 1, returned: 1, skippedStale: 0 }, "duplicate payloads compare against the newest incoming timestamp");
+
+  const staleDelete = favoriteDeleteSummary(
+    [{ symbol: "NVDA", updated_at: "2026-05-26T10:00:00.000Z", deleted_at: null }],
+    [{ symbol: "NVDA", deletedAt: "2026-05-25T10:00:00.000Z" }],
+  );
+  assert.deepEqual(staleDelete, { deleted: 0, returned: 1, skippedStale: 1 }, "older delete tombstones must not delete newer remote favorites");
+
+  const acceptedDelete = favoriteDeleteSummary(
+    [{ symbol: "MSFT", updated_at: "2026-05-26T10:00:00.000Z", deleted_at: "2026-05-26T10:00:00.000Z" }],
+    [{ symbol: "MSFT", deletedAt: "2026-05-26T10:00:00.000Z" }],
+  );
+  assert.deepEqual(acceptedDelete, { deleted: 1, returned: 1, skippedStale: 0 }, "equal delete tombstones are idempotent");
+
+  const mergedAfterRemoteDelete = mergeFavoritesWithTombstones(
+    [],
+    [{ symbol: "ASML", notes: "local viejo", updatedAt: "2026-05-25T10:00:00.000Z" }],
+    [{ symbol: "ASML", deletedAt: "2026-05-26T10:00:00.000Z" }],
+  );
+  assert.deepEqual(mergedAfterRemoteDelete, [], "remote tombstones must remove older local favorites during pull");
+
+  const mergedAfterLocalReadd = mergeFavoritesWithTombstones(
+    [],
+    [{ symbol: "ASML", notes: "readd", updatedAt: "2026-05-27T10:00:00.000Z" }],
+    [{ symbol: "ASML", deletedAt: "2026-05-26T10:00:00.000Z" }],
+  );
+  assert.equal(mergedAfterLocalReadd[0].notes, "readd", "newer local re-add must beat an older tombstone");
+}
+
+function runSnapshotAlertSettingSyncContractTests() {
+  const staleScanWrite = scanSyncSummary(
+    [{ local_id: "scan-1", updated_at: "2026-05-26T10:00:00.000Z", deleted_at: null }],
+    [{ local_id: "scan-1", updated_at: "2026-05-25T10:00:00.000Z" }],
+  );
+  assert.deepEqual(staleScanWrite, { saved: 0, returned: 1, skippedStale: 1 }, "older snapshot writes must not replace newer remote snapshots");
+
+  const acceptedScanDelete = scanDeleteSummary(
+    [{ local_id: "scan-1", updated_at: "2026-05-26T10:00:00.000Z", deleted_at: "2026-05-26T10:00:00.000Z" }],
+    [{ id: "scan-1", deletedAt: "2026-05-26T10:00:00.000Z" }],
+  );
+  assert.deepEqual(acceptedScanDelete, { deleted: 1, returned: 1, skippedStale: 0 }, "snapshot deletes are idempotent at equal timestamps");
+
+  const mergedAfterRemoteScanDelete = mergeScansWithTombstones(
+    [],
+    [{ id: "scan-1", rows: [1], updatedAt: "2026-05-25T10:00:00.000Z" }],
+    [{ id: "scan-1", deletedAt: "2026-05-26T10:00:00.000Z" }],
+  );
+  assert.deepEqual(mergedAfterRemoteScanDelete, [], "remote scan tombstones must remove older local snapshots during pull");
+
+  const mergedAfterLocalScanReadd = mergeScansWithTombstones(
+    [],
+    [{ id: "scan-1", rows: [1, 2], updatedAt: "2026-05-27T10:00:00.000Z" }],
+    [{ id: "scan-1", deletedAt: "2026-05-26T10:00:00.000Z" }],
+  );
+  assert.deepEqual(mergedAfterLocalScanReadd[0].rows, [1, 2], "newer local snapshot re-add must beat older scan tombstones");
+
+  const staleAlertWrite = alertSyncSummary(
+    [{ local_id: "alert-1", updated_at: "2026-05-26T10:00:00.000Z" }],
+    [{ local_id: "alert-1", updated_at: "2026-05-25T10:00:00.000Z" }],
+  );
+  assert.deepEqual(staleAlertWrite, { saved: 0, returned: 1, skippedStale: 1 }, "older alert writes must not reopen newer remote alert state");
+
+  const mergedAlerts = mergeAlertsWithTimestamps(
+    [{ id: "alert-1", status: "resolved", updatedAt: "2026-05-26T10:00:00.000Z" }],
+    [{ id: "alert-1", status: "active", updatedAt: "2026-05-25T10:00:00.000Z" }],
+  );
+  assert.equal(mergedAlerts[0].status, "resolved", "alert pull must keep the newest status across local and cloud");
+
+  const staleSettingWrite = settingSyncSummary(
+    [{ setting_type: "screener_filters", setting_key: "default", updated_at: "2026-05-26T10:00:00.000Z" }],
+    { updated_at: "2026-05-25T10:00:00.000Z" },
+  );
+  assert.deepEqual(staleSettingWrite, { saved: 0, returned: 1, skippedStale: 1 }, "older filter settings must not overwrite newer cloud settings");
+}
+
+function runQuickListCoherenceTests() {
+  const source = baseRow({
+    symbol: "COH",
+    companyName: "Coherence Corp",
+    rsGlobalPct: 97,
+    rsRating: 52,
+    totalScore: 91,
+    lastDate: "2026-05-25",
+  });
+  const favorite = createFavoriteFromRow(source, { source: "coherence-test" });
+  const rowFromFavorite = favoriteToRow(favorite);
+
+  assert.equal(rowFromFavorite.symbol, source.symbol, "favorite quick-list row must preserve symbol");
+  assert.equal(rowFromFavorite.rsGlobalPct, source.rsGlobalPct, "favorite quick-list row must preserve RS global, not benchmark RS");
+  assert.equal(rowFromFavorite.totalScore, source.totalScore, "favorite quick-list row must preserve screener total score");
+  assert.equal(rowFromFavorite.lastDate, source.lastDate, "favorite quick-list row must preserve price date for ficha/list consistency");
+}
+
 function runTrendStructureTests() {
   assert.equal(isConfirmedStage2(baseRow()), true, "base row should be confirmed Stage 2");
   const broken = baseRow({ sma50: 70, sma150: 82 });
@@ -292,8 +488,13 @@ function main() {
   runBooleanAndModeTests();
   runFreshnessAndDataGateTests();
   runParsingAndExactnessTests();
+  runLeaderboardSnapshotContractTests();
+  runCloudMergeContractTests();
+  runFavoriteSyncContractTests();
+  runSnapshotAlertSettingSyncContractTests();
+  runQuickListCoherenceTests();
   runTrendStructureTests();
-  console.log("OK filter-regression-test: thresholds, toggles, modes, freshness and Stage 2 contracts passed.");
+  console.log("OK filter-regression-test: thresholds, leaderboards, sync merge, freshness and Stage 2 contracts passed.");
 }
 
 main();

@@ -1,4 +1,4 @@
-import { disabledPayload, finiteOrNull, requirePersistenceAuth, supabaseConfig, supabaseRequest, textOrNull, toTimestamp } from "@/lib/supabaseServer";
+import { disabledPayload, finiteOrNull, requirePersistenceAuth, supabaseConfig, supabaseRequest, supabaseRpc, textOrNull, toTimestamp } from "@/lib/supabaseServer";
 
 function alertLocalId(alert = {}) {
   return textOrNull(alert.localId || alert.payload?.localId || alert.id) || crypto.randomUUID();
@@ -10,6 +10,7 @@ function isUuid(value = "") {
 
 function alertPayload(alert = {}, ownerId) {
   const localId = alertLocalId(alert);
+  const updatedAt = toTimestamp(alert.updatedAt || alert.updated_at || alert.triggeredAt || alert.triggered_at || alert.createdAt || alert.created_at);
   return {
     owner_id: ownerId,
     local_id: localId,
@@ -24,6 +25,7 @@ function alertPayload(alert = {}, ownerId) {
     status: textOrNull(alert.status) || "active",
     created_at: toTimestamp(alert.createdAt || alert.created_at),
     triggered_at: alert.triggeredAt || alert.triggered_at ? toTimestamp(alert.triggeredAt || alert.triggered_at) : null,
+    updated_at: updatedAt,
   };
 }
 
@@ -40,7 +42,36 @@ function alertFromDb(row = {}) {
     status: row.status || "active",
     createdAt: row.created_at,
     triggeredAt: row.triggered_at,
+    updatedAt: row.updated_at || row.triggered_at || row.created_at,
   };
+}
+
+function timestampValue(value) {
+  const time = value ? new Date(value).getTime() : 0;
+  return Number.isFinite(time) ? time : 0;
+}
+
+export function alertSyncSummary(rows = [], payloads = []) {
+  const incomingById = new Map(payloads.map((payload) => [String(payload?.local_id || "").trim(), timestampValue(payload?.updated_at)]));
+  const skippedStale = rows.reduce((count, row) => {
+    const incomingTime = incomingById.get(String(row?.local_id || "").trim()) || 0;
+    if (!incomingTime) return count;
+    return timestampValue(row?.updated_at) > incomingTime ? count + 1 : count;
+  }, 0);
+  return {
+    saved: Math.max(rows.length - skippedStale, 0),
+    returned: rows.length,
+    skippedStale,
+  };
+}
+
+function alertSyncError(error = {}) {
+  const code = error.details?.code;
+  const message = error.message || "";
+  if (code === "PGRST202" || /(upsert_alerts_newer_wins|update_alert_status_newer_wins)/i.test(message)) {
+    return "Falta una RPC de sincronizacion de alertas. Aplica supabase/schema.sql antes de sincronizar alertas.";
+  }
+  return message || "No se pudieron sincronizar alertas";
 }
 
 function uniqByLocalId(alerts = []) {
@@ -86,15 +117,15 @@ export async function POST(req) {
     const body = await req.json();
     const alerts = body.alerts || (body.alert ? [body.alert] : []);
     if (!alerts.length) return Response.json({ configured: true, ok: true, saved: 0, alerts: [] });
-    const saved = await supabaseRequest("alerts", {
-      method: "POST",
-      query: "on_conflict=owner_id,local_id",
-      prefer: "resolution=merge-duplicates,return=representation",
-      body: alerts.map((alert) => alertPayload(alert, config.ownerId)),
+    const payloads = alerts.map((alert) => alertPayload(alert, config.ownerId));
+    const saved = await supabaseRpc("upsert_alerts_newer_wins", {
+      p_owner_id: config.ownerId,
+      p_alerts: payloads,
     });
-    return Response.json({ configured: true, ok: true, saved: saved.length, alerts: saved.map(alertFromDb) });
+    const summary = alertSyncSummary(saved, payloads);
+    return Response.json({ configured: true, ok: true, ...summary, alerts: saved.map(alertFromDb) });
   } catch (error) {
-    return Response.json({ configured: true, ok: false, error: error.message, details: error.details || null }, { status: 500 });
+    return Response.json({ configured: true, ok: false, error: alertSyncError(error), details: error.details || null }, { status: 500 });
   }
 }
 
@@ -109,23 +140,23 @@ export async function PATCH(req) {
     const localId = textOrNull(body.localId || body.payload?.localId || body.id || (!cloudId ? body.cloudId : null));
     if (!cloudId && !localId) return Response.json({ error: "Falta cloudId o localId" }, { status: 400 });
     const status = textOrNull(body.status) || "resolved";
+    const updatedAt = toTimestamp(body.updatedAt || body.updated_at || body.payload?.resolvedAt || new Date().toISOString());
     const payload = body.payload || {};
-    const filter = cloudId ? `id=eq.${encodeURIComponent(cloudId)}` : `local_id=eq.${encodeURIComponent(localId)}`;
-    const saved = await supabaseRequest("alerts", {
-      method: "PATCH",
-      query: `owner_id=eq.${encodeURIComponent(config.ownerId)}&${filter}`,
-      prefer: "return=representation",
-      body: {
-        status,
-        payload: {
-          ...payload,
-          localId: localId || payload.localId || cloudId,
-          resolvedAt: payload.resolvedAt || new Date().toISOString(),
-        },
+    const saved = await supabaseRpc("update_alert_status_newer_wins", {
+      p_owner_id: config.ownerId,
+      p_cloud_id: cloudId,
+      p_local_id: localId,
+      p_status: status,
+      p_payload: {
+        ...payload,
+        localId: localId || payload.localId || cloudId,
+        resolvedAt: payload.resolvedAt || updatedAt,
       },
+      p_updated_at: updatedAt,
     });
-    return Response.json({ configured: true, ok: true, alerts: saved.map(alertFromDb) });
+    const skippedStale = saved.some((row) => timestampValue(row.updated_at) > timestampValue(updatedAt)) ? 1 : 0;
+    return Response.json({ configured: true, ok: true, saved: Math.max(saved.length - skippedStale, 0), returned: saved.length, skippedStale, alerts: saved.map(alertFromDb) });
   } catch (error) {
-    return Response.json({ configured: true, ok: false, error: error.message, details: error.details || null }, { status: 500 });
+    return Response.json({ configured: true, ok: false, error: alertSyncError(error), details: error.details || null }, { status: 500 });
   }
 }

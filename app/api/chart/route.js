@@ -19,6 +19,26 @@ export async function GET(request) {
   try {
     return Response.json(await withDailyBarsCache(symbol, { range, interval, refresh, useCache, maxAgeDays }, fetchYahooChart));
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 502 });
+    return Response.json({
+      ok: false,
+      bars: [],
+      meta: {
+        symbol,
+        requestedInterval: interval,
+        requestedRange: range || "2A",
+        dataProvider: "No disponible",
+        cache: {
+          hit: false,
+          stale: false,
+          rows: 0,
+          maxAgeDays: maxAgeDays ?? null,
+          error: err.message || "Historico no disponible",
+        },
+      },
+      dataQuality: {
+        status: "missing",
+        issue: "Historico no disponible",
+      },
+    });
   }
 }

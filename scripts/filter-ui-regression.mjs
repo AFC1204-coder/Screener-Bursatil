@@ -3,6 +3,8 @@ import { chromium } from "playwright";
 
 const BASE_URL = process.env.FILTER_UI_BASE_URL || "http://127.0.0.1:3000";
 const STORAGE_KEY = "statsedge.screenerSession.v1";
+const SCANS_KEY = "statsedge.scans.v1";
+const FAVORITES_KEY = "statsedge.favorites.v1";
 const SESSION_VERSION = 4;
 
 const DEFAULT_VIEW_LAYERS = {
@@ -238,6 +240,19 @@ async function openSeededPage(browser, session) {
   return { context, page };
 }
 
+async function openSeededPath(browser, path, storage = {}) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  await page.addInitScript((items) => {
+    localStorage.clear();
+    for (const [key, value] of Object.entries(items)) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+  }, storage);
+  await page.goto(`${BASE_URL}${path}`, { waitUntil: "domcontentloaded" });
+  return { context, page };
+}
+
 async function symbols(page) {
   return page.$$eval(".compactResultsTable tbody .ticker", (links) => links.map((link) => link.textContent.trim()));
 }
@@ -414,6 +429,99 @@ async function testMissingScoreDoesNotPass(browser) {
   }
 }
 
+async function testOpenStockPersistsReturnContext(browser) {
+  const seededRows = Array.from({ length: 80 }, (_, index) => row({
+    symbol: `NAV${String(index + 1).padStart(2, "0")}`,
+    companyName: `Navigation ${index + 1}`,
+    totalScore: 100 - index,
+    compositeScore: 100 - index,
+  }));
+  const { context, page } = await openSeededPage(browser, baseSession({ rows: seededRows }));
+  try {
+    await waitForSymbols(page, 50);
+    await page.evaluate(() => window.scrollTo(0, 720));
+    await page.locator(".compactResultsTable tbody .ticker").first().dispatchEvent("pointerdown");
+    const saved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) || "{}"), STORAGE_KEY);
+    assert.equal(saved.lastOpenedStockSymbol, "NAV01", "opening a stock should persist the active symbol before navigation");
+    assert.ok(Number(saved.scrollY) >= 500, `opening a stock should persist scroll position, got ${saved.scrollY}`);
+    assert.equal(saved.resultPage, 1, "opening a stock should preserve the current result page");
+  } finally {
+    await context.close();
+  }
+}
+
+async function testSessionRestoresReturnScroll(browser) {
+  const seededRows = Array.from({ length: 80 }, (_, index) => row({
+    symbol: `RET${String(index + 1).padStart(2, "0")}`,
+    companyName: `Return ${index + 1}`,
+    totalScore: 100 - index,
+    compositeScore: 100 - index,
+  }));
+  const { context, page } = await openSeededPage(browser, baseSession({
+    rows: seededRows,
+    extra: { scrollY: 680, lastOpenedStockSymbol: "RET20", lastOpenedStockAt: new Date().toISOString() },
+  }));
+  try {
+    await waitForSymbols(page, 50);
+    await page.waitForFunction(() => window.scrollY > 400, null, { timeout: 15_000 });
+    const y = await page.evaluate(() => window.scrollY);
+    assert.ok(y >= 400, `screener should restore the previous scroll position, got ${y}`);
+  } finally {
+    await context.close();
+  }
+}
+
+async function testQuickListsUseSameSnapshotContract(browser) {
+  const rows = [
+    row({ symbol: "QLA", companyName: "Quick Leader A", totalScore: 96, compositeScore: 96, rsGlobalPct: 97, rsRating: 44, lastDate: "2026-05-25" }),
+    row({ symbol: "QLB", companyName: "Quick Leader B", totalScore: 82, compositeScore: 82, rsGlobalPct: 84, rsRating: 83, lastDate: "2026-05-24" }),
+  ];
+  const scan = {
+    id: "quick-list-scan",
+    createdAt: "2026-05-26T08:00:00.000Z",
+    updatedAt: "2026-05-26T08:00:00.000Z",
+    name: "Quick List Coherence",
+    rows,
+  };
+  const favorite = {
+    id: "favorite-qla",
+    symbol: "QLA",
+    companyName: "Quick Leader A",
+    addedAt: "2026-05-26T08:30:00.000Z",
+    updatedAt: "2026-05-26T08:30:00.000Z",
+    source: "test",
+    notes: "",
+    snapshot: { ...rows[0] },
+  };
+  const { context, page } = await openSeededPath(browser, "/lists", {
+    [SCANS_KEY]: [scan],
+    [FAVORITES_KEY]: [favorite],
+  });
+  try {
+    await page.waitForSelector(".listsPage .table", { timeout: 15_000 });
+    await page.waitForFunction(() => {
+      const values = [...document.querySelectorAll(".listsPage .kpi b")].map((node) => node.textContent?.trim());
+      return values[0] === "2" && values[1] === "1";
+    }, null, { timeout: 15_000 });
+    const kpiText = await page.locator(".listsPage .kpis").innerText();
+    assert.match(kpiText, /\b2\b[\s\S]*acciones visibles/i, "quick lists should read exactly the seeded latest snapshot rows");
+    assert.match(kpiText, /\b1\b[\s\S]*favoritos/i, "quick lists should read exactly the seeded favorites");
+
+    const favoritesTicker = await page.locator("section.card", { hasText: "Favoritos" }).locator("tbody .ticker").first().textContent();
+    assert.equal(favoritesTicker?.trim(), "QLA", "favorites quick list should preserve the favorite symbol");
+
+    const compositeTicker = await page.locator("details", { hasText: "Composite Leaders" }).locator("tbody .ticker").first().textContent();
+    assert.equal(compositeTicker?.trim(), "QLA", "composite quick list should use the same totalScore ordering as the screener snapshot");
+
+    const favoriteRow = await page.locator("section.card", { hasText: "Favoritos" }).locator("tbody tr").first().innerText();
+    assert.match(favoriteRow, /\b96\b/, "favorites quick list should preserve visible score metrics from the screener snapshot");
+    const href = await page.locator("details", { hasText: "Composite Leaders" }).locator("tbody .ticker").first().getAttribute("href");
+    assert.equal(href, "/stock/QLA", "quick-list ticker should route to the same stock ficha URL");
+  } finally {
+    await context.close();
+  }
+}
+
 async function main() {
   const browser = await chromium.launch({ headless: true });
   try {
@@ -422,7 +530,10 @@ async function main() {
     await testExecutionUpperBoundary(browser);
     await testPreviewChartUsesMainRs(browser);
     await testMissingScoreDoesNotPass(browser);
-    console.log(`OK filter-ui-regression: view filters and execution exactness passed against ${BASE_URL}.`);
+    await testOpenStockPersistsReturnContext(browser);
+    await testSessionRestoresReturnScroll(browser);
+    await testQuickListsUseSameSnapshotContract(browser);
+    console.log(`OK filter-ui-regression: view filters, execution exactness and return navigation passed against ${BASE_URL}.`);
   } finally {
     await browser.close();
   }

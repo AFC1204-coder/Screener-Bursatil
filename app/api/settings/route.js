@@ -1,4 +1,4 @@
-import { disabledPayload, requirePersistenceAuth, supabaseConfig, supabaseRequest, textOrNull } from "@/lib/supabaseServer";
+import { disabledPayload, requirePersistenceAuth, supabaseConfig, supabaseRequest, supabaseRpc, textOrNull, toTimestamp } from "@/lib/supabaseServer";
 
 const DEFAULT_TYPE = "general";
 const DEFAULT_KEY = "default";
@@ -19,6 +19,30 @@ function settingFromDb(row = {}) {
     value: row.value || {},
     updatedAt: row.updated_at,
   };
+}
+
+function timestampValue(value) {
+  const time = value ? new Date(value).getTime() : 0;
+  return Number.isFinite(time) ? time : 0;
+}
+
+export function settingSyncSummary(rows = [], payload = {}) {
+  const incomingTime = timestampValue(payload.updated_at);
+  const skippedStale = incomingTime && rows.some((row) => timestampValue(row.updated_at) > incomingTime) ? 1 : 0;
+  return {
+    saved: Math.max(rows.length - skippedStale, 0),
+    returned: rows.length,
+    skippedStale,
+  };
+}
+
+function settingSyncError(error = {}) {
+  const code = error.details?.code;
+  const message = error.message || "";
+  if (code === "PGRST202" || /upsert_app_setting_newer_wins/i.test(message)) {
+    return "Falta una RPC de sincronizacion de settings. Aplica supabase/schema.sql antes de sincronizar settings.";
+  }
+  return message || "No se pudieron sincronizar settings";
 }
 
 export async function GET(req) {
@@ -49,20 +73,24 @@ export async function POST(req) {
     const type = settingType(body.type || body.settingType);
     const key = settingKey(body.key || body.settingKey);
     const value = body.value && typeof body.value === "object" && !Array.isArray(body.value) ? body.value : {};
-    const saved = await supabaseRequest("app_settings", {
-      method: "POST",
-      query: "on_conflict=owner_id,setting_type,setting_key",
-      prefer: "resolution=merge-duplicates,return=representation",
-      body: [{
-        owner_id: config.ownerId,
-        setting_type: type,
-        setting_key: key,
-        value,
-        updated_at: new Date().toISOString(),
-      }],
+    const updatedAt = toTimestamp(body.updatedAt || body.updated_at || value.updatedAt || value.updated_at || new Date().toISOString());
+    const payload = {
+      owner_id: config.ownerId,
+      setting_type: type,
+      setting_key: key,
+      value,
+      updated_at: updatedAt,
+    };
+    const saved = await supabaseRpc("upsert_app_setting_newer_wins", {
+      p_owner_id: config.ownerId,
+      p_setting_type: type,
+      p_setting_key: key,
+      p_value: value,
+      p_updated_at: updatedAt,
     });
-    return Response.json({ configured: true, ok: true, setting: settingFromDb(saved[0]), saved: saved.length });
+    const summary = settingSyncSummary(saved, payload);
+    return Response.json({ configured: true, ok: true, setting: saved[0] ? settingFromDb(saved[0]) : null, ...summary });
   } catch (error) {
-    return Response.json({ configured: true, ok: false, error: error.message, details: error.details || null }, { status: 500 });
+    return Response.json({ configured: true, ok: false, error: settingSyncError(error), details: error.details || null }, { status: 500 });
   }
 }

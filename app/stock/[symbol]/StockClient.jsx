@@ -336,7 +336,7 @@ function ResultsSection({ results = {}, currency = "", embedded = false, snapsho
 
   return <section className={embedded ? "fundamentalHistory" : "card fundamentalCard"}>
     <div className="sectionTitle">
-      <h2>{embedded ? "Historico" : "Fundamentales historicos"} {!embedded && <InfoHint text={`Fuente: ${results.source || "Yahoo / SEC"}. Vista inspirada en estados financieros historicos; no son datos normalizados propietarios. En empresas no USA la cobertura puede variar por mercado, proveedor y moneda.`} />}</h2>
+      <h2>{embedded ? "Historico" : "Fundamentales historicos"} {!embedded && <InfoHint text="Vista inspirada en estados financieros historicos; no son datos normalizados propietarios. La cobertura puede variar por mercado, moneda y disponibilidad." />}</h2>
       <span className="fine">{currency || "Moneda no disponible"}</span>
     </div>
     <div className="fundamentalToolbar" aria-label="Selector de fundamentales">
@@ -585,14 +585,14 @@ function NewsSection({ rows = [] }) {
     <span>
       <i className={`sentimentPill ${sentimentClass(item.sentimentLabel)}`}>{item.sentimentLabel || "neutral"}</i>
       <b>{item.title}</b>
-      <em>{item.publisher || "Proveedor"} · {dateFmt(item.publishedAt)}</em>
+      <em>{item.publisher || "Fuente disponible"} · {dateFmt(item.publishedAt)}</em>
       <small>{item.relevanceReasons?.length ? `Relevancia: ${item.relevanceReasons.join(", ")}` : "Relevancia aproximada por ticker/nombre"}</small>
-      <span className={`newsLinkCue ${item.link ? "" : "disabled"}`}>{item.link ? "Abrir noticia ->" : "Sin enlace del proveedor"}</span>
+      <span className={`newsLinkCue ${item.link ? "" : "disabled"}`}>{item.link ? "Abrir noticia ->" : "Sin enlace disponible"}</span>
     </span>
   </>;
   return <section className="card">
     <div className="sectionTitle">
-      <h2>Noticias relevantes <InfoHint text="Noticias recuperadas desde proveedores disponibles. La relevancia y el sesgo son heuristicas, no una clasificacion editorial." /></h2>
+      <h2>Noticias relevantes <InfoHint text="Noticias recuperadas desde fuentes disponibles. La relevancia y el sesgo son heuristicas, no una clasificacion editorial." /></h2>
       <span className="fine">sesgo heuristico</span>
     </div>
     <div className="newsGrid">
@@ -601,7 +601,7 @@ function NewsSection({ rows = [] }) {
         return item.link
           ? <a className={className} key={`${item.link}-${item.publishedAt}`} href={item.link} target="_blank" rel="noreferrer" aria-label={`Abrir noticia: ${item.title}`}>{cardContent(item)}</a>
           : <article className={className} key={`${item.title}-${item.publishedAt}`}>{cardContent(item)}</article>;
-      }) : <div className="dataNote">Sin noticias recientes del proveedor para este ticker.</div>}
+      }) : <div className="dataNote">Sin noticias recientes para este ticker.</div>}
     </div>
   </section>;
 }
@@ -614,8 +614,8 @@ function SocialPulseSection({ social = null, loading = false, symbol = "" }) {
   const hasRows = !!social?.rows?.length;
   return <section className="card">
     <div className="sectionTitle">
-      <h2>Pulso X / cashtag <InfoHint text="Busca posts recientes con cashtag tipo $TICKER mediante la API oficial de X si hay token configurado. No hace scraping ni usa X como fuente de precio." /></h2>
-      <span className="fine">{loading ? "cargando" : social?.provider || "X API v2 recent search"}</span>
+      <h2>Pulso X / cashtag <InfoHint text="Busca posts recientes con cashtag tipo $TICKER si hay integracion social configurada. No se usa como fuente de precio." /></h2>
+      <span className="fine">{loading ? "cargando" : hasRows ? "muestra reciente" : "sin datos"}</span>
     </div>
     {social?.error && <div className="dataNote" style={{ marginBottom: 12 }}>{social.error}</div>}
     <div className="sentimentBars" aria-label={`Distribucion social de ${symbol}`}>
@@ -775,11 +775,8 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const nextEarnings = data?.earningsCalendar?.earningsDate || data?.earningsCalendar?.earningsStart || "Sin dato";
   const listingDate = data?.ipoDate || data?.listingDate || "";
   const listingLabel = data?.ipoDate ? "IPO" : data?.listingDate ? "Cotiza desde" : "IPO";
-  const providerIssues = [
-    data?.dataQuality?.profileProviderError ? `Perfil: ${data.dataQuality.profileProviderError}` : "",
-    data?.dataQuality?.extrasProviderError ? `Extras: ${data.dataQuality.extrasProviderError}` : "",
-    data?.dataQuality?.secProviderError ? `SEC: ${data.dataQuality.secProviderError}` : "",
-  ].filter(Boolean).join(" · ");
+  const freshness = data?.dataQuality?.freshness || {};
+  const coverage = data?.dataQuality?.coverage || {};
   const compactProfile = data ? [data.sector, data.industry, data.country].filter(Boolean).join(" · ") : "";
   useEffect(() => {
     setBenchmarkDraft(activeBenchmark);
@@ -854,13 +851,21 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
               {data?.currency && <span className="stockQuoteCurrency">{data.currency}</span>}
               {Number.isFinite(q.dayChangePct) && <b className={dayTone}>{signedPriceMoney(q.dayChange)} ({pct(q.dayChangePct)})</b>}
             </div>
-            {data?.links?.official && (
-              <div className="stockHeroActions">
+            <div className="stockDataLine" aria-label="Frescura y cobertura de datos">
+              <span>{freshness.priceDate ? `Precio ${compactDate(freshness.priceDate)}` : "Precio sin fecha"}</span>
+              {coverage.label && <span>{coverage.label}</span>}
+              <span>{freshness.rsGlobalAsOf ? `RS ${compactDate(freshness.rsGlobalAsOf)} · ${sampleText(freshness.rsGlobalSample)}` : "RS sin snapshot"}</span>
+            </div>
+            <div className="stockHeroActions">
+              <a className="stockHeroLink stockBackLink" href="/">
+                Screener
+              </a>
+              {data?.links?.official && (
                 <a className="stockHeroLink" href={data.links.official} target="_blank" rel="noreferrer">
                   Web oficial
                 </a>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
         {compactResearchCard && <div className="stockHeroCompactCard">{compactResearchCard}</div>}

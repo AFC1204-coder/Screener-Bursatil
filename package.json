@@ -7,6 +7,9 @@
     "test:filters": "node --loader ./scripts/loader.mjs scripts/filter-regression-test.mjs",
     "test:filters:ui": "node scripts/filter-ui-regression.mjs",
     "test:symbols": "node --no-warnings scripts/symbol-mapping-test.mjs",
+    "audit:coherence": "node --env-file=.env.local scripts/data-coherence-audit.mjs",
+    "audit:performance": "node scripts/performance-audit.mjs",
+    "supabase:seed-settings": "node --env-file=.env.local scripts/seed-default-settings.mjs",
     "supabase:status": "node scripts/supabase-admin.mjs status",
     "supabase:schema": "node scripts/supabase-admin.mjs schema"
   },

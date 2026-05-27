@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { deleteFavoriteFromCloud, deleteScanFromCloud, getAlertsFromCloud, getCloudStatus, mergeByKey, pullCloudState, pushCloudState, resolveAlertInCloud, syncAlertsToCloud, syncFavoriteToCloud, syncFavoritesToCloud, syncScanToCloud } from "@/lib/cloudSyncClient";
+import { deleteFavoriteFromCloud, deleteScanFromCloud, getAlertsFromCloud, getCloudStatus, mergeAlertsWithTimestamps, mergeFavoritesWithTombstones, mergeScansWithTombstones, pullCloudState, pushCloudState, resolveAlertInCloud, syncAlertsToCloud, syncFavoriteToCloud, syncFavoritesToCloud, syncScanToCloud } from "@/lib/cloudSyncClient";
 import { num, pct } from "@/lib/formatters";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
@@ -98,7 +98,7 @@ export default function ResearchDesk() {
       const result = await pushCloudState({ scans, favorites, alerts });
       await refreshCloudStatus(false);
       if (result.configured === false) setStatus("Supabase no configurado. No se ha subido nada.");
-      else if (result.ok) setStatus(`Supabase actualizado: ${result.scansSaved} snapshots, ${result.favoritesSaved} favoritos y ${result.alertsSaved || 0} alertas.`);
+      else if (result.ok) setStatus(`Supabase actualizado: ${result.scansSaved} snapshots, ${result.scansDeleted || 0} snapshots borrados, ${result.favoritesSaved} favoritos, ${result.favoritesDeleted || 0} borrados y ${result.alertsSaved || 0} alertas.${result.favoritesSkippedStale || result.favoritesDeleteSkippedStale || result.scansDeleteSkippedStale ? ` ${result.favoritesSkippedStale + result.favoritesDeleteSkippedStale + result.scansDeleteSkippedStale} cambios remotos mas recientes no se pisaron.` : ""}`);
       else setStatus(`Supabase no pudo sincronizar: ${result.message}`);
     } finally {
       setSyncing(false);
@@ -119,9 +119,9 @@ export default function ResearchDesk() {
         setStatus(`No se pudo importar Supabase: ${result.message}`);
         return;
       }
-      const nextScans = sortScans(mergeByKey(result.scans, scans, (scan) => scan.id));
-      const nextFavs = sortFavorites(mergeByKey(result.favorites, favorites, (favorite) => String(favorite.symbol || "").toUpperCase()));
-      const nextAlerts = mergeAlerts(result.alerts || [], alerts);
+      const nextScans = sortScans(mergeScansWithTombstones(result.scans, scans, result.scanTombstones));
+      const nextFavs = sortFavorites(mergeFavoritesWithTombstones(result.favorites, favorites, result.favoriteTombstones));
+      const nextAlerts = mergeAlertsWithTimestamps(result.alerts || [], alerts);
       persistScans(nextScans);
       persistFavs(nextFavs);
       persistAlerts(nextAlerts);
@@ -174,7 +174,7 @@ export default function ResearchDesk() {
         if (result.configured !== false && result.ok) setStatus(`Snapshot guardado en local y Supabase: ${scan.rows.length} acciones`);
       });
       syncAlertsToCloud(generatedAlerts).then((result) => {
-        if (result.ok && result.data?.alerts?.length) persistAlerts(mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), result.data.alerts).slice(0, 500));
+        if (result.ok && result.data?.alerts?.length) persistAlerts(mergeAlertsWithTimestamps(result.data.alerts, safeRead(STORAGE_KEYS.alerts, [])).slice(0, 500));
       });
     } catch {
       setStatus("JSON no valido");
@@ -197,6 +197,7 @@ export default function ResearchDesk() {
         notes: "",
         marketScore: market?.marketScore ?? null,
         marketRegime: market?.regime?.label || "sin dato",
+        updatedAt: now,
       }));
     if (!newFavorites.length) {
       setManual("");
@@ -253,7 +254,7 @@ export default function ResearchDesk() {
         setStatus(`No se pudieron importar alertas: ${result.message}`);
         return;
       }
-      const next = mergeAlerts(result.data?.alerts || [], alerts);
+      const next = mergeAlertsWithTimestamps(result.data?.alerts || [], alerts);
       persistAlerts(next);
       setStatus(`Alertas importadas: ${result.data?.alerts?.length || 0} remotas, ${activeAlerts(next).length} activas.`);
     } finally {
@@ -268,7 +269,7 @@ export default function ResearchDesk() {
     setStatus(`${alert.symbol} · alerta resuelta`);
     resolveAlertInCloud(nextAlert).then((result) => {
       if (result.configured !== false && !result.ok) setStatus(`Alerta resuelta localmente. Supabase: ${result.message}`);
-      else if (result.ok && result.data?.alerts?.length) persistAlerts(mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), result.data.alerts).slice(0, 500));
+      else if (result.ok && result.data?.alerts?.length) persistAlerts(mergeAlertsWithTimestamps(result.data.alerts, safeRead(STORAGE_KEYS.alerts, [])).slice(0, 500));
     });
   }
 
@@ -298,9 +299,10 @@ export default function ResearchDesk() {
           alpha: Number.isFinite(perfSinceAdd) && Number.isFinite(benchmarkPerf) ? perfSinceAdd - benchmarkPerf : null,
           currentState: q.state,
           error: null,
+          updatedAt: new Date().toISOString(),
         });
       } catch (e) {
-        next.push({ ...f, error: e.message || "Proveedor no disponible" });
+        next.push({ ...f, error: e.message || "Proveedor no disponible", updatedAt: new Date().toISOString() });
       }
       await new Promise((r) => setTimeout(r, 70));
     }

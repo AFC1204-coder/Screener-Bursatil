@@ -26,6 +26,15 @@ const REQUIRED_TABLES = [
   ["rs_weekly_snapshots", "derived-products"],
   ["rs_weekly_items", "derived-products"],
 ];
+const REQUIRED_FUNCTIONS = [
+  ["upsert_scan_newer_wins", "sync", (config) => ({ p_owner_id: config.ownerId, p_scan: null, p_results: [] })],
+  ["delete_scan_newer_wins", "sync", (config) => ({ p_owner_id: config.ownerId, p_local_id: null, p_deleted_at: new Date().toISOString() })],
+  ["upsert_favorites_newer_wins", "sync", (config) => ({ p_owner_id: config.ownerId, p_favorites: [] })],
+  ["delete_favorite_newer_wins", "sync", (config) => ({ p_owner_id: config.ownerId, p_symbol: null, p_local_id: null, p_deleted_at: new Date().toISOString() })],
+  ["upsert_alerts_newer_wins", "sync", (config) => ({ p_owner_id: config.ownerId, p_alerts: [] })],
+  ["update_alert_status_newer_wins", "sync", (config) => ({ p_owner_id: config.ownerId, p_cloud_id: null, p_local_id: null, p_status: "resolved", p_payload: {}, p_updated_at: new Date().toISOString() })],
+  ["upsert_app_setting_newer_wins", "settings", (config) => ({ p_owner_id: config.ownerId, p_setting_type: null, p_setting_key: null, p_value: null, p_updated_at: new Date().toISOString() })],
+];
 
 function loadEnv() {
   for (const file of ENV_FILES) {
@@ -83,15 +92,19 @@ async function readJson(res) {
   }
 }
 
-async function restRequest(config, pathName) {
+async function restRequest(config, pathName, options = {}) {
   if (!config.url || !config.serviceKey) {
     throw new Error("Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY.");
   }
   const res = await fetch(`${config.url}/rest/v1/${pathName}`, {
+    method: options.method || "GET",
     headers: {
       apikey: config.serviceKey,
       Authorization: `Bearer ${config.serviceKey}`,
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
     },
+    body: options.body === undefined ? undefined : JSON.stringify(options.body),
     cache: "no-store",
   });
   const data = await readJson(res);
@@ -128,7 +141,7 @@ function failureMessage(result) {
 
 function tableStatus(result) {
   if (result.ok) return "OK";
-  if (result.status === 404 || result.data?.code === "PGRST205") return "MISSING";
+  if (result.status === 404 || result.data?.code === "PGRST205" || result.data?.code === "PGRST202") return "MISSING";
   if (result.status === 401 || result.status === 403) return "PERMISSION";
   return "WARN";
 }
@@ -158,13 +171,37 @@ async function statusCommand(config) {
     console.log(`FAIL Data API: ${error.message}`);
   }
 
+  try {
+    const functionResults = [];
+    for (const [fn, area, payload] of REQUIRED_FUNCTIONS) {
+      const result = await restRequest(config, `rpc/${fn}`, {
+        method: "POST",
+        body: payload ? payload(config) : {},
+      });
+      functionResults.push({ fn, area, result, status: tableStatus(result) });
+    }
+    const missing = functionResults.filter((item) => item.status === "MISSING");
+    const permission = functionResults.filter((item) => item.status === "PERMISSION");
+    const warn = functionResults.filter((item) => item.status === "WARN");
+    console.log(`Data API RPC: ${functionResults.filter((item) => item.status === "OK").length}/${REQUIRED_FUNCTIONS.length} OK.`);
+    for (const item of functionResults) {
+      const detail = item.status === "OK" ? "" : ` - ${failureMessage(item.result)}`;
+      console.log(`${item.status} ${item.area}: public.${item.fn}${detail}`);
+    }
+    if (missing.length) console.log(`PENDING Schema: faltan RPC ${missing.map((item) => item.fn).join(", ")}.`);
+    if (permission.length) console.log(`FAIL Permissions: revisar grants RPC para ${permission.map((item) => item.fn).join(", ")}.`);
+    if (warn.length) console.log(`WARN Data API RPC: revisar ${warn.map((item) => item.fn).join(", ")}.`);
+  } catch (error) {
+    console.log(`FAIL Data API RPC: ${error.message}`);
+  }
+
   if (!config.accessToken) {
     console.log("PENDING Management API: falta SUPABASE_ACCESS_TOKEN.");
     return;
   }
 
   try {
-    const result = await managementRequest(config, "/health", undefined, "GET");
+    const result = await managementRequest(config, "/health?services=db&services=rest", undefined, "GET");
     if (result.ok) {
       console.log("OK Management API: proyecto alcanzable.");
     } else {

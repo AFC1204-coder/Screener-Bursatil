@@ -40,6 +40,7 @@ exports/
 backups/
 tmp/
 temp/
+output/
 
 # Private research material
 research/books/*

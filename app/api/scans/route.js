@@ -1,9 +1,15 @@
-import { disabledPayload, finiteOrNull, requirePersistenceAuth, supabaseConfig, supabaseRequest, textOrNull, toTimestamp } from "@/lib/supabaseServer";
+import { disabledPayload, finiteOrNull, requirePersistenceAuth, supabaseConfig, supabaseRequest, supabaseRpc, textOrNull, toTimestamp } from "@/lib/supabaseServer";
 
 function scanPayload(scan = {}, ownerId) {
   const rows = Array.isArray(scan.rows) ? scan.rows : [];
   const settings = {
     ...(scan.settings || {}),
+    activeSettings: scan.activeSettings || scan.settings?.activeSettings || null,
+    filterLayers: scan.filterLayers || scan.settings?.filterLayers || null,
+    fieldRules: scan.fieldRules || scan.settings?.fieldRules || null,
+    viewLayers: scan.viewLayers || scan.settings?.viewLayers || null,
+    useRegimeFilter: scan.useRegimeFilter ?? scan.settings?.useRegimeFilter ?? null,
+    rowsAreFilteredSnapshot: scan.rowsAreFilteredSnapshot ?? scan.settings?.rowsAreFilteredSnapshot ?? true,
     snapshotCompatibilityKey: scan.snapshotCompatibilityKey || scan.settings?.snapshotCompatibilityKey || null,
     methodologySummary: scan.methodologySummary || scan.settings?.methodologySummary || null,
     comparison: scan.comparison || scan.settings?.comparison || null,
@@ -18,7 +24,7 @@ function scanPayload(scan = {}, ownerId) {
     market_regime: textOrNull(scan.marketRegime),
     row_count: rows.length,
     created_at: toTimestamp(scan.createdAt),
-    updated_at: new Date().toISOString(),
+    updated_at: toTimestamp(scan.updatedAt || scan.updated_at || scan.createdAt || scan.created_at),
   };
 }
 
@@ -124,9 +130,16 @@ function scanFromDb(row, results = []) {
     cloudId: row.id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
     name: row.name,
     preset: row.preset,
     settings: row.settings || {},
+    activeSettings: row.settings?.activeSettings || null,
+    filterLayers: row.settings?.filterLayers || null,
+    fieldRules: row.settings?.fieldRules || null,
+    viewLayers: row.settings?.viewLayers || null,
+    useRegimeFilter: row.settings?.useRegimeFilter ?? null,
+    rowsAreFilteredSnapshot: row.settings?.rowsAreFilteredSnapshot !== false,
     snapshotCompatibilityKey: row.settings?.snapshotCompatibilityKey || null,
     methodologySummary: row.settings?.methodologySummary || null,
     comparison: row.settings?.comparison || null,
@@ -152,28 +165,66 @@ function scanFromDb(row, results = []) {
   };
 }
 
-async function saveScan(scan, ownerId) {
-  const [saved] = await supabaseRequest("scans", {
-    method: "POST",
-    query: "on_conflict=owner_id,local_id",
-    prefer: "resolution=merge-duplicates,return=representation",
-    body: [scanPayload(scan, ownerId)],
-  });
-  await supabaseRequest("scan_results", {
-    method: "DELETE",
-    query: `scan_id=eq.${encodeURIComponent(saved.id)}`,
-  });
-  const rows = Array.isArray(scan.rows) ? scan.rows : [];
-  if (rows.length) {
-    for (let i = 0; i < rows.length; i += 300) {
-      await supabaseRequest("scan_results", {
-        method: "POST",
-        prefer: "return=minimal",
-        body: rows.slice(i, i + 300).map((row, offset) => resultPayload(row, saved.id, ownerId, i + offset)),
-      });
-    }
+function scanTombstoneFromDb(row = {}) {
+  return {
+    id: row.local_id || row.id,
+    cloudId: row.id,
+    deletedAt: row.deleted_at || row.updated_at,
+    updatedAt: row.updated_at || row.deleted_at,
+  };
+}
+
+function timestampValue(value) {
+  const time = value ? new Date(value).getTime() : 0;
+  return Number.isFinite(time) ? time : 0;
+}
+
+export function scanSyncSummary(rows = [], payloads = []) {
+  const incomingById = new Map(payloads.map((payload) => [String(payload?.local_id || "").trim(), timestampValue(payload?.updated_at)]));
+  const skippedStale = rows.reduce((count, row) => {
+    const incomingTime = incomingById.get(String(row?.local_id || "").trim()) || 0;
+    if (!incomingTime) return count;
+    return timestampValue(row?.updated_at) > incomingTime ? count + 1 : count;
+  }, 0);
+  return {
+    saved: Math.max(rows.length - skippedStale, 0),
+    returned: rows.length,
+    skippedStale,
+  };
+}
+
+export function scanDeleteSummary(rows = [], tombstones = []) {
+  const incomingById = new Map(tombstones.map((item) => [String(item?.id || item?.localId || item?.local_id || "").trim(), timestampValue(item?.deletedAt || item?.deleted_at || item?.updatedAt || item?.updated_at)]));
+  const skippedStale = rows.reduce((count, row) => {
+    const incomingTime = incomingById.get(String(row?.local_id || row?.id || "").trim()) || 0;
+    if (!incomingTime) return count;
+    return !row?.deleted_at && timestampValue(row?.updated_at) > incomingTime ? count + 1 : count;
+  }, 0);
+  return {
+    deleted: Math.max(rows.length - skippedStale, 0),
+    returned: rows.length,
+    skippedStale,
+  };
+}
+
+function scanSyncError(error = {}) {
+  const code = error.details?.code;
+  const message = error.message || "";
+  if (code === "PGRST202" || /(upsert_scan_newer_wins|delete_scan_newer_wins)/i.test(message)) {
+    return "Falta una RPC de sincronizacion de snapshots. Aplica supabase/schema.sql antes de sincronizar snapshots.";
   }
-  return { ...saved, row_count: rows.length };
+  return message || "No se pudieron sincronizar snapshots";
+}
+
+async function saveScan(scan, ownerId) {
+  const payload = scanPayload(scan, ownerId);
+  const rows = Array.isArray(scan.rows) ? scan.rows : [];
+  const saved = await supabaseRpc("upsert_scan_newer_wins", {
+    p_owner_id: ownerId,
+    p_scan: payload,
+    p_results: rows.map((row, index) => resultPayload(row, null, ownerId, index)),
+  });
+  return { row: Array.isArray(saved) ? saved[0] : null, payload };
 }
 
 export async function GET(req) {
@@ -183,14 +234,17 @@ export async function GET(req) {
   if (!config.configured) return Response.json({ ...disabledPayload(), scans: [] });
   const { searchParams } = new URL(req.url);
   const includeRows = searchParams.get("includeRows") !== "0";
+  const includeDeleted = searchParams.get("includeDeleted") === "1";
   const limit = Math.min(Number(searchParams.get("limit") || 50), 100);
   try {
     const scans = await supabaseRequest("scans", {
-      query: `owner_id=eq.${encodeURIComponent(config.ownerId)}&select=*&order=created_at.desc&limit=${limit}`,
+      query: `owner_id=eq.${encodeURIComponent(config.ownerId)}${includeDeleted ? "" : "&deleted_at=is.null"}&select=*&order=created_at.desc&limit=${limit}`,
     });
+    const activeScans = scans.filter((scan) => !scan.deleted_at);
+    const deletedScans = scans.filter((scan) => scan.deleted_at);
     let results = [];
-    if (includeRows && scans.length) {
-      const ids = scans.map((scan) => scan.id).join(",");
+    if (includeRows && activeScans.length) {
+      const ids = activeScans.map((scan) => scan.id).join(",");
       results = await supabaseRequest("scan_results", {
         query: `scan_id=in.(${ids})&select=*&order=rank_index.asc`,
       });
@@ -198,7 +252,8 @@ export async function GET(req) {
     return Response.json({
       configured: true,
       ok: true,
-      scans: scans.map((scan) => scanFromDb(scan, results)),
+      scans: activeScans.map((scan) => scanFromDb(scan, results)),
+      scanTombstones: includeDeleted ? deletedScans.map(scanTombstoneFromDb) : [],
     });
   } catch (error) {
     return Response.json({ configured: true, ok: false, error: error.message, details: error.details || null }, { status: 500 });
@@ -214,10 +269,16 @@ export async function POST(req) {
     const body = await req.json();
     const scans = body.scans || (body.scan ? [body.scan] : []);
     const saved = [];
-    for (const scan of scans) saved.push(await saveScan(scan, config.ownerId));
-    return Response.json({ configured: true, ok: true, saved: saved.length, scans: saved });
+    const payloads = [];
+    for (const scan of scans) {
+      const result = await saveScan(scan, config.ownerId);
+      if (result.row) saved.push(result.row);
+      if (result.payload) payloads.push(result.payload);
+    }
+    const summary = scanSyncSummary(saved, payloads);
+    return Response.json({ configured: true, ok: true, ...summary, scans: saved.filter((row) => !row.deleted_at).map((row) => ({ ...row, row_count: Number(row.row_count || 0) })) });
   } catch (error) {
-    return Response.json({ configured: true, ok: false, error: error.message, details: error.details || null }, { status: 500 });
+    return Response.json({ configured: true, ok: false, error: scanSyncError(error), details: error.details || null }, { status: 500 });
   }
 }
 
@@ -228,14 +289,36 @@ export async function DELETE(req) {
   if (!config.configured) return Response.json(disabledPayload());
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
-  if (!id) return Response.json({ error: "Falta id" }, { status: 400 });
   try {
-    await supabaseRequest("scans", {
-      method: "DELETE",
-      query: `owner_id=eq.${encodeURIComponent(config.ownerId)}&local_id=eq.${encodeURIComponent(id)}`,
+    const body = await req.json().catch(() => ({}));
+    const tombstones = Array.isArray(body?.tombstones) && body.tombstones.length
+      ? body.tombstones.map((item) => ({
+        id: textOrNull(item.id || item.localId || item.local_id),
+        deletedAt: toTimestamp(item.deletedAt || item.deleted_at || item.updatedAt || item.updated_at),
+      }))
+      : [{
+        id: textOrNull(id),
+        deletedAt: toTimestamp(searchParams.get("deletedAt")),
+      }];
+    const valid = tombstones.filter((item) => item.id);
+    if (!valid.length) return Response.json({ error: "Falta id" }, { status: 400 });
+    const rows = [];
+    for (const tombstone of valid) {
+      const savedRows = await supabaseRpc("delete_scan_newer_wins", {
+        p_owner_id: config.ownerId,
+        p_local_id: tombstone.id,
+        p_deleted_at: tombstone.deletedAt,
+      });
+      if (Array.isArray(savedRows)) rows.push(...savedRows);
+    }
+    const summary = scanDeleteSummary(rows, valid);
+    return Response.json({
+      configured: true,
+      ok: true,
+      ...summary,
+      scanTombstones: rows.filter((row) => row.deleted_at).map(scanTombstoneFromDb),
     });
-    return Response.json({ configured: true, ok: true });
   } catch (error) {
-    return Response.json({ configured: true, ok: false, error: error.message, details: error.details || null }, { status: 500 });
+    return Response.json({ configured: true, ok: false, error: scanSyncError(error), details: error.details || null }, { status: 500 });
   }
 }

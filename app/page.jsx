@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import ChartPreferences from "@/app/ChartPreferences";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { chartRangeBars, DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
-import { getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
+import { getLatestScanFromCloud, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
 import { assetDomainForName, assetDomainForSymbol } from "@/lib/companyAssets";
 import { pct } from "@/lib/formatters";
 import { safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
@@ -71,8 +72,8 @@ const DEFAULT_PRICE_FRESHNESS_DAYS = 5;
 const DEFAULT_FILTER_STRICTNESS = "balanced";
 const FILTER_STRICTNESS = {
   strict: { name: "Exacto", desc: "Respeta cada umbral activo" },
-  balanced: { name: "Flexible", desc: "Tolera pequenas desviaciones" },
-  discovery: { name: "Exploratorio", desc: "Amplia candidatos fuertes" },
+  balanced: { name: "Balanceado", desc: "Umbrales literales del preset" },
+  discovery: { name: "Descubrimiento", desc: "Preset mas amplio, sin tolerancias ocultas" },
 };
 function manualUniverseRows(value = "") {
   return String(value || "")
@@ -102,7 +103,7 @@ function filterStrictnessForPreset(key = "balanced") {
 }
 function settingsForPreset(key = "balanced", overrides = {}) {
   const preset = PRESETS[key] || PRESETS.balanced;
-  return { ...preset.v, ...overrides, filterStrictness: filterStrictnessForPreset(key) };
+  return { ...preset.v, filterStrictness: filterStrictnessForPreset(key), ...overrides };
 }
 const SETUP_MODES = [
   ["leader", "Lider Stage 2"],
@@ -1886,17 +1887,17 @@ function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenStock })
     <button type="button" className={`mobileResultLogo ${isFavorite ? "fav" : ""}`} onClick={() => onFavorite(row)} aria-label={`Guardar favorito ${row.symbol}`}>
       <CompanyMark row={row} size="lg" />
     </button>
-    <a className="mobileResultIdentity" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>
+    <Link className="mobileResultIdentity" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>
       <b>{row.symbol}</b>
       <span>{row.companyName}</span>
-    </a>
+    </Link>
     <button type="button" className="mobileResultSpark" onClick={() => onReview(row.symbol)} aria-label={`Revisar ${row.symbol}`}>
       <MiniSparkline bars={row.chartPreview || []} />
     </button>
-    <a className="mobileResultPrice" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>
+    <Link className="mobileResultPrice" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>
       <b>{money(row.price, row.currency)}</b>
       <span className={(change || 0) >= 0 ? "up" : "down"}>{pct(change)}</span>
-    </a>
+    </Link>
   </article>;
 }
 
@@ -1955,7 +1956,7 @@ function QuickPanel({ row, onOpenStock }) {
     <div className="quickPanelHead">
       <CompanyMark row={row} size="lg" />
       <div>
-        <a className="ticker" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>{row.symbol}</a>
+        <Link className="ticker" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>{row.symbol}</Link>
         <p>{row.companyName}</p>
       </div>
     </div>
@@ -1993,7 +1994,7 @@ function QuickPanel({ row, onOpenStock }) {
     <div className="summaryRow"><span>IPO</span><span>{isRecentIpoDate(row.ipoDate, 60) ? `${row.ipoCategory} · ${row.ipoDate}` : "No reciente / sin fecha fiable"}</span></div>
     <div className="summaryRow"><span>Industria</span><span>{row.industry || "Sin dato"}</span></div>
     <div className="leaderPanelActions">
-      <a className="btn btnSmall btnPrimary" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>Ficha</a>
+      <Link className="btn btnSmall btnPrimary" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>Ficha</Link>
       <a className="btn btnSmall" href={externalLinks(row.symbol, row.exchange).tradingView} target="_blank" rel="noreferrer">TradingView</a>
     </div>
   </aside>;
@@ -2024,7 +2025,7 @@ function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = false, on
       <div className="previewIdentity">
         {!compact && <CompanyMark row={row} />}
         <span>
-          <a className="ticker" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>{row.symbol}</a>
+          <Link className="ticker" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>{row.symbol}</Link>
           {!compact && <span className="previewName">{row.companyName}</span>}
         </span>
       </div>
@@ -2041,7 +2042,7 @@ function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = false, on
     </div>}
     {!compact && <div className="previewActions">
       {onSelectChart && <button type="button" className="btn btnSmall btnPrimary" onClick={() => onSelectChart(row)}>Grafico</button>}
-      <a className="btn btnSmall" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>Ficha</a>
+      <Link className="btn btnSmall" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>Ficha</Link>
       <a className="btn btnSmall" href={links.tradingView} target="_blank" rel="noreferrer">TradingView</a>
       {onFavorite && <button type="button" className={`starBtn ${isFavorite ? "on" : ""}`} onClick={() => onFavorite(row)} aria-label={`Guardar favorito ${row.symbol}`}>{isFavorite ? "★ Guardada" : "★ Guardar"}</button>}
     </div>}
@@ -2127,7 +2128,7 @@ function PendingResultsBar({ pending, visibleCount = 0, filteredCount = 0, onCom
   const pendingCount = Number(pending.filteredCount ?? pending.rows?.length ?? 0);
   const delta = pendingCount - filteredCount;
   return <div className="pendingResultsBar">
-    <span>{pending.done ? "Actualización lista" : "Calculando"}</span>
+    <span>{pending.done ? "Actualización lista" : "Lista congelada"}</span>
     <b>{pendingCount} resultados</b>
     {delta ? <em>{delta > 0 ? `+${delta}` : `${delta}`} vs visibles</em> : <em>{visibleCount} visibles</em>}
     <button type="button" className="btn btnSmall btnPrimary" onClick={onCommit}>Mostrar</button>
@@ -2310,7 +2311,7 @@ function CompactResultsTable({ rows = [], favoriteSymbols, onFavorite, onReview,
             </td>
             <td className="rankCell">{rankOffset + i + 1}</td>
             <td className="compactSymbolCell">
-              <a className="ticker" href={stockUrl(r.symbol)} onPointerDown={() => onOpenStock?.(r)} onClick={() => onOpenStock?.(r)}>{r.symbol}</a>
+              <Link className="ticker" href={stockUrl(r.symbol)} onPointerDown={() => onOpenStock?.(r)} onClick={() => onOpenStock?.(r)}>{r.symbol}</Link>
               <CompactCountryFlag country={country} />
             </td>
             <td className="compactCompanyCell">
@@ -2337,9 +2338,9 @@ function CompactResultsTable({ rows = [], favoriteSymbols, onFavorite, onReview,
             </td>
             <td>
               <div className="compactMetricGrid">
-                <CompactMetric label={metricShortLabel("rsGlobalPct")} value={Number.isFinite(rsValue) ? rsValue.toFixed(0) : "-"} tone={compactTone(rsValue, 75, 45)} />
-                <CompactMetric label={metricShortLabel("rsSectorPct")} value={Number.isFinite(r.rsSectorPct) ? r.rsSectorPct.toFixed(0) : "-"} />
-                <CompactMetric label={metricShortLabel("rsQualityScore")} value={Number.isFinite(r.rsQualityScore) ? r.rsQualityScore.toFixed(0) : "-"} tone={compactTone(r.rsQualityScore, 70, 40)} />
+                <CompactMetric label="G" value={Number.isFinite(rsValue) ? rsValue.toFixed(0) : "-"} tone={compactTone(rsValue, 75, 45)} />
+                <CompactMetric label="Grp" value={Number.isFinite(r.rsSectorPct) ? r.rsSectorPct.toFixed(0) : "-"} />
+                <CompactMetric label="Q" value={Number.isFinite(r.rsQualityScore) ? r.rsQualityScore.toFixed(0) : "-"} tone={compactTone(r.rsQualityScore, 70, 40)} />
               </div>
             </td>
             <td>
@@ -2358,9 +2359,9 @@ function CompactResultsTable({ rows = [], favoriteSymbols, onFavorite, onReview,
             </td>
             <td>
               <div className="compactMetricGrid">
-                <CompactMetric label="Rel." value={Number.isFinite(r.relativeVolume) ? `${r.relativeVolume.toFixed(2)}x` : "-"} tone={compactTone(r.relativeVolume, 1.5)} />
+                <CompactMetric label="RV" value={Number.isFinite(r.relativeVolume) ? `${r.relativeVolume.toFixed(2)}x` : "-"} tone={compactTone(r.relativeVolume, 1.5)} />
                 <CompactMetric label="A/D" value={Number.isFinite(r.adProxyScore) ? r.adProxyScore.toFixed(0) : "-"} tone={compactTone(r.adProxyScore, 70, 40)} />
-                <CompactMetric label="Efecto" value={Number.isFinite(r.volumeEffectScore) ? r.volumeEffectScore.toFixed(0) : "-"} />
+                <CompactMetric label="Ef." value={Number.isFinite(r.volumeEffectScore) ? r.volumeEffectScore.toFixed(0) : "-"} />
               </div>
             </td>
             <td className="compactScoreCell">
@@ -2734,25 +2735,37 @@ export default function Page() {
   const [activeFilterFamily, setActiveFilterFamily] = useState(null);
   const fastFilterSignatureRef = useRef("");
   const scanAbortRef = useRef(false);
+  const restoreScrollRef = useRef(null);
   useEffect(() => {
+    let cancelled = false;
+    let restoredRowsCount = 0;
     setFavoriteSymbols(new Set(safeRead(STORAGE_KEYS.favorites, []).map((x) => x.symbol)));
     setChartSettings(readChartSettings());
     setSavedFilterTemplates(normalizeFilterTemplates(safeRead(STORAGE_KEYS.screenerFilterTemplates, [])));
     const session = safeRead(STORAGE_KEYS.screenerSession, null);
     if (session?.version === SCREENER_SESSION_VERSION) {
       const restoredPresetKey = PRESETS[session.presetKey] ? session.presetKey : "balanced";
-      const restoredPreset = PRESETS[restoredPresetKey] || PRESETS.balanced;
       const restoredMarkets = Array.isArray(session.markets) && session.markets.length ? session.markets : DEFAULT_MARKETS;
       const restoredManual = session.manual || "";
       const restoredUniverse = Array.isArray(session.universe) ? session.universe : [];
+      const restoredRows = Array.isArray(session.rows) ? session.rows : [];
+      const restoredAnalyzedRows = Array.isArray(session.analyzedRows) ? session.analyzedRows : [];
+      const restoredSettings = settingsForPreset(restoredPresetKey, session.settings || {});
+      const restoredFilterLayers = { ...filterLayersForPreset(restoredPresetKey), ...(session.filterLayers || {}) };
+      const restoredFieldRules = { ...DEFAULT_FIELD_RULES, ...(session.fieldRules || {}) };
+      const restoredMarketHealth = session.marketHealth || null;
+      const restoredUseRegimeFilter = session.useRegimeFilter !== false;
+      const restoredScrollY = Number(session.scrollY);
+      restoredRowsCount = restoredRows.length;
+      if (Number.isFinite(restoredScrollY) && restoredScrollY > 0) restoreScrollRef.current = restoredScrollY;
       setMarkets(restoredMarkets);
       setManual(restoredManual);
-      setSettings(settingsForPreset(restoredPresetKey, session.settings || {}));
+      setSettings(restoredSettings);
       setPresetKey(restoredPresetKey);
       setUniverse(restoredUniverse);
       setUniverseScope(session.universeScope || (restoredUniverse.length ? universeScopeKey(restoredMarkets, restoredManual) : ""));
-      setRows(Array.isArray(session.rows) ? session.rows : []);
-      setAnalyzedRows(Array.isArray(session.analyzedRows) ? session.analyzedRows : []);
+      setRows(restoredRows);
+      setAnalyzedRows(restoredAnalyzedRows);
       setScanContext(session.scanContext || null);
       setScanPerf(session.scanPerf || null);
       setFail(Array.isArray(session.fail) ? session.fail : []);
@@ -2769,19 +2782,107 @@ export default function Page() {
       setScanBatchSize(SCAN_BATCH_SIZES.includes(session.scanBatchSize) ? session.scanBatchSize : DEFAULT_SCAN_BATCH_SIZE);
       setResultPageSize(RESULT_PAGE_SIZES.includes(session.resultPageSize) ? session.resultPageSize : DEFAULT_RESULT_PAGE_SIZE);
       setResultPage(Number.isFinite(session.resultPage) && session.resultPage > 0 ? session.resultPage : 1);
-      setMarketHealth(session.marketHealth || null);
-      setUseRegimeFilter(session.useRegimeFilter !== false);
-      setFilterLayers({ ...filterLayersForPreset(restoredPresetKey), ...(session.filterLayers || {}) });
-      setFieldRules({ ...DEFAULT_FIELD_RULES, ...(session.fieldRules || {}) });
+      setMarketHealth(restoredMarketHealth);
+      setUseRegimeFilter(restoredUseRegimeFilter);
+      setFilterLayers(restoredFilterLayers);
+      setFieldRules(restoredFieldRules);
       setViewLayers(session.viewLayers || DEFAULT_VIEW_LAYERS);
       setSearchSymbol(session.searchSymbol || "");
       setSearchCandidates(Array.isArray(session.searchCandidates) ? session.searchCandidates : []);
       setSearchResult(session.searchResult || null);
       setQuickReviewRows(Array.isArray(session.quickReviewRows) ? session.quickReviewRows : []);
       setQuickReviewIndex(Number.isFinite(session.quickReviewIndex) ? session.quickReviewIndex : 0);
+      if (restoredRows.length && restoredAnalyzedRows.length && session.scanContext) {
+        fastFilterSignatureRef.current = fastFilterSignature(
+          restoredAnalyzedRows,
+          effectiveSettingsFromLayers(restoredSettings, restoredFilterLayers, restoredFieldRules),
+          { ...session.scanContext, marketHealth: restoredMarketHealth, useRegimeFilter: restoredUseRegimeFilter },
+        );
+      }
       setStatus(session.rows?.length ? `Sesión restaurada: ${session.rows.length} acciones en el screener.` : (session.status || DEFAULT_STATUS));
     }
+    if (!restoredRowsCount) {
+      getLatestScanFromCloud().then((result) => {
+        if (cancelled || !result.ok || result.configured === false) return;
+        const scan = result.data?.scans?.find((item) => Array.isArray(item.rows) && item.rows.length);
+        if (!scan) return;
+        const restoredPresetKey = PRESETS[scan.preset] ? scan.preset : "balanced";
+        const restoredSettings = settingsForPreset(restoredPresetKey, scan.settings || {});
+        const restoredFilterLayers = { ...filterLayersForPreset(restoredPresetKey), ...(scan.filterLayers || {}) };
+        const restoredFieldRules = { ...DEFAULT_FIELD_RULES, ...(scan.fieldRules || {}) };
+        const restoredViewLayers = scan.viewLayers || DEFAULT_VIEW_LAYERS;
+        const restoredUseRegimeFilter = scan.useRegimeFilter !== false;
+        const restoredActiveSettings = scan.activeSettings || effectiveSettingsFromLayers(restoredSettings, restoredFilterLayers, restoredFieldRules);
+        const nextScanContext = {
+          id: scan.id || uid(),
+          symbolsCount: scan.rows.length,
+          baseCount: scan.rows.length,
+          providerErrors: [],
+          scannedAt: scan.updatedAt || scan.createdAt || new Date().toISOString(),
+          snapshotSource: "supabase",
+          snapshotRowsAreFiltered: scan.rowsAreFilteredSnapshot !== false,
+        };
+        const storedScans = safeRead(STORAGE_KEYS.scans, []);
+        safeWrite(STORAGE_KEYS.scans, [scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])].slice(0, 50));
+        fastFilterSignatureRef.current = fastFilterSignature(scan.rows, restoredActiveSettings, {
+          ...nextScanContext,
+          marketHealth,
+          useRegimeFilter: restoredUseRegimeFilter,
+        });
+        setPresetKey(restoredPresetKey);
+        setSettings(restoredSettings);
+        setFilterLayers(restoredFilterLayers);
+        setFieldRules(restoredFieldRules);
+        setViewLayers(restoredViewLayers);
+        setUseRegimeFilter(restoredUseRegimeFilter);
+        setRows(scan.rows);
+        setAnalyzedRows(scan.rows);
+        setScanContext(nextScanContext);
+        setScanPerf({
+          fullScanMs: null,
+          lastFilterMs: 0,
+          lastFastFilterMs: null,
+          estimatedSavedMs: null,
+          analyzedRows: scan.rows.length,
+          scannedSymbols: scan.rows.length,
+          fastRefilters: 0,
+        });
+        setStatus(`Último snapshot Supabase cargado: ${scan.rows.length} acciones. Los filtros se aplican sobre este universo estable.`);
+      });
+    }
     setSessionReady(true);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!sessionReady) return;
+    const targetY = restoreScrollRef.current;
+    if (!Number.isFinite(targetY) || targetY <= 0) return;
+    restoreScrollRef.current = null;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => window.scrollTo(0, targetY));
+    });
+  }, [sessionReady, rows.length]);
+
+  useEffect(() => {
+    function restorePersistedScroll() {
+      const session = safeRead(STORAGE_KEYS.screenerSession, null);
+      const targetY = Number(session?.scrollY);
+      if (!Number.isFinite(targetY) || targetY <= 0) return;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => window.scrollTo(0, targetY));
+      });
+      window.setTimeout(() => window.scrollTo(0, targetY), 150);
+      window.setTimeout(() => window.scrollTo(0, targetY), 500);
+    }
+    window.addEventListener("popstate", restorePersistedScroll);
+    window.addEventListener("pageshow", restorePersistedScroll);
+    return () => {
+      window.removeEventListener("popstate", restorePersistedScroll);
+      window.removeEventListener("pageshow", restorePersistedScroll);
+    };
   }, []);
 
   function buildScreenerSessionPayload(overrides = {}) {
@@ -2824,6 +2925,7 @@ export default function Page() {
       searchResult,
       quickReviewRows,
       quickReviewIndex,
+      scrollY: previousSession?.scrollY ?? null,
       lastOpenedStockSymbol: previousSession?.lastOpenedStockSymbol || "",
       lastOpenedStockAt: previousSession?.lastOpenedStockAt || null,
       ...overrides,
@@ -2853,9 +2955,11 @@ export default function Page() {
   function saveSessionBeforeStockOpen(rowOrSymbol = null) {
     const row = rowOrSymbol && typeof rowOrSymbol === "object" ? rowOrSymbol : null;
     const symbol = typeof rowOrSymbol === "string" ? rowOrSymbol : row?.symbol;
+    const scrollY = typeof window !== "undefined" ? window.scrollY : 0;
     persistScreenerSession({
       lastOpenedStockSymbol: symbol || "",
       lastOpenedStockAt: new Date().toISOString(),
+      scrollY,
       searchResult: compactRowForSession(searchResult),
       quickReviewRows: compactRowsForSession(quickReviewRows),
       rows: compactRowsForSession(rows),
@@ -2922,12 +3026,12 @@ export default function Page() {
     ipo: ipo !== "Todos" ? 1 : 0,
   };
   const viewFiltersActive = VIEW_LAYERS.reduce((sum, layer) => sum + (viewLayers[layer.key] ? viewFilterCounts[layer.key] : 0), 0);
+  const kpiUniverseCount = universe.length || scanContext?.baseCount || analyzedRows.length || rows.length;
   function commitPendingResults() {
     if (!pendingResults) return;
     setRows(pendingResults.rows || []);
     setDiagnostics(pendingResults.diagnostics || null);
     setPendingResults(null);
-    setResultPage(1);
     setStatus(`Resultados actualizados: ${pendingResults.rows?.length || 0} acciones calculadas.`);
   }
   const clear = () => {
@@ -3328,7 +3432,7 @@ export default function Page() {
           return;
         }
         setSearchResult(null);
-        setSearchError("No encontre candidatos. Prueba con nombre, ticker, sector, subsector, pais o sufijo Yahoo.");
+        setSearchError("No encontre candidatos. Prueba con nombre, ticker, sector, subsector, pais o sufijo de mercado.");
         setStatus(`Sin coincidencias para ${query}.`);
         return;
       }
@@ -3382,8 +3486,17 @@ export default function Page() {
     clear();
     setStatus(`Filtro activo: ${PRESETS[k].name}. Capas del preset aplicadas. Pulsa Ejecutar.`);
   }
-  async function loadUniverse(marketsOverride = null) {
-    setErr(""); setFail([]); setRows([]); setPendingResults(null); setStatus("Descargando universos completos...");
+  async function loadUniverse(marketsOverride = null, options = {}) {
+    const preserveResults = Boolean(options.preserveResults);
+    setErr("");
+    setFail([]);
+    if (!preserveResults) {
+      setRows([]);
+      setDiagnostics(null);
+      setResultPage(1);
+    }
+    setPendingResults(null);
+    setStatus(preserveResults ? "Actualizando universo en segundo plano..." : "Descargando universos completos...");
     try {
       const targetMarkets = Array.isArray(marketsOverride) && marketsOverride.length ? marketsOverride : markets;
       const d = await getJson(`/api/universe?markets=${encodeURIComponent(targetMarkets.join(","))}`);
@@ -3413,12 +3526,27 @@ export default function Page() {
   }
   async function run() {
     const scanStartedAt = perfNow();
+    const hadVisibleRows = rows.length > 0;
     scanAbortRef.current = false;
-    setRunning(true); setRows([]); setPendingResults(null); setAnalyzedRows([]); setScanContext(null); setScanPerf(null); fastFilterSignatureRef.current = ""; setFail([]); setDiagnostics(null); setErr(""); setResultPage(1);
+    setRunning(true);
+    setPendingResults(null);
+    setAnalyzedRows([]);
+    setScanContext(null);
+    setScanPerf(null);
+    fastFilterSignatureRef.current = "";
+    setFail([]);
+    setErr("");
+    if (!hadVisibleRows) {
+      setRows([]);
+      setDiagnostics(null);
+      setResultPage(1);
+    } else {
+      setStatus("Actualizando en segundo plano. La tabla visible se mantiene hasta que confirmes los nuevos resultados.");
+    }
     try {
       const mh = marketHealth || (useRegimeFilter ? await loadMarketHealth() : null);
       const currentUniverseScope = universeScopeKey(markets, manual);
-      const base = universe.length && universeScope === currentUniverseScope ? universe : await loadUniverse();
+      const base = universe.length && universeScope === currentUniverseScope ? universe : await loadUniverse(null, { preserveResults: hadVisibleRows });
       setStatus("Preparando cache y benchmarks...");
       const [cachePreview, benchmarks] = await Promise.all([
         loadCachedScreenerPreview(activeSettings),
@@ -3426,13 +3554,27 @@ export default function Page() {
       ]);
       const symbols = selected(base);
       const fullUniverseScan = scanMode === "all";
-      let stableResultsPublished = false;
+      let stableResultsPublished = hadVisibleRows;
       if (cachePreview.rows.length) {
         stableResultsPublished = true;
-        setRows(cachePreview.rows);
-        setStatus(`Cache: ${cachePreview.rows.length} resultados precalculados. Refinando con scan actual.`);
+        if (hadVisibleRows) {
+          setPendingResults({
+            rows: cachePreview.rows,
+            diagnostics,
+            completed: 0,
+            total: symbols.length,
+            done: false,
+            updatedAt: new Date().toISOString(),
+          });
+          setStatus(`Cache precalculada lista (${cachePreview.rows.length}). La tabla visible queda congelada mientras se refina el scan actual.`);
+        } else {
+          setRows(cachePreview.rows);
+          setStatus(`Cache: ${cachePreview.rows.length} resultados precalculados. Refinando con scan actual.`);
+        }
       } else if (fullUniverseScan) {
-        setStatus(`Escaneando todo el universo: ${symbols.length}/${base.length} acciones. Puedes detenerlo si tarda demasiado.`);
+        setStatus(hadVisibleRows
+          ? `Escaneando todo el universo: ${symbols.length}/${base.length} acciones. Tabla visible congelada.`
+          : `Escaneando todo el universo: ${symbols.length}/${base.length} acciones. Puedes detenerlo si tarda demasiado.`);
       }
       let rawRows = [], bad = [];
       let completed = 0;
@@ -3630,6 +3772,8 @@ export default function Page() {
       filterLayers,
       fieldRules,
       viewLayers,
+      useRegimeFilter,
+      rowsAreFilteredSnapshot: true,
       marketScore: marketHealth?.marketScore ?? null,
       marketRegime: marketHealth?.regime?.label || "sin dato",
       snapshotCompatibilityKey: compatibilityKey,
@@ -3709,7 +3853,7 @@ export default function Page() {
   const viewFilterState = { viewLayers, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo };
   const filtered = useMemo(() => {
     const list = applyResultViewFilters(rows, viewFilterState);
-    return list.sort((a, b) => sortMetric(b, sort) - sortMetric(a, sort));
+    return [...list].sort((a, b) => sortMetric(b, sort) - sortMetric(a, sort));
   }, [rows, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, sort, viewLayers]);
   const pendingFilteredCount = useMemo(() => {
     if (!pendingResults) return 0;
@@ -3985,7 +4129,7 @@ export default function Page() {
           <button className={`btn ${running ? "btnGhost" : "btnPrimary"}`} onClick={() => { if (running) stopScan(); else { setShowMobileFilters(false); run(); } }}>{running ? "Detener" : "Aplicar"}</button>
         </div>
         <div className="kpis" style={{ marginBottom: 20 }}>
-          <div className="kpi"><b>{universe.length}</b><span>universo</span></div>
+          <div className="kpi"><b>{kpiUniverseCount}</b><span>universo</span></div>
           <div className="kpi"><b>{rows.length}</b><span>pasan</span></div>
           <div className="kpi"><b>{marketHealth ? Math.round(marketHealth.marketScore) : "-"}</b><span>{marketHealth?.regime?.label || "score"}</span></div>
         </div>
@@ -4145,7 +4289,13 @@ export default function Page() {
           />
         </section>
 
-        <FilterDiagnosticsPanel diagnostics={diagnostics} rowsCount={rows.length} filteredCount={filtered.length} running={running} />
+        <details className="scanDiagnosticsDisclosure">
+          <summary>
+            <span>Auditoria de filtros</span>
+            <em>{running ? "analizando" : diagnostics ? `${diagnostics.finalCount}/${diagnostics.analyzed} pasan` : "sin scan"}</em>
+          </summary>
+          <FilterDiagnosticsPanel diagnostics={diagnostics} rowsCount={rows.length} filteredCount={filtered.length} running={running} />
+        </details>
 
         <section className="desktopResultsSection" style={{ marginBottom: 20 }}>
           <PendingResultsBar pending={pendingResults ? { ...pendingResults, filteredCount: pendingFilteredCount } : null} visibleCount={rows.length} filteredCount={filtered.length} onCommit={commitPendingResults} />
@@ -4252,7 +4402,7 @@ export default function Page() {
               <button className="btn" onClick={() => moveQuickReview(-1)} disabled={modalReviewRows.length < 2}>Anterior</button>
               <span className="quickReviewCounter">{modalReviewPosition + 1}/{modalReviewRows.length}</span>
               <button className="btn btnPrimary" onClick={() => moveQuickReview(1)} disabled={modalReviewRows.length < 2}>Siguiente</button>
-              <a className="btn" href={stockUrl(activeModalRow.symbol)} onPointerDown={() => saveSessionBeforeStockOpen(activeModalRow)} onClick={() => saveSessionBeforeStockOpen(activeModalRow)}>Ficha</a>
+              <Link className="btn" href={stockUrl(activeModalRow.symbol)} onPointerDown={() => saveSessionBeforeStockOpen(activeModalRow)} onClick={() => saveSessionBeforeStockOpen(activeModalRow)}>Ficha</Link>
               <a className="btn" href={externalLinks(activeModalRow.symbol, activeModalRow.exchange).tradingView} target="_blank" rel="noreferrer">TradingView</a>
               <button className="btn" onClick={closeQuickReview}>Cerrar</button>
             </div>
@@ -4266,7 +4416,7 @@ export default function Page() {
               </div>
               <div className="reviewQueueList">
                 {modalReviewRows.map((row, index) => (
-                  <a
+                  <Link
                     key={`${row.symbol}-${index}`}
                     href={stockUrl(row.symbol)}
                     onPointerDown={() => saveSessionBeforeStockOpen(row)}
@@ -4281,7 +4431,7 @@ export default function Page() {
                       <em>{row.companyName || row.name || row.symbol}</em>
                     </span>
                     <i>{Number.isFinite(row.totalScore) ? Math.round(row.totalScore) : "-"}</i>
-                  </a>
+                  </Link>
                 ))}
               </div>
             </aside>

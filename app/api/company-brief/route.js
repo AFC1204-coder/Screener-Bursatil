@@ -4,10 +4,14 @@ import { fetchFmpCompanyData } from "@/lib/fmp";
 import { fetchAsicShortInterest, mergeAsicShortInterest } from "@/lib/asicShort";
 import { externalLinks, inferTradingViewSymbol, isTradingViewWidgetBlocked } from "@/lib/symbols";
 import { withProfileCache } from "@/lib/fundamentalsCache";
+import { withDailyBarsCache } from "@/lib/dailyBarsCache";
 import { scoreRsBenchmarkModel } from "@/lib/relativeStrength";
 import { readGlobalRsSeriesForSymbol } from "@/lib/globalRs";
-import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer";
+import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
 import { weeklyStageForBars } from "@/lib/weeklyStage";
+
+const BRIEF_CACHE_TYPE = "company_brief_cache";
+const DEFAULT_BRIEF_MAX_AGE_DAYS = 1;
 
 const THEME_RULES = [
   { key: "Semis / fotonica", re: /semiconductor|semiconductor equipment|integrated circuit|chip|wafer|photon|optic|laser|lithography|foundry/i, text: "Tiene exposicion a semiconductores, optica/fotonica, litografia, fabricacion de chips o infraestructura de computacion." },
@@ -108,17 +112,18 @@ function fxSymbolsToUsd(currency = "") {
   if (!code || code === "USD") return [];
   return [`${code}USD=X`, `USD${code}=X`];
 }
-async function marketCapUsdInfo(marketCap, currency = "") {
+async function marketCapUsdInfo(marketCap, currency = "", options = {}) {
   const code = normalizeCurrency(currency);
   if (!Number.isFinite(marketCap) || marketCap <= 0 || !code || code === "USD") return null;
   const [direct, inverse] = fxSymbolsToUsd(code);
-  const directChart = await fetchYahooChart(direct).catch(() => ({ bars: [] }));
+  const fxOptions = { ...options, chartCache: options.chartCache !== false, maxPriceFreshnessDays: options.maxPriceFreshnessDays ?? 5 };
+  const directChart = await fetchChartForBrief(direct, { range: "1M" }, fxOptions).catch(() => ({ bars: [] }));
   const directRate = directChart.bars?.[0]?.close;
   if (Number.isFinite(directRate) && directRate > 0) {
     const value = marketCap * directRate;
     return { value, label: `${fmtCap(value)} USD`, rate: directRate, pair: direct, source: "Yahoo Finance FX" };
   }
-  const inverseChart = await fetchYahooChart(inverse).catch(() => ({ bars: [] }));
+  const inverseChart = await fetchChartForBrief(inverse, { range: "1M" }, fxOptions).catch(() => ({ bars: [] }));
   const inverseRate = inverseChart.bars?.[0]?.close;
   if (Number.isFinite(inverseRate) && inverseRate > 0) {
     const rate = 1 / inverseRate;
@@ -566,6 +571,34 @@ function companyCoverage({ profile = {}, chartBars = [], relativeStrength = {}, 
     issues,
   };
 }
+
+function ageDaysFromDate(value = "") {
+  const time = dateTime(value);
+  if (!time) return null;
+  return Math.max(0, Math.floor((Date.now() - time) / 86400000));
+}
+
+function publicFreshness({ chart = {}, profile = {}, financialResults = null, relativeStrength = {}, weeklyGlobalRs = {}, coverage = {} } = {}) {
+  const latestBar = (chart.bars || []).find((bar) => bar?.date && Number.isFinite(bar.close)) || {};
+  const fundamentalsAsOf = profile.growthMetrics?.fundamentalsAsOf || financialResults?.latest?.date || "";
+  const fundamentalsCache = profile.fundamentalsCache || {};
+  const weeklyLatest = weeklyGlobalRs?.latest || null;
+  const rsGlobalAsOf = weeklyLatest?.date || relativeStrength.universe?.asOf || "";
+  const priceAgeDays = ageDaysFromDate(latestBar.date);
+  return {
+    priceDate: latestBar.date || "",
+    priceAgeDays,
+    chartBars: chart.bars?.length || 0,
+    chartStale: !Number.isFinite(priceAgeDays) || priceAgeDays > 5,
+    fundamentalsAsOf,
+    fundamentalsUpdatedAt: fundamentalsCache.updatedAt || fundamentalsCache.read?.updatedAt || "",
+    fundamentalsAgeDays: fundamentalsCache.freshnessDays ?? fundamentalsCache.read?.freshnessDays ?? ageDaysFromDate(fundamentalsAsOf),
+    rsGlobalAsOf,
+    rsGlobalBaseCurrency: weeklyLatest?.baseCurrency || "USD",
+    rsGlobalSample: weeklyLatest?.sampleSize ?? relativeStrength.rsGlobalSample ?? null,
+    coverageLabel: coverage.label || "",
+  };
+}
 function investorAngleFor({ stage = {}, rs = {}, theme = {} }) {
   const rating = Number.isFinite(rs.rating) ? rs.rating : null;
   const dist = Number.isFinite(rs.distance52w) ? rs.distance52w : null;
@@ -630,6 +663,103 @@ function mergeChartHistory(longChart = {}, recentChart = {}) {
       recentInterval: recentChart.meta?.requestedInterval || "",
     },
   };
+}
+
+function symbolKey(symbol = "") {
+  const clean = String(symbol || "").trim().toUpperCase();
+  const hk = clean.match(/^(\d{1,4})\.HK$/);
+  if (hk) return `${hk[1].padStart(4, "0")}.HK`;
+  return clean;
+}
+
+function briefCacheKey(symbol = "", benchmarkSymbol = "") {
+  const benchmark = cleanBenchmarkSymbol(benchmarkSymbol) || "AUTO";
+  return `${symbolKey(symbol)}:${benchmark}`;
+}
+
+function ageDaysFromTimestamp(value = "") {
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) return null;
+  return Math.max(0, Math.floor((Date.now() - time) / 86400000));
+}
+
+function annotateBriefCache(brief = {}, cache = {}) {
+  const cachedAt = cache.cachedAt || brief.updatedAt || "";
+  const ageDays = ageDaysFromTimestamp(cachedAt);
+  return {
+    ...brief,
+    servedAt: new Date().toISOString(),
+    dataQuality: {
+      ...(brief.dataQuality || {}),
+      partial: cache.stale ? true : brief.dataQuality?.partial,
+      freshness: {
+        ...(brief.dataQuality?.freshness || {}),
+        briefCacheHit: Boolean(cache.hit),
+        briefCacheStale: Boolean(cache.stale),
+        briefCachedAt: cachedAt,
+        briefCacheAgeDays: ageDays,
+        briefCacheMaxAgeDays: cache.maxAgeDays ?? DEFAULT_BRIEF_MAX_AGE_DAYS,
+        briefFallbackError: cache.fallbackError || "",
+      },
+    },
+  };
+}
+
+async function readBriefCache(symbol = "", options = {}) {
+  const config = supabaseConfig();
+  const key = briefCacheKey(symbol, options.benchmarkSymbol);
+  const maxAgeDays = Math.max(Number(options.briefMaxAgeDays ?? DEFAULT_BRIEF_MAX_AGE_DAYS), 0);
+  if (!config.configured || !key) return { hit: false, row: null, maxAgeDays };
+  try {
+    const rows = await supabaseRequest("app_settings", {
+      query: {
+        owner_id: `eq.${config.ownerId}`,
+        setting_type: `eq.${BRIEF_CACHE_TYPE}`,
+        setting_key: `eq.${key}`,
+        select: "value,updated_at",
+        limit: "1",
+      },
+    });
+    const row = rows?.[0] || null;
+    const brief = row?.value?.brief || null;
+    const cachedAt = row?.value?.cachedAt || row?.updated_at || brief?.updatedAt || "";
+    const ageDays = ageDaysFromTimestamp(cachedAt);
+    const fresh = Boolean(brief && ageDays !== null && ageDays <= maxAgeDays);
+    return {
+      hit: fresh,
+      stale: Boolean(brief && !fresh),
+      brief,
+      cachedAt,
+      maxAgeDays,
+    };
+  } catch (error) {
+    return { hit: false, row: null, maxAgeDays, error: error.message || "brief cache read failed" };
+  }
+}
+
+async function writeBriefCache(symbol = "", options = {}, brief = {}) {
+  const config = supabaseConfig();
+  const key = briefCacheKey(symbol, options.benchmarkSymbol);
+  if (!config.configured || !key || !brief?.symbol) return { written: false };
+  const cachedAt = new Date().toISOString();
+  try {
+    await supabaseRpc("upsert_app_setting_newer_wins", {
+      p_owner_id: config.ownerId,
+      p_setting_type: BRIEF_CACHE_TYPE,
+      p_setting_key: key,
+      p_value: {
+        version: 1,
+        symbol: symbolKey(symbol),
+        benchmarkSymbol: cleanBenchmarkSymbol(options.benchmarkSymbol) || "AUTO",
+        cachedAt,
+        brief,
+      },
+      p_updated_at: cachedAt,
+    });
+    return { written: true, cachedAt };
+  } catch (error) {
+    return { written: false, error: error.message || "brief cache write failed" };
+  }
 }
 
 function scanMetric(row = {}, key = "") {
@@ -983,17 +1113,35 @@ async function fetchProfileForCache(symbol) {
   return mergeAsicShortInterest(profile, asicShort);
 }
 
+function fetchChartForBrief(symbol, chartOptions = {}, options = {}) {
+  return withDailyBarsCache(symbol, {
+    range: chartOptions.range || "5A",
+    interval: "D",
+    refresh: options.refreshChart === true,
+    useCache: options.chartCache !== false,
+    maxAgeDays: options.maxPriceFreshnessDays ?? 5,
+  }, fetchYahooChart);
+}
+
 export async function getCompanyBrief(symbol, options = {}) {
   if (!symbol) throw new Error("Falta symbol");
+  let cachedBrief = null;
   try {
+    if (options.briefCache !== false && options.refresh !== true && options.debug !== true) {
+      cachedBrief = await readBriefCache(symbol, options);
+      if (cachedBrief.hit && cachedBrief.brief) {
+        return annotateBriefCache(cachedBrief.brief, cachedBrief);
+      }
+    }
+
     const [profileResult, longChart, recentChart] = await Promise.all([
       withProfileCache(symbol, {
         refresh: options.refreshProfile,
         useCache: options.profileCache !== false,
         maxAgeDays: options.profileMaxAgeDays,
       }, fetchProfileForCache).catch((error) => ({ profileProviderError: error.message || "Proveedor no disponible" })),
-      fetchYahooChart(symbol, { range: "MAX" }).catch(() => ({ bars: [] })),
-      fetchYahooChart(symbol, { range: "5A" }).catch(() => ({ bars: [] })),
+      fetchChartForBrief(symbol, { range: "MAX" }, options).catch(() => ({ bars: [] })),
+      fetchChartForBrief(symbol, { range: "5A" }, options).catch(() => ({ bars: [] })),
     ]);
     const chart = mergeChartHistory(longChart, recentChart);
     let profile = {
@@ -1052,8 +1200,10 @@ export async function getCompanyBrief(symbol, options = {}) {
     if (fmpResult.valuationMetrics) profile.valuationMetrics = mergeObjectFallback(profile.valuationMetrics, fmpResult.valuationMetrics);
     if (fmpResult.quoteSnapshot) profile.quoteSnapshot = mergeObjectFallback(profile.quoteSnapshot, fmpResult.quoteSnapshot);
     if (!secResult.error) profile.growthMetrics = mergeSecGrowthMetrics(profile.growthMetrics, secResult);
-    const asicShort = await fetchAsicShortInterest(symbol).catch(() => null);
-    profile = mergeAsicShortInterest(profile, asicShort);
+    if (!profile.shortInterest) {
+      const asicShort = await fetchAsicShortInterest(symbol).catch(() => null);
+      profile = mergeAsicShortInterest(profile, asicShort);
+    }
     const yahooFinancialResults = mergeFinancialResults(profile.fundamentalsFinancialResults || profile.growthMetrics?.financialResults, extrasResult.financialResults);
     const secFinancialResults = secResult.error
       ? yahooFinancialResults
@@ -1069,15 +1219,15 @@ export async function getCompanyBrief(symbol, options = {}) {
     const country = countryFromSymbol(symbol, profile.country);
     const summary = firstSentences(profile.businessSummary, 2);
     const marketCapCurrency = normalizeCurrency(profile.currency);
-    const marketCapUsd = await marketCapUsdInfo(profile.marketCap, marketCapCurrency).catch(() => null);
+    const marketCapUsd = await marketCapUsdInfo(profile.marketCap, marketCapCurrency, options).catch(() => null);
     const listingDate = profile.ipoDate || oldestBarDate(chart.bars || []);
     const listingDateSource = profile.ipoDate ? "Proveedor perfil" : listingDate ? "Primera cotizacion historica disponible" : "";
     const stage = stageFromBars(chart.bars || []);
     const requestedBenchmark = cleanBenchmarkSymbol(options.benchmarkSymbol);
     const benchmarkSymbol = requestedBenchmark || benchmarkForProfile(symbol, profile, theme.key);
     const [benchmarkLongChart, benchmarkRecentChart] = await Promise.all([
-      fetchYahooChart(benchmarkSymbol, { range: "MAX" }).catch(() => ({ bars: [] })),
-      fetchYahooChart(benchmarkSymbol, { range: "5A" }).catch(() => ({ bars: [] })),
+      fetchChartForBrief(benchmarkSymbol, { range: "MAX" }, options).catch(() => ({ bars: [] })),
+      fetchChartForBrief(benchmarkSymbol, { range: "5A" }, options).catch(() => ({ bars: [] })),
     ]);
     const benchmarkChart = mergeChartHistory(benchmarkLongChart, benchmarkRecentChart);
     const benchmarkStrength = {
@@ -1114,7 +1264,31 @@ export async function getCompanyBrief(symbol, options = {}) {
       growthMetrics: profile.growthMetrics || {},
       news: extrasResult.news || [],
     });
-    return {
+    const freshness = publicFreshness({ chart, profile, financialResults, relativeStrength, weeklyGlobalRs, coverage });
+    const debug = options.debug === true;
+    const dataQuality = {
+      coverage,
+      freshness,
+      partial: coverage.total < 60 || freshness.chartStale === true || relativeStrength.rsUniverseAvailable === false,
+    };
+    if (debug) {
+      dataQuality.providerErrors = {
+        profile: profile.profileProviderError || null,
+        extras: extrasResult.extrasProviderError || null,
+        sec: secResult.error || null,
+        fmp: fmpResult.fmpProviderError || null,
+      };
+      dataQuality.providers = {
+        profile: profile.fundamentalsCache?.hit ? "StageRadar fundamental_snapshots cache" : "Yahoo Finance",
+        chart: chart.meta?.fallbackReason ? `${chart.meta?.dataProvider || "Yahoo Finance"} · fallback: ${chart.meta.fallbackReason}` : chart.meta?.dataProvider || "Yahoo Finance",
+        news: "Yahoo Finance search/news + Google News RSS fallback",
+        statements: fmpResult.financialResults ? "Yahoo quoteSummary statements + FMP fallback" : "Yahoo quoteSummary statements",
+        fundamentalsFallback: secResult.error ? "SEC EDGAR no aplicado" : "SEC EDGAR companyfacts",
+        fundamentalsApi: fmpResult.configured === false ? "FMP no configurado" : (fmpResult.fmpProviderError ? "FMP no disponible" : "FMP opcional"),
+        shortInterest: profile.shortInterest ? "ASIC short position reports" : "Yahoo quoteSummary / proveedor base",
+      };
+    }
+    const brief = {
       symbol,
       name: profile.name,
       sector: profile.sector,
@@ -1142,7 +1316,12 @@ export async function getCompanyBrief(symbol, options = {}) {
       summary: summary || "Yahoo no ofrece un resumen de negocio suficientemente claro para esta empresa.",
       investorAngle,
       stage,
-      relativeStrength,
+      relativeStrength: {
+        ...relativeStrength,
+        rsGlobalAsOf: freshness.rsGlobalAsOf,
+        rsGlobalBaseCurrency: freshness.rsGlobalBaseCurrency,
+        rsGlobalEngineVersion: weeklyGlobalRs?.latest?.engineVersion || "",
+      },
       links,
       tradingViewSymbol,
       chartEmbed,
@@ -1156,26 +1335,23 @@ export async function getCompanyBrief(symbol, options = {}) {
       earningsCalendar: extrasResult.earningsCalendar || null,
       financialResults,
       news: extrasResult.news || [],
-      dataQuality: {
-        profileProviderError: profile.profileProviderError || null,
-        extrasProviderError: extrasResult.extrasProviderError || null,
-        secProviderError: secResult.error || null,
-        fmpProviderError: fmpResult.fmpProviderError || null,
-        fundamentalsCache: profile.fundamentalsCache || null,
-        coverage,
-        providers: {
-          profile: profile.fundamentalsCache?.hit ? "StageRadar fundamental_snapshots cache" : "Yahoo Finance",
-          chart: chart.meta?.fallbackReason ? `${chart.meta?.dataProvider || "Yahoo Finance"} · fallback: ${chart.meta.fallbackReason}` : chart.meta?.dataProvider || "Yahoo Finance",
-          news: "Yahoo Finance search/news + Google News RSS fallback",
-          statements: fmpResult.financialResults ? "Yahoo quoteSummary statements + FMP fallback" : "Yahoo quoteSummary statements",
-          fundamentalsFallback: secResult.error ? "SEC EDGAR no aplicado" : "SEC EDGAR companyfacts",
-          fundamentalsApi: fmpResult.configured === false ? "FMP no configurado" : (fmpResult.fmpProviderError ? "FMP no disponible" : "FMP opcional"),
-          shortInterest: profile.shortInterest ? "ASIC short position reports" : "Yahoo quoteSummary / proveedor base",
-        },
-      },
+      dataQuality,
       updatedAt: new Date().toISOString(),
     };
+    if (options.briefCache !== false && options.debug !== true) {
+      const cacheWrite = await writeBriefCache(symbol, options, brief);
+      if (cacheWrite.written) return annotateBriefCache(brief, { hit: false, stale: false, cachedAt: cacheWrite.cachedAt, maxAgeDays: options.briefMaxAgeDays ?? DEFAULT_BRIEF_MAX_AGE_DAYS });
+    }
+    return brief;
   } catch (e) {
+    if (cachedBrief?.brief) {
+      return annotateBriefCache(cachedBrief.brief, {
+        ...cachedBrief,
+        hit: false,
+        stale: true,
+        fallbackError: e.message || "live company brief failed",
+      });
+    }
     throw e;
   }
 }
@@ -1185,13 +1361,24 @@ export async function GET(req) {
   const symbol = searchParams.get("symbol");
   const benchmarkSymbol = searchParams.get("benchmark");
   const profileMaxAgeDays = Number(searchParams.get("maxFundamentalsAgeDays") || searchParams.get("profileMaxAgeDays"));
+  const maxPriceFreshnessDays = Number(searchParams.get("maxPriceFreshnessDays") || searchParams.get("maxAgeDays"));
+  const briefMaxAgeParam = searchParams.get("maxBriefAgeDays");
+  const briefMaxAgeDays = briefMaxAgeParam === null ? NaN : Number(briefMaxAgeParam);
+  const refresh = searchParams.get("refresh") === "1";
   if (!symbol) return Response.json({ error: "Falta symbol" }, { status: 400 });
   try {
     return Response.json(await getCompanyBrief(symbol, {
       benchmarkSymbol,
-      refreshProfile: searchParams.get("refresh") === "1" || searchParams.get("refreshProfile") === "1",
+      refreshProfile: refresh || searchParams.get("refreshProfile") === "1",
+      refreshChart: refresh || searchParams.get("refreshChart") === "1" || searchParams.get("refreshPrices") === "1",
+      refresh,
+      briefCache: searchParams.get("briefCache") !== "0" && searchParams.get("cache") !== "0",
       profileCache: searchParams.get("cache") !== "0",
+      chartCache: searchParams.get("cache") !== "0",
+      briefMaxAgeDays: Number.isFinite(briefMaxAgeDays) ? briefMaxAgeDays : undefined,
       profileMaxAgeDays: Number.isFinite(profileMaxAgeDays) ? profileMaxAgeDays : undefined,
+      maxPriceFreshnessDays: Number.isFinite(maxPriceFreshnessDays) ? maxPriceFreshnessDays : undefined,
+      debug: searchParams.get("debug") === "1",
     }));
   } catch (e) {
     return Response.json({ error: e.message || String(e) }, { status: 500 });

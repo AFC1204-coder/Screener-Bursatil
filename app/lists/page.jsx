@@ -5,7 +5,6 @@ import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { favoriteToRow, isRecentIpo, metricValue, normalizeStockRows, shortBusiness, sortByMetric, uniqueRows, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
-import { SEED_STOCKS } from "@/lib/listsSeedData";
 
 function chartPath(points, key, x, y) {
   let open = false;
@@ -70,65 +69,6 @@ function MiniSparkline({ bars = [] }) {
   </svg>;
 }
 
-function getOrGenerateChartPreview(row) {
-  if (Array.isArray(row.chartPreview) && row.chartPreview.length >= 2) {
-    return row.chartPreview;
-  }
-  const bars = [];
-  const count = 40;
-  const symbol = row.symbol || "SPY";
-
-  let hash = 0;
-  for (let i = 0; i < symbol.length; i++) {
-    hash = symbol.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const seed = Math.abs(hash);
-
-  const getNoise = (step) => {
-    const f1 = 1.5 + (seed % 3);
-    const f2 = 4.0 + (seed % 5);
-    const f3 = 8.0 + (seed % 9);
-
-    const w1 = Math.sin(step * Math.PI * f1) * 0.07;
-    const w2 = Math.cos(step * Math.PI * f2) * 0.035;
-    const w3 = Math.sin(step * Math.PI * f3) * 0.015;
-    const jitter = (((seed + step * 23) % 100) / 100 - 0.5) * 0.01;
-    return w1 + w2 + w3 + jitter;
-  };
-
-  const currentPrice = row.price || 100;
-  const sma50 = row.sma50 || currentPrice * 0.95;
-  const sma200 = row.sma200 || currentPrice * 0.85;
-
-  const change3m = Number.isFinite(row.perf3m) ? row.perf3m : 15;
-  const trendPct = change3m / 100;
-  const startPrice = currentPrice / (1 + trendPct * 0.6);
-
-  for (let i = 0; i < count; i++) {
-    const progress = i / (count - 1);
-    const wave = getNoise(progress);
-
-    let close = startPrice + progress * (currentPrice - startPrice);
-    close = close * (1 + wave);
-
-    const barSma50 = sma50 * (1 - progress * 0.06) + close * progress * 0.06;
-    const barSma200 = sma200 * (1 - progress * 0.03) + close * progress * 0.03;
-
-    const volBase = 150000 + (seed % 400000);
-    const volNoise = ((seed + i * 31) % 200) / 100;
-    const volume = Math.floor(volBase * (1 + volNoise + Math.abs(wave) * 3));
-
-    bars.push({
-      date: `day-${i}`,
-      close,
-      sma50: barSma50,
-      sma200: barSma200,
-      volume
-    });
-  }
-  return bars;
-}
-
 function ListSparkline({ row, chartsCache }) {
   if (Array.isArray(row.chartPreview) && row.chartPreview.length >= 2) {
     return <MiniSparkline bars={row.chartPreview} />;
@@ -137,9 +77,8 @@ function ListSparkline({ row, chartsCache }) {
   if (Array.isArray(cachedBars) && cachedBars.length >= 2) {
     return <MiniSparkline bars={cachedBars} />;
   }
-  // Si terminó de cargar (o falló el fetch) y no hay datos reales en caché, caemos en el generador armónico resiliente
   if (chartsCache[row.symbol] === null) {
-    return <MiniSparkline bars={getOrGenerateChartPreview(row)} />;
+    return <div className="previewEmpty" style={{ height: "44px", display: "grid", placeItems: "center" }}>Sin gráfico</div>;
   }
   return (
     <div className="sparklineSkeleton">
@@ -158,7 +97,7 @@ function applyGroupFilter(rows, groupType, group) {
   return rows.filter((r) => String(r[groupType] || "") === group);
 }
 
-function MiniTable({ title, desc, rows, chartsCache, scoreKey = "totalScore", collapsible = true }) {
+function MiniTable({ title, desc, rows, chartsCache, scoreKey = "totalScore", collapsible = true, emptyLabel = "Sin datos todavia." }) {
   const table = <div className="tableWrap">
     <table className="table">
       <thead><tr>{["Ticker", "Empresa", "Gráfico", "Tema", "3M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel("totalScore")].map((h) => <th key={h}>{h}</th>)}</tr></thead>
@@ -178,7 +117,7 @@ function MiniTable({ title, desc, rows, chartsCache, scoreKey = "totalScore", co
         <td>{num(weaknessScore(r))}</td>
         <td>{num(r.riskScore ?? r.snapshot?.riskScore)}</td>
         <td className="ticker">{num(Number.isFinite(metricValue(r, scoreKey)) ? metricValue(r, scoreKey) : r.snapshot?.totalScore)}</td>
-      </tr>)}{!rows.length && <tr><td colSpan="13">Sin datos todavia.</td></tr>}</tbody>
+      </tr>)}{!rows.length && <tr><td colSpan="13">{emptyLabel}</td></tr>}</tbody>
     </table>
   </div>;
 
@@ -200,24 +139,18 @@ export default function ListsPage() {
   const [favorites, setFavorites] = useState([]);
   const [filter, setFilter] = useState({ groupType: "", group: "" });
   const [chartsCache, setChartsCache] = useState({});
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    let loadedScans = safeRead(STORAGE_KEYS.scans, []);
+    const storedScans = safeRead(STORAGE_KEYS.scans, []);
+    const loadedScans = (Array.isArray(storedScans) ? storedScans : []).filter((scan) => scan?.id !== "seed-scan-01");
     const loadedFavorites = safeRead(STORAGE_KEYS.favorites, []);
 
-    if (!loadedScans || !loadedScans.length) {
-      const seedScan = {
-        id: "seed-scan-01",
-        createdAt: new Date().toISOString(),
-        rows: SEED_STOCKS
-      };
-      loadedScans = [seedScan];
-      safeWrite(STORAGE_KEYS.scans, loadedScans);
-    }
-
     setScans(loadedScans);
+    safeWrite(STORAGE_KEYS.scans, loadedScans);
     setFavorites(loadedFavorites);
     setFilter(queryState());
+    setLoaded(true);
   }, []);
 
   const latest = scans[0];
@@ -355,17 +288,17 @@ export default function ListsPage() {
         <div className="mobileActions"><a className="btn" href="/">Screener</a><a className="btn" href="/review?source=latest">Vista rapida</a><a className="btn" href="/ipo-radar">IPO Radar</a><a className="btn" href="/research-desk">Research</a><a className="btn btnPrimary" href="/sectors">Sectores</a></div>
       </div>
     </section>
-    <section className="card"><div className="kpis"><div className="kpi"><b>{rows.length}</b><span>acciones visibles</span></div><div className="kpi"><b>{favorites.length}</b><span>favoritos</span></div><div className="kpi"><b>{scans.length}</b><span>snapshots</span></div><div className="kpi"><b>{latest ? new Date(latest.createdAt).toLocaleDateString() : "-"}</b><span>ultimo scan</span></div></div></section>
+    <section className="card"><div className="kpis"><div className="kpi"><b>{loaded ? rows.length : "-"}</b><span>acciones visibles</span></div><div className="kpi"><b>{loaded ? favorites.length : "-"}</b><span>favoritos</span></div><div className="kpi"><b>{loaded ? scans.length : "-"}</b><span>snapshots</span></div><div className="kpi"><b>{loaded && latest ? new Date(latest.createdAt).toLocaleDateString() : "-"}</b><span>ultimo scan</span></div></div></section>
     {filter.group && <section className="card status">Filtro activo: <b>{filter.groupType} = {filter.group}</b> · <a className="ticker" href="/lists">limpiar</a></section>}
-    <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} chartsCache={chartsCache} collapsible={false} />
-    <MiniTable title="Composite Leaders" desc="Ranking principal" rows={leaders} chartsCache={chartsCache} />
-    <MiniTable title="RS Quality Leaders" desc="RS alto con volatilidad/drawdown controlados" rows={rsQuality} chartsCache={chartsCache} scoreKey="rsQualityScore" />
-    <MiniTable title="Deterioro tecnico" desc="Debilidad observable para evitar largos o estudiar cortos" rows={weakness} chartsCache={chartsCache} scoreKey="weaknessScore" />
-    <MiniTable title="Weinstein Leaders" desc="Mejor estructura de etapa/tendencia" rows={weinstein} chartsCache={chartsCache} scoreKey="weinsteinScore" />
-    <MiniTable title="Minervini Leaders" desc="Trend template, momentum y maximos" rows={minervini} chartsCache={chartsCache} scoreKey="minerviniScore" />
-    <MiniTable title="Near Pivot" desc="Cerca de maximos y con riesgo controlado" rows={nearPivot} chartsCache={chartsCache} />
-    <MiniTable title="IPO / New Leaders" desc="Solo IPOs reales con fecha <= 5 años" rows={ipo} chartsCache={chartsCache} scoreKey="ipoScore" />
-    <MiniTable title="Extended but strong" desc="Muy fuertes, pero vigilar extension sobre SMA50" rows={extended} chartsCache={chartsCache} />
-    <MiniTable title="Pullback to SMA50" desc="Lideres cerca de SMA50 para vigilancia" rows={pullback} chartsCache={chartsCache} />
+    <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} chartsCache={chartsCache} collapsible={false} emptyLabel={loaded ? "Sin datos todavia." : "Cargando listas..."} />
+    <MiniTable title="Composite Leaders" desc="Ranking principal" rows={leaders} chartsCache={chartsCache} emptyLabel={loaded ? "Sin datos todavia." : "Cargando listas..."} />
+    <MiniTable title="RS Quality Leaders" desc="RS alto con volatilidad/drawdown controlados" rows={rsQuality} chartsCache={chartsCache} scoreKey="rsQualityScore" emptyLabel={loaded ? "Sin datos todavia." : "Cargando listas..."} />
+    <MiniTable title="Deterioro tecnico" desc="Debilidad observable para evitar largos o estudiar cortos" rows={weakness} chartsCache={chartsCache} scoreKey="weaknessScore" emptyLabel={loaded ? "Sin datos todavia." : "Cargando listas..."} />
+    <MiniTable title="Weinstein Leaders" desc="Mejor estructura de etapa/tendencia" rows={weinstein} chartsCache={chartsCache} scoreKey="weinsteinScore" emptyLabel={loaded ? "Sin datos todavia." : "Cargando listas..."} />
+    <MiniTable title="Minervini Leaders" desc="Trend template, momentum y maximos" rows={minervini} chartsCache={chartsCache} scoreKey="minerviniScore" emptyLabel={loaded ? "Sin datos todavia." : "Cargando listas..."} />
+    <MiniTable title="Near Pivot" desc="Cerca de maximos y con riesgo controlado" rows={nearPivot} chartsCache={chartsCache} emptyLabel={loaded ? "Sin datos todavia." : "Cargando listas..."} />
+    <MiniTable title="IPO / New Leaders" desc="Solo IPOs reales con fecha <= 5 años" rows={ipo} chartsCache={chartsCache} scoreKey="ipoScore" emptyLabel={loaded ? "Sin datos todavia." : "Cargando listas..."} />
+    <MiniTable title="Extended but strong" desc="Muy fuertes, pero vigilar extension sobre SMA50" rows={extended} chartsCache={chartsCache} emptyLabel={loaded ? "Sin datos todavia." : "Cargando listas..."} />
+    <MiniTable title="Pullback to SMA50" desc="Lideres cerca de SMA50 para vigilancia" rows={pullback} chartsCache={chartsCache} emptyLabel={loaded ? "Sin datos todavia." : "Cargando listas..."} />
   </main>;
 }
