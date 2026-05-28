@@ -718,7 +718,7 @@ export default function MarketHealthPage() {
       </section>}
 
       <section className="card">
-        <div className="sectionTitle"><h2>Pulso de noticias <InfoHint text={`${news?.contrarianRead || "Sin lectura contraria disponible."} ${news?.note || "La métrica solo lee titulares recientes; confirmar con precio, medias y amplitud."}`} /></h2><span className="fine">{news?.provider || "Yahoo Finance News"}</span></div>
+        <div className="sectionTitle"><h2>Pulso de noticias <InfoHint text={`${news?.contrarianRead || "Sin lectura contraria disponible."} ${news?.note || "La métrica solo lee titulares recientes; confirmar con precio, medias y amplitud."}`} /></h2><span className="fine">fuentes recientes</span></div>
         {news?.error && <div className="dataNote error" style={{ marginBottom: 12 }}>{news.error}</div>}
         <NewsSentimentIndex news={news} />
         <div className="kpis">
@@ -765,7 +765,7 @@ export default function MarketHealthPage() {
             <span>
               <i className={`sentimentPill ${sentimentClass(item.sentimentLabel)}`}>{item.sentimentLabel}</i>
               <b>{item.title}</b>
-              <em>{item.publisher || "Proveedor"} · {dateFmt(item.publishedAt)}</em>
+              <em>{item.publisher || "Fuente"} · {dateFmt(item.publishedAt)}</em>
               <small>{item.sentimentReasons?.length ? item.sentimentReasons.join(", ") : "sin sesgo fuerte detectado"}</small>
             </span>
           </a>)}

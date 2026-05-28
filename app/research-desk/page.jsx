@@ -28,6 +28,13 @@ function exportJson(name, data) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);
 }
+function investorStatusLabel(text = "") {
+  return String(text || "")
+    .replaceAll("Supabase", "nube")
+    .replaceAll("localStorage", "modo local")
+    .replaceAll("Proveedor", "Datos")
+    .replaceAll("provider", "datos");
+}
 async function getJson(url) {
   const r = await fetch(url); const d = await r.json();
   if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
@@ -54,6 +61,75 @@ async function quoteWithBars(symbol) {
   if (!bars.length) throw new Error("Sin dato");
   return { symbol, bars, price: bars[0].close, lastDate: bars[0].date, state: stateFromBars(bars) };
 }
+
+function patternLabel(row = {}) {
+  if (row.failedBreakout || row.snapshot?.failedBreakout) return "Fallo de ruptura";
+  if (row.breakoutAttempt || row.snapshot?.breakoutAttempt) return "Ruptura observada";
+  if (row.vcpCandidate || row.snapshot?.vcpCandidate || row.patternFamily === "progressive_contraction" || row.snapshot?.patternFamily === "progressive_contraction") return "Contraccion progresiva";
+  if (row.pivotSqueeze || row.snapshot?.pivotSqueeze || row.patternFamily === "pivot_squeeze" || row.snapshot?.patternFamily === "pivot_squeeze") return "Compresion pivot";
+  if (row.patternFamily === "trend_no_base" || row.snapshot?.patternFamily === "trend_no_base") return "Tendencia sin base";
+  if (Number.isFinite(row.distanceToPivotPct ?? row.snapshot?.distanceToPivotPct)) return "Zona tecnica";
+  if (row.patternFamily || row.snapshot?.patternFamily) return String(row.patternFamily || row.snapshot?.patternFamily).replaceAll("_", " ");
+  return row.methodologyTags?.[0] || row.stageLabel || "Sin estructura";
+}
+
+function contractionText(row = {}) {
+  const depths = (row.contractionDepths || row.snapshot?.contractionDepths || []).filter(Number.isFinite).slice(0, 3);
+  if (depths.length) return depths.map((value) => `${value.toFixed(1)}%`).join(" -> ");
+  const base = row.baseDepthPct ?? row.snapshot?.baseDepthPct;
+  return Number.isFinite(base) ? `Base ${base.toFixed(1)}%` : "Sin dato";
+}
+
+function commandCenterFrom({ rows = [], alerts = [], favorites = [] } = {}) {
+  const favSet = new Set(favorites.map((item) => item.symbol));
+  const structures = rows
+    .filter((row) => row.patternEligible !== false && row.patternFamily !== "trend_no_base" && (row.vcpCandidate || row.patternFamily === "progressive_contraction" || row.patternFamily === "pivot_squeeze" || Number(row.patternQualityScore) > 0 || Number.isFinite(row.distanceToPivotPct)))
+    .sort((a, b) => (b.patternQualityScore || b.setupQualityScore || 0) - (a.patternQualityScore || a.setupQualityScore || 0))
+    .slice(0, 8);
+  const pivotZone = rows
+    .filter((row) => Number.isFinite(row.distanceToPivotPct) && row.distanceToPivotPct >= -5 && row.distanceToPivotPct <= 3)
+    .sort((a, b) => Math.abs(a.distanceToPivotPct || 99) - Math.abs(b.distanceToPivotPct || 99))
+    .slice(0, 8);
+  const favoriteAlerts = alerts
+    .filter((alert) => favSet.has(alert.symbol))
+    .slice(0, 8);
+  const dataIssues = rows
+    .filter((row) => row.patternDataStatus && !["ok", "partial_volume"].includes(row.patternDataStatus))
+    .slice(0, 8);
+  return [
+    { key: "structures", title: "Estructuras observables", detail: "Contracciones, bases o pivots medidos en el ultimo snapshot", rows: structures },
+    { key: "pivot", title: "Cerca de zona tecnica", detail: "Distancia objetiva al pivot estimado", rows: pivotZone },
+    { key: "favoriteAlerts", title: "Favoritos con cambios", detail: "Alertas activas sobre valores ya guardados", alerts: favoriteAlerts },
+    { key: "data", title: "Datos a revisar", detail: "Patrones no calculados por cobertura insuficiente", rows: dataIssues },
+  ];
+}
+
+function DailyCommandCenter({ sections = [] }) {
+  return <section className="card">
+    <div className="sectionTitle">
+      <div>
+        <h2>Command Center</h2>
+        <p className="fine">Cambios y estructuras observables; no establece preferencias.</p>
+      </div>
+      <span className="fine">snapshot + favoritos</span>
+    </div>
+    <div className="grid grid2">
+      {sections.map((section) => <div className="miniPanel" key={section.key}>
+        <div className="sectionTitle"><h3>{section.title}</h3><span className="fine">{section.rows?.length || section.alerts?.length || 0}</span></div>
+        <p className="fine">{section.detail}</p>
+        {section.alerts ? section.alerts.slice(0, 5).map((alert) => <div className="summaryRow" key={alert.id}>
+          <span><a className="ticker" href={stockUrl(alert.symbol)}>{alert.symbol}</a><br /><span className="fine">{alert.payload?.label || alert.alertType}</span></span>
+          <span>{alert.payload?.severity || "neutral"}</span>
+        </div>) : section.rows.slice(0, 5).map((row) => <div className="summaryRow" key={`${section.key}-${row.symbol}`}>
+          <span><a className="ticker" href={stockUrl(row.symbol)}>{row.symbol}</a><br /><span className="fine">{patternLabel(row)}</span></span>
+          <span>{section.key === "pivot" && Number.isFinite(row.distanceToPivotPct) ? pct(row.distanceToPivotPct) : contractionText(row)}</span>
+        </div>)}
+        {!(section.rows?.length || section.alerts?.length) && <p className="fine">Sin elementos en esta muestra.</p>}
+      </div>)}
+    </div>
+  </section>;
+}
+
 export default function ResearchDesk() {
   const [scans, setScans] = useState([]);
   const [favorites, setFavorites] = useState([]);
@@ -321,6 +397,7 @@ export default function ResearchDesk() {
     .slice(0, 24), [selectedRows]);
   const visibleAlerts = useMemo(() => activeAlerts(alerts).slice(0, 30), [alerts]);
   const alertsSummary = useMemo(() => alertSummary(alerts), [alerts]);
+  const commandCenter = useMemo(() => commandCenterFrom({ rows: selectedRows, alerts: visibleAlerts, favorites }), [selectedRows, visibleAlerts, favorites]);
   const favoriteStats = useMemo(() => {
     const valid = favorites.filter((f) => Number.isFinite(f.perfSinceAdd));
     const avgPerf = valid.length ? valid.reduce((a, b) => a + b.perfSinceAdd, 0) / valid.length : null;
@@ -337,14 +414,16 @@ export default function ResearchDesk() {
     </section>
 
     <section className="card"><div className="kpis"><div className="kpi"><b>{scans.length}</b><span>snapshots guardados</span></div><div className="kpi"><b>{favoriteStats.count}</b><span>favoritos</span></div><div className="kpi"><b>{alertsSummary.active}</b><span>alertas activas</span></div><div className="kpi"><b>{pct(favoriteStats.avg)}</b><span>media desde favorito</span></div><div className="kpi"><b>{pct(favoriteStats.alpha)}</b><span>alpha media</span></div></div></section>
-    <section className="card status">Estado: <b>{status}</b></section>
+    <section className="card status">Estado: <b>{investorStatusLabel(status)}</b></section>
+
+    <DailyCommandCenter sections={commandCenter} />
 
     <section className="card">
-      <div className="sectionTitle"><h2>Supabase <InfoHint text={cloud.message || "Sincronizacion opcional. localStorage sigue activo aunque Supabase no este configurado."} /></h2><span className="fine">{cloud.configured ? (cloud.ok ? "Conectado" : "Configurado con error") : "No configurado"}</span></div>
+      <div className="sectionTitle"><h2>Sincronización <InfoHint text="Copia opcional en la nube. La experiencia sigue funcionando en modo local aunque no esté conectada." /></h2><span className="fine">{cloud.configured ? (cloud.ok ? "Conectada" : "Revisar conexión") : "Modo local"}</span></div>
       <div className="controls">
-        <button className="btn" onClick={() => refreshCloudStatus(true)} disabled={syncing}>Probar conexion</button>
-        <button className="btn btnPrimary" onClick={pushToCloud} disabled={syncing}>{syncing ? "Sincronizando..." : "Subir local"}</button>
-        <button className="btn" onClick={pullFromCloud} disabled={syncing}>Importar nube</button>
+        <button className="btn" onClick={() => refreshCloudStatus(true)} disabled={syncing}>Comprobar</button>
+        <button className="btn btnPrimary" onClick={pushToCloud} disabled={syncing}>{syncing ? "Sincronizando..." : "Guardar copia"}</button>
+        <button className="btn" onClick={pullFromCloud} disabled={syncing}>Traer copia</button>
         <button className="btn" onClick={importCloudAlerts} disabled={syncing}>Importar alertas</button>
       </div>
     </section>
@@ -357,7 +436,7 @@ export default function ResearchDesk() {
           <button className="btn btnPrimary" onClick={importLatestScan}>Importar ultimo scan</button>
           <button className="btn" onClick={importManualSnapshot}>Snapshot manual</button>
           <button className="btn" onClick={() => exportJson("stageradar-backup.json", { scans, favorites, exportedAt: new Date().toISOString() })}>Exportar backup</button>
-          <button className="btn btnGhost" onClick={clearAll}>Borrar local</button>
+          <button className="btn btnGhost" onClick={clearAll}>Limpiar dispositivo</button>
         </div>
       </div>
       <div className="card"><h2>Anadir favoritos manuales</h2><textarea className="textarea" value={manual} onChange={(e) => setManual(e.target.value)} placeholder={"NVDA\nASML.AS\nRHM.DE"} /><button className="btn btnPrimary" style={{ marginTop: 10 }} onClick={createManualFavorites}>Anadir a watchlist</button></div>

@@ -11,6 +11,7 @@ import { safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState"
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { alertsFromScan, mergeAlerts } from "@/lib/methodologyAlerts";
 import { enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
+import { patternEvidenceLine, setupStructureForRow } from "@/lib/patternNarrative";
 import { qualityGateForResearchRow } from "@/lib/qualityGate";
 import { benchmarkSymbolForRow, enrichRelativePercentiles, rsBenchmarkValue, rsPrimaryValue, rsUniverseValue, scoreRelativeStrength, scoreRsQuality } from "@/lib/relativeStrength";
 import { SCREENER_FILTER_QUERY_KEYS, screenerFilterRejectReason as sharedScreenerFilterRejectReason } from "@/lib/screenerFilters";
@@ -87,7 +88,7 @@ function universeScopeKey(marketsValue = [], manualValue = "") {
   const manualPart = manualUniverseRows(manualValue).map((x) => x.symbol).join(",");
   return `${marketPart}::${manualPart}`;
 }
-const QUALITY_DEFAULTS = { filterStrictness: DEFAULT_FILTER_STRICTNESS, setupMode: "leader", requireStage2: true, requireSma200Up: false, requirePriceAboveSma50: false, requireRecentIpo: false, requireUpVolume: false, stageFastWeeks: 10, stageSlowWeeks: 30, stageSlopeWeeks: 10, maxIpoAgeMonths: 60, maxPriceFreshnessDays: DEFAULT_PRICE_FRESHNESS_DAYS, minWeinsteinScore: 50, minMinerviniScore: 38, minMomentumScore: 15, minRiskScore: 15, minVolumeScore: 0, minLiquidityScore: 0, minRsRating: 50, minRsBenchmarkRating: 0, minRsCountryPct: 0, minRsSectorPct: 0, minRsQualityScore: 0, minAdProxyScore: 0, minEpsGrowthProxyScore: 0, minWeaknessScore: 50, minSectorScore: 0, minTotalScore: 0, minDataCoverageScore: 35, minTechnicalCoverageScore: 45, minFundamentalCoverageScore: 0, minAvgTurnover: 1000000, minLatestVolume: 0, minLatestTurnover: 0, minRelativeVolume: 1, minVolumeSurgePct: 15, minUpDownVolRatio: .8, minVolumeEffectScore: 0, minShortFloatPct: 0, maxShortFloatPct: 999, minRiskRewardScore: 35, minReturnToVol3m: .2, minReturnToDrawdown3m: .5, maxDailyMove20dPct: 25, maxDailyRange20dPct: 32, maxRange63dPct: 120, maxVolatility63d: 120, maxDrawdown63d: 40 };
+const QUALITY_DEFAULTS = { filterStrictness: DEFAULT_FILTER_STRICTNESS, setupMode: "leader", requireStage2: true, requireSma200Up: false, requirePriceAboveSma50: false, requireRecentIpo: false, requireUpVolume: false, requireContractionsDecreasing: false, stageFastWeeks: 10, stageSlowWeeks: 30, stageSlopeWeeks: 10, maxIpoAgeMonths: 60, maxPriceFreshnessDays: DEFAULT_PRICE_FRESHNESS_DAYS, minWeinsteinScore: 50, minMinerviniScore: 38, minMomentumScore: 15, minRiskScore: 15, minVolumeScore: 0, minLiquidityScore: 0, minRsRating: 50, minRsBenchmarkRating: 0, minRsCountryPct: 0, minRsSectorPct: 0, minRsQualityScore: 0, minAdProxyScore: 0, minEpsGrowthProxyScore: 0, minWeaknessScore: 50, minSectorScore: 0, minTotalScore: 0, minDataCoverageScore: 35, minTechnicalCoverageScore: 45, minFundamentalCoverageScore: 0, minAvgTurnover: 1000000, minLatestVolume: 0, minLatestTurnover: 0, minRelativeVolume: 1, minVolumeSurgePct: 15, minUpDownVolRatio: .8, minVolumeEffectScore: 0, minShortFloatPct: 0, maxShortFloatPct: 999, minRiskRewardScore: 35, minReturnToVol3m: .2, minReturnToDrawdown3m: .5, maxDailyMove20dPct: 25, maxDailyRange20dPct: 32, maxRange63dPct: 120, maxVolatility63d: 120, maxDrawdown63d: 40, minContractionCount: 0, maxContraction1DepthPct: 999, maxContraction2DepthPct: 999, maxContraction3DepthPct: 999, maxLastContractionDepthPct: 999, maxBaseDepthPct: 999, minBaseWeeks: 0, maxBaseWeeks: 999, maxAbsDistanceToPivotPct: 999, maxVolumeDryUpRatio: 999, maxTightness10dPct: 999, minPatternQualityScore: 0 };
 const PRESETS = {
   balanced: { name: "Balanceado", desc: "Tendencia alcista amplia con sesgo profesional", v: { ...QUALITY_DEFAULTS, minMarketCap: 200000000, minPrice: 2, minAvgVolume: 150000, minAvgTurnover: 1500000, maxDistance20dHigh: 20, maxDistance50dHigh: 30, maxDistance52w: 40, maxDistanceATH: 70, maxHighsSpreadPct: 25, minPerf3m: 3, minPerf6m: 8, minPerf12m: 12, maxExtensionSma50: 45, maxSymbols: ALL_SYMBOLS_LIMIT } },
   strict: { name: "Lideres estrictos", desc: "Muy selectivo", v: { ...QUALITY_DEFAULTS, filterStrictness: "strict", setupMode: "leader", minMarketCap: 500000000, minPrice: 5, minAvgVolume: 500000, minAvgTurnover: 10000000, minLatestVolume: 250000, minLatestTurnover: 5000000, minUpDownVolRatio: 1, minVolumeEffectScore: 35, maxDistance20dHigh: 5, maxDistance50dHigh: 10, maxDistance52w: 15, maxDistanceATH: 25, maxHighsSpreadPct: 8, minPerf3m: 15, minPerf6m: 30, minPerf12m: 50, maxExtensionSma50: 25, maxDailyMove20dPct: 12, maxDailyRange20dPct: 16, maxRange63dPct: 55, maxVolatility63d: 60, maxDrawdown63d: 22, minWeinsteinScore: 75, minMinerviniScore: 65, minMomentumScore: 45, minRiskScore: 50, minVolumeScore: 30, minLiquidityScore: 35, minRsRating: 75, minDataCoverageScore: 50, minTechnicalCoverageScore: 70, minSectorScore: 55, minTotalScore: 68, maxSymbols: ALL_SYMBOLS_LIMIT } },
@@ -136,6 +137,7 @@ const FILTER_GROUPS = [
   { title: "Momentum", fields: [{ key: "minPerf3m", label: "Perf 3M min", unit: "%", step: 1 }, { key: "minPerf6m", label: "Perf 6M min", unit: "%", step: 1 }, { key: "minPerf12m", label: "Perf 12M min", unit: "%", step: 1 }] },
   { title: "Cercania a maximos", fields: [{ key: "maxDistance20dHigh", label: "Max caida vs 20d", unit: "%", step: 1 }, { key: "maxDistance50dHigh", label: "Max caida vs 50d", unit: "%", step: 1 }, { key: "maxDistance52w", label: "Max caida vs 52w", unit: "%", step: 1 }, { key: "maxDistanceATH", label: "Max caida vs ATH", unit: "%", step: 1 }, { key: "maxHighsSpreadPct", label: "Highs spread max", unit: "%", step: 1 }, { key: "maxExtensionSma50", label: "Extension SMA50 max", unit: "%", step: 1 }] },
   { title: "Volatilidad / rango", fields: [{ key: "maxDailyMove20dPct", label: "Movimiento diario max 20d", unit: "%", step: 1, hint: "Mayor cambio absoluto cierre-cierre de las ultimas 20 sesiones." }, { key: "maxDailyRange20dPct", label: "Rango intradia max 20d", unit: "%", step: 1, hint: "Mayor rango high-low relativo al cierre en las ultimas 20 sesiones." }, { key: "maxRange63dPct", label: "Rango precio 63d max", unit: "%", step: 5, hint: "Amplitud high-low de los ultimos tres meses." }, { key: "maxVolatility63d", label: "Volatilidad anualizada max", unit: "%", step: 5 }, { key: "maxDrawdown63d", label: "Drawdown 3M max", unit: "%", step: 1 }] },
+  { title: "Estructura / patrones", fields: [{ key: "minContractionCount", label: "Contracciones min", unit: "", step: 1, hint: "Numero de pullbacks medidos por swings locales dentro de la base reciente." }, { key: "maxContraction1DepthPct", label: "Contraccion 1 max", unit: "%", step: 1 }, { key: "maxContraction2DepthPct", label: "Contraccion 2 max", unit: "%", step: 1 }, { key: "maxContraction3DepthPct", label: "Contraccion 3 max", unit: "%", step: 1 }, { key: "maxLastContractionDepthPct", label: "Ultima contraccion max", unit: "%", step: 1 }, { key: "maxBaseDepthPct", label: "Profundidad base max", unit: "%", step: 1 }, { key: "minBaseWeeks", label: "Duracion base min", unit: "sem", step: .5 }, { key: "maxBaseWeeks", label: "Duracion base max", unit: "sem", step: .5 }, { key: "maxAbsDistanceToPivotPct", label: "Distancia pivot max", unit: "%", step: .5 }, { key: "maxVolumeDryUpRatio", label: "Volumen seco max", unit: "x", step: .05, hint: "Volumen medio 10d dividido entre volumen medio 50d." }, { key: "maxTightness10dPct", label: "Rango 10d max", unit: "%", step: .5 }, { key: "minPatternQualityScore", label: "Calidad estructura min", unit: "", step: 5 }] },
   { title: "Rentabilidad / riesgo", fields: [{ key: "minRiskRewardScore", label: "Score rent/riesgo min", unit: "", step: 5 }, { key: "minReturnToVol3m", label: "Retorno 3M / volatilidad min", unit: "x", step: .1 }, { key: "minReturnToDrawdown3m", label: "Retorno 3M / drawdown min", unit: "x", step: .1 }] },
   { title: "Ratings proxy", fields: [{ key: "minAdProxyScore", label: `${metricShortLabel("adProxyScore")} min`, unit: "", step: 5, hint: "Proxy 0-100 de acumulacion/distribucion usando up/down volume, volumen relativo y cierre con volumen." }, { key: "minEpsGrowthProxyScore", label: `${metricShortLabel("epsGrowthProxyScore")} min`, unit: "", step: 5, hint: "Proxy 0-100 de crecimiento/calidad con beneficios, ventas, margenes y ROE si el proveedor devuelve datos." }] },
   { title: "Cobertura de datos", fields: [{ key: "maxPriceFreshnessDays", label: "Precio fresco max", unit: "d", step: 1, hint: "Dias maximos desde la ultima vela diaria. Si el dato esta viejo, la accion no entra en rankings accionables." }, { key: "minDataCoverageScore", label: "Cobertura total min", unit: "", step: 5 }, { key: "minTechnicalCoverageScore", label: "Cobertura tecnica min", unit: "", step: 5 }, { key: "minFundamentalCoverageScore", label: "Cobertura fundamental min", unit: "", step: 5 }] },
@@ -180,6 +182,18 @@ const FILTER_FIELD_LAYERS = {
   maxRange63dPct: ["volatility"],
   maxVolatility63d: ["volatility"],
   maxDrawdown63d: ["volatility"],
+  minContractionCount: ["pattern"],
+  maxContraction1DepthPct: ["pattern"],
+  maxContraction2DepthPct: ["pattern"],
+  maxContraction3DepthPct: ["pattern"],
+  maxLastContractionDepthPct: ["pattern"],
+  maxBaseDepthPct: ["pattern"],
+  minBaseWeeks: ["pattern"],
+  maxBaseWeeks: ["pattern"],
+  maxAbsDistanceToPivotPct: ["pattern"],
+  maxVolumeDryUpRatio: ["pattern"],
+  maxTightness10dPct: ["pattern"],
+  minPatternQualityScore: ["pattern"],
   maxPriceFreshnessDays: ["coverage"],
   minDataCoverageScore: ["coverage"],
   minTechnicalCoverageScore: ["coverage"],
@@ -232,6 +246,18 @@ const NEUTRAL_FIELD_VALUES = {
   maxRange63dPct: 999,
   maxVolatility63d: 999,
   maxDrawdown63d: 999,
+  minContractionCount: 0,
+  maxContraction1DepthPct: 999,
+  maxContraction2DepthPct: 999,
+  maxContraction3DepthPct: 999,
+  maxLastContractionDepthPct: 999,
+  maxBaseDepthPct: 999,
+  minBaseWeeks: 0,
+  maxBaseWeeks: 999,
+  maxAbsDistanceToPivotPct: 999,
+  maxVolumeDryUpRatio: 999,
+  maxTightness10dPct: 999,
+  minPatternQualityScore: 0,
   maxPriceFreshnessDays: 999,
   minDataCoverageScore: 0,
   minTechnicalCoverageScore: 0,
@@ -250,8 +276,8 @@ const NEUTRAL_FIELD_VALUES = {
   minTotalScore: 0,
   maxIpoAgeMonths: 999,
 };
-const DEFAULT_FILTER_LAYERS = { trend: true, momentum: true, relativeStrength: true, proximity: true, volatility: true, score: true, liquidity: true, volumeSurge: false, shortInterest: false, riskReward: false, coverage: true, ipo: true };
-const ALL_FILTER_LAYERS = { ...DEFAULT_FILTER_LAYERS, volumeSurge: true, shortInterest: true, riskReward: true };
+const DEFAULT_FILTER_LAYERS = { trend: true, momentum: true, relativeStrength: true, proximity: true, volatility: true, pattern: false, score: true, liquidity: true, volumeSurge: false, shortInterest: false, riskReward: false, coverage: true, ipo: true };
+const ALL_FILTER_LAYERS = { ...DEFAULT_FILTER_LAYERS, pattern: true, volumeSurge: true, shortInterest: true, riskReward: true };
 const PRESET_LAYER_OVERRIDES = {
   strict: { volumeSurge: true, riskReward: true },
   weakness: { trend: false, momentum: false, relativeStrength: false, proximity: false, volatility: false, volumeSurge: false, shortInterest: false, riskReward: false, ipo: false },
@@ -274,6 +300,7 @@ const EXECUTION_LAYERS = [
   { key: "relativeStrength", label: "RS", detail: "universo, benchmark, pais y grupo", count: 6 },
   { key: "proximity", label: "Cercania", detail: "maximos y extension", count: 7 },
   { key: "volatility", label: "Volatilidad", detail: "movimiento y rango", count: 5 },
+  { key: "pattern", label: "Estructura", detail: "contracciones, base y pivot", count: 13 },
   { key: "score", label: "Scores", detail: "minimos composite", count: 6 },
   { key: "liquidity", label: "Liquidez", detail: "precio, cap, importe", count: 6 },
   { key: "volumeSurge", label: "Volumen+", detail: "actividad objetiva", count: 8 },
@@ -326,6 +353,16 @@ const FILTER_FAMILY_PRESETS = {
       { label: "Conservador", detail: "Evita nombres bruscos.", settings: { maxDailyMove20dPct: 10, maxDailyRange20dPct: 14, maxRange63dPct: 45, maxVolatility63d: 55, maxDrawdown63d: 18 } },
       { label: "Balanceado", detail: "Riesgo técnico normal.", settings: { maxDailyMove20dPct: 18, maxDailyRange20dPct: 22, maxRange63dPct: 85, maxVolatility63d: 85, maxDrawdown63d: 32 } },
       { label: "Permisivo", detail: "No bloquea por volatilidad.", settings: { maxDailyMove20dPct: 999, maxDailyRange20dPct: 999, maxRange63dPct: 999, maxVolatility63d: 999, maxDrawdown63d: 999 } },
+    ],
+  },
+  pattern: {
+    title: "Estructura",
+    intro: "Contracciones, base reciente, pivot estimado y volumen seco. La app mide evidencia; no etiqueta recomendaciones.",
+    actions: [
+      { label: "Contracción progresiva", detail: "3 pullbacks decrecientes con base controlada.", filterLayers: { pattern: true }, settings: { requireContractionsDecreasing: true, minContractionCount: 3, maxContraction1DepthPct: 25, maxContraction2DepthPct: 16, maxContraction3DepthPct: 8, maxLastContractionDepthPct: 8, maxBaseDepthPct: 35, maxAbsDistanceToPivotPct: 6, maxVolumeDryUpRatio: .9, maxTightness10dPct: 12 } },
+      { label: "VCP vigilancia", detail: "Misma logica, algo mas permisiva para seguimiento.", filterLayers: { pattern: true }, settings: { requireContractionsDecreasing: true, minContractionCount: 3, maxContraction1DepthPct: 30, maxContraction2DepthPct: 20, maxContraction3DepthPct: 12, maxLastContractionDepthPct: 12, maxBaseDepthPct: 40, maxAbsDistanceToPivotPct: 10, maxVolumeDryUpRatio: 1, maxTightness10dPct: 16, minPatternQualityScore: 50 } },
+      { label: "Base estrecha", detail: "Rango reciente contenido cerca de pivot.", filterLayers: { pattern: true }, settings: { requireContractionsDecreasing: false, minContractionCount: 1, maxBaseDepthPct: 25, maxAbsDistanceToPivotPct: 8, maxTightness10dPct: 8, minPatternQualityScore: 55 } },
+      { label: "Sin estructura", detail: "Desactiva esta familia opcional.", filterLayers: { pattern: false }, settings: { requireContractionsDecreasing: false, minContractionCount: 0, maxContraction1DepthPct: 999, maxContraction2DepthPct: 999, maxContraction3DepthPct: 999, maxLastContractionDepthPct: 999, maxBaseDepthPct: 999, minBaseWeeks: 0, maxBaseWeeks: 999, maxAbsDistanceToPivotPct: 999, maxVolumeDryUpRatio: 999, maxTightness10dPct: 999, minPatternQualityScore: 0 } },
     ],
   },
   score: {
@@ -405,6 +442,7 @@ const SETTING_LAYER_DEPENDENCIES = {
   requireStage2: { layer: "trend", label: "Trend" },
   requireUpVolume: { layer: "volumeSurge", label: "Volumen+" },
   requireRecentIpo: { layer: "ipo", label: "IPO" },
+  requireContractionsDecreasing: { layer: "pattern", label: "Estructura" },
 };
 const SECTOR_STRENGTH_OPTIONS = ["Todos", "Fuertes", "Constructivos", "Debiles", "Muy debiles"];
 const BENCHMARK_SYMBOLS = ["SPY", "QQQ", "ACWI"];
@@ -447,6 +485,15 @@ const avg = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
 const clamp = (n, a = 0, b = 100) => Math.max(a, Math.min(b, n));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const searchText = (value = "") => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+function investorStatusLabel(text = "") {
+  return String(text || "")
+    .replaceAll("Supabase", "nube")
+    .replaceAll("localStorage", "modo local")
+    .replaceAll("Proveedor", "Datos")
+    .replaceAll("proveedor", "datos")
+    .replaceAll("Yahoo/mercado", "mercado")
+    .replaceAll("Yahoo", "fuente de mercado");
+}
 function InfoHint({ text, tone = "" }) {
   if (!text) return null;
   return <span className={`infoHint ${tone}`} tabIndex="0" aria-label={text}>
@@ -821,6 +868,8 @@ function scoreSetupQuality(r) {
   }
   if (lte(r.highsSpreadPct, 8)) s += 7;
   else if (lte(r.highsSpreadPct, 15)) s += 4;
+  if (Number.isFinite(r.patternQualityScore)) s += Math.min(10, r.patternQualityScore * .1);
+  if (Number.isFinite(r.contractionScore)) s += Math.min(6, r.contractionScore * .06);
   if (r.vcpCandidate) s += 10;
   if (r.breakoutAttempt) s += 6;
   if (Number.isFinite(r.breakoutQualityScore)) s += Math.min(8, r.breakoutQualityScore * .08);
@@ -1386,6 +1435,7 @@ const REJECTION_META = {
   shortInterest: { label: metricShortLabel("shortPercentOfFloat"), stage: "Opcional" },
   riskReward: { label: "Rentabilidad/riesgo", stage: "Opcional" },
   volatility: { label: "Volatilidad/rango", stage: "Puerta" },
+  pattern: { label: "Estructura", stage: "Patrones" },
   trend: { label: "Tendencia", stage: "Puerta" },
   proximity: { label: "Cercania a maximos", stage: "Puerta" },
   momentum: { label: "Momentum", stage: "Puerta" },
@@ -1410,6 +1460,7 @@ function sharedRejectKey(field = "") {
   if (["minShortFloatPct", "maxShortFloatPct"].includes(field)) return "shortInterest";
   if (["minRiskRewardScore", "minReturnToVol3m", "minReturnToDrawdown3m"].includes(field)) return "riskReward";
   if (["maxDailyMove20dPct", "maxDailyRange20dPct", "maxRange63dPct", "maxVolatility63d", "maxDrawdown63d"].includes(field)) return "volatility";
+  if (["requireContractionsDecreasing", "minContractionCount", "maxContraction1DepthPct", "maxContraction2DepthPct", "maxContraction3DepthPct", "maxLastContractionDepthPct", "maxBaseDepthPct", "minBaseWeeks", "maxBaseWeeks", "maxAbsDistanceToPivotPct", "maxVolumeDryUpRatio", "maxTightness10dPct", "minPatternQualityScore"].includes(field)) return "pattern";
   if (["requireStage2", "requireSma200Up", "requirePriceAboveSma50", "longBiasFloor", "minWeinsteinScore", "minMinerviniScore"].includes(field)) return "trend";
   if (["maxDistance20dHigh", "maxDistance50dHigh", "maxDistance52w", "maxDistanceATH", "maxHighsSpreadPct", "maxExtensionSma50", "minRiskScore"].includes(field)) return "proximity";
   if (["minPerf3m", "minPerf6m", "minPerf12m", "minMomentumScore"].includes(field)) return "momentum";
@@ -1672,15 +1723,33 @@ function CompanyMark({ row = {}, size = "md" }) {
 
 function quickSetup(row) {
   if (!row) return "Sin dato";
+  const structure = setupStructureForRow(row);
+  if (structure.key !== "unknown" && structure.key !== "data") return structure.shortLabel;
   if (row.failedBreakout) return "Fallo de breakout";
   if (row.breakoutAttempt && gte(row.breakoutQualityScore, 55)) return "Breakout";
-  if (row.vcpCandidate) return "VCP / contraccion";
+  if (row.vcpCandidate || row.patternFamily === "progressive_contraction") return "Contraccion progresiva";
+  if (row.pivotSqueeze || row.patternFamily === "pivot_squeeze") return "Compresion pivot";
   if (Number.isFinite(row.distanceToPivotPct) && between(row.distanceToPivotPct, -5, 3)) return "Zona de pivote";
   if (stageLabel(row) === "Stage 2" && gte(row.distance20d, -5) && lte(row.extSma50, 15)) return "Near pivot";
   if (stageLabel(row) === "Stage 2" && gte(row.extSma50, 18)) return "Fuerte extendida";
   if (gt(row.price, row.sma200) && between(row.extSma50, -4, 9)) return "Pullback SMA50";
   if (stageLabel(row) === "Stage 2") return "Leader";
   return stageLabel(row);
+}
+
+function compactPatternLine(row = {}) {
+  const structure = setupStructureForRow(row);
+  if (structure.key !== "unknown") return patternEvidenceLine(row);
+  if (row.patternDataStatus && row.patternDataStatus !== "ok") return `Datos: ${row.patternDataStatus}`;
+  if (Number.isFinite(row.baseDepthPct)) return `Base ${row.baseDepthPct.toFixed(1)}%`;
+  return "Estructura sin dato";
+}
+
+function compactPatternReason(row = {}) {
+  const structure = setupStructureForRow(row);
+  if (structure.key !== "unknown" && structure.reason) return structure.reason;
+  if (Number.isFinite(row.distanceToPivotPct)) return `Pivot ${pct(row.distanceToPivotPct)}`;
+  return row.theme || row.sector || "-";
 }
 
 function LeaderTape({ rows = [], activeRow, onSelect, onFavorite, favoriteSymbols, mode = "leader" }) {
@@ -2207,6 +2276,7 @@ function FilterFamilyModal({ layerKey, settings, filterLayers, fieldRules, onClo
     requireStage2: "Stage 2",
     requireUpVolume: "Volumen en vela alcista",
     requireRecentIpo: "IPO real reciente",
+    requireContractionsDecreasing: "Contracciones decrecientes",
   };
 
   return <dialog className="filterFamilyModal stockModal" open onClick={(event) => { if (event.target === event.currentTarget) onClose?.(); }}>
@@ -2331,9 +2401,9 @@ function CompactResultsTable({ rows = [], favoriteSymbols, onFavorite, onReview,
             </td>
             <td>
               <div className="compactStack">
-                <b>{stageLabel(r)}</b>
-                <span>{r.theme || r.sector || "-"}</span>
-                <small>{r.ipoCategory || "Sin IPO"}</small>
+                <b>{quickSetup(r)}</b>
+                <span>{compactPatternLine(r)}</span>
+                <small title={compactPatternReason(r)}>{compactPatternReason(r)}</small>
               </div>
             </td>
             <td>
@@ -2442,7 +2512,7 @@ function LayerControl({ active, onClick, onOpen, label, detail, countLabel }) {
 }
 
 const CORE_LAYER_KEYS = ["liquidity", "trend", "momentum", "relativeStrength", "proximity", "volatility", "score", "coverage"];
-const OPTIONAL_LAYER_KEYS = ["volumeSurge", "riskReward", "shortInterest", "ipo"];
+const OPTIONAL_LAYER_KEYS = ["pattern", "volumeSurge", "riskReward", "shortInterest", "ipo"];
 
 function FilterArchitecturePanel({ filterLayers, viewLayers, useRegimeFilter, onToggleLayer, onOpenLayer, onToggleViewLayer, onToggleRegime, executionRuleActive, executionRuleTotal, viewFiltersActive }) {
   const layerByKey = Object.fromEntries(EXECUTION_LAYERS.map((layer) => [layer.key, layer]));
@@ -2627,6 +2697,21 @@ function effectiveSettingsFromLayers(set, layers = DEFAULT_FILTER_LAYERS, fieldR
     next.maxRange63dPct = 999;
     next.maxVolatility63d = 999;
     next.maxDrawdown63d = 999;
+  }
+  if (!layers.pattern) {
+    next.requireContractionsDecreasing = false;
+    next.minContractionCount = 0;
+    next.maxContraction1DepthPct = 999;
+    next.maxContraction2DepthPct = 999;
+    next.maxContraction3DepthPct = 999;
+    next.maxLastContractionDepthPct = 999;
+    next.maxBaseDepthPct = 999;
+    next.minBaseWeeks = 0;
+    next.maxBaseWeeks = 999;
+    next.maxAbsDistanceToPivotPct = 999;
+    next.maxVolumeDryUpRatio = 999;
+    next.maxTightness10dPct = 999;
+    next.minPatternQualityScore = 0;
   }
   if (!layers.score) {
     next.minRiskScore = 0;
@@ -4249,7 +4334,7 @@ export default function Page() {
                 <button className="btn btnPrimary" disabled={searchLoading}>{searchLoading ? "Buscando..." : "Buscar"}</button>
               </form>
               <SearchScopeList items={searchScopeItems} onPick={applySearchScope} />
-              {searchError && <div className="dataNote error" style={{ marginTop: 12 }}>{searchError}</div>}
+              {searchError && <div className="dataNote error" style={{ marginTop: 12 }}>{investorStatusLabel(searchError)}</div>}
               {searchResult ? <div className="searchResult searchResultPrimary">
                 <PreviewCard row={searchResult} variant="search" onFavorite={addFavorite} onOpenStock={saveSessionBeforeStockOpen} isFavorite={favoriteSymbols.has(searchResult.symbol)} />
               </div> : null}
@@ -4359,7 +4444,7 @@ export default function Page() {
         </section>
       </main>
     </div>
-    <footer className="footer" style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,.04)", paddingTop: 16, fontSize: 11, opacity: 0.5 }}>StageRadar · Datos orientativos · {status}</footer>
+    <footer className="footer" style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,.04)", paddingTop: 16, fontSize: 11, opacity: 0.5 }}>StageRadar · Datos orientativos · {investorStatusLabel(status)}</footer>
 
     {activeFilterFamily && <FilterFamilyModal
       layerKey={activeFilterFamily}

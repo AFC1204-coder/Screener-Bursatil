@@ -22,6 +22,7 @@ const DEFAULT_FILTER_LAYERS = {
   relativeStrength: true,
   proximity: true,
   volatility: true,
+  pattern: false,
   score: true,
   liquidity: true,
   volumeSurge: false,
@@ -39,6 +40,7 @@ const NEUTRAL_SETTINGS = {
   requirePriceAboveSma50: false,
   requireRecentIpo: false,
   requireUpVolume: false,
+  requireContractionsDecreasing: false,
   stageFastWeeks: 10,
   stageSlowWeeks: 30,
   stageSlopeWeeks: 10,
@@ -70,6 +72,18 @@ const NEUTRAL_SETTINGS = {
   maxRange63dPct: 999,
   maxVolatility63d: 999,
   maxDrawdown63d: 999,
+  minContractionCount: 0,
+  maxContraction1DepthPct: 999,
+  maxContraction2DepthPct: 999,
+  maxContraction3DepthPct: 999,
+  maxLastContractionDepthPct: 999,
+  maxBaseDepthPct: 999,
+  minBaseWeeks: 0,
+  maxBaseWeeks: 999,
+  maxAbsDistanceToPivotPct: 999,
+  maxVolumeDryUpRatio: 999,
+  maxTightness10dPct: 999,
+  minPatternQualityScore: 0,
   minRiskRewardScore: 0,
   minReturnToVol3m: -999,
   minReturnToDrawdown3m: -999,
@@ -429,6 +443,98 @@ async function testMissingScoreDoesNotPass(browser) {
   }
 }
 
+async function testProgressiveContractionFilter(browser) {
+  const progressiveMetrics = {
+    patternDataStatus: "ok",
+    patternEligible: true,
+    consolidationCandidate: true,
+    patternFamily: "progressive_contraction",
+    contractionCount: 3,
+    contractionDepths: [22, 13, 6],
+    contractionsDecreasing: true,
+    contraction1DepthPct: 22,
+    contraction2DepthPct: 13,
+    contraction3DepthPct: 6,
+    lastContractionDepthPct: 6,
+    baseDepthPct: 28,
+    baseWeeks: 9,
+    absDistanceToPivotPct: 3,
+    volumeDryUpRatio: 0.72,
+    tightness10dPct: 6,
+    patternQualityScore: 76,
+  };
+  const analyzedRows = [
+    row({ symbol: "VCPGOOD", totalScore: 92, compositeScore: 92, ...progressiveMetrics }),
+    row({
+      symbol: "VCPEXPAND",
+      totalScore: 91,
+      compositeScore: 91,
+      patternFamily: "tight_base",
+      contractionCount: 4,
+      contractionDepths: [9.7, 5.8, 3.5, 6.5],
+      contractionsDecreasing: false,
+      contraction1DepthPct: 9.7,
+      contraction2DepthPct: 5.8,
+      contraction3DepthPct: 3.5,
+      lastContractionDepthPct: 6.5,
+      baseDepthPct: 13,
+      baseWeeks: 9,
+      absDistanceToPivotPct: 1,
+      volumeDryUpRatio: 0.62,
+      tightness10dPct: 5.5,
+      patternQualityScore: 77,
+    }),
+    row({
+      symbol: "TRENDONLY",
+      totalScore: 90,
+      compositeScore: 90,
+      patternFamily: "trend_no_base",
+      consolidationCandidate: false,
+      contractionCount: 0,
+      contractionDepths: [],
+      contractionsDecreasing: false,
+      baseDepthPct: 31,
+      baseWeeks: 9,
+      absDistanceToPivotPct: 2,
+      volumeDryUpRatio: 0.8,
+      tightness10dPct: 7,
+      patternQualityScore: 0,
+    }),
+  ];
+  const session = baseSession({
+    rows: [],
+    analyzedRows,
+    settings: {
+      requireContractionsDecreasing: true,
+      minContractionCount: 3,
+      maxContraction1DepthPct: 25,
+      maxContraction2DepthPct: 16,
+      maxContraction3DepthPct: 8,
+      maxLastContractionDepthPct: 8,
+      maxBaseDepthPct: 35,
+      maxAbsDistanceToPivotPct: 6,
+      maxVolumeDryUpRatio: 0.9,
+      maxTightness10dPct: 12,
+    },
+    filterLayers: { pattern: true },
+    scanContext: {
+      id: "pattern-progressive-contract",
+      symbolsCount: analyzedRows.length,
+      baseCount: analyzedRows.length,
+      providerErrors: [],
+      marketHealth: { marketScore: 90 },
+      useRegimeFilter: false,
+    },
+  });
+  const { context, page } = await openSeededPage(browser, session);
+  try {
+    const accepted = await waitForSymbols(page, 1);
+    assert.deepEqual(accepted, ["VCPGOOD"], "progressive contraction filter should reject trend-only and non-decreasing contraction structures");
+  } finally {
+    await context.close();
+  }
+}
+
 async function testOpenStockPersistsReturnContext(browser) {
   const seededRows = Array.from({ length: 80 }, (_, index) => row({
     symbol: `NAV${String(index + 1).padStart(2, "0")}`,
@@ -530,6 +636,7 @@ async function main() {
     await testExecutionUpperBoundary(browser);
     await testPreviewChartUsesMainRs(browser);
     await testMissingScoreDoesNotPass(browser);
+    await testProgressiveContractionFilter(browser);
     await testOpenStockPersistsReturnContext(browser);
     await testSessionRestoresReturnScroll(browser);
     await testQuickListsUseSameSnapshotContract(browser);
@@ -540,6 +647,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(`FAIL filter-ui-regression: ${error.message}`);
+  console.error(`FAIL filter-ui-regression: ${error.stack || error.message}`);
   process.exitCode = 1;
 });

@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CHART_RANGES, DEFAULT_CHART_SETTINGS, normalizeChartInterval } from "@/lib/chartSettings";
+import { setupStructureForRow } from "@/lib/patternNarrative";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
 const TRADING_DAY_SECONDS = 86400 * 7 / 5;
+const AXIS_MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const money = (n, currency = "") => {
   if (!Number.isFinite(n)) return "Sin dato";
   const value = Math.abs(n) >= 1000
@@ -95,6 +97,19 @@ function aggregateRows(rows = [], interval = "D") {
   });
 }
 
+function aggregateLinePoints(points = [], interval = "D") {
+  const normalizedInterval = normalizeChartInterval(interval);
+  if (normalizedInterval === "D" || isIntradayInterval(normalizedInterval)) return points;
+  const groups = new Map();
+  for (const point of points) {
+    const dateText = point.date || (Number.isFinite(point.time) ? new Date(point.time * 1000).toISOString().slice(0, 10) : "");
+    const key = normalizedInterval === "M" ? dateText.slice(0, 7) : weekKey(dateText);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(point);
+  }
+  return [...groups.values()].map((group) => group[group.length - 1]).filter(Boolean);
+}
+
 function movingAverage(rows = [], length = 50) {
   const output = [];
   let sum = 0;
@@ -130,6 +145,96 @@ function responsiveChartHeight(width = 0, requestedHeight = 460) {
   return requestedHeight;
 }
 
+function dateFromChartTime(time) {
+  if (typeof time === "number") return new Date(time * 1000);
+  if (typeof time === "string") return new Date(`${time.slice(0, 10)}T00:00:00Z`);
+  if (time && typeof time === "object") return new Date(Date.UTC(time.year, (time.month || 1) - 1, time.day || 1));
+  return null;
+}
+
+function padTime(value = 0) {
+  return String(value).padStart(2, "0");
+}
+
+function axisMonth(date) {
+  return AXIS_MONTHS[date.getUTCMonth()] || "";
+}
+
+function axisTickFormatter(interval = "D", range = "1A") {
+  const normalizedInterval = normalizeChartInterval(interval);
+  const intraday = isIntradayInterval(normalizedInterval);
+  return (time) => {
+    const date = dateFromChartTime(time);
+    if (!date || !Number.isFinite(date.getTime())) return null;
+    if (intraday) {
+      return `${padTime(date.getHours())}:${padTime(date.getMinutes())}`;
+    }
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = axisMonth(date);
+    const year = String(date.getUTCFullYear());
+    const shortYear = year.slice(-2);
+    if (normalizedInterval === "M") {
+      return ["5A", "MAX"].includes(range) ? year : `${month} ${shortYear}`;
+    }
+    if (normalizedInterval === "W") {
+      return ["2A", "5A", "MAX"].includes(range) ? `${month} ${shortYear}` : `${day} ${month}`;
+    }
+    return ["1A", "2A", "5A", "MAX"].includes(range) ? `${month} ${shortYear}` : `${day} ${month}`;
+  };
+}
+
+function crosshairTimeFormatter(interval = "D") {
+  const normalizedInterval = normalizeChartInterval(interval);
+  const intraday = isIntradayInterval(normalizedInterval);
+  return (time) => {
+    const date = dateFromChartTime(time);
+    if (!date || !Number.isFinite(date.getTime())) return "";
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = axisMonth(date);
+    const year = date.getUTCFullYear();
+    if (!intraday) return `${day} ${month} ${year}`;
+    return `${day} ${month} ${year} ${padTime(date.getHours())}:${padTime(date.getMinutes())}`;
+  };
+}
+
+function adaptiveChartProfile({ interval = "D", range = "1A", rowCount = 0, width = 720, volume = true } = {}) {
+  const normalizedInterval = normalizeChartInterval(interval);
+  const intraday = isIntradayInterval(normalizedInterval);
+  const compact = width <= 520;
+  const availableWidth = Math.max(260, width - (compact ? 42 : 70));
+  const targetBars = normalizedInterval === "M"
+    ? (compact ? 30 : 52)
+    : normalizedInterval === "W"
+      ? (compact ? 48 : 88)
+      : intraday
+        ? (compact ? 70 : 120)
+        : (compact ? 90 : 160);
+  const visibleBars = Math.max(8, Math.min(Math.max(rowCount, 8), targetBars));
+  const rawSpacing = availableWidth / visibleBars;
+  const minBarSpacing = normalizedInterval === "M" ? 7 : normalizedInterval === "W" ? 5 : intraday ? 3 : 3.5;
+  const maxBarSpacing = normalizedInterval === "M" ? 22 : normalizedInterval === "W" ? 16 : intraday ? 11 : 12;
+  const barSpacing = Number(clamp(rawSpacing, minBarSpacing, maxBarSpacing).toFixed(2));
+  const rightOffsetPixels = compact ? 10 : normalizedInterval === "M" ? 28 : normalizedInterval === "W" ? 24 : 18;
+  return {
+    priceScaleMargins: volume ? { top: 0.08, bottom: 0.25 } : { top: 0.08, bottom: 0.08 },
+    timeScale: {
+      rightOffsetPixels,
+      barSpacing,
+      minBarSpacing,
+      maxBarSpacing,
+      fixLeftEdge: true,
+      fixRightEdge: false,
+      lockVisibleTimeRangeOnResize: false,
+      rightBarStaysOnScroll: true,
+      shiftVisibleRangeOnNewBar: true,
+      timeVisible: intraday,
+      secondsVisible: false,
+      tickMarkFormatter: axisTickFormatter(normalizedInterval, range),
+    },
+    timeFormatter: crosshairTimeFormatter(normalizedInterval),
+  };
+}
+
 function normalizeRsScoreSeries(series = null, visibleRows = []) {
   const source = Array.isArray(series) ? series : Array.isArray(series?.points) ? series.points : [];
   const start = visibleRows[0]?.time || 0;
@@ -149,11 +254,11 @@ function normalizeRsScoreSeries(series = null, visibleRows = []) {
     .sort((a, b) => a.time - b.time);
 }
 
-function normalizeBenchmarkLineSeries(series = null, visibleRows = []) {
+function normalizeBenchmarkLineSeries(series = null, visibleRows = [], interval = "D") {
   const source = Array.isArray(series) ? series : Array.isArray(series?.points) ? series.points : [];
   const start = visibleRows[0]?.time || 0;
   const end = visibleRows.at(-1)?.time || Infinity;
-  const points = source
+  const points = aggregateLinePoints(source
     .map((point) => {
       const value = safeNumber(point.rsLine ?? point.rs_line ?? point.relativeLine ?? point.relative_line);
       const time = timeFromBar(point);
@@ -165,7 +270,7 @@ function normalizeBenchmarkLineSeries(series = null, visibleRows = []) {
       };
     })
     .filter((point) => point && point.time >= start && point.time <= end)
-    .sort((a, b) => a.time - b.time);
+    .sort((a, b) => a.time - b.time), interval);
   const base = points[0]?.value;
   if (!Number.isFinite(base) || base <= 0) return [];
   return points.map((point) => ({
@@ -195,6 +300,43 @@ function rsVisibleRangeScore(points = []) {
   };
 }
 
+function rowTimeForDate(rows = [], date = "") {
+  const target = String(date || "").slice(0, 10);
+  if (!target) return null;
+  const exact = rows.find((row) => row.date === target);
+  if (exact) return exact.time;
+  const targetMs = Date.parse(`${target}T00:00:00Z`);
+  if (!Number.isFinite(targetMs)) return null;
+  let best = null;
+  let bestDistance = Infinity;
+  for (const row of rows) {
+    const rowMs = Date.parse(`${row.date}T00:00:00Z`);
+    const distance = Math.abs(rowMs - targetMs);
+    if (Number.isFinite(distance) && distance < bestDistance) {
+      best = row;
+      bestDistance = distance;
+    }
+  }
+  return bestDistance <= 5 * 86400000 ? best?.time ?? null : null;
+}
+
+function patternMarkersForRows(patternOverlay = null, rows = [], interval = "D") {
+  if (!patternOverlay || normalizeChartInterval(interval) !== "D") return [];
+  const swings = Array.isArray(patternOverlay.contractionSwings) ? patternOverlay.contractionSwings.slice(0, 4) : [];
+  return swings.map((swing, index) => {
+    const time = rowTimeForDate(rows, swing.toDate);
+    if (!Number.isFinite(time)) return null;
+    return {
+      time,
+      position: "belowBar",
+      shape: "circle",
+      color: "rgba(214,174,92,.92)",
+      text: `C${index + 1}`,
+      size: 1,
+    };
+  }).filter(Boolean);
+}
+
 export default function UniversalPriceChart({
   bars = [],
   symbol = "",
@@ -205,6 +347,7 @@ export default function UniversalPriceChart({
   benchmarkSymbol = "",
   rsMainScore = null,
   rsRatingSeries = [],
+  patternOverlay = null,
   className = "",
   height = 460,
 }) {
@@ -221,6 +364,7 @@ export default function UniversalPriceChart({
   const localRows = useMemo(() => normalizeRows(bars), [bars]);
   const needsRemote = shouldRequestRemoteBars(localRows, range, interval);
   const intraday = isIntradayInterval(interval);
+  const patternSummary = useMemo(() => setupStructureForRow(patternOverlay || {}), [patternOverlay]);
 
   useEffect(() => {
     if (!needsRemote || !symbol) {
@@ -259,9 +403,10 @@ export default function UniversalPriceChart({
   );
   const rsScoreData = globalRsScoreData.length > 1 ? globalRsScoreData : fallbackRsScoreData;
   const rsLineData = useMemo(
-    () => indicators.rsLine && !intraday ? normalizeBenchmarkLineSeries(relativeStrength, rows) : [],
-    [rows, relativeStrength, indicators.rsLine, intraday],
+    () => indicators.rsLine && !intraday ? normalizeBenchmarkLineSeries(relativeStrength, rows, interval) : [],
+    [rows, relativeStrength, indicators.rsLine, intraday, interval],
   );
+  const patternMarkers = useMemo(() => patternMarkersForRows(patternOverlay, rows, interval), [patternOverlay, rows, interval]);
   const visibleRangeRs = useMemo(() => rsVisibleRangeScore(rsLineData), [rsLineData]);
   const latestGlobalRsScoreValue = globalRsScoreData.at(-1)?.value;
   const latestGlobalSnapshotValue = Number.isFinite(latestGlobalRsScoreValue) ? latestGlobalRsScoreValue : Number.isFinite(mainRsValue) ? mainRsValue : rsScoreData.at(-1)?.value;
@@ -288,6 +433,7 @@ export default function UniversalPriceChart({
         AreaSeries,
         CandlestickSeries,
         createChart,
+        createSeriesMarkers,
         HistogramSeries,
         LineSeries,
         PriceScaleMode,
@@ -298,6 +444,7 @@ export default function UniversalPriceChart({
       container.innerHTML = "";
       let width = Math.max(container.clientWidth || 0, 280);
       let chartHeight = responsiveChartHeight(width, mainChartHeightTarget);
+      let chartProfile = adaptiveChartProfile({ interval, range, rowCount: rows.length, width, volume: indicators.volume });
 
       chart = createChart(container, {
         width,
@@ -315,20 +462,21 @@ export default function UniversalPriceChart({
         rightPriceScale: {
           borderColor: "rgba(255,255,255,.1)",
           mode: scale === "log" ? PriceScaleMode.Logarithmic : scale === "percent" ? PriceScaleMode.Percentage : PriceScaleMode.Normal,
-          scaleMargins: { top: 0.08, bottom: 0.25 },
+          autoScale: true,
+          scaleMargins: chartProfile.priceScaleMargins,
         },
         timeScale: {
           borderColor: "rgba(255,255,255,.1)",
-          fixLeftEdge: true,
-          fixRightEdge: true,
-          timeVisible: isIntradayInterval(interval),
+          ...chartProfile.timeScale,
         },
         crosshair: {
           vertLine: { color: "rgba(214,174,92,.34)", labelBackgroundColor: "#1d2430" },
           horzLine: { color: "rgba(214,174,92,.26)", labelBackgroundColor: "#1d2430" },
         },
         localization: {
+          locale: "es-ES",
           priceFormatter: (price) => fmt(price),
+          timeFormatter: chartProfile.timeFormatter,
         },
       });
       chartRef.current = chart;
@@ -364,12 +512,33 @@ export default function UniversalPriceChart({
               },
       );
       mainSeries.setData(isLine || isArea ? lineData : candleData);
+      mainSeries.priceScale?.().applyOptions?.({
+        autoScale: true,
+        scaleMargins: chartProfile.priceScaleMargins,
+      });
+
+      const pivotPrice = safeNumber(patternOverlay?.pivotPrice);
+      if (!intraday && Number.isFinite(pivotPrice) && pivotPrice > 0) {
+        mainSeries.createPriceLine?.({
+          price: pivotPrice,
+          color: "rgba(214,174,92,.58)",
+          lineStyle: 2,
+          lineWidth: 1,
+          axisLabelVisible: true,
+          title: "Pivot",
+        });
+      }
+      if (!intraday && patternMarkers.length && typeof createSeriesMarkers === "function") {
+        createSeriesMarkers(mainSeries, patternMarkers);
+      }
 
       if (indicators.volume) {
         const volumeSeries = chart.addSeries(HistogramSeries, {
           priceFormat: { type: "volume" },
           priceScaleId: "",
           color: "rgba(160,160,170,.24)",
+          lastValueVisible: false,
+          priceLineVisible: false,
         });
         volumeSeries.setData(rows.map((row) => ({
           time: row.time,
@@ -436,7 +605,31 @@ export default function UniversalPriceChart({
         chart.timeScale().subscribeVisibleTimeRangeChange?.(() => requestAnimationFrame(updateRsBadge));
       }
 
-      chart.timeScale().fitContent();
+      function fitAdaptiveView(nextWidth = width) {
+        chartProfile = adaptiveChartProfile({ interval, range, rowCount: rows.length, width: nextWidth, volume: indicators.volume });
+        chart?.applyOptions({
+          rightPriceScale: {
+            autoScale: true,
+            scaleMargins: chartProfile.priceScaleMargins,
+          },
+          timeScale: chartProfile.timeScale,
+          localization: {
+            locale: "es-ES",
+            priceFormatter: (price) => fmt(price),
+            timeFormatter: chartProfile.timeFormatter,
+          },
+        });
+        mainSeries.priceScale?.().applyOptions?.({
+          autoScale: true,
+          scaleMargins: chartProfile.priceScaleMargins,
+        });
+        chart?.timeScale().fitContent();
+        chart?.timeScale().applyOptions({
+          rightOffsetPixels: chartProfile.timeScale.rightOffsetPixels,
+        });
+      }
+
+      fitAdaptiveView(width);
       if (updateRsBadge) {
         requestAnimationFrame(updateRsBadge);
         window.setTimeout(updateRsBadge, 80);
@@ -447,6 +640,7 @@ export default function UniversalPriceChart({
           width = nextWidth;
           chartHeight = responsiveChartHeight(nextWidth, mainChartHeightTarget);
           chart?.applyOptions({ width, height: chartHeight });
+          fitAdaptiveView(nextWidth);
           if (updateRsBadge) requestAnimationFrame(updateRsBadge);
         }
       });
@@ -463,7 +657,7 @@ export default function UniversalPriceChart({
       chartRef.current = null;
       chart?.remove();
     };
-  }, [rows, style, positive, mainChartHeightTarget, scale, interval, indicators.volume, indicators.maFast, indicators.maFastLength, indicators.maSlow, indicators.maSlowLength, hasRsLine, rsLineData]);
+  }, [rows, style, positive, mainChartHeightTarget, scale, interval, range, indicators.volume, indicators.maFast, indicators.maFastLength, indicators.maSlow, indicators.maSlowLength, hasRsLine, rsLineData, patternOverlay, patternMarkers, intraday]);
 
   if (rows.length < 2) {
     return <div className={`universalChart empty ${className}`}>
@@ -480,13 +674,17 @@ export default function UniversalPriceChart({
           <em className={positive ? "positive" : "negative"}>{pct(change)}</em>
         </div>
       </div>
-      <div className={`universalChartBadges ${Number.isFinite(latestGlobalSnapshotValue) ? "" : "muted"}`} title="RS global del snapshot activo. No cambia con el rango del grafico.">
+      {indicators.rsLine && <div className={`universalChartBadges ${Number.isFinite(latestGlobalSnapshotValue) ? "" : "muted"}`} title="RS global del snapshot activo. No cambia con el rango del grafico.">
         <span>RS global</span>
         <b>{Number.isFinite(latestGlobalSnapshotValue) ? latestGlobalSnapshotValue.toFixed(0) : "Sin dato"}</b>
-      </div>
+      </div>}
       {indicators.rsLine && intraday && <div className="universalChartBadges muted" title="La linea RS se calcula con cierre diario y se oculta en intradia">
         <span>RS</span>
         <b>D</b>
+      </div>}
+      {patternOverlay && !intraday && <div className={`universalChartPatternBadge ${patternSummary.tone || ""}`} title={patternSummary.reason || ""}>
+        <span>{patternSummary.shortLabel}</span>
+        <b>{patternSummary.evidence}</b>
       </div>}
       {tradingViewUrl && <a className="priceTvLink" href={tradingViewUrl} target="_blank" rel="noreferrer">Abrir TradingView</a>}
     </div>

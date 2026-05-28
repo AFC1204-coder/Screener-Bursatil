@@ -523,6 +523,32 @@ a{color:inherit;text-decoration:none}
   border-radius:var(--radius);
   background:rgba(255,255,255,.04);
 }
+.structureSummary{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+.structureSummary span{
+  min-width:0;
+  overflow:hidden;
+  color:#f4f4f5;
+  font-weight:760;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.structureSummary small{
+  min-width:0;
+  overflow:hidden;
+  color:#8f8f99;
+  font-size:11px;
+  line-height:1.25;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.structureSummary.good span{color:#86efac}
+.structureSummary.watch span{color:#bfdbfe}
+.structureSummary.warn span{color:#facc15}
+.structureSummary.muted span{color:#a1a1aa}
 .error{
   border-color:rgba(239,68,68,.45);
   background:rgba(239,68,68,.11);
@@ -1543,6 +1569,64 @@ a{color:inherit;text-decoration:none}
 }
 .universalChartBadges.muted b{
   color:var(--muted);
+}
+.universalChartPatternBadge{
+  min-width:0;
+  max-width:min(360px,42vw);
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  padding:7px 10px;
+  border:1px solid rgba(214,174,92,.22);
+  border-radius:var(--radius);
+  background:rgba(214,174,92,.075);
+}
+.universalChartPatternBadge + .priceTvLink{
+  margin-left:0;
+}
+.universalChartPatternBadge span{
+  flex:0 0 auto;
+  color:#f3d98b;
+  font-size:10px;
+  font-weight:850;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.universalChartPatternBadge b{
+  min-width:0;
+  overflow:hidden;
+  color:#f4f4f5;
+  font-size:12px;
+  font-weight:750;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.universalChartPatternBadge.good{
+  border-color:rgba(134,239,172,.28);
+  background:rgba(34,197,94,.09);
+}
+.universalChartPatternBadge.good span{color:#86efac}
+.universalChartPatternBadge.watch{
+  border-color:rgba(96,165,250,.24);
+  background:rgba(59,130,246,.085);
+}
+.universalChartPatternBadge.watch span{color:#bfdbfe}
+.universalChartPatternBadge.muted{
+  border-color:rgba(148,163,184,.16);
+  background:rgba(148,163,184,.055);
+}
+.universalChartPatternBadge.muted span,
+.universalChartPatternBadge.muted b{color:var(--muted)}
+@media (max-width:760px){
+  .universalChartHead{
+    flex-wrap:wrap;
+  }
+  .universalChartPatternBadge{
+    order:3;
+    flex:1 1 100%;
+    max-width:100%;
+  }
 }
 .universalChartHead .positive,
 .universalChart .positive{
@@ -10997,6 +11081,10 @@ body:before{
   overflow:hidden;
 }
 
+.stockPage .stockResearchCardHeroExpanded{
+  overflow:visible;
+}
+
 .stockPage .stockResearchCardHero::before{
   content:"";
   position:absolute;
@@ -11089,6 +11177,9 @@ body:before{
 .stockPage .heroCardMetrics b.good{color:#86efac}
 .stockPage .heroCardMetrics b.bad{color:#ff9b9b}
 .stockPage .heroCardMetrics b.neutral{color:#f3d98b}
+.stockPage .heroCardMetrics b.watch{color:#bfdbfe}
+.stockPage .heroCardMetrics b.muted{color:#a1a1aa}
+.stockPage .heroCardMetrics b.warn{color:#facc15}
 .stockPage .heroCardMetrics .heroBusinessMetric b{
   display:-webkit-box;
   overflow:hidden;
@@ -11141,6 +11232,43 @@ body:before{
   line-height:1.3;
   -webkit-box-orient:vertical;
   -webkit-line-clamp:2;
+}
+
+.stockPage .heroCompanyBriefCopy{
+  min-width:0;
+  display:grid;
+  gap:5px;
+}
+
+.stockPage .heroCompanyBriefCopy.isExpanded p{
+  display:block;
+  max-height:126px;
+  overflow:auto;
+  padding-right:6px;
+  -webkit-line-clamp:unset;
+}
+
+.stockPage .heroCompanyBriefToggle{
+  width:max-content;
+  min-height:24px;
+  border:1px solid rgba(148,163,184,.24);
+  border-radius:6px;
+  padding:0 8px;
+  background:rgba(148,163,184,.08);
+  color:#d9dbe3;
+  font-size:10px;
+  font-weight:690;
+  letter-spacing:0;
+}
+
+.stockPage .heroCompanyBriefToggle:hover{
+  border-color:rgba(148,163,184,.42);
+  background:rgba(148,163,184,.14);
+}
+
+.stockPage .heroCompanyBriefToggle:focus-visible{
+  outline:2px solid rgba(96,165,250,.8);
+  outline-offset:2px;
 }
 
 .stockPage .heroCompanyFacts{
@@ -11222,6 +11350,11 @@ body:before{
       #050607;
   }
 
+  .stockPage .stockHeroCompactCard .stockResearchCardHeroExpanded{
+    height:auto;
+    min-height:100%;
+  }
+
   .stockPage .stockHeroCompactCard .marketSmithStrip{
     margin-bottom:5px;
     border-color:rgba(148,163,184,.18);
@@ -11259,8 +11392,11 @@ body:before{
     grid-area:head;
   }
 
-  .stockPage .stockHeroCompactCard .heroCompanyBrief p{
+  .stockPage .stockHeroCompactCard .heroCompanyBriefCopy{
     grid-area:copy;
+  }
+
+  .stockPage .stockHeroCompactCard .heroCompanyBrief p{
     margin:0;
     -webkit-line-clamp:3;
   }
@@ -12108,6 +12244,14 @@ body{
   font-weight:450;
   line-height:1.38;
   letter-spacing:0;
+}
+
+.stockPage .stockHeroCompactCard .heroCompanyBriefCopy.isExpanded p{
+  display:block;
+  max-height:126px;
+  overflow:auto;
+  padding-right:6px;
+  -webkit-line-clamp:unset;
 }
 
 .stockPage .stockHeroCompactCard .heroCardBenchmark{
@@ -14002,5 +14146,262 @@ body:before {
 
   .mobileResultList {
     padding-bottom: 24px;
+  }
+}
+
+/* Premium UX remediation: mobile review stability and mobile-native lists. */
+.reviewMain {
+  min-width: 0;
+}
+
+.listMobileRows {
+  display: none;
+}
+
+.listMobileRow {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  background: #090b0f;
+}
+
+.listMobileRowTop {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.listMobileRowTop span {
+  min-width: 0;
+}
+
+.listMobileRowTop b {
+  display: block;
+  color: #f4f7fb;
+  font-size: 15px;
+  line-height: 1.1;
+}
+
+.listMobileRowTop em {
+  display: block;
+  overflow: hidden;
+  margin-top: 3px;
+  color: #8b95a4;
+  font-size: 12px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listMobileRowTop strong {
+  color: #dbeafe;
+  font-size: 18px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.listMobileSpark {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.listMobileSpark .miniSparkline {
+  width: 100%;
+  height: 42px;
+}
+
+.listMobileFacts {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 6px;
+}
+
+.listMobileFacts span {
+  min-width: 0;
+  padding: 7px 6px;
+  background: rgba(255,255,255,.018);
+  color: #87909d;
+  font-size: 10px;
+  font-weight: 720;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.listMobileFacts b {
+  display: block;
+  margin-top: 2px;
+  color: #e5e7eb;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.listMobileRow p,
+.listMobileEmpty {
+  margin: 0;
+  color: #8b95a4;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+@media(max-width:900px) {
+  .reviewWorkbench {
+    grid-template-columns: 1fr;
+  }
+
+  .reviewMain { order: 1; }
+  .reviewQueue { order: 2; }
+  .reviewSide { order: 3; }
+
+  .reviewQueue,
+  .reviewSide {
+    position: static;
+    max-height: none;
+  }
+
+  .reviewQueueList {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(190px,72vw);
+    gap: 8px;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+  }
+
+  .reviewChart {
+    height: auto;
+    min-height: 0;
+    padding: 8px;
+    overflow: visible;
+  }
+
+  .reviewChart .universalChart {
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .reviewChart .universalChartHead {
+    flex-wrap: wrap;
+  }
+
+  .reviewChart .universalChartCanvas {
+    min-height: clamp(320px,52dvh,430px);
+  }
+
+  .reviewFloatingNav {
+    top: 72px;
+    right: 10px;
+  }
+
+  .reviewSide {
+    padding: 10px;
+  }
+
+  .reviewActionStrip {
+    grid-template-columns: 1fr 1fr 40px;
+  }
+}
+
+.miniPanel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(255,255,255,.025);
+  min-width: 0;
+}
+
+.miniPanel .sectionTitle {
+  margin-bottom: 6px;
+}
+
+.miniPanel .sectionTitle h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.table tr.active td {
+  background: rgba(214,174,92,.08);
+}
+
+@media(max-width:760px) {
+  .listsPage .tableWrap {
+    display: none;
+  }
+
+  .listMobileRows {
+    display: grid;
+    gap: 8px;
+  }
+
+  .listsPage .sectionTitle {
+    align-items: flex-start;
+  }
+
+  .listsPage .sectionTitle .fine {
+    text-align: right;
+  }
+
+  .stockModal.quickReviewModal {
+    width: 100dvw;
+    max-width: 100dvw;
+    overflow: hidden;
+  }
+
+  .quickReviewInner,
+  .screenerReviewMain,
+  .quickReviewGrid,
+  .profileChartArea,
+  .quickReviewChart {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .quickReviewChart {
+    overflow: hidden;
+  }
+
+  .quickReviewChart .tvPreviewNative,
+  .quickReviewChart .tvPreviewNative .universalChart,
+  .quickReviewChart .tvPreviewNative .universalChartCanvas {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .quickReviewChart .tvPreviewNative .universalChartHead {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .quickReviewTitleBlock .profileTitle h2 {
+    font-size: 24px;
+  }
+
+  .profilePrice .price {
+    font-size: 26px;
+  }
+}
+
+@media(max-width:430px) {
+  .listMobileFacts {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .reviewMetricGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .quickReviewActions {
+    grid-template-columns: repeat(2,minmax(0,1fr));
   }
 }

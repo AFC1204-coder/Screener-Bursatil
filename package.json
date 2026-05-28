@@ -4,6 +4,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "test": "node scripts/smoke-test.mjs",
+    "test:patterns": "node --loader ./scripts/loader.mjs scripts/pattern-detector-regression.mjs",
     "test:filters": "node --loader ./scripts/loader.mjs scripts/filter-regression-test.mjs",
     "test:filters:ui": "node scripts/filter-ui-regression.mjs",
     "test:symbols": "node --no-warnings scripts/symbol-mapping-test.mjs",

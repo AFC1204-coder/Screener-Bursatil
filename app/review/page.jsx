@@ -32,6 +32,13 @@ function sourceLabel(source) {
   if (source === "current") return "Screener actual";
   return "Cola guardada";
 }
+function investorStatusLabel(text = "") {
+  return String(text || "")
+    .replaceAll("Supabase", "nube")
+    .replaceAll("favoritos locales", "favoritos")
+    .replaceAll("localmente", "en este dispositivo")
+    .replaceAll("Proveedor", "Datos");
+}
 function rowSource(source, review, scans, favorites) {
   if (source === "favorites") return favoriteRows(favorites);
   if (source === "latest") return normalizeRows(scans[0]?.rows || []);
@@ -342,7 +349,6 @@ function evidenceRows(row = {}) {
     [metricShortLabel("weaknessScore"), num(value(row, "weaknessScore"))],
   ];
 }
-
 export default function ReviewPage() {
   const [source, setSource] = useState("current");
   const [rows, setRows] = useState([]);
@@ -507,7 +513,7 @@ export default function ReviewPage() {
         <button className="btn btnGhost" onClick={() => hideActive()} disabled={!activeRow}>Ocultar</button>
         <button className={`btn btnGhost ${showHidden ? "btnActive" : ""}`} onClick={() => setShowHidden((x) => !x)}>Ver ocultas</button>
       </div>
-      <div style={{ marginTop: 12, fontSize: 11, color: "var(--muted)" }}>{status}</div>
+      <div style={{ marginTop: 12, fontSize: 11, color: "var(--muted)" }}>{investorStatusLabel(status)}</div>
     </section>
 
     {!visibleRows.length ? <section className="card emptyState">

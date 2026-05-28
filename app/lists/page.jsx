@@ -98,10 +98,11 @@ function applyGroupFilter(rows, groupType, group) {
 }
 
 function MiniTable({ title, desc, rows, chartsCache, scoreKey = "totalScore", collapsible = true, emptyLabel = "Sin datos todavia." }) {
+  const visibleRows = rows.slice(0, 18);
   const table = <div className="tableWrap">
     <table className="table">
       <thead><tr>{["Ticker", "Empresa", "Gráfico", "Tema", "3M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel("totalScore")].map((h) => <th key={h}>{h}</th>)}</tr></thead>
-      <tbody>{rows.slice(0, 18).map((r) => <tr key={r.symbol}>
+      <tbody>{visibleRows.map((r) => <tr key={r.symbol}>
         <td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a></td>
         <td>{r.companyName || r.symbol}<br /><span className="fine">{shortBusiness(r)}</span></td>
         <td className="compactSparkCell" style={{ width: "110px", minWidth: "110px", verticalAlign: "middle" }}>
@@ -120,17 +121,36 @@ function MiniTable({ title, desc, rows, chartsCache, scoreKey = "totalScore", co
       </tr>)}{!rows.length && <tr><td colSpan="13">{emptyLabel}</td></tr>}</tbody>
     </table>
   </div>;
+  const mobileRows = <div className="listMobileRows">
+    {visibleRows.map((r) => <a className="listMobileRow" key={`${title}-${r.symbol}`} href={stockUrl(r.symbol)}>
+      <div className="listMobileRowTop">
+        <span><b>{r.symbol}</b><em>{r.companyName || r.symbol}</em></span>
+        <strong>{num(Number.isFinite(metricValue(r, scoreKey)) ? metricValue(r, scoreKey) : r.snapshot?.totalScore)}</strong>
+      </div>
+      <div className="listMobileSpark"><ListSparkline row={r} chartsCache={chartsCache} /></div>
+      <div className="listMobileFacts">
+        <span>3M <b>{pct(r.perf3m ?? r.snapshot?.perf3m)}</b></span>
+        <span>52w <b>{pct(r.distance52w)}</b></span>
+        <span>RSQ <b>{num(r.rsQualityScore ?? r.snapshot?.rsQualityScore)}</b></span>
+        <span>Riesgo <b>{num(r.riskScore ?? r.snapshot?.riskScore)}</b></span>
+      </div>
+      <p>{shortBusiness(r) || r.theme || r.snapshot?.theme || "Sin contexto"}</p>
+    </a>)}
+    {!rows.length && <div className="listMobileEmpty">{emptyLabel}</div>}
+  </div>;
 
   if (collapsible) {
     return <details className="card listDisclosure" open>
       <summary className="sectionTitle"><h2>{title}</h2><span className="fine">{desc}</span></summary>
       {table}
+      {mobileRows}
     </details>;
   }
 
   return <section className="card">
     <div className="sectionTitle"><h2>{title}</h2><span className="fine">{desc}</span></div>
     {table}
+    {mobileRows}
   </section>;
 }
 

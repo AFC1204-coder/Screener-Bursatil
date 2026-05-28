@@ -1,9 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ChartPreferences from "@/app/ChartPreferences";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { metricShortLabel } from "@/lib/metricCatalog";
+import { dataStatusLabel, setupStructureForRow } from "@/lib/patternNarrative";
+import { setupPatternForBars } from "@/lib/setupPatterns";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const rsFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
@@ -509,7 +511,7 @@ function technicalSnapshotFromBars(bars = [], quote = {}) {
     .filter((bar) => Number.isFinite(bar.close) && bar.close > 0)
     .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
   const latest = rows.at(-1) || {};
-  const price = finiteValue(quote.price, latest.close);
+  const price = finiteValue(latest.close, quote.price);
   const last50 = rows.slice(-50);
   const last200 = rows.slice(-200);
   const last252 = rows.slice(-252);
@@ -525,6 +527,32 @@ function technicalSnapshotFromBars(bars = [], quote = {}) {
     distanceSma200: Number.isFinite(price) && Number.isFinite(sma200) && sma200 > 0 ? ((price / sma200) - 1) * 100 : null,
     relativeVolume50: Number.isFinite(latest.volume) && Number.isFinite(avgVolume50) && avgVolume50 > 0 ? latest.volume / avgVolume50 : null,
     distance52w: Number.isFinite(price) && high52w > 0 ? ((price / high52w) - 1) * 100 : null,
+  };
+}
+
+function priceSnapshotFromBars(bars = [], quote = {}) {
+  const rows = [...(bars || [])]
+    .map((bar) => ({
+      date: bar.date,
+      close: Number(bar.close),
+    }))
+    .filter((bar) => Number.isFinite(bar.close) && bar.close > 0)
+    .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+  const latest = rows.at(-1) || {};
+  const previous = rows.at(-2) || {};
+  const price = finiteValue(latest.close, quote.price);
+  const dayChange = Number.isFinite(price) && Number.isFinite(previous.close) ? price - previous.close : quote.dayChange;
+  const dayChangePct = Number.isFinite(price) && Number.isFinite(previous.close) && previous.close > 0 ? ((price / previous.close) - 1) * 100 : quote.dayChangePct;
+  const quoteDriftPct = Number.isFinite(latest.close) && Number.isFinite(quote.price) && latest.close > 0
+    ? Math.abs((quote.price / latest.close) - 1) * 100
+    : null;
+  return {
+    price,
+    date: latest.date || "",
+    dayChange,
+    dayChangePct,
+    quoteDriftPct,
+    coherent: !Number.isFinite(quoteDriftPct) || quoteDriftPct < 0.35,
   };
 }
 
@@ -667,6 +695,56 @@ function SimilarStocks({ rows = [] }) {
   </section>;
 }
 
+function StructureSummary({ row = {}, compact = false }) {
+  const structure = setupStructureForRow(row);
+  const score = Number.isFinite(row.patternQualityScore) ? `Calidad ${row.patternQualityScore.toFixed(0)}` : "";
+  return <div className={`structureSummary ${compact ? "compact" : ""} ${structure.tone || ""}`} title={structure.reason || ""}>
+    <span>{structure.label}</span>
+    <small>{structure.reason || score || structure.dataLabel}</small>
+  </div>;
+}
+
+function ContractionTape({ depths = [] }) {
+  const values = (Array.isArray(depths) ? depths : []).filter(Number.isFinite).slice(0, 4);
+  if (!values.length) return <span>Sin dato</span>;
+  return <span>{values.map((value) => `${value.toFixed(1)}%`).join(" -> ")}</span>;
+}
+
+function ComparativeContext({ rows = [], note = "", symbol = "" }) {
+  const countLabel = rows.length ? `${rows.length} referencias` : "sin referencias";
+  return <section className="card">
+    <div className="sectionTitle">
+      <div>
+        <h2>Contexto comparativo</h2>
+        <p className="fine">Mismo grupo o mercado · perfiles tecnicos comparables</p>
+      </div>
+      <span className="fine">{countLabel}</span>
+    </div>
+    <div className="dataNote" style={{ marginBottom: 12 }}>
+      {note || "Sin referencias comparables en los snapshots recientes con los datos actuales."}
+    </div>
+    {rows.length ? <div className="tableWrap">
+      <table className="table">
+        <thead><tr>{["Ticker", "Relacion", "Estructura", "Contracciones", "Base", "Pivot", "Vol. seco", "RS grupo", "Datos"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
+        <tbody>{rows.map((item) => {
+          const current = String(item.symbol || "").toUpperCase() === String(symbol || "").toUpperCase();
+          return <tr key={item.symbol} className={current ? "active" : ""}>
+            <td><a className="ticker" href={`/stock/${encodeURIComponent(item.symbol)}`}>{item.symbol}</a><br /><span className="fine">{item.companyName || ""}</span></td>
+            <td><span className="pill">{item.relation?.label || "Contexto"}</span></td>
+            <td><StructureSummary row={item} compact /></td>
+            <td><ContractionTape depths={item.contractionDepths} /></td>
+            <td>{Number.isFinite(item.baseDepthPct) ? `${item.baseDepthPct.toFixed(1)}%` : "Sin dato"}<br /><span className="fine">{Number.isFinite(item.baseWeeks) ? `${item.baseWeeks.toFixed(1)} sem` : ""}</span></td>
+            <td>{Number.isFinite(item.distanceToPivotPct) ? pct(item.distanceToPivotPct) : "Sin dato"}</td>
+            <td>{Number.isFinite(item.volumeDryUpRatio) ? `${item.volumeDryUpRatio.toFixed(2)}x` : "Sin dato"}</td>
+            <td>{Number.isFinite(item.rsSectorPct) ? item.rsSectorPct.toFixed(0) : "Sin dato"}</td>
+            <td>{dataStatusLabel(item.patternDataStatus)}</td>
+          </tr>;
+        })}</tbody>
+      </table>
+    </div> : <p className="fine">La seccion queda activa y se completara cuando haya snapshots suficientes del mismo sector, industria, tema o mercado.</p>}
+  </section>;
+}
+
 export default function StockClient({ initialSymbol = "", initialData = null, initialError = "" }) {
   const symbol = String(initialSymbol || "").toUpperCase();
   const [data, setData] = useState(initialData || null);
@@ -675,11 +753,13 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const [logoIndex, setLogoIndex] = useState(0);
   const [logoLoaded, setLogoLoaded] = useState(false);
   const [similar, setSimilar] = useState([]);
+  const [comparables, setComparables] = useState({ rows: [], note: "" });
   const [social, setSocial] = useState(null);
   const [socialLoading, setSocialLoading] = useState(false);
   const [chartSettings, setChartSettings] = useState(DEFAULT_CHART_SETTINGS);
   const [chartScope, setChartScope] = useState("global");
   const [benchmarkDraft, setBenchmarkDraft] = useState("");
+  const [companyBriefExpanded, setCompanyBriefExpanded] = useState(false);
 
   function updateChartSettings(nextSettings) {
     setChartSettings(writeChartSettings(nextSettings, { scope: chartScope, symbol }));
@@ -704,6 +784,21 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       .then((res) => res.json())
       .then((result) => setSimilar(result.results || []))
       .catch(() => setSimilar([]));
+  }
+
+  function loadComparablesFor(payload) {
+    if (!symbol || !payload) return;
+    const qs = new URLSearchParams({
+      symbol,
+      sector: payload.sector || "",
+      industry: payload.industry || "",
+      theme: payload.theme || "",
+      country: payload.country || "",
+    });
+    fetch(`/api/comparables?${qs.toString()}`)
+      .then((res) => res.json())
+      .then((result) => setComparables({ rows: result.results || [], note: result.note || "" }))
+      .catch(() => setComparables({ rows: [], note: "Contexto comparativo no disponible en este momento." }));
   }
 
   function loadSocialFor(payload) {
@@ -733,6 +828,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
       setData(d);
       loadSimilarFor(d);
+      loadComparablesFor(d);
       loadSocialFor(d);
     } catch (e) {
       setError(e.message || String(e));
@@ -746,9 +842,11 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     setChartSettings(nextSettings);
     setLogoIndex(0);
     setLogoLoaded(false);
+    setCompanyBriefExpanded(false);
     const savedBenchmark = cleanBenchmarkSymbol(nextSettings.benchmarks?.[symbol]);
     if (initialData) {
       loadSimilarFor(initialData);
+      loadComparablesFor(initialData);
       loadSocialFor(initialData);
       if (savedBenchmark && savedBenchmark !== cleanBenchmarkSymbol(initialData.relativeStrength?.benchmarkSymbol)) {
         load({ benchmarkSymbol: savedBenchmark });
@@ -768,16 +866,19 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const weeklyGlobalRs = latestWeeklyRs(rs);
   const rsUniverse = finiteValue(weeklyGlobalRs?.rsRating, rs.rsGlobalPct);
   const rsBenchmark = finiteValue(rs.benchmarkRating, rs.rsRating);
+  const priceSnapshot = priceSnapshotFromBars(data?.chartBars || [], q);
   const technical = technicalSnapshotFromBars(data?.chartBars || [], q);
   const statementCurrency = data?.financialResults?.currency || g.financialCurrency || data?.currency || "";
   const stageTone = /etapa 2/i.test(data?.stage?.label || "") ? "good" : /etapa 4/i.test(data?.stage?.label || "") ? "bad" : "neutral";
-  const dayTone = (q.dayChangePct || 0) >= 0 ? "up" : "down";
+  const dayTone = (priceSnapshot.dayChangePct || 0) >= 0 ? "up" : "down";
   const nextEarnings = data?.earningsCalendar?.earningsDate || data?.earningsCalendar?.earningsStart || "Sin dato";
   const listingDate = data?.ipoDate || data?.listingDate || "";
   const listingLabel = data?.ipoDate ? "IPO" : data?.listingDate ? "Cotiza desde" : "IPO";
   const freshness = data?.dataQuality?.freshness || {};
   const coverage = data?.dataQuality?.coverage || {};
   const compactProfile = data ? [data.sector, data.industry, data.country].filter(Boolean).join(" · ") : "";
+  const setupPattern = useMemo(() => data?.setupPattern || (data?.chartBars?.length ? setupPatternForBars(data.chartBars) : null), [data?.setupPattern, data?.chartBars]);
+  const setupStructure = useMemo(() => setupStructureForRow(setupPattern || {}), [setupPattern]);
   useEffect(() => {
     setBenchmarkDraft(activeBenchmark);
   }, [activeBenchmark]);
@@ -799,7 +900,10 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const heroEpsYoY = heroEpsRows.length ? epsGrowth(heroEpsRows[0], heroEpsRows, 0, heroEpsCompareOffset, v.sharesOutstanding || g.sharesOutstanding) : g.earningsGrowth;
   const stageShortLabel = (data?.stage?.label || "Sin dato").replace(/\s+probable$/i, "");
   const businessTeaser = compactBusinessTeaser(data);
-  const compactResearchCard = data ? <section className="terminalPanel stockResearchCard stockResearchCardHero">
+  const companySummary = data?.summary || "Sin descripcion de negocio disponible.";
+  const companySummaryId = `hero-company-summary-${symbol || "stock"}`;
+  const canExpandCompanyBrief = companySummary.length > 80;
+  const compactResearchCard = data ? <section className={`terminalPanel stockResearchCard stockResearchCardHero ${companyBriefExpanded ? "stockResearchCardHeroExpanded" : ""}`}>
     <div className="marketSmithStrip" aria-label="Resumen Weinstein Minervini compacto">
       <MiniMetric label="RS" value={rsFmt(rsUniverse)} tone={Number.isFinite(rsUniverse) && rsUniverse >= 75 ? "good" : Number.isFinite(rsUniverse) && rsUniverse < 45 ? "bad" : ""} />
       <MiniMetric label="Etapa" value={stageShortLabel} tone={stageTone} />
@@ -808,7 +912,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     </div>
     <div className="heroCardMetrics" aria-label="Metricas clave compactas">
       <div><span>MA 50/200</span><b className={valueTone(finiteValue(technical.distanceSma50, technical.distanceSma200))}>{pct(technical.distanceSma50)} / {pct(technical.distanceSma200)}</b></div>
-      <div><span>Vol. 50d</span><b>{Number.isFinite(technical.relativeVolume50) ? `${technical.relativeVolume50.toFixed(1)}x` : "Sin dato"}</b></div>
+      <div><span>Estructura</span><b className={setupStructure.tone || ""} title={setupStructure.reason || ""}>{setupStructure.shortLabel}</b></div>
       <div><span>RS Quality</span><b>{rsFmt(rs.rsQualityScore)}</b></div>
       <div className="heroBusinessMetric"><span>Negocio</span><b title={businessTeaser}>{businessTeaser}</b></div>
     </div>
@@ -817,7 +921,18 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
         <span>Negocio</span>
         <b>{data.theme || data.sector || "Sin clasificar"}</b>
       </div>
-      <p>{data.summary || "Sin descripcion de negocio disponible."}</p>
+      <div className={`heroCompanyBriefCopy ${companyBriefExpanded ? "isExpanded" : ""}`}>
+        <p id={companySummaryId}>{companySummary}</p>
+        {canExpandCompanyBrief && <button
+          className="heroCompanyBriefToggle"
+          type="button"
+          aria-expanded={companyBriefExpanded}
+          aria-controls={companySummaryId}
+          onClick={() => setCompanyBriefExpanded((value) => !value)}
+        >
+          {companyBriefExpanded ? "Ver menos" : "Ver completo"}
+        </button>}
+      </div>
       <div className="heroCompanyFacts">
         <div><span>Industria</span><b>{data.industry || "Sin dato"}</b></div>
         <div><span>Cap.</span><b>{money(data.marketCap, data.marketCapCurrency || data.currency)}</b></div>
@@ -846,15 +961,16 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
               <p className="stockCompanyName">{data?.name || symbol}</p>
             </div>
             <div className="stockQuoteLine">
-              <span className="stockQuoteLabel">Ultima cotizacion</span>
-              <strong>{Number.isFinite(q.price) ? priceMoney(q.price) : "Sin cotizacion"}</strong>
+              <span className="stockQuoteLabel">Cierre del gráfico</span>
+              <strong>{Number.isFinite(priceSnapshot.price) ? priceMoney(priceSnapshot.price) : "Sin cotizacion"}</strong>
               {data?.currency && <span className="stockQuoteCurrency">{data.currency}</span>}
-              {Number.isFinite(q.dayChangePct) && <b className={dayTone}>{signedPriceMoney(q.dayChange)} ({pct(q.dayChangePct)})</b>}
+              {Number.isFinite(priceSnapshot.dayChangePct) && <b className={dayTone}>{signedPriceMoney(priceSnapshot.dayChange)} ({pct(priceSnapshot.dayChangePct)})</b>}
             </div>
             <div className="stockDataLine" aria-label="Frescura y cobertura de datos">
-              <span>{freshness.priceDate ? `Precio ${compactDate(freshness.priceDate)}` : "Precio sin fecha"}</span>
+              <span>{priceSnapshot.date || freshness.priceDate ? `Cierre ${compactDate(priceSnapshot.date || freshness.priceDate)}` : "Cierre sin fecha"}</span>
               {coverage.label && <span>{coverage.label}</span>}
               <span>{freshness.rsGlobalAsOf ? `RS ${compactDate(freshness.rsGlobalAsOf)} · ${sampleText(freshness.rsGlobalSample)}` : "RS sin snapshot"}</span>
+              {!priceSnapshot.coherent && <span>cotizacion intradia distinta</span>}
             </div>
             <div className="stockHeroActions">
               <a className="stockHeroLink stockBackLink" href="/">
@@ -900,12 +1016,15 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
             rsMainScore={rsUniverse}
             rsRatingSeries={rs.globalRsSeries}
             benchmarkSymbol={rs.benchmarkSymbol}
+            patternOverlay={setupPattern}
             height={600}
           />
         </div>
       </section>
 
       <SimilarStocks rows={similar} />
+
+      <ComparativeContext rows={comparables.rows} note={comparables.note} symbol={symbol} />
 
       <RelativeStrengthPanel rs={rs} rsUniverse={rsUniverse} rsBenchmark={rsBenchmark} country={data.country} />
 

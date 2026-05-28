@@ -7,6 +7,7 @@ import { withProfileCache } from "@/lib/fundamentalsCache";
 import { withDailyBarsCache } from "@/lib/dailyBarsCache";
 import { scoreRsBenchmarkModel } from "@/lib/relativeStrength";
 import { readGlobalRsSeriesForSymbol } from "@/lib/globalRs";
+import { setupPatternForBars } from "@/lib/setupPatterns";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
 import { weeklyStageForBars } from "@/lib/weeklyStage";
 
@@ -1256,6 +1257,7 @@ export async function getCompanyBrief(symbol, options = {}) {
     };
     const short = `${profile.name} es una compañía de ${country} del sector ${profile.sector || "sin clasificar"}, en la industria ${profile.industry || "no especificada"}. ${theme.text}`;
     const investorAngle = investorAngleFor({ stage, rs: relativeStrength, theme });
+    const setupPattern = setupPatternForBars(chart.bars || []);
     const coverage = companyCoverage({
       profile,
       chartBars: chart.bars || [],
@@ -1326,6 +1328,7 @@ export async function getCompanyBrief(symbol, options = {}) {
       tradingViewSymbol,
       chartEmbed,
       chartBars: compactChartBars(chart.bars || []),
+      setupPattern,
       chartProvider: chart.meta?.dataProvider || "Yahoo Finance",
       visual,
       valuationMetrics: profile.valuationMetrics || {},

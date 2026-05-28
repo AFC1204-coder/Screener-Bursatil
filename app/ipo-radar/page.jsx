@@ -117,7 +117,7 @@ function IpoForm({ form, setForm, onSubmit, editing }) {
       <label className="field"><span>Primer dia cotizacion</span><input className="input" type="date" value={form.expectedTradeDate} onChange={(e) => update("expectedTradeDate", e.target.value)} /></label>
       <label className="field"><span>Estado</span><select className="select" value={form.status} onChange={(e) => update("status", e.target.value)}>{Object.entries(STATUS_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       <label className="field"><span>Prioridad</span><select className="select" value={form.priority} onChange={(e) => update("priority", e.target.value)}><option value="high">Alta</option><option value="normal">Normal</option><option value="low">Baja</option></select></label>
-      <label className="field wide"><span>Fuente / prospecto</span><input className="input" value={form.sourceUrl} onChange={(e) => update("sourceUrl", e.target.value)} placeholder="URL SEC, HKEX, Nasdaq, noticia..." /></label>
+      <label className="field wide"><span>Fuente / prospecto</span><input className="input" value={form.sourceUrl} onChange={(e) => update("sourceUrl", e.target.value)} placeholder="URL de prospecto, bolsa o noticia..." /></label>
       <label className="field wide"><span>Notas</span><textarea className="textarea" value={form.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Lock-up, crecimiento, fecha esperada, dudas..." /></label>
     </div>
     <label className="checkLine">
@@ -318,7 +318,7 @@ export default function IpoRadarPage() {
     <IpoForm form={form} setForm={setForm} onSubmit={saveItem} editing={Boolean(editingId)} />
 
     <section className="card">
-      <div className="sectionTitle"><h2>Acciones rapidas</h2><span className="fine">V1 localStorage</span></div>
+      <div className="sectionTitle"><h2>Acciones rapidas</h2><span className="fine">control local</span></div>
       <div className="controls">
         <button className="btn" onClick={importRecentIposFromScan}>Importar IPOs recientes del ultimo scan</button>
         <button className="btn" onClick={importJson}>Importar JSON</button>
