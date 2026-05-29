@@ -2188,6 +2188,62 @@ function effectiveSettingsFromLayers(set, layers = DEFAULT_FILTER_LAYERS, fieldR
   return next;
 }
 
+// Calculadora neutral: a partir del pivot (dato objetivo) y de los parámetros que el
+// trader controla (capital, riesgo por operación, ancho del stop), devuelve el plan.
+// No emite juicio sobre la acción; solo aritmética que el usuario decide cómo usar.
+function computeTradePlan(row, { capital, riskPct, stopPct }) {
+  const price = Number(row?.price);
+  if (!Number.isFinite(price) || price <= 0) return null;
+  const high20 = Number.isFinite(row.distance20d) ? price / (1 + row.distance20d / 100) : null;
+  const high50 = Number.isFinite(row.distance50d) ? price / (1 + row.distance50d / 100) : null;
+  const pivot = Number.isFinite(high20) ? high20 : price;
+  const entry = pivot;
+  const sp = Number.isFinite(stopPct) && stopPct > 0 ? stopPct : 7;
+  const stop = entry * (1 - sp / 100);
+  const riskPerShare = entry - stop;
+  const cap = Number.isFinite(capital) && capital > 0 ? capital : null;
+  const rp = Number.isFinite(riskPct) && riskPct > 0 ? riskPct : null;
+  const riskAmount = cap && rp ? cap * (rp / 100) : null;
+  const shares = riskAmount && riskPerShare > 0 ? Math.floor(riskAmount / riskPerShare) : null;
+  const positionValue = shares != null ? shares * entry : null;
+  const pctCapital = positionValue != null && cap ? (positionValue / cap) * 100 : null;
+  return {
+    pivot, stop, sp, riskPerShare,
+    distanceToPivotPct: (price / pivot - 1) * 100,
+    sma50: Number.isFinite(row.sma50) ? row.sma50 : null,
+    high50, shares, positionValue, pctCapital,
+    target2R: entry + 2 * riskPerShare,
+    target3R: entry + 3 * riskPerShare,
+  };
+}
+
+function TradePlanner({ row, cfg, onChange }) {
+  const plan = computeTradePlan(row, cfg);
+  if (!plan) return null;
+  const cur = row.currency || "";
+  const triggered = plan.distanceToPivotPct >= 0;
+  const setField = (key) => (e) => onChange({ ...cfg, [key]: e.target.value === "" ? null : Number(e.target.value) });
+  return <div className="profileCard tradePlanner">
+    <div className="profileCardHeader">
+      <h3>Plan de operación</h3>
+      <span>Tu decisión</span>
+    </div>
+    <div className="plannerInputs">
+      <label>Capital<input type="number" inputMode="decimal" min="0" value={cfg.capital ?? ""} onChange={setField("capital")} /></label>
+      <label>Riesgo %<input type="number" inputMode="decimal" min="0" step="0.25" value={cfg.riskPct ?? ""} onChange={setField("riskPct")} /></label>
+      <label>Stop %<input type="number" inputMode="decimal" min="0" step="0.5" value={cfg.stopPct ?? ""} onChange={setField("stopPct")} /></label>
+    </div>
+    <div className="profileRow"><span>Pivot (máx. 20d)</span><b>{money(plan.pivot, cur)}</b></div>
+    <div className="profileRow"><span>{triggered ? "Precio sobre pivot" : "Precio bajo pivot"}</span><b className={triggered ? "up" : ""}>{pct(plan.distanceToPivotPct)}</b></div>
+    <div className="profileRow"><span>Stop ({plan.sp.toFixed(1)}%)</span><b className="down">{money(plan.stop, cur)}</b></div>
+    <div className="profileRow"><span>Riesgo 1R / acción</span><b>{money(plan.riskPerShare, cur)}</b></div>
+    <div className="profileRow"><span>Acciones</span><b>{plan.shares != null ? plan.shares.toLocaleString("es-ES") : "—"}</b></div>
+    <div className="profileRow"><span>Importe · % capital</span><b>{plan.positionValue != null ? `${amount(plan.positionValue, cur)} · ${plan.pctCapital.toFixed(1)}%` : "—"}</b></div>
+    <div className="profileRow"><span>Objetivo +2R · +3R</span><b className="up">{money(plan.target2R, cur)} · {money(plan.target3R, cur)}</b></div>
+    <p className="plannerRef">Niveles para tu criterio · SMA50 {money(plan.sma50, cur)} · máx. 50d {money(plan.high50, cur)}</p>
+  </div>;
+}
+
 function ModalDialog({ onClose, className, children }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -2246,9 +2302,13 @@ export default function Page() {
     clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setToastMsg(""), 4000);
   };
+  const [plannerCfg, setPlannerCfg] = useState({ capital: null, riskPct: 1, stopPct: 7 });
+  const updatePlannerCfg = (next) => { setPlannerCfg(next); safeWrite(STORAGE_KEYS.tradePlanner, next); };
   useEffect(() => {
     setFavoriteSymbols(new Set(safeRead(STORAGE_KEYS.favorites, []).map((x) => x.symbol)));
     setChartSettings(readChartSettings());
+    const tp = safeRead(STORAGE_KEYS.tradePlanner, null);
+    if (tp) setPlannerCfg({ capital: tp.capital ?? null, riskPct: tp.riskPct ?? 1, stopPct: tp.stopPct ?? 7 });
     const session = safeRead(STORAGE_KEYS.screenerSession, null);
     if (session?.version === SCREENER_SESSION_VERSION) {
       setMarkets(Array.isArray(session.markets) && session.markets.length ? session.markets : DEFAULT_MARKETS);
@@ -3251,6 +3311,8 @@ export default function Page() {
                 </div>
 
                 <div className="profileSide">
+                  <TradePlanner row={activeModalRow} cfg={plannerCfg} onChange={updatePlannerCfg} />
+
                   <div className="profileCard">
                     <div className="profileCardHeader">
                       <h3>Métricas técnicas</h3>
