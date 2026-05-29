@@ -167,9 +167,9 @@ export default function SectorsPage() {
     <section className="card hero">
       <div className="heroTop">
         <div>
-          <div className="badge">STATS EDGE · Sector Map</div>
-          <h1>Sectores y tematicas</h1>
-          <p className="muted">Ranking por tematica, sector e industria desde snapshot/favoritos.</p>
+          <div className="badge">StageRadar · Sectores</div>
+          <h1>Sectores y temáticas</h1>
+          <p className="muted">Ranking por temática, sector e industria desde snapshot/favoritos.</p>
         </div>
         <div className="mobileActions">
           <a className="btn" href="/">Screener</a>

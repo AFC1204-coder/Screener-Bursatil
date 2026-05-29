@@ -108,7 +108,7 @@ function DailyCommandCenter({ sections = [] }) {
   return <section className="card">
     <div className="sectionTitle">
       <div>
-        <h2>Command Center</h2>
+        <h2>Observatorio</h2>
         <p className="fine">Cambios y estructuras observables; no establece preferencias.</p>
       </div>
       <span className="fine">snapshot + favoritos</span>
@@ -408,7 +408,7 @@ export default function ResearchDesk() {
   return <main className="page">
     <section className="card hero">
       <div className="heroTop">
-        <div><div className="badge">STAGE RADAR · Research Desk</div><h1>Registro y favoritos</h1><p className="muted">Snapshots, watchlist, notas y seguimiento local-first.</p></div>
+        <div><div className="badge">StageRadar · Research</div><h1>Registro y favoritos</h1><p className="muted">Snapshots, watchlist, notas y seguimiento local-first.</p></div>
         <div className="mobileActions"><a className="btn" href="/">Screener</a><a className="btn" href="/review?source=favorites">Vista favoritos</a><a className="btn" href="/lists">Listas</a><a className="btn" href="/ipo-radar">IPO Radar</a><a className="btn" href="/market-health">Salud mercado</a><button className="btn btnPrimary" onClick={refreshFavorites} disabled={loading}>{loading ? "Actualizando..." : "Actualizar favoritos"}</button></div>
       </div>
     </section>

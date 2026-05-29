@@ -14405,3 +14405,359 @@ body:before {
     grid-template-columns: repeat(2,minmax(0,1fr));
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   STATSEDGE — Premium Design Layer
+   Visual-only overrides. No layout or functionality changes.
+   Applied last so it wins the cascade cleanly.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Accent tokens ── */
+:root {
+  --accent:        #3b78f0;
+  --accent2:       #6da4ff;
+  --accent-dim:    rgba(59,120,240,.11);
+  --radius:        7px;
+}
+
+/* ── 2. Top accent line: single-pixel, calm gradient ── */
+body::before {
+  height: 1px !important;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(59,120,240,.5) 20%,
+    rgba(100,164,255,.72) 55%,
+    transparent 100%) !important;
+  animation: none !important;
+}
+
+/* ── 3. Top bar ── */
+.appTopBar {
+  min-height: 50px !important;
+  border-bottom-color: rgba(255,255,255,.06) !important;
+  background: rgba(6,7,10,.96) !important;
+}
+
+.appBrandMark {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 6px !important;
+  border-color: rgba(59,120,240,.16) !important;
+  background: #0c1020 !important;
+}
+
+.appBrand b {
+  font-size: 13.5px !important;
+  font-weight: 660 !important;
+  letter-spacing: -.015em !important;
+  color: #eef0f6 !important;
+}
+
+.appBrand small {
+  font-size: 8px !important;
+  letter-spacing: .09em !important;
+  color: #48515e !important;
+}
+
+/* ── 4. Page title hierarchy: "data tool", not "marketing site" ── */
+.topbar .title {
+  font-size: 22px !important;
+  font-weight: 650 !important;
+  letter-spacing: -.025em !important;
+  color: #eceff5 !important;
+}
+
+.hero h1 {
+  font-size: 22px !important;
+  line-height: 1.15 !important;
+  font-weight: 650 !important;
+  letter-spacing: -.025em !important;
+  color: #eceff5 !important;
+  margin-bottom: 8px !important;
+}
+
+.marketHealthHeader h1 {
+  font-size: clamp(20px, 2.2vw, 28px) !important;
+  font-weight: 650 !important;
+  letter-spacing: -.03em !important;
+  line-height: 1.1 !important;
+}
+
+/* ── 5. Eyebrow / breadcrumb label ── */
+.eyebrow,
+.marketHealthHeader .eyebrow {
+  font-size: 10px !important;
+  font-weight: 560 !important;
+  letter-spacing: .08em !important;
+  color: #48515e !important;
+  text-transform: uppercase !important;
+  margin-bottom: 8px !important;
+  display: block !important;
+}
+
+/* ── 6. Badge pill (hero breadcrumbs): subtle, not screaming ── */
+.badge {
+  padding: 3px 8px !important;
+  border-radius: 5px !important;
+  border: 1px solid rgba(255,255,255,.065) !important;
+  background: rgba(255,255,255,.022) !important;
+  color: #525e6e !important;
+  font-size: 9.5px !important;
+  font-weight: 560 !important;
+  letter-spacing: .055em !important;
+  text-transform: none !important;
+  margin-bottom: 10px !important;
+  display: inline-block !important;
+}
+
+/* ── 7. Section titles: restrained, not shouting ── */
+.sectionTitle {
+  padding-bottom: 9px !important;
+  border-bottom: 1px solid rgba(255,255,255,.056) !important;
+  margin-bottom: 14px !important;
+}
+
+.sectionTitle h2 {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: .08em !important;
+  color: #525e6e !important;
+  text-transform: uppercase !important;
+  margin: 0 !important;
+}
+
+/* Section h3 headings (miniPanel titles) */
+.sectionTitle h3 {
+  font-size: 13.5px !important;
+  font-weight: 620 !important;
+  letter-spacing: -.01em !important;
+  color: #c8cdd8 !important;
+  text-transform: none !important;
+  margin: 0 !important;
+}
+
+/* Standalone h2 used as filter labels (Agrupar por, Filtrar fuerza…) */
+h2:not(.topbar h2) {
+  font-size: 10px;
+  font-weight: 600;
+  color: #525e6e;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* ── 8. Buttons ── */
+.btn {
+  font-size: 12px !important;
+  font-weight: 510 !important;
+  border-radius: 6px !important;
+  letter-spacing: 0 !important;
+}
+
+.btn:hover {
+  background: rgba(255,255,255,.05) !important;
+  color: #dce2ec !important;
+}
+
+/* Primary: crisp light button on dark — professional default */
+.btnPrimary {
+  background: linear-gradient(180deg, #f6f8fc 0%, #dde3ed 100%) !important;
+  color: #090b0e !important;
+  font-weight: 610 !important;
+  font-size: 12px !important;
+  border: 1px solid rgba(255,255,255,.48) !important;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.38) !important;
+  letter-spacing: -.005em !important;
+  transform: none !important;
+}
+
+.btnPrimary:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #e6eaf4 100%) !important;
+  box-shadow:
+    0 2px 6px rgba(0,0,0,.22),
+    inset 0 1px 0 rgba(255,255,255,.5) !important;
+  transform: translateY(-0.5px) !important;
+}
+
+/* Active / selected state for filter pills */
+.btnActive {
+  color: #7ab2ff !important;
+  background: rgba(59,120,240,.09) !important;
+  border: 1px solid rgba(59,120,240,.26) !important;
+  border-radius: 6px !important;
+}
+
+/* ── 9. Table ── */
+.table th {
+  font-size: 9.5px !important;
+  font-weight: 580 !important;
+  letter-spacing: .075em !important;
+  color: #45515f !important;
+  padding: 8px 10px !important;
+}
+
+.table td {
+  border-top-color: rgba(255,255,255,.034) !important;
+}
+
+/* Remove staggered animation (template feel) */
+.table tbody tr {
+  animation: none !important;
+}
+
+/* Row hover: accent background + left-edge indicator */
+.table tbody tr:hover td {
+  background: rgba(59,120,240,.048) !important;
+}
+
+.table tbody tr:hover td:first-child {
+  box-shadow: inset 2px 0 0 rgba(59,120,240,.5) !important;
+}
+
+/* ── 10. KPI tiles ── */
+.kpi b {
+  font-size: 20px !important;
+  font-weight: 630 !important;
+  letter-spacing: -.025em !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.kpi span {
+  font-size: 9px !important;
+  letter-spacing: .07em !important;
+  color: #45515f !important;
+  margin-top: 3px !important;
+}
+
+/* ── 11. Signal stats (stock page metric strip) ── */
+.signalStat span {
+  font-size: 9.5px !important;
+  letter-spacing: .08em !important;
+  color: #45515f !important;
+}
+
+.signalStat b {
+  font-size: 17px !important;
+  font-weight: 620 !important;
+  letter-spacing: -.02em !important;
+}
+
+/* ── 12. Mini-metrics ── */
+.metric b {
+  font-size: 18px !important;
+  font-weight: 620 !important;
+  letter-spacing: -.02em !important;
+}
+
+.metric span {
+  font-size: 9.5px !important;
+  letter-spacing: .08em !important;
+  color: #45515f !important;
+}
+
+/* ── 13. Pill badges ── */
+.pill {
+  font-size: 9.5px !important;
+  font-weight: 510 !important;
+  padding: 2px 5px !important;
+  border-radius: 4px !important;
+  background: rgba(255,255,255,.03) !important;
+  color: #5e6878 !important;
+}
+
+/* ── 14. Cards: softer borders ── */
+.card {
+  border-color: rgba(255,255,255,.058) !important;
+}
+
+/* ── 15. Form controls ── */
+.input,
+.select {
+  font-size: 12.5px !important;
+  border-color: rgba(255,255,255,.08) !important;
+  background: rgba(255,255,255,.022) !important;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: rgba(59,120,240,.42) !important;
+  box-shadow: 0 0 0 3px rgba(59,120,240,.07) !important;
+}
+
+/* ── 16. Scores in compact table ── */
+.compactScoreCell b {
+  font-size: 17px !important;
+  font-weight: 640 !important;
+  letter-spacing: -.02em !important;
+}
+
+/* ── 17. Fine / muted text ── */
+.fine {
+  font-size: 11.5px !important;
+  color: #525e6e !important;
+  line-height: 1.5 !important;
+}
+
+/* ── 18. Summary rows ── */
+.summaryRow {
+  border-bottom-color: rgba(255,255,255,.05) !important;
+  font-size: 12.5px !important;
+}
+
+/* ── 19. Sector toolbar filter buttons ── */
+.sectorToolbar button,
+.sectorToolbar .btn {
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 510 !important;
+}
+
+/* ── 20. Star / watchlist button ── */
+.starBtn {
+  border-radius: 6px !important;
+  border-color: rgba(255,255,255,.08) !important;
+  background: rgba(255,255,255,.025) !important;
+}
+
+.starBtn:hover {
+  border-color: rgba(255,255,255,.18) !important;
+  background: rgba(255,255,255,.04) !important;
+}
+
+/* ── 21. Bottom nav active dot: keep gold, refine glow ── */
+.bottomNav .navItem.active:before {
+  background: #c4a84a !important;
+  box-shadow: 0 0 8px rgba(196,168,74,.35) !important;
+}
+
+/* ── 22. Table header background ── */
+.tableWrap {
+  border-color: rgba(255,255,255,.07) !important;
+}
+
+/* ── 23. Score numbers in main table (RS columns) ── */
+.table td b {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 24. Hero page subtitle ── */
+.hero p,
+.marketHealthHeader p {
+  font-size: 13px !important;
+  color: #525e6e !important;
+  line-height: 1.5 !important;
+  margin-top: 6px !important;
+}
+
+/* ── 25. "Estado: Listo" status bar ── */
+.card.status {
+  font-size: 11.5px !important;
+  color: #525e6e !important;
+  padding: 8px 14px !important;
+  border-color: rgba(255,255,255,.045) !important;
+  background: rgba(255,255,255,.012) !important;
+}
+

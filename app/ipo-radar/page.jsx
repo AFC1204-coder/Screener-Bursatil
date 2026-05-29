@@ -280,7 +280,7 @@ export default function IpoRadarPage() {
     <section className="card hero ipoHero">
       <div className="heroTop">
         <div>
-          <div className="badge">STAGE RADAR · IPO RADAR</div>
+          <div className="badge">StageRadar · IPO Radar</div>
           <h1>Radar de IPOs</h1>
           <p className="muted">Lista local de candidatas pre-IPO, fechas estimadas y tickers que entraran al screener cuando empiecen a cotizar.</p>
         </div>

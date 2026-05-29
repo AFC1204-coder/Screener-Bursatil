@@ -304,7 +304,7 @@ export default function ListsPage() {
 
     <section className="card hero">
       <div className="heroTop">
-        <div><div className="badge">STATS EDGE · Quick Lists</div><h1>Listas rapidas</h1><p className="muted">Lideres, favoritos y setups desde el ultimo snapshot.</p></div>
+        <div><div className="badge">StageRadar · Listas</div><h1>Listas rápidas</h1><p className="muted">Líderes, favoritos y setups desde el último snapshot.</p></div>
         <div className="mobileActions"><a className="btn" href="/">Screener</a><a className="btn" href="/review?source=latest">Vista rapida</a><a className="btn" href="/ipo-radar">IPO Radar</a><a className="btn" href="/research-desk">Research</a><a className="btn btnPrimary" href="/sectors">Sectores</a></div>
       </div>
     </section>
