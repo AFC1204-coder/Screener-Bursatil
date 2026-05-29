@@ -63,9 +63,9 @@ const RESULT_PAGE_SIZES = [50, 100];
 const DEFAULT_RESULT_PAGE_SIZE = 50;
 const SCAN_BATCH_SIZES = [50, 100];
 const DEFAULT_SCAN_BATCH_SIZE = 100;
-const FULL_SCAN_CONCURRENCY = 4;
+const FULL_SCAN_CONCURRENCY = 10;
 const FULL_SCAN_PARTIAL_EVERY = 25;
-const FULL_SCAN_THROTTLE_MS = 35;
+const FULL_SCAN_THROTTLE_MS = 0;
 const DEFAULT_STATUS = "Listo · Universo por defecto: EEUU + Europa + Asia/HK + Canadá + Australia/África/LatAm";
 const SCREENER_FILTER_SETTING = { type: "screener_filters", key: "default" };
 const USER_TEMPLATE_LIMIT = 18;
@@ -3705,23 +3705,19 @@ export default function Page() {
         }
         completed += 1;
         publishPartial(false, s);
-        await sleep(fullUniverseScan ? FULL_SCAN_THROTTLE_MS : 65);
+        if (FULL_SCAN_THROTTLE_MS > 0) await sleep(FULL_SCAN_THROTTLE_MS);
       };
-      if (fullUniverseScan) {
-        const workerCount = Math.min(FULL_SCAN_CONCURRENCY, Math.max(symbols.length, 1));
-        await Promise.all(Array.from({ length: workerCount }, async () => {
-          while (!scanAbortRef.current && cursor < symbols.length) {
-            const index = cursor;
-            cursor += 1;
-            await analyzeSymbolAt(index);
-          }
-        }));
-      } else {
-        for (let i = 0; i < symbols.length; i++) {
-          if (scanAbortRef.current) break;
-          await analyzeSymbolAt(i);
+      // Pool de workers concurrente para todos los modos (lote, aleatorio y universo completo).
+      // El número de workers en vuelo es el único regulador de carga; el backend cachea y tolera
+      // esta concurrencia con holgura. El modo lote ya no es secuencial.
+      const workerCount = Math.min(FULL_SCAN_CONCURRENCY, Math.max(symbols.length, 1));
+      await Promise.all(Array.from({ length: workerCount }, async () => {
+        while (!scanAbortRef.current && cursor < symbols.length) {
+          const index = cursor;
+          cursor += 1;
+          await analyzeSymbolAt(index);
         }
-      }
+      }));
       publishPartial(true);
       const filterContext = { marketHealth: mh, useRegimeFilter, symbolsCount: completed, baseCount: base.length, providerErrors: bad };
       const filteredView = filterAnalyzedRows(rawRows, activeSettings, filterContext);
