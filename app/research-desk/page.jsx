@@ -5,16 +5,17 @@ import { num, pct } from "@/lib/formatters";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { activeAlerts, alertSummary, alertsFromScan, mergeAlerts, resolveAlert } from "@/lib/methodologyAlerts";
+import { methodologyDisplayForRow, methodologyPivotWatchEligible } from "@/lib/methodologyDisplay";
 import { checklistForRow, enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
-import { createFavoriteFromRow, shortBusiness } from "@/lib/stockRows";
+import { createFavoriteFromRow, rowTheme, shortBusiness } from "@/lib/stockRows";
 import { benchmarkForFavorite, externalLinks, stockUrl } from "@/lib/symbols";
 
 function uid() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
 function InfoHint({ text, tone = "" }) {
   if (!text) return null;
   return <span className={`infoHint ${tone}`} tabIndex="0" aria-label={text}>
-    <span>i</span>
-    <em>{text}</em>
+    <span aria-hidden="true">i</span>
+    <em aria-hidden="true">{text}</em>
   </span>;
 }
 function sortScans(rows = []) {
@@ -22,6 +23,24 @@ function sortScans(rows = []) {
 }
 function sortFavorites(rows = []) {
   return [...rows].sort((a, b) => new Date(b.addedAt || 0) - new Date(a.addedAt || 0));
+}
+function storedScanCompatibilityKey(scan = {}) {
+  return scan.snapshotCompatibilityKey || scan.settings?.snapshotCompatibilityKey || null;
+}
+function previousScanForDisplay(scans = [], scan = null) {
+  if (!scan) return null;
+  const explicitId = scan.comparison?.previousScanId || scan.methodologySummary?.previousScanId || "";
+  const explicit = explicitId ? scans.find((item) => item.id === explicitId && Array.isArray(item.rows) && item.rows.length) : null;
+  if (explicit) return explicit;
+  const key = storedScanCompatibilityKey(scan);
+  if (!key) return null;
+  const selectedTime = Date.parse(scan.createdAt || scan.updatedAt || 0);
+  return sortScans(scans).find((item) => {
+    if (!item || item.id === scan.id || !Array.isArray(item.rows) || !item.rows.length) return false;
+    if (storedScanCompatibilityKey(item) !== key) return false;
+    const itemTime = Date.parse(item.createdAt || item.updatedAt || 0);
+    return !Number.isFinite(selectedTime) || !Number.isFinite(itemTime) || itemTime < selectedTime;
+  }) || null;
 }
 function exportJson(name, data) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -63,14 +82,7 @@ async function quoteWithBars(symbol) {
 }
 
 function patternLabel(row = {}) {
-  if (row.failedBreakout || row.snapshot?.failedBreakout) return "Fallo de ruptura";
-  if (row.breakoutAttempt || row.snapshot?.breakoutAttempt) return "Ruptura observada";
-  if (row.vcpCandidate || row.snapshot?.vcpCandidate || row.patternFamily === "progressive_contraction" || row.snapshot?.patternFamily === "progressive_contraction") return "Contraccion progresiva";
-  if (row.pivotSqueeze || row.snapshot?.pivotSqueeze || row.patternFamily === "pivot_squeeze" || row.snapshot?.patternFamily === "pivot_squeeze") return "Compresion pivot";
-  if (row.patternFamily === "trend_no_base" || row.snapshot?.patternFamily === "trend_no_base") return "Tendencia sin base";
-  if (Number.isFinite(row.distanceToPivotPct ?? row.snapshot?.distanceToPivotPct)) return "Zona tecnica";
-  if (row.patternFamily || row.snapshot?.patternFamily) return String(row.patternFamily || row.snapshot?.patternFamily).replaceAll("_", " ");
-  return row.methodologyTags?.[0] || row.stageLabel || "Sin estructura";
+  return methodologyDisplayForRow(row).label || row.methodologyTags?.[0] || row.stageLabel || "Sin estructura";
 }
 
 function contractionText(row = {}) {
@@ -83,11 +95,28 @@ function contractionText(row = {}) {
 function commandCenterFrom({ rows = [], alerts = [], favorites = [] } = {}) {
   const favSet = new Set(favorites.map((item) => item.symbol));
   const structures = rows
-    .filter((row) => row.patternEligible !== false && row.patternFamily !== "trend_no_base" && (row.vcpCandidate || row.patternFamily === "progressive_contraction" || row.patternFamily === "pivot_squeeze" || Number(row.patternQualityScore) > 0 || Number.isFinite(row.distanceToPivotPct)))
+    .filter((row) => {
+      const display = methodologyDisplayForRow(row);
+      return display.watch || display.actionable || display.strict;
+    })
+    .sort((a, b) => {
+      const av = methodologyDisplayForRow(a);
+      const bv = methodologyDisplayForRow(b);
+      return (Number(bv.actionable) - Number(av.actionable)) || (b.patternQualityScore || b.setupQualityScore || 0) - (a.patternQualityScore || a.setupQualityScore || 0);
+    })
+    .slice(0, 8);
+  const measuredBases = rows
+    .filter((row) => {
+      const display = methodologyDisplayForRow(row);
+      return display.observable && !display.watch && !display.actionable;
+    })
     .sort((a, b) => (b.patternQualityScore || b.setupQualityScore || 0) - (a.patternQualityScore || a.setupQualityScore || 0))
     .slice(0, 8);
   const pivotZone = rows
-    .filter((row) => Number.isFinite(row.distanceToPivotPct) && row.distanceToPivotPct >= -5 && row.distanceToPivotPct <= 3)
+    .filter((row) => {
+      const display = methodologyDisplayForRow(row);
+      return display.key === "pivot_proximity" || methodologyPivotWatchEligible(row, { min: -5, max: 3 });
+    })
     .sort((a, b) => Math.abs(a.distanceToPivotPct || 99) - Math.abs(b.distanceToPivotPct || 99))
     .slice(0, 8);
   const favoriteAlerts = alerts
@@ -97,8 +126,9 @@ function commandCenterFrom({ rows = [], alerts = [], favorites = [] } = {}) {
     .filter((row) => row.patternDataStatus && !["ok", "partial_volume"].includes(row.patternDataStatus))
     .slice(0, 8);
   return [
-    { key: "structures", title: "Estructuras observables", detail: "Contracciones, bases o pivots medidos en el ultimo snapshot", rows: structures },
-    { key: "pivot", title: "Cerca de zona tecnica", detail: "Distancia objetiva al pivot estimado", rows: pivotZone },
+    { key: "structures", title: "Vigilancia metodológica", detail: "Estructuras en zona útil; solo Plan válido habilita plan automático", rows: structures },
+    { key: "measured", title: "Bases medibles", detail: "Estructura reconocible, pero fuera de zona de vigilancia", rows: measuredBases },
+    { key: "pivot", title: "Pivot cercano", detail: "Proximidad objetiva; no implica VCP validado ni plan automatico", rows: pivotZone },
     { key: "favoriteAlerts", title: "Favoritos con cambios", detail: "Alertas activas sobre valores ya guardados", alerts: favoriteAlerts },
     { key: "data", title: "Datos a revisar", detail: "Patrones no calculados por cobertura insuficiente", rows: dataIssues },
   ];
@@ -390,8 +420,12 @@ export default function ResearchDesk() {
     });
   }
 
-  const selectedRows = selectedScan?.rows || [];
-  const selectedMethodology = selectedScan?.methodologySummary || summarizeMethodology(selectedRows);
+  const selectedPreviousScan = useMemo(() => previousScanForDisplay(scans, selectedScan), [scans, selectedScan]);
+  const selectedRows = useMemo(() => {
+    const rows = Array.isArray(selectedScan?.rows) ? selectedScan.rows : [];
+    return rows.length ? enrichRowsWithMethodology(rows, selectedPreviousScan?.rows || []) : [];
+  }, [selectedScan, selectedPreviousScan]);
+  const selectedMethodology = useMemo(() => summarizeMethodology(selectedRows, selectedPreviousScan), [selectedRows, selectedPreviousScan]);
   const selectedEvents = useMemo(() => selectedRows
     .flatMap((row) => (row.methodologyEvents || []).map((event) => ({ ...event, symbol: row.symbol, companyName: row.companyName })))
     .slice(0, 24), [selectedRows]);
@@ -464,7 +498,7 @@ export default function ResearchDesk() {
         const checklist = checklistForRow(f).slice(1, 6);
         return <tr key={f.id}>
           <td><a className="ticker" href={stockUrl(f.symbol)}>{f.symbol}</a></td>
-          <td>{f.companyName}<br /><span className="fine">{f.snapshot?.theme || f.source}</span></td>
+          <td>{f.companyName}<br /><span className="fine">{rowTheme(f) || f.source}</span></td>
           <td>{new Date(f.addedAt).toLocaleDateString()}</td>
           <td>{Number.isFinite(f.entryPrice) ? f.entryPrice.toFixed(2) : "Sin dato"}</td>
           <td>{Number.isFinite(f.lastPrice) ? f.lastPrice.toFixed(2) : "Sin dato"}<br /><span className="fine">{f.lastDate || f.error || "sin actualizar"}</span></td>
@@ -488,7 +522,7 @@ export default function ResearchDesk() {
       <div className="card"><h2>Snapshot seleccionado</h2>{selectedScan ? <><div className="summaryRow"><span>{selectedScan.name}</span><span>{selectedRows.length} filas</span></div><div className="controls" style={{ marginTop: 10 }}><button className="btn" onClick={() => exportJson(`scan-${selectedScan.id}.json`, selectedScan)}>Exportar scan</button><button className="btn btnGhost" onClick={() => deleteScan(selectedScan.id)}>Eliminar scan</button><a className="btn" href="/review?source=latest">Vista rapida</a><a className="btn btnPrimary" href="/lists">Ver en listas</a></div></> : <p className="fine">Selecciona un snapshot del historial.</p>}</div>
     </section>
 
-    {selectedScan && <section className="card"><h2>Candidatas del snapshot</h2><div className="tableWrap"><table className="table"><thead><tr>{["★", "Ticker", "Empresa", "Tema", metricShortLabel("stage"), "Cambios", "3M", "6M", "12M", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel("totalScore"), "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{selectedRows.map((r) => <tr key={r.symbol}><td><button className="starBtn" onClick={() => favFromRow(r)}>★</button></td><td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a></td><td>{r.companyName}<br /><span className="fine">{shortBusiness(r)}</span></td><td><span className="pill">{r.theme}</span></td><td>{r.stageLabel || r.methodology?.stageState?.label || "-"}</td><td>{(r.methodologyEvents || []).slice(0, 2).map((event) => event.label).join(" · ") || "-"}</td><td>{pct(r.perf3m)}</td><td>{pct(r.perf6m)}</td><td>{pct(r.perf12m)}</td><td>{num(r.weinsteinScore)}</td><td>{num(r.minerviniScore)}</td><td>{num(r.rsQualityScore)}</td><td>{num(r.weaknessScore)}</td><td>{num(r.riskScore)}</td><td className="ticker">{num(r.totalScore)}</td><td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(r.symbol)}>Ficha</a><a className="btn btnSmall" href={externalLinks(r.symbol).tradingView} target="_blank" rel="noreferrer">TV</a></div></td></tr>)}</tbody></table></div></section>}
+    {selectedScan && <section className="card"><h2>Candidatas del snapshot</h2><div className="tableWrap"><table className="table"><thead><tr>{["★", "Ticker", "Empresa", "Tema", metricShortLabel("stage"), "Cambios", "3M", "6M", "12M", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel("totalScore"), "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{selectedRows.map((r) => <tr key={r.symbol}><td><button className="starBtn" onClick={() => favFromRow(r)}>★</button></td><td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a></td><td>{r.companyName}<br /><span className="fine">{shortBusiness(r)}</span></td><td><span className="pill">{rowTheme(r)}</span></td><td>{r.stageLabel || r.methodology?.stageState?.label || "-"}</td><td>{(r.methodologyEvents || []).slice(0, 2).map((event) => event.label).join(" · ") || "-"}</td><td>{pct(r.perf3m)}</td><td>{pct(r.perf6m)}</td><td>{pct(r.perf12m)}</td><td>{num(r.weinsteinScore)}</td><td>{num(r.minerviniScore)}</td><td>{num(r.rsQualityScore)}</td><td>{num(r.weaknessScore)}</td><td>{num(r.riskScore)}</td><td className="ticker">{num(r.totalScore)}</td><td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(r.symbol)}>Ficha</a><a className="btn btnSmall" href={externalLinks(r.symbol).tradingView} target="_blank" rel="noreferrer">TV</a></div></td></tr>)}</tbody></table></div></section>}
 
     <footer className="card footer">Local-first con sincronizacion opcional.</footer>
   </main>;

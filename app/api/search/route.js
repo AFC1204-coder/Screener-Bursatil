@@ -2,6 +2,21 @@ import { searchYahooCompanies } from "@/lib/yahoo";
 import { searchCuratedCompanies } from "@/lib/universes";
 import { searchOpenFigiCompanies } from "@/lib/openfigi";
 
+const SEARCH_PROVIDER_TIMEOUT_MS = 3500;
+
+function timeoutResult(provider) {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve({ status: "timeout", provider, value: [], reason: `${provider} timeout` }), SEARCH_PROVIDER_TIMEOUT_MS);
+  });
+}
+
+async function settledWithTimeout(provider, promise) {
+  return Promise.race([
+    promise.then((value) => ({ status: "fulfilled", provider, value })).catch((reason) => ({ status: "rejected", provider, value: [], reason })),
+    timeoutResult(provider),
+  ]);
+}
+
 function mergeResults(...groups) {
   const map = new Map();
   for (const group of groups) {
@@ -18,11 +33,8 @@ export async function GET(request) {
   const query = searchParams.get("q");
   if (!query) return Response.json({ error: "Missing query" }, { status: 400 });
   try {
-    const [curated, yahoo] = await Promise.allSettled([
-      Promise.resolve(searchCuratedCompanies(query)),
-      searchYahooCompanies(query),
-    ]);
-    const curatedResults = curated.status === "fulfilled" ? curated.value : [];
+    const curatedResults = searchCuratedCompanies(query);
+    const yahoo = await settledWithTimeout("yahoo", searchYahooCompanies(query));
     const yahooResults = yahoo.status === "fulfilled" ? yahoo.value : [];
     let results = mergeResults(curatedResults, yahooResults);
     const shouldResolve = !results.length || /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/i.test(String(query || "").trim());
@@ -43,6 +55,7 @@ export async function GET(request) {
       providers: {
         curated: curatedResults.length,
         yahoo: yahooResults.length,
+        yahooStatus: yahoo.status,
         openfigi: openFigiResults.length,
         openfigiError: openFigiError || null,
       },

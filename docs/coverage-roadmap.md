@@ -8,7 +8,7 @@ Implemented:
 
 - Universe Engine snapshot API: `/api/universe-engine`.
 - Compatibility universe API: `/api/universe`.
-- Coverage report API: `/api/coverage`, now split into inventory candidates, scanned-fresh coverage and actionable coverage so broad universe counts are not confused with fully materialized screener coverage.
+- Coverage report API: `/api/coverage`, now split into inventory candidates, scanned-fresh coverage and ranking-eligible coverage so broad universe counts are not confused with fully materialized screener coverage.
 - Universe Quality Gate for instrument hygiene.
 - Scanner Quality Gate for hydrated rows before ranking.
 - Supabase schema for universe snapshots, daily bars, fundamentals snapshots, shadow universe candidates, symbol resolutions and provider run logs.
@@ -30,8 +30,8 @@ Implemented:
 - Coverage semantics:
   - `inventoryCandidates` are symbols available to the internal queue after the Universe Quality Gate. They are not necessarily fresh, ranked or usable in leaderboards yet.
   - `scannedSymbols` are symbols materialized in `scan_results` during the recent scan window.
-  - `actionableSymbols` are scanned symbols that pass price freshness, minimum data coverage and score gates.
-  - Public product claims should use scanned/actionable coverage, not raw inventory size.
+  - `rankingEligibleSymbols` are scanned symbols that pass price freshness, minimum data coverage and score gates. `actionableSymbols` remains a legacy alias only.
+  - Public product claims should use scanned/ranking-eligible coverage, not raw inventory size.
   - `backfillPlan` suggests small cursorized jobs to convert inventory into fresh scan rows without a global live scan.
 - Shadow Universe endpoint: `/api/shadow-universe` reports aggregate hidden-universe readiness so broad legal/reference universes can stay internal while users only see filtered candidates.
 - Protected Shadow FIRDS batch job: `/api/jobs/shadow-firds-refresh` measures ESMA/FCA reference coverage, persists non-dry ESMA/FCA candidates into `shadow_instruments`, persists capped OpenFIGI mappings into `symbol_resolutions` and never exposes complete directories.
@@ -56,7 +56,7 @@ Acceptance criteria:
 - `daily_bars` can store OHLCV by symbol/date/provider.
 - `leaderboard_snapshots` and `leaderboard_items` store derived top lists, not provider raw datasets.
 - Scans read cached bars first, then provider live only on cache miss/stale data.
-- Price Freshness Gate blocks actionable rankings when the latest daily bar is older than the configured threshold.
+- Price Freshness Gate blocks ranking-eligible output when the latest daily bar is older than the configured threshold.
 - Profile/fundamental hydration reads cached normalized snapshots first, then provider live only on cache miss/stale data.
 - Scan materialization writes only derived rows that pass base quality/freshness gates; full raw universes remain internal.
 - Shadow universes remain aggregate/internal and are not exposed as complete exchange directories.
@@ -87,7 +87,7 @@ Implementation:
 
 ## Price Freshness Gate
 
-Default rule: a row is actionable only when its latest daily OHLCV bar is no older than 5 calendar days. This protects Japan and other free-source markets from stale-price false positives.
+Default rule: a row can enter current rankings only when its latest daily OHLCV bar is no older than 5 calendar days. This protects Japan and other free-source markets from stale-price false positives.
 
 Fields added to scan rows and exports:
 

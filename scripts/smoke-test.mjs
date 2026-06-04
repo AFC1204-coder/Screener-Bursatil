@@ -36,7 +36,29 @@ const apiChecks = [
     name: "Derived leaderboards",
     path: "/api/leaderboards?type=momentum&limit=5",
     provider: false,
-    check: (data) => data.ok === true && data.legalMode === "derived-signals-only" && (data.leaderboard || Array.isArray(data.leaderboards)),
+    check: (data) => {
+      const item = data.leaderboard?.items?.[0];
+      return data.ok === true
+        && data.legalMode === "derived-signals-only"
+        && (data.leaderboard || Array.isArray(data.leaderboards))
+        && (!item || (Boolean(item.methodologyReliabilityState)
+          && Boolean(item.setupDisplayKey)
+          && Boolean(item.setupDisplayLabel)
+          && typeof item.setupDisplayBlocksPatternClaim === "boolean"));
+    },
+  },
+  {
+    name: "Discovery feed",
+    path: "/api/discovery?limit=5&groupsLimit=5&minGroupSize=1",
+    provider: false,
+    check: (data) => data.ok === true
+      && data.legalMode === "derived-signals-only"
+      && typeof data.configured === "boolean"
+      && Array.isArray(data.lists)
+      && Array.isArray(data.rows)
+      && data.groups && Array.isArray(data.groups.sector)
+      && data.health && typeof data.health.state === "string"
+      && (!data.configured || data.lists.some((item) => item.key === "leaders" && Array.isArray(item.items))),
   },
   {
     name: "Alerts",
@@ -75,10 +97,15 @@ const apiChecks = [
     check: (data) => Number(data.count) > 500 && data.coverage?.bySource?.["HKEX Full List of Securities"] > 500,
   },
   {
-    name: "Universe TW official",
+    name: "Universe TW official/readiness",
     path: "/api/universe-engine?market=TW&summary=1",
     provider: true,
-    check: (data) => Number(data.count) > 800 && data.coverage?.bySource?.["TWSE ISIN listed equities"] > 800,
+    check: (data) => {
+      const officialReady = Number(data.count) > 800 && data.coverage?.bySource?.["TWSE ISIN listed equities"] > 800;
+      const declaredFallback = data.coverageReadiness?.byMarket?.TW?.state === "official_source_missing"
+        && data.coverageReadiness?.byMarket?.TW?.blocksCoverageClaim === true;
+      return officialReady || declaredFallback;
+    },
   },
   {
     name: "Universe Europe alias",
@@ -108,7 +135,11 @@ const apiChecks = [
     name: "Coverage report",
     path: "/api/coverage?markets=US,EU1,JP,HK,AU",
     provider: true,
-    check: (data) => Number(data.summary?.current) > 100 && Array.isArray(data.markets) && data.markets.some((item) => item.market === "JP") && data.markets.some((item) => item.market === "GB"),
+    check: (data) => Number(data.summary?.current) > 100
+      && Number.isFinite(data.summary?.rankingEligibleCoveragePct)
+      && Array.isArray(data.markets)
+      && data.markets.some((item) => item.market === "JP" && Number.isFinite(item.scan?.rankingEligible))
+      && data.markets.some((item) => item.market === "GB"),
   },
   {
     name: "Shadow universe aggregate",
@@ -127,6 +158,12 @@ const apiChecks = [
     path: "/api/cron/scan-refresh?dryRun=1",
     provider: true,
     check: (data) => data.ok === true && data.dryRun === true && data.group?.key && Array.isArray(data.options?.markets) && data.options.markets.length > 0,
+  },
+  {
+    name: "Materialized scan plan dry run",
+    path: "/api/jobs/scan-refresh?markets=US,HK&limit=4&perMarket=2&cursor=0&dryRun=1&leaderboards=0",
+    provider: true,
+    check: (data) => data.ok === true && data.dryRun === true && Array.isArray(data.plan?.symbols) && data.stats?.selection?.priorityMode,
   },
   {
     name: "Cron shadow Europe dry run",
@@ -187,6 +224,17 @@ const apiChecks = [
     path: "/api/market-health",
     provider: true,
     check: (data) => Number.isFinite(data.marketScore) && Array.isArray(data.indexes),
+  },
+  {
+    name: "Methodology health",
+    path: "/api/methodology-health",
+    provider: false,
+    check: (data) => data.configured === true
+      && data.status === "pass"
+      && data.totals?.failed === 0
+      && data.calibration?.mismatches === 0
+      && data.calibration?.guardrailsOk === true
+      && data.calibration?.buckets?.plan === 0,
   },
 ];
 

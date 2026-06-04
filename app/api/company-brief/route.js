@@ -2,6 +2,7 @@ import { fetchYahooProfile, fetchYahooChart, fetchYahooCompanyExtras } from "@/l
 import { fetchSecFundamentals, mergeSecGrowthMetrics } from "@/lib/sec";
 import { fetchFmpCompanyData } from "@/lib/fmp";
 import { fetchAsicShortInterest, mergeAsicShortInterest } from "@/lib/asicShort";
+import { inferBusinessTheme } from "@/lib/businessTheme";
 import { externalLinks, inferTradingViewSymbol, isTradingViewWidgetBlocked } from "@/lib/symbols";
 import { withProfileCache } from "@/lib/fundamentalsCache";
 import { withDailyBarsCache } from "@/lib/dailyBarsCache";
@@ -12,20 +13,8 @@ import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServ
 import { weeklyStageForBars } from "@/lib/weeklyStage";
 
 const BRIEF_CACHE_TYPE = "company_brief_cache";
+const BRIEF_CACHE_VERSION = 2;
 const DEFAULT_BRIEF_MAX_AGE_DAYS = 1;
-
-const THEME_RULES = [
-  { key: "Semis / fotonica", re: /semiconductor|semiconductor equipment|integrated circuit|chip|wafer|photon|optic|laser|lithography|foundry/i, text: "Tiene exposicion a semiconductores, optica/fotonica, litografia, fabricacion de chips o infraestructura de computacion." },
-  { key: "Internet / plataformas", re: /internet content|interactive media|communication services|online advertising|social network|social media|video game|gaming|multimedia|digital entertainment|streaming|e-commerce|marketplace|search|payments|fintech/i, text: "Opera en plataformas digitales, internet, publicidad online, gaming, contenidos, pagos digitales o ecosistemas de comercio y servicios." },
-  { key: "Inmobiliario / REIT", re: /real estate|reit|property|properties|residential|commercial real estate|shopping mall|leasing|landlord|homebuilding|property development/i, text: "Opera en activos inmobiliarios, promocion, alquileres, REITs, centros comerciales, oficinas, residencial o suelo." },
-  { key: "Defensa / aeroespacial", re: /aerospace|defense|defence|military|missile|radar|satellite|space systems|aviation|homeland security/i, text: "Opera en defensa, aeroespacial, aviacion, satelites, sistemas criticos o ingenieria avanzada." },
-  { key: "Software / IA", re: /\b(software|cloud|cyber|data|ai|artificial intelligence|analytics|platform|applications?|infrastructure|saas)\b/i, text: "Su negocio esta vinculado a software, cloud, datos, ciberseguridad, plataformas digitales, automatizacion o infraestructura de IA." },
-  { key: "Energia / red", re: /electrical|power|grid|energy|uranium|nuclear|utility|solar|battery|renewable|transmission/i, text: "Esta expuesta a energia, electrificacion, red electrica, utilities, nuclear, renovables, baterias o infraestructura energetica." },
-  { key: "Automatizacion", re: /robot|automation|machinery|industrial|factory|electrical equipment|sensors|controls/i, text: "Participa en automatizacion industrial, maquinaria, robotica, sensores, equipos electricos o productividad industrial." },
-  { key: "Medtech / biotech", re: /medical|diagnostic|device|biotech|pharma|health|therapeutics|clinical|surgical/i, text: "Opera en salud, biotecnologia, diagnostico, dispositivos medicos, farmaceuticas, terapias o tecnologia medica." },
-  { key: "Consumo / marca", re: /consumer|retail|apparel|restaurant|beverage|food|luxury|brand|e-commerce/i, text: "Su actividad esta vinculada a consumo, distribucion, retail, marcas, alimentacion, restauracion o comercio digital." },
-  { key: "Finanzas", re: /bank|insurance|asset management|financial|broker|exchange|payments|fintech|credit/i, text: "Pertenece al area financiera: banca, seguros, gestion de activos, pagos, mercados, credito o fintech." },
-];
 
 function clean(s = "") { return String(s).replace(/\s+/g, " ").replace(/\([^)]*\)/g, "").trim(); }
 function cleanBenchmarkSymbol(value = "") {
@@ -36,10 +25,6 @@ function firstSentences(s = "", max = 2) {
   if (!cleaned) return "";
   const parts = cleaned.split(/(?<=[.!?])\s+/).filter(Boolean);
   return parts.slice(0, max).join(" ");
-}
-function inferTheme(sector = "", industry = "", summary = "") {
-  const text = `${sector} ${industry} ${summary}`;
-  return THEME_RULES.find((r) => r.re.test(text)) || { key: sector || "General", text: "Clasificacion tematica general." };
 }
 function countryFromSymbol(symbol, profileCountry = "") {
   if (profileCountry) return profileCountry;
@@ -723,9 +708,10 @@ async function readBriefCache(symbol = "", options = {}) {
     });
     const row = rows?.[0] || null;
     const brief = row?.value?.brief || null;
+    const cacheVersion = Number(row?.value?.version || 0);
     const cachedAt = row?.value?.cachedAt || row?.updated_at || brief?.updatedAt || "";
     const ageDays = ageDaysFromTimestamp(cachedAt);
-    const fresh = Boolean(brief && ageDays !== null && ageDays <= maxAgeDays);
+    const fresh = Boolean(brief && cacheVersion === BRIEF_CACHE_VERSION && ageDays !== null && ageDays <= maxAgeDays);
     return {
       hit: fresh,
       stale: Boolean(brief && !fresh),
@@ -749,7 +735,7 @@ async function writeBriefCache(symbol = "", options = {}, brief = {}) {
       p_setting_type: BRIEF_CACHE_TYPE,
       p_setting_key: key,
       p_value: {
-        version: 1,
+        version: BRIEF_CACHE_VERSION,
         symbol: symbolKey(symbol),
         benchmarkSymbol: cleanBenchmarkSymbol(options.benchmarkSymbol) || "AUTO",
         cachedAt,
@@ -1216,7 +1202,7 @@ export async function getCompanyBrief(symbol, options = {}) {
       firstFinite(profile.valuationMetrics?.sharesOutstanding, profile.growthMetrics?.sharesOutstanding)
     );
     profile.growthMetrics = mergeDerivedGrowthMetrics(profile.growthMetrics, deriveGrowthFromFinancialResults(financialResults));
-    const theme = inferTheme(profile.sector, profile.industry, profile.businessSummary);
+    const theme = inferBusinessTheme(profile.sector, profile.industry, profile.businessSummary);
     const country = countryFromSymbol(symbol, profile.country);
     const summary = firstSentences(profile.businessSummary, 2);
     const marketCapCurrency = normalizeCurrency(profile.currency);

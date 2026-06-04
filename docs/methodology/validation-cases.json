@@ -1,0 +1,624 @@
+{
+  "version": 1,
+  "updatedAt": "2026-06-03",
+  "purpose": "Manual validation set for methodology labels, business themes, and actionability. Keep cases small, explicit, and reviewed by a human.",
+  "calibrationBuckets": {
+    "block": "Pattern claim should stay blocked: no watch, no plan.",
+    "observe": "Structure may be observable/measurable, but not useful watch and never plan.",
+    "watch": "Useful technical watch is allowed, but plan remains blocked.",
+    "plan": "Strict, data-valid VCP with a valid plan.",
+    "not_plan": "Only asserts that plan remains blocked; watch/observe/block may vary."
+  },
+  "calibrationExpectations": {
+    "minCheckedCases": 24,
+    "maxMismatches": 0,
+    "maxPlanCases": 0,
+    "minWatchCases": 1,
+    "minObserveCases": 1
+  },
+  "cases": [
+    {
+      "id": "aapl-consumer-tech-base-watch-not-actionable",
+      "symbol": "AAPL",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Consumer tech leader; may be observable/watch, but should not expose an automatic trade plan unless strict actionability is met.",
+      "expect": {
+        "theme": "Consumer tech / hardware",
+        "themeNot": ["Inmobiliario / REIT"],
+        "verdictStatesAllowed": ["watch", "blocked"],
+        "verdictKeysAllowed": ["vcp_watch", "constructive_base", "pivot_proximity", "no_base", "not_actionable"],
+        "actionable": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Protects against the earlier AAPL REIT false classification and against presenting a plan from a non-strict pattern."
+    },
+    {
+      "id": "nvda-semis-theme",
+      "symbol": "NVDA",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Semiconductor/AI infrastructure leader.",
+      "expect": {
+        "theme": "Semis / fotonica",
+        "themeNot": ["Inmobiliario / REIT", "Consumer tech / hardware"],
+        "actionable": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Protects core leadership taxonomy from drifting into generic hardware or real estate labels."
+    },
+    {
+      "id": "msft-software-theme",
+      "symbol": "MSFT",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Software/cloud platform leader.",
+      "expect": {
+        "theme": "Software / IA",
+        "themeNot": ["Inmobiliario / REIT", "Semis / fotonica"],
+        "actionable": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Protects software/platform classification from over-broad hardware or property regex matches."
+    },
+    {
+      "id": "meta-platforms-review",
+      "symbol": "META",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "trend_without_base_false_positive", "actionability"],
+      "humanLabel": "Internet/platform leader with irregular contractions; should not become VCP/watch from quality score alone.",
+      "expect": {
+        "theme": "Internet / plataformas",
+        "themeNot": ["Software / IA", "Consumer tech / hardware"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Protects against high-quality but non-decreasing contractions being promoted to a VCP watch state."
+    },
+    {
+      "id": "googl-platforms-review",
+      "symbol": "GOOGL",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "trend_without_base_false_positive", "actionability"],
+      "humanLabel": "Internet/search platform with irregular contractions; should remain non-actionable.",
+      "expect": {
+        "theme": "Internet / plataformas",
+        "themeNot": ["Software / IA", "Consumer tech / hardware"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Guards against platform leaders being classified as VCP when contractions re-expand."
+    },
+    {
+      "id": "amzn-platforms-review",
+      "symbol": "AMZN",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "constructive_base_vs_no_base", "actionability"],
+      "humanLabel": "Internet retail/platform leader with irregular contractions; no automatic setup.",
+      "expect": {
+        "theme": "Internet / plataformas",
+        "themeNot": ["Consumo / marca", "Software / IA"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Prevents generic internet-retail strength from becoming pattern validation."
+    },
+    {
+      "id": "tsla-consumer-growth-review",
+      "symbol": "TSLA",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "high_volatility_pattern_rejection", "actionability"],
+      "humanLabel": "High-volatility auto/EV name; irregular contractions should stay blocked.",
+      "expect": {
+        "theme": "Autos / movilidad",
+        "themeNot": ["Consumer tech / hardware", "Software / IA"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Keeps volatile growth charts from being upgraded when the contraction sequence is not clean."
+    },
+    {
+      "id": "avgo-semis-review",
+      "symbol": "AVGO",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "vcp_false_positive", "actionability"],
+      "humanLabel": "Semiconductor leader near highs, but current contractions are not decreasing cleanly.",
+      "expect": {
+        "theme": "Semis / fotonica",
+        "themeNot": ["Consumer tech / hardware", "Software / IA"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "verdictLabelsNot": ["Base en vigilancia", "Compresion de pivot", "VCP plan valido"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Regression case for the exact false-positive VCP/pivot-watch behavior we tightened."
+    },
+    {
+      "id": "amd-semis-review",
+      "symbol": "AMD",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "vcp_false_positive", "failed_breakout"],
+      "humanLabel": "Semiconductor name with deep/unclear base context; no VCP promotion.",
+      "expect": {
+        "theme": "Semis / fotonica",
+        "themeNot": ["Consumer tech / hardware", "Software / IA"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["no_base", "not_actionable"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Deep bases near a calculated pivot should not become VCP by proximity alone."
+    },
+    {
+      "id": "tsm-semis-review",
+      "symbol": "TSM",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "pivot_proximity", "actionability"],
+      "humanLabel": "Semiconductor leader near pivot, but latest contraction re-expands.",
+      "expect": {
+        "theme": "Semis / fotonica",
+        "themeNot": ["Consumer tech / hardware", "Software / IA"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "verdictLabelsNot": ["Base en vigilancia", "Compresion de pivot", "VCP plan valido"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Near-pivot alone must not override irregular contraction evidence."
+    },
+    {
+      "id": "asml-semis-europe-review",
+      "symbol": "ASML.AS",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "europe_data_quality", "vcp_false_positive"],
+      "humanLabel": "European semiconductor equipment leader; close to pivot does not imply VCP.",
+      "expect": {
+        "theme": "Semis / fotonica",
+        "themeNot": ["Automatizacion", "Software / IA"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["no_base", "not_actionable"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "European leader regression case for pivot proximity without validated base structure."
+    },
+    {
+      "id": "arm-semis-review",
+      "symbol": "ARM",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "young_leader_data_depth", "actionability"],
+      "humanLabel": "Younger semiconductor leader with limited history and deep base context.",
+      "expect": {
+        "theme": "Semis / fotonica",
+        "themeNot": ["Consumer tech / hardware", "Software / IA"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["no_base", "not_actionable"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 250
+      },
+      "rationale": "Protects young leaders from actionability when history/base depth is not supportive."
+    },
+    {
+      "id": "panw-software-cyber-review",
+      "symbol": "PANW",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "pivot_proximity", "actionability"],
+      "humanLabel": "Cyber/software leader near pivot but without current validated base.",
+      "expect": {
+        "theme": "Software / IA",
+        "themeNot": ["Internet / plataformas", "Consumer tech / hardware"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["no_base", "not_actionable"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "A close calculated pivot with deep/unclear base should stay non-watch."
+    },
+    {
+      "id": "crwd-software-cyber-review",
+      "symbol": "CRWD",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "pivot_proximity", "failed_breakout"],
+      "humanLabel": "Cyber/software leader near pivot but without current validated base.",
+      "expect": {
+        "theme": "Software / IA",
+        "themeNot": ["Internet / plataformas", "Consumer tech / hardware"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["no_base", "not_actionable"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Keeps failed/unclear pivot regions from surfacing as a watch setup."
+    },
+    {
+      "id": "net-software-cloud-review",
+      "symbol": "NET",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "constructive_base_vs_vcp_watch", "actionability"],
+      "humanLabel": "Cloud/software name with close pivot but no validated base.",
+      "expect": {
+        "theme": "Software / IA",
+        "themeNot": ["Internet / plataformas", "Consumer tech / hardware"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["no_base", "not_actionable"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Prevents close-pivot cloud charts from bypassing base-context gates."
+    },
+    {
+      "id": "pltr-software-ai-review",
+      "symbol": "PLTR",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "extended_leader_no_base", "actionability"],
+      "humanLabel": "AI/software leader with re-expanding contraction sequence.",
+      "expect": {
+        "theme": "Software / IA",
+        "themeNot": ["Internet / plataformas", "Consumer tech / hardware"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "High-profile AI leaders should still obey contraction-quality gates."
+    },
+    {
+      "id": "sap-software-europe-review",
+      "symbol": "SAP.DE",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "europe_data_quality", "trend_without_base_false_positive"],
+      "humanLabel": "European software leader; may be observable, never actionable without strict VCP.",
+      "expect": {
+        "theme": "Software / IA",
+        "themeNot": ["Internet / plataformas", "Consumer tech / hardware"],
+        "verdictStatesAllowed": ["watch", "blocked"],
+        "verdictKeysAllowed": ["vcp_watch", "constructive_base", "pivot_proximity", "no_base", "not_actionable"],
+        "actionable": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Allows a cautious watch label while preventing automatic plan exposure."
+    },
+    {
+      "id": "lly-healthcare-review",
+      "symbol": "LLY",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Large-cap pharmaceutical healthcare leader.",
+      "expect": {
+        "theme": "Medtech / biotech",
+        "themeNot": ["Autos / movilidad", "Consumer tech / hardware"]
+      },
+      "rationale": "Protects healthcare names from generic summary words such as devices or vehicles."
+    },
+    {
+      "id": "nvo-healthcare-review",
+      "symbol": "NVO",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Large-cap pharmaceutical healthcare leader.",
+      "expect": {
+        "theme": "Medtech / biotech",
+        "themeNot": ["Autos / movilidad", "Consumer tech / hardware"]
+      },
+      "rationale": "Keeps ADR healthcare taxonomy separate from transport or generic hardware labels."
+    },
+    {
+      "id": "isrg-medtech-review",
+      "symbol": "ISRG",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Medical instruments and robotic surgical systems leader.",
+      "expect": {
+        "theme": "Medtech / biotech",
+        "themeNot": ["Consumer tech / hardware", "Autos / movilidad"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["base_measurable"],
+        "verdictLabelsAllowed": ["Base medible"],
+        "actionable": false,
+        "watch": false,
+        "observable": true,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Prevents medical devices from being misread as consumer hardware and keeps far-from-pivot bases out of useful watch."
+    },
+    {
+      "id": "tmo-medtech-review",
+      "symbol": "TMO",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Diagnostics and life-sciences tools leader.",
+      "expect": {
+        "theme": "Medtech / biotech",
+        "themeNot": ["Autos / movilidad", "Automatizacion"]
+      },
+      "rationale": "Locks diagnostics/research taxonomy before broader industrial or mobility terms."
+    },
+    {
+      "id": "jpm-finance-review",
+      "symbol": "JPM",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Diversified bank and financial services leader.",
+      "expect": {
+        "theme": "Finanzas",
+        "themeNot": ["Internet / plataformas", "Autos / movilidad"],
+        "verdictStatesAllowed": ["watch", "blocked"],
+        "verdictKeysAllowed": ["constructive_base", "vcp_watch", "pivot_proximity", "base_measurable", "not_actionable", "no_base"],
+        "actionable": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Protects banks from being over-labelled as digital platforms because of payments or research wording."
+    },
+    {
+      "id": "brkb-finance-review",
+      "symbol": "BRK-B",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Diversified insurance and financial holding company.",
+      "expect": {
+        "theme": "Finanzas",
+        "themeNot": ["Autos / movilidad", "Internet / plataformas"]
+      },
+      "rationale": "Protects financial holding companies from generic investment-vehicle wording."
+    },
+    {
+      "id": "xom-energy-review",
+      "symbol": "XOM",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Integrated oil and gas energy leader.",
+      "expect": {
+        "theme": "Energia / red",
+        "themeNot": ["Autos / movilidad", "Consumo / marca"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["base_measurable"],
+        "verdictLabelsAllowed": ["Base medible"],
+        "actionable": false,
+        "watch": false,
+        "observable": true,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Keeps energy taxonomy anchored to sector/industry and separates far-from-pivot bases from useful watch."
+    },
+    {
+      "id": "cost-consumer-review",
+      "symbol": "COST",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Consumer defensive warehouse and discount retail leader.",
+      "expect": {
+        "theme": "Consumo / marca",
+        "themeNot": ["Semis / fotonica", "Internet / plataformas"]
+      },
+      "rationale": "Prevents optical/pharmacy wording from creating semiconductor or platform labels."
+    },
+    {
+      "id": "mcd-consumer-review",
+      "symbol": "MCD",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Global restaurant and consumer brand leader.",
+      "expect": {
+        "theme": "Consumo / marca",
+        "themeNot": ["Internet / plataformas", "Software / IA"]
+      },
+      "rationale": "Protects consumer brand taxonomy from app/platform wording in summaries."
+    },
+    {
+      "id": "lulu-consumer-review",
+      "symbol": "LULU",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Apparel retail and consumer brand company.",
+      "expect": {
+        "theme": "Consumo / marca",
+        "themeNot": ["Internet / plataformas", "Software / IA"]
+      },
+      "rationale": "Prevents e-commerce wording from overriding apparel retail sector/industry."
+    },
+    {
+      "id": "rhm-defense-europe-review",
+      "symbol": "RHM.DE",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "European aerospace and defense company.",
+      "expect": {
+        "theme": "Defensa / aeroespacial",
+        "themeNot": ["Autos / movilidad", "Automatizacion"]
+      },
+      "rationale": "Prevents military vehicles from being treated as generic auto/mobility exposure."
+    },
+    {
+      "id": "tencent-platforms-hk-review",
+      "symbol": "0700.HK",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "hk_data_quality", "platform_taxonomy"],
+      "humanLabel": "Hong Kong-listed internet/platform company; non-actionable unless strict pattern emerges.",
+      "expect": {
+        "theme": "Internet / plataformas",
+        "themeNot": ["Software / IA", "Finanzas"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Keeps HK platform taxonomy separate from finance/software and blocks weak single-contraction bases."
+    },
+    {
+      "id": "alibaba-platforms-hk-review",
+      "symbol": "9988.HK",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "hk_data_quality", "platform_taxonomy"],
+      "humanLabel": "Hong Kong-listed internet retail/platform company with irregular contractions.",
+      "expect": {
+        "theme": "Internet / plataformas",
+        "themeNot": ["Consumo / marca", "Finanzas"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "E-commerce/platform labels should not downgrade to generic consumer or promote re-expanding bases."
+    },
+    {
+      "id": "xiaomi-consumer-tech-hk-review",
+      "symbol": "1810.HK",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "consumer_tech_taxonomy", "hk_data_quality"],
+      "humanLabel": "Hong Kong-listed consumer electronics company with irregular contractions.",
+      "expect": {
+        "theme": "Consumer tech / hardware",
+        "themeNot": ["Consumo / marca", "Software / IA"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Locks consumer-tech taxonomy while keeping irregular structures non-watch."
+    },
+    {
+      "id": "bank-of-china-finance-hk-review",
+      "symbol": "3988.HK",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Hong Kong-listed diversified bank.",
+      "expect": {
+        "theme": "Finanzas",
+        "themeNot": ["Internet / plataformas", "Software / IA"],
+        "verdictStatesAllowed": ["watch"],
+        "verdictKeysAllowed": ["pivot_squeeze", "vcp_watch", "constructive_base"],
+        "actionable": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Protects HK bank taxonomy from digital platform wording in profiles."
+    },
+    {
+      "id": "well-reit-review",
+      "symbol": "WELL",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "humanLabel": "Healthcare facilities REIT.",
+      "expect": {
+        "theme": "Inmobiliario / REIT",
+        "themeNot": ["Autos / movilidad", "Medtech / biotech"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Keeps healthcare-facilities REITs anchored to real estate instead of health or mobility themes."
+    },
+    {
+      "id": "mar-consumer-travel-review",
+      "symbol": "MAR",
+      "active": true,
+      "reviewedAsOf": "2026-06-03",
+      "reviewFocus": ["theme", "consumer_travel_taxonomy", "pivot_proximity"],
+      "humanLabel": "Travel/lodging consumer name near pivot but with re-expanding contraction.",
+      "expect": {
+        "theme": "Consumo / marca",
+        "themeNot": ["Inmobiliario / REIT", "Internet / plataformas"],
+        "verdictStatesAllowed": ["blocked"],
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "verdictLabelsNot": ["Base en vigilancia", "Compresion de pivot", "VCP plan valido"],
+        "actionable": false,
+        "watch": false,
+        "strict": false,
+        "patternDataStatusAllowed": ["ok", "partial_volume"],
+        "minChartBars": 500
+      },
+      "rationale": "Near-pivot travel names should not be upgraded when contractions re-expand."
+    }
+  ]
+}

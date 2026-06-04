@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
-import { rowRsBenchmark, rowRsPrimary, rowRsUniverse, weaknessScore } from "@/lib/stockRows";
+import { rowRsBenchmark, rowRsPrimary, rowRsUniverse, rowTheme, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
 
 const dateFmt = (value) => {
@@ -17,8 +17,8 @@ const listText = (items = []) => items.length ? items.join(", ") : "-";
 function InfoHint({ text, tone = "" }) {
   if (!text) return null;
   return <span className={`infoHint ${tone}`} tabIndex="0" aria-label={text}>
-    <span>i</span>
-    <em>{text}</em>
+    <span aria-hidden="true">i</span>
+    <em aria-hidden="true">{text}</em>
   </span>;
 }
 
@@ -115,9 +115,29 @@ function buildScanPulse(scans = []) {
     rsLeaderPct: rows.length ? (rsLeader / rows.length) * 100 : null,
     pressurePct: rows.length ? (pressure / rows.length) * 100 : null,
     countries: summarizeGroups(rows, (row) => row.country),
-    themes: summarizeGroups(rows, (row) => row.theme || row.sector),
+    themes: summarizeGroups(rows, (row) => rowTheme(row) || row.sector),
   };
 }
+
+async function fetchJsonWithTimeout(path, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const r = await fetch(path, { signal: controller.signal });
+    const d = await r.json();
+    if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
+    return d;
+  } catch (error) {
+    if (error?.name === "AbortError") throw new Error(`${path} no respondió en ${Math.round(timeoutMs / 1000)}s`);
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const CORE_COVERAGE_PATH = "/api/coverage?markets=US,JP,HK,AU,TW";
+const FULL_COVERAGE_PATH = "/api/coverage?markets=US,EU1,JP,HK,AU,TW";
+const METHODOLOGY_HEALTH_PATH = "/api/methodology-health";
 
 function NewsSentimentIndex({ news, title = "News sentiment tape", sampleLabel = "titulares", scoreLabel = "Score medio titulares" }) {
   const total = news?.total || 0;
@@ -404,6 +424,140 @@ function GlobalRegionsPanel({ rows = [] }) {
   );
 }
 
+function readinessWeight(row = {}) {
+  const state = row.readiness?.state || "";
+  if (state === "official_source_missing") return 0;
+  if (state === "coverage_gap") return 1;
+  if (state === "inventory_not_materialized") return 2;
+  if (state === "partial_provider" || state === "curated_core") return 3;
+  return 4;
+}
+
+function readinessClass(tone = "") {
+  if (tone === "pass") return "pass";
+  if (tone === "warn") return "warn";
+  return "neutral";
+}
+
+function CoverageReadinessPanel({ coverage, loading = false }) {
+  const rows = Array.isArray(coverage?.markets) ? coverage.markets : [];
+  const visibleRows = [...rows]
+    .sort((a, b) => readinessWeight(a) - readinessWeight(b) || a.priority - b.priority || b.gap - a.gap)
+    .slice(0, 4);
+  const hiddenRows = Math.max(0, rows.length - visibleRows.length);
+  const issueCount = rows.filter((row) => row.readiness?.blocksCoverageClaim).length;
+  const operational = rows.filter((row) => row.readiness?.operational).length;
+  const summary = coverage?.summary || {};
+  const rankingCoveragePct = summary.rankingEligibleCoveragePct ?? summary.actionableCoveragePct;
+  const hasError = Boolean(coverage?.error);
+
+  return <section className="card coverageReadinessPanel">
+    <div className="sectionTitle">
+      <div>
+        <h2>Fiabilidad de cobertura</h2>
+        <p className="fine">Inventario, fuente y materialización; cobertura de ranking no equivale a setup ni plan válido.</p>
+      </div>
+      <span className={`coverageReadinessStatus ${hasError || issueCount ? "warn" : "pass"}`}>
+        {loading && !coverage ? "Cargando" : hasError ? "Sin dato" : issueCount ? `${issueCount} avisos` : "Operativo"}
+      </span>
+    </div>
+
+    {coverage?.error ? <div className="dataNote error">{coverage.error}</div> : <>
+      <div className="coverageReadinessKpis">
+        <div><b>{num(summary.inventoryCandidates)}</b><span>Inventario</span></div>
+        <div><b>{pctShare(summary.inventoryCoveragePct)}</b><span>Cobertura inventario</span></div>
+        <div><b>{num(summary.scannedSymbols)}</b><span>Escaneados frescos</span></div>
+        <div><b>{pctShare(rankingCoveragePct)}</b><span>Cobertura ranking</span></div>
+        <div><b>{operational}/{rows.length || "-"}</b><span>Mercados operativos</span></div>
+      </div>
+
+      {loading && <p className="fine coverageReadinessLoading">Actualizando lectura de cobertura...</p>}
+
+      <div className="coverageReadinessGrid">
+        {visibleRows.map((row) => {
+          const readiness = row.readiness || {};
+          const provider = readiness.providerStatus || {};
+          const providerBadge = provider.status === "not_configured"
+            ? "no configurado"
+            : ["error", "degraded"].includes(provider.status)
+              ? provider.retryBlocked ? "fallo cacheado" : "degradado"
+              : "";
+          const sourceLine = [readiness.sourceClaim || row.activeSource, providerBadge].filter(Boolean).join(" · ");
+          return <div className={`coverageReadinessItem ${readinessClass(readiness.tone)}`} key={row.market}>
+            <div className="coverageReadinessHead">
+              <b>{row.market}</b>
+              <span>{readiness.label || row.grade}</span>
+            </div>
+            <p>{readiness.detail || row.nextAction}</p>
+            <div className="coverageReadinessMeta">
+              <span><b>{num(row.inventory?.candidates)}</b><small>inventario</small></span>
+              <span><b>{num(row.scan?.fresh)}</b><small>fresco</small></span>
+              <span><b>{num(row.scan?.rankingEligible ?? row.scan?.actionable)}</b><small>ranking</small></span>
+              <span><b>{pctShare(readiness.activationPct)}</b><small>activación</small></span>
+            </div>
+            <em>{sourceLine}</em>
+          </div>;
+        })}
+      </div>
+      {hiddenRows > 0 && <p className="fine coverageReadinessLoading">Mostrando los {visibleRows.length} mercados más prioritarios; {hiddenRows} adicionales quedan resumidos en los KPIs.</p>}
+    </>}
+  </section>;
+}
+
+function methodologyStatusClass(status = "") {
+  if (status === "pass") return "pass";
+  if (status === "missing" || status === "warn" || status === "fail" || status === "error") return "warn";
+  return "neutral";
+}
+
+function MethodologyHealthPanel({ health, loading = false }) {
+  const totals = health?.totals || {};
+  const calibration = health?.calibration || {};
+  const buckets = calibration.buckets || {};
+  const statusClass = methodologyStatusClass(health?.status);
+  const bucketRows = [
+    { key: "block", label: "Bloqueado", value: buckets.block, tone: "neutral", detail: "No reclama setup ni vigilancia cuando la estructura no pasa filtros." },
+    { key: "observe", label: "Observable", value: buckets.observe, tone: "neutral", detail: "Base medible, pero fuera de zona o sin suficiente confirmacion." },
+    { key: "watch", label: "Vigilancia", value: buckets.watch, tone: "pass", detail: "Candidatas para mirar, todavia sin plan automatico." },
+    { key: "plan", label: "Plan valido", value: buckets.plan, tone: buckets.plan > 0 ? "warn" : "pass", detail: "Debe permanecer en 0 hasta que la deteccion sea realmente fiable." },
+  ];
+
+  return <section className="card coverageReadinessPanel methodologyHealthPanel">
+    <div className="sectionTitle">
+      <div>
+        <h2>Fiabilidad metodologica</h2>
+        <p className="fine">Regresion de VCP, buckets block/observe/watch/plan y bloqueo de plan valido.</p>
+      </div>
+      <span className={`coverageReadinessStatus ${statusClass}`}>
+        {loading && !health ? "Cargando" : health?.label || "Sin dato"}
+      </span>
+    </div>
+
+    {health?.error ? <div className="dataNote error">{health.error}</div> : <>
+      <div className="coverageReadinessKpis">
+        <div><b>{Number.isFinite(totals.passed) && Number.isFinite(totals.cases) ? `${totals.passed}/${totals.cases}` : "-"}</b><span>Casos validados</span></div>
+        <div><b>{num(totals.failed)}</b><span>Fallos</span></div>
+        <div><b>{num(calibration.mismatches)}</b><span>Desajustes bucket</span></div>
+        <div><b>{num(buckets.plan)}</b><span>Planes automaticos</span></div>
+        <div><b>{calibration.guardrailsOk ? "OK" : "Revisar"}</b><span>Guardrails</span></div>
+      </div>
+
+      {loading && <p className="fine coverageReadinessLoading">Actualizando lectura metodologica...</p>}
+      {health?.detail && <p className="fine methodologyHealthNote">{health.detail}</p>}
+
+      <div className="coverageReadinessGrid methodologyBucketGrid">
+        {bucketRows.map((row) => <div className={`coverageReadinessItem ${row.tone}`} key={row.key}>
+          <div className="coverageReadinessHead">
+            <b>{row.label}</b>
+            <span>{num(row.value)}</span>
+          </div>
+          <p>{row.detail}</p>
+        </div>)}
+      </div>
+    </>}
+  </section>;
+}
+
 
 function colorClass(color) {
   if (color === "green") return "btnActive";
@@ -418,6 +572,10 @@ export default function MarketHealthPage() {
   const [news, setNews] = useState(null);
   const [social, setSocial] = useState(null);
   const [scanPulse, setScanPulse] = useState(null);
+  const [coverage, setCoverage] = useState(null);
+  const [methodologyHealth, setMethodologyHealth] = useState(null);
+  const [coverageLoading, setCoverageLoading] = useState(false);
+  const [methodologyLoading, setMethodologyLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -430,27 +588,15 @@ export default function MarketHealthPage() {
     setError("");
     refreshScanPulse();
     try {
-      const [healthResult, newsResult, socialResult] = await Promise.allSettled([
-        fetch("/api/market-health").then(async (r) => {
-          const d = await r.json();
-          if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
-          return d;
-        }),
-        fetch("/api/market-news").then(async (r) => {
-          const d = await r.json();
-          if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
-          return d;
-        }),
-        fetch("/api/social-sentiment").then(async (r) => {
-          const d = await r.json();
-          if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
-          return d;
-        }),
+      const [marketResult, newsResult, socialResult] = await Promise.allSettled([
+        fetchJsonWithTimeout("/api/market-health", 25000),
+        fetchJsonWithTimeout("/api/market-news", 8000),
+        fetchJsonWithTimeout("/api/social-sentiment", 8000),
       ]);
-      if (healthResult.status === "rejected") throw healthResult.reason;
-      setData(healthResult.value);
       setNews(newsResult.status === "fulfilled" ? newsResult.value : { error: newsResult.reason?.message || "Noticias no disponibles", rows: [] });
       setSocial(socialResult.status === "fulfilled" ? socialResult.value : { error: socialResult.reason?.message || "Pulso social no disponible", rows: [] });
+      if (marketResult.status === "rejected") throw marketResult.reason;
+      setData(marketResult.value);
     } catch (e) {
       setError(e.message || String(e));
     } finally {
@@ -458,7 +604,47 @@ export default function MarketHealthPage() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  async function loadMethodologyHealth() {
+    setMethodologyLoading(true);
+    try {
+      setMethodologyHealth(await fetchJsonWithTimeout(METHODOLOGY_HEALTH_PATH, 20000));
+    } catch (e) {
+      setMethodologyHealth({ error: e.message || String(e) });
+    } finally {
+      setMethodologyLoading(false);
+    }
+  }
+
+  async function loadCoverage() {
+    setCoverageLoading(true);
+    try {
+      const core = await fetchJsonWithTimeout(CORE_COVERAGE_PATH, 30000);
+      setCoverage({ ...core, scope: "core" });
+      setCoverageLoading(false);
+      fetchJsonWithTimeout(FULL_COVERAGE_PATH, 45000)
+        .then((full) => setCoverage({ ...full, scope: "full" }))
+        .catch((e) => {
+          setCoverage((previous) => previous && !previous.error
+            ? { ...previous, secondaryError: e.message || String(e), scope: previous.scope || "core" }
+            : { error: e.message || String(e) });
+        });
+    } catch (e) {
+      setCoverage({ error: e.message || String(e) });
+      setCoverageLoading(false);
+    }
+  }
+
+  function refreshAll() {
+    load();
+    loadMethodologyHealth();
+    loadCoverage();
+  }
+
+  useEffect(() => {
+    load();
+    loadMethodologyHealth();
+    loadCoverage();
+  }, []);
 
   return <main className="page marketHealthPage">
     <section className="marketHealthHeader">
@@ -469,7 +655,7 @@ export default function MarketHealthPage() {
       </div>
       <div className="marketHealthActions">
         <a className="btn" href="/">Screener</a>
-        <button className="btn btnPrimary" onClick={load} disabled={loading}>{loading ? "Actualizando..." : "Actualizar"}</button>
+        <button className="btn btnPrimary" onClick={refreshAll} disabled={loading}>{loading ? "Actualizando..." : "Actualizar"}</button>
       </div>
     </section>
 
@@ -477,6 +663,11 @@ export default function MarketHealthPage() {
     {loading && !data && <section className="card">
       <div className="sectionTitle"><h2>Cargando salud de mercado</h2><span className="fine">Índices, sectores y titulares</span></div>
       <p className="fine">Actualizando lectura de mercado...</p>
+    </section>}
+
+    {!data && (coverage || methodologyHealth || coverageLoading || methodologyLoading) && <section className="marketHealthReliabilityGrid" aria-label="Fiabilidad de datos y metodología">
+      <CoverageReadinessPanel coverage={coverage} loading={coverageLoading} />
+      <MethodologyHealthPanel health={methodologyHealth} loading={methodologyLoading} />
     </section>}
 
     {data && <>
@@ -613,6 +804,11 @@ export default function MarketHealthPage() {
         </div>
       </section>
 
+      {(coverage || methodologyHealth || coverageLoading || methodologyLoading) && <section className="marketHealthReliabilityGrid" aria-label="Fiabilidad de datos y metodología">
+        <CoverageReadinessPanel coverage={coverage} loading={coverageLoading} />
+        <MethodologyHealthPanel health={methodologyHealth} loading={methodologyLoading} />
+      </section>}
+
       {data.weinsteinTape && <section className="card marketTapeCard">
         <div className="sectionTitle">
           <h2>Weinstein tape</h2>
@@ -675,7 +871,7 @@ export default function MarketHealthPage() {
               {scanPulse.leaders.map((row) => {
                 const rs = rowRsDisplay(row);
                 return <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
-                  <span><b>{row.symbol}</b><small>{row.companyName || row.theme || "-"}</small></span>
+                  <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small></span>
                   <span><b>{Number.isFinite(rs) ? rs.toFixed(0) : "-"}</b><small>{rowRsDisplayLabel(row)}</small></span>
                   <span><b>{row.totalScore?.toFixed(0) || "-"}</b><small>{metricShortLabel("totalScore")}</small></span>
                 </a>;
@@ -687,7 +883,7 @@ export default function MarketHealthPage() {
               {scanPulse.deterioration.map((row) => {
                 const rs = rowRsDisplay(row);
                 return <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
-                  <span><b>{row.symbol}</b><small>{row.companyName || row.theme || "-"}</small></span>
+                  <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small></span>
                   <span><b>{row.deteriorationReasons.length}</b><small>evidencias</small></span>
                   <span><b>{Number.isFinite(rs) ? rs.toFixed(0) : "-"}</b><small>{row.deteriorationReasons.slice(0, 2).join(", ")}</small></span>
                 </a>;

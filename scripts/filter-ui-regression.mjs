@@ -610,7 +610,7 @@ async function testQuickListsUseSameSnapshotContract(browser) {
       return values[0] === "2" && values[1] === "1";
     }, null, { timeout: 15_000 });
     const kpiText = await page.locator(".listsPage .kpis").innerText();
-    assert.match(kpiText, /\b2\b[\s\S]*acciones visibles/i, "quick lists should read exactly the seeded latest snapshot rows");
+    assert.match(kpiText, /\b2\b[\s\S]*acciones unicas/i, "quick lists should read exactly the seeded latest snapshot rows");
     assert.match(kpiText, /\b1\b[\s\S]*favoritos/i, "quick lists should read exactly the seeded favorites");
 
     const favoritesTicker = await page.locator("section.card", { hasText: "Favoritos" }).locator("tbody .ticker").first().textContent();

@@ -1,4 +1,5 @@
 import { supabaseConfig, supabaseRequestAll } from "@/lib/supabaseServer";
+import { businessThemeKey } from "@/lib/businessTheme";
 
 function clean(value = "") {
   return String(value || "").trim();
@@ -16,6 +17,13 @@ function rowValue(row = {}, key = "") {
   return row.raw?.[key] ?? row.metrics?.[key] ?? row[key] ?? null;
 }
 
+function normalizedTheme(row = {}, raw = {}) {
+  const sector = row.sector || raw.sector || "";
+  const industry = row.industry || raw.industry || "";
+  if (sector || industry) return businessThemeKey(sector, industry, raw.businessSummary || raw.summary || raw.businessEs || row.theme || raw.theme || "");
+  return row.theme || raw.theme || "";
+}
+
 function normalizeResult(row = {}) {
   const raw = row.raw || {};
   const metrics = row.metrics || {};
@@ -25,7 +33,7 @@ function normalizeResult(row = {}) {
     country: row.country || raw.country || "",
     sector: row.sector || raw.sector || "",
     industry: row.industry || raw.industry || "",
-    theme: row.theme || raw.theme || "",
+    theme: normalizedTheme(row, raw),
     asOf: row.created_at || "",
     totalScore: firstFinite(raw.totalScore, row.total_score),
     rsGlobalPct: firstFinite(raw.rsGlobalPct, metrics.rsGlobalPct, row.rs_rating),

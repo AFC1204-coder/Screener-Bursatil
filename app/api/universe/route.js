@@ -15,6 +15,8 @@ export async function GET(request) {
       source: snapshot.source,
       qualityGate: snapshot.qualityGate,
       coverage: snapshot.coverage,
+      coverageReadiness: snapshot.coverageReadiness,
+      providerDiagnostics: snapshot.providerDiagnostics,
       cache: snapshot.cache,
       universe: snapshot.universe,
     });

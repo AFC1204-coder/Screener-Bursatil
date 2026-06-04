@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CHART_RANGES, DEFAULT_CHART_SETTINGS, normalizeChartInterval } from "@/lib/chartSettings";
-import { setupStructureForRow } from "@/lib/patternNarrative";
+import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
@@ -364,7 +364,7 @@ export default function UniversalPriceChart({
   const localRows = useMemo(() => normalizeRows(bars), [bars]);
   const needsRemote = shouldRequestRemoteBars(localRows, range, interval);
   const intraday = isIntradayInterval(interval);
-  const patternSummary = useMemo(() => setupStructureForRow(patternOverlay || {}), [patternOverlay]);
+  const patternSummary = useMemo(() => methodologyDisplayForRow(patternOverlay || {}), [patternOverlay]);
 
   useEffect(() => {
     if (!needsRemote || !symbol) {

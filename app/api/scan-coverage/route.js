@@ -68,6 +68,8 @@ function rowShape(item = {}, maxPriceFreshnessDays = DEFAULT_MAX_PRICE_FRESHNESS
   const freshness = priceFreshness(item, maxPriceFreshnessDays);
   const coverage = metric(item, "dataCoverageScore");
   const totalScore = firstFinite(item.total_score, item.raw?.totalScore, item.metrics?.totalScore);
+  const qualityOk = freshness.ok && (!Number.isFinite(coverage) || coverage >= minCoverage);
+  const rankingEligible = qualityOk && (!Number.isFinite(totalScore) || totalScore >= 45);
   return {
     symbol: cleanText(item.symbol || item.raw?.symbol).toUpperCase(),
     country: cleanText(item.country || item.raw?.country || "US"),
@@ -78,8 +80,9 @@ function rowShape(item = {}, maxPriceFreshnessDays = DEFAULT_MAX_PRICE_FRESHNESS
     dataCoverageScore: coverage,
     priceFreshnessDays: freshness.days,
     priceFresh: freshness.ok,
-    qualityOk: freshness.ok && (!Number.isFinite(coverage) || coverage >= minCoverage),
-    actionable: freshness.ok && (!Number.isFinite(coverage) || coverage >= minCoverage) && (!Number.isFinite(totalScore) || totalScore >= 45),
+    qualityOk,
+    rankingEligible,
+    actionable: rankingEligible,
     lastDate: metricText(item, "lastDate"),
     chartProvider: metricText(item, "chartProvider"),
     createdAt: item.created_at || "",
@@ -126,7 +129,8 @@ function groupCoverage(rows = [], field = "country", { includeTop = false } = {}
         fresh,
         freshPct: pct(fresh, items.length),
         qualityOk: items.filter((row) => row.qualityOk).length,
-        actionable: items.filter((row) => row.actionable).length,
+        rankingEligible: items.filter((row) => row.rankingEligible).length,
+        actionable: items.filter((row) => row.rankingEligible).length,
         avgCoverageScore: avg(items.map((row) => row.dataCoverageScore)),
         avgTotalScore: avg(items.map((row) => row.totalScore)),
       };
@@ -255,7 +259,8 @@ export async function GET(request) {
     const shaped = latestBySymbol((scanResults || []).map((row) => rowShape(row, maxPriceFreshnessDays, minCoverageScore)));
     const fresh = shaped.filter((row) => row.priceFresh).length;
     const qualityOk = shaped.filter((row) => row.qualityOk).length;
-    const actionable = shaped.filter((row) => row.actionable).length;
+    const rankingEligible = shaped.filter((row) => row.rankingEligible).length;
+    const actionable = rankingEligible;
     const latestScanAt = shaped.map((row) => Date.parse(row.createdAt || "") || 0).sort((a, b) => b - a)[0];
 
     return Response.json({
@@ -271,6 +276,8 @@ export async function GET(request) {
         freshPct: pct(fresh, shaped.length),
         qualityOk,
         qualityPct: pct(qualityOk, shaped.length),
+        rankingEligible,
+        rankingEligiblePct: pct(rankingEligible, shaped.length),
         actionable,
         actionablePct: pct(actionable, shaped.length),
         avgCoverageScore: avg(shaped.map((row) => row.dataCoverageScore)),

@@ -2,6 +2,7 @@ import { envValue } from "@/lib/env";
 import { normalizeMarketList } from "@/lib/markets";
 import {
   DEFAULT_MATERIALIZED_MARKETS,
+  planMaterializedScan,
   readScanBatchCursor,
   refreshDefaultLeaderboards,
   runMaterializedScan,
@@ -43,6 +44,11 @@ function boolParam(searchParams, key, fallback = false) {
   return ["1", "true", "yes", "y"].includes(String(raw).toLowerCase());
 }
 
+function boolOverride(value, fallback = true) {
+  if (value === null || value === undefined || value === "") return fallback;
+  return !["0", "false", "no", "n", "off", "cursor"].includes(String(value).toLowerCase());
+}
+
 function optionsFromRequest(request) {
   const { searchParams } = new URL(request.url);
   const symbols = cleanList(searchParams.get("symbols"));
@@ -64,6 +70,8 @@ function optionsFromRequest(request) {
     && !refreshProfiles
     && !rescanRecent
     && !skipRecentDisabled;
+  const recentScanMaxRows = numberParam(searchParams, "recentScanMaxRows", 20000, 1, 50000);
+  const priorityOverride = searchParams.get("prioritizeMaterialization") ?? searchParams.get("materializationPriority");
   return {
     symbols,
     markets: markets.length ? markets : DEFAULT_MATERIALIZED_MARKETS,
@@ -86,11 +94,15 @@ function optionsFromRequest(request) {
     cache: searchParams.get("cache") !== "0",
     skipRecentlyScanned,
     recentScanDays: numberParam(searchParams, "recentScanDays", 45, 1, 365),
-    recentScanMaxRows: numberParam(searchParams, "recentScanMaxRows", 20000, 1, 50000),
+    recentScanMaxRows,
+    materializationLookbackDays: numberParam(searchParams, "materializationLookbackDays", 365, 1, 1095),
+    materializationMaxRows: numberParam(searchParams, "materializationMaxRows", recentScanMaxRows, 1, 50000),
+    prioritizeMaterialization: !symbols.length && boolOverride(priorityOverride, true),
     useCursor: !symbols.length && !offsetProvided && searchParams.get("cursor") !== "0",
     resetCursor: searchParams.get("resetCursor") === "1",
     refreshLeaderboards: searchParams.get("leaderboards") !== "0",
     includeRows: searchParams.get("includeRows") === "1",
+    dryRun: boolParam(searchParams, "dryRun", false),
     shadowPriced: searchParams.get("shadowPriced") === "1",
     shadowStatus: searchParams.get("shadowStatus") || "priced",
     screenerFilters: screenerFiltersFromSearchParams(searchParams),
@@ -185,6 +197,8 @@ async function createRun(options) {
           offset: options.offset,
           skipRecentlyScanned: Boolean(options.skipRecentlyScanned),
           recentScanDays: options.recentScanDays,
+          materializationLookbackDays: options.materializationLookbackDays,
+          prioritizeMaterialization: Boolean(options.prioritizeMaterialization),
           shadowSource: options.shadowSource || null,
           screenerFilters: options.screenerFilters || null,
         },
@@ -221,6 +235,7 @@ export async function GET(request) {
   if (baseOptions.shadowSource?.enabled && !baseOptions.symbols.length) {
     return Response.json({
       ok: true,
+      dryRun: Boolean(baseOptions.dryRun),
       skipped: true,
       reason: "No priced shadow symbols available for the requested markets/status.",
       scan: { rowCount: 0 },
@@ -239,6 +254,32 @@ export async function GET(request) {
     ...baseOptions,
     marketOffsets: cursorOffsets(cursor.value || {}, baseOptions),
   };
+  if (options.dryRun) {
+    const plan = await planMaterializedScan(options);
+    return Response.json({
+      ok: true,
+      dryRun: true,
+      plan: {
+        markets: plan.markets,
+        symbols: plan.symbols,
+        selectedRows: options.includeRows ? plan.selectedRows : undefined,
+        universeTotal: plan.universeTotal,
+        settings: plan.settings,
+      },
+      stats: {
+        ...plan.stats,
+        shadowSource: options.shadowSource || null,
+        screenerFilters: options.screenerFilters || null,
+      },
+      cursor: {
+        used: Boolean(options.useCursor),
+        saved: false,
+        skipped: true,
+        offsets: plan.stats.selection?.marketOffsets || {},
+        nextOffsets: plan.stats.selection?.nextMarketOffsets || {},
+      },
+    });
+  }
   const run = await createRun(options);
   try {
     const result = await runMaterializedScan(options);

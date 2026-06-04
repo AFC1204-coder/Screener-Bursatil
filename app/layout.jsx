@@ -1,5 +1,5 @@
 import "./globals.css";
-import BottomNav from "./BottomNav";
+import BottomNav, { AppHeaderNav } from "./BottomNav";
 
 export const metadata = {
   title: "StageRadar",
@@ -42,6 +42,7 @@ export default function RootLayout({ children }) {
               <small>Equity Research</small>
             </span>
           </a>
+          <AppHeaderNav />
         </header>
         {children}
         <BottomNav />

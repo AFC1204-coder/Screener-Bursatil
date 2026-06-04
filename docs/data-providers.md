@@ -92,11 +92,11 @@ Universe Engine, Quality Gate and cache:
 - Europe can now be requested as market aliases: `EU1` for priority Europe, `EU2` for the secondary wave, and `EU`/`EUROPE` for the full current European seed universe. Current Europe is still a curated high-liquidity seed, not an official complete exchange universe.
 - `vercel.json` schedules two protected daily cron routes: `/api/cron/universe-refresh` and `/api/cron/scan-refresh`. The scan cron rotates small cohorts through `app_settings`, including bounded Japan, Taiwan, Canada and Singapore/South Africa cohorts, and refreshes leaderboards after saving materialized scan rows. India/Israel are manual/backlog only.
 - `vercel.json` also schedules `/api/cron/shadow-europe-refresh`, which rotates `shadow-europe-uk`, `shadow-europe-nordics`, `shadow-europe-west` and `shadow-europe-south` after the normal scan cron.
-- `/api/scan-coverage` exposes aggregate derived coverage by default: symbol counts, freshness, quality/actionable rates, leaderboard population, recent job status and cursor offsets. Use `includeTop=1` only for limited diagnostic top samples; user-facing "best of" lists should come from leaderboards.
+- `/api/scan-coverage` exposes aggregate derived coverage by default: symbol counts, freshness, quality/ranking-eligible rates, leaderboard population, recent job status and cursor offsets. Use `includeTop=1` only for limited diagnostic top samples; user-facing "best of" lists should come from leaderboards.
 - This cache is for research workflow acceleration, not for redistributing exchange data. Respect source terms, public endpoint rate limits and official dataset methodology labels.
 - Leaderboards use saved `scan_results` to expose only top derived candidates by country, sector, industry or theme. They should not return complete exchange universes or raw OHLCV datasets.
 - Hidden universes are not a licensing workaround. They are allowed only where the source is public/regulatory or properly licensed; exchange/product datasets that require paid permission stay as curated cores or provider-later candidates.
-- Price freshness is a hard gate for actionable output: stale OHLCV can exist in cache/history, but it should not pass screener rankings or leaderboards.
+- Price freshness is a hard gate for ranking-eligible output: stale OHLCV can exist in cache/history, but it should not pass screener rankings or leaderboards.
 
 Incremental free-source roadmap:
 

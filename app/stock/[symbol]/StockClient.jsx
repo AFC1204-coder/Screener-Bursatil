@@ -1,11 +1,16 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ChartPreferences from "@/app/ChartPreferences";
+import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
+import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
-import { dataStatusLabel, setupStructureForRow } from "@/lib/patternNarrative";
+import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
+import { dataStatusLabel } from "@/lib/patternNarrative";
+import { screenerStockContextFromSession } from "@/lib/screenerContracts";
 import { setupPatternForBars } from "@/lib/setupPatterns";
+import { computeTradePlan, tradePlanEligibility } from "@/lib/tradePlan";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const rsFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
@@ -204,8 +209,8 @@ function PeerLogo({ item }) {
 function InfoHint({ text, tone = "" }) {
   if (!text) return null;
   return <span className={`infoHint ${tone}`} tabIndex="0" aria-label={text}>
-    <span>i</span>
-    <em>{text}</em>
+    <span aria-hidden="true">i</span>
+    <em aria-hidden="true">{text}</em>
   </span>;
 }
 
@@ -215,6 +220,120 @@ function SignalStat({ label, value, detail, tone = "" }) {
     <b>{value}</b>
     {detail && <small>{detail}</small>}
   </div>;
+}
+
+const TRADE_PLAN_STORAGE_KEY = "statsedge:tradePlan";
+function readTradePlanPrefs() {
+  if (typeof window === "undefined") return { accountSize: "", accountRiskPct: "1" };
+  try {
+    const raw = window.localStorage.getItem(TRADE_PLAN_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const accountRiskPct = Number(parsed.accountRiskPct);
+      return {
+        accountSize: parsed.accountSize != null ? String(parsed.accountSize) : "",
+        accountRiskPct: Number.isFinite(accountRiskPct) && accountRiskPct > 0 ? String(accountRiskPct) : "1",
+      };
+    }
+  } catch {}
+  return { accountSize: "", accountRiskPct: "1" };
+}
+
+function tradePlanContext(plan) {
+  const distance = plan?.distanceToPivotPct;
+  if (!Number.isFinite(distance)) return { label: "Sin precio", detail: "Precio actual no disponible", tone: "neutral" };
+  const absoluteDistance = Math.abs(distance);
+  if (distance < -3) return { label: "Bajo pivot", detail: `a ${pct(absoluteDistance)} del pivot`, tone: "below" };
+  if (distance <= 3) {
+    return {
+      label: "Zona pivot",
+      detail: distance >= 0 ? `precio ${pct(distance)} sobre pivot` : `a ${pct(absoluteDistance)} del pivot`,
+      tone: "ready",
+    };
+  }
+  return { label: "Sobre pivot", detail: `precio ${pct(distance)} sobre pivot`, tone: distance > 8 ? "extended" : "neutral" };
+}
+
+function TradePlanPanel({ pattern, price, currency, structure, display }) {
+  // Initialise with SSR-safe defaults; read localStorage only after mount so the
+  // server and first client render agree (no hydration mismatch).
+  const [prefs, setPrefs] = useState({ accountSize: "", accountRiskPct: "1" });
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    setPrefs(readTradePlanPrefs());
+    hydratedRef.current = true;
+  }, []);
+  useEffect(() => {
+    if (!hydratedRef.current || typeof window === "undefined") return;
+    try { window.localStorage.setItem(TRADE_PLAN_STORAGE_KEY, JSON.stringify(prefs)); } catch {}
+  }, [prefs]);
+
+  const accountSize = Number(prefs.accountSize);
+  const accountRiskPct = Number(prefs.accountRiskPct);
+  const displayGate = display || methodologyDisplayForRow(pattern || {});
+  const gate = useMemo(() => {
+    if (displayGate.blocksPatternClaim) return { actionable: false, reason: displayGate.reason || displayGate.line || "Datos insuficientes para derivar plan." };
+    if (!displayGate.actionable || !displayGate.tradePlanEligible) return { actionable: false, reason: displayGate.tradePlanReason || displayGate.reason || "Plan no válido para esta estructura." };
+    return tradePlanEligibility({
+      ...(pattern || {}),
+      setupStructureKey: structure?.key,
+      setupStructureStrict: structure?.strict,
+      setupStructureReason: structure?.reason,
+    });
+  }, [pattern, structure, displayGate]);
+  const plan = useMemo(() => computeTradePlan(
+    { ...(pattern || {}), price },
+    {
+      accountSize: Number.isFinite(accountSize) && accountSize > 0 ? accountSize : undefined,
+      accountRiskPct: Number.isFinite(accountRiskPct) && accountRiskPct > 0 ? accountRiskPct : 1,
+    },
+  ), [pattern, price, accountSize, accountRiskPct]);
+  const context = plan.available ? tradePlanContext(plan) : null;
+  if (!gate.actionable) return null;
+
+  return <section className="card terminalPanel tradePlanPanel">
+    <div className="sectionTitle tradePlanTitle">
+      <div>
+        <h2>Plan de operación</h2>
+        <span className="fine">Niveles derivados de la base · referencia técnica, no recomendación</span>
+      </div>
+      {context && <span className={`tradePlanStatus ${context.tone}`.trim()}>{context.label}</span>}
+    </div>
+    {!plan.available
+      ? <p className="fine">{plan.reason || "Sin estructura medible para derivar un plan."}</p>
+      : <>
+        <div className="signalStrip tradePlanLevels">
+          <SignalStat
+            label="Pivot técnico"
+            value={priceMoney(plan.pivot, currency)}
+            detail={context?.detail || ""}
+            tone={plan.abovePivot ? "neutral" : ""}
+          />
+          <SignalStat label="Stop referencia" value={priceMoney(plan.stop, currency)} detail={`${plan.stopType} · riesgo ${pct(plan.riskPct)}`} tone="bad" />
+          <SignalStat label="Objetivo 2R" value={priceMoney(plan.target2R, currency)} tone="good" />
+          <SignalStat label="Objetivo 3R" value={priceMoney(plan.target3R, currency)} tone="good" />
+        </div>
+        {plan.deepBase && <p className="fine tradePlanNotice">Base profunda: el mínimo estructural queda más allá del {plan.cappedStopPct}% bajo el pivot. El stop se acota al {plan.cappedStopPct}% para limitar la pérdida por acción.</p>}
+        <div className="tradePlanSizing">
+          <div className="tradePlanSizingHead">
+            <span>Dimensionamiento por riesgo</span>
+            <small>{plan.sizing ? `Presupuesto ${priceMoney(plan.sizing.riskBudget, currency)}` : "Completa capital y riesgo"}</small>
+          </div>
+          <div className="tradePlanFields">
+            <label className="field tradePlanField"><span>Capital de cuenta</span><input className="input" type="number" inputMode="decimal" min="0" value={prefs.accountSize} placeholder="ej. 10000" onChange={(event) => setPrefs((previous) => ({ ...previous, accountSize: event.target.value }))} /></label>
+            <label className="field tradePlanField"><span>Riesgo por operación %</span><input className="input" type="number" inputMode="decimal" min="0.1" step="0.25" value={prefs.accountRiskPct} onChange={(event) => setPrefs((previous) => ({ ...previous, accountRiskPct: event.target.value }))} /></label>
+          </div>
+        </div>
+        {plan.sizing
+          ? <div className="signalStrip tradePlanSizingResults">
+            <SignalStat label="Acciones" value={fmt(plan.sizing.shares)} detail={`presupuesto de riesgo ${priceMoney(plan.sizing.riskBudget, currency)}`} />
+            <SignalStat label="Importe posición" value={money(plan.sizing.positionValue, currency)} detail={`${pct(plan.sizing.positionPctOfAccount)} de la cuenta`} tone={plan.sizing.leveraged ? "bad" : ""} />
+            <SignalStat label="Riesgo / acción" value={priceMoney(plan.riskPerShare, currency)} />
+          </div>
+          : <p className="fine tradePlanEmpty">Introduce tu capital para calcular tamaño de posición.</p>}
+        {plan.sizing?.shares === 0 && <p className="fine tradePlanEmpty">El presupuesto de riesgo no alcanza una acción completa con este stop.</p>}
+      </>}
+  </section>;
 }
 
 function HolderTable({ title, rows }) {
@@ -696,12 +815,72 @@ function SimilarStocks({ rows = [] }) {
 }
 
 function StructureSummary({ row = {}, compact = false }) {
-  const structure = setupStructureForRow(row);
+  const display = methodologyDisplayForRow(row);
+  const confidence = display.confidence;
   const score = Number.isFinite(row.patternQualityScore) ? `Calidad ${row.patternQualityScore.toFixed(0)}` : "";
-  return <div className={`structureSummary ${compact ? "compact" : ""} ${structure.tone || ""}`} title={structure.reason || ""}>
-    <span>{structure.label}</span>
-    <small>{structure.reason || score || structure.dataLabel}</small>
+  const reason = display.reason || score || display.structure?.dataLabel;
+  const detail = confidence.key === "partial" ? `${confidence.shortLabel} · ${reason}` : reason;
+  return <div className={`structureSummary ${compact ? "compact" : ""} ${display.tone || ""}`} title={display.reason || ""}>
+    <span>{display.label}</span>
+    <small>{detail}</small>
   </div>;
+}
+
+function DataConfidenceCell({ row = {} }) {
+  const confidence = methodologyDisplayForRow(row).confidence;
+  return <span className={`dataConfidencePill ${confidence.state}`.trim()} title={confidence.detail}>{confidence.label}</span>;
+}
+
+function AuditCheck({ label, value, state = "neutral", detail = "" }) {
+  return <div className={`auditCheck ${state}`.trim()}>
+    <span>{label}</span>
+    <b>{value}</b>
+    {detail && <small>{detail}</small>}
+  </div>;
+}
+
+function MethodologyAuditPanel({ pattern, verdict, stage }) {
+  if (!pattern) return null;
+  const display = methodologyDisplayForRow(pattern);
+  const currentVerdict = verdict || display.verdict;
+  const confidence = display.confidence;
+  const stageOk = /stage 2/i.test(stage?.label || "");
+  const baseOk = pattern.consolidationCandidate === true;
+  const count = Number(pattern.contractionCount);
+  const contractionsOk = Number.isFinite(count) && count >= 3 && pattern.contractionsDecreasing === true;
+  const volume = Number(pattern.volumeDryUpRatio);
+  const volumeOk = Number.isFinite(volume) && volume <= 0.9;
+  const pivot = Number(pattern.distanceToPivotPct);
+  const pivotOk = Number.isFinite(pivot) && Math.abs(pivot) <= 6;
+  const quality = Number(pattern.patternQualityScore);
+  const qualityOk = Number.isFinite(quality) && quality >= 65;
+  const planValid = display.actionable && display.tradePlanEligible && !display.blocksPatternClaim;
+  return <section className="card methodologyAuditPanel">
+    <div className="sectionTitle methodologyAuditTitle">
+      <div>
+        <h2>Veredicto metodológico</h2>
+        <p className="fine">Separación explícita entre dato, observación y plan válido.</p>
+      </div>
+      <div className="methodologyBadgeStack">
+        <span className={`methodologyVerdictBadge ${display.tone || ""}`.trim()} title={display.reason || ""}>{display.label}</span>
+        <span className={`methodologyConfidenceBadge ${confidence.state}`.trim()} title={confidence.detail}>{confidence.label}</span>
+      </div>
+    </div>
+    <p className="methodologyVerdictReason">
+      <span>{display.reason || currentVerdict.reason || "Sin razon disponible."}</span>
+      {confidence.key !== "ok" && <small>{confidence.detail}</small>}
+    </p>
+    <div className="auditGrid">
+      <AuditCheck label="Datos técnicos" value={confidence.label} state={confidence.state} detail={confidence.detail || currentVerdict.dataLabel || dataStatusLabel(pattern.patternDataStatus)} />
+      <AuditCheck label="Etapa" value={stage?.label || "Sin dato"} state={stageOk ? "pass" : "warn"} />
+      <AuditCheck label="Base" value={baseOk ? "Confirmada" : "No validada"} state={baseOk ? "pass" : "fail"} detail={pattern.baseContextStatus || ""} />
+      <AuditCheck label="Contracciones" value={Number.isFinite(count) ? `${count.toFixed(0)} medidas` : "Sin dato"} state={contractionsOk ? "pass" : "fail"} detail={pattern.contractionsDecreasing ? "decrecientes" : "no decrecientes"} />
+      <AuditCheck label="Volumen seco" value={Number.isFinite(volume) ? `${volume.toFixed(2)}x` : "Sin dato"} state={volumeOk ? "pass" : "warn"} />
+      <AuditCheck label="Pivot" value={Number.isFinite(pivot) ? pct(pivot) : "Sin dato"} state={pivotOk ? "pass" : "warn"} />
+      <AuditCheck label="Calidad patrón" value={Number.isFinite(quality) ? quality.toFixed(0) : "Sin dato"} state={qualityOk ? "pass" : "warn"} />
+      <AuditCheck label="Plan válido" value={planValid ? "Permitido" : "Bloqueado"} state={planValid ? "pass" : "fail"} detail={display.tradePlanReason || currentVerdict.tradePlanReason || display.reason || ""} />
+    </div>
+  </section>;
 }
 
 function ContractionTape({ depths = [] }) {
@@ -737,7 +916,7 @@ function ComparativeContext({ rows = [], note = "", symbol = "" }) {
             <td>{Number.isFinite(item.distanceToPivotPct) ? pct(item.distanceToPivotPct) : "Sin dato"}</td>
             <td>{Number.isFinite(item.volumeDryUpRatio) ? `${item.volumeDryUpRatio.toFixed(2)}x` : "Sin dato"}</td>
             <td>{Number.isFinite(item.rsSectorPct) ? item.rsSectorPct.toFixed(0) : "Sin dato"}</td>
-            <td>{dataStatusLabel(item.patternDataStatus)}</td>
+            <td><DataConfidenceCell row={item} /></td>
           </tr>;
         })}</tbody>
       </table>
@@ -760,6 +939,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const [chartScope, setChartScope] = useState("global");
   const [benchmarkDraft, setBenchmarkDraft] = useState("");
   const [companyBriefExpanded, setCompanyBriefExpanded] = useState(false);
+  const [screenerOrigin, setScreenerOrigin] = useState(null);
 
   function updateChartSettings(nextSettings) {
     setChartSettings(writeChartSettings(nextSettings, { scope: chartScope, symbol }));
@@ -840,6 +1020,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   useEffect(() => {
     const nextSettings = readChartSettings({ scope: chartScope, symbol });
     setChartSettings(nextSettings);
+    setScreenerOrigin(screenerStockContextFromSession(safeRead(STORAGE_KEYS.screenerSession, null), symbol));
     setLogoIndex(0);
     setLogoLoaded(false);
     setCompanyBriefExpanded(false);
@@ -878,7 +1059,11 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const coverage = data?.dataQuality?.coverage || {};
   const compactProfile = data ? [data.sector, data.industry, data.country].filter(Boolean).join(" · ") : "";
   const setupPattern = useMemo(() => data?.setupPattern || (data?.chartBars?.length ? setupPatternForBars(data.chartBars) : null), [data?.setupPattern, data?.chartBars]);
-  const setupStructure = useMemo(() => setupStructureForRow(setupPattern || {}), [setupPattern]);
+  const setupDisplay = useMemo(() => methodologyDisplayForRow(setupPattern || {}), [setupPattern]);
+  const setupVerdict = setupDisplay.verdict;
+  const setupStructure = setupDisplay.structure;
+  const setupTradePlanEligible = setupDisplay.actionable && setupDisplay.tradePlanEligible && !setupDisplay.blocksPatternClaim;
+  const actionableSetupPattern = setupTradePlanEligible ? setupPattern : null;
   useEffect(() => {
     setBenchmarkDraft(activeBenchmark);
   }, [activeBenchmark]);
@@ -912,7 +1097,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     </div>
     <div className="heroCardMetrics" aria-label="Metricas clave compactas">
       <div><span>MA 50/200</span><b className={valueTone(finiteValue(technical.distanceSma50, technical.distanceSma200))}>{pct(technical.distanceSma50)} / {pct(technical.distanceSma200)}</b></div>
-      <div><span>Estructura</span><b className={setupStructure.tone || ""} title={setupStructure.reason || ""}>{setupStructure.shortLabel}</b></div>
+      <div><span>Estructura</span><b className={setupDisplay.tone || ""} title={setupDisplay.reason || ""}>{setupDisplay.shortLabel}</b></div>
       <div><span>RS Quality</span><b>{rsFmt(rs.rsQualityScore)}</b></div>
       <div className="heroBusinessMetric"><span>Negocio</span><b title={businessTeaser}>{businessTeaser}</b></div>
     </div>
@@ -972,6 +1157,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
               <span>{freshness.rsGlobalAsOf ? `RS ${compactDate(freshness.rsGlobalAsOf)} · ${sampleText(freshness.rsGlobalSample)}` : "RS sin snapshot"}</span>
               {!priceSnapshot.coherent && <span>cotizacion intradia distinta</span>}
             </div>
+            <ScreenerOriginPanel origin={screenerOrigin} variant="stock" />
             <div className="stockHeroActions">
               <a className="stockHeroLink stockBackLink" href="/">
                 Screener
@@ -1016,11 +1202,15 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
             rsMainScore={rsUniverse}
             rsRatingSeries={rs.globalRsSeries}
             benchmarkSymbol={rs.benchmarkSymbol}
-            patternOverlay={setupPattern}
+            patternOverlay={actionableSetupPattern}
             height={600}
           />
         </div>
       </section>
+
+      <MethodologyAuditPanel pattern={setupPattern} verdict={setupVerdict} stage={data.stage} />
+
+      <TradePlanPanel pattern={setupPattern} structure={setupStructure} display={setupDisplay} price={priceSnapshot.price} currency={data.currency} />
 
       <SimilarStocks rows={similar} />
 

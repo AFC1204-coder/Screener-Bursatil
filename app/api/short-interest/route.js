@@ -12,6 +12,7 @@ export async function GET(request) {
         lagDays: report.lagDays,
         count: report.rows.length,
         sourceUrl: report.sourceUrl,
+        providerStatus: report.providerStatus,
         coverage: "Australia (.AX)",
         methodology: "ASIC aggregated short positions as a percentage of total product in issue.",
       });
@@ -22,6 +23,7 @@ export async function GET(request) {
         symbol,
         available: false,
         provider: "ASIC short position reports",
+        providerStatus: shortInterest?.providerStatus || null,
         note: "Solo cubre simbolos .AX presentes en el ultimo reporte agregado de ASIC.",
       });
     }

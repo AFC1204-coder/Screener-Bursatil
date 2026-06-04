@@ -66,7 +66,7 @@ StatsEdge should treat third-party market data as licensed input, not as owned c
 9. For Europe, start with ESMA FIRDS for EEA universe/reference mapping, FCA FIRDS for UK as a separate step, and filings.xbrl.org/ESEF for annual issuer facts; avoid exchange price feeds until licensing is clear.
 10. Leaderboard endpoints should cap results and omit raw provider payloads; use them as the public discovery surface instead of exposing full universes.
 11. J-Quants refresh jobs should stay bounded by `limit` and feed derived rankings/fichas, not public bulk downloads.
-12. Price freshness must gate actionable rankings: cached stale prices may support diagnostics/history, but not current leadership claims.
+12. Price freshness must gate ranking-eligible output: cached stale prices may support diagnostics/history, but not current leadership claims.
 13. Shadow universe persistence (`shadow_instruments`, `symbol_resolutions`) is internal reference plumbing. It does not grant rights to expose raw exchange datasets, and it should feed only freshness-gated scans and capped derived leaderboards.
 
 ## Source links reviewed
