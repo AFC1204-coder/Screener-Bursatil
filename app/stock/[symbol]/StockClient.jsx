@@ -1,16 +1,18 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ScanSearch } from "lucide-react";
 import ChartPreferences from "@/app/ChartPreferences";
 import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
-import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
+import { methodologyCompactReasonLine, methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { dataStatusLabel } from "@/lib/patternNarrative";
 import { screenerStockContextFromSession } from "@/lib/screenerContracts";
 import { setupPatternForBars } from "@/lib/setupPatterns";
 import { computeTradePlan, tradePlanEligibility } from "@/lib/tradePlan";
+import { vcpObjectiveSummary } from "@/lib/vcpDiagnostics";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const rsFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
@@ -118,7 +120,7 @@ function compactBusinessTeaser(data = {}) {
   const summary = String(data.summary || "").replace(/\s+/g, " ").trim();
   const usableSummary = summary && !/^Yahoo no ofrece/i.test(summary) ? summary : "";
   const raw = String(usableSummary || data.short || fallback || "").replace(/\s+/g, " ").trim();
-  if (!raw || /^Yahoo no ofrece/i.test(raw)) return fallback || "Sin descripcion disponible";
+  if (!raw || /^Yahoo no ofrece/i.test(raw)) return fallback || "Sin descripción disponible";
   if (raw.length <= 92) return raw;
   const clipped = raw.slice(0, 89).replace(/\s+\S*$/, "").trim();
   return clipped ? `${clipped}...` : raw.slice(0, 89);
@@ -177,14 +179,14 @@ function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" 
         <RsMetric label="Grupo" value={rsFmt(rs.rsSectorPct)} detail={groupDetail} tone={scoreTone(rs.rsSectorPct)} />
       </RsGroup>
       <RsGroup title={`Benchmark ${benchmarkSymbol}`} subtitle="precio relativo">
-        <RsMetric label="RS bench" value={rsFmt(rsBenchmark)} detail="modelo tecnico" tone={scoreTone(rsBenchmark)} />
+        <RsMetric label="RS bench" value={rsFmt(rsBenchmark)} detail="modelo técnico" tone={scoreTone(rsBenchmark)} />
         <RsMetric label="3M" value={pct(rs.rs3m)} detail="vs benchmark" tone={valueTone(rs.rs3m)} />
         <RsMetric label="6M" value={pct(rs.rs6m)} detail="vs benchmark" tone={valueTone(rs.rs6m)} />
         <RsMetric label="12M" value={pct(rs.rs12m)} detail="vs benchmark" tone={valueTone(rs.rs12m)} />
       </RsGroup>
-      <RsGroup title="Calidad y riesgo" subtitle="datos tecnicos">
+      <RsGroup title="Calidad y riesgo" subtitle="datos técnicos">
         <RsMetric label="RS quality" value={scoreFmt(rs.rsQualityScore)} detail={rs.rsQualityLabel || "estabilidad"} tone={scoreTone(rs.rsQualityScore, 70, 45)} />
-        <RsMetric label="Riesgo tecnico" value={scoreFmt(rs.speculationRiskScore)} detail="0 bajo · 99 alto" tone={riskTone(rs.speculationRiskScore)} />
+        <RsMetric label="Riesgo técnico" value={scoreFmt(rs.speculationRiskScore)} detail="0 bajo · 99 alto" tone={riskTone(rs.speculationRiskScore)} />
         <RsMetric label="Volatilidad 63d" value={pct(rs.volatility63d)} detail="anualizada" tone={riskTone(rs.volatility63d, 70)} />
         <RsMetric label="Drawdown 63d" value={pct(rs.maxDrawdown63d)} detail="maximo" tone={riskTone(rs.maxDrawdown63d, 25)} />
       </RsGroup>
@@ -457,7 +459,7 @@ function ResultsSection({ results = {}, currency = "", embedded = false, snapsho
 
   return <section className={embedded ? "fundamentalHistory" : "card fundamentalCard"}>
     <div className="sectionTitle">
-      <h2>{embedded ? "Historico" : "Fundamentales historicos"} {!embedded && <InfoHint text="Vista inspirada en estados financieros historicos; no son datos normalizados propietarios. La cobertura puede variar por mercado, moneda y disponibilidad." />}</h2>
+      <h2>{embedded ? "Histórico" : "Fundamentales históricos"} {!embedded && <InfoHint text="Vista inspirada en estados financieros históricos; no son datos normalizados propietarios. La cobertura puede variar por mercado, moneda y disponibilidad." />}</h2>
       <span className="fine">{currency || "Moneda no disponible"}</span>
     </div>
     <div className="fundamentalToolbar" aria-label="Selector de fundamentales">
@@ -818,7 +820,7 @@ function StructureSummary({ row = {}, compact = false }) {
   const display = methodologyDisplayForRow(row);
   const confidence = display.confidence;
   const score = Number.isFinite(row.patternQualityScore) ? `Calidad ${row.patternQualityScore.toFixed(0)}` : "";
-  const reason = display.reason || score || display.structure?.dataLabel;
+  const reason = methodologyCompactReasonLine(row) || score || display.structure?.dataLabel;
   const detail = confidence.key === "partial" ? `${confidence.shortLabel} · ${reason}` : reason;
   return <div className={`structureSummary ${compact ? "compact" : ""} ${display.tone || ""}`} title={display.reason || ""}>
     <span>{display.label}</span>
@@ -844,22 +846,28 @@ function MethodologyAuditPanel({ pattern, verdict, stage }) {
   const display = methodologyDisplayForRow(pattern);
   const currentVerdict = verdict || display.verdict;
   const confidence = display.confidence;
+  const objective = vcpObjectiveSummary(pattern);
   const stageOk = /stage 2/i.test(stage?.label || "");
   const baseOk = pattern.consolidationCandidate === true;
   const count = Number(pattern.contractionCount);
-  const contractionsOk = Number.isFinite(count) && count >= 3 && pattern.contractionsDecreasing === true;
+  const contractionsOk = Number.isFinite(count) && count >= 2 && pattern.contractionsDecreasing === true;
   const volume = Number(pattern.volumeDryUpRatio);
   const volumeOk = Number.isFinite(volume) && volume <= 0.9;
   const pivot = Number(pattern.distanceToPivotPct);
   const pivotOk = Number.isFinite(pivot) && Math.abs(pivot) <= 6;
+  const lastContraction = Number(pattern.lastContractionDepthPct);
+  const lastContractionOk = Number.isFinite(lastContraction) && lastContraction <= 8;
+  const range10 = Number(pattern.tightness10dPct);
+  const range10Ok = Number.isFinite(range10) && range10 <= 12;
   const quality = Number(pattern.patternQualityScore);
   const qualityOk = Number.isFinite(quality) && quality >= 65;
   const planValid = display.actionable && display.tradePlanEligible && !display.blocksPatternClaim;
+  const fullReason = display.reason || currentVerdict.reason || "Sin razón disponible.";
+  const objectiveDetail = [objective.detail, `Veredicto: ${display.label}`, fullReason].filter(Boolean).join(" · ");
   return <section className="card methodologyAuditPanel">
     <div className="sectionTitle methodologyAuditTitle">
       <div>
-        <h2>Veredicto metodológico</h2>
-        <p className="fine">Separación explícita entre dato, observación y plan válido.</p>
+        <h2>Evidencia VCP <InfoHint text="Datos observables de la base actual: compresiones de precio, rango, pivot y volumen. El veredicto se mantiene como contexto, no como recomendación." /></h2>
       </div>
       <div className="methodologyBadgeStack">
         <span className={`methodologyVerdictBadge ${display.tone || ""}`.trim()} title={display.reason || ""}>{display.label}</span>
@@ -867,18 +875,22 @@ function MethodologyAuditPanel({ pattern, verdict, stage }) {
       </div>
     </div>
     <p className="methodologyVerdictReason">
-      <span>{display.reason || currentVerdict.reason || "Sin razon disponible."}</span>
+      <span>{objective.primary}</span>
+      {objective.secondary && <small>{objective.secondary}</small>}
+      <InfoHint text={objectiveDetail} />
       {confidence.key !== "ok" && <small>{confidence.detail}</small>}
     </p>
     <div className="auditGrid">
       <AuditCheck label="Datos técnicos" value={confidence.label} state={confidence.state} detail={confidence.detail || currentVerdict.dataLabel || dataStatusLabel(pattern.patternDataStatus)} />
       <AuditCheck label="Etapa" value={stage?.label || "Sin dato"} state={stageOk ? "pass" : "warn"} />
-      <AuditCheck label="Base" value={baseOk ? "Confirmada" : "No validada"} state={baseOk ? "pass" : "fail"} detail={pattern.baseContextStatus || ""} />
-      <AuditCheck label="Contracciones" value={Number.isFinite(count) ? `${count.toFixed(0)} medidas` : "Sin dato"} state={contractionsOk ? "pass" : "fail"} detail={pattern.contractionsDecreasing ? "decrecientes" : "no decrecientes"} />
-      <AuditCheck label="Volumen seco" value={Number.isFinite(volume) ? `${volume.toFixed(2)}x` : "Sin dato"} state={volumeOk ? "pass" : "warn"} />
+      <AuditCheck label="Base/rango" value={Number.isFinite(pattern.baseDepthPct) ? pct(pattern.baseDepthPct) : "Sin dato"} state={baseOk ? "pass" : "fail"} detail={Number.isFinite(pattern.baseWeeks) ? `${pattern.baseWeeks.toFixed(1)} semanas` : pattern.baseContextStatus || ""} />
+      <AuditCheck label="Compresiones" value={Number.isFinite(count) ? `${count.toFixed(0)} medidas` : "Sin dato"} state={contractionsOk ? "pass" : Number.isFinite(count) && count >= 2 ? "warn" : "fail"} detail={objective.sequence} />
+      <AuditCheck label="Última comp." value={Number.isFinite(lastContraction) ? pct(lastContraction) : "Sin dato"} state={lastContractionOk ? "pass" : "warn"} detail={objective.contractionDetail.at(-1) || ""} />
+      <AuditCheck label="Rango 10d" value={Number.isFinite(range10) ? pct(range10) : "Sin dato"} state={range10Ok ? "pass" : "warn"} detail={Number.isFinite(pattern.tightness20dPct) ? `20d ${pct(pattern.tightness20dPct)}` : ""} />
       <AuditCheck label="Pivot" value={Number.isFinite(pivot) ? pct(pivot) : "Sin dato"} state={pivotOk ? "pass" : "warn"} />
-      <AuditCheck label="Calidad patrón" value={Number.isFinite(quality) ? quality.toFixed(0) : "Sin dato"} state={qualityOk ? "pass" : "warn"} />
-      <AuditCheck label="Plan válido" value={planValid ? "Permitido" : "Bloqueado"} state={planValid ? "pass" : "fail"} detail={display.tradePlanReason || currentVerdict.tradePlanReason || display.reason || ""} />
+      <AuditCheck label="Volumen seco" value={Number.isFinite(volume) ? `${volume.toFixed(2)}x` : "Sin dato"} state={volumeOk ? "pass" : "warn"} />
+      <AuditCheck label="Score patrón" value={Number.isFinite(quality) ? quality.toFixed(0) : "Sin dato"} state={qualityOk ? "pass" : "warn"} />
+      <AuditCheck label="Plan" value={planValid ? "Válido" : "No válido"} state={planValid ? "pass" : "fail"} detail={display.tradePlanReason || currentVerdict.tradePlanReason || display.reason || ""} />
     </div>
   </section>;
 }
@@ -895,7 +907,7 @@ function ComparativeContext({ rows = [], note = "", symbol = "" }) {
     <div className="sectionTitle">
       <div>
         <h2>Contexto comparativo</h2>
-        <p className="fine">Mismo grupo o mercado · perfiles tecnicos comparables</p>
+        <p className="fine">Mismo grupo o mercado · perfiles técnicos comparables</p>
       </div>
       <span className="fine">{countLabel}</span>
     </div>
@@ -940,6 +952,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const [benchmarkDraft, setBenchmarkDraft] = useState("");
   const [companyBriefExpanded, setCompanyBriefExpanded] = useState(false);
   const [screenerOrigin, setScreenerOrigin] = useState(null);
+  const [showVcpDiagnostics, setShowVcpDiagnostics] = useState(false);
 
   function updateChartSettings(nextSettings) {
     setChartSettings(writeChartSettings(nextSettings, { scope: chartScope, symbol }));
@@ -1024,6 +1037,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     setLogoIndex(0);
     setLogoLoaded(false);
     setCompanyBriefExpanded(false);
+    setShowVcpDiagnostics(false);
     const savedBenchmark = cleanBenchmarkSymbol(nextSettings.benchmarks?.[symbol]);
     if (initialData) {
       loadSimilarFor(initialData);
@@ -1085,7 +1099,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const heroEpsYoY = heroEpsRows.length ? epsGrowth(heroEpsRows[0], heroEpsRows, 0, heroEpsCompareOffset, v.sharesOutstanding || g.sharesOutstanding) : g.earningsGrowth;
   const stageShortLabel = (data?.stage?.label || "Sin dato").replace(/\s+probable$/i, "");
   const businessTeaser = compactBusinessTeaser(data);
-  const companySummary = data?.summary || "Sin descripcion de negocio disponible.";
+  const companySummary = data?.summary || "Sin descripción de negocio disponible.";
   const companySummaryId = `hero-company-summary-${symbol || "stock"}`;
   const canExpandCompanyBrief = companySummary.length > 80;
   const compactResearchCard = data ? <section className={`terminalPanel stockResearchCard stockResearchCardHero ${companyBriefExpanded ? "stockResearchCardHeroExpanded" : ""}`}>
@@ -1191,6 +1205,18 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
             </datalist>
             <button type="button" onClick={() => updateBenchmark(benchmarkDraft)} disabled={loading || !benchmarkDraft}>Aplicar</button>
             <button type="button" onClick={() => updateBenchmark("")} disabled={loading || !benchmarkOverride}>Auto</button>
+            <button
+              type="button"
+              className={`chartToolButton ${showVcpDiagnostics ? "active" : ""}`.trim()}
+              onClick={() => setShowVcpDiagnostics((value) => !value)}
+              disabled={!setupPattern}
+              aria-pressed={showVcpDiagnostics}
+              title="Mostrar contracciones VCP, pivot y motivo de bloqueo en el gráfico."
+            >
+              <ScanSearch aria-hidden="true" size={14} />
+              VCP
+            </button>
+            <InfoHint text="Activa C1/C2/C3, pivot y gates mínimos de diagnóstico. No cambia filtros ni verdictos." />
           </div>
           <UniversalPriceChart
             bars={data.chartBars}
@@ -1202,7 +1228,8 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
             rsMainScore={rsUniverse}
             rsRatingSeries={rs.globalRsSeries}
             benchmarkSymbol={rs.benchmarkSymbol}
-            patternOverlay={actionableSetupPattern}
+            patternOverlay={showVcpDiagnostics ? setupPattern : actionableSetupPattern}
+            showPatternDiagnostics={showVcpDiagnostics}
             height={600}
           />
         </div>

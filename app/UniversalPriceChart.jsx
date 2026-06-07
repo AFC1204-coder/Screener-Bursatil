@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CHART_RANGES, DEFAULT_CHART_SETTINGS, normalizeChartInterval } from "@/lib/chartSettings";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
+import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
@@ -348,6 +349,7 @@ export default function UniversalPriceChart({
   rsMainScore = null,
   rsRatingSeries = [],
   patternOverlay = null,
+  showPatternDiagnostics = false,
   className = "",
   height = 460,
 }) {
@@ -365,6 +367,10 @@ export default function UniversalPriceChart({
   const needsRemote = shouldRequestRemoteBars(localRows, range, interval);
   const intraday = isIntradayInterval(interval);
   const patternSummary = useMemo(() => methodologyDisplayForRow(patternOverlay || {}), [patternOverlay]);
+  const patternDiagnostic = useMemo(
+    () => showPatternDiagnostics && patternOverlay && !intraday ? vcpDiagnosticSnapshot(patternOverlay) : null,
+    [showPatternDiagnostics, patternOverlay, intraday],
+  );
 
   useEffect(() => {
     if (!needsRemote || !symbol) {
@@ -689,6 +695,26 @@ export default function UniversalPriceChart({
       {tradingViewUrl && <a className="priceTvLink" href={tradingViewUrl} target="_blank" rel="noreferrer">Abrir TradingView</a>}
     </div>
     <div className="universalChartCanvas" ref={containerRef} style={{ "--chart-target-height": `${mainChartHeightTarget}px` }} />
+    {patternDiagnostic && <div className="vcpDiagnosticPanel" aria-label="Diagnóstico VCP">
+      <div className="vcpDiagnosticHead">
+        <span>Compresiones</span>
+        <b>{patternDiagnostic.objective?.primary || patternDiagnostic.evidence}</b>
+      </div>
+      {patternDiagnostic.objective?.secondary && <div className="vcpDiagnosticObjective">{patternDiagnostic.objective.secondary}</div>}
+      <div className="vcpDiagnosticGates">
+        {patternDiagnostic.gates.map((item) => <span key={item.key} className={`vcpGate ${item.state}`}>
+          <em>{item.label}</em>
+          <b>{item.detail}</b>
+        </span>)}
+      </div>
+      {patternDiagnostic.contractions.length > 0 && <div className="vcpDiagnosticContractions">
+        {patternDiagnostic.contractions.map((item) => <span key={`${item.label}-${item.toDate}`}>
+          <b>{item.label}</b>
+          <em>{item.depthPct != null ? `${item.depthPct.toFixed(1)}%` : "sin dato"}</em>
+          <small>{item.toDate}</small>
+        </span>)}
+      </div>}
+    </div>}
     {hasRsLine && Number.isFinite(latestVisibleRsValue) && <div
       ref={rsBadgeRef}
       className="universalRsLineBadge"

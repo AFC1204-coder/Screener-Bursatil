@@ -1,0 +1,236 @@
+{
+  "version": 1,
+  "updatedAt": "2026-06-06",
+  "purpose": "Golden filter contract matrix. Synthetic boundary cases are generated from the live filter catalog; frozen rows pin real ticker-style VCP/filter semantics so unit, null, sign, and field-mapping changes fail audibly.",
+  "expectations": {
+    "maxFailures": 0,
+    "requireAllVisibleFieldsCovered": true,
+    "minSyntheticCases": 150,
+    "minFrozenCases": 6
+  },
+  "frozenCases": [
+    {
+      "id": "meta-vcp-plan-2024-01-05",
+      "symbol": "META",
+      "asOf": "2024-01-05",
+      "row": {
+        "price": 349.3,
+        "sma50": 329,
+        "sma150": 305,
+        "sma200": 292,
+        "sma200Slope": 2.4,
+        "contractionsDecreasing": true,
+        "contractionCount": 3,
+        "contraction1DepthPct": 14.3,
+        "contraction2DepthPct": 8.5,
+        "contraction3DepthPct": 6,
+        "lastContractionDepthPct": 6,
+        "baseDepthPct": 22,
+        "baseWeeks": 15,
+        "absDistanceToPivotPct": 2.7,
+        "volumeDryUpRatio": 0.75,
+        "tightness10dPct": 7.6,
+        "patternQualityScore": 80
+      },
+      "checks": [
+        {
+          "id": "strict-vcp-plan-pass",
+          "filter": {
+            "requireContractionsDecreasing": true,
+            "minContractionCount": 3,
+            "maxContraction1DepthPct": 15,
+            "maxContraction2DepthPct": 9,
+            "maxContraction3DepthPct": 6,
+            "maxLastContractionDepthPct": 6,
+            "maxAbsDistanceToPivotPct": 3,
+            "maxVolumeDryUpRatio": 0.9,
+            "minPatternQualityScore": 80
+          },
+          "expect": { "pass": true }
+        }
+      ]
+    },
+    {
+      "id": "3988-hk-vcp-plan-2026-05-28",
+      "symbol": "3988.HK",
+      "asOf": "2026-05-28",
+      "row": {
+        "price": 4.92,
+        "sma50": 4.65,
+        "sma150": 4.21,
+        "sma200": 4.05,
+        "sma200Slope": 1.1,
+        "contractionsDecreasing": true,
+        "contractionCount": 3,
+        "contraction1DepthPct": 7.8,
+        "contraction2DepthPct": 4.6,
+        "contraction3DepthPct": 3,
+        "lastContractionDepthPct": 3,
+        "baseDepthPct": 13,
+        "baseWeeks": 12,
+        "absDistanceToPivotPct": 3.8,
+        "volumeDryUpRatio": 0.9,
+        "tightness10dPct": 6.8,
+        "patternQualityScore": 83
+      },
+      "checks": [
+        {
+          "id": "strict-vcp-plan-pass",
+          "filter": {
+            "requireContractionsDecreasing": true,
+            "minContractionCount": 3,
+            "maxContraction1DepthPct": 8,
+            "maxContraction2DepthPct": 5,
+            "maxContraction3DepthPct": 3,
+            "maxLastContractionDepthPct": 3,
+            "maxAbsDistanceToPivotPct": 4,
+            "maxVolumeDryUpRatio": 0.9,
+            "minPatternQualityScore": 80
+          },
+          "expect": { "pass": true }
+        }
+      ]
+    },
+    {
+      "id": "nvda-pivot-squeeze-2024-05-22",
+      "symbol": "NVDA",
+      "asOf": "2024-05-22",
+      "row": {
+        "price": 94.95,
+        "sma50": 84,
+        "sma150": 69,
+        "sma200": 61,
+        "sma200Slope": 4,
+        "contractionsDecreasing": true,
+        "contractionCount": 2,
+        "contraction1DepthPct": 16.7,
+        "contraction2DepthPct": 4.3,
+        "lastContractionDepthPct": 4.3,
+        "baseDepthPct": 24,
+        "baseWeeks": 11,
+        "absDistanceToPivotPct": 2.5,
+        "volumeDryUpRatio": 0.78,
+        "tightness10dPct": 5.2,
+        "patternQualityScore": 73
+      },
+      "checks": [
+        {
+          "id": "pivot-squeeze-watch-pass",
+          "filter": {
+            "requireContractionsDecreasing": true,
+            "minContractionCount": 2,
+            "maxContraction1DepthPct": 18,
+            "maxContraction2DepthPct": 5,
+            "maxAbsDistanceToPivotPct": 3,
+            "maxVolumeDryUpRatio": 0.8,
+            "minPatternQualityScore": 70
+          },
+          "expect": { "pass": true }
+        },
+        {
+          "id": "strict-vcp-rejects-two-contraction-watch",
+          "filter": {
+            "requireContractionsDecreasing": true,
+            "minContractionCount": 3
+          },
+          "expect": { "pass": false, "rejectField": "minContractionCount" }
+        }
+      ]
+    },
+    {
+      "id": "brk-b-lower-low-drift-2026-06-02",
+      "symbol": "BRK-B",
+      "asOf": "2026-06-02",
+      "row": {
+        "price": 471.7,
+        "sma50": 454,
+        "sma150": 420,
+        "sma200": 401,
+        "sma200Slope": 1.3,
+        "contractionsDecreasing": false,
+        "contractionCount": 3,
+        "contraction1DepthPct": 6.7,
+        "contraction2DepthPct": 2.4,
+        "contraction3DepthPct": 6,
+        "lastContractionDepthPct": 6,
+        "baseDepthPct": 18,
+        "baseWeeks": 13,
+        "absDistanceToPivotPct": 6.9,
+        "volumeDryUpRatio": 1.03,
+        "tightness10dPct": 13,
+        "patternQualityScore": 67
+      },
+      "checks": [
+        {
+          "id": "rejects-lower-low-drift",
+          "filter": {
+            "requireContractionsDecreasing": true,
+            "minContractionCount": 3
+          },
+          "expect": { "pass": false, "rejectField": "requireContractionsDecreasing" }
+        }
+      ]
+    },
+    {
+      "id": "aapl-observe-too-far-2022-02-22",
+      "symbol": "AAPL",
+      "asOf": "2022-02-22",
+      "row": {
+        "price": 160.1,
+        "sma50": 151,
+        "sma150": 140,
+        "sma200": 132,
+        "sma200Slope": 1.8,
+        "contractionsDecreasing": true,
+        "contractionCount": 2,
+        "contraction1DepthPct": 12.7,
+        "contraction2DepthPct": 5.7,
+        "lastContractionDepthPct": 5.7,
+        "baseDepthPct": 18,
+        "baseWeeks": 10,
+        "absDistanceToPivotPct": 10.1,
+        "volumeDryUpRatio": 0.8,
+        "tightness10dPct": 9.4,
+        "patternQualityScore": 68
+      },
+      "checks": [
+        {
+          "id": "rejects-observe-far-from-pivot",
+          "filter": {
+            "maxAbsDistanceToPivotPct": 6
+          },
+          "expect": { "pass": false, "rejectField": "maxAbsDistanceToPivotPct" }
+        }
+      ]
+    },
+    {
+      "id": "msft-no-base-2026-06-02",
+      "symbol": "MSFT",
+      "asOf": "2026-06-02",
+      "row": {
+        "price": 468.2,
+        "sma50": 449,
+        "sma150": 415,
+        "sma200": 398,
+        "sma200Slope": 1.5,
+        "contractionsDecreasing": false,
+        "contractionCount": 0,
+        "baseDepthPct": 12,
+        "baseWeeks": 5,
+        "absDistanceToPivotPct": 5.4,
+        "volumeDryUpRatio": 1.09,
+        "tightness10dPct": 10,
+        "patternQualityScore": 0
+      },
+      "checks": [
+        {
+          "id": "rejects-missing-contractions",
+          "filter": {
+            "minContractionCount": 2
+          },
+          "expect": { "pass": false, "rejectField": "minContractionCount" }
+        }
+      ]
+    }
+  ]
+}

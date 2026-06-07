@@ -2,10 +2,29 @@ import assert from "node:assert/strict";
 
 import {
   applyScreenerFilters,
+  buildScreenerFilterExplainPlan,
   effectiveScreenerFilterValues,
   screenerFilterRejectReason,
   screenerFiltersFromParams,
 } from "@/lib/screenerFilters";
+import {
+  ALL_FILTER_LAYERS,
+  BOOLEAN_FILTER_KEYS,
+  DEFAULT_FIELD_RULES,
+  DISTANCE_RULES,
+  FIELD_RULES,
+  FILTER_FIELDS,
+  FILTER_FIELD_LAYERS,
+  FILTER_STRICTNESS_KEYS,
+  NEUTRAL_FIELD_VALUES,
+  SCREENER_FILTER_PRESETS,
+  SCREENER_FILTER_QUERY_KEYS,
+  SCREENER_WEB_FILTER_PRESETS,
+  SETTING_LAYER_DEPENDENCIES,
+  SETUP_MODE_DEFAULTS,
+  SETUP_MODES,
+  STRING_FILTER_KEYS,
+} from "@/lib/screenerFilterCatalog";
 import { buildScreenerContract, buildScreenerStockContext, isScreenerLongContract, screenerContractKeyForSettings, screenerStockContextFromSession } from "@/lib/screenerContracts";
 import { alertSyncSummary } from "@/app/api/alerts/route.js";
 import { favoriteDeleteSummary, favoriteSyncSummary } from "@/app/api/favorites/route.js";
@@ -88,6 +107,86 @@ const DISTANCE_CASES = [
   ["maxDistance52w", "distance52w", 20],
   ["maxDistanceATH", "distanceATH", 35],
 ];
+
+function assertSubset(name, values, allowed) {
+  for (const value of values) {
+    assert.ok(allowed.has(value), `${name} contains unknown key "${value}"`);
+  }
+}
+
+function runFilterCatalogContractTests() {
+  const queryKeys = new Set(SCREENER_FILTER_QUERY_KEYS);
+  const filterFieldKeys = FILTER_FIELDS.map((field) => field.key);
+  const fieldKeys = new Set(filterFieldKeys);
+  const layerKeys = new Set(Object.keys(ALL_FILTER_LAYERS));
+  const modeKeys = new Set(SETUP_MODES.map(([key]) => key));
+  const specialQueryKeys = new Set([
+    "filterPreset",
+    "filterStrictness",
+    "setupMode",
+    "requireStage2",
+    "requireSma200Up",
+    "requirePriceAboveSma50",
+    "requireRecentIpo",
+    "requireUpVolume",
+    "requireContractionsDecreasing",
+    "stageFastWeeks",
+    "stageSlowWeeks",
+    "stageSlopeWeeks",
+  ]);
+  const engineRuleKeys = new Set([
+    ...Object.keys(FIELD_RULES),
+    ...Object.keys(DISTANCE_RULES),
+    "minRsRating",
+    "minWeaknessScore",
+    "maxPriceFreshnessDays",
+    "maxIpoAgeMonths",
+  ]);
+  const presetValueKeys = new Set([...queryKeys, "maxSymbols"]);
+
+  assert.equal(new Set(SCREENER_FILTER_QUERY_KEYS).size, SCREENER_FILTER_QUERY_KEYS.length, "filter query keys must be unique");
+  assert.equal(new Set(filterFieldKeys).size, filterFieldKeys.length, "visible filter field keys must be unique");
+
+  assertSubset("boolean filters", BOOLEAN_FILTER_KEYS, queryKeys);
+  assertSubset("string filters", STRING_FILTER_KEYS, queryKeys);
+  assertSubset("filter fields", fieldKeys, queryKeys);
+  assertSubset("field rules", Object.keys(FIELD_RULES), fieldKeys);
+  assertSubset("distance rules", Object.keys(DISTANCE_RULES), fieldKeys);
+
+  for (const field of FILTER_FIELDS) {
+    assert.ok(Object.hasOwn(DEFAULT_FIELD_RULES, field.key), `${field.key} must have a default field-rule state`);
+    assert.ok(Object.hasOwn(NEUTRAL_FIELD_VALUES, field.key), `${field.key} must have a neutral value`);
+    assert.ok(FILTER_FIELD_LAYERS[field.key]?.length, `${field.key} must declare at least one execution layer`);
+    assertSubset(`${field.key} layers`, FILTER_FIELD_LAYERS[field.key], layerKeys);
+    assert.ok(engineRuleKeys.has(field.key), `${field.key} must be enforced by a generic or special screener rule`);
+  }
+
+  for (const key of queryKeys) {
+    assert.ok(fieldKeys.has(key) || specialQueryKeys.has(key), `${key} must be visible as a field or documented as a special filter key`);
+  }
+
+  for (const [presetKey, preset] of Object.entries(SCREENER_FILTER_PRESETS)) {
+    assert.ok(preset.name && preset.desc, `${presetKey} preset must expose name and description`);
+    assertSubset(`${presetKey} preset values`, Object.keys(preset.v || {}), presetValueKeys);
+    assert.ok(FILTER_STRICTNESS_KEYS.has(preset.v.filterStrictness || "balanced"), `${presetKey} preset must use a known strictness`);
+    assert.ok(modeKeys.has(preset.v.setupMode || "leader"), `${presetKey} preset must use a known setup mode`);
+  }
+
+  for (const [presetKey, values] of Object.entries(SCREENER_WEB_FILTER_PRESETS)) {
+    assert.equal(Object.hasOwn(values, "maxSymbols"), false, `${presetKey} web preset must not expose internal maxSymbols`);
+    assertSubset(`${presetKey} web preset values`, Object.keys(values || {}), queryKeys);
+  }
+
+  for (const [modeKey, defaults] of Object.entries(SETUP_MODE_DEFAULTS)) {
+    assert.ok(modeKeys.has(modeKey), `${modeKey} defaults must map to a visible setup mode`);
+    assertSubset(`${modeKey} setup defaults`, Object.keys(defaults || {}), queryKeys);
+  }
+
+  for (const [key, dependency] of Object.entries(SETTING_LAYER_DEPENDENCIES)) {
+    assert.ok(queryKeys.has(key), `${key} layer dependency must point to a query filter`);
+    assert.ok(layerKeys.has(dependency.layer), `${key} layer dependency must point to an existing layer`);
+  }
+}
 
 function baseRow(overrides = {}) {
   return {
@@ -290,6 +389,50 @@ function runParsingAndExactnessTests() {
   const result = applyScreenerFilters(rows, filters);
   assert.deepEqual(result.rows.map((row) => row.symbol), ["RS99"], "minRsRating 99 must only pass 99+ rows");
   assert.deepEqual(result.rejections.map((row) => row.symbol), ["RS98"]);
+}
+
+function runFilterExplainPlanTests() {
+  const filters = {
+    ...BASE_FILTERS,
+    setupMode: "nearPivot",
+    requireStage2: true,
+    maxPriceFreshnessDays: 5,
+    minRsRating: 75,
+    minPerf6m: 30,
+    maxDistance52w: 20,
+    minTotalScore: 70,
+  };
+  const strong = buildScreenerFilterExplainPlan(baseRow({ symbol: "PLANOK", rsGlobalPct: 91, perf6m: 45, distance52w: -8, totalScore: 86, priceFreshnessDays: 0 }), filters);
+  assert.equal(strong.status, "pass", "strong passing row should have a clean explain plan");
+  assert.match(strong.text, /Pasa \d+ reglas activas/, "explain plan must summarize active rule count");
+  assert.ok(strong.activeCount >= 5, "explain plan must include hard thresholds and boolean gates");
+
+  const near = buildScreenerFilterExplainPlan(baseRow({ symbol: "PLANNR", rsGlobalPct: 76, perf6m: 31, distance52w: -19.5, totalScore: 71, priceFreshnessDays: 4 }), filters);
+  assert.equal(near.status, "watch", "near-threshold passing row should be marked for review");
+  assert.ok(near.near.some((item) => item.field === "maxDistance52w"), "distance close to threshold must be listed as near");
+  assert.match(near.text, /cerca del corte/i, "near-threshold explanation must be visible in tooltip text");
+
+  const failed = buildScreenerFilterExplainPlan(baseRow({ symbol: "PLANNO", rsGlobalPct: 70, perf6m: 45, distance52w: -8, totalScore: 86, priceFreshnessDays: 0 }), filters);
+  assert.equal(failed.status, "fail", "failing row should not receive a passing explain plan");
+  assert.ok(failed.failed.some((item) => item.field === "minRsRating"), "failing active RS rule must be identified");
+
+  const missing = buildScreenerFilterExplainPlan(baseRow({ symbol: "PLANMS", rsGlobalPct: null, perf6m: 45, distance52w: -8, totalScore: 86, priceFreshnessDays: 0 }), filters);
+  assert.equal(missing.status, "missing", "missing active metric should be distinguished from numeric failure");
+  assert.ok(missing.missing.some((item) => item.field === "minRsRating"), "missing active RS rule must be identified");
+
+  const setupFail = buildScreenerFilterExplainPlan(
+    baseRow({ symbol: "PLANST", extSma50: 18.1 }),
+    { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 25 },
+  );
+  assert.equal(setupFail.status, "fail", "setupMode gate failure must mark the explain plan as failing");
+  assert.ok(setupFail.failed.some((item) => item.field === "setupMode"), "setupMode gate failure must be identified explicitly");
+
+  const longBiasFail = buildScreenerFilterExplainPlan(
+    baseRow({ symbol: "PLANLB", price: 70, sma200: 72 }),
+    { ...BASE_FILTERS, setupMode: "any", requireStage2: false },
+  );
+  assert.equal(longBiasFail.status, "fail", "long-bias floor failure must mark the explain plan as failing");
+  assert.ok(longBiasFail.failed.some((item) => item.field === "longBiasFloor"), "long-bias floor must be identified explicitly");
 }
 
 function scanResultFromRow(row, createdAt = "2026-05-25T10:00:00.000Z") {
@@ -807,10 +950,12 @@ function runScreenerContractDisplayTests() {
 }
 
 function main() {
+  runFilterCatalogContractTests();
   runThresholdMatrix();
   runBooleanAndModeTests();
   runFreshnessAndDataGateTests();
   runParsingAndExactnessTests();
+  runFilterExplainPlanTests();
   runLeaderboardSnapshotContractTests();
   runDiscoveryContractTests();
   runCoverageAuditContractTests();

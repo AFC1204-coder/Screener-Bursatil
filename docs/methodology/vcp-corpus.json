@@ -1,0 +1,380 @@
+{
+  "version": 1,
+  "updatedAt": "2026-06-06",
+  "purpose": "Small reviewed corpus for VCP calibration. Cases are real tickers evaluated on daily bars through an as-of date. Keep the set compact and focused on structure, not recommendations.",
+  "defaultRefresh": true,
+  "calibrationBuckets": {
+    "block": "No VCP/watch claim should surface.",
+    "observe": "A base can be measured, but it is not a useful watch.",
+    "watch": "VCP-like watch is allowed; plan remains blocked.",
+    "plan": "Strict, data-valid VCP with a valid plan."
+  },
+  "calibrationExpectations": {
+    "minCheckedCases": 18,
+    "maxMismatches": 0,
+    "maxPlanCases": 2,
+    "minPlanCases": 2,
+    "minWatchCases": 7,
+    "minObserveCases": 3,
+    "minBlockCases": 6
+  },
+  "cases": [
+    {
+      "id": "meta-actionable-vcp-2024-01-05",
+      "symbol": "META",
+      "asOf": "2024-01-05",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "strict_vcp_plan",
+      "humanLabel": "Historical strict VCP candidate with three decreasing contractions, dry-up, and price near pivot.",
+      "expect": {
+        "calibrationBucket": "plan",
+        "verdictKeysAllowed": ["actionable_vcp"],
+        "planValid": true,
+        "strict": true,
+        "contractionsDecreasing": true,
+        "contractionStructureStatusAllowed": ["ok"],
+        "minContractionCount": 3,
+        "minChartBars": 600
+      }
+    },
+    {
+      "id": "3988-hk-actionable-vcp-2026-05-28",
+      "symbol": "3988.HK",
+      "asOf": "2026-05-28",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "strict_vcp_plan",
+      "humanLabel": "Recent strict VCP candidate with compact contractions and valid pivot proximity.",
+      "expect": {
+        "calibrationBucket": "plan",
+        "verdictKeysAllowed": ["actionable_vcp"],
+        "planValid": true,
+        "strict": true,
+        "contractionsDecreasing": true,
+        "contractionStructureStatusAllowed": ["ok"],
+        "minContractionCount": 3,
+        "minChartBars": 1100
+      }
+    },
+    {
+      "id": "isrg-vcp-watch-2025-07-15",
+      "symbol": "ISRG",
+      "asOf": "2025-07-15",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "valid_vcp_watch",
+      "humanLabel": "Four decreasing contractions make it monitorable, but quality/pivot context should keep it below plan.",
+      "expect": {
+        "calibrationBucket": "watch",
+        "verdictKeysAllowed": ["vcp_watch"],
+        "watch": true,
+        "planValid": false,
+        "strict": false,
+        "contractionsDecreasing": true,
+        "contractionStructureStatusAllowed": ["ok"],
+        "minContractionCount": 4,
+        "minChartBars": 1000
+      }
+    },
+    {
+      "id": "nvda-pivot-squeeze-2024-05-22",
+      "symbol": "NVDA",
+      "asOf": "2024-05-22",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "pivot_squeeze",
+      "humanLabel": "Two tightening contractions near pivot should be a squeeze/watch, not a strict VCP.",
+      "expect": {
+        "calibrationBucket": "watch",
+        "verdictKeysAllowed": ["pivot_squeeze"],
+        "watch": true,
+        "planValid": false,
+        "strict": false,
+        "contractionsDecreasing": true,
+        "contractionStructureStatusAllowed": ["ok"],
+        "minContractionCount": 2,
+        "maxContractionCount": 2,
+        "minChartBars": 700
+      }
+    },
+    {
+      "id": "xom-vcp-watch-2024-04-17",
+      "symbol": "XOM",
+      "asOf": "2024-04-17",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "valid_vcp_watch",
+      "humanLabel": "Three compact contractions are valid for monitoring while plan remains blocked by strict quality gates.",
+      "expect": {
+        "calibrationBucket": "watch",
+        "verdictKeysAllowed": ["vcp_watch"],
+        "watch": true,
+        "planValid": false,
+        "strict": false,
+        "contractionsDecreasing": true,
+        "contractionStructureStatusAllowed": ["ok"],
+        "minContractionCount": 3,
+        "minChartBars": 700
+      }
+    },
+    {
+      "id": "mcd-constructive-watch-2023-11-29",
+      "symbol": "MCD",
+      "asOf": "2023-11-29",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "constructive_base_watch",
+      "humanLabel": "Constructive two-swing base should remain watch-level, not be promoted to strict VCP.",
+      "expect": {
+        "calibrationBucket": "watch",
+        "verdictKeysAllowed": ["constructive_base"],
+        "watch": true,
+        "planValid": false,
+        "strict": false,
+        "contractionsDecreasing": true,
+        "contractionStructureStatusAllowed": ["ok"],
+        "minContractionCount": 2,
+        "maxContractionCount": 2,
+        "minChartBars": 600
+      }
+    },
+    {
+      "id": "aapl-constructive-watch-2023-12-20",
+      "symbol": "AAPL",
+      "asOf": "2023-12-20",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "constructive_base_watch",
+      "humanLabel": "Constructive two-contraction base close to pivot; watch-level only.",
+      "expect": {
+        "calibrationBucket": "watch",
+        "verdictKeysAllowed": ["constructive_base"],
+        "watch": true,
+        "planValid": false,
+        "strict": false,
+        "contractionsDecreasing": true,
+        "contractionStructureStatusAllowed": ["ok"],
+        "minContractionCount": 2,
+        "maxContractionCount": 2,
+        "minChartBars": 600
+      }
+    },
+    {
+      "id": "cost-constructive-watch-2026-05-07",
+      "symbol": "COST",
+      "asOf": "2026-05-07",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "constructive_base_watch",
+      "humanLabel": "Compact two-swing base near pivot; valid watch but not strict VCP.",
+      "expect": {
+        "calibrationBucket": "watch",
+        "verdictKeysAllowed": ["constructive_base"],
+        "watch": true,
+        "planValid": false,
+        "strict": false,
+        "contractionsDecreasing": true,
+        "contractionStructureStatusAllowed": ["ok"],
+        "minContractionCount": 2,
+        "maxContractionCount": 2,
+        "minChartBars": 1000
+      }
+    },
+    {
+      "id": "well-vcp-watch-2026-05-14",
+      "symbol": "WELL",
+      "asOf": "2026-05-14",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "valid_vcp_watch",
+      "humanLabel": "Three decreasing contractions near pivot; useful watch while strict plan stays blocked.",
+      "expect": {
+        "calibrationBucket": "watch",
+        "verdictKeysAllowed": ["vcp_watch"],
+        "watch": true,
+        "planValid": false,
+        "strict": false,
+        "contractionsDecreasing": true,
+        "contractionStructureStatusAllowed": ["ok"],
+        "minContractionCount": 3,
+        "minChartBars": 1000
+      }
+    },
+    {
+      "id": "brk-b-observe-2022-07-11",
+      "symbol": "BRK-B",
+      "asOf": "2022-07-11",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "far_measurable_base",
+      "humanLabel": "Historical measurable base, but too far from pivot for watch/action.",
+      "expect": {
+        "calibrationBucket": "observe",
+        "verdictKeysAllowed": ["base_measurable"],
+        "watch": false,
+        "planValid": false,
+        "strict": false,
+        "contractionsDecreasing": true,
+        "contractionStructureStatusAllowed": ["ok"],
+        "minContractionCount": 2,
+        "minChartBars": 250
+      }
+    },
+    {
+      "id": "aapl-observe-2022-02-22",
+      "symbol": "AAPL",
+      "asOf": "2022-02-22",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "far_measurable_base",
+      "humanLabel": "Two clean contractions are measurable, but pivot distance should keep the result observational.",
+      "expect": {
+        "calibrationBucket": "observe",
+        "verdictKeysAllowed": ["base_measurable"],
+        "watch": false,
+        "planValid": false,
+        "strict": false,
+        "contractionsDecreasing": true,
+        "contractionStructureStatusAllowed": ["ok"],
+        "minContractionCount": 2,
+        "minChartBars": 180
+      }
+    },
+    {
+      "id": "msft-observe-2022-02-22",
+      "symbol": "MSFT",
+      "asOf": "2022-02-22",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "far_measurable_base",
+      "humanLabel": "Clean measurable historical base that is too far from pivot for watch/action.",
+      "expect": {
+        "calibrationBucket": "observe",
+        "verdictKeysAllowed": ["base_measurable"],
+        "watch": false,
+        "planValid": false,
+        "strict": false,
+        "contractionsDecreasing": true,
+        "contractionStructureStatusAllowed": ["ok"],
+        "minContractionCount": 2,
+        "minChartBars": 180
+      }
+    },
+    {
+      "id": "brk-b-lower-low-drift-2026-06-02",
+      "symbol": "BRK-B",
+      "asOf": "2026-06-02",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "lower_low_false_positive",
+      "humanLabel": "Truncated history can look like a watch, but full daily history shows lower-low drift.",
+      "expect": {
+        "calibrationBucket": "block",
+        "verdictKeysAllowed": ["not_actionable"],
+        "watch": false,
+        "planValid": false,
+        "strict": false,
+        "contractionsDecreasing": false,
+        "contractionStructureStatusAllowed": ["lower_low_drift"],
+        "minContractionCount": 3,
+        "minChartBars": 1200
+      }
+    },
+    {
+      "id": "3988-hk-lower-low-drift-2026-06-03",
+      "symbol": "3988.HK",
+      "asOf": "2026-06-03",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "lower_low_false_positive",
+      "humanLabel": "Looks like a pivot squeeze in a short window, but full daily history rejects the base floor.",
+      "expect": {
+        "calibrationBucket": "block",
+        "verdictKeysAllowed": ["not_actionable"],
+        "watch": false,
+        "planValid": false,
+        "strict": false,
+        "contractionsDecreasing": false,
+        "contractionStructureStatusAllowed": ["lower_low_drift"],
+        "minContractionCount": 4,
+        "minChartBars": 1200
+      }
+    },
+    {
+      "id": "isrg-lower-low-drift-2026-06-02",
+      "symbol": "ISRG",
+      "asOf": "2026-06-02",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "lower_low_false_positive",
+      "humanLabel": "Full daily history rejects the apparent measurable base because lows do not hold.",
+      "expect": {
+        "calibrationBucket": "block",
+        "verdictKeysAllowed": ["not_actionable"],
+        "watch": false,
+        "planValid": false,
+        "strict": false,
+        "contractionStructureStatusAllowed": ["lower_low_drift"],
+        "minContractionCount": 3,
+        "minChartBars": 1200
+      }
+    },
+    {
+      "id": "aapl-lower-low-drift-2026-06-01",
+      "symbol": "AAPL",
+      "asOf": "2026-06-01",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "lower_low_false_positive",
+      "humanLabel": "Shrinking percentages should stay blocked when lows do not hold the base.",
+      "expect": {
+        "calibrationBucket": "block",
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "watch": false,
+        "planValid": false,
+        "strict": false,
+        "contractionStructureStatusAllowed": ["lower_low_drift"],
+        "minContractionCount": 2,
+        "minChartBars": 500
+      }
+    },
+    {
+      "id": "meta-reexpansion-2026-06-02",
+      "symbol": "META",
+      "asOf": "2026-06-02",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "depth_reexpansion_false_positive",
+      "humanLabel": "Irregular sequence with re-expansion should remain blocked.",
+      "expect": {
+        "calibrationBucket": "block",
+        "verdictKeysAllowed": ["not_actionable", "no_base"],
+        "watch": false,
+        "planValid": false,
+        "strict": false,
+        "contractionStructureStatusAllowed": ["depth_reexpansion", "lower_low_drift"],
+        "minContractionCount": 2,
+        "minChartBars": 500
+      }
+    },
+    {
+      "id": "msft-no-base-2026-06-02",
+      "symbol": "MSFT",
+      "asOf": "2026-06-02",
+      "active": true,
+      "chartRange": "5A",
+      "archetype": "no_validated_base",
+      "humanLabel": "High-quality leader without current validated VCP base.",
+      "expect": {
+        "calibrationBucket": "block",
+        "verdictKeysAllowed": ["no_base", "not_actionable"],
+        "watch": false,
+        "planValid": false,
+        "strict": false,
+        "consolidationCandidate": false,
+        "minChartBars": 500
+      }
+    }
+  ]
+}

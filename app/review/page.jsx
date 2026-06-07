@@ -28,7 +28,7 @@ function favoriteRows(favorites = []) {
 }
 function sourceLabel(source) {
   if (source === "favorites") return "Favoritos";
-  if (source === "latest") return "Ultimo snapshot";
+  if (source === "latest") return "Último snapshot";
   if (source === "current") return "Screener actual";
   return "Cola guardada";
 }
@@ -46,6 +46,28 @@ function rowSource(source, review, scans, favorites) {
   if (review?.rows?.length) return normalizeRows(review.rows);
   if (scans[0]?.rows?.length) return normalizeRows(scans[0].rows);
   return favoriteRows(favorites);
+}
+function discoveryRowsFromPayload(data = {}) {
+  const listRows = Array.isArray(data.lists)
+    ? data.lists.flatMap((list) => Array.isArray(list.items) ? list.items : [])
+    : [];
+  const groupRows = data.groups && typeof data.groups === "object"
+    ? Object.values(data.groups).flatMap((groups) => Array.isArray(groups)
+      ? groups.flatMap((group) => Array.isArray(group.items) ? group.items : [])
+      : [])
+    : [];
+  return normalizeRows([...(Array.isArray(data.rows) ? data.rows : []), ...listRows, ...groupRows]);
+}
+async function fetchDiscoveryReviewRows(signal) {
+  const params = new URLSearchParams({
+    limit: "120",
+    groupItemLimit: "12",
+    groupsLimit: "45",
+    maxRows: "8000",
+    sinceDays: "45",
+  });
+  const data = await fetchJson(`/api/discovery?${params.toString()}`, signal, 18000);
+  return discoveryRowsFromPayload(data);
 }
 function domainFromUrl(url = "") {
   try { return new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).hostname.replace(/^www\./, ""); } catch { return ""; }
@@ -359,8 +381,11 @@ export default function ReviewPage() {
   const [showHidden, setShowHidden] = useState(false);
   const [status, setStatus] = useState("Listo");
   const [hydration, setHydration] = useState({});
+  const sourceRequestRef = useRef(0);
 
   function loadSource(nextSource = source, keepState = false, startSymbol = "") {
+    const requestId = sourceRequestRef.current + 1;
+    sourceRequestRef.current = requestId;
     const review = safeRead(STORAGE_KEYS.review, {});
     const scans = safeRead(STORAGE_KEYS.scans, []);
     const favs = safeRead(STORAGE_KEYS.favorites, []);
@@ -373,6 +398,26 @@ export default function ReviewPage() {
     setReviewed(new Set(keepState ? review.reviewedSymbols || [] : []));
     setHidden(new Set(keepState ? review.hiddenSymbols || [] : []));
     setStatus(`${sourceLabel(nextSource)} · ${nextRows.length} acciones`);
+    if (nextSource === "latest" && !nextRows.length) {
+      const controller = new AbortController();
+      setStatus("Último snapshot · sin cola local; consultando Discovery...");
+      fetchDiscoveryReviewRows(controller.signal)
+        .then((discoveryRows) => {
+          if (sourceRequestRef.current !== requestId) return;
+          if (!discoveryRows.length) {
+            setStatus("Último snapshot · sin filas locales ni discovery disponible.");
+            return;
+          }
+          const discoveryIndex = startSymbol ? discoveryRows.findIndex((row) => row.symbol === String(startSymbol).toUpperCase()) : -1;
+          setRows(discoveryRows);
+          setCurrentIndex(discoveryIndex >= 0 ? discoveryIndex : 0);
+          setStatus(`Último snapshot · ${discoveryRows.length} acciones desde Discovery`);
+        })
+        .catch((error) => {
+          if (sourceRequestRef.current !== requestId) return;
+          setStatus(`Último snapshot no disponible: ${error.message || "Discovery no respondió"}`);
+        });
+    }
   }
 
   useEffect(() => {
@@ -486,7 +531,7 @@ export default function ReviewPage() {
     <section className="card hero">
       <div className="heroTop">
         <div>
-          <div className="badge">STATS EDGE · Rapid Review</div>
+          <div className="badge">StageRadar · Rapid Review</div>
           <h1>Vista rapida</h1>
         </div>
         <div className="mobileActions">

@@ -27,6 +27,14 @@ function hasOwn(obj = {}, key = "") {
   return Object.prototype.hasOwnProperty.call(obj, key);
 }
 
+function InfoHint({ text, tone = "" }) {
+  if (!text) return null;
+  return <span className={`infoHint ${tone}`} tabIndex="0" aria-label={text}>
+    <span aria-hidden="true">i</span>
+    <em aria-hidden="true">{text}</em>
+  </span>;
+}
+
 function scopedDiscoveryPath(filter = {}) {
   const params = new URLSearchParams({
     limit: "25",
@@ -46,9 +54,9 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, localRows,
   const health = data?.health || {};
   const status = loading ? "" : usingDiscovery ? (health.state === "pass" ? "pass" : "warn") : "warn";
   const scope = filter?.group ? `${filter.groupType}: ${filter.group}` : "Global";
-  const source = loading ? "Cargando discovery" : usingDiscovery ? health.sourceLabel || "Discovery API" : "Snapshot local";
+  const source = loading ? "Actualizando discovery" : usingDiscovery ? health.sourceLabel || "Discovery API" : "Snapshot local";
   const note = loading
-    ? "Leyendo scans persistidos para listas derivadas."
+    ? "Vista provisional desde snapshot local; los conteos y rankings se actualizarán al terminar Discovery."
     : error ? `Discovery API no disponible: ${error}` : usingDiscovery ? health.note : "Usando snapshots/favoritos locales hasta tener scans persistidos suficientes.";
 
   return <section className="card discoveryHealthPanel">
@@ -59,7 +67,7 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, localRows,
     <div className="discoveryHealthGrid">
       <span><b>{usingDiscovery ? health.rows ?? 0 : localRows}</b><em>filas ranking</em></span>
       <span><b>{usingDiscovery ? health.staleRows ?? 0 : "-"}</b><em>precio viejo</em></span>
-      <span><b>{usingDiscovery ? health.missingTaxonomyRows ?? 0 : "-"}</b><em>taxonomia incompleta</em></span>
+      <span><b>{usingDiscovery ? health.missingTaxonomyRows ?? 0 : "-"}</b><em>taxonomía incompleta</em></span>
       <span><b>{usingDiscovery ? health.planClaims ?? 0 : "-"}</b><em>planes VCP</em></span>
       <span><b>{scope}</b><em>alcance</em></span>
     </div>
@@ -89,6 +97,7 @@ function CoverageAuditPanel({ audit }) {
   const issues = auditIssueLabels(audit, 5);
   const topMarkets = audit.topMarkets || [];
   const topSectors = audit.topSectors || [];
+  const hasCoverageInput = (audit.universeRows ?? 0) > 0 || (audit.rankedRows ?? 0) > 0;
 
   return <section className="card coverageAuditPanel">
     <div className="sectionTitle">
@@ -100,7 +109,7 @@ function CoverageAuditPanel({ audit }) {
       <span><b>{audit.rankedRows ?? 0}</b><em>rankeadas</em></span>
       <span><b>{pctShare(audit.rankingCoveragePct ?? 0, 1)}</b><em>cobertura ranking</em></span>
       <span><b>{audit.rankedMarketCount ?? 0}/{audit.marketCount ?? 0}</b><em>mercados ranking</em></span>
-      <span><b>{audit.listHealth?.emptyLists?.length ?? 0}</b><em>listas vacias</em></span>
+      <span><b>{hasCoverageInput ? audit.listHealth?.emptyLists?.length ?? 0 : "-"}</b><em>listas vacias</em></span>
     </div>
     <div className="coverageAuditColumns">
       <div>
@@ -113,7 +122,7 @@ function CoverageAuditPanel({ audit }) {
       </div>
       <div>
         <b>Alertas accionables</b>
-        <span>{issues.length ? issues.join(" · ") : "Sin alertas de sesgo relevantes"}</span>
+        <span>{hasCoverageInput ? (issues.length ? issues.join(" · ") : "Sin alertas de sesgo relevantes") : "Sin universo suficiente"}</span>
       </div>
     </div>
     <p className="fine">{audit.note}</p>
@@ -269,6 +278,26 @@ function ListReliabilityStrip({ summary, contractRejected = 0 }) {
   </div>;
 }
 
+function ListsEmptyState({ loading, hasSnapshot, discoveryError }) {
+  const title = loading ? "Cargando rankings" : "Sin listas disponibles";
+  const detail = loading
+    ? "Se esta consultando discovery. Si no hay datos remotos, se usara el ultimo snapshot local."
+    : hasSnapshot
+      ? "Hay snapshot local, pero no genera candidatos visibles con los contratos actuales."
+      : "Listas se alimenta de discovery o de snapshots guardados desde el screener.";
+  const status = loading ? "Discovery" : discoveryError ? "Snapshot local" : hasSnapshot ? "Sin candidatos" : "Sin snapshot";
+  return <section className="card listsEmptyState">
+    <div className="emptyStateHead">
+      <h2>{title} <InfoHint text={detail} /></h2>
+      <span className="fine">{status}</span>
+    </div>
+    <div className="controls">
+      <a className="btn btnPrimary" href="/">Screener</a>
+      <a className="btn" href="/research-desk">Research</a>
+    </div>
+  </section>;
+}
+
 function MiniTable({ title, desc, rows, chartsCache, listKey = "leaders", scoreKey = "totalScore", collapsible = true, emptyLabel = "Sin datos todavia.", contractRejected = 0 }) {
   const visibleRows = rows.slice(0, 18);
   const reliability = summarizeListReliability(rows);
@@ -314,7 +343,7 @@ function MiniTable({ title, desc, rows, chartsCache, listKey = "leaders", scoreK
   </div>;
 
   if (collapsible) {
-    return <details className="card listDisclosure" open>
+    return <details className="card listDisclosure" open={visibleRows.length > 0}>
       <summary className="sectionTitle"><h2>{title}</h2><span className="fine">{desc}</span></summary>
       <ListContractNote listKey={listKey} />
       <ListReliabilityStrip summary={reliability} contractRejected={contractRejected} />
@@ -407,17 +436,21 @@ export default function ListsPage() {
   const listSections = useMemo(() => [
     { key: "leaders", title: "Composite Leaders", desc: "Ranking principal", rows: leaders, contractRejected: discoveryRejectedByKey.leaders || 0 },
     { key: "rsQuality", title: "RS Quality Leaders", desc: "RS alto con volatilidad/drawdown controlados", rows: rsQuality, scoreKey: "rsQualityScore", contractRejected: discoveryRejectedByKey.rsQuality || 0 },
-    { key: "weakness", title: "Deterioro tecnico", desc: "Debilidad observable para evitar largos o estudiar cortos", rows: weakness, scoreKey: "weaknessScore", contractRejected: discoveryRejectedByKey.weakness || 0 },
+    { key: "weakness", title: "Deterioro técnico", desc: "Debilidad observable para evitar largos o estudiar cortos", rows: weakness, scoreKey: "weaknessScore", contractRejected: discoveryRejectedByKey.weakness || 0 },
     { key: "weinstein", title: "Weinstein Leaders", desc: "Mejor estructura de etapa/tendencia", rows: weinstein, scoreKey: "weinsteinScore", contractRejected: discoveryRejectedByKey.weinstein || 0 },
-    { key: "minervini", title: "Minervini Leaders", desc: "Trend template, momentum y maximos", rows: minervini, scoreKey: "minerviniScore", contractRejected: discoveryRejectedByKey.minervini || 0 },
-    { key: "nearPivot", title: "Vigilancia pivot", desc: "Setup observable cerca de pivot; no equivale a plan automatico", rows: nearPivot, contractRejected: discoveryRejectedByKey.nearPivot || 0 },
-    { key: "ipo", title: "IPO / New Leaders", desc: "Solo IPOs reales con fecha <= 5 anos", rows: ipo, scoreKey: "ipoScore", contractRejected: discoveryRejectedByKey.ipo || 0 },
-    { key: "extended", title: "Extended but strong", desc: "Muy fuertes, pero vigilar extension sobre SMA50", rows: extended, contractRejected: discoveryRejectedByKey.extended || 0 },
-    { key: "pullback", title: "Pullback to SMA50", desc: "Lideres cerca de SMA50 para vigilancia", rows: pullback, contractRejected: discoveryRejectedByKey.pullback || 0 },
+    { key: "minervini", title: "Minervini Leaders", desc: "Trend template, momentum y máximos", rows: minervini, scoreKey: "minerviniScore", contractRejected: discoveryRejectedByKey.minervini || 0 },
+    { key: "nearPivot", title: "Vigilancia pivot", desc: "Setup observable cerca de pivot; no equivale a plan automático", rows: nearPivot, contractRejected: discoveryRejectedByKey.nearPivot || 0 },
+    { key: "ipo", title: "IPO / New Leaders", desc: "Solo IPOs reales con fecha <= 5 años", rows: ipo, scoreKey: "ipoScore", contractRejected: discoveryRejectedByKey.ipo || 0 },
+    { key: "extended", title: "Extended but strong", desc: "Muy fuertes, pero vigilar extensión sobre SMA50", rows: extended, contractRejected: discoveryRejectedByKey.extended || 0 },
+    { key: "pullback", title: "Pullback to SMA50", desc: "Líderes cerca de SMA50 para vigilancia", rows: pullback, contractRejected: discoveryRejectedByKey.pullback || 0 },
   ], [leaders, rsQuality, weakness, weinstein, minervini, nearPivot, ipo, extended, pullback, discoveryRejectedByKey]);
   const rankingAppearances = useMemo(() => listSections.reduce((sum, section) => sum + (section.rows || []).slice(0, 18).length, 0), [listSections]);
   const activeRankingCount = useMemo(() => listSections.filter((section) => (section.rows || []).length > 0).length, [listSections]);
   const activeSavedView = useMemo(() => savedListViews.find((view) => view.signature === currentListViewSignature) || null, [savedListViews, currentListViewSignature]);
+  const hasAnyListRows = favoritesAsRows.length > 0 || listSections.some((section) => (section.rows || []).length > 0);
+  const hasListSource = rows.length > 0 || favoritesAsRows.length > 0 || useDiscovery;
+  const showListTables = hasListSource || hasAnyListRows;
+  const showEmptyState = !showListTables;
   const coverageAudit = useMemo(() => {
     if (useDiscovery && discovery?.audit) return discovery.audit;
     return buildCoverageAudit({
@@ -570,17 +603,19 @@ export default function ListsPage() {
     <ListScopeSummary filter={filter} rowsCount={rows.length} rankingAppearances={rankingAppearances} activeRankingCount={activeRankingCount} savedView={activeSavedView} useDiscovery={useDiscovery} discoveryLoading={discoveryLoading} />
     <SavedListViewsPanel views={savedListViews} currentSignature={currentListViewSignature} onSave={saveCurrentListView} onDelete={deleteSavedListView} />
     {filter.group && <section className="card status">Filtro activo: <b>{filter.groupType} = {filter.group}</b> · <a className="ticker" href="/lists">limpiar</a></section>}
-    <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} chartsCache={chartsCache} listKey="favorites" collapsible={false} emptyLabel={loaded ? "Sin datos todavia." : "Cargando listas..."} />
-    {listSections.map((section) => <MiniTable
-      key={section.key}
-      title={section.title}
-      desc={section.desc}
-      rows={section.rows}
-      chartsCache={chartsCache}
-      listKey={section.key}
-      scoreKey={section.scoreKey || "totalScore"}
-      contractRejected={section.contractRejected || 0}
-      emptyLabel={loaded ? "Sin datos todavia." : "Cargando listas..."}
-    />)}
+    {showEmptyState ? <ListsEmptyState loading={!loaded || discoveryLoading} hasSnapshot={localRows.length > 0 || scans.length > 0} discoveryError={discoveryError} /> : <>
+      {favoritesAsRows.length > 0 ? <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} chartsCache={chartsCache} listKey="favorites" collapsible={false} emptyLabel={loaded ? "Sin favoritos guardados." : "Cargando listas..."} /> : null}
+      {listSections.map((section) => <MiniTable
+        key={section.key}
+        title={section.title}
+        desc={section.desc}
+        rows={section.rows}
+        chartsCache={chartsCache}
+        listKey={section.key}
+        scoreKey={section.scoreKey || "totalScore"}
+        contractRejected={section.contractRejected || 0}
+        emptyLabel={loaded ? "Sin datos." : "Cargando listas..."}
+      />)}
+    </>}
   </main>;
 }

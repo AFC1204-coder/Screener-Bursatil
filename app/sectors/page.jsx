@@ -87,9 +87,9 @@ function sectorStateClass(value = "") {
 function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, countryFilter, localRows, groupedRows, groupCount }) {
   const health = data?.health || {};
   const status = loading ? "" : usingDiscovery ? (health.state === "pass" ? "pass" : "warn") : "warn";
-  const source = loading ? "Cargando discovery" : usingDiscovery ? health.sourceLabel || "Discovery API" : "Snapshot local";
+  const source = loading ? "Actualizando discovery" : usingDiscovery ? health.sourceLabel || "Discovery API" : "Snapshot local";
   const note = loading
-    ? "Leyendo scans persistidos para grupos sectoriales derivados."
+    ? "Vista provisional desde snapshot local; los grupos y rankings se actualizarán al terminar Discovery."
     : error
       ? `Discovery API no disponible: ${error}`
       : usingDiscovery
@@ -106,9 +106,9 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, countryFil
     <div className="discoveryHealthGrid">
       <span><b>{usingDiscovery ? groupedRows : localRows}</b><em>acciones agrupadas</em></span>
       <span><b>{usingDiscovery ? groupCount : "-"}</b><em>grupos visibles</em></span>
-      <span><b>{usingDiscovery ? health.missingTaxonomyRows ?? 0 : "-"}</b><em>taxonomia incompleta</em></span>
+      <span><b>{usingDiscovery ? health.missingTaxonomyRows ?? 0 : "-"}</b><em>taxonomía incompleta</em></span>
       <span><b>{usingDiscovery ? health.planClaims ?? 0 : "-"}</b><em>planes VCP</em></span>
-      <span><b>{countryFilter}</b><em>pais</em></span>
+      <span><b>{countryFilter}</b><em>país</em></span>
     </div>
     <p className="fine">{note}</p>
   </section>;
@@ -176,7 +176,7 @@ function MarketSectorOverview({ data, error }) {
 
       <div className="sectorPulse compact">
         <div><b>Lideres</b><span>{listText(summary.leaders)}</span></div>
-        <div><b>Debiles</b><span>{listText(summary.laggards)}</span></div>
+        <div><b>Débiles</b><span>{listText(summary.laggards)}</span></div>
       </div>
 
       <div className="tableWrap sectorOverviewTable">
@@ -214,7 +214,7 @@ function GroupCard({ group, active, onClick }) {
       <span><b>{metricShortLabel("totalScore")}</b>{num(group.avgTotal)}</span>
       <span><b>{metricShortLabel("rsGlobalPct")}</b>{num(group.avgRs)}</span>
       <span><b>3M</b>{pct(group.avg3m)}</span>
-      <span><b>Debiles</b>{group.weak}</span>
+      <span><b>Débiles</b>{group.weak}</span>
     </span>
     <small>Top: {group.top.map((row) => row.symbol).join(", ") || "Sin dato"}</small>
   </button>;
@@ -237,7 +237,7 @@ function GroupDrilldownPanel({ group, dimension }) {
     </div>
     <div className={`groupContractScope ${hasContractDrilldown ? "pass" : "watch"}`}>
       <b>{hasContractDrilldown ? "Contratos completos" : "Muestra visible"}</b>
-      <span>{contractScopeLabel}. Las sublistas alcistas excluyen deterioro tecnico y bajismo estructural.</span>
+      <span>{contractScopeLabel}. Las sublistas alcistas excluyen deterioro técnico y bajismo estructural.</span>
     </div>
     <div className="groupDrilldownGrid">
       {drilldown.map((bucket) => <article className={`groupDrilldownCard ${bucket.tone}`} key={bucket.key}>
@@ -469,12 +469,12 @@ export default function SectorsPage() {
         <div className="sectionTitle"><h2>Mapa de grupos</h2><span className="fine">Ranking por fuerza compuesta</span></div>
         <div className="groupMap">
           {filteredGroups.map((group) => <GroupCard key={group.key} group={group} active={group.key === selected?.key} onClick={() => setActive(group.key)} />)}
-          {!filteredGroups.length && <div className="dataNote">No hay grupos en este rango de fuerza. Cambia el filtro o guarda un snapshot mas amplio.</div>}
+          {!filteredGroups.length && <div className="dataNote">No hay grupos en este rango de fuerza. Cambia el filtro o guarda un snapshot más amplio.</div>}
         </div>
       </div>
 
       <div className="card">
-        <div className="sectionTitle"><h2>Lectura rapida <InfoHint text="Fuerza compuesta local: score medio, RS, momentum 3M y numero de lideres del snapshot. Los grupos debiles se ordenan de peor a menos debil." /></h2><span className="fine">{dimensionLabel(dimension)}</span></div>
+        <div className="sectionTitle"><h2>Lectura rápida <InfoHint text="Fuerza compuesta local: score medio, RS, momentum 3M y número de líderes del snapshot. Los grupos débiles se ordenan de peor a menos débil." /></h2><span className="fine">{dimensionLabel(dimension)}</span></div>
         {selected && <>
           <div className="quickMetricGrid">
             <span><b>Grupo</b>{selected.key}</span>

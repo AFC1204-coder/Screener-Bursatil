@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
+import {
+  DEFAULT_FILTER_LAYERS,
+  DEFAULT_FILTER_STRICTNESS,
+  NEUTRAL_FIELD_VALUES,
+} from "../lib/screenerFilterCatalog.js";
 
 const BASE_URL = process.env.FILTER_UI_BASE_URL || "http://127.0.0.1:3000";
 const STORAGE_KEY = "statsedge.screenerSession.v1";
@@ -16,24 +21,8 @@ const DEFAULT_VIEW_LAYERS = {
   ipo: true,
 };
 
-const DEFAULT_FILTER_LAYERS = {
-  trend: true,
-  momentum: true,
-  relativeStrength: true,
-  proximity: true,
-  volatility: true,
-  pattern: false,
-  score: true,
-  liquidity: true,
-  volumeSurge: false,
-  shortInterest: false,
-  riskReward: false,
-  coverage: true,
-  ipo: true,
-};
-
 const NEUTRAL_SETTINGS = {
-  filterStrictness: "balanced",
+  filterStrictness: DEFAULT_FILTER_STRICTNESS,
   setupMode: "any",
   requireStage2: false,
   requireSma200Up: false,
@@ -44,68 +33,7 @@ const NEUTRAL_SETTINGS = {
   stageFastWeeks: 10,
   stageSlowWeeks: 30,
   stageSlopeWeeks: 10,
-  maxPriceFreshnessDays: 999,
-  maxIpoAgeMonths: 999,
-  minPrice: 0,
-  minMarketCap: 0,
-  minAvgVolume: 0,
-  minAvgTurnover: 0,
-  minLatestVolume: 0,
-  minLatestTurnover: 0,
-  minRelativeVolume: 0,
-  minVolumeSurgePct: -999,
-  minUpDownVolRatio: 0,
-  minVolumeEffectScore: 0,
-  minShortFloatPct: 0,
-  maxShortFloatPct: 999,
-  minPerf3m: -100,
-  minPerf6m: -100,
-  minPerf12m: -100,
-  maxDistance20dHigh: 999,
-  maxDistance50dHigh: 999,
-  maxDistance52w: 999,
-  maxDistanceATH: 999,
-  maxHighsSpreadPct: 999,
-  maxExtensionSma50: 999,
-  maxDailyMove20dPct: 999,
-  maxDailyRange20dPct: 999,
-  maxRange63dPct: 999,
-  maxVolatility63d: 999,
-  maxDrawdown63d: 999,
-  minContractionCount: 0,
-  maxContraction1DepthPct: 999,
-  maxContraction2DepthPct: 999,
-  maxContraction3DepthPct: 999,
-  maxLastContractionDepthPct: 999,
-  maxBaseDepthPct: 999,
-  minBaseWeeks: 0,
-  maxBaseWeeks: 999,
-  maxAbsDistanceToPivotPct: 999,
-  maxVolumeDryUpRatio: 999,
-  maxTightness10dPct: 999,
-  minPatternQualityScore: 0,
-  minRiskRewardScore: 0,
-  minReturnToVol3m: -999,
-  minReturnToDrawdown3m: -999,
-  minAdProxyScore: 0,
-  minEpsGrowthProxyScore: 0,
-  minDataCoverageScore: 0,
-  minTechnicalCoverageScore: 0,
-  minFundamentalCoverageScore: 0,
-  minRsRating: 0,
-  minRsBenchmarkRating: 0,
-  minRsCountryPct: 0,
-  minRsSectorPct: 0,
-  minRsQualityScore: 0,
-  minSectorScore: 0,
-  minWeinsteinScore: 0,
-  minMinerviniScore: 0,
-  minMomentumScore: 0,
-  minRiskScore: 0,
-  minVolumeScore: 0,
-  minLiquidityScore: 0,
-  minTotalScore: 0,
-  minWeaknessScore: 0,
+  ...NEUTRAL_FIELD_VALUES,
 };
 
 function chartPreview(seed = 100) {
@@ -535,6 +463,102 @@ async function testProgressiveContractionFilter(browser) {
   }
 }
 
+async function testSetupCellKeepsDetailsBehindInfo(browser) {
+  const setupMetrics = {
+    patternDataStatus: "ok",
+    patternEligible: true,
+    consolidationCandidate: true,
+    patternFamily: "progressive_contraction",
+    contractionCount: 3,
+    contractionDepths: [22, 13, 6],
+    contractionsDecreasing: true,
+    contraction1DepthPct: 22,
+    contraction2DepthPct: 13,
+    contraction3DepthPct: 6,
+    lastContractionDepthPct: 6,
+    baseDepthPct: 28,
+    baseContextScore: 55,
+    baseWeeks: 9,
+    pivotPrice: 104,
+    distanceToPivotPct: -4,
+    absDistanceToPivotPct: 4,
+    pivotClarityScore: 80,
+    pivotTouchCount: 3,
+    baseNearPivotDays: 12,
+    volumeDryUpRatio: 0.72,
+    tightness10dPct: 6,
+    patternQualityScore: 76,
+    latestCloseLocationPct: 65,
+  };
+  const nonDecreasingMetrics = {
+    ...setupMetrics,
+    contractionDepths: [8, 13, 7],
+    contractionsDecreasing: false,
+    contraction1DepthPct: 8,
+    contraction2DepthPct: 13,
+    contraction3DepthPct: 7,
+    lastContractionDepthPct: 7,
+    volumeDryUpRatio: 0.82,
+    patternQualityScore: 70,
+  };
+  const constructiveMetrics = {
+    ...setupMetrics,
+    patternFamily: "base_structure",
+    contractionCount: 2,
+    contractionDepths: [14, 5],
+    contractionsDecreasing: true,
+    contraction1DepthPct: 14,
+    contraction2DepthPct: 5,
+    contraction3DepthPct: null,
+    lastContractionDepthPct: 5,
+    baseDepthPct: 20,
+    distanceToPivotPct: -3,
+    absDistanceToPivotPct: 3,
+    volumeDryUpRatio: 0.86,
+    patternQualityScore: 72,
+  };
+  const { context, page } = await openSeededPage(browser, baseSession({
+    rows: [
+      row({ symbol: "SETUPUI", totalScore: 92, compositeScore: 92, ...setupMetrics }),
+      row({ symbol: "SETUPBAD", totalScore: 91, compositeScore: 91, ...nonDecreasingMetrics }),
+      row({ symbol: "SETUPBASE", totalScore: 90, compositeScore: 90, ...constructiveMetrics }),
+    ],
+  }));
+  try {
+    await waitForSymbols(page, 3);
+    const setupCells = page.locator(".compactResultsTable tbody tr td:nth-child(6)");
+    assert.equal(await setupCells.count(), 3, "seeded setup rows should render compact setup cells");
+    const firstSetupCell = setupCells.nth(0);
+    const secondSetupCell = setupCells.nth(1);
+    const thirdSetupCell = setupCells.nth(2);
+    const visibleText = `${await firstSetupCell.innerText()}\n${await secondSetupCell.innerText()}`;
+    const allSetupText = `${visibleText}\n${await thirdSetupCell.innerText()}`;
+    assert.match(allSetupText, /3 comp\.\s*·\s*22\.0% -> 13\.0% -> 6\.0%/i, "setup cell should show objective contraction count and sequence");
+    assert.match(allSetupText, /3 comp\.\s*·\s*8\.0% -> 13\.0% -> 7\.0%/i, "rejected setup cell should still show measured contraction sequence");
+    assert.match(allSetupText, /2 comp\.\s*·\s*14\.0% -> 5\.0%/i, "two-contraction constructive bases should show measured count and sequence");
+    assert.match(allSetupText, /ultima 6\.0%|pivot -4\.0%|vol 0\.72x/i, "setup cell should expose compact objective context");
+    assert.doesNotMatch(allSetupText, /Base en vigilancia|Base constructiva|VCP estricto|Plan válido|No VCP/i, "setup cell should not lead with methodology verdict labels");
+    assert.doesNotMatch(allSetupText, /Volumen seco|Calidad:/i, "setup cell should keep secondary metrics behind the info hint");
+    assert.doesNotMatch(allSetupText, /contracciones|volumen \d/i, "setup cell should avoid full methodology sentences");
+    const info = firstSetupCell.locator(".infoHint").first();
+    assert.equal(await firstSetupCell.locator(".infoHint").count(), 1, "setup cell should expose one info hint for methodology details");
+    assert.equal(await secondSetupCell.locator(".infoHint").count(), 1, "rejected setup cell should also expose one info hint for methodology details");
+    assert.equal(await thirdSetupCell.locator(".infoHint").count(), 1, "constructive setup cell should also expose one info hint for methodology details");
+    const detail = await info.getAttribute("aria-label");
+    assert.match(detail || "", /Evidencia: 22\.0% -> 13\.0% -> 6\.0%/, "info hint should retain contraction evidence");
+    assert.match(detail || "", /Pivot: -4\.0%/, "info hint should retain pivot distance");
+    assert.match(detail || "", /Volumen seco: 0\.72x/, "info hint should retain volume dry-up");
+    assert.match(detail || "", /Calidad: 76/, "info hint should retain pattern quality");
+    assert.match(detail || "", /Veredicto:/, "info hint should retain the methodology verdict as secondary context");
+    const rejectedDetail = await secondSetupCell.locator(".infoHint").first().getAttribute("aria-label");
+    assert.match(rejectedDetail || "", /Evidencia: 8\.0% -> 13\.0% -> 7\.0%/, "rejected setup info hint should retain contraction evidence");
+    const constructiveDetail = await thirdSetupCell.locator(".infoHint").first().getAttribute("aria-label");
+    assert.match(constructiveDetail || "", /Evidencia: 14\.0% -> 5\.0%/, "constructive setup info hint should retain contraction evidence");
+  } finally {
+    await context.close();
+  }
+}
+
 async function testOpenStockPersistsReturnContext(browser) {
   const seededRows = Array.from({ length: 80 }, (_, index) => row({
     symbol: `NAV${String(index + 1).padStart(2, "0")}`,
@@ -637,6 +661,7 @@ async function main() {
     await testPreviewChartUsesMainRs(browser);
     await testMissingScoreDoesNotPass(browser);
     await testProgressiveContractionFilter(browser);
+    await testSetupCellKeepsDetailsBehindInfo(browser);
     await testOpenStockPersistsReturnContext(browser);
     await testSessionRestoresReturnScroll(browser);
     await testQuickListsUseSameSnapshotContract(browser);

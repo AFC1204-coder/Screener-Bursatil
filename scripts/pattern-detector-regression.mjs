@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import { groupRows } from "../lib/grouping.js";
 import { sanitizeMaterializedLeaderboardItem } from "../lib/leaderboards.js";
-import { methodologyDisplayForRow, methodologyEvidenceLine, methodologyPivotWatchEligible, methodologySetupLabel, methodologyTradePlanEligible, methodologyWatchEligible } from "../lib/methodologyDisplay.js";
+import { methodologyCompactReasonLine, methodologyDisplayForRow, methodologyEvidenceLine, methodologyPivotWatchEligible, methodologySetupLabel, methodologyTradePlanEligible, methodologyWatchEligible } from "../lib/methodologyDisplay.js";
 import { compactMethodologySnapshot, enrichRowsWithMethodology } from "../lib/methodologyEngine.js";
 import { methodologyVerdictForRow } from "../lib/methodologyVerdict.js";
 import { setupStructureForRow, strictVcpRejectReason, technicalConfidenceForPattern } from "../lib/patternNarrative.js";
 import { screenerFilterRejectReason } from "../lib/screenerFilters.js";
 import { setupPatternForBars } from "../lib/setupPatterns.js";
 import { tradePlanEligibility } from "../lib/tradePlan.js";
+import { vcpObjectiveSummary } from "../lib/vcpDiagnostics.js";
 
 const dayMs = 86400000;
 const startMs = Date.now() - 179 * dayMs;
@@ -30,6 +31,18 @@ function solidUptrendWithMicroPullbacks() {
     const trend = 50 + i * 0.42;
     const wave = Math.sin(i / 4) * 2.2;
     rows.push(bar(i, trend + wave, 1_000_000 + i * 1_000));
+  }
+  return rows;
+}
+
+function persistentAdvanceWithTwoShallowDips() {
+  const rows = [];
+  for (let i = 0; i < 180; i++) {
+    const trend = 42 + i * 0.48;
+    const firstDip = i >= 116 && i <= 123 ? -Math.sin(((i - 116) / 7) * Math.PI) * 4.2 : 0;
+    const secondDip = i >= 150 && i <= 157 ? -Math.sin(((i - 150) / 7) * Math.PI) * 5.2 : 0;
+    const wave = Math.sin(i / 9) * 0.3;
+    rows.push(bar(i, trend + firstDip + secondDip + wave, 1_000_000 + i * 1_000, 0.009));
   }
   return rows;
 }
@@ -83,6 +96,22 @@ function expandingContractionsBase() {
   return rows;
 }
 
+function lowerLowCompressionTrap() {
+  const rows = [];
+  for (let i = 0; i < 100; i++) rows.push(bar(i, 45 + i * 0.45, 1_300_000));
+  for (let i = 100; i < 180; i++) {
+    let close;
+    if (i < 114) close = 96 - ((i - 100) / 14) * 16;
+    else if (i < 128) close = 80 + ((i - 114) / 14) * 12;
+    else if (i < 142) close = 92 - ((i - 128) / 14) * 12.3;
+    else if (i < 156) close = 79.7 + ((i - 142) / 14) * 8.7;
+    else if (i < 168) close = 88.4 - ((i - 156) / 12) * 9;
+    else close = 79.4 + ((i - 168) / 12) * 16.6;
+    rows.push(bar(i, close, i > 145 ? 650_000 : 950_000, i > 160 ? 0.007 : 0.011));
+  }
+  return rows;
+}
+
 const trend = setupPatternForBars(solidUptrendWithMicroPullbacks());
 assert.equal(trend.patternDataStatus, "ok");
 assert.equal(trend.consolidationCandidate, false);
@@ -98,6 +127,21 @@ assert.equal(methodologyDisplayForRow(trend).label, "Sin base validada");
 assert.equal(methodologySetupLabel(trend), "Sin base");
 assert.equal(methodologyWatchEligible(trend), false);
 
+const twoDipAdvance = setupPatternForBars(persistentAdvanceWithTwoShallowDips());
+assert.equal(twoDipAdvance.patternDataStatus, "ok");
+assert.equal(twoDipAdvance.baseContextStatus, "persistent_advance");
+assert.equal(twoDipAdvance.consolidationCandidate, false);
+assert.equal(twoDipAdvance.patternFamily, "trend_no_base");
+assert.equal(twoDipAdvance.contractionCount, 0);
+assert.deepEqual(twoDipAdvance.contractionDepths, []);
+assert.equal(twoDipAdvance.vcpCandidate, false);
+assert.equal(twoDipAdvance.pivotSqueeze, false);
+assert.equal(setupStructureForRow(twoDipAdvance).key, "trend_no_base");
+assert.equal(methodologyVerdictForRow(twoDipAdvance).key, "no_base");
+assert.equal(methodologyWatchEligible(twoDipAdvance), false);
+assert.equal(methodologyTradePlanEligible(twoDipAdvance), false);
+assert.equal(methodologyPivotWatchEligible(twoDipAdvance), false);
+
 const base = setupPatternForBars(progressiveContractionBase());
 assert.equal(base.patternDataStatus, "ok");
 assert.equal(base.consolidationCandidate, true);
@@ -110,7 +154,7 @@ assert.ok(base.contraction3DepthPct > 6 && base.contraction3DepthPct < 10);
 assert.ok(base.patternQualityScore >= 60);
 assert.ok(["vcp_strict", "vcp_watch"].includes(setupStructureForRow(base).key));
 assert.equal(["actionable_vcp", "strict_not_actionable", "vcp_watch"].includes(methodologyVerdictForRow(base).key), true);
-assert.equal(["VCP plan valido", "VCP estricto sin plan", "Base en vigilancia"].includes(methodologyDisplayForRow(base).label), true);
+assert.equal(["VCP plan válido", "VCP estricto sin plan", "Base en vigilancia"].includes(methodologyDisplayForRow(base).label), true);
 
 const squeeze = setupPatternForBars(marginalHighBreakThenPivotSqueeze());
 assert.equal(squeeze.patternDataStatus, "ok");
@@ -150,6 +194,7 @@ assert.equal(methodologyDisplayForRow(irregularNearPivot).watch, false);
 assert.equal(methodologyWatchEligible(irregularNearPivot), false);
 assert.equal(methodologyPivotWatchEligible(irregularNearPivot), false);
 assert.notEqual(methodologySetupLabel(irregularNearPivot), "Pivot estimado");
+assert.equal(methodologyCompactReasonLine(irregularNearPivot), "re-expansión final");
 
 const weakConstructiveBase = {
   patternDataStatus: "ok",
@@ -206,8 +251,9 @@ const cleanTwoContractionSqueeze = {
 };
 assert.equal(setupStructureForRow(cleanTwoContractionSqueeze).key, "pivot_squeeze");
 assert.equal(methodologyVerdictForRow(cleanTwoContractionSqueeze).key, "pivot_squeeze");
+assert.notEqual(methodologyVerdictForRow(cleanTwoContractionSqueeze).key, "vcp_watch");
 assert.equal(methodologyVerdictForRow(cleanTwoContractionSqueeze).watch, true);
-assert.equal(methodologyDisplayForRow(cleanTwoContractionSqueeze).label, "Compresion de pivot");
+assert.equal(methodologyDisplayForRow(cleanTwoContractionSqueeze).label, "Compresión de pivot");
 assert.equal(methodologyWatchEligible(cleanTwoContractionSqueeze), true);
 
 const usefulTwoContractionBase = {
@@ -229,9 +275,23 @@ const usefulTwoContractionBase = {
 };
 assert.equal(setupStructureForRow(usefulTwoContractionBase).key, "constructive_base");
 assert.equal(methodologyVerdictForRow(usefulTwoContractionBase).key, "constructive_base");
-assert.equal(methodologyVerdictForRow(usefulTwoContractionBase).label, "Base en vigilancia");
+assert.equal(methodologyVerdictForRow(usefulTwoContractionBase).label, "Base constructiva");
+assert.notEqual(methodologyVerdictForRow(usefulTwoContractionBase).key, "vcp_watch");
 assert.equal(methodologyVerdictForRow(usefulTwoContractionBase).watch, true);
-assert.equal(methodologySetupLabel(usefulTwoContractionBase), "Base en vigilancia");
+assert.equal(methodologySetupLabel(usefulTwoContractionBase), "Base constructiva");
+
+const storedLegacyConstructiveBase = {
+  ...usefulTwoContractionBase,
+  setupDisplayKey: "constructive_base",
+  setupDisplayState: "watch",
+  setupDisplayLabel: "Base en vigilancia",
+  setupDisplayShortLabel: "Base en vigilancia",
+  setupDisplayWatch: true,
+};
+assert.equal(methodologyDisplayForRow(storedLegacyConstructiveBase).key, "constructive_base");
+assert.equal(methodologyDisplayForRow(storedLegacyConstructiveBase).label, "Base constructiva");
+assert.equal(methodologySetupLabel(storedLegacyConstructiveBase), "Base constructiva");
+assert.notEqual(methodologyDisplayForRow(storedLegacyConstructiveBase).label, "Base en vigilancia");
 
 const farMeasuredBase = {
   ...usefulTwoContractionBase,
@@ -298,6 +358,21 @@ assert.ok(expanding.contraction1DepthPct > 24);
 assert.equal(expanding.contractionsDecreasing, false);
 assert.notEqual(setupStructureForRow(expanding).key, "vcp_strict");
 
+const lowerLowTrap = setupPatternForBars(lowerLowCompressionTrap());
+assert.equal(lowerLowTrap.patternDataStatus, "ok");
+assert.equal(lowerLowTrap.consolidationCandidate, true);
+assert.notEqual(lowerLowTrap.patternFamily, "progressive_contraction");
+assert.equal(lowerLowTrap.contractionCount, 2);
+assert.equal(lowerLowTrap.contractionsDecreasing, false);
+assert.equal(lowerLowTrap.contractionStructureStatus, "lower_low_drift");
+assert.equal(lowerLowTrap.vcpCandidate, false);
+assert.equal(lowerLowTrap.pivotSqueeze, false);
+assert.equal(setupStructureForRow(lowerLowTrap).key, "not_vcp");
+assert.equal(methodologyVerdictForRow(lowerLowTrap).key, "not_actionable");
+assert.notEqual(setupStructureForRow(lowerLowTrap).key, "vcp_watch");
+assert.equal(methodologyWatchEligible(lowerLowTrap), false);
+assert.equal(methodologyPivotWatchEligible(lowerLowTrap), false);
+
 const progressiveFilter = {
   requireContractionsDecreasing: true,
   minContractionCount: 3,
@@ -347,15 +422,23 @@ const cleanActionableStrict = {
 };
 assert.equal(tradePlanEligibility(cleanActionableStrict).actionable, true);
 assert.equal(methodologyVerdictForRow(cleanActionableStrict).key, "actionable_vcp");
-assert.equal(methodologyDisplayForRow(cleanActionableStrict).label, "VCP plan valido");
-assert.equal(methodologySetupLabel(cleanActionableStrict), "Plan valido");
+assert.equal(methodologyDisplayForRow(cleanActionableStrict).label, "VCP plan válido");
+assert.equal(methodologySetupLabel(cleanActionableStrict), "Plan válido");
 assert.equal(methodologyWatchEligible(cleanActionableStrict), true);
 assert.equal(methodologyTradePlanEligible(cleanActionableStrict), true);
 assert.equal(methodologyPivotWatchEligible(cleanActionableStrict), true);
 assert.ok(methodologyEvidenceLine(cleanActionableStrict).includes("24.0% -> 15.0% -> 7.0%"));
+assert.equal(methodologyCompactReasonLine(cleanActionableStrict), "compresión válida");
+const cleanActionableObjective = vcpObjectiveSummary(cleanActionableStrict);
+assert.equal(cleanActionableObjective.countText, "3 comp.");
+assert.equal(cleanActionableObjective.sequence, "24.0% -> 15.0% -> 7.0%");
+assert.ok(cleanActionableObjective.primary.includes("3 comp."));
+assert.ok(cleanActionableObjective.secondary.includes("ultima 7.0%"));
+assert.ok(cleanActionableObjective.secondary.includes("base 32.0%"));
+assert.ok(cleanActionableObjective.secondary.includes("pivot -4.0%"));
 const cleanActionableSnapshot = compactMethodologySnapshot(cleanActionableStrict);
 assert.equal(cleanActionableSnapshot.setupDisplayKey, "actionable_vcp");
-assert.equal(cleanActionableSnapshot.setupDisplayLabel, "VCP plan valido");
+assert.equal(cleanActionableSnapshot.setupDisplayLabel, "VCP plan válido");
 assert.equal(cleanActionableSnapshot.setupPlanValid, true);
 assert.equal(cleanActionableSnapshot.setupDisplayPlanValid, true);
 assert.equal(cleanActionableSnapshot.setupDisplayBlocksPatternClaim, false);
@@ -371,8 +454,8 @@ const storedLegacyActionableDisplay = {
   setupDisplayTradePlanEligible: true,
   setupDisplayBlocksPatternClaim: false,
 };
-assert.equal(methodologyDisplayForRow(storedLegacyActionableDisplay).label, "VCP plan valido");
-assert.equal(methodologySetupLabel(storedLegacyActionableDisplay), "Plan valido");
+assert.equal(methodologyDisplayForRow(storedLegacyActionableDisplay).label, "VCP plan válido");
+assert.equal(methodologySetupLabel(storedLegacyActionableDisplay), "Plan válido");
 
 const staleStoredPlanDisplay = {
   ...cleanActionableStrict,
@@ -387,8 +470,8 @@ const staleStoredPlanDisplay = {
 };
 assert.notEqual(methodologyVerdictForRow(staleStoredPlanDisplay).key, "actionable_vcp");
 assert.notEqual(methodologyDisplayForRow(staleStoredPlanDisplay).key, "actionable_vcp");
-assert.notEqual(methodologyDisplayForRow(staleStoredPlanDisplay).label, "VCP plan valido");
-assert.notEqual(methodologySetupLabel(staleStoredPlanDisplay), "Plan valido");
+assert.notEqual(methodologyDisplayForRow(staleStoredPlanDisplay).label, "VCP plan válido");
+assert.notEqual(methodologySetupLabel(staleStoredPlanDisplay), "Plan válido");
 assert.equal(methodologyDisplayForRow(staleStoredPlanDisplay).actionable, false);
 assert.equal(methodologyDisplayForRow(staleStoredPlanDisplay).tradePlanEligible, false);
 assert.equal(methodologyTradePlanEligible(staleStoredPlanDisplay), false);
@@ -402,7 +485,7 @@ const staleSnapshotRow = {
 };
 const refreshedSnapshotRow = enrichRowsWithMethodology([staleSnapshotRow], [])[0];
 assert.equal(refreshedSnapshotRow.setupDisplayPlanValid, false);
-assert.notEqual(refreshedSnapshotRow.setupDisplayLabel, "VCP plan valido");
+assert.notEqual(refreshedSnapshotRow.setupDisplayLabel, "VCP plan válido");
 assert.equal(refreshedSnapshotRow.methodologyEvents.some((event) => event.type === "setup_plan_valid"), false);
 
 const staleMaterializedLeaderboardItem = sanitizeMaterializedLeaderboardItem({
@@ -419,7 +502,7 @@ const staleMaterializedLeaderboardItem = sanitizeMaterializedLeaderboardItem({
 }, { maxPriceFreshnessDays: 5 });
 assert.equal(staleMaterializedLeaderboardItem.setupDisplayPlanValid, false);
 assert.equal(staleMaterializedLeaderboardItem.setupDisplayActionable, false);
-assert.notEqual(staleMaterializedLeaderboardItem.setupDisplayLabel, "VCP plan valido");
+assert.notEqual(staleMaterializedLeaderboardItem.setupDisplayLabel, "VCP plan válido");
 
 const strictPlanFalsePositiveGoldenSet = [
   {
@@ -567,6 +650,7 @@ assert.equal(tradePlanEligibility(storedDataLimitedActionable).actionable, true)
 assert.equal(methodologyDisplayForRow(storedDataLimitedActionable).actionable, false);
 assert.equal(methodologyDisplayForRow(storedDataLimitedActionable).tradePlanEligible, false);
 assert.equal(methodologyDisplayForRow(storedDataLimitedActionable).blocksPatternClaim, true);
+assert.equal(methodologyDisplayForRow(storedDataLimitedActionable).reason, "Precio viejo: no derivar plan automático.");
 assert.equal(methodologyWatchEligible(storedDataLimitedActionable), false);
 assert.equal(methodologyTradePlanEligible(storedDataLimitedActionable), false);
 assert.equal(methodologyPivotWatchEligible(storedDataLimitedActionable), false);

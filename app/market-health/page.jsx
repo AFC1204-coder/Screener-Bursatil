@@ -517,16 +517,16 @@ function MethodologyHealthPanel({ health, loading = false }) {
   const statusClass = methodologyStatusClass(health?.status);
   const bucketRows = [
     { key: "block", label: "Bloqueado", value: buckets.block, tone: "neutral", detail: "No reclama setup ni vigilancia cuando la estructura no pasa filtros." },
-    { key: "observe", label: "Observable", value: buckets.observe, tone: "neutral", detail: "Base medible, pero fuera de zona o sin suficiente confirmacion." },
-    { key: "watch", label: "Vigilancia", value: buckets.watch, tone: "pass", detail: "Candidatas para mirar, todavia sin plan automatico." },
-    { key: "plan", label: "Plan valido", value: buckets.plan, tone: buckets.plan > 0 ? "warn" : "pass", detail: "Debe permanecer en 0 hasta que la deteccion sea realmente fiable." },
+    { key: "observe", label: "Observable", value: buckets.observe, tone: "neutral", detail: "Base medible, pero fuera de zona o sin suficiente confirmación." },
+    { key: "watch", label: "Vigilancia", value: buckets.watch, tone: "pass", detail: "Candidatas para mirar, todavía sin plan automático." },
+    { key: "plan", label: "Plan válido", value: buckets.plan, tone: buckets.plan > 0 ? "warn" : "pass", detail: "Debe permanecer en 0 hasta que la detección sea realmente fiable." },
   ];
 
   return <section className="card coverageReadinessPanel methodologyHealthPanel">
     <div className="sectionTitle">
       <div>
-        <h2>Fiabilidad metodologica</h2>
-        <p className="fine">Regresion de VCP, buckets block/observe/watch/plan y bloqueo de plan valido.</p>
+        <h2>Fiabilidad metodológica</h2>
+        <p className="fine">Regresión de VCP, buckets block/observe/watch/plan y bloqueo de plan válido.</p>
       </div>
       <span className={`coverageReadinessStatus ${statusClass}`}>
         {loading && !health ? "Cargando" : health?.label || "Sin dato"}
@@ -538,7 +538,7 @@ function MethodologyHealthPanel({ health, loading = false }) {
         <div><b>{Number.isFinite(totals.passed) && Number.isFinite(totals.cases) ? `${totals.passed}/${totals.cases}` : "-"}</b><span>Casos validados</span></div>
         <div><b>{num(totals.failed)}</b><span>Fallos</span></div>
         <div><b>{num(calibration.mismatches)}</b><span>Desajustes bucket</span></div>
-        <div><b>{num(buckets.plan)}</b><span>Planes automaticos</span></div>
+        <div><b>{num(buckets.plan)}</b><span>Planes automáticos</span></div>
         <div><b>{calibration.guardrailsOk ? "OK" : "Revisar"}</b><span>Guardrails</span></div>
       </div>
 
@@ -907,8 +907,8 @@ export default function MarketHealthPage() {
           <div className="kpi"><b>{data.sectorSummary?.worst1m || "-"}</b><span>Peor 1M</span></div>
         </div>
         <div className="sectorPulse">
-          <div><b>Lideres</b><span>{listText(data.sectorSummary?.leaders)}</span></div>
-          <div><b>Debiles</b><span>{listText(data.sectorSummary?.laggards)}</span></div>
+          <div><b>Líderes</b><span>{listText(data.sectorSummary?.leaders)}</span></div>
+          <div><b>Débiles</b><span>{listText(data.sectorSummary?.laggards)}</span></div>
         </div>
         {data.sectorTapeNote && <span className="fine">Detalle operativo en Sectores.</span>}
       </section>}

@@ -128,25 +128,31 @@ function commandCenterFrom({ rows = [], alerts = [], favorites = [] } = {}) {
   return [
     { key: "structures", title: "Vigilancia metodológica", detail: "Estructuras en zona útil; solo Plan válido habilita plan automático", rows: structures },
     { key: "measured", title: "Bases medibles", detail: "Estructura reconocible, pero fuera de zona de vigilancia", rows: measuredBases },
-    { key: "pivot", title: "Pivot cercano", detail: "Proximidad objetiva; no implica VCP validado ni plan automatico", rows: pivotZone },
+    { key: "pivot", title: "Pivot cercano", detail: "Proximidad objetiva; no implica VCP validado ni plan automático", rows: pivotZone },
     { key: "favoriteAlerts", title: "Favoritos con cambios", detail: "Alertas activas sobre valores ya guardados", alerts: favoriteAlerts },
     { key: "data", title: "Datos a revisar", detail: "Patrones no calculados por cobertura insuficiente", rows: dataIssues },
   ];
 }
 
 function DailyCommandCenter({ sections = [] }) {
+  const visibleSections = sections.filter((section) => (section.rows?.length || section.alerts?.length || 0) > 0);
+  if (!visibleSections.length) {
+    return <section className="card commandCenterEmpty">
+      <div className="emptyStateHead">
+        <h2>Observatorio <InfoHint text="Cambios y estructuras observables desde snapshots y favoritos. No establece preferencias." /></h2>
+        <span className="fine">Sin elementos relevantes</span>
+      </div>
+      <a className="btn" href="/">Screener</a>
+    </section>;
+  }
   return <section className="card">
     <div className="sectionTitle">
-      <div>
-        <h2>Observatorio</h2>
-        <p className="fine">Cambios y estructuras observables; no establece preferencias.</p>
-      </div>
+      <h2>Observatorio <InfoHint text="Cambios y estructuras observables desde snapshots y favoritos. No establece preferencias." /></h2>
       <span className="fine">snapshot + favoritos</span>
     </div>
     <div className="grid grid2">
-      {sections.map((section) => <div className="miniPanel" key={section.key}>
-        <div className="sectionTitle"><h3>{section.title}</h3><span className="fine">{section.rows?.length || section.alerts?.length || 0}</span></div>
-        <p className="fine">{section.detail}</p>
+      {visibleSections.map((section) => <div className="miniPanel" key={section.key}>
+        <div className="sectionTitle"><h3>{section.title} <InfoHint text={section.detail} /></h3><span className="fine">{section.rows?.length || section.alerts?.length || 0}</span></div>
         {section.alerts ? section.alerts.slice(0, 5).map((alert) => <div className="summaryRow" key={alert.id}>
           <span><a className="ticker" href={stockUrl(alert.symbol)}>{alert.symbol}</a><br /><span className="fine">{alert.payload?.label || alert.alertType}</span></span>
           <span>{alert.payload?.severity || "neutral"}</span>
@@ -154,7 +160,6 @@ function DailyCommandCenter({ sections = [] }) {
           <span><a className="ticker" href={stockUrl(row.symbol)}>{row.symbol}</a><br /><span className="fine">{patternLabel(row)}</span></span>
           <span>{section.key === "pivot" && Number.isFinite(row.distanceToPivotPct) ? pct(row.distanceToPivotPct) : contractionText(row)}</span>
         </div>)}
-        {!(section.rows?.length || section.alerts?.length) && <p className="fine">Sin elementos en esta muestra.</p>}
       </div>)}
     </div>
   </section>;
