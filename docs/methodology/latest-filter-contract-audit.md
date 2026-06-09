@@ -1,8 +1,8 @@
 # Filter Contract Audit
 
 Dataset version: 1
-Cases: 219 · Passed: 219 · Failed: 0
-Synthetic: 212 · Frozen: 7
+Cases: 230 · Passed: 230 · Failed: 0
+Synthetic: 223 · Frozen: 7
 Visible fields covered: 62/62
 Guardrails: OK
 Exactness probe: OK · passed RS90 · rejected RS89
@@ -14,9 +14,9 @@ Exactness probe: OK · passed RS90 · rejected RS89
 | frozen-real | 7 | 0 |
 | synthetic-boundary | 108 | 0 |
 | synthetic-distance | 12 | 0 |
-| synthetic-mode | 11 | 0 |
+| synthetic-mode | 18 | 0 |
 | synthetic-null | 64 | 0 |
-| synthetic-special | 17 | 0 |
+| synthetic-special | 21 | 0 |
 
 ## Matrix
 
@@ -218,26 +218,37 @@ OK | synthetic-null | requireUpVolume-null-reject | requireUpVolume | upVolume |
 OK | synthetic-special | requireContractionsDecreasing-true-pass | requireContractionsDecreasing | contractionsDecreasing | 1 | 1 | pass | pass | - | -
 OK | synthetic-special | requireContractionsDecreasing-false-reject | requireContractionsDecreasing | contractionsDecreasing | 1 | 0 | reject requireContractionsDecreasing | reject | requireContractionsDecreasing | sin compresión progresiva
 OK | synthetic-null | requireContractionsDecreasing-null-reject | requireContractionsDecreasing | contractionsDecreasing | 1 | null | reject requireContractionsDecreasing | reject | requireContractionsDecreasing | sin compresión progresiva
+OK | synthetic-special | pattern-data-blocked-rejects-structure-filter | patternDataStatus | patternDataStatus | pattern active | insufficient_history | reject patternDataStatus | reject | patternDataStatus | estructura no fiable: histórico insuficiente
+OK | synthetic-special | pattern-invalid-structure-rejects-count-pass | contractionStructureStatus | contractionStructureStatus | pattern active | lower_low_drift | reject contractionStructureStatus | reject | contractionStructureStatus | mínimos no sostienen la base
+OK | synthetic-special | pattern-valid-structure-allows-count-pass | contractionStructureStatus | contractionStructureStatus | pattern active | ok | pass | pass | - | -
+OK | synthetic-special | pattern-partial-volume-rejects-dry-up-filter | patternDataStatus | patternVolumeEligible | maxVolumeDryUpRatio | partial_volume | reject patternDataStatus | reject | patternDataStatus | volumen no fiable para validar volumen seco
 OK | synthetic-special | requireStage2-confirmed-pass | requireStage2 | stage2 structure | 1 | confirmed | pass | pass | - | -
 OK | synthetic-special | requireStage2-broken-stack-reject | requireStage2 | sma stack | 1 | sma50<sma150 | reject requireStage2 | reject | requireStage2 | SMA50 diaria no supera SMA150
 OK | synthetic-special | requireRecentIpo-age-boundary-pass | maxIpoAgeMonths | ipoAgeMonths | 12 | 12 | pass | pass | - | -
 OK | synthetic-special | requireRecentIpo-age-over-reject | maxIpoAgeMonths | ipoAgeMonths | 12 | 13 | reject requireRecentIpo | reject | requireRecentIpo | IPO no reciente <= 12m
 OK | synthetic-null | requireRecentIpo-null-reject | maxIpoAgeMonths | ipoAgeMonths | 12 | null | reject requireRecentIpo | reject | requireRecentIpo | IPO no reciente <= 12m
-OK | synthetic-mode | setupMode-nearPivot-boundary-pass | setupMode | distance/spread/ext | nearPivot | -6/10/18 | pass | pass | - | -
-OK | synthetic-mode | setupMode-nearPivot-extension-reject | setupMode | extSma50 | nearPivot | 18.1 | reject setupMode | reject | setupMode | Vigilancia pivot: dist20 -2 >= -6, spread 5 <= 10.0, ext 18.1 <= 18.0
-OK | synthetic-mode | setupMode-pullback-window-pass | setupMode | ext/distance52w/perf6m | pullback | 0/-20/8 | pass | pass | - | -
-OK | synthetic-mode | setupMode-pullback-extension-reject | setupMode | extSma50 | pullback | 10 | reject setupMode | reject | setupMode | Pullback SMA50: precio 100 > SMA200 72.0, ext 10.0 entre -4 y 9, 52w -20.0 >= -30, 6M 12.0 >= 8
+OK | synthetic-mode | setupMode-nearPivot-score-only-reject | setupMode | distance/spread/ext | nearPivot | -6/10/18 no method pivot | reject setupMode | reject | setupMode | Vigilancia pivot: contrato compartido no validado, pivot metodológico no validado, dist20 -6 >= -6, spread 10.0 <= 10.0, ext 18.0 <= 18.0
+OK | synthetic-mode | setupMode-nearPivot-boundary-pass | setupMode | method-pivot/distance/spread/ext | nearPivot | -4 pivot/-6/10/18 | pass | pass | - | -
+OK | synthetic-mode | setupMode-nearPivot-contract-score-reject | setupMode | method-pivot/contract-score | nearPivot | score 40 | reject setupMode | reject | setupMode | Vigilancia pivot: contrato compartido no validado, pivot metodológico validado, dist20 -6 >= -6, spread 10.0 <= 10.0, ext 18.0 <= 18.0
+OK | synthetic-mode | setupMode-nearPivot-partial-volume-reject | setupMode | method-pivot/partial-volume | nearPivot | partial_volume | reject setupMode | reject | setupMode | Vigilancia pivot: contrato compartido no validado, pivot metodológico no validado, dist20 -6 >= -6, spread 10.0 <= 10.0, ext 18.0 <= 18.0
+OK | synthetic-mode | setupMode-nearPivot-extension-reject | setupMode | extSma50 | nearPivot | 18.1 | reject setupMode | reject | setupMode | Vigilancia pivot: contrato compartido no validado, pivot metodológico no validado, dist20 -2 >= -6, spread 5 <= 10.0, ext 18.1 <= 18.0
+OK | synthetic-mode | setupMode-pullback-window-pass | setupMode | price/sma50/ext/distance52w/perf6m | pullback | 100/100/0/-20/8 | pass | pass | - | -
+OK | synthetic-mode | setupMode-pullback-contract-score-reject | setupMode | composite | pullback | 40 | reject setupMode | reject | setupMode | Pullback SMA50: contrato compartido no validado, precio 100 > SMA200 70.0, precio/SMA50 100 => ext calc 0, ext 0 entre -3 y 8, 52w -20.0 >= -30, 6M 12.0 >= 8
+OK | synthetic-mode | setupMode-pullback-stale-extension-reject | setupMode | price/sma50/ext | pullback | 80/100/0 | reject setupMode | reject | setupMode | Pullback SMA50: contrato compartido no validado, precio 80.0 > SMA200 70.0, precio/SMA50 100 => ext calc -20.0, ext 0 entre -3 y 8, 52w -20.0 >= -30, 6M 12.0 >= 8
+OK | synthetic-mode | setupMode-pullback-extension-reject | setupMode | extSma50 | pullback | 10 | reject setupMode | reject | setupMode | Pullback SMA50: contrato compartido no validado, precio 100 > SMA200 72.0, precio/SMA50 92.0 => ext calc 8.70, ext 10.0 entre -3 y 8, 52w -20.0 >= -30, 6M 12.0 >= 8
 OK | synthetic-mode | setupMode-early-boundary-pass | setupMode | distance52w/perf3m/ext | early | -35/5/20 | pass | pass | - | -
 OK | synthetic-mode | setupMode-ipoRecent-boundary-pass | setupMode | ipo/momentum/ext | ipoRecent | 10/35/35 | pass | pass | - | -
-OK | synthetic-mode | setupMode-ipoRecent-old-reject | setupMode | ipoAgeMonths | ipoRecent | 13 | reject setupMode | reject | setupMode | IPO reciente: edad 13.0m <= 12.0m, 52w -35.0 >= -35, ext 35.0 <= 35.0, momentum 35.0 >= 35.0
-OK | synthetic-mode | setupMode-extended-boundary-pass | setupMode | ext/momentum | extended | 12/65 | pass | pass | - | -
-OK | synthetic-mode | setupMode-extended-underextension-reject | setupMode | extSma50 | extended | 11.9 | reject setupMode | reject | setupMode | Extendida fuerte: ext 11.9 entre 12 y 25.0, momentum 80.0 >= 65.0
+OK | synthetic-mode | setupMode-ipoRecent-old-reject | setupMode | ipoAgeMonths | ipoRecent | 13 | reject setupMode | reject | setupMode | IPO reciente: contrato compartido no validado, edad 13.0m <= 12.0m, 52w -35.0 >= -35, ext 35.0 <= 35.0, momentum 35.0 >= 35.0
+OK | synthetic-mode | setupMode-ipoRecent-long-bias-reject | setupMode | ipo/long-bias | ipoRecent | price below SMA200 | reject setupMode | reject | setupMode | IPO reciente: contrato compartido no validado, edad 10.0m <= 12.0m, 52w -20.0 >= -35, ext 20.0 <= 35.0, momentum 60.0 >= 35.0
+OK | synthetic-mode | setupMode-extended-boundary-pass | setupMode | price/sma50/ext/momentum | extended | 115/100/15/65 | pass | pass | - | -
+OK | synthetic-mode | setupMode-extended-stale-extension-reject | setupMode | price/sma50/ext | extended | 90/100/15 | reject setupMode | reject | setupMode | Extendida fuerte: contrato compartido no validado, precio/SMA50 100 => ext calc -10, ext 15.0 entre 15.0 y 25.0, momentum 80.0 >= 65.0
+OK | synthetic-mode | setupMode-extended-underextension-reject | setupMode | extSma50 | extended | 14.9 | reject setupMode | reject | setupMode | Extendida fuerte: contrato compartido no validado, precio/SMA50 100 => ext calc 14.9, ext 14.9 entre 15.0 y 25.0, momentum 80.0 >= 65.0
 OK | synthetic-mode | setupMode-weakness-boundary-pass | minWeaknessScore | weaknessScore | 55 | 55 | pass | pass | - | -
 OK | synthetic-mode | setupMode-weakness-below-reject | minWeaknessScore | weaknessScore | 55 | 54.9 | reject minWeaknessScore | reject | minWeaknessScore | deterioro 55 < 55
 OK | frozen-real | meta-vcp-plan-2024-01-05:strict-vcp-plan-pass | requireContractionsDecreasing, minContractionCount, maxContraction1DepthPct, maxContraction2DepthPct, maxContraction3DepthPct, maxLastContractionDepthPct, maxAbsDistanceToPivotPct, maxVolumeDryUpRatio, minPatternQualityScore | META | 2024-01-05 | meta-vcp-plan-2024-01-05 | pass | pass | - | -
 OK | frozen-real | 3988-hk-vcp-plan-2026-05-28:strict-vcp-plan-pass | requireContractionsDecreasing, minContractionCount, maxContraction1DepthPct, maxContraction2DepthPct, maxContraction3DepthPct, maxLastContractionDepthPct, maxAbsDistanceToPivotPct, maxVolumeDryUpRatio, minPatternQualityScore | 3988.HK | 2026-05-28 | 3988-hk-vcp-plan-2026-05-28 | pass | pass | - | -
 OK | frozen-real | nvda-pivot-squeeze-2024-05-22:pivot-squeeze-watch-pass | requireContractionsDecreasing, minContractionCount, maxContraction1DepthPct, maxContraction2DepthPct, maxAbsDistanceToPivotPct, maxVolumeDryUpRatio, minPatternQualityScore | NVDA | 2024-05-22 | nvda-pivot-squeeze-2024-05-22 | pass | pass | - | -
 OK | frozen-real | nvda-pivot-squeeze-2024-05-22:strict-vcp-rejects-two-contraction-watch | requireContractionsDecreasing, minContractionCount | NVDA | 2024-05-22 | nvda-pivot-squeeze-2024-05-22 | reject minContractionCount | reject | minContractionCount | contracciones 2.00 < 3
-OK | frozen-real | brk-b-lower-low-drift-2026-06-02:rejects-lower-low-drift | requireContractionsDecreasing, minContractionCount | BRK-B | 2026-06-02 | brk-b-lower-low-drift-2026-06-02 | reject requireContractionsDecreasing | reject | requireContractionsDecreasing | sin compresión progresiva
+OK | frozen-real | brk-b-lower-low-drift-2026-06-02:rejects-lower-low-drift | requireContractionsDecreasing, minContractionCount | BRK-B | 2026-06-02 | brk-b-lower-low-drift-2026-06-02 | reject contractionStructureStatus | reject | contractionStructureStatus | mínimos no sostienen la base
 OK | frozen-real | aapl-observe-too-far-2022-02-22:rejects-observe-far-from-pivot | maxAbsDistanceToPivotPct | AAPL | 2022-02-22 | aapl-observe-too-far-2022-02-22 | reject maxAbsDistanceToPivotPct | reject | maxAbsDistanceToPivotPct | distancia pivot 10.10 > 6
 OK | frozen-real | msft-no-base-2026-06-02:rejects-missing-contractions | minContractionCount | MSFT | 2026-06-02 | msft-no-base-2026-06-02 | reject minContractionCount | reject | minContractionCount | contracciones 0.00 < 2

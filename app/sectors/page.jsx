@@ -7,6 +7,7 @@ import { buildGroupListDrilldown } from "@/lib/listRationale";
 import { buildSavedListView, listViewSignature, normalizeSavedListViews } from "@/lib/listViews";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
+import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { favoriteToRow, normalizeStockRows, rowCountry, shortBusiness, weaknessScore } from "@/lib/stockRows";
 import { countryName, externalLinks, marketFlag, stockUrl } from "@/lib/symbols";
 
@@ -53,6 +54,14 @@ function countRows(items = [], predicate = () => false) {
   return (Array.isArray(items) ? items : []).filter(predicate).length;
 }
 
+function rowHasValidPlanClaim(row = {}) {
+  const display = methodologyDisplayForRow(row);
+  return display.blocksPatternClaim !== true
+    && display.dataLimited !== true
+    && display.actionable === true
+    && display.tradePlanEligible === true;
+}
+
 function groupDiscoverySnapshot(discovery = null, group = null) {
   const items = group?.items || [];
   const scopeRows = Number(group?.count || items.length || 0);
@@ -64,7 +73,7 @@ function groupDiscoverySnapshot(discovery = null, group = null) {
       scopeRows,
       listItemCount: items.length,
       staleRows: countRows(items, (row) => Boolean(row.priceFreshnessIssue)),
-      planClaims: countRows(items, (row) => row.setupDisplayPlanValid === true || row.setupPlanValid === true),
+      planClaims: countRows(items, rowHasValidPlanClaim),
     },
   };
 }
@@ -106,6 +115,7 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, countryFil
     <div className="discoveryHealthGrid">
       <span><b>{usingDiscovery ? groupedRows : localRows}</b><em>acciones agrupadas</em></span>
       <span><b>{usingDiscovery ? groupCount : "-"}</b><em>grupos visibles</em></span>
+      <span><b>{usingDiscovery ? health.lowCoverageRows ?? 0 : "-"}</b><em>cobertura baja</em></span>
       <span><b>{usingDiscovery ? health.missingTaxonomyRows ?? 0 : "-"}</b><em>taxonomía incompleta</em></span>
       <span><b>{usingDiscovery ? health.planClaims ?? 0 : "-"}</b><em>planes VCP</em></span>
       <span><b>{countryFilter}</b><em>país</em></span>

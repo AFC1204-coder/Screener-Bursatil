@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import { methodologyDisplayForRow } from "../lib/methodologyDisplay.js";
 import { setupPatternForBars } from "../lib/setupPatterns.js";
-import { vcpDiagnosticSnapshot } from "../lib/vcpDiagnostics.js";
+import { vcpDiagnosticSnapshot, vcpObjectiveSummary } from "../lib/vcpDiagnostics.js";
 
 const CORPUS_PATH = process.env.VCP_CORPUS_PATH || "docs/methodology/vcp-corpus.json";
 const OUTPUT_PATH = process.env.VCP_CORPUS_OUTPUT || "docs/methodology/latest-vcp-corpus-audit.md";
@@ -21,7 +21,10 @@ function array(value) {
 }
 
 function finite(value) {
-  const n = Number(value);
+  if (value === null || value === undefined || value === "") return null;
+  const normalized = typeof value === "string" ? value.trim() : value;
+  if (normalized === "") return null;
+  const n = Number(normalized);
   return Number.isFinite(n) ? n : null;
 }
 
@@ -52,6 +55,17 @@ function fmtPct(value) {
 
 function fmtRatio(value) {
   return Number.isFinite(value) ? `${value.toFixed(2)}x` : "";
+}
+
+function contractionSwings(pattern = {}, { includeRejected = false } = {}) {
+  const accepted = Array.isArray(pattern.contractionSwings) ? pattern.contractionSwings : [];
+  if (!includeRejected) return accepted.slice(0, 4);
+  const measured = Array.isArray(pattern.measuredContractionSwings) ? pattern.measuredContractionSwings : [];
+  if (measured.length) return measured.slice(0, 4);
+  const rejected = pattern.rejectedContractionSwing && typeof pattern.rejectedContractionSwing === "object"
+    ? [pattern.rejectedContractionSwing]
+    : [];
+  return [...accepted, ...rejected].slice(0, 4);
 }
 
 function normalizedBucket(value = "") {
@@ -99,12 +113,16 @@ function refreshEnabled(testCase = {}, dataset = {}) {
 }
 
 function chartPath(testCase = {}, dataset = {}) {
+  const minBars = finite(testCase.expect?.minChartBars);
+  const asOf = toDate(testCase.asOf || "");
   const params = new URLSearchParams({
     symbol: testCase.symbol || "",
     range: testCase.chartRange || "MAX",
     interval: testCase.chartInterval || "D",
     maxAgeDays: String(testCase.maxPriceAgeDays ?? MAX_PRICE_AGE_DAYS),
   });
+  if (Number.isFinite(minBars)) params.set("minBars", String(Math.ceil(minBars)));
+  if (asOf) params.set("asOf", asOf);
   if (testCase.cache === false) params.set("cache", "0");
   if (refreshEnabled(testCase, dataset)) {
     params.set("cache", "0");
@@ -153,6 +171,21 @@ function checkNumber(checks, label, actual, predicate, expected) {
   });
 }
 
+function measuredContractionCount(pattern = {}) {
+  const measured = Array.isArray(pattern.measuredContractionDepths) ? pattern.measuredContractionDepths.filter((value) => Number.isFinite(finite(value))) : [];
+  if (measured.length) return measured.length;
+  const accepted = Array.isArray(pattern.contractionDepths) ? pattern.contractionDepths.filter((value) => Number.isFinite(finite(value))).length : 0;
+  const rejected = Number.isFinite(finite(pattern.rejectedContractionDepthPct)) || pattern.rejectedContractionSwing ? 1 : 0;
+  return accepted + rejected;
+}
+
+function cacheHitMeta(chart = {}) {
+  const cache = chart.meta?.cache || {};
+  if (cache.hit === true) return cache;
+  if (cache.read?.hit === true) return cache.read;
+  return null;
+}
+
 function assertCase({ testCase = {}, chart = {}, bars = [], pattern = {}, display = {}, diagnostic = {} } = {}) {
   const expect = testCase.expect || {};
   const checks = [];
@@ -176,7 +209,18 @@ function assertCase({ testCase = {}, chart = {}, bars = [], pattern = {}, displa
   if (typeof expect.consolidationCandidate === "boolean") checks.push({ label: "consolidationCandidate", ok: pattern.consolidationCandidate === expect.consolidationCandidate, expected: String(expect.consolidationCandidate), actual: String(pattern.consolidationCandidate === true) });
   if (Number.isFinite(expect.minContractionCount)) checkNumber(checks, "contractionCount", finite(pattern.contractionCount), (actual) => Number.isFinite(actual) && actual >= expect.minContractionCount, `>= ${expect.minContractionCount}`);
   if (Number.isFinite(expect.maxContractionCount)) checkNumber(checks, "contractionCount", finite(pattern.contractionCount), (actual) => Number.isFinite(actual) && actual <= expect.maxContractionCount, `<= ${expect.maxContractionCount}`);
+  if (Number.isFinite(expect.minMeasuredContractionCount)) checkNumber(checks, "measuredContractionCount", measuredContractionCount(pattern), (actual) => Number.isFinite(actual) && actual >= expect.minMeasuredContractionCount, `>= ${expect.minMeasuredContractionCount}`);
+  if (typeof expect.rejectedContraction === "boolean") checks.push({
+    label: "rejectedContraction",
+    ok: Boolean(Number.isFinite(finite(pattern.rejectedContractionDepthPct)) || pattern.rejectedContractionSwing) === expect.rejectedContraction,
+    expected: String(expect.rejectedContraction),
+    actual: String(Boolean(Number.isFinite(finite(pattern.rejectedContractionDepthPct)) || pattern.rejectedContractionSwing)),
+  });
   if (Number.isFinite(expect.minChartBars)) checkNumber(checks, "chartBars", bars.length, (actual) => actual >= expect.minChartBars, `>= ${expect.minChartBars}`);
+  const cacheHit = cacheHitMeta(chart);
+  if (cacheHit && Number.isFinite(expect.minChartBars)) {
+    checkNumber(checks, "cache asOfRows", finite(cacheHit.asOfRows ?? cacheHit.rows), (actual) => Number.isFinite(actual) && actual >= expect.minChartBars, `>= ${expect.minChartBars}`);
+  }
 
   const failures = checks.filter((check) => !check.ok);
   return {
@@ -208,6 +252,8 @@ function assertCase({ testCase = {}, chart = {}, bars = [], pattern = {}, displa
       contractionsDecreasing: pattern.contractionsDecreasing === true,
       contractionStructureStatus: pattern.contractionStructureStatus || "",
       contractionDepths: Array.isArray(pattern.contractionDepths) ? pattern.contractionDepths : [],
+      measuredContractionDepths: Array.isArray(pattern.measuredContractionDepths) ? pattern.measuredContractionDepths : [],
+      rejectedContractionDepthPct: finite(pattern.rejectedContractionDepthPct),
       distanceToPivotPct: finite(pattern.distanceToPivotPct),
       volumeDryUpRatio: finite(pattern.volumeDryUpRatio),
       patternQualityScore: finite(pattern.patternQualityScore),
@@ -230,7 +276,7 @@ function uniqueDates(bars = []) {
 function chartWindowRows(bars = [], pattern = {}, visualBars = 130) {
   const descending = [...bars].filter((bar) => toDate(bar.date) && Number.isFinite(finite(bar.close)));
   const maxRows = Math.min(Math.max(Number(visualBars) || 130, 80), 220);
-  const swings = Array.isArray(pattern.contractionSwings) ? pattern.contractionSwings : [];
+  const swings = contractionSwings(pattern, { includeRejected: true });
   const needed = new Set(swings.flatMap((swing) => [toDate(swing.fromDate), toDate(swing.toDate)]).filter(Boolean));
   const selected = descending.slice(0, maxRows);
   const present = new Set(selected.map((bar) => toDate(bar.date)).filter(Boolean));
@@ -269,8 +315,11 @@ function renderVcpSvg({ testCase = {}, bars = [], pattern = {}, display = {} } =
     .filter(Boolean)
     .join(" ");
   const toneColor = display.actionable ? "#166534" : display.watch ? "#92400e" : display.observable ? "#1d4ed8" : "#991b1b";
-  const swingColor = pattern.contractionStructureStatus === "ok" ? "#2563eb" : "#dc2626";
-  const swingNodes = (Array.isArray(pattern.contractionSwings) ? pattern.contractionSwings : []).slice(0, 4).map((swing, index) => {
+  const acceptedSwings = contractionSwings(pattern);
+  const rejectedSwing = pattern.rejectedContractionSwing && typeof pattern.rejectedContractionSwing === "object"
+    ? pattern.rejectedContractionSwing
+    : null;
+  const swingNodes = acceptedSwings.map((swing, index) => {
     const fromIndex = byDate.get(toDate(swing.fromDate));
     const toIndex = byDate.get(toDate(swing.toDate));
     const high = finite(swing.high);
@@ -280,6 +329,7 @@ function renderVcpSvg({ testCase = {}, bars = [], pattern = {}, display = {} } =
     const x2 = xForIndex(toIndex);
     const y1 = yForPrice(high);
     const y2 = yForPrice(low);
+    const swingColor = "#2563eb";
     const labelX = Math.max(pad.left + 16, Math.min(width - pad.right - 18, (x1 + x2) / 2));
     const labelY = Math.max(pad.top + 18, Math.min(height - pad.bottom - 18, Math.min(y1, y2) - 8));
     return [
@@ -289,9 +339,31 @@ function renderVcpSvg({ testCase = {}, bars = [], pattern = {}, display = {} } =
       `<text x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="${swingColor}">C${index + 1} ${fmtPct(finite(swing.depthPct))}</text>`,
     ].join("\n");
   }).filter(Boolean).join("\n");
+  const rejectedNode = (() => {
+    if (!rejectedSwing) return "";
+    const fromIndex = byDate.get(toDate(rejectedSwing.fromDate));
+    const toIndex = byDate.get(toDate(rejectedSwing.toDate));
+    const high = finite(rejectedSwing.high);
+    const low = finite(rejectedSwing.low);
+    if (!Number.isFinite(fromIndex) || !Number.isFinite(toIndex) || !Number.isFinite(high) || !Number.isFinite(low)) return "";
+    const x1 = xForIndex(fromIndex);
+    const x2 = xForIndex(toIndex);
+    const y1 = yForPrice(high);
+    const y2 = yForPrice(low);
+    const labelX = Math.max(pad.left + 16, Math.min(width - pad.right - 18, (x1 + x2) / 2));
+    const labelY = Math.max(pad.top + 18, Math.min(height - pad.bottom - 18, Math.max(y1, y2) + 16));
+    return [
+      `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="5 4" stroke-linecap="round"/>`,
+      `<circle cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="3" fill="#dc2626"/>`,
+      `<circle cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="3" fill="#dc2626"/>`,
+      `<text x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">rechazada ${fmtPct(finite(rejectedSwing.depthPct))}</text>`,
+    ].join("\n");
+  })();
   const pivotNode = Number.isFinite(pivot)
     ? `<line x1="${pad.left}" y1="${yForPrice(pivot).toFixed(1)}" x2="${width - pad.right}" y2="${yForPrice(pivot).toFixed(1)}" stroke="#0f766e" stroke-width="1.4" stroke-dasharray="6 5"/><text x="${width - pad.right}" y="${(yForPrice(pivot) - 6).toFixed(1)}" text-anchor="end" font-size="11" fill="#0f766e">pivot ${pivot.toFixed(2)}</text>`
     : "";
+  const pivotLayer = pivotNode ? `\n  ${pivotNode}` : "";
+  const swingLayer = [swingNodes, rejectedNode].filter(Boolean).join("\n  ");
   const title = `${testCase.symbol || ""} ${testCase.asOf || ""} · ${display.label || ""}`;
   const subtitle = `${pattern.contractionStructureStatus || "sin estructura"} · ${contractionsLine(pattern) || "sin contracciones"} · pivot ${fmtPct(finite(pattern.distanceToPivotPct)) || "sin dato"}`;
   const firstDate = rows[0]?.date || "";
@@ -301,10 +373,8 @@ function renderVcpSvg({ testCase = {}, bars = [], pattern = {}, display = {} } =
   <rect x="${pad.left}" y="${pad.top}" width="${plotW}" height="${plotH}" fill="#f8fafc" stroke="#d9e2ec"/>
   <text x="${pad.left}" y="25" font-size="16" font-weight="700" fill="#0f172a">${xmlEscape(title)}</text>
   <text x="${pad.left}" y="43" font-size="12" fill="${toneColor}">${xmlEscape(subtitle)}</text>
-  <path d="M ${pad.left} ${pad.top + plotH * .25} H ${width - pad.right} M ${pad.left} ${pad.top + plotH * .5} H ${width - pad.right} M ${pad.left} ${pad.top + plotH * .75} H ${width - pad.right}" stroke="#e5e7eb" stroke-width="1"/>
-  ${pivotNode}
-  <polyline points="${linePoints}" fill="none" stroke="#111827" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
-  ${swingNodes}
+  <path d="M ${pad.left} ${pad.top + plotH * .25} H ${width - pad.right} M ${pad.left} ${pad.top + plotH * .5} H ${width - pad.right} M ${pad.left} ${pad.top + plotH * .75} H ${width - pad.right}" stroke="#e5e7eb" stroke-width="1"/>${pivotLayer}
+  <polyline points="${linePoints}" fill="none" stroke="#111827" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>${swingLayer ? `\n  ${swingLayer}` : ""}
   <text x="${pad.left}" y="${height - 16}" font-size="11" fill="#475569">${xmlEscape(firstDate)}</text>
   <text x="${width - pad.right}" y="${height - 16}" text-anchor="end" font-size="11" fill="#475569">${xmlEscape(lastDate)}</text>
 </svg>
@@ -353,8 +423,10 @@ function aggregateFailures(dataset = {}, calibration = {}) {
 }
 
 function contractionsLine(pattern = {}) {
-  const depths = Array.isArray(pattern.contractionDepths) ? pattern.contractionDepths : [];
-  return depths.map((value) => fmtPct(finite(value))).filter(Boolean).join(" -> ");
+  const objective = vcpObjectiveSummary(pattern);
+  return [objective.sequence, objective.rejectedContractionText]
+    .filter((part) => part && part !== "sin compresiones")
+    .join(" · ");
 }
 
 function markdownReport(payload = {}) {

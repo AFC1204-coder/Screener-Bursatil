@@ -238,7 +238,7 @@
         "contractionsDecreasing": true,
         "contractionStructureStatusAllowed": ["ok"],
         "minContractionCount": 2,
-        "minChartBars": 180
+        "minChartBars": 179
       }
     },
     {
@@ -258,7 +258,7 @@
         "contractionsDecreasing": true,
         "contractionStructureStatusAllowed": ["ok"],
         "minContractionCount": 2,
-        "minChartBars": 180
+        "minChartBars": 179
       }
     },
     {
@@ -277,7 +277,9 @@
         "strict": false,
         "contractionsDecreasing": false,
         "contractionStructureStatusAllowed": ["lower_low_drift"],
-        "minContractionCount": 3,
+        "minContractionCount": 2,
+        "minMeasuredContractionCount": 3,
+        "rejectedContraction": true,
         "minChartBars": 1200
       }
     },
@@ -297,7 +299,9 @@
         "strict": false,
         "contractionsDecreasing": false,
         "contractionStructureStatusAllowed": ["lower_low_drift"],
-        "minContractionCount": 4,
+        "minContractionCount": 3,
+        "minMeasuredContractionCount": 4,
+        "rejectedContraction": true,
         "minChartBars": 1200
       }
     },
@@ -316,7 +320,9 @@
         "planValid": false,
         "strict": false,
         "contractionStructureStatusAllowed": ["lower_low_drift"],
-        "minContractionCount": 3,
+        "minContractionCount": 2,
+        "minMeasuredContractionCount": 3,
+        "rejectedContraction": true,
         "minChartBars": 1200
       }
     },
@@ -335,7 +341,9 @@
         "planValid": false,
         "strict": false,
         "contractionStructureStatusAllowed": ["lower_low_drift"],
-        "minContractionCount": 2,
+        "minContractionCount": 1,
+        "minMeasuredContractionCount": 2,
+        "rejectedContraction": true,
         "minChartBars": 500
       }
     },

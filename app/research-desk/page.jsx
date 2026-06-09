@@ -5,10 +5,12 @@ import { num, pct } from "@/lib/formatters";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { activeAlerts, alertSummary, alertsFromScan, mergeAlerts, resolveAlert } from "@/lib/methodologyAlerts";
-import { methodologyDisplayForRow, methodologyPivotWatchEligible } from "@/lib/methodologyDisplay";
+import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { checklistForRow, enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
+import { rowPassesListContract } from "@/lib/listRationale";
 import { createFavoriteFromRow, rowTheme, shortBusiness } from "@/lib/stockRows";
 import { benchmarkForFavorite, externalLinks, stockUrl } from "@/lib/symbols";
+import { vcpContractionSummary } from "@/lib/vcpDiagnostics";
 
 function uid() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
 function InfoHint({ text, tone = "" }) {
@@ -86,9 +88,12 @@ function patternLabel(row = {}) {
 }
 
 function contractionText(row = {}) {
-  const depths = (row.contractionDepths || row.snapshot?.contractionDepths || []).filter(Number.isFinite).slice(0, 3);
+  const source = { ...(row.snapshot || {}), ...row };
+  const summary = vcpContractionSummary(source);
+  if (summary) return summary;
+  const depths = (source.contractionDepths || []).filter(Number.isFinite).slice(0, 3);
   if (depths.length) return depths.map((value) => `${value.toFixed(1)}%`).join(" -> ");
-  const base = row.baseDepthPct ?? row.snapshot?.baseDepthPct;
+  const base = source.baseDepthPct;
   return Number.isFinite(base) ? `Base ${base.toFixed(1)}%` : "Sin dato";
 }
 
@@ -97,7 +102,7 @@ function commandCenterFrom({ rows = [], alerts = [], favorites = [] } = {}) {
   const structures = rows
     .filter((row) => {
       const display = methodologyDisplayForRow(row);
-      return display.watch || display.actionable || display.strict;
+      return display.blocksPatternClaim !== true && (display.watch || display.actionable || display.strict);
     })
     .sort((a, b) => {
       const av = methodologyDisplayForRow(a);
@@ -108,15 +113,12 @@ function commandCenterFrom({ rows = [], alerts = [], favorites = [] } = {}) {
   const measuredBases = rows
     .filter((row) => {
       const display = methodologyDisplayForRow(row);
-      return display.observable && !display.watch && !display.actionable;
+      return display.blocksPatternClaim !== true && display.observable && !display.watch && !display.actionable;
     })
     .sort((a, b) => (b.patternQualityScore || b.setupQualityScore || 0) - (a.patternQualityScore || a.setupQualityScore || 0))
     .slice(0, 8);
   const pivotZone = rows
-    .filter((row) => {
-      const display = methodologyDisplayForRow(row);
-      return display.key === "pivot_proximity" || methodologyPivotWatchEligible(row, { min: -5, max: 3 });
-    })
+    .filter((row) => rowPassesListContract(row, "nearPivot"))
     .sort((a, b) => Math.abs(a.distanceToPivotPct || 99) - Math.abs(b.distanceToPivotPct || 99))
     .slice(0, 8);
   const favoriteAlerts = alerts

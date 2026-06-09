@@ -10,10 +10,10 @@
 <circle cx="420.7" cy="232.4" r="3.2" fill="#2563eb"/>
 <circle cx="490.6" cy="301.7" r="3.2" fill="#2563eb"/>
 <text x="455.6" y="224.4" text-anchor="middle" font-size="12" font-weight="700" fill="#2563eb">C1 8.4%</text>
-<line x1="535.1" y1="229.9" x2="554.2" y2="264.4" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round"/>
-<circle cx="535.1" cy="229.9" r="3.2" fill="#2563eb"/>
+<line x1="528.7" y1="229.9" x2="554.2" y2="264.4" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round"/>
+<circle cx="528.7" cy="229.9" r="3.2" fill="#2563eb"/>
 <circle cx="554.2" cy="264.4" r="3.2" fill="#2563eb"/>
-<text x="544.6" y="221.9" text-anchor="middle" font-size="12" font-weight="700" fill="#2563eb">C2 4.2%</text>
+<text x="541.5" y="221.9" text-anchor="middle" font-size="12" font-weight="700" fill="#2563eb">C2 4.2%</text>
 <line x1="579.6" y1="230.3" x2="598.7" y2="257.7" stroke="#2563eb" stroke-width="2.6" stroke-linecap="round"/>
 <circle cx="579.6" cy="230.3" r="3.2" fill="#2563eb"/>
 <circle cx="598.7" cy="257.7" r="3.2" fill="#2563eb"/>

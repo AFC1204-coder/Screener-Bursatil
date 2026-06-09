@@ -12,6 +12,7 @@
     "audit:methodology": "node --env-file=.env.local --loader ./scripts/loader.mjs scripts/methodology-validation-audit.mjs",
     "audit:methodology:matrix": "METHODOLOGY_AUDIT_MARKDOWN=1 node --env-file=.env.local --loader ./scripts/loader.mjs scripts/methodology-validation-audit.mjs",
     "audit:vcp:corpus": "node --env-file=.env.local --loader ./scripts/loader.mjs scripts/vcp-corpus-audit.mjs",
+    "audit:vcp:depths": "node --env-file=.env.local --loader ./scripts/loader.mjs scripts/vcp-real-depth-audit.mjs",
     "audit:filters:contracts": "node --loader ./scripts/loader.mjs scripts/filter-contract-audit.mjs",
     "audit:filters:layers": "node --loader ./scripts/loader.mjs scripts/filter-layer-contract-audit.mjs",
     "review:methodology": "node --env-file=.env.local --loader ./scripts/loader.mjs scripts/methodology-review-report.mjs",

@@ -96,17 +96,21 @@ stage_structure:
     - sma200_slope_pct < 0
 
 setup_quality:
-  near_pivot:
+  near_highs:
     - distance_20d_high_pct >= -5
     - distance_52w_high_pct >= -15
     - extension_sma50_pct <= 15
     - highs_spread_pct <= 10
+  near_pivot:
+    - methodology_pivot_watch_eligible == true
+    - blocks_pattern_claim == false
+    - distance_to_pivot_pct between -5 and 3
   pullback_sma50:
     - price > sma200
-    - extension_sma50_pct between -4 and 9
+    - extension_sma50_pct between -3 and 8
     - distance_52w_high_pct >= -30
   extended_strong:
-    - extension_sma50_pct >= 18
+    - extension_sma50_pct >= 15
     - momentum_score >= 65
     - rs_global >= 75
   failed_setup:

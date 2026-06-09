@@ -5,6 +5,7 @@ import ChartPreferences from "@/app/ChartPreferences";
 import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { businessThemeKey } from "@/lib/businessTheme";
+import { normalizeCachedScreenerRow } from "@/lib/cachedScreenerRows";
 import { chartRangeBars, DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getLatestScanFromCloud, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
 import { assetDomainForName, assetDomainForSymbol } from "@/lib/companyAssets";
@@ -12,8 +13,9 @@ import { pct } from "@/lib/formatters";
 import { safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { alertsFromScan, mergeAlerts } from "@/lib/methodologyAlerts";
-import { methodologyCompactReasonLine, methodologyDisplayForRow, methodologyPivotWatchEligible, methodologySetupLabel, methodologyTradePlanEligible, methodologyWatchEligible } from "@/lib/methodologyDisplay";
+import { methodologyCompactDetailLine, methodologyCompactReasonLine, methodologyDisplayForRow, methodologyPatternEvidenceBonus, methodologySetupLabel, methodologyTradePlanEligible } from "@/lib/methodologyDisplay";
 import { enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
+import { rowPassesListContract } from "@/lib/listRationale";
 import { qualityGateForResearchRow } from "@/lib/qualityGate";
 import { benchmarkSymbolForRow, enrichRelativePercentiles, rsBenchmarkValue, rsPrimaryValue, rsUniverseValue, scoreRelativeStrength, scoreRsQuality } from "@/lib/relativeStrength";
 import {
@@ -173,6 +175,11 @@ const money = (n, currency = "") => Number.isFinite(n) ? `${n >= 100 ? n.toFixed
 const cap = (n) => Number.isFinite(n) && n > 0 ? n >= 1000000000000 ? `${(n / 1000000000000).toFixed(2)}T` : n >= 1000000000 ? `${(n / 1000000000).toFixed(1)}B` : n >= 1000000 ? `${(n / 1000000).toFixed(0)}M` : `${n.toFixed(0)}` : "-";
 const amount = (n, currency = "") => Number.isFinite(n) && n > 0 ? `${cap(n)}${currency ? ` ${currency}` : ""}` : "-";
 const avg = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const avgWithCoverage = (a, minCoverage = 0.8) => {
+  if (!a.length) return null;
+  const xs = a.filter(Number.isFinite);
+  return xs.length / a.length >= minCoverage ? avg(xs) : null;
+};
 const clamp = (n, a = 0, b = 100) => Math.max(a, Math.min(b, n));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const searchText = (value = "") => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -281,10 +288,35 @@ function riskAdjustedStats(b, perf3m) {
   };
 }
 function monthsSince(d) { if (!d) return null; const x = new Date(d); if (Number.isNaN(x.getTime())) return null; const n = new Date(); return (n.getFullYear() - x.getFullYear()) * 12 + n.getMonth() - x.getMonth(); }
-function isRecentIpoDate(d, maxMonths = 60) { const m = monthsSince(d); return Number.isFinite(m) && m >= 0 && m <= maxMonths; }
+function ipoAgeMonthsForRow(row = {}) {
+  const direct = firstFinite(row.ipoAgeMonths, row.snapshot?.ipoAgeMonths);
+  return Number.isFinite(direct) ? direct : monthsSince(row.ipoDate || row.snapshot?.ipoDate || "");
+}
+function verifiedIpoCategory(row = {}) {
+  if (!rowPassesListContract(row, "ipo")) return "";
+  return String(row.ipoCategory || row.snapshot?.ipoCategory || "IPO verificable").trim() || "IPO verificable";
+}
+function ipoVerificationText(row = {}) {
+  const category = verifiedIpoCategory(row);
+  if (!category) return "No reciente / sin fecha fiable";
+  const date = row.ipoDate || row.snapshot?.ipoDate || "";
+  const age = ipoAgeMonthsForRow(row);
+  const evidence = date || (Number.isFinite(age) ? `${age.toFixed(0)}m` : "verificada");
+  return [category, evidence].filter(Boolean).join(" · ");
+}
 function ipoCat(d) {
   const m = monthsSince(d);
-  if (m === null) return "Sin fecha IPO";
+  if (m === null || m < 0) return "Sin fecha IPO";
+  if (m < 6) return "IPO reciente 0-6m";
+  if (m < 18) return "IPO reciente 6-18m";
+  if (m < 36) return "IPO reciente 18-36m";
+  if (m <= 60) return "IPO reciente 3-5a";
+  if (m < 120) return "Madura 5-10a";
+  return "Madura +10a";
+}
+function ipoCatForRow(row = {}) {
+  const m = ipoAgeMonthsForRow(row);
+  if (m === null || m < 0) return ipoCat(row.ipoDate || row.snapshot?.ipoDate || "");
   if (m < 6) return "IPO reciente 0-6m";
   if (m < 18) return "IPO reciente 6-18m";
   if (m < 36) return "IPO reciente 18-36m";
@@ -296,13 +328,6 @@ function normalizeWebsite(url = "") { if (!url) return ""; const value = /^https
 function domainFromUrl(url = "") { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; } }
 function initials(name = "", symbol = "") { return String(name || symbol).split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]?.toUpperCase()).join("") || String(symbol).slice(0, 2).toUpperCase() || "SE"; }
 function theme(sector = "", industry = "", summary = "") { return businessThemeKey(sector, industry, summary); }
-function normalizedTheme(item = {}) {
-  const sector = item.sector || "";
-  const industry = item.industry || "";
-  const hasBusinessTaxonomy = (sector && sector !== "Sin sector") || (industry && industry !== "Sin industria");
-  if (hasBusinessTaxonomy) return theme(sector, industry, item.businessSummary || item.summary || item.businessEs || "");
-  return item.theme || "General";
-}
 function compactBusinessSummary(value = "", maxLength = 360) {
   const text = String(value || "").replace(/\s+/g, " ").trim();
   if (!text) return "";
@@ -326,63 +351,7 @@ function quickBusinessMarket(row = {}) {
 }
 async function getJson(url) { const r = await fetch(url); const d = await r.json(); if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`); return d; }
 function cachedScreenerRow(item = {}) {
-  return {
-    ...item,
-    symbol: String(item.symbol || "").toUpperCase(),
-    companyName: item.companyName || item.name || item.symbol,
-    country: item.country || countryCode(item.symbol),
-    sector: item.sector || "Sin sector",
-    industry: item.industry || "Sin industria",
-    theme: normalizedTheme(item),
-    totalScore: finiteNumber(item.totalScore ?? item.score),
-    rsGlobalPct: finiteNumber(item.rsGlobalPct),
-    rsRating: finiteNumber(item.rsRating),
-    rsCountryPct: finiteNumber(item.rsCountryPct),
-    rsSectorPct: finiteNumber(item.rsSectorPct),
-    rsQualityScore: finiteNumber(item.rsQualityScore),
-    weinsteinScore: finiteNumber(item.weinsteinScore),
-    minerviniScore: finiteNumber(item.minerviniScore),
-    dataCoverageScore: finiteNumber(item.dataCoverageScore),
-    priceFreshnessDays: finiteNumber(item.priceFreshnessDays),
-    perf3m: finiteNumber(item.perf3m),
-    perf6m: finiteNumber(item.perf6m),
-    perf12m: finiteNumber(item.perf12m),
-    distance20d: finiteNumber(item.distance20d),
-    distance52w: finiteNumber(item.distance52w),
-    avgTurnover: finiteNumber(item.avgTurnover),
-    marketCap: finiteNumber(item.marketCap),
-    currency: item.currency || "",
-    lastDate: item.lastDate || "",
-    priceFreshnessLabel: item.priceFreshnessLabel || "",
-    priceFreshnessIssue: item.priceFreshnessIssue || "",
-    setupQualityScore: finiteNumber(item.setupQualityScore),
-    patternQualityScore: finiteNumber(item.patternQualityScore),
-    patternDataStatus: item.patternDataStatus || "",
-    patternEligible: item.patternEligible,
-    patternFamily: item.patternFamily || "",
-    patternMaturity: item.patternMaturity || "",
-    setupVerdictKey: item.setupVerdictKey || "",
-    setupVerdictState: item.setupVerdictState || "",
-    setupVerdictLabel: item.setupVerdictLabel || "",
-    setupVerdictShortLabel: item.setupVerdictShortLabel || "",
-    setupPlanValid: item.setupPlanValid,
-    setupActionable: item.setupActionable,
-    setupWatch: item.setupWatch,
-    setupStrict: item.setupStrict,
-    methodologyReliabilityState: item.methodologyReliabilityState || "",
-    methodologyReliabilityLabel: item.methodologyReliabilityLabel || "",
-    methodologyReliabilityReason: item.methodologyReliabilityReason || "",
-    methodologyBlocksPatternClaim: item.methodologyBlocksPatternClaim,
-    vcpCandidate: item.vcpCandidate,
-    breakoutAttempt: item.breakoutAttempt,
-    pivotSqueeze: item.pivotSqueeze,
-    failedBreakout: item.failedBreakout,
-    distanceToPivotPct: finiteNumber(item.distanceToPivotPct),
-    baseDepthPct: finiteNumber(item.baseDepthPct),
-    contractionCount: finiteNumber(item.contractionCount),
-    volumeDryUpRatio: finiteNumber(item.volumeDryUpRatio),
-    sourceType: "materialized-cache",
-  };
+  return normalizeCachedScreenerRow(item);
 }
 function cachedScreenerQuery(settings = {}, selectedMarkets = []) {
   const params = new URLSearchParams({ strategy: "composite", limit: "50", maxRows: "8000", sinceDays: "45" });
@@ -410,6 +379,9 @@ function firstFinite(...values) {
   }
   return null;
 }
+function avgVolume(rows = [], minCoverage = 0.8) {
+  return avgWithCoverage(rows.map((bar) => firstFinite(bar.volume)), minCoverage);
+}
 function rsPrimaryScore(row = {}) {
   return rsPrimaryValue(row);
 }
@@ -423,7 +395,18 @@ function gte(value, threshold) { return Number.isFinite(value) && Number.isFinit
 function lt(value, threshold) { return Number.isFinite(value) && Number.isFinite(threshold) && value < threshold; }
 function lte(value, threshold) { return Number.isFinite(value) && Number.isFinite(threshold) && value <= threshold; }
 function between(value, min, max) { return gte(value, min) && lte(value, max); }
-function udVol(b, n = 50) { let up = 0, down = 0; for (let i = 0; i < Math.min(n, b.length - 1); i++) { const v = b[i].volume || 0; if (b[i].close >= b[i + 1].close) up += v; else down += v; } return down ? up / down : null; }
+function udVol(b, n = 50) {
+  let up = 0, down = 0, valid = 0;
+  const limit = Math.min(n, b.length - 1);
+  for (let i = 0; i < limit; i++) {
+    const v = firstFinite(b[i].volume);
+    if (!Number.isFinite(v)) continue;
+    valid += 1;
+    if (b[i].close >= b[i + 1].close) up += v;
+    else down += v;
+  }
+  return limit && valid / limit >= 0.8 && down > 0 ? up / down : null;
+}
 function scoreWeinstein(r) { let s = 0; if (gt(r.price, r.sma150)) s += 18; if (gt(r.sma150, r.sma200)) s += 18; if (gt(r.sma200Slope, 0)) s += 18; if (gt(r.price, r.sma50)) s += 14; if (gt(r.sma50, r.sma150)) s += 14; if (gte(r.distance52w, -25)) s += 10; if (gt(r.perf6m, 0)) s += 8; return clamp(s); }
 function scoreMinervini(r) { let s = 0; if (gt(r.price, r.sma150) && gt(r.price, r.sma200)) s += 14; if (gt(r.sma150, r.sma200)) s += 12; if (gt(r.sma200Slope, 0)) s += 12; if (gt(r.sma50, r.sma150) && gt(r.sma50, r.sma200)) s += 12; if (gt(r.price, r.sma50)) s += 10; if (gte(r.lowAdvance52w, 30)) s += 12; if (gte(r.distance52w, -25)) s += 8; if (gte(r.distance20d, -10)) s += 8; if (lte(r.highsSpreadPct, 12)) s += 6; if (gt(r.perf3m, 10)) s += 6; return clamp(s); }
 function scoreMomentum(r) { let s = 0; if (gte(r.perf3m, 20)) s += 35; else if (gte(r.perf3m, 10)) s += 25; else if (gte(r.perf3m, 0)) s += 12; if (gte(r.perf6m, 40)) s += 35; else if (gte(r.perf6m, 20)) s += 25; else if (gte(r.perf6m, 5)) s += 12; if (gte(r.perf12m, 80)) s += 30; else if (gte(r.perf12m, 40)) s += 22; else if (gte(r.perf12m, 15)) s += 12; return clamp(s); }
@@ -567,8 +550,8 @@ function scoreLiq(r) {
   return clamp(s);
 }
 function scoreIpo(r) {
-  const m = monthsSince(r.ipoDate);
-  if (!Number.isFinite(m) || m > 60) return 0;
+  const m = ipoAgeMonthsForRow(r);
+  if (!Number.isFinite(m) || m < 0 || m > 60) return 0;
   const age = m < 6 ? 25 : m < 18 ? 30 : m < 36 ? 24 : 16;
   const high = gte(r.distanceATH, -15) || gte(r.distance52w, -15) ? 25 : gte(r.distance52w, -25) ? 15 : 5;
   const liq = gte(r.avgVolume, 1000000) ? 15 : gte(r.avgVolume, 300000) ? 8 : 0;
@@ -594,13 +577,7 @@ function scoreSetupQuality(r) {
   }
   if (lte(r.highsSpreadPct, 8)) s += 7;
   else if (lte(r.highsSpreadPct, 15)) s += 4;
-  if (Number.isFinite(r.patternQualityScore)) s += Math.min(10, r.patternQualityScore * .1);
-  if (Number.isFinite(r.contractionScore)) s += Math.min(6, r.contractionScore * .06);
-  if (r.vcpCandidate) s += 10;
-  if (r.breakoutAttempt) s += 6;
-  if (Number.isFinite(r.breakoutQualityScore)) s += Math.min(8, r.breakoutQualityScore * .08);
-  if (Number.isFinite(r.distanceToPivotPct) && r.distanceToPivotPct >= -5 && r.distanceToPivotPct <= 3) s += 5;
-  if (Number.isFinite(r.volumeDryUpRatio) && r.volumeDryUpRatio <= .85) s += 4;
+  s += methodologyPatternEvidenceBonus(r);
   if (r.failedBreakout) s -= 12;
   return clamp(s);
 }
@@ -1009,7 +986,7 @@ function chartPreviewBars(b, limit = 96) {
       high: Number.isFinite(bar.high) ? bar.high : bar.close,
       low: Number.isFinite(bar.low) ? bar.low : bar.close,
       close: bar.close,
-      volume: Number.isFinite(bar.volume) ? bar.volume : 0,
+      volume: firstFinite(bar.volume),
       sma50: windowAvg(50),
       sma200: windowAvg(200),
     };
@@ -1066,16 +1043,16 @@ function buildResearchRow(symbol, chart, profile = {}, requireLongHistoryOrOptio
   });
   const s50 = sma(calcBars, 50), s150 = sma(calcBars, 150), s200 = sma(calcBars, 200), s200p = sma(calcBars, 200, 30);
   const h20 = highValue(calcBars, 20), h65 = highValue(calcBars, 65);
-  const avgVol20 = avg(b.slice(0, 20).map((x) => x.volume || 0));
-  const avgVol5 = avg(b.slice(0, 5).map((x) => x.volume || 0));
-  const prevVol20 = avg(b.slice(5, 25).map((x) => x.volume || 0));
-  const latestVolume = b[0]?.volume || 0;
+  const avgVol20 = avgVolume(b.slice(0, 20));
+  const avgVol5 = avgVolume(b.slice(0, 5));
+  const prevVol20 = avgVolume(b.slice(5, 25));
+  const latestVolume = firstFinite(b[0]?.volume);
   const perf3m = perf(calcBars, 63);
   const perf6m = perf(calcBars, 126);
   const perf12m = perf(calcBars, 252);
   const riskAdjusted = riskAdjustedStats(calcBars, perf3m);
   const weeklyStage = weeklyStageForBars(calcBars, options);
-  const setupPattern = setupPatternForBars(calcBars);
+  const setupPattern = setupPatternForBars(calcBars, { ...options, rawBars: chart.bars || b });
   const row = {
     symbol,
     companyName: profile.name || chart.meta?.shortName || symbol,
@@ -1106,8 +1083,8 @@ function buildResearchRow(symbol, chart, profile = {}, requireLongHistoryOrOptio
     latestVolume,
     avgTurnover: Number.isFinite(avgVol20) && Number.isFinite(price) ? avgVol20 * price : null,
     latestTurnover: Number.isFinite(latestVolume) && Number.isFinite(price) ? latestVolume * price : null,
-    relativeVolume: avgVol20 ? latestVolume / avgVol20 : null,
-    volumeSurgePct: prevVol20 ? ((avgVol5 / prevVol20) - 1) * 100 : null,
+    relativeVolume: Number.isFinite(avgVol20) && avgVol20 > 0 && Number.isFinite(latestVolume) ? latestVolume / avgVol20 : null,
+    volumeSurgePct: Number.isFinite(prevVol20) && prevVol20 > 0 && Number.isFinite(avgVol5) ? ((avgVol5 / prevVol20) - 1) * 100 : null,
     upVolume: calcBars[1] ? calcBars[0].close >= calcBars[1].close : null,
     sma50: s50,
     sma150: s150,
@@ -1145,7 +1122,7 @@ function buildResearchRow(symbol, chart, profile = {}, requireLongHistoryOrOptio
   row.epsGrowthProxyScore = scoreEpsGrowthProxy(row.growthMetrics || {});
   row.volumeScore = scoreVolume(row);
   row.liquidityScore = scoreLiq(row);
-  row.ipoCategory = ipoCat(row.ipoDate);
+  row.ipoCategory = ipoCatForRow(row);
   const withRs = applyRelativeStrength(row, benchmarks);
   const withQuality = { ...withRs, ...scoreRsQuality(withRs) };
   const withCoverage = { ...withQuality, ...dataCoverageForRow(withQuality, profile) };
@@ -1186,7 +1163,7 @@ function sharedRejectKey(field = "") {
   if (["minShortFloatPct", "maxShortFloatPct"].includes(field)) return "shortInterest";
   if (["minRiskRewardScore", "minReturnToVol3m", "minReturnToDrawdown3m"].includes(field)) return "riskReward";
   if (["maxDailyMove20dPct", "maxDailyRange20dPct", "maxRange63dPct", "maxVolatility63d", "maxDrawdown63d"].includes(field)) return "volatility";
-  if (["requireContractionsDecreasing", "minContractionCount", "maxContraction1DepthPct", "maxContraction2DepthPct", "maxContraction3DepthPct", "maxLastContractionDepthPct", "maxBaseDepthPct", "minBaseWeeks", "maxBaseWeeks", "maxAbsDistanceToPivotPct", "maxVolumeDryUpRatio", "maxTightness10dPct", "minPatternQualityScore"].includes(field)) return "pattern";
+  if (["patternDataStatus", "contractionStructureStatus", "requireContractionsDecreasing", "minContractionCount", "maxContraction1DepthPct", "maxContraction2DepthPct", "maxContraction3DepthPct", "maxLastContractionDepthPct", "maxBaseDepthPct", "minBaseWeeks", "maxBaseWeeks", "maxAbsDistanceToPivotPct", "maxVolumeDryUpRatio", "maxTightness10dPct", "minPatternQualityScore"].includes(field)) return "pattern";
   if (["requireStage2", "requireSma200Up", "requirePriceAboveSma50", "longBiasFloor", "minWeinsteinScore", "minMinerviniScore"].includes(field)) return "trend";
   if (["maxDistance20dHigh", "maxDistance50dHigh", "maxDistance52w", "maxDistanceATH", "maxHighsSpreadPct", "maxExtensionSma50", "minRiskScore"].includes(field)) return "proximity";
   if (["minPerf3m", "minPerf6m", "minPerf12m", "minMomentumScore"].includes(field)) return "momentum";
@@ -1457,15 +1434,7 @@ function compactPatternReason(row = {}) {
 }
 
 function compactPatternDetail(row = {}) {
-  const display = methodologyDisplayForRow(row);
-  const parts = [
-    display.evidence ? `Evidencia: ${display.evidence}` : "",
-    display.confidence?.label ? `Datos: ${display.confidence.label}` : "",
-    Number.isFinite(row.distanceToPivotPct) ? `Pivot: ${pct(row.distanceToPivotPct)}` : "",
-    Number.isFinite(row.volumeDryUpRatio) ? `Volumen seco: ${row.volumeDryUpRatio.toFixed(2)}x` : "",
-    Number.isFinite(row.patternQualityScore) ? `Calidad: ${row.patternQualityScore.toFixed(0)}` : "",
-  ].filter(Boolean);
-  return [...new Set(parts)].join(" · ");
+  return methodologyCompactDetailLine(row);
 }
 
 function LeaderTape({ rows = [], activeRow, onSelect, onFavorite, favoriteSymbols, mode = "leader" }) {
@@ -1500,15 +1469,15 @@ function LeaderTape({ rows = [], activeRow, onSelect, onFavorite, favoriteSymbol
 function opportunityBuckets(rows = []) {
   const sorted = (check, key = "totalScore") => rows.filter(check).sort((a, b) => sortMetric(b, key) - sortMetric(a, key));
   const defs = [
-    { key: "pivot", title: "Vigilancia pivot", note: "Setup observable", check: methodologyPivotWatchEligible },
+    { key: "pivot", title: "Vigilancia pivot", note: "Setup observable", check: (r) => rowPassesListContract(r, "nearPivot") },
     { key: "stage2", title: "Stage 2 temprano", note: "Transición saludable", check: (r) => gt(r.price, r.sma200) && gte(r.sma200Slope, 0) && gte(r.distance52w, -35) && lte(r.extSma50, 18) && !isStage2(r) },
-    { key: "pullback", title: "Pullback SMA50", note: "Descanso en tendencia", check: (r) => gt(r.price, r.sma200) && between(r.extSma50, -4, 9) && (rsUniverseValue(r) ?? 0) >= 55 },
+    { key: "pullback", title: "Pullback SMA50", note: "Descanso en tendencia", check: (r) => rowPassesListContract(r, "pullback") },
     { key: "rs", title: "RS", note: "Percentil del lote", check: (r) => (rsUniverseValue(r) ?? 0) >= 75 && gte(r.distance52w, -25) },
     { key: "growth", title: "Growth Quality", note: "Crecimiento + margen", check: (r) => (r.growthScore || 0) >= 70 && (r.totalScore || 0) >= 64 },
-    { key: "ipo", title: "IPO reales", note: "Últimos 5 años", check: (r) => isRecentIpoDate(r.ipoDate, 60) },
-    { key: "extended", title: "Extendidas fuertes", note: "Extensión alta", check: (r) => gte(r.extSma50, 15) && (r.totalScore || 0) >= 70 && (rsUniverseValue(r) ?? 0) >= 65 },
+    { key: "ipo", title: "IPO reales", note: "Últimos 5 años", check: (r) => rowPassesListContract(r, "ipo") },
+    { key: "extended", title: "Extendidas fuertes", note: "Extensión alta", check: (r) => rowPassesListContract(r, "extended") },
     { key: "risk", title: "Riesgo a revisar", note: "Volatilidad/extensión", check: (r) => (r.riskScore || 0) < 45 || gt(r.extSma50, 28) || (r.speculationRiskScore || 0) >= 70 },
-    { key: "weakness", title: "Deterioro técnico", note: "Evitar largos / estudiar debilidad", sortKey: "weaknessScore", check: (r) => (r.weaknessScore || 0) >= 60 },
+    { key: "weakness", title: "Deterioro técnico", note: "Evitar largos / estudiar debilidad", sortKey: "weaknessScore", check: (r) => rowPassesListContract(r, "weakness") },
   ];
   return defs.map((def) => {
     const hits = sorted(def.check, def.sortKey);
@@ -1624,9 +1593,9 @@ function MarketMiniTape({ marketHealth }) {
 
 function SetupChipRail({ rows = [], presetKey, setupMode, sort, onPreset, onMode, onSort }) {
   const counts = {
-    stage2: rows.filter((row) => stageLabel(row) === "Stage 2").length,
-    trend: rows.filter((row) => (row.minerviniScore || 0) >= 65 && (rsPrimaryValue(row) ?? 0) >= 65).length,
-    watch: rows.filter(methodologyWatchEligible).length,
+    stage2: rows.filter((row) => rowPassesListContract(row, "weinstein")).length,
+    trend: rows.filter((row) => rowPassesListContract(row, "minervini")).length,
+    watch: rows.filter((row) => rowPassesListContract(row, "nearPivot")).length,
     rs: rows.filter((row) => (rsUniverseValue(row) ?? 0) >= 75).length,
   };
   const chips = [
@@ -1691,10 +1660,11 @@ function MobileResultRow({ row, settings, onReview, onFavorite, isFavorite, onOp
 function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize }) {
   const start = totalRows ? ((page - 1) * pageSize) + 1 : 0;
   const end = totalRows ? Math.min(page * pageSize, totalRows) : 0;
+  const hasRows = totalRows > 0;
   return <section className="mobileResultList">
     <div className="mobileResultListHead">
-      <span>{totalRows} resultados · {start}-{end} · ordenados por {SORT_LABELS[sort] || sort}</span>
-      <div>
+      <span>{hasRows ? `${totalRows} resultados · ${start}-${end} · ${SORT_LABELS[sort] || sort}` : "0 resultados"}</span>
+      {hasRows ? <div>
         <select value={sort} onChange={(event) => onSort(event.target.value)} aria-label="Orden movil">
           <option value="totalScore">Score</option>
           <option value="rsGlobalPct">{metricShortLabel("rsGlobalPct")}</option>
@@ -1706,15 +1676,15 @@ function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, 
         <button type="button" onClick={onCsv} disabled={!rows.length}>CSV</button>
         <button type="button" onClick={onSave} disabled={!rows.length || savingDisabled} aria-label="Guardar snapshot de resultados">Guardar</button>
         <button type="button" onClick={() => onReview()} disabled={!rows.length}>Revisar</button>
-      </div>
+      </div> : null}
     </div>
-    <div className="controls" style={{ marginBottom: 10 }}>
+    {hasRows ? <div className="controls" style={{ marginBottom: 10 }}>
       <select value={pageSize} onChange={(event) => onPageSize?.(Number(event.target.value))} aria-label="Acciones por pagina">
         {RESULT_PAGE_SIZES.map((size) => <option key={size} value={size}>{size} / página</option>)}
       </select>
       <button type="button" onClick={() => onPage?.(page - 1)} disabled={page <= 1}>Anterior</button>
       <button type="button" onClick={() => onPage?.(page + 1)} disabled={page >= totalPages}>Siguiente</button>
-    </div>
+    </div> : null}
     <div className="mobileRows">
       {rows.length ? rows.map((row) => <MobileResultRow key={row.symbol} row={row} settings={settings} onReview={onReview} onFavorite={onFavorite} onOpenStock={onOpenStock} isFavorite={favoriteSymbols?.has(row.symbol)} />) : <div className="mobileEmpty">Sin resultados todavia. Carga universo y ejecuta el screener.</div>}
     </div>
@@ -1779,7 +1749,7 @@ function QuickPanel({ row, onOpenStock }) {
     <div className="summaryRow"><span>Setup</span><span>{quickSetup(row)}</span></div>
     {row.methodologyReliabilityLabel && <div className="summaryRow"><span>Fiabilidad</span><span>{row.methodologyReliabilityLabel}{row.methodologyReliabilityReason ? ` · ${row.methodologyReliabilityReason}` : ""}</span></div>}
     <div className="summaryRow"><span>Tema</span><span>{row.theme}</span></div>
-    <div className="summaryRow"><span>IPO</span><span>{isRecentIpoDate(row.ipoDate, 60) ? `${row.ipoCategory} · ${row.ipoDate}` : "No reciente / sin fecha fiable"}</span></div>
+    <div className="summaryRow"><span>IPO</span><span>{ipoVerificationText(row)}</span></div>
     <div className="summaryRow"><span>Industria</span><span>{row.industry || "Sin dato"}</span></div>
     <div className="leaderPanelActions">
       <Link className="btn btnSmall btnPrimary" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>Ficha</Link>
@@ -1907,7 +1877,7 @@ function applyResultViewFilters(baseRows = [], filters = {}) {
   if (filters.viewLayers?.sector && filters.sectorFilter !== "Todos") list = list.filter((row) => row.sector === filters.sectorFilter);
   if (filters.viewLayers?.industry && filters.industryFilter !== "Todos") list = list.filter((row) => row.industry === filters.industryFilter);
   if (filters.viewLayers?.sectorStrength) list = list.filter((row) => passesSectorStrength(row, filters.sectorStrength));
-  if (filters.viewLayers?.ipo && filters.ipo !== "Todos") list = list.filter((row) => row.ipoCategory === filters.ipo);
+  if (filters.viewLayers?.ipo && filters.ipo !== "Todos") list = list.filter((row) => verifiedIpoCategory(row) === filters.ipo);
   return list;
 }
 
@@ -1926,25 +1896,29 @@ function PendingResultsBar({ pending, visibleCount = 0, filteredCount = 0, onCom
 function ScreenerContractPanel({ contract }) {
   if (!contract) return null;
   const warnings = contract.warnings || [];
+  const statsByKey = new Map((contract.stats || []).map((stat) => [stat.key, stat]));
+  const visibleStats = ["rules", "results", "scope", "regime"]
+    .map((key) => statsByKey.get(key))
+    .filter(Boolean);
+  const viewStat = statsByKey.get("view");
+  if (viewStat?.value && viewStat.value !== "limpia") visibleStats.push(viewStat);
+  const infoText = [contract.text, warnings.length ? "" : contract.okText].filter(Boolean).join(" ");
   return <section className={`screenerContractPanel ${contract.tone}`} data-contract-key={contract.key}>
     <div className="screenerContractIntro">
       <span className="screenerContractLabel">{contract.label}</span>
       <div>
-        <h2>{contract.title}</h2>
-        <p>{contract.text}</p>
+        <h2>{contract.title}{infoText ? <InfoHint text={infoText} /> : null}</h2>
       </div>
     </div>
-    <div className="screenerContractStats">
-      {(contract.stats || []).map((stat) => <span key={stat.key}>
+    <div className="screenerContractStats" aria-label="Estado objetivo del filtro">
+      {visibleStats.map((stat) => <span key={stat.key}>
         <b>{stat.value}</b>
         <em>{stat.label}</em>
       </span>)}
     </div>
-    <div className={`screenerContractStatus ${warnings.length ? "warn" : "ok"}`}>
-      {warnings.length
-        ? warnings.slice(0, 3).map((warning) => <span key={warning.key}>{warning.text}</span>)
-        : <span>{contract.okText}</span>}
-    </div>
+    {warnings.length ? <div className="screenerContractStatus warn">
+      {warnings.slice(0, 3).map((warning) => <span key={warning.key}>{warning.text}</span>)}
+    </div> : null}
   </section>;
 }
 
@@ -2254,18 +2228,18 @@ function FilterToggle({ active, applies = true, detail = "", onClick, children }
 }
 
 function LayerToggleButton({ active, onClick, label, detail, countLabel }) {
-  return <button type="button" className={`layerToggle ${active ? "on" : "off"}`} aria-pressed={active} onClick={onClick}>
+  return <button type="button" className={`layerToggle ${active ? "on" : "off"}`} aria-pressed={active} onClick={onClick} title={detail || label}>
     <span className="layerToggleState"><i>{active ? "✓" : "X"}</i><b>{active ? "Activo" : "Quitado"}</b></span>
-    <span className="layerToggleText"><strong>{label}</strong><small>{detail}</small></span>
+    <span className="layerToggleText"><strong>{label}</strong></span>
     <span className="layerToggleCount">{countLabel}</span>
   </button>;
 }
 
 function LayerControl({ active, onClick, onOpen, label, detail, countLabel }) {
-  if (!onOpen) return <LayerToggleButton active={active} onClick={onClick} label={label} detail={detail} countLabel={countLabel} />;
-  return <div className={`layerControlRow ${active ? "on" : "off"}`}>
+  return <div className={`layerControlRow ${active ? "on" : "off"} ${onOpen ? "" : "simple"}`}>
     <LayerToggleButton active={active} onClick={onClick} label={label} detail={detail} countLabel={countLabel} />
-    <button type="button" className="layerEditBtn" onClick={onOpen}>Ajustar</button>
+    {detail ? <InfoHint text={detail} /> : null}
+    {onOpen ? <button type="button" className="layerEditBtn" onClick={onOpen}>Ajustar</button> : null}
   </div>;
 }
 
@@ -3708,9 +3682,9 @@ export default function Page() {
       .filter((item, index, array) => array.findIndex((other) => other.type === item.type && other.value === item.value) === index)
       .slice(0, 10);
   }, [searchSymbol, rows]);
-  const recentIpoRows = useMemo(() => rows.filter((r) => isRecentIpoDate(r.ipoDate, 60)), [rows]);
-  const ipos = useMemo(() => ["Todos", ...Array.from(new Set(recentIpoRows.map((r) => r.ipoCategory))).sort()], [recentIpoRows]);
-  const ipoCounts = useMemo(() => countByOption(recentIpoRows, (r) => r.ipoCategory), [recentIpoRows]);
+  const recentIpoRows = useMemo(() => rows.filter((r) => rowPassesListContract(r, "ipo")), [rows]);
+  const ipos = useMemo(() => ["Todos", ...Array.from(new Set(recentIpoRows.map(verifiedIpoCategory).filter(Boolean))).sort()], [recentIpoRows]);
+  const ipoCounts = useMemo(() => countByOption(recentIpoRows, verifiedIpoCategory), [recentIpoRows]);
   const hiddenByView = Math.max(0, rows.length - filtered.length);
   const screenerContract = useMemo(() => buildScreenerContract({
     settings: activeSettings,
@@ -3782,7 +3756,14 @@ export default function Page() {
   }, [rows]);
   const ipoSum = useMemo(() => {
     const m = new Map();
-    recentIpoRows.forEach((r) => { const x = m.get(r.ipoCategory) || { cat: r.ipoCategory, count: 0, avg: 0 }; x.count++; x.avg += r.totalScore; m.set(r.ipoCategory, x); });
+    recentIpoRows.forEach((r) => {
+      const category = verifiedIpoCategory(r);
+      if (!category) return;
+      const x = m.get(category) || { cat: category, count: 0, avg: 0 };
+      x.count++;
+      x.avg += r.totalScore;
+      m.set(category, x);
+    });
     return [...m.values()].map((x) => ({ ...x, avg: x.avg / x.count })).sort((a, b) => b.avg - a.avg);
   }, [recentIpoRows]);
   useEffect(() => {
@@ -3990,8 +3971,6 @@ export default function Page() {
           </div>
         </section>
 
-        <ScreenerContractPanel contract={screenerContract} />
-
         <section className="mobileResearchHome">
           <MarketMiniTape marketHealth={marketHealth} />
           <SetupChipRail
@@ -4036,13 +4015,14 @@ export default function Page() {
         <section className="desktopResultsSection" style={{ marginBottom: 20 }}>
           <PendingResultsBar pending={pendingResults ? { ...pendingResults, filteredCount: pendingFilteredCount } : null} visibleCount={rows.length} filteredCount={filtered.length} onCommit={commitPendingResults} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <h2 style={{ fontSize: 13, margin: 0, fontWeight: 600, letterSpacing: '-0.01em' }}>{filtered.length} resultados · {hiddenByView ? `${hiddenByView} ocultas por vista` : "vista completa"}</h2>
+            <h2 style={{ fontSize: 13, margin: 0, fontWeight: 600, letterSpacing: 0 }}>{filtered.length} resultados</h2>
             <div className="controls">
-              <button className="btn btnSmall btnGhost" onClick={() => { setViewLayers(DEFAULT_VIEW_LAYERS); clearResultView(); }}>Reset</button>
-              <button className="btn btnSmall btnGhost" onClick={resetScreenerSession}>Reset sesión</button>
-              <button className="btn btnSmall btnGhost" onClick={() => csv(filtered)}>↓ CSV</button>
-              <button className="btn btnSmall btnPrimary" onClick={() => openReview(filtered)} disabled={!filtered.length}>Revisar</button>
-              <button className="btn btnSmall" onClick={() => saveSnapshot(filtered)} disabled={!filtered.length || running} aria-label="Guardar snapshot de resultados">Guardar</button>
+              {(rows.length > 0 || pendingResults?.rows?.length || diagnostics) ? <button className="btn btnSmall btnGhost" onClick={resetScreenerSession}>Reset sesión</button> : null}
+              {filtered.length ? <>
+                <button className="btn btnSmall btnGhost" onClick={() => csv(filtered)}>↓ CSV</button>
+                <button className="btn btnSmall btnPrimary" onClick={() => openReview(filtered)}>Revisar</button>
+                <button className="btn btnSmall" onClick={() => saveSnapshot(filtered)} disabled={running} aria-label="Guardar snapshot de resultados">Guardar</button>
+              </> : null}
             </div>
           </div>
           <div className="controls resultFilterBar" style={{ marginBottom: 12 }}>
@@ -4078,7 +4058,7 @@ export default function Page() {
             </select>
           </div>
           <ResultFilterChips chips={resultFilterChips} hiddenCount={hiddenByView} onClearAll={clearResultView} />
-          <div className="controls" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+          {filtered.length ? <div className="controls" style={{ justifyContent: "space-between", marginBottom: 12 }}>
             <span className="fine">
               Mostrando {filtered.length ? resultPageStart + 1 : 0}-{resultPageEnd} de {filtered.length}
             </span>
@@ -4090,7 +4070,7 @@ export default function Page() {
               <span className="fine">Página {visibleResultPage}/{totalResultPages}</span>
               <button className="btn btnSmall btnGhost" onClick={() => setResultPageClamped(visibleResultPage + 1)} disabled={visibleResultPage >= totalResultPages}>Siguiente</button>
             </div>
-          </div>
+          </div> : null}
       <CompactResultsTable rows={pagedRows} settings={activeSettings} favoriteSymbols={favoriteSymbols} onFavorite={addFavorite} onReview={(symbol) => openReview(filtered, symbol)} onOpenStock={saveSessionBeforeStockOpen} rankOffset={resultPageStart} />
         </section>
       </main>

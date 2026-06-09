@@ -147,6 +147,10 @@
         "sma150": 420,
         "sma200": 401,
         "sma200Slope": 1.3,
+        "patternDataStatus": "ok",
+        "patternEligible": true,
+        "contractionStructureStatus": "lower_low_drift",
+        "contractionStructureReason": "base floor not holding",
         "contractionsDecreasing": false,
         "contractionCount": 3,
         "contraction1DepthPct": 6.7,
@@ -167,7 +171,7 @@
             "requireContractionsDecreasing": true,
             "minContractionCount": 3
           },
-          "expect": { "pass": false, "rejectField": "requireContractionsDecreasing" }
+          "expect": { "pass": false, "rejectField": "contractionStructureStatus" }
         }
       ]
     },

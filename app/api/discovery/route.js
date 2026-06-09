@@ -75,6 +75,7 @@ export async function GET(request) {
           listItemCount: 0,
           groupCount: 0,
           staleRows: 0,
+          lowCoverageRows: 0,
           dataLimitedRows: 0,
           missingTaxonomyRows: 0,
           planClaims: 0,

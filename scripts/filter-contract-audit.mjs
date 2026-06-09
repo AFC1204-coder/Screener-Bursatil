@@ -21,7 +21,7 @@ const OUTPUT_PATH = process.env.FILTER_CONTRACT_OUTPUT || (MARKDOWN_OUTPUT ? "do
 
 const BASE_FILTERS = {
   filterStrictness: "strict",
-  setupMode: "weakness",
+  setupMode: "any",
   requireStage2: false,
   requireSma200Up: false,
   requirePriceAboveSma50: false,
@@ -194,7 +194,7 @@ function baseRow(overrides = {}) {
     volumeScore: 72,
     liquidityScore: 74,
     totalScore: 86,
-    weaknessScore: 60,
+    weaknessScore: 20,
     chartBarsCount: 252,
     priceFreshnessDays: 0,
     lastDate: "2026-06-05",
@@ -205,12 +205,40 @@ function baseRow(overrides = {}) {
   };
 }
 
+function pivotWatchRow(overrides = {}) {
+  return baseRow({
+    patternDataStatus: "ok",
+    patternEligible: true,
+    consolidationCandidate: true,
+    patternFamily: "pivot_squeeze",
+    patternQualityScore: 78,
+    baseDepthPct: 20,
+    distanceToPivotPct: -4,
+    absDistanceToPivotPct: 4,
+    pivotClarityScore: 82,
+    tightness10dPct: 4,
+    rightSideTight: true,
+    volumeDryUpRatio: .7,
+    contractionCount: 2,
+    contractionsDecreasing: true,
+    contractionDepths: [12, 5],
+    contraction1DepthPct: 12,
+    contraction2DepthPct: 5,
+    lastContractionDepthPct: 5,
+    ...overrides,
+  });
+}
+
 function rowWithMetric(metric, value, overrides = {}) {
-  return baseRow({ [metric]: value, ...overrides });
+  const coherence = metric === "price" && Number.isFinite(Number(value))
+    ? { sma200: Number(value) - 1 }
+    : {};
+  return baseRow({ [metric]: value, ...coherence, ...overrides });
 }
 
 function withFilter(field, value, overrides = {}) {
-  return { ...BASE_FILTERS, ...overrides, [field]: value };
+  const modeOverride = field === "minWeaknessScore" ? { setupMode: "weakness" } : {};
+  return { ...BASE_FILTERS, ...modeOverride, ...overrides, [field]: value };
 }
 
 function thresholdForField(field, rule = {}) {
@@ -358,6 +386,13 @@ function specialCases() {
     caseItem({ id: "requireContractionsDecreasing-true-pass", area: "synthetic-special", field: "requireContractionsDecreasing", metric: "contractionsDecreasing", threshold: true, input: true, row: baseRow({ contractionsDecreasing: true }), filters: withFilter("requireContractionsDecreasing", true), expectPass: true }),
     caseItem({ id: "requireContractionsDecreasing-false-reject", area: "synthetic-special", field: "requireContractionsDecreasing", metric: "contractionsDecreasing", threshold: true, input: false, row: baseRow({ contractionsDecreasing: false }), filters: withFilter("requireContractionsDecreasing", true), expectPass: false, rejectField: "requireContractionsDecreasing" }),
     caseItem({ id: "requireContractionsDecreasing-null-reject", area: "synthetic-null", field: "requireContractionsDecreasing", metric: "contractionsDecreasing", threshold: true, input: null, row: baseRow({ contractionsDecreasing: null }), filters: withFilter("requireContractionsDecreasing", true), expectPass: false, rejectField: "requireContractionsDecreasing" }),
+    caseItem({ id: "pattern-data-blocked-rejects-structure-filter", area: "synthetic-special", field: "patternDataStatus", metric: "patternDataStatus", threshold: "pattern active", input: "insufficient_history", row: baseRow({ patternDataStatus: "insufficient_history", patternEligible: false, contractionCount: 3 }), filters: withFilter("minContractionCount", 2), expectPass: false, rejectField: "patternDataStatus" }),
+    caseItem({ id: "pattern-invalid-structure-rejects-count-pass", area: "synthetic-special", field: "contractionStructureStatus", metric: "contractionStructureStatus", threshold: "pattern active", input: "lower_low_drift", row: baseRow({ patternDataStatus: "ok", patternEligible: true, contractionStructureStatus: "lower_low_drift", contractionCount: 3 }), filters: withFilter("minContractionCount", 2), expectPass: false, rejectField: "contractionStructureStatus" }),
+    caseItem({ id: "pattern-valid-structure-allows-count-pass", area: "synthetic-special", field: "contractionStructureStatus", metric: "contractionStructureStatus", threshold: "pattern active", input: "ok", row: baseRow({ patternDataStatus: "ok", patternEligible: true, contractionStructureStatus: "ok", contractionCount: 3 }), filters: withFilter("minContractionCount", 2), expectPass: true }),
+    caseItem({ id: "pattern-partial-volume-rejects-dry-up-filter", area: "synthetic-special", field: "patternDataStatus", metric: "patternVolumeEligible", threshold: "maxVolumeDryUpRatio", input: "partial_volume", row: baseRow({ patternDataStatus: "partial_volume", patternEligible: true, patternVolumeEligible: false, volumeDryUpRatio: 0.7 }), filters: withFilter("maxVolumeDryUpRatio", 0.9), expectPass: false, rejectField: "patternDataStatus" }),
+    caseItem({ id: "pattern-display-data-limited-rejects-count-filter", area: "synthetic-special", field: "patternDataStatus", metric: "setupDisplayDataLimited", threshold: "pattern active", input: true, row: baseRow({ patternDataStatus: "ok", patternEligible: true, contractionStructureStatus: "ok", contractionCount: 3, setupDisplayDataLimited: true, setupDisplayBlocksPatternClaim: true, methodologyReliabilityState: "data_limited", methodologyBlocksPatternClaim: true }), filters: withFilter("minContractionCount", 2), expectPass: false, rejectField: "patternDataStatus" }),
+    caseItem({ id: "pattern-partial-volume-allows-ohlc-count-filter", area: "synthetic-special", field: "minContractionCount", metric: "partial volume + OHLC contractions", threshold: 3, input: 3, row: baseRow({ patternDataStatus: "partial_volume", patternEligible: true, patternVolumeEligible: false, contractionStructureStatus: "ok", contractionCount: 3, contractionsDecreasing: true, setupDisplayBlocksPatternClaim: true, setupDisplayWatch: true, methodologyBlocksPatternClaim: true }), filters: { ...BASE_FILTERS, requireContractionsDecreasing: true, minContractionCount: 3 }, expectPass: true }),
+    caseItem({ id: "pattern-blocked-full-claim-rejects-quality-filter", area: "synthetic-special", field: "patternDataStatus", metric: "blocked pattern quality", threshold: 65, input: 96, row: baseRow({ patternDataStatus: "partial_volume", patternEligible: true, patternVolumeEligible: false, contractionStructureStatus: "ok", patternQualityScore: 96, setupDisplayBlocksPatternClaim: true, setupDisplayWatch: true, methodologyBlocksPatternClaim: true }), filters: withFilter("minPatternQualityScore", 65), expectPass: false, rejectField: "patternDataStatus" }),
 
     caseItem({ id: "requireStage2-confirmed-pass", area: "synthetic-special", field: "requireStage2", metric: "stage2 structure", threshold: true, input: "confirmed", row: baseRow(), filters: withFilter("requireStage2", true, { setupMode: "any" }), expectPass: true }),
     caseItem({ id: "requireStage2-broken-stack-reject", area: "synthetic-special", field: "requireStage2", metric: "sma stack", threshold: true, input: "sma50<sma150", row: baseRow({ sma50: 70, sma150: 82 }), filters: withFilter("requireStage2", true, { setupMode: "any" }), expectPass: false, rejectField: "requireStage2" }),
@@ -366,15 +401,22 @@ function specialCases() {
     caseItem({ id: "requireRecentIpo-age-over-reject", area: "synthetic-special", field: "maxIpoAgeMonths", metric: "ipoAgeMonths", threshold: 12, input: 13, row: baseRow({ ipoAgeMonths: 13 }), filters: withFilter("requireRecentIpo", true, { setupMode: "any", maxIpoAgeMonths: 12 }), expectPass: false, rejectField: "requireRecentIpo" }),
     caseItem({ id: "requireRecentIpo-null-reject", area: "synthetic-null", field: "maxIpoAgeMonths", metric: "ipoAgeMonths", threshold: 12, input: null, row: baseRow({ ipoAgeMonths: null, ipoDate: "" }), filters: withFilter("requireRecentIpo", true, { setupMode: "any", maxIpoAgeMonths: 12 }), expectPass: false, rejectField: "requireRecentIpo" }),
 
-    caseItem({ id: "setupMode-nearPivot-boundary-pass", area: "synthetic-mode", field: "setupMode", metric: "distance/spread/ext", threshold: "nearPivot", input: "-6/10/18", row: baseRow({ distance20d: -6, highsSpreadPct: 10, extSma50: 18 }), filters: { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 18 }, expectPass: true }),
+    caseItem({ id: "setupMode-nearPivot-score-only-reject", area: "synthetic-mode", field: "setupMode", metric: "distance/spread/ext", threshold: "nearPivot", input: "-6/10/18 no method pivot", row: baseRow({ distance20d: -6, highsSpreadPct: 10, extSma50: 18 }), filters: { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 18 }, expectPass: false, rejectField: "setupMode" }),
+    caseItem({ id: "setupMode-nearPivot-boundary-pass", area: "synthetic-mode", field: "setupMode", metric: "method-pivot/distance/spread/ext", threshold: "nearPivot", input: "-4 pivot/-6/10/18", row: pivotWatchRow({ distance20d: -6, highsSpreadPct: 10, extSma50: 18 }), filters: { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 18 }, expectPass: true }),
+    caseItem({ id: "setupMode-nearPivot-contract-score-reject", area: "synthetic-mode", field: "setupMode", metric: "method-pivot/contract-score", threshold: "nearPivot", input: "score 40", row: pivotWatchRow({ totalScore: 40, rsGlobalPct: 82, distance20d: -6, highsSpreadPct: 10, extSma50: 18 }), filters: { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 18 }, expectPass: false, rejectField: "setupMode" }),
+    caseItem({ id: "setupMode-nearPivot-partial-volume-reject", area: "synthetic-mode", field: "setupMode", metric: "method-pivot/partial-volume", threshold: "nearPivot", input: "partial_volume", row: pivotWatchRow({ patternDataStatus: "partial_volume", distance20d: -6, highsSpreadPct: 10, extSma50: 18 }), filters: { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 18 }, expectPass: false, rejectField: "setupMode" }),
     caseItem({ id: "setupMode-nearPivot-extension-reject", area: "synthetic-mode", field: "setupMode", metric: "extSma50", threshold: "nearPivot", input: 18.1, row: baseRow({ extSma50: 18.1 }), filters: { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 25 }, expectPass: false, rejectField: "setupMode" }),
-    caseItem({ id: "setupMode-pullback-window-pass", area: "synthetic-mode", field: "setupMode", metric: "ext/distance52w/perf6m", threshold: "pullback", input: "0/-20/8", row: baseRow({ extSma50: 0, distance52w: -20, perf6m: 8 }), filters: { ...BASE_FILTERS, setupMode: "pullback", minPerf6m: 0 }, expectPass: true }),
+    caseItem({ id: "setupMode-pullback-window-pass", area: "synthetic-mode", field: "setupMode", metric: "price/sma50/ext/distance52w/perf6m", threshold: "pullback", input: "100/100/0/-20/8", row: baseRow({ price: 100, sma50: 100, extSma50: 0, distance52w: -20, perf6m: 8 }), filters: { ...BASE_FILTERS, setupMode: "pullback", minPerf6m: 0 }, expectPass: true }),
+    caseItem({ id: "setupMode-pullback-contract-score-reject", area: "synthetic-mode", field: "setupMode", metric: "composite", threshold: "pullback", input: 40, row: baseRow({ totalScore: 40, price: 100, sma50: 100, sma200: 70, extSma50: 0, distance52w: -20, perf6m: 12 }), filters: { ...BASE_FILTERS, setupMode: "pullback", minPerf6m: 0 }, expectPass: false, rejectField: "setupMode" }),
+    caseItem({ id: "setupMode-pullback-stale-extension-reject", area: "synthetic-mode", field: "setupMode", metric: "price/sma50/ext", threshold: "pullback", input: "80/100/0", row: baseRow({ price: 80, sma50: 100, sma200: 70, extSma50: 0, distance52w: -20, perf6m: 12 }), filters: { ...BASE_FILTERS, setupMode: "pullback", minPerf6m: 0 }, expectPass: false, rejectField: "setupMode" }),
     caseItem({ id: "setupMode-pullback-extension-reject", area: "synthetic-mode", field: "setupMode", metric: "extSma50", threshold: "pullback", input: 10, row: baseRow({ extSma50: 10, distance52w: -20, perf6m: 12 }), filters: { ...BASE_FILTERS, setupMode: "pullback", minPerf6m: 0 }, expectPass: false, rejectField: "setupMode" }),
     caseItem({ id: "setupMode-early-boundary-pass", area: "synthetic-mode", field: "setupMode", metric: "distance52w/perf3m/ext", threshold: "early", input: "-35/5/20", row: baseRow({ distance52w: -35, perf3m: 5, extSma50: 20 }), filters: { ...BASE_FILTERS, setupMode: "early", minPerf3m: 5, maxExtensionSma50: 20 }, expectPass: true }),
     caseItem({ id: "setupMode-ipoRecent-boundary-pass", area: "synthetic-mode", field: "setupMode", metric: "ipo/momentum/ext", threshold: "ipoRecent", input: "10/35/35", row: baseRow({ ipoAgeMonths: 10, distance52w: -35, extSma50: 35, momentumScore: 35 }), filters: { ...BASE_FILTERS, setupMode: "ipoRecent", maxIpoAgeMonths: 12, maxExtensionSma50: 35, minMomentumScore: 35 }, expectPass: true }),
     caseItem({ id: "setupMode-ipoRecent-old-reject", area: "synthetic-mode", field: "setupMode", metric: "ipoAgeMonths", threshold: "ipoRecent", input: 13, row: baseRow({ ipoAgeMonths: 13, distance52w: -35, extSma50: 35, momentumScore: 35 }), filters: { ...BASE_FILTERS, setupMode: "ipoRecent", maxIpoAgeMonths: 12, maxExtensionSma50: 35, minMomentumScore: 35 }, expectPass: false, rejectField: "setupMode" }),
-    caseItem({ id: "setupMode-extended-boundary-pass", area: "synthetic-mode", field: "setupMode", metric: "ext/momentum", threshold: "extended", input: "12/65", row: baseRow({ extSma50: 12, momentumScore: 65 }), filters: { ...BASE_FILTERS, setupMode: "extended", maxExtensionSma50: 25, minMomentumScore: 50 }, expectPass: true }),
-    caseItem({ id: "setupMode-extended-underextension-reject", area: "synthetic-mode", field: "setupMode", metric: "extSma50", threshold: "extended", input: 11.9, row: baseRow({ extSma50: 11.9, momentumScore: 80 }), filters: { ...BASE_FILTERS, setupMode: "extended", maxExtensionSma50: 25, minMomentumScore: 50 }, expectPass: false, rejectField: "setupMode" }),
+    caseItem({ id: "setupMode-ipoRecent-long-bias-reject", area: "synthetic-mode", field: "setupMode", metric: "ipo/long-bias", threshold: "ipoRecent", input: "price below SMA200", row: baseRow({ ipoAgeMonths: 10, price: 70, sma200: 100, distance52w: -20, extSma50: 20, momentumScore: 60 }), filters: { ...BASE_FILTERS, setupMode: "ipoRecent", maxIpoAgeMonths: 12, maxExtensionSma50: 35, minMomentumScore: 35 }, expectPass: false, rejectField: "setupMode" }),
+    caseItem({ id: "setupMode-extended-boundary-pass", area: "synthetic-mode", field: "setupMode", metric: "price/sma50/ext/momentum", threshold: "extended", input: "115/100/15/65", row: baseRow({ price: 115, sma50: 100, extSma50: 15, momentumScore: 65 }), filters: { ...BASE_FILTERS, setupMode: "extended", maxExtensionSma50: 25, minMomentumScore: 50 }, expectPass: true }),
+    caseItem({ id: "setupMode-extended-stale-extension-reject", area: "synthetic-mode", field: "setupMode", metric: "price/sma50/ext", threshold: "extended", input: "90/100/15", row: baseRow({ price: 90, sma50: 100, sma200: 70, extSma50: 15, momentumScore: 80 }), filters: { ...BASE_FILTERS, setupMode: "extended", maxExtensionSma50: 25, minMomentumScore: 50 }, expectPass: false, rejectField: "setupMode" }),
+    caseItem({ id: "setupMode-extended-underextension-reject", area: "synthetic-mode", field: "setupMode", metric: "extSma50", threshold: "extended", input: 14.9, row: baseRow({ price: 114.9, sma50: 100, extSma50: 14.9, momentumScore: 80 }), filters: { ...BASE_FILTERS, setupMode: "extended", maxExtensionSma50: 25, minMomentumScore: 50 }, expectPass: false, rejectField: "setupMode" }),
     caseItem({ id: "setupMode-weakness-boundary-pass", area: "synthetic-mode", field: "minWeaknessScore", metric: "weaknessScore", threshold: 55, input: 55, row: baseRow({ weaknessScore: 55 }), filters: { ...BASE_FILTERS, setupMode: "weakness", minWeaknessScore: 55 }, expectPass: true }),
     caseItem({ id: "setupMode-weakness-below-reject", area: "synthetic-mode", field: "minWeaknessScore", metric: "weaknessScore", threshold: 55, input: 54.9, row: baseRow({ weaknessScore: 54.9 }), filters: { ...BASE_FILTERS, setupMode: "weakness", minWeaknessScore: 55 }, expectPass: false, rejectField: "minWeaknessScore" }),
   ];

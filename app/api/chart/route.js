@@ -3,7 +3,9 @@ import { withDailyBarsCache } from "@/lib/dailyBarsCache";
 
 function optionalNumber(value) {
   if (value === null || value === undefined || value === "") return undefined;
-  const n = Number(value);
+  const normalized = typeof value === "string" ? value.trim() : value;
+  if (normalized === "") return undefined;
+  const n = Number(normalized);
   return Number.isFinite(n) ? n : undefined;
 }
 
@@ -15,9 +17,11 @@ export async function GET(request) {
   const refresh = searchParams.get("refresh") === "1";
   const useCache = searchParams.get("cache") !== "0";
   const maxAgeDays = optionalNumber(searchParams.get("maxAgeDays") || searchParams.get("maxPriceFreshnessDays"));
+  const minBars = optionalNumber(searchParams.get("minBars") || searchParams.get("minChartBars"));
+  const asOfDate = searchParams.get("asOf") || searchParams.get("asOfDate") || "";
   if (!symbol) return Response.json({ error: "Missing symbol" }, { status: 400 });
   try {
-    return Response.json(await withDailyBarsCache(symbol, { range, interval, refresh, useCache, maxAgeDays }, fetchYahooChart));
+    return Response.json(await withDailyBarsCache(symbol, { range, interval, refresh, useCache, maxAgeDays, minBars, asOfDate }, fetchYahooChart));
   } catch (err) {
     return Response.json({
       ok: false,

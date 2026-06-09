@@ -13889,14 +13889,22 @@ body{
 
 .layerControlRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 68px;
+  grid-template-columns: minmax(0, 1fr) 24px 68px;
   gap: 6px;
-  align-items: stretch;
+  align-items: center;
+}
+
+.layerControlRow.simple {
+  grid-template-columns: minmax(0, 1fr) 24px;
 }
 
 .layerControlRow .layerToggle {
   width: 100%;
   min-width: 0;
+}
+
+.layerControlRow > .infoHint {
+  justify-self: center;
 }
 
 .layerEditBtn {
@@ -14036,11 +14044,11 @@ body{
 
 .screenerContractPanel {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, .9fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
-  align-items: stretch;
+  align-items: center;
   margin: 0 0 14px;
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 8px;
   background: #080a0d;
@@ -14068,8 +14076,9 @@ body{
 
 .screenerContractIntro {
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
   min-width: 0;
 }
 
@@ -14092,6 +14101,9 @@ body{
 }
 
 .screenerContractIntro h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   margin: 0 0 4px;
   color: #f4f7fb;
   font-size: 15px;
@@ -14109,15 +14121,16 @@ body{
 }
 
 .screenerContractStats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
+  justify-content: flex-end;
 }
 
 .screenerContractStats span {
   min-width: 0;
-  min-height: 44px;
-  padding: 7px 8px;
+  min-height: 38px;
+  padding: 6px 8px;
   border: 1px solid rgba(255,255,255,.06);
   border-radius: 7px;
   background: rgba(255,255,255,.025);
@@ -17492,4 +17505,32 @@ summary:focus-visible,
     display: block !important;
     font-size: 8.8px !important;
   }
+}
+
+.layerToggleText {
+  align-items: center !important;
+  min-width: 0;
+}
+
+.layerControlRow > .infoHint,
+.screenerContractIntro h2 .infoHint {
+  width: 20px !important;
+  height: 20px !important;
+  margin-left: 0 !important;
+  flex: 0 0 auto;
+}
+
+.layerControlRow > .infoHint > span,
+.screenerContractIntro h2 .infoHint > span {
+  width: 15px;
+  height: 15px;
+  font-size: 8px;
+}
+
+.screenerContractIntro h2 {
+  margin-bottom: 0;
+}
+
+.screenerContractStatus {
+  grid-column: 1 / -1;
 }

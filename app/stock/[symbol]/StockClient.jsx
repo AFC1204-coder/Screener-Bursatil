@@ -43,6 +43,20 @@ const signedPriceMoney = (n, currency = "") => {
 };
 const sentimentClass = (label = "") => label === "alcista" ? "bullish" : label === "bajista" ? "bearish" : "neutral";
 const textKey = (...values) => values.filter(Boolean).join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+function withPatternHistoryCoverage(pattern = null, bars = []) {
+  if (!pattern) return null;
+  const existingBars = Number(pattern.patternBarsCount);
+  if (Number.isFinite(existingBars)) return pattern;
+  const barsCount = Array.isArray(bars) ? bars.length : 0;
+  if (!barsCount) return pattern;
+  const minBars = Number.isFinite(Number(pattern.patternMinBars)) ? Number(pattern.patternMinBars) : 90;
+  return {
+    ...pattern,
+    patternBarsCount: barsCount,
+    patternMinBars: minBars,
+    patternCoveragePct: minBars > 0 ? Math.min(100, (barsCount / minBars) * 100) : null,
+  };
+}
 
 function hexToRgb(hex = "#d6ae5c") {
   const clean = hex.replace("#", "");
@@ -833,6 +847,11 @@ function DataConfidenceCell({ row = {} }) {
   return <span className={`dataConfidencePill ${confidence.state}`.trim()} title={confidence.detail}>{confidence.label}</span>;
 }
 
+function patternClaimBlocked(row = {}) {
+  const display = methodologyDisplayForRow(row);
+  return display.blocksPatternClaim === true || display.dataLimited === true ? display : null;
+}
+
 function AuditCheck({ label, value, state = "neutral", detail = "" }) {
   return <div className={`auditCheck ${state}`.trim()}>
     <span>{label}</span>
@@ -862,6 +881,8 @@ function MethodologyAuditPanel({ pattern, verdict, stage }) {
   const quality = Number(pattern.patternQualityScore);
   const qualityOk = Number.isFinite(quality) && quality >= 65;
   const planValid = display.actionable && display.tradePlanEligible && !display.blocksPatternClaim;
+  const claimBlocked = display.blocksPatternClaim === true || display.dataLimited === true;
+  const claimState = (ok, fallback = "warn") => claimBlocked ? "warn" : ok ? "pass" : fallback;
   const fullReason = display.reason || currentVerdict.reason || "Sin razón disponible.";
   const objectiveDetail = [objective.detail, `Veredicto: ${display.label}`, fullReason].filter(Boolean).join(" · ");
   return <section className="card methodologyAuditPanel">
@@ -882,20 +903,27 @@ function MethodologyAuditPanel({ pattern, verdict, stage }) {
     </p>
     <div className="auditGrid">
       <AuditCheck label="Datos técnicos" value={confidence.label} state={confidence.state} detail={confidence.detail || currentVerdict.dataLabel || dataStatusLabel(pattern.patternDataStatus)} />
+      <AuditCheck label="Histórico" value={objective.history?.value || "Sin dato"} state={objective.history?.state || "neutral"} detail={objective.history?.detail || ""} />
       <AuditCheck label="Etapa" value={stage?.label || "Sin dato"} state={stageOk ? "pass" : "warn"} />
       <AuditCheck label="Base/rango" value={Number.isFinite(pattern.baseDepthPct) ? pct(pattern.baseDepthPct) : "Sin dato"} state={baseOk ? "pass" : "fail"} detail={Number.isFinite(pattern.baseWeeks) ? `${pattern.baseWeeks.toFixed(1)} semanas` : pattern.baseContextStatus || ""} />
-      <AuditCheck label="Compresiones" value={Number.isFinite(count) ? `${count.toFixed(0)} medidas` : "Sin dato"} state={contractionsOk ? "pass" : Number.isFinite(count) && count >= 2 ? "warn" : "fail"} detail={objective.sequence} />
-      <AuditCheck label="Última comp." value={Number.isFinite(lastContraction) ? pct(lastContraction) : "Sin dato"} state={lastContractionOk ? "pass" : "warn"} detail={objective.contractionDetail.at(-1) || ""} />
-      <AuditCheck label="Rango 10d" value={Number.isFinite(range10) ? pct(range10) : "Sin dato"} state={range10Ok ? "pass" : "warn"} detail={Number.isFinite(pattern.tightness20dPct) ? `20d ${pct(pattern.tightness20dPct)}` : ""} />
-      <AuditCheck label="Pivot" value={Number.isFinite(pivot) ? pct(pivot) : "Sin dato"} state={pivotOk ? "pass" : "warn"} />
-      <AuditCheck label="Volumen seco" value={Number.isFinite(volume) ? `${volume.toFixed(2)}x` : "Sin dato"} state={volumeOk ? "pass" : "warn"} />
-      <AuditCheck label="Score patrón" value={Number.isFinite(quality) ? quality.toFixed(0) : "Sin dato"} state={qualityOk ? "pass" : "warn"} />
+      <AuditCheck label="Compresiones" value={Number.isFinite(count) ? `${count.toFixed(0)} medidas` : "Sin dato"} state={claimState(contractionsOk, Number.isFinite(count) && count >= 2 ? "warn" : "fail")} detail={objective.sequence} />
+      <AuditCheck label="Última comp." value={Number.isFinite(lastContraction) ? pct(lastContraction) : "Sin dato"} state={claimState(lastContractionOk)} detail={objective.contractionDetail.at(-1) || ""} />
+      <AuditCheck label="Rango 10d" value={Number.isFinite(range10) ? pct(range10) : "Sin dato"} state={claimState(range10Ok)} detail={Number.isFinite(pattern.tightness20dPct) ? `20d ${pct(pattern.tightness20dPct)}` : ""} />
+      <AuditCheck label="Pivot" value={Number.isFinite(pivot) ? pct(pivot) : "Sin dato"} state={claimState(pivotOk)} />
+      <AuditCheck label="Volumen seco" value={Number.isFinite(volume) ? `${volume.toFixed(2)}x` : "Sin dato"} state={claimState(volumeOk)} />
+      <AuditCheck label="Score patrón" value={Number.isFinite(quality) ? quality.toFixed(0) : "Sin dato"} state={claimState(qualityOk)} />
       <AuditCheck label="Plan" value={planValid ? "Válido" : "No válido"} state={planValid ? "pass" : "fail"} detail={display.tradePlanReason || currentVerdict.tradePlanReason || display.reason || ""} />
     </div>
   </section>;
 }
 
-function ContractionTape({ depths = [] }) {
+function ContractionTape({ row = {}, depths = [] }) {
+  const blocked = patternClaimBlocked(row);
+  if (blocked) return <span title={blocked.reason || blocked.line || ""}>No validado</span>;
+  const objective = vcpObjectiveSummary(row);
+  if (objective.sequence && objective.sequence !== "sin compresiones") {
+    return <span title={objective.rejectedContractionText || ""}>{objective.sequence}</span>;
+  }
   const values = (Array.isArray(depths) ? depths : []).filter(Number.isFinite).slice(0, 4);
   if (!values.length) return <span>Sin dato</span>;
   return <span>{values.map((value) => `${value.toFixed(1)}%`).join(" -> ")}</span>;
@@ -919,14 +947,16 @@ function ComparativeContext({ rows = [], note = "", symbol = "" }) {
         <thead><tr>{["Ticker", "Relacion", "Estructura", "Contracciones", "Base", "Pivot", "Vol. seco", "RS grupo", "Datos"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
         <tbody>{rows.map((item) => {
           const current = String(item.symbol || "").toUpperCase() === String(symbol || "").toUpperCase();
+          const blocked = patternClaimBlocked(item);
+          const blockedCell = <span title={blocked?.reason || blocked?.line || ""}>No validado</span>;
           return <tr key={item.symbol} className={current ? "active" : ""}>
             <td><a className="ticker" href={`/stock/${encodeURIComponent(item.symbol)}`}>{item.symbol}</a><br /><span className="fine">{item.companyName || ""}</span></td>
             <td><span className="pill">{item.relation?.label || "Contexto"}</span></td>
             <td><StructureSummary row={item} compact /></td>
-            <td><ContractionTape depths={item.contractionDepths} /></td>
+            <td><ContractionTape row={item} depths={item.contractionDepths} /></td>
             <td>{Number.isFinite(item.baseDepthPct) ? `${item.baseDepthPct.toFixed(1)}%` : "Sin dato"}<br /><span className="fine">{Number.isFinite(item.baseWeeks) ? `${item.baseWeeks.toFixed(1)} sem` : ""}</span></td>
-            <td>{Number.isFinite(item.distanceToPivotPct) ? pct(item.distanceToPivotPct) : "Sin dato"}</td>
-            <td>{Number.isFinite(item.volumeDryUpRatio) ? `${item.volumeDryUpRatio.toFixed(2)}x` : "Sin dato"}</td>
+            <td>{blocked ? blockedCell : Number.isFinite(item.distanceToPivotPct) ? pct(item.distanceToPivotPct) : "Sin dato"}</td>
+            <td>{blocked ? blockedCell : Number.isFinite(item.volumeDryUpRatio) ? `${item.volumeDryUpRatio.toFixed(2)}x` : "Sin dato"}</td>
             <td>{Number.isFinite(item.rsSectorPct) ? item.rsSectorPct.toFixed(0) : "Sin dato"}</td>
             <td><DataConfidenceCell row={item} /></td>
           </tr>;
@@ -1072,7 +1102,10 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const freshness = data?.dataQuality?.freshness || {};
   const coverage = data?.dataQuality?.coverage || {};
   const compactProfile = data ? [data.sector, data.industry, data.country].filter(Boolean).join(" · ") : "";
-  const setupPattern = useMemo(() => data?.setupPattern || (data?.chartBars?.length ? setupPatternForBars(data.chartBars) : null), [data?.setupPattern, data?.chartBars]);
+  const setupPattern = useMemo(() => {
+    const pattern = data?.setupPattern || (data?.chartBars?.length ? setupPatternForBars(data.chartBars) : null);
+    return withPatternHistoryCoverage(pattern, data?.chartBars || []);
+  }, [data?.setupPattern, data?.chartBars]);
   const setupDisplay = useMemo(() => methodologyDisplayForRow(setupPattern || {}), [setupPattern]);
   const setupVerdict = setupDisplay.verdict;
   const setupStructure = setupDisplay.structure;

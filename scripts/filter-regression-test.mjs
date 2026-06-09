@@ -28,16 +28,21 @@ import {
 import { buildScreenerContract, buildScreenerStockContext, isScreenerLongContract, screenerContractKeyForSettings, screenerStockContextFromSession } from "@/lib/screenerContracts";
 import { alertSyncSummary } from "@/app/api/alerts/route.js";
 import { favoriteDeleteSummary, favoriteSyncSummary } from "@/app/api/favorites/route.js";
-import { scanDeleteSummary, scanSyncSummary } from "@/app/api/scans/route.js";
+import { resultPayload, scanDeleteSummary, scanSyncSummary } from "@/app/api/scans/route.js";
 import { settingSyncSummary } from "@/app/api/settings/route.js";
 import { mergeAlertsWithTimestamps, mergeByKey, mergeFavoritesWithTombstones, mergeScansWithTombstones } from "@/lib/cloudSyncClient";
+import { normalizeCachedScreenerRow } from "@/lib/cachedScreenerRows";
+import { comparablePatternUsable, comparableScore, normalizeComparableResult } from "@/lib/comparables";
 import { buildDiscoverySnapshot } from "@/lib/discovery";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";
 import { buildLeaderboard } from "@/lib/leaderboards";
+import { latestScanStateFromRow, scanResultPayload as materializedScanResultPayload } from "@/lib/materializedScanner";
 import { buildSavedListView, listViewHref, listViewSignature, normalizeSavedListViews, savedListViewMetaLine } from "@/lib/listViews";
 import { buildGroupListDrilldown, enforceListContractRows, isBullishListKey, listContractForKey, listInclusionReasons, listInclusionSummary, rowPassesListContract, rowReliabilityIssues, summarizeListReliability } from "@/lib/listRationale";
+import { methodologyCompactDetailLine, methodologyDisplayForRow, methodologyPatternEvidenceBonus, methodologyPatternEvidenceUsable } from "@/lib/methodologyDisplay";
+import { enrichRowsWithMethodology, methodologyEvents, setupTagsForRow } from "@/lib/methodologyEngine";
 import { qualityGateForResearchRow } from "@/lib/qualityGate";
-import { createFavoriteFromRow, favoriteToRow, isLongOpportunityRow, normalizeStockRows } from "@/lib/stockRows";
+import { createFavoriteFromRow, favoriteToRow, isLongOpportunityRow, isRecentIpo, normalizeStockRows } from "@/lib/stockRows";
 import { isConfirmedStage2, stage2RejectDetail } from "@/lib/trendStructure";
 
 const BASE_FILTERS = {
@@ -258,6 +263,30 @@ function baseRow(overrides = {}) {
   };
 }
 
+function pivotWatchRow(overrides = {}) {
+  return baseRow({
+    patternDataStatus: "ok",
+    patternEligible: true,
+    consolidationCandidate: true,
+    patternFamily: "pivot_squeeze",
+    patternQualityScore: 78,
+    baseDepthPct: 20,
+    distanceToPivotPct: -4,
+    absDistanceToPivotPct: 4,
+    pivotClarityScore: 82,
+    tightness10dPct: 4,
+    rightSideTight: true,
+    volumeDryUpRatio: .7,
+    contractionCount: 2,
+    contractionsDecreasing: true,
+    contractionDepths: [12, 5],
+    contraction1DepthPct: 12,
+    contraction2DepthPct: 5,
+    lastContractionDepthPct: 5,
+    ...overrides,
+  });
+}
+
 function rejectField(reason) {
   return reason?.field || reason?.key || "";
 }
@@ -337,10 +366,15 @@ function runBooleanAndModeTests() {
   expectPass("requireRecentIpo accepts age boundary", baseRow({ ipoAgeMonths: 12 }), withFilter("requireRecentIpo", true, { maxIpoAgeMonths: 12 }));
   expectReject("requireRecentIpo rejects older IPO", baseRow({ ipoAgeMonths: 13 }), withFilter("requireRecentIpo", true, { maxIpoAgeMonths: 12 }), "requireRecentIpo");
 
-  expectPass("nearPivot accepts all boundaries", baseRow({ distance20d: -6, highsSpreadPct: 10, extSma50: 18 }), { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 18 });
+  expectReject("nearPivot rejects score-only pivot proximity without methodology", baseRow({ distance20d: -6, highsSpreadPct: 10, extSma50: 18 }), { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 18 }, "setupMode");
+  expectPass("nearPivot accepts methodology-backed pivot watch at boundaries", pivotWatchRow({ distance20d: -6, highsSpreadPct: 10, extSma50: 18 }), { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 18 });
+  expectReject("nearPivot rejects validated pivots below shared score contract", pivotWatchRow({ totalScore: 40, rsGlobalPct: 82, distance20d: -6, highsSpreadPct: 10, extSma50: 18 }), { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 18 }, "setupMode");
+  expectReject("nearPivot rejects partial-volume pattern claims", pivotWatchRow({ patternDataStatus: "partial_volume", distance20d: -6, highsSpreadPct: 10, extSma50: 18 }), { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 18 }, "setupMode");
   expectReject("nearPivot rejects extension beyond internal cap", baseRow({ extSma50: 18.1 }), { ...BASE_FILTERS, setupMode: "nearPivot", maxDistance20dHigh: 6, maxHighsSpreadPct: 10, maxExtensionSma50: 25 }, "setupMode");
 
-  expectPass("pullback accepts SMA50 pullback window", baseRow({ extSma50: 0, distance52w: -20, perf6m: 8 }), { ...BASE_FILTERS, setupMode: "pullback", minPerf6m: 0 });
+  expectPass("pullback accepts SMA50 pullback window", baseRow({ price: 100, sma50: 100, extSma50: 0, distance52w: -20, perf6m: 8 }), { ...BASE_FILTERS, setupMode: "pullback", minPerf6m: 0 });
+  expectReject("pullback rejects rows below shared composite contract", baseRow({ totalScore: 40, price: 100, sma50: 100, sma200: 70, extSma50: 0, distance52w: -20, perf6m: 12 }), { ...BASE_FILTERS, setupMode: "pullback", minPerf6m: 0 }, "setupMode");
+  expectReject("pullback rejects stale SMA50 extension mismatch", baseRow({ price: 80, sma50: 100, sma200: 70, extSma50: 0, distance52w: -20, perf6m: 12 }), { ...BASE_FILTERS, setupMode: "pullback", minPerf6m: 0 }, "setupMode");
   expectReject("pullback rejects broken pullback window", baseRow({ extSma50: 10, distance52w: -20, perf6m: 12 }), { ...BASE_FILTERS, setupMode: "pullback", minPerf6m: 0 }, "setupMode");
 
   expectPass("early accepts boundary setup", baseRow({ distance52w: -35, perf3m: 5, extSma50: 20 }), { ...BASE_FILTERS, setupMode: "early", minPerf3m: 5, maxExtensionSma50: 20 });
@@ -348,9 +382,11 @@ function runBooleanAndModeTests() {
 
   expectPass("ipoRecent accepts recent issue", baseRow({ ipoAgeMonths: 10, distance52w: -35, extSma50: 35, momentumScore: 35 }), { ...BASE_FILTERS, setupMode: "ipoRecent", maxIpoAgeMonths: 12, maxExtensionSma50: 35, minMomentumScore: 35 });
   expectReject("ipoRecent rejects old issue", baseRow({ ipoAgeMonths: 13, distance52w: -35, extSma50: 35, momentumScore: 35 }), { ...BASE_FILTERS, setupMode: "ipoRecent", maxIpoAgeMonths: 12, maxExtensionSma50: 35, minMomentumScore: 35 }, "setupMode");
+  expectReject("ipoRecent rejects bearish recent issues via shared contract", baseRow({ ipoAgeMonths: 10, price: 70, sma200: 100, distance52w: -20, extSma50: 20, momentumScore: 60 }), { ...BASE_FILTERS, setupMode: "ipoRecent", maxIpoAgeMonths: 12, maxExtensionSma50: 35, minMomentumScore: 35 }, "setupMode");
 
-  expectPass("extended accepts strong extension window", baseRow({ extSma50: 12, momentumScore: 65 }), { ...BASE_FILTERS, setupMode: "extended", maxExtensionSma50: 25, minMomentumScore: 50 });
-  expectReject("extended rejects under-extension", baseRow({ extSma50: 11.9, momentumScore: 80 }), { ...BASE_FILTERS, setupMode: "extended", maxExtensionSma50: 25, minMomentumScore: 50 }, "setupMode");
+  expectPass("extended accepts strong extension window", baseRow({ price: 115, sma50: 100, extSma50: 15, momentumScore: 65 }), { ...BASE_FILTERS, setupMode: "extended", maxExtensionSma50: 25, minMomentumScore: 50 });
+  expectReject("extended rejects stale SMA50 extension mismatch", baseRow({ price: 90, sma50: 100, sma200: 70, extSma50: 15, momentumScore: 80 }), { ...BASE_FILTERS, setupMode: "extended", maxExtensionSma50: 25, minMomentumScore: 50 }, "setupMode");
+  expectReject("extended rejects under shared extension contract", baseRow({ price: 114.9, sma50: 100, extSma50: 14.9, momentumScore: 80 }), { ...BASE_FILTERS, setupMode: "extended", maxExtensionSma50: 25, minMomentumScore: 50 }, "setupMode");
 
   expectPass("weakness accepts minimum deterioration", baseRow({ weaknessScore: 55 }), { ...BASE_FILTERS, setupMode: "weakness", minWeaknessScore: 55 });
   expectReject("weakness rejects below deterioration minimum", baseRow({ weaknessScore: 54.9 }), { ...BASE_FILTERS, setupMode: "weakness", minWeaknessScore: 55 }, "minWeaknessScore");
@@ -364,6 +400,164 @@ function runFreshnessAndDataGateTests() {
   assert.equal(qualityGateForResearchRow(baseRow({ chartBarsCount: 179 }), { setupMode: "leader" }).passed, false, "quality gate should reject 179 bars for normal scans");
   assert.equal(qualityGateForResearchRow(baseRow({ chartBarsCount: 20 }), { setupMode: "ipoRecent" }).passed, true, "quality gate should accept 20 bars for IPO mode");
   assert.equal(qualityGateForResearchRow(baseRow({ chartBarsCount: 19 }), { setupMode: "ipoRecent" }).passed, false, "quality gate should reject 19 bars for IPO mode");
+}
+
+function runPatternValidityGateTests() {
+  expectReject(
+    "pattern filter rejects data-blocked VCP metrics",
+    baseRow({ patternDataStatus: "insufficient_history", patternEligible: false, contractionCount: 3 }),
+    withFilter("minContractionCount", 2),
+    "patternDataStatus",
+  );
+  expectReject(
+    "pattern filter rejects invalid VCP structure even when counts pass",
+    baseRow({ patternDataStatus: "ok", patternEligible: true, contractionStructureStatus: "lower_low_drift", contractionCount: 3 }),
+    withFilter("minContractionCount", 2),
+    "contractionStructureStatus",
+  );
+  expectPass(
+    "pattern filter accepts validated contraction structure",
+    baseRow({ patternDataStatus: "ok", patternEligible: true, contractionStructureStatus: "ok", contractionCount: 3 }),
+    withFilter("minContractionCount", 2),
+  );
+  expectReject(
+    "volume dry-up filter rejects partial volume evidence",
+    baseRow({ patternDataStatus: "partial_volume", patternEligible: true, patternVolumeEligible: false, volumeDryUpRatio: 0.7 }),
+    withFilter("maxVolumeDryUpRatio", 0.9),
+    "patternDataStatus",
+  );
+  expectPass(
+    "contraction-only filter can still observe partial volume structures",
+    baseRow({ patternDataStatus: "partial_volume", patternEligible: true, patternVolumeEligible: false, contractionStructureStatus: "ok", contractionCount: 3, contractionsDecreasing: true }),
+    { ...BASE_FILTERS, requireContractionsDecreasing: true, minContractionCount: 3 },
+  );
+  expectReject(
+    "pattern filter rejects display data-limited contraction claims",
+    baseRow({
+      patternDataStatus: "ok",
+      patternEligible: true,
+      contractionStructureStatus: "ok",
+      contractionCount: 3,
+      setupDisplayDataLimited: true,
+      setupDisplayBlocksPatternClaim: true,
+      methodologyReliabilityState: "data_limited",
+      methodologyBlocksPatternClaim: true,
+    }),
+    withFilter("minContractionCount", 2),
+    "patternDataStatus",
+  );
+  expectPass(
+    "contraction-only filter can observe partial-volume display blockers when OHLC structure is valid",
+    baseRow({
+      patternDataStatus: "partial_volume",
+      patternEligible: true,
+      patternVolumeEligible: false,
+      contractionStructureStatus: "ok",
+      contractionCount: 3,
+      contractionsDecreasing: true,
+      setupDisplayBlocksPatternClaim: true,
+      setupDisplayWatch: true,
+      methodologyBlocksPatternClaim: true,
+    }),
+    { ...BASE_FILTERS, requireContractionsDecreasing: true, minContractionCount: 3 },
+  );
+  expectReject(
+    "pattern quality filter rejects blocked full-claim evidence",
+    baseRow({
+      patternDataStatus: "partial_volume",
+      patternEligible: true,
+      patternVolumeEligible: false,
+      contractionStructureStatus: "ok",
+      patternQualityScore: 96,
+      setupDisplayBlocksPatternClaim: true,
+      setupDisplayWatch: true,
+      methodologyBlocksPatternClaim: true,
+    }),
+    withFilter("minPatternQualityScore", 65),
+    "patternDataStatus",
+  );
+  const blockedMethodologyClaim = baseRow({
+    symbol: "METHBLOCK",
+    patternDataStatus: "ok",
+    patternEligible: true,
+    consolidationCandidate: true,
+    patternFamily: "progressive_contraction",
+    patternQualityScore: 94,
+    baseContextScore: 72,
+    baseDepthPct: 20,
+    pivotPrice: 101,
+    pivotClarityScore: 82,
+    pivotTouchCount: 3,
+    baseNearPivotDays: 14,
+    latestCloseLocationPct: 72,
+    distanceToPivotPct: -1,
+    absDistanceToPivotPct: 1,
+    volumeDryUpRatio: .62,
+    tightness10dPct: 5,
+    contractionCount: 3,
+    contractionsDecreasing: true,
+    contractionDepths: [18, 10, 5],
+    contraction1DepthPct: 18,
+    contraction2DepthPct: 10,
+    contraction3DepthPct: 5,
+    lastContractionDepthPct: 5,
+    breakoutAttempt: true,
+    breakoutQualityScore: 92,
+    setupDisplayKey: "data_limited",
+    setupDisplayState: "data_limited",
+    setupDisplayLabel: "Datos parciales",
+    setupDisplayReason: "cobertura parcial del patrón",
+    setupDisplayDataLimited: true,
+    setupDisplayBlocksPatternClaim: true,
+    setupDisplayPlanValid: false,
+    setupDisplayActionable: false,
+    setupDisplayObservable: false,
+    setupDisplayWatch: false,
+    setupDisplayStrict: false,
+    setupDisplayTradePlanEligible: false,
+    methodologyReliabilityState: "data_limited",
+    methodologyBlocksPatternClaim: true,
+  });
+  const blockedTagKeys = setupTagsForRow(blockedMethodologyClaim).map((tag) => tag.key);
+  assert.equal(blockedTagKeys.includes("setup_plan_valid"), false, "methodology tags must not emit VCP plan when display blocks the pattern claim");
+  assert.equal(blockedTagKeys.includes("vcp_strict"), false, "methodology tags must not emit VCP strict when display blocks the pattern claim");
+  assert.equal(blockedTagKeys.includes("setup_watch"), false, "methodology tags must not emit setup watch when display blocks the pattern claim");
+  assert.equal(blockedTagKeys.includes("pattern_quality"), false, "methodology tags must not emit pattern quality when display blocks the pattern claim");
+  assert.equal(blockedTagKeys.includes("breakout_quality"), false, "methodology tags must not emit breakout quality when display blocks the pattern claim");
+  assert.equal(blockedTagKeys.includes("volume_dry_up"), false, "methodology tags must not emit volume dry-up when display blocks the pattern claim");
+  const blockedEventTypes = methodologyEvents(blockedMethodologyClaim).map((event) => event.type);
+  assert.equal(blockedEventTypes.includes("setup_plan_valid"), false, "methodology events must not emit VCP plan from blocked raw metrics");
+  assert.equal(blockedEventTypes.includes("vcp_strict"), false, "methodology events must not emit strict VCP from blocked raw metrics");
+  assert.equal(blockedEventTypes.includes("setup_watch"), false, "methodology events must not emit watch setup from blocked raw metrics");
+  assert.equal(blockedEventTypes.includes("breakout_attempt"), false, "methodology events must not emit breakout attempts from blocked raw metrics");
+  const enrichedBlocked = enrichRowsWithMethodology([blockedMethodologyClaim])[0];
+  assert.equal(enrichedBlocked.methodologyTags.includes("VCP plan válido"), false, "enriched rows must not expose blocked VCP plan tags");
+  assert.equal(enrichedBlocked.methodologyTags.includes("Breakout con calidad"), false, "enriched rows must not expose blocked breakout tags");
+  const validMethodologyClaim = {
+    ...blockedMethodologyClaim,
+    symbol: "METHVALID",
+    setupDisplayKey: "actionable_vcp",
+    setupDisplayState: "actionable",
+    setupDisplayLabel: "VCP plan válido",
+    setupDisplayShortLabel: "Plan válido",
+    setupDisplayReason: "VCP estricto validado.",
+    setupDisplayDataLimited: false,
+    setupDisplayBlocksPatternClaim: false,
+    setupDisplayPlanValid: true,
+    setupDisplayActionable: true,
+    setupDisplayObservable: true,
+    setupDisplayWatch: false,
+    setupDisplayStrict: true,
+    setupDisplayTradePlanEligible: true,
+    methodologyReliabilityState: "",
+    methodologyBlocksPatternClaim: false,
+  };
+  const validTagKeys = setupTagsForRow(validMethodologyClaim).map((tag) => tag.key);
+  assert.equal(validTagKeys.includes("setup_plan_valid"), true, "methodology tags must still expose validated VCP plans");
+  assert.equal(validTagKeys.includes("breakout_quality"), true, "methodology tags must still expose validated breakout evidence");
+  const validEventTypes = methodologyEvents(validMethodologyClaim).map((event) => event.type);
+  assert.equal(validEventTypes.includes("setup_plan_valid"), true, "methodology events must still expose validated VCP plans");
+  assert.equal(validEventTypes.includes("breakout_attempt"), true, "methodology events must still expose validated breakout attempts");
 }
 
 function runParsingAndExactnessTests() {
@@ -381,6 +575,14 @@ function runParsingAndExactnessTests() {
   assert.equal(filters.enabled, true);
   assert.equal(filters.values.requireStage2, false);
   assert.equal(filters.values.minRsRating, 99);
+
+  const blankNumericFilters = screenerFiltersFromParams({ minRsRating: "   " });
+  assert.equal(blankNumericFilters.enabled, false, "blank numeric params with spaces must not activate filters");
+  assert.equal(blankNumericFilters.values.minRsRating, null, "blank numeric params with spaces must stay missing, not become 0");
+
+  const paddedNumericFilters = screenerFiltersFromParams({ maxPriceFreshnessDays: " 5 ", minRsRating: " 99 " });
+  assert.equal(paddedNumericFilters.values.maxPriceFreshnessDays, 5, "padded numeric params must still parse");
+  assert.equal(paddedNumericFilters.values.minRsRating, 99, "padded numeric thresholds must remain exact");
 
   const rows = [
     baseRow({ symbol: "RS98", rsGlobalPct: 98 }),
@@ -402,12 +604,12 @@ function runFilterExplainPlanTests() {
     maxDistance52w: 20,
     minTotalScore: 70,
   };
-  const strong = buildScreenerFilterExplainPlan(baseRow({ symbol: "PLANOK", rsGlobalPct: 91, perf6m: 45, distance52w: -8, totalScore: 86, priceFreshnessDays: 0 }), filters);
+  const strong = buildScreenerFilterExplainPlan(pivotWatchRow({ symbol: "PLANOK", rsGlobalPct: 91, perf6m: 45, distance52w: -8, totalScore: 86, priceFreshnessDays: 0 }), filters);
   assert.equal(strong.status, "pass", "strong passing row should have a clean explain plan");
   assert.match(strong.text, /Pasa \d+ reglas activas/, "explain plan must summarize active rule count");
   assert.ok(strong.activeCount >= 5, "explain plan must include hard thresholds and boolean gates");
 
-  const near = buildScreenerFilterExplainPlan(baseRow({ symbol: "PLANNR", rsGlobalPct: 76, perf6m: 31, distance52w: -19.5, totalScore: 71, priceFreshnessDays: 4 }), filters);
+  const near = buildScreenerFilterExplainPlan(pivotWatchRow({ symbol: "PLANNR", rsGlobalPct: 76, perf6m: 31, distance52w: -19.5, totalScore: 71, priceFreshnessDays: 4 }), filters);
   assert.equal(near.status, "watch", "near-threshold passing row should be marked for review");
   assert.ok(near.near.some((item) => item.field === "maxDistance52w"), "distance close to threshold must be listed as near");
   assert.match(near.text, /cerca del corte/i, "near-threshold explanation must be visible in tooltip text");
@@ -416,7 +618,7 @@ function runFilterExplainPlanTests() {
   assert.equal(failed.status, "fail", "failing row should not receive a passing explain plan");
   assert.ok(failed.failed.some((item) => item.field === "minRsRating"), "failing active RS rule must be identified");
 
-  const missing = buildScreenerFilterExplainPlan(baseRow({ symbol: "PLANMS", rsGlobalPct: null, perf6m: 45, distance52w: -8, totalScore: 86, priceFreshnessDays: 0 }), filters);
+  const missing = buildScreenerFilterExplainPlan(pivotWatchRow({ symbol: "PLANMS", rsGlobalPct: null, perf6m: 45, distance52w: -8, totalScore: 86, priceFreshnessDays: 0 }), filters);
   assert.equal(missing.status, "missing", "missing active metric should be distinguished from numeric failure");
   assert.ok(missing.missing.some((item) => item.field === "minRsRating"), "missing active RS rule must be identified");
 
@@ -473,7 +675,17 @@ function runLeaderboardSnapshotContractTests() {
     rsRating: 99,
     totalScore: 95,
   });
-  const rows = [benchmarkOnly, globalLeader, globalLag].map(scanResultFromRow);
+  const sparseButEligible = baseRow({
+    symbol: "SPARSENULL",
+    totalScore: 60,
+    rsGlobalPct: 65,
+    rsQualityScore: null,
+    distanceToPivotPct: null,
+    volumeDryUpRatio: null,
+    contractionCount: null,
+    minerviniScore: 0,
+  });
+  const rows = [benchmarkOnly, globalLeader, globalLag, sparseButEligible].map(scanResultFromRow);
 
   const topRs = buildLeaderboard(rows, {
     strategy: "rs",
@@ -492,17 +704,148 @@ function runLeaderboardSnapshotContractTests() {
     limit: 10,
   });
   assert.deepEqual(filteredComposite.items.map((item) => item.symbol), ["GLOBAL99"], "leaderboard screener minRsRating must remain a hard RS global contract");
+
+  const composite = buildLeaderboard(rows, {
+    strategy: "composite",
+    maxPriceFreshnessDays: 999,
+    minCoverageScore: 0,
+    limit: 10,
+  });
+  const sparseItem = composite.items.find((item) => item.symbol === "SPARSENULL");
+  assert.ok(sparseItem, "eligible sparse rows should still appear in broad composite leaderboards");
+  assert.equal(sparseItem.rsQualityScore, null, "leaderboard output must preserve missing RS quality as null, not 0");
+  assert.equal(sparseItem.distanceToPivotPct, null, "leaderboard output must preserve missing pivot distance as null, not 0");
+  assert.equal(sparseItem.volumeDryUpRatio, null, "leaderboard output must preserve missing VCP volume dry-up as null, not 0");
+  assert.equal(sparseItem.contractionCount, null, "leaderboard output must preserve missing contraction count as null, not 0");
+  assert.equal(sparseItem.minerviniScore, 0, "leaderboard output must keep genuine zero scores as 0");
+
+  const persistedBlockedVcp = baseRow({
+    symbol: "SCANMETRICSBLOCK",
+    totalScore: 93,
+    rsGlobalPct: 90,
+    setupPlanValid: true,
+    setupActionable: true,
+    setupWatch: true,
+    setupStrict: true,
+    setupDisplayKey: "data_limited",
+    setupDisplayState: "data_limited",
+    setupDisplayLabel: "Datos parciales",
+    setupDisplayShortLabel: "Datos",
+    setupDisplayReason: "estructura de contracciones rechazada",
+    setupDisplayDataLimited: true,
+    setupDisplayBlocksPatternClaim: true,
+    setupDisplayPlanValid: false,
+    setupDisplayActionable: false,
+    setupDisplayObservable: false,
+    setupDisplayWatch: false,
+    setupDisplayStrict: false,
+    setupDisplayTradePlanEligible: false,
+    methodologyReliabilityState: "data_limited",
+    methodologyBlocksPatternClaim: true,
+    patternDataStatus: "ok",
+    patternEligible: true,
+    patternVolumeEligible: false,
+    contractionStructureStatus: "lower_low_drift",
+    contractionStructureReason: "base floor not holding",
+    contractionDepths: [20, 10],
+    measuredContractionDepths: [20, 10, 12],
+    rejectedContractionDepthPct: 12,
+    contractionCount: 2,
+    contractionsDecreasing: false,
+    vcpCandidate: true,
+    pivotSqueeze: true,
+    distanceToPivotPct: -2,
+    volumeDryUpRatio: .65,
+  });
+  const persistedPayload = resultPayload(persistedBlockedVcp, "scan-1", "owner-1", 0);
+  assert.equal(persistedPayload.metrics.setupDisplayBlocksPatternClaim, true, "scan metrics must persist display claim blockers");
+  assert.equal(persistedPayload.metrics.setupDisplayPlanValid, false, "scan metrics must persist display plan rejection");
+  assert.equal(persistedPayload.metrics.contractionStructureStatus, "lower_low_drift", "scan metrics must persist contraction structure rejection");
+  assert.deepEqual(persistedPayload.metrics.measuredContractionDepths, [20, 10, 12], "scan metrics must persist measured/rejected contraction depths");
+  const metricsOnlyPayload = { ...persistedPayload, raw: null, created_at: "2026-05-25T10:00:00.000Z" };
+  const metricsOnlyNearPivot = buildLeaderboard([metricsOnlyPayload], {
+    strategy: "nearPivot",
+    maxPriceFreshnessDays: 999,
+    minCoverageScore: 0,
+    limit: 10,
+  });
+  assert.deepEqual(metricsOnlyNearPivot.items.map((item) => item.symbol), [], "metrics-only scan rows must not leak blocked VCPs into near-pivot leaderboards");
+  const recentScanState = latestScanStateFromRow(metricsOnlyPayload);
+  assert.equal(recentScanState.planValid, false, "metrics-only recent scan state must let display blocker override legacy setupPlanValid");
+  assert.equal(recentScanState.watch, false, "metrics-only recent scan state must let display blocker override legacy setupWatch");
+
+  const materializedPayload = materializedScanResultPayload(persistedBlockedVcp, "materialized-scan-1", "owner-1", 0);
+  assert.equal(materializedPayload.metrics.setupDisplayBlocksPatternClaim, true, "materialized scan metrics must persist display claim blockers");
+  assert.equal(materializedPayload.metrics.patternVolumeEligible, false, "materialized scan metrics must persist unusable pattern volume");
+  assert.equal(materializedPayload.metrics.contractionStructureStatus, "lower_low_drift", "materialized scan metrics must persist contraction structure rejection");
+  assert.deepEqual(materializedPayload.metrics.measuredContractionDepths, [20, 10, 12], "materialized scan metrics must persist measured/rejected contraction depths");
+  const materializedMetricsOnly = { ...materializedPayload, raw: null, created_at: "2026-05-25T10:00:00.000Z" };
+  const materializedCachedRow = normalizeCachedScreenerRow(materializedMetricsOnly);
+  assert.equal(materializedCachedRow.setupDisplayBlocksPatternClaim, true, "materialized cached rows must preserve display blockers from metrics");
+  assert.equal(materializedCachedRow.patternVolumeEligible, false, "materialized cached rows must preserve pattern volume eligibility from metrics");
+  assert.equal(materializedCachedRow.contractionStructureStatus, "lower_low_drift", "materialized cached rows must preserve contraction structure status from metrics");
+  assert.equal(materializedCachedRow.rejectedContractionDepthPct, 12, "materialized cached rows must preserve rejected contraction depth from metrics");
+  const blockedDetailLine = methodologyCompactDetailLine(materializedCachedRow);
+  assert.match(blockedDetailLine, /Motivo:|Datos:/, "blocked pattern detail should explain why the claim is blocked");
+  assert.doesNotMatch(blockedDetailLine, /Volumen seco/i, "blocked pattern detail must not advertise raw dry-up evidence");
+  assert.doesNotMatch(blockedDetailLine, /Calidad:/i, "blocked pattern detail must not advertise raw pattern quality");
+  const materializedNearPivot = buildLeaderboard([materializedMetricsOnly], {
+    strategy: "nearPivot",
+    maxPriceFreshnessDays: 999,
+    minCoverageScore: 0,
+    limit: 10,
+  });
+  assert.deepEqual(materializedNearPivot.items.map((item) => item.symbol), [], "materialized metrics-only rows must not leak blocked VCPs into near-pivot leaderboards");
+
+  const validDetailLine = methodologyCompactDetailLine(baseRow({
+    symbol: "DETAILVALID",
+    patternDataStatus: "ok",
+    patternEligible: true,
+    patternQualityScore: 72,
+    volumeDryUpRatio: .74,
+    distanceToPivotPct: -2,
+    setupDisplayKey: "vcp_watch",
+    setupDisplayState: "watch",
+    setupDisplayLabel: "Base en vigilancia",
+    setupDisplayBlocksPatternClaim: false,
+    setupDisplayWatch: true,
+    setupDisplayObservable: true,
+  }));
+  assert.match(validDetailLine, /Volumen seco: 0\.74x/i, "valid pattern detail should still show usable dry-up evidence");
+  assert.match(validDetailLine, /Calidad: 72/i, "valid pattern detail should still show usable quality evidence");
 }
 
 function runDiscoveryContractTests() {
   assert.equal(normalizeStockRows([baseRow({ sector: "", industry: "", theme: { color: "#22c55e", label: "Objeto legado", stance: "bullish" } })])[0].theme, "Objeto legado", "stock row normalization must render legacy theme objects as text");
 
+  const legacyPlanTrap = baseRow({
+    symbol: "DISCPLANLEGACY",
+    companyName: "Legacy Plan Flag Trap",
+    totalScore: 90,
+    rsGlobalPct: 87,
+    setupPlanValid: true,
+    setupActionable: true,
+    setupWatch: true,
+    setupDisplayKey: "actionable_vcp",
+    setupDisplayState: "data_limited",
+    setupDisplayLabel: "VCP plan válido",
+    setupDisplayShortLabel: "Plan válido",
+    setupDisplayPlanValid: false,
+    setupDisplayActionable: false,
+    setupDisplayTradePlanEligible: false,
+    setupDisplayWatch: false,
+    setupDisplayBlocksPatternClaim: true,
+    sector: "Technology",
+    industry: "Application Software",
+    theme: "Software / IA",
+  });
+
   const rows = [
     baseRow({ symbol: "DISC1", companyName: "Discovery Leader", totalScore: 93, rsGlobalPct: 91, rsQualityScore: 88, sector: "Technology", industry: "Software", theme: "Software / IA" }),
     baseRow({ symbol: "DISC2", companyName: "Discovery Weak", totalScore: 42, rsGlobalPct: 32, weaknessScore: 78, perf3m: -18, distance52w: -46, riskScore: 25, sector: "Industrials", industry: "Machinery", theme: "Automatizacion" }),
     baseRow({ symbol: "DISC3", companyName: "Discovery Minervini", totalScore: 88, minerviniScore: 94, sector: "Healthcare", industry: "Medical Devices", theme: "Medtech / biotech" }),
-    baseRow({ symbol: "DISC4", companyName: "Discovery Extended", totalScore: 89, rsGlobalPct: 86, extSma50: 24, distance52w: -6, sector: "Technology", industry: "Semiconductors", theme: "Semis / fotonica" }),
-    baseRow({ symbol: "DISC5", companyName: "Discovery Pullback", totalScore: 84, rsGlobalPct: 82, extSma50: 2, price: 100, sma200: 78, sector: "Consumer Cyclical", industry: "Specialty Retail", theme: "Consumo / marca" }),
+    baseRow({ symbol: "DISC4", companyName: "Discovery Extended", totalScore: 89, rsGlobalPct: 86, price: 124, sma50: 100, extSma50: 24, distance52w: -6, sector: "Technology", industry: "Semiconductors", theme: "Semis / fotonica" }),
+    baseRow({ symbol: "DISC5", companyName: "Discovery Pullback", totalScore: 84, rsGlobalPct: 82, price: 100, sma50: 98, sma200: 78, extSma50: 2, sector: "Consumer Cyclical", industry: "Specialty Retail", theme: "Consumo / marca" }),
     baseRow({ symbol: "DISC6", companyName: "Discovery IPO", totalScore: 72, rsGlobalPct: 77, ipoScore: 83, ipoDate: "2024-03-15", sector: "Technology", industry: "Application Software", theme: "Software / IA" }),
     baseRow({ symbol: "DISC7", companyName: "Stale Energy Theme", totalScore: 90, rsGlobalPct: 86, sector: "Industrials", industry: "Electrical Equipment & Parts", theme: "Energia / red" }),
     baseRow({ symbol: "DISC8", companyName: "Real Energy Theme", totalScore: 88, rsGlobalPct: 84, sector: "Energy", industry: "Oil & Gas Integrated", theme: "Energia / red" }),
@@ -539,6 +882,21 @@ function runDiscoveryContractTests() {
       industry: "Application Software",
       theme: "Software / IA",
     }),
+    baseRow({
+      symbol: "DISC11",
+      companyName: "Stale Extension Trap",
+      totalScore: 91,
+      rsGlobalPct: 88,
+      price: 90,
+      sma50: 100,
+      sma200: 70,
+      extSma50: 18,
+      distance52w: -6,
+      sector: "Technology",
+      industry: "Application Software",
+      theme: "Software / IA",
+    }),
+    legacyPlanTrap,
   ].map(scanResultFromRow);
 
   const snapshot = buildDiscoverySnapshot(rows, {
@@ -555,6 +913,17 @@ function runDiscoveryContractTests() {
   assert.equal(snapshot.audit.scope.type, "global", "global discovery audit must declare global scope");
   assert.equal(Array.isArray(snapshot.audit.topMarkets), true, "discovery audit must expose ranked market distribution");
   assert.equal(snapshot.criteria.derivedOnly, true, "discovery criteria must declare derived-only mode");
+  assert.equal(Number.isFinite(snapshot.health.lowCoverageRows), true, "discovery health must expose low-coverage row counts");
+  assert.ok(snapshot.rows.some((item) => item.symbol === "DISCPLANLEGACY"), "legacy plan trap must still be visible as a broad discovery row");
+  const legacyOnlySnapshot = buildDiscoverySnapshot([scanResultFromRow(legacyPlanTrap)], {
+    limit: 10,
+    groupsLimit: 10,
+    minGroupSize: 1,
+    minCoverageScore: 0,
+    maxPriceFreshnessDays: 999,
+  });
+  assert.equal(legacyOnlySnapshot.health.planClaims, 0, "discovery health planClaims must ignore legacy setupPlanValid when display blocks the plan claim");
+  assert.equal(legacyOnlySnapshot.health.watchRows, 0, "discovery health watchRows must ignore legacy setupWatch when display blocks the claim");
   assert.ok(listMap.leaders.items.some((item) => item.symbol === "DISC1"), "discovery leaders must use composite leaderboard strategy");
   assert.ok(listMap.rsQuality.items.every((item) => Number(item.rsQualityScore || 0) >= 55), "RS Quality list must require RS quality score");
   assert.ok(listMap.weakness.items.some((item) => item.symbol === "DISC2"), "weakness list must expose deterioration strategy");
@@ -564,7 +933,27 @@ function runDiscoveryContractTests() {
   assert.equal(listMap.minervini.items.some((item) => item.symbol === "DISC10"), false, "Minervini Leaders must require non-negative 3M momentum");
   assert.equal(rowPassesListContract(listMap.leaders.items.find((item) => item.symbol === "DISC10") || rows.find((item) => item.symbol === "DISC10")?.raw, "minervini"), false, "visible Minervini contract must reject negative 3M momentum");
   assert.equal(["leaders", "rsQuality", "weinstein", "minervini", "nearPivot", "ipo", "extended", "pullback"].every((key) => !listMap[key].items.some((item) => item.symbol === "DISC9")), true, "bullish discovery lists must exclude bearish high-score traps");
+  assert.equal(listMap.extended.items.some((item) => item.symbol === "DISC11"), false, "extended discovery list must exclude stale SMA50 extension traps");
   assert.equal(listMap.weakness.items.some((item) => item.symbol === "DISC9"), true, "bearish high-score traps may only appear in deterioration lists");
+  const stringMetricTrap = baseRow({
+    symbol: "STRINGWEAK",
+    totalScore: "91",
+    rsGlobalPct: "88",
+    weaknessScore: "82",
+    price: "120",
+    sma200: "80",
+    sma200Slope: "3",
+  });
+  assert.equal(isLongOpportunityRow(stringMetricTrap), false, "numeric-string weakness must still block long opportunity rows");
+  assert.equal(rowPassesListContract(stringMetricTrap, "leaders"), false, "numeric-string weakness must not leak into bullish list contracts");
+  assert.match(listInclusionReasons(stringMetricTrap, "leaders").join(" "), /Deterioro técnico 82/i, "string-metric trap rationale must explain deterioration");
+  const normalizedStringMetrics = normalizeStockRows([{ symbol: "STRINGOK", totalScore: " 77 ", rsGlobalPct: "66", weaknessScore: "0" }])[0];
+  assert.equal(normalizedStringMetrics.totalScore, 77, "stock row normalization must parse numeric-string total score");
+  assert.equal(normalizedStringMetrics.rsGlobalPct, 66, "stock row normalization must parse numeric-string RS");
+  assert.equal(normalizedStringMetrics.weaknessScore, 0, "stock row normalization must keep genuine numeric-string zero as 0");
+  const normalizedBlankMetrics = normalizeStockRows([{ symbol: "STRINGMISS", totalScore: "   ", rsGlobalPct: "" }])[0];
+  assert.equal(normalizedBlankMetrics.totalScore, null, "stock row normalization must preserve blank total score as null, not 0");
+  assert.equal(normalizedBlankMetrics.rsGlobalPct, null, "stock row normalization must preserve blank RS as null, not 0");
   const uiGuard = enforceListContractRows([
     listMap.minervini.items.find((item) => item.symbol === "DISC3"),
     rows.find((item) => item.symbol === "DISC9")?.raw,
@@ -572,6 +961,150 @@ function runDiscoveryContractTests() {
   ], "minervini");
   assert.deepEqual(uiGuard.rows.map((item) => item.symbol), ["DISC3"], "visible list contract guard must preserve only coherent Minervini leaders");
   assert.equal(uiGuard.rejectedCount, 2, "visible list contract guard must count rejected discovery rows");
+  const validPivotWatch = baseRow({
+    symbol: "PIVOTOK",
+    patternDataStatus: "ok",
+    patternEligible: true,
+    totalScore: 84,
+    rsGlobalPct: 82,
+    distanceToPivotPct: -2,
+    setupDisplayKey: "vcp_watch",
+    setupDisplayState: "watch",
+    setupDisplayLabel: "Base en vigilancia",
+    setupDisplayWatch: true,
+    setupDisplayObservable: true,
+    setupDisplayBlocksPatternClaim: false,
+  });
+  const scoreOnlyPivot = baseRow({
+    symbol: "PIVOTSCORE",
+    totalScore: 92,
+    rsGlobalPct: 88,
+    distanceToPivotPct: null,
+    setupDisplayKey: "no_base",
+    setupDisplayState: "blocked",
+    setupDisplayWatch: false,
+    setupDisplayObservable: false,
+  });
+  assert.equal(rowPassesListContract(validPivotWatch, "nearPivot"), true, "near-pivot list contract must accept validated pivot-watch rows");
+  assert.equal(rowPassesListContract(scoreOnlyPivot, "nearPivot"), false, "near-pivot list contract must reject score-only rows without pivot methodology");
+  const nearPivotGuard = enforceListContractRows([validPivotWatch, scoreOnlyPivot], "nearPivot");
+  assert.deepEqual(nearPivotGuard.rows.map((item) => item.symbol), ["PIVOTOK"], "visible near-pivot guard must preserve only methodology-backed pivot rows");
+  assert.match(listInclusionReasons(scoreOnlyPivot, "nearPivot").join(" "), /pivot no validado/i, "invalid near-pivot rationale must explain the missing pivot claim");
+  const nearPivotBoard = buildLeaderboard([scanResultFromRow(scoreOnlyPivot), scanResultFromRow(validPivotWatch)], {
+    strategy: "nearPivot",
+    maxPriceFreshnessDays: 999,
+    minCoverageScore: 0,
+    limit: 10,
+  });
+  assert.deepEqual(nearPivotBoard.items.map((item) => item.symbol), ["PIVOTOK"], "Near-pivot leaderboard must use the shared list contract and reject score-only pivot rows");
+  const cachedBlockedVcp = normalizeCachedScreenerRow({
+    symbol: "CACHEBLOCK",
+    score: "98",
+    metrics: {
+      ...baseRow({
+        symbol: "CACHEBLOCK",
+        totalScore: "91",
+        rsGlobalPct: "88",
+        setupPlanValid: "true",
+        setupActionable: "true",
+        setupWatch: "true",
+        setupStrict: "true",
+        patternEligible: "true",
+        patternDataStatus: "ok",
+        patternQualityScore: "96",
+        contractionScore: "90",
+        vcpCandidate: "true",
+        pivotSqueeze: "true",
+        distanceToPivotPct: "-2",
+        volumeDryUpRatio: "0.60",
+        setupDisplayKey: "data_limited",
+        setupDisplayState: "data_limited",
+        setupDisplayLabel: "Datos parciales",
+        setupDisplayReason: "cobertura parcial del patrón",
+        setupDisplayDataLimited: "true",
+        setupDisplayBlocksPatternClaim: "true",
+        setupDisplayPlanValid: "false",
+        setupDisplayActionable: "false",
+        setupDisplayObservable: "false",
+        setupDisplayWatch: "false",
+        setupDisplayStrict: "false",
+        setupDisplayTradePlanEligible: "false",
+        methodologyReliabilityState: "data_limited",
+        methodologyBlocksPatternClaim: "true",
+      }),
+    },
+  });
+  assert.equal(cachedBlockedVcp.setupActionable, true, "cached row must preserve legacy actionability flags for audit visibility");
+  assert.equal(cachedBlockedVcp.setupDisplayBlocksPatternClaim, true, "cached row must preserve nested display blockers");
+  assert.equal(methodologyDisplayForRow(cachedBlockedVcp).dataLimited, true, "cached display blocker must dominate legacy VCP claims");
+  assert.equal(methodologyPatternEvidenceUsable(cachedBlockedVcp), false, "cached blocked VCP evidence must not be usable");
+  assert.equal(methodologyPatternEvidenceBonus(cachedBlockedVcp), 0, "cached blocked VCP metrics must not add setup-score bonus");
+  assert.equal(rowPassesListContract(cachedBlockedVcp, "nearPivot"), false, "cached blocked VCP must not pass near-pivot contract from raw metrics");
+  const cachedValidWatch = normalizeCachedScreenerRow({
+    symbol: "CACHEWATCH",
+    metrics: {
+      ...baseRow({
+        symbol: "CACHEWATCH",
+        totalScore: "84",
+        rsGlobalPct: "82",
+        patternEligible: "true",
+        patternDataStatus: "ok",
+        patternQualityScore: "72",
+        vcpCandidate: "true",
+        distanceToPivotPct: "-2",
+        volumeDryUpRatio: "0.74",
+        setupDisplayKey: "vcp_watch",
+        setupDisplayState: "watch",
+        setupDisplayLabel: "Base en vigilancia",
+        setupDisplayDataLimited: "false",
+        setupDisplayBlocksPatternClaim: "false",
+        setupDisplayActionable: "false",
+        setupDisplayObservable: "true",
+        setupDisplayWatch: "true",
+        setupDisplayTradePlanEligible: "false",
+      }),
+    },
+  });
+  assert.equal(rowPassesListContract(cachedValidWatch, "nearPivot"), true, "cached validated VCP watch rows must still pass near-pivot contract");
+  assert.ok(methodologyPatternEvidenceBonus(cachedValidWatch) > 0, "cached validated VCP evidence must still contribute positive setup evidence");
+  const fakeIpoByScore = baseRow({ symbol: "IPOFAKE", totalScore: 92, rsGlobalPct: 88, ipoScore: 91, ipoDate: "", ipoAgeMonths: null });
+  const ageVerifiedIpo = baseRow({ symbol: "IPOAGE", totalScore: 72, rsGlobalPct: 76, ipoScore: 82, ipoDate: "", ipoAgeMonths: 24 });
+  const staleIpoAge = baseRow({ symbol: "IPOSTALE", totalScore: 90, rsGlobalPct: 86, ipoScore: 90, ipoDate: "", ipoAgeMonths: 84 });
+  const futureIpoAge = baseRow({ symbol: "IPOFUTURE", totalScore: 90, rsGlobalPct: 86, ipoScore: 90, ipoDate: "", ipoAgeMonths: -1 });
+  assert.equal(isRecentIpo(ageVerifiedIpo, 60), true, "shared IPO recency helper must accept verified IPO age without a date string");
+  assert.equal(isRecentIpo(staleIpoAge, 60), false, "shared IPO recency helper must reject stale IPO age without a date string");
+  assert.equal(isRecentIpo(futureIpoAge, 60), false, "shared IPO recency helper must reject future/negative IPO ages");
+  assert.equal(isRecentIpo(fakeIpoByScore, 60), false, "shared IPO recency helper must reject score-only IPO rows without age/date evidence");
+  assert.equal(rowPassesListContract(ageVerifiedIpo, "ipo"), true, "IPO list contract must accept age-verified IPO rows without a date string");
+  assert.equal(rowPassesListContract(fakeIpoByScore, "ipo"), false, "IPO list contract must require a verifiable recent IPO, not only score");
+  assert.match(listInclusionReasons(fakeIpoByScore, "ipo").join(" "), /IPO no verificada/i, "invalid IPO rationale must flag missing IPO evidence");
+  const ipoTrapBoard = buildLeaderboard([scanResultFromRow(fakeIpoByScore), rows.find((item) => item.raw?.symbol === "DISC6")], {
+    strategy: "ipo",
+    maxPriceFreshnessDays: 999,
+    minCoverageScore: 0,
+    limit: 10,
+  });
+  assert.deepEqual(ipoTrapBoard.items.map((item) => item.symbol), ["DISC6"], "IPO leaderboard must exclude score-only rows without IPO evidence");
+  const staleExtended = baseRow({ symbol: "EXTSTALE", totalScore: 91, rsGlobalPct: 88, price: 90, sma50: 100, sma200: 70, extSma50: 18, distance52w: -6 });
+  const stalePullback = baseRow({ symbol: "PBSTALE", totalScore: 84, rsGlobalPct: 82, price: 80, sma50: 100, sma200: 70, extSma50: 0 });
+  assert.equal(rowPassesListContract(staleExtended, "extended"), false, "extended list contract must reject stale SMA50 extension mismatches");
+  assert.equal(rowPassesListContract(stalePullback, "pullback"), false, "pullback list contract must reject stale SMA50 extension mismatches");
+  assert.match(listInclusionReasons(staleExtended, "extended").join(" "), /SMA50 no validada/i, "extended mismatch rationale must flag unvalidated SMA50 extension");
+  assert.match(listInclusionReasons(stalePullback, "pullback").join(" "), /SMA50 no validada/i, "pullback mismatch rationale must flag unvalidated SMA50 extension");
+  const extendedTrapBoard = buildLeaderboard([scanResultFromRow(staleExtended), rows.find((item) => item.raw?.symbol === "DISC4")], {
+    strategy: "extended",
+    maxPriceFreshnessDays: 999,
+    minCoverageScore: 0,
+    limit: 10,
+  });
+  assert.deepEqual(extendedTrapBoard.items.map((item) => item.symbol), ["DISC4"], "Extended leaderboard must reject stale SMA50 extension mismatches");
+  const pullbackTrapBoard = buildLeaderboard([scanResultFromRow(stalePullback), rows.find((item) => item.raw?.symbol === "DISC5")], {
+    strategy: "pullback",
+    maxPriceFreshnessDays: 999,
+    minCoverageScore: 0,
+    limit: 10,
+  });
+  assert.deepEqual(pullbackTrapBoard.items.map((item) => item.symbol), ["DISC5"], "Pullback leaderboard must reject stale SMA50 extension mismatches");
   assert.equal(isBullishListKey("minervini"), true, "Minervini contract must be classified as bullish");
   assert.equal(isBullishListKey("weakness"), false, "weakness contract must not be classified as bullish");
   assert.equal(listContractForKey("minervini").tone, "bullish", "Minervini Leaders must expose a bullish contract");
@@ -587,7 +1120,10 @@ function runDiscoveryContractTests() {
   assert.ok(softwareGroup?.contractDrilldown?.length, "discovery sector groups must expose contract drill-down over the full group");
   const softwareContracts = Object.fromEntries(softwareGroup.contractDrilldown.map((bucket) => [bucket.key, bucket]));
   assert.equal(softwareGroup.contractScopeRows >= softwareGroup.items.length, true, "sector contract scope must be at least as broad as the visible composite sample");
+  assert.equal(softwareGroup.items.some((item) => item.symbol === "DISC11"), true, "software group must include the stale extension trap in broad composite context");
+  assert.equal(softwareGroup.extended, 0, "discovery group extended count must use the visible contract and reject stale extension traps");
   assert.equal(softwareContracts.minervini.sample.some((item) => item.symbol === "DISC9" || item.symbol === "DISC10"), false, "discovery sector Minervini contract must exclude bearish or negative-momentum traps");
+  assert.equal(softwareContracts.extended.sample.some((item) => item.symbol === "DISC11"), false, "discovery sector Extended contract must exclude stale extension traps");
   assert.equal(softwareContracts.weakness.sample.some((item) => item.symbol === "DISC9"), true, "discovery sector deterioration contract must preserve bearish traps");
   assert.equal(groupDrilldown.minervini.reliability.rows, groupDrilldown.minervini.count, "sector drill-down must summarize reliability on the same matching rows");
   assert.equal(groupDrilldown.minervini.reliability.state, "watch", "coherent fresh Minervini rows with limited pattern data should stay distinct from stale/low-coverage warnings");
@@ -601,12 +1137,27 @@ function runDiscoveryContractTests() {
   });
   const reliabilityIssues = rowReliabilityIssues(reliabilityRow).map((issue) => issue.key);
   assert.deepEqual(new Set(reliabilityIssues), new Set(["stale", "coverage", "dataLimited", "taxonomy"]), "row reliability must flag freshness, coverage, data limits and taxonomy independently");
+  const missingReliabilityRow = baseRow({
+    symbol: "RELMISS",
+    priceFreshnessDays: null,
+    priceFreshnessOk: undefined,
+    priceFreshnessIssue: "",
+    lastDate: "",
+    dataCoverageScore: null,
+  });
+  const missingReliabilityIssues = rowReliabilityIssues(missingReliabilityRow);
+  assert.equal(missingReliabilityIssues.some((issue) => issue.key === "stale" && /sin validar/i.test(issue.label)), true, "row reliability must flag missing freshness as unvalidated price");
+  assert.equal(missingReliabilityIssues.some((issue) => issue.key === "coverage" && /sin validar/i.test(issue.label)), true, "row reliability must flag missing coverage as unvalidated coverage");
   const reliabilitySummary = summarizeListReliability([baseRow({ symbol: "REL0" }), reliabilityRow]);
   assert.equal(reliabilitySummary.state, "warn", "list reliability must warn when any visible candidate has weak data");
   assert.equal(reliabilitySummary.staleRows, 1, "list reliability must count stale rows");
   assert.equal(reliabilitySummary.lowCoverageRows, 1, "list reliability must count low coverage rows");
   assert.equal(reliabilitySummary.dataLimitedRows, 1, "list reliability must count data-limited rows");
   assert.equal(reliabilitySummary.missingTaxonomyRows, 1, "list reliability must count missing taxonomy rows");
+  const missingReliabilitySummary = summarizeListReliability([missingReliabilityRow]);
+  assert.equal(missingReliabilitySummary.state, "warn", "list reliability must warn when freshness and coverage are missing");
+  assert.equal(missingReliabilitySummary.staleRows, 1, "list reliability must count missing freshness as stale risk");
+  assert.equal(missingReliabilitySummary.lowCoverageRows, 1, "list reliability must count missing coverage as coverage risk");
   const warningDrilldown = buildGroupListDrilldown([reliabilityRow], ["leaders"], 2)[0];
   assert.equal(warningDrilldown.reliability.state, "warn", "sector drill-down reliability must warn on stale/low-coverage matching rows");
   assert.equal(warningDrilldown.reliability.lowCoverageRows, 1, "sector drill-down reliability must carry coverage issues to the UI");
@@ -646,6 +1197,105 @@ function runDiscoveryContractTests() {
   assert.ok(scopedEnergy.rows.some((item) => item.symbol === "DISC8"), "energy scope must keep genuine energy taxonomy");
   assert.equal(scopedEnergy.rows.some((item) => item.symbol === "DISC7"), false, "energy scope must not leak stale energy labels after canonicalization");
   assert.equal(scopedEnergy.lists.every((list) => list.items.every((item) => item.theme === "Energia / red")), true, "energy scoped lists must preserve canonical energy theme");
+
+  const unvalidatedDiscovery = buildDiscoverySnapshot([
+    baseRow({
+      symbol: "DISCNULL",
+      totalScore: 80,
+      rsGlobalPct: 78,
+      dataCoverageScore: null,
+      priceFreshnessDays: null,
+      priceFreshnessOk: undefined,
+      priceFreshnessIssue: "",
+      lastDate: "",
+    }),
+  ].map(scanResultFromRow), {
+    limit: 10,
+    groupsLimit: 10,
+    minGroupSize: 1,
+    minCoverageScore: 0,
+    maxPriceFreshnessDays: 999,
+  });
+  assert.equal(unvalidatedDiscovery.health.state, "warn", "discovery health must warn when freshness and coverage are unvalidated");
+  assert.equal(unvalidatedDiscovery.health.staleRows, 1, "discovery health must count unvalidated price freshness");
+  assert.equal(unvalidatedDiscovery.health.lowCoverageRows, 1, "discovery health must count unvalidated coverage");
+  assert.match(unvalidatedDiscovery.health.note, /precio sin validar|cobertura baja|sin validar/i, "discovery health note must explain unvalidated data");
+}
+
+function runComparableContractTests() {
+  const target = normalizeComparableResult({
+    symbol: "CMPTGT",
+    sector: "Technology",
+    industry: "Application Software",
+    theme: "Software / IA",
+    metrics: { rsSectorPct: 80 },
+  });
+  const validComparable = normalizeComparableResult({
+    symbol: "CMPVALID",
+    sector: "Technology",
+    industry: "Application Software",
+    theme: "Software / IA",
+    metrics: {
+      rsSectorPct: 74,
+      patternDataStatus: "ok",
+      patternEligible: true,
+      patternQualityScore: 70,
+      distanceToPivotPct: -2,
+      absDistanceToPivotPct: 2,
+      contractionDepths: [14, 7],
+      contractionCount: 2,
+      contractionsDecreasing: true,
+      setupDisplayKey: "pivot_squeeze",
+      setupDisplayState: "watch",
+      setupDisplayLabel: "Compresión de pivot",
+      setupDisplayWatch: true,
+      setupDisplayObservable: true,
+      setupDisplayBlocksPatternClaim: false,
+      setupDisplayDataLimited: false,
+    },
+  });
+  const blockedComparable = normalizeComparableResult({
+    symbol: "CMPBLOCK",
+    sector: "Technology",
+    industry: "Application Software",
+    theme: "Software / IA",
+    metrics: {
+      rsSectorPct: 96,
+      patternDataStatus: "ok",
+      patternEligible: true,
+      patternQualityScore: 99,
+      distanceToPivotPct: -0.5,
+      absDistanceToPivotPct: 0.5,
+      contractionDepths: [20, 10, 5],
+      contractionCount: 3,
+      contractionsDecreasing: true,
+      setupPlanValid: true,
+      setupActionable: true,
+      setupWatch: true,
+      setupDisplayKey: "actionable_vcp",
+      setupDisplayState: "data_limited",
+      setupDisplayLabel: "VCP plan válido",
+      setupDisplayShortLabel: "Plan válido",
+      setupDisplayPlanValid: false,
+      setupDisplayActionable: false,
+      setupDisplayTradePlanEligible: false,
+      setupDisplayWatch: false,
+      setupDisplayBlocksPatternClaim: true,
+      setupDisplayDataLimited: true,
+      methodologyReliabilityState: "data_limited",
+    },
+  });
+
+  assert.equal(validComparable.comparablePatternUsable, true, "valid comparable pattern should be usable for ranking evidence");
+  assert.equal(comparablePatternUsable(validComparable), true, "valid comparable pattern should remain usable after normalization");
+  assert.equal(blockedComparable.setupDisplayBlocksPatternClaim, true, "comparable normalization must preserve display claim blockers");
+  assert.equal(blockedComparable.setupDisplayPlanValid, false, "comparable normalization must preserve display plan rejection");
+  assert.equal(blockedComparable.comparablePatternUsable, false, "blocked comparable pattern must not be usable for ranking evidence");
+  assert.equal(comparablePatternUsable(blockedComparable), false, "blocked comparable pattern must stay unusable in scoring");
+  assert.ok(
+    comparableScore(validComparable, target) < comparableScore(blockedComparable, target),
+    "blocked high-quality pivot traps must not outrank validated comparables by raw pattern/pivot metrics",
+  );
 }
 
 function runCoverageAuditContractTests() {
@@ -691,6 +1341,23 @@ function runCoverageAuditContractTests() {
   assert.equal(scoped.rankedRows, 1, "country-scoped audit must narrow ranked rows");
   assert.equal(scoped.scope.type, "country", "country-scoped audit must preserve scope type");
   assert.equal(scoped.state, "pass", "country-scoped audit with one represented market should not warn for global concentration");
+
+  const missingCountAudit = buildCoverageAudit({
+    inputRows: [inputRows[0]],
+    lists: [
+      { key: "leaders", title: "Composite Leaders", count: "", items: [inputRows[0]] },
+      { key: "nearPivot", title: "Vigilancia pivot", count: 0, items: [inputRows[0]] },
+    ],
+    groups: {
+      sector: [{ key: "Technology", count: "", items: [inputRows[0]], strength: "" }],
+    },
+    criteria: { minMarketRows: 1, minListRows: 2, minGroupRows: 2 },
+  });
+  const missingCountLists = Object.fromEntries(missingCountAudit.listHealth.lists.map((item) => [item.key, item]));
+  assert.equal(missingCountLists.leaders.count, 1, "coverage audit must fallback blank list counts to visible items");
+  assert.equal(missingCountLists.nearPivot.count, 1, "coverage audit must not mark a list empty when visible items contradict count 0");
+  assert.equal(missingCountAudit.listHealth.emptyLists.length, 0, "coverage audit must not create false empty-list warnings from missing counts");
+  assert.equal(missingCountAudit.groupHealth.thinGroups[0]?.count, 1, "coverage audit must fallback blank group counts to visible group items");
 }
 
 function runSavedListViewContractTests() {
@@ -726,6 +1393,18 @@ function runSavedListViewContractTests() {
     id: "global-discovery",
   });
   assert.equal(savedListViewMetaLine(globalDiscoveryView).includes("61 filas"), true, "global discovery views must still describe ranking rows as rows");
+
+  const missingCountsView = normalizeSavedListViews([{
+    id: "missing-counts",
+    source: "discovery-api",
+    counts: { rows: null, scopeRows: "", staleRows: undefined, planClaims: null },
+    criteria: { maxPriceFreshnessDays: "", minCoverageScore: null },
+    updatedAt: "2026-06-04T11:10:00.000Z",
+  }])[0];
+  assert.equal(missingCountsView.counts.rows, null, "saved views must preserve missing row counts as null, not 0");
+  assert.equal(missingCountsView.counts.scopeRows, null, "saved views must preserve blank scope counts as null, not 0");
+  assert.equal(missingCountsView.criteria.maxPriceFreshnessDays, null, "saved views must preserve blank criteria as null, not 0");
+  assert.equal(savedListViewMetaLine(missingCountsView).includes("filas -"), true, "saved views with unknown counts should not claim 0 rows");
 
   const sectorOriginView = buildSavedListView({
     filter: { groupType: "theme", group: "Energia / red" },
@@ -939,6 +1618,19 @@ function runScreenerContractDisplayTests() {
   assert.equal(bearishOrigin.row.weakness, "82", "stock origin must preserve deterioration score for bearish context");
   assert.match(bearishOrigin.statusText, /deterioro|debilidad|largos/i, "stock origin status must explain weakness context");
 
+  const sparseOrigin = buildScreenerStockContext(bearish, {
+    symbol: "NODATA",
+    row: { symbol: "NODATA", totalScore: null, rsGlobalPct: "", weaknessScore: undefined },
+    rank: null,
+    queueSize: "",
+    openedAt: "2026-06-05T09:30:00.000Z",
+  });
+  assert.equal(sparseOrigin.rank, null, "stock origin must preserve missing rank as null, not 0");
+  assert.equal(sparseOrigin.queueSize, null, "stock origin must preserve missing queue size as null, not 0");
+  assert.equal(sparseOrigin.row.score, "-", "stock origin must show missing score as dash, not 0");
+  assert.equal(sparseOrigin.row.rs, "-", "stock origin must show missing RS as dash, not 0");
+  assert.equal(sparseOrigin.row.weakness, "-", "stock origin must show missing weakness as dash, not 0");
+
   const session = {
     lastOpenedStockSymbol: "DISC9",
     lastOpenedStockAt: "2026-06-05T09:00:00.000Z",
@@ -954,10 +1646,12 @@ function main() {
   runThresholdMatrix();
   runBooleanAndModeTests();
   runFreshnessAndDataGateTests();
+  runPatternValidityGateTests();
   runParsingAndExactnessTests();
   runFilterExplainPlanTests();
   runLeaderboardSnapshotContractTests();
   runDiscoveryContractTests();
+  runComparableContractTests();
   runCoverageAuditContractTests();
   runSavedListViewContractTests();
   runCloudMergeContractTests();

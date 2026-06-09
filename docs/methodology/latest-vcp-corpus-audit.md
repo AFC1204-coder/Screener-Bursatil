@@ -1,8 +1,8 @@
 # VCP Corpus Audit
 
 Dataset version: 1
-Base URL: http://127.0.0.1:3000
-Refresh: yes · Price max age: 5d
+Base URL: http://127.0.0.1:3006
+Refresh: no · Price max age: 5d
 Cases: 18 · Passed: 18 · Failed: 0
 Calibration: checked 18 · mismatches 0 · actual block 6 / observe 3 / watch 7 / plan 2
 Calibration guardrails: OK
@@ -19,11 +19,11 @@ OK | aapl-constructive-watch-2023-12-20 | AAPL | 2023-12-20 | Base constructiva 
 OK | cost-constructive-watch-2026-05-07 | COST | 2026-05-07 | Base constructiva (constructive_base/watch) | watch | [SVG](vcp-visuals/cost-constructive-watch-2026-05-07.svg) | 2 contracciones útiles; estructura ok; pivot -2.2%; vol 0.98x; q 76; 1236 barras | 6.7% -> 3.1% | -
 OK | well-vcp-watch-2026-05-14 | WELL | 2026-05-14 | Base en vigilancia (vcp_watch/watch) | watch | [SVG](vcp-visuals/well-vcp-watch-2026-05-14.svg) | contexto de base 42 < 45; estructura ok; pivot -1.8%; vol 0.98x; q 78; 1241 barras | 10.2% -> 7.5% -> 5.0% | -
 OK | brk-b-observe-2022-07-11 | BRK-B | 2022-07-11 | Base medible (base_measurable/blocked) | observe | [SVG](vcp-visuals/brk-b-observe-2022-07-11.svg) | Base medible, pero pivot a -21.4%; fuera de zona de vigilancia.; estructura ok; pivot -21.4%; vol 0.79x; q 67; 276 barras | 17.4% -> 4.9% | -
-OK | aapl-observe-2022-02-22 | AAPL | 2022-02-22 | Base medible (base_measurable/blocked) | observe | [SVG](vcp-visuals/aapl-observe-2022-02-22.svg) | Base medible, pero pivot a -10.1%; fuera de zona de vigilancia.; estructura ok; pivot -10.1%; vol 0.80x; q 68; 181 barras | 12.7% -> 5.7% | -
+OK | aapl-observe-2022-02-22 | AAPL | 2022-02-22 | Base medible (base_measurable/blocked) | observe | [SVG](vcp-visuals/aapl-observe-2022-02-22.svg) | Base medible, pero pivot a -10.1%; fuera de zona de vigilancia.; estructura ok; pivot -10.1%; vol 0.80x; q 68; 179 barras | 12.7% -> 5.7% | -
 OK | msft-observe-2022-02-22 | MSFT | 2022-02-22 | Base medible (base_measurable/blocked) | observe | [SVG](vcp-visuals/msft-observe-2022-02-22.svg) | Base medible, pero pivot a -17.5%; fuera de zona de vigilancia.; estructura ok; pivot -17.5%; vol 0.93x; q 66; 181 barras | 19.8% -> 4.8% | -
-OK | brk-b-lower-low-drift-2026-06-02 | BRK-B | 2026-06-02 | No VCP claro (not_actionable/blocked) | block | [SVG](vcp-visuals/brk-b-lower-low-drift-2026-06-02.svg) | mínimos no sostienen la base; estructura lower_low_drift; pivot -6.9%; vol 1.03x; q 67; 1253 barras | 6.7% -> 2.4% -> 6.0% | -
-OK | 3988-hk-lower-low-drift-2026-06-03 | 3988.HK | 2026-06-03 | No VCP claro (not_actionable/blocked) | block | [SVG](vcp-visuals/3988-hk-lower-low-drift-2026-06-03.svg) | mínimos no sostienen la base; estructura lower_low_drift; pivot -1.1%; vol 0.94x; q 72; 1225 barras | 7.8% -> 4.6% -> 3.0% -> 4.2% | -
-OK | isrg-lower-low-drift-2026-06-02 | ISRG | 2026-06-02 | No VCP claro (not_actionable/blocked) | block | [SVG](vcp-visuals/isrg-lower-low-drift-2026-06-02.svg) | mínimos no sostienen la base; estructura lower_low_drift; pivot -20.4%; vol 1.19x; q 43; 1253 barras | 13.8% -> 4.9% -> 10.5% | -
-OK | aapl-lower-low-drift-2026-06-01 | AAPL | 2026-06-01 | No VCP claro (not_actionable/blocked) | block | [SVG](vcp-visuals/aapl-lower-low-drift-2026-06-01.svg) | mínimos no sostienen la base; estructura lower_low_drift; pivot -2.8%; vol 1.01x; q 60; 1252 barras | 9.0% -> 8.1% | -
-OK | meta-reexpansion-2026-06-02 | META | 2026-06-02 | No VCP claro (not_actionable/blocked) | block | [SVG](vcp-visuals/meta-reexpansion-2026-06-02.svg) | mínimos no sostienen la base; estructura lower_low_drift; pivot -13.6%; vol 0.99x; q 53; 1253 barras | 22.6% -> 5.6% -> 12.1% | -
-OK | msft-no-base-2026-06-02 | MSFT | 2026-06-02 | Sin base validada (no_base/blocked) | block | [SVG](vcp-visuals/msft-no-base-2026-06-02.svg) | base reciente no confirmada; estructura not_consolidating; pivot -5.4%; vol 1.09x; q 0; 1253 barras |  | -
+OK | brk-b-lower-low-drift-2026-06-02 | BRK-B | 2026-06-02 | No VCP claro (not_actionable/blocked) | block | [SVG](vcp-visuals/brk-b-lower-low-drift-2026-06-02.svg) | mínimos no sostienen la base; estructura lower_low_drift; pivot -6.9%; vol 1.03x; q 69; 1251 barras | 6.7% -> 2.4% · C3 rechazada: 6.0% | -
+OK | 3988-hk-lower-low-drift-2026-06-03 | 3988.HK | 2026-06-03 | No VCP claro (not_actionable/blocked) | block | [SVG](vcp-visuals/3988-hk-lower-low-drift-2026-06-03.svg) | mínimos no sostienen la base; estructura lower_low_drift; pivot -1.1%; vol 0.94x; q 74; 1223 barras | 7.8% -> 4.6% -> 3.0% · C4 rechazada: 4.2% | -
+OK | isrg-lower-low-drift-2026-06-02 | ISRG | 2026-06-02 | No VCP claro (not_actionable/blocked) | block | [SVG](vcp-visuals/isrg-lower-low-drift-2026-06-02.svg) | mínimos no sostienen la base; estructura lower_low_drift; pivot -20.4%; vol 1.19x; q 46; 1251 barras | 13.8% -> 4.9% · C3 rechazada: 10.5% | -
+OK | aapl-lower-low-drift-2026-06-01 | AAPL | 2026-06-01 | No VCP claro (not_actionable/blocked) | block | [SVG](vcp-visuals/aapl-lower-low-drift-2026-06-01.svg) | mínimos no sostienen la base; estructura lower_low_drift; pivot -2.8%; vol 1.01x; q 55; 995 barras | 9.0% · C2 rechazada: 6.3% | -
+OK | meta-reexpansion-2026-06-02 | META | 2026-06-02 | No VCP claro (not_actionable/blocked) | block | [SVG](vcp-visuals/meta-reexpansion-2026-06-02.svg) | última contracción se re-expande; estructura depth_reexpansion; pivot -13.6%; vol 0.99x; q 55; 996 barras | 15.6% -> 5.2% · C3 rechazada: 5.6% | -
+OK | msft-no-base-2026-06-02 | MSFT | 2026-06-02 | Sin base validada (no_base/blocked) | block | [SVG](vcp-visuals/msft-no-base-2026-06-02.svg) | base reciente no confirmada; estructura not_consolidating; pivot -5.4%; vol 1.09x; q 0; 996 barras |  | -

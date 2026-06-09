@@ -6,8 +6,7 @@ import { buildSavedListView, listViewHref, listViewSignature, normalizeListScope
 import { enforceListContractRows, listContractForKey, listInclusionSummary, rowPassesListContract, summarizeListReliability } from "@/lib/listRationale";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
-import { methodologyPivotWatchEligible } from "@/lib/methodologyDisplay";
-import { favoriteToRow, isLongOpportunityRow, isRecentIpo, metricValue, normalizeStockRows, shortBusiness, sortByMetric, uniqueRows, weaknessScore } from "@/lib/stockRows";
+import { favoriteToRow, isLongOpportunityRow, metricValue, normalizeStockRows, shortBusiness, sortByMetric, uniqueRows, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
 
 async function fetchJsonWithTimeout(path, timeoutMs = 16000) {
@@ -67,6 +66,7 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, localRows,
     <div className="discoveryHealthGrid">
       <span><b>{usingDiscovery ? health.rows ?? 0 : localRows}</b><em>filas ranking</em></span>
       <span><b>{usingDiscovery ? health.staleRows ?? 0 : "-"}</b><em>precio viejo</em></span>
+      <span><b>{usingDiscovery ? health.lowCoverageRows ?? 0 : "-"}</b><em>cobertura baja</em></span>
       <span><b>{usingDiscovery ? health.missingTaxonomyRows ?? 0 : "-"}</b><em>taxonomía incompleta</em></span>
       <span><b>{usingDiscovery ? health.planClaims ?? 0 : "-"}</b><em>planes VCP</em></span>
       <span><b>{scope}</b><em>alcance</em></span>
@@ -429,10 +429,10 @@ export default function ListsPage() {
   const weakness = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "weakness") ? discoveryListRows.weakness : sortByMetric(rows.filter((r) => rowPassesListContract(r, "weakness")), "weaknessScore"), [useDiscovery, discoveryListRows, rows]);
   const weinstein = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "weinstein") ? discoveryListRows.weinstein : sortByMetric(trendTemplateRows.filter((r) => rowPassesListContract(r, "weinstein")), "weinsteinScore"), [useDiscovery, discoveryListRows, trendTemplateRows]);
   const minervini = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "minervini") ? discoveryListRows.minervini : sortByMetric(trendTemplateRows.filter((r) => rowPassesListContract(r, "minervini")), "minerviniScore"), [useDiscovery, discoveryListRows, trendTemplateRows]);
-  const nearPivot = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "nearPivot") ? discoveryListRows.nearPivot : longRows.filter((r) => rowPassesListContract(r, "nearPivot") && methodologyPivotWatchEligible(r)).sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0)), [useDiscovery, discoveryListRows, longRows]);
-  const ipo = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "ipo") ? discoveryListRows.ipo : longRows.filter((r) => rowPassesListContract(r, "ipo") && isRecentIpo(r, 60)).sort((a, b) => (b.ipoScore || 0) - (a.ipoScore || 0)), [useDiscovery, discoveryListRows, longRows]);
+  const nearPivot = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "nearPivot") ? discoveryListRows.nearPivot : longRows.filter((r) => rowPassesListContract(r, "nearPivot")).sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0)), [useDiscovery, discoveryListRows, longRows]);
+  const ipo = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "ipo") ? discoveryListRows.ipo : longRows.filter((r) => rowPassesListContract(r, "ipo")).sort((a, b) => (b.ipoScore || 0) - (a.ipoScore || 0)), [useDiscovery, discoveryListRows, longRows]);
   const extended = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "extended") ? discoveryListRows.extended : longRows.filter((r) => rowPassesListContract(r, "extended")).sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0)), [useDiscovery, discoveryListRows, longRows]);
-  const pullback = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "pullback") ? discoveryListRows.pullback : longRows.filter((r) => rowPassesListContract(r, "pullback") && (r.price ?? 0) > (r.sma200 ?? Infinity)).sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0)), [useDiscovery, discoveryListRows, longRows]);
+  const pullback = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "pullback") ? discoveryListRows.pullback : longRows.filter((r) => rowPassesListContract(r, "pullback")).sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0)), [useDiscovery, discoveryListRows, longRows]);
   const listSections = useMemo(() => [
     { key: "leaders", title: "Composite Leaders", desc: "Ranking principal", rows: leaders, contractRejected: discoveryRejectedByKey.leaders || 0 },
     { key: "rsQuality", title: "RS Quality Leaders", desc: "RS alto con volatilidad/drawdown controlados", rows: rsQuality, scoreKey: "rsQualityScore", contractRejected: discoveryRejectedByKey.rsQuality || 0 },
@@ -440,7 +440,7 @@ export default function ListsPage() {
     { key: "weinstein", title: "Weinstein Leaders", desc: "Mejor estructura de etapa/tendencia", rows: weinstein, scoreKey: "weinsteinScore", contractRejected: discoveryRejectedByKey.weinstein || 0 },
     { key: "minervini", title: "Minervini Leaders", desc: "Trend template, momentum y máximos", rows: minervini, scoreKey: "minerviniScore", contractRejected: discoveryRejectedByKey.minervini || 0 },
     { key: "nearPivot", title: "Vigilancia pivot", desc: "Setup observable cerca de pivot; no equivale a plan automático", rows: nearPivot, contractRejected: discoveryRejectedByKey.nearPivot || 0 },
-    { key: "ipo", title: "IPO / New Leaders", desc: "Solo IPOs reales con fecha <= 5 años", rows: ipo, scoreKey: "ipoScore", contractRejected: discoveryRejectedByKey.ipo || 0 },
+    { key: "ipo", title: "IPO / New Leaders", desc: "Solo IPOs reales verificables <= 5 años", rows: ipo, scoreKey: "ipoScore", contractRejected: discoveryRejectedByKey.ipo || 0 },
     { key: "extended", title: "Extended but strong", desc: "Muy fuertes, pero vigilar extensión sobre SMA50", rows: extended, contractRejected: discoveryRejectedByKey.extended || 0 },
     { key: "pullback", title: "Pullback to SMA50", desc: "Líderes cerca de SMA50 para vigilancia", rows: pullback, contractRejected: discoveryRejectedByKey.pullback || 0 },
   ], [leaders, rsQuality, weakness, weinstein, minervini, nearPivot, ipo, extended, pullback, discoveryRejectedByKey]);
