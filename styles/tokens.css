@@ -1,0 +1,115 @@
+/* styles/tokens.css — variables de diseño (:root). Extraído verbatim de app/globals.css. */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  color-scheme:dark;
+  --bg:#09090b;
+  --surface:#0c0c0e;
+  --surface2:#131316;
+  --surface3:#1a1a1f;
+  --line:rgba(255,255,255,.08);
+  --line2:rgba(255,255,255,.14);
+  --text:#e4e4e7;
+  --muted:#71717a;
+  --soft:#a1a1aa;
+  --gold:#e4e4e7;
+  --gold2:#fafafa;
+  --amber:#a1a1aa;
+  --lime:#22c55e;
+  --teal:#06b6d4;
+  --red:#ef4444;
+  --panel:#09090b;
+  --panel2:#131316;
+  --panel3:#1a1a1f;
+  --radius:6px;
+  --accent:#2563eb;
+  --accent2:#3b82f6;
+}
+
+/* Claude prototype integration pass: cleaner research terminal language. */
+
+:root {
+  --bg:#050505;
+  --surface:#070708;
+  --surface2:#0a0a0b;
+  --surface3:#111113;
+  --line:rgba(255,255,255,.06);
+  --line2:rgba(255,255,255,.1);
+  --text:#e4e4e7;
+  --muted:#71717a;
+  --soft:#a1a1aa;
+  --gold:#d4d4d8;
+  --gold2:#fafafa;
+  --amber:#71717a;
+  --lime:#22c55e;
+  --red:#ef4444;
+  --panel:#050505;
+  --panel2:#070708;
+  --panel3:#111113;
+  --radius:5px;
+  --accent:#2563eb;
+  --accent2:#93c5fd;
+}
+
+/* StatsEdge SaaS redesign pass. Local, reversible visual system layer. */
+
+:root {
+  color-scheme:dark;
+  --bg:#050506;
+  --surface:#090a0c;
+  --surface2:#0d0f12;
+  --surface3:#12151a;
+  --line:rgba(255,255,255,.075);
+  --line2:rgba(255,255,255,.12);
+  --text:#f4f4f5;
+  --muted:#7a7d86;
+  --soft:#a3a6af;
+  --gold:#f4f4f5;
+  --gold2:#ffffff;
+  --amber:#f59e0b;
+  --lime:#22c55e;
+  --teal:#3b82f6;
+  --red:#ef4444;
+  --panel:#090a0c;
+  --panel2:#0d0f12;
+  --panel3:#12151a;
+  --accent:#3b82f6;
+  --accent2:#8ab4ff;
+  --radius:8px;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+}
+
+/* Premium investor workstation pass: calmer chrome, denser tables, clearer daily workflow. */
+
+:root {
+  --bg: #060709;
+  --surface: #0b0d10;
+  --surface2: #101319;
+  --surface3: #151922;
+  --line: rgba(255,255,255,.085);
+  --line2: rgba(255,255,255,.16);
+  --text: #f1f3f7;
+  --muted: #838894;
+  --soft: #b5bac6;
+  --accent: #4f8cff;
+  --accent2: #9fc2ff;
+  --lime: #2bd576;
+  --red: #ff5d5d;
+  --amber: #eab308;
+  --radius: 8px;
+}
+
+/* ── 1. Accent tokens ── */
+
+:root {
+  --accent:        #3b78f0;
+  --accent2:       #6da4ff;
+  --accent-dim:    rgba(59,120,240,.11);
+  --radius:        7px;
+}

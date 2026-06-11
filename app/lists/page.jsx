@@ -1,4 +1,5 @@
 "use client";
+import "../../styles/lists.css";
 import { useEffect, useMemo, useState } from "react";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";

@@ -1,4 +1,5 @@
 "use client";
+import "../../styles/research-desk.css";
 import { useEffect, useMemo, useState } from "react";
 import { getJson } from "@/lib/clientApi";
 import { deleteFavoriteFromCloud, deleteScanFromCloud, getAlertsFromCloud, getCloudStatus, mergeAlertsWithTimestamps, mergeFavoritesWithTombstones, mergeScansWithTombstones, pullCloudState, pushCloudState, resolveAlertInCloud, syncAlertsToCloud, syncFavoriteToCloud, syncFavoritesToCloud, syncScanToCloud } from "@/lib/cloudSyncClient";

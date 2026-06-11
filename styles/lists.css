@@ -1,0 +1,256 @@
+/* styles/lists.css — reglas exclusivas de la ruta lists. Extraído de app/globals.css. */
+
+.savedListViewsPanel {
+  display:grid;
+  gap:12px;
+}
+
+.listScopeSummary {
+  display:grid;
+  gap:12px;
+}
+
+.savedListView {
+  min-width:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  border:1px solid rgba(255,255,255,.08);
+  border-left:3px solid rgba(148,163,184,.34);
+  border-radius:8px;
+  padding:10px 12px;
+  background:rgba(255,255,255,.025);
+}
+
+.savedListView a {
+  min-width:0;
+  display:grid;
+  gap:4px;
+  text-decoration:none;
+}
+
+.savedListView b {
+  color:#f8fafc;
+  font-size:13px;
+  font-weight:760;
+  line-height:1.2;
+  overflow-wrap:anywhere;
+}
+
+.savedListView span {
+  color:#87909f;
+  font-size:11px;
+  line-height:1.3;
+  overflow-wrap:anywhere;
+}
+
+@media(max-width:560px) {
+  .savedListView {
+    grid-template-columns:1fr;
+  }
+}
+
+.listDisclosure {
+  padding-bottom:12px;
+}
+
+.listDisclosure:not([open]) {
+  padding-bottom:0;
+}
+
+.listMobileRows {
+  display: none;
+}
+
+.listContractNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: -2px 0 12px;
+  border-left: 3px solid rgba(148,163,184,.35);
+  border-radius: 7px;
+  padding: 9px 11px;
+  background: rgba(255,255,255,.025);
+  color: #9aa4b2;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.listContractNote b {
+  flex: 0 0 auto;
+  color: #edf2f7;
+  font-size: 11px;
+  font-weight: 760;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.listReliabilityStrip {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) repeat(5, minmax(82px, auto));
+  gap: 8px;
+  align-items: stretch;
+  margin: -4px 0 12px;
+  border: 1px solid rgba(148,163,184,.14);
+  border-radius: 7px;
+  padding: 8px;
+  background: rgba(148,163,184,.035);
+}
+
+.listReliabilityStrip > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.listReliabilityStrip b {
+  color: #edf2f7;
+  font-size: 12px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.listReliabilityStrip em {
+  overflow: hidden;
+  color: #97a4b5;
+  font-size: 10.5px;
+  font-style: normal;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listReliabilityMain em {
+  white-space: normal;
+}
+
+.listInclusionReason {
+  display: block;
+  margin-top: 5px;
+  color: #b6c0cf;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.listMobileRow {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  background: #090b0f;
+}
+
+.listMobileRowTop {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.listMobileRowTop span {
+  min-width: 0;
+}
+
+.listMobileRowTop b {
+  display: block;
+  color: #f4f7fb;
+  font-size: 15px;
+  line-height: 1.1;
+}
+
+.listMobileRowTop em {
+  display: block;
+  overflow: hidden;
+  margin-top: 3px;
+  color: #8b95a4;
+  font-size: 12px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listMobileRowTop strong {
+  color: #dbeafe;
+  font-size: 18px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.listMobileSpark {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.listMobileFacts {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 6px;
+}
+
+.listMobileFacts span {
+  min-width: 0;
+  padding: 7px 6px;
+  background: rgba(255,255,255,.018);
+  color: #87909d;
+  font-size: 10px;
+  font-weight: 720;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.listMobileFacts b {
+  display: block;
+  margin-top: 2px;
+  color: #e5e7eb;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.listMobileRow p,
+.listMobileEmpty {
+  margin: 0;
+  color: #8b95a4;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.listMobileReason {
+  display: block;
+  border-top: 1px solid rgba(255,255,255,.07);
+  padding-top: 8px;
+  color: #c0c8d3;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+@media(max-width:900px) {
+  .listReliabilityStrip {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+  .listReliabilityMain {
+    grid-column: 1 / -1;
+  }
+}
+
+@media(max-width:760px) {
+  .listMobileRows {
+    display: grid;
+    gap: 8px;
+  }
+  .listContractNote {
+    display: grid;
+  }
+}
+
+@media(max-width:430px) {
+  .listMobileFacts {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+}

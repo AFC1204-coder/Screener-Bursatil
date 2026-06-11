@@ -1,0 +1,59 @@
+/* styles/ipo-radar.css — reglas exclusivas de la ruta ipo-radar. Extraído de app/globals.css. */
+
+.ipoFormGrid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.ipoFormGrid .wide {
+  grid-column:1 / -1;
+}
+
+.checkLine {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:12px;
+  color:var(--soft);
+  font-size:13px;
+}
+
+.checkLine input {
+  width:16px;
+  height:16px;
+  accent-color:var(--gold2);
+}
+
+.ipoAlertList {
+  display:grid;
+  gap:8px;
+}
+
+.signalStatMini {
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  padding:4px 8px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  background:rgba(255,255,255,.035);
+  color:var(--soft);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+@media(max-width:760px) {
+  .ipoFormGrid {
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:760px) {
+  .ipoRadarForm {
+    padding-bottom:24px;
+  }
+}

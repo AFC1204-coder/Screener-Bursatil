@@ -1,4 +1,5 @@
 "use client";
+import "../../styles/review.css";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import UniversalPriceChart from "@/app/UniversalPriceChart";

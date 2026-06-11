@@ -1,3 +1,4 @@
+import "../../../styles/stock.css";
 import { getCompanyBrief } from "@/app/api/company-brief/route";
 import StockClient from "./StockClient";
 

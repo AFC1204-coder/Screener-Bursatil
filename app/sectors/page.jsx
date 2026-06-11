@@ -1,4 +1,5 @@
 "use client";
+import "../../styles/sectors.css";
 import { useEffect, useMemo, useState } from "react";
 import { authHeaders, getJson } from "@/lib/clientApi";
 import { num, pct, pctShare } from "@/lib/formatters";

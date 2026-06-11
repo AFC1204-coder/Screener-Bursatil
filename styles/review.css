@@ -1,0 +1,263 @@
+/* styles/review.css — reglas exclusivas de la ruta review. Extraído de app/globals.css. */
+
+.emptyState {max-width:980px
+}
+
+.reviewPage {
+  width:min(1680px,100%);
+}
+
+.reviewControls {
+  align-items:center;
+}
+
+.reviewWorkbench {
+  display:grid;
+  grid-template-columns:minmax(220px,280px) minmax(0,1fr) minmax(260px,330px);
+  gap:12px;
+  align-items:start;
+}
+
+.reviewFocus {
+  position:relative;
+  min-width:0;
+  overflow:hidden;
+}
+
+.reviewFocusHeader {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:60px;
+  padding:12px;
+  border-bottom:1px solid rgba(255,255,255,.13);
+}
+
+.reviewIdentity {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.reviewIdentity span {min-width:0
+}
+
+.reviewIdentity b {
+  display:block;
+  color:#f8e7b1;
+  font-size:18px;
+  line-height:1.05;
+  font-weight:900;
+}
+
+.reviewIdentity em {
+  display:block;
+  overflow:hidden;
+  max-width:420px;
+  color:#918b80;
+  font-size:12px;
+  font-style:normal;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.reviewMeta {
+  color:#b7ad99;
+  font-size:12px;
+  font-weight:750;
+  text-align:right;
+}
+
+.reviewChart {
+  height:min(74vh,760px);
+  min-height:560px;
+  overflow:hidden;
+  padding:12px;
+  background:#050505;
+}
+
+.reviewTvChart {
+  padding:0;
+}
+
+.reviewFloatingNav {
+  position:absolute;
+  right:14px;
+  top:74px;
+  z-index:4;
+  display:grid;
+  gap:6px;
+  width:48px;
+  padding:6px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  background:rgba(5,5,5,.72);
+  backdrop-filter:blur(18px);
+  box-shadow:0 16px 34px rgba(0,0,0,.34);
+}
+
+.reviewFloatingNav button {
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:999px;
+  background:rgba(255,255,255,.05);
+  color:#f4f4f5;
+  font-size:18px;
+  line-height:1;
+}
+
+.reviewFloatingNav button:hover {
+  border-color:rgba(59,130,246,.55);
+  background:rgba(59,130,246,.2);
+}
+
+.reviewFloatingNav span {
+  display:grid;
+  place-items:center;
+  min-height:32px;
+  color:#fafafa;
+  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11px;
+  font-weight:700;
+}
+
+.reviewFloatingNav em {
+  color:#71717a;
+  font-style:normal;
+}
+
+.reviewSpark {
+  display:none;
+  padding:10px;
+  border-top:1px solid rgba(255,255,255,.1);
+}
+
+.reviewSide {
+  position:sticky;
+  top:64px;
+  padding:12px;
+}
+
+.reviewActionStrip {
+  display:grid;
+  grid-template-columns:1fr 1fr 44px;
+  gap:7px;
+  margin-bottom:10px;
+}
+
+.reviewMetricGrid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:0;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:3px;
+  background:rgba(0,0,0,.25);
+}
+
+.reviewMetricGrid span {
+  min-height:56px;
+  padding:9px;
+  border-right:1px solid rgba(255,255,255,.08);
+  border-bottom:1px solid rgba(255,255,255,.08);
+  color:#cccccc;
+  font-size:16px;
+  font-weight:900;
+}
+
+.reviewMetricGrid b {
+  display:block;
+  margin-bottom:4px;
+  color:#817c73;
+  font-size:9px;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+
+.reviewEvidence {
+  margin-top:12px;
+}
+
+.reviewNotes {
+  margin-top:10px;
+  border-top:1px solid rgba(255,255,255,.1);
+}
+
+@media(max-width:1040px) {
+  .reviewWorkbench {
+    grid-template-columns:1fr;
+  }
+  .reviewMain {order:1
+  }
+  .reviewSide {order:3
+  }
+}
+
+@media(max-width:620px) {
+  .reviewFocusHeader {
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .reviewMeta {text-align:left
+  }
+  .reviewChart {
+    height:520px;
+    min-height:420px;
+  }
+  .reviewFloatingNav {
+    top:78px;
+    right:10px;
+    bottom:auto;
+  }
+  .reviewSpark {display:block
+  }
+  .reviewActionStrip {
+    grid-template-columns:1fr 1fr 42px;
+  }
+  .reviewMetricGrid {
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+/* Premium UX remediation: mobile review stability and mobile-native lists. */
+
+.reviewMain {
+  min-width: 0;
+}
+
+@media(max-width:900px) {
+  .reviewWorkbench {
+    grid-template-columns: 1fr;
+  }
+  .reviewMain { order: 1;
+  }
+  .reviewSide { order: 3;
+  }
+  .reviewChart {
+    height: auto;
+    min-height: 0;
+    padding: 8px;
+    overflow: visible;
+  }
+  .reviewFloatingNav {
+    top: 72px;
+    right: 10px;
+  }
+  .reviewSide {
+    padding: 10px;
+  }
+  .reviewActionStrip {
+    grid-template-columns: 1fr 1fr 40px;
+  }
+}
+
+@media(max-width:430px) {
+  .reviewMetricGrid {
+    grid-template-columns: 1fr;
+  }
+}

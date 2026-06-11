@@ -1,4 +1,5 @@
 "use client";
+import "../../styles/ipo-radar.css";
 import { useEffect, useMemo, useState } from "react";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { countryCode, stockUrl } from "@/lib/symbols";

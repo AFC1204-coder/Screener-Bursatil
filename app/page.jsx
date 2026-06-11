@@ -1,4 +1,5 @@
 "use client";
+import "../styles/screener.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import ChartPreferences from "@/app/ChartPreferences";

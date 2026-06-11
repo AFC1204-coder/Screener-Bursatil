@@ -25,6 +25,7 @@ pnpm-debug.log*
 *credential*
 *credentials*
 *token*
+!styles/tokens.css
 
 # Local data, exports and backups
 *.sqlite

@@ -1,4 +1,6 @@
-import "./globals.css";
+import "../styles/tokens.css";
+import "../styles/base.css";
+import "../styles/components.css";
 import BottomNav, { AppHeaderNav } from "./BottomNav";
 
 export const metadata = {

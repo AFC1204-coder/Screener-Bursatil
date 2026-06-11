@@ -1,0 +1,37 @@
+/* styles/research-desk.css — reglas exclusivas de la ruta research-desk. Extraído de app/globals.css. */
+
+.grid3 {grid-template-columns:repeat(auto-fit,minmax(170px,1fr))
+}
+
+.commandCenter {
+  position:relative;
+  margin:0 0 14px;
+  padding:18px 0;
+  border-top:1px solid rgba(255,255,255,.22);
+  border-bottom:1px solid rgba(255,255,255,.16);
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,255,255,.018) 28%,rgba(94,234,212,.035) 100%);
+}
+
+.commandCenter:before {
+  content:"";
+  position:absolute;
+  inset:0 auto auto 0;
+  width:120px;
+  height:2px;
+  background:linear-gradient(90deg,var(--gold2),transparent);
+}
+
+.commandCenter {
+  margin:0 0 10px;
+  padding:14px 0;
+  background:linear-gradient(90deg,rgba(255,255,255,.045),rgba(255,255,255,.01) 42%,rgba(94,234,212,.018));
+}
+
+.miniPanel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(255,255,255,.025);
+  min-width: 0;
+}

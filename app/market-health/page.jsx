@@ -1,4 +1,5 @@
 "use client";
+import "../../styles/market-health.css";
 import { useEffect, useState } from "react";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
