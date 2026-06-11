@@ -1,4 +1,4 @@
-import { fetchYahooChart } from "@/lib/yahoo";
+import { fetchYahooChart } from "@/lib/marketData";
 import { withDailyBarsCache } from "@/lib/dailyBarsCache";
 
 function optionalNumber(value) {

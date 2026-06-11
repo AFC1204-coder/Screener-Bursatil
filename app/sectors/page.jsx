@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { authHeaders, getJson } from "@/lib/clientApi";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";
 import { filterGroupsByStrength, groupRows, STRENGTH_FILTERS } from "@/lib/grouping";
@@ -15,7 +16,7 @@ async function fetchJsonWithTimeout(path, timeoutMs = 16000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(path, { signal: controller.signal, cache: "no-store" });
+    const response = await fetch(path, { signal: controller.signal, cache: "no-store", headers: authHeaders() });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || payload.error) throw new Error(payload.error || `HTTP ${response.status}`);
     return payload;
@@ -305,11 +306,7 @@ export default function SectorsPage() {
   useEffect(() => { reloadLocal(); }, []);
   useEffect(() => {
     let alive = true;
-    fetch("/api/market-health").then(async (response) => {
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
-      return payload;
-    }).then((payload) => {
+    getJson("/api/market-health").then((payload) => {
       if (alive) setMarketHealth(payload);
     }).catch((error) => {
       if (alive) setMarketHealthError(error.message || "Sin respuesta");

@@ -1,4 +1,4 @@
-import { fetchYahooProfile } from "@/lib/yahoo";
+import { fetchYahooProfile } from "@/lib/marketData";
 import { fetchAsicShortInterest, mergeAsicShortInterest } from "@/lib/asicShort";
 import { withProfileCache } from "@/lib/fundamentalsCache";
 

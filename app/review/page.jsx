@@ -5,8 +5,10 @@ import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
 import { clamp, num, pct, ratio } from "@/lib/formatters";
+import { stdev } from "@/lib/indicators";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
+import { objectiveStage } from "@/lib/scoring";
 import { createFavoriteFromRow } from "@/lib/stockRows";
 import { countryCode, externalLinks, isTradingViewWidgetBlocked, stockUrl } from "@/lib/symbols";
 
@@ -92,11 +94,6 @@ function chartPath(points, key, x, y) {
 function avg(values = []) {
   const xs = values.filter(Number.isFinite);
   return xs.length ? xs.reduce((sum, item) => sum + item, 0) / xs.length : null;
-}
-function stdev(values = []) {
-  const mean = avg(values);
-  if (!Number.isFinite(mean) || values.length < 2) return null;
-  return Math.sqrt(avg(values.map((item) => (item - mean) ** 2)));
 }
 function barsAsc(bars = []) {
   return [...bars]
@@ -325,18 +322,6 @@ function ReviewChartPanel({ row, loading = false }) {
   return <div className="reviewChart">
     <div className="previewEmpty">{loading ? "Cargando datos..." : "Sin grafico disponible"}</div>
   </div>;
-}
-function objectiveStage(row = {}) {
-  const price = value(row, "price");
-  const sma50 = value(row, "sma50");
-  const sma150 = value(row, "sma150");
-  const sma200 = value(row, "sma200");
-  const slope = value(row, "sma200Slope");
-  if ([price, sma50, sma150, sma200].every(Number.isFinite) && price > sma50 && sma50 > sma150 && sma150 > sma200 && slope > 0) return "Precio > SMA50 > SMA150 > SMA200";
-  if (Number.isFinite(price) && Number.isFinite(sma200) && price < sma200) return "Precio < SMA200";
-  if (Number.isFinite(price) && Number.isFinite(sma50) && price < sma50) return "Precio < SMA50";
-  if (Number.isFinite(price) && Number.isFinite(sma200) && price > sma200) return "Precio > SMA200";
-  return "Historico insuficiente";
 }
 function metricRows(row = {}) {
   return [

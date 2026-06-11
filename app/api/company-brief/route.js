@@ -1,4 +1,4 @@
-import { fetchYahooProfile, fetchYahooChart, fetchYahooCompanyExtras } from "@/lib/yahoo";
+import { fetchYahooProfile, fetchYahooChart, fetchYahooCompanyExtras } from "@/lib/marketData";
 import { fetchSecFundamentals, mergeSecGrowthMetrics } from "@/lib/sec";
 import { fetchFmpCompanyData } from "@/lib/fmp";
 import { fetchAsicShortInterest, mergeAsicShortInterest } from "@/lib/asicShort";

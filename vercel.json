@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/shadow-europe-refresh",
       "schedule": "50 22 * * *"
+    },
+    {
+      "path": "/api/cron/favorite-snapshots",
+      "schedule": "30 22 * * *"
     }
   ]
 }

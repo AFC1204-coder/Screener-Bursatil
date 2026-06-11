@@ -1,4 +1,4 @@
-import { fetchYahooProfile } from "@/lib/yahoo";
+import { fetchYahooProfile } from "@/lib/marketData";
 import { findSimilarStocks } from "@/lib/peers";
 
 export async function GET(request) {

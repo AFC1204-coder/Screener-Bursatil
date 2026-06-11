@@ -3,7 +3,7 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "test": "node scripts/smoke-test.mjs && npm run test:patterns",
+    "test": "vitest run",
     "test:patterns": "node --loader ./scripts/loader.mjs scripts/pattern-detector-regression.mjs",
     "test:filters": "node --loader ./scripts/loader.mjs scripts/filter-regression-test.mjs && FILTER_CONTRACT_MARKDOWN=0 FILTER_CONTRACT_QUIET=1 node --loader ./scripts/loader.mjs scripts/filter-contract-audit.mjs && FILTER_LAYER_CONTRACT_MARKDOWN=0 FILTER_LAYER_CONTRACT_QUIET=1 node --loader ./scripts/loader.mjs scripts/filter-layer-contract-audit.mjs",
     "test:filters:ui": "node scripts/filter-ui-regression.mjs",
@@ -35,6 +35,7 @@
     "autoprefixer": "latest",
     "playwright": "^1.60.0",
     "postcss": "latest",
-    "tailwindcss": "latest"
+    "tailwindcss": "latest",
+    "vitest": "^4.1.8"
   }
 }

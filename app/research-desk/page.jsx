@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { getJson } from "@/lib/clientApi";
 import { deleteFavoriteFromCloud, deleteScanFromCloud, getAlertsFromCloud, getCloudStatus, mergeAlertsWithTimestamps, mergeFavoritesWithTombstones, mergeScansWithTombstones, pullCloudState, pushCloudState, resolveAlertInCloud, syncAlertsToCloud, syncFavoriteToCloud, syncFavoritesToCloud, syncScanToCloud } from "@/lib/cloudSyncClient";
 import { num, pct } from "@/lib/formatters";
+import { sma } from "@/lib/indicators";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { activeAlerts, alertSummary, alertsFromScan, mergeAlerts, resolveAlert } from "@/lib/methodologyAlerts";
@@ -56,21 +58,49 @@ function investorStatusLabel(text = "") {
     .replaceAll("Proveedor", "Datos")
     .replaceAll("provider", "datos");
 }
-async function getJson(url) {
-  const r = await fetch(url); const d = await r.json();
-  if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
-  return d;
+// Sparkline favorito-vs-benchmark sobre la serie diaria de favorite_snapshots.
+// Ambas series se normalizan a base 100 en el primer snapshot: la línea azul es el
+// favorito y la gris discontinua el benchmark.
+function FavoriteSparkline({ series = [] }) {
+  const points = series.filter((point) => Number.isFinite(point.price));
+  if (points.length < 2) return <span className="fine">Serie en construcción ({points.length}/2 snapshots)</span>;
+  const width = 130;
+  const height = 36;
+  const pad = 2;
+  const base = points[0];
+  const favorite = points.map((point) => (point.price / base.price) * 100);
+  const benchmarkBase = Number.isFinite(base.benchmarkPrice) && base.benchmarkPrice > 0 ? base.benchmarkPrice : null;
+  const benchmark = benchmarkBase ? points.map((point) => Number.isFinite(point.benchmarkPrice) ? (point.benchmarkPrice / benchmarkBase) * 100 : null) : [];
+  const values = [...favorite, ...benchmark.filter(Number.isFinite)];
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const x = (index) => pad + (index / (points.length - 1)) * (width - pad * 2);
+  const y = (value) => max === min ? height / 2 : pad + (1 - (value - min) / (max - min)) * (height - pad * 2);
+  const path = (vals) => {
+    let open = false;
+    return vals.map((value, index) => {
+      if (!Number.isFinite(value)) { open = false; return ""; }
+      const cmd = open ? "L" : "M";
+      open = true;
+      return `${cmd}${x(index).toFixed(1)},${y(value).toFixed(1)}`;
+    }).filter(Boolean).join(" ");
+  };
+  const lastAlpha = [...points].reverse().find((point) => Number.isFinite(point.alpha))?.alpha ?? null;
+  const title = `${points.length} snapshots · ${base.capturedAt?.slice(0, 10) || ""} → ${points.at(-1).capturedAt?.slice(0, 10) || ""}${Number.isFinite(lastAlpha) ? ` · alpha ${lastAlpha.toFixed(1)}%` : ""}`;
+  return <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title}>
+    <title>{title}</title>
+    {benchmark.length > 0 && <path d={path(benchmark)} fill="none" stroke="#9ca3af" strokeWidth="1" strokeDasharray="3 2" />}
+    <path d={path(favorite)} fill="none" stroke="#2563eb" strokeWidth="1.6" />
+  </svg>;
 }
 function closeOnOrBefore(bars = [], isoDate) {
   const target = new Date(isoDate || Date.now()).toISOString().slice(0, 10);
   return bars.find((bar) => bar.date <= target)?.close ?? bars.at(-1)?.close ?? null;
 }
-function avg(a) { return a.length ? a.reduce((x, y) => x + y, 0) / a.length : null; }
 function stateFromBars(bars = []) {
   if (bars.length < 210) return "Historico insuficiente";
-  const sma = (n) => avg(bars.slice(0, n).map((x) => x.close));
   const price = bars[0].close;
-  const s50 = sma(50), s200 = sma(200);
+  const s50 = sma(bars, 50), s200 = sma(bars, 200);
   if (price > s50 && price > s200) return "Tendencia constructiva";
   if (price < s200) return "Bajo SMA200";
   if (price < s50) return "Pullback / vigilancia";
@@ -178,6 +208,12 @@ export default function ResearchDesk() {
   const [loading, setLoading] = useState(false);
   const [cloud, setCloud] = useState({ configured: false, ok: false, message: "Comprobando Supabase..." });
   const [syncing, setSyncing] = useState(false);
+  const [favoriteSeries, setFavoriteSeries] = useState({});
+  useEffect(() => {
+    getJson("/api/favorites/snapshots?days=180")
+      .then((data) => setFavoriteSeries(data.snapshots || {}))
+      .catch(() => {});
+  }, []);
 
   function reloadLocal() {
     const nextScans = safeRead(STORAGE_KEYS.scans, []);
@@ -500,7 +536,7 @@ export default function ResearchDesk() {
 
     <section className="card">
       <h2>Favoritos / watchlist</h2>
-      <div className="tableWrap"><table className="table"><thead><tr>{["Ticker", "Empresa", "Desde", "Precio ref", "Ultimo", "Rend.", "Benchmark", "Alpha", "Estado", "Regimen", "Scores", "Notas", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{favorites.map((f) => {
+      <div className="tableWrap"><table className="table"><thead><tr>{["Ticker", "Empresa", "Desde", "Precio ref", "Ultimo", "Rend.", "Benchmark", "Alpha", "Evolución", "Estado", "Regimen", "Scores", "Notas", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{favorites.map((f) => {
         const links = externalLinks(f.symbol);
         const checklist = checklistForRow(f).slice(1, 6);
         return <tr key={f.id}>
@@ -512,6 +548,7 @@ export default function ResearchDesk() {
           <td className="ticker">{pct(f.perfSinceAdd)}</td>
           <td>{f.benchmarkSymbol || benchmarkForFavorite(f)}<br /><span className="fine">{pct(f.benchmarkPerf)}</span></td>
           <td className="ticker">{pct(f.alpha)}</td>
+          <td><FavoriteSparkline series={favoriteSeries[String(f.symbol || "").toUpperCase()] || []} /></td>
           <td>{f.currentState || "Sin dato"}</td>
           <td>{f.marketRegime || "-"}<br /><span className="fine">Score {num(f.marketScore)}</span></td>
           <td>{metricShortLabel("totalScore")} {num(f.snapshot?.totalScore)} · {metricShortLabel("rsQualityScore")} {num(f.snapshot?.rsQualityScore)} · {metricShortLabel("weaknessScore")} {num(f.snapshot?.weaknessScore)} · {metricShortLabel("weinsteinScore")} {num(f.snapshot?.weinsteinScore)}<br /><span className="fine">{checklist.map((item) => `${item.label}: ${item.status}`).join(" · ")}</span></td>
@@ -521,7 +558,7 @@ export default function ResearchDesk() {
           }} placeholder="tesis / alerta" /></td>
           <td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(f.symbol)}>Ficha</a><a className="btn btnSmall" href={links.tradingView} target="_blank" rel="noreferrer">TV</a><button className="starBtn on" onClick={() => removeFav(f.id)}>Eliminar</button></div></td>
         </tr>;
-      })}{!favorites.length && <tr><td colSpan="13">Aun no tienes favoritos.</td></tr>}</tbody></table></div>
+      })}{!favorites.length && <tr><td colSpan="14">Aun no tienes favoritos.</td></tr>}</tbody></table></div>
     </section>
 
     <section className="grid grid2">

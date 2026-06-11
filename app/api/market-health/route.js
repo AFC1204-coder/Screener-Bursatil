@@ -1,4 +1,4 @@
-import { fetchYahooChart } from "@/lib/yahoo";
+import { fetchYahooChart } from "@/lib/marketData";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
 
 const MARKET_HEALTH_CACHE_TYPE = "market_health_cache";
