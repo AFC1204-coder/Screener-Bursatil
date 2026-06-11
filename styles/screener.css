@@ -1,19 +1,13 @@
 /* styles/screener.css — reglas exclusivas de la ruta screener. Extraído de app/globals.css. */
 
 .dashboardContainer {
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
+  display:grid;
+  align-items:start;
 }
 
 .sidebar {
-  position: sticky;
-  top: 16px;
-  max-height: calc(100vh - 32px);
-  overflow-y: auto;
-  border-right: 1px solid rgba(255,255,255,.06);
-  padding-right: 20px;
+  position:sticky;
+  overflow-y:auto;
 }
 
 .sidebar::-webkit-scrollbar {
@@ -25,13 +19,7 @@
   border-radius: 10px;
 }
 
-.mainContent {
-  min-width: 0;
-}
-
-.btnMobileOnly { display: none;
-}
-
+.btnMobileOnly,
 .mobileSidebarHeader { display: none;
 }
 
@@ -72,19 +60,12 @@
 }
 
 .topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-  flex-wrap: wrap;
-}
-
-.tvPreviewFallback {
-  padding:0;
-  display:block;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding-bottom:16px;
+  flex-wrap:wrap;
 }
 
 .weeklyStageControls {
@@ -113,10 +94,8 @@
   }
 }
 
-.searchBar {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center
-}
-
-.searchInput {min-height:46px
+.searchBar {
+  align-items:center;
 }
 
 .searchPanelBare {
@@ -238,7 +217,6 @@
 
 .searchResultPrimary {
   display:block;
-  max-width:420px;
 }
 
 .searchResultPrimary .stockPreview-search {
@@ -247,7 +225,6 @@
 
 .stockPreview-search .previewTop {
   align-items:center;
-  margin-bottom:10px;
 }
 
 .stockPreview-search .previewIdentity {
@@ -256,7 +233,6 @@
 
 .stockPreview-search .previewName {
   margin-top:1px;
-  max-width:210px;
 }
 
 .stockPreview-search .previewStats {
@@ -267,11 +243,6 @@
 
 .stockPreview-search .previewStats span {
   padding:7px 8px;
-}
-
-.stockPreview-search .previewActions {
-  margin-top:10px;
-  gap:6px;
 }
 
 .regimeStrip {
@@ -288,8 +259,6 @@
 
 .regimeStrip span {
   flex:1 1 auto;
-  min-height:42px;
-  padding:8px 14px;
   border-right:1px solid rgba(255,255,255,.06);
 }
 
@@ -300,7 +269,6 @@
   display:block;
   overflow:hidden;
   color:#fafafa;
-  font-size:16px;
   font-weight:700;
   font-variant-numeric:tabular-nums;
   line-height:1.2;
@@ -310,9 +278,7 @@
 
 .regimeStrip em {
   display:block;
-  margin-top:3px;
   color:var(--muted);
-  font-size:10px;
   font-style:normal;
   font-weight:500;
   text-transform:uppercase;
@@ -330,8 +296,6 @@
 }
 
 .opportunityLane {
-  min-height:152px;
-  padding:12px;
   background:#070706;
 }
 
@@ -357,9 +321,7 @@
 }
 
 .opportunityLane p {
-  margin:4px 0 10px;
   color:var(--muted);
-  font-size:11px;
 }
 
 .opportunityTickers {
@@ -574,10 +536,8 @@
 }
 
 .tvPreviewBox {
-  height:360px;
   overflow:hidden;
   border:1px solid rgba(255,255,255,.13);
-  border-radius:var(--radius);
   background:#050505;
 }
 
@@ -586,9 +546,6 @@
   grid-template-rows:minmax(0,1fr) auto;
   gap:12px;
   padding:12px;
-}
-
-.searchResultGrid .tvPreviewBox {height:332px
 }
 
 .disclosurePanel {
@@ -679,10 +636,6 @@
   min-height:38px;
 }
 
-.compactDisclosure .layerPanel {
-  margin-top:0;
-}
-
 .stockPreview {
   padding:11px;
   border:1px solid rgba(255,255,255,.16);
@@ -764,17 +717,14 @@
 .marketSelector {
   display:flex;
   flex-wrap:wrap;
-  gap:4px;
 }
 
 .marketChip {
   display:flex;
   gap:5px;
   align-items:center;
-  min-height:28px;
   border:1px solid rgba(255,255,255,.08);
   border-radius:var(--radius);
-  padding:4px 10px;
   background:rgba(255,255,255,.02);
   color:var(--muted);
   text-align:left;
@@ -813,22 +763,6 @@
   white-space:nowrap;
 }
 
-.filterArchitecture {
-  margin:0 0 24px;
-  padding:12px;
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:10px;
-  background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
-}
-
-.filterArchitectureHead {
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:10px;
-  margin:0 0 12px;
-}
-
 .filterArchitectureHead span,
 .scanDiagnosticsHead span {
   display:block;
@@ -848,50 +782,19 @@
   font-weight:800;
 }
 
-.filterLayerBlock {
-  display:grid;
-  gap:6px;
-  padding:10px 0;
-  border-top:1px solid rgba(255,255,255,.06);
-}
-
-.filterLayerBlock h3 {
-  margin:0 0 2px;
-  color:#e4c775;
-  font-size:10px;
-  font-weight:900;
-  letter-spacing:.16em;
-  text-transform:uppercase;
-}
-
 .viewLayerMini {
-  border-top:1px solid rgba(255,255,255,.06);
   padding-top:10px;
 }
 
 .viewLayerMini summary {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
   cursor:pointer;
-  color:#e9e0ca;
-  font-size:12px;
-  font-weight:800;
-}
-
-.viewLayerMini summary em {
-  color:var(--muted);
-  font-size:10px;
-  font-style:normal;
 }
 
 .scanDiagnostics {
   margin:0 0 18px;
-  padding:14px;
   border:1px solid rgba(255,255,255,.1);
   border-radius:12px;
-  background:
-    linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01)),
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01)),
     radial-gradient(circle at top right,rgba(207,176,92,.08),transparent 38%);
 }
 
@@ -905,7 +808,6 @@
 
 .diagnosticStats {
   display:grid;
-  grid-template-columns:repeat(8,minmax(0,1fr));
   border:1px solid rgba(255,255,255,.07);
   border-radius:10px;
   overflow:hidden;
@@ -1028,20 +930,13 @@
 }
 
 .viewLayerBar {
-  display:flex;
   flex-wrap:wrap;
-  gap:8px;
-  margin:0 0 12px;
 }
 
 .layerToggle {
   display:flex;
   align-items:center;
-  gap:8px;
   border:none;
-  background:transparent;
-  padding:4px 0;
-  color:#888;
   text-align:left;
   cursor:pointer;
 }
@@ -1055,14 +950,10 @@
 }
 
 .layerToggleState i {
-  width:14px;
-  height:14px;
   display:grid;
   place-items:center;
   border:1px solid rgba(255,255,255,.3);
-  border-radius:2px;
   font-style:normal;
-  font-size:10px;
   font-weight:700;
   line-height:1;
 }
@@ -1071,22 +962,7 @@
   display:none;
 }
 
-.layerToggleText {
-  min-width:0;
-  display:flex;
-  align-items:baseline;
-  gap:6px;
-}
-
-.layerToggleText strong {
-  color:inherit;
-  font-size:12px;
-  font-weight:500;
-}
-
 .layerToggleText small {
-  color:#555;
-  font-size:11px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -1094,8 +970,6 @@
 
 .layerToggleCount {
   margin-left:auto;
-  color:#555;
-  font-size:10px;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 
@@ -1103,7 +977,8 @@
   flex:0 0 auto;
 }
 
-.filterGroups {display:grid;grid-template-columns:1fr;gap:8px
+.filterGroups {
+  display:grid;
 }
 
 .filterGroup {
@@ -1161,8 +1036,6 @@
 
 .filterField {
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(98px,128px);
-  gap:8px;
   align-items:center;
   color:var(--muted);
   font-size:12px;
@@ -1222,7 +1095,7 @@
 .filterFooter {margin-top:12px
 }
 
-.tvBox,.tvPreviewBox {
+.tvPreviewBox {
   border-radius:3px;
   border-color:rgba(255,255,255,.12);
 }
@@ -1250,7 +1123,7 @@
   }
   .leaderActions {grid-area:fav
   }
-  .tvPreviewBox,.searchResultGrid .tvPreviewBox {height:318px
+  .tvPreviewBox {height:318px
   }
   .filterField {grid-template-columns:1fr
   }
@@ -1286,10 +1159,6 @@
   padding-top:16px!important;
 }
 
-.searchBar {
-  grid-template-columns:minmax(0,1fr) minmax(96px,auto);
-}
-
 .searchInput {
   min-height:40px;
 }
@@ -1320,25 +1189,6 @@
 .filterField {
   grid-template-columns:minmax(0,1fr) minmax(86px,112px);
   gap:7px;
-}
-
-.layerToggle {
-  min-height:46px;
-  padding:7px 8px;
-}
-
-.layerToggleState i {
-  width:20px;
-  height:20px;
-  font-size:11px;
-}
-
-.layerToggleText strong {
-  font-size:11px;
-}
-
-.layerToggleText small {
-  font-size:9px;
 }
 
 .tvPreviewBox {
@@ -1411,9 +1261,8 @@
 }
 
 .quickReviewInner {
-  max-height: 92vh;
-  padding: 20px;
-  gap: 16px;
+  max-height:92vh;
+  gap:16px;
 }
 
 .profileHeader {
@@ -1432,14 +1281,12 @@
 }
 
 .profileHeaderBreadcrumb {
-  font-size: 11px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 500;
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  font-size:11px;
+  text-transform:uppercase;
+  font-weight:500;
+  display:flex;
+  gap:8px;
+  align-items:center;
 }
 
 .profileHeaderBreadcrumb span { color: var(--soft);
@@ -1479,9 +1326,8 @@
 }
 
 .quickReviewHeader {
-  align-items: center;
-  margin-bottom: 0;
-  padding-bottom: 16px;
+  align-items:center;
+  margin-bottom:0;
 }
 
 .quickReviewTitleBlock {
@@ -1507,10 +1353,8 @@
 }
 
 .screenerReviewLayout {
-  display: grid;
-  grid-template-columns: minmax(210px, 280px) minmax(0, 1fr);
-  gap: 16px;
-  min-height: 0;
+  display:grid;
+  min-height:0;
 }
 
 .screenerReviewQueue {
@@ -1526,11 +1370,6 @@
 .quickReviewGrid {
   grid-template-columns: minmax(0, 2.7fr) minmax(260px, .9fr);
   gap: 16px;
-}
-
-.quickReviewChart {
-  height: min(64vh, 650px);
-  min-height: 420px;
 }
 
 .quickReviewChart .tvPreviewNative {
@@ -1705,10 +1544,8 @@
   .quickReviewInner {
     padding: 12px;
   }
-  .quickReviewTitleBlock {
-    align-items: flex-start;
-  }
-  .quickReviewHeader {
+  .quickReviewTitleBlock,
+.quickReviewHeader {
     align-items: flex-start;
   }
   .quickReviewActions {
@@ -1733,13 +1570,8 @@
   }
 }
 
-.compactTableWrap {
-  overflow-x:hidden;
-}
-
 .compactResultsTable {
   min-width:0;
-  table-layout:fixed;
 }
 
 .compactResultsTable th,
@@ -1747,31 +1579,10 @@
   white-space:normal;
 }
 
-.compactResultsTable th:nth-child(1) {width:44px
-}
-
-.compactResultsTable th:nth-child(2) {width:46px
-}
-
-.compactResultsTable th:nth-child(3) {width:110px
-}
-
-.compactResultsTable th:nth-child(4) {width:20%
-}
-
-.compactResultsTable th:nth-child(5) {width:150px
-}
-
-.compactResultsTable th:nth-child(6) {width:12%
-}
-
 .compactResultsTable th:nth-child(7),
 .compactResultsTable th:nth-child(8),
 .compactResultsTable th:nth-child(9),
 .compactResultsTable th:nth-child(10) {width:10.5%
-}
-
-.compactResultsTable th:nth-child(11) {width:9%
 }
 
 .compactResultsTable td {
@@ -1836,111 +1647,15 @@
   display:none;
 }
 
-.compactSymbolCell .flag-US {
-  --flag:linear-gradient(90deg,#1e3a8a 0 38%,transparent 38%),repeating-linear-gradient(to bottom,#b91c1c 0 1px,#f8fafc 1px 2px,#b91c1c 2px 3px,#f8fafc 3px 4px);
-}
-
-.compactSymbolCell .flag-ES {--flag:linear-gradient(to bottom,#aa151b 0 25%,#f1bf00 25% 75%,#aa151b 75%);
-}
-
-.compactSymbolCell .flag-DE {--flag:linear-gradient(to bottom,#111827 0 33%,#dc2626 33% 66%,#facc15 66%);
-}
-
-.compactSymbolCell .flag-FR {--flag:linear-gradient(90deg,#1d4ed8 0 33%,#f8fafc 33% 66%,#dc2626 66%);
-}
-
-.compactSymbolCell .flag-NL {--flag:linear-gradient(to bottom,#ae1c28 0 33%,#f8fafc 33% 66%,#21468b 66%);
-}
-
-.compactSymbolCell .flag-GB {--flag:linear-gradient(135deg,#1e3a8a 0 44%,#f8fafc 44% 48%,#c8102e 48% 52%,#f8fafc 52% 56%,#1e3a8a 56%);
-}
-
-.compactSymbolCell .flag-CH {--flag:radial-gradient(circle at 50% 50%,#f8fafc 0 16%,transparent 17%),linear-gradient(#d52b1e,#d52b1e);
-}
-
-.compactSymbolCell .flag-SE {--flag:linear-gradient(90deg,transparent 0 30%,#facc15 30% 42%,transparent 42%),linear-gradient(to bottom,#006aa7 0 42%,#facc15 42% 56%,#006aa7 56%);
-}
-
-.compactSymbolCell .flag-DK {--flag:linear-gradient(90deg,transparent 0 31%,#f8fafc 31% 42%,transparent 42%),linear-gradient(to bottom,#c60c30 0 42%,#f8fafc 42% 56%,#c60c30 56%);
-}
-
-.compactSymbolCell .flag-NO {--flag:linear-gradient(90deg,transparent 0 31%,#f8fafc 31% 47%,#00205b 47% 58%,#f8fafc 58% 66%,transparent 66%),linear-gradient(to bottom,#ba0c2f 0 37%,#f8fafc 37% 45%,#00205b 45% 57%,#f8fafc 57% 65%,#ba0c2f 65%);
-}
-
-.compactSymbolCell .flag-FI {--flag:linear-gradient(90deg,transparent 0 32%,#003580 32% 48%,transparent 48%),linear-gradient(to bottom,#f8fafc 0 38%,#003580 38% 58%,#f8fafc 58%);
-}
-
-.compactSymbolCell .flag-IT {--flag:linear-gradient(90deg,#009246 0 33%,#f8fafc 33% 66%,#ce2b37 66%);
-}
-
-.compactSymbolCell .flag-BE {--flag:linear-gradient(90deg,#111827 0 33%,#facc15 33% 66%,#ef4444 66%);
-}
-
-.compactSymbolCell .flag-PT {--flag:linear-gradient(90deg,#046a38 0 42%,#da291c 42%);
-}
-
-.compactSymbolCell .flag-AT {--flag:linear-gradient(to bottom,#ed2939 0 33%,#f8fafc 33% 66%,#ed2939 66%);
-}
-
-.compactSymbolCell .flag-IE {--flag:linear-gradient(90deg,#169b62 0 33%,#f8fafc 33% 66%,#ff883e 66%);
-}
-
-.compactSymbolCell .flag-CA {--flag:linear-gradient(90deg,#d80621 0 24%,#f8fafc 24% 76%,#d80621 76%);
-}
-
-.compactSymbolCell .flag-JP {--flag:radial-gradient(circle at 50% 50%,#bc002d 0 24%,transparent 25%),linear-gradient(#f8fafc,#f8fafc);
-}
-
-.compactSymbolCell .flag-HK {--flag:radial-gradient(circle at 52% 50%,#f8fafc 0 10%,transparent 11%),linear-gradient(#de2910,#de2910);
-}
-
-.compactSymbolCell .flag-SG {--flag:linear-gradient(to bottom,#ef3340 0 50%,#f8fafc 50%);
-}
-
-.compactSymbolCell .flag-ZA {--flag:linear-gradient(135deg,#007a4d 0 30%,#ffb81c 30% 40%,#111827 40% 50%,#f8fafc 50% 58%,#001489 58% 78%,#de3831 78%);
-}
-
-.compactSymbolCell .flag-AU {--flag:linear-gradient(135deg,#012169,#012169 58%,#f8fafc 58% 62%,#c8102e 62% 66%,#012169 66%);
-}
-
-.compactSymbolCell .flag-TW {--flag:linear-gradient(90deg,#000095 0 42%,transparent 42%),linear-gradient(#fe0000,#fe0000);
-}
-
-.compactSymbolCell .flag-IL {--flag:radial-gradient(circle at 50% 50%,#2563eb 0 12%,transparent 13%),linear-gradient(to bottom,#f8fafc 0 18%,#2563eb 18% 28%,#f8fafc 28% 72%,#2563eb 72% 82%,#f8fafc 82%);
-}
-
-.compactSymbolCell .flag-KR {--flag:radial-gradient(circle at 50% 50%,#c60c30 0 13%,#003478 14% 24%,transparent 25%),linear-gradient(#f8fafc,#f8fafc);
-}
-
-.compactSymbolCell .flag-IN {--flag:linear-gradient(to bottom,#ff9933 0 33%,#f8fafc 33% 66%,#138808 66%);
-}
-
-.compactSymbolCell .flag-CN {--flag:radial-gradient(circle at 28% 34%,#ffde00 0 12%,transparent 13%),linear-gradient(#de2910,#de2910);
-}
-
-.compactSymbolCell .flag-BR {--flag:radial-gradient(circle at 50% 50%,#002776 0 18%,transparent 19%),linear-gradient(135deg,#009b3a 0 35%,#ffdf00 35% 65%,#009b3a 65%);
-}
-
-.compactSymbolCell .flag-MX {--flag:linear-gradient(90deg,#006847 0 33%,#f8fafc 33% 66%,#ce1126 66%);
-}
-
 .compactCompanyCell {
   display:flex;
-  gap:10px;
   align-items:flex-start;
   min-width:0;
-}
-
-.compactCompanyCell .companyMark-sm {
-  width:30px;
-  height:30px;
-  border-radius:7px;
 }
 
 .compactCompanyCell b,
 .compactStack b {
   display:block;
-  color:#f5f5f5;
   font-weight:650;
   line-height:1.25;
   overflow:hidden;
@@ -1950,32 +1665,23 @@
 .compactMetricGrid {
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:4px;
 }
 
 .compactMetric {
   min-width:0;
-  padding:5px 6px;
-  border:1px solid rgba(255,255,255,.045);
-  border-radius:6px;
-  background:rgba(255,255,255,.018);
 }
 
 .compactMetric small {
   display:block;
-  color:#73737c;
   font-size:9px;
   font-weight:750;
-  letter-spacing:.08em;
   text-transform:uppercase;
 }
 
 .compactMetric b {
   display:block;
   margin-top:2px;
-  color:#f4f4f5;
   font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:11px;
   font-weight:650;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -1983,10 +1689,7 @@
 
 .compactScoreCell b {
   display:block;
-  color:#fafafa;
   font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:22px;
-  font-weight:800;
 }
 
 .compactScoreHead {
@@ -2405,20 +2108,12 @@
 }
 
 .topbar {
-  min-height:86px;
   margin:0 0 var(--space-5);
-  padding:22px 0 18px;
   border-bottom:1px solid var(--line);
 }
 
 .dashboardContainer {
   position:relative;
-  grid-template-columns:minmax(238px,280px) minmax(0,1fr);
-  gap:28px;
-}
-
-.dashboardContainer.sidebarCollapsed {
-  grid-template-columns:minmax(0,1fr);
 }
 
 .dashboardContainer.sidebarCollapsed .sidebar {
@@ -2435,12 +2130,9 @@
   left:calc(280px + 14px);
   z-index:12;
   width:auto;
-  min-width:38px;
-  height:34px;
   padding:0 12px;
   border:1px solid var(--line);
   border-radius:var(--radius);
-  background:rgba(13,14,18,.86);
   color:var(--text);
   font-size:13px;
   font-weight:760;
@@ -2457,8 +2149,6 @@
 }
 
 .sidebar {
-  top:70px;
-  padding-right:22px;
   border-right:1px solid var(--line);
 }
 
@@ -2467,7 +2157,6 @@
 }
 
 .searchCard {
-  margin-bottom:18px!important;
   padding:0!important;
   border:0;
   background:transparent;
@@ -2478,11 +2167,6 @@
   border:0!important;
   background:transparent!important;
   padding:0!important;
-}
-
-.searchBar {
-  gap:10px!important;
-  margin-bottom:12px!important;
 }
 
 .filterArchitecture {
@@ -2536,18 +2220,13 @@
   text-transform:uppercase;
 }
 
-.layerToggle,
-.filterToggle,
-.filterGroup,
-.filterField,
-.searchScopeChip {
+.layerToggle, .filterGroup, .filterField, .searchScopeChip {
   border:1px solid var(--line);
   border-radius:var(--radius);
   background:#0b0c0e;
 }
 
 .layerToggle {
-  min-height:36px;
   padding:7px 8px;
   gap:8px;
   border-color:transparent;
@@ -2665,19 +2344,12 @@
   padding:16px 18px;
 }
 
-.desktopResultsSection {
-  margin-top:18px;
-}
-
 .desktopResultsSection > div:first-child {
   align-items:center!important;
   padding:0 2px;
 }
 
 .desktopResultsSection > div:first-child h2 {
-  color:#d6d6db;
-  font-size:15px!important;
-  font-weight:720!important;
   letter-spacing:-.01em!important;
   text-transform:none;
 }
@@ -2700,18 +2372,8 @@
 .compactResultsTable th:nth-child(3) {width:108px
 }
 
-.compactResultsTable th:nth-child(4) {width:25%
-}
-
-.compactResultsTable th:nth-child(5) {width:170px
-}
-
-.compactResultsTable th:nth-child(6) {width:13%
-}
-
-.compactResultsTable th:nth-child(7) {width:13%
-}
-
+.compactResultsTable th:nth-child(6),
+.compactResultsTable th:nth-child(7),
 .compactResultsTable th:nth-child(8) {width:13%
 }
 
@@ -2728,7 +2390,6 @@
 
 .compactResultsTable th,
 .compactResultsTable td {
-  padding:11px 12px;
   border-bottom:1px solid var(--line);
 }
 
@@ -2744,11 +2405,6 @@
   gap:12px;
 }
 
-.compactCompanyCell .companyMark-sm {
-  width:34px;
-  height:34px;
-}
-
 .compactCompanyCell b,
 .compactStack b {
   color:#f3f4f6;
@@ -2759,7 +2415,6 @@
 .compactStack span,
 .compactStack small,
 .compactScoreCell span {
-  color:var(--muted);
   font-size:11px;
 }
 
@@ -2771,14 +2426,11 @@
 }
 
 .compactMetric b {
-  color:#f4f4f5;
   font-size:12px;
 }
 
 .compactScoreCell b {
   color:#fff;
-  font-size:20px;
-  font-weight:780;
 }
 
 .stockModal.quickReviewModal {
@@ -2821,9 +2473,8 @@
   }
   .compactResultsTable th:nth-child(5) {width:172px
   }
-  .compactResultsTable th:nth-child(6) {width:15%
-  }
-  .compactResultsTable th:nth-child(7) {width:15%
+  .compactResultsTable th:nth-child(6),
+.compactResultsTable th:nth-child(7) {width:15%
   }
 }
 
@@ -2852,10 +2503,8 @@
   .mobileEmpty {
     border-radius:var(--radius);
   }
-  .mobileMoverRail {
-    display:none;
-  }
-  .mobileSectionHead {
+  .mobileMoverRail,
+.mobileSectionHead {
     display:none;
   }
   .mobileResultRow {
@@ -3351,11 +3000,10 @@
 }
 
 .filterTemplatePanel {
-  display: grid;
-  gap: 12px;
-  margin: 0 0 20px;
-  padding: 0 0 18px;
-  border-bottom: 1px solid var(--line);
+  display:grid;
+  margin:0 0 20px;
+  padding:0 0 18px;
+  border-bottom:1px solid var(--line);
 }
 
 .filterTemplateHead,
@@ -3711,11 +3359,10 @@
 }
 
 .screenerContractStatus {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding-top: 2px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  padding-top:2px;
 }
 
 .screenerContractStatus span {
@@ -3978,9 +3625,6 @@
   .filterFamilyInner {
     padding: 14px;
   }
-}
-
-@media(max-width: 760px) {
   .quickReviewInner {
     padding-bottom: calc(40px + env(safe-area-inset-bottom)) !important;
   }
@@ -4137,10 +3781,6 @@
   color: #f4f7fb;
 }
 
-.compactScoreCell b {
-  font-size: 18px;
-}
-
 @media(max-width:760px) {
   .topbar {
     display: grid;
@@ -4262,9 +3902,6 @@
   .screenerContractPanel {
     width: 100%;
   }
-}
-
-@media(max-width:760px) {
   .stockModal.quickReviewModal {
     width: 100dvw;
     max-width: 100dvw;

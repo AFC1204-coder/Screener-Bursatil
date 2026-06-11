@@ -78,6 +78,24 @@ export function stringifyRule(node, indent = "") {
   return `${indent}${node.selector} {${node.body.trimEnd()}\n${indent}}`;
 }
 
+// Separa un grupo de selectores por comas de nivel superior (respeta :is(...), :not(...)).
+export function splitSelectors(selector = "") {
+  const out = [];
+  let depth = 0, current = "";
+  for (const ch of selector) {
+    if (ch === "(") depth += 1;
+    if (ch === ")") depth -= 1;
+    if (ch === "," && depth === 0) {
+      if (current.trim()) out.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+  if (current.trim()) out.push(current.trim());
+  return out;
+}
+
 export function classesInSelector(selector) {
   return [...new Set([...selector.matchAll(/\.([A-Za-z_][\w-]*)/g)].map((m) => m[1]))];
 }
@@ -85,13 +103,23 @@ export function classesInSelector(selector) {
 export function declarationsOf(body) {
   // pares prop:valor de primer nivel (sin anidados; suficiente para reglas planas)
   const out = [];
-  let depth = 0, current = "";
+  let depth = 0, parens = 0, current = "";
   for (let i = 0; i < body.length; i++) {
     const ch = body[i];
+    if (ch === "'" || ch === '"') {
+      const quote = ch;
+      let j = i + 1;
+      while (j < body.length && body[j] !== quote) j += body[j] === "\\" ? 2 : 1;
+      current += body.slice(i, j + 1);
+      i = j;
+      continue;
+    }
     if (ch === "/" && body[i + 1] === "*") { i = body.indexOf("*/", i) + 1; continue; }
+    if (ch === "(") parens += 1;
+    if (ch === ")") parens -= 1;
     if (ch === "{") depth += 1;
     if (ch === "}") depth -= 1;
-    if (ch === ";" && depth === 0) {
+    if (ch === ";" && depth === 0 && parens === 0) {
       if (current.trim()) out.push(current.trim());
       current = "";
       continue;

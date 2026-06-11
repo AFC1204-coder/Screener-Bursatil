@@ -1,10 +1,6 @@
 /* styles/lists.css — reglas exclusivas de la ruta lists. Extraído de app/globals.css. */
 
-.savedListViewsPanel {
-  display:grid;
-  gap:12px;
-}
-
+.savedListViewsPanel,
 .listScopeSummary {
   display:grid;
   gap:12px;

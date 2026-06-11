@@ -5,12 +5,8 @@
 
 .commandCenter {
   position:relative;
-  margin:0 0 14px;
-  padding:18px 0;
   border-top:1px solid rgba(255,255,255,.22);
   border-bottom:1px solid rgba(255,255,255,.16);
-  background:
-    linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,255,255,.018) 28%,rgba(94,234,212,.035) 100%);
 }
 
 .commandCenter:before {

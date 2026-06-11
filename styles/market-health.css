@@ -253,10 +253,6 @@
 .marketHealthHeader h1 {
   margin:0;
   color:#fff;
-  font-size:clamp(34px,4vw,56px);
-  line-height:.98;
-  font-weight:760;
-  letter-spacing:-.045em;
 }
 
 .marketHealthHeader p {
@@ -580,10 +576,7 @@
   margin-bottom: 18px;
 }
 
-.marketHealthReliabilityGrid .coverageReadinessGrid {
-  grid-template-columns: repeat(2,minmax(0,1fr));
-}
-
+.marketHealthReliabilityGrid .coverageReadinessGrid,
 .marketHealthReliabilityGrid .methodologyBucketGrid {
   grid-template-columns: repeat(2,minmax(0,1fr));
 }
