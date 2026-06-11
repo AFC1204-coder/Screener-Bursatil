@@ -26,6 +26,7 @@ pnpm-debug.log*
 *credentials*
 *token*
 !styles/tokens.css
+!scripts/css-refactor/tokens-consolidate.mjs
 
 # Local data, exports and backups
 *.sqlite
