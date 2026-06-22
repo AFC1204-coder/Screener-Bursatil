@@ -1,5 +1,5 @@
 import { scanCronGroupAt, scanCronGroupByKey } from "@/lib/cronPlan";
-import { envValue } from "@/lib/env";
+import { isInternalRequest } from "@/lib/internalAuth";
 import {
   readScanBatchCursor,
   refreshDefaultLeaderboards,
@@ -16,9 +16,7 @@ const ROTATION_SETTING_TYPE = "jobs";
 const ROTATION_SETTING_KEY = "scan-refresh-cron-rotation";
 
 function authorized(request) {
-  const secret = envValue("CRON_SECRET");
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}` || request.headers.get("x-cron-secret") === secret;
+  return isInternalRequest(request, { allowCron: true });
 }
 
 function numberParam(searchParams, key, fallback, min, max) {

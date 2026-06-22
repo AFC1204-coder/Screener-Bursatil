@@ -4,6 +4,7 @@ import { setupPatternForBars } from "../lib/setupPatterns.js";
 
 const CORPUS_PATH = process.env.VCP_CORPUS_PATH || "docs/methodology/vcp-corpus.json";
 const BASE_URL = process.env.VCP_DEPTH_BASE_URL || process.env.VCP_CORPUS_BASE_URL || "http://127.0.0.1:3000";
+const TOKEN = process.env.STATSEDGE_ACCESS_TOKEN || process.env.STATSEDGE_API_TOKEN || process.env.STATSEDGE_ADMIN_TOKEN || "";
 const REFRESH_ENV = process.env.VCP_DEPTH_REFRESH ?? process.env.VCP_CORPUS_REFRESH;
 const MAX_PRICE_AGE_DAYS = Math.max(0, Number(process.env.VCP_DEPTH_MAX_PRICE_AGE_DAYS || process.env.VCP_CORPUS_MAX_PRICE_AGE_DAYS || 5));
 const REQUEST_TIMEOUT_MS = Math.max(1000, Number(process.env.VCP_DEPTH_TIMEOUT_MS || 45000));
@@ -74,7 +75,12 @@ async function getJson(path) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    const res = await fetch(`${BASE_URL}${path}`, { signal: controller.signal });
+    const res = await fetch(`${BASE_URL}${path}`, {
+      headers: {
+        ...(TOKEN ? { "x-statsedge-token": TOKEN } : {}),
+      },
+      signal: controller.signal,
+    });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.error) throw new Error(`${path}: ${data.error || data.message || `HTTP ${res.status}`}`);
     return data;

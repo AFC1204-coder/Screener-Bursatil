@@ -1,5 +1,7 @@
 import { disabledPayload, finiteOrNull, requirePersistenceAuth, supabaseConfig, supabaseRequest, supabaseRpc, textOrNull, toTimestamp } from "@/lib/supabaseServer";
 
+const ALERTS_READ_TIMEOUT_MS = Number(process.env.ALERTS_READ_TIMEOUT_MS || 3500);
+
 function alertLocalId(alert = {}) {
   return textOrNull(alert.localId || alert.payload?.localId || alert.id) || crypto.randomUUID();
 }
@@ -101,10 +103,17 @@ export async function GET(req) {
   try {
     const rows = await supabaseRequest("alerts", {
       query: `${filters.join("&")}&select=*&order=triggered_at.desc.nullslast,created_at.desc&limit=${limit}`,
+      timeoutMs: ALERTS_READ_TIMEOUT_MS,
     });
     return Response.json({ configured: true, ok: true, alerts: uniqByLocalId(rows.map(alertFromDb)) });
   } catch (error) {
-    return Response.json({ configured: true, ok: false, error: error.message, details: error.details || null }, { status: 500 });
+    return Response.json({
+      configured: true,
+      ok: false,
+      degraded: true,
+      alerts: [],
+      error: error.message || "Alertas no disponibles",
+    });
   }
 }
 

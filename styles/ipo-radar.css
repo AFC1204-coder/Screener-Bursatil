@@ -47,6 +47,14 @@
 }
 
 @media(max-width:760px) {
+  body:has(.ipoRadarPage) {
+    padding-bottom: calc(28px + env(safe-area-inset-bottom)) !important;
+  }
+
+  body:has(.ipoRadarPage) .bottomNav {
+    display:none !important;
+  }
+
   .ipoFormGrid {
     grid-template-columns:1fr;
   }

@@ -1,5 +1,5 @@
 import { withDailyBarsCache } from "@/lib/dailyBarsCache";
-import { envValue } from "@/lib/env";
+import { isInternalRequest } from "@/lib/internalAuth";
 import { normalizeMarketList } from "@/lib/markets";
 import {
   markSymbolResolutionPriceStatus,
@@ -15,9 +15,7 @@ const DEFAULT_MARKETS = ["GB", "FI", "DK", "NO", "NL", "ES", "SE", "IT", "FR", "
 const SUPPORTED_MARKETS = new Set(["GB", "AT", "BE", "DE", "DK", "ES", "FI", "FR", "IE", "IT", "NL", "NO", "PT", "SE"]);
 
 function authorized(request) {
-  const secret = envValue("CRON_SECRET");
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}` || request.headers.get("x-cron-secret") === secret;
+  return isInternalRequest(request, { allowCron: true });
 }
 
 function boolParam(searchParams, key, fallback = false) {

@@ -59,6 +59,30 @@
   display: none;
 }
 
+.listRowTrustSignature {
+  display:grid;
+  width:max-content;
+  max-width:100%;
+  margin-top:5px;
+}
+
+.listRowTrustSignature .rowTrustChip,
+.listMobileTrustSignature .rowTrustChip {
+  min-width:21px;
+  min-height:17px;
+  padding:1px 4px;
+}
+
+.listRowTrustSignature .rowTrustChip em,
+.listMobileTrustSignature .rowTrustChip em {
+  font-size:7px;
+}
+
+.listRowTrustSignature .rowTrustChip b,
+.listMobileTrustSignature .rowTrustChip b {
+  font-size:8px;
+}
+
 .listContractNote {
   display: flex;
   align-items: flex-start;
@@ -129,6 +153,58 @@
   line-height: 1.35;
 }
 
+.listTrustMetric {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.listTrustMetric > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.listTrustMetric i {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 9px;
+  height: 9px;
+  border: 1px solid rgba(148,163,184,.24);
+  border-radius: 999px;
+  color: #cbd5e1;
+  background: rgba(15,23,42,.72);
+  font-size: 6.5px;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.listTrustMetric.source-proxy i {
+  border-color: rgba(148,163,184,.28);
+  color: #cbd5e1;
+  background: rgba(148,163,184,.12);
+}
+
+.listTrustMetric.source-review i {
+  border-color: rgba(245,158,11,.32);
+  color: #fed7aa;
+  background: rgba(245,158,11,.1);
+}
+
+.listTrustMetric.source-blocked i {
+  border-color: rgba(248,113,113,.34);
+  color: #fecaca;
+  background: rgba(239,68,68,.12);
+}
+
 .listMobileRow {
   display: grid;
   gap: 9px;
@@ -178,6 +254,11 @@
   width: 100%;
   min-width: 0;
   overflow: hidden;
+}
+
+.listMobileTrustSignature {
+  width:max-content;
+  max-width:100%;
 }
 
 .listMobileFacts {

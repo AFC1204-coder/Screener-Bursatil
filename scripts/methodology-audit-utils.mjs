@@ -4,7 +4,7 @@ import { methodologyVerdictForRow } from "../lib/methodologyVerdict.js";
 import { setupPatternForBars } from "../lib/setupPatterns.js";
 
 export const BASE_URL = process.env.METHODOLOGY_AUDIT_BASE_URL || "http://127.0.0.1:3000";
-export const TOKEN = process.env.STATSEDGE_API_TOKEN || process.env.STATSEDGE_ADMIN_TOKEN || "";
+export const TOKEN = process.env.STATSEDGE_ACCESS_TOKEN || process.env.STATSEDGE_API_TOKEN || process.env.STATSEDGE_ADMIN_TOKEN || "";
 export const REFRESH = process.env.METHODOLOGY_AUDIT_REFRESH === "1";
 export const PROFILE_MAX_AGE_DAYS = Math.max(0, Number(process.env.METHODOLOGY_AUDIT_MAX_PROFILE_AGE_DAYS || 14));
 export const PRICE_MAX_AGE_DAYS = Math.max(0, Number(process.env.METHODOLOGY_AUDIT_MAX_PRICE_AGE_DAYS || 5));

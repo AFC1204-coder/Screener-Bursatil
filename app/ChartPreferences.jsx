@@ -4,14 +4,49 @@ import { CHART_INTERVALS, CHART_RANGES, CHART_SCALE_MODES, CHART_STYLES, DEFAULT
 
 function compatibleRangeForInterval(nextInterval = DEFAULT_CHART_SETTINGS.interval, currentRange = DEFAULT_CHART_SETTINGS.range) {
   const interval = normalizeChartInterval(nextInterval);
+  const range = currentRange || DEFAULT_CHART_SETTINGS.range;
   if (interval === "1m") return "1D";
-  if (["5m", "15m", "30m"].includes(interval)) return "5D";
-  if (interval === "1H") return "1M";
-  if (interval === "4H") return "3M";
-  if (interval === "D") return "1A";
-  if (interval === "W") return "5A";
-  if (interval === "M") return "5A";
-  return currentRange;
+  if (["5m", "15m", "30m"].includes(interval)) return ["1D", "5D"].includes(range) ? range : "5D";
+  if (interval === "1H") return ["1D", "5D", "1M"].includes(range) ? range : "1M";
+  if (interval === "4H") return ["5D", "1M", "3M"].includes(range) ? range : "3M";
+  if (interval === "W") return ["1D", "5D", "1M"].includes(range) ? "1A" : range;
+  if (interval === "M") return range === "MAX" ? "5A" : ["1D", "5D", "1M", "3M"].includes(range) ? "1A" : range;
+  return range;
+}
+
+function rangeIsCompatibleWithInterval(nextInterval = DEFAULT_CHART_SETTINGS.interval, rangeKey = DEFAULT_CHART_SETTINGS.range) {
+  const interval = normalizeChartInterval(nextInterval);
+  if (interval === "1m") return rangeKey === "1D";
+  if (["5m", "15m", "30m"].includes(interval)) return ["1D", "5D"].includes(rangeKey);
+  if (interval === "1H") return ["1D", "5D", "1M"].includes(rangeKey);
+  if (interval === "4H") return ["5D", "1M", "3M"].includes(rangeKey);
+  if (interval === "W") return !["1D", "5D", "1M"].includes(rangeKey);
+  if (interval === "M") return !["1D", "5D", "1M", "3M", "MAX"].includes(rangeKey);
+  return true;
+}
+
+function ChartSegmentedControl({ label = "", options = [], value = "", onChange, disabledOption = () => false }) {
+  return <div className="chartPrefGroup" role="group" aria-label={label}>
+    <span className="chartPrefGroupLabel">{label}</span>
+    <div className="chartSegmented">
+      {options.map((item) => {
+        const active = item.key === value;
+        const disabled = disabledOption(item);
+        return <button
+          type="button"
+          key={item.key}
+          className={active ? "active" : ""}
+          onClick={() => onChange?.(item.key)}
+          disabled={disabled}
+          aria-pressed={active}
+          aria-label={`${label} ${item.label}`}
+          title={disabled ? `${item.label} no aplica a esta temporalidad` : `${label}: ${item.label}`}
+        >
+          {item.label}
+        </button>;
+      })}
+    </div>
+  </div>;
 }
 
 export default function ChartPreferences({ settings, onChange, symbol = "", listId = "", scope = "global", onScopeChange, compact = false }) {
@@ -20,6 +55,7 @@ export default function ChartPreferences({ settings, onChange, symbol = "", list
   const interval = normalizeChartInterval(settings?.interval || DEFAULT_CHART_SETTINGS.interval);
   const range = settings?.range || DEFAULT_CHART_SETTINGS.range;
   const rangeOptions = CHART_RANGES.filter((item) => !(interval === "M" && item.key === "MAX"));
+  const activeRange = rangeOptions.some((item) => item.key === range) ? range : "5A";
   const scopes = [
     { key: "global", label: "Global" },
     symbol ? { key: "symbol", label: "Simbolo" } : null,
@@ -28,8 +64,9 @@ export default function ChartPreferences({ settings, onChange, symbol = "", list
   const update = (patch) => onChange?.({ ...settings, ...patch });
 
   useEffect(() => {
-    if (interval === "M" && range === "MAX") {
-      onChange?.({ ...settings, range: "5A" });
+    const compatibleRange = compatibleRangeForInterval(interval, range);
+    if (compatibleRange !== range) {
+      onChange?.({ ...settings, range: compatibleRange });
     }
   }, [interval, range, onChange, settings]);
 
@@ -47,12 +84,19 @@ export default function ChartPreferences({ settings, onChange, symbol = "", list
       {scopes.length > 1 && <select aria-label="Preset de grafico" value={scope} onChange={(event) => onScopeChange?.(event.target.value)}>
         {scopes.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
       </select>}
-      <select aria-label="Rango" value={rangeOptions.some((item) => item.key === range) ? range : "5A"} onChange={(event) => update({ range: event.target.value })}>
-        {rangeOptions.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
-      </select>
-      <select aria-label="Temporalidad" value={interval} onChange={(event) => updateInterval(event.target.value)}>
-        {CHART_INTERVALS.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
-      </select>
+      <ChartSegmentedControl
+        label="Rango"
+        options={rangeOptions}
+        value={activeRange}
+        onChange={(value) => update({ range: value })}
+        disabledOption={(item) => !rangeIsCompatibleWithInterval(interval, item.key)}
+      />
+      <ChartSegmentedControl
+        label="Temporalidad"
+        options={CHART_INTERVALS}
+        value={interval}
+        onChange={updateInterval}
+      />
       <select aria-label="Tipo de grafico" value={settings?.style || "1"} onChange={(event) => update({ style: event.target.value })}>
         {CHART_STYLES.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
       </select>

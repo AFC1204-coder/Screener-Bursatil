@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Activity, AlertTriangle, CheckCircle, ChevronDown, RefreshCw, XCircle, ShieldCheck } from "lucide-react";
+import { getJson } from "@/lib/clientApi";
 
 export default function SourceStatusWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,9 +16,7 @@ export default function SourceStatusWidget() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/data-providers");
-      if (!res.ok) throw new Error("Error en respuesta de API");
-      const data = await res.json();
+      const data = await getJson("/api/data-providers", { cache: "no-store" });
       setProviders(data.providers || []);
       setSummary({
         priority: data.priority || "free-first",
@@ -194,7 +193,7 @@ export default function SourceStatusWidget() {
 
               <div className="sourceDropdownFooter">
                 <ShieldCheck size={11} />
-                <span>Modo de contingencia activo. StageRadar utiliza fallbacks automáticos si hay caídas en las fuentes primarias.</span>
+                <span>Modo de contingencia activo. StatsEdge utiliza fallbacks automáticos si hay caídas en las fuentes primarias.</span>
               </div>
             </>
           )}

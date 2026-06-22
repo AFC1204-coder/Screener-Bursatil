@@ -6,11 +6,13 @@
 // GET /api/scan?id=&offset= — estado + resultados incrementales; el cliente es
 // agnóstico a cuántos eslabones hubo.
 import { after } from "next/server";
+import { clearScansApiCache } from "@/lib/scansApiCache";
 import { clampChunkSize, normalizeSymbols, runScanChunk } from "@/lib/serverScanRunner";
 import { disabledPayload, requirePersistenceAuth, supabaseConfig, supabaseRequest, textOrNull } from "@/lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
+const INLINE_SCAN_SYMBOL_LIMIT = 20;
 
 export async function POST(req) {
   const authError = requirePersistenceAuth(req);
@@ -38,6 +40,7 @@ export async function POST(req) {
         preset: textOrNull(body.preset),
         settings: {
           ...settings,
+          rowsAreFilteredSnapshot: false,
           scanSymbols: symbols,
           progress: {
             status: "running",
@@ -57,8 +60,14 @@ export async function POST(req) {
       }],
     });
     if (!saved?.id) throw new Error("No se pudo crear la fila del scan");
+    clearScansApiCache();
     const baseUrl = new URL(req.url).origin;
-    after(() => runScanChunk({ scanId: saved.id, ownerId: config.ownerId, baseUrl }));
+    const runFirstChunk = () => runScanChunk({ scanId: saved.id, ownerId: config.ownerId, baseUrl });
+    if (symbols.length <= INLINE_SCAN_SYMBOL_LIMIT) {
+      await runFirstChunk();
+    } else {
+      after(runFirstChunk);
+    }
     return Response.json({ ok: true, configured: true, scanId: saved.id, localId: saved.local_id, total: symbols.length, chunkSize }, { status: 202 });
   } catch (error) {
     return Response.json({ ok: false, configured: true, error: error.message }, { status: 500 });

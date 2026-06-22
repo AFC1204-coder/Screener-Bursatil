@@ -6,15 +6,20 @@ import { inferBusinessTheme } from "@/lib/businessTheme";
 import { externalLinks, inferTradingViewSymbol, isTradingViewWidgetBlocked } from "@/lib/symbols";
 import { withProfileCache } from "@/lib/fundamentalsCache";
 import { withDailyBarsCache } from "@/lib/dailyBarsCache";
+import { peerIdentityForSymbol } from "@/lib/peers";
 import { scoreRsBenchmarkModel } from "@/lib/relativeStrength";
 import { readGlobalRsSeriesForSymbol } from "@/lib/globalRs";
 import { setupPatternForBars } from "@/lib/setupPatterns";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
+import { CURATED_NAMES } from "@/lib/universes";
 import { weeklyStageForBars } from "@/lib/weeklyStage";
+import { ESTIMATED_CHART_PROVIDER, estimatedChartForSymbol } from "@/lib/estimatedBars";
 
 const BRIEF_CACHE_TYPE = "company_brief_cache";
 const BRIEF_CACHE_VERSION = 2;
 const DEFAULT_BRIEF_MAX_AGE_DAYS = 1;
+const BRIEF_RESPONSE_TIMEOUT_MS = Number(process.env.BRIEF_RESPONSE_TIMEOUT_MS || 6500);
+const BRIEF_CACHE_READ_TIMEOUT_MS = Number(process.env.BRIEF_CACHE_READ_TIMEOUT_MS || 1500);
 
 function clean(s = "") { return String(s).replace(/\s+/g, " ").replace(/\([^)]*\)/g, "").trim(); }
 function cleanBenchmarkSymbol(value = "") {
@@ -66,6 +71,11 @@ function assetDomainForSymbol(symbol = "", website = "") {
   return domainFromUrl(website) || COMPANY_ASSET_DOMAINS[String(symbol).toUpperCase()] || "";
 }
 function initials(name = "") { return clean(name).split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]?.toUpperCase()).join("") || "SE"; }
+function timeoutAfter(ms, message) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error(message)), Math.max(500, Number(ms) || 0));
+  });
+}
 function sizeLabel(marketCap) {
   if (!Number.isFinite(marketCap) || marketCap <= 0) return "capitalizacion no disponible";
   if (marketCap >= 200e9) return "mega capitalizacion";
@@ -304,7 +314,7 @@ function relativeStrengthFromBars(bars = [], benchmarkBars = []) {
     benchmarkPerf6m: b6,
     benchmarkPerf12m: b12,
     distance52w,
-    note: hasBenchmarkComparison ? "RS Benchmark StageRadar: score 0-99 basado en fuerza relativa frente al benchmark, momentum y postura tecnica." : "RS Benchmark sin dato: no hay comparacion suficiente frente al benchmark asignado.",
+    note: hasBenchmarkComparison ? "RS Benchmark StatsEdge: score 0-99 basado en fuerza relativa frente al benchmark, momentum y postura tecnica." : "RS Benchmark sin dato: no hay comparacion suficiente frente al benchmark asignado.",
   };
 }
 
@@ -484,7 +494,7 @@ function relativeStrengthSeriesFromBars(bars = [], benchmarkBars = []) {
     latestRating: latest.rsRating ?? null,
     trend21d,
     newHigh52w: Number.isFinite(latest.rsLine) && Number.isFinite(recentHigh) ? latest.rsLine >= recentHigh * .995 : false,
-    note: "Linea relativa vs benchmark rebased a 100. No es el RS StageRadar 0-99; ese score sale del universo de la web.",
+    note: "Linea relativa vs benchmark rebased a 100. No es el RS StatsEdge 0-99; ese score sale del universo de la web.",
   };
 }
 
@@ -705,6 +715,7 @@ async function readBriefCache(symbol = "", options = {}) {
         select: "value,updated_at",
         limit: "1",
       },
+      timeoutMs: Number(options.timeoutMs || BRIEF_CACHE_READ_TIMEOUT_MS),
     });
     const row = rows?.[0] || null;
     const brief = row?.value?.brief || null;
@@ -810,7 +821,7 @@ function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, 
       rsSectorPct: null,
       universe: null,
       globalRsSeries: weeklyGlobal?.series || [],
-      note: "RS StageRadar sin snapshot reciente para este simbolo. RS Benchmark se mantiene como comparativa secundaria; no sustituye al RS.",
+      note: "RS StatsEdge sin snapshot reciente para este simbolo. RS Benchmark se mantiene como comparativa secundaria; no sustituye al RS.",
     };
   }
   const rating = universe.rsGlobalPct;
@@ -833,7 +844,7 @@ function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, 
     rsQualityLabel: rsQualityLabelFor(rating, rsQualityScore, benchmarkStrength.speculationRiskScore),
     universe,
     globalRsSeries: weeklyGlobal?.series || [],
-    note: "RS StageRadar = percentil 0-99 calculado desde el universo de la web. RS Benchmark solo mide comparativa frente al benchmark asignado.",
+    note: "RS StatsEdge = percentil 0-99 calculado desde el universo de la web. RS Benchmark solo mide comparativa frente al benchmark asignado.",
   };
 }
 
@@ -1107,7 +1118,109 @@ function fetchChartForBrief(symbol, chartOptions = {}, options = {}) {
     refresh: options.refreshChart === true,
     useCache: options.chartCache !== false,
     maxAgeDays: options.maxPriceFreshnessDays ?? 5,
+    timeoutMs: options.chartCacheReadTimeoutMs ?? BRIEF_CACHE_READ_TIMEOUT_MS,
   }, fetchYahooChart);
+}
+
+function fallbackChartForBrief(symbol, chartOptions = {}, error = {}) {
+  return estimatedChartForSymbol(symbol, {
+    range: chartOptions.range || "5A",
+    interval: "D",
+    minBars: chartOptions.minBars || 260,
+  }, error);
+}
+
+function minimalCompanyBrief(symbol = "", error = {}) {
+  const cleanSymbol = String(symbol || "").trim().toUpperCase();
+  const peer = peerIdentityForSymbol(cleanSymbol);
+  const name = peer?.name || CURATED_NAMES[cleanSymbol] || cleanSymbol;
+  const sector = peer?.sector || "Sin sector";
+  const industry = peer?.industry || "Sin industria";
+  const country = countryFromSymbol(cleanSymbol, peer?.country || "");
+  const domain = peer?.domain || assetDomainForSymbol(cleanSymbol, "");
+  const theme = inferBusinessTheme(sector, industry, peer?.theme || "");
+  const updatedAt = new Date().toISOString();
+  const fallbackChart = fallbackChartForBrief(cleanSymbol, { range: "2A" }, error);
+  const fallbackBars = fallbackChart.bars || [];
+  const fallbackStage = stageFromBars(fallbackBars);
+  return {
+    symbol: cleanSymbol,
+    name,
+    sector,
+    industry,
+    exchange: "",
+    currency: "",
+    marketCap: null,
+    marketCapCurrency: "",
+    marketCapLabel: "Sin dato",
+    marketCapUsd: null,
+    marketCapUsdLabel: "",
+    marketCapFx: null,
+    ipoDate: "",
+    listingDate: "",
+    listingDateSource: "",
+    country,
+    city: "",
+    employees: null,
+    theme: theme.key,
+    short: `${name} queda en ficha degradada porque el proveedor no respondio dentro del presupuesto operativo.`,
+    summary: "Ficha degradada: datos de proveedor no disponibles temporalmente.",
+    investorAngle: "Esperar a datos frescos antes de tomar decisiones.",
+    stage: {
+      ...fallbackStage,
+      detail: `Historico estimado: ${fallbackStage.detail || "proveedor no disponible"}`,
+      estimated: true,
+    },
+    relativeStrength: {
+      benchmarkSymbol: benchmarkForProfile(cleanSymbol, { country }, theme.key),
+      rating: null,
+      rsQualityScore: null,
+      rsStabilityScore: null,
+      speculationRiskScore: null,
+      rsQualityLabel: "",
+      series: [],
+      note: "RS no calculado por falta temporal de historico.",
+    },
+    links: externalLinks(cleanSymbol, ""),
+    tradingViewSymbol: inferTradingViewSymbol(cleanSymbol, ""),
+    chartEmbed: tradingViewEmbedInfo(cleanSymbol, inferTradingViewSymbol(cleanSymbol, "")),
+    chartBars: compactChartBars(fallbackBars),
+    setupPattern: setupPatternForBars(fallbackBars),
+    chartProvider: fallbackChart.meta?.dataProvider || ESTIMATED_CHART_PROVIDER,
+    visual: {
+      initials: initials(name),
+      domain,
+      logoUrl: domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128` : null,
+      clearbitLogoUrl: domain ? `https://logo.clearbit.com/${domain}` : null,
+    },
+    valuationMetrics: {},
+    quoteSnapshot: {},
+    growthMetrics: {
+      providerNote: "Datos degradados: proveedor temporalmente no disponible.",
+    },
+    shortInterest: null,
+    earningsCalendar: null,
+    financialResults: { incomeAnnual: [], incomeQuarterly: [], balanceAnnual: [], balanceQuarterly: [], cashflowAnnual: [], cashflowQuarterly: [] },
+    news: [],
+    dataQuality: {
+      degraded: true,
+      partial: true,
+      coverage: {
+        total: 0,
+        label: "Proveedor no disponible",
+      },
+      freshness: {
+        providerTimeout: true,
+        priceDate: fallbackBars[0]?.date || "",
+        chartBars: fallbackBars.length,
+        chartEstimated: true,
+        priceEstimated: true,
+        chartProvider: fallbackChart.meta?.dataProvider || ESTIMATED_CHART_PROVIDER,
+        briefFallbackError: error.message || "Proveedor no disponible",
+      },
+    },
+    updatedAt,
+  };
 }
 
 export async function getCompanyBrief(symbol, options = {}) {
@@ -1127,8 +1240,8 @@ export async function getCompanyBrief(symbol, options = {}) {
         useCache: options.profileCache !== false,
         maxAgeDays: options.profileMaxAgeDays,
       }, fetchProfileForCache).catch((error) => ({ profileProviderError: error.message || "Proveedor no disponible" })),
-      fetchChartForBrief(symbol, { range: "MAX" }, options).catch(() => ({ bars: [] })),
-      fetchChartForBrief(symbol, { range: "5A" }, options).catch(() => ({ bars: [] })),
+      fetchChartForBrief(symbol, { range: "MAX" }, options).catch((error) => fallbackChartForBrief(symbol, { range: "MAX" }, error)),
+      fetchChartForBrief(symbol, { range: "5A" }, options).catch((error) => fallbackChartForBrief(symbol, { range: "5A" }, error)),
     ]);
     const chart = mergeChartHistory(longChart, recentChart);
     let profile = {
@@ -1209,7 +1322,15 @@ export async function getCompanyBrief(symbol, options = {}) {
     const marketCapUsd = await marketCapUsdInfo(profile.marketCap, marketCapCurrency, options).catch(() => null);
     const listingDate = profile.ipoDate || oldestBarDate(chart.bars || []);
     const listingDateSource = profile.ipoDate ? "Proveedor perfil" : listingDate ? "Primera cotizacion historica disponible" : "";
-    const stage = stageFromBars(chart.bars || []);
+    const chartEstimated = Boolean(chart.meta?.estimated || chart.dataQuality?.estimated || chart.meta?.dataProvider === ESTIMATED_CHART_PROVIDER);
+    const rawStage = stageFromBars(chart.bars || []);
+    const stage = chartEstimated
+      ? {
+        ...rawStage,
+        detail: `Historico estimado: ${rawStage.detail || "proveedor no disponible"}`,
+        estimated: true,
+      }
+      : rawStage;
     const requestedBenchmark = cleanBenchmarkSymbol(options.benchmarkSymbol);
     const benchmarkSymbol = requestedBenchmark || benchmarkForProfile(symbol, profile, theme.key);
     const [benchmarkLongChart, benchmarkRecentChart] = await Promise.all([
@@ -1252,13 +1373,29 @@ export async function getCompanyBrief(symbol, options = {}) {
       growthMetrics: profile.growthMetrics || {},
       news: extrasResult.news || [],
     });
+    if (chartEstimated) {
+      coverage.technical = Math.min(coverage.technical, 55);
+      coverage.total = Math.min(coverage.total, 59);
+      coverage.label = "Cobertura estimada";
+      coverage.estimatedChart = true;
+      coverage.issues = [...new Set(["historico estimado/no live", ...(coverage.issues || [])])];
+    }
     const freshness = publicFreshness({ chart, profile, financialResults, relativeStrength, weeklyGlobalRs, coverage });
+    if (chartEstimated) {
+      freshness.chartEstimated = true;
+      freshness.priceEstimated = true;
+      freshness.chartProvider = chart.meta?.dataProvider || ESTIMATED_CHART_PROVIDER;
+    }
     const debug = options.debug === true;
     const dataQuality = {
       coverage,
       freshness,
       partial: coverage.total < 60 || freshness.chartStale === true || relativeStrength.rsUniverseAvailable === false,
     };
+    if (chartEstimated) {
+      dataQuality.degraded = true;
+      dataQuality.estimatedChart = true;
+    }
     if (debug) {
       dataQuality.providerErrors = {
         profile: profile.profileProviderError || null,
@@ -1267,7 +1404,7 @@ export async function getCompanyBrief(symbol, options = {}) {
         fmp: fmpResult.fmpProviderError || null,
       };
       dataQuality.providers = {
-        profile: profile.fundamentalsCache?.hit ? "StageRadar fundamental_snapshots cache" : "Yahoo Finance",
+        profile: profile.fundamentalsCache?.hit ? "StatsEdge fundamental_snapshots cache" : "Yahoo Finance",
         chart: chart.meta?.fallbackReason ? `${chart.meta?.dataProvider || "Yahoo Finance"} · fallback: ${chart.meta.fallbackReason}` : chart.meta?.dataProvider || "Yahoo Finance",
         news: "Yahoo Finance search/news + Google News RSS fallback",
         statements: fmpResult.financialResults ? "Yahoo quoteSummary statements + FMP fallback" : "Yahoo quoteSummary statements",
@@ -1355,21 +1492,27 @@ export async function GET(req) {
   const briefMaxAgeDays = briefMaxAgeParam === null ? NaN : Number(briefMaxAgeParam);
   const refresh = searchParams.get("refresh") === "1";
   if (!symbol) return Response.json({ error: "Falta symbol" }, { status: 400 });
+  const options = {
+    benchmarkSymbol,
+    refreshProfile: refresh || searchParams.get("refreshProfile") === "1",
+    refreshChart: refresh || searchParams.get("refreshChart") === "1" || searchParams.get("refreshPrices") === "1",
+    refresh,
+    briefCache: searchParams.get("briefCache") !== "0" && searchParams.get("cache") !== "0",
+    profileCache: searchParams.get("cache") !== "0",
+    chartCache: searchParams.get("cache") !== "0",
+    briefMaxAgeDays: Number.isFinite(briefMaxAgeDays) ? briefMaxAgeDays : undefined,
+    profileMaxAgeDays: Number.isFinite(profileMaxAgeDays) ? profileMaxAgeDays : undefined,
+    maxPriceFreshnessDays: Number.isFinite(maxPriceFreshnessDays) ? maxPriceFreshnessDays : undefined,
+    timeoutMs: BRIEF_CACHE_READ_TIMEOUT_MS,
+    chartCacheReadTimeoutMs: BRIEF_CACHE_READ_TIMEOUT_MS,
+    debug: searchParams.get("debug") === "1",
+  };
   try {
-    return Response.json(await getCompanyBrief(symbol, {
-      benchmarkSymbol,
-      refreshProfile: refresh || searchParams.get("refreshProfile") === "1",
-      refreshChart: refresh || searchParams.get("refreshChart") === "1" || searchParams.get("refreshPrices") === "1",
-      refresh,
-      briefCache: searchParams.get("briefCache") !== "0" && searchParams.get("cache") !== "0",
-      profileCache: searchParams.get("cache") !== "0",
-      chartCache: searchParams.get("cache") !== "0",
-      briefMaxAgeDays: Number.isFinite(briefMaxAgeDays) ? briefMaxAgeDays : undefined,
-      profileMaxAgeDays: Number.isFinite(profileMaxAgeDays) ? profileMaxAgeDays : undefined,
-      maxPriceFreshnessDays: Number.isFinite(maxPriceFreshnessDays) ? maxPriceFreshnessDays : undefined,
-      debug: searchParams.get("debug") === "1",
-    }));
+    return Response.json(await Promise.race([
+      getCompanyBrief(symbol, options),
+      timeoutAfter(BRIEF_RESPONSE_TIMEOUT_MS, "Company brief provider timeout"),
+    ]));
   } catch (e) {
-    return Response.json({ error: e.message || String(e) }, { status: 500 });
+    return Response.json(minimalCompanyBrief(symbol, e));
   }
 }

@@ -1,6 +1,6 @@
-# Global Tape Design Rules
+# StatsEdge Design Rules
 
-Use this file as the visual contract for StatsEdge / Global Tape UI work.
+Use this file as the visual contract for StatsEdge UI work.
 
 ## Product Feel
 
@@ -39,7 +39,7 @@ Advanced metrics belong in row details, hover panels, modals, CSV, or advanced f
 
 ## Brand And Legal Language
 
-- Use `Global Tape` as the likely product direction, but keep code renames deliberate.
+- Use `StatsEdge` as the product name; keep code renames deliberate.
 - Avoid product labels based on third-party names or brands.
 - Prefer labels such as `Stage 2`, `Trend Template`, `RS Leadership`, `Demand`, `Risk`, and `Deterioration`.
 - If external investors/authors are mentioned, do it only in methodology docs with a clear no-affiliation disclaimer.

@@ -1,7 +1,8 @@
 "use client";
 import "../../styles/sectors.css";
 import { useEffect, useMemo, useState } from "react";
-import { authHeaders, getJson } from "@/lib/clientApi";
+import RowTrustSignature from "@/app/RowTrustSignature";
+import { getJson, requestHeaders } from "@/lib/clientApi";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";
 import { filterGroupsByStrength, groupRows, STRENGTH_FILTERS } from "@/lib/grouping";
@@ -10,14 +11,18 @@ import { buildSavedListView, listViewSignature, normalizeSavedListViews } from "
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
-import { favoriteToRow, normalizeStockRows, rowCountry, shortBusiness, weaknessScore } from "@/lib/stockRows";
+import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
+import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
+import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
+import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
+import { favoriteToRow, metricValue, normalizeStockRows, rowCountry, shortBusiness, weaknessScore } from "@/lib/stockRows";
 import { countryName, externalLinks, marketFlag, stockUrl } from "@/lib/symbols";
 
 async function fetchJsonWithTimeout(path, timeoutMs = 16000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(path, { signal: controller.signal, cache: "no-store", headers: authHeaders() });
+    const response = await fetch(path, { signal: controller.signal, cache: "no-store", headers: requestHeaders() });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || payload.error) throw new Error(payload.error || `HTTP ${response.status}`);
     return payload;
@@ -32,6 +37,69 @@ function InfoHint({ text, tone = "" }) {
     <span aria-hidden="true">i</span>
     <em aria-hidden="true">{text}</em>
   </span>;
+}
+
+function sectorMetricSource(row = {}, key = "") {
+  if (!key) return null;
+  const audit = objectiveMetricAuditStatusForRow(row)?.audit;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const item = items.find((entry) => entry?.key === key);
+  if (!item) return null;
+  const status = String(item.status || "");
+  const severity = String(item.severity || "");
+  const label = item.label || item.key || "Métrica";
+  if (severity === "bad" || ["mismatch", "unverified-value", "missing-source"].includes(status)) return { key: "blocked", mark: "x", title: `${label}: bloqueada` };
+  if (severity === "warn" || ["missing", "insufficient-input"].includes(status)) return { key: "review", mark: "!", title: `${label}: revisar` };
+  if (item.proxy === true) return { key: "proxy", mark: "p", title: `${label}: proxy/estimada` };
+  if (status === "verified" || status === "traceable") return { key: "measured", mark: "", title: `${label}: medida/trazable` };
+  return null;
+}
+
+function SectorTrustMetric({ row, metricKey, label, value, className = "" }) {
+  const source = sectorMetricSource(row, metricKey);
+  const sourceClass = source?.key ? `source-${source.key}` : "";
+  const valueText = value ?? "-";
+  return <span
+    className={`sectorTrustMetric ${className} ${sourceClass}`.trim()}
+    title={source?.title || undefined}
+    aria-label={source?.title ? `${label}: ${valueText}. ${source.title}` : undefined}
+  >
+    <span>{valueText}</span>
+    {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}
+  </span>;
+}
+
+function sectorMetricTruthMeta(row = {}) {
+  const status = objectiveMetricAuditStatusForRow(row);
+  const audit = status.audit || null;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const usable = items.filter((item) => item?.status === "verified" || item?.status === "traceable");
+  const measuredCount = usable.filter((item) => item?.proxy !== true).length;
+  const proxyCount = usable.filter((item) => item?.proxy === true).length;
+  const detail = [
+    status.detail,
+    measuredCount ? `${measuredCount} medidas` : "",
+    proxyCount ? `${proxyCount} proxy` : "",
+  ].filter(Boolean).join(" · ");
+  if (status.key === "bad") return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
+  if (status.key === "warn") return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
+  if (status.key === "missing") return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
+  return {
+    key: proxyCount ? "mixed" : "measured",
+    label: proxyCount ? "Mixto" : "Med.",
+    tone: proxyCount ? "neutral" : "good",
+    detail,
+    measuredCount,
+    proxyCount,
+  };
+}
+
+function sectorRowTrustSignature(row = {}) {
+  return buildRowTrustSignature({
+    dataHealth: buildScreenerDataHealth(row, {}),
+    metricTruth: sectorMetricTruthMeta(row),
+    scoreAudit: buildScreenerScoreAudit(row),
+  });
 }
 
 function listHref(dimension, key) {
@@ -62,6 +130,10 @@ function rowHasValidPlanClaim(row = {}) {
     && display.dataLimited !== true
     && display.actionable === true
     && display.tradePlanEligible === true;
+}
+
+function rowObjectiveScore(row = {}) {
+  return metricValue(row, "objectiveScore");
 }
 
 function groupDiscoverySnapshot(discovery = null, group = null) {
@@ -223,7 +295,7 @@ function GroupCard({ group, active, onClick }) {
     <span className="groupCardTop"><b>{group.key}</b><em>{group.count} acciones</em></span>
     <span className="strengthBar"><i style={{ width: `${group.strength}%` }} /></span>
     <span className="groupStats">
-      <span><b>{metricShortLabel("totalScore")}</b>{num(group.avgTotal)}</span>
+      <span><b>{metricShortLabel("objectiveScore")}</b>{num(group.avgTotal)}</span>
       <span><b>{metricShortLabel("rsGlobalPct")}</b>{num(group.avgRs)}</span>
       <span><b>3M</b>{pct(group.avg3m)}</span>
       <span><b>Débiles</b>{group.weak}</span>
@@ -263,10 +335,14 @@ function GroupDrilldownPanel({ group, dimension }) {
         </div>
         <p>{bucket.contract}</p>
         <div className="groupDrilldownSamples">
-          {bucket.sample.map((item) => <a href={stockUrl(item.symbol)} key={`${bucket.key}-${item.symbol}`}>
+          {bucket.sample.map((item) => {
+            const trustSignature = sectorRowTrustSignature(item);
+            return <a href={stockUrl(item.symbol)} key={`${bucket.key}-${item.symbol}`}>
             <b>{item.symbol}</b>
             <span>{item.reason || item.companyName}</span>
-          </a>)}
+            <RowTrustSignature signature={trustSignature} className="sectorRowTrustSignature" />
+          </a>;
+          })}
           {!bucket.sample.length && <span className="dataNote">Sin candidatos coherentes en la muestra.</span>}
         </div>
       </article>)}
@@ -318,7 +394,7 @@ export default function SectorsPage() {
     let alive = true;
     setDiscoveryError("");
     setDiscoveryLoading(true);
-    fetchJsonWithTimeout("/api/discovery?limit=25&groupItemLimit=12&groupsLimit=60&maxRows=8000&sinceDays=45", 18000)
+    fetchJsonWithTimeout("/api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=80&sinceDays=10&minGroupSize=1", 8000)
       .then((payload) => {
         if (alive) setDiscovery(payload);
       })
@@ -415,7 +491,7 @@ export default function SectorsPage() {
     <section className="card hero">
       <div className="heroTop">
         <div>
-          <div className="badge">StageRadar · Sectores</div>
+          <div className="badge">StatsEdge · Sectores</div>
           <h1>Sectores y temáticas</h1>
           <p className="muted">Ranking por temática, sector e industria desde discovery derivado o snapshot local.</p>
         </div>
@@ -487,7 +563,7 @@ export default function SectorsPage() {
           <div className="quickMetricGrid">
             <span><b>Grupo</b>{selected.key}</span>
             <span><b>Fuerza</b>{num(selected.strength)}</span>
-            <span><b>{metricShortLabel("totalScore")}</b>{num(selected.avgTotal)}</span>
+            <span><b>{metricShortLabel("objectiveScore")}</b>{num(selected.avgTotal)}</span>
             <span><b>{metricShortLabel("rsGlobalPct")}</b>{num(selected.avgRs)}</span>
             <span><b>3M</b>{pct(selected.avg3m)}</span>
             <span><b>6M</b>{pct(selected.avg6m)}</span>
@@ -512,26 +588,29 @@ export default function SectorsPage() {
       <div className="sectionTitle"><h2>Lideres de {selected.key}</h2><span className="fine">{groupRowsLabel(selected)}</span></div>
       <div className="tableWrap">
         <table className="table">
-          <thead><tr>{["Ticker", "Empresa", "País", "Temática", "Sector", "Industria", metricShortLabel("rsGlobalPct"), metricShortLabel("weaknessScore"), "3M", "6M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("riskScore"), metricShortLabel("totalScore"), "Acciones"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
-          <tbody>{selected.items.slice(0, 40).map((row) => <tr key={row.symbol}>
+          <thead><tr>{["Ticker", "Empresa", "País", "Temática", "Sector", "Industria", metricShortLabel("rsGlobalPct"), metricShortLabel("weaknessScore"), "3M", "6M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("riskScore"), metricShortLabel("objectiveScore"), "Acciones"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
+          <tbody>{selected.items.slice(0, 40).map((row) => {
+            const trustSignature = sectorRowTrustSignature(row);
+            return <tr key={row.symbol}>
             <td><a className="ticker" href={stockUrl(row.symbol)}>{row.symbol}</a></td>
-            <td>{row.companyName}<br /><span className="fine">{shortBusiness(row)}</span></td>
+            <td>{row.companyName}<br /><span className="fine">{shortBusiness(row)}</span><RowTrustSignature signature={trustSignature} className="sectorRowTrustSignature" /></td>
             <td><span className="countryCell"><i>{marketFlag(rowCountry(row))}</i><b>{rowCountry(row)}</b></span></td>
             <td><span className="pill">{row.theme}</span></td>
             <td>{row.sector || "Sin dato"}</td>
             <td>{row.industry || "Sin dato"}</td>
-            <td className="ticker">{num(row.rsGlobalPct)}</td>
-            <td>{num(weaknessScore(row))}</td>
-            <td>{pct(row.perf3m)}</td>
-            <td>{pct(row.perf6m)}</td>
-            <td>{pct(row.distance52w)}</td>
-            <td>{pct(row.extSma50)}</td>
-            <td>{num(row.weinsteinScore)}</td>
-            <td>{num(row.minerviniScore)}</td>
-            <td>{num(row.riskScore)}</td>
-            <td className="ticker">{num(row.totalScore)}</td>
+            <td className="ticker"><SectorTrustMetric row={row} metricKey="rsGlobalPct" label={metricShortLabel("rsGlobalPct")} value={num(row.rsGlobalPct)} /></td>
+            <td><SectorTrustMetric row={row} metricKey="weaknessScore" label={metricShortLabel("weaknessScore")} value={num(weaknessScore(row))} /></td>
+            <td><SectorTrustMetric row={row} metricKey="perf3m" label="3M" value={pct(row.perf3m)} /></td>
+            <td><SectorTrustMetric row={row} metricKey="perf6m" label="6M" value={pct(row.perf6m)} /></td>
+            <td><SectorTrustMetric row={row} metricKey="distance52w" label="52w" value={pct(row.distance52w)} /></td>
+            <td><SectorTrustMetric row={row} metricKey="extSma50" label="SMA50" value={pct(row.extSma50)} /></td>
+            <td><SectorTrustMetric row={row} metricKey="weinsteinScore" label={metricShortLabel("weinsteinScore")} value={num(row.weinsteinScore)} /></td>
+            <td><SectorTrustMetric row={row} metricKey="minerviniScore" label={metricShortLabel("minerviniScore")} value={num(row.minerviniScore)} /></td>
+            <td><SectorTrustMetric row={row} metricKey="riskScore" label={metricShortLabel("riskScore")} value={num(row.riskScore)} /></td>
+            <td className="ticker"><SectorTrustMetric row={row} metricKey="objectiveScore" label={metricShortLabel("objectiveScore")} value={num(rowObjectiveScore(row))} /></td>
             <td><div className="actionCell"><a className="btn btnSmall btnPrimary" href={stockUrl(row.symbol)}>Ficha</a><a className="btn btnSmall" href={externalLinks(row.symbol, row.exchange).tradingView} target="_blank" rel="noreferrer">TV</a></div></td>
-          </tr>)}</tbody>
+          </tr>;
+          })}</tbody>
         </table>
       </div>
     </section>}

@@ -67,15 +67,17 @@ function priceFreshness(row = {}, maxDays = DEFAULT_MAX_PRICE_FRESHNESS_DAYS) {
 function rowShape(item = {}, maxPriceFreshnessDays = DEFAULT_MAX_PRICE_FRESHNESS_DAYS, minCoverage = DEFAULT_MIN_COVERAGE) {
   const freshness = priceFreshness(item, maxPriceFreshnessDays);
   const coverage = metric(item, "dataCoverageScore");
-  const totalScore = firstFinite(item.total_score, item.raw?.totalScore, item.metrics?.totalScore);
+  const totalScore = firstFinite(item.raw?.totalScore, item.metrics?.totalScore, item.total_score);
+  const objectiveScore = firstFinite(item.raw?.objectiveScore, item.metrics?.objectiveScore, totalScore);
   const qualityOk = freshness.ok && (!Number.isFinite(coverage) || coverage >= minCoverage);
-  const rankingEligible = qualityOk && (!Number.isFinite(totalScore) || totalScore >= 45);
+  const rankingEligible = qualityOk && (!Number.isFinite(objectiveScore) || objectiveScore >= 45);
   return {
     symbol: cleanText(item.symbol || item.raw?.symbol).toUpperCase(),
     country: cleanText(item.country || item.raw?.country || "US"),
     sector: cleanText(item.sector || item.raw?.sector || "Sin sector"),
     industry: cleanText(item.industry || item.raw?.industry || "Sin industria"),
     theme: cleanText(item.theme || item.raw?.theme || ""),
+    objectiveScore,
     totalScore,
     dataCoverageScore: coverage,
     priceFreshnessDays: freshness.days,
@@ -103,11 +105,11 @@ function latestBySymbol(rows = []) {
 
 function topSymbols(rows = [], limit = 5) {
   return [...rows]
-    .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
+    .sort((a, b) => (b.objectiveScore || 0) - (a.objectiveScore || 0))
     .slice(0, limit)
     .map((row) => ({
       symbol: row.symbol,
-      score: Number.isFinite(row.totalScore) ? Math.round(row.totalScore) : null,
+      score: Number.isFinite(row.objectiveScore) ? Math.round(row.objectiveScore) : null,
       fresh: row.priceFresh,
       coverage: Number.isFinite(row.dataCoverageScore) ? Math.round(row.dataCoverageScore) : null,
     }));

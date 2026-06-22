@@ -238,7 +238,7 @@
         "contractionsDecreasing": true,
         "contractionStructureStatusAllowed": ["ok"],
         "minContractionCount": 2,
-        "minChartBars": 179
+        "minChartBars": 170
       }
     },
     {
@@ -258,7 +258,7 @@
         "contractionsDecreasing": true,
         "contractionStructureStatusAllowed": ["ok"],
         "minContractionCount": 2,
-        "minChartBars": 179
+        "minChartBars": 170
       }
     },
     {

@@ -1,6 +1,8 @@
 "use client";
 import "../../styles/research-desk.css";
 import { useEffect, useMemo, useState } from "react";
+import { DecisionTraceBadge, DecisionTracePanel } from "@/app/DecisionTraceability";
+import RowTrustSignature from "@/app/RowTrustSignature";
 import { getJson } from "@/lib/clientApi";
 import { deleteFavoriteFromCloud, deleteScanFromCloud, getAlertsFromCloud, getCloudStatus, mergeAlertsWithTimestamps, mergeFavoritesWithTombstones, mergeScansWithTombstones, pullCloudState, pushCloudState, resolveAlertInCloud, syncAlertsToCloud, syncFavoriteToCloud, syncFavoritesToCloud, syncScanToCloud } from "@/lib/cloudSyncClient";
 import { num, pct } from "@/lib/formatters";
@@ -10,8 +12,13 @@ import { metricShortLabel } from "@/lib/metricCatalog";
 import { activeAlerts, alertSummary, alertsFromScan, mergeAlerts, resolveAlert } from "@/lib/methodologyAlerts";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { checklistForRow, enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
+import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
+import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
+import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
+import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
+import { buildDecisionTraceabilitySummary, decisionResolutionForRow } from "@/lib/decisionTraceability";
 import { rowPassesListContract } from "@/lib/listRationale";
-import { createFavoriteFromRow, rowTheme, shortBusiness } from "@/lib/stockRows";
+import { createFavoriteFromRow, metricValue, rowTheme, shortBusiness } from "@/lib/stockRows";
 import { benchmarkForFavorite, externalLinks, stockUrl } from "@/lib/symbols";
 import { vcpContractionSummary } from "@/lib/vcpDiagnostics";
 
@@ -21,6 +28,85 @@ function InfoHint({ text, tone = "" }) {
   return <span className={`infoHint ${tone}`} tabIndex="0" aria-label={text}>
     <span aria-hidden="true">i</span>
     <em aria-hidden="true">{text}</em>
+  </span>;
+}
+function researchMetricSource(row = {}, key = "") {
+  if (!key) return null;
+  const audit = objectiveMetricAuditStatusForRow(row)?.audit;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const item = items.find((entry) => entry?.key === key);
+  if (!item) return null;
+  const status = String(item.status || "");
+  const severity = String(item.severity || "");
+  const label = item.label || item.key || "Métrica";
+  if (severity === "bad" || ["mismatch", "unverified-value", "missing-source"].includes(status)) return { key: "blocked", mark: "x", title: `${label}: bloqueada` };
+  if (severity === "warn" || ["missing", "insufficient-input"].includes(status)) return { key: "review", mark: "!", title: `${label}: revisar` };
+  if (item.proxy === true) return { key: "proxy", mark: "p", title: `${label}: proxy/estimada` };
+  if (status === "verified" || status === "traceable") return { key: "measured", mark: "", title: `${label}: medida/trazable` };
+  return null;
+}
+function ResearchTrustMetric({ row, metricKey, label, value, className = "" }) {
+  const source = researchMetricSource(row, metricKey);
+  const sourceClass = source?.key ? `source-${source.key}` : "";
+  const valueText = value ?? "-";
+  return <span
+    className={`researchTrustMetric ${className} ${sourceClass}`.trim()}
+    title={source?.title || undefined}
+    aria-label={source?.title ? `${label}: ${valueText}. ${source.title}` : undefined}
+  >
+    <span>{valueText}</span>
+    {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}
+  </span>;
+}
+function researchMetricTruthMeta(row = {}) {
+  const status = objectiveMetricAuditStatusForRow(row);
+  const audit = status.audit || null;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const usable = items.filter((item) => item?.status === "verified" || item?.status === "traceable");
+  const measuredCount = usable.filter((item) => item?.proxy !== true).length;
+  const proxyCount = usable.filter((item) => item?.proxy === true).length;
+  const detail = [
+    status.detail,
+    measuredCount ? `${measuredCount} medidas` : "",
+    proxyCount ? `${proxyCount} proxy` : "",
+  ].filter(Boolean).join(" · ");
+  if (status.key === "bad") return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
+  if (status.key === "warn") return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
+  if (status.key === "missing") return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
+  return {
+    key: proxyCount ? "mixed" : "measured",
+    label: proxyCount ? "Mixto" : "Med.",
+    tone: proxyCount ? "neutral" : "good",
+    detail,
+    measuredCount,
+    proxyCount,
+  };
+}
+function researchRowTrustSignature(row = {}) {
+  const sourceRow = row?.snapshot || row || {};
+  return buildRowTrustSignature({
+    dataHealth: buildScreenerDataHealth(sourceRow, {}),
+    metricTruth: researchMetricTruthMeta(sourceRow),
+    scoreAudit: buildScreenerScoreAudit(sourceRow),
+  });
+}
+function ResearchScoreStrip({ row }) {
+  const sourceRow = row?.snapshot || row || {};
+  const trustSignature = researchRowTrustSignature(sourceRow);
+  const items = [
+    ["objectiveScore", metricShortLabel("objectiveScore"), num(metricValue(sourceRow, "objectiveScore"))],
+    ["rsQualityScore", metricShortLabel("rsQualityScore"), num(sourceRow.rsQualityScore)],
+    ["weaknessScore", metricShortLabel("weaknessScore"), num(sourceRow.weaknessScore)],
+    ["weinsteinScore", metricShortLabel("weinsteinScore"), num(sourceRow.weinsteinScore)],
+  ];
+  return <span className="researchScoreCluster">
+    <span className="researchScoreStrip">
+      {items.map(([key, label, value]) => <span key={key}>
+        <em>{label}</em>
+        <ResearchTrustMetric row={sourceRow} metricKey={key} label={label} value={value} />
+      </span>)}
+    </span>
+    <RowTrustSignature signature={trustSignature} className="researchRowTrustSignature" />
   </span>;
 }
 function sortScans(rows = []) {
@@ -189,10 +275,13 @@ function DailyCommandCenter({ sections = [] }) {
         {section.alerts ? section.alerts.slice(0, 5).map((alert) => <div className="summaryRow" key={alert.id}>
           <span><a className="ticker" href={stockUrl(alert.symbol)}>{alert.symbol}</a><br /><span className="fine">{alert.payload?.label || alert.alertType}</span></span>
           <span>{alert.payload?.severity || "neutral"}</span>
-        </div>) : section.rows.slice(0, 5).map((row) => <div className="summaryRow" key={`${section.key}-${row.symbol}`}>
-          <span><a className="ticker" href={stockUrl(row.symbol)}>{row.symbol}</a><br /><span className="fine">{patternLabel(row)}</span></span>
+        </div>) : section.rows.slice(0, 5).map((row) => {
+          const trustSignature = researchRowTrustSignature(row);
+          return <div className="summaryRow" key={`${section.key}-${row.symbol}`}>
+          <span><a className="ticker" href={stockUrl(row.symbol)}>{row.symbol}</a><br /><span className="fine">{patternLabel(row)}</span><RowTrustSignature signature={trustSignature} className="researchRowTrustSignature" /></span>
           <span>{section.key === "pivot" && Number.isFinite(row.distanceToPivotPct) ? pct(row.distanceToPivotPct) : contractionText(row)}</span>
-        </div>)}
+        </div>;
+        })}
       </div>)}
     </div>
   </section>;
@@ -210,6 +299,7 @@ export default function ResearchDesk() {
   const [cloud, setCloud] = useState({ configured: false, ok: false, message: "Comprobando Supabase..." });
   const [syncing, setSyncing] = useState(false);
   const [favoriteSeries, setFavoriteSeries] = useState({});
+  const [reviewState, setReviewState] = useState({});
   useEffect(() => {
     getJson("/api/favorites/snapshots?days=180")
       .then((data) => setFavoriteSeries(data.snapshots || {}))
@@ -220,15 +310,38 @@ export default function ResearchDesk() {
     const nextScans = safeRead(STORAGE_KEYS.scans, []);
     const nextFavs = safeRead(STORAGE_KEYS.favorites, []);
     const nextAlerts = safeRead(STORAGE_KEYS.alerts, []);
+    const nextReview = safeRead(STORAGE_KEYS.review, {});
     setScans(nextScans);
     setFavorites(nextFavs);
     setAlerts(nextAlerts);
+    setReviewState(nextReview);
     if (!selectedScan && nextScans[0]) setSelectedScan(nextScans[0]);
     return { nextScans, nextFavs, nextAlerts };
   }
   useEffect(() => {
     reloadLocal();
     refreshCloudStatus(false);
+  }, []);
+  useEffect(() => {
+    function refreshReviewState() {
+      setReviewState(safeRead(STORAGE_KEYS.review, {}));
+    }
+    function handleStorage(event) {
+      if (!event.key || event.key === STORAGE_KEYS.review) refreshReviewState();
+    }
+    function handleVisibility() {
+      if (document.visibilityState === "visible") refreshReviewState();
+    }
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("focus", refreshReviewState);
+    window.addEventListener("pageshow", refreshReviewState);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("focus", refreshReviewState);
+      window.removeEventListener("pageshow", refreshReviewState);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
   function persistScans(next) { setScans(next); safeWrite(STORAGE_KEYS.scans, next); }
   function persistFavs(next) { setFavorites(next); safeWrite(STORAGE_KEYS.favorites, next); }
@@ -476,6 +589,7 @@ export default function ResearchDesk() {
   const visibleAlerts = useMemo(() => activeAlerts(alerts).slice(0, 30), [alerts]);
   const alertsSummary = useMemo(() => alertSummary(alerts), [alerts]);
   const commandCenter = useMemo(() => commandCenterFrom({ rows: selectedRows, alerts: visibleAlerts, favorites }), [selectedRows, visibleAlerts, favorites]);
+  const decisionTraceability = useMemo(() => buildDecisionTraceabilitySummary([...selectedRows, ...favorites], reviewState), [selectedRows, favorites, reviewState]);
   const favoriteStats = useMemo(() => {
     const valid = favorites.filter((f) => Number.isFinite(f.perfSinceAdd));
     const avgPerf = valid.length ? valid.reduce((a, b) => a + b.perfSinceAdd, 0) / valid.length : null;
@@ -486,13 +600,14 @@ export default function ResearchDesk() {
   return <main className="page">
     <section className="card hero">
       <div className="heroTop">
-        <div><div className="badge">StageRadar · Research</div><h1>Registro y favoritos</h1><p className="muted">Snapshots, watchlist, notas y seguimiento local-first.</p></div>
+        <div><div className="badge">StatsEdge · Research</div><h1>Registro y favoritos</h1><p className="muted">Snapshots, watchlist, notas y seguimiento local-first.</p></div>
         <div className="mobileActions"><a className="btn" href="/">Screener</a><a className="btn" href="/review?source=favorites">Vista favoritos</a><a className="btn" href="/lists">Listas</a><a className="btn" href="/ipo-radar">IPO Radar</a><a className="btn" href="/market-health">Salud mercado</a><button className="btn btnPrimary" onClick={refreshFavorites} disabled={loading}>{loading ? "Actualizando..." : "Actualizar favoritos"}</button></div>
       </div>
     </section>
 
     <section className="card"><div className="kpis"><div className="kpi"><b>{scans.length}</b><span>snapshots guardados</span></div><div className="kpi"><b>{favoriteStats.count}</b><span>favoritos</span></div><div className="kpi"><b>{alertsSummary.active}</b><span>alertas activas</span></div><div className="kpi"><b>{pct(favoriteStats.avg)}</b><span>media desde favorito</span></div><div className="kpi"><b>{pct(favoriteStats.alpha)}</b><span>alpha media</span></div></div></section>
     <section className="card status">Estado: <b>{investorStatusLabel(status)}</b></section>
+    <DecisionTracePanel summary={decisionTraceability} detail="Decisiones tomadas en Review/Ficha que afectan a snapshots y favoritos visibles en Research Desk." />
 
     <DailyCommandCenter sections={commandCenter} />
 
@@ -541,7 +656,7 @@ export default function ResearchDesk() {
         const links = externalLinks(f.symbol);
         const checklist = checklistForRow(f).slice(1, 6);
         return <tr key={f.id}>
-          <td><a className="ticker" href={stockUrl(f.symbol)}>{f.symbol}</a></td>
+          <td><a className="ticker" href={stockUrl(f.symbol)}>{f.symbol}</a><DecisionTraceBadge resolution={decisionResolutionForRow(f, reviewState)} /></td>
           <td>{f.companyName}<br /><span className="fine">{rowTheme(f) || f.source}</span></td>
           <td>{new Date(f.addedAt).toLocaleDateString()}</td>
           <td>{Number.isFinite(f.entryPrice) ? f.entryPrice.toFixed(2) : "Sin dato"}</td>
@@ -552,7 +667,7 @@ export default function ResearchDesk() {
           <td><FavoriteSparkline series={favoriteSeries[String(f.symbol || "").toUpperCase()] || []} /></td>
           <td>{f.currentState || "Sin dato"}</td>
           <td>{f.marketRegime || "-"}<br /><span className="fine">Score {num(f.marketScore)}</span></td>
-          <td>{metricShortLabel("totalScore")} {num(f.snapshot?.totalScore)} · {metricShortLabel("rsQualityScore")} {num(f.snapshot?.rsQualityScore)} · {metricShortLabel("weaknessScore")} {num(f.snapshot?.weaknessScore)} · {metricShortLabel("weinsteinScore")} {num(f.snapshot?.weinsteinScore)}<br /><span className="fine">{checklist.map((item) => `${item.label}: ${item.status}`).join(" · ")}</span></td>
+          <td><ResearchScoreStrip row={f} /><br /><span className="fine">{checklist.map((item) => `${item.label}: ${item.status}`).join(" · ")}</span></td>
           <td><input className="input" value={f.notes || ""} onChange={(e) => persistFavs(favorites.map((x) => x.id === f.id ? { ...x, notes: e.target.value, updatedAt: new Date().toISOString() } : x))} onBlur={() => {
             const latest = safeRead(STORAGE_KEYS.favorites, []).find((item) => item.id === f.id || item.symbol === f.symbol);
             if (latest) syncFavoriteToCloud(latest);
@@ -567,7 +682,35 @@ export default function ResearchDesk() {
       <div className="card"><h2>Snapshot seleccionado</h2>{selectedScan ? <><div className="summaryRow"><span>{selectedScan.name}</span><span>{selectedRows.length} filas</span></div><div className="controls" style={{ marginTop: 10 }}><button className="btn" onClick={() => exportJson(`scan-${selectedScan.id}.json`, selectedScan)}>Exportar scan</button><button className="btn btnGhost" onClick={() => deleteScan(selectedScan.id)}>Eliminar scan</button><a className="btn" href="/review?source=latest">Vista rapida</a><a className="btn btnPrimary" href="/lists">Ver en listas</a></div></> : <p className="fine">Selecciona un snapshot del historial.</p>}</div>
     </section>
 
-    {selectedScan && <section className="card"><h2>Candidatas del snapshot</h2><div className="tableWrap"><table className="table"><thead><tr>{["★", "Ticker", "Empresa", "Tema", metricShortLabel("stage"), "Cambios", "3M", "6M", "12M", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel("totalScore"), "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{selectedRows.map((r) => <tr key={r.symbol}><td><button className="starBtn" onClick={() => favFromRow(r)}>★</button></td><td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a></td><td>{r.companyName}<br /><span className="fine">{shortBusiness(r)}</span></td><td><span className="pill">{rowTheme(r)}</span></td><td>{r.stageLabel || r.methodology?.stageState?.label || "-"}</td><td>{(r.methodologyEvents || []).slice(0, 2).map((event) => event.label).join(" · ") || "-"}</td><td>{pct(r.perf3m)}</td><td>{pct(r.perf6m)}</td><td>{pct(r.perf12m)}</td><td>{num(r.weinsteinScore)}</td><td>{num(r.minerviniScore)}</td><td>{num(r.rsQualityScore)}</td><td>{num(r.weaknessScore)}</td><td>{num(r.riskScore)}</td><td className="ticker">{num(r.totalScore)}</td><td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(r.symbol)}>Ficha</a><a className="btn btnSmall" href={externalLinks(r.symbol).tradingView} target="_blank" rel="noreferrer">TV</a></div></td></tr>)}</tbody></table></div></section>}
+    {selectedScan && <section className="card">
+      <h2>Candidatas del snapshot</h2>
+      <div className="tableWrap">
+        <table className="table">
+          <thead><tr>{["★", "Ticker", "Empresa", "Tema", metricShortLabel("stage"), "Cambios", "3M", "6M", "12M", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel("objectiveScore"), "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
+          <tbody>{selectedRows.map((r) => {
+            const trustSignature = researchRowTrustSignature(r);
+            return <tr key={r.symbol}>
+            <td><button className="starBtn" onClick={() => favFromRow(r)}>★</button></td>
+            <td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a><DecisionTraceBadge resolution={decisionResolutionForRow(r, reviewState)} /></td>
+            <td>{r.companyName}<br /><span className="fine">{shortBusiness(r)}</span><RowTrustSignature signature={trustSignature} className="researchRowTrustSignature" /></td>
+            <td><span className="pill">{rowTheme(r)}</span></td>
+            <td>{r.stageLabel || r.methodology?.stageState?.label || "-"}</td>
+            <td>{(r.methodologyEvents || []).slice(0, 2).map((event) => event.label).join(" · ") || "-"}</td>
+            <td><ResearchTrustMetric row={r} metricKey="perf3m" label="3M" value={pct(r.perf3m)} /></td>
+            <td><ResearchTrustMetric row={r} metricKey="perf6m" label="6M" value={pct(r.perf6m)} /></td>
+            <td><ResearchTrustMetric row={r} metricKey="perf12m" label="12M" value={pct(r.perf12m)} /></td>
+            <td><ResearchTrustMetric row={r} metricKey="weinsteinScore" label={metricShortLabel("weinsteinScore")} value={num(r.weinsteinScore)} /></td>
+            <td><ResearchTrustMetric row={r} metricKey="minerviniScore" label={metricShortLabel("minerviniScore")} value={num(r.minerviniScore)} /></td>
+            <td><ResearchTrustMetric row={r} metricKey="rsQualityScore" label={metricShortLabel("rsQualityScore")} value={num(r.rsQualityScore)} /></td>
+            <td><ResearchTrustMetric row={r} metricKey="weaknessScore" label={metricShortLabel("weaknessScore")} value={num(r.weaknessScore)} /></td>
+            <td><ResearchTrustMetric row={r} metricKey="riskScore" label={metricShortLabel("riskScore")} value={num(r.riskScore)} /></td>
+            <td className="ticker"><ResearchTrustMetric row={r} metricKey="objectiveScore" label={metricShortLabel("objectiveScore")} value={num(metricValue(r, "objectiveScore"))} /></td>
+            <td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(r.symbol)}>Ficha</a><a className="btn btnSmall" href={externalLinks(r.symbol).tradingView} target="_blank" rel="noreferrer">TV</a></div></td>
+          </tr>;
+          })}</tbody>
+        </table>
+      </div>
+    </section>}
 
     <footer className="card footer">Local-first con sincronizacion opcional.</footer>
   </main>;

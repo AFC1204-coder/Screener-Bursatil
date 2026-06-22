@@ -587,7 +587,10 @@ async function testSetupCellKeepsDetailsBehindInfo(browser) {
   }));
   try {
     await waitForSymbols(page, 4);
-    const setupCells = page.locator(".compactResultsTable tbody tr td:nth-child(6)");
+    const headerLabels = (await page.locator(".compactResultsTable thead th").allInnerTexts()).map((text) => text.trim());
+    const setupColumnIndex = headerLabels.findIndex((label) => /^Setup$/i.test(label)) + 1;
+    assert.ok(setupColumnIndex > 0, "compact table should expose a Setup column");
+    const setupCells = page.locator(`.compactResultsTable tbody tr td:nth-child(${setupColumnIndex})`);
     assert.equal(await setupCells.count(), 4, "seeded setup rows should render compact setup cells");
     const firstSetupCell = setupCells.nth(0);
     const secondSetupCell = setupCells.nth(1);
@@ -844,12 +847,12 @@ async function testQuickListsUseSameSnapshotContract(browser) {
     const favoritesTicker = await page.locator("section.card", { hasText: "Favoritos" }).locator("tbody .ticker").first().textContent();
     assert.equal(favoritesTicker?.trim(), "QLA", "favorites quick list should preserve the favorite symbol");
 
-    const compositeTicker = await page.locator("details", { hasText: "Composite Leaders" }).locator("tbody .ticker").first().textContent();
-    assert.equal(compositeTicker?.trim(), "QLA", "composite quick list should use the same totalScore ordering as the screener snapshot");
+    const objectiveTicker = await page.locator("details", { hasText: "Calidad objetiva" }).locator("tbody .ticker").first().textContent();
+    assert.equal(objectiveTicker?.trim(), "QLA", "objective quick list should use the same objectiveScore ordering as the screener snapshot");
 
     const favoriteRow = await page.locator("section.card", { hasText: "Favoritos" }).locator("tbody tr").first().innerText();
     assert.match(favoriteRow, /\b96\b/, "favorites quick list should preserve visible score metrics from the screener snapshot");
-    const href = await page.locator("details", { hasText: "Composite Leaders" }).locator("tbody .ticker").first().getAttribute("href");
+    const href = await page.locator("details", { hasText: "Calidad objetiva" }).locator("tbody .ticker").first().getAttribute("href");
     assert.equal(href, "/stock/QLA", "quick-list ticker should route to the same stock ficha URL");
   } finally {
     await context.close();

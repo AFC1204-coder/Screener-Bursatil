@@ -1,18 +1,15 @@
-// middleware.js — colocar en la RAÍZ del repo (junto a package.json).
-// Cierra el perímetro de /api/* con un token de aplicación.
+// proxy.js — colocar en la RAÍZ del repo (junto a package.json).
+// Cierra el perímetro de /api/* con token servidor-servidor o sesión HttpOnly.
 //
 // Env requerida (Vercel + .env.local):
 //   STATSEDGE_ACCESS_TOKEN=<cadena larga aleatoria, ej: openssl rand -hex 32>
-//   NEXT_PUBLIC_STATSEDGE_ACCESS_TOKEN=<el mismo valor>  (lo usa el cliente, ver lib/clientApi.js)
-//
-// Nota: NEXT_PUBLIC_ expone el token en el bundle del navegador. Es un cierre de
-// perímetro para app personal (evita que terceros usen tu API/proxy Yahoo y tus datos),
-// NO un sistema de auth multiusuario. Nunca apliques este patrón a claves de Supabase.
+//   STATSEDGE_SESSION_SECRET=<cadena larga aleatoria independiente en producción>
 
 import { NextResponse } from "next/server";
+import { SESSION_COOKIE, isStatsEdgeSessionValid } from "./lib/authSession";
 
 // Endpoints de estado inofensivos que pueden quedar abiertos.
-const PUBLIC_API_PATHS = new Set(["/api/supabase/status", "/api/data-providers"]);
+const PUBLIC_API_PATHS = new Set(["/api/auth/session", "/api/supabase/status", "/api/data-providers"]);
 
 function timingSafeEqual(a = "", b = "") {
   if (a.length !== b.length) return false;
@@ -21,7 +18,7 @@ function timingSafeEqual(a = "", b = "") {
   return diff === 0;
 }
 
-export function middleware(request) {
+export function proxy(request) {
   const { pathname } = request.nextUrl;
   if (PUBLIC_API_PATHS.has(pathname)) return NextResponse.next();
   // Los crons de Vercel llegan con "authorization: Bearer CRON_SECRET", sin el token
@@ -30,20 +27,18 @@ export function middleware(request) {
 
   const expected = process.env.STATSEDGE_ACCESS_TOKEN || "";
   if (!expected) {
-    // Sin token configurado: modo abierto (desarrollo local sin .env).
-    // Si prefieres fail-closed, sustituye por el return 401 de abajo.
-    return NextResponse.next();
+    if (process.env.NODE_ENV !== "production") return NextResponse.next();
+    return NextResponse.json({ error: "Configuración de auth ausente" }, { status: 401 });
   }
 
-  const provided =
-    request.headers.get("x-statsedge-token") ||
-    request.cookies.get("statsedge_token")?.value ||
-    "";
+  const provided = request.headers.get("x-statsedge-token") || "";
+  const session = request.cookies.get(SESSION_COOKIE)?.value || "";
 
   if (timingSafeEqual(provided, expected)) return NextResponse.next();
+  if (isStatsEdgeSessionValid(session)) return NextResponse.next();
 
   return NextResponse.json(
-    { error: "No autorizado", hint: "Falta o no coincide x-statsedge-token" },
+    { error: "No autorizado", hint: "Falta una sesión válida de StatsEdge" },
     { status: 401 }
   );
 }

@@ -1,4 +1,4 @@
-import { envValue } from "@/lib/env";
+import { isInternalRequest } from "@/lib/internalAuth";
 import { fetchJquantsDailyBars, fetchJquantsFundamentals, jquantsStatus, writeJquantsBars, writeJquantsFundamentals } from "@/lib/jquants";
 import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer";
 import { getUniverseEngineSnapshot } from "@/lib/universeEngine";
@@ -7,9 +7,7 @@ const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 200;
 
 function authorized(request) {
-  const secret = envValue("CRON_SECRET");
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}` || request.headers.get("x-cron-secret") === secret;
+  return isInternalRequest(request, { allowCron: true });
 }
 
 function requestedSymbols(request) {

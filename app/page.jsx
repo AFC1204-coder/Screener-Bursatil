@@ -3,6 +3,7 @@ import "../styles/screener.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import ChartPreferences from "@/app/ChartPreferences";
+import RowTrustSignature from "@/app/RowTrustSignature";
 import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import {
   activeLayerCount,
@@ -10,6 +11,17 @@ import {
   applyResultViewFilters,
   CompactResultsTable,
   CompanyMark,
+  DECISION_PROFILE_ORDER,
+  DecisionEvidenceChecklist,
+  DecisionEvidenceSummaryRail,
+  DecisionOperatingBrief,
+  DecisionQualityStrip,
+  DecisionSummaryRail,
+  DataHealthSummaryRail,
+  AuditabilitySummaryRail,
+  buildReviewProfileSummary,
+  decisionProfileForRow,
+  decisionProfileLabel,
   FilterArchitecturePanel,
   FilterDiagnosticsPanel,
   FilterFamilyModal,
@@ -23,7 +35,9 @@ import {
   money,
   opportunityBuckets,
   passesSectorStrength,
+  PendingDecisionWorkRail,
   PendingResultsBar,
+  prepareReviewQueueRows,
   PreviewCard,
   quickBusinessDescription,
   quickBusinessMarket,
@@ -31,10 +45,13 @@ import {
   ResultFilterChips,
   SearchCandidateList,
   SearchScopeList,
+  ScoreAuditPanel,
+  ScoreAuditSummaryRail,
   SetupChipRail,
   shortBusiness,
   sleep,
   searchText,
+  reviewProfileMeta,
   TradingViewPreviewChart,
   verifiedIpoCategory,
 } from "@/app/screenerPanels";
@@ -54,8 +71,22 @@ import { benchmarkSymbolForRow } from "@/lib/relativeStrength";
 import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/lib/researchRow";
 import { isTerminalScanStatus } from "@/lib/scanStatus";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
-import { ASIA, DEFAULT_MARKETS, DEFAULT_RESULT_PAGE_SIZE, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, EUROPE, FULL_SCAN_PARTIAL_EVERY, MARKET_META, MARKET_ORDER, MARKETS, marketExchange, marketName, normalizeSectorStrength, RESULT_PAGE_SIZES, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, SECTOR_STRENGTH_LABELS, SECTOR_STRENGTH_OPTIONS, SERVER_SCAN_POLL_MS, USER_TEMPLATE_LIMIT, VIEW_LAYERS } from "@/lib/screenerConfig";
-import { cachedScreenerQuery, cachedScreenerRow, compactRowForSession, compactRowsForSession, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, secondsLabel, sectorize, setupModeLabel, shuffle, sortMetric, spreadByInitial, uid, universeScopeKey } from "@/lib/screenerPipeline";
+import { ASIA, DEFAULT_MARKETS, DEFAULT_RESULT_PAGE_SIZE, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, EUROPE, FULL_SCAN_PARTIAL_EVERY, MARKET_META, MARKET_ORDER, MARKETS, marketExchange, marketName, normalizeSectorStrength, RESULT_PAGE_SIZES, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, SECTOR_STRENGTH_LABELS, SECTOR_STRENGTH_OPTIONS, SERVER_SCAN_POLL_MS, SORT_LABELS, USER_TEMPLATE_LIMIT, VIEW_LAYERS } from "@/lib/screenerConfig";
+import { buildScreenerDecisionBrief } from "@/lib/screenerDecisionBrief";
+import { DECISION_EVIDENCE_FILTER_ALL, DECISION_EVIDENCE_FILTER_ORDER, buildDecisionBrief, buildDecisionEvidenceChecklist, buildDecisionEvidenceSummary, buildDecisionQueueItem, buildDecisionQueueSummary, decisionEvidenceFilterLabel, DECISION_READINESS_ORDER, decisionReadinessLabel, explainScreenerRank, RANK_ACTION_ORDER, rankActionLabel } from "@/lib/screenerExplainability";
+import { attachDecisionTrace, auditDecisionRowIssues, auditDecisionScan, buildDecisionAuditExportPayload, buildDecisionTrace, DECISION_CONFIDENCE_ORDER, decisionConfidenceLabel, decisionConfidenceSummary, decisionPriorityBreakdown, decisionTraceForRow } from "@/lib/decisionAudit";
+import { buildReviewPrioritySummary, decisionProfileStateForStock, reviewPriorityForRow, reviewPriorityMeta } from "@/lib/decisionProfile";
+import { DATA_HEALTH_FILTER_ALL, DATA_HEALTH_FILTER_ORDER, buildScreenerDataHealth, buildScreenerDataHealthSummary, dataHealthFilterLabel } from "@/lib/screenerDataHealth";
+import { RELIABILITY_FILTER_ALL, RELIABILITY_FILTER_ORDER, buildScreenerAuditabilitySummary, buildScreenerReliabilitySummary, screenerReliabilityFilterLabel } from "@/lib/screenerReliability";
+import { SCORE_AUDIT_FILTER_ALL, SCORE_AUDIT_FILTER_ORDER, buildScreenerScoreAudit, buildScreenerScoreAuditSummary, scoreAuditFilterLabel, scoreAuditMatchesFilter, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
+import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
+import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
+import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
+import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, buildStockDecisionResolutionSummary, decisionResolutionForSymbol, reopenStockDecisionResolution, reviewDecisionStateForRows, stockDecisionResolutionFilter } from "@/lib/stockDecisionResolution";
+import { cachedScreenerQuery, cachedScreenerRow, compactRowForSession, compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, secondsLabel, sectorize, setupModeLabel, shuffle, sortMetric, spreadByInitial, uid, universeScopeKey } from "@/lib/screenerPipeline";
+import { buildSnapshotFreshnessNotice } from "@/lib/snapshotFreshness";
+import { pickBestRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
+import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 import {
   ALL_FILTER_LAYERS,
   DEFAULT_FIELD_RULES,
@@ -85,6 +116,333 @@ import { buildScreenerContract, buildScreenerStockContext } from "@/lib/screener
 import { createFavoriteFromRow } from "@/lib/stockRows";
 import { countryCode, externalLinks, marketFlag, stockUrl } from "@/lib/symbols";
 
+const CACHE_PREVIEW_TIMEOUT_MS = 3500;
+const MARKET_HEALTH_TIMEOUT_MS = 5000;
+
+function decisionResolutionDisplayLabel(key = "") {
+  return key === "pending" ? "Sin decidir" : stockDecisionResolutionFilter(key).label;
+}
+
+function reviewPriorityDisplayLabel(key = "all") {
+  return key === "all" ? "Todas" : reviewPriorityMeta(key).label;
+}
+
+function reviewQueueScoreAuditMeta(row = {}) {
+  const status = scoreAuditStatusForRow(row);
+  const key = status.mismatch ? "mismatch" : status.missing ? "missing" : status.clean ? "clean" : "attention";
+  const reasons = scoreAuditReviewReasons(status.audit);
+  const detail = reasons.map((item) => [item.label, item.value, item.detail].filter(Boolean).join(": ")).join(" · ");
+  return {
+    key,
+    label: scoreAuditFilterLabel(key, { compact: true }),
+    tone: key === "clean" ? "good" : reasons[0]?.tone || "warn",
+    detail,
+  };
+}
+
+function reviewQueueDataHealthMeta(row = {}, settings = {}) {
+  const health = buildScreenerDataHealth(row, settings);
+  const key = health.status?.key || "unknown";
+  const issues = Array.isArray(health.issues) ? health.issues : [];
+  const detail = [
+    health.status?.detail,
+    health.topLine,
+    ...issues.slice(0, 2).map((item) => [item.label, item.detail].filter(Boolean).join(": ")),
+  ].filter(Boolean).join(" · ");
+  return {
+    key,
+    label: dataHealthFilterLabel(key, { compact: true }),
+    tone: health.status?.tone || "neutral",
+    detail,
+  };
+}
+
+function reviewQueueMetricTruthMeta(row = {}) {
+  const status = objectiveMetricAuditStatusForRow(row);
+  const audit = status.audit || null;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const usable = items.filter((item) => item?.status === "verified" || item?.status === "traceable");
+  const measuredCount = usable.filter((item) => item?.proxy !== true).length;
+  const proxyCount = usable.filter((item) => item?.proxy === true).length;
+  const issueDetail = Array.isArray(audit?.issues) && audit.issues.length
+    ? audit.issues.slice(0, 2).map((item) => [item.label || item.key, item.status].filter(Boolean).join(": ")).join(" · ")
+    : "";
+  const detail = [
+    status.detail || issueDetail,
+    measuredCount ? `${measuredCount} medidas` : "",
+    proxyCount ? `${proxyCount} proxy` : "",
+  ].filter(Boolean).join(" · ");
+  if (status.key === "bad") {
+    return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
+  }
+  if (status.key === "warn") {
+    return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
+  }
+  if (status.key === "missing") {
+    return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
+  }
+  return {
+    key: proxyCount ? "mixed" : "measured",
+    label: proxyCount ? "Mixto" : "Med.",
+    tone: proxyCount ? "neutral" : "good",
+    detail,
+    measuredCount,
+    proxyCount,
+  };
+}
+
+function quickReviewMetricSource(row = {}, key = "", label = "") {
+  const audit = objectiveMetricAuditStatusForRow(row)?.audit;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const item = items.find((candidate) => candidate?.key === key);
+  if (!item) return null;
+  const status = item.status || "";
+  const severity = item.severity || "";
+  const titleLabel = label || item.label || key;
+  if (severity === "bad" || ["mismatch", "unverified-value", "missing-source"].includes(status)) {
+    return { key: "blocked", mark: "x", title: `${titleLabel}: bloqueada` };
+  }
+  if (severity === "warn" || ["missing", "insufficient-input"].includes(status)) {
+    return { key: "review", mark: "!", title: `${titleLabel}: revisar` };
+  }
+  if (item.proxy === true) {
+    return { key: "proxy", mark: "p", title: `${titleLabel}: proxy/estimada` };
+  }
+  if (status === "verified" || status === "traceable") {
+    return { key: "measured", mark: "", title: `${titleLabel}: medida/trazable` };
+  }
+  return null;
+}
+
+function QuickReviewMetricValue({ row = {}, metricKey = "", label = "", value = "-", className = "" }) {
+  const source = metricKey ? quickReviewMetricSource(row, metricKey, label) : null;
+  const sourceClass = source?.key ? `source-${source.key}` : "";
+  return <b
+    className={["quickReviewMetricValue", className, sourceClass].filter(Boolean).join(" ")}
+    title={source?.title || undefined}
+    aria-label={source?.title ? `${label}: ${value}. ${source.title}` : undefined}
+  >
+    <span>{value}</span>
+    {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}
+  </b>;
+}
+
+function reviewQueueFocusMeta({ dataHealth = null, metricTruth = null, scoreAudit = null, evidence = null, methodologyFocus = null, vcp = null } = {}) {
+  const candidates = [];
+  const add = (item) => { if (item?.key && item?.label) candidates.push(item); };
+  if (dataHealth?.key === "blocked") add({ priority: 100, key: "data", label: "Datos", tone: "bad", detail: dataHealth.detail });
+  if (metricTruth?.key === "blocked") add({ priority: 95, key: "metrics", label: "Metr.", tone: "bad", detail: metricTruth.detail });
+  if (scoreAudit?.key === "mismatch") add({ priority: 86, key: "score", label: "Score", tone: "warn", detail: scoreAudit.detail });
+  if (["review", "missing"].includes(metricTruth?.key)) add({ priority: 82, key: "metrics", label: "Metr.", tone: "warn", detail: metricTruth.detail });
+  if (["blocked", "inconsistent", "needs-data"].includes(vcp?.key)) add({ priority: vcp.key === "blocked" ? 80 : 70, key: "vcp", label: "VCP", tone: vcp.tone || "warn", detail: vcp.summary || vcp.note });
+  if (dataHealth?.key && dataHealth.key !== "ready") add({ priority: 72, key: "data", label: "Datos", tone: dataHealth.tone || "warn", detail: dataHealth.detail });
+  if (scoreAudit?.key === "missing") add({ priority: 70, key: "score", label: "Score", tone: "warn", detail: scoreAudit.detail });
+  if (evidence?.status === "blocked") add({ priority: 68, key: "evidence", label: "Pruebas", tone: "bad", detail: evidence.summary });
+  if (methodologyFocus?.tone === "bad" || methodologyFocus?.tone === "warn") add({ priority: methodologyFocus.tone === "bad" ? 66 : 54, key: "method", label: "Método", tone: methodologyFocus.tone, detail: methodologyFocus.detail || methodologyFocus.label });
+  if (evidence?.status === "needs-work") add({ priority: 62, key: "evidence", label: "Pruebas", tone: evidence.tone || "warn", detail: evidence.pending?.[0]?.detail || evidence.pending?.[0]?.label || evidence.summary });
+  if (scoreAudit?.key === "attention") add({ priority: 50, key: "score", label: "Score", tone: "warn", detail: scoreAudit.detail });
+  return candidates.sort((a, b) => b.priority - a.priority)[0] || null;
+}
+
+function ReviewQueueFocusBadge({ focus = null }) {
+  if (!focus) return null;
+  return <span className={`reviewQueueFocusBadge ${focus.tone || "warn"} focus-${focus.key || "other"}`} title={focus.detail || focus.label}>Foco {focus.label}</span>;
+}
+
+function buildReviewQueueAuditSummary(items = [], activeIndex = 0) {
+  const firstIndex = (predicate) => {
+    const index = items.findIndex(predicate);
+    return index >= 0 ? index : 0;
+  };
+  const dataCount = items.filter((item) => item.dataHealth?.key && item.dataHealth.key !== "ready").length;
+  const dataBlocked = items.filter((item) => item.dataHealth?.key === "blocked").length;
+  const scoreCount = items.filter((item) => item.scoreAudit?.key && item.scoreAudit.key !== "clean").length;
+  const scoreMismatch = items.filter((item) => item.scoreAudit?.key === "mismatch").length;
+  const evidenceCount = items.filter((item) => item.evidence?.status && item.evidence.status !== "ready").length;
+  const evidenceBlocked = items.filter((item) => item.evidence?.status === "blocked").length;
+  const activeItem = items[activeIndex] || null;
+  return [
+    {
+      key: "data",
+      label: dataCount ? (dataBlocked ? "Datos bloqueados" : "Datos revisar") : "Datos OK",
+      count: dataCount,
+      tone: dataBlocked ? "bad" : dataCount ? "warn" : "good",
+      firstIndex: firstIndex((item) => item.dataHealth?.key && item.dataHealth.key !== "ready"),
+      active: Boolean(activeItem?.dataHealth?.key && activeItem.dataHealth.key !== "ready"),
+      detail: dataBlocked ? `${dataBlocked} bloqueadas · ${dataCount} a revisar` : `${dataCount} con datos a revisar`,
+    },
+    {
+      key: "score",
+      label: scoreCount ? (scoreMismatch ? "Score descuadre" : "Score revisar") : "Score OK",
+      count: scoreCount,
+      tone: scoreCount ? "warn" : "good",
+      firstIndex: firstIndex((item) => item.scoreAudit?.key && item.scoreAudit.key !== "clean"),
+      active: Boolean(activeItem?.scoreAudit?.key && activeItem.scoreAudit.key !== "clean"),
+      detail: scoreMismatch ? `${scoreMismatch} con descuadre · ${scoreCount} a revisar` : `${scoreCount} con score a revisar`,
+    },
+    {
+      key: "evidence",
+      label: evidenceCount ? (evidenceBlocked ? "Pruebas bloqueadas" : "Pruebas validar") : "Pruebas OK",
+      count: evidenceCount,
+      tone: evidenceBlocked ? "bad" : evidenceCount ? "warn" : "good",
+      firstIndex: firstIndex((item) => item.evidence?.status && item.evidence.status !== "ready"),
+      active: Boolean(activeItem?.evidence?.status && activeItem.evidence.status !== "ready"),
+      detail: evidenceBlocked ? `${evidenceBlocked} bloqueadas · ${evidenceCount} a validar` : `${evidenceCount} con pruebas pendientes`,
+    },
+  ];
+}
+
+function ReviewPriorityResultRail({ summary = [], activeKey = "all", onSelect, onReview }) {
+  const items = Array.isArray(summary) ? summary.filter((item) => item?.count > 0) : [];
+  if (!items.length) return null;
+  const activeItem = activeKey !== "all" ? items.find((item) => item.key === activeKey) : null;
+  const reviewTarget = activeItem || items[0];
+  return <div className="decisionSummaryRail reviewPriorityResultRail" aria-label="Resumen por prioridad de investigacion">
+    {items.map((item) => {
+      const active = activeKey === item.key;
+      return <button
+        type="button"
+        key={item.key}
+        className={`decisionSummaryChip priority-${item.key} ${item.tone || "neutral"} ${active ? "active" : ""}`.trim()}
+        onClick={() => onSelect?.(active ? "all" : item.key)}
+        onDoubleClick={() => onReview?.(item.key)}
+        title={[item.topSymbol ? `${item.topSymbol} · ${Math.round(item.topScore || 0)}` : "", item.sampleSymbols?.length ? item.sampleSymbols.join(", ") : item.label, "Doble click: revisar esta prioridad"].filter(Boolean).join(" · ")}
+      >
+        <b>{item.count}</b>
+        <span>{item.shortLabel || item.label}</span>
+      </button>;
+    })}
+    {reviewTarget ? <button
+      type="button"
+      className={`decisionSummaryChip reviewPriorityAction priority-${reviewTarget.key} ${reviewTarget.tone || "neutral"}`.trim()}
+      onClick={() => onReview?.(reviewTarget.key)}
+      title={`Abrir cola Review: ${reviewTarget.label}`}
+    >
+      <b>Ir</b>
+      <span>Revisar {reviewTarget.shortLabel || reviewTarget.label}</span>
+    </button> : null}
+  </div>;
+}
+
+function ReviewPriorityPanel({ priority = null, compact = false }) {
+  if (!priority) return null;
+  const components = Array.isArray(priority.priority?.components) ? priority.priority.components.slice(0, compact ? 3 : 4) : [];
+  const penalties = Array.isArray(priority.priority?.penalties) ? priority.priority.penalties.slice(0, compact ? 2 : 3) : [];
+  return <div className={`reviewPriorityPanel quickReviewPriorityPanel ${compact ? "compact" : ""} ${priority.tone || ""}`} aria-label="Prioridad de investigacion">
+    <div className="reviewPriorityHead">
+      <span><b>{priority.label}</b><em>{priority.reason}</em></span>
+      <strong>{Math.round(priority.score || 0)}</strong>
+    </div>
+    {components.length ? <div className="reviewPriorityComponents">
+      {components.map((item) => <span key={item.key} title={item.detail || item.label}>
+        <em>{item.label}</em>
+        <b>{Math.round(item.value || 0)}</b>
+      </span>)}
+    </div> : null}
+    {penalties.length ? <div className="reviewPriorityPenalties">
+      {penalties.map((item) => <small className={item.severity || "warn"} key={item.key}>-{Math.round(item.value || 0)} {item.label}</small>)}
+    </div> : null}
+  </div>;
+}
+
+function resultBriefToneRank(tone = "") {
+  if (tone === "bad") return 4;
+  if (tone === "warn") return 3;
+  if (tone === "watch") return 2;
+  if (tone === "good") return 0;
+  return 1;
+}
+
+function resultBriefIssue(key, verdict = null, okKeys = []) {
+  if (!verdict?.key || okKeys.includes(verdict.key)) return null;
+  return {
+    key,
+    label: verdict.label || key,
+    detail: verdict.detail || "",
+    tone: verdict.tone || "neutral",
+    count: Number(verdict.count || 0),
+  };
+}
+
+function buildResultViewBrief({ chips = [], visibleCount = 0, totalCount = 0, decisionBrief = null, dataHealthSummary = null, decisionEvidenceSummary = null, scoreAuditSummary = null, pendingDecisionWorkSummary = null } = {}) {
+  if (!visibleCount) return null;
+  const verdict = decisionBrief?.verdict || {
+    label: "Vista de investigación",
+    tone: "neutral",
+    detail: `${visibleCount} resultados visibles.`,
+  };
+  const focus = chips.length
+    ? chips.slice(0, 3).map((chip) => chip.label).join(" · ")
+    : "Sin filtros activos";
+  const blockers = [
+    resultBriefIssue("evidence", decisionEvidenceSummary?.verdict, ["ready", "empty"]),
+    resultBriefIssue("data", dataHealthSummary?.verdict, ["ready", "empty"]),
+    resultBriefIssue("score", scoreAuditSummary?.verdict, ["clean", "empty"]),
+    decisionBrief?.primaryIssue ? {
+      key: `issue-${decisionBrief.primaryIssue.key}`,
+      label: decisionBrief.primaryIssue.label,
+      detail: [`${decisionBrief.primaryIssue.count || 0} filas`, decisionBrief.primaryIssue.share].filter(Boolean).join(" · "),
+      tone: decisionBrief.primaryIssue.severity || "warn",
+      count: Number(decisionBrief.primaryIssue.count || 0),
+    } : null,
+  ].filter(Boolean).sort((a, b) => resultBriefToneRank(b.tone) - resultBriefToneRank(a.tone) || b.count - a.count);
+  const blocker = blockers[0] || null;
+  const top = pendingDecisionWorkSummary?.top || null;
+  const firstAction = top
+    ? {
+      value: top.symbol,
+      detail: `Pri ${Math.round(top.priority || 0)} · ${top.confidenceLabel || "Confianza"}`,
+      tone: top.confidenceKey === "high" ? "good" : "warn",
+    }
+    : decisionBrief?.actions?.[0]
+      ? {
+        value: decisionBrief.actions[0].label,
+        detail: decisionBrief.actions[0].detail,
+        tone: "warn",
+      }
+      : {
+        value: "Revisar ranking",
+        detail: `${visibleCount} resultados visibles`,
+        tone: "neutral",
+      };
+
+  return {
+    label: verdict.label,
+    detail: verdict.detail,
+    tone: blocker?.tone || verdict.tone || "neutral",
+    primarySymbol: top?.symbol || "",
+    sourceDetail: [
+      `Brief vista: ${verdict.label}`,
+      `Foco: ${focus}`,
+      `Primero: ${firstAction.value}`,
+      `Freno: ${blocker?.label || "Sin freno"}`,
+    ].join(" · "),
+    items: [
+      {
+        key: "focus",
+        label: "Foco",
+        value: focus,
+        detail: `${visibleCount}/${totalCount || visibleCount} visibles`,
+        tone: chips.length ? "warn" : "neutral",
+      },
+      {
+        key: "first",
+        label: "Primero",
+        value: firstAction.value,
+        detail: firstAction.detail,
+        tone: firstAction.tone,
+      },
+      {
+        key: "blocker",
+        label: "Freno",
+        value: blocker?.label || "Sin freno",
+        detail: blocker?.detail || "La vista no concentra una alerta crítica.",
+        tone: blocker?.tone || "good",
+      },
+    ],
+  };
+}
+
 
 
 export default function Page() {
@@ -102,6 +460,8 @@ export default function Page() {
   const [fail, setFail] = useState([]);
   const [diagnostics, setDiagnostics] = useState(null);
   const [status, setStatus] = useState(DEFAULT_STATUS);
+  const [snapshotNotice, setSnapshotNotice] = useState(null);
+  const [restoringScan, setRestoringScan] = useState(false);
   const [running, setRunning] = useState(false);
   const [themeFilter, setThemeFilter] = useState("Todos");
   const [sectorFilter, setSectorFilter] = useState("Todos");
@@ -109,7 +469,18 @@ export default function Page() {
   const [countryFilter, setCountryFilter] = useState("Todos");
   const [sectorStrength, setSectorStrength] = useState("Todos");
   const [ipo, setIpo] = useState("Todos");
-  const [sort, setSort] = useState("totalScore");
+  const [actionFilter, setActionFilter] = useState("Todos");
+  const [readinessFilter, setReadinessFilter] = useState("Todos");
+  const [decisionProfileFilter, setDecisionProfileFilter] = useState("Todos");
+  const [reviewPriorityFilter, setReviewPriorityFilter] = useState("all");
+  const [reliabilityFilter, setReliabilityFilter] = useState(RELIABILITY_FILTER_ALL);
+  const [decisionEvidenceFilter, setDecisionEvidenceFilter] = useState(DECISION_EVIDENCE_FILTER_ALL);
+  const [confidenceFilter, setConfidenceFilter] = useState("Todos");
+  const [dataHealthFilter, setDataHealthFilter] = useState(DATA_HEALTH_FILTER_ALL);
+  const [scoreAuditFilter, setScoreAuditFilter] = useState(SCORE_AUDIT_FILTER_ALL);
+  const [decisionIssueFilter, setDecisionIssueFilter] = useState("Todos");
+  const [decisionResolutionFilter, setDecisionResolutionFilter] = useState("all");
+  const [sort, setSort] = useState("objectiveScore");
   const [err, setErr] = useState("");
   const [scanMode, setScanMode] = useState("all");
   const [batchStart, setBatchStart] = useState(0);
@@ -131,10 +502,23 @@ export default function Page() {
   const [activeModalRow, setActiveModalRow] = useState(null);
   const [quickReviewRows, setQuickReviewRows] = useState([]);
   const [quickReviewIndex, setQuickReviewIndex] = useState(0);
+  const [quickReviewResolutionRevision, setQuickReviewResolutionRevision] = useState(0);
+  const [screenerDecisionRevision, setScreenerDecisionRevision] = useState(0);
   const [chartSettings, setChartSettings] = useState(DEFAULT_CHART_SETTINGS);
   const [chartScope, setChartScope] = useState("global");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  useEffect(() => {
+    const refreshDecisionState = () => setScreenerDecisionRevision((value) => value + 1);
+    window.addEventListener("pageshow", refreshDecisionState);
+    window.addEventListener("focus", refreshDecisionState);
+    window.addEventListener("storage", refreshDecisionState);
+    return () => {
+      window.removeEventListener("pageshow", refreshDecisionState);
+      window.removeEventListener("focus", refreshDecisionState);
+      window.removeEventListener("storage", refreshDecisionState);
+    };
+  }, []);
   // Panel "Configuración avanzada": cerrado por defecto, colapso persistido en localStorage.
   const [advancedOpen, setAdvancedOpen] = useState(false);
   useEffect(() => {
@@ -166,6 +550,60 @@ export default function Page() {
   const scanAbortRef = useRef(false);
   const serverScanIdRef = useRef("");
   const restoreScrollRef = useRef(null);
+  // Propiedad de los resultados visibles: "none" | "session" | "cloud" | "local" | "scan".
+  // La restauración asíncrona desde Supabase SOLO aplica si nadie produjo
+  // resultados mientras resolvía (evita que un snapshot viejo pise un scan).
+  const resultsOwnerRef = useRef("none");
+  function restoreSnapshot(scan, { source = "local", notice = null } = {}) {
+    if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) return false;
+    resultsOwnerRef.current = source;
+    const restoredPresetKey = PRESETS[scan.preset] ? scan.preset : "balanced";
+    const restoredSettings = settingsForPreset(restoredPresetKey, scan.settings || {});
+    const restoredFilterLayers = { ...filterLayersForPreset(restoredPresetKey), ...(scan.filterLayers || {}) };
+    const restoredFieldRules = { ...DEFAULT_FIELD_RULES, ...(scan.fieldRules || {}) };
+    const restoredViewLayers = scan.viewLayers || DEFAULT_VIEW_LAYERS;
+    const restoredUseRegimeFilter = scan.useRegimeFilter !== false;
+    const restoredActiveSettings = scan.activeSettings || effectiveSettingsFromLayers(restoredSettings, restoredFilterLayers, restoredFieldRules);
+    const restoredRowsAreFiltered = snapshotRowsAreFiltered(scan);
+    const nextScanContext = {
+      id: scan.id || uid(),
+      symbolsCount: scan.rows.length,
+      baseCount: scan.rows.length,
+      providerErrors: [],
+      scannedAt: scan.updatedAt || scan.createdAt || new Date().toISOString(),
+      snapshotSource: source === "cloud" ? "supabase" : "local",
+      snapshotRowsAreFiltered: restoredRowsAreFiltered,
+    };
+    const restoreFilterContext = {
+      ...nextScanContext,
+      marketHealth,
+      useRegimeFilter: restoredUseRegimeFilter,
+    };
+    const restoredFilterView = restoredSnapshotView(scan, restoredActiveSettings, restoreFilterContext, filterAnalyzedRows);
+    fastFilterSignatureRef.current = fastFilterSignature(scan.rows, restoredActiveSettings, restoreFilterContext);
+    setPresetKey(restoredPresetKey);
+    setSettings(restoredSettings);
+    setFilterLayers(restoredFilterLayers);
+    setFieldRules(restoredFieldRules);
+    setViewLayers(restoredViewLayers);
+    setUseRegimeFilter(restoredUseRegimeFilter);
+    setSort(scan.sort || scan.settings?.sort || defaultSortForSettings(restoredActiveSettings));
+    setRows(restoredFilterView.rows);
+    setAnalyzedRows(scan.rows);
+    setScanContext(nextScanContext);
+    setDiagnostics(restoredFilterView.diagnostics);
+    setSnapshotNotice(notice);
+    setScanPerf({
+      fullScanMs: null,
+      lastFilterMs: restoredFilterView.filterMs,
+      lastFastFilterMs: null,
+      estimatedSavedMs: null,
+      analyzedRows: scan.rows.length,
+      scannedSymbols: scan.rows.length,
+      fastRefilters: 0,
+    });
+    return true;
+  }
   useEffect(() => {
     let cancelled = false;
     let restoredRowsCount = 0;
@@ -185,8 +623,10 @@ export default function Page() {
       const restoredFieldRules = { ...DEFAULT_FIELD_RULES, ...(session.fieldRules || {}) };
       const restoredMarketHealth = session.marketHealth || null;
       const restoredUseRegimeFilter = session.useRegimeFilter !== false;
+      const restoredActiveSettings = session.activeSettings || effectiveSettingsFromLayers(restoredSettings, restoredFilterLayers, restoredFieldRules);
       const restoredScrollY = Number(session.scrollY);
-      restoredRowsCount = restoredRows.length;
+      restoredRowsCount = restoredRows.length || restoredAnalyzedRows.length;
+      if (restoredRowsCount) resultsOwnerRef.current = "session";
       if (Number.isFinite(restoredScrollY) && restoredScrollY > 0) restoreScrollRef.current = restoredScrollY;
       setMarkets(restoredMarkets);
       setManual(restoredManual);
@@ -198,6 +638,7 @@ export default function Page() {
       setAnalyzedRows(restoredAnalyzedRows);
       setScanContext(session.scanContext || null);
       setScanPerf(session.scanPerf || null);
+      setSnapshotNotice(session.snapshotNotice || null);
       setFail(Array.isArray(session.fail) ? session.fail : []);
       setDiagnostics(session.diagnostics || null);
       setThemeFilter(session.themeFilter || "Todos");
@@ -206,7 +647,18 @@ export default function Page() {
       setCountryFilter(session.countryFilter || "Todos");
       setSectorStrength(normalizeSectorStrength(session.sectorStrength));
       setIpo(session.ipo || "Todos");
-      setSort(session.sort || "totalScore");
+      setActionFilter(session.actionFilter || "Todos");
+      setReadinessFilter(session.readinessFilter || "Todos");
+      setDecisionProfileFilter(session.decisionProfileFilter || "Todos");
+      setReviewPriorityFilter(session.reviewPriorityFilter || "all");
+      setReliabilityFilter(session.reliabilityFilter || RELIABILITY_FILTER_ALL);
+      setDecisionEvidenceFilter(session.decisionEvidenceFilter || DECISION_EVIDENCE_FILTER_ALL);
+      setConfidenceFilter(session.confidenceFilter || "Todos");
+      setDataHealthFilter(session.dataHealthFilter || DATA_HEALTH_FILTER_ALL);
+      setScoreAuditFilter(session.scoreAuditFilter || SCORE_AUDIT_FILTER_ALL);
+      setDecisionIssueFilter(session.decisionIssueFilter || "Todos");
+      setDecisionResolutionFilter(session.decisionResolutionFilter || "all");
+      setSort(session.sort || defaultSortForSettings(restoredActiveSettings));
       setScanMode(session.scanMode || "all");
       setBatchStart(Number.isFinite(session.batchStart) ? session.batchStart : 0);
       setScanBatchSize(SCAN_BATCH_SIZES.includes(session.scanBatchSize) ? session.scanBatchSize : DEFAULT_SCAN_BATCH_SIZE);
@@ -225,59 +677,59 @@ export default function Page() {
       if (restoredRows.length && restoredAnalyzedRows.length && session.scanContext) {
         fastFilterSignatureRef.current = fastFilterSignature(
           restoredAnalyzedRows,
-          effectiveSettingsFromLayers(restoredSettings, restoredFilterLayers, restoredFieldRules),
+          restoredActiveSettings,
           { ...session.scanContext, marketHealth: restoredMarketHealth, useRegimeFilter: restoredUseRegimeFilter },
         );
       }
-      setStatus(session.rows?.length ? `Sesión restaurada: ${session.rows.length} acciones en el screener.` : (session.status || DEFAULT_STATUS));
+      setStatus(
+        restoredRows.length
+          ? `Sesión restaurada: ${restoredRows.length} acciones en el screener.`
+          : restoredAnalyzedRows.length
+            ? `Sesión restaurada: ${restoredAnalyzedRows.length} acciones analizadas; recalculando filtros.`
+            : DEFAULT_STATUS
+      );
     }
     if (!restoredRowsCount) {
+      setRestoringScan(true);
+      setStatus("Cargando último snapshot guardado...");
+      const restoreLocalSnapshot = (reason = "") => {
+        if (cancelled || resultsOwnerRef.current !== "none") return false;
+        const localScan = pickBestRestorableScan(safeRead(STORAGE_KEYS.scans, []));
+        if (!localScan) return false;
+        const notice = reason ? {
+          tone: "info",
+          label: "Snapshot local",
+          detail: `${reason} Se restaura la última copia local disponible.`,
+          source: "local",
+        } : null;
+        const restored = restoreSnapshot(localScan, { source: "local", notice });
+        if (restored) setStatus(`Último snapshot local cargado: ${localScan.rows.length} acciones. Puedes ejecutar para refrescar datos.`);
+        return restored;
+      };
       getLatestScanFromCloud().then((result) => {
-        if (cancelled || !result.ok || result.configured === false) return;
-        const scan = result.data?.scans?.find((item) => Array.isArray(item.rows) && item.rows.length);
-        if (!scan) return;
-        const restoredPresetKey = PRESETS[scan.preset] ? scan.preset : "balanced";
-        const restoredSettings = settingsForPreset(restoredPresetKey, scan.settings || {});
-        const restoredFilterLayers = { ...filterLayersForPreset(restoredPresetKey), ...(scan.filterLayers || {}) };
-        const restoredFieldRules = { ...DEFAULT_FIELD_RULES, ...(scan.fieldRules || {}) };
-        const restoredViewLayers = scan.viewLayers || DEFAULT_VIEW_LAYERS;
-        const restoredUseRegimeFilter = scan.useRegimeFilter !== false;
-        const restoredActiveSettings = scan.activeSettings || effectiveSettingsFromLayers(restoredSettings, restoredFilterLayers, restoredFieldRules);
-        const nextScanContext = {
-          id: scan.id || uid(),
-          symbolsCount: scan.rows.length,
-          baseCount: scan.rows.length,
-          providerErrors: [],
-          scannedAt: scan.updatedAt || scan.createdAt || new Date().toISOString(),
-          snapshotSource: "supabase",
-          snapshotRowsAreFiltered: scan.rowsAreFilteredSnapshot !== false,
-        };
+        // Si mientras resolvía el fetch arrancó un scan (o llegaron resultados por
+        // otra vía), el snapshot remoto NO debe pisarlos.
+        if (cancelled || resultsOwnerRef.current !== "none") return;
+        if (!result.ok || result.configured === false) {
+          if (!restoreLocalSnapshot(result.message ? `Supabase: ${result.message}.` : "Supabase no disponible.")) setStatus(DEFAULT_STATUS);
+          return;
+        }
+        const scan = pickBestRestorableScan(result.data?.scans || []);
+        if (!scan) {
+          if (!restoreLocalSnapshot("Supabase no devolvió snapshots con filas.")) setStatus(DEFAULT_STATUS);
+          return;
+        }
+        const notice = buildSnapshotFreshnessNotice(result.data, scan);
         const storedScans = safeRead(STORAGE_KEYS.scans, []);
         safeWrite(STORAGE_KEYS.scans, [scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])].slice(0, 50));
-        fastFilterSignatureRef.current = fastFilterSignature(scan.rows, restoredActiveSettings, {
-          ...nextScanContext,
-          marketHealth,
-          useRegimeFilter: restoredUseRegimeFilter,
-        });
-        setPresetKey(restoredPresetKey);
-        setSettings(restoredSettings);
-        setFilterLayers(restoredFilterLayers);
-        setFieldRules(restoredFieldRules);
-        setViewLayers(restoredViewLayers);
-        setUseRegimeFilter(restoredUseRegimeFilter);
-        setRows(scan.rows);
-        setAnalyzedRows(scan.rows);
-        setScanContext(nextScanContext);
-        setScanPerf({
-          fullScanMs: null,
-          lastFilterMs: 0,
-          lastFastFilterMs: null,
-          estimatedSavedMs: null,
-          analyzedRows: scan.rows.length,
-          scannedSymbols: scan.rows.length,
-          fastRefilters: 0,
-        });
-        setStatus(`Último snapshot Supabase cargado: ${scan.rows.length} acciones. Los filtros se aplican sobre este universo estable.`);
+        restoreSnapshot(scan, { source: "cloud", notice });
+        setStatus(notice?.stale
+          ? `Último snapshot cacheado cargado: ${scan.rows.length} acciones. Supabase no respondió al refrescar.`
+          : `Último snapshot Supabase cargado: ${scan.rows.length} acciones. Los filtros se aplican sobre este universo estable.`);
+      }).catch(() => {
+        if (!cancelled && !restoreLocalSnapshot("Supabase no respondió.")) setStatus(DEFAULT_STATUS);
+      }).finally(() => {
+        if (!cancelled) setRestoringScan(false);
       });
     }
     setSessionReady(true);
@@ -330,6 +782,7 @@ export default function Page() {
       analyzedRows: compactRowsForSession(analyzedRows),
       scanContext,
       scanPerf,
+      snapshotNotice,
       fail,
       diagnostics,
       status,
@@ -339,6 +792,17 @@ export default function Page() {
       countryFilter,
       sectorStrength,
       ipo,
+      actionFilter,
+      readinessFilter,
+      decisionProfileFilter,
+      reviewPriorityFilter,
+      reliabilityFilter,
+      decisionEvidenceFilter,
+      confidenceFilter,
+      dataHealthFilter,
+      scoreAuditFilter,
+      decisionIssueFilter,
+      decisionResolutionFilter,
       sort,
       scanMode,
       batchStart,
@@ -399,10 +863,118 @@ export default function Page() {
     });
   }
 
+  function quickReviewContext(row = activeModalRow, index = modalReviewPosition) {
+    const list = modalReviewRows.length ? modalReviewRows : row ? [row] : [];
+    const fallbackIndex = row?.symbol ? list.findIndex((item) => item.symbol === row.symbol) : 0;
+    const resolvedIndex = Number.isFinite(index) ? index : Math.max(0, fallbackIndex);
+    return {
+      list,
+      index: Math.max(0, resolvedIndex),
+      rank: resolvedIndex >= 0 ? resolvedIndex + 1 : 1,
+    };
+  }
+
+  function quickReviewPayload(row = activeModalRow, index = modalReviewPosition, previousReview = safeRead(STORAGE_KEYS.review, {})) {
+    const context = quickReviewContext(row, index);
+    const decisionState = reviewDecisionStateForRows(previousReview, context.list);
+    return {
+      ...previousReview,
+      source: "current",
+      rows: context.list,
+      activeSettings,
+      presetKey,
+      currentIndex: context.index,
+      reviewedSymbols: decisionState.reviewedSymbols,
+      hiddenSymbols: decisionState.hiddenSymbols,
+      decisionResolutions: decisionState.decisionResolutions,
+      decisionResolutionLog: decisionState.decisionResolutionLog,
+      selectedSymbol: row?.symbol || context.list[context.index]?.symbol || "",
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  function saveQuickReviewStockOpen(row = activeModalRow, index = modalReviewPosition) {
+    if (!row?.symbol) {
+      saveSessionBeforeStockOpen(row);
+      return;
+    }
+    const contextMeta = quickReviewContext(row, index);
+    const openedAt = new Date().toISOString();
+    const previousReview = safeRead(STORAGE_KEYS.review, {});
+    const digestFilter = previousReview.digestFilter || "all";
+    const resolutionFilter = previousReview.resolutionFilter || "all";
+    const reviewSourceLabel = previousReview.sourceLabel || "Screener actual";
+    const reviewSourceDetail = String(previousReview.sourceDetail || "").trim();
+    const reviewQueueMode = String(previousReview.queueMode || "screener-review").trim() || "screener-review";
+    const reviewPayload = { ...quickReviewPayload(row, index, previousReview), updatedAt: openedAt };
+    safeWrite(STORAGE_KEYS.review, reviewPayload);
+    const context = buildReviewStockOpenContext(row, {
+      settings: activeSettings,
+      source: "current",
+      sourceLabel: reviewSourceLabel,
+      sourceDetail: reviewSourceDetail,
+      queueMode: reviewQueueMode,
+      digestFilter,
+      resolutionFilter,
+      rank: contextMeta.rank,
+      queueSize: contextMeta.list.length,
+      rowsCount: contextMeta.list.length,
+      visibleCount: contextMeta.list.length,
+      hiddenCount: 0,
+      openedAt,
+    });
+    persistScreenerSession({
+      lastOpenedStockSymbol: row.symbol,
+      lastOpenedStockAt: openedAt,
+      lastOpenedStockContext: context,
+      scrollY: typeof window !== "undefined" ? window.scrollY : 0,
+      quickReviewRows: compactRowsForSession(contextMeta.list),
+      quickReviewIndex: contextMeta.index,
+      searchResult: compactRowForSession(searchResult),
+      rows: compactRowsForSession(rows),
+      analyzedRows: compactRowsForSession(analyzedRows),
+    });
+  }
+
+  function resolveQuickReviewDecision(actionKey, row = activeModalRow, index = modalReviewPosition) {
+    if (!row?.symbol) return;
+    const previousReview = safeRead(STORAGE_KEYS.review, {});
+    const decision = modalReviewQueueItems[index] || buildDecisionQueueItem(row, activeSettings);
+    const note = [
+      decision?.nextAction?.value || "",
+      decision?.risk?.value || "",
+    ].filter(Boolean).join(" · ");
+    const nextReview = applyStockDecisionResolution(quickReviewPayload(row, index, previousReview), {
+      symbol: row.symbol,
+      actionKey,
+      source: "screener-review",
+      note,
+    });
+    safeWrite(STORAGE_KEYS.review, nextReview);
+    setQuickReviewResolutionRevision((value) => value + 1);
+    const resolution = decisionResolutionForSymbol(nextReview, row.symbol);
+    setStatus(`${row.symbol}: ${resolution?.label || "resuelta"} desde Vista rápida`);
+  }
+
+  function reopenQuickReviewDecision(row = activeModalRow, index = modalReviewPosition) {
+    if (!row?.symbol) return;
+    const previousReview = safeRead(STORAGE_KEYS.review, {});
+    const resolution = decisionResolutionForSymbol(previousReview, row.symbol);
+    const nextReview = reopenStockDecisionResolution(quickReviewPayload(row, index, previousReview), {
+      symbol: row.symbol,
+      source: "screener-review",
+      note: resolution?.label ? `Antes: ${resolution.label}` : "",
+    });
+    safeWrite(STORAGE_KEYS.review, nextReview);
+    setQuickReviewResolutionRevision((value) => value + 1);
+    setStatus(`${row.symbol}: reabierta desde Vista rápida`);
+  }
+
   useEffect(() => {
     if (!sessionReady) return;
+    if (restoringScan && !rows.length) return;
     persistScreenerSession();
-  }, [sessionReady, markets, manual, settings, presetKey, universe, universeScope, rows, analyzedRows, scanContext, scanPerf, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, sort, scanMode, batchStart, scanBatchSize, resultPageSize, resultPage, marketHealth, useRegimeFilter, filterLayers, fieldRules, viewLayers, searchSymbol, searchCandidates, searchResult, quickReviewRows, quickReviewIndex]);
+  }, [sessionReady, markets, manual, settings, presetKey, universe, universeScope, rows, analyzedRows, scanContext, scanPerf, snapshotNotice, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, sort, scanMode, batchStart, scanBatchSize, resultPageSize, resultPage, marketHealth, restoringScan, useRegimeFilter, filterLayers, fieldRules, viewLayers, searchSymbol, searchCandidates, searchResult, quickReviewRows, quickReviewIndex]);
 
   const chartListId = useMemo(() => `screener:${presetKey}:${markets.join(",")}`, [presetKey, markets]);
 
@@ -457,16 +1029,19 @@ export default function Page() {
     sectorStrength: sectorStrength !== "Todos" ? 1 : 0,
     ipo: ipo !== "Todos" ? 1 : 0,
   };
-  const viewFiltersActive = VIEW_LAYERS.reduce((sum, layer) => sum + (viewLayers[layer.key] ? viewFilterCounts[layer.key] : 0), 0);
+  const decisionFilterActive = (actionFilter !== "Todos" ? 1 : 0) + (readinessFilter !== "Todos" ? 1 : 0) + (decisionProfileFilter !== "Todos" ? 1 : 0) + (reviewPriorityFilter !== "all" ? 1 : 0) + (reliabilityFilter !== RELIABILITY_FILTER_ALL ? 1 : 0) + (decisionEvidenceFilter !== DECISION_EVIDENCE_FILTER_ALL ? 1 : 0) + (confidenceFilter !== "Todos" ? 1 : 0) + (dataHealthFilter !== DATA_HEALTH_FILTER_ALL ? 1 : 0) + (scoreAuditFilter !== SCORE_AUDIT_FILTER_ALL ? 1 : 0) + (decisionIssueFilter !== "Todos" ? 1 : 0) + (decisionResolutionFilter !== "all" ? 1 : 0);
+  const viewFiltersActive = decisionFilterActive + VIEW_LAYERS.reduce((sum, layer) => sum + (viewLayers[layer.key] ? viewFilterCounts[layer.key] : 0), 0);
   const kpiUniverseCount = universe.length || scanContext?.baseCount || analyzedRows.length || rows.length;
   function commitPendingResults() {
     if (!pendingResults) return;
     setRows(pendingResults.rows || []);
     setDiagnostics(pendingResults.diagnostics || null);
+    setSnapshotNotice(null);
     setPendingResults(null);
     setStatus(`Resultados actualizados: ${pendingResults.rows?.length || 0} acciones calculadas.`);
   }
   const clear = () => {
+    resultsOwnerRef.current = "none";
     setRows([]);
     setPendingResults(null);
     setAnalyzedRows([]);
@@ -475,6 +1050,7 @@ export default function Page() {
     fastFilterSignatureRef.current = "";
     setFail([]);
     setDiagnostics(null);
+    setSnapshotNotice(null);
     setErr("");
     setResultPage(1);
   };
@@ -490,6 +1066,7 @@ export default function Page() {
   }
   function resetScreenerSession() {
     safeRemove(STORAGE_KEYS.screenerSession);
+    resultsOwnerRef.current = "none";
     setMarkets(DEFAULT_MARKETS);
     setManual("");
     setSettings(settingsForPreset("balanced"));
@@ -512,7 +1089,18 @@ export default function Page() {
     setCountryFilter("Todos");
     setSectorStrength("Todos");
     setIpo("Todos");
-    setSort("totalScore");
+    setActionFilter("Todos");
+    setReadinessFilter("Todos");
+    setDecisionProfileFilter("Todos");
+    setReviewPriorityFilter("all");
+    setReliabilityFilter(RELIABILITY_FILTER_ALL);
+    setDecisionEvidenceFilter(DECISION_EVIDENCE_FILTER_ALL);
+    setConfidenceFilter("Todos");
+    setDataHealthFilter(DATA_HEALTH_FILTER_ALL);
+    setScoreAuditFilter(SCORE_AUDIT_FILTER_ALL);
+    setDecisionIssueFilter("Todos");
+    setDecisionResolutionFilter("all");
+    setSort(defaultSortForSettings(settingsForPreset("balanced")));
     setErr("");
     setScanMode("all");
     setBatchStart(0);
@@ -547,7 +1135,7 @@ export default function Page() {
       if (nextMode === "weakness") return { ...prev, ...settingsForPreset("weakness"), maxSymbols: prev.maxSymbols || PRESETS.weakness.v.maxSymbols };
       return { ...prev, ...strictnessPatch, ...defaults };
     });
-    setSort(nextMode === "weakness" ? "weaknessScore" : "totalScore");
+    setSort(defaultSortForSettings({ setupMode: nextMode }));
     setResultPage(1);
     setSelectedFilterTemplateId("");
     setFilterTemplateName("");
@@ -623,6 +1211,17 @@ export default function Page() {
       countryFilter,
       sectorStrength,
       ipo,
+      actionFilter,
+      readinessFilter,
+      decisionProfileFilter,
+      reviewPriorityFilter,
+      reliabilityFilter,
+      decisionEvidenceFilter,
+      confidenceFilter,
+      dataHealthFilter,
+      scoreAuditFilter,
+      decisionIssueFilter,
+      decisionResolutionFilter,
       sort,
       scanMode,
       batchStart,
@@ -689,7 +1288,18 @@ export default function Page() {
     setCountryFilter(config.countryFilter || "Todos");
     setSectorStrength(normalizeSectorStrength(config.sectorStrength));
     setIpo(config.ipo || "Todos");
-    setSort(config.sort || (nextPreset.v.setupMode === "weakness" ? "weaknessScore" : "totalScore"));
+    setActionFilter(config.actionFilter || "Todos");
+    setReadinessFilter(config.readinessFilter || "Todos");
+    setDecisionProfileFilter(config.decisionProfileFilter || "Todos");
+    setReviewPriorityFilter(config.reviewPriorityFilter || "all");
+    setReliabilityFilter(config.reliabilityFilter || RELIABILITY_FILTER_ALL);
+    setDecisionEvidenceFilter(config.decisionEvidenceFilter || DECISION_EVIDENCE_FILTER_ALL);
+    setConfidenceFilter(config.confidenceFilter || "Todos");
+    setDataHealthFilter(config.dataHealthFilter || DATA_HEALTH_FILTER_ALL);
+    setScoreAuditFilter(config.scoreAuditFilter || SCORE_AUDIT_FILTER_ALL);
+    setDecisionIssueFilter(config.decisionIssueFilter || "Todos");
+    setDecisionResolutionFilter(config.decisionResolutionFilter || "all");
+    setSort(config.sort || defaultSortForSettings(nextPreset.v));
     setScanMode(config.scanMode || "all");
     setBatchStart(Number.isFinite(config.batchStart) ? config.batchStart : 0);
     setScanBatchSize(SCAN_BATCH_SIZES.includes(config.scanBatchSize) ? config.scanBatchSize : DEFAULT_SCAN_BATCH_SIZE);
@@ -728,13 +1338,12 @@ export default function Page() {
   async function loadMarketHealth() {
     setStatus("Actualizando salud de mercado...");
     try {
-      const d = await getJson("/api/market-health");
+      const d = await getJson("/api/market-health", { timeoutMs: MARKET_HEALTH_TIMEOUT_MS });
       setMarketHealth(d);
       setStatus(`Salud de mercado: ${d.regime?.label || "sin regimen"} · Score ${Math.round(d.marketScore || 0)}`);
       return d;
     } catch (e) {
-      setErr(e.message);
-      setStatus("Proveedor no disponible para salud de mercado");
+      setStatus("Salud de mercado no disponible; el scan continua sin filtro de regimen.");
       return null;
     }
   }
@@ -881,7 +1490,7 @@ export default function Page() {
   async function loadCachedScreenerPreview(set = activeSettings) {
     try {
       const params = cachedScreenerQuery(set, markets);
-      const data = await getJson(`/api/leaderboards?${params.toString()}`);
+      const data = await getJson(`/api/leaderboards?${params.toString()}`, { timeoutMs: CACHE_PREVIEW_TIMEOUT_MS });
       const marketSet = new Set(markets);
       const items = data.leaderboard?.items || [];
       const cachedRows = items
@@ -899,7 +1508,7 @@ export default function Page() {
   function setPreset(k) {
     setPresetKey(k);
     setSettings(settingsForPreset(k));
-    setSort(PRESETS[k].v.setupMode === "weakness" ? "weaknessScore" : "totalScore");
+    setSort(defaultSortForSettings(PRESETS[k].v));
     setFieldRules(DEFAULT_FIELD_RULES);
     setFilterLayers(filterLayersForPreset(k));
     setUseRegimeFilter(true);
@@ -950,6 +1559,7 @@ export default function Page() {
     const scanStartedAt = perfNow();
     const hadVisibleRows = rows.length > 0;
     scanAbortRef.current = false;
+    resultsOwnerRef.current = "scan";
     setRunning(true);
     setPendingResults(null);
     setAnalyzedRows([]);
@@ -959,6 +1569,7 @@ export default function Page() {
     setFail([]);
     setErr("");
     if (!hadVisibleRows) {
+      setSnapshotNotice(null);
       setRows([]);
       setDiagnostics(null);
       setResultPage(1);
@@ -966,6 +1577,7 @@ export default function Page() {
       setStatus("Actualizando en segundo plano. La tabla visible se mantiene hasta que confirmes los nuevos resultados.");
     }
     try {
+      setStatus("Preparando scan...");
       const mh = marketHealth || (useRegimeFilter ? await loadMarketHealth() : null);
       const currentUniverseScope = universeScopeKey(markets, manual);
       const base = universe.length && universeScope === currentUniverseScope ? universe : await loadUniverse(null, { preserveResults: hadVisibleRows });
@@ -1015,6 +1627,7 @@ export default function Page() {
         };
         if (!stableResultsPublished && (partialView.rows.length || force)) {
           stableResultsPublished = true;
+          setSnapshotNotice(null);
           setRows(partialView.rows);
           setDiagnostics(partialView.diagnostics);
           setPendingResults(null);
@@ -1100,6 +1713,7 @@ export default function Page() {
           updatedAt: new Date().toISOString(),
         });
       } else {
+        setSnapshotNotice(null);
         setRows(final);
         setDiagnostics(filteredView.diagnostics);
       }
@@ -1194,12 +1808,13 @@ export default function Page() {
     const compatibilityKey = snapshotCompatibilityKey(compatibilityContext);
     const previousScan = findCompatiblePreviousScan(scans, compatibilityContext);
     const enrichedRows = enrichRowsWithMethodology(currentRows, previousScan?.rows || []);
-    const methodologySummary = summarizeMethodology(enrichedRows, previousScan);
+    const decisionRows = enrichedRows.map((row) => attachDecisionTrace(row, activeSettings));
+    const methodologySummary = summarizeMethodology(decisionRows, previousScan);
     const eventTotal = Object.values(methodologySummary.eventCounts || {}).reduce((sum, value) => sum + value, 0);
     const scan = {
       id: uid(),
       createdAt: new Date().toISOString(),
-      name: `${PRESETS[presetKey].name} · ${enrichedRows.length} acciones · ${new Date().toLocaleString()}`,
+      name: `${PRESETS[presetKey].name} · ${decisionRows.length} acciones · ${new Date().toLocaleString()}`,
       preset: presetKey,
       settings,
       activeSettings,
@@ -1207,6 +1822,7 @@ export default function Page() {
       fieldRules,
       viewLayers,
       useRegimeFilter,
+      sort,
       rowsAreFilteredSnapshot: true,
       marketScore: marketHealth?.marketScore ?? null,
       marketRegime: marketHealth?.regime?.label || "sin dato",
@@ -1217,16 +1833,17 @@ export default function Page() {
         previousScanDate: previousScan?.createdAt || null,
       },
       methodologySummary,
-      rows: enrichedRows,
+      rows: decisionRows,
     };
     safeWrite(STORAGE_KEYS.scans, [scan, ...scans].slice(0, 50));
     const generatedAlerts = alertsFromScan(scan);
     const nextAlerts = mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), generatedAlerts).slice(0, 500);
     safeWrite(STORAGE_KEYS.alerts, nextAlerts);
-    setStatus(`Snapshot guardado localmente: ${enrichedRows.length} acciones · ${eventTotal} eventos · ${generatedAlerts.length} alertas. Sincronizando Supabase...`);
+    setStatus(`Snapshot guardado localmente: ${decisionRows.length} acciones · ${eventTotal} eventos · ${generatedAlerts.length} alertas. Sincronizando Supabase...`);
+    setSnapshotNotice(null);
     syncScanToCloud(scan).then((result) => {
-      if (result.configured === false) setStatus(`Snapshot guardado localmente: ${enrichedRows.length} acciones · ${generatedAlerts.length} alertas. Supabase no configurado.`);
-      else if (result.ok) setStatus(`Snapshot guardado: ${enrichedRows.length} acciones · ${generatedAlerts.length} alertas. Disponible en local y Supabase.`);
+      if (result.configured === false) setStatus(`Snapshot guardado localmente: ${decisionRows.length} acciones · ${generatedAlerts.length} alertas. Supabase no configurado.`);
+      else if (result.ok) setStatus(`Snapshot guardado: ${decisionRows.length} acciones · ${generatedAlerts.length} alertas. Disponible en local y Supabase.`);
       else setStatus(`Snapshot local guardado. Supabase: ${result.message}`);
     });
     syncAlertsToCloud(generatedAlerts).then((result) => {
@@ -1234,40 +1851,70 @@ export default function Page() {
       else if (result.ok && result.data?.alerts?.length) safeWrite(STORAGE_KEYS.alerts, mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), result.data.alerts).slice(0, 500));
     });
   }
-  function openReview(currentRows, startSymbol = "") {
-    const reviewRows = Array.isArray(currentRows) ? currentRows.filter(Boolean) : [];
+  function openReview(currentRows, startSymbol = "", options = {}) {
+    const reviewRows = prepareReviewQueueRows(currentRows, activeSettings);
     if (!reviewRows.length) {
       setStatus("Sin filas actuales para abrir vista rapida.");
       return;
     }
+    const reviewSourceLabel = options.sourceLabel || "Screener actual";
+    const reviewSourceDetail = options.sourceDetail || "";
+    const queueMode = options.queueMode || "screener-review";
+    const nextResolutionFilter = options.resolutionFilter || "all";
+    const nextDigestFilter = options.digestFilter || "all";
     const currentIndex = Math.max(0, reviewRows.findIndex((row) => row.symbol === startSymbol));
+    const profileSummary = buildReviewProfileSummary(reviewRows, activeSettings);
+    const cleanCount = profileSummary.find((group) => group.key === "operable-clean")?.count || 0;
+    const fragileCount = profileSummary.find((group) => group.key === "operable-fragile")?.count || 0;
+    const previousReview = safeRead(STORAGE_KEYS.review, {});
+    const decisionState = reviewDecisionStateForRows(previousReview, reviewRows);
     setQuickReviewRows(reviewRows);
     setQuickReviewIndex(currentIndex);
     setActiveModalRow(reviewRows[currentIndex]);
     safeWrite(STORAGE_KEYS.review, {
       source: "current",
+      sourceLabel: reviewSourceLabel,
+      sourceDetail: reviewSourceDetail,
+      queueMode,
       rows: reviewRows,
+      activeSettings,
+      presetKey,
       currentIndex,
-      contractContext: buildScreenerStockOpenContext(reviewRows[currentIndex], { rank: currentIndex + 1, queueSize: reviewRows.length, sourceLabel: "Revisión Screener" }),
-      reviewedSymbols: [],
-      hiddenSymbols: [],
+      contractContext: buildScreenerStockOpenContext(reviewRows[currentIndex], { rank: currentIndex + 1, queueSize: reviewRows.length, sourceLabel: reviewSourceLabel === "Screener actual" ? "Revisión Screener" : reviewSourceLabel }),
+      reviewedSymbols: decisionState.reviewedSymbols,
+      hiddenSymbols: decisionState.hiddenSymbols,
+      decisionResolutions: decisionState.decisionResolutions,
+      decisionResolutionLog: decisionState.decisionResolutionLog,
+      resolutionFilter: nextResolutionFilter,
+      digestFilter: nextDigestFilter,
       selectedSymbol: startSymbol || reviewRows[0]?.symbol || "",
       updatedAt: new Date().toISOString(),
     });
-    setStatus(`Vista rapida: ${reviewRows.length} acciones en cola.`);
+    setStatus(`${reviewSourceLabel}: ${reviewRows.length} acciones en cola · ${cleanCount} limpias · ${fragileCount} fragiles.`);
   }
   function selectQuickReview(index, list = quickReviewRows) {
     if (!list.length) return;
     const nextIndex = ((index % list.length) + list.length) % list.length;
+    const previousReview = safeRead(STORAGE_KEYS.review, {});
+    const decisionState = reviewDecisionStateForRows(previousReview, list);
     setQuickReviewIndex(nextIndex);
     setActiveModalRow(list[nextIndex]);
     safeWrite(STORAGE_KEYS.review, {
-      source: "current",
+      source: previousReview.source || "current",
+      sourceLabel: previousReview.sourceLabel || "Screener actual",
+      sourceDetail: previousReview.sourceDetail || "",
+      queueMode: previousReview.queueMode || "screener-review",
       rows: list,
+      activeSettings,
+      presetKey,
       currentIndex: nextIndex,
-      contractContext: buildScreenerStockOpenContext(list[nextIndex], { rank: nextIndex + 1, queueSize: list.length, sourceLabel: "Revisión Screener" }),
-      reviewedSymbols: [],
-      hiddenSymbols: [],
+      contractContext: buildScreenerStockOpenContext(list[nextIndex], { rank: nextIndex + 1, queueSize: list.length, sourceLabel: previousReview.sourceLabel && previousReview.sourceLabel !== "Screener actual" ? previousReview.sourceLabel : "Revisión Screener" }),
+      reviewedSymbols: decisionState.reviewedSymbols,
+      hiddenSymbols: decisionState.hiddenSymbols,
+      decisionResolutions: decisionState.decisionResolutions,
+      decisionResolutionLog: decisionState.decisionResolutionLog,
+      resolutionFilter: previousReview.resolutionFilter || "all",
+      digestFilter: previousReview.digestFilter || "all",
       selectedSymbol: list[nextIndex]?.symbol || "",
       updatedAt: new Date().toISOString(),
     });
@@ -1279,27 +1926,143 @@ export default function Page() {
     setActiveModalRow(null);
   }
   function csv(filteredRows) {
-    const h = ["Rank", "Ticker", "Empresa", "Actividad ES", "Tema", "Pais", "Sector", "Industria", "IPO", "IPO Date", "IPO Age Months", "Benchmark", "Last Price Date", "Price Freshness Days", "Price Freshness Label", "Price Freshness Issue", "Data Coverage", "Technical Coverage", "Fundamental Coverage", "Data Issues", "RS Benchmark", "RS", "RS Pais", "RS Grupo", "RS Quality", "RS Stability", "Speculation Risk", "RS Quality Label", "Weakness Score", "Weakness Label", "Weakness Reasons", "RS Sample", "RS Pais Sample", "RS Grupo Sample", "RS 3M", "RS 6M", "RS 12M", "Dist 20d", "Dist 50d", "Dist 52w", "Dist ATH", "Highs Spread", "3M", "6M", "12M", "SMA50", "Avg Volume 20d", "Latest Volume", "Avg Turnover 20d", "Latest Turnover", "UD Vol", "Rel Volume", "Volume Surge %", "Volume Effect Score", "A/D Proxy", "EPS/Growth Proxy", "Volume Evidence", "Short Float %", "Short Ratio", "Shares Short", "Float Shares", "Up Volume", "Max Daily Move 20d", "Max Daily Range 20d", "Avg Daily Range 20d", "Price Range 63d", "Volatility 63d", "Downside Vol 63d", "Max Drawdown 63d", "Return/Vol 3M", "Return/Drawdown 3M", "Risk/Reward Score", "Weinstein", "Minervini", "Momentum", "Risk", "Volume", "Liquidity", "Sector Score", "Setup Quality", "Demand", "Growth", "IPO Score", "Composite", "Legacy Total", "Composite Label", "Reasons", "Risks"];
-    const lines = filteredRows.map((r, i) => [i + 1, r.symbol, r.companyName, r.businessEs, r.theme, r.country, r.sector, r.industry, r.ipoCategory, r.ipoDate, r.ipoAgeMonths, r.benchmarkSymbol, r.lastDate, r.priceFreshnessDays, r.priceFreshnessLabel, r.priceFreshnessIssue, r.dataCoverageScore, r.technicalCoverageScore, r.fundamentalCoverageScore, (r.dataCoverageIssues || []).join(" | "), r.rsRating, r.rsGlobalPct, r.rsCountryPct, r.rsSectorPct, r.rsQualityScore, r.rsStabilityScore, r.speculationRiskScore, r.rsQualityLabel, r.weaknessScore, r.weaknessLabel, (r.weaknessReasons || []).join(" | "), r.rsGlobalSample, r.rsCountrySample, r.rsSectorSample, r.rs3m, r.rs6m, r.rs12m, r.distance20d, r.distance50d, r.distance52w, r.distanceATH, r.highsSpreadPct, r.perf3m, r.perf6m, r.perf12m, r.extSma50, r.avgVolume, r.latestVolume, r.avgTurnover, r.latestTurnover, r.upDownVolRatio, r.relativeVolume, r.volumeSurgePct, r.volumeEffectScore, r.adProxyScore, r.epsGrowthProxyScore, r.volumeEvidence, r.shortPercentOfFloat, r.shortRatio, r.sharesShort, r.floatShares, r.upVolume, r.maxDailyMove20dPct, r.maxDailyRange20dPct, r.avgDailyRange20dPct, r.range63dPct, r.volatility63d, r.downsideVolatility63d, r.maxDrawdown63d, r.returnToVol3m, r.returnToDrawdown3m, r.riskRewardScore, r.weinsteinScore, r.minerviniScore, r.momentumScore, r.riskScore, r.volumeScore, r.liquidityScore, r.sectorScore, r.setupQualityScore, r.demandScore, r.growthScore, r.ipoScore, r.totalScore, r.legacyTotalScore, r.compositeLabel, (r.compositeReasons || []).join(" | "), (r.compositeRisks || []).join(" | ")].map((v) => `"${String(v ?? "").replaceAll('"', '""')}"`).join(","));
+    const h = ["Rank", "Ticker", "Empresa", "Actividad ES", "Tema", "Pais", "Sector", "Industria", "IPO", "IPO Date", "IPO Age Months", "Benchmark", "Last Price Date", "Price Freshness Days", "Price Freshness Label", "Price Freshness Issue", "Data Coverage", "Technical Coverage", "Fundamental Coverage", "Data Issues", "Data Health", "Data Health Key", "Data Health Detail", "Data Health Topline", "Data Health Issues", "RS Benchmark", "RS", "RS Pais", "RS Grupo", "RS Quality", "RS Stability", "Speculation Risk", "RS Quality Label", "Weakness Score", "Weakness Label", "Weakness Reasons", "RS Sample", "RS Pais Sample", "RS Grupo Sample", "RS 3M", "RS 6M", "RS 12M", "Dist 20d", "Dist 50d", "Dist 52w", "Dist ATH", "Highs Spread", "3M", "6M", "12M", "SMA50", "Avg Volume 20d", "Latest Volume", "Avg Turnover 20d", "Latest Turnover", "UD Vol", "Rel Volume", "Volume Surge %", "Volume Effect Score", "A/D Proxy", "EPS/Growth Proxy", "Volume Evidence", "Short Float %", "Short Ratio", "Shares Short", "Float Shares", "Up Volume", "Max Daily Move 20d", "Max Daily Range 20d", "Avg Daily Range 20d", "Price Range 63d", "Volatility 63d", "Downside Vol 63d", "Max Drawdown 63d", "Return/Vol 3M", "Return/Drawdown 3M", "Risk/Reward Score", "Weinstein", "Minervini", "Momentum", "Risk", "Volume", "Liquidity", "Sector Score", "Objective Setup", "Pattern Score", "Pattern Contribution", "Setup Quality", "Demand", "Growth", "IPO Score", "Objective Score", "Composite", "Legacy Total", "Objective Label", "Composite Label", "Reasons", "Risks", "Decision Priority", "Decision Confidence", "Decision Confidence Score", "Decision Issues", "Decision Drivers", "Decision Watch", "Decision", "Decision Detail", "Action", "Action Detail"];
+    const lines = filteredRows.map((r, i) => {
+      const explanation = explainScreenerRank(r, activeSettings);
+      const trace = buildDecisionTrace(r, explanation);
+      const dataHealth = buildScreenerDataHealth(r, activeSettings);
+      return [i + 1, r.symbol, r.companyName, r.businessEs, r.theme, r.country, r.sector, r.industry, r.ipoCategory, r.ipoDate, r.ipoAgeMonths, r.benchmarkSymbol, r.lastDate, r.priceFreshnessDays, r.priceFreshnessLabel, r.priceFreshnessIssue, r.dataCoverageScore, r.technicalCoverageScore, r.fundamentalCoverageScore, (r.dataCoverageIssues || []).join(" | "), dataHealth.status?.label, dataHealth.status?.key, dataHealth.status?.detail, dataHealth.topLine, dataHealth.issues.map((item) => item.label).join(" | "), r.rsRating, r.rsGlobalPct, r.rsCountryPct, r.rsSectorPct, r.rsQualityScore, r.rsStabilityScore, r.speculationRiskScore, r.rsQualityLabel, r.weaknessScore, r.weaknessLabel, (r.weaknessReasons || []).join(" | "), r.rsGlobalSample, r.rsCountrySample, r.rsSectorSample, r.rs3m, r.rs6m, r.rs12m, r.distance20d, r.distance50d, r.distance52w, r.distanceATH, r.highsSpreadPct, r.perf3m, r.perf6m, r.perf12m, r.extSma50, r.avgVolume, r.latestVolume, r.avgTurnover, r.latestTurnover, r.upDownVolRatio, r.relativeVolume, r.volumeSurgePct, r.volumeEffectScore, r.adProxyScore, r.epsGrowthProxyScore, r.volumeEvidence, r.shortPercentOfFloat, r.shortRatio, r.sharesShort, r.floatShares, r.upVolume, r.maxDailyMove20dPct, r.maxDailyRange20dPct, r.avgDailyRange20dPct, r.range63dPct, r.volatility63d, r.downsideVolatility63d, r.maxDrawdown63d, r.returnToVol3m, r.returnToDrawdown3m, r.riskRewardScore, r.weinsteinScore, r.minerviniScore, r.momentumScore, r.riskScore, r.volumeScore, r.liquidityScore, r.sectorScore, r.objectiveSetupScore, r.patternScore, r.patternContributionScore, r.setupQualityScore, r.demandScore, r.growthScore, r.ipoScore, r.objectiveScore, r.totalScore, r.legacyTotalScore, r.objectiveLabel, r.compositeLabel, (r.compositeReasons || []).join(" | "), (r.compositeRisks || []).join(" | "), trace.priorityScore, trace.confidence?.label, trace.confidence?.score, trace.issues.map((item) => item.label).join(" | "), trace.drivers.map((item) => item.value ? `${item.label} ${item.value}` : item.label).join(" | "), trace.watch.map((item) => item.value ? `${item.label}: ${item.value}` : item.label).join(" | "), explanation.readiness.label, explanation.readiness.detail, explanation.action.label, explanation.action.detail].map((v) => `"${String(v ?? "").replaceAll('"', '""')}"`).join(",");
+    });
     const blob = new Blob([[h.join(","), ...lines].join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = "stageradar-screener.csv"; a.click(); URL.revokeObjectURL(url);
   }
+  function decisionAuditJson(filteredRows) {
+    const exportRows = compactRowsForSession(filteredRows);
+    const payload = buildDecisionAuditExportPayload({
+      rows: exportRows,
+      name: `${PRESETS[presetKey]?.name || "Screener"} · ${exportRows.length} visibles`,
+      preset: presetKey,
+      settings,
+      activeSettings,
+      filterLayers: { ...filterLayers, marketRegime: useRegimeFilter },
+      fieldRules,
+      viewLayers,
+      viewFilters: { countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, sort },
+      marketScore: marketHealth?.marketScore ?? null,
+      marketRegime: marketHealth?.regime?.label || "sin dato",
+    });
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = `stageradar-decision-audit-${new Date().toISOString().slice(0, 10)}.json`; a.click(); URL.revokeObjectURL(url);
+    setStatus(`JSON audit exportado: ${exportRows.length} resultados visibles listos para npm run audit:decisions.`);
+  }
 
-  const viewFilterState = { viewLayers, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo };
+  const screenerDecisionResolutions = useMemo(() => safeRead(STORAGE_KEYS.review, {})?.decisionResolutions || {}, [screenerDecisionRevision, quickReviewResolutionRevision]);
+  const viewFilterState = { viewLayers, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, decisionResolutions: screenerDecisionResolutions, activeSettings };
   const filtered = useMemo(() => {
     const list = applyResultViewFilters(rows, viewFilterState);
-    return [...list].sort((a, b) => sortMetric(b, sort) - sortMetric(a, sort));
-  }, [rows, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, sort, viewLayers]);
+    return [...list].sort((a, b) => sortMetric(b, sort, activeSettings) - sortMetric(a, sort, activeSettings));
+  }, [rows, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, screenerDecisionResolutions, activeSettings, sort, viewLayers]);
+  const reviewPriorityBaseRows = useMemo(() => applyResultViewFilters(rows, {
+    ...viewFilterState,
+    reviewPriorityFilter: "all",
+  }), [rows, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, screenerDecisionResolutions, activeSettings, viewLayers]);
+  const reliabilityBaseRows = useMemo(() => applyResultViewFilters(rows, {
+    ...viewFilterState,
+    reliabilityFilter: RELIABILITY_FILTER_ALL,
+  }), [rows, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, screenerDecisionResolutions, activeSettings, viewLayers]);
+  const decisionEvidenceBaseRows = useMemo(() => applyResultViewFilters(rows, {
+    ...viewFilterState,
+    decisionEvidenceFilter: DECISION_EVIDENCE_FILTER_ALL,
+  }), [rows, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, screenerDecisionResolutions, activeSettings, viewLayers]);
+  const dataHealthBaseRows = useMemo(() => applyResultViewFilters(rows, {
+    ...viewFilterState,
+    dataHealthFilter: DATA_HEALTH_FILTER_ALL,
+  }), [rows, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, screenerDecisionResolutions, activeSettings, viewLayers]);
+  const scoreAuditBaseRows = useMemo(() => applyResultViewFilters(rows, {
+    ...viewFilterState,
+    scoreAuditFilter: SCORE_AUDIT_FILTER_ALL,
+  }), [rows, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, decisionIssueFilter, decisionResolutionFilter, screenerDecisionResolutions, activeSettings, viewLayers]);
+  const pendingDecisionWorkSummary = useMemo(() => {
+    const pendingItems = filtered.map((row) => {
+      if (decisionResolutionForSymbol({ decisionResolutions: screenerDecisionResolutions }, row.symbol)) return null;
+      const explanation = explainScreenerRank(row, activeSettings);
+      const confidence = decisionConfidenceSummary(row, explanation);
+      const priority = decisionPriorityBreakdown(row, explanation);
+      return {
+        row,
+        symbol: row.symbol,
+        companyName: row.companyName || row.name || "",
+        priority: priority.score,
+        confidenceKey: confidence.key,
+        confidenceLabel: confidence.label,
+      };
+    }).filter(Boolean).sort((a, b) => b.priority - a.priority);
+    const highConfidenceItems = pendingItems.filter((item) => item.confidenceKey === "high");
+    const focusItems = highConfidenceItems.length ? highConfidenceItems : pendingItems;
+    return {
+      pendingCount: pendingItems.length,
+      highConfidenceCount: highConfidenceItems.length,
+      focusCount: focusItems.length,
+      usesHighConfidence: highConfidenceItems.length > 0,
+      top: focusItems[0] || null,
+      rows: focusItems.map((item) => item.row),
+    };
+  }, [filtered, screenerDecisionResolutions, activeSettings]);
+  const pendingDecisionWorkActive = decisionResolutionFilter === "pending"
+    && sort === "decisionPriority"
+    && reviewPriorityFilter === "all"
+    && (pendingDecisionWorkSummary.usesHighConfidence ? confidenceFilter === "high" : confidenceFilter === "Todos");
+  function applyPendingDecisionWorkFocus() {
+    if (!pendingDecisionWorkSummary.pendingCount) return;
+    setDecisionResolutionFilter("pending");
+    setReviewPriorityFilter("all");
+    setConfidenceFilter(pendingDecisionWorkSummary.usesHighConfidence ? "high" : "Todos");
+    setSort("decisionPriority");
+    setResultPage(1);
+    const label = pendingDecisionWorkSummary.usesHighConfidence ? `${pendingDecisionWorkSummary.highConfidenceCount} pendientes de confianza alta` : `${pendingDecisionWorkSummary.pendingCount} pendientes priorizadas`;
+    setStatus(`Trabajo pendiente: ${label}.`);
+  }
+  function clearPendingDecisionWorkFocus() {
+    setDecisionResolutionFilter("all");
+    setReviewPriorityFilter("all");
+    if (confidenceFilter === "high") setConfidenceFilter("Todos");
+    setResultPage(1);
+  }
+  function reviewPendingDecisionWork() {
+    const reviewRows = pendingDecisionWorkSummary.rows?.length ? pendingDecisionWorkSummary.rows : filtered;
+    const detail = pendingDecisionWorkSummary.usesHighConfidence
+      ? "Sin decidir · confianza alta · prioridad decision"
+      : "Sin decidir · prioridad decision";
+    openReview(reviewRows, pendingDecisionWorkSummary.top?.symbol || "", {
+      sourceLabel: "Trabajo pendiente",
+      sourceDetail: detail,
+      queueMode: "pending-work",
+      resolutionFilter: "pending",
+    });
+  }
   const pendingFilteredCount = useMemo(() => {
     if (!pendingResults) return 0;
     return applyResultViewFilters(pendingResults.rows || [], viewFilterState).length;
-  }, [pendingResults, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, viewLayers]);
+  }, [pendingResults, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, screenerDecisionResolutions, activeSettings, viewLayers]);
+  useEffect(() => {
+    if (running || filtered.length || !pendingResults?.rows?.length || pendingFilteredCount <= 0) return;
+    setRows(pendingResults.rows || []);
+    setDiagnostics(pendingResults.diagnostics || null);
+    setSnapshotNotice(null);
+    setPendingResults(null);
+    setResultPage(1);
+    setStatus(`Resultados actualizados automaticamente: ${pendingResults.rows?.length || 0} acciones calculadas.`);
+  }, [running, filtered.length, pendingFilteredCount, pendingResults]);
   const totalResultPages = Math.max(1, Math.ceil(filtered.length / resultPageSize));
   const visibleResultPage = Math.min(resultPage, totalResultPages);
   const resultPageStart = (visibleResultPage - 1) * resultPageSize;
   const resultPageEnd = Math.min(resultPageStart + resultPageSize, filtered.length);
   const pagedRows = filtered.slice(resultPageStart, resultPageEnd);
+  const visibleDecisionAudit = useMemo(() => filtered.length
+    ? auditDecisionScan({ id: "visible-results", name: "Resultados visibles", rows: filtered, activeSettings })
+    : null, [filtered, activeSettings]);
   const setResultPageClamped = (page) => setResultPage(Math.max(1, Math.min(page, totalResultPages)));
   function updateResultPageSize(size) {
     const nextSize = RESULT_PAGE_SIZES.includes(size) ? size : DEFAULT_RESULT_PAGE_SIZE;
@@ -1309,7 +2072,7 @@ export default function Page() {
   const opportunities = useMemo(() => opportunityBuckets(filtered), [filtered]);
   useEffect(() => {
     setResultPage(1);
-  }, [countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, sort, resultPageSize]);
+  }, [countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, sort, resultPageSize]);
   useEffect(() => {
     if (resultPage > totalResultPages) setResultPage(totalResultPages);
   }, [resultPage, totalResultPages]);
@@ -1337,6 +2100,228 @@ export default function Page() {
     const count = counts?.get(value) || 0;
     return `${formatter(value)}${count ? ` (${count})` : ""}`;
   };
+  const actionCounts = useMemo(() => {
+    const counts = new Map();
+    rows.forEach((row) => {
+      const actionKey = explainScreenerRank(row, activeSettings).action.key;
+      counts.set(actionKey, (counts.get(actionKey) || 0) + 1);
+    });
+    return counts;
+  }, [rows, activeSettings]);
+  const actionOptions = useMemo(() => {
+    const known = RANK_ACTION_ORDER.filter((key) => actionCounts.has(key));
+    const unknown = [...actionCounts.keys()].filter((key) => !RANK_ACTION_ORDER.includes(key)).sort();
+    return ["Todos", ...known, ...unknown];
+  }, [actionCounts]);
+  const readinessCounts = useMemo(() => {
+    const counts = new Map();
+    rows.forEach((row) => {
+      const readinessKey = explainScreenerRank(row, activeSettings).readiness.key;
+      counts.set(readinessKey, (counts.get(readinessKey) || 0) + 1);
+    });
+    return counts;
+  }, [rows, activeSettings]);
+  const readinessOptions = useMemo(() => {
+    const known = DECISION_READINESS_ORDER.filter((key) => readinessCounts.has(key));
+    const unknown = [...readinessCounts.keys()].filter((key) => !DECISION_READINESS_ORDER.includes(key)).sort();
+    return ["Todos", ...known, ...unknown];
+  }, [readinessCounts]);
+  const readinessSummary = useMemo(() => DECISION_READINESS_ORDER
+    .map((key) => ({ key, label: decisionReadinessLabel(key), count: readinessCounts.get(key) || 0 }))
+    .filter((item) => item.count > 0), [readinessCounts]);
+  const decisionProfileCounts = useMemo(() => {
+    const counts = new Map();
+    rows.forEach((row) => {
+      const key = decisionProfileForRow(row, activeSettings);
+      if (key === "other") return;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return counts;
+  }, [rows, activeSettings]);
+  const decisionProfileOptions = useMemo(() => {
+    const known = DECISION_PROFILE_ORDER.filter((key) => decisionProfileCounts.has(key));
+    const unknown = [...decisionProfileCounts.keys()].filter((key) => !DECISION_PROFILE_ORDER.includes(key)).sort();
+    return ["Todos", ...known, ...unknown];
+  }, [decisionProfileCounts]);
+  const confidenceCounts = useMemo(() => {
+    const counts = new Map();
+    rows.forEach((row) => {
+      const confidenceKey = decisionConfidenceSummary(row, activeSettings).key;
+      counts.set(confidenceKey, (counts.get(confidenceKey) || 0) + 1);
+    });
+    return counts;
+  }, [rows, activeSettings]);
+  const confidenceOptions = useMemo(() => {
+    const known = DECISION_CONFIDENCE_ORDER.filter((key) => confidenceCounts.has(key));
+    const unknown = [...confidenceCounts.keys()].filter((key) => !DECISION_CONFIDENCE_ORDER.includes(key)).sort();
+    return ["Todos", ...known, ...unknown];
+  }, [confidenceCounts]);
+  const dataHealthCounts = useMemo(() => {
+    const counts = new Map();
+    dataHealthBaseRows.forEach((row) => {
+      const key = buildScreenerDataHealth(row, activeSettings).status.key;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return counts;
+  }, [dataHealthBaseRows, activeSettings]);
+  const dataHealthSummary = useMemo(() => buildScreenerDataHealthSummary(dataHealthBaseRows, activeSettings), [dataHealthBaseRows, activeSettings]);
+  const dataHealthOptions = useMemo(() => {
+    const known = DATA_HEALTH_FILTER_ORDER.filter((key) => dataHealthCounts.has(key));
+    const unknown = [...dataHealthCounts.keys()].filter((key) => !DATA_HEALTH_FILTER_ORDER.includes(key)).sort();
+    return [DATA_HEALTH_FILTER_ALL, ...known, ...unknown].map((key) => ({
+      key,
+      label: dataHealthFilterLabel(key),
+      displayLabel: key === DATA_HEALTH_FILTER_ALL ? "Datos: Todos" : `${dataHealthFilterLabel(key)}${dataHealthCounts.get(key) ? ` (${dataHealthCounts.get(key)})` : ""}`,
+    }));
+  }, [dataHealthCounts]);
+  const reviewPrioritySummary = useMemo(() => buildReviewPrioritySummary(reviewPriorityBaseRows, activeSettings), [reviewPriorityBaseRows, activeSettings]);
+  const reviewPriorityOptions = useMemo(() => [
+    { key: "all", label: "Todas", displayLabel: "Prioridad: Todas" },
+    ...reviewPrioritySummary.map((item) => ({
+      key: item.key,
+      label: item.label,
+      displayLabel: `${item.label}${item.count ? ` (${item.count})` : ""}`,
+    })),
+  ], [reviewPrioritySummary]);
+  const reliabilitySummary = useMemo(() => buildScreenerReliabilitySummary(reliabilityBaseRows, activeSettings), [reliabilityBaseRows, activeSettings]);
+  const reliabilityCounts = useMemo(() => new Map(Object.entries(reliabilitySummary.counts || {}).filter(([, count]) => Number(count) > 0)), [reliabilitySummary]);
+  const reliabilityOptions = useMemo(() => {
+    const known = RELIABILITY_FILTER_ORDER.filter((key) => reliabilityCounts.has(key));
+    const unknown = [...reliabilityCounts.keys()].filter((key) => !RELIABILITY_FILTER_ORDER.includes(key)).sort();
+    return [RELIABILITY_FILTER_ALL, ...known, ...unknown].map((key) => ({
+      key,
+      label: screenerReliabilityFilterLabel(key),
+      displayLabel: key === RELIABILITY_FILTER_ALL ? "Fiabilidad: Todas" : `${screenerReliabilityFilterLabel(key)}${reliabilityCounts.get(key) ? ` (${reliabilityCounts.get(key)})` : ""}`,
+    }));
+  }, [reliabilityCounts]);
+  const decisionEvidenceSummary = useMemo(() => buildDecisionEvidenceSummary(decisionEvidenceBaseRows, activeSettings), [decisionEvidenceBaseRows, activeSettings]);
+  const decisionEvidenceCounts = useMemo(() => new Map(Object.entries(decisionEvidenceSummary.counts || {}).filter(([, count]) => Number(count) > 0)), [decisionEvidenceSummary]);
+  const decisionEvidenceOptions = useMemo(() => {
+    const known = DECISION_EVIDENCE_FILTER_ORDER.filter((key) => decisionEvidenceCounts.has(key));
+    const unknown = [...decisionEvidenceCounts.keys()].filter((key) => !DECISION_EVIDENCE_FILTER_ORDER.includes(key)).sort();
+    return [DECISION_EVIDENCE_FILTER_ALL, ...known, ...unknown].map((key) => ({
+      key,
+      label: decisionEvidenceFilterLabel(key),
+      displayLabel: key === DECISION_EVIDENCE_FILTER_ALL ? "Pruebas: Todas" : `${decisionEvidenceFilterLabel(key)}${decisionEvidenceCounts.get(key) ? ` (${decisionEvidenceCounts.get(key)})` : ""}`,
+    }));
+  }, [decisionEvidenceCounts]);
+  function openReviewPriorityQueue(key = "all") {
+    const filterKey = key === "all" ? (reviewPrioritySummary[0]?.key || "all") : key;
+    if (filterKey === "all") {
+      openReview(filtered);
+      return;
+    }
+    const priority = reviewPriorityMeta(filterKey);
+    const reviewRows = applyResultViewFilters(rows, { ...viewFilterState, reviewPriorityFilter: filterKey });
+    if (!reviewRows.length) {
+      setStatus(`Prioridad ${priority.label}: sin resultados visibles.`);
+      return;
+    }
+    openReview(reviewRows, reviewRows[0]?.symbol || "", {
+      sourceLabel: `Prioridad: ${priority.label}`,
+      sourceDetail: `Filtro de prioridad de investigacion · ${reviewRows.length} acciones`,
+      queueMode: "priority-focus",
+    });
+  }
+  function openReviewDecisionEvidenceQueue(key = DECISION_EVIDENCE_FILTER_ALL) {
+    const filterKey = key === DECISION_EVIDENCE_FILTER_ALL
+      ? (decisionEvidenceSummary.items || []).find((item) => item.key === "needs-work" && item.count > 0)?.key
+        || (decisionEvidenceSummary.items || []).find((item) => item.key === "blocked" && item.count > 0)?.key
+        || (decisionEvidenceSummary.items || []).find((item) => item.count > 0)?.key
+        || DECISION_EVIDENCE_FILTER_ALL
+      : key;
+    if (filterKey === DECISION_EVIDENCE_FILTER_ALL) {
+      openReview(filtered);
+      return;
+    }
+    const label = decisionEvidenceFilterLabel(filterKey);
+    const reviewRows = applyResultViewFilters(rows, { ...viewFilterState, decisionEvidenceFilter: filterKey });
+    if (!reviewRows.length) {
+      setStatus(`Pruebas ${label}: sin resultados visibles.`);
+      return;
+    }
+    openReview(reviewRows, reviewRows[0]?.symbol || "", {
+      sourceLabel: `Pruebas: ${label}`,
+      sourceDetail: `Checklist de decision · ${reviewRows.length} acciones`,
+      queueMode: "evidence-focus",
+    });
+  }
+  function openReviewScoreAuditQueue(key = SCORE_AUDIT_FILTER_ALL) {
+    const preferredKey = scoreAuditCounts.get("attention") > 0
+      ? "attention"
+      : scoreAuditCounts.get("mismatch") > 0
+        ? "mismatch"
+        : scoreAuditCounts.get("missing") > 0
+          ? "missing"
+          : SCORE_AUDIT_FILTER_ALL;
+    const filterKey = key === SCORE_AUDIT_FILTER_ALL ? preferredKey : key;
+    if (filterKey === SCORE_AUDIT_FILTER_ALL) {
+      openReview(filtered);
+      return;
+    }
+    const label = scoreAuditFilterLabel(filterKey);
+    const reviewRows = applyResultViewFilters(rows, { ...viewFilterState, scoreAuditFilter: filterKey });
+    if (!reviewRows.length) {
+      setStatus(`Score audit ${label}: sin resultados visibles.`);
+      return;
+    }
+    openReview(reviewRows, reviewRows[0]?.symbol || "", {
+      sourceLabel: `Score audit: ${label}`,
+      sourceDetail: `Auditoria de score · ${reviewRows.length} acciones`,
+      queueMode: "score-audit-focus",
+    });
+  }
+  function openReviewMethodologyFocusQueue(key = "") {
+    const focusKey = String(key || "").trim();
+    if (!focusKey) {
+      openReview(filtered);
+      return;
+    }
+    const target = (visibleAuditabilitySummary.methodologyReviewFocus || []).find((item) => item.key === focusKey) || null;
+    const reviewRows = filtered.filter((row) => {
+      const evidence = buildDecisionEvidenceChecklist(row, activeSettings);
+      return (evidence.reviewFocus || []).some((item) => item.requiresReview && item.key === focusKey);
+    });
+    if (!reviewRows.length) {
+      setStatus(`Foco metodológico ${target?.label || focusKey}: sin resultados visibles.`);
+      return;
+    }
+    openReview(reviewRows, reviewRows[0]?.symbol || "", {
+      sourceLabel: `Método: ${target?.label || focusKey}`,
+      sourceDetail: `Foco de revisión metodológica · ${reviewRows.length} acciones · herramienta de observación`,
+      queueMode: "methodology-focus",
+    });
+  }
+  const scoreAuditCounts = useMemo(() => {
+    const counts = new Map();
+    SCORE_AUDIT_FILTER_ORDER.forEach((key) => counts.set(key, 0));
+    scoreAuditBaseRows.forEach((row) => {
+      SCORE_AUDIT_FILTER_ORDER.forEach((key) => {
+        if (scoreAuditMatchesFilter(row, key)) counts.set(key, (counts.get(key) || 0) + 1);
+      });
+    });
+    return counts;
+  }, [scoreAuditBaseRows]);
+  const scoreAuditOptions = useMemo(() => {
+    const known = SCORE_AUDIT_FILTER_ORDER.filter((key) => scoreAuditCounts.get(key) > 0);
+    return [SCORE_AUDIT_FILTER_ALL, ...known].map((key) => ({
+      key,
+      label: scoreAuditFilterLabel(key),
+      displayLabel: key === SCORE_AUDIT_FILTER_ALL ? "Score: Todos" : `${scoreAuditFilterLabel(key)}${scoreAuditCounts.get(key) ? ` (${scoreAuditCounts.get(key)})` : ""}`,
+    }));
+  }, [scoreAuditCounts]);
+  const scoreAuditSummary = useMemo(() => buildScreenerScoreAuditSummary(scoreAuditBaseRows), [scoreAuditBaseRows]);
+  const visibleDecisionBrief = useMemo(() => buildScreenerDecisionBrief({ audit: visibleDecisionAudit, rows: filtered }), [visibleDecisionAudit, filtered]);
+  const visibleDataHealthSummary = useMemo(() => buildScreenerDataHealthSummary(filtered, activeSettings), [filtered, activeSettings]);
+  const visibleDecisionEvidenceSummary = useMemo(() => buildDecisionEvidenceSummary(filtered, activeSettings), [filtered, activeSettings]);
+  const visibleScoreAuditSummary = useMemo(() => buildScreenerScoreAuditSummary(filtered), [filtered]);
+  const visibleAuditabilitySummary = useMemo(() => buildScreenerAuditabilitySummary(filtered, activeSettings), [filtered, activeSettings]);
+  const decisionResolutionOptions = useMemo(() => buildStockDecisionResolutionSummary(rows, { decisionResolutions: screenerDecisionResolutions })
+    .map((item) => ({
+      ...item,
+      label: decisionResolutionDisplayLabel(item.key),
+      displayLabel: item.key === "all" ? "Resolución: Todas" : `${decisionResolutionDisplayLabel(item.key)}${item.count ? ` (${item.count})` : ""}`,
+    })), [rows, screenerDecisionResolutions]);
   const countryCounts = useMemo(() => countByOption(rows, (r) => r.country || countryCode(r.symbol)), [rows]);
   const themeCounts = useMemo(() => countByOption(rows, (r) => cleanOption(r.theme, "General")), [rows]);
   const sectorCounts = useMemo(() => countByOption(rows.filter((r) => themeFilter === "Todos" || r.theme === themeFilter), (r) => cleanOption(r.sector, "Sin sector")), [rows, themeFilter]);
@@ -1388,7 +2373,7 @@ export default function Page() {
         if (!value || value === "General" || value === "Sin sector" || value === "Sin industria") return;
         const bucket = map.get(value) || { value, count: 0, top: null };
         bucket.count += 1;
-        if (!bucket.top || (row.totalScore || 0) > (bucket.top.totalScore || 0)) bucket.top = row;
+        if (!bucket.top || (row.objectiveScore ?? row.totalScore ?? 0) > (bucket.top.objectiveScore ?? bucket.top.totalScore ?? 0)) bucket.top = row;
         map.set(value, bucket);
       });
       return [...map.values()];
@@ -1477,6 +2462,21 @@ export default function Page() {
     const row = rowOrSymbol && typeof rowOrSymbol === "object" ? rowOrSymbol : null;
     const symbol = typeof rowOrSymbol === "string" ? rowOrSymbol : row?.symbol;
     const foundIndex = symbol ? filtered.findIndex((item) => item.symbol === symbol) : -1;
+    const rankExplain = row ? explainScreenerRank(row, activeSettings) : null;
+    const decisionIssues = row ? auditDecisionRowIssues(row, rankExplain || activeSettings) : [];
+    const decisionTrace = row ? decisionTraceForRow(row, rankExplain || activeSettings) : null;
+    const decisionBrief = row ? (decisionTrace?.brief || buildDecisionBrief(row, rankExplain || activeSettings)) : null;
+    const decisionEvidence = row ? buildDecisionEvidenceChecklist(row, rankExplain || activeSettings) : null;
+    const dataHealth = row ? buildScreenerDataHealth(row, activeSettings) : null;
+    const scoreAudit = row ? buildScreenerScoreAudit(row) : null;
+    const metricTruth = row ? reviewQueueMetricTruthMeta(row) : null;
+    const reviewFocus = row ? reviewQueueFocusMeta({
+      dataHealth: reviewQueueDataHealthMeta(row, activeSettings),
+      metricTruth,
+      scoreAudit: reviewQueueScoreAuditMeta(row),
+      evidence: decisionEvidence,
+      vcp: vcpReliabilityAudit(row),
+    }) : null;
     return buildScreenerStockContext(screenerContract, {
       symbol,
       row,
@@ -1484,6 +2484,16 @@ export default function Page() {
       queueSize: Number.isFinite(extras.queueSize) ? extras.queueSize : filtered.length,
       sourceLabel: extras.sourceLabel || "Screener",
       openedAt: extras.openedAt || new Date().toISOString(),
+      action: rankExplain?.action,
+      readiness: rankExplain?.readiness,
+      decisionProfile: decisionProfileStateForStock(row, rankExplain || activeSettings),
+      decisionIssues,
+      decisionTrace,
+      decisionBrief,
+      decisionEvidence,
+      reviewFocus,
+      dataHealth,
+      scoreAudit,
     });
   }
   const resultFilterChips = [
@@ -1493,7 +2503,36 @@ export default function Page() {
     viewLayers.industry && industryFilter !== "Todos" ? { key: "industry", label: `Subsector: ${industryFilter}`, onClear: () => setIndustryFilter("Todos") } : null,
     viewLayers.sectorStrength && sectorStrength !== "Todos" ? { key: "sectorStrength", label: `Fuerza: ${SECTOR_STRENGTH_LABELS[sectorStrength] || sectorStrength}`, onClear: () => setSectorStrength("Todos") } : null,
     viewLayers.ipo && ipo !== "Todos" ? { key: "ipo", label: `IPO: ${ipo}`, onClear: () => setIpo("Todos") } : null,
+    readinessFilter !== "Todos" ? { key: "readiness", label: `Decisión: ${decisionReadinessLabel(readinessFilter)}`, onClear: () => setReadinessFilter("Todos") } : null,
+    decisionProfileFilter !== "Todos" ? { key: "decisionProfile", label: `Perfil: ${decisionProfileLabel(decisionProfileFilter)}`, onClear: () => setDecisionProfileFilter("Todos") } : null,
+    reviewPriorityFilter !== "all" ? { key: "reviewPriority", label: `Prioridad: ${reviewPriorityDisplayLabel(reviewPriorityFilter)}`, onClear: () => setReviewPriorityFilter("all") } : null,
+    reliabilityFilter !== RELIABILITY_FILTER_ALL ? { key: "reliability", label: `Fiabilidad: ${screenerReliabilityFilterLabel(reliabilityFilter, { compact: true })}`, onClear: () => setReliabilityFilter(RELIABILITY_FILTER_ALL) } : null,
+    decisionEvidenceFilter !== DECISION_EVIDENCE_FILTER_ALL ? { key: "decisionEvidence", label: `Pruebas: ${decisionEvidenceFilterLabel(decisionEvidenceFilter, { compact: true })}`, onClear: () => setDecisionEvidenceFilter(DECISION_EVIDENCE_FILTER_ALL) } : null,
+    actionFilter !== "Todos" ? { key: "action", label: `Acción: ${rankActionLabel(actionFilter)}`, onClear: () => setActionFilter("Todos") } : null,
+    confidenceFilter !== "Todos" ? { key: "confidence", label: `Confianza: ${decisionConfidenceLabel(confidenceFilter)}`, onClear: () => setConfidenceFilter("Todos") } : null,
+    dataHealthFilter !== DATA_HEALTH_FILTER_ALL ? { key: "dataHealth", label: `Datos: ${dataHealthFilterLabel(dataHealthFilter, { compact: true })}`, onClear: () => setDataHealthFilter(DATA_HEALTH_FILTER_ALL) } : null,
+    scoreAuditFilter !== SCORE_AUDIT_FILTER_ALL ? { key: "scoreAudit", label: `Score: ${scoreAuditFilterLabel(scoreAuditFilter, { compact: true })}`, onClear: () => setScoreAuditFilter(SCORE_AUDIT_FILTER_ALL) } : null,
+    decisionIssueFilter !== "Todos" ? { key: "decisionIssue", label: `Issue: ${visibleDecisionAudit?.decisionQuality?.topIssues?.find((item) => item.key === decisionIssueFilter)?.label || decisionIssueFilter}`, onClear: () => setDecisionIssueFilter("Todos") } : null,
+    decisionResolutionFilter !== "all" ? { key: "decisionResolution", label: `Resolución: ${decisionResolutionDisplayLabel(decisionResolutionFilter)}`, onClear: () => setDecisionResolutionFilter("all") } : null,
   ].filter(Boolean);
+  const resultViewBrief = useMemo(() => buildResultViewBrief({
+    chips: resultFilterChips,
+    visibleCount: filtered.length,
+    totalCount: rows.length,
+    decisionBrief: visibleDecisionBrief,
+    dataHealthSummary: visibleDataHealthSummary,
+    decisionEvidenceSummary: visibleDecisionEvidenceSummary,
+    scoreAuditSummary: visibleScoreAuditSummary,
+    pendingDecisionWorkSummary,
+  }), [resultFilterChips, filtered.length, rows.length, visibleDecisionBrief, visibleDataHealthSummary, visibleDecisionEvidenceSummary, visibleScoreAuditSummary, pendingDecisionWorkSummary]);
+  function openResultViewReview() {
+    if (!filtered.length) return;
+    openReview(filtered, resultViewBrief?.primarySymbol || filtered[0]?.symbol || "", {
+      sourceLabel: "Vista filtrada",
+      sourceDetail: resultViewBrief?.sourceDetail || `${filtered.length} resultados filtrados`,
+      queueMode: "filtered-view",
+    });
+  }
   function clearResultViewLayer(key) {
     if (key === "country") setCountryFilter("Todos");
     if (key === "theme") {
@@ -1508,6 +2547,17 @@ export default function Page() {
     if (key === "industry") setIndustryFilter("Todos");
     if (key === "sectorStrength") setSectorStrength("Todos");
     if (key === "ipo") setIpo("Todos");
+    if (key === "action") setActionFilter("Todos");
+    if (key === "readiness") setReadinessFilter("Todos");
+    if (key === "decisionProfile") setDecisionProfileFilter("Todos");
+    if (key === "reviewPriority") setReviewPriorityFilter("all");
+    if (key === "reliability") setReliabilityFilter(RELIABILITY_FILTER_ALL);
+    if (key === "decisionEvidence") setDecisionEvidenceFilter(DECISION_EVIDENCE_FILTER_ALL);
+    if (key === "confidence") setConfidenceFilter("Todos");
+    if (key === "dataHealth") setDataHealthFilter(DATA_HEALTH_FILTER_ALL);
+    if (key === "scoreAudit") setScoreAuditFilter(SCORE_AUDIT_FILTER_ALL);
+    if (key === "decisionIssue") setDecisionIssueFilter("Todos");
+    if (key === "decisionResolution") setDecisionResolutionFilter("all");
   }
   const clearResultView = () => {
     setCountryFilter("Todos");
@@ -1516,10 +2566,21 @@ export default function Page() {
     setIndustryFilter("Todos");
     setSectorStrength("Todos");
     setIpo("Todos");
+    setActionFilter("Todos");
+    setReadinessFilter("Todos");
+    setDecisionProfileFilter("Todos");
+    setReviewPriorityFilter("all");
+    setReliabilityFilter(RELIABILITY_FILTER_ALL);
+    setDecisionEvidenceFilter(DECISION_EVIDENCE_FILTER_ALL);
+    setConfidenceFilter("Todos");
+    setDataHealthFilter(DATA_HEALTH_FILTER_ALL);
+    setScoreAuditFilter(SCORE_AUDIT_FILTER_ALL);
+    setDecisionIssueFilter("Todos");
+    setDecisionResolutionFilter("all");
   };
   const secSum = useMemo(() => {
     const m = new Map();
-    rows.forEach((r) => { const x = m.get(r.theme) || { theme: r.theme, count: 0, avg: 0, p3: 0 }; x.count++; x.avg += r.totalScore; x.p3 += r.perf3m || 0; m.set(r.theme, x); });
+    rows.forEach((r) => { const x = m.get(r.theme) || { theme: r.theme, count: 0, avg: 0, p3: 0 }; x.count++; x.avg += r.objectiveScore ?? r.totalScore ?? 0; x.p3 += r.perf3m || 0; m.set(r.theme, x); });
     return [...m.values()].map((x) => ({ ...x, avg: x.avg / x.count, p3: x.p3 / x.count })).sort((a, b) => b.avg - a.avg);
   }, [rows]);
   const ipoSum = useMemo(() => {
@@ -1529,7 +2590,7 @@ export default function Page() {
       if (!category) return;
       const x = m.get(category) || { cat: category, count: 0, avg: 0 };
       x.count++;
-      x.avg += r.totalScore;
+      x.avg += r.objectiveScore ?? r.totalScore ?? 0;
       m.set(category, x);
     });
     return [...m.values()].map((x) => ({ ...x, avg: x.avg / x.count })).sort((a, b) => b.avg - a.avg);
@@ -1540,7 +2601,17 @@ export default function Page() {
     if (sectorFilter !== "Todos" && !sectorOptions.includes(sectorFilter)) setSectorFilter("Todos");
     if (industryFilter !== "Todos" && !industryOptions.includes(industryFilter)) setIndustryFilter("Todos");
     if (ipo !== "Todos" && !ipos.includes(ipo)) setIpo("Todos");
-  }, [countryFilter, countryOptions, themeFilter, themeOptions, sectorFilter, sectorOptions, industryFilter, industryOptions, ipo, ipos]);
+    if (rows.length && actionFilter !== "Todos" && !actionOptions.includes(actionFilter)) setActionFilter("Todos");
+    if (rows.length && readinessFilter !== "Todos" && !readinessOptions.includes(readinessFilter)) setReadinessFilter("Todos");
+    if (rows.length && decisionProfileFilter !== "Todos" && !decisionProfileOptions.includes(decisionProfileFilter)) setDecisionProfileFilter("Todos");
+    if (rows.length && reviewPriorityFilter !== "all" && !reviewPriorityOptions.some((item) => item.key === reviewPriorityFilter)) setReviewPriorityFilter("all");
+    if (rows.length && reliabilityFilter !== RELIABILITY_FILTER_ALL && !reliabilityOptions.some((item) => item.key === reliabilityFilter)) setReliabilityFilter(RELIABILITY_FILTER_ALL);
+    if (rows.length && decisionEvidenceFilter !== DECISION_EVIDENCE_FILTER_ALL && !decisionEvidenceOptions.some((item) => item.key === decisionEvidenceFilter)) setDecisionEvidenceFilter(DECISION_EVIDENCE_FILTER_ALL);
+    if (rows.length && confidenceFilter !== "Todos" && !confidenceOptions.includes(confidenceFilter)) setConfidenceFilter("Todos");
+    if (rows.length && dataHealthFilter !== DATA_HEALTH_FILTER_ALL && !dataHealthOptions.some((item) => item.key === dataHealthFilter)) setDataHealthFilter(DATA_HEALTH_FILTER_ALL);
+    if (rows.length && scoreAuditFilter !== SCORE_AUDIT_FILTER_ALL && !scoreAuditOptions.some((item) => item.key === scoreAuditFilter)) setScoreAuditFilter(SCORE_AUDIT_FILTER_ALL);
+    if (rows.length && decisionResolutionFilter !== "all" && !decisionResolutionOptions.some((item) => item.key === decisionResolutionFilter)) setDecisionResolutionFilter("all");
+  }, [countryFilter, countryOptions, themeFilter, themeOptions, sectorFilter, sectorOptions, industryFilter, industryOptions, ipo, ipos, rows.length, actionFilter, actionOptions, readinessFilter, readinessOptions, decisionProfileFilter, decisionProfileOptions, reviewPriorityFilter, reviewPriorityOptions, reliabilityFilter, reliabilityOptions, decisionEvidenceFilter, decisionEvidenceOptions, confidenceFilter, confidenceOptions, dataHealthFilter, dataHealthOptions, scoreAuditFilter, scoreAuditOptions, decisionResolutionFilter, decisionResolutionOptions]);
   const failSummary = useMemo(() => {
     const map = new Map();
     fail.forEach((item) => {
@@ -1557,13 +2628,68 @@ export default function Page() {
   const modalReviewRows = quickReviewRows.length ? quickReviewRows : (activeModalRow ? [activeModalRow] : []);
   const modalReviewIndex = activeModalRow ? modalReviewRows.findIndex((row) => row.symbol === activeModalRow.symbol) : -1;
   const modalReviewPosition = modalReviewIndex >= 0 ? modalReviewIndex : quickReviewIndex;
+  const modalActiveResolution = useMemo(() => activeModalRow
+    ? decisionResolutionForSymbol({ decisionResolutions: screenerDecisionResolutions }, activeModalRow.symbol)
+    : null,
+  [activeModalRow?.symbol, screenerDecisionResolutions]);
+  const modalDecisionResolutions = screenerDecisionResolutions;
+  const modalReviewQueueItems = useMemo(() => modalReviewRows.map((row) => {
+    const item = buildDecisionQueueItem(row, activeSettings);
+    const profileKey = decisionProfileForRow(row, activeSettings);
+    const profile = reviewProfileMeta(profileKey);
+    const reviewPriority = reviewPriorityForRow(row, activeSettings);
+    const scoreAudit = reviewQueueScoreAuditMeta(row);
+    const dataHealth = reviewQueueDataHealthMeta(row, activeSettings);
+    const metricTruth = reviewQueueMetricTruthMeta(row);
+    const vcp = vcpReliabilityAudit(row);
+    const focus = reviewQueueFocusMeta({ dataHealth, metricTruth, scoreAudit, evidence: item.evidence, methodologyFocus: item.methodologyFocus, vcp });
+    const trustSignature = buildRowTrustSignature({ dataHealth, metricTruth, scoreAudit, evidence: item.evidence, vcpReliability: vcp });
+    return {
+      ...item,
+      profileKey,
+      profileLabel: profile.label,
+      profileTone: profile.tone,
+      reviewPriority,
+      scoreAudit,
+      dataHealth,
+      metricTruth,
+      focus,
+      trustSignature,
+    };
+  }), [modalReviewRows, activeSettings]);
+  const modalReviewAuditSummary = useMemo(() => buildReviewQueueAuditSummary(modalReviewQueueItems, modalReviewPosition), [modalReviewQueueItems, modalReviewPosition]);
+  const modalReviewPrioritySummary = useMemo(() => buildReviewPrioritySummary(modalReviewQueueItems), [modalReviewQueueItems]);
+  const modalReviewQueueSummary = useMemo(() => buildDecisionQueueSummary(modalReviewQueueItems), [modalReviewQueueItems]);
+  const modalReviewProfileSummary = useMemo(() => buildReviewProfileSummary(modalReviewQueueItems), [modalReviewQueueItems]);
+  const modalActiveReviewPriority = modalReviewQueueItems[modalReviewPosition]?.reviewPriority || (activeModalRow ? reviewPriorityForRow(activeModalRow, activeSettings) : null);
+  const modalRankExplain = useMemo(() => activeModalRow ? explainScreenerRank(activeModalRow, activeSettings) : null, [activeModalRow, activeSettings]);
+  const modalDecisionIssues = useMemo(() => activeModalRow ? auditDecisionRowIssues(activeModalRow, modalRankExplain || activeSettings) : [], [activeModalRow, modalRankExplain, activeSettings]);
+  const modalDecisionEvidence = useMemo(() => activeModalRow ? buildDecisionEvidenceChecklist(activeModalRow, modalRankExplain || activeSettings) : null, [activeModalRow, modalRankExplain, activeSettings]);
+  const modalDecisionTrace = useMemo(() => activeModalRow ? decisionTraceForRow(activeModalRow, modalRankExplain || activeSettings) : null, [activeModalRow, modalRankExplain, activeSettings]);
+  const modalDecisionBrief = useMemo(() => activeModalRow ? (modalDecisionTrace?.brief || buildDecisionBrief(activeModalRow, modalRankExplain || activeSettings)) : null, [activeModalRow, modalRankExplain, activeSettings, modalDecisionTrace]);
+  const modalDataHealth = useMemo(() => activeModalRow ? buildScreenerDataHealth(activeModalRow, activeSettings) : null, [activeModalRow, activeSettings]);
+  const modalScoreAudit = useMemo(() => activeModalRow ? buildScreenerScoreAudit(activeModalRow) : null, [activeModalRow]);
+  const modalReviewSourceMeta = activeModalRow ? safeRead(STORAGE_KEYS.review, {}) : {};
+  const modalReviewSourceLabel = String(modalReviewSourceMeta.sourceLabel || "Screener actual").trim() || "Screener actual";
+  const modalReviewSourceDetail = String(modalReviewSourceMeta.sourceDetail || "").trim();
+  const modalReviewQueueMode = String(modalReviewSourceMeta.queueMode || "screener-review").trim() || "screener-review";
+  const modalOriginLabel = modalReviewSourceLabel === "Screener actual" ? "Revisión Screener" : modalReviewSourceLabel;
   const quickReviewOrigin = useMemo(() => activeModalRow ? buildScreenerStockContext(screenerContract, {
     symbol: activeModalRow.symbol,
     row: activeModalRow,
     rank: modalReviewPosition + 1,
     queueSize: modalReviewRows.length,
-    sourceLabel: "Revisión Screener",
-  }) : null, [activeModalRow, screenerContract, modalReviewPosition, modalReviewRows.length]);
+    sourceLabel: modalOriginLabel,
+    action: modalRankExplain?.action,
+    readiness: modalRankExplain?.readiness,
+    decisionProfile: decisionProfileStateForStock(activeModalRow, modalRankExplain || activeSettings),
+    decisionIssues: modalDecisionIssues,
+    decisionEvidence: modalDecisionEvidence,
+    decisionTrace: modalDecisionTrace,
+    decisionBrief: modalDecisionBrief,
+    dataHealth: modalDataHealth,
+    scoreAudit: modalScoreAudit,
+  }) : null, [activeModalRow, screenerContract, modalReviewPosition, modalReviewRows.length, modalOriginLabel, modalRankExplain, modalDecisionIssues, modalDecisionEvidence, modalDecisionTrace, modalDecisionBrief, modalDataHealth, modalScoreAudit, activeSettings]);
 
   useEffect(() => {
     if (!activeModalRow) return undefined;
@@ -1585,15 +2711,27 @@ export default function Page() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeFilterFamily]);
 
-  return <main className="page">
-    <div className="topbar">
-      <h1 className="title">Screener</h1>
+  return <main className="page screenerTerminalPage">
+    <div className="topbar screenerHeroBar">
+      <div className="screenerHeroTitle">
+        <span className="screenerEyebrow">StatsEdge · Screener</span>
+        <h1 className="title">Global Leaders</h1>
+        <p>{PRESETS[presetKey]?.name || "Filtro activo"} · {markets.length} mercados · {filtered.length} resultados visibles</p>
+      </div>
       <div className="actions">
         <button className="btn btnMobileOnly" onClick={() => setShowMobileFilters(!showMobileFilters)}>Filtros</button>
         <button className={`btn ${running ? "btnGhost" : "btnPrimary"}`} onClick={() => { if (running) stopScan(); else { setShowMobileFilters(false); run(); } }}>{running ? "Detener" : "Ejecutar"}</button>
       </div>
     </div>
     {err && <div className="error">{err}</div>}
+    <div className={`scanStatusBar ${running ? "running" : err ? "error" : ""}`} role="status" aria-live="polite">
+      <span>{running ? "En ejecución" : err ? "Incidencia" : "Estado"}</span>
+      <b>{investorStatusLabel(status)}</b>
+    </div>
+    {snapshotNotice ? <div className={`snapshotFreshnessNotice ${snapshotNotice.tone || "info"}`} role="note">
+      <span>{snapshotNotice.label}</span>
+      <b>{snapshotNotice.detail}</b>
+    </div> : null}
     
     <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}`}>
       <button
@@ -1750,7 +2888,7 @@ export default function Page() {
               <SearchScopeList items={searchScopeItems} onPick={applySearchScope} />
               {searchError && <div className="dataNote error" style={{ marginTop: 12 }}>{investorStatusLabel(searchError)}</div>}
               {searchResult ? <div className="searchResult searchResultPrimary">
-                <PreviewCard row={searchResult} variant="search" onFavorite={addFavorite} onOpenStock={saveSessionBeforeStockOpen} isFavorite={favoriteSymbols.has(searchResult.symbol)} />
+                <PreviewCard row={searchResult} variant="search" onFavorite={addFavorite} onOpenStock={saveSessionBeforeStockOpen} isFavorite={favoriteSymbols.has(searchResult.symbol)} decisionResolutions={screenerDecisionResolutions} />
               </div> : null}
               <SearchCandidateList candidates={searchCandidates} activeSymbol={searchResult?.symbol} onPick={(item) => { setSearchSymbol(item.symbol); loadSearchResult(item.symbol, item); }} />
           </div>
@@ -1768,6 +2906,14 @@ export default function Page() {
             onSort={setSort}
           />
           <PendingResultsBar pending={pendingResults ? { ...pendingResults, filteredCount: pendingFilteredCount } : null} visibleCount={rows.length} filteredCount={filtered.length} onCommit={commitPendingResults} />
+          <PendingDecisionWorkRail
+            summary={pendingDecisionWorkSummary}
+            active={pendingDecisionWorkActive}
+            onFocus={applyPendingDecisionWorkFocus}
+            onClear={clearPendingDecisionWorkFocus}
+            onReview={reviewPendingDecisionWork}
+            className="mobile"
+          />
           <MobileResultList
             rows={pagedRows}
             settings={activeSettings}
@@ -1779,6 +2925,7 @@ export default function Page() {
             favoriteSymbols={favoriteSymbols}
             onSave={() => saveSnapshot(filtered)}
             onCsv={() => csv(filtered)}
+            onAuditJson={() => decisionAuditJson(filtered)}
             onOpenStock={saveSessionBeforeStockOpen}
             savingDisabled={running}
             page={visibleResultPage}
@@ -1786,23 +2933,110 @@ export default function Page() {
             totalPages={totalResultPages}
             onPage={setResultPageClamped}
             onPageSize={updateResultPageSize}
+            decisionQuality={visibleDecisionAudit}
+            decisionIssueFilter={decisionIssueFilter}
+            onDecisionIssueFilter={setDecisionIssueFilter}
+            decisionProfileFilter={decisionProfileFilter}
+            onDecisionProfileFilter={setDecisionProfileFilter}
+            reviewPriorityFilter={reviewPriorityFilter}
+            reviewPriorityOptions={reviewPriorityOptions}
+            onReviewPriorityFilter={setReviewPriorityFilter}
+            reliabilityFilter={reliabilityFilter}
+            reliabilityOptions={reliabilityOptions}
+            onReliabilityFilter={setReliabilityFilter}
+            decisionEvidenceSummary={decisionEvidenceSummary}
+            decisionEvidenceFilter={decisionEvidenceFilter}
+            decisionEvidenceOptions={decisionEvidenceOptions}
+            onDecisionEvidenceFilter={setDecisionEvidenceFilter}
+            onDecisionEvidenceReview={openReviewDecisionEvidenceQueue}
+            readinessSummary={readinessSummary}
+            readinessFilter={readinessFilter}
+            onReadinessFilter={setReadinessFilter}
+            confidenceFilter={confidenceFilter}
+            confidenceOptions={confidenceOptions}
+            confidenceCounts={confidenceCounts}
+            onConfidenceFilter={setConfidenceFilter}
+            dataHealthSummary={dataHealthSummary}
+            dataHealthFilter={dataHealthFilter}
+            dataHealthOptions={dataHealthOptions}
+            onDataHealthFilter={setDataHealthFilter}
+            scoreAuditSummary={scoreAuditSummary}
+            scoreAuditFilter={scoreAuditFilter}
+            scoreAuditOptions={scoreAuditOptions}
+            onScoreAuditFilter={setScoreAuditFilter}
+            onScoreAuditReview={openReviewScoreAuditQueue}
+            decisionResolutionFilter={decisionResolutionFilter}
+            decisionResolutionOptions={decisionResolutionOptions}
+            onDecisionResolutionFilter={setDecisionResolutionFilter}
+            decisionResolutions={screenerDecisionResolutions}
+            emptyLabel={restoringScan ? "Cargando último snapshot guardado..." : undefined}
           />
         </section>
 
         <section className="desktopResultsSection" style={{ marginBottom: 20 }}>
           <PendingResultsBar pending={pendingResults ? { ...pendingResults, filteredCount: pendingFilteredCount } : null} visibleCount={rows.length} filteredCount={filtered.length} onCommit={commitPendingResults} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <h2 style={{ fontSize: 13, margin: 0, fontWeight: 600, letterSpacing: 0 }}>{filtered.length} resultados</h2>
+          <div className="resultsHeader">
+            <div className="resultsTitleBlock">
+              <span>Results</span>
+              <h2>{filtered.length} resultados</h2>
+              <p>{rows.length} pasan · {analyzedRows.length || universe.length || 0} analizadas · {SORT_LABELS[sort] || sort}</p>
+              <DecisionSummaryRail summary={readinessSummary} activeKey={readinessFilter} onSelect={setReadinessFilter} />
+              <ReviewPriorityResultRail summary={reviewPrioritySummary} activeKey={reviewPriorityFilter} onSelect={setReviewPriorityFilter} onReview={openReviewPriorityQueue} />
+            </div>
             <div className="controls">
               {(rows.length > 0 || pendingResults?.rows?.length || diagnostics) ? <button className="btn btnSmall btnGhost" onClick={resetScreenerSession}>Reset sesión</button> : null}
               {filtered.length ? <>
                 <button className="btn btnSmall btnGhost" onClick={() => csv(filtered)}>↓ CSV</button>
+                <button className="btn btnSmall btnGhost" onClick={() => decisionAuditJson(filtered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
                 <button className="btn btnSmall btnPrimary" onClick={() => openReview(filtered)}>Revisar</button>
                 <button className="btn btnSmall" onClick={() => saveSnapshot(filtered)} disabled={running} aria-label="Guardar snapshot de resultados">Guardar</button>
               </> : null}
             </div>
           </div>
+          <DecisionQualityStrip audit={visibleDecisionAudit} activeIssueKey={decisionIssueFilter} onIssueSelect={setDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={setDecisionProfileFilter} />
+          <DecisionOperatingBrief audit={visibleDecisionAudit} rows={filtered} onIssueSelect={setDecisionIssueFilter} onReadinessFilter={setReadinessFilter} onConfidenceFilter={setConfidenceFilter} onReview={() => openReview(filtered)} />
+          <DecisionEvidenceSummaryRail summary={decisionEvidenceSummary} activeKey={decisionEvidenceFilter} onSelect={setDecisionEvidenceFilter} onReview={openReviewDecisionEvidenceQueue} />
+          <DataHealthSummaryRail summary={dataHealthSummary} activeKey={dataHealthFilter} onSelect={setDataHealthFilter} />
+          <ScoreAuditSummaryRail summary={scoreAuditSummary} activeKey={scoreAuditFilter} onSelect={setScoreAuditFilter} onReview={openReviewScoreAuditQueue} />
+          <AuditabilitySummaryRail summary={visibleAuditabilitySummary} onReviewFocus={openReviewMethodologyFocusQueue} />
+          <PendingDecisionWorkRail
+            summary={pendingDecisionWorkSummary}
+            active={pendingDecisionWorkActive}
+            onFocus={applyPendingDecisionWorkFocus}
+            onClear={clearPendingDecisionWorkFocus}
+            onReview={reviewPendingDecisionWork}
+          />
           <div className="controls resultFilterBar" style={{ marginBottom: 12 }}>
+            <select className="select resultFilterSelect" value={readinessFilter} onChange={(e) => setReadinessFilter(e.target.value)} aria-label="Filtrar por calidad de decision">
+              {readinessOptions.map((x) => <option key={x} value={x}>{optionLabel("Decisión", x, readinessCounts, decisionReadinessLabel)}</option>)}
+            </select>
+            <select className="select resultFilterSelect" value={decisionResolutionFilter} onChange={(e) => setDecisionResolutionFilter(e.target.value)} aria-label="Filtrar por resolución de decision">
+              {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
+            </select>
+            <select className="select resultFilterSelect" value={decisionProfileFilter} onChange={(e) => setDecisionProfileFilter(e.target.value)} aria-label="Filtrar por perfil de decision">
+              {decisionProfileOptions.map((x) => <option key={x} value={x}>{optionLabel("Perfil", x, decisionProfileCounts, decisionProfileLabel)}</option>)}
+            </select>
+            <select className="select resultFilterSelect" value={reviewPriorityFilter} onChange={(e) => setReviewPriorityFilter(e.target.value)} aria-label="Filtrar por prioridad de investigacion">
+              {reviewPriorityOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
+            </select>
+            <select className="select resultFilterSelect" value={reliabilityFilter} onChange={(e) => setReliabilityFilter(e.target.value)} aria-label="Filtrar por fiabilidad de observacion">
+              {reliabilityOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
+            </select>
+            <select className="select resultFilterSelect" value={decisionEvidenceFilter} onChange={(e) => setDecisionEvidenceFilter(e.target.value)} aria-label="Filtrar por pruebas de decision">
+              {decisionEvidenceOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
+            </select>
+            <select className="select resultFilterSelect" value={confidenceFilter} onChange={(e) => setConfidenceFilter(e.target.value)} aria-label="Filtrar por confianza de decision">
+              {confidenceOptions.map((x) => <option key={x} value={x}>{optionLabel("Confianza", x, confidenceCounts, decisionConfidenceLabel)}</option>)}
+            </select>
+            <select className="select resultFilterSelect" value={dataHealthFilter} onChange={(e) => setDataHealthFilter(e.target.value)} aria-label="Filtrar por salud de datos">
+              {dataHealthOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
+            </select>
+            <select className="select resultFilterSelect" value={scoreAuditFilter} onChange={(e) => setScoreAuditFilter(e.target.value)} aria-label="Filtrar por auditoría de score">
+              {scoreAuditOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
+            </select>
+            <select className="select resultFilterSelect" value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} aria-label="Filtrar por accion sugerida">
+              {actionOptions.map((x) => <option key={x} value={x}>{optionLabel("Acción", x, actionCounts, rankActionLabel)}</option>)}
+            </select>
             {viewLayers.country ? <select className="select resultFilterSelect" value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)} aria-label="Filtrar por pais">
               {countryOptions.map((x) => <option key={x} value={x}>{optionLabel("País", x, countryCounts, (code) => `${code} · ${marketName(code)}`)}</option>)}
             </select> : null}
@@ -1822,6 +3056,8 @@ export default function Page() {
               {ipos.map((x) => <option key={x} value={x}>{optionLabel("IPO", x, ipoCounts)}</option>)}
             </select> : null}
             <select className="select resultFilterSelect resultSortSelect" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Ordenar resultados">
+              <option value="objectiveScore">Ordenar: Calidad objetiva</option>
+              <option value="decisionPriority">Ordenar: Calidad decisión</option>
               <option value="totalScore">Ordenar: Composite</option>
               <option value="rsGlobalPct">Ordenar: {metricShortLabel("rsGlobalPct")}</option>
               <option value="rsRating">Ordenar: {metricShortLabel("rsRating")}</option>
@@ -1834,8 +3070,8 @@ export default function Page() {
               <option value="weaknessScore">Ordenar: Deterioro</option>
             </select>
           </div>
-          <ResultFilterChips chips={resultFilterChips} hiddenCount={hiddenByView} onClearAll={clearResultView} />
-          {filtered.length ? <div className="controls" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+          <ResultFilterChips chips={resultFilterChips} hiddenCount={hiddenByView} visibleCount={filtered.length} totalCount={rows.length} brief={resultViewBrief} onClearAll={clearResultView} onReview={filtered.length ? openResultViewReview : undefined} />
+          {filtered.length ? <div className="controls resultPager" style={{ justifyContent: "space-between", marginBottom: 12 }}>
             <span className="fine">
               Mostrando {filtered.length ? resultPageStart + 1 : 0}-{resultPageEnd} de {filtered.length}
             </span>
@@ -1848,11 +3084,11 @@ export default function Page() {
               <button className="btn btnSmall btnGhost" onClick={() => setResultPageClamped(visibleResultPage + 1)} disabled={visibleResultPage >= totalResultPages}>Siguiente</button>
             </div>
           </div> : null}
-      <CompactResultsTable rows={pagedRows} settings={activeSettings} favoriteSymbols={favoriteSymbols} onFavorite={addFavorite} onReview={(symbol) => openReview(filtered, symbol)} onOpenStock={saveSessionBeforeStockOpen} rankOffset={resultPageStart} />
+      <CompactResultsTable rows={pagedRows} settings={activeSettings} favoriteSymbols={favoriteSymbols} onFavorite={addFavorite} onReview={(symbol) => openReview(filtered, symbol)} onOpenStock={saveSessionBeforeStockOpen} rankOffset={resultPageStart} emptyLabel={restoringScan ? "Cargando último snapshot guardado..." : undefined} decisionIssueFilter={decisionIssueFilter} onDecisionIssueFilter={setDecisionIssueFilter} decisionEvidenceFilter={decisionEvidenceFilter} onDecisionEvidenceFilter={setDecisionEvidenceFilter} dataHealthFilter={dataHealthFilter} onDataHealthFilter={setDataHealthFilter} scoreAuditFilter={scoreAuditFilter} onScoreAuditFilter={setScoreAuditFilter} decisionResolutions={screenerDecisionResolutions} />
         </section>
       </main>
     </div>
-    <footer className="footer" style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,.04)", paddingTop: 16, fontSize: 11, opacity: 0.5 }}>StageRadar · Datos orientativos · {investorStatusLabel(status)}</footer>
+    <footer className="footer" style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,.04)", paddingTop: 16, fontSize: 11, opacity: 0.5 }}>StatsEdge · Datos orientativos · {investorStatusLabel(status)}</footer>
 
     {activeFilterFamily && <FilterFamilyModal
       layerKey={activeFilterFamily}
@@ -1895,13 +3131,53 @@ export default function Page() {
               <button className="btn" onClick={() => moveQuickReview(-1)} disabled={modalReviewRows.length < 2}>Anterior</button>
               <span className="quickReviewCounter">{modalReviewPosition + 1}/{modalReviewRows.length}</span>
               <button className="btn btnPrimary" onClick={() => moveQuickReview(1)} disabled={modalReviewRows.length < 2}>Siguiente</button>
-              <Link className="btn" href={stockUrl(activeModalRow.symbol)} onPointerDown={() => saveSessionBeforeStockOpen(activeModalRow)} onClick={() => saveSessionBeforeStockOpen(activeModalRow)}>Ficha</Link>
+              <Link className="btn" href={stockUrl(activeModalRow.symbol)} onPointerDown={() => saveQuickReviewStockOpen(activeModalRow, modalReviewPosition)} onClick={() => saveQuickReviewStockOpen(activeModalRow, modalReviewPosition)}>Ficha</Link>
               <a className="btn" href={externalLinks(activeModalRow.symbol, activeModalRow.exchange).tradingView} target="_blank" rel="noreferrer">TradingView</a>
               <button className="btn" onClick={closeQuickReview}>Cerrar</button>
             </div>
           </div>
 
+          <div className={`quickReviewSourceBrief mode-${modalReviewQueueMode}`} aria-label="Origen de la cola Review">
+            <span>
+              <em>Origen cola</em>
+              <b>{modalOriginLabel}</b>
+            </span>
+            {modalReviewSourceDetail ? <p>{modalReviewSourceDetail}</p> : <p>{modalReviewRows.length} acciones abiertas desde el Screener.</p>}
+            <small>{modalReviewRows.length} acciones · {modalReviewPosition + 1}/{modalReviewRows.length}</small>
+          </div>
+
           <ScreenerOriginPanel origin={quickReviewOrigin} variant="review" />
+          <div className="reviewResolveRail quickReviewResolveRail" aria-label="Resolver decision desde Vista rápida">
+            <span>{modalActiveResolution ? `Resolución: ${modalActiveResolution.label}` : "Resolver cola"}</span>
+            <div>
+              <button
+                type="button"
+                className={`neutral ${!modalActiveResolution ? "active" : ""}`.trim()}
+                onClick={() => reopenQuickReviewDecision(activeModalRow, modalReviewPosition)}
+                disabled={!modalActiveResolution}
+                title="Vuelve a pendiente"
+              >
+                Reabrir
+              </button>
+              {STOCK_DECISION_ACTIONS.map((item) => <button
+                type="button"
+                key={item.key}
+                className={`${item.tone || ""} ${modalActiveResolution?.key === item.key ? "active" : ""}`.trim()}
+                onClick={() => resolveQuickReviewDecision(item.key, activeModalRow, modalReviewPosition)}
+                title={item.detail}
+              >
+                {item.label}
+              </button>)}
+            </div>
+          </div>
+          {!quickReviewOrigin?.decisionBrief && modalRankExplain ? <div className={`reviewThesisBar ${modalRankExplain.readiness.tone}`}>
+            <span className="reviewDecisionPills">
+              <span className={`rankActionBadge ${modalRankExplain.action.tone}`}>{modalRankExplain.action.label}</span>
+              <span className={`rankDecisionBadge ${modalRankExplain.readiness.tone}`}>{modalRankExplain.readiness.label}</span>
+            </span>
+            <b>{modalRankExplain.line}</b>
+            <small>{modalRankExplain.readiness.detail}</small>
+          </div> : null}
 
           <div className="screenerReviewLayout">
             <aside className="reviewQueue screenerReviewQueue" aria-label="Cola de acciones del screener">
@@ -1909,25 +3185,97 @@ export default function Page() {
                 <h2>Cola</h2>
                 <span>{modalReviewRows.length}</span>
               </div>
+              {modalReviewAuditSummary.length ? <div className="reviewQueueSummary reviewQueueAuditSummary" aria-label="Resumen de auditoría de la cola">
+                {modalReviewAuditSummary.map((item) => (
+                  <button
+                    type="button"
+                    key={item.key}
+                    className={`reviewQueueSummaryChip audit-${item.key} ${item.tone || "neutral"} ${item.active ? "active" : ""}`}
+                    onClick={() => selectQuickReview(item.firstIndex, modalReviewRows)}
+                    disabled={!item.count}
+                    title={item.detail}
+                  >
+                    <b>{item.count}</b>
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div> : null}
+              {modalReviewPrioritySummary.length ? <div className="reviewQueueSummary reviewPrioritySummary" aria-label="Prioridad de investigacion">
+                {modalReviewPrioritySummary.map((group) => (
+                  <button
+                    type="button"
+                    key={group.key}
+                    className={`reviewQueueSummaryChip priority-${group.key} ${group.tone || "neutral"} ${modalReviewQueueItems[modalReviewPosition]?.reviewPriority?.key === group.key ? "active" : ""}`}
+                    onClick={() => selectQuickReview(group.firstIndex, modalReviewRows)}
+                    title={[group.topSymbol ? `${group.topSymbol} · ${Math.round(group.topScore || 0)}` : "", group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label].filter(Boolean).join(" · ")}
+                  >
+                    <b>{group.count}</b>
+                    <span>{group.shortLabel || group.label}</span>
+                  </button>
+                ))}
+              </div> : null}
+              {modalReviewProfileSummary.length ? <div className="reviewQueueSummary reviewQueueProfileSummary" aria-label="Prioridad de cola por perfil">
+                {modalReviewProfileSummary.map((group) => (
+                  <button
+                    type="button"
+                    key={group.key}
+                    className={`reviewQueueSummaryChip profile-${group.key} ${group.tone || "neutral"} ${modalReviewQueueItems[modalReviewPosition]?.profileKey === group.key ? "active" : ""}`}
+                    onClick={() => selectQuickReview(group.firstIndex, modalReviewRows)}
+                    title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
+                  >
+                    <b>{group.count}</b>
+                    <span>{group.label}</span>
+                  </button>
+                ))}
+              </div> : null}
+              {modalReviewQueueSummary.groups.length ? <div className="reviewQueueSummary" aria-label="Resumen de cola por decision">
+                {modalReviewQueueSummary.groups.map((group) => (
+                  <button
+                    type="button"
+                    key={group.key}
+                    className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${modalReviewQueueItems[modalReviewPosition]?.readiness?.key === group.key ? "active" : ""}`}
+                    onClick={() => selectQuickReview(group.firstIndex, modalReviewRows)}
+                    title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
+                  >
+                    <b>{group.count}</b>
+                    <span>{group.label}</span>
+                  </button>
+                ))}
+              </div> : null}
               <div className="reviewQueueList">
-                {modalReviewRows.map((row, index) => (
-                  <Link
+                {modalReviewRows.map((row, index) => {
+                  const decision = modalReviewQueueItems[index] || buildDecisionQueueItem(row, activeSettings);
+                  const resolution = decisionResolutionForSymbol({ decisionResolutions: modalDecisionResolutions }, row.symbol);
+                  return <Link
                     key={`${row.symbol}-${index}`}
                     href={stockUrl(row.symbol)}
-                    onPointerDown={() => saveSessionBeforeStockOpen(row)}
-                    onClick={() => saveSessionBeforeStockOpen(row)}
-                    className={`reviewQueueItem ${index === modalReviewPosition ? "active" : ""}`}
+                    onPointerDown={() => saveQuickReviewStockOpen(row, index)}
+                    onClick={() => saveQuickReviewStockOpen(row, index)}
+                    className={`reviewQueueItem ${index === modalReviewPosition ? "active" : ""} decision-${decision.readiness?.key || "unknown"} score-audit-${decision.scoreAudit?.key || "unknown"} data-health-${decision.dataHealth?.key || "unknown"} metric-truth-${decision.metricTruth?.key || "unknown"} focus-${decision.focus?.key || "none"} ${resolution ? `resolved-${resolution.key}` : ""}`}
                     aria-current={index === modalReviewPosition ? "true" : undefined}
-                    title={`Abrir ficha de ${row.symbol}`}
+                    title={resolution ? `${resolution.label} · ${resolution.detail}` : [decision.focus ? `Foco ${decision.focus.label}: ${decision.focus.detail || ""}` : "", `${decision.nextAction?.value || "Revisar"} · ${decision.risk?.value || row.symbol}`].filter(Boolean).join(" · ")}
                   >
                     <CompanyMark row={row} size="sm" />
-                    <span>
+                    <span className="reviewQueueBody">
                       <b>{row.symbol}</b>
                       <em>{row.companyName || row.name || row.symbol}</em>
+                      <RowTrustSignature signature={decision.trustSignature} className="reviewQueueTrustSignature" />
+                      <span className="reviewQueueDecisionLine">
+                        <span className={`reviewQueueDecisionBadge ${decision.tone || "neutral"}`}>{decision.nextAction?.value || decision.action?.label || "Revisar"}</span>
+                        {resolution ? <span className={`reviewQueueResolutionBadge ${resolution.tone || "neutral"}`}>{resolution.label}</span> : null}
+                        <ReviewQueueFocusBadge focus={decision.focus} />
+                        {decision.reviewPriority ? <span className={`reviewQueuePriorityBadge ${decision.reviewPriority.tone || "neutral"}`} title={decision.reviewPriority.reason}>{decision.reviewPriority.shortLabel || decision.reviewPriority.label}</span> : null}
+                        {decision.profileKey && decision.profileKey !== "other" ? <span className={`reviewQueueProfileBadge ${decision.profileTone || "neutral"}`}>{decision.profileLabel}</span> : null}
+                        {decision.methodologyFocus ? <span className={`reviewQueueMethodologyBadge ${decision.methodologyFocus.tone || "neutral"}`} title={decision.methodologyFocus.detail || decision.methodologyFocus.label}>Método: {decision.methodologyFocus.shortLabel || decision.methodologyFocus.label}</span> : null}
+                        {decision.dataHealth ? <span className={`reviewQueueDataHealthBadge ${decision.dataHealth.tone || "neutral"} data-${decision.dataHealth.key || "unknown"}`} title={decision.dataHealth.detail || decision.dataHealth.label}>{decision.dataHealth.label}</span> : null}
+                        {decision.metricTruth ? <span className={`reviewQueueMetricTruthBadge ${decision.metricTruth.tone || "neutral"} metric-${decision.metricTruth.key || "unknown"}`} title={decision.metricTruth.detail || decision.metricTruth.label}>{decision.metricTruth.label}</span> : null}
+                        {decision.scoreAudit ? <span className={`reviewQueueScoreAuditBadge ${decision.scoreAudit.tone || "neutral"} score-${decision.scoreAudit.key || "unknown"}`} title={decision.scoreAudit.detail || decision.scoreAudit.label}>{decision.scoreAudit.label}</span> : null}
+                        {decision.risk?.value ? <small>{decision.risk.value}</small> : null}
+                      </span>
                     </span>
-                    <i>{Number.isFinite(row.totalScore) ? Math.round(row.totalScore) : "-"}</i>
-                  </Link>
-                ))}
+                    <i>{decision.score ?? (Number.isFinite(row.objectiveScore) ? Math.round(row.objectiveScore) : Number.isFinite(row.totalScore) ? Math.round(row.totalScore) : "-")}</i>
+                  </Link>;
+                })}
               </div>
             </aside>
 
@@ -1949,6 +3297,10 @@ export default function Page() {
                 </div>
 
                 <div className="profileSide">
+                  <ReviewPriorityPanel priority={modalActiveReviewPriority} compact />
+                  <DecisionEvidenceChecklist evidence={modalDecisionEvidence} compact />
+                  <ScoreAuditPanel audit={modalScoreAudit} />
+
                   <div className="profileCard quickBusinessCard">
                     <div className="profileCardHeader">
                       <h3>Negocio</h3>
@@ -1967,14 +3319,15 @@ export default function Page() {
                       <span>Score</span>
                     </div>
                     <div className="profileRow"><span>Capitalización</span><b>{amount(activeModalRow.marketCap, activeModalRow.currency) || "-"}</b></div>
-                    <div className="profileRow"><span>{metricShortLabel("totalScore")}</span><b className="up">{activeModalRow.totalScore?.toFixed(0) || "-"}</b></div>
-                    <div className="profileRow"><span>{metricShortLabel("rsGlobalPct")}</span><b>{activeModalRow.rsGlobalPct?.toFixed(0) || "-"}</b></div>
-                    <div className="profileRow"><span>{metricShortLabel("rsQualityScore")}</span><b>{activeModalRow.rsQualityScore?.toFixed(0) || "-"}</b></div>
-                    <div className="profileRow"><span>{metricShortLabel("adProxyScore")}</span><b>{activeModalRow.adProxyScore?.toFixed(0) || "-"}</b></div>
-                    <div className="profileRow"><span>{metricShortLabel("epsGrowthProxyScore")}</span><b>{activeModalRow.epsGrowthProxyScore?.toFixed(0) || "-"}</b></div>
-                    <div className="profileRow"><span>Setup quality</span><b>{activeModalRow.setupQualityScore?.toFixed(0) || "-"}</b></div>
-                    <div className="profileRow"><span>Growth</span><b>{activeModalRow.growthScore?.toFixed(0) || "-"}</b></div>
-                    <div className="profileRow"><span>Rentabilidad/riesgo</span><b>{activeModalRow.riskRewardScore?.toFixed(0) || "-"}</b></div>
+                    <div className="profileRow"><span>{metricShortLabel("objectiveScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="objectiveScore" label={metricShortLabel("objectiveScore")} value={activeModalRow.objectiveScore?.toFixed(0) || activeModalRow.totalScore?.toFixed(0) || "-"} className="up" /></div>
+                    <div className="profileRow"><span>{metricShortLabel("totalScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="totalScore" label={metricShortLabel("totalScore")} value={activeModalRow.totalScore?.toFixed(0) || "-"} /></div>
+                    <div className="profileRow"><span>{metricShortLabel("rsGlobalPct")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="rsGlobalPct" label={metricShortLabel("rsGlobalPct")} value={activeModalRow.rsGlobalPct?.toFixed(0) || "-"} /></div>
+                    <div className="profileRow"><span>{metricShortLabel("rsQualityScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="rsQualityScore" label={metricShortLabel("rsQualityScore")} value={activeModalRow.rsQualityScore?.toFixed(0) || "-"} /></div>
+                    <div className="profileRow"><span>{metricShortLabel("adProxyScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="adProxyScore" label={metricShortLabel("adProxyScore")} value={activeModalRow.adProxyScore?.toFixed(0) || "-"} /></div>
+                    <div className="profileRow"><span>{metricShortLabel("epsGrowthProxyScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="epsGrowthProxyScore" label={metricShortLabel("epsGrowthProxyScore")} value={activeModalRow.epsGrowthProxyScore?.toFixed(0) || "-"} /></div>
+                    <div className="profileRow"><span>Setup quality</span><QuickReviewMetricValue row={activeModalRow} metricKey="setupQualityScore" label="Setup quality" value={activeModalRow.setupQualityScore?.toFixed(0) || "-"} /></div>
+                    <div className="profileRow"><span>Growth</span><QuickReviewMetricValue row={activeModalRow} metricKey="growthScore" label="Growth" value={activeModalRow.growthScore?.toFixed(0) || "-"} /></div>
+                    <div className="profileRow"><span>Rentabilidad/riesgo</span><QuickReviewMetricValue row={activeModalRow} metricKey="riskRewardScore" label="Rentabilidad/riesgo" value={activeModalRow.riskRewardScore?.toFixed(0) || "-"} /></div>
                   </div>
 
                   <div className="profileCard">
@@ -1982,12 +3335,12 @@ export default function Page() {
                       <h3>Volumen y riesgo</h3>
                       <span>Datos</span>
                     </div>
-                    <div className="profileRow"><span>Volumen sesión</span><b>{amount(activeModalRow.latestTurnover, activeModalRow.currency)}</b></div>
-                    <div className="profileRow"><span>Volumen 5d</span><b className={(activeModalRow.volumeSurgePct || 0) > 0 ? "up" : ""}>{pct(activeModalRow.volumeSurgePct)}</b></div>
-                    <div className="profileRow"><span>Up/down ratio</span><b>{ratioLabel(activeModalRow.upDownVolRatio)}</b></div>
-                    <div className="profileRow"><span>{metricShortLabel("shortPercentOfFloat")}</span><b>{pct(activeModalRow.shortPercentOfFloat)}</b></div>
-                    <div className="profileRow"><span>Drawdown 3M</span><b className="down">{Number.isFinite(activeModalRow.maxDrawdown63d) ? `${activeModalRow.maxDrawdown63d.toFixed(1)}%` : "-"}</b></div>
-                    <div className="profileRow"><span>Volatilidad</span><b>{Number.isFinite(activeModalRow.volatility63d) ? `${activeModalRow.volatility63d.toFixed(1)}%` : "-"}</b></div>
+                    <div className="profileRow"><span>Volumen sesión</span><QuickReviewMetricValue row={activeModalRow} metricKey="latestTurnover" label="Volumen sesión" value={amount(activeModalRow.latestTurnover, activeModalRow.currency) || "-"} /></div>
+                    <div className="profileRow"><span>Volumen 5d</span><QuickReviewMetricValue row={activeModalRow} metricKey="volumeSurgePct" label="Volumen 5d" value={pct(activeModalRow.volumeSurgePct)} className={(activeModalRow.volumeSurgePct || 0) > 0 ? "up" : ""} /></div>
+                    <div className="profileRow"><span>Up/down ratio</span><QuickReviewMetricValue row={activeModalRow} metricKey="upDownVolRatio" label="Up/down ratio" value={ratioLabel(activeModalRow.upDownVolRatio)} /></div>
+                    <div className="profileRow"><span>{metricShortLabel("shortPercentOfFloat")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="shortPercentOfFloat" label={metricShortLabel("shortPercentOfFloat")} value={pct(activeModalRow.shortPercentOfFloat)} /></div>
+                    <div className="profileRow"><span>Drawdown 3M</span><QuickReviewMetricValue row={activeModalRow} metricKey="maxDrawdown63d" label="Drawdown 3M" value={Number.isFinite(activeModalRow.maxDrawdown63d) ? `${activeModalRow.maxDrawdown63d.toFixed(1)}%` : "-"} className="down" /></div>
+                    <div className="profileRow"><span>Volatilidad</span><QuickReviewMetricValue row={activeModalRow} metricKey="volatility63d" label="Volatilidad" value={Number.isFinite(activeModalRow.volatility63d) ? `${activeModalRow.volatility63d.toFixed(1)}%` : "-"} /></div>
                   </div>
                 </div>
               </div>

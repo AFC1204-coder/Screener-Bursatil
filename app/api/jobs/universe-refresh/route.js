@@ -1,5 +1,5 @@
 import { CORE_COVERAGE_MARKETS } from "@/lib/coveragePlan";
-import { envValue } from "@/lib/env";
+import { isInternalRequest } from "@/lib/internalAuth";
 import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer";
 import { getUniverseEngineSnapshot } from "@/lib/universeEngine";
 
@@ -10,9 +10,7 @@ function requestedMarkets(request) {
 }
 
 function authorized(request) {
-  const secret = envValue("CRON_SECRET");
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}` || request.headers.get("x-cron-secret") === secret;
+  return isInternalRequest(request, { allowCron: true });
 }
 
 async function createRun(markets) {

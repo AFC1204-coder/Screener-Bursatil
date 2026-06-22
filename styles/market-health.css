@@ -204,6 +204,78 @@
   line-height:1.15;
 }
 
+.marketTrustMetric {
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+  color:inherit;
+  font-variant-numeric:tabular-nums;
+}
+
+.marketTrustMetric b {
+  display:block;
+  color:#ffffff;
+  font-size:13px;
+  line-height:1.15;
+}
+
+.marketTrustMetric i {
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:9px;
+  height:9px;
+  border:1px solid rgba(148,163,184,.24);
+  border-radius:999px;
+  color:#cbd5e1;
+  background:rgba(15,23,42,.72);
+  font-size:6.5px;
+  font-style:normal;
+  font-weight:850;
+  line-height:1;
+  text-transform:uppercase;
+}
+
+.marketTrustMetric.source-proxy i {
+  border-color:rgba(148,163,184,.28);
+  color:#cbd5e1;
+  background:rgba(148,163,184,.12);
+}
+
+.marketTrustMetric.source-review i {
+  border-color:rgba(245,158,11,.32);
+  color:#fed7aa;
+  background:rgba(245,158,11,.1);
+}
+
+.marketTrustMetric.source-blocked i {
+  border-color:rgba(248,113,113,.34);
+  color:#fecaca;
+  background:rgba(239,68,68,.12);
+}
+
+.marketRowTrustSignature {
+  width:max-content;
+  max-width:100%;
+  margin-top:5px;
+}
+
+.marketRowTrustSignature .rowTrustChip {
+  min-width:21px;
+  min-height:17px;
+  padding:1px 4px;
+}
+
+.marketRowTrustSignature .rowTrustChip em {
+  font-size:7px;
+}
+
+.marketRowTrustSignature .rowTrustChip b {
+  font-size:8px;
+}
+
 .evidenceRow small {
   display:block;
   margin-top:3px;

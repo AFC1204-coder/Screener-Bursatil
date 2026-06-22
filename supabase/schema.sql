@@ -1151,7 +1151,13 @@ create table if not exists rs_weekly_items (
 );
 
 create index if not exists scan_results_scan_id_idx on scan_results(scan_id);
+create index if not exists scan_results_owner_scan_rank_idx on scan_results(owner_id, scan_id, rank_index);
 create index if not exists scan_results_symbol_idx on scan_results(owner_id, symbol);
+create index if not exists scan_results_owner_created_idx on scan_results(owner_id, created_at desc);
+create index if not exists scan_results_owner_sector_created_idx on scan_results(owner_id, sector, created_at desc);
+create index if not exists scan_results_owner_industry_created_idx on scan_results(owner_id, industry, created_at desc);
+create index if not exists scan_results_owner_theme_created_idx on scan_results(owner_id, theme, created_at desc);
+create index if not exists scan_results_owner_country_created_idx on scan_results(owner_id, country, created_at desc);
 create index if not exists scans_active_idx on scans(owner_id, deleted_at, updated_at desc);
 create index if not exists favorites_symbol_idx on favorites(owner_id, symbol);
 create index if not exists favorites_active_idx on favorites(owner_id, deleted_at, updated_at desc);

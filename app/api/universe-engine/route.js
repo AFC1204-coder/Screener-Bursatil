@@ -8,7 +8,7 @@ export async function GET(request) {
   const maxAgeHours = Math.max(1, Math.min(Number(searchParams.get("maxAgeHours") || 24), 168));
   const summary = searchParams.get("summary") === "1";
   try {
-    const snapshot = await getUniverseEngineSnapshot({ markets, refresh, maxAgeHours });
+    const snapshot = await getUniverseEngineSnapshot({ markets, refresh, maxAgeHours, allowCuratedFallback: summary });
     if (summary) {
       const { universe, excluded, ...rest } = snapshot;
       return Response.json(rest);

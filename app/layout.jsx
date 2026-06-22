@@ -1,14 +1,15 @@
 import "../styles/tokens.css";
 import "../styles/base.css";
 import "../styles/components.css";
+import AuthGate from "./AuthGate";
 import BottomNav, { AppHeaderNav } from "./BottomNav";
 
 export const metadata = {
-  title: "StageRadar",
+  title: "StatsEdge",
   description: "Professional equity research and screening platform",
   manifest: "/manifest.webmanifest",
-  applicationName: "StageRadar",
-  appleWebApp: { capable: true, title: "StageRadar", statusBarStyle: "black-translucent" },
+  applicationName: "StatsEdge",
+  appleWebApp: { capable: true, title: "StatsEdge", statusBarStyle: "black-translucent" },
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
 };
 
@@ -40,14 +41,16 @@ export default function RootLayout({ children }) {
               </svg>
             </span>
             <span>
-              <b>StageRadar</b>
+              <b>StatsEdge</b>
               <small>Equity Research</small>
             </span>
           </a>
           <AppHeaderNav />
         </header>
-        {children}
-        <BottomNav />
+        <AuthGate>
+          {children}
+          <BottomNav />
+        </AuthGate>
       </body>
     </html>
   );

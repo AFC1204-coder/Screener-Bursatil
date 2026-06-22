@@ -1,6 +1,7 @@
 const BASE_URL = process.env.SMOKE_BASE_URL || "http://127.0.0.1:3000";
 const STRICT_PROVIDER = process.env.STRICT_PROVIDER === "1";
 const TIMEOUT_MS = Number(process.env.SMOKE_TIMEOUT_MS || 30000);
+const TOKEN = process.env.STATSEDGE_ACCESS_TOKEN || process.env.STATSEDGE_API_TOKEN || process.env.STATSEDGE_ADMIN_TOKEN || "";
 
 const pages = [
   ["/", "Screener global"],
@@ -59,6 +60,24 @@ const apiChecks = [
       && data.groups && Array.isArray(data.groups.sector)
       && data.health && typeof data.health.state === "string"
       && (!data.configured || data.lists.some((item) => item.key === "leaders" && Array.isArray(item.items))),
+  },
+  {
+    name: "Discovery refresh dry run",
+    path: "/api/jobs/discovery-refresh?dryRun=1",
+    provider: false,
+    check: (data) => data.ok === true
+      && data.dryRun === true
+      && Array.isArray(data.stats?.snapshots)
+      && data.stats.snapshots.some((item) => item.key === "discovery:interactive:v1"),
+  },
+  {
+    name: "MVP operational health",
+    path: "/api/mvp-health",
+    provider: false,
+    check: (data) => ["pass", "warn"].includes(data.status)
+      && Array.isArray(data.checks)
+      && data.checks.some((item) => item.area === "discovery-cache")
+      && data.checks.some((item) => item.area === "leaderboards-cache"),
   },
   {
     name: "Alerts",
@@ -238,16 +257,44 @@ const apiChecks = [
   },
 ];
 
+const unauthenticatedApiChecks = [
+  {
+    name: "Auth guard job scan-refresh",
+    path: "/api/jobs/scan-refresh?markets=US&limit=1&perMarket=1&dryRun=1&leaderboards=0",
+  },
+  {
+    name: "Auth guard MVP health",
+    path: "/api/mvp-health",
+  },
+  {
+    name: "Auth guard scan coverage",
+    path: "/api/scan-coverage",
+  },
+  {
+    name: "Auth guard settings",
+    path: "/api/settings",
+  },
+  {
+    name: "Auth guard favorites",
+    path: "/api/favorites",
+  },
+];
+
 function timeoutSignal(ms) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   return { signal: controller.signal, clear: () => clearTimeout(timer) };
 }
 
-async function fetchWithTimeout(path) {
+async function fetchWithTimeout(path, options = {}) {
   const { signal, clear } = timeoutSignal(TIMEOUT_MS);
+  const includeAuth = options.includeAuth !== false;
   try {
-    return await fetch(`${BASE_URL}${path}`, { signal, cache: "no-store" });
+    return await fetch(`${BASE_URL}${path}`, {
+      signal,
+      cache: "no-store",
+      headers: includeAuth && TOKEN ? { "x-statsedge-token": TOKEN } : {},
+    });
   } finally {
     clear();
   }
@@ -298,10 +345,24 @@ async function checkApi(item) {
   log("OK", item.name, providerNote);
 }
 
+async function checkUnauthenticatedApi(item) {
+  if (!TOKEN) {
+    log("SKIP", item.name, "sin token configurado; modo dev fail-open");
+    return;
+  }
+  const res = await fetchWithTimeout(item.path, { includeAuth: false });
+  if (res.status !== 401) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`${item.name} deberia devolver 401 sin token; obtuvo HTTP ${res.status}${text ? ` ${text.slice(0, 120)}` : ""}`);
+  }
+  log("OK", item.name, "401 sin token");
+}
+
 async function main() {
   console.log(`StatsEdge smoke test: ${BASE_URL}`);
   for (const [path, label] of pages) await checkPage(path, label);
   for (const item of apiChecks) await checkApi(item);
+  for (const item of unauthenticatedApiChecks) await checkUnauthenticatedApi(item);
   console.log("Smoke test completado.");
 }
 

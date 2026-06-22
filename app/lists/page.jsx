@@ -1,25 +1,29 @@
 "use client";
 import "../../styles/lists.css";
 import { useEffect, useMemo, useState } from "react";
+import { DecisionTraceBadge, DecisionTracePanel } from "@/app/DecisionTraceability";
+import RowTrustSignature from "@/app/RowTrustSignature";
+import { getJson } from "@/lib/clientApi";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";
+import { buildDecisionTraceabilitySummary, decisionResolutionForRow } from "@/lib/decisionTraceability";
 import { buildSavedListView, listViewHref, listViewSignature, normalizeListScope, normalizeSavedListViews, savedListViewMetaLine } from "@/lib/listViews";
 import { enforceListContractRows, listContractForKey, listInclusionSummary, rowPassesListContract, summarizeListReliability } from "@/lib/listRationale";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
+import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
+import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
+import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
+import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
 import { favoriteToRow, isLongOpportunityRow, metricValue, normalizeStockRows, shortBusiness, sortByMetric, uniqueRows, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
 
 async function fetchJsonWithTimeout(path, timeoutMs = 16000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(path, { signal: controller.signal, cache: "no-store" });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || payload.error) throw new Error(payload.error || `HTTP ${response.status}`);
-    return payload;
-  } finally {
-    clearTimeout(timer);
+    return await getJson(path, { timeoutMs, cache: "no-store" });
+  } catch (error) {
+    if (error?.name === "AbortError") throw new Error(`${path} no respondió en ${Math.round(timeoutMs / 1000)}s`);
+    throw error;
   }
 }
 
@@ -35,13 +39,85 @@ function InfoHint({ text, tone = "" }) {
   </span>;
 }
 
+function listMetricSource(row = {}, key = "") {
+  if (!key) return null;
+  const audit = objectiveMetricAuditStatusForRow(row)?.audit;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const item = items.find((entry) => entry?.key === key);
+  if (!item) return null;
+  const status = String(item.status || "");
+  const severity = String(item.severity || "");
+  const label = item.label || item.key || "Métrica";
+  if (severity === "bad" || ["mismatch", "unverified-value", "missing-source"].includes(status)) {
+    return { key: "blocked", mark: "x", title: `${label}: bloqueada` };
+  }
+  if (severity === "warn" || ["missing", "insufficient-input"].includes(status)) {
+    return { key: "review", mark: "!", title: `${label}: revisar` };
+  }
+  if (item.proxy === true) {
+    return { key: "proxy", mark: "p", title: `${label}: proxy/estimada` };
+  }
+  if (status === "verified" || status === "traceable") {
+    return { key: "measured", mark: "", title: `${label}: medida/trazable` };
+  }
+  return null;
+}
+
+function ListTrustMetric({ row, metricKey, label, value, className = "" }) {
+  const source = listMetricSource(row, metricKey);
+  const sourceClass = source?.key ? `source-${source.key}` : "";
+  const valueText = value ?? "-";
+  return <span
+    className={`listTrustMetric ${className} ${sourceClass}`.trim()}
+    title={source?.title || undefined}
+    aria-label={source?.title ? `${label}: ${valueText}. ${source.title}` : undefined}
+  >
+    <span>{valueText}</span>
+    {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}
+  </span>;
+}
+
+function listMetricTruthMeta(row = {}) {
+  const status = objectiveMetricAuditStatusForRow(row);
+  const audit = status.audit || null;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const usable = items.filter((item) => item?.status === "verified" || item?.status === "traceable");
+  const measuredCount = usable.filter((item) => item?.proxy !== true).length;
+  const proxyCount = usable.filter((item) => item?.proxy === true).length;
+  const detail = [
+    status.detail,
+    measuredCount ? `${measuredCount} medidas` : "",
+    proxyCount ? `${proxyCount} proxy` : "",
+  ].filter(Boolean).join(" · ");
+  if (status.key === "bad") return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
+  if (status.key === "warn") return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
+  if (status.key === "missing") return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
+  return {
+    key: proxyCount ? "mixed" : "measured",
+    label: proxyCount ? "Mixto" : "Med.",
+    tone: proxyCount ? "neutral" : "good",
+    detail,
+    measuredCount,
+    proxyCount,
+  };
+}
+
+function listRowTrustSignature(row = {}) {
+  return buildRowTrustSignature({
+    dataHealth: buildScreenerDataHealth(row, {}),
+    metricTruth: listMetricTruthMeta(row),
+    scoreAudit: buildScreenerScoreAudit(row),
+  });
+}
+
 function scopedDiscoveryPath(filter = {}) {
   const params = new URLSearchParams({
-    limit: "25",
-    groupItemLimit: "12",
-    groupsLimit: "45",
-    maxRows: "8000",
-    sinceDays: "45",
+    limit: "20",
+    groupItemLimit: "8",
+    groupsLimit: "12",
+    maxRows: "80",
+    sinceDays: "10",
+    minGroupSize: "1",
   });
   if (filter.groupType && filter.group) {
     params.set("groupType", filter.groupType);
@@ -299,47 +375,54 @@ function ListsEmptyState({ loading, hasSnapshot, discoveryError }) {
   </section>;
 }
 
-function MiniTable({ title, desc, rows, chartsCache, listKey = "leaders", scoreKey = "totalScore", collapsible = true, emptyLabel = "Sin datos todavia.", contractRejected = 0 }) {
+function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey = "leaders", scoreKey = "objectiveScore", collapsible = true, emptyLabel = "Sin datos todavia.", contractRejected = 0 }) {
   const visibleRows = rows.slice(0, 18);
   const reliability = summarizeListReliability(rows);
   const table = <div className="tableWrap">
     <table className="table">
-      <thead><tr>{["Ticker", "Empresa", "Gráfico", "Tema", "3M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel("totalScore")].map((h) => <th key={h}>{h}</th>)}</tr></thead>
-      <tbody>{visibleRows.map((r) => <tr key={r.symbol}>
-        <td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a></td>
-        <td>{r.companyName || r.symbol}<br /><span className="fine">{shortBusiness(r)}</span><span className="listInclusionReason">{listInclusionSummary(r, listKey)}</span></td>
+      <thead><tr>{["Ticker", "Empresa", "Gráfico", "Tema", "3M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel(scoreKey)].map((h, index) => <th key={`${index}-${h}`}>{h}</th>)}</tr></thead>
+      <tbody>{visibleRows.map((r) => {
+        const trustSignature = listRowTrustSignature(r);
+        return <tr key={r.symbol}>
+        <td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a><DecisionTraceBadge resolution={decisionResolutionForRow(r, reviewState)} /></td>
+        <td>{r.companyName || r.symbol}<br /><span className="fine">{shortBusiness(r)}</span><RowTrustSignature signature={trustSignature} className="listRowTrustSignature" /><span className="listInclusionReason">{listInclusionSummary(r, listKey)}</span></td>
         <td className="compactSparkCell" style={{ width: "110px", minWidth: "110px", verticalAlign: "middle" }}>
           <ListSparkline row={r} chartsCache={chartsCache} />
         </td>
         <td><span className="pill">{r.theme || r.snapshot?.theme || "-"}</span></td>
-        <td>{pct(r.perf3m ?? r.snapshot?.perf3m)}</td>
-        <td>{pct(r.distance52w)}</td>
-        <td>{pct(r.extSma50)}</td>
-        <td>{num(r.weinsteinScore ?? r.snapshot?.weinsteinScore)}</td>
-        <td>{num(r.minerviniScore ?? r.snapshot?.minerviniScore)}</td>
-        <td>{num(r.rsQualityScore ?? r.snapshot?.rsQualityScore)}</td>
-        <td>{num(weaknessScore(r))}</td>
-        <td>{num(r.riskScore ?? r.snapshot?.riskScore)}</td>
-        <td className="ticker">{num(Number.isFinite(metricValue(r, scoreKey)) ? metricValue(r, scoreKey) : r.snapshot?.totalScore)}</td>
-      </tr>)}{!rows.length && <tr><td colSpan="13">{emptyLabel}</td></tr>}</tbody>
+        <td><ListTrustMetric row={r} metricKey="perf3m" label="3M" value={pct(r.perf3m ?? r.snapshot?.perf3m)} /></td>
+        <td><ListTrustMetric row={r} metricKey="distance52w" label="52w" value={pct(r.distance52w)} /></td>
+        <td><ListTrustMetric row={r} metricKey="extSma50" label="SMA50" value={pct(r.extSma50)} /></td>
+        <td><ListTrustMetric row={r} metricKey="weinsteinScore" label={metricShortLabel("weinsteinScore")} value={num(r.weinsteinScore ?? r.snapshot?.weinsteinScore)} /></td>
+        <td><ListTrustMetric row={r} metricKey="minerviniScore" label={metricShortLabel("minerviniScore")} value={num(r.minerviniScore ?? r.snapshot?.minerviniScore)} /></td>
+        <td><ListTrustMetric row={r} metricKey="rsQualityScore" label={metricShortLabel("rsQualityScore")} value={num(r.rsQualityScore ?? r.snapshot?.rsQualityScore)} /></td>
+        <td><ListTrustMetric row={r} metricKey="weaknessScore" label={metricShortLabel("weaknessScore")} value={num(weaknessScore(r))} /></td>
+        <td><ListTrustMetric row={r} metricKey="riskScore" label={metricShortLabel("riskScore")} value={num(r.riskScore ?? r.snapshot?.riskScore)} /></td>
+        <td className="ticker"><ListTrustMetric row={r} metricKey={scoreKey} label={metricShortLabel(scoreKey)} value={num(Number.isFinite(metricValue(r, scoreKey)) ? metricValue(r, scoreKey) : (r.snapshot?.objectiveScore ?? r.snapshot?.totalScore))} /></td>
+      </tr>;
+      })}{!rows.length && <tr><td colSpan="13">{emptyLabel}</td></tr>}</tbody>
     </table>
   </div>;
   const mobileRows = <div className="listMobileRows">
-    {visibleRows.map((r) => <a className="listMobileRow" key={`${title}-${r.symbol}`} href={stockUrl(r.symbol)}>
+    {visibleRows.map((r) => {
+      const trustSignature = listRowTrustSignature(r);
+      return <a className="listMobileRow" key={`${title}-${r.symbol}`} href={stockUrl(r.symbol)}>
       <div className="listMobileRowTop">
-        <span><b>{r.symbol}</b><em>{r.companyName || r.symbol}</em></span>
-        <strong>{num(Number.isFinite(metricValue(r, scoreKey)) ? metricValue(r, scoreKey) : r.snapshot?.totalScore)}</strong>
+        <span><b>{r.symbol}</b><em>{r.companyName || r.symbol}</em><DecisionTraceBadge resolution={decisionResolutionForRow(r, reviewState)} /></span>
+        <strong><ListTrustMetric row={r} metricKey={scoreKey} label={metricShortLabel(scoreKey)} value={num(Number.isFinite(metricValue(r, scoreKey)) ? metricValue(r, scoreKey) : (r.snapshot?.objectiveScore ?? r.snapshot?.totalScore))} /></strong>
       </div>
+      <RowTrustSignature signature={trustSignature} className="listMobileTrustSignature" />
       <div className="listMobileSpark"><ListSparkline row={r} chartsCache={chartsCache} /></div>
       <div className="listMobileFacts">
-        <span>3M <b>{pct(r.perf3m ?? r.snapshot?.perf3m)}</b></span>
-        <span>52w <b>{pct(r.distance52w)}</b></span>
-        <span>RSQ <b>{num(r.rsQualityScore ?? r.snapshot?.rsQualityScore)}</b></span>
-        <span>Riesgo <b>{num(r.riskScore ?? r.snapshot?.riskScore)}</b></span>
+        <span>3M <b><ListTrustMetric row={r} metricKey="perf3m" label="3M" value={pct(r.perf3m ?? r.snapshot?.perf3m)} /></b></span>
+        <span>52w <b><ListTrustMetric row={r} metricKey="distance52w" label="52w" value={pct(r.distance52w)} /></b></span>
+        <span>RSQ <b><ListTrustMetric row={r} metricKey="rsQualityScore" label={metricShortLabel("rsQualityScore")} value={num(r.rsQualityScore ?? r.snapshot?.rsQualityScore)} /></b></span>
+        <span>Riesgo <b><ListTrustMetric row={r} metricKey="riskScore" label={metricShortLabel("riskScore")} value={num(r.riskScore ?? r.snapshot?.riskScore)} /></b></span>
       </div>
       <p>{shortBusiness(r) || r.theme || r.snapshot?.theme || "Sin contexto"}</p>
       <span className="listMobileReason">{listInclusionSummary(r, listKey)}</span>
-    </a>)}
+    </a>;
+    })}
     {!rows.length && <div className="listMobileEmpty">{emptyLabel}</div>}
   </div>;
 
@@ -371,6 +454,7 @@ export default function ListsPage() {
   const [discoveryError, setDiscoveryError] = useState("");
   const [discoveryLoading, setDiscoveryLoading] = useState(false);
   const [savedListViews, setSavedListViews] = useState([]);
+  const [reviewState, setReviewState] = useState({});
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -378,13 +462,36 @@ export default function ListsPage() {
     const loadedScans = (Array.isArray(storedScans) ? storedScans : []).filter((scan) => scan?.id !== "seed-scan-01");
     const loadedFavorites = safeRead(STORAGE_KEYS.favorites, []);
     const loadedListViews = normalizeSavedListViews(safeRead(STORAGE_KEYS.listViews, []));
+    const loadedReview = safeRead(STORAGE_KEYS.review, {});
 
     setScans(loadedScans);
     safeWrite(STORAGE_KEYS.scans, loadedScans);
     setFavorites(loadedFavorites);
     setSavedListViews(loadedListViews);
+    setReviewState(loadedReview);
     setFilter(queryState());
     setLoaded(true);
+  }, []);
+  useEffect(() => {
+    function refreshReviewState() {
+      setReviewState(safeRead(STORAGE_KEYS.review, {}));
+    }
+    function handleStorage(event) {
+      if (!event.key || event.key === STORAGE_KEYS.review) refreshReviewState();
+    }
+    function handleVisibility() {
+      if (document.visibilityState === "visible") refreshReviewState();
+    }
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("focus", refreshReviewState);
+    window.addEventListener("pageshow", refreshReviewState);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("focus", refreshReviewState);
+      window.removeEventListener("pageshow", refreshReviewState);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
 
   useEffect(() => {
@@ -392,19 +499,25 @@ export default function ListsPage() {
     let alive = true;
     setDiscoveryError("");
     setDiscoveryLoading(true);
-    fetchJsonWithTimeout(scopedDiscoveryPath(filter), 18000)
-      .then((payload) => {
-        if (alive) setDiscovery(payload);
-      })
-      .catch((error) => {
-        if (!alive) return;
-        setDiscovery(null);
-        setDiscoveryError(error.name === "AbortError" ? "timeout" : error.message || "Sin respuesta");
-      })
-      .finally(() => {
-        if (alive) setDiscoveryLoading(false);
-      });
-    return () => { alive = false; };
+    const timer = window.setTimeout(() => {
+      if (!alive) return;
+      fetchJsonWithTimeout(scopedDiscoveryPath(filter), 8000)
+        .then((payload) => {
+          if (alive) setDiscovery(payload);
+        })
+        .catch((error) => {
+          if (!alive) return;
+          setDiscovery(null);
+          setDiscoveryError(error.name === "AbortError" ? "timeout" : error.message || "Sin respuesta");
+        })
+        .finally(() => {
+          if (alive) setDiscoveryLoading(false);
+        });
+    }, 1400);
+    return () => {
+      alive = false;
+      window.clearTimeout(timer);
+    };
   }, [loaded, filter.groupType, filter.group]);
 
   const latest = scans[0];
@@ -425,17 +538,17 @@ export default function ListsPage() {
   const longRows = useMemo(() => rows.filter((row) => isLongOpportunityRow(row)), [rows]);
   const trendTemplateRows = useMemo(() => rows.filter((row) => isLongOpportunityRow(row, { requireTrendTemplate: true })), [rows]);
 
-  const leaders = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "leaders") ? discoveryListRows.leaders : sortByMetric(longRows.filter((r) => rowPassesListContract(r, "leaders")), "totalScore"), [useDiscovery, discoveryListRows, longRows]);
+  const leaders = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "leaders") ? discoveryListRows.leaders : sortByMetric(longRows.filter((r) => rowPassesListContract(r, "leaders")), "objectiveScore"), [useDiscovery, discoveryListRows, longRows]);
   const rsQuality = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "rsQuality") ? discoveryListRows.rsQuality : sortByMetric(longRows.filter((r) => rowPassesListContract(r, "rsQuality")), "rsQualityScore"), [useDiscovery, discoveryListRows, longRows]);
   const weakness = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "weakness") ? discoveryListRows.weakness : sortByMetric(rows.filter((r) => rowPassesListContract(r, "weakness")), "weaknessScore"), [useDiscovery, discoveryListRows, rows]);
   const weinstein = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "weinstein") ? discoveryListRows.weinstein : sortByMetric(trendTemplateRows.filter((r) => rowPassesListContract(r, "weinstein")), "weinsteinScore"), [useDiscovery, discoveryListRows, trendTemplateRows]);
   const minervini = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "minervini") ? discoveryListRows.minervini : sortByMetric(trendTemplateRows.filter((r) => rowPassesListContract(r, "minervini")), "minerviniScore"), [useDiscovery, discoveryListRows, trendTemplateRows]);
-  const nearPivot = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "nearPivot") ? discoveryListRows.nearPivot : longRows.filter((r) => rowPassesListContract(r, "nearPivot")).sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0)), [useDiscovery, discoveryListRows, longRows]);
+  const nearPivot = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "nearPivot") ? discoveryListRows.nearPivot : longRows.filter((r) => rowPassesListContract(r, "nearPivot")).sort((a, b) => (b.objectiveScore ?? b.totalScore ?? 0) - (a.objectiveScore ?? a.totalScore ?? 0)), [useDiscovery, discoveryListRows, longRows]);
   const ipo = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "ipo") ? discoveryListRows.ipo : longRows.filter((r) => rowPassesListContract(r, "ipo")).sort((a, b) => (b.ipoScore || 0) - (a.ipoScore || 0)), [useDiscovery, discoveryListRows, longRows]);
-  const extended = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "extended") ? discoveryListRows.extended : longRows.filter((r) => rowPassesListContract(r, "extended")).sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0)), [useDiscovery, discoveryListRows, longRows]);
-  const pullback = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "pullback") ? discoveryListRows.pullback : longRows.filter((r) => rowPassesListContract(r, "pullback")).sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0)), [useDiscovery, discoveryListRows, longRows]);
+  const extended = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "extended") ? discoveryListRows.extended : longRows.filter((r) => rowPassesListContract(r, "extended")).sort((a, b) => (b.objectiveScore ?? b.totalScore ?? 0) - (a.objectiveScore ?? a.totalScore ?? 0)), [useDiscovery, discoveryListRows, longRows]);
+  const pullback = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "pullback") ? discoveryListRows.pullback : longRows.filter((r) => rowPassesListContract(r, "pullback")).sort((a, b) => (b.objectiveScore ?? b.totalScore ?? 0) - (a.objectiveScore ?? a.totalScore ?? 0)), [useDiscovery, discoveryListRows, longRows]);
   const listSections = useMemo(() => [
-    { key: "leaders", title: "Composite Leaders", desc: "Ranking principal", rows: leaders, contractRejected: discoveryRejectedByKey.leaders || 0 },
+    { key: "leaders", title: "Calidad objetiva", desc: "Ranking principal sin bonus VCP", rows: leaders, contractRejected: discoveryRejectedByKey.leaders || 0 },
     { key: "rsQuality", title: "RS Quality Leaders", desc: "RS alto con volatilidad/drawdown controlados", rows: rsQuality, scoreKey: "rsQualityScore", contractRejected: discoveryRejectedByKey.rsQuality || 0 },
     { key: "weakness", title: "Deterioro técnico", desc: "Debilidad observable para evitar largos o estudiar cortos", rows: weakness, scoreKey: "weaknessScore", contractRejected: discoveryRejectedByKey.weakness || 0 },
     { key: "weinstein", title: "Weinstein Leaders", desc: "Mejor estructura de etapa/tendencia", rows: weinstein, scoreKey: "weinsteinScore", contractRejected: discoveryRejectedByKey.weinstein || 0 },
@@ -462,6 +575,7 @@ export default function ListsPage() {
       scopeValue: filter.group || "",
     });
   }, [useDiscovery, discovery, rows, listSections, filter.groupType, filter.group]);
+  const decisionTraceability = useMemo(() => buildDecisionTraceabilitySummary([...rows, ...favoritesAsRows], reviewState), [rows, favoritesAsRows, reviewState]);
 
   // Recolectar todos los tickers visibles únicos en pantalla (top 18 de cada lista)
   const visibleTickers = useMemo(() => {
@@ -505,14 +619,7 @@ export default function ListsPage() {
 
         await Promise.all(batch.map(async (symbol) => {
           try {
-            const res = await fetch(`/api/chart?symbol=${encodeURIComponent(symbol)}`);
-            if (!res.ok) {
-              if (active) {
-                setChartsCache((prev) => ({ ...prev, [symbol]: null })); // Indicar error para usar fallback armónico
-              }
-              return;
-            }
-            const data = await res.json();
+            const data = await getJson(`/api/chart?symbol=${encodeURIComponent(symbol)}`, { timeoutMs: 12000 });
             const rawBars = data.bars || [];
             if (rawBars.length >= 2) {
               const preview = chartPreviewBars(rawBars);
@@ -594,7 +701,7 @@ export default function ListsPage() {
 
     <section className="card hero">
       <div className="heroTop">
-        <div><div className="badge">StageRadar · Listas</div><h1>Listas rápidas</h1><p className="muted">Líderes, favoritos y setups desde discovery derivado o snapshot local.</p></div>
+        <div><div className="badge">StatsEdge · Listas</div><h1>Listas rápidas</h1><p className="muted">Líderes, favoritos y setups desde discovery derivado o snapshot local.</p></div>
         <div className="mobileActions"><a className="btn" href="/">Screener</a><a className="btn" href="/review?source=latest">Vista rapida</a><a className="btn" href="/ipo-radar">IPO Radar</a><a className="btn" href="/research-desk">Research</a><a className="btn btnPrimary" href="/sectors">Sectores</a></div>
       </div>
     </section>
@@ -602,18 +709,20 @@ export default function ListsPage() {
     <DiscoveryHealthPanel data={discovery} error={discoveryError} loading={discoveryLoading} usingDiscovery={useDiscovery} localRows={localRows.length} filter={filter} />
     <CoverageAuditPanel audit={coverageAudit} />
     <ListScopeSummary filter={filter} rowsCount={rows.length} rankingAppearances={rankingAppearances} activeRankingCount={activeRankingCount} savedView={activeSavedView} useDiscovery={useDiscovery} discoveryLoading={discoveryLoading} />
+    <DecisionTracePanel summary={decisionTraceability} detail="Resoluciones de Review/Ficha detectadas en las listas y favoritos visibles." />
     <SavedListViewsPanel views={savedListViews} currentSignature={currentListViewSignature} onSave={saveCurrentListView} onDelete={deleteSavedListView} />
     {filter.group && <section className="card status">Filtro activo: <b>{filter.groupType} = {filter.group}</b> · <a className="ticker" href="/lists">limpiar</a></section>}
     {showEmptyState ? <ListsEmptyState loading={!loaded || discoveryLoading} hasSnapshot={localRows.length > 0 || scans.length > 0} discoveryError={discoveryError} /> : <>
-      {favoritesAsRows.length > 0 ? <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} chartsCache={chartsCache} listKey="favorites" collapsible={false} emptyLabel={loaded ? "Sin favoritos guardados." : "Cargando listas..."} /> : null}
+      {favoritesAsRows.length > 0 ? <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} chartsCache={chartsCache} reviewState={reviewState} listKey="favorites" collapsible={false} emptyLabel={loaded ? "Sin favoritos guardados." : "Cargando listas..."} /> : null}
       {listSections.map((section) => <MiniTable
         key={section.key}
         title={section.title}
         desc={section.desc}
         rows={section.rows}
         chartsCache={chartsCache}
+        reviewState={reviewState}
         listKey={section.key}
-        scoreKey={section.scoreKey || "totalScore"}
+        scoreKey={section.scoreKey || "objectiveScore"}
         contractRejected={section.contractRejected || 0}
         emptyLabel={loaded ? "Sin datos." : "Cargando listas..."}
       />)}

@@ -1,6 +1,6 @@
 # VCP Operational Specification
 
-This spec translates Mark Minervini-style Volatility Contraction Pattern evidence into Statsedge rules. It is intentionally conservative: the app should classify evidence, not claim a trade setup when the structure is only a normal advance with small pullbacks.
+This spec translates Mark Minervini-style Volatility Contraction Pattern evidence into StatsEdge rules. It is intentionally conservative: the app should classify evidence, not claim a trade setup when the structure is only a normal advance with small pullbacks.
 
 ## Research Basis
 

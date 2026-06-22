@@ -1,10 +1,10 @@
 # Filter Contract Audit
 
 Dataset version: 1
-Cases: 230 · Passed: 230 · Failed: 0
-Synthetic: 223 · Frozen: 7
+Cases: 233 · Passed: 232 · Failed: 1
+Synthetic: 226 · Frozen: 7
 Visible fields covered: 62/62
-Guardrails: OK
+Guardrails: maxFailures expected <= 0, actual 1
 Exactness probe: OK · passed RS90 · rejected RS89
 
 ## Area Summary
@@ -15,8 +15,8 @@ Exactness probe: OK · passed RS90 · rejected RS89
 | synthetic-boundary | 108 | 0 |
 | synthetic-distance | 12 | 0 |
 | synthetic-mode | 18 | 0 |
-| synthetic-null | 64 | 0 |
-| synthetic-special | 21 | 0 |
+| synthetic-null | 64 | 1 |
+| synthetic-special | 24 | 0 |
 
 ## Matrix
 
@@ -181,9 +181,9 @@ OK | synthetic-null | minVolumeScore-null-reject | minVolumeScore | volumeScore 
 OK | synthetic-boundary | minLiquidityScore-boundary-pass | minLiquidityScore | liquidityScore | 60 | 60 | pass | pass | - | -
 OK | synthetic-boundary | minLiquidityScore-below-reject | minLiquidityScore | liquidityScore | 60 | 59.9 | reject minLiquidityScore | reject | minLiquidityScore | liquidity score 59.90 < 60
 OK | synthetic-null | minLiquidityScore-null-reject | minLiquidityScore | liquidityScore | 60 | null | reject minLiquidityScore | reject | minLiquidityScore | liquidity score sin dato
-OK | synthetic-boundary | minTotalScore-boundary-pass | minTotalScore | totalScore | 85 | 85 | pass | pass | - | -
-OK | synthetic-boundary | minTotalScore-below-reject | minTotalScore | totalScore | 85 | 84.9 | reject minTotalScore | reject | minTotalScore | composite 84.90 < 85
-OK | synthetic-null | minTotalScore-null-reject | minTotalScore | totalScore | 85 | null | reject minTotalScore | reject | minTotalScore | composite sin dato
+OK | synthetic-boundary | minTotalScore-boundary-pass | minTotalScore | objectiveScore | 85 | 85 | pass | pass | - | -
+OK | synthetic-boundary | minTotalScore-below-reject | minTotalScore | objectiveScore | 85 | 84.9 | reject minTotalScore | reject | minTotalScore | calidad objetiva 84.90 < 85
+FAIL | synthetic-null | minTotalScore-null-reject | minTotalScore | objectiveScore | 85 | null | reject minTotalScore | pass | - | -
 OK | synthetic-distance | maxDistance20dHigh-drawdown-boundary-pass | maxDistance20dHigh | distance20d | 12 | -12 | pass | pass | - | -
 OK | synthetic-distance | maxDistance20dHigh-positive-extension-pass | maxDistance20dHigh | distance20d | 12 | 2 | pass | pass | - | -
 OK | synthetic-distance | maxDistance20dHigh-beyond-drawdown-reject | maxDistance20dHigh | distance20d | 12 | -12.1 | reject maxDistance20dHigh | reject | maxDistance20dHigh | distancia 20d -12.10 < -12
@@ -222,6 +222,9 @@ OK | synthetic-special | pattern-data-blocked-rejects-structure-filter | pattern
 OK | synthetic-special | pattern-invalid-structure-rejects-count-pass | contractionStructureStatus | contractionStructureStatus | pattern active | lower_low_drift | reject contractionStructureStatus | reject | contractionStructureStatus | mínimos no sostienen la base
 OK | synthetic-special | pattern-valid-structure-allows-count-pass | contractionStructureStatus | contractionStructureStatus | pattern active | ok | pass | pass | - | -
 OK | synthetic-special | pattern-partial-volume-rejects-dry-up-filter | patternDataStatus | patternVolumeEligible | maxVolumeDryUpRatio | partial_volume | reject patternDataStatus | reject | patternDataStatus | volumen no fiable para validar volumen seco
+OK | synthetic-special | pattern-display-data-limited-rejects-count-filter | patternDataStatus | setupDisplayDataLimited | pattern active | 1 | reject patternDataStatus | reject | patternDataStatus | estructura no fiable: claim bloqueado por datos parciales
+OK | synthetic-special | pattern-partial-volume-allows-ohlc-count-filter | minContractionCount | partial volume + OHLC contractions | 3 | 3 | pass | pass | - | -
+OK | synthetic-special | pattern-blocked-full-claim-rejects-quality-filter | patternDataStatus | blocked pattern quality | 65 | 96 | reject patternDataStatus | reject | patternDataStatus | claim de patrón bloqueado por fiabilidad
 OK | synthetic-special | requireStage2-confirmed-pass | requireStage2 | stage2 structure | 1 | confirmed | pass | pass | - | -
 OK | synthetic-special | requireStage2-broken-stack-reject | requireStage2 | sma stack | 1 | sma50<sma150 | reject requireStage2 | reject | requireStage2 | SMA50 diaria no supera SMA150
 OK | synthetic-special | requireRecentIpo-age-boundary-pass | maxIpoAgeMonths | ipoAgeMonths | 12 | 12 | pass | pass | - | -

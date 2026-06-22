@@ -1,69 +1,49 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import ChartPreferences from "@/app/ChartPreferences";
-import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
+import RowTrustSignature from "@/app/RowTrustSignature";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
-import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
-import { getJson, postJson } from "@/lib/clientApi";
-import { getLatestScanFromCloud, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
+import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
+import { getJson } from "@/lib/clientApi";
 import { assetDomainForName, assetDomainForSymbol } from "@/lib/companyAssets";
 import { pct } from "@/lib/formatters";
-import { avg, avgVolume, clamp } from "@/lib/indicators";
-import { safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { clamp } from "@/lib/indicators";
 import { metricShortLabel } from "@/lib/metricCatalog";
-import { alertsFromScan, mergeAlerts } from "@/lib/methodologyAlerts";
-import { methodologyCompactDetailLine, methodologyCompactReasonLine, methodologyDisplayForRow, methodologySetupLabel, methodologyTradePlanEligible } from "@/lib/methodologyDisplay";
-import { enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
+import { methodologyCompactDetailLine, methodologyCompactReasonLine, methodologySetupLabel, methodologyTradePlanEligible } from "@/lib/methodologyDisplay";
+import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
 import { rowPassesListContract } from "@/lib/listRationale";
-import { qualityGateForResearchRow } from "@/lib/qualityGate";
-import { benchmarkSymbolForRow, rsUniverseValue } from "@/lib/relativeStrength";
-import { applyRelativeStrength, buildResearchRow, compactBusinessSummary, dataCoverageForRow, domainFromUrl } from "@/lib/researchRow";
-import { compositeLabel, gt, gte, ipoAgeMonthsForRow, isStage2, lte, volumeEvidence } from "@/lib/scoring";
-import { ASIA, CORE_LAYER_KEYS, DEFAULT_MARKETS, DEFAULT_RESULT_PAGE_SIZE, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, EUROPE, FULL_SCAN_PARTIAL_EVERY, GLOBAL_INDEX_TAPE, MARKET_META, MARKET_ORDER, MARKETS, marketExchange, marketName, normalizeSectorStrength, OPTIONAL_LAYER_KEYS, RESULT_PAGE_SIZES, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, SECTOR_STRENGTH_LABELS, SECTOR_STRENGTH_OPTIONS, SERVER_SCAN_POLL_MS, SORT_LABELS, USER_TEMPLATE_LIMIT, VIEW_LAYERS } from "@/lib/screenerConfig";
-import { cachedScreenerQuery, cachedScreenerRow, compactRowForSession, compactRowsForSession, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, secondsLabel, sectorize, setupModeLabel, shuffle, sortMetric, spreadByInitial, stageLabel, uid, universeScopeKey } from "@/lib/screenerPipeline";
-import {
-  ALL_FILTER_LAYERS,
-  DEFAULT_FIELD_RULES,
-  DEFAULT_FILTER_LAYERS,
-  EXECUTION_LAYERS,
-  FILTER_FAMILY_PRESETS,
-  FILTER_FIELDS,
-  FILTER_GROUPS,
-  NEUTRAL_FIELD_VALUES,
-  REGIME_LAYER,
-  SCREENER_ALL_SYMBOLS_LIMIT as ALL_SYMBOLS_LIMIT,
-  SCREENER_FILTER_PRESETS as PRESETS,
-  SETTING_LAYER_DEPENDENCIES,
-  filterLayersForPreset,
-  filterStrictnessForPreset,
-  settingsForPreset,
-  setupModeDefaults,
-  setupModeLayerRequirements,
-} from "@/lib/screenerFilterCatalog";
-import {
-  effectiveSettingsFromLayers,
-  fieldLayerKeys,
-  inactiveFieldReason,
-  inactiveSettingReason,
-  isFieldRuleActive,
-  settingApplies,
-  settingLayerDependency,
-} from "@/lib/screenerFilterLayers";
+import { rsUniverseValue } from "@/lib/relativeStrength";
+import { compactBusinessSummary, domainFromUrl } from "@/lib/researchRow";
+import { compositeLabel, gt, gte, ipoAgeMonthsForRow, isStage2, lte } from "@/lib/scoring";
+import { CORE_LAYER_KEYS, DEFAULT_RESULT_PAGE_SIZE, GLOBAL_INDEX_TAPE, marketName, OPTIONAL_LAYER_KEYS, RESULT_PAGE_SIZES, SORT_LABELS, VIEW_LAYERS } from "@/lib/screenerConfig";
+import { buildDecisionEvidenceChecklist, decisionEvidenceFilterLabel, decisionEvidenceMatchesFilter, explainScreenerRank } from "@/lib/screenerExplainability";
+import { sortMetric, stageLabel } from "@/lib/screenerPipeline";
+import { DEFAULT_FILTER_LAYERS, EXECUTION_LAYERS, FILTER_FAMILY_PRESETS, FILTER_FIELDS, NEUTRAL_FIELD_VALUES, REGIME_LAYER, SCREENER_FILTER_PRESETS as PRESETS, SETTING_LAYER_DEPENDENCIES } from "@/lib/screenerFilterCatalog";
+import { fieldLayerKeys, inactiveFieldReason, inactiveSettingReason, isFieldRuleActive, settingApplies } from "@/lib/screenerFilterLayers";
 import { buildScreenerFilterExplainPlan } from "@/lib/screenerFilters";
-import { buildScreenerContract, buildScreenerStockContext } from "@/lib/screenerContracts";
-import { createFavoriteFromRow } from "@/lib/stockRows";
+import { auditDecisionRowIssues, decisionConfidenceLabel, decisionConfidenceSummary, decisionPriorityBreakdown } from "@/lib/decisionAudit";
+import { DECISION_PROFILE_ORDER, buildReviewProfileSummary, decisionProfileForRow, decisionProfileLabel, prepareReviewQueueRows, reviewPriorityForRow, reviewProfileMeta } from "@/lib/decisionProfile";
+import { buildScreenerDataHealth, dataHealthFilterLabel, dataHealthMatchesFilter } from "@/lib/screenerDataHealth";
+import { buildScreenerDecisionBrief } from "@/lib/screenerDecisionBrief";
+import { RELIABILITY_FILTER_ALL, screenerReliabilityMatchesFilter } from "@/lib/screenerReliability";
+import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditMatchesFilter, scoreAuditReviewReasons } from "@/lib/screenerScoreAudit";
 import { countryCode, countryName, externalLinks, isTradingViewWidgetBlocked, marketFlag, stockUrl } from "@/lib/symbols";
-import { vcpObjectiveSummary } from "@/lib/vcpDiagnostics";
+import { vcpObjectiveSummary, vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
+import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
 
-// app/screenerPanels.jsx — helpers de presentación y componentes del screener,
-// extraídos verbatim de app/page.jsx. El import block se hereda de page.jsx;
-// los nombres no usados aquí son inofensivos.
+// app/screenerPanels.jsx — helpers de presentación y componentes del screener.
+// Secciones: formato/texto · tarjetas y charts · móvil · tablas de resultados ·
+// paneles de filtros. Solo presentación: la lógica vive en lib/screenerPipeline.
 const money = (n, currency = "") => Number.isFinite(n) ? `${n >= 100 ? n.toFixed(0) : n.toFixed(2)}${currency ? ` ${currency}` : ""}` : "-";
 const cap = (n) => Number.isFinite(n) && n > 0 ? n >= 1000000000000 ? `${(n / 1000000000000).toFixed(2)}T` : n >= 1000000000 ? `${(n / 1000000000).toFixed(1)}B` : n >= 1000000 ? `${(n / 1000000).toFixed(0)}M` : `${n.toFixed(0)}` : "-";
 const amount = (n, currency = "") => Number.isFinite(n) && n > 0 ? `${cap(n)}${currency ? ` ${currency}` : ""}` : "-";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const searchText = (value = "") => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+const decisionConfidenceForRow = (row = {}, settingsOrExplanation = {}) => decisionConfidenceSummary(row, settingsOrExplanation);
+function decisionResolutionForRow(row = {}, decisionResolutions = {}) {
+  const symbol = String(row?.symbol || "").trim().toUpperCase();
+  return symbol ? decisionResolutions?.[symbol] || null : null;
+}
 function investorStatusLabel(text = "") {
   return String(text || "")
     .replaceAll("Supabase", "nube")
@@ -81,6 +61,129 @@ function InfoHint({ text, tone = "" }) {
   </span>;
 }
 const ratioLabel = (n) => Number.isFinite(n) ? `${n.toFixed(2)}x` : "-";
+function DecisionConfidenceBadge({ confidence = null, compact = false }) {
+  if (!confidence) return null;
+  const score = Number(confidence.score);
+  const title = [confidence.detail, Number.isFinite(score) ? `Confianza ${confidence.label} ${Math.round(score)}` : confidence.label].filter(Boolean).join(" · ");
+  return <span className={`decisionConfidenceBadge ${compact ? "compact" : ""} ${confidence.tone || ""}`} title={title}>
+    <b>{confidence.label || decisionConfidenceLabel(confidence.key, "Confianza")}</b>
+    {Number.isFinite(score) ? <em>{Math.round(score)}</em> : null}
+  </span>;
+}
+
+function DecisionResolutionBadge({ resolution = null, className = "" }) {
+  if (!resolution) return null;
+  const label = resolution.label || "Resuelta";
+  return <span
+    className={`reviewQueueResolutionBadge ${resolution.tone || "neutral"} ${className}`.trim()}
+    title={`Decision guardada: ${label}`}
+  >
+    {label}
+  </span>;
+}
+
+function priorityTooltip(priority = null) {
+  if (!priority) return "";
+  const parts = (priority.components || []).map((item) => {
+    const value = Number(item.value);
+    const sign = Number.isFinite(value) && value >= 0 ? "+" : "";
+    return `${item.label} ${sign}${Number.isFinite(value) ? Math.round(value) : "-"}`;
+  });
+  if (priority.issuePenalty) parts.push(`issues -${Math.round(priority.issuePenalty)}`);
+  return [`Prioridad decision ${Math.round(priority.score || 0)}`, ...parts].join(" · ");
+}
+
+function DecisionPriorityBadge({ priority = null, compact = false }) {
+  const score = Number(priority?.score);
+  if (!Number.isFinite(score)) return null;
+  return <span className={`decisionPriorityBadge ${compact ? "compact" : ""}`} title={priorityTooltip(priority)}>
+    <b>Pri</b>
+    <em>{Math.round(score).toLocaleString("es-ES")}</em>
+  </span>;
+}
+
+function DecisionEvidenceChecklist({ evidence = null, compact = false, activeKey = "all", onFilter }) {
+  const items = Array.isArray(evidence?.pending) && evidence.pending.length
+    ? evidence.pending
+    : Array.isArray(evidence?.items) ? evidence.items.filter((item) => item.status === "confirmed") : [];
+  if (!items.length) return null;
+  const label = evidence?.pending?.length ? "Pruebas pendientes" : "Pruebas confirmadas";
+  const filterKey = evidence?.status || "all";
+  const canFilter = compact && filterKey !== "all" && typeof onFilter === "function";
+  const active = activeKey === filterKey;
+  const className = `decisionEvidenceChecklist ${compact ? "compact" : ""} ${evidence?.tone || ""} ${canFilter ? "compactTrustFilter" : ""} ${active ? "active" : ""}`.trim();
+  const reviewFocus = Array.isArray(evidence?.reviewFocus) ? evidence.reviewFocus.filter((item) => item?.label || item?.key).slice(0, 2) : [];
+  const compactLabel = filterKey === "complete"
+    ? "OK"
+    : filterKey === "blocked"
+      ? "Bloq."
+      : filterKey === "needs-work"
+        ? "Validar"
+        : evidence?.pending?.length ? "Revisar" : "OK";
+  const compactTitle = [
+    label,
+    Number.isFinite(evidence?.passedCount) && Number.isFinite(evidence?.totalCount) ? `${evidence.passedCount}/${evidence.totalCount}` : "",
+    items.slice(0, 4).map((item) => [item.label, item.statusLabel || item.status, item.detail].filter(Boolean).join(": ")).join(" · "),
+    reviewFocus.map((item) => [item.label, item.action || item.detail].filter(Boolean).join(": ")).join(" · "),
+    canFilter ? `Filtrar similares: ${decisionEvidenceFilterLabel(filterKey)}` : "",
+  ].filter(Boolean).join(" · ");
+  if (compact) {
+    const body = <>
+      <span>
+        <b>Pruebas</b>
+        <em>{compactLabel}</em>
+      </span>
+      {items.length > 1 ? <i>{items.length}</i> : null}
+    </>;
+    if (canFilter) {
+      return <button
+        type="button"
+        className={className}
+        aria-label={`Filtrar resultados por pruebas: ${decisionEvidenceFilterLabel(filterKey)}`}
+        aria-pressed={active}
+        title={compactTitle}
+        onClick={(event) => { event.stopPropagation(); onFilter(filterKey); }}
+      >
+        {body}
+      </button>;
+    }
+    return <span className={className} title={compactTitle}>{body}</span>;
+  }
+  const body = <>
+    <span>{label}<em>{Number.isFinite(evidence?.passedCount) && Number.isFinite(evidence?.totalCount) ? `${evidence.passedCount}/${evidence.totalCount}` : ""}</em></span>
+    <div>
+      {items.slice(0, compact ? 2 : 4).map((item) => <strong key={item.key || item.label} className={item.tone || ""} title={item.detail || undefined}>
+        <b>{item.label}</b>
+        <em>{item.statusLabel || item.status}</em>
+      </strong>)}
+    </div>
+    {!compact && reviewFocus.length ? <section className="decisionEvidenceReviewFocus" aria-label="Foco de revision metodologica">
+      <span>{evidence?.manualReviewRequired ? "Foco revision" : "Contexto observado"}</span>
+      {reviewFocus.map((item) => {
+        const visibleDetail = item.detail || item.statusLabel || item.status || "Validar";
+        const fullDetail = [item.action, item.detail].filter(Boolean).join(" · ") || undefined;
+        return <p key={`review-${item.key || item.label}`} className={item.tone || "neutral"} title={fullDetail}>
+          <b>{item.label}</b>
+          <em>{visibleDetail}</em>
+        </p>;
+      })}
+    </section> : null}
+    {canFilter ? <i>{active ? "Filtro activo" : `Filtrar ${decisionEvidenceFilterLabel(filterKey, { compact: true })}`}</i> : null}
+  </>;
+  if (canFilter) {
+    return <button
+      type="button"
+      className={className}
+      aria-label={`Filtrar resultados por pruebas: ${decisionEvidenceFilterLabel(filterKey)}`}
+      aria-pressed={active}
+      title={`Filtrar similares: ${decisionEvidenceFilterLabel(filterKey)}`}
+      onClick={(event) => { event.stopPropagation(); onFilter(filterKey); }}
+    >
+      {body}
+    </button>;
+  }
+  return <div className={className} aria-label="Pruebas de decision">{body}</div>;
+}
 function verifiedIpoCategory(row = {}) {
   if (!rowPassesListContract(row, "ipo")) return "";
   return String(row.ipoCategory || row.snapshot?.ipoCategory || "IPO verificable").trim() || "IPO verificable";
@@ -108,6 +211,7 @@ function quickBusinessMarket(row = {}) {
   return [marketName(row.country), row.exchange].filter((value, index, arr) => value && value !== "-" && arr.indexOf(value) === index).join(" · ") || "-";
 }
 
+/* ── Tarjetas, sparklines y charts de preview ── */
 function chartPath(points, key, x, y) {
   let open = false;
   return points.map((p, i) => {
@@ -230,17 +334,29 @@ function LeaderTape({ rows = [], activeRow, onSelect, onFavorite, favoriteSymbol
   const visible = rows.slice(0, 18);
   return <div className="leaderTape">
     <div className="leaderTapeHead">
-      <span>Symbol</span><span>{weaknessMode ? metricShortLabel("weaknessScore") : metricShortLabel("totalScore")}</span><span>{metricShortLabel("rsGlobalPct")}</span><span>{metricShortLabel("rsQualityScore")}</span><span>Setup</span><span>{metricShortLabel("volumeEffectScore")}</span>
+      <span>Symbol</span><span>{weaknessMode ? metricShortLabel("weaknessScore") : metricShortLabel("objectiveScore")}</span><span>{metricShortLabel("rsGlobalPct")}</span><span>{metricShortLabel("rsQualityScore")}</span><span>Setup</span><span>{metricShortLabel("volumeEffectScore")}</span>
     </div>
     {visible.map((row) => {
       const active = activeRow?.symbol === row.symbol;
       const rs = rsUniverseValue(row);
+      const rankExplain = explainScreenerRank(row, {});
+      const rowIssues = auditDecisionRowIssues(row, rankExplain);
+      const scoreAudit = buildScreenerScoreAudit(row);
+      const dataHealth = buildScreenerDataHealth(row, {});
+      const metricTruth = objectiveMetricCompactState(row);
+      const evidence = buildDecisionEvidenceChecklist(row, rankExplain);
+      const vcpReliability = vcpReliabilityAudit(row);
+      const trustSignature = buildRowTrustSignature({ dataHealth, metricTruth, scoreAudit, evidence, vcpReliability, rowIssues });
       return <div role="button" tabIndex={0} className={`leaderRow ${active ? "active" : ""}`} key={row.symbol} onClick={() => onSelect(row)} onKeyDown={(event) => { if (event.key === "Enter") onSelect(row); }}>
         <span className="leaderIdentity">
           <CompanyMark row={row} />
-          <span><b>{row.symbol}</b><em>{row.companyName}</em></span>
+          <span>
+            <b>{row.symbol}</b>
+            <em>{row.companyName}</em>
+            <RowTrustSignature signature={trustSignature} className="leaderTrustSignature" />
+          </span>
         </span>
-        <span><b className="miniRating">{weaknessMode ? row.weaknessScore?.toFixed(0) || "-" : row.compositeScore?.toFixed(0) || "-"}</b><small>{weaknessMode ? row.weaknessLabel || "Deterioro" : row.compositeLabel || "Watchlist"}</small></span>
+        <span><b className="miniRating">{weaknessMode ? row.weaknessScore?.toFixed(0) || "-" : row.objectiveScore?.toFixed(0) || row.compositeScore?.toFixed(0) || "-"}</b><small>{weaknessMode ? row.weaknessLabel || "Deterioro" : row.objectiveLabel || row.compositeLabel || "Watchlist"}</small></span>
         <span className={(rs ?? 0) >= 75 ? "scoreHot" : (rs ?? 0) >= 55 ? "scoreOk" : "scoreWeak"}>{Number.isFinite(rs) ? rs.toFixed(0) : "-"}</span>
         <span className={(row.rsQualityScore || 0) >= 70 ? "scoreHot" : (row.rsQualityScore || 0) >= 55 ? "scoreOk" : "scoreWeak"}>{row.rsQualityScore?.toFixed(0) || "-"}<small>{row.rsQualityLabel || "-"}</small></span>
         <span><i>{quickSetup(row)}</i><small>{row.theme}</small></span>
@@ -255,13 +371,13 @@ function LeaderTape({ rows = [], activeRow, onSelect, onFavorite, favoriteSymbol
 }
 
 function opportunityBuckets(rows = []) {
-  const sorted = (check, key = "totalScore") => rows.filter(check).sort((a, b) => sortMetric(b, key) - sortMetric(a, key));
+  const sorted = (check, key = "objectiveScore") => rows.filter(check).sort((a, b) => sortMetric(b, key) - sortMetric(a, key));
   const defs = [
     { key: "pivot", title: "Vigilancia pivot", note: "Setup observable", check: (r) => rowPassesListContract(r, "nearPivot") },
     { key: "stage2", title: "Stage 2 temprano", note: "Transición saludable", check: (r) => gt(r.price, r.sma200) && gte(r.sma200Slope, 0) && gte(r.distance52w, -35) && lte(r.extSma50, 18) && !isStage2(r) },
     { key: "pullback", title: "Pullback SMA50", note: "Descanso en tendencia", check: (r) => rowPassesListContract(r, "pullback") },
     { key: "rs", title: "RS", note: "Percentil del lote", check: (r) => (rsUniverseValue(r) ?? 0) >= 75 && gte(r.distance52w, -25) },
-    { key: "growth", title: "Growth Quality", note: "Crecimiento + margen", check: (r) => (r.growthScore || 0) >= 70 && (r.totalScore || 0) >= 64 },
+    { key: "growth", title: "Growth Quality", note: "Crecimiento + margen", check: (r) => (r.growthScore || 0) >= 70 && (r.objectiveScore ?? r.totalScore ?? 0) >= 64 },
     { key: "ipo", title: "IPO reales", note: "Últimos 5 años", check: (r) => rowPassesListContract(r, "ipo") },
     { key: "extended", title: "Extendidas fuertes", note: "Extensión alta", check: (r) => rowPassesListContract(r, "extended") },
     { key: "risk", title: "Riesgo a revisar", note: "Volatilidad/extensión", check: (r) => (r.riskScore || 0) < 45 || gt(r.extSma50, 28) || (r.speculationRiskScore || 0) >= 70 },
@@ -293,7 +409,7 @@ function OpportunityMap({ buckets = [], onSelect }) {
       <div className="opportunityTickers">
         {bucket.leaders.map((row) => <button type="button" key={row.symbol} onClick={() => onSelect?.(row)}>
           <CompanyMark row={row} size="sm" />
-          <span><strong>{row.symbol}</strong><em>{bucket.key === "weakness" ? row.weaknessScore?.toFixed(0) || "-" : row.totalScore?.toFixed(0) || "-"}</em></span>
+          <span><strong>{row.symbol}</strong><em>{bucket.key === "weakness" ? row.weaknessScore?.toFixed(0) || "-" : row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-"}</em></span>
         </button>)}
         {!bucket.leaders.length && <small>Sin candidatos</small>}
       </div>
@@ -369,6 +485,7 @@ function MarketMiniTape({ marketHealth }) {
   </section>;
 }
 
+/* ── Superficie móvil (tape, movers, lista de resultados) ── */
 function SetupChipRail({ rows = [], presetKey, setupMode, sort, onPreset, onMode, onSort }) {
   const counts = {
     stage2: rows.filter((row) => rowPassesListContract(row, "weinstein")).length,
@@ -413,17 +530,42 @@ function MobileTopMovers({ rows = [], onSelect }) {
   </section>;
 }
 
-function MobileResultRow({ row, settings, onReview, onFavorite, isFavorite, onOpenStock }) {
+function MobileResultRow({ row, settings, onReview, onFavorite, isFavorite, onOpenStock, activeIssueKey = "Todos", onDecisionIssueSelect, decisionResolutions = {} }) {
   const change = Number.isFinite(row.perf3m) ? row.perf3m : row.rs3m;
   const filterPlan = buildScreenerFilterExplainPlan(row, settings);
-  return <article className="mobileResultRow">
+  const rankExplain = explainScreenerRank(row, settings);
+  const rowIssues = auditDecisionRowIssues(row, rankExplain);
+  const confidence = decisionConfidenceForRow(row, rankExplain);
+  const resolution = decisionResolutionForRow(row, decisionResolutions);
+  const scoreAudit = buildScreenerScoreAudit(row);
+  const dataHealth = buildScreenerDataHealth(row, settings);
+  const metricTruth = objectiveMetricCompactState(row);
+  const evidence = buildDecisionEvidenceChecklist(row, rankExplain);
+  const vcpReliability = vcpReliabilityAudit(row);
+  const reviewFocus = buildRowReviewFocus({ dataHealth, metricTruth, scoreAudit, vcpReliability, evidence, rowIssues });
+  const trustSignature = buildRowTrustSignature({ dataHealth, metricTruth, scoreAudit, evidence, vcpReliability, rowIssues });
+  return <article className={`mobileResultRow ${resolution ? `resolved-${resolution.key}` : ""}`.trim()}>
     <button type="button" className={`mobileResultLogo ${isFavorite ? "fav" : ""}`} onClick={() => onFavorite(row)} aria-label={`Guardar favorito ${row.symbol}`}>
       <CompanyMark row={row} size="lg" />
     </button>
-    <Link className="mobileResultIdentity" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>
-      <b>{row.symbol}</b>
-      <span>{row.companyName}</span>
-    </Link>
+    <div className="mobileResultIdentity">
+      <Link href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>
+        <b>{row.symbol}</b>
+        <span>{row.companyName}</span>
+      </Link>
+      <div className="mobileResultBadges">
+        <DecisionResolutionBadge resolution={resolution} />
+        <ReviewFocusPill focus={reviewFocus} />
+        <DecisionConfidenceBadge confidence={confidence} compact />
+        <DataHealthPanel health={dataHealth} compact />
+        <ObjectiveMetricTruthPill state={metricTruth} />
+        <ScoreAuditPanel audit={scoreAudit} compact />
+        <DecisionIssueBadge issues={rowIssues} compact activeKey={activeIssueKey} onSelect={onDecisionIssueSelect} />
+      </div>
+      <div className="mobileResultTrustLine" aria-label={`Fiabilidad de ${row.symbol}`}>
+        <RowTrustSignature signature={trustSignature} />
+      </div>
+    </div>
     <button type="button" className="mobileResultSpark" onClick={() => onReview(row.symbol)} aria-label={`Revisar ${row.symbol}`}>
       <MiniSparkline bars={row.chartPreview || []} />
     </button>
@@ -431,31 +573,672 @@ function MobileResultRow({ row, settings, onReview, onFavorite, isFavorite, onOp
       <b>{money(row.price, row.currency)}</b>
       <span className={(change || 0) >= 0 ? "up" : "down"}>{pct(change)}</span>
     </Link>
-    <InfoHint text={filterPlan.text} tone={filterPlan.tone} />
+    <InfoHint text={[rankExplain.text, filterPlan.text].filter(Boolean).join(" · ")} tone={rankExplain.tone === "bad" ? "warn" : filterPlan.tone} />
   </article>;
 }
 
-function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize }) {
+function DecisionQualityStrip({ audit, compact = false, activeIssueKey = "Todos", onIssueSelect, activeProfileKey = "Todos", onProfileSelect }) {
+  if (!audit?.rows) return null;
+  const decisions = audit.decisions || {};
+  const quality = audit.decisionQuality || {};
+  const riskCount = quality.longCandidateRiskCount || 0;
+  const fragileOperableCount = quality.operableConfidenceRiskCount || 0;
+  const topIssues = (quality.topIssues || []).filter((issue) => issue?.key).slice(0, compact ? 2 : 3);
+  const topIssue = topIssues[0] || null;
+  const auditCount = decisions.audit || 0;
+  const operableCount = decisions.operable || 0;
+  const cleanOperableCount = Math.max(0, operableCount - fragileOperableCount);
+  const tone = topIssue?.severity || (riskCount || auditCount ? "warn" : "good");
+  const fragileSample = quality.operableConfidenceRiskRows?.map((item) => item.symbol).filter(Boolean).slice(0, 4).join(" · ");
+  const issueChip = (issue) => {
+    const issueActive = issue?.key && activeIssueKey === issue.key;
+    const sample = issue?.sample?.map((item) => item.symbol).filter(Boolean).slice(0, 4).join(" · ");
+    const issueClass = `decisionQualityIssue ${issue?.severity || "good"} ${issueActive ? "active" : ""}`;
+    const issueBody = <>
+      <b>{issue?.label || "Sin alerta dominante"}</b>
+      <em>{issue?.share || `${audit.rows} filas`}</em>
+    </>;
+    return issue?.key && onIssueSelect ? <button
+      type="button"
+      key={issue.key}
+      className={issueClass}
+      title={sample || undefined}
+      onClick={() => onIssueSelect(issueActive ? "Todos" : issue.key)}
+      aria-pressed={issueActive}
+    >
+      {issueBody}
+    </button> : <span key={issue?.key || "none"} className={issueClass} title={sample || undefined}>{issueBody}</span>;
+  };
+  const metricButton = (key, count, label, metricTone = "") => {
+    const active = activeProfileKey === key;
+    const body = <>
+      <b>{count}</b>
+      <em>{label}</em>
+    </>;
+    return onProfileSelect ? <button
+      type="button"
+      className={`decisionQualityMetric ${metricTone} ${active ? "active" : ""}`}
+      onClick={() => onProfileSelect(active ? "Todos" : key)}
+      aria-pressed={active}
+      title={key === "operable-fragile" ? fragileSample || "Operables con confianza no alta o confluencia minima" : undefined}
+    >
+      {body}
+    </button> : <span className={`decisionQualityMetric ${metricTone}`}>{body}</span>;
+  };
+  return <div className={`decisionQualityStrip ${compact ? "compact" : ""} ${tone}`}>
+    {metricButton("operable-clean", cleanOperableCount, "limpios", "good")}
+    {metricButton("operable-fragile", fragileOperableCount, "fragiles", fragileOperableCount ? "warn" : "")}
+    <span>
+      <b>{riskCount}</b>
+      <em>riesgo cola</em>
+    </span>
+    <span>
+      <b>{auditCount}</b>
+      <em>auditar</em>
+    </span>
+    <div className="decisionQualityIssueList" aria-label="Alertas principales de decision">
+      {topIssues.length ? topIssues.map(issueChip) : issueChip(null)}
+    </div>
+  </div>;
+}
+
+function DecisionOperatingBrief({ audit = null, rows = [], compact = false, onIssueSelect, onReadinessFilter, onConfidenceFilter, onReview }) {
+  const brief = buildScreenerDecisionBrief({ audit, rows });
+  if (!brief.rows) return null;
+  const applyFilter = (filter = {}) => {
+    if (filter.type === "readiness") onReadinessFilter?.(filter.value);
+    else if (filter.type === "confidence") onConfidenceFilter?.(filter.value);
+    else if (filter.type === "issue") onIssueSelect?.(filter.value);
+    else if (filter.type === "review") onReview?.();
+  };
+  const filterAvailable = (filter = {}) => {
+    if (filter.type === "readiness") return Boolean(onReadinessFilter);
+    if (filter.type === "confidence") return Boolean(onConfidenceFilter);
+    if (filter.type === "issue") return Boolean(onIssueSelect);
+    if (filter.type === "review") return Boolean(onReview);
+    return false;
+  };
+  const metricBody = (metric) => <>
+    <b>{metric.value}</b>
+    <span>{metric.label}</span>
+    <em>{metric.share}</em>
+  </>;
+  return <section className={`decisionOperatingBrief ${compact ? "compact" : ""} ${brief.verdict.tone || "neutral"}`.trim()} aria-label="Lectura operativa del Screener">
+    <div className="decisionOperatingIntro">
+      <span>Lectura Screener</span>
+      <strong>{brief.verdict.label}</strong>
+      <p>{brief.verdict.detail}</p>
+    </div>
+    <div className="decisionOperatingMetrics">
+      {brief.metrics.map((metric) => filterAvailable(metric.filter) ? <button
+        type="button"
+        key={metric.key}
+        className={`decisionOperatingMetric ${metric.tone || "neutral"}`}
+        onClick={() => applyFilter(metric.filter)}
+        title={`Filtrar ${metric.label}`}
+      >
+        {metricBody(metric)}
+      </button> : <span key={metric.key} className={`decisionOperatingMetric ${metric.tone || "neutral"}`}>{metricBody(metric)}</span>)}
+    </div>
+    <div className="decisionOperatingActions">
+      {brief.primaryIssue ? <button
+        type="button"
+        className={`decisionOperatingIssue ${brief.primaryIssue.severity || "warn"}`}
+        onClick={() => onIssueSelect?.(brief.primaryIssue.key)}
+        disabled={!onIssueSelect}
+        title={brief.primaryIssue.sample?.map((item) => item.symbol).filter(Boolean).join(", ") || brief.primaryIssue.label}
+      >
+        <span>Riesgo principal</span>
+        <b>{brief.primaryIssue.label}</b>
+        <em>{brief.primaryIssue.count} · {brief.primaryIssue.share}</em>
+      </button> : <span className="decisionOperatingIssue good">
+        <span>Riesgo principal</span>
+        <b>Sin incidencia dominante</b>
+        <em>scope limpio</em>
+      </span>}
+      <div>
+        {brief.actions.map((item) => <button
+          type="button"
+          key={item.key}
+          className="decisionOperatingAction"
+          onClick={() => applyFilter(item.filter)}
+          disabled={!filterAvailable(item.filter)}
+          title={item.detail}
+        >
+          <b>{item.label}</b>
+          <em>{item.detail}</em>
+        </button>)}
+      </div>
+    </div>
+  </section>;
+}
+
+function scoreAuditCompactFilterKey(audit = null) {
+  if (!audit) return "all";
+  const residualWarn = Number.isFinite(audit.residual) && Math.abs(audit.residual) >= 4;
+  if (residualWarn) return "mismatch";
+  if (Array.isArray(audit.missing) && audit.missing.length) return "missing";
+  if (audit.integrityTone === "good") return "clean";
+  return "attention";
+}
+
+function scoreAuditCompactLabel(audit = null) {
+  const key = scoreAuditCompactFilterKey(audit);
+  if (key === "clean") return "Traz.";
+  if (key === "mismatch") return "Desc.";
+  if (key === "missing") return "Inc.";
+  if (key === "attention") return "Revisar";
+  return "Score";
+}
+
+function ScoreAuditPanel({ audit = null, compact = false, activeKey = "all", onFilter }) {
+  if (!audit) return null;
+  const reasons = scoreAuditReviewReasons(audit);
+  const visibleComponents = compact ? audit.positive.slice(0, 3) : audit.components.filter((item) => !item.optional || item.value != null);
+  const tooltip = [audit.formula, Number.isFinite(audit.residual) ? `Diferencia vs score mostrado ${audit.residual.toFixed(1)}` : ""].filter(Boolean).join(" · ");
+  if (compact) {
+    const filterKey = scoreAuditCompactFilterKey(audit);
+    const canFilter = filterKey !== "all" && typeof onFilter === "function";
+    const active = activeKey === filterKey;
+    const className = `scoreAuditMini ${audit.integrityTone || "neutral"} ${canFilter ? "compactTrustFilter" : ""} ${active ? "active" : ""}`.trim();
+    const body = <>
+      <b>Score</b>
+      <em>{scoreAuditCompactLabel(audit)}</em>
+    </>;
+    if (canFilter) {
+      return <button
+        type="button"
+        className={className}
+        aria-label={`Filtrar resultados por auditoría de score: ${scoreAuditFilterLabel(filterKey)}`}
+        aria-pressed={active}
+        title={[tooltip, `Filtrar similares: ${scoreAuditFilterLabel(filterKey)}`].filter(Boolean).join(" · ")}
+        onClick={(event) => { event.stopPropagation(); onFilter(filterKey); }}
+      >
+        {body}
+      </button>;
+    }
+    return <span className={className} title={tooltip}>{body}</span>;
+  }
+  return <div className={`scoreAuditPanel ${audit.integrityTone || "neutral"}`} aria-label="Composición auditable del score">
+    <div className="scoreAuditHead">
+      <span>Score audit</span>
+      <b>{Number.isFinite(audit.displayedScore) ? audit.displayedScore.toFixed(0) : "-"}</b>
+      <em>calc {audit.calculatedScore.toFixed(1)}{Number.isFinite(audit.residual) ? ` · Δ ${audit.residual.toFixed(1)}` : ""}</em>
+    </div>
+    {reasons.length ? <div className="scoreAuditReasons" aria-label="Motivos de auditoría del score">
+      {reasons.slice(0, 4).map((item) => <span className={item.tone || "neutral"} key={item.key} title={item.detail || item.label}>
+        <b>{item.label}</b>
+        <em>{item.value || item.detail || ""}</em>
+      </span>)}
+    </div> : null}
+    <div className="scoreAuditComponents">
+      {visibleComponents.map((item) => <span className={`scoreAuditComponent ${item.tone || "neutral"}`} key={item.key} title={`${item.label}: ${item.value ?? "sin dato"} x ${item.weight}`}>
+        <b>{item.label}</b>
+        <em>{item.value == null ? "-" : item.value.toFixed(0)}</em>
+        <i>+{item.points.toFixed(1)}</i>
+      </span>)}
+    </div>
+    {(audit.drags.length || audit.risks.length || audit.missing.length) ? <div className="scoreAuditRisks">
+      {audit.drags.slice(0, 3).map((item) => <span className="warn" key={`drag-${item.key}`}>{item.label} {item.value?.toFixed(0)}</span>)}
+      {audit.risks.slice(0, 3).map((item) => <span className={item.tone || "warn"} key={`risk-${item.key}`}>{item.label}</span>)}
+      {audit.missing.slice(0, 2).map((item) => <span className="warn" key={`missing-${item.key}`}>{item.label} sin dato</span>)}
+    </div> : null}
+  </div>;
+}
+
+function dataHealthCompactLabel(health = null) {
+  const key = health?.status?.key || "";
+  if (key === "ready") return "OK";
+  if (key === "stale") return "Viejo";
+  if (key === "blocked") return "Bloq.";
+  if (key === "thin") return "Parcial";
+  if (key === "limited") return "Parcial";
+  return health?.status?.label || "Datos";
+}
+
+function objectiveMetricCompactState(row = {}) {
+  const status = objectiveMetricAuditStatusForRow(row);
+  const audit = status.audit || null;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const usable = items.filter((item) => ["verified", "traceable"].includes(item.status));
+  const proxyCount = usable.filter((item) => item.proxy === true).length;
+  const measuredCount = usable.filter((item) => item.proxy !== true).length;
+  const issueText = Array.isArray(audit?.issues) && audit.issues.length
+    ? audit.issues.slice(0, 4).map((item) => `${item.label || item.key}: ${item.status}`).join(" · ")
+    : "";
+  if (status.key === "bad") {
+    return {
+      key: "blocked",
+      label: "Bloq.",
+      tone: "bad",
+      title: [status.label, status.detail || issueText, "No usar metricas objetivas sin revisar"].filter(Boolean).join(" · "),
+      measuredCount,
+      proxyCount,
+      issueCount: Array.isArray(audit?.issues) ? audit.issues.length : 0,
+    };
+  }
+  if (status.key === "warn") {
+    return {
+      key: "review",
+      label: "Rev.",
+      tone: "warn",
+      title: [status.label, status.detail || issueText, `${measuredCount} medidas · ${proxyCount} proxy`].filter(Boolean).join(" · "),
+      measuredCount,
+      proxyCount,
+      issueCount: Array.isArray(audit?.issues) ? audit.issues.length : 0,
+    };
+  }
+  if (status.key === "missing") {
+    return {
+      key: "missing",
+      label: "Sin audit",
+      tone: "warn",
+      title: status.detail || "Sin auditoria de metricas objetivas",
+      measuredCount: 0,
+      proxyCount: 0,
+      issueCount: 1,
+    };
+  }
+  return {
+    key: proxyCount ? "mixed" : "measured",
+    label: proxyCount ? "Mixto" : "Med.",
+    tone: proxyCount ? "neutral" : "good",
+    measuredCount,
+    proxyCount,
+    issueCount: 0,
+    title: [
+      "Metricas objetivas auditadas",
+      `${measuredCount} medidas`,
+      proxyCount ? `${proxyCount} proxy/estimadas` : "",
+      status.detail,
+    ].filter(Boolean).join(" · "),
+  };
+}
+
+function DataHealthPanel({ health = null, compact = false, activeKey = "Todos", onFilter }) {
+  if (!health) return null;
+  const tone = health.status?.tone || "neutral";
+  const title = [health.status?.detail, health.topLine, health.provider?.detail].filter(Boolean).join(" · ");
+  if (compact) {
+    const filterKey = health.status?.key || "unknown";
+    const canFilter = filterKey !== "Todos" && typeof onFilter === "function";
+    const active = activeKey === filterKey;
+    const className = `dataHealthBadge ${tone} ${canFilter ? "compactTrustFilter" : ""} ${active ? "active" : ""}`.trim();
+    const body = <>
+      <b>Datos</b>
+      <em>{dataHealthCompactLabel(health)}</em>
+    </>;
+    if (canFilter) {
+      return <button
+        type="button"
+        className={className}
+        aria-label={`Filtrar resultados por salud de datos: ${dataHealthFilterLabel(filterKey)}`}
+        aria-pressed={active}
+        title={[title, `Filtrar similares: ${dataHealthFilterLabel(filterKey)}`].filter(Boolean).join(" · ")}
+        onClick={(event) => { event.stopPropagation(); onFilter(filterKey); }}
+      >
+        {body}
+      </button>;
+    }
+    return <span className={className} title={title}>{body}</span>;
+  }
+  return <div className={`dataHealthPanel ${tone}`} aria-label="Salud de datos del resultado">
+    <div className="dataHealthHead">
+      <span>Salud datos</span>
+      <b>{health.status?.label || "Sin auditoria"}</b>
+      <em>{health.status?.detail || health.topLine}</em>
+    </div>
+    <div className="dataHealthMetrics">
+      {health.metrics.map((item) => <span className={`dataHealthMetric ${item.tone || "neutral"}`} key={item.key} title={item.detail || undefined}>
+        <b>{item.label}</b>
+        <em>{item.value == null ? "-" : `${item.value}${item.suffix || ""}`}</em>
+      </span>)}
+    </div>
+    <div className="dataHealthMeta">
+      <span className={health.freshness?.tone || ""}>
+        <b>Frescura</b>
+        <em>{health.freshness?.detail || health.freshness?.label || "-"}</em>
+      </span>
+      <span className={health.provider?.tone || ""} title={health.provider?.detail || undefined}>
+        <b>Fuente</b>
+        <em>{health.provider?.label || "-"}</em>
+      </span>
+    </div>
+    {health.issues?.length ? <div className="dataHealthIssues">
+      {health.issues.slice(0, 4).map((item) => <span className={item.tone || "warn"} key={item.key} title={item.detail || undefined}>{item.label}</span>)}
+    </div> : null}
+  </div>;
+}
+
+function DataHealthSummaryRail({ summary = null, activeKey = "Todos", onSelect, compact = false }) {
+  if (!summary?.rows) return null;
+  const items = (summary.items || []).filter((item) => item.count > 0);
+  const railClass = ["dataHealthSummaryRail", compact ? "compact" : "", summary.verdict?.tone || "neutral"].filter(Boolean).join(" ");
+  const selectItem = (item) => {
+    if (!item?.key) return;
+    onSelect?.(activeKey === item.key ? "Todos" : item.key);
+  };
+  return <section className={railClass} aria-label="Resumen de salud de datos">
+    <div className="dataHealthSummaryIntro" title={summary.verdict?.detail || `${summary.rows} filas`}>
+      <span>Salud datos</span>
+      <b>{summary.verdict?.label || "Base de datos"}</b>
+      <em>{summary.rows} filas</em>
+    </div>
+    <div className="dataHealthSummaryItems">
+      {items.map((item) => {
+        const active = activeKey === item.key;
+        const body = <>
+          <b>{item.count}</b>
+          <span>{item.label}</span>
+          <em>{item.share}</em>
+        </>;
+        return onSelect ? <button
+          type="button"
+          key={item.key}
+          className={["dataHealthSummaryItem", item.tone || "neutral", active ? "active" : ""].filter(Boolean).join(" ")}
+          onClick={() => selectItem(item)}
+          aria-pressed={active}
+          title={`Filtrar ${item.fullLabel}`}
+        >
+          {body}
+        </button> : <span key={item.key} className={`dataHealthSummaryItem ${item.tone || "neutral"}`}>{body}</span>;
+      })}
+    </div>
+    {summary.topIssues?.length && !compact ? <div className="dataHealthSummaryIssues">
+      {summary.topIssues.slice(0, 3).map((item) => <span className={item.tone || "warn"} key={item.key}>
+        <b>{item.label}</b>
+        <em>{item.count} · {item.share}</em>
+      </span>)}
+    </div> : null}
+  </section>;
+}
+
+function DecisionEvidenceSummaryRail({ summary = null, activeKey = "all", onSelect, onReview, compact = false }) {
+  if (!summary?.rows) return null;
+  const items = (summary.items || []).filter((item) => item.count > 0);
+  const activeItem = activeKey !== "all" ? items.find((item) => item.key === activeKey) : null;
+  const reviewTarget = activeItem || items.find((item) => item.key === "needs-work") || items.find((item) => item.key === "blocked") || items[0];
+  const railClass = ["decisionEvidenceSummaryRail", "dataHealthSummaryRail", compact ? "compact" : "", summary.verdict?.tone || "neutral"].filter(Boolean).join(" ");
+  const selectItem = (item) => {
+    if (!item?.key) return;
+    onSelect?.(activeKey === item.key ? "all" : item.key);
+  };
+  return <section className={railClass} aria-label="Resumen de pruebas de decision">
+    <div className="dataHealthSummaryIntro" title={summary.verdict?.detail || `${summary.rows} filas evaluadas`}>
+      <span>Pruebas</span>
+      <b>{summary.verdict?.label || "Checklist"}</b>
+      <em>{summary.rows} filas</em>
+    </div>
+    <div className="dataHealthSummaryItems">
+      {items.map((item) => {
+        const active = activeKey === item.key;
+        const body = <>
+          <b>{item.count}</b>
+          <span>{item.label}</span>
+          <em>{item.share}</em>
+        </>;
+        return onSelect ? <button
+          type="button"
+          key={item.key}
+          className={["dataHealthSummaryItem", item.tone || "neutral", active ? "active" : ""].filter(Boolean).join(" ")}
+          onClick={() => selectItem(item)}
+          aria-pressed={active}
+          title={`Filtrar ${decisionEvidenceFilterLabel(item.key)}`}
+        >
+          {body}
+        </button> : <span key={item.key} className={`dataHealthSummaryItem ${item.tone || "neutral"}`}>{body}</span>;
+      })}
+    </div>
+    {summary.topIssues?.length || onReview ? <div className="dataHealthSummaryIssues decisionEvidenceActions">
+      {summary.topIssues?.length && !compact ? summary.topIssues.slice(0, 2).map((item) => <span className={item.tone || "warn"} key={item.key}>
+        <b>{item.label}</b>
+        <em>{item.count} · {item.share}</em>
+      </span>) : null}
+      {onReview && reviewTarget ? <button
+        type="button"
+        className={`decisionEvidenceReviewAction ${reviewTarget.tone || "neutral"}`}
+        onClick={() => onReview(reviewTarget.key)}
+        title={`Abrir Review: ${decisionEvidenceFilterLabel(reviewTarget.key)}`}
+      >
+        <b>Revisar</b>
+        <em>{decisionEvidenceFilterLabel(reviewTarget.key, { compact: true })}</em>
+      </button> : null}
+    </div> : null}
+  </section>;
+}
+
+function scoreAuditShare(count = 0, total = 0) {
+  if (!total) return "0%";
+  const value = (count / total) * 100;
+  return `${value >= 10 || count === total ? value.toFixed(0) : value.toFixed(1)}%`;
+}
+
+function ScoreAuditSummaryRail({ summary = null, activeKey = "all", onSelect, onReview, compact = false }) {
+  if (!summary?.rows) return null;
+  const total = summary.rows || 0;
+  const items = [
+    { key: "clean", count: summary.cleanCount || 0, label: "Trazable", tone: "good", share: summary.cleanShare || scoreAuditShare(summary.cleanCount, total) },
+    { key: "attention", count: summary.attentionCount || 0, label: "Revisar", tone: summary.attentionCount ? "warn" : "good", share: summary.attentionShare || scoreAuditShare(summary.attentionCount, total) },
+    { key: "mismatch", count: summary.mismatchCount || 0, label: "Descuadre", tone: summary.mismatchCount ? "warn" : "muted", share: scoreAuditShare(summary.mismatchCount, total) },
+    { key: "missing", count: summary.missingRows || 0, label: "Incompleto", tone: summary.missingRows ? "warn" : "muted", share: scoreAuditShare(summary.missingRows, total) },
+  ].filter((item) => item.count > 0 || item.key === "clean");
+  const topIssues = [
+    ...(summary.topMissing || []).slice(0, 1).map((item) => ({ ...item, label: `${item.label} sin dato` })),
+    ...(summary.topDrags || []).slice(0, 1),
+    ...(summary.topRisks || []).slice(0, 1),
+  ].slice(0, 3);
+  const actionableKeys = ["attention", "mismatch", "missing"];
+  const activeReviewTarget = actionableKeys.includes(activeKey)
+    ? items.find((item) => item.key === activeKey && item.count > 0)
+    : null;
+  const reviewTarget = activeReviewTarget
+    || items.find((item) => item.key === "attention" && item.count > 0)
+    || items.find((item) => item.key === "mismatch" && item.count > 0)
+    || items.find((item) => item.key === "missing" && item.count > 0);
+  const railClass = ["scoreAuditSummaryRail", "dataHealthSummaryRail", compact ? "compact" : "", summary.verdict?.tone || "neutral"].filter(Boolean).join(" ");
+  const selectItem = (item) => {
+    if (!item?.key) return;
+    onSelect?.(activeKey === item.key ? "all" : item.key);
+  };
+  return <section className={railClass} aria-label="Resumen de auditoría de score">
+    <div className="dataHealthSummaryIntro" title={summary.verdict?.detail || `${summary.rows} filas auditadas`}>
+      <span>Score audit</span>
+      <b>{summary.verdict?.label || "Score trazable"}</b>
+      <em>{summary.rows} filas</em>
+    </div>
+    <div className="dataHealthSummaryItems">
+      {items.map((item) => {
+        const active = activeKey === item.key;
+        const body = <>
+          <b>{item.count}</b>
+          <span>{item.label}</span>
+          <em>{item.share}</em>
+        </>;
+        return onSelect ? <button
+          type="button"
+          key={item.key}
+          className={["scoreAuditSummaryItem", "dataHealthSummaryItem", item.tone || "neutral", active ? "active" : ""].filter(Boolean).join(" ")}
+          onClick={() => selectItem(item)}
+          aria-pressed={active}
+          title={`Filtrar ${scoreAuditFilterLabel(item.key)}`}
+        >
+          {body}
+        </button> : <span key={item.key} className={`scoreAuditSummaryItem dataHealthSummaryItem ${item.tone || "neutral"}`}>{body}</span>;
+      })}
+    </div>
+    {(topIssues.length && !compact) || (onReview && reviewTarget) ? <div className="dataHealthSummaryIssues scoreAuditActions">
+      {topIssues.length && !compact ? topIssues.map((item) => <span className={item.tone || "warn"} key={`${item.key}-${item.label}`}>
+        <b>{item.label}</b>
+        <em>{item.count} · {item.share}</em>
+      </span>) : null}
+      {onReview && reviewTarget ? <button
+        type="button"
+        className={`scoreAuditReviewAction ${reviewTarget.tone || "neutral"}`}
+        onClick={() => onReview(reviewTarget.key)}
+        title={`Abrir Review: ${scoreAuditFilterLabel(reviewTarget.key)}`}
+      >
+        <b>Auditar</b>
+        <em>{scoreAuditFilterLabel(reviewTarget.key, { compact: true })}</em>
+      </button> : null}
+    </div> : null}
+  </section>;
+}
+
+function AuditabilitySummaryRail({ summary = null, compact = false, onReviewFocus }) {
+  if (!summary?.rows) return null;
+  const railClass = ["auditabilitySummaryRail", "dataHealthSummaryRail", compact ? "compact" : "", summary.verdict?.tone || "neutral"].filter(Boolean).join(" ");
+  const reviewFocus = (summary.methodologyReviewFocus || []).slice(0, 3);
+  const limitations = (summary.methodologyLimitations || []).slice(0, 3);
+  const usageTitle = "Herramienta de observación; no sustituye el criterio metodológico del inversor.";
+  return <section className={railClass} aria-label="Auditabilidad interna">
+    <div className="dataHealthSummaryIntro" title={summary.verdict?.detail || usageTitle}>
+      <span>Auditabilidad</span>
+      <b>{summary.auditabilityShare}</b>
+      <em>{summary.verdict?.label || `${summary.rows} filas`}</em>
+    </div>
+    <div className="dataHealthSummaryItems">
+      {(summary.items || []).map((item) => <span key={item.key} className={`dataHealthSummaryItem ${item.tone || "neutral"}`}>
+        <b>{item.count}</b>
+        <span>{item.label}</span>
+        <em>{item.share}</em>
+      </span>)}
+    </div>
+    {!compact ? <div className="dataHealthSummaryIssues">
+      <span className={summary.counts?.fullyAuditable === summary.rows ? "good" : "warn"}>
+        <b>Snapshot</b>
+        <em>{summary.snapshotIntegrity} íntegro</em>
+      </span>
+      {reviewFocus.map((item) => {
+        const meta = item.share || (item.count ? `${item.count}` : "");
+        const body = <>
+          <b>{item.label}</b>
+          <em>{meta}</em>
+        </>;
+        return onReviewFocus ? <button
+          type="button"
+          className={`decisionEvidenceReviewAction ${item.tone || "warn"}`}
+          key={`methodology-review-${item.key}`}
+          title={[item.action, item.toneSummary].filter(Boolean).join(" · ") || undefined}
+          aria-label={`Abrir Review: ${item.label}`}
+          onClick={() => onReviewFocus(item.key)}
+        >
+          {body}
+        </button> : <span className={item.tone || "warn"} key={`methodology-review-${item.key}`} title={[item.action, item.toneSummary].filter(Boolean).join(" · ") || undefined}>
+          {body}
+        </span>;
+      })}
+      {limitations.map((item) => {
+        const meta = item.share || (item.count ? `${item.count}` : "");
+        return <span className={item.tone || "neutral"} key={`methodology-limit-${item.key}`} title={item.toneSummary || undefined}>
+          <b>{item.label}</b>
+          <em>{meta}</em>
+        </span>;
+      })}
+      <span className="neutral" title={usageTitle}>
+        <b>Uso</b>
+        <em>Observación</em>
+      </span>
+    </div> : null}
+  </section>;
+}
+
+function DecisionSummaryRail({ summary = [], activeKey = "Todos", onSelect, className = "" }) {
+  if (!summary.length) return null;
+  return <div className={`decisionSummaryRail ${className}`.trim()} aria-label="Resumen por calidad de decision">
+    {summary.map((item) => {
+      const active = activeKey === item.key;
+      return <button
+        type="button"
+        key={item.key}
+        className={`decisionSummaryChip ${active ? "active" : ""}`}
+        onClick={() => onSelect?.(active ? "Todos" : item.key)}
+        aria-pressed={active}
+      >
+        <b>{item.count}</b>
+        <span>{item.label}</span>
+      </button>;
+    })}
+  </div>;
+}
+
+function PendingDecisionWorkRail({ summary = null, active = false, onFocus, onClear, onReview, className = "" }) {
+  if (!summary?.pendingCount) return null;
+  const top = summary.top || null;
+  return <div className={`pendingDecisionWorkRail ${active ? "active" : ""} ${className}`.trim()} aria-label="Trabajo pendiente de decision">
+    <div className="pendingDecisionWorkStats">
+      <span><b>{summary.pendingCount}</b><em>sin decidir</em></span>
+      <span><b>{summary.highConfidenceCount || 0}</b><em>alta confianza</em></span>
+      <span><b>{summary.reviewableCount || 0}</b><em>prioritarias</em></span>
+    </div>
+    <div className="pendingDecisionWorkFocus">
+      <span>Foco sugerido</span>
+      <b>{top?.symbol || "-"}</b>
+      <em>{top ? `Pri ${Math.round(top.priority || 0)} · ${top.confidenceLabel || "Confianza"}` : "Sin foco"}</em>
+    </div>
+    <div className="pendingDecisionWorkActions">
+      <button type="button" className={`pendingDecisionWorkPrimary ${active ? "active" : ""}`} onClick={onFocus}>
+        Trabajo pendiente
+      </button>
+      <button type="button" onClick={onReview}>Revisar</button>
+      {active ? <button type="button" onClick={onClear}>Limpiar enfoque</button> : null}
+    </div>
+  </div>;
+}
+
+function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionQuality, decisionIssueFilter = "Todos", onDecisionIssueFilter, decisionProfileFilter = "Todos", onDecisionProfileFilter, reviewPriorityFilter = "all", reviewPriorityOptions = [{ key: "all", displayLabel: "Prioridad: Todas" }], onReviewPriorityFilter, reliabilityFilter = RELIABILITY_FILTER_ALL, reliabilityOptions = [{ key: RELIABILITY_FILTER_ALL, displayLabel: "Fiabilidad: Todas" }], onReliabilityFilter, decisionEvidenceSummary = null, decisionEvidenceFilter = "all", decisionEvidenceOptions = [{ key: "all", displayLabel: "Pruebas: Todas" }], onDecisionEvidenceFilter, onDecisionEvidenceReview, readinessSummary = [], readinessFilter = "Todos", onReadinessFilter, confidenceFilter = "Todos", confidenceOptions = ["Todos"], confidenceCounts, onConfidenceFilter, dataHealthSummary = null, dataHealthFilter = "Todos", dataHealthOptions = [{ key: "Todos", displayLabel: "Datos: Todos" }], onDataHealthFilter, scoreAuditSummary = null, scoreAuditFilter = "all", scoreAuditOptions = [{ key: "all", displayLabel: "Score: Todos" }], onScoreAuditFilter, onScoreAuditReview, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados todavia. Carga universo y ejecuta el screener." }) {
   const start = totalRows ? ((page - 1) * pageSize) + 1 : 0;
   const end = totalRows ? Math.min(page * pageSize, totalRows) : 0;
   const hasRows = totalRows > 0;
+  const confidenceOptionLabel = (value) => value === "Todos"
+    ? "Confianza: Todas"
+    : `${decisionConfidenceLabel(value)}${confidenceCounts?.get(value) ? ` (${confidenceCounts.get(value)})` : ""}`;
   return <section className="mobileResultList">
     <div className="mobileResultListHead">
       <span>{hasRows ? `${totalRows} resultados · ${start}-${end} · ${SORT_LABELS[sort] || sort}` : "0 resultados"}</span>
       {hasRows ? <div>
         <select value={sort} onChange={(event) => onSort(event.target.value)} aria-label="Orden movil">
-          <option value="totalScore">Score</option>
+          <option value="objectiveScore">Objetivo</option>
+          <option value="decisionPriority">Calidad decisión</option>
+          <option value="totalScore">Composite</option>
           <option value="rsGlobalPct">{metricShortLabel("rsGlobalPct")}</option>
           <option value="rsRating">{metricShortLabel("rsRating")}</option>
           <option value="volumeEffectScore">Volumen</option>
           <option value="avgTurnover">Liquidez</option>
           <option value="weaknessScore">Deterioro</option>
         </select>
+        <select value={confidenceFilter} onChange={(event) => onConfidenceFilter?.(event.target.value)} aria-label="Filtrar por confianza de decision">
+          {confidenceOptions.map((x) => <option key={x} value={x}>{confidenceOptionLabel(x)}</option>)}
+        </select>
+        <select value={reviewPriorityFilter} onChange={(event) => onReviewPriorityFilter?.(event.target.value)} aria-label="Filtrar por prioridad de investigacion">
+          {reviewPriorityOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
+        </select>
+        <select value={reliabilityFilter} onChange={(event) => onReliabilityFilter?.(event.target.value)} aria-label="Filtrar por fiabilidad de observacion">
+          {reliabilityOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
+        </select>
+        <select value={decisionEvidenceFilter} onChange={(event) => onDecisionEvidenceFilter?.(event.target.value)} aria-label="Filtrar por pruebas de decision">
+          {decisionEvidenceOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
+        </select>
+        <select value={dataHealthFilter} onChange={(event) => onDataHealthFilter?.(event.target.value)} aria-label="Filtrar por salud de datos">
+          {dataHealthOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
+        </select>
+        <select value={scoreAuditFilter} onChange={(event) => onScoreAuditFilter?.(event.target.value)} aria-label="Filtrar por auditoría de score">
+          {scoreAuditOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
+        </select>
+        <select value={decisionResolutionFilter} onChange={(event) => onDecisionResolutionFilter?.(event.target.value)} aria-label="Filtrar por resolución de decision">
+          {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
+        </select>
         <button type="button" onClick={onCsv} disabled={!rows.length}>CSV</button>
+        <button type="button" onClick={onAuditJson} disabled={!rows.length} title="Exportar JSON compatible con audit:decisions">JSON</button>
         <button type="button" onClick={onSave} disabled={!rows.length || savingDisabled} aria-label="Guardar snapshot de resultados">Guardar</button>
         <button type="button" onClick={() => onReview()} disabled={!rows.length}>Revisar</button>
       </div> : null}
     </div>
+    {hasRows ? <DecisionQualityStrip audit={decisionQuality} compact activeIssueKey={decisionIssueFilter} onIssueSelect={onDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={onDecisionProfileFilter} /> : null}
+    {hasRows ? <DecisionOperatingBrief audit={decisionQuality} rows={rows} compact onIssueSelect={onDecisionIssueFilter} onReadinessFilter={onReadinessFilter} onConfidenceFilter={onConfidenceFilter} onReview={onReview} /> : null}
+    {hasRows ? <DecisionEvidenceSummaryRail summary={decisionEvidenceSummary} activeKey={decisionEvidenceFilter} onSelect={onDecisionEvidenceFilter} onReview={onDecisionEvidenceReview} compact /> : null}
+    {hasRows ? <DataHealthSummaryRail summary={dataHealthSummary} activeKey={dataHealthFilter} onSelect={onDataHealthFilter} compact /> : null}
+    {hasRows ? <ScoreAuditSummaryRail summary={scoreAuditSummary} activeKey={scoreAuditFilter} onSelect={onScoreAuditFilter} onReview={onScoreAuditReview} compact /> : null}
+    {hasRows ? <DecisionSummaryRail summary={readinessSummary} activeKey={readinessFilter} onSelect={onReadinessFilter} className="mobile" /> : null}
     {hasRows ? <div className="controls" style={{ marginBottom: 10 }}>
       <select value={pageSize} onChange={(event) => onPageSize?.(Number(event.target.value))} aria-label="Acciones por pagina">
         {RESULT_PAGE_SIZES.map((size) => <option key={size} value={size}>{size} / página</option>)}
@@ -464,14 +1247,14 @@ function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, 
       <button type="button" onClick={() => onPage?.(page + 1)} disabled={page >= totalPages}>Siguiente</button>
     </div> : null}
     <div className="mobileRows">
-      {rows.length ? rows.map((row) => <MobileResultRow key={row.symbol} row={row} settings={settings} onReview={onReview} onFavorite={onFavorite} onOpenStock={onOpenStock} isFavorite={favoriteSymbols?.has(row.symbol)} />) : <div className="mobileEmpty">Sin resultados todavia. Carga universo y ejecuta el screener.</div>}
+      {rows.length ? rows.map((row) => <MobileResultRow key={row.symbol} row={row} settings={settings} onReview={onReview} onFavorite={onFavorite} onOpenStock={onOpenStock} isFavorite={favoriteSymbols?.has(row.symbol)} activeIssueKey={decisionIssueFilter} onDecisionIssueSelect={onDecisionIssueFilter} decisionResolutions={decisionResolutions} />) : <div className="mobileEmpty">{emptyLabel}</div>}
     </div>
   </section>;
 }
 
 function RegimeStrip({ rows = [], marketHealth, presetName, setupName, mode = "leader" }) {
   const weaknessMode = mode === "weakness";
-  const elite = rows.filter((r) => (r.totalScore || 0) >= 75).length;
+  const elite = rows.filter((r) => (r.objectiveScore ?? r.totalScore ?? 0) >= 75).length;
   const actionable = rows.filter(methodologyTradePlanEligible).length;
   const weaknessCount = rows.filter((r) => (r.weaknessScore || 0) >= 65).length;
   const marketScore = marketHealth?.marketScore;
@@ -485,8 +1268,50 @@ function RegimeStrip({ rows = [], marketHealth, presetName, setupName, mode = "l
   </div>;
 }
 
-function QuickPanel({ row, onOpenStock }) {
+function QuickPanel({ row, settings, onOpenStock }) {
   if (!row) return <div className="quickPanel"><p className="fine">Selecciona una accion para ver sus caracteristicas.</p></div>;
+  const rankExplain = explainScreenerRank(row, settings);
+  const rowIssues = auditDecisionRowIssues(row, rankExplain);
+  const confidence = decisionConfidenceForRow(row, rankExplain);
+  const priority = decisionPriorityBreakdown(row, rankExplain);
+  const evidence = buildDecisionEvidenceChecklist(row, rankExplain);
+  const scoreAudit = buildScreenerScoreAudit(row);
+  const dataHealth = buildScreenerDataHealth(row, settings);
+  const metricTruth = objectiveMetricCompactState(row);
+  const metricSource = compactMetricSourceLookup(row);
+  const vcpReliability = vcpReliabilityAudit(row);
+  const reviewFocus = buildRowReviewFocus({ dataHealth, metricTruth, scoreAudit, vcpReliability, evidence, rowIssues });
+  const trustSignature = buildRowTrustSignature({ dataHealth, metricTruth, scoreAudit, evidence, vcpReliability, rowIssues });
+  const quickMetrics = [
+    [metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"],
+    [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-", "totalScore"],
+    [metricShortLabel("patternScore"), row.patternScore?.toFixed(0) || "-", "patternScore"],
+    [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-", "rsGlobalPct"],
+    [metricShortLabel("rsQualityScore"), row.rsQualityScore?.toFixed(0) || "-", "rsQualityScore"],
+    [metricShortLabel("adProxyScore"), row.adProxyScore?.toFixed(0) || "-", "adProxyScore"],
+    [metricShortLabel("epsGrowthProxyScore"), row.epsGrowthProxyScore?.toFixed(0) || "-", "epsGrowthProxyScore"],
+    [metricShortLabel("weaknessScore"), row.weaknessScore?.toFixed(0) || "-", "weaknessScore"],
+    [metricShortLabel("rsCountryPct"), row.rsCountryPct?.toFixed(0) || "-", "rsCountryPct"],
+    [metricShortLabel("rsSectorPct"), row.rsSectorPct?.toFixed(0) || "-", "rsSectorPct"],
+    [metricShortLabel("objectiveSetupScore"), row.objectiveSetupScore?.toFixed(0) || "-", "objectiveSetupScore"],
+    ["Growth", row.growthScore?.toFixed(0) || "-", "growthScore"],
+    ["Cobertura", row.dataCoverageScore?.toFixed(0) || "-", "dataCoverageScore"],
+    ["3M", pct(row.perf3m), "perf3m"],
+    ["52W", pct(row.distance52w), "distance52w"],
+    ["SMA50", pct(row.extSma50), "extSma50"],
+    ["RelVol", Number.isFinite(row.relativeVolume) ? `${row.relativeVolume.toFixed(2)}x` : "-", "relativeVolume"],
+    ["Vol 5d", pct(row.volumeSurgePct), "volumeSurgePct"],
+    ["Imp 20d", amount(row.avgTurnover, row.currency), "avgTurnover"],
+    ["Imp sesion", amount(row.latestTurnover, row.currency), "latestTurnover"],
+    [metricShortLabel("volumeEffectScore"), row.volumeEffectScore?.toFixed(0) || "-", "volumeEffectScore"],
+    ["Up/Down", ratioLabel(row.upDownVolRatio), "upDownVolRatio"],
+    [metricShortLabel("shortPercentOfFloat"), pct(row.shortPercentOfFloat), "shortPercentOfFloat"],
+    ["Short ratio", ratioLabel(row.shortRatio), "shortRatio"],
+    ["Spec Risk", row.speculationRiskScore?.toFixed(0) || "-", "speculationRiskScore"],
+    ["DD 3M", Number.isFinite(row.maxDrawdown63d) ? `${row.maxDrawdown63d.toFixed(1)}%` : "-", "maxDrawdown63d"],
+    ["Rent/Risk", row.riskRewardScore?.toFixed(0) || "-", "riskRewardScore"],
+    ["Bench", row.benchmarkSymbol || "-", ""],
+  ];
   return <aside className="quickPanel">
     <div className="quickPanelHead">
       <CompanyMark row={row} size="lg" />
@@ -495,34 +1320,45 @@ function QuickPanel({ row, onOpenStock }) {
         <p>{row.companyName}</p>
       </div>
     </div>
-    <div className="quickMetricGrid">
-      <span><b>{metricShortLabel("totalScore")}</b>{row.totalScore?.toFixed(0) || "-"}</span>
-      <span><b>{metricShortLabel("rsGlobalPct")}</b>{row.rsGlobalPct?.toFixed(0) || "-"}</span>
-      <span><b>{metricShortLabel("rsQualityScore")}</b>{row.rsQualityScore?.toFixed(0) || "-"}</span>
-      <span><b>{metricShortLabel("adProxyScore")}</b>{row.adProxyScore?.toFixed(0) || "-"}</span>
-      <span><b>{metricShortLabel("epsGrowthProxyScore")}</b>{row.epsGrowthProxyScore?.toFixed(0) || "-"}</span>
-      <span><b>{metricShortLabel("weaknessScore")}</b>{row.weaknessScore?.toFixed(0) || "-"}</span>
-      <span><b>{metricShortLabel("rsCountryPct")}</b>{row.rsCountryPct?.toFixed(0) || "-"}</span>
-      <span><b>{metricShortLabel("rsSectorPct")}</b>{row.rsSectorPct?.toFixed(0) || "-"}</span>
-      <span><b>Setup</b>{row.setupQualityScore?.toFixed(0) || "-"}</span>
-      <span><b>Growth</b>{row.growthScore?.toFixed(0) || "-"}</span>
-      <span><b>Cobertura</b>{row.dataCoverageScore?.toFixed(0) || "-"}</span>
-      <span><b>3M</b>{pct(row.perf3m)}</span>
-      <span><b>52W</b>{pct(row.distance52w)}</span>
-      <span><b>SMA50</b>{pct(row.extSma50)}</span>
-      <span><b>RelVol</b>{Number.isFinite(row.relativeVolume) ? `${row.relativeVolume.toFixed(2)}x` : "-"}</span>
-      <span><b>Vol 5d</b>{pct(row.volumeSurgePct)}</span>
-      <span><b>Imp 20d</b>{amount(row.avgTurnover, row.currency)}</span>
-      <span><b>Imp sesion</b>{amount(row.latestTurnover, row.currency)}</span>
-      <span><b>{metricShortLabel("volumeEffectScore")}</b>{row.volumeEffectScore?.toFixed(0) || "-"}</span>
-      <span><b>Up/Down</b>{ratioLabel(row.upDownVolRatio)}</span>
-      <span><b>{metricShortLabel("shortPercentOfFloat")}</b>{pct(row.shortPercentOfFloat)}</span>
-      <span><b>Short ratio</b>{ratioLabel(row.shortRatio)}</span>
-      <span><b>Spec Risk</b>{row.speculationRiskScore?.toFixed(0) || "-"}</span>
-      <span><b>DD 3M</b>{Number.isFinite(row.maxDrawdown63d) ? `${row.maxDrawdown63d.toFixed(1)}%` : "-"}</span>
-      <span><b>Rent/Risk</b>{row.riskRewardScore?.toFixed(0) || "-"}</span>
-      <span><b>Bench</b>{row.benchmarkSymbol || "-"}</span>
+    <div className="compactTrustRail quickPanelTrustRail" aria-label={`Confianza de ${row.symbol}`}>
+      <RowTrustSignature signature={trustSignature} />
+      <ReviewFocusPill focus={reviewFocus} />
+      <ObjectiveMetricTruthPill state={metricTruth} />
+      <DataHealthPanel health={dataHealth} compact />
+      <ScoreAuditPanel audit={scoreAudit} compact />
+      <VcpReliabilityPill audit={vcpReliability} />
+      <DecisionEvidenceChecklist evidence={evidence} compact />
     </div>
+    <div className="quickMetricGrid">
+      {quickMetrics.map(([label, value, key]) => <CompactMetric key={`${label}-${key || value}`} label={label} value={value} source={key ? metricSource(key) : null} />)}
+    </div>
+    <div className={`rankExplainPanel ${rankExplain.tone}`}>
+      <div className="rankExplainTitle">
+        <span>{rankExplain.title}</span>
+        <div className="rankExplainBadges">
+          <strong className={`rankActionBadge ${rankExplain.action.tone}`}>{rankExplain.action.label}</strong>
+          <strong className={`rankDecisionBadge ${rankExplain.readiness.tone}`}>{rankExplain.readiness.label}</strong>
+          <DecisionConfidenceBadge confidence={confidence} compact />
+          <DecisionPriorityBadge priority={priority} compact />
+          <InfoHint text={[rankExplain.readiness.detail, rankExplain.text].filter(Boolean).join(" · ")} tone={rankExplain.tone === "bad" ? "warn" : ""} />
+        </div>
+      </div>
+      <div className="rankExplainChips">
+        {rankExplain.drivers.slice(0, 4).map((item) => <span key={item.key} className={item.tone}>
+          <b>{item.label}</b>{item.value ? <em>{item.value}</em> : null}
+        </span>)}
+      </div>
+      {(rankExplain.displayWatch || rankExplain.watch).length ? <div className="rankExplainWatch">
+        <span>Revisar</span>
+        <p>{(rankExplain.displayWatch || rankExplain.watch).map((item) => item.value ? `${item.label}: ${item.value}` : item.label).slice(0, 3).join(" · ")}</p>
+      </div> : null}
+      <DecisionEvidenceChecklist evidence={evidence} />
+    </div>
+    <DataHealthPanel health={dataHealth} />
+    <ScoreAuditPanel audit={scoreAudit} />
+    {rowIssues.length ? <div className="decisionIssueRail">
+      {rowIssues.slice(0, 4).map((issue) => <DecisionIssueBadge key={issue.key} issues={[issue]} />)}
+    </div> : null}
     <div className="labelRail compact">{[...(row.compositeReasons || []).slice(0, 2), row.weaknessLabel].filter(Boolean).map((x) => <span key={x}>{x}</span>)}</div>
     <div className="summaryRow"><span>Setup</span><span>{quickSetup(row)}</span></div>
     {row.methodologyReliabilityLabel && <div className="summaryRow"><span>Fiabilidad</span><span>{row.methodologyReliabilityLabel}{row.methodologyReliabilityReason ? ` · ${row.methodologyReliabilityReason}` : ""}</span></div>}
@@ -536,27 +1372,38 @@ function QuickPanel({ row, onOpenStock }) {
   </aside>;
 }
 
-function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = false, onSelectChart, onOpenStock }) {
+function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = false, onSelectChart, onOpenStock, decisionResolutions = {} }) {
   const links = externalLinks(row.symbol, row.exchange);
   const compact = variant === "table";
   const summary = variant === "search";
   const showSparkline = !compact && !summary;
   const stage = stageLabel(row);
   const stageClass = stage === "Stage 2" ? "good" : stage === "Stage 4" ? "bad" : "neutral";
+  const metricSource = compactMetricSourceLookup(row);
   const stats = compact
-    ? [[metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-"], [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-"], [metricShortLabel("volumeEffectScore"), row.volumeEffectScore?.toFixed(0) || "-"]]
+    ? [[metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"], [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-", "rsGlobalPct"], [metricShortLabel("volumeEffectScore"), row.volumeEffectScore?.toFixed(0) || "-", "volumeEffectScore"]]
     : summary
-      ? [["Precio", money(row.price, row.currency)], [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-"], [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-"], [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-"], [metricShortLabel("adProxyScore"), row.adProxyScore?.toFixed(0) || "-"], [metricShortLabel("epsGrowthProxyScore"), row.epsGrowthProxyScore?.toFixed(0) || "-"], ["Bench", row.benchmarkSymbol || "-"]]
-      : [["Precio", money(row.price, row.currency)], [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-"], [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-"], [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-"], [metricShortLabel("rsQualityScore"), row.rsQualityScore?.toFixed(0) || "-"], [metricShortLabel("volumeEffectScore"), row.volumeEffectScore?.toFixed(0) || "-"], [metricShortLabel("shortPercentOfFloat"), pct(row.shortPercentOfFloat)], ["Imp 20d", amount(row.avgTurnover, row.currency)], ["Cob", row.dataCoverageScore?.toFixed(0) || "-"], ["Bench", row.benchmarkSymbol || "-"]];
+      ? [["Precio", money(row.price, row.currency), ""], [metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"], [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-", "totalScore"], [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-", "rsGlobalPct"], [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-", "rsRating"], [metricShortLabel("adProxyScore"), row.adProxyScore?.toFixed(0) || "-", "adProxyScore"], [metricShortLabel("epsGrowthProxyScore"), row.epsGrowthProxyScore?.toFixed(0) || "-", "epsGrowthProxyScore"], ["Bench", row.benchmarkSymbol || "-", ""]]
+      : [["Precio", money(row.price, row.currency), ""], [metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"], [metricShortLabel("patternScore"), row.patternScore?.toFixed(0) || "-", "patternScore"], [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-", "rsGlobalPct"], [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-", "rsRating"], [metricShortLabel("rsQualityScore"), row.rsQualityScore?.toFixed(0) || "-", "rsQualityScore"], [metricShortLabel("volumeEffectScore"), row.volumeEffectScore?.toFixed(0) || "-", "volumeEffectScore"], [metricShortLabel("shortPercentOfFloat"), pct(row.shortPercentOfFloat), "shortPercentOfFloat"], ["Imp 20d", amount(row.avgTurnover, row.currency), "avgTurnover"], ["Cob", row.dataCoverageScore?.toFixed(0) || "-", "dataCoverageScore"], ["Bench", row.benchmarkSymbol || "-", ""]];
   const summaryStats = [
-    [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-"],
-    [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-"],
-    [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-"],
-    [metricShortLabel("adProxyScore"), row.adProxyScore?.toFixed(0) || "-"],
-    [metricShortLabel("epsGrowthProxyScore"), row.epsGrowthProxyScore?.toFixed(0) || "-"],
-    ["Bench", row.benchmarkSymbol || "-"],
+    [metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"],
+    [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-", "totalScore"],
+    [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-", "rsGlobalPct"],
+    [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-", "rsRating"],
+    [metricShortLabel("adProxyScore"), row.adProxyScore?.toFixed(0) || "-", "adProxyScore"],
+    [metricShortLabel("epsGrowthProxyScore"), row.epsGrowthProxyScore?.toFixed(0) || "-", "epsGrowthProxyScore"],
+    ["Bench", row.benchmarkSymbol || "-", ""],
   ];
-  return <div className={`stockPreview stockPreview-${variant}`}>
+  const resolution = decisionResolutionForRow(row, decisionResolutions);
+  const rankExplain = explainScreenerRank(row, {});
+  const rowIssues = auditDecisionRowIssues(row, rankExplain);
+  const scoreAudit = buildScreenerScoreAudit(row);
+  const dataHealth = buildScreenerDataHealth(row, {});
+  const metricTruth = objectiveMetricCompactState(row);
+  const evidence = buildDecisionEvidenceChecklist(row, rankExplain);
+  const vcpReliability = vcpReliabilityAudit(row);
+  const trustSignature = buildRowTrustSignature({ dataHealth, metricTruth, scoreAudit, evidence, vcpReliability, rowIssues });
+  return <div className={`stockPreview stockPreview-${variant} ${resolution ? `resolved-${resolution.key}` : ""}`.trim()}>
     <div className="previewTop">
       <div className="previewIdentity">
         {!compact && <CompanyMark row={row} />}
@@ -567,15 +1414,17 @@ function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = false, on
       </div>
       {summary ? <div className="previewHeaderMeta">
         <strong>{money(row.price, row.currency)}</strong>
+        <DecisionResolutionBadge resolution={resolution} />
         <span className={`previewStage ${stageClass}`}>{stage}</span>
       </div> : <span className={`previewStage ${stageClass}`}>{stage}</span>}
     </div>
     {showSparkline && <MiniSparkline bars={row.chartPreview || []} />}
     {summary ? <div className="previewSummaryGrid">
-      {summaryStats.map(([label, value]) => <span className="previewSummaryStat" key={label}><b>{label}</b><em>{value}</em></span>)}
+      {summaryStats.map(([label, value, key]) => <CompactMetric className="previewSummaryStat" key={label} label={label} value={value} source={key ? metricSource(key) : null} />)}
     </div> : <div className="previewStats">
-      {stats.map(([label, value]) => <span key={label}><b>{label}</b>{value}</span>)}
+      {stats.map(([label, value, key]) => <CompactMetric key={label} label={label} value={value} source={key ? metricSource(key) : null} />)}
     </div>}
+    <RowTrustSignature signature={trustSignature} className={`previewTrustSignature ${compact ? "compact" : ""}`.trim()} />
     {!compact && <div className="previewActions">
       {onSelectChart && <button type="button" className="btn btnSmall btnPrimary" onClick={() => onSelectChart(row)}>Grafico</button>}
       <Link className="btn btnSmall" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>Ficha</Link>
@@ -626,30 +1475,266 @@ function compactTone(value, strongAt, weakBelow = null) {
   return "";
 }
 
-function CompactMetric({ label, value, tone = "" }) {
-  return <span className={`compactMetric ${tone}`}>
+function compactMetricSource(item = null) {
+  if (!item || typeof item !== "object") return null;
+  const status = String(item.status || "");
+  const severity = String(item.severity || "");
+  const label = item.label || item.key || "Metrica";
+  if (severity === "bad" || ["mismatch", "unverified-value", "missing-source"].includes(status)) {
+    return { key: "blocked", mark: "x", title: `${label}: bloqueada` };
+  }
+  if (severity === "warn" || ["missing", "insufficient-input"].includes(status)) {
+    return { key: "review", mark: "!", title: `${label}: revisar` };
+  }
+  if (item.proxy === true) {
+    return { key: "proxy", mark: "p", title: `${label}: proxy/estimada` };
+  }
+  if (status === "verified" || status === "traceable") {
+    return { key: "measured", mark: "", title: `${label}: medida/trazable` };
+  }
+  return null;
+}
+
+function compactMetricSourceLookup(row = {}) {
+  const audit = objectiveMetricAuditStatusForRow(row)?.audit;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const byKey = new Map(items.filter((item) => item?.key).map((item) => [item.key, item]));
+  return (key) => compactMetricSource(byKey.get(key));
+}
+
+function CompactMetric({ label, value, tone = "", source = null, title = "", className = "" }) {
+  const sourceClass = source?.key ? `source-${source.key}` : "";
+  const sourceTitle = source?.title || "";
+  const valueText = value ?? "-";
+  const titleText = [title, sourceTitle].filter(Boolean).join(" · ") || undefined;
+  const ariaLabel = sourceTitle ? `${label}: ${valueText}. ${sourceTitle}` : undefined;
+  return <span className={`compactMetric ${className} ${tone} ${sourceClass}`.trim()} title={titleText} aria-label={ariaLabel}>
     <small>{label}</small>
-    <b>{value ?? "-"}</b>
+    <b>{valueText}</b>
+    {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}
   </span>;
 }
 
-function ResultFilterChips({ chips = [], hiddenCount = 0, onClearAll }) {
+function compactIssueLabel(label = "", key = "") {
+  const text = String(label || key || "").toLowerCase();
+  if (/\brs\b|liderazgo rs/.test(text)) return "RS";
+  if (/\bscore\b/.test(text)) return "Score";
+  if (/\bsma50\b/.test(text)) return "SMA50";
+  if (/evidencia|prueba/.test(text)) return "Pruebas";
+  if (/\bdatos?\b|\bprecio\b/.test(text)) return "Datos";
+  if (/volumen|demanda/.test(text)) return "Demanda";
+  if (/riesgo/.test(text)) return "Riesgo";
+  if (/setup|vcp/.test(text)) return "Setup";
+  if (/operable|candidato|confirmaci/.test(text)) return "Validar";
+  return String(label || key || "Revisar").split(/\s+/).slice(0, 2).join(" ");
+}
+
+function buildRowReviewFocus({ dataHealth = null, metricTruth = null, scoreAudit = null, vcpReliability = null, evidence = null, rowIssues = [] } = {}) {
+  const candidates = [];
+  const add = ({ priority = 0, key = "", label = "", tone = "warn", detail = "" } = {}) => {
+    if (!key || !label) return;
+    candidates.push({ priority, key, label, tone, detail });
+  };
+  const dataKey = dataHealth?.status?.key || "";
+  if (dataKey === "blocked") {
+    add({ priority: 100, key: "data", label: "Datos", tone: "bad", detail: dataHealth.status?.detail || dataHealth.topLine || "Datos bloqueados." });
+  } else if (["stale", "thin", "limited", "unknown"].includes(dataKey)) {
+    add({ priority: 72, key: "data", label: "Datos", tone: dataHealth?.status?.tone || "warn", detail: dataHealth.status?.detail || dataHealth.topLine || "Datos a revisar." });
+  }
+
+  const metricKey = metricTruth?.key || "";
+  if (metricKey === "blocked") {
+    add({ priority: 95, key: "metrics", label: "Metr.", tone: "bad", detail: metricTruth.title || metricTruth.detail || "Métricas bloqueadas." });
+  } else if (["review", "missing"].includes(metricKey)) {
+    add({ priority: 82, key: "metrics", label: "Metr.", tone: "warn", detail: metricTruth.title || metricTruth.detail || "Métricas a validar." });
+  }
+
+  const scoreKey = scoreAuditCompactFilterKey(scoreAudit);
+  if (scoreKey === "mismatch") {
+    add({ priority: 86, key: "score", label: "Score", tone: "warn", detail: scoreAudit?.topLine || "Score descuadrado." });
+  } else if (scoreKey === "missing") {
+    add({ priority: 76, key: "score", label: "Score", tone: "warn", detail: scoreAudit?.topLine || "Componentes de score incompletos." });
+  } else if (scoreKey === "attention") {
+    add({ priority: 58, key: "score", label: "Score", tone: "warn", detail: scoreAudit?.topLine || "Score a revisar." });
+  }
+
+  const vcpKey = vcpReliability?.key || "";
+  if (vcpKey === "blocked") {
+    add({ priority: 80, key: "vcp", label: "VCP", tone: "bad", detail: vcpReliability.summary || vcpReliability.note || "VCP bloqueado." });
+  } else if (["inconsistent", "needs-data"].includes(vcpKey)) {
+    add({ priority: 70, key: "vcp", label: "VCP", tone: "warn", detail: vcpReliability.summary || vcpReliability.note || "VCP a validar." });
+  } else if (["needs-validation", "summary-only"].includes(vcpKey)) {
+    add({ priority: 45, key: "vcp", label: "VCP", tone: vcpReliability.tone || "warn", detail: vcpReliability.summary || vcpReliability.note || "Validar patrón." });
+  }
+
+  if (evidence?.status === "blocked") {
+    add({ priority: 74, key: "evidence", label: "Pruebas", tone: "bad", detail: evidence.summary || "Pruebas bloqueadas." });
+  } else if (evidence?.status === "needs-work") {
+    const pending = Array.isArray(evidence.pending) ? evidence.pending[0] : null;
+    add({ priority: 62, key: "evidence", label: "Pruebas", tone: evidence.tone || "warn", detail: pending?.detail || pending?.label || evidence.summary || "Pruebas pendientes." });
+  }
+
+  const issue = Array.isArray(rowIssues) ? rowIssues[0] : null;
+  if (issue?.key || issue?.label) {
+    add({
+      priority: issue.severity === "bad" ? 66 : 52,
+      key: "issue",
+      label: compactIssueLabel(issue.label, issue.key),
+      tone: issue.severity || "warn",
+      detail: issue.detail || issue.label || "Revisar incidencia.",
+    });
+  }
+
+  return candidates.sort((a, b) => b.priority - a.priority)[0] || null;
+}
+
+function ReviewFocusPill({ focus = null }) {
+  if (!focus) return null;
+  return <span className={`reviewFocusPill ${focus.tone || "warn"} focus-${focus.key || "other"}`} title={focus.detail || focus.label}>
+    <b>Foco</b>
+    <em>{focus.label}</em>
+  </span>;
+}
+
+function vcpCompactLabel(audit = null) {
+  const key = audit?.key || "";
+  if (key === "audit-ready") return "Audit.";
+  if (key === "needs-validation") return "Valid.";
+  if (key === "summary-only") return "Resumen";
+  if (key === "needs-data") return "Datos";
+  if (key === "inconsistent") return "Rev.";
+  if (key === "blocked") return "Bloq.";
+  return "VCP";
+}
+
+function DecisionIssueBadge({ issues = [], compact = false, activeKey = "Todos", onSelect }) {
+  const primary = issues[0];
+  if (!primary) return null;
+  const active = primary.key && activeKey === primary.key;
+  const detail = issues.map((issue) => issue.detail ? `${issue.label}: ${issue.detail}` : issue.label).join(" · ");
+  const className = `decisionIssueBadge ${compact ? "compact" : ""} ${primary.severity || "warn"} ${active ? "active" : ""}`;
+  const body = <>
+    <b>{compact ? compactIssueLabel(primary.label, primary.key) : primary.label}</b>
+    {issues.length > 1 ? <em>+{issues.length - 1}</em> : null}
+  </>;
+  return primary.key && onSelect ? <button
+    type="button"
+    className={className}
+    title={detail}
+    onClick={(event) => {
+      event.stopPropagation();
+      onSelect(active ? "Todos" : primary.key);
+    }}
+    aria-pressed={active}
+  >
+    {body}
+  </button> : <span className={className} title={detail}>{body}</span>;
+}
+
+function VcpReliabilityPill({ audit = null }) {
+  if (!audit) return null;
+  const title = [
+    audit.label,
+    Number.isFinite(audit.auditabilityPct) ? `${audit.auditabilityPct}%` : "",
+    audit.summary,
+    audit.sequence ? `Secuencia ${audit.sequence}` : "",
+    audit.note,
+  ].filter(Boolean).join(" · ");
+  return <span className={`vcpReliabilityPill ${audit.tone || "neutral"}`} title={title}>
+    <b>VCP</b>
+    <em>{vcpCompactLabel(audit)}</em>
+  </span>;
+}
+
+function ObjectiveMetricTruthPill({ state = null }) {
+  if (!state) return null;
+  return <span className={`objectiveMetricTruthPill ${state.tone || "neutral"}`} title={state.title || state.label}>
+    <b>Metr.</b>
+    <em>{state.label}</em>
+  </span>;
+}
+
+function ResultFilterChips({ chips = [], hiddenCount = 0, visibleCount = null, totalCount = null, brief = null, onClearAll, onReview }) {
   if (!chips.length && !hiddenCount) return null;
-  return <div className="resultFilterChips">
-    {hiddenCount > 0 ? <div className="resultFilterChipSummary">
-      <b>{hiddenCount}</b>
-      <span>ocultas por vista</span>
+  const hasVisibleCounts = Number.isFinite(visibleCount) && Number.isFinite(totalCount);
+  const visibleLabel = hasVisibleCounts ? `${visibleCount}/${totalCount}` : String(Math.max(0, Number(visibleCount) || 0));
+  return <div className={`resultFilterChips ${brief ? "withBrief" : ""}`.trim()}>
+    <div className="resultViewFocusSummary" aria-label="Resumen de vista de investigacion">
+      <span>
+        <em>Vista de investigación</em>
+        <b>{visibleLabel}</b>
+      </span>
+      <span>
+        <em>filtros</em>
+        <b>{chips.length}</b>
+      </span>
+      <span>
+        <em>ocultas</em>
+        <b>{hiddenCount}</b>
+      </span>
+      {onReview && Number(visibleCount) > 0 ? <button type="button" onClick={onReview}>Revisar vista</button> : null}
+    </div>
+    {brief ? <div className={`resultViewBrief ${brief.tone || "neutral"}`} aria-label="Brief de investigacion de la vista">
+      <span className="resultViewBriefIntro" title={brief.detail || undefined}>
+        <em>Brief vista</em>
+        <b>{brief.label}</b>
+      </span>
+      <div>
+        {(brief.items || []).slice(0, 3).map((item) => <span className={item.tone || "neutral"} key={item.key || item.label} title={item.detail || undefined}>
+          <em>{item.label}</em>
+          <b>{item.value}</b>
+        </span>)}
+      </div>
     </div> : null}
-    {chips.map((chip) => <button type="button" key={chip.key} className="resultFilterChip" onClick={chip.onClear}>
-      <span>{chip.label}</span>
-      <b>×</b>
-    </button>)}
-    {chips.length ? <button type="button" className="resultFilterClear" onClick={onClearAll}>Limpiar vista</button> : null}
+    <div className="resultViewChipRail">
+      {hiddenCount > 0 ? <div className="resultFilterChipSummary">
+        <b>{hiddenCount}</b>
+        <span>ocultas por vista</span>
+      </div> : null}
+      {chips.map((chip) => <button type="button" key={chip.key} className="resultFilterChip" onClick={chip.onClear}>
+        <span>{chip.label}</span>
+        <b>×</b>
+      </button>)}
+      {chips.length ? <button type="button" className="resultFilterClear" onClick={onClearAll}>Limpiar vista</button> : null}
+    </div>
   </div>;
 }
 
 function applyResultViewFilters(baseRows = [], filters = {}) {
   let list = [...baseRows];
+  if (filters.decisionResolutionFilter && filters.decisionResolutionFilter !== "all") {
+    list = list.filter((row) => {
+      const resolution = decisionResolutionForRow(row, filters.decisionResolutions || {});
+      const key = resolution?.key || "pending";
+      return key === filters.decisionResolutionFilter;
+    });
+  }
+  if ((filters.readinessFilter && filters.readinessFilter !== "Todos") || (filters.actionFilter && filters.actionFilter !== "Todos") || (filters.confidenceFilter && filters.confidenceFilter !== "Todos") || (filters.decisionProfileFilter && filters.decisionProfileFilter !== "Todos") || (filters.reviewPriorityFilter && filters.reviewPriorityFilter !== "all")) {
+    list = list.filter((row) => {
+      const explanation = explainScreenerRank(row, filters.activeSettings || filters.settings || {});
+      if (filters.readinessFilter && filters.readinessFilter !== "Todos" && explanation.readiness.key !== filters.readinessFilter) return false;
+      if (filters.actionFilter && filters.actionFilter !== "Todos" && explanation.action.key !== filters.actionFilter) return false;
+      if (filters.confidenceFilter && filters.confidenceFilter !== "Todos" && decisionConfidenceForRow(row, explanation).key !== filters.confidenceFilter) return false;
+      if (filters.decisionProfileFilter && filters.decisionProfileFilter !== "Todos" && decisionProfileForRow(row, explanation) !== filters.decisionProfileFilter) return false;
+      if (filters.reviewPriorityFilter && filters.reviewPriorityFilter !== "all" && reviewPriorityForRow(row, explanation)?.key !== filters.reviewPriorityFilter) return false;
+      return true;
+    });
+  }
+  if (filters.decisionIssueFilter && filters.decisionIssueFilter !== "Todos") {
+    list = list.filter((row) => auditDecisionRowIssues(row, filters.activeSettings || filters.settings || {}).some((issue) => issue.key === filters.decisionIssueFilter));
+  }
+  if (filters.decisionEvidenceFilter && filters.decisionEvidenceFilter !== "all") {
+    list = list.filter((row) => decisionEvidenceMatchesFilter(row, filters.decisionEvidenceFilter, filters.activeSettings || filters.settings || {}));
+  }
+  if (filters.dataHealthFilter && filters.dataHealthFilter !== "Todos") {
+    list = list.filter((row) => dataHealthMatchesFilter(row, filters.dataHealthFilter, filters.activeSettings || filters.settings || {}));
+  }
+  if (filters.scoreAuditFilter && filters.scoreAuditFilter !== "all") {
+    list = list.filter((row) => scoreAuditMatchesFilter(row, filters.scoreAuditFilter));
+  }
+  if (filters.reliabilityFilter && filters.reliabilityFilter !== RELIABILITY_FILTER_ALL) {
+    list = list.filter((row) => screenerReliabilityMatchesFilter(row, filters.reliabilityFilter, filters.activeSettings || filters.settings || {}));
+  }
   if (filters.viewLayers?.country && filters.countryFilter !== "Todos") list = list.filter((row) => (row.country || countryCode(row.symbol)) === filters.countryFilter);
   if (filters.viewLayers?.theme && filters.themeFilter !== "Todos") list = list.filter((row) => row.theme === filters.themeFilter);
   if (filters.viewLayers?.sector && filters.sectorFilter !== "Todos") list = list.filter((row) => row.sector === filters.sectorFilter);
@@ -671,6 +1756,7 @@ function PendingResultsBar({ pending, visibleCount = 0, filteredCount = 0, onCom
   </div>;
 }
 
+/* ── Tablas de resultados y paneles de filtros ── */
 function ScreenerContractPanel({ contract }) {
   if (!contract) return null;
   const warnings = contract.warnings || [];
@@ -852,8 +1938,8 @@ function CompactCountryFlag({ country }) {
   </span>;
 }
 
-function CompactResultsTable({ rows = [], settings, favoriteSymbols, onFavorite, onReview, onOpenStock, rankOffset = 0 }) {
-  const headers = ["★", "#", "Ticker", "Empresa", "Gráfico", "Setup", "RS", "Mom.", "Riesgo", "Volumen", "Score"];
+function CompactResultsTable({ rows = [], settings, favoriteSymbols, onFavorite, onReview, onOpenStock, rankOffset = 0, emptyLabel = "Ejecuta un scan para ver resultados", decisionIssueFilter = "Todos", onDecisionIssueFilter, decisionEvidenceFilter = "all", onDecisionEvidenceFilter, dataHealthFilter = "Todos", onDataHealthFilter, scoreAuditFilter = "all", onScoreAuditFilter, decisionResolutions = {} }) {
+  const headers = ["★", "#", "Compañía", "Gráfico", "Setup", "RS", "Mom.", "Riesgo", "Volumen", "Objetivo"];
   return <div className="tableWrap compactTableWrap">
     <table className="table compactResultsTable">
       <thead>
@@ -867,13 +1953,39 @@ function CompactResultsTable({ rows = [], settings, favoriteSymbols, onFavorite,
           const setupReason = compactPatternReason(r);
           const setupDetail = compactPatternDetail(r);
           const setupObjective = vcpObjectiveSummary(r);
+          const vcpReliability = vcpReliabilityAudit(r);
           const setupInfo = [
             setupObjective.detail,
+            `${vcpReliability.label}: ${vcpReliability.auditabilityPct}% · ${vcpReliability.summary}`,
             `Veredicto: ${quickSetup(r)}`,
             setupDetail,
           ].filter(Boolean).join(" · ");
           const filterPlan = buildScreenerFilterExplainPlan(r, settings);
-          return <tr key={r.symbol} onClick={(e) => { if (!e.target.closest("button, a")) onOpen(); }}>
+          const rankExplain = explainScreenerRank(r, settings);
+          const rowIssues = auditDecisionRowIssues(r, rankExplain);
+          const confidence = decisionConfidenceForRow(r, rankExplain);
+          const priority = decisionPriorityBreakdown(r, rankExplain);
+          const evidence = buildDecisionEvidenceChecklist(r, rankExplain);
+          const scoreAudit = buildScreenerScoreAudit(r);
+          const dataHealth = buildScreenerDataHealth(r, settings);
+          const metricTruth = objectiveMetricCompactState(r);
+          const metricSource = compactMetricSourceLookup(r);
+          const evidenceFocus = evidence.pending?.[0] || (rankExplain.displayWatch || rankExplain.watch)[0];
+          const issueTone = rowIssues.some((issue) => issue.severity === "bad") ? "bad" : rowIssues.length ? "warn" : "";
+          const resolution = decisionResolutionForRow(r, decisionResolutions);
+          const reviewFocus = buildRowReviewFocus({ dataHealth, metricTruth, scoreAudit, vcpReliability, evidence, rowIssues });
+          const trustSignature = buildRowTrustSignature({ dataHealth, metricTruth, scoreAudit, evidence, vcpReliability, rowIssues });
+          const compactTrustTitle = [
+            trustSignature.title,
+            reviewFocus ? `Foco: ${reviewFocus.label}${reviewFocus.detail ? ` (${reviewFocus.detail})` : ""}` : "",
+            `Datos: ${dataHealth.status?.label || "sin auditoria"}${dataHealth.topLine ? ` (${dataHealth.topLine})` : ""}`,
+            `Metricas: ${metricTruth.title || metricTruth.label}`,
+            `Score: ${scoreAudit.topLine || "sin auditoria"}`,
+            `VCP: ${vcpReliability.label} ${vcpReliability.auditabilityPct}%`,
+            evidenceFocus ? `Revisar: ${evidenceFocus.label}` : rankExplain.readiness.detail,
+            rowIssues.length ? `Incidencias: ${rowIssues.map((issue) => issue.label).join(", ")}` : "",
+          ].filter(Boolean).join(" · ");
+          return <tr key={r.symbol} className={`${issueTone ? `hasDecisionIssue ${issueTone}` : ""} ${resolution ? `resolved-${resolution.key}` : ""}`.trim()} onClick={(e) => { if (!e.target.closest("button, a")) onOpen(); }}>
             <td>
               <button
                 type="button"
@@ -885,14 +1997,14 @@ function CompactResultsTable({ rows = [], settings, favoriteSymbols, onFavorite,
               </button>
             </td>
             <td className="rankCell">{rankOffset + i + 1}</td>
-            <td className="compactSymbolCell">
-              <Link className="ticker" href={stockUrl(r.symbol)} onPointerDown={() => onOpenStock?.(r)} onClick={() => onOpenStock?.(r)}>{r.symbol}</Link>
-              <CompactCountryFlag country={country} />
-            </td>
-            <td className="compactCompanyCell">
+            <td className="compactIdentityCell">
               <CompanyMark row={r} size="sm" />
-              <span>
-                <b>{r.companyName || r.symbol}</b>
+              <span className="compactIdentityText">
+                <span className="compactIdentityTop">
+                  <Link className="ticker" href={stockUrl(r.symbol)} onPointerDown={() => onOpenStock?.(r)} onClick={() => onOpenStock?.(r)}>{r.symbol}</Link>
+                  <CompactCountryFlag country={country} />
+                </span>
+                <b title={r.companyName || r.symbol}>{r.companyName || r.symbol}</b>
               </span>
             </td>
             <td className="compactSparkCell">
@@ -911,46 +2023,66 @@ function CompactResultsTable({ rows = [], settings, favoriteSymbols, onFavorite,
                   <InfoHint text={setupInfo} />
                 </span>
                 <small title={setupObjective.secondary || setupReason}>{setupObjective.secondary || setupReason}</small>
+                <small className={`vcpReliabilityLine ${vcpReliability.tone}`} title={vcpReliability.note}>
+                  {vcpReliability.label} · {vcpReliability.auditabilityPct}%
+                </small>
               </div>
             </td>
             <td>
               <div className="compactMetricGrid">
-                <CompactMetric label="G" value={Number.isFinite(rsValue) ? rsValue.toFixed(0) : "-"} tone={compactTone(rsValue, 75, 45)} />
-                <CompactMetric label="Grp" value={Number.isFinite(r.rsSectorPct) ? r.rsSectorPct.toFixed(0) : "-"} />
-                <CompactMetric label="Q" value={Number.isFinite(r.rsQualityScore) ? r.rsQualityScore.toFixed(0) : "-"} tone={compactTone(r.rsQualityScore, 70, 40)} />
+                <CompactMetric label="G" value={Number.isFinite(rsValue) ? rsValue.toFixed(0) : "-"} tone={compactTone(rsValue, 75, 45)} source={metricSource("rsGlobalPct")} />
+                <CompactMetric label="Grp" value={Number.isFinite(r.rsSectorPct) ? r.rsSectorPct.toFixed(0) : "-"} source={metricSource("rsSectorPct")} />
+                <CompactMetric label="Q" value={Number.isFinite(r.rsQualityScore) ? r.rsQualityScore.toFixed(0) : "-"} tone={compactTone(r.rsQualityScore, 70, 40)} source={metricSource("rsQualityScore")} />
               </div>
             </td>
             <td>
               <div className="compactMetricGrid">
-                <CompactMetric label="3M" value={pct(r.perf3m)} tone={compactTone(r.perf3m, 20, 0)} />
-                <CompactMetric label="6M" value={pct(r.perf6m)} tone={compactTone(r.perf6m, 35, 0)} />
-                <CompactMetric label="52w" value={pct(r.distance52w)} tone={compactTone(r.distance52w, -10, -35)} />
+                <CompactMetric label="3M" value={pct(r.perf3m)} tone={compactTone(r.perf3m, 20, 0)} source={metricSource("perf3m")} />
+                <CompactMetric label="6M" value={pct(r.perf6m)} tone={compactTone(r.perf6m, 35, 0)} source={metricSource("perf6m")} />
+                <CompactMetric label="52w" value={pct(r.distance52w)} tone={compactTone(r.distance52w, -10, -35)} source={metricSource("distance52w")} />
               </div>
             </td>
             <td>
               <div className="compactMetricGrid">
-                <CompactMetric label="Ext." value={pct(r.extSma50)} />
-                <CompactMetric label="DD63" value={Number.isFinite(r.maxDrawdown63d) ? `${r.maxDrawdown63d.toFixed(1)}%` : "-"} />
+                <CompactMetric label="Ext." value={pct(r.extSma50)} source={metricSource("extSma50")} />
+                <CompactMetric label="DD63" value={Number.isFinite(r.maxDrawdown63d) ? `${r.maxDrawdown63d.toFixed(1)}%` : "-"} source={metricSource("maxDrawdown63d")} />
                 <CompactMetric label="Short" value={pct(r.shortPercentOfFloat)} />
               </div>
             </td>
             <td>
               <div className="compactMetricGrid">
-                <CompactMetric label="RV" value={Number.isFinite(r.relativeVolume) ? `${r.relativeVolume.toFixed(2)}x` : "-"} tone={compactTone(r.relativeVolume, 1.5)} />
-                <CompactMetric label="A/D" value={Number.isFinite(r.adProxyScore) ? r.adProxyScore.toFixed(0) : "-"} tone={compactTone(r.adProxyScore, 70, 40)} />
+                <CompactMetric label="RV" value={Number.isFinite(r.relativeVolume) ? `${r.relativeVolume.toFixed(2)}x` : "-"} tone={compactTone(r.relativeVolume, 1.5)} source={metricSource("relativeVolume")} />
+                <CompactMetric label="A/D" value={Number.isFinite(r.adProxyScore) ? r.adProxyScore.toFixed(0) : "-"} tone={compactTone(r.adProxyScore, 70, 40)} source={metricSource("adProxyScore")} />
                 <CompactMetric label="Ef." value={Number.isFinite(r.volumeEffectScore) ? r.volumeEffectScore.toFixed(0) : "-"} />
               </div>
             </td>
             <td className="compactScoreCell">
               <span className="compactScoreHead">
-                <b>{Number.isFinite(r.totalScore) ? r.totalScore.toFixed(0) : "-"}</b>
-                <InfoHint text={filterPlan.text} tone={filterPlan.tone} />
+                <b>{Number.isFinite(r.objectiveScore) ? r.objectiveScore.toFixed(0) : Number.isFinite(r.totalScore) ? r.totalScore.toFixed(0) : "-"}</b>
+                <em className={`rankActionBadge compact ${rankExplain.action.tone}`}>{rankExplain.action.label}</em>
+                <em className={`rankDecisionBadge compact ${rankExplain.readiness.tone}`}>{rankExplain.readiness.label}</em>
+                <DecisionResolutionBadge resolution={resolution} />
+                <DecisionConfidenceBadge confidence={confidence} compact />
+                <DecisionPriorityBadge priority={priority} compact />
+                <InfoHint text={[rankExplain.readiness.detail, rankExplain.text, filterPlan.text].filter(Boolean).join(" · ")} tone={rankExplain.tone === "bad" ? "warn" : filterPlan.tone} />
               </span>
-              <span>W {Number.isFinite(r.weinsteinScore) ? r.weinsteinScore.toFixed(0) : "-"} · EPS {Number.isFinite(r.epsGrowthProxyScore) ? r.epsGrowthProxyScore.toFixed(0) : "-"}</span>
+              <span className="compactScoreMeta" title={`Comp ${Number.isFinite(r.totalScore) ? r.totalScore.toFixed(0) : "-"} · VCP ${Number.isFinite(r.patternScore) ? r.patternScore.toFixed(0) : "-"} · Weinstein ${Number.isFinite(r.weinsteinScore) ? r.weinsteinScore.toFixed(0) : "-"} · EPS ${Number.isFinite(r.epsGrowthProxyScore) ? r.epsGrowthProxyScore.toFixed(0) : "-"}`}>
+                Obj {Number.isFinite(r.objectiveScore) ? r.objectiveScore.toFixed(0) : Number.isFinite(r.totalScore) ? r.totalScore.toFixed(0) : "-"} · Comp {Number.isFinite(r.totalScore) ? r.totalScore.toFixed(0) : "-"}
+              </span>
+              <div className="compactTrustRail" title={compactTrustTitle} aria-label={`Confianza de ${r.symbol}`}>
+                <RowTrustSignature signature={trustSignature} />
+                <ReviewFocusPill focus={reviewFocus} />
+                <DataHealthPanel health={dataHealth} compact activeKey={dataHealthFilter} onFilter={onDataHealthFilter} />
+                <ObjectiveMetricTruthPill state={metricTruth} />
+                <ScoreAuditPanel audit={scoreAudit} compact activeKey={scoreAuditFilter} onFilter={onScoreAuditFilter} />
+                <VcpReliabilityPill audit={vcpReliability} />
+                <DecisionEvidenceChecklist evidence={evidence} compact activeKey={decisionEvidenceFilter} onFilter={onDecisionEvidenceFilter} />
+                <DecisionIssueBadge issues={rowIssues} compact activeKey={decisionIssueFilter} onSelect={onDecisionIssueFilter} />
+              </div>
             </td>
           </tr>;
         })}
-        {!rows.length && <tr><td colSpan={headers.length} className="emptyResultsCell">Ejecuta un scan para ver resultados</td></tr>}
+        {!rows.length && <tr><td colSpan={headers.length} className="emptyResultsCell">{emptyLabel}</td></tr>}
       </tbody>
     </table>
   </div>;
@@ -1130,10 +2262,12 @@ export {
   quickBusinessMarket, chartPath, MiniSparkline, TradingViewPreviewChart, companyLogoDomain,
   CompanyMark, quickSetup, compactPatternReason, compactPatternDetail, LeaderTape,
   opportunityBuckets, ScoreLine, OpportunityMap, MarketMiniTape, SetupChipRail,
-  MobileMoverCard, MobileTopMovers, MobileResultRow, MobileResultList, RegimeStrip,
+  MobileMoverCard, MobileTopMovers, MobileResultRow, buildRowTrustSignature, RowTrustSignature, DecisionQualityStrip, DecisionOperatingBrief, DecisionSummaryRail, DecisionEvidenceChecklist, DecisionEvidenceSummaryRail, DataHealthPanel, DataHealthSummaryRail, ScoreAuditPanel, ScoreAuditSummaryRail, AuditabilitySummaryRail, MobileResultList, RegimeStrip,
+  PendingDecisionWorkRail,
   QuickPanel, PreviewCard, SearchCandidateList, SearchScopeList, compactTone, CompactMetric,
-  ResultFilterChips, applyResultViewFilters, PendingResultsBar, ScreenerContractPanel,
+  DecisionIssueBadge, ResultFilterChips, applyResultViewFilters, PendingResultsBar, ScreenerContractPanel,
   FilterTemplatePanel, FilterFamilyModal, CompactCountryFlag, CompactResultsTable,
   FilterNumber, FilterToggle, LayerToggleButton, LayerControl, FilterArchitecturePanel,
   FilterDiagnosticsPanel, passesSectorStrength, activeLayerCount, ruleCountLabel, layerStatusText,
+  DECISION_PROFILE_ORDER, buildReviewProfileSummary, decisionProfileForRow, decisionProfileLabel, prepareReviewQueueRows, reviewProfileMeta,
 };

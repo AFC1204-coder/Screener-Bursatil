@@ -268,7 +268,7 @@ export default function IpoRadarPage() {
       return;
     }
     due.slice(0, 5).forEach((item) => {
-      new Notification(`StageRadar IPO: ${item.companyName || item.symbol}`, {
+      new Notification(`StatsEdge IPO: ${item.companyName || item.symbol}`, {
         body: `${STATUS_LABELS[item.status] || item.status} · ${dateLabel(alertDate(item))}`,
       });
     });
@@ -277,11 +277,11 @@ export default function IpoRadarPage() {
     setStatus(`${due.length} avisos lanzados y marcados.`);
   }
 
-  return <main className="page">
+  return <main className="page ipoRadarPage">
     <section className="card hero ipoHero">
       <div className="heroTop">
         <div>
-          <div className="badge">StageRadar · IPO Radar</div>
+          <div className="badge">StatsEdge · IPO Radar</div>
           <h1>Radar de IPOs</h1>
           <p className="muted">Lista local de candidatas pre-IPO, fechas estimadas y tickers que entraran al screener cuando empiecen a cotizar.</p>
         </div>

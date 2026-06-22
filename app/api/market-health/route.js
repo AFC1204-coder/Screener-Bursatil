@@ -4,6 +4,8 @@ import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServ
 const MARKET_HEALTH_CACHE_TYPE = "market_health_cache";
 const MARKET_HEALTH_CACHE_KEY = "default";
 const DEFAULT_MARKET_HEALTH_MAX_AGE_HOURS = 4;
+const MARKET_HEALTH_RESPONSE_TIMEOUT_MS = Number(process.env.MARKET_HEALTH_RESPONSE_TIMEOUT_MS || 7500);
+const MARKET_HEALTH_CACHE_READ_TIMEOUT_MS = Number(process.env.MARKET_HEALTH_CACHE_READ_TIMEOUT_MS || 1500);
 
 const INDEXES = [
   { symbol: "^GSPC", name: "S&P 500", weight: 30 },
@@ -65,6 +67,58 @@ function annotateCache(payload = {}, cache = {}) {
   };
 }
 
+function timeoutAfter(ms, message) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error(message)), Math.max(500, Number(ms) || 0));
+  });
+}
+
+function neutralMarketHealth(error = {}) {
+  const indexes = INDEXES.map((index) => ({
+    ...index,
+    price: null,
+    lastDate: "",
+    sma50: null,
+    sma200: null,
+    sma200Slope: null,
+    perf1m: null,
+    perf3m: null,
+    perf6m: null,
+    distance52w: null,
+    advanceFrom52wLow: null,
+    weeklyBars: 0,
+    stage30w: "Proveedor no disponible",
+    stage: "Sin dato",
+    score: 50,
+    weinsteinScore: 50,
+  }));
+  const marketScore = 50;
+  return {
+    generatedAt: new Date().toISOString(),
+    marketScore,
+    regime: regime(marketScore),
+    breadthProxy: {
+      indexes: indexes.length,
+      above50: 0,
+      above200: 0,
+      above30w: 0,
+      positiveSma200Slope: 0,
+      near52wHigh: 0,
+      pctAbove50: null,
+      pctAbove200: null,
+      pctAbove30w: null,
+    },
+    indexes,
+    sectorTape: [],
+    weinsteinTape: weinsteinTape(indexes, []),
+    sectorSummary: sectorSummary([]),
+    sectorTapeNote: "Proveedor de mercado no disponible dentro del presupuesto operativo; lectura neutral degradada.",
+    failures: INDEXES.map((index) => ({ symbol: index.symbol, name: index.name, reason: error.message || "Proveedor no disponible" })),
+    sectorFailures: SECTOR_ETFS.map((sector) => ({ symbol: sector.symbol, name: sector.name, reason: error.message || "Proveedor no disponible" })),
+    degraded: true,
+  };
+}
+
 async function readMarketHealthCache(options = {}) {
   const config = supabaseConfig();
   const maxAgeHours = Math.max(Number(options.maxAgeHours ?? DEFAULT_MARKET_HEALTH_MAX_AGE_HOURS), 0);
@@ -78,6 +132,7 @@ async function readMarketHealthCache(options = {}) {
         select: "value,updated_at",
         limit: "1",
       },
+      timeoutMs: Number(options.timeoutMs || MARKET_HEALTH_CACHE_READ_TIMEOUT_MS),
     });
     const row = rows?.[0] || null;
     const payload = row?.value?.payload || null;
@@ -463,15 +518,36 @@ export async function GET(req) {
   const refresh = searchParams.get("refresh") === "1" || searchParams.get("cache") === "0";
   const maxAgeParam = searchParams.get("maxAgeHours");
   const maxAgeHours = maxAgeParam === null ? NaN : Number(maxAgeParam);
+  const live = refresh || searchParams.get("live") === "1";
   let cached = null;
   if (!refresh) {
     cached = await readMarketHealthCache({
       maxAgeHours: Number.isFinite(maxAgeHours) ? maxAgeHours : undefined,
+      timeoutMs: MARKET_HEALTH_CACHE_READ_TIMEOUT_MS,
     });
     if (cached.hit && cached.payload) return Response.json(annotateCache(cached.payload, cached));
+    if (!live) {
+      if (cached?.payload) {
+        return Response.json(annotateCache(cached.payload, {
+          ...cached,
+          hit: false,
+          stale: true,
+          fallbackError: cached.error || "market health cache stale",
+        }));
+      }
+      return Response.json(annotateCache(neutralMarketHealth({ message: cached?.error || "market health live skipped" }), {
+        hit: false,
+        stale: false,
+        fallbackError: cached?.error || "market health live skipped",
+        maxAgeHours: Number.isFinite(maxAgeHours) ? maxAgeHours : DEFAULT_MARKET_HEALTH_MAX_AGE_HOURS,
+      }));
+    }
   }
   try {
-    const payload = await computeMarketHealth();
+    const payload = await Promise.race([
+      computeMarketHealth(),
+      timeoutAfter(MARKET_HEALTH_RESPONSE_TIMEOUT_MS, "Market health provider timeout"),
+    ]);
     const cacheWrite = await writeMarketHealthCache(payload);
     return Response.json(annotateCache(payload, {
       hit: false,
@@ -488,6 +564,11 @@ export async function GET(req) {
         fallbackError: error.message || "live market health failed",
       }));
     }
-    return Response.json({ error: error.message || "No se pudo calcular salud de mercado" }, { status: 500 });
+    return Response.json(annotateCache(neutralMarketHealth(error), {
+      hit: false,
+      stale: false,
+      fallbackError: error.message || "live market health failed",
+      maxAgeHours: Number.isFinite(maxAgeHours) ? maxAgeHours : DEFAULT_MARKET_HEALTH_MAX_AGE_HOURS,
+    }));
   }
 }

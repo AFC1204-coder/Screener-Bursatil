@@ -1,5 +1,6 @@
-import { envValue } from "@/lib/env";
+import { isInternalRequest } from "@/lib/internalAuth";
 import { normalizeMarketList } from "@/lib/markets";
+import { countryCode } from "@/lib/symbols";
 import {
   DEFAULT_MATERIALIZED_MARKETS,
   planMaterializedScan,
@@ -12,6 +13,7 @@ import {
 import { screenerFiltersFromSearchParams } from "@/lib/screenerFilters";
 import { readPricedShadowSymbols } from "@/lib/shadowUniverseStore";
 import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer";
+import { marketSymbols } from "@/lib/universes";
 
 const DEFAULT_LIMIT = 40;
 const MAX_LIMIT = 200;
@@ -19,9 +21,7 @@ const DEFAULT_PER_MARKET = 10;
 const MAX_CONCURRENCY = 4;
 
 function authorized(request) {
-  const secret = envValue("CRON_SECRET");
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}` || request.headers.get("x-cron-secret") === secret;
+  return isInternalRequest(request, { allowCron: true });
 }
 
 function cleanList(value = "") {
@@ -103,6 +103,7 @@ function optionsFromRequest(request) {
     refreshLeaderboards: searchParams.get("leaderboards") !== "0",
     includeRows: searchParams.get("includeRows") === "1",
     dryRun: boolParam(searchParams, "dryRun", false),
+    fullPlan: boolParam(searchParams, "fullPlan", false) || boolParam(searchParams, "fullDryRun", false),
     shadowPriced: searchParams.get("shadowPriced") === "1",
     shadowStatus: searchParams.get("shadowStatus") || "priced",
     screenerFilters: screenerFiltersFromSearchParams(searchParams),
@@ -176,6 +177,84 @@ function nextCursorValue(previous = {}, options = {}, result = {}, savedScan = {
   };
 }
 
+function fastDryRunPlan(options = {}) {
+  const markets = normalizeMarketList(options.markets?.length ? options.markets : DEFAULT_MATERIALIZED_MARKETS, DEFAULT_MATERIALIZED_MARKETS);
+  const limit = Math.max(Number(options.limit || DEFAULT_LIMIT), 1);
+  const perMarket = Math.max(Number(options.perMarket || 0), 0);
+  const selectedRows = [];
+  const marketTotals = {};
+  const selectedByMarket = {};
+  const marketOffsets = {};
+  const nextMarketOffsets = {};
+
+  if (perMarket > 0) {
+    for (const market of markets) {
+      const symbols = marketSymbols(market);
+      marketTotals[market] = symbols.length;
+      marketOffsets[market] = 0;
+      const take = Math.min(perMarket, Math.max(0, limit - selectedRows.length), symbols.length);
+      for (const symbol of symbols.slice(0, take)) selectedRows.push({ symbol, market, source: "curated-operational-probe" });
+      selectedByMarket[market] = take;
+      nextMarketOffsets[market] = symbols.length > take ? take : 0;
+      if (selectedRows.length >= limit) break;
+    }
+  } else {
+    const symbols = markets.flatMap((market) => {
+      const list = marketSymbols(market);
+      marketTotals[market] = list.length;
+      return list.map((symbol) => ({ symbol, market, source: "curated-operational-probe" }));
+    });
+    selectedRows.push(...symbols.slice(0, limit));
+    selectedByMarket[markets.length === 1 ? markets[0] : "GLOBAL"] = selectedRows.length;
+    marketOffsets[markets.length === 1 ? markets[0] : "GLOBAL"] = 0;
+    nextMarketOffsets[markets.length === 1 ? markets[0] : "GLOBAL"] = symbols.length > selectedRows.length ? selectedRows.length : 0;
+  }
+
+  const symbols = selectedRows.map((row) => row.symbol);
+  const selection = {
+    selected: selectedRows,
+    marketTotals,
+    selectedByMarket,
+    marketOffsets,
+    nextMarketOffsets,
+    skippedRecent: 0,
+    skippedRecentByMarket: {},
+    priorityMode: "operational-probe",
+    selectedReasons: { "curated-operational-probe": selectedRows.length },
+    selectedReasonsByMarket: Object.fromEntries(markets.map((market) => [market, { "curated-operational-probe": selectedRows.filter((row) => row.market === market).length }])),
+    materialization: { operationalProbe: true, stateConfigured: false },
+  };
+  return {
+    markets,
+    symbols,
+    selectedRows: selectedRows.map((row) => ({ ...row, country: countryCode(row.symbol) })),
+    universeTotal: Object.values(marketTotals).reduce((sum, count) => sum + Number(count || 0), 0),
+    settings: {
+      source: "jobs/scan-refresh",
+      dryRun: true,
+      operationalProbe: true,
+      markets,
+      limit,
+      perMarket,
+      offset: 0,
+      marketOffsets,
+      nextMarketOffsets,
+      skipRecentlyScanned: false,
+      prioritizeMaterialization: false,
+      shadowSource: options.shadowSource || null,
+    },
+    stats: {
+      markets,
+      universeTotal: Object.values(marketTotals).reduce((sum, count) => sum + Number(count || 0), 0),
+      selected: symbols.length,
+      selection,
+      recentScanExclusion: { enabled: false, skipped: true, operationalProbe: true },
+      shadowSource: options.shadowSource || null,
+      cache: { status: "curated-operational-probe" },
+    },
+  };
+}
+
 async function createRun(options) {
   const config = supabaseConfig();
   if (!config.configured) return null;
@@ -231,7 +310,19 @@ async function finishRun(run, status, payload = {}) {
 
 export async function GET(request) {
   if (!authorized(request)) return Response.json({ error: "Unauthorized" }, { status: 401 });
-  const baseOptions = await resolveShadowPricedOptions(optionsFromRequest(request));
+  const requestedOptions = optionsFromRequest(request);
+  const fastDryRun = requestedOptions.dryRun && !requestedOptions.fullPlan;
+  const dryRunOptions = fastDryRun
+    ? {
+      ...requestedOptions,
+      useCursor: false,
+      skipRecentlyScanned: false,
+      prioritizeMaterialization: false,
+      recentScanMaxRows: Math.min(Number(requestedOptions.recentScanMaxRows || 0) || 500, 500),
+      materializationMaxRows: Math.min(Number(requestedOptions.materializationMaxRows || 0) || 500, 500),
+    }
+    : requestedOptions;
+  const baseOptions = await resolveShadowPricedOptions(dryRunOptions);
   if (baseOptions.shadowSource?.enabled && !baseOptions.symbols.length) {
     return Response.json({
       ok: true,
@@ -255,10 +346,11 @@ export async function GET(request) {
     marketOffsets: cursorOffsets(cursor.value || {}, baseOptions),
   };
   if (options.dryRun) {
-    const plan = await planMaterializedScan(options);
+    const plan = fastDryRun ? fastDryRunPlan(options) : await planMaterializedScan(options);
     return Response.json({
       ok: true,
       dryRun: true,
+      operationalProbe: fastDryRun,
       plan: {
         markets: plan.markets,
         symbols: plan.symbols,
@@ -270,6 +362,7 @@ export async function GET(request) {
         ...plan.stats,
         shadowSource: options.shadowSource || null,
         screenerFilters: options.screenerFilters || null,
+        operationalProbe: fastDryRun,
       },
       cursor: {
         used: Boolean(options.useCursor),

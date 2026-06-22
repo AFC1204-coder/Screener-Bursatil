@@ -31,3 +31,102 @@
   background: rgba(255,255,255,.025);
   min-width: 0;
 }
+
+.researchScoreCluster {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.researchScoreStrip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.researchRowTrustSignature {
+  width: max-content;
+  max-width: 100%;
+}
+
+.researchRowTrustSignature .rowTrustChip {
+  min-width: 21px;
+  min-height: 17px;
+  padding: 1px 4px;
+}
+
+.researchRowTrustSignature .rowTrustChip em {
+  font-size: 7px;
+}
+
+.researchRowTrustSignature .rowTrustChip b {
+  font-size: 8px;
+}
+
+.researchScoreStrip > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.researchScoreStrip em {
+  color: #8b95a4;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 760;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.researchTrustMetric {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.researchTrustMetric > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.researchTrustMetric i {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 9px;
+  height: 9px;
+  border: 1px solid rgba(148,163,184,.24);
+  border-radius: 999px;
+  color: #cbd5e1;
+  background: rgba(15,23,42,.72);
+  font-size: 6.5px;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.researchTrustMetric.source-proxy i {
+  border-color: rgba(148,163,184,.28);
+  color: #cbd5e1;
+  background: rgba(148,163,184,.12);
+}
+
+.researchTrustMetric.source-review i {
+  border-color: rgba(245,158,11,.32);
+  color: #fed7aa;
+  background: rgba(245,158,11,.1);
+}
+
+.researchTrustMetric.source-blocked i {
+  border-color: rgba(248,113,113,.34);
+  color: #fecaca;
+  background: rgba(239,68,68,.12);
+}

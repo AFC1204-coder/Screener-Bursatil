@@ -1,4 +1,10 @@
 import { disabledPayload, finiteOrNull, requirePersistenceAuth, supabaseConfig, supabaseRequest, supabaseRpc, textOrNull, toTimestamp } from "@/lib/supabaseServer";
+import { compactResearchRow } from "@/lib/researchRowContract";
+import { prepareScanDecisionRow, scanDecisionMetrics, scanDecisionRowFromDb } from "@/lib/scanDecisionProjection";
+import { clearScansApiCache, LATEST_SCAN_TTL_MS, scansApiCache } from "@/lib/scansApiCache";
+import { snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
+
+const SCANS_SUPABASE_TIMEOUT_MS = 8000;
 
 function scanPayload(scan = {}, ownerId) {
   const rows = Array.isArray(scan.rows) ? scan.rows : [];
@@ -9,7 +15,8 @@ function scanPayload(scan = {}, ownerId) {
     fieldRules: scan.fieldRules || scan.settings?.fieldRules || null,
     viewLayers: scan.viewLayers || scan.settings?.viewLayers || null,
     useRegimeFilter: scan.useRegimeFilter ?? scan.settings?.useRegimeFilter ?? null,
-    rowsAreFilteredSnapshot: scan.rowsAreFilteredSnapshot ?? scan.settings?.rowsAreFilteredSnapshot ?? true,
+    sort: scan.sort || scan.settings?.sort || null,
+    rowsAreFilteredSnapshot: snapshotRowsAreFiltered(scan),
     snapshotCompatibilityKey: scan.snapshotCompatibilityKey || scan.settings?.snapshotCompatibilityKey || null,
     methodologySummary: scan.methodologySummary || scan.settings?.methodologySummary || null,
     comparison: scan.comparison || scan.settings?.comparison || null,
@@ -28,197 +35,204 @@ function scanPayload(scan = {}, ownerId) {
   };
 }
 
-export function resultPayload(row = {}, scanId, ownerId, index) {
+export function resultPayload(row = {}, scanId, ownerId, index, settingsOrExplanation = {}) {
+  const preparedRow = prepareScanDecisionRow(row, settingsOrExplanation);
   return {
     owner_id: ownerId,
     scan_id: scanId,
-    symbol: textOrNull(row.symbol) || "-",
-    company_name: textOrNull(row.companyName || row.name || row.symbol),
-    country: textOrNull(row.country),
-    sector: textOrNull(row.sector),
-    industry: textOrNull(row.industry),
-    theme: textOrNull(row.theme),
+    symbol: textOrNull(preparedRow.symbol) || "-",
+    company_name: textOrNull(preparedRow.companyName || preparedRow.name || preparedRow.symbol),
+    country: textOrNull(preparedRow.country),
+    sector: textOrNull(preparedRow.sector),
+    industry: textOrNull(preparedRow.industry),
+    theme: textOrNull(preparedRow.theme),
     rank_index: index + 1,
-    total_score: finiteOrNull(row.totalScore),
-    weinstein_score: finiteOrNull(row.weinsteinScore),
-    minervini_score: finiteOrNull(row.minerviniScore),
-    risk_score: finiteOrNull(row.riskScore),
-    rs_rating: finiteOrNull(row.rsGlobalPct ?? row.rsRating),
+    total_score: finiteOrNull(preparedRow.totalScore),
+    weinstein_score: finiteOrNull(preparedRow.weinsteinScore),
+    minervini_score: finiteOrNull(preparedRow.minerviniScore),
+    risk_score: finiteOrNull(preparedRow.riskScore),
+    rs_rating: finiteOrNull(preparedRow.rsGlobalPct ?? preparedRow.rsRating),
     metrics: {
-      rsGlobalPct: row.rsGlobalPct ?? null,
-      rsRating: row.rsRating ?? null,
-      rsCountryPct: row.rsCountryPct ?? null,
-      rsSectorPct: row.rsSectorPct ?? null,
-      rsQualityScore: row.rsQualityScore ?? null,
-      rsStabilityScore: row.rsStabilityScore ?? null,
-      speculationRiskScore: row.speculationRiskScore ?? null,
-      rsQualityLabel: row.rsQualityLabel ?? null,
-      rsGlobalSample: row.rsGlobalSample ?? null,
-      rsCountrySample: row.rsCountrySample ?? null,
-      rsSectorSample: row.rsSectorSample ?? null,
-      rs3m: row.rs3m ?? null,
-      rs6m: row.rs6m ?? null,
-      rs12m: row.rs12m ?? null,
-      benchmarkSymbol: row.benchmarkSymbol ?? null,
-      benchmarkPerf3m: row.benchmarkPerf3m ?? null,
-      benchmarkPerf6m: row.benchmarkPerf6m ?? null,
-      benchmarkPerf12m: row.benchmarkPerf12m ?? null,
-      rsBenchmarkSample: row.rsBenchmarkSample ?? null,
-      rsBenchmarkAvailable: row.rsBenchmarkAvailable ?? null,
-      rsBenchmarkIssue: row.rsBenchmarkIssue ?? null,
-      perf3m: row.perf3m ?? null,
-      perf6m: row.perf6m ?? null,
-      perf12m: row.perf12m ?? null,
-      distance20d: row.distance20d ?? null,
-      distance50d: row.distance50d ?? null,
-      distance52w: row.distance52w ?? null,
-      extSma50: row.extSma50 ?? null,
-      avgVolume: row.avgVolume ?? null,
-      latestVolume: row.latestVolume ?? null,
-      avgTurnover: row.avgTurnover ?? null,
-      latestTurnover: row.latestTurnover ?? null,
-      relativeVolume: row.relativeVolume ?? null,
-      volumeSurgePct: row.volumeSurgePct ?? null,
-      upDownVolRatio: row.upDownVolRatio ?? null,
-      shortPercentOfFloat: row.shortPercentOfFloat ?? null,
-      sharesPercentSharesOut: row.sharesPercentSharesOut ?? null,
-      shortRatio: row.shortRatio ?? null,
-      sharesShort: row.sharesShort ?? null,
-      floatShares: row.floatShares ?? null,
-      volumeScore: row.volumeScore ?? null,
-      volumeEffectScore: row.volumeEffectScore ?? null,
-      volumeEvidence: row.volumeEvidence ?? null,
-      liquidityScore: row.liquidityScore ?? null,
-      sectorScore: row.sectorScore ?? null,
-      growthScore: row.growthScore ?? null,
-      setupQualityScore: row.setupQualityScore ?? null,
-      setupVerdictKey: row.setupVerdictKey ?? null,
-      setupVerdictState: row.setupVerdictState ?? null,
-      setupVerdictLabel: row.setupVerdictLabel ?? null,
-      setupVerdictShortLabel: row.setupVerdictShortLabel ?? null,
-      setupVerdictReason: row.setupVerdictReason ?? null,
-      setupVerdictEvidence: row.setupVerdictEvidence ?? null,
-      setupVerdictTone: row.setupVerdictTone ?? null,
-      setupDataConfidenceKey: row.setupDataConfidenceKey ?? null,
-      setupDataConfidenceLabel: row.setupDataConfidenceLabel ?? null,
-      setupPlanValid: row.setupPlanValid ?? null,
-      setupActionable: row.setupActionable ?? null,
-      setupObservable: row.setupObservable ?? null,
-      setupWatch: row.setupWatch ?? null,
-      setupStrict: row.setupStrict ?? null,
-      setupDisplayKey: row.setupDisplayKey ?? null,
-      setupDisplayState: row.setupDisplayState ?? null,
-      setupDisplayLabel: row.setupDisplayLabel ?? null,
-      setupDisplayShortLabel: row.setupDisplayShortLabel ?? null,
-      setupDisplayReason: row.setupDisplayReason ?? null,
-      setupDisplayEvidence: row.setupDisplayEvidence ?? null,
-      setupDisplayLine: row.setupDisplayLine ?? null,
-      setupDisplayTone: row.setupDisplayTone ?? null,
-      setupDisplayDataLimited: row.setupDisplayDataLimited ?? null,
-      setupDisplayBlocksPatternClaim: row.setupDisplayBlocksPatternClaim ?? null,
-      setupDisplayPlanValid: row.setupDisplayPlanValid ?? null,
-      setupDisplayActionable: row.setupDisplayActionable ?? null,
-      setupDisplayObservable: row.setupDisplayObservable ?? null,
-      setupDisplayWatch: row.setupDisplayWatch ?? null,
-      setupDisplayStrict: row.setupDisplayStrict ?? null,
-      setupDisplayTradePlanEligible: row.setupDisplayTradePlanEligible ?? null,
-      setupDisplayConfidenceKey: row.setupDisplayConfidenceKey ?? null,
-      setupDisplayConfidenceLabel: row.setupDisplayConfidenceLabel ?? null,
-      methodologyReliabilityState: row.methodologyReliabilityState ?? null,
-      methodologyReliabilityLabel: row.methodologyReliabilityLabel ?? null,
-      methodologyReliabilityReason: row.methodologyReliabilityReason ?? null,
-      methodologyBlocksPatternClaim: row.methodologyBlocksPatternClaim ?? null,
-      pivotPrice: row.pivotPrice ?? null,
-      distanceToPivotPct: row.distanceToPivotPct ?? null,
-      baseDepthPct: row.baseDepthPct ?? null,
-      baseDays: row.baseDays ?? null,
-      baseWeeks: row.baseWeeks ?? null,
-      volumeDryUpRatio: row.volumeDryUpRatio ?? null,
-      latestVolumeRatio: row.latestVolumeRatio ?? null,
-      latestCloseLocationPct: row.latestCloseLocationPct ?? null,
-      contractionDepths: row.contractionDepths ?? null,
-      contractionCount: row.contractionCount ?? null,
-      vcpCandidate: row.vcpCandidate ?? null,
-      breakoutAttempt: row.breakoutAttempt ?? null,
-      breakoutQualityScore: row.breakoutQualityScore ?? null,
-      failedBreakout: row.failedBreakout ?? null,
-      patternFamily: row.patternFamily ?? null,
-      patternMaturity: row.patternMaturity ?? null,
-      patternQualityScore: row.patternQualityScore ?? null,
-      setupStructureKey: row.setupStructureKey ?? null,
-      setupStructureLabel: row.setupStructureLabel ?? null,
-      setupStructureReason: row.setupStructureReason ?? null,
-      setupStructureEvidence: row.setupStructureEvidence ?? null,
-      setupStructureTone: row.setupStructureTone ?? null,
-      setupStructureStrict: row.setupStructureStrict ?? null,
-      setupStructureDataLabel: row.setupStructureDataLabel ?? null,
-      patternDataStatus: row.patternDataStatus ?? null,
-      patternEligible: row.patternEligible ?? null,
-      patternIssues: row.patternIssues ?? null,
-      patternVolumeEligible: row.patternVolumeEligible ?? null,
-      patternFreshnessDays: row.patternFreshnessDays ?? null,
-      patternBarsCount: row.patternBarsCount ?? null,
-      patternMinBars: row.patternMinBars ?? null,
-      patternCoveragePct: row.patternCoveragePct ?? null,
-      patternOhlcCoveragePct: row.patternOhlcCoveragePct ?? null,
-      patternVolumeCoveragePct: row.patternVolumeCoveragePct ?? null,
-      consolidationCandidate: row.consolidationCandidate ?? null,
-      baseContextStatus: row.baseContextStatus ?? null,
-      pivotSqueeze: row.pivotSqueeze ?? null,
-      baseContextScore: row.baseContextScore ?? null,
-      baseReturnPct: row.baseReturnPct ?? null,
-      priorUptrendPct: row.priorUptrendPct ?? null,
-      basePivotAgeBars: row.basePivotAgeBars ?? null,
-      baseNearPivotDays: row.baseNearPivotDays ?? null,
-      baseNewHighCount: row.baseNewHighCount ?? null,
-      marginalHighBreaks: row.marginalHighBreaks ?? null,
-      earlyBaseDepthPct: row.earlyBaseDepthPct ?? null,
-      middleBaseDepthPct: row.middleBaseDepthPct ?? null,
-      lateBaseDepthPct: row.lateBaseDepthPct ?? null,
-      rangeCompressionRatio: row.rangeCompressionRatio ?? null,
-      atr20Pct: row.atr20Pct ?? null,
-      atr50Pct: row.atr50Pct ?? null,
-      meaningfulContractionMinPct: row.meaningfulContractionMinPct ?? null,
-      contractionsDecreasing: row.contractionsDecreasing ?? null,
-      contraction1DepthPct: row.contraction1DepthPct ?? null,
-      contraction2DepthPct: row.contraction2DepthPct ?? null,
-      contraction3DepthPct: row.contraction3DepthPct ?? null,
-      contraction4DepthPct: row.contraction4DepthPct ?? null,
-      lastContractionDepthPct: row.lastContractionDepthPct ?? null,
-      rejectedContractionDepthPct: row.rejectedContractionDepthPct ?? null,
-      contractionReductionPct: row.contractionReductionPct ?? null,
-      contractionStructureStatus: row.contractionStructureStatus ?? null,
-      contractionStructureReason: row.contractionStructureReason ?? null,
-      measuredContractionDepths: row.measuredContractionDepths ?? null,
-      contractionSwings: row.contractionSwings ?? null,
-      measuredContractionSwings: row.measuredContractionSwings ?? null,
-      rejectedContractionSwing: row.rejectedContractionSwing ?? null,
-      absDistanceToPivotPct: row.absDistanceToPivotPct ?? null,
-      tightness5dPct: row.tightness5dPct ?? null,
-      tightness10dPct: row.tightness10dPct ?? null,
-      tightness20dPct: row.tightness20dPct ?? null,
-      pivotClarityScore: row.pivotClarityScore ?? null,
-      volumeDryUpScore: row.volumeDryUpScore ?? null,
-      baseQualityScore: row.baseQualityScore ?? null,
-      weeklyStageState: row.weeklyStageState ?? null,
-      weeklyStageLabel: row.weeklyStageLabel ?? null,
-      weeklyFastWeeks: row.weeklyFastWeeks ?? null,
-      weeklySlowWeeks: row.weeklySlowWeeks ?? null,
-      weeklyFastMa: row.weeklyFastMa ?? null,
-      weeklySlowMa: row.weeklySlowMa ?? null,
-      weeklySlowMaSlope: row.weeklySlowMaSlope ?? null,
-      weeklyDistanceFastMa: row.weeklyDistanceFastMa ?? null,
-      weeklyDistanceSlowMa: row.weeklyDistanceSlowMa ?? null,
-      priceFreshnessDays: row.priceFreshnessDays ?? null,
-      priceFreshnessLabel: row.priceFreshnessLabel ?? null,
-      priceFreshnessOk: row.priceFreshnessOk ?? null,
-      lastDate: row.lastDate ?? null,
+      ...scanDecisionMetrics(preparedRow),
+      rsGlobalPct: preparedRow.rsGlobalPct ?? null,
+      rsRating: preparedRow.rsRating ?? null,
+      rsCountryPct: preparedRow.rsCountryPct ?? null,
+      rsSectorPct: preparedRow.rsSectorPct ?? null,
+      rsQualityScore: preparedRow.rsQualityScore ?? null,
+      rsStabilityScore: preparedRow.rsStabilityScore ?? null,
+      speculationRiskScore: preparedRow.speculationRiskScore ?? null,
+      rsQualityLabel: preparedRow.rsQualityLabel ?? null,
+      rsGlobalSample: preparedRow.rsGlobalSample ?? null,
+      rsCountrySample: preparedRow.rsCountrySample ?? null,
+      rsSectorSample: preparedRow.rsSectorSample ?? null,
+      rs3m: preparedRow.rs3m ?? null,
+      rs6m: preparedRow.rs6m ?? null,
+      rs12m: preparedRow.rs12m ?? null,
+      benchmarkSymbol: preparedRow.benchmarkSymbol ?? null,
+      benchmarkPerf3m: preparedRow.benchmarkPerf3m ?? null,
+      benchmarkPerf6m: preparedRow.benchmarkPerf6m ?? null,
+      benchmarkPerf12m: preparedRow.benchmarkPerf12m ?? null,
+      rsBenchmarkSample: preparedRow.rsBenchmarkSample ?? null,
+      rsBenchmarkAvailable: preparedRow.rsBenchmarkAvailable ?? null,
+      rsBenchmarkIssue: preparedRow.rsBenchmarkIssue ?? null,
+      perf3m: preparedRow.perf3m ?? null,
+      perf6m: preparedRow.perf6m ?? null,
+      perf12m: preparedRow.perf12m ?? null,
+      distance20d: preparedRow.distance20d ?? null,
+      distance50d: preparedRow.distance50d ?? null,
+      distance52w: preparedRow.distance52w ?? null,
+      extSma50: preparedRow.extSma50 ?? null,
+      avgVolume: preparedRow.avgVolume ?? null,
+      latestVolume: preparedRow.latestVolume ?? null,
+      avgTurnover: preparedRow.avgTurnover ?? null,
+      latestTurnover: preparedRow.latestTurnover ?? null,
+      relativeVolume: preparedRow.relativeVolume ?? null,
+      volumeSurgePct: preparedRow.volumeSurgePct ?? null,
+      upDownVolRatio: preparedRow.upDownVolRatio ?? null,
+      shortPercentOfFloat: preparedRow.shortPercentOfFloat ?? null,
+      sharesPercentSharesOut: preparedRow.sharesPercentSharesOut ?? null,
+      shortRatio: preparedRow.shortRatio ?? null,
+      sharesShort: preparedRow.sharesShort ?? null,
+      floatShares: preparedRow.floatShares ?? null,
+      volumeScore: preparedRow.volumeScore ?? null,
+      volumeEffectScore: preparedRow.volumeEffectScore ?? null,
+      volumeEvidence: preparedRow.volumeEvidence ?? null,
+      liquidityScore: preparedRow.liquidityScore ?? null,
+      sectorScore: preparedRow.sectorScore ?? null,
+      growthScore: preparedRow.growthScore ?? null,
+      setupQualityScore: preparedRow.setupQualityScore ?? null,
+      setupVerdictKey: preparedRow.setupVerdictKey ?? null,
+      setupVerdictState: preparedRow.setupVerdictState ?? null,
+      setupVerdictLabel: preparedRow.setupVerdictLabel ?? null,
+      setupVerdictShortLabel: preparedRow.setupVerdictShortLabel ?? null,
+      setupVerdictReason: preparedRow.setupVerdictReason ?? null,
+      setupVerdictEvidence: preparedRow.setupVerdictEvidence ?? null,
+      setupVerdictTone: preparedRow.setupVerdictTone ?? null,
+      setupDataConfidenceKey: preparedRow.setupDataConfidenceKey ?? null,
+      setupDataConfidenceLabel: preparedRow.setupDataConfidenceLabel ?? null,
+      setupPlanValid: preparedRow.setupPlanValid ?? null,
+      setupActionable: preparedRow.setupActionable ?? null,
+      setupObservable: preparedRow.setupObservable ?? null,
+      setupWatch: preparedRow.setupWatch ?? null,
+      setupStrict: preparedRow.setupStrict ?? null,
+      setupDisplayKey: preparedRow.setupDisplayKey ?? null,
+      setupDisplayState: preparedRow.setupDisplayState ?? null,
+      setupDisplayLabel: preparedRow.setupDisplayLabel ?? null,
+      setupDisplayShortLabel: preparedRow.setupDisplayShortLabel ?? null,
+      setupDisplayReason: preparedRow.setupDisplayReason ?? null,
+      setupDisplayEvidence: preparedRow.setupDisplayEvidence ?? null,
+      setupDisplayLine: preparedRow.setupDisplayLine ?? null,
+      setupDisplayTone: preparedRow.setupDisplayTone ?? null,
+      setupDisplayDataLimited: preparedRow.setupDisplayDataLimited ?? null,
+      setupDisplayBlocksPatternClaim: preparedRow.setupDisplayBlocksPatternClaim ?? null,
+      setupDisplayPlanValid: preparedRow.setupDisplayPlanValid ?? null,
+      setupDisplayActionable: preparedRow.setupDisplayActionable ?? null,
+      setupDisplayObservable: preparedRow.setupDisplayObservable ?? null,
+      setupDisplayWatch: preparedRow.setupDisplayWatch ?? null,
+      setupDisplayStrict: preparedRow.setupDisplayStrict ?? null,
+      setupDisplayTradePlanEligible: preparedRow.setupDisplayTradePlanEligible ?? null,
+      setupDisplayConfidenceKey: preparedRow.setupDisplayConfidenceKey ?? null,
+      setupDisplayConfidenceLabel: preparedRow.setupDisplayConfidenceLabel ?? null,
+      methodologyReliabilityState: preparedRow.methodologyReliabilityState ?? null,
+      methodologyReliabilityLabel: preparedRow.methodologyReliabilityLabel ?? null,
+      methodologyReliabilityReason: preparedRow.methodologyReliabilityReason ?? null,
+      methodologyBlocksPatternClaim: preparedRow.methodologyBlocksPatternClaim ?? null,
+      pivotPrice: preparedRow.pivotPrice ?? null,
+      distanceToPivotPct: preparedRow.distanceToPivotPct ?? null,
+      baseDepthPct: preparedRow.baseDepthPct ?? null,
+      baseDays: preparedRow.baseDays ?? null,
+      baseWeeks: preparedRow.baseWeeks ?? null,
+      volumeDryUpRatio: preparedRow.volumeDryUpRatio ?? null,
+      latestVolumeRatio: preparedRow.latestVolumeRatio ?? null,
+      latestCloseLocationPct: preparedRow.latestCloseLocationPct ?? null,
+      contractionDepths: preparedRow.contractionDepths ?? null,
+      contractionCount: preparedRow.contractionCount ?? null,
+      vcpCandidate: preparedRow.vcpCandidate ?? null,
+      breakoutAttempt: preparedRow.breakoutAttempt ?? null,
+      breakoutQualityScore: preparedRow.breakoutQualityScore ?? null,
+      failedBreakout: preparedRow.failedBreakout ?? null,
+      patternFamily: preparedRow.patternFamily ?? null,
+      patternMaturity: preparedRow.patternMaturity ?? null,
+      patternQualityScore: preparedRow.patternQualityScore ?? null,
+      setupStructureKey: preparedRow.setupStructureKey ?? null,
+      setupStructureLabel: preparedRow.setupStructureLabel ?? null,
+      setupStructureReason: preparedRow.setupStructureReason ?? null,
+      setupStructureEvidence: preparedRow.setupStructureEvidence ?? null,
+      setupStructureTone: preparedRow.setupStructureTone ?? null,
+      setupStructureStrict: preparedRow.setupStructureStrict ?? null,
+      setupStructureDataLabel: preparedRow.setupStructureDataLabel ?? null,
+      patternDataStatus: preparedRow.patternDataStatus ?? null,
+      patternEligible: preparedRow.patternEligible ?? null,
+      patternIssues: preparedRow.patternIssues ?? null,
+      patternVolumeEligible: preparedRow.patternVolumeEligible ?? null,
+      patternFreshnessDays: preparedRow.patternFreshnessDays ?? null,
+      patternBarsCount: preparedRow.patternBarsCount ?? null,
+      patternMinBars: preparedRow.patternMinBars ?? null,
+      patternCoveragePct: preparedRow.patternCoveragePct ?? null,
+      patternOhlcCoveragePct: preparedRow.patternOhlcCoveragePct ?? null,
+      patternVolumeCoveragePct: preparedRow.patternVolumeCoveragePct ?? null,
+      consolidationCandidate: preparedRow.consolidationCandidate ?? null,
+      baseContextStatus: preparedRow.baseContextStatus ?? null,
+      pivotSqueeze: preparedRow.pivotSqueeze ?? null,
+      baseContextScore: preparedRow.baseContextScore ?? null,
+      baseReturnPct: preparedRow.baseReturnPct ?? null,
+      priorUptrendPct: preparedRow.priorUptrendPct ?? null,
+      basePivotAgeBars: preparedRow.basePivotAgeBars ?? null,
+      baseNearPivotDays: preparedRow.baseNearPivotDays ?? null,
+      baseNewHighCount: preparedRow.baseNewHighCount ?? null,
+      marginalHighBreaks: preparedRow.marginalHighBreaks ?? null,
+      earlyBaseDepthPct: preparedRow.earlyBaseDepthPct ?? null,
+      middleBaseDepthPct: preparedRow.middleBaseDepthPct ?? null,
+      lateBaseDepthPct: preparedRow.lateBaseDepthPct ?? null,
+      rangeCompressionRatio: preparedRow.rangeCompressionRatio ?? null,
+      atr20Pct: preparedRow.atr20Pct ?? null,
+      atr50Pct: preparedRow.atr50Pct ?? null,
+      meaningfulContractionMinPct: preparedRow.meaningfulContractionMinPct ?? null,
+      contractionsDecreasing: preparedRow.contractionsDecreasing ?? null,
+      contraction1DepthPct: preparedRow.contraction1DepthPct ?? null,
+      contraction2DepthPct: preparedRow.contraction2DepthPct ?? null,
+      contraction3DepthPct: preparedRow.contraction3DepthPct ?? null,
+      contraction4DepthPct: preparedRow.contraction4DepthPct ?? null,
+      lastContractionDepthPct: preparedRow.lastContractionDepthPct ?? null,
+      rejectedContractionDepthPct: preparedRow.rejectedContractionDepthPct ?? null,
+      contractionReductionPct: preparedRow.contractionReductionPct ?? null,
+      contractionStructureStatus: preparedRow.contractionStructureStatus ?? null,
+      contractionStructureReason: preparedRow.contractionStructureReason ?? null,
+      measuredContractionDepths: preparedRow.measuredContractionDepths ?? null,
+      contractionSwings: preparedRow.contractionSwings ?? null,
+      measuredContractionSwings: preparedRow.measuredContractionSwings ?? null,
+      rejectedContractionSwing: preparedRow.rejectedContractionSwing ?? null,
+      absDistanceToPivotPct: preparedRow.absDistanceToPivotPct ?? null,
+      tightness5dPct: preparedRow.tightness5dPct ?? null,
+      tightness10dPct: preparedRow.tightness10dPct ?? null,
+      tightness20dPct: preparedRow.tightness20dPct ?? null,
+      pivotClarityScore: preparedRow.pivotClarityScore ?? null,
+      volumeDryUpScore: preparedRow.volumeDryUpScore ?? null,
+      baseQualityScore: preparedRow.baseQualityScore ?? null,
+      weeklyStageState: preparedRow.weeklyStageState ?? null,
+      weeklyStageLabel: preparedRow.weeklyStageLabel ?? null,
+      weeklyFastWeeks: preparedRow.weeklyFastWeeks ?? null,
+      weeklySlowWeeks: preparedRow.weeklySlowWeeks ?? null,
+      weeklyFastMa: preparedRow.weeklyFastMa ?? null,
+      weeklySlowMa: preparedRow.weeklySlowMa ?? null,
+      weeklySlowMaSlope: preparedRow.weeklySlowMaSlope ?? null,
+      weeklyDistanceFastMa: preparedRow.weeklyDistanceFastMa ?? null,
+      weeklyDistanceSlowMa: preparedRow.weeklyDistanceSlowMa ?? null,
+      priceFreshnessDays: preparedRow.priceFreshnessDays ?? null,
+      priceFreshnessLabel: preparedRow.priceFreshnessLabel ?? null,
+      priceFreshnessOk: preparedRow.priceFreshnessOk ?? null,
+      lastDate: preparedRow.lastDate ?? null,
     },
-    raw: row,
+    raw: preparedRow,
   };
 }
 
-function scanFromDb(row, results = []) {
+export function scanFromDb(row, results = [], options = {}) {
+  const decisionSettings = row.settings?.activeSettings || row.settings || {};
+  const rows = results
+    .filter((item) => item.scan_id === row.id)
+    .sort((a, b) => (a.rank_index || 0) - (b.rank_index || 0))
+    .map((item) => prepareScanDecisionRow(scanDecisionRowFromDb(item, options), decisionSettings));
   return {
     id: row.local_id || row.id,
     cloudId: row.id,
@@ -233,29 +247,17 @@ function scanFromDb(row, results = []) {
     fieldRules: row.settings?.fieldRules || null,
     viewLayers: row.settings?.viewLayers || null,
     useRegimeFilter: row.settings?.useRegimeFilter ?? null,
-    rowsAreFilteredSnapshot: row.settings?.rowsAreFilteredSnapshot !== false,
+    sort: row.settings?.sort || "",
+    rowsAreFilteredSnapshot: snapshotRowsAreFiltered({ settings: row.settings || {} }),
     snapshotCompatibilityKey: row.settings?.snapshotCompatibilityKey || null,
     methodologySummary: row.settings?.methodologySummary || null,
     comparison: row.settings?.comparison || null,
     marketScore: finiteOrNull(row.market_score),
     marketRegime: row.market_regime || "sin dato",
-    rows: results
-      .filter((item) => item.scan_id === row.id)
-      .sort((a, b) => (a.rank_index || 0) - (b.rank_index || 0))
-      .map((item) => item.raw || {
-        symbol: item.symbol,
-        companyName: item.company_name,
-        country: item.country,
-        sector: item.sector,
-        industry: item.industry,
-        theme: item.theme,
-        totalScore: finiteOrNull(item.total_score),
-        weinsteinScore: finiteOrNull(item.weinstein_score),
-        minerviniScore: finiteOrNull(item.minervini_score),
-        riskScore: finiteOrNull(item.risk_score),
-        rsRating: finiteOrNull(item.rs_rating),
-        ...(item.metrics || {}),
-      }),
+    rows,
+    ...(options.decisionProjection
+      ? { decisionProjectionPartialRows: rows.filter((item) => item.decisionProjectionPartial).length }
+      : {}),
   };
 }
 
@@ -266,6 +268,39 @@ function scanTombstoneFromDb(row = {}) {
     deletedAt: row.deleted_at || row.updated_at,
     updatedAt: row.updated_at || row.deleted_at,
   };
+}
+
+function compactErrorMessage(value = "") {
+  const text = String(value || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text) return "";
+  if (/aborted|timeout|timed out/i.test(text)) return "Timeout consultando Supabase.";
+  const cloudflare = text.match(/Error code\s*(\d+)/i)?.[1];
+  if (cloudflare) return `Cloudflare ${cloudflare}: ${text.slice(0, 180)}`;
+  return text.slice(0, 240);
+}
+
+async function cachedLatestScans(cacheKey, loadPayload) {
+  const cached = scansApiCache.peek(cacheKey, { allowExpired: true });
+  if (cached && !cached.expired) return cached.value;
+  try {
+    const payload = await loadPayload();
+    scansApiCache.set(cacheKey, payload, LATEST_SCAN_TTL_MS);
+    return payload;
+  } catch (error) {
+    if (!cached?.value) throw error;
+    return {
+      ...cached.value,
+      ok: true,
+      stale: true,
+      staleForMs: cached.staleForMs,
+      staleReason: compactErrorMessage(error.message) || "No se pudo refrescar el snapshot desde Supabase.",
+    };
+  }
 }
 
 function timestampValue(value) {
@@ -313,10 +348,11 @@ function scanSyncError(error = {}) {
 async function saveScan(scan, ownerId) {
   const payload = scanPayload(scan, ownerId);
   const rows = Array.isArray(scan.rows) ? scan.rows : [];
+  const decisionSettings = scan.activeSettings || scan.settings?.activeSettings || scan.settings || {};
   const saved = await supabaseRpc("upsert_scan_newer_wins", {
     p_owner_id: ownerId,
     p_scan: payload,
-    p_results: rows.map((row, index) => resultPayload(row, null, ownerId, index)),
+    p_results: rows.map((row, index) => resultPayload(row, null, ownerId, index, decisionSettings)),
   });
   return { row: Array.isArray(saved) ? saved[0] : null, payload };
 }
@@ -329,28 +365,48 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const includeRows = searchParams.get("includeRows") !== "0";
   const includeDeleted = searchParams.get("includeDeleted") === "1";
+  // Snapshot compacto por defecto: el chartPreview completo (96 barras OHLC por
+  // fila) es ~70% del peso del payload y la UI de listas solo necesita la serie
+  // ligera de la sparkline. ?full=1 devuelve las filas íntegras.
+  const full = searchParams.get("full") === "1";
+  const projection = searchParams.get("projection") || "";
+  const decisionProjection = projection === "decision" && !full;
   const limit = Math.min(Number(searchParams.get("limit") || 50), 100);
+  const rowsLimit = Math.min(Math.max(Number(searchParams.get("rowsLimit") || 5000), 0), 20000);
+  const scanSelect = "id,local_id,created_at,updated_at,deleted_at,name,preset,settings,market_score,market_regime,row_count";
+  const resultSelectFull = "scan_id,rank_index,raw,symbol,company_name,country,sector,industry,theme,total_score,weinstein_score,minervini_score,risk_score,rs_rating,metrics";
+  const resultSelectDecision = "scan_id,rank_index,symbol,company_name,country,sector,industry,theme,total_score,weinstein_score,minervini_score,risk_score,rs_rating,metrics";
+  const resultSelect = decisionProjection ? resultSelectDecision : resultSelectFull;
   try {
-    const scans = await supabaseRequest("scans", {
-      query: `owner_id=eq.${encodeURIComponent(config.ownerId)}${includeDeleted ? "" : "&deleted_at=is.null"}&select=*&order=created_at.desc&limit=${limit}`,
-    });
-    const activeScans = scans.filter((scan) => !scan.deleted_at);
-    const deletedScans = scans.filter((scan) => scan.deleted_at);
-    let results = [];
-    if (includeRows && activeScans.length) {
-      const ids = activeScans.map((scan) => scan.id).join(",");
-      results = await supabaseRequest("scan_results", {
-        query: `scan_id=in.(${ids})&select=*&order=rank_index.asc`,
+    const cacheableLatest = includeRows && !includeDeleted && limit === 1 && rowsLimit <= 5000;
+    const cacheKey = `latest:${config.ownerId}:${rowsLimit}:${decisionProjection ? "decision" : full ? "full" : "compact"}`;
+    const loadPayload = async () => {
+      const scans = await supabaseRequest("scans", {
+        query: `owner_id=eq.${encodeURIComponent(config.ownerId)}${includeDeleted ? "" : "&deleted_at=is.null"}&select=${scanSelect}&order=created_at.desc&limit=${limit}`,
+        timeoutMs: SCANS_SUPABASE_TIMEOUT_MS,
       });
-    }
-    return Response.json({
-      configured: true,
-      ok: true,
-      scans: activeScans.map((scan) => scanFromDb(scan, results)),
-      scanTombstones: includeDeleted ? deletedScans.map(scanTombstoneFromDb) : [],
-    });
+      const activeScans = scans.filter((scan) => !scan.deleted_at);
+      const deletedScans = scans.filter((scan) => scan.deleted_at);
+      let results = [];
+      if (includeRows && activeScans.length && rowsLimit > 0) {
+        const ids = activeScans.map((scan) => scan.id).join(",");
+        results = await supabaseRequest("scan_results", {
+          query: `owner_id=eq.${encodeURIComponent(config.ownerId)}&scan_id=in.(${ids})&select=${resultSelect}&order=rank_index.asc&limit=${rowsLimit}`,
+          timeoutMs: SCANS_SUPABASE_TIMEOUT_MS,
+        });
+        if (!full && !decisionProjection) results = results.map((item) => ({ ...item, raw: compactResearchRow(item.raw) }));
+      }
+      return {
+        configured: true,
+        ok: true,
+        projection: decisionProjection ? "decision" : full ? "full" : "compact",
+        scans: activeScans.map((scan) => scanFromDb(scan, results, { decisionProjection })),
+        scanTombstones: includeDeleted ? deletedScans.map(scanTombstoneFromDb) : [],
+      };
+    };
+    return Response.json(cacheableLatest ? await cachedLatestScans(cacheKey, loadPayload) : await loadPayload());
   } catch (error) {
-    return Response.json({ configured: true, ok: false, error: error.message, details: error.details || null }, { status: 500 });
+    return Response.json({ configured: true, ok: false, error: compactErrorMessage(error.message) || "No se pudieron cargar snapshots", details: error.details || null }, { status: 500 });
   }
 }
 
@@ -370,6 +426,7 @@ export async function POST(req) {
       if (result.payload) payloads.push(result.payload);
     }
     const summary = scanSyncSummary(saved, payloads);
+    clearScansApiCache();
     return Response.json({ configured: true, ok: true, ...summary, scans: saved.filter((row) => !row.deleted_at).map((row) => ({ ...row, row_count: Number(row.row_count || 0) })) });
   } catch (error) {
     return Response.json({ configured: true, ok: false, error: scanSyncError(error), details: error.details || null }, { status: 500 });
@@ -406,6 +463,7 @@ export async function DELETE(req) {
       if (Array.isArray(savedRows)) rows.push(...savedRows);
     }
     const summary = scanDeleteSummary(rows, valid);
+    clearScansApiCache();
     return Response.json({
       configured: true,
       ok: true,

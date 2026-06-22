@@ -2,7 +2,9 @@
 import "../../styles/review.css";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import RowTrustSignature from "@/app/RowTrustSignature";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
+import { getJson } from "@/lib/clientApi";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
 import { clamp, num, pct, ratio } from "@/lib/formatters";
@@ -10,8 +12,19 @@ import { stdev } from "@/lib/indicators";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { objectiveStage } from "@/lib/scoring";
+import { DECISION_QUEUE_DIGEST_FILTERS, buildDecisionQueueDigest, buildDecisionQueueDigestSummary, buildDecisionQueueItem, buildDecisionQueueSummary } from "@/lib/screenerExplainability";
+import { buildReviewPrioritySummary, buildReviewProfileSummary, decisionProfileForRow, prepareReviewQueueRows, reviewPriorityForRow, reviewProfileMeta } from "@/lib/decisionProfile";
+import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
+import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
+import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
+import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
+import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
+import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
+import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, buildStockDecisionResolutionSummary, decisionResolutionForSymbol, decisionResolutionHistory, filterRowsByDecisionResolution, reopenStockDecisionResolution, reviewDecisionStateForRows, stockDecisionResolutionFilter } from "@/lib/stockDecisionResolution";
 import { createFavoriteFromRow } from "@/lib/stockRows";
 import { countryCode, externalLinks, isTradingViewWidgetBlocked, stockUrl } from "@/lib/symbols";
+import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
+import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
 
 function value(row = {}, key) {
   return row[key] ?? row.snapshot?.[key] ?? null;
@@ -29,11 +42,21 @@ function normalizeRows(rows = []) {
 function favoriteRows(favorites = []) {
   return normalizeRows(favorites.map((favorite) => ({ ...(favorite.snapshot || {}), ...favorite, sourceType: "favorite" })));
 }
-function sourceLabel(source) {
+function sourceLabel(source, meta = {}) {
+  const customLabel = source === "current" ? String(meta?.sourceLabel || "").trim() : "";
+  if (customLabel) return customLabel;
   if (source === "favorites") return "Favoritos";
   if (source === "latest") return "Último snapshot";
   if (source === "current") return "Screener actual";
   return "Cola guardada";
+}
+function sourceMetaForReview(source = "current", review = {}) {
+  if (source !== "current") return {};
+  return {
+    sourceLabel: String(review?.sourceLabel || "").trim(),
+    sourceDetail: String(review?.sourceDetail || "").trim(),
+    queueMode: String(review?.queueMode || "").trim(),
+  };
 }
 function investorStatusLabel(text = "") {
   return String(text || "")
@@ -41,6 +64,113 @@ function investorStatusLabel(text = "") {
     .replaceAll("favoritos locales", "favoritos")
     .replaceAll("localmente", "en este dispositivo")
     .replaceAll("Proveedor", "Datos");
+}
+function reviewQueueMetricTruthMeta(row = {}) {
+  const status = objectiveMetricAuditStatusForRow(row);
+  const audit = status.audit || null;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const usable = items.filter((item) => item?.status === "verified" || item?.status === "traceable");
+  const measuredCount = usable.filter((item) => item?.proxy !== true).length;
+  const proxyCount = usable.filter((item) => item?.proxy === true).length;
+  const detail = [
+    status.detail,
+    measuredCount ? `${measuredCount} medidas` : "",
+    proxyCount ? `${proxyCount} proxy` : "",
+  ].filter(Boolean).join(" · ");
+  if (status.key === "bad") return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
+  if (status.key === "warn") return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
+  if (status.key === "missing") return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
+  return {
+    key: proxyCount ? "mixed" : "measured",
+    label: proxyCount ? "Mixto" : "Med.",
+    tone: proxyCount ? "neutral" : "good",
+    detail,
+    measuredCount,
+    proxyCount,
+  };
+}
+function reviewMetricSource(row = {}, key = "", label = "") {
+  const audit = objectiveMetricAuditStatusForRow(row)?.audit;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const item = items.find((candidate) => candidate?.key === key);
+  if (!item) return null;
+  const status = item.status || "";
+  const severity = item.severity || "";
+  const titleLabel = label || item.label || key;
+  if (severity === "bad" || ["mismatch", "unverified-value", "missing-source"].includes(status)) {
+    return { key: "blocked", mark: "x", title: `${titleLabel}: bloqueada` };
+  }
+  if (severity === "warn" || ["missing", "insufficient-input"].includes(status)) {
+    return { key: "review", mark: "!", title: `${titleLabel}: revisar` };
+  }
+  if (item.proxy === true) {
+    return { key: "proxy", mark: "p", title: `${titleLabel}: proxy/estimada` };
+  }
+  if (status === "verified" || status === "traceable") {
+    return { key: "measured", mark: "", title: `${titleLabel}: medida/trazable` };
+  }
+  return null;
+}
+function ReviewTrustMetric({ row = {}, metricKey = "", label = "", value: displayValue = "-" }) {
+  const source = metricKey ? reviewMetricSource(row, metricKey, label) : null;
+  const sourceClass = source?.key ? `source-${source.key}` : "";
+  return <strong
+    className={["reviewTrustMetric", sourceClass].filter(Boolean).join(" ")}
+    title={source?.title || undefined}
+    aria-label={source?.title ? `${label}: ${displayValue}. ${source.title}` : undefined}
+  >
+    <em>{displayValue}</em>
+    {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}
+  </strong>;
+}
+function reviewQueueDataHealthMeta(row = {}, settings = {}) {
+  const health = buildScreenerDataHealth(row, settings);
+  const key = health.status?.key || "unknown";
+  return {
+    key,
+    label: key === "ready" ? "OK" : key === "blocked" ? "Bloq." : key === "stale" ? "Viejo" : key === "thin" || key === "limited" ? "Parcial" : health.status?.label || "Datos",
+    tone: health.status?.tone || "neutral",
+    detail: [health.status?.detail, health.topLine].filter(Boolean).join(" · "),
+  };
+}
+function reviewQueueScoreAuditMeta(row = {}) {
+  const audit = buildScreenerScoreAudit(row);
+  const residualWarn = Number.isFinite(audit?.residual) && Math.abs(audit.residual) >= 4;
+  const missing = Array.isArray(audit?.missing) && audit.missing.length;
+  const key = residualWarn ? "mismatch" : missing ? "missing" : audit?.integrityTone === "good" ? "clean" : "attention";
+  return {
+    key,
+    label: key === "clean" ? "Traz." : key === "mismatch" ? "Desc." : key === "missing" ? "Inc." : "Rev.",
+    tone: key === "clean" ? "good" : "warn",
+    detail: [audit?.topLine, Number.isFinite(audit?.residual) ? `Delta ${audit.residual.toFixed(1)}` : ""].filter(Boolean).join(" · "),
+  };
+}
+function reviewQueueFocusMeta({ dataHealth = null, metricTruth = null, scoreAudit = null, evidence = null, methodologyFocus = null, vcp = null } = {}) {
+  const candidates = [];
+  const add = (item) => { if (item?.key && item?.label) candidates.push(item); };
+  if (dataHealth?.key === "blocked") add({ priority: 100, key: "data", label: "Datos", tone: "bad", detail: dataHealth.detail });
+  if (metricTruth?.key === "blocked") add({ priority: 95, key: "metrics", label: "Metr.", tone: "bad", detail: metricTruth.detail });
+  if (scoreAudit?.key === "mismatch") add({ priority: 86, key: "score", label: "Score", tone: "warn", detail: scoreAudit.detail });
+  if (["review", "missing"].includes(metricTruth?.key)) add({ priority: 82, key: "metrics", label: "Metr.", tone: "warn", detail: metricTruth.detail });
+  if (["blocked", "inconsistent", "needs-data"].includes(vcp?.key)) add({ priority: vcp.key === "blocked" ? 80 : 70, key: "vcp", label: "VCP", tone: vcp.tone || "warn", detail: vcp.summary || vcp.note });
+  if (dataHealth?.key && dataHealth.key !== "ready") add({ priority: 72, key: "data", label: "Datos", tone: dataHealth.tone || "warn", detail: dataHealth.detail });
+  if (scoreAudit?.key === "missing") add({ priority: 70, key: "score", label: "Score", tone: "warn", detail: scoreAudit.detail });
+  if (evidence?.status === "blocked") add({ priority: 68, key: "evidence", label: "Pruebas", tone: "bad", detail: evidence.summary });
+  if (methodologyFocus?.tone === "bad" || methodologyFocus?.tone === "warn") add({ priority: methodologyFocus.tone === "bad" ? 66 : 54, key: "method", label: "Método", tone: methodologyFocus.tone, detail: methodologyFocus.detail || methodologyFocus.label });
+  if (evidence?.status === "needs-work") add({ priority: 62, key: "evidence", label: "Pruebas", tone: evidence.tone || "warn", detail: evidence.pending?.[0]?.detail || evidence.pending?.[0]?.label || evidence.summary });
+  if (scoreAudit?.key === "attention") add({ priority: 50, key: "score", label: "Score", tone: "warn", detail: scoreAudit.detail });
+  return candidates.sort((a, b) => b.priority - a.priority)[0] || null;
+}
+function ReviewQueueFocusBadge({ focus = null }) {
+  if (!focus) return null;
+  return <span className={`reviewQueueFocusBadge ${focus.tone || "warn"} focus-${focus.key || "other"}`} title={focus.detail || focus.label}>Foco {focus.label}</span>;
+}
+function shortDateTime(value = "") {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isFinite(date.getTime())
+    ? date.toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
+    : String(value).slice(0, 16);
 }
 function rowSource(source, review, scans, favorites) {
   if (source === "favorites") return favoriteRows(favorites);
@@ -63,11 +193,12 @@ function discoveryRowsFromPayload(data = {}) {
 }
 async function fetchDiscoveryReviewRows(signal) {
   const params = new URLSearchParams({
-    limit: "120",
-    groupItemLimit: "12",
-    groupsLimit: "45",
-    maxRows: "8000",
-    sinceDays: "45",
+    limit: "80",
+    groupItemLimit: "8",
+    groupsLimit: "16",
+    maxRows: "120",
+    sinceDays: "14",
+    minGroupSize: "1",
   });
   const data = await fetchJson(`/api/discovery?${params.toString()}`, signal, 18000);
   return discoveryRowsFromPayload(data);
@@ -185,22 +316,7 @@ function deriveTechnicalFromBars(bars = []) {
   });
 }
 async function fetchJson(url, signal, timeoutMs = 12000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  const abort = () => controller.abort();
-  signal?.addEventListener?.("abort", abort, { once: true });
-  try {
-    const res = await fetch(url, { signal: controller.signal });
-    const text = await res.text();
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    if (!text.trim()) throw new Error("Proveedor sin respuesta");
-    const data = JSON.parse(text);
-    if (data?.error) throw new Error(data.error);
-    return data;
-  } finally {
-    clearTimeout(timer);
-    signal?.removeEventListener?.("abort", abort);
-  }
+  return getJson(url, { signal, timeoutMs });
 }
 async function hydrateReviewRow(row = {}, signal) {
   const symbol = row.symbol;
@@ -326,21 +442,24 @@ function ReviewChartPanel({ row, loading = false }) {
 }
 function metricRows(row = {}) {
   return [
-    [metricShortLabel("rsGlobalPct"), `p${num(value(row, "rsGlobalPct"))}`],
-    [metricShortLabel("rsRating"), `p${num(value(row, "rsRating"))}`],
-    [metricShortLabel("rsCountryPct"), `p${num(value(row, "rsCountryPct"))}`],
-    [metricShortLabel("rsSectorPct"), `p${num(value(row, "rsSectorPct"))}`],
-    ["3M", pct(value(row, "perf3m"))],
-    ["6M", pct(value(row, "perf6m"))],
-    ["12M", pct(value(row, "perf12m"))],
-    ["SMA50", pct(value(row, "extSma50"))],
-    ["Vol rel 20d", ratio(value(row, "relativeVolume"))],
-    [metricShortLabel("volumeEffectScore"), num(value(row, "volumeEffectScore"))],
-    [metricShortLabel("shortPercentOfFloat"), pct(value(row, "shortPercentOfFloat"))],
-    ["Vol 63d", pct(value(row, "volatility63d"))],
-    ["DD 63d", pct(Number.isFinite(value(row, "maxDrawdown63d")) ? -value(row, "maxDrawdown63d") : null)],
-    ["R/Vol 3M", ratio(value(row, "returnToVol3m"))],
-    ["R/DD 3M", ratio(value(row, "returnToDrawdown3m"))],
+    [metricShortLabel("totalScore"), num(value(row, "totalScore")), "totalScore"],
+    [metricShortLabel("rsGlobalPct"), num(value(row, "rsGlobalPct")), "rsGlobalPct"],
+    [metricShortLabel("rsRating"), num(value(row, "rsRating")), "rsRating"],
+    [metricShortLabel("rsCountryPct"), num(value(row, "rsCountryPct")), "rsCountryPct"],
+    [metricShortLabel("rsSectorPct"), num(value(row, "rsSectorPct")), "rsSectorPct"],
+    [metricShortLabel("adProxyScore"), num(value(row, "adProxyScore")), "adProxyScore"],
+    [metricShortLabel("epsGrowthProxyScore"), num(value(row, "epsGrowthProxyScore")), "epsGrowthProxyScore"],
+    ["3M", pct(value(row, "perf3m")), "perf3m"],
+    ["6M", pct(value(row, "perf6m")), "perf6m"],
+    ["12M", pct(value(row, "perf12m")), "perf12m"],
+    ["SMA50", pct(value(row, "extSma50")), "extSma50"],
+    ["Vol rel 20d", ratio(value(row, "relativeVolume")), "relativeVolume"],
+    [metricShortLabel("volumeEffectScore"), num(value(row, "volumeEffectScore")), "volumeEffectScore"],
+    [metricShortLabel("shortPercentOfFloat"), pct(value(row, "shortPercentOfFloat")), "shortPercentOfFloat"],
+    ["Vol 63d", pct(value(row, "volatility63d")), "volatility63d"],
+    ["DD 63d", pct(Number.isFinite(value(row, "maxDrawdown63d")) ? -value(row, "maxDrawdown63d") : null), "maxDrawdown63d"],
+    ["R/Vol 3M", ratio(value(row, "returnToVol3m")), "returnToVol3m"],
+    ["R/DD 3M", ratio(value(row, "returnToDrawdown3m")), "returnToDrawdown3m"],
   ];
 }
 function evidenceRows(row = {}) {
@@ -357,6 +476,77 @@ function evidenceRows(row = {}) {
     [metricShortLabel("weaknessScore"), num(value(row, "weaknessScore"))],
   ];
 }
+
+function DecisionEvidenceStrip({ evidence = null }) {
+  if (!evidence || typeof evidence !== "object") return null;
+  const pending = Array.isArray(evidence.pending) ? evidence.pending.filter((item) => item?.label || item?.key) : [];
+  const confirmed = Array.isArray(evidence.items) ? evidence.items.filter((item) => item?.status === "confirmed" && (item.label || item.key)) : [];
+  const items = (pending.length ? pending : confirmed).slice(0, pending.length ? 3 : 2);
+  if (!items.length) return null;
+  const ratio = Number.isFinite(Number(evidence.passedCount)) && Number.isFinite(Number(evidence.totalCount))
+    ? `${Number(evidence.passedCount)}/${Number(evidence.totalCount)}`
+    : "";
+  return <div className={`reviewDecisionEvidence ${evidence.tone || ""}`}>
+    <span><b>{pending.length ? "Pruebas pendientes" : "Pruebas confirmadas"}</b>{ratio ? <em>{ratio}</em> : null}</span>
+    <div>
+      {items.map((item) => <small key={item.key || item.label} className={item.tone || ""} title={item.detail || item.label}>
+        {item.label || item.key}
+      </small>)}
+    </div>
+  </div>;
+}
+
+function ReviewDecisionPanel({ decision = null }) {
+  if (!decision) return null;
+  const cards = [
+    decision.thesis ? { key: "thesis", ...decision.thesis } : null,
+    decision.risk ? { key: "risk", ...decision.risk } : null,
+    decision.nextAction ? { key: "nextAction", ...decision.nextAction } : null,
+  ].filter((item) => item?.value || item?.detail);
+  return <div className={`reviewDecisionPanel ${decision.tone || ""}`}>
+    <div className="sectionTitle"><h2>Decisión Screener</h2></div>
+    {cards.length ? <div className="reviewDecisionCards">
+      {cards.map((item) => <span key={item.key} className={item.tone || ""}>
+        <em>{item.label || item.key}</em>
+        <b title={item.value}>{item.value}</b>
+        {item.detail ? <small title={item.detail}>{item.detail}</small> : null}
+      </span>)}
+    </div> : null}
+    <DecisionEvidenceStrip evidence={decision.evidence} />
+  </div>;
+}
+
+function ReviewPriorityPanel({ priority = null }) {
+  if (!priority) return null;
+  const components = Array.isArray(priority.priority?.components) ? priority.priority.components.slice(0, 4) : [];
+  const penalties = Array.isArray(priority.priority?.penalties) ? priority.priority.penalties.slice(0, 3) : [];
+  return <div className={`reviewPriorityPanel ${priority.tone || ""}`} aria-label="Prioridad de investigacion">
+    <div className="reviewPriorityHead">
+      <span><b>{priority.label}</b><em>{priority.reason}</em></span>
+      <strong>{Math.round(priority.score || 0)}</strong>
+    </div>
+    {components.length ? <div className="reviewPriorityComponents">
+      {components.map((item) => <span key={item.key} title={item.detail || item.label}>
+        <em>{item.label}</em>
+        <b>{Math.round(item.value || 0)}</b>
+      </span>)}
+    </div> : null}
+    {penalties.length ? <div className="reviewPriorityPenalties">
+      {penalties.map((item) => <small className={item.severity || "warn"} key={item.key}>-{Math.round(item.value || 0)} {item.label}</small>)}
+    </div> : null}
+  </div>;
+}
+
+function QueueDecisionDigest({ digest = null }) {
+  if (!digest) return null;
+  const evidenceLine = digest.checkLine || digest.actionDetail || digest.risk || "";
+  return <span className={`reviewQueueDigest ${digest.state || ""}`.trim()}>
+    <em>{digest.ratio ? `${digest.stateLabel} ${digest.ratio}` : digest.stateLabel}</em>
+    <b title={digest.thesis}>{digest.thesis || digest.headline || "Sin tesis clara"}</b>
+    <small title={evidenceLine}>{evidenceLine || "Sin pruebas destacadas"}</small>
+  </span>;
+}
+
 export default function ReviewPage() {
   const [source, setSource] = useState("current");
   const [rows, setRows] = useState([]);
@@ -366,6 +556,12 @@ export default function ReviewPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showHidden, setShowHidden] = useState(false);
   const [status, setStatus] = useState("Listo");
+  const [reviewSettings, setReviewSettings] = useState({});
+  const [decisionResolutions, setDecisionResolutions] = useState({});
+  const [decisionResolutionLog, setDecisionResolutionLog] = useState([]);
+  const [resolutionFilter, setResolutionFilter] = useState("all");
+  const [digestFilter, setDigestFilter] = useState("all");
+  const [sourceMeta, setSourceMeta] = useState({});
   const [hydration, setHydration] = useState({});
   const sourceRequestRef = useRef(0);
 
@@ -375,15 +571,38 @@ export default function ReviewPage() {
     const review = safeRead(STORAGE_KEYS.review, {});
     const scans = safeRead(STORAGE_KEYS.scans, []);
     const favs = safeRead(STORAGE_KEYS.favorites, []);
-    const nextRows = rowSource(nextSource, review, scans, favs);
-    const symbolIndex = startSymbol ? nextRows.findIndex((row) => row.symbol === String(startSymbol).toUpperCase()) : -1;
+    const nextSettings = nextSource === "latest"
+      ? (scans[0]?.activeSettings || scans[0]?.settings?.activeSettings || scans[0]?.settings || {})
+      : (review.activeSettings || review.settings?.activeSettings || review.settings || {});
+    const nextRows = prepareReviewQueueRows(rowSource(nextSource, review, scans, favs), nextSettings || {});
+    const decisionState = reviewDecisionStateForRows(review, nextRows);
+    const nextResolutionFilter = keepState ? review.resolutionFilter || "all" : "all";
+    const nextDigestFilter = keepState ? review.digestFilter || "all" : "all";
+    const nextSourceMeta = sourceMetaForReview(nextSource, review);
+    const navigation = buildReviewQueueNavigation({
+      ...review,
+      source: nextSource,
+      rows: nextRows,
+      activeSettings: nextSettings || {},
+      hiddenSymbols: decisionState.hiddenSymbols,
+      decisionResolutions: decisionState.decisionResolutions,
+      resolutionFilter: nextResolutionFilter,
+      digestFilter: nextDigestFilter,
+    }, startSymbol || review.selectedSymbol || "");
+    const symbolIndex = navigation.currentIndex;
     setSource(nextSource);
+    setSourceMeta(nextSourceMeta);
     setRows(nextRows);
     setFavorites(favs);
-    setCurrentIndex(symbolIndex >= 0 ? symbolIndex : keepState ? clamp(review.currentIndex || 0, 0, Math.max(0, nextRows.length - 1)) : 0);
-    setReviewed(new Set(keepState ? review.reviewedSymbols || [] : []));
-    setHidden(new Set(keepState ? review.hiddenSymbols || [] : []));
-    setStatus(`${sourceLabel(nextSource)} · ${nextRows.length} acciones`);
+    setReviewSettings(nextSettings || {});
+    setCurrentIndex(symbolIndex >= 0 ? symbolIndex : keepState ? clamp(review.currentIndex || 0, 0, Math.max(0, navigation.visibleCount - 1)) : 0);
+    setReviewed(new Set(decisionState.reviewedSymbols));
+    setHidden(new Set(decisionState.hiddenSymbols));
+    setDecisionResolutions(decisionState.decisionResolutions);
+    setDecisionResolutionLog(decisionState.decisionResolutionLog);
+    setResolutionFilter(nextResolutionFilter);
+    setDigestFilter(nextDigestFilter);
+    setStatus(`${sourceLabel(nextSource, nextSourceMeta)} · ${nextRows.length} acciones`);
     if (nextSource === "latest" && !nextRows.length) {
       const controller = new AbortController();
       setStatus("Último snapshot · sin cola local; consultando Discovery...");
@@ -394,10 +613,26 @@ export default function ReviewPage() {
             setStatus("Último snapshot · sin filas locales ni discovery disponible.");
             return;
           }
-          const discoveryIndex = startSymbol ? discoveryRows.findIndex((row) => row.symbol === String(startSymbol).toUpperCase()) : -1;
-          setRows(discoveryRows);
+          const orderedRows = prepareReviewQueueRows(discoveryRows, nextSettings || {});
+          const discoveryDecisionState = reviewDecisionStateForRows(review, orderedRows);
+          const discoveryNavigation = buildReviewQueueNavigation({
+            ...review,
+            source: nextSource,
+            rows: orderedRows,
+            activeSettings: nextSettings || {},
+            hiddenSymbols: discoveryDecisionState.hiddenSymbols,
+            decisionResolutions: discoveryDecisionState.decisionResolutions,
+            resolutionFilter: nextResolutionFilter,
+            digestFilter: nextDigestFilter,
+          }, startSymbol || review.selectedSymbol || "");
+          const discoveryIndex = discoveryNavigation.currentIndex;
+          setRows(orderedRows);
           setCurrentIndex(discoveryIndex >= 0 ? discoveryIndex : 0);
-          setStatus(`Último snapshot · ${discoveryRows.length} acciones desde Discovery`);
+          setReviewed(new Set(discoveryDecisionState.reviewedSymbols));
+          setHidden(new Set(discoveryDecisionState.hiddenSymbols));
+          setDecisionResolutions(discoveryDecisionState.decisionResolutions);
+          setDecisionResolutionLog(discoveryDecisionState.decisionResolutionLog);
+          setStatus(`Último snapshot · ${orderedRows.length} acciones desde Discovery`);
         })
         .catch((error) => {
           if (sourceRequestRef.current !== requestId) return;
@@ -413,12 +648,119 @@ export default function ReviewPage() {
   }, []);
 
   const favoriteSymbols = useMemo(() => new Set(favorites.map((f) => String(f.symbol).toUpperCase())), [favorites]);
-  const visibleRows = useMemo(() => showHidden ? rows : rows.filter((row) => !hidden.has(row.symbol)), [rows, hidden, showHidden]);
+  const baseVisibleRows = useMemo(() => showHidden ? rows : rows.filter((row) => !hidden.has(row.symbol)), [rows, hidden, showHidden]);
+  const resolutionSummary = useMemo(() => buildStockDecisionResolutionSummary(baseVisibleRows, { decisionResolutions }), [baseVisibleRows, decisionResolutions]);
+  const resolutionRows = useMemo(() => filterRowsByDecisionResolution(baseVisibleRows, { decisionResolutions }, resolutionFilter), [baseVisibleRows, decisionResolutions, resolutionFilter]);
+  const resolvedVisibleCount = useMemo(() => {
+    const all = resolutionSummary.find((item) => item.key === "all")?.count || 0;
+    const pending = resolutionSummary.find((item) => item.key === "pending")?.count || 0;
+    return Math.max(0, all - pending);
+  }, [resolutionSummary]);
+  const resolutionDecisionItems = useMemo(() => resolutionRows.map((row) => {
+    const item = buildDecisionQueueItem(row, reviewSettings);
+    const profileKey = decisionProfileForRow(row, reviewSettings);
+    const profile = reviewProfileMeta(profileKey);
+    const reviewPriority = reviewPriorityForRow(row, reviewSettings);
+    const metricTruth = reviewQueueMetricTruthMeta(row);
+    const dataHealth = reviewQueueDataHealthMeta(row, reviewSettings);
+    const scoreAudit = reviewQueueScoreAuditMeta(row);
+    const vcp = vcpReliabilityAudit(row);
+    const focus = reviewQueueFocusMeta({ dataHealth, metricTruth, scoreAudit, evidence: item.evidence, methodologyFocus: item.methodologyFocus, vcp });
+    const trustSignature = buildRowTrustSignature({ dataHealth, metricTruth, scoreAudit, evidence: item.evidence, vcpReliability: vcp });
+    return {
+      ...item,
+      row,
+      profileKey,
+      profileLabel: profile.label,
+      profileTone: profile.tone,
+      reviewPriority,
+      metricTruth,
+      dataHealth,
+      scoreAudit,
+      focus,
+      trustSignature,
+      digest: buildDecisionQueueDigest(item),
+    };
+  }), [resolutionRows, reviewSettings]);
+  const digestSummary = useMemo(() => buildDecisionQueueDigestSummary(resolutionDecisionItems), [resolutionDecisionItems]);
+  const visibleDecisionItems = useMemo(() => digestFilter === "all"
+    ? resolutionDecisionItems
+    : resolutionDecisionItems.filter((item) => item.digest?.state === digestFilter),
+  [resolutionDecisionItems, digestFilter]);
+  const visibleRows = useMemo(() => visibleDecisionItems.map((item) => item.row).filter(Boolean), [visibleDecisionItems]);
+  const visiblePrioritySummary = useMemo(() => buildReviewPrioritySummary(visibleDecisionItems), [visibleDecisionItems]);
+  const visibleDecisionSummary = useMemo(() => buildDecisionQueueSummary(visibleDecisionItems), [visibleDecisionItems]);
+  const visibleProfileSummary = useMemo(() => buildReviewProfileSummary(visibleDecisionItems), [visibleDecisionItems]);
+  const activeResolutionFilter = useMemo(() => stockDecisionResolutionFilter(resolutionFilter), [resolutionFilter]);
+  const activeDigestFilter = useMemo(
+    () => DECISION_QUEUE_DIGEST_FILTERS.find((item) => item.key === digestFilter) || DECISION_QUEUE_DIGEST_FILTERS[0],
+    [digestFilter],
+  );
+  const activeQueueFilterLabels = [
+    resolutionFilter !== "all" ? activeResolutionFilter.label : "",
+    digestFilter !== "all" ? activeDigestFilter.label : "",
+  ].filter(Boolean);
+  const queueFiltersActive = activeQueueFilterLabels.length > 0;
+  const pendingVisibleCount = resolutionSummary.find((item) => item.key === "pending")?.count || 0;
+  const queueEmptyByFilter = queueFiltersActive && baseVisibleRows.length > 0 && !visibleRows.length;
+  const queuePendingComplete = queueEmptyByFilter && resolutionFilter === "pending" && !pendingVisibleCount;
+  const queueEmptyTitle = queuePendingComplete
+    ? "Cola pendiente completada"
+    : queueEmptyByFilter
+      ? "Sin acciones para este filtro"
+      : "Sin cola de revision";
+  const queueEmptyDetail = queuePendingComplete
+    ? `${sourceLabel(source, sourceMeta)} · no quedan acciones pendientes en esta cola.`
+    : queueEmptyByFilter
+      ? `${sourceLabel(source, sourceMeta)} · ${activeQueueFilterLabels.join(" · ")} no tiene resultados ahora.`
+      : "Carga una cola desde el Screener o recupera un snapshot para iniciar la revision.";
+  const queueCompletionResolution = queuePendingComplete
+    ? resolutionSummary.find((item) => ["candidate", "watch", "reject"].includes(item.key) && item.count > 0)
+    : null;
+  const queueCompletionActionLabel = queueCompletionResolution
+    ? ({
+      candidate: "Ver candidatas",
+      watch: "Ver vigilancia",
+      reject: "Ver descartadas",
+    }[queueCompletionResolution.key] || `Ver ${queueCompletionResolution.label.toLowerCase()}`)
+    : "";
+  const reviewStatusText = queuePendingComplete
+    ? `${sourceLabel(source, sourceMeta)} · cola pendiente completada · ${resolvedVisibleCount}/${baseVisibleRows.length} resueltas`
+    : queueEmptyByFilter
+      ? `${sourceLabel(source, sourceMeta)} · ${activeQueueFilterLabels.join(" · ")} · 0/${baseVisibleRows.length} visibles`
+      : queueFiltersActive
+        ? `${sourceLabel(source, sourceMeta)} · ${activeQueueFilterLabels.join(" · ")} · ${visibleRows.length}/${baseVisibleRows.length} visibles`
+        : status;
+  const reviewStatusLineClassName = [
+    "reviewStatusLine",
+    queueFiltersActive ? "filtered" : "",
+    queueEmptyByFilter ? "empty" : "",
+    queuePendingComplete ? "complete" : "",
+  ].filter(Boolean).join(" ");
   const activeBaseRow = visibleRows[currentIndex] || visibleRows[0] || null;
   const activeHydration = activeBaseRow ? hydration[activeBaseRow.symbol] : null;
   const activeRow = useMemo(() => activeBaseRow ? normalizeRow({ ...activeBaseRow, ...(activeHydration?.row || {}) }) : null, [activeBaseRow, activeHydration]);
   const activeSymbol = activeRow?.symbol || "";
   const activeHydrating = activeHydration?.status === "loading";
+  const activeResolution = useMemo(() => decisionResolutionForSymbol({ decisionResolutions }, activeSymbol), [decisionResolutions, activeSymbol]);
+  const activeResolutionHistory = useMemo(
+    () => decisionResolutionHistory({ decisionResolutions, decisionResolutionLog }, { symbol: activeSymbol, limit: 4 }),
+    [decisionResolutions, decisionResolutionLog, activeSymbol],
+  );
+  const activeDecision = useMemo(() => {
+    if (!activeRow) return null;
+    const item = buildDecisionQueueItem(activeRow, reviewSettings);
+    const profileKey = decisionProfileForRow(activeRow, reviewSettings);
+    const profile = reviewProfileMeta(profileKey);
+    const reviewPriority = reviewPriorityForRow(activeRow, reviewSettings);
+    return {
+      ...item,
+      profileKey,
+      profileLabel: profile.label,
+      profileTone: profile.tone,
+      reviewPriority,
+    };
+  }, [activeRow, reviewSettings]);
 
   useEffect(() => {
     if (currentIndex >= visibleRows.length) setCurrentIndex(Math.max(0, visibleRows.length - 1));
@@ -450,14 +792,22 @@ export default function ReviewPage() {
     if (!rows.length) return;
     safeWrite(STORAGE_KEYS.review, {
       source,
+      sourceLabel: sourceMeta.sourceLabel || "",
+      sourceDetail: sourceMeta.sourceDetail || "",
+      queueMode: sourceMeta.queueMode || "",
       rows,
+      activeSettings: reviewSettings,
       currentIndex,
       selectedSymbol: activeSymbol,
       reviewedSymbols: [...reviewed],
       hiddenSymbols: [...hidden],
+      decisionResolutions,
+      decisionResolutionLog,
+      resolutionFilter,
+      digestFilter,
       updatedAt: new Date().toISOString(),
     });
-  }, [source, rows, currentIndex, reviewed, hidden]);
+  }, [source, sourceMeta, rows, reviewSettings, currentIndex, reviewed, hidden, decisionResolutions, decisionResolutionLog, resolutionFilter, digestFilter, activeSymbol]);
 
   function move(delta) {
     setCurrentIndex((index) => visibleRows.length ? (index + delta + visibleRows.length) % visibleRows.length : 0);
@@ -498,6 +848,113 @@ export default function ReviewPage() {
     setStatus(`${row.symbol} oculto de esta cola`);
     move(1);
   }
+  function resolveActiveDecision(actionKey, row = activeRow) {
+    if (!row?.symbol) return;
+    const note = [
+      activeDecision?.nextAction?.value || "",
+      activeDecision?.risk?.value || "",
+    ].filter(Boolean).join(" · ");
+    const nextReview = applyStockDecisionResolution({
+      source,
+      sourceLabel: sourceMeta.sourceLabel || "",
+      sourceDetail: sourceMeta.sourceDetail || "",
+      queueMode: sourceMeta.queueMode || "",
+      rows,
+      activeSettings: reviewSettings,
+      currentIndex,
+      selectedSymbol: row.symbol,
+      reviewedSymbols: [...reviewed],
+      hiddenSymbols: [...hidden],
+      decisionResolutions,
+      decisionResolutionLog,
+      resolutionFilter,
+    }, {
+      symbol: row.symbol,
+      actionKey,
+      source: "review",
+      note,
+    });
+    setReviewed(new Set(nextReview.reviewedSymbols || []));
+    setHidden(new Set(nextReview.hiddenSymbols || []));
+    setDecisionResolutions(nextReview.decisionResolutions || {});
+    setDecisionResolutionLog(nextReview.decisionResolutionLog || []);
+    safeWrite(STORAGE_KEYS.review, nextReview);
+    const resolution = decisionResolutionForSymbol(nextReview, row.symbol);
+    setStatus(`${row.symbol}: ${resolution?.label || "resuelta"} desde Review`);
+  }
+  function reopenActiveDecision(row = activeRow) {
+    if (!row?.symbol) return;
+    const nextReview = reopenStockDecisionResolution({
+      source,
+      sourceLabel: sourceMeta.sourceLabel || "",
+      sourceDetail: sourceMeta.sourceDetail || "",
+      queueMode: sourceMeta.queueMode || "",
+      rows,
+      activeSettings: reviewSettings,
+      currentIndex,
+      selectedSymbol: row.symbol,
+      reviewedSymbols: [...reviewed],
+      hiddenSymbols: [...hidden],
+      decisionResolutions,
+      decisionResolutionLog,
+      resolutionFilter,
+    }, {
+      symbol: row.symbol,
+      source: "review",
+      note: activeResolution?.label ? `Antes: ${activeResolution.label}` : "",
+    });
+    setReviewed(new Set(nextReview.reviewedSymbols || []));
+    setHidden(new Set(nextReview.hiddenSymbols || []));
+    setDecisionResolutions(nextReview.decisionResolutions || {});
+    setDecisionResolutionLog(nextReview.decisionResolutionLog || []);
+    safeWrite(STORAGE_KEYS.review, nextReview);
+    setStatus(`${row.symbol}: reabierta como pendiente`);
+  }
+  function applyResolutionFilter(nextFilter) {
+    setResolutionFilter(nextFilter);
+    setCurrentIndex(0);
+  }
+  function applyDigestFilter(nextFilter) {
+    setDigestFilter(nextFilter);
+    setCurrentIndex(0);
+  }
+  function clearQueueFilters() {
+    setResolutionFilter("all");
+    setDigestFilter("all");
+    setCurrentIndex(0);
+  }
+  function showResolutionQueue(filterKey = "all") {
+    setResolutionFilter(filterKey);
+    setDigestFilter("all");
+    setCurrentIndex(0);
+  }
+  function saveStockOpenContext(row = activeRow, index = currentIndex) {
+    if (!row?.symbol) return;
+    const openedAt = new Date().toISOString();
+    const previousSession = safeRead(STORAGE_KEYS.screenerSession, {}) || {};
+    const context = buildReviewStockOpenContext(row, {
+      settings: reviewSettings,
+      source,
+      sourceLabel: sourceLabel(source, sourceMeta),
+      sourceDetail: sourceMeta.sourceDetail || "",
+      queueMode: sourceMeta.queueMode || "",
+      digestFilter,
+      resolutionFilter,
+      rank: Number.isFinite(index) ? index + 1 : null,
+      queueSize: visibleRows.length,
+      rowsCount: rows.length,
+      visibleCount: visibleRows.length,
+      hiddenCount: Math.max(0, rows.length - visibleRows.length),
+      openedAt,
+    });
+    safeWrite(STORAGE_KEYS.screenerSession, {
+      ...previousSession,
+      version: previousSession.version || SCREENER_SESSION_VERSION,
+      lastOpenedStockSymbol: row.symbol,
+      lastOpenedStockAt: openedAt,
+      lastOpenedStockContext: context,
+    });
+  }
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -506,18 +963,18 @@ export default function ReviewPage() {
       if (event.key === "ArrowDown" || event.key.toLowerCase() === "j") { event.preventDefault(); move(1); }
       if (event.key === "ArrowUp" || event.key.toLowerCase() === "k") { event.preventDefault(); move(-1); }
       if (event.key.toLowerCase() === "f") { event.preventDefault(); toggleFavorite(); }
-      if (event.key === "Enter" && activeRow) { event.preventDefault(); window.location.href = stockUrl(activeRow.symbol); }
+      if (event.key === "Enter" && activeRow) { event.preventDefault(); saveStockOpenContext(activeRow, currentIndex); window.location.href = stockUrl(activeRow.symbol); }
       if (event.key.toLowerCase() === "t" && activeRow) { event.preventDefault(); window.open(externalLinks(activeRow.symbol, activeRow.exchange).tradingView, "_blank", "noreferrer"); }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeRow, favorites, favoriteSymbols, visibleRows.length]);
+  }, [activeRow, currentIndex, favorites, favoriteSymbols, reviewSettings, rows.length, source, visibleRows.length]);
 
   return <main className="page reviewPage">
     <section className="card hero">
       <div className="heroTop">
         <div>
-          <div className="badge">StageRadar · Rapid Review</div>
+          <div className="badge">StatsEdge · Rapid Review</div>
           <h1>Vista rapida</h1>
         </div>
         <div className="mobileActions">
@@ -531,9 +988,10 @@ export default function ReviewPage() {
 
     <section className="card reviewStatus">
       <div className="kpis">
-        <div className="kpi"><b>{visibleRows.length}</b><span>acciones en cola</span></div>
+        <div className="kpi"><b>{visibleRows.length}</b><span>{queueFiltersActive ? "acciones filtradas" : "acciones en cola"}</span></div>
         <div className="kpi"><b>{currentIndex + (visibleRows.length ? 1 : 0)}</b><span>posicion actual</span></div>
         <div className="kpi"><b>{reviewed.size}</b><span>revisadas</span></div>
+        <div className="kpi"><b>{resolvedVisibleCount}</b><span>resueltas ficha</span></div>
         <div className="kpi"><b>{hidden.size}</b><span>ocultas</span></div>
       </div>
       <div className="controls reviewControls">
@@ -544,25 +1002,133 @@ export default function ReviewPage() {
         <button className="btn btnGhost" onClick={() => hideActive()} disabled={!activeRow}>Ocultar</button>
         <button className={`btn btnGhost ${showHidden ? "btnActive" : ""}`} onClick={() => setShowHidden((x) => !x)}>Ver ocultas</button>
       </div>
-      <div style={{ marginTop: 12, fontSize: 11, color: "var(--muted)" }}>{investorStatusLabel(status)}</div>
+      <div className={reviewStatusLineClassName}>{investorStatusLabel(reviewStatusText)}</div>
     </section>
 
-    {!visibleRows.length ? <section className="card emptyState">
-      <h2>Sin cola de revision</h2>
-      <div className="controls"><a className="btn btnPrimary" href="/">Ir al screener</a><a className="btn" href="/research-desk">Research Desk</a></div>
+    {!visibleRows.length ? <section className={`card emptyState reviewEmptyState ${queueEmptyByFilter ? "filtered" : ""} ${queuePendingComplete ? "complete" : ""}`.trim()}>
+      <div className="emptyStateHead">
+        <span>{queuePendingComplete ? "Trabajo cerrado" : queueFiltersActive ? "Filtro activo" : "Review"}</span>
+        <h2>{queueEmptyTitle}</h2>
+        <p className="fine">{queueEmptyDetail}</p>
+      </div>
+      <div className="reviewEmptyMetrics" aria-label="Resumen de cola vacia">
+        <span><b>{baseVisibleRows.length}</b><em>base visible</em></span>
+        <span><b>{pendingVisibleCount}</b><em>pendientes</em></span>
+        <span><b>{resolvedVisibleCount}</b><em>resueltas</em></span>
+      </div>
+      <div className="controls reviewEmptyActions">
+        {queueCompletionResolution ? <button className="btn btnPrimary" onClick={() => showResolutionQueue(queueCompletionResolution.key)}>{queueCompletionActionLabel}</button> : null}
+        {queueFiltersActive ? <button className={`btn ${queueCompletionResolution ? "" : "btnPrimary"}`.trim()} onClick={clearQueueFilters}>Quitar filtros</button> : <a className="btn btnPrimary" href="/">Ir al screener</a>}
+        <a className="btn" href="/">Screener</a>
+        <a className="btn" href="/research-desk">Research Desk</a>
+      </div>
     </section> : <section className="reviewWorkbench">
       <aside className="reviewQueue">
         <div className="reviewQueueHead">
-          <h2>{sourceLabel(source)}</h2>
-          <span>{visibleRows.length} visibles</span>
+          <h2>{sourceLabel(source, sourceMeta)}</h2>
+          {sourceMeta.sourceDetail ? <small className="reviewQueueSourceDetail">{sourceMeta.sourceDetail}</small> : null}
+          <span>{resolutionFilter === "all" && digestFilter === "all" ? `${baseVisibleRows.length} visibles` : `${visibleRows.length}/${baseVisibleRows.length} visibles`}</span>
         </div>
+        {resolutionSummary.length > 1 ? <div className="reviewQueueSummary reviewResolutionSummary" aria-label="Resumen de cola por resolucion de ficha">
+          {resolutionSummary.map((group) => (
+            <button
+              type="button"
+              key={group.key}
+              className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${resolutionFilter === group.key ? "active" : ""}`}
+              onClick={() => applyResolutionFilter(group.key)}
+              title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
+            >
+              <b>{group.count}</b>
+              <span>{group.label}</span>
+            </button>
+          ))}
+        </div> : null}
+        {digestSummary.length > 1 ? <div className="reviewQueueSummary reviewDigestSummary" aria-label="Resumen de cola por estado de pruebas">
+          {digestSummary.map((group) => (
+            <button
+              type="button"
+              key={group.key}
+              className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${digestFilter === group.key ? "active" : ""}`}
+              onClick={() => applyDigestFilter(group.key)}
+              title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
+            >
+              <b>{group.count}</b>
+              <span>{group.label}</span>
+            </button>
+          ))}
+        </div> : null}
+        {visiblePrioritySummary.length ? <div className="reviewQueueSummary reviewPrioritySummary" aria-label="Prioridad de investigacion">
+          {visiblePrioritySummary.map((group) => (
+            <button
+              type="button"
+              key={group.key}
+              className={`reviewQueueSummaryChip priority-${group.key} ${group.tone || "neutral"} ${visibleDecisionItems[currentIndex]?.reviewPriority?.key === group.key ? "active" : ""}`}
+              onClick={() => setCurrentIndex(group.firstIndex)}
+              title={[group.topSymbol ? `${group.topSymbol} · ${Math.round(group.topScore || 0)}` : "", group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label].filter(Boolean).join(" · ")}
+            >
+              <b>{group.count}</b>
+              <span>{group.shortLabel || group.label}</span>
+            </button>
+          ))}
+        </div> : null}
+        {visibleProfileSummary.length ? <div className="reviewQueueSummary reviewQueueProfileSummary" aria-label="Prioridad de cola por perfil">
+          {visibleProfileSummary.map((group) => (
+            <button
+              type="button"
+              key={group.key}
+              className={`reviewQueueSummaryChip profile-${group.key} ${group.tone || "neutral"} ${visibleDecisionItems[currentIndex]?.profileKey === group.key ? "active" : ""}`}
+              onClick={() => setCurrentIndex(group.firstIndex)}
+              title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
+            >
+              <b>{group.count}</b>
+              <span>{group.label}</span>
+            </button>
+          ))}
+        </div> : null}
+        {visibleDecisionSummary.groups.length ? <div className="reviewQueueSummary" aria-label="Resumen de cola por decision">
+          {visibleDecisionSummary.groups.map((group) => (
+            <button
+              type="button"
+              key={group.key}
+              className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${visibleDecisionItems[currentIndex]?.readiness?.key === group.key ? "active" : ""}`}
+              onClick={() => setCurrentIndex(group.firstIndex)}
+              title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
+            >
+              <b>{group.count}</b>
+              <span>{group.label}</span>
+            </button>
+          ))}
+        </div> : null}
         <div className="reviewQueueList">
           {visibleRows.map((row, index) => {
             const active = activeRow?.symbol === row.symbol;
-            return <button key={row.symbol} className={`reviewQueueItem ${active ? "active" : ""}`} onClick={() => setCurrentIndex(index)}>
+            const decision = visibleDecisionItems[index] || buildDecisionQueueItem(row, reviewSettings);
+            const resolution = decisionResolutionForSymbol({ decisionResolutions }, row.symbol);
+            return <button
+              key={row.symbol}
+              className={`reviewQueueItem ${active ? "active" : ""} decision-${decision.readiness?.key || "unknown"} data-health-${decision.dataHealth?.key || "unknown"} score-audit-${decision.scoreAudit?.key || "unknown"} metric-truth-${decision.metricTruth?.key || "unknown"} focus-${decision.focus?.key || "none"} ${resolution ? `resolved-${resolution.key}` : ""}`}
+              onClick={() => setCurrentIndex(index)}
+              title={resolution ? `${resolution.label} · ${resolution.detail}` : [decision.focus ? `Foco ${decision.focus.label}: ${decision.focus.detail || ""}` : "", decision.digest?.tooltip || `${decision.nextAction?.value || "Revisar"} · ${decision.risk?.value || row.symbol}`].filter(Boolean).join(" · ")}
+            >
               <CompanyMark row={row} size="sm" />
-              <span><b>{row.symbol}</b><em>{row.companyName || row.symbol}</em></span>
-              <i>{num(value(row, "totalScore") ?? value(row, "compositeScore"))}</i>
+              <span className="reviewQueueBody">
+                <b>{row.symbol}</b>
+                <em>{row.companyName || row.symbol}</em>
+                <RowTrustSignature signature={decision.trustSignature} className="reviewQueueTrustSignature" />
+                <span className="reviewQueueDecisionLine">
+                  <span className={`reviewQueueDecisionBadge ${decision.tone || "neutral"}`}>{decision.nextAction?.value || decision.action?.label || "Revisar"}</span>
+                  {resolution ? <span className={`reviewQueueResolutionBadge ${resolution.tone || "neutral"}`}>{resolution.label}</span> : null}
+                  <ReviewQueueFocusBadge focus={decision.focus} />
+                  {decision.dataHealth ? <span className={`reviewQueueDataHealthBadge ${decision.dataHealth.tone || "neutral"} data-${decision.dataHealth.key || "unknown"}`} title={decision.dataHealth.detail || decision.dataHealth.label}>{decision.dataHealth.label}</span> : null}
+                  {decision.reviewPriority ? <span className={`reviewQueuePriorityBadge ${decision.reviewPriority.tone || "neutral"}`} title={decision.reviewPriority.reason}>{decision.reviewPriority.shortLabel || decision.reviewPriority.label}</span> : null}
+                  {decision.profileKey && decision.profileKey !== "other" ? <span className={`reviewQueueProfileBadge ${decision.profileTone || "neutral"}`}>{decision.profileLabel}</span> : null}
+                  {decision.metricTruth ? <span className={`reviewQueueMetricTruthBadge ${decision.metricTruth.tone || "neutral"} metric-${decision.metricTruth.key || "unknown"}`} title={decision.metricTruth.detail || decision.metricTruth.label}>{decision.metricTruth.label}</span> : null}
+                  {decision.scoreAudit ? <span className={`reviewQueueScoreAuditBadge ${decision.scoreAudit.tone || "neutral"} score-${decision.scoreAudit.key || "unknown"}`} title={decision.scoreAudit.detail || decision.scoreAudit.label}>{decision.scoreAudit.label}</span> : null}
+                  {decision.risk?.value ? <small>{decision.risk.value}</small> : null}
+                </span>
+                <QueueDecisionDigest digest={decision.digest} />
+              </span>
+              <i>{decision.score ?? num(value(row, "totalScore") ?? value(row, "compositeScore"))}</i>
             </button>;
           })}
         </div>
@@ -586,13 +1152,18 @@ export default function ReviewPage() {
 
       <aside className="reviewSide">
         <div className="reviewActionStrip">
-          <a className="btn btnPrimary" href={stockUrl(activeRow.symbol)}>Ficha</a>
+          <a className="btn btnPrimary" href={stockUrl(activeRow.symbol)} onPointerDown={() => saveStockOpenContext(activeRow, currentIndex)} onClick={() => saveStockOpenContext(activeRow, currentIndex)}>Ficha</a>
           <a className="btn" href={externalLinks(activeRow.symbol, activeRow.exchange).tradingView} target="_blank" rel="noreferrer">TradingView</a>
           <button className={`starBtn ${favoriteSymbols.has(activeSymbol) ? "on" : ""}`} onClick={() => toggleFavorite(activeRow)} aria-label={`Favorito ${activeRow.symbol}`}>★</button>
         </div>
         {activeHydrating && <div className="dataNote" style={{ marginBottom: 10 }}>Cargando historico y metricas...</div>}
+        <ReviewPriorityPanel priority={activeDecision?.reviewPriority} />
+        <ReviewDecisionPanel decision={activeDecision} />
         <div className="reviewMetricGrid">
-          {metricRows(activeRow).map(([label, metric]) => <span key={label}><b>{label}</b>{metric}</span>)}
+          {metricRows(activeRow).map(([label, metric, key]) => <span key={label}>
+            <b>{label}</b>
+            <ReviewTrustMetric row={activeRow} metricKey={key} label={label} value={metric} />
+          </span>)}
         </div>
         <div className="reviewEvidence">
           <div className="sectionTitle"><h2>Evidencia medible</h2></div>
@@ -600,8 +1171,42 @@ export default function ReviewPage() {
         </div>
         <div className="reviewNotes">
           <div className="summaryRow"><span>Estado local</span><b>{reviewed.has(activeSymbol) ? "Revisada" : "Pendiente"}</b></div>
+          {activeResolution ? <div className="summaryRow">
+            <span>Resolución ficha</span>
+            <b>{activeResolution.label}</b>
+          </div> : null}
           <div className="summaryRow"><span>Favorito local</span><b>{favoriteSymbols.has(activeSymbol) ? "Si" : "No"}</b></div>
         </div>
+        <div className="reviewResolveRail" aria-label="Resolver decision desde Review">
+          <span>Resolver desde Review</span>
+          <div>
+            <button
+              type="button"
+              className={`neutral ${!activeResolution ? "active" : ""}`.trim()}
+              onClick={() => reopenActiveDecision(activeRow)}
+              title="Vuelve a pendiente"
+              disabled={!activeResolution}
+            >
+              Reabrir
+            </button>
+            {STOCK_DECISION_ACTIONS.map((item) => <button
+              type="button"
+              key={item.key}
+              className={`${item.tone || ""} ${activeResolution?.key === item.key ? "active" : ""}`.trim()}
+              onClick={() => resolveActiveDecision(item.key, activeRow)}
+              title={item.detail}
+            >
+              {item.label}
+            </button>)}
+          </div>
+        </div>
+        {activeResolutionHistory.length ? <div className="reviewDecisionHistory">
+          <div className="sectionTitle"><h2>Historial decisión</h2></div>
+          {activeResolutionHistory.map((entry) => <div className={`decisionHistoryItem ${entry.tone || ""}`} key={`${entry.symbol}-${entry.key}-${entry.updatedAt}-${entry.note}`}>
+            <span><b>{entry.label}</b><em>{shortDateTime(entry.updatedAt) || entry.source}</em></span>
+            {entry.note ? <p>{entry.note}</p> : <p>{entry.detail}</p>}
+          </div>)}
+        </div> : null}
       </aside>
     </section>}
   </main>;

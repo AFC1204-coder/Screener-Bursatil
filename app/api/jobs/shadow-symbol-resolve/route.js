@@ -1,4 +1,5 @@
 import { envValue } from "@/lib/env";
+import { isInternalRequest } from "@/lib/internalAuth";
 import { normalizeMarketList } from "@/lib/markets";
 import { mapOpenFigiIsins } from "@/lib/openfigi";
 import {
@@ -15,11 +16,11 @@ export const maxDuration = 60;
 
 const DEFAULT_MARKETS = ["GB", "FI", "DK", "NO", "NL", "ES", "SE", "IT", "FR", "DE"];
 const SUPPORTED_MARKETS = new Set(["GB", "AT", "BE", "DE", "DK", "ES", "FI", "FR", "IE", "IT", "NL", "NO", "PT", "SE"]);
+const SHADOW_RESOLVE_READ_TIMEOUT_MS = Number(process.env.SHADOW_RESOLVE_READ_TIMEOUT_MS || 1500);
+const SHADOW_RESOLVE_RUN_LOG_TIMEOUT_MS = Number(process.env.SHADOW_RESOLVE_RUN_LOG_TIMEOUT_MS || 1200);
 
 function authorized(request) {
-  const secret = envValue("CRON_SECRET");
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}` || request.headers.get("x-cron-secret") === secret;
+  return isInternalRequest(request, { allowCron: true });
 }
 
 function boolParam(searchParams, key, fallback = false) {
@@ -85,6 +86,7 @@ async function createRun(options) {
         status: "started",
         stats: options,
       }],
+      timeoutMs: SHADOW_RESOLVE_RUN_LOG_TIMEOUT_MS,
     });
     return run;
   } catch {
@@ -105,6 +107,7 @@ async function finishRun(run, status, payload = {}) {
         stats: payload.stats || {},
         error: payload.error || null,
       },
+      timeoutMs: SHADOW_RESOLVE_RUN_LOG_TIMEOUT_MS,
     });
   } catch {
     // Run logging should never block the resolver.
@@ -135,21 +138,48 @@ function enrichMappedRows(mapped = [], references = [], market = "") {
 export async function GET(request) {
   if (!authorized(request)) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const options = optionsFromRequest(request);
-  const run = await createRun(options);
+  const run = options.dryRun ? null : await createRun(options);
   try {
     const rows = [];
     const errors = [];
     for (const market of options.markets) {
       const referenceProvider = referenceProviderForMarket(market, options);
-      const candidates = await readShadowInstrumentsForResolution({
-        market,
-        provider: referenceProvider,
-        status: options.status,
-        limit: options.perMarket,
-      });
+      let candidates;
+      try {
+        candidates = await readShadowInstrumentsForResolution({
+          market,
+          provider: referenceProvider,
+          status: options.status,
+          limit: options.perMarket,
+          timeoutMs: SHADOW_RESOLVE_READ_TIMEOUT_MS,
+        });
+      } catch (error) {
+        const message = error.message || "Shadow reference lookup failed";
+        errors.push({ market, referenceProvider, error: message });
+        rows.push({
+          market,
+          referenceProvider,
+          candidateStatus: "error",
+          candidates: 0,
+          cached: 0,
+          openfigiRequested: 0,
+          mapped: 0,
+          markedResolved: 0,
+          markedUnresolved: 0,
+          degraded: true,
+          error: message,
+        });
+        continue;
+      }
       const references = candidates.rows || [];
       const isins = references.map((row) => row.isin).filter(Boolean);
-      const cached = await readCachedSymbolResolutions({ market, isins });
+      let cached;
+      try {
+        cached = await readCachedSymbolResolutions({ market, isins, timeoutMs: SHADOW_RESOLVE_READ_TIMEOUT_MS });
+      } catch (error) {
+        cached = { status: "error", rows: [], error: error.message || "resolution cache lookup failed" };
+        errors.push({ market, referenceProvider, error: cached.error });
+      }
       const cachedRows = cached.rows || [];
       const cachedIsins = Array.from(new Set(cachedRows.map((row) => row.isin).filter(Boolean)));
       const cachedSet = new Set(cachedIsins);

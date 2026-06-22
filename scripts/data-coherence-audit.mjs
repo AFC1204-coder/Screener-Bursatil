@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 
 const BASE_URL = process.env.COHERENCE_BASE_URL || "http://127.0.0.1:3000";
-const TOKEN = process.env.STATSEDGE_API_TOKEN || process.env.STATSEDGE_ADMIN_TOKEN || "";
+const TOKEN = process.env.STATSEDGE_ACCESS_TOKEN || process.env.STATSEDGE_API_TOKEN || process.env.STATSEDGE_ADMIN_TOKEN || "";
 const SAMPLE_LIMIT = Math.max(1, Math.min(Number(process.env.COHERENCE_SAMPLE_LIMIT || 20), 25));
 
 async function getJson(path) {

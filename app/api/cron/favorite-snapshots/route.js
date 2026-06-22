@@ -3,25 +3,16 @@
 // benchmark vía lib/marketData (caché TTL), inserta una fila en favorite_snapshots
 // y actualiza last_price/last_date/performance en favorites.
 // Auth: header x-statsedge-token (token de app) o authorization Bearer CRON_SECRET
-// (Vercel Cron). El middleware deja pasar /api/cron/* y cada cron valida aquí.
+// (Vercel Cron). El proxy deja pasar /api/cron/* y cada cron valida aquí.
 // Para pruebas: ?capturedAt=<ISO> fuerza la fecha del snapshot.
 import { sma } from "@/lib/indicators";
+import { requireInternalAuth } from "@/lib/internalAuth";
 import { fetchYahooChart } from "@/lib/marketData";
 import { benchmarkForFavorite } from "@/lib/symbols";
-import { envValue } from "@/lib/env";
 import { disabledPayload, finiteOrNull, supabaseConfig, supabaseRequest, textOrNull } from "@/lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
-
-function authorized(request) {
-  const appToken = envValue("STATSEDGE_ACCESS_TOKEN");
-  if (appToken && request.headers.get("x-statsedge-token") === appToken) return true;
-  const secret = envValue("CRON_SECRET");
-  if (secret && (request.headers.get("authorization") === `Bearer ${secret}` || request.headers.get("x-cron-secret") === secret)) return true;
-  if (!appToken && !secret) return process.env.NODE_ENV !== "production";
-  return false;
-}
 
 // bars descendentes (bars[0] = última sesión): primer cierre con fecha <= objetivo.
 function closeOnOrBefore(bars = [], isoDate) {
@@ -37,7 +28,8 @@ async function chartFor(symbol, cache) {
 }
 
 export async function GET(request) {
-  if (!authorized(request)) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  const authError = requireInternalAuth(request, { allowCron: true });
+  if (authError) return authError;
   const config = supabaseConfig();
   if (!config.configured) return Response.json(disabledPayload(), { status: 503 });
   const { searchParams } = new URL(request.url);

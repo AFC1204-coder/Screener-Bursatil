@@ -1,6 +1,6 @@
 import { shadowEuropeCronGroupAt, shadowEuropeCronGroupByKey } from "@/lib/cronPlan";
+import { isInternalRequest } from "@/lib/internalAuth";
 import { withDailyBarsCache } from "@/lib/dailyBarsCache";
-import { envValue } from "@/lib/env";
 import { mapOpenFigiIsins } from "@/lib/openfigi";
 import { refreshDefaultLeaderboards, runMaterializedScan, writeMaterializedScan } from "@/lib/materializedScanner";
 import {
@@ -22,9 +22,7 @@ const ROTATION_SETTING_TYPE = "jobs";
 const ROTATION_SETTING_KEY = "shadow-europe-refresh-cron-rotation";
 
 function authorized(request) {
-  const secret = envValue("CRON_SECRET");
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}` || request.headers.get("x-cron-secret") === secret;
+  return isInternalRequest(request, { allowCron: true });
 }
 
 function boolParam(searchParams, key, fallback = false) {

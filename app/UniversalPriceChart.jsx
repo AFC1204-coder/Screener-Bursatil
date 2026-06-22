@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Maximize2, SkipForward, ZoomIn, ZoomOut } from "lucide-react";
 import { CHART_RANGES, DEFAULT_CHART_SETTINGS, normalizeChartInterval } from "@/lib/chartSettings";
+import { chartViewStateFromLogicalRange, latestLogicalRange, manualChartWindowRestorePolicy, rescaledLogicalRange, shiftedLogicalRange, timeWindowFromLogicalRange, timeWindowLogicalRange, zoomedLogicalRange } from "@/lib/chartNavigation";
+import { getJson } from "@/lib/clientApi";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
 
@@ -35,6 +38,12 @@ function scoreFromEdge(edgePct, sensitivity = 40) {
 
 function isIntradayInterval(interval = "") {
   return ["1m", "5m", "15m", "30m", "1H", "4H"].includes(normalizeChartInterval(interval));
+}
+
+function vcpGateMark(state = "") {
+  if (state === "fail") return "x";
+  if (state === "watch" || state === "warn") return "!";
+  return "";
 }
 
 function timeFromBar(bar = {}) {
@@ -153,6 +162,23 @@ function dateFromChartTime(time) {
   return null;
 }
 
+function secondsFromChartTime(time) {
+  if (typeof time === "number" && Number.isFinite(time)) return time;
+  const date = dateFromChartTime(time);
+  return date && Number.isFinite(date.getTime()) ? Math.floor(date.getTime() / 1000) : null;
+}
+
+function numericVisibleTimeRange(timeRange = null) {
+  const from = secondsFromChartTime(timeRange?.from);
+  const to = secondsFromChartTime(timeRange?.to);
+  if (!Number.isFinite(from) || !Number.isFinite(to) || from === to) return null;
+  return { from: Math.min(from, to), to: Math.max(from, to) };
+}
+
+function emptyManualWindow() {
+  return { active: false, timeRange: null, logicalRange: null, rowCount: 0 };
+}
+
 function padTime(value = 0) {
   return String(value).padStart(2, "0");
 }
@@ -198,6 +224,29 @@ function crosshairTimeFormatter(interval = "D") {
   };
 }
 
+function chartWindowDateLabel(seconds, interval = "D") {
+  const date = new Date(Number(seconds) * 1000);
+  if (!Number.isFinite(date.getTime())) return "";
+  const intraday = isIntradayInterval(interval);
+  const day = String(intraday ? date.getDate() : date.getUTCDate()).padStart(2, "0");
+  const month = AXIS_MONTHS[intraday ? date.getMonth() : date.getUTCMonth()] || "";
+  const year = intraday ? date.getFullYear() : date.getUTCFullYear();
+  if (!intraday) return `${day} ${month} ${year}`;
+  return `${day} ${month} ${year} ${padTime(date.getHours())}:${padTime(date.getMinutes())}`;
+}
+
+function chartWindowLabel(timeRange = null, interval = "D") {
+  const from = Number(timeRange?.from);
+  const to = Number(timeRange?.to);
+  if (!Number.isFinite(from) || !Number.isFinite(to)) return "Sin ventana";
+  const start = Math.min(from, to);
+  const end = Math.max(from, to);
+  const startLabel = chartWindowDateLabel(start, interval);
+  const endLabel = chartWindowDateLabel(end, interval);
+  if (!startLabel || !endLabel) return "Sin ventana";
+  return startLabel === endLabel ? startLabel : `${startLabel} - ${endLabel}`;
+}
+
 function adaptiveChartProfile({ interval = "D", range = "1A", rowCount = 0, width = 720, volume = true } = {}) {
   const normalizedInterval = normalizeChartInterval(interval);
   const intraday = isIntradayInterval(normalizedInterval);
@@ -213,7 +262,7 @@ function adaptiveChartProfile({ interval = "D", range = "1A", rowCount = 0, widt
   const visibleBars = Math.max(8, Math.min(Math.max(rowCount, 8), targetBars));
   const rawSpacing = availableWidth / visibleBars;
   const minBarSpacing = normalizedInterval === "M" ? 7 : normalizedInterval === "W" ? 5 : intraday ? 3 : 3.5;
-  const maxBarSpacing = normalizedInterval === "M" ? 22 : normalizedInterval === "W" ? 16 : intraday ? 11 : 12;
+  const maxBarSpacing = normalizedInterval === "M" ? 36 : normalizedInterval === "W" ? 28 : intraday ? 20 : 24;
   const barSpacing = Number(clamp(rawSpacing, minBarSpacing, maxBarSpacing).toFixed(2));
   const rightOffsetPixels = compact ? 10 : normalizedInterval === "M" ? 28 : normalizedInterval === "W" ? 24 : 18;
   return {
@@ -356,8 +405,16 @@ export default function UniversalPriceChart({
   const containerRef = useRef(null);
   const rsBadgeRef = useRef(null);
   const chartRef = useRef(null);
+  const chartProfileRef = useRef(null);
+  const visibleLogicalRangeRef = useRef(null);
+  const visibleTimeRangeRef = useRef(null);
+  const manualWindowRef = useRef(emptyManualWindow());
+  const lastInteractiveViewStateRef = useRef(chartViewStateFromLogicalRange(null, 0));
+  const previousRenderMetaRef = useRef({ ready: false, symbol: "", range: "", interval: "", style: "", scale: "", rowCount: 0 });
   const [remote, setRemote] = useState({ bars: null, loading: false, error: "", meta: null });
   const [renderError, setRenderError] = useState("");
+  const [viewState, setViewState] = useState(() => chartViewStateFromLogicalRange(null, 0));
+  const [visibleWindow, setVisibleWindow] = useState(null);
   const range = settings?.range || DEFAULT_CHART_SETTINGS.range;
   const interval = normalizeChartInterval(settings?.interval || DEFAULT_CHART_SETTINGS.interval);
   const style = settings?.style || DEFAULT_CHART_SETTINGS.style;
@@ -380,10 +437,8 @@ export default function UniversalPriceChart({
     const controller = new AbortController();
     setRemote((prev) => ({ ...prev, loading: true, error: "" }));
     const params = new URLSearchParams({ symbol, range, interval });
-    fetch(`/api/chart?${params.toString()}`, { signal: controller.signal })
-      .then((res) => res.json().then((json) => ({ ok: res.ok, status: res.status, json })))
-      .then(({ ok, status, json }) => {
-        if (!ok || json.error) throw new Error(json.error || `HTTP ${status}`);
+    getJson(`/api/chart?${params.toString()}`, { signal: controller.signal })
+      .then((json) => {
         setRemote({ bars: json.bars || [], loading: false, error: "", meta: json.meta || null });
       })
       .catch((error) => {
@@ -398,6 +453,7 @@ export default function UniversalPriceChart({
     const normalized = remoteRows.length ? remoteRows : intraday ? [] : localRows;
     return chartRangeRows(aggregateRows(normalized, interval), range, interval);
   }, [remote.bars, intraday, localRows, interval, range]);
+  const rowTimes = useMemo(() => rows.map((row) => row.time), [rows]);
   const mainRsValue = safeNumber(rsMainScore);
   const globalRsScoreData = useMemo(
     () => indicators.rsLine && !intraday ? normalizeRsScoreSeries(rsRatingSeries, rows) : [],
@@ -420,6 +476,10 @@ export default function UniversalPriceChart({
   const hasRsLine = indicators.rsLine && !intraday && rsLineData.length > 1;
   const rsPanelLabel = benchmarkSymbol ? `RS Line vs ${benchmarkSymbol}` : "RS Line";
   const rangeLabel = (CHART_RANGES.find((item) => item.key === range)?.label || range || "").toUpperCase();
+  const visibleWindowLabel = useMemo(
+    () => chartWindowLabel(visibleWindow || visibleTimeRangeRef.current, interval),
+    [visibleWindow, interval],
+  );
   const mainChartHeightTarget = height;
 
   const latest = rows.at(-1);
@@ -428,9 +488,125 @@ export default function UniversalPriceChart({
   const positive = !Number.isFinite(change) || change >= 0;
 
   useEffect(() => {
+    setViewState(chartViewStateFromLogicalRange(null, rows.length));
+    setVisibleWindow(null);
+  }, [symbol, range, interval]);
+
+  useEffect(() => {
+    manualWindowRef.current = emptyManualWindow();
+    visibleLogicalRangeRef.current = null;
+    visibleTimeRangeRef.current = null;
+    lastInteractiveViewStateRef.current = chartViewStateFromLogicalRange(null, 0);
+    setVisibleWindow(null);
+  }, [symbol]);
+
+  const commitViewState = (logicalRange) => {
+    const nextState = chartViewStateFromLogicalRange(logicalRange, rows.length);
+    setViewState(nextState);
+    let derivedTimeRange = null;
+    if (logicalRange) {
+      visibleLogicalRangeRef.current = logicalRange;
+      derivedTimeRange = timeWindowFromLogicalRange({
+        rowTimes,
+        logicalRange,
+      });
+      if (derivedTimeRange) visibleTimeRangeRef.current = derivedTimeRange;
+    }
+    setVisibleWindow(derivedTimeRange);
+    if (nextState.isManual) {
+      manualWindowRef.current = {
+        active: true,
+        timeRange: derivedTimeRange || visibleTimeRangeRef.current,
+        logicalRange,
+        rowCount: rows.length,
+      };
+    }
+    if (nextState.key !== "unknown") lastInteractiveViewStateRef.current = nextState;
+  };
+
+  const syncViewStateFromChart = () => {
+    const logicalRange = chartRef.current?.timeScale?.().getVisibleLogicalRange?.();
+    commitViewState(logicalRange);
+  };
+
+  const syncViewStateSoon = () => {
+    if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(syncViewStateFromChart);
+      return;
+    }
+    syncViewStateFromChart();
+  };
+
+  const scrollToLatest = () => {
+    const timeScale = chartRef.current?.timeScale?.();
+    if (!timeScale) return;
+    const nextRange = latestLogicalRange({
+      rowCount: rows.length,
+      currentRange: timeScale.getVisibleLogicalRange?.(),
+      fallbackSpan: Math.min(rows.length, 90),
+    });
+    if (nextRange) {
+      timeScale.setVisibleLogicalRange?.(nextRange);
+      syncViewStateSoon();
+      return;
+    }
+    timeScale.scrollToRealTime?.();
+    syncViewStateSoon();
+  };
+
+  const resetCurrentRange = () => {
+    const chart = chartRef.current;
+    const timeScale = chart?.timeScale?.();
+    if (!timeScale) return;
+    timeScale.fitContent?.();
+    const rightOffsetPixels = chartProfileRef.current?.timeScale?.rightOffsetPixels;
+    if (Number.isFinite(rightOffsetPixels)) {
+      timeScale.applyOptions?.({ rightOffsetPixels });
+    }
+    const restoredRange = latestLogicalRange({
+      rowCount: rows.length,
+      currentRange: null,
+      fallbackSpan: rows.length,
+    });
+    if (restoredRange) {
+      timeScale.setVisibleLogicalRange?.(restoredRange);
+    }
+    manualWindowRef.current = emptyManualWindow();
+    if (restoredRange) {
+      commitViewState(restoredRange);
+      return;
+    }
+    syncViewStateSoon();
+  };
+
+  const zoomChart = (factor = 1) => {
+    const timeScale = chartRef.current?.timeScale?.();
+    const logicalRange = timeScale?.getVisibleLogicalRange?.();
+    const nextRange = zoomedLogicalRange({
+      rowCount: rows.length,
+      currentRange: logicalRange,
+      factor,
+      anchorLatest: !viewState.isAwayFromLatest,
+    });
+    if (!nextRange) return;
+    timeScale.setVisibleLogicalRange?.(nextRange);
+    syncViewStateSoon();
+  };
+
+  const panChartWindow = (direction = -1) => {
+    const timeScale = chartRef.current?.timeScale?.();
+    const logicalRange = timeScale?.getVisibleLogicalRange?.();
+    const nextRange = shiftedLogicalRange({ rowCount: rows.length, currentRange: logicalRange, direction });
+    if (!nextRange) return;
+    timeScale.setVisibleLogicalRange?.(nextRange);
+    syncViewStateSoon();
+  };
+
+  useEffect(() => {
     let cancelled = false;
     let chart = null;
     let resizeObserver = null;
+    let unsubscribeLogicalRange = null;
 
     async function render() {
       if (!containerRef.current || rows.length < 2) return;
@@ -451,6 +627,42 @@ export default function UniversalPriceChart({
       let width = Math.max(container.clientWidth || 0, 280);
       let chartHeight = responsiveChartHeight(width, mainChartHeightTarget);
       let chartProfile = adaptiveChartProfile({ interval, range, rowCount: rows.length, width, volume: indicators.volume });
+      chartProfileRef.current = chartProfile;
+      const previousRenderMeta = previousRenderMetaRef.current;
+      const nextRenderMeta = { ready: true, symbol, range, interval, style, scale, rowCount: rows.length };
+      const manualWindow = manualWindowRef.current || emptyManualWindow();
+      const restoreViewState = manualWindow.active ? { isManual: true } : viewState?.isManual ? viewState : lastInteractiveViewStateRef.current;
+      const restoreTimeRange = manualWindow.active ? manualWindow.timeRange : visibleTimeRangeRef.current;
+      const restoreLogicalRange = manualWindow.active ? manualWindow.logicalRange : visibleLogicalRangeRef.current;
+      const restorePreviousRowCount = manualWindow.active ? manualWindow.rowCount : previousRenderMeta?.rowCount;
+      const restorePolicy = manualChartWindowRestorePolicy({
+        previousMeta: previousRenderMeta,
+        nextMeta: nextRenderMeta,
+        viewState: restoreViewState,
+        visibleTimeRange: restoreTimeRange,
+      });
+      const restoredFromTime = restorePolicy.restore
+        ? timeWindowLogicalRange({
+          rowTimes,
+          timeRange: restoreTimeRange,
+          minSpan: 8,
+        })
+        : null;
+      const restoredFromLogical = restorePolicy.restore
+        ? rescaledLogicalRange({
+          previousRowCount: restorePreviousRowCount,
+          nextRowCount: rows.length,
+          previousRange: restoreLogicalRange,
+          minSpan: 8,
+        })
+        : null;
+      const restoredFromTimeState = chartViewStateFromLogicalRange(restoredFromTime, rows.length);
+      const restoredFromLogicalState = chartViewStateFromLogicalRange(restoredFromLogical, rows.length);
+      const restoredLogicalRange = restoredFromTimeState.isManual
+        ? restoredFromTime
+        : restoredFromLogicalState.isManual
+          ? restoredFromLogical
+          : restoredFromTime;
 
       chart = createChart(container, {
         width,
@@ -474,6 +686,18 @@ export default function UniversalPriceChart({
         timeScale: {
           borderColor: "rgba(255,255,255,.1)",
           ...chartProfile.timeScale,
+        },
+        handleScroll: {
+          mouseWheel: false,
+          pressedMouseMove: true,
+          horzTouchDrag: true,
+          vertTouchDrag: false,
+        },
+        handleScale: {
+          axisPressedMouseMove: false,
+          axisDoubleClickReset: true,
+          mouseWheel: false,
+          pinch: true,
         },
         crosshair: {
           vertLine: { color: "rgba(214,174,92,.34)", labelBackgroundColor: "#1d2430" },
@@ -608,11 +832,14 @@ export default function UniversalPriceChart({
           badge.style.transform = `translate(${Math.round(nextX)}px, ${Math.round(nextY)}px)`;
           badge.style.opacity = "1";
         };
-        chart.timeScale().subscribeVisibleTimeRangeChange?.(() => requestAnimationFrame(updateRsBadge));
       }
 
-      function fitAdaptiveView(nextWidth = width) {
+      function fitAdaptiveView(nextWidth = width, { resetRange = false } = {}) {
+        const timeScale = chart?.timeScale?.();
+        const rangeBeforeFit = !resetRange ? timeScale?.getVisibleLogicalRange?.() : null;
+        const shouldPreserveRange = chartViewStateFromLogicalRange(rangeBeforeFit, rows.length).isManual;
         chartProfile = adaptiveChartProfile({ interval, range, rowCount: rows.length, width: nextWidth, volume: indicators.volume });
+        chartProfileRef.current = chartProfile;
         chart?.applyOptions({
           rightPriceScale: {
             autoScale: true,
@@ -629,13 +856,54 @@ export default function UniversalPriceChart({
           autoScale: true,
           scaleMargins: chartProfile.priceScaleMargins,
         });
-        chart?.timeScale().fitContent();
-        chart?.timeScale().applyOptions({
+        if (resetRange) timeScale?.fitContent();
+        timeScale?.applyOptions({
           rightOffsetPixels: chartProfile.timeScale.rightOffsetPixels,
         });
+        if (!resetRange && shouldPreserveRange && rangeBeforeFit) {
+          timeScale?.setVisibleLogicalRange?.(rangeBeforeFit);
+        }
       }
 
-      fitAdaptiveView(width);
+      const watchLogicalRange = () => {
+        const timeScale = chart?.timeScale?.();
+        const updateRangeState = () => {
+          const logicalRange = timeScale?.getVisibleLogicalRange?.();
+          if (!logicalRange || cancelled) return;
+          commitViewState(logicalRange);
+        };
+        const updateTimeRangeState = (timeRange) => {
+          const nextTimeRange = numericVisibleTimeRange(timeRange);
+          if (nextTimeRange && !cancelled) visibleTimeRangeRef.current = nextTimeRange;
+          if (updateRsBadge) requestAnimationFrame(updateRsBadge);
+        };
+        timeScale?.subscribeVisibleLogicalRangeChange?.(updateRangeState);
+        timeScale?.subscribeVisibleTimeRangeChange?.(updateTimeRangeState);
+        unsubscribeLogicalRange = () => {
+          timeScale?.unsubscribeVisibleLogicalRangeChange?.(updateRangeState);
+          timeScale?.unsubscribeVisibleTimeRangeChange?.(updateTimeRangeState);
+        };
+        const initialTimeRange = numericVisibleTimeRange(timeScale?.getVisibleRange?.());
+        if (initialTimeRange) {
+          visibleTimeRangeRef.current = initialTimeRange;
+          setVisibleWindow(initialTimeRange);
+        }
+        requestAnimationFrame(updateRangeState);
+      };
+
+      fitAdaptiveView(width, { resetRange: true });
+      previousRenderMetaRef.current = nextRenderMeta;
+      watchLogicalRange();
+      if (restoredLogicalRange) {
+        const applyRestoredLogicalRange = () => {
+          if (cancelled) return;
+          chart?.timeScale?.().setVisibleLogicalRange?.(restoredLogicalRange);
+          commitViewState(restoredLogicalRange);
+        };
+        applyRestoredLogicalRange();
+        window.requestAnimationFrame?.(applyRestoredLogicalRange);
+        window.setTimeout(applyRestoredLogicalRange, 80);
+      }
       if (updateRsBadge) {
         requestAnimationFrame(updateRsBadge);
         window.setTimeout(updateRsBadge, 80);
@@ -660,10 +928,11 @@ export default function UniversalPriceChart({
     return () => {
       cancelled = true;
       resizeObserver?.disconnect();
+      unsubscribeLogicalRange?.();
       chartRef.current = null;
       chart?.remove();
     };
-  }, [rows, style, positive, mainChartHeightTarget, scale, interval, range, indicators.volume, indicators.maFast, indicators.maFastLength, indicators.maSlow, indicators.maSlowLength, hasRsLine, rsLineData, patternOverlay, patternMarkers, intraday]);
+  }, [rows, rowTimes, style, positive, mainChartHeightTarget, scale, interval, range, indicators.volume, indicators.maFast, indicators.maFastLength, indicators.maSlow, indicators.maSlowLength, hasRsLine, rsLineData, patternOverlay, patternMarkers, intraday]);
 
   if (rows.length < 2) {
     return <div className={`universalChart empty ${className}`}>
@@ -692,19 +961,61 @@ export default function UniversalPriceChart({
         <span>{patternSummary.shortLabel}</span>
         <b>{patternSummary.evidence}</b>
       </div>}
+      <div className="universalChartScopeBadge" title="Rango e intervalo aplicados">
+        <span>Vista</span>
+        <b>{rangeLabel} · {interval}</b>
+      </div>
+      <div className="universalChartNavGroup" aria-label="Navegación del gráfico">
+        <span className={`universalChartViewState ${viewState.isAwayFromLatest ? "away" : viewState.isZoomed ? "zoom" : ""}`} title={viewState.detail}>
+          <em>{viewState.label}</em>
+          {viewState.visibleBars ? <b>{viewState.visibleBars}</b> : null}
+        </span>
+        <button type="button" className="universalChartNavButton icon" onClick={() => panChartWindow(-1)} disabled={!viewState.canPanLeft} aria-label="Mover ventana hacia el historial" title="Mover ventana hacia el historial"><ChevronLeft size={15} aria-hidden="true" /></button>
+        <button type="button" className="universalChartNavButton icon" onClick={() => panChartWindow(1)} disabled={!viewState.canPanRight} aria-label="Mover ventana hacia el último dato" title="Mover ventana hacia el último dato"><ChevronRight size={15} aria-hidden="true" /></button>
+        <button type="button" className="universalChartNavButton icon" onClick={() => zoomChart(0.72)} aria-label="Acercar gráfico" title="Acercar"><ZoomIn size={14} aria-hidden="true" /></button>
+        <button type="button" className="universalChartNavButton icon" onClick={() => zoomChart(1.38)} aria-label="Alejar gráfico" title="Alejar"><ZoomOut size={14} aria-hidden="true" /></button>
+        <button type="button" className="universalChartNavButton icon" onClick={resetCurrentRange} disabled={!viewState.isManual} aria-label="Restaurar rango seleccionado" title="Restaurar el rango seleccionado"><Maximize2 size={14} aria-hidden="true" /></button>
+        {viewState.isAwayFromLatest && <button type="button" className="universalChartNavButton icon accent" onClick={scrollToLatest} aria-label="Volver al último dato sin cambiar el zoom" title="Volver al último dato sin cambiar el zoom"><SkipForward size={14} aria-hidden="true" /></button>}
+      </div>
       {tradingViewUrl && <a className="priceTvLink" href={tradingViewUrl} target="_blank" rel="noreferrer">Abrir TradingView</a>}
     </div>
+    <div
+      className={`universalChartViewportRail ${viewState.isManual ? "manual" : "auto"} ${viewState.key}`}
+      aria-label="Estado del rango visible"
+      aria-live="polite"
+      data-view-mode={viewState.key}
+      data-manual={viewState.isManual ? "true" : "false"}
+      data-window-label={visibleWindowLabel}
+      title={viewState.isManual ? "Ventana manual activa" : "Vista anclada al último dato"}
+    >
+      <span className="universalChartViewportChip mode">
+        <em>Modo</em>
+        <b>{viewState.isManual ? viewState.label : "Último dato"}</b>
+      </span>
+      <span className="universalChartViewportChip window">
+        <em>Ventana</em>
+        <b>{visibleWindowLabel}</b>
+      </span>
+      <span className="universalChartViewportChip bars">
+        <em>Barras</em>
+        <b>{viewState.visibleBars ? `${viewState.visibleBars}` : "Sin dato"}</b>
+      </span>
+      {viewState.isAwayFromLatest ? <span className="universalChartViewportChip distance">
+        <em>Hasta último</em>
+        <b>{viewState.distanceFromLatest}</b>
+      </span> : null}
+    </div>
     <div className="universalChartCanvas" ref={containerRef} style={{ "--chart-target-height": `${mainChartHeightTarget}px` }} />
-    {patternDiagnostic && <div className="vcpDiagnosticPanel" aria-label="Diagnóstico VCP">
+    {patternDiagnostic && <div className="vcpDiagnosticPanel" aria-label="Diagnóstico VCP" title={patternDiagnostic.objective?.detail || patternDiagnostic.reason || ""}>
       <div className="vcpDiagnosticHead">
         <span>Compresiones</span>
         <b>{patternDiagnostic.objective?.primary || patternDiagnostic.evidence}</b>
       </div>
-      {patternDiagnostic.objective?.secondary && <div className="vcpDiagnosticObjective">{patternDiagnostic.objective.secondary}</div>}
       <div className="vcpDiagnosticGates">
-        {patternDiagnostic.gates.map((item) => <span key={item.key} className={`vcpGate ${item.state}`}>
+        {patternDiagnostic.gates.map((item) => <span key={item.key} className={`vcpGate ${item.state}`} title={[item.label, item.detail].filter(Boolean).join(" · ")}>
           <em>{item.label}</em>
           <b>{item.detail}</b>
+          {vcpGateMark(item.state) ? <i aria-hidden="true">{vcpGateMark(item.state)}</i> : null}
         </span>)}
       </div>
       {patternDiagnostic.contractions.length > 0 && <div className="vcpDiagnosticContractions">

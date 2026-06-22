@@ -1,4 +1,4 @@
-import { envValue } from "@/lib/env";
+import { isInternalRequest } from "@/lib/internalAuth";
 import { normalizeMarketList } from "@/lib/markets";
 import { fetchEsmaFirdsReferenceUniverse, fetchFcaFirdsReferenceUniverse, fetchFcaFirdsUniverse, fetchFirdsUniverse } from "@/lib/officialUniverses";
 import { upsertShadowInstruments, upsertSymbolResolutions } from "@/lib/shadowUniverseStore";
@@ -11,9 +11,7 @@ const FCA_FIRDS_MARKETS = new Set(["GB"]);
 const ALL_FIRDS_MARKETS = new Set([...ESMA_FIRDS_MARKETS, ...FCA_FIRDS_MARKETS]);
 
 function authorized(request) {
-  const secret = envValue("CRON_SECRET");
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}` || request.headers.get("x-cron-secret") === secret;
+  return isInternalRequest(request, { allowCron: true });
 }
 
 function boolParam(searchParams, key, fallback = false) {

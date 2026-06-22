@@ -5,12 +5,18 @@ import ChartPreferences from "@/app/ChartPreferences";
 import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
-import { safeRead, STORAGE_KEYS } from "@/lib/localState";
+import { getJson } from "@/lib/clientApi";
+import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { methodologyCompactReasonLine, methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { dataStatusLabel } from "@/lib/patternNarrative";
 import { screenerStockContextFromSession } from "@/lib/screenerContracts";
+import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { setupPatternForBars } from "@/lib/setupPatterns";
+import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
+import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
+import { DECISION_CHART_PRESETS, buildStockDecisionDesk } from "@/lib/stockDecisionDesk";
+import { STOCK_DECISION_ACTIONS, STOCK_DECISION_VALIDATION_STATES, applyStockDecisionResolution, buildStockDecisionResolutionNote, decisionResolutionForSymbol, decisionResolutionHistory, reopenStockDecisionResolution } from "@/lib/stockDecisionResolution";
 import { computeTradePlan, tradePlanEligibility } from "@/lib/tradePlan";
 import { vcpObjectiveSummary } from "@/lib/vcpDiagnostics";
 
@@ -24,6 +30,11 @@ const dateFmt = (value) => {
   if (!value) return "Sin dato";
   const d = new Date(value);
   return Number.isFinite(d.getTime()) ? d.toLocaleDateString("es-ES", { year: "numeric", month: "short", day: "2-digit" }) : "Sin dato";
+};
+const dateTimeFmt = (value) => {
+  if (!value) return "";
+  const d = new Date(value);
+  return Number.isFinite(d.getTime()) ? d.toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : String(value).slice(0, 16);
 };
 const money = (n, currency = "") => {
   if (!Number.isFinite(n)) return "Sin dato";
@@ -43,6 +54,58 @@ const signedPriceMoney = (n, currency = "") => {
 };
 const sentimentClass = (label = "") => label === "alcista" ? "bullish" : label === "bajista" ? "bearish" : "neutral";
 const textKey = (...values) => values.filter(Boolean).join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const compactTitle = (...parts) => parts.map((part) => String(part || "").trim()).filter(Boolean).join(" · ");
+const NEWS_PROVIDER_RE = /\b(Yahoo|FMP|SEC|X API v2|recent search)\b/i;
+
+function displayNewsPublisher(publisher = "") {
+  const text = String(publisher || "").replace(/\s+/g, " ").trim();
+  if (!text) return "Fuente disponible";
+  return NEWS_PROVIDER_RE.test(text) ? "Fuente de noticias" : text;
+}
+
+function metricSourceState(kind = "measured", label = "Métrica", detail = "") {
+  const key = ["proxy", "review", "blocked", "measured"].includes(kind) ? kind : "measured";
+  const suffix = {
+    measured: "medida/trazable",
+    proxy: "proxy/estimada",
+    review: "revisar",
+    blocked: "bloqueada",
+  }[key];
+  return {
+    key,
+    mark: key === "proxy" ? "p" : key === "review" ? "!" : key === "blocked" ? "x" : "",
+    title: compactTitle(`${label}: ${suffix}`, detail),
+  };
+}
+
+function metricSourceFromState(state = "pass", label = "Métrica", detail = "") {
+  if (state === "fail" || state === "bad" || state === "blocked") return metricSourceState("blocked", label, detail);
+  if (state === "warn" || state === "watch" || state === "partial") return metricSourceState("review", label, detail);
+  return metricSourceState("measured", label, detail);
+}
+
+function metricSourceForValue(value, label = "Métrica", detail = "") {
+  return Number.isFinite(Number(value))
+    ? metricSourceState("measured", label, detail)
+    : metricSourceState("review", label, detail || "sin dato");
+}
+
+function sourceClass(source = null) {
+  return source?.key ? `source-${source.key}` : "";
+}
+
+function MetricSourceMark({ source = null }) {
+  if (!source?.mark) return null;
+  return <i className={`metricSourceMark ${source.key}`} aria-hidden="true">{source.mark}</i>;
+}
+
+function trustTitle(label = "", value = "", detail = "", source = null) {
+  const sourceTitle = String(source?.title || "").trim();
+  const detailText = String(detail || "").trim();
+  const extraDetail = detailText && !sourceTitle.includes(detailText) ? detailText : "";
+  return compactTitle(`${label}: ${value}`, sourceTitle, extraDetail);
+}
+
 function withPatternHistoryCoverage(pattern = null, bars = []) {
   if (!pattern) return null;
   const existingBars = Number(pattern.patternBarsCount);
@@ -93,6 +156,7 @@ function sectorAccent(sector = "", theme = "", industry = "") {
 }
 
 function stockAccentStyle(data = {}, symbol = "") {
+  data = data || {};
   const country = countryAccent(data.country, symbol);
   const sector = sectorAccent(data.sector, data.theme, data.industry);
   return {
@@ -103,8 +167,12 @@ function stockAccentStyle(data = {}, symbol = "") {
   };
 }
 
-function Metric({ label, value, tone = "" }) {
-  return <div className={`metric ${tone}`.trim()}><span>{label}</span><b>{value}</b></div>;
+function Metric({ label, value, tone = "", source = null, detail = "" }) {
+  const title = trustTitle(label, value, detail, source);
+  return <div className={`metric ${tone} ${sourceClass(source)}`.trim()} title={title} aria-label={title}>
+    <span>{label}</span>
+    <b>{value}<MetricSourceMark source={source} /></b>
+  </div>;
 }
 
 function scoreTone(value, good = 75, bad = 45) {
@@ -130,6 +198,7 @@ function compactDate(value) {
 }
 
 function compactBusinessTeaser(data = {}) {
+  data = data || {};
   const fallback = [data.sector, data.industry].filter(Boolean).join(" · ");
   const summary = String(data.summary || "").replace(/\s+/g, " ").trim();
   const usableSummary = summary && !/^Yahoo no ofrece/i.test(summary) ? summary : "";
@@ -144,11 +213,11 @@ function latestWeeklyRs(rs = {}) {
   return Array.isArray(rs.globalRsSeries) ? rs.globalRsSeries.at(-1) : null;
 }
 
-function RsMetric({ label, value, detail = "", tone = "neutral", compact = false }) {
-  return <div className={`rsMetric ${tone} ${compact ? "compact" : ""}`.trim()}>
+function RsMetric({ label, value, detail = "", tone = "neutral", compact = false, source = null }) {
+  const title = trustTitle(label, value, detail, source);
+  return <div className={`rsMetric ${tone} ${compact ? "compact" : ""} ${sourceClass(source)}`.trim()} title={title} aria-label={title}>
     <span>{label}</span>
-    <b>{value}</b>
-    {detail && <small>{detail}</small>}
+    <b>{value}<MetricSourceMark source={source} /></b>
   </div>;
 }
 
@@ -174,6 +243,14 @@ function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" 
   const countryDetail = [country, sampleText(rs.rsCountrySample)].filter(Boolean).join(" · ");
   const groupSample = finiteValue(rs.rsSectorSample);
   const groupDetail = `${sampleText(groupSample)}${groupSample && groupSample < 20 ? " · muestra baja" : ""}`;
+  const sourceForSample = (label, value, sample, minSample = 1, detail = "") => {
+    if (!Number.isFinite(value)) return metricSourceState("review", label, detail || "sin dato");
+    if (!Number.isFinite(sample) || sample < minSample) return metricSourceState("review", label, detail || "muestra insuficiente");
+    return metricSourceState("measured", label, detail);
+  };
+  const benchmarkSource = Number.isFinite(rsBenchmark)
+    ? metricSourceState("proxy", "RS bench", "modelo técnico vs benchmark")
+    : metricSourceState("review", "RS bench", "sin benchmark suficiente");
   const sourceLine = weekly
     ? `RS global semanal USD · ${sampleText(globalSample)}${globalDate ? ` · ${globalDate}` : ""}`
     : `RS global del ultimo scan${snapshotDate ? ` · ${snapshotDate}` : ""}`;
@@ -188,25 +265,25 @@ function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" 
     </div>
     <div className="rsPanelGrid">
       <RsGroup title="Ranking" subtitle="percentil 1-99">
-        <RsMetric label="RS global" value={rsFmt(globalScore)} detail={sampleText(globalSample)} tone={scoreTone(globalScore)} />
-        <RsMetric label="RS pais" value={rsFmt(rs.rsCountryPct)} detail={countryDetail} tone={scoreTone(rs.rsCountryPct)} />
-        <RsMetric label="Grupo" value={rsFmt(rs.rsSectorPct)} detail={groupDetail} tone={scoreTone(rs.rsSectorPct)} />
+        <RsMetric label="RS global" value={rsFmt(globalScore)} detail={sampleText(globalSample)} tone={scoreTone(globalScore)} source={sourceForSample("RS global", globalScore, globalSample, 20, sourceLine)} />
+        <RsMetric label="RS pais" value={rsFmt(rs.rsCountryPct)} detail={countryDetail} tone={scoreTone(rs.rsCountryPct)} source={sourceForSample("RS pais", rs.rsCountryPct, rs.rsCountrySample, 5, countryDetail)} />
+        <RsMetric label="Grupo" value={rsFmt(rs.rsSectorPct)} detail={groupDetail} tone={scoreTone(rs.rsSectorPct)} source={sourceForSample("Grupo", rs.rsSectorPct, groupSample, 5, groupDetail)} />
       </RsGroup>
       <RsGroup title={`Benchmark ${benchmarkSymbol}`} subtitle="precio relativo">
-        <RsMetric label="RS bench" value={rsFmt(rsBenchmark)} detail="modelo técnico" tone={scoreTone(rsBenchmark)} />
-        <RsMetric label="3M" value={pct(rs.rs3m)} detail="vs benchmark" tone={valueTone(rs.rs3m)} />
-        <RsMetric label="6M" value={pct(rs.rs6m)} detail="vs benchmark" tone={valueTone(rs.rs6m)} />
-        <RsMetric label="12M" value={pct(rs.rs12m)} detail="vs benchmark" tone={valueTone(rs.rs12m)} />
+        <RsMetric label="RS bench" value={rsFmt(rsBenchmark)} detail="modelo técnico" tone={scoreTone(rsBenchmark)} source={benchmarkSource} />
+        <RsMetric label="3M" value={pct(rs.rs3m)} detail="vs benchmark" tone={valueTone(rs.rs3m)} source={metricSourceForValue(rs.rs3m, "RS 3M", "vs benchmark")} />
+        <RsMetric label="6M" value={pct(rs.rs6m)} detail="vs benchmark" tone={valueTone(rs.rs6m)} source={metricSourceForValue(rs.rs6m, "RS 6M", "vs benchmark")} />
+        <RsMetric label="12M" value={pct(rs.rs12m)} detail="vs benchmark" tone={valueTone(rs.rs12m)} source={metricSourceForValue(rs.rs12m, "RS 12M", "vs benchmark")} />
       </RsGroup>
       <RsGroup title="Calidad y riesgo" subtitle="datos técnicos">
-        <RsMetric label="RS quality" value={scoreFmt(rs.rsQualityScore)} detail={rs.rsQualityLabel || "estabilidad"} tone={scoreTone(rs.rsQualityScore, 70, 45)} />
-        <RsMetric label="Riesgo técnico" value={scoreFmt(rs.speculationRiskScore)} detail="0 bajo · 99 alto" tone={riskTone(rs.speculationRiskScore)} />
-        <RsMetric label="Volatilidad 63d" value={pct(rs.volatility63d)} detail="anualizada" tone={riskTone(rs.volatility63d, 70)} />
-        <RsMetric label="Drawdown 63d" value={pct(rs.maxDrawdown63d)} detail="maximo" tone={riskTone(rs.maxDrawdown63d, 25)} />
+        <RsMetric label="RS quality" value={scoreFmt(rs.rsQualityScore)} detail={rs.rsQualityLabel || "estabilidad"} tone={scoreTone(rs.rsQualityScore, 70, 45)} source={Number.isFinite(rs.rsQualityScore) ? metricSourceState("proxy", "RS quality", "score compuesto técnico") : metricSourceState("review", "RS quality", "sin dato")} />
+        <RsMetric label="Riesgo técnico" value={scoreFmt(rs.speculationRiskScore)} detail="0 bajo · 99 alto" tone={riskTone(rs.speculationRiskScore)} source={Number.isFinite(rs.speculationRiskScore) ? metricSourceState("proxy", "Riesgo técnico", "score compuesto técnico") : metricSourceState("review", "Riesgo técnico", "sin dato")} />
+        <RsMetric label="Volatilidad 63d" value={pct(rs.volatility63d)} detail="anualizada" tone={riskTone(rs.volatility63d, 70)} source={metricSourceForValue(rs.volatility63d, "Volatilidad 63d", "anualizada")} />
+        <RsMetric label="Drawdown 63d" value={pct(rs.maxDrawdown63d)} detail="maximo" tone={riskTone(rs.maxDrawdown63d, 25)} source={metricSourceForValue(rs.maxDrawdown63d, "Drawdown 63d", "maximo")} />
       </RsGroup>
       <RsGroup title="Precio" subtitle="contexto">
-        <RsMetric label="Perf 3M" value={pct(rs.perf3m)} detail="precio absoluto" tone={valueTone(rs.perf3m)} />
-        <RsMetric label="Dist. 52W high" value={pct(rs.distance52w)} detail="desde maximo" tone={Number.isFinite(rs.distance52w) && rs.distance52w >= -15 ? "good" : "neutral"} />
+        <RsMetric label="Perf 3M" value={pct(rs.perf3m)} detail="precio absoluto" tone={valueTone(rs.perf3m)} source={metricSourceForValue(rs.perf3m, "Perf 3M", "precio absoluto")} />
+        <RsMetric label="Dist. 52W high" value={pct(rs.distance52w)} detail="desde maximo" tone={Number.isFinite(rs.distance52w) && rs.distance52w >= -15 ? "good" : "neutral"} source={metricSourceForValue(rs.distance52w, "Dist. 52W high", "desde maximo")} />
       </RsGroup>
     </div>
   </section>;
@@ -352,6 +429,280 @@ function TradePlanPanel({ pattern, price, currency, structure, display }) {
   </section>;
 }
 
+function StockReviewFlowRail({ navigation = null, onOpenSymbol }) {
+  if (!navigation?.totalRows) return null;
+  const previousDisabled = !navigation.previousSymbol;
+  const outOfFilter = !navigation.isCurrentVisible && navigation.hasFilters;
+  const queueComplete = outOfFilter && (navigation.visibleCount || 0) <= 0;
+  const nextDisabled = !navigation.nextSymbol && !queueComplete;
+  const queueCompleteScope = navigation.resolutionFilter === "pending"
+    ? "acciones pendientes"
+    : navigation.filterLabel && navigation.filterLabel !== "Cola completa"
+      ? `acciones del filtro ${navigation.filterLabel}`
+      : "acciones en este filtro";
+  const statusLine = navigation.isCurrentVisible
+    ? `${navigation.sourceLabel} · ${navigation.visibleCount} acciones`
+    : queueComplete
+      ? `${navigation.sourceLabel} · cola completa`
+      : `${navigation.sourceLabel} · acción resuelta fuera del filtro`;
+  const statusCopy = queueComplete
+    ? `Cola completa: no quedan ${queueCompleteScope}.`
+    : outOfFilter
+      ? "Resuelta: continúa con la siguiente acción pendiente."
+      : statusLine;
+  const nextLabel = navigation.isCurrentVisible ? "Siguiente" : queueComplete ? "Ver Review" : "Continuar cola";
+  const nextHref = queueComplete ? navigation.reviewHref : (navigation.nextHref || navigation.reviewHref);
+  const railClassName = [
+    "stockReviewFlowRail",
+    navigation.hasFilters ? "filtered" : "",
+    outOfFilter ? "outOfFilter" : "",
+    queueComplete ? "queueComplete" : "",
+  ].filter(Boolean).join(" ");
+  const nextClassName = ["primary", nextDisabled ? "disabled" : "", queueComplete ? "complete" : ""].filter(Boolean).join(" ");
+  return <div className={railClassName} aria-label="Flujo Review de la ficha">
+    <div className="stockReviewFlowMeta">
+      <span>Review</span>
+      <b>{navigation.positionLabel}</b>
+      <em title={statusLine}>{navigation.filterLabel}</em>
+    </div>
+    <p title={statusLine}>{statusCopy}</p>
+    <div className="stockReviewFlowActions">
+      <a href={navigation.reviewHref}>Volver</a>
+      <a
+        href={navigation.previousHref || navigation.reviewHref}
+        className={previousDisabled ? "disabled" : ""}
+        aria-disabled={previousDisabled}
+        onClick={(event) => {
+          if (previousDisabled) event.preventDefault();
+          else onOpenSymbol?.(navigation.previousSymbol);
+        }}
+      >
+        Anterior
+      </a>
+      <a
+        href={nextHref}
+        className={nextClassName}
+        aria-disabled={nextDisabled}
+        onClick={(event) => {
+          if (nextDisabled) event.preventDefault();
+          else if (!queueComplete) onOpenSymbol?.(navigation.nextSymbol);
+        }}
+      >
+        {nextLabel}
+      </a>
+    </div>
+  </div>;
+}
+
+function fallbackObservationChecklist(origin = null) {
+  if (!origin) return [];
+  const focus = origin.reviewFocus?.label || origin.decisionFocus?.label || origin.readiness?.label || origin.statusText || "Observacion";
+  const evidence = origin.decisionEvidence || origin.decisionTrace?.evidence || null;
+  const pendingCount = Array.isArray(evidence?.pending) ? evidence.pending.length : 0;
+  const firstPending = Array.isArray(evidence?.pending) ? evidence.pending[0] : null;
+  return [
+    {
+      key: "method",
+      label: "Criterio propio",
+      value: "Obligatorio",
+      detail: "Contrasta el foco con tus reglas antes de clasificar.",
+      tone: "neutral",
+    },
+    {
+      key: "focus",
+      label: "Foco",
+      value: focus,
+      detail: origin.reviewFocus?.detail || origin.decisionFocus?.detail || origin.readiness?.detail || origin.sourceDetail || "",
+      tone: origin.reviewFocus?.tone || origin.decisionFocus?.tone || origin.readiness?.tone || origin.tone || "neutral",
+    },
+    {
+      key: "evidence",
+      label: "Evidencia",
+      value: pendingCount ? `${pendingCount} por validar` : evidence?.status === "ready" ? "Completa" : "Revisar",
+      detail: firstPending?.detail || evidence?.summary || origin.statusText || "",
+      tone: pendingCount ? "warn" : evidence?.tone || "neutral",
+    },
+    {
+      key: "chart",
+      label: "Grafico",
+      value: "Revisar",
+      detail: "Comprueba temporalidad, volumen, RS y estructura.",
+      tone: "neutral",
+    },
+  ];
+}
+
+function StockMethodGuardrails({ desk = null, origin = null }) {
+  const guardrail = desk?.guardrail || (origin ? {
+    title: "Apoyo de observacion, no señal automatica",
+    detail: "El screener ordena evidencias; la entrada, salida o descarte debe salir de tu metodo y revision manual.",
+  } : null);
+  const checklist = desk?.observationChecklist?.length ? desk.observationChecklist : fallbackObservationChecklist(origin);
+  if (!guardrail && !checklist.length) return null;
+  return <>
+    {guardrail ? <div className="stockDecisionGuardrail" aria-label="Límite metodológico">
+      <b>{guardrail.title}</b>
+      <p>{guardrail.detail}</p>
+    </div> : null}
+    {checklist.length ? <div className="stockObservationChecklist" aria-label="Checklist metodológico de observación">
+      {checklist.map((item) => <span key={item.key} className={item.tone || ""}>
+        <em>{item.label}</em>
+        <b title={item.value}>{item.value}</b>
+        {item.detail ? <small title={item.detail}>{item.detail}</small> : null}
+      </span>)}
+    </div> : null}
+  </>;
+}
+
+function StockDecisionDesk({
+  desk = null,
+  resolution = null,
+  resolutionHistory = [],
+  reviewNavigation = null,
+  showMethodGuardrails = true,
+  validationKey = "pending",
+  validationNote = "",
+  onValidationKeyChange,
+  onValidationNoteChange,
+  onOpenReviewSymbol,
+  onApplyPreset,
+  onFocusEvidence,
+  onResolveDecision,
+  onReopenDecision,
+}) {
+  if (!desk) return null;
+  const evidenceItems = desk.pending.length ? desk.pending : desk.confirmed;
+  return <section className={`stockDecisionDesk ${desk.tone || ""}`.trim()} aria-label="Mesa de observación metodológica de la ficha">
+    <div className="stockDecisionDeskHead">
+      <div>
+        <span>{desk.sourceLabel}</span>
+        <h3>Observación: {desk.status}{desk.profileLabel ? ` · ${desk.profileLabel}` : ""}</h3>
+        {desk.focus && <p title={desk.focus}>{desk.focus}</p>}
+      </div>
+      <b title="Pruebas confirmadas">{desk.ratio || desk.status}</b>
+    </div>
+    {showMethodGuardrails ? <StockMethodGuardrails desk={desk} /> : null}
+    <StockReviewFlowRail navigation={reviewNavigation} onOpenSymbol={onOpenReviewSymbol} />
+    {desk.decisionFocus ? <div className={`stockDecisionFocus ${desk.decisionFocus.tone || ""}`.trim()}>
+      <div>
+        <span>Foco a observar</span>
+        <b>{desk.decisionFocus.queueFilterLabel || desk.decisionFocus.stateLabel || desk.decisionFocus.filterLabel || "Validar"}</b>
+        {desk.decisionFocus.ratio ? <em>{desk.decisionFocus.ratio}</em> : null}
+      </div>
+      <p title={[desk.decisionFocus.label, desk.decisionFocus.detail, desk.decisionFocus.checkLine].filter(Boolean).join(" · ")}>
+        <strong>{desk.decisionFocus.label || desk.decisionFocus.headline}</strong>
+        {desk.decisionFocus.detail ? ` · ${desk.decisionFocus.detail}` : ""}
+      </p>
+      {desk.decisionFocus.focusPresetKey ? <button type="button" onClick={() => onFocusEvidence?.(desk.decisionFocus)} title={desk.decisionFocus.focusDetail || desk.decisionFocus.focusLabel}>
+        {desk.decisionFocus.focusLabel || "Ver gráfico"}
+      </button> : null}
+    </div> : null}
+    {desk.brief.length ? <div className="stockDecisionBriefGrid">
+      {desk.brief.map((item) => <div key={item.key} className={`stockDecisionBrief ${item.tone || ""}`.trim()}>
+        <span>{item.label || item.key}</span>
+        <b title={item.value}>{item.value}</b>
+        {item.detail ? <em title={item.detail}>{item.detail}</em> : null}
+      </div>)}
+    </div> : null}
+    <div className="stockDecisionDeskBody">
+      <div className="stockDecisionMetricStrip">
+        {desk.metrics.map((item) => <span key={item.key}>
+          <em>{item.label}</em>
+          <b>{item.value}</b>
+        </span>)}
+      </div>
+      <div className="stockDecisionEvidenceRail">
+        <span>{desk.pending.length ? "Pendiente" : "Confirmado"}</span>
+        <div>
+          {evidenceItems.map((item, index) => <button
+            type="button"
+            key={`${item.key || item.label}-${index}`}
+            className={item.tone || ""}
+            title={[item.detail || item.label, item.focusDetail].filter(Boolean).join(" · ")}
+            onClick={() => onFocusEvidence?.(item)}
+          >
+            <b>{item.label}</b>
+            {item.focusLabel ? <em>{item.focusLabel}</em> : null}
+          </button>)}
+        </div>
+      </div>
+      <div className="stockDecisionChartRail">
+        <span>Coherencia grafico</span>
+        <div>
+          {desk.chartRead.map((item) => <b key={item.key} className={item.tone || ""} title={item.detail || item.value}>
+            <em>{item.label}</em>{item.value}
+          </b>)}
+        </div>
+      </div>
+    </div>
+    <div className="stockDecisionPresetRail" aria-label="Vistas de observación del grafico">
+      {DECISION_CHART_PRESETS.map((item) => <button
+        type="button"
+        key={item.key}
+        className={`${desk.activePresetKey === item.key ? "active" : ""} ${desk.presetKey === item.key ? "recommended" : ""}`.trim()}
+        onClick={() => onApplyPreset?.(item.key)}
+        title={item.detail}
+      >
+        <span>{item.label}</span>
+        <em>{item.detail}</em>
+      </button>)}
+    </div>
+    <div className="stockDecisionResolveRail" aria-label="Clasificar observación de la ficha">
+      <span>{resolution ? `Clasificación: ${resolution.label}` : "Clasificar observación"}</span>
+      <label className="stockDecisionValidationNote">
+        <span>Nota del inversor</span>
+        <input
+          value={validationNote}
+          maxLength={120}
+          onChange={(event) => onValidationNoteChange?.(event.target.value)}
+          placeholder={desk.decisionFocus?.label || "Qué observas en la ficha"}
+        />
+      </label>
+      <div className="stockDecisionValidationState" aria-label="Estado de observación del foco">
+        {STOCK_DECISION_VALIDATION_STATES.map((item) => <button
+          type="button"
+          key={item.key}
+          className={`${item.tone || ""} ${validationKey === item.key ? "active" : ""}`.trim()}
+          onClick={() => onValidationKeyChange?.(item.key)}
+          title={item.detail}
+        >
+          {item.label}
+        </button>)}
+      </div>
+      <div>
+        <button
+          type="button"
+          className={`neutral ${!resolution ? "active" : ""}`.trim()}
+          onClick={() => onReopenDecision?.()}
+          title="Vuelve a pendiente"
+          disabled={!resolution}
+        >
+          Reabrir
+        </button>
+        {STOCK_DECISION_ACTIONS.map((item) => <button
+          type="button"
+          key={item.key}
+          className={`${item.tone || ""} ${resolution?.key === item.key ? "active" : ""}`.trim()}
+          onClick={() => onResolveDecision?.(item.key)}
+          title={item.detail}
+        >
+          {item.label}
+        </button>)}
+      </div>
+    </div>
+    {resolutionHistory.length ? <div className="stockDecisionHistory" aria-label="Historial manual de la ficha">
+      <span>Historial manual</span>
+      <div>
+        {resolutionHistory.map((entry) => <article className={entry.tone || ""} key={`${entry.symbol}-${entry.key}-${entry.updatedAt}-${entry.note}`}>
+          <b>{entry.label}</b>
+          <em>{dateTimeFmt(entry.updatedAt) || entry.source}</em>
+          <p>{entry.note || entry.detail}</p>
+        </article>)}
+      </div>
+    </div> : null}
+  </section>;
+}
+
 function HolderTable({ title, rows }) {
   return <section className="card">
     <h2>{title}</h2>
@@ -372,10 +723,10 @@ function EarningsSection({ calendar = {}, currency = "" }) {
     </div>
     <div className="calendarGrid">
       <Metric label="Proxima fecha resultados" value={calendar.earningsDate || (calendar.earningsStart && calendar.earningsEnd ? `${calendar.earningsStart} / ${calendar.earningsEnd}` : "Sin dato")} />
-      <Metric label="EPS estimate" value={money(calendar.epsEstimate, currency)} />
-      <Metric label="EPS growth est." value={pct(calendar.epsEstimateGrowth)} />
-      <Metric label="Revenue estimate" value={money(calendar.revenueEstimate, currency)} />
-      <Metric label="Revenue growth est." value={pct(calendar.revenueEstimateGrowth)} />
+      <Metric label="EPS estimate" value={money(calendar.epsEstimate, currency)} source={metricSourceState("proxy", "EPS estimate", "estimación de proveedor")} />
+      <Metric label="EPS growth est." value={pct(calendar.epsEstimateGrowth)} source={metricSourceState("proxy", "EPS growth est.", "estimación de proveedor")} />
+      <Metric label="Revenue estimate" value={money(calendar.revenueEstimate, currency)} source={metricSourceState("proxy", "Revenue estimate", "estimación de proveedor")} />
+      <Metric label="Revenue growth est." value={pct(calendar.revenueEstimateGrowth)} source={metricSourceState("proxy", "Revenue growth est.", "estimación de proveedor")} />
       <Metric label="Ex-dividend date" value={calendar.exDividendDate || "Sin dato"} />
     </div>
   </section>;
@@ -504,10 +855,19 @@ function ResultsSection({ results = {}, currency = "", embedded = false, snapsho
   </section>;
 }
 
-function MiniMetric({ label, value, tone = "" }) {
-  return <div className={`miniMetric ${tone}`.trim()}>
+function MiniMetric({ label, value, tone = "", source = null, detail = "" }) {
+  const title = trustTitle(label, value, detail, source);
+  return <div className={`miniMetric ${tone} ${sourceClass(source)}`.trim()} title={title} aria-label={title}>
     <span>{label}</span>
-    <b>{value}</b>
+    <b>{value}<MetricSourceMark source={source} /></b>
+  </div>;
+}
+
+function HeroMetric({ label, value, tone = "", source = null, detail = "" }) {
+  const title = trustTitle(label, value, detail, source);
+  return <div className={sourceClass(source)} title={title} aria-label={title}>
+    <span>{label}</span>
+    <b className={tone}>{value}<MetricSourceMark source={source} /></b>
   </div>;
 }
 
@@ -748,7 +1108,7 @@ function NewsSection({ rows = [] }) {
     <span>
       <i className={`sentimentPill ${sentimentClass(item.sentimentLabel)}`}>{item.sentimentLabel || "neutral"}</i>
       <b>{item.title}</b>
-      <em>{item.publisher || "Fuente disponible"} · {dateFmt(item.publishedAt)}</em>
+      <em>{displayNewsPublisher(item.publisher)} · {dateFmt(item.publishedAt)}</em>
       <small>{item.relevanceReasons?.length ? `Relevancia: ${item.relevanceReasons.join(", ")}` : "Relevancia aproximada por ticker/nombre"}</small>
       <span className={`newsLinkCue ${item.link ? "" : "disabled"}`}>{item.link ? "Abrir noticia ->" : "Sin enlace disponible"}</span>
     </span>
@@ -792,7 +1152,7 @@ function SocialPulseSection({ social = null, loading = false, symbol = "" }) {
       <Metric label="Bajistas" value={`${fmt(social?.bearish)} · ${pct(social?.bearishPct)}`} />
       <Metric label="Pesimismo social" value={fmt(social?.pessimismIndex)} />
       <Metric label="Engagement" value={fmt(social?.totalEngagement)} />
-      <Metric label="Score ponderado" value={Number.isFinite(social?.weightedAvgScore) ? social.weightedAvgScore.toFixed(1) : "Sin dato"} />
+      <Metric label="Score ponderado" value={Number.isFinite(social?.weightedAvgScore) ? social.weightedAvgScore.toFixed(1) : "Sin dato"} source={metricSourceState("proxy", "Score ponderado", "heurística social")} />
     </div>
     <div className="summaryRow"><span>Query</span><span className="summaryValue"><b>{social?.query || `"$${String(symbol).split(".")[0]}"`}</b></span></div>
     {hasRows ? <div className="newsGrid" style={{ marginTop: 14 }}>
@@ -853,10 +1213,11 @@ function patternClaimBlocked(row = {}) {
 }
 
 function AuditCheck({ label, value, state = "neutral", detail = "" }) {
-  return <div className={`auditCheck ${state}`.trim()}>
+  const source = metricSourceFromState(state, label, detail);
+  const title = trustTitle(label, value, detail, source);
+  return <div className={`auditCheck ${state} ${sourceClass(source)}`.trim()} title={title} aria-label={title}>
     <span>{label}</span>
-    <b>{value}</b>
-    {detail && <small>{detail}</small>}
+    <b>{value}<MetricSourceMark source={source} /></b>
   </div>;
 }
 
@@ -895,11 +1256,9 @@ function MethodologyAuditPanel({ pattern, verdict, stage }) {
         <span className={`methodologyConfidenceBadge ${confidence.state}`.trim()} title={confidence.detail}>{confidence.label}</span>
       </div>
     </div>
-    <p className="methodologyVerdictReason">
+    <p className="methodologyVerdictReason" title={objectiveDetail}>
       <span>{objective.primary}</span>
-      {objective.secondary && <small>{objective.secondary}</small>}
       <InfoHint text={objectiveDetail} />
-      {confidence.key !== "ok" && <small>{confidence.detail}</small>}
     </p>
     <div className="auditGrid">
       <AuditCheck label="Datos técnicos" value={confidence.label} state={confidence.state} detail={confidence.detail || currentVerdict.dataLabel || dataStatusLabel(pattern.patternDataStatus)} />
@@ -982,6 +1341,11 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const [benchmarkDraft, setBenchmarkDraft] = useState("");
   const [companyBriefExpanded, setCompanyBriefExpanded] = useState(false);
   const [screenerOrigin, setScreenerOrigin] = useState(null);
+  const [reviewNavigation, setReviewNavigation] = useState(null);
+  const [decisionResolution, setDecisionResolution] = useState(null);
+  const [decisionResolutionHistoryItems, setDecisionResolutionHistoryItems] = useState([]);
+  const [decisionValidationKey, setDecisionValidationKey] = useState("pending");
+  const [decisionValidationNote, setDecisionValidationNote] = useState("");
   const [showVcpDiagnostics, setShowVcpDiagnostics] = useState(false);
 
   function updateChartSettings(nextSettings) {
@@ -991,6 +1355,12 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   function updateChartScope(nextScope) {
     setChartScope(nextScope);
     setChartSettings(readChartSettings({ scope: nextScope, symbol }));
+  }
+
+  function syncReviewNavigation(reviewState = safeRead(STORAGE_KEYS.review, {}), activeSymbol = symbol) {
+    const navigation = buildReviewQueueNavigation(reviewState || {}, activeSymbol);
+    setReviewNavigation(navigation);
+    return navigation;
   }
 
   function loadSimilarFor(payload) {
@@ -1003,8 +1373,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       theme: payload.theme || "",
       country: payload.country || "",
     });
-    fetch(`/api/similar?${qs.toString()}`)
-      .then((res) => res.json())
+    getJson(`/api/similar?${qs.toString()}`)
       .then((result) => setSimilar(result.results || []))
       .catch(() => setSimilar([]));
   }
@@ -1018,8 +1387,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       theme: payload.theme || "",
       country: payload.country || "",
     });
-    fetch(`/api/comparables?${qs.toString()}`)
-      .then((res) => res.json())
+    getJson(`/api/comparables?${qs.toString()}`, { timeoutMs: 12000 })
       .then((result) => setComparables({ rows: result.results || [], note: result.note || "" }))
       .catch(() => setComparables({ rows: [], note: "Contexto comparativo no disponible en este momento." }));
   }
@@ -1031,8 +1399,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       symbol,
       name: payload?.name || symbol,
     });
-    fetch(`/api/social-sentiment?${qs.toString()}`)
-      .then((res) => res.json())
+    getJson(`/api/social-sentiment?${qs.toString()}`)
       .then((result) => setSocial(result))
       .catch((error) => setSocial({ error: error.message || "Pulso X no disponible", rows: [] }))
       .finally(() => setSocialLoading(false));
@@ -1046,9 +1413,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       const qs = new URLSearchParams({ symbol });
       const benchmark = cleanBenchmarkSymbol(benchmarkSymbol);
       if (benchmark) qs.set("benchmark", benchmark);
-      const r = await fetch(`/api/company-brief?${qs.toString()}`);
-      const d = await r.json();
-      if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
+      const d = await getJson(`/api/company-brief?${qs.toString()}`);
       setData(d);
       loadSimilarFor(d);
       loadComparablesFor(d);
@@ -1062,8 +1427,12 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
 
   useEffect(() => {
     const nextSettings = readChartSettings({ scope: chartScope, symbol });
+    const reviewState = safeRead(STORAGE_KEYS.review, {});
     setChartSettings(nextSettings);
     setScreenerOrigin(screenerStockContextFromSession(safeRead(STORAGE_KEYS.screenerSession, null), symbol));
+    syncReviewNavigation(reviewState, symbol);
+    setDecisionResolution(decisionResolutionForSymbol(reviewState, symbol));
+    setDecisionResolutionHistoryItems(decisionResolutionHistory(reviewState, { symbol, limit: 4 }));
     setLogoIndex(0);
     setLogoLoaded(false);
     setCompanyBriefExpanded(false);
@@ -1101,6 +1470,13 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const listingLabel = data?.ipoDate ? "IPO" : data?.listingDate ? "Cotiza desde" : "IPO";
   const freshness = data?.dataQuality?.freshness || {};
   const coverage = data?.dataQuality?.coverage || {};
+  const chartEstimated = Boolean(
+    freshness.priceEstimated
+    || freshness.chartEstimated
+    || data?.dataQuality?.estimatedChart
+    || /estimado|estimated|no live/i.test(data?.chartProvider || "")
+  );
+  const chartSourceDetail = chartEstimated ? "historico estimado por fallback operativo" : "calculada desde barras";
   const compactProfile = data ? [data.sector, data.industry, data.country].filter(Boolean).join(" · ") : "";
   const setupPattern = useMemo(() => {
     const pattern = data?.setupPattern || (data?.chartBars?.length ? setupPatternForBars(data.chartBars) : null);
@@ -1111,9 +1487,124 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const setupStructure = setupDisplay.structure;
   const setupTradePlanEligible = setupDisplay.actionable && setupDisplay.tradePlanEligible && !setupDisplay.blocksPatternClaim;
   const actionableSetupPattern = setupTradePlanEligible ? setupPattern : null;
+  const decisionDesk = buildStockDecisionDesk({
+    origin: screenerOrigin,
+    chartSettings,
+    setupDisplay,
+    setupPattern,
+    technical,
+    rsUniverse,
+    activeBenchmark,
+    showVcpDiagnostics,
+  });
+  const decisionFocusKey = decisionDesk?.decisionFocus?.key || decisionDesk?.focus || symbol;
+  useEffect(() => {
+    const focusState = decisionDesk?.decisionFocus?.state || "";
+    setDecisionValidationKey(focusState === "ready" ? "validated" : focusState === "blocked" ? "blocked" : "pending");
+    setDecisionValidationNote("");
+  }, [symbol, decisionFocusKey]);
+
   useEffect(() => {
     setBenchmarkDraft(activeBenchmark);
   }, [activeBenchmark]);
+
+  function applyDecisionChartPreset(presetKey) {
+    const preset = DECISION_CHART_PRESETS.find((item) => item.key === presetKey);
+    if (!preset) return;
+    const nextIndicators = {
+      ...DEFAULT_CHART_SETTINGS.indicators,
+      ...(chartSettings.indicators || {}),
+      ...(preset.indicators || {}),
+    };
+    updateChartSettings({
+      ...chartSettings,
+      range: preset.range,
+      interval: preset.interval,
+      indicators: nextIndicators,
+    });
+    setShowVcpDiagnostics(preset.diagnostics ? Boolean(setupPattern) : false);
+  }
+
+  function focusDecisionEvidence(item) {
+    if (!item?.focusPresetKey) return;
+    applyDecisionChartPreset(item.focusPresetKey);
+  }
+
+  function resolveStockDecision(actionKey) {
+    if (!symbol) return;
+    const previousReview = safeRead(STORAGE_KEYS.review, {});
+    const note = buildStockDecisionResolutionNote({
+      validationKey: decisionValidationKey,
+      focusLabel: decisionDesk?.decisionFocus?.label || decisionDesk?.focus || "",
+      comment: decisionValidationNote,
+      fallback: decisionDesk?.focus || "",
+    });
+    const nextReview = applyStockDecisionResolution(previousReview, {
+      symbol,
+      actionKey,
+      source: "stock",
+      note,
+    });
+    safeWrite(STORAGE_KEYS.review, nextReview);
+    syncReviewNavigation(nextReview, symbol);
+    setDecisionResolution(decisionResolutionForSymbol(nextReview, symbol));
+    setDecisionResolutionHistoryItems(decisionResolutionHistory(nextReview, { symbol, limit: 4 }));
+  }
+
+  function reopenStockDecision() {
+    if (!symbol) return;
+    const previousReview = safeRead(STORAGE_KEYS.review, {});
+    const nextReview = reopenStockDecisionResolution(previousReview, {
+      symbol,
+      source: "stock",
+      note: decisionResolution?.label ? `Antes: ${decisionResolution.label}` : "",
+    });
+    safeWrite(STORAGE_KEYS.review, nextReview);
+    syncReviewNavigation(nextReview, symbol);
+    setDecisionResolution(decisionResolutionForSymbol(nextReview, symbol));
+    setDecisionResolutionHistoryItems(decisionResolutionHistory(nextReview, { symbol, limit: 4 }));
+  }
+
+  function openReviewFlowSymbol(targetSymbol = "") {
+    const cleanTarget = String(targetSymbol || "").trim().toUpperCase();
+    if (!cleanTarget) return;
+    const reviewState = safeRead(STORAGE_KEYS.review, {});
+    const navigation = buildReviewQueueNavigation(reviewState, cleanTarget);
+    const targetItem = navigation.items.find((item) => item.symbol === cleanTarget);
+    if (!targetItem?.row) return;
+    const openedAt = new Date().toISOString();
+    const previousSession = safeRead(STORAGE_KEYS.screenerSession, {}) || {};
+    const nextReview = {
+      ...(reviewState || {}),
+      selectedSymbol: cleanTarget,
+      currentIndex: targetItem.index,
+      updatedAt: openedAt,
+    };
+    const context = buildReviewStockOpenContext(targetItem.row, {
+      settings: navigation.settings,
+      source: navigation.source,
+      sourceLabel: navigation.sourceLabel,
+      sourceDetail: navigation.sourceDetail || "",
+      queueMode: navigation.queueMode || "",
+      digestFilter: navigation.digestFilter,
+      resolutionFilter: navigation.resolutionFilter,
+      rank: targetItem.index + 1,
+      queueSize: navigation.visibleCount,
+      rowsCount: navigation.totalRows,
+      visibleCount: navigation.visibleCount,
+      hiddenCount: Math.max(0, navigation.totalRows - navigation.visibleCount),
+      openedAt,
+    });
+    safeWrite(STORAGE_KEYS.review, nextReview);
+    safeWrite(STORAGE_KEYS.screenerSession, {
+      ...previousSession,
+      version: previousSession.version || SCREENER_SESSION_VERSION,
+      lastOpenedStockSymbol: cleanTarget,
+      lastOpenedStockAt: openedAt,
+      lastOpenedStockContext: context,
+    });
+    syncReviewNavigation(nextReview, cleanTarget);
+  }
 
   function updateBenchmark(value) {
     const nextBenchmark = cleanBenchmarkSymbol(value);
@@ -1135,18 +1626,33 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const companySummary = data?.summary || "Sin descripción de negocio disponible.";
   const companySummaryId = `hero-company-summary-${symbol || "stock"}`;
   const canExpandCompanyBrief = companySummary.length > 80;
+  const rsUniverseSource = Number.isFinite(rsUniverse)
+    ? Number.isFinite(rs.rsGlobalSample) && rs.rsGlobalSample >= 20
+      ? metricSourceState("measured", "RS", `n=${Math.round(rs.rsGlobalSample)}`)
+      : metricSourceState("review", "RS", "muestra insuficiente o snapshot sin muestra")
+    : metricSourceState("review", "RS", "sin dato");
+  const setupSource = chartEstimated
+    ? metricSourceState("review", "Estructura", chartSourceDetail)
+    : setupDisplay.blocksPatternClaim || setupDisplay.dataLimited
+    ? metricSourceState("blocked", "Estructura", setupDisplay.reason || "datos insuficientes")
+    : metricSourceState("proxy", "Estructura", setupDisplay.reason || "modelo de patrón técnico");
+  const heroEpsSource = Number.isFinite(heroEpsYoY)
+    ? heroEpsRows.length
+      ? metricSourceState("measured", "EPS YoY", "estado financiero")
+      : metricSourceState("proxy", "EPS YoY", "fallback de proveedor")
+    : metricSourceState("review", "EPS YoY", "sin dato");
   const compactResearchCard = data ? <section className={`terminalPanel stockResearchCard stockResearchCardHero ${companyBriefExpanded ? "stockResearchCardHeroExpanded" : ""}`}>
     <div className="marketSmithStrip" aria-label="Resumen Weinstein Minervini compacto">
-      <MiniMetric label="RS" value={rsFmt(rsUniverse)} tone={Number.isFinite(rsUniverse) && rsUniverse >= 75 ? "good" : Number.isFinite(rsUniverse) && rsUniverse < 45 ? "bad" : ""} />
-      <MiniMetric label="Etapa" value={stageShortLabel} tone={stageTone} />
-      <MiniMetric label="Ventas YoY" value={pct(g.revenueGrowth)} tone={valueTone(g.revenueGrowth)} />
-      <MiniMetric label="EPS YoY" value={pct(heroEpsYoY)} tone={valueTone(heroEpsYoY)} />
+      <MiniMetric label="RS" value={rsFmt(rsUniverse)} tone={Number.isFinite(rsUniverse) && rsUniverse >= 75 ? "good" : Number.isFinite(rsUniverse) && rsUniverse < 45 ? "bad" : ""} source={rsUniverseSource} />
+      <MiniMetric label="Etapa" value={stageShortLabel} tone={stageTone} source={data?.stage?.label ? metricSourceState(chartEstimated ? "review" : "proxy", "Etapa", chartEstimated ? chartSourceDetail : "modelo técnico") : metricSourceState("review", "Etapa", "sin dato")} />
+      <MiniMetric label="Ventas YoY" value={pct(g.revenueGrowth)} tone={valueTone(g.revenueGrowth)} source={metricSourceForValue(g.revenueGrowth, "Ventas YoY", "proveedor financiero")} />
+      <MiniMetric label="EPS YoY" value={pct(heroEpsYoY)} tone={valueTone(heroEpsYoY)} source={heroEpsSource} />
     </div>
     <div className="heroCardMetrics" aria-label="Metricas clave compactas">
-      <div><span>MA 50/200</span><b className={valueTone(finiteValue(technical.distanceSma50, technical.distanceSma200))}>{pct(technical.distanceSma50)} / {pct(technical.distanceSma200)}</b></div>
-      <div><span>Estructura</span><b className={setupDisplay.tone || ""} title={setupDisplay.reason || ""}>{setupDisplay.shortLabel}</b></div>
-      <div><span>RS Quality</span><b>{rsFmt(rs.rsQualityScore)}</b></div>
-      <div className="heroBusinessMetric"><span>Negocio</span><b title={businessTeaser}>{businessTeaser}</b></div>
+      <HeroMetric label="MA 50/200" value={`${pct(technical.distanceSma50)} / ${pct(technical.distanceSma200)}`} tone={valueTone(finiteValue(technical.distanceSma50, technical.distanceSma200))} source={Number.isFinite(technical.distanceSma50) && Number.isFinite(technical.distanceSma200) ? metricSourceState(chartEstimated ? "review" : "measured", "MA 50/200", chartSourceDetail) : metricSourceState("review", "MA 50/200", "histórico insuficiente")} />
+      <HeroMetric label="Estructura" value={setupDisplay.shortLabel} tone={setupDisplay.tone || ""} source={setupSource} />
+      <HeroMetric label="RS Quality" value={rsFmt(rs.rsQualityScore)} source={Number.isFinite(rs.rsQualityScore) ? metricSourceState("proxy", "RS Quality", "score compuesto técnico") : metricSourceState("review", "RS Quality", "sin dato")} />
+      <HeroMetric label="Negocio" value={businessTeaser} source={metricSourceState("measured", "Negocio", "perfil descriptivo de proveedor")} />
     </div>
     <div className="heroCompanyBrief" aria-label="Resumen de negocio compacto">
       <div className="heroCompanyBriefHead">
@@ -1199,12 +1705,14 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
               {Number.isFinite(priceSnapshot.dayChangePct) && <b className={dayTone}>{signedPriceMoney(priceSnapshot.dayChange)} ({pct(priceSnapshot.dayChangePct)})</b>}
             </div>
             <div className="stockDataLine" aria-label="Frescura y cobertura de datos">
-              <span>{priceSnapshot.date || freshness.priceDate ? `Cierre ${compactDate(priceSnapshot.date || freshness.priceDate)}` : "Cierre sin fecha"}</span>
+              <span>{priceSnapshot.date || freshness.priceDate ? `${chartEstimated ? "Cierre estimado" : "Cierre"} ${compactDate(priceSnapshot.date || freshness.priceDate)}` : "Cierre sin fecha"}</span>
               {coverage.label && <span>{coverage.label}</span>}
+              {chartEstimated && <span>Historico estimado</span>}
               <span>{freshness.rsGlobalAsOf ? `RS ${compactDate(freshness.rsGlobalAsOf)} · ${sampleText(freshness.rsGlobalSample)}` : "RS sin snapshot"}</span>
               {!priceSnapshot.coherent && <span>cotizacion intradia distinta</span>}
             </div>
             <ScreenerOriginPanel origin={screenerOrigin} variant="stock" />
+            <StockMethodGuardrails desk={decisionDesk} origin={screenerOrigin} />
             <div className="stockHeroActions">
               <a className="stockHeroLink stockBackLink" href="/">
                 Screener
@@ -1229,6 +1737,22 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           <div className="sectionTitle">
             <h2>Grafico</h2>
           </div>
+          <StockDecisionDesk
+            desk={decisionDesk}
+            resolution={decisionResolution}
+            resolutionHistory={decisionResolutionHistoryItems}
+            reviewNavigation={reviewNavigation}
+            showMethodGuardrails={false}
+            validationKey={decisionValidationKey}
+            validationNote={decisionValidationNote}
+            onValidationKeyChange={setDecisionValidationKey}
+            onValidationNoteChange={setDecisionValidationNote}
+            onOpenReviewSymbol={openReviewFlowSymbol}
+            onApplyPreset={applyDecisionChartPreset}
+            onFocusEvidence={focusDecisionEvidence}
+            onResolveDecision={resolveStockDecision}
+            onReopenDecision={reopenStockDecision}
+          />
           <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={symbol} scope={chartScope} onScopeChange={updateChartScope} compact />
           <div className="chartBenchmarkControl">
             <label htmlFor={`benchmark-${symbol}`}>Comparar vs</label>

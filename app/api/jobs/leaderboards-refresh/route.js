@@ -1,11 +1,12 @@
-import { envValue } from "@/lib/env";
+import { isInternalRequest } from "@/lib/internalAuth";
 import { buildLeaderboard, DEFAULT_LEADERBOARD_SPECS, readScanRows, writeMaterializedLeaderboards } from "@/lib/leaderboards";
 import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer";
 
+const DEFAULT_REFRESH_ROWS = Number(process.env.LEADERBOARD_REFRESH_ROWS || 300);
+const DEFAULT_REFRESH_SINCE_DAYS = Number(process.env.LEADERBOARD_REFRESH_SINCE_DAYS || 14);
+
 function authorized(request) {
-  const secret = envValue("CRON_SECRET");
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}` || request.headers.get("x-cron-secret") === secret;
+  return isInternalRequest(request, { allowCron: true });
 }
 
 async function createRun() {
@@ -50,17 +51,33 @@ async function finishRun(run, status, payload = {}) {
 
 export async function GET(request) {
   if (!authorized(request)) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const { searchParams } = new URL(request.url);
+  const maxRows = Number(searchParams.get("maxRows") || DEFAULT_REFRESH_ROWS);
+  const sinceDays = Number(searchParams.get("sinceDays") || DEFAULT_REFRESH_SINCE_DAYS);
+  const dryRun = searchParams.get("dryRun") === "1";
   const run = await createRun();
   try {
-    const scanData = await readScanRows();
+    const scanData = await readScanRows({ maxRows, sinceDays });
     if (!scanData.configured) {
       await finishRun(run, "skipped", { stats: { reason: "supabase-disabled" } });
       return Response.json({ ok: true, skipped: true, message: scanData.message, saved: 0 });
     }
     const leaderboards = DEFAULT_LEADERBOARD_SPECS.map((spec) => buildLeaderboard(scanData.rows, spec));
+    if (dryRun) {
+      const stats = {
+        inputRows: scanData.rows.length,
+        maxRows,
+        sinceDays,
+        leaderboards: leaderboards.map((item) => ({ key: item.key, count: item.count })),
+      };
+      await finishRun(run, "completed", { stats: { ...stats, dryRun: true } });
+      return Response.json({ ok: true, dryRun: true, saved: 0, ...stats });
+    }
     const saved = await writeMaterializedLeaderboards(leaderboards);
     const stats = {
       inputRows: scanData.rows.length,
+      maxRows,
+      sinceDays,
       saved: saved.saved,
       leaderboards: saved.leaderboards,
     };

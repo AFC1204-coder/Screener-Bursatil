@@ -1,4 +1,4 @@
-import { envValue } from "@/lib/env";
+import { isInternalRequest } from "@/lib/internalAuth";
 import { updateEsefFundamentalsForSymbol } from "@/lib/esef";
 import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer";
 
@@ -8,9 +8,7 @@ export const maxDuration = 120; // Allow sufficient time for multiple downloads
 const EUROPEAN_MARKETS = ["GB", "FI", "DK", "NO", "NL", "ES", "SE", "IT", "FR", "DE"];
 
 function authorized(request) {
-  const secret = envValue("CRON_SECRET");
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secret}` || request.headers.get("x-cron-secret") === secret;
+  return isInternalRequest(request, { allowCron: true });
 }
 
 async function defaultEuropeanSymbols(limit) {

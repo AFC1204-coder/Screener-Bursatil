@@ -1,10 +1,16 @@
 "use client";
 import "../../styles/market-health.css";
 import { useEffect, useState } from "react";
+import RowTrustSignature from "@/app/RowTrustSignature";
+import { getJson } from "@/lib/clientApi";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
-import { rowRsBenchmark, rowRsPrimary, rowRsUniverse, rowTheme, weaknessScore } from "@/lib/stockRows";
+import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
+import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
+import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
+import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
+import { metricValue, rowRsBenchmark, rowRsPrimary, rowRsUniverse, rowTheme, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
 
 const dateFmt = (value) => {
@@ -23,6 +29,69 @@ function InfoHint({ text, tone = "" }) {
   </span>;
 }
 
+function marketMetricSource(row = {}, key = "") {
+  if (!key) return null;
+  const audit = objectiveMetricAuditStatusForRow(row)?.audit;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const item = items.find((entry) => entry?.key === key);
+  if (!item) return null;
+  const status = String(item.status || "");
+  const severity = String(item.severity || "");
+  const label = item.label || item.key || "Métrica";
+  if (severity === "bad" || ["mismatch", "unverified-value", "missing-source"].includes(status)) return { key: "blocked", mark: "x", title: `${label}: bloqueada` };
+  if (severity === "warn" || ["missing", "insufficient-input"].includes(status)) return { key: "review", mark: "!", title: `${label}: revisar` };
+  if (item.proxy === true) return { key: "proxy", mark: "p", title: `${label}: proxy/estimada` };
+  if (status === "verified" || status === "traceable") return { key: "measured", mark: "", title: `${label}: medida/trazable` };
+  return null;
+}
+
+function MarketTrustMetric({ row, metricKey, label, value }) {
+  const source = marketMetricSource(row, metricKey);
+  const sourceClass = source?.key ? `source-${source.key}` : "";
+  const valueText = value ?? "-";
+  return <span
+    className={`marketTrustMetric ${sourceClass}`.trim()}
+    title={source?.title || undefined}
+    aria-label={source?.title ? `${label}: ${valueText}. ${source.title}` : undefined}
+  >
+    <b>{valueText}</b>
+    {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}
+  </span>;
+}
+
+function marketMetricTruthMeta(row = {}) {
+  const status = objectiveMetricAuditStatusForRow(row);
+  const audit = status.audit || null;
+  const items = Array.isArray(audit?.items) ? audit.items : [];
+  const usable = items.filter((item) => item?.status === "verified" || item?.status === "traceable");
+  const measuredCount = usable.filter((item) => item?.proxy !== true).length;
+  const proxyCount = usable.filter((item) => item?.proxy === true).length;
+  const detail = [
+    status.detail,
+    measuredCount ? `${measuredCount} medidas` : "",
+    proxyCount ? `${proxyCount} proxy` : "",
+  ].filter(Boolean).join(" · ");
+  if (status.key === "bad") return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
+  if (status.key === "warn") return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
+  if (status.key === "missing") return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
+  return {
+    key: proxyCount ? "mixed" : "measured",
+    label: proxyCount ? "Mixto" : "Med.",
+    tone: proxyCount ? "neutral" : "good",
+    detail,
+    measuredCount,
+    proxyCount,
+  };
+}
+
+function marketRowTrustSignature(row = {}) {
+  return buildRowTrustSignature({
+    dataHealth: buildScreenerDataHealth(row, {}),
+    metricTruth: marketMetricTruthMeta(row),
+    scoreAudit: buildScreenerScoreAudit(row),
+  });
+}
+
 function safePct(value, fallback = 0) {
   return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : fallback;
 }
@@ -38,6 +107,10 @@ function rowRsDisplayLabel(row = {}) {
 }
 function rowWeakness(row = {}) {
   return weaknessScore(row);
+}
+
+function rowObjectiveScore(row = {}) {
+  return metricValue(row, "objectiveScore");
 }
 
 function isNearHigh(row = {}) {
@@ -73,10 +146,11 @@ function summarizeGroups(rows = [], keyFn) {
     const rs = rowRs(row);
     bucket.count += 1;
     bucket.rs += Number.isFinite(rs) ? rs : 50;
-    bucket.score += row.totalScore || 0;
+    const objectiveScore = rowObjectiveScore(row);
+    bucket.score += objectiveScore || 0;
     if (isNearHigh(row)) bucket.nearHigh += 1;
-    if ((rs || 0) >= 80 || (row.totalScore || 0) >= 75) bucket.leaders += 1;
-    if (!bucket.top || (row.totalScore || 0) > (bucket.top.totalScore || 0)) bucket.top = row;
+    if ((rs || 0) >= 80 || (objectiveScore || 0) >= 75) bucket.leaders += 1;
+    if (!bucket.top || (objectiveScore || 0) > (rowObjectiveScore(bucket.top) || 0)) bucket.top = row;
     map.set(key, bucket);
   });
   return [...map.values()]
@@ -90,8 +164,8 @@ function buildScanPulse(scans = []) {
   const rows = Array.isArray(scan?.rows) ? scan.rows : [];
   if (!scan || !rows.length) return null;
   const leaders = rows
-    .filter((row) => (rowRs(row) || 0) >= 80 || (row.totalScore || 0) >= 75 || (isStage2Like(row) && isNearHigh(row)))
-    .sort((a, b) => ((rowRs(b) || 0) - (rowRs(a) || 0)) || ((b.totalScore || 0) - (a.totalScore || 0)))
+    .filter((row) => (rowRs(row) || 0) >= 80 || (rowObjectiveScore(row) || 0) >= 75 || (isStage2Like(row) && isNearHigh(row)))
+    .sort((a, b) => ((rowRs(b) || 0) - (rowRs(a) || 0)) || ((rowObjectiveScore(b) || 0) - (rowObjectiveScore(a) || 0)))
     .slice(0, 8);
   const deterioration = rows
     .map((row) => ({ ...row, deteriorationReasons: deteriorationReasons(row) }))
@@ -121,18 +195,11 @@ function buildScanPulse(scans = []) {
 }
 
 async function fetchJsonWithTimeout(path, timeoutMs = 12000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const r = await fetch(path, { signal: controller.signal });
-    const d = await r.json();
-    if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
-    return d;
+    return await getJson(path, { timeoutMs, cache: "no-store" });
   } catch (error) {
     if (error?.name === "AbortError") throw new Error(`${path} no respondió en ${Math.round(timeoutMs / 1000)}s`);
     throw error;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
@@ -314,7 +381,7 @@ function GlobalRegionsPanel({ rows = [] }) {
     const avgRs = validRs.length ? validRs.reduce((s, v) => s + v, 0) / validRs.length : 50;
 
     const leaders = [...filtered]
-      .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
+      .sort((a, b) => (rowObjectiveScore(b) || 0) - (rowObjectiveScore(a) || 0))
       .slice(0, 3);
 
     let rsLabel = "Neutral";
@@ -367,8 +434,9 @@ function GlobalRegionsPanel({ rows = [] }) {
         <div className="regionLeadersSection">
           <span className="eyebrow" style={{ display: "block", fontSize: "10px", fontWeight: "600", textTransform: "uppercase", color: "rgba(235,235,242,0.35)", letterSpacing: "0.05em", marginBottom: "8px" }}>Líderes de Mercado</span>
           <div className="regionLeadersList" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            {leaders.map((leader) => (
-              <a className="regionLeaderRow" href={stockUrl(leader.symbol)} key={leader.symbol} style={{
+            {leaders.map((leader) => {
+              const trustSignature = marketRowTrustSignature(leader);
+              return <a className="regionLeaderRow" href={stockUrl(leader.symbol)} key={leader.symbol} style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -394,19 +462,20 @@ function GlobalRegionsPanel({ rows = [] }) {
                 <span className="leaderTickerWrap" style={{ display: "flex", flexDirection: "column", gap: "2px", maxWidth: "60%" }}>
                   <b className="tickerLink" style={{ fontSize: "13px", color: "#2563eb" }}>{leader.symbol}</b>
                   <small className="muted textTruncate" style={{ fontSize: "11px", color: "rgba(235, 235, 242, 0.45)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{leader.companyName || leader.symbol}</small>
+                  <RowTrustSignature signature={trustSignature} className="marketRowTrustSignature" />
                 </span>
                 <span className="leaderScoresWrap" style={{ display: "flex", gap: "10px" }}>
                   <span className="leaderScore" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                    <small style={{ fontSize: "9px", color: "rgba(235,235,242,0.3)" }}>Comp</small>
-                    <b style={{ fontSize: "12px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{leader.totalScore?.toFixed(0) || "-"}</b>
+                    <small style={{ fontSize: "9px", color: "rgba(235,235,242,0.3)" }}>{metricShortLabel("objectiveScore")}</small>
+                    <b style={{ fontSize: "12px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{rowObjectiveScore(leader)?.toFixed(0) || "-"}</b>
                   </span>
                   <span className="leaderScore" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
                     <small style={{ fontSize: "9px", color: "rgba(235,235,242,0.3)" }}>RS</small>
                     <b style={{ fontSize: "12px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{rowRsPrimary(leader)?.toFixed(0) || "-"}</b>
                   </span>
                 </span>
-              </a>
-            ))}
+              </a>;
+            })}
             {!leaders.length && (
               <p className="fine muted" style={{ textAlign: "center", padding: "8px 0", fontSize: "11px", color: "rgba(235,235,242,0.35)" }}>
                 Sin activos analizados en esta geografía.
@@ -650,7 +719,7 @@ export default function MarketHealthPage() {
   return <main className="page marketHealthPage">
     <section className="marketHealthHeader">
       <div>
-        <span className="eyebrow">StageRadar · Market Health</span>
+        <span className="eyebrow">StatsEdge · Market Health</span>
         <h1>Salud de mercado</h1>
         <p>Índices, sectores, titulares y liderazgo del último snapshot.</p>
       </div>
@@ -871,10 +940,12 @@ export default function MarketHealthPage() {
               <h3>Liderazgo observado</h3>
               {scanPulse.leaders.map((row) => {
                 const rs = rowRsDisplay(row);
+                const rsKey = Number.isFinite(rowRsUniverse(row)) ? "rsGlobalPct" : "rsRating";
+                const trustSignature = marketRowTrustSignature(row);
                 return <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
-                  <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small></span>
-                  <span><b>{Number.isFinite(rs) ? rs.toFixed(0) : "-"}</b><small>{rowRsDisplayLabel(row)}</small></span>
-                  <span><b>{row.totalScore?.toFixed(0) || "-"}</b><small>{metricShortLabel("totalScore")}</small></span>
+                  <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small><RowTrustSignature signature={trustSignature} className="marketRowTrustSignature" /></span>
+                  <span><MarketTrustMetric row={row} metricKey={rsKey} label={rowRsDisplayLabel(row)} value={Number.isFinite(rs) ? rs.toFixed(0) : "-"} /><small>{rowRsDisplayLabel(row)}</small></span>
+                  <span><MarketTrustMetric row={row} metricKey="objectiveScore" label={metricShortLabel("objectiveScore")} value={rowObjectiveScore(row)?.toFixed(0) || "-"} /><small>{metricShortLabel("objectiveScore")}</small></span>
                 </a>;
               })}
               {!scanPulse.leaders.length && <p className="fine">Sin liderazgo claro en el último snapshot.</p>}
@@ -883,10 +954,12 @@ export default function MarketHealthPage() {
               <h3>Deterioro a revisar</h3>
               {scanPulse.deterioration.map((row) => {
                 const rs = rowRsDisplay(row);
+                const rsKey = Number.isFinite(rowRsUniverse(row)) ? "rsGlobalPct" : "rsRating";
+                const trustSignature = marketRowTrustSignature(row);
                 return <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
-                  <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small></span>
+                  <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small><RowTrustSignature signature={trustSignature} className="marketRowTrustSignature" /></span>
                   <span><b>{row.deteriorationReasons.length}</b><small>evidencias</small></span>
-                  <span><b>{Number.isFinite(rs) ? rs.toFixed(0) : "-"}</b><small>{row.deteriorationReasons.slice(0, 2).join(", ")}</small></span>
+                  <span><MarketTrustMetric row={row} metricKey={rsKey} label={rowRsDisplayLabel(row)} value={Number.isFinite(rs) ? rs.toFixed(0) : "-"} /><small>{row.deteriorationReasons.slice(0, 2).join(", ")}</small></span>
                 </a>;
               })}
               {!scanPulse.deterioration.length && <p className="fine">Sin deterioro técnico relevante en el último snapshot.</p>}

@@ -10,7 +10,7 @@ const VISUAL_OUTPUT_DIR = process.env.VCP_CORPUS_VISUAL_DIR || "docs/methodology
 const WRITE_VISUALS = process.env.VCP_CORPUS_VISUALS !== "0";
 const MARKDOWN_OUTPUT = process.env.VCP_CORPUS_MARKDOWN !== "0";
 const BASE_URL = process.env.VCP_CORPUS_BASE_URL || process.env.METHODOLOGY_AUDIT_BASE_URL || "http://127.0.0.1:3000";
-const TOKEN = process.env.STATSEDGE_API_TOKEN || process.env.STATSEDGE_ADMIN_TOKEN || "";
+const TOKEN = process.env.STATSEDGE_ACCESS_TOKEN || process.env.STATSEDGE_API_TOKEN || process.env.STATSEDGE_ADMIN_TOKEN || "";
 const REFRESH_ENV = process.env.VCP_CORPUS_REFRESH;
 const MAX_PRICE_AGE_DAYS = Math.max(0, Number(process.env.VCP_CORPUS_MAX_PRICE_AGE_DAYS || 5));
 const REQUEST_TIMEOUT_MS = Math.max(1000, Number(process.env.VCP_CORPUS_TIMEOUT_MS || 45000));
@@ -179,6 +179,14 @@ function measuredContractionCount(pattern = {}) {
   return accepted + rejected;
 }
 
+function reliabilityLine(reliability = {}) {
+  const label = reliability.label || reliability.key || "sin auditoria";
+  const pctValue = Number.isFinite(finite(reliability.auditabilityPct)) ? `${Number(reliability.auditabilityPct).toFixed(0)}%` : "s/d";
+  const confidence = reliability.confidence ? `/${reliability.confidence}` : "";
+  const claim = reliability.claimLevel ? `/${reliability.claimLevel}` : "";
+  return `${label} ${pctValue}${confidence}${claim}`;
+}
+
 function cacheHitMeta(chart = {}) {
   const cache = chart.meta?.cache || {};
   if (cache.hit === true) return cache;
@@ -192,10 +200,42 @@ function assertCase({ testCase = {}, chart = {}, bars = [], pattern = {}, displa
   const bucket = actualBucket(display);
   const expectedBucket = normalizedBucket(expect.calibrationBucket || expect.expectedOutcome);
   const planValid = display.actionable === true && display.tradePlanEligible === true && display.blocksPatternClaim !== true;
+  const reliability = diagnostic.reliability || {};
 
   checks.push({ label: "display key", ok: Boolean(display.key), expected: "non-empty", actual: display.key || "blank" });
   checks.push({ label: "diagnostic gates", ok: Array.isArray(diagnostic.gates) && diagnostic.gates.length >= 4, expected: ">= 4", actual: String(diagnostic.gates?.length || 0) });
+  checks.push({ label: "vcp reliability", ok: Boolean(reliability.key), expected: "non-empty", actual: reliability.key || "blank" });
+  checks.push({
+    label: "vcp reliability contradictions",
+    ok: Array.isArray(reliability.contradictions) && reliability.contradictions.length === 0,
+    expected: "0",
+    actual: String(Array.isArray(reliability.contradictions) ? reliability.contradictions.length : "blank"),
+  });
   if (expectedBucket) checks.push({ label: "calibration bucket", ok: bucket === expectedBucket, expected: expectedBucket, actual: bucket });
+  if (expectedBucket === "plan") checks.push({
+    label: "vcp plan auditability",
+    ok: reliability.key === "audit-ready" && reliability.patternClaimReliable === true && reliability.claimLevel === "plan",
+    expected: "audit-ready plan claim",
+    actual: reliabilityLine(reliability),
+  });
+  if (expectedBucket === "watch") checks.push({
+    label: "vcp watch auditability",
+    ok: reliability.key === "audit-ready" && reliability.patternClaimReliable === true && reliability.claimLevel === "watch",
+    expected: "audit-ready watch claim",
+    actual: reliabilityLine(reliability),
+  });
+  if (expectedBucket === "observe") checks.push({
+    label: "vcp observe auditability",
+    ok: ["audit-ready", "needs-validation", "summary-only"].includes(reliability.key) && reliability.claimLevel === "observe",
+    expected: "observable claim audited",
+    actual: reliabilityLine(reliability),
+  });
+  if (expectedBucket === "block") checks.push({
+    label: "vcp false-positive block",
+    ok: reliability.patternClaimReliable !== true && reliability.claimLevel === "block",
+    expected: "no reliable VCP claim",
+    actual: reliabilityLine(reliability),
+  });
   checkIn(checks, display.key, array(expect.verdictKeysAllowed), "setup verdict key");
   checkIn(checks, display.state, array(expect.verdictStatesAllowed), "setup verdict state");
   checkIn(checks, pattern.patternFamily, array(expect.patternFamilyAllowed), "pattern family");
@@ -257,6 +297,17 @@ function assertCase({ testCase = {}, chart = {}, bars = [], pattern = {}, displa
       distanceToPivotPct: finite(pattern.distanceToPivotPct),
       volumeDryUpRatio: finite(pattern.volumeDryUpRatio),
       patternQualityScore: finite(pattern.patternQualityScore),
+    },
+    reliability: {
+      key: reliability.key || "",
+      label: reliability.label || "",
+      tone: reliability.tone || "",
+      claimLevel: reliability.claimLevel || "",
+      patternClaimReliable: reliability.patternClaimReliable === true,
+      auditabilityPct: finite(reliability.auditabilityPct),
+      confidence: reliability.confidence || "",
+      summary: reliability.summary || "",
+      contradictions: Array.isArray(reliability.contradictions) ? reliability.contradictions : [],
     },
     diagnostic,
     calibration: {
@@ -402,6 +453,20 @@ function calibrationSummary(results = []) {
   return summary;
 }
 
+function reliabilitySummary(results = []) {
+  const summary = { keys: {}, claims: {}, contradictions: 0, reliableClaims: 0 };
+  for (const item of results) {
+    const reliability = item.reliability || {};
+    const key = reliability.key || "blank";
+    const claim = reliability.claimLevel || "blank";
+    summary.keys[key] = (summary.keys[key] || 0) + 1;
+    summary.claims[claim] = (summary.claims[claim] || 0) + 1;
+    if (reliability.patternClaimReliable === true) summary.reliableClaims += 1;
+    if (Array.isArray(reliability.contradictions)) summary.contradictions += reliability.contradictions.length;
+  }
+  return summary;
+}
+
 function aggregateFailures(dataset = {}, calibration = {}) {
   const expected = dataset.calibrationExpectations || {};
   const failures = [];
@@ -431,6 +496,7 @@ function contractionsLine(pattern = {}) {
 
 function markdownReport(payload = {}) {
   const calibration = payload.calibration || {};
+  const reliability = payload.reliability || {};
   const guardrails = payload.aggregateFailures || [];
   const lines = [
     "# VCP Corpus Audit",
@@ -440,10 +506,11 @@ function markdownReport(payload = {}) {
     `Refresh: ${payload.refresh ? "yes" : "no"} · Price max age: ${payload.maxPriceAgeDays}d`,
     `Cases: ${payload.cases} · Passed: ${payload.passed} · Failed: ${payload.failed}`,
     `Calibration: checked ${calibration.checked || 0} · mismatches ${calibration.mismatches || 0} · actual block ${calibration.actual?.block || 0} / observe ${calibration.actual?.observe || 0} / watch ${calibration.actual?.watch || 0} / plan ${calibration.actual?.plan || 0}`,
+    `Reliability: claims fiables ${reliability.reliableClaims || 0} · contradicciones ${reliability.contradictions || 0} · keys ${Object.entries(reliability.keys || {}).map(([key, value]) => `${key}:${value}`).join(" / ") || "none"}`,
     `Calibration guardrails: ${guardrails.length ? guardrails.map((item) => `${item.label} expected ${item.expected}, actual ${item.actual}`).join("; ") : "OK"}`,
     "",
-    "| Result | Case | Symbol | As of | Actual | Expected | Visual | Diagnostic | Contractions | Failed checks |",
-    "|---|---|---|---|---|---|---|---|---|---|",
+    "| Result | Case | Symbol | As of | Actual | Expected | Reliability | Visual | Diagnostic | Contractions | Failed checks |",
+    "|---|---|---|---|---|---|---|---|---|---|---|",
   ];
   for (const item of payload.results || []) {
     const failedChecks = item.failures.map((check) => `${check.label}: esperado ${check.expected}, actual ${check.actual}`).join("; ");
@@ -463,6 +530,7 @@ function markdownReport(payload = {}) {
       mdEscape(item.latestDate || item.asOf),
       mdEscape(`${item.display.label} (${item.display.key}/${item.display.state})`),
       mdEscape(item.calibration?.expected || "-"),
+      mdEscape(reliabilityLine(item.reliability)),
       visual,
       mdEscape(diagnostic),
       mdEscape(contractionsLine(item.pattern)),
@@ -515,6 +583,7 @@ async function main() {
 
   const failed = results.filter((item) => !item.ok);
   const calibration = calibrationSummary(results);
+  const reliability = reliabilitySummary(results);
   const aggregate = aggregateFailures(dataset, calibration);
   const payload = {
     ok: failed.length === 0 && aggregate.length === 0,
@@ -527,6 +596,7 @@ async function main() {
     refresh: refreshMode,
     maxPriceAgeDays: MAX_PRICE_AGE_DAYS,
     calibration,
+    reliability,
     aggregateFailures: aggregate,
     results,
   };

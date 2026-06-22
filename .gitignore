@@ -20,13 +20,14 @@ pnpm-debug.log*
 *.crt
 *.cer
 *.mobileprovision
-*secret*
-*secrets*
-*credential*
-*credentials*
-*token*
-!styles/tokens.css
-!scripts/css-refactor/tokens-consolidate.mjs
+secrets.json
+credentials.json
+service-account*.json
+*.secret
+*.secrets
+*.credential
+*.credentials
+*.token
 
 # Local data, exports and backups
 *.sqlite

@@ -1,4 +1,6 @@
 {
+  "name": "statsedge-v0.1",
+  "private": true,
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
@@ -15,11 +17,17 @@
     "audit:vcp:depths": "node --env-file=.env.local --loader ./scripts/loader.mjs scripts/vcp-real-depth-audit.mjs",
     "audit:filters:contracts": "node --loader ./scripts/loader.mjs scripts/filter-contract-audit.mjs",
     "audit:filters:layers": "node --loader ./scripts/loader.mjs scripts/filter-layer-contract-audit.mjs",
+    "audit:decisions": "node --env-file=.env.local --loader ./scripts/loader.mjs scripts/decision-readiness-audit.mjs",
+    "audit:reliability": "node --env-file=.env.local --loader ./scripts/loader.mjs scripts/reliability-audit.mjs",
+    "audit:metrics": "node --env-file=.env.local --loader ./scripts/loader.mjs scripts/metrics-audit.mjs",
+    "audit:rc": "node --env-file=.env.local --loader ./scripts/loader.mjs scripts/rc-readiness-audit.mjs",
+    "audit:postdeploy": "node --env-file=.env.local --loader ./scripts/loader.mjs scripts/post-deploy-observability-audit.mjs",
     "review:methodology": "node --env-file=.env.local --loader ./scripts/loader.mjs scripts/methodology-review-report.mjs",
     "audit:performance": "node scripts/performance-audit.mjs",
     "supabase:seed-settings": "node --env-file=.env.local scripts/seed-default-settings.mjs",
     "supabase:status": "node scripts/supabase-admin.mjs status",
-    "supabase:schema": "node scripts/supabase-admin.mjs schema"
+    "supabase:schema": "node scripts/supabase-admin.mjs schema",
+    "test:e2e": "node --import ./scripts/refactor-check/register.mjs scripts/e2e/run.mjs"
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.9.10",
@@ -32,10 +40,7 @@
   },
   "devDependencies": {
     "@next/swc-wasm-nodejs": "^16.2.6",
-    "autoprefixer": "latest",
     "playwright": "^1.60.0",
-    "postcss": "latest",
-    "tailwindcss": "latest",
     "vitest": "^4.1.8"
   }
 }
