@@ -4,6 +4,7 @@ import { ScanSearch } from "lucide-react";
 import ChartPreferences from "@/app/ChartPreferences";
 import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
+import { InfoHint } from "@/app/components/ui/InfoHint";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
@@ -296,14 +297,6 @@ function PeerLogo({ item }) {
   return <span className="companyMark similarLogo">
     <b>{String(item.name || item.symbol).slice(0, 2).toUpperCase()}</b>
     {src ? <img src={src} alt="" loading="lazy" onError={() => setIndex((value) => value + 1)} /> : null}
-  </span>;
-}
-
-function InfoHint({ text, tone = "" }) {
-  if (!text) return null;
-  return <span className={`infoHint ${tone}`} tabIndex="0" aria-label={text}>
-    <span aria-hidden="true">i</span>
-    <em aria-hidden="true">{text}</em>
   </span>;
 }
 

@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
+import { InfoHint } from "@/app/components/ui/InfoHint";
+import { metricSourceFromItem } from "@/app/components/ui/MetricSource";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
 import { assetDomainForName, assetDomainForSymbol } from "@/lib/companyAssets";
@@ -52,13 +54,6 @@ function investorStatusLabel(text = "") {
     .replaceAll("proveedor", "datos")
     .replaceAll("Yahoo/mercado", "mercado")
     .replaceAll("Yahoo", "fuente de mercado");
-}
-function InfoHint({ text, tone = "" }) {
-  if (!text) return null;
-  return <span className={`infoHint ${tone}`} tabIndex="0" aria-label={text}>
-    <span aria-hidden="true">i</span>
-    <em aria-hidden="true">{text}</em>
-  </span>;
 }
 const ratioLabel = (n) => Number.isFinite(n) ? `${n.toFixed(2)}x` : "-";
 function DecisionConfidenceBadge({ confidence = null, compact = false }) {
@@ -1476,23 +1471,7 @@ function compactTone(value, strongAt, weakBelow = null) {
 }
 
 function compactMetricSource(item = null) {
-  if (!item || typeof item !== "object") return null;
-  const status = String(item.status || "");
-  const severity = String(item.severity || "");
-  const label = item.label || item.key || "Metrica";
-  if (severity === "bad" || ["mismatch", "unverified-value", "missing-source"].includes(status)) {
-    return { key: "blocked", mark: "x", title: `${label}: bloqueada` };
-  }
-  if (severity === "warn" || ["missing", "insufficient-input"].includes(status)) {
-    return { key: "review", mark: "!", title: `${label}: revisar` };
-  }
-  if (item.proxy === true) {
-    return { key: "proxy", mark: "p", title: `${label}: proxy/estimada` };
-  }
-  if (status === "verified" || status === "traceable") {
-    return { key: "measured", mark: "", title: `${label}: medida/trazable` };
-  }
-  return null;
+  return metricSourceFromItem(item, "", "Metrica");
 }
 
 function compactMetricSourceLookup(row = {}) {

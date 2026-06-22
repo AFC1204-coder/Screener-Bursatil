@@ -3,6 +3,8 @@ import "../../styles/lists.css";
 import { useEffect, useMemo, useState } from "react";
 import { DecisionTraceBadge, DecisionTracePanel } from "@/app/DecisionTraceability";
 import RowTrustSignature from "@/app/RowTrustSignature";
+import { InfoHint } from "@/app/components/ui/InfoHint";
+import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { getJson } from "@/lib/clientApi";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";
@@ -31,50 +33,8 @@ function hasOwn(obj = {}, key = "") {
   return Object.prototype.hasOwnProperty.call(obj, key);
 }
 
-function InfoHint({ text, tone = "" }) {
-  if (!text) return null;
-  return <span className={`infoHint ${tone}`} tabIndex="0" aria-label={text}>
-    <span aria-hidden="true">i</span>
-    <em aria-hidden="true">{text}</em>
-  </span>;
-}
-
-function listMetricSource(row = {}, key = "") {
-  if (!key) return null;
-  const audit = objectiveMetricAuditStatusForRow(row)?.audit;
-  const items = Array.isArray(audit?.items) ? audit.items : [];
-  const item = items.find((entry) => entry?.key === key);
-  if (!item) return null;
-  const status = String(item.status || "");
-  const severity = String(item.severity || "");
-  const label = item.label || item.key || "Métrica";
-  if (severity === "bad" || ["mismatch", "unverified-value", "missing-source"].includes(status)) {
-    return { key: "blocked", mark: "x", title: `${label}: bloqueada` };
-  }
-  if (severity === "warn" || ["missing", "insufficient-input"].includes(status)) {
-    return { key: "review", mark: "!", title: `${label}: revisar` };
-  }
-  if (item.proxy === true) {
-    return { key: "proxy", mark: "p", title: `${label}: proxy/estimada` };
-  }
-  if (status === "verified" || status === "traceable") {
-    return { key: "measured", mark: "", title: `${label}: medida/trazable` };
-  }
-  return null;
-}
-
 function ListTrustMetric({ row, metricKey, label, value, className = "" }) {
-  const source = listMetricSource(row, metricKey);
-  const sourceClass = source?.key ? `source-${source.key}` : "";
-  const valueText = value ?? "-";
-  return <span
-    className={`listTrustMetric ${className} ${sourceClass}`.trim()}
-    title={source?.title || undefined}
-    aria-label={source?.title ? `${label}: ${valueText}. ${source.title}` : undefined}
-  >
-    <span>{valueText}</span>
-    {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}
-  </span>;
+  return <TrustMetric row={row} metricKey={metricKey} label={label} value={value} className={className} baseClass="listTrustMetric" />;
 }
 
 function listMetricTruthMeta(row = {}) {

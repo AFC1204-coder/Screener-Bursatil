@@ -4,6 +4,7 @@ import "../../styles/review.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
+import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { getJson } from "@/lib/clientApi";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
@@ -89,39 +90,8 @@ function reviewQueueMetricTruthMeta(row = {}) {
     proxyCount,
   };
 }
-function reviewMetricSource(row = {}, key = "", label = "") {
-  const audit = objectiveMetricAuditStatusForRow(row)?.audit;
-  const items = Array.isArray(audit?.items) ? audit.items : [];
-  const item = items.find((candidate) => candidate?.key === key);
-  if (!item) return null;
-  const status = item.status || "";
-  const severity = item.severity || "";
-  const titleLabel = label || item.label || key;
-  if (severity === "bad" || ["mismatch", "unverified-value", "missing-source"].includes(status)) {
-    return { key: "blocked", mark: "x", title: `${titleLabel}: bloqueada` };
-  }
-  if (severity === "warn" || ["missing", "insufficient-input"].includes(status)) {
-    return { key: "review", mark: "!", title: `${titleLabel}: revisar` };
-  }
-  if (item.proxy === true) {
-    return { key: "proxy", mark: "p", title: `${titleLabel}: proxy/estimada` };
-  }
-  if (status === "verified" || status === "traceable") {
-    return { key: "measured", mark: "", title: `${titleLabel}: medida/trazable` };
-  }
-  return null;
-}
 function ReviewTrustMetric({ row = {}, metricKey = "", label = "", value: displayValue = "-" }) {
-  const source = metricKey ? reviewMetricSource(row, metricKey, label) : null;
-  const sourceClass = source?.key ? `source-${source.key}` : "";
-  return <strong
-    className={["reviewTrustMetric", sourceClass].filter(Boolean).join(" ")}
-    title={source?.title || undefined}
-    aria-label={source?.title ? `${label}: ${displayValue}. ${source.title}` : undefined}
-  >
-    <em>{displayValue}</em>
-    {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}
-  </strong>;
+  return <TrustMetric row={row} metricKey={metricKey} label={label} value={displayValue} baseClass="reviewTrustMetric" variant="strong" valueTag="em" />;
 }
 function reviewQueueDataHealthMeta(row = {}, settings = {}) {
   const health = buildScreenerDataHealth(row, settings);

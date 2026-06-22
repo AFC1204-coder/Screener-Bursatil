@@ -5,6 +5,7 @@ import Link from "next/link";
 import ChartPreferences from "@/app/ChartPreferences";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
+import { TrustMetric } from "@/app/components/ui/MetricSource";
 import {
   activeLayerCount,
   amount,
@@ -191,40 +192,8 @@ function reviewQueueMetricTruthMeta(row = {}) {
   };
 }
 
-function quickReviewMetricSource(row = {}, key = "", label = "") {
-  const audit = objectiveMetricAuditStatusForRow(row)?.audit;
-  const items = Array.isArray(audit?.items) ? audit.items : [];
-  const item = items.find((candidate) => candidate?.key === key);
-  if (!item) return null;
-  const status = item.status || "";
-  const severity = item.severity || "";
-  const titleLabel = label || item.label || key;
-  if (severity === "bad" || ["mismatch", "unverified-value", "missing-source"].includes(status)) {
-    return { key: "blocked", mark: "x", title: `${titleLabel}: bloqueada` };
-  }
-  if (severity === "warn" || ["missing", "insufficient-input"].includes(status)) {
-    return { key: "review", mark: "!", title: `${titleLabel}: revisar` };
-  }
-  if (item.proxy === true) {
-    return { key: "proxy", mark: "p", title: `${titleLabel}: proxy/estimada` };
-  }
-  if (status === "verified" || status === "traceable") {
-    return { key: "measured", mark: "", title: `${titleLabel}: medida/trazable` };
-  }
-  return null;
-}
-
 function QuickReviewMetricValue({ row = {}, metricKey = "", label = "", value = "-", className = "" }) {
-  const source = metricKey ? quickReviewMetricSource(row, metricKey, label) : null;
-  const sourceClass = source?.key ? `source-${source.key}` : "";
-  return <b
-    className={["quickReviewMetricValue", className, sourceClass].filter(Boolean).join(" ")}
-    title={source?.title || undefined}
-    aria-label={source?.title ? `${label}: ${value}. ${source.title}` : undefined}
-  >
-    <span>{value}</span>
-    {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}
-  </b>;
+  return <TrustMetric row={row} metricKey={metricKey} label={label} value={value} className={className} baseClass="quickReviewMetricValue" variant="b" />;
 }
 
 function reviewQueueFocusMeta({ dataHealth = null, metricTruth = null, scoreAudit = null, evidence = null, methodologyFocus = null, vcp = null } = {}) {
