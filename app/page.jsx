@@ -5,7 +5,8 @@ import Link from "next/link";
 import ChartPreferences from "@/app/ChartPreferences";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
-import { TrustMetric } from "@/app/components/ui/MetricSource";
+import { QuickReviewMetricValue, ReviewPriorityPanel, ReviewPriorityResultRail, ReviewQueueFocusBadge } from "@/app/components/screener/ReviewWidgets";
+import { buildResultViewBrief } from "@/app/components/screener/resultViewBrief";
 import { metricTruthMetaForRow, rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import {
   activeLayerCount,
@@ -157,10 +158,6 @@ function reviewQueueDataHealthMeta(row = {}, settings = {}) {
   };
 }
 
-function QuickReviewMetricValue({ row = {}, metricKey = "", label = "", value = "-", className = "" }) {
-  return <TrustMetric row={row} metricKey={metricKey} label={label} value={value} className={className} baseClass="quickReviewMetricValue" variant="b" />;
-}
-
 function reviewQueueFocusMeta({ dataHealth = null, metricTruth = null, scoreAudit = null, evidence = null, methodologyFocus = null, vcp = null } = {}) {
   const candidates = [];
   const add = (item) => { if (item?.key && item?.label) candidates.push(item); };
@@ -176,11 +173,6 @@ function reviewQueueFocusMeta({ dataHealth = null, metricTruth = null, scoreAudi
   if (evidence?.status === "needs-work") add({ priority: 62, key: "evidence", label: "Pruebas", tone: evidence.tone || "warn", detail: evidence.pending?.[0]?.detail || evidence.pending?.[0]?.label || evidence.summary });
   if (scoreAudit?.key === "attention") add({ priority: 50, key: "score", label: "Score", tone: "warn", detail: scoreAudit.detail });
   return candidates.sort((a, b) => b.priority - a.priority)[0] || null;
-}
-
-function ReviewQueueFocusBadge({ focus = null }) {
-  if (!focus) return null;
-  return <span className={`reviewQueueFocusBadge ${focus.tone || "warn"} focus-${focus.key || "other"}`} title={focus.detail || focus.label}>Foco {focus.label}</span>;
 }
 
 function buildReviewQueueAuditSummary(items = [], activeIndex = 0) {
@@ -225,159 +217,6 @@ function buildReviewQueueAuditSummary(items = [], activeIndex = 0) {
     },
   ];
 }
-
-function ReviewPriorityResultRail({ summary = [], activeKey = "all", onSelect, onReview }) {
-  const items = Array.isArray(summary) ? summary.filter((item) => item?.count > 0) : [];
-  if (!items.length) return null;
-  const activeItem = activeKey !== "all" ? items.find((item) => item.key === activeKey) : null;
-  const reviewTarget = activeItem || items[0];
-  return <div className="decisionSummaryRail reviewPriorityResultRail" aria-label="Resumen por prioridad de investigacion">
-    {items.map((item) => {
-      const active = activeKey === item.key;
-      return <button
-        type="button"
-        key={item.key}
-        className={`decisionSummaryChip priority-${item.key} ${item.tone || "neutral"} ${active ? "active" : ""}`.trim()}
-        onClick={() => onSelect?.(active ? "all" : item.key)}
-        onDoubleClick={() => onReview?.(item.key)}
-        title={[item.topSymbol ? `${item.topSymbol} · ${Math.round(item.topScore || 0)}` : "", item.sampleSymbols?.length ? item.sampleSymbols.join(", ") : item.label, "Doble click: revisar esta prioridad"].filter(Boolean).join(" · ")}
-      >
-        <b>{item.count}</b>
-        <span>{item.shortLabel || item.label}</span>
-      </button>;
-    })}
-    {reviewTarget ? <button
-      type="button"
-      className={`decisionSummaryChip reviewPriorityAction priority-${reviewTarget.key} ${reviewTarget.tone || "neutral"}`.trim()}
-      onClick={() => onReview?.(reviewTarget.key)}
-      title={`Abrir cola Review: ${reviewTarget.label}`}
-    >
-      <b>Ir</b>
-      <span>Revisar {reviewTarget.shortLabel || reviewTarget.label}</span>
-    </button> : null}
-  </div>;
-}
-
-function ReviewPriorityPanel({ priority = null, compact = false }) {
-  if (!priority) return null;
-  const components = Array.isArray(priority.priority?.components) ? priority.priority.components.slice(0, compact ? 3 : 4) : [];
-  const penalties = Array.isArray(priority.priority?.penalties) ? priority.priority.penalties.slice(0, compact ? 2 : 3) : [];
-  return <div className={`reviewPriorityPanel quickReviewPriorityPanel ${compact ? "compact" : ""} ${priority.tone || ""}`} aria-label="Prioridad de investigacion">
-    <div className="reviewPriorityHead">
-      <span><b>{priority.label}</b><em>{priority.reason}</em></span>
-      <strong>{Math.round(priority.score || 0)}</strong>
-    </div>
-    {components.length ? <div className="reviewPriorityComponents">
-      {components.map((item) => <span key={item.key} title={item.detail || item.label}>
-        <em>{item.label}</em>
-        <b>{Math.round(item.value || 0)}</b>
-      </span>)}
-    </div> : null}
-    {penalties.length ? <div className="reviewPriorityPenalties">
-      {penalties.map((item) => <small className={item.severity || "warn"} key={item.key}>-{Math.round(item.value || 0)} {item.label}</small>)}
-    </div> : null}
-  </div>;
-}
-
-function resultBriefToneRank(tone = "") {
-  if (tone === "bad") return 4;
-  if (tone === "warn") return 3;
-  if (tone === "watch") return 2;
-  if (tone === "good") return 0;
-  return 1;
-}
-
-function resultBriefIssue(key, verdict = null, okKeys = []) {
-  if (!verdict?.key || okKeys.includes(verdict.key)) return null;
-  return {
-    key,
-    label: verdict.label || key,
-    detail: verdict.detail || "",
-    tone: verdict.tone || "neutral",
-    count: Number(verdict.count || 0),
-  };
-}
-
-function buildResultViewBrief({ chips = [], visibleCount = 0, totalCount = 0, decisionBrief = null, dataHealthSummary = null, decisionEvidenceSummary = null, scoreAuditSummary = null, pendingDecisionWorkSummary = null } = {}) {
-  if (!visibleCount) return null;
-  const verdict = decisionBrief?.verdict || {
-    label: "Vista de investigación",
-    tone: "neutral",
-    detail: `${visibleCount} resultados visibles.`,
-  };
-  const focus = chips.length
-    ? chips.slice(0, 3).map((chip) => chip.label).join(" · ")
-    : "Sin filtros activos";
-  const blockers = [
-    resultBriefIssue("evidence", decisionEvidenceSummary?.verdict, ["ready", "empty"]),
-    resultBriefIssue("data", dataHealthSummary?.verdict, ["ready", "empty"]),
-    resultBriefIssue("score", scoreAuditSummary?.verdict, ["clean", "empty"]),
-    decisionBrief?.primaryIssue ? {
-      key: `issue-${decisionBrief.primaryIssue.key}`,
-      label: decisionBrief.primaryIssue.label,
-      detail: [`${decisionBrief.primaryIssue.count || 0} filas`, decisionBrief.primaryIssue.share].filter(Boolean).join(" · "),
-      tone: decisionBrief.primaryIssue.severity || "warn",
-      count: Number(decisionBrief.primaryIssue.count || 0),
-    } : null,
-  ].filter(Boolean).sort((a, b) => resultBriefToneRank(b.tone) - resultBriefToneRank(a.tone) || b.count - a.count);
-  const blocker = blockers[0] || null;
-  const top = pendingDecisionWorkSummary?.top || null;
-  const firstAction = top
-    ? {
-      value: top.symbol,
-      detail: `Pri ${Math.round(top.priority || 0)} · ${top.confidenceLabel || "Confianza"}`,
-      tone: top.confidenceKey === "high" ? "good" : "warn",
-    }
-    : decisionBrief?.actions?.[0]
-      ? {
-        value: decisionBrief.actions[0].label,
-        detail: decisionBrief.actions[0].detail,
-        tone: "warn",
-      }
-      : {
-        value: "Revisar ranking",
-        detail: `${visibleCount} resultados visibles`,
-        tone: "neutral",
-      };
-
-  return {
-    label: verdict.label,
-    detail: verdict.detail,
-    tone: blocker?.tone || verdict.tone || "neutral",
-    primarySymbol: top?.symbol || "",
-    sourceDetail: [
-      `Brief vista: ${verdict.label}`,
-      `Foco: ${focus}`,
-      `Primero: ${firstAction.value}`,
-      `Freno: ${blocker?.label || "Sin freno"}`,
-    ].join(" · "),
-    items: [
-      {
-        key: "focus",
-        label: "Foco",
-        value: focus,
-        detail: `${visibleCount}/${totalCount || visibleCount} visibles`,
-        tone: chips.length ? "warn" : "neutral",
-      },
-      {
-        key: "first",
-        label: "Primero",
-        value: firstAction.value,
-        detail: firstAction.detail,
-        tone: firstAction.tone,
-      },
-      {
-        key: "blocker",
-        label: "Freno",
-        value: blocker?.label || "Sin freno",
-        detail: blocker?.detail || "La vista no concentra una alerta crítica.",
-        tone: blocker?.tone || "good",
-      },
-    ],
-  };
-}
-
-
 
 export default function Page() {
   const [markets, setMarkets] = useState(DEFAULT_MARKETS);
