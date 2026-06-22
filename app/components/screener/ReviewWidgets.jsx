@@ -1,3 +1,5 @@
+"use client";
+
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 
 export function QuickReviewMetricValue({ row = {}, metricKey = "", label = "", value = "-", className = "" }) {
