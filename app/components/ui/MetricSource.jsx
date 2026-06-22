@@ -35,6 +35,7 @@ export function metricSourceFromRow(row = {}, key = "", label = "") {
   const audit = objectiveMetricAuditStatusForRow(row)?.audit;
   const items = Array.isArray(audit?.items) ? audit.items : [];
   const item = items.find((entry) => entry?.key === key);
+  // Resolve row labels before delegating so direct item calls keep their own fallback semantics.
   return item ? metricSourceFromItem(item, label || item.label || item.key) : null;
 }
 

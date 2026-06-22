@@ -5,6 +5,7 @@ import { DecisionTraceBadge, DecisionTracePanel } from "@/app/DecisionTraceabili
 import RowTrustSignature from "@/app/RowTrustSignature";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
+import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { getJson } from "@/lib/clientApi";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";
@@ -13,10 +14,6 @@ import { buildSavedListView, listViewHref, listViewSignature, normalizeListScope
 import { enforceListContractRows, listContractForKey, listInclusionSummary, rowPassesListContract, summarizeListReliability } from "@/lib/listRationale";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
-import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
-import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
-import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
-import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
 import { favoriteToRow, isLongOpportunityRow, metricValue, normalizeStockRows, shortBusiness, sortByMetric, uniqueRows, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
 
@@ -35,39 +32,6 @@ function hasOwn(obj = {}, key = "") {
 
 function ListTrustMetric({ row, metricKey, label, value, className = "" }) {
   return <TrustMetric row={row} metricKey={metricKey} label={label} value={value} className={className} baseClass="listTrustMetric" />;
-}
-
-function listMetricTruthMeta(row = {}) {
-  const status = objectiveMetricAuditStatusForRow(row);
-  const audit = status.audit || null;
-  const items = Array.isArray(audit?.items) ? audit.items : [];
-  const usable = items.filter((item) => item?.status === "verified" || item?.status === "traceable");
-  const measuredCount = usable.filter((item) => item?.proxy !== true).length;
-  const proxyCount = usable.filter((item) => item?.proxy === true).length;
-  const detail = [
-    status.detail,
-    measuredCount ? `${measuredCount} medidas` : "",
-    proxyCount ? `${proxyCount} proxy` : "",
-  ].filter(Boolean).join(" · ");
-  if (status.key === "bad") return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
-  if (status.key === "warn") return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
-  if (status.key === "missing") return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
-  return {
-    key: proxyCount ? "mixed" : "measured",
-    label: proxyCount ? "Mixto" : "Med.",
-    tone: proxyCount ? "neutral" : "good",
-    detail,
-    measuredCount,
-    proxyCount,
-  };
-}
-
-function listRowTrustSignature(row = {}) {
-  return buildRowTrustSignature({
-    dataHealth: buildScreenerDataHealth(row, {}),
-    metricTruth: listMetricTruthMeta(row),
-    scoreAudit: buildScreenerScoreAudit(row),
-  });
 }
 
 function scopedDiscoveryPath(filter = {}) {
@@ -342,7 +306,7 @@ function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey =
     <table className="table">
       <thead><tr>{["Ticker", "Empresa", "Gráfico", "Tema", "3M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel(scoreKey)].map((h, index) => <th key={`${index}-${h}`}>{h}</th>)}</tr></thead>
       <tbody>{visibleRows.map((r) => {
-        const trustSignature = listRowTrustSignature(r);
+        const trustSignature = rowTrustSignatureForRow(r);
         return <tr key={r.symbol}>
         <td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a><DecisionTraceBadge resolution={decisionResolutionForRow(r, reviewState)} /></td>
         <td>{r.companyName || r.symbol}<br /><span className="fine">{shortBusiness(r)}</span><RowTrustSignature signature={trustSignature} className="listRowTrustSignature" /><span className="listInclusionReason">{listInclusionSummary(r, listKey)}</span></td>
@@ -365,7 +329,7 @@ function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey =
   </div>;
   const mobileRows = <div className="listMobileRows">
     {visibleRows.map((r) => {
-      const trustSignature = listRowTrustSignature(r);
+      const trustSignature = rowTrustSignatureForRow(r);
       return <a className="listMobileRow" key={`${title}-${r.symbol}`} href={stockUrl(r.symbol)}>
       <div className="listMobileRowTop">
         <span><b>{r.symbol}</b><em>{r.companyName || r.symbol}</em><DecisionTraceBadge resolution={decisionResolutionForRow(r, reviewState)} /></span>

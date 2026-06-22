@@ -6,6 +6,7 @@ import ChartPreferences from "@/app/ChartPreferences";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
+import { metricTruthMetaForRow, rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import {
   activeLayerCount,
   amount,
@@ -80,8 +81,6 @@ import { buildReviewPrioritySummary, decisionProfileStateForStock, reviewPriorit
 import { DATA_HEALTH_FILTER_ALL, DATA_HEALTH_FILTER_ORDER, buildScreenerDataHealth, buildScreenerDataHealthSummary, dataHealthFilterLabel } from "@/lib/screenerDataHealth";
 import { RELIABILITY_FILTER_ALL, RELIABILITY_FILTER_ORDER, buildScreenerAuditabilitySummary, buildScreenerReliabilitySummary, screenerReliabilityFilterLabel } from "@/lib/screenerReliability";
 import { SCORE_AUDIT_FILTER_ALL, SCORE_AUDIT_FILTER_ORDER, buildScreenerScoreAudit, buildScreenerScoreAuditSummary, scoreAuditFilterLabel, scoreAuditMatchesFilter, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
-import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
-import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, buildStockDecisionResolutionSummary, decisionResolutionForSymbol, reopenStockDecisionResolution, reviewDecisionStateForRows, stockDecisionResolutionFilter } from "@/lib/stockDecisionResolution";
 import { cachedScreenerQuery, cachedScreenerRow, compactRowForSession, compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, secondsLabel, sectorize, setupModeLabel, shuffle, sortMetric, spreadByInitial, uid, universeScopeKey } from "@/lib/screenerPipeline";
@@ -155,40 +154,6 @@ function reviewQueueDataHealthMeta(row = {}, settings = {}) {
     label: dataHealthFilterLabel(key, { compact: true }),
     tone: health.status?.tone || "neutral",
     detail,
-  };
-}
-
-function reviewQueueMetricTruthMeta(row = {}) {
-  const status = objectiveMetricAuditStatusForRow(row);
-  const audit = status.audit || null;
-  const items = Array.isArray(audit?.items) ? audit.items : [];
-  const usable = items.filter((item) => item?.status === "verified" || item?.status === "traceable");
-  const measuredCount = usable.filter((item) => item?.proxy !== true).length;
-  const proxyCount = usable.filter((item) => item?.proxy === true).length;
-  const issueDetail = Array.isArray(audit?.issues) && audit.issues.length
-    ? audit.issues.slice(0, 2).map((item) => [item.label || item.key, item.status].filter(Boolean).join(": ")).join(" · ")
-    : "";
-  const detail = [
-    status.detail || issueDetail,
-    measuredCount ? `${measuredCount} medidas` : "",
-    proxyCount ? `${proxyCount} proxy` : "",
-  ].filter(Boolean).join(" · ");
-  if (status.key === "bad") {
-    return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
-  }
-  if (status.key === "warn") {
-    return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
-  }
-  if (status.key === "missing") {
-    return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
-  }
-  return {
-    key: proxyCount ? "mixed" : "measured",
-    label: proxyCount ? "Mixto" : "Med.",
-    tone: proxyCount ? "neutral" : "good",
-    detail,
-    measuredCount,
-    proxyCount,
   };
 }
 
@@ -2438,7 +2403,7 @@ export default function Page() {
     const decisionEvidence = row ? buildDecisionEvidenceChecklist(row, rankExplain || activeSettings) : null;
     const dataHealth = row ? buildScreenerDataHealth(row, activeSettings) : null;
     const scoreAudit = row ? buildScreenerScoreAudit(row) : null;
-    const metricTruth = row ? reviewQueueMetricTruthMeta(row) : null;
+    const metricTruth = row ? metricTruthMetaForRow(row, { includeIssueDetail: true }) : null;
     const reviewFocus = row ? reviewQueueFocusMeta({
       dataHealth: reviewQueueDataHealthMeta(row, activeSettings),
       metricTruth,
@@ -2609,10 +2574,10 @@ export default function Page() {
     const reviewPriority = reviewPriorityForRow(row, activeSettings);
     const scoreAudit = reviewQueueScoreAuditMeta(row);
     const dataHealth = reviewQueueDataHealthMeta(row, activeSettings);
-    const metricTruth = reviewQueueMetricTruthMeta(row);
+    const metricTruth = metricTruthMetaForRow(row, { includeIssueDetail: true });
     const vcp = vcpReliabilityAudit(row);
     const focus = reviewQueueFocusMeta({ dataHealth, metricTruth, scoreAudit, evidence: item.evidence, methodologyFocus: item.methodologyFocus, vcp });
-    const trustSignature = buildRowTrustSignature({ dataHealth, metricTruth, scoreAudit, evidence: item.evidence, vcpReliability: vcp });
+    const trustSignature = rowTrustSignatureForRow(row, { dataHealth, metricTruth, scoreAudit, evidence: item.evidence, vcpReliability: vcp });
     return {
       ...item,
       profileKey,

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
+import { metricTruthMetaForRow, rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { getJson } from "@/lib/clientApi";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
@@ -15,7 +16,6 @@ import { metricShortLabel } from "@/lib/metricCatalog";
 import { objectiveStage } from "@/lib/scoring";
 import { DECISION_QUEUE_DIGEST_FILTERS, buildDecisionQueueDigest, buildDecisionQueueDigestSummary, buildDecisionQueueItem, buildDecisionQueueSummary } from "@/lib/screenerExplainability";
 import { buildReviewPrioritySummary, buildReviewProfileSummary, decisionProfileForRow, prepareReviewQueueRows, reviewPriorityForRow, reviewProfileMeta } from "@/lib/decisionProfile";
-import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
 import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
 import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
 import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
@@ -25,7 +25,6 @@ import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, buildStockDecisio
 import { createFavoriteFromRow } from "@/lib/stockRows";
 import { countryCode, externalLinks, isTradingViewWidgetBlocked, stockUrl } from "@/lib/symbols";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
-import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
 
 function value(row = {}, key) {
   return row[key] ?? row.snapshot?.[key] ?? null;
@@ -65,30 +64,6 @@ function investorStatusLabel(text = "") {
     .replaceAll("favoritos locales", "favoritos")
     .replaceAll("localmente", "en este dispositivo")
     .replaceAll("Proveedor", "Datos");
-}
-function reviewQueueMetricTruthMeta(row = {}) {
-  const status = objectiveMetricAuditStatusForRow(row);
-  const audit = status.audit || null;
-  const items = Array.isArray(audit?.items) ? audit.items : [];
-  const usable = items.filter((item) => item?.status === "verified" || item?.status === "traceable");
-  const measuredCount = usable.filter((item) => item?.proxy !== true).length;
-  const proxyCount = usable.filter((item) => item?.proxy === true).length;
-  const detail = [
-    status.detail,
-    measuredCount ? `${measuredCount} medidas` : "",
-    proxyCount ? `${proxyCount} proxy` : "",
-  ].filter(Boolean).join(" · ");
-  if (status.key === "bad") return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
-  if (status.key === "warn") return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
-  if (status.key === "missing") return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
-  return {
-    key: proxyCount ? "mixed" : "measured",
-    label: proxyCount ? "Mixto" : "Med.",
-    tone: proxyCount ? "neutral" : "good",
-    detail,
-    measuredCount,
-    proxyCount,
-  };
 }
 function ReviewTrustMetric({ row = {}, metricKey = "", label = "", value: displayValue = "-" }) {
   return <TrustMetric row={row} metricKey={metricKey} label={label} value={displayValue} baseClass="reviewTrustMetric" variant="strong" valueTag="em" />;
@@ -631,12 +606,12 @@ export default function ReviewPage() {
     const profileKey = decisionProfileForRow(row, reviewSettings);
     const profile = reviewProfileMeta(profileKey);
     const reviewPriority = reviewPriorityForRow(row, reviewSettings);
-    const metricTruth = reviewQueueMetricTruthMeta(row);
+    const metricTruth = metricTruthMetaForRow(row);
     const dataHealth = reviewQueueDataHealthMeta(row, reviewSettings);
     const scoreAudit = reviewQueueScoreAuditMeta(row);
     const vcp = vcpReliabilityAudit(row);
     const focus = reviewQueueFocusMeta({ dataHealth, metricTruth, scoreAudit, evidence: item.evidence, methodologyFocus: item.methodologyFocus, vcp });
-    const trustSignature = buildRowTrustSignature({ dataHealth, metricTruth, scoreAudit, evidence: item.evidence, vcpReliability: vcp });
+    const trustSignature = rowTrustSignatureForRow(row, { dataHealth, metricTruth, scoreAudit, evidence: item.evidence, vcpReliability: vcp });
     return {
       ...item,
       row,

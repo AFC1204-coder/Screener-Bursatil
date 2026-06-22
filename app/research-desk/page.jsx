@@ -5,6 +5,7 @@ import { DecisionTraceBadge, DecisionTracePanel } from "@/app/DecisionTraceabili
 import RowTrustSignature from "@/app/RowTrustSignature";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
+import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { getJson } from "@/lib/clientApi";
 import { deleteFavoriteFromCloud, deleteScanFromCloud, getAlertsFromCloud, getCloudStatus, mergeAlertsWithTimestamps, mergeFavoritesWithTombstones, mergeScansWithTombstones, pullCloudState, pushCloudState, resolveAlertInCloud, syncAlertsToCloud, syncFavoriteToCloud, syncFavoritesToCloud, syncScanToCloud } from "@/lib/cloudSyncClient";
 import { num, pct } from "@/lib/formatters";
@@ -14,10 +15,6 @@ import { metricShortLabel } from "@/lib/metricCatalog";
 import { activeAlerts, alertSummary, alertsFromScan, mergeAlerts, resolveAlert } from "@/lib/methodologyAlerts";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { checklistForRow, enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
-import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
-import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
-import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
-import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
 import { buildDecisionTraceabilitySummary, decisionResolutionForRow } from "@/lib/decisionTraceability";
 import { rowPassesListContract } from "@/lib/listRationale";
 import { createFavoriteFromRow, metricValue, rowTheme, shortBusiness } from "@/lib/stockRows";
@@ -28,41 +25,9 @@ function uid() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Ma
 function ResearchTrustMetric({ row, metricKey, label, value, className = "" }) {
   return <TrustMetric row={row} metricKey={metricKey} label={label} value={value} className={className} baseClass="researchTrustMetric" />;
 }
-function researchMetricTruthMeta(row = {}) {
-  const status = objectiveMetricAuditStatusForRow(row);
-  const audit = status.audit || null;
-  const items = Array.isArray(audit?.items) ? audit.items : [];
-  const usable = items.filter((item) => item?.status === "verified" || item?.status === "traceable");
-  const measuredCount = usable.filter((item) => item?.proxy !== true).length;
-  const proxyCount = usable.filter((item) => item?.proxy === true).length;
-  const detail = [
-    status.detail,
-    measuredCount ? `${measuredCount} medidas` : "",
-    proxyCount ? `${proxyCount} proxy` : "",
-  ].filter(Boolean).join(" · ");
-  if (status.key === "bad") return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
-  if (status.key === "warn") return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
-  if (status.key === "missing") return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
-  return {
-    key: proxyCount ? "mixed" : "measured",
-    label: proxyCount ? "Mixto" : "Med.",
-    tone: proxyCount ? "neutral" : "good",
-    detail,
-    measuredCount,
-    proxyCount,
-  };
-}
-function researchRowTrustSignature(row = {}) {
-  const sourceRow = row?.snapshot || row || {};
-  return buildRowTrustSignature({
-    dataHealth: buildScreenerDataHealth(sourceRow, {}),
-    metricTruth: researchMetricTruthMeta(sourceRow),
-    scoreAudit: buildScreenerScoreAudit(sourceRow),
-  });
-}
 function ResearchScoreStrip({ row }) {
   const sourceRow = row?.snapshot || row || {};
-  const trustSignature = researchRowTrustSignature(sourceRow);
+  const trustSignature = rowTrustSignatureForRow(sourceRow);
   const items = [
     ["objectiveScore", metricShortLabel("objectiveScore"), num(metricValue(sourceRow, "objectiveScore"))],
     ["rsQualityScore", metricShortLabel("rsQualityScore"), num(sourceRow.rsQualityScore)],
@@ -246,7 +211,7 @@ function DailyCommandCenter({ sections = [] }) {
           <span><a className="ticker" href={stockUrl(alert.symbol)}>{alert.symbol}</a><br /><span className="fine">{alert.payload?.label || alert.alertType}</span></span>
           <span>{alert.payload?.severity || "neutral"}</span>
         </div>) : section.rows.slice(0, 5).map((row) => {
-          const trustSignature = researchRowTrustSignature(row);
+          const trustSignature = rowTrustSignatureForRow(row);
           return <div className="summaryRow" key={`${section.key}-${row.symbol}`}>
           <span><a className="ticker" href={stockUrl(row.symbol)}>{row.symbol}</a><br /><span className="fine">{patternLabel(row)}</span><RowTrustSignature signature={trustSignature} className="researchRowTrustSignature" /></span>
           <span>{section.key === "pivot" && Number.isFinite(row.distanceToPivotPct) ? pct(row.distanceToPivotPct) : contractionText(row)}</span>
@@ -658,7 +623,7 @@ export default function ResearchDesk() {
         <table className="table">
           <thead><tr>{["★", "Ticker", "Empresa", "Tema", metricShortLabel("stage"), "Cambios", "3M", "6M", "12M", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel("objectiveScore"), "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
           <tbody>{selectedRows.map((r) => {
-            const trustSignature = researchRowTrustSignature(r);
+            const trustSignature = rowTrustSignatureForRow(r);
             return <tr key={r.symbol}>
             <td><button className="starBtn" onClick={() => favFromRow(r)}>★</button></td>
             <td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a><DecisionTraceBadge resolution={decisionResolutionForRow(r, reviewState)} /></td>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
+import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { getJson, requestHeaders } from "@/lib/clientApi";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";
@@ -13,10 +14,6 @@ import { buildSavedListView, listViewSignature, normalizeSavedListViews } from "
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
-import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
-import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
-import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
-import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
 import { favoriteToRow, metricValue, normalizeStockRows, rowCountry, shortBusiness, weaknessScore } from "@/lib/stockRows";
 import { countryName, externalLinks, marketFlag, stockUrl } from "@/lib/symbols";
 
@@ -35,39 +32,6 @@ async function fetchJsonWithTimeout(path, timeoutMs = 16000) {
 
 function SectorTrustMetric({ row, metricKey, label, value, className = "" }) {
   return <TrustMetric row={row} metricKey={metricKey} label={label} value={value} className={className} baseClass="sectorTrustMetric" />;
-}
-
-function sectorMetricTruthMeta(row = {}) {
-  const status = objectiveMetricAuditStatusForRow(row);
-  const audit = status.audit || null;
-  const items = Array.isArray(audit?.items) ? audit.items : [];
-  const usable = items.filter((item) => item?.status === "verified" || item?.status === "traceable");
-  const measuredCount = usable.filter((item) => item?.proxy !== true).length;
-  const proxyCount = usable.filter((item) => item?.proxy === true).length;
-  const detail = [
-    status.detail,
-    measuredCount ? `${measuredCount} medidas` : "",
-    proxyCount ? `${proxyCount} proxy` : "",
-  ].filter(Boolean).join(" · ");
-  if (status.key === "bad") return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
-  if (status.key === "warn") return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
-  if (status.key === "missing") return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
-  return {
-    key: proxyCount ? "mixed" : "measured",
-    label: proxyCount ? "Mixto" : "Med.",
-    tone: proxyCount ? "neutral" : "good",
-    detail,
-    measuredCount,
-    proxyCount,
-  };
-}
-
-function sectorRowTrustSignature(row = {}) {
-  return buildRowTrustSignature({
-    dataHealth: buildScreenerDataHealth(row, {}),
-    metricTruth: sectorMetricTruthMeta(row),
-    scoreAudit: buildScreenerScoreAudit(row),
-  });
 }
 
 function listHref(dimension, key) {
@@ -304,7 +268,7 @@ function GroupDrilldownPanel({ group, dimension }) {
         <p>{bucket.contract}</p>
         <div className="groupDrilldownSamples">
           {bucket.sample.map((item) => {
-            const trustSignature = sectorRowTrustSignature(item);
+            const trustSignature = rowTrustSignatureForRow(item);
             return <a href={stockUrl(item.symbol)} key={`${bucket.key}-${item.symbol}`}>
             <b>{item.symbol}</b>
             <span>{item.reason || item.companyName}</span>
@@ -558,7 +522,7 @@ export default function SectorsPage() {
         <table className="table">
           <thead><tr>{["Ticker", "Empresa", "País", "Temática", "Sector", "Industria", metricShortLabel("rsGlobalPct"), metricShortLabel("weaknessScore"), "3M", "6M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("riskScore"), metricShortLabel("objectiveScore"), "Acciones"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
           <tbody>{selected.items.slice(0, 40).map((row) => {
-            const trustSignature = sectorRowTrustSignature(row);
+            const trustSignature = rowTrustSignatureForRow(row);
             return <tr key={row.symbol}>
             <td><a className="ticker" href={stockUrl(row.symbol)}>{row.symbol}</a></td>
             <td>{row.companyName}<br /><span className="fine">{shortBusiness(row)}</span><RowTrustSignature signature={trustSignature} className="sectorRowTrustSignature" /></td>

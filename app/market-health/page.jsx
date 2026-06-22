@@ -4,14 +4,11 @@ import { useEffect, useState } from "react";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
+import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { getJson } from "@/lib/clientApi";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
-import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
-import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
-import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
-import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
 import { metricValue, rowRsBenchmark, rowRsPrimary, rowRsUniverse, rowTheme, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
 
@@ -25,39 +22,6 @@ const listText = (items = []) => items.length ? items.join(", ") : "-";
 
 function MarketTrustMetric({ row, metricKey, label, value }) {
   return <TrustMetric row={row} metricKey={metricKey} label={label} value={value} baseClass="marketTrustMetric" valueTag="b" />;
-}
-
-function marketMetricTruthMeta(row = {}) {
-  const status = objectiveMetricAuditStatusForRow(row);
-  const audit = status.audit || null;
-  const items = Array.isArray(audit?.items) ? audit.items : [];
-  const usable = items.filter((item) => item?.status === "verified" || item?.status === "traceable");
-  const measuredCount = usable.filter((item) => item?.proxy !== true).length;
-  const proxyCount = usable.filter((item) => item?.proxy === true).length;
-  const detail = [
-    status.detail,
-    measuredCount ? `${measuredCount} medidas` : "",
-    proxyCount ? `${proxyCount} proxy` : "",
-  ].filter(Boolean).join(" · ");
-  if (status.key === "bad") return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
-  if (status.key === "warn") return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
-  if (status.key === "missing") return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
-  return {
-    key: proxyCount ? "mixed" : "measured",
-    label: proxyCount ? "Mixto" : "Med.",
-    tone: proxyCount ? "neutral" : "good",
-    detail,
-    measuredCount,
-    proxyCount,
-  };
-}
-
-function marketRowTrustSignature(row = {}) {
-  return buildRowTrustSignature({
-    dataHealth: buildScreenerDataHealth(row, {}),
-    metricTruth: marketMetricTruthMeta(row),
-    scoreAudit: buildScreenerScoreAudit(row),
-  });
 }
 
 function safePct(value, fallback = 0) {
@@ -403,7 +367,7 @@ function GlobalRegionsPanel({ rows = [] }) {
           <span className="eyebrow" style={{ display: "block", fontSize: "10px", fontWeight: "600", textTransform: "uppercase", color: "rgba(235,235,242,0.35)", letterSpacing: "0.05em", marginBottom: "8px" }}>Líderes de Mercado</span>
           <div className="regionLeadersList" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             {leaders.map((leader) => {
-              const trustSignature = marketRowTrustSignature(leader);
+              const trustSignature = rowTrustSignatureForRow(leader);
               return <a className="regionLeaderRow" href={stockUrl(leader.symbol)} key={leader.symbol} style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -909,7 +873,7 @@ export default function MarketHealthPage() {
               {scanPulse.leaders.map((row) => {
                 const rs = rowRsDisplay(row);
                 const rsKey = Number.isFinite(rowRsUniverse(row)) ? "rsGlobalPct" : "rsRating";
-                const trustSignature = marketRowTrustSignature(row);
+                const trustSignature = rowTrustSignatureForRow(row);
                 return <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
                   <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small><RowTrustSignature signature={trustSignature} className="marketRowTrustSignature" /></span>
                   <span><MarketTrustMetric row={row} metricKey={rsKey} label={rowRsDisplayLabel(row)} value={Number.isFinite(rs) ? rs.toFixed(0) : "-"} /><small>{rowRsDisplayLabel(row)}</small></span>
@@ -923,7 +887,7 @@ export default function MarketHealthPage() {
               {scanPulse.deterioration.map((row) => {
                 const rs = rowRsDisplay(row);
                 const rsKey = Number.isFinite(rowRsUniverse(row)) ? "rsGlobalPct" : "rsRating";
-                const trustSignature = marketRowTrustSignature(row);
+                const trustSignature = rowTrustSignatureForRow(row);
                 return <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
                   <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small><RowTrustSignature signature={trustSignature} className="marketRowTrustSignature" /></span>
                   <span><b>{row.deteriorationReasons.length}</b><small>evidencias</small></span>
