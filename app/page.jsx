@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import QuickReviewModal from "@/app/components/screener/QuickReviewModal";
 import { ReviewPriorityResultRail } from "@/app/components/screener/ReviewWidgets";
 import { buildResultViewBrief } from "@/app/components/screener/resultViewBrief";
+import { useQuickReviewSession } from "@/app/components/screener/useQuickReviewSession";
 import { metricTruthMetaForRow, rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import {
   activeLayerCount,
@@ -33,7 +34,6 @@ import {
   passesSectorStrength,
   PendingDecisionWorkRail,
   PendingResultsBar,
-  prepareReviewQueueRows,
   PreviewCard,
   ResultFilterChips,
   SearchCandidateList,
@@ -69,8 +69,7 @@ import { buildReviewPrioritySummary, decisionProfileStateForStock, reviewPriorit
 import { DATA_HEALTH_FILTER_ALL, DATA_HEALTH_FILTER_ORDER, buildScreenerDataHealth, buildScreenerDataHealthSummary, dataHealthFilterLabel } from "@/lib/screenerDataHealth";
 import { RELIABILITY_FILTER_ALL, RELIABILITY_FILTER_ORDER, buildScreenerAuditabilitySummary, buildScreenerReliabilitySummary, screenerReliabilityFilterLabel } from "@/lib/screenerReliability";
 import { SCORE_AUDIT_FILTER_ALL, SCORE_AUDIT_FILTER_ORDER, buildScreenerScoreAudit, buildScreenerScoreAuditSummary, scoreAuditFilterLabel, scoreAuditMatchesFilter, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
-import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
-import { applyStockDecisionResolution, buildStockDecisionResolutionSummary, decisionResolutionForSymbol, reopenStockDecisionResolution, reviewDecisionStateForRows, stockDecisionResolutionFilter } from "@/lib/stockDecisionResolution";
+import { buildStockDecisionResolutionSummary, decisionResolutionForSymbol, stockDecisionResolutionFilter } from "@/lib/stockDecisionResolution";
 import { cachedScreenerQuery, cachedScreenerRow, compactRowForSession, compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, secondsLabel, sectorize, setupModeLabel, shuffle, sortMetric, spreadByInitial, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import { buildSnapshotFreshnessNotice } from "@/lib/snapshotFreshness";
 import { pickBestRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
@@ -259,10 +258,35 @@ export default function Page() {
   const [searchError, setSearchError] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const [activePreviewRow, setActivePreviewRow] = useState(null);
-  const [activeModalRow, setActiveModalRow] = useState(null);
-  const [quickReviewRows, setQuickReviewRows] = useState([]);
-  const [quickReviewIndex, setQuickReviewIndex] = useState(0);
-  const [quickReviewResolutionRevision, setQuickReviewResolutionRevision] = useState(0);
+  const activeSettings = useMemo(() => effectiveSettingsFromLayers(settings, filterLayers, fieldRules), [settings, filterLayers, fieldRules]);
+  const quickReview = useQuickReviewSession({
+    activeSettings,
+    presetKey,
+    searchResult,
+    rows,
+    analyzedRows,
+    setStatus,
+    persistScreenerSession,
+    buildScreenerStockOpenContext,
+    saveSessionBeforeStockOpen,
+  });
+  const {
+    activeModalRow,
+    quickReviewRows,
+    quickReviewIndex,
+    quickReviewResolutionRevision,
+    modalReviewRows,
+    modalReviewPosition,
+    restoreQuickReviewSession,
+    resetQuickReview,
+    openReview,
+    selectQuickReview,
+    moveQuickReview,
+    closeQuickReview,
+    saveQuickReviewStockOpen,
+    resolveQuickReviewDecision,
+    reopenQuickReviewDecision,
+  } = quickReview;
   const [screenerDecisionRevision, setScreenerDecisionRevision] = useState(0);
   const [chartSettings, setChartSettings] = useState(DEFAULT_CHART_SETTINGS);
   const [chartScope, setChartScope] = useState("global");
@@ -432,8 +456,10 @@ export default function Page() {
       setSearchSymbol(session.searchSymbol || "");
       setSearchCandidates(Array.isArray(session.searchCandidates) ? session.searchCandidates : []);
       setSearchResult(session.searchResult || null);
-      setQuickReviewRows(Array.isArray(session.quickReviewRows) ? session.quickReviewRows : []);
-      setQuickReviewIndex(Number.isFinite(session.quickReviewIndex) ? session.quickReviewIndex : 0);
+      restoreQuickReviewSession(
+        Array.isArray(session.quickReviewRows) ? session.quickReviewRows : [],
+        Number.isFinite(session.quickReviewIndex) ? session.quickReviewIndex : 0,
+      );
       if (restoredRows.length && restoredAnalyzedRows.length && session.scanContext) {
         fastFilterSignatureRef.current = fastFilterSignature(
           restoredAnalyzedRows,
@@ -623,113 +649,6 @@ export default function Page() {
     });
   }
 
-  function quickReviewContext(row = activeModalRow, index = modalReviewPosition) {
-    const list = modalReviewRows.length ? modalReviewRows : row ? [row] : [];
-    const fallbackIndex = row?.symbol ? list.findIndex((item) => item.symbol === row.symbol) : 0;
-    const resolvedIndex = Number.isFinite(index) ? index : Math.max(0, fallbackIndex);
-    return {
-      list,
-      index: Math.max(0, resolvedIndex),
-      rank: resolvedIndex >= 0 ? resolvedIndex + 1 : 1,
-    };
-  }
-
-  function quickReviewPayload(row = activeModalRow, index = modalReviewPosition, previousReview = safeRead(STORAGE_KEYS.review, {})) {
-    const context = quickReviewContext(row, index);
-    const decisionState = reviewDecisionStateForRows(previousReview, context.list);
-    return {
-      ...previousReview,
-      source: "current",
-      rows: context.list,
-      activeSettings,
-      presetKey,
-      currentIndex: context.index,
-      reviewedSymbols: decisionState.reviewedSymbols,
-      hiddenSymbols: decisionState.hiddenSymbols,
-      decisionResolutions: decisionState.decisionResolutions,
-      decisionResolutionLog: decisionState.decisionResolutionLog,
-      selectedSymbol: row?.symbol || context.list[context.index]?.symbol || "",
-      updatedAt: new Date().toISOString(),
-    };
-  }
-
-  function saveQuickReviewStockOpen(row = activeModalRow, index = modalReviewPosition) {
-    if (!row?.symbol) {
-      saveSessionBeforeStockOpen(row);
-      return;
-    }
-    const contextMeta = quickReviewContext(row, index);
-    const openedAt = new Date().toISOString();
-    const previousReview = safeRead(STORAGE_KEYS.review, {});
-    const digestFilter = previousReview.digestFilter || "all";
-    const resolutionFilter = previousReview.resolutionFilter || "all";
-    const reviewSourceLabel = previousReview.sourceLabel || "Screener actual";
-    const reviewSourceDetail = String(previousReview.sourceDetail || "").trim();
-    const reviewQueueMode = String(previousReview.queueMode || "screener-review").trim() || "screener-review";
-    const reviewPayload = { ...quickReviewPayload(row, index, previousReview), updatedAt: openedAt };
-    safeWrite(STORAGE_KEYS.review, reviewPayload);
-    const context = buildReviewStockOpenContext(row, {
-      settings: activeSettings,
-      source: "current",
-      sourceLabel: reviewSourceLabel,
-      sourceDetail: reviewSourceDetail,
-      queueMode: reviewQueueMode,
-      digestFilter,
-      resolutionFilter,
-      rank: contextMeta.rank,
-      queueSize: contextMeta.list.length,
-      rowsCount: contextMeta.list.length,
-      visibleCount: contextMeta.list.length,
-      hiddenCount: 0,
-      openedAt,
-    });
-    persistScreenerSession({
-      lastOpenedStockSymbol: row.symbol,
-      lastOpenedStockAt: openedAt,
-      lastOpenedStockContext: context,
-      scrollY: typeof window !== "undefined" ? window.scrollY : 0,
-      quickReviewRows: compactRowsForSession(contextMeta.list),
-      quickReviewIndex: contextMeta.index,
-      searchResult: compactRowForSession(searchResult),
-      rows: compactRowsForSession(rows),
-      analyzedRows: compactRowsForSession(analyzedRows),
-    });
-  }
-
-  function resolveQuickReviewDecision(actionKey, row = activeModalRow, index = modalReviewPosition) {
-    if (!row?.symbol) return;
-    const previousReview = safeRead(STORAGE_KEYS.review, {});
-    const decision = modalReviewQueueItems[index] || buildDecisionQueueItem(row, activeSettings);
-    const note = [
-      decision?.nextAction?.value || "",
-      decision?.risk?.value || "",
-    ].filter(Boolean).join(" · ");
-    const nextReview = applyStockDecisionResolution(quickReviewPayload(row, index, previousReview), {
-      symbol: row.symbol,
-      actionKey,
-      source: "screener-review",
-      note,
-    });
-    safeWrite(STORAGE_KEYS.review, nextReview);
-    setQuickReviewResolutionRevision((value) => value + 1);
-    const resolution = decisionResolutionForSymbol(nextReview, row.symbol);
-    setStatus(`${row.symbol}: ${resolution?.label || "resuelta"} desde Vista rápida`);
-  }
-
-  function reopenQuickReviewDecision(row = activeModalRow, index = modalReviewPosition) {
-    if (!row?.symbol) return;
-    const previousReview = safeRead(STORAGE_KEYS.review, {});
-    const resolution = decisionResolutionForSymbol(previousReview, row.symbol);
-    const nextReview = reopenStockDecisionResolution(quickReviewPayload(row, index, previousReview), {
-      symbol: row.symbol,
-      source: "screener-review",
-      note: resolution?.label ? `Antes: ${resolution.label}` : "",
-    });
-    safeWrite(STORAGE_KEYS.review, nextReview);
-    setQuickReviewResolutionRevision((value) => value + 1);
-    setStatus(`${row.symbol}: reabierta desde Vista rápida`);
-  }
-
   useEffect(() => {
     if (!sessionReady) return;
     if (restoringScan && !rows.length) return;
@@ -751,7 +670,6 @@ export default function Page() {
     if (chartScope !== "global") setChartSettings(readChartSettings({ scope: chartScope, symbol: activeModalRow?.symbol, listId: chartListId }));
   }, [chartScope, activeModalRow?.symbol, chartListId]);
 
-  const activeSettings = useMemo(() => effectiveSettingsFromLayers(settings, filterLayers, fieldRules), [settings, filterLayers, fieldRules]);
   const activeLayerLabel = useMemo(() => layerStatusText(filterLayers, useRegimeFilter), [filterLayers, useRegimeFilter]);
   useEffect(() => {
     if (!sessionReady || running || !analyzedRows.length || !scanContext) return;
@@ -878,9 +796,7 @@ export default function Page() {
     setSearchError("");
     setSearchLoading(false);
     setActivePreviewRow(null);
-    setActiveModalRow(null);
-    setQuickReviewRows([]);
-    setQuickReviewIndex(0);
+    resetQuickReview();
     setShowMobileFilters(false);
     setSelectedFilterTemplateId("");
     setFilterTemplateName("");
@@ -1611,80 +1527,6 @@ export default function Page() {
       else if (result.ok && result.data?.alerts?.length) safeWrite(STORAGE_KEYS.alerts, mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), result.data.alerts).slice(0, 500));
     });
   }
-  function openReview(currentRows, startSymbol = "", options = {}) {
-    const reviewRows = prepareReviewQueueRows(currentRows, activeSettings);
-    if (!reviewRows.length) {
-      setStatus("Sin filas actuales para abrir vista rapida.");
-      return;
-    }
-    const reviewSourceLabel = options.sourceLabel || "Screener actual";
-    const reviewSourceDetail = options.sourceDetail || "";
-    const queueMode = options.queueMode || "screener-review";
-    const nextResolutionFilter = options.resolutionFilter || "all";
-    const nextDigestFilter = options.digestFilter || "all";
-    const currentIndex = Math.max(0, reviewRows.findIndex((row) => row.symbol === startSymbol));
-    const profileSummary = buildReviewProfileSummary(reviewRows, activeSettings);
-    const cleanCount = profileSummary.find((group) => group.key === "operable-clean")?.count || 0;
-    const fragileCount = profileSummary.find((group) => group.key === "operable-fragile")?.count || 0;
-    const previousReview = safeRead(STORAGE_KEYS.review, {});
-    const decisionState = reviewDecisionStateForRows(previousReview, reviewRows);
-    setQuickReviewRows(reviewRows);
-    setQuickReviewIndex(currentIndex);
-    setActiveModalRow(reviewRows[currentIndex]);
-    safeWrite(STORAGE_KEYS.review, {
-      source: "current",
-      sourceLabel: reviewSourceLabel,
-      sourceDetail: reviewSourceDetail,
-      queueMode,
-      rows: reviewRows,
-      activeSettings,
-      presetKey,
-      currentIndex,
-      contractContext: buildScreenerStockOpenContext(reviewRows[currentIndex], { rank: currentIndex + 1, queueSize: reviewRows.length, sourceLabel: reviewSourceLabel === "Screener actual" ? "Revisión Screener" : reviewSourceLabel }),
-      reviewedSymbols: decisionState.reviewedSymbols,
-      hiddenSymbols: decisionState.hiddenSymbols,
-      decisionResolutions: decisionState.decisionResolutions,
-      decisionResolutionLog: decisionState.decisionResolutionLog,
-      resolutionFilter: nextResolutionFilter,
-      digestFilter: nextDigestFilter,
-      selectedSymbol: startSymbol || reviewRows[0]?.symbol || "",
-      updatedAt: new Date().toISOString(),
-    });
-    setStatus(`${reviewSourceLabel}: ${reviewRows.length} acciones en cola · ${cleanCount} limpias · ${fragileCount} fragiles.`);
-  }
-  function selectQuickReview(index, list = quickReviewRows) {
-    if (!list.length) return;
-    const nextIndex = ((index % list.length) + list.length) % list.length;
-    const previousReview = safeRead(STORAGE_KEYS.review, {});
-    const decisionState = reviewDecisionStateForRows(previousReview, list);
-    setQuickReviewIndex(nextIndex);
-    setActiveModalRow(list[nextIndex]);
-    safeWrite(STORAGE_KEYS.review, {
-      source: previousReview.source || "current",
-      sourceLabel: previousReview.sourceLabel || "Screener actual",
-      sourceDetail: previousReview.sourceDetail || "",
-      queueMode: previousReview.queueMode || "screener-review",
-      rows: list,
-      activeSettings,
-      presetKey,
-      currentIndex: nextIndex,
-      contractContext: buildScreenerStockOpenContext(list[nextIndex], { rank: nextIndex + 1, queueSize: list.length, sourceLabel: previousReview.sourceLabel && previousReview.sourceLabel !== "Screener actual" ? previousReview.sourceLabel : "Revisión Screener" }),
-      reviewedSymbols: decisionState.reviewedSymbols,
-      hiddenSymbols: decisionState.hiddenSymbols,
-      decisionResolutions: decisionState.decisionResolutions,
-      decisionResolutionLog: decisionState.decisionResolutionLog,
-      resolutionFilter: previousReview.resolutionFilter || "all",
-      digestFilter: previousReview.digestFilter || "all",
-      selectedSymbol: list[nextIndex]?.symbol || "",
-      updatedAt: new Date().toISOString(),
-    });
-  }
-  function moveQuickReview(delta) {
-    selectQuickReview(quickReviewIndex + delta);
-  }
-  function closeQuickReview() {
-    setActiveModalRow(null);
-  }
   function csv(filteredRows) {
     const h = ["Rank", "Ticker", "Empresa", "Actividad ES", "Tema", "Pais", "Sector", "Industria", "IPO", "IPO Date", "IPO Age Months", "Benchmark", "Last Price Date", "Price Freshness Days", "Price Freshness Label", "Price Freshness Issue", "Data Coverage", "Technical Coverage", "Fundamental Coverage", "Data Issues", "Data Health", "Data Health Key", "Data Health Detail", "Data Health Topline", "Data Health Issues", "RS Benchmark", "RS", "RS Pais", "RS Grupo", "RS Quality", "RS Stability", "Speculation Risk", "RS Quality Label", "Weakness Score", "Weakness Label", "Weakness Reasons", "RS Sample", "RS Pais Sample", "RS Grupo Sample", "RS 3M", "RS 6M", "RS 12M", "Dist 20d", "Dist 50d", "Dist 52w", "Dist ATH", "Highs Spread", "3M", "6M", "12M", "SMA50", "Avg Volume 20d", "Latest Volume", "Avg Turnover 20d", "Latest Turnover", "UD Vol", "Rel Volume", "Volume Surge %", "Volume Effect Score", "A/D Proxy", "EPS/Growth Proxy", "Volume Evidence", "Short Float %", "Short Ratio", "Shares Short", "Float Shares", "Up Volume", "Max Daily Move 20d", "Max Daily Range 20d", "Avg Daily Range 20d", "Price Range 63d", "Volatility 63d", "Downside Vol 63d", "Max Drawdown 63d", "Return/Vol 3M", "Return/Drawdown 3M", "Risk/Reward Score", "Weinstein", "Minervini", "Momentum", "Risk", "Volume", "Liquidity", "Sector Score", "Objective Setup", "Pattern Score", "Pattern Contribution", "Setup Quality", "Demand", "Growth", "IPO Score", "Objective Score", "Composite", "Legacy Total", "Objective Label", "Composite Label", "Reasons", "Risks", "Decision Priority", "Decision Confidence", "Decision Confidence Score", "Decision Issues", "Decision Drivers", "Decision Watch", "Decision", "Decision Detail", "Action", "Action Detail"];
     const lines = filteredRows.map((r, i) => {
@@ -2385,9 +2227,6 @@ export default function Page() {
   }, [fail]);
   const analysisSize = universe.length ? selected(universe).length : 0;
   const batchLabel = universe.length ? scanMode === "all" ? `1-${analysisSize} / ${universe.length}` : `${batchStart + 1}-${Math.min(batchStart + scanBatchSize, universe.length)} / ${universe.length}` : "-";
-  const modalReviewRows = quickReviewRows.length ? quickReviewRows : (activeModalRow ? [activeModalRow] : []);
-  const modalReviewIndex = activeModalRow ? modalReviewRows.findIndex((row) => row.symbol === activeModalRow.symbol) : -1;
-  const modalReviewPosition = modalReviewIndex >= 0 ? modalReviewIndex : quickReviewIndex;
   const modalActiveResolution = useMemo(() => activeModalRow
     ? decisionResolutionForSymbol({ decisionResolutions: screenerDecisionResolutions }, activeModalRow.symbol)
     : null,
@@ -2452,17 +2291,6 @@ export default function Page() {
   }) : null, [activeModalRow, screenerContract, modalReviewPosition, modalReviewRows.length, modalOriginLabel, modalRankExplain, modalDecisionIssues, modalDecisionEvidence, modalDecisionTrace, modalDecisionBrief, modalDataHealth, modalScoreAudit, activeSettings]);
 
   useEffect(() => {
-    if (!activeModalRow) return undefined;
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") closeQuickReview();
-      if (event.key === "ArrowRight" || event.key === "ArrowDown") moveQuickReview(1);
-      if (event.key === "ArrowLeft" || event.key === "ArrowUp") moveQuickReview(-1);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeModalRow, quickReviewIndex, quickReviewRows]);
-
-  useEffect(() => {
     if (!activeFilterFamily) return undefined;
     const onKeyDown = (event) => {
       if (event.key === "Escape") setActiveFilterFamily(null);
@@ -2492,7 +2320,7 @@ export default function Page() {
       <span>{snapshotNotice.label}</span>
       <b>{snapshotNotice.detail}</b>
     </div> : null}
-    
+
     <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}`}>
       <button
         type="button"
@@ -2597,7 +2425,7 @@ export default function Page() {
             <FilterToggle active={settings.requireUpVolume} applies={settingApplies("requireUpVolume", filterLayers)} detail={inactiveSettingReason("requireUpVolume", filterLayers)} onClick={() => toggleLayeredSetting("requireUpVolume")}>Volumen en vela alcista</FilterToggle>
             <FilterToggle active={settings.requireRecentIpo} applies={settingApplies("requireRecentIpo", filterLayers)} detail={inactiveSettingReason("requireRecentIpo", filterLayers)} onClick={() => toggleLayeredSetting("requireRecentIpo")}>IPO real reciente</FilterToggle>
           </div>
-          
+
           <details className="advancedFiltersDetails" style={{ marginTop: 12 }}>
             <summary style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: 12, fontWeight: 500, display: 'inline-block', borderBottom: '1px dashed rgba(255,255,255,.2)', paddingBottom: 2 }}>Ajustes finos ({fineRuleActive}/{fineRuleTotal})</summary>
             <div className="filterGroups" style={{ marginTop: 16 }}>
@@ -2862,7 +2690,7 @@ export default function Page() {
       onToggleFieldRule={toggleFieldRule}
       onToggleLayeredSetting={toggleLayeredSetting}
     />}
-    
+
     <QuickReviewModal
       activeModalRow={activeModalRow}
       activeSettings={activeSettings}

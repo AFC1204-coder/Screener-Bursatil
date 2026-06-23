@@ -116,7 +116,7 @@ export default function QuickReviewModal({
             type="button"
             key={item.key}
             className={`${item.tone || ""} ${modalActiveResolution?.key === item.key ? "active" : ""}`.trim()}
-            onClick={() => resolveQuickReviewDecision(item.key, activeModalRow, modalReviewPosition)}
+            onClick={() => resolveQuickReviewDecision(item.key, activeModalRow, modalReviewPosition, modalReviewQueueItems)}
             title={item.detail}
           >
             {item.label}
