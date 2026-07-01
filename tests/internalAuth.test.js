@@ -1,22 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { isInternalRequest, requireInternalAuth } from "@/lib/internalAuth";
+import { createStatsEdgeSession } from "@/lib/authSession";
 
 const TOKEN_ENV_KEYS = [
   "STATSEDGE_ACCESS_TOKEN",
   "STATSEDGE_API_TOKEN",
   "STATSEDGE_ADMIN_TOKEN",
   "CRON_SECRET",
+  "STATSEDGE_SESSION_SECRET",
   "NODE_ENV",
 ];
 
 let previousEnv = {};
 
-function request(headers = {}) {
+function request(headers = {}, cookies = {}) {
   const normalized = Object.fromEntries(Object.entries(headers).map(([key, value]) => [key.toLowerCase(), value]));
   return {
     headers: {
       get(key) {
         return normalized[String(key).toLowerCase()] || "";
+      },
+    },
+    cookies: {
+      get(name) {
+        const value = cookies[name];
+        return value === undefined ? undefined : { name, value };
       },
     },
   };
@@ -77,5 +85,50 @@ describe("internal auth", () => {
 
     expect(isInternalRequest(request({ authorization: "Bearer cron-secret" }))).toBe(false);
     expect(requireInternalAuth(request({ authorization: "Bearer cron-secret" }))?.status).toBe(401);
+  });
+
+  it("authorizes a normal request with a valid session cookie", () => {
+    process.env.STATSEDGE_ACCESS_TOKEN = "app-token";
+    process.env.STATSEDGE_SESSION_SECRET = "session-secret";
+    const session = createStatsEdgeSession(Date.now());
+
+    expect(isInternalRequest(request({}, { statsedge_session: session }))).toBe(true);
+    expect(requireInternalAuth(request({}, { statsedge_session: session }))).toBeNull();
+  });
+
+  it("does not authorize cron-capable routes with a valid session cookie when tokens are configured", () => {
+    process.env.STATSEDGE_ACCESS_TOKEN = "app-token";
+    process.env.CRON_SECRET = "cron-secret";
+    process.env.STATSEDGE_SESSION_SECRET = "session-secret";
+    const session = createStatsEdgeSession(Date.now());
+
+    // La cookie de navegador sigue sin autorizar la ruta cron/job.
+    expect(isInternalRequest(request({}, { statsedge_session: session }), { allowCron: true })).toBe(false);
+    expect(requireInternalAuth(request({}, { statsedge_session: session }), { allowCron: true })?.status).toBe(401);
+  });
+
+  it("authorizes cron-capable routes with CRON_SECRET via Authorization Bearer", () => {
+    process.env.CRON_SECRET = "cron-secret";
+
+    expect(isInternalRequest(request({ authorization: "Bearer cron-secret" }), { allowCron: true })).toBe(true);
+  });
+
+  it("authorizes cron-capable routes with CRON_SECRET via x-cron-secret", () => {
+    process.env.CRON_SECRET = "cron-secret";
+
+    expect(isInternalRequest(request({ "x-cron-secret": "cron-secret" }), { allowCron: true })).toBe(true);
+  });
+
+  it("keeps authorizing cron/job routes with STATSEDGE_ACCESS_TOKEN via header", () => {
+    process.env.STATSEDGE_ACCESS_TOKEN = "app-token";
+    process.env.CRON_SECRET = "cron-secret";
+
+    expect(isInternalRequest(request({ "x-statsedge-token": "app-token" }), { allowCron: true })).toBe(true);
+    expect(isInternalRequest(request({ authorization: "Bearer app-token" }), { allowCron: true })).toBe(true);
+  });
+
+  it("keeps dev mode open with no tokens configured", () => {
+    expect(isInternalRequest(request(), { allowCron: true })).toBe(true);
+    expect(isInternalRequest(request())).toBe(true);
   });
 });
