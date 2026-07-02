@@ -26,14 +26,6 @@ export default function ResultPagerTable({
   onFavorite,
   onReview,
   onOpenStock,
-  decisionIssueFilter,
-  onDecisionIssueFilter,
-  decisionEvidenceFilter,
-  onDecisionEvidenceFilter,
-  dataHealthFilter,
-  onDataHealthFilter,
-  scoreAuditFilter,
-  onScoreAuditFilter,
   decisionResolutions,
   emptyLabel,
 }) {
@@ -63,14 +55,6 @@ export default function ResultPagerTable({
         onOpenStock={onOpenStock}
         rankOffset={resultPageStart}
         emptyLabel={emptyLabel}
-        decisionIssueFilter={decisionIssueFilter}
-        onDecisionIssueFilter={onDecisionIssueFilter}
-        decisionEvidenceFilter={decisionEvidenceFilter}
-        onDecisionEvidenceFilter={onDecisionEvidenceFilter}
-        dataHealthFilter={dataHealthFilter}
-        onDataHealthFilter={onDataHealthFilter}
-        scoreAuditFilter={scoreAuditFilter}
-        onScoreAuditFilter={onScoreAuditFilter}
         decisionResolutions={decisionResolutions}
       />
     </>

@@ -50,13 +50,13 @@ export function CompanyMark({ row = {}, size = "md" }) {
   </span>;
 }
 
-export function CompactMetric({ label, value, tone = "", source = null, title = "", className = "" }) {
+export function CompactMetric({ label, value, tone = "", source = null, title = "", className = "", zero = false }) {
   const sourceClass = source?.key ? `source-${source.key}` : "";
   const sourceTitle = source?.title || "";
   const valueText = value ?? "-";
   const titleText = [title, sourceTitle].filter(Boolean).join(" · ") || undefined;
   const ariaLabel = sourceTitle ? `${label}: ${valueText}. ${sourceTitle}` : undefined;
-  return <span className={`compactMetric ${className} ${tone} ${sourceClass}`.trim()} title={titleText} aria-label={ariaLabel}>
+  return <span className={`compactMetric ${className} ${tone} ${sourceClass}`.trim()} title={titleText} aria-label={ariaLabel} data-zero={zero ? "true" : "false"}>
     <small>{label}</small>
     <b>{valueText}</b>
     {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}
