@@ -5,17 +5,12 @@ import ChartPreferences from "@/app/ChartPreferences";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import {
-  amount,
   CompanyMark,
   DecisionEvidenceChecklist,
-  money,
-  quickBusinessDescription,
-  quickBusinessMarket,
-  ratioLabel,
   ScoreAuditPanel,
-  shortBusiness,
   TradingViewPreviewChart,
 } from "@/app/screenerPanels";
+import { amount, money, quickBusinessDescription, quickBusinessMarket, ratioLabel, shortBusiness } from "@/lib/screenerFormat";
 import { QuickReviewMetricValue, ReviewPriorityPanel, ReviewQueueFocusBadge } from "@/app/components/screener/ReviewWidgets";
 import { pct } from "@/lib/formatters";
 import { metricShortLabel } from "@/lib/metricCatalog";

@@ -42,23 +42,34 @@ import { vcpObjectiveSummary, vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
 
 // app/screenerPanels.jsx — helpers de presentación y componentes del screener.
-// Secciones: formato/texto · tarjetas y charts · móvil · tablas de resultados ·
-// paneles de filtros. Solo presentación: la lógica vive en lib/screenerPipeline.
-const money = (n, currency = "") => Number.isFinite(n) ? `${n >= 100 ? n.toFixed(0) : n.toFixed(2)}${currency ? ` ${currency}` : ""}` : "-";
-const cap = (n) => Number.isFinite(n) && n > 0 ? n >= 1000000000000 ? `${(n / 1000000000000).toFixed(2)}T` : n >= 1000000000 ? `${(n / 1000000000).toFixed(1)}B` : n >= 1000000 ? `${(n / 1000000).toFixed(0)}M` : `${n.toFixed(0)}` : "-";
-const amount = (n, currency = "") => Number.isFinite(n) && n > 0 ? `${cap(n)}${currency ? ` ${currency}` : ""}` : "-";
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const searchText = (value = "") => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-function investorStatusLabel(text = "") {
-  return String(text || "")
-    .replaceAll("Supabase", "nube")
-    .replaceAll("localStorage", "modo local")
-    .replaceAll("Proveedor", "Datos")
-    .replaceAll("proveedor", "datos")
-    .replaceAll("Yahoo/mercado", "mercado")
-    .replaceAll("Yahoo", "fuente de mercado");
-}
-const ratioLabel = (n) => Number.isFinite(n) ? `${n.toFixed(2)}x` : "-";
+// Secciones: tarjetas y charts · móvil · tablas de resultados · paneles de filtros.
+// Los helpers de formato viven en lib/screenerFormat.js.
+import {
+  activeLayerCount,
+  amount,
+  cap,
+  chartPath,
+  compactMetricSourceLookup,
+  compactPatternDetail,
+  compactPatternReason,
+  compactTone,
+  companyLogoDomain,
+  initials,
+  investorStatusLabel,
+  layerStatusText,
+  money,
+  objectiveMetricCompactState,
+  priorityTooltip,
+  quickBusinessDescription,
+  quickBusinessMarket,
+  quickSetup,
+  ratioLabel,
+  ruleCountLabel,
+  searchText,
+  shortBusiness,
+  sleep,
+} from "@/lib/screenerFormat";
+
 function DecisionConfidenceBadge({ confidence = null, compact = false }) {
   if (!confidence) return null;
   const score = Number(confidence.score);
@@ -78,17 +89,6 @@ function DecisionResolutionBadge({ resolution = null, className = "" }) {
   >
     {label}
   </span>;
-}
-
-function priorityTooltip(priority = null) {
-  if (!priority) return "";
-  const parts = (priority.components || []).map((item) => {
-    const value = Number(item.value);
-    const sign = Number.isFinite(value) && value >= 0 ? "+" : "";
-    return `${item.label} ${sign}${Number.isFinite(value) ? Math.round(value) : "-"}`;
-  });
-  if (priority.issuePenalty) parts.push(`issues -${Math.round(priority.issuePenalty)}`);
-  return [`Prioridad decision ${Math.round(priority.score || 0)}`, ...parts].join(" · ");
 }
 
 function DecisionPriorityBadge({ priority = null, compact = false }) {
@@ -190,36 +190,7 @@ function ipoVerificationText(row = {}) {
   const evidence = date || (Number.isFinite(age) ? `${age.toFixed(0)}m` : "verificada");
   return [category, evidence].filter(Boolean).join(" · ");
 }
-function initials(name = "", symbol = "") { return String(name || symbol).split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]?.toUpperCase()).join("") || String(symbol).slice(0, 2).toUpperCase() || "SE"; }
-function shortBusiness(row = {}) {
-  return [row.industry, row.sector, row.theme].filter((value, index, arr) => value && value !== "Sin industria" && value !== "Sin sector" && arr.indexOf(value) === index).slice(0, 3).join(" · ") || row.businessEs || row.exchange || "";
-}
-function quickBusinessDescription(row = {}) {
-  const summary = compactBusinessSummary(row.businessSummary, 300);
-  if (summary) return summary;
-  const activity = shortBusiness(row);
-  if (activity) return `${row.companyName || row.symbol} opera en ${activity}.`;
-  return "Descripción de negocio no disponible en el proveedor.";
-}
-function quickBusinessMarket(row = {}) {
-  return [marketName(row.country), row.exchange].filter((value, index, arr) => value && value !== "-" && arr.indexOf(value) === index).join(" · ") || "-";
-}
-
 /* ── Tarjetas, sparklines y charts de preview ── */
-function chartPath(points, key, x, y) {
-  let open = false;
-  return points.map((p, i) => {
-    const value = p[key];
-    if (!Number.isFinite(value)) {
-      open = false;
-      return "";
-    }
-    const cmd = open ? "L" : "M";
-    open = true;
-    return `${cmd}${x(i).toFixed(1)},${y(value).toFixed(1)}`;
-  }).filter(Boolean).join(" ");
-}
-
 function MiniSparkline({ bars = [] }) {
   const points = bars.filter((x) => Number.isFinite(x.close));
   if (points.length < 2) return <div className="previewEmpty">Sin dato</div>;
@@ -296,10 +267,6 @@ function TradingViewPreviewChart({ row, chartSettings = DEFAULT_CHART_SETTINGS }
   return <div className="tvPreviewBox"><div className="tradingview-widget-container" ref={ref} /></div>;
 }
 
-function companyLogoDomain(row = {}) {
-  return row.logoDomain || domainFromUrl(row.website || "") || assetDomainForSymbol(row.symbol) || assetDomainForName(row.companyName || row.name);
-}
-
 function CompanyMark({ row = {}, size = "md" }) {
   const domain = companyLogoDomain(row);
   const logo = domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128` : "";
@@ -308,19 +275,6 @@ function CompanyMark({ row = {}, size = "md" }) {
   return <span className={`companyMark companyMark-${size}`}>
     {canShowLogo ? <img src={logo} alt="" loading="lazy" onError={() => setFailedLogo(logo)} /> : <b>{initials(row.companyName || row.name, row.symbol)}</b>}
   </span>;
-}
-
-function quickSetup(row) {
-  if (!row) return "Sin dato";
-  return methodologySetupLabel(row);
-}
-
-function compactPatternReason(row = {}) {
-  return methodologyCompactReasonLine(row);
-}
-
-function compactPatternDetail(row = {}) {
-  return methodologyCompactDetailLine(row);
 }
 
 function LeaderTape({ rows = [], activeRow, onSelect, onFavorite, favoriteSymbols, mode = "leader" }) {
@@ -769,65 +723,6 @@ function dataHealthCompactLabel(health = null) {
   if (key === "thin") return "Parcial";
   if (key === "limited") return "Parcial";
   return health?.status?.label || "Datos";
-}
-
-function objectiveMetricCompactState(row = {}) {
-  const status = objectiveMetricAuditStatusForRow(row);
-  const audit = status.audit || null;
-  const items = Array.isArray(audit?.items) ? audit.items : [];
-  const usable = items.filter((item) => ["verified", "traceable"].includes(item.status));
-  const proxyCount = usable.filter((item) => item.proxy === true).length;
-  const measuredCount = usable.filter((item) => item.proxy !== true).length;
-  const issueText = Array.isArray(audit?.issues) && audit.issues.length
-    ? audit.issues.slice(0, 4).map((item) => `${item.label || item.key}: ${item.status}`).join(" · ")
-    : "";
-  if (status.key === "bad") {
-    return {
-      key: "blocked",
-      label: "Bloq.",
-      tone: "bad",
-      title: [status.label, status.detail || issueText, "No usar metricas objetivas sin revisar"].filter(Boolean).join(" · "),
-      measuredCount,
-      proxyCount,
-      issueCount: Array.isArray(audit?.issues) ? audit.issues.length : 0,
-    };
-  }
-  if (status.key === "warn") {
-    return {
-      key: "review",
-      label: "Rev.",
-      tone: "warn",
-      title: [status.label, status.detail || issueText, `${measuredCount} medidas · ${proxyCount} proxy`].filter(Boolean).join(" · "),
-      measuredCount,
-      proxyCount,
-      issueCount: Array.isArray(audit?.issues) ? audit.issues.length : 0,
-    };
-  }
-  if (status.key === "missing") {
-    return {
-      key: "missing",
-      label: "Sin audit",
-      tone: "warn",
-      title: status.detail || "Sin auditoria de metricas objetivas",
-      measuredCount: 0,
-      proxyCount: 0,
-      issueCount: 1,
-    };
-  }
-  return {
-    key: proxyCount ? "mixed" : "measured",
-    label: proxyCount ? "Mixto" : "Med.",
-    tone: proxyCount ? "neutral" : "good",
-    measuredCount,
-    proxyCount,
-    issueCount: 0,
-    title: [
-      "Metricas objetivas auditadas",
-      `${measuredCount} medidas`,
-      proxyCount ? `${proxyCount} proxy/estimadas` : "",
-      status.detail,
-    ].filter(Boolean).join(" · "),
-  };
 }
 
 function DataHealthPanel({ health = null, compact = false, activeKey = "Todos", onFilter }) {
@@ -1451,24 +1346,6 @@ function SearchScopeList({ items = [], onPick }) {
       </button>)}
     </div>
   </div>;
-}
-
-function compactTone(value, strongAt, weakBelow = null) {
-  if (!Number.isFinite(value)) return "";
-  if (value >= strongAt) return "good";
-  if (Number.isFinite(weakBelow) && value < weakBelow) return "soft";
-  return "";
-}
-
-function compactMetricSource(item = null) {
-  return metricSourceFromItem(item, "", "Metrica");
-}
-
-function compactMetricSourceLookup(row = {}) {
-  const audit = objectiveMetricAuditStatusForRow(row)?.audit;
-  const items = Array.isArray(audit?.items) ? audit.items : [];
-  const byKey = new Map(items.filter((item) => item?.key).map((item) => [item.key, item]));
-  return (key) => compactMetricSource(byKey.get(key));
 }
 
 function CompactMetric({ label, value, tone = "", source = null, title = "", className = "" }) {
@@ -2154,20 +2031,6 @@ function FilterDiagnosticsPanel({ diagnostics, rowsCount, filteredCount, running
       </article>)}
     </div> : <div className="scanDiagnosticHint">No hay rechazos registrados en el ultimo scan.</div>}
   </section>;
-}
-
-function activeLayerCount(layers = {}) {
-  return Object.values(layers).filter(Boolean).length;
-}
-
-function ruleCountLabel(count = 0, singular = "regla", plural = "reglas") {
-  return `${count} ${count === 1 ? singular : plural}`;
-}
-
-function layerStatusText(layers = DEFAULT_FILTER_LAYERS, useRegime = true) {
-  const off = EXECUTION_LAYERS.filter((x) => !layers[x.key]).map((x) => x.label.toLowerCase());
-  if (!useRegime) off.push("regimen");
-  return off.length ? `capas off: ${off.join(", ")}` : "todas las capas activas";
 }
 
 export {

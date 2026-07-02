@@ -7,15 +7,12 @@ import { useQuickReviewSession } from "@/app/components/screener/useQuickReviewS
 import { useResultViewModel } from "@/app/components/screener/useResultViewModel";
 import { metricTruthMetaForRow, rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import {
-  activeLayerCount,
   buildReviewProfileSummary,
   decisionProfileForRow,
   FilterFamilyModal,
-  layerStatusText,
-  sleep,
-  searchText,
   reviewProfileMeta,
 } from "@/app/screenerPanels";
+import { activeLayerCount, layerStatusText, searchText, sleep } from "@/lib/screenerFormat";
 import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson, postJson } from "@/lib/clientApi";

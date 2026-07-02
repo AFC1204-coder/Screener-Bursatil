@@ -34,8 +34,8 @@ import {
   SearchScopeList,
   ScoreAuditSummaryRail,
   SetupChipRail,
-  investorStatusLabel,
 } from "@/app/screenerPanels";
+import { investorStatusLabel } from "@/lib/screenerFormat";
 import {
   ALL_FILTER_LAYERS,
   DEFAULT_FIELD_RULES,
