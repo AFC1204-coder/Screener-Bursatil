@@ -28,8 +28,22 @@
   --accent     : #3b78f0;
   --accent2    : #6da4ff;
 
-  /* Espaciado */
+  /* Semántica de estado — uso obligatorio para estado/señal, nunca decoración.
+     --positive: alcista/pass/OK · --negative: bajista/fail ·
+     --warning: SOLO alertas accionables (máx 1-2 por vista) ·
+     --neutral: informativo, ceros · --accent: solo interacción. */
+  --positive   : #2bd576;
+  --negative   : #ff5d5d;
+  --warning    : #eab308;
+  --neutral    : #838894;
+
+  /* Espaciado — tokens oficiales (4-24px). Prohibido hardcodear px de espaciado. */
+  --space-1    : 4px;
+  --space-2    : 8px;
+  --space-3    : 12px;
+  --space-4    : 16px;
   --space-5    : 20px;
+  --space-6    : 24px;
 
   /* Radios */
   --radius     : 7px;
@@ -41,10 +55,5 @@
   /* --panel      : #090a0c; */
   /* --panel2     : #0d0f12; */
   /* --panel3     : #12151a; */
-  /* --space-1    : 4px; */
-  /* --space-2    : 8px; */
-  /* --space-3    : 12px; */
-  /* --space-4    : 16px; */
-  /* --space-6    : 24px; */
   /* --accent-dim : rgba(59,120,240,.11); */
 }

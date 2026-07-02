@@ -7388,3 +7388,316 @@ button.decisionOperatingIssue:hover {
     margin:8px 0 10px !important;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Rediseño ResultPagerTable — densidad compact (PASA FINAL, pisa todo lo anterior).
+   Sistema de diseño: spacing con tokens --space-*, colores estrictamente
+   semánticos (--positive/--negative/--warning/--neutral/--accent), densidad
+   compact (texto base 11px, control min-height 28px, fila 56-72px).
+   El trust rail colapsa a una badge status agregada; el detalle vive en QuickReview.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Contenedor + tabla */
+.compactTableWrap {
+  overflow-x: hidden;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.compactResultsTable {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.compactResultsTable th,
+.compactResultsTable td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text);
+}
+.compactResultsTable th {
+  height: 32px;
+  color: var(--neutral);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-align: left;
+}
+/* Columnas: ★ | # | Compañía | RS | Mom. | Volumen | Objetivo (7 tras rediseño) */
+.compactResultsTable th:nth-child(1), .compactResultsTable td:nth-child(1) { width: 32px; }
+.compactResultsTable th:nth-child(2), .compactResultsTable td:nth-child(2) { width: 36px; }
+.compactResultsTable th:nth-child(3), .compactResultsTable td:nth-child(3) { width: 26%; }
+.compactResultsTable th:nth-child(7), .compactResultsTable td:nth-child(7) { width: 220px; }
+
+/* Fila: altura objetivo 56-72px */
+.compactResultsTable tbody tr {
+  transition: background .12s ease;
+  cursor: pointer;
+}
+.compactResultsTable tbody tr td {
+  height: 56px;
+  max-height: 72px;
+}
+.compactResultsTable tbody tr:hover td {
+  background: rgba(59,120,240,.055);
+}
+
+/* Favorito */
+.compactResultsTable .starBtn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--neutral);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  padding: var(--space-1);
+  min-height: 28px;
+}
+.compactResultsTable .starBtn.on { color: var(--warning); }
+
+/* Rango */
+.compactResultsTable .rankCell {
+  color: var(--neutral);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Identidad */
+.compactResultsTable .compactIdentityCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.compactResultsTable .compactIdentityText {
+  display: block;
+  min-width: 0;
+}
+.compactResultsTable .compactIdentityTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.compactResultsTable .compactIdentityTop .ticker {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+.compactResultsTable .compactIdentityCell b {
+  display: block;
+  margin-top: 1px;
+  color: var(--soft);
+  font-size: 11px;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.compactResultsTable .compactCountryFlag {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* Métricas (RS / Mom. / Volumen) — grid compact */
+.compactResultsTable .compactMetricGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+.compactResultsTable .compactMetric {
+  min-width: 0;
+}
+.compactResultsTable .compactMetric small {
+  display: block;
+  color: var(--neutral);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .04em;
+}
+.compactResultsTable .compactMetric b {
+  display: block;
+  margin-top: 1px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Ceros siempre en neutral, peso 400 */
+.compactResultsTable .compactMetric b[data-zero="true"] {
+  color: var(--neutral);
+  font-weight: 400;
+}
+/* Tono semántico de métrica */
+.compactResultsTable .compactMetric.good b { color: var(--positive); }
+.compactResultsTable .compactMetric.soft b { color: var(--negative); }
+/* Punto de proveniencia (source) — discreto, neutral */
+.compactResultsTable .compactMetric i {
+  display: none;
+}
+
+/* Celda Objetivo */
+.compactResultsTable .compactScoreCell {
+  min-width: 0;
+}
+.compactResultsTable .compactScoreHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+.compactResultsTable .compactScoreHead > b {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.compactResultsTable .compactScoreMeta {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--neutral);
+  font-size: 10px;
+}
+
+/* Badges de veredicto — sistema status: punto de color + texto, sin borde, sin uppercase.
+   Reemplaza las ~6 variants (rankAction/rankDecision/confidence/priority) heredadas. */
+.compactResultsTable .rankActionBadge,
+.compactResultsTable .rankDecisionBadge,
+.compactResultsTable .decisionConfidenceBadge,
+.compactResultsTable .decisionPriorityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: none;
+  min-height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: none;
+  white-space: nowrap;
+  color: var(--text);
+}
+/* Punto semántico vía ::before — el tono viene de la clase .good/.warn/.bad/.neutral */
+.compactResultsTable .rankActionBadge::before,
+.compactResultsTable .rankDecisionBadge::before,
+.compactResultsTable .decisionConfidenceBadge::before,
+.compactResultsTable .decisionPriorityBadge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--neutral);
+  flex: 0 0 auto;
+}
+.compactResultsTable .rankActionBadge.good::before,
+.compactResultsTable .rankDecisionBadge.good::before,
+.compactResultsTable .decisionConfidenceBadge.good::before,
+.compactResultsTable .decisionPriorityBadge.good::before { background: var(--positive); }
+.compactResultsTable .rankActionBadge.warn::before,
+.compactResultsTable .rankDecisionBadge.warn::before,
+.compactResultsTable .decisionConfidenceBadge.warn::before,
+.compactResultsTable .decisionPriorityBadge.warn::before,
+.compactResultsTable .rankActionBadge.bad::before,
+.compactResultsTable .rankDecisionBadge.bad::before,
+.compactResultsTable .decisionConfidenceBadge.bad::before,
+.compactResultsTable .decisionPriorityBadge.bad::before { background: var(--negative); }
+.compactResultsTable .rankActionBadge em,
+.compactResultsTable .rankDecisionBadge em,
+.compactResultsTable .decisionConfidenceBadge em,
+.compactResultsTable .decisionPriorityBadge em {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--neutral);
+}
+
+/* Badge status agregada del trust rail — abre QuickReview (interacción = --accent) */
+.compactResultsTable .rowTrustBadge {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 10px;
+  color: var(--text);
+  cursor: pointer;
+}
+.compactResultsTable .rowTrustBadge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--neutral);
+  flex: 0 0 auto;
+}
+.compactResultsTable .rowTrustBadge.good::before { background: var(--positive); }
+.compactResultsTable .rowTrustBadge.warn::before { background: var(--warning); }
+.compactResultsTable .rowTrustBadge.bad::before { background: var(--negative); }
+.compactResultsTable .rowTrustBadge:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.compactResultsTable .rowTrustBadge em {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--neutral);
+}
+
+/* Resolución de decisión — punto discreto neutral/positive */
+.compactResultsTable .reviewQueueResolutionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 10px;
+  color: var(--text);
+}
+.compactResultsTable .reviewQueueResolutionBadge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--positive);
+  flex: 0 0 auto;
+}
+.compactResultsTable .reviewQueueResolutionBadge.neutral::before { background: var(--neutral); }
+
+/* Estado vacío */
+.compactResultsTable .emptyResultsCell {
+  text-align: center;
+  color: var(--neutral);
+  padding: var(--space-6) var(--space-2);
+}
+
+/* Gutter de fila con incidencia — borde sutil, sin saturar */
+.compactResultsTable tbody tr.hasDecisionIssue.warn td:first-child { box-shadow: inset 2px 0 0 var(--warning); }
+.compactResultsTable tbody tr.hasDecisionIssue.bad td:first-child { box-shadow: inset 2px 0 0 var(--negative); }
+
+/* InfoHint en cabecera de setup — se mantiene accesible pero compacto */
+.compactResultsTable .compactSetupHead .infoHint,
+.compactResultsTable .compactScoreHead .infoHint { display: none; }
+
+/* Ocultar sparkline y bloque setup fuera de la fila base (hover/preview) */
+.compactResultsTable .compactSparkCell,
+.compactResultsTable .compactSetupStack { display: none !important; }
