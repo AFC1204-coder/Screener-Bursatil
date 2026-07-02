@@ -8,6 +8,7 @@
 // por lo que pasar el bag completo no provoca escrituras por identity-change.
 
 import { ReviewPriorityResultRail } from "@/app/components/screener/ReviewWidgets";
+import DecisionGroups from "@/app/components/screener/DecisionGroups";
 import {
   CompactResultsTable,
   DecisionEvidenceSummaryRail,
@@ -556,29 +557,36 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             </div>
           </div>
 
-          {/* Grupo "Decisiones": abierto por defecto. Contiene los rails operativos. */}
-          <details className="disclosurePanel resultsDecisionGroup" open>
-            <summary><span>Decisiones</span><em>{resultsFiltered.length}</em></summary>
-            <DecisionQualityStrip audit={visibleDecisionAudit} activeIssueKey={decisionIssueFilter} onIssueSelect={setDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={setDecisionProfileFilter} />
-            <DecisionOperatingBrief audit={visibleDecisionAudit} rows={resultsFiltered} onIssueSelect={setDecisionIssueFilter} onReadinessFilter={setReadinessFilter} onConfidenceFilter={setConfidenceFilter} onReview={() => openReview(resultsFiltered)} />
-            <PendingDecisionWorkRail
-              summary={pendingDecisionWorkSummary}
-              active={pendingDecisionWorkActive}
-              onFocus={applyPendingDecisionWorkFocus}
-              onClear={clearPendingDecisionWorkFocus}
-              onReview={reviewPendingDecisionWork}
-            />
-          </details>
-
-          {/* Grupo "Auditoría y datos": cerrado por defecto. Rails de calidad/pruebas/salud.
-              Sus filtros se activan desde aquí; los <select> duplicados se eliminaron. */}
-          <details className="disclosurePanel resultsAuditGroup">
-            <summary><span>Auditoría y datos</span><em>{resultsFiltered.length}</em></summary>
-            <DecisionEvidenceSummaryRail summary={decisionEvidenceSummary} activeKey={decisionEvidenceFilter} onSelect={setDecisionEvidenceFilter} onReview={openReviewDecisionEvidenceQueue} />
-            <DataHealthSummaryRail summary={dataHealthSummary} activeKey={dataHealthFilter} onSelect={setDataHealthFilter} />
-            <ScoreAuditSummaryRail summary={scoreAuditSummary} activeKey={scoreAuditFilter} onSelect={setScoreAuditFilter} onReview={openReviewScoreAuditQueue} />
-            <AuditabilitySummaryRail summary={visibleAuditabilitySummary} onReviewFocus={openReviewMethodologyFocusQueue} />
-          </details>
+          <DecisionGroups
+            audit={visibleDecisionAudit}
+            filteredCount={resultsFiltered.length}
+            filteredRows={resultsFiltered}
+            onReviewAll={() => openReview(resultsFiltered)}
+            decisionIssueFilter={decisionIssueFilter}
+            onDecisionIssueFilter={setDecisionIssueFilter}
+            decisionProfileFilter={decisionProfileFilter}
+            onDecisionProfileFilter={setDecisionProfileFilter}
+            onReadinessFilter={setReadinessFilter}
+            onConfidenceFilter={setConfidenceFilter}
+            pendingDecisionWorkSummary={pendingDecisionWorkSummary}
+            pendingDecisionWorkActive={pendingDecisionWorkActive}
+            onPendingDecisionWorkFocus={applyPendingDecisionWorkFocus}
+            onPendingDecisionWorkClear={clearPendingDecisionWorkFocus}
+            onPendingDecisionWorkReview={reviewPendingDecisionWork}
+            decisionEvidenceSummary={decisionEvidenceSummary}
+            decisionEvidenceFilter={decisionEvidenceFilter}
+            onDecisionEvidenceFilter={setDecisionEvidenceFilter}
+            onReviewDecisionEvidenceQueue={openReviewDecisionEvidenceQueue}
+            dataHealthSummary={dataHealthSummary}
+            dataHealthFilter={dataHealthFilter}
+            onDataHealthFilter={setDataHealthFilter}
+            scoreAuditSummary={scoreAuditSummary}
+            scoreAuditFilter={scoreAuditFilter}
+            onScoreAuditFilter={setScoreAuditFilter}
+            onReviewScoreAuditQueue={openReviewScoreAuditQueue}
+            auditabilitySummary={visibleAuditabilitySummary}
+            onReviewMethodologyFocusQueue={openReviewMethodologyFocusQueue}
+          />
 
           <div className="controls resultFilterBar" style={{ marginBottom: 12 }}>
             {/* No redundantes: resolución/fiabilidad/acción no tienen rail equivalente. */}
