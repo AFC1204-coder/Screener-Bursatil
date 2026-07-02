@@ -54,9 +54,8 @@ import {
 } from "@/lib/screenerConfig";
 import { marketFlag } from "@/lib/symbols";
 import { metricShortLabel } from "@/lib/metricCatalog";
-import { decisionReadinessLabel, rankActionLabel } from "@/lib/screenerExplainability";
+import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
-import { decisionProfileLabel } from "@/lib/decisionProfile";
 
 export default function ScreenerShell({ chrome, sidebar, search, resultView, results, actions }) {
   // --- chrome ---
@@ -174,12 +173,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     readinessSummary,
     readinessFilter,
     setReadinessFilter,
-    readinessOptions,
-    readinessCounts,
     decisionProfileFilter,
     setDecisionProfileFilter,
-    decisionProfileOptions,
-    decisionProfileCounts,
     reviewPrioritySummary,
     reviewPriorityFilter,
     setReviewPriorityFilter,
@@ -550,6 +545,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               <span>Results</span>
               <h2>{resultsFiltered.length} resultados</h2>
               <p>{resultsRows.length} pasan · {analyzedRows.length || resultsUniverse.length || 0} analizadas · {SORT_LABELS[sort] || sort}</p>
+              {/* Rails de decisión: control clicable único para readiness/reviewPriority.
+                  Los <select> que antes duplicaban estos estados se eliminaron; el re-click
+                  del chip limpia a "Todos"/"all", y ResultFilterChips también permite limpiar. */}
               <DecisionSummaryRail summary={readinessSummary} activeKey={readinessFilter} onSelect={setReadinessFilter} />
               <ReviewPriorityResultRail summary={reviewPrioritySummary} activeKey={reviewPriorityFilter} onSelect={setReviewPriorityFilter} onReview={openReviewPriorityQueue} />
             </div>
@@ -563,68 +561,47 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               </> : null}
             </div>
           </div>
-          <DecisionQualityStrip audit={visibleDecisionAudit} activeIssueKey={decisionIssueFilter} onIssueSelect={setDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={setDecisionProfileFilter} />
-          <DecisionOperatingBrief audit={visibleDecisionAudit} rows={resultsFiltered} onIssueSelect={setDecisionIssueFilter} onReadinessFilter={setReadinessFilter} onConfidenceFilter={setConfidenceFilter} onReview={() => openReview(resultsFiltered)} />
-          <DecisionEvidenceSummaryRail summary={decisionEvidenceSummary} activeKey={decisionEvidenceFilter} onSelect={setDecisionEvidenceFilter} onReview={openReviewDecisionEvidenceQueue} />
-          <DataHealthSummaryRail summary={dataHealthSummary} activeKey={dataHealthFilter} onSelect={setDataHealthFilter} />
-          <ScoreAuditSummaryRail summary={scoreAuditSummary} activeKey={scoreAuditFilter} onSelect={setScoreAuditFilter} onReview={openReviewScoreAuditQueue} />
-          <AuditabilitySummaryRail summary={visibleAuditabilitySummary} onReviewFocus={openReviewMethodologyFocusQueue} />
-          <PendingDecisionWorkRail
-            summary={pendingDecisionWorkSummary}
-            active={pendingDecisionWorkActive}
-            onFocus={applyPendingDecisionWorkFocus}
-            onClear={clearPendingDecisionWorkFocus}
-            onReview={reviewPendingDecisionWork}
-          />
+
+          {/* Grupo "Decisiones": abierto por defecto. Contiene los rails operativos. */}
+          <details className="disclosurePanel resultsDecisionGroup" open>
+            <summary><span>Decisiones</span><em>{resultsFiltered.length}</em></summary>
+            <DecisionQualityStrip audit={visibleDecisionAudit} activeIssueKey={decisionIssueFilter} onIssueSelect={setDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={setDecisionProfileFilter} />
+            <DecisionOperatingBrief audit={visibleDecisionAudit} rows={resultsFiltered} onIssueSelect={setDecisionIssueFilter} onReadinessFilter={setReadinessFilter} onConfidenceFilter={setConfidenceFilter} onReview={() => openReview(resultsFiltered)} />
+            <PendingDecisionWorkRail
+              summary={pendingDecisionWorkSummary}
+              active={pendingDecisionWorkActive}
+              onFocus={applyPendingDecisionWorkFocus}
+              onClear={clearPendingDecisionWorkFocus}
+              onReview={reviewPendingDecisionWork}
+            />
+          </details>
+
+          {/* Grupo "Auditoría y datos": cerrado por defecto. Rails de calidad/pruebas/salud.
+              Sus filtros se activan desde aquí; los <select> duplicados se eliminaron. */}
+          <details className="disclosurePanel resultsAuditGroup">
+            <summary><span>Auditoría y datos</span><em>{resultsFiltered.length}</em></summary>
+            <DecisionEvidenceSummaryRail summary={decisionEvidenceSummary} activeKey={decisionEvidenceFilter} onSelect={setDecisionEvidenceFilter} onReview={openReviewDecisionEvidenceQueue} />
+            <DataHealthSummaryRail summary={dataHealthSummary} activeKey={dataHealthFilter} onSelect={setDataHealthFilter} />
+            <ScoreAuditSummaryRail summary={scoreAuditSummary} activeKey={scoreAuditFilter} onSelect={setScoreAuditFilter} onReview={openReviewScoreAuditQueue} />
+            <AuditabilitySummaryRail summary={visibleAuditabilitySummary} onReviewFocus={openReviewMethodologyFocusQueue} />
+          </details>
+
           <div className="controls resultFilterBar" style={{ marginBottom: 12 }}>
-            <select className="select resultFilterSelect" value={readinessFilter} onChange={(e) => setReadinessFilter(e.target.value)} aria-label="Filtrar por calidad de decision">
-              {readinessOptions.map((x) => <option key={x} value={x}>{optionLabel("Decisión", x, readinessCounts, decisionReadinessLabel)}</option>)}
-            </select>
+            {/* No redundantes: resolución/fiabilidad/acción no tienen rail equivalente. */}
             <select className="select resultFilterSelect" value={decisionResolutionFilter} onChange={(e) => setDecisionResolutionFilter(e.target.value)} aria-label="Filtrar por resolución de decision">
               {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
-            </select>
-            <select className="select resultFilterSelect" value={decisionProfileFilter} onChange={(e) => setDecisionProfileFilter(e.target.value)} aria-label="Filtrar por perfil de decision">
-              {decisionProfileOptions.map((x) => <option key={x} value={x}>{optionLabel("Perfil", x, decisionProfileCounts, decisionProfileLabel)}</option>)}
-            </select>
-            <select className="select resultFilterSelect" value={reviewPriorityFilter} onChange={(e) => setReviewPriorityFilter(e.target.value)} aria-label="Filtrar por prioridad de investigacion">
-              {reviewPriorityOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
             </select>
             <select className="select resultFilterSelect" value={reliabilityFilter} onChange={(e) => setReliabilityFilter(e.target.value)} aria-label="Filtrar por fiabilidad de observacion">
               {reliabilityOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
             </select>
-            <select className="select resultFilterSelect" value={decisionEvidenceFilter} onChange={(e) => setDecisionEvidenceFilter(e.target.value)} aria-label="Filtrar por pruebas de decision">
-              {decisionEvidenceOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
-            </select>
+            {/* NO borrar: DecisionOperatingBrief solo emite onConfidenceFilter("high"); este select
+                es el único acceso a medium/low/very-low confidence. */}
             <select className="select resultFilterSelect" value={confidenceFilter} onChange={(e) => setConfidenceFilter(e.target.value)} aria-label="Filtrar por confianza de decision">
               {confidenceOptions.map((x) => <option key={x} value={x}>{optionLabel("Confianza", x, confidenceCounts, decisionConfidenceLabel)}</option>)}
-            </select>
-            <select className="select resultFilterSelect" value={dataHealthFilter} onChange={(e) => setDataHealthFilter(e.target.value)} aria-label="Filtrar por salud de datos">
-              {dataHealthOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
-            </select>
-            <select className="select resultFilterSelect" value={scoreAuditFilter} onChange={(e) => setScoreAuditFilter(e.target.value)} aria-label="Filtrar por auditoría de score">
-              {scoreAuditOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
             </select>
             <select className="select resultFilterSelect" value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} aria-label="Filtrar por accion sugerida">
               {actionOptions.map((x) => <option key={x} value={x}>{optionLabel("Acción", x, actionCounts, rankActionLabel)}</option>)}
             </select>
-            {viewLayers.country ? <select className="select resultFilterSelect" value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)} aria-label="Filtrar por pais">
-              {countryOptions.map((x) => <option key={x} value={x}>{optionLabel("País", x, countryCounts, (code) => `${code} · ${marketName(code)}`)}</option>)}
-            </select> : null}
-            {viewLayers.theme ? <select className="select resultFilterSelect" value={themeFilter} onChange={(e) => { setThemeFilter(e.target.value); setSectorFilter("Todos"); setIndustryFilter("Todos"); }} aria-label="Filtrar por tema">
-              {themeOptions.map((x) => <option key={x} value={x}>{optionLabel("Tema", x, themeCounts)}</option>)}
-            </select> : null}
-            {viewLayers.sector ? <select className="select resultFilterSelect" value={sectorFilter} onChange={(e) => { setSectorFilter(e.target.value); setIndustryFilter("Todos"); }} aria-label="Filtrar por sector">
-              {sectorOptions.map((x) => <option key={x} value={x}>{optionLabel("Sector", x, sectorCounts)}</option>)}
-            </select> : null}
-            {viewLayers.industry ? <select className="select resultFilterSelect" value={industryFilter} onChange={(e) => setIndustryFilter(e.target.value)} aria-label="Filtrar por subsector">
-              {industryOptions.map((x) => <option key={x} value={x}>{optionLabel("Subsector", x, industryCounts)}</option>)}
-            </select> : null}
-            {viewLayers.sectorStrength ? <select className="select resultFilterSelect" value={sectorStrength} onChange={(e) => setSectorStrength(e.target.value)} aria-label="Filtrar por fuerza de grupo">
-              {SECTOR_STRENGTH_OPTIONS.map((x) => <option key={x} value={x}>{optionLabel("Fuerza grupo", x, sectorStrengthCounts, (item) => SECTOR_STRENGTH_LABELS[item] || item)}</option>)}
-            </select> : null}
-            {viewLayers.ipo ? <select className="select resultFilterSelect" value={ipo} onChange={(e) => setIpo(e.target.value)} aria-label="Filtrar por IPO">
-              {ipos.map((x) => <option key={x} value={x}>{optionLabel("IPO", x, ipoCounts)}</option>)}
-            </select> : null}
             <select className="select resultFilterSelect resultSortSelect" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Ordenar resultados">
               <option value="objectiveScore">Ordenar: Calidad objetiva</option>
               <option value="decisionPriority">Ordenar: Calidad decisión</option>
@@ -639,6 +616,32 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               <option value="dataCoverageScore">Ordenar: Cobertura datos</option>
               <option value="weaknessScore">Ordenar: Deterioro</option>
             </select>
+            {/* View-layers: colapsados para reducir saturación de la barra de filtros. */}
+            {(viewLayers.country || viewLayers.theme || viewLayers.sector || viewLayers.industry || viewLayers.sectorStrength || viewLayers.ipo) ? (
+              <details className="disclosurePanel compactDisclosure viewLayerFilters">
+                <summary><span>Más filtros</span><em>{viewFiltersActive} activos</em></summary>
+                <div className="controls resultFilterBar viewLayerFilterGrid">
+                  {viewLayers.country ? <select className="select resultFilterSelect" value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)} aria-label="Filtrar por pais">
+                    {countryOptions.map((x) => <option key={x} value={x}>{optionLabel("País", x, countryCounts, (code) => `${code} · ${marketName(code)}`)}</option>)}
+                  </select> : null}
+                  {viewLayers.theme ? <select className="select resultFilterSelect" value={themeFilter} onChange={(e) => { setThemeFilter(e.target.value); setSectorFilter("Todos"); setIndustryFilter("Todos"); }} aria-label="Filtrar por tema">
+                    {themeOptions.map((x) => <option key={x} value={x}>{optionLabel("Tema", x, themeCounts)}</option>)}
+                  </select> : null}
+                  {viewLayers.sector ? <select className="select resultFilterSelect" value={sectorFilter} onChange={(e) => { setSectorFilter(e.target.value); setIndustryFilter("Todos"); }} aria-label="Filtrar por sector">
+                    {sectorOptions.map((x) => <option key={x} value={x}>{optionLabel("Sector", x, sectorCounts)}</option>)}
+                  </select> : null}
+                  {viewLayers.industry ? <select className="select resultFilterSelect" value={industryFilter} onChange={(e) => setIndustryFilter(e.target.value)} aria-label="Filtrar por subsector">
+                    {industryOptions.map((x) => <option key={x} value={x}>{optionLabel("Subsector", x, industryCounts)}</option>)}
+                  </select> : null}
+                  {viewLayers.sectorStrength ? <select className="select resultFilterSelect" value={sectorStrength} onChange={(e) => setSectorStrength(e.target.value)} aria-label="Filtrar por fuerza de grupo">
+                    {SECTOR_STRENGTH_OPTIONS.map((x) => <option key={x} value={x}>{optionLabel("Fuerza grupo", x, sectorStrengthCounts, (item) => SECTOR_STRENGTH_LABELS[item] || item)}</option>)}
+                  </select> : null}
+                  {viewLayers.ipo ? <select className="select resultFilterSelect" value={ipo} onChange={(e) => setIpo(e.target.value)} aria-label="Filtrar por IPO">
+                    {ipos.map((x) => <option key={x} value={x}>{optionLabel("IPO", x, ipoCounts)}</option>)}
+                  </select> : null}
+                </div>
+              </details>
+            ) : null}
           </div>
           <ResultFilterChips chips={resultFilterChips} hiddenCount={hiddenByView} visibleCount={resultsFiltered.length} totalCount={resultsRows.length} brief={resultViewBrief} onClearAll={clearResultView} onReview={resultsFiltered.length ? openResultViewReview : undefined} />
           {resultsFiltered.length ? <div className="controls resultPager" style={{ justifyContent: "space-between", marginBottom: 12 }}>

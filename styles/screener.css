@@ -1696,6 +1696,45 @@ button.dataHealthSummaryItem:hover,
   min-height:38px;
 }
 
+/* --- Grupos plegables del bloque de resultados de escritorio --- */
+/* Reutiliza .disclosurePanel para el summary (+/−, uppercase label, em count).
+   Aqui solo anadimos contenedor tipo card + espaciado entre rails internos. */
+.resultsDecisionGroup,
+.resultsAuditGroup {
+  margin:12px 0;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:var(--radius);
+  background:var(--surface);
+}
+
+.resultsDecisionGroup > *,
+.resultsAuditGroup > * {
+  margin-top:10px;
+}
+
+.resultsDecisionGroup[open] > summary,
+.resultsAuditGroup[open] > summary {
+  margin-bottom:4px;
+}
+
+/* Disclosure compacto de view-layers dentro de la barra de filtros:
+   ocupa el ancho de la fila y rejilla interna de selects. */
+.viewLayerFilters {
+  margin-top:8px;
+}
+
+.viewLayerFilters[open] > summary {
+  margin-bottom:10px;
+}
+
+.viewLayerFilterGrid {
+  margin:0;
+  padding:0;
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:10px;
+}
+
 .stockPreview {
   padding:11px;
   border:1px solid rgba(255,255,255,.16);
