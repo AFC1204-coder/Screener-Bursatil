@@ -257,10 +257,13 @@ describe("DecisionQualityStrip", () => {
     }));
 
     expect(html).toContain("compactResultsTable");
-    expect(html).toContain("decisionEvidenceChecklist compact");
-    expect(html).toContain("Pruebas pendientes");
-    expect(html).toContain("Confluencia amplia");
-    expect(html).toContain("Contradicciones");
+    // Tras el rediseño: el trust rail colapsa a una badge status agregada que abre
+    // QuickReview; el detalle (pruebas/incidencias/score audit) ya no vive en la fila.
+    expect(html).toContain("rowTrustBadge");
+    expect(html).toContain("compactScoreCell");
+    // Los veredictos siguen visibles (acción + decisión + confianza + prioridad).
+    expect(html).toContain("rankActionBadge");
+    expect(html).toContain("decisionConfidenceBadge");
   });
 
   it("convierte señales compactas desktop en filtros de investigación", () => {
@@ -311,32 +314,15 @@ describe("DecisionQualityStrip", () => {
       onFavorite: () => {},
       onReview: () => {},
       onOpenStock: () => {},
-      decisionEvidenceFilter: "all",
-      onDecisionEvidenceFilter: () => {},
-      dataHealthFilter: "ready",
-      onDataHealthFilter: () => {},
-      scoreAuditFilter: "all",
-      onScoreAuditFilter: () => {},
     }));
 
-    expect(html).toContain("compactTrustFilter active");
-    expect(html).toContain("aria-pressed=\"true\"");
-    expect(html).toContain("compactTrustRail");
-    expect(html).toContain("reviewFocusPill");
-    expect(html).toContain("Foco:");
-    expect(html).toContain("<em>Score</em>");
-    expect(html).toContain("objectiveMetricTruthPill");
+    // Tras el rediseño: los filtros por fila se eliminaron (viven en DecisionGroups).
+    // La fila expone una badge status agregada + proveniencia de métrica (source).
+    expect(html).toContain("rowTrustBadge");
     expect(html).toContain("source-measured");
     expect(html).toContain("source-proxy");
     expect(html).toContain("A/D proxy: proxy/estimada");
     expect(html).toContain("aria-label=\"A/D: 44. A/D proxy: proxy/estimada\"");
-    expect(html).toContain("aria-hidden=\"true\">p");
-    expect(html).toContain("Metricas:");
-    expect(html).toContain("Filtrar similares: Falta validar");
-    expect(html).toContain("Filtrar similares: Score descuadrado");
-    expect(html).toContain("Filtrar resultados por pruebas");
-    expect(html).toContain("Filtrar resultados por salud de datos");
-    expect(html).toContain("Filtrar resultados por auditoría de score");
   });
 
   it("renderiza la salud de datos como bloque accionable", () => {
