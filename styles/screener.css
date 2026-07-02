@@ -7429,8 +7429,9 @@ button.decisionOperatingIssue:hover {
 /* Columnas: ★ | # | Compañía | RS | Mom. | Volumen | Objetivo (7 tras rediseño) */
 .compactResultsTable th:nth-child(1), .compactResultsTable td:nth-child(1) { width: 32px; }
 .compactResultsTable th:nth-child(2), .compactResultsTable td:nth-child(2) { width: 36px; }
-.compactResultsTable th:nth-child(3), .compactResultsTable td:nth-child(3) { width: 26%; }
-.compactResultsTable th:nth-child(7), .compactResultsTable td:nth-child(7) { width: 220px; }
+/* Compañía: ancho suficiente para [logo 24] + [gap 8] + [ticker (≈9ch×7px=63)] + [gap 4] + [flag 20] + padding 16 ≈ 135px. */
+.compactResultsTable th:nth-child(3), .compactResultsTable td:nth-child(3) { width: 138px; min-width: 138px; }
+.compactResultsTable th:nth-child(7), .compactResultsTable td:nth-child(7) { width: 190px; }
 
 /* Fila: altura objetivo 56-72px */
 .compactResultsTable tbody tr {
@@ -7488,6 +7489,12 @@ button.decisionOperatingIssue:hover {
   font-size: 12px;
   font-weight: 500;
   color: var(--text);
+  /* El ticker nunca se trunca: si falta ancho, la fila se reduce antes que el ticker.
+     Sin ellipsis como estado permanente (regla del sistema de diseño). */
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  flex: 0 0 auto;
 }
 .compactResultsTable .compactIdentityCell b {
   display: block;
