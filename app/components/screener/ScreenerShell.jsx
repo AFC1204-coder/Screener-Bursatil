@@ -10,6 +10,7 @@
 import { ReviewPriorityResultRail } from "@/app/components/screener/ReviewWidgets";
 import DecisionGroups from "@/app/components/screener/DecisionGroups";
 import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
+import ResultPagerTable from "@/app/components/screener/ResultPagerTable";
 import {
   CompactResultsTable,
   DecisionEvidenceSummaryRail,
@@ -640,20 +641,32 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onClearAll={clearResultView}
             onReview={resultsFiltered.length ? openResultViewReview : undefined}
           />
-          {resultsFiltered.length ? <div className="controls resultPager" style={{ justifyContent: "space-between", marginBottom: 12 }}>
-            <span className="fine">
-              Mostrando {resultsFiltered.length ? resultPageStart + 1 : 0}-{resultPageEnd} de {resultsFiltered.length}
-            </span>
-            <div className="controls">
-              <select className="select" style={{ width: "auto", padding: "4px 8px" }} value={resultPageSize} onChange={(e) => updateResultPageSize(Number(e.target.value))} aria-label="Acciones por página">
-                {RESULT_PAGE_SIZES.map((size) => <option key={size} value={size}>{size} por página</option>)}
-              </select>
-              <button className="btn btnSmall btnGhost" onClick={() => setResultPageClamped(visibleResultPage - 1)} disabled={visibleResultPage <= 1}>Anterior</button>
-              <span className="fine">Página {visibleResultPage}/{totalResultPages}</span>
-              <button className="btn btnSmall btnGhost" onClick={() => setResultPageClamped(visibleResultPage + 1)} disabled={visibleResultPage >= totalResultPages}>Siguiente</button>
-            </div>
-          </div> : null}
-      <CompactResultsTable rows={resultsPagedRows} settings={activeSettings} favoriteSymbols={resultsFavoriteSymbols} onFavorite={addFavorite} onReview={(symbol) => openReview(resultsFiltered, symbol)} onOpenStock={saveSessionBeforeStockOpen} rankOffset={resultPageStart} emptyLabel={restoringScan ? "Cargando último snapshot guardado..." : undefined} decisionIssueFilter={decisionIssueFilter} onDecisionIssueFilter={setDecisionIssueFilter} decisionEvidenceFilter={decisionEvidenceFilter} onDecisionEvidenceFilter={setDecisionEvidenceFilter} dataHealthFilter={dataHealthFilter} onDataHealthFilter={setDataHealthFilter} scoreAuditFilter={scoreAuditFilter} onScoreAuditFilter={setScoreAuditFilter} decisionResolutions={resultsDecisionResolutions} />
+          <ResultPagerTable
+            visibleCount={resultsFiltered.length}
+            resultPageStart={resultPageStart}
+            resultPageEnd={resultPageEnd}
+            resultPageSize={resultPageSize}
+            onPageSizeChange={updateResultPageSize}
+            visibleResultPage={visibleResultPage}
+            totalResultPages={totalResultPages}
+            onSetResultPage={setResultPageClamped}
+            pagedRows={resultsPagedRows}
+            settings={activeSettings}
+            favoriteSymbols={resultsFavoriteSymbols}
+            onFavorite={addFavorite}
+            onReview={(symbol) => openReview(resultsFiltered, symbol)}
+            onOpenStock={saveSessionBeforeStockOpen}
+            decisionIssueFilter={decisionIssueFilter}
+            onDecisionIssueFilter={setDecisionIssueFilter}
+            decisionEvidenceFilter={decisionEvidenceFilter}
+            onDecisionEvidenceFilter={setDecisionEvidenceFilter}
+            dataHealthFilter={dataHealthFilter}
+            onDataHealthFilter={setDataHealthFilter}
+            scoreAuditFilter={scoreAuditFilter}
+            onScoreAuditFilter={setScoreAuditFilter}
+            decisionResolutions={resultsDecisionResolutions}
+            emptyLabel={restoringScan ? "Cargando último snapshot guardado..." : undefined}
+          />
         </section>
       </main>
     </div>
