@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { applyResultViewFilters, buildReviewProfileSummary, prepareReviewQueueRows } from "@/app/screenerPanels";
+import { applyResultViewFilters } from "@/lib/screenerResultView";
+import { buildReviewProfileSummary, prepareReviewQueueRows } from "@/lib/decisionProfile";
 import { auditRestoredScanRow, buildScreenerAuditabilitySummary, buildScreenerReliability } from "@/lib/screenerReliability";
 
 const strongRow = {

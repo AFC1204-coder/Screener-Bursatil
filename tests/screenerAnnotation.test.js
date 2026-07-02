@@ -3,7 +3,7 @@ import { explainScreenerRank } from "@/lib/screenerExplainability";
 import { decisionConfidenceSummary, auditDecisionRowIssues, decisionPriorityBreakdown } from "@/lib/decisionAudit";
 import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
 import { decisionProfileForRow } from "@/lib/decisionProfile";
-import { applyResultViewFilters } from "@/app/screenerPanels";
+import { applyResultViewFilters } from "@/lib/screenerResultView";
 
 // Anotación local equivalente a annotateRow() en useResultViewModel.js.
 // Mantenerla en sincronía con el helper del hook; este test protege el contrato.

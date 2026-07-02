@@ -2,17 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { buildResultViewBrief } from "@/app/components/screener/resultViewBrief";
-import {
-  applyResultViewFilters,
-  DECISION_PROFILE_ORDER,
-  decisionProfileForRow,
-  decisionProfileLabel,
-  opportunityBuckets,
-  passesSectorStrength,
-  verifiedIpoCategory,
-} from "@/app/screenerPanels";
+import { applyResultViewFilters, opportunityBuckets, passesSectorStrength, verifiedIpoCategory } from "@/lib/screenerResultView";
 import { decisionConfidenceLabel, decisionConfidenceSummary, decisionPriorityBreakdown, DECISION_CONFIDENCE_ORDER, auditDecisionRowIssues, auditDecisionScan } from "@/lib/decisionAudit";
-import { buildReviewPrioritySummary, reviewPriorityMeta } from "@/lib/decisionProfile";
+import { DECISION_PROFILE_ORDER, buildReviewPrioritySummary, decisionProfileForRow, decisionProfileLabel, reviewPriorityMeta } from "@/lib/decisionProfile";
 import { rowPassesListContract } from "@/lib/listRationale";
 import {
   DATA_HEALTH_FILTER_ALL,
