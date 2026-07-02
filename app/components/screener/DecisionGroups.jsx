@@ -6,14 +6,16 @@
 // Los callbacks openReview*Queue viven en useResultViewModel; aquí se inyectan.
 
 import {
-  AuditabilitySummaryRail,
-  DataHealthSummaryRail,
-  DecisionEvidenceSummaryRail,
   DecisionOperatingBrief,
   DecisionQualityStrip,
   PendingDecisionWorkRail,
+} from "@/lib/screenerDomains/decision";
+import {
+  AuditabilitySummaryRail,
+  DecisionEvidenceSummaryRail,
   ScoreAuditSummaryRail,
-} from "@/app/screenerPanels";
+} from "@/lib/screenerDomains/audit";
+import { DataHealthSummaryRail } from "@/lib/screenerDomains/dataHealth";
 
 export default function DecisionGroups({
   audit,
