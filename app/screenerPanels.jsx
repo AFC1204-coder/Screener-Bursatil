@@ -1180,13 +1180,17 @@ function PendingDecisionWorkRail({ summary = null, active = false, onFocus, onCl
   </div>;
 }
 
-function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionQuality, decisionIssueFilter = "Todos", onDecisionIssueFilter, decisionProfileFilter = "Todos", onDecisionProfileFilter, reviewPriorityFilter = "all", reviewPriorityOptions = [{ key: "all", displayLabel: "Prioridad: Todas" }], onReviewPriorityFilter, reliabilityFilter = RELIABILITY_FILTER_ALL, reliabilityOptions = [{ key: RELIABILITY_FILTER_ALL, displayLabel: "Fiabilidad: Todas" }], onReliabilityFilter, decisionEvidenceSummary = null, decisionEvidenceFilter = "all", decisionEvidenceOptions = [{ key: "all", displayLabel: "Pruebas: Todas" }], onDecisionEvidenceFilter, onDecisionEvidenceReview, readinessSummary = [], readinessFilter = "Todos", onReadinessFilter, confidenceFilter = "Todos", confidenceOptions = ["Todos"], confidenceCounts, onConfidenceFilter, dataHealthSummary = null, dataHealthFilter = "Todos", dataHealthOptions = [{ key: "Todos", displayLabel: "Datos: Todos" }], onDataHealthFilter, scoreAuditSummary = null, scoreAuditFilter = "all", scoreAuditOptions = [{ key: "all", displayLabel: "Score: Todos" }], onScoreAuditFilter, onScoreAuditReview, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados todavia. Carga universo y ejecuta el screener." }) {
+function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionQuality, decisionIssueFilter = "Todos", onDecisionIssueFilter, decisionProfileFilter = "Todos", onDecisionProfileFilter, reviewPriorityFilter = "all", reviewPriorityOptions = [{ key: "all", displayLabel: "Prioridad: Todas" }], onReviewPriorityFilter, reliabilityFilter = RELIABILITY_FILTER_ALL, reliabilityOptions = [{ key: RELIABILITY_FILTER_ALL, displayLabel: "Fiabilidad: Todas" }], onReliabilityFilter, decisionEvidenceSummary = null, decisionEvidenceFilter = "all", onDecisionEvidenceFilter, onDecisionEvidenceReview, readinessSummary = [], readinessFilter = "Todos", onReadinessFilter, confidenceFilter = "Todos", confidenceOptions = ["Todos"], confidenceCounts, onConfidenceFilter, dataHealthSummary = null, dataHealthFilter = "Todos", onDataHealthFilter, scoreAuditSummary = null, scoreAuditFilter = "all", onScoreAuditFilter, onScoreAuditReview, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados todavia. Carga universo y ejecuta el screener." }) {
   const start = totalRows ? ((page - 1) * pageSize) + 1 : 0;
   const end = totalRows ? Math.min(page * pageSize, totalRows) : 0;
   const hasRows = totalRows > 0;
   const confidenceOptionLabel = (value) => value === "Todos"
     ? "Confianza: Todas"
     : `${decisionConfidenceLabel(value)}${confidenceCounts?.get(value) ? ` (${confidenceCounts.get(value)})` : ""}`;
+  const mobileFiltersActive = (confidenceFilter !== "Todos" ? 1 : 0)
+    + (reviewPriorityFilter !== "all" ? 1 : 0)
+    + (reliabilityFilter !== RELIABILITY_FILTER_ALL ? 1 : 0)
+    + (decisionResolutionFilter !== "all" ? 1 : 0);
   return <section className="mobileResultList">
     <div className="mobileResultListHead">
       <span>{hasRows ? `${totalRows} resultados · ${start}-${end} · ${SORT_LABELS[sort] || sort}` : "0 resultados"}</span>
@@ -1201,6 +1205,19 @@ function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, 
           <option value="avgTurnover">Liquidez</option>
           <option value="weaknessScore">Deterioro</option>
         </select>
+        <button type="button" onClick={onCsv} disabled={!rows.length}>CSV</button>
+        <button type="button" onClick={onAuditJson} disabled={!rows.length} title="Exportar JSON compatible con audit:decisions">JSON</button>
+        <button type="button" onClick={onSave} disabled={!rows.length || savingDisabled} aria-label="Guardar snapshot de resultados">Guardar</button>
+        <button type="button" onClick={() => onReview()} disabled={!rows.length}>Revisar</button>
+      </div> : null}
+    </div>
+    {/* Filtros no redundantes con los rails (mismo criterio que el bloque desktop):
+        confianza (único acceso a medium/low), prioridad, fiabilidad y resolución.
+        Los selects de pruebas/datos/score se eliminaron: sus rails viven en el
+        grupo "Auditoría y datos" y son el control canónico de esos filtros. */}
+    {hasRows ? <details className="disclosurePanel compactDisclosure mobileFilterDisclosure">
+      <summary><span>Filtros</span><em>{mobileFiltersActive ? `${mobileFiltersActive} activos` : "Sin filtros"}</em></summary>
+      <div className="mobileFilterGrid">
         <select value={confidenceFilter} onChange={(event) => onConfidenceFilter?.(event.target.value)} aria-label="Filtrar por confianza de decision">
           {confidenceOptions.map((x) => <option key={x} value={x}>{confidenceOptionLabel(x)}</option>)}
         </select>
@@ -1210,30 +1227,23 @@ function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, 
         <select value={reliabilityFilter} onChange={(event) => onReliabilityFilter?.(event.target.value)} aria-label="Filtrar por fiabilidad de observacion">
           {reliabilityOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
         </select>
-        <select value={decisionEvidenceFilter} onChange={(event) => onDecisionEvidenceFilter?.(event.target.value)} aria-label="Filtrar por pruebas de decision">
-          {decisionEvidenceOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
-        </select>
-        <select value={dataHealthFilter} onChange={(event) => onDataHealthFilter?.(event.target.value)} aria-label="Filtrar por salud de datos">
-          {dataHealthOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
-        </select>
-        <select value={scoreAuditFilter} onChange={(event) => onScoreAuditFilter?.(event.target.value)} aria-label="Filtrar por auditoría de score">
-          {scoreAuditOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
-        </select>
         <select value={decisionResolutionFilter} onChange={(event) => onDecisionResolutionFilter?.(event.target.value)} aria-label="Filtrar por resolución de decision">
           {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
         </select>
-        <button type="button" onClick={onCsv} disabled={!rows.length}>CSV</button>
-        <button type="button" onClick={onAuditJson} disabled={!rows.length} title="Exportar JSON compatible con audit:decisions">JSON</button>
-        <button type="button" onClick={onSave} disabled={!rows.length || savingDisabled} aria-label="Guardar snapshot de resultados">Guardar</button>
-        <button type="button" onClick={() => onReview()} disabled={!rows.length}>Revisar</button>
-      </div> : null}
-    </div>
-    {hasRows ? <DecisionQualityStrip audit={decisionQuality} compact activeIssueKey={decisionIssueFilter} onIssueSelect={onDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={onDecisionProfileFilter} /> : null}
-    {hasRows ? <DecisionOperatingBrief audit={decisionQuality} rows={rows} compact onIssueSelect={onDecisionIssueFilter} onReadinessFilter={onReadinessFilter} onConfidenceFilter={onConfidenceFilter} onReview={onReview} /> : null}
-    {hasRows ? <DecisionEvidenceSummaryRail summary={decisionEvidenceSummary} activeKey={decisionEvidenceFilter} onSelect={onDecisionEvidenceFilter} onReview={onDecisionEvidenceReview} compact /> : null}
-    {hasRows ? <DataHealthSummaryRail summary={dataHealthSummary} activeKey={dataHealthFilter} onSelect={onDataHealthFilter} compact /> : null}
-    {hasRows ? <ScoreAuditSummaryRail summary={scoreAuditSummary} activeKey={scoreAuditFilter} onSelect={onScoreAuditFilter} onReview={onScoreAuditReview} compact /> : null}
-    {hasRows ? <DecisionSummaryRail summary={readinessSummary} activeKey={readinessFilter} onSelect={onReadinessFilter} className="mobile" /> : null}
+      </div>
+    </details> : null}
+    {hasRows ? <details className="disclosurePanel resultsDecisionGroup" open>
+      <summary><span>Decisiones</span><em>{totalRows}</em></summary>
+      <DecisionQualityStrip audit={decisionQuality} compact activeIssueKey={decisionIssueFilter} onIssueSelect={onDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={onDecisionProfileFilter} />
+      <DecisionOperatingBrief audit={decisionQuality} rows={rows} compact onIssueSelect={onDecisionIssueFilter} onReadinessFilter={onReadinessFilter} onConfidenceFilter={onConfidenceFilter} onReview={onReview} />
+      <DecisionSummaryRail summary={readinessSummary} activeKey={readinessFilter} onSelect={onReadinessFilter} className="mobile" />
+    </details> : null}
+    {hasRows ? <details className="disclosurePanel resultsAuditGroup">
+      <summary><span>Auditoría y datos</span><em>{totalRows}</em></summary>
+      <DecisionEvidenceSummaryRail summary={decisionEvidenceSummary} activeKey={decisionEvidenceFilter} onSelect={onDecisionEvidenceFilter} onReview={onDecisionEvidenceReview} compact />
+      <DataHealthSummaryRail summary={dataHealthSummary} activeKey={dataHealthFilter} onSelect={onDataHealthFilter} compact />
+      <ScoreAuditSummaryRail summary={scoreAuditSummary} activeKey={scoreAuditFilter} onSelect={onScoreAuditFilter} onReview={onScoreAuditReview} compact />
+    </details> : null}
     {hasRows ? <div className="controls" style={{ marginBottom: 10 }}>
       <select value={pageSize} onChange={(event) => onPageSize?.(Number(event.target.value))} aria-label="Acciones por pagina">
         {RESULT_PAGE_SIZES.map((size) => <option key={size} value={size}>{size} / página</option>)}

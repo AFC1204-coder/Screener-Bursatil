@@ -186,7 +186,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     decisionEvidenceSummary,
     decisionEvidenceFilter,
     setDecisionEvidenceFilter,
-    decisionEvidenceOptions,
     openReviewDecisionEvidenceQueue,
     confidenceFilter,
     setConfidenceFilter,
@@ -195,11 +194,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     dataHealthSummary,
     dataHealthFilter,
     setDataHealthFilter,
-    dataHealthOptions,
     scoreAuditSummary,
     scoreAuditFilter,
     setScoreAuditFilter,
-    scoreAuditOptions,
     openReviewScoreAuditQueue,
     decisionResolutionFilter,
     setDecisionResolutionFilter,
@@ -511,7 +508,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onReliabilityFilter={setReliabilityFilter}
             decisionEvidenceSummary={decisionEvidenceSummary}
             decisionEvidenceFilter={decisionEvidenceFilter}
-            decisionEvidenceOptions={decisionEvidenceOptions}
             onDecisionEvidenceFilter={setDecisionEvidenceFilter}
             onDecisionEvidenceReview={openReviewDecisionEvidenceQueue}
             readinessSummary={readinessSummary}
@@ -523,11 +519,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onConfidenceFilter={setConfidenceFilter}
             dataHealthSummary={dataHealthSummary}
             dataHealthFilter={dataHealthFilter}
-            dataHealthOptions={dataHealthOptions}
             onDataHealthFilter={setDataHealthFilter}
             scoreAuditSummary={scoreAuditSummary}
             scoreAuditFilter={scoreAuditFilter}
-            scoreAuditOptions={scoreAuditOptions}
             onScoreAuditFilter={setScoreAuditFilter}
             onScoreAuditReview={openReviewScoreAuditQueue}
             decisionResolutionFilter={decisionResolutionFilter}

@@ -3698,6 +3698,41 @@ button.decisionIssueBadge:hover,
   font-size:11px;
 }
 
+/* Disclosures del listado móvil: mismo patrón que el bloque desktop
+   (resultsDecisionGroup/resultsAuditGroup) con padding reducido. */
+.mobileResultList .resultsDecisionGroup,
+.mobileResultList .resultsAuditGroup {
+  margin:0 0 12px;
+  padding:12px;
+}
+
+.mobileFilterDisclosure {
+  margin:0 0 12px;
+}
+
+.mobileFilterDisclosure[open] > summary {
+  margin-bottom:10px;
+}
+
+.mobileFilterGrid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:10px;
+}
+
+.mobileFilterGrid select {
+  width:100%;
+  min-height:36px;
+  border:0;
+  border-radius:6px;
+  padding:8px;
+  background:rgba(255,255,255,.035);
+  color:#93c5fd;
+  font-size:11px;
+}
+
 .mobileResultList .decisionQualityStrip.compact {
   grid-template-columns:repeat(3,minmax(0,1fr));
   overflow:hidden;
