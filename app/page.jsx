@@ -15,8 +15,8 @@ import {
   sleep,
   searchText,
   reviewProfileMeta,
-  verifiedIpoCategory,
 } from "@/app/screenerPanels";
+import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson, postJson } from "@/lib/clientApi";
 import { getLatestScanFromCloud, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
