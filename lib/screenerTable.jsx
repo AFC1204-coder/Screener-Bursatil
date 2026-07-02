@@ -12,7 +12,6 @@ import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
 import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
 import { buildRowReviewFocus, decisionConfidenceForRow, decisionResolutionForRow } from "@/lib/screenerResultView";
 import { CompanyMark, CompactMetric } from "@/lib/screenerAtoms";
-import { DecisionConfidenceBadge, DecisionPriorityBadge, DecisionResolutionBadge } from "@/lib/screenerDomains/decision";
 import { compactMetricSourceLookup, compactTone, objectiveMetricCompactState } from "@/lib/screenerFormat";
 import { countryCode, countryName, marketFlag, stockUrl } from "@/lib/symbols";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
@@ -71,8 +70,22 @@ export function CompactResultsTable({ rows = [], settings, favoriteSymbols, onFa
           const issueTone = rowIssues.some((issue) => issue.severity === "bad") ? "bad" : rowIssues.length ? "warn" : "";
           const resolution = decisionResolutionForRow(r, decisionResolutions);
           const reviewFocus = buildRowReviewFocus({ dataHealth, metricTruth, scoreAudit, vcpReliability, evidence, rowIssues });
-          // Conteo de señales con severidad para el indicador "+N" de la badge agregada.
-          const signalCount = (rowIssues?.length || 0)
+          // Tono agregado: el más severo entre los 5 ejes de veredicto (bad > warn > neutral).
+          // Un único punto de color por fila => jerarquía clara.
+          const verdictTones = [
+            rankExplain.action.tone,
+            rankExplain.readiness.tone,
+            confidence.tone,
+            resolution?.tone || "",
+            priority.tone || "",
+          ];
+          const aggregateTone = verdictTones.includes("bad") ? "bad"
+            : verdictTones.includes("warn") ? "warn"
+            : "neutral";
+          // Conteo de señales y veredictos para el indicador "+N" de la badge agregada.
+          const warnBadVerdicts = verdictTones.filter((t) => t === "warn" || t === "bad").length;
+          const signalCount = warnBadVerdicts
+            + (rowIssues?.length || 0)
             + (scoreAudit?.missing?.length || 0)
             + (dataHealth?.issues?.length || 0)
             + (evidence?.pending?.length || 0)
@@ -91,12 +104,11 @@ export function CompactResultsTable({ rows = [], settings, favoriteSymbols, onFa
             <td className="rankCell">{rankOffset + i + 1}</td>
             <td className="compactIdentityCell">
               <CompanyMark row={r} size="sm" />
-              <span className="compactIdentityText">
+              <span className="compactIdentityText" title={r.companyName || r.symbol}>
                 <span className="compactIdentityTop">
                   <Link className="ticker" href={stockUrl(r.symbol)} onPointerDown={() => onOpenStock?.(r)} onClick={() => onOpenStock?.(r)}>{r.symbol}</Link>
                   <CompactCountryFlag country={country} />
                 </span>
-                <b title={r.companyName || r.symbol}>{r.companyName || r.symbol}</b>
               </span>
             </td>
             <td>
@@ -123,19 +135,14 @@ export function CompactResultsTable({ rows = [], settings, favoriteSymbols, onFa
             <td className="compactScoreCell">
               <span className="compactScoreHead">
                 <b>{Number.isFinite(r.objectiveScore) ? r.objectiveScore.toFixed(0) : Number.isFinite(r.totalScore) ? r.totalScore.toFixed(0) : "-"}</b>
-                <em className={`rankActionBadge ${rankExplain.action.tone}`}>{rankExplain.action.label}</em>
-                <em className={`rankDecisionBadge ${rankExplain.readiness.tone}`}>{rankExplain.readiness.label}</em>
-                <DecisionResolutionBadge resolution={resolution} />
-                <DecisionConfidenceBadge confidence={confidence} />
-                <DecisionPriorityBadge priority={priority} />
                 <button
                   type="button"
-                  className={`rowTrustBadge ${reviewFocus?.tone || "neutral"}`}
+                  className={`rowTrustBadge ${aggregateTone}`}
                   onClick={(e) => { e.stopPropagation(); onOpen(); }}
-                  title="Abrir revisión con el detalle de confianza"
+                  title="Abrir revisión con el detalle de decisión y confianza"
                   aria-label={`Abrir revisión de ${r.symbol}`}
                 >
-                  {reviewFocus?.label || "Revisar"}
+                  {rankExplain.action.label} · {confidence.label}
                   {signalCount > 0 ? <em>+{signalCount}</em> : null}
                 </button>
                 <InfoHint text={[rankExplain.readiness.detail, rankExplain.text, filterPlan.text].filter(Boolean).join(" · ")} tone={rankExplain.tone === "bad" ? "warn" : filterPlan.tone} />

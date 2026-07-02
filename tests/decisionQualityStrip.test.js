@@ -257,13 +257,12 @@ describe("DecisionQualityStrip", () => {
     }));
 
     expect(html).toContain("compactResultsTable");
-    // Tras el rediseño: el trust rail colapsa a una badge status agregada que abre
-    // QuickReview; el detalle (pruebas/incidencias/score audit) ya no vive en la fila.
+    // Tras la fusión final: el Objetivo muestra score + 1 badge agregada con
+    // "{action.label} · {confidence.label}" + +N. Los 5 veredictos viven en QuickReview.
     expect(html).toContain("rowTrustBadge");
-    expect(html).toContain("compactScoreCell");
-    // Los veredictos siguen visibles (acción + decisión + confianza + prioridad).
-    expect(html).toContain("rankActionBadge");
-    expect(html).toContain("decisionConfidenceBadge");
+    expect(html).toContain("Candidato largo");
+    expect(html).toContain("Baja");
+    expect(html).toMatch(/<em>\+\d+<\/em>/);
   });
 
   it("convierte señales compactas desktop en filtros de investigación", () => {

@@ -7535,9 +7535,10 @@ button.decisionOperatingIssue:hover {
   color: var(--neutral);
   font-weight: 400;
 }
-/* Tono semántico de métrica */
+/* Tono semántico de métrica. soft (negativo, ej. drawdown) baja a --neutral
+   para no competir con la alerta ámbar --warning del veredicto por fila. */
 .compactResultsTable .compactMetric.good b { color: var(--positive); }
-.compactResultsTable .compactMetric.soft b { color: var(--negative); }
+.compactResultsTable .compactMetric.soft b { color: var(--neutral); opacity: .8; }
 /* Punto de proveniencia (source) — discreto, neutral */
 .compactResultsTable .compactMetric i {
   display: none;
