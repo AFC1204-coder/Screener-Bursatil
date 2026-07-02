@@ -1690,6 +1690,7 @@ function ResultFilterChips({ chips = [], hiddenCount = 0, visibleCount = null, t
 }
 
 function applyResultViewFilters(baseRows = [], filters = {}) {
+  const settings = filters.activeSettings || filters.settings || {};
   let list = [...baseRows];
   if (filters.decisionResolutionFilter && filters.decisionResolutionFilter !== "all") {
     list = list.filter((row) => {
@@ -1700,29 +1701,30 @@ function applyResultViewFilters(baseRows = [], filters = {}) {
   }
   if ((filters.readinessFilter && filters.readinessFilter !== "Todos") || (filters.actionFilter && filters.actionFilter !== "Todos") || (filters.confidenceFilter && filters.confidenceFilter !== "Todos") || (filters.decisionProfileFilter && filters.decisionProfileFilter !== "Todos") || (filters.reviewPriorityFilter && filters.reviewPriorityFilter !== "all")) {
     list = list.filter((row) => {
-      const explanation = explainScreenerRank(row, filters.activeSettings || filters.settings || {});
+      const annotation = row.__screenerAnnotation;
+      const explanation = annotation?.explanation || explainScreenerRank(row, settings);
       if (filters.readinessFilter && filters.readinessFilter !== "Todos" && explanation.readiness.key !== filters.readinessFilter) return false;
       if (filters.actionFilter && filters.actionFilter !== "Todos" && explanation.action.key !== filters.actionFilter) return false;
       if (filters.confidenceFilter && filters.confidenceFilter !== "Todos" && decisionConfidenceForRow(row, explanation).key !== filters.confidenceFilter) return false;
-      if (filters.decisionProfileFilter && filters.decisionProfileFilter !== "Todos" && decisionProfileForRow(row, explanation) !== filters.decisionProfileFilter) return false;
+      if (filters.decisionProfileFilter && filters.decisionProfileFilter !== "Todos" && (annotation?.profile || decisionProfileForRow(row, explanation)) !== filters.decisionProfileFilter) return false;
       if (filters.reviewPriorityFilter && filters.reviewPriorityFilter !== "all" && reviewPriorityForRow(row, explanation)?.key !== filters.reviewPriorityFilter) return false;
       return true;
     });
   }
   if (filters.decisionIssueFilter && filters.decisionIssueFilter !== "Todos") {
-    list = list.filter((row) => auditDecisionRowIssues(row, filters.activeSettings || filters.settings || {}).some((issue) => issue.key === filters.decisionIssueFilter));
+    list = list.filter((row) => (row.__screenerAnnotation?.issues || auditDecisionRowIssues(row, settings)).some((issue) => issue.key === filters.decisionIssueFilter));
   }
   if (filters.decisionEvidenceFilter && filters.decisionEvidenceFilter !== "all") {
-    list = list.filter((row) => decisionEvidenceMatchesFilter(row, filters.decisionEvidenceFilter, filters.activeSettings || filters.settings || {}));
+    list = list.filter((row) => decisionEvidenceMatchesFilter(row, filters.decisionEvidenceFilter, settings));
   }
   if (filters.dataHealthFilter && filters.dataHealthFilter !== "Todos") {
-    list = list.filter((row) => dataHealthMatchesFilter(row, filters.dataHealthFilter, filters.activeSettings || filters.settings || {}));
+    list = list.filter((row) => dataHealthMatchesFilter(row, filters.dataHealthFilter, settings));
   }
   if (filters.scoreAuditFilter && filters.scoreAuditFilter !== "all") {
     list = list.filter((row) => scoreAuditMatchesFilter(row, filters.scoreAuditFilter));
   }
   if (filters.reliabilityFilter && filters.reliabilityFilter !== RELIABILITY_FILTER_ALL) {
-    list = list.filter((row) => screenerReliabilityMatchesFilter(row, filters.reliabilityFilter, filters.activeSettings || filters.settings || {}));
+    list = list.filter((row) => screenerReliabilityMatchesFilter(row, filters.reliabilityFilter, settings));
   }
   if (filters.viewLayers?.country && filters.countryFilter !== "Todos") list = list.filter((row) => (row.country || countryCode(row.symbol)) === filters.countryFilter);
   if (filters.viewLayers?.theme && filters.themeFilter !== "Todos") list = list.filter((row) => row.theme === filters.themeFilter);

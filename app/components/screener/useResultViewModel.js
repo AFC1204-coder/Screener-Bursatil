@@ -11,7 +11,7 @@ import {
   passesSectorStrength,
   verifiedIpoCategory,
 } from "@/app/screenerPanels";
-import { decisionConfidenceLabel, decisionConfidenceSummary, decisionPriorityBreakdown, DECISION_CONFIDENCE_ORDER, auditDecisionScan } from "@/lib/decisionAudit";
+import { decisionConfidenceLabel, decisionConfidenceSummary, decisionPriorityBreakdown, DECISION_CONFIDENCE_ORDER, auditDecisionRowIssues, auditDecisionScan } from "@/lib/decisionAudit";
 import { buildReviewPrioritySummary, reviewPriorityMeta } from "@/lib/decisionProfile";
 import { rowPassesListContract } from "@/lib/listRationale";
 import {
@@ -197,45 +197,67 @@ export function useResultViewModel({
     activeSettings,
   }), [viewLayers, countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, screenerDecisionResolutions, activeSettings]);
 
-  const filtered = useMemo(() => {
-    const list = applyResultViewFilters(rows, viewFilterState);
-    return [...list].sort((a, b) => sortMetric(b, sort, activeSettings) - sortMetric(a, sort, activeSettings));
-  }, [rows, viewFilterState, sort, activeSettings]);
+  // ── Paso de anotación única por fila ───────────────────────────────────
+  // Consolida explanation/confidence/dataHealth/priority/profile/issues que
+  // antes recalculaban 8+ memos independientes y applyResultViewFilters (6×/render).
+  // Cache en `__screenerAnnotation`: campo no-persistido (no es RESEARCH_ROW_CORE_FIELD,
+  // así que compactResearchRow lo descarta y nunca llega a localStorage).
+  function annotateRow(row) {
+    const explanation = explainScreenerRank(row, activeSettings);
+    const issues = auditDecisionRowIssues(row, explanation);
+    return {
+      ...row,
+      __screenerAnnotation: {
+        explanation,
+        confidence: decisionConfidenceSummary(row, explanation, issues),
+        dataHealth: buildScreenerDataHealth(row, activeSettings),
+        priority: decisionPriorityBreakdown(row, explanation),
+        profile: decisionProfileForRow(row, activeSettings),
+        issues,
+      },
+    };
+  }
 
-  const reviewPriorityBaseRows = useMemo(() => applyResultViewFilters(rows, {
+  const annotatedRows = useMemo(() => rows.map(annotateRow), [rows, activeSettings]);
+
+  const filtered = useMemo(() => {
+    const list = applyResultViewFilters(annotatedRows, viewFilterState);
+    return [...list].sort((a, b) => sortMetric(b, sort, activeSettings) - sortMetric(a, sort, activeSettings));
+  }, [annotatedRows, viewFilterState, sort, activeSettings]);
+
+  const reviewPriorityBaseRows = useMemo(() => applyResultViewFilters(annotatedRows, {
     ...viewFilterState,
     reviewPriorityFilter: "all",
-  }), [rows, viewFilterState]);
-  const reliabilityBaseRows = useMemo(() => applyResultViewFilters(rows, {
+  }), [annotatedRows, viewFilterState]);
+  const reliabilityBaseRows = useMemo(() => applyResultViewFilters(annotatedRows, {
     ...viewFilterState,
     reliabilityFilter: RELIABILITY_FILTER_ALL,
-  }), [rows, viewFilterState]);
-  const decisionEvidenceBaseRows = useMemo(() => applyResultViewFilters(rows, {
+  }), [annotatedRows, viewFilterState]);
+  const decisionEvidenceBaseRows = useMemo(() => applyResultViewFilters(annotatedRows, {
     ...viewFilterState,
     decisionEvidenceFilter: DECISION_EVIDENCE_FILTER_ALL,
-  }), [rows, viewFilterState]);
-  const dataHealthBaseRows = useMemo(() => applyResultViewFilters(rows, {
+  }), [annotatedRows, viewFilterState]);
+  const dataHealthBaseRows = useMemo(() => applyResultViewFilters(annotatedRows, {
     ...viewFilterState,
     dataHealthFilter: DATA_HEALTH_FILTER_ALL,
-  }), [rows, viewFilterState]);
-  const scoreAuditBaseRows = useMemo(() => applyResultViewFilters(rows, {
+  }), [annotatedRows, viewFilterState]);
+  const scoreAuditBaseRows = useMemo(() => applyResultViewFilters(annotatedRows, {
     ...viewFilterState,
     scoreAuditFilter: SCORE_AUDIT_FILTER_ALL,
-  }), [rows, viewFilterState]);
+  }), [annotatedRows, viewFilterState]);
 
   const pendingDecisionWorkSummary = useMemo(() => {
     const pendingItems = filtered.map((row) => {
       if (decisionResolutionForSymbol({ decisionResolutions: screenerDecisionResolutions }, row.symbol)) return null;
-      const explanation = explainScreenerRank(row, activeSettings);
-      const confidence = decisionConfidenceSummary(row, explanation);
-      const priority = decisionPriorityBreakdown(row, explanation);
+      const annotation = row.__screenerAnnotation;
+      if (!annotation) return null;
       return {
         row,
         symbol: row.symbol,
         companyName: row.companyName || row.name || "",
-        priority: priority.score,
-        confidenceKey: confidence.key,
-        confidenceLabel: confidence.label,
+        priority: annotation.priority.score,
+        confidenceKey: annotation.confidence.key,
+        confidenceLabel: annotation.confidence.label,
       };
     }).filter(Boolean).sort((a, b) => b.priority - a.priority);
     const highConfidenceItems = pendingItems.filter((item) => item.confidenceKey === "high");
@@ -319,12 +341,14 @@ export function useResultViewModel({
 
   const actionCounts = useMemo(() => {
     const counts = new Map();
-    rows.forEach((row) => {
-      const actionKey = explainScreenerRank(row, activeSettings).action.key;
+    annotatedRows.forEach((row) => {
+      const annotation = row.__screenerAnnotation;
+      if (!annotation) return;
+      const actionKey = annotation.explanation.action.key;
       counts.set(actionKey, (counts.get(actionKey) || 0) + 1);
     });
     return counts;
-  }, [rows, activeSettings]);
+  }, [annotatedRows]);
   const actionOptions = useMemo(() => {
     const known = RANK_ACTION_ORDER.filter((key) => actionCounts.has(key));
     const unknown = [...actionCounts.keys()].filter((key) => !RANK_ACTION_ORDER.includes(key)).sort();
@@ -332,12 +356,14 @@ export function useResultViewModel({
   }, [actionCounts]);
   const readinessCounts = useMemo(() => {
     const counts = new Map();
-    rows.forEach((row) => {
-      const readinessKey = explainScreenerRank(row, activeSettings).readiness.key;
+    annotatedRows.forEach((row) => {
+      const annotation = row.__screenerAnnotation;
+      if (!annotation) return;
+      const readinessKey = annotation.explanation.readiness.key;
       counts.set(readinessKey, (counts.get(readinessKey) || 0) + 1);
     });
     return counts;
-  }, [rows, activeSettings]);
+  }, [annotatedRows]);
   const readinessOptions = useMemo(() => {
     const known = DECISION_READINESS_ORDER.filter((key) => readinessCounts.has(key));
     const unknown = [...readinessCounts.keys()].filter((key) => !DECISION_READINESS_ORDER.includes(key)).sort();
@@ -348,13 +374,13 @@ export function useResultViewModel({
     .filter((item) => item.count > 0), [readinessCounts]);
   const decisionProfileCounts = useMemo(() => {
     const counts = new Map();
-    rows.forEach((row) => {
-      const key = decisionProfileForRow(row, activeSettings);
-      if (key === "other") return;
+    annotatedRows.forEach((row) => {
+      const key = row.__screenerAnnotation?.profile;
+      if (!key || key === "other") return;
       counts.set(key, (counts.get(key) || 0) + 1);
     });
     return counts;
-  }, [rows, activeSettings]);
+  }, [annotatedRows]);
   const decisionProfileOptions = useMemo(() => {
     const known = DECISION_PROFILE_ORDER.filter((key) => decisionProfileCounts.has(key));
     const unknown = [...decisionProfileCounts.keys()].filter((key) => !DECISION_PROFILE_ORDER.includes(key)).sort();
@@ -362,12 +388,13 @@ export function useResultViewModel({
   }, [decisionProfileCounts]);
   const confidenceCounts = useMemo(() => {
     const counts = new Map();
-    rows.forEach((row) => {
-      const confidenceKey = decisionConfidenceSummary(row, activeSettings).key;
+    annotatedRows.forEach((row) => {
+      const confidenceKey = row.__screenerAnnotation?.confidence?.key;
+      if (!confidenceKey) return;
       counts.set(confidenceKey, (counts.get(confidenceKey) || 0) + 1);
     });
     return counts;
-  }, [rows, activeSettings]);
+  }, [annotatedRows]);
   const confidenceOptions = useMemo(() => {
     const known = DECISION_CONFIDENCE_ORDER.filter((key) => confidenceCounts.has(key));
     const unknown = [...confidenceCounts.keys()].filter((key) => !DECISION_CONFIDENCE_ORDER.includes(key)).sort();
@@ -376,7 +403,7 @@ export function useResultViewModel({
   const dataHealthCounts = useMemo(() => {
     const counts = new Map();
     dataHealthBaseRows.forEach((row) => {
-      const key = buildScreenerDataHealth(row, activeSettings).status.key;
+      const key = row.__screenerAnnotation?.dataHealth?.status?.key || buildScreenerDataHealth(row, activeSettings).status.key;
       counts.set(key, (counts.get(key) || 0) + 1);
     });
     return counts;
@@ -430,7 +457,7 @@ export function useResultViewModel({
       return;
     }
     const priority = reviewPriorityMeta(filterKey);
-    const reviewRows = applyResultViewFilters(rows, { ...viewFilterState, reviewPriorityFilter: filterKey });
+    const reviewRows = applyResultViewFilters(annotatedRows, { ...viewFilterState, reviewPriorityFilter: filterKey });
     if (!reviewRows.length) {
       setStatus(`Prioridad ${priority.label}: sin resultados visibles.`);
       return;
@@ -454,7 +481,7 @@ export function useResultViewModel({
       return;
     }
     const label = decisionEvidenceFilterLabel(filterKey);
-    const reviewRows = applyResultViewFilters(rows, { ...viewFilterState, decisionEvidenceFilter: filterKey });
+    const reviewRows = applyResultViewFilters(annotatedRows, { ...viewFilterState, decisionEvidenceFilter: filterKey });
     if (!reviewRows.length) {
       setStatus(`Pruebas ${label}: sin resultados visibles.`);
       return;
@@ -480,7 +507,7 @@ export function useResultViewModel({
       return;
     }
     const label = scoreAuditFilterLabel(filterKey);
-    const reviewRows = applyResultViewFilters(rows, { ...viewFilterState, scoreAuditFilter: filterKey });
+    const reviewRows = applyResultViewFilters(annotatedRows, { ...viewFilterState, scoreAuditFilter: filterKey });
     if (!reviewRows.length) {
       setStatus(`Score audit ${label}: sin resultados visibles.`);
       return;
