@@ -9,6 +9,7 @@
 
 import { ReviewPriorityResultRail } from "@/app/components/screener/ReviewWidgets";
 import DecisionGroups from "@/app/components/screener/DecisionGroups";
+import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
 import {
   CompactResultsTable,
   DecisionEvidenceSummaryRail,
@@ -588,64 +589,57 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onReviewMethodologyFocusQueue={openReviewMethodologyFocusQueue}
           />
 
-          <div className="controls resultFilterBar" style={{ marginBottom: 12 }}>
-            {/* No redundantes: resolución/fiabilidad/acción no tienen rail equivalente. */}
-            <select className="select resultFilterSelect" value={decisionResolutionFilter} onChange={(e) => setDecisionResolutionFilter(e.target.value)} aria-label="Filtrar por resolución de decision">
-              {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
-            </select>
-            <select className="select resultFilterSelect" value={reliabilityFilter} onChange={(e) => setReliabilityFilter(e.target.value)} aria-label="Filtrar por fiabilidad de observacion">
-              {reliabilityOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
-            </select>
-            {/* NO borrar: DecisionOperatingBrief solo emite onConfidenceFilter("high"); este select
-                es el único acceso a medium/low/very-low confidence. */}
-            <select className="select resultFilterSelect" value={confidenceFilter} onChange={(e) => setConfidenceFilter(e.target.value)} aria-label="Filtrar por confianza de decision">
-              {confidenceOptions.map((x) => <option key={x} value={x}>{optionLabel("Confianza", x, confidenceCounts, decisionConfidenceLabel)}</option>)}
-            </select>
-            <select className="select resultFilterSelect" value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} aria-label="Filtrar por accion sugerida">
-              {actionOptions.map((x) => <option key={x} value={x}>{optionLabel("Acción", x, actionCounts, rankActionLabel)}</option>)}
-            </select>
-            <select className="select resultFilterSelect resultSortSelect" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Ordenar resultados">
-              <option value="objectiveScore">Ordenar: Calidad objetiva</option>
-              <option value="decisionPriority">Ordenar: Calidad decisión</option>
-              <option value="totalScore">Ordenar: Composite</option>
-              <option value="rsGlobalPct">Ordenar: {metricShortLabel("rsGlobalPct")}</option>
-              <option value="rsRating">Ordenar: {metricShortLabel("rsRating")}</option>
-              <option value="adProxyScore">Ordenar: {metricShortLabel("adProxyScore")}</option>
-              <option value="epsGrowthProxyScore">Ordenar: {metricShortLabel("epsGrowthProxyScore")}</option>
-              <option value="volumeEffectScore">Ordenar: Volume Effect</option>
-              <option value="avgTurnover">Ordenar: Importe 20d</option>
-              <option value="shortPercentOfFloat">Ordenar: {metricShortLabel("shortPercentOfFloat")}</option>
-              <option value="dataCoverageScore">Ordenar: Cobertura datos</option>
-              <option value="weaknessScore">Ordenar: Deterioro</option>
-            </select>
-            {/* View-layers: colapsados para reducir saturación de la barra de filtros. */}
-            {(viewLayers.country || viewLayers.theme || viewLayers.sector || viewLayers.industry || viewLayers.sectorStrength || viewLayers.ipo) ? (
-              <details className="disclosurePanel compactDisclosure viewLayerFilters">
-                <summary><span>Más filtros</span><em>{viewFiltersActive} activos</em></summary>
-                <div className="controls resultFilterBar viewLayerFilterGrid">
-                  {viewLayers.country ? <select className="select resultFilterSelect" value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)} aria-label="Filtrar por pais">
-                    {countryOptions.map((x) => <option key={x} value={x}>{optionLabel("País", x, countryCounts, (code) => `${code} · ${marketName(code)}`)}</option>)}
-                  </select> : null}
-                  {viewLayers.theme ? <select className="select resultFilterSelect" value={themeFilter} onChange={(e) => { setThemeFilter(e.target.value); setSectorFilter("Todos"); setIndustryFilter("Todos"); }} aria-label="Filtrar por tema">
-                    {themeOptions.map((x) => <option key={x} value={x}>{optionLabel("Tema", x, themeCounts)}</option>)}
-                  </select> : null}
-                  {viewLayers.sector ? <select className="select resultFilterSelect" value={sectorFilter} onChange={(e) => { setSectorFilter(e.target.value); setIndustryFilter("Todos"); }} aria-label="Filtrar por sector">
-                    {sectorOptions.map((x) => <option key={x} value={x}>{optionLabel("Sector", x, sectorCounts)}</option>)}
-                  </select> : null}
-                  {viewLayers.industry ? <select className="select resultFilterSelect" value={industryFilter} onChange={(e) => setIndustryFilter(e.target.value)} aria-label="Filtrar por subsector">
-                    {industryOptions.map((x) => <option key={x} value={x}>{optionLabel("Subsector", x, industryCounts)}</option>)}
-                  </select> : null}
-                  {viewLayers.sectorStrength ? <select className="select resultFilterSelect" value={sectorStrength} onChange={(e) => setSectorStrength(e.target.value)} aria-label="Filtrar por fuerza de grupo">
-                    {SECTOR_STRENGTH_OPTIONS.map((x) => <option key={x} value={x}>{optionLabel("Fuerza grupo", x, sectorStrengthCounts, (item) => SECTOR_STRENGTH_LABELS[item] || item)}</option>)}
-                  </select> : null}
-                  {viewLayers.ipo ? <select className="select resultFilterSelect" value={ipo} onChange={(e) => setIpo(e.target.value)} aria-label="Filtrar por IPO">
-                    {ipos.map((x) => <option key={x} value={x}>{optionLabel("IPO", x, ipoCounts)}</option>)}
-                  </select> : null}
-                </div>
-              </details>
-            ) : null}
-          </div>
-          <ResultFilterChips chips={resultFilterChips} hiddenCount={hiddenByView} visibleCount={resultsFiltered.length} totalCount={resultsRows.length} brief={resultViewBrief} onClearAll={clearResultView} onReview={resultsFiltered.length ? openResultViewReview : undefined} />
+          <ResultFilterBar
+            optionLabel={optionLabel}
+            decisionResolutionFilter={decisionResolutionFilter}
+            decisionResolutionOptions={decisionResolutionOptions}
+            onDecisionResolutionFilter={setDecisionResolutionFilter}
+            reliabilityFilter={reliabilityFilter}
+            reliabilityOptions={reliabilityOptions}
+            onReliabilityFilter={setReliabilityFilter}
+            confidenceFilter={confidenceFilter}
+            confidenceOptions={confidenceOptions}
+            confidenceCounts={confidenceCounts}
+            onConfidenceFilter={setConfidenceFilter}
+            actionFilter={actionFilter}
+            actionOptions={actionOptions}
+            actionCounts={actionCounts}
+            onActionFilter={setActionFilter}
+            sort={sort}
+            onSort={setSort}
+            viewLayers={viewLayers}
+            viewFiltersActive={viewFiltersActive}
+            countryFilter={countryFilter}
+            countryOptions={countryOptions}
+            countryCounts={countryCounts}
+            onCountryFilter={setCountryFilter}
+            themeFilter={themeFilter}
+            themeOptions={themeOptions}
+            themeCounts={themeCounts}
+            onThemeFilter={setThemeFilter}
+            onSectorFilter={setSectorFilter}
+            onIndustryFilter={setIndustryFilter}
+            sectorFilter={sectorFilter}
+            sectorOptions={sectorOptions}
+            sectorCounts={sectorCounts}
+            industryFilter={industryFilter}
+            industryOptions={industryOptions}
+            industryCounts={industryCounts}
+            sectorStrength={sectorStrength}
+            sectorStrengthCounts={sectorStrengthCounts}
+            onSectorStrength={setSectorStrength}
+            ipo={ipo}
+            ipos={ipos}
+            ipoCounts={ipoCounts}
+            onIpo={setIpo}
+            chips={resultFilterChips}
+            hiddenCount={hiddenByView}
+            visibleCount={resultsFiltered.length}
+            totalCount={resultsRows.length}
+            brief={resultViewBrief}
+            onClearAll={clearResultView}
+            onReview={resultsFiltered.length ? openResultViewReview : undefined}
+          />
           {resultsFiltered.length ? <div className="controls resultPager" style={{ justifyContent: "space-between", marginBottom: 12 }}>
             <span className="fine">
               Mostrando {resultsFiltered.length ? resultPageStart + 1 : 0}-{resultPageEnd} de {resultsFiltered.length}
