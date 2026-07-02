@@ -49,6 +49,7 @@ import {
   amount,
   cap,
   chartPath,
+  compactIssueLabel,
   compactMetricSourceLookup,
   compactPatternDetail,
   compactPatternReason,
@@ -68,6 +69,7 @@ import {
   searchText,
   shortBusiness,
   sleep,
+  vcpCompactLabel,
 } from "@/lib/screenerFormat";
 import {
   DecisionConfidenceBadge,
@@ -84,9 +86,18 @@ import {
   DecisionEvidenceSummaryRail,
   ScoreAuditPanel,
   ScoreAuditSummaryRail,
-  scoreAuditCompactFilterKey,
 } from "@/lib/screenerDomains/audit";
 import { DataHealthPanel, DataHealthSummaryRail } from "@/lib/screenerDomains/dataHealth";
+import { buildRowReviewFocus } from "@/lib/screenerResultView";
+import {
+  CompanyMark,
+  CompactMetric,
+  DecisionIssueBadge,
+  MiniSparkline,
+  ObjectiveMetricTruthPill,
+  ReviewFocusPill,
+  VcpReliabilityPill,
+} from "@/lib/screenerAtoms";
 
 function ipoVerificationText(row = {}) {
   const category = verifiedIpoCategory(row);
@@ -97,35 +108,6 @@ function ipoVerificationText(row = {}) {
   return [category, evidence].filter(Boolean).join(" · ");
 }
 /* ── Tarjetas, sparklines y charts de preview ── */
-function MiniSparkline({ bars = [] }) {
-  const points = bars.filter((x) => Number.isFinite(x.close));
-  if (points.length < 2) return <div className="previewEmpty">Sin dato</div>;
-  const w = 260, h = 118, pad = 10;
-  const values = points.flatMap((p) => [p.close, p.sma50, p.sma200].filter(Number.isFinite));
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || Math.max(1, max * 0.02);
-  const x = (i) => pad + (i * (w - pad * 2)) / Math.max(1, points.length - 1);
-  const y = (v) => pad + (1 - ((v - min) / range)) * (h - pad * 2);
-  const first = points[0]?.close;
-  const last = points[points.length - 1]?.close;
-  const trendClass = last >= first ? "up" : "down";
-  const volumeMax = Math.max(...points.map((p) => p.volume || 0), 1);
-  const barW = Math.max(1.2, (w - pad * 2) / points.length - 1);
-  return <svg className={`miniSparkline ${trendClass}`} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Grafico tecnico compacto">
-    <line x1={pad} x2={w - pad} y1={y(max)} y2={y(max)} className="sparkGuide" />
-    <line x1={pad} x2={w - pad} y1={y(min)} y2={y(min)} className="sparkGuide" />
-    {points.map((p, i) => {
-      const vh = Math.max(1, ((p.volume || 0) / volumeMax) * 20);
-      return <rect key={`${p.date}-${i}`} x={x(i) - barW / 2} y={h - pad - vh} width={barW} height={vh} className="sparkVolume" />;
-    })}
-    <path d={chartPath(points, "sma200", x, y)} className="sparkMa sparkMa200" />
-    <path d={chartPath(points, "sma50", x, y)} className="sparkMa sparkMa50" />
-    <path d={chartPath(points, "close", x, y)} className="sparkPrice" />
-    <circle cx={x(points.length - 1)} cy={y(last)} r="3.4" className="sparkLast" />
-  </svg>;
-}
-
 function TradingViewPreviewChart({ row, chartSettings = DEFAULT_CHART_SETTINGS }) {
   const ref = useRef(null);
   const tvSymbol = row ? externalLinks(row.symbol, row.exchange).tradingViewSymbol : "";
@@ -171,16 +153,6 @@ function TradingViewPreviewChart({ row, chartSettings = DEFAULT_CHART_SETTINGS }
     </div>;
   }
   return <div className="tvPreviewBox"><div className="tradingview-widget-container" ref={ref} /></div>;
-}
-
-function CompanyMark({ row = {}, size = "md" }) {
-  const domain = companyLogoDomain(row);
-  const logo = domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128` : "";
-  const [failedLogo, setFailedLogo] = useState("");
-  const canShowLogo = logo && failedLogo !== logo;
-  return <span className={`companyMark companyMark-${size}`}>
-    {canShowLogo ? <img src={logo} alt="" loading="lazy" onError={() => setFailedLogo(logo)} /> : <b>{initials(row.companyName || row.name, row.symbol)}</b>}
-  </span>;
 }
 
 function LeaderTape({ rows = [], activeRow, onSelect, onFavorite, favoriteSymbols, mode = "leader" }) {
@@ -703,158 +675,6 @@ function SearchScopeList({ items = [], onPick }) {
       </button>)}
     </div>
   </div>;
-}
-
-function CompactMetric({ label, value, tone = "", source = null, title = "", className = "" }) {
-  const sourceClass = source?.key ? `source-${source.key}` : "";
-  const sourceTitle = source?.title || "";
-  const valueText = value ?? "-";
-  const titleText = [title, sourceTitle].filter(Boolean).join(" · ") || undefined;
-  const ariaLabel = sourceTitle ? `${label}: ${valueText}. ${sourceTitle}` : undefined;
-  return <span className={`compactMetric ${className} ${tone} ${sourceClass}`.trim()} title={titleText} aria-label={ariaLabel}>
-    <small>{label}</small>
-    <b>{valueText}</b>
-    {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}
-  </span>;
-}
-
-function compactIssueLabel(label = "", key = "") {
-  const text = String(label || key || "").toLowerCase();
-  if (/\brs\b|liderazgo rs/.test(text)) return "RS";
-  if (/\bscore\b/.test(text)) return "Score";
-  if (/\bsma50\b/.test(text)) return "SMA50";
-  if (/evidencia|prueba/.test(text)) return "Pruebas";
-  if (/\bdatos?\b|\bprecio\b/.test(text)) return "Datos";
-  if (/volumen|demanda/.test(text)) return "Demanda";
-  if (/riesgo/.test(text)) return "Riesgo";
-  if (/setup|vcp/.test(text)) return "Setup";
-  if (/operable|candidato|confirmaci/.test(text)) return "Validar";
-  return String(label || key || "Revisar").split(/\s+/).slice(0, 2).join(" ");
-}
-
-function buildRowReviewFocus({ dataHealth = null, metricTruth = null, scoreAudit = null, vcpReliability = null, evidence = null, rowIssues = [] } = {}) {
-  const candidates = [];
-  const add = ({ priority = 0, key = "", label = "", tone = "warn", detail = "" } = {}) => {
-    if (!key || !label) return;
-    candidates.push({ priority, key, label, tone, detail });
-  };
-  const dataKey = dataHealth?.status?.key || "";
-  if (dataKey === "blocked") {
-    add({ priority: 100, key: "data", label: "Datos", tone: "bad", detail: dataHealth.status?.detail || dataHealth.topLine || "Datos bloqueados." });
-  } else if (["stale", "thin", "limited", "unknown"].includes(dataKey)) {
-    add({ priority: 72, key: "data", label: "Datos", tone: dataHealth?.status?.tone || "warn", detail: dataHealth.status?.detail || dataHealth.topLine || "Datos a revisar." });
-  }
-
-  const metricKey = metricTruth?.key || "";
-  if (metricKey === "blocked") {
-    add({ priority: 95, key: "metrics", label: "Metr.", tone: "bad", detail: metricTruth.title || metricTruth.detail || "Métricas bloqueadas." });
-  } else if (["review", "missing"].includes(metricKey)) {
-    add({ priority: 82, key: "metrics", label: "Metr.", tone: "warn", detail: metricTruth.title || metricTruth.detail || "Métricas a validar." });
-  }
-
-  const scoreKey = scoreAuditCompactFilterKey(scoreAudit);
-  if (scoreKey === "mismatch") {
-    add({ priority: 86, key: "score", label: "Score", tone: "warn", detail: scoreAudit?.topLine || "Score descuadrado." });
-  } else if (scoreKey === "missing") {
-    add({ priority: 76, key: "score", label: "Score", tone: "warn", detail: scoreAudit?.topLine || "Componentes de score incompletos." });
-  } else if (scoreKey === "attention") {
-    add({ priority: 58, key: "score", label: "Score", tone: "warn", detail: scoreAudit?.topLine || "Score a revisar." });
-  }
-
-  const vcpKey = vcpReliability?.key || "";
-  if (vcpKey === "blocked") {
-    add({ priority: 80, key: "vcp", label: "VCP", tone: "bad", detail: vcpReliability.summary || vcpReliability.note || "VCP bloqueado." });
-  } else if (["inconsistent", "needs-data"].includes(vcpKey)) {
-    add({ priority: 70, key: "vcp", label: "VCP", tone: "warn", detail: vcpReliability.summary || vcpReliability.note || "VCP a validar." });
-  } else if (["needs-validation", "summary-only"].includes(vcpKey)) {
-    add({ priority: 45, key: "vcp", label: "VCP", tone: vcpReliability.tone || "warn", detail: vcpReliability.summary || vcpReliability.note || "Validar patrón." });
-  }
-
-  if (evidence?.status === "blocked") {
-    add({ priority: 74, key: "evidence", label: "Pruebas", tone: "bad", detail: evidence.summary || "Pruebas bloqueadas." });
-  } else if (evidence?.status === "needs-work") {
-    const pending = Array.isArray(evidence.pending) ? evidence.pending[0] : null;
-    add({ priority: 62, key: "evidence", label: "Pruebas", tone: evidence.tone || "warn", detail: pending?.detail || pending?.label || evidence.summary || "Pruebas pendientes." });
-  }
-
-  const issue = Array.isArray(rowIssues) ? rowIssues[0] : null;
-  if (issue?.key || issue?.label) {
-    add({
-      priority: issue.severity === "bad" ? 66 : 52,
-      key: "issue",
-      label: compactIssueLabel(issue.label, issue.key),
-      tone: issue.severity || "warn",
-      detail: issue.detail || issue.label || "Revisar incidencia.",
-    });
-  }
-
-  return candidates.sort((a, b) => b.priority - a.priority)[0] || null;
-}
-
-function ReviewFocusPill({ focus = null }) {
-  if (!focus) return null;
-  return <span className={`reviewFocusPill ${focus.tone || "warn"} focus-${focus.key || "other"}`} title={focus.detail || focus.label}>
-    <b>Foco</b>
-    <em>{focus.label}</em>
-  </span>;
-}
-
-function vcpCompactLabel(audit = null) {
-  const key = audit?.key || "";
-  if (key === "audit-ready") return "Audit.";
-  if (key === "needs-validation") return "Valid.";
-  if (key === "summary-only") return "Resumen";
-  if (key === "needs-data") return "Datos";
-  if (key === "inconsistent") return "Rev.";
-  if (key === "blocked") return "Bloq.";
-  return "VCP";
-}
-
-function DecisionIssueBadge({ issues = [], compact = false, activeKey = "Todos", onSelect }) {
-  const primary = issues[0];
-  if (!primary) return null;
-  const active = primary.key && activeKey === primary.key;
-  const detail = issues.map((issue) => issue.detail ? `${issue.label}: ${issue.detail}` : issue.label).join(" · ");
-  const className = `decisionIssueBadge ${compact ? "compact" : ""} ${primary.severity || "warn"} ${active ? "active" : ""}`;
-  const body = <>
-    <b>{compact ? compactIssueLabel(primary.label, primary.key) : primary.label}</b>
-    {issues.length > 1 ? <em>+{issues.length - 1}</em> : null}
-  </>;
-  return primary.key && onSelect ? <button
-    type="button"
-    className={className}
-    title={detail}
-    onClick={(event) => {
-      event.stopPropagation();
-      onSelect(active ? "Todos" : primary.key);
-    }}
-    aria-pressed={active}
-  >
-    {body}
-  </button> : <span className={className} title={detail}>{body}</span>;
-}
-
-function VcpReliabilityPill({ audit = null }) {
-  if (!audit) return null;
-  const title = [
-    audit.label,
-    Number.isFinite(audit.auditabilityPct) ? `${audit.auditabilityPct}%` : "",
-    audit.summary,
-    audit.sequence ? `Secuencia ${audit.sequence}` : "",
-    audit.note,
-  ].filter(Boolean).join(" · ");
-  return <span className={`vcpReliabilityPill ${audit.tone || "neutral"}`} title={title}>
-    <b>VCP</b>
-    <em>{vcpCompactLabel(audit)}</em>
-  </span>;
-}
-
-function ObjectiveMetricTruthPill({ state = null }) {
-  if (!state) return null;
-  return <span className={`objectiveMetricTruthPill ${state.tone || "neutral"}`} title={state.title || state.label}>
-    <b>Metr.</b>
-    <em>{state.label}</em>
-  </span>;
 }
 
 function ResultFilterChips({ chips = [], hiddenCount = 0, visibleCount = null, totalCount = null, brief = null, onClearAll, onReview }) {
