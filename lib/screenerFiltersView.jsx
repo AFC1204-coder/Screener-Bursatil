@@ -1,0 +1,401 @@
+// lib/screenerFilters.jsx — paneles y controles de filtros del screener:
+// chips de vista, contrato, plantillas, familias, capas y diagnósticos.
+
+import { InfoHint } from "@/app/components/ui/InfoHint";
+import { rowPassesListContract } from "@/lib/listRationale";
+import { rsUniverseValue } from "@/lib/relativeStrength";
+import { CORE_LAYER_KEYS, OPTIONAL_LAYER_KEYS, VIEW_LAYERS } from "@/lib/screenerConfig";
+import {
+  EXECUTION_LAYERS,
+  FILTER_FAMILY_PRESETS,
+  FILTER_FIELDS,
+  NEUTRAL_FIELD_VALUES,
+  REGIME_LAYER,
+  SCREENER_FILTER_PRESETS as PRESETS,
+  SETTING_LAYER_DEPENDENCIES,
+} from "@/lib/screenerFilterCatalog";
+import {
+  fieldLayerKeys,
+  inactiveFieldReason,
+  inactiveSettingReason,
+  isFieldRuleActive,
+  settingApplies,
+} from "@/lib/screenerFilterLayers";
+import { ruleCountLabel } from "@/lib/screenerFormat";
+
+export function SetupChipRail({ rows = [], presetKey, setupMode, sort, onPreset, onMode, onSort }) {
+  const counts = {
+    stage2: rows.filter((row) => rowPassesListContract(row, "weinstein")).length,
+    trend: rows.filter((row) => rowPassesListContract(row, "minervini")).length,
+    watch: rows.filter((row) => rowPassesListContract(row, "nearPivot")).length,
+    rs: rows.filter((row) => (rsUniverseValue(row) ?? 0) >= 75).length,
+  };
+  const chips = [
+    { key: "stage2", label: "Stage 2", count: counts.stage2, active: setupMode === "leader", action: () => onMode("leader") },
+    { key: "trend", label: "Trend Template", count: counts.trend, active: presetKey === "strict", action: () => onPreset("strict") },
+    { key: "watch", label: "Vigilancia", count: counts.watch, active: setupMode === "nearPivot", action: () => onMode("nearPivot") },
+    { key: "rs", label: "RS", count: counts.rs, active: sort === "rsGlobalPct", action: () => onSort("rsGlobalPct") },
+  ];
+  return <div className="mobileChipRail">
+    {chips.map((chip) => <button type="button" key={chip.key} className={chip.active ? "active" : ""} onClick={chip.action}>
+      {chip.label} <span>{chip.count}</span>
+    </button>)}
+  </div>;
+}
+
+export function ResultFilterChips({ chips = [], hiddenCount = 0, visibleCount = null, totalCount = null, brief = null, onClearAll, onReview }) {
+  if (!chips.length && !hiddenCount) return null;
+  const hasVisibleCounts = Number.isFinite(visibleCount) && Number.isFinite(totalCount);
+  const visibleLabel = hasVisibleCounts ? `${visibleCount}/${totalCount}` : String(Math.max(0, Number(visibleCount) || 0));
+  return <div className={`resultFilterChips ${brief ? "withBrief" : ""}`.trim()}>
+    <div className="resultViewFocusSummary" aria-label="Resumen de vista de investigacion">
+      <span>
+        <em>Vista de investigación</em>
+        <b>{visibleLabel}</b>
+      </span>
+      <span>
+        <em>filtros</em>
+        <b>{chips.length}</b>
+      </span>
+      <span>
+        <em>ocultas</em>
+        <b>{hiddenCount}</b>
+      </span>
+      {onReview && Number(visibleCount) > 0 ? <button type="button" onClick={onReview}>Revisar vista</button> : null}
+    </div>
+    {brief ? <div className={`resultViewBrief ${brief.tone || "neutral"}`} aria-label="Brief de investigacion de la vista">
+      <span className="resultViewBriefIntro" title={brief.detail || undefined}>
+        <em>Brief vista</em>
+        <b>{brief.label}</b>
+      </span>
+      <div>
+        {(brief.items || []).slice(0, 3).map((item) => <span className={item.tone || "neutral"} key={item.key || item.label} title={item.detail || undefined}>
+          <em>{item.label}</em>
+          <b>{item.value}</b>
+        </span>)}
+      </div>
+    </div> : null}
+    <div className="resultViewChipRail">
+      {hiddenCount > 0 ? <div className="resultFilterChipSummary">
+        <b>{hiddenCount}</b>
+        <span>ocultas por vista</span>
+      </div> : null}
+      {chips.map((chip) => <button type="button" key={chip.key} className="resultFilterChip" onClick={chip.onClear}>
+        <span>{chip.label}</span>
+        <b>×</b>
+      </button>)}
+      {chips.length ? <button type="button" className="resultFilterClear" onClick={onClearAll}>Limpiar vista</button> : null}
+    </div>
+  </div>;
+}
+
+export function ScreenerContractPanel({ contract }) {
+  if (!contract) return null;
+  const warnings = contract.warnings || [];
+  const statsByKey = new Map((contract.stats || []).map((stat) => [stat.key, stat]));
+  const visibleStats = ["rules", "results", "scope", "regime"]
+    .map((key) => statsByKey.get(key))
+    .filter(Boolean);
+  const viewStat = statsByKey.get("view");
+  if (viewStat?.value && viewStat.value !== "limpia") visibleStats.push(viewStat);
+  const infoText = [contract.text, warnings.length ? "" : contract.okText].filter(Boolean).join(" ");
+  return <section className={`screenerContractPanel ${contract.tone}`} data-contract-key={contract.key}>
+    <div className="screenerContractIntro">
+      <span className="screenerContractLabel">{contract.label}</span>
+      <div>
+        <h2>{contract.title}{infoText ? <InfoHint text={infoText} /> : null}</h2>
+      </div>
+    </div>
+    <div className="screenerContractStats" aria-label="Estado objetivo del filtro">
+      {visibleStats.map((stat) => <span key={stat.key}>
+        <b>{stat.value}</b>
+        <em>{stat.label}</em>
+      </span>)}
+    </div>
+    {warnings.length ? <div className="screenerContractStatus warn">
+      {warnings.slice(0, 3).map((warning) => <span key={warning.key}>{warning.text}</span>)}
+    </div> : null}
+  </section>;
+}
+
+export function FilterTemplatePanel({
+  presetKey,
+  savedTemplates = [],
+  selectedTemplateId = "",
+  templateName = "",
+  running = false,
+  onPreset,
+  onApplySaved,
+  onTemplateName,
+  onSave,
+  onDelete,
+  onSaveCloud,
+  onLoadCloud,
+}) {
+  return <section className="filterTemplatePanel">
+    <div className="filterTemplateHead">
+      <span>Filtro editable</span>
+      <em>Base {PRESETS[presetKey]?.name || "personal"}</em>
+    </div>
+
+    <details className="templateQuickPresets">
+      <summary><span>Bases opcionales</span><em>{Object.keys(PRESETS).length}</em></summary>
+      <div className="filterTemplateGrid">
+        {Object.entries(PRESETS).map(([key, preset]) => <button
+          type="button"
+          key={key}
+          className={`filterTemplateBtn ${presetKey === key ? "active" : ""}`}
+          onClick={() => onPreset?.(key)}
+          title={preset.desc}
+        >
+          <b>{preset.name}</b>
+          <small>{preset.desc}</small>
+        </button>)}
+      </div>
+    </details>
+
+    <details className="savedTemplatesDisclosure">
+      <summary><span>Mis plantillas</span><em>{savedTemplates.length} guardadas</em></summary>
+      <div className="savedTemplateTools">
+        <select className="select" value={selectedTemplateId} onChange={(event) => onApplySaved?.(event.target.value)} aria-label="Plantillas guardadas">
+          <option value="">Mis plantillas guardadas</option>
+          {savedTemplates.map((template) => <option key={template.id} value={template.id}>{template.name}</option>)}
+        </select>
+        <input className="input" value={templateName} onChange={(event) => onTemplateName?.(event.target.value)} placeholder="Nombre de plantilla" aria-label="Nombre de plantilla" />
+        <div className="savedTemplateActions">
+          <button type="button" className="btn btnSmall" onClick={() => onSave?.(false)}>Guardar</button>
+          <button type="button" className="btn btnSmall btnGhost" onClick={() => onSave?.(true)}>Copia</button>
+          <button type="button" className="btn btnSmall btnGhost" onClick={onDelete} disabled={!selectedTemplateId}>Borrar</button>
+        </div>
+        <div className="cloudTemplateActions">
+          <button type="button" className="btn btnSmall btnGhost" onClick={onSaveCloud} disabled={running}>Guardar nube</button>
+          <button type="button" className="btn btnSmall btnGhost" onClick={onLoadCloud} disabled={running}>Cargar nube</button>
+        </div>
+      </div>
+    </details>
+  </section>;
+}
+
+export function FilterFamilyModal({ layerKey, settings, filterLayers, fieldRules, onClose, onToggleLayer, onApplyAction, onUpdateSetting, onToggleFieldRule, onToggleLayeredSetting }) {
+  if (!layerKey) return null;
+  const layer = EXECUTION_LAYERS.find((item) => item.key === layerKey);
+  if (!layer) return null;
+  const family = FILTER_FAMILY_PRESETS[layerKey] || { title: layer.label, intro: layer.detail, actions: [] };
+  const layerActive = filterLayers[layerKey] !== false;
+  const familyFields = FILTER_FIELDS.filter((field) => fieldLayerKeys(field).includes(layerKey));
+  const familySettingKeys = Object.entries(SETTING_LAYER_DEPENDENCIES)
+    .filter(([, dependency]) => dependency.layer === layerKey)
+    .map(([key]) => key);
+  const settingLabels = {
+    requireStage2: "Stage 2",
+    requireUpVolume: "Volumen en vela alcista",
+    requireRecentIpo: "IPO real reciente",
+    requireContractionsDecreasing: "Contracciones decrecientes",
+  };
+
+  return <dialog className="filterFamilyModal stockModal" open onClick={(event) => { if (event.target === event.currentTarget) onClose?.(); }}>
+    <div className="filterFamilyInner">
+      <header className="filterFamilyHeader">
+        <div>
+          <span>Familia de filtro</span>
+          <h2>{family.title}</h2>
+          <p>{family.intro}</p>
+        </div>
+        <button type="button" className="stockModalClose" onClick={onClose} aria-label="Cerrar">×</button>
+      </header>
+
+      <div className="filterFamilyToolbar">
+        <button type="button" className={`filterFamilyPower ${layerActive ? "on" : "off"}`} onClick={() => onToggleLayer?.(layerKey)}>
+          <b>{layerActive ? "Activa" : "Apagada"}</b>
+          <span>{ruleCountLabel(layer.count)}</span>
+        </button>
+        {family.actions.length ? <div className="filterFamilyPresetRail" aria-label="Ajustes rápidos de exigencia">
+          <span>Exigencia</span>
+          <div>
+            {family.actions.map((action) => <button type="button" className="filterFamilyPreset" key={action.label} onClick={() => onApplyAction?.(layerKey, action)} title={action.detail}>
+              {action.label}
+            </button>)}
+          </div>
+        </div> : null}
+      </div>
+
+      {layerKey === "trend" ? <div className={`weeklyStageControls modalWeeklyControls ${layerActive ? "" : "isMuted"}`}>
+        <label><span>Media rapida semanal</span><input className="input" type="number" min="2" max="80" step="1" value={settings.stageFastWeeks || 10} onChange={(event) => onUpdateSetting?.("stageFastWeeks", Number(event.target.value) || 10)} /></label>
+        <label><span>Media lenta semanal</span><input className="input" type="number" min="3" max="120" step="1" value={settings.stageSlowWeeks || 30} onChange={(event) => onUpdateSetting?.("stageSlowWeeks", Number(event.target.value) || 30)} /></label>
+        <label><span>Pendiente semanas</span><input className="input" type="number" min="2" max="40" step="1" value={settings.stageSlopeWeeks || 10} onChange={(event) => onUpdateSetting?.("stageSlopeWeeks", Number(event.target.value) || 10)} /></label>
+      </div> : null}
+
+      {familySettingKeys.length ? <div className="filterSwitches filterFamilySwitches">
+        {familySettingKeys.map((key) => <FilterToggle
+          key={key}
+          active={settings[key]}
+          applies={settingApplies(key, filterLayers)}
+          detail={inactiveSettingReason(key, filterLayers)}
+          onClick={() => onToggleLayeredSetting?.(key)}
+        >
+          {settingLabels[key] || key}
+        </FilterToggle>)}
+      </div> : null}
+
+      <div className="filterFamilyFields">
+        <div className="filterFamilySubhead">
+          <span>Ajustes finos</span>
+          <em>{familyFields.filter((field) => isFieldRuleActive(field, fieldRules, filterLayers)).length}/{familyFields.length}</em>
+        </div>
+        {familyFields.length ? <div className="filterFields">
+          {familyFields.map((field) => <FilterNumber
+            key={field.key}
+            field={field}
+            value={settings[field.key]}
+            onChange={onUpdateSetting}
+            active={isFieldRuleActive(field, fieldRules, filterLayers)}
+            inactiveReason={inactiveFieldReason(field, fieldRules, filterLayers)}
+            onToggle={() => onToggleFieldRule?.(field)}
+          />)}
+        </div> : <p className="filterFamilyEmpty">Esta familia se controla con los botones superiores.</p>}
+      </div>
+    </div>
+  </dialog>;
+}
+
+export function FilterNumber({ field, value, onChange, active = true, inactiveReason = "", onToggle }) {
+  const scale = field.scale || 1;
+  const step = field.step || 1;
+  const currentValue = Number.isFinite(value) ? value / scale : 0;
+  const shown = Number.isFinite(value) ? value / scale : "";
+  const neutral = NEUTRAL_FIELD_VALUES[field.key];
+  const minValue = Number.isFinite(field.min)
+    ? field.min
+    : (field.key.startsWith("min") && Number.isFinite(neutral) && neutral < 0 ? neutral / scale : 0);
+
+  const handleDecrement = (e) => {
+    e.preventDefault();
+    const newValue = Math.max(minValue, currentValue - step);
+    onChange(field.key, Number(newValue.toFixed(4)) * scale);
+  };
+
+  const handleIncrement = (e) => {
+    e.preventDefault();
+    const newValue = currentValue + step;
+    onChange(field.key, Number(newValue.toFixed(4)) * scale);
+  };
+
+  return <div className={`filterField ${active ? "isActive" : "isOff"}`}>
+    <label className="filterFieldLabel">
+      <span className={`ruleMiniToggle ${active ? "on" : "off"}`} title={active ? "Quitar esta regla del filtro" : inactiveReason || "Activar esta regla"}>
+        <input type="checkbox" checked={active} onChange={onToggle} aria-label={`${active ? "Quitar" : "Activar"} ${field.label}`} />
+        <span>{active ? "✓" : ""}</span>
+      </span>
+      <span>{field.label}</span>
+      {field.hint && <InfoHint text={field.hint} />}
+    </label>
+    <div className="filterInputWrap">
+      <button type="button" className="filterStepperBtn decrement" onClick={handleDecrement} title="Disminuir" aria-label="Disminuir">-</button>
+      <input className="input" type="number" step={step} value={shown} aria-label={field.label} onChange={(e) => onChange(field.key, (Number(e.target.value) || 0) * scale)} />
+      {field.unit && <b className="filterUnit">{field.unit}</b>}
+      <button type="button" className="filterStepperBtn increment" onClick={handleIncrement} title="Incrementar" aria-label="Incrementar">+</button>
+    </div>
+  </div>;
+}
+
+export function FilterToggle({ active, applies = true, detail = "", onClick, children }) {
+  const checked = Boolean(active && applies);
+  return <label className={`filterToggleLine ${checked ? "on" : ""} ${applies ? "" : "isMuted"}`} title={detail}>
+    <input type="checkbox" checked={checked} onChange={onClick} />
+    <span>{children}</span>
+    {detail ? <small>{detail}</small> : null}
+  </label>;
+}
+
+export function LayerToggleButton({ active, onClick, label, detail, countLabel }) {
+  return <button type="button" className={`layerToggle ${active ? "on" : "off"}`} aria-pressed={active} onClick={onClick} title={detail || label}>
+    <span className="layerToggleState"><i>{active ? "✓" : "X"}</i><b>{active ? "Activo" : "Quitado"}</b></span>
+    <span className="layerToggleText"><strong>{label}</strong></span>
+    <span className="layerToggleCount">{countLabel}</span>
+  </button>;
+}
+
+export function LayerControl({ active, onClick, onOpen, label, detail, countLabel }) {
+  return <div className={`layerControlRow ${active ? "on" : "off"} ${onOpen ? "" : "simple"}`}>
+    <LayerToggleButton active={active} onClick={onClick} label={label} detail={detail} countLabel={countLabel} />
+    {detail ? <InfoHint text={detail} /> : null}
+    {onOpen ? <button type="button" className="layerEditBtn" onClick={onOpen}>Ajustar</button> : null}
+  </div>;
+}
+
+export function FilterArchitecturePanel({ filterLayers, viewLayers, useRegimeFilter, onToggleLayer, onOpenLayer, onToggleViewLayer, onToggleRegime, executionRuleActive, executionRuleTotal, viewFiltersActive }) {
+  const layerByKey = Object.fromEntries(EXECUTION_LAYERS.map((layer) => [layer.key, layer]));
+  return <section className="filterArchitecture">
+    <div className="filterArchitectureHead">
+      <div>
+        <span>Filtro activo</span>
+        <strong>{executionRuleActive} de {executionRuleTotal} reglas</strong>
+      </div>
+    </div>
+    <div className="filterLayerBlock">
+      <h3>Núcleo</h3>
+      {CORE_LAYER_KEYS.map((key) => {
+        const layer = layerByKey[key];
+        return <LayerControl key={key} active={filterLayers[key]} onClick={() => onToggleLayer(key)} onOpen={() => onOpenLayer?.(key)} label={layer.label} detail={layer.detail} countLabel={ruleCountLabel(layer.count)} />;
+      })}
+    </div>
+    <div className="filterLayerBlock">
+      <h3>Adicionales</h3>
+      {OPTIONAL_LAYER_KEYS.map((key) => {
+        const layer = layerByKey[key];
+        return <LayerControl key={key} active={filterLayers[key]} onClick={() => onToggleLayer(key)} onOpen={() => onOpenLayer?.(key)} label={layer.label} detail={layer.detail} countLabel={ruleCountLabel(layer.count)} />;
+      })}
+      <LayerControl active={useRegimeFilter} onClick={onToggleRegime} label={REGIME_LAYER.label} detail={REGIME_LAYER.detail} countLabel={ruleCountLabel(REGIME_LAYER.count)} />
+    </div>
+    <details className="viewLayerMini">
+      <summary><span>Vista de resultados</span><em>{viewFiltersActive} activos</em></summary>
+      <div className="viewLayerBar">
+        {VIEW_LAYERS.map((layer) => <LayerControl key={layer.key} active={viewLayers[layer.key]} onClick={() => onToggleViewLayer(layer.key)} label={layer.label} detail={layer.detail} countLabel="vista" />)}
+      </div>
+    </details>
+  </section>;
+}
+
+export function FilterDiagnosticsPanel({ diagnostics, rowsCount, filteredCount, running }) {
+  const viewHidden = Math.max(0, rowsCount - filteredCount);
+  if (!diagnostics && !running) return <section className="scanDiagnostics empty">
+    <div className="scanDiagnosticsHead">
+      <span>Embudo del scan</span>
+      <strong>Sin diagnóstico</strong>
+    </div>
+    <div className="scanDiagnosticHint">Ejecuta un scan para ver que bloque corta acciones y que parte solo afecta a la vista.</div>
+  </section>;
+  const blocks = diagnostics?.blocks || [];
+  const analyzed = Number(diagnostics?.analyzed || 0);
+  const finalCount = Number(diagnostics?.finalCount || 0);
+  const universeTotal = Number(diagnostics?.universeTotal || analyzed || 0);
+  const passRate = analyzed > 0 ? (finalCount / analyzed) * 100 : null;
+  const sampleRate = universeTotal > 0 ? (analyzed / universeTotal) * 100 : null;
+  const limitedSample = universeTotal > analyzed;
+  return <section className="scanDiagnostics">
+    <div className="scanDiagnosticsHead">
+      <span>Embudo del scan</span>
+      <strong>{running ? "Analizando..." : `${diagnostics.finalCount}/${diagnostics.analyzed} pasan`}</strong>
+    </div>
+    <div className="diagnosticStats">
+      <span><b>{diagnostics?.analyzed ?? "-"}</b><em>analizadas</em></span>
+      <span><b>{Number.isFinite(passRate) ? `${passRate.toFixed(0)}%` : "-"}</b><em>pasan</em></span>
+      <span><b>{Number.isFinite(sampleRate) ? `${sampleRate < 10 ? sampleRate.toFixed(1) : sampleRate.toFixed(0)}%` : "-"}</b><em>muestra</em></span>
+      <span><b>{diagnostics?.hardRejected ?? "-"}</b><em>filtros duros</em></span>
+      <span><b>{diagnostics?.providerRejected ?? "-"}</b><em>datos</em></span>
+      <span><b>{diagnostics?.regimeRejected ?? "-"}</b><em>regimen</em></span>
+      <span><b>{diagnostics?.postRejected ?? "-"}</b><em>post</em></span>
+      <span><b>{viewHidden}</b><em>vista</em></span>
+    </div>
+    {limitedSample ? <div className="scanSampleNotice">
+      Muestra actual: <b>{analyzed}</b> de <b>{universeTotal}</b> acciones ({Number.isFinite(sampleRate) ? `${sampleRate.toFixed(1)}%` : "sin porcentaje"}). Si salen pocos resultados, primero aumenta lotes o usa snapshots/cache antes de endurecer filtros.
+    </div> : null}
+    {blocks.length ? <div className="diagnosticBlocks">
+      {blocks.slice(0, 7).map((block) => <article key={block.key} className="diagnosticBlock">
+        <div><span>{block.stage}</span><strong>{block.label}</strong></div>
+        <b>{block.count}</b>
+        <ul>{block.examples.slice(0, 2).map((example, index) => <li key={`${block.key}-${example.symbol}-${index}`}><em>{example.symbol}</em>{example.detail}</li>)}</ul>
+      </article>)}
+    </div> : <div className="scanDiagnosticHint">No hay rechazos registrados en el ultimo scan.</div>}
+  </section>;
+}
