@@ -2172,16 +2172,16 @@ function layerStatusText(layers = DEFAULT_FILTER_LAYERS, useRegime = true) {
 
 export {
   money, cap, amount, sleep, searchText, investorStatusLabel, InfoHint, ratioLabel,
-  verifiedIpoCategory, ipoVerificationText, initials, shortBusiness, quickBusinessDescription,
+  ipoVerificationText, initials, shortBusiness, quickBusinessDescription,
   quickBusinessMarket, chartPath, MiniSparkline, TradingViewPreviewChart, companyLogoDomain,
   CompanyMark, quickSetup, compactPatternReason, compactPatternDetail, LeaderTape,
-  opportunityBuckets, ScoreLine, OpportunityMap, MarketMiniTape, SetupChipRail,
+  ScoreLine, OpportunityMap, MarketMiniTape, SetupChipRail,
   MobileMoverCard, MobileTopMovers, MobileResultRow, buildRowTrustSignature, RowTrustSignature, DecisionQualityStrip, DecisionOperatingBrief, DecisionSummaryRail, DecisionEvidenceChecklist, DecisionEvidenceSummaryRail, DataHealthPanel, DataHealthSummaryRail, ScoreAuditPanel, ScoreAuditSummaryRail, AuditabilitySummaryRail, MobileResultList, RegimeStrip,
   PendingDecisionWorkRail,
   QuickPanel, PreviewCard, SearchCandidateList, SearchScopeList, compactTone, CompactMetric,
-  DecisionIssueBadge, ResultFilterChips, applyResultViewFilters, PendingResultsBar, ScreenerContractPanel,
+  DecisionIssueBadge, ResultFilterChips, PendingResultsBar, ScreenerContractPanel,
   FilterTemplatePanel, FilterFamilyModal, CompactCountryFlag, CompactResultsTable,
   FilterNumber, FilterToggle, LayerToggleButton, LayerControl, FilterArchitecturePanel,
-  FilterDiagnosticsPanel, passesSectorStrength, activeLayerCount, ruleCountLabel, layerStatusText,
+  FilterDiagnosticsPanel, activeLayerCount, ruleCountLabel, layerStatusText,
   DECISION_PROFILE_ORDER, buildReviewProfileSummary, decisionProfileForRow, decisionProfileLabel, prepareReviewQueueRows, reviewProfileMeta,
 };
