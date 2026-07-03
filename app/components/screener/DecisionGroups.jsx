@@ -52,11 +52,12 @@ export default function DecisionGroups({
 }) {
   return (
     <>
-      {/* Grupo "Decisiones": abierto por defecto. Contiene los rails operativos. */}
+      {/* Grupo "Decisiones": abierto por defecto. La lectura operativa (Brief)
+          domina primero; los contadores (Strip) quedan subordinados debajo. */}
       <details className="disclosurePanel resultsDecisionGroup" open>
         <summary><span>Decisiones</span><em>{filteredCount}</em></summary>
-        <DecisionQualityStrip audit={audit} activeIssueKey={decisionIssueFilter} onIssueSelect={onDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={onDecisionProfileFilter} />
         <DecisionOperatingBrief audit={audit} rows={filteredRows} onIssueSelect={onDecisionIssueFilter} onReadinessFilter={onReadinessFilter} onConfidenceFilter={onConfidenceFilter} onReview={onReviewAll} />
+        <DecisionQualityStrip audit={audit} activeIssueKey={decisionIssueFilter} onIssueSelect={onDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={onDecisionProfileFilter} />
         <PendingDecisionWorkRail
           summary={pendingDecisionWorkSummary}
           active={pendingDecisionWorkActive}
