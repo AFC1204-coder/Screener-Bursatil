@@ -102,7 +102,7 @@ export function DecisionQualityStrip({ audit, compact = false, activeIssueKey = 
   </div>;
 }
 
-export function DecisionOperatingBrief({ audit = null, rows = [], compact = false, onIssueSelect, onReadinessFilter, onConfidenceFilter, onReview }) {
+export function DecisionOperatingBrief({ audit = null, rows = [], compact = false, emphasis = "E2", onIssueSelect, onReadinessFilter, onConfidenceFilter, onReview }) {
   const brief = buildScreenerDecisionBrief({ audit, rows });
   if (!brief.rows) return null;
   const applyFilter = (filter = {}) => {
@@ -123,7 +123,7 @@ export function DecisionOperatingBrief({ audit = null, rows = [], compact = fals
     <span>{metric.label}</span>
     <em>{metric.share}</em>
   </>;
-  return <section className={`decisionOperatingBrief ${compact ? "compact" : ""} ${brief.verdict.tone || "neutral"}`.trim()} aria-label="Lectura operativa del Screener">
+  return <section className={`decisionOperatingBrief ${compact ? "compact" : ""} ${brief.verdict.tone || "neutral"}`.trim()} aria-label="Lectura operativa del Screener" data-emphasis={emphasis}>
     <div className="decisionOperatingIntro">
       <span className="decisionOperatingEyebrow">Lectura operativa</span>
       <strong className="decisionOperatingVerdict">{brief.verdict.label}</strong>

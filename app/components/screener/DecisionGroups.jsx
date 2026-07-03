@@ -56,7 +56,7 @@ export default function DecisionGroups({
       {/* Grupo "Decisiones": abierto por defecto. La lectura operativa (Brief)
           domina primero; los contadores (Strip) quedan subordinados debajo. */}
       <ResultsDisclosureGroup label="Decisiones" count={filteredCount} defaultOpen storageKey="statsedge.disclosureDecisiones.v1" className="resultsDecisionGroup">
-        <DecisionOperatingBrief audit={audit} rows={filteredRows} onIssueSelect={onDecisionIssueFilter} onReadinessFilter={onReadinessFilter} onConfidenceFilter={onConfidenceFilter} onReview={onReviewAll} />
+        <DecisionOperatingBrief audit={audit} rows={filteredRows} emphasis="E1" onIssueSelect={onDecisionIssueFilter} onReadinessFilter={onReadinessFilter} onConfidenceFilter={onConfidenceFilter} onReview={onReviewAll} />
         <DecisionQualityStrip audit={audit} activeIssueKey={decisionIssueFilter} onIssueSelect={onDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={onDecisionProfileFilter} />
         <PendingDecisionWorkRail
           summary={pendingDecisionWorkSummary}

@@ -7791,9 +7791,13 @@ button.decisionOperatingIssue:hover {
   line-height: 1.2;
   margin-bottom: var(--space-1);
 }
-.decisionOperatingBrief.good .decisionOperatingVerdict { color: var(--positive); }
-.decisionOperatingBrief.warn .decisionOperatingVerdict { color: var(--warning); }
-.decisionOperatingBrief.bad .decisionOperatingVerdict { color: var(--negative); }
+/* Presupuesto de énfasis: solo E1 permite color semántico en el veredicto.
+   E2 (default) lo neutraliza a --text. Esto garantiza que el único texto de
+   color fuerte del panel sea el slot que la vista designa explícitamente. */
+.decisionOperatingBrief[data-emphasis="E1"].good .decisionOperatingVerdict { color: var(--positive); }
+.decisionOperatingBrief[data-emphasis="E1"].warn .decisionOperatingVerdict { color: var(--warning); }
+.decisionOperatingBrief[data-emphasis="E1"].bad .decisionOperatingVerdict { color: var(--negative); }
+.decisionOperatingBrief:not([data-emphasis="E1"]) .decisionOperatingVerdict { color: var(--text); }
 .decisionOperatingIntro p {
   font-size: 13px;
   color: var(--soft);
