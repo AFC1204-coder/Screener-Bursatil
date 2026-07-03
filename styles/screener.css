@@ -7709,3 +7709,335 @@ button.decisionOperatingIssue:hover {
 /* Ocultar sparkline y bloque setup fuera de la fila base (hover/preview) */
 .compactResultsTable .compactSparkCell,
 .compactResultsTable .compactSetupStack { display: none !important; }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Sistema de diseño — DecisionGroups + rails unificados (PASA FINAL).
+   Densidad comfortable: padding --space-4/5, gap --space-3, texto 13px,
+   control min 40px. La lectura operativa domina; KPIs subordinados.
+   Ceros en --neutral peso 400. Anatomía de rail unificada (.decisionRail).
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Contenedores de grupo (details) ── */
+.resultsDecisionGroup,
+.resultsAuditGroup {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-3);
+}
+.resultsDecisionGroup > summary,
+.resultsAuditGroup > summary {
+  padding: var(--space-4) var(--space-5);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.resultsDecisionGroup > summary::-webkit-details-marker,
+.resultsAuditGroup > summary::-webkit-details-marker { display: none; }
+.resultsDecisionGroup > summary > span,
+.resultsAuditGroup > summary > span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--neutral);
+}
+.resultsDecisionGroup > summary > em,
+.resultsAuditGroup > summary > em {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  font-style: normal;
+  color: var(--neutral);
+  background: var(--surface2);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  margin-left: auto;
+}
+.resultsDecisionGroup[open] > *,
+.resultsAuditGroup[open] > * { padding-left: var(--space-5); padding-right: var(--space-5); }
+.resultsDecisionGroup[open] > summary,
+.resultsAuditGroup[open] > summary { padding-left: var(--space-5); padding-right: var(--space-5); }
+
+/* ── Lectura operativa (DecisionOperatingBrief) — elemento dominante ── */
+.decisionOperatingBrief {
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface);
+}
+.decisionOperatingBrief.compact { padding: var(--space-3) var(--space-4); }
+.decisionOperatingEyebrow {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--neutral);
+  margin-bottom: var(--space-1);
+}
+.decisionOperatingVerdict {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  margin-bottom: var(--space-1);
+}
+.decisionOperatingBrief.good .decisionOperatingVerdict { color: var(--positive); }
+.decisionOperatingBrief.warn .decisionOperatingVerdict { color: var(--warning); }
+.decisionOperatingBrief.bad .decisionOperatingVerdict { color: var(--negative); }
+.decisionOperatingIntro p {
+  font-size: 13px;
+  color: var(--soft);
+  line-height: 1.4;
+  margin: 0;
+}
+.decisionOperatingMetrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.decisionOperatingMetric {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: var(--surface2);
+  border: 0;
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  min-height: 28px;
+}
+.decisionOperatingMetric b {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.decisionOperatingMetric b[data-zero="true"] { color: var(--neutral); font-weight: 400; }
+.decisionOperatingMetric.good b { color: var(--positive); }
+.decisionOperatingMetric.warn b { color: var(--warning); }
+.decisionOperatingMetric.bad b { color: var(--negative); }
+.decisionOperatingMetric span { color: var(--neutral); font-size: 11px; }
+.decisionOperatingMetric em { color: var(--soft); font-size: 11px; font-style: normal; }
+.decisionOperatingActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  align-items: center;
+}
+.decisionOperatingIssue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  min-height: 40px;
+}
+.decisionOperatingIssue::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--neutral);
+  flex: 0 0 auto;
+}
+.decisionOperatingIssue.good::before { background: var(--positive); }
+.decisionOperatingIssue.warn::before { background: var(--warning); }
+.decisionOperatingIssue.bad::before { background: var(--negative); }
+.decisionOperatingIssue span { color: var(--neutral); font-size: 11px; }
+.decisionOperatingIssue b { font-weight: 600; color: var(--text); }
+.decisionOperatingIssue em { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: var(--neutral); font-style: normal; }
+.decisionOperatingAction {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface2);
+  border: 0;
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  min-height: 40px;
+}
+.decisionOperatingAction b { font-weight: 600; }
+.decisionOperatingAction em { color: var(--neutral); font-size: 11px; font-style: normal; }
+
+/* ── DecisionQualityStrip — contadores subordinados (metric badges) ── */
+.decisionQualityStrip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+}
+.decisionQualityStrip.compact { padding: var(--space-2) var(--space-4); gap: var(--space-1); }
+.decisionQualityMetric {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: var(--surface2);
+  border: 0;
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  min-height: 28px;
+}
+.decisionQualityMetric b {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.decisionQualityMetric b[data-zero="true"] { color: var(--neutral); font-weight: 400; }
+.decisionQualityMetric.good b { color: var(--positive); }
+.decisionQualityMetric.warn b { color: var(--warning); }
+.decisionQualityMetric em { color: var(--neutral); font-size: 11px; font-style: normal; }
+.decisionQualityMetric.active { box-shadow: inset 0 0 0 1px var(--accent); }
+.decisionQualityIssueList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  width: 100%;
+  margin-top: var(--space-2);
+}
+.decisionQualityIssue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  min-height: 28px;
+}
+.decisionQualityIssue::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--neutral);
+  flex: 0 0 auto;
+}
+.decisionQualityIssue.good::before { background: var(--positive); }
+.decisionQualityIssue.warn::before { background: var(--warning); }
+.decisionQualityIssue.bad::before { background: var(--negative); }
+.decisionQualityIssue b { font-weight: 600; }
+.decisionQualityIssue em { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: var(--neutral); font-style: normal; }
+
+/* ── Anatomía de rail unificada (.decisionRail) ──
+   Misma estructura para DecisionSummaryRail, PendingDecisionWorkRail y los
+   rails de auditoría (evidence/dataHealth/scoreAudit/auditability). */
+.decisionRail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+.decisionRailEyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--neutral);
+  flex: 0 0 auto;
+}
+.decisionRailItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  flex: 1 1 auto;
+  align-items: center;
+}
+.decisionRailItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  min-height: 32px;
+}
+.decisionRailItem::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--neutral);
+  flex: 0 0 auto;
+}
+.decisionRailItem.good::before { background: var(--positive); }
+.decisionRailItem.warn::before { background: var(--warning); }
+.decisionRailItem.bad::before { background: var(--negative); }
+.decisionRailItem em {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  font-style: normal;
+  color: var(--text);
+}
+.decisionRailItem em[data-zero="true"] { color: var(--neutral); font-weight: 400; }
+.decisionRailItem span { color: var(--soft); font-size: 12px; }
+.decisionRailItem.active { box-shadow: inset 0 0 0 1px var(--accent); border-radius: var(--radius); }
+.decisionRailAction {
+  display: flex;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+  align-items: center;
+}
+.decisionRailSecondary,
+.pendingDecisionWorkPrimary {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 40px;
+}
+.decisionRailSecondary {
+  background: var(--surface2);
+  color: var(--text);
+}
+.decisionRailSecondary:hover { color: var(--accent); }
+.pendingDecisionWorkPrimary {
+  background: var(--accent);
+  color: #fff;
+}
+.pendingDecisionWorkPrimary.active { box-shadow: inset 0 0 0 1px var(--accent2); }
+
+/* PendingDecisionWorkRail-specific overrides sobre .decisionRail */
+.pendingDecisionWorkRail { border-top: 0; padding-top: var(--space-3); }

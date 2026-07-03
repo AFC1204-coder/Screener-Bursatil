@@ -70,8 +70,9 @@ export function DecisionQualityStrip({ audit, compact = false, activeIssueKey = 
   };
   const metricButton = (key, count, label, metricTone = "") => {
     const active = activeProfileKey === key;
+    const isZero = !count;
     const body = <>
-      <b>{count}</b>
+      <b data-zero={isZero ? "true" : "false"}>{count}</b>
       <em>{label}</em>
     </>;
     return onProfileSelect ? <button
@@ -87,12 +88,12 @@ export function DecisionQualityStrip({ audit, compact = false, activeIssueKey = 
   return <div className={`decisionQualityStrip ${compact ? "compact" : ""} ${tone}`}>
     {metricButton("operable-clean", cleanOperableCount, "limpios", "good")}
     {metricButton("operable-fragile", fragileOperableCount, "fragiles", fragileOperableCount ? "warn" : "")}
-    <span>
-      <b>{riskCount}</b>
+    <span className="decisionQualityMetric">
+      <b data-zero={!riskCount ? "true" : "false"}>{riskCount}</b>
       <em>riesgo cola</em>
     </span>
-    <span>
-      <b>{auditCount}</b>
+    <span className="decisionQualityMetric">
+      <b data-zero={!auditCount ? "true" : "false"}>{auditCount}</b>
       <em>auditar</em>
     </span>
     <div className="decisionQualityIssueList" aria-label="Alertas principales de decision">
@@ -118,14 +119,14 @@ export function DecisionOperatingBrief({ audit = null, rows = [], compact = fals
     return false;
   };
   const metricBody = (metric) => <>
-    <b>{metric.value}</b>
+    <b data-zero={metric.value === "0" || metric.value === "-" ? "true" : "false"}>{metric.value}</b>
     <span>{metric.label}</span>
     <em>{metric.share}</em>
   </>;
   return <section className={`decisionOperatingBrief ${compact ? "compact" : ""} ${brief.verdict.tone || "neutral"}`.trim()} aria-label="Lectura operativa del Screener">
     <div className="decisionOperatingIntro">
-      <span>Lectura Screener</span>
-      <strong>{brief.verdict.label}</strong>
+      <span className="decisionOperatingEyebrow">Lectura operativa</span>
+      <strong className="decisionOperatingVerdict">{brief.verdict.label}</strong>
       <p>{brief.verdict.detail}</p>
     </div>
     <div className="decisionOperatingMetrics">
@@ -174,43 +175,57 @@ export function DecisionOperatingBrief({ audit = null, rows = [], compact = fals
 
 export function DecisionSummaryRail({ summary = [], activeKey = "Todos", onSelect, className = "" }) {
   if (!summary.length) return null;
-  return <div className={`decisionSummaryRail ${className}`.trim()} aria-label="Resumen por calidad de decision">
-    {summary.map((item) => {
-      const active = activeKey === item.key;
-      return <button
-        type="button"
-        key={item.key}
-        className={`decisionSummaryChip ${active ? "active" : ""}`}
-        onClick={() => onSelect?.(active ? "Todos" : item.key)}
-        aria-pressed={active}
-      >
-        <b>{item.count}</b>
-        <span>{item.label}</span>
-      </button>;
-    })}
+  return <div className={`decisionRail ${className}`.trim()} aria-label="Resumen por calidad de decision">
+    <span className="decisionRailEyebrow">Calidad de decisión</span>
+    <div className="decisionRailItems">
+      {summary.map((item) => {
+        const active = activeKey === item.key;
+        return <button
+          type="button"
+          key={item.key}
+          className={`decisionRailItem ${item.tone || "neutral"} ${active ? "active" : ""}`}
+          onClick={() => onSelect?.(active ? "Todos" : item.key)}
+          aria-pressed={active}
+        >
+          <em>{item.count}</em>
+          <span>{item.label}</span>
+        </button>;
+      })}
+    </div>
   </div>;
 }
 
 export function PendingDecisionWorkRail({ summary = null, active = false, onFocus, onClear, onReview, className = "" }) {
   if (!summary?.pendingCount) return null;
   const top = summary.top || null;
-  return <div className={`pendingDecisionWorkRail ${active ? "active" : ""} ${className}`.trim()} aria-label="Trabajo pendiente de decision">
-    <div className="pendingDecisionWorkStats">
-      <span><b>{summary.pendingCount}</b><em>sin decidir</em></span>
-      <span><b>{summary.highConfidenceCount || 0}</b><em>alta confianza</em></span>
-      <span><b>{summary.reviewableCount || 0}</b><em>prioritarias</em></span>
+  const highCount = summary.highConfidenceCount || 0;
+  const reviewableCount = summary.reviewableCount || 0;
+  return <div className={`decisionRail pendingDecisionWorkRail ${active ? "active" : ""} ${className}`.trim()} aria-label="Trabajo pendiente de decision">
+    <span className="decisionRailEyebrow">Trabajo pendiente</span>
+    <div className="decisionRailItems">
+      <span className="decisionRailItem neutral">
+        <em data-zero={!summary.pendingCount ? "true" : "false"}>{summary.pendingCount}</em>
+        <span>sin decidir</span>
+      </span>
+      <span className={`decisionRailItem ${highCount ? "good" : "neutral"}`}>
+        <em data-zero={!highCount ? "true" : "false"}>{highCount}</em>
+        <span>alta confianza</span>
+      </span>
+      <span className={`decisionRailItem ${reviewableCount ? "warn" : "neutral"}`}>
+        <em data-zero={!reviewableCount ? "true" : "false"}>{reviewableCount}</em>
+        <span>prioritarias</span>
+      </span>
+      <span className="decisionRailItem neutral">
+        <em>{top?.symbol || "-"}</em>
+        <span>{top ? `Pri ${Math.round(top.priority || 0)} · ${top.confidenceLabel || "Confianza"}` : "Sin foco"}</span>
+      </span>
     </div>
-    <div className="pendingDecisionWorkFocus">
-      <span>Foco sugerido</span>
-      <b>{top?.symbol || "-"}</b>
-      <em>{top ? `Pri ${Math.round(top.priority || 0)} · ${top.confidenceLabel || "Confianza"}` : "Sin foco"}</em>
-    </div>
-    <div className="pendingDecisionWorkActions">
+    <div className="decisionRailAction">
       <button type="button" className={`pendingDecisionWorkPrimary ${active ? "active" : ""}`} onClick={onFocus}>
-        Trabajo pendiente
+        {active ? "Enfoque activo" : "Enfocar"}
       </button>
-      <button type="button" onClick={onReview}>Revisar</button>
-      {active ? <button type="button" onClick={onClear}>Limpiar enfoque</button> : null}
+      <button type="button" className="decisionRailSecondary" onClick={onReview}>Revisar</button>
+      {active ? <button type="button" className="decisionRailSecondary" onClick={onClear}>Limpiar</button> : null}
     </div>
   </div>;
 }

@@ -61,10 +61,10 @@ describe("DecisionQualityStrip", () => {
       onSelect: () => {},
     }));
 
-    expect(html).toContain("decisionSummaryRail");
+    expect(html).toContain("decisionRail");
     expect(html).toContain("Operable");
     expect(html).toContain("Auditar");
-    expect(html).toContain("decisionSummaryChip active");
+    expect(html).toContain("decisionRailItem neutral active");
     expect(html).toContain("aria-pressed=\"true\"");
   });
 
@@ -93,7 +93,7 @@ describe("DecisionQualityStrip", () => {
     }));
 
     expect(html).toContain("decisionOperatingBrief");
-    expect(html).toContain("Lectura Screener");
+    expect(html).toContain("Lectura operativa");
     expect(html).toContain("Lectura frágil");
     expect(html).toContain("Sin liderazgo RS global");
     expect(html).toContain("Auditar datos");
@@ -130,7 +130,7 @@ describe("DecisionQualityStrip", () => {
       emptyLabel: "Sin filas en esta pagina",
     }));
 
-    expect(html).toContain("decisionSummaryRail mobile");
+    expect(html).toContain("decisionRail mobile");
     expect(html).toContain("decisionOperatingBrief compact");
     expect(html).toContain("Operable");
     expect(html).toContain("Auditar");
@@ -525,7 +525,7 @@ describe("DecisionQualityStrip", () => {
 
     expect(html).toContain("pendingDecisionWorkRail active");
     expect(html).toContain("Trabajo pendiente");
-    expect(html).toContain("Limpiar enfoque");
+    expect(html).toContain("Limpiar");
     expect(html).toContain("HIGH");
     expect(html).toContain("alta confianza");
   });
