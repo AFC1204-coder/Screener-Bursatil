@@ -120,9 +120,9 @@ export function CompactResultsTable({ rows = [], settings, favoriteSymbols, onFa
             </td>
             <td>
               <div className="compactMetricGrid">
-                <CompactMetric label="3M" value={pct(r.perf3m)} tone={compactTone(r.perf3m, 20, 0)} source={metricSource("perf3m")} zero={isZero(r.perf3m)} />
-                <CompactMetric label="6M" value={pct(r.perf6m)} tone={compactTone(r.perf6m, 35, 0)} source={metricSource("perf6m")} zero={isZero(r.perf6m)} />
-                <CompactMetric label="52w" value={pct(r.distance52w)} tone={compactTone(r.distance52w, -10, -35)} source={metricSource("distance52w")} zero={isZero(r.distance52w)} />
+                <CompactMetric label="3M" value={pct(r.perf3m)} tone={compactTone(r.perf3m, 20, 0)} source={metricSource("perf3m")} zero={isZero(r.perf3m)} metricType="price" />
+                <CompactMetric label="6M" value={pct(r.perf6m)} tone={compactTone(r.perf6m, 35, 0)} source={metricSource("perf6m")} zero={isZero(r.perf6m)} metricType="price" />
+                <CompactMetric label="52w" value={pct(r.distance52w)} tone={compactTone(r.distance52w, -10, -35)} source={metricSource("distance52w")} zero={isZero(r.distance52w)} metricType="price" />
               </div>
             </td>
             <td>

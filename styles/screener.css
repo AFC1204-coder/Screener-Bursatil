@@ -7542,9 +7542,13 @@ button.decisionOperatingIssue:hover {
   color: var(--neutral);
   font-weight: 400;
 }
-/* Tono semántico de métrica. soft (negativo, ej. drawdown) baja a --neutral
-   para no competir con la alerta ámbar --warning del veredicto por fila. */
-.compactResultsTable .compactMetric.good b { color: var(--positive); }
+/* Tono semántico de métrica.
+   - quality metrics (RS, A/D, etc.): good → --soft (neutro). Un score alto es
+     un dato, no una señal alcista. El verde queda reservado para deltas de precio.
+   - price metrics (perf3m/perf6m/52w): good → --positive (verde real).
+   - soft (negativo): --neutral para no competir con el veredicto. */
+.compactResultsTable .compactMetric.good b { color: var(--soft); }
+.compactResultsTable .compactMetric.good[data-metric-type="price"] b { color: var(--positive); }
 .compactResultsTable .compactMetric.soft b { color: var(--neutral); opacity: .8; }
 /* Punto de proveniencia (source) — discreto, neutral */
 .compactResultsTable .compactMetric i {
