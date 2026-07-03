@@ -554,7 +554,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
                 <button className="btn btnSmall btnGhost" onClick={() => csv(resultsFiltered)}>↓ CSV</button>
                 <button className="btn btnSmall btnGhost" onClick={() => decisionAuditJson(resultsFiltered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
                 <button className="btn btnSmall btnPrimary" onClick={() => openReview(resultsFiltered)}>Revisar</button>
-                <button className="btn btnSmall" onClick={() => saveSnapshot(resultsFiltered)} disabled={running} aria-label="Guardar snapshot de resultados">Guardar</button>
+                <button className="btn btnSmall btnGhost" onClick={() => saveSnapshot(resultsFiltered)} disabled={running} aria-label="Guardar snapshot de resultados">Guardar</button>
               </> : null}
             </div>
           </div>
