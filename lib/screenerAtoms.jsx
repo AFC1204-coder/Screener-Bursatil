@@ -117,3 +117,16 @@ export function ObjectiveMetricTruthPill({ state = null }) {
     <em>{state.label}</em>
   </span>;
 }
+
+// ResultsDisclosureGroup — shell unificado para los disclosure groups de resultados
+// (Decisiones, Auditoría y datos, Filtros). Unifica el "chrome" (contenedor,
+// comportamiento de apertura, persistencia) entre desktop y móvil.
+// Commit 1-2: NO-controlado (native <details open={defaultOpen}>). Commit 3: controlado.
+export function ResultsDisclosureGroup({ label, count, defaultOpen = false, className = "", children }) {
+  return (
+    <details className={`disclosurePanel ${className}`.trim()} open={defaultOpen || undefined}>
+      <summary><span>{label}</span>{count != null ? <em>{count}</em> : null}</summary>
+      {children}
+    </details>
+  );
+}
