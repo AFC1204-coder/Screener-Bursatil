@@ -166,7 +166,7 @@ export function DecisionEvidenceSummaryRail({ summary = null, activeKey = "all",
   const items = (summary.items || []).filter((item) => item.count > 0);
   const activeItem = activeKey !== "all" ? items.find((item) => item.key === activeKey) : null;
   const reviewTarget = activeItem || items.find((item) => item.key === "needs-work") || items.find((item) => item.key === "blocked") || items[0];
-  const railClass = ["decisionEvidenceSummaryRail", "dataHealthSummaryRail", compact ? "compact" : "", summary.verdict?.tone || "neutral"].filter(Boolean).join(" ");
+  const railClass = ["decisionRail", "decisionEvidenceSummaryRail", "dataHealthSummaryRail", compact ? "compact" : "", summary.verdict?.tone || "neutral"].filter(Boolean).join(" ");
   const selectItem = (item) => {
     if (!item?.key) return;
     onSelect?.(activeKey === item.key ? "all" : item.key);
@@ -243,7 +243,7 @@ export function ScoreAuditSummaryRail({ summary = null, activeKey = "all", onSel
     || items.find((item) => item.key === "attention" && item.count > 0)
     || items.find((item) => item.key === "mismatch" && item.count > 0)
     || items.find((item) => item.key === "missing" && item.count > 0);
-  const railClass = ["scoreAuditSummaryRail", "dataHealthSummaryRail", compact ? "compact" : "", summary.verdict?.tone || "neutral"].filter(Boolean).join(" ");
+  const railClass = ["decisionRail", "scoreAuditSummaryRail", "dataHealthSummaryRail", compact ? "compact" : "", summary.verdict?.tone || "neutral"].filter(Boolean).join(" ");
   const selectItem = (item) => {
     if (!item?.key) return;
     onSelect?.(activeKey === item.key ? "all" : item.key);
@@ -294,7 +294,7 @@ export function ScoreAuditSummaryRail({ summary = null, activeKey = "all", onSel
 
 export function AuditabilitySummaryRail({ summary = null, compact = false, onReviewFocus }) {
   if (!summary?.rows) return null;
-  const railClass = ["auditabilitySummaryRail", "dataHealthSummaryRail", compact ? "compact" : "", summary.verdict?.tone || "neutral"].filter(Boolean).join(" ");
+  const railClass = ["decisionRail", "auditabilitySummaryRail", "dataHealthSummaryRail", compact ? "compact" : "", summary.verdict?.tone || "neutral"].filter(Boolean).join(" ");
   const reviewFocus = (summary.methodologyReviewFocus || []).slice(0, 3);
   const limitations = (summary.methodologyLimitations || []).slice(0, 3);
   const usageTitle = "Herramienta de observación; no sustituye el criterio metodológico del inversor.";

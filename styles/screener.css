@@ -8041,3 +8041,142 @@ button.decisionOperatingIssue:hover {
 
 /* PendingDecisionWorkRail-specific overrides sobre .decisionRail */
 .pendingDecisionWorkRail { border-top: 0; padding-top: var(--space-3); }
+
+/* ── Rails de auditoría/data-health unificados bajo .decisionRail ──
+   Misma anatomía que los rails de decisión. Las clases internas existentes
+   (dataHealthSummaryIntro/Items/Issues) se mapean al patrón eyebrow/items/action. */
+.decisionRail.dataHealthSummaryRail,
+.decisionRail.decisionEvidenceSummaryRail,
+.decisionRail.scoreAuditSummaryRail,
+.decisionRail.auditabilitySummaryRail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.decisionRail .dataHealthSummaryIntro {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+.decisionRail .dataHealthSummaryIntro > span:first-child {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--neutral);
+}
+.decisionRail .dataHealthSummaryIntro > b {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.decisionRail .dataHealthSummaryIntro > em {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  font-style: normal;
+  color: var(--neutral);
+}
+.decisionRail .dataHealthSummaryItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  flex: 1 1 auto;
+  align-items: center;
+}
+.decisionRail .dataHealthSummaryItem,
+.decisionRail .scoreAuditSummaryItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  min-height: 32px;
+}
+.decisionRail .dataHealthSummaryItem::before,
+.decisionRail .scoreAuditSummaryItem::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--neutral);
+  flex: 0 0 auto;
+}
+.decisionRail .dataHealthSummaryItem.good::before,
+.decisionRail .scoreAuditSummaryItem.good::before { background: var(--positive); }
+.decisionRail .dataHealthSummaryItem.warn::before,
+.decisionRail .scoreAuditSummaryItem.warn::before { background: var(--warning); }
+.decisionRail .dataHealthSummaryItem.bad::before,
+.decisionRail .scoreAuditSummaryItem.bad::before { background: var(--negative); }
+.decisionRail .dataHealthSummaryItem b,
+.decisionRail .scoreAuditSummaryItem b {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.decisionRail .dataHealthSummaryItem em,
+.decisionRail .scoreAuditSummaryItem em {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  font-style: normal;
+  color: var(--neutral);
+}
+.decisionRail .dataHealthSummaryItem span,
+.decisionRail .scoreAuditSummaryItem span { color: var(--soft); font-size: 12px; }
+.decisionRail .dataHealthSummaryIssues {
+  display: flex;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.decisionRail .dataHealthSummaryIssues > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 12px;
+  color: var(--soft);
+}
+.decisionRail .dataHealthSummaryIssues > span b { font-weight: 600; color: var(--text); }
+.decisionRail .dataHealthSummaryIssues > span em { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: var(--neutral); font-style: normal; }
+.decisionEvidenceReviewAction,
+.scoreAuditReviewAction {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface2);
+  border: 0;
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  min-height: 40px;
+}
+.decisionEvidenceReviewAction:hover,
+.scoreAuditReviewAction:hover { color: var(--accent); }
+.decisionEvidenceReviewAction b,
+.scoreAuditReviewAction b { font-weight: 600; }
+.decisionEvidenceReviewAction em,
+.scoreAuditReviewAction em {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--neutral);
+  font-style: normal;
+}

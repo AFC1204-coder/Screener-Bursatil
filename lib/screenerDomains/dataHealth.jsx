@@ -72,7 +72,7 @@ export function DataHealthPanel({ health = null, compact = false, activeKey = "T
 export function DataHealthSummaryRail({ summary = null, activeKey = "Todos", onSelect, compact = false }) {
   if (!summary?.rows) return null;
   const items = (summary.items || []).filter((item) => item.count > 0);
-  const railClass = ["dataHealthSummaryRail", compact ? "compact" : "", summary.verdict?.tone || "neutral"].filter(Boolean).join(" ");
+  const railClass = ["decisionRail", "dataHealthSummaryRail", compact ? "compact" : "", summary.verdict?.tone || "neutral"].filter(Boolean).join(" ");
   const selectItem = (item) => {
     if (!item?.key) return;
     onSelect?.(activeKey === item.key ? "Todos" : item.key);
