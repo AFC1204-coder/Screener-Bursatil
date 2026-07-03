@@ -161,12 +161,12 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
         </select>
       </div>
     </ResultsDisclosureGroup> : null}
-    {hasRows ? <ResultsDisclosureGroup label="Decisiones" count={totalRows} defaultOpen className="resultsDecisionGroup">
+    {hasRows ? <ResultsDisclosureGroup label="Decisiones" count={totalRows} defaultOpen storageKey="statsedge.disclosureDecisiones.v1" className="resultsDecisionGroup">
       <DecisionQualityStrip audit={decisionQuality} compact activeIssueKey={decisionIssueFilter} onIssueSelect={onDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={onDecisionProfileFilter} />
       <DecisionOperatingBrief audit={decisionQuality} rows={rows} compact onIssueSelect={onDecisionIssueFilter} onReadinessFilter={onReadinessFilter} onConfidenceFilter={onConfidenceFilter} onReview={onReview} />
       <DecisionSummaryRail summary={readinessSummary} activeKey={readinessFilter} onSelect={onReadinessFilter} className="mobile" />
     </ResultsDisclosureGroup> : null}
-    {hasRows ? <ResultsDisclosureGroup label="Auditoría y datos" count={totalRows} className="resultsAuditGroup">
+    {hasRows ? <ResultsDisclosureGroup label="Auditoría y datos" count={totalRows} storageKey="statsedge.disclosureAuditoria.v1" className="resultsAuditGroup">
       <DecisionEvidenceSummaryRail summary={decisionEvidenceSummary} activeKey={decisionEvidenceFilter} onSelect={onDecisionEvidenceFilter} onReview={onDecisionEvidenceReview} compact />
       <DataHealthSummaryRail summary={dataHealthSummary} activeKey={dataHealthFilter} onSelect={onDataHealthFilter} compact />
       <ScoreAuditSummaryRail summary={scoreAuditSummary} activeKey={scoreAuditFilter} onSelect={onScoreAuditFilter} onReview={onScoreAuditReview} compact />

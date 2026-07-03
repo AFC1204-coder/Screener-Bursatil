@@ -2,7 +2,8 @@
 // Componentes pequeños usados por varios módulos feature (Table, Market, Mobile).
 // Mantener acá rompe el ciclo Table↔Market: ambos importan de aquí, ninguno del otro.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { safeRead, safeWrite } from "@/lib/localState";
 import {
   chartPath,
   companyLogoDomain,
@@ -121,10 +122,32 @@ export function ObjectiveMetricTruthPill({ state = null }) {
 // ResultsDisclosureGroup — shell unificado para los disclosure groups de resultados
 // (Decisiones, Auditoría y datos, Filtros). Unifica el "chrome" (contenedor,
 // comportamiento de apertura, persistencia) entre desktop y móvil.
-// Commit 1-2: NO-controlado (native <details open={defaultOpen}>). Commit 3: controlado.
-export function ResultsDisclosureGroup({ label, count, defaultOpen = false, className = "", children }) {
+//
+// Estado: TOTALMENTE CONTROLADO cuando storageKey está presente. useState arranca
+// con defaultOpen; useEffect lee localStorage al montar y sobrescribe si hay un
+// valor persistido. onToggle persiste el nuevo estado. Misma storageKey en
+// desktop y móvil → estado sincronizado al montar (cada superficie lee el mismo
+// valor al aparecer). Nunca mixto: o todas las superficies usan storageKey
+// (controlado) o ninguna (no-controlado, defaultOpen nativo).
+export function ResultsDisclosureGroup({ label, count, defaultOpen = false, storageKey = null, className = "", children }) {
+  const [open, setOpen] = useState(defaultOpen);
+  useEffect(() => {
+    if (!storageKey) return;
+    const stored = safeRead(storageKey, null);
+    if (stored !== null) setOpen(Boolean(stored));
+  }, [storageKey]);
+  const handleToggle = (event) => {
+    if (!storageKey) return;
+    const next = event.currentTarget.open;
+    setOpen(next);
+    safeWrite(storageKey, next);
+  };
   return (
-    <details className={`disclosurePanel ${className}`.trim()} open={defaultOpen || undefined}>
+    <details
+      className={`disclosurePanel ${className}`.trim()}
+      open={open || undefined}
+      onToggle={storageKey ? handleToggle : undefined}
+    >
       <summary><span>{label}</span>{count != null ? <em>{count}</em> : null}</summary>
       {children}
     </details>

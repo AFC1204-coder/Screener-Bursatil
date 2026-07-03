@@ -55,7 +55,7 @@ export default function DecisionGroups({
     <>
       {/* Grupo "Decisiones": abierto por defecto. La lectura operativa (Brief)
           domina primero; los contadores (Strip) quedan subordinados debajo. */}
-      <ResultsDisclosureGroup label="Decisiones" count={filteredCount} defaultOpen className="resultsDecisionGroup">
+      <ResultsDisclosureGroup label="Decisiones" count={filteredCount} defaultOpen storageKey="statsedge.disclosureDecisiones.v1" className="resultsDecisionGroup">
         <DecisionOperatingBrief audit={audit} rows={filteredRows} onIssueSelect={onDecisionIssueFilter} onReadinessFilter={onReadinessFilter} onConfidenceFilter={onConfidenceFilter} onReview={onReviewAll} />
         <DecisionQualityStrip audit={audit} activeIssueKey={decisionIssueFilter} onIssueSelect={onDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={onDecisionProfileFilter} />
         <PendingDecisionWorkRail
@@ -69,7 +69,7 @@ export default function DecisionGroups({
 
       {/* Grupo "Auditoría y datos": cerrado por defecto. Rails de calidad/pruebas/salud.
           Sus filtros se activan desde aquí; los <select> duplicados se eliminaron. */}
-      <ResultsDisclosureGroup label="Auditoría y datos" count={filteredCount} className="resultsAuditGroup">
+      <ResultsDisclosureGroup label="Auditoría y datos" count={filteredCount} storageKey="statsedge.disclosureAuditoria.v1" className="resultsAuditGroup">
         <DecisionEvidenceSummaryRail summary={decisionEvidenceSummary} activeKey={decisionEvidenceFilter} onSelect={onDecisionEvidenceFilter} onReview={onReviewDecisionEvidenceQueue} />
         <DataHealthSummaryRail summary={dataHealthSummary} activeKey={dataHealthFilter} onSelect={onDataHealthFilter} />
         <ScoreAuditSummaryRail summary={scoreAuditSummary} activeKey={scoreAuditFilter} onSelect={onScoreAuditFilter} onReview={onReviewScoreAuditQueue} />
