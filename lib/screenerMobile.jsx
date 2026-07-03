@@ -21,6 +21,7 @@ import { buildRowReviewFocus, decisionConfidenceForRow, decisionResolutionForRow
 import { stockUrl } from "@/lib/symbols";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 import { money, objectiveMetricCompactState } from "@/lib/screenerFormat";
+import { ResultsDisclosureGroup } from "@/lib/screenerAtoms";
 import {
   CompanyMark,
   DecisionIssueBadge,
@@ -144,8 +145,7 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
         confianza (único acceso a medium/low), prioridad, fiabilidad y resolución.
         Los selects de pruebas/datos/score se eliminaron: sus rails viven en el
         grupo "Auditoría y datos" y son el control canónico de esos filtros. */}
-    {hasRows ? <details className="disclosurePanel compactDisclosure mobileFilterDisclosure">
-      <summary><span>Filtros</span><em>{mobileFiltersActive ? `${mobileFiltersActive} activos` : "Sin filtros"}</em></summary>
+    {hasRows ? <ResultsDisclosureGroup label="Filtros" count={mobileFiltersActive ? `${mobileFiltersActive} activos` : "Sin filtros"} className="compactDisclosure mobileFilterDisclosure">
       <div className="mobileFilterGrid">
         <select value={confidenceFilter} onChange={(event) => onConfidenceFilter?.(event.target.value)} aria-label="Filtrar por confianza de decision">
           {confidenceOptions.map((x) => <option key={x} value={x}>{confidenceOptionLabel(x)}</option>)}
@@ -160,19 +160,17 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
           {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
         </select>
       </div>
-    </details> : null}
-    {hasRows ? <details className="disclosurePanel resultsDecisionGroup" open>
-      <summary><span>Decisiones</span><em>{totalRows}</em></summary>
+    </ResultsDisclosureGroup> : null}
+    {hasRows ? <ResultsDisclosureGroup label="Decisiones" count={totalRows} defaultOpen className="resultsDecisionGroup">
       <DecisionQualityStrip audit={decisionQuality} compact activeIssueKey={decisionIssueFilter} onIssueSelect={onDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={onDecisionProfileFilter} />
       <DecisionOperatingBrief audit={decisionQuality} rows={rows} compact onIssueSelect={onDecisionIssueFilter} onReadinessFilter={onReadinessFilter} onConfidenceFilter={onConfidenceFilter} onReview={onReview} />
       <DecisionSummaryRail summary={readinessSummary} activeKey={readinessFilter} onSelect={onReadinessFilter} className="mobile" />
-    </details> : null}
-    {hasRows ? <details className="disclosurePanel resultsAuditGroup">
-      <summary><span>Auditoría y datos</span><em>{totalRows}</em></summary>
+    </ResultsDisclosureGroup> : null}
+    {hasRows ? <ResultsDisclosureGroup label="Auditoría y datos" count={totalRows} className="resultsAuditGroup">
       <DecisionEvidenceSummaryRail summary={decisionEvidenceSummary} activeKey={decisionEvidenceFilter} onSelect={onDecisionEvidenceFilter} onReview={onDecisionEvidenceReview} compact />
       <DataHealthSummaryRail summary={dataHealthSummary} activeKey={dataHealthFilter} onSelect={onDataHealthFilter} compact />
       <ScoreAuditSummaryRail summary={scoreAuditSummary} activeKey={scoreAuditFilter} onSelect={onScoreAuditFilter} onReview={onScoreAuditReview} compact />
-    </details> : null}
+    </ResultsDisclosureGroup> : null}
     {hasRows ? <div className="controls" style={{ marginBottom: 10 }}>
       <select value={pageSize} onChange={(event) => onPageSize?.(Number(event.target.value))} aria-label="Acciones por pagina">
         {RESULT_PAGE_SIZES.map((size) => <option key={size} value={size}>{size} / página</option>)}
