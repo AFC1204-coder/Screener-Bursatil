@@ -8180,3 +8180,109 @@ button.decisionOperatingIssue:hover {
   color: var(--neutral);
   font-style: normal;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Rediseño ResultFilterBar — densidad standard, alineación "Más filtros",
+   indicador de filtro activo, jerarquía de botones. PASA FINAL, pisa todo.
+   Sistema de diseño: padding --space-3, gap --space-2, texto 12px, control
+   min-height 36px. "Más filtros" alineado al mismo eje que los selects.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Barra de filtros — densidad standard */
+.screenerTerminalPage .resultFilterBar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-2);
+  padding: var(--space-3);
+  margin: 0 0 var(--space-3);
+}
+.screenerTerminalPage .resultFilterSelect,
+.screenerTerminalPage .resultSortSelect {
+  width: 100%;
+  min-height: 36px;
+  max-width: none;
+  font-size: 12px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Filtro activo (valor no-default) — borde --accent sutil + fondo */
+.screenerTerminalPage .resultFilterSelect[data-active="true"] {
+  border-color: rgba(59, 120, 240, .45);
+  background: rgba(59, 120, 240, .06);
+}
+
+/* "Más filtros" — mismo eje y altura que los selects, sin hueco muerto */
+.screenerTerminalPage .viewLayerFilters {
+  margin-top: 0;
+}
+.screenerTerminalPage .viewLayerFilters > summary {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.screenerTerminalPage .viewLayerFilters > summary::before {
+  content: "+";
+  font-size: 14px;
+  color: var(--neutral);
+  flex: 0 0 auto;
+}
+.screenerTerminalPage .viewLayerFilters[open] > summary::before {
+  content: "−";
+}
+.screenerTerminalPage .viewLayerFilters > summary > span {
+  white-space: nowrap;
+  overflow: visible;
+}
+.screenerTerminalPage .viewLayerFilters > summary > em {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 500;
+  font-style: normal;
+  color: var(--neutral);
+  text-transform: none;
+}
+/* Grid interno del disclosure — mismo gap que la barra principal */
+.screenerTerminalPage .viewLayerFilterGrid {
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-2);
+}
+
+/* Botones del header — jerarquía: 1 primario + 4 tertiary iguales */
+.screenerTerminalPage .resultsHeader .controls .btn {
+  min-height: 36px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--soft);
+  padding: var(--space-1) var(--space-3);
+}
+.screenerTerminalPage .resultsHeader .controls .btn:hover {
+  border-color: var(--line2);
+  background: rgba(255, 255, 255, .03);
+}
+.screenerTerminalPage .resultsHeader .controls .btnPrimary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+.screenerTerminalPage .resultsHeader .controls .btnPrimary:hover {
+  background: var(--accent2);
+}

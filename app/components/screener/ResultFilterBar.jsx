@@ -7,6 +7,7 @@
 
 import { ResultFilterChips } from "@/app/screenerPanels";
 import { SECTOR_STRENGTH_LABELS, SECTOR_STRENGTH_OPTIONS, marketName } from "@/lib/screenerConfig";
+import { RELIABILITY_FILTER_ALL } from "@/lib/screenerReliability";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
@@ -67,23 +68,23 @@ export default function ResultFilterBar({
 }) {
   return (
     <>
-      <div className="controls resultFilterBar" style={{ marginBottom: 12 }}>
+      <div className="controls resultFilterBar">
         {/* No redundantes: resolución/fiabilidad/acción no tienen rail equivalente. */}
-        <select className="select resultFilterSelect" value={decisionResolutionFilter} onChange={(e) => onDecisionResolutionFilter(e.target.value)} aria-label="Filtrar por resolución de decision">
+        <select className="select resultFilterSelect" value={decisionResolutionFilter} onChange={(e) => onDecisionResolutionFilter(e.target.value)} aria-label="Filtrar por resolución de decision" data-active={decisionResolutionFilter !== "all" ? "true" : "false"}>
           {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
         </select>
-        <select className="select resultFilterSelect" value={reliabilityFilter} onChange={(e) => onReliabilityFilter(e.target.value)} aria-label="Filtrar por fiabilidad de observacion">
+        <select className="select resultFilterSelect" value={reliabilityFilter} onChange={(e) => onReliabilityFilter(e.target.value)} aria-label="Filtrar por fiabilidad de observacion" data-active={reliabilityFilter !== RELIABILITY_FILTER_ALL ? "true" : "false"}>
           {reliabilityOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
         </select>
         {/* NO borrar: DecisionOperatingBrief solo emite onConfidenceFilter("high"); este select
             es el único acceso a medium/low/very-low confidence. */}
-        <select className="select resultFilterSelect" value={confidenceFilter} onChange={(e) => onConfidenceFilter(e.target.value)} aria-label="Filtrar por confianza de decision">
+        <select className="select resultFilterSelect" value={confidenceFilter} onChange={(e) => onConfidenceFilter(e.target.value)} aria-label="Filtrar por confianza de decision" data-active={confidenceFilter !== "Todos" ? "true" : "false"}>
           {confidenceOptions.map((x) => <option key={x} value={x}>{optionLabel("Confianza", x, confidenceCounts, decisionConfidenceLabel)}</option>)}
         </select>
-        <select className="select resultFilterSelect" value={actionFilter} onChange={(e) => onActionFilter(e.target.value)} aria-label="Filtrar por accion sugerida">
+        <select className="select resultFilterSelect" value={actionFilter} onChange={(e) => onActionFilter(e.target.value)} aria-label="Filtrar por accion sugerida" data-active={actionFilter !== "Todos" ? "true" : "false"}>
           {actionOptions.map((x) => <option key={x} value={x}>{optionLabel("Acción", x, actionCounts, rankActionLabel)}</option>)}
         </select>
-        <select className="select resultFilterSelect resultSortSelect" value={sort} onChange={(e) => onSort(e.target.value)} aria-label="Ordenar resultados">
+        <select className="select resultFilterSelect resultSortSelect" value={sort} onChange={(e) => onSort(e.target.value)} aria-label="Ordenar resultados" data-active={sort !== "objectiveScore" ? "true" : "false"}>
           <option value="objectiveScore">Ordenar: Calidad objetiva</option>
           <option value="decisionPriority">Ordenar: Calidad decisión</option>
           <option value="totalScore">Ordenar: Composite</option>
@@ -102,22 +103,22 @@ export default function ResultFilterBar({
           <details className="disclosurePanel compactDisclosure viewLayerFilters">
             <summary><span>Más filtros</span><em>{viewFiltersActive} activos</em></summary>
             <div className="controls resultFilterBar viewLayerFilterGrid">
-              {viewLayers.country ? <select className="select resultFilterSelect" value={countryFilter} onChange={(e) => onCountryFilter(e.target.value)} aria-label="Filtrar por pais">
+              {viewLayers.country ? <select className="select resultFilterSelect" value={countryFilter} onChange={(e) => onCountryFilter(e.target.value)} aria-label="Filtrar por pais" data-active={countryFilter !== "Todos" ? "true" : "false"}>
                 {countryOptions.map((x) => <option key={x} value={x}>{optionLabel("País", x, countryCounts, (code) => `${code} · ${marketName(code)}`)}</option>)}
               </select> : null}
-              {viewLayers.theme ? <select className="select resultFilterSelect" value={themeFilter} onChange={(e) => { onThemeFilter(e.target.value); onSectorFilter("Todos"); onIndustryFilter("Todos"); }} aria-label="Filtrar por tema">
+              {viewLayers.theme ? <select className="select resultFilterSelect" value={themeFilter} onChange={(e) => { onThemeFilter(e.target.value); onSectorFilter("Todos"); onIndustryFilter("Todos"); }} aria-label="Filtrar por tema" data-active={themeFilter !== "Todos" ? "true" : "false"}>
                 {themeOptions.map((x) => <option key={x} value={x}>{optionLabel("Tema", x, themeCounts)}</option>)}
               </select> : null}
-              {viewLayers.sector ? <select className="select resultFilterSelect" value={sectorFilter} onChange={(e) => { onSectorFilter(e.target.value); onIndustryFilter("Todos"); }} aria-label="Filtrar por sector">
+              {viewLayers.sector ? <select className="select resultFilterSelect" value={sectorFilter} onChange={(e) => { onSectorFilter(e.target.value); onIndustryFilter("Todos"); }} aria-label="Filtrar por sector" data-active={sectorFilter !== "Todos" ? "true" : "false"}>
                 {sectorOptions.map((x) => <option key={x} value={x}>{optionLabel("Sector", x, sectorCounts)}</option>)}
               </select> : null}
-              {viewLayers.industry ? <select className="select resultFilterSelect" value={industryFilter} onChange={(e) => onIndustryFilter(e.target.value)} aria-label="Filtrar por subsector">
+              {viewLayers.industry ? <select className="select resultFilterSelect" value={industryFilter} onChange={(e) => onIndustryFilter(e.target.value)} aria-label="Filtrar por subsector" data-active={industryFilter !== "Todos" ? "true" : "false"}>
                 {industryOptions.map((x) => <option key={x} value={x}>{optionLabel("Subsector", x, industryCounts)}</option>)}
               </select> : null}
-              {viewLayers.sectorStrength ? <select className="select resultFilterSelect" value={sectorStrength} onChange={(e) => onSectorStrength(e.target.value)} aria-label="Filtrar por fuerza de grupo">
+              {viewLayers.sectorStrength ? <select className="select resultFilterSelect" value={sectorStrength} onChange={(e) => onSectorStrength(e.target.value)} aria-label="Filtrar por fuerza de grupo" data-active={sectorStrength !== "Todos" ? "true" : "false"}>
                 {SECTOR_STRENGTH_OPTIONS.map((x) => <option key={x} value={x}>{optionLabel("Fuerza grupo", x, sectorStrengthCounts, (item) => SECTOR_STRENGTH_LABELS[item] || item)}</option>)}
               </select> : null}
-              {viewLayers.ipo ? <select className="select resultFilterSelect" value={ipo} onChange={(e) => onIpo(e.target.value)} aria-label="Filtrar por IPO">
+              {viewLayers.ipo ? <select className="select resultFilterSelect" value={ipo} onChange={(e) => onIpo(e.target.value)} aria-label="Filtrar por IPO" data-active={ipo !== "Todos" ? "true" : "false"}>
                 {ipos.map((x) => <option key={x} value={x}>{optionLabel("IPO", x, ipoCounts)}</option>)}
               </select> : null}
             </div>
