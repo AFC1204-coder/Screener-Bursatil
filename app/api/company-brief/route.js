@@ -1,4 +1,5 @@
 import { fetchYahooProfile, fetchYahooChart, fetchYahooCompanyExtras } from "@/lib/marketData";
+import { usefulValue } from "@/lib/dataCoverageShared";
 import { fetchSecFundamentals, mergeSecGrowthMetrics } from "@/lib/sec";
 import { fetchFmpCompanyData } from "@/lib/fmp";
 import { fetchAsicShortInterest, mergeAsicShortInterest } from "@/lib/asicShort";
@@ -97,6 +98,33 @@ function oldestBarDate(bars = []) {
     .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date))
     .sort();
   return dates[0] || "";
+}
+
+// Calcula listingDate priorizando fuentes en orden:
+//   1. ipoDate del profile (fuente más autoritativa — SEC/FMP/Yahoo profile)
+//   2. primera barra del longChart (range MAX, profundidad completa en memoria,
+//      antes de pasar por el cap de writeDailyBarsCache)
+//   3. primera barra del chart merged (fallback si longChart falló)
+// Exportada para test unitario directo — el cálculo es puro.
+export function computeListingDate(profileIpoDate = "", longBars = [], mergedBars = []) {
+  if (profileIpoDate) {
+    return {
+      listingDate: profileIpoDate,
+      listingDateSource: "Proveedor perfil",
+    };
+  }
+  const fromLong = oldestBarDate(longBars);
+  if (fromLong) {
+    return {
+      listingDate: fromLong,
+      listingDateSource: "Primera cotizacion historica disponible",
+    };
+  }
+  const fromMerged = oldestBarDate(mergedBars);
+  return {
+    listingDate: fromMerged,
+    listingDateSource: fromMerged ? "Primera cotizacion (rango reciente)" : "",
+  };
 }
 function normalizeCurrency(currency = "") {
   const code = String(currency || "").trim().toUpperCase();
@@ -879,10 +907,6 @@ function daysApart(a, b) {
   if (!left || !right) return Infinity;
   return Math.abs(left - right) / 86400000;
 }
-function usefulValue(value) {
-  if (Number.isFinite(value)) return value !== 0;
-  return value !== undefined && value !== null && value !== "";
-}
 function richerRow(row = {}) {
   return [
     "revenue",
@@ -1243,6 +1267,13 @@ export async function getCompanyBrief(symbol, options = {}) {
       fetchChartForBrief(symbol, { range: "MAX" }, options).catch((error) => fallbackChartForBrief(symbol, { range: "MAX" }, error)),
       fetchChartForBrief(symbol, { range: "5A" }, options).catch((error) => fallbackChartForBrief(symbol, { range: "5A" }, error)),
     ]);
+    // listingDate/ATH se calculan en memoria sobre la respuesta cruda del
+    // proveedor (longChart = range MAX, profundidad completa) ANTES de pasar a
+    // mergeChartHistory/writeDailyBarsCache. Esto desacopla la profundidad
+    // vista por el cálculo de la profundidad que termina cacheada (que ahora
+    // está capada a 400/1260 barras). El usuario ve el mismo listingDate que
+    // antes; solo cambia el momento y la fuente del cálculo — ya no depende de
+    // leer la caché post-truncate.
     const chart = mergeChartHistory(longChart, recentChart);
     let profile = {
       name: chart.meta?.longName || chart.meta?.shortName || symbol,
@@ -1320,8 +1351,11 @@ export async function getCompanyBrief(symbol, options = {}) {
     const summary = firstSentences(profile.businessSummary, 2);
     const marketCapCurrency = normalizeCurrency(profile.currency);
     const marketCapUsd = await marketCapUsdInfo(profile.marketCap, marketCapCurrency, options).catch(() => null);
-    const listingDate = profile.ipoDate || oldestBarDate(chart.bars || []);
-    const listingDateSource = profile.ipoDate ? "Proveedor perfil" : listingDate ? "Primera cotizacion historica disponible" : "";
+    const { listingDate, listingDateSource } = computeListingDate(
+      profile.ipoDate,
+      longChart?.bars || [],
+      chart.bars || [],
+    );
     const chartEstimated = Boolean(chart.meta?.estimated || chart.dataQuality?.estimated || chart.meta?.dataProvider === ESTIMATED_CHART_PROVIDER);
     const rawStage = stageFromBars(chart.bars || []);
     const stage = chartEstimated
