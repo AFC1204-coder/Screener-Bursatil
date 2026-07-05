@@ -193,6 +193,84 @@ begin
     where nullif(trim(item.symbol), '') is not null;
   end if;
 
+  -- ────────────────────────────────────────────────────────────────────────
+  -- PURGA OPORTUNISTA (política de retención "últimos N scans por owner").
+  --
+  -- Política decidida por Fable (no rediseñar):
+  --   1. Retención: conservar los N=3 scans MÁS RECIENTES por owner_id
+  --      (ordenados por updated_at desc). Todo scan del mismo owner fuera de
+  --      ese top-3 se elimina.
+  --   2. Tombstones: cualquier scan con deleted_at no nulo Y anterior a 7 días
+  --      desde now() se elimina, independientemente de si está en el top-3
+  --      (un soft-delete de más de una semana ya no tiene valor de undo).
+  --
+  -- Ejecución: ocurre DENTRO de la misma transacción que el upsert exitoso
+  -- (v_accepted=true), así la atomicidad cubre (a) el upsert, (b) el insert
+  -- de scan_results, y (c) la purga. Si la purga falla, el upsert completo se
+  -- revierte — no hay estado intermedio con "scan guardado pero sin purga".
+  -- Si el upsert fue rechazado por stale (v_accepted=false), NO se purga: la
+  -- spec exige atomicidad con el upsert exitoso, y un upsert rechazado no es
+  -- "exitoso" — el caller retiene el derecho de reintentar y la purga no debe
+  -- tener efectos colaterales sobre un write que no se aplicó.
+  --
+  -- Cascade: scan_results.scan_id references scans(id) ON DELETE CASCADE
+  -- (ver DDL de scan_results arriba), así borrar de scans limpia
+  -- automáticamente scan_results. NO se toca favorites ni favorite_snapshots
+  -- (desacopladas: copy-on-favorite, sin FK hacia scans/scan_results).
+  --
+  -- Opportunity, no cron: la purga corre en cada upsert exitoso del owner.
+  -- Como el upsert es la operación más frecuente de escritura, esto mantiene
+  -- la tabla acotada sin necesidad de pg_cron (backstop de cron sería trabajo
+  -- aparte — no implementado aquí).
+  --
+  -- N=3 es constante hardcodeada (dato decidido, no parámetro). Si en el
+  -- futuro se quiere configurable, exponerlo como parámetro de la función
+  -- requeriría migrar callers; fuera de scope de este cambio.
+  -- ────────────────────────────────────────────────────────────────────────
+  if v_accepted then
+    declare
+      v_owner text := coalesce(nullif(trim(p_owner_id)), 'personal');
+      v_retention_count int := 3;
+      v_tombstone_days int := 7;
+    begin
+      -- Paso 1: tombstones antiguos (>7 días). Soft-deletes del owner que ya
+      -- no sirven ni para undo. Se eliminan antes que la retención por recencia
+      -- por claridad de orden. (Tras el fix del paso 2, los tombstones nunca
+      -- entran al ranking de retención, así que este paso ya no compite con
+      -- la retención — simplemente limpia tombstones que cumplieron su plazo
+      -- mínimo de undo. La política de 7 días es la ÚNICA regla que gobierna
+      -- la desaparición de un tombstone.)
+      delete from public.scans
+      where owner_id = v_owner
+        and deleted_at is not null
+        and deleted_at < (now() - (v_tombstone_days || ' days')::interval);
+
+      -- Paso 2: retención top-N. row_number() ordena por updated_at desc sobre
+      -- los scans ACTIVOS (deleted_at is null) del owner. Los tombstones se
+      -- excluyen explícitamente del ranking: aunque la purga de tombstones del
+      -- paso 1 solo borra los >7 días, los tombstones recientes (<7d) tampoco
+      -- deben competir por las N plazas — un tombstone reciente con updated_at
+      -- alta podría desplazar a un scan activo real. La regla de 7 días gobierna
+      -- la desaparición definitiva del tombstone; el ranking de retención solo
+      -- opera sobre scans vivos. El cascade limpia scan_results automáticamente.
+      delete from public.scans
+      where id in (
+        select id from (
+          select
+            s.id,
+            row_number() over (
+              partition by s.owner_id
+              order by s.updated_at desc, s.created_at desc
+            ) as rn
+          from public.scans s
+          where s.owner_id = v_owner
+            and s.deleted_at is null
+        ) ranked
+        where ranked.rn > v_retention_count
+      );
+    end;
+  end if;
+
   return query
   select *
   from public.scans
@@ -205,6 +283,75 @@ do $$
 begin
   if to_regrole('service_role') is not null then
     grant execute on function public.upsert_scan_newer_wins(text, jsonb, jsonb) to service_role;
+  end if;
+end $$;
+
+-- finalize_scan_results: aplicador ATÓMICO de la finalización de percentiles RS.
+-- Recibe un array JSONB de {id, metrics_patch} (uno por fila del scan) y hace un
+-- único UPDATE masivo en una sola sentencia (Postgres la envuelve en su propia
+-- transacción → todo o nada). Si la función revierte, ninguna fila queda tocada.
+--
+-- Por qué PL/pgSQL en vez de N PATCHes REST: el patrón anterior (PATCH por fila
+-- con concurrencia 5) dejaba filas en estado mixto "final"/"batch" si el PATCH
+-- k de N fallaba. Esta función garantiza atomicidad real: o las N filas reciben
+-- sus nuevos percentiles + percentileScope="final", o ninguna lo hace.
+--
+-- Convención de la casa: SECURITY INVOKER + set search_path + revoke/grant a
+-- service_role (la API usa SUPABASE_SERVICE_ROLE_KEY que bypasea RLS, ver
+-- comentario al final del archivo). Igual que upsert_scan_newer_wins.
+create or replace function public.finalize_scan_results(
+  p_owner_id text,
+  p_scan_id uuid,
+  p_patches jsonb
+)
+returns table(updated_count integer)
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  -- Sanity: el owner debe coincidir con el de la fila del scan. Esto evita que
+  -- un payload malicioso o erróneo cruce fronteras de owner.
+  if not exists (
+    select 1 from public.scans
+    where id = p_scan_id and owner_id = p_owner_id
+  ) then
+    raise exception 'scan % no pertenece al owner %', p_scan_id, p_owner_id
+      using errcode = '21000';
+  end if;
+
+  -- UPDATE masivo desde el array JSONB. Cada item lleva el id de la fila y el
+  -- blob metrics_patch completo (ya con los 3 percentiles nuevos +
+  -- percentileScope: "final"). Usamos `||` para mergear sobre el metrics actual
+  -- (conserva cualquier key no mencionada; el patch sobreescribe las que toca).
+  -- El filtro scan_id/owner_id en el JOIN es defensa en profundidad, aunque el
+  -- id ya es PK global.
+  return query
+  with source as (
+    select *
+    from jsonb_to_recordset(coalesce(p_patches, '[]'::jsonb)) as item(
+      id uuid,
+      metrics_patch jsonb
+    )
+  ),
+  touched as (
+    update public.scan_results as sr
+    set metrics = sr.metrics || src.metrics_patch
+    from source as src
+    where sr.id = src.id
+      and sr.scan_id = p_scan_id
+      and sr.owner_id = p_owner_id
+    returning 1
+  )
+  select count(*)::integer from touched;
+end;
+$$;
+
+revoke all on function public.finalize_scan_results(text, uuid, jsonb) from public;
+do $$
+begin
+  if to_regrole('service_role') is not null then
+    grant execute on function public.finalize_scan_results(text, uuid, jsonb) to service_role;
   end if;
 end $$;
 
@@ -1205,3 +1352,290 @@ alter table rs_weekly_snapshots enable row level security;
 alter table rs_weekly_items enable row level security;
 -- The Next.js API uses SUPABASE_SERVICE_ROLE_KEY, which bypasses RLS.
 -- Do not expose the service role key in browser code.
+
+-- ──────────────────────────────────────────────────────────────────────────
+-- pg_cron: backstop semanal para huérfanos que la purga oportunista NO cubre.
+-- ──────────────────────────────────────────────────────────────────────────
+-- POR QUÉ EXISTE ESTE JOB — backstop, NO mecanismo principal:
+-- La purga oportunista dentro de `upsert_scan_newer_wins` (ver arriba) cubre
+-- el caso normal: cada upsert exitoso retiene los 3 scans activos más
+-- recientes del owner y limpia tombstones >7 días. Eso mantiene la tabla
+-- acotada MIENTRAS el usuario siga escaneando.
+--
+-- Pero ese flujo nunca dispara para el caso huérfano: un owner que creó scans
+-- y dejó de escanear. Sin un upsert nuevo, la purga oportunista nunca corre,
+-- y sus ≤3 scans activos + cualquier tombstone se quedan indefinidamente.
+-- Este job semanal es el respaldo que cubre ESE único caso — no reemplaza la
+-- purga oportunista, no la duplica, solo atrapa lo que ella no toca.
+--
+-- POR QUÉ EL UMBRAL ES 30 DÍAS (más laxo que la purga oportunista):
+-- La purga oportunista gobierna el rango 0–7 días (tombstones) y retiene solo
+-- 3 scans activos por owner. Este backstop solo debe activarse para huérfanos
+-- que la purga oportunista nunca tocó — es decir, scans cuyo owner lleva meses
+-- sin actividad. 30 días es 4.3× el umbral de tombstones (7 días), lo que
+-- garantiza que el backstop NUNCA compita con la purga oportunista en el rango
+-- 0–29 días: si el usuario vuelve a escanear antes de 30 días, la purga
+-- oportunista retoma el control y este job no hace nada relevante. El backstop
+-- es estrictamente de "última oportunidad" para datos que ya nadie quiere.
+--
+-- CAMPO APLICADO: opera sobre `updated_at` (activos huérfanos) y `deleted_at`
+-- (tombstones que sobrevivieron >30 días pese a la purga oportunista de 7 días
+-- — señal de que ningún upsert disparó la limpieza normal, pero igual hay que
+-- limpiarlos). El cascade ON DELETE CASCADE en scan_results.scan_id (ver DDL)
+-- limpia automáticamente las filas hijas al borrar de scans.
+--
+-- NO TOCA favorites NI favorite_snapshots — desacopladas (copy-on-favorite,
+-- sin FK hacia scans/scan_results). Solo opera sobre public.scans.
+--
+-- SINTAXIS PENDIENTE DE VALIDACIÓN EN RUNTIME: este bloque usa pg_cron, que
+-- requiere (a) que la extensión esté habilitada a nivel de proyecto en
+-- Supabase (Dashboard → Database → Extensions → pg_cron), y (b) que el rol
+-- que ejecuta `cron.schedule` tenga permisos sobre el schema `cron`.
+-- pg_cron crea sus objetos internos (incluidas las funciones
+-- schedule/unschedule) en un schema llamado literalmente "cron",
+-- independientemente del schema donde se cargue la extensión con
+-- `with schema`. Por eso las llamadas se hacen sin prefijo
+-- (`cron.schedule(...)`, no `extensions.cron.schedule(...)`): el prefijo
+-- apuntaba al schema equivocado. Convención confirmada contra docs
+-- oficiales de Supabase y ejemplos reales. No se puede verificar aquí porque
+-- el proyecto está restringido (sin acceso a Postgres real); seguimos el
+-- mismo patrón que `finalize_scan_results` (inspección estática, validación
+-- runtime pendiente).
+--
+-- create extension sin `with schema` para seguir la convención del proyecto
+-- (la única otra create extension existente, pgcrypto, tampoco especifica
+-- schema — ver línea 4).
+create extension if not exists pg_cron;
+
+-- Idempotencia: si el job ya existe (re-ejecución de la migración), se quita
+-- antes de re-programarlo. cron.unschedule devuelve NULL si no existe — no
+-- levanta error.
+do $$
+begin
+  perform cron.unschedule('statsedge-backstop-purge-weekly');
+exception
+  when others then null;
+end $$;
+
+select cron.schedule(
+  'statsedge-backstop-purge-weekly',
+  '0 3 * * 0',  -- domingos 03:00 UTC (fuera de horas pico, semanal)
+  $cron$
+    delete from public.scans
+    where deleted_at is null
+      and updated_at < now() - interval '30 days';
+    delete from public.scans
+    where deleted_at is not null
+      and deleted_at < now() - interval '30 days';
+  $cron$
+);
+
+-- ──────────────────────────────────────────────────────────────────────────
+-- pg_cron: backstop semanal para daily_bars (huérfanos + trim de excedentes).
+-- ──────────────────────────────────────────────────────────────────────────
+-- POR QUÉ EXISTE ESTE JOB — backstop complementario al cap de escritura:
+-- writeDailyBarsCache (lib/dailyBarsCache.js) ya aplica un cap de profundidad
+-- por símbolo en cada escritura: 400 barras por defecto, 1260 si el símbolo
+-- está referenciado (favorito/nota/alerta activa). Ese cap cubre el caso
+-- normal — cada nueva escritura trunca el payload y purga lo viejo para ese
+-- símbolo.
+--
+-- Pero igual que con scans, ese flujo nunca dispara para el caso huérfano:
+-- un símbolo que se fetcheó una vez (p.ej. un /review puntual hace meses) y
+-- cuyo owner nunca volvió a tocar. Sin una nueva escritura, el cap de
+-- writeDailyBarsCache nunca corre, y sus filas se quedan indefinidamente.
+-- Este job semanal es el respaldo que cubre ESE caso — no reemplaza el cap
+-- de escritura, no lo duplica, solo atrapa lo que él no toca.
+--
+-- DOS FASES, una sola función:
+--
+-- FASE 1 — Huérfanos: borra TODAS las filas de cualquier (owner_id, symbol)
+--   cuyo max(updated_at) agrupado por symbol sea anterior a 90 días. 90 días
+--   es deliberadamente más laxo que el cap de escritura (que actúa en cada
+--   write): cubre el caso "el usuario fetcheó esto en algún momento de los
+--   últimos 3 meses pero no volvió". Si volvió a tocarlo en los últimos 90
+--   días, el símbolo NO es huérfano y sobrevive (su trim lo maneja la fase 2).
+--   EXCEPCIÓN: si el símbolo está referenciado (favorito/nota/alerta activa),
+--   NO se borra aunque sea huérfano — el usuario sigue siguiéndolo, así que
+--   retener su histórico tiene valor (distanceATH/listingDate).
+--
+-- FASE 2 — Trim de excedentes: para los símbolos supervivientes, row_number()
+--   over (partition by owner_id, symbol order by trade_date desc) y borrar
+--   rn > 400 (no referenciados) o rn > 1260 (referenciados). Esto atrapa el
+--   caso "el símbolo se fetcheó con range=MAX antes de que existiera el cap
+--   de escritura" — filas viejas pre-cap que writeDailyBarsCache no había
+--   podido purgar porque todavía no existía la lógica.
+--
+-- CRITERIO DE "REFERENCIADO" — réplica exacta de isSymbolReferenced en
+-- lib/dailyBarsCache.js. Mismas 3 tablas, mismas condiciones:
+--   • favorites: owner_id + symbol + deleted_at is null (excluye tombstones)
+--   • notes: owner_id + symbol (symbol es nullable; el eq implícito filtra)
+--   • alerts: owner_id + symbol + status='active' (excluye disparadas/pausadas)
+-- Si una sola de las 3 tiene una fila para ese (owner_id, symbol), el símbolo
+-- cuenta como referenciado. Cualquier diferencia con el JS sería un bug —
+-- mantener ambos en sincronía es un contrato explícito.
+--
+-- VACUUM SEPARADO: VACUUM (ANALYZE) no puede correr dentro de un bloque de
+-- transacción ni dentro de una función plpgsql. Por eso se programa como un
+-- cron.schedule APARTE (ver abajo) con el comando VACUUM directo, no envuelto
+-- en esta función. VACUUM normal (no FULL) — recupera espacio de tuplas muertas
+-- sin bloquear la tabla exclusivamente, suficiente para un backstop semanal.
+--
+-- NO TOCA favorites/favorite_snapshots/notes/alerts — solo lee las 3 tablas
+-- para el EXISTS de "referenciado", nunca escribe en ellas. Solo opera sobre
+-- public.daily_bars.
+--
+-- SINTAXIS PENDIENTE DE VALIDACIÓN EN RUNTIME: misma situación que el backstop
+-- de scan_results — pg_cron debe estar habilitado, el rol que ejecuta debe
+-- tener permisos sobre el schema `cron`, y la función debe ser executable por
+-- ese rol (security invoker + grant a service_role, ver convención abajo). No
+-- verificable aquí (proyecto restringido); inspección estática, validación
+-- runtime pendiente cuando se confirme el desbloqueo.
+
+create or replace function public.purge_daily_bars_backstop()
+returns integer
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_orphans integer := 0;
+  v_trimmed integer := 0;
+begin
+  -- FASE 1 — Huérfanos: borra todos los símbolos cuyo último updated_at es
+  -- anterior a 90 días Y no están referenciados por el owner. Se ejecuta
+  -- antes del trim para reducir el universo que la fase 2 tiene que procesar.
+  --
+  -- El `ctid in (...)` evita el anti-pattern de borrar de la misma tabla que
+  -- se está escaneando; pre-computamos los ctids a borrar en una subquery.
+  delete from public.daily_bars
+  where ctid in (
+    select d.ctid
+    from public.daily_bars d
+    join (
+      -- Último updated_at por (owner_id, symbol) — agrupa todas las filas
+      -- del símbolo para decidir si el conjunto es huérfano.
+      select owner_id, symbol, max(updated_at) as last_seen
+      from public.daily_bars
+      group by owner_id, symbol
+    ) latest
+      on latest.owner_id = d.owner_id
+     and latest.symbol = d.symbol
+    where latest.last_seen < now() - interval '90 days'
+      -- EXCEPCIÓN: el símbolo está referenciado (favorito/nota/alerta activa
+      -- para ese mismo owner_id). Réplica exacta de isSymbolReferenced (JS).
+      and not exists (
+        select 1 from public.favorites f
+        where f.owner_id = d.owner_id
+          and f.symbol = d.symbol
+          and f.deleted_at is null
+      )
+      and not exists (
+        select 1 from public.notes n
+        where n.owner_id = d.owner_id
+          and n.symbol = d.symbol
+      )
+      and not exists (
+        select 1 from public.alerts a
+        where a.owner_id = d.owner_id
+          and a.symbol = d.symbol
+          and a.status = 'active'
+      )
+  );
+
+  get diagnostics v_orphans = row_count;
+
+  -- FASE 2 — Trim de excedentes: para los símbolos supervivientes, retiene las
+  -- 400 más recientes (no referenciados) o 1260 (referenciados) por
+  -- (owner_id, symbol). row_number() ordena desc por trade_date, así que rn=1
+  -- es la barra más reciente y rn > cap son las viejas a borrar.
+  --
+  -- El cap se decide por símbolo según si está referenciado o no. La subquery
+  -- referenciados pre-computa el set de (owner_id, symbol) referenciados para
+  -- evitar re-ejecutar los 3 EXISTS por cada fila.
+  with ranked as (
+    select
+      d.ctid,
+      d.owner_id,
+      d.symbol,
+      row_number() over (
+        partition by d.owner_id, d.symbol
+        order by d.trade_date desc
+      ) as rn
+    from public.daily_bars d
+  ),
+  referenciados as (
+    -- Set de (owner_id, symbol) con al menos una referencia activa.
+    -- UNION (no UNION ALL) deduplica — mismo (owner_id, symbol) en varias
+    -- tablas cuenta como una sola referencia. Misma lógica que
+    -- isSymbolReferenced (JS): cualquiera de las 3 basta.
+    select owner_id, symbol from public.favorites
+      where deleted_at is null and symbol is not null
+    union
+    select owner_id, symbol from public.notes
+      where symbol is not null
+    union
+    select owner_id, symbol from public.alerts
+      where status = 'active' and symbol is not null
+  )
+  delete from public.daily_bars
+  where ctid in (
+    select r.ctid
+    from ranked r
+    left join referenciados ref
+      on ref.owner_id = r.owner_id
+     and ref.symbol = r.symbol
+    where r.rn > case
+      when ref.owner_id is not null then 1260
+      else 400
+    end
+  );
+
+  get diagnostics v_trimmed = row_count;
+
+  -- Retorna el total (huérfanos + trim) para observabilidad en cron.job_run_details.
+  return v_orphans + v_trimmed;
+end $$;
+
+revoke all on function public.purge_daily_bars_backstop() from public;
+do $$
+begin
+  -- grant execute a service_role solo si el rol existe (idempotente ante
+  -- entornos donde el rol no está creado todavía).
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant execute on function public.purge_daily_bars_backstop() to service_role;
+  end if;
+end $$;
+
+-- Idempotencia: si los jobs ya existen (re-ejecución de la migración), se
+-- quitan antes de re-programarlos. cron.unschedule devuelve NULL si no
+-- existe — no levanta error.
+do $$
+begin
+  perform cron.unschedule('statsedge-daily-bars-purge-weekly');
+  perform cron.unschedule('statsedge-daily-bars-vacuum-weekly');
+exception
+  when others then null;
+end $$;
+
+-- Job 1: DELETE (huérfanos + trim). Misma ventana que el backstop de scans.
+select cron.schedule(
+  'statsedge-daily-bars-purge-weekly',
+  '0 3 * * 0',  -- domingos 03:00 UTC (fuera de horas pico, semanal)
+  $cron$
+    select public.purge_daily_bars_backstop();
+  $cron$
+);
+
+-- Job 2: VACUUM (ANALYZE) — separado porque VACUUM no puede correr dentro de
+-- una transacción ni dentro de una función plpgsql. VACUUM normal (no FULL):
+-- recupera espacio de tuplas muertas tras los DELETEs del job 1 sin bloqueo
+-- exclusivo de la tabla. Corre 15 minutos después del DELETE (03:15 UTC) para
+-- dejar margen a que la transacción de purga termine.
+select cron.schedule(
+  'statsedge-daily-bars-vacuum-weekly',
+  '15 3 * * 0',  -- domingos 03:15 UTC (15 min después del DELETE)
+  $cron$
+    vacuum (analyze) public.daily_bars;
+  $cron$
+);
