@@ -224,7 +224,16 @@ describeIf("PIEZA 1 · scan real + finalize_scan_results (Supabase real)", () =>
       const rsGlobal = sampleMetrics.rsGlobalPct ?? sampleMetrics.rs_rating;
       const rsCountry = sampleMetrics.rsCountryPct;
       const rsSector = sampleMetrics.rsSectorPct;
+      // Sample sizes: con 3 símbolos no hay universo representativo, así que
+      // rsGlobalPct queda null por diseño (no por bug). rsGlobalSample debe
+      // ser 3 (= universo entero).
+      const rsGlobalSample = sampleMetrics.rsGlobalSample;
+      const rsCountrySample = sampleMetrics.rsCountrySample;
+      const rsSectorSample = sampleMetrics.rsSectorSample;
+      const contradictions = sampleMetrics.signalContradictions || [];
       console.log(`     [sample row metrics] rsGlobalPct=${rsGlobal} rsCountryPct=${rsCountry} rsSectorPct=${rsSector} percentileScope=${sampleMetrics.percentileScope}`);
+      console.log(`     [sample row metrics] rsGlobalSample=${rsGlobalSample} rsCountrySample=${rsCountrySample} rsSectorSample=${rsSectorSample}`);
+      console.log(`     [sample row metrics] signalContradictions=${JSON.stringify(contradictions)}`);
 
       if (allFinal && finalizationStatus === "succeeded") {
         console.log(`     [PASS] percentileScope='final' en ${scopes.length}/${rows.length} filas, finalizationStatus='succeeded'`);
