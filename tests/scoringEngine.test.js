@@ -676,3 +676,464 @@ describe("scoringEngine · weaknessScore (registro diagnósticas)", () => {
     expect(computeComposite(withWeakness)).toBe(computeComposite(baseInput));
   });
 });
+
+// ---------------------------------------------------------------------------
+// Coverage wrapper para las 12 señales del registry que NO estaban cubiertas
+// directamente en el bloque "computeSignal coverage wrapper" superior.
+// Patrón idéntico: (1) coverage=1.0 con todos los requiredInputs presentes,
+// (2) coverage proporcional con un subconjunto presente, (3) coverage=0 con
+// ninguno presente, (4) value === snapshot pre-consolidación para una fila
+// completa (contrato inmutable del wrapper).
+//
+// Notas de diseño:
+// - volumeScore depende de volumeEffectScore (intra-row); los tests lo incluyen
+//   como requiredInput ya calculado en la fila mock.
+// - demandScore depende de volumeScore/volumeEffectScore/liquidityScore (intra-
+//   row) y de campos RS (rsGlobalPct/rsRating) — fixtures locales, no integración.
+// - setupQualityScore depende de objectiveSetupScore; el motor acepta override y
+//   lo respeta, pero los tests pasan objectiveSetupScore explícito para mantener
+//   comparabilidad con el snapshot pre-consolidación (snapSetup replica override).
+// - ipoScore: señal "muerta" en el pipeline real (materializedScanner no la
+//   invoca); aquí se prueba como señal aislada, igual que las demás.
+// ---------------------------------------------------------------------------
+describe("scoringEngine · computeSignal coverage wrapper (señales sin cobertura directa)", () => {
+  // ---- minerviniScore: requiredInputs = 10 ---------------------------------
+  it("minerviniScore: coverage=1.0 cuando los 10 requiredInputs están presentes", () => {
+    const row = {
+      price: 120, sma50: 110, sma150: 100, sma200: 95, sma200Slope: 0.4,
+      lowAdvance52w: 40, distance52w: -3, distance20d: -2, highsSpreadPct: 8, perf3m: 12,
+    };
+    const result = computeSignal(row, "minerviniScore");
+    expect(result.coverage).toBe(1.0);
+    expect(result.partial).toBe(false);
+    expect(typeof result.value).toBe("number");
+  });
+
+  it("minerviniScore: coverage=5/10=0.5 cuando faltan 5 de 10 inputs", () => {
+    // sma150, lowAdvance52w, distance52w, distance20d, highsSpreadPct ausentes
+    const row = { price: 120, sma50: 110, sma200: 95, sma200Slope: 0.4, perf3m: 12 };
+    const result = computeSignal(row, "minerviniScore");
+    expect(result.coverage).toBeCloseTo(5 / 10, 6);
+    expect(result.partial).toBe(true);
+  });
+
+  it("minerviniScore: coverage=0 cuando ningún requiredInput está presente", () => {
+    const result = computeSignal({}, "minerviniScore");
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+    expect(result.value).toBe(0);
+  });
+
+  it("minerviniScore: value === snapshot pre-consolidación con fila completa", () => {
+    const row = {
+      price: 120, sma50: 110, sma150: 100, sma200: 95, sma200Slope: 0.4,
+      lowAdvance52w: 40, distance52w: -3, distance20d: -2, highsSpreadPct: 8, perf3m: 12,
+    };
+    const { value } = computeSignal(row, "minerviniScore");
+    expect(value).toBe(snapMinervini(row));
+  });
+
+  // ---- riskScore: requiredInputs = 5 ---------------------------------------
+  it("riskScore: coverage=1.0 cuando los 5 requiredInputs están presentes", () => {
+    const row = { extSma50: 5, distance20d: -2, distance50d: -3, price: 120, sma50: 110 };
+    const result = computeSignal(row, "riskScore");
+    expect(result.coverage).toBe(1.0);
+    expect(result.partial).toBe(false);
+    expect(typeof result.value).toBe("number");
+  });
+
+  it("riskScore: coverage=3/5=0.6 cuando faltan 2 de 5 inputs", () => {
+    // extSma50, distance50d ausentes
+    const row = { distance20d: -2, price: 120, sma50: 110 };
+    const result = computeSignal(row, "riskScore");
+    expect(result.coverage).toBeCloseTo(3 / 5, 6);
+    expect(result.partial).toBe(true);
+  });
+
+  it("riskScore: coverage=0 cuando ningún requiredInput está presente", () => {
+    const result = computeSignal({}, "riskScore");
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+    expect(result.value).toBe(0);
+  });
+
+  it("riskScore: value === snapshot pre-consolidación con fila completa", () => {
+    const row = { extSma50: 5, distance20d: -2, distance50d: -3, price: 120, sma50: 110 };
+    const { value } = computeSignal(row, "riskScore");
+    expect(value).toBe(snapRisk(row));
+  });
+
+  // ---- riskRewardScore: requiredInputs = 7 --------------------------------
+  it("riskRewardScore: coverage=1.0 cuando los 7 requiredInputs están presentes", () => {
+    const row = {
+      returnToVol3m: 0.9, returnToDrawdown3m: 1.6, volatility63d: 30,
+      maxDrawdown63d: 15, maxDailyMove20dPct: 6, range63dPct: 50, perf3m: 12,
+    };
+    const result = computeSignal(row, "riskRewardScore");
+    expect(result.coverage).toBe(1.0);
+    expect(result.partial).toBe(false);
+    expect(typeof result.value).toBe("number");
+  });
+
+  it("riskRewardScore: coverage=4/7≈0.571 cuando faltan 3 de 7 inputs", () => {
+    // volatility63d, maxDailyMove20dPct, range63dPct ausentes
+    const row = {
+      returnToVol3m: 0.9, returnToDrawdown3m: 1.6, maxDrawdown63d: 15, perf3m: 12,
+    };
+    const result = computeSignal(row, "riskRewardScore");
+    expect(result.coverage).toBeCloseTo(4 / 7, 6);
+    expect(result.partial).toBe(true);
+  });
+
+  it("riskRewardScore: coverage=0 cuando ningún requiredInput está presente", () => {
+    const result = computeSignal({}, "riskRewardScore");
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+    expect(result.value).toBe(0);
+  });
+
+  it("riskRewardScore: value === snapshot pre-consolidación con fila completa", () => {
+    const row = {
+      returnToVol3m: 0.9, returnToDrawdown3m: 1.6, volatility63d: 30,
+      maxDrawdown63d: 15, maxDailyMove20dPct: 6, range63dPct: 50, perf3m: 12,
+    };
+    const { value } = computeSignal(row, "riskRewardScore");
+    expect(value).toBe(snapRiskReward(row));
+  });
+
+  // ---- volumeEffectScore: requiredInputs = 6 ------------------------------
+  it("volumeEffectScore: coverage=1.0 cuando los 6 requiredInputs están presentes", () => {
+    const row = {
+      latestTurnover: 12000000, latestVolume: 600000, relativeVolume: 1.3,
+      volumeSurgePct: 20, upDownVolRatio: 1.5, upVolume: true,
+    };
+    const result = computeSignal(row, "volumeEffectScore");
+    expect(result.coverage).toBe(1.0);
+    expect(result.partial).toBe(false);
+    expect(typeof result.value).toBe("number");
+  });
+
+  it("volumeEffectScore: coverage=3/6=0.5 cuando faltan 3 de 6 inputs", () => {
+    // latestVolume, volumeSurgePct, upVolume ausentes
+    const row = { latestTurnover: 12000000, relativeVolume: 1.3, upDownVolRatio: 1.5 };
+    const result = computeSignal(row, "volumeEffectScore");
+    expect(result.coverage).toBeCloseTo(3 / 6, 6);
+    expect(result.partial).toBe(true);
+  });
+
+  it("volumeEffectScore: coverage=0 cuando ningún requiredInput está presente", () => {
+    const result = computeSignal({}, "volumeEffectScore");
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+    expect(result.value).toBe(0);
+  });
+
+  it("volumeEffectScore: value === snapshot pre-consolidación con fila completa", () => {
+    const row = {
+      latestTurnover: 12000000, latestVolume: 600000, relativeVolume: 1.3,
+      volumeSurgePct: 20, upDownVolRatio: 1.5, upVolume: true,
+    };
+    const { value } = computeSignal(row, "volumeEffectScore");
+    expect(value).toBe(snapVolumeEffect(row));
+  });
+
+  // ---- volumeScore: requiredInputs = 6 (incluye volumeEffectScore intra-row)
+  it("volumeScore: coverage=1.0 cuando los 6 requiredInputs están presentes", () => {
+    const row = {
+      avgTurnover: 9000000, avgVolume: 400000, upDownVolRatio: 1.5,
+      relativeVolume: 1.3, volumeSurgePct: 20, volumeEffectScore: 60,
+    };
+    const result = computeSignal(row, "volumeScore");
+    expect(result.coverage).toBe(1.0);
+    expect(result.partial).toBe(false);
+    expect(typeof result.value).toBe("number");
+  });
+
+  it("volumeScore: coverage=3/6=0.5 cuando faltan 3 de 6 inputs (incl. dep intra-row)", () => {
+    // upDownVolRatio, volumeSurgePct, volumeEffectScore ausentes
+    const row = { avgTurnover: 9000000, avgVolume: 400000, relativeVolume: 1.3 };
+    const result = computeSignal(row, "volumeScore");
+    expect(result.coverage).toBeCloseTo(3 / 6, 6);
+    expect(result.partial).toBe(true);
+  });
+
+  it("volumeScore: coverage=0 cuando ningún requiredInput está presente", () => {
+    const result = computeSignal({}, "volumeScore");
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+    // value=0: sin inputs, compute() no aporta puntos y el bonus
+    // volumeEffectScore (||0) aporta 0.
+    expect(result.value).toBe(0);
+  });
+
+  it("volumeScore: value === snapshot pre-consolidación con fila completa (dep intra-row incluida)", () => {
+    const row = {
+      avgTurnover: 9000000, avgVolume: 400000, upDownVolRatio: 1.5,
+      relativeVolume: 1.3, volumeSurgePct: 20, volumeEffectScore: 60,
+    };
+    const { value } = computeSignal(row, "volumeScore");
+    expect(value).toBe(snapVolume(row));
+  });
+
+  // ---- liquidityScore: requiredInputs = 4 ---------------------------------
+  it("liquidityScore: coverage=1.0 cuando los 4 requiredInputs están presentes", () => {
+    const row = { marketCap: 500000000, avgTurnover: 9000000, avgVolume: 400000, price: 120 };
+    const result = computeSignal(row, "liquidityScore");
+    expect(result.coverage).toBe(1.0);
+    expect(result.partial).toBe(false);
+    expect(typeof result.value).toBe("number");
+  });
+
+  it("liquidityScore: coverage=2/4=0.5 cuando faltan 2 de 4 inputs", () => {
+    // marketCap, avgTurnover ausentes
+    const row = { avgVolume: 400000, price: 120 };
+    const result = computeSignal(row, "liquidityScore");
+    expect(result.coverage).toBeCloseTo(2 / 4, 6);
+    expect(result.partial).toBe(true);
+  });
+
+  it("liquidityScore: coverage=0 cuando ningún requiredInput está presente", () => {
+    const result = computeSignal({}, "liquidityScore");
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+    expect(result.value).toBe(0);
+  });
+
+  it("liquidityScore: value === snapshot pre-consolidación con fila completa", () => {
+    const row = { marketCap: 500000000, avgTurnover: 9000000, avgVolume: 400000, price: 120 };
+    const { value } = computeSignal(row, "liquidityScore");
+    expect(value).toBe(snapLiquidity(row));
+  });
+
+  // ---- ipoScore: requiredInputs = 9 ---------------------------------------
+  // ipoScore es "muerta" en el pipeline real (materializedScanner no la invoca);
+  // se prueba igual como señal aislada para cubrir el contrato del wrapper.
+  it("ipoScore: coverage=1.0 cuando los 9 requiredInputs están presentes", () => {
+    const row = {
+      ipoAgeMonths: 12, ipoDate: "", distanceATH: -10, distance52w: -10,
+      avgVolume: 1500000, price: 100, sma50: 90, perf3m: 15, sectorScore: 60,
+    };
+    const result = computeSignal(row, "ipoScore");
+    expect(result.coverage).toBe(1.0);
+    expect(result.partial).toBe(false);
+    expect(typeof result.value).toBe("number");
+  });
+
+  it("ipoScore: coverage=5/9≈0.556 cuando faltan 4 de 9 inputs", () => {
+    // distanceATH, ipoDate, sma50, sectorScore ausentes
+    const row = {
+      ipoAgeMonths: 12, distance52w: -10, avgVolume: 1500000, price: 100, perf3m: 15,
+    };
+    const result = computeSignal(row, "ipoScore");
+    expect(result.coverage).toBeCloseTo(5 / 9, 6);
+    expect(result.partial).toBe(true);
+  });
+
+  it("ipoScore: coverage=0 cuando ningún requiredInput está presente", () => {
+    const result = computeSignal({}, "ipoScore");
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+    // compute() sin ipoAgeMonths/ipoDate válidos → m=null → bucket out of range → 0
+    expect(result.value).toBe(0);
+  });
+
+  it("ipoScore: value === snapshot pre-consolidación con fila completa", () => {
+    const row = {
+      ipoAgeMonths: 12, ipoDate: "", distanceATH: -10, distance52w: -10,
+      avgVolume: 1500000, price: 100, sma50: 90, perf3m: 15, sectorScore: 60,
+    };
+    const { value } = computeSignal(row, "ipoScore");
+    expect(value).toBe(snapIpo(row));
+  });
+
+  // ---- objectiveSetupScore: requiredInputs = 9 -----------------------------
+  it("objectiveSetupScore: coverage=1.0 cuando los 9 requiredInputs están presentes", () => {
+    const row = {
+      price: 120, sma50: 110, sma150: 100, sma200: 95, sma200Slope: 0.4,
+      distance52w: -3, distance20d: -2, extSma50: 5, highsSpreadPct: 8,
+    };
+    const result = computeSignal(row, "objectiveSetupScore");
+    expect(result.coverage).toBe(1.0);
+    expect(result.partial).toBe(false);
+    expect(typeof result.value).toBe("number");
+  });
+
+  it("objectiveSetupScore: coverage=5/9≈0.556 cuando faltan 4 de 9 inputs", () => {
+    // sma150, sma200, distance52w, highsSpreadPct ausentes
+    const row = { price: 120, sma50: 110, sma200Slope: 0.4, distance20d: -2, extSma50: 5 };
+    const result = computeSignal(row, "objectiveSetupScore");
+    expect(result.coverage).toBeCloseTo(5 / 9, 6);
+    expect(result.partial).toBe(true);
+  });
+
+  it("objectiveSetupScore: coverage=0 cuando ningún requiredInput está presente", () => {
+    const result = computeSignal({}, "objectiveSetupScore");
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+    expect(result.value).toBe(0);
+  });
+
+  it("objectiveSetupScore: value === snapshot pre-consolidación con fila completa", () => {
+    const row = {
+      price: 120, sma50: 110, sma150: 100, sma200: 95, sma200Slope: 0.4,
+      distance52w: -3, distance20d: -2, extSma50: 5, highsSpreadPct: 8,
+    };
+    const { value } = computeSignal(row, "objectiveSetupScore");
+    expect(value).toBe(snapObjectiveSetup(row));
+  });
+
+  // ---- patternScore: requiredInputs = 4 -----------------------------------
+  it("patternScore: coverage=1.0 cuando los 4 requiredInputs están presentes", () => {
+    const row = {
+      patternContribution: 5, patternQualityScore: 70, baseQualityScore: 60, contractionScore: 50,
+    };
+    const result = computeSignal(row, "patternScore");
+    expect(result.coverage).toBe(1.0);
+    expect(result.partial).toBe(false);
+    expect(typeof result.value).toBe("number");
+  });
+
+  it("patternScore: coverage=2/4=0.5 cuando faltan 2 de 4 inputs", () => {
+    // patternContribution, contractionScore ausentes
+    const row = { patternQualityScore: 70, baseQualityScore: 60 };
+    const result = computeSignal(row, "patternScore");
+    expect(result.coverage).toBeCloseTo(2 / 4, 6);
+    expect(result.partial).toBe(true);
+  });
+
+  it("patternScore: coverage=0 cuando ningún requiredInput está presente", () => {
+    const result = computeSignal({}, "patternScore");
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+    // Sin patternContribution ni quality resoluble → compute() retorna 0
+    expect(result.value).toBe(0);
+  });
+
+  it("patternScore: value === snapshot pre-consolidación con fila completa", () => {
+    const row = {
+      patternContribution: 5, patternQualityScore: 70, baseQualityScore: 60, contractionScore: 50,
+    };
+    const { value } = computeSignal(row, "patternScore");
+    expect(value).toBe(snapPatternQuality(row));
+  });
+
+  // ---- setupQualityScore: requiredInputs = 3 ------------------------------
+  // setupQualityScore depende de objectiveSetupScore (intra-row, lo recalcula
+  // si no viene pre-calculado). El snapshot snapSetup replica el override, por
+  // lo que pasamos objectiveSetupScore explícito en la fila mock.
+  it("setupQualityScore: coverage=1.0 cuando los 3 requiredInputs están presentes", () => {
+    const row = { objectiveSetupScore: 60, patternContribution: 5, failedBreakout: false };
+    const result = computeSignal(row, "setupQualityScore");
+    expect(result.coverage).toBe(1.0);
+    expect(result.partial).toBe(false);
+    expect(typeof result.value).toBe("number");
+  });
+
+  it("setupQualityScore: coverage=1/3≈0.333 cuando solo 1 de 3 inputs presente", () => {
+    // Solo objectiveSetupScore presente (patternContribution y failedBreakout ausentes)
+    const row = { objectiveSetupScore: 60 };
+    const result = computeSignal(row, "setupQualityScore");
+    expect(result.coverage).toBeCloseTo(1 / 3, 6);
+    expect(result.partial).toBe(true);
+  });
+
+  it("setupQualityScore: coverage=0 cuando ningún requiredInput está presente", () => {
+    const result = computeSignal({}, "setupQualityScore");
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+    // Sin patternContribution (||0) ni failedBreakout (false → no descuento) → 0
+    expect(result.value).toBe(0);
+  });
+
+  it("setupQualityScore: value === snapshot pre-consolidación con fila completa", () => {
+    const row = { objectiveSetupScore: 60, patternContribution: 5, failedBreakout: false };
+    const { value } = computeSignal(row, "setupQualityScore");
+    expect(value).toBe(snapSetup(row));
+  });
+
+  // ---- demandScore: requiredInputs = 9 (incluye deps intra-row y RS) ------
+  // demandScore depende de volumeScore/volumeEffectScore/liquidityScore (intra-
+  // row) y de la cadena RS via rsPrimaryValue (rsGlobalPct ?? rsRating ?? ...).
+  // Construimos la fila mock con esos campos ya poblados.
+  it("demandScore: coverage=1.0 cuando los 9 requiredInputs están presentes", () => {
+    const row = {
+      rsGlobalPct: 75, rsRating: 75, volumeScore: 55, volumeEffectScore: 60,
+      liquidityScore: 60, upDownVolRatio: 1.5, relativeVolume: 1.3,
+      volumeSurgePct: 20, avgVolume: 400000,
+    };
+    const result = computeSignal(row, "demandScore");
+    expect(result.coverage).toBe(1.0);
+    expect(result.partial).toBe(false);
+    expect(typeof result.value).toBe("number");
+  });
+
+  it("demandScore: coverage=5/9≈0.556 cuando faltan 4 de 9 inputs", () => {
+    // rsRating, volumeEffectScore, upDownVolRatio, avgVolume ausentes
+    const row = {
+      rsGlobalPct: 75, volumeScore: 55, liquidityScore: 60,
+      relativeVolume: 1.3, volumeSurgePct: 20,
+    };
+    const result = computeSignal(row, "demandScore");
+    expect(result.coverage).toBeCloseTo(5 / 9, 6);
+    expect(result.partial).toBe(true);
+  });
+
+  it("demandScore: coverage=0 cuando ningún requiredInput está presente", () => {
+    const result = computeSignal({}, "demandScore");
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+    // rs=50 (fallback), volumeScore/volumeEffectScore/liquidityScore=0 → 0+0+0+0+0+0+0 = 0
+    expect(result.value).toBe(0);
+  });
+
+  it("demandScore: value === snapshot pre-consolidación con fila completa (RS + deps intra-row)", () => {
+    const row = {
+      rsGlobalPct: 75, rsRating: 75, volumeScore: 55, volumeEffectScore: 60,
+      liquidityScore: 60, upDownVolRatio: 1.5, relativeVolume: 1.3,
+      volumeSurgePct: 20, avgVolume: 400000,
+    };
+    const { value } = computeSignal(row, "demandScore");
+    expect(value).toBe(snapDemand(row));
+  });
+
+  // ---- adProxyScore: requiredInputs = 10 ----------------------------------
+  it("adProxyScore: coverage=1.0 cuando los 10 requiredInputs están presentes", () => {
+    const row = {
+      upDownVolRatio: 1.5, relativeVolume: 1.3, upVolume: true, volumeSurgePct: 20,
+      perf3m: 12, distance20d: -2, distance52w: -3, price: 120, sma50: 110,
+      maxDrawdown63d: 15,
+    };
+    const result = computeSignal(row, "adProxyScore");
+    expect(result.coverage).toBe(1.0);
+    expect(result.partial).toBe(false);
+    expect(typeof result.value).toBe("number");
+  });
+
+  it("adProxyScore: coverage=5/10=0.5 cuando faltan 5 de 10 inputs", () => {
+    // upVolume, volumeSurgePct, distance20d, distance52w, maxDrawdown63d ausentes
+    const row = {
+      upDownVolRatio: 1.5, relativeVolume: 1.3, perf3m: 12, price: 120, sma50: 110,
+    };
+    const result = computeSignal(row, "adProxyScore");
+    expect(result.coverage).toBeCloseTo(5 / 10, 6);
+    expect(result.partial).toBe(true);
+  });
+
+  it("adProxyScore: coverage=0 cuando ningún requiredInput está presente", () => {
+    const result = computeSignal({}, "adProxyScore");
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+    // s=45 base, sin tramos ni descuentos aplicables
+    expect(result.value).toBe(45);
+  });
+
+  it("adProxyScore: value === snapshot pre-consolidación con fila completa", () => {
+    const row = {
+      upDownVolRatio: 1.5, relativeVolume: 1.3, upVolume: true, volumeSurgePct: 20,
+      perf3m: 12, distance20d: -2, distance52w: -3, price: 120, sma50: 110,
+      maxDrawdown63d: 15,
+    };
+    const { value } = computeSignal(row, "adProxyScore");
+    expect(value).toBe(snapAdProxy(row));
+  });
+});
