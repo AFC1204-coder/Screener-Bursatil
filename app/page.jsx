@@ -35,7 +35,7 @@ import { buildReviewPrioritySummary, decisionProfileStateForStock, reviewPriorit
 import { buildScreenerDataHealth, dataHealthFilterLabel } from "@/lib/screenerDataHealth";
 import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
-import { cachedScreenerQuery, cachedScreenerRow, compactRowForSession, compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, secondsLabel, sectorize, setupModeLabel, shuffle, sortMetric, spreadByInitial, uid, universeScopeKey } from "@/lib/screenerPipeline";
+import { cachedScreenerQuery, cachedScreenerRow, compactRowForSession, compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, shuffle, sortMetric, spreadByInitial, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import { buildSnapshotFreshnessNotice } from "@/lib/snapshotFreshness";
 import { pickBestRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
@@ -411,6 +411,14 @@ export default function Page() {
       scannedAt: scan.updatedAt || scan.createdAt || new Date().toISOString(),
       snapshotSource: source === "cloud" ? "supabase" : "local",
       snapshotRowsAreFiltered: restoredRowsAreFiltered,
+      // El snapshot restaurado se considera "vigente" respecto a los settings
+      // efectivos al restaurar; si markets/manual/scanMode cambian después, el
+      // banner de staleness lo reflejará. Firmamos contra el estado actual del
+      // componente (los snapshots locales/cloud no persisten markets/manual, y
+      // en este punto el caller ya ha seteado los mercados que aplican).
+      settingsSignature: scanSettingsSignature(markets, manual, scanMode),
+      scannedMarkets: [...markets].sort(),
+      scannedScanMode: scanMode,
     };
     const restoreFilterContext = {
       ...nextScanContext,
@@ -735,6 +743,24 @@ export default function Page() {
   const fineRuleTotal = FILTER_FIELDS.length;
   const fineRuleActive = FILTER_FIELDS.filter((field) => isFieldRuleActive(field, fieldRules, filterLayers)).length;
   const kpiUniverseCount = universe.length || scanContext?.baseCount || analyzedRows.length || rows.length;
+  // --- Staleness de scan-settings -------------------------------------------
+  // El scan mostrado es "vigente" si markets/manual/scanMode actuales coinciden
+  // con los vigentes al completar el último scan (guardados en scanContext).
+  // NO comparamos activeSettings/filterLayers/useRegimeFilter/marketHealth:
+  // esos son post-filtrado en cliente sobre analyzedRows (filterAnalyzedRows),
+  // nunca producen staleness del universo. Solo el banner global + dots de
+  // control (markets/scanMode) consumen estos flags.
+  const currentSettingsSignature = useMemo(() => scanSettingsSignature(markets, manual, scanMode), [markets, manual, scanMode]);
+  const scannedSettingsSignature = scanContext?.settingsSignature || null;
+  const scanStale = Boolean(scanContext && scannedSettingsSignature && scannedSettingsSignature !== currentSettingsSignature);
+  // Dots por control: comparan el valor actual de cada campo con el capturado
+  // en el último scan. marketsStale y scanModeStale solo son true cuando el
+  // banner global también lo es (no señalamos "cambió y luego se deshizo" si
+  // el resultado final coincide). manual no tiene control visible en el shell,
+  // así que no expone dot (lo cubre el banner global).
+  const scannedMarketsKey = (scanContext?.scannedMarkets || []).slice().sort().join(",");
+  const marketsStale = scanStale && (markets.slice().sort().join(",") !== scannedMarketsKey);
+  const scanModeStale = scanStale && scanContext && scanMode !== scanContext?.scannedScanMode;
   function commitPendingResults() {
     if (!pendingResults) return;
     setRows(pendingResults.rows || []);
@@ -1353,6 +1379,16 @@ export default function Page() {
         providerErrors: bad,
         scannedAt: new Date().toISOString(),
         aborted,
+        // Hash de scan-settings vigente al completar el scan: lo usamos para
+        // detectar staleness si markets/manual/scanMode cambian después. Solo
+        // estas tres variables determinan el universo; activeSettings/uso de
+        // regimen/marketHealth NO entran aquí (son post-filtrado en cliente).
+        settingsSignature: scanSettingsSignature(markets, manual, scanMode),
+        // Snapshots por control para los dot indicators (orden-canónico para
+        // markets, ya que el orden no afecta al universo pero sí a la igualdad
+        // trivial === al comparar arrays).
+        scannedMarkets: [...markets].sort(),
+        scannedScanMode: scanMode,
       };
       fastFilterSignatureRef.current = fastFilterSignature(rawRows, activeSettings, { ...nextScanContext, marketHealth: mh, useRegimeFilter });
       setAnalyzedRows(rawRows);
@@ -1904,6 +1940,13 @@ export default function Page() {
       saveSessionBeforeStockOpen,
     }}
     resultView={resultView}
+    staleness={{
+      scanStale,
+      marketsStale,
+      scanModeStale,
+      scannedAt: scanContext?.scannedAt || null,
+      onRelaunch: () => run(),
+    }}
     results={{
       rows,
       filtered,

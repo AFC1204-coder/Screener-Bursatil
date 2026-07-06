@@ -157,6 +157,61 @@
   }
 }
 
+/* Banner no-modal de staleness del scan: los datos siguen siendo válidos pero
+   corresponden al universo anterior (markets/manual/scanMode cambiaron). No
+   oculta ni degrada la tabla; solo invita a relanzar. Tono ámbar suave, mismo
+   lenguaje visual que .snapshotFreshnessNotice. */
+.scanStaleNotice {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:0 0 12px;
+  padding:10px 12px;
+  border:1px solid rgba(234,179,8,.4);
+  border-radius:var(--radius);
+  background:rgba(234,179,8,.09);
+  color:var(--soft);
+}
+
+.scanStaleNotice .scanStaleNoticeLabel {
+  flex:0 0 auto;
+  color:#f1d280;
+  font-size:11px;
+  font-weight:820;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.scanStaleNotice b {
+  flex:1 1 auto;
+  min-width:0;
+  color:var(--text);
+  font-size:13px;
+  font-weight:620;
+  line-height:1.4;
+}
+
+.scanStaleNotice .btn {
+  flex:0 0 auto;
+}
+
+/* Dot indicator para controles cuyo valor actual difiere del último scan
+   mostrado. Va inline junto al label del control (markets / cobertura). */
+.controlDot {
+  display:inline-block;
+  width:8px;
+  height:8px;
+  margin-left:6px;
+  border-radius:50%;
+  vertical-align:middle;
+}
+
+.controlDot.controlDotStale {
+  background:#eab308;
+  box-shadow:0 0 0 2px rgba(234,179,8,.22);
+}
+
 .weeklyStageControls {
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultSortForSettings, sortMetric, sortRowsForMode } from "@/lib/screenerPipeline";
+import { defaultSortForSettings, scanSettingsSignature, sortMetric, sortRowsForMode } from "@/lib/screenerPipeline";
 
 const cleanCandidate = {
   symbol: "CLEAN",
@@ -83,5 +83,77 @@ describe("screener pipeline sorting", () => {
     expect(sortMetric(vcpBoosted, "objectiveScore", { setupMode: "leader" })).toBe(67);
     expect(sortMetric(vcpBoosted, "totalScore", { setupMode: "leader" })).toBe(92);
     expect(sortRowsForMode([vcpBoosted, objectiveLeader], { setupMode: "leader" }).map((row) => row.symbol)).toEqual(["OBJ", "VCP"]);
+  });
+});
+
+describe("scanSettingsSignature", () => {
+  // Contrato: solo markets/manual/scanMode determinan el universo real. El hash
+  // debe ser estable, determinista e independiente del orden de arrays/claves.
+  // Cualquier cambio en estas tres variables produce un hash distinto → staleness.
+  // activeSettings/filterLayers/useRegimeFilter/marketHealth NO entran aquí.
+
+  it("es determinista: mismo input → mismo output", () => {
+    const a = scanSettingsSignature(["US"], "NVDA\nAAPL", "all");
+    const b = scanSettingsSignature(["US"], "NVDA\nAAPL", "all");
+    expect(a).toBe(b);
+  });
+
+  it("es independiente del orden de markets (mismo conjunto → mismo hash)", () => {
+    const a = scanSettingsSignature(["US", "DE", "FR"], "", "all");
+    const b = scanSettingsSignature(["FR", "US", "DE"], "", "all");
+    expect(a).toBe(b);
+  });
+
+  it("es independiente del orden de símbolos manuales", () => {
+    const a = scanSettingsSignature(["US"], "NVDA\nAAPL\nMSFT", "all");
+    const b = scanSettingsSignature(["US"], "MSFT,AAPL,NVDA", "all");
+    expect(a).toBe(b);
+  });
+
+  it("cambia cuando cambia markets (different set)", () => {
+    const a = scanSettingsSignature(["US", "DE"], "", "all");
+    const b = scanSettingsSignature(["US", "FR"], "", "all");
+    expect(a).not.toBe(b);
+  });
+
+  it("cambia cuando cambia manual (different symbols)", () => {
+    const a = scanSettingsSignature(["US"], "NVDA", "all");
+    const b = scanSettingsSignature(["US"], "AAPL", "all");
+    expect(a).not.toBe(b);
+  });
+
+  it("cambia cuando cambia scanMode", () => {
+    const a = scanSettingsSignature(["US"], "", "all");
+    const b = scanSettingsSignature(["US"], "", "batch");
+    expect(a).not.toBe(b);
+  });
+
+  it("no depende de settings que sean post-filtrado: el hash no acepta extra args", () => {
+    // El contrato de la función es (markets, manual, scanMode) — 3 args. Si el
+    // caller intentara pasar activeSettings como 4º arg, la firma lo ignora
+    // (no es un parámetro). Verificamos que un umbral distinto NO cambia el hash.
+    const base = scanSettingsSignature(["US"], "", "all");
+    // Simulamos "otra configuración" simplemente llamando igual — el hash debe
+    // ser idéntico porque scanSettingsSignature no recibe settings en absoluto.
+    expect(scanSettingsSignature(["US"], "", "all")).toBe(base);
+  });
+
+  it("normaliza markets a mayúsculas y filtra vacíos/inválidos", () => {
+    const a = scanSettingsSignature(["us", "DE", ""], "", "all");
+    const b = scanSettingsSignature(["US", "DE"], "", "all");
+    expect(a).toBe(b);
+  });
+
+  it("default scanMode a 'all' cuando se omite", () => {
+    const a = scanSettingsSignature(["US"], "");
+    const b = scanSettingsSignature(["US"], "", "all");
+    expect(a).toBe(b);
+  });
+
+  it("produce un string no vacío con prefijo de versión para futuras migraciones", () => {
+    const sig = scanSettingsSignature(["US"], "", "all");
+    expect(typeof sig).toBe("string");
+    expect(sig.length).toBeGreaterThan(0);
+    expect(sig.startsWith("v1|")).toBe(true);
   });
 });

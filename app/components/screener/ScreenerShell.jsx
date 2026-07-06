@@ -60,7 +60,7 @@ import { metricShortLabel } from "@/lib/metricCatalog";
 import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 
-export default function ScreenerShell({ chrome, sidebar, search, resultView, results, actions }) {
+export default function ScreenerShell({ chrome, sidebar, search, resultView, results, actions, staleness }) {
   // --- chrome ---
   const {
     presetKey,
@@ -276,6 +276,20 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     saveSessionBeforeStockOpen: actionsSaveSessionBeforeStockOpen,
   } = actions;
 
+  // --- staleness ---
+  // El container (app/page.jsx) calcula si el scan mostrado quedó desactualizado
+  // respecto a markets/manual/scanMode actuales. El banner es no-modal: NO oculta
+  // ni degrada la tabla (los datos siguen siendo válidos, solo del universo previo).
+  // Los dot indicators marcan el control concreto que diverge del último scan.
+  const {
+    scanStale = false,
+    marketsStale = false,
+    scanModeStale = false,
+    scannedAt = null,
+    onRelaunch,
+  } = staleness || {};
+  const scannedAtLabel = scannedAt ? new Date(scannedAt).toLocaleString() : "";
+
   return <main className="page screenerTerminalPage">
     <div className="topbar screenerHeroBar">
       <div className="screenerHeroTitle">
@@ -335,7 +349,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
 
         <div className="sidebarGroup marketPanel" style={{ marginBottom: 24 }}>
           <div className="marketPanelHead">
-            <span>Mercados</span>
+            <span>Mercados{marketsStale ? <i className="controlDot controlDotStale" aria-hidden="true" title="Mercados cambiados desde el último scan" /> : null}</span>
             <em>{markets.length}/{MARKETS.length}</em>
           </div>
           <div className="marketPresetBar">
@@ -421,7 +435,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         </div>
 
         <details className="disclosurePanel compactDisclosure" style={{ marginBottom: 20 }}>
-          <summary><span>Cobertura y alcance</span></summary>
+          <summary><span>Cobertura y alcance{scanModeStale ? <i className="controlDot controlDotStale" aria-hidden="true" title="Modo de alcance cambiado desde el último scan" /> : null}</span></summary>
           <div className="grid" style={{ gap: 8 }}>
             <select className="select" value={scanMode} onChange={(e) => { setScanMode(e.target.value); setBatchStart(0); }}><option value="batch">Por lote</option><option value="random">Aleatorio</option><option value="all">Todo el universo</option></select>
             <select className="select" value={scanBatchSize} onChange={(e) => { setScanBatchSize(Number(e.target.value)); setBatchStart(0); }} aria-label="Tickers por lote">
@@ -470,6 +484,13 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onMode={(mode) => { updateSetting("setupMode", mode); if (mode === "weakness") setSort("weaknessScore"); }}
             onSort={setSort}
           />
+          {scanStale ? (
+            <div className="scanStaleNotice" role="status" aria-live="polite">
+              <span className="scanStaleNoticeLabel">Desactualizado</span>
+              <b>Resultados calculados con configuración anterior.</b>
+              {onRelaunch ? <button type="button" className="btn btnSmall btnPrimary" onClick={onRelaunch}>Relanzar scan</button> : null}
+            </div>
+          ) : null}
           <PendingResultsBar pending={pendingResults ? { ...pendingResults, filteredCount: pendingFilteredCount } : null} visibleCount={resultsRows.length} filteredCount={resultsFiltered.length} onCommit={commitPendingResults} />
           <PendingDecisionWorkRail
             summary={pendingDecisionWorkSummary}
@@ -536,12 +557,19 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         </section>
 
         <section className="desktopResultsSection" style={{ marginBottom: 20 }}>
+          {scanStale ? (
+            <div className="scanStaleNotice" role="status" aria-live="polite">
+              <span className="scanStaleNoticeLabel">Desactualizado</span>
+              <b>Resultados calculados con configuración anterior.</b>
+              {onRelaunch ? <button type="button" className="btn btnSmall btnPrimary" onClick={onRelaunch}>Relanzar scan</button> : null}
+            </div>
+          ) : null}
           <PendingResultsBar pending={pendingResults ? { ...pendingResults, filteredCount: pendingFilteredCount } : null} visibleCount={resultsRows.length} filteredCount={resultsFiltered.length} onCommit={commitPendingResults} />
           <div className="resultsHeader">
             <div className="resultsTitleBlock">
               <span>Results</span>
               <h2>{resultsFiltered.length} resultados</h2>
-              <p>{resultsRows.length} pasan · {analyzedRows.length || resultsUniverse.length || 0} analizadas · {SORT_LABELS[sort] || sort}</p>
+              <p>{resultsRows.length} pasan · {analyzedRows.length || resultsUniverse.length || 0} analizadas · {SORT_LABELS[sort] || sort}{scannedAtLabel ? ` · scan ${scannedAtLabel}` : ""}</p>
               {/* Rails de decisión: control clicable único para readiness/reviewPriority.
                   Los <select> que antes duplicaban estos estados se eliminaron; el re-click
                   del chip limpia a "Todos"/"all", y ResultFilterChips también permite limpiar. */}
