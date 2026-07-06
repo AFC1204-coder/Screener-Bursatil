@@ -77,6 +77,12 @@ function buildSyntheticChart(symbol, count) {
   return { meta: { symbol, currency: "USD" }, bars: bars.reverse() };
 }
 
+function dateMs(d = "") {
+  // Convierte YYYY-MM-DD a ms. Usado para calcular cobertura temporal en días.
+  if (!d) return NaN;
+  return Date.parse(`${d}T00:00:00Z`);
+}
+
 // Solo cargar writeDailyBarsCache si SUPABASE_URL está set (entorno real).
 // En CI sin env, este test se salta con .skip para no fallar el build.
 const skipIntegration = !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -244,6 +250,39 @@ describeIf("PIEZA 3 · daily_bars cap (real Supabase)", () => {
       query: `owner_id=eq.${OWNER}&symbol=eq.${SYMBOL_REF}&select=trade_date,provider&order=trade_date.desc&limit=1`,
     });
     console.log(`     [range persistido] oldest=${JSON.stringify(oldest)}, top=${JSON.stringify(top)}`);
+
+    // ===== Diagnóstico de ORDEN dentro de los 1000 devueltos =====
+    // Pregunta específica: PostgREST respeta el ORDER BY al truncar? Si el
+    // LIMIT de 1000 (max_rows default) se aplica ANTES del ORDER BY, los
+    // 1000 devueltos podrían ser los más antiguos. Si se aplica DESPUÉS, son
+    // los más recientes. Crítico porque el cache miss para el caller (scoring
+    // con 253 días recientes) le serviría fechas de 2018 en vez de 2022.
+    const first3 = read.bars.slice(0, 3).map((b) => b.date);
+    const last3 = read.bars.slice(-3).map((b) => b.date);
+    const topDate = Array.isArray(top) && top[0] ? top[0].trade_date : null;
+    const oldestDate = Array.isArray(oldest) && oldest[0] ? oldest[0].trade_date : null;
+    console.log(`     [orden en read.bars] first3=${JSON.stringify(first3)} last3=${JSON.stringify(last3)}`);
+    console.log(`     [referencia]        top=${topDate} oldest=${oldestDate}`);
+    const firstMatchesTop = first3.length > 0 && first3[0] === topDate;
+    const lastMatchesOldest = last3.length > 0 && last3[last3.length - 1] === oldestDate;
+    const orderCorrect = firstMatchesTop && lastMatchesOldest;
+    console.log(`     [orden] firstMatchesTop=${firstMatchesTop} lastMatchesOldest=${lastMatchesOldest} → orderCorrect=${orderCorrect}`);
+    if (firstMatchesTop && !lastMatchesOldest) {
+      // Caso intermedio (severidad BAJA-MEDIA, no alta): el ORDER BY SÍ se
+      // respeta (los más recientes llegan primero), pero el cap de 1000
+      // descarta los más antiguos. Implicación: la lectura del cache cubre
+      // los días recientes (suficiente para scoring con 253 días) pero
+      // pierde profundidad histórica. distanceATH sigue funcionando porque
+      // se calcula en memoria sobre longChart.bars en company-brief, no
+      // sobre la caché.
+      const diasEnCache = Math.round((dateMs(first3[0]) - dateMs(last3[last3.length - 1])) / 86400000);
+      const diasTotalesPersistidos = Math.round((dateMs(topDate) - dateMs(oldestDate)) / 86400000);
+      console.warn(`     ⚠️  SEVERIDAD BAJA-MEDIA: ORDER BY honrado (firstMatchesTop=true) pero cap de 1000 descarta los más antiguos.`);
+      console.warn(`     ⚠️  Cache cubre ${diasEnCache}d de los ${diasTotalesPersistidos}d persistidos.`);
+      console.warn(`     ⚠️  Scoring (253d) funciona — los 253 más recientes llegan. distanceATH sigue funcionando vía memoria.`);
+    } else if (!firstMatchesTop) {
+      console.error(`     🚨 SEVERIDAD ALTA: ORDER BY NO honrado — read.bars devuelve los más antiguos en lugar de los más recientes.`);
+    }
 
     // Assertions principales: el cap debe estar entre (400, 1260].
     // 1000 es válido — pero si la lectura cache (read.rows) y el conteo real
