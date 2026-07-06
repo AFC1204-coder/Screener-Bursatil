@@ -98,3 +98,69 @@ describe("scoring · helpers y régimen", () => {
     expect(regimeRejectReason(weakRow, { marketScore: 30 }, false, {})).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// scoreWeakness · cadena de fallback RS unificada con screenerFilters.js
+// ---------------------------------------------------------------------------
+// Cobertura del caso límite que cambió de comportamiento con la consolidación:
+// símbolos donde rsGlobalPct y rsRating son null/undefined pero rsCountryPct o
+// rsSectorPct están presentes.
+//
+// ANTES del fix:
+//   - lib/scoring.js usaba rsPrimaryScore(r) ≡ rsGlobalPct ?? rsRating ?? 50,
+//     caía a 50 → score 36 ("Debilidad mixta").
+//   - lib/screenerFilters.js usaba metric("rsPrimary") ≡ rsGlobalPct ?? rsRating
+//     ?? rsCountryPct ?? rsSectorPct ?? 50, usaba 80 → score 30.
+//   → researchRow.js y screenerPipeline.js (vía scoring.js) divergían de
+//     materializedScanner.js (vía screenerFilters.js) en 6 puntos.
+//
+// DESPUÉS del fix:
+//   - lib/scoring.js usa la cadena de 4 niveles; lib/screenerFilters.js importa
+//     y re-exporta scoreWeakness desde lib/scoring.js. Ambas rutas convergen.
+//
+// Este test fija el valor esperado nuevo (30) y por lo tanto FALLARÁ si se
+// revierte el fix a rsPrimaryScore (volvería a 36).
+import { scoreWeakness as scoreWeaknessFromFilters } from "@/lib/screenerFilters";
+
+const rsFallbackRow = {
+  price: 80, sma50: 95, sma200: 90, sma200Slope: 0.5,
+  // rsGlobalPct y rsRating ausentes — antes hacían caer a 50.
+  rsGlobalPct: null,
+  rsRating: null,
+  // rsCountryPct/rsSectorPct presentes — el fix ahora los usa como fallback.
+  rsCountryPct: 70,
+  rsSectorPct: 80,
+  perf3m: 5, perf6m: 10, perf12m: 20,
+  distance52w: -10, distance20d: -5, maxDrawdown63d: 15, upDownVolRatio: 1.2,
+  upVolume: true, relativeVolume: 1.0, riskScore: 60, extSma50: -10,
+  speculationRiskScore: 30,
+};
+
+describe("scoreWeakness · cadena de fallback RS unificada (rsGlobalPct ?? rsRating ?? rsCountryPct ?? rsSectorPct ?? 50)", () => {
+  it("usa rsSectorPct=80 cuando rsGlobalPct y rsRating faltan → score 30 (no 36)", () => {
+    const w = scoreWeakness(rsFallbackRow);
+    // Con el fix, rs se resuelve a 80 (rsSectorPct) → fuera de los tramos RS que
+    // penalizan (<30, <45, <55). Sin el fix, rs caía a 50 (rama <55 → +6) y el
+    // score era 36. La diferencia de 6 puntos proviene exclusivamente del tramo
+    // "rs < 55 → +6 (sin razón)". Por eso el assert fija 30 y rompe en revert.
+    expect(w.weaknessScore).toBe(30);
+    expect(w.weaknessLabel).toBe("Sin deterioro claro");
+  });
+
+  it("scoring.js y screenerFilters.js producen el MISMO resultado (consolidación)", () => {
+    // Tras el fix screenerFilters.js re-exporta scoreWeakness desde scoring.js,
+    // así que son la misma función. Antes divergían en 6 puntos para esta fixture.
+    expect(scoreWeakness(rsFallbackRow)).toEqual(scoreWeaknessFromFilters(rsFallbackRow));
+  });
+
+  it("razones con tilde son las canónicas ('muy lejos de máximos', 'caída con volumen')", () => {
+    const w = scoreWeakness({ ...rsFallbackRow, distance52w: -50, upVolume: false, relativeVolume: 1.3 });
+    expect(w.weaknessReasons).toEqual(expect.arrayContaining([
+      "muy lejos de máximos",
+      "caída con volumen",
+    ]));
+    // Y explícitamente NO contienen las versiones sin tilde que tenía screenerFilters.
+    expect(w.weaknessReasons).not.toContain("muy lejos de maximos");
+    expect(w.weaknessReasons).not.toContain("caida con volumen");
+  });
+});
