@@ -208,10 +208,49 @@ describeIf("PIEZA 3 · daily_bars cap (real Supabase)", () => {
     expect(writeRes.count).toBeGreaterThan(EXPECTED_DEFAULT_CAP);
 
     const read = await readDailyBarsCache(SYMBOL_REF, { range: "MAX" });
-    console.log(`     [PostgREST] ${SYMBOL_REF}: rows=${read.rows}`);
+    console.log(`     [PostgREST readDailyBarsCache] ${SYMBOL_REF}: rows=${read.rows}`);
+
+    // Diagnóstico adicional: SELECT con Prefer: count=exact para conocer el
+    // conteo real del DB (no del wrapper). Si difiere de read.rows, hay un
+    // mismatch entre lo que la app reporta y lo que la DB tiene.
+    const realCountRes = await supabaseRequest("daily_bars", {
+      query: `owner_id=eq.${OWNER}&symbol=eq.${SYMBOL_REF}&select=id&limit=0`,
+      headers: { Prefer: "count=exact" },
+    });
+    console.log(`     [PostgREST count=exact] ${SYMBOL_REF}: returned array length=${Array.isArray(realCountRes) ? realCountRes.length : "(no array)"}, see headers for total`);
+
+    // Diagnóstico adicional: SELECT directo sin pasar por dedupeBars/slice.
+    // Esto aísla si el 1000 viene del wrapper (readDailyBarsCache) o del
+    // PostgREST mismo. Si SELECT directo devuelve 1260 y readDailyBarsCache
+    // devuelve 1000, el bug está en dedupeBars/slice. Si ambos devuelven 1000,
+    // el bug está antes (PostgREST, índice, etc).
+    const directFetch = await fetch(`${process.env.SUPABASE_URL}/rest/v1/daily_bars?owner_id=eq.${OWNER}&symbol=eq.${SYMBOL_REF}&select=trade_date&order=trade_date.desc&limit=18000`, {
+      headers: {
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+    });
+    const directBody = await directFetch.text();
+    let directArr = null;
+    try { directArr = JSON.parse(directBody); } catch {}
+    const directLen = Array.isArray(directArr) ? directArr.length : -1;
+    console.log(`     [PostgREST DIRECTO sin wrapper] ${SYMBOL_REF}: rows devueltos=${directLen}, content-range=${directFetch.headers.get("content-range") || "(none)"}`);
+
+    // Diagnóstico: oldest y top trade_date para ver el rango real persistido.
+    const oldest = await supabaseRequest("daily_bars", {
+      query: `owner_id=eq.${OWNER}&symbol=eq.${SYMBOL_REF}&select=trade_date,provider&order=trade_date.asc&limit=1`,
+    });
+    const top = await supabaseRequest("daily_bars", {
+      query: `owner_id=eq.${OWNER}&symbol=eq.${SYMBOL_REF}&select=trade_date,provider&order=trade_date.desc&limit=1`,
+    });
+    console.log(`     [range persistido] oldest=${JSON.stringify(oldest)}, top=${JSON.stringify(top)}`);
+
+    // Assertions principales: el cap debe estar entre (400, 1260].
+    // 1000 es válido — pero si la lectura cache (read.rows) y el conteo real
+    // difieren, lo registramos explícitamente.
     expect(read.rows).toBeLessThanOrEqual(EXPECTED_REFERENCED_CAP);
     expect(read.rows).toBeGreaterThan(EXPECTED_DEFAULT_CAP);
-    results.p3b = "OK";
+    results.p3b = `OK (read=${read.rows}, directo=${directLen})`;
   }, 60_000);
 
   it("3c · columna raw ausente en filas nuevas", async () => {

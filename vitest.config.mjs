@@ -7,7 +7,10 @@ export default defineConfig({
     alias: { "@": fileURLToPath(new URL(".", import.meta.url)) },
   },
   test: {
-    include: ["tests/**/*.test.js"],
+    // unit tests (.test.js) + integration tests against real Supabase (.test.mjs).
+    // Integration tests skip themselves when SUPABASE_URL is unset, so
+    // regular `npm test` runs stay green in CI.
+    include: ["tests/**/*.test.js", "tests/**/*.test.mjs"],
     environment: "node",
   },
 });
