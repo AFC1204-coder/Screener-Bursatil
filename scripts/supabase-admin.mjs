@@ -34,6 +34,22 @@ const REQUIRED_FUNCTIONS = [
   ["upsert_alerts_newer_wins", "sync", (config) => ({ p_owner_id: config.ownerId, p_alerts: [] })],
   ["update_alert_status_newer_wins", "sync", (config) => ({ p_owner_id: config.ownerId, p_cloud_id: null, p_local_id: null, p_status: "resolved", p_payload: {}, p_updated_at: new Date().toISOString() })],
   ["upsert_app_setting_newer_wins", "settings", (config) => ({ p_owner_id: config.ownerId, p_setting_type: null, p_setting_key: null, p_value: null, p_updated_at: new Date().toISOString() })],
+  // finalize_scan_results: RPC atómica que aplica los percentiles RS finales
+  // (rsGlobalPct/rsCountryPct/rsSectorPct) y pasa percentileScope de "batch"
+  // a "final". Si falta, todos los scan_results quedan con scope='batch' —
+  // bug silencioso porque la UI los muestra igual pero el campo está mal.
+  // Detectado en checkpoint de pieza 1 (jul 2026): faltaba del proyecto real
+  // pese a estar en schema.sql — agregado aquí para que cualquier deploy
+  // incompleto falle ruidosamente en `npm run supabase:status`.
+  ["finalize_scan_results", "scan-finalize", (config) => ({
+    p_owner_id: config.ownerId,
+    p_scan_id: "00000000-0000-0000-0000-000000000000", // sentinel; la RPC falla con 21000 si no existe scan
+    p_patches: [],
+  })],
+  // purge_daily_bars_backstop: función invocada semanalmente por pg_cron
+  // (limpieza de huérfanos + trim de excedentes en daily_bars). Si falta, el
+  // job de pg_cron falla y daily_bars crece sin control.
+  ["purge_daily_bars_backstop", "ops", () => ({})],
 ];
 
 function loadEnv() {
