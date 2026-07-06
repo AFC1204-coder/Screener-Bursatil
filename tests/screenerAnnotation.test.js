@@ -99,3 +99,72 @@ describe("screener row annotation cache", () => {
     expect(annotated.__screenerAnnotation.dataHealth.status.key).toBeTruthy();
   });
 });
+
+// ─── Isomorfismo Node-puro ──────────────────────────────────────────────
+// Las seis funciones de annotateRow (useResultViewModel.js:197) deben poderse
+// ejecutar en Node sin DOM, sin window, sin localStorage. Si alguna vez
+// empieza a depender de un global del navegador, este test la señala en
+// lugar de silenciarlo con un mock.
+describe("isomorfismo Node-puro: annotateRow y sus 6 funciones son browser-free", () => {
+  // Pre-condición: confirma que este test corre sin DOM (vitest sin jsdom).
+  // Si alguien añade { environment: "jsdom" } a la config de vitest por error,
+  // este test falla y le obliga a decidir explícitamente.
+  // Nota: `navigator` puede existir en Node ≥21 aunque NO haya DOM — no es
+  // un indicador fiable. Nos anclamos a window/document/localStorage, que sí
+  // son exclusivamente del navegador.
+  it("corre en un entorno Node puro (sin window/document/localStorage)", () => {
+    expect(typeof window).toBe("undefined");
+    expect(typeof document).toBe("undefined");
+    expect(typeof localStorage).toBe("undefined");
+  });
+
+  // Determinismo por función individual: misma input → mismo output
+  // byte-a-byte en invocaciones repetidas. No usamos expect.toBe de Date.now
+  // ni nada no-determinista; solo comparamos el output completo.
+  const deterministicChecks = [
+    ["explainScreenerRank", (row, s) => explainScreenerRank(row, s)],
+    ["auditDecisionRowIssues", (row, s) => {
+      const explanation = explainScreenerRank(row, s);
+      return auditDecisionRowIssues(row, explanation);
+    }],
+    ["decisionConfidenceSummary", (row, s) => {
+      const explanation = explainScreenerRank(row, s);
+      const issues = auditDecisionRowIssues(row, explanation);
+      return decisionConfidenceSummary(row, explanation, issues);
+    }],
+    ["buildScreenerDataHealth", (row, s) => buildScreenerDataHealth(row, s)],
+    ["decisionPriorityBreakdown", (row, s) => {
+      const explanation = explainScreenerRank(row, s);
+      return decisionPriorityBreakdown(row, explanation);
+    }],
+    ["decisionProfileForRow", (row, s) => {
+      const explanation = explainScreenerRank(row, s);
+      const issues = auditDecisionRowIssues(row, explanation);
+      const confidence = decisionConfidenceSummary(row, explanation, issues);
+      return decisionProfileForRow(row, explanation); // profile usa explanation, no settings
+    }],
+  ];
+
+  it.each(deterministicChecks)("%s: 5 invocaciones consecutivas producen el mismo output determinista", (_name, invoke) => {
+    const outputs = Array.from({ length: 5 }, () => JSON.stringify(invoke(baseRow, settings)));
+    const first = outputs[0];
+    expect(outputs.every((out) => out === first)).toBe(true);
+  });
+
+  // Determinismo del pipeline completo (annotateRow con todas las 6 funciones).
+  it("annotateRow: 10 invocaciones consecutivas producen anotaciones estructuralmente idénticas", () => {
+    const snapshots = Array.from({ length: 10 }, () => JSON.stringify(annotateRow(baseRow, settings)));
+    expect(new Set(snapshots).size).toBe(1);
+  });
+
+  // Estabilidad de la firma estructural: las 6 claves del annotation están
+  // siempre presentes y son objetos no-undefined. Esto blinda el contrato
+  // __screenerAnnotation que consumers aguas abajo asumen.
+  it("annotateRow siempre produce las 6 claves del annotation (contrato aguas abajo)", () => {
+    const result = annotateRow(baseRow, settings);
+    const keys = ["explanation", "confidence", "dataHealth", "priority", "profile", "issues"];
+    for (const k of keys) {
+      expect(result.__screenerAnnotation[k]).toBeDefined();
+    }
+  });
+});

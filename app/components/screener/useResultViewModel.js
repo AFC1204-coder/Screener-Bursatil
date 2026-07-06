@@ -194,6 +194,16 @@ export function useResultViewModel({
   // antes recalculaban 8+ memos independientes y applyResultViewFilters (6×/render).
   // Cache en `__screenerAnnotation`: campo no-persistido (no es RESEARCH_ROW_CORE_FIELD,
   // así que compactResearchRow lo descarta y nunca llega a localStorage).
+  //
+  // Dep memo: las 6 funciones de annotateRow solo leen `activeSettings.setupMode`
+  // (verificado en lib/screenerExplainability.js, lib/decisionAudit.js,
+  // lib/screenerDataHealth.js, lib/decisionProfile.js). Estrechar el memo a esa
+  // única clave evita re-anotar N filas cuando cambia un umbral que no afecta
+  // a la anotación (ej. settings.maxSymbols, settings.minRS, sortIndex).
+  //
+  // CONTRATO: si añades una 7ª función a annotateRow que lea OTRA clave de
+  // activeSettings, amplia este useMemo para incluirla.
+  const setupMode = activeSettings?.setupMode;
   function annotateRow(row) {
     const explanation = explainScreenerRank(row, activeSettings);
     const issues = auditDecisionRowIssues(row, explanation);
@@ -210,7 +220,7 @@ export function useResultViewModel({
     };
   }
 
-  const annotatedRows = useMemo(() => rows.map(annotateRow), [rows, activeSettings]);
+  const annotatedRows = useMemo(() => rows.map(annotateRow), [rows, setupMode]);
 
   const filtered = useMemo(() => {
     const list = applyResultViewFilters(annotatedRows, viewFilterState);

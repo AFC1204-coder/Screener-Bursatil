@@ -156,4 +156,31 @@ describe("scanSettingsSignature", () => {
     expect(sig.length).toBeGreaterThan(0);
     expect(sig.startsWith("v1|")).toBe(true);
   });
+
+  // ─── Gaps cubiertos en Fase 2 (endurecimiento) ─────────────────────────────
+  // Pieza 3 del prompt: ampliar cobertura sin duplicar la existente.
+
+  it("acepta null/undefined como argumentos sin lanzar excepción", () => {
+    expect(() => scanSettingsSignature(null, null, null)).not.toThrow();
+    expect(() => scanSettingsSignature(undefined, undefined, undefined)).not.toThrow();
+    expect(() => scanSettingsSignature()).not.toThrow();
+  });
+
+  it("hash estable y NO idéntico cuando todos los inputs son vacíos vs. con contenido", () => {
+    const empty = scanSettingsSignature([], "", "");
+    const emptyAlt = scanSettingsSignature([], "", "all"); // "" default → "all"
+    const withContent = scanSettingsSignature(["US"], "NVDA", "all");
+    // vacío canónico es estable (dos llamadas producen el mismo string)
+    expect(empty).toBe(emptyAlt);
+    // y es claramente distinto de uno con contenido
+    expect(withContent).not.toBe(empty);
+  });
+
+  it("normaliza símbolos manuales a mayúsculas (mismo ticker en distinta caja → mismo hash)", () => {
+    const upper = scanSettingsSignature(["US"], "NVDA\nAAPL", "all");
+    const lower = scanSettingsSignature(["US"], "nvda\naapl", "all");
+    const mixed = scanSettingsSignature(["US"], "NvDa, AaPl", "all");
+    expect(lower).toBe(upper);
+    expect(mixed).toBe(upper);
+  });
 });
