@@ -5,8 +5,8 @@
 
 .commandCenter {
   position:relative;
-  border-top:1px solid rgba(255,255,255,.22);
-  border-bottom:1px solid rgba(255,255,255,.16);
+  border-top:1px solid var(--line2);
+  border-bottom:1px solid var(--line);
 }
 
 .commandCenter:before {
@@ -15,20 +15,20 @@
   inset:0 auto auto 0;
   width:120px;
   height:2px;
-  background:linear-gradient(90deg,var(--gold2),transparent);
+  background:linear-gradient(90deg,var(--tiza),transparent);
 }
 
 .commandCenter {
   margin:0 0 10px;
   padding:14px 0;
-  background:linear-gradient(90deg,rgba(255,255,255,.045),rgba(255,255,255,.01) 42%,rgba(94,234,212,.018));
+  background:linear-gradient(90deg,var(--surface2),var(--surface2) 42%,rgba(94,234,212,.018));
 }
 
 .miniPanel {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 14px;
-  background: rgba(255,255,255,.025);
+  background: var(--surface2);
   min-width: 0;
 }
 
@@ -102,7 +102,7 @@
   justify-content: center;
   width: 9px;
   height: 9px;
-  border: 1px solid rgba(148,163,184,.24);
+  border: 1px solid var(--line);
   border-radius: 999px;
   color: #cbd5e1;
   background: rgba(15,23,42,.72);
@@ -114,19 +114,19 @@
 }
 
 .researchTrustMetric.source-proxy i {
-  border-color: rgba(148,163,184,.28);
+  border-color: var(--line);
   color: #cbd5e1;
-  background: rgba(148,163,184,.12);
+  background: var(--surface2);
 }
 
 .researchTrustMetric.source-review i {
-  border-color: rgba(245,158,11,.32);
+  border-color: var(--risk);
   color: #fed7aa;
-  background: rgba(245,158,11,.1);
+  background: var(--oxido-dim);
 }
 
 .researchTrustMetric.source-blocked i {
-  border-color: rgba(248,113,113,.34);
+  border-color: var(--risk);
   color: #fecaca;
-  background: rgba(239,68,68,.12);
+  background: var(--oxido-dim);
 }

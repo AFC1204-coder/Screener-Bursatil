@@ -1,4 +1,6 @@
-import "../styles/tokens.css";
+// Pizarra y Tiza v2: tokens-v2.css es la única fuente de tokens para toda la app
+// (global, todas las rutas). Sustituye a tokens.css v1. Spec: docs/design/DIRECCION-VISUAL.md.
+import "../styles/tokens-v2.css";
 import "../styles/base.css";
 import "../styles/components.css";
 import AuthGate from "./AuthGate";

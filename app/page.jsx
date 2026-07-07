@@ -1,4 +1,5 @@
 "use client";
+// tokens-v2.css se importa globalmente desde app/layout.jsx.
 import "../styles/screener.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import QuickReviewModal from "@/app/components/screener/QuickReviewModal";

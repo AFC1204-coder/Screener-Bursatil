@@ -1,0 +1,156 @@
+/* styles/tokens-v2.css — Sistema de tokens «Pizarra y Tiza» (dirección visual v2).
+   Spec completa: docs/design/DIRECCION-VISUAL.md
+   NO importado todavía: la migración se hace pantalla a pantalla sustituyendo
+   el @import de tokens.css por este fichero cuando cada pantalla se re-ejecute.
+
+   REGLAS DE GOBIERNO (obligatorias para la fase de ejecución):
+   1. El color es convicción. La UI en reposo es bicolor (pizarra + tiza/humo).
+      Fuera de la zona de resultados/veredicto, máximo UN elemento --senal por vista.
+      El CTA no usa --senal: es tiza sólida invertida (--cta-bg/--cta-fg).
+   2. Si es un número que puede cambiar, va en --font-data (Spline Sans Mono).
+   3. --font-display solo en mayúsculas con --track-display; máx. 3 usos por vista.
+   4. Descartar no gana color: pierde tinta (--humo + opacidad .6 + peso 400).
+   5. El precio no tiene color por defecto (signo + glifo en tiza); solo movimientos
+      excepcionales (umbral definido por pantalla) ganan --senal / --oxido.
+   6. Prohibido hardcodear hex, px de espaciado o font-family fuera de estos tokens. */
+
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,500..700&family=Instrument+Sans:ital,wght@0,400..700;1,400..600&family=Spline+Sans+Mono:wght@400..700&display=swap');
+
+:root {
+  color-scheme: dark;
+
+  /* ── Primitivas de color ─────────────────────────────────────── */
+  --pizarra    : #17291F;   /* lienzo: verde-pizarra — debe leerse verde, no negro */
+  --pizarra-0  : #101D15;   /* pozo/inset: tablas densas, zonas hundidas (más oscuro que el lienzo) */
+  --tiza       : #EDE8DA;   /* texto principal: blanco cálido de tiza */
+  --humo       : #7E8B82;   /* secundario, bordes, descartes */
+  --senal      : #E0A93F;   /* ámbar dorado: atención / Vigilar (nunca crema: eso es CTA) */
+  --traza      : #93B8CE;   /* tiza azul: análisis / Auditar */
+  --oxido      : #C4614C;   /* arcilla quemada: riesgo real (uso escaso) */
+
+  /* Superficies derivadas (nunca inventar otras) */
+  --pizarra-2  : #2C4C39;   /* panel elevado (~+11 pts de luminosidad sobre el lienzo) */
+  --pizarra-3  : #365A44;   /* hover / superficie sobre superficie (~+5 pts sobre panel).
+                               Texto secundario aquí usa --soft, no --humo (contraste). */
+
+  /* Doctrina de elevación (v2.2): entre campos verdes del mismo matiz, el delta de
+     luminosidad NO basta — la elevación la da el CONTORNO. Cinco roles de superficie:
+       lienzo   --bg            sin borde, sin sombra
+       pozo     --surface-inset tabla densa / zona hundida: borde 1px --line, SIN sombra
+       panel    --surface       borde 1px --line2 + --shadow-panel (ambos OBLIGATORIOS)
+       anidada  --surface2      solo dentro de un panel: borde 1px --line, sin sombra
+       flotante --surface       (dropdown/modal/sticky): borde --line2 + --shadow-float
+     Un panel sin borde+sombra se funde con el lienzo: es un bug de ejecución. */
+
+  /* ── Alias semánticos (mismos nombres que tokens.css v1 → migración mecánica) ── */
+  --bg            : var(--pizarra);
+  --surface       : var(--pizarra-2);
+  --surface2      : var(--pizarra-3);
+  --surface-inset : var(--pizarra-0);   /* cuerpo de tablas densas (compactResultsTable etc.):
+                                           filas sobre el pozo, separadas por --line; cabecera de
+                                           tabla en --surface con border-bottom --line2 — nunca negro puro */
+  --text       : var(--tiza);
+  --muted      : var(--humo);
+  --soft       : #B9BFB2;                        /* tiza al 70%, texto terciario */
+  --line       : rgba(237, 232, 218, .10);       /* tiza en alpha, no blanco frío */
+  --line2      : rgba(237, 232, 218, .26);       /* borde obligatorio de panel elevado */
+  --line3      : rgba(237, 232, 218, .45);       /* borde de elemento activo/seleccionado */
+
+  /* Estado activo/selección de UI (nav, toggles, chips de mercado, filtros):
+     lo activo se marca con TINTA, no con matiz — más tiza, no otro color.
+     PROHIBIDO usar --senal/--traza/--oxido para estados de UI genéricos:
+     esos tonos son vocabulario de decisión/riesgo del trader, no de la interfaz.
+     Alertas de infraestructura (Supabase, timeout, snapshot): lenguaje de calidad
+     de dato (franja tiza/humo sobre --surface + --line2), JAMÁS señal ni óxido. */
+  --accent     : var(--tiza);        /* CORRECCIÓN rollout: antes var(--senal) — lo activo es tinta */
+  --accent2    : var(--tiza);        /* deprecated: sin hover de color; el hover lo da --pizarra-3 */
+  --active-fg     : var(--tiza);     /* texto del elemento activo, peso 600 */
+  --active-bg     : var(--pizarra-3);
+  --active-border : var(--line3);
+  --focus-ring    : var(--tiza);     /* anillo de foco teclado: 2px — interacción = tinta */
+
+  /* CTA sólido invertido (decisión UX: el CTA no comparte --senal con Vigilar).
+     Texto pizarra sobre fondo tiza — visualmente el elemento más prominente. */
+  --cta-bg     : var(--tiza);
+  --cta-fg     : var(--pizarra);
+  --cta-border : var(--tiza);
+
+  /* Semántica de decisión (sustituye a --positive/--negative/--warning) */
+  --decision-vigilar   : var(--senal);
+  --decision-auditar   : var(--traza);
+  --decision-descartar : var(--humo);
+  --risk               : var(--oxido);   /* riesgo cola, deterioro — dot/marker, no fondos */
+  --neutral            : var(--humo);
+
+  /* Tintes de fondo para zonas/chips (única forma permitida de color de fondo) */
+  --senal-dim  : rgba(224, 169, 63, .12);
+  --traza-dim  : rgba(147, 184, 206, .12);
+  --oxido-dim  : rgba(196, 97, 76, .12);
+
+  /* Calidad de dato (ficha ticker — DIRECCION-VISUAL.md y FICHA-TICKER-IA.md).
+     Lo ausente/estimado NO usa color semántico (ni ámbar ni óxido): pierde tinta.
+     --ghost ≠ humo·.6 a propósito: humo·.6 significa "descartado por el sistema";
+     --ghost significa "el dato no existe/está degradado". No mezclar significados. */
+  --ghost      : rgba(237, 232, 218, .35);        /* valor ausente: "—", placeholders */
+  --line-stale : 1px dotted rgba(126, 139, 130, .55);  /* subrayado de dato estimado/viejo */
+
+  /* Mapeo de migración v1 → v2 (mantener hasta retirar la última pantalla v1):
+     --positive → --decision-vigilar · --negative → --risk ·
+     --warning → --risk · --gold/--gold2 → --tiza · --lime/--red/--amber → eliminar */
+
+  /* ── Tipografía ──────────────────────────────────────────────── */
+  --font-display : 'Archivo', 'Instrument Sans', sans-serif;  /* usar con font-stretch:125% */
+  --font-body    : 'Instrument Sans', -apple-system, sans-serif;
+  --font-data    : 'Spline Sans Mono', ui-monospace, monospace;
+
+  --stretch-display : 125%;
+  --track-display   : .08em;    /* display siempre uppercase + este tracking */
+  --track-label     : .14em;    /* micro-labels uppercase 11px */
+
+  /* Escala de cuerpo (body) */
+  --text-xs : 11px;
+  --text-s  : 12.5px;
+  --text-m  : 14px;    /* base */
+  --text-l  : 16px;
+
+  /* Escala de datos (mono, numerales tabulares) */
+  --data-s  : 12.5px;
+  --data-m  : 17px;
+  --data-l  : 26px;
+  --data-xl : 38px;    /* métricas grandes: Universo / Pasan / Score */
+
+  /* Escala display */
+  --display-s : 13px;  /* cabeceras de sección */
+  --display-m : 20px;  /* título de pantalla / preset */
+
+  --lh-body    : 1.5;
+  --lh-data    : 1.1;
+  --lh-display : 1.05;
+
+  /* ── Espaciado (v1 conservado + ritmo de sección) ────────────── */
+  --space-1 : 4px;
+  --space-2 : 8px;
+  --space-3 : 12px;
+  --space-4 : 16px;
+  --space-5 : 20px;
+  --space-6 : 24px;
+  --space-7 : 32px;
+  --space-8 : 48px;
+
+  /* ── Radios / bordes / sombras ───────────────────────────────── */
+  --radius-s   : 3px;
+  --radius     : 6px;
+  --radius-pill: 999px;
+  --shadow-1     : 0 1px 0 rgba(0,0,0,.30);      /* la tiza no brilla: sin glows */
+  --shadow-panel : 0 1px 3px rgba(0,0,0,.38);    /* obligatoria en paneles --surface */
+  --shadow-float : 0 12px 28px rgba(0,0,0,.42);  /* SOLO dropdown/popover/modal/sticky header */
+
+  /* ── Curva de Etapa (elemento firma) ─────────────────────────── */
+  /* Geometría única para glifo, chips y constelación. Ver DIRECCION-VISUAL.md §5 */
+  --curve-stroke       : 2px;                       /* stroke-linecap: round */
+  --curve-track        : rgba(237, 232, 218, .22);  /* curva en reposo */
+  --curve-dot          : 4px;                       /* radio del punto de posición */
+  --curve-glyph-w      : 40px;                      /* glifo inline junto a ticker */
+  --curve-glyph-h      : 16px;
+  --curve-hero-h       : 72px;                      /* constelación de cabecera */
+}

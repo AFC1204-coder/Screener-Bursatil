@@ -15,7 +15,7 @@
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,.08);
+  background: var(--surface2);
   border-radius: 10px;
 }
 
@@ -37,7 +37,7 @@
     position: fixed;
     inset: 0;
     z-index: 999;
-    background: #000;
+    background:var(--surface) ;
     padding: 20px;
     overflow-y: auto;
     border: none;
@@ -49,7 +49,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    border-bottom: 1px solid rgba(255,255,255,.05);
+    border-bottom: 1px solid var(--line);
     padding-bottom: 12px;
   }
   .mobileSidebarHeader h2 {
@@ -77,7 +77,7 @@
   padding:9px 12px;
   border:1px solid var(--line);
   border-radius:var(--radius);
-  background:rgba(255,255,255,.025);
+  background:var(--surface2);
   color:var(--muted);
   overflow:hidden;
 }
@@ -103,13 +103,13 @@
 }
 
 .scanStatusBar.running {
-  border-color:rgba(94,141,255,.36);
-  background:rgba(94,141,255,.08);
+  border-color:var(--accent);
+  background:var(--senal-dim);
 }
 
 .scanStatusBar.error {
-  border-color:rgba(248,113,113,.35);
-  background:rgba(248,113,113,.08);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .snapshotFreshnessNotice {
@@ -118,20 +118,20 @@
   gap:10px;
   margin:calc(var(--space-4) * -0.55) 0 var(--space-4);
   padding:10px 12px;
-  border:1px solid rgba(234,179,8,.26);
+  border:1px solid var(--risk);
   border-radius:var(--radius);
-  background:rgba(234,179,8,.07);
+  background:var(--oxido-dim);
   color:var(--soft);
 }
 
 .snapshotFreshnessNotice.info {
-  border-color:rgba(94,141,255,.26);
-  background:rgba(94,141,255,.07);
+  border-color:var(--accent);
+  background:var(--senal-dim);
 }
 
 .snapshotFreshnessNotice span {
   flex:0 0 auto;
-  color:#f1d280;
+  color:var(--oxido);
   font-size:11px;
   font-weight:820;
   letter-spacing:.08em;
@@ -139,7 +139,7 @@
 }
 
 .snapshotFreshnessNotice.info span {
-  color:#9db7ff;
+  color:var(--traza);
 }
 
 .snapshotFreshnessNotice b {
@@ -159,8 +159,9 @@
 
 /* Banner no-modal de staleness del scan: los datos siguen siendo válidos pero
    corresponden al universo anterior (markets/manual/scanMode cambiaron). No
-   oculta ni degrada la tabla; solo invita a relanzar. Tono ámbar suave, mismo
-   lenguaje visual que .snapshotFreshnessNotice. */
+   oculta ni degrada la tabla; solo invita a relanzar. Tono v2: --oxido-dim
+   (regla 5 de tokens-v2: --oxido como marcador, no fondo grande; aquí se usa
+   --oxido-dim para un fondo muy suave). */
 .scanStaleNotice {
   display:flex;
   align-items:center;
@@ -168,26 +169,28 @@
   flex-wrap:wrap;
   margin:0 0 12px;
   padding:10px 12px;
-  border:1px solid rgba(234,179,8,.4);
+  border:1px solid var(--oxido);
+  background:var(--oxido-dim);
   border-radius:var(--radius);
-  background:rgba(234,179,8,.09);
   color:var(--soft);
 }
 
 .scanStaleNotice .scanStaleNoticeLabel {
   flex:0 0 auto;
-  color:#f1d280;
+  color:var(--oxido);
   font-size:11px;
   font-weight:820;
-  letter-spacing:.08em;
+  letter-spacing:var(--track-display);
   text-transform:uppercase;
+  font-family:var(--font-display);
+  font-stretch:var(--stretch-display);
 }
 
 .scanStaleNotice b {
   flex:1 1 auto;
   min-width:0;
   color:var(--text);
-  font-size:13px;
+  font-size:var(--text-m);
   font-weight:620;
   line-height:1.4;
 }
@@ -197,7 +200,8 @@
 }
 
 /* Dot indicator para controles cuyo valor actual difiere del último scan
-   mostrado. Va inline junto al label del control (markets / cobertura). */
+   mostrado. Va inline junto al label del control (markets / cobertura).
+   --oxido: riesgo real / "algo no encaja"; spec v2 §2 regla 5. */
 .controlDot {
   display:inline-block;
   width:8px;
@@ -208,8 +212,8 @@
 }
 
 .controlDot.controlDotStale {
-  background:#eab308;
-  box-shadow:0 0 0 2px rgba(234,179,8,.22);
+  background:var(--oxido);
+  box-shadow:0 0 0 2px var(--oxido-dim);
 }
 
 .weeklyStageControls {
@@ -254,9 +258,9 @@
   grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
   gap:1px;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.16);
+  border:1px solid var(--line);
   border-radius:var(--radius);
-  background:rgba(255,255,255,.16);
+  background:var(--surface2);
 }
 
 .searchCandidate {
@@ -267,7 +271,7 @@
   min-height:70px;
   padding:10px;
   border:0;
-  background:#070706;
+  background:var(--surface) ;
   color:var(--soft);
   text-align:left;
 }
@@ -277,7 +281,7 @@
 
 .searchCandidate b {
   display:block;
-  color:#dddddd;
+  color:var(--text);
   font-size:13px;
 }
 
@@ -317,22 +321,22 @@
   min-width:160px;
   max-width:270px;
   padding:8px 10px;
-  border:1px solid rgba(255,255,255,.14);
+  border:1px solid var(--line);
   border-radius:999px;
-  background:rgba(255,255,255,.035);
+  background:var(--surface2);
   color:var(--soft);
   text-align:left;
 }
 
 .searchScopeChip:hover {
-  border-color:rgba(214,174,92,.45);
-  background:rgba(214,174,92,.09);
+  border-color:var(--line2);
+  background:var(--surface2);
 }
 
 .searchScopeChip span {
   grid-row:1 / span 2;
   min-width:34px;
-  color:var(--gold2);
+  color:var(--tiza);
   font-size:10px;
   font-weight:850;
   letter-spacing:.08em;
@@ -382,7 +386,7 @@
 .stockPreview-search .previewStats {
   grid-template-columns:repeat(3,minmax(0,1fr));
   margin-top:10px;
-  border-color:rgba(255,255,255,.1);
+  border-color:var(--line);
 }
 
 .stockPreview-search .previewStats span {
@@ -394,16 +398,16 @@
   flex-wrap:wrap;
   gap:0;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.08);
+  border:1px solid var(--line);
   border-radius:var(--radius);
-  background:rgba(255,255,255,.03);
+  background:var(--surface2);
   margin-bottom:16px;
   animation:fadeIn .3s ease;
 }
 
 .regimeStrip span {
   flex:1 1 auto;
-  border-right:1px solid rgba(255,255,255,.06);
+  border-right:1px solid var(--line);
 }
 
 .regimeStrip span:last-child {border-right:0
@@ -412,7 +416,7 @@
 .regimeStrip b {
   display:block;
   overflow:hidden;
-  color:#fafafa;
+  color:var(--text);
   font-weight:700;
   font-variant-numeric:tabular-nums;
   line-height:1.2;
@@ -434,13 +438,13 @@
   grid-template-columns:repeat(4,minmax(150px,1fr));
   gap:1px;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.16);
+  border:1px solid var(--line);
   border-radius:var(--radius);
-  background:rgba(255,255,255,.16);
+  background:var(--surface2);
 }
 
 .opportunityLane {
-  background:#070706;
+  background:var(--surface) ;
 }
 
 .opportunityLaneHead {
@@ -451,7 +455,7 @@
 }
 
 .opportunityLaneHead span {
-  color:#f3d98b;
+  color:var(--senal);
   font-size:11px;
   font-weight:900;
   letter-spacing:.08em;
@@ -459,7 +463,7 @@
 }
 
 .opportunityLaneHead b {
-  color:#ffffff;
+  color:var(--text);
   font-size:24px;
   line-height:1;
 }
@@ -482,21 +486,21 @@
   border:0;
   border-radius:6px;
   padding:5px 6px;
-  background:rgba(255,255,255,.035);
+  background:var(--surface2);
   color:var(--soft);
   text-align:left;
 }
 
-.opportunityTickers button:hover {background:rgba(255,255,255,.1)
+.opportunityTickers button:hover {background:var(--line)
 }
 
 .opportunityTickers span {display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;flex:1
 }
 
-.opportunityTickers strong {overflow:hidden;color:#dddddd;font-size:12px;text-overflow:ellipsis
+.opportunityTickers strong {overflow:hidden;color:var(--text);font-size:12px;text-overflow:ellipsis
 }
 
-.opportunityTickers em {color:#ffffff;font-size:11px;font-style:normal;font-weight:900
+.opportunityTickers em {color:var(--text);font-size:11px;font-style:normal;font-weight:900
 }
 
 .opportunityTickers small {color:var(--muted);font-size:11px
@@ -510,11 +514,11 @@
 }
 
 .labelRail span {
-  border:1px solid rgba(255,255,255,.18);
+  border:1px solid var(--line);
   border-radius:999px;
   padding:5px 8px;
-  background:rgba(255,255,255,.06);
-  color:#f5dda0;
+  background:var(--surface2);
+  color:var(--senal);
   font-size:10px;
   font-weight:850;
 }
@@ -542,7 +546,7 @@
   bottom:0;
   height:3px;
   border-radius:999px;
-  background:rgba(255,255,255,.08);
+  background:var(--surface2);
 }
 
 .scoreLine i {
@@ -551,25 +555,25 @@
   bottom:0;
   height:3px;
   border-radius:999px;
-  background:linear-gradient(90deg,var(--gold),var(--lime));
+  background:linear-gradient(90deg,var(--senal),var(--decision-vigilar));
 }
 
 .scoreLine b {
-  color:#ffffff;
+  color:var(--text);
   text-align:right;
 }
 
 .miniRating {
   display:block;
-  color:#ffffff;
+  color:var(--text);
   font-size:13px;
 }
 
 .leaderTape,.quickPanel {
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.15);
+  border:1px solid var(--line);
   border-radius:var(--radius);
-  background:#050505;
+  background:var(--surface) ;
 }
 
 .leaderTapeHead,.leaderRow {
@@ -584,9 +588,9 @@
   top:0;
   z-index:1;
   padding:10px 12px;
-  border-bottom:1px solid rgba(255,255,255,.16);
-  background:#0f0d09;
-  color:#cdbb8d;
+  border-bottom:1px solid var(--line);
+  background:var(--surface2) ;
+  color:var(--soft);
   font-size:10px;
   font-weight:900;
   letter-spacing:.09em;
@@ -597,7 +601,7 @@
   width:100%;
   min-height:58px;
   padding:9px 12px;
-  border-bottom:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid var(--line);
   color:var(--soft);
   text-align:left;
   outline:none;
@@ -613,7 +617,7 @@
 .leaderIdentity span,.previewIdentity span,.quickPanelHead div {min-width:0
 }
 
-.leaderIdentity b {display:block;color:#dddddd;font-size:13px
+.leaderIdentity b {display:block;color:var(--text);font-size:13px
 }
 
 .leaderIdentity em {
@@ -649,10 +653,10 @@
 .leaderEmpty {padding:14px;color:var(--muted);font-size:12px
 }
 
-.scoreHot {color:var(--lime);font-weight:900
+.scoreHot {color:var(--decision-vigilar);font-weight:900
 }
 
-.scoreOk {color:#f3d98b;font-weight:900
+.scoreOk {color:var(--senal);font-weight:900
 }
 
 .scoreWeak {color:#f0a3c9;font-weight:900
@@ -664,7 +668,7 @@
 
 .quickPanelHead {
   padding-bottom:12px;
-  border-bottom:1px solid rgba(255,255,255,.13);
+  border-bottom:1px solid var(--line);
 }
 
 .quickPanelHead p {
@@ -679,7 +683,7 @@
 .rankExplainPanel {
   margin:12px 0 10px;
   padding-top:10px;
-  border-top:1px solid rgba(255,255,255,.1);
+  border-top:1px solid var(--line);
 }
 
 .rankExplainTitle {
@@ -720,10 +724,10 @@
   flex:0 0 auto;
   min-height:22px;
   max-width:150px;
-  border:1px solid rgba(148,163,184,.22);
+  border:1px solid var(--line);
   border-radius:999px;
   padding:3px 7px;
-  background:rgba(148,163,184,.08);
+  background:var(--surface2);
   color:#d6dbe4;
   font-size:10px;
   font-style:normal;
@@ -743,59 +747,59 @@
 
 .decisionConfidenceBadge {
   gap:4px;
-  border-color:rgba(96,165,250,.26);
-  background:rgba(96,165,250,.08);
-  color:#bfdbfe;
+  border-color:var(--accent);
+  background:var(--senal-dim);
+  color:var(--accent);
 }
 
 .decisionPriorityBadge {
   gap:4px;
   border-color:rgba(168,85,247,.28);
   background:rgba(168,85,247,.08);
-  color:#e9d5ff;
+  color:var(--decision-auditar);
 }
 
 .reviewFocusPill {
   gap:4px;
-  border-color:rgba(245,158,11,.28);
-  background:rgba(245,158,11,.08);
-  color:#fed7aa;
+  border-color:var(--risk);
+  background:var(--oxido-dim);
+  color:var(--oxido);
 }
 
 .reviewFocusPill.good {
-  border-color:rgba(34,197,94,.28);
-  background:rgba(34,197,94,.08);
-  color:#bbf7d0;
+  border-color:var(--decision-vigilar);
+  background:var(--senal-dim);
+  color:var(--decision-vigilar);
 }
 
 .reviewFocusPill.bad {
-  border-color:rgba(248,113,113,.34);
-  background:rgba(239,68,68,.1);
-  color:#fecaca;
+  border-color:var(--risk);
+  background:var(--oxido-dim);
+  color:var(--risk);
 }
 
 .rankActionBadge.good,
 .rankDecisionBadge.good,
 .decisionConfidenceBadge.good {
-  border-color:rgba(34,197,94,.34);
-  background:rgba(34,197,94,.11);
-  color:#bdf7c9;
+  border-color:var(--decision-vigilar);
+  background:var(--senal-dim);
+  color:var(--decision-vigilar);
 }
 
 .rankActionBadge.warn,
 .rankDecisionBadge.warn,
 .decisionConfidenceBadge.warn {
-  border-color:rgba(251,191,36,.36);
-  background:rgba(251,191,36,.1);
-  color:#ffe4a8;
+  border-color:var(--risk);
+  background:var(--oxido-dim);
+  color:var(--senal);
 }
 
 .rankActionBadge.bad,
 .rankDecisionBadge.bad,
 .decisionConfidenceBadge.bad {
-  border-color:rgba(248,113,113,.38);
-  background:rgba(248,113,113,.11);
-  color:#ffc7c7;
+  border-color:var(--risk);
+  background:var(--oxido-dim);
+  color:var(--risk);
 }
 
 .rankActionBadge.muted,
@@ -846,7 +850,8 @@
 
 .decisionConfidenceBadge em,
 .decisionPriorityBadge em {
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
 }
 
 .rankExplainChips {
@@ -861,10 +866,10 @@
   gap:5px;
   max-width:100%;
   min-height:24px;
-  border:1px solid rgba(148,163,184,.22);
+  border:1px solid var(--line);
   border-radius:999px;
   padding:3px 7px;
-  background:rgba(148,163,184,.08);
+  background:var(--surface2);
   color:#d5dae3;
   font-size:10px;
   font-weight:800;
@@ -878,18 +883,18 @@
 
 .rankExplainChips span.ok {
   border-color:rgba(134,239,172,.3);
-  background:rgba(34,197,94,.1);
-  color:#ddf8e6;
+  background:var(--senal-dim);
+  color:var(--decision-vigilar);
 }
 
 .rankExplainChips span.warn {
-  border-color:rgba(251,191,36,.32);
-  background:rgba(251,191,36,.1);
-  color:#ffe8a6;
+  border-color:var(--risk);
+  background:var(--oxido-dim);
+  color:var(--senal);
 }
 
 .rankExplainChips span.muted {
-  color:#a1a1aa;
+  color:var(--muted);
 }
 
 .rankExplainChips b {
@@ -900,7 +905,7 @@
 }
 
 .rankExplainChips em {
-  color:#ffffff;
+  color:var(--text);
   font-style:normal;
   font-weight:900;
 }
@@ -914,7 +919,7 @@
 }
 
 .rankExplainWatch span {
-  color:#fbbf24;
+  color:var(--senal);
   font-size:10px;
   font-weight:850;
   letter-spacing:.07em;
@@ -932,17 +937,17 @@
   display:grid;
   gap:8px;
   padding:9px;
-  border:1px solid rgba(148,163,184,.14);
+  border:1px solid var(--line);
   border-radius:7px;
   background:rgba(15,23,42,.22);
 }
 
 .scoreAuditPanel.good {
-  border-color:rgba(34,197,94,.18);
+  border-color:var(--decision-vigilar);
 }
 
 .scoreAuditPanel.warn {
-  border-color:rgba(245,158,11,.22);
+  border-color:var(--risk);
 }
 
 .scoreAuditHead {
@@ -961,8 +966,9 @@
 }
 
 .scoreAuditHead b {
-  color:#f8fafc;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--text);
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:18px;
   line-height:1;
 }
@@ -985,24 +991,24 @@
   gap:2px;
   min-width:0;
   padding:7px;
-  border:1px solid rgba(148,163,184,.12);
+  border:1px solid var(--line);
   border-radius:6px;
   background:rgba(2,6,23,.2);
 }
 
 .scoreAuditReasons span.good {
-  border-color:rgba(34,197,94,.18);
-  background:rgba(34,197,94,.045);
+  border-color:var(--decision-vigilar);
+  background:var(--senal-dim);
 }
 
 .scoreAuditReasons span.warn {
-  border-color:rgba(245,158,11,.22);
-  background:rgba(245,158,11,.055);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .scoreAuditReasons span.bad {
-  border-color:rgba(248,113,113,.24);
-  background:rgba(248,113,113,.06);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .scoreAuditReasons b,
@@ -1014,14 +1020,15 @@
 }
 
 .scoreAuditReasons b {
-  color:#f8fafc;
+  color:var(--text);
   font-size:10px;
   font-weight:820;
 }
 
 .scoreAuditReasons em {
   color:#a7b0c0;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:10px;
   font-style:normal;
 }
@@ -1037,17 +1044,17 @@
   gap:2px;
   min-width:0;
   padding:6px;
-  border:1px solid rgba(148,163,184,.12);
+  border:1px solid var(--line);
   border-radius:6px;
   background:rgba(2,6,23,.18);
 }
 
 .scoreAuditComponent.good {
-  border-color:rgba(34,197,94,.18);
+  border-color:var(--decision-vigilar);
 }
 
 .scoreAuditComponent.warn {
-  border-color:rgba(245,158,11,.2);
+  border-color:var(--risk);
 }
 
 .scoreAuditComponent b,
@@ -1071,8 +1078,9 @@
 }
 
 .scoreAuditComponent em {
-  color:#f8fafc;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--text);
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
 }
 
 .scoreAuditComponent i {
@@ -1089,18 +1097,18 @@
   max-width:100%;
   min-height:21px;
   padding:4px 6px;
-  border:1px solid rgba(245,158,11,.2);
+  border:1px solid var(--risk);
   border-radius:999px;
-  background:rgba(245,158,11,.07);
-  color:#fde68a;
+  background:var(--oxido-dim);
+  color:var(--senal);
   font-size:10px;
   font-weight:780;
 }
 
 .scoreAuditRisks span.bad {
-  border-color:rgba(239,68,68,.24);
-  background:rgba(239,68,68,.08);
-  color:#fecaca;
+  border-color:var(--risk);
+  background:var(--oxido-dim);
+  color:var(--risk);
 }
 
 .dataHealthSummaryRail {
@@ -1108,39 +1116,39 @@
   grid-template-columns:minmax(180px,.8fr) minmax(0,1.6fr) minmax(170px,.7fr);
   gap:1px;
   overflow:hidden;
-  border-bottom:1px solid rgba(255,255,255,.065);
-  background:rgba(255,255,255,.035);
+  border-bottom:1px solid var(--line);
+  background:var(--surface2);
 }
 
 .dataHealthSummaryRail.compact {
   grid-template-columns:1fr;
   margin:0 0 10px;
-  border:1px solid rgba(255,255,255,.07);
+  border:1px solid var(--line);
   border-radius:7px;
 }
 
 .scoreAuditSummaryRail {
-  border-bottom-color:rgba(214,174,92,.13);
+  border-bottom-color:var(--line);
 }
 
 .scoreAuditSummaryRail .dataHealthSummaryIntro span {
-  color:#c7a96f;
+  color:var(--soft);
 }
 
 .scoreAuditSummaryRail .dataHealthSummaryIntro b {
-  color:#f8fafc;
+  color:var(--text);
 }
 
 .scoreAuditSummaryItem.active {
-  background:rgba(214,174,92,.13);
+  background:var(--surface2);
 }
 
 .scoreAuditSummaryRail .dataHealthSummaryIssues b {
-  color:#f3d98b;
+  color:var(--senal);
 }
 
 .decisionEvidenceSummaryRail .dataHealthSummaryIntro span {
-  color:#b8c7ff;
+  color:var(--accent);
 }
 
 .decisionEvidenceActions,
@@ -1156,41 +1164,41 @@
   gap:6px;
   min-height:28px;
   margin-top:2px;
-  border:1px solid rgba(148,163,184,.16);
+  border:1px solid var(--line);
   border-radius:6px;
   padding:5px 8px;
-  background:rgba(255,255,255,.03);
-  color:#dbeafe;
+  background:var(--surface2);
+  color:var(--accent);
   text-align:left;
   cursor:pointer;
 }
 
 .decisionEvidenceReviewAction:hover {
-  border-color:rgba(96,165,250,.42);
-  background:rgba(96,165,250,.12);
+  border-color:var(--accent);
+  background:var(--senal-dim);
 }
 
 .scoreAuditReviewAction:hover {
-  border-color:rgba(214,174,92,.42);
-  background:rgba(214,174,92,.12);
+  border-color:var(--line2);
+  background:var(--surface2);
 }
 
 .decisionEvidenceReviewAction.good,
 .scoreAuditReviewAction.good {
-  border-color:rgba(34,197,94,.22);
-  color:#dcfce7;
+  border-color:var(--decision-vigilar);
+  color:var(--decision-vigilar);
 }
 
 .decisionEvidenceReviewAction.warn,
 .scoreAuditReviewAction.warn {
-  border-color:rgba(245,158,11,.26);
-  color:#fef3c7;
+  border-color:var(--risk);
+  color:var(--senal);
 }
 
 .decisionEvidenceReviewAction.bad,
 .scoreAuditReviewAction.bad {
-  border-color:rgba(248,113,113,.28);
-  color:#fee2e2;
+  border-color:var(--risk);
+  color:var(--risk);
 }
 
 .decisionEvidenceReviewAction b,
@@ -1250,7 +1258,7 @@
 }
 
 .dataHealthSummaryIntro b {
-  color:#f8fafc;
+  color:var(--text);
   font-size:12px;
   font-weight:820;
 }
@@ -1275,7 +1283,7 @@
   gap:2px;
   padding:8px 10px;
   border:0;
-  border-top:2px solid rgba(148,163,184,.18);
+  border-top:2px solid var(--line);
   background:rgba(5,7,10,.72);
   color:inherit;
   text-align:left;
@@ -1287,28 +1295,29 @@ button.dataHealthSummaryItem {
 
 button.dataHealthSummaryItem:hover,
 .dataHealthSummaryItem.active {
-  background:rgba(96,165,250,.12);
+  background:var(--senal-dim);
 }
 
 .dataHealthSummaryItem.good {
-  border-top-color:rgba(34,197,94,.55);
+  border-top-color:var(--decision-vigilar);
 }
 
 .dataHealthSummaryItem.warn {
-  border-top-color:rgba(245,158,11,.64);
+  border-top-color:var(--risk);
 }
 
 .dataHealthSummaryItem.bad {
-  border-top-color:rgba(248,113,113,.7);
+  border-top-color:var(--risk);
 }
 
 .dataHealthSummaryItem.muted {
-  border-top-color:rgba(148,163,184,.28);
+  border-top-color:var(--line);
 }
 
 .dataHealthSummaryItem b {
-  color:#f8fafc;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--text);
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:16px;
   line-height:1;
 }
@@ -1357,13 +1366,13 @@ button.dataHealthSummaryItem:hover,
 }
 
 .dataHealthSummaryIssues b {
-  color:#fde68a;
+  color:var(--senal);
   font-size:10px;
   font-weight:780;
 }
 
 .dataHealthSummaryIssues span.bad b {
-  color:#fecaca;
+  color:var(--risk);
 }
 
 .dataHealthSummaryIssues em {
@@ -1376,25 +1385,25 @@ button.dataHealthSummaryItem:hover,
   display:grid;
   gap:8px;
   padding:9px;
-  border:1px solid rgba(148,163,184,.14);
+  border:1px solid var(--line);
   border-radius:7px;
   background:rgba(2,6,23,.2);
 }
 
 .dataHealthPanel.good {
-  border-color:rgba(34,197,94,.18);
+  border-color:var(--decision-vigilar);
 }
 
 .dataHealthPanel.warn {
-  border-color:rgba(245,158,11,.24);
+  border-color:var(--risk);
 }
 
 .dataHealthPanel.bad {
-  border-color:rgba(248,113,113,.28);
+  border-color:var(--risk);
 }
 
 .dataHealthPanel.muted {
-  border-color:rgba(148,163,184,.12);
+  border-color:var(--line);
   opacity:.9;
 }
 
@@ -1414,7 +1423,7 @@ button.dataHealthSummaryItem:hover,
 }
 
 .dataHealthHead b {
-  color:#f8fafc;
+  color:var(--text);
   font-size:13px;
   font-weight:780;
   line-height:1.1;
@@ -1440,21 +1449,21 @@ button.dataHealthSummaryItem:hover,
   min-width:0;
   gap:2px;
   padding:6px;
-  border:1px solid rgba(148,163,184,.12);
+  border:1px solid var(--line);
   border-radius:6px;
   background:rgba(15,23,42,.2);
 }
 
 .dataHealthMetric.good,
 .dataHealthMeta span.good {
-  border-color:rgba(34,197,94,.18);
-  background:rgba(34,197,94,.055);
+  border-color:var(--decision-vigilar);
+  background:var(--senal-dim);
 }
 
 .dataHealthMetric.warn,
 .dataHealthMeta span.warn {
-  border-color:rgba(245,158,11,.22);
-  background:rgba(245,158,11,.07);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .dataHealthMetric.muted,
@@ -1474,8 +1483,9 @@ button.dataHealthSummaryItem:hover,
 .dataHealthMetric em,
 .dataHealthMeta em {
   overflow:hidden;
-  color:#f8fafc;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--text);
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:11px;
   font-style:normal;
   font-weight:650;
@@ -1499,10 +1509,10 @@ button.dataHealthSummaryItem:hover,
   min-height:20px;
   max-width:100%;
   padding:4px 6px;
-  border:1px solid rgba(245,158,11,.2);
+  border:1px solid var(--risk);
   border-radius:999px;
-  background:rgba(245,158,11,.07);
-  color:#fde68a;
+  background:var(--oxido-dim);
+  color:var(--senal);
   font-size:10px;
   font-weight:780;
   overflow:hidden;
@@ -1511,9 +1521,9 @@ button.dataHealthSummaryItem:hover,
 }
 
 .dataHealthIssues span.bad {
-  border-color:rgba(248,113,113,.28);
-  background:rgba(248,113,113,.08);
-  color:#fecaca;
+  border-color:var(--risk);
+  background:var(--oxido-dim);
+  color:var(--risk);
 }
 
 .decisionEvidenceChecklist {
@@ -1521,7 +1531,7 @@ button.dataHealthSummaryItem:hover,
   gap:7px;
   margin-top:9px;
   padding-top:9px;
-  border-top:1px dashed rgba(148,163,184,.18);
+  border-top:1px dashed var(--line);
 }
 
 .decisionEvidenceChecklist>span {
@@ -1538,7 +1548,8 @@ button.dataHealthSummaryItem:hover,
 
 .decisionEvidenceChecklist>span em {
   color:#e4e7ec;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-style:normal;
   letter-spacing:0;
 }
@@ -1554,26 +1565,26 @@ button.dataHealthSummaryItem:hover,
   gap:2px;
   min-width:0;
   min-height:38px;
-  border:1px solid rgba(148,163,184,.16);
+  border:1px solid var(--line);
   border-radius:6px;
   padding:6px 8px;
-  background:rgba(148,163,184,.055);
+  background:var(--surface2);
   font-style:normal;
 }
 
 .decisionEvidenceChecklist strong.good {
-  border-color:rgba(34,197,94,.24);
-  background:rgba(34,197,94,.07);
+  border-color:var(--decision-vigilar);
+  background:var(--senal-dim);
 }
 
 .decisionEvidenceChecklist strong.warn {
-  border-color:rgba(251,191,36,.25);
-  background:rgba(251,191,36,.07);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .decisionEvidenceChecklist strong.bad {
-  border-color:rgba(248,113,113,.28);
-  background:rgba(248,113,113,.08);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .decisionEvidenceChecklist b,
@@ -1603,7 +1614,7 @@ button.dataHealthSummaryItem:hover,
   gap:6px;
   margin-top:2px;
   padding:8px;
-  border:1px solid rgba(148,163,184,.14);
+  border:1px solid var(--line);
   border-radius:6px;
   background:rgba(2,6,23,.28);
 }
@@ -1644,7 +1655,7 @@ button.dataHealthSummaryItem:hover,
 
 .decisionEvidenceReviewFocus p.warn b,
 .decisionEvidenceReviewFocus p.bad b {
-  color:#fef3c7;
+  color:var(--senal);
 }
 
 .leaderPanelActions {display:flex;gap:7px;flex-wrap:wrap;margin-top:12px
@@ -1652,8 +1663,8 @@ button.dataHealthSummaryItem:hover,
 
 .tvPreviewBox {
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.13);
-  background:#050505;
+  border:1px solid var(--line);
+  background:var(--surface) ;
 }
 
 .tvPreviewFallback {
@@ -1682,7 +1693,7 @@ button.dataHealthSummaryItem:hover,
 }
 
 .disclosurePanel > summary:hover {
-  color:#fafafa;
+  color:var(--text);
 }
 
 .disclosurePanel > summary::-webkit-details-marker {
@@ -1695,9 +1706,9 @@ button.dataHealthSummaryItem:hover,
   height:20px;
   display:grid;
   place-items:center;
-  border:1px solid rgba(255,255,255,.1);
+  border:1px solid var(--line);
   border-radius:var(--radius);
-  background:rgba(255,255,255,.03);
+  background:var(--surface2);
   color:var(--muted);
   font-size:12px;
   font-weight:600;
@@ -1705,8 +1716,8 @@ button.dataHealthSummaryItem:hover,
 }
 
 .disclosurePanel > summary:hover:before {
-  border-color:rgba(255,255,255,.2);
-  background:rgba(255,255,255,.06);
+  border-color:var(--line2);
+  background:var(--surface2);
 }
 
 .disclosurePanel[open] > summary:before {
@@ -1740,7 +1751,7 @@ button.dataHealthSummaryItem:hover,
 .disclosurePanel[open] > summary {
   margin-bottom:12px;
   padding-bottom:8px;
-  border-bottom:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid var(--line);
 }
 
 .compactDisclosure {
@@ -1758,7 +1769,7 @@ button.dataHealthSummaryItem:hover,
 .resultsAuditGroup {
   margin:12px 0;
   padding:14px;
-  border:1px solid rgba(255,255,255,.06);
+  border:1px solid var(--line);
   border-radius:var(--radius);
   background:var(--surface);
 }
@@ -1786,13 +1797,13 @@ button.dataHealthSummaryItem:hover,
 .viewLayerFilterGrid {
   margin:0;
   padding:0;
-  border-top:1px solid rgba(255,255,255,.06);
+  border-top:1px solid var(--line);
   padding-top:10px;
 }
 
 .stockPreview {
   padding:11px;
-  border:1px solid rgba(255,255,255,.16);
+  border:1px solid var(--line);
   border-radius:var(--radius);
   background:linear-gradient(180deg,rgba(17,16,13,.88),rgba(5,5,5,.9));
   box-shadow:none;
@@ -1815,10 +1826,10 @@ button.dataHealthSummaryItem:hover,
 
 .previewStage {
   flex:0 0 auto;
-  border:1px solid rgba(255,255,255,.2);
+  border:1px solid var(--line2);
   border-radius:5px;
   padding:5px 7px;
-  background:rgba(255,255,255,.028);
+  background:var(--surface2);
   color:#d7cfbf;
   font-size:10px;
   font-weight:900;
@@ -1831,7 +1842,7 @@ button.dataHealthSummaryItem:hover,
   grid-template-columns:repeat(3,1fr);
   gap:0;
   margin-top:8px;
-  border:1px solid rgba(255,255,255,.12);
+  border:1px solid var(--line);
   border-radius:6px;
   overflow:hidden;
 }
@@ -1839,9 +1850,9 @@ button.dataHealthSummaryItem:hover,
 .previewStats span {
   min-width:0;
   padding:6px 7px;
-  border-right:1px solid rgba(255,255,255,.1);
-  background:rgba(255,255,255,.016);
-  color:#ffffff;
+  border-right:1px solid var(--line);
+  background:var(--surface2);
+  color:var(--text);
   font-size:11px;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -1867,7 +1878,7 @@ button.dataHealthSummaryItem:hover,
 }
 
 .previewStats .compactMetric b {
-  color:#ffffff;
+  color:var(--text);
   font-size:11px;
   letter-spacing:0;
   text-transform:none;
@@ -1894,9 +1905,9 @@ button.dataHealthSummaryItem:hover,
   display:flex;
   gap:5px;
   align-items:center;
-  border:1px solid rgba(255,255,255,.08);
+  border:1px solid var(--line);
   border-radius:var(--radius);
-  background:rgba(255,255,255,.02);
+  background:var(--surface2);
   color:var(--muted);
   text-align:left;
   transition:all .15s ease;
@@ -1963,9 +1974,9 @@ button.dataHealthSummaryItem:hover,
 
 .scanDiagnostics {
   margin:0 0 18px;
-  border:1px solid rgba(255,255,255,.1);
+  border:1px solid var(--line);
   border-radius:12px;
-  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01)),
+  background:linear-gradient(180deg,var(--surface2),var(--surface2)),
     radial-gradient(circle at top right,rgba(207,176,92,.08),transparent 38%);
 }
 
@@ -1979,7 +1990,7 @@ button.dataHealthSummaryItem:hover,
 
 .diagnosticStats {
   display:grid;
-  border:1px solid rgba(255,255,255,.07);
+  border:1px solid var(--line);
   border-radius:10px;
   overflow:hidden;
 }
@@ -1987,8 +1998,8 @@ button.dataHealthSummaryItem:hover,
 .diagnosticStats span {
   min-width:0;
   padding:10px;
-  border-right:1px solid rgba(255,255,255,.06);
-  background:rgba(0,0,0,.16);
+  border-right:1px solid var(--line);
+  background:var(--surface);
 }
 
 .diagnosticStats span:last-child {border-right:none
@@ -1996,7 +2007,7 @@ button.dataHealthSummaryItem:hover,
 
 .diagnosticStats b {
   display:block;
-  color:#fff9d9;
+  color:var(--senal);
   font-size:18px;
   line-height:1;
 }
@@ -2014,16 +2025,16 @@ button.dataHealthSummaryItem:hover,
 .scanSampleNotice {
   margin-top:10px;
   padding:10px 12px;
-  border:1px solid rgba(96,165,250,.18);
+  border:1px solid var(--accent);
   border-radius:10px;
-  background:rgba(96,165,250,.08);
+  background:var(--senal-dim);
   color:#cbd5e1;
   font-size:12px;
   line-height:1.45;
 }
 
 .scanSampleNotice b {
-  color:#fff;
+  color:var(--text);
   font-weight:800;
 }
 
@@ -2036,9 +2047,9 @@ button.dataHealthSummaryItem:hover,
 
 .diagnosticBlock {
   padding:10px;
-  border:1px solid rgba(255,255,255,.08);
+  border:1px solid var(--line);
   border-radius:10px;
-  background:rgba(0,0,0,.18);
+  background:var(--surface);
 }
 
 .diagnosticBlock>div {
@@ -2063,7 +2074,7 @@ button.dataHealthSummaryItem:hover,
 .diagnosticBlock>b {
   display:block;
   margin:8px 0;
-  color:#fff4bd;
+  color:var(--senal);
   font-size:22px;
   line-height:1;
 }
@@ -2086,7 +2097,7 @@ button.dataHealthSummaryItem:hover,
   display:inline-block;
   min-width:48px;
   margin-right:6px;
-  color:#f1d883;
+  color:var(--senal);
   font-style:normal;
   font-weight:900;
 }
@@ -2113,7 +2124,7 @@ button.dataHealthSummaryItem:hover,
 }
 
 .layerToggle:hover {
-  color:#fff;
+  color:var(--text);
 }
 
 .layerToggleState {
@@ -2123,7 +2134,7 @@ button.dataHealthSummaryItem:hover,
 .layerToggleState i {
   display:grid;
   place-items:center;
-  border:1px solid rgba(255,255,255,.3);
+  border:1px solid var(--line2);
   font-style:normal;
   font-weight:700;
   line-height:1;
@@ -2141,7 +2152,8 @@ button.dataHealthSummaryItem:hover,
 
 .layerToggleCount {
   margin-left:auto;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
 }
 
 .viewLayerBar .layerToggle {
@@ -2153,9 +2165,9 @@ button.dataHealthSummaryItem:hover,
 }
 
 .filterGroup {
-  border:1px solid rgba(255,255,255,.14);
+  border:1px solid var(--line);
   border-radius:var(--radius);
-  background:rgba(255,255,255,.014);
+  background:var(--surface2);
   overflow:hidden;
 }
 
@@ -2175,12 +2187,12 @@ button.dataHealthSummaryItem:hover,
 }
 
 .filterGroup[open] .filterGroupHead {
-  border-bottom:1px solid rgba(255,255,255,.1);
+  border-bottom:1px solid var(--line);
 }
 
 .filterGroup h3 {
   margin:0;
-  color:#f3d98b;
+  color:var(--senal);
   font-size:12px;
   text-transform:uppercase;
   letter-spacing:.14em;
@@ -2193,7 +2205,7 @@ button.dataHealthSummaryItem:hover,
 .filterGroupHead span {
   min-width:34px;
   padding:3px 7px;
-  border:1px solid rgba(255,255,255,.18);
+  border:1px solid var(--line);
   border-radius:999px;
   color:#cbd88b;
   background:rgba(179,225,101,.055);
@@ -2232,8 +2244,8 @@ button.dataHealthSummaryItem:hover,
   display:grid;
   place-items:center;
   border-radius:5px;
-  border:1px solid rgba(255,255,255,.22);
-  background:rgba(255,255,255,.025);
+  border:1px solid var(--line2);
+  background:var(--surface2);
   color:#e8dec2;
   font-size:12px;
   font-weight:1000;
@@ -2260,7 +2272,7 @@ button.dataHealthSummaryItem:hover,
 .filterInputWrap {position:relative
 }
 
-.filterInputWrap b {position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#dddddd;font-size:10px
+.filterInputWrap b {position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text);font-size:10px
 }
 
 .filterFooter {margin-top:12px
@@ -2268,7 +2280,7 @@ button.dataHealthSummaryItem:hover,
 
 .tvPreviewBox {
   border-radius:3px;
-  border-color:rgba(255,255,255,.12);
+  border-color:var(--line);
 }
 
 @media(max-width:620px) {
@@ -2387,14 +2399,14 @@ button.dataHealthSummaryItem:hover,
   transform: translate(-50%, -50%);
   z-index: 10000;
   padding: 0;
-  border: 1px solid rgba(255,255,255,.08);
+  border: 1px solid var(--line);
   border-radius: 12px;
-  background: #09090b;
+  background:var(--surface) ;
   color: var(--text);
   max-width: 1200px;
   width: 95vw;
   max-height: 90vh;
-  box-shadow: 0 24px 48px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05);
+  box-shadow: 0 24px 48px rgba(0,0,0,.6), 0 0 0 1px var(--line);
 }
 
 .stockModal::backdrop {
@@ -2412,8 +2424,8 @@ button.dataHealthSummaryItem:hover,
 }
 
 .stockModalClose {
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.1);
+  background: var(--surface2);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
   color: var(--muted);
   font-size: 14px;
@@ -2422,7 +2434,7 @@ button.dataHealthSummaryItem:hover,
   transition: all .15s ease;
 }
 
-.stockModalClose:hover { color: #fafafa; background: rgba(255,255,255,.1);
+.stockModalClose:hover { color: #fafafa; background: var(--line);
 }
 
 .stockModal.quickReviewModal {
@@ -2440,7 +2452,7 @@ button.dataHealthSummaryItem:hover,
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  border-bottom: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid var(--line);
   padding-bottom: 24px;
   margin-bottom: 24px;
 }
@@ -2531,9 +2543,9 @@ button.dataHealthSummaryItem:hover,
   min-height:44px;
   margin-top:10px;
   padding:8px 10px;
-  border:1px solid rgba(96,165,250,.14);
+  border:1px solid var(--accent);
   border-radius:8px;
-  background:rgba(37,99,235,.055);
+  background:var(--senal-dim);
 }
 
 .quickReviewSourceBrief span {
@@ -2558,7 +2570,7 @@ button.dataHealthSummaryItem:hover,
 
 .quickReviewSourceBrief b {
   overflow:hidden;
-  color:#dbeafe;
+  color:var(--accent);
   font-size:12px;
   font-weight:820;
   line-height:1.1;
@@ -2578,7 +2590,7 @@ button.dataHealthSummaryItem:hover,
 
 .quickReviewSourceBrief small {
   justify-self:end;
-  color:#93c5fd;
+  color:var(--accent);
 }
 
 .screenerReviewLayout {
@@ -2624,14 +2636,14 @@ button.dataHealthSummaryItem:hover,
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
   gap: 1px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.06);
+  background: var(--surface2);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
 }
 
 .perfBox {
-  background: #09090b;
+  background:var(--surface) ;
   padding: 12px 8px;
   display: flex;
   flex-direction: column;
@@ -2660,13 +2672,13 @@ button.dataHealthSummaryItem:hover,
 
 .quickBusinessCard {
   background:
-    radial-gradient(circle at 100% 0,rgba(59,130,246,.08),transparent 36%),
-    rgba(255,255,255,.012);
+    radial-gradient(circle at 100% 0, var(--senal-dim), transparent 36%),
+    var(--surface2);
 }
 
 .quickBusinessBody {
   padding:12px 16px 13px;
-  border-bottom:1px solid rgba(255,255,255,.03);
+  border-bottom:1px solid var(--line);
 }
 
 .quickBusinessBody p {
@@ -2697,15 +2709,15 @@ button.dataHealthSummaryItem:hover,
 }
 
 .profileCard {
-  border: 1px solid rgba(255,255,255,.06);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: rgba(255,255,255,.01);
+  background: var(--surface2);
   overflow: hidden;
 }
 
 .profileCardHeader {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(255,255,255,.04);
+  border-bottom: 1px solid var(--line);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2730,7 +2742,7 @@ button.dataHealthSummaryItem:hover,
   display: flex;
   justify-content: space-between;
   padding: 10px 16px;
-  border-bottom: 1px solid rgba(255,255,255,.03);
+  border-bottom: 1px solid var(--line);
   font-size: 13px;
   align-items: baseline;
 }
@@ -2768,9 +2780,9 @@ button.dataHealthSummaryItem:hover,
   place-items:center;
   width:15px;
   height:15px;
-  border:1px solid rgba(148,163,184,.26);
+  border:1px solid var(--line);
   border-radius:999px;
-  background:rgba(148,163,184,.08);
+  background:var(--surface2);
   color:#aeb7c6;
   font-size:9px;
   font-style:normal;
@@ -2779,21 +2791,21 @@ button.dataHealthSummaryItem:hover,
 }
 
 .quickReviewMetricValue.source-proxy i {
-  border-color:rgba(96,165,250,.28);
-  background:rgba(96,165,250,.09);
-  color:#bfdbfe;
+  border-color:var(--accent);
+  background:var(--senal-dim);
+  color:var(--accent);
 }
 
 .quickReviewMetricValue.source-review i {
-  border-color:rgba(245,158,11,.32);
-  background:rgba(245,158,11,.1);
-  color:#fed7aa;
+  border-color:var(--risk);
+  background:var(--oxido-dim);
+  color:var(--oxido);
 }
 
 .quickReviewMetricValue.source-blocked i {
-  border-color:rgba(248,113,113,.36);
-  background:rgba(239,68,68,.12);
-  color:#fecaca;
+  border-color:var(--risk);
+  background:var(--oxido-dim);
+  color:var(--risk);
 }
 
 @media (max-width: 1024px) {
@@ -2838,8 +2850,8 @@ button.dataHealthSummaryItem:hover,
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
   .diagnosticStats span {
-    border-right:1px solid rgba(255,255,255,.06);
-    border-bottom:1px solid rgba(255,255,255,.06);
+    border-right:1px solid var(--line);
+    border-bottom:1px solid var(--line);
   }
   .diagnosticBlocks {
     grid-template-columns:1fr;
@@ -2867,8 +2879,9 @@ button.dataHealthSummaryItem:hover,
 }
 
 .rankCell {
-  color:#a1a1aa;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--muted);
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
 }
 
 .compactSymbolCell span,
@@ -2879,7 +2892,7 @@ button.dataHealthSummaryItem:hover,
 .compactScoreCell span {
   display:block;
   margin-top:4px;
-  color:#85858d;
+  color:var(--soft);
   font-size:11px;
   line-height:1.25;
   overflow:hidden;
@@ -2905,7 +2918,7 @@ button.dataHealthSummaryItem:hover,
 .compactSetupStack .vcpReliabilityLine {
   display:block;
   margin-top:2px;
-  color:#8f96a3;
+  color:var(--soft);
   font-size:10px;
   line-height:1.2;
   white-space:nowrap;
@@ -3014,7 +3027,8 @@ button.dataHealthSummaryItem:hover,
 .compactMetric b {
   display:block;
   margin-top:2px;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-weight:650;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -3022,7 +3036,8 @@ button.dataHealthSummaryItem:hover,
 
 .compactScoreCell b {
   display:block;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
 }
 
 .compactScoreHead {
@@ -3057,15 +3072,15 @@ button.dataHealthSummaryItem:hover,
 }
 
 .compactScoreCell .rankExplainLine.good {
-  color:#b7f0c7;
+  color:var(--decision-vigilar);
 }
 
 .compactScoreCell .rankExplainLine.warn {
-  color:#ffe1a3;
+  color:var(--senal);
 }
 
 .compactScoreCell .rankExplainLine.bad {
-  color:#ffc4c4;
+  color:var(--risk);
 }
 
 .compactScoreCell .rankExplainLine em {
@@ -3073,7 +3088,7 @@ button.dataHealthSummaryItem:hover,
   max-width:70px;
   margin-left:5px;
   overflow:hidden;
-  color:#fbbf24;
+  color:var(--senal);
   font-style:normal;
   text-overflow:ellipsis;
   vertical-align:bottom;
@@ -3141,7 +3156,7 @@ button.dataHealthSummaryItem:hover,
   max-width:170px;
   margin-top:5px;
   padding:5px 6px;
-  border:1px solid rgba(148,163,184,.13);
+  border:1px solid var(--line);
   border-radius:6px;
   background:rgba(15,23,42,.25);
 }
@@ -3160,7 +3175,7 @@ button.dataHealthSummaryItem:hover,
   max-width:82px;
   min-height:20px;
   margin-top:0;
-  border:1px solid rgba(148,163,184,.16);
+  border:1px solid var(--line);
   border-radius:999px;
   padding:2px 6px;
   background:rgba(15,23,42,.24);
@@ -3169,7 +3184,7 @@ button.dataHealthSummaryItem:hover,
 
 .compactTrustRail .decisionEvidenceChecklist.compact {
   padding-top:2px;
-  border-top:1px solid rgba(148,163,184,.16);
+  border-top:1px solid var(--line);
 }
 
 .compactTrustRail .decisionEvidenceChecklist.compact>span,
@@ -3182,7 +3197,8 @@ button.dataHealthSummaryItem:hover,
 
 .compactTrustRail .decisionEvidenceChecklist.compact>i {
   color:inherit;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:8px;
   font-style:normal;
   opacity:.72;
@@ -3227,8 +3243,8 @@ button.dataHealthSummaryItem:hover,
 .compactTrustRail .objectiveMetricTruthPill.good,
 .compactTrustRail .decisionEvidenceChecklist.good,
 .compactTrustRail .vcpReliabilityPill.good {
-  border-color:rgba(34,197,94,.26);
-  background:rgba(34,197,94,.075);
+  border-color:var(--decision-vigilar);
+  background:var(--senal-dim);
 }
 
 .compactTrustRail .scoreAuditMini.warn,
@@ -3238,8 +3254,8 @@ button.dataHealthSummaryItem:hover,
 .compactTrustRail .decisionEvidenceChecklist.warn,
 .compactTrustRail .vcpReliabilityPill.warn,
 .compactTrustRail .decisionIssueBadge.warn {
-  border-color:rgba(245,158,11,.28);
-  background:rgba(245,158,11,.085);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .compactTrustRail .scoreAuditMini.bad,
@@ -3249,8 +3265,8 @@ button.dataHealthSummaryItem:hover,
 .compactTrustRail .decisionEvidenceChecklist.bad,
 .compactTrustRail .vcpReliabilityPill.bad,
 .compactTrustRail .decisionIssueBadge.bad {
-  border-color:rgba(248,113,113,.3);
-  background:rgba(239,68,68,.09);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .compactTrustRail .vcpReliabilityPill.neutral,
@@ -3273,14 +3289,14 @@ button.compactTrustFilter {
 }
 
 button.compactTrustFilter:hover {
-  border-color:rgba(96,165,250,.35);
-  background:rgba(37,99,235,.09);
+  border-color:var(--accent);
+  background:var(--senal-dim);
 }
 
 button.compactTrustFilter.active {
-  border-color:rgba(96,165,250,.52);
-  background:rgba(37,99,235,.13);
-  box-shadow:inset 0 0 0 1px rgba(96,165,250,.16);
+  border-color:var(--accent);
+  background:var(--senal-dim);
+  box-shadow:inset 0 0 0 1px var(--accent);
 }
 
 .compactTrustFilter i {
@@ -3288,7 +3304,7 @@ button.compactTrustFilter.active {
   min-width:0;
   margin-top:2px;
   overflow:hidden;
-  color:#93c5fd;
+  color:var(--accent);
   font-size:8.5px;
   font-style:normal;
   font-weight:820;
@@ -3300,15 +3316,15 @@ button.compactTrustFilter.active {
 }
 
 .compactTrustFilter.active i {
-  color:#bfdbfe;
+  color:var(--accent);
 }
 
 .scoreAuditMini.good {
-  border-color:rgba(34,197,94,.18);
+  border-color:var(--decision-vigilar);
 }
 
 .scoreAuditMini.warn {
-  border-color:rgba(245,158,11,.22);
+  border-color:var(--risk);
 }
 
 .scoreAuditMini b,
@@ -3344,7 +3360,7 @@ button.compactTrustFilter.active {
   max-width:170px;
   margin-top:5px;
   padding:5px 6px;
-  border:1px solid rgba(148,163,184,.13);
+  border:1px solid var(--line);
   border-radius:6px;
   background:rgba(15,23,42,.22);
 }
@@ -3355,39 +3371,39 @@ button.compactTrustFilter.active {
   max-width:170px;
   margin-top:5px;
   padding:5px 6px;
-  border:1px solid rgba(148,163,184,.13);
+  border:1px solid var(--line);
   border-radius:6px;
   background:rgba(15,23,42,.22);
 }
 
 .dataHealthBadge.good {
-  border-color:rgba(34,197,94,.2);
-  background:rgba(34,197,94,.055);
+  border-color:var(--decision-vigilar);
+  background:var(--senal-dim);
 }
 
 .objectiveMetricTruthPill.good {
-  border-color:rgba(34,197,94,.2);
-  background:rgba(34,197,94,.055);
+  border-color:var(--decision-vigilar);
+  background:var(--senal-dim);
 }
 
 .dataHealthBadge.warn {
-  border-color:rgba(245,158,11,.24);
-  background:rgba(245,158,11,.07);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .objectiveMetricTruthPill.warn {
-  border-color:rgba(245,158,11,.24);
-  background:rgba(245,158,11,.07);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .dataHealthBadge.bad {
-  border-color:rgba(248,113,113,.28);
-  background:rgba(248,113,113,.08);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .objectiveMetricTruthPill.bad {
-  border-color:rgba(248,113,113,.28);
-  background:rgba(248,113,113,.08);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .dataHealthBadge.muted {
@@ -3395,8 +3411,8 @@ button.compactTrustFilter.active {
 }
 
 .objectiveMetricTruthPill.neutral {
-  border-color:rgba(148,163,184,.15);
-  background:rgba(148,163,184,.055);
+  border-color:var(--line);
+  background:var(--surface2);
 }
 
 .dataHealthBadge b,
@@ -3423,11 +3439,11 @@ button.compactTrustFilter.active {
   gap:4px;
   max-width:100%;
   min-height:18px;
-  border:1px solid rgba(245,158,11,.26);
+  border:1px solid var(--risk);
   border-radius:6px;
   padding:2px 6px;
-  background:rgba(245,158,11,.08);
-  color:#fde68a;
+  background:var(--oxido-dim);
+  color:var(--senal);
   font:inherit;
   text-align:left;
   vertical-align:middle;
@@ -3439,15 +3455,15 @@ button.decisionIssueBadge {
 
 button.decisionIssueBadge:hover,
 .decisionIssueBadge.active {
-  border-color:rgba(96,165,250,.42);
-  background:rgba(96,165,250,.13);
-  color:#bfdbfe;
+  border-color:var(--accent);
+  background:var(--senal-dim);
+  color:var(--accent);
 }
 
 .decisionIssueBadge.bad {
-  border-color:rgba(248,113,113,.32);
-  background:rgba(239,68,68,.1);
-  color:#fecaca;
+  border-color:var(--risk);
+  background:var(--oxido-dim);
+  color:var(--risk);
 }
 
 .decisionIssueBadge b {
@@ -3463,7 +3479,8 @@ button.decisionIssueBadge:hover,
 .decisionIssueBadge em {
   flex:0 0 auto;
   color:inherit;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:9px;
   font-style:normal;
   line-height:1;
@@ -3480,15 +3497,15 @@ button.decisionIssueBadge:hover,
 .compactTrustRail .decisionIssueBadge.compact {
   max-width:86px;
   margin-top:0;
-  color:#fde68a;
+  color:var(--senal);
 }
 
 .compactResultsTable tbody tr.hasDecisionIssue.warn td:first-child {
-  box-shadow:inset 2px 0 0 rgba(245,158,11,.55);
+  box-shadow:inset 2px 0 0 var(--risk);
 }
 
 .compactResultsTable tbody tr.hasDecisionIssue.bad td:first-child {
-  box-shadow:inset 2px 0 0 rgba(239,68,68,.65);
+  box-shadow:inset 2px 0 0 var(--risk);
 }
 
 .emptyResultsCell {
@@ -3499,7 +3516,7 @@ button.decisionIssueBadge:hover,
 
 .diagnosticBlock li em,
 .diagnosticBlock>b {
-  color:#fafafa;
+  color:var(--text);
 }
 
 /* Mobile screener prototype adaptation. */
@@ -3518,7 +3535,7 @@ button.decisionIssueBadge:hover,
 .mobileResultListHead button {
   border:0;
   background:transparent;
-  color:#60a5fa;
+  color:var(--accent);
   font-size:12px;
   font-weight:500;
 }
@@ -3540,7 +3557,8 @@ button.decisionIssueBadge:hover,
 
 .mobileIndexTapeHeader em {
   color:#737987;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:10px;
   font-style:normal;
   font-weight:600;
@@ -3549,10 +3567,10 @@ button.decisionIssueBadge:hover,
 .mobileIndexScreen {
   position:relative;
   overflow:hidden;
-  border:1px solid rgba(148,163,184,.14);
+  border:1px solid var(--line);
   border-radius:8px;
   background:linear-gradient(180deg,rgba(15,23,42,.42),rgba(8,10,13,.72));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 10px 26px rgba(0,0,0,.16);
+  box-shadow:inset 0 1px 0 var(--line),0 10px 26px rgba(0,0,0,.16);
 }
 
 .mobileIndexScreen:after {
@@ -3590,11 +3608,11 @@ button.decisionIssueBadge:hover,
   flex:0 0 124px;
   min-height:70px;
   padding:9px 10px 8px;
-  border:1px solid rgba(148,163,184,.12);
+  border:1px solid var(--line);
   border-radius:7px;
-  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018));
+  background:linear-gradient(180deg,var(--surface2),var(--surface2));
   scroll-snap-align:start;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+  box-shadow:inset 0 1px 0 var(--line);
 }
 
 .mobileIndexTileTop {
@@ -3610,9 +3628,9 @@ button.decisionIssueBadge:hover,
   min-width:24px;
   height:17px;
   padding:0 5px;
-  border:1px solid rgba(96,165,250,.2);
+  border:1px solid var(--accent);
   border-radius:5px;
-  color:#bfdbfe;
+  color:var(--accent);
   font-size:9px;
   font-weight:780;
   letter-spacing:.06em;
@@ -3622,7 +3640,7 @@ button.decisionIssueBadge:hover,
 .mobileSectionHead span,
 .mobileResultListHead>span {
   display:block;
-  color:#71717a;
+  color:var(--muted);
   font-size:10px;
   font-weight:600;
   letter-spacing:.14em;
@@ -3640,8 +3658,9 @@ button.decisionIssueBadge:hover,
 .mobileIndexTile strong {
   display:block;
   margin-top:4px;
-  color:#fafafa;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--text);
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:16px;
   font-weight:620;
   letter-spacing:0;
@@ -3651,8 +3670,9 @@ button.decisionIssueBadge:hover,
 .mobileResultPrice span,
 .mobileMoverCard>span {
   display:block;
-  color:#22c55e;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--decision-vigilar);
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:11px;
   font-style:normal;
   font-weight:720;
@@ -3674,11 +3694,11 @@ button.decisionIssueBadge:hover,
 .mobileChipRail button {
   flex:0 0 auto;
   min-height:32px;
-  border:1px solid rgba(255,255,255,.07);
+  border:1px solid var(--line);
   border-radius:999px;
   padding:7px 12px;
-  background:rgba(255,255,255,.025);
-  color:#a1a1aa;
+  background:var(--surface2);
+  color:var(--muted);
   font-size:12px;
 }
 
@@ -3712,10 +3732,10 @@ button.decisionIssueBadge:hover,
   grid-template-rows:auto auto auto 44px;
   gap:4px;
   min-height:124px;
-  border:1px solid rgba(255,255,255,.055);
+  border:1px solid var(--line);
   border-radius:12px;
   padding:10px;
-  background:#070708;
+  background:var(--surface) ;
   text-align:left;
 }
 
@@ -3726,13 +3746,13 @@ button.decisionIssueBadge:hover,
 
 .mobileMoverCard b {
   grid-column:1 / -1;
-  color:#fff;
+  color:var(--text);
   font-size:13px;
 }
 
 .mobileMoverCard em {
   grid-column:1 / -1;
-  color:#71717a;
+  color:var(--muted);
   font-style:normal;
   font-size:12px;
 }
@@ -3748,8 +3768,8 @@ button.decisionIssueBadge:hover,
   border:0;
   border-radius:6px;
   padding:5px 8px;
-  background:rgba(255,255,255,.035);
-  color:#93c5fd;
+  background:var(--surface2);
+  color:var(--accent);
   font-size:11px;
 }
 
@@ -3773,7 +3793,7 @@ button.decisionIssueBadge:hover,
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:8px;
-  border-top:1px solid rgba(255,255,255,.06);
+  border-top:1px solid var(--line);
   padding-top:10px;
 }
 
@@ -3783,8 +3803,8 @@ button.decisionIssueBadge:hover,
   border:0;
   border-radius:6px;
   padding:8px;
-  background:rgba(255,255,255,.035);
-  color:#93c5fd;
+  background:var(--surface2);
+  color:var(--accent);
   font-size:11px;
 }
 
@@ -3792,7 +3812,7 @@ button.decisionIssueBadge:hover,
   grid-template-columns:repeat(3,minmax(0,1fr));
   overflow:hidden;
   margin:0 0 10px;
-  border:1px solid rgba(255,255,255,.065);
+  border:1px solid var(--line);
   border-radius:6px;
 }
 
@@ -3818,15 +3838,15 @@ button.decisionIssueBadge:hover,
 .mobileResultList .decisionQualityStrip.compact .decisionQualityIssue {
   grid-template-columns:minmax(0,1fr) auto;
   border-left:0;
-  border-top:2px solid rgba(34,197,94,.55);
+  border-top:2px solid var(--decision-vigilar);
 }
 
 .mobileResultList .decisionQualityStrip.compact .decisionQualityIssue.warn {
-  border-top-color:rgba(245,158,11,.72);
+  border-top-color:var(--risk);
 }
 
 .mobileResultList .decisionQualityStrip.compact .decisionQualityIssue.bad {
-  border-top-color:rgba(239,68,68,.72);
+  border-top-color:var(--risk);
 }
 
 .mobileResultRow {
@@ -3835,8 +3855,8 @@ button.decisionIssueBadge:hover,
   gap:10px;
   align-items:center;
   min-height:66px;
-  border-bottom:1px solid rgba(255,255,255,.04);
-  background:#050505;
+  border-bottom:1px solid var(--line);
+  background:var(--surface) ;
 }
 
 .mobileResultLogo {
@@ -3847,7 +3867,7 @@ button.decisionIssueBadge:hover,
   border:0;
   border-radius:9px;
   background:transparent;
-  color:#fff;
+  color:var(--text);
   padding:0;
   position:relative;
 }
@@ -3863,7 +3883,7 @@ button.decisionIssueBadge:hover,
 
 .mobileResultIdentity b {
   display:block;
-  color:#f4f4f5;
+  color:var(--text);
   font-size:15px;
   line-height:1.1;
 }
@@ -3871,7 +3891,7 @@ button.decisionIssueBadge:hover,
 .mobileResultIdentity span {
   display:block;
   overflow:hidden;
-  color:#71717a;
+  color:var(--muted);
   font-size:12px;
   line-height:1.25;
   text-overflow:ellipsis;
@@ -3919,8 +3939,9 @@ button.decisionIssueBadge:hover,
 
 .mobileResultPrice b {
   display:block;
-  color:#fafafa;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--text);
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:13px;
   font-weight:500;
 }
@@ -3929,9 +3950,9 @@ button.decisionIssueBadge:hover,
   min-height:88px;
   display:grid;
   place-items:center;
-  border:1px solid rgba(255,255,255,.045);
+  border:1px solid var(--line);
   border-radius:10px;
-  color:#71717a;
+  color:var(--muted);
   font-size:12px;
 }
 
@@ -3969,14 +3990,14 @@ button.decisionIssueBadge:hover,
     min-height:40px;
     border-radius:12px;
     padding-left:36px;
-    background:rgba(255,255,255,.055);
+    background:var(--surface2);
   }
   .searchBar:before {
     content:'⌕';
     position:absolute;
     margin:8px 0 0 13px;
     z-index:1;
-    color:#71717a;
+    color:var(--muted);
     font-size:17px;
   }
   .mobileResearchHome {
@@ -4092,7 +4113,7 @@ button.decisionIssueBadge:hover,
 
 .filterArchitectureHead strong {
   margin:4px 0 0;
-  color:#f3f4f6;
+  color:var(--text);
   font-size:13px;
   font-weight:720;
   letter-spacing:0;
@@ -4118,7 +4139,7 @@ button.decisionIssueBadge:hover,
 .layerToggle, .filterGroup, .filterField, .searchScopeChip {
   border:1px solid var(--line);
   border-radius:var(--radius);
-  background:#0b0c0e;
+  background:var(--surface2) ;
 }
 
 .layerToggle {
@@ -4194,9 +4215,9 @@ button.decisionIssueBadge:hover,
 
 .scanDiagnosticsDisclosure {
   margin:0 0 14px;
-  border:1px solid rgba(255,255,255,.055);
+  border:1px solid var(--line);
   border-radius:8px;
-  background:rgba(255,255,255,.018);
+  background:var(--surface2);
 }
 
 .scanDiagnosticsDisclosure > summary {
@@ -4296,7 +4317,7 @@ button.decisionIssueBadge:hover,
 }
 
 .compactResultsTable tbody tr:hover td {
-  background:rgba(59,130,246,.055);
+  background:var(--senal-dim);
 }
 
 .compactCompanyCell,
@@ -4309,14 +4330,14 @@ button.decisionIssueBadge:hover,
 }
 
 .compactIdentityCell b {
-  color:#89909d;
+  color:var(--soft);
   font-size:11px;
   font-weight:500;
 }
 
 .compactCompanyCell b,
 .compactStack b {
-  color:#f3f4f6;
+  color:var(--text);
   font-size:13px;
 }
 
@@ -4348,7 +4369,7 @@ button.decisionIssueBadge:hover,
   justify-content:center;
   width:9px;
   height:9px;
-  border:1px solid rgba(148,163,184,.24);
+  border:1px solid var(--line);
   border-radius:999px;
   color:#cbd5e1;
   background:rgba(15,23,42,.72);
@@ -4364,25 +4385,25 @@ button.decisionIssueBadge:hover,
 }
 
 .compactMetric.source-proxy i {
-  border-color:rgba(148,163,184,.28);
+  border-color:var(--line);
   color:#cbd5e1;
-  background:rgba(148,163,184,.12);
+  background:var(--surface2);
 }
 
 .compactMetric.source-review i {
-  border-color:rgba(245,158,11,.32);
-  color:#fed7aa;
-  background:rgba(245,158,11,.12);
+  border-color:var(--risk);
+  color:var(--oxido);
+  background:var(--oxido-dim);
 }
 
 .compactMetric.source-blocked i {
-  border-color:rgba(248,113,113,.34);
-  color:#fecaca;
-  background:rgba(239,68,68,.14);
+  border-color:var(--risk);
+  color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .compactScoreCell b {
-  color:#fff;
+  color:var(--text);
 }
 
 .stockModal.quickReviewModal {
@@ -4410,24 +4431,24 @@ button.decisionIssueBadge:hover,
   align-items:center;
   min-height:42px;
   padding:9px 11px;
-  border:1px solid rgba(148,163,184,.16);
+  border:1px solid var(--line);
   border-radius:7px;
-  background:rgba(148,163,184,.055);
+  background:var(--surface2);
 }
 
 .reviewThesisBar.good {
-  border-color:rgba(34,197,94,.2);
-  background:rgba(34,197,94,.055);
+  border-color:var(--decision-vigilar);
+  background:var(--senal-dim);
 }
 
 .reviewThesisBar.warn {
-  border-color:rgba(251,191,36,.22);
-  background:rgba(251,191,36,.06);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .reviewThesisBar.bad {
-  border-color:rgba(248,113,113,.23);
-  background:rgba(248,113,113,.06);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .reviewThesisBar b,
@@ -4542,7 +4563,7 @@ button.decisionIssueBadge:hover,
 .stockPreview-search .previewTop {
   margin-bottom:12px;
   padding-bottom:12px;
-  border-bottom:1px solid rgba(255,255,255,.075);
+  border-bottom:1px solid var(--line);
 }
 
 .stockPreview-search .previewIdentity {
@@ -4569,7 +4590,7 @@ button.decisionIssueBadge:hover,
 }
 
 .previewHeaderMeta strong {
-  color:#f4f4f5;
+  color:var(--text);
   font-size:19px;
   font-weight:760;
   line-height:1;
@@ -4581,10 +4602,10 @@ button.decisionIssueBadge:hover,
   min-height:28px;
   display:inline-flex;
   align-items:center;
-  border-color:rgba(255,255,255,.16);
+  border-color:var(--line);
   border-radius:6px;
   padding:0 9px;
-  background:#101114;
+  background:var(--surface2) ;
   color:#d4d4d8;
   font-size:10px;
   font-weight:680;
@@ -4596,9 +4617,9 @@ button.decisionIssueBadge:hover,
   grid-template-columns:repeat(5,minmax(0,1fr));
   gap:1px;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.1);
+  border:1px solid var(--line);
   border-radius:7px;
-  background:rgba(255,255,255,.07);
+  background:var(--surface2);
 }
 
 .previewSummaryStat {
@@ -4607,7 +4628,7 @@ button.decisionIssueBadge:hover,
   flex-direction:column;
   gap:6px;
   padding:11px 13px;
-  background:#0d0e11;
+  background:var(--surface) ;
 }
 
 .previewSummaryStat b {
@@ -4629,7 +4650,7 @@ button.decisionIssueBadge:hover,
 .previewSummaryStat em {
   min-width:0;
   overflow:hidden;
-  color:#f4f4f5;
+  color:var(--text);
   font-style:normal;
   font-size:16px;
   font-weight:700;
@@ -4641,7 +4662,7 @@ button.decisionIssueBadge:hover,
 .previewSummaryStat.compactMetric b {
   min-width:0;
   overflow:hidden;
-  color:#f4f4f5;
+  color:var(--text);
   font-size:16px;
   font-weight:700;
   letter-spacing:0;
@@ -4730,14 +4751,14 @@ button.decisionIssueBadge:hover,
   justify-content:center;
   gap:2px;
   padding:6px 5px;
-  border-color:rgba(148,163,184,.15);
-  background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01)),#0b0d11;
+  border-color:var(--line);
+  background:linear-gradient(180deg,var(--surface2),var(--surface2)),#0b0d11;
   color:#b7bdc8;
 }
 
 .countryMarketChip:hover {
-  border-color:rgba(148,163,184,.32);
-  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018)),#11141a;
+  border-color:var(--line);
+  background:linear-gradient(180deg,var(--surface2),var(--surface2)),#11141a;
 }
 
 .countryMarketChip .marketChipFlag {
@@ -4749,7 +4770,8 @@ button.decisionIssueBadge:hover,
 
 .countryMarketChip .marketChipCode {
   color:inherit;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:12px;
   font-weight:760;
   line-height:1;
@@ -4808,7 +4830,7 @@ button.decisionIssueBadge:hover,
     z-index:90;
     max-height:none;
     padding:12px 14px calc(120px + env(safe-area-inset-bottom));
-    background:#050506;
+    background:var(--surface) ;
   }
   .sidebar.mobileOpen .mobileSidebarHeader {
     position:sticky;
@@ -4816,7 +4838,7 @@ button.decisionIssueBadge:hover,
     z-index:3;
     margin:-12px -14px 14px;
     padding:12px 14px;
-    border-bottom:1px solid rgba(255,255,255,.1);
+    border-bottom:1px solid var(--line);
     background:rgba(5,5,6,.96);
     backdrop-filter:blur(18px) saturate(1.08);
   }
@@ -4991,10 +5013,10 @@ button.decisionIssueBadge:hover,
     position: sticky !important;
     left: 0 !important;
     z-index: 3;
-    background: #0c0c0e !important;
+    background:var(--surface2) !important;
   }
   .compactResultsTable th:nth-child(1) {
-    background: #09090b !important;
+    background:var(--surface2) !important;
     z-index: 4;
   }
   .compactResultsTable th:nth-child(2),
@@ -5002,10 +5024,10 @@ button.decisionIssueBadge:hover,
     position: sticky !important;
     left: 36px !important;
     z-index: 3;
-    background: #0c0c0e !important;
+    background:var(--surface2) !important;
   }
   .compactResultsTable th:nth-child(2) {
-    background: #09090b !important;
+    background:var(--surface2) !important;
     z-index: 4;
   }
   .compactResultsTable th:nth-child(3),
@@ -5013,12 +5035,12 @@ button.decisionIssueBadge:hover,
     position: sticky !important;
     left: 72px !important;
     z-index: 3;
-    background: #0c0c0e !important;
+    background:var(--surface2) !important;
     border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow: 4px 0 8px rgba(0,0,0,0.45);
   }
   .compactResultsTable th:nth-child(3) {
-    background: #09090b !important;
+    background:var(--surface2) !important;
     z-index: 4;
   }
 }
@@ -5064,7 +5086,7 @@ button.decisionIssueBadge:hover,
 .savedTemplatesDisclosure {
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: rgba(255,255,255,.012);
+  background: var(--surface2);
 }
 
 .templateQuickPresets summary,
@@ -5170,7 +5192,7 @@ button.decisionIssueBadge:hover,
   min-height: 36px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #101114;
+  background:var(--surface2) ;
   color: var(--muted);
   font-size: 10px;
   font-weight: 720;
@@ -5180,7 +5202,7 @@ button.decisionIssueBadge:hover,
 
 .layerEditBtn:hover {
   border-color: var(--line2);
-  background: #14161a;
+  background:var(--surface2) ;
   color: #fff;
 }
 
@@ -5194,7 +5216,7 @@ button.decisionIssueBadge:hover,
   padding: 7px 8px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #0b0c0e;
+  background:var(--surface2) ;
   color: var(--soft);
   cursor: pointer;
   transition: background .14s ease, border-color .14s ease, color .14s ease, opacity .14s ease;
@@ -5202,7 +5224,7 @@ button.decisionIssueBadge:hover,
 
 .filterToggleLine:hover {
   border-color: var(--line2);
-  background: #101114;
+  background:var(--surface2) ;
   color: #fff;
 }
 
@@ -5230,8 +5252,8 @@ button.decisionIssueBadge:hover,
 }
 
 .filterToggleLine.isMuted {
-  border-color: rgba(255,255,255,.045);
-  background: rgba(255,255,255,.012);
+  border-color: var(--line);
+  background: var(--surface2);
   color: var(--muted);
 }
 
@@ -5262,9 +5284,9 @@ button.decisionIssueBadge:hover,
   min-height: 38px;
   margin: 0 0 12px;
   padding: 7px 8px 7px 12px;
-  border: 1px solid rgba(96,165,250,.22);
+  border: 1px solid var(--accent);
   border-radius: 8px;
-  background: rgba(15,23,42,.62);
+  background: var(--surface);
   color: var(--soft);
 }
 
@@ -5297,9 +5319,9 @@ button.decisionIssueBadge:hover,
   align-items: center;
   margin: 0 0 14px;
   padding: 10px 12px;
-  border: 1px solid rgba(255,255,255,.08);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: #080a0d;
+  background:var(--surface) ;
 }
 
 .screenerContractIntro {
@@ -5317,10 +5339,10 @@ button.decisionIssueBadge:hover,
   align-self: start;
   min-height: 30px;
   padding: 0 10px;
-  border: 1px solid rgba(255,255,255,.1);
+  border: 1px solid var(--line);
   border-radius: 7px;
   color: #e7ebf2;
-  background: rgba(255,255,255,.04);
+  background: var(--surface2);
   font-size: 10px;
   font-weight: 820;
   letter-spacing: .08em;
@@ -5359,9 +5381,9 @@ button.decisionIssueBadge:hover,
   min-width: 0;
   min-height: 38px;
   padding: 6px 8px;
-  border: 1px solid rgba(255,255,255,.06);
+  border: 1px solid var(--line);
   border-radius: 7px;
-  background: rgba(255,255,255,.025);
+  background: var(--surface2);
 }
 
 .screenerContractStats b {
@@ -5396,10 +5418,10 @@ button.decisionIssueBadge:hover,
 .screenerContractStatus span {
   min-height: 26px;
   padding: 5px 8px;
-  border: 1px solid rgba(255,255,255,.07);
+  border: 1px solid var(--line);
   border-radius: 7px;
   color: #aeb6c5;
-  background: rgba(255,255,255,.025);
+  background: var(--surface2);
   font-size: 11px;
   line-height: 1.35;
 }
@@ -5435,10 +5457,10 @@ button.decisionIssueBadge:hover,
   align-items: stretch;
   gap: 1px;
   margin: -2px 0 12px;
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid var(--line2);
   border-radius: 8px;
   overflow: hidden;
-  background: rgba(255,255,255,0.035);
+  background: var(--surface2);
 }
 
 .resultFilterChips.withBrief {
@@ -5466,7 +5488,7 @@ button.decisionIssueBadge:hover,
   min-width: 0;
   min-height: 44px;
   padding: 7px 10px;
-  border-right: 1px solid rgba(255,255,255,0.045);
+  border-right: 1px solid var(--line2);
 }
 
 .resultViewFocusSummary em {
@@ -5485,7 +5507,8 @@ button.decisionIssueBadge:hover,
 .resultViewFocusSummary b {
   overflow: hidden;
   color: #f8fafc;
-  font-family: 'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
   font-size: 15px;
   font-weight: 760;
   line-height: 1;
@@ -5496,9 +5519,9 @@ button.decisionIssueBadge:hover,
 .resultViewFocusSummary button {
   min-height: 44px;
   border: 0;
-  border-left: 1px solid rgba(96,165,250,.18);
+  border-left: 1px solid var(--accent);
   padding: 0 12px;
-  background: rgba(37,99,235,.1);
+  background: var(--senal-dim);
   color: #dbeafe;
   font-size: 11px;
   font-weight: 760;
@@ -5507,7 +5530,7 @@ button.decisionIssueBadge:hover,
 }
 
 .resultViewFocusSummary button:hover {
-  background: rgba(37,99,235,.18);
+  background: var(--senal-dim);
 }
 
 .resultViewBrief {
@@ -5527,8 +5550,8 @@ button.decisionIssueBadge:hover,
 }
 
 .resultViewBriefIntro {
-  border-left:1px solid rgba(255,255,255,.045);
-  border-right:1px solid rgba(255,255,255,.045);
+  border-left:1px solid var(--line);
+  border-right:1px solid var(--line);
 }
 
 .resultViewBrief div {
@@ -5539,7 +5562,7 @@ button.decisionIssueBadge:hover,
 }
 
 .resultViewBrief div span {
-  background:rgba(255,255,255,.018);
+  background:var(--surface2);
 }
 
 .resultViewBrief em,
@@ -5561,7 +5584,7 @@ button.decisionIssueBadge:hover,
 
 .resultViewBrief b {
   overflow:hidden;
-  color:#f8fafc;
+  color:var(--text);
   font-size:11px;
   font-weight:780;
   line-height:1.1;
@@ -5580,16 +5603,16 @@ button.decisionIssueBadge:hover,
 }
 
 .resultViewBrief .good b {
-  color:#bbf7d0;
+  color:var(--decision-vigilar);
 }
 
 .resultViewBrief .warn b,
 .resultViewBrief .watch b {
-  color:#fde68a;
+  color:var(--senal);
 }
 
 .resultViewBrief .bad b {
-  color:#fecaca;
+  color:var(--risk);
 }
 
 .resultViewChipRail {
@@ -5605,8 +5628,8 @@ button.decisionIssueBadge:hover,
 .resultFilterClear {
   min-height: 30px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--line2);
+  background: var(--surface2);
   color: var(--text);
 }
 
@@ -5639,8 +5662,8 @@ button.decisionIssueBadge:hover,
 
 .resultFilterChip:hover,
 .resultFilterClear:hover {
-  border-color: rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.06);
+  border-color: var(--line2);
+  background: var(--surface2);
 }
 
 .resultFilterChip b {
@@ -5672,8 +5695,8 @@ button.decisionIssueBadge:hover,
   .resultViewBriefIntro {
     border-left:0;
     border-right:0;
-    border-top:1px solid rgba(255,255,255,.045);
-    border-bottom:1px solid rgba(255,255,255,.045);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
   }
 
   .resultViewBrief div {
@@ -5684,7 +5707,7 @@ button.decisionIssueBadge:hover,
     grid-column: 1 / -1;
     min-height: 36px;
     border-left: 0;
-    border-top: 1px solid rgba(96,165,250,.18);
+    border-top: 1px solid var(--accent);
   }
 }
 
@@ -5695,7 +5718,7 @@ button.decisionIssueBadge:hover,
 .filterFamilyModal {
   width: min(860px, 94vw);
   border-radius: var(--radius);
-  background: #070708;
+  background:var(--surface) ;
 }
 
 .filterFamilyInner {
@@ -5743,7 +5766,7 @@ button.decisionIssueBadge:hover,
   min-height: 38px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #101114;
+  background:var(--surface2) ;
   color: var(--soft);
   cursor: pointer;
 }
@@ -5792,7 +5815,7 @@ button.decisionIssueBadge:hover,
   padding: 5px 9px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #101114;
+  background:var(--surface2) ;
   color: var(--soft);
   font-size: 11px;
   font-weight: 680;
@@ -5802,8 +5825,8 @@ button.decisionIssueBadge:hover,
 }
 
 .filterFamilyPreset:hover {
-  border-color: rgba(59,130,246,.38);
-  background: rgba(59,130,246,.08);
+  border-color: var(--accent);
+  background: var(--senal-dim);
 }
 
 .filterFamilyFields {
@@ -5893,8 +5916,8 @@ button.decisionIssueBadge:hover,
 .sidebarCollapseBtn {
   min-width: 34px;
   height: 32px;
-  border-color: rgba(255,255,255,.1);
-  background: #101319;
+  border-color: var(--line);
+  background:var(--surface2) ;
 }
 
 .filterTemplatePanel {
@@ -5908,7 +5931,7 @@ button.decisionIssueBadge:hover,
 .filterFamilyModal,
 .filterGroup,
 .filterField {
-  background: #0a0c10;
+  background:var(--surface) ;
 }
 
 .filterTemplateBtn,
@@ -5946,7 +5969,7 @@ button.decisionIssueBadge:hover,
 }
 
 .searchInput {
-  background: #0c0f14;
+  background:var(--surface2) ;
 }
 
 .desktopResultsSection {
@@ -5974,7 +5997,7 @@ button.decisionIssueBadge:hover,
   width: 100%;
   min-height: 36px;
   max-width: none;
-  background: #0c0f14;
+  background:var(--surface2) ;
 }
 
 .compactResultsTable th,
@@ -6000,7 +6023,7 @@ button.decisionIssueBadge:hover,
 .compactStack span,
 .compactStack small,
 .compactScoreCell span {
-  color: #89909d;
+  color: var(--soft);
 }
 
 .compactCompanyCell .companyMark-sm {
@@ -6014,11 +6037,11 @@ button.decisionIssueBadge:hover,
 }
 
 .compactMetric small {
-  color: #717987;
+  color: var(--soft);
 }
 
 .compactMetric b {
-  color: #f4f7fb;
+  color: var(--text);
 }
 
 @media(max-width:760px) {
@@ -6036,15 +6059,15 @@ button.decisionIssueBadge:hover,
     display: block;
   }
   .mobileIndexScreen {
-    border-color: rgba(255,255,255,.09);
-    background: #0a0d12;
+    border-color: var(--line);
+    background:var(--surface) ;
     box-shadow: none;
   }
   .mobileIndexTile {
     flex-basis: 118px;
     min-height: 66px;
-    border-color: rgba(255,255,255,.08);
-    background: #0d1117;
+    border-color: var(--line);
+    background:var(--surface2) ;
   }
   .mobileChipRail {
     gap: 6px;
@@ -6054,7 +6077,7 @@ button.decisionIssueBadge:hover,
     min-height: 30px;
     border-radius: 8px;
     padding: 6px 9px;
-    background: #0c0f14;
+    background:var(--surface2) ;
   }
   .mobileResultList {
     padding-bottom: 86px;
@@ -6071,15 +6094,15 @@ button.decisionIssueBadge:hover,
   .mobileResultListHead select,
   .mobileResultListHead button {
     min-height: 30px;
-    border: 1px solid rgba(255,255,255,.1);
+    border: 1px solid var(--line);
     border-radius: 7px;
-    background: #0c0f14;
+    background:var(--surface2) ;
   }
   .mobileResultRow {
     min-height: 64px;
     padding: 7px 8px;
-    border-bottom-color: rgba(255,255,255,.055);
-    background: #080a0d;
+    border-bottom-color: var(--line);
+    background:var(--surface) ;
   }
   .mobileResultRow:hover {
     background: rgba(79,140,255,.055);
@@ -6263,7 +6286,7 @@ h2:not(.topbar h2) {
 .screenerHeroBar {
   align-items:flex-end;
   padding:26px 0 18px;
-  border-bottom:1px solid rgba(255,255,255,.07);
+  border-bottom:1px solid var(--line);
   margin-bottom:16px;
 }
 
@@ -6277,9 +6300,9 @@ h2:not(.topbar h2) {
   width:max-content;
   max-width:100%;
   padding:4px 7px;
-  border:1px solid rgba(255,255,255,.12);
+  border:1px solid var(--line);
   border-radius:4px;
-  color:#71717a;
+  color:var(--muted);
   font-size:10px;
   font-weight:680;
   letter-spacing:.08em;
@@ -6289,7 +6312,7 @@ h2:not(.topbar h2) {
 
 .screenerHeroBar .title {
   margin:0;
-  color:#fafafa;
+  color:var(--text);
   font-size:30px;
   font-weight:900;
   line-height:1;
@@ -6314,10 +6337,10 @@ h2:not(.topbar h2) {
 .screenerTerminalPage .btnGhost,
 .screenerTerminalPage .starBtn {
   min-height:32px;
-  border:1px solid rgba(255,255,255,.095);
+  border:1px solid var(--line);
   border-radius:6px;
-  background:rgba(255,255,255,.026);
-  color:#a1a1aa;
+  background:var(--surface2);
+  color:var(--muted);
   font-size:12px;
   font-weight:620;
   box-shadow:none;
@@ -6326,65 +6349,75 @@ h2:not(.topbar h2) {
 .screenerTerminalPage .btn:hover,
 .screenerTerminalPage .btnGhost:hover,
 .screenerTerminalPage .starBtn:hover {
-  border-color:rgba(255,255,255,.16);
-  background:rgba(255,255,255,.055);
-  color:#f4f4f5;
+  border-color:var(--line);
+  background:var(--surface2);
+  color:var(--text);
 }
 
+/* CTA sólido invertido (Pizarra y Tiza): fondo tiza, texto pizarra. NO comparte
+   --senal con Vigilar — visualmente el elemento más prominente de la pantalla.
+   Tokens v2: --cta-bg / --cta-fg / --cta-border (definidos en tokens-v2.css).
+   Regla 1 de tokens-v2: "Fuera de la zona de resultados, máximo UN elemento
+   --senal por vista: el CTA" — aquí el CTA usa tiza sólida, ni --senal. */
 .screenerTerminalPage .btnPrimary {
-  border-color:rgba(59,130,246,.55) !important;
-  background:linear-gradient(135deg,#2563eb,#3b82f6) !important;
-  color:#ffffff !important;
+  border:1px solid var(--cta-border) !important;
+  background:var(--cta-bg) !important;
+  color:var(--cta-fg) !important;
   font-weight:720 !important;
-  box-shadow:0 1px 2px rgba(37,99,235,.28),0 10px 28px rgba(37,99,235,.13) !important;
+  box-shadow:var(--shadow-1) !important;
 }
 
 .screenerTerminalPage .btnPrimary:hover {
-  border-color:rgba(96,165,250,.72) !important;
-  background:linear-gradient(135deg,#1d4ed8,#60a5fa) !important;
-  color:#ffffff !important;
-  box-shadow:0 1px 2px rgba(37,99,235,.28),0 12px 34px rgba(37,99,235,.17) !important;
+  border-color:var(--cta-border) !important;
+  background:var(--cta-bg) !important;
+  color:var(--cta-fg) !important;
+  opacity:.92;
+  box-shadow:var(--shadow-1) !important;
 }
 
+/* Estado activo de preset markets: regla v2 §4 ("toggle activo: borde --line2
+   + texto tiza; inactivo: humo"). Sin acento azul ni fondo de color: el
+   acento cromático en reposo es bicolor pizarra+tiza. */
 .screenerTerminalPage .btnActive {
-  border-color:rgba(59,130,246,.5);
-  background:rgba(37,99,235,.16);
-  color:#ffffff;
+  border-color:var(--line2);
+  background:var(--surface2);
+
+  color:var(--text);
 }
 
 .screenerTerminalPage .input,
 .screenerTerminalPage .select {
   min-height:36px;
-  border:1px solid rgba(255,255,255,.08);
+  border:1px solid var(--line);
   border-radius:6px;
-  background:#0c0c0f;
-  color:#e4e4e7;
+  background:var(--surface2) ;
+  color:var(--text);
   box-shadow:none;
 }
 
 .screenerTerminalPage .input:focus,
 .screenerTerminalPage .select:focus {
-  border-color:rgba(59,130,246,.48);
-  box-shadow:0 0 0 3px rgba(37,99,235,.12);
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--senal-dim);
 }
 
 .screenerTerminalPage .scanStatusBar {
   min-height:44px;
   margin:0 0 16px;
   padding:0 12px;
-  border-color:rgba(255,255,255,.09);
+  border-color:var(--line);
   border-radius:6px;
-  background:#0b0b0e;
+  background:var(--surface2) ;
 }
 
 .screenerTerminalPage .scanStatusBar span {
-  color:#71717a;
+  color:var(--muted);
   font-size:10px;
   letter-spacing:.1em;
 }
 
 .screenerTerminalPage .scanStatusBar b {
-  color:#f4f4f5;
+  color:var(--text);
   font-size:13px;
   font-weight:650;
 }
@@ -6409,16 +6442,16 @@ h2:not(.topbar h2) {
   gap:0;
   overflow:hidden;
   margin:0 0 12px !important;
-  border:1px solid rgba(255,255,255,.08);
+  border:1px solid var(--line);
   border-radius:6px;
-  background:rgba(255,255,255,.018);
+  background:var(--surface2);
 }
 
 .screenerTerminalPage .sidebar .kpi {
   min-width:0;
   min-height:64px;
   padding:11px 12px;
-  border-right:1px solid rgba(255,255,255,.055);
+  border-right:1px solid var(--line);
   background:transparent;
 }
 
@@ -6427,8 +6460,9 @@ h2:not(.topbar h2) {
 }
 
 .screenerTerminalPage .sidebar .kpi b {
-  color:#fafafa;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--text);
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:20px;
   font-weight:720;
   letter-spacing:0;
@@ -6436,7 +6470,7 @@ h2:not(.topbar h2) {
 
 .screenerTerminalPage .sidebar .kpi span {
   margin-top:6px;
-  color:#71717a;
+  color:var(--muted);
   font-size:9px;
   font-weight:650;
   letter-spacing:.08em;
@@ -6447,29 +6481,29 @@ h2:not(.topbar h2) {
 .screenerTerminalPage .disclosurePanel,
 .screenerTerminalPage .scanDiagnosticsDisclosure {
   padding:14px;
-  border:1px solid rgba(255,255,255,.075);
+  border:1px solid var(--line);
   border-radius:6px;
-  background:rgba(255,255,255,.018);
+  background:var(--surface2);
 }
 
 .screenerTerminalPage .filterTemplatePanel {
   gap:10px;
   margin:0 0 12px;
-  border-bottom:1px solid rgba(255,255,255,.075);
+  border-bottom:1px solid var(--line);
 }
 
 .screenerTerminalPage .filterTemplateHead,
 .screenerTerminalPage .marketPanelHead,
 .screenerTerminalPage .disclosurePanel summary {
   padding-bottom:9px;
-  border-bottom:1px solid rgba(255,255,255,.08);
+  border-bottom:1px solid var(--line);
 }
 
 .screenerTerminalPage .filterTemplateHead span,
 .screenerTerminalPage .marketPanelHead span,
 .screenerTerminalPage .disclosurePanel summary span,
 .screenerTerminalPage .scanDiagnosticsDisclosure summary span {
-  color:#a1a1aa;
+  color:var(--muted);
   font-size:10.5px;
   font-weight:650;
   letter-spacing:.1em;
@@ -6478,8 +6512,8 @@ h2:not(.topbar h2) {
 
 .screenerTerminalPage .templateQuickPresets,
 .screenerTerminalPage .savedTemplatesDisclosure {
-  border-color:rgba(255,255,255,.075);
-  background:rgba(255,255,255,.016);
+  border-color:var(--line);
+  background:var(--surface2);
 }
 
 .screenerTerminalPage .templateQuickPresets summary,
@@ -6490,13 +6524,13 @@ h2:not(.topbar h2) {
 
 .screenerTerminalPage .filterTemplateBtn {
   min-height:58px;
-  border-color:rgba(255,255,255,.07);
-  background:rgba(255,255,255,.022);
+  border-color:var(--line);
+  background:var(--surface2);
 }
 
 .screenerTerminalPage .filterTemplateBtn.active {
-  border-color:rgba(59,130,246,.46);
-  background:rgba(37,99,235,.14);
+  border-color:var(--accent);
+  background:var(--senal-dim);
 }
 
 .screenerTerminalPage .marketPresetBar {
@@ -6518,22 +6552,22 @@ h2:not(.topbar h2) {
 
 .screenerTerminalPage .marketChip {
   min-height:42px;
-  border-color:rgba(255,255,255,.075);
+  border-color:var(--line);
   border-radius:6px;
-  background:rgba(255,255,255,.026);
+  background:var(--surface2);
 }
 
 .screenerTerminalPage .marketChip.active {
-  border-color:rgba(59,130,246,.5);
-  background:rgba(37,99,235,.16);
-  box-shadow:inset 0 0 0 1px rgba(59,130,246,.16);
+  border-color:var(--line2);
+  background:var(--surface2);
+  box-shadow:inset 0 0 0 1px var(--line2);
 }
 
 .screenerTerminalPage .searchCard {
   margin:0 0 14px !important;
-  border:1px solid rgba(255,255,255,.075);
+  border:1px solid var(--line);
   border-radius:6px;
-  background:rgba(255,255,255,.014);
+  background:var(--surface2);
 }
 
 .screenerTerminalPage .searchPanelBare {
@@ -6549,14 +6583,14 @@ h2:not(.topbar h2) {
 
 .screenerTerminalPage .searchInput {
   min-height:40px;
-  background:#0b0b0e;
+  background:var(--surface2) ;
 }
 
 .screenerTerminalPage .desktopResultsSection {
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.075);
+  border:1px solid var(--line);
   border-radius:6px;
-  background:rgba(255,255,255,.014);
+  background:var(--surface2);
 }
 
 .screenerTerminalPage .resultsHeader {
@@ -6566,7 +6600,7 @@ h2:not(.topbar h2) {
   gap:16px;
   padding:14px 14px 12px !important;
   margin:0 !important;
-  border-bottom:1px solid rgba(255,255,255,.07);
+  border-bottom:1px solid var(--line);
 }
 
 .screenerTerminalPage .resultsTitleBlock {
@@ -6576,7 +6610,7 @@ h2:not(.topbar h2) {
 }
 
 .screenerTerminalPage .resultsTitleBlock span {
-  color:#71717a;
+  color:var(--muted);
   font-size:10px;
   font-weight:680;
   letter-spacing:.1em;
@@ -6585,7 +6619,7 @@ h2:not(.topbar h2) {
 
 .screenerTerminalPage .resultsTitleBlock h2 {
   margin:0 !important;
-  color:#fafafa;
+  color:var(--text);
   font-size:18px !important;
   font-weight:780 !important;
   letter-spacing:0 !important;
@@ -6594,7 +6628,7 @@ h2:not(.topbar h2) {
 
 .screenerTerminalPage .resultsTitleBlock p {
   margin:0;
-  color:#71717a;
+  color:var(--muted);
   font-size:11px;
   font-weight:560;
 }
@@ -6611,45 +6645,54 @@ h2:not(.topbar h2) {
   align-items:center;
   gap:5px;
   min-height:24px;
-  border:1px solid rgba(148,163,184,.18);
+  border:1px solid var(--line);
   border-radius:999px;
   padding:3px 8px;
-  background:rgba(255,255,255,.025);
+  background:var(--surface2);
   color:#aeb7c6;
   cursor:pointer;
 }
 
+/* Chips de decisión: regla v2 §2 "El color es convicción". Vigilar usa --senal
+   (acción/atención); Auditar usa --traza (análisis pendiente); Descartar PIERDE
+   color (humo + opacidad .6 + peso 400, regla v2 §2). El chip codifica el
+   porqué, no solo el veredicto. */
 .decisionSummaryChip:hover,
 .decisionSummaryChip.active {
-  border-color:rgba(96,165,250,.42);
-  background:rgba(96,165,250,.12);
-  color:#dbeafe;
+  border-color:var(--line2);
+  background:var(--surface2);
+  color:var(--text);
 }
 
-.decisionSummaryChip.priority-focus-now {
-  border-color:rgba(34,197,94,.22);
-  background:rgba(34,197,94,.07);
+.decisionSummaryChip.priority-focus-now { /* Vigilar */
+  border-color:var(--senal);
+  background:var(--senal-dim);
+  color:var(--senal);
 }
 
-.decisionSummaryChip.priority-validate-first {
-  border-color:rgba(245,158,11,.24);
-  background:rgba(245,158,11,.07);
+.decisionSummaryChip.priority-validate-first { /* Auditar */
+  border-color:var(--traza);
+  background:var(--traza-dim);
+  color:var(--traza);
 }
 
-.decisionSummaryChip.priority-blocked {
-  border-color:rgba(248,113,113,.22);
-  background:rgba(239,68,68,.07);
+.decisionSummaryChip.priority-blocked { /* Descartar — pierde color */
+  border-color:var(--line);
+  background:var(--surface);
+  color:var(--humo);
+  opacity:.6;
 }
 
-.decisionSummaryChip.priority-watch-next {
-  border-color:rgba(148,163,184,.16);
-  background:rgba(148,163,184,.045);
+.decisionSummaryChip.priority-watch-next { /* 4º estado neutro */
+  border-color:var(--line);
+  background:var(--surface);
+  color:var(--soft);
 }
 
 .reviewPriorityResultRail .reviewPriorityAction {
   border-style:solid;
   margin-left:2px;
-  color:#f4f7fb;
+  color:var(--text);
 }
 
 .reviewPriorityResultRail .reviewPriorityAction b {
@@ -6657,17 +6700,24 @@ h2:not(.topbar h2) {
   letter-spacing:.02em;
 }
 
+/* Contador (número) del chip: cualquier cifra que pueda cambiar → --font-data
+   + --data-s + color --text. Regla v2 §3: "Toda cifra que pueda cambiar en
+   --font-data". */
 .decisionSummaryChip b {
-  color:#f8fafc;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:11px;
-  line-height:1;
+  color:var(--text);
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
+  font-size:var(--data-s);
+  line-height:var(--lh-data);
 }
 
+/* Label uppercase del chip: --font-display + --track-label (regla v2 §3). */
 .decisionSummaryChip span {
-  font-size:10px;
-  font-weight:820;
-  letter-spacing:.04em;
+  font-family:var(--font-display);
+  font-stretch:var(--stretch-display);
+  font-size:var(--text-xs);
+  font-weight:620;
+  letter-spacing:var(--track-label);
   text-transform:uppercase;
 }
 
@@ -6691,7 +6741,7 @@ h2:not(.topbar h2) {
   min-height:28px;
   border-radius:7px;
   padding:5px 8px;
-  background:#0b0d11;
+  background:var(--surface2) ;
 }
 
 .mobileResultList .decisionSummaryRail.mobile .decisionSummaryChip span {
@@ -6705,8 +6755,8 @@ h2:not(.topbar h2) {
   display:grid;
   grid-template-columns:repeat(4,minmax(82px,auto)) minmax(180px,1fr);
   gap:1px;
-  border-bottom:1px solid rgba(255,255,255,.065);
-  background:rgba(255,255,255,.035);
+  border-bottom:1px solid var(--line);
+  background:var(--surface2);
 }
 
 .decisionQualityStrip>span,
@@ -6738,25 +6788,25 @@ h2:not(.topbar h2) {
 .decisionQualityStrip>button.active,
 .decisionQualityIssueList>button:hover,
 .decisionQualityIssueList>button.active {
-  background:rgba(96,165,250,.12);
+  background:var(--senal-dim);
 }
 
 .decisionQualityMetric.good {
-  box-shadow:inset 2px 0 0 rgba(34,197,94,.58);
+  box-shadow:inset 2px 0 0 var(--decision-vigilar);
 }
 
 .decisionQualityMetric.warn {
-  box-shadow:inset 2px 0 0 rgba(245,158,11,.68);
+  box-shadow:inset 2px 0 0 var(--risk);
 }
 
 .decisionQualityMetric.active {
-  background:rgba(96,165,250,.12);
-  box-shadow:inset 0 0 0 1px rgba(96,165,250,.32);
+  background:var(--senal-dim);
+  box-shadow:inset 0 0 0 1px var(--accent);
 }
 
 .decisionQualityStrip b {
   overflow:hidden;
-  color:#f8fafc;
+  color:var(--text);
   font-size:15px;
   font-weight:820;
   line-height:1.05;
@@ -6786,7 +6836,7 @@ h2:not(.topbar h2) {
   min-height:46px;
   padding:8px 10px;
   border:0;
-  border-left:2px solid rgba(34,197,94,.55);
+  border-left:2px solid var(--decision-vigilar);
   background:rgba(5,7,10,.72);
   text-align:left;
 }
@@ -6796,11 +6846,11 @@ button.decisionQualityIssue {
 }
 
 .decisionQualityIssue.warn {
-  border-left-color:rgba(245,158,11,.72);
+  border-left-color:var(--risk);
 }
 
 .decisionQualityIssue.bad {
-  border-left-color:rgba(239,68,68,.72);
+  border-left-color:var(--risk);
 }
 
 .decisionQualityIssue b {
@@ -6813,27 +6863,27 @@ button.decisionQualityIssue {
 }
 
 .decisionQualityIssue.active {
-  box-shadow:inset 0 0 0 1px rgba(96,165,250,.32);
+  box-shadow:inset 0 0 0 1px var(--accent);
 }
 
 .decisionOperatingBrief {
   display:grid;
   grid-template-columns:minmax(220px,.7fr) minmax(300px,1fr) minmax(260px,1.1fr);
   gap:1px;
-  border-bottom:1px solid rgba(255,255,255,.065);
-  background:rgba(255,255,255,.035);
+  border-bottom:1px solid var(--line);
+  background:var(--surface2);
 }
 
 .decisionOperatingBrief.good {
-  background:rgba(34,197,94,.08);
+  background:var(--senal-dim);
 }
 
 .decisionOperatingBrief.warn {
-  background:rgba(245,158,11,.08);
+  background:var(--oxido-dim);
 }
 
 .decisionOperatingBrief.bad {
-  background:rgba(239,68,68,.08);
+  background:var(--oxido-dim);
 }
 
 .decisionOperatingIntro,
@@ -6849,19 +6899,19 @@ button.decisionQualityIssue {
   align-content:center;
   gap:3px;
   padding:10px 12px;
-  box-shadow:inset 2px 0 0 rgba(148,163,184,.4);
+  box-shadow:inset 2px 0 0 var(--line2);
 }
 
 .decisionOperatingBrief.good .decisionOperatingIntro {
-  box-shadow:inset 2px 0 0 rgba(34,197,94,.66);
+  box-shadow:inset 2px 0 0 var(--decision-vigilar);
 }
 
 .decisionOperatingBrief.warn .decisionOperatingIntro {
-  box-shadow:inset 2px 0 0 rgba(245,158,11,.72);
+  box-shadow:inset 2px 0 0 var(--risk);
 }
 
 .decisionOperatingBrief.bad .decisionOperatingIntro {
-  box-shadow:inset 2px 0 0 rgba(239,68,68,.72);
+  box-shadow:inset 2px 0 0 var(--risk);
 }
 
 .decisionOperatingIntro span,
@@ -6875,7 +6925,7 @@ button.decisionQualityIssue {
 
 .decisionOperatingIntro strong {
   overflow:hidden;
-  color:#f8fafc;
+  color:var(--text);
   font-size:14px;
   font-weight:840;
   text-overflow:ellipsis;
@@ -6919,24 +6969,25 @@ button.decisionOperatingMetric {
 button.decisionOperatingMetric:hover,
 .decisionOperatingAction:hover,
 button.decisionOperatingIssue:hover {
-  background:rgba(96,165,250,.12);
+  background:var(--senal-dim);
 }
 
 .decisionOperatingMetric.good {
-  box-shadow:inset 0 2px 0 rgba(34,197,94,.48);
+  box-shadow:inset 0 2px 0 var(--decision-vigilar);
 }
 
 .decisionOperatingMetric.warn {
-  box-shadow:inset 0 2px 0 rgba(245,158,11,.6);
+  box-shadow:inset 0 2px 0 var(--risk);
 }
 
 .decisionOperatingMetric.bad {
-  box-shadow:inset 0 2px 0 rgba(239,68,68,.62);
+  box-shadow:inset 0 2px 0 var(--risk);
 }
 
 .decisionOperatingMetric b {
-  color:#f8fafc;
-  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--text);
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
   font-size:17px;
   line-height:1;
 }
@@ -6977,24 +7028,24 @@ button.decisionOperatingIssue:hover {
   min-height:68px;
   padding:9px 10px;
   border:0;
-  border-left:2px solid rgba(34,197,94,.55);
+  border-left:2px solid var(--decision-vigilar);
   background:rgba(5,7,10,.72);
   color:inherit;
   text-align:left;
 }
 
 .decisionOperatingIssue.warn {
-  border-left-color:rgba(245,158,11,.72);
+  border-left-color:var(--risk);
 }
 
 .decisionOperatingIssue.bad {
-  border-left-color:rgba(239,68,68,.72);
+  border-left-color:var(--risk);
 }
 
 .decisionOperatingIssue b,
 .decisionOperatingAction b {
   overflow:hidden;
-  color:#f8fafc;
+  color:var(--text);
   font-size:11px;
   font-weight:820;
   text-overflow:ellipsis;
@@ -7041,8 +7092,8 @@ button.decisionOperatingIssue:hover {
   display:grid;
   grid-template-columns:minmax(220px,.8fr) minmax(180px,1fr) auto;
   gap:1px;
-  border-bottom:1px solid rgba(255,255,255,.065);
-  background:rgba(255,255,255,.035);
+  border-bottom:1px solid var(--line);
+  background:var(--surface2);
 }
 
 .pendingDecisionWorkRail>div {
@@ -7052,7 +7103,7 @@ button.decisionOperatingIssue:hover {
 }
 
 .pendingDecisionWorkRail.active {
-  background:rgba(96,165,250,.2);
+  background:var(--senal-dim);
 }
 
 .pendingDecisionWorkStats {
@@ -7071,13 +7122,13 @@ button.decisionOperatingIssue:hover {
 }
 
 .pendingDecisionWorkStats span:not(:last-child) {
-  border-right:1px solid rgba(255,255,255,.045);
+  border-right:1px solid var(--line);
 }
 
 .pendingDecisionWorkStats b,
 .pendingDecisionWorkFocus b {
   overflow:hidden;
-  color:#f8fafc;
+  color:var(--text);
   font-size:15px;
   font-weight:820;
   line-height:1.05;
@@ -7125,10 +7176,10 @@ button.decisionOperatingIssue:hover {
 
 .pendingDecisionWorkActions button {
   min-height:30px;
-  border:1px solid rgba(148,163,184,.16);
+  border:1px solid var(--line);
   border-radius:6px;
   padding:0 10px;
-  background:rgba(255,255,255,.026);
+  background:var(--surface2);
   color:#aeb7c6;
   font-size:11px;
   font-weight:720;
@@ -7137,9 +7188,9 @@ button.decisionOperatingIssue:hover {
 
 .pendingDecisionWorkActions button:hover,
 .pendingDecisionWorkActions button.active {
-  border-color:rgba(96,165,250,.42);
-  background:rgba(96,165,250,.12);
-  color:#dbeafe;
+  border-color:var(--accent);
+  background:var(--senal-dim);
+  color:var(--accent);
 }
 
 .pendingDecisionWorkActions .pendingDecisionWorkPrimary {
@@ -7168,38 +7219,41 @@ button.decisionOperatingIssue:hover {
   padding:0 14px;
 }
 
+/* Regla 8 (pozo): tabla densa sobre --surface-inset, borde 1px --line, sin sombra.
+   Cabecera en --surface (panel) con border-bottom --line2 y micro-labels display. */
 .screenerTerminalPage .compactTableWrap {
-  border:0;
-  border-top:1px solid rgba(255,255,255,.07);
+  border:1px solid var(--line);
   border-radius:0;
-  background:#0a0a0d;
+  background:var(--surface-inset);
 }
 
 .screenerTerminalPage .compactResultsTable {
-  background:#0a0a0d;
+  background:var(--surface-inset);
 }
 
 .screenerTerminalPage .compactResultsTable th {
   height:38px;
   padding:0 10px;
-  border-bottom:1px solid rgba(255,255,255,.07);
-  background:rgba(10,10,13,.98);
-  color:#525b6b;
+  border-bottom:1px solid var(--line2);
+  background:var(--surface);
+  color:var(--soft);
+  font-family:var(--font-display);
+  font-stretch:var(--stretch-display);
   font-size:10px;
-  font-weight:680;
-  letter-spacing:.09em;
+  font-weight:600;
+  letter-spacing:var(--track-label);
 }
 
 .screenerTerminalPage .compactResultsTable td {
   height:66px;
   padding:8px 10px;
-  border-bottom:1px solid rgba(255,255,255,.055);
+  border-bottom:1px solid var(--line);
   color:#d4d4d8;
   background:transparent;
 }
 
 .screenerTerminalPage .compactResultsTable tbody tr:hover td {
-  background:rgba(37,99,235,.055);
+  background:var(--senal-dim);
 }
 
 .screenerTerminalPage .compactIdentityCell {
@@ -7207,19 +7261,19 @@ button.decisionOperatingIssue:hover {
 }
 
 .screenerTerminalPage .compactIdentityCell .ticker {
-  color:#fafafa;
+  color:var(--text);
   font-size:13px;
   font-weight:720;
 }
 
 .screenerTerminalPage .compactIdentityCell b {
-  color:#a1a1aa;
+  color:var(--muted);
 }
 
 .screenerTerminalPage .compactSparkCell .miniSparkline {
   height:42px;
-  border-color:rgba(255,255,255,.07);
-  background:#08090c;
+  border-color:var(--line);
+  background:var(--surface2) ;
 }
 
 .screenerTerminalPage .compactSparkCell .sparkPrice {
@@ -7228,7 +7282,7 @@ button.decisionOperatingIssue:hover {
 }
 
 .screenerTerminalPage .compactSparkCell .sparkMa50 {
-  stroke:rgba(255,255,255,.5);
+  stroke:var(--line2);
 }
 
 .screenerTerminalPage .compactSparkCell .sparkMa200 {
@@ -7236,22 +7290,22 @@ button.decisionOperatingIssue:hover {
 }
 
 .screenerTerminalPage .compactSparkCell > span {
-  color:#71717a;
+  color:var(--muted);
   font-size:10px;
 }
 
 .screenerTerminalPage .compactMetric b {
-  color:#e4e4e7;
+  color:var(--text);
 }
 
 .screenerTerminalPage .compactMetric.good b,
 .screenerTerminalPage .compactSparkCell > span em {
-  color:#22c55e;
+  color:var(--decision-vigilar);
 }
 
 .screenerTerminalPage .compactMetric.soft b,
 .screenerTerminalPage .compactSparkCell > span em.down {
-  color:#ef4444;
+  color:var(--risk);
 }
 
 @media(max-width:1280px) {
@@ -7294,7 +7348,7 @@ button.decisionOperatingIssue:hover {
 
   .screenerTerminalPage .sidebar.mobileOpen {
     padding:16px;
-    background:#09090b;
+    background:var(--surface) ;
   }
 
   .screenerTerminalPage .searchBar,
@@ -7308,7 +7362,7 @@ button.decisionOperatingIssue:hover {
   .pendingDecisionWorkRail.mobile {
     grid-template-columns:1fr;
     overflow:hidden;
-    border:1px solid rgba(255,255,255,.07);
+    border:1px solid var(--line);
     border-radius:7px;
     margin:0 0 10px;
   }
@@ -7396,9 +7450,9 @@ button.decisionOperatingIssue:hover {
   }
 
   .mobileIndexScreen {
-    border-color:rgba(148,163,184,.1) !important;
+    border-color:var(--line) !important;
     border-radius:7px !important;
-    background:rgba(8,10,13,.54) !important;
+    background:var(--surface) !important;
     box-shadow:none !important;
   }
 
@@ -7498,7 +7552,7 @@ button.decisionOperatingIssue:hover {
   max-height: 72px;
 }
 .compactResultsTable tbody tr:hover td {
-  background: rgba(59,120,240,.055);
+  background: var(--senal-dim);
 }
 
 /* Favorito */
@@ -7513,12 +7567,13 @@ button.decisionOperatingIssue:hover {
   padding: var(--space-1);
   min-height: 28px;
 }
-.compactResultsTable .starBtn.on { color: var(--warning); }
+.compactResultsTable .starBtn.on { color: var(--risk); }
 
 /* Rango */
 .compactResultsTable .rankCell {
   color: var(--neutral);
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 500;
 }
@@ -7540,7 +7595,8 @@ button.decisionOperatingIssue:hover {
   gap: var(--space-1);
 }
 .compactResultsTable .compactIdentityTop .ticker {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   font-weight: 500;
   color: var(--text);
@@ -7585,7 +7641,8 @@ button.decisionOperatingIssue:hover {
 .compactResultsTable .compactMetric b {
   display: block;
   margin-top: 1px;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 500;
   color: var(--text);
@@ -7603,7 +7660,7 @@ button.decisionOperatingIssue:hover {
    - price metrics (perf3m/perf6m/52w): good → --positive (verde real).
    - soft (negativo): --neutral para no competir con el veredicto. */
 .compactResultsTable .compactMetric.good b { color: var(--soft); }
-.compactResultsTable .compactMetric.good[data-metric-type="price"] b { color: var(--positive); }
+.compactResultsTable .compactMetric.good[data-metric-type="price"] b { color: var(--decision-vigilar); }
 .compactResultsTable .compactMetric.soft b { color: var(--neutral); opacity: .8; }
 /* Punto de proveniencia (source) — discreto, neutral */
 .compactResultsTable .compactMetric i {
@@ -7621,7 +7678,8 @@ button.decisionOperatingIssue:hover {
   flex-wrap: wrap;
 }
 .compactResultsTable .compactScoreHead > b {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
   font-size: 13px;
   font-weight: 500;
   color: var(--text);
@@ -7672,7 +7730,7 @@ button.decisionOperatingIssue:hover {
 .compactResultsTable .rankActionBadge.good::before,
 .compactResultsTable .rankDecisionBadge.good::before,
 .compactResultsTable .decisionConfidenceBadge.good::before,
-.compactResultsTable .decisionPriorityBadge.good::before { background: var(--positive); }
+.compactResultsTable .decisionPriorityBadge.good::before { background: var(--decision-vigilar); }
 .compactResultsTable .rankActionBadge.warn::before,
 .compactResultsTable .rankDecisionBadge.warn::before,
 .compactResultsTable .decisionConfidenceBadge.warn::before,
@@ -7680,12 +7738,13 @@ button.decisionOperatingIssue:hover {
 .compactResultsTable .rankActionBadge.bad::before,
 .compactResultsTable .rankDecisionBadge.bad::before,
 .compactResultsTable .decisionConfidenceBadge.bad::before,
-.compactResultsTable .decisionPriorityBadge.bad::before { background: var(--negative); }
+.compactResultsTable .decisionPriorityBadge.bad::before { background: var(--risk); }
 .compactResultsTable .rankActionBadge em,
 .compactResultsTable .rankDecisionBadge em,
 .compactResultsTable .decisionConfidenceBadge em,
 .compactResultsTable .decisionPriorityBadge em {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
   font-size: 10px;
   font-weight: 500;
   color: var(--neutral);
@@ -7714,15 +7773,16 @@ button.decisionOperatingIssue:hover {
   background: var(--neutral);
   flex: 0 0 auto;
 }
-.compactResultsTable .rowTrustBadge.good::before { background: var(--positive); }
-.compactResultsTable .rowTrustBadge.warn::before { background: var(--warning); }
-.compactResultsTable .rowTrustBadge.bad::before { background: var(--negative); }
+.compactResultsTable .rowTrustBadge.good::before { background: var(--decision-vigilar); }
+.compactResultsTable .rowTrustBadge.warn::before { background: var(--risk); }
+.compactResultsTable .rowTrustBadge.bad::before { background: var(--risk); }
 .compactResultsTable .rowTrustBadge:hover {
   color: var(--accent);
   text-decoration: underline;
 }
 .compactResultsTable .rowTrustBadge em {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
   font-size: 10px;
   font-weight: 500;
   color: var(--neutral);
@@ -7745,7 +7805,7 @@ button.decisionOperatingIssue:hover {
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: var(--positive);
+  background: var(--decision-vigilar);
   flex: 0 0 auto;
 }
 .compactResultsTable .reviewQueueResolutionBadge.neutral::before { background: var(--neutral); }
@@ -7758,8 +7818,8 @@ button.decisionOperatingIssue:hover {
 }
 
 /* Gutter de fila con incidencia — borde sutil, sin saturar */
-.compactResultsTable tbody tr.hasDecisionIssue.warn td:first-child { box-shadow: inset 2px 0 0 var(--warning); }
-.compactResultsTable tbody tr.hasDecisionIssue.bad td:first-child { box-shadow: inset 2px 0 0 var(--negative); }
+.compactResultsTable tbody tr.hasDecisionIssue.warn td:first-child { box-shadow: inset 2px 0 0 var(--risk); }
+.compactResultsTable tbody tr.hasDecisionIssue.bad td:first-child { box-shadow: inset 2px 0 0 var(--risk); }
 
 /* InfoHint en cabecera de setup — se mantiene accesible pero compacto */
 .compactResultsTable .compactSetupHead .infoHint,
@@ -7800,15 +7860,18 @@ button.decisionOperatingIssue:hover {
 .resultsAuditGroup > summary::-webkit-details-marker { display: none; }
 .resultsDecisionGroup > summary > span,
 .resultsAuditGroup > summary > span {
-  font-size: 10px;
+  font-family: var(--font-display);
+  font-stretch: var(--stretch-display);
+  font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: .08em;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--neutral);
 }
 .resultsDecisionGroup > summary > em,
 .resultsAuditGroup > summary > em {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 500;
   font-style: normal;
@@ -7848,10 +7911,11 @@ button.decisionOperatingIssue:hover {
 }
 /* Presupuesto de énfasis: solo E1 permite color semántico en el veredicto.
    E2 (default) lo neutraliza a --text. Esto garantiza que el único texto de
-   color fuerte del panel sea el slot que la vista designa explícitamente. */
-.decisionOperatingBrief[data-emphasis="E1"].good .decisionOperatingVerdict { color: var(--positive); }
-.decisionOperatingBrief[data-emphasis="E1"].warn .decisionOperatingVerdict { color: var(--warning); }
-.decisionOperatingBrief[data-emphasis="E1"].bad .decisionOperatingVerdict { color: var(--negative); }
+   color fuerte del panel sea el slot que la vista designa explícitamente.
+   Mapeo v1→v2: --positive→--decision-vigilar · --warning/--negative→--risk. */
+.decisionOperatingBrief[data-emphasis="E1"].good .decisionOperatingVerdict { color: var(--decision-vigilar); }
+.decisionOperatingBrief[data-emphasis="E1"].warn .decisionOperatingVerdict { color: var(--risk); }
+.decisionOperatingBrief[data-emphasis="E1"].bad .decisionOperatingVerdict { color: var(--risk); }
 .decisionOperatingBrief:not([data-emphasis="E1"]) .decisionOperatingVerdict { color: var(--text); }
 .decisionOperatingIntro p {
   font-size: 13px;
@@ -7880,15 +7944,16 @@ button.decisionOperatingIssue:hover {
   min-height: 28px;
 }
 .decisionOperatingMetric b {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 13px;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--data-s);
   font-weight: 500;
   color: var(--text);
 }
 .decisionOperatingMetric b[data-zero="true"] { color: var(--neutral); font-weight: 400; }
-.decisionOperatingMetric.good b { color: var(--positive); }
-.decisionOperatingMetric.warn b { color: var(--warning); }
-.decisionOperatingMetric.bad b { color: var(--negative); }
+.decisionOperatingMetric.good b { color: var(--decision-vigilar); }
+.decisionOperatingMetric.warn b { color: var(--risk); }
+.decisionOperatingMetric.bad b { color: var(--risk); }
 .decisionOperatingMetric span { color: var(--neutral); font-size: 11px; }
 .decisionOperatingMetric em { color: var(--soft); font-size: 11px; font-style: normal; }
 .decisionOperatingActions {
@@ -7919,12 +7984,12 @@ button.decisionOperatingIssue:hover {
   background: var(--neutral);
   flex: 0 0 auto;
 }
-.decisionOperatingIssue.good::before { background: var(--positive); }
-.decisionOperatingIssue.warn::before { background: var(--warning); }
-.decisionOperatingIssue.bad::before { background: var(--negative); }
+.decisionOperatingIssue.good::before { background: var(--decision-vigilar); }
+.decisionOperatingIssue.warn::before { background: var(--risk); }
+.decisionOperatingIssue.bad::before { background: var(--risk); }
 .decisionOperatingIssue span { color: var(--neutral); font-size: 11px; }
 .decisionOperatingIssue b { font-weight: 600; color: var(--text); }
-.decisionOperatingIssue em { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: var(--neutral); font-style: normal; }
+.decisionOperatingIssue em { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-size: 11px; color: var(--neutral); font-style: normal; }
 .decisionOperatingAction {
   display: inline-flex;
   align-items: center;
@@ -7966,8 +8031,9 @@ button.decisionOperatingIssue:hover {
   min-height: 28px;
 }
 .decisionQualityMetric b {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 13px;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--data-s);
   font-weight: 500;
   color: var(--text);
 }
@@ -8006,11 +8072,11 @@ button.decisionOperatingIssue:hover {
   background: var(--neutral);
   flex: 0 0 auto;
 }
-.decisionQualityIssue.good::before { background: var(--positive); }
-.decisionQualityIssue.warn::before { background: var(--warning); }
-.decisionQualityIssue.bad::before { background: var(--negative); }
+.decisionQualityIssue.good::before { background: var(--decision-vigilar); }
+.decisionQualityIssue.warn::before { background: var(--risk); }
+.decisionQualityIssue.bad::before { background: var(--risk); }
 .decisionQualityIssue b { font-weight: 500; }
-.decisionQualityIssue em { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: var(--neutral); font-style: normal; }
+.decisionQualityIssue em { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-size: 11px; color: var(--neutral); font-style: normal; }
 
 /* ── Anatomía de rail unificada (.decisionRail) ──
    Misma estructura para DecisionSummaryRail, PendingDecisionWorkRail y los
@@ -8025,9 +8091,11 @@ button.decisionOperatingIssue:hover {
   border-top: 1px solid var(--line);
 }
 .decisionRailEyebrow {
-  font-size: 10px;
+  font-family: var(--font-display);
+  font-stretch: var(--stretch-display);
+  font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: .08em;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--neutral);
   flex: 0 0 auto;
@@ -8060,11 +8128,11 @@ button.decisionOperatingIssue:hover {
   background: var(--neutral);
   flex: 0 0 auto;
 }
-.decisionRailItem.good::before { background: var(--positive); }
-.decisionRailItem.warn::before { background: var(--warning); }
-.decisionRailItem.bad::before { background: var(--negative); }
+.decisionRailItem.good::before { background: var(--decision-vigilar); }
+.decisionRailItem.warn::before { background: var(--risk); }
+.decisionRailItem.bad::before { background: var(--risk); }
 .decisionRailItem em {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-data);
   font-size: 13px;
   font-weight: 500;
   font-style: normal;
@@ -8136,13 +8204,15 @@ button.decisionOperatingIssue:hover {
   color: var(--neutral);
 }
 .decisionRail .dataHealthSummaryIntro > b {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
   font-size: 13px;
   font-weight: 500;
   color: var(--text);
 }
 .decisionRail .dataHealthSummaryIntro > em {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 500;
   font-style: normal;
@@ -8179,21 +8249,23 @@ button.decisionOperatingIssue:hover {
   flex: 0 0 auto;
 }
 .decisionRail .dataHealthSummaryItem.good::before,
-.decisionRail .scoreAuditSummaryItem.good::before { background: var(--positive); }
+.decisionRail .scoreAuditSummaryItem.good::before { background: var(--decision-vigilar); }
 .decisionRail .dataHealthSummaryItem.warn::before,
-.decisionRail .scoreAuditSummaryItem.warn::before { background: var(--warning); }
+.decisionRail .scoreAuditSummaryItem.warn::before { background: var(--risk); }
 .decisionRail .dataHealthSummaryItem.bad::before,
-.decisionRail .scoreAuditSummaryItem.bad::before { background: var(--negative); }
+.decisionRail .scoreAuditSummaryItem.bad::before { background: var(--risk); }
 .decisionRail .dataHealthSummaryItem b,
 .decisionRail .scoreAuditSummaryItem b {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 13px;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--data-s);
   font-weight: 500;
   color: var(--text);
 }
 .decisionRail .dataHealthSummaryItem em,
 .decisionRail .scoreAuditSummaryItem em {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 500;
   font-style: normal;
@@ -8216,7 +8288,8 @@ button.decisionOperatingIssue:hover {
   color: var(--soft);
 }
 .decisionRail .dataHealthSummaryIssues > span b { font-weight: 600; color: var(--text); }
-.decisionRail .dataHealthSummaryIssues > span em { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: var(--neutral); font-style: normal; }
+.decisionRail .dataHealthSummaryIssues > span em { font-family: var(--font-data);
+  font-variant-numeric: tabular-nums; font-size: 11px; color: var(--neutral); font-style: normal; }
 .decisionEvidenceReviewAction,
 .scoreAuditReviewAction {
   appearance: none;
@@ -8240,7 +8313,8 @@ button.decisionOperatingIssue:hover {
 .scoreAuditReviewAction b { font-weight: 600; }
 .decisionEvidenceReviewAction em,
 .scoreAuditReviewAction em {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   color: var(--neutral);
   font-style: normal;

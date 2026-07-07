@@ -1,185 +1,32 @@
-/* styles/base.css — resets, elementos, keyframes y scrollbars. Extraído de app/globals.css. */
+/* styles/base.css — resets, elementos, keyframes y scrollbars.
+   Migrado a Pizarra y Tiza v2: tokens-v2.css provee colores, fuentes, espaciado.
+   Spec: docs/design/DIRECCION-VISUAL.md. Tokens en styles/tokens-v2.css. */
 
-* {box-sizing:border-box
-}
+* { box-sizing: border-box; }
 
-html,body {
-  margin:0;
-  min-height:100%;
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-  font-size:14px;
-  line-height:1.5;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  -webkit-tap-highlight-color:transparent;
-}
-
-body {
-  padding-bottom:104px;
-}
-
-body:before {
-  content:'';
-  position:fixed;
-  top:0;
-  left:0;
-  right:0;
-  z-index:999;
-}
-
-@keyframes brandShimmer {
-  0%{background-position:200% 0}
-  100%{background-position:-200% 0}
-}
-
-body:after {
-  display:none;
-}
-
-@keyframes fadeIn {
-  from{opacity:0;transform:translateY(4px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
-@keyframes fadeInSubtle {
-  from{opacity:0}
-  to{opacity:1}
-}
-
-button,input,select,textarea {font:inherit
-}
-
-button {cursor:pointer
-}
-
-a {color:inherit;text-decoration:none
-}
-
-@keyframes pulseGreen {
-  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.65); }
-  70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-}
-
-@keyframes pulseYellow {
-  0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.65); }
-  70% { box-shadow: 0 0 0 6px rgba(234, 179, 8, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
-}
-
-@keyframes pulseRed {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.65); }
-  70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-
-@keyframes pulseBlue {
-  0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.65); }
-  70% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-}
-
-@keyframes slideDropdown {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulseSubtle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@media(min-width:1180px) {
-  body {padding-bottom:0
-  }
-}
-
-/* Elegance pass: reduce visible weight and make the terminal easier to scan. */
-
-body:after {
-  opacity:.24;
-}
-
-html,body {
-  background:#050505;
-  color:#e4e4e7;
-  font-feature-settings:'cv11','ss01','ss03','tnum';
-}
-
-body:before {
-  background-size:200% 100%;
-}
-
-@media(max-width:760px) {
-  body {
-    padding-bottom:88px;
-    background:#050505;
-  }
-}
-
-html,
-body {
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-  font-size:14px;
-}
-
-body:before {
-  opacity:.9;
-}
-
-/* Mobile deployment hardening: keep research surfaces inside the viewport. */
-
-html,
-body {
-  overflow-x:hidden;
-}
-
-/* Mobile premium hardening: stable screener, review modal and chart layout. */
-
-@media(max-width:760px) {
-  html,
-  body {
-    max-width:100%;
-    overflow-x:hidden;
-  }
-}
-
-@media(max-width: 760px) {
-  body {
-    padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
-  }
-}
-
-html,
-body {
-  background: #060709;
-  color: var(--text);
+html, body {
+  margin: 0;
+  min-height: 100%;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  background: var(--pizarra);
+  color: var(--tiza);
   letter-spacing: 0;
 }
 
-body:before {
-  height: 1px;
-  background: rgba(79,140,255,.72);
-  animation: none;
-}
+/* Micro-labels y data: ya están tokenizados en los consumidores; nada global. */
 
-/* ── 2. Top accent line: single-pixel, calm gradient ── */
+button, input, select, textarea { font: inherit; }
 
-body::before {
-  height: 1px !important;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(59,120,240,.5) 20%,
-    rgba(100,164,255,.72) 55%,
-    transparent 100%) !important;
-  animation: none !important;
-}
+button { cursor: pointer; }
 
+a { color: inherit; text-decoration: none; }
+
+/* Focus ring: tiza azul --traza (mismo tono que el acento secundario del sistema). */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -187,26 +34,106 @@ select:focus-visible,
 textarea:focus-visible,
 summary:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid rgba(109,164,255,.86) !important;
-  outline-offset: 2px !important;
+  outline: 2px solid var(--traza);
+  outline-offset: 2px;
 }
 
-@media(min-width:761px) {
-  body {
-    padding-bottom: 0 !important;
-  }
+@media (min-width: 1180px) {
+  body { padding-bottom: 0; }
 }
 
-@media(max-width:760px) {
-  body {
-    padding-bottom: calc(78px + env(safe-area-inset-bottom)) !important;
-  }
+@media (max-width: 760px) {
+  body { padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
+  html, body { max-width: 100%; overflow-x: hidden; }
 }
 
-/* Final guard: mobile nav remains readable and does not cover terminal content. */
+@media (min-width: 761px) {
+  body { padding-bottom: 0; }
+}
 
-@media(max-width:760px) {
-  body {
-    padding-bottom: calc(116px + env(safe-area-inset-bottom)) !important;
-  }
+/* El padding-bottom de móvil con safe-area lo maneja la barra de navegación
+   inferior (BottomNav), no este reset. */
+@media (max-width: 760px) {
+  body { padding-bottom: calc(116px + env(safe-area-inset-bottom)); }
+}
+
+html, body { overflow-x: hidden; }
+
+/* ── Keyframes ── */
+
+/* Marca: shimmer reservado para hovers de CTA, no para fondos. */
+@keyframes brandShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Aparece/desaparece sutil: para drawers, modales. */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInSubtle {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Pulso de atención Vigilar: --decision-vigilar (--senal). */
+@keyframes pulseVigilar {
+  0%   { box-shadow: 0 0 0 0 var(--senal-dim); }
+  70%  { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* Pulso de atención Auditar: --decision-auditar (--traza). */
+@keyframes pulseAuditar {
+  0%   { box-shadow: 0 0 0 0 var(--traza-dim); }
+  70%  { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* Pulso de atención Riesgo: --risk (--oxido). */
+@keyframes pulseRiesgo {
+  0%   { box-shadow: 0 0 0 0 var(--oxido-dim); }
+  70%  { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* Pulso neutro / informativo: --traza a baja opacidad. */
+@keyframes pulseTraza {
+  0%   { box-shadow: 0 0 0 0 var(--traza-dim); }
+  70%  { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes slideDropdown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Acento superior: línea de un píxel, calmada, tono tiza azul --traza. ── */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  z-index: 999;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--traza-dim) 20%,
+    var(--traza) 55%,
+    transparent 100%);
+  animation: none;
 }
