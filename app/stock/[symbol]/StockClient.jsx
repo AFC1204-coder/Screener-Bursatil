@@ -21,6 +21,335 @@ import { STOCK_DECISION_ACTIONS, STOCK_DECISION_VALIDATION_STATES, applyStockDec
 import { computeTradePlan, tradePlanEligibility } from "@/lib/tradePlan";
 import { vcpObjectiveSummary } from "@/lib/vcpDiagnostics";
 
+/* ── Componentes de la jerarquía N0–N3 (spec FICHA-TICKER-IA.md) ──────── */
+
+/* Fila de tabla clave-valor de 2 columnas. Reemplaza a la píldora para
+   cualquier par label-valor en N1 y N2. La fila crece verticalmente:
+   nada de ellipsis en label ni en cifra. */
+function KVRow({ label, value, state = "value", detail = "", source = null, suffix = "" }) {
+  const valueState = !Number.isFinite(Number(value)) && value !== "—" && value !== ""
+    ? "value"
+    : state;
+  const cls = `stockTechRow ${sourceClass(source)}`.trim();
+  const valueCls = `stockTechRowValue ${valueState === "ghost" ? "" : valueState === "stale" ? "stale" : ""}`.trim();
+  const sourceTitle = source?.title || detail || label;
+  return (
+    <div className={cls}>
+      <span className="stockTechRowLabel">{label}</span>
+      <b className={valueCls} title={sourceTitle}>
+        {value}
+        {suffix ? <span className="stockTechRowStaleSuffix">{suffix}</span> : null}
+      </b>
+    </div>
+  );
+}
+
+/* Curva de etapa como glifo SVG. Geometría canónica de tokens-v2. */
+function StockCurveSvg({ decision = "vigilar", width = 96, height = 32 }) {
+  const color = decision === "vigilar"
+    ? "var(--decision-vigilar)"
+    : decision === "auditar"
+      ? "var(--decision-auditar)"
+      : decision === "descartar"
+        ? "var(--decision-descartar)"
+        : "var(--curve-track)";
+  const dotX = decision === "vigilar" ? 38 : decision === "auditar" ? 70 : 96;
+  const dotY = decision === "vigilar" ? 22 : decision === "auditar" ? 10 : 32;
+  return (
+    <svg className="stockCurveSvg" viewBox="0 0 120 44" width={width} height={height} aria-hidden="true">
+      <path
+        d="M4,34 L30,34 C40,34 42,10 54,10 L74,10 C84,10 86,34 96,34 L116,34"
+        fill="none"
+        stroke="var(--curve-track)"
+        strokeWidth="var(--curve-stroke)"
+        strokeLinecap="round"
+      />
+      <circle cx={dotX} cy={dotY} r="var(--curve-dot)" fill={color} />
+    </svg>
+  );
+}
+
+/* Chip-curva de decisión: EL ÚNICO chip que sobrevive en la ficha
+   (spec §1, regla estructural nº1). Curva + etiqueta + decisión. */
+function DecisionCurveChip({ decision = "vigilar", label = "Etapa", stageLabel = "" }) {
+  const decisionLabel = decision === "vigilar"
+    ? "Vigilar"
+    : decision === "auditar"
+      ? "Auditar"
+      : "Descartar";
+  return (
+    <div className="stockDecisionChip" data-decision={decision} aria-label={`Decisión: ${decisionLabel}`}>
+      <StockCurveSvg decision={decision} />
+      <div className="stockDecisionChipBody">
+        <span className="stockDecisionChipLabel">{label}</span>
+        <span className="stockDecisionChipDecision">{decisionLabel}</span>
+        {stageLabel ? <span className="stockDecisionChipLabel">{stageLabel}</span> : null}
+      </div>
+    </div>
+  );
+}
+
+/* Franja de calidad de dato (una sola, bajo cabecera N0). */
+function QualityStrip({ items = [] }) {
+  if (!items.length) return null;
+  return (
+    <div className="stockQualityStrip" aria-label="Cobertura de datos">
+      <span className="stockQualityStripLabel">Calidad de dato</span>
+      {items.map((item, index) => (
+        <span key={`${item.label}-${index}`} className="stockQualityStripItem">
+          <span className="stockTechRowLabel">{item.label}</span>
+          <span className="stockTechRowValue">{item.value}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/* Bloque N0 (Veredicto). Estructura: identidad + precio + decisión + freno
+   + score + resumen de setup. Única zona con color semántico. */
+function N0VerdictBlock({
+  symbol,
+  data,
+  priceSnapshot,
+  freshness,
+  coverage,
+  chartEstimated,
+  decisionDesk,
+  setupDisplay,
+  brake,
+  setupSummary,
+  decision,
+  actions,
+}) {
+  const priceHas = Number.isFinite(priceSnapshot?.price);
+  const stageLabel = data?.stage?.label || setupDisplay?.shortLabel || "Etapa sin clasificar";
+  return (
+    <section className="stockVerdict" data-decision={decision}>
+      <div className="stockVerdictHead">
+        <div className="stockVerdictIdentity">
+          <div className="stockLogoPro">
+            <span>{String(data?.visual?.initials || symbol.slice(0, 2)).toUpperCase()}</span>
+          </div>
+          <div className="stockIdentityBlock">
+            <span className="stockIdentityKicker">{data?.sector || "Sector sin clasificar"}{data?.exchange ? ` · ${data.exchange}` : ""}</span>
+            <h1 className="stockIdentityTitle">{symbol}</h1>
+            <p className="stockIdentityCompany">{data?.name || symbol}</p>
+          </div>
+        </div>
+        <div className="stockVerdictQuote">
+          <span className="stockVerdictQuoteLabel">Cierre del gráfico</span>
+          <div className="stockVerdictQuoteValue">
+            <span className="stockVerdictPrice" data-state={priceHas ? "value" : "ghost"}>
+              {priceHas ? priceMoney(priceSnapshot.price) : "—"}
+            </span>
+            {data?.currency && <span className="stockVerdictCurrency">{data.currency}</span>}
+            {Number.isFinite(priceSnapshot?.dayChangePct) && (
+              <span className="stockVerdictChange">
+                {signedPriceMoney(priceSnapshot.dayChange)} ({pct(priceSnapshot.dayChangePct)})
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="stockVerdictActions">
+          <DecisionCurveChip decision={decision} label="Decisión" stageLabel={stageLabel} />
+        </div>
+      </div>
+
+      <QualityStrip items={[
+        { label: "Cierre", value: freshness.priceDate ? compactDate(freshness.priceDate) : "Sin fecha" },
+        { label: "Cobertura", value: coverage.label || "Completa" },
+        { label: "RS", value: freshness.rsGlobalAsOf ? `${compactDate(freshness.rsGlobalAsOf)} · n=${Math.round(freshness.rsGlobalSample || 0)}` : "Sin snapshot" },
+        ...(chartEstimated ? [{ label: "Histórico", value: "Estimado" }] : []),
+        ...(!priceSnapshot?.coherent ? [{ label: "Cotización", value: "Intradía distinta" }] : []),
+      ]} />
+
+      <div className="stockVerdictBrake">
+        <span className="stockVerdictBrakeLabel">Freno</span>
+        {brake || "Sin freno explícito: la decisión se sostiene con los criterios técnicos del setup."}
+      </div>
+
+      <div className="stockVerdictFoot">
+        <div className="stockVerdictScore">
+          <span className="stockVerdictScoreLabel">Score</span>
+          <span className="stockVerdictScoreValue" data-state={Number.isFinite(data?.patternQualityScore) ? "value" : "ghost"}>
+            {Number.isFinite(data?.patternQualityScore) ? Math.round(data.patternQualityScore) : "—"}
+          </span>
+        </div>
+        <div className="stockVerdictSetup">
+          <span className="stockVerdictSetupLabel">Setup</span>
+          <span className="stockVerdictSetupText">{setupSummary || "Setup sin checklist disponible."}</span>
+        </div>
+      </div>
+
+      {actions && actions.length ? (
+        <div className="stockVerdictActions">
+          {actions}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+/* Bloque N1 (Lectura técnica). Tabla clave-valor en mono, máx. 8 filas,
+   sin color. Vocabulario cerrado de labels (FICHA-TICKER-IA.md §5). */
+function N1TechTable({ rows = [] }) {
+  if (!rows.length) return null;
+  return (
+    <section className="stockPanel" aria-label="Lectura técnica">
+      <h2 className="stockNarrativeTitle" style={{ padding: "var(--space-5) var(--space-5) var(--space-3)" }}>
+        Lectura técnica
+      </h2>
+      <div className="stockTechTable">
+        {rows.map((row, index) => (
+          <KVRow
+            key={`${row.label}-${index}`}
+            label={row.label}
+            value={row.value}
+            state={row.state}
+            detail={row.detail}
+            suffix={row.suffix}
+            source={row.source}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* Bloque N2 (Contexto). Narrativa como anotación al margen + fundamentales
+   operativos (ventas YoY, EPS YoY, cap). */
+function N2ContextBlock({ narrative = null, fundamentals = [] }) {
+  return (
+    <div className="stockContext" aria-label="Contexto">
+      <section className="stockNarrative" aria-label="Tesis y siguiente paso">
+        <div className="stockNarrativeHead">
+          <h2 className="stockNarrativeTitle">Contexto</h2>
+        </div>
+        {narrative?.tesis ? (
+          <div className="stockNarrativeItem">
+            <span className="stockNarrativeItemLabel">Tesis</span>
+            <p className="stockNarrativeItemText">{narrative.tesis}</p>
+          </div>
+        ) : null}
+        {narrative?.riesgo ? (
+          <div className="stockNarrativeItem">
+            <span className="stockNarrativeItemLabel">Riesgo</span>
+            <p className="stockNarrativeItemText">{narrative.riesgo}</p>
+          </div>
+        ) : null}
+        {narrative?.siguientePaso ? (
+          <div className="stockNarrativeItem">
+            <span className="stockNarrativeItemLabel">Siguiente paso</span>
+            <p className="stockNarrativeItemText">{narrative.siguientePaso}</p>
+          </div>
+        ) : null}
+        {!narrative?.tesis && !narrative?.riesgo && !narrative?.siguientePaso ? (
+          <p className="stockNarrativeItemText">Sin narrativa del screener para esta ficha.</p>
+        ) : null}
+      </section>
+      <section className="stockContextFundamentals" aria-label="Fundamentales operativos">
+        <h2 className="stockContextFundamentalsTitle">Fundamentales operativos</h2>
+        <div className="stockTechTable" style={{ background: "var(--surface-inset)" }}>
+          {fundamentals.length ? fundamentals.map((row, index) => (
+            <KVRow
+              key={`${row.label}-${index}`}
+              label={row.label}
+              value={row.value}
+              state={row.state}
+              detail={row.detail}
+              suffix={row.suffix}
+              source={row.source}
+            />
+          )) : <p className="stockNarrativeItemText">Sin fundamentales operativos.</p>}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* Bloque N3 (Auditoría). Tres sub-bloques colapsados por defecto:
+   desglose del score, bloque empresa, detalle de calidad de datos. */
+function N3AuditBlock({ scoreBreakdown = [], company = null, dataQualityDetail = [], methodology = null }) {
+  return (
+    <div className="stockAudit" aria-label="Auditoría">
+      <details>
+        <summary>Desglose del score</summary>
+        <div className="stockAuditBody">
+          {scoreBreakdown.length ? (
+            <div className="stockScoreBreakdown">
+              {scoreBreakdown.map((row, index) => (
+                <div
+                  key={`${row.label}-${index}`}
+                  className="stockScoreRow"
+                  data-dominant={row.dominant ? "true" : "false"}
+                  data-tone={row.tone || "neutral"}
+                >
+                  <span className="stockScoreRowLabel">{row.label}</span>
+                  <span className="stockScoreRowBar">
+                    <span
+                      className="stockScoreRowBarFill"
+                      style={{ width: `${Math.min(100, Math.max(0, row.pct || 0))}%` }}
+                    />
+                  </span>
+                  <span className="stockScoreRowValue">{row.value}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="stockNarrativeItemText">Sin desglose disponible.</p>
+          )}
+        </div>
+      </details>
+      <details>
+        <summary>Bloque empresa</summary>
+        <div className="stockAuditBody">
+          <h3>Identidad</h3>
+          {company ? (
+            <>
+              <div className="stockCompanyTable">
+                <KVRow label="Sector" value={company.sector || "—"} state={company.sector ? "value" : "ghost"} />
+                <KVRow label="Industria" value={company.industry || "—"} state={company.industry ? "value" : "ghost"} />
+                <KVRow label="Subsector" value={company.subsector || "—"} state={company.subsector ? "value" : "ghost"} />
+                <KVRow label="Empleados" value={fmt(company.employees)} state={Number.isFinite(company.employees) ? "value" : "ghost"} />
+                <KVRow label="IPO" value={company.ipoDate || "—"} state={company.ipoDate ? "value" : "ghost"} detail={company.listingDateSource} />
+              </div>
+              <p className="stockCompanyDescription">{company.description || "Sin descripción de negocio."}</p>
+            </>
+          ) : (
+            <p className="stockNarrativeItemText">Sin bloque empresa disponible.</p>
+          )}
+        </div>
+      </details>
+      <details>
+        <summary>Calidad de datos</summary>
+        <div className="stockAuditBody">
+          <div className="stockDataQualityDetail">
+            {dataQualityDetail.length ? dataQualityDetail.map((row, index) => (
+              <KVRow
+                key={`${row.label}-${index}`}
+                label={row.label}
+                value={row.value}
+                state={row.state}
+                detail={row.detail}
+                suffix={row.suffix}
+                source={row.source}
+              />
+            )) : <p className="stockNarrativeItemText">Sin detalle de calidad disponible.</p>}
+          </div>
+        </div>
+      </details>
+      {methodology ? (
+        <details>
+          <summary>Metodología y gates</summary>
+          <div className="stockAuditBody">
+            {methodology}
+          </div>
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const rsFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
 const scoreFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
@@ -1221,22 +1550,12 @@ function MethodologyAuditPanel({ pattern, verdict, stage }) {
   const confidence = display.confidence;
   const objective = vcpObjectiveSummary(pattern);
   const stageOk = /stage 2/i.test(stage?.label || "");
-  const baseOk = pattern.consolidationCandidate === true;
-  const count = Number(pattern.contractionCount);
-  const contractionsOk = Number.isFinite(count) && count >= 2 && pattern.contractionsDecreasing === true;
-  const volume = Number(pattern.volumeDryUpRatio);
-  const volumeOk = Number.isFinite(volume) && volume <= 0.9;
-  const pivot = Number(pattern.distanceToPivotPct);
-  const pivotOk = Number.isFinite(pivot) && Math.abs(pivot) <= 6;
-  const lastContraction = Number(pattern.lastContractionDepthPct);
-  const lastContractionOk = Number.isFinite(lastContraction) && lastContraction <= 8;
-  const range10 = Number(pattern.tightness10dPct);
-  const range10Ok = Number.isFinite(range10) && range10 <= 12;
-  const quality = Number(pattern.patternQualityScore);
-  const qualityOk = Number.isFinite(quality) && quality >= 65;
+  // El desglose numérico del score (Base/rango, Compresiones, Última comp.,
+  // Rango 10d, Pivot, Volumen seco, Score patrón) vive ahora en stockScoreBreakdown
+  // dentro de N3 — este panel solo conserva los gates que no son desglose del score
+  // (Datos técnicos, Histórico, Etapa, Plan) más el veredicto y la confianza de
+  // metodología. No duplica el breakdown.
   const planValid = display.actionable && display.tradePlanEligible && !display.blocksPatternClaim;
-  const claimBlocked = display.blocksPatternClaim === true || display.dataLimited === true;
-  const claimState = (ok, fallback = "warn") => claimBlocked ? "warn" : ok ? "pass" : fallback;
   const fullReason = display.reason || currentVerdict.reason || "Sin razón disponible.";
   const objectiveDetail = [objective.detail, `Veredicto: ${display.label}`, fullReason].filter(Boolean).join(" · ");
   return <section className="card methodologyAuditPanel">
@@ -1257,13 +1576,6 @@ function MethodologyAuditPanel({ pattern, verdict, stage }) {
       <AuditCheck label="Datos técnicos" value={confidence.label} state={confidence.state} detail={confidence.detail || currentVerdict.dataLabel || dataStatusLabel(pattern.patternDataStatus)} />
       <AuditCheck label="Histórico" value={objective.history?.value || "Sin dato"} state={objective.history?.state || "neutral"} detail={objective.history?.detail || ""} />
       <AuditCheck label="Etapa" value={stage?.label || "Sin dato"} state={stageOk ? "pass" : "warn"} />
-      <AuditCheck label="Base/rango" value={Number.isFinite(pattern.baseDepthPct) ? pct(pattern.baseDepthPct) : "Sin dato"} state={baseOk ? "pass" : "fail"} detail={Number.isFinite(pattern.baseWeeks) ? `${pattern.baseWeeks.toFixed(1)} semanas` : pattern.baseContextStatus || ""} />
-      <AuditCheck label="Compresiones" value={Number.isFinite(count) ? `${count.toFixed(0)} medidas` : "Sin dato"} state={claimState(contractionsOk, Number.isFinite(count) && count >= 2 ? "warn" : "fail")} detail={objective.sequence} />
-      <AuditCheck label="Última comp." value={Number.isFinite(lastContraction) ? pct(lastContraction) : "Sin dato"} state={claimState(lastContractionOk)} detail={objective.contractionDetail.at(-1) || ""} />
-      <AuditCheck label="Rango 10d" value={Number.isFinite(range10) ? pct(range10) : "Sin dato"} state={claimState(range10Ok)} detail={Number.isFinite(pattern.tightness20dPct) ? `20d ${pct(pattern.tightness20dPct)}` : ""} />
-      <AuditCheck label="Pivot" value={Number.isFinite(pivot) ? pct(pivot) : "Sin dato"} state={claimState(pivotOk)} />
-      <AuditCheck label="Volumen seco" value={Number.isFinite(volume) ? `${volume.toFixed(2)}x` : "Sin dato"} state={claimState(volumeOk)} />
-      <AuditCheck label="Score patrón" value={Number.isFinite(quality) ? quality.toFixed(0) : "Sin dato"} state={claimState(qualityOk)} />
       <AuditCheck label="Plan" value={planValid ? "Válido" : "No válido"} state={planValid ? "pass" : "fail"} detail={display.tradePlanReason || currentVerdict.tradePlanReason || display.reason || ""} />
     </div>
   </section>;
@@ -1634,175 +1946,347 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       ? metricSourceState("measured", "EPS YoY", "estado financiero")
       : metricSourceState("proxy", "EPS YoY", "fallback de proveedor")
     : metricSourceState("review", "EPS YoY", "sin dato");
-  const compactResearchCard = data ? <section className={`terminalPanel stockResearchCard stockResearchCardHero ${companyBriefExpanded ? "stockResearchCardHeroExpanded" : ""}`}>
-    <div className="marketSmithStrip" aria-label="Resumen Weinstein Minervini compacto">
-      <MiniMetric label="RS" value={rsFmt(rsUniverse)} tone={Number.isFinite(rsUniverse) && rsUniverse >= 75 ? "good" : Number.isFinite(rsUniverse) && rsUniverse < 45 ? "bad" : ""} source={rsUniverseSource} />
-      <MiniMetric label="Etapa" value={stageShortLabel} tone={stageTone} source={data?.stage?.label ? metricSourceState(chartEstimated ? "review" : "proxy", "Etapa", chartEstimated ? chartSourceDetail : "modelo técnico") : metricSourceState("review", "Etapa", "sin dato")} />
-      <MiniMetric label="Ventas YoY" value={pct(g.revenueGrowth)} tone={valueTone(g.revenueGrowth)} source={metricSourceForValue(g.revenueGrowth, "Ventas YoY", "proveedor financiero")} />
-      <MiniMetric label="EPS YoY" value={pct(heroEpsYoY)} tone={valueTone(heroEpsYoY)} source={heroEpsSource} />
-    </div>
-    <div className="heroCardMetrics" aria-label="Metricas clave compactas">
-      <HeroMetric label="MA 50/200" value={`${pct(technical.distanceSma50)} / ${pct(technical.distanceSma200)}`} tone={valueTone(finiteValue(technical.distanceSma50, technical.distanceSma200))} source={Number.isFinite(technical.distanceSma50) && Number.isFinite(technical.distanceSma200) ? metricSourceState(chartEstimated ? "review" : "measured", "MA 50/200", chartSourceDetail) : metricSourceState("review", "MA 50/200", "histórico insuficiente")} />
-      <HeroMetric label="Estructura" value={setupDisplay.shortLabel} tone={setupDisplay.tone || ""} source={setupSource} />
-      <HeroMetric label="RS Quality" value={rsFmt(rs.rsQualityScore)} source={Number.isFinite(rs.rsQualityScore) ? metricSourceState("proxy", "RS Quality", "score compuesto técnico") : metricSourceState("review", "RS Quality", "sin dato")} />
-      <HeroMetric label="Negocio" value={businessTeaser} source={metricSourceState("measured", "Negocio", "perfil descriptivo de proveedor")} />
-    </div>
-    <div className="heroCompanyBrief" aria-label="Resumen de negocio compacto">
-      <div className="heroCompanyBriefHead">
-        <span>Negocio</span>
-        <b>{data.theme || data.sector || "Sin clasificar"}</b>
-      </div>
-      <div className={`heroCompanyBriefCopy ${companyBriefExpanded ? "isExpanded" : ""}`}>
-        <p id={companySummaryId}>{companySummary}</p>
-        {canExpandCompanyBrief && <button
-          className="heroCompanyBriefToggle"
-          type="button"
-          aria-expanded={companyBriefExpanded}
-          aria-controls={companySummaryId}
-          onClick={() => setCompanyBriefExpanded((value) => !value)}
-        >
-          {companyBriefExpanded ? "Ver menos" : "Ver completo"}
-        </button>}
-      </div>
-      <div className="heroCompanyFacts">
-        <div><span>Industria</span><b>{data.industry || "Sin dato"}</b></div>
-        <div><span>Cap.</span><b>{money(data.marketCap, data.marketCapCurrency || data.currency)}</b></div>
-        <div><span>Empleados</span><b>{fmt(data.employees)}</b></div>
-        <div><span>{listingLabel === "Cotiza desde" ? "Cotiza" : listingLabel}</span><b title={data.listingDateSource || ""}>{listingDate || "Sin dato"}</b></div>
-      </div>
-    </div>
-  </section> : null;
+
+  /* ── Cálculos para N0–N3 (jerarquía FICHA-TICKER-IA.md) ─────────── */
+
+  // Decisión (vigilar / auditar / descartar): se deriva del estado del
+  // foco metodológico. Si no hay foco, se mira el verdict del setup.
+  const decisionState = (() => {
+    const focusState = decisionDesk?.decisionFocus?.state || decisionDesk?.status || "";
+    const validated = decisionResolution?.key || decisionValidationKey;
+    if (validated === "vigilar" || /listo|ready/i.test(focusState)) return "vigilar";
+    if (validated === "descartar" || /bloquead|blocked/i.test(focusState)) return "descartar";
+    if (validated === "auditar" || /pendiente|partial|review/i.test(focusState)) return "auditar";
+    // Sin foco explícito: auditar por defecto (curva neutra)
+    return "auditar";
+  })();
+
+  // Freno (una sola frase): si hay razón metodológica, esa; si no, la
+  // distancia al pivot o la nota del setup.
+  const brake = setupDisplay?.reason
+    || decisionDesk?.decisionFocus?.detail
+    || (Number.isFinite(setupPattern?.distanceToPivotPct)
+      ? `A ${pct(Math.abs(setupPattern.distanceToPivotPct))} del pivot${setupPattern.distanceToPivotPct > 0 ? " por encima" : " por debajo"}.`
+      : "");
+
+  // Resumen de setup ("3/5 · falta: ...") — alimentado por el score
+  // del patrón cuando está disponible.
+  const setupSummary = (() => {
+    if (!setupPattern) return "Sin estructura medible.";
+    const checks = [
+      setupPattern.consolidationCandidate === true,
+      Number.isFinite(setupPattern.contractionCount) && setupPattern.contractionCount >= 2,
+      setupPattern.contractionsDecreasing === true,
+      Number.isFinite(setupPattern.distanceToPivotPct) && Math.abs(setupPattern.distanceToPivotPct) <= 6,
+      Number.isFinite(setupPattern.volumeDryUpRatio) && setupPattern.volumeDryUpRatio <= 0.9,
+    ];
+    const passed = checks.filter(Boolean).length;
+    const total = checks.length;
+    const missing = [];
+    if (!checks[0]) missing.push("base");
+    if (!checks[1]) missing.push("contracciones");
+    if (!checks[2]) missing.push("contracción decreciente");
+    if (!checks[3]) missing.push("cierre sobre pivot");
+    if (!checks[4]) missing.push("volumen seco");
+    return `${passed}/${total} condiciones${missing.length ? ` · falta: ${missing.join(", ")}` : " · setup completo"}`;
+  })();
+
+  // Narrativa (tesis / riesgo / siguiente paso). Las fuentes (decisionBrief,
+  // decisionTrace, screenerOrigin) pueden entregar strings O objetos
+  // `{label, value, detail, tone}` (forma compacta de briefItems en
+  // stockDecisionDesk / screenerContracts). Normalizamos a string antes de
+  // pasarlas al JSX para evitar el crash "Objects are not valid as a
+  // React child".
+  const narrativeString = (input) => {
+    if (input == null) return "";
+    if (typeof input === "string") return input.trim();
+    if (typeof input === "number" || typeof input === "boolean") return String(input);
+    if (typeof input === "object") {
+      const candidate = input.value ?? input.label ?? input.detail ?? "";
+      if (typeof candidate === "string") return candidate.trim();
+      if (candidate != null) return String(candidate);
+    }
+    return "";
+  };
+  const narrative = (() => {
+    const origin = screenerOrigin || {};
+    const trace = origin.decisionTrace || {};
+    const brief = origin.decisionBrief || {};
+    const focus = decisionDesk?.decisionFocus;
+    return {
+      tesis: narrativeString(brief.thesis)
+        || narrativeString(trace.thesis)
+        || narrativeString(origin.thesis)
+        || narrativeString(focus?.label)
+        || "",
+      riesgo: narrativeString(brief.risk)
+        || narrativeString(trace.risk)
+        || narrativeString(origin.risk)
+        || narrativeString(setupDisplay?.reason)
+        || "",
+      siguientePaso: narrativeString(focus?.detail)
+        || narrativeString(origin.nextStep)
+        || narrativeString(brief.nextStep)
+        || "",
+    };
+  })();
+
+  // N1: 8 filas máximo, sin color, tabla clave-valor
+  const n1Rows = [
+    {
+      label: "RS",
+      value: Number.isFinite(rsUniverse) ? String(Math.round(rsUniverse)) : "—",
+      state: Number.isFinite(rsUniverse) ? "value" : "ghost",
+      source: rsUniverseSource,
+      detail: trustTitle("RS", Number.isFinite(rsUniverse) ? Math.round(rsUniverse) : "—", sampleText(rs?.rsGlobalSample), rsUniverseSource),
+    },
+    {
+      label: "RS QUALITY",
+      value: Number.isFinite(rs?.rsQualityScore) ? String(Math.round(rs.rsQualityScore)) : "—",
+      state: Number.isFinite(rs?.rsQualityScore) ? "value" : "ghost",
+      source: Number.isFinite(rs?.rsQualityScore) ? metricSourceState("proxy", "RS Quality", "score compuesto técnico") : metricSourceState("review", "RS Quality", "sin dato"),
+    },
+    {
+      label: "ETAPA",
+      value: data?.stage?.label ? stageShortLabel : "—",
+      state: data?.stage?.label ? "value" : "ghost",
+      source: data?.stage?.label ? metricSourceState(chartEstimated ? "review" : "proxy", "Etapa", chartEstimated ? chartSourceDetail : "modelo técnico") : metricSourceState("review", "Etapa", "sin dato"),
+    },
+    {
+      label: "MA50",
+      value: Number.isFinite(technical.distanceSma50) ? pct(technical.distanceSma50) : "—",
+      state: Number.isFinite(technical.distanceSma50) ? (chartEstimated ? "stale" : "value") : "ghost",
+      suffix: chartEstimated && Number.isFinite(technical.distanceSma50) ? "est" : "",
+      source: Number.isFinite(technical.distanceSma50)
+        ? metricSourceState(chartEstimated ? "review" : "measured", "MA50", chartSourceDetail)
+        : metricSourceState("review", "MA50", "histórico insuficiente"),
+    },
+    {
+      label: "MA200",
+      value: Number.isFinite(technical.distanceSma200) ? pct(technical.distanceSma200) : "—",
+      state: Number.isFinite(technical.distanceSma200) ? (chartEstimated ? "stale" : "value") : "ghost",
+      suffix: chartEstimated && Number.isFinite(technical.distanceSma200) ? "est" : "",
+      source: Number.isFinite(technical.distanceSma200)
+        ? metricSourceState(chartEstimated ? "review" : "measured", "MA200", chartSourceDetail)
+        : metricSourceState("review", "MA200", "histórico insuficiente"),
+    },
+    {
+      label: "BASE",
+      value: Number.isFinite(setupPattern?.baseWeeks) ? `${(setupPattern.baseWeeks).toFixed(1)} sem` : "—",
+      state: Number.isFinite(setupPattern?.baseWeeks) ? "value" : "ghost",
+      source: Number.isFinite(setupPattern?.baseWeeks)
+        ? metricSourceState(setupPattern.consolidationCandidate === true ? "measured" : "proxy", "Base", "modelo de patrón técnico")
+        : metricSourceState("review", "Base", "sin estructura"),
+    },
+    {
+      label: "PIVOT",
+      value: Number.isFinite(setupPattern?.distanceToPivotPct) ? pct(setupPattern.distanceToPivotPct) : "—",
+      state: Number.isFinite(setupPattern?.distanceToPivotPct) ? "value" : "ghost",
+      source: Number.isFinite(setupPattern?.distanceToPivotPct)
+        ? metricSourceState("measured", "Pivot", "precio relativo al pivot estructural")
+        : metricSourceState("review", "Pivot", "sin pivot calculado"),
+    },
+    {
+      label: "ATH",
+      value: Number.isFinite(technical.distance52w) ? pct(technical.distance52w) : "—",
+      state: Number.isFinite(technical.distance52w) ? (chartEstimated ? "stale" : "value") : "ghost",
+      suffix: chartEstimated && Number.isFinite(technical.distance52w) ? "est" : "",
+      source: Number.isFinite(technical.distance52w)
+        ? metricSourceState(chartEstimated ? "review" : "measured", "ATH", chartSourceDetail)
+        : metricSourceState("review", "ATH", "histórico insuficiente"),
+    },
+  ];
+
+  // N2 fundamentales operativos (3): Ventas YoY, EPS YoY, Cap.
+  const n2Fundamentals = [
+    {
+      label: "VENTAS YOY",
+      value: pct(g.revenueGrowth),
+      state: Number.isFinite(g.revenueGrowth) ? "value" : "ghost",
+      source: metricSourceForValue(g.revenueGrowth, "Ventas YoY", "proveedor financiero"),
+    },
+    {
+      label: "EPS YOY",
+      value: pct(heroEpsYoY),
+      state: Number.isFinite(heroEpsYoY) ? "value" : "ghost",
+      source: heroEpsSource,
+    },
+    {
+      label: "CAP.",
+      value: money(data?.marketCap, data?.marketCapCurrency || data?.currency),
+      state: Number.isFinite(data?.marketCap) ? "value" : "ghost",
+      source: Number.isFinite(data?.marketCap)
+        ? metricSourceState("measured", "Cap.", "capitalización de mercado del proveedor")
+        : metricSourceState("review", "Cap.", "sin dato"),
+    },
+  ];
+
+  // N3 desglose del score (barras de razón estilo Decisiones)
+  const n3ScoreBreakdown = setupPattern
+    ? [
+        { label: "Base/rango", value: Number.isFinite(setupPattern.baseDepthPct) ? pct(setupPattern.baseDepthPct) : "—", pct: Number.isFinite(setupPattern.baseDepthPct) ? Math.min(100, setupPattern.baseDepthPct) : 0, dominant: setupPattern.consolidationCandidate === true, tone: setupPattern.consolidationCandidate === true ? "ok" : "risk" },
+        { label: "Compresiones", value: Number.isFinite(setupPattern.contractionCount) ? `${setupPattern.contractionCount} · ${setupPattern.contractionsDecreasing ? "decrecientes" : "no decrecientes"}` : "—", pct: Number.isFinite(setupPattern.contractionCount) ? Math.min(100, setupPattern.contractionCount * 25) : 0, dominant: setupPattern.contractionsDecreasing === true, tone: setupPattern.contractionsDecreasing === true ? "ok" : "risk" },
+        { label: "Última comp.", value: Number.isFinite(setupPattern.lastContractionDepthPct) ? pct(setupPattern.lastContractionDepthPct) : "—", pct: Number.isFinite(setupPattern.lastContractionDepthPct) ? Math.max(0, 100 - setupPattern.lastContractionDepthPct * 4) : 0, dominant: Number.isFinite(setupPattern.lastContractionDepthPct) && setupPattern.lastContractionDepthPct <= 8, tone: "neutral" },
+        { label: "Rango 10d", value: Number.isFinite(setupPattern.tightness10dPct) ? pct(setupPattern.tightness10dPct) : "—", pct: Number.isFinite(setupPattern.tightness10dPct) ? Math.max(0, 100 - setupPattern.tightness10dPct * 4) : 0, dominant: Number.isFinite(setupPattern.tightness10dPct) && setupPattern.tightness10dPct <= 12, tone: "neutral" },
+        { label: "Pivot", value: Number.isFinite(setupPattern.distanceToPivotPct) ? pct(setupPattern.distanceToPivotPct) : "—", pct: Number.isFinite(setupPattern.distanceToPivotPct) ? Math.max(0, 100 - Math.abs(setupPattern.distanceToPivotPct) * 8) : 0, dominant: Number.isFinite(setupPattern.distanceToPivotPct) && Math.abs(setupPattern.distanceToPivotPct) <= 6, tone: "neutral" },
+        { label: "Volumen seco", value: Number.isFinite(setupPattern.volumeDryUpRatio) ? `${setupPattern.volumeDryUpRatio.toFixed(2)}x` : "—", pct: Number.isFinite(setupPattern.volumeDryUpRatio) ? Math.max(0, 100 - setupPattern.volumeDryUpRatio * 60) : 0, dominant: Number.isFinite(setupPattern.volumeDryUpRatio) && setupPattern.volumeDryUpRatio <= 0.9, tone: "neutral" },
+        { label: "Score patrón", value: Number.isFinite(setupPattern.patternQualityScore) ? Math.round(setupPattern.patternQualityScore) : "—", pct: Number.isFinite(setupPattern.patternQualityScore) ? setupPattern.patternQualityScore : 0, dominant: Number.isFinite(setupPattern.patternQualityScore) && setupPattern.patternQualityScore >= 65, tone: Number.isFinite(setupPattern.patternQualityScore) && setupPattern.patternQualityScore >= 65 ? "ok" : "risk" },
+      ]
+    : [];
+
+  // N3 bloque empresa
+  const n3Company = data ? {
+    sector: data.sector,
+    industry: data.industry,
+    subsector: data.subsector || data.theme || "",
+    employees: data.employees,
+    ipoDate: data.ipoDate || data.listingDate || "",
+    listingDateSource: data.listingDateSource || "",
+    description: data.summary || data.description || "Sin descripción de negocio.",
+  } : null;
+
+  // N3 detalle de calidad de datos por fuente
+  const n3DataQualityDetail = data ? [
+    { label: "Cierre", value: freshness.priceDate ? compactDate(freshness.priceDate) : "—", state: freshness.priceDate ? (chartEstimated ? "stale" : "value") : "ghost", suffix: chartEstimated && freshness.priceDate ? "est" : "", source: metricSourceState(chartEstimated ? "proxy" : "measured", "Cierre", "cierre del proveedor") },
+    { label: "RS global", value: freshness.rsGlobalAsOf ? `${compactDate(freshness.rsGlobalAsOf)} · ${sampleText(freshness.rsGlobalSample)}` : "Sin snapshot", state: freshness.rsGlobalAsOf ? "value" : "ghost", source: rsUniverseSource },
+    { label: "Cobertura", value: coverage.label || "Completa", state: coverage.label ? "value" : "ghost", source: coverage.label ? metricSourceState("measured", "Cobertura", "auditoría interna") : metricSourceState("review", "Cobertura", "sin dato") },
+    { label: "Estimación", value: chartEstimated ? "Histórico estimado" : "Histórico en vivo", state: "value", source: chartEstimated ? metricSourceState("review", "Estimación", chartSourceDetail) : metricSourceState("measured", "Estimación", "live") },
+    { label: "Fundamentales", value: freshness.fundamentalsAgeDays != null ? `${freshness.fundamentalsAgeDays} días` : "Sin fecha", state: freshness.fundamentalsAgeDays != null ? "value" : "ghost", source: freshness.fundamentalsAgeDays != null ? metricSourceState("measured", "Fundamentales", "estado financiero del proveedor") : metricSourceState("review", "Fundamentales", "sin fecha") },
+  ] : [];
+
+  // Acciones rápidas de la cabecera (links) — se renderizan dentro de N0
+  const n0Actions = (
+    <>
+      <a className="stockHeroLink stockBackLink" href="/">Screener</a>
+      {data?.links?.official && (
+        <a className="stockHeroLink" href={data.links.official} target="_blank" rel="noreferrer">Web oficial</a>
+      )}
+    </>
+  );
 
   return <main className="page stockPage">
-    <section className="stockCommand" style={stockAccentStyle(data, symbol)}>
-      <div className="stockCommandMain">
-        <div className="stockHead">
-          <div className="stockLogo stockLogoPro">
-            <span className={logo ? "logoInitialHidden" : ""}>{data?.visual?.initials || symbol.slice(0, 2)}</span>
-            {logo && <img className={logoLoaded ? "isLoaded" : ""} src={logo} alt={`${data?.name || symbol} logo`} onLoad={() => setLogoLoaded(true)} onError={() => { setLogoLoaded(false); setLogoIndex((index) => index + 1); }} />}
-          </div>
-          <div>
-            <div className="stockKicker">
-              <span>{symbol}</span>
-              {data?.exchange && <span>{data.exchange}</span>}
-              {data?.sector && <span>{data.sector}</span>}
-            </div>
-            <div className="stockTitleBlock">
-              <h1>{symbol}</h1>
-              <p className="stockCompanyName">{data?.name || symbol}</p>
-            </div>
-            <div className="stockQuoteLine">
-              <span className="stockQuoteLabel">Cierre del gráfico</span>
-              <strong>{Number.isFinite(priceSnapshot.price) ? priceMoney(priceSnapshot.price) : "Sin cotizacion"}</strong>
-              {data?.currency && <span className="stockQuoteCurrency">{data.currency}</span>}
-              {Number.isFinite(priceSnapshot.dayChangePct) && <b className={dayTone}>{signedPriceMoney(priceSnapshot.dayChange)} ({pct(priceSnapshot.dayChangePct)})</b>}
-            </div>
-            <div className="stockDataLine" aria-label="Frescura y cobertura de datos">
-              <span>{priceSnapshot.date || freshness.priceDate ? `${chartEstimated ? "Cierre estimado" : "Cierre"} ${compactDate(priceSnapshot.date || freshness.priceDate)}` : "Cierre sin fecha"}</span>
-              {coverage.label && <span>{coverage.label}</span>}
-              {chartEstimated && <span>Historico estimado</span>}
-              <span>{freshness.rsGlobalAsOf ? `RS ${compactDate(freshness.rsGlobalAsOf)} · ${sampleText(freshness.rsGlobalSample)}` : "RS sin snapshot"}</span>
-              {!priceSnapshot.coherent && <span>cotizacion intradia distinta</span>}
-            </div>
-            <ScreenerOriginPanel origin={screenerOrigin} variant="stock" />
-            <StockMethodGuardrails desk={decisionDesk} origin={screenerOrigin} />
-            <div className="stockHeroActions">
-              <a className="stockHeroLink stockBackLink" href="/">
-                Screener
-              </a>
-              {data?.links?.official && (
-                <a className="stockHeroLink" href={data.links.official} target="_blank" rel="noreferrer">
-                  Web oficial
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-        {compactResearchCard && <div className="stockHeroCompactCard">{compactResearchCard}</div>}
-      </div>
-    </section>
+    {/* N0 — Veredicto (siempre visible, sin scroll) */}
+    <N0VerdictBlock
+      symbol={symbol}
+      data={data}
+      priceSnapshot={priceSnapshot}
+      freshness={freshness}
+      coverage={coverage}
+      chartEstimated={chartEstimated}
+      decisionDesk={decisionDesk}
+      setupDisplay={setupDisplay}
+      brake={brake}
+      setupSummary={setupSummary}
+      decision={decisionState}
+      actions={n0Actions}
+    />
 
-    {error && <section className="card error">{error}</section>}
+    {/* Decisión metodológica — bloque secundario que vive entre N0 y N1 */}
+    {decisionDesk && (
+      <StockDecisionDesk
+        desk={decisionDesk}
+        resolution={decisionResolution}
+        resolutionHistory={decisionResolutionHistoryItems}
+        reviewNavigation={reviewNavigation}
+        showMethodGuardrails={false}
+        validationKey={decisionValidationKey}
+        validationNote={decisionValidationNote}
+        onValidationKeyChange={setDecisionValidationKey}
+        onValidationNoteChange={setDecisionValidationNote}
+        onOpenReviewSymbol={openReviewFlowSymbol}
+        onApplyPreset={applyDecisionChartPreset}
+        onFocusEvidence={focusDecisionEvidence}
+        onResolveDecision={resolveStockDecision}
+        onReopenDecision={reopenStockDecision}
+      />
+    )}
+
+    {error && <p className="stockPageError" role="alert">{error}</p>}
 
     {data && <>
-      <section className="stockWorkspace">
-        <div className="terminalPanel chartPanel">
-          <div className="sectionTitle">
-            <h2>Grafico</h2>
-          </div>
-          <StockDecisionDesk
-            desk={decisionDesk}
-            resolution={decisionResolution}
-            resolutionHistory={decisionResolutionHistoryItems}
-            reviewNavigation={reviewNavigation}
-            showMethodGuardrails={false}
-            validationKey={decisionValidationKey}
-            validationNote={decisionValidationNote}
-            onValidationKeyChange={setDecisionValidationKey}
-            onValidationNoteChange={setDecisionValidationNote}
-            onOpenReviewSymbol={openReviewFlowSymbol}
-            onApplyPreset={applyDecisionChartPreset}
-            onFocusEvidence={focusDecisionEvidence}
-            onResolveDecision={resolveStockDecision}
-            onReopenDecision={reopenStockDecision}
-          />
-          <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={symbol} scope={chartScope} onScopeChange={updateChartScope} compact />
-          <div className="chartBenchmarkControl">
-            <label htmlFor={`benchmark-${symbol}`}>Comparar vs</label>
-            <input id={`benchmark-${symbol}`} list={`benchmark-options-${symbol}`} value={benchmarkDraft} onChange={(event) => setBenchmarkDraft(cleanBenchmarkSymbol(event.target.value))} onKeyDown={(event) => { if (event.key === "Enter") updateBenchmark(benchmarkDraft); }} placeholder={rs.benchmarkSymbol || "SPY"} disabled={loading} />
-            <datalist id={`benchmark-options-${symbol}`}>
-              {BENCHMARK_OPTIONS.map((item) => <option key={item} value={item} />)}
-            </datalist>
-            <button type="button" onClick={() => updateBenchmark(benchmarkDraft)} disabled={loading || !benchmarkDraft}>Aplicar</button>
-            <button type="button" onClick={() => updateBenchmark("")} disabled={loading || !benchmarkOverride}>Auto</button>
-            <button
-              type="button"
-              className={`chartToolButton ${showVcpDiagnostics ? "active" : ""}`.trim()}
-              onClick={() => setShowVcpDiagnostics((value) => !value)}
-              disabled={!setupPattern}
-              aria-pressed={showVcpDiagnostics}
-              title="Mostrar contracciones VCP, pivot y motivo de bloqueo en el gráfico."
-            >
-              <ScanSearch aria-hidden="true" size={14} />
-              VCP
-            </button>
-            <InfoHint text="Activa C1/C2/C3, pivot y gates mínimos de diagnóstico. No cambia filtros ni verdictos." />
-          </div>
-          <UniversalPriceChart
-            bars={data.chartBars}
-            symbol={symbol}
-            currency={data.currency}
-            tradingViewUrl={data.links?.tradingView}
-            settings={chartSettings}
-            relativeStrength={rs.series}
-            rsMainScore={rsUniverse}
-            rsRatingSeries={rs.globalRsSeries}
-            benchmarkSymbol={rs.benchmarkSymbol}
-            patternOverlay={showVcpDiagnostics ? setupPattern : actionableSetupPattern}
-            showPatternDiagnostics={showVcpDiagnostics}
-            height={600}
-          />
+      {/* Gráfico: zona de visualización entre N0 (veredicto) y N1 (lectura
+          técnica). El usuario pidió que el gráfico sea lo segundo que aparece
+          tras el precio/decisión, antes de la tabla técnica. */}
+      <section className="stockChartPanel" aria-label="Gráfico de la ficha">
+        <h2 className="stockChartTitle">Gráfico</h2>
+        <div className="stockChartBenchmarkControl">
+          <label htmlFor={`benchmark-${symbol}`}>Comparar vs</label>
+          <input id={`benchmark-${symbol}`} list={`benchmark-options-${symbol}`} value={benchmarkDraft} onChange={(event) => setBenchmarkDraft(cleanBenchmarkSymbol(event.target.value))} onKeyDown={(event) => { if (event.key === "Enter") updateBenchmark(benchmarkDraft); }} placeholder={rs.benchmarkSymbol || "SPY"} disabled={loading} />
+          <datalist id={`benchmark-options-${symbol}`}>
+            {BENCHMARK_OPTIONS.map((item) => <option key={item} value={item} />)}
+          </datalist>
+          <button type="button" onClick={() => updateBenchmark(benchmarkDraft)} disabled={loading || !benchmarkDraft}>Aplicar</button>
+          <button type="button" onClick={() => updateBenchmark("")} disabled={loading || !benchmarkOverride}>Auto</button>
+          <button
+            type="button"
+            className={`chartToolButton ${showVcpDiagnostics ? "active" : ""}`.trim()}
+            onClick={() => setShowVcpDiagnostics((value) => !value)}
+            disabled={!setupPattern}
+            aria-pressed={showVcpDiagnostics}
+            title="Mostrar contracciones VCP, pivot y motivo de bloqueo en el gráfico."
+          >
+            <ScanSearch aria-hidden="true" size={14} />
+            VCP
+          </button>
+          <InfoHint text="Activa C1/C2/C3, pivot y gates mínimos de diagnóstico. No cambia filtros ni verdictos." />
         </div>
+        <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={symbol} scope={chartScope} onScopeChange={updateChartScope} compact />
+        <UniversalPriceChart
+          bars={data.chartBars}
+          symbol={symbol}
+          currency={data.currency}
+          tradingViewUrl={data.links?.tradingView}
+          settings={chartSettings}
+          relativeStrength={rs.series}
+          rsMainScore={rsUniverse}
+          rsRatingSeries={rs.globalRsSeries}
+          benchmarkSymbol={rs.benchmarkSymbol}
+          patternOverlay={showVcpDiagnostics ? setupPattern : actionableSetupPattern}
+          showPatternDiagnostics={showVcpDiagnostics}
+          height={600}
+        />
       </section>
 
-      <MethodologyAuditPanel pattern={setupPattern} verdict={setupVerdict} stage={data.stage} />
+      {/* N1 — Lectura técnica (tabla clave-valor, sin color, máx. 8 filas) */}
+      <N1TechTable rows={n1Rows} />
 
+      {/* N2 — Contexto (narrativa + fundamentales operativos) */}
+      <N2ContextBlock
+        narrative={narrative}
+        fundamentals={n2Fundamentals}
+      />
+
+      {/* N3 — Auditoría (colapsado por defecto). Incluye ahora dentro de un
+          cuarto <details> ("Metodología y gates") el antiguo
+          MethodologyAuditPanel: verdict/confianza + 4 gates no-score (Datos
+          técnicos, Histórico, Etapa, Plan). El desglose del score vive
+          únicamente en stockScoreBreakdown (primer <details>). */}
+      <N3AuditBlock
+        scoreBreakdown={n3ScoreBreakdown}
+        company={n3Company}
+        dataQualityDetail={n3DataQualityDetail}
+        methodology={
+          setupPattern ? (
+            <MethodologyAuditPanel
+              pattern={setupPattern}
+              verdict={setupVerdict}
+              stage={data.stage}
+            />
+          ) : null
+        }
+      />
+
+      {/* Plan de operación y comparativos: viven al final, fuera de la
+          jerarquía N0–N3, como soporte secundario. */}
       <TradePlanPanel pattern={setupPattern} structure={setupStructure} display={setupDisplay} price={priceSnapshot.price} currency={data.currency} />
-
       <SimilarStocks rows={similar} />
-
       <ComparativeContext rows={comparables.rows} note={comparables.note} symbol={symbol} />
-
       <RelativeStrengthPanel rs={rs} rsUniverse={rsUniverse} rsBenchmark={rsBenchmark} country={data.country} />
-
       <FundamentalsPanel data={data} growth={g} valuation={v} quote={q} calendar={data.earningsCalendar} currency={statementCurrency} />
-
       <NewsSection rows={data.news} />
-
       <SocialPulseSection social={social} loading={socialLoading} symbol={symbol} />
-
     </>}
 
-    {!data && !error && <section className="card">Cargando ficha de {symbol}...</section>}
+    {!data && !error && <p className="stockPageLoading">Cargando ficha de {symbol}…</p>}
   </main>;
 }
