@@ -1402,6 +1402,36 @@
   background:#090a0c;
 }
 
+/* Grid de métricas dentro de un grupo fundamental. */
+.stockPage .fundamentalGroupGrid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
+  gap:var(--space-3);
+}
+
+/* Pane de métricas snapshot (vista "Métricas" del statement selector). */
+.stockPage .fundamentalSnapshotPane {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
+  gap:var(--space-3);
+  padding:var(--space-4) var(--space-5);
+}
+
+/* Grid compacto de 4 métricas clave (fallback cuando no hay histórico fundamental). */
+.stockPage .researchMetricGrid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));
+  gap:var(--space-3);
+}
+
+/* Placeholder "Sin dato" dentro de compactHolderList. */
+.stockPage .compactHolderEmpty {
+  padding:var(--space-4) 0;
+  color:var(--soft);
+  font-size:var(--text-s);
+  text-align:center;
+}
+
 .stockPage .fundamentalToolbar {
   margin:12px 0;
   border:1px solid var(--stock-line);

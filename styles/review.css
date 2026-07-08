@@ -195,6 +195,15 @@
   padding:0;
 }
 
+/* Wrapper del chart nativo (UniversalPriceChart) cuando hay barras reales.
+   Regla defensiva anti "hueco negro": .reviewChart ya aporta fondo/padding/altura,
+   pero este wrapper renderiza un canvas propio, así que reforzamos el fondo y el
+   overflow para que nunca herede el negro del body aunque se mute .reviewChart. */
+.reviewNativeChart {
+  background:var(--surface);
+  overflow:hidden;
+}
+
 .reviewFloatingNav {
   position:absolute;
   right:14px;

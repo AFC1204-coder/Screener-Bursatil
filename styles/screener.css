@@ -2164,6 +2164,15 @@ button.dataHealthSummaryItem:hover,
   display:grid;
 }
 
+/* <details> "Ajustes finos" anidado dentro del panel avanzado. */
+.advancedFiltersDetails {
+  margin-top:var(--space-3);
+  padding:var(--space-3);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--surface-inset);
+}
+
 .filterGroup {
   border:1px solid var(--line);
   border-radius:var(--radius);

@@ -383,7 +383,6 @@ const signedPriceMoney = (n, currency = "") => {
   return `${sign}${priceMoney(n, currency)}`;
 };
 const sentimentClass = (label = "") => label === "alcista" ? "bullish" : label === "bajista" ? "bearish" : "neutral";
-const textKey = (...values) => values.filter(Boolean).join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 const compactTitle = (...parts) => parts.map((part) => String(part || "").trim()).filter(Boolean).join(" · ");
 const NEWS_PROVIDER_RE = /\b(Yahoo|FMP|SEC|X API v2|recent search)\b/i;
 
@@ -448,52 +447,6 @@ function withPatternHistoryCoverage(pattern = null, bars = []) {
     patternBarsCount: barsCount,
     patternMinBars: minBars,
     patternCoveragePct: minBars > 0 ? Math.min(100, (barsCount / minBars) * 100) : null,
-  };
-}
-
-function hexToRgb(hex = "#d6ae5c") {
-  const clean = hex.replace("#", "");
-  const value = clean.length === 3 ? clean.split("").map((x) => x + x).join("") : clean;
-  const int = parseInt(value, 16);
-  return Number.isFinite(int) ? `${(int >> 16) & 255}, ${(int >> 8) & 255}, ${int & 255}` : "214, 174, 92";
-}
-
-function countryAccent(country = "", symbol = "") {
-  const text = textKey(country, symbol);
-  if (/china|hong kong|\.hk|\bcn\b/.test(text)) return "#c83d3d";
-  if (/taiwan|\.tw/.test(text)) return "#2f7de1";
-  if (/japon|japan|\.t\b/.test(text)) return "#d94b4b";
-  if (/singapur|singapore|\.si/.test(text)) return "#db3b45";
-  if (/australia|\.ax/.test(text)) return "#3b82f6";
-  if (/espana|spain|\.mc/.test(text)) return "#d6ae5c";
-  if (/alemania|germany|\.de/.test(text)) return "#d6ae5c";
-  if (/francia|france|\.pa/.test(text)) return "#3b82f6";
-  if (/reino unido|united kingdom|\.l\b/.test(text)) return "#4169e1";
-  if (/estados unidos|united states|usa|nasdaq|nyse/.test(text)) return "#3b82f6";
-  return "#d6ae5c";
-}
-
-function sectorAccent(sector = "", theme = "", industry = "") {
-  const text = textKey(sector, theme, industry);
-  if (/communication|internet|gaming|media|plataformas|publicidad/.test(text)) return "#7c5cff";
-  if (/technology|software|semiconductor|cloud|ia|ai/.test(text)) return "#38bdf8";
-  if (/consumer|retail|e-commerce|marca|cyclical/.test(text)) return "#f59e0b";
-  if (/health|biotech|medical|pharma/.test(text)) return "#22c55e";
-  if (/industrial|defensa|aero|electrical|automation/.test(text)) return "#d6ae5c";
-  if (/financial|bank|insurance|fintech/.test(text)) return "#14b8a6";
-  if (/energy|energia|utility|utilities|power/.test(text)) return "#60a5fa";
-  return "#d6ae5c";
-}
-
-function stockAccentStyle(data = {}, symbol = "") {
-  data = data || {};
-  const country = countryAccent(data.country, symbol);
-  const sector = sectorAccent(data.sector, data.theme, data.industry);
-  return {
-    "--stock-country-accent": country,
-    "--stock-country-rgb": hexToRgb(country),
-    "--stock-sector-accent": sector,
-    "--stock-sector-rgb": hexToRgb(sector),
   };
 }
 
