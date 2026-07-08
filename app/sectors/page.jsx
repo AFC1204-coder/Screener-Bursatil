@@ -113,9 +113,9 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, countryFil
           ? "Filtro de pais activo: usando snapshot local para no mezclar universos."
           : "Usando snapshot/favoritos locales hasta tener scans persistidos suficientes.";
 
-  return <section className="card discoveryHealthPanel">
-    <div className="sectionTitle">
-      <h2>Fiabilidad sectorial</h2>
+  return <div className="marketReliabilityBlock">
+    <div className="marketReliabilityBlockHead">
+      <h3>Fiabilidad sectorial</h3>
       <span className={`discoveryStatus ${status}`}>{source}</span>
     </div>
     <div className="discoveryHealthGrid">
@@ -127,7 +127,7 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, countryFil
       <span><b>{countryFilter}</b><em>país</em></span>
     </div>
     <p className="fine">{note}</p>
-  </section>;
+  </div>;
 }
 
 function SectorCoverageAuditPanel({ audit, dimension }) {
@@ -136,9 +136,9 @@ function SectorCoverageAuditPanel({ audit, dimension }) {
   const issues = auditIssueLabels(audit, 5);
   const thinGroups = audit.groupHealth?.strongThinGroups?.length ? audit.groupHealth.strongThinGroups : audit.groupHealth?.thinGroups || [];
 
-  return <section className="card coverageAuditPanel sectorCoverageAuditPanel">
-    <div className="sectionTitle">
-      <h2>Auditoria sector/listas</h2>
+  return <div className="marketReliabilityBlock">
+    <div className="marketReliabilityBlockHead">
+      <h3>Auditoria sector/listas</h3>
       <span className={`discoveryStatus ${status}`}>{audit.label || "Sin auditoria"}</span>
     </div>
     <div className="coverageAuditGrid">
@@ -163,7 +163,63 @@ function SectorCoverageAuditPanel({ audit, dimension }) {
       </div>
     </div>
     <p className="fine">{audit.note}</p>
-  </section>;
+  </div>;
+}
+
+/* ─── Franja de infraestructura de Sectores ─────────────────────────
+   Misma receta estándar que market-health: una línea bajo la cabecera,
+   tiza/humo sobre --surface, --line2, expandible con <details>. La
+   fiabilidad y la auditoría NUNCA deben competir como card co-igual
+   con el contenido de mercado (DIRECCION-VISUAL.md regla 7). */
+function SectorsInfraStrip({ discovery, discoveryError, discoveryLoading, useDiscoveryGroups, countryFilter, rows, visibleRowsCount, groups, coverageAudit, dimension }) {
+  const health = discovery?.health || {};
+  const audit = coverageAudit || {};
+  const source = discoveryLoading ? "Actualizando" : useDiscoveryGroups ? (health.sourceLabel || "Discovery API") : "Snapshot local";
+  const issues = auditIssueLabels(audit, 5);
+  const thinGroups = audit.groupHealth?.strongThinGroups?.length ? audit.groupHealth.strongThinGroups : audit.groupHealth?.thinGroups || [];
+  return (
+    <details className="marketReliabilityStrip" data-testid="sectors-infra-strip">
+      <summary className="marketReliabilityStripLabel">Sectores · cobertura</summary>
+      <div className="marketReliabilityStripItem">
+        <span>fuente</span>
+        <b>{source}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>cobertura ranking</span>
+        <b>{audit.rankingCoveragePct ? pctShare(audit.rankingCoveragePct, 1) : "—"}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>universo</span>
+        <b>{audit.universeRows ?? rows.length}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>sectores rank</span>
+        <b>{audit.rankedSectorCount ?? "—"}/{audit.sectorCount ?? "—"}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>muestra chica</span>
+        <b>{thinGroups.length}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>país</span>
+        <b>{countryFilter}</b>
+      </div>
+      <summary className="marketReliabilityStripToggle" data-action="toggle">[+]</summary>
+      <div className="marketReliabilityStripDetail">
+        <DiscoveryHealthPanel
+          data={discovery}
+          error={discoveryError}
+          loading={discoveryLoading}
+          usingDiscovery={useDiscoveryGroups}
+          countryFilter={countryFilter}
+          localRows={rows.length}
+          groupedRows={visibleRowsCount}
+          groupCount={groups.length}
+        />
+        <SectorCoverageAuditPanel audit={coverageAudit} dimension={dimension} />
+      </div>
+    </details>
+  );
 }
 
 function MarketSectorOverview({ data, error }) {
@@ -464,8 +520,18 @@ export default function SectorsPage() {
       </div>
     </section>
 
-    <DiscoveryHealthPanel data={discovery} error={discoveryError} loading={discoveryLoading} usingDiscovery={useDiscoveryGroups} countryFilter={countryFilter} localRows={rows.length} groupedRows={visibleRowsCount} groupCount={groups.length} />
-    <SectorCoverageAuditPanel audit={coverageAudit} dimension={dimension} />
+    <SectorsInfraStrip
+      discovery={discovery}
+      discoveryError={discoveryError}
+      discoveryLoading={discoveryLoading}
+      useDiscoveryGroups={useDiscoveryGroups}
+      countryFilter={countryFilter}
+      rows={rows}
+      visibleRowsCount={visibleRowsCount}
+      groups={groups}
+      coverageAudit={coverageAudit}
+      dimension={dimension}
+    />
 
     <section className="card">
       <h2>Agrupar por</h2>

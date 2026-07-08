@@ -130,3 +130,50 @@
   color: #fecaca;
   background: var(--oxido-dim);
 }
+
+/* ─── PIEZA 2 — Herramientas de mantenimiento colapsadas ─────────────
+   La fontanería (Sincronización, Acciones rápidas, Añadir favoritos
+   manuales) vive al final, dentro de un <details> cerrado por defecto.
+   El ojo entra por la pregunta rectora ("¿qué ha cambiado?") y solo
+   despliega las herramientas si el trader las busca. */
+.researchDeskTools {
+  cursor: pointer;
+}
+
+.researchDeskTools > summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  list-style: none;
+  cursor: pointer;
+}
+
+.researchDeskTools > summary::-webkit-details-marker {
+  display: none;
+}
+
+.researchDeskTools > summary::before {
+  content: "[+]";
+  color: var(--muted);
+  font-family: var(--font-data);
+  font-size: var(--text-s);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.researchDeskTools[open] > summary::before {
+  content: "[–]";
+}
+
+.researchDeskTools > summary h2 {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.researchDeskTools[open] > summary h2 {
+  color: var(--text);
+}

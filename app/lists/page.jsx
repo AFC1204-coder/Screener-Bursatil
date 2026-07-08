@@ -59,9 +59,9 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, localRows,
     ? "Vista provisional desde snapshot local; los conteos y rankings se actualizarán al terminar Discovery."
     : error ? `Discovery API no disponible: ${error}` : usingDiscovery ? health.note : "Usando snapshots/favoritos locales hasta tener scans persistidos suficientes.";
 
-  return <section className="card discoveryHealthPanel">
-    <div className="sectionTitle">
-      <h2>Fiabilidad discovery</h2>
+  return <div className="marketReliabilityBlock">
+    <div className="marketReliabilityBlockHead">
+      <h3>Fiabilidad discovery</h3>
       <span className={`discoveryStatus ${status}`}>{source}</span>
     </div>
     <div className="discoveryHealthGrid">
@@ -73,7 +73,7 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, localRows,
       <span><b>{scope}</b><em>alcance</em></span>
     </div>
     <p className="fine">{note}</p>
-  </section>;
+  </div>;
 }
 
 function SavedListViewsPanel({ views, currentSignature, onSave, onDelete }) {
@@ -100,9 +100,9 @@ function CoverageAuditPanel({ audit }) {
   const topSectors = audit.topSectors || [];
   const hasCoverageInput = (audit.universeRows ?? 0) > 0 || (audit.rankedRows ?? 0) > 0;
 
-  return <section className="card coverageAuditPanel">
-    <div className="sectionTitle">
-      <h2>Auditoria cobertura</h2>
+  return <div className="marketReliabilityBlock">
+    <div className="marketReliabilityBlockHead">
+      <h3>Auditoria cobertura</h3>
       <span className={`discoveryStatus ${status}`}>{audit.label || "Sin auditoria"}</span>
     </div>
     <div className="coverageAuditGrid">
@@ -127,7 +127,62 @@ function CoverageAuditPanel({ audit }) {
       </div>
     </div>
     <p className="fine">{audit.note}</p>
-  </section>;
+  </div>;
+}
+
+/* ─── Franja de infraestructura de Listas ───────────────────────────
+   Misma receta estándar que market-health: una línea bajo la cabecera,
+   tiza/humo sobre --surface, --line2, expandible con <details>. La
+   fiabilidad y la auditoría NUNCA deben competir como card co-igual
+   con el contenido de listas (DIRECCION-VISUAL.md regla 7). */
+function ListsInfraStrip({ discovery, discoveryError, discoveryLoading, useDiscovery, localRows, filter, coverageAudit }) {
+  const health = discovery?.health || {};
+  const audit = coverageAudit || {};
+  const source = discoveryLoading ? "Actualizando" : useDiscovery ? (health.sourceLabel || "Discovery API") : "Snapshot local";
+  const scope = filter?.group ? `${filter.groupType}: ${filter.group}` : "Global";
+  const hasCoverageInput = (audit.universeRows ?? 0) > 0 || (audit.rankedRows ?? 0) > 0;
+  const emptyLists = hasCoverageInput ? audit.listHealth?.emptyLists?.length ?? 0 : null;
+  return (
+    <details className="marketReliabilityStrip" data-testid="lists-infra-strip">
+      <summary className="marketReliabilityStripLabel">Listas · cobertura</summary>
+      <div className="marketReliabilityStripItem">
+        <span>fuente</span>
+        <b>{source}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>filas ranking</span>
+        <b>{useDiscovery ? (health.rows ?? 0) : localRows}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>cobertura ranking</span>
+        <b>{pctShare(audit.rankingCoveragePct ?? 0, 1)}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>mercados</span>
+        <b>{audit.rankedMarketCount ?? "—"}/{audit.marketCount ?? "—"}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>listas vacias</span>
+        <b>{emptyLists ?? "—"}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>alcance</span>
+        <b>{scope}</b>
+      </div>
+      <summary className="marketReliabilityStripToggle" data-action="toggle">[+]</summary>
+      <div className="marketReliabilityStripDetail">
+        <DiscoveryHealthPanel
+          data={discovery}
+          error={discoveryError}
+          loading={discoveryLoading}
+          usingDiscovery={useDiscovery}
+          localRows={localRows}
+          filter={filter}
+        />
+        <CoverageAuditPanel audit={coverageAudit} />
+      </div>
+    </details>
+  );
 }
 
 function ListScopeSummary({ filter, rowsCount, rankingAppearances, activeRankingCount, savedView, useDiscovery, discoveryLoading }) {
@@ -630,8 +685,15 @@ export default function ListsPage() {
       </div>
     </section>
     <section className="card"><div className="kpis"><div className="kpi"><b>{loaded ? rows.length : "-"}</b><span>acciones unicas</span></div><div className="kpi"><b>{loaded ? favorites.length : "-"}</b><span>favoritos</span></div><div className="kpi"><b>{discoveryLoading ? "..." : useDiscovery ? "API" : loaded ? "Local" : "-"}</b><span>fuente rankings</span></div><div className="kpi"><b>{loaded && latest ? new Date(latest.createdAt).toLocaleDateString() : "-"}</b><span>ultimo snapshot local</span></div></div></section>
-    <DiscoveryHealthPanel data={discovery} error={discoveryError} loading={discoveryLoading} usingDiscovery={useDiscovery} localRows={localRows.length} filter={filter} />
-    <CoverageAuditPanel audit={coverageAudit} />
+    <ListsInfraStrip
+      discovery={discovery}
+      discoveryError={discoveryError}
+      discoveryLoading={discoveryLoading}
+      useDiscovery={useDiscovery}
+      localRows={localRows.length}
+      filter={filter}
+      coverageAudit={coverageAudit}
+    />
     <ListScopeSummary filter={filter} rowsCount={rows.length} rankingAppearances={rankingAppearances} activeRankingCount={activeRankingCount} savedView={activeSavedView} useDiscovery={useDiscovery} discoveryLoading={discoveryLoading} />
     <DecisionTracePanel summary={decisionTraceability} detail="Resoluciones de Review/Ficha detectadas en las listas y favoritos visibles." />
     <SavedListViewsPanel views={savedListViews} currentSignature={currentListViewSignature} onSave={saveCurrentListView} onDelete={deleteSavedListView} />

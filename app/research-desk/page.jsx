@@ -188,6 +188,77 @@ function commandCenterFrom({ rows = [], alerts = [], favorites = [] } = {}) {
   ];
 }
 
+/* ─── Franja de infraestructura de Research Desk ─────────────────────
+   Misma receta estándar que market-health: una línea bajo la cabecera,
+   tiza/humo sobre --surface, --line2, expandible con <details>.
+   La "fontanería" del Research Desk (estado local, snapshot/favoritos/
+   alertas, sync en la nube) debe vivir como infra, no como card co-igual
+   con Alertas y Cambios. Ver DIRECCION-VISUAL.md regla 7. */
+function ResearchDeskInfraStrip({ scans, favoriteStats, alertsSummary, cloud, syncing, statusLabel }) {
+  return (
+    <details className="marketReliabilityStrip" data-testid="research-desk-infra-strip">
+      <summary className="marketReliabilityStripLabel">Research · estado</summary>
+      <div className="marketReliabilityStripItem">
+        <span>snapshots</span>
+        <b>{scans.length}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>favoritos</span>
+        <b>{favoriteStats.count}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>alertas activas</span>
+        <b>{alertsSummary.active}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>alpha media</span>
+        <b>{pct(favoriteStats.alpha)}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>estado</span>
+        <b>{statusLabel}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>sync</span>
+        <b>{cloud.configured ? (cloud.ok ? "OK" : "Revisar") : "Local"}</b>
+      </div>
+      <summary className="marketReliabilityStripToggle" data-action="toggle">[+]</summary>
+      <div className="marketReliabilityStripDetail">
+        <div className="marketReliabilityBlock">
+          <div className="marketReliabilityBlockHead">
+            <h3>Sincronización en la nube</h3>
+            <span>{syncing ? "Sincronizando..." : cloud.configured ? (cloud.ok ? "Conectada" : "Revisar") : "Modo local"}</span>
+          </div>
+          <p className="marketSentimentRead">{cloud.message || "La experiencia sigue funcionando en modo local aunque no esté conectada."}</p>
+        </div>
+        <div className="marketReliabilityBlock">
+          <div className="marketReliabilityBlockHead">
+            <h3>Resumen local</h3>
+            <span>{scans.length + favoriteStats.count + alertsSummary.active} entradas</span>
+          </div>
+          <div className="marketReliabilityRows">
+            <div className="marketReliabilityRow">
+              <b>{scans.length}</b>
+              <span>snapshots guardados</span>
+              <em>local</em>
+            </div>
+            <div className="marketReliabilityRow">
+              <b>{favoriteStats.count}</b>
+              <span>favoritos</span>
+              <em>media {pct(favoriteStats.avg)}</em>
+            </div>
+            <div className="marketReliabilityRow">
+              <b>{alertsSummary.active}</b>
+              <span>alertas activas</span>
+              <em>{alertsSummary.warnings}W · {alertsSummary.positives}P</em>
+            </div>
+          </div>
+        </div>
+      </div>
+    </details>
+  );
+}
+
 function DailyCommandCenter({ sections = [] }) {
   const visibleSections = sections.filter((section) => (section.rows?.length || section.alerts?.length || 0) > 0);
   if (!visibleSections.length) {
@@ -540,36 +611,22 @@ export default function ResearchDesk() {
       </div>
     </section>
 
-    <section className="card"><div className="kpis"><div className="kpi"><b>{scans.length}</b><span>snapshots guardados</span></div><div className="kpi"><b>{favoriteStats.count}</b><span>favoritos</span></div><div className="kpi"><b>{alertsSummary.active}</b><span>alertas activas</span></div><div className="kpi"><b>{pct(favoriteStats.avg)}</b><span>media desde favorito</span></div><div className="kpi"><b>{pct(favoriteStats.alpha)}</b><span>alpha media</span></div></div></section>
-    <section className="card status">Estado: <b>{investorStatusLabel(status)}</b></section>
+    {/* PIEZA 1 — Franja de infraestructura (bajo cabecera, sobre N0).
+       Reemplaza los cards co-iguales de KPIs y Estado. Mismo patrón que
+       market-health (ver marketReliabilityStrip en styles/components.css). */}
+    <ResearchDeskInfraStrip
+      scans={scans}
+      favoriteStats={favoriteStats}
+      alertsSummary={alertsSummary}
+      cloud={cloud}
+      syncing={syncing}
+      statusLabel={investorStatusLabel(status)}
+    />
+
+    {/* N1 — Trazabilidad de decisiones (contenido, no infra). */}
     <DecisionTracePanel summary={decisionTraceability} detail="Decisiones tomadas en Review/Ficha que afectan a snapshots y favoritos visibles en Research Desk." />
 
-    <DailyCommandCenter sections={commandCenter} />
-
-    <section className="card">
-      <div className="sectionTitle"><h2>Sincronización <InfoHint text="Copia opcional en la nube. La experiencia sigue funcionando en modo local aunque no esté conectada." /></h2><span className="fine">{cloud.configured ? (cloud.ok ? "Conectada" : "Revisar conexión") : "Modo local"}</span></div>
-      <div className="controls">
-        <button className="btn" onClick={() => refreshCloudStatus(true)} disabled={syncing}>Comprobar</button>
-        <button className="btn btnPrimary" onClick={pushToCloud} disabled={syncing}>{syncing ? "Sincronizando..." : "Guardar copia"}</button>
-        <button className="btn" onClick={pullFromCloud} disabled={syncing}>Traer copia</button>
-        <button className="btn" onClick={importCloudAlerts} disabled={syncing}>Importar alertas</button>
-      </div>
-    </section>
-
-    <section className="grid grid2">
-      <div className="card">
-        <h2>Acciones rapidas</h2>
-        <div className="controls">
-          <button className="btn" onClick={loadMarket}>Actualizar benchmark</button>
-          <button className="btn btnPrimary" onClick={importLatestScan}>Importar ultimo scan</button>
-          <button className="btn" onClick={importManualSnapshot}>Snapshot manual</button>
-          <button className="btn" onClick={() => exportJson("stageradar-backup.json", { scans, favorites, exportedAt: new Date().toISOString() })}>Exportar backup</button>
-          <button className="btn btnGhost" onClick={clearAll}>Limpiar dispositivo</button>
-        </div>
-      </div>
-      <div className="card"><h2>Anadir favoritos manuales</h2><textarea className="textarea" value={manual} onChange={(e) => setManual(e.target.value)} placeholder={"NVDA\nASML.AS\nRHM.DE"} /><button className="btn btnPrimary" style={{ marginTop: 10 }} onClick={createManualFavorites}>Anadir a watchlist</button></div>
-    </section>
-
+    {/* N0/N1 — Pregunta rectora: "¿qué ha cambiado en lo que sigo?". */}
     {!!selectedEvents.length && <section className="card">
       <div className="sectionTitle"><h2>Cambios desde snapshot anterior</h2><span className="fine">{selectedEvents.length} eventos visibles · {selectedMethodology.previousScanDate ? new Date(selectedMethodology.previousScanDate).toLocaleString() : "sin comparativo previo"}</span></div>
       <div className="grid grid3">
@@ -584,6 +641,8 @@ export default function ResearchDesk() {
       <div className="sectionTitle"><h2>Alertas activas</h2><span className="fine">{alertsSummary.warnings} deterioros · {alertsSummary.positives} mejoras · {alertsSummary.neutral} contexto</span></div>
       {visibleAlerts.length ? <div className="tableWrap"><table className="table"><thead><tr>{["Ticker", "Alerta", "Severidad", "Origen", "Detalle", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{visibleAlerts.map((alert) => <tr key={alert.id}><td><a className="ticker" href={stockUrl(alert.symbol)}>{alert.symbol}</a><br /><span className="fine">{alert.payload?.companyName || ""}</span></td><td>{alert.payload?.label || alert.alertType}</td><td><span className="pill">{alert.payload?.severity || "neutral"}</span></td><td>{alert.payload?.scanName || "Snapshot"}<br /><span className="fine">{alert.triggeredAt ? new Date(alert.triggeredAt).toLocaleString() : ""}</span></td><td>{alert.payload?.detail || "-"}</td><td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(alert.symbol)}>Ficha</a><button className="btn btnSmall btnGhost" onClick={() => resolveLocalAlert(alert)}>Resolver</button></div></td></tr>)}</tbody></table></div> : <p className="fine">Sin alertas activas. Guarda un nuevo snapshot comparable para generar cambios observables.</p>}
     </section>
+
+    <DailyCommandCenter sections={commandCenter} />
 
     <section className="card">
       <h2>Favoritos / watchlist</h2>
@@ -646,6 +705,42 @@ export default function ResearchDesk() {
         </table>
       </div>
     </section>}
+
+    {/* PIEZA 2 — Sincronización + Acciones rápidas + Añadir favoritos manuales
+       son fontanería: van al final, dentro de un <details> colapsado por
+       defecto. La pantalla responde a "¿qué ha cambiado?" y "qué alertas
+       tengo" antes que a "¿cómo sincronizo mi copia local con la nube?". */}
+    <details className="card researchDeskTools" data-testid="research-desk-tools">
+      <summary><h2 style={{ display: "inline-block", margin: 0 }}>Herramientas de mantenimiento</h2></summary>
+
+      <section className="card" style={{ marginTop: "var(--space-3)" }}>
+        <div className="sectionTitle"><h3>Sincronización <InfoHint text="Copia opcional en la nube. La experiencia sigue funcionando en modo local aunque no esté conectada." /></h3><span className="fine">{cloud.configured ? (cloud.ok ? "Conectada" : "Revisar conexión") : "Modo local"}</span></div>
+        <div className="controls">
+          <button className="btn" onClick={() => refreshCloudStatus(true)} disabled={syncing}>Comprobar</button>
+          <button className="btn btnPrimary" onClick={pushToCloud} disabled={syncing}>{syncing ? "Sincronizando..." : "Guardar copia"}</button>
+          <button className="btn" onClick={pullFromCloud} disabled={syncing}>Traer copia</button>
+          <button className="btn" onClick={importCloudAlerts} disabled={syncing}>Importar alertas</button>
+        </div>
+      </section>
+
+      <section className="grid grid2" style={{ marginTop: "var(--space-3)" }}>
+        <div className="card">
+          <h3>Acciones rapidas</h3>
+          <div className="controls">
+            <button className="btn" onClick={loadMarket}>Actualizar benchmark</button>
+            <button className="btn btnPrimary" onClick={importLatestScan}>Importar ultimo scan</button>
+            <button className="btn" onClick={importManualSnapshot}>Snapshot manual</button>
+            <button className="btn" onClick={() => exportJson("stageradar-backup.json", { scans, favorites, exportedAt: new Date().toISOString() })}>Exportar backup</button>
+            <button className="btn btnGhost" onClick={clearAll}>Limpiar dispositivo</button>
+          </div>
+        </div>
+        <div className="card">
+          <h3>Anadir favoritos manuales</h3>
+          <textarea className="textarea" value={manual} onChange={(e) => setManual(e.target.value)} placeholder={"NVDA\nASML.AS\nRHM.DE"} />
+          <button className="btn btnPrimary" style={{ marginTop: 10 }} onClick={createManualFavorites}>Anadir a watchlist</button>
+        </div>
+      </section>
+    </details>
 
     <footer className="card footer">Local-first con sincronizacion opcional.</footer>
   </main>;
