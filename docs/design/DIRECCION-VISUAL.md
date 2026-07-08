@@ -44,12 +44,22 @@ o cualquier skeuomorfismo. La audacia se gasta entera en la Curva de Etapa (§5)
 4. Fondos de color solo mediante `--senal-dim` / `--traza-dim` / `--oxido-dim`.
    Nunca color sólido de fondo en superficies grandes.
 5. `--oxido` se usa como marcador (dot, texto puntual, regla), jamás como relleno grande.
-6. **Lo activo es tinta, no matiz** (corrección post-rollout). Estados de UI genéricos
-   — pestaña de navegación activa, toggles de mercado, chips de país, selección de
-   filtro, foco de teclado — usan `--active-*` / `--focus-ring` (tiza + `--line3` +
-   `--pizarra-3`), nunca `--senal`/`--traza`/`--oxido`. Esos tres tonos son vocabulario
-   exclusivo del trader (Vigilar / Auditar / riesgo); si la interfaz los usa para
-   marcarse a sí misma, dejan de significar nada. `--accent` ahora es tiza.
+6. **Interacción: sistema de dos intensidades — DECISIÓN CERRADA (validada en uso
+   real tras la migración global, jul-2026).** La señal y lo activo no se separan
+   por matiz sino por intensidad:
+   - **`--senal` a plena tinta** (texto, borde, marcador sólido): exclusivo del
+     vocabulario del trader — decisión Vigilar y atención de mercado excepcional.
+   - **`--senal-dim`** (wash al 12%): el "calor" de la interacción — fondo de estado
+     encendido, hover, selección. Permitido con libertad SOLO como fondo; el texto y
+     el borde del elemento activo van en tinta (`--accent`/`--active-*`/`--line3`).
+   - **`--accent` = tiza (definitivo)**: estructura de lo activo — texto y borde de
+     nav activa, toggles, chips seleccionados, `--focus-ring`.
+   Por qué funciona sin devaluar Vigilar: el temor original asumía ámbar a plena
+   saturación repetido 8-10× por pantalla; en el sistema validado la plena tinta
+   ámbar solo aparece en decisiones, y la interacción la insinúa en wash — el ojo
+   distingue intensidad + rol sin esfuerzo. Sigue prohibido: `--senal` sólido como
+   fondo/borde de UI genérica, y (regla 7) cualquier señal en alertas de
+   infraestructura.
 7. **Alertas de infraestructura** (fallo de proveedor, timeout, snapshot local):
    lenguaje de calidad de dato — franja tiza/humo sobre `--surface` con `--line2` —
    jamás señal ni óxido. La infraestructura no compite con las señales de mercado.

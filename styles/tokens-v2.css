@@ -56,13 +56,14 @@
   --line2      : rgba(237, 232, 218, .26);       /* borde obligatorio de panel elevado */
   --line3      : rgba(237, 232, 218, .45);       /* borde de elemento activo/seleccionado */
 
-  /* Estado activo/selección de UI (nav, toggles, chips de mercado, filtros):
-     lo activo se marca con TINTA, no con matiz — más tiza, no otro color.
-     PROHIBIDO usar --senal/--traza/--oxido para estados de UI genéricos:
-     esos tonos son vocabulario de decisión/riesgo del trader, no de la interfaz.
-     Alertas de infraestructura (Supabase, timeout, snapshot): lenguaje de calidad
-     de dato (franja tiza/humo sobre --surface + --line2), JAMÁS señal ni óxido. */
-  --accent     : var(--tiza);        /* CORRECCIÓN rollout: antes var(--senal) — lo activo es tinta */
+  /* Interacción — DECISIÓN CERRADA (regla 6 de DIRECCION-VISUAL.md, validada en
+     uso real): sistema de dos intensidades. --senal a plena tinta = solo decisión
+     Vigilar / atención de mercado. --senal-dim como wash de fondo = estado
+     encendido/hover/selección (permitido). Texto y borde de lo activo = tinta
+     (--accent/--active-* /--line3). Prohibido --senal sólido como fondo/borde de UI
+     genérica. Alertas de infraestructura (Supabase, timeout, snapshot): lenguaje
+     de calidad de dato (franja tiza/humo sobre --surface), JAMÁS señal ni óxido. */
+  --accent     : var(--tiza);        /* DEFINITIVO: estructura de lo activo es tinta */
   --accent2    : var(--tiza);        /* deprecated: sin hover de color; el hover lo da --pizarra-3 */
   --active-fg     : var(--tiza);     /* texto del elemento activo, peso 600 */
   --active-bg     : var(--pizarra-3);
