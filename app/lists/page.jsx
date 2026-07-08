@@ -653,31 +653,6 @@ export default function ListsPage() {
   }
 
   return <main className="page listsPage">
-    <style>{`
-      @keyframes sparklinePulse {
-        0% { opacity: 0.35; }
-        50% { opacity: 0.75; }
-        100% { opacity: 0.35; }
-      }
-      .sparklineSkeleton {
-        height: 38px;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(13, 27, 42, 0.4);
-        border-radius: 4px;
-        border: 1px dashed rgba(0, 82, 204, 0.15);
-      }
-      .skeletonPulse {
-        height: 10px;
-        width: 65px;
-        background: rgba(0, 82, 204, 0.22);
-        border-radius: 2px;
-        animation: sparklinePulse 1.4s infinite ease-in-out;
-      }
-    `}</style>
-
     <section className="card hero">
       <div className="heroTop">
         <div><div className="badge">StatsEdge · Listas</div><h1>Listas rápidas</h1><p className="muted">Líderes, favoritos y setups desde discovery derivado o snapshot local.</p></div>

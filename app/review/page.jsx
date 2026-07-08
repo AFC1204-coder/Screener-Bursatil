@@ -974,63 +974,7 @@ export default function ReviewPage() {
           {sourceMeta.sourceDetail ? <small className="reviewQueueSourceDetail">{sourceMeta.sourceDetail}</small> : null}
           <span>{resolutionFilter === "all" && digestFilter === "all" ? `${baseVisibleRows.length} visibles` : `${visibleRows.length}/${baseVisibleRows.length} visibles`}</span>
         </div>
-        {resolutionSummary.length > 1 ? <div className="reviewQueueSummary reviewResolutionSummary" aria-label="Resumen de cola por resolucion de ficha">
-          {resolutionSummary.map((group) => (
-            <button
-              type="button"
-              key={group.key}
-              className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${resolutionFilter === group.key ? "active" : ""}`}
-              onClick={() => applyResolutionFilter(group.key)}
-              title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
-            >
-              <b>{group.count}</b>
-              <span>{group.label}</span>
-            </button>
-          ))}
-        </div> : null}
-        {digestSummary.length > 1 ? <div className="reviewQueueSummary reviewDigestSummary" aria-label="Resumen de cola por estado de pruebas">
-          {digestSummary.map((group) => (
-            <button
-              type="button"
-              key={group.key}
-              className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${digestFilter === group.key ? "active" : ""}`}
-              onClick={() => applyDigestFilter(group.key)}
-              title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
-            >
-              <b>{group.count}</b>
-              <span>{group.label}</span>
-            </button>
-          ))}
-        </div> : null}
-        {visiblePrioritySummary.length ? <div className="reviewQueueSummary reviewPrioritySummary" aria-label="Prioridad de investigacion">
-          {visiblePrioritySummary.map((group) => (
-            <button
-              type="button"
-              key={group.key}
-              className={`reviewQueueSummaryChip priority-${group.key} ${group.tone || "neutral"} ${visibleDecisionItems[currentIndex]?.reviewPriority?.key === group.key ? "active" : ""}`}
-              onClick={() => setCurrentIndex(group.firstIndex)}
-              title={[group.topSymbol ? `${group.topSymbol} · ${Math.round(group.topScore || 0)}` : "", group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label].filter(Boolean).join(" · ")}
-            >
-              <b>{group.count}</b>
-              <span>{group.shortLabel || group.label}</span>
-            </button>
-          ))}
-        </div> : null}
-        {visibleProfileSummary.length ? <div className="reviewQueueSummary reviewQueueProfileSummary" aria-label="Prioridad de cola por perfil">
-          {visibleProfileSummary.map((group) => (
-            <button
-              type="button"
-              key={group.key}
-              className={`reviewQueueSummaryChip profile-${group.key} ${group.tone || "neutral"} ${visibleDecisionItems[currentIndex]?.profileKey === group.key ? "active" : ""}`}
-              onClick={() => setCurrentIndex(group.firstIndex)}
-              title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
-            >
-              <b>{group.count}</b>
-              <span>{group.label}</span>
-            </button>
-          ))}
-        </div> : null}
-        {visibleDecisionSummary.groups.length ? <div className="reviewQueueSummary" aria-label="Resumen de cola por decision">
+        {visibleDecisionSummary.groups.length ? <div className="reviewQueueSummary reviewDecisionSummary" aria-label="Resumen de cola por decision">
           {visibleDecisionSummary.groups.map((group) => (
             <button
               type="button"
@@ -1044,6 +988,70 @@ export default function ReviewPage() {
             </button>
           ))}
         </div> : null}
+        {(() => {
+          const facetCount = (resolutionSummary.length > 1 ? 1 : 0) + (digestSummary.length > 1 ? 1 : 0) + (visiblePrioritySummary.length ? 1 : 0) + (visibleProfileSummary.length ? 1 : 0);
+          if (!facetCount) return null;
+          const facetOpenMarker = queueFiltersActive ? " · filtro activo" : "";
+          return <details className="reviewQueueFacets">
+            <summary className="reviewQueueFacetsLabel">Más facetas{facetCount > 1 ? ` (${facetCount})` : ""}<small>{facetOpenMarker}</small></summary>
+            {resolutionSummary.length > 1 ? <div className="reviewQueueSummary reviewResolutionSummary" aria-label="Resumen de cola por resolucion de ficha">
+              {resolutionSummary.map((group) => (
+                <button
+                  type="button"
+                  key={group.key}
+                  className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${resolutionFilter === group.key ? "active" : ""}`}
+                  onClick={() => applyResolutionFilter(group.key)}
+                  title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
+                >
+                  <b>{group.count}</b>
+                  <span>{group.label}</span>
+                </button>
+              ))}
+            </div> : null}
+            {digestSummary.length > 1 ? <div className="reviewQueueSummary reviewDigestSummary" aria-label="Resumen de cola por estado de pruebas">
+              {digestSummary.map((group) => (
+                <button
+                  type="button"
+                  key={group.key}
+                  className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${digestFilter === group.key ? "active" : ""}`}
+                  onClick={() => applyDigestFilter(group.key)}
+                  title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
+                >
+                  <b>{group.count}</b>
+                  <span>{group.label}</span>
+                </button>
+              ))}
+            </div> : null}
+            {visiblePrioritySummary.length ? <div className="reviewQueueSummary reviewPrioritySummary" aria-label="Prioridad de investigacion">
+              {visiblePrioritySummary.map((group) => (
+                <button
+                  type="button"
+                  key={group.key}
+                  className={`reviewQueueSummaryChip priority-${group.key} ${group.tone || "neutral"} ${visibleDecisionItems[currentIndex]?.reviewPriority?.key === group.key ? "active" : ""}`}
+                  onClick={() => setCurrentIndex(group.firstIndex)}
+                  title={[group.topSymbol ? `${group.topSymbol} · ${Math.round(group.topScore || 0)}` : "", group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label].filter(Boolean).join(" · ")}
+                >
+                  <b>{group.count}</b>
+                  <span>{group.shortLabel || group.label}</span>
+                </button>
+              ))}
+            </div> : null}
+            {visibleProfileSummary.length ? <div className="reviewQueueSummary reviewQueueProfileSummary" aria-label="Prioridad de cola por perfil">
+              {visibleProfileSummary.map((group) => (
+                <button
+                  type="button"
+                  key={group.key}
+                  className={`reviewQueueSummaryChip profile-${group.key} ${group.tone || "neutral"} ${visibleDecisionItems[currentIndex]?.profileKey === group.key ? "active" : ""}`}
+                  onClick={() => setCurrentIndex(group.firstIndex)}
+                  title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
+                >
+                  <b>{group.count}</b>
+                  <span>{group.label}</span>
+                </button>
+              ))}
+            </div> : null}
+          </details>;
+        })()}
         <div className="reviewQueueList">
           {visibleRows.map((row, index) => {
             const active = activeRow?.symbol === row.symbol;

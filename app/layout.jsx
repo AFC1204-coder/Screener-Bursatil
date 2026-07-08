@@ -35,11 +35,11 @@ export default function RootLayout({ children }) {
                 <circle cx="8" cy="16" r="6" stroke="rgba(255,255,255,0.18)" strokeWidth="1.5" strokeDasharray="2 2" />
                 <circle cx="8" cy="16" r="11" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" />
                 {/* Sweeper sweep arc line */}
-                <line x1="8" y1="16" x2="15" y2="9" stroke="rgba(59, 130, 246, 0.45)" strokeWidth="1.5" strokeLinecap="round" />
-                {/* Solid chart breakout path in electric Cobalt Blue */}
-                <path d="M3 17L8 12L13 15L21 5" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1="8" y1="16" x2="15" y2="9" stroke="var(--line3)" strokeWidth="1.5" strokeLinecap="round" />
+                {/* Solid chart breakout path in tiza (brand monochrome) */}
+                <path d="M3 17L8 12L13 15L21 5" stroke="var(--tiza)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 {/* Arrowhead */}
-                <path d="M16 5H21V10" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M16 5H21V10" stroke="var(--tiza)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
             <span>

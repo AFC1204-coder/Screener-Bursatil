@@ -380,7 +380,7 @@ function patternMarkersForRows(patternOverlay = null, rows = [], interval = "D")
       time,
       position: "belowBar",
       shape: "circle",
-      color: "rgba(214,174,92,.92)",
+      color: "var(--senal)",
       text: `C${index + 1}`,
       size: 1,
     };
@@ -669,22 +669,22 @@ export default function UniversalPriceChart({
         height: chartHeight,
         layout: {
           background: { color: "transparent" },
-          textColor: "rgba(235, 235, 242, .72)",
-          fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+          textColor: "var(--soft)",
+          fontFamily: "Instrument Sans, ui-sans-serif, system-ui, sans-serif",
           fontSize: 12,
         },
         grid: {
-          vertLines: { color: "rgba(255,255,255,.035)" },
-          horzLines: { color: "rgba(255,255,255,.07)" },
+          vertLines: { color: "var(--line)" },
+          horzLines: { color: "var(--line)" },
         },
         rightPriceScale: {
-          borderColor: "rgba(255,255,255,.1)",
+          borderColor: "var(--line2)",
           mode: scale === "log" ? PriceScaleMode.Logarithmic : scale === "percent" ? PriceScaleMode.Percentage : PriceScaleMode.Normal,
           autoScale: true,
           scaleMargins: chartProfile.priceScaleMargins,
         },
         timeScale: {
-          borderColor: "rgba(255,255,255,.1)",
+          borderColor: "var(--line2)",
           ...chartProfile.timeScale,
         },
         handleScroll: {
@@ -700,8 +700,8 @@ export default function UniversalPriceChart({
           pinch: true,
         },
         crosshair: {
-          vertLine: { color: "rgba(214,174,92,.34)", labelBackgroundColor: "#1d2430" },
-          horzLine: { color: "rgba(214,174,92,.26)", labelBackgroundColor: "#1d2430" },
+          vertLine: { color: "var(--line3)", labelBackgroundColor: "var(--pizarra-2)" },
+          horzLine: { color: "var(--line3)", labelBackgroundColor: "var(--pizarra-2)" },
         },
         localization: {
           locale: "es-ES",
@@ -725,20 +725,20 @@ export default function UniversalPriceChart({
         isArea ? AreaSeries : isLine ? LineSeries : CandlestickSeries,
         isArea
           ? {
-              lineColor: positive ? "#4ade80" : "#ff6464",
-              topColor: positive ? "rgba(74, 222, 128, .22)" : "rgba(255, 100, 100, .2)",
+              lineColor: positive ? "var(--tiza)" : "var(--humo)",
+              topColor: positive ? "var(--traza-dim)" : "var(--line)",
               bottomColor: "rgba(0,0,0,0)",
               lineWidth: 2,
             }
           : isLine
-            ? { color: positive ? "#4ade80" : "#ff6464", lineWidth: 2 }
+            ? { color: positive ? "var(--tiza)" : "var(--humo)", lineWidth: 2 }
             : {
-                upColor: "#4ade80",
-                downColor: "#ff6464",
-                borderUpColor: "#4ade80",
-                borderDownColor: "#ff6464",
-                wickUpColor: "rgba(74, 222, 128, .72)",
-                wickDownColor: "rgba(255, 100, 100, .72)",
+                upColor: "var(--tiza)",
+                downColor: "var(--humo)",
+                borderUpColor: "var(--tiza)",
+                borderDownColor: "var(--humo)",
+                wickUpColor: "var(--soft)",
+                wickDownColor: "var(--line3)",
               },
       );
       mainSeries.setData(isLine || isArea ? lineData : candleData);
@@ -751,7 +751,7 @@ export default function UniversalPriceChart({
       if (!intraday && Number.isFinite(pivotPrice) && pivotPrice > 0) {
         mainSeries.createPriceLine?.({
           price: pivotPrice,
-          color: "rgba(214,174,92,.58)",
+          color: "var(--line3)",
           lineStyle: 2,
           lineWidth: 1,
           axisLabelVisible: true,
@@ -766,14 +766,14 @@ export default function UniversalPriceChart({
         const volumeSeries = chart.addSeries(HistogramSeries, {
           priceFormat: { type: "volume" },
           priceScaleId: "",
-          color: "rgba(160,160,170,.24)",
+          color: "var(--line)",
           lastValueVisible: false,
           priceLineVisible: false,
         });
         volumeSeries.setData(rows.map((row) => ({
           time: row.time,
           value: row.volume || 0,
-          color: row.close >= row.open ? "rgba(74,222,128,.28)" : "rgba(255,100,100,.26)",
+          color: row.close >= row.open ? "var(--traza-dim)" : "var(--line)",
         })));
         chart.priceScale("").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
       }
@@ -782,12 +782,12 @@ export default function UniversalPriceChart({
       const maSlowLength = Math.max(2, Math.min(600, Number(indicators.maSlowLength) || 200));
       const smaFast = indicators.maFast ? movingAverage(rows, maFastLength) : [];
       if (smaFast.length) {
-        const series = chart.addSeries(LineSeries, { color: "rgba(235,235,242,.58)", lineWidth: 1 });
+        const series = chart.addSeries(LineSeries, { color: "var(--soft)", lineWidth: 1 });
         series.setData(smaFast);
       }
       const smaSlow = indicators.maSlow ? movingAverage(rows, maSlowLength) : [];
       if (smaSlow.length) {
-        const series = chart.addSeries(LineSeries, { color: "rgba(214,174,92,.42)", lineWidth: 1 });
+        const series = chart.addSeries(LineSeries, { color: "var(--humo)", lineWidth: 1 });
         series.setData(smaSlow);
       }
 
@@ -795,7 +795,7 @@ export default function UniversalPriceChart({
       if (hasRsLine) {
         const rsScaleId = "rs-line-overlay";
         const rsSeries = chart.addSeries(LineSeries, {
-          color: "rgba(96,165,250,.92)",
+          color: "var(--traza)",
           lineWidth: 2,
           priceLineVisible: false,
           lastValueVisible: false,
@@ -806,7 +806,7 @@ export default function UniversalPriceChart({
         rsSeries.setData(rsLineData.map((point) => ({ time: point.time, value: point.value })));
         rsSeries.createPriceLine?.({
           price: 0,
-          color: "rgba(96,165,250,.18)",
+          color: "var(--line2)",
           lineStyle: 2,
           lineWidth: 1,
           axisLabelVisible: false,

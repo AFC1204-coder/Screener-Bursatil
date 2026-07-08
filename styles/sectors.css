@@ -28,14 +28,15 @@
   padding:20px;
   border:1px solid var(--line);
   border-radius:var(--radius);
-  background:linear-gradient(180deg,var(--surface2),var(--surface2));
+  background:var(--surface2);
 }
 
+/* Regla 8 (pozo): tabla densa sectorial sobre --surface-inset, borde --line2, sin sombra. */
 .sectorOverviewTable {
   margin-top:12px;
-  border:1px solid var(--line);
+  border:1px solid var(--line2);
   border-radius:var(--radius);
-  background:rgba(0,0,0,.16);
+  background:var(--surface-inset);
 }
 
 .sectorCoverageNote {
@@ -67,8 +68,8 @@
   height:9px;
   border:1px solid var(--line);
   border-radius:999px;
-  color:#cbd5e1;
-  background:rgba(15,23,42,.72);
+  color:var(--soft);
+  background:var(--surface-inset);
   font-size:6.5px;
   font-style:normal;
   font-weight:850;
@@ -78,7 +79,7 @@
 
 .sectorTrustMetric.source-proxy i {
   border-color:var(--line);
-  color:#cbd5e1;
+  color:var(--soft);
   background:var(--surface2);
 }
 
@@ -226,13 +227,13 @@
 }
 
 .groupContractScope b {
-  color:#edf2f7;
+  color:var(--text);
   font-size:12px;
   line-height:1.2;
 }
 
 .groupContractScope span {
-  color:#a3adbb;
+  color:var(--soft);
   font-size:11px;
   line-height:1.35;
 }
@@ -275,7 +276,7 @@
 .groupDrilldownHead em {
   display:block;
   margin-top:3px;
-  color:#8994a3;
+  color:var(--soft);
   font-size:10px;
   font-style:normal;
   font-weight:720;
@@ -300,20 +301,20 @@
 }
 
 .groupDrilldownReliability b {
-  color:#edf2f7;
+  color:var(--text);
   font-size:11px;
   line-height:1.2;
 }
 
 .groupDrilldownReliability span {
-  color:#99a6b7;
+  color:var(--soft);
   font-size:10.5px;
   line-height:1.35;
 }
 
 .groupDrilldownCard p {
   margin:0;
-  color:#9aa4b2;
+  color:var(--soft);
   font-size:11.5px;
   line-height:1.4;
 }
@@ -333,13 +334,13 @@
 }
 
 .groupDrilldownSamples b {
-  color:#f3f7fb;
+  color:var(--text);
   font-size:12px;
   line-height:1.2;
 }
 
 .groupDrilldownSamples span {
-  color:#a8b2c0;
+  color:var(--soft);
   font-size:11px;
   line-height:1.35;
   overflow-wrap:anywhere;
