@@ -85,7 +85,7 @@ export default function ResultFilterBar({
           {actionOptions.map((x) => <option key={x} value={x}>{optionLabel("Acción", x, actionCounts, rankActionLabel)}</option>)}
         </select>
         <select className="select resultFilterSelect resultSortSelect" value={sort} onChange={(e) => onSort(e.target.value)} aria-label="Ordenar resultados" data-active={sort !== "objectiveScore" ? "true" : "false"}>
-          <option value="objectiveScore">Ordenar: Calidad objetiva</option>
+          <option value="objectiveScore">Ordenar: Score compuesto</option>
           <option value="decisionPriority">Ordenar: Calidad decisión</option>
           <option value="totalScore">Ordenar: Composite</option>
           <option value="rsGlobalPct">Ordenar: {metricShortLabel("rsGlobalPct")}</option>

@@ -527,7 +527,7 @@ export default function ListsPage() {
   const extended = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "extended") ? discoveryListRows.extended : longRows.filter((r) => rowPassesListContract(r, "extended")).sort((a, b) => (b.objectiveScore ?? b.totalScore ?? 0) - (a.objectiveScore ?? a.totalScore ?? 0)), [useDiscovery, discoveryListRows, longRows]);
   const pullback = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "pullback") ? discoveryListRows.pullback : longRows.filter((r) => rowPassesListContract(r, "pullback")).sort((a, b) => (b.objectiveScore ?? b.totalScore ?? 0) - (a.objectiveScore ?? a.totalScore ?? 0)), [useDiscovery, discoveryListRows, longRows]);
   const listSections = useMemo(() => [
-    { key: "leaders", title: "Calidad objetiva", desc: "Ranking principal sin bonus VCP", rows: leaders, contractRejected: discoveryRejectedByKey.leaders || 0 },
+    { key: "leaders", title: "Score compuesto", desc: "Ranking principal sin bonus VCP", rows: leaders, contractRejected: discoveryRejectedByKey.leaders || 0 },
     { key: "rsQuality", title: "RS Quality Leaders", desc: "RS alto con volatilidad/drawdown controlados", rows: rsQuality, scoreKey: "rsQualityScore", contractRejected: discoveryRejectedByKey.rsQuality || 0 },
     { key: "weakness", title: "Deterioro técnico", desc: "Debilidad observable para evitar largos o estudiar cortos", rows: weakness, scoreKey: "weaknessScore", contractRejected: discoveryRejectedByKey.weakness || 0 },
     { key: "weinstein", title: "Weinstein Leaders", desc: "Mejor estructura de etapa/tendencia", rows: weinstein, scoreKey: "weinsteinScore", contractRejected: discoveryRejectedByKey.weinstein || 0 },

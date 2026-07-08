@@ -182,7 +182,7 @@ OK | synthetic-boundary | minLiquidityScore-boundary-pass | minLiquidityScore | 
 OK | synthetic-boundary | minLiquidityScore-below-reject | minLiquidityScore | liquidityScore | 60 | 59.9 | reject minLiquidityScore | reject | minLiquidityScore | liquidity score 59.90 < 60
 OK | synthetic-null | minLiquidityScore-null-reject | minLiquidityScore | liquidityScore | 60 | null | reject minLiquidityScore | reject | minLiquidityScore | liquidity score sin dato
 OK | synthetic-boundary | minTotalScore-boundary-pass | minTotalScore | objectiveScore | 85 | 85 | pass | pass | - | -
-OK | synthetic-boundary | minTotalScore-below-reject | minTotalScore | objectiveScore | 85 | 84.9 | reject minTotalScore | reject | minTotalScore | calidad objetiva 84.90 < 85
+OK | synthetic-boundary | minTotalScore-below-reject | minTotalScore | objectiveScore | 85 | 84.9 | reject minTotalScore | reject | minTotalScore | score compuesto 84.90 < 85
 FAIL | synthetic-null | minTotalScore-null-reject | minTotalScore | objectiveScore | 85 | null | reject minTotalScore | pass | - | -
 OK | synthetic-distance | maxDistance20dHigh-drawdown-boundary-pass | maxDistance20dHigh | distance20d | 12 | -12 | pass | pass | - | -
 OK | synthetic-distance | maxDistance20dHigh-positive-extension-pass | maxDistance20dHigh | distance20d | 12 | 2 | pass | pass | - | -

@@ -44,7 +44,7 @@ describe("screener pipeline sorting", () => {
     expect(sorted.map((row) => row.symbol)).toEqual(["CLEAN", "RISKY"]);
   });
 
-  it("usa calidad objetiva como ranking por defecto en modos largos", () => {
+  it("usa score compuesto como ranking por defecto en modos largos", () => {
     const riskyHigherScore = {
       ...cleanCandidate,
       symbol: "RISKY",
