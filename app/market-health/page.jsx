@@ -2,6 +2,7 @@
 import "../../styles/market-health.css";
 import { useEffect, useState } from "react";
 import RowTrustSignature from "@/app/RowTrustSignature";
+import RegimeConstellation, { aggregatePosition, regimeTone } from "./RegimeConstellation";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
@@ -17,8 +18,12 @@ const dateFmt = (value) => {
   const d = new Date(value);
   return Number.isFinite(d.getTime()) ? d.toLocaleDateString("es-ES", { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "-";
 };
+
 const sentimentClass = (label = "") => label === "alcista" ? "bullish" : label === "bajista" ? "bearish" : "neutral";
+const sentimentDirection = (label = "") => label === "alcista" ? "up" : label === "bajista" ? "down" : "flat";
+const sentimentGlyph = (label = "") => label === "alcista" ? "▴" : label === "bajista" ? "▾" : "·";
 const listText = (items = []) => items.length ? items.join(", ") : "-";
+
 
 function MarketTrustMetric({ row, metricKey, label, value }) {
   return <TrustMetric row={row} metricKey={metricKey} label={label} value={value} baseClass="marketTrustMetric" valueTag="b" />;
@@ -28,27 +33,18 @@ function safePct(value, fallback = 0) {
   return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : fallback;
 }
 
-function rowRs(row = {}) {
-  return rowRsPrimary(row);
-}
+function rowRs(row = {}) { return rowRsPrimary(row); }
 function rowRsDisplay(row = {}) {
   return rowRsUniverse(row) ?? rowRsBenchmark(row) ?? null;
 }
 function rowRsDisplayLabel(row = {}) {
   return Number.isFinite(rowRsUniverse(row)) ? metricShortLabel("rsGlobalPct") : metricShortLabel("rsRating");
 }
-function rowWeakness(row = {}) {
-  return weaknessScore(row);
-}
-
-function rowObjectiveScore(row = {}) {
-  return metricValue(row, "objectiveScore");
-}
-
+function rowWeakness(row = {}) { return weaknessScore(row); }
+function rowObjectiveScore(row = {}) { return metricValue(row, "objectiveScore"); }
 function isNearHigh(row = {}) {
   return Number.isFinite(row.distance52w) && row.distance52w >= -15;
 }
-
 function isStage2Like(row = {}) {
   return row.price > row.sma50 && row.price > row.sma200 && (row.sma200Slope ?? 0) >= 0;
 }
@@ -137,171 +133,228 @@ async function fetchJsonWithTimeout(path, timeoutMs = 12000) {
 
 const CORE_COVERAGE_PATH = "/api/coverage?markets=US,JP,HK,AU,TW";
 const FULL_COVERAGE_PATH = "/api/coverage?markets=US,EU1,JP,HK,AU,TW";
-const METHODOLOGY_HEALTH_PATH = "/api/methodology-health";
 
-function NewsSentimentIndex({ news, title = "News sentiment tape", sampleLabel = "titulares", scoreLabel = "Score medio titulares" }) {
-  const total = news?.total || 0;
-  const bearishPct = safePct(news?.bearishPct);
-  const neutralPct = safePct(news?.neutralPct);
-  const bullishPct = safePct(news?.bullishPct);
-  const pessimism = safePct(news?.pessimismIndex, 50);
-  const optimism = safePct(news?.optimismIndex, 50);
-  const spread = Number.isFinite(news?.sentimentSpread) ? news.sentimentSpread : 0;
-  const dominant = news?.dominantSentiment || "neutral";
-  const markerLeft = `${pessimism}%`;
-
-  return <div className="newsMoodPanel" style={{
-    background: "linear-gradient(180deg, #0d0d11 0%, #060608 100%)",
-    border: "1px solid rgba(255, 255, 255, 0.08)",
-    borderRadius: "10px",
-    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.03)",
-    padding: "20px",
-    marginBottom: "16px"
-  }}>
-    <div className="newsMoodTop" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: "14px", alignItems: "center" }}>
+/* ─── Sentimiento fusionado (N2): un componente, dos filas ──────────
+   Sin rojo/verde: la dirección la dan los extremos etiquetados + el glifo
+   en el sentimentPill del item. La barra usa tonos de humo + un dot tiza
+   como marcador de posición (no como semáforo). */
+function SentimentRow({ data, title = "Lectura contraria", sampleLabel = "titulares" }) {
+  if (!data || data.error) {
+    return (
+      <div className="marketSentimentRow" data-empty="true">
+        <div className="marketSentimentRowHead">
+          <small>{title}</small>
+          <span className="marketSentimentIndex">—</span>
+        </div>
+        <p className="marketSentimentRead">{data?.error || `Sin muestra de ${sampleLabel}.`}</p>
+      </div>
+    );
+  }
+  const bearishPct = safePct(data?.bearishPct);
+  const neutralPct = safePct(data?.neutralPct);
+  const bullishPct = safePct(data?.bullishPct);
+  const pessimism = safePct(data?.pessimismIndex, 50);
+  const dominant = data?.dominantSentiment || "neutral";
+  return (
+    <div className="marketSentimentRow">
+      <div className="marketSentimentRowHead">
+        <small>{title} · {data?.regime || "sin regimen"}</small>
+        <span className="marketSentimentIndex">{num(pessimism)}</span>
+      </div>
       <div>
-        <span className="eyebrow" style={{ display: "block", color: "var(--muted)", fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.1em" }}>{title}</span>
-        <h3 style={{ margin: "6px 0 4px 0", color: "#ffffff", fontSize: "24px", fontWeight: "700" }}>{news?.regime || "Sin regimen de titulares"}</h3>
-        <p style={{ margin: 0, color: "var(--muted)", fontSize: "12px" }}>{total ? `${total} ${sampleLabel} · dominante: ${dominant}.` : `Sin muestra suficiente.`}</p>
+        <div className="marketSentimentBar" role="img" aria-label={`Distribución de ${sampleLabel}`}>
+          <i data-segment="bearish" style={{ width: `${bearishPct}%` }} />
+          <i data-segment="neutral" style={{ width: `${neutralPct}%` }} />
+          <i data-segment="bullish" style={{ width: `${bullishPct}%` }} />
+        </div>
+        <div className="marketSentimentMarker" aria-hidden="true">
+          <i style={{ left: `${pessimism}%` }} />
+        </div>
       </div>
-      <div className="moodDial" style={{
-        width: "96px",
-        height: "96px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: "50%",
-        border: "1px solid rgba(255, 255, 255, 0.08)",
-        background: `radial-gradient(circle at center, #060608 0% 57%, transparent 58%), conic-gradient(from -90deg, #ef4444 0% ${pessimism}%, rgba(255, 255, 255, 0.08) ${pessimism}% 100%)`,
-        boxShadow: "0 0 15px rgba(239, 68, 68, 0.08)",
-        flexShrink: 0
-      }}>
-        <b style={{ fontSize: "26px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{num(pessimism)}</b>
-        <span style={{ fontSize: "9px", color: "rgba(235, 235, 242, 0.4)", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: "2px" }}>pesimismo</span>
+      <div className="marketSentimentLegend">
+        <span>bajistas <b>{pctShare(bearishPct)}</b></span>
+        <span>neutrales <b>{pctShare(neutralPct)}</b></span>
+        <span>alcistas <b>{pctShare(bullishPct)}</b></span>
+        <span>dominante <b>{dominant}</b></span>
       </div>
+      {data?.contrarianRead && <p className="marketSentimentRead">«{data.contrarianRead}»</p>}
     </div>
-
-    <div className="sentimentBars" style={{
-      display: "flex",
-      height: "16px",
-      margin: "18px 0 12px",
-      overflow: "hidden",
-      border: "1px solid rgba(255, 255, 255, 0.06)",
-      borderRadius: "6px",
-      background: "#09090b",
-      boxShadow: "inset 0 1px 3px rgba(0,0,0,0.6)"
-    }} aria-label="Distribucion de titulares por sentimiento">
-      <span className="bearish" style={{ width: `${bearishPct}%`, background: "linear-gradient(90deg, #ef4444, #f87171)", transition: "width 0.4s ease" }} />
-      <span className="neutral" style={{ width: `${neutralPct}%`, background: "linear-gradient(90deg, #4b5563, #9ca3af)", transition: "width 0.4s ease" }} />
-      <span className="bullish" style={{ width: `${bullishPct}%`, background: "linear-gradient(90deg, #10b981, #34d399)", transition: "width 0.4s ease" }} />
-    </div>
-
-    <div className="sentimentLegend" style={{ display: "flex", flexWrap: "wrap", gap: "8px 14px", color: "var(--soft)", fontSize: "12px" }}>
-      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><i className="bearish" style={{ width: "9px", height: "9px", borderRadius: "2px", background: "#ef4444" }} /> Bajistas <b style={{ color: "#ffffff" }}>{pctShare(bearishPct)}</b></span>
-      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><i className="neutral" style={{ width: "9px", height: "9px", borderRadius: "2px", background: "#6b7280" }} /> Neutrales <b style={{ color: "#ffffff" }}>{pctShare(neutralPct)}</b></span>
-      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><i className="bullish" style={{ width: "9px", height: "9px", borderRadius: "2px", background: "#10b981" }} /> Alcistas <b style={{ color: "#ffffff" }}>{pctShare(bullishPct)}</b></span>
-    </div>
-
-    <div className="contrarianGauge" style={{ marginTop: "18px" }}>
-      <div className="gaugeTrack" style={{
-        position: "relative",
-        height: "8px",
-        borderRadius: "999px",
-        background: "linear-gradient(90deg, #10b981 0%, #4b5563 50%, #ef4444 100%)",
-        boxShadow: "inset 0 1px 2px rgba(0,0,0,0.5)"
-      }}>
-        <i style={{
-          position: "absolute",
-          top: "50%",
-          left: markerLeft,
-          width: "16px",
-          height: "16px",
-          border: "2px solid #09090b",
-          borderRadius: "50%",
-          background: "#ffffff",
-          transform: "translate(-50%, -50%)",
-          boxShadow: "0 0 8px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.5)",
-          transition: "left 0.4s ease"
-        }} />
-      </div>
-      <div className="gaugeLabels" style={{ display: "flex", justifyContent: "space-between", marginTop: "7px", color: "var(--muted)", fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-        <span>Euforia</span>
-        <span>Neutral</span>
-        <span>Pesimismo</span>
-      </div>
-    </div>
-
-    <div className="moodMetrics" style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(3, 1fr)",
-      gap: "1px",
-      marginTop: "18px",
-      borderRadius: "6px",
-      overflow: "hidden",
-      border: "1px solid rgba(255,255,255,0.06)",
-      background: "rgba(255,255,255,0.02)"
-    }}>
-      <span style={{ display: "flex", flexDirection: "column", padding: "12px", background: "#0d0d11", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-        <b style={{ fontSize: "20px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{num(optimism)}</b>
-        <small style={{ fontSize: "10px", color: "rgba(235,235,242,0.4)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "4px" }}>Índice optimismo</small>
-      </span>
-      <span style={{ display: "flex", flexDirection: "column", padding: "12px", background: "#0d0d11", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-        <b style={{ fontSize: "20px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{pctShare(Math.abs(spread))}</b>
-        <small style={{ fontSize: "10px", color: "rgba(235,235,242,0.4)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "4px" }}>{spread >= 0 ? "Ventaja alcista" : "Ventaja bajista"}</small>
-      </span>
-      <span style={{ display: "flex", flexDirection: "column", padding: "12px", background: "#0d0d11" }}>
-        <b style={{ fontSize: "20px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{Number.isFinite(news?.avgScore) ? news.avgScore.toFixed(1) : "-"}</b>
-        <small style={{ fontSize: "10px", color: "rgba(235,235,242,0.4)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "4px" }}>{scoreLabel}</small>
-      </span>
-    </div>
-  </div>;
+  );
 }
 
+function SentimentFeeds({ news, social }) {
+  return (
+    <div className="marketSentimentFeeds">
+      {!!social?.rows?.length && (
+        <details>
+          <summary>Posts sociales recientes <b>{social.total || social.rows.length}</b></summary>
+          <div className="newsGrid">
+            {social.rows.slice(0, 12).map((item) => (
+              <a className="newsItem newsTextOnly" key={item.id || `${item.link}-${item.publishedAt}`} href={item.link} target="_blank" rel="noreferrer">
+                <span>
+                  <i className={`sentimentPill ${sentimentClass(item.sentimentLabel)}`} data-direction={sentimentDirection(item.sentimentLabel)}>
+                    <i aria-hidden="true">{sentimentGlyph(item.sentimentLabel)}</i>
+                    {item.sentimentLabel}
+                  </i>
+                  <b>{item.title}</b>
+                  <em>{item.publisher || "X"} · {dateFmt(item.publishedAt)}</em>
+                  <small>{item.sentimentReasons?.length ? `${item.sentimentReasons.join(", ")} · engagement ${item.engagement || 0}` : `sin sesgo fuerte detectado · engagement ${item.engagement || 0}`}</small>
+                </span>
+              </a>
+            ))}
+          </div>
+        </details>
+      )}
+      {!!news?.rows?.length && (
+        <details>
+          <summary>Titulares de mercado <b>{news.total || news.rows.length}</b></summary>
+          <div className="newsGrid">
+            {news.rows.slice(0, 12).map((item) => (
+              <a className="newsItem" key={`${item.link}-${item.publishedAt}`} href={item.link} target="_blank" rel="noreferrer">
+                {item.thumbnail && <img src={item.thumbnail} alt="" loading="lazy" />}
+                <span>
+                  <i className={`sentimentPill ${sentimentClass(item.sentimentLabel)}`} data-direction={sentimentDirection(item.sentimentLabel)}>
+                    <i aria-hidden="true">{sentimentGlyph(item.sentimentLabel)}</i>
+                    {item.sentimentLabel}
+                  </i>
+                  <b>{item.title}</b>
+                  <em>{item.publisher || "Fuente"} · {dateFmt(item.publishedAt)}</em>
+                  <small>{item.sentimentReasons?.length ? item.sentimentReasons.join(", ") : "sin sesgo fuerte detectado"}</small>
+                </span>
+              </a>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+/* ─── Franja de infraestructura (debajo de la cabecera, sobre N0) ────
+   Cobertura 5/6 mercados · metodología OK · 2 fallos [+] — todo en una
+   línea, expandible al detalle. Receta de la ficha de ticker. */
+function ReliabilityStrip({ coverage, methodologyHealth, coverageLoading, methodologyLoading }) {
+  const summary = coverage?.summary || {};
+  const markets = Array.isArray(coverage?.markets) ? coverage.markets : [];
+  const rankingCoveragePct = summary.rankingEligibleCoveragePct ?? summary.actionableCoveragePct;
+  const operational = markets.filter((row) => row.readiness?.operational).length;
+  const issues = markets.filter((row) => row.readiness?.blocksCoverageClaim).length;
+  const failures = (coverage?.failures?.length ?? 0) + (coverage?.sectorFailures?.length ?? 0);
+  const methodologyLabel = methodologyHealth?.label || "—";
+  const methodologyOk = methodologyHealth?.status === "pass";
+
+  return (
+    <details className="marketReliabilityStrip" data-testid="market-reliability-strip">
+      <summary className="marketReliabilityStripLabel">Datos · cobertura</summary>
+      <div className="marketReliabilityStripItem">
+        <span>cobertura</span>
+        <b>{Number.isFinite(rankingCoveragePct) ? pctShare(rankingCoveragePct) : "—"}</b>
+        <span>·</span>
+        <span>{operational}/{markets.length || "—"} mercados operativos</span>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>metodología</span>
+        <b>{methodologyOk ? "OK" : methodologyLabel}</b>
+      </div>
+      <div className="marketReliabilityStripItem">
+        <span>fallos</span>
+        <b>{issues || failures || 0}</b>
+      </div>
+      <summary className="marketReliabilityStripToggle" data-action="toggle">[+]</summary>
+      <div className="marketReliabilityStripDetail">
+        <CoverageDetail coverage={coverage} loading={coverageLoading} />
+        <MethodologyDetail health={methodologyHealth} loading={methodologyLoading} />
+        {!!coverage?.failures?.length && (
+          <div className="marketReliabilityBlock">
+            <div className="marketReliabilityBlockHead">
+              <h3>Fallos de datos</h3>
+              <span>{coverage.failures.length} entradas</span>
+            </div>
+            <div className="marketReliabilityRows">
+              {coverage.failures.slice(0, 6).map((f) => (
+                <div className="marketReliabilityRow" key={f.symbol || f.name}>
+                  <b>{f.symbol || "—"}</b>
+                  <span>{f.name || "—"}</span>
+                  <em>{f.reason || "—"}</em>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </details>
+  );
+}
+
+function CoverageDetail({ coverage, loading }) {
+  const markets = Array.isArray(coverage?.markets) ? coverage.markets : [];
+  if (coverage?.error) return <div className="dataNote">{coverage.error}</div>;
+  return (
+    <div className="marketReliabilityBlock">
+      <div className="marketReliabilityBlockHead">
+        <h3>Cobertura por mercado</h3>
+        <span>{loading ? "actualizando" : markets.length ? `${markets.length} mercados` : "—"}</span>
+      </div>
+      {markets.length ? (
+        <div className="marketReliabilityRows">
+          {markets.slice(0, 6).map((row) => {
+            const readiness = row.readiness || {};
+            return (
+              <div className="marketReliabilityRow" key={row.market}>
+                <b>{row.market}</b>
+                <span>{readiness.label || row.grade || "—"}</span>
+                <em>{pctShare(readiness.activationPct) || "—"}</em>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="marketSentimentRead">Sin datos de cobertura disponibles.</p>
+      )}
+    </div>
+  );
+}
+
+function MethodologyDetail({ health, loading }) {
+  const totals = health?.totals || {};
+  const buckets = health?.calibration?.buckets || {};
+  return (
+    <div className="marketReliabilityBlock">
+      <div className="marketReliabilityBlockHead">
+        <h3>Fiabilidad metodológica</h3>
+        <span>{loading ? "actualizando" : health?.label || "—"}</span>
+      </div>
+      {health?.error ? (
+        <div className="dataNote">{health.error}</div>
+      ) : (
+        <div className="marketReliabilityRows">
+          <div className="marketReliabilityRow"><b>{totals.passed ?? "—"}/{totals.cases ?? "—"}</b><span>casos validados</span><em>{totals.failed ?? 0} fallos</em></div>
+          <div className="marketReliabilityRow"><b>{buckets.plan ?? 0}</b><span>planes automáticos</span><em>debe permanecer en 0</em></div>
+          <div className="marketReliabilityRow"><b>{buckets.watch ?? 0}</b><span>vigilancia</span><em>candidatas para mirar</em></div>
+          <div className="marketReliabilityRow"><b>{buckets.observe ?? 0}</b><span>observables</span><em>fuera de zona</em></div>
+          <div className="marketReliabilityRow"><b>{buckets.block ?? 0}</b><span>bloqueadas</span><em>estructura no pasa</em></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Regiones (cards compactas; N1) ───────────────────────────────── */
 function GlobalRegionsPanel({ rows = [] }) {
   const REGIONS = [
-    {
-      key: "US",
-      name: "Estados Unidos",
-      flag: "🇺🇸",
-      benchmark: "S&P 500 (SPY)",
-      countries: ["US"],
-    },
-    {
-      key: "EU",
-      name: "Europa",
-      flag: "🇪🇺",
-      benchmark: "Euro Stoxx 50 (FEZ)",
-      countries: ["ES", "DE", "FR", "NL", "CH", "SE", "IT", "BE", "PT", "AT", "IE", "GB"],
-    },
-    {
-      key: "AS",
-      name: "Asia / Pacífico",
-      flag: "🇯🇵",
-      benchmark: "Nikkei 225 (TSE)",
-      countries: ["JP", "HK", "SG", "TW", "KR", "CN", "AU"],
-    },
-    {
-      key: "Global",
-      name: "Global / Emergentes",
-      flag: "🌐",
-      benchmark: "MSCI ACWI (ACWI)",
-      countries: [],
-    }
+    { key: "US", name: "Estados Unidos", flag: "🇺🇸", benchmark: "S&P 500 (SPY)", countries: ["US"] },
+    { key: "EU", name: "Europa", flag: "🇪🇺", benchmark: "Euro Stoxx 50 (FEZ)", countries: ["ES", "DE", "FR", "NL", "CH", "SE", "IT", "BE", "PT", "AT", "IE", "GB"] },
+    { key: "AS", name: "Asia / Pacífico", flag: "🇯🇵", benchmark: "Nikkei 225 (TSE)", countries: ["JP", "HK", "SG", "TW", "KR", "CN", "AU"] },
+    { key: "Global", name: "Global / Emergentes", flag: "🌐", benchmark: "MSCI ACWI (ACWI)", countries: [] },
   ];
 
   const regionCards = REGIONS.map((region) => {
     let filtered = [];
     if (region.key === "Global") {
       const otherCountries = new Set([
-        ...REGIONS[0].countries,
-        ...REGIONS[1].countries,
-        ...REGIONS[2].countries
+        ...REGIONS[0].countries, ...REGIONS[1].countries, ...REGIONS[2].countries,
       ]);
-      filtered = rows.filter((r) => {
-        const code = r.country || "US";
-        return !otherCountries.has(code);
-      });
+      filtered = rows.filter((r) => !otherCountries.has(r.country || "US"));
     } else {
       filtered = rows.filter((r) => region.countries.includes(r.country || "US"));
     }
@@ -317,256 +370,60 @@ function GlobalRegionsPanel({ rows = [] }) {
       .slice(0, 3);
 
     let rsLabel = "Neutral";
-    let rsClass = "neutral";
-    if (avgRs >= 80) {
-      rsLabel = "Fuerte";
-      rsClass = "bullish";
-    } else if (avgRs <= 45) {
-      rsLabel = "Débil";
-      rsClass = "bearish";
-    }
+    if (avgRs >= 80) rsLabel = "Fuerte";
+    else if (avgRs <= 45) rsLabel = "Débil";
 
     return (
-      <div className="card regionCard" key={region.key} style={{
-        background: "linear-gradient(180deg, #0e0e12 0%, #060609 100%)",
-        border: "1px solid rgba(255, 255, 255, 0.06)",
-        borderRadius: "10px",
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.02)",
-        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-        padding: "20px",
-        position: "relative",
-        overflow: "hidden"
-      }}>
-        <div className="regionCardHead" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <div className="regionTitleWrap" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span className="regionFlag" style={{ fontSize: "24px" }}>{region.flag}</span>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "600", color: "#ebebf2" }}>{region.name}</h3>
-              <span className="fine muted" style={{ fontSize: "11px", color: "rgba(235, 235, 242, 0.45)" }}>{region.benchmark}</span>
+      <div className="marketRegionCard" key={region.key}>
+        <div className="marketRegionCardHead">
+          <div className="marketRegionCardTitle">
+            <span className="marketRegionFlag" aria-hidden="true">{region.flag}</span>
+            <div>
+              <h3>{region.name}</h3>
+              <small>{region.benchmark}</small>
             </div>
           </div>
-          <span className={`sentimentPill ${rsClass}`} style={{ fontSize: "11px", padding: "2px 8px" }}>{rsLabel}</span>
+          <span className="marketRegionTag">{rsLabel}</span>
         </div>
-
-        <div className="regionMetricsGrid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "14px", marginBottom: "14px" }}>
-          <div className="regionMetric" style={{ display: "flex", flexDirection: "column" }}>
-            <b style={{ fontSize: "18px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{pct(amplitudePct)}</b>
-            <span style={{ fontSize: "10px", color: "rgba(235,235,242,0.45)" }}>Amplitud (SMA50)</span>
-          </div>
-          <div className="regionMetric" style={{ display: "flex", flexDirection: "column" }}>
-            <b style={{ fontSize: "18px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{avgRs.toFixed(0)}</b>
-            <span style={{ fontSize: "10px", color: "rgba(235,235,242,0.45)" }}>RS Promedio</span>
-          </div>
-          <div className="regionMetric" style={{ display: "flex", flexDirection: "column" }}>
-            <b style={{ fontSize: "18px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{total}</b>
-            <span style={{ fontSize: "10px", color: "rgba(235,235,242,0.45)" }}>En snapshot</span>
-          </div>
+        <div className="marketRegionMetrics">
+          <div className="marketRegionMetric"><b>{pct(amplitudePct)}</b><span>Amplitud (SMA50)</span></div>
+          <div className="marketRegionMetric"><b>{avgRs.toFixed(0)}</b><span>RS promedio</span></div>
+          <div className="marketRegionMetric"><b>{total}</b><span>En snapshot</span></div>
         </div>
-
-        <div className="regionLeadersSection">
-          <span className="eyebrow" style={{ display: "block", fontSize: "10px", fontWeight: "600", textTransform: "uppercase", color: "rgba(235,235,242,0.35)", letterSpacing: "0.05em", marginBottom: "8px" }}>Líderes de Mercado</span>
-          <div className="regionLeadersList" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            {leaders.map((leader) => {
-              const trustSignature = rowTrustSignatureForRow(leader);
-              return <a className="regionLeaderRow" href={stockUrl(leader.symbol)} key={leader.symbol} style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "8px 10px",
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.04)",
-                borderRadius: "6px",
-                textDecoration: "none",
-                transition: "all 0.2s ease",
-                cursor: "pointer"
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(37, 99, 235, 0.08)";
-                e.currentTarget.style.borderColor = "rgba(37, 99, 235, 0.25)";
-                e.currentTarget.style.transform = "translateX(2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.02)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.04)";
-                e.currentTarget.style.transform = "none";
-              }}
-              >
-                <span className="leaderTickerWrap" style={{ display: "flex", flexDirection: "column", gap: "2px", maxWidth: "60%" }}>
-                  <b className="tickerLink" style={{ fontSize: "13px", color: "#2563eb" }}>{leader.symbol}</b>
-                  <small className="muted textTruncate" style={{ fontSize: "11px", color: "rgba(235, 235, 242, 0.45)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{leader.companyName || leader.symbol}</small>
+        <div className="marketRegionLeaders">
+          {leaders.map((leader) => {
+            const trustSignature = rowTrustSignatureForRow(leader);
+            return (
+              <a className="marketRegionLeaderRow" href={stockUrl(leader.symbol)} key={leader.symbol}>
+                <span className="leaderTickerWrap">
+                  <b>{leader.symbol}</b>
+                  <small>{leader.companyName || leader.symbol}</small>
                   <RowTrustSignature signature={trustSignature} className="marketRowTrustSignature" />
                 </span>
-                <span className="leaderScoresWrap" style={{ display: "flex", gap: "10px" }}>
-                  <span className="leaderScore" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                    <small style={{ fontSize: "9px", color: "rgba(235,235,242,0.3)" }}>{metricShortLabel("objectiveScore")}</small>
-                    <b style={{ fontSize: "12px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{rowObjectiveScore(leader)?.toFixed(0) || "-"}</b>
+                <span className="marketRegionLeaderScores">
+                  <span className="marketRegionLeaderScore">
+                    <span>{metricShortLabel("objectiveScore")}</span>
+                    <b>{rowObjectiveScore(leader)?.toFixed(0) || "-"}</b>
                   </span>
-                  <span className="leaderScore" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                    <small style={{ fontSize: "9px", color: "rgba(235,235,242,0.3)" }}>RS</small>
-                    <b style={{ fontSize: "12px", color: "#ebebf2", fontFamily: "'JetBrains Mono', monospace" }}>{rowRsPrimary(leader)?.toFixed(0) || "-"}</b>
+                  <span className="marketRegionLeaderScore">
+                    <span>RS</span>
+                    <b>{rowRsPrimary(leader)?.toFixed(0) || "-"}</b>
                   </span>
                 </span>
-              </a>;
-            })}
-            {!leaders.length && (
-              <p className="fine muted" style={{ textAlign: "center", padding: "8px 0", fontSize: "11px", color: "rgba(235,235,242,0.35)" }}>
-                Sin activos analizados en esta geografía.
-              </p>
-            )}
-          </div>
+              </a>
+            );
+          })}
+          {!leaders.length && (
+            <p className="marketSentimentRead marketRegionLeaderEmpty">
+              Sin activos analizados en esta geografía.
+            </p>
+          )}
         </div>
       </div>
     );
   });
 
-  return (
-    <div className="grid grid2 globalRegionsGrid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
-      {regionCards}
-    </div>
-  );
-}
-
-function readinessWeight(row = {}) {
-  const state = row.readiness?.state || "";
-  if (state === "official_source_missing") return 0;
-  if (state === "coverage_gap") return 1;
-  if (state === "inventory_not_materialized") return 2;
-  if (state === "partial_provider" || state === "curated_core") return 3;
-  return 4;
-}
-
-function readinessClass(tone = "") {
-  if (tone === "pass") return "pass";
-  if (tone === "warn") return "warn";
-  return "neutral";
-}
-
-function CoverageReadinessPanel({ coverage, loading = false }) {
-  const rows = Array.isArray(coverage?.markets) ? coverage.markets : [];
-  const visibleRows = [...rows]
-    .sort((a, b) => readinessWeight(a) - readinessWeight(b) || a.priority - b.priority || b.gap - a.gap)
-    .slice(0, 4);
-  const hiddenRows = Math.max(0, rows.length - visibleRows.length);
-  const issueCount = rows.filter((row) => row.readiness?.blocksCoverageClaim).length;
-  const operational = rows.filter((row) => row.readiness?.operational).length;
-  const summary = coverage?.summary || {};
-  const rankingCoveragePct = summary.rankingEligibleCoveragePct ?? summary.actionableCoveragePct;
-  const hasError = Boolean(coverage?.error);
-
-  return <section className="card coverageReadinessPanel">
-    <div className="sectionTitle">
-      <div>
-        <h2>Fiabilidad de cobertura</h2>
-        <p className="fine">Inventario, fuente y materialización; cobertura de ranking no equivale a setup ni plan válido.</p>
-      </div>
-      <span className={`coverageReadinessStatus ${hasError || issueCount ? "warn" : "pass"}`}>
-        {loading && !coverage ? "Cargando" : hasError ? "Sin dato" : issueCount ? `${issueCount} avisos` : "Operativo"}
-      </span>
-    </div>
-
-    {coverage?.error ? <div className="dataNote error">{coverage.error}</div> : <>
-      <div className="coverageReadinessKpis">
-        <div><b>{num(summary.inventoryCandidates)}</b><span>Inventario</span></div>
-        <div><b>{pctShare(summary.inventoryCoveragePct)}</b><span>Cobertura inventario</span></div>
-        <div><b>{num(summary.scannedSymbols)}</b><span>Escaneados frescos</span></div>
-        <div><b>{pctShare(rankingCoveragePct)}</b><span>Cobertura ranking</span></div>
-        <div><b>{operational}/{rows.length || "-"}</b><span>Mercados operativos</span></div>
-      </div>
-
-      {loading && <p className="fine coverageReadinessLoading">Actualizando lectura de cobertura...</p>}
-
-      <div className="coverageReadinessGrid">
-        {visibleRows.map((row) => {
-          const readiness = row.readiness || {};
-          const provider = readiness.providerStatus || {};
-          const providerBadge = provider.status === "not_configured"
-            ? "no configurado"
-            : ["error", "degraded"].includes(provider.status)
-              ? provider.retryBlocked ? "fallo cacheado" : "degradado"
-              : "";
-          const sourceLine = [readiness.sourceClaim || row.activeSource, providerBadge].filter(Boolean).join(" · ");
-          return <div className={`coverageReadinessItem ${readinessClass(readiness.tone)}`} key={row.market}>
-            <div className="coverageReadinessHead">
-              <b>{row.market}</b>
-              <span>{readiness.label || row.grade}</span>
-            </div>
-            <p>{readiness.detail || row.nextAction}</p>
-            <div className="coverageReadinessMeta">
-              <span><b>{num(row.inventory?.candidates)}</b><small>inventario</small></span>
-              <span><b>{num(row.scan?.fresh)}</b><small>fresco</small></span>
-              <span><b>{num(row.scan?.rankingEligible ?? row.scan?.actionable)}</b><small>ranking</small></span>
-              <span><b>{pctShare(readiness.activationPct)}</b><small>activación</small></span>
-            </div>
-            <em>{sourceLine}</em>
-          </div>;
-        })}
-      </div>
-      {hiddenRows > 0 && <p className="fine coverageReadinessLoading">Mostrando los {visibleRows.length} mercados más prioritarios; {hiddenRows} adicionales quedan resumidos en los KPIs.</p>}
-    </>}
-  </section>;
-}
-
-function methodologyStatusClass(status = "") {
-  if (status === "pass") return "pass";
-  if (status === "missing" || status === "warn" || status === "fail" || status === "error") return "warn";
-  return "neutral";
-}
-
-function MethodologyHealthPanel({ health, loading = false }) {
-  const totals = health?.totals || {};
-  const calibration = health?.calibration || {};
-  const buckets = calibration.buckets || {};
-  const statusClass = methodologyStatusClass(health?.status);
-  const bucketRows = [
-    { key: "block", label: "Bloqueado", value: buckets.block, tone: "neutral", detail: "No reclama setup ni vigilancia cuando la estructura no pasa filtros." },
-    { key: "observe", label: "Observable", value: buckets.observe, tone: "neutral", detail: "Base medible, pero fuera de zona o sin suficiente confirmación." },
-    { key: "watch", label: "Vigilancia", value: buckets.watch, tone: "pass", detail: "Candidatas para mirar, todavía sin plan automático." },
-    { key: "plan", label: "Plan válido", value: buckets.plan, tone: buckets.plan > 0 ? "warn" : "pass", detail: "Debe permanecer en 0 hasta que la detección sea realmente fiable." },
-  ];
-
-  return <section className="card coverageReadinessPanel methodologyHealthPanel">
-    <div className="sectionTitle">
-      <div>
-        <h2>Fiabilidad metodológica</h2>
-        <p className="fine">Regresión de VCP, buckets block/observe/watch/plan y bloqueo de plan válido.</p>
-      </div>
-      <span className={`coverageReadinessStatus ${statusClass}`}>
-        {loading && !health ? "Cargando" : health?.label || "Sin dato"}
-      </span>
-    </div>
-
-    {health?.error ? <div className="dataNote error">{health.error}</div> : <>
-      <div className="coverageReadinessKpis">
-        <div><b>{Number.isFinite(totals.passed) && Number.isFinite(totals.cases) ? `${totals.passed}/${totals.cases}` : "-"}</b><span>Casos validados</span></div>
-        <div><b>{num(totals.failed)}</b><span>Fallos</span></div>
-        <div><b>{num(calibration.mismatches)}</b><span>Desajustes bucket</span></div>
-        <div><b>{num(buckets.plan)}</b><span>Planes automáticos</span></div>
-        <div><b>{calibration.guardrailsOk ? "OK" : "Revisar"}</b><span>Guardrails</span></div>
-      </div>
-
-      {loading && <p className="fine coverageReadinessLoading">Actualizando lectura metodologica...</p>}
-      {health?.detail && <p className="fine methodologyHealthNote">{health.detail}</p>}
-
-      <div className="coverageReadinessGrid methodologyBucketGrid">
-        {bucketRows.map((row) => <div className={`coverageReadinessItem ${row.tone}`} key={row.key}>
-          <div className="coverageReadinessHead">
-            <b>{row.label}</b>
-            <span>{num(row.value)}</span>
-          </div>
-          <p>{row.detail}</p>
-        </div>)}
-      </div>
-    </>}
-  </section>;
-}
-
-
-function colorClass(color) {
-  if (color === "green") return "btnActive";
-  if (color === "lime") return "btnActive";
-  if (color === "amber") return "btnGhost";
-  if (color === "red") return "error";
-  return "btnGhost";
+  return <div className="marketRegionsGrid">{regionCards}</div>;
 }
 
 export default function MarketHealthPage() {
@@ -624,7 +481,7 @@ export default function MarketHealthPage() {
       setCoverage({ ...core, scope: "core" });
       setCoverageLoading(false);
       fetchJsonWithTimeout(FULL_COVERAGE_PATH, 45000)
-        .then((full) => setCoverage({ ...full, scope: "full" }))
+        .then((full) => setCoverage((previous) => ({ ...previous, ...full, scope: "full" })))
         .catch((e) => {
           setCoverage((previous) => previous && !previous.error
             ? { ...previous, secondaryError: e.message || String(e), scope: previous.scope || "core" }
@@ -648,378 +505,303 @@ export default function MarketHealthPage() {
     loadCoverage();
   }, []);
 
-  return <main className="page marketHealthPage">
-    <section className="marketHealthHeader">
-      <div>
-        <span className="eyebrow">StatsEdge · Market Health</span>
-        <h1>Salud de mercado</h1>
-        <p>Índices, sectores, titulares y liderazgo del último snapshot.</p>
-      </div>
-      <div className="marketHealthActions">
-        <a className="btn" href="/">Screener</a>
-        <button className="btn btnPrimary" onClick={refreshAll} disabled={loading}>{loading ? "Actualizando..." : "Actualizar"}</button>
-      </div>
-    </section>
+  const tone = data ? regimeTone(data, data.indexes) : "humo";
 
-    {error && <section className="card error">{error}</section>}
-    {loading && !data && <section className="card">
-      <div className="sectionTitle"><h2>Cargando salud de mercado</h2><span className="fine">Índices, sectores y titulares</span></div>
-      <p className="fine">Actualizando lectura de mercado...</p>
-    </section>}
-
-    {!data && (coverage || methodologyHealth || coverageLoading || methodologyLoading) && <section className="marketHealthReliabilityGrid" aria-label="Fiabilidad de datos y metodología">
-      <CoverageReadinessPanel coverage={coverage} loading={coverageLoading} />
-      <MethodologyHealthPanel health={methodologyHealth} loading={methodologyLoading} />
-    </section>}
-
-    {data && <>
-      <section className={`marketRegimePanel ${colorClass(data.regime?.color)}`} style={{
-        background: "linear-gradient(135deg, #0a0a0d 0%, #121217 100%)",
-        border: "1px solid rgba(255, 255, 255, 0.08)",
-        borderLeft: `4px solid ${
-          data.regime?.color === "green" || data.regime?.color === "lime"
-            ? "#10b981"
-            : data.regime?.color === "amber"
-              ? "#f59e0b"
-              : data.regime?.color === "red"
-                ? "#ef4444"
-                : "#2563eb"
-        }`,
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.05)",
-        display: "grid",
-        gridTemplateColumns: "minmax(280px, .82fr) minmax(0, 1.18fr)",
-        gap: "1px",
-        overflow: "hidden",
-        borderRadius: "12px",
-        position: "relative",
-        marginBottom: "20px"
-      }}>
-        <div className="regimeLead" style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "24px",
-          padding: "24px 20px",
-          background: "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005))"
-        }}>
-          <div className="speedometer" style={{ width: "120px", height: "70px", position: "relative", flexShrink: 0 }}>
-            <svg viewBox="0 0 180 110" style={{ width: "100%", height: "100%" }}>
-              <defs>
-                <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#ef4444" />
-                  <stop offset="50%" stopColor="#f59e0b" />
-                  <stop offset="100%" stopColor="#10b981" />
-                </linearGradient>
-              </defs>
-              <path d="M 20,90 A 70,70 0 0,1 160,90" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="12" strokeLinecap="round" />
-              <path d="M 20,90 A 70,70 0 0,1 160,90" fill="none" stroke="url(#gaugeGradient)" strokeWidth="12" strokeLinecap="round" strokeDasharray="220" strokeDashoffset={220 - (Math.min(100, Math.max(0, data.marketScore ?? 50)) / 100) * 220} />
-              <g transform={`translate(90, 90) rotate(${(Math.min(100, Math.max(0, data.marketScore ?? 50)) / 100) * 180 - 90})`}>
-                <line x1="0" y1="0" x2="0" y2="-70" stroke="#2563eb" strokeWidth="5" strokeLinecap="round" filter="drop-shadow(0 0 4px rgba(37,99,235,0.6))" />
-                <circle cx="0" cy="0" r="8" fill="#ebebf2" />
-                <circle cx="0" cy="0" r="4" fill="#09090b" />
-              </g>
-              <text x="90" y="105" textAnchor="middle" fill="#ebebf2" fontSize="16" fontWeight="bold" fontFamily="'JetBrains Mono', monospace">{(data.marketScore ?? 50).toFixed(0)}</text>
-            </svg>
-          </div>
-          <div>
-            <span style={{
-              display: "block",
-              color: "var(--muted)",
-              fontSize: "10px",
-              fontWeight: "900",
-              letterSpacing: "0.13em",
-              textTransform: "uppercase"
-            }}>Régimen</span>
-            <strong style={{
-              display: "block",
-              marginTop: "4px",
-              color: "#ffffff",
-              fontSize: "26px",
-              fontWeight: "800",
-              lineHeight: "1.1",
-              letterSpacing: "-0.02em"
-            }}>{data.regime?.label || "-"}</strong>
-            <p style={{
-              margin: "6px 0 0 0",
-              color: "var(--soft)",
-              fontSize: "13px",
-              lineHeight: "1.45"
-            }}>{data.regime?.stance}</p>
-          </div>
+  return (
+    <main className="page marketHealthPage">
+      <section className="marketHealthHeader">
+        <div>
+          <span className="eyebrow">StatsEdge · Market Health</span>
+          <h1>Salud de mercado</h1>
+          <p>¿Qué exposición tolera este mercado hoy — y si tolera alguna, dónde está el liderazgo?</p>
         </div>
-        <div className="regimeMetrics" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "1px", background: "rgba(255,255,255,0.06)" }}>
-          <span style={{
-            minHeight: "112px",
-            padding: "18px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            background: "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.005))"
-          }}>
-            <b style={{ color: "#ffffff", fontSize: "32px", fontWeight: "800", letterSpacing: "-0.03em", fontFamily: "'JetBrains Mono', monospace" }}>{num(data.marketScore)}</b>
-            <small style={{ display: "block", color: "var(--muted)", fontSize: "10px", fontWeight: "900", letterSpacing: "0.13em", textTransform: "uppercase", marginTop: "2px" }}>Market score</small>
-            <div style={{ height: "4px", width: "100%", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden", marginTop: "8px" }}>
-              <div style={{ width: `${Math.min(100, Math.max(0, data.marketScore ?? 0))}%`, height: "100%", background: "linear-gradient(90deg, #ef4444, #10b981)", borderRadius: "2px" }} />
+        <div className="marketHealthActions">
+          <a className="btn" href="/">Screener</a>
+          <button className="btn btnPrimary" onClick={refreshAll} disabled={loading}>{loading ? "Actualizando..." : "Actualizar"}</button>
+        </div>
+      </section>
+
+      {error && <section className="card error">{error}</section>}
+
+      {(coverage || methodologyHealth || coverageLoading || methodologyLoading) && (
+        <ReliabilityStrip
+          coverage={coverage}
+          methodologyHealth={methodologyHealth}
+          coverageLoading={coverageLoading}
+          methodologyLoading={methodologyLoading}
+        />
+      )}
+
+      {loading && !data && (
+        <section className="card">
+          <div className="sectionTitle"><h2>Cargando salud de mercado</h2><span className="fine">Índices, sectores y liderazgo</span></div>
+          <div className="marketHealthSkeleton">
+            <i /><i /><i />
+          </div>
+        </section>
+      )}
+
+      {data && (
+        <>
+          {/* ─── N0 Veredicto de mercado ─────────────────────────── */}
+          <section className="marketRegimePanel" data-tone={tone}>
+            <div className="marketRegimeLead">
+              <div className="marketRegimeLabel">
+                <small>Régimen</small>
+                <h2>{data.regime?.label || "Sin dato"}</h2>
+                <p>
+                  {data.regime?.stance || "Lectura pendiente."}
+                </p>
+              </div>
+              <RegimeConstellation indexes={data.indexes} />
             </div>
-          </span>
-          <span style={{
-            minHeight: "112px",
-            padding: "18px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            background: "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.005))"
-          }}>
-            <b style={{ color: "#ffffff", fontSize: "32px", fontWeight: "800", letterSpacing: "-0.03em", fontFamily: "'JetBrains Mono', monospace" }}>{pct(data.breadthProxy?.pctAbove50)}</b>
-            <small style={{ display: "block", color: "var(--muted)", fontSize: "10px", fontWeight: "900", letterSpacing: "0.13em", textTransform: "uppercase", marginTop: "2px" }}>SMA50</small>
-            <div style={{ height: "4px", width: "100%", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden", marginTop: "8px" }}>
-              <div style={{ width: `${data.breadthProxy?.pctAbove50 || 0}%`, height: "100%", background: "#2563eb", borderRadius: "2px" }} />
+            <div className="marketRegimeKpis">
+              <div className="marketRegimeKpi">
+                <b>{num(data.marketScore)}</b>
+                <span>Market score</span>
+                <span className="marketRegimeKpiMeter"><i style={{ width: `${Math.min(100, Math.max(0, data.marketScore ?? 0))}%` }} /></span>
+              </div>
+              <div className="marketRegimeKpi">
+                <b>{data.breadthProxy?.indexesAbove30w ?? data.breadthProxy?.above30w ?? "—"}/{data.indexes?.length ?? "—"}</b>
+                <span>Sobre MM30s</span>
+              </div>
+              <div className="marketRegimeKpi">
+                <b>{pctShare(data.weinsteinTape?.pctSectorsStage2)}</b>
+                <span>Sectores E2</span>
+                <span className="marketRegimeKpiMeter"><i style={{ width: `${Math.min(100, Math.max(0, data.weinsteinTape?.pctSectorsStage2 ?? 0))}%` }} /></span>
+              </div>
+              <div className="marketRegimeKpi">
+                <b>{Number.isFinite(data.weinsteinTape?.distributionDays20Avg) && Number.isFinite(data.weinsteinTape?.accumulationDays20Avg) ? `${data.weinsteinTape.distributionDays20Avg.toFixed(1)}/${data.weinsteinTape.accumulationDays20Avg.toFixed(1)}` : "—"}</b>
+                <span>Dist/Acc 20d</span>
+              </div>
             </div>
-          </span>
-          <span style={{
-            minHeight: "112px",
-            padding: "18px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            background: "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.005))"
-          }}>
-            <b style={{ color: "#ffffff", fontSize: "32px", fontWeight: "800", letterSpacing: "-0.03em", fontFamily: "'JetBrains Mono', monospace" }}>{pct(data.breadthProxy?.pctAbove200)}</b>
-            <small style={{ display: "block", color: "var(--muted)", fontSize: "10px", fontWeight: "900", letterSpacing: "0.13em", textTransform: "uppercase", marginTop: "2px" }}>SMA200</small>
-            <div style={{ height: "4px", width: "100%", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden", marginTop: "8px" }}>
-              <div style={{ width: `${data.breadthProxy?.pctAbove200 || 0}%`, height: "100%", background: "#10b981", borderRadius: "2px" }} />
+          </section>
+
+          {/* ─── N1 Evidencia interna ─────────────────────────────── */}
+          {data.weinsteinTape && (
+            <section className="card marketTapeCard">
+              <div className="sectionTitle">
+                <h2>Weinstein tape</h2>
+                <span className="fine">MM30 semanas · amplitud · volumen</span>
+              </div>
+              <div className="marketTapeKpis">
+                <div className="marketTapeKpi"><b>{data.weinsteinTape.indexesAbove30w ?? "—"}/{data.weinsteinTape.indexesTotal ?? data.indexes?.length ?? "—"}</b><span>Sobre MM30s</span></div>
+                <div className="marketTapeKpi"><b>{pctShare(data.weinsteinTape.pctSectorsAbove30w)}</b><span>Sectores sobre MM30s</span></div>
+                <div className="marketTapeKpi"><b>{pctShare(data.weinsteinTape.pctSectorsStage4)}</b><span>Sectores E4</span></div>
+                <div className="marketTapeKpi"><b>{pctShare(data.weinsteinTape.pctSectorsAbove50 ?? data.sectorSummary?.above50)}</b><span>Sobre SMA50</span></div>
+              </div>
+              <div className="marketPulseEvidence">
+                <div className="evidencePanel">
+                  <h3>Sectores con confirmación</h3>
+                  {data.weinsteinTape.leadingSectors?.map((sector) => (
+                    <div className="evidenceRow" key={sector.symbol}>
+                      <span><b>{sector.name}</b><small>{sector.symbol}</small></span>
+                      <span><b>{num(sector.score)}</b><small>W tape</small></span>
+                      <span><b>{pct(sector.rs1m)}</b><small>RS 1M vs SPY</small></span>
+                    </div>
+                  ))}
+                  {!data.weinsteinTape.leadingSectors?.length && (
+                    <p className="fine evidencePanelEmpty">Sin sectores con confirmación suficiente.</p>
+                  )}
+                </div>
+                <div className="evidencePanel">
+                  <h3>Divergencias y presión</h3>
+                  {data.weinsteinTape.divergences?.map((item) => (
+                    <div className="evidenceRow" key={item}>
+                      <span><b>{item}</b><small>Lectura interna</small></span>
+                      <span><b>—</b><small>dato</small></span>
+                      <span><b>Contexto</b><small>interno</small></span>
+                    </div>
+                  ))}
+                  {!data.weinsteinTape.divergences?.length && (
+                    <p className="fine evidencePanelEmpty">Sin divergencias internas relevantes en esta muestra.</p>
+                  )}
+                </div>
+              </div>
+              <div className="marketSectorTapeRow">
+                <div>
+                  <b>Tipo de liderazgo</b>
+                  <span>Ofensivo E2: {data.weinsteinTape.offensiveStage2 ?? "—"} · Defensivo E2: {data.weinsteinTape.defensiveStage2 ?? "—"}</span>
+                </div>
+                <div>
+                  <b>Sensores seleccionados</b>
+                  <span>{listText(data.weinsteinTape.indicators?.slice(0, 3))}</span>
+                </div>
+              </div>
+            </section>
+          )}
+
+          <section className="card">
+            <div className="sectionTitle">
+              <h2>Liderazgo y fuerza relativa global</h2>
+              <span className="fine">Amplitud y líderes por regiones principales</span>
             </div>
-          </span>
-          <span style={{
-            minHeight: "112px",
-            padding: "18px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            background: "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.005))"
-          }}>
-            <b style={{ color: "#ffffff", fontSize: "32px", fontWeight: "800", letterSpacing: "-0.03em", fontFamily: "'JetBrains Mono', monospace" }}>{data.breadthProxy?.indexes ?? "-"}</b>
-            <small style={{ display: "block", color: "var(--muted)", fontSize: "10px", fontWeight: "900", letterSpacing: "0.13em", textTransform: "uppercase", marginTop: "2px" }}>Índices</small>
-            <div style={{ height: "4px", width: "100%", background: "rgba(255,255,255,0.06)", borderRadius: "2px", overflow: "hidden", marginTop: "8px" }}>
-              <div style={{ width: "100%", height: "100%", background: "#a855f7", borderRadius: "2px" }} />
+            <GlobalRegionsPanel rows={scanPulse?.rows || []} />
+          </section>
+
+          <section className="card">
+            <div className="sectionTitle">
+              <h2>Leadership pulse</h2>
+              <span className="fine">{scanPulse ? `Último snapshot · ${dateFmt(scanPulse.createdAt)} · ${scanPulse.marketRegime}` : "Sin snapshot local"}</span>
             </div>
-          </span>
-        </div>
-      </section>
+            {scanPulse ? (
+              <>
+                <div className="marketPulseKpis">
+                  <div className="marketPulseKpi"><b>{pctShare(scanPulse.rsLeaderPct)}</b><span>{metricShortLabel("rsGlobalPct")} ≥ 80</span></div>
+                  <div className="marketPulseKpi"><b>{pctShare(scanPulse.nearHighPct)}</b><span>Cerca máximos 52s</span></div>
+                  <div className="marketPulseKpi"><b>{pctShare(scanPulse.pressurePct)}</b><span>Deterioro 2+</span></div>
+                  <div className="marketPulseKpi"><b>{num(data.sectorSummary?.avgScore)}</b><span>Score medio sectorial</span></div>
+                </div>
+                <div className="marketPulseEvidence">
+                  <div className="evidencePanel">
+                    <h3>Liderazgo observado</h3>
+                    {scanPulse.leaders.map((row) => {
+                      const rs = rowRsDisplay(row);
+                      const rsKey = Number.isFinite(rowRsUniverse(row)) ? "rsGlobalPct" : "rsRating";
+                      const trustSignature = rowTrustSignatureForRow(row);
+                      return (
+                        <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
+                          <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small><RowTrustSignature signature={trustSignature} className="marketRowTrustSignature" /></span>
+                          <span><MarketTrustMetric row={row} metricKey={rsKey} label={rowRsDisplayLabel(row)} value={Number.isFinite(rs) ? rs.toFixed(0) : "-"} /><small>{rowRsDisplayLabel(row)}</small></span>
+                          <span><MarketTrustMetric row={row} metricKey="objectiveScore" label={metricShortLabel("objectiveScore")} value={rowObjectiveScore(row)?.toFixed(0) || "-"} /><small>{metricShortLabel("objectiveScore")}</small></span>
+                        </a>
+                      );
+                    })}
+                    {!scanPulse.leaders.length && <p className="fine">Sin liderazgo claro en el último snapshot.</p>}
+                  </div>
+                  <div className="evidencePanel">
+                    <h3>Deterioro a revisar</h3>
+                    {scanPulse.deterioration.map((row) => {
+                      const rs = rowRsDisplay(row);
+                      const rsKey = Number.isFinite(rowRsUniverse(row)) ? "rsGlobalPct" : "rsRating";
+                      const trustSignature = rowTrustSignatureForRow(row);
+                      return (
+                        <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
+                          <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small><RowTrustSignature signature={trustSignature} className="marketRowTrustSignature" /></span>
+                          <span><b>{row.deteriorationReasons.length}</b><small>evidencias</small></span>
+                          <span><MarketTrustMetric row={row} metricKey={rsKey} label={rowRsDisplayLabel(row)} value={Number.isFinite(rs) ? rs.toFixed(0) : "-"} /><small>{row.deteriorationReasons.slice(0, 2).join(", ")}</small></span>
+                        </a>
+                      );
+                    })}
+                    {!scanPulse.deterioration.length && <p className="fine">Sin deterioro técnico relevante en el último snapshot.</p>}
+                  </div>
+                </div>
+                <div className="marketSectorTapeRow">
+                  <div>
+                    <b>Concentración por país</b>
+                    <span>{scanPulse.countries.slice(0, 5).map((x) => `${x.name} ${x.leaders}/${x.count}`).join(" · ") || "—"}</span>
+                  </div>
+                  <div>
+                    <b>Concentración por tema</b>
+                    <span>{scanPulse.themes.slice(0, 5).map((x) => `${x.name} ${x.leaders}/${x.count}`).join(" · ") || "—"}</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="fine">Guarda un snapshot desde el screener para que esta sección muestre liderazgo, concentración por país/tema y deterioro observado.</p>
+            )}
+          </section>
 
-      {(coverage || methodologyHealth || coverageLoading || methodologyLoading) && <section className="marketHealthReliabilityGrid" aria-label="Fiabilidad de datos y metodología">
-        <CoverageReadinessPanel coverage={coverage} loading={coverageLoading} />
-        <MethodologyHealthPanel health={methodologyHealth} loading={methodologyLoading} />
-      </section>}
+          {!!data.sectorTape?.length && (
+            <section className="card">
+              <div className="sectionTitle"><h2>Amplitud sectorial</h2><a className="btnSmall" href="/sectors">Ver sectores</a></div>
+              <div className="marketTapeKpis">
+                <div className="marketTapeKpi"><b>{num(data.sectorSummary?.avgScore)}</b><span>Score medio</span></div>
+                <div className="marketTapeKpi"><b>{data.sectorSummary?.above50 ?? "—"}/{data.sectorSummary?.count ?? "—"}</b><span>Sobre SMA50</span></div>
+              </div>
+              <div className="marketSectorTapeRow">
+                <div><b>1M</b><span>{data.sectorSummary?.best1m || "—"} lidera · {data.sectorSummary?.worst1m || "—"} rezaga</span></div>
+                <div><b>Líderes / débiles</b><span>{listText(data.sectorSummary?.leaders)} · {listText(data.sectorSummary?.laggards)}</span></div>
+              </div>
+              {data.sectorTapeNote && <span className="fine">Detalle operativo en Sectores.</span>}
+            </section>
+          )}
 
-      {data.weinsteinTape && <section className="card marketTapeCard">
-        <div className="sectionTitle">
-          <h2>Weinstein tape</h2>
-          <span className="fine">MM30 semanas · amplitud · volumen</span>
-        </div>
-        <div className="kpis">
-          <div className="kpi"><b>{data.weinsteinTape.label || "-"}</b><span>Lectura interna</span></div>
-          <div className="kpi"><b>{data.weinsteinTape.indexesAbove30w}/{data.weinsteinTape.indexesTotal}</b><span>Índices sobre MM30s</span></div>
-          <div className="kpi"><b>{pctShare(data.weinsteinTape.pctSectorsAbove30w)}</b><span>Sectores sobre MM30s</span></div>
-          <div className="kpi"><b>{pctShare(data.weinsteinTape.pctSectorsStage2)}</b><span>Sectores Etapa 2</span></div>
-          <div className="kpi"><b>{pctShare(data.weinsteinTape.pctSectorsStage4)}</b><span>Sectores Etapa 4</span></div>
-          <div className="kpi"><b>{Number.isFinite(data.weinsteinTape.distributionDays20Avg) ? `${data.weinsteinTape.distributionDays20Avg.toFixed(1)} / ${data.weinsteinTape.accumulationDays20Avg?.toFixed(1) ?? "-"}` : "-"}</b><span>Distribución / acumulación 20d</span></div>
-        </div>
-        <div className="grid grid2" style={{ marginTop: 12 }}>
-          <div className="evidencePanel">
-            <h3>Sectores con confirmación</h3>
-            {data.weinsteinTape.leadingSectors?.map((sector) => <div className="evidenceRow" key={sector.symbol}>
-              <span><b>{sector.name}</b><small>{sector.symbol}</small></span>
-              <span><b>{num(sector.score)}</b><small>W tape</small></span>
-              <span><b>{pct(sector.rs1m)}</b><small>RS 1M vs SPY</small></span>
-            </div>)}
-            {!data.weinsteinTape.leadingSectors?.length && <p className="fine" style={{ padding: 12 }}>Sin sectores con confirmación suficiente.</p>}
-          </div>
-          <div className="evidencePanel">
-            <h3>Divergencias y presión</h3>
-            {data.weinsteinTape.divergences?.map((item) => <div className="evidenceRow" key={item}>
-              <span><b>{item}</b><small>Lectura interna</small></span>
-              <span><b>-</b><small>dato</small></span>
-              <span><b>Contexto</b><small>interno</small></span>
-            </div>)}
-            {!data.weinsteinTape.divergences?.length && <p className="fine" style={{ padding: 12 }}>Sin divergencias internas relevantes en esta muestra.</p>}
-          </div>
-        </div>
-        <div className="sectorPulse">
-          <div><b>Sensores seleccionados</b><span>{listText(data.weinsteinTape.indicators?.slice(0, 3))}</span></div>
-          <div><b>Tipo de liderazgo</b><span>Ofensivo Etapa 2: {data.weinsteinTape.offensiveStage2 ?? "-"} · Defensivo Etapa 2: {data.weinsteinTape.defensiveStage2 ?? "-"}</span></div>
-        </div>
-      </section>}
-
-      <section className="card">
-        <div className="sectionTitle">
-          <h2>Liderazgo y Fuerza Relativa Global</h2>
-          <span className="fine">Desglose de amplitud y líderes por regiones principales</span>
-        </div>
-        <GlobalRegionsPanel rows={scanPulse?.rows || []} />
-      </section>
-
-      <section className="card">
-        <div className="sectionTitle"><h2>Leadership pulse</h2><span className="fine">{scanPulse ? `Último snapshot · ${dateFmt(scanPulse.createdAt)} · ${scanPulse.marketRegime}` : "Sin snapshot local"}</span></div>
-        {scanPulse ? <>
-          <div className="kpis">
-            <div className="kpi"><b>{scanPulse.count}</b><span>acciones snapshot</span></div>
-            <div className="kpi"><b>{pctShare(scanPulse.rsLeaderPct)}</b><span>{metricShortLabel("rsGlobalPct")} &gt;= 80</span></div>
-            <div className="kpi"><b>{pctShare(scanPulse.nearHighPct)}</b><span>cerca de máximos 52s</span></div>
-            <div className="kpi"><b>{pctShare(scanPulse.pressurePct)}</b><span>deterioro 2+ evidencias</span></div>
-          </div>
-          <div className="grid grid2" style={{ marginTop: 12 }}>
-            <div className="evidencePanel">
-              <h3>Liderazgo observado</h3>
-              {scanPulse.leaders.map((row) => {
-                const rs = rowRsDisplay(row);
-                const rsKey = Number.isFinite(rowRsUniverse(row)) ? "rsGlobalPct" : "rsRating";
-                const trustSignature = rowTrustSignatureForRow(row);
-                return <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
-                  <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small><RowTrustSignature signature={trustSignature} className="marketRowTrustSignature" /></span>
-                  <span><MarketTrustMetric row={row} metricKey={rsKey} label={rowRsDisplayLabel(row)} value={Number.isFinite(rs) ? rs.toFixed(0) : "-"} /><small>{rowRsDisplayLabel(row)}</small></span>
-                  <span><MarketTrustMetric row={row} metricKey="objectiveScore" label={metricShortLabel("objectiveScore")} value={rowObjectiveScore(row)?.toFixed(0) || "-"} /><small>{metricShortLabel("objectiveScore")}</small></span>
-                </a>;
-              })}
-              {!scanPulse.leaders.length && <p className="fine">Sin liderazgo claro en el último snapshot.</p>}
+          {/* ─── N2 Lectura contraria: Sentimiento fusionado ────── */}
+          <section className="card marketSentimentCard">
+            <div className="sectionTitle">
+              <h2>Sentimiento <InfoHint text={`${news?.contrarianRead || social?.contrarianRead || "Sin lectura contraria disponible."} ${news?.note || ""}`} /></h2>
+              <span className="fine">Titulares + social · lectura contraria</span>
             </div>
-            <div className="evidencePanel">
-              <h3>Deterioro a revisar</h3>
-              {scanPulse.deterioration.map((row) => {
-                const rs = rowRsDisplay(row);
-                const rsKey = Number.isFinite(rowRsUniverse(row)) ? "rsGlobalPct" : "rsRating";
-                const trustSignature = rowTrustSignatureForRow(row);
-                return <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
-                  <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small><RowTrustSignature signature={trustSignature} className="marketRowTrustSignature" /></span>
-                  <span><b>{row.deteriorationReasons.length}</b><small>evidencias</small></span>
-                  <span><MarketTrustMetric row={row} metricKey={rsKey} label={rowRsDisplayLabel(row)} value={Number.isFinite(rs) ? rs.toFixed(0) : "-"} /><small>{row.deteriorationReasons.slice(0, 2).join(", ")}</small></span>
-                </a>;
-              })}
-              {!scanPulse.deterioration.length && <p className="fine">Sin deterioro técnico relevante en el último snapshot.</p>}
+            {(news?.error || social?.error) && (
+              <div className="dataNote marketSentimentCardNotice">
+                {news?.error || social?.error}
+              </div>
+            )}
+            <div className="marketSentimentGrid">
+              <SentimentRow data={news} title="Titulares" sampleLabel="titulares" />
+              <SentimentRow data={social} title="Social" sampleLabel="posts" />
             </div>
-          </div>
-          <div className="sectorPulse">
-            <div><b>Concentración por país</b><span>{scanPulse.countries.slice(0, 5).map((x) => `${x.name} ${x.leaders}/${x.count}`).join(" · ") || "-"}</span></div>
-            <div><b>Concentración por tema</b><span>{scanPulse.themes.slice(0, 5).map((x) => `${x.name} ${x.leaders}/${x.count}`).join(" · ") || "-"}</span></div>
-          </div>
-        </> : <p className="fine">Guarda un snapshot desde el screener para que esta sección muestre liderazgo, concentración por país/tema y deterioro observado.</p>}
-      </section>
+            <SentimentFeeds news={news} social={social} />
+          </section>
 
-      {!!data.sectorTape?.length && <section className="card">
-        <div className="sectionTitle"><h2>Amplitud sectorial</h2><a className="btnSmall" href="/sectors">Ver sectores</a></div>
-        <div className="kpis">
-          <div className="kpi"><b>{num(data.sectorSummary?.avgScore)}</b><span>Score medio</span></div>
-          <div className="kpi"><b>{data.sectorSummary?.above50 ?? "-"}/{data.sectorSummary?.count ?? "-"}</b><span>Sobre SMA50</span></div>
-          <div className="kpi"><b>{data.sectorSummary?.best1m || "-"}</b><span>Mejor 1M</span></div>
-          <div className="kpi"><b>{data.sectorSummary?.worst1m || "-"}</b><span>Peor 1M</span></div>
-        </div>
-        <div className="sectorPulse">
-          <div><b>Líderes</b><span>{listText(data.sectorSummary?.leaders)}</span></div>
-          <div><b>Débiles</b><span>{listText(data.sectorSummary?.laggards)}</span></div>
-        </div>
-        {data.sectorTapeNote && <span className="fine">Detalle operativo en Sectores.</span>}
-      </section>}
+          {/* ─── N3 Auditoría (colapsado por defecto) ───────────── */}
+          <section className="card">
+            <details>
+              <summary><h2 className="marketAuditSummary">Auditoría</h2></summary>
 
-      <section className="card">
-        <div className="sectionTitle"><h2>Pulso de noticias <InfoHint text={`${news?.contrarianRead || "Sin lectura contraria disponible."} ${news?.note || "La métrica solo lee titulares recientes; confirmar con precio, medias y amplitud."}`} /></h2><span className="fine">fuentes recientes</span></div>
-        {news?.error && <div className="dataNote error" style={{ marginBottom: 12 }}>{news.error}</div>}
-        <NewsSentimentIndex news={news} />
-        <div className="kpis">
-          <div className="kpi"><b>{num(news?.pessimismIndex)}</b><span>Índice pesimismo</span></div>
-          <div className="kpi"><b>{news?.regime || "-"}</b><span>Régimen titulares</span></div>
-          <div className="kpi"><b>{news?.bearish ?? "-"} · {pctShare(news?.bearishPct)}</b><span>Titulares bajistas</span></div>
-          <div className="kpi"><b>{news?.bullish ?? "-"} · {pctShare(news?.bullishPct)}</b><span>Titulares alcistas</span></div>
-        </div>
-      </section>
+              <div className="marketAuditGrid marketAuditGridSpaced">
+                <div>
+                  <div className="sectionTitle"><h3>Amplitud aproximada (absolutos)</h3><span className="fine">Método</span></div>
+                  <div className="marketAuditKv">
+                    <div className="marketAuditKvRow"><span>Índices analizados</span><b>{data.breadthProxy?.indexes ?? "—"}</b></div>
+                    <div className="marketAuditKvRow"><span>Sobre SMA50</span><b>{data.breadthProxy?.above50 ?? "—"}</b></div>
+                    <div className="marketAuditKvRow"><span>Sobre SMA200</span><b>{data.breadthProxy?.above200 ?? "—"}</b></div>
+                    <div className="marketAuditKvRow"><span>Sobre MM30 semanas</span><b>{data.breadthProxy?.above30w ?? "—"}</b></div>
+                    <div className="marketAuditKvRow"><span>SMA200 subiendo</span><b>{data.breadthProxy?.positiveSma200Slope ?? "—"}</b></div>
+                    <div className="marketAuditKvRow"><span>Cerca de máximo 52s</span><b>{data.breadthProxy?.near52wHigh ?? "—"}</b></div>
+                    <div className="marketAuditKvRow"><span>Base</span><b>Medias / amplitud / liderazgo</b></div>
+                    <div className="marketAuditKvRow"><span>Confirmación</span><b>Precio y snapshot</b></div>
+                  </div>
+                </div>
 
-      <section className="card">
-        <div className="sectionTitle"><h2>Pulso social <InfoHint text={`${social?.contrarianRead || "Sin lectura social disponible."} ${social?.note || "Usa X API oficial cuando hay token disponible; sin token queda como panel preparado."}`} /></h2><span className="fine">{social?.provider || "X API v2 recent search"}</span></div>
-        {social?.error && <div className="dataNote" style={{ marginBottom: 12 }}>{social.error}</div>}
-        <NewsSentimentIndex news={social} title="X / social sentiment tape" sampleLabel="posts" scoreLabel="Score medio social" />
-        <div className="kpis">
-          <div className="kpi"><b>{num(social?.pessimismIndex)}</b><span>Índice pesimismo social</span></div>
-          <div className="kpi"><b>{social?.regime || "-"}</b><span>Régimen social</span></div>
-          <div className="kpi"><b>{social?.bearish ?? "-"} · {pctShare(social?.bearishPct)}</b><span>Posts bajistas</span></div>
-          <div className="kpi"><b>{social?.bullish ?? "-"} · {pctShare(social?.bullishPct)}</b><span>Posts alcistas</span></div>
-        </div>
-        <div className="summaryRow"><span>Engagement total muestra</span><span>{num(social?.totalEngagement)}</span></div>
-        <div className="summaryRow"><span>Query X</span><span className="summaryValue"><b>{social?.query || "Sin query"}</b></span></div>
-      </section>
+                <div>
+                  <div className="sectionTitle"><h3>Índices principales</h3><span className="fine">{data.indexes?.length || 0} entradas</span></div>
+                  <div className="tableWrap">
+                    <div className="marketIndexesTableWrap">
+                      <table className="marketIndexesTable">
+                        <thead><tr>{["Índice", "Etapa", "Etapa 30s", "Score", "W tape", "1M", "3M", "6M", "52w", "Desde mín 52w", "MM30s", "SMA200 slope", "Dist/Acc", "Fecha"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
+                        <tbody>{data.indexes?.map((x) => (
+                          <tr key={x.symbol}>
+                            <td><b>{x.name}</b><small>{x.symbol}</small></td>
+                            <td data-col="stage">{x.stage || "—"}</td>
+                            <td data-col="stage">{x.stage30w || "—"}</td>
+                            <td data-col="data">{num(x.score)}</td>
+                            <td data-col="data">{num(x.weinsteinScore)}</td>
+                            <td data-col="data">{pct(x.perf1m)}</td>
+                            <td data-col="data">{pct(x.perf3m)}</td>
+                            <td data-col="data">{pct(x.perf6m)}</td>
+                            <td data-col="data">{pct(x.distance52w)}</td>
+                            <td data-col="data">{pct(x.advanceFrom52wLow)}</td>
+                            <td data-col="data">{pct(x.distanceSma30w)}</td>
+                            <td data-col="data">{pct(x.sma200Slope)}</td>
+                            <td data-col="data">{Number.isFinite(x.distributionDays20) ? `${x.distributionDays20}/${x.accumulationDays20}` : "—"}</td>
+                            <td data-col="data">{x.lastDate || "—"}</td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
 
-      {!!social?.rows?.length && <section className="card">
-        <div className="sectionTitle"><h2>Posts sociales recientes</h2><span className="fine">{social.total} posts · score ponderado {Number.isFinite(social.weightedAvgScore) ? social.weightedAvgScore.toFixed(1) : "-"}</span></div>
-        <div className="newsGrid">
-          {social.rows.slice(0, 12).map((item) => <a className="newsItem newsTextOnly" key={item.id || `${item.link}-${item.publishedAt}`} href={item.link} target="_blank" rel="noreferrer">
-            <span>
-              <i className={`sentimentPill ${sentimentClass(item.sentimentLabel)}`}>{item.sentimentLabel}</i>
-              <b>{item.title}</b>
-              <em>{item.publisher || "X"} · {dateFmt(item.publishedAt)}</em>
-              <small>{item.sentimentReasons?.length ? `${item.sentimentReasons.join(", ")} · engagement ${item.engagement || 0}` : `sin sesgo fuerte detectado · engagement ${item.engagement || 0}`}</small>
-            </span>
-          </a>)}
-        </div>
-      </section>}
-
-      {!!news?.rows?.length && <section className="card">
-        <div className="sectionTitle"><h2>Titulares de mercado</h2><span className="fine">{news.total} titulares · score medio {Number.isFinite(news.avgScore) ? news.avgScore.toFixed(1) : "-"}</span></div>
-        <div className="newsGrid">
-          {news.rows.slice(0, 12).map((item) => <a className="newsItem" key={`${item.link}-${item.publishedAt}`} href={item.link} target="_blank" rel="noreferrer">
-            {item.thumbnail && <img src={item.thumbnail} alt="" loading="lazy" />}
-            <span>
-              <i className={`sentimentPill ${sentimentClass(item.sentimentLabel)}`}>{item.sentimentLabel}</i>
-              <b>{item.title}</b>
-              <em>{item.publisher || "Fuente"} · {dateFmt(item.publishedAt)}</em>
-              <small>{item.sentimentReasons?.length ? item.sentimentReasons.join(", ") : "sin sesgo fuerte detectado"}</small>
-            </span>
-          </a>)}
-        </div>
-      </section>}
-
-      <section className="grid grid2">
-        <div className="card">
-          <h2>Amplitud aproximada</h2>
-          <div className="summaryRow"><span>Índices analizados</span><span>{data.breadthProxy?.indexes}</span></div>
-          <div className="summaryRow"><span>Sobre SMA50</span><span>{data.breadthProxy?.above50}</span></div>
-          <div className="summaryRow"><span>Sobre SMA200</span><span>{data.breadthProxy?.above200}</span></div>
-          <div className="summaryRow"><span>Sobre MM30 semanas</span><span>{data.breadthProxy?.above30w ?? "-"}</span></div>
-          <div className="summaryRow"><span>SMA200 subiendo</span><span>{data.breadthProxy?.positiveSma200Slope}</span></div>
-          <div className="summaryRow"><span>Cerca de máximo 52s</span><span>{data.breadthProxy?.near52wHigh}</span></div>
-        </div>
-        <div className="card">
-          <h2>Método <InfoHint text="La lectura de régimen combina índices sobre medias largas, pendiente de SMA200, momentum, amplitud aproximada y concentración de liderazgo. La página muestra evidencias, no instrucciones operativas." /></h2>
-          <div className="summaryRow"><span>Base</span><span>Medias / amplitud / liderazgo</span></div>
-          <div className="summaryRow"><span>Confirmacion</span><span>Precio y snapshot</span></div>
-        </div>
-      </section>
-
-      <section className="card">
-        <h2>Índices principales</h2>
-        <div className="tableWrap">
-          <table className="table">
-            <thead><tr>{["Índice", "Etapa", "Etapa 30s", "Score", "W Tape", "1M", "3M", "6M", "52w", "Desde mínimo 52w", "MM30s", "SMA200 slope", "Dist/Acc", "Fecha"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
-            <tbody>{data.indexes?.map((x) => <tr key={x.symbol}>
-              <td><b>{x.name}</b><br /><span className="fine">{x.symbol}</span></td>
-              <td>{x.stage}</td>
-              <td>{x.stage30w || "-"}</td>
-              <td className="ticker">{num(x.score)}</td>
-              <td className="ticker">{num(x.weinsteinScore)}</td>
-              <td>{pct(x.perf1m)}</td>
-              <td>{pct(x.perf3m)}</td>
-              <td>{pct(x.perf6m)}</td>
-              <td>{pct(x.distance52w)}</td>
-              <td>{pct(x.advanceFrom52wLow)}</td>
-              <td>{pct(x.distanceSma30w)}</td>
-              <td>{pct(x.sma200Slope)}</td>
-              <td>{Number.isFinite(x.distributionDays20) ? `${x.distributionDays20}/${x.accumulationDays20}` : "-"}</td>
-              <td>{x.lastDate}</td>
-            </tr>)}</tbody>
-          </table>
-        </div>
-      </section>
-
-      {data.failures?.length > 0 && <section className="card">
-        <h2>Fallos de datos</h2>
-        {data.failures.map((f) => <div className="summaryRow" key={f.symbol}><span>{f.symbol} · {f.name}</span><span>{f.reason}</span></div>)}
-      </section>}
-    </>}
-  </main>;
+                {data.failures?.length > 0 && (
+                  <div>
+                    <div className="sectionTitle"><h3>Fallos de datos</h3><span className="fine">{data.failures.length} entradas</span></div>
+                    <div className="marketAuditKv">
+                      {data.failures.map((f) => (
+                        <div className="marketAuditKvRow" key={f.symbol}>
+                          <span>{f.symbol} · {f.name}</span>
+                          <b>{f.reason}</b>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </details>
+          </section>
+        </>
+      )}
+    </main>
+  );
 }

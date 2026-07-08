@@ -1,757 +1,1147 @@
-/* styles/market-health.css — reglas exclusivas de la ruta market-health. Extraído de app/globals.css. */
+/* styles/market-health.css — exclusiva de /market-health.
+   Migrado a Pizarra y Tiza v2 (tokens-v2.css). Spec: docs/design/MARKET-HEALTH-IA.md.
+   Sistema: 3 niveles + pozo (--surface-inset) + franja infra.
+   La página no usa ningún estilo inline: paleta, tipografía, espaciado, radios y
+   superficies son exclusivamente tokens. */
 
-.newsMoodPanel {
-  margin:0 0 12px;
-  padding:14px;
-  border:1px solid var(--line);
-  border-radius:4px;
-  background:linear-gradient(180deg,rgba(10,10,9,.96),rgba(4,4,4,.98));
-}
-
-.newsMoodTop {
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
-  gap:14px;
-  align-items:center;
-}
-
-.newsMoodTop h3 {
-  margin:4px 0 6px;
-  color:var(--text);
-  font-size:24px;
-  line-height:1.05;
-}
-
-.newsMoodTop p {
-  max-width:760px;
-  margin:0;
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.45;
-}
-
-.moodDial {
-  width:96px;
-  height:96px;
-  display:grid;
-  place-items:center;
-  align-content:center;
-  border:1px solid var(--line);
-  border-radius:50%;
-  background:
-    radial-gradient(circle at center,#050505 0 57%,transparent 58%),
-    conic-gradient(from -90deg,#ef4444 0 calc(var(--mood) * 1%),var(--line) 0 100%);
-}
-
-.moodDial b {
-  color:var(--text);
-  font-size:28px;
-  line-height:1;
-}
-
-.moodDial span {
-  margin-top:4px;
-  color:var(--muted);
-  font-size:9px;
-  font-weight:900;
-  letter-spacing:.09em;
-  text-transform:uppercase;
-}
-
-.sentimentLegend {
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px 14px;
-  color:var(--soft);
-  font-size:12px;
-}
-
-.sentimentLegend span {
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-}
-
-.sentimentLegend i {
-  width:9px;
-  height:9px;
-  border-radius:2px;
-}
-
-.sentimentLegend b {
-  color:var(--text);
-  font-weight:900;
-}
-
-.contrarianGauge {
-  margin-top:14px;
-}
-
-.gaugeTrack {
-  position:relative;
-  height:8px;
-  border-radius:999px;
-  background:linear-gradient(90deg,#22c55e 0%,#888888 50%,#ef4444 100%);
-}
-
-.gaugeTrack i {
-  position:absolute;
-  top:50%;
-  width:15px;
-  height:15px;
-  border:2px solid #050505;
-  border-radius:50%;
-  background:#ffffff;
-  transform:translate(-50%,-50%);
-  box-shadow:0 0 0 1px var(--line2);
-}
-
-.gaugeLabels {
-  display:flex;
-  justify-content:space-between;
-  margin-top:7px;
-  color:var(--muted);
-  font-size:10px;
-  font-weight:900;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-}
-
-.moodMetrics {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:0;
-  margin-top:12px;
-  overflow:hidden;
-  border:1px solid var(--line);
-  border-radius:4px;
-}
-
-.moodMetrics span {
-  min-height:58px;
-  padding:10px;
-  border-right:1px solid var(--line);
-  background:var(--surface2);
-}
-
-.moodMetrics span:last-child {border-right:0
-}
-
-.moodMetrics b {
-  display:block;
-  color:var(--text);
-  font-size:19px;
-  line-height:1.05;
-}
-
-.moodMetrics small {
-  display:block;
-  margin-top:5px;
-  color:var(--muted);
-  font-size:10px;
-  font-weight:850;
-  letter-spacing:.05em;
-  text-transform:uppercase;
-}
-
-.eyebrow {
-  color:#888888;
-  font-size:10px;
-  font-weight:900;
-  letter-spacing:.14em;
-}
-
-.evidencePanel {
-  min-width:0;
-  border:1px solid var(--line);
-  border-radius:4px;
-  background:var(--surface2);
-}
-
-.evidencePanel h3 {
-  margin:0;
-  padding:12px;
-  border-bottom:1px solid var(--line);
-  color:var(--senal);
-  font-size:12px;
-  letter-spacing:.14em;
-  text-transform:uppercase;
-}
-
-.evidenceRow {
-  display:grid;
-  grid-template-columns:minmax(0,1.25fr) 72px minmax(84px,.7fr);
-  gap:10px;
-  align-items:center;
-  min-height:54px;
-  padding:10px 12px;
-  border-bottom:1px solid var(--line);
-  color:var(--soft);
-}
-
-.evidenceRow:last-child {
-  border-bottom:0;
-}
-
-.evidenceRow:hover {
-  background:var(--surface2);
-}
-
-.evidenceRow b {
-  display:block;
-  color:var(--text);
-  font-size:13px;
-  line-height:1.15;
-}
-
-.marketTrustMetric {
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  min-width:0;
-  color:inherit;
-  font-variant-numeric:tabular-nums;
-}
-
-.marketTrustMetric b {
-  display:block;
-  color:var(--text);
-  font-size:13px;
-  line-height:1.15;
-}
-
-.marketTrustMetric i {
-  flex:0 0 auto;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:9px;
-  height:9px;
-  border:1px solid var(--line);
-  border-radius:999px;
-  color:#cbd5e1;
-  background:rgba(15,23,42,.72);
-  font-size:6.5px;
-  font-style:normal;
-  font-weight:850;
-  line-height:1;
-  text-transform:uppercase;
-}
-
-.marketTrustMetric.source-proxy i {
-  border-color:var(--line);
-  color:#cbd5e1;
-  background:var(--surface2);
-}
-
-.marketTrustMetric.source-review i {
-  border-color:var(--risk);
-  color:var(--oxido);
-  background:var(--oxido-dim);
-}
-
-.marketTrustMetric.source-blocked i {
-  border-color:var(--risk);
-  color:var(--risk);
-  background:var(--oxido-dim);
-}
-
-.marketRowTrustSignature {
-  width:max-content;
-  max-width:100%;
-  margin-top:5px;
-}
-
-.marketRowTrustSignature .rowTrustChip {
-  min-width:21px;
-  min-height:17px;
-  padding:1px 4px;
-}
-
-.marketRowTrustSignature .rowTrustChip em {
-  font-size:7px;
-}
-
-.marketRowTrustSignature .rowTrustChip b {
-  font-size:8px;
-}
-
-.evidenceRow small {
-  display:block;
-  margin-top:3px;
-  color:var(--muted);
-  font-size:10px;
-  line-height:1.25;
-  overflow-wrap:anywhere;
-}
-
-@media(max-width:620px) {
-  .newsMoodTop {grid-template-columns:1fr
-  }
-  .moodDial {width:82px;height:82px
-  }
-  .moodMetrics {grid-template-columns:1fr
-  }
-  .moodMetrics span {border-right:0;border-bottom:1px solid var(--line)
-  }
-  .moodMetrics span:last-child {border-bottom:0
-  }
-}
+/* ─── Cabecera de página ─────────────────────────────────────────── */
 
 .marketHealthPage {
-  max-width:1500px;
+  padding: var(--space-6) var(--space-5) var(--space-8);
 }
 
 .marketHealthHeader {
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
-  gap:24px;
-  align-items:end;
-  padding:22px 0 18px;
-  margin-bottom:18px;
-  border-bottom:1px solid var(--line);
-}
-
-.marketHealthHeader .eyebrow {
-  display:block;
-  margin-bottom:10px;
-  color:var(--muted);
-  font-size:11px;
-  font-weight:720;
-  letter-spacing:.13em;
-  text-transform:uppercase;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-7);
 }
 
 .marketHealthHeader h1 {
-  margin:0;
-  color:var(--text);
+  margin: var(--space-2) 0 var(--space-2);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-stretch: var(--stretch-display);
+  font-weight: 600;
+  font-size: var(--display-m);
+  line-height: var(--lh-display);
+  letter-spacing: var(--track-display);
+  text-transform: uppercase;
 }
 
 .marketHealthHeader p {
-  max-width:680px;
-  margin:10px 0 0;
-  color:var(--muted);
-  font-size:15px;
-  line-height:1.4;
+  margin: 0;
+  max-width: 720px;
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-m);
+  line-height: var(--lh-body);
 }
 
 .marketHealthActions {
-  display:flex;
-  gap:10px;
-  align-items:center;
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
+
+/* ─── Franja de infraestructura (bajo cabecera, sobre N0) ───────────
+   Receta estándar del sistema: tiza/humo sobre --surface, --line2.
+   Expandible: contiene resumen agregado + bloque colapsado con detalle. */
+
+.marketReliabilityStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: baseline;
+  margin: 0 0 var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  line-height: var(--lh-body);
+}
+
+.marketReliabilityStripLabel {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+}
+
+.marketReliabilityStripItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.marketReliabilityStripItem b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-s);
+  font-weight: 600;
+}
+
+.marketReliabilityStripToggle {
+  margin-left: auto;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease;
+}
+
+.marketReliabilityStripToggle:hover {
+  color: var(--text);
+  border-color: var(--line2);
+}
+
+.marketReliabilityStripDetail {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.marketReliabilityBlock {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.marketReliabilityBlockHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.marketReliabilityBlockHead h3 {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+}
+
+.marketReliabilityBlockHead span {
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+}
+
+.marketReliabilityRows {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-inset);
+}
+
+.marketReliabilityRow {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.7fr) minmax(0, 2fr) auto;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--line);
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+}
+
+.marketReliabilityRow:first-child {
+  border-top: 0;
+}
+
+.marketReliabilityRow b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: var(--text-s);
+}
+
+.marketReliabilityRow em {
+  font-style: normal;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+/* ─── N0 Veredicto de mercado ───────────────────────────────────────
+   Panel régimen = constelación de la Curva de Etapa (variante hero).
+   Único color semántico de la página: el marcador agregado del régimen. */
 
 .marketRegimePanel {
-  display:grid;
-  grid-template-columns:minmax(280px,.82fr) minmax(0,1.18fr);
-  gap:1px;
-  overflow:hidden;
-  margin-bottom:18px;
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  background:var(--line);
-}
-
-.regimeLead,
-.regimeMetrics span {
-  background:linear-gradient(180deg,var(--surface2),var(--surface2)),var(--surface);
-}
-
-.regimeLead {
-  padding:18px 20px;
-}
-
-.regimeLead span,
-.regimeMetrics small {
-  display:block;
-  color:var(--muted);
-  font-size:10px;
-  font-weight:720;
-  letter-spacing:.13em;
-  text-transform:uppercase;
-}
-
-.regimeLead strong {
-  display:block;
-  margin-top:8px;
-  color:var(--text);
-  font-size:clamp(22px,2.6vw,34px);
-  line-height:1.05;
-  font-weight:760;
-  letter-spacing:-.025em;
-}
-
-.regimeLead p {
-  margin:10px 0 0;
-  color:var(--soft);
-  line-height:1.45;
-}
-
-.regimeMetrics {
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:1px;
-}
-
-.regimeMetrics span {
-  min-height:112px;
-  padding:18px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-}
-
-.regimeMetrics b {
-  color:var(--text);
-  font-size:clamp(24px,2.7vw,38px);
-  line-height:1;
-  font-weight:760;
-  letter-spacing:-.03em;
-}
-
-.marketTapeCard {
-  margin-top:0;
-}
-
-.coverageReadinessPanel {
-  display:grid;
-  gap:14px;
-  margin-bottom:18px;
-}
-
-.coverageReadinessStatus {
-  flex:0 0 auto;
-  min-height:28px;
-  display:inline-flex;
-  align-items:center;
-  border:1px solid var(--line);
-  border-radius:999px;
-  padding:0 10px;
-  background:var(--surface2);
-  color:#cbd5e1;
-  font-size:11px;
-  font-weight:720;
-  white-space:nowrap;
-}
-
-.coverageReadinessKpis {
-  display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:1px;
-  overflow:hidden;
-  border:1px solid var(--line);
-  border-radius:9px;
-  background:var(--surface2);
-}
-
-.coverageReadinessKpis > div {
-  min-height:78px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  padding:13px 14px;
-  background:rgba(8,10,13,.82);
-}
-
-.coverageReadinessKpis b {
-  color:#f5f7fb;
-  font-size:clamp(20px,2vw,28px);
-  line-height:1;
-  font-weight:760;
-  letter-spacing:0;
-}
-
-.coverageReadinessKpis span {
-  margin-top:7px;
-  color:#87909f;
-  font-size:10px;
-  font-weight:690;
-  line-height:1.2;
-  text-transform:uppercase;
-}
-
-.coverageReadinessLoading {
-  margin:0;
-  color:#8c96a6;
-}
-
-.coverageReadinessGrid {
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:10px;
-}
-
-.coverageReadinessItem {
-  display:grid;
-  gap:9px;
-  min-width:0;
-  border:1px solid var(--line);
-  border-left:3px solid var(--line);
-  border-radius:8px;
-  background:var(--surface2);
-  padding:12px;
-}
-
-.coverageReadinessHead {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-
-.coverageReadinessHead b {
-  color:var(--text);
-  font-size:13px;
-  font-weight:760;
-  letter-spacing:.04em;
-}
-
-.coverageReadinessHead span {
-  min-height:22px;
-  display:inline-flex;
-  align-items:center;
-  border:1px solid var(--line);
-  border-radius:999px;
-  padding:0 8px;
-  color:#d8dee9;
-  background:var(--surface2);
-  font-size:10.5px;
-  font-weight:720;
-  white-space:nowrap;
-}
-
-.coverageReadinessItem p {
-  margin:0;
-  color:#a4adba;
-  font-size:12px;
-  line-height:1.45;
-}
-
-.coverageReadinessMeta {
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:1px;
-  overflow:hidden;
-  border:1px solid var(--line);
-  border-radius:7px;
-  background:var(--surface2);
-}
-
-.coverageReadinessMeta span {
-  min-width:0;
-  display:flex;
-  flex-direction:column;
-  padding:8px;
-  background:rgba(8,10,13,.62);
-}
-
-.coverageReadinessMeta b {
-  color:var(--text);
-  font-size:13px;
-  font-weight:740;
-}
-
-.coverageReadinessMeta small,
-.coverageReadinessItem em {
-  color:var(--muted);
-  font-size:10px;
-  font-style:normal;
-  line-height:1.25;
-  text-transform:uppercase;
-}
-
-.methodologyHealthPanel {
-  margin-bottom:18px;
-}
-
-.methodologyHealthPanel .coverageReadinessKpis {
-  grid-template-columns:repeat(5,minmax(0,1fr));
-}
-
-.methodologyBucketGrid {
-  grid-template-columns:repeat(4,minmax(0,1fr));
-}
-
-.methodologyHealthNote {
-  margin:0;
-  color:#9aa4b2;
-}
-
-@media(max-width:980px) {
-  .marketHealthHeader,
-  .marketRegimePanel {
-    grid-template-columns:1fr;
-  }
-  .marketHealthActions {
-    justify-content:flex-start;
-  }
-  .coverageReadinessGrid {
-    grid-template-columns:1fr;
-  }
-  .methodologyBucketGrid {
-    grid-template-columns:repeat(2,minmax(0,1fr));
-  }
-}
-
-@media(max-width:560px) {
-  .marketHealthHeader h1 {
-    font-size:36px;
-  }
-  .marketHealthActions {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-  }
-  .regimeMetrics span {
-    min-height:86px;
-    padding:14px;
-  }
-  .coverageReadinessStatus {
-    justify-self:start;
-  }
-  .coverageReadinessKpis,
-  .coverageReadinessMeta {
-    grid-template-columns:1fr 1fr;
-  }
-  .methodologyHealthPanel .coverageReadinessKpis,
-  .methodologyBucketGrid {
-    grid-template-columns:1fr;
-  }
-}
-
-.marketHealthHeader h1 {
-  font-size: clamp(20px, 2.2vw, 28px) !important;
-  font-weight: 650 !important;
-  letter-spacing: -.03em !important;
-  line-height: 1.1 !important;
-}
-
-/* ── 5. Eyebrow / breadcrumb label ── */
-
-.eyebrow,
-.marketHealthHeader .eyebrow {
-  font-size: 10px !important;
-  font-weight: 560 !important;
-  letter-spacing: .08em !important;
-  color: #48515e !important;
-  text-transform: uppercase !important;
-  margin-bottom: 8px !important;
-  display: block !important;
-}
-
-/* 29. Desktop and tablet research workspace pass */
-
-.marketHealthReliabilityGrid {
   display: grid;
-  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
-  gap: 14px;
-  align-items: start;
-  margin-bottom: 18px;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-5);
+  margin-bottom: var(--space-5);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-panel);
 }
 
-.marketHealthReliabilityGrid .coverageReadinessGrid,
-.marketHealthReliabilityGrid .methodologyBucketGrid {
-  grid-template-columns: repeat(2,minmax(0,1fr));
+.marketRegimeLead {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.8fr);
+  gap: var(--space-5);
+  align-items: center;
 }
 
-.marketHealthReliabilityGrid .coverageReadinessKpis > div {
-  min-height: 68px;
-  padding: 11px 12px;
+.marketRegimeLabel {
+  display: grid;
+  gap: var(--space-2);
 }
 
-.marketHealthReliabilityGrid .coverageReadinessKpis b {
-  font-size: clamp(18px,1.55vw,24px);
+.marketRegimeLabel small {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
 }
 
-.marketHealthReliabilityGrid .coverageReadinessItem {
-  gap: 7px;
-  padding: 10px 11px;
+.marketRegimeLabel h2 {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-stretch: var(--stretch-display);
+  font-weight: 600;
+  font-size: var(--display-m);
+  line-height: var(--lh-display);
+  letter-spacing: var(--track-display);
+  text-transform: uppercase;
 }
 
-.marketHealthReliabilityGrid .coverageReadinessItem p {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+.marketRegimeLabel p {
+  margin: 0;
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-m);
+  line-height: var(--lh-body);
 }
 
-.marketHealthReliabilityGrid .coverageReadinessItem em {
+.marketRegimeLabel p u {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.marketRegimeLabel p u[data-tone="senal"] { text-decoration-color: var(--senal); }
+.marketRegimeLabel p u[data-tone="oxido"] { text-decoration-color: var(--oxido); }
+.marketRegimeLabel p u[data-tone="humo"]  { text-decoration-color: var(--humo); }
+
+/* Curva de Etapa — variante constelación.
+   Contenedor con aspect-ratio 120:48 = viewBox del SVG. El SVG se escala
+   uniformemente (sin preserveAspectRatio="none") para que el texto NO se
+   distorsione y los puntos se vean nítidos en cualquier ancho de columna. */
+.marketRegimeConstellation {
+  display: grid;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.marketRegimeConstellationSvg {
   display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 120 / 56;
+  max-width: 100%;
+  overflow: visible; /* los puntos pueden pintarse ligeramente fuera del viewBox
+                        por el stroke; el contenedor del panel los recorta con
+                        el border-radius del panel de régimen. */
+}
+
+.marketRegimeConstellation .curve-track {
+  fill: none;
+  stroke: var(--curve-track);
+  stroke-width: var(--curve-stroke);
+  stroke-linecap: round;
+}
+
+.marketRegimeConstellation .curve-index-dot {
+  fill: var(--tiza);
+  stroke: var(--surface);
+  stroke-width: 0.6;
+}
+
+.marketRegimeConstellation .curve-index-label {
+  fill: var(--muted);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: 4.5px;  /* unidades del viewBox: a 600px de ancho se ven ~22px,
+                         a 1200px ~45px. Proporcional, sin distorsión. */
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  /* Permitimos que el navegador use anti-aliasing nativo del viewBox */
+}
+
+.marketRegimeConstellation .curve-marker {
+  stroke: var(--surface);
+  stroke-width: 1;
+}
+
+.marketRegimeConstellation .curve-marker[data-tone="senal"] { fill: var(--senal); }
+.marketRegimeConstellation .curve-marker[data-tone="oxido"] { fill: var(--oxido); }
+.marketRegimeConstellation .curve-marker[data-tone="humo"]  { fill: var(--humo); }
+
+.marketRegimeConstellation .curve-zone-tick {
+  fill: var(--muted);
+  font-family: var(--font-body);
+  font-size: 3.5px;  /* unidades del viewBox: a 600px de ancho se ven ~17px */
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Leader lines: solo aparecen cuando un label se ha desplazado >5 unidades
+   del punto (típicamente por solape). Humo tenue, sin desaparecer la pista
+   que asocia cada ticker a su posición real en la curva. */
+.marketRegimeConstellation .curve-leader {
+  stroke: var(--humo);
+  stroke-width: 0.4;
+  stroke-dasharray: 1 1;  /* discontinua — distingue de la curva principal */
+  opacity: .55;
+  fill: none;
+}
+
+/* El contenedor padre (marketRegimePanel) ya recorta con border-radius; el SVG
+   con aspect-ratio propio evita texto estirado y mantiene proporciones. */
+
+.marketRegimeKpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface-inset);
+  overflow: hidden;
+}
+
+.marketRegimeKpi {
+  padding: var(--space-3) var(--space-4);
+  border-right: 1px solid var(--line);
+  display: grid;
+  gap: 2px;
+}
+
+.marketRegimeKpi:last-child { border-right: 0; }
+
+.marketRegimeKpi b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--data-xl);
+  font-weight: 500;
+  line-height: var(--lh-data);
+}
+
+.marketRegimeKpi span {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+}
+
+.marketRegimeKpiMeter {
+  display: block;
+  width: 100%;
+  height: 4px;
+  margin-top: var(--space-2);
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.marketRegimeKpiMeter i {
+  display: block;
+  height: 100%;
+  background: var(--humo);
+}
+
+.evidencePanelEmpty {
+  padding: var(--space-3);
+}
+
+.marketAuditGridSpaced {
+  margin-top: var(--space-4);
+}
+
+.marketSentimentCardNotice {
+  margin-bottom: var(--space-3);
+}
+
+.marketAuditSummary {
+  display: inline-block;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .marketRegimeLead { grid-template-columns: 1fr; }
+  .marketRegimeKpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .marketRegimeKpi:nth-child(2) { border-right: 0; }
+  .marketRegimeKpi:nth-child(1),
+  .marketRegimeKpi:nth-child(2) { border-bottom: 1px solid var(--line); }
+}
+
+/* ─── N1 Evidencia interna ────────────────────────────────────────── */
+
+.marketTapeCard { /* hereda .card (panel) */ }
+
+.marketTapeKpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface-inset);
+  overflow: hidden;
+}
+
+.marketTapeKpi {
+  padding: var(--space-3) var(--space-4);
+  border-right: 1px solid var(--line);
+  display: grid;
+  gap: 2px;
+}
+
+.marketTapeKpi:last-child { border-right: 0; }
+
+.marketTapeKpi b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--data-l);
+  font-weight: 500;
+  line-height: var(--lh-data);
+}
+
+.marketTapeKpi span {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+}
+
+@media (max-width: 760px) {
+  .marketTapeKpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .marketTapeKpi:nth-child(2) { border-right: 0; }
+  .marketTapeKpi:nth-child(1),
+  .marketTapeKpi:nth-child(2) { border-bottom: 1px solid var(--line); }
+}
+
+/* ─── Regiones (cards compactas en grid) ──────────────────────────── */
+
+.marketRegionsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.marketRegionCard {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.marketRegionCardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.marketRegionCardTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.marketRegionFlag {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.marketRegionCardTitle h3 {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--text-l);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.marketRegionCardTitle small {
+  display: block;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.marketRegionTag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 8px;
+  border: 1px solid var(--line2);
+  border-radius: var(--radius-pill);
+  background: var(--surface2);
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.marketRegionMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.marketRegionMetric { display: grid; gap: 2px; }
+
+.marketRegionMetric b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--data-m);
+  font-weight: 500;
+  line-height: var(--lh-data);
+}
+
+.marketRegionMetric span {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+}
+
+.marketRegionLeaders { display: grid; gap: var(--space-1); }
+
+.marketRegionLeaderRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-inset);
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.marketRegionLeaderRow:hover {
+  background: var(--surface2);
+  border-color: var(--line2);
+}
+
+.marketRegionLeaderRow b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-size: var(--text-s);
+  font-weight: 600;
+}
+
+.marketRegionLeaderRow small {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  margin-top: 2px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.marketRegionLeaderScores {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.marketRegionLeaderScore {
+  display: grid;
+  gap: 1px;
+  text-align: right;
+}
+
+.marketRegionLeaderScore span {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+}
+
+.marketRegionLeaderScore b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-s);
+  font-weight: 600;
+}
+
+.marketRegionLeaderEmpty {
+  text-align: center;
+  padding: var(--space-2) 0;
+}
+
+/* ─── Leadership pulse ────────────────────────────────────────────── */
+
+.marketPulseKpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface-inset);
+  overflow: hidden;
+}
+
+.marketPulseKpi {
+  padding: var(--space-3) var(--space-4);
+  border-right: 1px solid var(--line);
+  display: grid;
+  gap: 2px;
+}
+
+.marketPulseKpi:last-child { border-right: 0; }
+
+.marketPulseKpi b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--data-l);
+  font-weight: 500;
+  line-height: var(--lh-data);
+}
+
+.marketPulseKpi span {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+}
+
+@media (max-width: 760px) {
+  .marketPulseKpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .marketPulseKpi:nth-child(2) { border-right: 0; }
+  .marketPulseKpi:nth-child(1),
+  .marketPulseKpi:nth-child(2) { border-bottom: 1px solid var(--line); }
+}
+
+.marketPulseEvidence {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+@media (max-width: 760px) { .marketPulseEvidence { grid-template-columns: 1fr; } }
+
+/* ─── Evidence panels (weinsteinTape + Leadership pulse) ────────────
+   Cada panel = card con cabecera h3 + filas evidenceRow.
+   Cada evidenceRow = grid de 3 columnas (ticker+meta · métrica · métrica)
+   con gap horizontal. Migrado del legacy (pre-Pizarra) con tokens v2. */
+
+.evidencePanel {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface2);
+}
+
+.evidencePanel h3 {
+  margin: 0;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.evidenceRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 86px minmax(96px, 0.8fr);
+  gap: var(--space-3);
+  align-items: center;
+  min-height: 54px;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--line);
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  text-decoration: none;
+  transition: background .15s ease;
+}
+
+.evidenceRow:last-child { border-bottom: 0; }
+
+.evidenceRow:hover {
+  background: var(--surface);
+}
+
+.evidenceRow > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.evidenceRow > span:first-child {
+  /* Columna 1: ticker (b) + nombre/razones (small) + trust signature */
+}
+
+.evidenceRow b {
+  display: block;
+  color: var(--text);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-s);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.evidenceRow small {
+  display: block;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.evidenceRow > span:not(:first-child) {
+  text-align: right;
+}
+
+.evidenceRow > span:not(:first-child) b {
+  font-size: var(--data-s);
+}
+
+.evidenceRow > span:not(:first-child) small {
+  text-align: right;
+}
+
+/* Wrapper interno del ticker (específico de marketRegionLeaderRow). */
+.leaderTickerWrap {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  max-width: 60%;
+}
+
+/* Micro-label uppercase (eyebrow) usado en cabeceras de página. */
+.eyebrow {
+  display: block;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+/* ─── Amplitud sectorial ──────────────────────────────────────────── */
+
+.marketSectorTapeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin-top: var(--space-3);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface-inset);
+  overflow: hidden;
+}
+
+.marketSectorTapeRow > div {
+  padding: var(--space-3) var(--space-4);
+  border-right: 1px solid var(--line);
+}
+
+.marketSectorTapeRow > div:last-child { border-right: 0; }
+
+.marketSectorTapeRow b {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.marketSectorTapeRow span {
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  font-weight: 500;
+}
+
+/* ─── N2 Lectura contraria: Sentimiento (un componente, dos filas) ── */
+
+.marketSentimentCard { /* hereda .card */ }
+
+.marketSentimentGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+@media (max-width: 760px) { .marketSentimentGrid { grid-template-columns: 1fr; } }
+
+.marketSentimentRow {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface-inset);
+}
+
+.marketSentimentRowHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.marketSentimentRowHead small {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+}
+
+.marketSentimentIndex {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--data-l);
+  font-weight: 500;
+  line-height: var(--lh-data);
+}
+
+.marketSentimentBar {
+  display: flex;
+  height: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.marketSentimentBar i { display: block; height: 100%; background: var(--humo); }
+
+.marketSentimentBar i[data-segment="bearish"]  { background: var(--humo); opacity: .5; }
+.marketSentimentBar i[data-segment="neutral"]  { background: var(--humo); }
+.marketSentimentBar i[data-segment="bullish"]  { background: var(--tiza); }
+
+.marketSentimentMarker {
+  position: relative;
+  height: 6px;
+  margin-top: var(--space-2);
+}
+
+.marketSentimentMarker i {
+  position: absolute;
+  top: -3px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--tiza);
+  transform: translateX(-50%);
+}
+
+.marketSentimentLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.marketSentimentLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.marketSentimentLegend b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.marketSentimentRead {
+  margin: 0;
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  font-style: italic;
+  line-height: var(--lh-body);
+}
+
+.marketSentimentFeeds {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.marketSentimentFeeds details {
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.marketSentimentFeeds .newsGrid {
+  border-radius: 0;
+  border-top: 1px solid var(--line);
+}
+
+.marketSentimentFeeds summary {
+  cursor: pointer;
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  list-style: none;
+}
+
+.marketSentimentFeeds summary::-webkit-details-marker { display: none; }
+
+.marketSentimentFeeds summary:hover { color: var(--text); }
+
+.marketSentimentFeeds details[open] summary {
+  color: var(--text);
+  border-bottom: 1px solid var(--line);
+}
+
+.marketSentimentFeeds summary b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-weight: 600;
+  margin-left: var(--space-2);
+}
+
+.sentimentPill {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  margin: 0 0 var(--space-2);
+  padding: 2px 8px;
+  border: 1px solid var(--line2);
+  border-radius: var(--radius-pill);
+  background: var(--surface2);
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.sentimentPill[data-direction="up"]   { color: var(--text); }
+.sentimentPill[data-direction="down"] { color: var(--text); }
+.sentimentPill[data-direction="flat"] { color: var(--soft); }
+
+.sentimentPill i {
+  font-style: normal;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+/* ─── N3 Auditoría: tabla sobre el pozo ───────────────────────────── */
+
+.marketIndexesTableWrap {
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface-inset);
+  overflow: hidden;
+}
+
+.marketIndexesTable {
+  width: 100%;
+  min-width: 1280px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.marketIndexesTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--line2);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  text-align: left;
   white-space: nowrap;
 }
 
-.marketHealthReliabilityGrid .coverageReadinessMeta span {
-  padding: 6px 7px;
+.marketIndexesTable tbody td {
+  padding: var(--space-3) var(--space-3);
+  border-top: 1px solid var(--line);
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  white-space: nowrap;
 }
 
-@media(max-width: 820px) {
-  .marketHealthReliabilityGrid {
-    grid-template-columns: 1fr;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessGrid {
-    grid-template-columns: repeat(2,minmax(0,1fr));
-  }
-  .marketHealthReliabilityGrid .methodologyBucketGrid {
-    grid-template-columns: repeat(4,minmax(0,1fr));
-  }
+.marketIndexesTable tbody tr:first-child td { border-top: 0; }
+
+.marketIndexesTable tbody td b {
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 600;
 }
 
-@media(max-width: 720px) {
-  .marketHealthReliabilityGrid .coverageReadinessGrid,
-  .marketHealthReliabilityGrid .methodologyBucketGrid {
-    grid-template-columns: 1fr;
-  }
+.marketIndexesTable tbody td small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
 }
 
-@media(max-width: 560px) {
-  .marketHealthReliabilityGrid {
-    gap: 10px;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessPanel {
-    gap: 10px;
-    padding: 12px !important;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessKpis,
-  .marketHealthReliabilityGrid .methodologyHealthPanel .coverageReadinessKpis,
-  .marketHealthReliabilityGrid .methodologyBucketGrid {
-    grid-template-columns: repeat(2,minmax(0,1fr)) !important;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessKpis > div {
-    min-height: 58px;
-    padding: 9px 8px;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessKpis b {
-    font-size: 18px;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessKpis span {
-    margin-top: 5px;
-    font-size: 8.5px;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessGrid {
-    gap: 7px;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessItem {
-    gap: 6px;
-    padding: 9px;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessItem p {
-    -webkit-line-clamp: 1;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessMeta {
-    grid-template-columns: repeat(4,minmax(0,1fr)) !important;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessMeta span {
-    padding: 5px 4px;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessMeta b {
-    font-size: 11px;
-  }
-  .marketHealthReliabilityGrid .coverageReadinessMeta small {
-    font-size: 7.5px;
-  }
-  .marketHealthReliabilityGrid > .coverageReadinessPanel:not(.methodologyHealthPanel) .coverageReadinessGrid,
-  .marketHealthReliabilityGrid > .coverageReadinessPanel:not(.methodologyHealthPanel) .coverageReadinessLoading {
-    display: none;
-  }
+.marketIndexesTable tbody td[data-col="data"] {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
 }
+
+.marketIndexesTable tbody td[data-col="stage"] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Bloque Método / Amplitud en absolutos (clave-valor) */
+.marketAuditGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.marketAuditKv {
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface-inset);
+  overflow: hidden;
+}
+
+.marketAuditKvRow {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.7fr) minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--line);
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+}
+
+.marketAuditKvRow:first-child { border-top: 0; }
+
+.marketAuditKvRow span {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.marketAuditKvRow b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-m);
+  font-weight: 500;
+  text-align: right;
+}
+
+/* ─── Estado / carga ─────────────────────────────────────────────── */
+
+.marketHealthSkeleton {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.marketHealthSkeleton i {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+}
+
+.marketHealthSkeleton i:nth-child(2) { width: 60%; }
+.marketHealthSkeleton i:nth-child(3) { width: 80%; }
