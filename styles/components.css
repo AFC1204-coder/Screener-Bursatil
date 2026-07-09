@@ -92,8 +92,8 @@
 }
 
 .infoHint.warn {
-  border-color:rgba(250,204,21,.8);
-  color:#facc15;
+  border-color:var(--senal);
+  color:var(--senal);
 }
 
 .infoHint em {
@@ -397,7 +397,7 @@
 .structureSummary.watch span {color:#bfdbfe
 }
 
-.structureSummary.warn span {color:#facc15
+.structureSummary.warn span {color:var(--senal)
 }
 
 .structureSummary.muted span {color:#a1a1aa
@@ -463,7 +463,7 @@
   flex-direction:column;
   justify-content:center;
   padding:11px 12px;
-  background:rgba(8,10,13,.7);
+  background:var(--surface2);
 }
 
 .coverageAuditGrid b {
@@ -540,7 +540,7 @@
 .discoveryStatus.warn {
   border-color:var(--risk);
   background:var(--oxido-dim);
-  color:#f8d38d;
+  color:var(--senal);
 }
 
 .discoveryHealthGrid {
@@ -560,7 +560,7 @@
   flex-direction:column;
   justify-content:center;
   padding:11px 12px;
-  background:rgba(8,10,13,.7);
+  background:var(--surface2);
 }
 
 .discoveryHealthGrid b {
@@ -828,7 +828,7 @@
 .sentimentBars .neutral,.sentimentLegend .neutral {background:#9b958b
 }
 
-.sentimentBars .bullish,.sentimentLegend .bullish {background:#22c55e
+.sentimentBars .bullish,.sentimentLegend .bullish {background:var(--decision-vigilar)
 }
 
 .newsItem b {
@@ -1590,7 +1590,7 @@
 }
 
 .vcpGate.pass {
-  border-color:rgba(74,222,128,.22);
+  border-color:var(--decision-vigilar);
   background:var(--senal-dim);
 }
 
@@ -1644,7 +1644,7 @@
   padding:0 8px;
   border:1px solid var(--accent);
   border-radius:4px;
-  background:rgba(15,23,42,.94);
+  background:var(--surface2);
   box-shadow:0 6px 18px rgba(0,0,0,.35);
   color:var(--accent);
   opacity:0;
@@ -2074,7 +2074,7 @@
 .reviewQueueSummaryChip.active {
   border-color:var(--accent);
   background:var(--senal-dim);
-  color:#eaf2ff;
+  color:var(--text);
 }
 
 .reviewQueueSummaryChip.good {
@@ -2104,7 +2104,7 @@
 
 .reviewPrioritySummary {
   border-bottom-color:var(--accent);
-  background:rgba(15,23,42,.16);
+  background:var(--surface2);
 }
 
 .reviewQueueSummaryChip.priority-focus-now {
@@ -2129,8 +2129,8 @@
 
 .reviewQueueSummaryChip.warn,
 .reviewQueueSummaryChip.watch {
-  border-color:rgba(250,204,21,.16);
-  background:rgba(250,204,21,.052);
+  border-color:var(--senal);
+  background:var(--senal-dim);
 }
 
 .reviewQueueSummaryChip.bad {
@@ -2171,7 +2171,7 @@
 }
 
 .reviewQueueSummaryChip b {
-  color:#f5f7fb;
+  color:var(--text);
   font-size:12px;
   font-weight:850;
 }
@@ -2205,7 +2205,7 @@
   padding:2px 5px;
   border:1px solid var(--line);
   border-radius:999px;
-  background:rgba(15,23,42,.24);
+  background:var(--surface2);
   line-height:1;
 }
 
@@ -2363,8 +2363,8 @@
 
 .reviewQueueDecisionBadge.warn,
 .reviewQueueDecisionBadge.watch {
-  border-color:rgba(250,204,21,.2);
-  background:rgba(250,204,21,.07);
+  border-color:var(--senal);
+  background:var(--senal-dim);
   color:var(--senal);
 }
 
@@ -2753,7 +2753,7 @@
   padding:9px;
   border:1px solid var(--line);
   border-radius:7px;
-  background:rgba(15,23,42,.24);
+  background:var(--surface2);
 }
 
 .reviewDecisionPanel.good {
@@ -2763,8 +2763,8 @@
 
 .reviewDecisionPanel.warn,
 .reviewDecisionPanel.watch {
-  border-color:rgba(250,204,21,.16);
-  background:rgba(250,204,21,.045);
+  border-color:var(--senal);
+  background:var(--senal-dim);
 }
 
 .reviewDecisionPanel.bad {
@@ -2779,7 +2779,7 @@
   padding:9px;
   border:1px solid var(--line);
   border-radius:7px;
-  background:rgba(15,23,42,.22);
+  background:var(--surface2);
 }
 
 .reviewPriorityPanel.good {
@@ -2924,7 +2924,7 @@
 
 .reviewDecisionCards span.warn,
 .reviewDecisionCards span.watch {
-  border-color:rgba(250,204,21,.16);
+  border-color:var(--senal);
 }
 
 .reviewDecisionCards span.bad {
@@ -3016,8 +3016,8 @@
 }
 
 .reviewDecisionEvidence small.warn {
-  border-color:rgba(250,204,21,.16);
-  background:rgba(250,204,21,.055);
+  border-color:var(--senal);
+  background:var(--senal-dim);
   color:#f8e3a3;
 }
 
@@ -3102,8 +3102,8 @@
 }
 
 .reviewResolveRail button.warn {
-  border-color:rgba(250,204,21,.24);
-  color:#f3d98a;
+  border-color:var(--senal);
+  color:var(--senal);
 }
 
 .reviewResolveRail button.bad {
@@ -3119,7 +3119,7 @@
 .reviewResolveRail button.active {
   border-color:var(--line2);
   background:#e8e9ed;
-  color:#08090b;
+  color:var(--bg);
 }
 
 .reviewResolveRail button:disabled {
@@ -3147,7 +3147,7 @@
 }
 
 .decisionHistoryItem.warn {
-  border-left-color:rgba(250,204,21,.72);
+  border-left-color:var(--senal);
 }
 
 .decisionHistoryItem.bad {
@@ -3195,7 +3195,7 @@
   background:var(--surface);
 }
 
-.previewStage.good {border-color:rgba(199,240,90,.45);background:rgba(199,240,90,.09);color:#e9ff91
+.previewStage.good {border-color:var(--decision-vigilar);background:var(--senal-dim);color:var(--decision-vigilar)
 }
 
 .previewStage.bad {border-color:var(--risk);background:var(--risk);color:#fecaca
@@ -3240,13 +3240,13 @@
 .sparkMa200 {stroke:rgba(157,151,140,.62);stroke-width:1.3
 }
 
-.sparkPrice {stroke:var(--decision-vigilar);stroke-width:2.6;filter:drop-shadow(0 0 7px rgba(199,240,90,.22))
+.sparkPrice {stroke:var(--decision-vigilar);stroke-width:2.6;filter:drop-shadow(0 0 7px var(--senal-dim))
 }
 
 .miniSparkline.down .sparkPrice {stroke:var(--oxido);filter:drop-shadow(0 0 7px rgba(237,162,71,.2))
 }
 
-.sparkLast {fill:#ffffff;stroke:#050505;stroke-width:1.5
+.sparkLast {fill:var(--tiza);stroke:#050505;stroke-width:1.5
 }
 
 .marketChip:hover,.marketChip.active {
@@ -3411,7 +3411,7 @@
 }
 
 .sourcePulseDot.green {
-  background: #22c55e;
+  background: var(--decision-vigilar);
   animation: pulseGreen 2s infinite;
 }
 
@@ -3421,7 +3421,7 @@
 }
 
 .sourcePulseDot.red {
-  background: #ef4444;
+  background: var(--risk);
   animation: pulseRed 2s infinite;
 }
 
@@ -3520,7 +3520,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #ef4444;
+  color: var(--risk);
   font-size: 12px;
 }
 
@@ -3611,13 +3611,13 @@
   flex-shrink: 0;
 }
 
-.statusLED.green { background: #22c55e; box-shadow: 0 0 5px #22c55e;
+.statusLED.green { background: var(--decision-vigilar); box-shadow: 0 0 5px var(--decision-vigilar);
 }
 
 .statusLED.yellow { background: var(--risk); box-shadow: 0 0 5px var(--risk);
 }
 
-.statusLED.red { background: #ef4444; box-shadow: 0 0 5px #ef4444;
+.statusLED.red { background: var(--risk); box-shadow: 0 0 5px var(--risk);
 }
 
 .statusLED.blue { background: var(--accent); box-shadow: 0 0 5px var(--accent);
@@ -3640,9 +3640,9 @@
 }
 
 .providerBadge.yellow {
-  background: rgba(234, 179, 8, 0.08);
-  color: #facc15;
-  border: 1px solid rgba(234, 179, 8, 0.15);
+  background: var(--senal-dim);
+  color: var(--senal);
+  border: 1px solid var(--senal);
 }
 
 .providerBadge.red {
@@ -4059,7 +4059,7 @@ body:has(.stockModal[open]) .bottomNav {
 .profilePrice .price {
   font-size: 36px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -4070,10 +4070,10 @@ body:has(.stockModal[open]) .bottomNav {
   font-variant-numeric: tabular-nums;
 }
 
-.profilePrice .change.up { color: #22c55e;
+.profilePrice .change.up { color: var(--decision-vigilar);
 }
 
-.profilePrice .change.down { color: #ef4444;
+.profilePrice .change.down { color: var(--risk);
 }
 
 .screenerReviewQueue .reviewQueueList {
@@ -4113,16 +4113,16 @@ body:has(.stockModal[open]) .bottomNav {
   background:var(--surface);
 }
 
-.perfBox b.up { color: #22c55e;
+.perfBox b.up { color: var(--decision-vigilar);
 }
 
-.perfBox b.down { color: #ef4444;
+.perfBox b.down { color: var(--risk);
 }
 
-.profileRow b.up { color: #22c55e;
+.profileRow b.up { color: var(--decision-vigilar);
 }
 
-.profileRow b.down { color: #ef4444;
+.profileRow b.down { color: var(--risk);
 }
 
 @media (max-width: 1024px) {
@@ -4145,7 +4145,7 @@ body:has(.stockModal[open]) .bottomNav {
 .rsLine.up {stroke:var(--decision-vigilar)
 }
 
-.rsLine.down {stroke:#ff7a7a
+.rsLine.down {stroke:var(--risk)
 }
 
 .coverageScore {
@@ -4179,9 +4179,9 @@ body:has(.stockModal[open]) .bottomNav {
 }
 
 .signalStatMini.good {
-  border-color:rgba(199,240,90,.3);
+  border-color:var(--decision-vigilar);
   color:var(--decision-vigilar);
-  background:rgba(199,240,90,.08);
+  background:var(--senal-dim);
 }
 
 .signalStatMini.bad {
@@ -4402,13 +4402,13 @@ h2 {
   color:var(--muted);
 }
 
-.stockQuoteLine b.up {color:#22c55e
+.stockQuoteLine b.up {color:var(--decision-vigilar)
 }
 
-.stockQuoteLine b.down {color:#ef4444
+.stockQuoteLine b.down {color:var(--risk)
 }
 
-.signalStat.good b {color:#22c55e
+.signalStat.good b {color:var(--decision-vigilar)
 }
 
 .signalStat.neutral b {color:#fafafa
@@ -4556,8 +4556,8 @@ h2 {
   place-items:center;
   border:1px solid rgba(0,0,0,.55);
   border-radius:999px;
-  background:#22c55e;
-  color:#041006;
+  background:var(--decision-vigilar);
+  color:var(--bg);
   font-size:9px;
   line-height:1;
 }
@@ -4579,8 +4579,8 @@ h2 {
 
 .decisionEvidenceChecklist.compact.warn,
 .decisionEvidenceChecklist.compact.watch {
-  border-color:rgba(250,204,21,.16);
-  background:rgba(250,204,21,.055);
+  border-color:var(--senal);
+  background:var(--senal-dim);
 }
 
 .decisionEvidenceChecklist.compact.bad {
@@ -4635,7 +4635,7 @@ h2 {
 
 .decisionEvidenceChecklist.compact strong.warn,
 .decisionEvidenceChecklist.compact strong.watch {
-  border-color:rgba(250,204,21,.17);
+  border-color:var(--senal);
   color:var(--senal);
 }
 
@@ -4699,8 +4699,8 @@ h2 {
 
 .mobileResultTrustLine span.warn,
 .mobileResultTrustLine span.watch {
-  border-color: rgba(250,204,21,.16);
-  background: rgba(250,204,21,.055);
+  border-color: var(--senal);
+  background: var(--senal-dim);
 }
 
 .mobileResultTrustLine span.bad {
@@ -4812,7 +4812,7 @@ h2 {
     padding:0 12px;
   }
   .searchBar .btnPrimary:not(:disabled) {
-    color:#090a0c;
+    color:var(--bg);
   }
   .bottomNav {
     left:8px;
@@ -5443,7 +5443,7 @@ h2 {
 .coverageReadinessStatus.warn {
   border-color:var(--risk);
   background:var(--oxido-dim);
-  color:#f8d38d;
+  color:var(--senal);
 }
 
 .coverageReadinessItem.pass {
@@ -5617,7 +5617,7 @@ h2 {
 .btnActive, .compactSeg button.active, .chartPrefs .compactSeg button.active, .chartPrefs .chartIndicators[open] summary, .chartPrefs .chartNotes[open] summary {
   border-color:var(--line2);
   background:#f4f4f5;
-  color:#090a0c;
+  color:var(--bg);
   box-shadow:none;
   font-weight:720;
 }
@@ -5639,7 +5639,7 @@ h2 {
 .stockPreview-search {
   padding:14px;
   border-color:var(--line2);
-  background:linear-gradient(180deg,var(--surface2),var(--surface2)),#090a0c;
+  background:linear-gradient(180deg,var(--surface2),var(--surface2));
 }
 
 .stockPreview-search .companyMark {
@@ -5819,7 +5819,7 @@ h2 {
 }
 
 .stockPage .stockDecisionDesk.good {
-  border-color:rgba(74,222,128,.24);
+  border-color:var(--decision-vigilar);
 }
 
 .stockPage .stockDecisionDesk.warn,
@@ -5828,7 +5828,7 @@ h2 {
 }
 
 .stockPage .stockDecisionDesk.bad {
-  border-color:rgba(255,100,100,.3);
+  border-color:var(--risk);
 }
 
 .stockPage .stockDecisionDeskHead {
@@ -6056,8 +6056,8 @@ h2 {
 }
 
 .stockPage .stockDecisionFocus.good {
-  border-color:rgba(74,222,128,.18);
-  background:rgba(74,222,128,.045);
+  border-color:var(--decision-vigilar);
+  background:var(--senal-dim);
 }
 
 .stockPage .stockDecisionFocus.warn,
@@ -6067,8 +6067,8 @@ h2 {
 }
 
 .stockPage .stockDecisionFocus.bad {
-  border-color:rgba(255,100,100,.22);
-  background:rgba(255,100,100,.055);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .stockPage .stockDecisionFocus > div,
@@ -6160,8 +6160,8 @@ h2 {
 }
 
 .stockPage .stockObservationChecklist span.good {
-  border-color:rgba(74,222,128,.18);
-  background:rgba(74,222,128,.04);
+  border-color:var(--decision-vigilar);
+  background:var(--senal-dim);
 }
 
 .stockPage .stockObservationChecklist span.warn,
@@ -6171,8 +6171,8 @@ h2 {
 }
 
 .stockPage .stockObservationChecklist span.bad {
-  border-color:rgba(255,100,100,.22);
-  background:rgba(255,100,100,.045);
+  border-color:var(--risk);
+  background:var(--oxido-dim);
 }
 
 .stockPage .stockObservationChecklist em,
@@ -6366,7 +6366,7 @@ h2 {
 
 .stockPage .stockDecisionEvidenceRail button.good,
 .stockPage .stockDecisionChartRail b.good {
-  border-color:rgba(74,222,128,.2);
+  border-color:var(--decision-vigilar);
   color:#9ee8b1;
 }
 
@@ -6380,7 +6380,7 @@ h2 {
 
 .stockPage .stockDecisionEvidenceRail button.bad,
 .stockPage .stockDecisionChartRail b.bad {
-  border-color:rgba(255,100,100,.24);
+  border-color:var(--risk);
   color:#ffaaa4;
 }
 
@@ -6404,7 +6404,7 @@ h2 {
 .stockPage .stockDecisionPresetRail button.active {
   border-color:var(--line2);
   background:#e8e9ed;
-  color:#08090b;
+  color:var(--bg);
 }
 
 .stockPage .stockDecisionPresetRail button.recommended:not(.active) {
@@ -6512,7 +6512,7 @@ h2 {
 }
 
 .stockPage .stockDecisionResolveRail button.good {
-  border-color:rgba(74,222,128,.22);
+  border-color:var(--decision-vigilar);
   color:#9ee8b1;
 }
 
@@ -6522,7 +6522,7 @@ h2 {
 }
 
 .stockPage .stockDecisionResolveRail button.bad {
-  border-color:rgba(255,100,100,.26);
+  border-color:var(--risk);
   color:#ffaaa4;
 }
 
@@ -6534,7 +6534,7 @@ h2 {
 .stockPage .stockDecisionResolveRail button.active {
   border-color:var(--line2);
   background:#e8e9ed;
-  color:#08090b;
+  color:var(--bg);
 }
 
 .stockPage .stockDecisionResolveRail button:disabled {
@@ -6574,7 +6574,7 @@ h2 {
 }
 
 .stockPage .stockDecisionHistory article.good {
-  border-left-color:rgba(74,222,128,.7);
+  border-left-color:var(--decision-vigilar);
 }
 
 .stockPage .stockDecisionHistory article.warn {
@@ -6582,7 +6582,7 @@ h2 {
 }
 
 .stockPage .stockDecisionHistory article.bad {
-  border-left-color:rgba(255,100,100,.72);
+  border-left-color:var(--risk);
 }
 
 .stockPage .stockDecisionHistory b {
@@ -6880,7 +6880,7 @@ h2 {
 .stockPage .heroCardMetrics b.muted {color:#a1a1aa
 }
 
-.stockPage .heroCardMetrics b.warn {color:#facc15
+.stockPage .heroCardMetrics b.warn {color:var(--senal)
 }
 
 @media(min-width:1024px) {
@@ -7372,29 +7372,29 @@ h2 {
 }
 
 .screenerContractPanel.bullish {
-  border-color: rgba(74,222,128,.18);
-  background: linear-gradient(135deg, rgba(22,163,74,.08), rgba(8,10,13,.96) 42%);
+  border-color: var(--decision-vigilar);
+  background: linear-gradient(135deg, var(--senal-dim), var(--surface2) 42%);
 }
 
 .screenerContractPanel.watch {
   border-color: var(--accent);
-  background: linear-gradient(135deg, var(--senal-dim), rgba(8,10,13,.96) 42%);
+  background: linear-gradient(135deg, var(--senal-dim), var(--surface2) 42%);
 }
 
 .screenerContractPanel.bearish {
   border-color: var(--risk);
-  background: linear-gradient(135deg, rgba(185,28,28,.1), rgba(8,10,13,.96) 42%);
+  background: linear-gradient(135deg, var(--oxido-dim), var(--surface2) 42%);
 }
 
 .screenerContractPanel.exploratory {
-  border-color: rgba(250,204,21,.16);
-  background: linear-gradient(135deg, rgba(161,98,7,.09), rgba(8,10,13,.96) 42%);
+  border-color: var(--senal);
+  background: linear-gradient(135deg, var(--senal-dim), var(--surface2) 42%);
 }
 
 .screenerContractStatus.warn span {
-  border-color: rgba(250,204,21,.16);
-  color: #d6bd72;
-  background: rgba(250,204,21,.055);
+  border-color: var(--senal);
+  color: var(--senal);
+  background: var(--senal-dim);
 }
 
 .screenerOriginPanel {
@@ -7410,23 +7410,23 @@ h2 {
 }
 
 .screenerOriginPanel.bullish {
-  border-color: rgba(74,222,128,.18);
-  background: linear-gradient(135deg, rgba(22,163,74,.075), rgba(8,10,13,.96) 46%);
+  border-color: var(--decision-vigilar);
+  background: linear-gradient(135deg, var(--senal-dim), var(--surface2) 46%);
 }
 
 .screenerOriginPanel.watch {
   border-color: var(--accent);
-  background: linear-gradient(135deg, var(--senal-dim), rgba(8,10,13,.96) 46%);
+  background: linear-gradient(135deg, var(--senal-dim), var(--surface2) 46%);
 }
 
 .screenerOriginPanel.bearish {
   border-color: var(--risk);
-  background: linear-gradient(135deg, rgba(185,28,28,.1), rgba(8,10,13,.96) 46%);
+  background: linear-gradient(135deg, var(--oxido-dim), var(--surface2) 46%);
 }
 
 .screenerOriginPanel.exploratory {
-  border-color: rgba(250,204,21,.16);
-  background: linear-gradient(135deg, rgba(161,98,7,.085), rgba(8,10,13,.96) 46%);
+  border-color: var(--senal);
+  background: linear-gradient(135deg, var(--senal-dim), var(--surface2) 46%);
 }
 
 .screenerOriginPanel.stock {
@@ -7504,7 +7504,7 @@ h2 {
   padding: 7px;
   border: 1px solid var(--line);
   border-radius: 7px;
-  background: rgba(15,23,42,.28);
+  background: var(--surface2);
 }
 
 .screenerOriginDecisionRead.good,
@@ -7515,8 +7515,8 @@ h2 {
 
 .screenerOriginDecisionRead.warn,
 .screenerOriginDecisionRead.watch {
-  border-color: rgba(250,204,21,.17);
-  background: rgba(250,204,21,.045);
+  border-color: var(--senal);
+  background: var(--senal-dim);
 }
 
 .screenerOriginDecisionRead.bad,
@@ -7545,8 +7545,8 @@ h2 {
 
 .screenerOriginDecisionRead span.warn,
 .screenerOriginDecisionRead span.watch {
-  border-color: rgba(250,204,21,.16);
-  background: rgba(250,204,21,.055);
+  border-color: var(--senal);
+  background: var(--senal-dim);
 }
 
 .screenerOriginDecisionRead span.bad {
@@ -7658,7 +7658,7 @@ h2 {
 .screenerOriginMeta b {
   display: block;
   overflow: hidden;
-  color: #f5f7fb;
+  color: var(--text);
   font-size: 11px;
   font-weight: 760;
   line-height: 1.15;
@@ -7690,9 +7690,9 @@ h2 {
 }
 
 .screenerOriginStatus.warn {
-  border-color: rgba(250,204,21,.16);
-  color: #d6bd72;
-  background: rgba(250,204,21,.055);
+  border-color: var(--senal);
+  color: var(--senal);
+  background: var(--senal-dim);
 }
 
 .screenerOriginStatus.bad {
@@ -7712,7 +7712,7 @@ h2 {
   padding: 7px;
   border: 1px solid var(--line);
   border-radius: 7px;
-  background: rgba(15,23,42,.26);
+  background: var(--surface2);
 }
 
 .screenerOriginDataHealth.good,
@@ -7853,7 +7853,7 @@ h2 {
 
 .screenerOriginSnapshotMetrics b {
   overflow: hidden;
-  color: #f5f7fb;
+  color: var(--text);
   font-size: 12px;
   font-weight: 780;
   line-height: 1;
@@ -8002,7 +8002,7 @@ h2 {
   padding: 7px;
   border: 1px solid var(--accent);
   border-radius: 7px;
-  background: rgba(30,64,175,.08);
+  background: var(--surface2);
 }
 
 .screenerOriginMethodologyFocus.warn,
@@ -8084,8 +8084,8 @@ h2 {
 
 .screenerOriginDecisionItem.warn,
 .screenerOriginDecisionItem.watch {
-  border-color: rgba(250,204,21,.16);
-  background: rgba(250,204,21,.045);
+  border-color: var(--senal);
+  background: var(--senal-dim);
 }
 
 .screenerOriginDecisionItem.bad {
@@ -8127,7 +8127,7 @@ h2 {
   padding: 7px;
   border: 1px solid var(--line);
   border-radius: 7px;
-  background: rgba(15,23,42,.28);
+  background: var(--surface2);
 }
 
 .screenerOriginEvidence.good {
@@ -8136,8 +8136,8 @@ h2 {
 }
 
 .screenerOriginEvidence.warn {
-  border-color: rgba(250,204,21,.16);
-  background: rgba(250,204,21,.045);
+  border-color: var(--senal);
+  background: var(--senal-dim);
 }
 
 .screenerOriginEvidence.bad {
@@ -8204,8 +8204,8 @@ h2 {
 }
 
 .screenerOriginEvidence > div:last-child span.warn {
-  border-color: rgba(250,204,21,.16);
-  background: rgba(250,204,21,.055);
+  border-color: var(--senal);
+  background: var(--senal-dim);
   color: #f8e3a3;
 }
 
@@ -8249,10 +8249,10 @@ h2 {
   gap: 5px;
   max-width: 100%;
   min-height: 22px;
-  border: 1px solid rgba(250,204,21,.16);
+  border: 1px solid var(--senal);
   border-radius: 7px;
   padding: 4px 7px;
-  background: rgba(250,204,21,.055);
+  background: var(--senal-dim);
   color: #fde68a;
 }
 
@@ -8280,7 +8280,7 @@ h2 {
   padding: 7px;
   border: 1px solid var(--accent);
   border-radius: 7px;
-  background: rgba(15,23,42,.34);
+  background: var(--surface2);
 }
 
 .screenerOriginTraceGroup {
@@ -8304,7 +8304,7 @@ h2 {
   max-width: 170px;
   min-height: 21px;
   padding: 4px 7px;
-  border: 1px solid rgba(74,222,128,.14);
+  border: 1px solid var(--decision-vigilar);
   border-radius: 7px;
   background: var(--senal-dim);
   color: #c9f6d5;
@@ -8316,8 +8316,8 @@ h2 {
 }
 
 .screenerOriginTraceGroup.watch span {
-  border-color: rgba(250,204,21,.15);
-  background: rgba(250,204,21,.055);
+  border-color: var(--senal);
+  background: var(--senal-dim);
   color: #f8e3a3;
 }
 
@@ -8459,8 +8459,8 @@ h2 {
 
 .filterTemplateBtn.active,
 .layerToggle.on {
-  border-color: rgba(79,140,255,.34);
-  background: rgba(79,140,255,.1);
+  border-color: var(--tiza);
+  background: var(--surface2);
 }
 
 .searchBar .input,
@@ -9195,8 +9195,8 @@ h2 {
 }
 
 .infoHint.warn > span {
-  border-color: rgba(250,204,21,.8);
-  color: #facc15;
+  border-color: var(--senal);
+  color: var(--senal);
 }
 
 @media(min-width:761px) {
@@ -9338,7 +9338,7 @@ h2 {
 .stockPage .methodologyVerdictBadge.warn {
   border-color: var(--risk);
   background: var(--oxido-dim);
-  color: #f8d38d;
+  color: var(--senal);
 }
 
 .stockPage .methodologyVerdictBadge.muted {
@@ -9356,7 +9356,7 @@ h2 {
 .stockPage .dataConfidencePill.warn {
   border-color: var(--risk);
   background: var(--oxido-dim);
-  color: #f8d38d;
+  color: var(--senal);
 }
 
 .stockPage .methodologyConfidenceBadge.fail,
@@ -9371,7 +9371,7 @@ h2 {
 }
 
 .stockPage .auditCheck.warn b {
-  color: #f8d38d;
+  color: var(--senal);
 }
 
 .stockPage .auditCheck.fail b {
@@ -9401,7 +9401,7 @@ h2 {
 .stockPage .tradePlanStatus.extended {
   border-color: var(--risk);
   background: var(--oxido-dim);
-  color: #f8d38d;
+  color: var(--risk);
 }
 
 .stockPage .tradePlanPanel .signalStat.good b {
@@ -9684,7 +9684,7 @@ h2 {
   display:grid;
   gap:10px;
   border-color:var(--line);
-  background:rgba(15,23,42,.24);
+  background:var(--surface2);
 }
 
 .decisionTracePanel.active {
@@ -9735,7 +9735,7 @@ h2 {
 }
 
 .decisionTraceGrid b {
-  color:#f5f7fb;
+  color:var(--text);
   font-family:var(--font-data);
   font-variant-numeric:tabular-nums;
   font-size:15px;
@@ -9778,7 +9778,7 @@ h2 {
 }
 
 .decisionTraceChip b {
-  color:#f5f7fb;
+  color:var(--text);
   font-size:12px;
   font-weight:850;
 }
@@ -9843,7 +9843,7 @@ h2 {
   padding:7px 9px;
   border:1px solid var(--line);
   border-radius:7px;
-  background:rgba(2,6,23,.18);
+  background:var(--surface2);
   color:#dbe4f0;
   text-decoration:none;
 }
@@ -9863,7 +9863,7 @@ h2 {
 }
 
 .decisionTraceEvent span {
-  color:#f5f7fb;
+  color:var(--text);
   font-size:11px;
   font-weight:820;
 }
