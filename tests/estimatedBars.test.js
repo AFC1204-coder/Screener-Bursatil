@@ -22,4 +22,20 @@ describe("estimated chart fallback", () => {
     expect(chart.dataQuality.status).toBe("estimated");
     expect(chart.dataQuality.fallbackError).toContain("timeout");
   });
+
+  it("emite dataQuality canónico con source/demo/reason (fallbackError por compatibilidad)", () => {
+    const chart = estimatedChartForSymbol("AAPL", { range: "1A", asOfDate: "2026-06-19" }, new Error("caída del proveedor"));
+
+    expect(chart.dataQuality.source).toBe("estimator");
+    // demo default false — el wiring real llega en el paso 4.
+    expect(chart.dataQuality.demo).toBe(false);
+    // reason es alias de fallbackError; ambos deben coincidir y contener el motivo.
+    expect(chart.dataQuality.reason).toBe(chart.dataQuality.fallbackError);
+    expect(chart.dataQuality.reason).toContain("caída del proveedor");
+  });
+
+  it("propaga demo:true cuando el caller lo pide explícitamente", () => {
+    const chart = estimatedChartForSymbol("AAPL", { range: "1A", demo: true });
+    expect(chart.dataQuality.demo).toBe(true);
+  });
 });

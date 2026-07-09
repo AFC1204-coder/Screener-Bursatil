@@ -58,6 +58,7 @@ vi.mock("@/lib/supabaseServer", () => ({
 }));
 
 import { writeDailyBarsCache } from "@/lib/dailyBarsCache";
+import { ESTIMATED_CHART_PROVIDER } from "@/lib/estimatedBars";
 import { supabaseRequest } from "@/lib/supabaseServer";
 
 function makeBars(count, { startYear = 2024, symbol = "AAPL", provider = "Yahoo Finance" } = {}) {
@@ -359,5 +360,86 @@ describe("writeDailyBarsCache · aislamiento de otras tablas", () => {
       const opts = call[1] || {};
       expect(opts.method || "GET").toBe("GET");
     }
+  });
+});
+
+// ===========================================================================
+// Guard anti-estimados — barras sintéticas nunca llegan a daily_bars
+// ===========================================================================
+
+describe("writeDailyBarsCache · guard anti-estimados", () => {
+  // La invariant que sostiene este guard: lo que sale de la caché es siempre
+  // mercado real (decision-grade). Si una serie estimada se colase al write,
+  // chartFromCache emitiría status:"real" sobre barras sintéticas — un bug
+  // silencioso que corrompe el scoring. Por eso el rechazo es completo: o se
+  // escribe toda la serie real, o nada.
+
+  it("rechaza el write cuando dataQuality.estimated === true (no escribe nada)", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(50);
+    const result = await writeDailyBarsCache("AAPL", {
+      bars,
+      meta: {},
+      dataQuality: { status: "estimated", estimated: true },
+    });
+
+    expect(result).toMatchObject({ status: "rejected-estimated", written: false, count: 0 });
+    // Cero writes a daily_bars — ni POST ni DELETE.
+    expect(dailyBarsPosts()).toHaveLength(0);
+    expect(dailyBarsDeletes()).toHaveLength(0);
+  });
+
+  it("rechaza cuando meta.estimated === true (sin dataQuality top-level)", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(50);
+    const result = await writeDailyBarsCache("AAPL", { bars, meta: { estimated: true } });
+
+    expect(result.status).toBe("rejected-estimated");
+    expect(dailyBarsPosts()).toHaveLength(0);
+  });
+
+  it("rechaza cuando alguna barra trae estimated === true", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(10);
+    // Una sola barra sintética contamina toda la serie.
+    bars[3] = { ...bars[3], estimated: true };
+    const result = await writeDailyBarsCache("AAPL", { bars, meta: {} });
+
+    expect(result.status).toBe("rejected-estimated");
+    expect(dailyBarsPosts()).toHaveLength(0);
+  });
+
+  it("rechaza cuando alguna barra trae provider === ESTIMATED_CHART_PROVIDER", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(10);
+    bars[5] = { ...bars[5], provider: ESTIMATED_CHART_PROVIDER };
+    const result = await writeDailyBarsCache("AAPL", { bars, meta: {} });
+
+    expect(result.status).toBe("rejected-estimated");
+    expect(dailyBarsPosts()).toHaveLength(0);
+  });
+
+  it("NO ejecuta la consulta de referencia (isSymbolReferenced) cuando rechaza por estimado", async () => {
+    // El guard corre antes que la consulta de referencia, así que un rechazo
+    // no debe tocar favorites/notes/alerts en absoluto.
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(50);
+    await writeDailyBarsCache("AAPL", {
+      bars,
+      meta: {},
+      dataQuality: { estimated: true },
+    });
+
+    const refs = supabaseRequest.mock.calls.filter(([path]) => ["favorites", "notes", "alerts"].includes(path));
+    expect(refs).toHaveLength(0);
+  });
+
+  it("escribe normalmente cuando la serie es real (sin señales estimated)", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(50);
+    const result = await writeDailyBarsCache("AAPL", { bars, meta: {} });
+
+    expect(result.written).toBe(true);
+    expect(dailyBarsPosts().flatMap(([, opts]) => opts.body)).toHaveLength(50);
   });
 });
