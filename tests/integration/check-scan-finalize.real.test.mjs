@@ -1,13 +1,17 @@
 // PIEZA 1 — Verificación real (Supabase "Healthy") de finalize_scan_results.
 //
-// Inserta un scan de prueba bajo owner_id="playwright-check-2" con un
+// Inserta un scan de prueba bajo un owner_id ÚNICO por ejecución con un
 // universo pequeño (2-3 símbolos para el smoke test), invoca
 // runScanChunk que produce filas scan_results y ejecuta la RPC
 // finalize_scan_results al final, y verifica que percentileScope pasa
 // de "batch" a "final" en las métricas patcheadas.
 //
-// Aísla el estado bajo owner_id="playwright-check-2". Cleanup midido:
-// SELECT count(*) por tabla tras el cleanup, no asume DELETE.
+// Aísla el estado bajo un owner_id ÚNICO por ejecución (timestamp+pid+random),
+// generado más abajo. Esto evita que dos suites (o dos corridas) que antes
+// compartían owner_id="playwright-check-2" se borren datos mutuamente cuando
+// corren en paralelo o en secuencia rápida. Cleanup midido: SELECT count(*)
+// por tabla tras el cleanup, no asume DELETE — y siempre filtrando por el
+// owner_id de ESTA ejecución.
 //
 // Smoke test mínimo: 2-3 símbolos para validar el flujo end-to-end sin
 // agotar la cuota compartida de Yahoo (los fetches externos pueden caer
@@ -33,7 +37,11 @@ if (fs.existsSync(envLocal)) {
 
 // SAFETY ABORT — mismo patrón que pieza 3.
 delete process.env.STATSEDGE_OWNER_ID;
-const OWNER = "playwright-check-2";
+// Owner ÚNICO por ejecución: prefijo estable + timestamp + pid + random.
+// Evita colisiones cuando varias suites de integración (o varias corridas)
+// corren en paralelo y antes compartían un owner fijo que se limpiaba de
+// forma global. owner_id es `text` en el schema (sin límite de longitud).
+const OWNER = `playwright-scan-finalize-${Date.now()}-${process.pid}-${Math.random().toString(36).slice(2, 8)}`;
 if (OWNER === "personal" || OWNER === "") {
   throw new Error(`SAFETY ABORT: owner="${OWNER}" — no se permite ejecutar contra el workspace real.`);
 }
@@ -52,7 +60,7 @@ describeIf("PIEZA 1 · scan real + finalize_scan_results (Supabase real)", () =>
   // Smoke test: 3 símbolos US bien conocidos (alta probabilidad de datos).
   const SMOKE_SYMBOLS = ["AAPL", "MSFT", "GOOGL"];
   const CHUNK_SIZE = SMOKE_SYMBOLS.length; // para que termine en un solo eslabón
-  const SCAN_LOCAL_ID = `playwright-check-2-${Date.now()}`;
+  const SCAN_LOCAL_ID = `${OWNER}-${Date.now()}`;
   const SCAN_NAME = "Pieza1 smoke scan";
 
   beforeAll(async () => {
@@ -137,7 +145,7 @@ describeIf("PIEZA 1 · scan real + finalize_scan_results (Supabase real)", () =>
         owner_id: OWNER,
         local_id: SCAN_LOCAL_ID,
         name: SCAN_NAME,
-        preset: "playwright-check-2-smoke",
+        preset: `${OWNER}-smoke`,
         settings,
         row_count: 0,
       }],

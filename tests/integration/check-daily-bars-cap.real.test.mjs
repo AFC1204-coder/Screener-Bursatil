@@ -5,9 +5,10 @@
 // normal (no se ejecuta con `npm test`). Vitest lo carga solo si se llama
 // explícitamente: `npx vitest run tests/integration/check-daily-bars-cap.real.test.mjs`.
 //
-// Aísla el estado bajo owner_id='playwright-check' (no toca el workspace
+// Aísla el estado bajo un owner_id ÚNICO por ejecución (no toca el workspace
 // personal del usuario). Cleanup obligatorio al final: borra todas las filas
-// bajo ese owner_id de daily_bars y favorites.
+// bajo ese owner_id de daily_bars y favorites — siempre filtrando por el
+// owner de ESTA ejecución, nunca un cleanup global compartido.
 //
 // NO se ejecuta automáticamente en CI ni en `npm test`. Solo manualmente.
 
@@ -35,7 +36,11 @@ if (fs.existsSync(envLocal)) {
 // el `envValue("STATSEDGE_OWNER_ID")` de supabaseConfig() lee exactamente lo
 // que nosotros queremos y no lo que el .env.local cargó por defecto.
 delete process.env.STATSEDGE_OWNER_ID;
-const OWNER = "playwright-check";
+// Owner ÚNICO por ejecución (timestamp+pid+random). Antes era el valor fijo
+// "playwright-check", compartido conceptualmente con otros scripts. Para que
+// el cleanup de esta suite nunca pueda tocar datos de otra suite corriendo
+// en paralelo, lo hacemos único. owner_id es `text` en el schema.
+const OWNER = `playwright-daily-bars-${Date.now()}-${process.pid}-${Math.random().toString(36).slice(2, 8)}`;
 
 // Guard de seguridad: el test debe negarse a sí mismo si el owner resuelto
 // coincide con el workspace real. No es una advertencia — es un abort: debe
@@ -198,7 +203,7 @@ describeIf("PIEZA 3 · daily_bars cap (real Supabase)", () => {
       method: "POST",
       body: [{
         owner_id: OWNER,
-        local_id: `playwright-check-${SYMBOL_REF}-${Date.now()}`,
+        local_id: `${OWNER}-${SYMBOL_REF}-${Date.now()}`,
         symbol: SYMBOL_REF,
         notes: "Test row for cap verification — cleaned up after.",
       }],

@@ -28,14 +28,18 @@ if (fs.existsSync(envLocal)) {
   }
 }
 
-const TARGET_OWNER = "playwright-check";
+// Owner ÚNICO por ejecución. Este test es READ-ONLY y verifica aislamiento;
+// usa un owner inédito para que la asunción "0 filas" sea cierta por
+// construcción y no dependa del estado que otras suites dejen bajo un owner
+// fijo compartido.
+const TARGET_OWNER = `playwright-diag-${Date.now()}-${process.pid}-${Math.random().toString(36).slice(2, 8)}`;
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 const skipIntegration = !SUPABASE_URL || !SERVICE_KEY;
 const describeIf = skipIntegration ? describe.skip : describe;
 
-describeIf("DIAGNÓSTICO READ-ONLY · aislamiento owner_id playwright-check", () => {
+describeIf("DIAGNÓSTICO READ-ONLY · aislamiento owner_id (único por ejecución)", () => {
   it("confirmar env vars cargadas", () => {
     expect(SUPABASE_URL).toMatch(/^https:\/\/[a-z0-9]+\.supabase\.co$/);
     expect(SERVICE_KEY.length).toBeGreaterThan(20);

@@ -1,7 +1,7 @@
 // PIEZA 2 — Verificación real de signalContradictions contra lógica pura.
 //
-// Inserta 3 filas sintéticas en scan_results bajo owner_id="playwright-check-2"
-// con scores precomputados a mano para forzar que las reglas C1, C2, C5
+// Inserta 3 filas sintéticas en scan_results bajo un owner_id ÚNICO por
+// ejecución, con scores precomputados a mano para forzar que las reglas C1, C2, C5
 // disparen. NO depende de un scan real ni de fetches externos — los scores
 // se eligen directamente para cruzar los umbrales declarados en
 // lib/signalContradictions.js:99-130.
@@ -29,7 +29,11 @@ if (fs.existsSync(envLocal)) {
 }
 
 delete process.env.STATSEDGE_OWNER_ID;
-const OWNER = "playwright-check-2";
+// Owner ÚNICO por ejecución (timestamp+pid+random). Antes esta suite y
+// PIEZA 1 compartían owner_id="playwright-check-2" y se borraban datos
+// mutuamente al hacer cleanup global en paralelo. Ahora cada suite crea
+// y limpia solo sus propias filas. owner_id es `text` en el schema.
+const OWNER = `playwright-signal-cx-${Date.now()}-${process.pid}-${Math.random().toString(36).slice(2, 8)}`;
 if (OWNER === "personal" || OWNER === "") {
   throw new Error(`SAFETY ABORT: owner="${OWNER}"`);
 }
@@ -44,8 +48,10 @@ describeIf("PIEZA 2 · signalContradictions C1-C6 (lógica pura)", () => {
   let evaluateContradictions;
   let scanId;
   let results = {};
-  // Scan header para anclar las filas scan_results (FK scan_id).
-  const SCAN_LOCAL_ID = `playwright-check-2-cx-${Date.now()}`;
+  // Scan header para anclar las filas scan_results (FK scan_id). Deriva del
+  // OWNER único de esta ejecución para evitar conflictos de uniqueness con
+  // leftovers de otras suites/corridas.
+  const SCAN_LOCAL_ID = `${OWNER}-cx-${Date.now()}`;
 
   // Filas sintéticas diseñadas para disparar reglas específicas:
   const SCENARIOS = [
@@ -102,7 +108,7 @@ describeIf("PIEZA 2 · signalContradictions C1-C6 (lógica pura)", () => {
         owner_id: OWNER,
         local_id: SCAN_LOCAL_ID,
         name: "Pieza2 signalContradictions fixtures",
-        preset: "playwright-check-2-cx",
+        preset: `${OWNER}-cx`,
         settings: {
           scanSymbols: SCENARIOS.map((s) => s.symbol),
           progress: { status: "done", cursor: 0, chunkSize: SCENARIOS.length, completed: SCENARIOS.length, total: SCENARIOS.length, saved: 0, errors: [], startedAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
@@ -200,7 +206,7 @@ describeIf("PIEZA 2 · signalContradictions C1-C6 (lógica pura)", () => {
         country: "US",
         sector: "Test",
         industry: "Test",
-        theme: "playwright-check-2",
+        theme: OWNER,
         rank_index: SCENARIOS.indexOf(scenario) + 1,
         total_score: Object.values(scenario.scores).reduce((a, b) => a + b, 0) / Object.values(scenario.scores).length,
         // top-level: solo los scores que tienen columna en la tabla.
