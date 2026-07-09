@@ -285,6 +285,32 @@ function adaptiveChartProfile({ interval = "D", range = "1A", rowCount = 0, widt
   };
 }
 
+// lightweight-charts pinta en <canvas> y no entiende sintaxis CSS.
+// Hay que resolver los tokens del sistema visual v2 a valores de color
+// concretos (hex/rgba) antes de pasarlos a la librería, si no el motor
+// del canvas recibe un color inválido y cae a un default (habitualmente
+// transparente), y las velas/series se renderizan sin color.
+function resolveCssTokens() {
+  if (typeof window === "undefined" || typeof document === "undefined") return {};
+  const styles = window.getComputedStyle(document.documentElement);
+  const read = (name, fallback) => {
+    const value = styles.getPropertyValue(name).trim();
+    return value || fallback;
+  };
+  return {
+    soft: read("--soft", "#B9BFB2"),
+    humo: read("--humo", "#7E8B82"),
+    tiza: read("--tiza", "#EDE8DA"),
+    line: read("--line", "rgba(237, 232, 218, .10)"),
+    line2: read("--line2", "rgba(237, 232, 218, .26)"),
+    line3: read("--line3", "rgba(237, 232, 218, .45)"),
+    pizarra2: read("--pizarra-2", "#2C4C39"),
+    senal: read("--senal", "#E0A93F"),
+    traza: read("--traza", "#93B8CE"),
+    trazaDim: read("--traza-dim", "rgba(147, 184, 206, .12)"),
+  };
+}
+
 function normalizeRsScoreSeries(series = null, visibleRows = []) {
   const source = Array.isArray(series) ? series : Array.isArray(series?.points) ? series.points : [];
   const start = visibleRows[0]?.time || 0;
@@ -373,6 +399,9 @@ function rowTimeForDate(rows = [], date = "") {
 function patternMarkersForRows(patternOverlay = null, rows = [], interval = "D") {
   if (!patternOverlay || normalizeChartInterval(interval) !== "D") return [];
   const swings = Array.isArray(patternOverlay.contractionSwings) ? patternOverlay.contractionSwings.slice(0, 4) : [];
+  const senal = (typeof window !== "undefined" && typeof document !== "undefined")
+    ? window.getComputedStyle(document.documentElement).getPropertyValue("--senal").trim() || "#E0A93F"
+    : "#E0A93F";
   return swings.map((swing, index) => {
     const time = rowTimeForDate(rows, swing.toDate);
     if (!Number.isFinite(time)) return null;
@@ -380,7 +409,7 @@ function patternMarkersForRows(patternOverlay = null, rows = [], interval = "D")
       time,
       position: "belowBar",
       shape: "circle",
-      color: "var(--senal)",
+      color: senal,
       text: `C${index + 1}`,
       size: 1,
     };
@@ -624,6 +653,7 @@ export default function UniversalPriceChart({
       if (cancelled || !containerRef.current) return;
       const container = containerRef.current;
       container.innerHTML = "";
+      const colors = resolveCssTokens();
       let width = Math.max(container.clientWidth || 0, 280);
       let chartHeight = responsiveChartHeight(width, mainChartHeightTarget);
       let chartProfile = adaptiveChartProfile({ interval, range, rowCount: rows.length, width, volume: indicators.volume });
@@ -669,22 +699,22 @@ export default function UniversalPriceChart({
         height: chartHeight,
         layout: {
           background: { color: "transparent" },
-          textColor: "var(--soft)",
+          textColor: colors.soft,
           fontFamily: "Instrument Sans, ui-sans-serif, system-ui, sans-serif",
           fontSize: 12,
         },
         grid: {
-          vertLines: { color: "var(--line)" },
-          horzLines: { color: "var(--line)" },
+          vertLines: { color: colors.line },
+          horzLines: { color: colors.line },
         },
         rightPriceScale: {
-          borderColor: "var(--line2)",
+          borderColor: colors.line2,
           mode: scale === "log" ? PriceScaleMode.Logarithmic : scale === "percent" ? PriceScaleMode.Percentage : PriceScaleMode.Normal,
           autoScale: true,
           scaleMargins: chartProfile.priceScaleMargins,
         },
         timeScale: {
-          borderColor: "var(--line2)",
+          borderColor: colors.line2,
           ...chartProfile.timeScale,
         },
         handleScroll: {
@@ -700,8 +730,8 @@ export default function UniversalPriceChart({
           pinch: true,
         },
         crosshair: {
-          vertLine: { color: "var(--line3)", labelBackgroundColor: "var(--pizarra-2)" },
-          horzLine: { color: "var(--line3)", labelBackgroundColor: "var(--pizarra-2)" },
+          vertLine: { color: colors.line3, labelBackgroundColor: colors.pizarra2 },
+          horzLine: { color: colors.line3, labelBackgroundColor: colors.pizarra2 },
         },
         localization: {
           locale: "es-ES",
@@ -725,20 +755,20 @@ export default function UniversalPriceChart({
         isArea ? AreaSeries : isLine ? LineSeries : CandlestickSeries,
         isArea
           ? {
-              lineColor: positive ? "var(--tiza)" : "var(--humo)",
-              topColor: positive ? "var(--traza-dim)" : "var(--line)",
+              lineColor: positive ? colors.tiza : colors.humo,
+              topColor: positive ? colors.trazaDim : colors.line,
               bottomColor: "rgba(0,0,0,0)",
               lineWidth: 2,
             }
           : isLine
-            ? { color: positive ? "var(--tiza)" : "var(--humo)", lineWidth: 2 }
+            ? { color: positive ? colors.tiza : colors.humo, lineWidth: 2 }
             : {
-                upColor: "var(--tiza)",
-                downColor: "var(--humo)",
-                borderUpColor: "var(--tiza)",
-                borderDownColor: "var(--humo)",
-                wickUpColor: "var(--soft)",
-                wickDownColor: "var(--line3)",
+                upColor: colors.tiza,
+                downColor: "rgba(0,0,0,0)",
+                borderUpColor: colors.tiza,
+                borderDownColor: colors.soft,
+                wickUpColor: colors.soft,
+                wickDownColor: colors.humo,
               },
       );
       mainSeries.setData(isLine || isArea ? lineData : candleData);
@@ -751,7 +781,7 @@ export default function UniversalPriceChart({
       if (!intraday && Number.isFinite(pivotPrice) && pivotPrice > 0) {
         mainSeries.createPriceLine?.({
           price: pivotPrice,
-          color: "var(--line3)",
+          color: colors.line3,
           lineStyle: 2,
           lineWidth: 1,
           axisLabelVisible: true,
@@ -766,14 +796,14 @@ export default function UniversalPriceChart({
         const volumeSeries = chart.addSeries(HistogramSeries, {
           priceFormat: { type: "volume" },
           priceScaleId: "",
-          color: "var(--line)",
+          color: colors.line,
           lastValueVisible: false,
           priceLineVisible: false,
         });
         volumeSeries.setData(rows.map((row) => ({
           time: row.time,
           value: row.volume || 0,
-          color: row.close >= row.open ? "var(--traza-dim)" : "var(--line)",
+          color: row.close >= row.open ? colors.trazaDim : colors.line,
         })));
         chart.priceScale("").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
       }
@@ -782,12 +812,12 @@ export default function UniversalPriceChart({
       const maSlowLength = Math.max(2, Math.min(600, Number(indicators.maSlowLength) || 200));
       const smaFast = indicators.maFast ? movingAverage(rows, maFastLength) : [];
       if (smaFast.length) {
-        const series = chart.addSeries(LineSeries, { color: "var(--soft)", lineWidth: 1 });
+        const series = chart.addSeries(LineSeries, { color: colors.soft, lineWidth: 1 });
         series.setData(smaFast);
       }
       const smaSlow = indicators.maSlow ? movingAverage(rows, maSlowLength) : [];
       if (smaSlow.length) {
-        const series = chart.addSeries(LineSeries, { color: "var(--humo)", lineWidth: 1 });
+        const series = chart.addSeries(LineSeries, { color: colors.humo, lineWidth: 1 });
         series.setData(smaSlow);
       }
 
@@ -795,7 +825,7 @@ export default function UniversalPriceChart({
       if (hasRsLine) {
         const rsScaleId = "rs-line-overlay";
         const rsSeries = chart.addSeries(LineSeries, {
-          color: "var(--traza)",
+          color: colors.traza,
           lineWidth: 2,
           priceLineVisible: false,
           lastValueVisible: false,
@@ -806,7 +836,7 @@ export default function UniversalPriceChart({
         rsSeries.setData(rsLineData.map((point) => ({ time: point.time, value: point.value })));
         rsSeries.createPriceLine?.({
           price: 0,
-          color: "var(--line2)",
+          color: colors.line2,
           lineStyle: 2,
           lineWidth: 1,
           axisLabelVisible: false,
