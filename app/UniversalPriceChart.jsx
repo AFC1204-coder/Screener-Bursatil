@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Maximize2, SkipForward, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2, SkipForward, TrendingUp, Trash2, ZoomIn, ZoomOut } from "lucide-react";
 import { CHART_RANGES, DEFAULT_CHART_SETTINGS, normalizeChartInterval } from "@/lib/chartSettings";
 import { chartViewStateFromLogicalRange, latestLogicalRange, manualChartWindowRestorePolicy, rescaledLogicalRange, shiftedLogicalRange, timeWindowFromLogicalRange, timeWindowLogicalRange, zoomedLogicalRange } from "@/lib/chartNavigation";
 import { getJson } from "@/lib/clientApi";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
+import { useChartDrawings } from "@/app/useChartDrawings";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
@@ -516,6 +517,18 @@ export default function UniversalPriceChart({
   const change = first?.close ? ((latest?.close / first.close) - 1) * 100 : null;
   const positive = !Number.isFinite(change) || change >= 0;
 
+  // Hook de trendlines (D6): debe ir DESPUÉS de que `interval` exista para no
+  // romper el orden de inicialización. El propio hook es estable entre renders.
+  const drawings = useChartDrawings({ symbol, interval });
+  const drawingsRef = useRef(drawings);
+  drawingsRef.current = drawings;
+
+  // Sincroniza rowTimes en el hook cada vez que cambian las filas (D1: la
+  // primitiva necesita el array de tiempos actual para interpolar).
+  useEffect(() => {
+    drawingsRef.current?.setRowTimes?.(rows);
+  }, [rows]);
+
   useEffect(() => {
     setViewState(chartViewStateFromLogicalRange(null, rows.length));
     setVisibleWindow(null);
@@ -777,6 +790,10 @@ export default function UniversalPriceChart({
         scaleMargins: chartProfile.priceScaleMargins,
       });
 
+      // Adjuntar primitiva de trendlines al mainSeries (D6). El hook se
+      // re-suscribe al rango lógico del chart y limpia el attach previo.
+      drawingsRef.current.attach(chart, mainSeries, container);
+
       const pivotPrice = safeNumber(patternOverlay?.pivotPrice);
       if (!intraday && Number.isFinite(pivotPrice) && pivotPrice > 0) {
         mainSeries.createPriceLine?.({
@@ -959,6 +976,7 @@ export default function UniversalPriceChart({
       cancelled = true;
       resizeObserver?.disconnect();
       unsubscribeLogicalRange?.();
+      drawingsRef.current?.detach?.();
       chartRef.current = null;
       chart?.remove();
     };
@@ -970,7 +988,7 @@ export default function UniversalPriceChart({
     </div>;
   }
 
-  return <div className={`universalChart ${className}`}>
+  return <div className={`universalChart ${drawings.toolbarProps.toolActive ? "drawing" : ""} ${className}`.trim()}>
     <div className="universalChartHead">
       <div className="universalChartIdentity">
         <span className="universalChartSymbol">{symbol}</span>
@@ -1005,6 +1023,27 @@ export default function UniversalPriceChart({
         <button type="button" className="universalChartNavButton icon" onClick={() => zoomChart(0.72)} aria-label="Acercar gráfico" title="Acercar"><ZoomIn size={14} aria-hidden="true" /></button>
         <button type="button" className="universalChartNavButton icon" onClick={() => zoomChart(1.38)} aria-label="Alejar gráfico" title="Alejar"><ZoomOut size={14} aria-hidden="true" /></button>
         <button type="button" className="universalChartNavButton icon" onClick={resetCurrentRange} disabled={!viewState.isManual} aria-label="Restaurar rango seleccionado" title="Restaurar el rango seleccionado"><Maximize2 size={14} aria-hidden="true" /></button>
+        <button
+          type="button"
+          className={`universalChartNavButton icon ${drawings.toolbarProps.toolActive ? "active" : ""}`.trim()}
+          onClick={drawings.toolbarProps.toggleTool}
+          aria-pressed={drawings.toolbarProps.toolActive}
+          aria-label="Dibujar línea de tendencia"
+          title={drawings.toolbarProps.toolActive ? "Salir de herramienta de dibujo" : "Dibujar línea de tendencia"}
+        >
+          <TrendingUp size={14} aria-hidden="true" />
+        </button>
+        {drawings.toolbarProps.hasSelection && (
+          <button
+            type="button"
+            className="universalChartNavButton icon accent"
+            onClick={drawings.toolbarProps.removeSelected}
+            aria-label="Borrar línea seleccionada"
+            title="Borrar línea seleccionada"
+          >
+            <Trash2 size={14} aria-hidden="true" />
+          </button>
+        )}
         {viewState.isAwayFromLatest && <button type="button" className="universalChartNavButton icon accent" onClick={scrollToLatest} aria-label="Volver al último dato sin cambiar el zoom" title="Volver al último dato sin cambiar el zoom"><SkipForward size={14} aria-hidden="true" /></button>}
       </div>
       {tradingViewUrl && <a className="priceTvLink" href={tradingViewUrl} target="_blank" rel="noreferrer">Abrir TradingView</a>}
@@ -1033,6 +1072,10 @@ export default function UniversalPriceChart({
       {viewState.isAwayFromLatest ? <span className="universalChartViewportChip distance">
         <em>Hasta último</em>
         <b>{viewState.distanceFromLatest}</b>
+      </span> : null}
+      {drawings.toolbarProps.modeLabel ? <span className="universalChartViewportChip drawing">
+        <em>Dibujo</em>
+        <b>{drawings.toolbarProps.modeLabel}</b>
       </span> : null}
     </div>
     <div className="universalChartCanvas" ref={containerRef} style={{ "--chart-target-height": `${mainChartHeightTarget}px` }} />

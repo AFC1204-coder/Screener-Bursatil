@@ -1318,6 +1318,31 @@
   color:#f8d999;
 }
 
+/* Botón de herramienta de dibujo de líneas (D3): estado activo por doctrina
+   de tokens (--active-bg + --active-border, texto tinta). */
+.universalChartNavButton.active,
+.universalChartNavButton[aria-pressed="true"] {
+  border-color:var(--active-border);
+  background:var(--active-bg);
+  color:var(--active-fg);
+}
+
+/* Cuando el modo dibujo está activo, el canvas del chart pinta crosshair. */
+.universalChart.drawing .universalChartCanvas {
+  cursor:crosshair;
+}
+
+/* Chip de modo dibujo en el rail de viewport (D3): tinte --senal-dim para
+   distinguirlo de los chips de estado del viewport. */
+.universalChartViewportChip.drawing {
+  border-color:var(--line3);
+  background:var(--senal-dim);
+  color:var(--tiza);
+}
+.universalChartViewportChip.drawing b {
+  color:var(--tiza);
+}
+
 .universalChartViewportRail {
   min-width:0;
   display:flex;

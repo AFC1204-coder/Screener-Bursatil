@@ -95,6 +95,14 @@
   --ghost      : rgba(237, 232, 218, .35);        /* valor ausente: "—", placeholders */
   --line-stale : 1px dotted rgba(126, 139, 130, .55);  /* subrayado de dato estimado/viejo */
 
+  /* Anotación del usuario (trendlines v1): tiza del usuario sobre la pizarra.
+     NO es decisión del sistema (nunca --senal: ámbar reservado a Vigilar) NI dato
+     calculado (nunca --traza: ya es la RS Line en este canvas). Reposo entre
+     --line3 y tiza plena; activa = tiza plena (la interacción es tinta). */
+  --anotacion        : rgba(237, 232, 218, .60);  /* línea en reposo: trazo 1.5px */
+  --anotacion-activa : var(--tiza);               /* seleccionada o en dibujo: trazo 2px */
+  --anotacion-handle : 4px;                       /* radio del tirador = --curve-dot */
+
   /* Mapeo de migración v1 → v2 (mantener hasta retirar la última pantalla v1):
      --positive → --decision-vigilar · --negative → --risk ·
      --warning → --risk · --gold/--gold2 → --tiza · --lime/--red/--amber → eliminar */
