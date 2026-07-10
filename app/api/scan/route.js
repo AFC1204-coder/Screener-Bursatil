@@ -7,6 +7,7 @@
 // agnóstico a cuántos eslabones hubo.
 import { after } from "next/server";
 import { clearScansApiCache } from "@/lib/scansApiCache";
+import { isPublicScanStatus } from "@/lib/scanStatus";
 import { clampChunkSize, normalizeSymbols, runScanChunk } from "@/lib/serverScanRunner";
 import { disabledPayload, requirePersistenceAuth, supabaseConfig, supabaseRequest, textOrNull } from "@/lib/supabaseServer";
 
@@ -113,6 +114,8 @@ export async function GET(req) {
         updatedAt: scan.updated_at,
       },
       status: progress.status || "running",
+      degraded: progress.status === "partial",
+      publishable: isPublicScanStatus(progress.status),
       progress,
       rows,
       nextOffset,

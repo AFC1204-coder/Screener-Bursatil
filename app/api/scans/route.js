@@ -1,5 +1,6 @@
 import { disabledPayload, finiteOrNull, requirePersistenceAuth, supabaseConfig, supabaseRequest, supabaseRpc, textOrNull, toTimestamp } from "@/lib/supabaseServer";
 import { compactResearchRow } from "@/lib/researchRowContract";
+import { isPublicScanStatus } from "@/lib/scanStatus";
 import { prepareScanDecisionRow, scanDecisionMetrics, scanDecisionRowFromDb } from "@/lib/scanDecisionProjection";
 import { clearScansApiCache, LATEST_SCAN_TTL_MS, scansApiCache } from "@/lib/scansApiCache";
 import { snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
@@ -8,6 +9,7 @@ const SCANS_SUPABASE_TIMEOUT_MS = 8000;
 
 function scanPayload(scan = {}, ownerId) {
   const rows = Array.isArray(scan.rows) ? scan.rows : [];
+  const progressStatus = textOrNull(scan.settings?.progress?.status);
   const settings = {
     ...(scan.settings || {}),
     activeSettings: scan.activeSettings || scan.settings?.activeSettings || null,
@@ -26,6 +28,9 @@ function scanPayload(scan = {}, ownerId) {
     local_id: textOrNull(scan.id) || crypto.randomUUID(),
     name: textOrNull(scan.name) || `Scan ${new Date().toLocaleString()}`,
     preset: textOrNull(scan.preset),
+    progress_status: progressStatus,
+    degraded: progressStatus === "partial",
+    publishable: isPublicScanStatus(progressStatus),
     settings,
     market_score: finiteOrNull(scan.marketScore),
     market_regime: textOrNull(scan.marketRegime),

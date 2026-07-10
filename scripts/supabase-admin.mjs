@@ -76,6 +76,17 @@ const REQUIRED_FUNCTIONS = [
     p_scan_id: "00000000-0000-0000-0000-000000000000", // sentinel; la RPC filtra por scan_id
     p_max_rows: 1,
   })],
+  // leaderboard_publishable_rows: filtra scan_results por el estado del scan
+  // padre (lib/scanStatus.js: PUBLIC_SCAN_STATUSES) para que /api/leaderboards
+  // SOLO publique filas de scans complete|partial|done. Si falta, el guard
+  // configurable de leaderboards cae a `degraded: true` con el snapshot
+  // materializado. Detectado tras audit 2026-07-10 §"Terminal done can mean
+  // zero successful scan rows".
+  ["leaderboard_publishable_rows", "leaderboards", (config) => ({
+    p_owner_id: config.ownerId,
+    p_max_rows: 1,
+    p_since_days: 45,
+  })],
   // purge_daily_bars_backstop: función invocada semanalmente por pg_cron
   // (limpieza de huérfanos + trim de excedentes en daily_bars). Si falta, el
   // job de pg_cron falla y daily_bars crece sin control.

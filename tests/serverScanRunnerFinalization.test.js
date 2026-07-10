@@ -22,7 +22,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // --- Mocks -----------------------------------------------------------------
 
 // Mock mínimo de marketData: chart con bars vacío + profile vacío. No llega a
-// buildResearchRow porque también la mockeamos abajo.
+// buildResearchRow porque también la mockeamos abajo. Los helpers `failChartFor`
+// y `chartFailures` aplican en runtime para forzar fallos por símbolo.
 vi.mock("@/lib/marketData", () => ({
   fetchYahooChart: vi.fn(async () => ({ bars: [], meta: {} })),
   fetchYahooProfile: vi.fn(async () => ({})),
@@ -144,6 +145,19 @@ function progressPatches() {
     .filter(Boolean);
 }
 
+// Configura fallos por símbolo en fetchYahooChart. `failureMap` mapea símbolo
+// → mensaje de error. El mock global retorna siempre OK por defecto; este
+// helper instala una implementación alternativa que lanza para los símbolos
+// mapeados y deja pasar al resto.
+function failChartFor(failureMap = {}) {
+  fetchYahooChart.mockImplementation(async (symbol) => {
+    if (Object.hasOwn(failureMap, symbol)) {
+      throw new Error(failureMap[symbol]);
+    }
+    return { bars: [], meta: {} };
+  });
+}
+
 // --- Tests -----------------------------------------------------------------
 
 const SCAN_ID = "scan-test-uuid";
@@ -204,7 +218,7 @@ describe("runScanChunk · wiring de finalización de percentiles", () => {
     fetchMock.mockRestore();
   });
 
-  it("éxito: progress pasa por finalizationStatus 'pending' → 'succeeded' + percentilesFinalized:true, y status termina 'done'", async () => {
+  it("éxito (todo OK): progress pasa por finalizationStatus 'pending' → 'succeeded' + percentilesFinalized:true, status terminal 'complete' (no 'done')", async () => {
     const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 3, chunkSize: 3 });
     configureSnapshotOnce(snapshot);
     finalizeScanResultsInDb.mockResolvedValue({ rowsProcessed: 3, rowsPatched: 3 });
@@ -212,32 +226,41 @@ describe("runScanChunk · wiring de finalización de percentiles", () => {
     await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
 
     const patches = progressPatches();
-    // Esperamos al menos 2 PATCH de progress durante la rama done:
+    // Esperamos al menos 2 PATCH de progress durante la rama terminal:
     //   1. "finalizing" + finalizationStatus:"pending"
-    //   2. "done" + finalizationStatus:"succeeded" + percentilesFinalized:true
+    //   2. "complete" (ratio=1, errores=0) + finalizationStatus:"succeeded" + percentilesFinalized:true
     const finalizingPatch = patches.find((p) => p.status === "finalizing");
-    const donePatch = patches.find((p) => p.status === "done");
+    const completePatch = patches.find((p) => p.status === "complete");
     expect(finalizingPatch).toBeTruthy();
     expect(finalizingPatch.finalizationStatus).toBe("pending");
     expect(finalizingPatch.percentilesFinalized).toBe(false);
 
-    expect(donePatch).toBeTruthy();
-    expect(donePatch.finalizationStatus).toBe("succeeded");
-    expect(donePatch.percentilesFinalized).toBe(true);
-    expect(donePatch.finalizationRowsPatched).toBe(3);
+    expect(completePatch).toBeTruthy();
+    expect(completePatch.finalizationStatus).toBe("succeeded");
+    expect(completePatch.percentilesFinalized).toBe(true);
+    expect(completePatch.finalizationRowsPatched).toBe(3);
 
-    // ORDEN TEMPORAL: "finalizing" debe aparecer ANTES que "done" en la secuencia
-    // de PATCHes (no basta con que ambos existan; el orden importa).
+    // Métrica de completitud persistida.
+    expect(completePatch.completeness).toBeTruthy();
+    expect(completePatch.completeness.saved).toBe(3);
+    expect(completePatch.completeness.errors).toBe(0);
+    expect(completePatch.completeness.ratio).toBe(1);
+    expect(completePatch.completeness.kindBreakdown).toEqual({ retryable: 0, terminal: 0, unknown: 0 });
+
+    // "done" legado NUNCA debe aparecer — el runner nuevo lo prohibe.
+    expect(patches.find((p) => p.status === "done")).toBeUndefined();
+
+    // ORDEN TEMPORAL: "finalizing" debe aparecer ANTES que "complete".
     const finalizingIdx = patches.findIndex((p) => p.status === "finalizing");
-    const doneIdx = patches.findIndex((p) => p.status === "done");
-    expect(finalizingIdx).toBeLessThan(doneIdx);
+    const completeIdx = patches.findIndex((p) => p.status === "complete");
     expect(finalizingIdx).toBeGreaterThanOrEqual(0);
+    expect(finalizingIdx).toBeLessThan(completeIdx);
   });
 
-  it("status 'done' NO se escribe antes de que finalizeScanResultsInDb se resuelva", async () => {
+  it("status terminal (complete|partial|failed) NO se escribe antes de que finalizeScanResultsInDb se resuelva", async () => {
     // Patrón de defer controlable: finalizeScanResultsInDb queda pendiente hasta
     // que liberemos `releaseFinalize`. Mientras está pendiente, verificamos que
-    // ningún PATCH con status:"done" se ha emitido.
+    // ningún PATCH con status completo o partial o failed se ha emitido.
     //
     // Nota: el writer del runner hace sleep(FLUSH_INTERVAL_MS=1500ms) entre
     // flushes, así que esperamos >1.5s reales para que el flujo llegue al await
@@ -263,10 +286,12 @@ describe("runScanChunk · wiring de finalización de percentiles", () => {
     });
     expect(await startedWithin).toBe(true);
 
-    // Mientras finalizeScanResultsInDb está pendiente, no debe haber "done".
+    // Mientras finalizeScanResultsInDb está pendiente, NO debe haber ningún estado terminal de completitud.
     const patchesBeforeResolve = progressPatches();
-    const doneBefore = patchesBeforeResolve.find((p) => p.status === "done");
-    expect(doneBefore).toBeUndefined();
+    expect(patchesBeforeResolve.find((p) => p.status === "complete")).toBeUndefined();
+    expect(patchesBeforeResolve.find((p) => p.status === "partial")).toBeUndefined();
+    expect(patchesBeforeResolve.find((p) => p.status === "failed")).toBeUndefined();
+    expect(patchesBeforeResolve.find((p) => p.status === "done")).toBeUndefined();
     // El "finalizing" sí debe estar ya escrito.
     expect(patchesBeforeResolve.find((p) => p.status === "finalizing")).toBeTruthy();
 
@@ -275,10 +300,10 @@ describe("runScanChunk · wiring de finalización de percentiles", () => {
     await chunkPromise;
 
     const patchesAfter = progressPatches();
-    expect(patchesAfter.find((p) => p.status === "done")).toBeTruthy();
+    expect(patchesAfter.find((p) => p.status === "complete")).toBeTruthy();
   });
 
-  it("fallo del RPC: progress termina con finalizationStatus:'failed', percentilesFinalized:false, finalizationError con el mensaje, status:'error' (no 'done')", async () => {
+  it("fallo del RPC: progress termina con finalizationStatus:'failed', percentilesFinalized:false, finalizationError con el mensaje, status:'error' (ni 'complete' ni 'failed')", async () => {
     const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 3, chunkSize: 3 });
     configureSnapshotOnce(snapshot);
     const errorMsg = "DB rollback simulado";
@@ -289,7 +314,6 @@ describe("runScanChunk · wiring de finalización de percentiles", () => {
     const patches = progressPatches();
     const finalizingPatch = patches.find((p) => p.status === "finalizing");
     const errorPatch = patches.find((p) => p.status === "error");
-    const donePatch = patches.find((p) => p.status === "done");
 
     expect(finalizingPatch).toBeTruthy();
     expect(finalizingPatch.finalizationStatus).toBe("pending");
@@ -300,13 +324,100 @@ describe("runScanChunk · wiring de finalización de percentiles", () => {
     expect(errorPatch.finalizationError).toBe(errorMsg);
     expect(errorPatch.error).toContain("percentile finalization failed");
 
-    // CRÍTICO: no debe haber ningún "done".
-    expect(donePatch).toBeUndefined();
+    // CRÍTICO: cuando la RPC falla, NINGÚN terminal de completitud se escribe.
+    // El status es "error" (runtime); el cómputo de ratio no se aplica.
+    expect(patches.find((p) => p.status === "complete")).toBeUndefined();
+    expect(patches.find((p) => p.status === "partial")).toBeUndefined();
+    expect(patches.find((p) => p.status === "failed")).toBeUndefined();
+    expect(patches.find((p) => p.status === "done")).toBeUndefined();
 
     // ORDEN: "finalizing" antes que "error".
     const finalizingIdx = patches.findIndex((p) => p.status === "finalizing");
     const errorIdx = patches.findIndex((p) => p.status === "error");
     expect(finalizingIdx).toBeLessThan(errorIdx);
+  });
+
+  it("ALERTA: todos los proveedores fallan → terminal 'failed' (no 'done'/'complete'). Reproduce audit §Terminal done can mean zero rows", async () => {
+    // Caso original del hallazgo del audit 2026-07-10: si los 3 providers
+    // fallan, el status reportado debe ser 'failed', no 'done' ni 'complete'.
+    failChartFor({ SYM1: "Yahoo chart HTTP 500", SYM2: "Yahoo chart HTTP 503", SYM3: "Yahoo chart HTTP 429" });
+    const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 3, chunkSize: 3 });
+    configureSnapshotOnce(snapshot);
+    finalizeScanResultsInDb.mockResolvedValue({ rowsProcessed: 0, rowsPatched: 0 });
+
+    await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
+
+    const patches = progressPatches();
+    // El status terminal del último PATCH debe ser 'failed' (no 'done' ni 'complete').
+    const completePatch = patches.find((p) => p.status === "complete");
+    const partialPatch = patches.find((p) => p.status === "partial");
+    const failedPatch = patches.find((p) => p.status === "failed");
+    const donePatch = patches.find((p) => p.status === "done");
+
+    expect(completePatch).toBeUndefined();
+    expect(partialPatch).toBeUndefined();
+    expect(donePatch).toBeUndefined();
+
+    expect(failedPatch).toBeTruthy();
+    expect(failedPatch.finalizationStatus).toBe("succeeded");
+    expect(failedPatch.percentilesFinalized).toBe(true);
+    // Métrica: 0 guardados / 3 errores → ratio 0, no publicable.
+    expect(failedPatch.completeness).toEqual(expect.objectContaining({
+      saved: 0,
+      errors: 3,
+      ratio: 0,
+    }));
+    // El kindBreakdown clasifica 3 errores como "retryable" (5xx/429 son retryable).
+    expect(failedPatch.completeness.kindBreakdown.retryable).toBe(3);
+  });
+
+  it("caso mixto: 7 OK y 3 fallan (de un scan de 10 en 1 eslabón) → terminal 'partial' con degraded-ready", async () => {
+    // 7/10 = 0.7 → partial. Se publica en leaderboards con degraded=true.
+    failChartFor({
+      SYM2: "Yahoo chart HTTP 503",
+      SYM5: "Yahoo chart HTTP 404", // terminal
+      SYM9: "Sin resultado Yahoo",  // terminal
+    });
+    const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 10, chunkSize: 10 });
+    configureSnapshotOnce(snapshot);
+    finalizeScanResultsInDb.mockResolvedValue({ rowsProcessed: 7, rowsPatched: 7 });
+
+    await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
+
+    const patches = progressPatches();
+    const completePatch = patches.find((p) => p.status === "complete");
+    const failedPatch = patches.find((p) => p.status === "failed");
+    const partialPatch = patches.find((p) => p.status === "partial");
+
+    expect(completePatch).toBeUndefined();
+    expect(failedPatch).toBeUndefined();
+
+    expect(partialPatch).toBeTruthy();
+    expect(partialPatch.finalizationStatus).toBe("succeeded");
+    expect(partialPatch.percentilesFinalized).toBe(true);
+    expect(partialPatch.completeness.saved).toBe(7);
+    expect(partialPatch.completeness.errors).toBe(3);
+    expect(partialPatch.completeness.ratio).toBeCloseTo(0.7, 5);
+    expect(partialPatch.completeness.kindBreakdown.retryable).toBe(1); // 503
+    expect(partialPatch.completeness.kindBreakdown.terminal).toBe(2);  // 404 + sin-resultado
+  });
+
+  it("caso degenerado: 0 símbolos procesados (cancel inmediato) → 'failed' (no 'complete')", async () => {
+    // saved=0 y errors=0 → falla seguro como failed por decisión del contrato.
+    const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 0, chunkSize: 3 });
+    configureSnapshotOnce(snapshot);
+    finalizeScanResultsInDb.mockResolvedValue({ rowsProcessed: 0, rowsPatched: 0 });
+
+    await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
+
+    const patches = progressPatches();
+    const completePatch = patches.find((p) => p.status === "complete");
+    const failedPatch = patches.find((p) => p.status === "failed");
+    expect(completePatch).toBeUndefined();
+    expect(failedPatch).toBeTruthy();
+    expect(failedPatch.completeness.saved).toBe(0);
+    expect(failedPatch.completeness.errors).toBe(0);
+    expect(failedPatch.completeness.ratio).toBe(0);
   });
 
   it("supabaseRpc no se invoca directamente desde runScanChunk (va vía finalizeScanResultsInDb)", async () => {
