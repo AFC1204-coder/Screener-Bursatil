@@ -15,6 +15,7 @@ import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServ
 import { CURATED_NAMES } from "@/lib/universes";
 import { weeklyStageForBars } from "@/lib/weeklyStage";
 import { ESTIMATED_CHART_PROVIDER, estimatedChartForSymbol } from "@/lib/estimatedBars";
+import { userFacingSearchError } from "@/lib/screenerFormat";
 
 const BRIEF_CACHE_TYPE = "company_brief_cache";
 const BRIEF_CACHE_VERSION = 2;
@@ -481,7 +482,7 @@ function relativeStrengthSeriesFromBars(bars = [], benchmarkBars = []) {
     return {
       points: [],
       alignedDays: aligned.length,
-      note: "Historico insuficiente para graficar la comparativa relativa vs benchmark.",
+      note: userFacingSearchError("Historico insuficiente para graficar la comparativa relativa vs benchmark."),
     };
   }
 
@@ -1192,7 +1193,7 @@ function minimalCompanyBrief(symbol = "", error = {}) {
     investorAngle: "Esperar a datos frescos antes de tomar decisiones.",
     stage: {
       ...fallbackStage,
-      detail: `Historico estimado: ${fallbackStage.detail || "proveedor no disponible"}`,
+      detail: userFacingSearchError(`Historico estimado: ${fallbackStage.detail || "proveedor no disponible"}`),
       estimated: true,
     },
     relativeStrength: {
@@ -1361,7 +1362,7 @@ export async function getCompanyBrief(symbol, options = {}) {
     const stage = chartEstimated
       ? {
         ...rawStage,
-        detail: `Historico estimado: ${rawStage.detail || "proveedor no disponible"}`,
+        detail: userFacingSearchError(`Historico estimado: ${rawStage.detail || "proveedor no disponible"}`),
         estimated: true,
       }
       : rawStage;

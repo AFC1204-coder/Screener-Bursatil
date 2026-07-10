@@ -17,6 +17,7 @@ import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { checklistForRow, enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
 import { buildDecisionTraceabilitySummary, decisionResolutionForRow } from "@/lib/decisionTraceability";
 import { rowPassesListContract } from "@/lib/listRationale";
+import { userFacingSearchError } from "@/lib/screenerFormat";
 import { createFavoriteFromRow, metricValue, rowTheme, shortBusiness } from "@/lib/stockRows";
 import { benchmarkForFavorite, externalLinks, stockUrl } from "@/lib/symbols";
 import { vcpContractionSummary } from "@/lib/vcpDiagnostics";
@@ -120,7 +121,7 @@ function closeOnOrBefore(bars = [], isoDate) {
   return bars.find((bar) => bar.date <= target)?.close ?? bars.at(-1)?.close ?? null;
 }
 function stateFromBars(bars = []) {
-  if (bars.length < 210) return "Historico insuficiente";
+  if (bars.length < 210) return userFacingSearchError("Historico insuficiente");
   const price = bars[0].close;
   const s50 = sma(bars, 50), s200 = sma(bars, 200);
   if (price > s50 && price > s200) return "Tendencia constructiva";

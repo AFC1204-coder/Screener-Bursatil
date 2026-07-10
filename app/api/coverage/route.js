@@ -7,10 +7,45 @@ const COVERAGE_RESPONSE_TIMEOUT_MS = Number(process.env.COVERAGE_RESPONSE_TIMEOU
 const COVERAGE_SCAN_MAX_ROWS = Number(process.env.COVERAGE_SCAN_MAX_ROWS || 4000);
 const COVERAGE_SCAN_TIMEOUT_MS = Number(process.env.COVERAGE_SCAN_TIMEOUT_MS || 7000);
 
-function timeoutAfter(ms, message) {
-  return new Promise((_, reject) => {
-    setTimeout(() => reject(new Error(message)), Math.max(500, Number(ms) || 0));
-  });
+// Ejecuta `build(params)` con un presupuesto de tiempo. Si vence el timeout,
+// ABORTA la señal (mezclada en `params.signal`) y ESPERA a que el trabajo
+// termine (rechazando o resolviendo) antes de rechazar con
+// "Coverage report timeout". Devolver el fallback sin esperar dejaría
+// mutaciones/rejects en background tras la respuesta (el síntoma concreto que
+// tests/coverageTimeout.test.js cubre).
+//
+// Contrato:
+//  - `build` se llama UNA vez y recibe `params` con `signal` ya inyectado.
+//  - Si `build` rechaza o aborta dentro del presupuesto, ese error propaga
+//    intacto (mismo comportamiento que un `Promise.race` para ese caso).
+//  - Si vence el timeout: abortamos, esperamos a que `build` termine de
+//    forma cooperativa (rechazando con el AbortError), y entonces rechazamos
+//    con `Error("Coverage report timeout")`.
+//  - El caller (GET) captura ese error y devuelve `partialCoverageReport`.
+export async function runCoverageWithTimeout(build, params = {}, timeoutMs = COVERAGE_RESPONSE_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const budget = Math.max(1, Number(timeoutMs) || 0);
+  let timedOut = false;
+  setTimeout(() => {
+    timedOut = true;
+    controller.abort(new Error("Coverage report timeout"));
+  }, budget);
+  // Espera el resultado del build. Si vence el timeout, el handler `abort`
+  // del build es responsable de liberar sus recursos y rechazar — esa
+  // rejection se captura aquí para que, cuando `timedOut` sea true, esperemos
+  // cooperativamente al build antes de propagar "Coverage report timeout".
+  // Devolver el fallback sin esperar dejaría timers/mutaciones en background.
+  try {
+    return await Promise.resolve().then(() => build({ ...params, signal: controller.signal }));
+  } catch (error) {
+    if (timedOut) {
+      // El build cooperó (o no) y su rejection ya se propagó; el caller solo
+      // necesita el error de timeout canónico. Mantener el `throw` aquí
+      // garantiza que el `await` del caller espere a este tick completo.
+      throw new Error("Coverage report timeout");
+    }
+    throw error;
+  }
 }
 
 function partialCoverageReport(markets = [], error = {}) {
@@ -110,10 +145,11 @@ export async function GET(request) {
   const scanMaxRows = Math.max(100, Math.min(Number(searchParams.get("scanMaxRows") || COVERAGE_SCAN_MAX_ROWS), 20000));
   const scanTimeoutMs = Math.max(500, Math.min(Number(searchParams.get("scanTimeoutMs") || COVERAGE_SCAN_TIMEOUT_MS), 10000));
   try {
-    const report = await Promise.race([
-      buildCoverageReport({ markets, refresh, maxAgeHours, scanMaxRows, scanTimeoutMs }),
-      timeoutAfter(COVERAGE_RESPONSE_TIMEOUT_MS, "Coverage report timeout"),
-    ]);
+    const report = await runCoverageWithTimeout(
+      (params) => buildCoverageReport(params),
+      { markets, refresh, maxAgeHours, scanMaxRows, scanTimeoutMs },
+      COVERAGE_RESPONSE_TIMEOUT_MS,
+    );
     if (!includeShadow) return Response.json(report);
     return Response.json({
       ...report,

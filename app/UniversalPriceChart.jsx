@@ -7,6 +7,7 @@ import { barsAreCandleGrade } from "@/lib/chartDataQuality";
 import { chartViewStateFromLogicalRange, latestLogicalRange, manualChartWindowRestorePolicy, rescaledLogicalRange, shiftedLogicalRange, timeWindowFromLogicalRange, timeWindowLogicalRange, zoomedLogicalRange } from "@/lib/chartNavigation";
 import { getJson } from "@/lib/clientApi";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
+import { userFacingSearchError } from "@/lib/screenerFormat";
 import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
 import { useChartDrawings } from "@/app/useChartDrawings";
 
@@ -1047,7 +1048,7 @@ export default function UniversalPriceChart({
 
   if (rows.length < 2) {
     return <div className={`universalChart empty ${className}`}>
-      {remote.loading ? "Cargando historico..." : remote.error ? `Proveedor de grafico no disponible: ${remote.error}` : "Historico insuficiente"}
+      {remote.loading ? "Cargando historico..." : remote.error ? `Proveedor de grafico no disponible: ${remote.error}` : userFacingSearchError("Historico insuficiente")}
     </div>;
   }
 
