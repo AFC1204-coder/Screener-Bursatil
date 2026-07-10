@@ -1,5 +1,5 @@
 import { readScanBatchCursor } from "@/lib/materializedScanner";
-import { disabledPayload, requirePersistenceAuth, supabaseConfig, supabaseRequest, supabaseRequestAll } from "@/lib/supabaseServer";
+import { disabledPayload, requirePersistenceAuth, supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
 
 const DEFAULT_SINCE_DAYS = 45;
 const DEFAULT_LIMIT = 10000;
@@ -64,7 +64,19 @@ function priceFreshness(row = {}, maxDays = DEFAULT_MAX_PRICE_FRESHNESS_DAYS) {
   return { days, ok: days <= maxDays };
 }
 
-function rowShape(item = {}, maxPriceFreshnessDays = DEFAULT_MAX_PRICE_FRESHNESS_DAYS, minCoverage = DEFAULT_MIN_COVERAGE) {
+// ---------------------------------------------------------------------------
+// LEGACY REFERENCE (pure). Estas helpers reproducen exactamente la logica que
+// la RPC scan_coverage_breakdown (supabase/migrations/*_scan_coverage_breakdown.sql)
+// ejecuta en Postgres. Se mantienen exportadas para:
+//   1. tests de paridad (tests/integration/scan-coverage-breakdown.real.test.mjs
+//      compara RPC vs summarizeScanCoverageBreakdown sobre el mismo dataset), y
+//   2. fallback/documentacion viva del contrato.
+// NO se llaman en el path en caliente del GET — el GET consume el payload
+// agregado que devuelve la RPC. Mismo patron que scanRowShape/summarizeScanCoverageRows
+// en lib/coveragePlan.js para /api/coverage.
+// ---------------------------------------------------------------------------
+
+export function rowShape(item = {}, maxPriceFreshnessDays = DEFAULT_MAX_PRICE_FRESHNESS_DAYS, minCoverage = DEFAULT_MIN_COVERAGE) {
   const freshness = priceFreshness(item, maxPriceFreshnessDays);
   const coverage = metric(item, "dataCoverageScore");
   const totalScore = firstFinite(item.raw?.totalScore, item.metrics?.totalScore, item.total_score);
@@ -91,7 +103,7 @@ function rowShape(item = {}, maxPriceFreshnessDays = DEFAULT_MAX_PRICE_FRESHNESS
   };
 }
 
-function latestBySymbol(rows = []) {
+export function latestBySymbol(rows = []) {
   const bySymbol = new Map();
   for (const row of rows) {
     if (!row.symbol) continue;
@@ -103,7 +115,7 @@ function latestBySymbol(rows = []) {
   return [...bySymbol.values()];
 }
 
-function topSymbols(rows = [], limit = 5) {
+export function topSymbols(rows = [], limit = 5) {
   return [...rows]
     .sort((a, b) => (b.objectiveScore || 0) - (a.objectiveScore || 0))
     .slice(0, limit)
@@ -115,7 +127,7 @@ function topSymbols(rows = [], limit = 5) {
     }));
 }
 
-function groupCoverage(rows = [], field = "country", { includeTop = false } = {}) {
+export function groupCoverage(rows = [], field = "country", { includeTop = false } = {}) {
   const groups = new Map();
   for (const row of rows) {
     const key = cleanText(row[field] || "Sin dato");
@@ -218,13 +230,46 @@ function sanitizeRunStats(stats = {}) {
   };
 }
 
-async function readScanResults(config, { sinceDays, limit }) {
+// Referencia pura de paridad: aplica las mismas reglas (rowShape → latestBySymbol
+// → groupCoverage por country y sector → totals/avg) que la RPC ejecuta en
+// Postgres. El test real compara esta salida contra scan_coverage_breakdown para
+// el mismo dataset. Shape identica a la del payload RPC (jsonb_build_object).
+export function summarizeScanCoverageBreakdown(rows = [], { maxPriceFreshnessDays = DEFAULT_MAX_PRICE_FRESHNESS_DAYS, minCoverageScore = DEFAULT_MIN_COVERAGE, includeTop = false, nowMs = Date.now() } = {}) {
+  const shaped = latestBySymbol((rows || []).map((row) => rowShape(row, maxPriceFreshnessDays, minCoverageScore)));
+  const fresh = shaped.filter((row) => row.priceFresh).length;
+  const qualityOk = shaped.filter((row) => row.qualityOk).length;
+  const rankingEligible = shaped.filter((row) => row.rankingEligible).length;
+  const latestScanAt = shaped.map((row) => Date.parse(row.createdAt || "") || 0).sort((a, b) => b - a)[0];
+  return {
+    rowsRead: rows?.length || 0,
+    uniqueSymbols: shaped.length,
+    fresh,
+    qualityOk,
+    rankingEligible,
+    actionable: rankingEligible,
+    avgCoverageScore: avg(shaped.map((row) => row.dataCoverageScore)),
+    avgTotalScore: avg(shaped.map((row) => row.totalScore)),
+    latestScanAt: latestScanAt ? new Date(latestScanAt).toISOString() : "",
+    byCountry: groupCoverage(shaped, "country", { includeTop }),
+    bySector: groupCoverage(shaped, "sector", { includeTop }).slice(0, 25),
+  };
+}
+
+// Lee el desglose agregado via RPC (scan_coverage_breakdown) en vez de transferir
+// metrics/raw completos de scan_results. Devuelve el payload agregado chico.
+async function readScanCoverageBreakdown(config, { sinceDays, limit, maxPriceFreshnessDays, minCoverageScore, includeTop }) {
   const since = new Date(Date.now() - sinceDays * 86400 * 1000).toISOString();
-  return supabaseRequestAll("scan_results", {
-    query: `owner_id=eq.${encodeURIComponent(config.ownerId)}&created_at=gte.${encodeURIComponent(since)}&select=symbol,country,sector,industry,theme,total_score,weinstein_score,minervini_score,risk_score,rs_rating,metrics,raw,created_at&order=created_at.desc`,
-  }, {
-    maxRows: limit,
+  const now = new Date();
+  const payload = await supabaseRpc("scan_coverage_breakdown", {
+    p_owner_id: config.ownerId,
+    p_since: since,
+    p_max_rows: limit,
+    p_max_price_freshness_days: maxPriceFreshnessDays,
+    p_min_coverage_score: minCoverageScore,
+    p_include_top: Boolean(includeTop),
+    p_now: now.toISOString(),
   });
+  return Array.isArray(payload) ? payload[0] || {} : payload || {};
 }
 
 async function readLeaderboards(config) {
@@ -252,42 +297,44 @@ export async function GET(request) {
   const includeTop = boolParam(searchParams, "includeTop", false);
 
   try {
-    const [scanResults, leaderboards, providerRuns, cursor] = await Promise.all([
-      readScanResults(config, { sinceDays, limit }),
+    const [breakdown, leaderboards, providerRuns, cursor] = await Promise.all([
+      readScanCoverageBreakdown(config, { sinceDays, limit, maxPriceFreshnessDays, minCoverageScore, includeTop }),
       readLeaderboards(config),
       readProviderRuns(config),
       readScanBatchCursor().catch(() => ({ value: {}, updatedAt: "" })),
     ]);
-    const shaped = latestBySymbol((scanResults || []).map((row) => rowShape(row, maxPriceFreshnessDays, minCoverageScore)));
-    const fresh = shaped.filter((row) => row.priceFresh).length;
-    const qualityOk = shaped.filter((row) => row.qualityOk).length;
-    const rankingEligible = shaped.filter((row) => row.rankingEligible).length;
+    // La RPC ya aplicó latestBySymbol + freshness/coverage/eligibility + agrupado
+    // por country y sector en Postgres. Solo derivamos los *Pct de summary sobre
+    // uniqueSymbols (igual que antes con pct()).
+    const uniqueSymbols = Number(breakdown.uniqueSymbols || 0);
+    const fresh = Number(breakdown.fresh || 0);
+    const qualityOk = Number(breakdown.qualityOk || 0);
+    const rankingEligible = Number(breakdown.rankingEligible || 0);
     const actionable = rankingEligible;
-    const latestScanAt = shaped.map((row) => Date.parse(row.createdAt || "") || 0).sort((a, b) => b - a)[0];
 
     return Response.json({
       ok: true,
       configured: true,
       legalMode: includeTop ? "derived-aggregate-with-limited-top-samples" : "derived-aggregate-only",
       generatedAt: new Date().toISOString(),
-      window: { sinceDays, rowsRead: scanResults?.length || 0, maxRows: limit },
+      window: { sinceDays, rowsRead: Number(breakdown.rowsRead || 0), maxRows: limit },
       thresholds: { maxPriceFreshnessDays, minCoverageScore },
       summary: {
-        uniqueSymbols: shaped.length,
+        uniqueSymbols,
         fresh,
-        freshPct: pct(fresh, shaped.length),
+        freshPct: pct(fresh, uniqueSymbols),
         qualityOk,
-        qualityPct: pct(qualityOk, shaped.length),
+        qualityPct: pct(qualityOk, uniqueSymbols),
         rankingEligible,
-        rankingEligiblePct: pct(rankingEligible, shaped.length),
+        rankingEligiblePct: pct(rankingEligible, uniqueSymbols),
         actionable,
-        actionablePct: pct(actionable, shaped.length),
-        avgCoverageScore: avg(shaped.map((row) => row.dataCoverageScore)),
-        avgTotalScore: avg(shaped.map((row) => row.totalScore)),
-        latestScanAt: latestScanAt ? new Date(latestScanAt).toISOString() : "",
+        actionablePct: pct(actionable, uniqueSymbols),
+        avgCoverageScore: breakdown.avgCoverageScore ?? null,
+        avgTotalScore: breakdown.avgTotalScore ?? null,
+        latestScanAt: breakdown.latestScanAt || "",
       },
-      byCountry: groupCoverage(shaped, "country", { includeTop }),
-      bySector: groupCoverage(shaped, "sector", { includeTop }).slice(0, 25),
+      byCountry: breakdown.byCountry || [],
+      bySector: (breakdown.bySector || []).slice(0, 25),
       leaderboards: {
         count: leaderboards.length,
         populated: leaderboards.filter((item) => Number(item.item_count || 0) > 0).length,

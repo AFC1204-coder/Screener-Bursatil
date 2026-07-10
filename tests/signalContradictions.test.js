@@ -735,12 +735,20 @@ describe("finalizeScanResultsInDb · integra contradicciones en RPC atómica", (
     });
 
     supabaseRequestAll.mockResolvedValue(rows);
-    supabaseRpc.mockResolvedValue([{ updated_count: rows.length }]);
+    // 1ª RPC: scan_finalize_inputs devuelve {inputs, rowsRead}. Las filas llegan
+    // "thin" (id + raw proyectado), aquí simulamos eso proyectando raw tal cual
+    // (makeDbRow ya pone todo lo necesario en raw). metrics no viaja en el READ
+    // thin — el echo `...row.metrics` queda {} (la RPC finalize_scan_results
+    // mergea en Postgres).
+    supabaseRpc.mockResolvedValueOnce({ inputs: rows.map(({ id, raw }) => ({ id, raw })), rowsRead: rows.length });
+    // 2ª RPC: finalize_scan_results devuelve updated_count.
+    supabaseRpc.mockResolvedValueOnce([{ updated_count: rows.length }]);
 
     await finalizeScanResultsInDb("scan-c", "owner-c");
 
-    expect(supabaseRpc).toHaveBeenCalledTimes(1);
-    const [, payload] = supabaseRpc.mock.calls[0];
+    // 2 RPCs: 1 lectura thin + 1 escritura atómica.
+    expect(supabaseRpc).toHaveBeenCalledTimes(2);
+    const [, payload] = supabaseRpc.mock.calls[1];
     expect(payload.p_patches).toHaveLength(rows.length);
 
     const byId = Object.fromEntries(payload.p_patches.map((p) => [p.id, p.metrics_patch]));

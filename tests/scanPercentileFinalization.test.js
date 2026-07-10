@@ -188,9 +188,15 @@ describe("finalizeScanPercentiles (pure)", () => {
 
 // --- Tests del orchestrator (con mock de Supabase) ------------------------
 //
-// PRIMER USO de vi.mock en el repo. Mockeamos supabaseRpc y supabaseRequestAll
-// para simular DB sin tocar red. El mock captura la llamada RPC atómica para
-// verificar el contrato: load → recompute → 1 RPC (no N PATCHes).
+// PRIMER USO de vi.mock en el repo. Mockeamos supabaseRpc (y supabaseRequestAll
+// por compatibilidad histórica del mock) para simular DB sin tocar red.
+//
+// El contrato del orchestrator cambió al migrar la lectura a la RPC
+// scan_finalize_inputs (thin-raw projection): ahora hay 2 RPCs — 1 de lectura
+// (scan_finalize_inputs devuelve {inputs, rowsRead}) + 1 de escritura atómica
+// (finalize_scan_results). La cobertura exhaustiva del NUEVO contrato vive en
+// tests/scanFinalizeInputs.test.js. Aquí mantenemos un smoke del happy path para
+// no perder la cobertura histórica de la integración pure-helper ↔ orchestrator.
 //
 // La atomicidad real la da la función PL/pgSQL finalize_scan_results (que hace
 // un único UPDATE masivo en una transacción); aquí solo verificamos que el
@@ -203,37 +209,45 @@ vi.mock("@/lib/supabaseServer", () => ({
 
 import { supabaseRequestAll, supabaseRpc } from "@/lib/supabaseServer";
 
-describe("finalizeScanResultsInDb (orchestrator atómico vía RPC)", () => {
+// Helper: universo thin tal como lo devuelve scan_finalize_inputs (sin metrics,
+// sin chartPreview — solo id + raw proyectado). Mismo shape que makeThinRow de
+// tests/scanFinalizeInputs.test.js pero reutilizando buildUniverse().
+function thinUniverse() {
+  return buildUniverse().map((r) => ({ id: r.id, raw: r.raw }));
+}
+
+describe("finalizeScanResultsInDb (orchestrator · smoke de integración post-thin-raw)", () => {
   afterEach(() => {
     supabaseRequestAll.mockReset();
     supabaseRpc.mockReset();
   });
 
-  it("carga filas, recalcula y aplica TODO en una sola RPC atómica", async () => {
-    const universe = buildUniverse();
-    supabaseRequestAll.mockResolvedValue(universe);
-    // La RPC retorna { updated_count } (PostgREST puede devolver array o objeto).
-    supabaseRpc.mockResolvedValue([{ updated_count: 24 }]);
+  it("carga vía scan_finalize_inputs + aplica TODO en finalize_scan_results atómica", async () => {
+    const universe = thinUniverse();
+    // 1ª llamada: scan_finalize_inputs → {inputs, rowsRead}.
+    supabaseRpc.mockResolvedValueOnce({ inputs: universe, rowsRead: universe.length });
+    // 2ª llamada: finalize_scan_results → { updated_count }.
+    supabaseRpc.mockResolvedValueOnce([{ updated_count: universe.length }]);
 
     const result = await finalizeScanResultsInDb("scan-1", "owner-1");
 
-    // 1 load, 1 RPC (NO N PATCHes).
-    expect(supabaseRequestAll).toHaveBeenCalledTimes(1);
-    expect(supabaseRpc).toHaveBeenCalledTimes(1);
-    expect(result.rowsProcessed).toBe(24);
-    expect(result.rowsPatched).toBe(24);
+    // 2 RPCs (1 lectura thin + 1 escritura). supabaseRequestAll NO se usa.
+    expect(supabaseRequestAll).not.toHaveBeenCalled();
+    expect(supabaseRpc).toHaveBeenCalledTimes(2);
+    expect(result.rowsProcessed).toBe(universe.length);
+    expect(result.rowsPatched).toBe(universe.length);
 
-    // Verifica el contrato de la RPC: nombre correcto, payload con 3 claves.
-    const [rpcName, rpcPayload, rpcOptions] = supabaseRpc.mock.calls[0];
-    expect(rpcName).toBe("finalize_scan_results");
-    expect(rpcPayload.p_owner_id).toBe("owner-1");
-    expect(rpcPayload.p_scan_id).toBe("scan-1");
-    expect(Array.isArray(rpcPayload.p_patches)).toBe(true);
-    expect(rpcPayload.p_patches).toHaveLength(24);
-    expect(rpcOptions.prefer).toBe("return=representation");
+    // La escritura es la 2ª llamada: finalize_scan_results con payload correcto.
+    const [writeName, writePayload, writeOptions] = supabaseRpc.mock.calls[1];
+    expect(writeName).toBe("finalize_scan_results");
+    expect(writePayload.p_owner_id).toBe("owner-1");
+    expect(writePayload.p_scan_id).toBe("scan-1");
+    expect(Array.isArray(writePayload.p_patches)).toBe(true);
+    expect(writePayload.p_patches).toHaveLength(universe.length);
+    expect(writeOptions.prefer).toBe("return=representation");
 
-    // Cada patch en el payload lleva id + metrics_patch con scope "final".
-    for (const patch of rpcPayload.p_patches) {
+    // Cada patch lleva id + metrics_patch con scope "final" y percentil finito.
+    for (const patch of writePayload.p_patches) {
       expect(typeof patch.id).toBe("string");
       expect(patch.metrics_patch.percentileScope).toBe("final");
       // Con 24 filas (≥ RS_GLOBAL_MIN_SAMPLE=20), el percentil global es finito.
@@ -241,47 +255,16 @@ describe("finalizeScanResultsInDb (orchestrator atómico vía RPC)", () => {
     }
   });
 
-  it("scan vacío (0 filas) → 0 patches, sin invocar RPC", async () => {
-    supabaseRequestAll.mockResolvedValue([]);
-    const result = await finalizeScanResultsInDb("scan-2", "owner-2");
-    expect(result).toEqual({ rowsProcessed: 0, rowsPatched: 0 });
-    expect(supabaseRpc).not.toHaveBeenCalled();
-  });
-
   it("lanza si falta scanId u ownerId (contrato)", async () => {
     await expect(finalizeScanResultsInDb("", "owner")).rejects.toThrow(/scanId.*requerido/);
     await expect(finalizeScanResultsInDb("scan", "")).rejects.toThrow(/scanId.*requerido/);
   });
-
-  it("RPC falla → throw; NINGUNA fila queda tocada (transacción revierte en DB real)", async () => {
-    // Este es el test clave de atomicidad. En producción, la función PL/pgSQL
-    // envuelve el UPDATE en una transacción: si lanza, NADA se persiste. El
-    // orchestrator propaga el throw sin haber escrito nada fuera de la DB
-    // (no hay estado intermedio en JS ni en DB). El caller (runScanChunk) marca
-    // status="error" + finalizationStatus="failed".
-    const universe = buildUniverse();
-    supabaseRequestAll.mockResolvedValue(universe);
-    supabaseRpc.mockRejectedValue(new Error("DB timeout"));
-
-    await expect(finalizeScanResultsInDb("scan-3", "owner-3")).rejects.toThrow("DB timeout");
-
-    // La RPC fue invocada (el intento ocurrió)...
-    expect(supabaseRpc).toHaveBeenCalledTimes(1);
-    // ...pero el caller recibe el throw y decide marcar error. En la DB real,
-    // la transacción de finalize_scan_results habría revertido → 0 filas
-    // "final". Aquí no podemos verificar la DB directamente, pero el contrato
-    // es: el orchestrator NO escribe nada parcial — o la RPC completa o nada.
-    // El mock NO escribe en ningún store compartido, así que 0 filas tocadas.
-  });
-
-  it("acepta respuesta RPC como objeto suelto o array PostgREST", async () => {
-    const universe = buildUniverse();
-    supabaseRequestAll.mockResolvedValue(universe);
-    supabaseRpc.mockResolvedValue({ updated_count: 24 }); // objeto, no array
-    const result = await finalizeScanResultsInDb("scan-4", "owner-4");
-    expect(result.rowsPatched).toBe(24);
-  });
 });
+
+// El contrato completo del nuevo orchestrator thin-raw (RPC de lectura, patch
+// sin echo de metrics, manejo de array/objeto, idempotencia, propagación de
+// errores) está cubierto en tests/scanFinalizeInputs.test.js. Este archivo
+// mantiene los tests del PURE helper (arriba) que son la base atómica.
 
 // --- Nota sobre cobertura del caller (runScanChunk) ------------------------
 //
@@ -290,8 +273,7 @@ describe("finalizeScanResultsInDb (orchestrator atómico vía RPC)", () => {
 // del código en lib/serverScanRunner.js:238-285. Un test end-to-end requeriría
 // mockear fetchYahooChart/fetchYahooProfile/supabaseRequest (snapshot de scan,
 // DELETE de filas, PATCH de progress) — un setup extenso que pertenece a una
-// suite de integración aparte. Aquí cubrimos el contrato del orchestrator
-// (éxito → rowsPatched, fallo → throw) que es la unidad atómica de este cambio.
+// suite de integración aparte.
 //
 // El contrato de detección de retry queda documentado en el código:
 //   - status="done" + finalizationStatus="succeeded" → finalización OK.

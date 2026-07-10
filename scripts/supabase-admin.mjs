@@ -46,6 +46,36 @@ const REQUIRED_FUNCTIONS = [
     p_scan_id: "00000000-0000-0000-0000-000000000000", // sentinel; la RPC falla con 21000 si no existe scan
     p_patches: [],
   })],
+  ["coverage_scan_summary", "coverage", (config) => ({
+    p_owner_id: config.ownerId,
+    p_since: new Date(Date.now() - 86400000).toISOString(),
+    p_max_rows: 1,
+    p_max_price_freshness_days: 5,
+    p_min_coverage_score: 40,
+    p_now: new Date().toISOString(),
+  })],
+  // scan_coverage_breakdown: hermana de coverage_scan_summary para /api/scan-coverage.
+  // Agrega por country Y sector (con averages y opcional topSymbols) en Postgres
+  // para no transferir metrics/raw completos. Si falta, /api/scan-coverage cae a
+  // 500. Misma convención security invoker + grant a service_role.
+  ["scan_coverage_breakdown", "coverage", (config) => ({
+    p_owner_id: config.ownerId,
+    p_since: new Date(Date.now() - 86400000).toISOString(),
+    p_max_rows: 1,
+    p_max_price_freshness_days: 5,
+    p_min_coverage_score: 40,
+    p_include_top: false,
+    p_now: new Date().toISOString(),
+  })],
+  // scan_finalize_inputs: thin-raw projection para el paso de finalización de
+  // percentiles RS (lib/scanPercentileFinalization.js). Si falta, la finalización
+  // lanza y todos los scan_results quedan con percentileScope='batch' (bug
+  // silencioso en UI pero campo mal). Detectado junto a finalize_scan_results.
+  ["scan_finalize_inputs", "scan-finalize", (config) => ({
+    p_owner_id: config.ownerId,
+    p_scan_id: "00000000-0000-0000-0000-000000000000", // sentinel; la RPC filtra por scan_id
+    p_max_rows: 1,
+  })],
   // purge_daily_bars_backstop: función invocada semanalmente por pg_cron
   // (limpieza de huérfanos + trim de excedentes en daily_bars). Si falta, el
   // job de pg_cron falla y daily_bars crece sin control.
