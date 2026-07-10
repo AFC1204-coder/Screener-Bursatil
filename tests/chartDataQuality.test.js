@@ -10,7 +10,7 @@
 //   4. Estimado detectable solo por barras/provider, sin campo top-level.
 
 import { describe, expect, it } from "vitest";
-import { assertDecisionGrade, chartQuality, isDecisionGrade } from "@/lib/chartDataQuality";
+import { assertDecisionGrade, barsAreCandleGrade, chartQuality, isDecisionGrade } from "@/lib/chartDataQuality";
 import { ESTIMATED_CHART_PROVIDER } from "@/lib/estimatedBars";
 
 describe("chartQuality · normalización canónica", () => {
@@ -86,5 +86,62 @@ describe("chartQuality · normalización canónica", () => {
       meta: { estimated: true },
     };
     expect(chartQuality(byMetaEstimated).status).toBe("estimated");
+  });
+});
+
+// barsAreCandleGrade evita que un fallback de preview close-only (p.ej. el
+// chartPreview persistido en review, que guarda {date, close, volume, sma50,
+// sma200}) se renderice como velas degeneradas cuando el fetch remoto de OHLC
+// real falla por red. Es la pieza testeable que decide si UniversalPriceChart
+// cae al estado empty limpio en lugar de pintar datos visualmente rotos.
+describe("barsAreCandleGrade · barras aptas para velas coherentes", () => {
+  it("barras OHLC nativas (high o low != close) → true", () => {
+    const bars = [
+      { date: "2026-07-01", open: 100, high: 105, low: 98, close: 102 },
+      { date: "2026-07-02", open: 102, high: 104, low: 99, close: 101 },
+    ];
+    expect(barsAreCandleGrade(bars)).toBe(true);
+  });
+
+  it("barras close-only ({close} sin OHLC) → false (preview degenerado)", () => {
+    // Shape exacta del chartPreview persistido en review (chartPreviewFromBars).
+    const bars = [
+      { date: "2026-07-01", close: 100, volume: 1000, sma50: 99, sma200: 98 },
+      { date: "2026-07-02", close: 101, volume: 1100, sma50: 99.5, sma200: 98.2 },
+    ];
+    expect(barsAreCandleGrade(bars)).toBe(false);
+  });
+
+  it("barras con OHLC degenerado a close (open=high=low=close) → false", () => {
+    // normalizeRows (UniversalPriceChart) expande close-only a este shape
+    // degenerado; barsAreCandleGrade debe detectarlo como NO candle-grade.
+    const bars = [
+      { date: "2026-07-01", open: 100, high: 100, low: 100, close: 100 },
+      { date: "2026-07-02", open: 101, high: 101, low: 101, close: 101 },
+    ];
+    expect(barsAreCandleGrade(bars)).toBe(false);
+  });
+
+  it("basta una sola barra con rango real para considerar el conjunto candle-grade", () => {
+    // .some: una barra con OHLC real salva el render aunque otras sean degeneradas.
+    const bars = [
+      { date: "2026-07-01", open: 100, high: 100, low: 100, close: 100 },
+      { date: "2026-07-02", open: 101, high: 103, low: 100, close: 102 },
+    ];
+    expect(barsAreCandleGrade(bars)).toBe(true);
+  });
+
+  it("array vacío o no-array → false", () => {
+    expect(barsAreCandleGrade([])).toBe(false);
+    expect(barsAreCandleGrade(null)).toBe(false);
+    expect(barsAreCandleGrade(undefined)).toBe(false);
+  });
+
+  it("barras con OHLC no numérico → false (datos corruptos)", () => {
+    const bars = [
+      { date: "2026-07-01", open: "n/a", high: 105, low: 98, close: 102 },
+      { date: "2026-07-02", open: 102, high: "n/a", low: 99, close: 101 },
+    ];
+    expect(barsAreCandleGrade(bars)).toBe(false);
   });
 });

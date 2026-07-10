@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, SkipForward, TrendingUp, Trash2, ZoomIn, ZoomOut } from "lucide-react";
 import { CHART_RANGES, DEFAULT_CHART_SETTINGS, normalizeChartInterval } from "@/lib/chartSettings";
+import { barsAreCandleGrade } from "@/lib/chartDataQuality";
 import { chartViewStateFromLogicalRange, latestLogicalRange, manualChartWindowRestorePolicy, rescaledLogicalRange, shiftedLogicalRange, timeWindowFromLogicalRange, timeWindowLogicalRange, zoomedLogicalRange } from "@/lib/chartNavigation";
 import { getJson } from "@/lib/clientApi";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
@@ -440,10 +441,12 @@ export default function UniversalPriceChart({
   const visibleTimeRangeRef = useRef(null);
   const manualWindowRef = useRef(emptyManualWindow());
   const lastInteractiveViewStateRef = useRef(chartViewStateFromLogicalRange(null, 0));
+  const viewStateRef = useRef(chartViewStateFromLogicalRange(null, 0));
   const previousRenderMetaRef = useRef({ ready: false, symbol: "", range: "", interval: "", style: "", scale: "", rowCount: 0 });
   const [remote, setRemote] = useState({ bars: null, loading: false, error: "", meta: null });
   const [renderError, setRenderError] = useState("");
   const [viewState, setViewState] = useState(() => chartViewStateFromLogicalRange(null, 0));
+  viewStateRef.current = viewState;
   const [visibleWindow, setVisibleWindow] = useState(null);
   const range = settings?.range || DEFAULT_CHART_SETTINGS.range;
   const interval = normalizeChartInterval(settings?.interval || DEFAULT_CHART_SETTINGS.interval);
@@ -480,9 +483,17 @@ export default function UniversalPriceChart({
 
   const rows = useMemo(() => {
     const remoteRows = normalizeRows(remote.bars || []);
-    const normalized = remoteRows.length ? remoteRows : intraday ? [] : localRows;
-    return chartRangeRows(aggregateRows(normalized, interval), range, interval);
-  }, [remote.bars, intraday, localRows, interval, range]);
+    if (remoteRows.length) return chartRangeRows(aggregateRows(remoteRows, interval), range, interval);
+    // Fetch remoto vacío/fallido. Si los datos locales NO son candle-grade (p.ej.
+    // chartPreview close-only persistido en review) y el modo es candlestick,
+    // caer a localRows pintaría velas degeneradas (puntos/guiones sueltos que el
+    // usuario podría confundir con mercado real). Devolver [] fuerza el estado
+    // empty limpio ("Historico insuficiente"). Los modos línea/área (style "8"/"3")
+    // solo usan close, así que se permiten con bars close-only. Ver barsAreCandleGrade.
+    const fallback = intraday ? [] : localRows;
+    const useLocal = fallback.length >= 2 && (style === "8" || style === "3" || barsAreCandleGrade(fallback));
+    return useLocal ? chartRangeRows(aggregateRows(fallback, interval), range, interval) : [];
+  }, [remote.bars, intraday, localRows, interval, range, style]);
   const rowTimes = useMemo(() => rows.map((row) => row.time), [rows]);
   const mainRsValue = safeNumber(rsMainScore);
   const globalRsScoreData = useMemo(
@@ -649,6 +660,7 @@ export default function UniversalPriceChart({
     let chart = null;
     let resizeObserver = null;
     let unsubscribeLogicalRange = null;
+    let detachWheelHandler = null;
 
     async function render() {
       if (!containerRef.current || rows.length < 2) return;
@@ -753,6 +765,56 @@ export default function UniversalPriceChart({
         },
       });
       chartRef.current = chart;
+
+      // PELLIZCO/SWIPE de trackpad en escritorio (Chrome/Safari Mac) llega como
+      // evento `wheel` con ctrlKey:true — NO como gesto táctil real, así que
+      // lightweight-charts v5 (que sólo escucha `touchstart/move/end` para
+      // `pinch`) nunca lo ve y `pinch:true` se queda inerte. Como además
+      // tenemos `handleScale.mouseWheel:false` a propósito, su handler de
+      // `wheel` también hace early-return y se pierde el gesto.
+      //
+      // Solución mínima: handler propio en fase de captura que (a) impide que
+      // el wheel llegue al listener interno de la librería (mediante
+      // stopImmediatePropagation) y (b) si el wheel lleva ctrlKey, lo
+      // reinyecta en el mismo pipeline que usan los botones ZoomIn/ZoomOut
+      // (zoomedLogicalRange + commitViewState) para que el estado "manual" se
+      // active igual que con un click. Wheel sin ctrlKey (scroll normal de
+      // página) sólo se cancela cuando es cancelable, para no romper scrolls
+      // donde no hace falta; nunca llega a la librería.
+      const onWheelCaptured = (event) => {
+        if (event.ctrlKey) {
+          // Es un pellizco de trackpad: el navegador lo emite como wheel+ctrl
+          // y, si no lo cancelamos, hace zoom de la PÁGINA entera, que es lo
+          // que el usuario percibe como "no responde dentro del chart".
+          if (event.cancelable) event.preventDefault();
+          event.stopImmediatePropagation();
+          const timeScale = chart.timeScale?.();
+          if (!timeScale) return;
+          const logicalRange = timeScale.getVisibleLogicalRange?.();
+          // Mismo factor por paso (~10% por unidad de deltaY normalizado a
+          // 100) que usa la librería internamente. deltaY<0 aleja (más
+          // barras), deltaY>0 acerca (menos barras).
+          const factor = Math.exp(event.deltaY * 0.0015);
+          const nextRange = zoomedLogicalRange({
+            rowCount: rows.length,
+            currentRange: logicalRange,
+            factor,
+            anchorLatest: !viewStateRef.current?.isAwayFromLatest,
+          });
+          if (nextRange) {
+            timeScale.setVisibleLogicalRange?.(nextRange);
+            syncViewStateSoon();
+          }
+          return;
+        }
+        // Wheel normal (no pellizco): nunca debe llegar a la librería porque
+        // mouseWheel:false ya lo bloquea, pero blindamos el camino con
+        // stopImmediatePropagation para que un futuro cambio de opciones no
+        // reactive el scroll-de-rueda accidentalmente.
+        event.stopImmediatePropagation();
+      };
+      container.addEventListener("wheel", onWheelCaptured, { capture: true, passive: false });
+      detachWheelHandler = () => container.removeEventListener("wheel", onWheelCaptured, { capture: true });
 
       const candleData = rows.map((row) => ({
         time: row.time,
@@ -976,6 +1038,7 @@ export default function UniversalPriceChart({
       cancelled = true;
       resizeObserver?.disconnect();
       unsubscribeLogicalRange?.();
+      detachWheelHandler?.();
       drawingsRef.current?.detach?.();
       chartRef.current = null;
       chart?.remove();
