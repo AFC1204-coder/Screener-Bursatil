@@ -4,6 +4,7 @@
 // zero successful scan rows".
 import { describe, expect, it } from "vitest";
 import {
+  COMPLETENESS_PARTIAL_MIN_RATIO,
   computeTerminalCompleteness,
   isPublicScanStatus,
   isTerminalScanStatus,
@@ -90,7 +91,7 @@ describe("computeTerminalCompleteness", () => {
     });
   });
 
-  it("caso mixto: 7 de 10 OK → partial con ratio 0.7", () => {
+  it("caso mixto: 7 de 10 OK → partial con ratio 0.7 (>= umbral 0.5)", () => {
     const result = computeTerminalCompleteness({ saved: 7, errors: 3 });
     expect(result.status).toBe("partial");
     expect(result.ratio).toBeCloseTo(0.7, 5);
@@ -133,5 +134,54 @@ describe("computeTerminalCompleteness", () => {
 
   it("un único símbolo que falla es failed con ratio 0", () => {
     expect(computeTerminalCompleteness({ saved: 0, errors: 1 }).status).toBe("failed");
+  });
+
+  // --- Umbral de mayoría simple (ratio >= 0.5) ------------------------------
+  // Contrato corregido: antes era binario (0 < ratio < 1 → partial), lo que
+  // dejaba pasar scans con mayoría de errores como "partial". Ahora el umbral
+  // es 0.5: por debajo (errores mayoría) se bloquea como "failed".
+
+  it("umbral exacto: saved=5/errors=5 (ratio 0.5) → partial (>= , no falla por usar >)", () => {
+    // Caso frontera: el límite exacto debe quedar en "partial". Protege contra
+    // un bug de >= vs > que dejaría el límite en el lado "failed".
+    const result = computeTerminalCompleteness({ saved: 5, errors: 5 });
+    expect(result.status).toBe("partial");
+    expect(result.ratio).toBeCloseTo(0.5, 5);
+    expect(result.saved).toBe(5);
+    expect(result.errors).toBe(5);
+    expect(result.total).toBe(10);
+  });
+
+  it("umbral justo por encima: saved=6/errors=4 (ratio 0.6) → partial", () => {
+    expect(computeTerminalCompleteness({ saved: 6, errors: 4 }).status).toBe("partial");
+  });
+
+  it("umbral justo por debajo: saved=4/errors=6 (ratio 0.4) → failed", () => {
+    // Errores son mayoría → no publicable.
+    const result = computeTerminalCompleteness({ saved: 4, errors: 6 });
+    expect(result.status).toBe("failed");
+    expect(result.ratio).toBeCloseTo(0.4, 5);
+  });
+
+  it("ratio despreciable: saved=1/errors=999 (ratio ~0.001) → failed, NO partial", () => {
+    // Escenario motivador de esta corrección: la implementación anterior
+    // (binario 0 < ratio < 1) publicaba esto como "partial". Con el umbral 0.5
+    // se bloquea como "failed" — un scan con 1 acierto y 999 fallos no es un
+    // resultado degradado publicable.
+    const result = computeTerminalCompleteness({ saved: 1, errors: 999 });
+    expect(result.status).toBe("failed");
+    expect(result.ratio).toBeCloseTo(1 / 1000, 5);
+    expect(result.saved).toBe(1);
+    expect(result.errors).toBe(999);
+    expect(result.total).toBe(1000);
+  });
+
+  it("bug original (saved=0/errors=3) sigue dando failed — sin regresión", () => {
+    // Caso que motivó el audit original: ratio 0 debe seguir siendo failed.
+    expect(computeTerminalCompleteness({ saved: 0, errors: 3 }).status).toBe("failed");
+  });
+
+  it("exporta el umbral COMPLETENESS_PARTIAL_MIN_RATIO = 0.5", () => {
+    expect(COMPLETENESS_PARTIAL_MIN_RATIO).toBe(0.5);
   });
 });
