@@ -126,16 +126,35 @@ describe("finalizeScanResultsInDb · contrato thin-raw vía scan_finalize_inputs
     expect(patch).toHaveProperty("signalContradictions");
     expect(patch).toHaveProperty("contradictionsSkipped");
 
-    // CLAVE del nuevo contrato: NO hay echo de metrics. Las claves que vivirían
-    // en metrics (totalScore, decisionTrace, objectiveScore, etc.) NO aparecen
-    // en el patch. finalize_scan_results las conserva via sr.metrics || patch.
-    expect(patch).not.toHaveProperty("totalScore");
+    // SectorScore final-time + composite recompute (audit 2026-07-10 C2 + C3,
+    // ADR fase 1): sectorScore, groupStrengthScore, objectiveScore,
+    // compositeScore, totalScore SÍ aparecen en el patch — son los overrides
+    // finales que se aplican en el mismo PATCH atómico que los percentiles RS.
+    expect(patch).toHaveProperty("sectorScore");
+    expect(patch).toHaveProperty("groupStrengthScore");
+    expect(patch).toHaveProperty("objectiveScore");
+    expect(patch).toHaveProperty("compositeScore");
+    expect(patch).toHaveProperty("totalScore");
+    // groupStrengthScore y sectorScore siempre coinciden (alias histórico del
+    // composite que los consumers leen como fallback: row.sectorScore ?? row.groupStrengthScore).
+    expect(patch.groupStrengthScore).toBe(patch.sectorScore);
+    // totalScore === compositeScore: misma convención que el scoring path.
+    expect(patch.totalScore).toBe(patch.compositeScore);
+
+    // CLAVE del contrato: NO hay echo de metrics. Las claves que viven
+    // exclusivamente en metrics (decisionTrace y otros payloads pesados) NO
+    // aparecen en el patch — finalize_scan_results las conserva via
+    // sr.metrics || patch. sectorScore/objectiveScore/compositeScore/totalScore
+    // NO cuentan como "echo": son overrides finales que el pure helper
+    // recalcula sobre la población completa del scan.
     expect(patch).not.toHaveProperty("decisionTrace");
-    expect(patch).not.toHaveProperty("objectiveScore");
     // El patch solo trae los overrides (+ claves de contradicciones que sean
     // necesarias). Verificamos que el número de claves es pequeño (no todo metrics).
+    // 9 originales (rsGlobalPct/Sample x3, percentileScope, signalContradictions,
+    // contradictionsSkipped) + 5 nuevos (sectorScore, groupStrengthScore,
+    // objectiveScore, compositeScore, totalScore) = 14.
     const overrideKeys = Object.keys(patch);
-    expect(overrideKeys.length).toBeLessThan(12);
+    expect(overrideKeys.length).toBeLessThan(16);
   });
 
   it("scan vacío (0 inputs) → 0 patches, sin invocar finalize_scan_results", async () => {

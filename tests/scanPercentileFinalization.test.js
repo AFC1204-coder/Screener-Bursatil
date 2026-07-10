@@ -124,12 +124,30 @@ describe("finalizeScanPercentiles (pure)", () => {
     expect(patch.metrics_patch.rsGlobalSample).toBeLessThan(5);
   });
 
-  it("conserva el resto de metrics (no solo los percentiles)", () => {
+  it("conserva el resto de metrics (no solo los percentiles) — pero totalScore/compositeScore/objectiveScore/sectorScore son overrides", () => {
+    // decisionTrace sigue siendo echo puro (no entra al recompute). totalScore,
+    // compositeScore, objectiveScore y sectorScore son overrides nuevos del
+    // contrato (audit C2 + sub-caso C3: el composite se recalcula con el
+    // sectorScore final para evitar rankings stale). Por tanto totalScore
+    // ya NO se conserva del metrics echo — se sustituye por el compositeScore
+    // recomputado sobre el sectorScore final.
     const row = makeDbRow("KEEP", { perf3m: 10 }, { metrics: { totalScore: 82, decisionTrace: { v: 1 } } });
     const [patch] = finalizeScanPercentiles([row]);
-    expect(patch.metrics_patch.totalScore).toBe(82);
+    // Echo puro (lo único que el contrato conserva del metrics de origen).
     expect(patch.metrics_patch.decisionTrace).toEqual({ v: 1 });
+    // Overrides nuevos — sustituyen cualquier valor previo del metrics de origen.
     expect(patch.metrics_patch.percentileScope).toBe("final");
+    expect(patch.metrics_patch).toHaveProperty("sectorScore");
+    expect(patch.metrics_patch).toHaveProperty("objectiveScore");
+    expect(patch.metrics_patch).toHaveProperty("compositeScore");
+    expect(patch.metrics_patch).toHaveProperty("totalScore");
+    // totalScore === compositeScore (mismo verbatim que lib/screenerPipeline.js:350).
+    expect(patch.metrics_patch.totalScore).toBe(patch.metrics_patch.compositeScore);
+    // objectiveScore === compositeScore (sin patternContribution: el score objetivo
+    // NO recibe bonus de VCP/contracciones; misma convención que el path vivo).
+    expect(patch.metrics_patch.objectiveScore).toBe(patch.metrics_patch.compositeScore);
+    // sectorScore y groupStrengthScore siempre coinciden (alias histórico).
+    expect(patch.metrics_patch.groupStrengthScore).toBe(patch.metrics_patch.sectorScore);
   });
 
   it("rsCountryPct y rsSectorPct se recalculan con su sample respectivo", () => {
@@ -183,6 +201,130 @@ describe("finalizeScanPercentiles (pure)", () => {
     // countryCode(symbol) y "Sin grupo" son los fallbacks en enrichRelativePercentiles;
     // con 2 filas en el mismo grupo fallback, los scoped percentiles son finitos.
     expect(patches[0].metrics_patch.rsCountrySample).toBeGreaterThanOrEqual(2);
+  });
+
+  // ─── sectorScore final-time (audit C2 + ADR fase 1) ───────────────────
+  // El helper recalcula sectorScore sobre la POBLACIÓN COMPLETA del scan (no
+  // por lote local) y lo escribe en metrics_patch junto con objectiveScore y
+  // compositeScore recomputados. Estos tests cubren la regresión del hallazgo
+  // C2 del audit 2026-07-10 (bonus temático eliminado) y la idempotencia del
+  // nuevo contrato.
+
+  it("sectorScore final-time: toda la población en 1 grupo → mismo sectorScore en todas las filas", () => {
+    // buildUniverse() = 24 filas, todas theme:"Technology" → 1 grupo de 24.
+    // Antes del fix: sectorScore variaba por lote + recibía +10 del bonus
+    // temático (tema "Technology" NO estaba en el regex, así que el bonus era
+    // +10, no +20 — pero el sectorScore AÚN variaba por composición de lote).
+    // Después del fix: sectorScore es UN valor para todo el scan (calculado
+    // una vez sobre la población completa) y NO incluye el bonus.
+    const universe = buildUniverse();
+    const patches = finalizeScanPercentiles(universe);
+    const sectorScores = patches.map((p) => p.metrics_patch.sectorScore);
+    // Todas finitas.
+    sectorScores.forEach((s) => expect(Number.isFinite(s)).toBe(true));
+    // Todas iguales (un solo grupo).
+    const first = sectorScores[0];
+    sectorScores.forEach((s) => expect(s).toBe(first));
+    // Rango efectivo 0-80 (sin renormalizar). El grupo de 24 con theme
+    // "Technology" y avg3/avg6 finitos: como máximo teórico es 25 (groupSize)
+    // + 20 (avg3) + 20 (avg6/2) + 15 (leaders) = 80, todos clamp 0-X.
+    expect(first).toBeGreaterThanOrEqual(0);
+    expect(first).toBeLessThanOrEqual(80);
+  });
+
+  it("sectorScore final-time: NO bonus temático — 'Semis / fotonica' y 'Software' producen el MISMO sectorScore para grupos equivalentes", () => {
+    // Regresión EXPLICITA del hallazgo C2 del audit 2026-07-10: el contrato
+    // viejo daba +20 al tema "Semis / fotonica" (regex matcheaba) vs +10 al
+    // resto (incluido "Software"). En el mismo universo, dos grupos con la
+    // MISMA composición (mismo tamaño, mismos perf3m/6m/leaders) deben
+    // recibir EXACTAMENTE el mismo sectorScore.
+    const semRow = (i, suffix) => makeDbRow(`SEMIS-${i}`, {
+      perf3m: 15, perf6m: 25, weinsteinScore: 85, minerviniScore: 75,
+      country: "US", theme: "Semis / fotonica", sector: "Technology",
+    }, { id: `SEMIS-${i}-uuid${suffix || ""}` });
+    const softRow = (i) => makeDbRow(`SOFT-${i}`, {
+      perf3m: 15, perf6m: 25, weinsteinScore: 85, minerviniScore: 75,
+      country: "US", theme: "Software", sector: "Technology",
+    }, { id: `SOFT-${i}-uuid` });
+    // 5 filas en cada grupo, mismos inputs numéricos. ANTES: SEMIS recibía
+    // +20 extra → sectorScore de Semis > sectorScore de Software. AHORA:
+    // deben ser idénticos.
+    const rows = [
+      semRow(1), semRow(2), semRow(3), semRow(4), semRow(5),
+      softRow(1), softRow(2), softRow(3), softRow(4), softRow(5),
+    ];
+    const patches = finalizeScanPercentiles(rows);
+    const semSector = patches.find((p) => p.id.startsWith("SEMIS-1-uuid")).metrics_patch.sectorScore;
+    const softSector = patches.find((p) => p.id.startsWith("SOFT-1-uuid")).metrics_patch.sectorScore;
+    expect(softSector).toBe(semSector);
+  });
+
+  it("sectorScore final-time: objetivoScore y compositeScore se recalculan con sectorScore final (no con el del batch)", () => {
+    // Caso: dos filas del mismo tema (mismo sectorScore en la nueva señal),
+    // pero con distinos setupQualityScore → objectiveScore/compositeScore
+    // finales dependen solo de los scores individuales (no del sectorScore,
+    // que es idéntico para ambas). Verificamos que ambas filas tienen
+    // objectiveScore/compositeScore finitos, sectorScore coherente, y que
+    // NO hay NaN ni undefined (los inputs faltantes caen a 0 vía el wrapper).
+    const rows = [
+      makeDbRow("RICH", {
+        perf3m: 25, perf6m: 30, weinsteinScore: 80, minerviniScore: 80,
+        setupQualityScore: 75, rsQualityScore: 80, adProxyScore: 70,
+        riskRewardScore: 70, momentumScore: 60, demandScore: 65,
+        growthScore: 70, epsGrowthProxyScore: 68, riskScore: 70,
+        ipoScore: 30, rsRating: 80,
+        country: "US", theme: "Software", sector: "Technology",
+      }, { id: "RICH-uuid" }),
+      makeDbRow("LEAN", {
+        perf3m: 25, perf6m: 30, weinsteinScore: 80, minerviniScore: 80,
+        setupQualityScore: 30, rsQualityScore: 30, adProxyScore: 30,
+        riskRewardScore: 30, momentumScore: 30, demandScore: 30,
+        growthScore: 30, epsGrowthProxyScore: 30, riskScore: 30,
+        ipoScore: 30, rsRating: 80,
+        country: "US", theme: "Software", sector: "Technology",
+      }, { id: "LEAN-uuid" }),
+    ];
+    const patches = finalizeScanPercentiles(rows);
+    const rich = patches.find((p) => p.id === "RICH-uuid").metrics_patch;
+    const lean = patches.find((p) => p.id === "LEAN-uuid").metrics_patch;
+    // Mismo sectorScore (mismo grupo).
+    expect(rich.sectorScore).toBe(lean.sectorScore);
+    // objectiveScore/compositeScore finitos para ambas (no NaN por inputs
+    // faltantes — el wrapper JS hace fallback a 0 explícito).
+    expect(Number.isFinite(rich.objectiveScore)).toBe(true);
+    expect(Number.isFinite(rich.compositeScore)).toBe(true);
+    expect(Number.isFinite(lean.objectiveScore)).toBe(true);
+    expect(Number.isFinite(lean.compositeScore)).toBe(true);
+    // RICH tiene mejores scores individuales → mayor composite que LEAN.
+    expect(rich.compositeScore).toBeGreaterThan(lean.compositeScore);
+    // totalScore === compositeScore (verbatim del path vivo).
+    expect(rich.totalScore).toBe(rich.compositeScore);
+    expect(lean.totalScore).toBe(lean.compositeScore);
+    // objectiveScore === compositeScore: el wrapper JS actual no aplica el
+    // descuento de patternContribution (eso ocurre solo en la fase 5 / path
+    // vivo de sectorize con setupQualityScore=objectiveSetupScore+contribución).
+    // Verificamos el invariante del patch: totalScore == compositeScore.
+    expect(rich.objectiveScore).toBe(rich.compositeScore);
+    expect(lean.objectiveScore).toBe(lean.compositeScore);
+  });
+
+  it("sectorScore final-time: idempotente — segunda pasada produce el mismo sectorScore y composite", () => {
+    // Verifica que el recompute es determinista: pasar el output del primer
+    // recompute como input del segundo no cambia el resultado.
+    const universe = buildUniverse();
+    const once = finalizeScanPercentiles(universe);
+    const secondPassInput = universe.map((r, i) => ({
+      ...r,
+      // Simulamos que la fila ya pasó por finalize: llevamos los overrides
+      // como parte de `raw` para que el recompute lea los mismos valores.
+      raw: { ...r.raw, sectorScore: once[i].metrics_patch.sectorScore, objectiveScore: once[i].metrics_patch.objectiveScore, compositeScore: once[i].metrics_patch.compositeScore },
+    }));
+    const twice = finalizeScanPercentiles(secondPassInput);
+    for (let i = 0; i < once.length; i += 1) {
+      expect(twice[i].metrics_patch.sectorScore).toBe(once[i].metrics_patch.sectorScore);
+      expect(twice[i].metrics_patch.objectiveScore).toBe(once[i].metrics_patch.objectiveScore);
+      expect(twice[i].metrics_patch.compositeScore).toBe(once[i].metrics_patch.compositeScore);
+    }
   });
 });
 
