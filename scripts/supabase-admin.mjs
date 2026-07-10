@@ -157,6 +157,22 @@ async function restRequest(config, pathName, options = {}) {
   return { ok: res.ok, status: res.status, data };
 }
 
+async function restOpenApi(config) {
+  if (!config.url || !config.serviceKey) {
+    throw new Error("Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY.");
+  }
+  const res = await fetch(`${config.url}/rest/v1/`, {
+    headers: {
+      apikey: config.serviceKey,
+      Authorization: `Bearer ${config.serviceKey}`,
+      Accept: "application/openapi+json",
+    },
+    cache: "no-store",
+  });
+  const data = await readJson(res);
+  return { ok: res.ok, status: res.status, data };
+}
+
 async function managementRequest(config, endpoint, body, method = "POST") {
   if (!config.projectRef) throw new Error("Falta SUPABASE_PROJECT_REF o una SUPABASE_URL valida.");
   if (!config.accessToken) throw new Error("Falta SUPABASE_ACCESS_TOKEN para usar la Management API.");
@@ -196,6 +212,8 @@ async function statusCommand(config) {
   printConfig(config);
   console.log("");
 
+  let contractFailed = false;
+
   const tableResults = [];
   try {
     for (const [table, area] of REQUIRED_TABLES) {
@@ -213,36 +231,40 @@ async function statusCommand(config) {
     if (missing.length) console.log(`PENDING Schema: faltan ${missing.map((item) => item.table).join(", ")}.`);
     if (permission.length) console.log(`FAIL Permissions: revisar service role key para ${permission.map((item) => item.table).join(", ")}.`);
     if (warn.length) console.log(`WARN Data API: revisar ${warn.map((item) => item.table).join(", ")}.`);
+    contractFailed ||= missing.length > 0 || permission.length > 0 || warn.length > 0;
   } catch (error) {
     console.log(`FAIL Data API: ${error.message}`);
+    contractFailed = true;
   }
 
   try {
-    const functionResults = [];
-    for (const [fn, area, payload] of REQUIRED_FUNCTIONS) {
-      const result = await restRequest(config, `rpc/${fn}`, {
-        method: "POST",
-        body: payload ? payload(config) : {},
-      });
-      functionResults.push({ fn, area, result, status: tableStatus(result) });
-    }
+    // El status solo verifica el contrato desplegado. Invocar las RPC como
+    // probe ejecutaba lógica real: finalize_scan_results devolvía un falso WARN
+    // con el sentinel y purge_daily_bars_backstop intentaba una purga destructiva.
+    // El OpenAPI de PostgREST refleja las rutas disponibles sin mutar datos.
+    const openApi = await restOpenApi(config);
+    if (!openApi.ok) throw new Error(`OpenAPI HTTP ${openApi.status}: ${failureMessage(openApi)}`);
+    const paths = openApi.data?.paths || {};
+    const functionResults = REQUIRED_FUNCTIONS.map(([fn, area]) => ({
+      fn,
+      area,
+      status: paths[`/rpc/${fn}`] ? "OK" : "MISSING",
+    }));
     const missing = functionResults.filter((item) => item.status === "MISSING");
-    const permission = functionResults.filter((item) => item.status === "PERMISSION");
-    const warn = functionResults.filter((item) => item.status === "WARN");
     console.log(`Data API RPC: ${functionResults.filter((item) => item.status === "OK").length}/${REQUIRED_FUNCTIONS.length} OK.`);
     for (const item of functionResults) {
-      const detail = item.status === "OK" ? "" : ` - ${failureMessage(item.result)}`;
-      console.log(`${item.status} ${item.area}: public.${item.fn}${detail}`);
+      console.log(`${item.status} ${item.area}: public.${item.fn}`);
     }
     if (missing.length) console.log(`PENDING Schema: faltan RPC ${missing.map((item) => item.fn).join(", ")}.`);
-    if (permission.length) console.log(`FAIL Permissions: revisar grants RPC para ${permission.map((item) => item.fn).join(", ")}.`);
-    if (warn.length) console.log(`WARN Data API RPC: revisar ${warn.map((item) => item.fn).join(", ")}.`);
+    contractFailed ||= missing.length > 0;
   } catch (error) {
     console.log(`FAIL Data API RPC: ${error.message}`);
+    contractFailed = true;
   }
 
   if (!config.accessToken) {
     console.log("PENDING Management API: falta SUPABASE_ACCESS_TOKEN.");
+    if (contractFailed) process.exitCode = 1;
     return;
   }
 
@@ -256,6 +278,8 @@ async function statusCommand(config) {
   } catch (error) {
     console.log(`FAIL Management API: ${error.message}`);
   }
+
+  if (contractFailed) process.exitCode = 1;
 }
 
 async function schemaCommand(config) {

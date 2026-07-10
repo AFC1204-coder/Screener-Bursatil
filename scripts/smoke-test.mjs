@@ -154,7 +154,10 @@ const apiChecks = [
     name: "Coverage report",
     path: "/api/coverage?markets=US,EU1,JP,HK,AU",
     provider: true,
-    check: (data) => Number(data.summary?.current) > 100
+    check: (data) => data.status === "complete"
+      && data.degraded !== true
+      && data.scanCoverage?.status === "supabase"
+      && Number(data.summary?.current) > 100
       && Number.isFinite(data.summary?.rankingEligibleCoveragePct)
       && Array.isArray(data.markets)
       && data.markets.some((item) => item.market === "JP" && Number.isFinite(item.scan?.rankingEligible))

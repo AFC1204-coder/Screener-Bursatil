@@ -275,13 +275,25 @@ async function readScanCoverageBreakdown(config, { sinceDays, limit, maxPriceFre
 async function readLeaderboards(config) {
   return supabaseRequest("leaderboard_snapshots", {
     query: `owner_id=eq.${encodeURIComponent(config.ownerId)}&select=leaderboard_key,title,strategy,scope_type,scope_value,item_count,generated_at,updated_at&order=generated_at.desc&limit=50`,
-  }).catch(() => []);
+  });
 }
 
 async function readProviderRuns(config) {
   return supabaseRequest("provider_runs", {
     query: `owner_id=eq.${encodeURIComponent(config.ownerId)}&select=provider,run_type,market,status,started_at,finished_at,stats,error&order=started_at.desc&limit=20`,
-  }).catch(() => []);
+  });
+}
+
+export async function settleScanCoverageDependency(area, promise, fallback) {
+  try {
+    return { area, value: await promise, failure: null };
+  } catch (error) {
+    return {
+      area,
+      value: fallback,
+      failure: { area, message: error.message || `${area} unavailable` },
+    };
+  }
 }
 
 export async function GET(request) {
@@ -297,12 +309,16 @@ export async function GET(request) {
   const includeTop = boolParam(searchParams, "includeTop", false);
 
   try {
-    const [breakdown, leaderboards, providerRuns, cursor] = await Promise.all([
+    const [breakdown, leaderboardsResult, providerRunsResult, cursorResult] = await Promise.all([
       readScanCoverageBreakdown(config, { sinceDays, limit, maxPriceFreshnessDays, minCoverageScore, includeTop }),
-      readLeaderboards(config),
-      readProviderRuns(config),
-      readScanBatchCursor().catch(() => ({ value: {}, updatedAt: "" })),
+      settleScanCoverageDependency("leaderboards", readLeaderboards(config), []),
+      settleScanCoverageDependency("provider-runs", readProviderRuns(config), []),
+      settleScanCoverageDependency("scan-cursor", readScanBatchCursor(), { value: {}, updatedAt: "" }),
     ]);
+    const leaderboards = leaderboardsResult.value;
+    const providerRuns = providerRunsResult.value;
+    const cursor = cursorResult.value;
+    const failures = [leaderboardsResult.failure, providerRunsResult.failure, cursorResult.failure].filter(Boolean);
     // La RPC ya aplicó latestBySymbol + freshness/coverage/eligibility + agrupado
     // por country y sector en Postgres. Solo derivamos los *Pct de summary sobre
     // uniqueSymbols (igual que antes con pct()).
@@ -315,6 +331,9 @@ export async function GET(request) {
     return Response.json({
       ok: true,
       configured: true,
+      degraded: failures.length > 0,
+      status: failures.length ? "partial-secondary-dependencies" : "complete",
+      failures,
       legalMode: includeTop ? "derived-aggregate-with-limited-top-samples" : "derived-aggregate-only",
       generatedAt: new Date().toISOString(),
       window: { sinceDays, rowsRead: Number(breakdown.rowsRead || 0), maxRows: limit },

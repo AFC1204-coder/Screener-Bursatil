@@ -5,7 +5,7 @@ import { marketSymbols } from "@/lib/universes";
 
 const COVERAGE_RESPONSE_TIMEOUT_MS = Number(process.env.COVERAGE_RESPONSE_TIMEOUT_MS || 8500);
 const COVERAGE_SCAN_MAX_ROWS = Number(process.env.COVERAGE_SCAN_MAX_ROWS || 4000);
-const COVERAGE_SCAN_TIMEOUT_MS = Number(process.env.COVERAGE_SCAN_TIMEOUT_MS || 2500);
+const COVERAGE_SCAN_TIMEOUT_MS = Number(process.env.COVERAGE_SCAN_TIMEOUT_MS || 7000);
 
 function timeoutAfter(ms, message) {
   return new Promise((_, reject) => {

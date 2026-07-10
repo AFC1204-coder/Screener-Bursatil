@@ -1,3 +1,4 @@
+-- Migration version aligned with the production history: 20260710104230.
 -- Thin projection of scan_results.raw/metrics for the RS percentile finalization
 -- step (lib/scanPercentileFinalization.js).
 --

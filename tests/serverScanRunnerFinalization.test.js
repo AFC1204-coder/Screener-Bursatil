@@ -158,6 +158,19 @@ describe("runScanChunk · wiring de finalización de percentiles", () => {
     vi.clearAllMocks();
   });
 
+  it("emite un log estructurado si ni siquiera puede leer el estado inicial", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    supabaseRequest.mockRejectedValueOnce(new Error("database unavailable probe"));
+
+    await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
+
+    expect(log).toHaveBeenCalledWith(
+      "[scan-runner] no se pudo leer el estado inicial",
+      expect.objectContaining({ scanId: SCAN_ID, ownerId: OWNER_ID, error: "database unavailable probe" }),
+    );
+    log.mockRestore();
+  });
+
   it("al completar el último batch: invoca finalizeScanResultsInDb una vez con scanId+ownerId correctos", async () => {
     // Scan de 3 símbolos, chunkSize=3 → 1 solo eslabón que completa todo.
     const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 3, chunkSize: 3 });

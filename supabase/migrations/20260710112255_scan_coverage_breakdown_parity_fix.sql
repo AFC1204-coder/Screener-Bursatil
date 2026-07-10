@@ -1,6 +1,7 @@
+-- Migration version aligned with the production history: 20260710112255.
 -- Restore exact object-shape parity with the legacy scan coverage aggregator.
 --
--- Changes over 20260710100700_scan_coverage_breakdown.sql:
+-- Changes over 20260710104227_scan_coverage_breakdown.sql:
 --   1. Omit topSymbols entirely when p_include_top=false instead of emitting
 --      "topSymbols": null.
 --   2. Limit bySector to 25 inside Postgres before jsonb_agg builds the payload.

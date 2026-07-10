@@ -1,7 +1,8 @@
+-- Migration version aligned with the production history: 20260710104227.
 -- Aggregate the coverage breakdown for /api/scan-coverage inside Postgres so the
 -- route never transfers the large scan_results.metrics/raw payloads to Next.js.
 --
--- Hermana de coverage_scan_summary (migracion 20260709225106). Esta funcion cubre
+-- Hermana de coverage_scan_summary (migracion 20260710104226). Esta funcion cubre
 -- las necesidades de /api/scan-coverage, que son sustancialmente distintas:
 --   - agrupa por country Y sector (la otra solo por country como byMarket),
 --   - emite averages (avgCoverageScore, avgTotalScore),
@@ -9,7 +10,7 @@
 --   - replica el shape exacto de groupCoverage()/topSymbols()/avg() de la route.
 --
 -- Reutiliza statsedge_coverage_finite_number / statsedge_coverage_timestamp
--- (creadas por 20260709225106). Si esa migracion no se ha aplicado, esta falla
+-- (creadas por 20260710104226). Si esa migracion no se ha aplicado, esta falla
 -- ruidosamente al resolver las dependencias — orden de apply: la otra primero.
 --
 -- Convencion de la casa: SECURITY INVOKER + set search_path + revoke/grant a
