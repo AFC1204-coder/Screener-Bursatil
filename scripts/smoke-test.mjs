@@ -200,6 +200,12 @@ const apiChecks = [
     check: (data) => data.ok === true && data.dryRun === true && data.job === "cron-shadow-europe-refresh" && data.group?.key && Array.isArray(data.options?.markets) && data.options.markets.length > 0,
   },
   {
+    name: "Cron shadow FIRDS dry run",
+    path: "/api/cron/shadow-firds-refresh?dryRun=1",
+    provider: true,
+    check: (data) => data.ok === true && data.dryRun === true && data.job === "cron-shadow-firds-refresh" && data.group?.key && Array.isArray(data.options?.markets) && data.options.markets.length > 0 && !data.options.markets.includes("GB"),
+  },
+  {
     name: "Shadow symbol resolve dry run",
     path: "/api/jobs/shadow-symbol-resolve?markets=FI&dryRun=1&perMarket=3",
     provider: true,

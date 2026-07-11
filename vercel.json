@@ -13,6 +13,10 @@
       "schedule": "50 22 * * *"
     },
     {
+      "path": "/api/cron/shadow-firds-refresh",
+      "schedule": "30 23 * * *"
+    },
+    {
       "path": "/api/cron/favorite-snapshots",
       "schedule": "30 22 * * *"
     }
