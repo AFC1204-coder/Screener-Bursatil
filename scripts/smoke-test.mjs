@@ -173,7 +173,13 @@ const apiChecks = [
     name: "Cron universe dry run",
     path: "/api/cron/universe-refresh?dryRun=1",
     provider: true,
-    check: (data) => data.ok === true && data.dryRun === true && Array.isArray(data.markets) && data.markets.includes("US") && data.markets.includes("GB"),
+    // EU1/EU2 (FIRDS markets) are excluded from this cron: they are seeded by
+    // app/api/jobs/shadow-firds-refresh and consumed from the DB snapshot, not
+    // re-downloaded inline. Verify non-FIRDS markets are present and FIRDS
+    // markets (GB, DE) are absent.
+    check: (data) => data.ok === true && data.dryRun === true && Array.isArray(data.markets)
+      && data.markets.includes("US") && data.markets.includes("JP")
+      && !data.markets.includes("GB") && !data.markets.includes("DE"),
   },
   {
     name: "Cron scan dry run",
