@@ -431,6 +431,7 @@ export default function UniversalPriceChart({
   rsRatingSeries = [],
   patternOverlay = null,
   showPatternDiagnostics = false,
+  chartEstimated = false,
   className = "",
   height = 460,
 }) {
@@ -502,10 +503,17 @@ export default function UniversalPriceChart({
     // usuario podría confundir con mercado real). Devolver [] fuerza el estado
     // empty limpio ("Historico insuficiente"). Los modos línea/área (style "8"/"3")
     // solo usan close, así que se permiten con bars close-only. Ver barsAreCandleGrade.
-    const fallback = intraday ? [] : localRows;
+    //
+    // chartEstimated (prop): el productor (company-brief) marcó la serie local
+    // como sintética, PERO compactChartBars borró el flag `estimated` por barra,
+    // así que barsAreCandleGrade la ve como candle-grade (tiene rango OHLC) y la
+    // pintaría como mercado real. Cuando la prop lo delata, localRows NO es
+    // decision-grade: se anula el fallback ([]) para caer al mismo estado
+    // degradado/indicador que el camino remoto. No se toca barsAreCandleGrade.
+    const fallback = intraday || chartEstimated ? [] : localRows;
     const useLocal = fallback.length >= 2 && (style === "8" || style === "3" || barsAreCandleGrade(fallback));
     return useLocal ? chartRangeRows(aggregateRows(fallback, interval), range, interval) : [];
-  }, [remote.bars, remote.quality, intraday, localRows, interval, range, style]);
+  }, [remote.bars, remote.quality, intraday, chartEstimated, localRows, interval, range, style]);
   const rowTimes = useMemo(() => rows.map((row) => row.time), [rows]);
   const mainRsValue = safeNumber(rsMainScore);
   const globalRsScoreData = useMemo(
@@ -535,14 +543,24 @@ export default function UniversalPriceChart({
   );
   const mainChartHeightTarget = height;
 
-  // Franja de fiabilidad: si el productor marcó la serie remota como no
-  // decision-grade (estimated/missing), se avisa sin alarmismo. Las barras ya
-  // se bloquearon en el useMemo de rows; esto solo explica el estado vacío.
-  const estimatedNote = remote.quality && remote.quality.status !== "real"
+  // Franja de fiabilidad: si el productor marcó la serie como no decision-grade
+  // se avisa sin alarmismo. Dos orígenes convergen en el MISMO indicador:
+  //  - remote.quality: veredicto del fetch a /api/chart (status estimated/missing).
+  //  - chartEstimated (prop): la serie local (SSR company-brief) es sintética.
+  // Las barras ya se bloquearon en el useMemo de rows; esto solo explica el vacío.
+  const remoteEstimated = remote.quality && remote.quality.status !== "real";
+  const estimatedNote = remoteEstimated
     ? remote.quality.status === "estimated"
       ? "Datos estimados — no aptos para decisión"
       : "Sin histórico de mercado disponible"
-    : "";
+    : chartEstimated
+      ? "Datos estimados — no aptos para decisión"
+      : "";
+  const estimatedNoteTitle = remoteEstimated
+    ? (remote.quality.reason || remote.quality.issue || "")
+    : chartEstimated
+      ? "Histórico estimado por el proveedor; no sustituye datos de mercado reales."
+      : "";
 
   const latest = rows.at(-1);
   const first = rows[0];
@@ -1069,7 +1087,7 @@ export default function UniversalPriceChart({
   if (rows.length < 2) {
     return <div className={`universalChart empty ${className}`}>
       {estimatedNote
-        ? <span className="universalChartEstimatedNote" role="status" title={remote.quality?.reason || remote.quality?.issue || ""}>{estimatedNote}</span>
+        ? <span className="universalChartEstimatedNote" role="status" title={estimatedNoteTitle}>{estimatedNote}</span>
         : remote.loading ? "Cargando historico..." : remote.error ? `Proveedor de grafico no disponible: ${remote.error}` : userFacingSearchError("Historico insuficiente")}
     </div>;
   }
@@ -1197,7 +1215,7 @@ export default function UniversalPriceChart({
       <span>{rsPanelLabel}</span>
       {!hasRsLine && <em>Sin serie relativa suficiente</em>}
     </div>}
-    {estimatedNote && <p className="universalChartEstimatedNote" role="status" title={remote.quality?.reason || remote.quality?.issue || ""}>{estimatedNote}</p>}
+    {estimatedNote && <p className="universalChartEstimatedNote" role="status" title={estimatedNoteTitle}>{estimatedNote}</p>}
     {remote.loading && needsRemote && !intraday && <p className="dataNote">Ampliando historico para este rango...</p>}
     {remote.error && !intraday && <p className="dataNote">Historico ampliado no disponible: {remote.error}. Se muestra el historico local.</p>}
     {renderError && <p className="dataNote">{renderError}</p>}

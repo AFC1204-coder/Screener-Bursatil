@@ -2196,6 +2196,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           benchmarkSymbol={rs.benchmarkSymbol}
           patternOverlay={showVcpDiagnostics ? setupPattern : actionableSetupPattern}
           showPatternDiagnostics={showVcpDiagnostics}
+          chartEstimated={chartEstimated}
           height={600}
         />
       </section>
