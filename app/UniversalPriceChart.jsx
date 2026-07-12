@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, SkipForward, TrendingUp, Trash2, ZoomIn, ZoomOut } from "lucide-react";
 import { CHART_RANGES, DEFAULT_CHART_SETTINGS, normalizeChartInterval } from "@/lib/chartSettings";
-import { barsAreCandleGrade } from "@/lib/chartDataQuality";
+import { barsAreCandleGrade, chartQuality } from "@/lib/chartDataQuality";
 import { chartViewStateFromLogicalRange, latestLogicalRange, manualChartWindowRestorePolicy, rescaledLogicalRange, shiftedLogicalRange, timeWindowFromLogicalRange, timeWindowLogicalRange, zoomedLogicalRange } from "@/lib/chartNavigation";
 import { getJson } from "@/lib/clientApi";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
@@ -444,7 +444,7 @@ export default function UniversalPriceChart({
   const lastInteractiveViewStateRef = useRef(chartViewStateFromLogicalRange(null, 0));
   const viewStateRef = useRef(chartViewStateFromLogicalRange(null, 0));
   const previousRenderMetaRef = useRef({ ready: false, symbol: "", range: "", interval: "", style: "", scale: "", rowCount: 0 });
-  const [remote, setRemote] = useState({ bars: null, loading: false, error: "", meta: null });
+  const [remote, setRemote] = useState({ bars: null, loading: false, error: "", meta: null, quality: null });
   const [renderError, setRenderError] = useState("");
   const [viewState, setViewState] = useState(() => chartViewStateFromLogicalRange(null, 0));
   viewStateRef.current = viewState;
@@ -465,7 +465,7 @@ export default function UniversalPriceChart({
 
   useEffect(() => {
     if (!needsRemote || !symbol) {
-      setRemote({ bars: null, loading: false, error: "", meta: null });
+      setRemote({ bars: null, loading: false, error: "", meta: null, quality: null });
       return;
     }
     const controller = new AbortController();
@@ -473,16 +473,27 @@ export default function UniversalPriceChart({
     const params = new URLSearchParams({ symbol, range, interval });
     getJson(`/api/chart?${params.toString()}`, { signal: controller.signal })
       .then((json) => {
-        setRemote({ bars: json.bars || [], loading: false, error: "", meta: json.meta || null });
+        // dataQuality es el veredicto canónico del productor (real/estimated/
+        // missing). chartQuality lo normaliza y detecta barras sintéticas del
+        // camino legacy. Se guarda en el estado para que el useMemo de rows
+        // bloquee las series no decision-grade antes de pintarlas.
+        const quality = chartQuality(json);
+        setRemote({ bars: json.bars || [], loading: false, error: "", meta: json.meta || null, quality });
       })
       .catch((error) => {
         if (error.name === "AbortError") return;
-        setRemote({ bars: [], loading: false, error: error.message || "Proveedor de grafico no disponible", meta: null });
+        setRemote({ bars: [], loading: false, error: error.message || "Proveedor de grafico no disponible", meta: null, quality: null });
       });
     return () => controller.abort();
   }, [needsRemote, symbol, range, interval]);
 
   const rows = useMemo(() => {
+    // Barras remotas estimadas/missing: NO son decision-grade (el productor las
+    // marcó en dataQuality). No se pintan como mercado real ni se cae a localRows
+    // (podría ser chartPreview close-only sintético): se fuerza [] — el mismo
+    // estado vacío limpio que la rama de remoto vacío/fallido de abajo. Esta es
+    // la superficie de decisión, así que sintético jamás debe verse como velas.
+    if (remote.quality && remote.quality.status !== "real") return [];
     const remoteRows = normalizeRows(remote.bars || []);
     if (remoteRows.length) return chartRangeRows(aggregateRows(remoteRows, interval), range, interval);
     // Fetch remoto vacío/fallido. Si los datos locales NO son candle-grade (p.ej.
@@ -494,7 +505,7 @@ export default function UniversalPriceChart({
     const fallback = intraday ? [] : localRows;
     const useLocal = fallback.length >= 2 && (style === "8" || style === "3" || barsAreCandleGrade(fallback));
     return useLocal ? chartRangeRows(aggregateRows(fallback, interval), range, interval) : [];
-  }, [remote.bars, intraday, localRows, interval, range, style]);
+  }, [remote.bars, remote.quality, intraday, localRows, interval, range, style]);
   const rowTimes = useMemo(() => rows.map((row) => row.time), [rows]);
   const mainRsValue = safeNumber(rsMainScore);
   const globalRsScoreData = useMemo(
@@ -523,6 +534,15 @@ export default function UniversalPriceChart({
     [visibleWindow, interval],
   );
   const mainChartHeightTarget = height;
+
+  // Franja de fiabilidad: si el productor marcó la serie remota como no
+  // decision-grade (estimated/missing), se avisa sin alarmismo. Las barras ya
+  // se bloquearon en el useMemo de rows; esto solo explica el estado vacío.
+  const estimatedNote = remote.quality && remote.quality.status !== "real"
+    ? remote.quality.status === "estimated"
+      ? "Datos estimados — no aptos para decisión"
+      : "Sin histórico de mercado disponible"
+    : "";
 
   const latest = rows.at(-1);
   const first = rows[0];
@@ -1048,7 +1068,9 @@ export default function UniversalPriceChart({
 
   if (rows.length < 2) {
     return <div className={`universalChart empty ${className}`}>
-      {remote.loading ? "Cargando historico..." : remote.error ? `Proveedor de grafico no disponible: ${remote.error}` : userFacingSearchError("Historico insuficiente")}
+      {estimatedNote
+        ? <span className="universalChartEstimatedNote" role="status" title={remote.quality?.reason || remote.quality?.issue || ""}>{estimatedNote}</span>
+        : remote.loading ? "Cargando historico..." : remote.error ? `Proveedor de grafico no disponible: ${remote.error}` : userFacingSearchError("Historico insuficiente")}
     </div>;
   }
 
@@ -1175,6 +1197,7 @@ export default function UniversalPriceChart({
       <span>{rsPanelLabel}</span>
       {!hasRsLine && <em>Sin serie relativa suficiente</em>}
     </div>}
+    {estimatedNote && <p className="universalChartEstimatedNote" role="status" title={remote.quality?.reason || remote.quality?.issue || ""}>{estimatedNote}</p>}
     {remote.loading && needsRemote && !intraday && <p className="dataNote">Ampliando historico para este rango...</p>}
     {remote.error && !intraday && <p className="dataNote">Historico ampliado no disponible: {remote.error}. Se muestra el historico local.</p>}
     {renderError && <p className="dataNote">{renderError}</p>}

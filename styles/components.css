@@ -440,6 +440,25 @@
   line-height:1.55;
 }
 
+/* Franja de fiabilidad de serie estimada. Regla de infraestructura del sistema
+   "Pizarra y Tiza": una sola línea discreta, NUNCA una card co-igual con el
+   mercado. Reutiliza --senal/--senal-dim (ámbar de atención, ya definidos en
+   tokens-v2.css) — sin verde/rojo puro. */
+.universalChartEstimatedNote {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 11px;
+  border:1px solid var(--line2);
+  border-left:2px solid var(--senal);
+  border-radius:4px;
+  background:var(--senal-dim);
+  color:var(--senal);
+  font-size:12px;
+  font-weight:650;
+  line-height:1.4;
+}
+
 .discoveryHealthPanel,
 .coverageAuditPanel {
   display:grid;
