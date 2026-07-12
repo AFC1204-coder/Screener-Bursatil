@@ -43,7 +43,9 @@ describe("shadow-firds cron plan", () => {
     const group = shadowFirdsCronGroupByKey("shadow-firds-pair-1");
     expect(group?.markets).toEqual(["IE", "PT"]);
     expect(group?.resolvePerMarket).toBe(5);
-    expect(group?.pricePerMarket).toBe(8);
+    // pricePerMarket bumped 8 → 20 (2026-07-11). Empirical worst-pair
+    // (ES+IT) measured at 26.7s on cache-hit runs under maxDuration=60.
+    expect(group?.pricePerMarket).toBe(20);
   });
 
   it("shadowFirdsCronGroupByKey devuelve null para keys desconocidas", () => {

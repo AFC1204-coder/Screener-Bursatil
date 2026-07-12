@@ -324,9 +324,16 @@ async function validateShadowPrices(options = {}) {
   const errors = [];
   for (const market of options.markets) {
     try {
+      // Re-validate anything that already has a symbol resolved. The pre-fix
+      // filter (status=eq.resolved) only saw the ~12 transient rows in DE and
+      // zero in the rest of the ESMA markets, so the cron was a no-op loop on
+      // the priced population. The full pool (priced + transient resolved +
+      // price-unavailable retries) now enters the oldest-first selection.
+      // See docs/evidence/shadow-firds-write-mechanism-2026-07-11.md §3 and
+      // docs/evidence/shadow-write-mechanism-confirm-2026-07-11.md.
       const candidates = await readSymbolResolutionsForPricing({
         market,
-        status: "resolved",
+        statuses: ["resolved", "priced", "price-unavailable"],
         limit: options.pricePerMarket,
       });
       const resolutions = candidates.rows || [];

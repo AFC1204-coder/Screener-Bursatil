@@ -268,9 +268,15 @@ async function validateShadowPrices(options = {}) {
   const errors = [];
   for (const market of options.markets) {
     try {
+      // Re-validate anything that already has a symbol resolved (priced, the
+      // transient resolved state, or price-unavailable so we periodically retry
+      // fetcher failures). Pre-fix the filter was status=eq.resolved which
+      // silently excluded every priced row after the initial population,
+      // leaving all 446 priced symbols frozen with checkedAt > 30d. See
+      // docs/evidence/shadow-firds-write-mechanism-2026-07-11.md §3.
       const candidates = await readSymbolResolutionsForPricing({
         market,
-        status: "resolved",
+        statuses: ["resolved", "priced", "price-unavailable"],
         limit: options.pricePerMarket,
       });
       const resolutions = candidates.rows || [];
