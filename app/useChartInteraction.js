@@ -269,7 +269,7 @@ export function useChartInteraction({
     // armed→drawing y drawing→idle). En idle→editing basta con originalPoint.
     let domain = null;
     if (typeof s2d === "function") {
-      domain = s2d(point.x, point.y);
+      domain = s2d(native.clientX, native.clientY);
     }
 
     // originalPoint para editing: el adaptador lo busca en el store vía el
@@ -302,7 +302,7 @@ export function useChartInteraction({
     const point = localPoint(containerEl, native.clientX, native.clientY);
     let domain = null;
     if (typeof s2d === "function") {
-      domain = s2d(point.x, point.y);
+      domain = s2d(native.clientX, native.clientY);
     }
     // p1Pixel para drawing→updateOverlay: la máquina guarda pendingP1 en
     // dominio; aquí lo proyectamos a píxeles usando el proveedor inverso.
