@@ -821,12 +821,25 @@ export default function UniversalPriceChart({
       // página) sólo se cancela cuando es cancelable, para no romper scrolls
       // donde no hace falta; nunca llega a la librería.
       const onWheelCaptured = (event) => {
+        // Gate por estado de la máquina (ADR §6): wheel NO entra en la
+        // máquina (no tiene ciclo down/move/up), pero SÓLO debe aplicar zoom
+        // cuando la máquina está idle. En cualquier otro estado (armed,
+        // drawing, editing, panning, pinching) seguimos tragando el evento
+        // para que no llegue a la librería, pero NO zoomeamos — un pellizco
+        // de trackpad a mitad de un `editing` re-escala las coordenadas bajo
+        // el drag y corrompe la posición del handle.
+        const interactionState = drawingsRef.current?.getInteractionState
+          ? drawingsRef.current.getInteractionState()
+          : "idle";
+        const isIdle = interactionState === "idle";
+
         if (event.ctrlKey) {
           // Es un pellizco de trackpad: el navegador lo emite como wheel+ctrl
           // y, si no lo cancelamos, hace zoom de la PÁGINA entera, que es lo
           // que el usuario percibe como "no responde dentro del chart".
           if (event.cancelable) event.preventDefault();
           event.stopImmediatePropagation();
+          if (!isIdle) return;
           const timeScale = chart.timeScale?.();
           if (!timeScale) return;
           const logicalRange = timeScale.getVisibleLogicalRange?.();
