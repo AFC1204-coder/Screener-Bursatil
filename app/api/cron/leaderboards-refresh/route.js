@@ -1,5 +1,8 @@
 // GET /api/cron/leaderboards-refresh — refresco de leaderboards materializados
-// (leaderboard_snapshots/leaderboard_items), cadencia baja (cada 6h).
+// (leaderboard_snapshots/leaderboard_items), 1x/día a las 23:45 UTC (después
+// de los demás crons del día). Hobby limita cron jobs a 1 ejecución diaria
+// (docs/cron-jobs/usage-and-pricing) — expresiones más frecuentes fallan el
+// deployment completo.
 //
 // Antes, scan-refresh y shadow-europe-refresh llamaban a
 // refreshDefaultLeaderboards() inline en cada invocación, con sinceDays=45,
