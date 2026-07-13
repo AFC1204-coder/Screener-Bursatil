@@ -53,3 +53,5 @@ research/books/*
 research/notes/*
 !research/notes/.gitkeep
 .vercel
+.zcode/
+supabase/.temp/
