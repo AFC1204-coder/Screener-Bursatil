@@ -2,7 +2,6 @@ import { scanCronGroupAt, scanCronGroupByKey } from "@/lib/cronPlan";
 import { isInternalRequest } from "@/lib/internalAuth";
 import {
   readScanBatchCursor,
-  refreshDefaultLeaderboards,
   runMaterializedScan,
   writeMaterializedScan,
   writeScanBatchCursor,
@@ -195,6 +194,12 @@ export async function GET(request) {
     minMarketCap: 300000000,
     minCoverageScore: 40,
     cache: true,
+    // universe-refresh corre a las 21:10 UTC, 70 min antes que este cron
+    // (22:20 UTC) — en operación normal el snapshot tiene minutos de
+    // antigüedad. 48h es solo el colchón para el día en que universe-refresh
+    // falle o se salte, evitando el fallback a buildUniverse() completo
+    // (que puede tardar >60s y detona el maxDuration del cron).
+    universeMaxAgeHours: 48,
     refreshUniverse: searchParams.get("refreshUniverse") === "1",
     refreshPrices: searchParams.get("refreshPrices") === "1",
     refreshProfiles: searchParams.get("refreshProfiles") === "1",
@@ -214,7 +219,10 @@ export async function GET(request) {
     const cursorWrite = savedScan.saved
       ? await writeScanBatchCursor(nextCursorValue(cursor.value || {}, options, result, savedScan)).catch((error) => ({ saved: false, error: error.message }))
       : { skipped: true };
-    const leaderboards = savedScan.saved ? await refreshDefaultLeaderboards() : { skipped: true, saved: 0 };
+    // Refresco de leaderboards movido a /api/cron/leaderboards-refresh
+    // (cadencia baja, propia) para no recomputar la RPC
+    // leaderboard_publishable_rows en cada corrida de este cron.
+    const leaderboards = { skipped: true, saved: 0 };
     const nextRotation = {
       updatedAt: new Date().toISOString(),
       previousIndex: groupIndex,

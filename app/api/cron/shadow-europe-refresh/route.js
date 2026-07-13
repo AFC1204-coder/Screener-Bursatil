@@ -2,7 +2,7 @@ import { shadowEuropeCronGroupAt, shadowEuropeCronGroupByKey } from "@/lib/cronP
 import { isInternalRequest } from "@/lib/internalAuth";
 import { withDailyBarsCache } from "@/lib/dailyBarsCache";
 import { mapOpenFigiIsins } from "@/lib/openfigi";
-import { refreshDefaultLeaderboards, runMaterializedScan, writeMaterializedScan } from "@/lib/materializedScanner";
+import { runMaterializedScan, writeMaterializedScan } from "@/lib/materializedScanner";
 import {
   markShadowInstrumentsStatus,
   markSymbolResolutionPriceStatus,
@@ -373,9 +373,10 @@ async function scanPricedShadowSymbols(group, options = {}) {
   };
   const result = await runMaterializedScan(scanOptions);
   const savedScan = await writeMaterializedScan(result.scan);
-  const leaderboards = options.refreshLeaderboards && savedScan.saved
-    ? await refreshDefaultLeaderboards()
-    : { skipped: true, saved: 0 };
+  // Refresco de leaderboards movido a /api/cron/leaderboards-refresh
+  // (cadencia baja, propia) — este cron ya no dispara la RPC
+  // leaderboard_publishable_rows (causa del "statement timeout" con GB).
+  const leaderboards = { skipped: true, saved: 0 };
   return {
     skipped: false,
     pricedRows: priced.rows?.length || 0,
@@ -410,7 +411,6 @@ export async function GET(request) {
     minBars: numberParam(searchParams, "minBars", 180, 20, 600),
     range: searchParams.get("range") || "2A",
     refreshPrices: boolParam(searchParams, "refreshPrices", false),
-    refreshLeaderboards: searchParams.get("leaderboards") !== "0",
     includeSymbols: boolParam(searchParams, "includeSymbols", false),
   };
   if (searchParams.get("dryRun") === "1") {
