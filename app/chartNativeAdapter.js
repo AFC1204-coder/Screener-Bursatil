@@ -36,6 +36,20 @@ import {
 const PRICE_SCALE_LINE = 2;
 const PRICE_SCALE_DASHED = 2;
 
+/**
+ * @typedef {object} ChartCssTokens
+ * @property {string} soft
+ * @property {string} humo
+ * @property {string} tiza
+ * @property {string} line
+ * @property {string} line2
+ * @property {string} line3
+ * @property {string} pizarra2
+ * @property {string} senal
+ * @property {string} traza
+ * @property {string} trazaDim
+ */
+
 function safeNumber(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
@@ -58,7 +72,7 @@ function fmtPrice(price) {
  * @param {object} args.config                    config canónica del viewport.
  * @param {Array}  args.rows                      filas decision-grade.
  * @param {Array}  args.rowTimes                  tiempos normalizados.
- * @param {object} args.colors                    tokens CSS ya resueltos.
+ * @param {ChartCssTokens} args.colors            tokens CSS ya resueltos.
  * @param {object} [args.overrides]               campos derivados
  *   (patternOverlay, relativeStrength, benchmarkSymbol, rsMainScore,
  *    rsRatingSeries, showPatternDiagnostics, requestedHeight).
@@ -215,8 +229,10 @@ export function createChartNativeAdapter(args) {
     });
   }
 
-  // Pattern markers (sin color, sólo descriptores)
-  const markerDescriptors = projectPatternMarkers(patternOverlay, rows, interval);
+  // La proyección pura no conoce tokens visuales; el adaptador replica el
+  // contrato original y aplica --senal a los marcadores C1/C2/C3.
+  const markerDescriptors = projectPatternMarkers(patternOverlay, rows, interval)
+    .map((marker) => ({ ...marker, color: colors.senal }));
   if (!intraday && markerDescriptors.length > 0 && typeof createSeriesMarkers === "function") {
     createSeriesMarkers(mainSeries, markerDescriptors);
   }
@@ -359,19 +375,22 @@ export function createChartNativeAdapter(args) {
  * Resuelve los tokens CSS del sistema visual a colores concretos para
  * `lightweight-charts`. Es un helper del adapter porque es la única
  * pieza que toca el DOM.
+ *
+ * @returns {ChartCssTokens}
  */
 export function resolveCssTokensNative() {
   if (typeof window === "undefined" || typeof getComputedStyle !== "function") {
     return {
-      soft: "#cccccc",
-      humo: "#888888",
-      tiza: "#ffffff",
-      traza: "#cccccc",
-      trazaDim: "#aaaaaa",
-      line: "#222222",
-      line2: "#333333",
-      line3: "#444444",
-      pizarra2: "#1a1a1a",
+      soft: "#B9BFB2",
+      humo: "#7E8B82",
+      tiza: "#EDE8DA",
+      line: "rgba(237, 232, 218, .10)",
+      line2: "rgba(237, 232, 218, .26)",
+      line3: "rgba(237, 232, 218, .45)",
+      pizarra2: "#2C4C39",
+      senal: "#E0A93F",
+      traza: "#93B8CE",
+      trazaDim: "rgba(147, 184, 206, .12)",
     };
   }
   const root = document.documentElement;
@@ -380,14 +399,15 @@ export function resolveCssTokensNative() {
     return value || fallback;
   };
   return {
-    soft: get("--ink-soft, #cccccc"),
-    humo: get("--ink-humo, #888888"),
-    tiza: get("--ink-tiza, #ffffff"),
-    traza: get("--ink-traza, #cccccc"),
-    trazaDim: get("--ink-traza-dim, #aaaaaa"),
-    line: get("--rule-line, #222222"),
-    line2: get("--rule-line-2, #333333"),
-    line3: get("--rule-line-3, #444444"),
-    pizarra2: get("--pizarra-2, #1a1a1a"),
+    soft: get("--soft", "#B9BFB2"),
+    humo: get("--humo", "#7E8B82"),
+    tiza: get("--tiza", "#EDE8DA"),
+    line: get("--line", "rgba(237, 232, 218, .10)"),
+    line2: get("--line2", "rgba(237, 232, 218, .26)"),
+    line3: get("--line3", "rgba(237, 232, 218, .45)"),
+    pizarra2: get("--pizarra-2", "#2C4C39"),
+    senal: get("--senal", "#E0A93F"),
+    traza: get("--traza", "#93B8CE"),
+    trazaDim: get("--traza-dim", "rgba(147, 184, 206, .12)"),
   };
 }
