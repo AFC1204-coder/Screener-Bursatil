@@ -137,8 +137,16 @@ export function useChartController(props = {}) {
   // §5.4 / §5.5: transacción de creación y destrucción del chart.
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!mountedRef.current) return undefined;
-    console.log('[chartDebug] EFFECT run, availability:', dataModel.availability, 'canvasRef.current:', !!canvasRef.current);
+    // NOTA: NO usamos `mountedRef.current` aquí. React 18 StrictMode
+    // monta/desmonta/monta este efecto dos veces en dev; un `mountedRef`
+    // compartido puesto a false por el primer desmontaje sintético dejaría
+    // la segunda invocación sin ejecutar la transacción §5.4. La fuente
+    // de verdad para esta invocación concreta es la variable local
+    // `cancelled` del closure, que se activa sólo en el cleanup (real o
+    // sintético) y descarta trabajo tardío vía `controllerAttachmentId`.
+    // `mountedRef` se conserva únicamente para el cleanup de unmount
+    // real (al final del archivo), que sigue protegiendo contra
+    // actualizar `setRenderError`/refs tras desmontaje del todo.
     if (dataModel.availability !== "ready") {
       // §5.4: no se crea chart si la disponibilidad no es "ready".
       return undefined;
@@ -160,12 +168,10 @@ export function useChartController(props = {}) {
     async function render() {
       if (cancelled) return;
       const container = canvasRef.current;
-      console.log('[chartDebug] render() container:', !!container, 'clientWidth:', container?.clientWidth);
-      if (!container) { console.log('[chartDebug] BAIL: no container'); return; }
+      if (!container) return;
       container.innerHTML = "";
 
       const lib = await import("lightweight-charts");
-      console.log('[chartDebug] lib cargada, cancelled:', cancelled, 'myId===current:', myId === controllerAttachmentIdRef.current);
       if (cancelled || myId !== controllerAttachmentIdRef.current) return;
 
       const profile = viewport.prepare(container);
@@ -189,7 +195,6 @@ export function useChartController(props = {}) {
           rsBadgeRef,
         },
       });
-      console.log('[chartDebug] adapter creado, chart:', !!adapter?.chart, 'mainSeries:', !!adapter?.mainSeries, 'rows.length:', rows.length);
 
       // §5.4 / 7: viewport.attach — fit/restore/subscriptions/wheel/resize.
       const renderMeta = {
@@ -250,7 +255,6 @@ export function useChartController(props = {}) {
 
     render().catch((error) => {
       if (cancelled) return;
-      console.log('[chartDebug] RENDER CATCH:', error);
       // §5.4 / 10: error en createChart o serie no muta dataModel.error;
       // se publica como renderError separado.
       const message = error?.message || "Grafico no disponible";

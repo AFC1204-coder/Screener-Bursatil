@@ -193,7 +193,6 @@ export function createChartNativeAdapter(args) {
     ? projectLineSeries(rows, interval)
     : projectCandles(rows);
   mainSeries.setData(mainData);
-  console.log('[chartDebug] setData llamado, mainData.length:', mainData.length, 'width:', width, 'height:', height);
 
   mainSeries.priceScale?.().applyOptions?.({
     autoScale: true,
