@@ -3,17 +3,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, SkipForward, TrendingUp, Trash2, ZoomIn, ZoomOut } from "lucide-react";
 import { CHART_RANGES, DEFAULT_CHART_SETTINGS, normalizeChartInterval } from "@/lib/chartSettings";
-import { barsAreCandleGrade, chartQuality } from "@/lib/chartDataQuality";
 import { chartViewStateFromLogicalRange, latestLogicalRange, manualChartWindowRestorePolicy, rescaledLogicalRange, shiftedLogicalRange, timeWindowFromLogicalRange, timeWindowLogicalRange, zoomedLogicalRange } from "@/lib/chartNavigation";
-import { getJson } from "@/lib/clientApi";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { userFacingSearchError } from "@/lib/screenerFormat";
 import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
+import { useChartDataModel } from "@/app/useChartDataModel";
 import { useChartDrawings } from "@/app/useChartDrawings";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
-const TRADING_DAY_SECONDS = 86400 * 7 / 5;
 const AXIS_MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const money = (n, currency = "") => {
   if (!Number.isFinite(n)) return "Sin dato";
@@ -39,14 +37,14 @@ function scoreFromEdge(edgePct, sensitivity = 40) {
   return clamp(50 + ((2 / Math.PI) * 49 * Math.atan(edgePct / sensitivity)), 1, 99);
 }
 
-function isIntradayInterval(interval = "") {
-  return ["1m", "5m", "15m", "30m", "1H", "4H"].includes(normalizeChartInterval(interval));
-}
-
 function vcpGateMark(state = "") {
   if (state === "fail") return "x";
   if (state === "watch" || state === "warn") return "!";
   return "";
+}
+
+function isIntradayInterval(interval = "") {
+  return ["1m", "5m", "15m", "30m", "1H", "4H"].includes(normalizeChartInterval(interval));
 }
 
 function timeFromBar(bar = {}) {
@@ -54,27 +52,6 @@ function timeFromBar(bar = {}) {
   if (Number.isFinite(numeric)) return numeric;
   const parsed = Date.parse(String(bar.date || "").length <= 10 ? `${bar.date}T00:00:00Z` : bar.date);
   return Number.isFinite(parsed) ? Math.floor(parsed / 1000) : null;
-}
-
-function normalizeRows(bars = []) {
-  return (bars || [])
-    .map((bar) => {
-      const close = safeNumber(bar.close);
-      if (!Number.isFinite(close)) return null;
-      const open = safeNumber(bar.open) ?? close;
-      const time = timeFromBar(bar);
-      return {
-        time,
-        date: String(bar.date || "").slice(0, 10),
-        open,
-        high: safeNumber(bar.high) ?? Math.max(open, close),
-        low: safeNumber(bar.low) ?? Math.min(open, close),
-        close,
-        volume: safeNumber(bar.volume) ?? 0,
-      };
-    })
-    .filter((bar) => Number.isFinite(bar?.time) && Number.isFinite(bar.close) && bar.close > 0)
-    .sort((a, b) => a.time - b.time);
 }
 
 function weekKey(dateText = "") {
@@ -85,29 +62,6 @@ function weekKey(dateText = "") {
   const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
   const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
   return `${date.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
-}
-
-function aggregateRows(rows = [], interval = "D") {
-  if (interval === "D" || (isIntradayInterval(interval) && interval !== "4H")) return rows;
-  const groups = new Map();
-  for (const row of rows) {
-    const key = interval === "4H" ? String(Math.floor(row.time / (4 * 60 * 60))) : interval === "M" ? row.date.slice(0, 7) : weekKey(row.date);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(row);
-  }
-  return [...groups.values()].map((group) => {
-    const first = group[0];
-    const last = group[group.length - 1];
-    return {
-      time: last.time,
-      date: last.date,
-      open: first.open,
-      high: Math.max(...group.map((item) => item.high)),
-      low: Math.min(...group.map((item) => item.low)),
-      close: last.close,
-      volume: group.reduce((sum, item) => sum + (item.volume || 0), 0),
-    };
-  });
 }
 
 function aggregateLinePoints(points = [], interval = "D") {
@@ -132,24 +86,6 @@ function movingAverage(rows = [], length = 50) {
     if (index >= length - 1) output.push({ time: rows[index].time, value: sum / length });
   }
   return output;
-}
-
-function chartRangeRows(rows = [], rangeKey = DEFAULT_CHART_SETTINGS.range, interval = DEFAULT_CHART_SETTINGS.interval) {
-  if (isIntradayInterval(interval)) return rows;
-  const activeRange = CHART_RANGES.find((range) => range.key === rangeKey) || CHART_RANGES[3];
-  if (activeRange.key === "MAX" || activeRange.bars === Infinity) return rows;
-  const latestTime = rows.at(-1)?.time;
-  if (!Number.isFinite(latestTime)) return rows.slice(-Math.min(activeRange.bars, rows.length));
-  const cutoff = latestTime - (activeRange.bars * TRADING_DAY_SECONDS);
-  const filtered = rows.filter((row) => Number.isFinite(row.time) && row.time >= cutoff);
-  return filtered.length >= 2 ? filtered : rows.slice(-Math.min(activeRange.bars, rows.length));
-}
-
-function shouldRequestRemoteBars(localRows = [], rangeKey = DEFAULT_CHART_SETTINGS.range, interval = DEFAULT_CHART_SETTINGS.interval) {
-  if (isIntradayInterval(interval)) return true;
-  const activeRange = CHART_RANGES.find((range) => range.key === rangeKey) || CHART_RANGES[3];
-  if (activeRange.key === "MAX" || activeRange.bars === Infinity) return localRows.length < 900;
-  return Number.isFinite(activeRange.bars) && localRows.length < activeRange.bars;
 }
 
 function responsiveChartHeight(width = 0, requestedHeight = 460) {
@@ -445,7 +381,6 @@ export default function UniversalPriceChart({
   const lastInteractiveViewStateRef = useRef(chartViewStateFromLogicalRange(null, 0));
   const viewStateRef = useRef(chartViewStateFromLogicalRange(null, 0));
   const previousRenderMetaRef = useRef({ ready: false, symbol: "", range: "", interval: "", style: "", scale: "", rowCount: 0 });
-  const [remote, setRemote] = useState({ bars: null, loading: false, error: "", meta: null, quality: null });
   const [renderError, setRenderError] = useState("");
   const [viewState, setViewState] = useState(() => chartViewStateFromLogicalRange(null, 0));
   viewStateRef.current = viewState;
@@ -455,66 +390,32 @@ export default function UniversalPriceChart({
   const style = settings?.style || DEFAULT_CHART_SETTINGS.style;
   const scale = settings?.scale || DEFAULT_CHART_SETTINGS.scale;
   const indicators = { ...DEFAULT_CHART_SETTINGS.indicators, ...(settings?.indicators || {}) };
-  const localRows = useMemo(() => normalizeRows(bars), [bars]);
-  const needsRemote = shouldRequestRemoteBars(localRows, range, interval);
   const intraday = isIntradayInterval(interval);
+
+  // Data model (ADR §3, paso 4): toda la decisión de filas, calidad,
+  // disponibilidad, estado del request y notice vive en el adaptador
+  // `useChartDataModel`. El componente no debe volver a preguntar por
+  // `remote.quality`, `needsRemote`, `localRows` ni por el guard inline:
+  // el data model es la única frontera que conoce esos detalles.
+  //
+  // El contrato provisional acepta tanto `localQuality` canónico (ADR §3.3)
+  // como el `chartEstimated` legacy (camino actual de UniversalPriceChart).
+  // El switch final a `localQuality` queda para el paso 9 del ADR.
+  const dataModel = useChartDataModel({
+    symbol,
+    localSource: { bars, chartEstimated },
+    config: { dataRange: range, interval, style },
+  });
+  const rows = dataModel.rows;
+  const rowTimes = dataModel.rowTimes;
+  const notice = dataModel.notice;
+
   const patternSummary = useMemo(() => methodologyDisplayForRow(patternOverlay || {}), [patternOverlay]);
   const patternDiagnostic = useMemo(
     () => showPatternDiagnostics && patternOverlay && !intraday ? vcpDiagnosticSnapshot(patternOverlay) : null,
     [showPatternDiagnostics, patternOverlay, intraday],
   );
 
-  useEffect(() => {
-    if (!needsRemote || !symbol) {
-      setRemote({ bars: null, loading: false, error: "", meta: null, quality: null });
-      return;
-    }
-    const controller = new AbortController();
-    setRemote((prev) => ({ ...prev, loading: true, error: "" }));
-    const params = new URLSearchParams({ symbol, range, interval });
-    getJson(`/api/chart?${params.toString()}`, { signal: controller.signal })
-      .then((json) => {
-        // dataQuality es el veredicto canónico del productor (real/estimated/
-        // missing). chartQuality lo normaliza y detecta barras sintéticas del
-        // camino legacy. Se guarda en el estado para que el useMemo de rows
-        // bloquee las series no decision-grade antes de pintarlas.
-        const quality = chartQuality(json);
-        setRemote({ bars: json.bars || [], loading: false, error: "", meta: json.meta || null, quality });
-      })
-      .catch((error) => {
-        if (error.name === "AbortError") return;
-        setRemote({ bars: [], loading: false, error: error.message || "Proveedor de grafico no disponible", meta: null, quality: null });
-      });
-    return () => controller.abort();
-  }, [needsRemote, symbol, range, interval]);
-
-  const rows = useMemo(() => {
-    // Barras remotas estimadas/missing: NO son decision-grade (el productor las
-    // marcó en dataQuality). No se pintan como mercado real ni se cae a localRows
-    // (podría ser chartPreview close-only sintético): se fuerza [] — el mismo
-    // estado vacío limpio que la rama de remoto vacío/fallido de abajo. Esta es
-    // la superficie de decisión, así que sintético jamás debe verse como velas.
-    if (remote.quality && remote.quality.status !== "real") return [];
-    const remoteRows = normalizeRows(remote.bars || []);
-    if (remoteRows.length) return chartRangeRows(aggregateRows(remoteRows, interval), range, interval);
-    // Fetch remoto vacío/fallido. Si los datos locales NO son candle-grade (p.ej.
-    // chartPreview close-only persistido en review) y el modo es candlestick,
-    // caer a localRows pintaría velas degeneradas (puntos/guiones sueltos que el
-    // usuario podría confundir con mercado real). Devolver [] fuerza el estado
-    // empty limpio ("Historico insuficiente"). Los modos línea/área (style "8"/"3")
-    // solo usan close, así que se permiten con bars close-only. Ver barsAreCandleGrade.
-    //
-    // chartEstimated (prop): el productor (company-brief) marcó la serie local
-    // como sintética, PERO compactChartBars borró el flag `estimated` por barra,
-    // así que barsAreCandleGrade la ve como candle-grade (tiene rango OHLC) y la
-    // pintaría como mercado real. Cuando la prop lo delata, localRows NO es
-    // decision-grade: se anula el fallback ([]) para caer al mismo estado
-    // degradado/indicador que el camino remoto. No se toca barsAreCandleGrade.
-    const fallback = intraday || chartEstimated ? [] : localRows;
-    const useLocal = fallback.length >= 2 && (style === "8" || style === "3" || barsAreCandleGrade(fallback));
-    return useLocal ? chartRangeRows(aggregateRows(fallback, interval), range, interval) : [];
-  }, [remote.bars, remote.quality, intraday, chartEstimated, localRows, interval, range, style]);
-  const rowTimes = useMemo(() => rows.map((row) => row.time), [rows]);
   const mainRsValue = safeNumber(rsMainScore);
   const globalRsScoreData = useMemo(
     () => indicators.rsLine && !intraday ? normalizeRsScoreSeries(rsRatingSeries, rows) : [],
@@ -543,24 +444,18 @@ export default function UniversalPriceChart({
   );
   const mainChartHeightTarget = height;
 
-  // Franja de fiabilidad: si el productor marcó la serie como no decision-grade
-  // se avisa sin alarmismo. Dos orígenes convergen en el MISMO indicador:
-  //  - remote.quality: veredicto del fetch a /api/chart (status estimated/missing).
-  //  - chartEstimated (prop): la serie local (SSR company-brief) es sintética.
-  // Las barras ya se bloquearon en el useMemo de rows; esto solo explica el vacío.
-  const remoteEstimated = remote.quality && remote.quality.status !== "real";
-  const estimatedNote = remoteEstimated
-    ? remote.quality.status === "estimated"
-      ? "Datos estimados — no aptos para decisión"
-      : "Sin histórico de mercado disponible"
-    : chartEstimated
-      ? "Datos estimados — no aptos para decisión"
-      : "";
-  const estimatedNoteTitle = remoteEstimated
-    ? (remote.quality.reason || remote.quality.issue || "")
-    : chartEstimated
-      ? "Histórico estimado por el proveedor; no sustituye datos de mercado reales."
-      : "";
+  // Franja de fiabilidad: `notice` viene resuelto por el data model con la
+  // prioridad numérica estricta del ADR §3.4. La vista NO reconstruye reglas
+  // de calidad; muestra el `notice` que el data model publica.
+  //
+  // En el estado vacío (rows.length < 2), el `notice` cubre las cuatro
+  // posibilidades: calidad estimada/missing, loading, error operacional o
+  // histórico insuficiente. En el estado con filas, el `notice` puede ser:
+  // - `history-expanding` (filas + loading): mostrar como "ampliando".
+  // - `history-expansion-failed` (filas + error): mostrar como aviso.
+  // - `null` (todo bien): no mostrar nada.
+  const estimatedNote = notice && notice.kind === "quality" ? notice.text : "";
+  const estimatedNoteTitle = notice && notice.kind === "quality" ? notice.title : "";
 
   const latest = rows.at(-1);
   const first = rows[0];
@@ -1098,10 +993,28 @@ export default function UniversalPriceChart({
   }, [rows, rowTimes, style, positive, mainChartHeightTarget, scale, interval, range, indicators.volume, indicators.maFast, indicators.maFastLength, indicators.maSlow, indicators.maSlowLength, hasRsLine, rsLineData, patternOverlay, patternMarkers, intraday]);
 
   if (rows.length < 2) {
+    // Estado vacío: el data model ya resolvió el notice (códigos 1-7 según
+    // §3.4). En orden de prioridad:
+    //   - calidad estimada/missing (1, 2) → franja estimatedNote.
+    //   - history-loading (3) → "Cargando historico..."
+    //   - provider-unavailable (4) → "Proveedor de grafico no disponible: ..."
+    //   - insufficient-history (7) → copy histórico insuficiente.
+    // En cualquier caso, mostramos el texto del notice directamente: ya está
+    // resuelto por prioridad numérica estricta.
+    const fallbackText = notice && notice.kind === "quality"
+      ? notice.text
+      : notice && notice.kind === "loading"
+        ? notice.text
+        : notice && notice.kind === "error"
+          ? notice.text
+          : notice && notice.kind === "empty"
+            ? notice.text
+            : userFacingSearchError("Historico insuficiente");
+    const fallbackTitle = notice && notice.kind === "quality" ? notice.title : "";
     return <div className={`universalChart empty ${className}`}>
-      {estimatedNote
-        ? <span className="universalChartEstimatedNote" role="status" title={estimatedNoteTitle}>{estimatedNote}</span>
-        : remote.loading ? "Cargando historico..." : remote.error ? `Proveedor de grafico no disponible: ${remote.error}` : userFacingSearchError("Historico insuficiente")}
+      {notice
+        ? <span className="universalChartEstimatedNote" role="status" title={fallbackTitle}>{fallbackText}</span>
+        : userFacingSearchError("Historico insuficiente")}
     </div>;
   }
 
@@ -1229,8 +1142,11 @@ export default function UniversalPriceChart({
       {!hasRsLine && <em>Sin serie relativa suficiente</em>}
     </div>}
     {estimatedNote && <p className="universalChartEstimatedNote" role="status" title={estimatedNoteTitle}>{estimatedNote}</p>}
-    {remote.loading && needsRemote && !intraday && <p className="dataNote">Ampliando historico para este rango...</p>}
-    {remote.error && !intraday && <p className="dataNote">Historico ampliado no disponible: {remote.error}. Se muestra el historico local.</p>}
+    {/* Avisos de "ampliando histórico" / "ampliación fallida" ya los resuelve
+        el data model con prioridad 5/6 (§3.4); la vista NO reconstruye
+        remote.loading / remote.error — sólo pinta el notice vigente. */}
+    {notice && notice.kind === "expanding" && !intraday && <p className="dataNote">{notice.text}</p>}
+    {notice && notice.kind === "error" && notice.code === "history-expansion-failed" && !intraday && <p className="dataNote">{notice.text}</p>}
     {renderError && <p className="dataNote">{renderError}</p>}
   </div>;
 }
