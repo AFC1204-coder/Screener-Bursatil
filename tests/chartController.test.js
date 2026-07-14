@@ -214,4 +214,47 @@ describe("useChartController · ciclo de vida (ADR §5.4, §5.5)", () => {
     expect(html).toContain("universalChart");
     expect(fakeChart._removeCount()).toBe(0);
   });
+
+  it("el effect grande del controller invalida el chart al cambiar patternOverlay o rsRatingSeries", () => {
+    // Este test documenta el contrato del effect grande del controller
+    // (definido en `useChartController.js`): los deps incluyen
+    // `patternOverlay` y `rsRatingSeries` además de los estructurales
+    // (symbol/range/interval/style/scale/height/rows/availability). La
+    // verificación es estática sobre el código fuente del controller:
+    // confirmamos que los nombres aparecen en el array de dependencias.
+    // El comportamiento dinámico (recreación real del chart) requiere
+    // un test con createRoot + jsdom, fuera del alcance de este repo
+    // (no usa jsdom/happy-dom en ningún test).
+    const { readFileSync } = require("node:fs");
+    const src = readFileSync("app/useChartController.js", "utf8");
+    // Localiza el array de deps del effect grande: el que sigue al
+    // `useEffect` que contiene `controllerAttachmentIdRef.current += 1`
+    // (señal inequívoca de la transacción §5.4/§5.5).
+    const idx = src.indexOf("controllerAttachmentIdRef.current += 1");
+    expect(idx, "no se encontró la marca de la transacción §5.4").toBeGreaterThan(-1);
+    const rest = src.slice(idx);
+    // El array de deps es el siguiente bloque `[ ... ]` seguido de `);`.
+    const match = rest.match(/\[\s*([\s\S]*?)\]\s*\)\s*;/);
+    expect(match, "no se encontró el array de deps del effect grande").toBeTruthy();
+    const deps = match[0];
+    // Dependencias estructurales (las que ya estaban en el commit).
+    expect(deps).toContain("dataModel.availability");
+    expect(deps).toContain("dataModel.rowTimes");
+    expect(deps).toContain("symbol");
+    expect(deps).toContain("config.dataRange");
+    expect(deps).toContain("config.interval");
+    expect(deps).toContain("config.style");
+    expect(deps).toContain("config.scale");
+    expect(deps).toContain("height");
+    // Dependencias de overlays e indicadores (regresión del paso 7 al
+    // commit 5722d84: estas NO estaban; se añadieron tras tu revisión).
+    expect(deps).toContain("patternOverlay");
+    expect(deps).toContain("rsRatingSeries");
+    expect(deps).toContain("config.indicators.volume");
+    expect(deps).toContain("config.indicators.rsLine");
+    expect(deps).toContain("config.indicators.maFast");
+    expect(deps).toContain("config.indicators.maFastLength");
+    expect(deps).toContain("config.indicators.maSlow");
+    expect(deps).toContain("config.indicators.maSlowLength");
+  });
 });

@@ -290,6 +290,15 @@ export function useChartController(props = {}) {
     config.style,
     config.scale,
     height,
+    patternOverlay,
+    rsRatingSeries,
+    config.indicators.volume,
+    config.indicators.rsLine,
+    config.indicators.maFast,
+    config.indicators.maFastLength,
+    config.indicators.maSlow,
+    config.indicators.maSlowLength,
+    positive,
   ]);
 
   // drawings.setRowTimes en cada cambio de filas.
