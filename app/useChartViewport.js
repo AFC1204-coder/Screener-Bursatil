@@ -101,34 +101,22 @@ export function useChartViewport({
   // Reset explícito cuando cambia el símbolo (§4.7 / §6 tabla "Cambio de
   // símbolo"). BUG 8: la pieza pura desuscribe listeners y cancela timers.
   //
-  // NOTA SOBRE EL ORDEN DE EJECUCIÓN (paso 7, controller):
-  // Este `useEffect` corre tras el commit, en el orden de declaración de
-  // los effects del componente. Si el controller del paso 7 invoca un
-  // nuevo `attach(...)` en el mismo render en que el padre cambió el
-  // símbolo, hay dos órdenes posibles:
+  // ORDEN DE EJECUCIÓN RESPECTO AL CONTROLLER (paso 7, app/useChartController.js):
+  // React ejecuta los effects en el orden en que los hooks se DECLARAN
+  // dentro del componente que los invoca. En useChartController.js, la
+  // llamada a useChartViewport() está en la línea 98, ANTES del useEffect
+  // grande del controller (línea 139). Por tanto, los effects internos de
+  // useChartViewport (incluido este `useEffect` de resetBySymbol) se
+  // ejecutan SIEMPRE ANTES que la transacción §5.4/§5.5 del controller
+  // en el mismo ciclo de render.
   //
-  //   A) attach(nuevo) corre ANTES de este effect:
-  //      state.attachmentId = N+1, state.currentAttachmentId = N+1,
-  //      chart y container del nuevo attach instalados.
-  //      Después este effect llama resetBySymbol(), que incrementa
-  //      attachmentId a N+2, desuscribe los listeners del nuevo attach,
-  //      pone lifecycle = "detached", chart = null, container = null.
-  //      El nuevo attach queda invalidado; el chart del controller
-  //      queda sin viewport.
-  //
-  //   B) Este effect corre ANTES de attach(nuevo):
-  //      resetBySymbol() deja el state limpio. El attach(nuevo) posterior
-  //      funciona normalmente, con state.attachmentId incrementando de
-  //      nuevo a N+2 (o el siguiente).
-  //
-  // El controller del paso 7 debe evitar la carrera (A). La forma robusta
-  // es que el reset por símbolo NO corra si el controller va a recrear
-  // el chart en el mismo ciclo; p. ej. el controller llama al `release()`
-  // del attach anterior antes del nuevo `attach()` y este effect de
-  // reset se delega al `unmount` (que es el cleanup final del chart).
-  // Esta nota es el recordatorio: si en el paso 7 vemos el caso (A) en
-  // producción, la solución es reubicar este reset, no reescribir la
-  // pieza pura.
+  // Esto descarta el escenario A (carrera destructiva) en la práctica:
+  // cuando el padre cambia el símbolo, resetBySymbol() deja el state
+  // limpio ANTES de que el controller recree el chart. El scenario B
+  // es el único que ocurre: el controller hace su transacción §5.4 con
+  // un state ya reseteado, y `viewport.attach()` se ejecuta sin restos
+  // del attach anterior. No hace falta coordinación adicional entre
+  // el controller y este hook.
   useEffect(() => {
     if (!symbol) return;
     lifecycle.resetBySymbol();
