@@ -13,7 +13,8 @@
 //   - fetch, AbortController o selección local/remota;
 //   - llamadas a `chart.timeScale()`;
 //   - cálculo de MA/RS/markers/perfiles;
-//   - guards `chartEstimated/dataQuality`;
+//   - guard de `dataQuality` (la calidad P0 se aplica en el data model,
+//     no en esta vista);
 //   - attach/detach de drawings.
 //
 // El controlador entrega `viewModel` (declarativo, listo para JSX) y

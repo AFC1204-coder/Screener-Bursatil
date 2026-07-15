@@ -53,8 +53,7 @@ import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
  * @param {Array}   [props.rsRatingSeries=[]]
  * @param {object}  [props.patternOverlay=null]
  * @param {boolean} [props.showPatternDiagnostics=false]
- * @param {boolean} [props.chartEstimated=false]      legacy, paso 9 lo elimina.
- * @param {object}  [props.localQuality=null]          provisional, paso 9 lo formaliza.
+ * @param {object}  [props.localQuality=null]         ChartQuality canónico (ADR §3.2).
  * @param {string}  [props.className=""]
  * @param {number}  [props.height=460]
  */
@@ -71,7 +70,6 @@ export function useChartController(props = {}) {
     rsRatingSeries = [],
     patternOverlay = null,
     showPatternDiagnostics = false,
-    chartEstimated = false,
     localQuality = null,
     className = "",
     height = 460,
@@ -80,10 +78,12 @@ export function useChartController(props = {}) {
   // §5.3 / 1: config canónica.
   const config = useMemo(() => resolveChartViewportConfig(settings || {}), [settings]);
 
-  // §5.3 / 2: data model.
+  // §5.3 / 2: data model. ADR §3.3 + §9: la calidad local viaja sólo como
+  // `localQuality` canónico (ChartQuality). La prop legacy `chartEstimated`
+  // ya no forma parte del contrato público del chart.
   const dataModel = useChartDataModel({
     symbol,
-    localSource: { bars, chartEstimated, quality: localQuality },
+    localSource: { bars, quality: localQuality },
     config: { dataRange: config.dataRange, interval: config.interval, style: config.style },
   });
 

@@ -25,11 +25,10 @@
 //     descartarse.
 //   - `AbortError` no se publica como error ni como notice.
 //
-// La prop `localQuality` (ChartQuality canónico) se acepta de forma
-// provisional para esta fase. En el paso 9 del ADR `chartEstimated` se
-// elimina del contrato público y el caller debe pasar `localQuality`
-// explícito; mientras tanto, el hook también acepta `chartEstimated` para
-// compatibilidad con UniversalPriceChart actual (ver ADR §3.2 / §9 paso 4).
+// Paso 9 del ADR: `localQuality` (ChartQuality canónico) es la ÚNICA forma
+// de expresar la calidad local. La prop legacy `chartEstimated` ya no es
+// parte del contrato público del hook: se ha eliminado y cualquier consumer
+// debe pasar `quality` explícito (ver ADR §3.2).
 
 "use client";
 
@@ -44,12 +43,11 @@ function buildRequestKey({ symbol, dataRange, interval }) {
   return `${symbol || ""}|${dataRange || ""}|${interval || ""}`;
 }
 
-// Huella estable del `localSource`: el contrato ADR §3.3 entrega `bars` y
-// `quality`, y UniversalPriceChart pasa además `chartEstimated` legacy. El
-// caller PUEDE construir un objeto nuevo cada render (es lo que hace el
-// componente actual para `localSource: { bars, chartEstimated }`), por lo que
-// la comparación por referencia no es válida. Esta huella es la pieza que
-// mantiene estable el efecto de fetch entre renders equivalentes.
+// Huella estable del `localSource`. ADR §3.3 + §9: la entrada es
+// `{ bars, quality }` (ChartQuality canónico). El caller PUEDE construir
+// un objeto nuevo cada render, por lo que la comparación por referencia
+// no es válida. Esta huella es la pieza que mantiene estable el efecto
+// de fetch entre renders equivalentes.
 function buildLocalSourceKey(localSource = null) {
   if (!localSource || typeof localSource !== "object") return "none|";
   const bars = Array.isArray(localSource.bars) ? localSource.bars : [];
@@ -64,7 +62,6 @@ function buildLocalSourceKey(localSource = null) {
     lastTime,
     Number(last?.close) || "",
     qualityStatus,
-    localSource.chartEstimated === true ? "1" : "0",
   ].join("|");
 }
 
@@ -124,7 +121,7 @@ function dispatchResolve({ symbol, localSource, config, plan }) {
   }
   return chartDataModel.resolve({
     symbol,
-    localSource: localSource || { bars: [], quality: null, chartEstimated: false },
+    localSource: localSource || { bars: [], quality: null },
     config,
     request,
   });
@@ -164,9 +161,11 @@ export function useChartDataModel(input = {}) {
   }, [config?.dataRange, config?.range, config?.interval, config?.style]);
 
   // Normalización del localSource. Se memoiza por su huella estable, no por
-  // referencia: el caller (UniversalPriceChart actual) construye `localSource`
-  // como object literal cada render. Mantener identidad por valor evita que
-  // el efecto de fetch se re-dispare en cada render por una falsa invalidación.
+  // referencia: el caller puede construir `localSource` como object literal
+  // cada render. Mantener identidad por valor evita que el efecto de fetch
+  // se re-dispare en cada render por una falsa invalidación. ADR §3.3 +
+  // §9: la entrada canónica es `{ bars, quality }`; el campo legacy
+  // `chartEstimated` ya no forma parte del contrato.
   const normalizedLocalSource = useMemo(() => {
     if (
       localSource
@@ -176,7 +175,6 @@ export function useChartDataModel(input = {}) {
       return {
         bars: Array.isArray(localSource.bars) ? localSource.bars : [],
         quality: localSource.quality ?? null,
-        chartEstimated: localSource.chartEstimated === true,
       };
     }
     return null;

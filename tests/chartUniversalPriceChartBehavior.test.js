@@ -1,25 +1,30 @@
 // tests/chartUniversalPriceChartBehavior.test.js — Tests de caracterización del
-// chart actual (pre-ADR).
+// chart, reescritos en el cierre del paso 9 (ADR chart-controller-extraction).
 //
-// Paso 1 del ADR chart-controller-extraction: congelar el comportamiento actual
-// de UniversalPriceChart con tests, ANTES de extraer nada a `lib/chartDataModel`
-// o `useChartDataModel`. Estos tests:
-//   1. Describen lo que `UniversalPriceChart.jsx` hace HOY (filas finales que
-//      decide pintar, request key que construye, política de ventana manual).
-//   2. NO modifican producción: reusan los helpers puros ya extraídos
-//      (`chartQuality`, `barsAreCandleGrade`, `manualChartWindowRestorePolicy`,
-//      `chartNavigation`) y replican verbatim la lógica embebida del componente
-//      en helpers locales de SOLO TEST (`resolveChartRows`, `buildChartRequest`,
-//      `resolveRestoreRange`). Si la lógica embebida cambia, estos tests
-//      cambian; eso es justamente lo que el ADR pide.
-//   3. Son ambiente Node puro (sin DOM, sin fetch real, sin lightweight-charts,
-//      sin React). Cuando la pieza pura `lib/chartDataModel.js` exista, esta
-//      matriz migra a tests de esa pieza sin perder cobertura.
+// Historia:
+//   - Paso 1 (caracterización pre-ADR): replicaba la lógica embebida de la
+//     versión inicial de `UniversalPriceChart.jsx` antes de extraer
+//     `lib/chartDataModel` y `useChartDataModel`. Vivía detrás de la prop
+//     legacy `chartEstimated`.
+//   - Pasos 2–8 del ADR: extrajeron piezas puras, crearon el controller y la
+//     vista declarativa. Estos tests han sido migrados para reflejar el
+//     nuevo contrato del data model (ChartQuality canónico, sin `chartEstimated`).
+//   - Paso 9 (este commit): la prop `chartEstimated` desaparece del contrato
+//     público del chart; este archivo pasa a consumir `localQuality` (ADR
+//     §3.2). Las pruebas que replican comportamiento interno del componente
+//     Viejo se conservan como referencia histórica; las del paso 1 que ya no
+//     tienen contraparte en producción (p.ej. `resolveChartRows`) se mantienen
+//     como documentación del algoritmo que vivió en `UniversalPriceChart.jsx`,
+//     y sus fixtures se reescriben para usar `localQuality` en lugar de
+//     `chartEstimated`.
 //
-// Las decisiones que NO se pueden caracterizar aquí sin inventar APIs de
-// producción (porque viven DENTRO del useEffect/useMemo del componente y
-// requieren montaje React + lightweight-charts) se documentan al final del
-// archivo como LIMITACIONES en lugar de fingir tests que mientan.
+// La matriz determinista de §3.5–§3.6 vive hoy en `tests/chartDataModel.test.js`
+// (consumiendo `chartDataModel.resolve`). Este archivo conserva sólo:
+//   - la sección "guard de calidad" en sus formas remoto real/estimated/missing;
+//   - las pruebas de viewport (`manualChartWindowRestorePolicy`,
+//     `resolveRestoreRange`) que siguen siendo válidas tras el refactor;
+//   - la documentación de las limitaciones del paso 1 (L1–L5) actualizada al
+//     estado del ADR cerrado.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -116,10 +121,15 @@ function aggregateRowsDaily(rows = []) {
 // UniversalPriceChart.jsx:491-516 (useMemo "rows") — réplica SOLO-TEST.
 // Esta es la decisión actual: si remoto es estimado/missing → []. Si remoto
 // real → sus barras. Si remoto vacío/fallido → fallback local SI es candle
-// grade (o style line/área), excepto intradía o chartEstimated.
+// grade (o style line/área), excepto intradía o `localQuality` no-real.
+//
+// Migración al cierre del paso 9 (ADR §3.2 + §9): el input de calidad local
+// pasa a ser el `ChartQuality` canónico (`localQuality`) en vez de la prop
+// legacy `chartEstimated` (booleano). Esta función replica la decisión tal
+// como vivía antes; conservarla es trazabilidad, no producción.
 function resolveChartRows({
   bars,            // props.bars (SSR local)
-  chartEstimated,  // prop: el productor local marcó la serie como estimada
+  localQuality,    // ChartQuality canónico (paso 9)
   remote,          // { bars, loading, error, meta, quality }
   range = DEFAULT_CHART_SETTINGS.range,
   interval = DEFAULT_CHART_SETTINGS.interval,
@@ -127,6 +137,7 @@ function resolveChartRows({
 }) {
   const localRows = normalizeRows(bars);
   const intraday = isIntradayInterval(interval);
+  const localDegraded = localQuality && localQuality.status && localQuality.status !== "real";
 
   // Regla 1: remoto estimado/missing → [] (P0 guard actual)
   if (remote && remote.quality && remote.quality.status !== "real") {
@@ -139,7 +150,7 @@ function resolveChartRows({
     return { rows: chartRangeRows(aggregated, range, interval), localRows };
   }
   // Regla 3: remoto vacío/fallido → fallback local elegible
-  const fallback = intraday || chartEstimated ? [] : localRows;
+  const fallback = intraday || localDegraded ? [] : localRows;
   const useLocal = fallback.length >= 2 && (style === "8" || style === "3" || barsAreCandleGrade(fallback));
   return {
     rows: useLocal ? chartRangeRows(aggregateRowsDaily(fallback), range, interval) : [],
@@ -261,7 +272,7 @@ describe("UniversalPriceChart · comportamiento actual · guard de calidad", () 
     };
     const { rows } = resolveChartRows({
       bars: ohlcBars(10),
-      chartEstimated: false,
+      localQuality: { status: "real", source: "Yahoo Finance" },
       remote,
       range: "1A",
       interval: "D",
@@ -290,7 +301,7 @@ describe("UniversalPriceChart · comportamiento actual · guard de calidad", () 
     };
     const { rows } = resolveChartRows({
       bars: ohlcBars(200), // local real candle-grade
-      chartEstimated: false,
+      localQuality: { status: "real", source: "Yahoo Finance" },
       remote,
       range: "1A",
       interval: "D",
@@ -312,7 +323,7 @@ describe("UniversalPriceChart · comportamiento actual · guard de calidad", () 
     };
     const { rows } = resolveChartRows({
       bars: ohlcBars(200),
-      chartEstimated: false,
+      localQuality: { status: "real", source: "Yahoo Finance" },
       remote,
       range: "1A",
       interval: "D",
@@ -330,34 +341,35 @@ describe("UniversalPriceChart · comportamiento actual · local estimado", () =>
     expect(needsRemote).toBe(false);
   });
 
-  it("local estimado largo con prop chartEstimated=true → filas vacías", () => {
+  it("local estimado largo (localQuality.status='estimated') → filas vacías", () => {
     // Replica del comentario embebido en UniversalPriceChart.jsx:508-512:
     // "compactChartBars borró el flag `estimated` por barra, así que
     // barsAreCandleGrade la ve como candle-grade y la pintaría como mercado
-    // real. Cuando la prop lo delata, localRows NO es decision-grade".
+    // real. Cuando `localQuality` lo delata, localRows NO es decision-grade".
+    // Migrado al cierre del paso 9 (ADR §3.2 + §9).
     const local = ohlcBars(300);
     const { rows } = resolveChartRows({
       bars: local,
-      chartEstimated: true, // el productor local marcó la serie como estimada
+      localQuality: { status: "estimated", source: "estimado", reason: "demo" },
       remote: null,
       range: "1A",
       interval: "D",
       style: "1",
     });
     // Aunque barsAreCandleGrade(local) sería true (tiene OHLC nativo),
-    // chartEstimated=true fuerza [].
+    // `localQuality.status="estimated"` fuerza [].
     expect(barsAreCandleGrade(normalizeRows(local))).toBe(true);
     expect(rows).toEqual([]);
   });
 
-  it("local estimado por barra (sin prop chartEstimated) cae al guard candle-grade", () => {
+  it("local estimado por barra (sin localQuality explícito) cae al guard candle-grade", () => {
     // Camino legacy detectado por chartQuality (estructural): el remote vacío
     // + local con estimated:true en cada barra → fallback bloqueado por
     // barsAreCandleGrade si todas son degeneradas.
     const local = closeOnlyBars(300).map((b) => ({ ...b, estimated: true }));
     const { rows } = resolveChartRows({
       bars: local,
-      chartEstimated: false, // la prop NO viene; depende del guard estructural
+      localQuality: null, // sin calidad explícita: depende del guard estructural
       remote: null,
       range: "1A",
       interval: "D",
@@ -375,7 +387,7 @@ describe("UniversalPriceChart · comportamiento actual · close-only por estilo"
     const local = closeOnlyBars(300);
     const { rows } = resolveChartRows({
       bars: local,
-      chartEstimated: false,
+      localQuality: null,
       remote: null,
       range: "1A",
       interval: "D",
@@ -388,7 +400,7 @@ describe("UniversalPriceChart · comportamiento actual · close-only por estilo"
     const local = closeOnlyBars(300);
     const { rows } = resolveChartRows({
       bars: local,
-      chartEstimated: false,
+      localQuality: null,
       remote: null,
       range: "1A",
       interval: "D",
@@ -408,7 +420,7 @@ describe("UniversalPriceChart · comportamiento actual · close-only por estilo"
     const local = closeOnlyBars(300);
     const { rows } = resolveChartRows({
       bars: local,
-      chartEstimated: false,
+      localQuality: null,
       remote: null,
       range: "1A",
       interval: "D",
@@ -434,7 +446,7 @@ describe("UniversalPriceChart · comportamiento actual · error remoto con fallb
     };
     const { rows } = resolveChartRows({
       bars: local,
-      chartEstimated: false,
+      localQuality: { status: "real", source: "Yahoo Finance" },
       remote,
       range: "1A",
       interval: "D",
@@ -449,7 +461,7 @@ describe("UniversalPriceChart · comportamiento actual · error remoto con fallb
     }
   });
 
-  it("error de transporte con local estimado → filas vacías (la prop bloquea)", () => {
+  it("error de transporte con local estimado → filas vacías (localQuality bloquea)", () => {
     const local = ohlcBars(300);
     const remote = {
       bars: [],
@@ -460,7 +472,7 @@ describe("UniversalPriceChart · comportamiento actual · error remoto con fallb
     };
     const { rows } = resolveChartRows({
       bars: local,
-      chartEstimated: true,
+      localQuality: { status: "estimated", source: "estimado", reason: "demo" },
       remote,
       range: "1A",
       interval: "D",
@@ -689,12 +701,12 @@ describe("UniversalPriceChart · limitaciones del paso 1 (caracterización)", ()
     expect(true).toBe(true);
   });
 
-  it("L5: la calidad local (chartQuality + chartQualityFromBrief del ADR §3.2) no existe aún", () => {
-    // El ADR introduce `chartQualityFromBrief` en el paso 2. Hasta entonces
-    // el consumer sigue pasando `chartEstimated` como booleano prop y el
-    // `useMemo` de filas reproduce el predicado inline. Caracterizamos el
-    // predicado replicando la lógica embebida arriba; cuando el helper puro
-    // exista, estos tests migran a `chartDataQuality.test.js`.
+  it("L5: la calidad local canónica (ChartQuality + chartQualityFromBrief del ADR §3.2)", () => {
+    // Pasos 2 y 9 del ADR introdujeron `chartQualityFromBrief` y cerraron la
+    // migración. `localQuality` (ChartQuality canónico) es la única vía de
+    // expresar la calidad local en el contrato público del chart. Los tests
+    // correspondientes viven ahora en `tests/chartDataQuality.test.js` y en
+    // este propio archivo (migración de `chartEstimated` → `localQuality`).
     expect(true).toBe(true);
   });
 });

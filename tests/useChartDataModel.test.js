@@ -67,9 +67,12 @@ const STANDARD_CONFIG = { dataRange: "1A", interval: "D", style: "1" };
 // "short" = local NO cubre el rango 1A (≥252 barras diarias): fuerza al
 // resolver puro a evaluar el `request` (Paso 5 de §3.6). Sin esta condición,
 // el resolver ignora el request y vuelve a la rama local con idle.
-const SHORT_LOCAL = { bars: ohlcBars(50), chartEstimated: false };
-const LONG_LOCAL = { bars: ohlcBars(300), chartEstimated: false };
-const ESTIMATED_LOCAL = { bars: ohlcBars(300), chartEstimated: true };
+const SHORT_LOCAL = { bars: ohlcBars(50) };
+const LONG_LOCAL = { bars: ohlcBars(300) };
+const ESTIMATED_LOCAL = {
+  bars: ohlcBars(300),
+  quality: { status: "estimated", source: "estimado", reason: "demo" },
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // §3.4 + §3.7: contrato de `buildRequestKey`.
@@ -105,8 +108,8 @@ describe("useChartDataModel · buildRequestKey (ADR §3.7.1)", () => {
 
 describe("useChartDataModel · buildLocalSourceKey (ADR §3.7.2)", () => {
   it("devuelve una huella estable para dos objetos `localSource` equivalentes", () => {
-    const a = { bars: ohlcBars(10), chartEstimated: false };
-    const b = { bars: ohlcBars(10), chartEstimated: false };
+    const a = { bars: ohlcBars(10) };
+    const b = { bars: ohlcBars(10) };
     expect(buildLocalSourceKey(a)).toBe(buildLocalSourceKey(b));
   });
 
@@ -116,9 +119,9 @@ describe("useChartDataModel · buildLocalSourceKey (ADR §3.7.2)", () => {
     expect(buildLocalSourceKey(a)).not.toBe(buildLocalSourceKey(b));
   });
 
-  it("distingue cambio de chartEstimated (local sintético vs real)", () => {
-    const a = { bars: ohlcBars(50), chartEstimated: false };
-    const b = { bars: ohlcBars(50), chartEstimated: true };
+  it("distingue cambio de `quality.status` (local sintético vs real)", () => {
+    const a = { bars: ohlcBars(50), quality: { status: "real", source: "Yahoo Finance" } };
+    const b = { bars: ohlcBars(50), quality: { status: "estimated", source: "estimado" } };
     expect(buildLocalSourceKey(a)).not.toBe(buildLocalSourceKey(b));
   });
 
@@ -210,7 +213,7 @@ describe("useChartDataModel · dispatchResolve · contrato §3.4", () => {
     // 250 barras (por debajo del rango 1A=252): el resolver evalúa el
     // `request`. El local "ready" + request "loading" produce el notice
     // history-expanding (prioridad 5 de §3.4).
-    const boundary = { bars: ohlcBars(250), chartEstimated: false };
+    const boundary = { bars: ohlcBars(250) };
     const out = dispatchResolve({
       symbol: "AAPL",
       localSource: boundary,
@@ -240,7 +243,10 @@ describe("useChartDataModel · dispatchResolve · contrato §3.4", () => {
   it("plan loading + local estimado corto: blocked + requestState=loading + quality notice", () => {
     const out = dispatchResolve({
       symbol: "AAPL",
-      localSource: { bars: ohlcBars(50), chartEstimated: true },
+      localSource: {
+        bars: ohlcBars(50),
+        quality: { status: "estimated", source: "estimado" },
+      },
       config: STANDARD_CONFIG,
       plan: { generation: 5, needsRemote: true, requestState: "loading" },
     });
@@ -284,7 +290,7 @@ describe("useChartDataModel · dispatchResolve · contrato §3.4", () => {
   it("plan error con local elegible: rows locales listas + notice history-expansion-failed", () => {
     const out = dispatchResolve({
       symbol: "AAPL",
-      localSource: { bars: ohlcBars(250), chartEstimated: false }, // < 252 ⇒ needsRemote=true
+      localSource: { bars: ohlcBars(250) }, // < 252 ⇒ needsRemote=true
       config: STANDARD_CONFIG,
       plan: {
         generation: 5,
@@ -303,7 +309,10 @@ describe("useChartDataModel · dispatchResolve · contrato §3.4", () => {
   it("plan error con local estimado: blocked + notice quality (no se publica history-expansion-failed)", () => {
     const out = dispatchResolve({
       symbol: "AAPL",
-      localSource: { bars: ohlcBars(250), chartEstimated: true },
+      localSource: {
+        bars: ohlcBars(250),
+        quality: { status: "estimated", source: "estimado" },
+      },
       config: STANDARD_CONFIG,
       plan: {
         generation: 5,
@@ -377,7 +386,7 @@ describe("useChartDataModel · dispatchResolve · concurrencia y stale generatio
     };
     const out = dispatchResolve({
       symbol: "AAPL",
-      localSource: { bars: ohlcBars(250), chartEstimated: false },
+      localSource: { bars: ohlcBars(250) },
       config: STANDARD_CONFIG,
       plan,
     });
@@ -427,7 +436,7 @@ describe("useChartDataModel · dispatchResolve · concurrencia y stale generatio
     };
     const out = dispatchResolve({
       symbol: "AAPL",
-      localSource: { bars: ohlcBars(250), chartEstimated: false },
+      localSource: { bars: ohlcBars(250) },
       config: STANDARD_CONFIG,
       plan,
     });
@@ -489,10 +498,10 @@ describe("useChartDataModel · dispatchResolve · invariante rows→real", () =>
     // Combinaciones con local suficiente para que el outcome sea "ready":
     // 252 barras diarias cubren el rango 1A y son candle-grade.
     const locals = [
-      { bars: ohlcBars(252), chartEstimated: false },
-      { bars: ohlcBars(300), chartEstimated: false },
-      { bars: ohlcBars(50), chartEstimated: false },
-      { bars: [], chartEstimated: false },
+      { bars: ohlcBars(252) },
+      { bars: ohlcBars(300) },
+      { bars: ohlcBars(50) },
+      { bars: [] },
     ];
     for (const plan of plans) {
       for (const local of locals) {
@@ -531,7 +540,7 @@ describe("useChartDataModel · dispatchResolve · descarte inmediato en cambio d
     };
     const out = dispatchResolve({
       symbol: "NVDA",
-      localSource: { bars: [], chartEstimated: false },
+      localSource: { bars: [] },
       config: STANDARD_CONFIG,
       plan,
     });

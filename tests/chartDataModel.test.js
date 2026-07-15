@@ -351,14 +351,18 @@ describe("chartDataModel.resolve · matriz de resolución", () => {
     expect(result.rows).toEqual([]);
   });
 
-  it("local estimado (chartEstimated=true) nunca entrega rows, aunque sea candle-grade", () => {
+  it("local estimado (ChartQuality.status='estimated') nunca entrega rows, aunque sea candle-grade", () => {
     // compactChartBars borró el flag por barra: barsAreCandleGrade la ve
-    // como candle-grade, pero la prop chartEstimated=true delata que es
-    // estimada. El guard P0 fuerza [].
+    // como candle-grade, pero `localQuality.status="estimated"` delata que
+    // es estimada. El guard P0 fuerza []. ADR §3.2 + §9: el contrato del
+    // data model es `quality` canónico.
     const local = ohlcBars(300);
     const result = chartDataModel.resolve({
       symbol: "AAPL",
-      localSource: { bars: local, chartEstimated: true },
+      localSource: {
+        bars: local,
+        quality: { status: "estimated", source: "estimado", reason: "demo" },
+      },
       config: { dataRange: "1A", interval: "D", style: "1" },
     });
     expect(result.availability).toBe("blocked");
@@ -494,7 +498,10 @@ describe("chartDataModel.resolve · matriz de resolución", () => {
     const local = ohlcBars(100);
     const result = chartDataModel.resolve({
       symbol: "AAPL",
-      localSource: { bars: local, chartEstimated: true },
+      localSource: {
+        bars: local,
+        quality: { status: "estimated", source: "estimado" },
+      },
       config: { dataRange: "1A", interval: "D", style: "1" },
       request: { state: "error", error: { message: "timeout" } },
     });
@@ -584,7 +591,10 @@ describe("chartDataModel.resolve · matriz de resolución", () => {
     const local = ohlcBars(100);
     const loading = chartDataModel.resolve({
       symbol: "AAPL",
-      localSource: { bars: local, chartEstimated: true },
+      localSource: {
+        bars: local,
+        quality: { status: "estimated", source: "estimado" },
+      },
       config: { dataRange: "1A", interval: "D", style: "1" },
       request: { state: "loading" },
     });
@@ -593,7 +603,10 @@ describe("chartDataModel.resolve · matriz de resolución", () => {
 
     const settled = chartDataModel.resolve({
       symbol: "AAPL",
-      localSource: { bars: local, chartEstimated: true },
+      localSource: {
+        bars: local,
+        quality: { status: "estimated", source: "estimado" },
+      },
       config: { dataRange: "1A", interval: "D", style: "1" },
       request: { state: "settled", payload: remotePayload(ohlcBars(300)) },
     });
@@ -677,7 +690,10 @@ describe("chartDataModel.resolve · matriz de resolución", () => {
     const local = ohlcBars(300);
     const result = chartDataModel.resolve({
       symbol: "AAPL",
-      localSource: { bars: local, chartEstimated: true },
+      localSource: {
+        bars: local,
+        quality: { status: "estimated", source: "estimado" },
+      },
       config: { dataRange: "1A", interval: "D", style: "1" },
       request: { state: "loading" },
     });
@@ -701,7 +717,7 @@ describe("chartDataModel.resolve · matriz de resolución", () => {
 
     const empty3 = chartDataModel.resolve({
       symbol: "AAPL",
-      localSource: { bars: null, quality: null, chartEstimated: false },
+      localSource: { bars: null, quality: null },
       config: { dataRange: "1A", interval: "D", style: "1" },
       request: null,
     });
@@ -774,7 +790,14 @@ describe("chartDataModel · invariante rows.length>0 ⇒ quality.status real", (
       // Casos degenerados: rows SIEMPRE es [], la invariante se cumple trivialmente.
       {
         label: "local estimado",
-        input: { symbol: "AAPL", localSource: { bars: localEstimated, chartEstimated: true }, config: { dataRange: "1A", interval: "D", style: "1" } },
+        input: {
+          symbol: "AAPL",
+          localSource: {
+            bars: localEstimated,
+            quality: { status: "estimated", source: "estimado" },
+          },
+          config: { dataRange: "1A", interval: "D", style: "1" },
+        },
       },
       {
         label: "remote estimated con local real",

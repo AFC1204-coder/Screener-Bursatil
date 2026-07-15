@@ -1733,9 +1733,10 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   // predicados históricos (`freshness.priceEstimated`, `freshness.chartEstimated`,
   // `dataQuality.estimatedChart` y provider con patrón estimado) en
   // `chartQualityFromBrief`; esta pieza NO decide si el chart puede pintar
-  // barras (eso vive en el data model). La usamos para etiquetas de
-  // confianza y para el prop legacy `chartEstimated` que todavía vive en
-  // UniversalPriceChart, eliminado en el mismo PR del data model.
+  // barras (eso vive en el data model). La usamos tanto para las
+  // etiquetas de confianza en `N0VerdictBlock` como para el prop canónico
+  // `localQuality` que hoy recibe `UniversalPriceChart` (ADR §9, cierre de
+  // la migración).
   const localQuality = useMemo(
     () => chartQualityFromBrief({
       bars: data?.chartBars || [],
@@ -2207,7 +2208,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           benchmarkSymbol={rs.benchmarkSymbol}
           patternOverlay={showVcpDiagnostics ? setupPattern : actionableSetupPattern}
           showPatternDiagnostics={showVcpDiagnostics}
-          chartEstimated={chartEstimated}
+          localQuality={localQuality}
           height={600}
         />
       </section>

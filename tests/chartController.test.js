@@ -133,13 +133,13 @@ describe("UniversalPriceChartView · render estático de los 4 estados (ADR §9.
     expect(html).toContain("universalChart empty");
   });
 
-  it("estado 'blocked' (chartEstimated=true) renderiza el fallback vacío", () => {
+  it("estado 'blocked' (localQuality.status='estimated') renderiza el fallback vacío", () => {
     /* UPC ya importado */
     const html = renderToStaticMarkup(
       React.createElement(UniversalPriceChart, {
         symbol: "BLOCKED",
         bars: makeBars(),
-        chartEstimated: true,
+        localQuality: { status: "estimated", source: "estimado", reason: "demo" },
         settings: { range: "1A", interval: "D", style: "1" },
       })
     );
