@@ -310,6 +310,7 @@ async function finishRun(run, status, payload = {}) {
 
 export async function GET(request) {
   if (!authorized(request)) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  let phase = "cursor_read";
   const requestedOptions = optionsFromRequest(request);
   const fastDryRun = requestedOptions.dryRun && !requestedOptions.fullPlan;
   const dryRunOptions = fastDryRun
@@ -373,13 +374,22 @@ export async function GET(request) {
       },
     });
   }
+  phase = "provider_run_create";
   const run = await createRun(options);
   try {
-    const result = await runMaterializedScan(options);
+    phase = "universe_select";
+    const result = await runMaterializedScan({
+      ...options,
+      onPhase: (nextPhase) => {
+        phase = nextPhase;
+      },
+    });
     const savedScan = await writeMaterializedScan(result.scan);
+    phase = "cursor_write";
     const cursorWrite = options.useCursor && savedScan.saved
       ? await writeScanBatchCursor(nextCursorValue(cursor.value || {}, options, result, savedScan)).catch((error) => ({ saved: false, error: error.message }))
       : { skipped: true };
+    phase = "leaderboards_refresh";
     const leaderboards = options.refreshLeaderboards && savedScan.saved
       ? await refreshDefaultLeaderboards()
       : { skipped: true, saved: 0 };
@@ -426,8 +436,9 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    await finishRun(run, "failed", { error: error.message, stats: { markets: options.markets, limit: options.limit } });
-    return Response.json({ ok: false, error: error.message || "Materialized scan refresh failed" }, { status: 502 });
+    const message = error?.message || "Materialized scan refresh failed";
+    await finishRun(run, "failed", { error: message, stats: { markets: options.markets, limit: options.limit, phase } });
+    return Response.json({ ok: false, error: message, phase }, { status: 502 });
   }
 }
 
