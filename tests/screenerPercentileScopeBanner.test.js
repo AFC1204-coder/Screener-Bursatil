@@ -38,6 +38,7 @@ vi.mock("@/app/screenerPanels", () => ({
 vi.mock("@/app/components/screener/ReviewWidgets", () => ({
   ReviewPriorityResultRail: () => Stub({ marker: "ReviewPriorityResultRail" }),
 }));
+vi.mock("@/app/components/screener/CuratedDiscoveryPanel", () => ({ default: () => Stub({ marker: "CuratedDiscoveryPanel" }) }));
 vi.mock("@/app/components/screener/DecisionGroups", () => ({ default: () => Stub({ marker: "DecisionGroups" }) }));
 vi.mock("@/app/components/screener/ResultFilterBar", () => ({ default: () => Stub({ marker: "ResultFilterBar" }) }));
 vi.mock("@/app/components/screener/ResultPagerTable", () => ({ default: () => Stub({ marker: "ResultPagerTable" }) }));

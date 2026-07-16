@@ -9,6 +9,8 @@
 
 import { ReviewPriorityResultRail } from "@/app/components/screener/ReviewWidgets";
 import DecisionGroups from "@/app/components/screener/DecisionGroups";
+import CuratedDiscoveryPanel from "@/app/components/screener/CuratedDiscoveryPanel";
+import GlobalCoveragePanel from "@/app/components/screener/GlobalCoveragePanel";
 import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
 import ResultPagerTable from "@/app/components/screener/ResultPagerTable";
 import {
@@ -335,6 +337,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       <summary>Muestra parcial · percentil por lote</summary>
       <p>Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.</p>
     </details> : null}
+    <CuratedDiscoveryPanel />
 
     <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}`}>
       <button
@@ -477,6 +480,19 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           </summary>
           <FilterDiagnosticsPanel diagnostics={diagnostics} rowsCount={resultsRows.length} filteredCount={resultsFiltered.length} running={running} />
         </details>
+        </details>
+
+        {/* Cobertura internacional por mercado (solo lectura). Carga asíncrona
+            desde GET /api/coverage; no bloquea la primera pintura. Comunica que
+            los lotes son trabajo interno del escáner, no el universo completo,
+            y distingue inventario de elegibles para ranking. Sin acciones que
+            ejecuten scan/backfill. */}
+        <details className="disclosurePanel globalCoverageDisclosure">
+          <summary>
+            <span>Cobertura internacional por mercado</span>
+            <em>informativo</em>
+          </summary>
+          <GlobalCoveragePanel />
         </details>
       </aside>
 

@@ -32,6 +32,9 @@ function paramsFromRequest(request) {
     maxPriceFreshnessDays: searchParams.get("maxPriceFreshnessDays") || "",
     maxRows: searchParams.get("maxRows") || "",
     sinceDays: searchParams.get("sinceDays") || "",
+    // Variante interna de F-A2. Solo GET la expone: no cambia snapshots ni
+    // escrituras y nunca se activa por ausencia del parámetro.
+    curatedDiscovery: ["1", "true"].includes((searchParams.get("curatedDiscovery") || "").toLowerCase()),
     cache: searchParams.get("cache") !== "0",
   };
   for (const key of SCREENER_FILTER_QUERY_KEYS) {
@@ -124,7 +127,7 @@ export async function GET(request) {
     const hasScreenerFilterParams = SCREENER_FILTER_QUERY_KEYS.some((key) => params[key] !== undefined && params[key] !== "");
     const cacheSpec = DEFAULT_LEADERBOARD_SPECS.find((item) => item.key === params.key)
       || (!params.key ? DEFAULT_LEADERBOARD_SPECS.find((item) => item.strategy === params.strategy) : null);
-    const canUseMaterialized = params.cache && cacheSpec && !params.groupBy && !params.maxPriceFreshnessDays
+    const canUseMaterialized = params.cache && !params.curatedDiscovery && cacheSpec && !params.groupBy && !params.maxPriceFreshnessDays
       && !params.minCoverageScore && !params.minTotalScore && !params.minRs && !params.minMarketCap && !params.minAvgTurnover
       && !params.country && !params.sector && !params.industry && !params.theme && !params.scopeValue && !hasScreenerFilterParams;
     if (canUseMaterialized) {
@@ -146,7 +149,9 @@ export async function GET(request) {
     } catch (error) {
       if (!recoverableReadError(error)) throw error;
       const spec = DEFAULT_LEADERBOARD_SPECS.find((item) => item.key === params.key) || cacheSpec;
-      const cached = spec ? await readMaterializedLeaderboard(spec.key).catch(() => null) : null;
+      // Un snapshot normal conserva su orden normal: no puede sustituir la
+      // variante curada si la lectura de scan_results se degrada.
+      const cached = !params.curatedDiscovery && spec ? await readMaterializedLeaderboard(spec.key).catch(() => null) : null;
       if (cached) {
         return Response.json(apiPayload({
           configured: true,

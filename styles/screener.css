@@ -8486,3 +8486,397 @@ button.decisionOperatingIssue:hover {
 .screenerTerminalPage .resultsHeader .controls .btnPrimary:hover {
   background: var(--accent2);
 }
+
+/* ---------------------------------------------------------------------------
+   GlobalCoveragePanel — panel informativo de cobertura internacional por mercado.
+   Pizarra y Tiza: cobertura/fiabilidad usa --traza / --traza-dim (análisis).
+   Nunca --senal: ese ámbar está reservado a la decisión "Vigilar".
+   Panel de solo lectura: sin botones ni enlaces que ejecuten scan/backfill.
+   --------------------------------------------------------------------------- */
+.globalCoverageDisclosure {
+  margin-bottom: 20px;
+}
+
+.globalCoverageDisclosure > summary {
+  cursor: pointer;
+}
+
+/* Descubrimiento global curado (F-A3): señal de trazabilidad visible, no una
+   recomendación. Usa el mismo lenguaje --traza que el panel de cobertura y
+   nunca --senal, reservado para la acción "Vigilar". */
+.curatedDiscoveryPanel {
+  margin: 14px auto 0;
+  width: min(1400px, calc(100% - 32px));
+  padding: 14px 16px;
+  border: 1px solid var(--traza);
+  border-radius: var(--radius);
+  background: var(--traza-dim);
+  color: var(--text);
+}
+
+.curatedDiscoveryHeading,
+.curatedDiscoveryFacts,
+.curatedDiscoveryList {
+  margin: 0;
+}
+
+.curatedDiscoveryEyebrow {
+  display: block;
+  color: var(--traza);
+  font-size: 11px;
+  font-weight: 780;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.curatedDiscoveryPanel h2 {
+  margin: 3px 0 0;
+  color: var(--tiza);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.curatedDiscoveryDisclosure {
+  margin: 8px 0 12px;
+  color: var(--soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.curatedDiscoveryDisclosure b,
+.curatedDiscoveryScope b,
+.curatedDiscoveryEmpty b {
+  color: var(--traza);
+}
+
+.curatedDiscoveryFacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.curatedDiscoveryFacts > div {
+  min-width: 0;
+  padding: 7px 8px;
+  border-radius: var(--radius-s);
+  background: var(--pizarra-0);
+}
+
+.curatedDiscoveryFacts dt {
+  color: var(--soft);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.curatedDiscoveryFacts dd {
+  margin: 3px 0 0;
+  color: var(--tiza);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.curatedDiscoveryScope,
+.curatedDiscoveryStatus,
+.curatedDiscoveryEmpty p {
+  margin: 10px 0 0;
+  color: var(--soft);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.curatedDiscoveryList {
+  display: grid;
+  list-style: none;
+  padding: 0;
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+}
+
+.curatedDiscoveryItem {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.curatedDiscoveryItem:last-child { border-bottom: 0; }
+
+.curatedDiscoveryRank,
+.curatedDiscoveryItemScope {
+  color: var(--traza);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.curatedDiscoveryIdentity { min-width: 0; }
+.curatedDiscoveryIdentity b { color: var(--tiza); font-size: 13px; }
+.curatedDiscoveryIdentity small { color: var(--soft); font-size: 11px; }
+.curatedDiscoveryItemScope { white-space: nowrap; }
+
+@media (max-width: 680px) {
+  .curatedDiscoveryPanel { width: calc(100% - 20px); padding: 12px; }
+  .curatedDiscoveryFacts { grid-template-columns: 1fr; }
+  .curatedDiscoveryItem { grid-template-columns: 22px minmax(0, 1fr); }
+  .curatedDiscoveryItemScope { grid-column: 2; }
+}
+
+.globalCoveragePanel {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--traza);
+  border-radius: var(--radius);
+  background: var(--traza-dim);
+  color: var(--soft);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.globalCoverageLoading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--traza);
+  font-weight: 500;
+}
+
+.globalCoverageSpinner {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--traza);
+  animation: globalCoveragePulse 1s ease-in-out infinite;
+}
+
+@keyframes globalCoveragePulse {
+  0%, 100% { opacity: .35; }
+  50% { opacity: 1; }
+}
+
+.globalCoverageError,
+.globalCoverageEmpty {
+  display: block;
+}
+
+.globalCoverageError b,
+.globalCoverageEmpty b {
+  display: block;
+  color: var(--traza);
+  font-size: 11px;
+  font-weight: 820;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.globalCoverageError p,
+.globalCoverageEmpty p {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.globalCoverageErrorDetail {
+  margin-top: 6px !important;
+  color: var(--soft) !important;
+  font-size: 11px !important;
+  font-family: var(--font-mono, monospace);
+  word-break: break-word;
+}
+
+.globalCoverageMarketList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.globalCoverageMarket {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.globalCoverageMarket:last-child {
+  border-bottom: none;
+}
+
+.globalCoverageMarketHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.globalCoverageMarketCode {
+  color: var(--tiza);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .03em;
+}
+
+.globalCoverageMarketRegion {
+  color: var(--soft);
+  font-size: 11px;
+}
+
+.globalCoverageMarketGrade {
+  color: var(--traza);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.globalCoverageState {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--traza);
+  color: var(--traza);
+  background: rgba(147, 184, 206, .06);
+}
+
+/* Tono "operational": cobertura utilizable plena. */
+.globalCoverageState--operational {
+  border-color: var(--traza);
+  color: var(--traza);
+}
+
+/* Tonos "partial" / "gap" / "deferred": cobertura incompleta — nunca se
+   presentan como cobertura completa. Mismo --traza (análisis), con wash distinto
+   para diferenciar sin recurrir a --senal. */
+.globalCoverageState--partial {
+  border-color: var(--traza);
+  color: var(--soft);
+  background: rgba(147, 184, 206, .03);
+}
+
+.globalCoverageState--gap {
+  border-color: var(--traza);
+  color: var(--soft);
+  background: transparent;
+}
+
+.globalCoverageState--deferred {
+  border-style: dashed;
+  border-color: var(--traza);
+  color: var(--soft);
+  background: transparent;
+}
+
+.globalCoverageMetrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.globalCoverageMetric {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 6px;
+  border-radius: var(--radius-s);
+  background: var(--pizarra-0);
+}
+
+.globalCoverageMetricLabel {
+  color: var(--soft);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.globalCoverageMetricValue {
+  color: var(--tiza);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.globalCoverageMetricHint {
+  color: var(--soft);
+  font-size: 10px;
+}
+
+.globalCoverageMarketDetail {
+  margin: 6px 0 0;
+  color: var(--soft);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.globalCoverageLegend {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--line);
+  color: var(--traza);
+  font-size: 11px;
+}
+
+.globalCoverageLegend li {
+  position: relative;
+  padding-left: 14px;
+  margin-bottom: 3px;
+}
+
+.globalCoverageLegend li::before {
+  content: "·";
+  position: absolute;
+  left: 4px;
+  color: var(--traza);
+  font-weight: 700;
+}
+
+.globalCoverageBackfill {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--soft);
+}
+
+.globalCoverageBackfill b {
+  display: block;
+  color: var(--traza);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.globalCoverageBackfillList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.globalCoverageBackfillList li {
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.globalCoverageBackfillLabel {
+  color: var(--soft);
+}
+
+.globalCoverageBackfillPath {
+  color: var(--soft);
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  word-break: break-all;
+}
+
+@media (min-width: 640px) {
+  .globalCoverageMetrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
