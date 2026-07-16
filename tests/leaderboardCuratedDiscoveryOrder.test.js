@@ -101,6 +101,17 @@ describe("buildLeaderboard · Descubrimiento global curado (F-A2)", () => {
     expect(curated([alpha, beta]).items.map((item) => item.symbol)).toEqual(["ALPHA", "BETA"]);
   });
 
+  it("la variante curada excluye final, acepta batch y trata scope ausente como batch", () => {
+    const finalRow = row("FINAL", { percentileScope: "final" });
+    const batchRow = row("BATCH", { percentileScope: "batch" });
+    const unscoped = row("UNSCOPED");
+    delete unscoped.raw.percentileScope;
+
+    expect(curated([finalRow, batchRow, unscoped]).items.map((item) => item.symbol)).toEqual(["BATCH", "UNSCOPED"]);
+    expect(curated([finalRow]).items).toEqual([]);
+    expect(buildLeaderboard([finalRow, batchRow], { strategy: "momentum", limit: 25 }).items.map((item) => item.symbol)).toEqual(["FINAL", "BATCH"]);
+  });
+
   it("conserva freshness, cobertura, liquidez, estrategia y la exclusión de contradicción presente", () => {
     const pass = row("PASS");
     const stale = row("STALE", { lastDate: "2020-01-01" });
