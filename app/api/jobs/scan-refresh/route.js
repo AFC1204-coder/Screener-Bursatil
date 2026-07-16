@@ -391,7 +391,7 @@ export async function GET(request) {
       : { skipped: true };
     phase = "leaderboards_refresh";
     const leaderboards = options.refreshLeaderboards && savedScan.saved
-      ? await refreshDefaultLeaderboards()
+      ? await refreshDefaultLeaderboards({ sinceDays: 21, maxRows: 2000 })
       : { skipped: true, saved: 0 };
     const stats = {
       ...result.stats,

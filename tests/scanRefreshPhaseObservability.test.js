@@ -119,6 +119,19 @@ describe("GET /api/jobs/scan-refresh · observabilidad de fase", () => {
     expect(body.stats.savedRows).toBe(0);
   });
 
+  it("acota el refresco de leaderboards del scan materializado", async () => {
+    runMaterializedScan.mockImplementation(async (options) => {
+      options.onPhase("universe_select");
+      options.onPhase("materialized_scan");
+      return successfulScan();
+    });
+
+    const response = await GET(request("?symbols=AAA"));
+
+    expect(response.status).toBe(200);
+    expect(refreshDefaultLeaderboards).toHaveBeenCalledWith({ sinceDays: 21, maxRows: 2000 });
+  });
+
   it("un error recuperable de cursor no queda registrado como fallo terminal", async () => {
     readScanBatchCursor.mockRejectedValueOnce(new Error("cursor read timeout"));
     runMaterializedScan.mockImplementation(async (options) => {
