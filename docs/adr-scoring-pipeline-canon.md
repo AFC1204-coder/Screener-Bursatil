@@ -101,9 +101,13 @@ deben cruzarse con los resultados de Camino A antes de la fase 2.
    [dailyBarsCache.js:322-332](lib/dailyBarsCache.js:322), y `lib/yahoo.js`
    no las fabrica), así que el coste de generalizar es cero — pero dejar el
    guard solo en A significa que el invariante desaparece en silencio el día
-   que cambie la capa de fetch del cron. `chartEstimated: false` pasa a estar
-   en toda fila; conviene añadirlo al grupo `coverage` de
-   `RESEARCH_ROW_CORE_FIELDS` en el contrato.
+   que cambie la capa de fetch del cron. **`chartEstimated`** pasa a estar
+   en toda fila y forma parte del grupo `coverage` de
+   `RESEARCH_ROW_CORE_FIELDS`. El guardrail de Ruta C se ejecuta dentro de
+   `materializedScanner.buildResearchRow` mediante `assertDecisionGrade` antes
+   de calcular scores: una serie estimada se rechaza y nunca produce una fila
+   persistible. La unificación estructural definitiva del builder queda para
+   fase 2.
 2. **`ebitdaMargin` en cobertura fundamental**: se adopta la lista de A (13
    entradas). Efecto: `fundamentalCoverageScore` del cron sube ligeramente
    para valores con dato.
@@ -131,6 +135,13 @@ deben cruzarse con los resultados de Camino A antes de la fase 2.
    flag `requireLongHistory`; el umbral de 180 del cron sigue viviendo en
    `baseRejectReason` (política de selección, no ensamblado), igual que en el
    camino vivo vive en `qualityGateForResearchRow`.
+9. **Percentiles por lote en leaderboards**: el `sectorize` privado del cron
+   sigue calculando `sectorScore` y percentiles sobre lotes locales hasta la
+   fase 3. Mientras coexistan filas `percentileScope: "batch"` y `"final"`,
+   los leaderboards conservan ambas, exponen el scope, muestran una franja
+   discreta y expandible de muestra parcial y, solo en empates, priorizan la
+   fila final sin mutar score ni veredicto. Es un guardrail de fiabilidad, no
+   una señal de trading; no usa `--senal`.
 
 ## 5. Plan de migración (fases, cada una desplegable por separado)
 
