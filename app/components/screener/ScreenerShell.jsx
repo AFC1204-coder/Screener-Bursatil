@@ -290,6 +290,26 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   } = staleness || {};
   const scannedAtLabel = scannedAt ? new Date(scannedAt).toLocaleString() : "";
 
+  // --- franja P3 (percentil por lote) ---
+  // Comunicamos honestamente los percentiles batch estén en la lista visible o
+  // en la actualización pendiente. La lista visible tiene precedencia (no
+  // duplicamos franjas); si ambos conjuntos son "final", no hay nada que decir.
+  // Nota: `results` es un prop-bag; las filas están en `resultsRows`, nunca en
+  // `results` directo (no es un array). `pendingResults?.rows` puede traer
+  // percentiles batch antes de que la lista visible cambie.
+  const visibleBatchRows = resultsRows.some((row) => (row.percentileScope || "batch") === "batch");
+  const pendingRows = pendingResults?.rows ?? [];
+  const pendingBatchRows = pendingRows.some((row) => (row.percentileScope || "batch") === "batch");
+  // La franja de actualización pendiente sólo aparece si la lista visible NO
+  // tiene batch (precedencia visible, sin duplicados). Se sitúa junto a
+  // PendingResultsBar para que el contexto sea inequívoco.
+  const pendingScopeNoticeEl = (!visibleBatchRows && pendingBatchRows) ? (
+    <details className="percentileScopeNoticePending">
+      <summary>Actualización preparada · percentil por lote</summary>
+      <p>La actualización preparada contiene filas con percentiles calculados sobre un lote menor. La lista visible no cambia hasta pulsar “Mostrar”; esos percentiles pueden cambiar al finalizar el universo.</p>
+    </details>
+  ) : null;
+
   return <main className="page screenerTerminalPage">
     <div className="topbar screenerHeroBar">
       <div className="screenerHeroTitle">
@@ -311,6 +331,10 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       <span>{snapshotNotice.label}</span>
       <b>{snapshotNotice.detail}</b>
     </div> : null}
+    {visibleBatchRows ? <details className="percentileScopeNotice">
+      <summary>Muestra parcial · percentil por lote</summary>
+      <p>Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.</p>
+    </details> : null}
 
     <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}`}>
       <button
@@ -492,6 +516,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             </div>
           ) : null}
           <PendingResultsBar pending={pendingResults ? { ...pendingResults, filteredCount: pendingFilteredCount } : null} visibleCount={resultsRows.length} filteredCount={resultsFiltered.length} onCommit={commitPendingResults} />
+          {pendingScopeNoticeEl}
           <PendingDecisionWorkRail
             summary={pendingDecisionWorkSummary}
             active={pendingDecisionWorkActive}
@@ -565,6 +590,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             </div>
           ) : null}
           <PendingResultsBar pending={pendingResults ? { ...pendingResults, filteredCount: pendingFilteredCount } : null} visibleCount={resultsRows.length} filteredCount={resultsFiltered.length} onCommit={commitPendingResults} />
+          {pendingScopeNoticeEl}
           <div className="resultsHeader">
             <div className="resultsTitleBlock">
               <span>Results</span>
