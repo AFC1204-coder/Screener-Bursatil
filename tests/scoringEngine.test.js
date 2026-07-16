@@ -8,7 +8,7 @@
 // 19 señales del registry, más 6 perfiles específicos para scoreIpo (buckets
 // de edad) y 3 perfiles para computeComposite.
 
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { computeComposite, computeSignal, compositeLabel, SIGNAL_REGISTRY, COMPOSITE_WEIGHTS } from "@/lib/scoringEngine";
 import { scoreWeakness } from "@/lib/scoring";
 import {
@@ -22,6 +22,7 @@ import {
   scoreMinervini as snapMinervini,
   scoreMomentum as snapMomentum,
   scoreObjectiveSetupQuality as snapObjectiveSetup,
+  scorePatternContribution as snapPatternContribution,
   scorePatternQuality as snapPatternQuality,
   scoreRisk as snapRisk,
   scoreRiskReward as snapRiskReward,
@@ -573,9 +574,7 @@ describe("scoringEngine · patternContributionScore (fix input fantasma)", () =>
     expect(result.value).toBe(0);
   });
 
-  it("value NO cambia: >0 cuando methodologyPatternEvidenceBonus aporta bonus", () => {
-    // Fila "usable" con calidad alta → bonus positivo. Verificamos que el value
-    // refleja el compute() real (no inventamos lógica, solo confirmamos invariabilidad).
+  it("value fallback >0 cuando methodologyPatternEvidenceBonus aporta bonus", () => {
     const row = {
       patternEligible: true,
       patternDataStatus: "ok",
@@ -585,6 +584,191 @@ describe("scoringEngine · patternContributionScore (fix input fantasma)", () =>
     };
     const result = computeSignal(row, "patternContributionScore");
     expect(result.value).toBeGreaterThan(0);
+  });
+
+  it("respeta patternContribution=0 como override, sin caer al fallback", () => {
+    const row = {
+      patternContribution: 0,
+      patternEligible: true,
+      patternDataStatus: "ok",
+      patternQualityScore: 80,
+      contractionScore: 50,
+      vcpCandidate: true,
+    };
+    const result = computeSignal(row, "patternContributionScore");
+    expect(result.value).toBe(0);
+  });
+
+  it("respeta un override finito de patternContribution", () => {
+    const result = computeSignal({ patternContribution: 7 }, "patternContributionScore");
+    expect(result.value).toBe(7);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// patternContributionScore — override endurecido (Number.isFinite)
+// ---------------------------------------------------------------------------
+// Antes el guardia era `r.patternContribution !== undefined`, que admitía
+// null/NaN/Infinity/strings/booleans como override (bug: propagaba valores no
+// numéricos a los scores). El nuevo contrato: solo Number.isFinite(x) es un
+// override válido; todo lo demás cae al fallback metodológico canónico. Esto
+// aplica de forma consistente en patternContributionScore, patternScore y
+// setupQualityScore (los 3 usos de producción), y el espejo del golden snapshot
+// sigue la misma definición (paridad engine↔golden en cada caso).
+describe("scoringEngine · patternContributionScore · override endurecido (Number.isFinite)", () => {
+  // Fila con datos de patrón usables: methodologyPatternEvidenceBonus(r) > 0.
+  // Sirve para verificar que un override inválido cae AL FALLBACK (no a 0).
+  const rowConBonus = {
+    patternEligible: true,
+    patternDataStatus: "ok",
+    patternQualityScore: 80,
+    contractionScore: 50,
+    vcpCandidate: true,
+  };
+  const fallbackEsperado = snapPatternContribution({ ...rowConBonus });
+  const SIGNAL_CON_PARIDAD = ["patternContributionScore", "patternScore", "setupQualityScore"];
+
+  beforeAll(() => {
+    // Sanity: el fallback debe ser >0 para que los asserts "cae al fallback"
+    // sean informativos (si fuera 0 no distinguiríamos override inválido de 0).
+    expect(fallbackEsperado).toBeGreaterThan(0);
+  });
+
+  // ---- overrides VÁLIDOS ----
+  it("respeta patternContribution=0 como override válido (no cae al fallback)", () => {
+    const row = { ...rowConBonus, patternContribution: 0 };
+    const result = computeSignal(row, "patternContributionScore");
+    expect(result.value).toBe(0);
+    expect(result.value).not.toBe(fallbackEsperado);
+  });
+
+  it("respeta un override finito positivo", () => {
+    const row = { ...rowConBonus, patternContribution: 7 };
+    const result = computeSignal(row, "patternContributionScore");
+    expect(result.value).toBe(7);
+  });
+
+  it("respeta un override finito negativo (no se clamp-a-0 a nivel contribution)", () => {
+    // patternContributionScore.compute devuelve el override tal cual (sin clamp);
+    // el clamp ocurre aguas abajo (patternScore/setupQualityScore). Verificamos
+    // que el override se respeta literalmente cuando es finito.
+    const row = { ...rowConBonus, patternContribution: -3 };
+    const result = computeSignal(row, "patternContributionScore");
+    expect(result.value).toBe(-3);
+  });
+
+  // ---- overrides INVÁLIDOS → fallback metodológico ----
+  it("null NO es override válido → cae al fallback", () => {
+    const row = { ...rowConBonus, patternContribution: null };
+    const result = computeSignal(row, "patternContributionScore");
+    expect(result.value).toBe(fallbackEsperado);
+  });
+
+  it("undefined NO es override válido → cae al fallback", () => {
+    const row = { ...rowConBonus, patternContribution: undefined };
+    const result = computeSignal(row, "patternContributionScore");
+    expect(result.value).toBe(fallbackEsperado);
+  });
+
+  it("NaN NO es override válido → cae al fallback", () => {
+    const row = { ...rowConBonus, patternContribution: NaN };
+    const result = computeSignal(row, "patternContributionScore");
+    expect(result.value).toBe(fallbackEsperado);
+  });
+
+  it("Infinity NO es override válido → cae al fallback", () => {
+    const row = { ...rowConBonus, patternContribution: Infinity };
+    const result = computeSignal(row, "patternContributionScore");
+    expect(result.value).toBe(fallbackEsperado);
+  });
+
+  it("-Infinity NO es override válido → cae al fallback", () => {
+    const row = { ...rowConBonus, patternContribution: -Infinity };
+    const result = computeSignal(row, "patternContributionScore");
+    expect(result.value).toBe(fallbackEsperado);
+  });
+
+  it("string NO es override válido → cae al fallback", () => {
+    const row = { ...rowConBonus, patternContribution: "7" };
+    const result = computeSignal(row, "patternContributionScore");
+    expect(result.value).toBe(fallbackEsperado);
+  });
+
+  it("boolean NO es override válido → cae al fallback", () => {
+    const row = { ...rowConBonus, patternContribution: true };
+    const result = computeSignal(row, "patternContributionScore");
+    expect(result.value).toBe(fallbackEsperado);
+  });
+
+  // ---- invariante: value nunca es no-numérico/no-finito por esta vía ----
+  it("invariante: computeSignal(patternContributionScore).value siempre es finito", () => {
+    const casos = [undefined, null, NaN, Infinity, -Infinity, "7", true, false, 0, 7, -3, "", [], {}];
+    for (const patternContribution of casos) {
+      const result = computeSignal({ ...rowConBonus, patternContribution }, "patternContributionScore");
+      expect(Number.isFinite(result.value)).toBe(true);
+    }
+  });
+
+  // ---- paridad engine ↔ golden snapshot en cada caso relevante ----
+  // El espejo tests/_golden_snapshot_scoring.js#scorePatternContribution debe
+  // aplicar la MISMA definición de "override válido". Cualquier discrepancia
+  // es un bug (la referencia y el engine divergen).
+  describe("paridad engine ↔ golden snapshot (scorePatternContribution)", () => {
+    const casosParidad = [
+      ["override finito positivo", { ...rowConBonus, patternContribution: 7 }],
+      ["override cero", { ...rowConBonus, patternContribution: 0 }],
+      ["override finito negativo", { ...rowConBonus, patternContribution: -3 }],
+      ["null → fallback", { ...rowConBonus, patternContribution: null }],
+      ["undefined → fallback", { ...rowConBonus, patternContribution: undefined }],
+      ["NaN → fallback", { ...rowConBonus, patternContribution: NaN }],
+      ["Infinity → fallback", { ...rowConBonus, patternContribution: Infinity }],
+      ["string → fallback", { ...rowConBonus, patternContribution: "7" }],
+      ["sin override → fallback", { ...rowConBonus }],
+    ];
+
+    for (const [nombre, row] of casosParidad) {
+      it(`patternContributionScore: engine === golden (${nombre})`, () => {
+        const fromEngine = computeSignal(row, "patternContributionScore").value;
+        const fromSnap = snapPatternContribution(row);
+        expect(fromEngine).toBe(fromSnap);
+      });
+    }
+
+    // Paridad también para patternScore y setupQualityScore (los otros 2 usos
+    // de producción del override), al menos en override válido + fallback.
+    for (const signal of ["patternScore", "setupQualityScore"]) {
+      it(`${signal}: engine === golden con override finito válido`, () => {
+        const row = { ...rowConBonus, patternContribution: 5, patternQualityScore: 70, baseQualityScore: 60, contractionScore: 50, objectiveSetupScore: 60, failedBreakout: false };
+        const fromEngine = computeSignal(row, signal).value;
+        const fromSnap = signal === "patternScore" ? snapPatternQuality(row) : snapSetup(row);
+        expect(fromEngine).toBe(fromSnap);
+      });
+
+      it(`${signal}: engine === golden cuando override inválido cae al fallback`, () => {
+        const row = { ...rowConBonus, patternContribution: NaN, patternQualityScore: 70, baseQualityScore: 60, contractionScore: 50, objectiveSetupScore: 60, failedBreakout: false };
+        const fromEngine = computeSignal(row, signal).value;
+        const fromSnap = signal === "patternScore" ? snapPatternQuality(row) : snapSetup(row);
+        expect(fromEngine).toBe(fromSnap);
+      });
+    }
+  });
+
+  // ---- los 3 usos de producción respetan override=0 (regresión) ----
+  it("regresión: los 3 usos (patternContributionScore, patternScore, setupQualityScore) respetan override=0", () => {
+    const base = { ...rowConBonus, patternContribution: 0, patternQualityScore: 70, baseQualityScore: 60, contractionScore: 50, objectiveSetupScore: 60, failedBreakout: false };
+    // patternContributionScore → 0 literal (override válido).
+    expect(computeSignal(base, "patternContributionScore").value).toBe(0);
+    // patternScore → contribution=0 → la rama `if (!contribution) return 0`.
+    expect(computeSignal(base, "patternScore").value).toBe(0);
+    // setupQualityScore → contribution=0 → solo objectiveSetupScore (sin bonus).
+    expect(computeSignal(base, "setupQualityScore").value).toBe(60);
+  });
+
+  // Smoke: las SIGNAL_CON_PARIDAD existen en el registry (documentación).
+  it("las 3 señales con override existen en SIGNAL_REGISTRY", () => {
+    for (const key of SIGNAL_CON_PARIDAD) {
+      expect(SIGNAL_REGISTRY[key]).toBeDefined();
+    }
   });
 });
 

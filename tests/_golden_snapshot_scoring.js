@@ -159,7 +159,11 @@ export function scoreObjectiveSetupQuality(r) {
   return clamp(s);
 }
 export function scorePatternContribution(r) {
-  return r.patternContribution !== undefined
+  // Override endurecido: solo un número FINITO es un override válido. Esto
+  // respeta `0` y rechaza null/undefined/NaN/Infinity/strings/booleans, cayendo
+  // al fallback metodológico en cualquier otro caso. Debe coincidir con
+  // lib/scoringEngine.js#resolvePatternContribution (paridad engine↔golden).
+  return Number.isFinite(r.patternContribution)
     ? r.patternContribution
     : methodologyPatternEvidenceBonus(r);
 }
