@@ -107,6 +107,8 @@ Behavior:
 
 Leaderboards are product output, not a market-data feed. They read `scan_results`, de-duplicate symbols, apply minimum coverage/quality gates and expose only top candidates plus StatsEdge-derived metrics.
 
+Publication contract for cron-materialized rows: see `docs/adr-discovery-global-curated.md` (accepted 2026-07-16). Materialized scans become publishable as "Descubrimiento global curado" only — mandatory gates, declared strategy, ordering by absolute per-symbol signals (never `objectiveScore` nor batch `rsGlobalPct`), and explicit non-global-ranking disclosure. Global-comparable rankings/RS require a versioned canonical universe, never daily cursor batches.
+
 Examples:
 
 - `/api/leaderboards?type=momentum&country=HK&limit=25`
