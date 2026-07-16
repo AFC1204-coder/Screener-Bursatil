@@ -29,7 +29,7 @@ trazabilidad.
 1. `d577fa5` — `fix(scoring): harden pattern contribution override`.
 2. `d425d83` — `fix(scan): enforce decision-grade materialized rows`.
 3. `642774f` — `fix(leaderboards): disclose batch percentile scope`.
-4. `5150d83` — `test(audit): record scoring-pipeline coherence baseline`.
+4. `b9ba723` — `test(audit): record scoring-pipeline coherence baseline`.
 
 Los hashes anteriores son los del branch `codex/statsedge-ui-polish`
 al cierre de esta sesión.
