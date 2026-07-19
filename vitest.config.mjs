@@ -7,10 +7,10 @@ export default defineConfig({
     alias: { "@": fileURLToPath(new URL(".", import.meta.url)) },
   },
   test: {
-    // unit tests (.test.js) + integration tests against real Supabase (.test.mjs).
-    // Integration tests skip themselves when SUPABASE_URL is unset, so
-    // regular `npm test` runs stay green in CI.
+    // Ordinary Vitest is strictly unit/static: database integrations run only
+    // through their explicit scripts. Hito 1A uses node:test.
     include: ["tests/**/*.test.js", "tests/**/*.test.mjs"],
+    exclude: ["tests/integration/**/*.test.mjs"],
     environment: "node",
   },
 });
