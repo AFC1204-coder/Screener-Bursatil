@@ -10,7 +10,7 @@ export const EPHEMERAL_POSTGRES_CONFIRM_ENV = "STATSEDGE_EPHEMERAL_POSTGRES";
 export const EPHEMERAL_DATABASE_PREFIX = "statsedge_ephemeral_";
 export const EPHEMERAL_SUITE_TOKEN = "{suite}";
 
-// Required, physically separate databases for the Hito 1B-1 ephemeral suite.
+// Required, physically separate databases for the Hito 1B ephemeral suite.
 // This is an inventory only: the harness neither creates databases nor permits
 // one suite to borrow another suite's database.
 export const EPHEMERAL_DATABASE_INVENTORY = Object.freeze([
@@ -20,6 +20,7 @@ export const EPHEMERAL_DATABASE_INVENTORY = Object.freeze([
   "statsedge_ephemeral_scan_result_set_integrity",
   "statsedge_ephemeral_scan_result_set_concurrency",
   "statsedge_ephemeral_scan_execution_lifecycle",
+  "statsedge_ephemeral_scan_result_set_finalization_publication",
   "statsedge_ephemeral_schema_parity_migrations",
   "statsedge_ephemeral_schema_parity_bootstrap",
   "statsedge_ephemeral_schema_parity_base_catalog",
@@ -29,6 +30,8 @@ const FOUNDATION_MARKER_BEGIN = "-- STATS_EDGE_HITO_1A_FOUNDATION_BEGIN";
 const FOUNDATION_MARKER_END = "-- STATS_EDGE_HITO_1A_FOUNDATION_END";
 const EXECUTION_MARKER_BEGIN = "-- STATS_EDGE_HITO_1B_1_BEGIN";
 const EXECUTION_MARKER_END = "-- STATS_EDGE_HITO_1B_1_END";
+const FINALIZATION_MARKER_BEGIN = "-- STATS_EDGE_HITO_1B_2_BEGIN";
+const FINALIZATION_MARKER_END = "-- STATS_EDGE_HITO_1B_2_END";
 
 const HITO_TABLES = Object.freeze([
   "derived_snapshot_heads",
@@ -45,7 +48,7 @@ const PROJECTED_TABLES = Object.freeze(["scans", "scan_results", ...HITO_TABLES]
 // Bootstrap safety has two independent controls: a byte-exact reviewed source
 // plus a lexical inventory of executable references. The digest alone is not
 // evidence that comments/strings were classified correctly.
-const REVIEWED_BOOTSTRAP_SOURCE_DIGEST = "d7bdb7e58100609ad3793209669982d0f874c3397b5594a2b9662c250b66da6c";
+const REVIEWED_BOOTSTRAP_SOURCE_DIGEST = "8a9978cc8ec70de555e5546ace13f8c6217e021b85966d55ca0ced5dcdb9f8cf";
 const REVIEWED_FOUNDATION_BASE_SOURCE_DIGEST = "dcf499b681c3fabc8fdd42b2481494e98aa87c8711235b5e3fb40057fcab2a56";
 const REPAIRED_FOUNDATION_BASE_SOURCE_DIGEST = "31c96fc15b795abec6393c4c2a4549f5daf0f98a4ab16d827f245d4c049b7145";
 const PG_CRON_EXTENSION_SQL = "create extension if not exists pg_cron;";
@@ -783,6 +786,12 @@ function executionLifecycleMigrationSql() {
   return fs.readFileSync(migration, "utf8");
 }
 
+function finalizationMigrationSql() {
+  const migration = path.resolve(process.cwd(), "supabase/migrations/20260719100000_scan_result_set_finalize_publish.sql");
+  assert.ok(fs.existsSync(migration), `Missing Hito 1B-2 migration: ${migration}`);
+  return fs.readFileSync(migration, "utf8");
+}
+
 function baselineRepairMigrationSql() {
   const migration = path.resolve(process.cwd(), "supabase/migrations/20260717120000_upsert_scan_newer_wins_baseline_repair.sql");
   assert.ok(fs.existsSync(migration), `Missing append-only baseline repair migration: ${migration}`);
@@ -811,6 +820,16 @@ function markedExecutionProjectionSql() {
   assert.notEqual(end, -1, `Missing ${EXECUTION_MARKER_END} in bootstrap schema.`);
   assert.ok(end > start, "Hito 1B-1 end marker must follow its begin marker.");
   return `${schema.slice(start + EXECUTION_MARKER_BEGIN.length, end).trim()}\n`;
+}
+
+function markedFinalizationProjectionSql() {
+  const schema = fs.readFileSync(path.resolve(process.cwd(), "supabase/schema.sql"), "utf8");
+  const start = schema.indexOf(FINALIZATION_MARKER_BEGIN);
+  const end = schema.indexOf(FINALIZATION_MARKER_END);
+  assert.notEqual(start, -1, `Missing ${FINALIZATION_MARKER_BEGIN} in bootstrap schema.`);
+  assert.notEqual(end, -1, `Missing ${FINALIZATION_MARKER_END} in bootstrap schema.`);
+  assert.ok(end > start, "Hito 1B-2 end marker must follow its begin marker.");
+  return `${schema.slice(start + FINALIZATION_MARKER_BEGIN.length, end).trim()}\n`;
 }
 
 export function assertMarkedFoundationProjection() {
@@ -922,6 +941,7 @@ export function applyExecutionLifecycle(url) {
   applyFoundation(url);
   applySql(url, executionLifecycleMigrationSql(), "Hito 1B-1 execution lifecycle migration");
   applySql(url, baselineRepairMigrationSql(), "Hito 0 append-only baseline repair migration");
+  applySql(url, finalizationMigrationSql(), "Hito 1B-2 finalization/publication migration");
 }
 
 export function applyBootstrapProjection(url) {

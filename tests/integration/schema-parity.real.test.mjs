@@ -44,7 +44,7 @@ function assertFunctionParity(migrationCatalog, bootstrapCatalog) {
   }
 }
 
-test("real PostgreSQL: bootstrap schema and base-plus-migrations 1A/1B-1/Hito-0 catalogs are identical", () => {
+test("real PostgreSQL: bootstrap schema and base-plus-migrations 1A/1B-1/1B-2/Hito-0 catalogs are identical", () => {
   const migrationUrl = requireEphemeralPostgresUrl("schema-parity-migrations");
   const bootstrapUrl = requireEphemeralPostgresUrl("schema-parity-bootstrap");
   const baseUrl = requireEphemeralPostgresUrl("schema-parity-base-catalog");

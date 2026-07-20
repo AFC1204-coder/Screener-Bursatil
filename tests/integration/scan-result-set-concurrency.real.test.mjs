@@ -320,64 +320,9 @@ test("real PostgreSQL: two persistent writers race through takeover, register an
     await removeDelayTrigger(connectionA, "scan_result_sets", "zzz_writer_state_delay");
     assert.equal((await rpc(connectionB, "register_scan_work_item", `'${owner}','${scan}','${execution}','${resultSet}',2,1,'{"symbol":"CCC"}'::jsonb`)).idempotent, false, "Writer retry after a state race must revalidate staging and complete.");
 
-    // Both directions use actual concurrent direct writers. The trigger order
-    // forces first the pointer to win, then the state change to win.
-    await connectionA.query(`insert into public.scan_executions(id,owner_id,scan_id,expected_count) values('${pointerExecutionA}','${owner}','${scan}',1)`);
-    await connectionA.query(`insert into public.scan_result_sets(id,owner_id,scan_id,execution_id,expected_count,state) values('${pointerResultSetA}','${owner}','${scan}','${pointerExecutionA}',1,'sealed')`);
-    await connectionA.query(`update public.scan_executions set result_set_id='${pointerResultSetA}' where id='${pointerExecutionA}'`);
-    await installDelayTrigger(connectionA, "scan_result_sets", "aaa_pointer_state_delay", "update");
-    const stateThenPointer = observeWriter(connectionA.query(`update public.scan_result_sets set state='abandoned' where id='${pointerResultSetA}'`));
-    await wait(10);
-    const pointerSecond = observeWriter(connectionB.query(`update public.scans set published_result_set_id='${pointerResultSetA}' where id='${scan}'`));
-    const pointerStateAOutcomes = await Promise.all([
-      settleWithoutDeadlock(pointerSecond, "pointer after state lock"),
-      settleWithoutDeadlock(stateThenPointer, "state after pointer lock"),
-    ]);
-    const pointerStateAClassifications = pointerStateAOutcomes.map((outcome, index) => assertPointerStateOutcome(outcome, `Pointer/state order A operation ${index}`));
-    await removeDelayTrigger(connectionA, "scan_result_sets", "aaa_pointer_state_delay");
-    for (const [index, classification] of pointerStateAClassifications.entries()) {
-      if (!classification.retryable) continue;
-      const retry = await settleWithoutDeadlock(
-        index === 0
-          ? observeWriter(connectionB.query(`update public.scans set published_result_set_id='${pointerResultSetA}' where id='${scan}'`))
-          : observeWriter(connectionA.query(`update public.scan_result_sets set state='abandoned' where id='${pointerResultSetA}'`)),
-        `pointer/state order A retry ${index}`,
-      );
-      const retryClassification = assertPointerStateOutcome(retry, `Pointer/state order A retry ${index}`);
-      assert.equal(retryClassification.retryable, false, "A retry is permitted only for SE_RESULT_SET_BUSY and must not remain contended after release.");
-    }
-    assertPointerStateProjection(await pointerStateProjection(connectionA, pointerResultSetA), pointerResultSetA, "Pointer/state order A");
-
-    await connectionA.query(`insert into public.scan_executions(id,owner_id,scan_id,expected_count) values('${pointerExecutionB}','${owner}','${scan}',1)`);
-    await connectionA.query(`insert into public.scan_result_sets(id,owner_id,scan_id,execution_id,expected_count,state) values('${pointerResultSetB}','${owner}','${scan}','${pointerExecutionB}',1,'sealed')`);
-    await connectionA.query(`update public.scan_executions set result_set_id='${pointerResultSetB}' where id='${pointerExecutionB}'`);
-    await installDelayTrigger(connectionA, "scan_result_sets", "zzz_state_pointer_delay", "update");
-    const stateFirst = observeWriter(connectionA.query(`update public.scan_result_sets set state='staging' where id='${pointerResultSetB}'`));
-    await wait(10);
-    const pointerThenState = observeWriter(connectionB.query(`update public.scans set published_result_set_id='${pointerResultSetB}' where id='${scan}'`));
-    const pointerStateBOutcomes = await Promise.all([
-      settleWithoutDeadlock(stateFirst, "state before pointer lock"),
-      settleWithoutDeadlock(pointerThenState, "pointer after state lock"),
-    ]);
-    const pointerStateBClassifications = pointerStateBOutcomes.map((outcome, index) => assertPointerStateOutcome(outcome, `Pointer/state order B operation ${index}`));
-    await removeDelayTrigger(connectionA, "scan_result_sets", "zzz_state_pointer_delay");
-    for (const [index, classification] of pointerStateBClassifications.entries()) {
-      if (!classification.retryable) continue;
-      const retry = await settleWithoutDeadlock(
-        index === 0
-          ? observeWriter(connectionA.query(`update public.scan_result_sets set state='staging' where id='${pointerResultSetB}'`))
-          : observeWriter(connectionB.query(`update public.scans set published_result_set_id='${pointerResultSetB}' where id='${scan}'`)),
-        `pointer/state order B retry ${index}`,
-      );
-      const retryClassification = assertPointerStateOutcome(retry, `Pointer/state order B retry ${index}`);
-      assert.equal(retryClassification.retryable, false, "A retry is permitted only for SE_RESULT_SET_BUSY and must not remain contended after release.");
-    }
-    assertPointerStateProjection(await pointerStateProjection(connectionA, pointerResultSetB), pointerResultSetB, "Pointer/state order B");
-    assert.equal(
-      Number((await connectionA.query(`select count(*) from public.scans s join public.scan_result_sets rs on rs.id=s.published_result_set_id where rs.state in ('staging','abandoned')`)).stdout),
-      0,
-      "Neither ordering may commit a published pointer to staging or abandoned.",
-    );
+    // Direct synthetic pointer/state races are intentionally retired. 1B-2
+    // permits publication only through finalize_scan_execution, and its real
+    // pointer/race matrix is exercised in the finalization suite.
   } finally {
     connectionA.close();
     connectionB.close();

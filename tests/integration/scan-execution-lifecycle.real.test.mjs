@@ -185,20 +185,14 @@ test("real PostgreSQL: Hito 1B-1 races use two persistent sessions and leave one
       /SE_INVALID_PUBLISHED_POINTER/,
     );
 
-    await connectionB.query("begin");
-    await connectionB.query(`insert into public.scan_executions(id,owner_id,scan_id,expected_count,checkpoint) values('${previousExecution}','${owner}','${scan}',1,'{"cursor":0}'::jsonb)`);
-    await connectionB.query(`insert into public.scan_result_sets(id,owner_id,scan_id,execution_id,expected_count,state) values('${previousResultSet}','${owner}','${scan}','${previousExecution}',1,'sealed')`);
-    await connectionB.query(`update public.scan_executions set result_set_id='${previousResultSet}' where id='${previousExecution}'`);
-    await connectionB.query(`update public.scans set published_result_set_id='${previousResultSet}' where id='${scan}'`);
-    await connectionB.query("commit");
-
-    // The inverse barrier makes the pointer invariant permanent, including
-    // both transitions that would make a published artifact non-sealed.
-    const pointerSnapshot = await integritySnapshot(connectionA);
-    await assert.rejects(() => connectionA.query(`update public.scan_result_sets set state='staging' where id='${previousResultSet}'`), /SE_PUBLISHED_RESULT_SET_STATE_LOCKED/);
-    assert.deepEqual(await integritySnapshot(connectionA), pointerSnapshot);
-    await assert.rejects(() => connectionA.query(`update public.scan_result_sets set state='abandoned' where id='${previousResultSet}'`), /SE_PUBLISHED_RESULT_SET_STATE_LOCKED/);
-    assert.deepEqual(await integritySnapshot(connectionA), pointerSnapshot);
+    // Hito 1B-2 rejects synthetic sealed artifacts: only finalize may create
+    // a publishable set. The dedicated finalization suite establishes valid
+    // old-pointer cycles before asserting their immutability.
+    await expectRejectedWithoutMutation(
+      connectionB,
+      () => connectionB.query(`update public.scans set published_result_set_id='${previousResultSet}' where id='${scan}'`),
+      /SE_INVALID_PUBLISHED_POINTER/,
+    );
 
     await connectionA.query(`create function public.hito_1b_zero_update() returns trigger language plpgsql as $$ begin return null; end $$`);
     await connectionA.query(`create trigger hito_1b_zero_update_trg before update on public.scan_result_sets for each row execute function public.hito_1b_zero_update()`);
@@ -213,7 +207,7 @@ test("real PostgreSQL: Hito 1B-1 races use two persistent sessions and leave one
     await rpc(connectionB, "abandon_scan_execution", `'${owner}','${scan}','${execution}','${resultSet}',2,'{"reason":"operator"}'::jsonb`);
     assert.deepEqual(
       JSON.parse((await connectionA.query(`select jsonb_build_object('scan', jsonb_build_object('active_execution_id', s.active_execution_id, 'active_result_set_id', s.active_result_set_id, 'published_result_set_id', s.published_result_set_id, 'lease_epoch', s.lease_epoch), 'execution', jsonb_build_object('state', e.state, 'lease_epoch', e.lease_epoch, 'registered_count', e.registered_count, 'persisted_count', e.persisted_count, 'failed_count', e.failed_count), 'result_set', jsonb_build_object('state', rs.state, 'ledger_count', rs.ledger_count, 'row_count', rs.row_count), 'ledger_count', (select count(*) from public.scan_work_items where result_set_id='${resultSet}'), 'result_row_count', (select count(*) from public.scan_result_set_rows where result_set_id='${resultSet}'), 'legacy_result_row_count', (select count(*) from public.scan_results where scan_id='${scan}'))::text from public.scans s join public.scan_executions e on e.id='${execution}' join public.scan_result_sets rs on rs.id='${resultSet}' where s.id='${scan}'`)).stdout),
-      { scan: { active_execution_id: null, active_result_set_id: null, published_result_set_id: previousResultSet, lease_epoch: 2 }, execution: { state: "abandoned", lease_epoch: 2, registered_count: 2, persisted_count: 1, failed_count: 1 }, result_set: { state: "abandoned", ledger_count: 2, row_count: 0 }, ledger_count: 2, result_row_count: 1, legacy_result_row_count: 0 },
+      { scan: { active_execution_id: null, active_result_set_id: null, published_result_set_id: null, lease_epoch: 2 }, execution: { state: "abandoned", lease_epoch: 2, registered_count: 2, persisted_count: 1, failed_count: 1 }, result_set: { state: "abandoned", ledger_count: 2, row_count: 0 }, ledger_count: 2, result_row_count: 1, legacy_result_row_count: 0 },
     );
 
     const acl = JSON.parse((await connectionA.query(`

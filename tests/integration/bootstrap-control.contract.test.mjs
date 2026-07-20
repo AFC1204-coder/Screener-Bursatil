@@ -122,9 +122,9 @@ test("declared bootstrap digest is the exact SHA-256 of the current schema bytes
   assert.equal(assertCurrentBootstrapSourceDigest(), createHash("sha256").update(source).digest("hex"));
 });
 
-test("ephemeral harness inventory declares exactly nine isolated databases", () => {
-  assert.equal(EPHEMERAL_DATABASE_INVENTORY.length, 9);
-  assert.equal(new Set(EPHEMERAL_DATABASE_INVENTORY).size, 9);
+test("ephemeral harness inventory declares exactly ten isolated databases", () => {
+  assert.equal(EPHEMERAL_DATABASE_INVENTORY.length, 10);
+  assert.equal(new Set(EPHEMERAL_DATABASE_INVENTORY).size, 10);
 });
 
 test("controlled bootstrap preserves the current complete SQL bytes except its single inventoried pg_cron replacement", () => {

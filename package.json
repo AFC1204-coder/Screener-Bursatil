@@ -6,7 +6,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "test": "vitest run",
-    "test:integration:ephemeral": "node --test tests/integration/bootstrap-control.contract.test.mjs tests/integration/ephemeral-roles.real.test.mjs tests/integration/scan-result-set-integrity.real.test.mjs tests/integration/scan-result-set-concurrency.real.test.mjs tests/integration/scan-execution-lifecycle.real.test.mjs tests/integration/schema-parity.real.test.mjs",
+    "test:integration:ephemeral": "node --test tests/integration/bootstrap-control.contract.test.mjs tests/integration/ephemeral-roles.real.test.mjs tests/integration/scan-result-set-integrity.real.test.mjs tests/integration/scan-result-set-concurrency.real.test.mjs tests/integration/scan-execution-lifecycle.real.test.mjs tests/integration/scan-result-set-finalization-publication.real.test.mjs tests/integration/schema-parity.real.test.mjs",
     "test:integration:legacy": "vitest run tests/integration/check-daily-bars-cap.real.test.mjs tests/integration/check-scan-finalize.real.test.mjs tests/integration/check-signal-contradictions.real.test.mjs tests/integration/coverage-scan-summary.real.test.mjs tests/integration/diagnose-isolation.test.mjs tests/integration/scan-coverage-breakdown.real.test.mjs",
     "test:patterns": "node --loader ./scripts/loader.mjs scripts/pattern-detector-regression.mjs",
     "test:filters": "node --loader ./scripts/loader.mjs scripts/filter-regression-test.mjs && FILTER_CONTRACT_MARKDOWN=0 FILTER_CONTRACT_QUIET=1 node --loader ./scripts/loader.mjs scripts/filter-contract-audit.mjs && FILTER_LAYER_CONTRACT_MARKDOWN=0 FILTER_LAYER_CONTRACT_QUIET=1 node --loader ./scripts/loader.mjs scripts/filter-layer-contract-audit.mjs",
