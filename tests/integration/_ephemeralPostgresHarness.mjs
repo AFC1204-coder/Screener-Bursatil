@@ -24,6 +24,7 @@ export const EPHEMERAL_DATABASE_INVENTORY = Object.freeze([
   "statsedge_ephemeral_schema_parity_migrations",
   "statsedge_ephemeral_schema_parity_bootstrap",
   "statsedge_ephemeral_schema_parity_base_catalog",
+  "statsedge_ephemeral_scan_result_set_published_read",
 ]);
 
 const FOUNDATION_MARKER_BEGIN = "-- STATS_EDGE_HITO_1A_FOUNDATION_BEGIN";
@@ -48,7 +49,7 @@ const PROJECTED_TABLES = Object.freeze(["scans", "scan_results", ...HITO_TABLES]
 // Bootstrap safety has two independent controls: a byte-exact reviewed source
 // plus a lexical inventory of executable references. The digest alone is not
 // evidence that comments/strings were classified correctly.
-const REVIEWED_BOOTSTRAP_SOURCE_DIGEST = "8a9978cc8ec70de555e5546ace13f8c6217e021b85966d55ca0ced5dcdb9f8cf";
+const REVIEWED_BOOTSTRAP_SOURCE_DIGEST = "f93822e948491c302da32ecb634ddacd6f091c13804f9a64ba3be0f228cde76c";
 const REVIEWED_FOUNDATION_BASE_SOURCE_DIGEST = "dcf499b681c3fabc8fdd42b2481494e98aa87c8711235b5e3fb40057fcab2a56";
 const REPAIRED_FOUNDATION_BASE_SOURCE_DIGEST = "31c96fc15b795abec6393c4c2a4549f5daf0f98a4ab16d827f245d4c049b7145";
 const PG_CRON_EXTENSION_SQL = "create extension if not exists pg_cron;";
@@ -792,6 +793,12 @@ function finalizationMigrationSql() {
   return fs.readFileSync(migration, "utf8");
 }
 
+function publishedResultReadMigrationSql() {
+  const migration = path.resolve(process.cwd(), "supabase/migrations/20260720100000_published_scan_result_read.sql");
+  assert.ok(fs.existsSync(migration), `Missing Hito 1B-3 migration: ${migration}`);
+  return fs.readFileSync(migration, "utf8");
+}
+
 function baselineRepairMigrationSql() {
   const migration = path.resolve(process.cwd(), "supabase/migrations/20260717120000_upsert_scan_newer_wins_baseline_repair.sql");
   assert.ok(fs.existsSync(migration), `Missing append-only baseline repair migration: ${migration}`);
@@ -942,6 +949,7 @@ export function applyExecutionLifecycle(url) {
   applySql(url, executionLifecycleMigrationSql(), "Hito 1B-1 execution lifecycle migration");
   applySql(url, baselineRepairMigrationSql(), "Hito 0 append-only baseline repair migration");
   applySql(url, finalizationMigrationSql(), "Hito 1B-2 finalization/publication migration");
+  applySql(url, publishedResultReadMigrationSql(), "Hito 1B-3 published result reader migration");
 }
 
 export function applyBootstrapProjection(url) {
