@@ -385,14 +385,106 @@ export function psql(url, sql) {
 
 // Explicit persistent sessions for lease-race tests. They never share a
 // connection and do not fall back to one-shot calls or mocks.
+//
+// Each command is wrapped in a unique begin/end marker pair. psql serializes
+// commands on its stdin, so markers always arrive in stdout strictly in the
+// order they were written. The harness must preserve that order: an earlier
+// in-flight query may still be running (e.g. blocked on a lease lock) when a
+// later query's markers land in stdout. The previous implementation truncated a
+// shared mutable buffer the moment any query resolved, which could delete the
+// pending marker range of another in-flight query and silently merge their
+// outputs or drop a result. The buffer is now append-only and drained by a
+// single ordered consumer that hands each marker range to its owning query.
 export function createPersistentPsqlSession(child, label, { pollIntervalMs = 5, timeoutMs = 30_000 } = {}) {
   let sequence = 0;
   let buffer = "";
   let errors = "";
+  // Pending queries in submission order. Only the head may be settled, which
+  // guarantees marker ranges are consumed strictly in stdout order and that no
+  // resolving query can advance the buffer past a still-running predecessor.
+  const pending = [];
+  let pollTimer = null;
   child.stdout.setEncoding("utf8");
   child.stderr.setEncoding("utf8");
-  child.stdout.on("data", (chunk) => { buffer += chunk; });
+  child.stdout.on("data", (chunk) => { buffer += chunk; scheduleDrain(); });
   child.stderr.on("data", (chunk) => { errors += chunk; });
+  const envelope = (marker, session) => ({ stdout = "", stderr = "", exitCode = child.exitCode, error = false, sqlstate = null }) => ({
+    stdout,
+    stderr,
+    exitCode,
+    marker,
+    session,
+    error,
+    sqlstate,
+  });
+  const settleHead = (entry, result, cause) => {
+    if (entry.settled) return;
+    entry.settled = true;
+    clearTimeout(entry.timeout);
+    if (result.error) {
+      const error = postgresIntegrationError({
+        label: "Persistent PostgreSQL command failed",
+        sql: entry.sql,
+        sqlstate: result.sqlstate === "00000" ? null : result.sqlstate,
+        exitCode: result.exitCode,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        cause,
+      });
+      error.envelope = result;
+      entry.reject(error);
+    } else {
+      entry.resolve(result);
+    }
+    pending.shift();
+    scheduleDrain();
+  };
+  const drain = () => {
+    pollTimer = null;
+    while (pending.length) {
+      const entry = pending[0];
+      if (entry.settled) { pending.shift(); continue; }
+      if (!entry.foundStart) {
+        const startMatch = new RegExp(`${entry.startMarker}\\r?\\n`, "u").exec(buffer);
+        if (!startMatch) break;
+        entry.outputStart = startMatch.index + startMatch[0].length;
+        entry.foundStart = true;
+      }
+      const tail = buffer.slice(entry.outputStart);
+      const endMatch = new RegExp(`${entry.endMarker}\\s+(true|false)\\s+([^\\s]+)`, "u").exec(tail);
+      if (!endMatch) {
+        // psql has exited or errored without emitting this command's end
+        // marker: surface the buffered output as a terminal failure instead of
+        // waiting out the whole timeout, so the test reports the real cause.
+        if (child.exitCode !== null) {
+          settleHead(entry, envelope(entry.marker, entry.session)({ stdout: buffer, stderr: errors.slice(entry.errorStart), error: true }));
+        }
+        break;
+      }
+      const endIndex = entry.outputStart + endMatch.index;
+      const output = buffer.slice(entry.outputStart, endIndex).trim();
+      buffer = buffer.slice(endIndex + endMatch[0].length).replace(/^\r?\n/u, "");
+      // Reset every pending query's output cursor, since each of them searches
+      // for its own unique marker from the (now advanced) buffer head; the
+      // head's range has been fully consumed and removed.
+      for (const other of pending) {
+        other.foundStart = false;
+        other.outputStart = 0;
+      }
+      const stderr = errors.slice(entry.errorStart).trim();
+      const result = envelope(entry.marker, entry.session)({
+        stdout: output,
+        stderr,
+        error: endMatch[1] === "true" || endMatch[2] !== "00000" || Boolean(stderr),
+        sqlstate: endMatch[2],
+      });
+      settleHead(entry, result);
+    }
+  };
+  const scheduleDrain = () => {
+    if (pollTimer || !pending.length) return;
+    pollTimer = setTimeout(drain, pollIntervalMs);
+  };
   return {
     async query(sql) {
       const marker = `__STATSEDGE_${label}_${sequence += 1}__`;
@@ -400,76 +492,30 @@ export function createPersistentPsqlSession(child, label, { pollIntervalMs = 5, 
       const endMarker = `${marker}_END`;
       const errorStart = errors.length;
       const session = { label, sequence };
-      const envelope = ({ stdout = "", stderr = "", exitCode = child.exitCode, error = false, sqlstate = null }) => ({
-        stdout,
-        stderr,
-        exitCode,
-        marker,
-        session,
-        error,
-        sqlstate,
+      const entry = {
+        sql, marker, startMarker, endMarker, errorStart, session,
+        foundStart: false, outputStart: 0, settled: false,
+        resolve: null, reject: null, timeout: null,
+      };
+      const promise = new Promise((resolve, reject) => {
+        entry.resolve = resolve;
+        entry.reject = reject;
       });
-      return new Promise((resolve, reject) => {
-        let settled = false;
-        let interval = null;
-        let timeout = null;
-        const settle = (callback, value) => {
-          if (settled) return;
-          settled = true;
-          if (interval) clearInterval(interval);
-          if (timeout) clearTimeout(timeout);
-          callback(value);
-        };
-        const rejectEnvelope = (result, cause) => {
-          const error = postgresIntegrationError({
-            label: "Persistent PostgreSQL command failed",
-            sql,
-            sqlstate: result.sqlstate === "00000" ? null : result.sqlstate,
-            exitCode: result.exitCode,
-            stdout: result.stdout,
-            stderr: result.stderr,
-            cause,
-          });
-          error.envelope = result;
-          settle(reject, error);
-        };
-        const timer = setInterval(() => {
-          const startMatch = new RegExp(`${startMarker}\\r?\\n`, "u").exec(buffer);
-          if (startMatch) {
-            const outputStart = startMatch.index + startMatch[0].length;
-            const endMatch = new RegExp(`${endMarker}\\s+(true|false)\\s+([^\\s]+)`, "u").exec(buffer.slice(outputStart));
-            if (endMatch) {
-              const endIndex = outputStart + endMatch.index;
-              const output = buffer.slice(outputStart, endIndex).trim();
-              buffer = buffer.slice(endIndex + endMatch[0].length).replace(/^\r?\n/u, "");
-              const stderr = errors.slice(errorStart).trim();
-              const result = envelope({
-                stdout: output,
-                stderr,
-                error: endMatch[1] === "true" || endMatch[2] !== "00000" || Boolean(stderr),
-                sqlstate: endMatch[2],
-              });
-              if (result.error) rejectEnvelope(result);
-              else settle(resolve, result);
-            }
-          }
-          if (child.exitCode !== null) {
-            const result = envelope({ stdout: buffer, stderr: errors.slice(errorStart), error: true });
-            rejectEnvelope(result);
-          }
-        }, pollIntervalMs);
-        interval = timer;
-        timeout = setTimeout(() => {
-          const result = envelope({ stdout: buffer, stderr: errors.slice(errorStart), error: true });
-          rejectEnvelope(result);
-        }, timeoutMs);
-        try {
-          child.stdin.write(`\\echo ${startMarker}\n${sql};\n\\echo ${endMarker} :ERROR :SQLSTATE\n`);
-        } catch (cause) {
-          const result = envelope({ stdout: buffer, stderr: `${errors.slice(errorStart)}${cause?.message ? `\n${cause.message}` : ""}`.trim(), error: true });
-          rejectEnvelope(result, cause);
-        }
-      });
+      entry.timeout = setTimeout(() => {
+        settleHead(entry, envelope(marker, session)({ stdout: buffer, stderr: errors.slice(errorStart), error: true }));
+      }, timeoutMs);
+      pending.push(entry);
+      try {
+        child.stdin.write(`\\echo ${startMarker}\n${sql};\n\\echo ${endMarker} :ERROR :SQLSTATE\n`);
+      } catch (cause) {
+        settleHead(entry, envelope(marker, session)({
+          stdout: buffer,
+          stderr: `${errors.slice(errorStart)}${cause?.message ? `\n${cause.message}` : ""}`.trim(),
+          error: true,
+        }), cause);
+      }
+      scheduleDrain();
+      return promise;
     },
     close() { child.stdin.end("\\q\n"); },
   };
