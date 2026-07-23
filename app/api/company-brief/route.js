@@ -676,17 +676,38 @@ function mergeLongAndRecentBars(longBars = [], recentBars = []) {
   for (const bar of recent) byDate.set(bar.date, bar);
   return [...byDate.values()].sort((a, b) => dateTime(b.date) - dateTime(a.date));
 }
-function mergeChartHistory(longChart = {}, recentChart = {}) {
+export function mergeChartHistory(longChart = {}, recentChart = {}) {
   const bars = mergeLongAndRecentBars(longChart.bars || [], recentChart.bars || []);
+  const longMeta = longChart.meta || {};
+  const recentMeta = recentChart.meta || {};
+  const longDataQuality = longChart.dataQuality;
+  const recentDataQuality = recentChart.dataQuality;
+  // El veredicto "estimated" es una unión lógica (OR) entre las dos fuentes.
+  // recentChart (ventana reciente) es la mas propensa a caer en fallback
+  // sintetico por presupuesto agotado o caida del proveedor, y antes su flag
+  // estimated se perdia al heredar solo de longChart.meta: el resultado
+  // quedaba con barras reales antiguas + barras fabricadas recientes
+  // marcadas como decision-grade. Se revisan ambos portadores (meta.estimated
+  // y dataQuality.estimated) en cada fuente, que es justo lo que aguas abajo
+  // (chartEstimated) inspecciona.
+  const estimated =
+    Boolean(longMeta.estimated) ||
+    Boolean(recentMeta.estimated) ||
+    Boolean(longDataQuality?.estimated) ||
+    Boolean(recentDataQuality?.estimated);
+  const dataQuality = { ...(longDataQuality || {}), ...(recentDataQuality || {}) };
+  if (estimated) dataQuality.estimated = true;
   return {
     ...longChart,
     bars,
     meta: {
-      ...(longChart.meta || {}),
-      dataProvider: longChart.meta?.dataProvider || recentChart.meta?.dataProvider,
-      recentRange: recentChart.meta?.requestedRange || "",
-      recentInterval: recentChart.meta?.requestedInterval || "",
+      ...longMeta,
+      dataProvider: longMeta.dataProvider || recentMeta.dataProvider,
+      recentRange: recentMeta.requestedRange || "",
+      recentInterval: recentMeta.requestedInterval || "",
+      estimated,
     },
+    ...(longDataQuality || recentDataQuality ? { dataQuality } : {}),
   };
 }
 
