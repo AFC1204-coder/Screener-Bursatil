@@ -54,13 +54,13 @@ function metricText(row = {}, key = "") {
   return cleanText(row[key] || row.metrics?.[key] || row.raw?.[key] || "");
 }
 
-function priceFreshness(row = {}, maxDays = DEFAULT_MAX_PRICE_FRESHNESS_DAYS) {
+function priceFreshness(row = {}, maxDays = DEFAULT_MAX_PRICE_FRESHNESS_DAYS, nowMs = Date.now()) {
   const stored = metric(row, "priceFreshnessDays");
   if (Number.isFinite(stored)) return { days: stored, ok: stored <= maxDays };
   const lastDate = metricText(row, "lastDate");
   const timestamp = Date.parse(lastDate);
   if (!Number.isFinite(timestamp)) return { days: null, ok: false };
-  const days = Math.max(0, Math.floor((Date.now() - timestamp) / 86400000));
+  const days = Math.max(0, Math.floor((nowMs - timestamp) / 86400000));
   return { days, ok: days <= maxDays };
 }
 
@@ -76,8 +76,8 @@ function priceFreshness(row = {}, maxDays = DEFAULT_MAX_PRICE_FRESHNESS_DAYS) {
 // en lib/coveragePlan.js para /api/coverage.
 // ---------------------------------------------------------------------------
 
-export function rowShape(item = {}, maxPriceFreshnessDays = DEFAULT_MAX_PRICE_FRESHNESS_DAYS, minCoverage = DEFAULT_MIN_COVERAGE) {
-  const freshness = priceFreshness(item, maxPriceFreshnessDays);
+export function rowShape(item = {}, maxPriceFreshnessDays = DEFAULT_MAX_PRICE_FRESHNESS_DAYS, minCoverage = DEFAULT_MIN_COVERAGE, nowMs = Date.now()) {
+  const freshness = priceFreshness(item, maxPriceFreshnessDays, nowMs);
   const coverage = metric(item, "dataCoverageScore");
   const totalScore = firstFinite(item.raw?.totalScore, item.metrics?.totalScore, item.total_score);
   const objectiveScore = firstFinite(item.raw?.objectiveScore, item.metrics?.objectiveScore, totalScore);
@@ -235,7 +235,7 @@ function sanitizeRunStats(stats = {}) {
 // Postgres. El test real compara esta salida contra scan_coverage_breakdown para
 // el mismo dataset. Shape identica a la del payload RPC (jsonb_build_object).
 export function summarizeScanCoverageBreakdown(rows = [], { maxPriceFreshnessDays = DEFAULT_MAX_PRICE_FRESHNESS_DAYS, minCoverageScore = DEFAULT_MIN_COVERAGE, includeTop = false, nowMs = Date.now() } = {}) {
-  const shaped = latestBySymbol((rows || []).map((row) => rowShape(row, maxPriceFreshnessDays, minCoverageScore)));
+  const shaped = latestBySymbol((rows || []).map((row) => rowShape(row, maxPriceFreshnessDays, minCoverageScore, nowMs)));
   const fresh = shaped.filter((row) => row.priceFresh).length;
   const qualityOk = shaped.filter((row) => row.qualityOk).length;
   const rankingEligible = shaped.filter((row) => row.rankingEligible).length;
