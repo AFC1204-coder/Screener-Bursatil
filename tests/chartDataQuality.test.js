@@ -10,7 +10,13 @@
 //   4. Estimado detectable solo por barras/provider, sin campo top-level.
 
 import { describe, expect, it } from "vitest";
-import { assertDecisionGrade, barsAreCandleGrade, chartQuality, isDecisionGrade } from "@/lib/chartDataQuality";
+import {
+  assertDecisionGrade,
+  barsAreCandleGrade,
+  chartQuality,
+  chartQualityFromBrief,
+  isDecisionGrade,
+} from "@/lib/chartDataQuality";
 import { ESTIMATED_CHART_PROVIDER } from "@/lib/estimatedBars";
 
 describe("chartQuality · normalización canónica", () => {
@@ -143,5 +149,138 @@ describe("barsAreCandleGrade · barras aptas para velas coherentes", () => {
       { date: "2026-07-02", open: 102, high: "n/a", low: 99, close: 101 },
     ];
     expect(barsAreCandleGrade(bars)).toBe(false);
+  });
+});
+
+// chartQualityFromBrief — adaptador puro que encapsula los predicados
+// locales del brief (`freshness.priceEstimated`, `freshness.chartEstimated`,
+// `dataQuality.estimatedChart`, proveedor con "estimado|estimated|no
+// live"). Su contrato de salida es la misma forma canónica que
+// `chartQuality()`, y NO decide si el chart puede renderizar: delega el
+// enforcement en el data model (ADR §3.2). Regresiones que garantizan que
+// ningún flag estimado del brief se cuele como decision-grade.
+describe("chartQualityFromBrief · adaptador puro para la fuente local", () => {
+  it("brief vacío + provider real + barras OHLC reales → real (decision-grade)", () => {
+    const quality = chartQualityFromBrief({
+      bars: [
+        { date: "2026-07-01", open: 100, high: 105, low: 98, close: 102 },
+        { date: "2026-07-02", open: 102, high: 104, low: 99, close: 101 },
+      ],
+      dataQuality: { freshness: {} },
+      chartProvider: "Yahoo Finance",
+    });
+    expect(quality.status).toBe("real");
+    expect(quality.estimated).toBe(false);
+    expect(quality.degraded).toBe(false);
+  });
+
+  it("freshness.priceEstimated=true → status estimated (bloqueante)", () => {
+    const quality = chartQualityFromBrief({
+      bars: [{ date: "2026-07-01", close: 100 }],
+      dataQuality: { freshness: { priceEstimated: true } },
+      chartProvider: "Yahoo Finance",
+    });
+    expect(quality.status).toBe("estimated");
+    expect(quality.estimated).toBe(true);
+    expect(quality.degraded).toBe(true);
+  });
+
+  it("freshness.chartEstimated=true → status estimated", () => {
+    const quality = chartQualityFromBrief({
+      bars: [{ date: "2026-07-01", close: 100 }],
+      dataQuality: { freshness: { chartEstimated: true } },
+      chartProvider: "Yahoo Finance",
+    });
+    expect(quality.status).toBe("estimated");
+    expect(quality.estimated).toBe(true);
+  });
+
+  it("dataQuality.estimatedChart=true → status estimated", () => {
+    const quality = chartQualityFromBrief({
+      bars: [{ date: "2026-07-01", close: 100 }],
+      dataQuality: { estimatedChart: true, freshness: {} },
+      chartProvider: "Yahoo Finance",
+    });
+    expect(quality.status).toBe("estimated");
+    expect(quality.estimated).toBe(true);
+  });
+
+  it("provider estimado (regex estimado|estimated|no live) → status estimated", () => {
+    const cases = [
+      "StatsEdge fallback estimado (no live)",
+      "Yahoo Finance estimated bars",
+      "Provider no live demo",
+    ];
+    for (const chartProvider of cases) {
+      const quality = chartQualityFromBrief({
+        bars: [{ date: "2026-07-01", close: 100 }],
+        dataQuality: { freshness: {} },
+        chartProvider,
+      });
+      expect(quality.status, `provider=${chartProvider}`).toBe("estimated");
+      expect(quality.estimated).toBe(true);
+    }
+  });
+
+  it("provider=ESTIMATED_CHART_PROVIDER delata estimado aunque freshness esté limpio", () => {
+    const quality = chartQualityFromBrief({
+      bars: [{ date: "2026-07-01", close: 100 }],
+      dataQuality: { freshness: {} },
+      chartProvider: ESTIMATED_CHART_PROVIDER,
+    });
+    expect(quality.status).toBe("estimated");
+    expect(quality.degraded).toBe(true);
+  });
+
+  it("barras con bar.estimated=true (legacy estructural sin flags del brief) → estimated", () => {
+    const quality = chartQualityFromBrief({
+      bars: [{ date: "2026-07-01", close: 100, estimated: true }],
+      dataQuality: { freshness: {} },
+      chartProvider: "Yahoo Finance",
+    });
+    expect(quality.status).toBe("estimated");
+    expect(quality.estimated).toBe(true);
+  });
+
+  it("devuelve la forma canónica completa {status, estimated, degraded, source, reason, issue, demo}", () => {
+    const quality = chartQualityFromBrief({
+      bars: [{ date: "2026-07-01", close: 100 }],
+      dataQuality: { freshness: {} },
+      chartProvider: "Yahoo Finance",
+    });
+    expect(Object.keys(quality).sort()).toEqual(
+      ["degraded", "demo", "estimated", "issue", "reason", "source", "status"].sort(),
+    );
+  });
+
+  it("entradas ausentes / null / undefined → no rompe y devuelve 'real' como default", () => {
+    expect(chartQualityFromBrief()).toMatchObject({ status: "real" });
+    expect(chartQualityFromBrief({})).toMatchObject({ status: "real" });
+    expect(chartQualityFromBrief({ bars: null, dataQuality: null, chartProvider: null })).toMatchObject({ status: "real" });
+  });
+
+  it("un solo flag estimado basta para degradar a 'estimated' (cualquier combinación)", () => {
+    // Cuatro orígenes posibles: cualquier subconjunto cubre el camino.
+    const inputs = [
+      { dataQuality: { freshness: { priceEstimated: true } }, chartProvider: "Yahoo Finance" },
+      { dataQuality: { freshness: { chartEstimated: true }, estimatedChart: false }, chartProvider: "Yahoo Finance" },
+      { dataQuality: { estimatedChart: true, freshness: {} }, chartProvider: "Yahoo Finance" },
+      { dataQuality: { freshness: {} }, chartProvider: "Algo estimado demo" },
+    ];
+    for (const args of inputs) {
+      const quality = chartQualityFromBrief({ bars: [{ date: "2026-07-01", close: 100 }], ...args });
+      expect(quality.status).toBe("estimated");
+      expect(quality.estimated).toBe(true);
+      expect(quality.degraded).toBe(true);
+    }
+  });
+
+  it("source del Quality refleja el provider del brief cuando NO hay estimación", () => {
+    const quality = chartQualityFromBrief({
+      bars: [{ date: "2026-07-01", open: 100, high: 105, low: 98, close: 102 }],
+      dataQuality: { freshness: {} },
+      chartProvider: "Yahoo Finance",
+    });
+    expect(quality.source).toBe("Yahoo Finance");
   });
 });

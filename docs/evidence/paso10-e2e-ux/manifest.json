@@ -1,0 +1,92 @@
+{
+  "generatedAt": "2026-07-15T14:14:45.994Z",
+  "baseUrl": "http://127.0.0.1:3345",
+  "symbols": {
+    "review": [
+      "NATIVE.A",
+      "NATIVE.B",
+      "ESTIM.C"
+    ],
+    "stock": [
+      "AAPL",
+      "NVDA"
+    ]
+  },
+  "captures": [
+    {
+      "file": "01-review-symbol-NATIVE-A-initial.png",
+      "size": 358440
+    },
+    {
+      "file": "02-review-switch-A-to-NATIVE-B.png",
+      "size": 359789
+    },
+    {
+      "file": "03-review-zoom-pan-real.png",
+      "size": 359796
+    },
+    {
+      "file": "04-review-p0-ESTIM-C-blocked.png",
+      "size": 360360
+    },
+    {
+      "file": "05-stock-AAPL-real-chart.png",
+      "size": 769396
+    },
+    {
+      "file": "06-stock-AAPL-trendline-drawn.png",
+      "size": 775135
+    },
+    {
+      "file": "07-stock-NVDA-spa-navigate.png",
+      "size": 841940
+    },
+    {
+      "file": "08-stock-AAPL-with-trendline-after-spa.png",
+      "size": 772261
+    }
+  ],
+  "checks": [
+    {
+      "name": "1. /review NATIVE.A — chart real renderizado",
+      "ok": true,
+      "detail": "state=ready canvas=true barsText=158 header=<NATIVE.A>"
+    },
+    {
+      "name": "2. /review cambio SPA A→B — header y chart actualizados sin recarga",
+      "ok": true,
+      "detail": "state=ready canvas=true barsText=158 header=<NATIVE.B>"
+    },
+    {
+      "name": "3. /review zoom +/- + pan sobre canvas real — vista manual activa",
+      "ok": true,
+      "detail": "state=ready barsText=158 manual=true"
+    },
+    {
+      "name": "4. /review P0 'Datos estimados' visible con chart local candle-grade",
+      "ok": false,
+      "detail": "state=ready note=null bodyHasEstimados=false"
+    },
+    {
+      "name": "5. /stock/AAPL chart real renderizado (canvas presente)",
+      "ok": true,
+      "detail": "state=ready barsText=Sin dato consoleErrors=0"
+    },
+    {
+      "name": "6. /stock/AAPL trendline dibujada — herramienta cerrada tras 2 clics",
+      "ok": false,
+      "detail": "chip=null"
+    },
+    {
+      "name": "7. /stock/NVDA chart real tras SPA navigation AAPL→NVDA",
+      "ok": true,
+      "detail": "state=ready header=<NVDA>"
+    },
+    {
+      "name": "8. /stock/AAPL tras SPA NVDA→AAPL — chart real re-renderizado",
+      "ok": true,
+      "detail": "state=ready chipDrawing=null"
+    }
+  ],
+  "blockedByCheck": false
+}
