@@ -313,12 +313,15 @@ export function useChartDataModel(input = {}) {
   }, [requestKey, buildLocalSourceKey(normalizedLocalSource), dataRange, interval, style]);
 
   // Unmount cleanup.
-  useEffect(() => () => {
-    mountedRef.current = false;
-    if (abortRef.current) {
-      try { abortRef.current.abort(); } catch { /* noop */ }
-      abortRef.current = null;
-    }
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (abortRef.current) {
+        try { abortRef.current.abort(); } catch { /* noop */ }
+        abortRef.current = null;
+      }
+    };
   }, []);
 
   return dataModel;
