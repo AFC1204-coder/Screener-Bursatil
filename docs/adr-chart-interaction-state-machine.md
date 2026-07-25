@@ -1,9 +1,11 @@
 # ADR — Máquina de estados de interacción del chart (pan / drawing / editing / pinch)
 
-- **Fecha:** 2026-07-12
-- **Estado:** Propuesto (pendiente de revisión de Alejandro; ejecución → MiniMax M3)
+- **Fecha:** 2026-07-12 · **Ampliado:** 2026-07-25 (§10–§13)
+- **Estado:** §0–§9 **implementadas** (`lib/chartInteractionMachine.js`, `app/useChartInteraction.js`, 44 tests en `tests/chartInteractionMachine.test.js`). §10–§13 **propuestas**, pendientes de revisión.
 - **Alcance:** SOLO arbitraje de la interacción existente. Sin persistencia Supabase, sin nuevas herramientas de dibujo, sin tocar `app/api/chart/route.js`, sin reactivar `mouseWheel:true`.
-- **Archivos afectados (implementación futura):** `app/useChartDrawings.js`, `app/UniversalPriceChart.jsx` (mínimo), nuevos `lib/chartInteractionMachine.js` y `app/useChartInteraction.js`.
+- **Archivos afectados:** `app/useChartDrawings.js`, `app/UniversalPriceChart.jsx` (mínimo), `lib/chartInteractionMachine.js` y `app/useChartInteraction.js`.
+
+> **Nota de la ampliación (2026-07-25).** §0–§9 se dejan intactas: sus hechos H1–H4 están verificados contra el bundle de lightweight-charts v5 y la implementación los respeta. §10–§13 cubren lo que el documento original no trataba — el diagrama de estados, la frontera con el ciclo de vida de React, y las invariantes comprobables — y se redactan **contra el código ya existente en `merge-test/chart-controller`**, no sobre un diseño hipotético.
 
 ---
 
@@ -215,3 +217,156 @@ Sin React, sin DOM, sin lightweight-charts: testeable en Node con tests de tabla
 4. Gating del wheel handler por `machine.getState() === 'idle'`.
 5. Tolerancia táctil en `pickAt` + `window.__chartInteractionState`.
 6. Verificación E2E: los scripts existentes de `scripts/e2e/` (trendlines + zoom/pan) deben pasar sin cambios de aserciones salvo el nuevo revert-on-cancel.
+
+---
+
+# Ampliación 2026-07-25 — §10 a §13
+
+## 10. Diagrama de estados
+
+Dos territorios disjuntos. En **territorio nativo** (verde) la librería es dueña del gesto y la máquina solo espeja su bookkeeping; en **territorio custom** (azul) la máquina es dueña y el nativo está apagado vía `applyOptions`. La frontera se cruza únicamente por `idle`.
+
+```mermaid
+stateDiagram-v2
+    [*] --> idle
+
+    state "TERRITORIO NATIVO (nativo ON — la máquina espeja)" as Nat {
+        panning --> pinching: pointerdown · touch · 2º dedo
+        pinching --> panning: pointerup · quedan ≥1 touch
+        pinching --> panning: pointerdown · 3º dedo
+    }
+
+    state "TERRITORIO CUSTOM (nativo OFF — la máquina arbitra)" as Cus {
+        armed --> drawing: pointerdown · isPrimary · con dominio
+        drawing --> armed: pointerdown · dominio == p1 (descarta)
+    }
+
+    idle --> panning: pointerdown · hit=empty / hit=body
+    idle --> editing: pointerdown · hit=handle
+    idle --> armed: ARM (botón lápiz)
+
+    panning --> idle: pointerup · último puntero
+    pinching --> idle: pointerup · quedan 0
+
+    armed --> idle: DISARM / ESCAPE
+    drawing --> idle: pointerdown · isPrimary (commit)
+    drawing --> idle: ESCAPE (cancela)
+    editing --> idle: pointerup (commit)
+    editing --> idle: pointercancel / lostpointercapture (REVERT)
+    editing --> idle: ESCAPE (revert)
+
+    Nat --> idle: DETACH
+    Cus --> idle: DETACH
+```
+
+**Transiciones ilegales — no existe arco entre territorios salvo por `idle`.** En concreto: `editing → pinching` no existe (el 2º puntero se traga, §3), `armed → panning` no existe (el lápiz es modal), `drawing → editing` no existe (a mitad de dibujo las líneas existentes no son seleccionables), y `panning → editing` no existe (una vez el nativo posee el press, no se le quita a mitad de gesto). Un evento que llega a un estado que no lo espera **se traga sin transición** — nunca lanza, nunca deja el estado a medias. Es la propiedad de totalidad que §12/I3 convierte en test.
+
+`DETACH` es el único arco universal: legal desde los seis estados, con prioridad sobre el `switch` (`chartInteractionMachine.js:155-163`).
+
+---
+
+## 11. Ciclo de vida de React — dónde vive la máquina y por qué (pregunta 5)
+
+### 11.1 Corrección de la premisa
+
+El bug de congelación citado como motivación **no ocurrió en la máquina de interacción**. Se corrigió en `5941767` y vivía en `useChartDataModel`: un `mountedRef` que solo se ponía a `false`, en el cleanup de un effect *unmount-only*, y cuyo cuerpo de montaje nunca lo restauraba a `true`. El doble-invoke de StrictMode disparaba ese cleanup una vez justo tras el montaje inicial, dejando el ref permanentemente en `false`; a partir de ahí todo cambio de rango o intervalo entraba en el guard y volvía antes de hacer fetch — el chart parecía congelado en los primeros datos cargados.
+
+Importa la distinción porque **el patrón, no el módulo, es lo peligroso**, y ese patrón está replicado en la frontera de interacción (§11.3).
+
+### 11.2 Decisión: la máquina vive en un ref del adaptador, una por *mount*, no por *attach*
+
+Implementado en `app/useChartInteraction.js:83-86` (init perezoso sobre `useRef`). La vida de la máquina es la vida del componente; las recreaciones del chart se modelan con `DETACH → idle`, no destruyendo y recreando la máquina.
+
+**Alternativas descartadas:**
+
+| Alternativa | Por qué se descarta |
+|---|---|
+| Estado de React (`useState`) | Un `setState` por `pointermove` re-renderiza a frecuencia de puntero durante `editing`. Inviable por rendimiento, y además introduce asincronía: la máquina debe resolver la transición **síncronamente** dentro del handler de captura para que el `applyOptions` llegue a tiempo (H2/H3). `useState` no da esa garantía. |
+| Singleton a nivel de módulo | Sobrevive a todo, pero **dos charts en la misma página compartirían máquina**. StatsEdge tiene vistas de comparación; sería un bug latente esperando a la primera vista con dos gráficos. |
+| Una máquina por *attach* (recrear en cada cambio de rango/temporalidad) | Rompe la identidad del objeto entre attaches: los consumidores de `subscribe()` (`useChartDrawings` deriva `toolActive`/`inProgress` de ahí) tendrían que re-suscribirse en cada cambio de rango, y el lápiz activo se apagaría al cambiar de temporalidad. Ver §13/P1: hay un argumento legítimo en contra que dejo abierto. |
+| Un `useRef` cuyo `.current` se reasigna en cada attach | Lo peor de ambos: identidad inestable sin la limpieza de recrear. |
+
+**Consecuencia deliberada:** la máquina **sobrevive al doble-invoke de StrictMode**. React reutiliza la misma instancia de componente en el ciclo simulado mount→unmount→remount, así que los refs persisten y `machineRef.current !== null` en el segundo montaje. Esto es correcto y es lo que se quiere: la máquina no debe reiniciarse por un artefacto de desarrollo.
+
+### 11.3 El riesgo estructural: mismo patrón que el bug de `mountedRef`
+
+En `app/useChartDrawings.js:193-195`:
+
+```js
+useEffect(() => () => {
+  detach();
+}, [detach]);
+```
+
+Es un effect **con cuerpo vacío y cleanup que muta estado compartido** — exactamente la forma del bug corregido en `5941767`. `detach()` (líneas 173-191) envía `DETACH` a la máquina y además pone a `null` `primitiveRef`, `chartRef`, `seriesRef` y `containerRef`.
+
+La diferencia con el caso de `useChartDataModel` es que aquí **sí existe una vía de restauración** — `attach()` (línea 123) repuebla esos refs. Pero vive en **otra función, invocada por otro componente** (el controller, ver `app/useChartController.js`). La corrección depende, por tanto, del **orden relativo** entre el cleanup de este effect y el effect de re-attach del controller a través del remount simulado de StrictMode. React no garantiza ese orden entre componentes distintos.
+
+Mitigación presente hoy: `detach` es `useCallback(..., [])`, estable, así que el effect **no** se re-ejecuta en cada cambio de rango — solo en montaje/desmontaje real y en el ciclo simulado de StrictMode. Eso reduce la superficie, no la elimina.
+
+### 11.4 Las tres reglas que fija este ADR
+
+**R1 — Prohibido el patrón "effect con cuerpo vacío + cleanup mutador" en esta frontera.** Si un cleanup invalida un ref, la restauración va en el **cuerpo de montaje del mismo effect**, no en una función hermana ni en otro componente. Un effect debe ser leíble como una transacción cerrada. Esta regla es la generalización del fix `5941767` y es el entregable de gobernanza más importante de §11.
+
+**R2 — `DETACH` debe ser total e idempotente.** Legal desde los seis estados, enviable cualquier número de veces, sin efectos observables cuando ya se está en `idle`. Ya se cumple (`chartInteractionMachine.js:155-163`: se resuelve antes del `switch`, incondicionalmente).
+
+**R3 — Los tres cruces de ciclo de vida se tratan igual: `DETACH` y nada más.**
+
+| Cruce | Qué pasa | Qué debe hacer |
+|---|---|---|
+| Doble-invoke de StrictMode (solo dev) | Refs persisten; la máquina sobrevive | `DETACH` → `idle`. El chart nuevo nace con `NATIVE_GESTURES_ON` |
+| Cambio de rango / temporalidad / símbolo | El controller destruye y recrea el chart; `attachKey` cambia y re-engancha listeners (`useChartInteraction.js:412`) | `DETACH` antes de `chart.remove()` — ya garantizado por el orden del controller |
+| HMR | El módulo se reemplaza; el estado de los refs es indefinido | Ver §13/P2: abierto |
+
+### 11.5 Hueco concreto detectado: `DETACH` no emite efectos de limpieza del DOM
+
+`DETACH` devuelve `effects: []` (línea 162). El razonamiento original era correcto para `applyOptions` — el chart viejo muere, no tiene sentido restaurarle las opciones. Pero arrastra dos consecuencias sobre el **contenedor**, que es un `<div>` propiedad de React y **sobrevive** a la recreación del chart:
+
+1. **`touch-action` queda huérfano.** Si se hace `DETACH` estando en `armed` o `editing`, `container.style.touchAction` se quedó en `'none'` (§4.3) y nadie lo restaura. Efecto visible: el scroll de página con el dedo sobre el área del chart deja de funcionar, de forma permanente y silenciosa, hasta un recargado.
+2. **La captura de puntero queda huérfana.** Si se hace `DETACH` desde `editing`, no se emite `releasePointer`; los eventos siguen redirigidos a un nodo que puede estar desmontándose.
+
+**Decisión:** `DETACH` debe emitir `[{type:'setTouchAction', payload:''}]` siempre, y además `{type:'releasePointer', pointerId: capturedPointerId}` cuando `capturedPointerId !== null`. **No** debe emitir `nativeOn` (ahí el razonamiento original sigue siendo válido: el chart viejo muere).
+
+El orden actual lo permite: `detach()` llama a `interactionRef.current.detach()` en la línea 176, **antes** de anular `containerRef` en la 187, así que el ejecutor de efectos todavía alcanza el contenedor. Si alguna vez se invierte ese orden, esta corrección deja de funcionar en silencio — anotarlo en el propio `detach()`.
+
+---
+
+## 12. Qué se rompe si esto se implementa mal, y qué invariante lo detecta (pregunta 6)
+
+El rasgo común de todos los fallos de esta frontera es que son **silenciosos**: no lanzan, no aparecen en consola, y los tests unitarios de dominio siguen verdes. El chart simplemente deja de responder. Por eso las invariantes tienen que ser estructurales, no de resultado.
+
+| # | Modo de fallo | Síntoma para el usuario | Invariante que lo detecta |
+|---|---|---|---|
+| F1 | Fuga de `nativeOff` (se apaga y no se vuelve a encender) | **Chart congelado**: pan y pinch muertos, sin error. El fallo más probable y más caro | **I1** |
+| F2 | Estado atascado en `editing`/`drawing`/`armed` | Chart inerte: todos los `pointerdown` se tragan | **I2** |
+| F3 | `touch-action:'none'` huérfano (§11.5) | El scroll de página sobre el chart muere | **I5** |
+| F4 | Captura de puntero huérfana | Eventos dirigidos a un nodo desmontado; posible fuga de memoria | **I4** |
+| F5 | Máquina reiniciada donde no debía | El lápiz se apaga solo al cambiar rango/temporalidad | **I6** |
+| F6 | Puntero fantasma en `activePointers` | Nunca se vuelve a `idle`; el siguiente gesto arranca en el estado equivocado | **I2** |
+
+### Invariantes
+
+Las seis son comprobables **sin DOM y sin navegador**, sobre la máquina pura — que es precisamente lo que justifica haberla extraído.
+
+- **I1 — Balance de gestos nativos.** Llevando un contador que suma en cada `nativeOff` y resta en cada `nativeOn`: `state === 'idle' ⟹ contador === 0`. Es la invariante que atrapa el chart congelado (F1) y la más valiosa de las seis. Se comprueba como *property test*: sobre secuencias aleatorias de eventos, tras cada transición a `idle`, aserción del contador.
+- **I2 — No hay estados huérfanos.** Para toda secuencia de eventos que termine con todos los punteros levantados (`activePointers.size === 0`), el estado final es `idle`. Property test con secuencias generadas, incluyendo intercalados de `pointercancel` y `lostpointercapture`.
+- **I3 — Totalidad y `DETACH`.** (a) Para todo estado × todo tipo de evento, `send()` devuelve un estado válido y no lanza — ningún par (estado, evento) queda sin definir. (b) Para los seis estados, `send({type:'DETACH'})` da `idle` con contexto vacío, y un segundo `DETACH` no produce efectos adicionales. Test de tabla exhaustivo, 6 × N celdas.
+- **I4 — La captura no sobrevive a `editing`.** `capturedPointerId !== null ⟺ state === 'editing'`. Aserción tras cada transición en todos los tests.
+- **I5 — `touch-action` restaurado.** `state === 'idle' ⟹ el último efecto de touchAction emitido fue de restauración`. Requiere el cambio de §11.5; hoy falla por `DETACH`.
+- **I6 — Supervivencia al ciclo de vida.** Simulando mount → unmount → remount (el ciclo de StrictMode) y a continuación un `ARM` + secuencia completa de dibujo: la línea debe comitearse. Es la regresión directa de la clase `5941767`, y es la única de las seis que necesita un test con React (`@testing-library/react` con `<StrictMode>`), no solo la máquina pura.
+
+### Estado actual de la cobertura
+
+`tests/chartInteractionMachine.test.js` tiene **44 casos**, todos de tabla estado-por-estado, y 8 tocan `DETACH`. Cubren bien la corrección *por transición*. **No hay ninguno de las seis invariantes anteriores**: cero property tests, cero tests de ciclo de vida (`grep` de `StrictMode|remount|HMR` da cero). Cerrar §12 es, sobre todo, añadir I1, I2 e I6 — las tres que cubren los modos de fallo silenciosos.
+
+---
+
+## 13. Preguntas abiertas — decisiones que NO tomo aquí
+
+**P1 — ¿Máquina por *mount* o por *attach*?** §11.2 documenta lo construido (por mount) y su justificación es sólida, pero el contra-argumento es real: una máquina por attach hace **imposible por construcción** que un estado sobreviva a una recreación del chart, en vez de depender de que `DETACH` se envíe correctamente en todos los caminos. Es la diferencia entre "no puede pasar" y "no pasa si el cableado es correcto". El coste es re-suscripción en cada cambio de rango y el lápiz apagándose al cambiar de temporalidad. **Trade-off: robustez estructural contra continuidad de UX.** No lo resuelvo unilateralmente porque depende de cuánto valga el lápiz persistente entre temporalidades, que es criterio de producto.
+
+**P2 — HMR.** Es el único de los tres cruces de §11.4 sin regla. Dos opciones legítimas: (a) forzar reset completo en cada hot-update mediante `import.meta.hot.dispose` (determinista, pero se pierde el dibujo en curso en cada guardado — molesto justo cuando se está iterando sobre el código de dibujo); (b) no hacer nada y aceptar que HMR sobre estos dos módulos puede dejar estado incoherente, con la instrucción de recargar a mano. Dado que solo afecta a desarrollo, **(b) con una nota en el módulo es defendible** y (a) es más trabajo del que parece. Necesita tu criterio, no el mío.
+
+**P3 — `AGENTS.md` no existe.** `CLAUDE.md` lo cita como fuente de gobernanza técnica que Codex lee, pero no está en el árbol de trabajo ni en el historial de ninguna rama (`git log --all -- AGENTS.md` vacío). O vive fuera del repo, o la referencia está obsoleta. Si contiene restricciones de diseño aplicables a esta frontera, §10–§13 no han podido tenerlas en cuenta.
+
+**P4 — Fragmentación de ramas.** Esta ampliación se redactó contra `merge-test/chart-controller`, donde la máquina está implementada y trackeada. `CLAUDE.md` advierte que el refactor del chart está fragmentado en al menos cuatro ramas. Si §0–§9 se implementaron de forma divergente en `refactor/chart-controller-extraction` o `codex/statsedge-ui-polish`, las referencias a líneas concretas de §11 y §12 no son válidas ahí.
