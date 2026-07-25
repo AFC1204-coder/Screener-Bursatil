@@ -20,6 +20,7 @@ import { DECISION_CHART_PRESETS, buildStockDecisionDesk } from "@/lib/stockDecis
 import { STOCK_DECISION_ACTIONS, STOCK_DECISION_VALIDATION_STATES, applyStockDecisionResolution, buildStockDecisionResolutionNote, decisionResolutionForSymbol, decisionResolutionHistory, reopenStockDecisionResolution } from "@/lib/stockDecisionResolution";
 import { computeTradePlan, tradePlanEligibility } from "@/lib/tradePlan";
 import { vcpObjectiveSummary } from "@/lib/vcpDiagnostics";
+import { chartQualityFromBrief } from "@/lib/chartDataQuality";
 
 /* ── Componentes de la jerarquía N0–N3 (spec FICHA-TICKER-IA.md) ──────── */
 
@@ -1728,12 +1729,23 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const listingLabel = data?.ipoDate ? "IPO" : data?.listingDate ? "Cotiza desde" : "IPO";
   const freshness = data?.dataQuality?.freshness || {};
   const coverage = data?.dataQuality?.coverage || {};
-  const chartEstimated = Boolean(
-    freshness.priceEstimated
-    || freshness.chartEstimated
-    || data?.dataQuality?.estimatedChart
-    || /estimado|estimated|no live/i.test(data?.chartProvider || "")
+  // ADR §3.2 — una sola clasificación local canónica. Encapsula los
+  // predicados históricos (`freshness.priceEstimated`, `freshness.chartEstimated`,
+  // `dataQuality.estimatedChart` y provider con patrón estimado) en
+  // `chartQualityFromBrief`; esta pieza NO decide si el chart puede pintar
+  // barras (eso vive en el data model). La usamos tanto para las
+  // etiquetas de confianza en `N0VerdictBlock` como para el prop canónico
+  // `localQuality` que hoy recibe `UniversalPriceChart` (ADR §9, cierre de
+  // la migración).
+  const localQuality = useMemo(
+    () => chartQualityFromBrief({
+      bars: data?.chartBars || [],
+      dataQuality: data?.dataQuality || null,
+      chartProvider: data?.chartProvider || "",
+    }),
+    [data?.chartBars, data?.dataQuality, data?.chartProvider],
   );
+  const chartEstimated = localQuality.status !== "real";
   const chartSourceDetail = chartEstimated ? "historico estimado por fallback operativo" : "calculada desde barras";
   const compactProfile = data ? [data.sector, data.industry, data.country].filter(Boolean).join(" · ") : "";
   const setupPattern = useMemo(() => {
@@ -2196,7 +2208,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           benchmarkSymbol={rs.benchmarkSymbol}
           patternOverlay={showVcpDiagnostics ? setupPattern : actionableSetupPattern}
           showPatternDiagnostics={showVcpDiagnostics}
-          chartEstimated={chartEstimated}
+          localQuality={localQuality}
           height={600}
         />
       </section>

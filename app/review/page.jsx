@@ -24,6 +24,7 @@ import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, buildStockDecisionResolutionSummary, decisionResolutionForSymbol, decisionResolutionHistory, filterRowsByDecisionResolution, reopenStockDecisionResolution, reviewDecisionStateForRows, stockDecisionResolutionFilter } from "@/lib/stockDecisionResolution";
 import { createFavoriteFromRow } from "@/lib/stockRows";
 import { countryCode, externalLinks, isTradingViewWidgetBlocked, stockUrl } from "@/lib/symbols";
+import { chartQuality } from "@/lib/chartDataQuality";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 
 function value(row = {}, key) {
@@ -376,9 +377,34 @@ function ReviewChartPanel({ row, loading = false }) {
     scale: "price",
     indicators: { ...DEFAULT_CHART_SETTINGS.indicators, rsLine: true },
   };
+  // ADR §3.2 / §9: el caller explícito pasa `localQuality` construido
+  // desde los campos ya producidos por el pipeline de research
+  // (`row.chartEstimated`, `row.chartProvider`). Antes este caller
+  // omitía la calidad y dependedía del default legacy del data model;
+  // el cierre de la migración exige pasar calidad explícita para que el
+  // bloqueo P0 sea visible también desde /review (mismas garantías que
+  // en /stock/[symbol]).
+  const reviewLocalQuality = chartQuality({
+    bars,
+    meta: {
+      estimated: row?.chartEstimated === true,
+      dataProvider: row?.chartProvider || "",
+    },
+  });
   if (bars.length > 1) {
     return <div className="reviewChart reviewNativeChart">
-      <UniversalPriceChart bars={bars} symbol={row.symbol} currency={row.currency} tradingViewUrl={links.tradingView} settings={reviewSettings} relativeStrength={row.relativeStrength} rsMainScore={row.rsGlobalPct} benchmarkSymbol={row.benchmarkSymbol} height={520} />
+      <UniversalPriceChart
+        bars={bars}
+        symbol={row.symbol}
+        currency={row.currency}
+        tradingViewUrl={links.tradingView}
+        settings={reviewSettings}
+        relativeStrength={row.relativeStrength}
+        rsMainScore={row.rsGlobalPct}
+        benchmarkSymbol={row.benchmarkSymbol}
+        localQuality={reviewLocalQuality}
+        height={520}
+      />
     </div>;
   }
   return <div className="reviewChart">
