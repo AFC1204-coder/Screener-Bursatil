@@ -31,5 +31,10 @@
       "Bash(git stash -u:*)",
       "Bash(rm -rf:*)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "bash .claude/hooks/verify-nightly.sh" } ] }
+    ]
   }
 }
