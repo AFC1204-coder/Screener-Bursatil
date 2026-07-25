@@ -56,3 +56,5 @@ research/notes/*
 .vercel
 .zcode/
 supabase/.temp/
+!.claude/hooks/
+!.claude/hooks/*
