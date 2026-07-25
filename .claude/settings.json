@@ -1,3 +1,35 @@
 {
-  "language": "spanish"
+  "language": "spanish",
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git --no-pager:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npm run:*)",
+      "Read",
+      "Grep",
+      "Glob"
+    ],
+    "ask": [
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)",
+      "Bash(git merge:*)",
+      "Bash(git worktree:*)",
+      "Write",
+      "Edit"
+    ],
+    "deny": [
+      "Bash(git checkout origin/*:*)",
+      "Bash(git stash -u:*)",
+      "Bash(rm -rf:*)"
+    ]
+  }
 }
