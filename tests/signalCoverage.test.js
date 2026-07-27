@@ -187,7 +187,10 @@ describe("signalCoverage · computeSignal coverage", () => {
     const result = computeSignal({}, "growthScore");
     expect(result.coverage).toBe(0);
     expect(result.partial).toBe(true);
-    expect(result.value).toBe(45); // compute() degrades to 45
+    // compute() señaliza ausencia (null) en vez de fabricar un 45 — mismo
+    // contrato que epsGrowthProxyScore. computeComposite renormaliza sobre
+    // los términos presentes cuando esto ocurre.
+    expect(result.value).toBeNull();
   });
 
   it("epsGrowthProxyScore coverage=0 sin growthMetrics", () => {

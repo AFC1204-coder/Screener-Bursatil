@@ -9,7 +9,7 @@
 // de edad) y 3 perfiles para computeComposite.
 
 import { beforeAll, describe, expect, it } from "vitest";
-import { computeComposite, computeSignal, compositeLabel, SIGNAL_REGISTRY, COMPOSITE_WEIGHTS } from "@/lib/scoringEngine";
+import { computeComposite, computeCompositeWithCoverage, computeSignal, compositeLabel, SIGNAL_REGISTRY, COMPOSITE_WEIGHTS } from "@/lib/scoringEngine";
 import { scoreWeakness } from "@/lib/scoring";
 import {
   scoreAdProxy as snapAdProxy,
@@ -207,7 +207,10 @@ const rowEnginesAndSnapshots = {
   objectiveSetupScore: [snapObjectiveSetup, "row"],
   patternScore: [snapPatternQuality, "row"],
   demandScore: [snapDemand, "row"],
-  growthScore: [snapGrowth, "metrics"],   // firma del original: scoreGrowthQuality(r.growthMetrics || {})
+  // growthScore NO va en esta tabla: se compara aparte, más abajo. Diverge
+  // intencionalmente del snapshot en el perfil "parcial" (growthMetrics: null) —
+  // el engine ahora devuelve null en vez del 45 fabricado que sigue devolviendo
+  // el snapshot congelado pre-consolidación.
   epsGrowthProxyScore: [snapEps, "metrics"], // idem
   adProxyScore: [snapAdProxy, "row"],
 };
@@ -253,6 +256,27 @@ describe("scoringEngine · equivalencia bit-a-bit con scoring.js pre-consolidaci
 
   // patternContribution depende de methodologyPatternEvidenceBonus (no en el
   // snapshot). Solo validamos que patternScore sea idéntico, ya cubierto arriba.
+
+  // growthScore: paridad con el snapshot en completo/caso límite (ambos perfiles
+  // tienen growthMetrics con los 9 campos presentes, así que ninguno pasa por la
+  // rama "sin dato" donde el engine y el snapshot ahora divergen). En "parcial"
+  // (growthMetrics: null) se prueba la divergencia intencional por separado.
+  it("growthScore (completo) · engine === snapshot", () => {
+    const row = completeRow();
+    expect(computeSignal(row, "growthScore").value).toBe(snapGrowth(row.growthMetrics || {}));
+  });
+  it("growthScore (caso límite) · engine === snapshot", () => {
+    const row = edgeRow();
+    expect(computeSignal(row, "growthScore").value).toBe(snapGrowth(row.growthMetrics || {}));
+  });
+  it("growthScore (parcial) · engine (null) DIVERGE del snapshot (45) — fix intencional", () => {
+    const row = partialRow(); // growthMetrics: null
+    const fromEngine = computeSignal(row, "growthScore").value;
+    const fromSnapshot = snapGrowth(row.growthMetrics || {});
+    expect(fromEngine).toBeNull();
+    expect(fromSnapshot).toBe(45); // referencia congelada pre-fix, para dejar constancia de la magnitud del cambio
+    expect(fromEngine).not.toBe(fromSnapshot);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -332,6 +356,118 @@ describe("scoringEngine · computeComposite (composite)", () => {
       ipoScore: 0,
     };
     expect(computeComposite(input)).toBe(snapComposite(input));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// computeCompositeWithCoverage — renormalización sobre términos presentes.
+//
+// growthScore ya no fabrica un 45 cuando growthMetrics no tiene datos (ver fix
+// más arriba); computeComposite/computeCompositeWithCoverage deben excluir ese
+// término (y epsAnchor, que cae en el mismo fallback en screenerPipeline.js:333
+// cuando epsGrowthProxyScore TAMBIÉN falta) en vez de tratarlo como 0, que en la
+// escala 0-100 del resto de señales significaría "peor caso posible" — no "sin
+// dato". Los 3 casos pedidos: growthMetrics vacío / parcial / completo.
+// ---------------------------------------------------------------------------
+describe("scoringEngine · computeCompositeWithCoverage (renormalización)", () => {
+  const fullInputExcept = (overrides) => ({
+    setupQualityScore: 70, rsAnchor: 75, rsQualityScore: 70, demandScore: 65,
+    adProxyScore: 55, sectorScore: 65, riskRewardScore: 60, riskScore: 70,
+    momentumScore: 50, ipoScore: 30,
+    ...overrides,
+  });
+
+  it("cobertura completa: coverage=1, partial=false, value bit-idéntico a computeComposite y al snapshot pre-fix", () => {
+    const input = fullInputExcept({ growthScore: 60, epsAnchor: 60 });
+    const result = computeCompositeWithCoverage(input);
+    expect(result.coverage).toBe(1);
+    expect(result.partial).toBe(false);
+    expect(result.value).toBe(computeComposite(input));
+    expect(result.value).toBe(snapComposite(input));
+  });
+
+  it("growthMetrics vacío → growthScore null + epsAnchor null (sin proxy) → composite renormalizado, NO en 0", () => {
+    // Reproduce el fallback real de screenerPipeline.js:333 sin importar ese
+    // archivo (fuera de scope): epsGrowthProxyScore ausente + growthScore
+    // ausente ⇒ epsAnchor también ausente.
+    const growthScore = null;
+    const epsGrowthProxyScore = null;
+    const epsAnchor = Number.isFinite(epsGrowthProxyScore) ? epsGrowthProxyScore : growthScore;
+    expect(epsAnchor).toBeNull();
+
+    const input = fullInputExcept({ growthScore, epsAnchor });
+    const result = computeCompositeWithCoverage(input);
+
+    expect(result.partial).toBe(true);
+    // 10 de 12 términos presentes; pesos ausentes: growthScore(.08) + epsAnchor(.08) = .16
+    expect(result.coverage).toBeCloseTo(0.84, 2);
+
+    // Promedio ponderado SOLO de los 10 términos presentes (fórmula independiente,
+    // no reutiliza la implementación — para que un bug real en computeComposite
+    // haga fallar este test en vez de auto-confirmarse).
+    const expectedWeightedSum =
+      70 * .17 + 75 * .16 + 70 * .06 + 65 * .10 + 55 * .08 +
+      65 * .10 + 60 * .08 + 70 * .05 + 50 * .02 + 30 * .02;
+    const expectedPresentWeight = .17 + .16 + .06 + .10 + .08 + .10 + .08 + .05 + .02 + .02;
+    expect(result.value).toBeCloseTo(expectedWeightedSum / expectedPresentWeight, 6);
+
+    // Y es distinto (y mayor) que tratar los ausentes como 0 — el comportamiento
+    // que se está eliminando con este fix.
+    const naiveZeroSubstitution = computeComposite(fullInputExcept({ growthScore: 0, epsAnchor: 0 }));
+    expect(result.value).toBeGreaterThan(naiveZeroSubstitution);
+  });
+
+  it("growthMetrics parcial → growthScore es un número real (no null): NO dispara renormalización del composite", () => {
+    const row = { growthMetrics: { revenueGrowth: 30, earningsGrowth: 40 } }; // 2 de 9 campos
+    const { value: growthScore, coverage: growthCoverage, partial: growthPartial } = computeSignal(row, "growthScore");
+    expect(growthScore).not.toBeNull();
+    expect(typeof growthScore).toBe("number");
+    // La señal SÍ sabe que tiene poca confianza (esto no cambia con el fix)...
+    expect(growthPartial).toBe(true);
+    expect(growthCoverage).toBeCloseTo(2 / 9, 6);
+
+    // ...pero el composite la trata como presente: es un valor real, solo que
+    // calculado con pocos datos. Confianza reducida ≠ ausencia.
+    const input = fullInputExcept({ growthScore, epsAnchor: growthScore });
+    const result = computeCompositeWithCoverage(input);
+    expect(result.coverage).toBe(1);
+    expect(result.partial).toBe(false);
+  });
+
+  it("growthMetrics completo → growthScore real con coverage=1 en la señal y en el composite", () => {
+    const row = {
+      growthMetrics: {
+        revenueGrowth: 30, earningsGrowth: 40, grossMargin: 60,
+        operatingMargin: 25, profitMargin: 20, roe: 25,
+        roa: 10, debtToEquity: 50, currentRatio: 1.5,
+      },
+    };
+    const { value: growthScore, coverage: growthCoverage, partial: growthPartial } = computeSignal(row, "growthScore");
+    expect(growthCoverage).toBe(1);
+    expect(growthPartial).toBe(false);
+
+    const input = fullInputExcept({ growthScore, epsAnchor: growthScore });
+    const result = computeCompositeWithCoverage(input);
+    expect(result.coverage).toBe(1);
+    expect(result.partial).toBe(false);
+    expect(result.value).toBe(computeComposite(input));
+  });
+
+  it("todos los términos ausentes: no revienta, devuelve value=0/coverage=0 en vez de NaN", () => {
+    // ipoScore necesita override explícito a null: el default del parámetro
+    // (=0) solo se aplica a `undefined`, y un ipoScore=0 seguiría siendo un
+    // término "presente" (peso .02), impidiendo el caso realmente vacío.
+    const result = computeCompositeWithCoverage({ ipoScore: null });
+    expect(result.value).toBe(0);
+    expect(result.coverage).toBe(0);
+    expect(result.partial).toBe(true);
+  });
+
+  it("solo ipoScore por defecto (0) presente: no revienta, renormaliza sobre ese único término", () => {
+    const result = computeCompositeWithCoverage({});
+    expect(result.coverage).toBeCloseTo(0.02, 6);
+    expect(result.partial).toBe(true);
+    expect(result.value).toBe(0); // 0 * .02 / .02 = 0
   });
 });
 
@@ -452,8 +588,9 @@ describe("scoringEngine · computeSignal coverage wrapper", () => {
     const result = computeSignal(row, "growthScore");
     expect(result.coverage).toBe(0);
     expect(result.partial).toBe(true);
-    // value no cambia: compute() sigue degradando a 45
-    expect(result.value).toBe(45);
+    // value señaliza ausencia (null) en vez de fabricar el 45 neutro histórico —
+    // mismo contrato que epsGrowthProxyScore.
+    expect(result.value).toBeNull();
   });
 
   it("growthScore: coverage=0 cuando growthMetrics es null", () => {
@@ -461,8 +598,8 @@ describe("scoringEngine · computeSignal coverage wrapper", () => {
     const result = computeSignal(row, "growthScore");
     expect(result.coverage).toBe(0);
     expect(result.partial).toBe(true);
-    // compute() still runs → returns 45 (default when no metrics are finite)
-    expect(result.value).toBe(45);
+    // compute() sigue ejecutándose → ahora devuelve null (antes: 45 fijo)
+    expect(result.value).toBeNull();
   });
 
   it("growthScore: coverage proporcional cuando algunos campos están presentes", () => {
