@@ -49,7 +49,14 @@ const PROJECTED_TABLES = Object.freeze(["scans", "scan_results", ...HITO_TABLES]
 // Bootstrap safety has two independent controls: a byte-exact reviewed source
 // plus a lexical inventory of executable references. The digest alone is not
 // evidence that comments/strings were classified correctly.
-const REVIEWED_BOOTSTRAP_SOURCE_DIGEST = "f93822e948491c302da32ecb634ddacd6f091c13804f9a64ba3be0f228cde76c";
+//
+// Updated 2026-07-29: supabase/schema.sql grew an additive block for
+// scan_symbol_history (table, indexes, RLS/grants, scan_symbol_history_latest_v1)
+// ported verbatim from supabase/migrations/20260729130755_scan_symbol_history.sql.
+// Reviewed: no pg_cron/net/http references, plain DDL + two `do $$ ... $$` role
+// existence checks, same shape as the other conditional-grant blocks already in
+// this file.
+const REVIEWED_BOOTSTRAP_SOURCE_DIGEST = "12e81baea88ab4c3fd4df5d877b7067caacb7668de6a13056193eb3c95667baa";
 const REVIEWED_FOUNDATION_BASE_SOURCE_DIGEST = "dcf499b681c3fabc8fdd42b2481494e98aa87c8711235b5e3fb40057fcab2a56";
 const REPAIRED_FOUNDATION_BASE_SOURCE_DIGEST = "31c96fc15b795abec6393c4c2a4549f5daf0f98a4ab16d827f245d4c049b7145";
 const PG_CRON_EXTENSION_SQL = "create extension if not exists pg_cron;";
