@@ -6,6 +6,7 @@ import {
   writeMaterializedScan,
   writeScanBatchCursor,
 } from "@/lib/materializedScanner";
+import { writeScanSymbolHistory } from "@/lib/scanHistory";
 import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
@@ -216,6 +217,13 @@ export async function GET(request) {
   try {
     const result = await runMaterializedScan(options);
     const savedScan = await writeMaterializedScan(result.scan);
+    const history = savedScan.saved && result.history
+      ? await writeScanSymbolHistory({
+        ownerId: supabaseConfig().ownerId,
+        sourceScanId: savedScan.scanId,
+        ...result.history,
+      })
+      : { skipped: true, saved: 0 };
     const cursorWrite = savedScan.saved
       ? await writeScanBatchCursor(nextCursorValue(cursor.value || {}, options, result, savedScan)).catch((error) => ({ saved: false, error: error.message }))
       : { skipped: true };
@@ -236,6 +244,7 @@ export async function GET(request) {
       group: group.key,
       ...sanitizeStats(result.stats),
       savedScan: { saved: Boolean(savedScan.saved), rows: savedScan.rows || 0 },
+      history,
       cursor: {
         saved: Boolean(cursorWrite.saved),
         skipped: Boolean(cursorWrite.skipped),
@@ -257,6 +266,7 @@ export async function GET(request) {
       group: { key: group.key, title: group.title, index: groupIndex },
       scan: { localId: result.scan.id, rowCount: result.scan.rows.length },
       savedScan,
+      history,
       cursor: stats.cursor,
       leaderboards,
       rotation: stats.rotation,

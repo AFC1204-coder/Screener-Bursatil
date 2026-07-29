@@ -3,6 +3,7 @@ import { isInternalRequest } from "@/lib/internalAuth";
 import { withDailyBarsCache } from "@/lib/dailyBarsCache";
 import { mapOpenFigiIsins } from "@/lib/openfigi";
 import { runMaterializedScan, writeMaterializedScan } from "@/lib/materializedScanner";
+import { writeScanSymbolHistory } from "@/lib/scanHistory";
 import {
   markShadowInstrumentsStatus,
   markSymbolResolutionPriceStatus,
@@ -373,6 +374,13 @@ async function scanPricedShadowSymbols(group, options = {}) {
   };
   const result = await runMaterializedScan(scanOptions);
   const savedScan = await writeMaterializedScan(result.scan);
+  const history = savedScan.saved && result.history
+    ? await writeScanSymbolHistory({
+      ownerId: supabaseConfig().ownerId,
+      sourceScanId: savedScan.scanId,
+      ...result.history,
+    })
+    : { skipped: true, saved: 0 };
   // Refresco de leaderboards movido a /api/cron/leaderboards-refresh
   // (cadencia baja, propia) — este cron ya no dispara la RPC
   // leaderboard_publishable_rows (causa del "statement timeout" con GB).
@@ -387,6 +395,7 @@ async function scanPricedShadowSymbols(group, options = {}) {
     rejections: result.stats.rejections || [],
     scan: { localId: result.scan.id, rowCount: result.scan.rows.length },
     savedScan,
+    history,
     leaderboards,
   };
 }

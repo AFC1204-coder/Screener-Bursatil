@@ -10,6 +10,7 @@ import {
   writeMaterializedScan,
   writeScanBatchCursor,
 } from "@/lib/materializedScanner";
+import { writeScanSymbolHistory } from "@/lib/scanHistory";
 import { screenerFiltersFromSearchParams } from "@/lib/screenerFilters";
 import { readPricedShadowSymbols } from "@/lib/shadowUniverseStore";
 import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer";
@@ -310,6 +311,7 @@ async function finishRun(run, status, payload = {}) {
 
 export async function GET(request) {
   if (!authorized(request)) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const config = supabaseConfig();
   let phase = "cursor_read";
   const requestedOptions = optionsFromRequest(request);
   const fastDryRun = requestedOptions.dryRun && !requestedOptions.fullPlan;
@@ -385,6 +387,14 @@ export async function GET(request) {
       },
     });
     const savedScan = await writeMaterializedScan(result.scan);
+    phase = "history_write";
+    const history = savedScan.saved && result.history
+      ? await writeScanSymbolHistory({
+        ownerId: config.ownerId,
+        sourceScanId: savedScan.scanId,
+        ...result.history,
+      })
+      : { skipped: true, saved: 0 };
     phase = "cursor_write";
     const cursorWrite = options.useCursor && savedScan.saved
       ? await writeScanBatchCursor(nextCursorValue(cursor.value || {}, options, result, savedScan)).catch((error) => ({ saved: false, error: error.message }))
@@ -396,6 +406,7 @@ export async function GET(request) {
     const stats = {
       ...result.stats,
       savedScan,
+      history,
       cursor: {
         used: Boolean(options.useCursor),
         saved: Boolean(cursorWrite.saved),
@@ -420,6 +431,7 @@ export async function GET(request) {
         rows: options.includeRows ? result.scan.rows : undefined,
       },
       savedScan,
+      history,
       cursor: {
         used: Boolean(options.useCursor),
         saved: Boolean(cursorWrite.saved),
