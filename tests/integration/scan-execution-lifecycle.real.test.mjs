@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyExecutionLifecycle, callRpc, openPersistentPsqlSession, requireEphemeralPostgresUrl } from "./_ephemeralPostgresHarness.mjs";
+import { applyExecutionLifecycle, callRpc, openPersistentPsqlSession, psql, requireEphemeralPostgresUrl } from "./_ephemeralPostgresHarness.mjs";
 
 const owner = "hito-1b-owner";
 const scan = "00000000-0000-0000-0000-000000001b01";
@@ -236,4 +236,53 @@ test("real PostgreSQL: Hito 1B-1 races use two persistent sessions and leave one
     connectionA.close();
     connectionB.close();
   }
+});
+
+// Regresión: writeMaterializedScan (lib/materializedScanner.js) hace un upsert
+// directo en public.scans por PostgREST con la service role key — sin
+// published_result_set_id en el payload. scans_published_result_set_sealed_trg
+// dispara en cada insert/update de owner_id sobre public.scans y llama a
+// statsedge_lock_result_sets_v1 incondicionalmente, incluso cuando no hay nada
+// que sellar (esa función ya trata un array de nulls como no-op — ver su propio
+// cuerpo). El problema no es la llamada incondicional: statsedge_lock_result_sets_v1
+// tiene EXECUTE revocado a service_role como parte del contrato Hito 1B-1 (ver
+// las aserciones de ACL más arriba), y como el trigger corre `security invoker`,
+// heredó esa restricción — cualquier escritura legacy en scans vía service_role
+// (incluidos los cron de escaneo) rompía con "permission denied" la primera vez
+// que este esquema llegó a tráfico real de producción.
+// Arreglo: statsedge_published_result_set_sealed_v1 pasa a `security definer`
+// (propiedad de postgres, a quien el revoke nunca le tocó el EXECUTE) — el
+// contrato de revocación de Hito 1B-1 para service_role queda intacto, solo se
+// habilita la ruta del trigger.
+test("real PostgreSQL: escritura legacy en scans como service_role sobrevive al trigger de sellado de Hito 1B-2", () => {
+  const url = requireEphemeralPostgresUrl("scan-execution-lifecycle");
+  const legacyScanId = "00000000-0000-0000-0000-000000001c01";
+  // Supabase concede a service_role acceso de tabla sobre todo public.* como parte
+  // del aprovisionamiento automático de la plataforma — nunca aparece en schema.sql
+  // (verificado: no hay ningún `grant ... to service_role` sobre tablas en todo el
+  // archivo) y el bootstrap efímero de este harness (ensureEphemeralRoles) no lo
+  // replica. Sin este grant el insert falla con "permission denied for table scans"
+  // antes de llegar siquiera al trigger — un problema real pero distinto del que
+  // este test existe para proteger. Se otorga aquí solo lo mínimo para igualar el
+  // acceso base que service_role ya tiene en producción.
+  psql(url, "grant select, insert, update on public.scans to service_role;");
+  // En Supabase real, service_role tiene el atributo BYPASSRLS a nivel de
+  // plataforma, así que ninguna tabla con RLS habilitada (como public.scans,
+  // que no tiene ninguna policy) le bloquea nada. Este harness crea los roles
+  // efímeros deliberadamente SIN bypassrls (ver EPHEMERAL_ROLE_PROVISION_SQL:
+  // la propia comprobación de seguridad revienta si rolbypassrls es true) — es
+  // una invariante de seguridad del harness, no algo que este test deba tocar.
+  // Se replica el efecto solo para esta tabla con una policy explícita y
+  // acotada a service_role, en vez de tocar el atributo del rol.
+  psql(url, "create policy scans_service_role_all on public.scans for all to service_role using (true) with check (true);");
+  psql(url, `
+    set role service_role;
+    insert into public.scans (id, owner_id, local_id, name)
+    values ('${legacyScanId}', 'hito-1b2-legacy-owner', 'hito-1b2-legacy-write', 'Legacy write as service_role');
+    reset role;
+  `);
+  const row = JSON.parse(psql(url, `select to_jsonb(s)::text from public.scans s where s.id='${legacyScanId}'`));
+  assert.equal(row.id, legacyScanId);
+  assert.equal(row.owner_id, "hito-1b2-legacy-owner");
+  assert.equal(row.published_result_set_id, null);
 });

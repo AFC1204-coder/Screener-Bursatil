@@ -56,7 +56,22 @@ const PROJECTED_TABLES = Object.freeze(["scans", "scan_results", ...HITO_TABLES]
 // Reviewed: no pg_cron/net/http references, plain DDL + two `do $$ ... $$` role
 // existence checks, same shape as the other conditional-grant blocks already in
 // this file.
-const REVIEWED_BOOTSTRAP_SOURCE_DIGEST = "12e81baea88ab4c3fd4df5d877b7067caacb7668de6a13056193eb3c95667baa";
+//
+// Updated again 2026-07-29: both definitions of
+// statsedge_published_result_set_sealed_v1() (Hito 1B-1 and Hito 1B-2) changed
+// from `security invoker` to `security definer` — see the comment on the first
+// definition for why. No other bytes changed; reviewed the same way (plain
+// keyword change, no new pg_cron/net/http surface).
+//
+// Updated again 2026-07-29: added the missing `drop trigger if exists
+// derived_snapshots_source_immutable_trg on public.derived_snapshots;` before
+// its `create trigger` — the only CREATE TRIGGER in the whole file without
+// this guard (verified by cross-referencing all 9 against their drop-if-exists
+// pairs). Without it, re-running this already-idempotent-everywhere-else file
+// against a database where it already ran once fails with "trigger already
+// exists" — exactly what happened deploying to production today. Reviewed:
+// single added DDL guard line, no new pg_cron/net/http surface.
+const REVIEWED_BOOTSTRAP_SOURCE_DIGEST = "ca42831d6553d8fa296a0ae6a70dfccc33609f98d85a3e72151e24f52b992fb6";
 const REVIEWED_FOUNDATION_BASE_SOURCE_DIGEST = "dcf499b681c3fabc8fdd42b2481494e98aa87c8711235b5e3fb40057fcab2a56";
 const REPAIRED_FOUNDATION_BASE_SOURCE_DIGEST = "31c96fc15b795abec6393c4c2a4549f5daf0f98a4ab16d827f245d4c049b7145";
 const PG_CRON_EXTENSION_SQL = "create extension if not exists pg_cron;";
@@ -1013,6 +1028,19 @@ export function applyBootstrapProjection(url) {
   prepareEmptyPostgres(url);
   ensureEphemeralRoles(url);
   applySql(url, bootstrapSchemaSql(), "controlled full bootstrap schema.sql");
+}
+
+// Re-aplica supabase/schema.sql sobre una base donde ya se aplicó una vez
+// (deliberadamente SIN prepareEmptyPostgres/assertEmptyDatabase — ese es
+// justo el escenario que se quiere probar: un redeploy real de
+// `npm run supabase:schema` nunca corre contra una base vacía). Existe porque
+// el 29 de julio de 2026 un `create trigger` sin su `drop trigger if exists`
+// (derived_snapshots_source_immutable_trg) hizo que el redeploy real contra
+// producción fallara con "trigger already exists" — el mismo archivo llevaba
+// meses pasando la suite efímera porque cada test parte de una base vacía y
+// nunca ejercita un segundo pase.
+export function reapplyBootstrapProjection(url) {
+  applySql(url, bootstrapSchemaSql(), "controlled full bootstrap schema.sql (re-apply)");
 }
 
 const FOUNDATION_CATALOG_SQL = String.raw`

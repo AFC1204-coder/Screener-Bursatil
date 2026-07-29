@@ -421,6 +421,7 @@ begin
 end;
 $$;
 
+drop trigger if exists derived_snapshots_source_immutable_trg on public.derived_snapshots;
 create trigger derived_snapshots_source_immutable_trg
 before update of source_kind, source_result_set_id, source_scan_id, source_execution_id, source_set_hash, source_hash_version
 on public.derived_snapshots
@@ -1031,13 +1032,25 @@ end;
 $$;
 
 create or replace function public.statsedge_published_result_set_sealed_v1()
-returns trigger language plpgsql security invoker
+returns trigger language plpgsql security definer
 set search_path = pg_catalog, public
 as $$
 declare v_set public.scan_result_sets%rowtype; v_execution public.scan_executions%rowtype;
 begin
   -- `scans` is already locked by this trigger. The advisory attempt must be
   -- fail-closed, not a wait that can cycle with an inverse trigger/writer.
+  --
+  -- SECURITY DEFINER (not invoker): this trigger fires on every insert/update
+  -- of owner_id on public.scans, including the ordinary legacy upsert that
+  -- writeMaterializedScan performs over PostgREST as service_role. The
+  -- internal helper below has EXECUTE revoked from service_role as part of
+  -- the Hito 1B-1 contract (see the nearby revoke block and the ACL
+  -- assertions in tests/integration/scan-execution-lifecycle.real.test.mjs).
+  -- As `security invoker` this function inherited that restriction and broke
+  -- every legacy write the instant this schema reached production. DEFINER
+  -- runs it as its owner (postgres), who the revoke never touched — the
+  -- service_role revocation itself stays completely intact; only the
+  -- trigger's own internal call is exempted.
   perform public.statsedge_lock_result_sets_v1(array[
     case when tg_op = 'UPDATE' then old.published_result_set_id else null end,
     new.published_result_set_id
@@ -1238,10 +1251,12 @@ create trigger scan_executions_terminal_immutable_trg before update on public.sc
 for each row execute function public.statsedge_terminal_execution_immutable_v1();
 
 create or replace function public.statsedge_published_result_set_sealed_v1()
-returns trigger language plpgsql security invoker set search_path = pg_catalog, public
+returns trigger language plpgsql security definer set search_path = pg_catalog, public
 as $$
 declare v_set public.scan_result_sets%rowtype; v_execution public.scan_executions%rowtype;
 begin
+  -- security definer: mismo motivo que la primera definición de esta función
+  -- (Hito 1B-1) — ver ese comentario para el detalle completo.
   perform public.statsedge_lock_result_sets_v1(array[case when tg_op = 'UPDATE' then old.published_result_set_id else null end, new.published_result_set_id]);
   if new.published_result_set_id is null then return new; end if;
   select * into v_set from public.scan_result_sets where id = new.published_result_set_id for key share;

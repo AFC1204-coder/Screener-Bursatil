@@ -7,6 +7,7 @@ import {
   bootstrapStatementInventory,
   catalogObjectNames,
   foundationCatalog,
+  reapplyBootstrapProjection,
   requireEphemeralPostgresUrl,
 } from "./_ephemeralPostgresHarness.mjs";
 
@@ -81,4 +82,22 @@ test("real PostgreSQL: bootstrap schema and base-plus-migrations 1A/1B-1/1B-2/Hi
       );
     }
   }
+});
+
+// Regresión del 29 de julio de 2026: `npm run supabase:schema` (que reaplica
+// TODO supabase/schema.sql, no una migración puntual) falló en producción con
+// "trigger \"derived_snapshots_source_immutable_trg\" already exists" — el
+// único `create trigger` del archivo sin su `drop trigger if exists`. La suite
+// efímera no lo cazó porque cada test parte de `prepareEmptyPostgres` /
+// `assertEmptyDatabase`: nunca se ejercita un segundo pase sobre una base ya
+// migrada, que es exactamente lo que hace un redeploy real. Este test reutiliza
+// la base `schema-parity-bootstrap` ya poblada por el test anterior (mismo
+// nombre de suite → misma base física; node:test corre los tests de un archivo
+// en el orden en que se declaran) y la reaplica encima de sí misma.
+test("real PostgreSQL: supabase/schema.sql se puede reaplicar sobre una base ya migrada sin romper ni duplicar nada", () => {
+  const bootstrapUrl = requireEphemeralPostgresUrl("schema-parity-bootstrap");
+  const before = foundationCatalog(bootstrapUrl);
+  reapplyBootstrapProjection(bootstrapUrl);
+  const after = foundationCatalog(bootstrapUrl);
+  assert.deepEqual(after, before, "Reaplicar supabase/schema.sql sobre una base ya migrada no debe fallar ni cambiar el catálogo resultante.");
 });

@@ -82,10 +82,12 @@ create trigger scan_executions_terminal_immutable_trg before update on public.sc
 for each row execute function public.statsedge_terminal_execution_immutable_v1();
 
 create or replace function public.statsedge_published_result_set_sealed_v1()
-returns trigger language plpgsql security invoker set search_path = pg_catalog, public
+returns trigger language plpgsql security definer set search_path = pg_catalog, public
 as $$
 declare v_set public.scan_result_sets%rowtype; v_execution public.scan_executions%rowtype;
 begin
+  -- security definer: mismo motivo que la primera definición de esta función
+  -- (Hito 1B-1) — ver ese comentario para el detalle completo.
   perform public.statsedge_lock_result_sets_v1(array[case when tg_op = 'UPDATE' then old.published_result_set_id else null end, new.published_result_set_id]);
   if new.published_result_set_id is null then return new; end if;
   select * into v_set from public.scan_result_sets where id = new.published_result_set_id for key share;
