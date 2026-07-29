@@ -177,6 +177,14 @@ Esto separa automáticamente warrants y ADR sin trabajo manual. Decidir
 aparte si los REIT entran (son valores operables legítimos, pero su
 comportamiento técnico difiere).
 
+**Esta regla es solo para el universo de acciones.** Filtrar por
+`type == "Common Stock"` excluye también los ETF (no aparecen como
+"Common Stock" en el catálogo de Twelve Data). Eso es correcto para el
+screener de acciones, pero la capa de ETF de país/sector (cobertura
+internacional, ver Regla whitelist más abajo) es un universo aparte con
+su propio criterio de tipo — no se resuelve extendiendo esta regla, y no
+debe mezclarse con el filtro de acciones.
+
 ### Regla 3 — Excluir OTC explícitamente
 
 En EEUU, `country: United States` + `type: Common Stock` incluye 9.217
@@ -193,10 +201,15 @@ están en:
 - `XNGS` — Global Select (1.266)
 - `XNMS` — Global Market (901)
 
+`XNAS` en cambio SÍ entra en la whitelist (ver abajo) pese a sus 24
+símbolos: verificado contra el catálogo que esos 24 `Common Stock` no se
+solapan con XNCM/XNGS/XNMS (0 símbolos en común) — no son ruido del
+mismo Nasdaq ya cubierto, son un listado distinto.
+
 ### Lista blanca de MIC codes
 
 ```
-Norteamérica:  XNYS, XASE, XNCM, XNGS, XNMS, XTSE, XTSX
+Norteamérica:  XNYS, XASE, XNAS, XNCM, XNGS, XNMS, ARCX, BATS, XTSE, XTSX
 Asia:          XJPX, XHKG
 Reino Unido:   XLON
 Europa:        XETR, XPAR, XMAD, XMIL, XAMS, XBRU, XLIS, XSWX
@@ -204,9 +217,29 @@ Nórdicos:      XSTO, XCSE, XOSL, XHEL
 Otros:         XWAR (Polonia), XTAE (Israel)
 ```
 
-Total en bruto con esta lista y `type == "Common Stock"`: **36.743**.
-Descontando el ruido de cotizaciones cruzadas de Milán, el universo real
-ronda los **26.000–27.000**.
+- **`ARCX` (NYSE Arca) es imprescindible, no opcional:** es la bolsa
+  donde cotiza la mayoría de ETF estadounidenses, y la capa de cobertura
+  internacional por ETF de país/sector depende de este MIC. Sin `ARCX`
+  esa capa no existe. Ojo: el catálogo `/stocks` de Twelve Data (este
+  documento se verificó contra él) NO incluye ETF — son un endpoint
+  aparte (`/etf`) no descargado todavía, así que el recuento de ETF en
+  `ARCX` queda pendiente de verificar cuando se traiga ese catálogo. Lo
+  que si se confirmó en `/stocks`: 7 símbolos bajo `ARCX` (3 Common
+  Stock, 3 Limited Partnership, 1 Exchange-Traded Note) — la razón real
+  de incluirlo no es este recuento, es la capa de ETF pendiente.
+- **`BATS` (Cboe BZX) no es redundante con NYSE/Nasdaq:** Cboe Global
+  Markets Inc. (símbolo `CBOE`, del S&P 500) cotiza bajo `mic_code:
+  BATS` — no aparece en ningún otro MIC de la whitelist. Verificado
+  contra el catálogo: **1 símbolo** bajo `BATS` (`CBOE` mismo), no 17
+  como se asumió inicialmente — la cifra de 17 no se sostuvo al
+  verificarla y se descarta. La razón para incluir `BATS` sigue siendo
+  válida (recupera un valor real que ningún otro MIC cubre), solo el
+  número era supuesto, no verificado.
+
+Total en bruto con esta lista y `type == "Common Stock"`: **36.771**
+(36.743 + 3 de `ARCX` + 1 de `BATS` + 24 de `XNAS`). Descontando el
+ruido de cotizaciones cruzadas de Milán, el universo real ronda los
+**26.000–27.000**.
 
 ### Mercados excluidos y por qué
 
