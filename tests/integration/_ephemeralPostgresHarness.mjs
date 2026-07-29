@@ -821,34 +821,39 @@ export function assertFoundationBaseFixtureSource() {
   foundationBaseFixtureSql();
 }
 
+const FOUNDATION_MIGRATION_FILENAME = "20260717100000_scan_result_sets_foundation.sql";
+
 function foundationMigrationSql() {
-  const migration = path.resolve(process.cwd(), "supabase/migrations/20260717100000_scan_result_sets_foundation.sql");
+  const migration = path.resolve(process.cwd(), `supabase/migrations/${FOUNDATION_MIGRATION_FILENAME}`);
   assert.ok(fs.existsSync(migration), `Missing foundation migration: ${migration}`);
   return fs.readFileSync(migration, "utf8");
 }
 
-function executionLifecycleMigrationSql() {
-  const migration = path.resolve(process.cwd(), "supabase/migrations/20260717110000_scan_execution_lease_ledger.sql");
-  assert.ok(fs.existsSync(migration), `Missing Hito 1B-1 migration: ${migration}`);
-  return fs.readFileSync(migration, "utf8");
-}
+const MIGRATIONS_DIR = path.resolve(process.cwd(), "supabase/migrations");
 
-function finalizationMigrationSql() {
-  const migration = path.resolve(process.cwd(), "supabase/migrations/20260719100000_scan_result_set_finalize_publish.sql");
-  assert.ok(fs.existsSync(migration), `Missing Hito 1B-2 migration: ${migration}`);
-  return fs.readFileSync(migration, "utf8");
-}
-
-function publishedResultReadMigrationSql() {
-  const migration = path.resolve(process.cwd(), "supabase/migrations/20260720100000_published_scan_result_read.sql");
-  assert.ok(fs.existsSync(migration), `Missing Hito 1B-3 migration: ${migration}`);
-  return fs.readFileSync(migration, "utf8");
-}
-
-function baselineRepairMigrationSql() {
-  const migration = path.resolve(process.cwd(), "supabase/migrations/20260717120000_upsert_scan_newer_wins_baseline_repair.sql");
-  assert.ok(fs.existsSync(migration), `Missing append-only baseline repair migration: ${migration}`);
-  return fs.readFileSync(migration, "utf8");
+// Migrations applied on top of the Hito 1A foundation, discovered dynamically
+// from supabase/migrations/ instead of a hand-maintained list of filenames.
+// A fixed list silently excludes every future migration from schema-parity
+// until someone remembers to add it by hand — that's a real failure mode
+// that already happened once in production (finalize_scan_results drifted
+// from schema.sql for 28 days undetected). Supabase's timestamp-prefixed
+// naming makes lexicographic filename order equal chronological order, so a
+// sorted directory read reproduces the exact same application order as the
+// migration timestamps themselves.
+//
+// Anything at or before FOUNDATION_MIGRATION_FILENAME is deliberately
+// excluded: applyFoundation() below applies foundationMigrationSql() on top
+// of foundationBaseFixtureSql(), a frozen `git show FOUNDATION_BASE_COMMIT:
+// supabase/schema.sql` snapshot. Everything up to and including the
+// foundation migration is already baked into that snapshot/step — replaying
+// it again here would fail on duplicate objects (tables/functions that
+// already exist). Only migrations strictly newer than the foundation belong
+// in this dynamic tail.
+function postFoundationMigrationFiles() {
+  return fs.readdirSync(MIGRATIONS_DIR)
+    .filter((name) => name.endsWith(".sql") && name > FOUNDATION_MIGRATION_FILENAME)
+    .sort()
+    .map((name) => path.join(MIGRATIONS_DIR, name));
 }
 
 function markedFoundationProjectionSql() {
@@ -992,10 +997,9 @@ export function applyBaseCatalogFixture(url) {
 
 export function applyExecutionLifecycle(url) {
   applyFoundation(url);
-  applySql(url, executionLifecycleMigrationSql(), "Hito 1B-1 execution lifecycle migration");
-  applySql(url, baselineRepairMigrationSql(), "Hito 0 append-only baseline repair migration");
-  applySql(url, finalizationMigrationSql(), "Hito 1B-2 finalization/publication migration");
-  applySql(url, publishedResultReadMigrationSql(), "Hito 1B-3 published result reader migration");
+  for (const migrationPath of postFoundationMigrationFiles()) {
+    applySql(url, fs.readFileSync(migrationPath, "utf8"), `migration ${path.basename(migrationPath)}`);
+  }
 }
 
 export function applyBootstrapProjection(url) {
