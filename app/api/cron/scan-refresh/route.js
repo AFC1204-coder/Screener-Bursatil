@@ -214,16 +214,20 @@ export async function GET(request) {
     });
   }
   const run = await createRun(group, options);
+  let phase = "scan";
   try {
     const result = await runMaterializedScan(options);
+    phase = "saved_scan_write";
     const savedScan = await writeMaterializedScan(result.scan);
+    phase = "history_write";
     const history = savedScan.saved && result.history
       ? await writeScanSymbolHistory({
         ownerId: supabaseConfig().ownerId,
         sourceScanId: savedScan.scanId,
         ...result.history,
-      })
+      }).catch((error) => ({ saved: false, error: error.message }))
       : { skipped: true, saved: 0 };
+    phase = "cursor_write";
     const cursorWrite = savedScan.saved
       ? await writeScanBatchCursor(nextCursorValue(cursor.value || {}, options, result, savedScan)).catch((error) => ({ saved: false, error: error.message }))
       : { skipped: true };
@@ -239,7 +243,9 @@ export async function GET(request) {
       lastMarkets: group.markets,
       lastSavedRows: savedScan.rows || 0,
     };
+    phase = "rotation_write";
     const rotationWrite = manualGroup ? { skipped: true } : await writeRotation(nextRotation).catch((error) => ({ saved: false, error: error.message }));
+    phase = "done";
     const stats = {
       group: group.key,
       ...sanitizeStats(result.stats),
@@ -273,8 +279,8 @@ export async function GET(request) {
       stats: sanitizeStats(result.stats),
     });
   } catch (error) {
-    await finishRun(run, "failed", { error: error.message, stats: { group: group.key, markets: options.markets, limit: options.limit } });
-    return Response.json({ ok: false, group: group.key, error: error.message || "Cron scan refresh failed" }, { status: 502 });
+    await finishRun(run, "failed", { error: error.message, stats: { group: group.key, markets: options.markets, limit: options.limit, phase } });
+    return Response.json({ ok: false, group: group.key, error: error.message || "Cron scan refresh failed", phase }, { status: 502 });
   }
 }
 

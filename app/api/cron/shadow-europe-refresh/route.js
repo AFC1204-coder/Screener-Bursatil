@@ -372,14 +372,17 @@ async function scanPricedShadowSymbols(group, options = {}) {
       markets: options.markets,
     },
   };
+  options.onPhase?.("scan");
   const result = await runMaterializedScan(scanOptions);
+  options.onPhase?.("saved_scan_write");
   const savedScan = await writeMaterializedScan(result.scan);
+  options.onPhase?.("history_write");
   const history = savedScan.saved && result.history
     ? await writeScanSymbolHistory({
       ownerId: supabaseConfig().ownerId,
       sourceScanId: savedScan.scanId,
       ...result.history,
-    })
+    }).catch((error) => ({ saved: false, error: error.message }))
     : { skipped: true, saved: 0 };
   // Refresco de leaderboards movido a /api/cron/leaderboards-refresh
   // (cadencia baja, propia) — este cron ya no dispara la RPC
@@ -433,10 +436,18 @@ export async function GET(request) {
     });
   }
   const run = await createRun(group, options);
+  let phase = "resolve";
   try {
     const resolve = options.resolvePerMarket ? await resolveShadowSymbols(options) : { skipped: true, rows: [], errors: [], candidates: 0, mapped: 0, persisted: 0, markedResolved: 0, markedUnresolved: 0 };
+    phase = "price";
     const price = options.pricePerMarket ? await validateShadowPrices(options) : { skipped: true, rows: [], errors: [], candidates: 0, priced: 0, stale: 0, unavailable: 0, updated: 0 };
-    const scan = await scanPricedShadowSymbols(group, options);
+    const scan = await scanPricedShadowSymbols(group, {
+      ...options,
+      onPhase: (nextPhase) => {
+        phase = nextPhase;
+      },
+    });
+    phase = "rotation_write";
     const nextRotation = {
       updatedAt: new Date().toISOString(),
       previousIndex: groupIndex,
@@ -448,6 +459,7 @@ export async function GET(request) {
       lastSavedRows: scan.savedRows || 0,
     };
     const rotationWrite = manualGroup ? { skipped: true } : await writeRotation(nextRotation).catch((error) => ({ saved: false, error: error.message }));
+    phase = "done";
     const errors = [...(resolve.errors || []), ...(price.errors || [])];
     const stats = {
       group: group.key,
@@ -472,8 +484,8 @@ export async function GET(request) {
       errors,
     });
   } catch (error) {
-    await finishRun(run, "failed", { error: error.message, stats: { group: group.key, markets: options.markets } });
-    return Response.json({ ok: false, job: "cron-shadow-europe-refresh", group: group.key, error: error.message || "Shadow Europe cron failed" }, { status: 502 });
+    await finishRun(run, "failed", { error: error.message, stats: { group: group.key, markets: options.markets, phase } });
+    return Response.json({ ok: false, job: "cron-shadow-europe-refresh", group: group.key, error: error.message || "Shadow Europe cron failed", phase }, { status: 502 });
   }
 }
 

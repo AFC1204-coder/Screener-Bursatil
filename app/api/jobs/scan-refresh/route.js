@@ -393,7 +393,7 @@ export async function GET(request) {
         ownerId: config.ownerId,
         sourceScanId: savedScan.scanId,
         ...result.history,
-      })
+      }).catch((error) => ({ saved: false, error: error.message }))
       : { skipped: true, saved: 0 };
     phase = "cursor_write";
     const cursorWrite = options.useCursor && savedScan.saved
