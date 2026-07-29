@@ -25,6 +25,7 @@ const REQUIRED_TABLES = [
   ["leaderboard_items", "derived-products"],
   ["rs_weekly_snapshots", "derived-products"],
   ["rs_weekly_items", "derived-products"],
+  ["scan_symbol_history", "scan-history"],
 ];
 const REQUIRED_FUNCTIONS = [
   ["upsert_scan_newer_wins", "sync", (config) => ({ p_owner_id: config.ownerId, p_scan: null, p_results: [] })],
@@ -91,6 +92,17 @@ const REQUIRED_FUNCTIONS = [
   // (limpieza de huérfanos + trim de excedentes en daily_bars). Si falta, el
   // job de pg_cron falla y daily_bars crece sin control.
   ["purge_daily_bars_backstop", "ops", () => ({})],
+  // scan_symbol_history_latest_v1: proyección del último estado por (owner, MIC,
+  // símbolo) que consume writeScanSymbolHistory (lib/scanHistory.js) en cada
+  // scan-refresh. Si falta, el escritor del histórico falla de forma aislada
+  // (no tumba el scan — commit c268111) pero el histórico deja de acumularse
+  // en silencio. Mismo patrón que finalize_scan_results/scan_finalize_inputs:
+  // agregado para que un deploy incompleto falle ruidosamente en
+  // `npm run supabase:status` en vez de descubrirse semanas después.
+  ["scan_symbol_history_latest_v1", "scan-history", (config) => ({
+    p_owner_id: config.ownerId,
+    p_mic_codes: [],
+  })],
 ];
 
 function loadEnv() {
