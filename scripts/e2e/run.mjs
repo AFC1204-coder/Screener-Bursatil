@@ -3,7 +3,7 @@
 // Arranca el dev server si no está, genera filas semilla con el buildResearchRow
 // real y ejecuta las specs de tests/e2e/ secuencialmente en Chromium headless.
 import { spawn } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
 import { buildResearchRow } from "@/lib/researchRow";
 import { stage2Bars } from "../../tests/fixtures.js";
@@ -11,6 +11,21 @@ import { stage2Bars } from "../../tests/fixtures.js";
 const BASE_URL = "http://127.0.0.1:3000";
 const onlyFilter = process.argv[2] || "";
 const SERVER_START_TIMEOUT_MS = Number(process.env.E2E_SERVER_TIMEOUT_MS || 180_000);
+
+function accessToken() {
+  const source = readFileSync(new URL("../../.env.local", import.meta.url), "utf8");
+  const line = source.split(/\r?\n/).find((item) => /^STATSEDGE_ACCESS_TOKEN\s*=/.test(item));
+  if (!line) throw new Error("STATSEDGE_ACCESS_TOKEN no encontrado en .env.local");
+  return line.replace(/^STATSEDGE_ACCESS_TOKEN\s*=\s*/, "").trim().replace(/^['"]|['"]$/g, "");
+}
+
+async function login(context) {
+  const response = await context.request.post(`${BASE_URL}/api/auth/session`, {
+    headers: { "Content-Type": "application/json" },
+    data: { token: accessToken() },
+  });
+  if (!response.ok()) throw new Error(`Login E2E falló: ${response.status()} ${await response.text()}`);
+}
 
 async function serverUp(page) {
   try {
@@ -94,6 +109,7 @@ for (const file of specFiles) {
   const context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
   const startedAt = Date.now();
   try {
+    await login(context);
     await spec.run({ context, baseUrl: BASE_URL, sessionSeed, seedRows });
     console.log(`✓ ${spec.name || file} (${((Date.now() - startedAt) / 1000).toFixed(1)}s)`);
   } catch (error) {

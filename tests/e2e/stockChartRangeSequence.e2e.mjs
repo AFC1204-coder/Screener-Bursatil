@@ -1,15 +1,6 @@
 // E2E gráfico: tras una carga fresca en StrictMode, cada cambio consecutivo de
 // rango debe publicar los datos de su request; no basta con validar el primer clic.
-import { readFileSync } from "node:fs";
-
 export const name = "gráfico de ficha actualiza tres rangos consecutivos";
-
-function accessToken() {
-  const source = readFileSync(new URL("../../.env.local", import.meta.url), "utf8");
-  const line = source.split(/\r?\n/).find((item) => /^STATSEDGE_ACCESS_TOKEN\s*=/.test(item));
-  if (!line) throw new Error("STATSEDGE_ACCESS_TOKEN no encontrado en .env.local");
-  return line.replace(/^STATSEDGE_ACCESS_TOKEN\s*=\s*/, "").trim().replace(/^['\"]|['\"]$/g, "");
-}
 
 function tradingBars(count, latestClose) {
   const bars = [];
@@ -110,12 +101,6 @@ async function selectRange(page, range, previousSnapshot) {
 }
 
 export async function run({ context, baseUrl }) {
-  const login = await context.request.post(`${baseUrl}/api/auth/session`, {
-    headers: { "Content-Type": "application/json" },
-    data: { token: accessToken() },
-  });
-  if (!login.ok()) throw new Error(`Login E2E falló: ${login.status()} ${await login.text()}`);
-
   await context.route("**/api/company-brief?**", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
