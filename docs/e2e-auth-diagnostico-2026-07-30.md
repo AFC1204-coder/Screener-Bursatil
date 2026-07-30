@@ -92,16 +92,17 @@ cuando fue posible.
 | 9 | `reviewStockContext.e2e.mjs` | **AMBIGUO** | Dos causas: (a) `text-transform:uppercase` en CSS (`styles/components.css:5892-5899`) transforma el `innerText` del `sourceLabel`, y el `.includes(...)` del test compara contra el texto sin mayúsculas — bug de test claro; (b) el test también busca `.screenerOriginPanel`/`.screenerOriginReviewFocus`, que no se renderizan en `/stock/[symbol]` (el import de `ScreenerOriginPanel` en `StockClient.jsx` está muerto, solo se usa en `QuickReviewModal.jsx`). Info equivalente sí existe vía `StockDecisionDesk`, pero no queda claro si `ScreenerOriginPanel` debía seguir viviendo en la ficha o si fue reemplazado intencionalmente — a confirmar con el equipo |
 | 10 | `scoreAuditFilter.e2e.mjs` | BUG DE TEST | Mismo patrón que #2/#4: `.scoreAuditMini.compactTrustFilter` (`lib/screenerDomains/audit.jsx:118`) ya no se renderiza por fila en `CompactResultsTable` |
 | 11 | `screenerQuickReviewStock.e2e.mjs` | BUG DE TEST | Busca `select[aria-label="Filtrar por prioridad de investigacion"]`, que solo existe en la vista **móvil** (`lib/screenerMobile.jsx:153`). El desktop reemplazó los `<select>` de filtro por rails clicables (`ReviewPriorityResultRail`, `app/components/screener/ReviewWidgets.jsx:14`) — documentado explícitamente en un comentario de `ScreenerShell.jsx:615-617` |
-| 12 | `serverScan.e2e.mjs` | BUG DE TEST (no determinista) | El scan corrió correctamente contra datos reales/en vivo (`providerErrors: []`, 6 símbolos analizados) y el motor rechazó legítimamente los 6 tickers por no cumplir el filtro de tendencia bajo el preset "Balanceado" — condición de mercado del día, no un fallo de pipeline. El test no mockea datos ni fija un preset permisivo, así que depende de que al menos un ticker real pase el filtro ese día |
+| 12 | `serverScan.e2e.mjs` | **RECLASIFICADO 2026-07-30 → BUG DE PRODUCTO** (ver abajo) | ~~El scan corrió correctamente contra datos reales/en vivo (`providerErrors: []`, 6 símbolos analizados) y el motor rechazó legítimamente los 6 tickers por no cumplir el filtro de tendencia bajo el preset "Balanceado" — condición de mercado del día, no un fallo de pipeline.~~ Clasificación original, descartada tras verificación — ver "Reclasificación #12" abajo |
 
 ### Resumen
 
-- **1 bug de producto real**: el zoom del gráfico no activa la vista manual
-  (`chartNavigation.e2e.mjs`).
+- **2 bugs de producto reales**: el zoom del gráfico no activa la vista manual
+  (`chartNavigation.e2e.mjs`) y el filtro `minWeaknessScore` rechaza líderes
+  técnicamente sanos (`serverScan.e2e.mjs` — ver reclasificación abajo).
 - **1 caso ambiguo**: mezcla de test frágil (case-sensitivity sobre
   `text-transform`) y una posible deuda de refactor sin confirmar
   (`ScreenerOriginPanel` con import muerto en la ficha).
-- **10 bugs de test**, casi todos por el mismo patrón raíz: refactors legítimos
+- **9 bugs de test**, casi todos por el mismo patrón raíz: refactors legítimos
   de UI (badges de filtro por fila consolidados en un badge agregado;
   `<details>` colapsados por defecto para "Auditoría y datos" y "Herramientas
   de mantenimiento"; `<select>` de filtro reemplazados por rails clicables en
@@ -110,3 +111,74 @@ cuando fue posible.
 
 No se corrigió ninguno de estos 12 fallos — quedan documentados para que se
 prioricen aparte, según instrucción explícita de la tarea.
+
+## Reclasificación #12 (2026-07-30, sesión posterior): BUG DE PRODUCTO
+
+La justificación original ("el motor rechazó legítimamente los 6 tickers...
+condición de mercado del día") citaba datos de ejecución (`providerErrors:
+[]`, "6 símbolos analizados") que no quedaron guardados en ningún artefacto
+del repo — a diferencia de los otros 11 hallazgos de esta tabla, ninguno
+verificable después del hecho. Se re-ejecutó el spec instrumentado
+(`page.on("response", ...)` capturando `/api/scan*` en vivo) para verificar
+con evidencia reproducible.
+
+**Confirmado: el escaneo funcionó perfecto — 6/6 símbolos analizados, 0
+errores de proveedor.** El texto visible tras completar decía literalmente
+`Completado: 0 pasan Balanceado · muestra 6/6 (100%)`. El rechazo es 100%
+del filtro, no un fallo de datos — hasta ahí, la clasificación original
+acertaba. Pero el motivo era otro. Scores reales de `scan_results` para esa
+corrida exacta (`scan_id: 9f2ff675-b2d3-484a-b037-cc27e051c0f5`):
+
+| Symbol | Weinstein | Minervini | RS | WeaknessScore | ¿Limpia Weinstein≥50 / Minervini≥38 / RS≥50? |
+|---|---|---|---|---|---|
+| AAPL | 100 | 100 | 76 | **0** | Sí, sí, sí — **rechazado igualmente** |
+| GOOGL | 68 | 62 | 58 | **29** | Sí, sí, sí — **rechazado igualmente** |
+| MSFT | 0 | 8 | 30 | 97 | No — rechazo legítimo (Stage 4 real) |
+| META | 0 | 6 | 31 | 100 | No — rechazo legítimo (Stage 4 real) |
+| NVDA | 68 | 50 | 42 | 67 | RS 42<50 — rechazo por RS, defendible con universo de 6 |
+| AMZN | 60 | 50 | 36 | 79 | RS 36<50 — rechazo por RS, defendible con universo de 6 |
+
+AAPL y GOOGL limpian todos los umbrales de tendencia/RS por márgenes amplios
+y aun así quedan fuera. Causa exacta, `lib/screenerFilters.js:747-748`:
+
+```js
+const minWeakness = Math.max(35, finite(set.minWeaknessScore) ?? 0);
+if (!Number.isFinite(weak) || weak < minWeakness) return reject("minWeaknessScore", ...);
+```
+
+`weaknessScore` es una señal de dirección **negativa** (alto = más
+deterioro técnico; confirmado en `lib/scoringEngine.js`). Este código exige
+`weaknessScore >= 50` (default de `QUALITY_DEFAULTS`,
+`lib/screenerFilterCatalog.js:130`) para **pasar** — es decir, exige
+deterioro técnico significativo para calificar como líder. AAPL, con
+`weaknessScore: 0` (salud perfecta), queda excluido por eso, no por
+debilidad real.
+
+**El suelo `Math.max(35, ...)` es además un límite duro que ni el propio
+preset de diagnóstico del producto puede desactivar.** La acción rápida
+"Abrir scores" (`lib/screenerFilterCatalog.js:472`, familia "Scores", detalle
+literal "Deja pasar para diagnosticar") fija explícitamente
+`minWeaknessScore: 0` — pero el código de `screenerFilters.js` ignora ese 0 y
+aplica 35 de todas formas. La propia intención del producto (0 = sin
+restricción) queda anulada por el código de aplicación del filtro.
+
+**Pregunta pendiente respondida — alcance del sesgo:** de los 7 presets
+definidos en `SCREENER_FILTER_PRESETS`
+(`balanced`, `strict`, `early`, `broad`, `ipo`, `nearPivot`, `weakness`),
+**6 de 7 heredan `minWeaknessScore: 50` de `QUALITY_DEFAULTS` sin
+sobrescribirlo** — solo `weakness` lo cambia explícitamente (`55`), y es el
+único preset donde exigir alta debilidad tiene sentido por diseño (busca
+candidatos a corto/evitar largos, `setupMode: "weakness"`,
+`lib/screenerFilterCatalog.js:174`). Para los otros 6 — incluidos `balanced`
+("Balanceado", el preset por defecto) y `strict` ("Líderes estrictos") — el
+sesgo aplica de la misma forma: exigir deterioro técnico para calificar como
+líder es lo opuesto de lo que esos presets dicen buscar. Esto significa que
+prácticamente cualquier cribado orientado a encontrar líderes hecho hasta
+hoy con estos presets ha estado excluyendo sistemáticamente a los candidatos
+técnicamente más sanos del lote — no es un caso aislado de este test.
+
+No se tocó `lib/screenerFilters.js` ni `lib/screenerFilterCatalog.js` — el
+arreglo (¿el suelo de 35 debería aplicar solo a `setupMode: "weakness"`?
+¿la dirección del criterio debería invertirse a un `maxWeaknessScore` para
+el resto de presets?) es una decisión de producto pendiente, deliberada,
+tomada aparte de esta investigación.
