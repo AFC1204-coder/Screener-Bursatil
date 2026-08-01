@@ -89,6 +89,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
   const page = await context.newPage();
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 90000 });
   await waitForStage(page, () => document.body.innerText.includes("READY") && document.body.innerText.includes("CHECK") && document.body.innerText.includes("BLOCK"), "Restaurar filas de evidencia");
+  await page.locator(".desktopResultsSection .resultsAuditGroup summary").click();
   await waitForStage(page, () => {
     const rail = document.querySelector(".desktopResultsSection .decisionEvidenceSummaryRail");
     return rail?.innerText.includes("Pruebas") && rail.innerText.includes("OK") && rail.innerText.includes("Validar");

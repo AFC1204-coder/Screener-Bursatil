@@ -58,3 +58,5 @@ research/notes/*
 supabase/.temp/
 !.claude/hooks/
 !.claude/hooks/*
+.mcp.json
+.mcp.json

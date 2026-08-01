@@ -6,6 +6,7 @@ export const name = "favoritos en research-desk";
 export async function run({ context, baseUrl }) {
   const page = await context.newPage();
   await page.goto(`${baseUrl}/research-desk`, { waitUntil: "networkidle", timeout: 90000 });
+  await page.locator('[data-testid="research-desk-tools"] summary').click();
   await page.fill("textarea.textarea", "NVDA");
   await page.click("text=Anadir a watchlist");
   await page.waitForFunction(() => {

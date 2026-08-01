@@ -93,6 +93,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
   const page = await context.newPage();
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 90000 });
   await waitForStage(page, () => document.body.innerText.includes("REL") && document.body.innerText.includes("VAL") && document.body.innerText.includes("BLOCK"), "Restaurar filas de fiabilidad");
+  await page.locator(".desktopResultsSection .resultsAuditGroup summary").click();
   await waitForStage(page, () => {
     const panel = (document.querySelector(".desktopResultsSection .auditabilitySummaryRail")?.innerText || "").toLowerCase();
     return panel.includes("auditabilidad") && panel.includes("observación");
