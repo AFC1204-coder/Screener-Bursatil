@@ -92,13 +92,15 @@ cuando fue posible.
 | 9 | `reviewStockContext.e2e.mjs` | **AMBIGUO** | Dos causas: (a) `text-transform:uppercase` en CSS (`styles/components.css:5892-5899`) transforma el `innerText` del `sourceLabel`, y el `.includes(...)` del test compara contra el texto sin mayúsculas — bug de test claro; (b) el test también busca `.screenerOriginPanel`/`.screenerOriginReviewFocus`, que no se renderizan en `/stock/[symbol]` (el import de `ScreenerOriginPanel` en `StockClient.jsx` está muerto, solo se usa en `QuickReviewModal.jsx`). Info equivalente sí existe vía `StockDecisionDesk`, pero no queda claro si `ScreenerOriginPanel` debía seguir viviendo en la ficha o si fue reemplazado intencionalmente — a confirmar con el equipo |
 | 10 | `scoreAuditFilter.e2e.mjs` | BUG DE TEST | Mismo patrón que #2/#4: `.scoreAuditMini.compactTrustFilter` (`lib/screenerDomains/audit.jsx:118`) ya no se renderiza por fila en `CompactResultsTable` |
 | 11 | `screenerQuickReviewStock.e2e.mjs` | BUG DE TEST | Busca `select[aria-label="Filtrar por prioridad de investigacion"]`, que solo existe en la vista **móvil** (`lib/screenerMobile.jsx:153`). El desktop reemplazó los `<select>` de filtro por rails clicables (`ReviewPriorityResultRail`, `app/components/screener/ReviewWidgets.jsx:14`) — documentado explícitamente en un comentario de `ScreenerShell.jsx:615-617` |
-| 12 | `serverScan.e2e.mjs` | **RECLASIFICADO 2026-07-30 → BUG DE PRODUCTO** (ver abajo) | ~~El scan corrió correctamente contra datos reales/en vivo (`providerErrors: []`, 6 símbolos analizados) y el motor rechazó legítimamente los 6 tickers por no cumplir el filtro de tendencia bajo el preset "Balanceado" — condición de mercado del día, no un fallo de pipeline.~~ Clasificación original, descartada tras verificación — ver "Reclasificación #12" abajo |
+| 12 | `serverScan.e2e.mjs` | **RECLASIFICADO 2026-07-30 → BUG DE PRODUCTO** (ver abajo) | El scan corrió correctamente contra datos reales/en vivo (`providerErrors: []`, 6 símbolos analizados). El motor los rechaza porque el filtro `minRsRating: 50` exige `rsGlobalPct` finito, pero con un universo de 6 símbolos `enrichRelativePercentiles` no puede calcular `rsGlobalPct` (`RS_GLOBAL_MIN_SAMPLE = 20`). Resultado: las 6 filas se rechazan con "RS universo sin dato < 50", no por condición de mercado ni por filtro de tendencia. Ver "Reclasificación #12" abajo |
 
 ### Resumen
 
 - **2 bugs de producto reales**: el zoom del gráfico no activa la vista manual
-  (`chartNavigation.e2e.mjs`) y el filtro `minWeaknessScore` rechaza líderes
-  técnicamente sanos (`serverScan.e2e.mjs` — ver reclasificación abajo).
+  (`chartNavigation.e2e.mjs`) y el filtro `minRsRating: 50` rechaza todo
+  escaneo con universo menor que `RS_GLOBAL_MIN_SAMPLE = 20`, incluso cuando
+  las filas limpian todos los demás umbrales del preset (`serverScan.e2e.mjs`
+  — ver reclasificación abajo).
 - **1 caso ambiguo**: mezcla de test frágil (case-sensitivity sobre
   `text-transform`) y una posible deuda de refactor sin confirmar
   (`ScreenerOriginPanel` con import muerto en la ficha).
@@ -139,46 +141,178 @@ corrida exacta (`scan_id: 9f2ff675-b2d3-484a-b037-cc27e051c0f5`):
 | AMZN | 60 | 50 | 36 | 79 | RS 36<50 — rechazo por RS, defendible con universo de 6 |
 
 AAPL y GOOGL limpian todos los umbrales de tendencia/RS por márgenes amplios
-y aun así quedan fuera. Causa exacta, `lib/screenerFilters.js:747-748`:
+y aun así quedan fuera. El motivo es **`minRsRating`**, no `minWeaknessScore`.
+
+### Atribución anterior (descartada)
+
+Una versión previa de esta sección atribuía el rechazo al filtro
+`minWeaknessScore`, citando `lib/screenerFilters.js:747-748` como:
 
 ```js
 const minWeakness = Math.max(35, finite(set.minWeaknessScore) ?? 0);
 if (!Number.isFinite(weak) || weak < minWeakness) return reject("minWeaknessScore", ...);
 ```
 
-`weaknessScore` es una señal de dirección **negativa** (alto = más
-deterioro técnico; confirmado en `lib/scoringEngine.js`). Este código exige
-`weaknessScore >= 50` (default de `QUALITY_DEFAULTS`,
-`lib/screenerFilterCatalog.js:130`) para **pasar** — es decir, exige
-deterioro técnico significativo para calificar como líder. AAPL, con
-`weaknessScore: 0` (salud perfecta), queda excluido por eso, no por
-debilidad real.
+La cita recoge líneas reales del código tal como estaba cuando se redactó
+este diagnóstico, pero la lectura original perdió de vista el contexto. El
+error fue de **encuadre**, no de invención:
 
-**El suelo `Math.max(35, ...)` es además un límite duro que ni el propio
-preset de diagnóstico del producto puede desactivar.** La acción rápida
-"Abrir scores" (`lib/screenerFilterCatalog.js:472`, familia "Scores", detalle
-literal "Deja pasar para diagnosticar") fija explícitamente
-`minWeaknessScore: 0` — pero el código de `screenerFilters.js` ignora ese 0 y
-aplica 35 de todas formas. La propia intención del producto (0 = sin
-restricción) queda anulada por el código de aplicación del filtro.
+1. **El suelo `Math.max(35, ...)` sí existía y era un defecto real, pero
+   no era la causa del rechazo de AAPL.** La línea
+   `lib/screenerFilters.js:747` decía
+   `const minWeakness = Math.max(35, finite(set.minWeaknessScore) ?? 0);`.
+   El suelo `35` anulaba la intención del preset de diagnóstico "Abrir
+   scores" (`lib/screenerFilterCatalog.js:472`), que fija
+   `minWeaknessScore: 0` para indicar "sin restricción". El código de
+   aplicación del filtro lo convertía en `35` y, por tanto, ignoraba esa
+   configuración. Ese suelo se eliminó en un cambio posterior del propio
+   `lib/screenerFilters.js`, junto con el tratamiento del dato ausente.
+   Sin embargo, **no explica el rechazo de AAPL**: aunque el suelo
+   existiera, el bloque que lo usa está guardado tras
+   `if (mode === "weakness")`, y el preset `balanced` que se ejecutó en
+   la corrida `9f2ff675` usa `setupMode: "leader"` (heredado de
+   `QUALITY_DEFAULTS`, `lib/screenerFilterCatalog.js:105`). Con ese modo
+   la guarda de `weakness` **nunca se evalúa**. Por tanto, aunque el
+   `Math.max(35, ...)` era un bug real, no era la causa de la fila
+   rechazada. Lo mismo ocurre en el segundo pipeline,
+   `lib/screenerPipeline.js:264-265`, que también está guardado tras
+   `setupMode === "weakness"`.
 
-**Pregunta pendiente respondida — alcance del sesgo:** de los 7 presets
-definidos en `SCREENER_FILTER_PRESETS`
+2. **El bloque entero está guardado tras `mode === "weakness"`.** La
+   condición completa, `lib/screenerFilters.js:747-752`, era:
+   ```js
+   if (mode === "weakness") {
+     const weak = weaknessFilterValue(row);
+     const minWeakness = Math.max(35, finite(set.minWeaknessScore) ?? 0);
+     if (!Number.isFinite(weak) || weak < minWeakness) return reject("minWeaknessScore", `deterioro ${Number.isFinite(weak) ? weak.toFixed(0) : "sin dato"} < ${minWeakness}`);
+     return "";
+   }
+   ```
+   El preset `balanced` usa `setupMode: "leader"` (heredado de
+   `QUALITY_DEFAULTS`, `lib/screenerFilterCatalog.js:105`). Con ese modo la
+   guarda de `weakness` **nunca se evalúa**. Lo mismo ocurre en el segundo
+   pipeline, `lib/screenerPipeline.js:264-265`, que también está guardado
+   tras `setupMode === "weakness"`.
+
+La atribución previa fue una **deducción estática a partir de un fragmento
+de dos líneas**, sin leer el `if (mode === "weakness")` que lo precede ni
+el `setupMode` del preset que se estaba ejecutando. **No existe ningún
+artefacto que registre `field: "minWeaknessScore"` para AAPL en
+`scan_results` de la corrida `9f2ff675`.**
+
+### Causa real (verificada leyendo código)
+
+El rechazo lo produce `minRsRating`, en `lib/screenerFilters.js:737-741`:
+
+```js
+const minRsRating = finite(set.minRsRating);
+if (Number.isFinite(minRsRating) && minRsRating > 0) {
+  const rs = metric(row, "rsGlobalPct");
+  if (!Number.isFinite(rs) || rs < minRsRating) return reject("minRsRating", `RS universo ${Number.isFinite(rs) ? rs.toFixed(0) : "sin dato"} < ${minRsRating}`);
+}
+```
+
+`minRsRating: 50` está activo en `QUALITY_DEFAULTS`
+(`lib/screenerFilterCatalog.js:123`) y por tanto en `balanced`
+(`lib/screenerFilterCatalog.js:168`). La guarda exige `rsGlobalPct >= 50`
+y rechaza con `"RS universo sin dato < 50"` cuando el campo no es finito.
+
+El dato falta por construcción. `enrichRelativePercentiles`
+(`lib/relativeStrength.js:224-241`) calcula `rsGlobalPct` llamando a
+`percentileFromSorted(row.rsCompositeRaw, sortedGlobal, minGlobalSample)`,
+con `minGlobalSample = RS_GLOBAL_MIN_SAMPLE = 20`
+(`lib/relativeStrength.js:4, 226`). Y `percentileFromSorted`
+(`lib/relativeStrength.js:192-201`) devuelve `null` cuando
+`sorted.length < minSample`:
+
+```js
+export function percentileFromSorted(value, sorted = [], minSample = 1) {
+  if (!Number.isFinite(value) || sorted.length < minSample) return null;
+  ...
+}
+```
+
+Con un universo de **6** símbolos, `sortedGlobal.length = 6 < 20` →
+`rsGlobalPct = null` para todas las filas. Confirmación en los datos
+persistidos: el `objectiveMetricAudit` de AAPL en `scan_results` marca
+`rsGlobalPct` con `"status": "insufficient-input"`, `"inputCount": 6`,
+`"minInputCount": 20`.
+
+**Cadena causal completa:**
+
+1. `tests/e2e/serverScan.e2e.mjs` define un universo manual de 6 símbolos
+   (AAPL, GOOGL, MSFT, NVDA, AMZN, META).
+2. `lib/screenerPipeline.js:120` llama `sectorize(qualityPassed)`, que en
+   `:314` invoca `enrichRelativePercentiles(...)`.
+3. `lib/relativeStrength.js:231` calcula `rsGlobalPct = percentileFromSorted(row.rsCompositeRaw, sortedGlobal, 20)`.
+4. `lib/relativeStrength.js:193`: con `sortedGlobal.length = 6 < 20`,
+   `percentileFromSorted` retorna `null` para las 6 filas.
+5. `lib/screenerPipeline.js:121` → `splitByFilter` → `filterRejectReason`
+   → `screenerFilterRejectReason`.
+6. `lib/screenerFilters.js:738-741`: como `rsGlobalPct` no es finito y
+   `minRsRating = 50 > 0`, retorna `reject("minRsRating", "RS universo sin dato < 50")`.
+7. Las 6 filas van a `filterRejections`. `postPassed` queda vacío.
+   `finalRows.length = 0` → la UI muestra `Completado: 0 pasan Balanceado`.
+
+### Nota sobre la nomenclatura `rsRating` vs `rsGlobalPct`
+
+El parámetro `minRsRating` lee `metric(row, "rsGlobalPct")` (línea 739),
+que es el **percentil sobre el universo del escaneo**. No es el RS contra
+el benchmark SPY. Ese otro valor aparece persistido en `scan_results` bajo
+el nombre `rsRating`: por ejemplo, AAPL tiene `rsRating: 76` y
+`rsGlobalPct: null`. La coincidencia de nombre entre el parámetro del
+filtro (`minRsRating`) y el campo de la fila (`rsRating`) **no es
+coincidencia de datos** — son magnitudes distintas, con mínimos de
+muestreo distintos. Esa discrepancia de nomenclatura es probablemente lo
+que indujo el error de diagnóstico original.
+
+### Alcance real del defecto
+
+`minRsRating: 50` está en `QUALITY_DEFAULTS`, así que **cualquier escaneo
+con menos de 20 símbolos devuelve cero resultados siempre**, con
+independencia de la calidad de los valores. El mensaje al usuario es
+"0 pasan", no "universo insuficiente para calcular RS de universo" — el
+fallo de producto es exactamente esa falta de diagnóstico en la UI.
+
+De los 7 presets definidos en `SCREENER_FILTER_PRESETS`
 (`balanced`, `strict`, `early`, `broad`, `ipo`, `nearPivot`, `weakness`),
-**6 de 7 heredan `minWeaknessScore: 50` de `QUALITY_DEFAULTS` sin
-sobrescribirlo** — solo `weakness` lo cambia explícitamente (`55`), y es el
-único preset donde exigir alta debilidad tiene sentido por diseño (busca
-candidatos a corto/evitar largos, `setupMode: "weakness"`,
-`lib/screenerFilterCatalog.js:174`). Para los otros 6 — incluidos `balanced`
-("Balanceado", el preset por defecto) y `strict` ("Líderes estrictos") — el
-sesgo aplica de la misma forma: exigir deterioro técnico para calificar como
-líder es lo opuesto de lo que esos presets dicen buscar. Esto significa que
-prácticamente cualquier cribado orientado a encontrar líderes hecho hasta
-hoy con estos presets ha estado excluyendo sistemáticamente a los candidatos
-técnicamente más sanos del lote — no es un caso aislado de este test.
+los 7 heredan `minRsRating: 50` de `QUALITY_DEFAULTS` sin sobrescribirlo
+(verificado contra `lib/screenerFilterCatalog.js:167-175`). El umbral
+afecta a todos por igual.
 
-No se tocó `lib/screenerFilters.js` ni `lib/screenerFilterCatalog.js` — el
-arreglo (¿el suelo de 35 debería aplicar solo a `setupMode: "weakness"`?
-¿la dirección del criterio debería invertirse a un `maxWeaknessScore` para
-el resto de presets?) es una decisión de producto pendiente, deliberada,
-tomada aparte de esta investigación.
+No se tocó `lib/screenerFilters.js`, `lib/relativeStrength.js` ni
+`lib/screenerFilterCatalog.js` — el arreglo (¿relajar `minRsRating` cuando
+`rsGlobalSample < RS_GLOBAL_MIN_SAMPLE`? ¿mostrar advertencia explícita al
+usuario cuando el universo no llega al mínimo?) es una decisión de
+producto pendiente, deliberada, tomada aparte de esta investigación.
+
+### Nota sobre el diseño del test
+
+`tests/e2e/serverScan.e2e.mjs` usa un universo manual de **6 símbolos**,
+por debajo del mínimo de 20 que el pipeline necesita para calcular
+percentiles de universo. Con ese tamaño el test **no puede validar el
+camino de filtrado de forma significativa**, sea cual sea el estado del
+código: cualquier filtro que dependa de `rsGlobalPct` producirá siempre
+"0 pasan" con ese universo, sin que el resultado informe sobre el
+comportamiento real de los filtros para usuarios con universos típicos
+(decenas o cientos de símbolos). La utilidad de este spec como cobertura
+del preset `balanced` es, en este punto, nula — pendiente de rediseñar
+la fixture con un universo mínimo válido o un bypass explícito del
+requisito de percentil.
+
+### Nota metodológica
+
+La atribución errónea a `minWeaknessScore` se produjo por **deducir una
+causa a partir de una lectura estática de código** (dos líneas citadas sin
+su `if (mode === "weakness")` guard) **en lugar de capturar la razón de
+rechazo real** (la salida del motor de filtros con `field` y `reason`).
+La evidencia cruda — `filterRejections` con `symbol`/`key`/`reason` para
+cada fila de la corrida `9f2ff675` — no quedó preservada en el log de la
+sesión original. Sin esa evidencia, la conclusión no era verificable y
+la cita de código, al estar descontextualizada, apuntaba a un mecanismo
+(`minWeaknessScore`) que en realidad está inactivo para el preset
+ejecutado. Lección operativa: para clasificar rechazos del screener, la
+única fuente válida es la lista de `rejections` emitida por
+`filterAnalyzedRows` / `applyScreenerFilters` en la corrida concreta; las
+deducciones a partir de fragmentos sueltos de `screenerFilters.js` deben
+tratarse como hipótesis a verificar, no como causa confirmada.
