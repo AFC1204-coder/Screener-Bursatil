@@ -89,14 +89,9 @@ export async function run({ context, baseUrl, sessionSeed }) {
     if (!before.includes(symbol)) throw new Error(`Falta ${symbol} antes de filtrar: ${before.join(",")}`);
   }
 
-  const clickedRowScoreFilter = await page.evaluate(() => {
-    const row = [...document.querySelectorAll(".compactResultsTable tbody tr")]
-      .find((item) => item.querySelector("a.ticker")?.textContent.trim() === "MIS");
-    const button = row?.querySelector(".scoreAuditMini.compactTrustFilter");
-    button?.click();
-    return Boolean(button);
-  });
-  if (!clickedRowScoreFilter) throw new Error("No encontré el filtro compacto de score audit en la fila MIS");
+  await page.locator(".desktopResultsSection .resultsAuditGroup summary").click();
+  const mismatchSelector = '.desktopResultsSection .scoreAuditSummaryRail button[title="Filtrar Score descuadrado"]';
+  await page.click(mismatchSelector);
   try {
     await page.waitForFunction(() => {
       const rows = [...document.querySelectorAll(".desktopResultsSection table a.ticker")].map((el) => el.textContent.trim());
@@ -112,7 +107,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
   const rowScoreChip = await page.evaluate(() => [...document.querySelectorAll(".resultFilterChip")]
     .map((el) => el.textContent.trim())
     .join(" "));
-  if (!/Score:\s*Descuadre/.test(rowScoreChip)) throw new Error(`Chip de auditoría desde fila inesperado: ${rowScoreChip}`);
+  if (!/Score:\s*Descuadre/.test(rowScoreChip)) throw new Error(`Chip de auditoría desde rail inesperado: ${rowScoreChip}`);
   await page.click(".resultFilterChip");
   await page.waitForFunction(() => document.querySelectorAll(".desktopResultsSection table a.ticker").length >= 3, null, { timeout: 10000 });
 
@@ -150,7 +145,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
   });
   await page.waitForFunction(() => !document.querySelector(".quickReviewModal"), null, { timeout: 10000 });
 
-  await page.click('.desktopResultsSection .scoreAuditSummaryRail button[title="Filtrar Score descuadrado"]');
+  await page.click(mismatchSelector);
   try {
     await page.waitForFunction(() => {
       const rows = [...document.querySelectorAll(".desktopResultsSection table a.ticker")].map((el) => el.textContent.trim());
@@ -159,7 +154,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
   } catch {
     const state = await page.evaluate(() => ({
       visible: [...document.querySelectorAll(".desktopResultsSection table a.ticker")].map((el) => el.textContent.trim()),
-      options: [...document.querySelectorAll('.desktopResultsSection select[aria-label="Filtrar por auditoría de score"] option')].map((option) => ({ value: option.value, text: option.textContent.trim(), selected: option.selected })),
+      options: [...document.querySelectorAll(".desktopResultsSection .scoreAuditSummaryRail button")].map((button) => ({ title: button.getAttribute("title"), text: button.textContent.trim(), pressed: button.getAttribute("aria-pressed") })),
       chips: [...document.querySelectorAll(".resultFilterChip")].map((el) => el.textContent.trim()),
     }));
     throw new Error(`Filtro de score descuadrado no dejó solo MIS: ${JSON.stringify(state)}`);
@@ -172,7 +167,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
 
   await page.click(".resultFilterChip");
   await page.waitForFunction(() => document.querySelectorAll(".desktopResultsSection table a.ticker").length >= 3, null, { timeout: 10000 });
-  await page.locator('.desktopResultsSection select[aria-label="Filtrar por auditoría de score"]').selectOption("missing");
+  await page.click('.desktopResultsSection .scoreAuditSummaryRail button[title="Filtrar Score incompleto"]');
   await page.waitForFunction(() => {
     const rows = [...document.querySelectorAll(".desktopResultsSection table a.ticker")].map((el) => el.textContent.trim());
     return rows.length === 1 && rows[0] === "MISS";

@@ -94,25 +94,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
     if (!before.includes(symbol)) throw new Error(`Falta ${symbol} antes de filtrar: ${before.join(",")}`);
   }
 
-  const clickedRowDataFilter = await page.evaluate(() => {
-    const row = [...document.querySelectorAll(".compactResultsTable tbody tr")]
-      .find((item) => item.querySelector("a.ticker")?.textContent.trim() === "STALE");
-    const button = row?.querySelector(".dataHealthBadge.compactTrustFilter");
-    button?.click();
-    return Boolean(button);
-  });
-  if (!clickedRowDataFilter) throw new Error("No encontré el filtro compacto de salud de datos en la fila STALE");
-  await page.waitForFunction(() => {
-    const rows = [...document.querySelectorAll(".desktopResultsSection table a.ticker")].map((el) => el.textContent.trim());
-    return rows.length === 1 && rows[0] === "STALE";
-  }, null, { timeout: 10000 });
-  const rowFilterChip = await page.evaluate(() => [...document.querySelectorAll(".resultFilterChip")]
-    .map((el) => el.textContent.trim())
-    .join(" "));
-  if (!/Datos:\s*Viejos/.test(rowFilterChip)) throw new Error(`Chip activo inesperado desde fila: ${rowFilterChip}`);
-  await page.click(".resultFilterChip");
-  await page.waitForFunction(() => document.querySelectorAll(".desktopResultsSection table a.ticker").length >= 3, null, { timeout: 10000 });
-
+  await page.locator(".desktopResultsSection .resultsAuditGroup summary").click();
   const dataHealthSelector = '.desktopResultsSection .dataHealthSummaryRail button[title="Filtrar Precio viejo"]';
   try {
     await page.waitForSelector(dataHealthSelector, { timeout: 10000 });
@@ -121,6 +103,18 @@ export async function run({ context, baseUrl, sessionSeed }) {
       .map((button) => `${button.getAttribute("title") || "sin title"}=${button.textContent.trim()}`));
     throw new Error(`No apareció el botón de precio viejo. Botones presentes: ${buttons.join(" | ") || "ninguno"}`);
   }
+
+  await page.click(dataHealthSelector);
+  await page.waitForFunction(() => {
+    const rows = [...document.querySelectorAll(".desktopResultsSection table a.ticker")].map((el) => el.textContent.trim());
+    return rows.length === 1 && rows[0] === "STALE";
+  }, null, { timeout: 10000 });
+  const railFilterChip = await page.evaluate(() => [...document.querySelectorAll(".resultFilterChip")]
+    .map((el) => el.textContent.trim())
+    .join(" "));
+  if (!/Datos:\s*Viejos/.test(railFilterChip)) throw new Error(`Chip activo inesperado desde rail: ${railFilterChip}`);
+  await page.click(".resultFilterChip");
+  await page.waitForFunction(() => document.querySelectorAll(".desktopResultsSection table a.ticker").length >= 3, null, { timeout: 10000 });
 
   await page.click(dataHealthSelector);
   await page.waitForFunction(() => {

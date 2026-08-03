@@ -122,7 +122,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
 
   await page.getByRole("link", { name: "Ficha" }).click();
   await page.waitForURL(`${baseUrl}/stock/FRAG`, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await page.waitForFunction(() => document.body.innerText.includes("Review · Screener actual"), null, { timeout: 20000 });
+  await page.waitForFunction(() => document.body.innerText.includes("REVIEW · SCREENER ACTUAL"), null, { timeout: 20000 });
   await page.waitForFunction(() => Boolean(document.querySelector(".screenerOriginReviewFocus")), null, { timeout: 20000 });
 
   const stockState = await page.evaluate(() => {
@@ -150,7 +150,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
   if (!savedContext.decisionTrace?.confidence || savedContext.decisionTrace.confidence.key === "high") {
     throw new Error("La trazabilidad no conserva la confianza frágil");
   }
-  if (!text.includes("Review · Screener actual")) throw new Error("La ficha no renderiza el origen Review");
+  if (!text.includes("REVIEW · SCREENER ACTUAL")) throw new Error("La ficha no renderiza el origen Review");
   if (!text.includes("Operable fragil")) throw new Error("La ficha no renderiza el perfil de decisión");
   if (!text.includes("Datos")) throw new Error("La ficha no renderiza el bloque de salud de datos del origen");
   if (!text.includes("Métricas")) throw new Error("La ficha no renderiza el bloque de métricas del origen");

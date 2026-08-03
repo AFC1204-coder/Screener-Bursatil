@@ -1,7 +1,24 @@
 // E2E restore: la sesión local con resultados se restaura tal cual (y sobrevive a
 // una recarga), y con la sesión vacía el último snapshot de Supabase puebla la
 // tabla sin pisar nada (no había nada que pisar).
+import { readFileSync } from "node:fs";
+
 export const name = "restore (sesión local + snapshot Supabase)";
+
+function accessToken() {
+  const source = readFileSync(new URL("../../.env.local", import.meta.url), "utf8");
+  const line = source.split(/\r?\n/).find((item) => /^STATSEDGE_ACCESS_TOKEN\s*=/.test(item));
+  if (!line) throw new Error("STATSEDGE_ACCESS_TOKEN no encontrado en .env.local");
+  return line.replace(/^STATSEDGE_ACCESS_TOKEN\s*=\s*/, "").trim().replace(/^['"]|['"]$/g, "");
+}
+
+async function login(context, baseUrl) {
+  const response = await context.request.post(`${baseUrl}/api/auth/session`, {
+    headers: { "Content-Type": "application/json" },
+    data: { token: accessToken() },
+  });
+  if (!response.ok()) throw new Error(`Login E2E del contexto fresh falló: ${response.status()} ${await response.text()}`);
+}
 
 export async function run({ context, baseUrl, sessionSeed, seedRows }) {
   // — Parte 1: restauración desde localStorage —
@@ -24,6 +41,7 @@ export async function run({ context, baseUrl, sessionSeed, seedRows }) {
 
   // — Parte 2: sesión vacía → snapshot Supabase —
   const fresh = await context.browser().newContext({ viewport: { width: 1600, height: 1000 } });
+  await login(fresh, baseUrl);
   const cloudPage = await fresh.newPage();
   await cloudPage.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 90000 });
   await cloudPage.waitForFunction(() => document.querySelectorAll("table a.ticker").length > 0, null, { timeout: 45000 });

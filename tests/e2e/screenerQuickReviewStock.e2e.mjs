@@ -89,13 +89,13 @@ export async function run({ context, baseUrl, sessionSeed }) {
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle", timeout: 90000 });
   await waitForStage(page, () => document.body.innerText.includes("FRAG"), "Restaurar FRAG en Screener");
 
-  const appliedPriorityFilter = await page.evaluate(() => {
-    const select = document.querySelector('.desktopResultsSection select[aria-label="Filtrar por prioridad de investigacion"]');
-    if (!select || ![...select.options].some((option) => option.value === "validate-first")) return false;
-    select.value = "validate-first";
-    select.dispatchEvent(new Event("change", { bubbles: true }));
+  const priorityFilterSelector = ".desktopResultsSection .reviewPriorityResultRail button.priority-validate-first:not(.reviewPriorityAction)";
+  const appliedPriorityFilter = await page.evaluate((selector) => {
+    const button = document.querySelector(selector);
+    if (!button) return false;
+    button.click();
     return true;
-  });
+  }, priorityFilterSelector);
   if (!appliedPriorityFilter) throw new Error("No encontré el filtro de prioridad Validar primero en el Screener");
   await waitForStage(page, () => {
     const table = document.querySelector(".compactResultsTable tbody")?.innerText || "";
@@ -116,12 +116,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
     close?.click();
   });
   await waitForStage(page, () => !document.querySelector(".quickReviewModal"), "Cerrar Vista rápida de prioridad");
-  await page.evaluate(() => {
-    const select = document.querySelector('.desktopResultsSection select[aria-label="Filtrar por prioridad de investigacion"]');
-    if (!select) return;
-    select.value = "all";
-    select.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+  await page.click(priorityFilterSelector);
   await waitForStage(page, () => {
     const table = document.querySelector(".compactResultsTable tbody")?.innerText || "";
     return table.includes("FRAG") && table.includes("WAIT");

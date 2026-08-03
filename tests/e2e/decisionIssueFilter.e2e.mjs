@@ -10,7 +10,7 @@ async function visibleSymbols(page) {
 
 async function clickIssueBadge(page, titlePart) {
   return page.evaluate((needle) => {
-    const buttons = [...document.querySelectorAll(".desktopResultsSection .compactResultsTable button.decisionIssueBadge")];
+    const buttons = [...document.querySelectorAll(".desktopResultsSection .resultsDecisionGroup button.decisionQualityIssue")];
     const button = buttons.find((el) => (el.getAttribute("title") || "").includes(needle) || el.textContent.includes(needle));
     if (!button) return false;
     button.click();
@@ -86,7 +86,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
     if (!before.includes(symbol)) throw new Error(`Falta ${symbol} antes de filtrar: ${before.join(",")}`);
   }
 
-  if (!await clickIssueBadge(page, "faltan")) throw new Error("No encontré badge de evidencia incompleta");
+  if (!await clickIssueBadge(page, "Evidencia incompleta")) throw new Error("No encontré la incidencia agregada de evidencia incompleta");
   await page.waitForFunction(() => {
     const rows = [...document.querySelectorAll(".desktopResultsSection table a.ticker")].map((el) => el.textContent.trim());
     return rows.length === 1 && rows[0] === "MISS";
@@ -96,7 +96,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
     .join(" "));
   if (!/Evidencia incompleta/.test(activeChip)) throw new Error(`Chip activo inesperado: ${activeChip}`);
 
-  if (!await clickIssueBadge(page, "faltan")) throw new Error("No encontré badge activo para quitar filtro");
+  if (!await clickIssueBadge(page, "Evidencia incompleta")) throw new Error("No encontré la incidencia agregada activa para quitar filtro");
   await page.waitForFunction(() => document.querySelectorAll(".desktopResultsSection table a.ticker").length >= 3, null, { timeout: 10000 });
   const restored = await visibleSymbols(page);
   for (const symbol of ["HIGH", "MISS", "EXT"]) {

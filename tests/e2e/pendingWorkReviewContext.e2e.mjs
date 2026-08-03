@@ -94,7 +94,7 @@ export async function run({ context, baseUrl, sessionSeed }) {
   }, "Aplicar Trabajo pendiente");
 
   await page.evaluate(() => {
-    const reviewButton = [...document.querySelectorAll(".desktopResultsSection .pendingDecisionWorkActions button")]
+    const reviewButton = [...document.querySelectorAll(".desktopResultsSection .decisionRailAction button")]
       .find((button) => button.textContent.trim() === "Revisar");
     reviewButton?.click();
   });
