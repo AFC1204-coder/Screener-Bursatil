@@ -151,7 +151,10 @@ describe("scan result-set JavaScript contracts", () => {
     const terminalExecution = functionBody(finalizationSource, "statsedge_terminal_execution_immutable_v1");
     expect(terminalExecution).toContain("old.state in ('published', 'failed', 'cancelled', 'abandoned')");
     expect(terminalExecution).toContain("SE_EXECUTION_IMMUTABLE");
-    for (const source of [finalizationSource, fs.readFileSync(path.join(projectRoot, "supabase/schema.sql"), "utf8")]) {
+    // Hito 1B se movió de supabase/schema.sql a supabase/deferred/hito-1b.sql
+    // el 2026-08-03 (docs/hito-1b-estado-2026-08-03.md); este guard vive ahora
+    // ahí, no en el bootstrap activo.
+    for (const source of [finalizationSource, fs.readFileSync(path.join(projectRoot, "supabase/deferred/hito-1b.sql"), "utf8")]) {
       expect(source).toMatch(/\(v_execution\.checkpoint\s*->>\s*'finalization_state'\)\s+is\s+null[\s\S]*?\(v_execution\.checkpoint\s*->>\s*'finalization_state'\)\s+not\s+in\s*\('complete',\s*'partial'\)/iu);
     }
     expect(finalize).not.toContain("publish_scan_result_set");
