@@ -201,6 +201,12 @@ export async function GET(request) {
     // falle o se salte, evitando el fallback a buildUniverse() completo
     // (que puede tardar >60s y detona el maxDuration del cron).
     universeMaxAgeHours: 48,
+    // Pide la instantánea combinada de universe-refresh (CRON_UNIVERSE_MARKETS)
+    // en vez de la clave exacta del grupo, que nunca se escribe individualmente.
+    // resolveSymbols() la recorta a los mercados de este grupo. Los grupos
+    // europeos (EU1/EU2) no son subconjunto de CRON_UNIVERSE_MARKETS, así que
+    // este flag no altera su comportamiento actual.
+    cronUniverseSnapshot: true,
     refreshUniverse: searchParams.get("refreshUniverse") === "1",
     refreshPrices: searchParams.get("refreshPrices") === "1",
     refreshProfiles: searchParams.get("refreshProfiles") === "1",
