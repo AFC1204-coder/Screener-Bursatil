@@ -308,3 +308,31 @@ fondo: **¿qué debe significar "paridad" cuando una migración queda
 deliberadamente diferida y ya no forma parte del bootstrap que se despliega?**
 Esa es una decisión de diseño del propio harness de pruebas, separada de la
 decisión de negocio que documenta este ADR, y queda explícitamente abierta.
+
+## Estado de la verificación tras el push (2026-08-05)
+
+Al subir estos cambios a `codex/statsedge-ui-polish`, cinco tests de
+`test:integration:ephemeral` quedan en rojo **de forma deliberada**:
+
+- `bootstrap-control.contract.test.mjs` falla porque
+  `REVIEWED_BOOTSTRAP_SOURCE_DIGEST` (`tests/integration/_ephemeralPostgresHarness.mjs`)
+  es un hash fijado a mano que exige revisión humana cada vez que
+  `supabase/schema.sql` cambia. El archivo pasó de 4.020 a 1.862 líneas.
+- `schema-parity.real.test.mjs` falla en cascada: comprueba que el
+  bootstrap equivale a base + migraciones reproducidas, y ahora divergen
+  a propósito (las migraciones del Hito 1B siguen en
+  `supabase/migrations/`, el bootstrap ya no las refleja).
+
+Ninguno de los dos corre en `npm test`, que está en verde (1.289 tests).
+
+**Consecuencia que hay que tener presente:** el mecanismo de paridad
+queda desactivado mientras esto siga así. Ese mecanismo es el que
+detectó en su día el modo de fallo que costó 28 días con
+`finalize_scan_results`. No es una señal decorativa.
+
+**Decisión pendiente, no tomada:** qué significa "paridad" cuando una
+migración queda deliberadamente fuera del bootstrap. Hay al menos tres
+salidas —excluir del cálculo las migraciones diferidas, mover también
+las migraciones, o redefinir el contrato— y ninguna se ha evaluado.
+Hasta entonces, actualizar el digest sin resolver esa pregunta solo
+silenciaría la señal.
