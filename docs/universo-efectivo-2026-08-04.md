@@ -1,3 +1,11 @@
+> **CORREGIDO el 2026-08-04.** Las siguientes cifras de este
+> documento han sido superadas por mediciones posteriores:
+> - Universo elegible ≈8.998 → **11.123**, ver `universo-relevante-2026-08-04.md`.
+> - ≈4,58 s/símbolo como tiempo real → **2,118 s/símbolo wall-clock** en 18 corridas; la descomposición disponible es ≈33,7 s fijos + ≈0,535 s marginales/símbolo, ver `limites-cron-2026-08-04.md`.
+> - Techo de ≈26 símbolos/invocación como cifra puntual → **rango derivado de 22-26** a la concurrencia 2 actual; ≈26 sigue siendo la cota alta, no una medición directa, ver `limites-cron-2026-08-04.md`.
+>
+> El resto del documento sigue siendo válido.
+
 # Por qué el universo efectivo de un escaneo es tan pequeño (auditoría 2026-08-04)
 
 BASE_SHA: a80caf2 · rama codex/statsedge-ui-polish. Contexto ya verificado (no

@@ -1,3 +1,11 @@
+> **CORREGIDO el 2026-08-04.** Las siguientes cifras de este
+> documento han sido superadas por mediciones posteriores:
+> - Techo de ~26 símbolos/invocación como cifra puntual → **rango derivado de 22-26** a la concurrencia 2 actual, ver `limites-cron-2026-08-04.md`.
+> - ≈34 noches para ~880 candidatos → **34-40 noches** bajo la misma simplificación de una invocación nocturna dedicada por completo a símbolos nuevos, ver `limites-cron-2026-08-04.md`.
+> - 85,3% del ciclo de ~880 por encima de 5 días y límite N≤130 para un ciclo de 5 noches → **85,3%-87,5%** y **N≤110-130**, respectivamente, al propagar el rango 22-26 símbolos/noche.
+>
+> El resto del documento sigue siendo válido.
+
 # Cuántos de los ~11.000 símbolos son candidatos de verdad (auditoría 2026-08-04)
 
 BASE_SHA: a80caf2 · rama codex/statsedge-ui-polish. Continúa

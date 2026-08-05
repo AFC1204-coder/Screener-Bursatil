@@ -1,3 +1,10 @@
+> **CORREGIDO el 2026-08-04.** Las siguientes cifras de este
+> documento han sido superadas por mediciones posteriores:
+> - 23,1 s para ~880 y 4 min 52 s para 11.123 → **solo miden/extrapolan la descarga de barras**, no el ciclo completo; no hay una duración completa sostenida verificada, ver `bench-analyze-2026-08-04.md` y `limites-cron-2026-08-04.md`.
+> - Capacidad de ≈659.405 símbolos en 6 h con margen y conclusión de que una sola corrida basta → **no válidas para el ciclo completo de producción**; producción mide 2,118 s/símbolo en lotes pequeños y se modela como ≈33,7 s fijos + ≈0,535 s marginales/símbolo, sin validación a escala de 11.123.
+>
+> El resto del documento sigue siendo válido.
+
 # Benchmark de concurrencia contra Yahoo Finance — 2026-08-04
 
 Objetivo: medir cuánta concurrencia aguanta Yahoo Finance al descargar barras

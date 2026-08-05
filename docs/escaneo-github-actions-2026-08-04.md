@@ -1,3 +1,11 @@
+> **CORREGIDO el 2026-08-04.** Las siguientes cifras de este
+> documento han sido superadas por mediciones posteriores:
+> - Base de 4,58 s/símbolo → **2,118 s/símbolo wall-clock** en lotes reales pequeños, con una descomposición de ≈33,7 s fijos + ≈0,535 s marginales/símbolo, ver `limites-cron-2026-08-04.md`.
+> - Los tiempos y minutos/mes de la sección 9 (424,5/33,6/14,2 min por corrida; 1.838/1.008/425 min/mes, y todas sus variantes a concurrencia 10) → **no son válidos para dimensionar producción**; no hay un reemplazo verificado para una carga sostenida de GitHub Actions, ver `limites-cron-2026-08-04.md`.
+> - La conclusión de 7,07 h para el universo semanal y que no cabe en un job de 6 h → **no queda demostrada** con la metodología posterior; el tiempo completo sostenido de 11.123 símbolos sigue sin medirse.
+>
+> El resto del documento sigue siendo válido.
+
 # Mover el escaneo a GitHub Actions — diseño y viabilidad (Fase 1, 2026-08-04)
 
 BASE_SHA: a80caf2 · rama codex/statsedge-ui-polish. Continúa

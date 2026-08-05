@@ -1,3 +1,11 @@
+> **CORREGIDO el 2026-08-04.** Las siguientes cifras de este
+> documento han sido superadas por mediciones posteriores:
+> - ~44 ms/símbolo a concurrencia 8 como "el número real" → **benchmark local del camino feliz sin escrituras**; producción mide **2,118 s/símbolo wall-clock** en lotes pequeños y se descompone en ≈33,7 s fijos + ≈0,535 s marginales/símbolo, ver `limites-cron-2026-08-04.md`.
+> - 38,9 s para ~880 y 8 min 12 s para 11.123 → **extrapolaciones locales no válidas como duración de producción**; no hay un reemplazo sostenido verificado para esos tamaños.
+> - ≈390.950 símbolos en 6 h, una sola corrida suficiente y ≈270 min/mes → **no demostrados para el job real**, porque excluyen arranque, selección de universo, lecturas/escrituras y comportamiento sostenido.
+>
+> El resto del documento sigue siendo válido.
+
 # Benchmark del ciclo completo (descarga + cómputo) — 2026-08-04
 
 BASE_SHA: a80caf2 · rama codex/statsedge-ui-polish.
