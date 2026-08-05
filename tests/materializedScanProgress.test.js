@@ -23,6 +23,7 @@ vi.mock("@/lib/fundamentalsCache", () => ({
 
 import { withDailyBarsCache } from "@/lib/dailyBarsCache";
 import {
+  _forTest,
   materializedScanProgress,
   runMaterializedScan,
   scanResultPayload,
@@ -130,6 +131,26 @@ describe("materializedScanProgress (contrato puro)", () => {
     expect(progress.status).toBe("complete");
     expect(progress.errors).toBe(0);
     expect(progress.completed).toBe(2);
+  });
+});
+
+describe("baseRejectReason · marketCap ausente no se confunde con marketCap=0 (docs/inventario-dato-ausente-2026-08-01.md C15-C17)", () => {
+  const passingRow = {
+    price: 40,
+    chartBarsCount: 260,
+    priceFreshnessOk: true,
+    avgTurnover: 1_000_000,
+    dataCoverageScore: 90,
+  };
+
+  it("perfil sin marketCap (null) => NO rechaza por market cap", () => {
+    const reason = _forTest.baseRejectReason({ ...passingRow, marketCap: null });
+    expect(reason).toBe("");
+  });
+
+  it("marketCap real por debajo del umbral SÍ rechaza (guard sigue activo)", () => {
+    const reason = _forTest.baseRejectReason({ ...passingRow, marketCap: 1000 });
+    expect(reason).toBe("market cap bajo 1000");
   });
 });
 
