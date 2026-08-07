@@ -143,8 +143,12 @@ describe("finalizeScanPercentiles (pure)", () => {
     expect(patch.metrics_patch).toHaveProperty("totalScore");
     // totalScore === compositeScore (mismo verbatim que lib/screenerPipeline.js:350).
     expect(patch.metrics_patch.totalScore).toBe(patch.metrics_patch.compositeScore);
-    // objectiveScore === compositeScore (sin patternContribution: el score objetivo
-    // NO recibe bonus de VCP/contracciones; misma convención que el path vivo).
+    // objectiveScore === compositeScore AQUÍ porque la fila no trae
+    // objectiveSetupScore (fixture no lo setea): el degrade cae a
+    // setupQualityScore para ambas llamadas. Cuando sí viene objectiveSetupScore
+    // (con bonus de patrón incluido en setupQualityScore), objectiveScore y
+    // compositeScore divergen — ver test "objectiveScore y totalScore
+    // divergen cuando hay bonus de patrón" más abajo.
     expect(patch.metrics_patch.objectiveScore).toBe(patch.metrics_patch.compositeScore);
     // sectorScore y groupStrengthScore siempre coinciden (alias histórico).
     expect(patch.metrics_patch.groupStrengthScore).toBe(patch.metrics_patch.sectorScore);
@@ -300,12 +304,41 @@ describe("finalizeScanPercentiles (pure)", () => {
     // totalScore === compositeScore (verbatim del path vivo).
     expect(rich.totalScore).toBe(rich.compositeScore);
     expect(lean.totalScore).toBe(lean.compositeScore);
-    // objectiveScore === compositeScore: el wrapper JS actual no aplica el
-    // descuento de patternContribution (eso ocurre solo en la fase 5 / path
-    // vivo de sectorize con setupQualityScore=objectiveSetupScore+contribución).
-    // Verificamos el invariante del patch: totalScore == compositeScore.
+    // objectiveScore === compositeScore AQUÍ porque ninguna fixture trae
+    // objectiveSetupScore (la RPC scan_finalize_inputs todavía no lo proyecta
+    // — ver comentario en lib/scanPercentileFinalization.js): el degrade cae
+    // a setupQualityScore para ambas llamadas. No es un invariante general del
+    // helper — con objectiveSetupScore presente, divergen (ver test dedicado).
     expect(rich.objectiveScore).toBe(rich.compositeScore);
     expect(lean.objectiveScore).toBe(lean.compositeScore);
+  });
+
+  it("objectiveScore y totalScore divergen cuando hay bonus de patrón (objectiveSetupScore != setupQualityScore)", () => {
+    // Regresión del colapso: antes del fix, ambas llamadas a scoreCompositeValue
+    // recibían la MISMA variable setupQualityScore, así que objectiveScore y
+    // compositeScore (y por tanto totalScore) eran siempre idénticos tras
+    // finalizar. En el path vivo (lib/screenerPipeline.js:335-336),
+    // setupQualityScore = objectiveSetupScore + bonus de patrón (VCP/contracciones)
+    // — objectiveScore NO debe llevar ese bonus, compositeScore SÍ. Con
+    // objectiveSetupScore < setupQualityScore (bonus de patrón presente),
+    // objectiveScore (que usa objectiveSetupScore) debe ser MENOR que
+    // compositeScore/totalScore (que usa setupQualityScore).
+    const row = makeDbRow("PATTERNED", {
+      setupQualityScore: 70, // incluye +15 de bonus de patrón (VCP)
+      objectiveSetupScore: 55, // sin el bonus de patrón
+      rsQualityScore: 60, adProxyScore: 50, riskRewardScore: 50,
+      momentumScore: 50, demandScore: 50, growthScore: 50,
+      epsGrowthProxyScore: 50, riskScore: 50, ipoScore: 30, rsRating: 60,
+    });
+    const [patch] = finalizeScanPercentiles([row]);
+    const { objectiveScore, compositeScore, totalScore } = patch.metrics_patch;
+    expect(Number.isFinite(objectiveScore)).toBe(true);
+    expect(Number.isFinite(compositeScore)).toBe(true);
+    // totalScore sigue siendo alias de compositeScore (no cambia por este fix).
+    expect(totalScore).toBe(compositeScore);
+    // El fix: objectiveScore YA NO colapsa con compositeScore/totalScore.
+    expect(objectiveScore).not.toBe(compositeScore);
+    expect(objectiveScore).toBeLessThan(compositeScore);
   });
 
   it("sectorScore final-time: idempotente — segunda pasada produce el mismo sectorScore y composite", () => {
