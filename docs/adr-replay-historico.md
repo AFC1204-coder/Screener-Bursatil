@@ -482,3 +482,22 @@ se pudo comprobar lo que quedaba pendiente:
 Límite práctico del replay: **no se puede retroceder más allá de la
 primera barra descargada de cada símbolo**, y eso hoy son unos 19 meses
 en el mejor caso.
+
+## Corrección (2026-08-07): la poda de scan_results NO queda desbloqueada
+
+Este ADR afirma que, como el replay no depende de `scan_results`, esa
+tabla puede podarse a una fila por símbolo. **Esa conclusión es falsa**
+y no debe usarse como permiso.
+
+El replay efectivamente no depende de `scan_results`, y eso sigue
+siendo cierto. Pero otros tres consumidores sí dependen de que la tabla
+conserve varias filas por símbolo, todos anclados a `scan_id`: la
+comparación de escaneos en la interfaz, el polling de un escaneo en
+curso, y las RPC de finalización de percentiles.
+
+Verificado contra Postgres local: un índice único `(owner_id, symbol)`
+falla con error 23505 contra dos escritores reales.
+
+Detalle completo en `docs/poda-scan-results-2026-08-07.md`. El camino
+correcto para abaratar la lectura es una vista `DISTINCT ON (symbol)`,
+sin borrar filas.
