@@ -13,6 +13,7 @@ describe("scan decision projection", () => {
       symbol: "STG",
       companyName: "Stage Radar",
       price: 42.5,
+      marketCap: 3826251264,
       chartBarsCount: 260,
       dataCoverageScore: 88,
       technicalCoverageScore: 91,
@@ -40,6 +41,7 @@ describe("scan decision projection", () => {
     expect(payload.metrics.decisionTrace.engineVersion).toBe(DECISION_TRACE_ENGINE_VERSION);
     expect(payload.metrics.decisionTrace.priorityScore).toBe(payload.raw.decisionTrace.priorityScore);
     expect(payload.metrics.price).toBe(42.5);
+    expect(payload.metrics.marketCap).toBe(3826251264);
     expect(payload.metrics.chartBarsCount).toBe(260);
     expect(payload.metrics.totalScore).toBeNull();
     expect(payload.metrics.dataCoverageScore).toBe(88);
