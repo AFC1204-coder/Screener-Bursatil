@@ -8,7 +8,7 @@ import { externalLinks, inferTradingViewSymbol, isTradingViewWidgetBlocked } fro
 import { withProfileCache } from "@/lib/fundamentalsCache";
 import { withDailyBarsCache } from "@/lib/dailyBarsCache";
 import { peerIdentityForSymbol } from "@/lib/peers";
-import { scoreRsBenchmarkModel } from "@/lib/relativeStrength";
+import { scoreRsBenchmarkModel, scoreRsQuality } from "@/lib/relativeStrength";
 import { readGlobalRsSeriesForSymbol } from "@/lib/globalRs";
 import { setupPatternForBars } from "@/lib/setupPatterns";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
@@ -273,7 +273,8 @@ function rsQualityLabelFor(rating, rsQualityScore, speculationRiskScore) {
             : "RS debil";
 }
 
-function relativeStrengthFromBars(bars = [], benchmarkBars = []) {
+// Exportada para test unitario directo (docs/duplicados-restantes-2026-08-07.md).
+export function relativeStrengthFromBars(bars = [], benchmarkBars = []) {
   const aligned = alignDailyWithBenchmark(bars, benchmarkBars);
   const latestIndex = aligned.length - 1;
   const price = aligned[latestIndex]?.close ?? bars[0]?.close;
@@ -323,6 +324,20 @@ function relativeStrengthFromBars(bars = [], benchmarkBars = []) {
     else if (maxDrawdown63d <= 32) stability -= 4;
     else stability -= 12;
   }
+  // NO delega en la canónica scoreRsQuality (lib/relativeStrength.js) — PARADA
+  // deliberada, no descuido (docs/duplicados-restantes-2026-08-07.md, Parte
+  // A.4). Impedimento real de datos: esta función solo tiene `bars`/
+  // `benchmarkBars` (sin snapshot de scan_results, caso símbolo nunca
+  // escaneado — ver mergeUniverseRelativeStrength para cuando sí lo hay). La
+  // canónica necesita, además de volatility63d/maxDrawdown63d (sí calculados
+  // aquí), maxDailyMove20dPct/range63dPct/highsSpreadPct/extSma50 (no
+  // calculados aquí, aunque son técnicamente derivables de `bars` con más
+  // código) y riskRewardScore — que es en sí mismo OTRA señal canónica del
+  // registro (SIGNAL_REGISTRY.riskRewardScore, lib/scoringEngine.js) con sus
+  // propios inputs (returnToVol3m, returnToDrawdown3m) que este archivo no
+  // calcula en ningún punto. Delegar aquí exigiría importar y replicar esa
+  // segunda señal, no solo llamar a la primera — fuera de alcance de esta
+  // tarea, que solo permite tocar las implementaciones paralelas y sus tests.
   const rsQualityScore = Number.isFinite(rating) ? clamp(rating * .68 + clamp(stability) * .32) : null;
   const speculationRiskScore = clamp(Math.max(0, (Number.isFinite(volatility63d) ? volatility63d : 35) - 35) * .62 + Math.max(0, Number.isFinite(maxDrawdown63d) ? maxDrawdown63d : 12) * .85);
   return {
@@ -852,10 +867,23 @@ async function readUniverseRsSnapshot(symbol = "") {
     weinsteinScore: firstFinite(row.raw?.weinsteinScore, row.weinstein_score),
     minerviniScore: firstFinite(row.raw?.minerviniScore, row.minervini_score),
     riskScore: firstFinite(row.raw?.riskScore, row.risk_score),
+    // Proyectados para poder delegar rsQualityScore en la canónica
+    // scoreRsQuality (lib/relativeStrength.js) en vez de la fórmula .68/.32
+    // paralela — ver mergeUniverseRelativeStrength y
+    // docs/duplicados-restantes-2026-08-07.md. Ya estaban en `raw`/`metrics`
+    // (la consulta de arriba trae ambas columnas completas); solo faltaba
+    // proyectarlos en este snapshot curado.
+    riskRewardScore: firstFinite(row.raw?.riskRewardScore, row.metrics?.riskRewardScore),
+    liquidityScore: firstFinite(row.raw?.liquidityScore, row.metrics?.liquidityScore),
+    maxDailyMove20dPct: firstFinite(row.raw?.maxDailyMove20dPct, row.metrics?.maxDailyMove20dPct),
+    range63dPct: firstFinite(row.raw?.range63dPct, row.metrics?.range63dPct),
+    highsSpreadPct: firstFinite(row.raw?.highsSpreadPct, row.metrics?.highsSpreadPct),
+    extSma50: firstFinite(row.raw?.extSma50, row.metrics?.extSma50),
   };
 }
 
-function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, weeklyGlobal = null) {
+// Exportada para test unitario directo (docs/duplicados-restantes-2026-08-07.md).
+export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, weeklyGlobal = null) {
   const benchmarkRating = benchmarkStrength.rating;
   if (!universe || !Number.isFinite(universe.rsGlobalPct)) {
     return {
@@ -875,7 +903,28 @@ function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, 
     };
   }
   const rating = universe.rsGlobalPct;
-  const rsQualityScore = clamp(rating * .68 + clamp(benchmarkStrength.rsStabilityScore ?? 72) * .32);
+  // Delega en la canónica lib/relativeStrength.js:scoreRsQuality en vez de la
+  // fórmula .68/.32 paralela (sin término riskRewardScore) — unificado en
+  // docs/duplicados-restantes-2026-08-07.md. volatility63d/maxDrawdown63d
+  // vienen de benchmarkStrength (bars en vivo, más frescos que el último
+  // scan); el resto de términos de estabilidad/especulación
+  // (riskRewardScore, maxDailyMove20dPct, range63dPct, highsSpreadPct,
+  // extSma50, liquidityScore) no se calculan en este archivo desde bars, así
+  // que se toman del snapshot de scan_results ya proyectado por
+  // readUniverseRsSnapshot (mismo patrón que rating: dato real, no un
+  // relleno neutro).
+  const quality = scoreRsQuality({
+    rsGlobalPct: universe.rsGlobalPct,
+    rsRating: benchmarkRating,
+    volatility63d: benchmarkStrength.volatility63d,
+    maxDrawdown63d: benchmarkStrength.maxDrawdown63d,
+    riskRewardScore: universe.riskRewardScore,
+    liquidityScore: universe.liquidityScore,
+    maxDailyMove20dPct: universe.maxDailyMove20dPct,
+    range63dPct: universe.range63dPct,
+    highsSpreadPct: universe.highsSpreadPct,
+    extSma50: universe.extSma50,
+  }) || { rsQualityScore: null, rsStabilityScore: null, speculationRiskScore: null, rsQualityLabel: "" };
   return {
     ...benchmarkStrength,
     rating,
@@ -890,8 +939,10 @@ function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, 
     rsGlobalSample: universe.rsGlobalSample,
     rsCountrySample: universe.rsCountrySample,
     rsSectorSample: universe.rsSectorSample,
-    rsQualityScore,
-    rsQualityLabel: rsQualityLabelFor(rating, rsQualityScore, benchmarkStrength.speculationRiskScore),
+    rsQualityScore: quality.rsQualityScore,
+    rsStabilityScore: quality.rsStabilityScore,
+    speculationRiskScore: quality.speculationRiskScore,
+    rsQualityLabel: quality.rsQualityLabel,
     universe,
     globalRsSeries: weeklyGlobal?.series || [],
     note: "RS StatsEdge = percentil 0-99 calculado desde el universo de la web. RS Benchmark solo mide comparativa frente al benchmark asignado.",
