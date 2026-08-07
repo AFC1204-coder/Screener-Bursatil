@@ -11,6 +11,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { enrichRelativePercentiles } from "@/lib/relativeStrength";
 import { finalizeScanPercentiles, finalizeScanResultsInDb } from "@/lib/scanPercentileFinalization";
+import { scoreCompositeValue } from "@/lib/scoring";
 
 // --- Helpers de fixtures --------------------------------------------------
 
@@ -339,6 +340,59 @@ describe("finalizeScanPercentiles (pure)", () => {
     // El fix: objectiveScore YA NO colapsa con compositeScore/totalScore.
     expect(objectiveScore).not.toBe(compositeScore);
     expect(objectiveScore).toBeLessThan(compositeScore);
+  });
+
+  // ─── Ausencia real ya no fabrica constante (docs/constantes-finalizacion-2026-08-07.md) ───
+  // Verifica que, para una fila sin ningún fundamental, el compositeScore que
+  // produce finalizeScanPercentiles coincide EXACTAMENTE con llamar al motor
+  // (scoreCompositeValue, la misma función que scanPercentileFinalization.js
+  // ya usa por dentro) directamente, pasando growthScore/epsAnchor como
+  // ausentes (`null`) en vez de que finalización los fabrique. Si ambas vías
+  // no coincidieran, significaría que finalización sigue sustituyendo por una
+  // constante en vez de excluir y renormalizar como hace el motor.
+  it("fila sin fundamentales: el composite de finalización coincide con el del motor excluyendo los mismos términos", () => {
+    const row = makeDbRow("NOFUND", {
+      setupQualityScore: 70,
+      rsQualityScore: 60,
+      demandScore: 55,
+      adProxyScore: 45,
+      riskRewardScore: 50,
+      riskScore: 60,
+      momentumScore: 40,
+      ipoScore: 20,
+      rsRating: 65,
+      // growthScore y epsGrowthProxyScore deliberadamente ausentes: "fila sin
+      // ningún fundamental" (docs/constantes-finalizacion-2026-08-07.md, A.2).
+    });
+    const [patch] = finalizeScanPercentiles([row]);
+    const { sectorScore, compositeScore } = patch.metrics_patch;
+
+    // rsAnchor cae a rsRating porque la muestra es 1 (< RS_GLOBAL_MIN_SAMPLE):
+    // rsGlobalPct sale null y la cadena SIN TOCAR (excepción documentada)
+    // degrada al dato real rsRating=65 — no es un término "sin fundamento",
+    // así que se replica tal cual en la llamada directa al motor de abajo.
+    expect(Number.isFinite(compositeScore)).toBe(true);
+
+    // Motor, en directo, con los MISMOS inputs efectivos que usó la
+    // finalización: sectorScore ya calculado final-time por finalización
+    // (mismo grupo, mismo valor), growthScore/epsAnchor como `null` (ausentes
+    // de verdad, no fabricados con 0).
+    const motorComposite = scoreCompositeValue({
+      setupQualityScore: 70,
+      rsAnchor: 65,
+      rsQualityScore: 60,
+      demandScore: 55,
+      adProxyScore: 45,
+      growthScore: null,
+      epsAnchor: null,
+      sectorScore,
+      riskRewardScore: 50,
+      riskScore: 60,
+      momentumScore: 40,
+      ipoScore: 20,
+    });
+
+    expect(compositeScore).toBe(motorComposite);
   });
 
   it("sectorScore final-time: idempotente — segunda pasada produce el mismo sectorScore y composite", () => {
