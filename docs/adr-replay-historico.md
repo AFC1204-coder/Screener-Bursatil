@@ -462,3 +462,23 @@ original no contemplaba. Se resuelven así:
 Criterio general: si una señal no se puede reconstruir con fidelidad,
 se marca como no disponible en vez de mostrarse aproximada sin avisar.
 
+
+## Profundidad real de daily_bars (verificado 2026-08-07)
+
+La tabla se añadió a la lista blanca del servidor MCP de solo lectura y
+se pudo comprobar lo que quedaba pendiente:
+
+- La barra más antigua de AAPL es del **2024-12-27**: unos 19 meses de
+  histórico, coherente con el `range: "2A"` que usa el descargador.
+- La profundidad **no es uniforme entre símbolos**. Cada uno tiene dos
+  años contados desde la primera vez que se descargó, así que un símbolo
+  tocado por primera vez ayer no tiene datos de hace 19 meses. El replay
+  debe comprobar la profundidad disponible por símbolo antes de ofrecer
+  una fecha, no asumir una ventana común.
+- Una consulta global ordenada por `trade_date` da timeout: la tabla es
+  grande y no hay índice que la soporte. Cualquier consulta de replay
+  debe filtrar por símbolo primero.
+
+Límite práctico del replay: **no se puede retroceder más allá de la
+primera barra descargada de cada símbolo**, y eso hoy son unos 19 meses
+en el mejor caso.

@@ -29,6 +29,7 @@ const TABLES = new Set([
   "shadow_instruments", "app_settings", "favorites", "provider_runs",
   "scan_executions", "scan_result_sets", "scan_work_items", "scan_result_set_rows",
   "universe_snapshots", "universe_snapshot_symbols",
+  "daily_bars", "fundamental_snapshots",
 ]);
 
 const MAX_LIMIT = 200;
