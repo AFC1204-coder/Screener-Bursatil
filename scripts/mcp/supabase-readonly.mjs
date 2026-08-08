@@ -30,6 +30,7 @@ const TABLES = new Set([
   "scan_executions", "scan_result_sets", "scan_work_items", "scan_result_set_rows",
   "universe_snapshots", "universe_snapshot_symbols",
   "daily_bars", "fundamental_snapshots",
+  "rs_weekly_items", "rs_weekly_runs",
 ]);
 
 const MAX_LIMIT = 200;
