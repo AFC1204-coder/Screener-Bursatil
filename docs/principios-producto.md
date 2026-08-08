@@ -99,3 +99,33 @@ La tabla actual tiene quince columnas, tres valores de RS por fila y
 paneles de auditoría. Eso no es gama media bien resuelta: es gama alta a
 medio construir. El rediseño no consiste en limpiar lo que hay, sino en
 decidir qué se queda en la tabla y mover el resto a la ficha.
+
+## 5. La metodología vive en un solo sitio (2026-08-09)
+
+Todo lo que haya que explicar al usuario sobre CÓMO se calcula algo va
+en una página de metodología, no repartido por la interfaz.
+
+Qué va ahí: cómo se calcula el RS y sobre qué población, qué significa
+cada etapa, qué mide el score compuesto y con qué pesos, de dónde salen
+los datos y con qué retraso, y qué criterios excluyen un valor del
+cálculo.
+
+Qué NO va en la interfaz: definiciones, fórmulas, tamaños de muestra
+repetidos por fila, ni avisos que digan lo mismo en varios sitios.
+
+### La excepción
+
+Un dato AUSENTE sí se explica en el sitio donde falta, porque es
+información sobre ese valor concreto y no sobre el método. Ejemplo:
+"sin RS: serie discontinua (salto de 25x el 6 de marzo)". Eso es
+específico de ese símbolo y el usuario lo necesita ahí.
+
+La diferencia: explicar el método es redundante repetirlo; explicar por
+qué falta un dato concreto no lo es.
+
+### Por qué importa
+
+La transparencia no debe costar espacio en pantalla. Publicar el
+criterio en un sitio da al usuario más información que la competencia
+—MarketSmith excluye valores de su universo y no publica el criterio—
+sin llenar la tabla.
