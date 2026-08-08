@@ -20,9 +20,17 @@
 // existentes de rs_weekly_items en docs/adr-rs-universo-us.md — no hay
 // código original que citar, así que esta es la primera implementación,
 // no una migración de una implementación previa.
+//
+// Además de "barras insuficientes", cada símbolo se filtra por
+// detectPriceDiscontinuities() (lib/indicators.js) — series con un salto
+// de precio >=3x entre sesiones consecutivas (splits/contrasplits que el
+// proveedor no ajusta, ver docs/splits-daily-bars-2026-08-09.md y
+// docs/splits-eventos-2026-08-09.md) se EXCLUYEN, nunca se ajustan: no
+// hay dato fiable para reconstruir la serie.
 
 import { percentileFromSorted, clamp } from "@/lib/relativeStrength.js";
 import { supabaseConfig, supabaseRequest, finiteOrNull, toDate } from "@/lib/supabaseServer.js";
+import { detectPriceDiscontinuities } from "@/lib/indicators.js";
 
 // ── Constantes de diseño, citadas y justificadas en el ADR ─────────────
 
@@ -53,6 +61,14 @@ const DEFAULT_MIN_SAMPLE = 20;
 // ventanas. Si un símbolo tiene menos, se excluye del ranking (la tarea
 // pide excluir, no descargar, en esta fase).
 const MIN_BARS_REQUIRED = RETURN_WINDOWS_WEEKS.at(-1) * TRADING_DAYS_PER_WEEK + 1;
+
+// Umbral de salto anómalo decidido en docs/splits-eventos-2026-08-09.md:
+// un factor >=3 entre dos sesiones CONSECUTIVAS (no fechas de calendario
+// consecutivas) marca la serie como discontinua. Se detecta y se excluye
+// — no se ajusta, porque no hay dato fiable para reconstruir la serie
+// (los eventos de split de Yahoo existen para 6/10 casos verificados pero
+// ninguno coincide con el salto real, ver ese documento Parte B).
+const DISCONTINUITY_FACTOR_THRESHOLD = 3;
 
 // Criterio para identificar fondos cerrados clasificados como "equity" por
 // instrumentTypeFor() (lib/universeEngine.js:66-79, NO modificado aquí).
@@ -221,7 +237,24 @@ async function fetchBarsForSymbol(config, symbol) {
 
 function computeReturns(bars) {
   if (bars.length < MIN_BARS_REQUIRED) {
-    return { ok: false, reason: `barras insuficientes (${bars.length}/${MIN_BARS_REQUIRED})` };
+    return { ok: false, exclusionReason: "insufficient-bars", reason: `barras insuficientes (${bars.length}/${MIN_BARS_REQUIRED})` };
+  }
+  // La detección de discontinuidad va sobre TODAS las barras disponibles
+  // (no solo la ventana de 52 semanas que usan los rendimientos) — un
+  // salto fuera de esa ventana igual corrompe sma/drawdown/volatilidad en
+  // otros consumidores (docs/splits-daily-bars-2026-08-09.md Parte C.9),
+  // así que un símbolo con serie discontinua se excluye aunque el salto
+  // caiga, por ejemplo, en la barra 300 y las ventanas de RS (hasta 260)
+  // no lo toquen directamente.
+  const discontinuity = detectPriceDiscontinuities(bars, DISCONTINUITY_FACTOR_THRESHOLD);
+  if (discontinuity.discontinuous) {
+    const { date, factor } = discontinuity.largestJump;
+    return {
+      ok: false,
+      exclusionReason: "discontinuous-series",
+      reason: `serie discontinua: salto de ${factor.toFixed(1)}x el ${date}`,
+      discontinuity,
+    };
   }
   const nowClose = bars[0].close;
   const returns = {};
@@ -357,7 +390,8 @@ async function main() {
   });
 
   const included = computed.filter((row) => row.ok);
-  const excludedForBars = computed.filter((row) => !row.ok);
+  const excludedForBars = computed.filter((row) => !row.ok && row.exclusionReason === "insufficient-bars");
+  const excludedForDiscontinuity = computed.filter((row) => !row.ok && row.exclusionReason === "discontinuous-series");
 
   const sortedRaw = included.map((row) => row.raw).sort((a, b) => a - b);
   const ranked = included
@@ -374,12 +408,18 @@ async function main() {
   console.log("");
   console.log("=== REPORTE ===");
   console.log(`Población solicitada: ${requestedPopulation.length}`);
-  console.log(`Con barras suficientes (>=${MIN_BARS_REQUIRED}): ${included.length}`);
-  console.log(`Excluidos por barras insuficientes: ${excludedForBars.length}`);
+  console.log(`Incluidos en el ranking (barras suficientes y serie continua): ${included.length}`);
+  console.log(`Excluidos por barras insuficientes (<${MIN_BARS_REQUIRED}): ${excludedForBars.length}`);
   if (excludedForBars.length) {
     const sample = excludedForBars.slice(0, 15);
     for (const row of sample) console.log(`  - ${row.symbol}: ${row.reason}`);
     if (excludedForBars.length > sample.length) console.log(`  ... y ${excludedForBars.length - sample.length} más (omitidos del detalle, no del conteo)`);
+  }
+  console.log(`Excluidos por serie discontinua (salto de precio >=${DISCONTINUITY_FACTOR_THRESHOLD}x entre sesiones consecutivas): ${excludedForDiscontinuity.length}`);
+  if (excludedForDiscontinuity.length) {
+    const sample = excludedForDiscontinuity.slice(0, 10);
+    for (const row of sample) console.log(`  - ${row.symbol}: ${row.reason}`);
+    if (excludedForDiscontinuity.length > sample.length) console.log(`  ... y ${excludedForDiscontinuity.length - sample.length} más (omitidos del detalle, no del conteo)`);
   }
   console.log(`Tiempo total: ${(elapsedMs / 1000).toFixed(1)}s`);
   if (included.length < args.minSample) {
