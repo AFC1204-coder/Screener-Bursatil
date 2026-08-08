@@ -57,3 +57,45 @@ todo lo que sobra por ruido sobra también por lenguaje.
 Un dato ausente se muestra como ausente, no como cero ni como valor por
 defecto. Una métrica calculada sobre muestra insuficiente se marca como
 tal. Ver docs/inventario-dato-ausente-2026-08-01.md.
+
+## 4. Las cinco cosas (2026-08-08)
+
+Definición de producto para el MVP. Un operador de tendencia mira estas
+cinco cosas a diario; todo lo demás es profundizar en un valor concreto
+y vive en la ficha, no en la tabla:
+
+1. **Gráfico de precio y volumen** limpio, con medias móviles e
+   indicadores superponibles.
+2. **RS**, tanto para filtrar como para analizar en el gráfico.
+3. **Filtros rápidos e intuitivos.** Simples y efectivos, no
+   exhaustivos.
+4. **Navegación fluida entre valores.** Entrar en una acción y pasar a
+   la siguiente sin volver atrás (el botón de flecha que ya existe).
+5. **Ficha de resumen compartible**: estado de la tendencia más un
+   resumen de la empresa, en un formato visualmente atractivo que dé
+   buena imagen al compartirse.
+
+### Sobre la ficha compartible
+
+No es una función más: es distribución. Cada imagen compartida en redes
+o grupos es un anuncio con la marca dentro. Es de las pocas vías de
+captación que no dependen de presupuesto.
+
+### La ineficiencia que explotamos
+
+MarketSmith ha ido llenando su cuadro de resumen de empresa hasta
+hacerlo denso y poco atractivo. Es lo que le pasa a un producto maduro
+que añade sin quitar. No competimos en cantidad de datos: competimos en
+que se entienda de un vistazo.
+
+Posición de mercado: no somos un MarketSmith barato con funciones
+recortadas. Somos un producto diseñado para hacer bien cinco cosas, como
+un móvil de gama media bien resuelto frente a uno de gama alta. Los
+recortes son decisiones, no ausencias.
+
+### Consecuencia para el rediseño
+
+La tabla actual tiene quince columnas, tres valores de RS por fila y
+paneles de auditoría. Eso no es gama media bien resuelta: es gama alta a
+medio construir. El rediseño no consiste en limpiar lo que hay, sino en
+decidir qué se queda en la tabla y mover el resto a la ficha.
