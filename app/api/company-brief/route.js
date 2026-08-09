@@ -883,69 +883,90 @@ async function readUniverseRsSnapshot(symbol = "") {
 }
 
 // Exportada para test unitario directo (docs/duplicados-restantes-2026-08-07.md).
+//
+// Prioridad del `rating` que ve la ficha: RS semanal del ranking global
+// (rs_weekly_items vía readGlobalRsSeriesForSymbol) por delante del
+// percentil del último lote de scan_results. Motivo: el semanal se calcula
+// sobre el universo completo y se refresca cada semana, mientras que
+// `universe.rsGlobalPct` solo compara al símbolo con los pocos símbolos de un
+// escaneo concreto y puede quedar congelado meses. El percentil del lote pasa
+// a ser RESPALDO: solo se muestra cuando no hay semanal.
 export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, weeklyGlobal = null) {
   const benchmarkRating = benchmarkStrength.rating;
-  if (!universe || !Number.isFinite(universe.rsGlobalPct)) {
-    return {
-      ...benchmarkStrength,
-      rating: null,
-      benchmarkRating,
-      rsRating: benchmarkRating,
-      rsUniverseAvailable: false,
-      rsBenchmarkAvailable: Number.isFinite(benchmarkRating),
-      ratingSource: "universe-missing",
-      rsGlobalPct: null,
-      rsCountryPct: null,
-      rsSectorPct: null,
-      universe: null,
-      globalRsSeries: weeklyGlobal?.series || [],
-      note: "RS StatsEdge sin snapshot reciente para este simbolo. RS Benchmark se mantiene como comparativa secundaria; no sustituye al RS.",
-    };
-  }
-  const rating = universe.rsGlobalPct;
+  const weeklyLatest = weeklyGlobal?.latest
+    || (Array.isArray(weeklyGlobal?.series) ? weeklyGlobal.series.at(-1) : null)
+    || null;
+  const weeklyRating = Number.isFinite(weeklyLatest?.rsRating) ? weeklyLatest.rsRating : null;
+  const universeAvailable = Boolean(universe) && Number.isFinite(universe.rsGlobalPct);
+  const rating = weeklyRating !== null ? weeklyRating : universeAvailable ? universe.rsGlobalPct : null;
+  const ratingSource = weeklyRating !== null
+    ? "weekly-universe"
+    : universeAvailable
+    ? "scan-batch"
+    : "universe-missing";
+  // La muestra tiene que describir al ranking que se enseña: la del snapshot
+  // semanal cuando el rating es el semanal, la del lote cuando es el respaldo.
+  const rsGlobalSample = weeklyRating !== null
+    ? (Number.isFinite(weeklyLatest?.sampleSize) ? weeklyLatest.sampleSize : null)
+    : universeAvailable
+    ? universe.rsGlobalSample
+    : null;
   // Delega en la canónica lib/relativeStrength.js:scoreRsQuality en vez de la
   // fórmula .68/.32 paralela (sin término riskRewardScore) — unificado en
-  // docs/duplicados-restantes-2026-08-07.md. volatility63d/maxDrawdown63d
-  // vienen de benchmarkStrength (bars en vivo, más frescos que el último
-  // scan); el resto de términos de estabilidad/especulación
-  // (riskRewardScore, maxDailyMove20dPct, range63dPct, highsSpreadPct,
-  // extSma50, liquidityScore) no se calculan en este archivo desde bars, así
-  // que se toman del snapshot de scan_results ya proyectado por
-  // readUniverseRsSnapshot (mismo patrón que rating: dato real, no un
-  // relleno neutro).
-  const quality = scoreRsQuality({
-    rsGlobalPct: universe.rsGlobalPct,
-    rsRating: benchmarkRating,
-    volatility63d: benchmarkStrength.volatility63d,
-    maxDrawdown63d: benchmarkStrength.maxDrawdown63d,
-    riskRewardScore: universe.riskRewardScore,
-    liquidityScore: universe.liquidityScore,
-    maxDailyMove20dPct: universe.maxDailyMove20dPct,
-    range63dPct: universe.range63dPct,
-    highsSpreadPct: universe.highsSpreadPct,
-    extSma50: universe.extSma50,
-  }) || { rsQualityScore: null, rsStabilityScore: null, speculationRiskScore: null, rsQualityLabel: "" };
+  // docs/duplicados-restantes-2026-08-07.md. El RS base es el MISMO que se
+  // muestra (rsQualityScore es un ajuste de calidad sobre el RS enseñado, no
+  // sobre otro ranking). volatility63d/maxDrawdown63d vienen de
+  // benchmarkStrength (bars en vivo, más frescos que el último scan); el resto
+  // de términos de estabilidad/especulación (riskRewardScore, liquidityScore,
+  // maxDailyMove20dPct, range63dPct, highsSpreadPct, extSma50) no se calculan
+  // en este archivo desde bars y NO existen en el ranking semanal, así que se
+  // siguen tomando del snapshot de scan_results ya proyectado por
+  // readUniverseRsSnapshot; si no hay snapshot quedan ausentes y la canónica
+  // los excluye y renormaliza (no rellena con neutros inventados).
+  const quality = (Number.isFinite(rating)
+    ? scoreRsQuality({
+      rsGlobalPct: rating,
+      rsRating: benchmarkRating,
+      volatility63d: benchmarkStrength.volatility63d,
+      maxDrawdown63d: benchmarkStrength.maxDrawdown63d,
+      riskRewardScore: universe?.riskRewardScore,
+      liquidityScore: universe?.liquidityScore,
+      maxDailyMove20dPct: universe?.maxDailyMove20dPct,
+      range63dPct: universe?.range63dPct,
+      highsSpreadPct: universe?.highsSpreadPct,
+      extSma50: universe?.extSma50,
+    })
+    : null) || null;
+  const note = weeklyRating !== null
+    ? "RS StatsEdge = percentil 1-99 del ranking semanal global (universo completo, base USD). RS Benchmark solo mide comparativa frente al benchmark asignado."
+    : universeAvailable
+    ? "RS StatsEdge sin ranking semanal para este simbolo: se muestra el percentil del ultimo escaneo, calculado solo sobre los simbolos de ese lote."
+    : "RS StatsEdge sin ranking semanal ni snapshot reciente para este simbolo. RS Benchmark se mantiene como comparativa secundaria; no sustituye al RS.";
   return {
     ...benchmarkStrength,
     rating,
     benchmarkRating,
     rsRating: benchmarkRating,
-    rsUniverseAvailable: true,
+    rsUniverseAvailable: Number.isFinite(rating),
     rsBenchmarkAvailable: Number.isFinite(benchmarkRating),
-    ratingSource: "universe",
-    rsGlobalPct: universe.rsGlobalPct,
-    rsCountryPct: universe.rsCountryPct,
-    rsSectorPct: universe.rsSectorPct,
-    rsGlobalSample: universe.rsGlobalSample,
-    rsCountrySample: universe.rsCountrySample,
-    rsSectorSample: universe.rsSectorSample,
-    rsQualityScore: quality.rsQualityScore,
-    rsStabilityScore: quality.rsStabilityScore,
-    speculationRiskScore: quality.speculationRiskScore,
-    rsQualityLabel: quality.rsQualityLabel,
-    universe,
+    ratingSource,
+    // rsGlobalPct sigue siendo el percentil del lote (su definición no cambia);
+    // el ranking semanal viaja en `rating` y en globalRsSeries.
+    rsGlobalPct: universeAvailable ? universe.rsGlobalPct : null,
+    rsCountryPct: universeAvailable ? universe.rsCountryPct : null,
+    rsSectorPct: universeAvailable ? universe.rsSectorPct : null,
+    rsGlobalSample,
+    rsCountrySample: universeAvailable ? universe.rsCountrySample : null,
+    rsSectorSample: universeAvailable ? universe.rsSectorSample : null,
+    ...(quality ? {
+      rsQualityScore: quality.rsQualityScore,
+      rsStabilityScore: quality.rsStabilityScore,
+      speculationRiskScore: quality.speculationRiskScore,
+      rsQualityLabel: quality.rsQualityLabel,
+    } : {}),
+    universe: universeAvailable ? universe : null,
     globalRsSeries: weeklyGlobal?.series || [],
-    note: "RS StatsEdge = percentil 0-99 calculado desde el universo de la web. RS Benchmark solo mide comparativa frente al benchmark asignado.",
+    note,
   };
 }
 

@@ -545,7 +545,7 @@ function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" 
         <h2>Fuerza relativa</h2>
         <p className="fine">{sourceLine}</p>
       </div>
-      <span className="rsPanelBadge">{rs.ratingSource === "universe" || weekly ? "RS real" : "Sin snapshot"}</span>
+      <span className="rsPanelBadge">{rs.ratingSource === "weekly-universe" || rs.ratingSource === "scan-batch" || weekly ? "RS real" : "Sin snapshot"}</span>
     </div>
     <div className="rsPanelGrid">
       <RsGroup title="Ranking" subtitle="percentil 1-99">
