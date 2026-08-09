@@ -13,7 +13,7 @@ import {
   FilterFamilyModal,
   reviewProfileMeta,
 } from "@/app/screenerPanels";
-import { activeLayerCount, layerStatusText, scanFailureExplanation, searchText, sleep } from "@/lib/screenerFormat";
+import { activeLayerCount, layerStatusText, scanFailureExplanation, scanPreparationStatus, searchText, sleep } from "@/lib/screenerFormat";
 import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson, postJson } from "@/lib/clientApi";
@@ -1294,9 +1294,11 @@ export default function Page() {
           setStatus(`Cache: ${cachePreview.rows.length} resultados precalculados. Refinando con scan actual.`);
         }
       } else if (fullUniverseScan) {
-        setStatus(hadVisibleRows
-          ? `Escaneando todo el universo: ${symbols.length}/${base.length} acciones. Tabla visible congelada.`
-          : `Escaneando todo el universo: ${symbols.length}/${base.length} acciones. Puedes detenerlo si tarda demasiado.`);
+        // Estado de PREPARACIÓN, no de progreso: en este punto todavía no se ha
+        // enviado el POST que crea el scan. El recuento real ("Analizando
+        // N/total") lo escribe publishPartial tras el primer sondeo con
+        // respuesta — ver scanPreparationStatus en lib/screenerFormat.js.
+        setStatus(scanPreparationStatus({ symbolsCount: symbols.length, hadVisibleRows }));
       }
       let rawRows = [], bad = [];
       let completed = 0;

@@ -14,6 +14,18 @@ import { disabledPayload, requirePersistenceAuth, supabaseConfig, supabaseReques
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 const INLINE_SCAN_SYMBOL_LIMIT = 20;
+// Tope de tiempo del INSERT que crea la fila del scan. Sin él, `supabaseRequest`
+// deja el AbortSignal en undefined y el fetch espera indefinidamente a que
+// Supabase responda o cierre: en el incidente de docs/upstream-timeout-2026-08-09.md
+// esa escritura se colgó ~3 minutos antes de fallar. 12 s es el valor más alto
+// que el repo ya usa contra Supabase (DEFAULT_SCAN_READ_TIMEOUT_MS en
+// lib/leaderboards.js, para la lectura paginada de scan_results); el resto de
+// llamadas van entre 1,5 y 8 s (SCANS_SUPABASE_TIMEOUT_MS en app/api/scans).
+// Esta escritura es la más pesada del camino (~181 KiB ida+vuelta con el
+// universo completo), así que se le da ese techo y no menos — pero muy por
+// debajo de maxDuration (300 s), para que el usuario reciba un error accionable
+// en segundos en vez de esperar minutos.
+const SCAN_CREATE_TIMEOUT_MS = Number(process.env.SCAN_CREATE_TIMEOUT_MS || 12000);
 
 export async function POST(req) {
   const authError = requirePersistenceAuth(req);
@@ -34,6 +46,7 @@ export async function POST(req) {
     const [saved] = await supabaseRequest("scans", {
       method: "POST",
       prefer: "return=representation",
+      timeoutMs: SCAN_CREATE_TIMEOUT_MS,
       body: [{
         owner_id: config.ownerId,
         local_id: `server-scan-${crypto.randomUUID()}`,

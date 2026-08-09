@@ -12,7 +12,7 @@
 //     cargado en el navegador.
 
 import { describe, expect, it } from "vitest";
-import { analyzedCountForDisplay, scanFailureExplanation, userFacingScanError } from "@/lib/screenerFormat";
+import { analyzedCountForDisplay, scanFailureExplanation, scanPreparationStatus, userFacingScanError } from "@/lib/screenerFormat";
 
 describe("userFacingScanError · el error de Postgres no llega crudo a pantalla", () => {
   it("mapea el statement timeout de Postgres al mensaje de producto", () => {
@@ -46,6 +46,29 @@ describe("userFacingScanError · el error de Postgres no llega crudo a pantalla"
     expect(mapped).not.toMatch(/PGRST301|JWSError/);
   });
 
+  // docs/upstream-timeout-2026-08-09.md: el INSERT que crea el scan no tenía
+  // tope de tiempo. Al ponérselo, el error crudo que puede llegar ahora al
+  // cliente ya no es de Postgres sino el aborto de undici/Node
+  // (AbortSignal.timeout), que también debe traducirse.
+  it("mapea el aborto por tope de tiempo (AbortSignal.timeout) a un mensaje accionable", () => {
+    const mapped = userFacingScanError("The operation was aborted due to timeout");
+    expect(mapped).not.toMatch(/aborted/i);
+    expect(mapped).toMatch(/universo/i);
+  });
+
+  it("mapea también las otras variantes de aborto de Node/undici", () => {
+    const expected = userFacingScanError("The operation was aborted due to timeout");
+    expect(userFacingScanError("TimeoutError: signal is aborted without reason")).toBe(expected);
+    expect(userFacingScanError("AbortError: This operation was aborted")).toBe(expected);
+    expect(userFacingScanError("The user aborted a request.")).toBe(expected);
+  });
+
+  it("el aborto gana al patrón genérico de timeout: da el mensaje específico, no 'tardó demasiado en responder'", () => {
+    const abortMessage = userFacingScanError("The operation was aborted due to timeout");
+    const genericMessage = userFacingScanError("fetch failed: ETIMEDOUT 10.0.0.1:443");
+    expect(abortMessage).not.toBe(genericMessage);
+  });
+
   it("string vacío o null pasa a vacío (sin banner)", () => {
     expect(userFacingScanError("")).toBe("");
     expect(userFacingScanError(null)).toBe("");
@@ -70,6 +93,47 @@ describe("analyzedCountForDisplay · el contador refleja lo procesado, no el uni
   it("con analyzedRows no-array (undefined/null, estado inicial), devuelve 0 sin lanzar", () => {
     expect(analyzedCountForDisplay(undefined)).toBe(0);
     expect(analyzedCountForDisplay(null)).toBe(0);
+  });
+});
+
+// scanPreparationStatus: el cartel que app/page.jsx muestra en modo "todo el
+// universo" ANTES de enviar el POST que crea el scan. Antes era
+// "Escaneando todo el universo: 10234/10234 acciones" — texto fijo, no un
+// contador, que se leía como un análisis ya terminado y se quedaba congelado
+// ahí si la creación fallaba (docs/upstream-timeout-2026-08-09.md, Parte B).
+describe("scanPreparationStatus · el cartel previo dice 'preparando', no un recuento de análisis", () => {
+  it("REGRESIÓN: no contiene un recuento con forma hechos/total", () => {
+    const message = scanPreparationStatus({ symbolsCount: 10234, hadVisibleRows: false });
+    expect(message).not.toMatch(/\d+\s*\/\s*\d+/);
+    expect(message).not.toMatch(/10234\s*\/\s*10234/);
+  });
+
+  it("dice explícitamente que está preparando y que el análisis no ha empezado", () => {
+    const message = scanPreparationStatus({ symbolsCount: 10234, hadVisibleRows: false });
+    expect(message).toMatch(/prepar/i);
+    expect(message).toMatch(/no ha empezado/i);
+    expect(message).not.toMatch(/^Escaneando/);
+  });
+
+  it("puede nombrar el tamaño del universo pedido, pero como alcance, nunca como progreso", () => {
+    const message = scanPreparationStatus({ symbolsCount: 10234, hadVisibleRows: false });
+    expect(message).toMatch(/10234 acciones/);
+    expect(message).not.toMatch(/\d+\s*\/\s*\d+/);
+  });
+
+  it("conserva las dos variantes de la UI: tabla congelada vs. aviso de que se puede detener", () => {
+    expect(scanPreparationStatus({ symbolsCount: 10234, hadVisibleRows: true })).toMatch(/congelada/i);
+    expect(scanPreparationStatus({ symbolsCount: 10234, hadVisibleRows: false })).toMatch(/detenerlo/i);
+  });
+
+  it("con un recuento inválido o ausente no pinta números raros", () => {
+    for (const value of [undefined, null, NaN, -5, "no-es-un-numero"]) {
+      const message = scanPreparationStatus({ symbolsCount: value });
+      expect(message).toMatch(/prepar/i);
+      expect(message).not.toMatch(/NaN|-\d|undefined|null/);
+      expect(message).not.toMatch(/\d+\s*\/\s*\d+/);
+    }
+    expect(scanPreparationStatus()).toMatch(/prepar/i);
   });
 });
 
