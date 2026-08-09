@@ -12,7 +12,7 @@
 //     cargado en el navegador.
 
 import { describe, expect, it } from "vitest";
-import { analyzedCountForDisplay, userFacingScanError } from "@/lib/screenerFormat";
+import { analyzedCountForDisplay, scanFailureExplanation, userFacingScanError } from "@/lib/screenerFormat";
 
 describe("userFacingScanError · el error de Postgres no llega crudo a pantalla", () => {
   it("mapea el statement timeout de Postgres al mensaje de producto", () => {
@@ -70,5 +70,34 @@ describe("analyzedCountForDisplay · el contador refleja lo procesado, no el uni
   it("con analyzedRows no-array (undefined/null, estado inicial), devuelve 0 sin lanzar", () => {
     expect(analyzedCountForDisplay(undefined)).toBe(0);
     expect(analyzedCountForDisplay(null)).toBe(0);
+  });
+});
+
+// scanFailureExplanation: el mensaje que app/page.jsx pone en el banner `err`
+// cuando classifyScanOutcome (lib/scanStatus.js) da "failed" — el caso motivador
+// de docs/limite-600-scan-2026-08-09.md. Reutiliza userFacingScanError cuando
+// hay un mensaje crudo; si no lo hay (progress.status:"failed" sin texto de
+// error propio), da una explicación en lenguaje llano en vez de dejar el
+// banner vacío.
+describe("scanFailureExplanation · mensaje del banner cuando el outcome es 'failed'", () => {
+  it("con un error crudo del servidor, delega en userFacingScanError (mismo mecanismo, no uno nuevo)", () => {
+    const raw = "canceling statement due to statement timeout";
+    expect(scanFailureExplanation(raw)).toBe(userFacingScanError(raw));
+  });
+
+  it("sin error crudo (progress.status:'failed', veredicto de calidad sin texto propio), da una explicación en lenguaje llano — nunca deja el banner vacío", () => {
+    const message = scanFailureExplanation("");
+    expect(message).not.toBe("");
+    expect(message).toMatch(/no se pudieron procesar/i);
+  });
+
+  it("null/undefined se tratan igual que string vacío", () => {
+    expect(scanFailureExplanation(null)).toBe(scanFailureExplanation(""));
+    expect(scanFailureExplanation(undefined)).toBe(scanFailureExplanation(""));
+  });
+
+  it("REPRODUCCIÓN con el error real del incidente: nunca se ve la jerga de Postgres", () => {
+    const message = scanFailureExplanation("canceling statement due to statement timeout");
+    expect(message).not.toMatch(/statement timeout/i);
   });
 });

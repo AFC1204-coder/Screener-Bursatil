@@ -13,7 +13,7 @@ import {
   FilterFamilyModal,
   reviewProfileMeta,
 } from "@/app/screenerPanels";
-import { activeLayerCount, layerStatusText, searchText, sleep, userFacingScanError } from "@/lib/screenerFormat";
+import { activeLayerCount, layerStatusText, scanFailureExplanation, searchText, sleep } from "@/lib/screenerFormat";
 import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson, postJson } from "@/lib/clientApi";
@@ -27,7 +27,7 @@ import { enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatib
 import { qualityGateForResearchRow } from "@/lib/qualityGate";
 import { benchmarkSymbolForRow } from "@/lib/relativeStrength";
 import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/lib/researchRow";
-import { isTerminalScanStatus } from "@/lib/scanStatus";
+import { classifyScanOutcome, isTerminalScanStatus, scanOutcomeLabel } from "@/lib/scanStatus";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
 import { ASIA, DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, EUROPE, FULL_SCAN_PARTIAL_EVERY, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, SERVER_SCAN_POLL_MS, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
 import { buildDecisionBrief, buildDecisionEvidenceChecklist, buildDecisionQueueItem, buildDecisionQueueSummary, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
@@ -1344,6 +1344,12 @@ export default function Page() {
       serverScanIdRef.current = launched.scanId;
       let serverStatus = "running";
       let serverError = "";
+      // GET /api/scan ya calcula estas dos señales en cada respuesta
+      // (app/api/scan/route.js) pero hasta ahora el cliente las ignoraba —
+      // ver docs/limite-600-scan-2026-08-09.md. Se capturan aquí para poder
+      // clasificar el resultado final con classifyScanOutcome más abajo.
+      let serverPublishable = false;
+      let serverDegraded = false;
       let resultOffset = 0;
       while (!scanAbortRef.current) {
         let state = null;
@@ -1362,6 +1368,8 @@ export default function Page() {
         if (Number.isFinite(state.progress?.completed)) completed = state.progress.completed;
         serverStatus = state.status || "running";
         serverError = state.progress?.error || "";
+        serverPublishable = Boolean(state.publishable);
+        serverDegraded = Boolean(state.degraded);
         publishPartial(true, state.progress?.currentSymbol || "");
         if (isTerminalScanStatus(serverStatus)) break;
         await sleep(SERVER_SCAN_POLL_MS);
@@ -1418,11 +1426,34 @@ export default function Page() {
         setDiagnostics(filteredView.diagnostics);
       }
       setFail(bad);
-      const samplePct = base.length ? (completed / base.length) * 100 : 100;
+      // requestedTotal = lo que este scan concreto pidió (symbols.length) —
+      // NO base.length (el universo cargado en el navegador, que en modo
+      // "lote"/"aleatorio" es mucho mayor que lo pedido y haría parecer
+      // "parcial" a un lote pequeño que sí terminó entero). En modo "todo el
+      // universo" symbols === spread(base), así que coinciden.
+      const requestedTotal = symbols.length;
+      const samplePct = requestedTotal ? (completed / requestedTotal) * 100 : 100;
       const cancelled = aborted || serverStatus === "cancelled";
-      const finishLabel = cancelled ? `Cancelado · ${rawRows.length} filas conservadas` : "Completado";
+      // classifyScanOutcome (lib/scanStatus.js) es la única fuente de verdad
+      // para esta etiqueta: cruza el estado del servidor (publishable/degraded,
+      // que ya calculaba GET /api/scan y el cliente ignoraba) con la cobertura
+      // real (completed vs. lo pedido) — ver docs/limite-600-scan-2026-08-09.md.
+      const outcome = classifyScanOutcome({
+        cancelled,
+        status: serverStatus,
+        publishable: serverPublishable,
+        degraded: serverDegraded,
+        completed,
+        requestedTotal,
+      });
+      if (outcome === "failed") {
+        // Mismo traductor y mismo banner que ya usaba el camino de fallo total
+        // (catch de más abajo) — no se inventa un segundo mecanismo.
+        setErr(scanFailureExplanation(serverError));
+      }
+      const finishLabel = scanOutcomeLabel(outcome, { rawRowsCount: rawRows.length });
       const stableNote = stableResultsPublished ? " · resultados nuevos listos para mostrar" : "";
-      setStatus(`${finishLabel}: ${final.length} pasan ${PRESETS[presetKey].name} · muestra ${completed}/${base.length} (${samplePct < 10 ? samplePct.toFixed(1) : samplePct.toFixed(0)}%) · RS calculado sobre ${filteredView.sectorized.length} acciones con datos · ${setupModeLabel(activeSettings.setupMode)} · ${activeLayerLabel}. Scan ${secondsLabel(fullScanMs)} · filtro ${secondsLabel(filteredView.filterMs)}${stableNote}.`);
+      setStatus(`${finishLabel}: ${final.length} pasan ${PRESETS[presetKey].name} · muestra ${completed}/${requestedTotal} (${samplePct < 10 ? samplePct.toFixed(1) : samplePct.toFixed(0)}%) · RS calculado sobre ${filteredView.sectorized.length} acciones con datos · ${setupModeLabel(activeSettings.setupMode)} · ${activeLayerLabel}. Scan ${secondsLabel(fullScanMs)} · filtro ${secondsLabel(filteredView.filterMs)}${stableNote}.`);
     } catch (e) {
       // El mensaje crudo (puede ser un error literal de Postgres/PostgREST,
       // p.ej. "canceling statement due to statement timeout") queda en
@@ -1430,7 +1461,7 @@ export default function Page() {
       // por ScreenerShell) es siempre lenguaje de producto — ver
       // docs/timeout-scan-universo-2026-08-09.md.
       console.error("[scan] el escaneo fallo", e);
-      setErr(userFacingScanError(e.message));
+      setErr(scanFailureExplanation(e.message));
       setStatus("Error");
     } finally {
       setRunning(false);
