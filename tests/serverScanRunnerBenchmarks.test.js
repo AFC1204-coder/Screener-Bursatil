@@ -28,6 +28,12 @@ vi.mock("@/lib/marketData", () => ({
   fetchYahooProfile: vi.fn(async () => ({})),
 }));
 
+// dailyBarsCache: la persistencia fire-and-forget de barras (docs/barras-desfasadas-2026-08-09.md)
+// no es lo que este archivo verifica — se mockea para aislarla del resto.
+vi.mock("@/lib/dailyBarsCache", () => ({
+  writeDailyBarsCache: vi.fn(async () => ({ status: "supabase", written: true, count: 0 })),
+}));
+
 // buildResearchRow sintetiza una fila cuya rsRating depende de si el benchmark
 // local está en `benchmarks`. Aquí solo nos importa que se llame con el map de
 // benchmarks completo; reflejamos benchmarkSymbol para inspeccionarlo.
