@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Atajo corto para scripts/verificar.sh — ver ese archivo para el detalle.
+exec "$(dirname "$0")/scripts/verificar.sh" "$@"
