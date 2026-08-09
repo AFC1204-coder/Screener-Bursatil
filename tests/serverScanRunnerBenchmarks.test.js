@@ -70,6 +70,10 @@ vi.mock("@/lib/scansApiCache", () => ({ clearScansApiCache: vi.fn() }));
 
 vi.mock("@/lib/supabaseServer", () => ({
   supabaseRequest: vi.fn(async () => []),
+  // patchScan (lib/serverScanRunner.js) llama a esta RPC para persistir el
+  // progreso (docs/timeout-scan-universo-2026-08-09.md); este archivo no
+  // inspecciona el progreso, solo necesita que la RPC no crashee.
+  supabaseRpc: vi.fn(async () => [{ id: "irrelevant", row_count: 0, updated_at: new Date().toISOString() }]),
   finiteOrNull: (v) => (Number.isFinite(v) ? v : null),
   textOrNull: (v) => (v == null ? null : String(v)),
 }));

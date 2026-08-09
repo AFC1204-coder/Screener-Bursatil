@@ -13,7 +13,7 @@ import {
   FilterFamilyModal,
   reviewProfileMeta,
 } from "@/app/screenerPanels";
-import { activeLayerCount, layerStatusText, searchText, sleep } from "@/lib/screenerFormat";
+import { activeLayerCount, layerStatusText, searchText, sleep, userFacingScanError } from "@/lib/screenerFormat";
 import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson, postJson } from "@/lib/clientApi";
@@ -1424,7 +1424,13 @@ export default function Page() {
       const stableNote = stableResultsPublished ? " · resultados nuevos listos para mostrar" : "";
       setStatus(`${finishLabel}: ${final.length} pasan ${PRESETS[presetKey].name} · muestra ${completed}/${base.length} (${samplePct < 10 ? samplePct.toFixed(1) : samplePct.toFixed(0)}%) · RS calculado sobre ${filteredView.sectorized.length} acciones con datos · ${setupModeLabel(activeSettings.setupMode)} · ${activeLayerLabel}. Scan ${secondsLabel(fullScanMs)} · filtro ${secondsLabel(filteredView.filterMs)}${stableNote}.`);
     } catch (e) {
-      setErr(e.message);
+      // El mensaje crudo (puede ser un error literal de Postgres/PostgREST,
+      // p.ej. "canceling statement due to statement timeout") queda en
+      // consola para depurar; lo que ve el usuario en el banner err (pintado
+      // por ScreenerShell) es siempre lenguaje de producto — ver
+      // docs/timeout-scan-universo-2026-08-09.md.
+      console.error("[scan] el escaneo fallo", e);
+      setErr(userFacingScanError(e.message));
       setStatus("Error");
     } finally {
       setRunning(false);

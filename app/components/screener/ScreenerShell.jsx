@@ -37,7 +37,7 @@ import {
   ScoreAuditSummaryRail,
   SetupChipRail,
 } from "@/app/screenerPanels";
-import { investorStatusLabel } from "@/lib/screenerFormat";
+import { analyzedCountForDisplay, investorStatusLabel } from "@/lib/screenerFormat";
 import {
   ALL_FILTER_LAYERS,
   DEFAULT_FIELD_RULES,
@@ -258,7 +258,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     pagedRows: resultsPagedRows,
     activeSettings,
     analyzedRows,
-    universe: resultsUniverse,
     pendingResults,
     pendingFilteredCount,
     favoriteSymbols: resultsFavoriteSymbols,
@@ -611,7 +610,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             <div className="resultsTitleBlock">
               <span>Results</span>
               <h2>{resultsFiltered.length} resultados</h2>
-              <p>{resultsRows.length} pasan · {analyzedRows.length || resultsUniverse.length || 0} analizadas · {SORT_LABELS[sort] || sort}{scannedAtLabel ? ` · scan ${scannedAtLabel}` : ""}</p>
+              <p>{resultsRows.length} pasan · {analyzedCountForDisplay(analyzedRows)} analizadas · {SORT_LABELS[sort] || sort}{scannedAtLabel ? ` · scan ${scannedAtLabel}` : ""}</p>
               {/* Rails de decisión: control clicable único para readiness/reviewPriority.
                   Los <select> que antes duplicaban estos estados se eliminaron; el re-click
                   del chip limpia a "Todos"/"all", y ResultFilterChips también permite limpiar. */}

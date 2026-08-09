@@ -145,12 +145,15 @@ function configureSnapshotOnce(snapshot) {
   supabaseRequest.mockResolvedValue([]);
 }
 
-// Extrae, en orden, los bodies PATCH de `scans` (donde vive progress).
-// Cada PATCH escribe { row_count, settings: { progress: {...} }, updated_at }.
+// Extrae, en orden, los objetos progress persistidos. patchScan
+// (lib/serverScanRunner.js) ya no hace un PATCH REST con `settings` completo
+// — llama a la RPC scan_progress_patch con el progress solo (ver
+// docs/timeout-scan-universo-2026-08-09.md), así que se leen desde
+// supabaseRpc, no desde supabaseRequest.
 function progressPatches() {
-  return supabaseRequest.mock.calls
-    .filter(([path, opts]) => path === "scans" && opts?.method === "PATCH")
-    .map(([_, opts]) => opts.body?.settings?.progress)
+  return supabaseRpc.mock.calls
+    .filter(([fn]) => fn === "scan_progress_patch")
+    .map(([, payload]) => payload?.p_progress)
     .filter(Boolean);
 }
 
@@ -429,16 +432,25 @@ describe("runScanChunk · wiring de finalización de percentiles", () => {
     expect(failedPatch.completeness.ratio).toBe(0);
   });
 
-  it("supabaseRpc no se invoca directamente desde runScanChunk (va vía finalizeScanResultsInDb)", async () => {
-    // El wiring del runner llama a finalizeScanResultsInDb, no a supabaseRpc
-    // directamente. Esto protege contra un refactor futuro que omita el wrapper.
+  it("la finalización de percentiles NUNCA llama a supabaseRpc directamente desde runScanChunk (va vía finalizeScanResultsInDb)", async () => {
+    // El wiring de la finalización llama a finalizeScanResultsInDb, no a
+    // supabaseRpc directamente para "finalize_scan_results"/"scan_finalize_inputs".
+    // Esto protege contra un refactor futuro que omita el wrapper.
+    //
+    // runScanChunk SÍ llama a supabaseRpc directamente para persistir el
+    // progreso (RPC scan_progress_patch, patchScan en lib/serverScanRunner.js —
+    // docs/timeout-scan-universo-2026-08-09.md) — eso es intencional y distinto
+    // de la finalización, así que aquí solo comprobamos que ninguna llamada a
+    // supabaseRpc use el nombre de función de la finalización.
     const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 3, chunkSize: 3 });
     configureSnapshotOnce(snapshot);
     finalizeScanResultsInDb.mockResolvedValue({ rowsProcessed: 3, rowsPatched: 3 });
 
     await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
 
-    expect(supabaseRpc).not.toHaveBeenCalled();
+    const rpcFunctionNames = supabaseRpc.mock.calls.map(([fn]) => fn);
+    expect(rpcFunctionNames).not.toContain("finalize_scan_results");
+    expect(rpcFunctionNames).not.toContain("scan_finalize_inputs");
     expect(finalizeScanResultsInDb).toHaveBeenCalledTimes(1);
   });
 });

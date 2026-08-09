@@ -1,0 +1,74 @@
+// Tests de los dos fallos de presentación de docs/timeout-scan-universo-2026-08-09.md:
+//
+//  1. userFacingScanError: el error crudo de Postgres/PostgREST (p.ej.
+//     "canceling statement due to statement timeout") NUNCA debe llegar tal
+//     cual al banner `err` que pinta ScreenerShell.jsx. El mensaje original
+//     se conserva por separado (consola, ver app/page.jsx) — esta función
+//     solo decide qué ve el usuario.
+//  2. analyzedCountForDisplay: el contador "N analizadas" del panel de
+//     resultados (ScreenerShell.jsx) debe reflejar SIEMPRE analyzedRows.length
+//     real, incluido el caso 0 (scan que falló antes de procesar nada, o
+//     antes de correr ningún scan) — nunca un fallback al tamaño del universo
+//     cargado en el navegador.
+
+import { describe, expect, it } from "vitest";
+import { analyzedCountForDisplay, userFacingScanError } from "@/lib/screenerFormat";
+
+describe("userFacingScanError · el error de Postgres no llega crudo a pantalla", () => {
+  it("mapea el statement timeout de Postgres al mensaje de producto", () => {
+    const raw = "canceling statement due to statement timeout";
+    const mapped = userFacingScanError(raw);
+    expect(mapped).not.toBe(raw);
+    expect(mapped).not.toMatch(/statement timeout/i);
+    expect(mapped).toMatch(/universo/i);
+  });
+
+  it("es insensible a mayúsculas/minúsculas y a texto adicional alrededor", () => {
+    const raw = "Supabase HTTP 500: canceling statement due to statement TIMEOUT after 8000ms";
+    expect(userFacingScanError(raw)).toMatch(/universo/i);
+  });
+
+  it("mapea timeouts de red genéricos (ETIMEDOUT) a un mensaje distinto sin jerga", () => {
+    const mapped = userFacingScanError("fetch failed: ETIMEDOUT 10.0.0.1:443");
+    expect(mapped).not.toMatch(/ETIMEDOUT/);
+    expect(mapped).toMatch(/servidor/i);
+  });
+
+  it("mapea errores 5xx de Supabase a un mensaje de producto", () => {
+    const mapped = userFacingScanError("Supabase HTTP 503: Service Unavailable");
+    expect(mapped).not.toMatch(/HTTP 503/);
+  });
+
+  it("un mensaje técnico no reconocido cae en el fallback genérico, nunca crudo", () => {
+    const raw = "PGRST301: JWSError CompactDecodeError InvalidNumberOfSegments";
+    const mapped = userFacingScanError(raw);
+    expect(mapped).not.toBe(raw);
+    expect(mapped).not.toMatch(/PGRST301|JWSError/);
+  });
+
+  it("string vacío o null pasa a vacío (sin banner)", () => {
+    expect(userFacingScanError("")).toBe("");
+    expect(userFacingScanError(null)).toBe("");
+    expect(userFacingScanError(undefined)).toBe("");
+  });
+});
+
+describe("analyzedCountForDisplay · el contador refleja lo procesado, no el universo pedido", () => {
+  it("con un scan que completó, devuelve el número real de filas analizadas", () => {
+    const analyzedRows = Array.from({ length: 47 }, (_, i) => ({ symbol: `SYM${i}` }));
+    expect(analyzedCountForDisplay(analyzedRows)).toBe(47);
+  });
+
+  it("REGRESIÓN: con 0 filas analizadas (fallo temprano), devuelve 0 — NUNCA un tamaño de universo ajeno", () => {
+    // Antes de este fix, el caller usaba `analyzedRows.length || resultsUniverse.length || 0`:
+    // con analyzedRows=[] (0, falsy), el `||` caía a resultsUniverse.length (el
+    // universo completo cargado, p.ej. 10234), mostrando "10234 analizadas"
+    // cuando el scan real solo procesó 47 símbolos antes de fallar.
+    expect(analyzedCountForDisplay([])).toBe(0);
+  });
+
+  it("con analyzedRows no-array (undefined/null, estado inicial), devuelve 0 sin lanzar", () => {
+    expect(analyzedCountForDisplay(undefined)).toBe(0);
+    expect(analyzedCountForDisplay(null)).toBe(0);
+  });
+});
