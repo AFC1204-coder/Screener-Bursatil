@@ -28,10 +28,17 @@ vi.mock("@/lib/marketData", () => ({
   fetchYahooProfile: vi.fn(async () => ({})),
 }));
 
-// dailyBarsCache: la persistencia fire-and-forget de barras (docs/barras-desfasadas-2026-08-09.md)
-// no es lo que este archivo verifica — se mockea para aislarla del resto.
+// dailyBarsCache/fundamentalsCache: no es lo que este archivo verifica (solo
+// le importa qué símbolos se piden a fetchYahooChart para benchmarks) — se
+// mockean como "pass-through" (llaman al fetcher recibido) para que el
+// símbolo del scan siga llegando a fetchYahooChart/fetchYahooProfile igual
+// que antes de docs/adr-scan-desde-base.md, sin tener que rediseñar estos
+// tests.
 vi.mock("@/lib/dailyBarsCache", () => ({
-  writeDailyBarsCache: vi.fn(async () => ({ status: "supabase", written: true, count: 0 })),
+  withDailyBarsCache: vi.fn(async (symbol, options, fetcher) => fetcher(symbol, options)),
+}));
+vi.mock("@/lib/fundamentalsCache", () => ({
+  withProfileCache: vi.fn(async (symbol, options, fetcher) => fetcher(symbol, options)),
 }));
 
 // buildResearchRow sintetiza una fila cuya rsRating depende de si el benchmark

@@ -29,12 +29,18 @@ vi.mock("@/lib/marketData", () => ({
   fetchYahooProfile: vi.fn(async () => ({})),
 }));
 
-// dailyBarsCache: writeDailyBarsCache es la persistencia fire-and-forget de
-// barras añadida en esta tarea (docs/barras-desfasadas-2026-08-09.md). Se
-// mockea aquí para no tocar Supabase de verdad y para poder espiar/controlar
-// su timing en el test dedicado más abajo.
+// dailyBarsCache/fundamentalsCache: withDailyBarsCache/withProfileCache son
+// las funciones que runScanChunk usa ahora para leer barras/perfil
+// (docs/adr-scan-desde-base.md) — el mismo patrón que ya usa el cron. El mock
+// por defecto es un "pass-through": llama al fetcher recibido (fetchYahooChart/
+// fetchYahooProfile, mockeados abajo) igual que haría la función real en un
+// cache-miss. Los tests que necesitan simular un cache-HIT sobrescriben la
+// implementación para no invocar el fetcher.
 vi.mock("@/lib/dailyBarsCache", () => ({
-  writeDailyBarsCache: vi.fn(async () => ({ status: "supabase", written: true, count: 0 })),
+  withDailyBarsCache: vi.fn(async (symbol, options, fetcher) => fetcher(symbol, options)),
+}));
+vi.mock("@/lib/fundamentalsCache", () => ({
+  withProfileCache: vi.fn(async (symbol, options, fetcher) => fetcher(symbol, options)),
 }));
 
 // researchRow: buildResearchRow retorna fila sintética con campos mínimos para
@@ -106,7 +112,8 @@ import { supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
 import { finalizeScanResultsInDb } from "@/lib/scanPercentileFinalization";
 import { fetchYahooChart, fetchYahooProfile } from "@/lib/marketData";
 import { buildResearchRow } from "@/lib/researchRow";
-import { writeDailyBarsCache } from "@/lib/dailyBarsCache";
+import { withDailyBarsCache } from "@/lib/dailyBarsCache";
+import { withProfileCache } from "@/lib/fundamentalsCache";
 
 // --- Helpers ---------------------------------------------------------------
 
@@ -455,58 +462,82 @@ describe("runScanChunk · wiring de finalización de percentiles", () => {
   });
 });
 
-// Persistencia de barras del scan interactivo (docs/barras-desfasadas-2026-08-09.md):
-// el scan interactivo descargaba charts frescos de Yahoo (vía @/lib/marketData)
-// pero nunca los escribía en daily_bars — solo el cron (materializedScanner.js)
-// lo hacía. Estos tests verifican que runScanChunk ahora persiste cada chart
-// descargado con el mismo escritor que usa el cron (writeDailyBarsCache), sin
-// bloquear el resto del scan en ello.
-describe("runScanChunk · persistencia de barras en daily_bars", () => {
+// Lectura desde la base en vez de descarga (docs/adr-scan-desde-base.md,
+// docs/cobertura-base-2026-08-09.md): el scan interactivo ahora lee barras y
+// perfil vía withDailyBarsCache/withProfileCache (el mismo patrón que ya usa
+// el cron) en vez de llamar a fetchYahooChart/fetchYahooProfile directamente.
+// Estos tests verifican las dos rutas: caché-hit (no toca Yahoo) y
+// caché-miss (cae a la descarga en vivo a través de la misma función).
+describe("runScanChunk · lee de la base, cae a descarga solo si falta", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     fetchYahooChart.mockResolvedValue({ bars: [{ date: "2026-08-08", close: 100 }], meta: { symbol: "SYM1" } });
-    writeDailyBarsCache.mockResolvedValue({ status: "supabase", written: true, count: 1 });
+    fetchYahooProfile.mockResolvedValue({ name: "Symbol One", sector: "Technology" });
+    // Pass-through por defecto (cache-miss simulado): cada test de "hit"
+    // sobrescribe esto para NO invocar el fetcher.
+    withDailyBarsCache.mockImplementation(async (symbol, options, fetcher) => fetcher(symbol, options));
+    withProfileCache.mockImplementation(async (symbol, options, fetcher) => fetcher(symbol, options));
   });
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it("persiste, con el mismo chart descargado, cada símbolo procesado del eslabón", async () => {
-    const chart = { bars: [{ date: "2026-08-08", close: 42 }], meta: { symbol: "SYM1", regularMarketPrice: 42 } };
-    fetchYahooChart.mockImplementation(async (symbol) => (symbol === "SYM1" ? chart : { bars: [], meta: {} }));
+  it("pide cada símbolo del eslabón a withDailyBarsCache/withProfileCache, no a Yahoo directamente", async () => {
     const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 1, chunkSize: 1 });
     configureSnapshotOnce(snapshot);
     finalizeScanResultsInDb.mockResolvedValue({ rowsProcessed: 1, rowsPatched: 1 });
 
     await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
 
-    expect(writeDailyBarsCache).toHaveBeenCalledWith("SYM1", chart, expect.objectContaining({ interval: "D" }));
+    expect(withDailyBarsCache).toHaveBeenCalledWith(
+      "SYM1",
+      expect.objectContaining({ range: "2A", interval: "D", maxAgeDays: 5 }),
+      fetchYahooChart,
+    );
+    expect(withProfileCache).toHaveBeenCalledWith(
+      "SYM1",
+      expect.objectContaining({ maxAgeDays: 14 }),
+      fetchYahooProfile,
+    );
   });
 
-  it("NO espera a que la escritura en daily_bars termine antes de seguir con el scan (fire-and-forget)", async () => {
-    // writeDailyBarsCache queda pendiente indefinidamente durante todo el test.
-    // Si runScanChunk la awaiteara, nunca llegaría a completar el eslabón.
-    let releaseWrite;
-    const writePending = new Promise((resolve) => { releaseWrite = resolve; });
-    writeDailyBarsCache.mockImplementation(() => writePending.then(() => ({ status: "supabase", written: true, count: 1 })));
+  it("cache-HIT: si withDailyBarsCache/withProfileCache resuelven sin llamar al fetcher, Yahoo nunca se toca", async () => {
+    const cachedChart = { bars: [{ date: "2026-08-07", close: 55 }], meta: { symbol: "SYM1", dataProvider: "StatsEdge daily_bars cache" } };
+    const cachedProfile = { name: "Symbol One (cached)", sector: "Industrials" };
+    // Simulan un hit real: NO invocan el tercer argumento (fetcher).
+    withDailyBarsCache.mockImplementation(async () => cachedChart);
+    withProfileCache.mockImplementation(async () => cachedProfile);
     const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 1, chunkSize: 1 });
     configureSnapshotOnce(snapshot);
     finalizeScanResultsInDb.mockResolvedValue({ rowsProcessed: 1, rowsPatched: 1 });
 
-    // Si esto no resuelve, el test falla por timeout — es la prueba de que
-    // runScanChunk no bloquea en writeDailyBarsCache.
     await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
 
-    const patches = progressPatches();
-    expect(patches.find((p) => p.status === "complete")).toBeTruthy();
-    expect(writeDailyBarsCache).toHaveBeenCalled();
-    // La promesa de escritura seguía pendiente cuando el eslabón ya había
-    // terminado — confirma que no fue awaiteada en el camino crítico.
-    releaseWrite();
+    // fetchYahooChart SÍ se llama para los benchmarks globales (SPY/QQQ/ACWI,
+    // loadBenchmarks — fuera del alcance de este cambio, ver comentario en
+    // lib/serverScanRunner.js), pero NUNCA para el símbolo del scan (SYM1):
+    // ese vino del cache-hit simulado arriba, no de Yahoo.
+    expect(fetchYahooChart).not.toHaveBeenCalledWith("SYM1");
+    expect(fetchYahooProfile).not.toHaveBeenCalled();
+    expect(buildResearchRow).toHaveBeenCalledWith("SYM1", cachedChart, cachedProfile, expect.any(Object), expect.any(Object));
   });
 
-  it("un fallo de writeDailyBarsCache no tumba el scan ni impide que termine 'complete'", async () => {
-    writeDailyBarsCache.mockRejectedValue(new Error("daily_bars insert failed"));
+  it("cache-MISS: si withDailyBarsCache cae a la descarga (pass-through), SÍ llama a fetchYahooChart", async () => {
+    // El mock por defecto de beforeEach ya es pass-through (simula el
+    // comportamiento real de un miss). Solo confirmamos que, en ese caso,
+    // el fetcher (Yahoo) SÍ se invoca.
+    const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 1, chunkSize: 1 });
+    configureSnapshotOnce(snapshot);
+    finalizeScanResultsInDb.mockResolvedValue({ rowsProcessed: 1, rowsPatched: 1 });
+
+    await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
+
+    expect(fetchYahooChart).toHaveBeenCalledWith("SYM1", expect.objectContaining({ range: "2A", interval: "D", maxAgeDays: 5 }));
+    expect(fetchYahooProfile).toHaveBeenCalledWith("SYM1", expect.objectContaining({ maxAgeDays: 14 }));
+  });
+
+  it("un fallo de withProfileCache (ni caché ni Yahoo) no tumba el scan — degrada a perfil vacío", async () => {
+    withProfileCache.mockRejectedValue(new Error("fundamental_snapshots read failed"));
     const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 1, chunkSize: 1 });
     configureSnapshotOnce(snapshot);
     finalizeScanResultsInDb.mockResolvedValue({ rowsProcessed: 1, rowsPatched: 1 });
@@ -516,5 +547,27 @@ describe("runScanChunk · persistencia de barras en daily_bars", () => {
     const patches = progressPatches();
     expect(patches.find((p) => p.status === "complete")).toBeTruthy();
     expect(patches.find((p) => p.status === "error")).toBeUndefined();
+    expect(buildResearchRow).toHaveBeenCalledWith("SYM1", expect.any(Object), {}, expect.any(Object), expect.any(Object));
+  });
+
+  it("un fallo de withDailyBarsCache (ni caché ni Yahoo) se clasifica como error de ESE símbolo, no tumba el scan", async () => {
+    // A diferencia del perfil, la falta de barras SÍ impide construir la fila
+    // (buildResearchRow las necesita) — mismo comportamiento que ya tenía
+    // fetchYahooChart antes de este cambio: el símbolo cae a state.errors,
+    // el resto del eslabón sigue.
+    withDailyBarsCache.mockRejectedValue(new Error("daily_bars read failed"));
+    const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 1, chunkSize: 1 });
+    configureSnapshotOnce(snapshot);
+    finalizeScanResultsInDb.mockResolvedValue({ rowsProcessed: 0, rowsPatched: 0 });
+
+    await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
+
+    const patches = progressPatches();
+    // 0 guardados / 1 error → "failed" por el contrato de completitud, pero
+    // NO "error" de runtime — el fallo quedó contenido al símbolo.
+    expect(patches.find((p) => p.status === "error")).toBeUndefined();
+    const terminal = patches.find((p) => ["complete", "partial", "failed"].includes(p.status));
+    expect(terminal).toBeTruthy();
+    expect(buildResearchRow).not.toHaveBeenCalled();
   });
 });

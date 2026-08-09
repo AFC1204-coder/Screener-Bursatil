@@ -26,7 +26,10 @@ vi.mock("@/lib/marketData", () => ({
 }));
 
 vi.mock("@/lib/dailyBarsCache", () => ({
-  writeDailyBarsCache: vi.fn(async () => ({ status: "supabase", written: true, count: 0 })),
+  withDailyBarsCache: vi.fn(async (symbol, options, fetcher) => fetcher(symbol, options)),
+}));
+vi.mock("@/lib/fundamentalsCache", () => ({
+  withProfileCache: vi.fn(async (symbol, options, fetcher) => fetcher(symbol, options)),
 }));
 
 vi.mock("@/lib/researchRow", () => ({
