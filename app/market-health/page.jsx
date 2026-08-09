@@ -33,11 +33,18 @@ function safePct(value, fallback = 0) {
   return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : fallback;
 }
 
-function rowRs(row = {}) { return rowRsPrimary(row); }
+// RS semanal cuando el símbolo está en el ranking US; si no, cae al mismo
+// fallback de siempre (percentil de lote, luego rating vs. benchmark).
+function rowRs(row = {}) {
+  if (row.weeklyRsAvailable === true) return row.weeklyRsRating;
+  return rowRsPrimary(row);
+}
 function rowRsDisplay(row = {}) {
+  if (row.weeklyRsAvailable === true) return row.weeklyRsRating;
   return rowRsUniverse(row) ?? rowRsBenchmark(row) ?? null;
 }
 function rowRsDisplayLabel(row = {}) {
+  if (row.weeklyRsAvailable === true) return metricShortLabel("rsGlobalPct");
   return Number.isFinite(rowRsUniverse(row)) ? metricShortLabel("rsGlobalPct") : metricShortLabel("rsRating");
 }
 function rowWeakness(row = {}) { return weaknessScore(row); }

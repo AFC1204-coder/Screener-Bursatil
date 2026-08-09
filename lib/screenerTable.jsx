@@ -5,7 +5,6 @@ import Link from "next/link";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { pct } from "@/lib/formatters";
 import { auditDecisionRowIssues, decisionPriorityBreakdown } from "@/lib/decisionAudit";
-import { rsUniverseValue } from "@/lib/relativeStrength";
 import { buildScreenerFilterExplainPlan } from "@/lib/screenerFilters";
 import { buildDecisionEvidenceChecklist, explainScreenerRank } from "@/lib/screenerExplainability";
 import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
@@ -54,7 +53,11 @@ export function CompactResultsTable({ rows = [], settings, favoriteSymbols, onFa
       <tbody>
         {rows.map((r, i) => {
           const country = r.country || countryCode(r.symbol);
-          const rsValue = rsUniverseValue(r);
+          // Columna "G" (RS) muestra el RS semanal (ranking sobre el
+          // universo US completo). Si el símbolo no está en ese ranking, se
+          // muestra "-" en vez del percentil del lote — el sistema no afirma
+          // lo que no sabe (docs/adr-rs-universo-us.md).
+          const rsValue = r.weeklyRsAvailable === true ? r.weeklyRsRating : null;
           const onOpen = () => onReview?.(r.symbol);
           const filterPlan = buildScreenerFilterExplainPlan(r, settings);
           const rankExplain = explainScreenerRank(r, settings);

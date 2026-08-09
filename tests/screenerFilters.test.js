@@ -46,3 +46,41 @@ describe("minWeaknessScore", () => {
     }));
   });
 });
+
+// minRsRating lee el RS semanal (rs_weekly_items sobre el universo US
+// completo), no rsGlobalPct (percentil del lote del escaneo). Cuando el
+// símbolo no está en el ranking semanal, el criterio se OMITE — no rechaza
+// la fila, aunque rsGlobalPct sea bajo o esté ausente (docs/adr-rs-universo-us.md).
+describe("minRsRating (RS semanal)", () => {
+  it("acepta un símbolo en el ranking con RS semanal por encima del umbral", () => {
+    const row = { weeklyRsAvailable: true, weeklyRsRating: 82, rsGlobalPct: 40 };
+    expect(screenerFilterRejectReason(row, { minRsRating: 75 })).toBe("");
+  });
+
+  it("rechaza un símbolo en el ranking con RS semanal por debajo del umbral", () => {
+    const row = { weeklyRsAvailable: true, weeklyRsRating: 60, rsGlobalPct: 95 };
+    expect(screenerFilterRejectReason(row, { minRsRating: 75 })).toMatchObject({ field: "minRsRating" });
+  });
+
+  it("NO rechaza un símbolo que no está en el ranking semanal, aunque rsGlobalPct sea bajo", () => {
+    const row = { weeklyRsAvailable: false, weeklyRsRating: null, rsGlobalPct: 10 };
+    expect(screenerFilterRejectReason(row, { minRsRating: 75 })).toBe("");
+  });
+
+  it("NO rechaza un símbolo que no está en el ranking semanal, aunque rsGlobalPct esté ausente", () => {
+    const row = { weeklyRsAvailable: false };
+    expect(screenerFilterRejectReason(row, { minRsRating: 75 })).toBe("");
+  });
+
+  it("con minRsRating desactivado (0), no evalúa el criterio en ningún caso", () => {
+    expect(screenerFilterRejectReason({ weeklyRsAvailable: true, weeklyRsRating: 1 }, { minRsRating: 0 })).toBe("");
+  });
+
+  it("el plan de explicación solo añade la regla minRsRating cuando el símbolo está en el ranking", () => {
+    const inRanking = buildScreenerFilterExplainPlan({ weeklyRsAvailable: true, weeklyRsRating: 82 }, { minRsRating: 75 });
+    expect([...inRanking.passed, ...inRanking.failed, ...inRanking.near, ...inRanking.missing]).toContainEqual(expect.objectContaining({ field: "minRsRating" }));
+
+    const notInRanking = buildScreenerFilterExplainPlan({ weeklyRsAvailable: false }, { minRsRating: 75 });
+    expect([...notInRanking.passed, ...notInRanking.failed, ...notInRanking.near, ...notInRanking.missing]).not.toContainEqual(expect.objectContaining({ field: "minRsRating" }));
+  });
+});

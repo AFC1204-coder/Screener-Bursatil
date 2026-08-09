@@ -4,6 +4,7 @@ import { isPublicScanStatus } from "@/lib/scanStatus";
 import { prepareScanDecisionRow, scanDecisionMetrics, scanDecisionRowFromDb } from "@/lib/scanDecisionProjection";
 import { clearScansApiCache, LATEST_SCAN_TTL_MS, scansApiCache } from "@/lib/scansApiCache";
 import { snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
+import { readGlobalRsForSymbols } from "@/lib/globalRs";
 
 const SCANS_SUPABASE_TIMEOUT_MS = 8000;
 
@@ -232,12 +233,53 @@ export function resultPayload(row = {}, scanId, ownerId, index, settingsOrExplan
   };
 }
 
+// Adjunta el RS semanal (rs_weekly_items, engine_version más reciente por
+// símbolo) a una fila ya construida por prepareScanDecisionRow. Deliberadamente
+// NO toca rsGlobalPct: ese campo lo consumen decenas de sitios además de la
+// tabla/filtro (scoringEngine, decisionAudit, signalContradictions,
+// screenerMethodologyEvidence, leaderboards...) y sustituirlo aquí cambiaría
+// esas superficies en silencio — algo que la tarea prohíbe explícitamente
+// ("NO cambies... el cálculo de rsGlobalPct"). Los campos nuevos conviven
+// junto a rsGlobalPct; solo las superficies de display/filtro RS explícitamente
+// migradas (tabla, ordenación, minRsRating, sectores, salud de mercado, modal
+// de revisión) leen weeklyRs*.
+function withWeeklyRs(row, weeklyRsBySymbol) {
+  const entry = weeklyRsBySymbol?.get(String(row?.symbol || "").trim().toUpperCase());
+  if (entry?.available) {
+    return {
+      ...row,
+      weeklyRsAvailable: true,
+      weeklyRsRating: entry.rsRating,
+      weeklyRsRaw: entry.rsRaw,
+      weeklyRsRank: entry.rank,
+      weeklyRsSampleSize: entry.sampleSize,
+      weeklyRsAsOf: entry.asOf,
+      weeklyRsWeekKey: entry.weekKey,
+      weeklyRsEngineVersion: entry.engineVersion,
+      weeklyRsReason: null,
+    };
+  }
+  return {
+    ...row,
+    weeklyRsAvailable: false,
+    weeklyRsRating: null,
+    weeklyRsRaw: null,
+    weeklyRsRank: null,
+    weeklyRsSampleSize: null,
+    weeklyRsAsOf: null,
+    weeklyRsWeekKey: null,
+    weeklyRsEngineVersion: null,
+    weeklyRsReason: entry?.reason || null,
+  };
+}
+
 export function scanFromDb(row, results = [], options = {}) {
   const decisionSettings = row.settings?.activeSettings || row.settings || {};
+  const weeklyRsBySymbol = options.weeklyRsBySymbol || null;
   const rows = results
     .filter((item) => item.scan_id === row.id)
     .sort((a, b) => (a.rank_index || 0) - (b.rank_index || 0))
-    .map((item) => prepareScanDecisionRow(scanDecisionRowFromDb(item, options), decisionSettings));
+    .map((item) => withWeeklyRs(prepareScanDecisionRow(scanDecisionRowFromDb(item, options), decisionSettings), weeklyRsBySymbol));
   return {
     id: row.local_id || row.id,
     cloudId: row.id,
@@ -401,11 +443,19 @@ export async function GET(req) {
         });
         if (!full && !decisionProjection) results = results.map((item) => ({ ...item, raw: compactResearchRow(item.raw) }));
       }
+      // Lote único de RS semanal para todos los símbolos de todos los scans
+      // devueltos — una consulta (o unas pocas, si hay muchos símbolos), no
+      // una por símbolo. Si falla (Supabase caído, engine no configurado,
+      // etc.) no debe tumbar la respuesta de scans: todo queda marcado como
+      // no disponible y el criterio se omite aguas abajo, igual que un
+      // símbolo que de verdad no esté en el ranking.
+      const scanSymbols = results.map((item) => item.symbol).filter(Boolean);
+      const weeklyRs = await readGlobalRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() }));
       return {
         configured: true,
         ok: true,
         projection: decisionProjection ? "decision" : full ? "full" : "compact",
-        scans: activeScans.map((scan) => scanFromDb(scan, results, { decisionProjection })),
+        scans: activeScans.map((scan) => scanFromDb(scan, results, { decisionProjection, weeklyRsBySymbol: weeklyRs.bySymbol })),
         scanTombstones: includeDeleted ? deletedScans.map(scanTombstoneFromDb) : [],
       };
     };
