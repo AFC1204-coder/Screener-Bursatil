@@ -292,15 +292,16 @@ describe("resultPayload (no regresión tras añadir purga server-side)", () => {
     expect(payload.weinstein_score).toBe(80);
     expect(payload.rs_rating).toBe(65);
     expect(payload.raw).toEqual(expect.objectContaining({ symbol: "TEST", totalScore: 75 }));
-    expect(payload.raw.chartPreview).toEqual(row.chartPreview); // SIN compactar (decisión: solo purga)
+    // Una barra que ya viene en forma compacta atraviesa la poda sin cambios.
+    expect(payload.raw.chartPreview).toEqual(row.chartPreview);
     expect(payload.metrics).toEqual(expect.objectContaining({ rsGlobalPct: 65 }));
   });
 
-  it("raw conserva chartPreview completo (decisión: solo purga, no compactar en escritura)", () => {
-    // Este test documenta explícitamente la decisión del usuario de NO compactar
-    // raw en escritura. Si en el futuro se aplica compactResearchRow en
-    // resultPayload, este test falla y fuerza re-abrir la conversación sobre
-    // el trade-off con /api/scans?full=1 y el chart de /review.
+  it("raw persiste el chartPreview COMPACTO, no las 96 barras OHLC", () => {
+    // Reemplaza al test que documentaba la decisión contraria ("no compactar en
+    // escritura"). La conversación que aquel test pedía reabrir se cerró con la
+    // medición de docs/flushbatches-timeout-2026-08-10.md: las 96 barras OHLC
+    // eran ~21 kB de los 89 kB por fila y nadie lee open/high/low.
     const fullBars = Array.from({ length: 96 }, (_, i) => ({
       date: `2026-${String(Math.floor(i / 31) + 1).padStart(2, "0")}-${String((i % 28) + 1).padStart(2, "0")}`,
       open: 100 + i,
@@ -308,14 +309,19 @@ describe("resultPayload (no regresión tras añadir purga server-side)", () => {
       low: 95 + i,
       close: 102 + i,
       volume: 1000 + i * 10,
+      sma50: 90 + i,
+      sma200: 80 + i,
     }));
     const row = { symbol: "FULL", chartPreview: fullBars };
     const payload = resultPayload(row, "scan", "owner", 0, {});
-    // El raw llega íntegro: 96 barras, con open/high/low preservados.
-    expect(payload.raw.chartPreview).toHaveLength(96);
-    expect(payload.raw.chartPreview[0]).toHaveProperty("open");
-    expect(payload.raw.chartPreview[0]).toHaveProperty("high");
-    expect(payload.raw.chartPreview[0]).toHaveProperty("low");
+    expect(payload.raw.chartPreview).toHaveLength(48);
+    expect(payload.raw.chartPreview[0]).not.toHaveProperty("open");
+    expect(payload.raw.chartPreview[0]).not.toHaveProperty("high");
+    expect(payload.raw.chartPreview[0]).not.toHaveProperty("low");
+    // Y son las 48 ÚLTIMAS barras, no las 48 primeras: la miniatura tiene que
+    // terminar en el último cierre disponible.
+    expect(payload.raw.chartPreview.at(-1)).toMatchObject({ date: fullBars.at(-1).date, close: fullBars.at(-1).close });
+    expect(payload.raw.chartPreview[0]).toMatchObject({ date: fullBars[48].date, close: fullBars[48].close });
   });
 });
 

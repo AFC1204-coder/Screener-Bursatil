@@ -37,9 +37,9 @@ describe("scan decision projection", () => {
     }, "scan-1", "owner-1", 0, { setupMode: "leader" });
 
     expect(payload.rank_index).toBe(1);
-    expect(payload.raw.decisionTrace.engineVersion).toBe(DECISION_TRACE_ENGINE_VERSION);
+    // decisionTrace vive SOLO en metrics desde la poda de escritura.
+    expect(payload.raw).not.toHaveProperty("decisionTrace");
     expect(payload.metrics.decisionTrace.engineVersion).toBe(DECISION_TRACE_ENGINE_VERSION);
-    expect(payload.metrics.decisionTrace.priorityScore).toBe(payload.raw.decisionTrace.priorityScore);
     expect(payload.metrics.price).toBe(42.5);
     expect(payload.metrics.marketCap).toBe(3826251264);
     expect(payload.metrics.chartBarsCount).toBe(260);
@@ -220,7 +220,7 @@ describe("scan decision projection", () => {
       },
     }, "scan-1", "owner-1", 0, { setupMode: "leader" });
 
-    expect(payload.raw.decisionTrace.engineVersion).toBe(DECISION_TRACE_ENGINE_VERSION);
+    expect(payload.raw).not.toHaveProperty("decisionTrace");
     expect(payload.metrics.decisionTrace.engineVersion).toBe(DECISION_TRACE_ENGINE_VERSION);
     expect(payload.metrics.decisionTrace.priorityScore).not.toBe(9999);
   });
@@ -243,9 +243,8 @@ describe("scan decision projection", () => {
     }, "scan-1", "owner-1", 7, { setupMode: "leader" });
 
     expect(payload.rank_index).toBe(7);
-    expect(payload.raw.decisionTrace.engineVersion).toBe(DECISION_TRACE_ENGINE_VERSION);
+    expect(payload.raw).not.toHaveProperty("decisionTrace");
     expect(payload.metrics.decisionTrace.engineVersion).toBe(DECISION_TRACE_ENGINE_VERSION);
-    expect(payload.metrics.decisionTrace.priorityScore).toBe(payload.raw.decisionTrace.priorityScore);
     expect(payload.metrics.decisionTrace.priorityScore).not.toBe(9999);
   });
 
@@ -304,9 +303,8 @@ describe("scan decision projection", () => {
     }, "scan-1", "owner-1", 2, { setupMode: "leader" });
 
     expect(payload.rank_index).toBe(3);
-    expect(payload.raw.decisionTrace.engineVersion).toBe(DECISION_TRACE_ENGINE_VERSION);
+    expect(payload.raw).not.toHaveProperty("decisionTrace");
     expect(payload.metrics.decisionTrace.engineVersion).toBe(DECISION_TRACE_ENGINE_VERSION);
-    expect(payload.metrics.decisionTrace.priorityScore).toBe(payload.raw.decisionTrace.priorityScore);
   });
 
   it("repara decisionTrace antigua al restaurar un snapshot desde Supabase", () => {
@@ -355,5 +353,112 @@ describe("scan decision projection", () => {
 
     expect(row.decisionProjectionPartial).toBe(true);
     expect(row.decisionProjectionMissing).toEqual(["chartBarsCount", "price"]);
+  });
+});
+
+// ===========================================================================
+// Poda de escritura de `raw` (docs/flushbatches-timeout-2026-08-10.md)
+// ===========================================================================
+//
+// Dos ahorros medidos sobre los 89 kB de JSON por fila que hacían que una tanda
+// de 50 filas rozara el statement_timeout de 8 s:
+//   · chartPreview persistido en su forma compacta (48 puntos ligeros) en vez
+//     de 96 barras OHLC.
+//   · objectiveMetricAudit y decisionTrace una sola vez, en `metrics`.
+// Ninguno cambia lo que ve el usuario: las tres MiniSparkline del repo solo
+// leen close/sma50/sma200/volume, y scanDecisionRowFromDb ya daba prioridad a
+// la copia de `metrics` sobre la de `raw`.
+
+const CHART_PREVIEW_96 = Array.from({ length: 96 }, (_, i) => ({
+  date: `2026-01-${String((i % 28) + 1).padStart(2, "0")}`,
+  open: 100 + i,
+  high: 105 + i,
+  low: 95 + i,
+  close: 102 + i,
+  volume: 1000 + i * 10,
+  sma50: 90 + i,
+  sma200: 80 + i,
+}));
+
+const AUDIT_FIXTURE = {
+  schemaVersion: 1,
+  status: "verified",
+  worstStatus: "verified",
+  items: [{ key: "totalScore", label: "Total", value: 70, expected: 70, status: "verified" }],
+  issues: [],
+};
+
+const WRITERS = [
+  ["scan servidor (lib/serverScanRunner)", (row) => serverResultPayload(row, "scan-1", "owner-1", 1, {})],
+  ["snapshot cliente (app/api/scans)", (row) => snapshotResultPayload(row, "scan-1", "owner-1", 0, {})],
+  ["cron materializado (lib/materializedScanner)", (row) => materializedResultPayload(row, "scan-1", "owner-1", 0, {})],
+];
+
+describe("poda de escritura de scan_results.raw", () => {
+  for (const [nombre, build] of WRITERS) {
+    describe(nombre, () => {
+      const payload = build({
+        symbol: "PODA",
+        companyName: "Poda SA",
+        price: 120,
+        chartBarsCount: 260,
+        totalScore: 70,
+        objectiveMetricAudit: AUDIT_FIXTURE,
+        chartPreview: CHART_PREVIEW_96,
+      });
+
+      it("persiste el chartPreview compacto, sin OHLC", () => {
+        expect(payload.raw.chartPreview).toHaveLength(48);
+        for (const campo of ["open", "high", "low"]) {
+          expect(payload.raw.chartPreview[0]).not.toHaveProperty(campo);
+        }
+        expect(Object.keys(payload.raw.chartPreview[0]).sort())
+          .toEqual(["close", "date", "sma200", "sma50", "volume"]);
+      });
+
+      it("conserva las 48 barras MÁS RECIENTES, no las 48 primeras", () => {
+        // La miniatura marca points[length-1] como último cierre: si la ventana
+        // fuese la mitad vieja, ese punto sería un precio caduco.
+        expect(payload.raw.chartPreview.at(-1).close).toBe(CHART_PREVIEW_96.at(-1).close);
+        expect(payload.raw.chartPreview[0].close).toBe(CHART_PREVIEW_96[48].close);
+      });
+
+      it("no duplica objectiveMetricAudit ni decisionTrace entre raw y metrics", () => {
+        expect(payload.raw).not.toHaveProperty("objectiveMetricAudit");
+        expect(payload.raw).not.toHaveProperty("decisionTrace");
+        // No se pierden: siguen en metrics, que es la copia que gana al leer.
+        expect(payload.metrics.objectiveMetricAudit).toBeTruthy();
+        expect(payload.metrics.decisionTrace).toBeTruthy();
+      });
+
+      it("ningún campo pesado queda escrito dos veces", () => {
+        const duplicados = Object.keys(payload.raw)
+          .filter((key) => key in payload.metrics)
+          .filter((key) => JSON.stringify(payload.raw[key] ?? null).length > 512);
+        expect(duplicados).toEqual([]);
+      });
+    });
+  }
+
+  it("la fila que llega al escritor NO se muta: la poda es solo de persistencia", () => {
+    const row = { symbol: "MEM", chartPreview: CHART_PREVIEW_96, objectiveMetricAudit: AUDIT_FIXTURE };
+    serverResultPayload(row, "scan-1", "owner-1", 1, {});
+    expect(row.chartPreview).toHaveLength(96);
+    expect(row.chartPreview[0]).toHaveProperty("open");
+    expect(row.objectiveMetricAudit).toBe(AUDIT_FIXTURE);
+  });
+
+  it("al releer de la base, la interfaz sigue viendo auditoría y traza", () => {
+    const payload = serverResultPayload({
+      symbol: "PODA",
+      price: 120,
+      chartBarsCount: 260,
+      objectiveMetricAudit: AUDIT_FIXTURE,
+      chartPreview: CHART_PREVIEW_96,
+    }, "scan-1", "owner-1", 1, {});
+    const row = scanDecisionRowFromDb({ ...payload, raw: payload.raw, metrics: payload.metrics });
+    expect(row.objectiveMetricAudit).toBeTruthy();
+    expect(row.decisionTrace).toBeTruthy();
+    expect(row.chartPreview).toHaveLength(48);
   });
 });

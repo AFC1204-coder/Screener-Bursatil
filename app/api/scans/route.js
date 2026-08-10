@@ -1,7 +1,7 @@
 import { disabledPayload, finiteOrNull, requirePersistenceAuth, supabaseConfig, supabaseRequest, supabaseRpc, textOrNull, toTimestamp } from "@/lib/supabaseServer";
 import { compactResearchRow } from "@/lib/researchRowContract";
 import { isPublicScanStatus } from "@/lib/scanStatus";
-import { prepareScanDecisionRow, scanDecisionMetrics, scanDecisionRowFromDb } from "@/lib/scanDecisionProjection";
+import { prepareScanDecisionRow, scanDecisionMetrics, scanDecisionRaw, scanDecisionRowFromDb } from "@/lib/scanDecisionProjection";
 import { clearScansApiCache, LATEST_SCAN_TTL_MS, scansApiCache } from "@/lib/scansApiCache";
 import { snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { readGlobalRsForSymbols } from "@/lib/globalRs";
@@ -229,7 +229,9 @@ export function resultPayload(row = {}, scanId, ownerId, index, settingsOrExplan
       priceFreshnessOk: preparedRow.priceFreshnessOk ?? null,
       lastDate: preparedRow.lastDate ?? null,
     },
-    raw: preparedRow,
+    // Misma poda de escritura que el runner del scan servidor: chartPreview
+    // compacto y sin las copias duplicadas que ya viajan en metrics.
+    raw: scanDecisionRaw(preparedRow),
   };
 }
 
