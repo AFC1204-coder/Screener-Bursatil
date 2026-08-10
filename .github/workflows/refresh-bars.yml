@@ -62,17 +62,17 @@
 name: Refresh daily bars (US)
 
 on:
-  # CRON DESACTIVADO (2026-08-10) — ver docs/frescura-sesion-2026-08-10.md.
-  # Las dos causas por las que se desactivó ya están resueltas: la
-  # reescritura de la serie entera (~2,2M filas/noche) la arregló el delta
-  # de d0a628b, y el guardián que abortaba cada noche se ha sustituido por
-  # el tope de filas escritas descrito arriba.
-  # Aun así se deja comentado A PROPÓSITO: reactivarlo es una decisión
-  # aparte, y se toma después de ver una corrida manual real
-  # (workflow_dispatch) que termine con código 0 y un número de filas
-  # escritas del orden de unas pocas miles. Para reactivar, descomentar:
-  #   schedule:
-  #     - cron: "0 2 * * *"
+  # Reactivado el 2026-08-10 tras verificar en una corrida real (workflow
+  # 31391402414): 5.565 símbolos en 18 minutos, y el delta de d0a628b
+  # confirmado contra la base — las barras antiguas de AAPL conservan su
+  # updated_at anterior, así que solo se escribe lo que falta de verdad.
+  # El tope de 200.000 filas escritas (5e2f59a) sustituye al guardián que
+  # abortaba cada noche.
+  schedule:
+    # 02:00 UTC a diario, con margen sobre los crons de Vercel (22:20-23:41).
+    # GitHub puede retrasar los horarios 5-30 minutos; en una cadencia
+    # diaria no importa.
+    - cron: "0 2 * * *"
   workflow_dispatch: {}
     # Disparo manual desde la pestaña Actions, para probar sin esperar a
     # las 02:00 UTC.
