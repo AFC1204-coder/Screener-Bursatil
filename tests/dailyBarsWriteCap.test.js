@@ -443,3 +443,151 @@ describe("writeDailyBarsCache · guard anti-estimados", () => {
     expect(dailyBarsPosts().flatMap(([, opts]) => opts.body)).toHaveLength(50);
   });
 });
+
+// ===========================================================================
+// Delta de escritura — options.cachedBars (docs/rango-corto-escritura-2026-08-10.md)
+// ===========================================================================
+// writeDailyBarsCache ya no reescribe una fila cuya fecha ya está en
+// options.cachedBars con los mismos valores. `cachedBars` tiene el shape que
+// produce normalizeCachedBar (lib/dailyBarsCache.js): `close` es el ADJUSTED
+// close (columna adj_close), `rawClose` es la columna `close` sin ajustar.
+// Todos los payloads de este bloque usan menos de 400 barras (el cap por
+// defecto) para que ninguno dispare la purga oportunista por excedente —
+// eso ya está cubierto en el bloque de purga de arriba y no es lo que se
+// está probando aquí.
+
+function makeCachedBars(rows, { currency = "USD", provider = "Yahoo Finance" } = {}) {
+  // Réplica del shape de normalizeCachedBar: en este pipeline close===adj_close
+  // siempre (docs/rango-corto-escritura-2026-08-10.md §B.6, confirmado también
+  // en docs/splits-daily-bars-2026-08-09.md §A.4), así que rawClose/adjClose
+  // parten del mismo valor salvo que el test pida explícitamente lo contrario.
+  return rows.map((row) => ({
+    date: row.date,
+    open: row.open,
+    high: row.high,
+    low: row.low,
+    close: row.close,
+    rawClose: row.rawClose ?? row.close,
+    adjClose: row.close,
+    volume: row.volume,
+    currency,
+    provider,
+    updatedAt: "2026-08-01T00:00:00.000Z",
+  }));
+}
+
+describe("writeDailyBarsCache · delta contra options.cachedBars", () => {
+  it("primera descarga (sin cachedBars) escribe todo, igual que antes", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(10);
+    // Sin options.cachedBars en absoluto — el caso de un symbol que nunca se
+    // descargó, o de cualquier llamada directa que no pase por
+    // withDailyBarsCache (como el resto de tests de este archivo).
+    const result = await writeDailyBarsCache("NEW.SYMBOL", { bars, meta: {} });
+
+    expect(result.status).toBe("supabase");
+    expect(result.written).toBe(true);
+    expect(result.count).toBe(10);
+    expect(result.candidates).toBe(10);
+    const allRows = dailyBarsPosts().flatMap(([, opts]) => opts.body);
+    expect(allRows).toHaveLength(10);
+  });
+
+  it("refresco con una barra nueva escribe solo esa barra", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(10, { symbol: "AAPL" }); // 10 fechas, la más nueva es bars[0].
+    const cachedBars = makeCachedBars(bars.slice(1)); // las 9 más viejas, sin cambios.
+
+    const result = await writeDailyBarsCache("AAPL", { bars, meta: {} }, { cachedBars });
+
+    expect(result.status).toBe("supabase");
+    expect(result.written).toBe(true);
+    expect(result.count).toBe(1);
+    expect(result.candidates).toBe(10);
+    const allRows = dailyBarsPosts().flatMap(([, opts]) => opts.body);
+    expect(allRows).toHaveLength(1);
+    expect(allRows[0].trade_date).toBe(bars[0].date);
+  });
+
+  it("refresco sin novedades no escribe nada — cero peticiones a daily_bars", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(10, { symbol: "AAPL" });
+    const cachedBars = makeCachedBars(bars); // las 10 fechas, valores idénticos.
+
+    const result = await writeDailyBarsCache("AAPL", { bars, meta: {} }, { cachedBars });
+
+    expect(result.status).toBe("unchanged");
+    expect(result.written).toBe(false);
+    expect(result.count).toBe(0);
+    expect(result.candidates).toBe(10);
+    // Cero peticiones de escritura: ni POST (upsert) ni DELETE (purga — no
+    // aplica de todos modos, 10 barras no exceden el cap de 400).
+    expect(dailyBarsPosts()).toHaveLength(0);
+    expect(dailyBarsDeletes()).toHaveLength(0);
+  });
+
+  it("una barra con precio corregido sí se escribe, aunque la fecha ya existiera", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(10, { symbol: "AAPL" });
+    const cachedBars = makeCachedBars(bars);
+    // Corrige el close de la barra más antigua del lote (índice 9) en más de
+    // la tolerancia relativa (1e-6): un cambio real de precio, no ruido.
+    cachedBars[9] = { ...cachedBars[9], close: cachedBars[9].close + 5, rawClose: cachedBars[9].rawClose + 5, adjClose: cachedBars[9].adjClose + 5 };
+
+    const result = await writeDailyBarsCache("AAPL", { bars, meta: {} }, { cachedBars });
+
+    expect(result.status).toBe("supabase");
+    expect(result.count).toBe(1);
+    const allRows = dailyBarsPosts().flatMap(([, opts]) => opts.body);
+    expect(allRows).toHaveLength(1);
+    expect(allRows[0].trade_date).toBe(bars[9].date);
+  });
+
+  it("una diferencia de volumen por debajo de la tolerancia NO dispara reescritura", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(10, { symbol: "AAPL" });
+    const cachedBars = makeCachedBars(bars);
+    // Ruido de 0.1 acciones (imposible en la realidad, pero sirve para
+    // probar el margen 0.5 sin acercarse a un cambio real de una acción).
+    cachedBars[0] = { ...cachedBars[0], volume: cachedBars[0].volume + 0.1 };
+
+    const result = await writeDailyBarsCache("AAPL", { bars, meta: {} }, { cachedBars });
+
+    expect(result.status).toBe("unchanged");
+    expect(dailyBarsPosts()).toHaveLength(0);
+  });
+
+  it("una diferencia de precio por debajo de la tolerancia relativa (ruido de coma flotante) NO dispara reescritura", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(10, { symbol: "AAPL" });
+    const cachedBars = makeCachedBars(bars);
+    // Precio ~102: 1e-6 relativo son ~0.0001 — muy por debajo de cualquier
+    // variación de precio real, y consistente con el ruido de round-trip
+    // que dos descargas independientes del mismo dato pueden introducir.
+    cachedBars[0] = { ...cachedBars[0], close: cachedBars[0].close + 0.00002, rawClose: cachedBars[0].rawClose + 0.00002, adjClose: cachedBars[0].adjClose + 0.00002 };
+
+    const result = await writeDailyBarsCache("AAPL", { bars, meta: {} }, { cachedBars });
+
+    expect(result.status).toBe("unchanged");
+    expect(dailyBarsPosts()).toHaveLength(0);
+  });
+
+  it("la purga oportunista sigue disparándose por excedente aunque el delta esté vacío", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const bars = makeBars(2000); // 2000 > cap 400 → purga siempre elegible.
+    const first400 = bars.slice(0, 400);
+    const cachedBars = makeCachedBars(first400); // las 400 que se escribirían, sin cambios.
+
+    const result = await writeDailyBarsCache("AAPL", { bars, meta: {} }, { cachedBars });
+
+    expect(result.status).toBe("unchanged");
+    expect(result.count).toBe(0);
+    // Cero POST (nada que escribir)...
+    expect(dailyBarsPosts()).toHaveLength(0);
+    // ...pero la purga por excedente de cap SÍ se dispara — es una operación
+    // de mantenimiento independiente del delta (ver comentario en el código).
+    const deletes = dailyBarsDeletes();
+    expect(deletes).toHaveLength(1);
+    expect(result.purgedBefore).toBe(bars[399].date);
+  });
+});
