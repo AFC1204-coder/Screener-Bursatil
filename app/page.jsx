@@ -27,6 +27,7 @@ import { enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatib
 import { qualityGateForResearchRow } from "@/lib/qualityGate";
 import { benchmarkSymbolForRow } from "@/lib/relativeStrength";
 import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/lib/researchRow";
+import { normalizeScanErrorGroups, scanErrorTotal } from "@/lib/scanErrorGroups";
 import { classifyScanOutcome, isTerminalScanStatus, scanOutcomeLabel } from "@/lib/scanStatus";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
 import { ASIA, DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, EUROPE, FULL_SCAN_PARTIAL_EVERY, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, SERVER_SCAN_POLL_MS, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
@@ -486,7 +487,9 @@ export default function Page() {
       setScanContext(session.scanContext || null);
       setScanPerf(session.scanPerf || null);
       setSnapshotNotice(session.snapshotNotice || null);
-      setFail(Array.isArray(session.fail) ? session.fail : []);
+      // normalizeScanErrorGroups cubre las sesiones guardadas con el formato
+      // plano anterior (una entrada por símbolo).
+      setFail(normalizeScanErrorGroups(session.fail));
       setDiagnostics(session.diagnostics || null);
       restoreResultViewSession(session, restoredActiveSettings);
       setScanMode(session.scanMode || "all");
@@ -1300,7 +1303,12 @@ export default function Page() {
         // respuesta — ver scanPreparationStatus en lib/screenerFormat.js.
         setStatus(scanPreparationStatus({ symbolsCount: symbols.length, hadVisibleRows }));
       }
+      // `bad` son los errores del scan AGRUPADOS POR MOTIVO tal y como los
+      // publica el servidor ({ reason, kind, status, count, symbols }) — ver
+      // lib/scanErrorGroups.js. `badTotal` es el recuento entero de símbolos
+      // fallidos: los grupos y sus listas de ejemplos están topados, el total no.
       let rawRows = [], bad = [];
+      let badTotal = 0;
       let completed = 0;
       let lastPartialAt = 0;
       const partialContext = () => ({ marketHealth: mh, useRegimeFilter, symbolsCount: symbols.length, baseCount: base.length, providerErrors: bad });
@@ -1330,7 +1338,7 @@ export default function Page() {
         }
         const verb = scanAbortRef.current ? "Deteniendo" : "Analizando";
         const frozenNote = stableResultsPublished ? " · tabla estable" : "";
-        setStatus(`${verb} ${completed}/${symbols.length}${currentSymbol ? `: ${currentSymbol}` : ""} · pasan ${partialView.rows.length} · errores ${bad.length}${frozenNote}`);
+        setStatus(`${verb} ${completed}/${symbols.length}${currentSymbol ? `: ${currentSymbol}` : ""} · pasan ${partialView.rows.length} · errores ${badTotal}${frozenNote}`);
       };
       // Scan en servidor: POST /api/scan lanza el proceso (concurrencia 5 en backend,
       // caché de Yahoo compartida) y el cliente hace polling cada 2s recogiendo los
@@ -1366,7 +1374,10 @@ export default function Page() {
           rawRows.push({ ...row, qualityGate: qualityGateForResearchRow(row, activeSettings) });
         }
         resultOffset = Number.isFinite(state.nextOffset) ? state.nextOffset : resultOffset + newRows.length;
-        if (Array.isArray(state.progress?.errors)) bad = state.progress.errors;
+        if (Array.isArray(state.progress?.errors)) {
+          bad = normalizeScanErrorGroups(state.progress.errors);
+          badTotal = scanErrorTotal(bad, state.progress.errorsTotal);
+        }
         if (Number.isFinite(state.progress?.completed)) completed = state.progress.completed;
         serverStatus = state.status || "running";
         serverError = state.progress?.error || "";
@@ -1802,11 +1813,16 @@ export default function Page() {
   }, [recentIpoRows]);
   const failSummary = useMemo(() => {
     const map = new Map();
-    fail.forEach((item) => {
-      const kind = failureKind(item.reason);
+    // `fail` viene agrupado por motivo desde el servidor: cada grupo aporta su
+    // `count` entero (no 1) y hasta 20 símbolos de ejemplo.
+    normalizeScanErrorGroups(fail).forEach((group) => {
+      const kind = failureKind(group.reason);
       const bucket = map.get(kind.key) || { ...kind, count: 0, examples: [] };
-      bucket.count += 1;
-      if (bucket.examples.length < 8) bucket.examples.push(item.symbol);
+      bucket.count += group.count;
+      for (const symbol of group.symbols) {
+        if (bucket.examples.length >= 8) break;
+        bucket.examples.push(symbol);
+      }
       map.set(kind.key, bucket);
     });
     return [...map.values()].sort((a, b) => b.count - a.count);

@@ -65,7 +65,9 @@ export async function POST(req) {
             total: symbols.length,
             saved: 0,
             currentSymbol: "",
+            // Grupos por motivo, no una entrada por símbolo (lib/scanErrorGroups.js).
             errors: [],
+            errorsTotal: 0,
             startedAt: new Date().toISOString(),
           },
         },

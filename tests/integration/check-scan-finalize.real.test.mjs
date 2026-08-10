@@ -251,7 +251,10 @@ describeIf("PIEZA 1 · scan real + finalize_scan_results (Supabase real)", () =>
         // (lo cual ocurriría si fetches externos fallaron y todos los símbolos
         // cayeron al catch — state.errors los cubre y reduce completed).
         console.warn(`     ⚠️  percentileScope='batch' — finalize NO se ejecutó o scan incompleto.`);
-        console.warn(`     ⚠️  Estado: completed=${scan.settings?.progress?.completed}/${SMOKE_SYMBOLS.length} errors=${JSON.stringify(scan.settings?.progress?.errors?.slice(0, 3))}`);
+        // progress.errors son GRUPOS por motivo ({reason, kind, count, symbols});
+        // el recuento entero de símbolos fallidos vive en progress.errorsTotal
+        // (lib/scanErrorGroups.js).
+        console.warn(`     ⚠️  Estado: completed=${scan.settings?.progress?.completed}/${SMOKE_SYMBOLS.length} errorsTotal=${scan.settings?.progress?.errorsTotal ?? "?"} errorGroups=${JSON.stringify(scan.settings?.progress?.errors?.slice(0, 3))}`);
         results.p1b = `INCOMPLETE (rows=${rows.length}, scopes=batch, completed=${scan.settings?.progress?.completed}/${SMOKE_SYMBOLS.length})`;
       } else {
         console.warn(`     ⚠️  percentileScope mixto: ${JSON.stringify(scopes)}`);
@@ -260,8 +263,8 @@ describeIf("PIEZA 1 · scan real + finalize_scan_results (Supabase real)", () =>
     } else {
       // Si no hay filas, el scan falló al 100% (todos los fetches cayeron al fallback).
       console.warn(`     ⚠️  scan_results tiene 0 filas — todos los fetches externos fallaron.`);
-      console.warn(`     ⚠️  state.errors: ${JSON.stringify(scan.settings?.progress?.errors?.slice(0, 3))}`);
-      results.p1b = `NO_ROWS (errors=${(scan.settings?.progress?.errors || []).length})`;
+      console.warn(`     ⚠️  state.errors (grupos por motivo): ${JSON.stringify(scan.settings?.progress?.errors?.slice(0, 3))}`);
+      results.p1b = `NO_ROWS (errors=${scan.settings?.progress?.errorsTotal ?? (scan.settings?.progress?.errors || []).reduce((sum, group) => sum + (Number(group?.count) || 0), 0)})`;
     }
   }, 180_000); // 3 min de timeout para el chunk real
 });
