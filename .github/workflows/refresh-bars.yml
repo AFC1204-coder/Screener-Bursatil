@@ -40,11 +40,16 @@
 name: Refresh daily bars (US)
 
 on:
-  schedule:
-    # 02:00 UTC a diario. GitHub documenta que los horarios programados
-    # pueden retrasarse 5-30 min en carga alta — es una cadencia diaria,
-    # ese margen no importa aquí.
-    - cron: "0 2 * * *"
+  # CRON DESACTIVADO (2026-08-10) — ver docs/frescura-sesion-2026-08-10.md.
+  # El guardián de carga masiva aborta cada noche porque cuenta símbolos
+  # que "necesitan actualizarse", y eso son TODOS por diseño: el refresco
+  # existe justamente para traer la sesión que aún no está en la base.
+  # Además, cada refresco reescribe la serie entera (~400 barras por
+  # símbolo, ~2,2M filas por noche), el triple de la carga que tumbó la
+  # instancia Supabase el 9 de agosto.
+  # Reactivar cuando ambas cosas estén resueltas:
+  #   schedule:
+  #     - cron: "0 2 * * *"
   workflow_dispatch: {}
     # Disparo manual desde la pestaña Actions, para probar sin esperar a
     # las 02:00 UTC.
