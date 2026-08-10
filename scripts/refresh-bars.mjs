@@ -13,11 +13,17 @@
 // Uso:
 //   node --env-file=.env.local --loader ./scripts/loader.mjs \
 //     scripts/refresh-bars.mjs [--dry-run] [--write] [--limit=N] \
-//     [--concurrency=4] [--stale-days=1]
+//     [--concurrency=4] [--stale-days=1] [--max-carga-masiva=1000] \
+//     [--permitir-carga-masiva]
 //
 // Por defecto corre en --dry-run (calcula y reporta qué refrescaría, no
 // descarga ni escribe). Descargar y escribir en Supabase exige --write
 // explícito.
+//
+// --write se detiene sin escribir nada si el número de símbolos caducados
+// supera --max-carga-masiva (por defecto 1.000) — ver "LÍMITE DE SEGURIDAD"
+// más abajo. Para forzar una carga grande a propósito, añade
+// --permitir-carga-masiva.
 //
 // ── REDISEÑO (esta tarea) ───────────────────────────────────────────────
 // La versión anterior calculaba la antigüedad de la última barra de TODA
@@ -94,6 +100,30 @@
 // que analyzeOne en lib/materializedScanner.js:1243-1266 — atrapa el
 // fallo, lo registra como fila `ok:false`, y el resto de la corrida
 // continúa). Un 429 o un fallo de proveedor en un símbolo no aborta nada.
+//
+// ── LÍMITE DE SEGURIDAD contra carga masiva accidental (esta tarea) ──────
+// La corrida de carga inicial (5.564/5.605 símbolos, ninguno con barra
+// previa) escribió ~700.000 filas y tumbó la instancia Supabase (Micro,
+// 1 GB) cuatro horas. Un refresco diario normal solo debería tocar los
+// símbolos caducados de UN día — pocos cientos como mucho, no miles: si
+// el cron corre cada noche, casi todo el universo ya está fresco a la
+// noche siguiente. Si en una corrida concreta aparecen miles de símbolos
+// "caducados" de golpe (universo recién repoblado, corrida saltada varios
+// días, --stale-days mal puesto), es la misma situación que tumbó la
+// instancia, y automatizarla a diario sin freno la repetiría sin que
+// nadie lo decidiera.
+//
+// Por eso, en modo --write (nunca en --dry-run, que ya es de solo
+// lectura) se recuenta cuántos símbolos de `toProcess` están caducados
+// ANTES de descargar nada — la misma comprobación ligera que ya usa
+// --dry-run (1 columna, 1 fila por símbolo) — y si supera
+// DEFAULT_MAX_MASS_LOAD (1.000, ver justificación en la constante) el
+// script se detiene sin escribir una sola fila, salvo que se pase
+// --permitir-carga-masiva explícito. Esto reintroduce, solo para --write,
+// el costo de precálculo que la Opción (b) de más arriba eliminó — es una
+// excepción deliberada: aquí no es para ordenar (lo que se descartó por
+// no aportar valor), es para decidir si es seguro proceder. La función
+// (countMassLoadCandidates) vive más abajo, junto a fetchLastBarDate.
 
 import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer.js";
 import { fetchYahooChart } from "@/lib/yahoo.js";
@@ -108,6 +138,18 @@ const MAX_CONCURRENCY = 8;
 const DEFAULT_CONCURRENCY = 4;
 const DEFAULT_STALE_DAYS = 1;
 
+// Tope de seguridad contra carga masiva accidental en --write (ver el
+// comentario "LÍMITE DE SEGURIDAD" en la cabecera del archivo). Valor: 1.000.
+// Justificación del número, no solo del mecanismo: un refresco diario en
+// régimen normal (el cron corre todas las noches, sin huecos) debería
+// encontrar como mucho unos pocos cientos de símbolos caducados — los que
+// nadie visitó en la app ni tocaron los jobs shadow ese día concreto. Mil es
+// un margen de ~3-4x sobre ese "pocos cientos" esperado: suficiente para
+// absorber una noche floja sin frenar el cron por una fluctuación normal,
+// pero muy por debajo de los ~5.600 símbolos que activarían de nuevo el
+// patrón que tumbó Supabase (carga inicial o corrida saltada muchos días).
+const DEFAULT_MAX_MASS_LOAD = 1000;
+
 // ── CLI args ─────────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
@@ -117,6 +159,8 @@ function parseArgs(argv) {
     limit: 0,
     concurrency: DEFAULT_CONCURRENCY,
     staleDays: DEFAULT_STALE_DAYS,
+    maxMassLoad: DEFAULT_MAX_MASS_LOAD,
+    permitMassLoad: false,
   };
   for (const arg of argv) {
     const [rawKey, rawValue] = arg.replace(/^--/, "").split("=");
@@ -126,6 +170,8 @@ function parseArgs(argv) {
     else if (key === "limit") out.limit = Math.max(0, Number(rawValue) || 0);
     else if (key === "concurrency") out.concurrency = Math.min(MAX_CONCURRENCY, Math.max(1, Number(rawValue) || DEFAULT_CONCURRENCY));
     else if (key === "stale-days") out.staleDays = Math.max(0, Number(rawValue) ?? DEFAULT_STALE_DAYS);
+    else if (key === "max-carga-masiva") out.maxMassLoad = Math.max(0, Number(rawValue) || 0) || DEFAULT_MAX_MASS_LOAD;
+    else if (key === "permitir-carga-masiva") out.permitMassLoad = rawValue === undefined ? true : rawValue !== "false";
   }
   // Mismo criterio que rs-universe.mjs: --write gana sobre el default
   // dry-run=true, pero --dry-run=true explícito manda sobre --write (más seguro).
@@ -233,6 +279,19 @@ function ageBucket(ageDays) {
   return ">60d";
 }
 
+// Cuenta cuántos de `toProcess` están caducados (candidatos a refresco),
+// reutilizando la misma comprobación ligera de --dry-run. Es el precálculo
+// que la Opción (b) de la cabecera evita para --write en régimen normal —
+// aquí se paga a propósito, solo para decidir el gate de seguridad antes de
+// escribir nada (ver "LÍMITE DE SEGURIDAD" en la cabecera del archivo).
+async function countMassLoadCandidates(config, toProcess, args) {
+  const withAge = await mapLimit(toProcess, args.concurrency, async (row) => {
+    const lastBarDate = await fetchLastBarDate(config, row.symbol);
+    return { ...row, lastBarDate, ageDays: ageDaysFrom(lastBarDate) };
+  });
+  return withAge.filter((row) => row.ageDays >= args.staleDays);
+}
+
 // ── Escritura: withDailyBarsCache decide fresh/stale al leer, no nosotros ─
 
 async function refreshOne(config, symbol, args) {
@@ -293,6 +352,25 @@ async function main() {
   if (!toProcess.length) {
     console.log("Nada que hacer: población vacía.");
     return;
+  }
+
+  if (!args.dryRun) {
+    console.log("");
+    console.log(`Límite de seguridad: comprobando cuántos símbolos están caducados antes de escribir (tope=${args.maxMassLoad})...`);
+    const massLoadCandidates = await countMassLoadCandidates(config, toProcess, args);
+    console.log(`Símbolos caducados (candidatos a refresco): ${massLoadCandidates.length} de ${toProcess.length} evaluados`);
+    if (massLoadCandidates.length > args.maxMassLoad && !args.permitMassLoad) {
+      console.error("");
+      console.error(`ABORTADO: ${massLoadCandidates.length} símbolos caducados superan el tope de seguridad de ${args.maxMassLoad}.`);
+      console.error("Un refresco diario normal toca unos pocos cientos de símbolos, no miles — esta cifra sugiere una");
+      console.error("carga inicial, una corrida saltada varios días, o --stale-days mal puesto. Repetir esa situación");
+      console.error("sin freno fue lo que tumbó la instancia Supabase (Micro, 1 GB) durante cuatro horas.");
+      console.error("");
+      console.error("No se ha descargado ni escrito nada.");
+      console.error(`Si esta carga masiva es intencional, repite el comando con --permitir-carga-masiva.`);
+      process.exitCode = 1;
+      return;
+    }
   }
 
   if (args.dryRun) {

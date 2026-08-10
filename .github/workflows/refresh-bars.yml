@@ -1,0 +1,96 @@
+# .github/workflows/refresh-bars.yml
+#
+# QUÉ HACE
+# Ejecuta scripts/refresh-bars.mjs --write cada noche para refrescar las
+# barras diarias (daily_bars) del universo estadounidense investable en
+# Supabase. Es un refresco INCREMENTAL: con --stale-days=1 (el valor por
+# defecto del script), solo descarga y escribe los símbolos cuya última
+# barra tiene un día o más de antigüedad — un día normal son unos pocos
+# cientos de símbolos, no los ~5.600 de una carga inicial.
+#
+# El propio script trae un tope de seguridad (ver "LÍMITE DE SEGURIDAD" en
+# scripts/refresh-bars.mjs): si un día aparecen más de 1.000 símbolos
+# caducados de golpe, se detiene sin escribir nada. Ese es el freno real
+# contra una repetición accidental de la carga masiva del 9 de agosto
+# (~700.000 filas, instancia Supabase Micro caída 4 horas) — este workflow
+# no añade lógica propia para eso, delega en el script.
+#
+# POR QUÉ A LAS 02:00 UTC
+# Los crons de Vercel (vercel.json) corren entre las 22:20 y las 23:41 UTC.
+# 02:00 UTC deja más de dos horas de margen tras el último cron de Vercel
+# (shadow-firds-refresh, 23:30 UTC aprox. con su propio procesamiento), para
+# no competir por la misma instancia Supabase (Micro, 1 GB) mientras esos
+# crons aún puedan estar escribiendo.
+#
+# SECRETOS QUE NECESITA (Settings → Secrets and variables → Actions →
+# Repository secrets de este repositorio en GitHub, NO en este archivo):
+#   - SUPABASE_URL              (o NEXT_PUBLIC_SUPABASE_URL, el script acepta
+#                                 cualquiera de los dos — ver lib/supabaseServer.js)
+#   - SUPABASE_SERVICE_ROLE_KEY
+# Opcional: STATSEDGE_OWNER_ID — solo si el proyecto usa un owner_id distinto
+# de "personal" (el valor por defecto). No hace falta si nunca se ha tocado.
+#
+# QUÉ RAMA LO DISPARA
+# Los workflows programados (schedule) de GitHub Actions SOLO se disparan
+# desde la rama por defecto del repositorio. Este repo tiene
+# codex/statsedge-ui-polish como rama por defecto (cambiada a propósito
+# para esto) — si esa rama cambia, este workflow deja de correr en cron
+# hasta que se mueva con él o se ajuste `on.push`/rama por defecto de nuevo.
+
+name: Refresh daily bars (US)
+
+on:
+  schedule:
+    # 02:00 UTC a diario. GitHub documenta que los horarios programados
+    # pueden retrasarse 5-30 min en carga alta — es una cadencia diaria,
+    # ese margen no importa aquí.
+    - cron: "0 2 * * *"
+  workflow_dispatch: {}
+    # Disparo manual desde la pestaña Actions, para probar sin esperar a
+    # las 02:00 UTC.
+
+# Si un disparo manual se lanza mientras el de anoche sigue corriendo (no
+# debería, ver timeout-minutes), no se solapan sobre el mismo cursor de
+# símbolos.
+concurrency:
+  group: refresh-bars
+  cancel-in-progress: false
+
+jobs:
+  refresh-bars:
+    runs-on: ubuntu-latest
+    # Acotado muy por debajo del máximo de 6h del plan gratuito de Actions.
+    # La corrida de carga inicial completa (~5.600 símbolos, la más lenta
+    # posible) midió 18 minutos a concurrency=4. Un refresco diario normal
+    # es mucho más corto (solo símbolos caducados de un día); 30 minutos
+    # deja margen sin acercarse al límite del plan.
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh daily bars (--write)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          STATSEDGE_OWNER_ID: ${{ secrets.STATSEDGE_OWNER_ID }}
+        # Sin --env-file: en Actions las credenciales llegan por variables de
+        # entorno normales (bloque `env:` de arriba), que es como
+        # lib/supabaseServer.js las lee (envValue → process.env). --env-file
+        # es solo la forma de cargarlas en local desde .env.local; aquí no
+        # existe ese archivo ni hace falta.
+        # concurrency=4: la que ya está medida y funciona (18 min para la
+        # población completa). stale-days=1 es el valor por defecto del
+        # script — no hace falta repetirlo, se deja explícito por claridad.
+        run: |
+          node --loader ./scripts/loader.mjs scripts/refresh-bars.mjs \
+            --write --concurrency=4 --stale-days=1
