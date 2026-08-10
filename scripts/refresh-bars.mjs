@@ -13,17 +13,15 @@
 // Uso:
 //   node --env-file=.env.local --loader ./scripts/loader.mjs \
 //     scripts/refresh-bars.mjs [--dry-run] [--write] [--limit=N] \
-//     [--concurrency=4] [--stale-days=1] [--max-carga-masiva=1000] \
-//     [--permitir-carga-masiva]
+//     [--concurrency=4] [--stale-days=1] [--max-filas=200000]
 //
 // Por defecto corre en --dry-run (calcula y reporta qué refrescaría, no
 // descarga ni escribe). Descargar y escribir en Supabase exige --write
 // explícito.
 //
-// --write se detiene sin escribir nada si el número de símbolos caducados
-// supera --max-carga-masiva (por defecto 1.000) — ver "LÍMITE DE SEGURIDAD"
-// más abajo. Para forzar una carga grande a propósito, añade
-// --permitir-carga-masiva.
+// --write lleva la cuenta de las filas escritas y para ordenadamente al
+// llegar a --max-filas (por defecto 200.000) — ver "TOPE DE FILAS
+// ESCRITAS" más abajo.
 //
 // ── REDISEÑO (esta tarea) ───────────────────────────────────────────────
 // La versión anterior calculaba la antigüedad de la última barra de TODA
@@ -101,29 +99,44 @@
 // fallo, lo registra como fila `ok:false`, y el resto de la corrida
 // continúa). Un 429 o un fallo de proveedor en un símbolo no aborta nada.
 //
-// ── LÍMITE DE SEGURIDAD contra carga masiva accidental (esta tarea) ──────
-// La corrida de carga inicial (5.564/5.605 símbolos, ninguno con barra
-// previa) escribió ~700.000 filas y tumbó la instancia Supabase (Micro,
-// 1 GB) cuatro horas. Un refresco diario normal solo debería tocar los
-// símbolos caducados de UN día — pocos cientos como mucho, no miles: si
-// el cron corre cada noche, casi todo el universo ya está fresco a la
-// noche siguiente. Si en una corrida concreta aparecen miles de símbolos
-// "caducados" de golpe (universo recién repoblado, corrida saltada varios
-// días, --stale-days mal puesto), es la misma situación que tumbó la
-// instancia, y automatizarla a diario sin freno la repetiría sin que
-// nadie lo decidiera.
+// ── TOPE DE FILAS ESCRITAS (sustituye al guardián de carga masiva) ───────
+// EL INCIDENTE, que no se borra de aquí porque es la razón de que exista
+// cualquier freno: el 9 de agosto de 2026 la corrida de carga inicial
+// (5.564/5.605 símbolos, ninguno con barra previa) escribió ~700.000
+// filas y tumbó la instancia Supabase (Micro, 1 GB) durante cuatro horas.
 //
-// Por eso, en modo --write (nunca en --dry-run, que ya es de solo
-// lectura) se recuenta cuántos símbolos de `toProcess` están caducados
-// ANTES de descargar nada — la misma comprobación ligera que ya usa
-// --dry-run (1 columna, 1 fila por símbolo) — y si supera
-// DEFAULT_MAX_MASS_LOAD (1.000, ver justificación en la constante) el
-// script se detiene sin escribir una sola fila, salvo que se pase
-// --permitir-carga-masiva explícito. Esto reintroduce, solo para --write,
-// el costo de precálculo que la Opción (b) de más arriba eliminó — es una
-// excepción deliberada: aquí no es para ordenar (lo que se descartó por
-// no aportar valor), es para decidir si es seguro proceder. La función
-// (countMassLoadCandidates) vive más abajo, junto a fetchLastBarDate.
+// LO QUE HABÍA: un guardián (countMassLoadCandidates) que, antes de
+// escribir nada, contaba cuántos símbolos estaban "caducados" y abortaba
+// la corrida entera si pasaban de 1.000 (--max-carga-masiva, con escape
+// --permitir-carga-masiva).
+//
+// POR QUÉ SE QUITA — dos motivos, y ambos se comprobaron en producción:
+//   1. Medía lo que no debe. "Caducado" significa "le falta la última
+//      sesión", y eso son TODOS los símbolos cada día laborable: el
+//      refresco existe justamente para traer la sesión que falta. Abortó
+//      la única ejecución real del workflow reportando 5.605 de 5.605.
+//      Un umbral sobre esa cifra no distingue una carga inicial de una
+//      noche normal, porque en ambas vale lo mismo.
+//   2. Costaba ~4 minutos de precálculo por corrida (una consulta de la
+//      fecha de la última barra por símbolo, N+1 sobre ~5.600), pagados
+//      siempre, incluso para no escribir nada.
+//
+// QUÉ LO SUSTITUYE, y por qué esto sí: el commit d0a628b hizo que
+// writeDailyBarsCache escriba solo el delta — las barras que faltan o que
+// cambiaron, no la serie entera. Medido con AAPL: de 400 filas a 0 cuando
+// está al día y a 1 cuando falta una sesión. Eso baja una noche normal de
+// ~2,24 millones de filas a unas pocas miles, y hace segura la operación
+// diaria sin ningún guardián previo. Lo único que queda por proteger es el
+// caso excepcional (una carga inicial disfrazada de refresco), y el
+// criterio correcto para eso no es "cuántos símbolos parecen caducados"
+// sino "cuántas filas llevo escritas": se cuentan las filas realmente
+// escritas durante la corrida y, al llegar a --max-filas
+// (DEFAULT_MAX_ROWS, ver justificación del número en la constante), se
+// deja de tomar símbolos nuevos, se espera a los que están en vuelo y se
+// reporta qué quedó pendiente. El script hace trabajo útil hasta el tope
+// y para ordenadamente, en vez de negarse a empezar.
+
+import { pathToFileURL } from "node:url";
 
 import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer.js";
 import { fetchYahooChart } from "@/lib/yahoo.js";
@@ -138,29 +151,37 @@ const MAX_CONCURRENCY = 8;
 const DEFAULT_CONCURRENCY = 4;
 const DEFAULT_STALE_DAYS = 1;
 
-// Tope de seguridad contra carga masiva accidental en --write (ver el
-// comentario "LÍMITE DE SEGURIDAD" en la cabecera del archivo). Valor: 1.000.
-// Justificación del número, no solo del mecanismo: un refresco diario en
-// régimen normal (el cron corre todas las noches, sin huecos) debería
-// encontrar como mucho unos pocos cientos de símbolos caducados — los que
-// nadie visitó en la app ni tocaron los jobs shadow ese día concreto. Mil es
-// un margen de ~3-4x sobre ese "pocos cientos" esperado: suficiente para
-// absorber una noche floja sin frenar el cron por una fluctuación normal,
-// pero muy por debajo de los ~5.600 símbolos que activarían de nuevo el
-// patrón que tumbó Supabase (carga inicial o corrida saltada muchos días).
-const DEFAULT_MAX_MASS_LOAD = 1000;
+// Tope acumulado de filas escritas en una corrida --write (ver "TOPE DE FILAS
+// ESCRITAS" en la cabecera). Valor: 200.000.
+//
+// Justificación del NÚMERO, no solo del mecanismo — se elige para caer con
+// holgura entre las dos magnitudes reales que ya conocemos:
+//   - Techo: las ~700.000 filas de la carga inicial del 9 de agosto, que
+//     tumbaron la instancia Supabase (Micro, 1 GB) cuatro horas. 200.000 es
+//     menos de un tercio de esa cifra, así que ni siquiera una corrida que
+//     agote el tope entero reproduce el volumen del incidente.
+//   - Suelo: un refresco diario normal post-delta (d0a628b) escribe del orden
+//     de unos pocos miles de filas — ~5.600 símbolos × ~1 barra nueva, más los
+//     huecos que se rellenen. 200.000 es ~30x ese caso, margen de sobra para
+//     un fin de semana largo, un festivo, o una corrida saltada varios días,
+//     sin que el tope se dispare por variación normal.
+// Es decir: invisible en operación diaria, y activo justo en el escenario que
+// hay que frenar (una carga inicial disfrazada de refresco). A 400 barras por
+// símbolo nuevo, 200.000 filas dan para ~500 símbolos vírgenes por corrida:
+// una carga inicial completa necesitaría ~12 corridas en vez de una sola que
+// tumbe la instancia. Eso es el comportamiento buscado, no un efecto colateral.
+const DEFAULT_MAX_ROWS = 200000;
 
 // ── CLI args ─────────────────────────────────────────────────────────────
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const out = {
     dryRun: true,
     write: false,
     limit: 0,
     concurrency: DEFAULT_CONCURRENCY,
     staleDays: DEFAULT_STALE_DAYS,
-    maxMassLoad: DEFAULT_MAX_MASS_LOAD,
-    permitMassLoad: false,
+    maxRows: DEFAULT_MAX_ROWS,
   };
   for (const arg of argv) {
     const [rawKey, rawValue] = arg.replace(/^--/, "").split("=");
@@ -170,8 +191,7 @@ function parseArgs(argv) {
     else if (key === "limit") out.limit = Math.max(0, Number(rawValue) || 0);
     else if (key === "concurrency") out.concurrency = Math.min(MAX_CONCURRENCY, Math.max(1, Number(rawValue) || DEFAULT_CONCURRENCY));
     else if (key === "stale-days") out.staleDays = Math.max(0, Number(rawValue) ?? DEFAULT_STALE_DAYS);
-    else if (key === "max-carga-masiva") out.maxMassLoad = Math.max(0, Number(rawValue) || 0) || DEFAULT_MAX_MASS_LOAD;
-    else if (key === "permitir-carga-masiva") out.permitMassLoad = rawValue === undefined ? true : rawValue !== "false";
+    else if (key === "max-filas") out.maxRows = Math.max(0, Number(rawValue) || 0) || DEFAULT_MAX_ROWS;
   }
   // Mismo criterio que rs-universe.mjs: --write gana sobre el default
   // dry-run=true, pero --dry-run=true explícito manda sobre --write (más seguro).
@@ -279,19 +299,6 @@ function ageBucket(ageDays) {
   return ">60d";
 }
 
-// Cuenta cuántos de `toProcess` están caducados (candidatos a refresco),
-// reutilizando la misma comprobación ligera de --dry-run. Es el precálculo
-// que la Opción (b) de la cabecera evita para --write en régimen normal —
-// aquí se paga a propósito, solo para decidir el gate de seguridad antes de
-// escribir nada (ver "LÍMITE DE SEGURIDAD" en la cabecera del archivo).
-async function countMassLoadCandidates(config, toProcess, args) {
-  const withAge = await mapLimit(toProcess, args.concurrency, async (row) => {
-    const lastBarDate = await fetchLastBarDate(config, row.symbol);
-    return { ...row, lastBarDate, ageDays: ageDaysFrom(lastBarDate) };
-  });
-  return withAge.filter((row) => row.ageDays >= args.staleDays);
-}
-
 // ── Escritura: withDailyBarsCache decide fresh/stale al leer, no nosotros ─
 
 async function refreshOne(config, symbol, args) {
@@ -309,7 +316,10 @@ async function refreshOne(config, symbol, args) {
       if (cache.write.status === "error") {
         return { symbol, ok: false, reason: cache.write.error || "writeDailyBarsCache devolvió status:error" };
       }
-      return { symbol, ok: true, skipped: false, barsWritten: cache.write.count || 0 };
+      // `count` = filas REALMENTE escritas (el delta, tras d0a628b);
+      // `candidates` = filas evaluadas antes del delta. El tope se lleva con
+      // `count`: es lo que pesa en la instancia, no lo que se miró.
+      return { symbol, ok: true, skipped: false, barsWritten: cache.write.count || 0, barsEvaluated: cache.write.candidates || 0 };
     }
     // Ni hit ni write: el proveedor falló y no había caché previa que
     // devolver, o se sirvió una caché vieja de emergencia (stale-fallback)
@@ -318,6 +328,69 @@ async function refreshOne(config, symbol, args) {
   } catch (error) {
     return { symbol, ok: false, reason: error?.message || String(error) };
   }
+}
+
+// ── Bucle de escritura con tope acumulado de filas ───────────────────────
+//
+// Procesa `items` con `concurrency` trabajadores y va sumando las filas
+// escritas. Cuando el acumulado alcanza `maxRows`, los trabajadores dejan de
+// tomar símbolos NUEVOS; los que ya están en vuelo terminan su símbolo (no se
+// cancelan a mitad, para no dejar una escritura parcial sin reportar) y el
+// bucle devuelve qué quedó sin procesar.
+//
+// SOBRE LA CONCURRENCIA — confirmado, no asumido: varios trabajadores suman a
+// `rowsWritten`, pero en JavaScript no puede haber condición de carrera sobre
+// ese contador. El modelo es de un solo hilo con event loop: `rowsWritten +=
+// n` y la comprobación `rowsWritten >= maxRows` son operaciones síncronas, y
+// un trabajador solo cede el control en un `await` explícito. Entre la lectura
+// y la escritura del contador nunca se intercala otro trabajador, así que no
+// hay lectura-modificación-escritura rota ni check-then-act partido en dos.
+// No hace falta mutex, atómicos ni SharedArrayBuffer (eso solo aplicaría con
+// Worker threads reales, que aquí no hay).
+//
+// Lo que SÍ ocurre, y es distinto de una carrera: el tope se comprueba ENTRE
+// símbolos, no dentro de uno. Cuando un trabajador cruza el umbral, hasta
+// `concurrency - 1` trabajadores ya están escribiendo su propio símbolo y
+// sumarán después. El exceso está acotado por (concurrency - 1) × writeCap
+// (writeCap = 400, o 1.260 si el símbolo está referenciado — ver
+// lib/dailyBarsCache.js), es decir unos pocos miles de filas en el peor caso.
+// El tope es un freno, no un límite exacto, y no necesita serlo: el margen
+// contra las ~700.000 del incidente absorbe ese exceso de sobra.
+export async function runWriteLoop(items, { concurrency, maxRows, refresh }) {
+  const results = [];
+  let rowsWritten = 0;
+  let processed = 0;
+  let stoppedByCap = false;
+  let cursor = 0;
+
+  async function run() {
+    for (;;) {
+      // Check-then-act síncrono: nadie se intercala aquí (ver nota de arriba).
+      if (rowsWritten >= maxRows) {
+        stoppedByCap = true;
+        return;
+      }
+      const index = cursor++;
+      if (index >= items.length) return;
+      const result = await refresh(items[index], index);
+      results.push(result);
+      processed += 1;
+      rowsWritten += result?.barsWritten || 0;
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, run));
+
+  return {
+    results,
+    rowsWritten,
+    processed,
+    // Símbolos que nunca se tocaron. Ojo: `cursor` puede haber avanzado más
+    // que `processed` solo si un trabajador tomó un índice y falló de forma no
+    // atrapada — refreshOne atrapa todo, así que en la práctica coinciden.
+    remaining: Math.max(0, items.length - processed),
+    stoppedByCap,
+  };
 }
 
 // ── Main ────────────────────────────────────────────────────────────────
@@ -352,25 +425,6 @@ async function main() {
   if (!toProcess.length) {
     console.log("Nada que hacer: población vacía.");
     return;
-  }
-
-  if (!args.dryRun) {
-    console.log("");
-    console.log(`Límite de seguridad: comprobando cuántos símbolos están caducados antes de escribir (tope=${args.maxMassLoad})...`);
-    const massLoadCandidates = await countMassLoadCandidates(config, toProcess, args);
-    console.log(`Símbolos caducados (candidatos a refresco): ${massLoadCandidates.length} de ${toProcess.length} evaluados`);
-    if (massLoadCandidates.length > args.maxMassLoad && !args.permitMassLoad) {
-      console.error("");
-      console.error(`ABORTADO: ${massLoadCandidates.length} símbolos caducados superan el tope de seguridad de ${args.maxMassLoad}.`);
-      console.error("Un refresco diario normal toca unos pocos cientos de símbolos, no miles — esta cifra sugiere una");
-      console.error("carga inicial, una corrida saltada varios días, o --stale-days mal puesto. Repetir esa situación");
-      console.error("sin freno fue lo que tumbó la instancia Supabase (Micro, 1 GB) durante cuatro horas.");
-      console.error("");
-      console.error("No se ha descargado ni escrito nada.");
-      console.error(`Si esta carga masiva es intencional, repite el comando con --permitir-carga-masiva.`);
-      process.exitCode = 1;
-      return;
-    }
   }
 
   if (args.dryRun) {
@@ -409,9 +463,13 @@ async function main() {
   }
 
   console.log("");
-  console.log(`Procesando ${toProcess.length} símbolos vía withDailyBarsCache (decide fresh/stale al leer, concurrency=${args.concurrency})...`);
+  console.log(`Procesando ${toProcess.length} símbolos vía withDailyBarsCache (decide fresh/stale al leer, concurrency=${args.concurrency}, tope=${args.maxRows} filas escritas)...`);
   const processStartedAt = Date.now();
-  const results = await mapLimit(toProcess, args.concurrency, (row) => refreshOne(config, row.symbol, args));
+  const { results, rowsWritten, processed, remaining, stoppedByCap } = await runWriteLoop(toProcess, {
+    concurrency: args.concurrency,
+    maxRows: args.maxRows,
+    refresh: (row) => refreshOne(config, row.symbol, args),
+  });
   const processElapsedMs = Date.now() - processStartedAt;
 
   const skipped = results.filter((r) => r.ok && r.skipped);
@@ -421,21 +479,48 @@ async function main() {
   console.log("");
   console.log("=== REPORTE ===");
   console.log(`Población: ${population.length}`);
-  console.log(`Evaluados en esta corrida: ${toProcess.length}`);
+  console.log(`Seleccionados para esta corrida: ${toProcess.length}`);
+  console.log(`Procesados: ${processed}`);
   console.log(`Al día, saltados (sin descargar): ${skipped.length}`);
   console.log(`Refrescados con éxito: ${succeeded.length}`);
   console.log(`Fallidos: ${failed.length}`);
+  console.log(`Filas escritas en daily_bars: ${rowsWritten} (tope: ${args.maxRows})`);
   if (failed.length) {
     for (const row of failed.slice(0, 30)) console.log(`  - ${row.symbol}: ${row.reason}`);
     if (failed.length > 30) console.log(`  ... y ${failed.length - 30} más (omitidos del detalle, no del conteo).`);
   }
   const elapsedMs = Date.now() - startedAt;
-  const msPerSymbol = toProcess.length ? processElapsedMs / toProcess.length : 0;
+  const msPerSymbol = processed ? processElapsedMs / processed : 0;
   console.log(`Tiempo de procesamiento (lectura+descarga+escritura): ${(processElapsedMs / 1000).toFixed(1)}s (${msPerSymbol.toFixed(0)} ms/símbolo)`);
   console.log(`Tiempo total: ${(elapsedMs / 1000).toFixed(1)}s`);
+
+  if (stoppedByCap) {
+    console.log("");
+    console.log(`PARADA POR TOPE: se alcanzaron ${rowsWritten} filas escritas (tope ${args.maxRows}).`);
+    console.log(`Quedaron ${remaining} símbolos sin procesar de los ${toProcess.length} seleccionados.`);
+    console.log("Los símbolos en vuelo terminaron; no hay escrituras a medias sin reportar.");
+    console.log("Este volumen no es el de un refresco diario normal (unas pocas miles de filas tras el delta de d0a628b):");
+    console.log("apunta a una carga inicial, un universo recién repoblado o huecos de varios días. Si es intencional,");
+    console.log("relanza — el orden de la instantánea es determinista, así que la siguiente corrida retoma el mismo");
+    console.log("conjunto y avanza sobre lo que ya quedó escrito — o sube el tope con --max-filas=N a sabiendas.");
+    // Código de salida 2, no 1: 1 ya significa "error fatal" (Supabase sin
+    // configurar, excepción no atrapada). Parar por el tope NO es un error —
+    // el trabajo hecho es válido y está persistido — pero tampoco es un
+    // "terminé todo", y en GitHub Actions cualquier código != 0 marca el job
+    // en rojo, que es exactamente la visibilidad que se quiere. Un código
+    // propio permite distinguir los tres casos sin leer los logs:
+    // 0 = corrida completa, 1 = falló, 2 = incompleta por el tope.
+    process.exitCode = 2;
+  }
 }
 
-main().catch((error) => {
-  console.error("Error fatal:", error?.message || error);
-  process.exitCode = 1;
-});
+// Solo se ejecuta cuando el archivo se invoca directamente por CLI. Si se
+// importa (los tests importan runWriteLoop/parseArgs), main() no corre y no se
+// toca Supabase.
+const invokedDirectly = process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url;
+if (invokedDirectly) {
+  main().catch((error) => {
+    console.error("Error fatal:", error?.message || error);
+    process.exitCode = 1;
+  });
+}

@@ -5,15 +5,37 @@
 # barras diarias (daily_bars) del universo estadounidense investable en
 # Supabase. Es un refresco INCREMENTAL: con --stale-days=1 (el valor por
 # defecto del script), solo descarga y escribe los símbolos cuya última
-# barra tiene un día o más de antigüedad — un día normal son unos pocos
-# cientos de símbolos, no los ~5.600 de una carga inicial.
+# barra tiene un día o más de antigüedad. Ojo con el matiz, que es lo que
+# el guardián retirado entendía mal: cada día laborable eso son CASI TODOS
+# los símbolos (~5.600), porque a todos les falta la sesión de ayer. Lo
+# incremental no es cuántos símbolos se visitan, sino cuánto se escribe:
+# desde el delta de d0a628b son ~1 barra por símbolo, unas pocas miles de
+# filas, no las ~2,24 millones de reescribir la serie entera.
 #
-# El propio script trae un tope de seguridad (ver "LÍMITE DE SEGURIDAD" en
-# scripts/refresh-bars.mjs): si un día aparecen más de 1.000 símbolos
-# caducados de golpe, se detiene sin escribir nada. Ese es el freno real
-# contra una repetición accidental de la carga masiva del 9 de agosto
-# (~700.000 filas, instancia Supabase Micro caída 4 horas) — este workflow
-# no añade lógica propia para eso, delega en el script.
+# FRENO CONTRA CARGA MASIVA
+# El script lleva un tope acumulado de FILAS ESCRITAS (ver "TOPE DE FILAS
+# ESCRITAS" en scripts/refresh-bars.mjs): por defecto 200.000 filas,
+# ajustable con --max-filas=N. Al alcanzarlo deja de tomar símbolos
+# nuevos, espera a los que están en vuelo y reporta cuántos quedaron sin
+# procesar — hace trabajo útil hasta el tope en vez de negarse a empezar.
+# Ese es el freno contra una repetición de la carga masiva del 9 de agosto
+# (~700.000 filas, instancia Supabase Micro caída 4 horas); este workflow
+# no añade lógica propia, delega en el script.
+#
+# Sustituye al guardián anterior, que contaba símbolos "caducados" y
+# abortaba por encima de 1.000 (--max-carga-masiva /
+# --permitir-carga-masiva, ambas banderas ya no existen). Medía lo que no
+# debe: caducados son todos los símbolos cada día laborable, así que
+# abortó la única ejecución real de este workflow con 5.605 de 5.605, y
+# costaba ~4 minutos de precálculo por corrida. Lo que hace segura la
+# operación diaria es el delta de escritura (commit d0a628b): solo se
+# escriben las barras que faltan o cambiaron, unas pocas miles por noche
+# en vez de ~2,24 millones.
+#
+# CÓDIGOS DE SALIDA del script (el job se marca en rojo si != 0):
+#   0 = procesó todos los símbolos seleccionados.
+#   1 = error fatal (Supabase sin configurar, excepción no atrapada).
+#   2 = corrida incompleta: paró al llegar al tope de filas.
 #
 # POR QUÉ A LAS 02:00 UTC
 # Los crons de Vercel (vercel.json) corren entre las 22:20 y las 23:41 UTC.
@@ -41,13 +63,14 @@ name: Refresh daily bars (US)
 
 on:
   # CRON DESACTIVADO (2026-08-10) — ver docs/frescura-sesion-2026-08-10.md.
-  # El guardián de carga masiva aborta cada noche porque cuenta símbolos
-  # que "necesitan actualizarse", y eso son TODOS por diseño: el refresco
-  # existe justamente para traer la sesión que aún no está en la base.
-  # Además, cada refresco reescribe la serie entera (~400 barras por
-  # símbolo, ~2,2M filas por noche), el triple de la carga que tumbó la
-  # instancia Supabase el 9 de agosto.
-  # Reactivar cuando ambas cosas estén resueltas:
+  # Las dos causas por las que se desactivó ya están resueltas: la
+  # reescritura de la serie entera (~2,2M filas/noche) la arregló el delta
+  # de d0a628b, y el guardián que abortaba cada noche se ha sustituido por
+  # el tope de filas escritas descrito arriba.
+  # Aun así se deja comentado A PROPÓSITO: reactivarlo es una decisión
+  # aparte, y se toma después de ver una corrida manual real
+  # (workflow_dispatch) que termine con código 0 y un número de filas
+  # escritas del orden de unas pocas miles. Para reactivar, descomentar:
   #   schedule:
   #     - cron: "0 2 * * *"
   workflow_dispatch: {}
