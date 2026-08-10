@@ -102,11 +102,18 @@ export async function GET(req) {
   const limit = Math.min(Math.max(Number(searchParams.get("limit") || 200), 1), 500);
   const includeRows = searchParams.get("includeRows") !== "0";
   try {
+    // `progress:settings->progress` en vez de `settings`: de toda la columna
+    // solo se usa settings.progress (dos líneas más abajo). Pedirla entera
+    // arrastraba settings.scanSymbols —los 10.000 símbolos del universo, ~84 KB
+    // medidos— en CADA sondeo del cliente, que son 2 s (SERVER_SCAN_POLL_MS) a
+    // lo largo de toda la corrida: ~110 lecturas inútiles por escaneo del
+    // universo completo, concurrentes con el bucle del runner sobre la misma
+    // fila. Ver docs/timeout-tres-minutos-2026-08-10.md.
     const [scan] = await supabaseRequest("scans", {
-      query: `id=eq.${encodeURIComponent(id)}&owner_id=eq.${encodeURIComponent(config.ownerId)}&select=id,local_id,name,preset,settings,row_count,created_at,updated_at&limit=1`,
+      query: `id=eq.${encodeURIComponent(id)}&owner_id=eq.${encodeURIComponent(config.ownerId)}&select=id,local_id,name,preset,progress:settings->progress,row_count,created_at,updated_at&limit=1`,
     });
     if (!scan) return Response.json({ ok: false, error: "Scan no encontrado" }, { status: 404 });
-    const progress = scan.settings?.progress || { status: "unknown" };
+    const progress = scan.progress || { status: "unknown" };
     let rows = [];
     let nextOffset = offset;
     if (includeRows) {
