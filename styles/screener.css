@@ -57,6 +57,25 @@
     font-size: 16px;
     font-weight: 700;
   }
+  .mobileSidebarHeaderActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .mobileSidebarCloseBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: inherit;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+  }
 }
 
 .topbar {

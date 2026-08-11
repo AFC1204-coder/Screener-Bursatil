@@ -6,7 +6,13 @@
 // devuelto por useResultViewModel) como prop-bag de solo lectura; el useEffect
 // de persistencia del container referencia escalares sueltos, no este objeto,
 // por lo que pasar el bag completo no provoca escrituras por identity-change.
+//
+// Única excepción: el useEffect de cierre del panel de filtros móvil (Escape /
+// click fuera) más abajo. `showMobileFilters` es visibilidad de UI pura, no
+// estado de negocio — mantenerlo aquí evita subir un ref del DOM del propio
+// panel al container solo para esto.
 
+import { useEffect, useRef } from "react";
 import { ReviewPriorityResultRail } from "@/app/components/screener/ReviewWidgets";
 import DecisionGroups from "@/app/components/screener/DecisionGroups";
 import CuratedDiscoveryPanel from "@/app/components/screener/CuratedDiscoveryPanel";
@@ -313,6 +319,29 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     </details>
   ) : null;
 
+  // Cierre del panel de filtros en móvil: Escape en cualquier punto de la
+  // página y click/tap fuera del panel (mobileFiltersRef). El botón "Filtros"
+  // de la topbar y el propio botón de cierre siguen cerrando via su onClick
+  // normal; esto cubre los dos casos que no tenían manejador.
+  const mobileFiltersRef = useRef(null);
+  useEffect(() => {
+    if (!showMobileFilters) return undefined;
+    function handleKeyDown(event) {
+      if (event.key === "Escape") setShowMobileFilters(false);
+    }
+    function handlePointerDown(event) {
+      if (mobileFiltersRef.current && !mobileFiltersRef.current.contains(event.target)) {
+        setShowMobileFilters(false);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [showMobileFilters, setShowMobileFilters]);
+
   return <main className="page screenerTerminalPage">
     <div className="topbar screenerHeroBar">
       <div className="screenerHeroTitle">
@@ -350,10 +379,13 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       >
         {sidebarCollapsed ? "Filtros" : "‹"}
       </button>
-      <aside className={`sidebar ${showMobileFilters ? "mobileOpen" : ""}`}>
+      <aside ref={mobileFiltersRef} className={`sidebar ${showMobileFilters ? "mobileOpen" : ""}`}>
         <div className="mobileSidebarHeader">
           <h2>Filtros</h2>
-          <button className={`btn ${running ? "btnGhost" : "btnPrimary"}`} onClick={() => { if (running) stopScan(); else { setShowMobileFilters(false); run(); } }}>{running ? "Detener" : "Aplicar"}</button>
+          <div className="mobileSidebarHeaderActions">
+            <button className={`btn ${running ? "btnGhost" : "btnPrimary"}`} onClick={() => { if (running) stopScan(); else { setShowMobileFilters(false); run(); } }}>{running ? "Detener" : "Aplicar"}</button>
+            <button type="button" className="mobileSidebarCloseBtn" onClick={() => setShowMobileFilters(false)} aria-label="Cerrar filtros" title="Cerrar filtros">✕</button>
+          </div>
         </div>
         <div className="kpis" style={{ marginBottom: 20 }}>
           <div className="kpi"><b>{kpiUniverseCount}</b><span>universo</span></div>

@@ -1237,7 +1237,12 @@ export default function Page() {
       setStatus(`Universo cargado${marketLabel}: ${u.length} tickers${ipoRadar.length ? ` · IPO Radar ${ipoRadar.length}` : ""}. Filtro: ${PRESETS[presetKey].name}. Alcance inicial: ${scopeLabel}.`);
       return u;
     } catch (e) {
-      setErr(e.message);
+      // El mensaje crudo (puede incluir detalle de red o del proveedor de
+      // datos) queda en consola para depurar; el banner err (pintado por
+      // ScreenerShell) es siempre lenguaje de producto — mismo criterio que
+      // el resto de errores de escaneo, ver lib/screenerFormat.js.
+      console.error("[loadUniverse] fallo al cargar universo", e);
+      setErr(scanFailureExplanation(e.message));
       setStatus("Proveedor no disponible al cargar universo");
       return [];
     }

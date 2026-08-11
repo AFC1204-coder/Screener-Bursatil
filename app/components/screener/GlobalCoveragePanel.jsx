@@ -82,7 +82,6 @@ export function renderGlobalCoverageView({ report = null, loading = false, error
       <div className="globalCoveragePanel globalCoverageError" role="alert">
         <b>Cobertura no disponible</b>
         <p>No se pudo cargar la cobertura internacional. Reintenta recargando la página.</p>
-        <p className="globalCoverageErrorDetail">{error}</p>
       </div>
     );
   }
@@ -165,13 +164,10 @@ export function renderGlobalCoverageView({ report = null, loading = false, error
 
       {backfillJobs.length ? (
         <div className="globalCoverageBackfill" role="note">
-          <b>Plan de cobertura interno (informativo, no ejecutable desde aquí).</b>
+          <b>Trabajo de cobertura pendiente (informativo, no ejecutable desde aquí).</b>
           <ul className="globalCoverageBackfillList" role="list">
             {backfillJobs.map((job, index) => (
-              <li key={`${job?.label || ""}-${index}`}>
-                {job?.label ? <span className="globalCoverageBackfillLabel">{job.label}: </span> : null}
-                <code className="globalCoverageBackfillPath">{job?.path || ""}</code>
-              </li>
+              <li key={`${job?.label || ""}-${index}`}>{job?.label || "Lote pendiente"}</li>
             ))}
           </ul>
         </div>
@@ -198,7 +194,11 @@ export default function GlobalCoveragePanel() {
       })
       .catch((e) => {
         if (cancelled) return;
-        setError(e?.message || "No se pudo contactar con /api/coverage");
+        // El mensaje crudo (puede incluir detalle de red o del proveedor de
+        // datos) queda en consola para depurar; la pantalla solo muestra el
+        // mensaje genérico ya pintado por el estado "error" de este render.
+        console.error("[GlobalCoveragePanel] /api/coverage falló:", e);
+        setError("No se pudo contactar con /api/coverage");
         setReport(null);
         setLoading(false);
       });

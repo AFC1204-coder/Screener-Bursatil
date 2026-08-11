@@ -136,13 +136,14 @@ describe("GlobalCoveragePanel · renderGlobalCoverageView", () => {
     expect(html).not.toContain("globalCoverageMetric");
   });
 
-  it("4. fallo de red: muestra error sin acciones de scan/backfill", () => {
+  it("4. fallo de red: muestra error genérico sin el detalle crudo del proveedor", () => {
     const html = renderToStaticMarkup(React.createElement(renderGlobalCoverageView, { report: null, loading: false, error: "Failed to fetch" }));
     const text = visibleText(html);
 
     expect(text).toContain("Cobertura no disponible");
     expect(text).toContain("recargando la página");
-    expect(text).toContain("Failed to fetch");
+    // El mensaje crudo del error (detalle de red/proveedor) NUNCA llega a pantalla.
+    expect(text).not.toContain("Failed to fetch");
     expect(text.toLowerCase()).not.toContain("ejecutar scan");
     expect(text.toLowerCase()).not.toContain("lanzar backfill");
   });
@@ -159,9 +160,12 @@ describe("GlobalCoveragePanel · renderGlobalCoverageView", () => {
       expect(html).not.toMatch(/<a\s[^>]*href=/i);
       expect(html).not.toMatch(/<button/i);
       expect(html).not.toMatch(/href=["']\/api\/(scan|jobs|cron)/i);
+      // Ni siquiera como texto plano: ninguna ruta interna de /api/jobs o /api/cron.
+      expect(html).not.toMatch(/\/api\/(jobs|cron)\//i);
     }
     const withBackfill = renderToStaticMarkup(React.createElement(renderGlobalCoverageView, states[0]));
-    expect(withBackfill).toContain("/api/jobs/scan-refresh");
+    expect(withBackfill).not.toContain("/api/jobs/scan-refresh");
+    expect(withBackfill).toContain("Core US");
     expect(withBackfill).toContain("no ejecutable desde aquí");
     expect(withBackfill).not.toMatch(/<a\s/i);
     expect(withBackfill).not.toMatch(/<button/i);
