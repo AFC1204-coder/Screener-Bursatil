@@ -1,0 +1,119 @@
+# .github/workflows/scan-universe.yml
+#
+# QUÉ HACE
+# Ejecuta scripts/scan-universe.mjs --write cada noche para analizar el
+# universo estadounidense investable completo (~5.605 símbolos), aplicar el
+# preset "balanced" (el mismo que usa el escaneo interactivo por defecto) y
+# guardar UN escaneo nocturno en scans/scan_results. Al terminar, aplica la
+# retención propia del script (conserva los 7 escaneos nocturnos
+# "materialized:US:*" más recientes, borra el resto vía DELETE en cascada).
+# El propio script ya implementa dry-run por defecto, retención y el
+# arranque de Vitest para --write (ver cabecera de scripts/scan-universe.mjs)
+# — este workflow no añade lógica propia, delega en el script, mismo
+# criterio que .github/workflows/refresh-bars.yml.
+#
+# POR QUÉ A LAS 03:00 UTC (una hora después de refresh-bars.yml, 02:00 UTC)
+# El escaneo lee daily_bars vía runMaterializedScan y necesita las barras
+# de la sesión de ayer ya frescas para que el cribado base (histórico/
+# turnover/frescura) y el scoring no trabajen con datos viejos. refresh-bars
+# corre a las 02:00 UTC; dejarle una hora de margen (03:00 UTC) asume que
+# termina bien dentro de eso — la corrida real medida fue 18 minutos
+# (comentario de refresh-bars.yml). Si algún día refresh-bars empieza a
+# tardar más de esa hora de margen, este escaneo arrancaría igual (no hay
+# encadenamiento condicional, ver "ENCADENAMIENTO" en Parte A del informe
+# de esta tarea) y correría sobre las barras que hubiera en ese momento.
+#
+# QUÉ NECESITA QUE refresh-bars.yml NO NECESITA
+# El modo --write de scan-universe.mjs importa lib/materializedScanner.js,
+# cuya cadena de imports llega a app/components/ui/MetricSource.jsx (un
+# componente JSX real) a través de lib/screenerFormat.js. El loader plano
+# (scripts/loader.mjs, el que basta para refresh-bars.mjs) NO transforma
+# JSX. Por eso scan-universe.mjs arranca internamente la API programática
+# de Vitest (vitest/node) para ese import — el mismo mecanismo que ya usa
+# scripts/bench-analyze.mjs (ver cabecera de scan-universe.mjs, sección
+# "BLOQUEO ENCONTRADO"). Esto NO cambia el paso de instalación: `vitest` ya
+# es una devDependency (package.json) y `npm ci` las instala por defecto
+# (no hay NODE_ENV=production ni --omit=dev en este workflow) — igual que
+# refresh-bars.yml, basta `npm ci` sin ningún paso adicional.
+#
+# CUÁNTO TARDA
+# Corrida real medida (fuera de Actions, según el contexto de esta tarea):
+# 5.605 símbolos en 3,5 minutos. docs/adr-escaneo-nocturno.md (sección B.8)
+# estima, por separado, "unos pocos minutos (probablemente 5-10 min con
+# finalización incluida)" para un volumen comparable, y recomienda
+# `timeout-minutes: 30` por ser "un trabajo de magnitud comparable" al de
+# refresh-bars.yml. Se sigue esa recomendación aquí: 30 minutos da un
+# margen de ~8-9x sobre los 3,5 minutos medidos, cubriendo latencia extra
+# hasta Supabase/Yahoo desde el runner de GitHub y el propio arranque de
+# Vitest (no medido en la corrida de 3,5 min). No hay corrida real medida
+# TODAVÍA dentro de un runner de Actions — la primera ejecución real de
+# este workflow es la que lo confirmará.
+#
+# SECRETOS QUE NECESITA (Settings → Secrets and variables → Actions →
+# Repository secrets de este repositorio en GitHub, NO en este archivo):
+#   - SUPABASE_URL              (o NEXT_PUBLIC_SUPABASE_URL, el script acepta
+#                                 cualquiera de los dos — ver lib/supabaseServer.js)
+#   - SUPABASE_SERVICE_ROLE_KEY
+# Opcional: STATSEDGE_OWNER_ID — solo si el proyecto usa un owner_id distinto
+# de "personal" (el valor por defecto). No hace falta si nunca se ha tocado.
+# Mismos secretos que refresh-bars.yml — no hace falta darlos de alta de
+# nuevo si ya existen en el repositorio.
+#
+# QUÉ RAMA LO DISPARA
+# Los workflows programados (schedule) de GitHub Actions SOLO se disparan
+# desde la rama por defecto del repositorio. Este repo tiene
+# codex/statsedge-ui-polish como rama por defecto — si cambia, este
+# workflow deja de correr en cron hasta que se mueva con ella o se ajuste
+# de nuevo (mismo aviso que refresh-bars.yml).
+
+name: Scan universe (US, nightly)
+
+on:
+  schedule:
+    # 03:00 UTC a diario — una hora después de refresh-bars.yml (02:00 UTC),
+    # para que el escaneo lea barras ya refrescadas. GitHub puede retrasar
+    # los horarios 5-30 minutos; en una cadencia diaria no importa.
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}
+    # Disparo manual desde la pestaña Actions, para probar sin esperar a
+    # las 03:00 UTC.
+
+# Si un disparo manual se lanza mientras el de anoche sigue corriendo, no se
+# solapan sobre el mismo local_id/retención (mismo patrón que refresh-bars).
+concurrency:
+  group: scan-universe
+  cancel-in-progress: false
+
+jobs:
+  scan-universe:
+    runs-on: ubuntu-latest
+    # Ver "CUÁNTO TARDA" arriba: 30 min, mismo valor que refresh-bars.yml,
+    # con margen amplio sobre los 3,5 min medidos fuera de Actions.
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Scan universe (--write)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          STATSEDGE_OWNER_ID: ${{ secrets.STATSEDGE_OWNER_ID }}
+        # Sin --env-file: en Actions las credenciales llegan por variables de
+        # entorno normales (bloque `env:` de arriba) — igual que
+        # refresh-bars.yml. --preset no se pasa explícito: "balanced" es el
+        # valor por defecto del script (DEFAULT_PRESET), y la retención (7
+        # escaneos nocturnos) corre siempre salvo --sin-retencion, que no se
+        # pasa aquí a propósito.
+        run: |
+          node --loader ./scripts/loader.mjs scripts/scan-universe.mjs \
+            --write --concurrency=4
