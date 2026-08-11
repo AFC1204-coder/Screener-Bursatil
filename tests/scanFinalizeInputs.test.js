@@ -19,7 +19,7 @@ vi.mock("@/lib/supabaseServer", () => ({
   supabaseRpc: vi.fn(),
 }));
 
-import { finalizeScanResultsInDb } from "@/lib/scanPercentileFinalization";
+import { finalizeScanPercentiles, finalizeScanResultsInDb } from "@/lib/scanPercentileFinalization";
 import { supabaseRpc } from "@/lib/supabaseServer";
 
 // Construye una fila "thin" tal como la devolvería scan_finalize_inputs: solo id
@@ -87,7 +87,14 @@ describe("finalizeScanResultsInDb · contrato thin-raw vía scan_finalize_inputs
     // El payload de lectura NO contiene la firma del select legacy.
     expect(JSON.stringify(supabaseRpc.mock.calls[0])).not.toContain("select=id,metrics,raw");
 
-    expect(result).toEqual({ rowsProcessed: universe.length, rowsPatched: universe.length });
+    // batchesDone/batchesTotal: 24 filas < FINALIZE_PATCH_BATCH_SIZE (100) →
+    // una sola tanda de escritura.
+    expect(result).toEqual({
+      rowsProcessed: universe.length,
+      rowsPatched: universe.length,
+      batchesTotal: 1,
+      batchesDone: 1,
+    });
   });
 
   it("el patch enviado a finalize_scan_results lleva SOLO overrides (sin echo de metrics)", async () => {
@@ -160,7 +167,7 @@ describe("finalizeScanResultsInDb · contrato thin-raw vía scan_finalize_inputs
   it("scan vacío (0 inputs) → 0 patches, sin invocar finalize_scan_results", async () => {
     supabaseRpc.mockResolvedValueOnce({ inputs: [], rowsRead: 0 });
     const result = await finalizeScanResultsInDb("scan-3", "owner-3");
-    expect(result).toEqual({ rowsProcessed: 0, rowsPatched: 0 });
+    expect(result).toEqual({ rowsProcessed: 0, rowsPatched: 0, batchesTotal: 0, batchesDone: 0 });
     // Solo se llamó a scan_finalize_inputs (lectura), no a finalize_scan_results.
     expect(supabaseRpc).toHaveBeenCalledTimes(1);
     expect(supabaseRpc.mock.calls[0][0]).toBe("scan_finalize_inputs");
@@ -201,5 +208,115 @@ describe("finalizeScanResultsInDb · contrato thin-raw vía scan_finalize_inputs
     supabaseRpc.mockResolvedValueOnce({ inputs: [], rowsRead: 0 });
     await finalizeScanResultsInDb("scan-7", "owner-7", { maxRows: 1234 });
     expect(supabaseRpc.mock.calls[0][1].p_max_rows).toBe(1234);
+  });
+});
+
+// ===========================================================================
+// Escritura en tandas (docs/finalizacion-percentiles-tandas-2026-08-11.md)
+// ===========================================================================
+//
+// La LECTURA sigue siendo una sola llamada a scan_finalize_inputs (sin
+// trocear — ver el comentario de cabecera de lib/scanPercentileFinalization.js
+// sobre por qué). Lo que se troceó es la ESCRITURA: finalize_scan_results se
+// llama varias veces, una por tanda de `patchBatchSize` filas, en orden.
+
+// N filas sintéticas para probar el TROCEO. No reproducen la distribución de
+// buildThinUniverse (eso ya está cubierto arriba) — solo necesitan que
+// finalizeScanPercentiles no explote con campos ausentes.
+function buildManyThinRows(n) {
+  return Array.from({ length: n }, (_, i) => makeThinRow(`SYM${i}`, {
+    perf3m: i % 40, perf6m: i % 55, perf12m: i % 80,
+    distance52w: -(5 + (i % 20)), maxDrawdown63d: 8 + (i % 15),
+  }, `id-${i}`));
+}
+
+// Mock de finalize_scan_results que se comporta como la RPC real: updated_count
+// = cuántas filas venían en ESE p_patches. Permite que rowsPatched acumulado
+// en los tests coincida con lo que devolvería Postgres real, sin necesidad de
+// encadenar mockResolvedValueOnce por cada tanda.
+function mockWriteEchoesBatchSize() {
+  supabaseRpc.mockImplementation(async (name, payload) => {
+    if (name === "finalize_scan_results") {
+      return [{ updated_count: payload.p_patches.length }];
+    }
+    throw new Error(`RPC inesperada en el mock: ${name}`);
+  });
+}
+
+describe("finalizeScanResultsInDb · escritura en tandas", () => {
+  afterEach(() => supabaseRpc.mockReset());
+
+  it("trocea la escritura en varias llamadas, y el resultado final es IDÉNTICO al de una escritura única", async () => {
+    const universe = buildManyThinRows(25);
+    // El cálculo puro no cambia con el troceo: lo que finalizeScanPercentiles
+    // produciría en una sola pasada es el "resultado único" de referencia.
+    const expectedPatches = finalizeScanPercentiles(universe);
+
+    supabaseRpc.mockResolvedValueOnce({ inputs: universe, rowsRead: universe.length });
+    mockWriteEchoesBatchSize();
+    // Salvo la primera respuesta (lectura) ya consumida por mockResolvedValueOnce
+    // arriba, el resto de llamadas usa mockImplementation (aplica a partir de
+    // la 2ª porque mockResolvedValueOnce tiene prioridad en la cola una vez).
+
+    const result = await finalizeScanResultsInDb("scan-batch", "owner-batch", { patchBatchSize: 10 });
+
+    // 25 filas / 10 por tanda = tandas de 10, 10, 5. Más la lectura: 4 llamadas.
+    expect(supabaseRpc).toHaveBeenCalledTimes(4);
+    const writeCalls = supabaseRpc.mock.calls.filter(([name]) => name === "finalize_scan_results");
+    expect(writeCalls.map(([, payload]) => payload.p_patches.length)).toEqual([10, 10, 5]);
+
+    // Concatenar las 3 tandas, EN ORDEN, reproduce exactamente los patches que
+    // habría producido una única llamada con las 25 filas de golpe — ni se
+    // pierde, ni se duplica, ni se reordena ninguna fila.
+    const allSentPatches = writeCalls.flatMap(([, payload]) => payload.p_patches);
+    expect(allSentPatches).toEqual(expectedPatches.map(({ id, metrics_patch }) => ({ id, metrics_patch })));
+
+    expect(result).toEqual({ rowsProcessed: 25, rowsPatched: 25, batchesTotal: 3, batchesDone: 3 });
+  });
+
+  it("onBatchProgress se invoca tras cada tanda con el acumulado correcto", async () => {
+    const universe = buildManyThinRows(25);
+    supabaseRpc.mockResolvedValueOnce({ inputs: universe, rowsRead: universe.length });
+    mockWriteEchoesBatchSize();
+    const progressCalls = [];
+
+    await finalizeScanResultsInDb("scan-progress", "owner-progress", {
+      patchBatchSize: 10,
+      onBatchProgress: (info) => progressCalls.push({ ...info }),
+    });
+
+    expect(progressCalls).toEqual([
+      { batchesDone: 1, batchesTotal: 3, rowsPatched: 10, rowsTotal: 25 },
+      { batchesDone: 2, batchesTotal: 3, rowsPatched: 20, rowsTotal: 25 },
+      { batchesDone: 3, batchesTotal: 3, rowsPatched: 25, rowsTotal: 25 },
+    ]);
+  });
+
+  it("una tanda fallida a mitad: NO sigue con las siguientes, y el error expone cuánto quedó finalizado", async () => {
+    const universe = buildManyThinRows(25);
+    supabaseRpc.mockResolvedValueOnce({ inputs: universe, rowsRead: universe.length }); // lectura
+    supabaseRpc.mockResolvedValueOnce([{ updated_count: 10 }]); // tanda 1/3 OK
+    supabaseRpc.mockRejectedValueOnce(new Error("finalize_scan_results DB timeout")); // tanda 2/3 falla
+
+    let caught;
+    try {
+      await finalizeScanResultsInDb("scan-partial", "owner-partial", { patchBatchSize: 10 });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeTruthy();
+    expect(caught.message).toContain("batch 2/3");
+    expect(caught.message).toContain("10/25");
+    expect(caught.rowsProcessed).toBe(25);
+    expect(caught.rowsPatched).toBe(10); // solo la tanda 1 quedó comprometida
+    expect(caught.rowsTotal).toBe(25);
+    expect(caught.batchesDone).toBe(1);
+    expect(caught.batchesTotal).toBe(3);
+    expect(caught.cause).toBeInstanceOf(Error);
+    expect(caught.cause.message).toBe("finalize_scan_results DB timeout");
+
+    // Lectura + tanda 1 (OK) + tanda 2 (fallida) = 3. La tanda 3 NUNCA se intenta.
+    expect(supabaseRpc).toHaveBeenCalledTimes(3);
   });
 });

@@ -212,9 +212,15 @@ describe("runScanChunk · wiring de finalización de percentiles", () => {
 
     await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
 
-    // Exactamente una invocación, con los IDs correctos.
+    // Exactamente una invocación, con los IDs correctos. Un tercer argumento
+    // (onBatchProgress, para reportar el avance de las tandas de escritura —
+    // ver lib/serverScanRunner.js) es el único extra permitido.
     expect(finalizeScanResultsInDb).toHaveBeenCalledTimes(1);
-    expect(finalizeScanResultsInDb).toHaveBeenCalledWith(SCAN_ID, OWNER_ID);
+    expect(finalizeScanResultsInDb).toHaveBeenCalledWith(
+      SCAN_ID,
+      OWNER_ID,
+      expect.objectContaining({ onBatchProgress: expect.any(Function) }),
+    );
   });
 
   it("no invoca finalizeScanResultsInDb en un batch intermedio (solo al completar)", async () => {
@@ -354,6 +360,97 @@ describe("runScanChunk · wiring de finalización de percentiles", () => {
     const finalizingIdx = patches.findIndex((p) => p.status === "finalizing");
     const errorIdx = patches.findIndex((p) => p.status === "error");
     expect(finalizingIdx).toBeLessThan(errorIdx);
+  });
+
+  it("fallo A MITAD de la escritura en tandas: persiste cuántas filas/tandas ya quedaron finalizadas, NUNCA 'succeeded'", async () => {
+    // Simula lo que lib/scanPercentileFinalization.js#finalizeScanResultsInDb
+    // lanza cuando una tanda falla tras otras ya comprometidas (ver sus propios
+    // tests en tests/scanFinalizeInputs.test.js): un Error con propiedades
+    // adicionales rowsPatched/rowsTotal/batchesDone/batchesTotal.
+    const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 3, chunkSize: 3 });
+    configureSnapshotOnce(snapshot);
+    const partialError = new Error("percentile finalization failed at batch 4/10 (300/992 filas ya finalizadas): DB timeout");
+    partialError.rowsProcessed = 992;
+    partialError.rowsPatched = 300;
+    partialError.rowsTotal = 992;
+    partialError.batchesDone = 3;
+    partialError.batchesTotal = 10;
+    finalizeScanResultsInDb.mockRejectedValue(partialError);
+
+    await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
+
+    const patches = progressPatches();
+    const errorPatch = patches.find((p) => p.status === "error");
+
+    expect(errorPatch).toBeTruthy();
+    // NUNCA succeeded/percentilesFinalized:true con tandas pendientes — pase lo
+    // que pase, si finalizeScanResultsInDb lanza, esto queda en false/"failed".
+    expect(errorPatch.finalizationStatus).toBe("failed");
+    expect(errorPatch.percentilesFinalized).toBe(false);
+    // Y el progreso real (no un "falló" opaco) queda persistido.
+    expect(errorPatch.finalizationRowsPatched).toBe(300);
+    expect(errorPatch.finalizationRowsTotal).toBe(992);
+    expect(errorPatch.finalizationBatchesDone).toBe(3);
+    expect(errorPatch.finalizationBatchesTotal).toBe(10);
+    expect(errorPatch.finalizationError).toContain("300/992");
+
+    expect(patches.find((p) => p.status === "complete")).toBeUndefined();
+    expect(patches.find((p) => p.status === "partial")).toBeUndefined();
+    expect(patches.find((p) => p.status === "failed")).toBeUndefined();
+  });
+
+  it("fallo SIN información de tandas (p.ej. la lectura scan_finalize_inputs falló, antes de escribir nada): los campos de progreso quedan null, no undefined ni NaN", async () => {
+    const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 3, chunkSize: 3 });
+    configureSnapshotOnce(snapshot);
+    finalizeScanResultsInDb.mockRejectedValue(new Error("scan_finalize_inputs timeout"));
+
+    await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
+
+    const errorPatch = progressPatches().find((p) => p.status === "error");
+    expect(errorPatch.finalizationStatus).toBe("failed");
+    expect(errorPatch.finalizationRowsPatched).toBeNull();
+    expect(errorPatch.finalizationRowsTotal).toBeNull();
+    expect(errorPatch.finalizationBatchesDone).toBeNull();
+    expect(errorPatch.finalizationBatchesTotal).toBeNull();
+  });
+
+  it("reporta el progreso INTERMEDIO de la finalización (finalizationStatus:'in_progress') sin marcarla terminal, antes del PATCH final de éxito", async () => {
+    // finalizeScanResultsInDb real invoca options.onBatchProgress tras cada
+    // tanda de escritura (ver lib/scanPercentileFinalization.js). Este mock
+    // simula esa llamada para probar el WIRING en runScanChunk, no la lógica
+    // de troceo en sí (ya cubierta en tests/scanFinalizeInputs.test.js).
+    const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 3, chunkSize: 3 });
+    configureSnapshotOnce(snapshot);
+    finalizeScanResultsInDb.mockImplementation(async (scanId, ownerId, options) => {
+      // Con FINALIZE_PROGRESS_PATCH_EVERY=10, solo la ÚLTIMA tanda de un run
+      // de 3 dispara un PATCH real (las intermedias quedan throttled) — ver
+      // el comentario de onFinalizeBatchProgress en lib/serverScanRunner.js.
+      options.onBatchProgress({ batchesDone: 1, batchesTotal: 3, rowsPatched: 100, rowsTotal: 280 });
+      options.onBatchProgress({ batchesDone: 2, batchesTotal: 3, rowsPatched: 200, rowsTotal: 280 });
+      options.onBatchProgress({ batchesDone: 3, batchesTotal: 3, rowsPatched: 280, rowsTotal: 280 });
+      return { rowsProcessed: 280, rowsPatched: 280, batchesTotal: 3, batchesDone: 3 };
+    });
+
+    await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
+
+    const patches = progressPatches();
+    const inProgressPatches = patches.filter((p) => p.finalizationStatus === "in_progress");
+    // Throttle: de las 3 llamadas a onBatchProgress, solo la última (isLast)
+    // se persiste — no una por tanda.
+    expect(inProgressPatches).toHaveLength(1);
+    expect(inProgressPatches[0]).toMatchObject({
+      status: "finalizing",
+      percentilesFinalized: false,
+      finalizationBatchesDone: 3,
+      finalizationBatchesTotal: 3,
+      finalizationRowsPatched: 280,
+    });
+
+    // Nunca terminal mientras es "in_progress" — y aparece ANTES del PATCH
+    // final de éxito.
+    const inProgressIdx = patches.findIndex((p) => p.finalizationStatus === "in_progress");
+    const completeIdx = patches.findIndex((p) => p.status === "complete");
+    expect(completeIdx).toBeGreaterThan(inProgressIdx);
   });
 
   it("ALERTA: todos los proveedores fallan → terminal 'failed' (no 'done'/'complete'). Reproduce audit §Terminal done can mean zero rows", async () => {
