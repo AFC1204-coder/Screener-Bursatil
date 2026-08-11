@@ -6,9 +6,10 @@
 // Recibe SOLO los slices que consume este bloque (no el prop-bag completo).
 
 import { ResultFilterChips } from "@/app/screenerPanels";
-import { SECTOR_STRENGTH_LABELS, SECTOR_STRENGTH_OPTIONS, marketName } from "@/lib/screenerConfig";
+import { SECTOR_STRENGTH_LABELS, SECTOR_STRENGTH_OPTIONS, SORT_LABELS, marketName } from "@/lib/screenerConfig";
 import { RELIABILITY_FILTER_ALL } from "@/lib/screenerReliability";
-import { metricShortLabel } from "@/lib/metricCatalog";
+import { screenerSortOptions } from "@/lib/screenerColumns";
+import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
 import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 
@@ -31,6 +32,7 @@ export default function ResultFilterBar({
   onActionFilter,
   sort,
   onSort,
+  perfPeriod,
   // View-layer selects
   viewLayers,
   viewFiltersActive,
@@ -66,6 +68,10 @@ export default function ResultFilterBar({
   onClearAll,
   onReview,
 }) {
+  const sortOptions = screenerSortOptions({ perfPeriod });
+  const legacySort = sort && !sortOptions.some((item) => item.value === sort)
+    ? { value: sort, label: SORT_LABELS[sort] || sort }
+    : null;
   return (
     <>
       <div className="controls resultFilterBar">
@@ -84,19 +90,12 @@ export default function ResultFilterBar({
         <select className="select resultFilterSelect" value={actionFilter} onChange={(e) => onActionFilter(e.target.value)} aria-label="Filtrar por accion sugerida" data-active={actionFilter !== "Todos" ? "true" : "false"}>
           {actionOptions.map((x) => <option key={x} value={x}>{optionLabel("Acción", x, actionCounts, rankActionLabel)}</option>)}
         </select>
-        <select className="select resultFilterSelect resultSortSelect" value={sort} onChange={(e) => onSort(e.target.value)} aria-label="Ordenar resultados" data-active={sort !== "objectiveScore" ? "true" : "false"}>
-          <option value="objectiveScore">Ordenar: Score compuesto</option>
-          <option value="decisionPriority">Ordenar: Calidad decisión</option>
-          <option value="totalScore">Ordenar: Composite</option>
-          <option value="rsGlobalPct">Ordenar: {metricShortLabel("rsGlobalPct")}</option>
-          <option value="rsRating">Ordenar: {metricShortLabel("rsRating")}</option>
-          <option value="adProxyScore">Ordenar: {metricShortLabel("adProxyScore")}</option>
-          <option value="epsGrowthProxyScore">Ordenar: {metricShortLabel("epsGrowthProxyScore")}</option>
-          <option value="volumeEffectScore">Ordenar: Volume Effect</option>
-          <option value="avgTurnover">Ordenar: Importe 20d</option>
-          <option value="shortPercentOfFloat">Ordenar: {metricShortLabel("shortPercentOfFloat")}</option>
-          <option value="dataCoverageScore">Ordenar: Cobertura datos</option>
-          <option value="weaknessScore">Ordenar: Deterioro</option>
+        {/* Ordenar solo por lo que la tabla muestra (lib/screenerColumns.jsx).
+            Un criterio antiguo restaurado de sesión se conserva visible para no
+            reordenar a espaldas del usuario, pero deja de poder elegirse. */}
+        <select className="select resultFilterSelect resultSortSelect" value={sort} onChange={(e) => onSort(e.target.value)} aria-label="Ordenar resultados" data-active={sort !== DEFAULT_PERFORMANCE_PERIOD ? "true" : "false"}>
+          {legacySort ? <option value={legacySort.value}>Ordenar: {legacySort.label}</option> : null}
+          {sortOptions.map((item) => <option key={item.value} value={item.value}>Ordenar: {item.label}</option>)}
         </select>
         {/* View-layers: colapsados para reducir saturación de la barra de filtros. */}
         {(viewLayers.country || viewLayers.theme || viewLayers.sector || viewLayers.industry || viewLayers.sectorStrength || viewLayers.ipo) ? (

@@ -21,12 +21,12 @@ export default function ResultPagerTable({
   onSetResultPage,
   // Table
   pagedRows,
-  settings,
   favoriteSymbols,
   onFavorite,
   onReview,
   onOpenStock,
-  decisionResolutions,
+  perfPeriod,
+  onPerfPeriod,
   emptyLabel,
 }) {
   return (
@@ -48,14 +48,13 @@ export default function ResultPagerTable({
       ) : null}
       <CompactResultsTable
         rows={pagedRows}
-        settings={settings}
         favoriteSymbols={favoriteSymbols}
         onFavorite={onFavorite}
         onReview={onReview}
         onOpenStock={onOpenStock}
-        rankOffset={resultPageStart}
+        perfPeriod={perfPeriod}
+        onPerfPeriod={onPerfPeriod}
         emptyLabel={emptyLabel}
-        decisionResolutions={decisionResolutions}
       />
     </>
   );

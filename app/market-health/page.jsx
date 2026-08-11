@@ -588,7 +588,7 @@ export default function MarketHealthPage() {
           {data.weinsteinTape && (
             <section className="card marketTapeCard">
               <div className="sectionTitle">
-                <h2>Weinstein tape</h2>
+                <h2>Estructura del mercado</h2>
                 <span className="fine">MM30 semanas · amplitud · volumen</span>
               </div>
               <div className="marketTapeKpis">

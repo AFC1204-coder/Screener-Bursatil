@@ -7236,7 +7236,8 @@ h2 {
     overflow-x:auto;
     -webkit-overflow-scrolling:touch;
   }
-  .compactResultsTable,
+  /* .compactResultsTable ya no fuerza 760px: con siete columnas cabe en el
+     ancho disponible y no necesita scroll horizontal. */
   .statementMatrix .table {
     min-width:760px;
   }

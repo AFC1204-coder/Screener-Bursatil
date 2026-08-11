@@ -12,9 +12,9 @@ import {
   vcpCompactLabel,
 } from "@/lib/screenerFormat";
 
-export function MiniSparkline({ bars = [] }) {
+export function MiniSparkline({ bars = [], className = "" }) {
   const points = bars.filter((x) => Number.isFinite(x.close));
-  if (points.length < 2) return <div className="previewEmpty">Sin dato</div>;
+  if (points.length < 2) return <div className={`previewEmpty ${className}`.trim()}>Sin dato</div>;
   const w = 260, h = 118, pad = 10;
   const values = points.flatMap((p) => [p.close, p.sma50, p.sma200].filter(Number.isFinite));
   const min = Math.min(...values);
@@ -27,7 +27,7 @@ export function MiniSparkline({ bars = [] }) {
   const trendClass = last >= first ? "up" : "down";
   const volumeMax = Math.max(...points.map((p) => p.volume || 0), 1);
   const barW = Math.max(1.2, (w - pad * 2) / points.length - 1);
-  return <svg className={`miniSparkline ${trendClass}`} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Grafico tecnico compacto">
+  return <svg className={`miniSparkline ${trendClass} ${className}`.trim()} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Grafico tecnico compacto">
     <line x1={pad} x2={w - pad} y1={y(max)} y2={y(max)} className="sparkGuide" />
     <line x1={pad} x2={w - pad} y1={y(min)} y2={y(min)} className="sparkGuide" />
     {points.map((p, i) => {

@@ -36,6 +36,7 @@ import {
   RANK_ACTION_ORDER,
   rankActionLabel,
 } from "@/lib/screenerExplainability";
+import { DEFAULT_PERFORMANCE_PERIOD, normalizePerformancePeriod } from "@/lib/screenerPeriods";
 import { sortMetric, defaultSortForSettings } from "@/lib/screenerPipeline";
 import {
   RELIABILITY_FILTER_ALL,
@@ -116,9 +117,21 @@ export function useResultViewModel({
   const [scoreAuditFilter, setScoreAuditFilter] = useState(SCORE_AUDIT_FILTER_ALL);
   const [decisionIssueFilter, setDecisionIssueFilter] = useState("Todos");
   const [decisionResolutionFilter, setDecisionResolutionFilter] = useState("all");
-  const [sort, setSort] = useState("objectiveScore");
+  const [sort, setSort] = useState(DEFAULT_PERFORMANCE_PERIOD);
+  // Periodo de la columna de rendimiento. Es GLOBAL (una sola elección para
+  // toda la tabla) porque si fuera por fila se perdería la comparación entre
+  // valores — docs/principios-producto.md, principio 7.5.
+  const [perfPeriod, setPerfPeriodState] = useState(DEFAULT_PERFORMANCE_PERIOD);
   const [resultPageSize, setResultPageSize] = useState(DEFAULT_RESULT_PAGE_SIZE);
   const [resultPage, setResultPage] = useState(1);
+
+  // El orden sigue al selector: mirar a tres meses es ordenar por tres meses.
+  function setPerfPeriod(value) {
+    const next = normalizePerformancePeriod(value);
+    setPerfPeriodState(next);
+    setSort(next);
+    setResultPage(1);
+  }
 
   function restoreResultViewSession(session = {}, fallbackSettings = activeSettings, options = {}) {
     setThemeFilter(session.themeFilter || "Todos");
@@ -139,6 +152,7 @@ export function useResultViewModel({
     setDecisionIssueFilter(session.decisionIssueFilter || "Todos");
     setDecisionResolutionFilter(session.decisionResolutionFilter || "all");
     setSort(session.sort || defaultSortForSettings(fallbackSettings));
+    setPerfPeriodState(normalizePerformancePeriod(session.perfPeriod));
     setResultPageSize(resolveResultPageSize(session.resultPageSize));
     setResultPage(options.resetPage ? 1 : (Number.isFinite(session.resultPage) && session.resultPage > 0 ? session.resultPage : 1));
   }
@@ -162,6 +176,7 @@ export function useResultViewModel({
     setDecisionIssueFilter("Todos");
     setDecisionResolutionFilter("all");
     setSort(nextSort);
+    setPerfPeriodState(DEFAULT_PERFORMANCE_PERIOD);
     setResultPageSize(DEFAULT_RESULT_PAGE_SIZE);
     setResultPage(1);
   }
@@ -761,6 +776,8 @@ export function useResultViewModel({
     setDecisionResolutionFilter,
     sort,
     setSort,
+    perfPeriod,
+    setPerfPeriod,
     resultPageSize,
     setResultPageSize,
     resultPage,

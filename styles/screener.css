@@ -2919,8 +2919,12 @@ button.dataHealthSummaryItem:hover,
   }
 }
 
+/* Tabla de resultados — siete columnas (docs/principios-producto.md, principio 7).
+   `min-width:0` anula el min-width:1580px de `.table`: con siete columnas la
+   tabla cabe en pantalla y ya no hay columnas fuera del viewport. */
 .compactResultsTable {
   min-width:0;
+  table-layout:fixed;
 }
 
 .compactResultsTable th,
@@ -2928,15 +2932,9 @@ button.dataHealthSummaryItem:hover,
   white-space:normal;
 }
 
-.compactResultsTable th:nth-child(6),
-.compactResultsTable th:nth-child(7),
-.compactResultsTable th:nth-child(8),
-.compactResultsTable th:nth-child(9) {width:10.5%
-}
-
 .compactResultsTable td {
   padding:10px 12px;
-  vertical-align:top;
+  vertical-align:middle;
 }
 
 .rankCell {
@@ -4340,33 +4338,11 @@ button.decisionIssueBadge:hover,
   table-layout:fixed;
 }
 
-.compactResultsTable th:nth-child(1) {width:38px
-}
-
-.compactResultsTable th:nth-child(2) {width:42px
-}
-
-.compactResultsTable th:nth-child(3) {width:24%
-}
-
-.compactResultsTable th:nth-child(4) {width:164px
-}
-
-.compactResultsTable th:nth-child(5),
-.compactResultsTable th:nth-child(6),
-.compactResultsTable th:nth-child(7) {width:13%
-}
-
-.compactResultsTable th:nth-child(8),
-.compactResultsTable td:nth-child(8) {
-  display:none;
-}
-
-.compactResultsTable th:nth-child(9) {width:13%
-}
-
-.compactResultsTable th:nth-child(10) {width:92px
-}
+/* Los anchos por posición (th:nth-child) del layout de quince columnas se
+   eliminaron: ahora cada columna lleva su propia clase, declarada junto a su
+   definición (lib/screenerColumns.jsx → .colTicker, .colTheme, …). Con
+   nth-child, añadir o quitar una columna reasignaba silenciosamente los anchos
+   de todas las siguientes. */
 
 .compactResultsTable th,
 .compactResultsTable td {
@@ -4547,21 +4523,9 @@ button.decisionIssueBadge:hover,
   letter-spacing:.12em;
 }
 
-@media(max-width:1280px) {
-  .compactResultsTable th:nth-child(7),
-  .compactResultsTable td:nth-child(7),
-  .compactResultsTable th:nth-child(9),
-  .compactResultsTable td:nth-child(9) {
-    display:none;
-  }
-  .compactResultsTable th:nth-child(3) {width:30%
-  }
-  .compactResultsTable th:nth-child(4) {width:172px
-  }
-  .compactResultsTable th:nth-child(5),
-.compactResultsTable th:nth-child(6) {width:15%
-  }
-}
+/* Antes, por debajo de 1280px se ocultaban dos columnas por posición y se
+   reajustaban otras tres. Con siete columnas caben todas: ninguna se esconde
+   ni se sale de pantalla, que era el problema real (principio 2). */
 
 @media(max-width:1024px) {
   .sidebarCollapseBtn {
@@ -5068,43 +5032,9 @@ button.decisionIssueBadge:hover,
   white-space: nowrap;
 }
 
-@media(max-width: 1024px) {
-  .compactResultsTable th:nth-child(1),
-  .compactResultsTable td:nth-child(1) {
-    position: sticky !important;
-    left: 0 !important;
-    z-index: 3;
-    background:var(--surface2) !important;
-  }
-  .compactResultsTable th:nth-child(1) {
-    background:var(--surface2) !important;
-    z-index: 4;
-  }
-  .compactResultsTable th:nth-child(2),
-  .compactResultsTable td:nth-child(2) {
-    position: sticky !important;
-    left: 36px !important;
-    z-index: 3;
-    background:var(--surface2) !important;
-  }
-  .compactResultsTable th:nth-child(2) {
-    background:var(--surface2) !important;
-    z-index: 4;
-  }
-  .compactResultsTable th:nth-child(3),
-  .compactResultsTable td:nth-child(3) {
-    position: sticky !important;
-    left: 72px !important;
-    z-index: 3;
-    background:var(--surface2) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 4px 0 8px rgba(0,0,0,0.45);
-  }
-  .compactResultsTable th:nth-child(3) {
-    background:var(--surface2) !important;
-    z-index: 4;
-  }
-}
+/* Las tres primeras columnas se fijaban con `position:sticky` porque la tabla
+   de quince columnas no cabía por debajo de 1024px. Con siete cabe entera:
+   fijar columnas ya no arregla nada y estorba al scroll. */
 
 .filterLayerActions {
   margin: -8px 0 20px;
@@ -6069,14 +5999,6 @@ button.decisionIssueBadge:hover,
 
 .compactResultsTable tbody tr {
   min-height: 62px;
-}
-
-.compactResultsTable th:nth-child(3) {
-  width: 24%;
-}
-
-.compactResultsTable th:nth-child(4) {
-  width: 158px;
 }
 
 .compactIdentityCell b,
@@ -7596,12 +7518,8 @@ button.decisionOperatingIssue:hover {
   text-transform: uppercase;
   text-align: left;
 }
-/* Columnas: ★ | # | Compañía | RS | Mom. | Volumen | Objetivo (7 tras rediseño) */
-.compactResultsTable th:nth-child(1), .compactResultsTable td:nth-child(1) { width: 32px; }
-.compactResultsTable th:nth-child(2), .compactResultsTable td:nth-child(2) { width: 36px; }
-/* Compañía: ancho suficiente para [logo 24] + [gap 8] + [ticker (≈9ch×7px=63)] + [gap 4] + [flag 20] + padding 16 ≈ 135px. */
-.compactResultsTable th:nth-child(3), .compactResultsTable td:nth-child(3) { width: 138px; min-width: 138px; }
-.compactResultsTable th:nth-child(7), .compactResultsTable td:nth-child(7) { width: 190px; }
+/* Columnas: Ticker | Tema | RS | Etapa | Rendimiento | Dist. máx 52s | Capitaliz.
+   Los anchos van por clase de columna, al final de este archivo. */
 
 /* Fila: altura objetivo 56-72px */
 .compactResultsTable tbody tr {
@@ -8879,4 +8797,292 @@ button.decisionOperatingIssue:hover {
   .globalCoverageMetrics {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Tabla de resultados — las siete columnas
+   docs/principios-producto.md, principio 7. Definición de columnas:
+   lib/screenerColumns.jsx (fuente única, compartida con la vista móvil).
+   Paleta y tipografía sin cambios: tokens de «Pizarra y Tiza» (tokens-v2.css).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.resultsTableControls {
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+/* Selector global de periodo: mismo control visual que el rango de la ficha
+   del valor (.chartPrefGroup + .chartSegmented en app/ChartPreferences.jsx). */
+.screenerPeriodPicker {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.screenerPeriodPicker .chartPrefGroupLabel {
+  color:var(--muted);
+  font-size:10px;
+  font-weight:750;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+/* La tabla ya no desborda: barra de scroll fina en vez del degradado que
+   insinuaba contenido oculto sin ofrecer forma de alcanzarlo. */
+.compactTableWrap {
+  overflow-x:auto;
+  scrollbar-width:thin;
+}
+
+.compactTableWrap::after {
+  display:none;
+}
+
+.compactResultsTable th .columnHead {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  white-space:nowrap;
+}
+
+.compactResultsTable th[data-align="right"] .columnHead {
+  justify-content:flex-end;
+  width:100%;
+}
+
+.compactResultsTable td[data-align="right"] {
+  text-align:right;
+}
+
+.compactResultsTable .colTicker { width:29%; }
+.compactResultsTable .colTheme { width:16%; }
+.compactResultsTable .colRs { width:8%; }
+.compactResultsTable .colStage { width:12%; }
+.compactResultsTable .colPerformance { width:12%; }
+.compactResultsTable .colDistance { width:12%; }
+.compactResultsTable .colCap { width:11%; }
+
+/* Columna 1 — ticker con miniatura. */
+.tickerCell {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:0;
+}
+
+.tickerCell .starBtn {
+  flex:0 0 auto;
+}
+
+.tickerIdentity {
+  display:block;
+  flex:1 1 auto;
+  min-width:0;
+}
+
+.tickerLine {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+}
+
+.tickerLine .ticker {
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.tickerName {
+  display:block;
+  margin-top:2px;
+  overflow:hidden;
+  color:var(--soft);
+  font-size:11px;
+  line-height:1.25;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.rowCountryFlag {
+  flex:0 0 auto;
+  font-size:14px;
+  line-height:1;
+}
+
+.rowSparkline {
+  flex:0 0 auto;
+  width:74px;
+  height:34px;
+}
+
+/* Columna 2 — tema (grupo temático, no el sector del proveedor). */
+.themeTag {
+  display:block;
+  overflow:hidden;
+  color:var(--soft);
+  font-size:12px;
+  line-height:1.3;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* Columna 4 — etapa de Weinstein, una palabra. */
+.stageTag {
+  display:inline-block;
+  padding:2px 8px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  color:var(--soft);
+  font-size:11px;
+  font-weight:650;
+  line-height:1.5;
+  white-space:nowrap;
+}
+
+.stageTag.stage-stage2 {
+  border-color:var(--line3);
+  color:var(--text);
+}
+
+.stageTag.stage-stage4 {
+  color:var(--muted);
+}
+
+/* Columnas numéricas — el problema de los porcentajes truncados con puntos
+   suspensivos era `text-overflow:ellipsis` sobre celdas estrechas. Con siete
+   columnas sobra espacio: el número se muestra entero, nunca se recorta. */
+.compactResultsTable .cellNumber,
+.mobileResultField .cellNumber {
+  display:inline-block;
+  overflow:visible;
+  color:var(--text);
+  font-family:var(--font-data);
+  font-size:13px;
+  font-variant-numeric:tabular-nums;
+  font-weight:650;
+  text-overflow:clip;
+  white-space:nowrap;
+}
+
+.cellNumber.up { color:var(--text); }
+.cellNumber.down { color:var(--muted); }
+.cellNumber.strong { color:var(--text); }
+.cellNumber.weak { color:var(--muted); }
+.cellNumber.near { color:var(--text); }
+
+/* Dato ausente: guion + icono de información con el motivo. Pierde tinta, no
+   gana color (regla 4 de DIRECCION-VISUAL.md). Nada de etiquetas de estado. */
+.cellMissing {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  color:var(--ghost);
+  font-family:var(--font-data);
+  font-size:13px;
+}
+
+.cellMissing .infoHint {
+  opacity:.5;
+}
+
+.cellMissing .infoHint:hover,
+.cellMissing .infoHint:focus {
+  opacity:1;
+}
+
+.srOnly {
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+
+/* ── Vista móvil: las mismas siete columnas, en tarjeta ────────────────── */
+
+.mobileResultPeriodBar {
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:10px;
+}
+
+/* .mobileRows es un grid: sin minmax(0,1fr) su única columna crece hasta el
+   min-content de la tarjeta y ésta se sale del ancho del móvil (la miniatura
+   quedaba cortada por el overflow:hidden del contenedor). */
+.mobileRows {
+  grid-template-columns:minmax(0, 1fr);
+}
+
+.mobileRows .mobileResultRow {
+  display:block;
+  min-width:0;
+  padding:10px 4px 12px;
+  min-height:0;
+}
+
+.mobileResultHead .tickerCell {
+  gap:10px;
+}
+
+.mobileResultHead .tickerLine .ticker {
+  font-size:15px;
+}
+
+.mobileResultHead .rowSparkline {
+  width:84px;
+  height:36px;
+}
+
+.mobileResultGrid {
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:8px 10px;
+  margin:9px 0 0;
+  padding-left:26px;
+}
+
+.mobileResultField dt {
+  color:var(--muted);
+  font-size:9px;
+  font-weight:750;
+  letter-spacing:.04em;
+  line-height:1.2;
+  text-transform:uppercase;
+}
+
+.mobileResultField dd {
+  margin:2px 0 0;
+  min-width:0;
+}
+
+.mobileResultField .themeTag,
+.mobileResultField .stageTag {
+  font-size:11px;
+}
+
+@media (max-width:430px) {
+  .mobileResultGrid {
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    padding-left:0;
+  }
+  .mobileResultHead .rowSparkline {
+    width:72px;
+    height:32px;
+  }
+}
+
+.rowSparklineMissing {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
 }

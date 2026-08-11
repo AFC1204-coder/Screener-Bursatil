@@ -1,19 +1,23 @@
-// lib/screenerTable.jsx — tabla de resultados compacta y barra de resultados pendientes.
+// lib/screenerTable.jsx — tabla de resultados del screener y barra de resultados pendientes.
 // Feature module: presentación de la tabla de resultados del screener.
+//
+// La tabla NO define columnas: las lee de lib/screenerColumns.jsx, que es la
+// fuente única compartida con la vista móvil (docs/principios-producto.md,
+// principio 7 y su nota de implementación). Este archivo solo pone el marco:
+// cabecera, filas, celda vacía y el selector global de periodo.
+//
+// Lo que YA NO vive en la fila (principio 1 y 7): el veredicto, la confianza,
+// las insignias de auditoría/fiabilidad, Minervini y Weinstein numéricos,
+// RS Quality, deterioro, SMA50 y los tres RS por separado. Todo eso se sigue
+// calculando y guardando; se consulta en la ficha del valor y en QuickReview.
 
-import Link from "next/link";
 import { InfoHint } from "@/app/components/ui/InfoHint";
-import { pct } from "@/lib/formatters";
-import { auditDecisionRowIssues, decisionPriorityBreakdown } from "@/lib/decisionAudit";
-import { buildScreenerFilterExplainPlan } from "@/lib/screenerFilters";
-import { buildDecisionEvidenceChecklist, explainScreenerRank } from "@/lib/screenerExplainability";
-import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
-import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
-import { buildRowReviewFocus, decisionConfidenceForRow, decisionResolutionForRow } from "@/lib/screenerResultView";
-import { CompanyMark, CompactMetric } from "@/lib/screenerAtoms";
-import { compactMetricSourceLookup, compactTone, objectiveMetricCompactState } from "@/lib/screenerFormat";
-import { countryCode, countryName, marketFlag, stockUrl } from "@/lib/symbols";
-import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
+import {
+  PerformancePeriodPicker,
+  SCREENER_COLUMNS,
+  screenerColumnLabel,
+} from "@/lib/screenerColumns";
+import { countryName, marketFlag } from "@/lib/symbols";
 
 export function CompactCountryFlag({ country }) {
   const code = String(country || "").toUpperCase();
@@ -39,122 +43,51 @@ export function PendingResultsBar({ pending, visibleCount = 0, filteredCount = 0
   </div>;
 }
 
-export function CompactResultsTable({ rows = [], settings, favoriteSymbols, onFavorite, onReview, onOpenStock, rankOffset = 0, emptyLabel = "Ejecuta un scan para ver resultados", decisionResolutions = {} }) {
-  // Tabla compacta (densidad nivel compact). El trust rail colapsa a una badge
-  // status agregada que abre QuickReview; el detalle deja de vivir en la fila.
-  // Sparkline y bloque setup viven en hover/preview (QuickReview), no en la fila.
-  const headers = ["★", "#", "Compañía", "RS", "Mom.", "Volumen", "Objetivo"];
-  const isZero = (n) => !Number.isFinite(n) || n === 0;
-  return <div className="tableWrap compactTableWrap">
-    <table className="table compactResultsTable">
-      <thead>
-        <tr>{headers.map((h) => <th key={h}>{h}</th>)}</tr>
-      </thead>
-      <tbody>
-        {rows.map((r, i) => {
-          const country = r.country || countryCode(r.symbol);
-          // Columna "G" (RS) muestra el RS semanal (ranking sobre el
-          // universo US completo). Si el símbolo no está en ese ranking, se
-          // muestra "-" en vez del percentil del lote — el sistema no afirma
-          // lo que no sabe (docs/adr-rs-universo-us.md).
-          const rsValue = r.weeklyRsAvailable === true ? r.weeklyRsRating : null;
-          const onOpen = () => onReview?.(r.symbol);
-          const filterPlan = buildScreenerFilterExplainPlan(r, settings);
-          const rankExplain = explainScreenerRank(r, settings);
-          const rowIssues = auditDecisionRowIssues(r, rankExplain);
-          const confidence = decisionConfidenceForRow(r, rankExplain);
-          const priority = decisionPriorityBreakdown(r, rankExplain);
-          const evidence = buildDecisionEvidenceChecklist(r, rankExplain);
-          const scoreAudit = buildScreenerScoreAudit(r);
-          const dataHealth = buildScreenerDataHealth(r, settings);
-          const metricTruth = objectiveMetricCompactState(r);
-          const metricSource = compactMetricSourceLookup(r);
-          const vcpReliability = vcpReliabilityAudit(r);
-          const issueTone = rowIssues.some((issue) => issue.severity === "bad") ? "bad" : rowIssues.length ? "warn" : "";
-          const resolution = decisionResolutionForRow(r, decisionResolutions);
-          const reviewFocus = buildRowReviewFocus({ dataHealth, metricTruth, scoreAudit, vcpReliability, evidence, rowIssues });
-          // Tono agregado: el más severo entre los 5 ejes de veredicto (bad > warn > neutral).
-          // Un único punto de color por fila => jerarquía clara.
-          const verdictTones = [
-            rankExplain.action.tone,
-            rankExplain.readiness.tone,
-            confidence.tone,
-            resolution?.tone || "",
-            priority.tone || "",
-          ];
-          const aggregateTone = verdictTones.includes("bad") ? "bad"
-            : verdictTones.includes("warn") ? "warn"
-            : "neutral";
-          // Conteo de señales y veredictos para el indicador "+N" de la badge agregada.
-          const warnBadVerdicts = verdictTones.filter((t) => t === "warn" || t === "bad").length;
-          const signalCount = warnBadVerdicts
-            + (rowIssues?.length || 0)
-            + (scoreAudit?.missing?.length || 0)
-            + (dataHealth?.issues?.length || 0)
-            + (evidence?.pending?.length || 0)
-            + (reviewFocus ? 1 : 0);
-          return <tr key={r.symbol} className={`${issueTone ? `hasDecisionIssue ${issueTone}` : ""} ${resolution ? `resolved-${resolution.key}` : ""}`.trim()} onClick={(e) => { if (!e.target.closest("button, a")) onOpen(); }}>
-            <td>
-              <button
-                type="button"
-                className={`starBtn ${favoriteSymbols?.has(r.symbol) ? "on" : ""}`}
-                onClick={(e) => { e.stopPropagation(); onFavorite?.(r); }}
-                aria-label={`Guardar favorito ${r.symbol}`}
-              >
-                ★
-              </button>
-            </td>
-            <td className="rankCell">{rankOffset + i + 1}</td>
-            <td className="compactIdentityCell">
-              <CompanyMark row={r} size="sm" />
-              <span className="compactIdentityText" title={r.companyName || r.symbol}>
-                <span className="compactIdentityTop">
-                  <Link className="ticker" href={stockUrl(r.symbol)} onPointerDown={() => onOpenStock?.(r)} onClick={() => onOpenStock?.(r)}>{r.symbol}</Link>
-                  <CompactCountryFlag country={country} />
+export function CompactResultsTable({
+  rows = [],
+  favoriteSymbols,
+  onFavorite,
+  onReview,
+  onOpenStock,
+  emptyLabel = "Ejecuta un scan para ver resultados",
+  perfPeriod,
+  onPerfPeriod,
+}) {
+  const ctx = { perfPeriod, favoriteSymbols, onFavorite, onOpenStock };
+  return <div className="resultsTableBlock">
+    <div className="resultsTableControls">
+      <PerformancePeriodPicker value={perfPeriod} onChange={onPerfPeriod} />
+    </div>
+    <div className="tableWrap compactTableWrap">
+      <table className="table compactResultsTable">
+        <thead>
+          <tr>
+            {SCREENER_COLUMNS.map((column) => (
+              <th key={column.key} className={column.className} data-align={column.align}>
+                <span className="columnHead">
+                  {screenerColumnLabel(column, ctx)}
+                  {column.legend ? <InfoHint text={column.legend} /> : null}
                 </span>
-              </span>
-            </td>
-            <td>
-              <div className="compactMetricGrid">
-                <CompactMetric label="G" value={Number.isFinite(rsValue) ? rsValue.toFixed(0) : "-"} tone={compactTone(rsValue, 75, 45)} source={metricSource("rsGlobalPct")} zero={isZero(rsValue)} />
-                <CompactMetric label="Grp" value={Number.isFinite(r.rsSectorPct) ? r.rsSectorPct.toFixed(0) : "-"} source={metricSource("rsSectorPct")} zero={isZero(r.rsSectorPct)} />
-                <CompactMetric label="Q" value={Number.isFinite(r.rsQualityScore) ? r.rsQualityScore.toFixed(0) : "-"} tone={compactTone(r.rsQualityScore, 70, 40)} source={metricSource("rsQualityScore")} zero={isZero(r.rsQualityScore)} />
-              </div>
-            </td>
-            <td>
-              <div className="compactMetricGrid">
-                <CompactMetric label="3M" value={pct(r.perf3m)} tone={compactTone(r.perf3m, 20, 0)} source={metricSource("perf3m")} zero={isZero(r.perf3m)} metricType="price" />
-                <CompactMetric label="6M" value={pct(r.perf6m)} tone={compactTone(r.perf6m, 35, 0)} source={metricSource("perf6m")} zero={isZero(r.perf6m)} metricType="price" />
-                <CompactMetric label="52w" value={pct(r.distance52w)} tone={compactTone(r.distance52w, -10, -35)} source={metricSource("distance52w")} zero={isZero(r.distance52w)} metricType="price" />
-              </div>
-            </td>
-            <td>
-              <div className="compactMetricGrid">
-                <CompactMetric label="RV" value={Number.isFinite(r.relativeVolume) ? `${r.relativeVolume.toFixed(2)}x` : "-"} tone={compactTone(r.relativeVolume, 1.5)} source={metricSource("relativeVolume")} zero={isZero(r.relativeVolume)} />
-                <CompactMetric label="A/D" value={Number.isFinite(r.adProxyScore) ? r.adProxyScore.toFixed(0) : "-"} tone={compactTone(r.adProxyScore, 70, 40)} source={metricSource("adProxyScore")} zero={isZero(r.adProxyScore)} />
-                <CompactMetric label="Ef." value={Number.isFinite(r.volumeEffectScore) ? r.volumeEffectScore.toFixed(0) : "-"} zero={isZero(r.volumeEffectScore)} />
-              </div>
-            </td>
-            <td className="compactScoreCell">
-              <span className="compactScoreHead">
-                <b>{Number.isFinite(r.objectiveScore) ? r.objectiveScore.toFixed(0) : Number.isFinite(r.totalScore) ? r.totalScore.toFixed(0) : "-"}</b>
-                <button
-                  type="button"
-                  className={`rowTrustBadge ${aggregateTone}`}
-                  onClick={(e) => { e.stopPropagation(); onOpen(); }}
-                  title="Abrir revisión con el detalle de decisión y confianza"
-                  aria-label={`Abrir revisión de ${r.symbol}`}
-                >
-                  {rankExplain.action.label} · {confidence.label}
-                  {signalCount > 0 ? <em>+{signalCount}</em> : null}
-                </button>
-                <InfoHint text={[rankExplain.readiness.detail, rankExplain.text, filterPlan.text].filter(Boolean).join(" · ")} tone={rankExplain.tone === "bad" ? "warn" : filterPlan.tone} />
-              </span>
-            </td>
-          </tr>;
-        })}
-        {!rows.length && <tr><td colSpan={headers.length} className="emptyResultsCell">{emptyLabel}</td></tr>}
-      </tbody>
-    </table>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr
+              key={row.symbol}
+              onClick={(event) => { if (!event.target.closest("button, a")) onReview?.(row.symbol); }}
+            >
+              {SCREENER_COLUMNS.map((column) => (
+                <td key={column.key} className={column.className} data-align={column.align}>
+                  {column.cell(row, ctx)}
+                </td>
+              ))}
+            </tr>
+          ))}
+          {!rows.length && <tr><td colSpan={SCREENER_COLUMNS.length} className="emptyResultsCell">{emptyLabel}</td></tr>}
+        </tbody>
+      </table>
+    </div>
   </div>;
 }

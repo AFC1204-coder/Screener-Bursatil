@@ -138,7 +138,12 @@ describe("DecisionQualityStrip", () => {
     expect(html).toContain("Sin filas en esta pagina");
   });
 
-  it("muestra resoluciones guardadas en resultados moviles", () => {
+  // La fila móvil ya no lleva veredicto ni maquinaria de fiabilidad: muestra
+  // las mismas siete columnas que escritorio (docs/principios-producto.md,
+  // principios 1 y 7). El contrato completo de columnas se prueba en
+  // tests/screenerSevenColumns.test.js; aquí solo se comprueba que los rails
+  // de decisión de la LISTA siguen vivos y que la FILA ya no los repite.
+  it("deja los rails de decisión en la lista móvil y los quita de la fila", () => {
     const html = renderToStaticMarkup(React.createElement(MobileResultList, {
       rows: [{
         symbol: "FRAG",
@@ -147,6 +152,7 @@ describe("DecisionQualityStrip", () => {
         exchange: "NASDAQ",
         currency: "USD",
         price: 50,
+        theme: "Software / IA",
         chartBarsCount: 220,
         priceFreshnessOk: true,
         priceFreshnessDays: 1,
@@ -159,6 +165,12 @@ describe("DecisionQualityStrip", () => {
         rsGlobalPct: 74,
         rsSectorPct: 71,
         rsQualityScore: 52,
+        weeklyRsAvailable: true,
+        weeklyRsRating: 74,
+        weeklyStageState: "stage2",
+        perf3m: 12.5,
+        distance52w: -6.4,
+        marketCap: 2400000000,
         volumeEffectScore: 69,
         adProxyScore: 50,
         growthScore: 45,
@@ -170,8 +182,10 @@ describe("DecisionQualityStrip", () => {
       }],
       settings: {},
       totalRows: 1,
-      sort: "decisionPriority",
+      sort: "perf3m",
       onSort: () => {},
+      perfPeriod: "perf3m",
+      onPerfPeriod: () => {},
       onReview: () => {},
       onFavorite: () => {},
       favoriteSymbols: new Set(),
@@ -186,142 +200,20 @@ describe("DecisionQualityStrip", () => {
       },
     }));
 
-    expect(html).toContain("reviewQueueResolutionBadge good");
-    expect(html).toContain("Candidata");
-    expect(html).toContain("resolved-candidate");
-    expect(html).toContain("reviewFocusPill");
-    expect(html).toContain("<b>Foco</b>");
-    expect(html).toContain("scoreAuditMini");
-    expect(html).toContain("<b>Score</b>");
-    expect(html).toContain("Desc.");
-    expect(html).toContain("objectiveMetricTruthPill");
-    expect(html).toContain("<b>Metr.</b>");
-    expect(html).toContain("dataHealthBadge");
-    expect(html).toContain("<b>Datos</b>");
-    expect(html).toContain("<em>OK</em>");
-    expect(html).toContain("mobileResultTrustLine");
-    expect(html).toContain("Fiabilidad de FRAG");
-    expect(html).toContain("Datos");
-    expect(html).toContain("Score");
-    expect(html).toContain("Pruebas");
-  });
+    // Los siete datos de la fila.
+    expect(html).toContain("mobileResultGrid");
+    expect(html).toContain("Software / IA");
+    expect(html).toContain("Etapa 2");
+    expect(html).toContain("+12.5%");
+    expect(html).toContain("-6.4%");
+    expect(html).toContain("2.4B");
 
-  it("expone pruebas de decisión en la tabla compacta desktop", () => {
-    const html = renderToStaticMarkup(React.createElement(CompactResultsTable, {
-      rows: [{
-        symbol: "THIN",
-        companyName: "Thin Confirmation Inc",
-        country: "US",
-        exchange: "NASDAQ",
-        currency: "USD",
-        price: 50,
-        chartPreview: [{ close: 48 }, { close: 50 }],
-        chartBarsCount: 260,
-        priceFreshnessOk: true,
-        dataCoverageScore: 82,
-        technicalCoverageScore: 88,
-        fundamentalCoverageScore: 64,
-        totalScore: 82,
-        rsGlobalPct: 90,
-        rsSectorPct: 82,
-        rsQualityScore: 78,
-        weinsteinScore: 86,
-        minerviniScore: 82,
-        volumeEffectScore: 45,
-        demandScore: 48,
-        adProxyScore: 44,
-        growthScore: 42,
-        epsGrowthProxyScore: 40,
-        riskRewardScore: 60,
-        relativeVolume: 1,
-        weaknessScore: 12,
-        extSma50: 10,
-        objectiveMetricAudit: {
-          status: "verified",
-          verifiedCount: 2,
-          traceableCount: 1,
-          issues: [],
-          items: [
-            { key: "perf3m", label: "Perf 3M", status: "verified", severity: "neutral", proxy: false },
-            { key: "relativeVolume", label: "Vol relativo", status: "verified", severity: "neutral", proxy: false },
-            { key: "adProxyScore", label: "A/D proxy", status: "traceable", severity: "neutral", proxy: true },
-          ],
-        },
-        setupDisplayPlanValid: true,
-      }],
-      settings: {},
-      favoriteSymbols: new Set(),
-      onFavorite: () => {},
-      onReview: () => {},
-      onOpenStock: () => {},
-    }));
-
-    expect(html).toContain("compactResultsTable");
-    // Tras la fusión final: el Objetivo muestra score + 1 badge agregada con
-    // "{action.label} · {confidence.label}" + +N. Los 5 veredictos viven en QuickReview.
-    expect(html).toContain("rowTrustBadge");
-    expect(html).toContain("Candidato largo");
-    expect(html).toContain("Baja");
-    expect(html).toMatch(/<em>\+\d+<\/em>/);
-  });
-
-  it("convierte señales compactas desktop en filtros de investigación", () => {
-    const html = renderToStaticMarkup(React.createElement(CompactResultsTable, {
-      rows: [{
-        symbol: "THIN",
-        companyName: "Thin Confirmation Inc",
-        country: "US",
-        exchange: "NASDAQ",
-        currency: "USD",
-        price: 50,
-        chartPreview: [{ close: 48 }, { close: 50 }],
-        chartBarsCount: 260,
-        priceFreshnessOk: true,
-        dataCoverageScore: 82,
-        technicalCoverageScore: 88,
-        fundamentalCoverageScore: 64,
-        totalScore: 82,
-        rsGlobalPct: 90,
-        rsSectorPct: 82,
-        rsQualityScore: 78,
-        weinsteinScore: 86,
-        minerviniScore: 82,
-        volumeEffectScore: 45,
-        demandScore: 48,
-        adProxyScore: 44,
-        growthScore: 42,
-        epsGrowthProxyScore: 40,
-        riskRewardScore: 60,
-        relativeVolume: 1,
-        weaknessScore: 12,
-        extSma50: 10,
-        objectiveMetricAudit: {
-          status: "verified",
-          verifiedCount: 2,
-          traceableCount: 1,
-          issues: [],
-          items: [
-            { key: "perf3m", label: "Perf 3M", status: "verified", severity: "neutral", proxy: false },
-            { key: "relativeVolume", label: "Vol relativo", status: "verified", severity: "neutral", proxy: false },
-            { key: "adProxyScore", label: "A/D proxy", status: "traceable", severity: "neutral", proxy: true },
-          ],
-        },
-        setupDisplayPlanValid: true,
-      }],
-      settings: {},
-      favoriteSymbols: new Set(),
-      onFavorite: () => {},
-      onReview: () => {},
-      onOpenStock: () => {},
-    }));
-
-    // Tras el rediseño: los filtros por fila se eliminaron (viven en DecisionGroups).
-    // La fila expone una badge status agregada + proveniencia de métrica (source).
-    expect(html).toContain("rowTrustBadge");
-    expect(html).toContain("source-measured");
-    expect(html).toContain("source-proxy");
-    expect(html).toContain("A/D proxy: proxy/estimada");
-    expect(html).toContain("aria-label=\"A/D: 44. A/D proxy: proxy/estimada\"");
+    // La maquinaria de fiabilidad y el veredicto ya no viven en la fila.
+    expect(html).not.toContain("mobileResultTrustLine");
+    expect(html).not.toContain("reviewFocusPill");
+    expect(html).not.toContain("objectiveMetricTruthPill");
+    expect(html).not.toContain("scoreAuditMini");
+    expect(html).not.toContain("resolved-candidate");
   });
 
   it("renderiza la salud de datos como bloque accionable", () => {

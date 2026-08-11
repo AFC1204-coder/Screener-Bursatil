@@ -3,39 +3,24 @@
 // lib/screenerMobile.jsx — composición de la superficie móvil del screener:
 // cinta de movers, lista de resultados, fila de resultado y franja de régimen.
 
-import Link from "next/link";
-import RowTrustSignature from "@/app/RowTrustSignature";
-import { InfoHint } from "@/app/components/ui/InfoHint";
 import { pct } from "@/lib/formatters";
 import { methodologyTradePlanEligible } from "@/lib/methodologyDisplay";
-import { metricShortLabel } from "@/lib/metricCatalog";
-import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
-import { auditDecisionRowIssues, decisionConfidenceLabel } from "@/lib/decisionAudit";
+import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 import { DEFAULT_RESULT_PAGE_SIZE, RESULT_PAGE_SIZES, SORT_LABELS } from "@/lib/screenerConfig";
-import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
-import { buildScreenerFilterExplainPlan } from "@/lib/screenerFilters";
-import { buildDecisionEvidenceChecklist, explainScreenerRank } from "@/lib/screenerExplainability";
-import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
 import { RELIABILITY_FILTER_ALL } from "@/lib/screenerReliability";
-import { buildRowReviewFocus, decisionConfidenceForRow, decisionResolutionForRow } from "@/lib/screenerResultView";
-import { stockUrl } from "@/lib/symbols";
-import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
-import { money, objectiveMetricCompactState } from "@/lib/screenerFormat";
-import { ResultsDisclosureGroup } from "@/lib/screenerAtoms";
+import { money } from "@/lib/screenerFormat";
 import {
-  CompanyMark,
-  DecisionIssueBadge,
-  MiniSparkline,
-  ObjectiveMetricTruthPill,
-  ReviewFocusPill,
-} from "@/lib/screenerAtoms";
-import { DecisionEvidenceSummaryRail, ScoreAuditPanel, ScoreAuditSummaryRail } from "@/lib/screenerDomains/audit";
-import { DataHealthPanel, DataHealthSummaryRail } from "@/lib/screenerDomains/dataHealth";
+  PerformancePeriodPicker,
+  SCREENER_COLUMNS,
+  screenerColumnLabel,
+  screenerSortOptions,
+} from "@/lib/screenerColumns";
+import { CompanyMark, MiniSparkline, ResultsDisclosureGroup } from "@/lib/screenerAtoms";
+import { DecisionEvidenceSummaryRail, ScoreAuditSummaryRail } from "@/lib/screenerDomains/audit";
+import { DataHealthSummaryRail } from "@/lib/screenerDomains/dataHealth";
 import {
-  DecisionConfidenceBadge,
   DecisionOperatingBrief,
   DecisionQualityStrip,
-  DecisionResolutionBadge,
   DecisionSummaryRail,
 } from "@/lib/screenerDomains/decision";
 
@@ -63,54 +48,34 @@ export function MobileTopMovers({ rows = [], onSelect }) {
   </section>;
 }
 
-export function MobileResultRow({ row, settings, onReview, onFavorite, isFavorite, onOpenStock, activeIssueKey = "Todos", onDecisionIssueSelect, decisionResolutions = {} }) {
-  const change = Number.isFinite(row.perf3m) ? row.perf3m : row.rs3m;
-  const filterPlan = buildScreenerFilterExplainPlan(row, settings);
-  const rankExplain = explainScreenerRank(row, settings);
-  const rowIssues = auditDecisionRowIssues(row, rankExplain);
-  const confidence = decisionConfidenceForRow(row, rankExplain);
-  const resolution = decisionResolutionForRow(row, decisionResolutions);
-  const scoreAudit = buildScreenerScoreAudit(row);
-  const dataHealth = buildScreenerDataHealth(row, settings);
-  const metricTruth = objectiveMetricCompactState(row);
-  const evidence = buildDecisionEvidenceChecklist(row, rankExplain);
-  const vcpReliability = vcpReliabilityAudit(row);
-  const reviewFocus = buildRowReviewFocus({ dataHealth, metricTruth, scoreAudit, vcpReliability, evidence, rowIssues });
-  const trustSignature = buildRowTrustSignature({ dataHealth, metricTruth, scoreAudit, evidence, vcpReliability, rowIssues });
-  return <article className={`mobileResultRow ${resolution ? `resolved-${resolution.key}` : ""}`.trim()}>
-    <button type="button" className={`mobileResultLogo ${isFavorite ? "fav" : ""}`} onClick={() => onFavorite(row)} aria-label={`Guardar favorito ${row.symbol}`}>
-      <CompanyMark row={row} size="lg" />
-    </button>
-    <div className="mobileResultIdentity">
-      <Link href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>
-        <b>{row.symbol}</b>
-        <span>{row.companyName}</span>
-      </Link>
-      <div className="mobileResultBadges">
-        <DecisionResolutionBadge resolution={resolution} />
-        <ReviewFocusPill focus={reviewFocus} />
-        <DecisionConfidenceBadge confidence={confidence} compact />
-        <DataHealthPanel health={dataHealth} compact />
-        <ObjectiveMetricTruthPill state={metricTruth} />
-        <ScoreAuditPanel audit={scoreAudit} compact />
-        <DecisionIssueBadge issues={rowIssues} compact activeKey={activeIssueKey} onSelect={onDecisionIssueSelect} />
-      </div>
-      <div className="mobileResultTrustLine" aria-label={`Fiabilidad de ${row.symbol}`}>
-        <RowTrustSignature signature={trustSignature} />
-      </div>
+// La fila móvil lee EXACTAMENTE las mismas columnas que la tabla de escritorio
+// (lib/screenerColumns.jsx): la primera —ticker con miniatura— hace de cabecera
+// de la tarjeta y las otras seis se pintan como pares etiqueta/valor. Dejarla
+// con quince datos mientras escritorio tiene siete sería peor que no tocar nada.
+export function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenStock, perfPeriod }) {
+  const [identityColumn, ...dataColumns] = SCREENER_COLUMNS;
+  const ctx = {
+    perfPeriod,
+    favoriteSymbols: isFavorite ? new Set([row.symbol]) : new Set(),
+    onFavorite,
+    onOpenStock,
+  };
+  return <article className="mobileResultRow" onClick={(event) => { if (!event.target.closest("button, a")) onReview?.(row.symbol); }}>
+    <div className="mobileResultHead">
+      {identityColumn.cell(row, ctx)}
     </div>
-    <button type="button" className="mobileResultSpark" onClick={() => onReview(row.symbol)} aria-label={`Revisar ${row.symbol}`}>
-      <MiniSparkline bars={row.chartPreview || []} />
-    </button>
-    <Link className="mobileResultPrice" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>
-      <b>{money(row.price, row.currency)}</b>
-      <span className={(change || 0) >= 0 ? "up" : "down"}>{pct(change)}</span>
-    </Link>
-    <InfoHint text={[rankExplain.text, filterPlan.text].filter(Boolean).join(" · ")} tone={rankExplain.tone === "bad" ? "warn" : filterPlan.tone} />
+    <dl className="mobileResultGrid">
+      {dataColumns.map((column) => (
+        <div key={column.key} className={`mobileResultField ${column.className}`} data-align={column.align}>
+          <dt title={column.legend}>{screenerColumnLabel(column, ctx)}</dt>
+          <dd>{column.cell(row, ctx)}</dd>
+        </div>
+      ))}
+    </dl>
   </article>;
 }
 
-export function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionQuality, decisionIssueFilter = "Todos", onDecisionIssueFilter, decisionProfileFilter = "Todos", onDecisionProfileFilter, reviewPriorityFilter = "all", reviewPriorityOptions = [{ key: "all", displayLabel: "Prioridad: Todas" }], onReviewPriorityFilter, reliabilityFilter = RELIABILITY_FILTER_ALL, reliabilityOptions = [{ key: RELIABILITY_FILTER_ALL, displayLabel: "Fiabilidad: Todas" }], onReliabilityFilter, decisionEvidenceSummary = null, decisionEvidenceFilter = "all", onDecisionEvidenceFilter, onDecisionEvidenceReview, readinessSummary = [], readinessFilter = "Todos", onReadinessFilter, confidenceFilter = "Todos", confidenceOptions = ["Todos"], confidenceCounts, onConfidenceFilter, dataHealthSummary = null, dataHealthFilter = "Todos", onDataHealthFilter, scoreAuditSummary = null, scoreAuditFilter = "all", onScoreAuditFilter, onScoreAuditReview, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados todavia. Carga universo y ejecuta el screener." }) {
+export function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, perfPeriod, onPerfPeriod, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionQuality, decisionIssueFilter = "Todos", onDecisionIssueFilter, decisionProfileFilter = "Todos", onDecisionProfileFilter, reviewPriorityFilter = "all", reviewPriorityOptions = [{ key: "all", displayLabel: "Prioridad: Todas" }], onReviewPriorityFilter, reliabilityFilter = RELIABILITY_FILTER_ALL, reliabilityOptions = [{ key: RELIABILITY_FILTER_ALL, displayLabel: "Fiabilidad: Todas" }], onReliabilityFilter, decisionEvidenceSummary = null, decisionEvidenceFilter = "all", onDecisionEvidenceFilter, onDecisionEvidenceReview, readinessSummary = [], readinessFilter = "Todos", onReadinessFilter, confidenceFilter = "Todos", confidenceOptions = ["Todos"], confidenceCounts, onConfidenceFilter, dataHealthSummary = null, dataHealthFilter = "Todos", onDataHealthFilter, scoreAuditSummary = null, scoreAuditFilter = "all", onScoreAuditFilter, onScoreAuditReview, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados todavia. Carga universo y ejecuta el screener." }) {
   const start = totalRows ? ((page - 1) * pageSize) + 1 : 0;
   const end = totalRows ? Math.min(page * pageSize, totalRows) : 0;
   const hasRows = totalRows > 0;
@@ -121,19 +86,21 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
     + (reviewPriorityFilter !== "all" ? 1 : 0)
     + (reliabilityFilter !== RELIABILITY_FILTER_ALL ? 1 : 0)
     + (decisionResolutionFilter !== "all" ? 1 : 0);
+  // El orden móvil solo ofrece las columnas que la tabla muestra. Si la sesión
+  // guardada traía un criterio antiguo (score compuesto, deterioro...), se
+  // mantiene visible como opción para no cambiar el orden a espaldas del
+  // usuario, pero ya no se puede elegir de nuevo.
+  const sortOptions = screenerSortOptions({ perfPeriod });
+  const legacySort = sort && !sortOptions.some((item) => item.value === sort)
+    ? { value: sort, label: SORT_LABELS[sort] || sort }
+    : null;
   return <section className="mobileResultList">
     <div className="mobileResultListHead">
       <span>{hasRows ? `${totalRows} resultados · ${start}-${end} · ${SORT_LABELS[sort] || sort}` : "0 resultados"}</span>
       {hasRows ? <div>
         <select value={sort} onChange={(event) => onSort(event.target.value)} aria-label="Orden movil">
-          <option value="objectiveScore">Objetivo</option>
-          <option value="decisionPriority">Calidad decisión</option>
-          <option value="totalScore">Composite</option>
-          <option value="rsGlobalPct">{metricShortLabel("rsGlobalPct")}</option>
-          <option value="rsRating">{metricShortLabel("rsRating")}</option>
-          <option value="volumeEffectScore">Volumen</option>
-          <option value="avgTurnover">Liquidez</option>
-          <option value="weaknessScore">Deterioro</option>
+          {legacySort ? <option value={legacySort.value}>{legacySort.label}</option> : null}
+          {sortOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
         </select>
         <button type="button" onClick={onCsv} disabled={!rows.length}>CSV</button>
         <button type="button" onClick={onAuditJson} disabled={!rows.length} title="Exportar JSON compatible con audit:decisions">JSON</button>
@@ -141,6 +108,9 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
         <button type="button" onClick={() => onReview()} disabled={!rows.length}>Revisar</button>
       </div> : null}
     </div>
+    {hasRows ? <div className="mobileResultPeriodBar">
+      <PerformancePeriodPicker value={perfPeriod} onChange={onPerfPeriod} />
+    </div> : null}
     {/* Filtros no redundantes con los rails (mismo criterio que el bloque desktop):
         confianza (único acceso a medium/low), prioridad, fiabilidad y resolución.
         Los selects de pruebas/datos/score se eliminaron: sus rails viven en el
@@ -179,7 +149,7 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
       <button type="button" onClick={() => onPage?.(page + 1)} disabled={page >= totalPages}>Siguiente</button>
     </div> : null}
     <div className="mobileRows">
-      {rows.length ? rows.map((row) => <MobileResultRow key={row.symbol} row={row} settings={settings} onReview={onReview} onFavorite={onFavorite} onOpenStock={onOpenStock} isFavorite={favoriteSymbols?.has(row.symbol)} activeIssueKey={decisionIssueFilter} onDecisionIssueSelect={onDecisionIssueFilter} decisionResolutions={decisionResolutions} />) : <div className="mobileEmpty">{emptyLabel}</div>}
+      {rows.length ? rows.map((row) => <MobileResultRow key={row.symbol} row={row} perfPeriod={perfPeriod} onReview={onReview} onFavorite={onFavorite} onOpenStock={onOpenStock} isFavorite={favoriteSymbols?.has(row.symbol)} />) : <div className="mobileEmpty">{emptyLabel}</div>}
     </div>
   </section>;
 }

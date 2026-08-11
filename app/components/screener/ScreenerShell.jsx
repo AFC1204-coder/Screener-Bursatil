@@ -162,6 +162,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   const {
     sort,
     setSort,
+    perfPeriod,
+    setPerfPeriod,
     updateSetting: resultUpdateSetting,
     filtered: rvFiltered,
     pagedRows,
@@ -546,6 +548,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             totalRows={resultsFiltered.length}
             sort={sort}
             onSort={setSort}
+            perfPeriod={perfPeriod}
+            onPerfPeriod={setPerfPeriod}
             onReview={(symbol) => openReview(resultsFiltered, symbol)}
             onFavorite={addFavorite}
             favoriteSymbols={resultsFavoriteSymbols}
@@ -677,6 +681,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onActionFilter={setActionFilter}
             sort={sort}
             onSort={setSort}
+            perfPeriod={perfPeriod}
             viewLayers={viewLayers}
             viewFiltersActive={viewFiltersActive}
             countryFilter={countryFilter}
@@ -720,20 +725,12 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             totalResultPages={totalResultPages}
             onSetResultPage={setResultPageClamped}
             pagedRows={resultsPagedRows}
-            settings={activeSettings}
             favoriteSymbols={resultsFavoriteSymbols}
             onFavorite={addFavorite}
             onReview={(symbol) => openReview(resultsFiltered, symbol)}
             onOpenStock={saveSessionBeforeStockOpen}
-            decisionIssueFilter={decisionIssueFilter}
-            onDecisionIssueFilter={setDecisionIssueFilter}
-            decisionEvidenceFilter={decisionEvidenceFilter}
-            onDecisionEvidenceFilter={setDecisionEvidenceFilter}
-            dataHealthFilter={dataHealthFilter}
-            onDataHealthFilter={setDataHealthFilter}
-            scoreAuditFilter={scoreAuditFilter}
-            onScoreAuditFilter={setScoreAuditFilter}
-            decisionResolutions={resultsDecisionResolutions}
+            perfPeriod={perfPeriod}
+            onPerfPeriod={setPerfPeriod}
             emptyLabel={restoringScan ? "Cargando último snapshot guardado..." : undefined}
           />
         </section>

@@ -53,7 +53,7 @@ describe("explainScreenerRank", () => {
     expect(explanation.tone).toBe("good");
     expect(labels).toContain("Plan valido");
     expect(labels).toContain("RS universo");
-    expect(labels).toContain("Weinstein");
+    expect(labels).toContain("Estructura");
     expect(explanation.watch).toEqual([]);
     expect(explanation.action.key).toBe("candidate-long");
     expect(explanation.action.label).toBe("Candidato largo");
@@ -125,7 +125,7 @@ describe("explainScreenerRank", () => {
     const labels = explanation.drivers.map((item) => item.label);
     expect(labels).toContain("RS universo");
     expect(labels).toContain("RS grupo");
-    expect(labels).toContain("Weinstein");
+    expect(labels).toContain("Estructura");
   });
 
   it("usa fallback informativo cuando no hay drivers largos fuertes", () => {

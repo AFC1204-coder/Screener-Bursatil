@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
 import { defaultSortForSettings, scanSettingsSignature, sortMetric, sortRowsForMode } from "@/lib/screenerPipeline";
 
 const cleanCandidate = {
@@ -44,7 +45,11 @@ describe("screener pipeline sorting", () => {
     expect(sorted.map((row) => row.symbol)).toEqual(["CLEAN", "RISKY"]);
   });
 
-  it("usa score compuesto como ranking por defecto en modos largos", () => {
+  // El ranking por defecto de los modos largos es el rendimiento del periodo
+  // activo de la tabla, no el score compuesto: la tabla de siete columnas ya no
+  // muestra ese score y ordenar por algo invisible deja al usuario sin poder
+  // explicarse el orden (docs/principios-producto.md, principios 1 y 7).
+  it("usa el rendimiento del periodo por defecto como ranking en modos largos", () => {
     const riskyHigherScore = {
       ...cleanCandidate,
       symbol: "RISKY",
@@ -54,11 +59,11 @@ describe("screener pipeline sorting", () => {
       riskRewardScore: 42,
     };
 
-    expect(defaultSortForSettings({ setupMode: "leader" })).toBe("objectiveScore");
+    expect(defaultSortForSettings({ setupMode: "leader" })).toBe(DEFAULT_PERFORMANCE_PERIOD);
     expect(defaultSortForSettings({ setupMode: "weakness" })).toBe("weaknessScore");
     expect(sortRowsForMode([
-      { ...riskyHigherScore, objectiveScore: 70 },
-      { ...cleanCandidate, objectiveScore: 82 },
+      { ...riskyHigherScore, perf3m: 8 },
+      { ...cleanCandidate, perf3m: 26 },
     ], { setupMode: "leader" }).map((row) => row.symbol)).toEqual(["CLEAN", "RISKY"]);
   });
 
@@ -82,7 +87,7 @@ describe("screener pipeline sorting", () => {
 
     expect(sortMetric(vcpBoosted, "objectiveScore", { setupMode: "leader" })).toBe(67);
     expect(sortMetric(vcpBoosted, "totalScore", { setupMode: "leader" })).toBe(92);
-    expect(sortRowsForMode([vcpBoosted, objectiveLeader], { setupMode: "leader" }).map((row) => row.symbol)).toEqual(["OBJ", "VCP"]);
+    expect(sortRowsForMode([vcpBoosted, objectiveLeader], { setupMode: "leader" }, "objectiveScore").map((row) => row.symbol)).toEqual(["OBJ", "VCP"]);
   });
 });
 
