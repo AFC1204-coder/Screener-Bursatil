@@ -129,3 +129,71 @@ La transparencia no debe costar espacio en pantalla. Publicar el
 criterio en un sitio da al usuario más información que la competencia
 —MarketSmith excluye valores de su universo y no publica el criterio—
 sin llenar la tabla.
+
+## 7. Las columnas de la tabla (2026-08-11)
+
+De quince columnas a siete. Todas descriptivas: ninguna sugiere qué
+hacer.
+
+1. **Ticker con miniatura.** El nombre y la forma. La miniatura ya
+   adelanta medio análisis: si sube ordenado o en dientes de sierra.
+2. **Tema.** Ojo con el nombre: lo que hoy se muestra como "sector" es
+   en realidad el grupo temático (`theme`), que agrupa varios sectores
+   estándar — "Inmobiliario / REIT" reúne cinco. Llamarlo por su
+   nombre.
+3. **RS.** Un solo número, el semanal sobre el universo. Los de país y
+   grupo van a la ficha.
+4. **Etapa.** Weinstein en una palabra. Es clasificación técnica
+   objetiva, no opinión: describe dónde está el precio respecto a sus
+   medias.
+5. **Rendimiento con selector de periodo.** Sustituye a las tres
+   columnas fijas de 3M, 6M y 12M. Selector GLOBAL, no por fila: si
+   fuera por fila se perdería la comparación entre valores, que es para
+   lo que sirve un screener. Y el orden puede seguir al selector.
+6. **Distancia al máximo de 52 semanas.** Dice si llegas tarde. Un
+   valor a un 2% de máximos está en zona útil; a un 25%, no.
+7. **Capitalización.** No por sí misma, sino porque un valor de 200
+   millones y uno de 200.000 no se operan igual.
+
+### Lo que se elimina
+
+El VEREDICTO y toda la maquinaria de fiabilidad de la fila — "Revisar
+datos", "Vigilancia", "Auditar". Es exactamente lo que el principio 1
+prohíbe: el usuario debe tener las herramientas para decidir por sí
+mismo, por metodología y por lo legal.
+
+Y también: Minervini y Weinstein como puntuaciones numéricas separadas
+(la etapa ya lo resume), RS Quality, deterioro, SMA50, los tres valores
+de RS por separado, y las insignias de auditoría. Todo eso a la ficha,
+donde hay espacio y contexto.
+
+### Cómo se muestra un dato no fiable
+
+Sin etiquetas de estado en la fila. El dato afectado se muestra como
+ausente —un guion— con el icono de información del principio 6. Que el
+RS de un valor no sea fiable porque sus barras están rotas es calidad de
+dato, no opinión, y el usuario debe poder saberlo sin que le ocupe
+espacio.
+
+### Aplazado hasta poder calcularlo bien
+
+**Distancia al pivote** y **semanas de base** serían de lo más útil, y
+Minervini las mira antes que casi nada. Pero hoy el pivote parece ser
+una línea sobre máximos históricos, y el pivote real es el máximo de la
+contracción final de la base, que suele estar por debajo. Un número
+falso con aspecto de preciso es peor que no tenerlo.
+
+La información está en las barras: detectar una base es identificar
+dónde el precio deja de avanzar y se mueve en rango; detectar
+contracciones es medir si cada retroceso es menor que el anterior. Es
+cálculo, no juicio. Hace falta un criterio explícito y verificable.
+
+Cuando estén, entran — pero algo sale a cambio. Siete columnas caben
+cómodas; nueve aprietan, sobre todo en móvil. Añadir sin quitar es cómo
+se llega a quince.
+
+### Nota para la implementación
+
+Las columnas deben estar definidas en UN sitio, no repartidas por el
+código. Si están incrustadas en el diseño, cada cambio futuro es una
+obra; si están en una lista, añadir o quitar es trivial.
