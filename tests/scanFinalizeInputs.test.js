@@ -19,7 +19,11 @@ vi.mock("@/lib/supabaseServer", () => ({
   supabaseRpc: vi.fn(),
 }));
 
-import { finalizeScanPercentiles, finalizeScanResultsInDb } from "@/lib/scanPercentileFinalization";
+import {
+  FINALIZE_READ_BATCH_SIZE,
+  finalizeScanPercentiles,
+  finalizeScanResultsInDb,
+} from "@/lib/scanPercentileFinalization";
 import { supabaseRpc } from "@/lib/supabaseServer";
 
 // Construye una fila "thin" tal como la devolvería scan_finalize_inputs: solo id
@@ -82,7 +86,11 @@ describe("finalizeScanResultsInDb · contrato thin-raw vía scan_finalize_inputs
     expect(readPayload).toEqual({
       p_owner_id: "owner-1",
       p_scan_id: "scan-1",
-      p_max_rows: 50000, // FINALIZE_MAX_ROWS por defecto
+      // Ya NO se piden las 50000 de golpe: p_max_rows es el tamaño de PÁGINA
+      // (FINALIZE_READ_BATCH_SIZE) y p_offset el desplazamiento. 24 filas < 50
+      // → una única página, así que sigue habiendo una sola llamada de lectura.
+      p_max_rows: FINALIZE_READ_BATCH_SIZE,
+      p_offset: 0,
     });
     // El payload de lectura NO contiene la firma del select legacy.
     expect(JSON.stringify(supabaseRpc.mock.calls[0])).not.toContain("select=id,metrics,raw");
@@ -204,10 +212,176 @@ describe("finalizeScanResultsInDb · contrato thin-raw vía scan_finalize_inputs
     expect(result.rowsPatched).toBe(universe.length);
   });
 
-  it("p_max_rows se respeta desde options.maxRows", async () => {
+  it("options.maxRows es el tope GLOBAL: topa el tamaño de la página si es menor que la tanda", async () => {
     supabaseRpc.mockResolvedValueOnce({ inputs: [], rowsRead: 0 });
-    await finalizeScanResultsInDb("scan-7", "owner-7", { maxRows: 1234 });
-    expect(supabaseRpc.mock.calls[0][1].p_max_rows).toBe(1234);
+    await finalizeScanResultsInDb("scan-7", "owner-7", { maxRows: 12 });
+    // maxRows(12) < FINALIZE_READ_BATCH_SIZE(50) → la primera página pide 12,
+    // nunca más que el tope global.
+    expect(supabaseRpc.mock.calls[0][1].p_max_rows).toBe(12);
+    expect(supabaseRpc.mock.calls[0][1].p_offset).toBe(0);
+  });
+});
+
+// ===========================================================================
+// Lectura en tandas (migración 20260811150000_scan_finalize_inputs_read_pagination)
+// ===========================================================================
+//
+// El escaneo de 9.920 filas moría ANTES de contar las tandas de escritura
+// (finalizationBatchesDone/Total en NULL): el paso que se agotaba era la
+// LECTURA, que traía raw+metrics (47,4 KB de texto por fila ≈ 470 MB) en una
+// sola llamada contra un statement_timeout de 8 s. Ahora scan_finalize_inputs
+// se pagina con p_offset, FINALIZE_READ_BATCH_SIZE filas por llamada.
+
+// Mock de la RPC de lectura que se comporta como la función SQL paginada:
+// sirve la ventana [p_offset, p_offset + p_max_rows) del universo dado, en el
+// mismo orden. La escritura devuelve updated_count = filas de esa tanda.
+function mockPaginatedRead(universe) {
+  supabaseRpc.mockImplementation(async (name, payload) => {
+    if (name === "scan_finalize_inputs") {
+      const offset = payload.p_offset || 0;
+      const page = universe.slice(offset, offset + payload.p_max_rows);
+      return { inputs: page, rowsRead: page.length };
+    }
+    if (name === "finalize_scan_results") {
+      return [{ updated_count: payload.p_patches.length }];
+    }
+    throw new Error(`RPC inesperada en el mock: ${name}`);
+  });
+}
+
+describe("finalizeScanResultsInDb · lectura en tandas", () => {
+  afterEach(() => supabaseRpc.mockReset());
+
+  it("trocea la lectura: varias llamadas a scan_finalize_inputs con p_offset creciente", async () => {
+    const universe = buildManyThinRows(25);
+    mockPaginatedRead(universe);
+
+    const result = await finalizeScanResultsInDb("scan-read", "owner-read", {
+      readBatchSize: 10,
+      patchBatchSize: 100,
+    });
+
+    const readCalls = supabaseRpc.mock.calls.filter(([name]) => name === "scan_finalize_inputs");
+    // 25 filas / 10 por tanda → páginas de 10, 10, 5. La de 5 viene incompleta,
+    // así que el bucle para ahí: NO hay una cuarta llamada de sondeo.
+    expect(readCalls.map(([, payload]) => [payload.p_offset, payload.p_max_rows])).toEqual([
+      [0, 10], [10, 10], [20, 10],
+    ]);
+    expect(readCalls.every(([, payload]) => payload.p_owner_id === "owner-read" && payload.p_scan_id === "scan-read")).toBe(true);
+    expect(result.rowsProcessed).toBe(25);
+    expect(result.rowsPatched).toBe(25);
+  });
+
+  it("pide una página más cuando la última encaja EXACTA (no puede saber que no hay más)", async () => {
+    const universe = buildManyThinRows(20);
+    mockPaginatedRead(universe);
+
+    await finalizeScanResultsInDb("scan-exact", "owner-exact", { readBatchSize: 10 });
+
+    const readCalls = supabaseRpc.mock.calls.filter(([name]) => name === "scan_finalize_inputs");
+    // 20 filas / 10 = 2 páginas llenas + 1 página vacía que confirma el final.
+    expect(readCalls.map(([, payload]) => payload.p_offset)).toEqual([0, 10, 20]);
+  });
+
+  it("el resultado de la lectura troceada es IDÉNTICO al de una lectura única", async () => {
+    const universe = buildManyThinRows(25);
+    // Referencia: los patches que produce el helper puro viendo las 25 filas
+    // juntas de una vez (= lo que haría una lectura sin trocear).
+    const expectedPatches = finalizeScanPercentiles(universe)
+      .map(({ id, metrics_patch }) => ({ id, metrics_patch }));
+
+    mockPaginatedRead(universe);
+    const troceado = await finalizeScanResultsInDb("scan-cmp", "owner-cmp", { readBatchSize: 7 });
+    const sentTroceado = supabaseRpc.mock.calls
+      .filter(([name]) => name === "finalize_scan_results")
+      .flatMap(([, payload]) => payload.p_patches);
+
+    supabaseRpc.mockReset();
+    // Contraste: una sola página de 50 (> 25 filas) = la lectura de antes.
+    mockPaginatedRead(universe);
+    const unico = await finalizeScanResultsInDb("scan-cmp", "owner-cmp", { readBatchSize: 50 });
+    const sentUnico = supabaseRpc.mock.calls
+      .filter(([name]) => name === "finalize_scan_results")
+      .flatMap(([, payload]) => payload.p_patches);
+
+    // 4 páginas de lectura (7,7,7,4) frente a 1: MISMOS patches, mismo orden.
+    expect(sentTroceado).toEqual(sentUnico);
+    expect(sentTroceado).toEqual(expectedPatches);
+    expect(troceado).toEqual(unico);
+    // Los percentiles son agregados de la población: si el troceo hubiera
+    // calculado por página, rsGlobalPct no coincidiría con la referencia.
+    expect(sentTroceado.some((patch) => Number.isFinite(patch.metrics_patch.rsGlobalPct))).toBe(true);
+  });
+
+  it("lee TODO antes de escribir: ninguna escritura se lanza hasta que la lectura acabó", async () => {
+    const universe = buildManyThinRows(25);
+    const order = [];
+    supabaseRpc.mockImplementation(async (name, payload) => {
+      order.push(name);
+      if (name === "scan_finalize_inputs") {
+        const offset = payload.p_offset || 0;
+        const page = universe.slice(offset, offset + payload.p_max_rows);
+        return { inputs: page, rowsRead: page.length };
+      }
+      return [{ updated_count: payload.p_patches.length }];
+    });
+
+    await finalizeScanResultsInDb("scan-order", "owner-order", { readBatchSize: 10, patchBatchSize: 10 });
+
+    // El percentil necesita la población completa antes de escribir la primera
+    // fila: todas las lecturas van primero, sin intercalar.
+    const firstWrite = order.indexOf("finalize_scan_results");
+    expect(firstWrite).toBeGreaterThan(0);
+    expect(order.slice(0, firstWrite).every((name) => name === "scan_finalize_inputs")).toBe(true);
+    expect(order.slice(firstWrite).every((name) => name === "finalize_scan_results")).toBe(true);
+  });
+
+  it("onReadProgress se invoca tras cada tanda de lectura con el acumulado", async () => {
+    const universe = buildManyThinRows(25);
+    mockPaginatedRead(universe);
+    const readProgress = [];
+
+    await finalizeScanResultsInDb("scan-readprog", "owner-readprog", {
+      readBatchSize: 10,
+      onReadProgress: (info) => readProgress.push({ ...info }),
+    });
+
+    expect(readProgress).toEqual([
+      { readBatchesDone: 1, rowsRead: 10, readBatchSize: 10 },
+      { readBatchesDone: 2, rowsRead: 20, readBatchSize: 10 },
+      { readBatchesDone: 3, rowsRead: 25, readBatchSize: 10 },
+    ]);
+  });
+
+  it("fallo a mitad de la LECTURA: no escribe nada y el error dice dónde murió", async () => {
+    const universe = buildManyThinRows(25);
+    supabaseRpc.mockImplementation(async (name, payload) => {
+      if (name === "scan_finalize_inputs") {
+        if ((payload.p_offset || 0) >= 10) {
+          throw new Error("canceling statement due to statement timeout");
+        }
+        const page = universe.slice(payload.p_offset || 0, (payload.p_offset || 0) + payload.p_max_rows);
+        return { inputs: page, rowsRead: page.length };
+      }
+      throw new Error("finalize_scan_results NO debería llamarse si la lectura falló");
+    });
+
+    let caught;
+    try {
+      await finalizeScanResultsInDb("scan-readfail", "owner-readfail", { readBatchSize: 10 });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeTruthy();
+    expect(caught.finalizationPhase).toBe("read");
+    expect(caught.readBatchesDone).toBe(1);
+    expect(caught.rowsRead).toBe(10);
+    expect(caught.cause).toBeInstanceOf(Error);
+    expect(caught.cause.message).toContain("statement timeout");
+    // Ninguna escritura: la fase de escritura empieza cuando la lectura ya
+    // terminó entera, así que la base queda intacta.
+    expect(supabaseRpc.mock.calls.some(([name]) => name === "finalize_scan_results")).toBe(false);
   });
 });
 
@@ -215,10 +389,11 @@ describe("finalizeScanResultsInDb · contrato thin-raw vía scan_finalize_inputs
 // Escritura en tandas (docs/finalizacion-percentiles-tandas-2026-08-11.md)
 // ===========================================================================
 //
-// La LECTURA sigue siendo una sola llamada a scan_finalize_inputs (sin
-// trocear — ver el comentario de cabecera de lib/scanPercentileFinalization.js
-// sobre por qué). Lo que se troceó es la ESCRITURA: finalize_scan_results se
-// llama varias veces, una por tanda de `patchBatchSize` filas, en orden.
+// Lo que se troceó aquí es la ESCRITURA: finalize_scan_results se llama varias
+// veces, una por tanda de `patchBatchSize` filas, en orden. Estos tests usan
+// universos de 25 filas, por debajo de FINALIZE_READ_BATCH_SIZE (50), así que
+// la lectura cabe en una sola página y no interfiere. El troceo de la LECTURA
+// tiene su propio bloque más abajo.
 
 // N filas sintéticas para probar el TROCEO. No reproducen la distribución de
 // buildThinUniverse (eso ya está cubierto arriba) — solo necesitan que

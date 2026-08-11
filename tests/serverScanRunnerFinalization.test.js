@@ -414,6 +414,77 @@ describe("runScanChunk · wiring de finalización de percentiles", () => {
     expect(errorPatch.finalizationBatchesTotal).toBeNull();
   });
 
+  it("fallo A MITAD de la LECTURA en tandas: status 'failed', fase 'read' y filas ya leídas persistidas", async () => {
+    // Lo que lanza readFinalizeInputsInBatches (lib/scanPercentileFinalization.js)
+    // cuando una página de scan_finalize_inputs se agota: un Error con
+    // finalizationPhase:"read" + readBatchesDone + rowsRead, y SIN
+    // batchesDone/batchesTotal — porque la escritura no llegó a empezar. Eso es
+    // exactamente el estado que dejó el escaneo de 9.920 filas
+    // (finalizationBatchesDone/Total en NULL), ahora identificable.
+    const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 3, chunkSize: 3 });
+    configureSnapshotOnce(snapshot);
+    const readError = new Error(
+      "percentile finalization failed reading inputs at batch 41 (2000 filas leídas): canceling statement due to statement timeout",
+    );
+    readError.finalizationPhase = "read";
+    readError.readBatchesDone = 40;
+    readError.rowsRead = 2000;
+    finalizeScanResultsInDb.mockRejectedValue(readError);
+
+    await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
+
+    const patches = progressPatches();
+    const errorPatch = patches.find((p) => p.status === "error");
+
+    expect(errorPatch).toBeTruthy();
+    expect(errorPatch.finalizationStatus).toBe("failed");
+    expect(errorPatch.percentilesFinalized).toBe(false);
+    expect(errorPatch.finalizationPhase).toBe("read");
+    expect(errorPatch.finalizationReadBatchesDone).toBe(40);
+    expect(errorPatch.finalizationRowsRead).toBe(2000);
+    // Un fallo de lectura NO deja escrituras a medias: la escritura empieza
+    // cuando la lectura ya terminó entera.
+    expect(errorPatch.finalizationBatchesDone).toBeNull();
+    expect(errorPatch.finalizationBatchesTotal).toBeNull();
+    expect(errorPatch.finalizationRowsPatched).toBeNull();
+
+    expect(patches.find((p) => p.status === "complete")).toBeUndefined();
+    expect(patches.find((p) => p.status === "partial")).toBeUndefined();
+    expect(patches.find((p) => p.status === "failed")).toBeUndefined();
+  });
+
+  it("reporta el progreso de la fase de LECTURA (finalizationStatus:'reading_inputs'), throttled como la escritura", async () => {
+    const snapshot = snapshotFor(SCAN_ID, OWNER_ID, { total: 3, chunkSize: 3 });
+    configureSnapshotOnce(snapshot);
+    finalizeScanResultsInDb.mockImplementation(async (scanId, ownerId, options) => {
+      // 12 tandas de lectura: con FINALIZE_PROGRESS_PATCH_EVERY=10 solo la 10ª
+      // dispara PATCH (la 11ª y 12ª quedan throttled; la fase de lectura no
+      // conoce su total, así que no hay excepción "última tanda").
+      for (let i = 1; i <= 12; i += 1) {
+        options.onReadProgress({ readBatchesDone: i, rowsRead: i * 50, readBatchSize: 50 });
+      }
+      options.onBatchProgress({ batchesDone: 1, batchesTotal: 1, rowsPatched: 600, rowsTotal: 600 });
+      return { rowsProcessed: 600, rowsPatched: 600, batchesTotal: 1, batchesDone: 1 };
+    });
+
+    await runScanChunk({ scanId: SCAN_ID, ownerId: OWNER_ID, baseUrl: BASE_URL });
+
+    const patches = progressPatches();
+    const readPatches = patches.filter((p) => p.finalizationStatus === "reading_inputs");
+    expect(readPatches).toHaveLength(1);
+    expect(readPatches[0]).toMatchObject({
+      status: "finalizing",
+      percentilesFinalized: false,
+      finalizationReadBatchesDone: 10,
+      finalizationRowsRead: 500,
+    });
+    // Estado NO terminal mientras lee, y siempre antes del terminal de éxito.
+    const readIdx = patches.findIndex((p) => p.finalizationStatus === "reading_inputs");
+    const successIdx = patches.findIndex((p) => p.finalizationStatus === "succeeded");
+    expect(readIdx).toBeGreaterThan(-1);
+    expect(successIdx).toBeGreaterThan(readIdx);
+  });
+
   it("reporta el progreso INTERMEDIO de la finalización (finalizationStatus:'in_progress') sin marcarla terminal, antes del PATCH final de éxito", async () => {
     // finalizeScanResultsInDb real invoca options.onBatchProgress tras cada
     // tanda de escritura (ver lib/scanPercentileFinalization.js). Este mock
