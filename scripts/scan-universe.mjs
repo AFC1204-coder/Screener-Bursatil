@@ -65,12 +65,42 @@
 // args.preset })` explícitamente, para cumplir el punto 7 de la tarea al
 // pie de la letra.
 //
-// ── RETENCIÓN: AVISO, no implementado ─────────────────────────────────────
-// Este script NO implementa borrado/retención de escaneos viejos en `scans`/
-// `scan_results`. Es fase aparte. NO debe programarse para correr a diario
-// (ni en un workflow, ni en un cron) hasta que exista esa retención — cada
-// corrida --write añade ~5.605 filas nuevas (o actualiza las del mismo día
-// vía upsert por local_id) sin borrar las de días anteriores.
+// ── RETENCIÓN: los 7 nocturnos más recientes ──────────────────────────────
+// Decisión ya tomada (docs/orden-y-sector-2026-08-11.md no la cubre; viene
+// del prompt de esta tarea): conservar los SIETE escaneos NOCTURNOS más
+// recientes, con todos sus símbolos analizados. Los anteriores se borran.
+//
+// Existe una RPC de retención en el esquema (upsert_scan_newer_wins,
+// supabase/schema.sql:230-272) pero NO sirve tal cual: purga TOP-3 POR
+// OWNER, mezclando cualquier tipo de escaneo (interactivo, cron, nocturno)
+// bajo el mismo owner_id — no distingue nocturno de interactivo, y el
+// número (3) tampoco es el que queremos (7). Usarla aquí borraría escaneos
+// interactivos/cron que la tarea prohíbe tocar. Además NINGUNO de los tres
+// escritores reales (escaneo interactivo vía servidor, cron de Vercel, este
+// script) pasa por esa RPC hoy — todos escriben directo a `scans`/
+// `scan_results`. Por eso la retención de este script es lógica JS propia
+// (pruneNightlyScans, abajo), no una llamada a esa RPC.
+//
+// Cómo se distingue un escaneo nocturno: local_id empieza por
+// "materialized:US:" (mercado exacto ["US"], sin combinar con otros — el
+// cron de Vercel, vía SCAN_CRON_GROUPS en lib/cronPlan.js, JAMÁS agrupa "US"
+// solo: el único grupo que lo incluye es "US-HK-AU"). Confirmado con datos
+// reales: de 92 escaneos existentes en producción (todo el historial de
+// `scans`, consultado 2026-08-11), solo 2 local_id empiezan por
+// "materialized:US:" — ambos de hoy, ninguno de ningún otro origen.
+// CAVEAT real, no solo teórico: app/api/jobs/scan-refresh/route.js (un
+// CUARTO escritor, endpoint admin/on-demand, no mencionado en el prompt de
+// esta tarea) llama a la MISMA runMaterializedScan y, si alguien lo invoca
+// manualmente con `?markets=US`, produciría un local_id con el mismo
+// prefijo. No se puede descartar por completo con un simple prefijo de
+// texto — se documenta aquí, no se resuelve (añadir una segunda señal, p.ej.
+// un mínimo de symbols/row_count, sería sobre-ingeniería para un caso que
+// hoy no ocurre en producción y que la tarea no pidió cubrir).
+//
+// Seguridad (punto 9 de la tarea): la retención corre DESPUÉS de confirmar
+// que writeMaterializedScan devolvió saved:true, envuelta en try/catch — si
+// el borrado falla, el escaneo recién escrito queda intacto (el error solo
+// se reporta, nunca se relanza).
 //
 // ── maxSavedRows: sin el tope de 500 del cron actual ──────────────────────
 // El cron interactivo cae a maxSavedRows=500 por defecto porque solo
@@ -95,6 +125,11 @@ const CLOSED_END_FUND_NAME_PATTERN = /\b(FUND|BDC|BUSINESS DEVELOPMENT (CORP(ORA
 const MAX_CONCURRENCY = 8;
 const DEFAULT_CONCURRENCY = 4;
 const DEFAULT_PRESET = "balanced";
+// Prefijo de local_id que identifica un escaneo nocturno de este script — ver
+// "RETENCIÓN" en la cabecera para el porqué y el caveat conocido.
+const NIGHTLY_LOCAL_ID_PREFIX = "materialized:US:";
+// Política ya decidida: conservar los 7 escaneos nocturnos más recientes.
+const DEFAULT_RETENTION_COUNT = 7;
 // Cortesía con la instancia Supabase Micro (ver AVISO en el prompt de la
 // tarea: se ha saturado dos veces esta semana): timeout generoso para que
 // una corrida --write lenta no aborte a medias con datos parciales.
@@ -109,6 +144,7 @@ export function parseArgs(argv) {
     limit: 0,
     concurrency: DEFAULT_CONCURRENCY,
     preset: DEFAULT_PRESET,
+    skipRetention: false,
   };
   for (const arg of argv) {
     const [rawKey, rawValue] = arg.replace(/^--/, "").split("=");
@@ -118,11 +154,71 @@ export function parseArgs(argv) {
     else if (key === "limit") out.limit = Math.max(0, Number(rawValue) || 0);
     else if (key === "concurrency") out.concurrency = Math.min(MAX_CONCURRENCY, Math.max(1, Number(rawValue) || DEFAULT_CONCURRENCY));
     else if (key === "preset") out.preset = String(rawValue || DEFAULT_PRESET).trim() || DEFAULT_PRESET;
+    // --sin-retencion: salta la retención (punto 12 de la tarea). Pensada para
+    // pruebas — deja intactos los escaneos nocturnos viejos aunque haya más de 7.
+    else if (key === "sin-retencion") out.skipRetention = rawValue === undefined ? true : rawValue !== "false";
   }
   // Mismo criterio que refresh-bars.mjs: --write gana sobre el default
   // dry-run=true, pero --dry-run=true explícito manda sobre --write (más seguro).
   if (out.write && !argv.some((a) => a.startsWith("--dry-run"))) out.dryRun = false;
   return out;
+}
+
+// ── Retención: conservar los N nocturnos más recientes ────────────────────
+// Lógica JS propia, no la RPC upsert_scan_newer_wins — ver "RETENCIÓN" en la
+// cabecera del archivo para el porqué.
+//
+// Solo lee/borra de `scans`. NO hace falta borrar `scan_results` aparte: la
+// FK scan_results.scan_id references scans(id) ON DELETE CASCADE (mismo
+// mecanismo que ya usa la purga de upsert_scan_newer_wins, supabase/schema.sql
+// líneas 27 y 216-219) limpia las filas hijas automáticamente. `row_count` en
+// `scans` ya lleva la cuenta de filas de cada escaneo (se fija en la escritura,
+// writeMaterializedScan), así que sumar esa columna evita tener que consultar
+// `scan_results` para saber cuántas filas se borraron — importante dado el
+// AVISO de la tarea sobre timeouts en scan_results sin filtro acotado.
+//
+// dryRun:true nunca llama DELETE — reporta `candidates` (lo que se borraría)
+// y dejan deletedScanCount/deletedRowCount en 0, para separar claramente
+// "esto es lo que pasaría" de "esto pasó".
+export async function pruneNightlyScans(config, options = {}) {
+  const retentionCount = Number.isFinite(options.retentionCount) && options.retentionCount > 0
+    ? Math.floor(options.retentionCount)
+    : DEFAULT_RETENTION_COUNT;
+  const dryRun = Boolean(options.dryRun);
+  if (options.skip) {
+    return { skipped: true, dryRun, retentionCount, kept: [], candidates: [], deletedScanCount: 0, deletedRowCount: 0 };
+  }
+  const rows = await supabaseRequest("scans", {
+    query: [
+      `owner_id=eq.${encodeURIComponent(config.ownerId)}`,
+      `local_id=like.${encodeURIComponent(`${NIGHTLY_LOCAL_ID_PREFIX}*`)}`,
+      "deleted_at=is.null",
+      "select=id,local_id,row_count,created_at",
+      "order=created_at.desc",
+    ].join("&"),
+  });
+  const nightly = Array.isArray(rows) ? rows : [];
+  const kept = nightly.slice(0, retentionCount);
+  const overflow = nightly.slice(retentionCount);
+  const candidates = overflow.map((row) => ({
+    id: row.id,
+    localId: row.local_id,
+    rowCount: Number(row.row_count || 0),
+    createdAt: row.created_at,
+  }));
+  if (!candidates.length) {
+    return { skipped: false, dryRun, retentionCount, kept: kept.map((row) => row.id), candidates: [], deletedScanCount: 0, deletedRowCount: 0 };
+  }
+  if (dryRun) {
+    return { skipped: false, dryRun, retentionCount, kept: kept.map((row) => row.id), candidates, deletedScanCount: 0, deletedRowCount: 0 };
+  }
+  const ids = overflow.map((row) => row.id);
+  await supabaseRequest("scans", {
+    method: "DELETE",
+    query: `id=in.(${ids.map(encodeURIComponent).join(",")})`,
+  });
+  const deletedRowCount = candidates.reduce((sum, row) => sum + row.rowCount, 0);
+  return { skipped: false, dryRun, retentionCount, kept: kept.map((row) => row.id), candidates, deletedScanCount: candidates.length, deletedRowCount };
 }
 
 // ── Población: mismo criterio "equity" que scripts/refresh-bars.mjs ───────
@@ -253,6 +349,33 @@ async function runWriteViaVitestChild({ symbols, concurrency, preset }) {
   return payload;
 }
 
+// Seam de test para el punto 9 (seguridad): la retención solo debe correr si
+// writeMaterializedScan confirmó la escritura. Extraído a función propia
+// (en vez de inline en main(), que no es invocable en tests sin arrancar el
+// bootstrap de Vitest completo) para poder testear la condición de guarda
+// sola, sin red ni Supabase.
+export function shouldPruneAfterWrite(savedScan) {
+  return Boolean(savedScan?.saved);
+}
+
+// Reporta el resultado de pruneNightlyScans, en dry-run (candidatos, nada
+// borrado) o en real (candidatos == lo que se borró).
+function logRetentionReport(retention) {
+  if (retention.skipped) {
+    console.log("Retención saltada (--sin-retencion).");
+    return;
+  }
+  console.log(`Escaneos nocturnos conservados (de los ${retention.retentionCount} más recientes): ${retention.kept.length}`);
+  if (!retention.candidates.length) {
+    console.log(retention.dryRun ? "No hay escaneos nocturnos de sobra: nada que borraría." : "No había escaneos nocturnos de sobra: no se borró nada.");
+    return;
+  }
+  console.log(`${retention.dryRun ? "Se borrarían" : "Se borraron"} ${retention.candidates.length} escaneos nocturnos, ${retention.dryRun ? "sumando" : "sumaron"} ${retention.candidates.reduce((sum, c) => sum + c.rowCount, 0)} filas de scan_results (vía cascade desde 'scans'):`);
+  for (const candidate of retention.candidates) {
+    console.log(`  - ${candidate.localId} (${candidate.rowCount} filas, creado ${candidate.createdAt})`);
+  }
+}
+
 // ── Main (bootstrap) ───────────────────────────────────────────────────────
 
 async function main() {
@@ -264,9 +387,8 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`=== scan-universe.mjs — modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"} concurrency=${args.concurrency} preset=${args.preset}${args.limit > 0 ? ` limit=${args.limit}` : ""} ===`);
-  console.log("AVISO: este script NO implementa retención de escaneos viejos (scans/scan_results).");
-  console.log("No lo programes a diario (cron ni workflow) hasta que exista esa retención — fase aparte.");
+  console.log(`=== scan-universe.mjs — modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"} concurrency=${args.concurrency} preset=${args.preset}${args.limit > 0 ? ` limit=${args.limit}` : ""}${args.skipRetention ? " sin-retencion" : ""} ===`);
+  console.log(`Retención: conserva los ${DEFAULT_RETENTION_COUNT} escaneos nocturnos (local_id "${NIGHTLY_LOCAL_ID_PREFIX}*") más recientes${args.skipRetention ? " — SALTADA por --sin-retencion" : ""}.`);
   console.log("");
 
   const { snapshotId, asOf } = await fetchLatestUsSnapshotId(config);
@@ -296,6 +418,13 @@ async function main() {
     console.log("");
     console.log(`Preset a aplicar en una corrida real: ${args.preset}`);
     console.log("Dry-run: no se descargó ni se escribió nada en Supabase. Pasa --write para persistir.");
+
+    console.log("");
+    console.log("=== RETENCIÓN (vista previa, no borra nada) ===");
+    const retentionPreview = await pruneNightlyScans(config, { dryRun: true, skip: args.skipRetention, retentionCount: DEFAULT_RETENTION_COUNT });
+    logRetentionReport(retentionPreview);
+
+    console.log("");
     console.log(`Tiempo total: ${((Date.now() - startedAt) / 1000).toFixed(1)}s`);
     return;
   }
@@ -329,6 +458,24 @@ async function main() {
   console.log("");
   console.log(`Escaneo creado en 'scans': id=${savedScan.scanId} local_id=${savedScan.localId}`);
   console.log(`Nombre: ${scan.name}`);
+
+  // Retención DESPUÉS de confirmar la escritura (punto 9 de la tarea): si
+  // savedScan.saved no es true, el escaneo no se persistió y no hay nada que
+  // retener sobre — no se llama a pruneNightlyScans. Si saved sí es true pero
+  // la retención falla, el error se atrapa y se reporta: el escaneo recién
+  // escrito NUNCA se pierde por un fallo de borrado.
+  console.log("");
+  console.log("=== RETENCIÓN ===");
+  if (!shouldPruneAfterWrite(savedScan)) {
+    console.log("Escaneo no confirmado como guardado (savedScan.saved !== true) — retención omitida por seguridad.");
+  } else {
+    try {
+      const retention = await pruneNightlyScans(config, { dryRun: false, skip: args.skipRetention, retentionCount: DEFAULT_RETENTION_COUNT });
+      logRetentionReport(retention);
+    } catch (error) {
+      console.log(`AVISO: la retención falló y se omitió (el escaneo recién escrito NO se ve afectado): ${error?.message || error}`);
+    }
+  }
 
   const elapsedMs = Date.now() - startedAt;
   const msPerSymbol = stats.selected ? scanElapsedMs / stats.selected : 0;
