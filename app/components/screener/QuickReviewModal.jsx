@@ -8,7 +8,7 @@ import {
   CompanyMark,
   DecisionEvidenceChecklist,
   ScoreAuditPanel,
-  TradingViewPreviewChart,
+  RowPreviewChart,
 } from "@/app/screenerPanels";
 import { amount, money, quickBusinessDescription, quickBusinessMarket, ratioLabel, shortBusiness } from "@/lib/screenerFormat";
 import { QuickReviewMetricValue, ReviewPriorityPanel, ReviewQueueFocusBadge } from "@/app/components/screener/ReviewWidgets";
@@ -232,7 +232,7 @@ export default function QuickReviewModal({
             <div className="profileChartArea">
               <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={activeModalRow.symbol} listId={chartListId} scope={chartScope} onScopeChange={updateChartScope} compact />
               <div className="quickReviewChart">
-                <TradingViewPreviewChart row={activeModalRow} chartSettings={chartSettings} />
+                <RowPreviewChart row={activeModalRow} chartSettings={chartSettings} />
               </div>
               <div className="perfStrip">
                 <div className="perfBox"><span>1S</span><b className={(activeModalRow.perf1w || 0) >= 0 ? "up" : "down"}>{pct(activeModalRow.perf1w || 0)}</b></div>

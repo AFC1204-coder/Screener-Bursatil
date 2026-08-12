@@ -72,7 +72,7 @@ import {
   PreviewCard,
   QuickPanel,
   ScoreLine,
-  TradingViewPreviewChart,
+  RowPreviewChart,
   ipoVerificationText,
 } from "@/lib/screenerMarket";
 import { MobileMoverCard, MobileResultList, MobileResultRow, MobileTopMovers, RegimeStrip } from "@/lib/screenerMobile";
@@ -94,7 +94,7 @@ import {
 export {
   money, cap, amount, sleep, searchText, investorStatusLabel, InfoHint, ratioLabel,
   ipoVerificationText, initials, shortBusiness, quickBusinessDescription,
-  quickBusinessMarket, chartPath, MiniSparkline, TradingViewPreviewChart, companyLogoDomain,
+  quickBusinessMarket, chartPath, MiniSparkline, RowPreviewChart, companyLogoDomain,
   CompanyMark, quickSetup, compactPatternReason, compactPatternDetail, LeaderTape,
   ScoreLine, OpportunityMap, MarketMiniTape, SetupChipRail,
   MobileMoverCard, MobileTopMovers, MobileResultRow, buildRowTrustSignature, RowTrustSignature, DecisionQualityStrip, DecisionOperatingBrief, DecisionSummaryRail, DecisionEvidenceChecklist, DecisionEvidenceSummaryRail, DataHealthPanel, DataHealthSummaryRail, ScoreAuditPanel, ScoreAuditSummaryRail, AuditabilitySummaryRail, MobileResultList, RegimeStrip,

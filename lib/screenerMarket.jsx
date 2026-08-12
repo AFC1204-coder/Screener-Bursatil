@@ -1,10 +1,10 @@
 // lib/screenerMarket.jsx — tarjetas/charts de preview, leaders y oportunidades.
 // Feature module: presentación de superficies de mercado (preview, leaders, cinta).
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import RowTrustSignature from "@/app/RowTrustSignature";
-import UniversalPriceChart from "@/app/UniversalPriceChart";
+import RowPriceChart from "@/app/RowPriceChart";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
@@ -22,7 +22,7 @@ import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
 import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
-import { externalLinks, isTradingViewWidgetBlocked, stockUrl } from "@/lib/symbols";
+import { externalLinks, stockUrl } from "@/lib/symbols";
 import {
   amount,
   compactMetricSourceLookup,
@@ -57,51 +57,19 @@ export function ipoVerificationText(row = {}) {
   return [category, evidence].filter(Boolean).join(" · ");
 }
 
-export function TradingViewPreviewChart({ row, chartSettings = DEFAULT_CHART_SETTINGS }) {
-  const ref = useRef(null);
-  const tvSymbol = row ? externalLinks(row.symbol, row.exchange).tradingViewSymbol : "";
-  const blockedEmbed = row ? isTradingViewWidgetBlocked(row.symbol, tvSymbol) : false;
-  const nativeBars = row?.chartPreview || [];
-  const hasNativeChart = nativeBars.filter((bar) => Number.isFinite(bar?.close)).length >= 2;
-  const interval = chartSettings?.interval || DEFAULT_CHART_SETTINGS.interval;
-  const range = chartSettings?.range || DEFAULT_CHART_SETTINGS.range;
-  const style = chartSettings?.style || DEFAULT_CHART_SETTINGS.style;
-  useEffect(() => {
-    if (!ref.current || !tvSymbol || blockedEmbed || hasNativeChart) return;
-    const container = ref.current;
-    container.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: tvSymbol,
-      interval,
-      range,
-      timezone: "Etc/UTC",
-      theme: "dark",
-      style,
-      locale: "es",
-      hide_side_toolbar: true,
-      allow_symbol_change: false,
-      save_image: false,
-      calendar: false,
-      support_host: "https://www.tradingview.com",
-    });
-    container.appendChild(script);
-    return () => {
-      script.remove();
-      container.innerHTML = "";
-    };
-  }, [tvSymbol, blockedEmbed, hasNativeChart, interval, range, style]);
-  if (!row) return <div className="tvPreviewBox"><div className="previewEmpty">Sin dato</div></div>;
-  const links = externalLinks(row.symbol, row.exchange);
-  if (hasNativeChart || blockedEmbed) {
-    return <div className="tvPreviewBox tvPreviewFallback tvPreviewNative">
-      <UniversalPriceChart bars={nativeBars} symbol={row.symbol} currency={row.currency} tradingViewUrl={links.tradingView} settings={chartSettings} relativeStrength={row.relativeStrength || row.relativeStrengthSeries} rsMainScore={row.rsGlobalPct} benchmarkSymbol={row.benchmarkSymbol} height={520} />
-    </div>;
-  }
-  return <div className="tvPreviewBox"><div className="tradingview-widget-container" ref={ref} /></div>;
+// Gráfico de la vista rápida. Antes montaba el widget incrustado de
+// TradingView y solo caía al gráfico propio si la fila ya traía preview
+// dibujable; como las filas de la cola de revisión llegan sin `chartPreview`,
+// en la práctica lo que se veía era el widget: velas verde/rojo puro (lo que
+// el sistema de diseño prohíbe), barra de herramientas y marca del proveedor.
+// Ahora siempre es el gráfico propio, el mismo de la ficha.
+//
+// Altura menor que en la ficha y en revisión: aquí vive dentro de un panel
+// del modal y el objetivo es pasar de un valor a otro deprisa.
+export function RowPreviewChart({ row, chartSettings = DEFAULT_CHART_SETTINGS }) {
+  return <div className="rowPreviewBox">
+    <RowPriceChart row={row} settings={chartSettings} height={380} />
+  </div>;
 }
 
 export function LeaderTape({ rows = [], activeRow, onSelect, onFavorite, favoriteSymbols, mode = "leader" }) {

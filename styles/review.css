@@ -191,10 +191,6 @@
   background:var(--surface);
 }
 
-.reviewTvChart {
-  padding:0;
-}
-
 /* Wrapper del chart nativo (UniversalPriceChart) cuando hay barras reales.
    Regla defensiva anti "hueco negro": .reviewChart ya aporta fondo/padding/altura,
    pero este wrapper renderiza un canvas propio, así que reforzamos el fondo y el

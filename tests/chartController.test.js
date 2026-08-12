@@ -258,3 +258,31 @@ describe("useChartController · ciclo de vida (ADR §5.4, §5.5)", () => {
     expect(deps).toContain("config.indicators.maSlowLength");
   });
 });
+
+// Regresión: bucle infinito de render cuando el caller OMITE `rsRatingSeries`.
+//
+// Esa prop está en el array de dependencias de la transacción §5.4/§5.5, y esa
+// transacción llama a `viewport.attach()`, que publica un snapshot vía
+// setState. Con un default `[]` escrito en línea, cada render creaba un array
+// nuevo → la dependencia cambiaba siempre → el efecto se reejecutaba → attach
+// publicaba → render → ... hasta "Maximum update depth exceeded", con la
+// pestaña colgada.
+//
+// La ficha del valor nunca lo vio porque siempre pasa la prop. Lo destapó el
+// primer caller que la omite y llega a `availability: "ready"` (la vista
+// rápida y la pantalla de revisión, al sustituir el widget de TradingView por
+// el gráfico propio).
+//
+// Sin DOM no se puede observar el bucle: los efectos no corren en
+// renderToStaticMarkup. Se verifica la invariante en la fuente — el default
+// tiene que ser una constante de módulo con identidad estable.
+describe("useChartController · defaults con identidad estable", () => {
+  it("rsRatingSeries no usa un array literal como default", async () => {
+    const { readFileSync } = await import("node:fs");
+    const source = readFileSync("app/useChartController.js", "utf8");
+
+    expect(source).toMatch(/const EMPTY_RS_RATING_SERIES = \[\];/);
+    expect(source).toMatch(/rsRatingSeries = EMPTY_RS_RATING_SERIES,/);
+    expect(source).not.toMatch(/rsRatingSeries = \[\],/);
+  });
+});

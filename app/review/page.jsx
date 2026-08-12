@@ -3,7 +3,7 @@ import "../../styles/review.css";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import RowTrustSignature from "@/app/RowTrustSignature";
-import UniversalPriceChart from "@/app/UniversalPriceChart";
+import RowPriceChart from "@/app/RowPriceChart";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { metricTruthMetaForRow, rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { getJson } from "@/lib/clientApi";
@@ -23,8 +23,7 @@ import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, buildStockDecisionResolutionSummary, decisionResolutionForSymbol, decisionResolutionHistory, filterRowsByDecisionResolution, reopenStockDecisionResolution, reviewDecisionStateForRows, stockDecisionResolutionFilter } from "@/lib/stockDecisionResolution";
 import { createFavoriteFromRow } from "@/lib/stockRows";
-import { countryCode, externalLinks, isTradingViewWidgetBlocked, stockUrl } from "@/lib/symbols";
-import { chartQuality } from "@/lib/chartDataQuality";
+import { countryCode, externalLinks, stockUrl } from "@/lib/symbols";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 
 function value(row = {}, key) {
@@ -333,82 +332,33 @@ function MiniSparkline({ bars = [] }) {
     <circle cx={x(points.length - 1)} cy={y(last)} r="3.4" className="sparkLast" />
   </svg>;
 }
-function TradingViewPanel({ row }) {
-  const ref = useRef(null);
-  const tvSymbol = row ? externalLinks(row.symbol, row.exchange).tradingViewSymbol : "";
-  useEffect(() => {
-    if (!ref.current || !tvSymbol) return;
-    const container = ref.current;
-    container.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: tvSymbol,
-      interval: "D",
-      range: "6M",
-      timezone: "Etc/UTC",
-      theme: "dark",
-      style: "1",
-      locale: "es",
-      hide_side_toolbar: true,
-      allow_symbol_change: false,
-      save_image: false,
-      calendar: false,
-      support_host: "https://www.tradingview.com",
-    });
-    container.appendChild(script);
-    return () => {
-      script.remove();
-      container.innerHTML = "";
-    };
-  }, [tvSymbol]);
-  return <div className="reviewChart reviewTvChart"><div className="tradingview-widget-container" ref={ref} /></div>;
-}
+// Gráfico de la pantalla de revisión: el mismo de la ficha, vía el envoltorio
+// compartido. Aquí hay más espacio que en la vista rápida, así que la altura
+// es mayor. `RowPriceChart` decide si el `chartPreview` de la fila sirve como
+// fuente local o hay que pedir la serie real — el preview del screener es
+// close-only y no se puede dibujar como velas.
+const REVIEW_CHART_SETTINGS = {
+  ...DEFAULT_CHART_SETTINGS,
+  range: "6M",
+  interval: "D",
+  style: "1",
+  scale: "price",
+  indicators: { ...DEFAULT_CHART_SETTINGS.indicators, rsLine: true },
+};
+
 function ReviewChartPanel({ row, loading = false }) {
-  const links = row ? externalLinks(row.symbol, row.exchange) : {};
-  const bars = row?.chartPreview || [];
-  const reviewSettings = {
-    ...DEFAULT_CHART_SETTINGS,
-    range: "6M",
-    interval: "D",
-    style: "1",
-    scale: "price",
-    indicators: { ...DEFAULT_CHART_SETTINGS.indicators, rsLine: true },
-  };
-  // ADR §3.2 / §9: el caller explícito pasa `localQuality` construido
-  // desde los campos ya producidos por el pipeline de research
-  // (`row.chartEstimated`, `row.chartProvider`). Antes este caller
-  // omitía la calidad y dependedía del default legacy del data model;
-  // el cierre de la migración exige pasar calidad explícita para que el
-  // bloqueo P0 sea visible también desde /review (mismas garantías que
-  // en /stock/[symbol]).
-  const reviewLocalQuality = chartQuality({
-    bars,
-    meta: {
-      estimated: row?.chartEstimated === true,
-      dataProvider: row?.chartProvider || "",
-    },
-  });
-  if (bars.length > 1) {
-    return <div className="reviewChart reviewNativeChart">
-      <UniversalPriceChart
-        bars={bars}
-        symbol={row.symbol}
-        currency={row.currency}
-        tradingViewUrl={links.tradingView}
-        settings={reviewSettings}
-        relativeStrength={row.relativeStrength}
-        rsMainScore={row.rsGlobalPct}
-        benchmarkSymbol={row.benchmarkSymbol}
-        localQuality={reviewLocalQuality}
-        height={520}
-      />
+  if (!row?.symbol) {
+    return <div className="reviewChart">
+      <div className="previewEmpty">{loading ? "Cargando datos..." : "Sin grafico disponible"}</div>
     </div>;
   }
-  return <div className="reviewChart">
-    <div className="previewEmpty">{loading ? "Cargando datos..." : "Sin grafico disponible"}</div>
+  return <div className="reviewChart reviewNativeChart">
+    <RowPriceChart
+      row={row}
+      settings={REVIEW_CHART_SETTINGS}
+      height={520}
+      emptyLabel={loading ? "Cargando datos..." : "Sin grafico disponible"}
+    />
   </div>;
 }
 function metricRows(row = {}) {

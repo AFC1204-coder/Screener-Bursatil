@@ -57,6 +57,16 @@ import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
  * @param {string}  [props.className=""]
  * @param {number}  [props.height=460]
  */
+// Defaults con IDENTIDAD ESTABLE. `rsRatingSeries` entra en el array de
+// dependencias de la transacción §5.4/§5.5, que llama a `viewport.attach()`, y
+// attach publica un snapshot vía setState. Un default `[]` en línea crea un
+// array nuevo en cada render: la dependencia cambia siempre, el efecto se
+// re-ejecuta, attach vuelve a publicar y el ciclo no termina ("Maximum update
+// depth exceeded", con la pestaña colgada). Los callers que sí pasan la prop
+// —la ficha del valor— nunca vieron el fallo; lo destapó el primer caller que
+// la omite y llega a `availability: "ready"`.
+const EMPTY_RS_RATING_SERIES = [];
+
 export function useChartController(props = {}) {
   const {
     bars = [],
@@ -67,7 +77,7 @@ export function useChartController(props = {}) {
     relativeStrength = null,
     benchmarkSymbol = "",
     rsMainScore = null,
-    rsRatingSeries = [],
+    rsRatingSeries = EMPTY_RS_RATING_SERIES,
     patternOverlay = null,
     showPatternDiagnostics = false,
     localQuality = null,

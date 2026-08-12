@@ -1732,13 +1732,13 @@ button.dataHealthSummaryItem:hover,
 .leaderPanelActions {display:flex;gap:7px;flex-wrap:wrap;margin-top:12px
 }
 
-.tvPreviewBox {
+.rowPreviewBox {
   overflow:hidden;
   border:1px solid var(--line);
   background:var(--surface) ;
 }
 
-.tvPreviewFallback {
+.rowPreviewBox {
   display:grid;
   grid-template-rows:minmax(0,1fr) auto;
   gap:12px;
@@ -2364,7 +2364,7 @@ button.dataHealthSummaryItem:hover,
 .filterFooter {margin-top:12px
 }
 
-.tvPreviewBox {
+.rowPreviewBox {
   border-radius:3px;
   border-color:var(--line);
 }
@@ -2392,7 +2392,7 @@ button.dataHealthSummaryItem:hover,
   }
   .leaderActions {grid-area:fav
   }
-  .tvPreviewBox {height:318px
+  .rowPreviewBox {height:318px
   }
   .filterField {grid-template-columns:1fr
   }
@@ -2460,7 +2460,7 @@ button.dataHealthSummaryItem:hover,
   gap:7px;
 }
 
-.tvPreviewBox {
+.rowPreviewBox {
   height:320px;
 }
 
@@ -2699,7 +2699,7 @@ button.dataHealthSummaryItem:hover,
   gap: 16px;
 }
 
-.quickReviewChart .tvPreviewNative {
+.quickReviewChart .rowPreviewBox {
   padding:0;
   border:0;
   background:transparent;
@@ -4978,7 +4978,7 @@ button.decisionIssueBadge:hover,
     max-width:100%;
     overflow:visible;
   }
-  .quickReviewChart .tvPreviewNative {
+  .quickReviewChart .rowPreviewBox {
     height:auto!important;
     min-height:0!important;
   }
