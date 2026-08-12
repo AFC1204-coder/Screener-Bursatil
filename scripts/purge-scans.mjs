@@ -12,8 +12,12 @@
 // Uso:
 //   node --env-file=.env.local --loader ./scripts/loader.mjs \
 //     scripts/purge-scans.mjs [--dry-run] [--write] \
-//     [--retention-days=7] [--batch-size=7] [--pause-ms=2000] \
-//     [--purge-universe] [--universe-max-age-days=45]
+//     [--retention-days=7] [--batch-size=7] [--weight-cap=3000] \
+//     [--pause-ms=2000] [--purge-universe] [--universe-max-age-days=45]
+//
+// --batch-size sigue siendo el TOPE MÁXIMO de elementos por tanda; el
+// tamaño real de cada tanda lo decide --weight-cap (filas hijas acumuladas,
+// vía row_count/total_count) — ver la sección "Agrupado por peso" más abajo.
 //
 // Por defecto corre en --dry-run (reporta qué borraría, no borra nada).
 // Borrar de verdad exige --write explícito.
@@ -94,11 +98,74 @@ const NIGHTLY_LOCAL_ID_PREFIX = "materialized:US:";
 const CRON_LOCAL_ID_PREFIX = "materialized:";
 
 const DEFAULT_RETENTION_DAYS = 7;
-const DEFAULT_BATCH_SIZE = 7; // dentro del rango pedido (5-10)
-const MIN_BATCH_SIZE = 5;
+const DEFAULT_BATCH_SIZE = 7; // dentro del rango pedido (5-10) — sigue siendo el TOPE de elementos por tanda (punto 7), el peso manda por debajo de él
+const MIN_BATCH_SIZE = 1;
 const MAX_BATCH_SIZE = 10;
 const DEFAULT_PAUSE_MS = 2000;
 const DEFAULT_UNIVERSE_MAX_AGE_DAYS = 45;
+
+// ── Agrupado por peso (punto 4-7) ──────────────────────────────────────────
+//
+// Lo aprendido purgando producción hoy (ver AVISO arriba): el número de
+// escaneos padre no predice el coste de un DELETE — lo predicen las filas
+// hijas que arrastra en cascada. Medido contra la instancia Micro real:
+//   - 5.062 filas hijas en una tanda: pasó, pero "lenta" (ya en zona de
+//     riesgo perceptible).
+//   - ~60.000 filas hijas (7 escaneos de ~9.900 cada uno): "canceling
+//     statement due to statement timeout".
+// DEFAULT_WEIGHT_CAP = 3.000 dejar margen a ambos lados con los dos únicos
+// puntos medidos: ~40% por debajo del punto que ya iba lento (5.062), y casi
+// 20× por debajo del punto que falló (60.000) — margen, no ajuste fino.
+// Un escaneo que por sí solo supera el tope (p.ej. los de ~9.900-9.920 filas
+// que pasaron uno-a-uno) va IGUAL solo en su propia tanda (punto 6): el tope
+// decide cuándo DEJAR DE ACUMULAR más elementos, nunca excluye a uno.
+const DEFAULT_WEIGHT_CAP = 3000;
+const MAX_RETRIES = 3; // hasta "dos o tres reintentos" (punto 8)
+const MAX_PAUSE_MS = 60000; // techo del backoff (punto 10) — no crecer sin límite
+
+// Agrupa `candidates` (ya ordenados) en tandas acumulando row_count hasta
+// `weightCap`, respetando `batchSize` como tope máximo de elementos por
+// tanda (punto 7). Un elemento cuyo propio peso ya supera `weightCap` cierra
+// su tanda en solitario en cuanto entra (punto 6) — nunca se descarta ni se
+// deja fuera.
+export function groupByWeight(candidates, { weightCap, batchSize }) {
+  const batches = [];
+  let current = [];
+  let currentWeight = 0;
+  for (const item of candidates) {
+    const weight = Number(item.rowCount || 0);
+    if (current.length > 0 && (currentWeight + weight > weightCap || current.length >= batchSize)) {
+      batches.push(current);
+      current = [];
+      currentWeight = 0;
+    }
+    current.push(item);
+    currentWeight += weight;
+    // Punto 6: un elemento que por sí solo ya supera el tope cierra su tanda
+    // de inmediato — nunca se acumula junto a otros ni se descarta.
+    if (weight > weightCap) {
+      batches.push(current);
+      current = [];
+      currentWeight = 0;
+    }
+  }
+  if (current.length) batches.push(current);
+  return batches;
+}
+
+function batchWeight(items) {
+  return items.reduce((sum, row) => sum + Number(row.rowCount || 0), 0);
+}
+
+// Detecta un timeout de statement en Postgres/PostgREST: code 57014
+// ("query_canceled"/statement_timeout) o el mensaje textual que devuelve
+// PostgREST cuando reenvía el error de Postgres tal cual.
+export function isTimeoutError(error) {
+  const code = error?.details?.code;
+  if (code === "57014") return true;
+  const message = String(error?.message || "");
+  return /statement timeout|canceling statement|query.?timeout/i.test(message);
+}
 
 // ── CLI args ─────────────────────────────────────────────────────────────
 
@@ -111,17 +178,25 @@ export function parseArgs(argv) {
     pauseMs: DEFAULT_PAUSE_MS,
     purgeUniverse: false,
     universeMaxAgeDays: DEFAULT_UNIVERSE_MAX_AGE_DAYS,
+    weightCap: DEFAULT_WEIGHT_CAP,
   };
   for (const arg of argv) {
     const [rawKey, rawValue] = arg.replace(/^--/, "").split("=");
     const key = rawKey.trim();
     if (key === "dry-run") out.dryRun = rawValue === undefined ? true : rawValue !== "false";
     else if (key === "write") out.write = rawValue === undefined ? true : rawValue !== "false";
-    else if (key === "retention-days") out.retentionDays = Math.max(1, Number(rawValue) || DEFAULT_RETENTION_DAYS);
+    else if (key === "retention-days") {
+      const parsed = Number(rawValue);
+      // Number.isFinite (no ||) para que --retention-days=0 no caiga al
+      // default por ser 0 "falsy" — punto 11 lo necesita para forzar
+      // candidatos en dry-run cuando no queda nada fuera de la ventana.
+      out.retentionDays = Math.max(0, Number.isFinite(parsed) ? parsed : DEFAULT_RETENTION_DAYS);
+    }
     else if (key === "batch-size") out.batchSize = Math.min(MAX_BATCH_SIZE, Math.max(MIN_BATCH_SIZE, Number(rawValue) || DEFAULT_BATCH_SIZE));
     else if (key === "pause-ms") out.pauseMs = Math.max(0, Number(rawValue) || 0);
     else if (key === "purge-universe") out.purgeUniverse = rawValue === undefined ? true : rawValue !== "false";
     else if (key === "universe-max-age-days") out.universeMaxAgeDays = Math.max(1, Number(rawValue) || DEFAULT_UNIVERSE_MAX_AGE_DAYS);
+    else if (key === "weight-cap") out.weightCap = Math.max(1, Number(rawValue) || DEFAULT_WEIGHT_CAP);
   }
   // Mismo criterio que refresh-bars.mjs/scan-universe.mjs: --write gana sobre
   // el default dry-run=true, pero --dry-run=true explícito manda sobre
@@ -182,7 +257,7 @@ export async function fetchAllUniverseSnapshots(config) {
   return supabaseRequestAll("universe_snapshots", {
     query: [
       `owner_id=eq.${encodeURIComponent(config.ownerId)}`,
-      "select=id,cache_key,markets,created_at,updated_at",
+      "select=id,cache_key,markets,created_at,updated_at,total_count",
       "order=updated_at.asc",
     ].join("&"),
   }, { maxRows: 5000, pageSize: 500 });
@@ -214,71 +289,119 @@ export function planUniversePurge(snapshots, { universeMaxAgeDays }) {
   const candidates = [];
   for (const row of snapshots) {
     const { keep, reason } = classifyUniverseSnapshot(row, cutoff);
-    const entry = { id: row.id, cacheKey: row.cache_key, markets: row.markets, createdAt: row.created_at, updatedAt: row.updated_at, reason };
+    // total_count es el nº de filas escritas en universe_snapshot_symbols
+    // para esta instantánea (lib/universeEngine.js writeSupabaseSnapshot:
+    // total_count = universe.length + excluded.length = rows.length, y ese
+    // mismo `rows` es exactamente lo que se inserta ahí) — mismo patrón que
+    // row_count en `scans`, disponible sin consultar la tabla hija.
+    const entry = { id: row.id, cacheKey: row.cache_key, markets: row.markets, createdAt: row.created_at, updatedAt: row.updated_at, rowCount: Number(row.total_count || 0), reason };
     (keep ? kept : candidates).push(entry);
   }
   // `snapshots` ya viene ordenado updated_at.asc de fetchAllUniverseSnapshots.
   return { kept, candidates, cutoffIso: new Date(cutoff).toISOString() };
 }
 
-// ── Borrado por tandas, con verificación tras cada una (punto 5) ──────────
+// ── Borrado por tandas, agrupadas por peso, con reintento adaptativo ──────
 //
-// `table` y `verifySelect` son los únicos parámetros que cambian entre
-// TAREA 1 (scans) y TAREA 2 (universe_snapshots) — el resto de la lógica de
-// tandas/pausa/verificación es idéntica a propósito, para que ambas purgas
-// se comporten igual frente a la instancia.
-export async function deleteInBatches(candidates, { table, batchSize, pauseMs, label }) {
-  const batches = [];
-  for (let i = 0; i < candidates.length; i += batchSize) batches.push(candidates.slice(i, i + batchSize));
+// `table` es el único parámetro que cambia entre TAREA 1 (scans) y TAREA 2
+// (universe_snapshots) — el resto de la lógica de tandas/pausa/verificación
+// es idéntica a propósito, para que ambas purgas se comporten igual frente a
+// la instancia.
+//
+// Cola de trabajo en vez de bucle sobre un array fijo: cuando una tanda falla
+// por timeout (punto 8) se divide por la mitad y las dos mitades vuelven a la
+// cola (no se pierde ningún candidato, solo se reintenta más fino). Si una
+// tanda de un solo elemento sigue fallando tras agotar los reintentos, para
+// ahí y lo reporta (punto 9). La pausa entre tandas crece tras un fallo y
+// vuelve a la normal tras una racha de tandas OK (punto 10).
+export async function deleteInBatches(candidates, { table, weightCap, batchSize, pauseMs, label, maxRetries = MAX_RETRIES, maxPauseMs = MAX_PAUSE_MS }) {
+  const initialBatches = groupByWeight(candidates, { weightCap, batchSize });
+  const queue = initialBatches.map((items) => ({ items, attempt: 0 }));
 
-  const report = { table, batches: [], deletedCount: 0, deletedRowCount: 0, stoppedEarly: false, error: null };
+  const report = { table, batches: [], deletedCount: 0, deletedRowCount: 0, stoppedEarly: false, error: null, failedItem: null };
 
-  for (let b = 0; b < batches.length; b += 1) {
-    const batch = batches[b];
-    const ids = batch.map((row) => row.id);
-    console.log(`  Tanda ${b + 1}/${batches.length} (${label}): borrando ${ids.length} filas de '${table}'...`);
+  let currentPause = pauseMs;
+  let consecutiveOk = 0;
+  let batchIndex = 0;
+
+  while (queue.length) {
+    const { items, attempt } = queue.shift();
+    batchIndex += 1;
+    const ids = items.map((row) => row.id);
+    const weight = batchWeight(items);
+    console.log(`  Tanda ${batchIndex} (${label}): borrando ${ids.length} filas de '${table}' (~${weight} filas hijas vía cascade)${attempt ? ` [reintento ${attempt}/${maxRetries}]` : ""}...`);
+
+    let stepFailed = null; // { error, retryable }
     try {
       await supabaseRequest(table, {
         method: "DELETE",
         query: `id=in.(${ids.map(encodeURIComponent).join(",")})`,
       });
-    } catch (error) {
-      report.error = `Tanda ${b + 1} falló al borrar: ${error?.message || error}`;
-      report.stoppedEarly = true;
-      console.log(`  ERROR: ${report.error}`);
-      break;
-    }
-
-    // Verificación ligera (punto 5): re-consulta los mismos IDs por PK, debe
-    // volver vacío. Acotada a un puñado de IDs — no un COUNT ni un barrido.
-    let stillPresent = [];
-    try {
-      stillPresent = await supabaseRequest(table, {
+      // Verificación ligera (punto 5): re-consulta los mismos IDs por PK, debe
+      // volver vacío. Acotada a un puñado de IDs — no un COUNT ni un barrido.
+      const stillPresent = await supabaseRequest(table, {
         query: `id=in.(${ids.map(encodeURIComponent).join(",")})&select=id&limit=${ids.length}`,
       });
+      if (Array.isArray(stillPresent) && stillPresent.length) {
+        const error = new Error(`${stillPresent.length} filas seguían presentes tras el DELETE (verificación falló)`);
+        stepFailed = { error, retryable: false };
+      }
     } catch (error) {
-      report.error = `Tanda ${b + 1} se borró pero la verificación posterior falló: ${error?.message || error}`;
-      report.stoppedEarly = true;
-      console.log(`  ERROR: ${report.error}`);
-      break;
-    }
-    if (Array.isArray(stillPresent) && stillPresent.length) {
-      report.error = `Tanda ${b + 1}: ${stillPresent.length} filas seguían presentes tras el DELETE (verificación falló).`;
-      report.stoppedEarly = true;
-      console.log(`  ERROR: ${report.error}`);
-      break;
+      stepFailed = { error, retryable: isTimeoutError(error) };
     }
 
-    const rowCountSum = batch.reduce((sum, row) => sum + (row.rowCount || 0), 0);
-    report.deletedCount += batch.length;
-    report.deletedRowCount += rowCountSum;
-    report.batches.push({ index: b + 1, ids, verified: true });
-    console.log(`  OK: tanda ${b + 1} verificada (${batch.length} filas, ${rowCountSum ? `${rowCountSum} filas hijas vía cascade` : "sin filas hijas contadas"}).`);
+    if (!stepFailed) {
+      report.deletedCount += items.length;
+      report.deletedRowCount += weight;
+      report.batches.push({ index: batchIndex, ids, weight, attempt, verified: true });
+      console.log(`  OK: tanda ${batchIndex} verificada (${items.length} filas, ${weight ? `${weight} filas hijas vía cascade` : "sin filas hijas contadas"}).`);
 
-    if (b < batches.length - 1 && pauseMs > 0) {
-      console.log(`  Pausa de ${pauseMs}ms antes de la siguiente tanda...`);
-      await sleep(pauseMs);
+      consecutiveOk += 1;
+      if (consecutiveOk >= 3 && currentPause > pauseMs) {
+        console.log(`  Racha de ${consecutiveOk} tandas OK seguidas: la pausa vuelve a ${pauseMs}ms.`);
+        currentPause = pauseMs;
+      }
+      if (queue.length && currentPause > 0) {
+        console.log(`  Pausa de ${currentPause}ms antes de la siguiente tanda...`);
+        await sleep(currentPause);
+      }
+      continue;
     }
+
+    // Punto 10: tras un fallo, la pausa crece (se dobla, con techo) y la
+    // racha de éxitos se reinicia — la base necesita respirar más.
+    consecutiveOk = 0;
+    currentPause = Math.min(maxPauseMs, Math.max(currentPause * 2, pauseMs * 2));
+
+    if (stepFailed.retryable && attempt < maxRetries && items.length > 1) {
+      const mid = Math.ceil(items.length / 2);
+      const first = items.slice(0, mid);
+      const second = items.slice(mid);
+      console.log(`  Tanda ${batchIndex} falló por timeout (${items.length} elementos, ~${weight} filas). Espera ${currentPause}ms y reintenta dividida en ${first.length}+${second.length}.`);
+      await sleep(currentPause);
+      queue.unshift({ items: second, attempt: attempt + 1 });
+      queue.unshift({ items: first, attempt: attempt + 1 });
+      continue;
+    }
+
+    if (stepFailed.retryable && attempt < maxRetries && items.length === 1) {
+      console.log(`  Tanda ${batchIndex} (1 elemento, ~${weight} filas) falló por timeout. Espera ${currentPause}ms y reintenta (${attempt + 1}/${maxRetries}).`);
+      await sleep(currentPause);
+      queue.unshift({ items, attempt: attempt + 1 });
+      continue;
+    }
+
+    // Punto 9: un elemento solo que sigue fallando tras agotar los
+    // reintentos (o un fallo no reintentable, p.ej. verificación) para todo
+    // y lo reporta con detalle.
+    const failed = items.length === 1 ? items[0] : null;
+    report.error = failed
+      ? `Elemento ${failed.localId || failed.cacheKey || failed.id} falló tras ${attempt} reintento(s) (${failed.rowCount || 0} filas hijas): ${stepFailed.error?.message || stepFailed.error}`
+      : `Tanda de ${items.length} elementos (~${weight} filas) falló${stepFailed.retryable ? ` tras ${attempt} reintento(s)` : ""}: ${stepFailed.error?.message || stepFailed.error}`;
+    report.stoppedEarly = true;
+    report.failedItem = failed;
+    console.log(`  ERROR: ${report.error}`);
+    break;
   }
 
   return report;
@@ -328,6 +451,21 @@ function logUniversePlan(plan, args) {
   }
 }
 
+// Vista previa de cómo se agruparían las tandas por peso (punto 11): corre
+// tanto en dry-run como antes de borrar de verdad, así se puede comprobar
+// la agrupación sin necesidad de --write.
+function logBatchPreview(candidates, { weightCap, batchSize, label }) {
+  if (!candidates.length) return;
+  const batches = groupByWeight(candidates, { weightCap, batchSize });
+  console.log("");
+  console.log(`Tandas por peso (${label}, tope=${weightCap} filas hijas, máx ${batchSize} elementos/tanda): ${batches.length} tanda(s)`);
+  batches.forEach((items, i) => {
+    const weight = batchWeight(items);
+    const flag = weight > weightCap ? "  [supera el tope — elemento único que va solo]" : "";
+    console.log(`  - Tanda ${i + 1}: ${items.length} elemento(s), ${weight} filas hijas${flag}`);
+  });
+}
+
 // ── Main ────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -339,7 +477,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`=== purge-scans.mjs — modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"} retention-days=${args.retentionDays} batch-size=${args.batchSize} pause-ms=${args.pauseMs}${args.purgeUniverse ? ` purge-universe universe-max-age-days=${args.universeMaxAgeDays}` : ""} ===`);
+  console.log(`=== purge-scans.mjs — modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"} retention-days=${args.retentionDays} batch-size=${args.batchSize} weight-cap=${args.weightCap} pause-ms=${args.pauseMs}${args.purgeUniverse ? ` purge-universe universe-max-age-days=${args.universeMaxAgeDays}` : ""} ===`);
 
   // ── TAREA 1 ──────────────────────────────────────────────────────────
   console.log("");
@@ -347,13 +485,15 @@ async function main() {
   const scans = await fetchAllScans(config);
   const scanPlan = planScanPurge(scans, { retentionDays: args.retentionDays });
   logScanPlan(scanPlan, args);
+  logBatchPreview(scanPlan.candidates, { weightCap: args.weightCap, batchSize: args.batchSize, label: "scans" });
 
   if (!args.dryRun) {
     if (scanPlan.candidates.length) {
       console.log("");
-      console.log(`Borrando ${scanPlan.candidates.length} escaneos en tandas de ${args.batchSize}...`);
+      console.log(`Borrando ${scanPlan.candidates.length} escaneos...`);
       const report = await deleteInBatches(scanPlan.candidates, {
         table: "scans",
+        weightCap: args.weightCap,
         batchSize: args.batchSize,
         pauseMs: args.pauseMs,
         label: "scans",
@@ -374,13 +514,15 @@ async function main() {
     const snapshots = await fetchAllUniverseSnapshots(config);
     const universePlan = planUniversePurge(snapshots, { universeMaxAgeDays: args.universeMaxAgeDays });
     logUniversePlan(universePlan, args);
+    logBatchPreview(universePlan.candidates, { weightCap: args.weightCap, batchSize: args.batchSize, label: "universe_snapshots" });
 
     if (!args.dryRun) {
       if (universePlan.candidates.length) {
         console.log("");
-        console.log(`Borrando ${universePlan.candidates.length} instantáneas en tandas de ${args.batchSize}...`);
+        console.log(`Borrando ${universePlan.candidates.length} instantáneas...`);
         const report = await deleteInBatches(universePlan.candidates, {
           table: "universe_snapshots",
+          weightCap: args.weightCap,
           batchSize: args.batchSize,
           pauseMs: args.pauseMs,
           label: "universe_snapshots",
