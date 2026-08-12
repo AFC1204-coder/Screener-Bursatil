@@ -603,7 +603,7 @@ export default function MarketHealthPage() {
                   {data.weinsteinTape.leadingSectors?.map((sector) => (
                     <div className="evidenceRow" key={sector.symbol}>
                       <span><b>{sector.name}</b><small>{sector.symbol}</small></span>
-                      <span><b>{num(sector.score)}</b><small>W tape</small></span>
+                      <span><b>{num(sector.score)}</b><small>Estructura</small></span>
                       <span><b>{pct(sector.rs1m)}</b><small>RS 1M vs SPY</small></span>
                     </div>
                   ))}
@@ -767,7 +767,7 @@ export default function MarketHealthPage() {
                   <div className="tableWrap">
                     <div className="marketIndexesTableWrap">
                       <table className="marketIndexesTable">
-                        <thead><tr>{["Índice", "Etapa", "Etapa 30s", "Score", "W tape", "1M", "3M", "6M", "52w", "Desde mín 52w", "MM30s", "SMA200 slope", "Dist/Acc", "Fecha"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
+                        <thead><tr>{["Índice", "Etapa", "Etapa 30s", "Score", "Estructura", "1M", "3M", "6M", "52w", "Desde mín 52w", "MM30s", "SMA200 slope", "Dist/Acc", "Fecha"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
                         <tbody>{data.indexes?.map((x) => (
                           <tr key={x.symbol}>
                             <td><b>{x.name}</b><small>{x.symbol}</small></td>
