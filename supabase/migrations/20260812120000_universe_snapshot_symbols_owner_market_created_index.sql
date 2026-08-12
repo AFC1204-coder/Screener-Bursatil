@@ -1,0 +1,27 @@
+-- El refresco nocturno de barras (scripts/refresh-bars.mjs:204,
+-- fetchLatestUsSnapshotId) consulta universe_snapshot_symbols filtrando por
+-- owner_id y market, ordenando por created_at desc. Sin un índice que cubra
+-- esa combinación, Postgres recurría a un Parallel Seq Scan: 784 ms y 20.996
+-- bloques leídos con 58 instantáneas acumuladas (204.493 filas). Con la
+-- instantánea del universo corriendo en paralelo de madrugada, esa consulta
+-- cruzaba el statement_timeout de 8 s y tumbaba el refresco dos noches
+-- seguidas.
+--
+-- Medido tras crear el índice: 0,109 ms y 4 bloques leídos.
+--
+-- Ya se creó a mano en producción con CREATE INDEX CONCURRENTLY (para no
+-- bloquear escrituras mientras se construía sobre una tabla con 200k+ filas).
+-- Esta migración usa la variante SIN CONCURRENTLY a propósito:
+-- CONCURRENTLY no puede ejecutarse dentro de un bloque de transacción, y
+-- este repo aplica cada archivo de supabase/migrations/ con
+-- `psql --single-transaction -f <archivo>`
+-- (ver psqlArgs/applySql en tests/integration/_ephemeralPostgresHarness.mjs,
+-- usado tanto por applyExecutionLifecycle como por la suite de paridad de
+-- esquema). CONCURRENTLY fallaría ahí con
+-- "CREATE INDEX CONCURRENTLY cannot run inside a transaction block". Es el
+-- mismo motivo por el que ninguno de los índices existentes en
+-- supabase/schema.sql usa CONCURRENTLY. Repetir esta migración contra la
+-- producción donde el índice ya existe es barato: `if not exists` la
+-- convierte en no-op.
+create index if not exists universe_snapshot_symbols_owner_market_created_idx
+  on public.universe_snapshot_symbols (owner_id, market, created_at desc);

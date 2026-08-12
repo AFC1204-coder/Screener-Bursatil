@@ -71,7 +71,18 @@ const PROJECTED_TABLES = Object.freeze(["scans", "scan_results", ...HITO_TABLES]
 // against a database where it already ran once fails with "trigger already
 // exists" — exactly what happened deploying to production today. Reviewed:
 // single added DDL guard line, no new pg_cron/net/http surface.
-const REVIEWED_BOOTSTRAP_SOURCE_DIGEST = "ca42831d6553d8fa296a0ae6a70dfccc33609f98d85a3e72151e24f52b992fb6";
+//
+// Updated 2026-08-12: added `create index if not exists
+// universe_snapshot_symbols_owner_market_created_idx on
+// universe_snapshot_symbols(owner_id, market, created_at desc);` right after
+// the table's two existing indexes. Backfills into schema.sql an index that
+// was already created by hand in production (CONCURRENTLY, outside any
+// transaction) to fix fetchLatestUsSnapshotId's 784 ms / 20,996-block
+// Parallel Seq Scan in scripts/refresh-bars.mjs — same combination
+// (owner_id, market, created_at desc) here, without CONCURRENTLY since this
+// file gets applied as a single statement batch. Reviewed: single added
+// plain `create index if not exists` line, no new pg_cron/net/http surface.
+const REVIEWED_BOOTSTRAP_SOURCE_DIGEST = "4cd6c73429e490080d8069c0dab5431881d15813e930aa00e898462a887d6839";
 const REVIEWED_FOUNDATION_BASE_SOURCE_DIGEST = "dcf499b681c3fabc8fdd42b2481494e98aa87c8711235b5e3fb40057fcab2a56";
 const REPAIRED_FOUNDATION_BASE_SOURCE_DIGEST = "31c96fc15b795abec6393c4c2a4549f5daf0f98a4ab16d827f245d4c049b7145";
 const PG_CRON_EXTENSION_SQL = "create extension if not exists pg_cron;";

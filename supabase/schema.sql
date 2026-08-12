@@ -1536,6 +1536,7 @@ create index if not exists alerts_updated_idx on alerts(owner_id, updated_at des
 create index if not exists universe_snapshots_cache_idx on universe_snapshots(owner_id, cache_key, updated_at desc);
 create index if not exists universe_snapshot_symbols_snapshot_idx on universe_snapshot_symbols(snapshot_id, passed);
 create index if not exists universe_snapshot_symbols_symbol_idx on universe_snapshot_symbols(owner_id, symbol);
+create index if not exists universe_snapshot_symbols_owner_market_created_idx on universe_snapshot_symbols(owner_id, market, created_at desc);
 create index if not exists daily_bars_symbol_date_idx on daily_bars(owner_id, symbol, trade_date desc);
 create index if not exists daily_bars_date_idx on daily_bars(owner_id, trade_date desc);
 create index if not exists fundamental_snapshots_symbol_idx on fundamental_snapshots(owner_id, symbol, period_end desc);
