@@ -24,6 +24,11 @@ const BASE_URL = env.SUPABASE_URL;
 const KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 if (!BASE_URL || !KEY) throw new Error("Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en .env.local");
 
+// Mismo valor por defecto que supabaseConfig() en lib/supabaseServer.js
+// (DEFAULT_OWNER = "personal"), leído de la misma fuente (.env.local) para
+// que este servidor consulte con el mismo owner_id que usa el producto.
+const OWNER_ID = (env.STATSEDGE_OWNER_ID || "personal").trim() || "personal";
+
 const TABLES = new Set([
   "scans", "scan_results", "scan_symbol_history", "symbol_resolutions",
   "shadow_instruments", "app_settings", "favorites", "provider_runs",
@@ -33,19 +38,51 @@ const TABLES = new Set([
   "rs_weekly_items", "rs_weekly_runs",
 ]);
 
+// Subconjunto de TABLES cuyas filas tienen columna owner_id (verificado
+// contra supabase/schema.sql y supabase/migrations/*.sql). rs_weekly_runs
+// queda fuera a propósito: no existe como tabla ni vista en ningún .sql del
+// repo (el código de producto usa rs_weekly_snapshots), así que no se le
+// puede asumir la columna.
+const OWNER_SCOPED_TABLES = new Set([
+  "scans", "scan_results", "scan_symbol_history", "symbol_resolutions",
+  "shadow_instruments", "app_settings", "favorites", "provider_runs",
+  "scan_executions", "scan_result_sets", "scan_work_items", "scan_result_set_rows",
+  "universe_snapshots", "universe_snapshot_symbols",
+  "daily_bars", "fundamental_snapshots",
+  "rs_weekly_items",
+]);
+
 const MAX_LIMIT = 200;
+
+// Detecta si el filtro crudo ya trae owner_id, tanto en forma de parámetro
+// top-level (owner_id=eq.x) como embebido en un grupo lógico de PostgREST
+// (or=(owner_id.eq.x,...)).
+function filterHasOwnerId(filter) {
+  if (!filter) return false;
+  if (/(^|&)owner_id=/.test(filter)) return true;
+  if (/owner_id\.(eq|neq|gt|gte|lt|lte|like|ilike|is|in)\./.test(filter)) return true;
+  return false;
+}
 
 async function queryTable({ table, select, filter, order, limit }) {
   if (!TABLES.has(table)) throw new Error(`Tabla no permitida: ${table}. Permitidas: ${[...TABLES].join(", ")}`);
+  if (filter && /[\r\n]/.test(filter)) throw new Error("filter no puede contener saltos de línea");
+
+  let effectiveFilter = filter || "";
+  let ownerFilterAdded = false;
+  if (OWNER_SCOPED_TABLES.has(table) && !filterHasOwnerId(effectiveFilter)) {
+    const ownerClause = `owner_id=eq.${encodeURIComponent(OWNER_ID)}`;
+    effectiveFilter = effectiveFilter ? `${effectiveFilter}&${ownerClause}` : ownerClause;
+    ownerFilterAdded = true;
+  }
+
   const params = new URLSearchParams();
   params.set("select", select || "*");
   if (order) params.set("order", order);
   params.set("limit", String(Math.min(Number(limit) || 20, MAX_LIMIT)));
   let query = params.toString();
-  if (filter) {
-    if (/[\r\n]/.test(filter)) throw new Error("filter no puede contener saltos de línea");
-    query += `&${filter}`;
-  }
+  if (effectiveFilter) query += `&${effectiveFilter}`;
+
   const url = `${BASE_URL.replace(/\/$/, "")}/rest/v1/${table}?${query}`;
   const response = await fetch(url, {
     method: "GET",
@@ -53,6 +90,10 @@ async function queryTable({ table, select, filter, order, limit }) {
   });
   const text = await response.text();
   if (!response.ok) throw new Error(`PostgREST ${response.status}: ${text.slice(0, 500)}`);
+
+  if (ownerFilterAdded) {
+    return `[MCP: se añadió automáticamente el filtro owner_id=eq.${OWNER_ID} porque la consulta no lo incluía]\n${text}`;
+  }
   return text;
 }
 
