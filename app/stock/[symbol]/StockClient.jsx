@@ -56,6 +56,9 @@ function StockCurveSvg({ decision = "vigilar", width = 96, height = 32 }) {
         : "var(--curve-track)";
   const dotX = decision === "vigilar" ? 38 : decision === "auditar" ? 70 : 96;
   const dotY = decision === "vigilar" ? 22 : decision === "auditar" ? 10 : 32;
+  // "sin-dato": la curva se dibuja pero SIN punto. Situar el punto en algún
+  // sitio sería afirmar una posición en la curva que no se ha medido.
+  const hasDot = decision === "vigilar" || decision === "auditar" || decision === "descartar";
   return (
     <svg className="stockCurveSvg" viewBox="0 0 120 44" width={width} height={height} aria-hidden="true">
       <path
@@ -65,7 +68,7 @@ function StockCurveSvg({ decision = "vigilar", width = 96, height = 32 }) {
         strokeWidth="var(--curve-stroke)"
         strokeLinecap="round"
       />
-      <circle cx={dotX} cy={dotY} r="var(--curve-dot)" fill={color} />
+      {hasDot ? <circle cx={dotX} cy={dotY} r="var(--curve-dot)" fill={color} /> : null}
     </svg>
   );
 }
@@ -77,7 +80,9 @@ function DecisionCurveChip({ decision = "vigilar", label = "Etapa", stageLabel =
     ? "Vigilar"
     : decision === "auditar"
       ? "Auditar"
-      : "Descartar";
+      : decision === "sin-dato"
+        ? "Sin dato"
+        : "Descartar";
   return (
     <div className="stockDecisionChip" data-decision={decision} aria-label={`Decisión: ${decisionLabel}`}>
       <StockCurveSvg decision={decision} />
@@ -87,6 +92,25 @@ function DecisionCurveChip({ decision = "vigilar", label = "Etapa", stageLabel =
         {stageLabel ? <span className="stockDecisionChipLabel">{stageLabel}</span> : null}
       </div>
     </div>
+  );
+}
+
+/* Estado vacío de la ficha: el símbolo no tiene serie de precios real ni
+   identidad reconocible en ningún proveedor. No se pinta precio, ni etapa, ni
+   decisión — no hay nada que el sistema pueda demostrar sobre este valor. */
+function StockUnavailableBlock({ symbol = "" }) {
+  return (
+    <section className="stockPanel stockUnavailable" aria-label="Sin datos para este símbolo">
+      <h1 className="stockIdentityTitle">{symbol}</h1>
+      <p className="stockUnavailableLead">Sin datos de mercado para este símbolo.</p>
+      <p className="stockUnavailableBody">
+        No hay serie de precios ni ficha de empresa disponibles, así que no se
+        muestra precio, etapa ni ninguna lectura técnica. Comprueba el ticker —
+        puede estar mal escrito, pertenecer a un mercado fuera de cobertura o
+        haber dejado de cotizar.
+      </p>
+      <a className="stockUnavailableBack" href="/">Volver al screener</a>
+    </section>
   );
 }
 
@@ -115,6 +139,7 @@ function N0VerdictBlock({
   freshness,
   coverage,
   chartEstimated,
+  chartUnavailable,
   decisionDesk,
   setupDisplay,
   brake,
@@ -160,7 +185,9 @@ function N0VerdictBlock({
         { label: "Cierre", value: freshness.priceDate ? compactDate(freshness.priceDate) : "Sin fecha" },
         { label: "Cobertura", value: coverage.label || "Completa" },
         { label: "RS", value: freshness.rsGlobalAsOf ? `${compactDate(freshness.rsGlobalAsOf)} · n=${Math.round(freshness.rsGlobalSample || 0)}` : "Sin snapshot" },
-        ...(chartEstimated ? [{ label: "Histórico", value: "Estimado" }] : []),
+        ...(chartUnavailable
+          ? [{ label: "Histórico", value: "Sin serie" }]
+          : chartEstimated ? [{ label: "Histórico", value: "Estimado" }] : []),
         ...(!priceSnapshot?.coherent ? [{ label: "Cotización", value: "Intradía distinta" }] : []),
       ]} />
 
@@ -1745,8 +1772,15 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     }),
     [data?.chartBars, data?.dataQuality, data?.chartProvider],
   );
+  // "missing" (ausencia declarada) y "estimated" (serie sintética) son estados
+  // distintos: el primero se muestra como hueco explícito, el segundo ya no se
+  // emite. chartEstimated conserva su significado histórico —serie no
+  // decision-grade— para no cambiar el resto de la ficha.
+  const chartUnavailable = localQuality.status === "missing";
   const chartEstimated = localQuality.status !== "real";
-  const chartSourceDetail = chartEstimated ? "historico estimado por fallback operativo" : "calculada desde barras";
+  const chartSourceDetail = chartUnavailable
+    ? "sin serie de precios real"
+    : chartEstimated ? "historico estimado por fallback operativo" : "calculada desde barras";
   const compactProfile = data ? [data.sector, data.industry, data.country].filter(Boolean).join(" · ") : "";
   const setupPattern = useMemo(() => {
     const pattern = data?.setupPattern || (data?.chartBars?.length ? setupPatternForBars(data.chartBars) : null);
@@ -1917,6 +1951,10 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   // Decisión (vigilar / auditar / descartar): se deriva del estado del
   // foco metodológico. Si no hay foco, se mira el verdict del setup.
   const decisionState = (() => {
+    // Sin serie real no hay decisión que emitir. El default histórico era
+    // "auditar", que convertía la ausencia de dato en un veredicto técnico
+    // sobre valores de los que el sistema no sabe nada.
+    if (chartUnavailable) return "sin-dato";
     const focusState = decisionDesk?.decisionFocus?.state || decisionDesk?.status || "";
     const validated = decisionResolution?.key || decisionValidationKey;
     if (validated === "vigilar" || /listo|ready/i.test(focusState)) return "vigilar";
@@ -2115,7 +2153,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     { label: "Cierre", value: freshness.priceDate ? compactDate(freshness.priceDate) : "—", state: freshness.priceDate ? (chartEstimated ? "stale" : "value") : "ghost", suffix: chartEstimated && freshness.priceDate ? "est" : "", source: metricSourceState(chartEstimated ? "proxy" : "measured", "Cierre", "cierre del proveedor") },
     { label: "RS global", value: freshness.rsGlobalAsOf ? `${compactDate(freshness.rsGlobalAsOf)} · ${sampleText(freshness.rsGlobalSample)}` : "Sin snapshot", state: freshness.rsGlobalAsOf ? "value" : "ghost", source: rsUniverseSource },
     { label: "Cobertura", value: coverage.label || "Completa", state: coverage.label ? "value" : "ghost", source: coverage.label ? metricSourceState("measured", "Cobertura", "auditoría interna") : metricSourceState("review", "Cobertura", "sin dato") },
-    { label: "Estimación", value: chartEstimated ? "Histórico estimado" : "Histórico en vivo", state: "value", source: chartEstimated ? metricSourceState("review", "Estimación", chartSourceDetail) : metricSourceState("measured", "Estimación", "live") },
+    { label: "Histórico", value: chartUnavailable ? "Sin serie de precios" : chartEstimated ? "Histórico estimado" : "Histórico en vivo", state: chartUnavailable ? "ghost" : "value", source: chartEstimated ? metricSourceState("review", "Histórico", chartSourceDetail) : metricSourceState("measured", "Histórico", "live") },
     { label: "Fundamentales", value: freshness.fundamentalsAgeDays != null ? `${freshness.fundamentalsAgeDays} días` : "Sin fecha", state: freshness.fundamentalsAgeDays != null ? "value" : "ghost", source: freshness.fundamentalsAgeDays != null ? metricSourceState("measured", "Fundamentales", "estado financiero del proveedor") : metricSourceState("review", "Fundamentales", "sin fecha") },
   ] : [];
 
@@ -2129,6 +2167,14 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     </>
   );
 
+  // Símbolo sin datos: la ficha entera se sustituye por el estado vacío. No se
+  // renderiza N0 (precio + decisión) ni ningún bloque derivado de barras.
+  if (data?.notFound) {
+    return <main className="page stockPage">
+      <StockUnavailableBlock symbol={symbol} />
+    </main>;
+  }
+
   return <main className="page stockPage">
     {/* N0 — Veredicto (siempre visible, sin scroll) */}
     <N0VerdictBlock
@@ -2138,6 +2184,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       freshness={freshness}
       coverage={coverage}
       chartEstimated={chartEstimated}
+      chartUnavailable={chartUnavailable}
       decisionDesk={decisionDesk}
       setupDisplay={setupDisplay}
       brake={brake}

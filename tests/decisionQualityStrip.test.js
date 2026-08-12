@@ -100,7 +100,11 @@ describe("DecisionQualityStrip", () => {
     expect(html).toContain("Priorizar alta confianza");
   });
 
-  it("expone el resumen accionable tambien en resultados moviles", () => {
+  // Los grupos "Decisiones" y "Auditoría y datos" se retiraron de la lista móvil
+  // igual que de escritorio (principio 1): la pantalla principal no muestra
+  // auditoría interna. Los componentes siguen existiendo y probándose arriba;
+  // aquí se fija que la LISTA ya no los monta.
+  it("no monta rails de decisión ni de auditoría en resultados moviles", () => {
     const html = renderToStaticMarkup(React.createElement(MobileResultList, {
       rows: [],
       totalRows: 4,
@@ -130,20 +134,22 @@ describe("DecisionQualityStrip", () => {
       emptyLabel: "Sin filas en esta pagina",
     }));
 
-    expect(html).toContain("decisionRail mobile");
-    expect(html).toContain("decisionOperatingBrief compact");
-    expect(html).toContain("Operable");
-    expect(html).toContain("Auditar");
-    expect(html).toContain("aria-pressed=\"true\"");
+    expect(html).not.toContain("decisionRail");
+    expect(html).not.toContain("decisionOperatingBrief");
+    expect(html).not.toContain("decisionQualityStrip");
+    expect(html).not.toContain("dataHealthSummaryRail");
+    expect(html).not.toContain("scoreAuditSummaryRail");
+    expect(html).not.toContain("Lectura operativa");
+    // El estado vacío y los filtros propios de la lista siguen intactos.
     expect(html).toContain("Sin filas en esta pagina");
+    expect(html).toContain("mobileFilterDisclosure");
   });
 
   // La fila móvil ya no lleva veredicto ni maquinaria de fiabilidad: muestra
   // las mismas siete columnas que escritorio (docs/principios-producto.md,
   // principios 1 y 7). El contrato completo de columnas se prueba en
-  // tests/screenerSevenColumns.test.js; aquí solo se comprueba que los rails
-  // de decisión de la LISTA siguen vivos y que la FILA ya no los repite.
-  it("deja los rails de decisión en la lista móvil y los quita de la fila", () => {
+  // tests/screenerSevenColumns.test.js.
+  it("pinta las siete columnas en la fila móvil sin maquinaria de fiabilidad", () => {
     const html = renderToStaticMarkup(React.createElement(MobileResultList, {
       rows: [{
         symbol: "FRAG",
@@ -422,7 +428,10 @@ describe("DecisionQualityStrip", () => {
     expect(html).toContain("alta confianza");
   });
 
-  it("explica la vista filtrada antes de investigar resultados", () => {
+  // Los chips dicen QUÉ está filtrado y cuántas filas quedan; ya no emiten el
+  // "Brief vista" (veredicto + Freno + Primero), que era el mismo juicio
+  // operativo del panel Decisiones condicionado a tener filtros activos.
+  it("explica la vista filtrada sin emitir un veredicto sobre ella", () => {
     const html = renderToStaticMarkup(React.createElement(ResultFilterChips, {
       chips: [
         { key: "evidence", label: "Pruebas: Validar", onClear: () => {} },
@@ -431,35 +440,23 @@ describe("DecisionQualityStrip", () => {
       hiddenCount: 58,
       visibleCount: 12,
       totalCount: 70,
-      brief: {
-        label: "Lectura frágil",
-        detail: "Score descuadrado domina la vista.",
-        tone: "warn",
-        items: [
-          { key: "focus", label: "Foco", value: "Pruebas: Validar · Score: Descuadre", detail: "12/70 visibles", tone: "warn" },
-          { key: "first", label: "Primero", value: "MIS", detail: "Pri 1388 · Alta", tone: "good" },
-          { key: "blocker", label: "Freno", value: "Score descuadrado", detail: "4 filas", tone: "warn" },
-        ],
-      },
       onClearAll: () => {},
       onReview: () => {},
     }));
 
     expect(html).toContain("resultViewFocusSummary");
-    expect(html).toContain("resultViewBrief warn");
     expect(html).toContain("Vista de investigación");
-    expect(html).toContain("Brief vista");
-    expect(html).toContain("Lectura frágil");
     expect(html).toContain("12/70");
-    expect(html).toContain('title="4 filas"');
-    expect(html).not.toContain("<small>4 filas</small>");
-    expect(html).toContain("Score descuadrado");
-    expect(html).toContain("MIS");
     expect(html).toContain("58");
     expect(html).toContain("Revisar vista");
     expect(html).toContain("Pruebas: Validar");
     expect(html).toContain("Score: Descuadre");
     expect(html).toContain("Limpiar vista");
+
+    expect(html).not.toContain("resultViewBrief");
+    expect(html).not.toContain("Brief vista");
+    expect(html).not.toContain("Lectura frágil");
+    expect(html).not.toContain("Freno");
   });
 
   it("renderiza pruebas pendientes de decision en el panel rapido", () => {

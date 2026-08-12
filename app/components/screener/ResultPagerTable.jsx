@@ -29,20 +29,23 @@ export default function ResultPagerTable({
   onPerfPeriod,
   emptyLabel,
 }) {
+  // El pie ocupaba una franja entera para repetir un dato que ya está en la
+  // cabecera ("N resultados"). Con una sola página no aporta nada y no se pinta;
+  // con varias se reduce a una línea: rango + tamaño de página + dos flechas.
+  const multiPage = totalResultPages > 1;
   return (
     <>
-      {visibleCount ? (
-        <div className="controls resultPager" style={{ justifyContent: "space-between", marginBottom: 12 }}>
-          <span className="fine">
-            Mostrando {visibleCount ? resultPageStart + 1 : 0}-{resultPageEnd} de {visibleCount}
+      {visibleCount && multiPage ? (
+        <div className="controls resultPager">
+          <span className="fine resultPagerRange">
+            {resultPageStart + 1}-{resultPageEnd} de {visibleCount} · pág. {visibleResultPage}/{totalResultPages}
           </span>
-          <div className="controls">
-            <select className="select" style={{ width: "auto", padding: "4px 8px" }} value={resultPageSize} onChange={(e) => onPageSizeChange(Number(e.target.value))} aria-label="Acciones por página">
-              {RESULT_PAGE_SIZES.map((size) => <option key={size} value={size}>{size} por página</option>)}
+          <div className="controls resultPagerControls">
+            <select className="select resultPagerSize" value={resultPageSize} onChange={(e) => onPageSizeChange(Number(e.target.value))} aria-label="Acciones por página">
+              {RESULT_PAGE_SIZES.map((size) => <option key={size} value={size}>{size}/pág.</option>)}
             </select>
-            <button className="btn btnSmall btnGhost" onClick={() => onSetResultPage(visibleResultPage - 1)} disabled={visibleResultPage <= 1}>Anterior</button>
-            <span className="fine">Página {visibleResultPage}/{totalResultPages}</span>
-            <button className="btn btnSmall btnGhost" onClick={() => onSetResultPage(visibleResultPage + 1)} disabled={visibleResultPage >= totalResultPages}>Siguiente</button>
+            <button className="btn btnSmall btnGhost resultPagerStep" onClick={() => onSetResultPage(visibleResultPage - 1)} disabled={visibleResultPage <= 1} aria-label="Página anterior" title="Página anterior">‹</button>
+            <button className="btn btnSmall btnGhost resultPagerStep" onClick={() => onSetResultPage(visibleResultPage + 1)} disabled={visibleResultPage >= totalResultPages} aria-label="Página siguiente" title="Página siguiente">›</button>
           </div>
         </div>
       ) : null}

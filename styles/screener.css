@@ -2076,9 +2076,11 @@ button.dataHealthSummaryItem:hover,
 .diagnosticStats span:last-child {border-right:none
 }
 
+/* Mismo motivo: los contadores de la auditoría de filtros son cifras neutras
+   —analizadas, pasan, rechazadas—, no alertas. En ámbar, todas gritaban igual. */
 .diagnosticStats b {
   display:block;
-  color:var(--senal);
+  color:var(--text);
   font-size:18px;
   line-height:1;
 }
@@ -2270,9 +2272,13 @@ button.dataHealthSummaryItem:hover,
   border-bottom:1px solid var(--line);
 }
 
+/* Los catorce títulos de grupo de filtros («Liquidez», «Momentum»…) llevaban el
+   acento --senal. No son señales de atención: son etiquetas de sección, y
+   catorce a la vez rompen la regla 1 (máximo UN --senal por vista fuera de la
+   zona de resultados). Pasan a tinta terciaria; el token no cambia. */
 .filterGroup h3 {
   margin:0;
-  color:var(--senal);
+  color:var(--soft);
   font-size:12px;
   text-transform:uppercase;
   letter-spacing:.14em;
@@ -6280,8 +6286,15 @@ h2:not(.topbar h2) {
 
 /* ── StageRadar terminal pass: screener workspace ── */
 
+/* El screener es una tabla: el ancho es útil, no decorativo. El tope estaba en
+   1440px y en un monitor de 1920 dejaba 240px de margen muerto a cada lado —la
+   tabla se quedaba en el 56% del ancho disponible—. 1720px deja la zona de
+   resultados por encima de 1350px sin que la fila se estire hasta perder la
+   relación entre columnas. NO es dashboardContainer: su primer hijo
+   (.sidebarCollapseBtn) es position:absolute y no ocupa columna de la rejilla;
+   medido, el grid reparte 272px + 1fr correctamente. */
 .screenerTerminalPage {
-  width:min(1440px,100%);
+  width:min(1720px,100%);
   padding:26px 28px 72px;
 }
 
@@ -7218,7 +7231,35 @@ button.decisionOperatingIssue:hover {
 }
 
 .screenerTerminalPage .resultPager {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:6px;
   padding:0 14px;
+}
+
+.screenerTerminalPage .resultPagerRange {
+  font-size:11px;
+  white-space:nowrap;
+}
+
+.screenerTerminalPage .resultPagerControls {
+  gap:6px;
+}
+
+.screenerTerminalPage .resultPagerSize {
+  width:auto;
+  min-height:26px;
+  padding:2px 6px;
+  font-size:11px;
+}
+
+.screenerTerminalPage .resultPagerStep {
+  min-width:26px;
+  min-height:26px;
+  padding:0 8px;
+  line-height:1;
 }
 
 /* Regla 8 (pozo): tabla densa sobre --surface-inset, borde 1px --line, sin sombra.
@@ -8325,10 +8366,14 @@ button.decisionOperatingIssue:hover {
    min-height 36px. "Más filtros" alineado al mismo eje que los selects.
    ════════════════════════════════════════════════════════════════════════ */
 
-/* Barra de filtros — densidad standard */
+/* Barra de filtros — densidad standard.
+   Los selects se dimensionan por su contenido, no por el ancho sobrante: al
+   quedar solo «Resolución» y «Ordenar», un 1fr estiraba cada uno hasta media
+   pantalla. Tope de 240px, alineados a la izquierda. */
 .screenerTerminalPage .resultFilterBar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 240px));
+  justify-content: start;
   gap: var(--space-2);
   padding: var(--space-3);
   margin: 0 0 var(--space-3);

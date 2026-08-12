@@ -1,6 +1,6 @@
 import { fetchYahooChart } from "@/lib/marketData";
 import { withDailyBarsCache } from "@/lib/dailyBarsCache";
-import { estimatedChartForSymbol } from "@/lib/estimatedBars";
+import { unavailableChartForSymbol } from "@/lib/estimatedBars";
 
 const CHART_RESPONSE_TIMEOUT_MS = Number(process.env.CHART_RESPONSE_TIMEOUT_MS || 6500);
 const CHART_CACHE_READ_TIMEOUT_MS = Number(process.env.CHART_CACHE_READ_TIMEOUT_MS || 1500);
@@ -19,29 +19,13 @@ function timeoutAfter(ms, message) {
   });
 }
 
+// Cuando el proveedor y la caché fallan, la respuesta es AUSENCIA explícita:
+// cero barras y dataQuality.status === "missing". Antes esta ruta servía por
+// defecto una serie sintética (estimatedFallback default true), y por eso
+// cualquier símbolo —inexistente o real con histórico insuficiente— recibía
+// precio y velas fabricadas en todas las superficies que leen /api/chart.
 function degradedChartPayload(symbol, options = {}, error = {}) {
-  if (options.estimatedFallback !== false) return estimatedChartForSymbol(symbol, options, error);
-  return {
-    ok: false,
-    bars: [],
-    meta: {
-      symbol,
-      requestedInterval: options.interval || "",
-      requestedRange: options.range || "2A",
-      dataProvider: "No disponible",
-      cache: {
-        hit: false,
-        stale: false,
-        rows: 0,
-        maxAgeDays: options.maxAgeDays ?? null,
-        error: error.message || "Historico no disponible",
-      },
-    },
-    dataQuality: {
-      status: "missing",
-      issue: "Historico no disponible dentro del presupuesto operativo",
-    },
-  };
+  return unavailableChartForSymbol(symbol, options, error);
 }
 
 export async function GET(request) {
@@ -55,8 +39,7 @@ export async function GET(request) {
   const minBars = optionalNumber(searchParams.get("minBars") || searchParams.get("minChartBars"));
   const asOfDate = searchParams.get("asOf") || searchParams.get("asOfDate") || "";
   if (!symbol) return Response.json({ error: "Missing symbol" }, { status: 400 });
-  const estimatedFallback = searchParams.get("estimatedFallback") !== "0" && searchParams.get("fallback") !== "0";
-  const options = { range, interval, refresh, useCache, maxAgeDays, minBars, asOfDate, estimatedFallback, timeoutMs: CHART_CACHE_READ_TIMEOUT_MS };
+  const options = { range, interval, refresh, useCache, maxAgeDays, minBars, asOfDate, timeoutMs: CHART_CACHE_READ_TIMEOUT_MS };
   try {
     return Response.json(await Promise.race([
       withDailyBarsCache(symbol, options, fetchYahooChart),

@@ -5,9 +5,7 @@
 
 import { pct } from "@/lib/formatters";
 import { methodologyTradePlanEligible } from "@/lib/methodologyDisplay";
-import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 import { DEFAULT_RESULT_PAGE_SIZE, RESULT_PAGE_SIZES, SORT_LABELS } from "@/lib/screenerConfig";
-import { RELIABILITY_FILTER_ALL } from "@/lib/screenerReliability";
 import { money } from "@/lib/screenerFormat";
 import {
   PerformancePeriodPicker,
@@ -16,13 +14,6 @@ import {
   screenerSortOptions,
 } from "@/lib/screenerColumns";
 import { CompanyMark, MiniSparkline, ResultsDisclosureGroup } from "@/lib/screenerAtoms";
-import { DecisionEvidenceSummaryRail, ScoreAuditSummaryRail } from "@/lib/screenerDomains/audit";
-import { DataHealthSummaryRail } from "@/lib/screenerDomains/dataHealth";
-import {
-  DecisionOperatingBrief,
-  DecisionQualityStrip,
-  DecisionSummaryRail,
-} from "@/lib/screenerDomains/decision";
 
 export function MobileMoverCard({ row, onSelect }) {
   const change = Number.isFinite(row.perf3m) ? row.perf3m : row.rs3m;
@@ -75,17 +66,15 @@ export function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenS
   </article>;
 }
 
-export function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, perfPeriod, onPerfPeriod, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionQuality, decisionIssueFilter = "Todos", onDecisionIssueFilter, decisionProfileFilter = "Todos", onDecisionProfileFilter, reviewPriorityFilter = "all", reviewPriorityOptions = [{ key: "all", displayLabel: "Prioridad: Todas" }], onReviewPriorityFilter, reliabilityFilter = RELIABILITY_FILTER_ALL, reliabilityOptions = [{ key: RELIABILITY_FILTER_ALL, displayLabel: "Fiabilidad: Todas" }], onReliabilityFilter, decisionEvidenceSummary = null, decisionEvidenceFilter = "all", onDecisionEvidenceFilter, onDecisionEvidenceReview, readinessSummary = [], readinessFilter = "Todos", onReadinessFilter, confidenceFilter = "Todos", confidenceOptions = ["Todos"], confidenceCounts, onConfidenceFilter, dataHealthSummary = null, dataHealthFilter = "Todos", onDataHealthFilter, scoreAuditSummary = null, scoreAuditFilter = "all", onScoreAuditFilter, onScoreAuditReview, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados todavia. Carga universo y ejecuta el screener." }) {
+// Los grupos "Decisiones" y "Auditoría y datos" se retiraron de esta superficie
+// (principio 1): eran los mismos rails de auditoría interna que en escritorio.
+// Sus resúmenes se siguen calculando en useResultViewModel; simplemente ya no
+// se pintan aquí. El detalle por valor vive en la ficha.
+export function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, perfPeriod, onPerfPeriod, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados todavia. Carga universo y ejecuta el screener." }) {
   const start = totalRows ? ((page - 1) * pageSize) + 1 : 0;
   const end = totalRows ? Math.min(page * pageSize, totalRows) : 0;
   const hasRows = totalRows > 0;
-  const confidenceOptionLabel = (value) => value === "Todos"
-    ? "Confianza: Todas"
-    : `${decisionConfidenceLabel(value)}${confidenceCounts?.get(value) ? ` (${confidenceCounts.get(value)})` : ""}`;
-  const mobileFiltersActive = (confidenceFilter !== "Todos" ? 1 : 0)
-    + (reviewPriorityFilter !== "all" ? 1 : 0)
-    + (reliabilityFilter !== RELIABILITY_FILTER_ALL ? 1 : 0)
-    + (decisionResolutionFilter !== "all" ? 1 : 0);
+  const mobileFiltersActive = decisionResolutionFilter !== "all" ? 1 : 0;
   // El orden móvil solo ofrece las columnas que la tabla muestra. Si la sesión
   // guardada traía un criterio antiguo (score compuesto, deterioro...), se
   // mantiene visible como opción para no cambiar el orden a espaldas del
@@ -111,42 +100,27 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
     {hasRows ? <div className="mobileResultPeriodBar">
       <PerformancePeriodPicker value={perfPeriod} onChange={onPerfPeriod} />
     </div> : null}
-    {/* Filtros no redundantes con los rails (mismo criterio que el bloque desktop):
-        confianza (único acceso a medium/low), prioridad, fiabilidad y resolución.
-        Los selects de pruebas/datos/score se eliminaron: sus rails viven en el
-        grupo "Auditoría y datos" y son el control canónico de esos filtros. */}
+    {/* Mismo conjunto que la barra de escritorio. Confianza, fiabilidad y acción
+        se retiraron allí por filtrar juicios del sistema; «prioridad de
+        investigación» es del mismo tipo y aquí no tenía par en escritorio desde
+        que se fue su rail, así que cae con ellos. Queda «Resolución», que filtra
+        por lo que el usuario marcó en Review/Ficha. */}
     {hasRows ? <ResultsDisclosureGroup label="Filtros" count={mobileFiltersActive ? `${mobileFiltersActive} activos` : "Sin filtros"} className="compactDisclosure mobileFilterDisclosure">
       <div className="mobileFilterGrid">
-        <select value={confidenceFilter} onChange={(event) => onConfidenceFilter?.(event.target.value)} aria-label="Filtrar por confianza de decision">
-          {confidenceOptions.map((x) => <option key={x} value={x}>{confidenceOptionLabel(x)}</option>)}
-        </select>
-        <select value={reviewPriorityFilter} onChange={(event) => onReviewPriorityFilter?.(event.target.value)} aria-label="Filtrar por prioridad de investigacion">
-          {reviewPriorityOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
-        </select>
-        <select value={reliabilityFilter} onChange={(event) => onReliabilityFilter?.(event.target.value)} aria-label="Filtrar por fiabilidad de observacion">
-          {reliabilityOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
-        </select>
         <select value={decisionResolutionFilter} onChange={(event) => onDecisionResolutionFilter?.(event.target.value)} aria-label="Filtrar por resolución de decision">
           {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel || item.label}</option>)}
         </select>
       </div>
     </ResultsDisclosureGroup> : null}
-    {hasRows ? <ResultsDisclosureGroup label="Decisiones" count={totalRows} defaultOpen storageKey="statsedge.disclosureDecisiones.v1" className="resultsDecisionGroup">
-      <DecisionQualityStrip audit={decisionQuality} compact activeIssueKey={decisionIssueFilter} onIssueSelect={onDecisionIssueFilter} activeProfileKey={decisionProfileFilter} onProfileSelect={onDecisionProfileFilter} />
-      <DecisionOperatingBrief audit={decisionQuality} rows={rows} compact onIssueSelect={onDecisionIssueFilter} onReadinessFilter={onReadinessFilter} onConfidenceFilter={onConfidenceFilter} onReview={onReview} />
-      <DecisionSummaryRail summary={readinessSummary} activeKey={readinessFilter} onSelect={onReadinessFilter} className="mobile" />
-    </ResultsDisclosureGroup> : null}
-    {hasRows ? <ResultsDisclosureGroup label="Auditoría y datos" count={totalRows} storageKey="statsedge.disclosureAuditoria.v1" className="resultsAuditGroup">
-      <DecisionEvidenceSummaryRail summary={decisionEvidenceSummary} activeKey={decisionEvidenceFilter} onSelect={onDecisionEvidenceFilter} onReview={onDecisionEvidenceReview} compact />
-      <DataHealthSummaryRail summary={dataHealthSummary} activeKey={dataHealthFilter} onSelect={onDataHealthFilter} compact />
-      <ScoreAuditSummaryRail summary={scoreAuditSummary} activeKey={scoreAuditFilter} onSelect={onScoreAuditFilter} onReview={onScoreAuditReview} compact />
-    </ResultsDisclosureGroup> : null}
-    {hasRows ? <div className="controls" style={{ marginBottom: 10 }}>
+    {/* Mismo criterio que el pie de escritorio: con una sola página el pager no
+        dice nada que la cabecera no diga ya, y ocupa una franja entera. */}
+    {hasRows && totalPages > 1 ? <div className="controls mobileResultPager" style={{ marginBottom: 10 }}>
       <select value={pageSize} onChange={(event) => onPageSize?.(Number(event.target.value))} aria-label="Acciones por pagina">
         {RESULT_PAGE_SIZES.map((size) => <option key={size} value={size}>{size} / página</option>)}
       </select>
-      <button type="button" onClick={() => onPage?.(page - 1)} disabled={page <= 1}>Anterior</button>
-      <button type="button" onClick={() => onPage?.(page + 1)} disabled={page >= totalPages}>Siguiente</button>
+      <button type="button" onClick={() => onPage?.(page - 1)} disabled={page <= 1} aria-label="Página anterior">‹</button>
+      <span className="fine">{page}/{totalPages}</span>
+      <button type="button" onClick={() => onPage?.(page + 1)} disabled={page >= totalPages} aria-label="Página siguiente">›</button>
     </div> : null}
     <div className="mobileRows">
       {rows.length ? rows.map((row) => <MobileResultRow key={row.symbol} row={row} perfPeriod={perfPeriod} onReview={onReview} onFavorite={onFavorite} onOpenStock={onOpenStock} isFavorite={favoriteSymbols?.has(row.symbol)} />) : <div className="mobileEmpty">{emptyLabel}</div>}

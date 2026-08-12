@@ -1,17 +1,14 @@
 "use client";
 
 // ResultFilterBar — slice presentacional de ScreenerShell.
-// Contiene los selects de orden/acción/confianza/resolución/fiabilidad, el
+// Contiene los selects de resolución y orden, el
 // disclosure "Más filtros" (view-layers) y los ResultFilterChips.
 // Recibe SOLO los slices que consume este bloque (no el prop-bag completo).
 
 import { ResultFilterChips } from "@/app/screenerPanels";
 import { SECTOR_STRENGTH_LABELS, SECTOR_STRENGTH_OPTIONS, SORT_LABELS, marketName } from "@/lib/screenerConfig";
-import { RELIABILITY_FILTER_ALL } from "@/lib/screenerReliability";
 import { screenerSortOptions } from "@/lib/screenerColumns";
 import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
-import { rankActionLabel } from "@/lib/screenerExplainability";
-import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 
 export default function ResultFilterBar({
   optionLabel,
@@ -19,17 +16,6 @@ export default function ResultFilterBar({
   decisionResolutionFilter,
   decisionResolutionOptions,
   onDecisionResolutionFilter,
-  reliabilityFilter,
-  reliabilityOptions,
-  onReliabilityFilter,
-  confidenceFilter,
-  confidenceOptions,
-  confidenceCounts,
-  onConfidenceFilter,
-  actionFilter,
-  actionOptions,
-  actionCounts,
-  onActionFilter,
   sort,
   onSort,
   perfPeriod,
@@ -64,7 +50,6 @@ export default function ResultFilterBar({
   hiddenCount,
   visibleCount,
   totalCount,
-  brief,
   onClearAll,
   onReview,
 }) {
@@ -75,20 +60,15 @@ export default function ResultFilterBar({
   return (
     <>
       <div className="controls resultFilterBar">
-        {/* No redundantes: resolución/fiabilidad/acción no tienen rail equivalente. */}
+        {/* «Fiabilidad», «Confianza» y «Acción» se retiraron: filtraban por
+            juicios del SISTEMA sobre cuánto fiarse o qué hacer —«Vigilancia»,
+            «Auditar»— que el principio 1 prohíbe, y además por dimensiones que
+            la tabla de siete columnas ya no muestra. Sus filtros y contadores
+            se siguen calculando en useResultViewModel.
+            «Resolución» se conserva: filtra por lo que el usuario ha marcado en
+            Review/Ficha, no por un juicio del sistema. */}
         <select className="select resultFilterSelect" value={decisionResolutionFilter} onChange={(e) => onDecisionResolutionFilter(e.target.value)} aria-label="Filtrar por resolución de decision" data-active={decisionResolutionFilter !== "all" ? "true" : "false"}>
           {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
-        </select>
-        <select className="select resultFilterSelect" value={reliabilityFilter} onChange={(e) => onReliabilityFilter(e.target.value)} aria-label="Filtrar por fiabilidad de observacion" data-active={reliabilityFilter !== RELIABILITY_FILTER_ALL ? "true" : "false"}>
-          {reliabilityOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
-        </select>
-        {/* NO borrar: DecisionOperatingBrief solo emite onConfidenceFilter("high"); este select
-            es el único acceso a medium/low/very-low confidence. */}
-        <select className="select resultFilterSelect" value={confidenceFilter} onChange={(e) => onConfidenceFilter(e.target.value)} aria-label="Filtrar por confianza de decision" data-active={confidenceFilter !== "Todos" ? "true" : "false"}>
-          {confidenceOptions.map((x) => <option key={x} value={x}>{optionLabel("Confianza", x, confidenceCounts, decisionConfidenceLabel)}</option>)}
-        </select>
-        <select className="select resultFilterSelect" value={actionFilter} onChange={(e) => onActionFilter(e.target.value)} aria-label="Filtrar por accion sugerida" data-active={actionFilter !== "Todos" ? "true" : "false"}>
-          {actionOptions.map((x) => <option key={x} value={x}>{optionLabel("Acción", x, actionCounts, rankActionLabel)}</option>)}
         </select>
         {/* Ordenar solo por lo que la tabla muestra (lib/screenerColumns.jsx).
             Un criterio antiguo restaurado de sesión se conserva visible para no
@@ -124,7 +104,7 @@ export default function ResultFilterBar({
           </details>
         ) : null}
       </div>
-      <ResultFilterChips chips={chips} hiddenCount={hiddenCount} visibleCount={visibleCount} totalCount={totalCount} brief={brief} onClearAll={onClearAll} onReview={onReview} />
+      <ResultFilterChips chips={chips} hiddenCount={hiddenCount} visibleCount={visibleCount} totalCount={totalCount} onClearAll={onClearAll} onReview={onReview} />
     </>
   );
 }

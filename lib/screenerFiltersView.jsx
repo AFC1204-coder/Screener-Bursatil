@@ -43,11 +43,11 @@ export function SetupChipRail({ rows = [], presetKey, setupMode, sort, onPreset,
   </div>;
 }
 
-export function ResultFilterChips({ chips = [], hiddenCount = 0, visibleCount = null, totalCount = null, brief = null, onClearAll, onReview }) {
+export function ResultFilterChips({ chips = [], hiddenCount = 0, visibleCount = null, totalCount = null, onClearAll, onReview }) {
   if (!chips.length && !hiddenCount) return null;
   const hasVisibleCounts = Number.isFinite(visibleCount) && Number.isFinite(totalCount);
   const visibleLabel = hasVisibleCounts ? `${visibleCount}/${totalCount}` : String(Math.max(0, Number(visibleCount) || 0));
-  return <div className={`resultFilterChips ${brief ? "withBrief" : ""}`.trim()}>
+  return <div className="resultFilterChips">
     <div className="resultViewFocusSummary" aria-label="Resumen de vista de investigacion">
       <span>
         <em>Vista de investigación</em>
@@ -63,18 +63,9 @@ export function ResultFilterChips({ chips = [], hiddenCount = 0, visibleCount = 
       </span>
       {onReview && Number(visibleCount) > 0 ? <button type="button" onClick={onReview}>Revisar vista</button> : null}
     </div>
-    {brief ? <div className={`resultViewBrief ${brief.tone || "neutral"}`} aria-label="Brief de investigacion de la vista">
-      <span className="resultViewBriefIntro" title={brief.detail || undefined}>
-        <em>Brief vista</em>
-        <b>{brief.label}</b>
-      </span>
-      <div>
-        {(brief.items || []).slice(0, 3).map((item) => <span className={item.tone || "neutral"} key={item.key || item.label} title={item.detail || undefined}>
-          <em>{item.label}</em>
-          <b>{item.value}</b>
-        </span>)}
-      </div>
-    </div> : null}
+    {/* El "Brief vista" (veredicto + Freno + Primero) se retiró: era el mismo
+        juicio operativo que el panel Decisiones, solo que condicionado a tener
+        filtros activos. buildResultViewBrief sigue calculándose. */}
     <div className="resultViewChipRail">
       {hiddenCount > 0 ? <div className="resultFilterChipSummary">
         <b>{hiddenCount}</b>

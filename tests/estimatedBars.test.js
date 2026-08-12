@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { ESTIMATED_CHART_PROVIDER, estimatedChartForSymbol, estimatedDailyBarsForSymbol } from "@/lib/estimatedBars";
+import {
+  ESTIMATED_CHART_PROVIDER,
+  UNAVAILABLE_CHART_PROVIDER,
+  estimatedChartForSymbol,
+  estimatedDailyBarsForSymbol,
+  unavailableChartForSymbol,
+} from "@/lib/estimatedBars";
 
 describe("estimated chart fallback", () => {
   it("genera barras descendentes suficientes para continuidad visual", () => {
@@ -13,29 +19,45 @@ describe("estimated chart fallback", () => {
     expect(bars.every((bar) => bar.estimated === true)).toBe(true);
   });
 
-  it("marca el payload como estimado y no-live", () => {
+  // Contrato central del arreglo: un fallo de proveedor NO fabrica serie.
+  it("un fallo de proveedor devuelve ausencia explícita, no barras inventadas", () => {
     const chart = estimatedChartForSymbol("nvda", { range: "1A", asOfDate: "2026-06-19" }, new Error("timeout"));
 
-    expect(chart.ok).toBe(false);
+    expect(chart.bars).toEqual([]);
     expect(chart.meta.symbol).toBe("NVDA");
-    expect(chart.meta.dataProvider).toBe(ESTIMATED_CHART_PROVIDER);
-    expect(chart.dataQuality.status).toBe("estimated");
+    expect(chart.meta.regularMarketPrice).toBeNull();
+    expect(chart.meta.dataProvider).toBe(UNAVAILABLE_CHART_PROVIDER);
+    expect(chart.meta.estimated).toBe(false);
+    expect(chart.dataQuality.status).toBe("missing");
+    expect(chart.dataQuality.estimated).toBe(false);
     expect(chart.dataQuality.fallbackError).toContain("timeout");
   });
 
-  it("emite dataQuality canónico con source/demo/reason (fallbackError por compatibilidad)", () => {
-    const chart = estimatedChartForSymbol("AAPL", { range: "1A", asOfDate: "2026-06-19" }, new Error("caída del proveedor"));
+  it("unavailableChartForSymbol es el payload canónico de ausencia", () => {
+    const chart = unavailableChartForSymbol("ZZZZQQ", { range: "2A" }, new Error("Yahoo chart HTTP 404"));
 
-    expect(chart.dataQuality.source).toBe("estimator");
-    // demo default false — el wiring real llega en el paso 4.
+    expect(chart.ok).toBe(false);
+    expect(chart.bars).toHaveLength(0);
+    expect(chart.dataQuality.status).toBe("missing");
+    expect(chart.dataQuality.degraded).toBe(true);
+    expect(chart.dataQuality.source).toBe("unavailable");
     expect(chart.dataQuality.demo).toBe(false);
+    // El mensaje crudo del proveedor queda en meta.cache.error para
+    // diagnóstico; el issue que puede leer la interfaz no lo repite.
+    expect(chart.meta.cache.error).toContain("404");
+    expect(chart.dataQuality.issue).not.toContain("404");
+  });
+
+  it("solo el modo demo explícito produce serie sintética", () => {
+    const chart = estimatedChartForSymbol("AAPL", { range: "1A", asOfDate: "2026-06-19", demo: true }, new Error("caída del proveedor"));
+
+    expect(chart.bars.length).toBeGreaterThan(100);
+    expect(chart.meta.dataProvider).toBe(ESTIMATED_CHART_PROVIDER);
+    expect(chart.dataQuality.status).toBe("estimated");
+    expect(chart.dataQuality.source).toBe("estimator");
+    expect(chart.dataQuality.demo).toBe(true);
     // reason es alias de fallbackError; ambos deben coincidir y contener el motivo.
     expect(chart.dataQuality.reason).toBe(chart.dataQuality.fallbackError);
     expect(chart.dataQuality.reason).toContain("caída del proveedor");
-  });
-
-  it("propaga demo:true cuando el caller lo pide explícitamente", () => {
-    const chart = estimatedChartForSymbol("AAPL", { range: "1A", demo: true });
-    expect(chart.dataQuality.demo).toBe(true);
   });
 });

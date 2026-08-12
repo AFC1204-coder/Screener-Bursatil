@@ -13,20 +13,10 @@
 // panel al container solo para esto.
 
 import { useEffect, useRef } from "react";
-import { ReviewPriorityResultRail } from "@/app/components/screener/ReviewWidgets";
-import DecisionGroups from "@/app/components/screener/DecisionGroups";
-import CuratedDiscoveryPanel from "@/app/components/screener/CuratedDiscoveryPanel";
 import GlobalCoveragePanel from "@/app/components/screener/GlobalCoveragePanel";
 import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
 import ResultPagerTable from "@/app/components/screener/ResultPagerTable";
 import {
-  CompactResultsTable,
-  DecisionEvidenceSummaryRail,
-  DecisionOperatingBrief,
-  DecisionQualityStrip,
-  DecisionSummaryRail,
-  DataHealthSummaryRail,
-  AuditabilitySummaryRail,
   FilterArchitecturePanel,
   FilterDiagnosticsPanel,
   FilterNumber,
@@ -34,13 +24,10 @@ import {
   FilterToggle,
   MarketMiniTape,
   MobileResultList,
-  PendingDecisionWorkRail,
   PendingResultsBar,
   PreviewCard,
-  ResultFilterChips,
   SearchCandidateList,
   SearchScopeList,
-  ScoreAuditSummaryRail,
   SetupChipRail,
 } from "@/app/screenerPanels";
 import { analyzedCountForDisplay, investorStatusLabel } from "@/lib/screenerFormat";
@@ -165,6 +152,13 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   } = search;
 
   // --- resultView (objeto del hook useResultViewModel) ---
+  // Los agregados de auditoría del conjunto (visibleDecisionAudit,
+  // visibleAuditabilitySummary, dataHealthSummary, scoreAuditSummary,
+  // decisionEvidenceSummary, readinessSummary, reviewPrioritySummary,
+  // pendingDecisionWorkSummary) SIGUEN calculándose en useResultViewModel y
+  // viajando en el bag: el screener ya no los pinta, por el principio 1 de
+  // docs/principios-producto.md. El detalle por valor vive en la ficha
+  // (DataHealthPanel / ScoreAuditPanel / DecisionEvidenceChecklist).
   const {
     sort,
     setSort,
@@ -180,46 +174,10 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     setResultPageClamped,
     resultPageStart,
     resultPageEnd,
-    visibleDecisionAudit,
-    visibleAuditabilitySummary,
     optionLabel,
-    readinessSummary,
-    readinessFilter,
-    setReadinessFilter,
-    decisionProfileFilter,
-    setDecisionProfileFilter,
-    reviewPrioritySummary,
-    reviewPriorityFilter,
-    setReviewPriorityFilter,
-    reviewPriorityOptions,
-    openReviewPriorityQueue,
-    reliabilityFilter,
-    setReliabilityFilter,
-    reliabilityOptions,
-    decisionEvidenceSummary,
-    decisionEvidenceFilter,
-    setDecisionEvidenceFilter,
-    openReviewDecisionEvidenceQueue,
-    confidenceFilter,
-    setConfidenceFilter,
-    confidenceOptions,
-    confidenceCounts,
-    dataHealthSummary,
-    dataHealthFilter,
-    setDataHealthFilter,
-    scoreAuditSummary,
-    scoreAuditFilter,
-    setScoreAuditFilter,
-    openReviewScoreAuditQueue,
     decisionResolutionFilter,
     setDecisionResolutionFilter,
     decisionResolutionOptions,
-    decisionIssueFilter,
-    setDecisionIssueFilter,
-    actionFilter,
-    setActionFilter,
-    actionOptions,
-    actionCounts,
     countryFilter,
     setCountryFilter,
     countryOptions,
@@ -243,17 +201,10 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     setIpo,
     ipos,
     ipoCounts,
-    pendingDecisionWorkSummary,
-    pendingDecisionWorkActive,
-    applyPendingDecisionWorkFocus,
-    clearPendingDecisionWorkFocus,
-    reviewPendingDecisionWork,
     resultFilterChips,
-    resultViewBrief,
     hiddenByView,
     clearResultView,
     openResultViewReview,
-    openReviewMethodologyFocusQueue,
   } = resultView;
 
   // El container pasa `filtered` y `rows` también por `results` para no
@@ -367,7 +318,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       <summary>Muestra parcial · percentil por lote</summary>
       <p>Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.</p>
     </details> : null}
-    <CuratedDiscoveryPanel />
 
     <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}`}>
       <button
@@ -566,14 +516,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           ) : null}
           <PendingResultsBar pending={pendingResults ? { ...pendingResults, filteredCount: pendingFilteredCount } : null} visibleCount={resultsRows.length} filteredCount={resultsFiltered.length} onCommit={commitPendingResults} />
           {pendingScopeNoticeEl}
-          <PendingDecisionWorkRail
-            summary={pendingDecisionWorkSummary}
-            active={pendingDecisionWorkActive}
-            onFocus={applyPendingDecisionWorkFocus}
-            onClear={clearPendingDecisionWorkFocus}
-            onReview={reviewPendingDecisionWork}
-            className="mobile"
-          />
           <MobileResultList
             rows={resultsPagedRows}
             settings={activeSettings}
@@ -595,35 +537,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             totalPages={totalResultPages}
             onPage={setResultPageClamped}
             onPageSize={updateResultPageSize}
-            decisionQuality={visibleDecisionAudit}
-            decisionIssueFilter={decisionIssueFilter}
-            onDecisionIssueFilter={setDecisionIssueFilter}
-            decisionProfileFilter={decisionProfileFilter}
-            onDecisionProfileFilter={setDecisionProfileFilter}
-            reviewPriorityFilter={reviewPriorityFilter}
-            reviewPriorityOptions={reviewPriorityOptions}
-            onReviewPriorityFilter={setReviewPriorityFilter}
-            reliabilityFilter={reliabilityFilter}
-            reliabilityOptions={reliabilityOptions}
-            onReliabilityFilter={setReliabilityFilter}
-            decisionEvidenceSummary={decisionEvidenceSummary}
-            decisionEvidenceFilter={decisionEvidenceFilter}
-            onDecisionEvidenceFilter={setDecisionEvidenceFilter}
-            onDecisionEvidenceReview={openReviewDecisionEvidenceQueue}
-            readinessSummary={readinessSummary}
-            readinessFilter={readinessFilter}
-            onReadinessFilter={setReadinessFilter}
-            confidenceFilter={confidenceFilter}
-            confidenceOptions={confidenceOptions}
-            confidenceCounts={confidenceCounts}
-            onConfidenceFilter={setConfidenceFilter}
-            dataHealthSummary={dataHealthSummary}
-            dataHealthFilter={dataHealthFilter}
-            onDataHealthFilter={setDataHealthFilter}
-            scoreAuditSummary={scoreAuditSummary}
-            scoreAuditFilter={scoreAuditFilter}
-            onScoreAuditFilter={setScoreAuditFilter}
-            onScoreAuditReview={openReviewScoreAuditQueue}
             decisionResolutionFilter={decisionResolutionFilter}
             decisionResolutionOptions={decisionResolutionOptions}
             onDecisionResolutionFilter={setDecisionResolutionFilter}
@@ -647,11 +560,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               <span>Results</span>
               <h2>{resultsFiltered.length} resultados</h2>
               <p>{resultsRows.length} pasan · {analyzedCountForDisplay(analyzedRows)} analizadas · {SORT_LABELS[sort] || sort}{scannedAtLabel ? ` · scan ${scannedAtLabel}` : ""}</p>
-              {/* Rails de decisión: control clicable único para readiness/reviewPriority.
-                  Los <select> que antes duplicaban estos estados se eliminaron; el re-click
-                  del chip limpia a "Todos"/"all", y ResultFilterChips también permite limpiar. */}
-              <DecisionSummaryRail summary={readinessSummary} activeKey={readinessFilter} onSelect={setReadinessFilter} />
-              <ReviewPriorityResultRail summary={reviewPrioritySummary} activeKey={reviewPriorityFilter} onSelect={setReviewPriorityFilter} onReview={openReviewPriorityQueue} />
             </div>
             <div className="controls">
               {(resultsRows.length > 0 || pendingResults?.rows?.length || diagnostics) ? <button className="btn btnSmall btnGhost" onClick={resetScreenerSession}>Reset sesión</button> : null}
@@ -664,53 +572,11 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             </div>
           </div>
 
-          <DecisionGroups
-            audit={visibleDecisionAudit}
-            filteredCount={resultsFiltered.length}
-            filteredRows={resultsFiltered}
-            onReviewAll={() => openReview(resultsFiltered)}
-            decisionIssueFilter={decisionIssueFilter}
-            onDecisionIssueFilter={setDecisionIssueFilter}
-            decisionProfileFilter={decisionProfileFilter}
-            onDecisionProfileFilter={setDecisionProfileFilter}
-            onReadinessFilter={setReadinessFilter}
-            onConfidenceFilter={setConfidenceFilter}
-            pendingDecisionWorkSummary={pendingDecisionWorkSummary}
-            pendingDecisionWorkActive={pendingDecisionWorkActive}
-            onPendingDecisionWorkFocus={applyPendingDecisionWorkFocus}
-            onPendingDecisionWorkClear={clearPendingDecisionWorkFocus}
-            onPendingDecisionWorkReview={reviewPendingDecisionWork}
-            decisionEvidenceSummary={decisionEvidenceSummary}
-            decisionEvidenceFilter={decisionEvidenceFilter}
-            onDecisionEvidenceFilter={setDecisionEvidenceFilter}
-            onReviewDecisionEvidenceQueue={openReviewDecisionEvidenceQueue}
-            dataHealthSummary={dataHealthSummary}
-            dataHealthFilter={dataHealthFilter}
-            onDataHealthFilter={setDataHealthFilter}
-            scoreAuditSummary={scoreAuditSummary}
-            scoreAuditFilter={scoreAuditFilter}
-            onScoreAuditFilter={setScoreAuditFilter}
-            onReviewScoreAuditQueue={openReviewScoreAuditQueue}
-            auditabilitySummary={visibleAuditabilitySummary}
-            onReviewMethodologyFocusQueue={openReviewMethodologyFocusQueue}
-          />
-
           <ResultFilterBar
             optionLabel={optionLabel}
             decisionResolutionFilter={decisionResolutionFilter}
             decisionResolutionOptions={decisionResolutionOptions}
             onDecisionResolutionFilter={setDecisionResolutionFilter}
-            reliabilityFilter={reliabilityFilter}
-            reliabilityOptions={reliabilityOptions}
-            onReliabilityFilter={setReliabilityFilter}
-            confidenceFilter={confidenceFilter}
-            confidenceOptions={confidenceOptions}
-            confidenceCounts={confidenceCounts}
-            onConfidenceFilter={setConfidenceFilter}
-            actionFilter={actionFilter}
-            actionOptions={actionOptions}
-            actionCounts={actionCounts}
-            onActionFilter={setActionFilter}
             sort={sort}
             onSort={setSort}
             perfPeriod={perfPeriod}
@@ -743,7 +609,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             hiddenCount={hiddenByView}
             visibleCount={resultsFiltered.length}
             totalCount={resultsRows.length}
-            brief={resultViewBrief}
             onClearAll={clearResultView}
             onReview={resultsFiltered.length ? openResultViewReview : undefined}
           />

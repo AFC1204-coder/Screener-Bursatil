@@ -14,7 +14,7 @@ import { setupPatternForBars } from "@/lib/setupPatterns";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
 import { CURATED_NAMES } from "@/lib/universes";
 import { weeklyStageForBars } from "@/lib/weeklyStage";
-import { ESTIMATED_CHART_PROVIDER, estimatedChartForSymbol } from "@/lib/estimatedBars";
+import { ESTIMATED_CHART_PROVIDER, UNAVAILABLE_CHART_PROVIDER, unavailableChartForSymbol } from "@/lib/estimatedBars";
 import { userFacingSearchError } from "@/lib/screenerFormat";
 
 const BRIEF_CACHE_TYPE = "company_brief_cache";
@@ -804,6 +804,11 @@ async function writeBriefCache(symbol = "", options = {}, brief = {}) {
   const config = supabaseConfig();
   const key = briefCacheKey(symbol, options.benchmarkSymbol);
   if (!config.configured || !key || !brief?.symbol) return { written: false };
+  // Guard anti-ficha-sin-dato: la caché de briefs solo persiste fichas con
+  // serie real detrás. Mismo criterio que el guard anti-estimados de
+  // writeDailyBarsCache (lib/dailyBarsCache.js): lo que sale de la caché tiene
+  // que poder sostener una decisión.
+  if (!briefHasRealData(brief)) return { written: false, status: "rejected-no-real-data" };
   const cachedAt = new Date().toISOString();
   try {
     await supabaseRpc("upsert_app_setting_newer_wins", {
@@ -1240,11 +1245,14 @@ function fetchChartForBrief(symbol, chartOptions = {}, options = {}) {
   }, fetchYahooChart);
 }
 
+// El fallback de gráfico del brief NO fabrica serie: devuelve ausencia
+// explícita (cero barras). Todo lo que se calculaba sobre barras —etapa, RS,
+// rendimiento, patrón— queda por tanto sin dato, que es la respuesta correcta
+// cuando no hay mercado real detrás.
 function fallbackChartForBrief(symbol, chartOptions = {}, error = {}) {
-  return estimatedChartForSymbol(symbol, {
+  return unavailableChartForSymbol(symbol, {
     range: chartOptions.range || "5A",
     interval: "D",
-    minBars: chartOptions.minBars || 260,
   }, error);
 }
 
@@ -1286,8 +1294,8 @@ function minimalCompanyBrief(symbol = "", error = {}) {
     investorAngle: "Esperar a datos frescos antes de tomar decisiones.",
     stage: {
       ...fallbackStage,
-      detail: userFacingSearchError(`Historico estimado: ${fallbackStage.detail || "proveedor no disponible"}`),
-      estimated: true,
+      detail: userFacingSearchError(fallbackStage.detail || "Sin histórico disponible para clasificar la etapa."),
+      unavailable: true,
     },
     relativeStrength: {
       benchmarkSymbol: benchmarkForProfile(cleanSymbol, { country }, theme.key),
@@ -1304,7 +1312,7 @@ function minimalCompanyBrief(symbol = "", error = {}) {
     chartEmbed: tradingViewEmbedInfo(cleanSymbol, inferTradingViewSymbol(cleanSymbol, "")),
     chartBars: compactChartBars(fallbackBars),
     setupPattern: setupPatternForBars(fallbackBars),
-    chartProvider: fallbackChart.meta?.dataProvider || ESTIMATED_CHART_PROVIDER,
+    chartProvider: fallbackChart.meta?.dataProvider || UNAVAILABLE_CHART_PROVIDER,
     visual: {
       initials: initials(name),
       domain,
@@ -1323,22 +1331,133 @@ function minimalCompanyBrief(symbol = "", error = {}) {
     dataQuality: {
       degraded: true,
       partial: true,
+      // unavailable: no hay serie real detrás de esta ficha. Es la señal que
+      // la interfaz usa para mostrar ausencia en vez de precio y veredicto, y
+      // la que impide que este brief se persista en caché.
+      unavailable: true,
       coverage: {
         total: 0,
-        label: "Proveedor no disponible",
+        label: "Sin datos de mercado",
       },
       freshness: {
         providerTimeout: true,
-        priceDate: fallbackBars[0]?.date || "",
-        chartBars: fallbackBars.length,
-        chartEstimated: true,
-        priceEstimated: true,
-        chartProvider: fallbackChart.meta?.dataProvider || ESTIMATED_CHART_PROVIDER,
+        priceDate: "",
+        chartBars: 0,
+        chartEstimated: false,
+        priceEstimated: false,
+        chartUnavailable: true,
+        chartProvider: fallbackChart.meta?.dataProvider || UNAVAILABLE_CHART_PROVIDER,
         briefFallbackError: error.message || "Proveedor no disponible",
       },
     },
     updatedAt,
   };
+}
+
+// ¿Algún proveedor sabe algo de este símbolo? Basta UNA señal de identidad
+// real: nombre propio distinto del ticker, mercado, divisa, sector/industria
+// clasificados o capitalización. Los valores por defecto que rellena el brief
+// ("Sin sector", "Sin industria", exchange "-", marketCap 0) NO cuentan como
+// identidad — son precisamente el hueco que dejaba pasar a un ticker inventado.
+function profileHasIdentity(profile = {}, symbol = "") {
+  const cleanSymbol = String(symbol || "").trim().toUpperCase();
+  const name = String(profile.name || "").trim();
+  if (name && name.toUpperCase() !== cleanSymbol) return true;
+  const exchange = String(profile.exchange || "").trim();
+  if (exchange && exchange !== "-") return true;
+  if (String(profile.currency || "").trim()) return true;
+  const sector = String(profile.sector || "").trim();
+  if (sector && sector !== "Sin sector") return true;
+  const industry = String(profile.industry || "").trim();
+  if (industry && industry !== "Sin industria") return true;
+  if (Number.isFinite(profile.marketCap) && profile.marketCap > 0) return true;
+  if (String(profile.ipoDate || "").trim()) return true;
+  if (String(profile.website || "").trim()) return true;
+  return false;
+}
+
+// Ficha VACÍA explícita: el símbolo no existe para el sistema. Sin precio, sin
+// etapa, sin RS, sin barras. `notFound` es lo que la interfaz lee para pintar
+// el estado vacío en vez de una ficha.
+function unavailableCompanyBrief(symbol = "", { reason = "" } = {}) {
+  const cleanSymbol = String(symbol || "").trim().toUpperCase();
+  return {
+    symbol: cleanSymbol,
+    name: cleanSymbol,
+    notFound: true,
+    sector: "",
+    industry: "",
+    exchange: "",
+    currency: "",
+    marketCap: null,
+    marketCapCurrency: "",
+    marketCapLabel: "",
+    marketCapUsd: null,
+    marketCapUsdLabel: "",
+    marketCapFx: null,
+    ipoDate: "",
+    listingDate: "",
+    listingDateSource: "",
+    country: "",
+    city: "",
+    employees: null,
+    theme: "",
+    short: "",
+    summary: "",
+    investorAngle: "",
+    stage: { label: "", detail: "", unavailable: true, weekly: null },
+    relativeStrength: { benchmarkSymbol: "", rating: null, series: [], note: "" },
+    links: {},
+    tradingViewSymbol: "",
+    chartEmbed: null,
+    chartBars: [],
+    setupPattern: null,
+    chartProvider: UNAVAILABLE_CHART_PROVIDER,
+    visual: { initials: "", domain: "", logoUrl: null, clearbitLogoUrl: null },
+    valuationMetrics: {},
+    quoteSnapshot: {},
+    growthMetrics: {},
+    shortInterest: null,
+    earningsCalendar: null,
+    financialResults: { incomeAnnual: [], incomeQuarterly: [], balanceAnnual: [], balanceQuarterly: [], cashflowAnnual: [], cashflowQuarterly: [] },
+    news: [],
+    dataQuality: {
+      unavailable: true,
+      degraded: true,
+      partial: true,
+      coverage: { total: 0, label: "Sin datos de mercado" },
+      freshness: {
+        priceDate: "",
+        chartBars: 0,
+        chartEstimated: false,
+        priceEstimated: false,
+        chartUnavailable: true,
+        chartProvider: UNAVAILABLE_CHART_PROVIDER,
+        // El motivo crudo del proveedor queda aquí para diagnóstico; la
+        // interfaz muestra el texto de ausencia, no este campo.
+        briefFallbackError: reason || "Sin datos de mercado",
+      },
+    },
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+// Un brief sin serie real no se persiste ni se sirve desde caché. Sin esto, la
+// primera visita a un símbolo inexistente dejaba la ficha fabricada guardada en
+// app_settings (company_brief_cache) durante un día entero, y el arreglo del
+// productor no la habría desalojado.
+function briefHasRealData(brief = {}) {
+  if (!brief || typeof brief !== "object") return false;
+  if (brief.notFound === true) return false;
+  const dq = brief.dataQuality || {};
+  if (dq.unavailable === true) return false;
+  if (dq.estimatedChart === true) return false;
+  const freshness = dq.freshness || {};
+  if (freshness.chartUnavailable === true) return false;
+  if (freshness.chartEstimated === true || freshness.priceEstimated === true) return false;
+  if (String(brief.chartProvider || "") === ESTIMATED_CHART_PROVIDER) return false;
+  if (String(brief.chartProvider || "") === UNAVAILABLE_CHART_PROVIDER) return false;
+  return true;
 }
 
 export async function getCompanyBrief(symbol, options = {}) {
@@ -1347,6 +1466,12 @@ export async function getCompanyBrief(symbol, options = {}) {
   try {
     if (options.briefCache !== false && options.refresh !== true && options.debug !== true) {
       cachedBrief = await readBriefCache(symbol, options);
+      // Descarta lo ya envenenado: entradas escritas antes de este arreglo
+      // pueden contener una ficha con serie sintética. No se sirven ni como
+      // hit ni como fallback stale — se tratan como si no existieran.
+      if (cachedBrief.brief && !briefHasRealData(cachedBrief.brief)) {
+        cachedBrief = { hit: false, stale: false, brief: null, maxAgeDays: cachedBrief.maxAgeDays };
+      }
       if (cachedBrief.hit && cachedBrief.brief) {
         return annotateBriefCache(cachedBrief.brief, cachedBrief);
       }
@@ -1412,6 +1537,18 @@ export async function getCompanyBrief(symbol, options = {}) {
       quoteSnapshot: {},
       ...profileResult,
     };
+    // Corte explícito por ausencia total de dato. Un símbolo que no devuelve
+    // ninguna barra real Y del que ningún proveedor sabe nada (sin nombre
+    // propio, sin mercado, sin divisa, sin sector, sin capitalización) no es
+    // una empresa degradada: no existe para el sistema. Antes seguía adelante
+    // y —con la serie sintética que se fabricaba unas líneas más arriba—
+    // terminaba en una ficha completa con precio, cierre y etapa. Ahora se
+    // corta aquí, antes de gastar llamadas a extras/SEC/FMP.
+    if (!(chart.bars || []).length && !profileHasIdentity(profile, symbol)) {
+      return unavailableCompanyBrief(symbol, {
+        reason: chart.dataQuality?.reason || chart.meta?.cache?.error || "Sin datos de mercado",
+      });
+    }
     const [extrasResult, secResult, fmpResult] = await Promise.all([
       fetchYahooCompanyExtras(symbol, profile).catch((error) => ({ extrasProviderError: error.message || "Proveedor no disponible" })),
       fetchSecFundamentals(symbol).catch((error) => ({ error: error.message || "SEC no disponible" })),
@@ -1451,6 +1588,11 @@ export async function getCompanyBrief(symbol, options = {}) {
       chart.bars || [],
     );
     const chartEstimated = Boolean(chart.meta?.estimated || chart.dataQuality?.estimated || chart.meta?.dataProvider === ESTIMATED_CHART_PROVIDER);
+    // Símbolo real (el perfil lo identifica) pero sin serie de precios: la
+    // ficha se sirve con la identidad de la empresa y AUSENCIA en todo lo que
+    // se calcula sobre barras. weeklyStageForBars ya devuelve "Historico
+    // semanal insuficiente" con cero barras, así que la etapa se cae sola.
+    const chartUnavailable = !chartEstimated && !(chart.bars || []).length;
     const rawStage = stageFromBars(chart.bars || []);
     const stage = chartEstimated
       ? {
@@ -1458,6 +1600,8 @@ export async function getCompanyBrief(symbol, options = {}) {
         detail: userFacingSearchError(`Historico estimado: ${rawStage.detail || "proveedor no disponible"}`),
         estimated: true,
       }
+      : chartUnavailable
+      ? { ...rawStage, unavailable: true }
       : rawStage;
     const requestedBenchmark = cleanBenchmarkSymbol(options.benchmarkSymbol);
     const benchmarkSymbol = requestedBenchmark || benchmarkForProfile(symbol, profile, theme.key);
@@ -1508,11 +1652,23 @@ export async function getCompanyBrief(symbol, options = {}) {
       coverage.estimatedChart = true;
       coverage.issues = [...new Set(["historico estimado/no live", ...(coverage.issues || [])])];
     }
+    if (chartUnavailable) {
+      coverage.technical = 0;
+      coverage.label = "Sin serie de precios";
+      coverage.chartUnavailable = true;
+      coverage.issues = [...new Set(["sin serie de precios real", ...(coverage.issues || [])])];
+    }
     const freshness = publicFreshness({ chart, profile, financialResults, relativeStrength, weeklyGlobalRs, coverage });
     if (chartEstimated) {
       freshness.chartEstimated = true;
       freshness.priceEstimated = true;
       freshness.chartProvider = chart.meta?.dataProvider || ESTIMATED_CHART_PROVIDER;
+    }
+    if (chartUnavailable) {
+      freshness.chartUnavailable = true;
+      freshness.priceDate = "";
+      freshness.chartBars = 0;
+      freshness.chartProvider = chart.meta?.dataProvider || UNAVAILABLE_CHART_PROVIDER;
     }
     const debug = options.debug === true;
     const dataQuality = {
@@ -1523,6 +1679,11 @@ export async function getCompanyBrief(symbol, options = {}) {
     if (chartEstimated) {
       dataQuality.degraded = true;
       dataQuality.estimatedChart = true;
+    }
+    if (chartUnavailable) {
+      dataQuality.degraded = true;
+      dataQuality.partial = true;
+      dataQuality.chartUnavailable = true;
     }
     if (debug) {
       dataQuality.providerErrors = {

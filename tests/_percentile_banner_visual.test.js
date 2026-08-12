@@ -16,13 +16,6 @@ import { join } from "node:path";
 const Stub = ({ marker }) => React.createElement("div", { "data-stub": marker });
 
 vi.mock("@/app/screenerPanels", () => ({
-  CompactResultsTable: () => Stub({ marker: "CompactResultsTable" }),
-  DecisionEvidenceSummaryRail: () => Stub({ marker: "DecisionEvidenceSummaryRail" }),
-  DecisionOperatingBrief: () => Stub({ marker: "DecisionOperatingBrief" }),
-  DecisionQualityStrip: () => Stub({ marker: "DecisionQualityStrip" }),
-  DecisionSummaryRail: () => Stub({ marker: "DecisionSummaryRail" }),
-  DataHealthSummaryRail: () => Stub({ marker: "DataHealthSummaryRail" }),
-  AuditabilitySummaryRail: () => Stub({ marker: "AuditabilitySummaryRail" }),
   FilterArchitecturePanel: () => Stub({ marker: "FilterArchitecturePanel" }),
   FilterDiagnosticsPanel: () => Stub({ marker: "FilterDiagnosticsPanel" }),
   FilterNumber: () => Stub({ marker: "FilterNumber" }),
@@ -30,20 +23,13 @@ vi.mock("@/app/screenerPanels", () => ({
   FilterToggle: () => Stub({ marker: "FilterToggle" }),
   MarketMiniTape: () => Stub({ marker: "MarketMiniTape" }),
   MobileResultList: () => Stub({ marker: "MobileResultList" }),
-  PendingDecisionWorkRail: () => Stub({ marker: "PendingDecisionWorkRail" }),
   PendingResultsBar: (props) => React.createElement("div", { className: "pendingResultsBar", "data-pending": props.pending ? "set" : "null" }),
   PreviewCard: () => Stub({ marker: "PreviewCard" }),
-  ResultFilterChips: () => Stub({ marker: "ResultFilterChips" }),
   SearchCandidateList: () => Stub({ marker: "SearchCandidateList" }),
   SearchScopeList: () => Stub({ marker: "SearchScopeList" }),
-  ScoreAuditSummaryRail: () => Stub({ marker: "ScoreAuditSummaryRail" }),
   SetupChipRail: () => Stub({ marker: "SetupChipRail" }),
 }));
 
-vi.mock("@/app/components/screener/ReviewWidgets", () => ({
-  ReviewPriorityResultRail: () => Stub({ marker: "ReviewPriorityResultRail" }),
-}));
-vi.mock("@/app/components/screener/DecisionGroups", () => ({ default: () => Stub({ marker: "DecisionGroups" }) }));
 vi.mock("@/app/components/screener/ResultFilterBar", () => ({ default: () => Stub({ marker: "ResultFilterBar" }) }));
 vi.mock("@/app/components/screener/ResultPagerTable", () => ({ default: () => Stub({ marker: "ResultPagerTable" }) }));
 

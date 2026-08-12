@@ -669,6 +669,57 @@
   font-size: var(--text-m);
 }
 
+/* Estado vacío de ficha: símbolo sin serie de precios ni identidad. */
+.stockUnavailable {
+  display: grid;
+  align-self: start;
+  align-content: start;
+  justify-items: start;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-5);
+}
+
+.stockUnavailable .stockIdentityTitle {
+  margin: 0;
+}
+
+.stockUnavailableLead {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--text-m);
+  font-weight: 600;
+}
+
+.stockUnavailableBody {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  line-height: 1.55;
+}
+
+.stockUnavailableBack {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin-top: var(--space-2);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface-inset);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.stockUnavailableBack:hover {
+  border-color: var(--soft);
+}
+
 /* ─── Curva (glifo standalone reutilizable) ──────────────────────── */
 
 .stockCurveSvg {
