@@ -889,13 +889,22 @@ async function readUniverseRsSnapshot(symbol = "") {
 
 // Exportada para test unitario directo (docs/duplicados-restantes-2026-08-07.md).
 //
-// Prioridad del `rating` que ve la ficha: RS semanal del ranking global
-// (rs_weekly_items vía readGlobalRsSeriesForSymbol) por delante del
-// percentil del último lote de scan_results. Motivo: el semanal se calcula
-// sobre el universo completo y se refresca cada semana, mientras que
-// `universe.rsGlobalPct` solo compara al símbolo con los pocos símbolos de un
-// escaneo concreto y puede quedar congelado meses. El percentil del lote pasa
-// a ser RESPALDO: solo se muestra cuando no hay semanal.
+// El `rating` que ve la ficha es EXCLUSIVAMENTE el RS semanal del ranking
+// global (rs_weekly_items vía readGlobalRsSeriesForSymbol). Sin respaldo.
+//
+// Antes, cuando no había semanal, caía al percentil del último lote de
+// scan_results (`universe.rsGlobalPct`) y lo enseñaba bajo la misma etiqueta
+// "RS". Eso es lo que producía el cuadro reportado en agosto de 2026: la ficha
+// decía 66 (semanal) mientras la vista rápida y salud de mercado decían 88
+// (percentil del lote) para el mismo símbolo en la misma sesión. Son dos
+// rankings sobre poblaciones distintas; solo uno puede llamarse RS.
+//
+// Ahora, sin semanal, `rating` es null y la ficha muestra ausencia con motivo
+// (docs/principios-producto.md, principios 3 y 7): un dato ausente es
+// preferible a un dato que contradice otra pantalla. El percentil del lote
+// sigue viajando en `rsGlobalPct` con su propio nombre y su propio significado
+// —y sigue alimentando el scoring, que no se toca—, pero deja de poder
+// ocupar el sitio del RS.
 export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, weeklyGlobal = null) {
   const benchmarkRating = benchmarkStrength.rating;
   const weeklyLatest = weeklyGlobal?.latest
@@ -903,18 +912,11 @@ export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe =
     || null;
   const weeklyRating = Number.isFinite(weeklyLatest?.rsRating) ? weeklyLatest.rsRating : null;
   const universeAvailable = Boolean(universe) && Number.isFinite(universe.rsGlobalPct);
-  const rating = weeklyRating !== null ? weeklyRating : universeAvailable ? universe.rsGlobalPct : null;
-  const ratingSource = weeklyRating !== null
-    ? "weekly-universe"
-    : universeAvailable
-    ? "scan-batch"
-    : "universe-missing";
-  // La muestra tiene que describir al ranking que se enseña: la del snapshot
-  // semanal cuando el rating es el semanal, la del lote cuando es el respaldo.
-  const rsGlobalSample = weeklyRating !== null
-    ? (Number.isFinite(weeklyLatest?.sampleSize) ? weeklyLatest.sampleSize : null)
-    : universeAvailable
-    ? universe.rsGlobalSample
+  const rating = weeklyRating;
+  const ratingSource = weeklyRating !== null ? "weekly-universe" : "weekly-missing";
+  // La muestra describe al ranking que se enseña, y solo se enseña el semanal.
+  const rsGlobalSample = weeklyRating !== null && Number.isFinite(weeklyLatest?.sampleSize)
+    ? weeklyLatest.sampleSize
     : null;
   // Delega en la canónica lib/relativeStrength.js:scoreRsQuality en vez de la
   // fórmula .68/.32 paralela (sin término riskRewardScore) — unificado en
@@ -944,9 +946,7 @@ export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe =
     : null) || null;
   const note = weeklyRating !== null
     ? "RS StatsEdge = percentil 1-99 del ranking semanal global (universo completo, base USD). RS Benchmark solo mide comparativa frente al benchmark asignado."
-    : universeAvailable
-    ? "RS StatsEdge sin ranking semanal para este simbolo: se muestra el percentil del ultimo escaneo, calculado solo sobre los simbolos de ese lote."
-    : "RS StatsEdge sin ranking semanal ni snapshot reciente para este simbolo. RS Benchmark se mantiene como comparativa secundaria; no sustituye al RS.";
+    : "RS StatsEdge sin ranking semanal para este simbolo: no entra en el ranking del universo (historico insuficiente o serie de precios discontinua). No se sustituye por el percentil del ultimo escaneo, que se calcula solo sobre los simbolos de ese lote y no es comparable. RS Benchmark se mantiene como comparativa secundaria; no sustituye al RS.";
   return {
     ...benchmarkStrength,
     rating,
@@ -963,12 +963,22 @@ export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe =
     rsGlobalSample,
     rsCountrySample: universeAvailable ? universe.rsCountrySample : null,
     rsSectorSample: universeAvailable ? universe.rsSectorSample : null,
+    // Sin RS que enseñar no hay calidad DE ESE RS que enseñar. El `...spread`
+    // de benchmarkStrength arrastraba aquí el rsQualityScore del camino de
+    // benchmark, así que la ficha podía mostrar un "RS Quality" al lado de un
+    // RS ausente: un ajuste de calidad sobre un ranking que no está en
+    // pantalla. Se anula explícitamente en vez de dejar pasar el valor viejo.
     ...(quality ? {
       rsQualityScore: quality.rsQualityScore,
       rsStabilityScore: quality.rsStabilityScore,
       speculationRiskScore: quality.speculationRiskScore,
       rsQualityLabel: quality.rsQualityLabel,
-    } : {}),
+    } : {
+      rsQualityScore: null,
+      rsStabilityScore: null,
+      speculationRiskScore: null,
+      rsQualityLabel: "",
+    }),
     universe: universeAvailable ? universe : null,
     globalRsSeries: weeklyGlobal?.series || [],
     note,

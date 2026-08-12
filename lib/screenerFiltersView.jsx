@@ -3,7 +3,7 @@
 
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { rowPassesListContract } from "@/lib/listRationale";
-import { rsUniverseValue } from "@/lib/relativeStrength";
+import { canonicalRsValue } from "@/lib/rsCanonical";
 import { CORE_LAYER_KEYS, OPTIONAL_LAYER_KEYS, VIEW_LAYERS } from "@/lib/screenerConfig";
 import {
   EXECUTION_LAYERS,
@@ -28,7 +28,7 @@ export function SetupChipRail({ rows = [], presetKey, setupMode, sort, onPreset,
     stage2: rows.filter((row) => rowPassesListContract(row, "weinstein")).length,
     trend: rows.filter((row) => rowPassesListContract(row, "minervini")).length,
     watch: rows.filter((row) => rowPassesListContract(row, "nearPivot")).length,
-    rs: rows.filter((row) => (rsUniverseValue(row) ?? 0) >= 75).length,
+    rs: rows.filter((row) => (canonicalRsValue(row) ?? 0) >= 75).length,
   };
   const chips = [
     { key: "stage2", label: "Stage 2", count: counts.stage2, active: setupMode === "leader", action: () => onMode("leader") },

@@ -13,6 +13,7 @@ import { buildGroupListDrilldown } from "@/lib/listRationale";
 import { buildSavedListView, listViewSignature, normalizeSavedListViews } from "@/lib/listViews";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
+import { canonicalRs } from "@/lib/rsCanonical";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { favoriteToRow, metricValue, normalizeStockRows, rowCountry, shortBusiness, weaknessScore } from "@/lib/stockRows";
 import { countryName, externalLinks, marketFlag, stockUrl } from "@/lib/symbols";
@@ -596,7 +597,7 @@ export default function SectorsPage() {
             <td><span className="pill">{row.theme}</span></td>
             <td>{row.sector || "Sin dato"}</td>
             <td>{row.industry || "Sin dato"}</td>
-            <td className="ticker"><SectorTrustMetric row={row} metricKey="rsGlobalPct" label={metricShortLabel("rsGlobalPct")} value={row.weeklyRsAvailable === true ? num(row.weeklyRsRating) : "-"} /></td>
+            <td className="ticker"><SectorTrustMetric row={row} metricKey="rsGlobalPct" label={metricShortLabel("rsGlobalPct")} value={canonicalRs(row).available ? num(canonicalRs(row).value) : "-"} /></td>
             <td><SectorTrustMetric row={row} metricKey="weaknessScore" label={metricShortLabel("weaknessScore")} value={num(weaknessScore(row))} /></td>
             <td><SectorTrustMetric row={row} metricKey="perf3m" label="3M" value={pct(row.perf3m)} /></td>
             <td><SectorTrustMetric row={row} metricKey="perf6m" label="6M" value={pct(row.perf6m)} /></td>

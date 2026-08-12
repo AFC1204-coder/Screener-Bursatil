@@ -1059,7 +1059,35 @@ export default function Page() {
       const benchmark = baseRow.benchmarkSymbol || benchmarkSymbolForRow(baseRow);
       const benchmarkChart = await getJson(`/api/chart?symbol=${encodeURIComponent(benchmark)}`).catch(() => ({ bars: [] }));
       const withBenchmark = applyRelativeStrength(baseRow, { [benchmark]: benchmarkChart });
-      const row = sectorize([{ ...withBenchmark, ...dataCoverageForRow(withBenchmark, profile) }])[0];
+      // Cuarta ruta que produce filas, y la única que las construye en
+      // cliente: sin esto la tarjeta de búsqueda enseñaba el RS ausente para
+      // símbolos que sí están en el ranking semanal, igual que le pasaba a la
+      // tabla. El RS que se muestra sale SIEMPRE de rs_weekly_items
+      // (lib/rsCanonical.js); si la lectura falla, la fila queda marcada como
+      // no disponible y la tarjeta enseña ausencia, nunca el percentil del lote.
+      const weekly = await getJson(`/api/rs-weekly?symbol=${encodeURIComponent(normalized)}&limit=1`)
+        .catch(() => null);
+      const weeklyLatest = weekly?.latest || null;
+      const weeklyRs = Number.isFinite(weeklyLatest?.rsRating) ? {
+        weeklyRsAvailable: true,
+        weeklyRsRating: weeklyLatest.rsRating,
+        weeklyRsRank: weeklyLatest.rank ?? null,
+        weeklyRsSampleSize: weeklyLatest.sampleSize ?? null,
+        weeklyRsAsOf: weeklyLatest.date || "",
+        weeklyRsWeekKey: weeklyLatest.weekKey || "",
+        weeklyRsEngineVersion: weeklyLatest.engineVersion || "",
+        weeklyRsReason: null,
+      } : {
+        weeklyRsAvailable: false,
+        weeklyRsRating: null,
+        weeklyRsRank: null,
+        weeklyRsSampleSize: null,
+        weeklyRsAsOf: null,
+        weeklyRsWeekKey: null,
+        weeklyRsEngineVersion: null,
+        weeklyRsReason: null,
+      };
+      const row = sectorize([{ ...withBenchmark, ...dataCoverageForRow(withBenchmark, profile), ...weeklyRs }])[0];
       setSearchResult(row);
       setStatus(`Vista rapida cargada para ${row.companyName || candidate?.name || normalized} (${normalized}).`);
     } catch (e) {

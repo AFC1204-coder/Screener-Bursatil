@@ -10,7 +10,7 @@ import { scoreRsQuality } from "@/lib/relativeStrength";
 import { mergeUniverseRelativeStrength, relativeStrengthFromBars } from "@/app/api/company-brief/route";
 
 describe("rsQualityScore en company-brief", () => {
-  it("mergeUniverseRelativeStrength: con universe disponible, coincide EXACTAMENTE con llamar a la canónica scoreRsQuality con los mismos inputs", () => {
+  it("mergeUniverseRelativeStrength: con ranking semanal, coincide EXACTAMENTE con llamar a la canónica scoreRsQuality con los mismos inputs", () => {
     const benchmarkStrength = {
       rating: 62,
       volatility63d: 30,
@@ -34,10 +34,15 @@ describe("rsQualityScore en company-brief", () => {
       extSma50: 6,
     };
 
-    const result = mergeUniverseRelativeStrength(benchmarkStrength, universe, null);
+    // El RS base es el del ranking semanal, el único que la ficha enseña.
+    // Antes este test pasaba `null` como semanal y la función caía al
+    // percentil del lote; ese respaldo ya no existe (ver
+    // tests/companyBriefRatingSource.test.js).
+    const weeklyGlobal = { latest: { date: "2026-08-09", rsRating: 78, sampleSize: 4868 }, series: [] };
+    const result = mergeUniverseRelativeStrength(benchmarkStrength, universe, weeklyGlobal);
 
     const expected = scoreRsQuality({
-      rsGlobalPct: universe.rsGlobalPct,
+      rsGlobalPct: 78,
       rsRating: benchmarkStrength.rating,
       volatility63d: benchmarkStrength.volatility63d,
       maxDrawdown63d: benchmarkStrength.maxDrawdown63d,

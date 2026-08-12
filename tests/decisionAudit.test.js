@@ -311,7 +311,9 @@ describe("decision audit", () => {
     expect(trace.drivers.length).toBeGreaterThan(0);
     expect(trace.confidence).toMatchObject({ label: expect.any(String), score: expect.any(Number) });
     expect(trace.priority).toMatchObject({
-      formula: "decision + accion + score + RS + rent/riesgo - issues",
+      // "percentil de lote", no "RS": el componente es rsGlobalPct, la
+      // entrada real de la prioridad, no el RS semanal que enseña la interfaz.
+      formula: "decision + accion + score + percentil de lote + rent/riesgo - issues",
       issuePenalty: expect.any(Number),
     });
   });

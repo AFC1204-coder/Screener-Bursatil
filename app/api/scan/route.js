@@ -6,6 +6,7 @@
 // GET /api/scan?id=&offset= — estado + resultados incrementales; el cliente es
 // agnóstico a cuántos eslabones hubo.
 import { after } from "next/server";
+import { hydrateRowsWithWeeklyRs } from "@/lib/globalRs";
 import { clearScansApiCache } from "@/lib/scansApiCache";
 import { isPublicScanStatus } from "@/lib/scanStatus";
 import { clampChunkSize, normalizeSymbols, runScanChunk } from "@/lib/serverScanRunner";
@@ -120,7 +121,14 @@ export async function GET(req) {
       const results = await supabaseRequest("scan_results", {
         query: `scan_id=eq.${encodeURIComponent(id)}&owner_id=eq.${encodeURIComponent(config.ownerId)}&rank_index=gt.${offset}&select=rank_index,raw&order=rank_index.asc&limit=${limit}`,
       });
-      rows = results.map((item) => item.raw).filter(Boolean);
+      // El RS que la tabla enseña es el del ranking semanal del universo
+      // (rs_weekly_items), no el percentil del lote que viaja en `raw`. Estas
+      // filas van directas a la tabla del screener mientras el escaneo corre,
+      // así que necesitan la misma hidratación que /api/scans: sin ella la
+      // columna RS mostraba "–" para símbolos que sí están en el ranking, y la
+      // ficha del mismo símbolo enseñaba el número. Es un lote acotado (≤ limit
+      // filas nuevas por sondeo), no el universo entero.
+      rows = await hydrateRowsWithWeeklyRs(results.map((item) => item.raw).filter(Boolean));
       nextOffset = results.length ? results.at(-1).rank_index : offset;
     }
     return Response.json({

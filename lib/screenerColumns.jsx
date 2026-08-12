@@ -23,6 +23,8 @@ import Link from "next/link";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { cap, pct } from "@/lib/formatters";
 import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
+import { canonicalRs } from "@/lib/rsCanonical";
+import { STAGE_MISSING_REASON, stageWordForState } from "@/lib/stageDisplay";
 import { CompanyMark, MiniSparkline } from "@/lib/screenerAtoms";
 import { PERFORMANCE_PERIODS, normalizePerformancePeriod, performancePeriod } from "@/lib/screenerPeriods";
 import { countryName, marketFlag, stockUrl } from "@/lib/symbols";
@@ -70,33 +72,11 @@ function auditIssueReason(row, metricKey) {
 
 // ── Etapa de Weinstein en una palabra ──────────────────────────────────────
 // Presentación pura: lee la clasificación que ya calcula lib/weeklyStage.js.
-// No recalcula nada.
-const STAGE_WORDS = {
-  stage2: { word: "Etapa 2", tone: "stage2" },
-  stage4: { word: "Etapa 4", tone: "stage4" },
-  base: { word: "Base", tone: "base" },
-  mixed: { word: "Mixta", tone: "mixed" },
-};
-
+// No recalcula nada. El diccionario vive en lib/stageDisplay.js para que la
+// ficha del valor escriba la MISMA palabra que esta celda: antes la tabla
+// decía "Base" y la ficha "Base / transición" para la misma clasificación.
 export function stageWord(row = {}) {
-  const state = row.weeklyStageState || "";
-  if (STAGE_WORDS[state]) return STAGE_WORDS[state];
-  if (state === "insufficient_history") return null;
-  // Filas de sesiones antiguas sin clasificación semanal: se derivan de la
-  // etiqueta larga ya guardada, nunca de un cálculo nuevo.
-  const label = String(row.weeklyStageLabel || "").toLowerCase();
-  if (/stage 2|etapa 2/.test(label)) return STAGE_WORDS.stage2;
-  if (/stage 4|etapa 4/.test(label)) return STAGE_WORDS.stage4;
-  if (/base/.test(label)) return STAGE_WORDS.base;
-  if (/mixta|debil/.test(label)) return STAGE_WORDS.mixed;
-  return null;
-}
-
-function rsValue(row = {}) {
-  // Solo el RS semanal sobre el universo. Si el símbolo no está en ese ranking
-  // se muestra ausente en vez del percentil del lote: el sistema no afirma lo
-  // que no sabe (docs/adr-rs-universo-us.md).
-  return row.weeklyRsAvailable === true && Number.isFinite(row.weeklyRsRating) ? row.weeklyRsRating : null;
+  return stageWordForState(row.weeklyStageState || "", row.weeklyStageLabel || "");
 }
 
 function moveTone(value) {
@@ -173,11 +153,11 @@ export const SCREENER_COLUMNS = [
     className: "colRs",
     sortKey: () => "rsGlobalPct",
     cell: (row) => {
-      const value = rsValue(row);
-      if (!Number.isFinite(value)) {
-        return <MissingValue reason="Sin RS semanal: este símbolo no entra en el ranking del universo (histórico insuficiente o serie de precios discontinua)." />;
-      }
-      return <b className={`cellNumber ${value >= 75 ? "strong" : value < 45 ? "weak" : ""}`.trim()}>{value.toFixed(0)}</b>;
+      // Lector único: lib/rsCanonical.js. La tabla, la vista rápida, la ficha y
+      // salud de mercado leen exactamente esta función.
+      const rs = canonicalRs(row);
+      if (!rs.available) return <MissingValue reason={rs.reason} />;
+      return <b className={`cellNumber ${rs.value >= 75 ? "strong" : rs.value < 45 ? "weak" : ""}`.trim()}>{rs.value.toFixed(0)}</b>;
     },
   },
   {
@@ -190,7 +170,7 @@ export const SCREENER_COLUMNS = [
     cell: (row) => {
       const stage = stageWord(row);
       if (!stage) {
-        return <MissingValue reason="Histórico semanal insuficiente para clasificar la etapa de este valor." />;
+        return <MissingValue reason={STAGE_MISSING_REASON} />;
       }
       return <span className={`stageTag stage-${stage.tone}`}>{stage.word}</span>;
     },

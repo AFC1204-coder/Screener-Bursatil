@@ -10,7 +10,8 @@ import { getJson } from "@/lib/clientApi";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
-import { metricValue, rowRsBenchmark, rowRsPrimary, rowRsUniverse, rowTheme, weaknessScore } from "@/lib/stockRows";
+import { canonicalRsValue } from "@/lib/rsCanonical";
+import { metricValue, rowRsBenchmark, rowTheme, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
 
 const dateFmt = (value) => {
@@ -33,19 +34,20 @@ function safePct(value, fallback = 0) {
   return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : fallback;
 }
 
-// RS semanal cuando el símbolo está en el ranking US; si no, cae al mismo
-// fallback de siempre (percentil de lote, luego rating vs. benchmark).
+// El RS es SIEMPRE el del ranking semanal del universo (lib/rsCanonical.js),
+// el mismo que la tabla del screener, la vista rápida y la ficha del valor.
+// Antes esta pantalla caía al percentil del lote y luego al rating vs.
+// benchmark, y los enseñaba a los tres bajo la etiqueta "RS": por eso salud de
+// mercado decía 88 para un símbolo cuya ficha decía 66. Un dato ausente es
+// preferible a un dato que contradice otra pantalla.
 function rowRs(row = {}) {
-  if (row.weeklyRsAvailable === true) return row.weeklyRsRating;
-  return rowRsPrimary(row);
+  return canonicalRsValue(row);
 }
 function rowRsDisplay(row = {}) {
-  if (row.weeklyRsAvailable === true) return row.weeklyRsRating;
-  return rowRsUniverse(row) ?? rowRsBenchmark(row) ?? null;
+  return canonicalRsValue(row);
 }
-function rowRsDisplayLabel(row = {}) {
-  if (row.weeklyRsAvailable === true) return metricShortLabel("rsGlobalPct");
-  return Number.isFinite(rowRsUniverse(row)) ? metricShortLabel("rsGlobalPct") : metricShortLabel("rsRating");
+function rowRsDisplayLabel() {
+  return metricShortLabel("rsGlobalPct");
 }
 function rowWeakness(row = {}) { return weaknessScore(row); }
 function rowObjectiveScore(row = {}) { return metricValue(row, "objectiveScore"); }
@@ -59,10 +61,13 @@ function isStage2Like(row = {}) {
 function deteriorationReasons(row = {}) {
   const reasons = [];
   if (rowWeakness(row) >= 65) reasons.push("Deterioro alto");
-  const rsUniverse = rowRsUniverse(row);
+  // "RS débil" habla del RS que el producto enseña (ranking semanal). "RS
+  // Bench bajo" es OTRA métrica —fuerza frente al benchmark local— y por eso
+  // conserva su propia etiqueta: no se mezclan bajo el mismo nombre.
+  const rsCanonical = canonicalRsValue(row);
   const rsBenchmark = rowRsBenchmark(row);
-  if (Number.isFinite(rsUniverse) && rsUniverse < 40) reasons.push("RS débil");
-  else if (!Number.isFinite(rsUniverse) && Number.isFinite(rsBenchmark) && rsBenchmark < 45) reasons.push("RS Bench bajo");
+  if (Number.isFinite(rsCanonical) && rsCanonical < 40) reasons.push("RS débil");
+  else if (!Number.isFinite(rsCanonical) && Number.isFinite(rsBenchmark) && rsBenchmark < 45) reasons.push("RS Bench bajo");
   if (Number.isFinite(row.price) && Number.isFinite(row.sma50) && row.price < row.sma50) reasons.push("Bajo SMA50");
   if (Number.isFinite(row.price) && Number.isFinite(row.sma200) && row.price < row.sma200) reasons.push("Bajo SMA200");
   if (Number.isFinite(row.distance52w) && row.distance52w < -30) reasons.push("Lejos de máximos");
@@ -109,7 +114,7 @@ function buildScanPulse(scans = []) {
     .slice(0, 8);
   const nearHigh = rows.filter(isNearHigh).length;
   const stage2 = rows.filter(isStage2Like).length;
-  const rsLeader = rows.filter((row) => (rowRsUniverse(row) || 0) >= 80).length;
+  const rsLeader = rows.filter((row) => (canonicalRsValue(row) || 0) >= 80).length;
   const pressure = rows.filter((row) => deteriorationReasons(row).length >= 2).length;
   return {
     scan,
@@ -369,16 +374,18 @@ function GlobalRegionsPanel({ rows = [] }) {
     const total = filtered.length;
     const above50 = filtered.filter((r) => (r.extSma50 ?? 0) >= 0).length;
     const amplitudePct = total ? (above50 / total) * 100 : 0;
-    const validRs = filtered.map((r) => rowRsPrimary(r)).filter(Number.isFinite);
-    const avgRs = validRs.length ? validRs.reduce((s, v) => s + v, 0) / validRs.length : 50;
+    // Promedio del MISMO RS que el resto del producto. Los símbolos sin
+    // ranking semanal quedan fuera del promedio en vez de entrar con el
+    // percentil de su lote, que no es comparable entre valores.
+    const validRs = filtered.map((r) => canonicalRsValue(r)).filter(Number.isFinite);
+    const avgRs = validRs.length ? validRs.reduce((s, v) => s + v, 0) / validRs.length : null;
 
     const leaders = [...filtered]
       .sort((a, b) => (rowObjectiveScore(b) || 0) - (rowObjectiveScore(a) || 0))
       .slice(0, 3);
 
-    let rsLabel = "Neutral";
-    if (avgRs >= 80) rsLabel = "Fuerte";
-    else if (avgRs <= 45) rsLabel = "Débil";
+    let rsLabel = "Sin RS";
+    if (Number.isFinite(avgRs)) rsLabel = avgRs >= 80 ? "Fuerte" : avgRs <= 45 ? "Débil" : "Neutral";
 
     return (
       <div className="marketRegionCard" key={region.key}>
@@ -394,7 +401,7 @@ function GlobalRegionsPanel({ rows = [] }) {
         </div>
         <div className="marketRegionMetrics">
           <div className="marketRegionMetric"><b>{pct(amplitudePct)}</b><span>Amplitud (SMA50)</span></div>
-          <div className="marketRegionMetric"><b>{avgRs.toFixed(0)}</b><span>RS promedio</span></div>
+          <div className="marketRegionMetric" title={Number.isFinite(avgRs) ? `Media del RS semanal de ${validRs.length} de ${total} valores del snapshot` : "Ningún valor de esta región está en el ranking semanal del universo."}><b>{Number.isFinite(avgRs) ? avgRs.toFixed(0) : "–"}</b><span>RS promedio</span></div>
           <div className="marketRegionMetric"><b>{total}</b><span>En snapshot</span></div>
         </div>
         <div className="marketRegionLeaders">
@@ -414,7 +421,7 @@ function GlobalRegionsPanel({ rows = [] }) {
                   </span>
                   <span className="marketRegionLeaderScore">
                     <span>RS</span>
-                    <b>{rowRsPrimary(leader)?.toFixed(0) || "-"}</b>
+                    <b>{canonicalRsValue(leader)?.toFixed(0) || "-"}</b>
                   </span>
                 </span>
               </a>
@@ -664,12 +671,12 @@ export default function MarketHealthPage() {
                     <h3>Liderazgo observado</h3>
                     {scanPulse.leaders.map((row) => {
                       const rs = rowRsDisplay(row);
-                      const rsKey = Number.isFinite(rowRsUniverse(row)) ? "rsGlobalPct" : "rsRating";
+                      const rsKey = "rsGlobalPct";
                       const trustSignature = rowTrustSignatureForRow(row);
                       return (
                         <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
                           <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small><RowTrustSignature signature={trustSignature} className="marketRowTrustSignature" /></span>
-                          <span><MarketTrustMetric row={row} metricKey={rsKey} label={rowRsDisplayLabel(row)} value={Number.isFinite(rs) ? rs.toFixed(0) : "-"} /><small>{rowRsDisplayLabel(row)}</small></span>
+                          <span><MarketTrustMetric row={row} metricKey={rsKey} label={rowRsDisplayLabel()} value={Number.isFinite(rs) ? rs.toFixed(0) : "-"} /><small>{rowRsDisplayLabel()}</small></span>
                           <span><MarketTrustMetric row={row} metricKey="objectiveScore" label={metricShortLabel("objectiveScore")} value={rowObjectiveScore(row)?.toFixed(0) || "-"} /><small>{metricShortLabel("objectiveScore")}</small></span>
                         </a>
                       );
@@ -680,13 +687,13 @@ export default function MarketHealthPage() {
                     <h3>Deterioro a revisar</h3>
                     {scanPulse.deterioration.map((row) => {
                       const rs = rowRsDisplay(row);
-                      const rsKey = Number.isFinite(rowRsUniverse(row)) ? "rsGlobalPct" : "rsRating";
+                      const rsKey = "rsGlobalPct";
                       const trustSignature = rowTrustSignatureForRow(row);
                       return (
                         <a className="evidenceRow" href={stockUrl(row.symbol)} key={row.symbol}>
                           <span><b>{row.symbol}</b><small>{row.companyName || rowTheme(row) || "-"}</small><RowTrustSignature signature={trustSignature} className="marketRowTrustSignature" /></span>
                           <span><b>{row.deteriorationReasons.length}</b><small>evidencias</small></span>
-                          <span><MarketTrustMetric row={row} metricKey={rsKey} label={rowRsDisplayLabel(row)} value={Number.isFinite(rs) ? rs.toFixed(0) : "-"} /><small>{row.deteriorationReasons.slice(0, 2).join(", ")}</small></span>
+                          <span><MarketTrustMetric row={row} metricKey={rsKey} label={rowRsDisplayLabel()} value={Number.isFinite(rs) ? rs.toFixed(0) : "-"} /><small>{row.deteriorationReasons.slice(0, 2).join(", ")}</small></span>
                         </a>
                       );
                     })}

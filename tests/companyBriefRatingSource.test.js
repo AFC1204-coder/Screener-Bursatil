@@ -1,10 +1,18 @@
 // El `rating` que enseña la ficha /stock/[symbol] sale de
-// mergeUniverseRelativeStrength. Antes venía SIEMPRE del percentil del último
-// lote de scan_results (universe.rsGlobalPct), aunque existiera el ranking
-// semanal global calculado sobre el universo completo: la ficha llegó a
-// mostrar un percentil de mayo sobre 300 símbolos mientras el semanal tenía
-// dato de agosto sobre 4.868. Estos tests fijan la prioridad nueva:
-// semanal > lote > nada, con la muestra y el ratingSource coherentes.
+// mergeUniverseRelativeStrength. Historia en dos pasos:
+//
+//   1. Venía SIEMPRE del percentil del último lote de scan_results
+//      (universe.rsGlobalPct): la ficha llegó a mostrar un percentil de mayo
+//      sobre 300 símbolos mientras el semanal tenía dato de agosto sobre 4.868.
+//      Se puso el semanal por delante, con el lote como RESPALDO.
+//   2. El respaldo seguía produciendo contradicciones entre pantallas: para un
+//      símbolo sin ranking semanal, la ficha enseñaba el percentil del lote
+//      bajo la etiqueta "RS" mientras la tabla del screener enseñaba ausencia.
+//      Son dos rankings sobre poblaciones distintas y solo uno puede llamarse
+//      RS, así que el respaldo se ELIMINÓ.
+//
+// Contrato vigente: `rating` es el semanal o es null. Nunca el percentil del
+// lote, que sigue viajando en `rsGlobalPct` con su propio nombre.
 import { describe, expect, it } from "vitest";
 import { scoreRsQuality } from "@/lib/relativeStrength";
 import { mergeUniverseRelativeStrength } from "@/app/api/company-brief/route";
@@ -56,20 +64,26 @@ describe("mergeUniverseRelativeStrength: origen del rating", () => {
     expect(result.universe).toBe(universe);
   });
 
-  it("sin semanal pero con snapshot del lote, el rating es el del lote", () => {
+  it("sin semanal pero con snapshot del lote, el rating es null: el percentil del lote NO ocupa el sitio del RS", () => {
     const result = mergeUniverseRelativeStrength(benchmarkStrength, universe, null);
 
-    expect(result.rating).toBe(41);
-    expect(result.ratingSource).toBe("scan-batch");
-    expect(result.rsGlobalSample).toBe(300);
-    expect(result.rsUniverseAvailable).toBe(true);
+    expect(result.rating).toBe(null);
+    expect(result.ratingSource).toBe("weekly-missing");
+    expect(result.rsUniverseAvailable).toBe(false);
+    // La muestra describe al ranking mostrado; si no se muestra ranking, no
+    // hay muestra que enseñar.
+    expect(result.rsGlobalSample).toBe(null);
+    // El percentil del lote sigue existiendo con su propio nombre y su propio
+    // significado: no desaparece, solo deja de poder llamarse RS.
+    expect(result.rsGlobalPct).toBe(41);
+    expect(result.universe).toBe(universe);
   });
 
   it("sin semanal y sin snapshot, el rating es null", () => {
     const result = mergeUniverseRelativeStrength(benchmarkStrength, null, null);
 
     expect(result.rating).toBe(null);
-    expect(result.ratingSource).toBe("universe-missing");
+    expect(result.ratingSource).toBe("weekly-missing");
     expect(result.rsGlobalSample).toBe(null);
     expect(result.rsGlobalPct).toBe(null);
     expect(result.rsUniverseAvailable).toBe(false);
@@ -126,22 +140,14 @@ describe("mergeUniverseRelativeStrength: origen del rating", () => {
     expect(result.speculationRiskScore).toBe(conSemanal.speculationRiskScore);
   });
 
-  it("sin semanal, rsQualityScore se calcula sobre el rating del lote", () => {
+  it("sin semanal, rsQualityScore queda ausente: no se calcula calidad sobre un RS que no se enseña", () => {
     const result = mergeUniverseRelativeStrength(benchmarkStrength, universe, null);
 
-    const esperado = scoreRsQuality({
-      rsGlobalPct: universe.rsGlobalPct,
-      rsRating: benchmarkStrength.rating,
-      volatility63d: benchmarkStrength.volatility63d,
-      maxDrawdown63d: benchmarkStrength.maxDrawdown63d,
-      riskRewardScore: universe.riskRewardScore,
-      liquidityScore: universe.liquidityScore,
-      maxDailyMove20dPct: universe.maxDailyMove20dPct,
-      range63dPct: universe.range63dPct,
-      highsSpreadPct: universe.highsSpreadPct,
-      extSma50: universe.extSma50,
-    });
-
-    expect(result.rsQualityScore).toBe(esperado.rsQualityScore);
+    expect(result.rating).toBe(null);
+    // Sin RS que mostrar no hay calidad DE ESE RS que mostrar. Antes se
+    // calculaba sobre el percentil del lote y la ficha enseñaba un RS Quality
+    // que no correspondía a ningún RS visible.
+    expect(result.rsQualityScore ?? null).toBe(null);
+    expect(result.rsQualityLabel ?? "").toBe("");
   });
 });

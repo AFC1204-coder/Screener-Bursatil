@@ -1,4 +1,6 @@
 import { buildGroupedLeaderboards, buildLeaderboard, DEFAULT_LEADERBOARD_SPECS, readMaterializedLeaderboard, readScanRows, writeMaterializedLeaderboards } from "@/lib/leaderboards";
+import { attachCachedMarketCap, readMarketCapForSymbols } from "@/lib/fundamentalsCache";
+import { hydrateRowsWithWeeklyRs } from "@/lib/globalRs";
 import { SCREENER_FILTER_QUERY_KEYS } from "@/lib/screenerFilters";
 import { requirePersistenceAuth } from "@/lib/supabaseServer";
 
@@ -98,6 +100,23 @@ function limitCachedLeaderboard(leaderboard = null, limitValue = "") {
   };
 }
 
+// La previsualización cacheada del screener (loadCachedScreenerPreview en
+// app/page.jsx) pinta la tabla con ESTOS items. Sin el ranking semanal
+// adjunto, la columna RS enseñaba "–" para símbolos que sí están en el
+// ranking mientras la ficha del mismo símbolo enseñaba el número: la fuente
+// del RS es rs_weekly_items en todas las superficies, no el percentil del
+// lote que viaja en el snapshot. Son ≤50 símbolos por respuesta.
+async function withWeeklyRsItems(leaderboard) {
+  if (!leaderboard || !Array.isArray(leaderboard.items) || !leaderboard.items.length) return leaderboard;
+  const withRs = await hydrateRowsWithWeeklyRs(leaderboard.items);
+  // La capitalización sale de la misma tabla que lee la ficha del valor
+  // (fundamental_snapshots), no de la copia congelada en el snapshot del
+  // escaneo, que puede ser de días atrás.
+  const caps = await readMarketCapForSymbols(withRs.map((item) => item?.symbol).filter(Boolean))
+    .catch(() => ({ configured: false, bySymbol: new Map() }));
+  return { ...leaderboard, items: withRs.map((item) => attachCachedMarketCap(item, caps.bySymbol)) };
+}
+
 function mergeSpecParams(spec, params) {
   if (!spec) return params;
   return {
@@ -136,7 +155,7 @@ export async function GET(request) {
         return Response.json(apiPayload({
           configured: true,
           source: "leaderboard_snapshots",
-          leaderboard: limitCachedLeaderboard(cached, params.limit),
+          leaderboard: await withWeeklyRsItems(limitCachedLeaderboard(cached, params.limit)),
           predefined: DEFAULT_LEADERBOARD_SPECS,
         }));
       }
@@ -158,11 +177,11 @@ export async function GET(request) {
           source: "leaderboard_snapshots",
           degraded: true,
           fallback: { reason: error.message || "Supabase scan_results unavailable", read },
-          leaderboard: limitCachedLeaderboard(cached, params.limit),
+          leaderboard: await withWeeklyRsItems(limitCachedLeaderboard(cached, params.limit)),
           predefined: DEFAULT_LEADERBOARD_SPECS,
         }));
       }
-      const leaderboard = buildLeaderboard([], mergeSpecParams(spec, params));
+      const leaderboard = await withWeeklyRsItems(buildLeaderboard([], mergeSpecParams(spec, params)));
       return Response.json(apiPayload({
         configured: true,
         source: "scan_results_unavailable",
@@ -187,7 +206,7 @@ export async function GET(request) {
     }
 
     const spec = DEFAULT_LEADERBOARD_SPECS.find((item) => item.key === params.key);
-    const leaderboard = buildLeaderboard(scanData.rows, mergeSpecParams(spec, params));
+    const leaderboard = await withWeeklyRsItems(buildLeaderboard(scanData.rows, mergeSpecParams(spec, params)));
     return Response.json(apiPayload({
       configured: true,
       source: "scan_results",

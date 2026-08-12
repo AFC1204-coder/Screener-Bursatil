@@ -14,6 +14,7 @@ import { amount, money, quickBusinessDescription, quickBusinessMarket, ratioLabe
 import { QuickReviewMetricValue, ReviewPriorityPanel, ReviewQueueFocusBadge } from "@/app/components/screener/ReviewWidgets";
 import { pct } from "@/lib/formatters";
 import { metricShortLabel } from "@/lib/metricCatalog";
+import { RS_QUALITY_OFF_CANON_REASON, canonicalRs } from "@/lib/rsCanonical";
 import { buildDecisionQueueItem } from "@/lib/screenerExplainability";
 import { externalLinks, stockUrl } from "@/lib/symbols";
 import { STOCK_DECISION_ACTIONS, decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
@@ -51,6 +52,10 @@ export default function QuickReviewModal({
   updateChartSettings,
 }) {
   if (!activeModalRow) return null;
+
+  // Lector único del RS (lib/rsCanonical.js). El mismo que usa la tabla del
+  // screener, la ficha del valor y salud de mercado.
+  const quickRs = canonicalRs(activeModalRow);
 
   return <dialog className="stockModal quickReviewModal" open onClick={(e) => { if (e.target === e.currentTarget) closeQuickReview(); }}>
     <div className="stockModalInner quickReviewInner">
@@ -269,8 +274,16 @@ export default function QuickReviewModal({
                 <div className="profileRow"><span>Capitalización</span><b>{amount(activeModalRow.marketCap, activeModalRow.currency) || "-"}</b></div>
                 <div className="profileRow"><span>{metricShortLabel("objectiveScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="objectiveScore" label={metricShortLabel("objectiveScore")} value={activeModalRow.objectiveScore?.toFixed(0) || activeModalRow.totalScore?.toFixed(0) || "-"} className="up" /></div>
                 <div className="profileRow"><span>{metricShortLabel("totalScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="totalScore" label={metricShortLabel("totalScore")} value={activeModalRow.totalScore?.toFixed(0) || "-"} /></div>
-                <div className="profileRow"><span>{metricShortLabel("rsGlobalPct")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="rsGlobalPct" label={metricShortLabel("rsGlobalPct")} value={activeModalRow.weeklyRsAvailable === true ? activeModalRow.weeklyRsRating?.toFixed(0) : "-"} /></div>
-                <div className="profileRow"><span>{metricShortLabel("rsQualityScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="rsQualityScore" label={metricShortLabel("rsQualityScore")} value={activeModalRow.rsQualityScore?.toFixed(0) || "-"} /></div>
+                <div className="profileRow"><span>{metricShortLabel("rsGlobalPct")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="rsGlobalPct" label={metricShortLabel("rsGlobalPct")} value={quickRs.available ? quickRs.value.toFixed(0) : "-"} title={quickRs.available ? "" : quickRs.reason} /></div>
+                {/* RS Quality NO es el RS: es un ajuste de calidad SOBRE un RS.
+                    El que trae la fila del escaneo está calculado sobre el
+                    percentil del lote, no sobre el ranking semanal que esta
+                    misma pantalla enseña como RS. Enseñar los dos juntos era
+                    exactamente la contradicción reportada ("RS – y RS Quality
+                    88" en el mismo panel). Mientras la fila no traiga un RS
+                    Quality derivado del RS canónico, se muestra ausente con su
+                    motivo: la ficha del valor sí lo calcula sobre el RS bueno. */}
+                <div className="profileRow"><span>{metricShortLabel("rsQualityScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="rsQualityScore" label={metricShortLabel("rsQualityScore")} value="-" title={RS_QUALITY_OFF_CANON_REASON} /></div>
                 <div className="profileRow"><span>{metricShortLabel("adProxyScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="adProxyScore" label={metricShortLabel("adProxyScore")} value={activeModalRow.adProxyScore?.toFixed(0) || "-"} /></div>
                 <div className="profileRow"><span>{metricShortLabel("epsGrowthProxyScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="epsGrowthProxyScore" label={metricShortLabel("epsGrowthProxyScore")} value={activeModalRow.epsGrowthProxyScore?.toFixed(0) || "-"} /></div>
                 <div className="profileRow"><span>Setup quality</span><QuickReviewMetricValue row={activeModalRow} metricKey="setupQualityScore" label="Setup quality" value={activeModalRow.setupQualityScore?.toFixed(0) || "-"} /></div>

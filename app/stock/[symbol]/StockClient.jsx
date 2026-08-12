@@ -14,6 +14,7 @@ import { dataStatusLabel } from "@/lib/patternNarrative";
 import { screenerStockContextFromSession } from "@/lib/screenerContracts";
 import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { setupPatternForBars } from "@/lib/setupPatterns";
+import { STAGE_MISSING_REASON, stageWordForState } from "@/lib/stageDisplay";
 import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { DECISION_CHART_PRESETS, buildStockDecisionDesk } from "@/lib/stockDecisionDesk";
@@ -148,7 +149,10 @@ function N0VerdictBlock({
   actions,
 }) {
   const priceHas = Number.isFinite(priceSnapshot?.price);
-  const stageLabel = data?.stage?.label || setupDisplay?.shortLabel || "Etapa sin clasificar";
+  // Misma palabra que la tabla y que la fila "ETAPA" de esta misma ficha.
+  const stageLabel = stageWordForState(data?.stage?.weekly?.state || "", data?.stage?.label || "")?.word
+    || setupDisplay?.shortLabel
+    || "Etapa sin clasificar";
   return (
     <section className="stockVerdict" data-decision={decision}>
       <div className="stockVerdictHead">
@@ -545,12 +549,13 @@ function RsGroup({ title, subtitle = "", children }) {
 function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" }) {
   const weekly = latestWeeklyRs(rs);
   const weeklyScore = finiteValue(weekly?.rsRating);
-  const snapshotScore = finiteValue(rs.rsGlobalPct);
-  const globalScore = finiteValue(rsUniverse, weeklyScore, snapshotScore);
+  // "RS global" del panel = ranking semanal del universo, sin caer al
+  // percentil del lote (rs.rsGlobalPct): ese percentil ya tiene su propio
+  // sitio y su propio nombre, y no puede ocupar el del RS.
+  const globalScore = finiteValue(rsUniverse, weeklyScore);
   const globalSample = finiteValue(weekly?.sampleSize, rs.rsGlobalSample);
   const globalDate = compactDate(weekly?.date || rs.universe?.asOf);
   const benchmarkSymbol = rs.benchmarkSymbol || "benchmark";
-  const snapshotDate = compactDate(rs.universe?.asOf);
   const countryDetail = [country, sampleText(rs.rsCountrySample)].filter(Boolean).join(" · ");
   const groupSample = finiteValue(rs.rsSectorSample);
   const groupDetail = `${sampleText(groupSample)}${groupSample && groupSample < 20 ? " · muestra baja" : ""}`;
@@ -564,7 +569,7 @@ function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" 
     : metricSourceState("review", "RS bench", "sin benchmark suficiente");
   const sourceLine = weekly
     ? `RS global semanal USD · ${sampleText(globalSample)}${globalDate ? ` · ${globalDate}` : ""}`
-    : `RS global del ultimo scan${snapshotDate ? ` · ${snapshotDate}` : ""}`;
+    : "Sin RS semanal: este simbolo no entra en el ranking del universo";
 
   return <section className="card rsPanel">
     <div className="sectionTitle rsPanelTitle">
@@ -572,7 +577,7 @@ function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" 
         <h2>Fuerza relativa</h2>
         <p className="fine">{sourceLine}</p>
       </div>
-      <span className="rsPanelBadge">{rs.ratingSource === "weekly-universe" || rs.ratingSource === "scan-batch" || weekly ? "RS real" : "Sin snapshot"}</span>
+      <span className="rsPanelBadge">{rs.ratingSource === "weekly-universe" || weekly ? "RS real" : "Sin RS semanal"}</span>
     </div>
     <div className="rsPanelGrid">
       <RsGroup title="Ranking" subtitle="percentil 1-99">
@@ -1744,12 +1749,17 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const benchmarkOverride = cleanBenchmarkSymbol(chartSettings?.benchmarks?.[symbol]);
   const activeBenchmark = benchmarkOverride || cleanBenchmarkSymbol(rs.benchmarkSymbol);
   const weeklyGlobalRs = latestWeeklyRs(rs);
-  const rsUniverse = finiteValue(weeklyGlobalRs?.rsRating, rs.rsGlobalPct);
+  // El RS de la ficha es el del ranking semanal del universo y nada más: el
+  // mismo número que la tabla del screener, la vista rápida y salud de
+  // mercado (lib/rsCanonical.js). Antes caía a rs.rsGlobalPct —el percentil
+  // del último lote— y ahí nacía la contradicción entre pantallas. Sin
+  // semanal se muestra ausente con motivo, no un número de otro ranking.
+  const rsUniverse = finiteValue(weeklyGlobalRs?.rsRating, rs.rating);
   const rsBenchmark = finiteValue(rs.benchmarkRating, rs.rsRating);
   const priceSnapshot = priceSnapshotFromBars(data?.chartBars || [], q);
   const technical = technicalSnapshotFromBars(data?.chartBars || [], q);
   const statementCurrency = data?.financialResults?.currency || g.financialCurrency || data?.currency || "";
-  const stageTone = /etapa 2/i.test(data?.stage?.label || "") ? "good" : /etapa 4/i.test(data?.stage?.label || "") ? "bad" : "neutral";
+  const stageTone = /etapa 2|stage 2/i.test(data?.stage?.label || "") ? "good" : /etapa 4|stage 4/i.test(data?.stage?.label || "") ? "bad" : "neutral";
   const dayTone = (priceSnapshot.dayChangePct || 0) >= 0 ? "up" : "down";
   const nextEarnings = data?.earningsCalendar?.earningsDate || data?.earningsCalendar?.earningsStart || "Sin dato";
   const listingDate = data?.ipoDate || data?.listingDate || "";
@@ -1925,7 +1935,14 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const heroEpsRows = annualRowsForHero.length >= 2 ? annualRowsForHero : quarterRowsForHero;
   const heroEpsCompareOffset = annualRowsForHero.length >= 2 ? 1 : 4;
   const heroEpsYoY = heroEpsRows.length ? epsGrowth(heroEpsRows[0], heroEpsRows, 0, heroEpsCompareOffset, v.sharesOutstanding || g.sharesOutstanding) : g.earningsGrowth;
-  const stageShortLabel = (data?.stage?.label || "Sin dato").replace(/\s+probable$/i, "");
+  // MISMA palabra que la celda "Etapa" de la tabla del screener
+  // (lib/stageDisplay.js). Antes la ficha imprimía el label largo del
+  // clasificador ("Base / transicion", "Stage 2 probable") y la tabla la
+  // versión corta en español: la misma clasificación se leía como dos datos
+  // distintos. La clasificación no cambia, solo cómo se escribe.
+  const stageState = data?.stage?.weekly?.state || "";
+  const stageDisplay = stageWordForState(stageState, data?.stage?.label || "");
+  const stageShortLabel = stageDisplay?.word || "";
   const businessTeaser = compactBusinessTeaser(data);
   const companySummary = data?.summary || "Sin descripción de negocio disponible.";
   const companySummaryId = `hero-company-summary-${symbol || "stock"}`;
@@ -1934,7 +1951,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     ? Number.isFinite(rs.rsGlobalSample) && rs.rsGlobalSample >= 20
       ? metricSourceState("measured", "RS", `n=${Math.round(rs.rsGlobalSample)}`)
       : metricSourceState("review", "RS", "muestra insuficiente o snapshot sin muestra")
-    : metricSourceState("review", "RS", "sin dato");
+    : metricSourceState("review", "RS", "sin ranking semanal para este simbolo");
   const setupSource = chartEstimated
     ? metricSourceState("review", "Estructura", chartSourceDetail)
     : setupDisplay.blocksPatternClaim || setupDisplay.dataLimited
@@ -2051,9 +2068,9 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     },
     {
       label: "ETAPA",
-      value: data?.stage?.label ? stageShortLabel : "—",
-      state: data?.stage?.label ? "value" : "ghost",
-      source: data?.stage?.label ? metricSourceState(chartEstimated ? "review" : "proxy", "Etapa", chartEstimated ? chartSourceDetail : "modelo técnico") : metricSourceState("review", "Etapa", "sin dato"),
+      value: stageShortLabel || "—",
+      state: stageShortLabel ? "value" : "ghost",
+      source: stageShortLabel ? metricSourceState(chartEstimated ? "review" : "proxy", "Etapa", chartEstimated ? chartSourceDetail : "modelo técnico") : metricSourceState("review", "Etapa", STAGE_MISSING_REASON),
     },
     {
       label: "MA50",

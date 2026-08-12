@@ -52,7 +52,9 @@ describe("explainScreenerRank", () => {
     expect(explanation.mode).toBe("long");
     expect(explanation.tone).toBe("good");
     expect(labels).toContain("Plan valido");
-    expect(labels).toContain("RS universo");
+    // El chip dejó de llamarse "RS universo": su número es el percentil del
+    // lote (rsGlobalPct), no el RS semanal del universo que enseña la interfaz.
+    expect(labels).toContain("Percentil lote");
     expect(labels).toContain("Estructura");
     expect(explanation.watch).toEqual([]);
     expect(explanation.action.key).toBe("candidate-long");
@@ -123,7 +125,9 @@ describe("explainScreenerRank", () => {
       },
     }, {});
     const labels = explanation.drivers.map((item) => item.label);
-    expect(labels).toContain("RS universo");
+    // El chip dejó de llamarse "RS universo": su número es el percentil del
+    // lote (rsGlobalPct), no el RS semanal del universo que enseña la interfaz.
+    expect(labels).toContain("Percentil lote");
     expect(labels).toContain("RS grupo");
     expect(labels).toContain("Estructura");
   });

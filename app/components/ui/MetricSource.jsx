@@ -48,16 +48,21 @@ export function TrustMetric({
   baseClass = "",
   variant = "span",
   valueTag = "span",
+  // Motivo específico de ESTE valor en ESTA fila (típicamente por qué falta).
+  // Es la excepción del principio 5: explicar el método es redundante,
+  // explicar una ausencia concreta no. Se antepone al aviso de trazabilidad.
+  title = "",
 }) {
   const source = metricKey ? metricSourceFromRow(row, metricKey, label) : null;
   const sourceClass = source?.key ? `source-${source.key}` : "";
   const valueText = value ?? "-";
   const Tag = componentForTag(variant);
   const ValueTag = componentForTag(valueTag);
+  const fullTitle = [title, source?.title].filter(Boolean).join(" · ");
   return <Tag
     className={[baseClass, className, sourceClass].filter(Boolean).join(" ")}
-    title={source?.title || undefined}
-    aria-label={source?.title ? `${label}: ${valueText}. ${source.title}` : undefined}
+    title={fullTitle || undefined}
+    aria-label={fullTitle ? `${label}: ${valueText}. ${fullTitle}` : undefined}
   >
     <ValueTag>{valueText}</ValueTag>
     {source?.mark ? <i aria-hidden="true">{source.mark}</i> : null}

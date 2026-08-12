@@ -11,7 +11,7 @@ import { getJson } from "@/lib/clientApi";
 import { pct } from "@/lib/formatters";
 import { clamp } from "@/lib/indicators";
 import { metricShortLabel } from "@/lib/metricCatalog";
-import { rsUniverseValue } from "@/lib/relativeStrength";
+import { RS_QUALITY_OFF_CANON_REASON, canonicalRs } from "@/lib/rsCanonical";
 import { ipoAgeMonthsForRow } from "@/lib/scoring";
 import { GLOBAL_INDEX_TAPE } from "@/lib/screenerConfig";
 import { buildDecisionEvidenceChecklist, explainScreenerRank } from "@/lib/screenerExplainability";
@@ -81,7 +81,11 @@ export function LeaderTape({ rows = [], activeRow, onSelect, onFavorite, favorit
     </div>
     {visible.map((row) => {
       const active = activeRow?.symbol === row.symbol;
-      const rs = rsUniverseValue(row);
+      // RS del ranking semanal del universo, el mismo que la tabla y la ficha
+      // (lib/rsCanonical.js). Antes era rsUniverseValue → rsGlobalPct, el
+      // percentil del lote: por eso la cinta enseñaba 88 mientras la tabla y
+      // el panel de la misma vista enseñaban "–" para el mismo símbolo.
+      const rs = canonicalRs(row);
       const rankExplain = explainScreenerRank(row, {});
       const rowIssues = auditDecisionRowIssues(row, rankExplain);
       const scoreAudit = buildScreenerScoreAudit(row);
@@ -100,8 +104,12 @@ export function LeaderTape({ rows = [], activeRow, onSelect, onFavorite, favorit
           </span>
         </span>
         <span><b className="miniRating">{weaknessMode ? row.weaknessScore?.toFixed(0) || "-" : row.objectiveScore?.toFixed(0) || row.compositeScore?.toFixed(0) || "-"}</b><small>{weaknessMode ? row.weaknessLabel || "Deterioro" : row.objectiveLabel || row.compositeLabel || "Watchlist"}</small></span>
-        <span className={(rs ?? 0) >= 75 ? "scoreHot" : (rs ?? 0) >= 55 ? "scoreOk" : "scoreWeak"}>{Number.isFinite(rs) ? rs.toFixed(0) : "-"}</span>
-        <span className={(row.rsQualityScore || 0) >= 70 ? "scoreHot" : (row.rsQualityScore || 0) >= 55 ? "scoreOk" : "scoreWeak"}>{row.rsQualityScore?.toFixed(0) || "-"}<small>{row.rsQualityLabel || "-"}</small></span>
+        <span className={rs.available && rs.value >= 75 ? "scoreHot" : rs.available && rs.value >= 55 ? "scoreOk" : "scoreWeak"} title={rs.available ? "" : rs.reason}>{rs.available ? rs.value.toFixed(0) : "-"}</span>
+        {/* RS Quality del escaneo está calculado sobre el percentil del lote,
+            no sobre el RS semanal de la celda anterior. Ver el comentario en
+            QuickReviewModal: se muestra ausente en vez de contradecir a la
+            ficha, que sí lo calcula sobre el RS que enseña. */}
+        <span className="scoreWeak" title={RS_QUALITY_OFF_CANON_REASON}>-<small>-</small></span>
         <span><i>{quickSetup(row)}</i><small>{row.theme}</small></span>
         <span>{Number.isFinite(row.volumeEffectScore) ? row.volumeEffectScore.toFixed(0) : "-"}<small>{Number.isFinite(row.relativeVolume) ? `${row.relativeVolume.toFixed(2)}x` : pct(row.volumeSurgePct)}</small></span>
         <span className="leaderActions" onClick={(event) => event.stopPropagation()}>
@@ -210,6 +218,9 @@ export function MarketMiniTape({ marketHealth }) {
 
 export function QuickPanel({ row, settings, onOpenStock }) {
   if (!row) return <div className="quickPanel"><p className="fine">Selecciona una accion para ver sus caracteristicas.</p></div>;
+  // Lector único del RS (lib/rsCanonical.js): el mismo número que la tabla,
+  // el modal de vista rápida, la ficha y salud de mercado.
+  const panelRs = canonicalRs(row);
   const rankExplain = explainScreenerRank(row, settings);
   const rowIssues = auditDecisionRowIssues(row, rankExplain);
   const confidence = decisionConfidenceForRow(row, rankExplain);
@@ -226,8 +237,8 @@ export function QuickPanel({ row, settings, onOpenStock }) {
     [metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"],
     [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-", "totalScore"],
     [metricShortLabel("patternScore"), row.patternScore?.toFixed(0) || "-", "patternScore"],
-    [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-", "rsGlobalPct"],
-    [metricShortLabel("rsQualityScore"), row.rsQualityScore?.toFixed(0) || "-", "rsQualityScore"],
+    [metricShortLabel("rsGlobalPct"), panelRs.available ? panelRs.value.toFixed(0) : "-", "rsGlobalPct", panelRs.available ? "" : panelRs.reason],
+    [metricShortLabel("rsQualityScore"), "-", "rsQualityScore", RS_QUALITY_OFF_CANON_REASON],
     [metricShortLabel("adProxyScore"), row.adProxyScore?.toFixed(0) || "-", "adProxyScore"],
     [metricShortLabel("epsGrowthProxyScore"), row.epsGrowthProxyScore?.toFixed(0) || "-", "epsGrowthProxyScore"],
     [metricShortLabel("weaknessScore"), row.weaknessScore?.toFixed(0) || "-", "weaknessScore"],
@@ -270,7 +281,7 @@ export function QuickPanel({ row, settings, onOpenStock }) {
       <DecisionEvidenceChecklist evidence={evidence} compact />
     </div>
     <div className="quickMetricGrid">
-      {quickMetrics.map(([label, value, key]) => <CompactMetric key={`${label}-${key || value}`} label={label} value={value} source={key ? metricSource(key) : null} />)}
+      {quickMetrics.map(([label, value, key, title = ""]) => <CompactMetric key={`${label}-${key || value}`} label={label} value={value} title={title} source={key ? metricSource(key) : null} />)}
     </div>
     <div className={`rankExplainPanel ${rankExplain.tone}`}>
       <div className="rankExplainTitle">
@@ -320,15 +331,19 @@ export function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = fa
   const stage = stageLabel(row);
   const stageClass = stage === "Stage 2" ? "good" : stage === "Stage 4" ? "bad" : "neutral";
   const metricSource = compactMetricSourceLookup(row);
+  // Lector único del RS (lib/rsCanonical.js).
+  const cardRs = canonicalRs(row);
+  const cardRsCell = [metricShortLabel("rsGlobalPct"), cardRs.available ? cardRs.value.toFixed(0) : "-", "rsGlobalPct", cardRs.available ? "" : cardRs.reason];
+  const cardRsQualityCell = [metricShortLabel("rsQualityScore"), "-", "rsQualityScore", RS_QUALITY_OFF_CANON_REASON];
   const stats = compact
-    ? [[metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"], [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-", "rsGlobalPct"], [metricShortLabel("volumeEffectScore"), row.volumeEffectScore?.toFixed(0) || "-", "volumeEffectScore"]]
+    ? [[metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"], cardRsCell, [metricShortLabel("volumeEffectScore"), row.volumeEffectScore?.toFixed(0) || "-", "volumeEffectScore"]]
     : summary
-      ? [["Precio", money(row.price, row.currency), ""], [metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"], [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-", "totalScore"], [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-", "rsGlobalPct"], [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-", "rsRating"], [metricShortLabel("adProxyScore"), row.adProxyScore?.toFixed(0) || "-", "adProxyScore"], [metricShortLabel("epsGrowthProxyScore"), row.epsGrowthProxyScore?.toFixed(0) || "-", "epsGrowthProxyScore"], ["Bench", row.benchmarkSymbol || "-", ""]]
-      : [["Precio", money(row.price, row.currency), ""], [metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"], [metricShortLabel("patternScore"), row.patternScore?.toFixed(0) || "-", "patternScore"], [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-", "rsGlobalPct"], [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-", "rsRating"], [metricShortLabel("rsQualityScore"), row.rsQualityScore?.toFixed(0) || "-", "rsQualityScore"], [metricShortLabel("volumeEffectScore"), row.volumeEffectScore?.toFixed(0) || "-", "volumeEffectScore"], [metricShortLabel("shortPercentOfFloat"), pct(row.shortPercentOfFloat), "shortPercentOfFloat"], ["Imp 20d", amount(row.avgTurnover, row.currency), "avgTurnover"], ["Cob", row.dataCoverageScore?.toFixed(0) || "-", "dataCoverageScore"], ["Bench", row.benchmarkSymbol || "-", ""]];
+      ? [["Precio", money(row.price, row.currency), ""], [metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"], [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-", "totalScore"], cardRsCell, [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-", "rsRating"], [metricShortLabel("adProxyScore"), row.adProxyScore?.toFixed(0) || "-", "adProxyScore"], [metricShortLabel("epsGrowthProxyScore"), row.epsGrowthProxyScore?.toFixed(0) || "-", "epsGrowthProxyScore"], ["Bench", row.benchmarkSymbol || "-", ""]]
+      : [["Precio", money(row.price, row.currency), ""], [metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"], [metricShortLabel("patternScore"), row.patternScore?.toFixed(0) || "-", "patternScore"], cardRsCell, [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-", "rsRating"], cardRsQualityCell, [metricShortLabel("volumeEffectScore"), row.volumeEffectScore?.toFixed(0) || "-", "volumeEffectScore"], [metricShortLabel("shortPercentOfFloat"), pct(row.shortPercentOfFloat), "shortPercentOfFloat"], ["Imp 20d", amount(row.avgTurnover, row.currency), "avgTurnover"], ["Cob", row.dataCoverageScore?.toFixed(0) || "-", "dataCoverageScore"], ["Bench", row.benchmarkSymbol || "-", ""]];
   const summaryStats = [
     [metricShortLabel("objectiveScore"), row.objectiveScore?.toFixed(0) || row.totalScore?.toFixed(0) || "-", "objectiveScore"],
     [metricShortLabel("totalScore"), row.totalScore?.toFixed(0) || "-", "totalScore"],
-    [metricShortLabel("rsGlobalPct"), row.rsGlobalPct?.toFixed(0) || "-", "rsGlobalPct"],
+    cardRsCell,
     [metricShortLabel("rsRating"), row.rsRating?.toFixed(0) || "-", "rsRating"],
     [metricShortLabel("adProxyScore"), row.adProxyScore?.toFixed(0) || "-", "adProxyScore"],
     [metricShortLabel("epsGrowthProxyScore"), row.epsGrowthProxyScore?.toFixed(0) || "-", "epsGrowthProxyScore"],
@@ -360,9 +375,9 @@ export function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = fa
     </div>
     {showSparkline && <MiniSparkline bars={row.chartPreview || []} />}
     {summary ? <div className="previewSummaryGrid">
-      {summaryStats.map(([label, value, key]) => <CompactMetric className="previewSummaryStat" key={label} label={label} value={value} source={key ? metricSource(key) : null} />)}
+      {summaryStats.map(([label, value, key, title = ""]) => <CompactMetric className="previewSummaryStat" key={label} label={label} value={value} title={title} source={key ? metricSource(key) : null} />)}
     </div> : <div className="previewStats">
-      {stats.map(([label, value, key]) => <CompactMetric key={label} label={label} value={value} source={key ? metricSource(key) : null} />)}
+      {stats.map(([label, value, key, title = ""]) => <CompactMetric key={label} label={label} value={value} title={title} source={key ? metricSource(key) : null} />)}
     </div>}
     <RowTrustSignature signature={trustSignature} className={`previewTrustSignature ${compact ? "compact" : ""}`.trim()} />
     {!compact && <div className="previewActions">

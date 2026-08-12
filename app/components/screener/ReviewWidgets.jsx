@@ -2,8 +2,8 @@
 
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 
-export function QuickReviewMetricValue({ row = {}, metricKey = "", label = "", value = "-", className = "" }) {
-  return <TrustMetric row={row} metricKey={metricKey} label={label} value={value} className={className} baseClass="quickReviewMetricValue" variant="b" />;
+export function QuickReviewMetricValue({ row = {}, metricKey = "", label = "", value = "-", className = "", title = "" }) {
+  return <TrustMetric row={row} metricKey={metricKey} label={label} value={value} className={className} title={title} baseClass="quickReviewMetricValue" variant="b" />;
 }
 
 export function ReviewQueueFocusBadge({ focus = null }) {

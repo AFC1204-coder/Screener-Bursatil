@@ -4,7 +4,8 @@ import { isPublicScanStatus } from "@/lib/scanStatus";
 import { prepareScanDecisionRow, scanDecisionMetrics, scanDecisionRaw, scanDecisionRowFromDb } from "@/lib/scanDecisionProjection";
 import { clearScansApiCache, LATEST_SCAN_TTL_MS, scansApiCache } from "@/lib/scansApiCache";
 import { snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
-import { readGlobalRsForSymbols } from "@/lib/globalRs";
+import { attachCachedMarketCap, readMarketCapForSymbols } from "@/lib/fundamentalsCache";
+import { attachWeeklyRs, readGlobalRsForSymbols } from "@/lib/globalRs";
 
 const SCANS_SUPABASE_TIMEOUT_MS = 8000;
 
@@ -235,53 +236,24 @@ export function resultPayload(row = {}, scanId, ownerId, index, settingsOrExplan
   };
 }
 
-// Adjunta el RS semanal (rs_weekly_items, engine_version más reciente por
-// símbolo) a una fila ya construida por prepareScanDecisionRow. Deliberadamente
-// NO toca rsGlobalPct: ese campo lo consumen decenas de sitios además de la
-// tabla/filtro (scoringEngine, decisionAudit, signalContradictions,
-// screenerMethodologyEvidence, leaderboards...) y sustituirlo aquí cambiaría
-// esas superficies en silencio — algo que la tarea prohíbe explícitamente
-// ("NO cambies... el cálculo de rsGlobalPct"). Los campos nuevos conviven
-// junto a rsGlobalPct; solo las superficies de display/filtro RS explícitamente
-// migradas (tabla, ordenación, minRsRating, sectores, salud de mercado, modal
-// de revisión) leen weeklyRs*.
-function withWeeklyRs(row, weeklyRsBySymbol) {
-  const entry = weeklyRsBySymbol?.get(String(row?.symbol || "").trim().toUpperCase());
-  if (entry?.available) {
-    return {
-      ...row,
-      weeklyRsAvailable: true,
-      weeklyRsRating: entry.rsRating,
-      weeklyRsRaw: entry.rsRaw,
-      weeklyRsRank: entry.rank,
-      weeklyRsSampleSize: entry.sampleSize,
-      weeklyRsAsOf: entry.asOf,
-      weeklyRsWeekKey: entry.weekKey,
-      weeklyRsEngineVersion: entry.engineVersion,
-      weeklyRsReason: null,
-    };
-  }
-  return {
-    ...row,
-    weeklyRsAvailable: false,
-    weeklyRsRating: null,
-    weeklyRsRaw: null,
-    weeklyRsRank: null,
-    weeklyRsSampleSize: null,
-    weeklyRsAsOf: null,
-    weeklyRsWeekKey: null,
-    weeklyRsEngineVersion: null,
-    weeklyRsReason: entry?.reason || null,
-  };
-}
-
+// La hidratación del RS semanal vive en lib/globalRs.js (attachWeeklyRs) para
+// que TODAS las rutas que producen filas la apliquen, no solo esta.
 export function scanFromDb(row, results = [], options = {}) {
   const decisionSettings = row.settings?.activeSettings || row.settings || {};
   const weeklyRsBySymbol = options.weeklyRsBySymbol || null;
+  const marketCapBySymbol = options.marketCapBySymbol || null;
   const rows = results
     .filter((item) => item.scan_id === row.id)
     .sort((a, b) => (a.rank_index || 0) - (b.rank_index || 0))
-    .map((item) => withWeeklyRs(prepareScanDecisionRow(scanDecisionRowFromDb(item, options), decisionSettings), weeklyRsBySymbol));
+    // Dos rehidrataciones desde la fuente compartida, ambas sobre la fila ya
+    // construida: el RS del ranking semanal (rs_weekly_items) y la
+    // capitalización de fundamental_snapshots. La ficha del valor lee esas dos
+    // mismas tablas en vivo; sin esto, un snapshot de días atrás enseñaba en
+    // el screener números que la ficha del mismo símbolo desmentía.
+    .map((item) => attachCachedMarketCap(
+      attachWeeklyRs(prepareScanDecisionRow(scanDecisionRowFromDb(item, options), decisionSettings), weeklyRsBySymbol),
+      marketCapBySymbol,
+    ));
   return {
     id: row.local_id || row.id,
     cloudId: row.id,
@@ -452,12 +424,18 @@ export async function GET(req) {
       // no disponible y el criterio se omite aguas abajo, igual que un
       // símbolo que de verdad no esté en el ranking.
       const scanSymbols = results.map((item) => item.symbol).filter(Boolean);
-      const weeklyRs = await readGlobalRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() }));
+      const [weeklyRs, marketCaps] = await Promise.all([
+        readGlobalRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
+        // Misma idea para la capitalización: la ficha la lee de
+        // fundamental_snapshots en vivo, así que el snapshot del escaneo no
+        // puede seguir siendo la única copia que ve el screener.
+        readMarketCapForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
+      ]);
       return {
         configured: true,
         ok: true,
         projection: decisionProjection ? "decision" : full ? "full" : "compact",
-        scans: activeScans.map((scan) => scanFromDb(scan, results, { decisionProjection, weeklyRsBySymbol: weeklyRs.bySymbol })),
+        scans: activeScans.map((scan) => scanFromDb(scan, results, { decisionProjection, weeklyRsBySymbol: weeklyRs.bySymbol, marketCapBySymbol: marketCaps.bySymbol })),
         scanTombstones: includeDeleted ? deletedScans.map(scanTombstoneFromDb) : [],
       };
     };
