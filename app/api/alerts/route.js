@@ -71,7 +71,7 @@ function alertSyncError(error = {}) {
   const code = error.details?.code;
   const message = error.message || "";
   if (code === "PGRST202" || /(upsert_alerts_newer_wins|update_alert_status_newer_wins)/i.test(message)) {
-    return "Falta una RPC de sincronizacion de alertas. Aplica supabase/schema.sql antes de sincronizar alertas.";
+    return "La sincronización de alertas no está disponible en este entorno.";
   }
   return message || "No se pudieron sincronizar alertas";
 }

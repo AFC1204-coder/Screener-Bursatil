@@ -92,7 +92,7 @@ export async function GET(request) {
   const symbol = cleanComparableText(searchParams.get("symbol")).toUpperCase();
   if (!symbol) return Response.json({ error: "Missing symbol" }, { status: 400 });
   if (!config.configured) {
-    return Response.json({ configured: false, target: { symbol }, results: [], note: "Contexto comparativo requiere snapshots guardados en Supabase." });
+    return Response.json({ configured: false, target: { symbol }, results: [], note: "El contexto comparativo necesita escaneos guardados." });
   }
   const targetFromParams = {
     symbol,

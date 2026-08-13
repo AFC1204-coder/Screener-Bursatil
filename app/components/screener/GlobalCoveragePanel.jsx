@@ -198,7 +198,7 @@ export default function GlobalCoveragePanel() {
         // datos) queda en consola para depurar; la pantalla solo muestra el
         // mensaje genérico ya pintado por el estado "error" de este render.
         console.error("[GlobalCoveragePanel] /api/coverage falló:", e);
-        setError("No se pudo contactar con /api/coverage");
+        setError("No se pudo cargar la cobertura internacional.");
         setReport(null);
         setLoading(false);
       });

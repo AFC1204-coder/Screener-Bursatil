@@ -11,7 +11,9 @@ import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { methodologyCompactReasonLine, methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { dataStatusLabel } from "@/lib/patternNarrative";
+import { MissingValue } from "@/lib/screenerColumns";
 import { screenerStockContextFromSession } from "@/lib/screenerContracts";
+import { userFacingServiceError } from "@/lib/serviceErrors";
 import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { setupPatternForBars } from "@/lib/setupPatterns";
 import { STAGE_MISSING_REASON, stageWordForState } from "@/lib/stageDisplay";
@@ -136,6 +138,7 @@ function QualityStrip({ items = [] }) {
 function N0VerdictBlock({
   symbol,
   data,
+  patternQualityScore = null,
   priceSnapshot,
   freshness,
   coverage,
@@ -203,8 +206,16 @@ function N0VerdictBlock({
       <div className="stockVerdictFoot">
         <div className="stockVerdictScore">
           <span className="stockVerdictScoreLabel">Score</span>
-          <span className="stockVerdictScoreValue" data-state={Number.isFinite(data?.patternQualityScore) ? "value" : "ghost"}>
-            {Number.isFinite(data?.patternQualityScore) ? Math.round(data.patternQualityScore) : "—"}
+          {/* El score de estructura vive dentro de setupPattern, no en la raíz
+              de la respuesta de company-brief. Leerlo de la raíz dejaba la
+              cabecera en guion SIEMPRE, incluso con el dato calculado y visible
+              en el desglose de auditoría de esta misma ficha. Un 0 aquí es un
+              valor real —el valor no está formando base— y se muestra como 0;
+              el guion queda solo para la ausencia de verdad. */}
+          <span className="stockVerdictScoreValue" data-state={Number.isFinite(patternQualityScore) ? "value" : "ghost"}>
+            {Number.isFinite(patternQualityScore)
+              ? Math.round(patternQualityScore)
+              : <MissingValue reason="Sin score de estructura: la serie de precios de este valor no da para evaluar su base (histórico corto, precio desactualizado o barras incompletas)." />}
           </span>
         </div>
         <div className="stockVerdictSetup">
@@ -1438,10 +1449,15 @@ function NewsSection({ rows = [] }) {
 }
 
 function SocialPulseSection({ social = null, loading = false, symbol = "" }) {
-  if (!loading && social && social.configured === false && !social.rows?.length) return null;
-  const bullish = Math.max(0, Math.min(100, social?.bullishPct || 0));
-  const neutral = Math.max(0, Math.min(100, social?.neutralPct || 0));
-  const bearish = Math.max(0, Math.min(100, social?.bearishPct || 0));
+  // Integración opcional: si no está activada, la sección entera desaparece.
+  // No se avisa de ello — que falte un token de despliegue no es información
+  // sobre este valor. `loading` ya no la mantiene viva: mientras carga no
+  // sabemos si existe, y aparecer para desaparecer es peor que no aparecer.
+  if (!social || social.configured === false) return null;
+  const hasSample = Number(social?.total) > 0;
+  const bullish = hasSample ? Math.max(0, Math.min(100, social?.bullishPct || 0)) : 0;
+  const neutral = hasSample ? Math.max(0, Math.min(100, social?.neutralPct || 0)) : 0;
+  const bearish = hasSample ? Math.max(0, Math.min(100, social?.bearishPct || 0)) : 0;
   const hasRows = !!social?.rows?.length;
   return <section className="card">
     <div className="sectionTitle">
@@ -1449,11 +1465,11 @@ function SocialPulseSection({ social = null, loading = false, symbol = "" }) {
       <span className="fine">{loading ? "cargando" : hasRows ? "muestra reciente" : "sin datos"}</span>
     </div>
     {social?.error && <div className="dataNote" style={{ marginBottom: 12 }}>{social.error}</div>}
-    <div className="sentimentBars" aria-label={`Distribucion social de ${symbol}`}>
+    {hasSample && <div className="sentimentBars" aria-label={`Distribucion social de ${symbol}`}>
       <span className="bearish" style={{ width: `${bearish}%` }} />
       <span className="neutral" style={{ width: `${neutral}%` }} />
       <span className="bullish" style={{ width: `${bullish}%` }} />
-    </div>
+    </div>}
     <div className="metricGrid">
       <Metric label="Posts" value={fmt(social?.total)} />
       <Metric label="Alcistas" value={`${fmt(social?.bullish)} · ${pct(social?.bullishPct)}`} />
@@ -1692,7 +1708,10 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     });
     getJson(`/api/social-sentiment?${qs.toString()}`)
       .then((result) => setSocial(result))
-      .catch((error) => setSocial({ error: error.message || "Pulso X no disponible", rows: [] }))
+      .catch((error) => {
+        console.error("[ficha] pulso social no disponible:", error);
+        setSocial({ error: userFacingServiceError(error?.message, "El pulso social no está disponible ahora mismo."), rows: [] });
+      })
       .finally(() => setSocialLoading(false));
   }
 
@@ -1710,7 +1729,9 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       loadComparablesFor(d);
       loadSocialFor(d);
     } catch (e) {
-      setError(e.message || String(e));
+      // El detalle técnico va a consola; la ficha enseña lenguaje de producto.
+      console.error("[ficha] no se pudo cargar la ficha del valor:", e);
+      setError(userFacingServiceError(e?.message, "No se ha podido cargar la ficha de este valor. Inténtalo de nuevo en unos minutos."));
     } finally {
       setLoading(false);
     }
@@ -2197,6 +2218,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     <N0VerdictBlock
       symbol={symbol}
       data={data}
+      patternQualityScore={setupPattern?.patternQualityScore ?? null}
       priceSnapshot={priceSnapshot}
       freshness={freshness}
       coverage={coverage}

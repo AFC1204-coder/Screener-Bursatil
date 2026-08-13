@@ -14,6 +14,7 @@ import { amount, money, quickBusinessDescription, quickBusinessMarket, ratioLabe
 import { QuickReviewMetricValue, ReviewPriorityPanel, ReviewQueueFocusBadge } from "@/app/components/screener/ReviewWidgets";
 import { pct } from "@/lib/formatters";
 import { metricShortLabel } from "@/lib/metricCatalog";
+import { PerformanceStrip } from "@/app/components/screener/PerformanceStrip";
 import { RS_QUALITY_OFF_CANON_REASON, canonicalRs } from "@/lib/rsCanonical";
 import { buildDecisionQueueItem } from "@/lib/screenerExplainability";
 import { externalLinks, stockUrl } from "@/lib/symbols";
@@ -239,14 +240,7 @@ export default function QuickReviewModal({
               <div className="quickReviewChart">
                 <RowPreviewChart row={activeModalRow} chartSettings={chartSettings} />
               </div>
-              <div className="perfStrip">
-                <div className="perfBox"><span>1S</span><b className={(activeModalRow.perf1w || 0) >= 0 ? "up" : "down"}>{pct(activeModalRow.perf1w || 0)}</b></div>
-                <div className="perfBox"><span>1M</span><b className={(activeModalRow.perf1m || 0) >= 0 ? "up" : "down"}>{pct(activeModalRow.perf1m || 0)}</b></div>
-                <div className="perfBox"><span>3M</span><b className={(activeModalRow.perf3m || 0) >= 0 ? "up" : "down"}>{pct(activeModalRow.perf3m || 0)}</b></div>
-                <div className="perfBox"><span>6M</span><b className={(activeModalRow.perf6m || 0) >= 0 ? "up" : "down"}>{pct(activeModalRow.perf6m || 0)}</b></div>
-                <div className="perfBox"><span>YTD</span><b className={(activeModalRow.perfYtd || 0) >= 0 ? "up" : "down"}>{pct(activeModalRow.perfYtd || 0)}</b></div>
-                <div className="perfBox"><span>1A</span><b className={(activeModalRow.perf12m || 0) >= 0 ? "up" : "down"}>{pct(activeModalRow.perf12m || 0)}</b></div>
-              </div>
+              <PerformanceStrip row={activeModalRow} />
             </div>
 
             <div className="profileSide">

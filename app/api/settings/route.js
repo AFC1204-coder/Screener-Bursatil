@@ -40,7 +40,7 @@ function settingSyncError(error = {}) {
   const code = error.details?.code;
   const message = error.message || "";
   if (code === "PGRST202" || /upsert_app_setting_newer_wins/i.test(message)) {
-    return "Falta una RPC de sincronizacion de settings. Aplica supabase/schema.sql antes de sincronizar settings.";
+    return "La sincronización de ajustes no está disponible en este entorno.";
   }
   return message || "No se pudieron sincronizar settings";
 }

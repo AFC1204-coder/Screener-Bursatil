@@ -13,7 +13,7 @@ import {
   FilterFamilyModal,
   reviewProfileMeta,
 } from "@/app/screenerPanels";
-import { activeLayerCount, layerStatusText, scanFailureExplanation, scanPreparationStatus, searchText, sleep } from "@/lib/screenerFormat";
+import { activeLayerCount, layerStatusText, scanFailureExplanation, scanPreparationStatus, searchText, sleep, userFacingServiceError } from "@/lib/screenerFormat";
 import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson, postJson } from "@/lib/clientApi";
@@ -545,12 +545,17 @@ export default function Page() {
         // otra vía), el snapshot remoto NO debe pisarlos.
         if (cancelled || resultsOwnerRef.current !== "none") return;
         if (!result.ok || result.configured === false) {
-          if (!restoreLocalSnapshot(result.message ? `Supabase: ${result.message}.` : "Supabase no disponible.")) setStatus(DEFAULT_STATUS);
+          // Este aviso lo pinta ScreenerShell tal cual (snapshotNotice.detail), así
+          // que aquí NO puede entrar ni el nombre del servicio ni el error crudo:
+          // era la vía que quedaba viva del banner "Supabase: Failed to fetch".
+          // El original va a consola, como en loadUniverse.
+          if (result.message) console.error("[snapshot] copia en la nube no disponible:", result.message);
+          if (!restoreLocalSnapshot(userFacingServiceError(result.message, "La copia guardada en la nube no está disponible."))) setStatus(DEFAULT_STATUS);
           return;
         }
         const scan = pickBestRestorableScan(result.data?.scans || []);
         if (!scan) {
-          if (!restoreLocalSnapshot("Supabase no devolvió snapshots con filas.")) setStatus(DEFAULT_STATUS);
+          if (!restoreLocalSnapshot("No hay ninguna copia guardada en la nube con resultados.")) setStatus(DEFAULT_STATUS);
           return;
         }
         const notice = buildSnapshotFreshnessNotice(result.data, scan);
@@ -558,12 +563,13 @@ export default function Page() {
         safeWrite(STORAGE_KEYS.scans, [scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])].slice(0, 50));
         restoreSnapshot(scan, { source: "cloud", notice });
         setStatus(notice?.stale
-          ? `Último snapshot cacheado cargado: ${scan.rows.length} acciones. Supabase no respondió al refrescar.`
+          ? `Último snapshot cacheado cargado: ${scan.rows.length} acciones. La nube no respondió al refrescar.`
           : notice?.truncated
-            ? `Último snapshot Supabase cargado: ${scan.rows.length} de ${notice.rowsAvailable} acciones (parcial).`
-            : `Último snapshot Supabase cargado: ${scan.rows.length} acciones. Los filtros se aplican sobre este universo estable.`);
-      }).catch(() => {
-        if (!cancelled && !restoreLocalSnapshot("Supabase no respondió.")) setStatus(DEFAULT_STATUS);
+            ? `Último snapshot de la nube cargado: ${scan.rows.length} de ${notice.rowsAvailable} acciones (parcial).`
+            : `Último snapshot de la nube cargado: ${scan.rows.length} acciones. Los filtros se aplican sobre este universo estable.`);
+      }).catch((error) => {
+        console.error("[snapshot] fallo al leer la copia en la nube:", error);
+        if (!cancelled && !restoreLocalSnapshot(userFacingServiceError(error?.message, "La copia guardada en la nube no está disponible."))) setStatus(DEFAULT_STATUS);
       }).finally(() => {
         if (!cancelled) setRestoringScan(false);
       });
@@ -1007,30 +1013,37 @@ export default function Page() {
     clear();
   }
   async function saveFilterConfigToCloud() {
-    setStatus("Guardando filtros en Supabase...");
+    setStatus("Guardando filtros en la nube...");
     const result = await syncSettingToCloud({ ...SCREENER_FILTER_SETTING, value: currentFilterConfig() });
-    if (result.configured === false) setStatus("Filtros guardados en local. Supabase no configurado.");
-    else if (result.ok) setStatus("Filtros guardados en Supabase.");
-    else setStatus(`No se pudieron guardar filtros en Supabase: ${result.message}`);
+    if (result.configured === false) setStatus("Filtros guardados en este dispositivo: la copia en la nube no está activada.");
+    else if (result.ok) setStatus("Filtros guardados en la nube.");
+    else {
+      // El mensaje de la nube puede ser cualquier cosa: "Failed to fetch", un
+      // código HTTP, texto del proveedor. A pantalla va traducido y sin nombre
+      // de servicio; el original, a consola.
+      console.error("[filtros] no se pudieron guardar en la nube:", result.message);
+      setStatus(`No se pudieron guardar los filtros en la nube. ${userFacingServiceError(result.message, "Inténtalo de nuevo en unos minutos.")}`);
+    }
   }
   async function loadFilterConfigFromCloud() {
-    setStatus("Cargando filtros desde Supabase...");
+    setStatus("Cargando filtros desde la nube...");
     const result = await getSettingFromCloud(SCREENER_FILTER_SETTING.type, SCREENER_FILTER_SETTING.key);
     if (result.configured === false) {
-      setStatus("Supabase no configurado. Se mantienen los filtros locales.");
+      setStatus("La copia en la nube no está activada. Se mantienen los filtros de este dispositivo.");
       return;
     }
     if (!result.ok) {
-      setStatus(`No se pudieron cargar filtros de Supabase: ${result.message}`);
+      console.error("[filtros] no se pudieron cargar de la nube:", result.message);
+      setStatus(`No se pudieron cargar los filtros de la nube. ${userFacingServiceError(result.message, "Inténtalo de nuevo en unos minutos.")}`);
       return;
     }
     const value = result.data?.setting?.value;
     if (!value) {
-      setStatus("No hay filtros guardados en Supabase todavia.");
+      setStatus("Todavía no hay filtros guardados en la nube.");
       return;
     }
     applyFilterConfig(value);
-    setStatus("Filtros cargados desde Supabase. Pulsa Cargar universo o Ejecutar.");
+    setStatus("Filtros cargados desde la nube. Pulsa Cargar universo o Ejecutar.");
   }
   async function loadMarketHealth() {
     setStatus("Actualizando salud de mercado...");
@@ -1566,11 +1579,14 @@ export default function Page() {
     const next = [favorite, ...favs].slice(0, 250);
     safeWrite(STORAGE_KEYS.favorites, next);
     setFavoriteSymbols(new Set(next.map((x) => x.symbol)));
-    setStatus(`${row.symbol} guardado en favoritos locales. Sincronizando Supabase...`);
+    setStatus(`${row.symbol} guardado en favoritos de este dispositivo. Sincronizando con la nube...`);
     syncFavoriteToCloud(favorite).then((result) => {
-      if (result.configured === false) setStatus(`${row.symbol} guardado localmente. Supabase no configurado.`);
-      else if (result.ok) setStatus(`${row.symbol} guardado en favoritos y Supabase.`);
-      else setStatus(`${row.symbol} guardado localmente. Supabase: ${result.message}`);
+      if (result.configured === false) setStatus(`${row.symbol} guardado en este dispositivo: la copia en la nube no está activada.`);
+      else if (result.ok) setStatus(`${row.symbol} guardado en favoritos y sincronizado con la nube.`);
+      else {
+        console.error("[favoritos] no se pudo sincronizar con la nube:", result.message);
+        setStatus(`${row.symbol} guardado en este dispositivo. ${userFacingServiceError(result.message, "No se pudo sincronizar con la nube.")}`);
+      }
     });
   }
   function saveSnapshot(currentRows) {
@@ -1626,15 +1642,21 @@ export default function Page() {
     const generatedAlerts = alertsFromScan(scan);
     const nextAlerts = mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), generatedAlerts).slice(0, 500);
     safeWrite(STORAGE_KEYS.alerts, nextAlerts);
-    setStatus(`Snapshot guardado localmente: ${decisionRows.length} acciones · ${eventTotal} eventos · ${generatedAlerts.length} alertas. Sincronizando Supabase...`);
+    setStatus(`Snapshot guardado en este dispositivo: ${decisionRows.length} acciones · ${eventTotal} eventos · ${generatedAlerts.length} alertas. Sincronizando con la nube...`);
     setSnapshotNotice(null);
     syncScanToCloud(scan).then((result) => {
-      if (result.configured === false) setStatus(`Snapshot guardado localmente: ${decisionRows.length} acciones · ${generatedAlerts.length} alertas. Supabase no configurado.`);
-      else if (result.ok) setStatus(`Snapshot guardado: ${decisionRows.length} acciones · ${generatedAlerts.length} alertas. Disponible en local y Supabase.`);
-      else setStatus(`Snapshot local guardado. Supabase: ${result.message}`);
+      if (result.configured === false) setStatus(`Snapshot guardado en este dispositivo: ${decisionRows.length} acciones · ${generatedAlerts.length} alertas. La copia en la nube no está activada.`);
+      else if (result.ok) setStatus(`Snapshot guardado: ${decisionRows.length} acciones · ${generatedAlerts.length} alertas. Disponible en este dispositivo y en la nube.`);
+      else {
+        console.error("[snapshot] no se pudo sincronizar con la nube:", result.message);
+        setStatus(`Snapshot guardado en este dispositivo. ${userFacingServiceError(result.message, "La copia en la nube no se pudo actualizar ahora mismo.")}`);
+      }
     });
     syncAlertsToCloud(generatedAlerts).then((result) => {
-      if (result.configured !== false && !result.ok) setStatus(`Snapshot guardado. Alertas solo locales: ${result.message}`);
+      if (result.configured !== false && !result.ok) {
+        console.error("[alertas] no se pudieron sincronizar con la nube:", result.message);
+        setStatus(`Snapshot guardado. Las alertas se quedan en este dispositivo. ${userFacingServiceError(result.message, "")}`.trim());
+      }
       else if (result.ok && result.data?.alerts?.length) safeWrite(STORAGE_KEYS.alerts, mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), result.data.alerts).slice(0, 500));
     });
   }

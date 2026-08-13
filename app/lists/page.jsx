@@ -6,6 +6,8 @@ import RowTrustSignature from "@/app/RowTrustSignature";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
+import { CountValue } from "@/app/components/ui/CountValue";
+import { MissingValue } from "@/lib/screenerColumns";
 import { getJson } from "@/lib/clientApi";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";
@@ -21,10 +23,20 @@ async function fetchJsonWithTimeout(path, timeoutMs = 16000) {
   try {
     return await getJson(path, { timeoutMs, cache: "no-store" });
   } catch (error) {
-    if (error?.name === "AbortError") throw new Error(`${path} no respondió en ${Math.round(timeoutMs / 1000)}s`);
+    // La ruta interna se queda en consola: el mensaje que sube hacia la UI no
+    // debe decirle a nadie qué endpoints existen.
+    if (error?.name === "AbortError") {
+      console.error(`[listas] ${path} no respondió en ${Math.round(timeoutMs / 1000)}s`);
+      throw new Error(`El servidor de datos tardó demasiado en responder (más de ${Math.round(timeoutMs / 1000)} s).`);
+    }
     throw error;
   }
 }
+
+const AUDIT_COUNT_MISSING = "Este recuento no se ha podido calcular en esta carga.";
+const COVERAGE_PCT_MISSING = "Sin universo cargado para este alcance: no hay sobre qué medir la cobertura.";
+const HEALTH_COUNT_MISSING = "Este recuento no ha llegado en esta carga, así que no se sabe cuántas filas hay.";
+const RANKING_UNAVAILABLE = "El ranking actualizado no está disponible ahora mismo.";
 
 function hasOwn(obj = {}, key = "") {
   return Object.prototype.hasOwnProperty.call(obj, key);
@@ -54,22 +66,24 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, localRows,
   const health = data?.health || {};
   const status = loading ? "" : usingDiscovery ? (health.state === "pass" ? "pass" : "warn") : "warn";
   const scope = filter?.group ? `${filter.groupType}: ${filter.group}` : "Global";
-  const source = loading ? "Actualizando discovery" : usingDiscovery ? health.sourceLabel || "Discovery API" : "Snapshot local";
+  const source = loading ? "Actualizando" : usingDiscovery ? health.sourceLabel || "Ranking en vivo" : "Copia local";
   const note = loading
-    ? "Vista provisional desde snapshot local; los conteos y rankings se actualizarán al terminar Discovery."
-    : error ? `Discovery API no disponible: ${error}` : usingDiscovery ? health.note : "Usando snapshots/favoritos locales hasta tener scans persistidos suficientes.";
+    ? "Vista provisional desde la copia local; los conteos y rankings se actualizarán al terminar la carga."
+    : error ? `${error} Mientras tanto se usa la copia local.` : usingDiscovery ? health.note : "Usando copias locales y favoritos hasta tener escaneos guardados suficientes.";
 
   return <div className="marketReliabilityBlock">
     <div className="marketReliabilityBlockHead">
       <h3>Fiabilidad discovery</h3>
       <span className={`discoveryStatus ${status}`}>{source}</span>
     </div>
+    {/* Un recuento que no ha llegado se muestra ausente. Un 0 aquí afirma
+        "ninguna fila con precio viejo", que es lo contrario de "no lo sé". */}
     <div className="discoveryHealthGrid">
-      <span><b>{usingDiscovery ? health.rows ?? 0 : localRows}</b><em>filas ranking</em></span>
-      <span><b>{usingDiscovery ? health.staleRows ?? 0 : "-"}</b><em>precio viejo</em></span>
-      <span><b>{usingDiscovery ? health.lowCoverageRows ?? 0 : "-"}</b><em>cobertura baja</em></span>
-      <span><b>{usingDiscovery ? health.missingTaxonomyRows ?? 0 : "-"}</b><em>taxonomía incompleta</em></span>
-      <span><b>{usingDiscovery ? health.planClaims ?? 0 : "-"}</b><em>planes VCP</em></span>
+      <span><b>{usingDiscovery ? <CountValue value={health.rows} reason={HEALTH_COUNT_MISSING} /> : localRows}</b><em>filas ranking</em></span>
+      <span><b>{usingDiscovery ? <CountValue value={health.staleRows} reason={HEALTH_COUNT_MISSING} /> : "-"}</b><em>precio viejo</em></span>
+      <span><b>{usingDiscovery ? <CountValue value={health.lowCoverageRows} reason={HEALTH_COUNT_MISSING} /> : "-"}</b><em>cobertura baja</em></span>
+      <span><b>{usingDiscovery ? <CountValue value={health.missingTaxonomyRows} reason={HEALTH_COUNT_MISSING} /> : "-"}</b><em>taxonomía incompleta</em></span>
+      <span><b>{usingDiscovery ? <CountValue value={health.planClaims} reason={HEALTH_COUNT_MISSING} /> : "-"}</b><em>planes VCP</em></span>
       <span><b>{scope}</b><em>alcance</em></span>
     </div>
     <p className="fine">{note}</p>
@@ -106,9 +120,11 @@ function CoverageAuditPanel({ audit }) {
       <span className={`discoveryStatus ${status}`}>{audit.label || "Sin auditoria"}</span>
     </div>
     <div className="coverageAuditGrid">
-      <span><b>{audit.universeRows ?? 0}</b><em>universo scope</em></span>
-      <span><b>{audit.rankedRows ?? 0}</b><em>rankeadas</em></span>
-      <span><b>{pctShare(audit.rankingCoveragePct ?? 0, 1)}</b><em>cobertura ranking</em></span>
+      <span><b><CountValue value={audit.universeRows} reason={AUDIT_COUNT_MISSING} /></b><em>universo scope</em></span>
+      <span><b><CountValue value={audit.rankedRows} reason={AUDIT_COUNT_MISSING} /></b><em>rankeadas</em></span>
+      {/* Sin universo no hay porcentaje de cobertura: el 0% que salía aquí lo
+          fabricaba la división por cero, no una medición. */}
+      <span><b>{hasCoverageInput ? pctShare(audit.rankingCoveragePct ?? 0, 1) : <MissingValue reason={COVERAGE_PCT_MISSING} />}</b><em>cobertura ranking</em></span>
       <span><b>{audit.rankedMarketCount ?? 0}/{audit.marketCount ?? 0}</b><em>mercados ranking</em></span>
       <span><b>{hasCoverageInput ? audit.listHealth?.emptyLists?.length ?? 0 : "-"}</b><em>listas vacias</em></span>
     </div>
@@ -138,7 +154,7 @@ function CoverageAuditPanel({ audit }) {
 function ListsInfraStrip({ discovery, discoveryError, discoveryLoading, useDiscovery, localRows, filter, coverageAudit }) {
   const health = discovery?.health || {};
   const audit = coverageAudit || {};
-  const source = discoveryLoading ? "Actualizando" : useDiscovery ? (health.sourceLabel || "Discovery API") : "Snapshot local";
+  const source = discoveryLoading ? "Actualizando" : useDiscovery ? (health.sourceLabel || "Ranking en vivo") : "Copia local";
   const scope = filter?.group ? `${filter.groupType}: ${filter.group}` : "Global";
   const hasCoverageInput = (audit.universeRows ?? 0) > 0 || (audit.rankedRows ?? 0) > 0;
   const emptyLists = hasCoverageInput ? audit.listHealth?.emptyLists?.length ?? 0 : null;
@@ -155,7 +171,7 @@ function ListsInfraStrip({ discovery, discoveryError, discoveryLoading, useDisco
       </div>
       <div className="marketReliabilityStripItem">
         <span>cobertura ranking</span>
-        <b>{pctShare(audit.rankingCoveragePct ?? 0, 1)}</b>
+        <b>{hasCoverageInput ? pctShare(audit.rankingCoveragePct ?? 0, 1) : <MissingValue reason={COVERAGE_PCT_MISSING} />}</b>
       </div>
       <div className="marketReliabilityStripItem">
         <span>mercados</span>
@@ -191,7 +207,7 @@ function ListScopeSummary({ filter, rowsCount, rankingAppearances, activeRanking
   const savedRows = savedView?.counts?.rows;
   const hasScopeRows = Number.isFinite(scopeRows) && scopeRows > 0;
   const hasLegacySavedRows = !hasScopeRows && Number.isFinite(savedRows) && savedRows > 0 && savedRows !== rowsCount;
-  const source = discoveryLoading ? "Cargando" : useDiscovery ? "Discovery API" : "Snapshot local";
+  const source = discoveryLoading ? "Cargando" : useDiscovery ? "Ranking en vivo" : "Copia local";
   const note = hasScopeRows && scopeRows !== rowsCount
     ? "El grupo completo puede contener mas acciones que los rankings visibles; Listas muestra candidatos unicos deduplicados por estrategia."
     : hasLegacySavedRows
@@ -486,8 +502,9 @@ export default function ListsPage() {
         })
         .catch((error) => {
           if (!alive) return;
+          console.error("[listas] ranking en vivo no disponible:", error);
           setDiscovery(null);
-          setDiscoveryError(error.name === "AbortError" ? "timeout" : error.message || "Sin respuesta");
+          setDiscoveryError(userFacingServiceError(error?.message, RANKING_UNAVAILABLE));
         })
         .finally(() => {
           if (alive) setDiscoveryLoading(false);
@@ -659,7 +676,7 @@ export default function ListsPage() {
         <div className="mobileActions"><a className="btn" href="/">Screener</a><a className="btn" href="/review?source=latest">Vista rapida</a><a className="btn" href="/ipo-radar">IPO Radar</a><a className="btn" href="/research-desk">Research</a><a className="btn btnPrimary" href="/sectors">Sectores</a></div>
       </div>
     </section>
-    <section className="card"><div className="kpis"><div className="kpi"><b>{loaded ? rows.length : "-"}</b><span>acciones unicas</span></div><div className="kpi"><b>{loaded ? favorites.length : "-"}</b><span>favoritos</span></div><div className="kpi"><b>{discoveryLoading ? "..." : useDiscovery ? "API" : loaded ? "Local" : "-"}</b><span>fuente rankings</span></div><div className="kpi"><b>{loaded && latest ? new Date(latest.createdAt).toLocaleDateString() : "-"}</b><span>ultimo snapshot local</span></div></div></section>
+    <section className="card"><div className="kpis"><div className="kpi"><b>{loaded ? rows.length : "-"}</b><span>acciones unicas</span></div><div className="kpi"><b>{loaded ? favorites.length : "-"}</b><span>favoritos</span></div><div className="kpi"><b>{discoveryLoading ? "..." : useDiscovery ? "Datos actualizados" : loaded ? "Datos guardados" : "-"}</b><span>fuente rankings</span></div><div className="kpi"><b>{loaded && latest ? new Date(latest.createdAt).toLocaleDateString() : "-"}</b><span>ultimo snapshot local</span></div></div></section>
     <ListsInfraStrip
       discovery={discovery}
       discoveryError={discoveryError}

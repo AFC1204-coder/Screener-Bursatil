@@ -7,7 +7,7 @@ export async function GET() {
     return Response.json({
       configured: true,
       ok: false,
-      message: error.message || "Supabase no disponible",
+      message: error.message || "La nube no está disponible",
       details: error.details || null,
     }, { status: 500 });
   }

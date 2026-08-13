@@ -2,28 +2,32 @@ import { fetchXMarketPosts, summarizeSocialSentiment } from "@/lib/socialSentime
 
 export const dynamic = "force-dynamic";
 
+// Sin muestra no hay distribución, ni índice de pesimismo, ni sentimiento
+// dominante: todo eso va a null, no a 0/50/"neutral". Un 50 aquí llegaba a la
+// pantalla como una lectura de sentimiento que nadie había medido
+// (docs/principios-producto.md, principio 3).
 function emptySocial(payload = {}) {
   return {
     provider: "X API v2 recent search",
     configured: false,
     updatedAt: new Date().toISOString(),
     total: 0,
-    bullish: 0,
-    bearish: 0,
-    neutral: 0,
-    bullishPct: 0,
-    bearishPct: 0,
-    neutralPct: 0,
-    sentimentSpread: 0,
-    dominantSentiment: "neutral",
-    avgScore: 0,
-    weightedAvgScore: 0,
-    totalEngagement: 0,
-    avgEngagement: 0,
-    pessimismIndex: 50,
-    optimismIndex: 50,
-    regime: "Sin X configurado",
-    contrarianRead: "Configura la API oficial de X para leer posts recientes y calcular el pulso social.",
+    bullish: null,
+    bearish: null,
+    neutral: null,
+    bullishPct: null,
+    bearishPct: null,
+    neutralPct: null,
+    sentimentSpread: null,
+    dominantSentiment: null,
+    avgScore: null,
+    weightedAvgScore: null,
+    totalEngagement: null,
+    avgEngagement: null,
+    pessimismIndex: null,
+    optimismIndex: null,
+    regime: null,
+    contrarianRead: "",
     note: "La app no hace scraping de X; usa la API oficial cuando hay token disponible.",
     rows: [],
     ...payload,
@@ -37,8 +41,14 @@ export async function GET(request) {
   try {
     const result = await fetchXMarketPosts({ symbol, name });
     if (!result.configured) {
+      // SIN campo `error`: lib/clientApi.js convierte cualquier `error` del
+      // cuerpo en una excepción, aunque el HTTP sea 200. Por eso el aviso de
+      // integración no configurada llegaba al cliente como un fallo y se
+      // pintaba en la ficha y en salud de mercado —con el nombre de la
+      // variable de entorno dentro— en vez de activar la rama que oculta la
+      // sección. Que la integración no esté activada no es un error: es que
+      // esta parte del producto no existe en este despliegue.
       return Response.json(emptySocial({
-        error: result.error,
         query: result.query,
         symbol: symbol || null,
       }));
@@ -54,11 +64,12 @@ export async function GET(request) {
       ...sentiment,
     });
   } catch (error) {
+    // El detalle del proveedor (código HTTP, texto de la API de X) se queda en
+    // el log del servidor; hacia fuera va una frase de producto.
+    console.error("[social] no se pudo leer X:", error);
     return Response.json(emptySocial({
       configured: true,
-      error: error.message || "X no disponible",
-      regime: "X no disponible",
-      contrarianRead: "No se pudo leer X en esta pasada. Revisa token, credito de API, permisos y query.",
+      error: "No se ha podido leer el pulso social en esta pasada.",
     }), { status: 200 });
   }
 }

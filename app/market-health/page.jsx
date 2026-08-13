@@ -11,6 +11,11 @@ import { num, pct, pctShare } from "@/lib/formatters";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { canonicalRsValue } from "@/lib/rsCanonical";
+// Mismo componente de ausencia que la tabla de resultados: guion + icono con el
+// motivo (docs/principios-producto.md, principios 3 y 7).
+import { MissingValue } from "@/lib/screenerColumns";
+import { userFacingServiceError } from "@/lib/serviceErrors";
+import { snapshotDisplayUpdate } from "@/lib/snapshotDisplay";
 import { metricValue, rowRsBenchmark, rowTheme, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
 
@@ -82,10 +87,16 @@ function summarizeGroups(rows = [], keyFn) {
   const map = new Map();
   rows.forEach((row) => {
     const key = keyFn(row) || "Sin grupo";
-    const bucket = map.get(key) || { name: key, count: 0, rs: 0, score: 0, nearHigh: 0, leaders: 0, top: null };
+    const bucket = map.get(key) || { name: key, count: 0, rs: 0, rsCount: 0, score: 0, nearHigh: 0, leaders: 0, top: null };
     const rs = rowRs(row);
     bucket.count += 1;
-    bucket.rs += Number.isFinite(rs) ? rs : 50;
+    // Los valores sin RS quedan FUERA del promedio del grupo. Antes entraban
+    // con un 50 inventado, que empujaba la media del grupo hacia el centro y
+    // decidía el orden de esta lista con un número que nadie había calculado.
+    if (Number.isFinite(rs)) {
+      bucket.rs += rs;
+      bucket.rsCount += 1;
+    }
     const objectiveScore = rowObjectiveScore(row);
     bucket.score += objectiveScore || 0;
     if (isNearHigh(row)) bucket.nearHigh += 1;
@@ -94,8 +105,8 @@ function summarizeGroups(rows = [], keyFn) {
     map.set(key, bucket);
   });
   return [...map.values()]
-    .map((x) => ({ ...x, rs: x.rs / x.count, score: x.score / x.count, nearHighPct: (x.nearHigh / x.count) * 100 }))
-    .sort((a, b) => (b.leaders - a.leaders) || (b.rs - a.rs) || (b.score - a.score))
+    .map((x) => ({ ...x, rs: x.rsCount ? x.rs / x.rsCount : null, score: x.score / x.count, nearHighPct: (x.nearHigh / x.count) * 100 }))
+    .sort((a, b) => (b.leaders - a.leaders) || ((b.rs ?? -1) - (a.rs ?? -1)) || (b.score - a.score))
     .slice(0, 8);
 }
 
@@ -110,7 +121,10 @@ function buildScanPulse(scans = []) {
   const deterioration = rows
     .map((row) => ({ ...row, deteriorationReasons: deteriorationReasons(row) }))
     .filter((row) => row.deteriorationReasons.length)
-    .sort((a, b) => (b.deteriorationReasons.length - a.deteriorationReasons.length) || ((rowRs(a) || 50) - (rowRs(b) || 50)))
+    // A igualdad de evidencias manda el RS más bajo. Los valores SIN RS van al
+    // final en vez de colarse en mitad de la lista con un 50 inventado.
+    .sort((a, b) => (b.deteriorationReasons.length - a.deteriorationReasons.length)
+      || ((rowRs(a) ?? Number.POSITIVE_INFINITY) - (rowRs(b) ?? Number.POSITIVE_INFINITY)))
     .slice(0, 8);
   const nearHigh = rows.filter(isNearHigh).length;
   const stage2 = rows.filter(isStage2Like).length;
@@ -138,11 +152,22 @@ async function fetchJsonWithTimeout(path, timeoutMs = 12000) {
   try {
     return await getJson(path, { timeoutMs, cache: "no-store" });
   } catch (error) {
-    if (error?.name === "AbortError") throw new Error(`${path} no respondió en ${Math.round(timeoutMs / 1000)}s`);
+    // La RUTA interna se queda en consola. El mensaje que viaja hacia la UI no
+    // la lleva: al usuario no le sirve saber qué endpoints existen, y a quien
+    // depura le basta la consola.
+    if (error?.name === "AbortError") {
+      console.error(`[salud de mercado] ${path} no respondió en ${Math.round(timeoutMs / 1000)}s`);
+      throw new Error(`El servidor de datos tardó demasiado en responder (más de ${Math.round(timeoutMs / 1000)} s).`);
+    }
     throw error;
   }
 }
 
+const COVERAGE_UNAVAILABLE = "El estado de cobertura por mercado no está disponible ahora mismo.";
+// Faltaba: la constante se usaba en loadMethodologyHealth pero no existía, así
+// que la llamada reventaba con un ReferenceError y el panel "Fiabilidad
+// metodológica" enseñaba en pantalla el nombre de la variable de JavaScript.
+const METHODOLOGY_HEALTH_PATH = "/api/methodology-health";
 const CORE_COVERAGE_PATH = "/api/coverage?markets=US,JP,HK,AU,TW";
 const FULL_COVERAGE_PATH = "/api/coverage?markets=US,EU1,JP,HK,AU,TW";
 
@@ -151,27 +176,38 @@ const FULL_COVERAGE_PATH = "/api/coverage?markets=US,EU1,JP,HK,AU,TW";
    en el sentimentPill del item. La barra usa tonos de humo + un dot tiza
    como marcador de posición (no como semáforo). */
 function SentimentRow({ data, title = "Lectura contraria", sampleLabel = "titulares" }) {
-  if (!data || data.error) {
+  // Sin muestra no hay distribución ni índice: las barras a 0% y el índice a 50
+  // eran valores por defecto con aspecto de lectura real. Se pinta el estado
+  // vacío, que dice justamente eso.
+  const sampleSize = Number(data?.total);
+  if (!data || data.error || !Number.isFinite(sampleSize) || sampleSize <= 0) {
     return (
       <div className="marketSentimentRow" data-empty="true">
         <div className="marketSentimentRowHead">
           <small>{title}</small>
           <span className="marketSentimentIndex">—</span>
         </div>
-        <p className="marketSentimentRead">{data?.error || `Sin muestra de ${sampleLabel}.`}</p>
+        <p className="marketSentimentRead">{`Sin muestra de ${sampleLabel} en esta pasada.`}</p>
       </div>
     );
   }
   const bearishPct = safePct(data?.bearishPct);
   const neutralPct = safePct(data?.neutralPct);
   const bullishPct = safePct(data?.bullishPct);
-  const pessimism = safePct(data?.pessimismIndex, 50);
-  const dominant = data?.dominantSentiment || "neutral";
+  // El índice se pinta solo si viene: el 50 de reserva es la posición del
+  // marcador en la barra, no una lectura de pesimismo.
+  const pessimismValue = Number.isFinite(Number(data?.pessimismIndex)) ? safePct(data.pessimismIndex) : null;
+  const pessimism = pessimismValue ?? 50;
+  // "neutral" es una lectura, no un valor por defecto: si el servidor no lo
+  // trae, aquí no se inventa.
+  const dominant = data?.dominantSentiment || "";
   return (
     <div className="marketSentimentRow">
       <div className="marketSentimentRowHead">
         <small>{title} · {data?.regime || "sin regimen"}</small>
-        <span className="marketSentimentIndex">{num(pessimism)}</span>
+        <span className="marketSentimentIndex">{pessimismValue === null
+          ? <MissingValue reason="El servidor no ha devuelto índice de pesimismo para esta muestra." />
+          : num(pessimismValue)}</span>
       </div>
       <div>
         <div className="marketSentimentBar" role="img" aria-label={`Distribución de ${sampleLabel}`}>
@@ -187,7 +223,7 @@ function SentimentRow({ data, title = "Lectura contraria", sampleLabel = "titula
         <span>bajistas <b>{pctShare(bearishPct)}</b></span>
         <span>neutrales <b>{pctShare(neutralPct)}</b></span>
         <span>alcistas <b>{pctShare(bullishPct)}</b></span>
-        <span>dominante <b>{dominant}</b></span>
+        <span>dominante <b>{dominant || <MissingValue reason="El servidor no ha devuelto sentimiento dominante para esta muestra." />}</b></span>
       </div>
       {data?.contrarianRead && <p className="marketSentimentRead">«{data.contrarianRead}»</p>}
     </div>
@@ -252,6 +288,7 @@ function ReliabilityStrip({ coverage, methodologyHealth, coverageLoading, method
   const operational = markets.filter((row) => row.readiness?.operational).length;
   const issues = markets.filter((row) => row.readiness?.blocksCoverageClaim).length;
   const failures = (coverage?.failures?.length ?? 0) + (coverage?.sectorFailures?.length ?? 0);
+  const coverageKnown = Boolean(coverage) && !coverage.error;
   const methodologyLabel = methodologyHealth?.label || "—";
   const methodologyOk = methodologyHealth?.status === "pass";
 
@@ -270,7 +307,11 @@ function ReliabilityStrip({ coverage, methodologyHealth, coverageLoading, method
       </div>
       <div className="marketReliabilityStripItem">
         <span>fallos</span>
-        <b>{issues || failures || 0}</b>
+        {/* "0 fallos" solo se puede afirmar si la cobertura llegó a leerse. Sin
+            respuesta, el recuento es desconocido, no cero. */}
+        {coverageKnown
+          ? <b>{issues || failures || 0}</b>
+          : <b><MissingValue reason="Todavía no se ha podido leer el estado de cobertura, así que no se sabe cuántos fallos hay." /></b>}
       </div>
       <summary className="marketReliabilityStripToggle" data-action="toggle">[+]</summary>
       <div className="marketReliabilityStripDetail">
@@ -327,6 +368,13 @@ function CoverageDetail({ coverage, loading }) {
   );
 }
 
+const METHODOLOGY_BUCKETS = [
+  { key: "plan", label: "planes automáticos", detail: "debe permanecer en 0" },
+  { key: "watch", label: "vigilancia", detail: "candidatas para mirar" },
+  { key: "observe", label: "observables", detail: "fuera de zona" },
+  { key: "block", label: "bloqueadas", detail: "estructura no pasa" },
+];
+
 function MethodologyDetail({ health, loading }) {
   const totals = health?.totals || {};
   const buckets = health?.calibration?.buckets || {};
@@ -339,12 +387,19 @@ function MethodologyDetail({ health, loading }) {
       {health?.error ? (
         <div className="dataNote">{health.error}</div>
       ) : (
+        /* Un recuento ausente se muestra ausente: un 0 aquí se lee como
+           "ninguna bloqueada", que es una afirmación sobre la metodología. */
         <div className="marketReliabilityRows">
-          <div className="marketReliabilityRow"><b>{totals.passed ?? "—"}/{totals.cases ?? "—"}</b><span>casos validados</span><em>{totals.failed ?? 0} fallos</em></div>
-          <div className="marketReliabilityRow"><b>{buckets.plan ?? 0}</b><span>planes automáticos</span><em>debe permanecer en 0</em></div>
-          <div className="marketReliabilityRow"><b>{buckets.watch ?? 0}</b><span>vigilancia</span><em>candidatas para mirar</em></div>
-          <div className="marketReliabilityRow"><b>{buckets.observe ?? 0}</b><span>observables</span><em>fuera de zona</em></div>
-          <div className="marketReliabilityRow"><b>{buckets.block ?? 0}</b><span>bloqueadas</span><em>estructura no pasa</em></div>
+          <div className="marketReliabilityRow"><b>{totals.passed ?? "—"}/{totals.cases ?? "—"}</b><span>casos validados</span><em>{Number.isFinite(totals.failed) ? `${totals.failed} fallos` : "sin recuento de fallos"}</em></div>
+          {METHODOLOGY_BUCKETS.map((bucket) => (
+            <div className="marketReliabilityRow" key={bucket.key}>
+              {Number.isFinite(buckets[bucket.key])
+                ? <b>{buckets[bucket.key]}</b>
+                : <b><MissingValue reason={`Todavía no se ha podido leer la validación metodológica, así que no se sabe cuántas ${bucket.label} hay.`} /></b>}
+              <span>{bucket.label}</span>
+              <em>{bucket.detail}</em>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -372,12 +427,17 @@ function GlobalRegionsPanel({ rows = [] }) {
     }
 
     const total = filtered.length;
-    const above50 = filtered.filter((r) => (r.extSma50 ?? 0) >= 0).length;
-    const amplitudePct = total ? (above50 / total) * 100 : 0;
+    // La amplitud se calcula SOLO sobre los valores que traen extensión sobre
+    // la SMA50. Antes `(r.extSma50 ?? 0) >= 0` contaba a los que no la traen
+    // como si estuvieran por encima, y con la región vacía el resultado era
+    // "+0.0% amplitud" junto a "Sin activos analizados": un cero fabricado.
+    const measured = filtered.filter((r) => Number.isFinite(r.extSma50));
+    const above50 = measured.filter((r) => r.extSma50 >= 0).length;
+    const amplitudePct = measured.length ? (above50 / measured.length) * 100 : null;
     // Promedio del MISMO RS que el resto del producto. Los símbolos sin
     // ranking semanal quedan fuera del promedio en vez de entrar con el
     // percentil de su lote, que no es comparable entre valores.
-    const validRs = filtered.map((r) => canonicalRsValue(r)).filter(Number.isFinite);
+    const validRs = total ? filtered.map((r) => canonicalRsValue(r)).filter(Number.isFinite) : [];
     const avgRs = validRs.length ? validRs.reduce((s, v) => s + v, 0) / validRs.length : null;
 
     const leaders = [...filtered]
@@ -400,8 +460,22 @@ function GlobalRegionsPanel({ rows = [] }) {
           <span className="marketRegionTag">{rsLabel}</span>
         </div>
         <div className="marketRegionMetrics">
-          <div className="marketRegionMetric"><b>{pct(amplitudePct)}</b><span>Amplitud (SMA50)</span></div>
-          <div className="marketRegionMetric" title={Number.isFinite(avgRs) ? `Media del RS semanal de ${validRs.length} de ${total} valores del snapshot` : "Ningún valor de esta región está en el ranking semanal del universo."}><b>{Number.isFinite(avgRs) ? avgRs.toFixed(0) : "–"}</b><span>RS promedio</span></div>
+          <div className="marketRegionMetric">
+            {Number.isFinite(amplitudePct)
+              ? <b>{pct(amplitudePct)}</b>
+              : <b><MissingValue reason={total
+                ? "Ningún valor de esta región trae la distancia a su SMA50, así que no se puede medir la amplitud."
+                : "Sin valores de esta región en el último snapshot: no hay muestra sobre la que medir amplitud."} /></b>}
+            <span>Amplitud (SMA50)</span>
+          </div>
+          <div className="marketRegionMetric" title={Number.isFinite(avgRs) ? `Media del RS semanal de ${validRs.length} de ${total} valores del snapshot` : ""}>
+            {Number.isFinite(avgRs)
+              ? <b>{avgRs.toFixed(0)}</b>
+              : <b><MissingValue reason={total
+                ? "Ningún valor de esta región está en el ranking semanal del universo, así que no hay RS que promediar."
+                : "Sin valores de esta región en el último snapshot: no hay RS que promediar."} /></b>}
+            <span>RS promedio</span>
+          </div>
           <div className="marketRegionMetric"><b>{total}</b><span>En snapshot</span></div>
         </div>
         <div className="marketRegionLeaders">
@@ -466,12 +540,17 @@ export default function MarketHealthPage() {
         fetchJsonWithTimeout("/api/market-news", 8000),
         fetchJsonWithTimeout("/api/social-sentiment", 8000),
       ]);
-      setNews(newsResult.status === "fulfilled" ? newsResult.value : { error: newsResult.reason?.message || "Noticias no disponibles", rows: [] });
-      setSocial(socialResult.status === "fulfilled" ? socialResult.value : { error: socialResult.reason?.message || "Pulso social no disponible", rows: [] });
+      if (newsResult.status === "rejected") console.error("[salud de mercado] titulares no disponibles:", newsResult.reason);
+      if (socialResult.status === "rejected") console.error("[salud de mercado] pulso social no disponible:", socialResult.reason);
+      setNews(newsResult.status === "fulfilled" ? newsResult.value : { error: userFacingServiceError(newsResult.reason?.message, "Los titulares de mercado no están disponibles ahora mismo."), rows: [] });
+      setSocial(socialResult.status === "fulfilled" ? socialResult.value : { error: userFacingServiceError(socialResult.reason?.message, "El pulso social no está disponible ahora mismo."), rows: [] });
       if (marketResult.status === "rejected") throw marketResult.reason;
       setData(marketResult.value);
     } catch (e) {
-      setError(e.message || String(e));
+      // El original a consola; a pantalla, lenguaje de producto. Este banner
+      // llegó a enseñar el error crudo del proveedor con su nombre dentro.
+      console.error("[salud de mercado] no se pudo cargar:", e);
+      setError(userFacingServiceError(e?.message, "No se ha podido cargar la salud de mercado ahora mismo. Inténtalo de nuevo en unos minutos."));
     } finally {
       setLoading(false);
     }
@@ -482,7 +561,8 @@ export default function MarketHealthPage() {
     try {
       setMethodologyHealth(await fetchJsonWithTimeout(METHODOLOGY_HEALTH_PATH, 20000));
     } catch (e) {
-      setMethodologyHealth({ error: e.message || String(e) });
+      console.error("[salud de mercado] validación metodológica no disponible:", e);
+      setMethodologyHealth({ error: userFacingServiceError(e?.message, "La validación metodológica no está disponible ahora mismo.") });
     } finally {
       setMethodologyLoading(false);
     }
@@ -497,12 +577,15 @@ export default function MarketHealthPage() {
       fetchJsonWithTimeout(FULL_COVERAGE_PATH, 45000)
         .then((full) => setCoverage((previous) => ({ ...previous, ...full, scope: "full" })))
         .catch((e) => {
+          console.error("[salud de mercado] cobertura ampliada no disponible:", e);
+          const message = userFacingServiceError(e?.message, COVERAGE_UNAVAILABLE);
           setCoverage((previous) => previous && !previous.error
-            ? { ...previous, secondaryError: e.message || String(e), scope: previous.scope || "core" }
-            : { error: e.message || String(e) });
+            ? { ...previous, secondaryError: message, scope: previous.scope || "core" }
+            : { error: message });
         });
     } catch (e) {
-      setCoverage({ error: e.message || String(e) });
+      console.error("[salud de mercado] cobertura no disponible:", e);
+      setCoverage({ error: userFacingServiceError(e?.message, COVERAGE_UNAVAILABLE) });
       setCoverageLoading(false);
     }
   }
@@ -520,6 +603,12 @@ export default function MarketHealthPage() {
   }, []);
 
   const tone = data ? regimeTone(data, data.indexes) : "humo";
+  // `configured: false` = la integración con X no está activada en este
+  // entorno. Eso no es un dato del mercado ni un fallo que el usuario pueda
+  // resolver: su sitio es el log del servidor, no la pantalla.
+  const socialConfigured = social?.configured !== false;
+  const newsAvailable = Boolean(news?.error || news?.rows?.length || Number(news?.total) > 0);
+  const showSentimentCard = socialConfigured || newsAvailable;
 
   return (
     <main className="page marketHealthPage">
@@ -656,7 +745,7 @@ export default function MarketHealthPage() {
           <section className="card">
             <div className="sectionTitle">
               <h2>Leadership pulse</h2>
-              <span className="fine">{scanPulse ? `Último snapshot · ${dateFmt(scanPulse.createdAt)} · ${scanPulse.marketRegime}` : "Sin snapshot local"}</span>
+              <span className="fine">{scanPulse ? `Último snapshot · ${dateFmt(scanPulse.createdAt)} · ${snapshotDisplayUpdate(scanPulse.scan)}` : "Sin datos guardados"}</span>
             </div>
             {scanPulse ? (
               <>
@@ -732,22 +821,30 @@ export default function MarketHealthPage() {
           )}
 
           {/* ─── N2 Lectura contraria: Sentimiento fusionado ────── */}
+          {/* La integración con X es opcional. Si no está activada, su fila no
+              se muestra —ni con un aviso que nombre la integración, que es lo
+              que dejaba en pantalla el nombre de una variable de entorno—, y
+              si tampoco hay titulares la sección entera desaparece. */}
+          {showSentimentCard && (
           <section className="card marketSentimentCard">
             <div className="sectionTitle">
-              <h2>Sentimiento <InfoHint text={`${news?.contrarianRead || social?.contrarianRead || "Sin lectura contraria disponible."} ${news?.note || ""}`} /></h2>
-              <span className="fine">Titulares + social · lectura contraria</span>
+              <h2>Sentimiento{news?.contrarianRead || social?.contrarianRead
+                ? <> <InfoHint text={[news?.contrarianRead || social?.contrarianRead, news?.note].filter(Boolean).join(" ")} /></>
+                : null}</h2>
+              <span className="fine">{socialConfigured ? "Titulares + social · lectura contraria" : "Titulares · lectura contraria"}</span>
             </div>
-            {(news?.error || social?.error) && (
+            {(news?.error || (socialConfigured && social?.error)) && (
               <div className="dataNote marketSentimentCardNotice">
                 {news?.error || social?.error}
               </div>
             )}
             <div className="marketSentimentGrid">
               <SentimentRow data={news} title="Titulares" sampleLabel="titulares" />
-              <SentimentRow data={social} title="Social" sampleLabel="posts" />
+              {socialConfigured ? <SentimentRow data={social} title="Social" sampleLabel="posts" /> : null}
             </div>
             <SentimentFeeds news={news} social={social} />
           </section>
+          )}
 
           {/* ─── N3 Auditoría (colapsado por defecto) ───────────── */}
           <section className="card">

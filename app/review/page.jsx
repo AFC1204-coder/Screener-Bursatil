@@ -12,6 +12,7 @@ import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncCli
 import { clamp, num, pct, ratio } from "@/lib/formatters";
 import { stdev } from "@/lib/indicators";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { userFacingServiceError } from "@/lib/serviceErrors";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { objectiveStage } from "@/lib/scoring";
 import { DECISION_QUEUE_DIGEST_FILTERS, buildDecisionQueueDigest, buildDecisionQueueDigestSummary, buildDecisionQueueItem, buildDecisionQueueSummary } from "@/lib/screenerExplainability";
@@ -743,19 +744,25 @@ export default function ReviewPage() {
     safeWrite(STORAGE_KEYS.favorites, next);
     if (favoriteSymbols.has(symbol)) {
       deleteFavoriteFromCloud({ symbol }).then((result) => {
-        if (result.configured === false) setStatus(`${symbol} eliminado de favoritos locales. Supabase no configurado.`);
-        else if (result.ok) setStatus(`${symbol} eliminado de favoritos y Supabase.`);
-        else setStatus(`${symbol} eliminado localmente. Supabase: ${result.message}`);
+        if (result.configured === false) setStatus(`${symbol} eliminado de los favoritos de este dispositivo. La copia en la nube no está activada.`);
+        else if (result.ok) setStatus(`${symbol} eliminado de favoritos y sincronizado con la nube.`);
+        else {
+          console.error("[favoritos] no se pudo sincronizar el borrado con la nube:", result.message);
+          setStatus(`${symbol} eliminado en este dispositivo. ${userFacingServiceError(result.message, "No se pudo sincronizar con la nube.")}`);
+        }
       });
-      setStatus(`${symbol} eliminado de favoritos locales. Sincronizando Supabase...`);
+      setStatus(`${symbol} eliminado de los favoritos de este dispositivo. Sincronizando con la nube...`);
     } else {
       const favorite = next.find((item) => String(item.symbol).toUpperCase() === symbol);
       syncFavoriteToCloud(favorite).then((result) => {
-        if (result.configured === false) setStatus(`${symbol} guardado localmente. Supabase no configurado.`);
-        else if (result.ok) setStatus(`${symbol} guardado en favoritos y Supabase.`);
-        else setStatus(`${symbol} guardado localmente. Supabase: ${result.message}`);
+        if (result.configured === false) setStatus(`${symbol} guardado en este dispositivo. La copia en la nube no está activada.`);
+        else if (result.ok) setStatus(`${symbol} guardado en favoritos y sincronizado con la nube.`);
+        else {
+          console.error("[favoritos] no se pudo sincronizar con la nube:", result.message);
+          setStatus(`${symbol} guardado en este dispositivo. ${userFacingServiceError(result.message, "No se pudo sincronizar con la nube.")}`);
+        }
       });
-      setStatus(`${symbol} guardado en favoritos locales. Sincronizando Supabase...`);
+      setStatus(`${symbol} guardado en los favoritos de este dispositivo. Sincronizando con la nube...`);
     }
   }
   function markReviewed(row = activeRow) {

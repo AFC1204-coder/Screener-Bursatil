@@ -176,7 +176,7 @@ export async function GET(request) {
           configured: true,
           source: "leaderboard_snapshots",
           degraded: true,
-          fallback: { reason: error.message || "Supabase scan_results unavailable", read },
+          fallback: { reason: error.message || "No hay resultados de escaneo disponibles", read },
           leaderboard: await withWeeklyRsItems(limitCachedLeaderboard(cached, params.limit)),
           predefined: DEFAULT_LEADERBOARD_SPECS,
         }));
@@ -186,7 +186,7 @@ export async function GET(request) {
         configured: true,
         source: "scan_results_unavailable",
         degraded: true,
-        fallback: { reason: error.message || "Supabase scan_results unavailable", read },
+        fallback: { reason: error.message || "No hay resultados de escaneo disponibles", read },
         leaderboard,
         predefined: DEFAULT_LEADERBOARD_SPECS,
       }));

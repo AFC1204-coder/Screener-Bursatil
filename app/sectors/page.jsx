@@ -5,6 +5,7 @@ import RowTrustSignature from "@/app/RowTrustSignature";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
+import { CountValue } from "@/app/components/ui/CountValue";
 import { getJson, requestHeaders } from "@/lib/clientApi";
 import { num, pct, pctShare } from "@/lib/formatters";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";
@@ -14,9 +15,12 @@ import { buildSavedListView, listViewSignature, normalizeSavedListViews } from "
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { canonicalRs } from "@/lib/rsCanonical";
+import { MissingValue } from "@/lib/screenerColumns";
+import { userFacingServiceError } from "@/lib/serviceErrors";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { favoriteToRow, metricValue, normalizeStockRows, rowCountry, shortBusiness, weaknessScore } from "@/lib/stockRows";
 import { countryName, externalLinks, marketFlag, stockUrl } from "@/lib/symbols";
+import { snapshotDisplayName } from "@/lib/snapshotDisplay";
 
 async function fetchJsonWithTimeout(path, timeoutMs = 16000) {
   const controller = new AbortController();
@@ -100,14 +104,19 @@ function sectorStateClass(value = "") {
   return "neutral";
 }
 
+const HEALTH_COUNT_MISSING = "Este recuento no ha llegado en esta carga, así que no se sabe cuántas filas hay.";
+const AUDIT_COUNT_MISSING = "Este recuento no se ha podido calcular en esta carga.";
+const COVERAGE_PCT_MISSING = "Sin universo cargado para este alcance: no hay sobre qué medir la cobertura.";
+const RANKING_UNAVAILABLE = "El ranking actualizado no está disponible ahora mismo.";
+
 function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, countryFilter, localRows, groupedRows, groupCount }) {
   const health = data?.health || {};
   const status = loading ? "" : usingDiscovery ? (health.state === "pass" ? "pass" : "warn") : "warn";
-  const source = loading ? "Actualizando discovery" : usingDiscovery ? health.sourceLabel || "Discovery API" : "Snapshot local";
+  const source = loading ? "Actualizando" : usingDiscovery ? health.sourceLabel || "Ranking en vivo" : "Copia local";
   const note = loading
-    ? "Vista provisional desde snapshot local; los grupos y rankings se actualizarán al terminar Discovery."
+    ? "Vista provisional desde la copia local; los grupos y rankings se actualizarán al terminar la carga."
     : error
-      ? `Discovery API no disponible: ${error}`
+      ? `${error} Mientras tanto se usa la copia local.`
       : usingDiscovery
         ? health.note
         : countryFilter !== "Todos"
@@ -122,9 +131,9 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, countryFil
     <div className="discoveryHealthGrid">
       <span><b>{usingDiscovery ? groupedRows : localRows}</b><em>acciones agrupadas</em></span>
       <span><b>{usingDiscovery ? groupCount : "-"}</b><em>grupos visibles</em></span>
-      <span><b>{usingDiscovery ? health.lowCoverageRows ?? 0 : "-"}</b><em>cobertura baja</em></span>
-      <span><b>{usingDiscovery ? health.missingTaxonomyRows ?? 0 : "-"}</b><em>taxonomía incompleta</em></span>
-      <span><b>{usingDiscovery ? health.planClaims ?? 0 : "-"}</b><em>planes VCP</em></span>
+      <span><b>{usingDiscovery ? <CountValue value={health.lowCoverageRows} reason={HEALTH_COUNT_MISSING} /> : "-"}</b><em>cobertura baja</em></span>
+      <span><b>{usingDiscovery ? <CountValue value={health.missingTaxonomyRows} reason={HEALTH_COUNT_MISSING} /> : "-"}</b><em>taxonomía incompleta</em></span>
+      <span><b>{usingDiscovery ? <CountValue value={health.planClaims} reason={HEALTH_COUNT_MISSING} /> : "-"}</b><em>planes VCP</em></span>
       <span><b>{countryFilter}</b><em>país</em></span>
     </div>
     <p className="fine">{note}</p>
@@ -136,6 +145,7 @@ function SectorCoverageAuditPanel({ audit, dimension }) {
   const status = audit.state === "pass" ? "pass" : audit.state === "empty" ? "" : "warn";
   const issues = auditIssueLabels(audit, 5);
   const thinGroups = audit.groupHealth?.strongThinGroups?.length ? audit.groupHealth.strongThinGroups : audit.groupHealth?.thinGroups || [];
+  const hasCoverageInput = (audit.universeRows ?? 0) > 0 || (audit.rankedRows ?? 0) > 0;
 
   return <div className="marketReliabilityBlock">
     <div className="marketReliabilityBlockHead">
@@ -143,10 +153,12 @@ function SectorCoverageAuditPanel({ audit, dimension }) {
       <span className={`discoveryStatus ${status}`}>{audit.label || "Sin auditoria"}</span>
     </div>
     <div className="coverageAuditGrid">
-      <span><b>{audit.universeRows ?? 0}</b><em>universo scope</em></span>
-      <span><b>{audit.rankedRows ?? 0}</b><em>filas ranking</em></span>
-      <span><b>{pctShare(audit.rankingCoveragePct ?? 0, 1)}</b><em>cobertura ranking</em></span>
-      <span><b>{audit.rankedSectorCount ?? 0}/{audit.sectorCount ?? 0}</b><em>sectores ranking</em></span>
+      <span><b><CountValue value={audit.universeRows} reason={AUDIT_COUNT_MISSING} /></b><em>universo scope</em></span>
+      <span><b><CountValue value={audit.rankedRows} reason={AUDIT_COUNT_MISSING} /></b><em>filas ranking</em></span>
+      {/* Sin universo no hay porcentaje de cobertura: el 0% que salía aquí lo
+          fabricaba la división por cero, no una medición. */}
+      <span><b>{hasCoverageInput ? pctShare(audit.rankingCoveragePct ?? 0, 1) : <MissingValue reason={COVERAGE_PCT_MISSING} />}</b><em>cobertura ranking</em></span>
+      <span><b><CountValue value={audit.rankedSectorCount} reason={AUDIT_COUNT_MISSING} />/<CountValue value={audit.sectorCount} reason={AUDIT_COUNT_MISSING} /></b><em>sectores ranking</em></span>
       <span><b>{thinGroups.length}</b><em>grupos muestra chica</em></span>
     </div>
     <div className="coverageAuditColumns">
@@ -175,7 +187,7 @@ function SectorCoverageAuditPanel({ audit, dimension }) {
 function SectorsInfraStrip({ discovery, discoveryError, discoveryLoading, useDiscoveryGroups, countryFilter, rows, visibleRowsCount, groups, coverageAudit, dimension }) {
   const health = discovery?.health || {};
   const audit = coverageAudit || {};
-  const source = discoveryLoading ? "Actualizando" : useDiscoveryGroups ? (health.sourceLabel || "Discovery API") : "Snapshot local";
+  const source = discoveryLoading ? "Actualizando" : useDiscoveryGroups ? (health.sourceLabel || "Ranking en vivo") : "Copia local";
   const issues = auditIssueLabels(audit, 5);
   const thinGroups = audit.groupHealth?.strongThinGroups?.length ? audit.groupHealth.strongThinGroups : audit.groupHealth?.thinGroups || [];
   return (
@@ -187,7 +199,9 @@ function SectorsInfraStrip({ discovery, discoveryError, discoveryLoading, useDis
       </div>
       <div className="marketReliabilityStripItem">
         <span>cobertura ranking</span>
-        <b>{audit.rankingCoveragePct ? pctShare(audit.rankingCoveragePct, 1) : "—"}</b>
+        <b>{Number.isFinite(audit.rankingCoveragePct) && ((audit.universeRows ?? 0) > 0 || (audit.rankedRows ?? 0) > 0)
+          ? pctShare(audit.rankingCoveragePct, 1)
+          : <MissingValue reason={COVERAGE_PCT_MISSING} />}</b>
       </div>
       <div className="marketReliabilityStripItem">
         <span>universo</span>
@@ -235,7 +249,7 @@ function MarketSectorOverview({ data, error }) {
     </div>
 
     {!data && !error && <div className="dataNote">Cargando comparativa sectorial...</div>}
-    {error && <div className="dataNote">Proveedor no disponible: {error}</div>}
+    {error && <div className="dataNote">{error}</div>}
 
     {!!sectors.length && <>
       <div className="kpis">
@@ -375,7 +389,8 @@ export default function SectorsPage() {
     getJson("/api/market-health").then((payload) => {
       if (alive) setMarketHealth(payload);
     }).catch((error) => {
-      if (alive) setMarketHealthError(error.message || "Sin respuesta");
+      console.error("[sectores] comparativa sectorial no disponible:", error);
+      if (alive) setMarketHealthError(userFacingServiceError(error?.message, "La comparativa sectorial no está disponible ahora mismo."));
     });
     return () => { alive = false; };
   }, []);
@@ -389,8 +404,9 @@ export default function SectorsPage() {
       })
       .catch((error) => {
         if (!alive) return;
+        console.error("[sectores] ranking en vivo no disponible:", error);
         setDiscovery(null);
-        setDiscoveryError(error.name === "AbortError" ? "timeout" : error.message || "Sin respuesta");
+        setDiscoveryError(userFacingServiceError(error?.message, RANKING_UNAVAILABLE));
       })
       .finally(() => {
         if (alive) setDiscoveryLoading(false);
@@ -425,7 +441,7 @@ export default function SectorsPage() {
   const sectorSourceLabel = discoveryLoading
     ? "Cargando discovery derivado..."
     : useDiscoveryGroups
-      ? `Discovery API · ${discovery?.generatedAt ? new Date(discovery.generatedAt).toLocaleString() : "scans persistidos"}`
+      ? `Ranking en vivo · ${discovery?.generatedAt ? new Date(discovery.generatedAt).toLocaleString() : "escaneos guardados"}`
       : sourceLabel;
   const coverageAudit = useMemo(() => {
     if (useDiscoveryGroups && discovery?.audit) return discovery.audit;
@@ -505,7 +521,7 @@ export default function SectorsPage() {
         <label className="field">
           <span>Fuente</span>
           <select className="select" value={scanId} onChange={(event) => setScanId(event.target.value)} disabled={!scans.length}>
-            {scans.length ? scans.map((scan) => <option value={scan.id} key={scan.id}>{scan.name || new Date(scan.createdAt).toLocaleString()}</option>) : <option value="">Sin snapshots</option>}
+            {scans.length ? scans.map((scan) => <option value={scan.id} key={scan.id}>{snapshotDisplayName(scan)}</option>) : <option value="">Sin snapshots</option>}
           </select>
         </label>
         <label className="field">

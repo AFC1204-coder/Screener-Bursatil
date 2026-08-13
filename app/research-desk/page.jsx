@@ -11,6 +11,7 @@ import { deleteFavoriteFromCloud, deleteScanFromCloud, getAlertsFromCloud, getCl
 import { num, pct } from "@/lib/formatters";
 import { sma } from "@/lib/indicators";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { userFacingServiceError } from "@/lib/serviceErrors";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { activeAlerts, alertSummary, alertsFromScan, mergeAlerts, resolveAlert } from "@/lib/methodologyAlerts";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
@@ -21,6 +22,7 @@ import { userFacingSearchError } from "@/lib/screenerFormat";
 import { createFavoriteFromRow, metricValue, rowTheme, shortBusiness } from "@/lib/stockRows";
 import { benchmarkForFavorite, externalLinks, stockUrl } from "@/lib/symbols";
 import { vcpContractionSummary } from "@/lib/vcpDiagnostics";
+import { snapshotDisplayName, snapshotDisplaySource } from "@/lib/snapshotDisplay";
 
 function uid() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
 function ResearchTrustMetric({ row, metricKey, label, value, className = "" }) {
@@ -303,7 +305,7 @@ export default function ResearchDesk() {
   const [selectedScan, setSelectedScan] = useState(null);
   const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [cloud, setCloud] = useState({ configured: false, ok: false, message: "Comprobando Supabase..." });
+  const [cloud, setCloud] = useState({ configured: false, ok: false, message: "Comprobando la nube..." });
   const [syncing, setSyncing] = useState(false);
   const [favoriteSeries, setFavoriteSeries] = useState({});
   const [reviewState, setReviewState] = useState({});
@@ -357,19 +359,27 @@ export default function ResearchDesk() {
   async function refreshCloudStatus(report = true) {
     const result = await getCloudStatus();
     setCloud(result);
-    if (report) setStatus(result.configured ? (result.ok ? "Supabase conectado." : `Supabase: ${result.message}`) : "Supabase no configurado. Sigues en localStorage.");
+    if (report) {
+      if (!result.ok && result.configured) console.error("[nube] estado no disponible:", result.message);
+      setStatus(result.configured
+        ? (result.ok ? "Conectado con la nube." : userFacingServiceError(result.message, "La nube no está disponible ahora mismo."))
+        : "La copia en la nube no está activada. Sigues trabajando en este dispositivo.");
+    }
     return result;
   }
 
   async function pushToCloud() {
     setSyncing(true);
-    setStatus("Subiendo localStorage a Supabase...");
+    setStatus("Subiendo los datos de este dispositivo a la nube...");
     try {
       const result = await pushCloudState({ scans, favorites, alerts });
       await refreshCloudStatus(false);
-      if (result.configured === false) setStatus("Supabase no configurado. No se ha subido nada.");
-      else if (result.ok) setStatus(`Supabase actualizado: ${result.scansSaved} snapshots, ${result.scansDeleted || 0} snapshots borrados, ${result.favoritesSaved} favoritos, ${result.favoritesDeleted || 0} borrados y ${result.alertsSaved || 0} alertas.${result.favoritesSkippedStale || result.favoritesDeleteSkippedStale || result.scansDeleteSkippedStale ? ` ${result.favoritesSkippedStale + result.favoritesDeleteSkippedStale + result.scansDeleteSkippedStale} cambios remotos mas recientes no se pisaron.` : ""}`);
-      else setStatus(`Supabase no pudo sincronizar: ${result.message}`);
+      if (result.configured === false) setStatus("La copia en la nube no está activada. No se ha subido nada.");
+      else if (result.ok) setStatus(`Nube actualizada: ${result.scansSaved} snapshots, ${result.scansDeleted || 0} snapshots borrados, ${result.favoritesSaved} favoritos, ${result.favoritesDeleted || 0} borrados y ${result.alertsSaved || 0} alertas.${result.favoritesSkippedStale || result.favoritesDeleteSkippedStale || result.scansDeleteSkippedStale ? ` ${result.favoritesSkippedStale + result.favoritesDeleteSkippedStale + result.scansDeleteSkippedStale} cambios remotos mas recientes no se pisaron.` : ""}`);
+      else {
+        console.error("[nube] no se pudo sincronizar:", result.message);
+        setStatus(`No se pudo sincronizar con la nube. ${userFacingServiceError(result.message, "Inténtalo de nuevo en unos minutos.")}`);
+      }
     } finally {
       setSyncing(false);
     }
@@ -377,16 +387,17 @@ export default function ResearchDesk() {
 
   async function pullFromCloud() {
     setSyncing(true);
-    setStatus("Importando datos desde Supabase...");
+    setStatus("Importando datos desde la nube...");
     try {
       const result = await pullCloudState();
       await refreshCloudStatus(false);
       if (result.configured === false) {
-        setStatus("Supabase no configurado. No hay datos remotos que importar.");
+        setStatus("La copia en la nube no está activada. No hay datos remotos que importar.");
         return;
       }
       if (!result.ok) {
-        setStatus(`No se pudo importar Supabase: ${result.message}`);
+        console.error("[nube] no se pudo importar:", result.message);
+        setStatus(`No se pudieron importar los datos de la nube. ${userFacingServiceError(result.message, "Inténtalo de nuevo en unos minutos.")}`);
         return;
       }
       const nextScans = sortScans(mergeScansWithTombstones(result.scans, scans, result.scanTombstones));
@@ -396,7 +407,7 @@ export default function ResearchDesk() {
       persistFavs(nextFavs);
       persistAlerts(nextAlerts);
       setSelectedScan(nextScans[0] || null);
-      setStatus(`Importado Supabase: ${result.scans.length} snapshots, ${result.favorites.length} favoritos y ${result.alerts.length} alertas. Local fusionado.`);
+      setStatus(`Importado de la nube: ${result.scans.length} snapshots, ${result.favorites.length} favoritos y ${result.alerts.length} alertas. Fusionado con lo de este dispositivo.`);
     } finally {
       setSyncing(false);
     }
@@ -441,7 +452,7 @@ export default function ResearchDesk() {
       setSelectedScan(scan);
       setStatus(`Snapshot guardado localmente: ${scan.rows.length} acciones · ${generatedAlerts.length} alertas`);
       syncScanToCloud(scan).then((result) => {
-        if (result.configured !== false && result.ok) setStatus(`Snapshot guardado en local y Supabase: ${scan.rows.length} acciones`);
+        if (result.configured !== false && result.ok) setStatus(`Snapshot guardado en este dispositivo y en la nube: ${scan.rows.length} acciones`);
       });
       syncAlertsToCloud(generatedAlerts).then((result) => {
         if (result.ok && result.data?.alerts?.length) persistAlerts(mergeAlertsWithTimestamps(result.data.alerts, safeRead(STORAGE_KEYS.alerts, [])).slice(0, 500));
@@ -482,7 +493,7 @@ export default function ResearchDesk() {
     setManual("");
     setStatus(`${newFavorites.length} tickers anadidos a favoritos/watchlist`);
     syncFavoritesToCloud(newFavorites).then((result) => {
-      if (result.configured !== false && result.ok) setStatus(`${newFavorites.length} favoritos anadidos en local y Supabase`);
+      if (result.configured !== false && result.ok) setStatus(`${newFavorites.length} favoritos anadidos en este dispositivo y en la nube`);
     });
   }
   function favFromRow(row) {
@@ -494,7 +505,7 @@ export default function ResearchDesk() {
     persistFavs([fav, ...favorites]);
     setStatus(`${row.symbol} anadido a favoritos`);
     syncFavoriteToCloud(fav).then((result) => {
-      if (result.configured !== false && result.ok) setStatus(`${row.symbol} anadido a favoritos y Supabase`);
+      if (result.configured !== false && result.ok) setStatus(`${row.symbol} anadido a favoritos y sincronizado con la nube`);
     });
   }
   function removeFav(id) {
@@ -513,15 +524,16 @@ export default function ResearchDesk() {
 
   async function importCloudAlerts() {
     setSyncing(true);
-    setStatus("Importando alertas desde Supabase...");
+    setStatus("Importando alertas desde la nube...");
     try {
       const result = await getAlertsFromCloud("all");
       if (result.configured === false) {
-        setStatus("Supabase no configurado. Las alertas siguen en localStorage.");
+        setStatus("La copia en la nube no está activada. Las alertas siguen solo en este dispositivo.");
         return;
       }
       if (!result.ok) {
-        setStatus(`No se pudieron importar alertas: ${result.message}`);
+        console.error("[alertas] no se pudieron importar:", result.message);
+        setStatus(`No se pudieron importar las alertas. ${userFacingServiceError(result.message, "Inténtalo de nuevo en unos minutos.")}`);
         return;
       }
       const next = mergeAlertsWithTimestamps(result.data?.alerts || [], alerts);
@@ -538,7 +550,10 @@ export default function ResearchDesk() {
     persistAlerts(next);
     setStatus(`${alert.symbol} · alerta resuelta`);
     resolveAlertInCloud(nextAlert).then((result) => {
-      if (result.configured !== false && !result.ok) setStatus(`Alerta resuelta localmente. Supabase: ${result.message}`);
+      if (result.configured !== false && !result.ok) {
+        console.error("[alertas] no se pudo resolver en la nube:", result.message);
+        setStatus(`Alerta resuelta en este dispositivo. ${userFacingServiceError(result.message, "No se pudo sincronizar con la nube.")}`);
+      }
       else if (result.ok && result.data?.alerts?.length) persistAlerts(mergeAlertsWithTimestamps(result.data.alerts, safeRead(STORAGE_KEYS.alerts, [])).slice(0, 500));
     });
   }
@@ -580,7 +595,7 @@ export default function ResearchDesk() {
     setLoading(false);
     setStatus("Favoritos actualizados");
     syncFavoritesToCloud(next).then((result) => {
-      if (result.configured !== false && result.ok) setStatus("Favoritos actualizados y sincronizados en Supabase");
+      if (result.configured !== false && result.ok) setStatus("Favoritos actualizados y sincronizados con la nube");
     });
   }
 
@@ -673,8 +688,8 @@ export default function ResearchDesk() {
     </section>
 
     <section className="grid grid2">
-      <div className="card"><h2>Historial de scans</h2>{scans.map((s) => <div className="summaryRow" key={s.id} onClick={() => setSelectedScan(s)} style={{ cursor: "pointer", borderColor: selectedScan?.id === s.id ? "rgba(243,217,139,.7)" : undefined }}><span>{s.name || new Date(s.createdAt).toLocaleString()}<br /><span className="fine">{s.preset || "-"} · {s.marketRegime || "sin regimen"}</span></span><span>{s.rows?.length || 0} acciones</span></div>)}{!scans.length && <p className="fine">No hay snapshots todavia. Guarda uno desde el screener o importa datos manualmente.</p>}</div>
-      <div className="card"><h2>Snapshot seleccionado</h2>{selectedScan ? <><div className="summaryRow"><span>{selectedScan.name}</span><span>{selectedRows.length} filas</span></div><div className="controls" style={{ marginTop: 10 }}><button className="btn" onClick={() => exportJson(`scan-${selectedScan.id}.json`, selectedScan)}>Exportar scan</button><button className="btn btnGhost" onClick={() => deleteScan(selectedScan.id)}>Eliminar scan</button><a className="btn" href="/review?source=latest">Vista rapida</a><a className="btn btnPrimary" href="/lists">Ver en listas</a></div></> : <p className="fine">Selecciona un snapshot del historial.</p>}</div>
+      <div className="card"><h2>Historial de scans</h2>{scans.map((s) => <div className="summaryRow" key={s.id} onClick={() => setSelectedScan(s)} style={{ cursor: "pointer", borderColor: selectedScan?.id === s.id ? "rgba(243,217,139,.7)" : undefined }}><span>{snapshotDisplayName(s)}<br /><span className="fine">{snapshotDisplaySource(s)}</span></span><span>{s.rows?.length || 0} acciones</span></div>)}{!scans.length && <p className="fine">No hay snapshots todavia. Guarda uno desde el screener o importa datos manualmente.</p>}</div>
+      <div className="card"><h2>Snapshot seleccionado</h2>{selectedScan ? <><div className="summaryRow"><span>{snapshotDisplayName(selectedScan)}</span><span>{selectedRows.length} filas</span></div><div className="controls" style={{ marginTop: 10 }}><button className="btn" onClick={() => exportJson(`scan-${selectedScan.id}.json`, selectedScan)}>Exportar scan</button><button className="btn btnGhost" onClick={() => deleteScan(selectedScan.id)}>Eliminar scan</button><a className="btn" href="/review?source=latest">Vista rapida</a><a className="btn btnPrimary" href="/lists">Ver en listas</a></div></> : <p className="fine">Selecciona un snapshot del historial.</p>}</div>
     </section>
 
     {selectedScan && <section className="card">

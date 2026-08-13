@@ -108,7 +108,7 @@ async function readDiscoveryScanRows(params = {}) {
         fallback: {
           ...fallback,
           empty: true,
-          fallbackReason: fallbackError.message || "Supabase scan_results unavailable",
+          fallbackReason: fallbackError.message || "No hay resultados de escaneo disponibles",
         },
         read: fallbackOptions,
       };
@@ -138,7 +138,7 @@ export async function GET(request) {
       return Response.json(apiPayload({
         configured: false,
         source: "local_snapshot_fallback_required",
-        message: scanData.message || "Supabase no configurado; Sector/Listas deben declarar fallback local.",
+        message: scanData.message || "Sin ranking en vivo: Sectores y Listas usan la copia local.",
         inputRows: 0,
         lists: [],
         rows: [],

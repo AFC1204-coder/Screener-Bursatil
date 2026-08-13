@@ -6,7 +6,10 @@ describe("snapshot freshness", () => {
     expect(buildSnapshotFreshnessNotice({ stale: false }, { decisionProjectionPartialRows: 0 })).toBeNull();
   });
 
-  it("explica cuando se sirve una copia cacheada por caida de Supabase", () => {
+  // Este aviso se pinta TAL CUAL en el banner del screener (ScreenerShell →
+  // snapshotNotice.detail), así que su texto es copia de producto: ni el
+  // nombre del servicio de base de datos ni el error original del proveedor.
+  it("explica en lenguaje de producto que se sirve una copia guardada", () => {
     const notice = buildSnapshotFreshnessNotice({
       stale: true,
       staleForMs: 125000,
@@ -15,9 +18,21 @@ describe("snapshot freshness", () => {
 
     expect(notice.label).toBe("Snapshot cacheado");
     expect(notice.tone).toBe("warn");
-    expect(notice.detail).toContain("última copia cacheada");
+    expect(notice.detail).toContain("última disponible");
     expect(notice.detail).toContain("2 min");
-    expect(notice.detail).toContain("Timeout consultando Supabase.");
+    expect(notice.detail).toMatch(/tardó demasiado en responder/i);
+    expect(notice.detail).not.toMatch(/supabase/i);
+  });
+
+  it("descarta el motivo crudo del servidor cuando no lo reconoce", () => {
+    const notice = buildSnapshotFreshnessNotice({
+      stale: true,
+      staleForMs: 60000,
+      staleReason: 'PostgREST: relation "public.scans" does not exist',
+    });
+
+    expect(notice.detail).not.toContain("PostgREST");
+    expect(notice.detail).not.toContain("public.scans");
   });
 
   it("advierte cuando la proyeccion de decision queda parcial", () => {
@@ -73,7 +88,7 @@ describe("snapshot freshness", () => {
     });
 
     expect(notice.label).toBe("Snapshot cacheado");
-    expect(notice.detail).toContain("última copia cacheada");
+    expect(notice.detail).toContain("última disponible");
     expect(notice.detail).toContain("500");
     expect(notice.detail).toContain("9918");
   });

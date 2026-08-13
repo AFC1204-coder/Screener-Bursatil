@@ -6,6 +6,7 @@ import { clearScansApiCache, LATEST_SCAN_TTL_MS, scansApiCache } from "@/lib/sca
 import { snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { attachCachedMarketCap, readMarketCapForSymbols } from "@/lib/fundamentalsCache";
 import { attachWeeklyRs, readGlobalRsForSymbols } from "@/lib/globalRs";
+import { userFacingServiceError } from "@/lib/serviceErrors";
 
 const SCANS_SUPABASE_TIMEOUT_MS = 8000;
 
@@ -301,6 +302,16 @@ function scanTombstoneFromDb(row = {}) {
   };
 }
 
+// Lo que sale de aquí VIAJA AL NAVEGADOR: va como `staleReason` del snapshot
+// —que el screener pinta en su banner— y como `error` de la respuesta 500, que
+// el cliente enseña en la línea de estado. Antes devolvía "Timeout consultando
+// Supabase.", el nombre de Cloudflare con 180 caracteres del error original, o
+// directamente 240 caracteres crudos: de ahí salía el "Supabase: Timeout
+// consultando Supabase." con doble mención que veía el usuario.
+//
+// Ahora traduce con el mismo mapa que el resto del producto
+// (lib/serviceErrors.js) y devuelve "" cuando no reconoce el error, para que
+// cada caller ponga su propio texto. El original queda en el log del servidor.
 function compactErrorMessage(value = "") {
   const text = String(value || "")
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -309,10 +320,8 @@ function compactErrorMessage(value = "") {
     .replace(/\s+/g, " ")
     .trim();
   if (!text) return "";
-  if (/aborted|timeout|timed out/i.test(text)) return "Timeout consultando Supabase.";
-  const cloudflare = text.match(/Error code\s*(\d+)/i)?.[1];
-  if (cloudflare) return `Cloudflare ${cloudflare}: ${text.slice(0, 180)}`;
-  return text.slice(0, 240);
+  console.error("[scans] error del proveedor:", text.slice(0, 240));
+  return userFacingServiceError(text, "");
 }
 
 async function cachedLatestScans(cacheKey, loadPayload) {
@@ -329,7 +338,7 @@ async function cachedLatestScans(cacheKey, loadPayload) {
       ok: true,
       stale: true,
       staleForMs: cached.staleForMs,
-      staleReason: compactErrorMessage(error.message) || "No se pudo refrescar el snapshot desde Supabase.",
+      staleReason: compactErrorMessage(error.message) || "No se pudo refrescar la copia guardada.",
     };
   }
 }
@@ -371,7 +380,7 @@ function scanSyncError(error = {}) {
   const code = error.details?.code;
   const message = error.message || "";
   if (code === "PGRST202" || /(upsert_scan_newer_wins|delete_scan_newer_wins)/i.test(message)) {
-    return "Falta una RPC de sincronizacion de snapshots. Aplica supabase/schema.sql antes de sincronizar snapshots.";
+    return "La sincronización de snapshots no está disponible en este entorno.";
   }
   return message || "No se pudieron sincronizar snapshots";
 }
