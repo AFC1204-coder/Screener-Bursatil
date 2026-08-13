@@ -4,6 +4,7 @@ import { ScanSearch } from "lucide-react";
 import ChartPreferences from "@/app/ChartPreferences";
 import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
+import { compactDate, QualityStrip } from "@/app/components/ui/QualityStrip";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
@@ -117,21 +118,8 @@ function StockUnavailableBlock({ symbol = "" }) {
   );
 }
 
-/* Franja de calidad de dato (una sola, bajo cabecera N0). */
-function QualityStrip({ items = [] }) {
-  if (!items.length) return null;
-  return (
-    <div className="stockQualityStrip" aria-label="Cobertura de datos">
-      <span className="stockQualityStripLabel">Calidad de dato</span>
-      {items.map((item, index) => (
-        <span key={`${item.label}-${index}`} className="stockQualityStripItem">
-          <span className="stockTechRowLabel">{item.label}</span>
-          <span className="stockTechRowValue">{item.value}</span>
-        </span>
-      ))}
-    </div>
-  );
-}
+/* QualityStrip vivía aquí; ahora es compartida con Listas.
+   Ver app/components/ui/QualityStrip.jsx. */
 
 /* Bloque N0 (Veredicto). Estructura: identidad + precio + decisión + freno
    + score + resumen de setup. Única zona con color semántico. */
@@ -515,12 +503,6 @@ function riskTone(value, warn = 60) {
 
 function sampleText(value) {
   return Number.isFinite(value) ? `n=${Math.round(value)}` : "sin muestra";
-}
-
-function compactDate(value) {
-  if (!value) return "";
-  const d = new Date(value);
-  return Number.isFinite(d.getTime()) ? d.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }) : "";
 }
 
 function compactBusinessTeaser(data = {}) {

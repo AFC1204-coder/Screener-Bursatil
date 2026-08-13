@@ -306,35 +306,8 @@
   line-height: var(--lh-body);
 }
 
-/* Franja de calidad de dato (una sola, bajo cabecera N0) */
-.stockQualityStrip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--line2);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--soft);
-  font-family: var(--font-body);
-  font-size: var(--text-s);
-  line-height: var(--lh-body);
-}
-
-.stockQualityStripLabel {
-  color: var(--muted);
-  font-family: var(--font-body);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
-}
-
-.stockQualityStripItem {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-1);
-}
+/* La franja de calidad de dato vive ahora en styles/quality-strip.css,
+   importada por app/components/ui/QualityStrip.jsx. */
 
 /* ─── N1 Lectura técnica: tabla clave-valor de 2 columnas ────────── */
 

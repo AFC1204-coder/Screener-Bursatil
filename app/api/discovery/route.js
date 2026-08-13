@@ -1,5 +1,6 @@
-import { buildDiscoverySnapshot } from "@/lib/discovery";
+import { buildDiscoverySnapshot, dataAsOfFrom, rsAsOfFrom } from "@/lib/discovery";
 import { discoveryCacheKeyForParams, readMaterializedDiscoverySnapshot } from "@/lib/discoveryCache";
+import { attachWeeklyRs, readGlobalRsForSymbols } from "@/lib/globalRs";
 import { readNightlyUsScanRows, readScanRows } from "@/lib/leaderboards";
 
 const DEFAULT_DISCOVERY_SCAN_ROWS = 900;
@@ -42,6 +43,39 @@ function paramsFromRequest(request) {
     // cualquier origen— para poder comparar los dos al depurar; no lo usa
     // ninguna pantalla.
     source: searchParams.get("source") === "recent" ? "recent" : "nightly-us",
+  };
+}
+
+// Discovery es la QUINTA ruta que produce filas, y no hidrataba el ranking
+// semanal: sus filas salen de scan_results, que solo lleva rsGlobalPct —el
+// percentil dentro del lote del escaneo—, y lib/rsCanonical.js prohíbe
+// enseñar eso bajo la etiqueta RS. Resultado: la columna RS de Listas salía
+// ausente con el motivo "esta fila no lo trae cargado", que era cierto pero
+// evitable. Mismo bug y mismo arreglo que las cuatro rutas de 1f20345.
+//
+// A diferencia de withWeeklyRsItems en /api/leaderboards, que hidrata una
+// lista, aquí hay nueve listas más tres dimensiones de grupos sobre el mismo
+// conjunto de símbolos: se lee rs_weekly_items UNA vez para todos y se
+// reparte, en vez de una lectura por lista.
+async function withWeeklyRsSnapshot(snapshot = {}) {
+  const symbols = new Set();
+  const collect = (items = []) => { for (const item of items || []) if (item?.symbol) symbols.add(item.symbol); };
+  collect(snapshot.rows);
+  for (const list of snapshot.lists || []) collect(list.items);
+  for (const dimension of Object.values(snapshot.groups || {})) {
+    for (const group of dimension || []) { collect(group.items); collect(group.top); }
+  }
+  if (!symbols.size) return snapshot;
+  const weekly = await readGlobalRsForSymbols([...symbols]).catch(() => ({ configured: false, bySymbol: new Map() }));
+  const attach = (items = []) => (items || []).map((item) => attachWeeklyRs(item, weekly.bySymbol));
+  return {
+    ...snapshot,
+    rows: attach(snapshot.rows),
+    lists: (snapshot.lists || []).map((list) => ({ ...list, items: attach(list.items) })),
+    groups: Object.fromEntries(Object.entries(snapshot.groups || {}).map(([dimension, groups]) => [
+      dimension,
+      (groups || []).map((group) => ({ ...group, items: attach(group.items), top: attach(group.top) })),
+    ])),
   };
 }
 
@@ -163,9 +197,13 @@ export async function GET(request) {
     if (cacheKey) {
       const cached = await readMaterializedDiscoverySnapshot(cacheKey).catch(() => null);
       if (cached?.payload) {
+        // El snapshot cacheado congela el RS del día en que se materializó,
+        // y el ranking es semanal: se rehidrata al servir, igual que hace
+        // /api/leaderboards con su caché.
         return Response.json(apiPayload({
           configured: true,
-          ...cached.payload,
+          ...(await withWeeklyRsSnapshot(cached.payload)),
+          dataAsOf: dataAsOfFrom(cached.payload),
           source: "discovery_snapshots",
           cache: cached.cache,
           effectiveRead: cached.read,
@@ -242,7 +280,7 @@ export async function GET(request) {
       }));
     }
 
-    const snapshot = buildDiscoverySnapshot(scanData.rows, params);
+    const snapshot = await withWeeklyRsSnapshot(buildDiscoverySnapshot(scanData.rows, params));
     let health = degraded ? {
       ...snapshot.health,
       state: snapshot.health?.state === "pass" ? "warn" : snapshot.health?.state,
@@ -264,6 +302,8 @@ export async function GET(request) {
       fallback,
       cache: cacheState,
       nightly: scanData.nightly || null,
+      dataAsOf: dataAsOfFrom(snapshot),
+      rsAsOf: rsAsOfFrom(snapshot),
       effectiveRead: read ? {
         maxRows: read.maxRows,
         sinceDays: read.sinceDays,

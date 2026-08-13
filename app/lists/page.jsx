@@ -16,6 +16,8 @@ import { buildSavedListView, listViewHref, listViewSignature, normalizeListScope
 import { enforceListContractRows, listContractForKey, listInclusionSummary, rowPassesListContract, summarizeListReliability } from "@/lib/listRationale";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
+import { compactDate, QualityStrip } from "@/app/components/ui/QualityStrip";
+import { canonicalRs, RS_CANONICAL_LABEL } from "@/lib/rsCanonical";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { favoriteToRow, isLongOpportunityRow, metricValue, normalizeStockRows, shortBusiness, sortByMetric, uniqueRows, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
@@ -84,6 +86,55 @@ function hasOwn(obj = {}, key = "") {
 
 function ListTrustMetric({ row, metricKey, label, value, className = "" }) {
   return <TrustMetric row={row} metricKey={metricKey} label={label} value={value} className={className} baseClass="listTrustMetric" />;
+}
+
+/* El RS sale del lector único (lib/rsCanonical.js), igual que en la tabla del
+   screener, la vista rápida y la ficha. Nunca del percentil del lote que
+   viaja en la fila: son poblaciones distintas y darían números distintos para
+   el mismo símbolo en dos pantallas. */
+function CanonicalRsCell({ row }) {
+  const rs = canonicalRs(row);
+  if (!rs.available) return <MissingValue reason={rs.reason} />;
+  return <b className={`cellNumber ${rs.value >= 75 ? "strong" : rs.value < 45 ? "weak" : ""}`.trim()}>{rs.value.toFixed(0)}</b>;
+}
+
+/* La fecha que manda, en la misma franja que la ficha.
+   El evaluador contó cinco fechas repartidas por el producto sin que ninguna
+   dijera cuál manda. Ésta lo dice: primero el cierre de las barras sobre las
+   que están calculadas TODAS las filas de debajo.
+   El RS va aparte a propósito. Es semanal y su corte no coincide con el de
+   las barras —hoy, 9 y 12 de agosto—: meterlos bajo una sola fecha sería
+   mentir sobre uno de los dos. Y el universo contesta la pregunta que hay
+   debajo de todas: si esto es el mercado entero o una selección. */
+function listsQualityItems({ dataAsOf, rsAsOf, nightly }) {
+  const items = [];
+  if (dataAsOf?.date) {
+    items.push({
+      label: "Cierre",
+      // mixed solo puede darse si alguien vuelve a mezclar orígenes: se
+      // enseña en vez de esconderse tras la fecha más reciente.
+      value: dataAsOf.mixed ? `${compactDate(dataAsOf.date)} — ${compactDate(dataAsOf.latest)}` : compactDate(dataAsOf.date),
+    });
+  } else {
+    items.push({ label: "Cierre", value: "Sin fecha" });
+  }
+  items.push({
+    label: RS_CANONICAL_LABEL,
+    value: rsAsOf?.date ? `${compactDate(rsAsOf.date)}${rsAsOf.sampleSize ? ` · n=${Math.round(rsAsOf.sampleSize).toLocaleString("es-ES")}` : ""}` : "Sin ranking",
+  });
+  // El total analizado viaja en el propio local_id del escaneo
+  // ("materialized:US:2026-08-13:o0:l5608"): es el dato que convierte "75
+  // valores" en "75 de 5.608".
+  const analizados = Number(String(nightly?.localId || "").match(/:l(\d+)$/)?.[1] || 0);
+  if (Number.isFinite(nightly?.rows) && nightly.rows > 0) {
+    items.push({
+      label: "Universo",
+      value: analizados > 0
+        ? `${nightly.rows.toLocaleString("es-ES")} de ${analizados.toLocaleString("es-ES")}`
+        : `${nightly.rows.toLocaleString("es-ES")} valores`,
+    });
+  }
+  return items;
 }
 
 function scopedDiscoveryPath(filter = {}) {
@@ -421,7 +472,7 @@ function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey =
   const reliability = summarizeListReliability(rows);
   const table = <div className="tableWrap">
     <table className="table">
-      <thead><tr>{["Ticker", "Empresa", "Gráfico", "Tema", "3M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel(scoreKey)].map((h, index) => <th key={`${index}-${h}`}>{h}</th>)}</tr></thead>
+      <thead><tr>{["Ticker", "Empresa", "Gráfico", "Tema", RS_CANONICAL_LABEL, "3M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel(scoreKey)].map((h, index) => <th key={`${index}-${h}`}>{h}</th>)}</tr></thead>
       <tbody>{visibleRows.map((r) => {
         const trustSignature = rowTrustSignatureForRow(r);
         return <tr key={r.symbol}>
@@ -431,6 +482,7 @@ function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey =
           <ListSparkline row={r} chartsCache={chartsCache} />
         </td>
         <td><span className="pill">{r.theme || r.snapshot?.theme || "-"}</span></td>
+        <td><CanonicalRsCell row={r} /></td>
         <td><ListTrustMetric row={r} metricKey="perf3m" label="3M" value={pct(r.perf3m ?? r.snapshot?.perf3m)} /></td>
         <td><ListTrustMetric row={r} metricKey="distance52w" label="52w" value={pct(r.distance52w)} /></td>
         <td><ListTrustMetric row={r} metricKey="extSma50" label="SMA50" value={pct(r.extSma50)} /></td>
@@ -441,7 +493,7 @@ function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey =
         <td><ListTrustMetric row={r} metricKey="riskScore" label={metricShortLabel("riskScore")} value={num(r.riskScore ?? r.snapshot?.riskScore)} /></td>
         <td className="ticker"><ListTrustMetric row={r} metricKey={scoreKey} label={metricShortLabel(scoreKey)} value={num(Number.isFinite(metricValue(r, scoreKey)) ? metricValue(r, scoreKey) : (r.snapshot?.objectiveScore ?? r.snapshot?.totalScore))} /></td>
       </tr>;
-      })}{!rows.length && <tr><td colSpan="13">{emptyLabel}</td></tr>}</tbody>
+      })}{!rows.length && <tr><td colSpan="14">{emptyLabel}</td></tr>}</tbody>
     </table>
   </div>;
   const mobileRows = <div className="listMobileRows">
@@ -455,6 +507,7 @@ function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey =
       <RowTrustSignature signature={trustSignature} className="listMobileTrustSignature" />
       <div className="listMobileSpark"><ListSparkline row={r} chartsCache={chartsCache} /></div>
       <div className="listMobileFacts">
+        <span>{RS_CANONICAL_LABEL} <b><CanonicalRsCell row={r} /></b></span>
         <span>3M <b><ListTrustMetric row={r} metricKey="perf3m" label="3M" value={pct(r.perf3m ?? r.snapshot?.perf3m)} /></b></span>
         <span>52w <b><ListTrustMetric row={r} metricKey="distance52w" label="52w" value={pct(r.distance52w)} /></b></span>
         <span>RSQ <b><ListTrustMetric row={r} metricKey="rsQualityScore" label={metricShortLabel("rsQualityScore")} value={num(r.rsQualityScore ?? r.snapshot?.rsQualityScore)} /></b></span>
@@ -733,6 +786,7 @@ export default function ListsPage() {
         <div className="mobileActions"><a className="btn" href="/">Screener</a><a className="btn" href="/review?source=latest">Vista rapida</a><a className="btn" href="/ipo-radar">IPO Radar</a><a className="btn" href="/research-desk">Research</a><a className="btn btnPrimary" href="/sectors">Sectores</a></div>
       </div>
     </section>
+    {useDiscovery && <QualityStrip items={listsQualityItems({ dataAsOf: discovery?.dataAsOf, rsAsOf: discovery?.rsAsOf, nightly: discovery?.nightly })} />}
     <section className="card"><div className="kpis"><div className="kpi"><b>{loaded ? rows.length : "-"}</b><span>acciones unicas</span></div><div className="kpi"><b>{loaded ? favorites.length : "-"}</b><span>favoritos</span></div><div className="kpi"><b>{discoveryLoading ? "..." : useDiscovery ? "Datos actualizados" : loaded ? "Datos guardados" : "-"}</b><span>fuente rankings</span></div><div className="kpi"><b>{loaded && latest ? new Date(latest.createdAt).toLocaleDateString() : "-"}</b><span>ultimo snapshot local</span></div></div></section>
     <ListsInfraStrip
       discovery={discovery}

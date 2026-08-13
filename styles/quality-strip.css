@@ -1,0 +1,38 @@
+/* Franja de calidad de dato — compartida.
+   Estrenada en la ficha del valor (bloque N0) y reutilizada por Listas. Vive
+   en su propio archivo, y no en styles/stock.css, porque el componente que la
+   usa (app/components/ui/QualityStrip.jsx) lo importa él mismo: así los
+   estilos viajan con el componente a cualquier pantalla que lo monte, sin que
+   nadie tenga que acordarse de cargar el CSS de la ficha.
+   Los nombres de clase se conservan (stockQualityStrip*) para no romper el
+   marcado ya verificado ni los tokens de tokens-v2.css que los describen. */
+/* Franja de calidad de dato (una sola, bajo cabecera N0) */
+.stockQualityStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  line-height: var(--lh-body);
+}
+
+.stockQualityStripLabel {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+}
+
+.stockQualityStripItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
