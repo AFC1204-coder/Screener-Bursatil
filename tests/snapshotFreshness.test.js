@@ -33,4 +33,48 @@ describe("snapshot freshness", () => {
     expect(staleDurationLabel(20 * 60000)).toBe("20 min");
     expect(staleDurationLabel(2 * 60 * 60000)).toBe("2 h");
   });
+
+  // Recorte silencioso (docs/timeout-arranque-2026-08-13.md, punto 6): si
+  // rowsLimit cortó el escaneo antes de traerlo entero, el usuario debe
+  // verlo — hoy creía que veía el escaneo completo y no era cierto.
+  it("avisa cuando el escaneo llegó recortado (rowsTruncated)", () => {
+    const notice = buildSnapshotFreshnessNotice({ stale: false }, {
+      rowsAvailable: 9918,
+      rowsReturned: 500,
+      rowsTruncated: true,
+    });
+
+    expect(notice).not.toBeNull();
+    expect(notice.label).toBe("Snapshot incompleto");
+    expect(notice.tone).toBe("warn");
+    expect(notice.truncated).toBe(true);
+    expect(notice.detail).toContain("500");
+    expect(notice.detail).toContain("9918");
+  });
+
+  it("no avisa de recorte si rowsTruncated es false, aunque vengan los conteos", () => {
+    const notice = buildSnapshotFreshnessNotice({ stale: false }, {
+      rowsAvailable: 42,
+      rowsReturned: 42,
+      rowsTruncated: false,
+    });
+
+    expect(notice).toBeNull();
+  });
+
+  it("combina stale y truncado en un solo aviso si pasan las dos cosas a la vez", () => {
+    const notice = buildSnapshotFreshnessNotice({
+      stale: true,
+      staleForMs: 30000,
+    }, {
+      rowsAvailable: 9918,
+      rowsReturned: 500,
+      rowsTruncated: true,
+    });
+
+    expect(notice.label).toBe("Snapshot cacheado");
+    expect(notice.detail).toContain("última copia cacheada");
+    expect(notice.detail).toContain("500");
+    expect(notice.detail).toContain("9918");
+  });
 });

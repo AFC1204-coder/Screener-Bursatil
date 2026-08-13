@@ -254,6 +254,13 @@ export function scanFromDb(row, results = [], options = {}) {
       attachWeeklyRs(prepareScanDecisionRow(scanDecisionRowFromDb(item, options), decisionSettings), weeklyRsBySymbol),
       marketCapBySymbol,
     ));
+  // rowsAvailable es el total real del escaneo (columna scans.row_count);
+  // rowsReturned es lo que sobrevivió al recorte de rowsLimit. Si
+  // includeRows viene en false no hubo recorte, solo no se pidieron filas:
+  // en ese caso no hay nada que reportar como truncado.
+  const rowsAvailable = Number(row.row_count) || 0;
+  const rowsReturned = rows.length;
+  const rowsTruncated = options.includeRows !== false && rowsAvailable > rowsReturned;
   return {
     id: row.local_id || row.id,
     cloudId: row.id,
@@ -276,6 +283,9 @@ export function scanFromDb(row, results = [], options = {}) {
     marketScore: finiteOrNull(row.market_score),
     marketRegime: row.market_regime || "sin dato",
     rows,
+    rowsAvailable,
+    rowsReturned,
+    rowsTruncated,
     ...(options.decisionProjection
       ? { decisionProjectionPartialRows: rows.filter((item) => item.decisionProjectionPartial).length }
       : {}),
@@ -435,7 +445,7 @@ export async function GET(req) {
         configured: true,
         ok: true,
         projection: decisionProjection ? "decision" : full ? "full" : "compact",
-        scans: activeScans.map((scan) => scanFromDb(scan, results, { decisionProjection, weeklyRsBySymbol: weeklyRs.bySymbol, marketCapBySymbol: marketCaps.bySymbol })),
+        scans: activeScans.map((scan) => scanFromDb(scan, results, { decisionProjection, includeRows, weeklyRsBySymbol: weeklyRs.bySymbol, marketCapBySymbol: marketCaps.bySymbol })),
         scanTombstones: includeDeleted ? deletedScans.map(scanTombstoneFromDb) : [],
       };
     };

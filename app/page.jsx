@@ -559,7 +559,9 @@ export default function Page() {
         restoreSnapshot(scan, { source: "cloud", notice });
         setStatus(notice?.stale
           ? `Último snapshot cacheado cargado: ${scan.rows.length} acciones. Supabase no respondió al refrescar.`
-          : `Último snapshot Supabase cargado: ${scan.rows.length} acciones. Los filtros se aplican sobre este universo estable.`);
+          : notice?.truncated
+            ? `Último snapshot Supabase cargado: ${scan.rows.length} de ${notice.rowsAvailable} acciones (parcial).`
+            : `Último snapshot Supabase cargado: ${scan.rows.length} acciones. Los filtros se aplican sobre este universo estable.`);
       }).catch(() => {
         if (!cancelled && !restoreLocalSnapshot("Supabase no respondió.")) setStatus(DEFAULT_STATUS);
       }).finally(() => {
