@@ -1,5 +1,13 @@
 # Listas: de dónde lee, de dónde debería leer y cómo mostrar la fecha
 
+> **Actualización del mismo 2026-08-13, tras aplicar la caducidad de caché.**
+> El diagnóstico se confirmó con evidencia directa y dos afirmaciones suyas
+> resultaron equivocadas. Ambas están corregidas en el sitio donde
+> aparecían (§6 y §7.1), y el detalle está en §12 al final. En resumen:
+> la fila congelada del 20 de junio **existía** —la API la reporta ahora
+> con `ageHours: 1306.4`—, y "Deterioro técnico" **no sale vacía**: saca
+> tres valores de Hong Kong, que es peor de lo que este documento predijo.
+
 Fecha: 2026-08-13
 Rama: `codex/statsedge-ui-polish` · BASE_SHA `07cca5f`
 Alcance: **solo Listas** (`/lists`). Sectores y Salud de mercado se tratan
@@ -633,24 +641,31 @@ Rangos observados en las 75 filas: `objectiveScore` de 61,7 a 83,6;
 
 | Sección | Contrato ([lib/listRationale.js](../lib/listRationale.js)) | Fuente correcta | Sale población hoy |
 |---|---|---|---|
+La columna final ya no es una estimación: son los recuentos **medidos** en
+`/api/discovery` una vez la caché caduca (§12).
+
+| Sección | Contrato ([lib/listRationale.js](../lib/listRationale.js)) | Fuente correcta | Devuelve hoy |
+|---|---|---|---|
 | Favoritos | manual, sin contrato (L176-178) | `favorites` + hidratación desde el nocturno | según usuario |
-| Score compuesto | `total >= 50` (L171) | nocturno US | **sí**, ~75 |
-| RS Quality Leaders | `rsQuality >= 55 && rs >= 55` (L166) | nocturno US, **RS desde `rs_weekly_items`** | sí, ~73 |
-| Deterioro técnico | `weaknessScore >= 45` (L154) | **ninguna hoy** — ver punto 7 | **no, 0** |
-| Tendencia establecida | `trendTemplate && weinstein >= 55 && total >= 55` (L165) | nocturno US | sí, ~75 |
-| Rupturas con contracción | `minervini >= 60 && total >= 50 && rs >= 55 && perf3m >= 0 && distance52w >= -25` (L157-163) | nocturno US | sí, ~73 |
-| Vigilancia pivot | `total>=55 && rs>=55 && methodologyPivotWatchEligible` (L167) | **retirar** — ver punto 7 | sí, pero no debe |
-| IPO / New Leaders | `recentIpoOk(...)` (L168) | **ninguna hoy** — ver punto 7 | **no, 0** |
-| Extended but strong | `total>=70 && extSma50>=15 && sma50ExtensionOk && distance52w>=-20` (L169) | nocturno US | sí, subconjunto real |
-| Pullback to SMA50 | `total>=50 && -3 <= extSma50 <= 8` (L170) | nocturno US | sí, subconjunto real |
+| Score compuesto | `total >= 50` (L171) | nocturno US | **20** |
+| RS Quality Leaders | `rsQuality >= 55 && rs >= 55` (L166) | nocturno US, **RS desde `rs_weekly_items`** | **20** |
+| Deterioro técnico | `weaknessScore >= 45` (L154) | **ninguna válida** — ver punto 7 | **3, todos de Hong Kong** |
+| Tendencia establecida | `trendTemplate && weinstein >= 55 && total >= 55` (L165) | nocturno US | **20** |
+| Rupturas con contracción | `minervini >= 60 && total >= 50 && rs >= 55 && perf3m >= 0 && distance52w >= -25` (L157-163) | nocturno US | **20** |
+| Vigilancia pivot | `total>=55 && rs>=55 && methodologyPivotWatchEligible` (L167) | **retirar** — ver punto 7 | **12** |
+| IPO / New Leaders | `recentIpoOk(...)` (L168) | **ninguna hoy** — ver punto 7 | **0** |
+| Extended but strong | `total>=70 && extSma50>=15 && sma50ExtensionOk && distance52w>=-20` (L169) | nocturno US | **20** |
+| Pullback to SMA50 | `total>=50 && -3 <= extSma50 <= 8` (L170) | nocturno US | **20** |
+
+El `limit=20` de la petición es el techo de las listas que salen a 20; la
+tabla muestra 18 por fila porque `MiniTable` corta en `rows.slice(0, 18)`
+([app/lists/page.jsx:374](../app/lists/page.jsx#L374)).
 
 Dos advertencias sobre la tabla:
 
-1. Los recuentos son **estimaciones sobre las métricas consultadas**. No
-   he ejecutado `longOpportunityIssue`
-   ([lib/stockRows.js:293-312](../lib/stockRows.js#L293)) sobre las filas
-   reales, que puede recortar cualquiera de las listas alcistas. Los
-   trato como cotas superiores.
+1. Los recuentos son de **una lectura concreta** (13 ago, 20:40 UTC) sobre
+   las 80 filas más recientes. Cambiarán cada noche, y bastante: dependen
+   de qué guarde el nocturno.
 2. Las diferencias entre `extended` y `pullback` son reales y
    **excluyentes por construcción** (`extSma50 >= 15` frente a
    `extSma50 <= 8`): con 75 filas repartidas entre 0,89 y 37,3 de
@@ -684,7 +699,24 @@ detrás de la misma tabla.
 
 **Sí, hay tres. Dos hay que retirarlas y una hay que decidirla.**
 
-### 7.1 "Deterioro técnico" — sin fuente, por diseño del nocturno
+### 7.1 "Deterioro técnico" — sin fuente válida, y peor de lo previsto
+
+> **Corregido el 13 de agosto.** Este apartado decía que la lista saldría
+> vacía. Sale con **tres valores, y los tres son de Hong Kong**:
+> `8328.HK` (deterioro 100), `8329.HK` (100) y `8326.HK` (65), con cierre
+> del **10 de agosto**, dos días más viejos que el resto de la pantalla.
+> No vienen del nocturno estadounidense sino de los escaneos del cron por
+> mercados (§5.2). El razonamiento de abajo sobre el nocturno era
+> correcto; lo que fallaba era dar por hecho que el nocturno es la única
+> fuente que entra por la lectura viva. No lo es: entran las 80 filas más
+> recientes, vengan del mercado que vengan.
+>
+> Para una lista de deterioro, eso significa que hoy **solo puede sacar
+> valores de fuera del mercado de lanzamiento**: los únicos débiles que
+> hay en la ventana son los que el cron trae de otros mercados, porque el
+> nocturno US filtra a los débiles por diseño. La conclusión de retirarla
+> se refuerza, y añade un motivo que este documento no había visto: no es
+> que esté vacía, es que enseña otro mercado y otra fecha sin decirlo.
 
 El contrato exige `weaknessScore >= 45`
 ([lib/listRationale.js:154](../lib/listRationale.js#L154)). En la muestra
@@ -1163,6 +1195,9 @@ y ahí no hay una respuesta obvia esperando en Supabase.
 
 # LO QUE NO HE VERIFICADO
 
+> **Los puntos 1 y 3 quedaron resueltos el mismo día**, al aplicar la
+> caducidad y medir contra el servidor: ver §12. El resto sigue en pie.
+
 1. **La tabla `leaderboard_snapshots`, directamente.** No está en la
    lista blanca del MCP de solo lectura (las permitidas son `scans`,
    `scan_results`, `scan_symbol_history`, `symbol_resolutions`,
@@ -1200,3 +1235,123 @@ y ahí no hay una respuesta obvia esperando en Supabase.
    Listas hoy.
 10. **La página `/ipo-radar`.** La menciono como posible duplicado de la
     sección IPO sin haberla leído.
+
+---
+
+# 12. Lo medido tras aplicar la caducidad (13 ago 2026, 20:40 UTC)
+
+El paso 1 del plan (§9) ya está implementado, pero **no como `cache=0` en
+la página sino como caducidad en el servidor**, que es la variante que §11
+recomendaba porque arregla Sectores a la vez.
+
+## 12.1 El plazo, y por qué no es un TTL en horas
+
+La caducidad vive en
+[lib/discoveryCache.js](../lib/discoveryCache.js) y no cuenta horas: mira
+si el snapshot es anterior a **la última frontera de las 04:00 UTC**.
+
+Un TTL fijo no vale aquí. Los datos no envejecen poco a poco: cambian de
+golpe una vez al día, cuando corre el nocturno. Un snapshot generado a
+las 02:00 con un TTL de 12 horas seguiría dándose por fresco a las 14:00,
+once horas después de que el escaneo haya dejado datos nuevos. El TTL
+mediría la edad del snapshot, cuando lo que importa es si entremedias han
+llegado datos.
+
+La frontera son las 04:00 UTC y no las 03:00 porque hay que sumar las dos
+holguras que el propio workflow documenta: GitHub puede retrasar un
+`schedule` entre 5 y 30 minutos, y la corrida tiene `timeout-minutes: 30`.
+A las 04:00 UTC los datos de esa noche están completos.
+
+Vida máxima 24 h; mínima, unos minutos si el snapshot se generó a las
+03:59. Ese es el lado correcto en el que fallar: una caducidad de más
+cuesta una lectura viva, y una de menos ya costó 54 días de datos falsos.
+
+## 12.2 La fila congelada existía: confirmado
+
+Era el hueco número 1 de "LO QUE NO HE VERIFICADO" — la tabla no se podía
+consultar por MCP. Ahora la respuesta de la API la reporta:
+
+```json
+"cache": {
+  "hit": false, "status": "expired", "key": "discovery:interactive:v1",
+  "generatedAt": "2026-06-20T10:15:33.964+00:00",
+  "ageHours": 1306.4, "boundary": "2026-08-13T04:00:00.000Z"
+}
+```
+
+**1.306,4 horas: 54,4 días.** Coincide con el `provider_runs` de §2.4 al
+segundo. El diagnóstico era correcto.
+
+## 12.3 Antes y después, con la misma petición
+
+`GET /api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=80&sinceDays=10&minGroupSize=1`
+
+| | Antes | Después |
+|---|---|---|
+| `source` | `discovery_snapshots` | `scan_results` |
+| Fecha del payload | 20 jun 2026 | 13 ago 2026 |
+| `inputRows` | 300 (leídas en junio) | 80 |
+| Valores únicos | **6** | **55** |
+| Cierre de las barras | junio | 12 ago (131 filas) y 10 ago (4) |
+
+Y en pantalla, con el KPI de Listas en "Datos actualizados" y 123
+apariciones de 53 tickers únicos:
+
+| Sección | Filas | Primeros valores |
+|---|---|---|
+| Score compuesto | 18 | VCTR HALO MRX DGII |
+| RS Quality Leaders | 18 | MPC SN VCTR MSGE |
+| Deterioro técnico | **3** | 8328.HK 8329.HK 8326.HK |
+| Tendencia establecida | 18 | DGII GHRS IMVT MRX |
+| Rupturas con contracción | 18 | IMVT MPC DGII MRX |
+| Vigilancia pivot | 12 | MSGS NTB CRON RMAX |
+| IPO / New Leaders | **0** | — |
+| Extended but strong | 18 | EAT DCTH SEPN URGN |
+| Pullback to SMA50 | 18 | LQDA OSCR YETI MANU |
+
+Esto contesta a la pregunta 4 de §4 con datos, no con razonamiento: las
+secciones **sí filtran cosas distintas**. Score compuesto empieza por
+VCTR, RS Quality por MPC, Extended por EAT y Pullback por LQDA. Los tres
+nombres repetidos eran falta de población, no falta de criterio.
+
+## 12.4 Sectores se arregló solo, como decía §11
+
+Sin tocar `app/sectors/page.jsx`. Su etiqueta de fuente pasó a mostrar la
+fecha de hoy y ya no aparece rastro del 20 de junio en la página. Era lo
+esperable: hace la misma llamada carácter por carácter y el arreglo está
+en el servidor.
+
+Queda abierta la pregunta de umbral que §11 planteaba —cuántos grupos de
+un solo valor produce `minGroupSize=1`—, que no es de fuente y no cambia
+con esto.
+
+## 12.5 Las tres listas sin fuente: qué muestran ahora
+
+Sin retirarlas, que es decisión de producto aparte:
+
+- **IPO / New Leaders: 0 filas.** Exactamente lo previsto en §7.2.
+- **Vigilancia pivot: 12 filas.** Tiene datos, y siguen siendo el pivote
+  dudoso de §7.3. Se ve en las propias filas: `INSW` tiene
+  `distanceToPivotPct` y `distance52w` idénticos (-6,0), mientras `CRON`
+  los tiene distintos (0,0 frente a -7,6). Sigue midiendo dos cosas según
+  la fila.
+- **Deterioro técnico: 3 filas de Hong Kong.** El hallazgo nuevo, ya
+  corregido en §7.1.
+
+## 12.6 Lo que este arreglo NO hace
+
+- **No repuebla la caché.** `discovery-refresh` sigue sin estar programado
+  (§2.3), así que a partir de ahora **toda** lectura entra por el camino
+  vivo. Es lo correcto —mejor una lectura viva que datos de junio—, pero
+  significa que la caché está efectivamente desactivada, no arreglada. Si
+  la RPC empieza a dar timeouts bajo carga, la causa será esta.
+- **No ancla la fuente al nocturno US** (paso 4 de §9). Sigue leyendo "las
+  80 filas más recientes", que es justo por lo que se cuelan los tres
+  valores de Hong Kong y las dos fechas de cierre distintas. Ese paso
+  sigue pendiente y ahora tiene una razón medida a favor.
+- **No toca el RS.** Las filas siguen sin `weeklyRs*` (§5.1).
+- **No toca `readMaterializedLeaderboard`**
+  ([lib/leaderboards.js:746-772](../lib/leaderboards.js#L746)), que tiene
+  el mismo patrón sin caducidad —`order=generated_at.desc&limit=1`— para
+  `/api/leaderboards`. No estaba en el encargo y no lo he investigado:
+  no sé si su caché está igual de vieja ni qué pantallas la consumen.

@@ -120,6 +120,10 @@ export async function GET(request) {
   const params = paramsFromRequest(request);
   try {
     const cacheKey = discoveryCacheKeyForParams(params);
+    // Por qué importa distinguir "no había" de "estaba caducada": mientras el
+    // trabajo que rellena la caché no esté programado, TODA lectura entra por
+    // el camino vivo, y eso tiene que poder verse desde fuera sin adivinarlo.
+    let cacheState = cacheKey ? { hit: false, status: "miss", key: cacheKey } : { hit: false, status: "bypass" };
     if (cacheKey) {
       const cached = await readMaterializedDiscoverySnapshot(cacheKey).catch(() => null);
       if (cached?.payload) {
@@ -131,6 +135,16 @@ export async function GET(request) {
           effectiveRead: cached.read,
         }));
       }
+      if (cached?.expired) {
+        cacheState = {
+          hit: false,
+          status: "expired",
+          key: cacheKey,
+          generatedAt: cached.generatedAt,
+          ageHours: cached.freshness?.ageHours ?? null,
+          boundary: cached.freshness?.boundary ?? null,
+        };
+      }
     }
 
     const { scanData, degraded, fallback, read } = await readDiscoveryScanRows(params);
@@ -139,6 +153,7 @@ export async function GET(request) {
         configured: false,
         source: "local_snapshot_fallback_required",
         message: scanData.message || "Sin ranking en vivo: Sectores y Listas usan la copia local.",
+        cache: cacheState,
         inputRows: 0,
         lists: [],
         rows: [],
@@ -180,6 +195,7 @@ export async function GET(request) {
       health,
       degraded,
       fallback,
+      cache: cacheState,
       effectiveRead: read ? {
         maxRows: read.maxRows,
         sinceDays: read.sinceDays,
