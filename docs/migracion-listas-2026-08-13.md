@@ -1543,3 +1543,100 @@ Queda en pie la única pregunta abierta de §11, que no es de fuente: con
   indistinguible de un nocturno. Lo hereda de `scripts/scan-universe.mjs`,
   que ya decidió no resolverlo con una segunda señal; se mantiene ese
   criterio, y queda escrito para quien lo encuentre.
+
+---
+
+# 15. RS canónico y franja de fecha (13 ago 2026)
+
+Pasos 5 y 6 de §9. Con esto, los tres problemas que trajo el evaluador
+—datos de mayo, listas que no filtraban, ninguna fecha que mandara—
+quedan cerrados en Listas.
+
+## 15.1 El RS: hidratar al servir, no al escribir
+
+Había dos formas y la elección no era de gusto: **el repo ya la había
+tomado**. El comentario de `attachWeeklyRs`
+([lib/globalRs.js](../lib/globalRs.js)) dice por qué vive en la librería
+y no en la ruta que lo estrenó:
+
+> *"porque el bug de agosto de 2026 fue precisamente que solo UNA de las
+> tres rutas que producen filas lo aplicaba"*
+
+Discovery era la **quinta** ruta que produce filas y la única que aún no
+hidrataba. Hidratar al servir, con el helper compartido, es seguir el
+camino ya trazado; hidratar al escribir habría abierto un segundo.
+
+Tres razones más, por si alguna vez se replantea:
+
+1. **El ranking es semanal y el escaneo diario.** Congelarlo al escribir
+   dejaría las filas del martes con el corte del domingo hasta el
+   siguiente escaneo. Al servir, siempre sale el corte vigente.
+2. **Arregla lo ya guardado.** Los siete nocturnos retenidos y los
+   escaneos del cron enseñan el RS correcto desde el primer despliegue,
+   sin reescribir una sola fila.
+3. **No crea una segunda copia.** `rsCanonical.js` declara que el RS vive
+   en `rs_weekly_items` y solo ahí. Guardarlo dentro de `scan_results`
+   sería una copia que puede divergir — el problema original, otra vez.
+
+Se lee `rs_weekly_items` **una vez por respuesta** y se reparte entre las
+nueve listas y las tres dimensiones de grupos, en vez de una lectura por
+lista. La caché materializada también se rehidrata al servir: congela el
+RS del día en que se materializó.
+
+Medido: **132 de 132 items con RS semanal, ninguno sin.** VCTR 89,
+HALO 91, DGII 95 — sobre 4.868 símbolos, no sobre los 75 del lote.
+
+Y la tabla de Listas estrena **columna RS**, que no tenía: sale de
+`canonicalRs`, igual que el screener, la vista rápida y la ficha. Un
+símbolo fuera del ranking muestra ausencia con su motivo; nunca cae al
+percentil del lote.
+
+## 15.2 La franja: la misma de la ficha, no una nueva
+
+`QualityStrip` se extrajo de `StockClient.jsx` a
+[app/components/ui/QualityStrip.jsx](../app/components/ui/QualityStrip.jsx)
+**sin cambiarla**, con sus estilos (`styles/quality-strip.css`, que el
+propio componente importa) y su formateador de fecha. La ficha ahora
+importa la misma. Dos superficies no pueden escribir la misma fecha de
+dos maneras.
+
+En Listas:
+
+```
+Calidad de dato   Cierre 12 ago 2026   RS 09 ago 2026 · n=4868   Universo 75 de 5608
+```
+
+- **Cierre** es la fecha de los DATOS, no la del cálculo. `generatedAt`
+  era lo único que viajaba y contesta otra pregunta. Se toma el cierre
+  **más antiguo** de las filas: es el que acota lo que se puede afirmar.
+  Si alguna vez vuelven a mezclarse orígenes, la franja enseña el rango
+  en vez de esconderlo tras la fecha más reciente.
+- **RS** va aparte a propósito: es semanal y su corte no coincide con el
+  de las barras —hoy, 9 y 12 de agosto—. Bajo una sola fecha, una de las
+  dos sería mentira.
+- **Universo** contesta la pregunta que hay debajo de todas: si esto es
+  el mercado entero o una selección.
+
+(«5608» sin punto es correcto: el español no separa los millares en
+números de cuatro cifras.)
+
+## 15.3 Lo que este cierre NO toca
+
+Los KPIs y paneles que §8.2 proponía retirar —"ultimo snapshot local",
+"fuente rankings", la franja de infraestructura, `ListScopeSummary`,
+`ListReliabilityStrip`— **siguen ahí**. La franja añade la fecha que
+manda; quitar lo que sobra alrededor es limpieza de superficie, no de
+datos, y merece su propia pasada con el principio 2 delante.
+
+## 15.4 Nota sobre la suite E2E
+
+`npm run test:e2e` da **11 fallos de 17 en el BASE_SHA `07cca5f`**, antes
+de cualquier cambio de este hilo. Comprobado yendo a ese commit y
+corriéndola: fallan las specs de filtros del screener, review, restore,
+navegación del gráfico y escaneo servidor.
+
+Tras este trabajo son **los mismos 11, uno por uno**, sobre 21 specs (las
+17 originales más 4 nuevas de Listas, todas en verde). No hay ninguna
+regresión, pero conviene saber que esa suite lleva tiempo rota y que
+`./vfc` no la ejecuta — solo corre `npm test`. Arreglarla es tarea
+aparte y probablemente no pequeña.
