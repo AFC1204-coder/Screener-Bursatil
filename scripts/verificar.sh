@@ -259,7 +259,9 @@ collect_descendants() {
   echo "$out"
 }
 
-DEV_SERVERS=()
+# Primera pasada: descarta autocapturas (pgrep/grep) y procesos que ya
+# murieron entre el pgrep y el ps.
+DEV_CANDIDATES=""
 if [ -n "$DEV_PIDS" ]; then
   while IFS= read -r pid; do
     [ -z "$pid" ] && continue
@@ -269,23 +271,61 @@ if [ -n "$DEV_PIDS" ]; then
     case "$CMD" in
       *pgrep*|*"grep -f"*) continue ;;
     esac
-    ALL_PIDS=$(collect_descendants "$pid" 3)
-    PORTS=$(lsof -iTCP -sTCP:LISTEN -Pn -a -p "$(echo "$ALL_PIDS" | tr ' ' ',')" 2>/dev/null \
-      | awk 'NR>1 {print $9}' | sed -E 's/.*:([0-9]+)$/\1/' | sort -un | tr '\n' ',' | sed 's/,$//')
-    DEV_SERVERS+=("$pid|${PORTS:-?}|$CMD")
+    DEV_CANDIDATES="$DEV_CANDIDATES $pid"
   done <<< "$DEV_PIDS"
 fi
+
+# UN servidor arrancado con `npm run dev` produce DOS procesos que casan con
+# el patrón de arriba: el wrapper de npm y el `next dev` que lanza como hijo.
+# Contarlos por separado disparaba el aviso de "dos servidores" con uno solo
+# corriendo (falso positivo real, 2026-08-13: PID 9000 `npm run dev` y PID
+# 9017 `next dev --webpack`, ambos en :3000, siendo 9017 hijo de 9000).
+#
+# Criterio: un candidato cuyo ancestro también es candidato pertenece al
+# mismo árbol y no es un servidor aparte. Se sube la cadena de PPID entera,
+# no solo un nivel, porque entre el wrapper y el servidor puede haber un
+# `sh -c` intermedio que no casa con el patrón.
+#
+# Esto NO afecta al caso que motivó el aviso (10 de agosto: uno en el :3000
+# de este proyecto y otro en el :3100 de /private/tmp): dos servidores
+# lanzados desde terminales distintas cuelgan cada uno de su propia shell,
+# que no casa con el patrón, así que ninguno es ancestro del otro y siguen
+# contando como dos.
+has_dev_ancestor() {
+  local parent
+  parent=$(ps -p "$1" -o ppid= 2>/dev/null | tr -d ' ')
+  while [ -n "$parent" ] && [ "$parent" -gt 1 ] 2>/dev/null; do
+    case " $DEV_CANDIDATES " in
+      *" $parent "*) return 0 ;;
+    esac
+    parent=$(ps -p "$parent" -o ppid= 2>/dev/null | tr -d ' ')
+  done
+  return 1
+}
+
+DEV_SERVERS=()
+for pid in $DEV_CANDIDATES; do
+  has_dev_ancestor "$pid" && continue
+  CMD=$(ps -p "$pid" -o command= 2>/dev/null || true)
+  [ -z "$CMD" ] && continue
+  ALL_PIDS=$(collect_descendants "$pid" 3)
+  PORTS=$(lsof -iTCP -sTCP:LISTEN -Pn -a -p "$(echo "$ALL_PIDS" | tr ' ' ',')" 2>/dev/null \
+    | awk 'NR>1 {print $9}' | sed -E 's/.*:([0-9]+)$/\1/' | sort -un | tr '\n' ',' | sed 's/,$//')
+  # Los pids del árbol viajan en la entrada para que --limpiar siga matando
+  # también a los hijos, que ya no se listan por separado.
+  DEV_SERVERS+=("$pid|${PORTS:-?}|$(echo "$ALL_PIDS" | tr ' ' ',')|$CMD")
+done
 
 DEV_COUNT=${#DEV_SERVERS[@]}
 if [ "$DEV_COUNT" -eq 0 ]; then
   info "No hay servidores de desarrollo corriendo."
 elif [ "$DEV_COUNT" -eq 1 ]; then
-  IFS='|' read -r pid ports cmd <<< "${DEV_SERVERS[0]}"
+  IFS='|' read -r pid ports tree cmd <<< "${DEV_SERVERS[0]}"
   ok "Un servidor de desarrollo corriendo (PID $pid, puerto ${ports:-?})."
 else
   bad "Hay $DEV_COUNT servidores de desarrollo corriendo a la vez — esto ya ha costado media hora de confusión:"
   for entry in "${DEV_SERVERS[@]}"; do
-    IFS='|' read -r pid ports cmd <<< "$entry"
+    IFS='|' read -r pid ports tree cmd <<< "$entry"
     echo "  ${C_RED}-${C_RESET} PID $pid, puerto ${ports:-?}: $cmd"
   done
   NEEDS_REVIEW+=("$DEV_COUNT servidores de desarrollo corriendo simultáneamente")
@@ -304,9 +344,15 @@ if [ "$LIMPIAR" -eq 1 ]; then
   header "--limpiar: limpiando entorno"
   if [ "$DEV_COUNT" -gt 0 ]; then
     for entry in "${DEV_SERVERS[@]}"; do
-      IFS='|' read -r pid ports cmd <<< "$entry"
-      if kill "$pid" 2>/dev/null; then
-        ok "Matado PID $pid (puerto ${ports:-?})."
+      IFS='|' read -r pid ports tree cmd <<< "$entry"
+      # Se mata el árbol entero, no solo la raíz: los hijos ya no se listan
+      # por separado, y matar el wrapper de npm no siempre arrastra al hijo.
+      KILLED=""
+      for tpid in $(echo "$tree" | tr ',' ' '); do
+        kill "$tpid" 2>/dev/null && KILLED="$KILLED $tpid"
+      done
+      if [ -n "$KILLED" ]; then
+        ok "Matado PID$KILLED (puerto ${ports:-?})."
       else
         warn "No se pudo matar PID $pid."
       fi
