@@ -39,6 +39,45 @@ const COVERAGE_PCT_MISSING = "Sin universo cargado para este alcance: no hay sob
 const HEALTH_COUNT_MISSING = "Este recuento no ha llegado en esta carga, así que no se sabe cuántas filas hay.";
 const RANKING_UNAVAILABLE = "El ranking actualizado no está disponible ahora mismo.";
 
+/* ─── Listas retiradas de la vista (2026-08-13) ──────────────────────────
+   NO están borradas: su contrato (lib/listRationale.js), su estrategia
+   (lib/leaderboards.js) y su cálculo en esta misma página siguen intactos y
+   se siguen ejecutando. Solo dejan de pintarse.
+
+   Se retiran porque cada una afirma algo que hoy no puede sostener. Las tres
+   se midieron contra datos reales el 13 de agosto de 2026, con la caché de
+   discovery ya caducada y la lectura viva funcionando — es decir, en su
+   mejor escenario posible, no con la caché rota que las vaciaba antes. El
+   detalle está en docs/migracion-listas-2026-08-13.md §7 y §12.5.
+
+   Para devolver una: quita su clave de aquí. Cada entrada dice qué tendría
+   que ser cierto antes de hacerlo. No las devuelvas solo porque "ahora sí
+   salen filas": las tres sacaban filas cuando se retiraron. */
+const RETIRED_LIST_SECTIONS = {
+  weakness: {
+    title: "Deterioro técnico",
+    // Medido: 8328.HK, 8329.HK y 8326.HK, cierre 10 ago, con el resto de la
+    // pantalla a cierre del 12.
+    motivo: "Enseñaba otro mercado y otra fecha sin decirlo: tres valores de Hong Kong con el cierre dos días más viejo que el resto de la pantalla.",
+    causa: "El escaneo nocturno aplica el preset balanced y guarda 75 de 5.608 PORQUE son fuertes, así que no deja débiles. Los únicos que superan el contrato vienen del cron por mercados, que no es el mercado de lanzamiento.",
+    paraVolver: "Que exista una fuente de deterioro del mismo mercado y la misma fecha que el resto de la pantalla — hoy pasaría por que el nocturno guarde también una cohorte de débiles, o por anclar la lectura al nocturno US y aceptar que la lista quede vacía.",
+  },
+  ipo: {
+    title: "IPO / New Leaders",
+    motivo: "Cero filas siempre, prometiendo en su propio título 'IPOs reales verificables <= 5 años'.",
+    causa: "recentIpoOk exige una edad finita, y el nocturno no trae el dato: ipoDate llega vacío e ipoAgeMonths nulo en las 75 filas.",
+    paraVolver: "Que las filas de scan_results traigan ipoDate o ipoAgeMonths hidratados. Antes de reconstruirla aquí, mirar /ipo-radar: puede que ya cubra esto y la lista sobre.",
+  },
+  nearPivot: {
+    title: "Vigilancia pivot",
+    // Medido: INSW tiene distanceToPivotPct == distance52w == -6,0; CRON los
+    // tiene distintos (0,0 frente a -7,6). Mide una cosa u otra según la fila.
+    motivo: "Su número es el pivote que docs/principios-producto.md ya decidió aplazar por no ser fiable, y las filas lo confirman: distanceToPivotPct coincide con distance52w hasta el último decimal en unas y no en otras.",
+    causa: "El pivote real es el máximo de la contracción final de la base, no una línea sobre máximos. Un número falso con aspecto de preciso es peor que no tenerlo (principio 7, 'Aplazado hasta poder calcularlo bien').",
+    paraVolver: "Que exista un pivote calculado con criterio explícito y verificable sobre la base — el mismo trabajo que desbloquea las columnas 'distancia al pivote' y 'semanas de base' de la tabla.",
+  },
+};
+
 function hasOwn(obj = {}, key = "") {
   return Object.prototype.hasOwnProperty.call(obj, key);
 }
@@ -544,7 +583,10 @@ export default function ListsPage() {
   const ipo = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "ipo") ? discoveryListRows.ipo : longRows.filter((r) => rowPassesListContract(r, "ipo")).sort((a, b) => (b.ipoScore || 0) - (a.ipoScore || 0)), [useDiscovery, discoveryListRows, longRows]);
   const extended = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "extended") ? discoveryListRows.extended : longRows.filter((r) => rowPassesListContract(r, "extended")).sort((a, b) => (b.objectiveScore ?? b.totalScore ?? 0) - (a.objectiveScore ?? a.totalScore ?? 0)), [useDiscovery, discoveryListRows, longRows]);
   const pullback = useMemo(() => useDiscovery && hasOwn(discoveryListRows, "pullback") ? discoveryListRows.pullback : longRows.filter((r) => rowPassesListContract(r, "pullback")).sort((a, b) => (b.objectiveScore ?? b.totalScore ?? 0) - (a.objectiveScore ?? a.totalScore ?? 0)), [useDiscovery, discoveryListRows, longRows]);
-  const listSections = useMemo(() => [
+  // Las nueve listas se siguen calculando enteras: RETIRED_LIST_SECTIONS solo
+  // decide cuáles se pintan. Devolver una es quitar su clave de ahí, sin
+  // tocar contratos ni cálculo.
+  const allListSections = useMemo(() => [
     { key: "leaders", title: "Score compuesto", desc: "Ranking principal sin bonus VCP", rows: leaders, contractRejected: discoveryRejectedByKey.leaders || 0 },
     { key: "rsQuality", title: "RS Quality Leaders", desc: "RS alto con volatilidad/drawdown controlados", rows: rsQuality, scoreKey: "rsQualityScore", contractRejected: discoveryRejectedByKey.rsQuality || 0 },
     { key: "weakness", title: "Deterioro técnico", desc: "Debilidad observable para evitar largos o estudiar cortos", rows: weakness, scoreKey: "weaknessScore", contractRejected: discoveryRejectedByKey.weakness || 0 },
@@ -555,6 +597,7 @@ export default function ListsPage() {
     { key: "extended", title: "Extended but strong", desc: "Muy fuertes, pero vigilar extensión sobre SMA50", rows: extended, contractRejected: discoveryRejectedByKey.extended || 0 },
     { key: "pullback", title: "Pullback to SMA50", desc: "Líderes cerca de SMA50 para vigilancia", rows: pullback, contractRejected: discoveryRejectedByKey.pullback || 0 },
   ], [leaders, rsQuality, weakness, weinstein, minervini, nearPivot, ipo, extended, pullback, discoveryRejectedByKey]);
+  const listSections = useMemo(() => allListSections.filter((section) => !RETIRED_LIST_SECTIONS[section.key]), [allListSections]);
   const rankingAppearances = useMemo(() => listSections.reduce((sum, section) => sum + (section.rows || []).slice(0, 18).length, 0), [listSections]);
   const activeRankingCount = useMemo(() => listSections.filter((section) => (section.rows || []).length > 0).length, [listSections]);
   const activeSavedView = useMemo(() => savedListViews.find((view) => view.signature === currentListViewSignature) || null, [savedListViews, currentListViewSignature]);

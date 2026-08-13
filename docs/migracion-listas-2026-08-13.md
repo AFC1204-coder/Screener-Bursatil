@@ -1355,3 +1355,87 @@ Sin retirarlas, que es decisión de producto aparte:
   el mismo patrón sin caducidad —`order=generated_at.desc&limit=1`— para
   `/api/leaderboards`. No estaba en el encargo y no lo he investigado:
   no sé si su caché está igual de vieja ni qué pantallas la consumen.
+
+---
+
+# 13. Las tres listas retiradas (13 ago 2026)
+
+Decidido tras la medición de §12.5. Se retiran de la vista **sin borrar
+nada**: contratos, estrategias y cálculo siguen intactos y se siguen
+ejecutando. El porqué de cada una y qué haría falta para devolverla viven
+en `RETIRED_LIST_SECTIONS`, en
+[app/lists/page.jsx](../app/lists/page.jsx) — junto al código, no solo
+aquí, para que quien las encuentre no tenga que buscar este documento.
+
+Fijado por `tests/e2e/listsRetiredSections.e2e.mjs`, que da tres filas a
+cada una de las nueve listas y comprueba que solo se pintan seis.
+Verificado que falla si se reactiva una.
+
+## 13.1 Qué queda
+
+Seis secciones, 108 apariciones, **47 valores únicos** (eran seis en
+total antes de que la caché caducara):
+
+| Sección | Filas | Primeros |
+|---|---|---|
+| Score compuesto | 18 | VCTR HALO MRX DGII RPRX |
+| RS Quality Leaders | 18 | MPC SN VCTR MSGE LFST |
+| Tendencia establecida | 18 | DGII GHRS IMVT MRX MPC |
+| Rupturas con contracción | 18 | IMVT MPC DGII MRX VCTR |
+| Extended but strong | 18 | EAT DCTH SEPN URGN HALO |
+| Pullback to SMA50 | 18 | LQDA OSCR YETI MANU SLF |
+
+## 13.2 Redundancia entre las que quedan
+
+Solapamiento medido como |A∩B| / |A∪B| sobre los tickers visibles:
+
+| Par | Solape |
+|---|---|
+| **Tendencia establecida ∩ Rupturas con contracción** | **71 %** |
+| RS Quality ∩ Rupturas con contracción | 57 % |
+| Rupturas con contracción ∩ Extended | 57 % |
+| RS Quality ∩ Tendencia establecida | 50 % |
+| Tendencia establecida ∩ Extended | 44 % |
+| Score compuesto ∩ Tendencia establecida | 38 % |
+| Score compuesto ∩ Rupturas con contracción | 38 % |
+| RS Quality ∩ Extended | 38 % |
+| Score compuesto ∩ RS Quality | 29 % |
+| Score compuesto ∩ Extended | 24 % |
+| Score compuesto ∩ Pullback | 13 % |
+| RS Quality ∩ Pullback | 6 % |
+| Tendencia establecida ∩ Pullback | 3 % |
+| Rupturas con contracción ∩ Pullback | 3 % |
+| **Extended ∩ Pullback** | **0 %** |
+
+Contesta a la pregunta 4 del encargo: **las que quedan son distintas, con
+una excepción clara.**
+
+- **Extended ∩ Pullback = 0 %** es la prueba limpia de que los contratos
+  discriminan: son excluyentes por construcción (`extSma50 >= 15` frente
+  a `extSma50 <= 8`) y el dato lo confirma sin un solo solape.
+- **Tendencia establecida ∩ Rupturas con contracción = 71 %** es
+  redundancia real. Sus contratos comparten `trendTemplateOk` y se
+  diferencian solo en qué puntuación miran (`weinstein >= 55` frente a
+  `minervini >= 60` más cercanía a máximos), y con la población de hoy
+  eso separa poco. **No la he retirado: el encargo era retirar tres, y
+  ésta no está en la lista.** Queda señalada como la primera candidata
+  si se quiere seguir reduciendo superficie — el principio 2 empuja en
+  esa dirección.
+- El resto, entre el 3 % y el 57 %, es solape esperable: todas las listas
+  alcistas beben del mismo embudo de valores fuertes.
+
+## 13.3 Retirar "Deterioro técnico" NO arregla la mezcla de mercados
+
+Hallazgo de la verificación, y conviene no confundirlo con un éxito de
+esta retirada: tras quitar las tres listas, **sigue habiendo un valor de
+Hong Kong en pantalla** — `8321.HK`, dentro de **Pullback to SMA50**.
+
+La lista de deterioro era donde la mezcla resultaba sistemática (los tres
+únicos débiles de la ventana eran de HK), pero la causa no era la lista:
+es que la lectura viva coge las 80 filas más recientes **vengan del
+mercado que vengan** (§5.4). Cualquier lista puede recibir un valor de
+otro mercado y otra fecha de cierre.
+
+Es decir: la retirada quita el síntoma más visible, no la causa.
+**El paso 4 de §9 —anclar la fuente al último `materialized:US:`— sigue
+siendo necesario**, y ahora tiene dos pruebas a favor en vez de una.
