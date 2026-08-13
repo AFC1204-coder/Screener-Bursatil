@@ -17,6 +17,10 @@ function scanPayload(scan = {}, ownerId) {
     ...(scan.settings || {}),
     activeSettings: scan.activeSettings || scan.settings?.activeSettings || null,
     filterLayers: scan.filterLayers || scan.settings?.filterLayers || null,
+    // Viaja junto a filterLayers para que al restaurar se sepa bajo qué
+    // contrato de capas se guardó (lib/screenerFilterLayers.js:restoreFilterLayers).
+    // Sin ella, un snapshot anterior a la v2 rehidrataría capas apagadas.
+    filterLayersVersion: scan.filterLayersVersion ?? scan.settings?.filterLayersVersion ?? null,
     fieldRules: scan.fieldRules || scan.settings?.fieldRules || null,
     viewLayers: scan.viewLayers || scan.settings?.viewLayers || null,
     useRegimeFilter: scan.useRegimeFilter ?? scan.settings?.useRegimeFilter ?? null,
@@ -273,6 +277,7 @@ export function scanFromDb(row, results = [], options = {}) {
     settings: row.settings || {},
     activeSettings: row.settings?.activeSettings || null,
     filterLayers: row.settings?.filterLayers || null,
+    filterLayersVersion: row.settings?.filterLayersVersion ?? null,
     fieldRules: row.settings?.fieldRules || null,
     viewLayers: row.settings?.viewLayers || null,
     useRegimeFilter: row.settings?.useRegimeFilter ?? null,

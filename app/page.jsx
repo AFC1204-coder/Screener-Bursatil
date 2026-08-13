@@ -57,11 +57,13 @@ import {
   setupModeLayerRequirements,
 } from "@/lib/screenerFilterCatalog";
 import {
+  FILTER_LAYERS_CONTRACT_VERSION,
   effectiveSettingsFromLayers,
   fieldLayerKeys,
   inactiveFieldReason,
   inactiveSettingReason,
   isFieldRuleActive,
+  restoreFilterLayers,
   settingApplies,
   settingLayerDependency,
 } from "@/lib/screenerFilterLayers";
@@ -400,7 +402,7 @@ export default function Page() {
     resultsOwnerRef.current = source;
     const restoredPresetKey = PRESETS[scan.preset] ? scan.preset : "balanced";
     const restoredSettings = settingsForPreset(restoredPresetKey, scan.settings || {});
-    const restoredFilterLayers = { ...filterLayersForPreset(restoredPresetKey), ...(scan.filterLayers || {}) };
+    const restoredFilterLayers = restoreFilterLayers(scan.filterLayers, scan.filterLayersVersion, restoredPresetKey);
     const restoredFieldRules = { ...DEFAULT_FIELD_RULES, ...(scan.fieldRules || {}) };
     const restoredViewLayers = scan.viewLayers || DEFAULT_VIEW_LAYERS;
     const restoredUseRegimeFilter = scan.useRegimeFilter !== false;
@@ -468,7 +470,7 @@ export default function Page() {
       const restoredRows = Array.isArray(session.rows) ? session.rows : [];
       const restoredAnalyzedRows = Array.isArray(session.analyzedRows) ? session.analyzedRows : [];
       const restoredSettings = settingsForPreset(restoredPresetKey, session.settings || {});
-      const restoredFilterLayers = { ...filterLayersForPreset(restoredPresetKey), ...(session.filterLayers || {}) };
+      const restoredFilterLayers = restoreFilterLayers(session.filterLayers, session.filterLayersVersion, restoredPresetKey);
       const restoredFieldRules = { ...DEFAULT_FIELD_RULES, ...(session.fieldRules || {}) };
       const restoredMarketHealth = session.marketHealth || null;
       const restoredUseRegimeFilter = session.useRegimeFilter !== false;
@@ -655,6 +657,7 @@ export default function Page() {
       marketHealth,
       useRegimeFilter,
       filterLayers,
+      filterLayersVersion: FILTER_LAYERS_CONTRACT_VERSION,
       fieldRules,
       viewLayers,
       searchSymbol,
@@ -925,6 +928,7 @@ export default function Page() {
       settings,
       useRegimeFilter,
       filterLayers,
+      filterLayersVersion: FILTER_LAYERS_CONTRACT_VERSION,
       fieldRules,
       viewLayers,
       themeFilter,
@@ -1001,7 +1005,7 @@ export default function Page() {
     setPresetKey(nextPresetKey);
     setSettings(settingsForPreset(nextPresetKey, config.settings || {}));
     setUseRegimeFilter(config.useRegimeFilter !== false);
-    setFilterLayers({ ...filterLayersForPreset(nextPresetKey), ...(config.filterLayers || {}) });
+    setFilterLayers(restoreFilterLayers(config.filterLayers, config.filterLayersVersion, nextPresetKey));
     setFieldRules({ ...DEFAULT_FIELD_RULES, ...(config.fieldRules || {}) });
     setViewLayers({ ...DEFAULT_VIEW_LAYERS, ...(config.viewLayers || {}) });
     restoreResultViewSession(config, nextPreset.v, { resetPage: true });
@@ -1622,6 +1626,7 @@ export default function Page() {
       settings,
       activeSettings,
       filterLayers,
+      filterLayersVersion: FILTER_LAYERS_CONTRACT_VERSION,
       fieldRules,
       viewLayers,
       useRegimeFilter,

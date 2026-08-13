@@ -4,6 +4,15 @@ BASE_SHA: `99b7b13` (rama `codex/statsedge-ui-polish`).
 Auditoría de solo lectura: no se ha modificado código, no se ha escrito en
 Supabase, no se ha ejecutado ningún escaneo, no hay commits.
 
+> **Estado de los hallazgos (actualizado el 2026-08-14).** El punto 3 del orden
+> de gravedad —el mismo preset filtrando distinto de noche que de día, sección
+> D.5— está **corregido**: la pantalla aplica ya el preset crudo, ninguna capa
+> viene apagada de fábrica, y sobre las mismas 264 filas los siete presets dan
+> el mismo conjunto por las dos rutas. Con él se cerró el riesgo abierto de
+> `?filterPreset=balanced&setupMode=weakness` (sección B.3). El resto de
+> hallazgos sigue vigente. Lo medido en este documento describe el estado
+> anterior al arreglo y se conserva como tal.
+
 ## Qué se ha auditado y con qué
 
 **Código.** Los cuatro archivos donde vive el filtrado:
@@ -955,6 +964,12 @@ umbrales de profundidad:
 ## D.5 El mismo preset filtra distinto de noche que de día
 
 Este es el hallazgo con más consecuencias prácticas.
+
+> **Corregido el 2026-08-14.** Las catorce capas arrancan encendidas
+> (`FILTER_LAYERS_CONTRACT_VERSION = 2`), `PRESET_LAYER_OVERRIDES` está vacío y
+> la pantalla aplica el preset crudo, igual que el cron. Sobre estas mismas 264
+> filas las dos rutas dan ahora 78 y 78, y coinciden en los siete presets. Lo
+> que sigue describe el estado anterior.
 
 - El **escaneo nocturno** usa el preset crudo:
   `screenerFiltersFromParams({ filterPreset: "balanced" })`. No hay capas.
