@@ -1,6 +1,6 @@
 import { buildDiscoverySnapshot } from "@/lib/discovery";
 import { discoveryCacheKeyForParams, readMaterializedDiscoverySnapshot } from "@/lib/discoveryCache";
-import { readScanRows } from "@/lib/leaderboards";
+import { readNightlyUsScanRows, readScanRows } from "@/lib/leaderboards";
 
 const DEFAULT_DISCOVERY_SCAN_ROWS = 900;
 const DEFAULT_DISCOVERY_SINCE_DAYS = 21;
@@ -10,6 +10,18 @@ const FALLBACK_DISCOVERY_SCAN_ROWS = 900;
 const FALLBACK_DISCOVERY_SINCE_DAYS = 14;
 const DISCOVERY_READ_TIMEOUT_MS = Number(process.env.DISCOVERY_READ_TIMEOUT_MS || 3500);
 const DISCOVERY_FALLBACK_TIMEOUT_MS = Number(process.env.DISCOVERY_FALLBACK_TIMEOUT_MS || 2500);
+
+// Ausencia explícita, en lenguaje de producto y distinguiendo los casos: no
+// es lo mismo que el nocturno no haya corrido, que haya corrido y fallado, o
+// que haya corrido y no encontrado nada. Los tres acaban en "no hay listas",
+// pero se arreglan de forma distinta.
+const NIGHTLY_ABSENCE_MESSAGE = {
+  "no-nightly-scan": "No hay ningún escaneo nocturno del mercado estadounidense guardado. Las listas se construyen solo con esa fuente.",
+  "nightly-not-publishable": "El último escaneo nocturno no terminó correctamente, así que no publica listas.",
+  "nightly-read-failed": "No se ha podido leer el escaneo nocturno ahora mismo.",
+  empty: "El último escaneo nocturno no guardó ningún valor.",
+  default: "El escaneo nocturno del mercado estadounidense no está disponible.",
+};
 
 function paramsFromRequest(request) {
   const { searchParams } = new URL(request.url);
@@ -25,6 +37,11 @@ function paramsFromRequest(request) {
     scopeType: searchParams.get("scopeType") || searchParams.get("groupType") || "",
     scopeValue: searchParams.get("scopeValue") || searchParams.get("group") || "",
     cache: searchParams.get("cache") !== "0",
+    // Por defecto, el último escaneo nocturno estadounidense. "recent"
+    // recupera el comportamiento anterior —las N filas más recientes de
+    // cualquier origen— para poder comparar los dos al depurar; no lo usa
+    // ninguna pantalla.
+    source: searchParams.get("source") === "recent" ? "recent" : "nightly-us",
   };
 }
 
@@ -80,6 +97,25 @@ function readOptions(params = {}, fallback = {}) {
 
 async function readDiscoveryScanRows(params = {}) {
   const options = readOptions(params);
+  if (params.source !== "recent") {
+    // Anclado: un escaneo concreto, no una ventana temporal. sinceDays deja
+    // de tener sentido aquí —el nocturno es el que es— y maxRows solo acota
+    // cuántas de sus filas se traen.
+    try {
+      const scanData = await readNightlyUsScanRows({ maxRows: options.maxRows, timeoutMs: options.timeoutMs });
+      return { scanData, degraded: false, fallback: null, read: { ...options, anchored: true } };
+    } catch (error) {
+      if (!isRecoverableReadError(error)) throw error;
+      // Un timeout no puede convertirse en "aquí tienes otro mercado": se
+      // devuelve la ausencia con su motivo y la pantalla decide.
+      return {
+        scanData: { configured: true, rows: [], nightly: { found: false, reason: "nightly-read-failed", error: error.message || "" } },
+        degraded: true,
+        fallback: { reason: error.message || "lectura del nocturno no disponible", anchored: true },
+        read: { ...options, anchored: true },
+      };
+    }
+  }
   try {
     return { scanData: await readScanRows(options), degraded: false, fallback: null, read: options };
   } catch (error) {
@@ -175,6 +211,37 @@ export async function GET(request) {
       }));
     }
 
+    // Sin nocturno no hay listas. Se dice por qué, y NO se busca sustituto:
+    // servir otro escaneo sería exactamente lo que este anclaje evita.
+    const nightly = scanData.nightly;
+    if (nightly && (!nightly.found || nightly.empty)) {
+      return Response.json(apiPayload({
+        configured: true,
+        source: "nightly_us_unavailable",
+        message: NIGHTLY_ABSENCE_MESSAGE[nightly.reason] || (nightly.empty ? NIGHTLY_ABSENCE_MESSAGE.empty : NIGHTLY_ABSENCE_MESSAGE.default),
+        nightly,
+        cache: cacheState,
+        inputRows: 0,
+        lists: [],
+        rows: [],
+        groups: { theme: [], sector: [], industry: [] },
+        health: {
+          state: "empty",
+          rows: 0,
+          listItemCount: 0,
+          groupCount: 0,
+          staleRows: 0,
+          lowCoverageRows: 0,
+          dataLimitedRows: 0,
+          missingTaxonomyRows: 0,
+          planClaims: 0,
+          watchRows: 0,
+          sourceLabel: "Sin escaneo nocturno",
+          note: NIGHTLY_ABSENCE_MESSAGE[nightly.reason] || (nightly.empty ? NIGHTLY_ABSENCE_MESSAGE.empty : NIGHTLY_ABSENCE_MESSAGE.default),
+        },
+      }));
+    }
+
     const snapshot = buildDiscoverySnapshot(scanData.rows, params);
     let health = degraded ? {
       ...snapshot.health,
@@ -196,6 +263,7 @@ export async function GET(request) {
       degraded,
       fallback,
       cache: cacheState,
+      nightly: scanData.nightly || null,
       effectiveRead: read ? {
         maxRows: read.maxRows,
         sinceDays: read.sinceDays,

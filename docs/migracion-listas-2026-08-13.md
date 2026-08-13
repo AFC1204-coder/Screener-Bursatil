@@ -1439,3 +1439,107 @@ otro mercado y otra fecha de cierre.
 Es decir: la retirada quita el síntoma más visible, no la causa.
 **El paso 4 de §9 —anclar la fuente al último `materialized:US:`— sigue
 siendo necesario**, y ahora tiene dos pruebas a favor en vez de una.
+
+---
+
+# 14. El anclaje al nocturno estadounidense (13 ago 2026)
+
+Paso 4 de §9, hecho. La lectura viva ya no coge "las N filas más recientes
+de cualquier origen": va a **un escaneo concreto**, el último `scans` cuyo
+`local_id` empieza por `materialized:US:`, y lee sus `scan_results` por
+`scan_id`.
+
+Vive en `readNightlyUsScan` / `readNightlyUsScanRows`
+([lib/leaderboards.js](../lib/leaderboards.js)), y `/api/discovery` lo usa
+**por defecto**. `?source=recent` recupera el comportamiento anterior para
+poder comparar los dos al depurar; no lo usa ninguna pantalla.
+
+Se mantiene el contrato terminal de la RPC: solo publican los escaneos en
+`complete`, `partial` o `done`.
+
+## 14.1 La misma petición, con y sin anclaje
+
+| | `source=recent` (antes) | anclado (ahora) |
+|---|---|---|
+| Filas en listas | 131 US + **4 HK** | **132, todas US** |
+| Fechas de cierre | 12 ago (131) y **10 ago (4)** | **12 ago (132)** |
+| Valores no estadounidenses | 8328.HK 8329.HK 8326.HK **8321.HK** | **ninguno** |
+| Escaneo de origen | varios | `materialized:US:2026-08-13:o0:l5608` (75 filas) |
+
+El `8321.HK` que §13.3 dejó señalado dentro de "Pullback to SMA50" ha
+desaparecido. **Una sola fecha de cierre en toda la pantalla**, que es lo
+que hace posible la franja de fecha única de la Parte C.
+
+## 14.2 Cuántos valores quedan por sección
+
+La población **no se reduce**, contra lo que cabía temer:
+
+| Sección | Antes | Ahora |
+|---|---|---|
+| Score compuesto | 18 | 18 |
+| RS Quality Leaders | 18 | 18 |
+| Tendencia establecida | 18 | 18 |
+| Rupturas con contracción | 18 | 18 |
+| Extended but strong | 18 | 18 |
+| Pullback to SMA50 | 18 | 18 |
+| **Apariciones / únicos** | 108 / 47 | **108 / 47** |
+
+Las 75 filas del nocturno bastan para llenar las seis listas hasta el tope
+de `limit=20` (18 en pantalla por el corte de `MiniTable`). Lo que cambia
+no es cuántos valores hay, sino **cuáles**: los cuatro de Hong Kong salen
+y no los sustituye nada, porque nunca hicieron falta para llenar la tabla.
+
+En las listas retiradas sí se nota, y confirma el diagnóstico de §13:
+"Deterioro técnico" pasa de 3 filas a **0**. Sus tres únicas filas eran los
+valores de Hong Kong. Con el mercado de lanzamiento anclado, la lista queda
+vacía del todo — que es exactamente lo que §7.1 predijo antes de que la
+mezcla de mercados lo enmascarara.
+
+## 14.3 Sin nocturno: ausencia explícita, nunca un sustituto
+
+Si el escaneo no existe, no terminó en un estado publicable, no guardó
+filas o no se puede leer, `/api/discovery` responde
+`source: "nightly_us_unavailable"` con el motivo, y **no busca sustituto**.
+En particular **no coge el nocturno de anteayer**: servirlo como si fuera
+el de hoy es la misma mentira que servir otro mercado — una fecha que la
+pantalla no declara.
+
+Los cuatro motivos se distinguen porque se arreglan distinto:
+
+| `reason` | Qué pasó |
+|---|---|
+| `no-nightly-scan` | no hay ningún `materialized:US:` guardado |
+| `nightly-not-publishable` | el último existe pero terminó en `failed`/`error`/`cancelled` |
+| `empty` | corrió y no guardó ningún valor |
+| `nightly-read-failed` | no se pudo leer (timeout o error recuperable) |
+
+En pantalla, Listas muestra el motivo en el cuerpo del estado vacío, no
+detrás de un icono. Y si hay copia local en el navegador, el aviso va
+aparte y dice de dónde sale lo que se está enseñando.
+
+Cubierto por `tests/nightlyUsAnchor.test.js` (7 casos, con Supabase
+simulado) y `tests/e2e/listsNightlyAbsence.e2e.mjs` (los tres motivos, en
+navegador, comprobando que no aparece ni un ticker).
+
+## 14.4 Sectores, otra vez gratis
+
+Misma llamada, mismo anclaje, sin tocar `app/sectors/page.jsx`. Sus grupos
+salen del mismo escaneo: **135 filas, todas US, todas con cierre del 12 de
+agosto**, repartidas en 11 temas, 10 sectores y 12 industrias.
+
+Queda en pie la única pregunta abierta de §11, que no es de fuente: con
+`minGroupSize=1`, cuántos de esos grupos tienen un solo valor — y si un
+"sector" de una acción merece pintarse.
+
+## 14.5 Lo que sigue sin estar
+
+- **El RS.** Las filas del nocturno siguen sin `weeklyRs*` (§5.1). El paso
+  5 de §9 sigue pendiente y ahora es más visible: con la fuente anclada, la
+  columna RS es lo único que aún no puede decir de dónde sale.
+- **La franja de fecha** (Parte C). Ahora hay una sola fecha de cierre que
+  mostrar —12 ago— y ya no hay excusa de datos mezclados.
+- **El caveat del prefijo.** `app/api/jobs/scan-refresh` con `?markets=US`
+  produciría un `local_id` con el mismo prefijo `materialized:US:` y sería
+  indistinguible de un nocturno. Lo hereda de `scripts/scan-universe.mjs`,
+  que ya decidió no resolverlo con una segunda señal; se mantiene ese
+  criterio, y queda escrito para quien lo encuentre.

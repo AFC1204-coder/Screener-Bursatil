@@ -390,19 +390,25 @@ function ListReliabilityStrip({ summary, contractRejected = 0 }) {
   </div>;
 }
 
-function ListsEmptyState({ loading, hasSnapshot, discoveryError }) {
-  const title = loading ? "Cargando rankings" : "Sin listas disponibles";
+function ListsEmptyState({ loading, hasSnapshot, discoveryError, absence }) {
+  const title = loading ? "Cargando rankings" : absence ? "Sin listas: falta el escaneo del día" : "Sin listas disponibles";
   const detail = loading
     ? "Se esta consultando discovery. Si no hay datos remotos, se usara el ultimo snapshot local."
-    : hasSnapshot
-      ? "Hay snapshot local, pero no genera candidatos visibles con los contratos actuales."
-      : "Listas se alimenta de discovery o de snapshots guardados desde el screener.";
-  const status = loading ? "Discovery" : discoveryError ? "Snapshot local" : hasSnapshot ? "Sin candidatos" : "Sin snapshot";
+    : absence
+      ? absence
+      : hasSnapshot
+        ? "Hay snapshot local, pero no genera candidatos visibles con los contratos actuales."
+        : "Listas se alimenta de discovery o de snapshots guardados desde el screener.";
+  const status = loading ? "Discovery" : absence ? "Sin escaneo nocturno" : discoveryError ? "Snapshot local" : hasSnapshot ? "Sin candidatos" : "Sin snapshot";
   return <section className="card listsEmptyState">
     <div className="emptyStateHead">
-      <h2>{title} <InfoHint text={detail} /></h2>
+      <h2>{title} {!absence && <InfoHint text={detail} />}</h2>
       <span className="fine">{status}</span>
     </div>
+    {/* El motivo va en el cuerpo, no escondido tras un icono: una lista que
+        falta entera es exactamente el caso en que el usuario necesita leer
+        por qué sin tener que buscarlo (principio 3). */}
+    {absence && <p className="dataNote">{absence}</p>}
     <div className="controls">
       <a className="btn btnPrimary" href="/">Screener</a>
       <a className="btn" href="/research-desk">Research</a>
@@ -557,6 +563,13 @@ export default function ListsPage() {
   }, [loaded, filter.groupType, filter.group]);
 
   const latest = scans[0];
+  // Discovery puede responder correctamente y aun así no tener listas: el
+  // escaneo nocturno del que salen no existe, no terminó bien o no guardó
+  // nada. Eso no es un error de red ni una lista vacía por contrato, y no
+  // puede quedarse en un "sin datos" genérico.
+  const discoveryAbsence = discovery?.source === "nightly_us_unavailable"
+    ? (discovery.message || discovery.health?.note || "El escaneo nocturno del mercado estadounidense no está disponible.")
+    : "";
   const localRows = useMemo(() => normalizeStockRows(uniqueRows(latest?.rows || [])), [latest]);
   const discoveryReady = discovery?.configured === true && !discoveryError;
   const discoveryRows = useMemo(() => normalizeStockRows(uniqueRows(discovery?.rows || [])), [discovery]);
@@ -734,7 +747,11 @@ export default function ListsPage() {
     <DecisionTracePanel summary={decisionTraceability} detail="Resoluciones de Review/Ficha detectadas en las listas y favoritos visibles." />
     <SavedListViewsPanel views={savedListViews} currentSignature={currentListViewSignature} onSave={saveCurrentListView} onDelete={deleteSavedListView} />
     {filter.group && <section className="card status">Filtro activo: <b>{filter.groupType} = {filter.group}</b> · <a className="ticker" href="/lists">limpiar</a></section>}
-    {showEmptyState ? <ListsEmptyState loading={!loaded || discoveryLoading} hasSnapshot={localRows.length > 0 || scans.length > 0} discoveryError={discoveryError} /> : <>
+    {/* Con datos locales a la vista, el aviso va aparte: lo que se está
+        enseñando es una copia guardada en este navegador, y decir de dónde
+        sale importa más cuando la pantalla NO está vacía. */}
+    {discoveryAbsence && !showEmptyState && <section className="card status">{discoveryAbsence} Mientras tanto se muestra la copia guardada en este dispositivo.</section>}
+    {showEmptyState ? <ListsEmptyState loading={!loaded || discoveryLoading} hasSnapshot={localRows.length > 0 || scans.length > 0} discoveryError={discoveryError} absence={discoveryAbsence} /> : <>
       {favoritesAsRows.length > 0 ? <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} chartsCache={chartsCache} reviewState={reviewState} listKey="favorites" collapsible={false} emptyLabel={loaded ? "Sin favoritos guardados." : "Cargando listas..."} /> : null}
       {listSections.map((section) => <MiniTable
         key={section.key}
