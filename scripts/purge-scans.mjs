@@ -91,11 +91,13 @@ import { pathToFileURL } from "node:url";
 import { supabaseConfig, supabaseRequest, supabaseRequestAll } from "@/lib/supabaseServer.js";
 import { CRON_UNIVERSE_MARKETS } from "@/lib/cronPlan.js";
 import { normalizeMarketList } from "@/lib/markets.js";
+import { CRON_LOCAL_ID_PREFIX, NIGHTLY_US_LOCAL_ID_PREFIX, isTestLocalId } from "@/lib/scanLocalId.js";
 
-// Mismo patrón que scripts/scan-universe.mjs:130 — reproducido aquí porque
-// scan-universe.mjs no lo exporta (y esta tarea prohíbe tocar su retención).
-const NIGHTLY_LOCAL_ID_PREFIX = "materialized:US:";
-const CRON_LOCAL_ID_PREFIX = "materialized:";
+// El vocabulario de local_id vive en lib/scanLocalId.js. Antes estaba escrito
+// a mano aquí, en scan-universe.mjs y en leaderboards.js — tres copias que
+// decidían por su cuenta qué era un nocturno. Con una sola clase de escaneo
+// era duplicación inofensiva; con la clase "prueba" deja de serlo.
+const NIGHTLY_LOCAL_ID_PREFIX = NIGHTLY_US_LOCAL_ID_PREFIX;
 
 const DEFAULT_RETENTION_DAYS = 7;
 const DEFAULT_BATCH_SIZE = 7; // dentro del rango pedido (5-10) — sigue siendo el TOPE de elementos por tanda (punto 7), el peso manda por debajo de él
@@ -224,6 +226,18 @@ export async function fetchAllScans(config) {
 // Clasifica un escaneo en keep/delete con el motivo. `cutoff` es un
 // timestamp epoch ms: now - retentionDays*86400000.
 export function classifyScan(row, cutoff) {
+  // Corridas de prueba de scan-universe.mjs (--limit produce el prefijo
+  // "test:", ver lib/scanLocalId.js). Se borran SIEMPRE, sin ventana de
+  // retención: no son la fuente de nada y nadie las echa de menos. Van antes
+  // que las demás ramas porque "test:materialized:US:..." contiene el prefijo
+  // del nocturno más adelante en la cadena, aunque no empiece por él.
+  //
+  // Sin esta rama ya se borraban —caían al descarte final— pero etiquetadas
+  // como "interactivo (server-scan-*)", que es sencillamente falso en el
+  // informe que lee el dueño antes de aprobar un borrado.
+  if (isTestLocalId(row.local_id)) {
+    return { keep: false, reason: "corrida de prueba (test:*) — no es fuente de nada, se borra sin ventana de retención" };
+  }
   if (row.local_id.startsWith(NIGHTLY_LOCAL_ID_PREFIX)) {
     return { keep: true, reason: "nocturno (materialized:US:*) — retención propia de scan-universe.mjs, no se toca" };
   }
@@ -422,8 +436,10 @@ function logScanPlan(plan, args) {
   console.log(`${args.dryRun ? "Se borrarían" : "Se borran"}: ${plan.candidates.length} (${plan.candidates.reduce((s, r) => s + r.rowCount, 0)} filas de scan_results vía cascade)`);
   const cronDelete = plan.candidates.filter((r) => r.reason.startsWith("cron"));
   const interactiveDelete = plan.candidates.filter((r) => r.reason.startsWith("interactivo"));
+  const testDelete = plan.candidates.filter((r) => r.reason.startsWith("corrida de prueba"));
   console.log(`  - cron fuera de ventana: ${cronDelete.length} (${cronDelete.reduce((s, r) => s + r.rowCount, 0)} filas)`);
   console.log(`  - interactivos (server-scan-*): ${interactiveDelete.length} (${interactiveDelete.reduce((s, r) => s + r.rowCount, 0)} filas)`);
+  console.log(`  - corridas de prueba (test:*): ${testDelete.length} (${testDelete.reduce((s, r) => s + r.rowCount, 0)} filas)`);
   if (plan.candidates.length) {
     console.log("");
     console.log(`Detalle de candidatos a borrar (orden ascendente por fecha, hasta 100 de ${plan.candidates.length}):`);

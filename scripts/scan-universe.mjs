@@ -12,7 +12,7 @@
 // Uso:
 //   node --env-file=.env.local --loader ./scripts/loader.mjs \
 //     scripts/scan-universe.mjs [--dry-run] [--write] [--limit=N] \
-//     [--concurrency=4] [--preset=balanced]
+//     [--concurrency=4] [--preset=balanced] [--sin-retencion] [--nocturno-real]
 //
 // Por defecto corre en --dry-run (lista qué símbolos analizaría, no descarga
 // ni escribe nada). Escribir en Supabase exige --write explícito.
@@ -86,6 +86,31 @@
 // (rsGlobalPct, sectorScore) se calculan sobre exactamente la misma
 // población que antes.
 //
+// ── CORRIDAS DE PRUEBA: fuera del espacio de nombres del nocturno ─────────
+// Una corrida con --limit analiza los primeros N símbolos de la población,
+// nunca el universo entero: por construcción no es el escaneo de la noche.
+// Así que --limit activa SOLO el prefijo "test:" en el local_id, sin bandera
+// que recordar:
+//     materialized:US:2026-08-14:o0:l5607        (nocturno real)
+//     test:materialized:US:2026-08-14:o0:l300    (corrida acotada)
+//
+// Por qué automático y no una bandera aparte: el 14 de agosto de 2026 una
+// corrida --limit=300 se convirtió en la fuente de las Listas durante horas,
+// porque su local_id era indistinguible del bueno. El camino seguro no puede
+// depender de acordarse de algo. Se invierte la carga: hay que pedir a mano
+// (--nocturno-real) escribir como nocturno, no pedir a mano no hacerlo.
+//
+// Verificado que no afecta al nocturno real: .github/workflows/scan-universe.yml
+// ejecuta `--write --concurrency=4`, sin --limit.
+//
+// Qué consigue el prefijo, en los tres sitios que miran el local_id (todos
+// leen ya el vocabulario de lib/scanLocalId.js, antes lo tenían a mano):
+//   - readNightlyUsScan (lib/leaderboards.js) no lo toma como fuente de las
+//     Listas;
+//   - pruneNightlyScans (abajo) no lo cuenta contra los 7 nocturnos, así que
+//     una tanda de pruebas no desplaza escaneos buenos;
+//   - scripts/purge-scans.mjs lo reconoce y lo borra por lo que es.
+//
 // ── RETENCIÓN: los 7 nocturnos más recientes ──────────────────────────────
 // Decisión ya tomada (docs/orden-y-sector-2026-08-11.md no la cubre; viene
 // del prompt de esta tarea): conservar los SIETE escaneos NOCTURNOS más
@@ -137,6 +162,7 @@ import os from "node:os";
 import fs from "node:fs";
 
 import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer.js";
+import { NIGHTLY_US_LOCAL_ID_PREFIX, TEST_LOCAL_ID_PREFIX } from "@/lib/scanLocalId.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -148,7 +174,7 @@ const DEFAULT_CONCURRENCY = 4;
 const DEFAULT_PRESET = "balanced";
 // Prefijo de local_id que identifica un escaneo nocturno de este script — ver
 // "RETENCIÓN" en la cabecera para el porqué y el caveat conocido.
-const NIGHTLY_LOCAL_ID_PREFIX = "materialized:US:";
+const NIGHTLY_LOCAL_ID_PREFIX = NIGHTLY_US_LOCAL_ID_PREFIX;
 // Política ya decidida: conservar los 7 escaneos nocturnos más recientes.
 const DEFAULT_RETENTION_COUNT = 7;
 // Cortesía con la instancia Supabase Micro (ver AVISO en el prompt de la
@@ -166,6 +192,7 @@ export function parseArgs(argv) {
     concurrency: DEFAULT_CONCURRENCY,
     preset: DEFAULT_PRESET,
     skipRetention: false,
+    forceNightly: false,
   };
   for (const arg of argv) {
     const [rawKey, rawValue] = arg.replace(/^--/, "").split("=");
@@ -178,11 +205,30 @@ export function parseArgs(argv) {
     // --sin-retencion: salta la retención (punto 12 de la tarea). Pensada para
     // pruebas — deja intactos los escaneos nocturnos viejos aunque haya más de 7.
     else if (key === "sin-retencion") out.skipRetention = rawValue === undefined ? true : rawValue !== "false";
+    // --nocturno-real: escribe en el espacio de nombres del nocturno AUNQUE se
+    // pase --limit. Ver "CORRIDAS DE PRUEBA" en la cabecera: existe para el
+    // caso raro de querer una corrida acotada que sí cuente como la de la
+    // noche. Hay que pedirlo a mano; por defecto una corrida acotada es prueba.
+    else if (key === "nocturno-real") out.forceNightly = rawValue === undefined ? true : rawValue !== "false";
   }
   // Mismo criterio que refresh-bars.mjs: --write gana sobre el default
   // dry-run=true, pero --dry-run=true explícito manda sobre --write (más seguro).
   if (out.write && !argv.some((a) => a.startsWith("--dry-run"))) out.dryRun = false;
   return out;
+}
+
+// Una corrida acotada no es el escaneo de la noche: analiza los primeros N
+// símbolos de la población, nunca el universo entero. Por eso el espacio de
+// nombres de prueba se activa SOLO, sin bandera que recordar — el incidente
+// del 14 de agosto de 2026 ocurrió justamente porque el camino seguro exigía
+// acordarse de algo. Se invierte: hay que pedir a mano (--nocturno-real)
+// escribir como nocturno, no pedir a mano no hacerlo.
+//
+// El nocturno real no pasa --limit (.github/workflows/scan-universe.yml
+// ejecuta `--write --concurrency=4` y nada más), así que esto no lo toca.
+export function localIdPrefixFor(args = {}) {
+  if (args.forceNightly) return "";
+  return args.limit > 0 ? TEST_LOCAL_ID_PREFIX : "";
 }
 
 // ── Retención: conservar los N nocturnos más recientes ────────────────────
@@ -307,6 +353,7 @@ async function runAsVitestChild() {
     const symbols = String(process.env.SCAN_UNIVERSE_SYMBOLS || "").split(",").map((s) => s.trim()).filter(Boolean);
     const concurrency = Number(process.env.SCAN_UNIVERSE_CONCURRENCY || DEFAULT_CONCURRENCY);
     const preset = process.env.SCAN_UNIVERSE_PRESET || DEFAULT_PRESET;
+    const localIdPrefix = process.env.SCAN_UNIVERSE_LOCAL_ID_PREFIX || "";
     const screenerFilters = screenerFiltersFromParams({ filterPreset: preset });
 
     const startedAt = Date.now();
@@ -324,6 +371,7 @@ async function runAsVitestChild() {
       minMarketCap: 300000000,
       minCoverageScore: 40,
       screenerFilters,
+      localIdPrefix,
     });
     const scanElapsedMs = Date.now() - startedAt;
 
@@ -350,12 +398,13 @@ async function runAsVitestChild() {
   }, VITEST_TEST_TIMEOUT_MS);
 }
 
-async function runWriteViaVitestChild({ symbols, concurrency, preset }) {
+async function runWriteViaVitestChild({ symbols, concurrency, preset, localIdPrefix }) {
   const resultFile = path.join(os.tmpdir(), `scan-universe-write-result-${process.pid}.json`);
   process.env.SCAN_UNIVERSE_MODE = "vitest-child";
   process.env.SCAN_UNIVERSE_SYMBOLS = symbols.join(",");
   process.env.SCAN_UNIVERSE_CONCURRENCY = String(concurrency);
   process.env.SCAN_UNIVERSE_PRESET = preset;
+  process.env.SCAN_UNIVERSE_LOCAL_ID_PREFIX = localIdPrefix || "";
   process.env.SCAN_UNIVERSE_RESULT_FILE = resultFile;
 
   const { startVitest } = await import("vitest/node");
@@ -436,7 +485,15 @@ async function main() {
     process.exit(1);
   }
 
+  const localIdPrefix = localIdPrefixFor(args);
   console.log(`=== scan-universe.mjs — modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"} concurrency=${args.concurrency} preset=${args.preset}${args.limit > 0 ? ` limit=${args.limit}` : ""}${args.skipRetention ? " sin-retencion" : ""} ===`);
+  if (localIdPrefix) {
+    console.log(`CORRIDA DE PRUEBA: --limit acota la población, así que el local_id lleva el prefijo "${localIdPrefix}".`);
+    console.log("  No será la fuente de las Listas, no cuenta contra la retención de 7 nocturnos,");
+    console.log("  y scripts/purge-scans.mjs puede borrarla. Usa --nocturno-real para escribir como nocturno.");
+  } else if (args.limit > 0) {
+    console.log("--nocturno-real: esta corrida acotada SÍ escribe en el espacio de nombres del nocturno.");
+  }
   console.log(`Retención: conserva los ${DEFAULT_RETENTION_COUNT} escaneos nocturnos (local_id "${NIGHTLY_LOCAL_ID_PREFIX}*") más recientes${args.skipRetention ? " — SALTADA por --sin-retencion" : ""}.`);
   console.log("");
 
@@ -496,6 +553,7 @@ async function main() {
     symbols: toProcess.map((row) => row.symbol),
     concurrency: args.concurrency,
     preset: args.preset,
+    localIdPrefix,
   });
 
   const { stats, scan, savedScan, scanElapsedMs, totalElapsedMs, screenerFilters } = payload;

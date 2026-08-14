@@ -29,6 +29,7 @@ import {
   scanResultPayload,
 } from "@/lib/materializedScanner";
 import { isPublicScanStatus, PUBLIC_SCAN_STATUSES } from "@/lib/scanStatus";
+import { NIGHTLY_US_LOCAL_ID_PREFIX, TEST_LOCAL_ID_PREFIX, isNightlyUsLocalId } from "@/lib/scanLocalId";
 
 // ---------------------------------------------------------------------------
 // Fixture: chart decision-grade con 260 barras diarias terminando hoy.
@@ -181,6 +182,21 @@ describe("runMaterializedScan · wiring de progress (mocks, sin red ni Supabase)
     concurrency: 1,
     refreshLeaderboards: false,
   };
+
+  it("sin localIdPrefix el local_id es el del nocturno; con él, sale de ese espacio de nombres", async () => {
+    // La propiedad que impide que una corrida acotada se convierta en la
+    // fuente de las Listas (readNightlyUsScan casa con "materialized:US:*").
+    mockCharts();
+    const nocturno = await runMaterializedScan({ ...baseOptions, markets: ["US"] });
+    expect(nocturno.scan.id.startsWith(NIGHTLY_US_LOCAL_ID_PREFIX)).toBe(true);
+
+    mockCharts();
+    const prueba = await runMaterializedScan({ ...baseOptions, markets: ["US"], localIdPrefix: TEST_LOCAL_ID_PREFIX });
+    expect(prueba.scan.id.startsWith(TEST_LOCAL_ID_PREFIX)).toBe(true);
+    expect(isNightlyUsLocalId(prueba.scan.id)).toBe(false);
+    // El resto del local_id no cambia: el prefijo se antepone, no sustituye.
+    expect(prueba.scan.id).toBe(`${TEST_LOCAL_ID_PREFIX}${nocturno.scan.id}`);
+  });
 
   it("run completo guarda progress.status complete y conserva la metadata previa", async () => {
     mockCharts();
