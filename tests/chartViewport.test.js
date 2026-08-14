@@ -1,36 +1,27 @@
-// tests/chartViewport.test.js — cobertura de la pieza pura de viewport
-// (ADR chart-controller-extraction §4 / §9.6, paso 6 de §9).
+// tests/chartViewport.test.js — contrato de ventana del viewport
+// (docs/analisis-grafico-2026-08-14.md, Parte C.1 — la inversión).
 //
-// Pieza bajo prueba: `lib/chartViewportLifecycle.js`. Cubre el mínimo de
-// §9.6 para viewport:
+// Pieza bajo prueba: `lib/chartViewportLifecycle.js`. El contrato:
 //
-//   - actions leen el rango nativo actual, no un snapshot React viejo;
-//   - subscription actualiza refs síncronamente y UI por RAF;
-//   - pan/pinch nativo solo se observa;
-//   - wheel+ctrl solo zoomea en `idle`;
-//   - resize preserva manual y readapta automático;
-//   - detach captura antes de desuscribir;
-//   - cambio de símbolo resetea;
-//   - attach del mismo símbolo restaura por tiempo, con lógico como fallback;
-//   - RAF/timeout/release antiguos no afectan al attachment nuevo.
+//   - attach dibuja el rango declarado ENTERO (`fitContent`) — la ventana es
+//     función pura de (settings, datos), no de un perfil de barras objetivo;
+//   - la desviación manual (gesto o acción) es estado explícito: una ventana
+//     temporal que se re-aplica tal cual en el siguiente attach y se limpia
+//     con `clearManual()` (cambio de símbolo/rango/intervalo) o `reset()`;
+//   - UNA instancia: botones, rueda y raíl operan sobre el mismo attachment
+//     que gobierna el chart;
+//   - liberar (release/detach/attach nuevo) retira TODOS los listeners:
+//     suscripción del timeScale, wheel y ResizeObserver;
+//   - la publicación (RAF único) nunca se auto-bloquea y el snapshot incluye
+//     `view` — el raíl se alimenta de él.
 //
 // Estrategia: la pieza pura se invoca con un fake timeScale y un container
-// stub. Sin React, sin DOM, sin `jsdom`. Las publicaciones por RAF se
-// capturan con un polyfill de `requestAnimationFrame`/`cancelAnimationFrame`
-// en `globalThis` para que la callback programada se ejecute cuando el
-// test lo pide.
+// stub. Sin React, sin DOM. Las publicaciones por RAF se capturan con un
+// polyfill de requestAnimationFrame/cancelAnimationFrame en globalThis.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createViewportLifecycle } from "@/lib/chartViewportLifecycle";
-import {
-  chartViewStateFromLogicalRange,
-  manualChartWindowRestorePolicy,
-  rescaledLogicalRange,
-  shiftedLogicalRange,
-  timeWindowLogicalRange,
-  zoomedLogicalRange,
-} from "@/lib/chartNavigation";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Polyfills Node: requestAnimationFrame/cancelAnimationFrame, ResizeObserver,
@@ -49,12 +40,12 @@ function setupBrowserEnvironment() {
   originalRaf = globalThis.requestAnimationFrame;
   originalCaf = globalThis.cancelAnimationFrame;
   globalThis.requestAnimationFrame = (cb) => {
-    rafCallbacks.push(cb);
     rafIdCounter += 1;
+    rafCallbacks.push({ id: rafIdCounter, cb });
     return rafIdCounter;
   };
   globalThis.cancelAnimationFrame = (id) => {
-    rafCallbacks = rafCallbacks.filter((_, idx) => idx + 1 !== id);
+    rafCallbacks = rafCallbacks.filter((entry) => entry.id !== id);
   };
 
   originalResizeObserver = globalThis.ResizeObserver;
@@ -73,7 +64,7 @@ function setupBrowserEnvironment() {
     constructor(type, init = {}) {
       this.type = type;
       this.bubbles = !!init.bubbles;
-      this.cancelable = !!init.cancelable;
+      this.cancelable = init.cancelable !== false;
       this.ctrlKey = !!init.ctrlKey;
       this.deltaY = Number(init.deltaY || 0);
       this.defaultPrevented = false;
@@ -93,7 +84,7 @@ function teardownBrowserEnvironment() {
 function flushRaf() {
   const callbacks = rafCallbacks;
   rafCallbacks = [];
-  for (const cb of callbacks) cb();
+  for (const entry of callbacks) entry.cb();
 }
 
 function makeContainer(width = 800, height = 460) {
@@ -108,9 +99,10 @@ function makeContainer(width = 800, height = 460) {
       if (type === "wheel") listeners.wheel = listeners.wheel.filter((l) => l.cb !== cb);
     },
     dispatchEvent(event) {
-      for (const { cb } of listeners.wheel) cb(event);
+      for (const { cb } of [...listeners.wheel]) cb(event);
       return true;
     },
+    _listeners: listeners,
     _resizeObserver: null,
   };
   return container;
@@ -126,17 +118,15 @@ function makeRowTimes(count, { start = BASE_TIME, step = TRADING_DAY } = {}) {
   return Array.from({ length: count }, (_, i) => start + i * step);
 }
 
-function createFakeTimeScale({ initialLogical = null, initialTimeRange = null } = {}) {
+function createFakeTimeScale({ rowCount = 200, initialLogical = null } = {}) {
   const log = { reads: [], writes: [], subscribes: [], unsubscribes: [] };
   let currentLogical = initialLogical;
-  let currentTimeRange = initialTimeRange;
   const logicalSubs = new Set();
-  const timeRangeSubs = new Set();
 
   const fake = {
     _currentLogical: () => currentLogical,
-    _currentTimeRange: () => currentTimeRange,
     _log: log,
+    _subCount: () => logicalSubs.size,
     getVisibleLogicalRange() {
       log.reads.push({ kind: "logical" });
       return currentLogical ? { from: currentLogical.from, to: currentLogical.to } : null;
@@ -146,31 +136,17 @@ function createFakeTimeScale({ initialLogical = null, initialTimeRange = null } 
       currentLogical = { from: Number(next.from), to: Number(next.to) };
       log.writes.push({ kind: "logical", value: { ...currentLogical } });
     },
-    getVisibleRange() {
-      log.reads.push({ kind: "time" });
-      return currentTimeRange ? { from: currentTimeRange.from, to: currentTimeRange.to } : null;
-    },
     subscribeVisibleLogicalRangeChange(handler) {
       logicalSubs.add(handler);
       log.subscribes.push({ kind: "logical", count: logicalSubs.size });
-      return handler;
     },
     unsubscribeVisibleLogicalRangeChange(handler) {
       logicalSubs.delete(handler);
       log.unsubscribes.push({ kind: "logical", count: logicalSubs.size });
     },
-    subscribeVisibleTimeRangeChange(handler) {
-      timeRangeSubs.add(handler);
-      log.subscribes.push({ kind: "time", count: timeRangeSubs.size });
-      return handler;
-    },
-    unsubscribeVisibleTimeRangeChange(handler) {
-      timeRangeSubs.delete(handler);
-      log.unsubscribes.push({ kind: "time", count: timeRangeSubs.size });
-    },
     fitContent() {
-      log.writes.push({ kind: "fitContent" });
-      if (currentLogical == null) currentLogical = { from: -0.5, to: 199.5 };
+      currentLogical = { from: -0.5, to: rowCount - 0.5 };
+      log.writes.push({ kind: "fitContent", value: { ...currentLogical } });
     },
     scrollToRealTime() {
       log.writes.push({ kind: "scrollToRealTime" });
@@ -182,41 +158,51 @@ function createFakeTimeScale({ initialLogical = null, initialTimeRange = null } 
       if (next) currentLogical = { from: Number(next.from), to: Number(next.to) };
       for (const handler of [...logicalSubs]) handler(currentLogical);
     },
-    emitTimeRange(next) {
-      if (next) currentTimeRange = { from: Number(next.from), to: Number(next.to) };
-      for (const handler of [...timeRangeSubs]) handler(currentTimeRange);
-    },
   };
 
   return fake;
 }
 
 function createFakeChart(timeScale) {
-  const calls = { remove: 0, applyOptions: 0 };
+  const calls = { remove: 0, applyOptions: 0, options: [] };
   return {
     timeScale: () => timeScale,
-    applyOptions() { calls.applyOptions += 1; },
+    applyOptions(opts) { calls.applyOptions += 1; calls.options.push(opts); },
     remove() { calls.remove += 1; },
     chartElement() { return null; },
     _calls: calls,
   };
 }
 
-function createHarness({ rowTimes, getInteractionState = () => "idle", interval = "D", dataRange = "1A" } = {}) {
+function createHarness({
+  rowTimes = makeRowTimes(200),
+  getInteractionState = () => "idle",
+  interval = "D",
+  dataRange = "1A",
+} = {}) {
   const published = [];
+  let currentRowTimes = rowTimes;
   const lifecycle = createViewportLifecycle({
     publish: (snapshot) => published.push(snapshot),
     getInteractionState,
-    interval,
-    dataRange,
-    requestedHeight: 460,
-    getRowTimes: () => rowTimes,
+    getConfig: () => ({ interval, dataRange }),
+    getRequestedHeight: () => 460,
+    getRowTimes: () => currentRowTimes,
   });
-  return { lifecycle, published };
+  return {
+    lifecycle,
+    published,
+    setRowTimes(next) { currentRowTimes = next; },
+  };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Configuración global.
+function attachFresh(harness, { rowCount = 200, width = 800 } = {}) {
+  const timeScale = createFakeTimeScale({ rowCount });
+  const chart = createFakeChart(timeScale);
+  const container = makeContainer(width);
+  const release = harness.lifecycle.attach({ chart, container });
+  return { timeScale, chart, container, release };
+}
 
 beforeEach(() => {
   setupBrowserEnvironment();
@@ -228,802 +214,404 @@ afterEach(() => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §9.6 viewport — actions leen el rango nativo actual.
+// Contrato: la ventana inicial es el rango declarado entero (fallo 1).
 
-describe("createViewportLifecycle · actions leen el timeScale nativo (ADR §9.6)", () => {
-  it("zoom() llama a getVisibleLogicalRange y setVisibleLogicalRange del timeScale vivo", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 99.5, to: 199.5 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
+describe("viewport · attach dibuja el rango declarado entero", () => {
+  it("attach hace fitContent: la ventana visible cubre TODAS las filas", () => {
+    const harness = createHarness({ rowTimes: makeRowTimes(243) });
+    const { timeScale } = attachFresh(harness, { rowCount: 243 });
 
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
+    const fits = timeScale._log.writes.filter((w) => w.kind === "fitContent");
+    expect(fits.length).toBeGreaterThanOrEqual(1);
+    expect(timeScale._currentLogical()).toEqual({ from: -0.5, to: 242.5 });
+
     flushRaf();
-
-    timeScale._log.reads.length = 0;
-    timeScale._log.writes.length = 0;
-
-    lifecycle.actions.zoom(0.5);
-
-    const readsAfter = timeScale._log.reads.filter((r) => r.kind === "logical");
-    const writesAfter = timeScale._log.writes.filter((w) => w.kind === "logical");
-    expect(readsAfter.length).toBeGreaterThanOrEqual(1);
-    expect(writesAfter.length).toBe(1);
-
-    const expected = zoomedLogicalRange({
-      rowCount: 200,
-      currentRange: { from: 99.5, to: 199.5 },
-      factor: 0.5,
-      anchorLatest: true,
-    });
-    expect(writesAfter[0].value).toEqual(expected);
+    const snapshot = harness.published.at(-1);
+    expect(snapshot.view.visibleBars).toBe(243);
+    expect(snapshot.view.key).toBe("latest");
+    expect(snapshot.manual).toBe(false);
   });
 
-  it("pan() lee el rango nativo y lo desplaza según shiftedLogicalRange", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 99.5, to: 199.5 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
+  it("el snapshot publicado incluye `view` y la etiqueta de ventana (el raíl se puebla)", () => {
+    const harness = createHarness();
+    attachFresh(harness);
     flushRaf();
 
-    timeScale._log.reads.length = 0;
-    timeScale._log.writes.length = 0;
-    lifecycle.actions.pan(-1);
-
-    const writesAfter = timeScale._log.writes.filter((w) => w.kind === "logical");
-    expect(writesAfter.length).toBe(1);
-    const expected = shiftedLogicalRange({
-      rowCount: 200,
-      currentRange: { from: 99.5, to: 199.5 },
-      direction: -1,
-    });
-    expect(writesAfter[0].value).toEqual(expected);
-  });
-
-  it("reset() llama a fitContent y vacía la manualWindow", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 50, to: 150 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    lifecycle.actions.pan(-1);
-    timeScale._log.writes.length = 0;
-    lifecycle.actions.reset();
-    flushRaf();
-
-    const fitWrites = timeScale._log.writes.filter((w) => w.kind === "fitContent");
-    expect(fitWrites.length).toBeGreaterThanOrEqual(1);
-    const snapshot = lifecycle.getSnapshot();
-    expect(snapshot.manualWindow.active).toBe(false);
-  });
-
-  it("scrollToLatest() cae a scrollToRealTime si no hay rango calculable", () => {
-    const rowTimes = makeRowTimes(0);
-    const timeScale = createFakeTimeScale({ initialLogical: null });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    timeScale._log.writes.length = 0;
-    lifecycle.actions.scrollToLatest();
-
-    const scroll = timeScale._log.writes.filter((w) => w.kind === "scrollToRealTime");
-    expect(scroll.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("actions NO leen ni escriben cuando lifecycle es detached", () => {
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes: makeRowTimes(200) });
-
-    lifecycle.actions.zoom(0.5);
-    lifecycle.actions.pan(-1);
-    lifecycle.actions.reset();
-    lifecycle.actions.scrollToLatest();
-
-    expect(timeScale._log.reads.length).toBe(0);
-    expect(timeScale._log.writes.length).toBe(0);
+    const snapshot = harness.published.at(-1);
+    expect(snapshot.lifecycle).toBe("attached");
+    expect(snapshot.view).toBeTruthy();
+    expect(snapshot.view.key).toBe("latest");
+    expect(typeof snapshot.view.visibleBars).toBe("number");
+    expect(snapshot.visibleWindowLabel).not.toBe("Sin ventana");
+    expect(snapshot.visibleTimeRange).toBeTruthy();
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §9.6 viewport — subscription actualiza refs síncronamente y UI por RAF.
+// Acciones: misma instancia que gobierna el chart (fallo 2).
 
-describe("createViewportLifecycle · subscriptions y publicación por RAF (ADR §9.6)", () => {
-  it("subscribeVisibleLogicalRangeChange se invoca UNA vez por attach", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
+describe("viewport · acciones sobre la instancia única", () => {
+  it("zoom acerca la ventana y la clasifica como desviación manual", () => {
+    const harness = createHarness();
+    const { timeScale } = attachFresh(harness);
 
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
+    harness.lifecycle.actions.zoom(0.5);
+
+    const last = timeScale._log.writes.at(-1);
+    expect(last.kind).toBe("logical");
+    expect(last.value.to - last.value.from).toBeCloseTo(100, 5);
+
     flushRaf();
-
-    const subs = timeScale._log.subscribes.filter((s) => s.kind === "logical");
-    expect(subs.length).toBe(1);
+    const snapshot = harness.published.at(-1);
+    expect(snapshot.view.isManual).toBe(true);
+    expect(snapshot.manual).toBe(true);
   });
 
-  it("un cambio lógico nativo se refleja en getSnapshot inmediatamente y en state tras el RAF", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle, published } = createHarness({ rowTimes });
-    const container = makeContainer();
+  it("pan desplaza la ventana hacia el historial", () => {
+    const harness = createHarness();
+    const { timeScale } = attachFresh(harness);
+    harness.lifecycle.actions.zoom(0.5);
+    const before = timeScale._currentLogical();
 
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-    published.length = 0;
+    harness.lifecycle.actions.pan(-1);
 
-    expect(lifecycle.getSnapshot().logicalRange).toEqual({ from: 0, to: 100 });
-
-    timeScale.emitLogical({ from: 50, to: 150 });
-
-    expect(lifecycle.getSnapshot().logicalRange).toEqual({ from: 50, to: 150 });
-
-    flushRaf();
-    const last = published[published.length - 1];
-    expect(last.visibleLogicalRange).toEqual({ from: 50, to: 150 });
+    const after = timeScale._currentLogical();
+    expect(after.from).toBeLessThan(before.from);
+    expect(after.to - after.from).toBeCloseTo(before.to - before.from, 5);
   });
 
-  it("varios cambios nativos consecutivos se agrupan a UNA publicación", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle, published } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
+  it("reset limpia la desviación manual y vuelve al rango entero", () => {
+    const harness = createHarness();
+    const { timeScale } = attachFresh(harness);
+    harness.lifecycle.actions.zoom(0.5);
     flushRaf();
-    published.length = 0;
+    expect(harness.published.at(-1).manual).toBe(true);
+
+    harness.lifecycle.actions.reset();
+
+    expect(timeScale._currentLogical()).toEqual({ from: -0.5, to: 199.5 });
+    flushRaf();
+    const snapshot = harness.published.at(-1);
+    expect(snapshot.manual).toBe(false);
+    expect(snapshot.view.key).toBe("latest");
+  });
+
+  it("las acciones son no-op cuando no hay attachment (detached)", () => {
+    const harness = createHarness();
+    expect(() => {
+      harness.lifecycle.actions.zoom(0.5);
+      harness.lifecycle.actions.pan(-1);
+      harness.lifecycle.actions.reset();
+      harness.lifecycle.actions.scrollToLatest();
+    }).not.toThrow();
+    expect(harness.published.length).toBe(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Gestos nativos (arrastre/pinch de la librería) → manual derivado.
+
+describe("viewport · gestos nativos", () => {
+  it("un cambio de rango por gesto se clasifica y publica como manual", () => {
+    const harness = createHarness();
+    const { timeScale } = attachFresh(harness);
+    flushRaf();
+
+    timeScale.emitLogical({ from: 50, to: 120 });
+    flushRaf();
+
+    const snapshot = harness.published.at(-1);
+    expect(snapshot.view.isManual).toBe(true);
+    expect(snapshot.manual).toBe(true);
+    expect(snapshot.visibleLogicalRange).toEqual({ from: 50, to: 120 });
+  });
+
+  it("los estados intermedios de una aplicación diferida NO se convierten en desviación manual", () => {
+    // lightweight-charts aplica fitContent en su propio animation frame: un
+    // chart recién creado emite primero su ventana de espaciado por defecto
+    // (~180 barras ancladas a la derecha). Ese estado intermedio no es un
+    // gesto del usuario: si se derivara como manual, el ResizeObserver lo
+    // re-aplicaría y el fit no llegaría nunca (visto en vivo: "Zoom 196" en
+    // una carga limpia).
+    const harness = createHarness();
+    const timeScale = createFakeTimeScale({ rowCount: 200 });
+    // Simula la aplicación diferida: fitContent NO cambia el rango al
+    // instante; el chart emite primero un estado intermedio.
+    timeScale.fitContent = () => { timeScale._log.writes.push({ kind: "fitContent" }); };
+    const chart = createFakeChart(timeScale);
+    const container = makeContainer(800);
+    harness.lifecycle.attach({ chart, container });
+
+    // Emisión intermedia (ventana por defecto de la librería, parcial).
+    timeScale.emitLogical({ from: 45.3, to: 199 });
+    flushRaf();
+    expect(harness.published.at(-1).manual).toBe(false);
+
+    // La aplicación real del fit llega después: consume el objetivo.
+    timeScale.emitLogical({ from: -0.5, to: 199.5 });
+    flushRaf();
+    expect(harness.published.at(-1).manual).toBe(false);
+    expect(harness.published.at(-1).view.key).toBe("latest");
+
+    // Un gesto POSTERIOR (sin objetivo pendiente) sí es desviación manual.
+    timeScale.emitLogical({ from: 60, to: 140 });
+    flushRaf();
+    expect(harness.published.at(-1).manual).toBe(true);
+  });
+
+  it("varias emisiones consecutivas se agrupan en UNA publicación por RAF", () => {
+    const harness = createHarness();
+    const { timeScale } = attachFresh(harness);
+    flushRaf();
+    const before = harness.published.length;
+
+    timeScale.emitLogical({ from: 50, to: 120 });
+    timeScale.emitLogical({ from: 48, to: 118 });
+    timeScale.emitLogical({ from: 46, to: 116 });
+    flushRaf();
+
+    expect(harness.published.length).toBe(before + 1);
+    expect(harness.published.at(-1).visibleLogicalRange).toEqual({ from: 46, to: 116 });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Persistencia de la desviación manual entre re-attaches (el contrato).
+
+describe("viewport · la desviación manual es estado explícito", () => {
+  it("un re-attach re-aplica la ventana manual mapeada por tiempo (no la pierde, no la inventa)", () => {
+    const harness = createHarness();
+    const first = attachFresh(harness);
+    harness.lifecycle.actions.zoom(0.5); // ventana manual: últimas ~100 filas
+    const manualBefore = first.timeScale._currentLogical();
+
+    harness.lifecycle.detach();
+    const second = attachFresh(harness);
+
+    const logicalWrites = second.timeScale._log.writes.filter((w) => w.kind === "logical");
+    expect(logicalWrites.length).toBeGreaterThanOrEqual(1);
+    const applied = second.timeScale._currentLogical();
+    expect(applied.from).toBeCloseTo(manualBefore.from, 0);
+    expect(applied.to).toBeCloseTo(manualBefore.to, 0);
+
+    flushRaf();
+    expect(harness.published.at(-1).manual).toBe(true);
+  });
+
+  it("clearManual() antes del re-attach → el nuevo attach dibuja el rango entero", () => {
+    const harness = createHarness();
+    attachFresh(harness);
+    harness.lifecycle.actions.zoom(0.5);
+    harness.lifecycle.detach();
+
+    harness.lifecycle.clearManual();
+    const second = attachFresh(harness);
+
+    expect(second.timeScale._currentLogical()).toEqual({ from: -0.5, to: 199.5 });
+    flushRaf();
+    expect(harness.published.at(-1).manual).toBe(false);
+  });
+
+  it("una ventana manual sin solape con los datos nuevos se descarta y se ajusta el rango entero", () => {
+    const harness = createHarness();
+    attachFresh(harness);
+    harness.lifecycle.actions.zoom(0.5);
+    harness.lifecycle.detach();
+
+    // Datos nuevos MUY posteriores: la ventana manual guardada no solapa.
+    harness.setRowTimes(makeRowTimes(100, { start: BASE_TIME + 5000 * TRADING_DAY }));
+    const second = attachFresh(harness, { rowCount: 100 });
+
+    expect(second.timeScale._currentLogical()).toEqual({ from: -0.5, to: 99.5 });
+    flushRaf();
+    expect(harness.published.at(-1).manual).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Liberación de listeners (fallo 3).
+
+describe("viewport · liberación de listeners", () => {
+  it("detach desuscribe el timeScale, quita el wheel y desconecta el ResizeObserver", () => {
+    const harness = createHarness();
+    const { timeScale, container } = attachFresh(harness);
+    expect(timeScale._subCount()).toBe(1);
+    expect(container._listeners.wheel.length).toBe(1);
+    expect(container._resizeObserver?.target).toBe(container);
+
+    harness.lifecycle.detach();
+
+    expect(timeScale._subCount()).toBe(0);
+    expect(container._listeners.wheel.length).toBe(0);
+    expect(container._resizeObserver.target).toBe(null);
+  });
+
+  it("un attach nuevo libera automáticamente al anterior (nada se acumula)", () => {
+    const harness = createHarness();
+    const first = attachFresh(harness);
+    const second = attachFresh(harness);
+
+    expect(first.timeScale._subCount()).toBe(0);
+    expect(first.container._listeners.wheel.length).toBe(0);
+    expect(second.timeScale._subCount()).toBe(1);
+    expect(second.container._listeners.wheel.length).toBe(1);
+  });
+
+  it("el release() devuelto por un attach viejo es no-op tras un attach nuevo", () => {
+    const harness = createHarness();
+    const first = attachFresh(harness);
+    const second = attachFresh(harness);
+
+    first.release();
+
+    expect(second.timeScale._subCount()).toBe(1);
+    expect(second.container._listeners.wheel.length).toBe(1);
+    expect(harness.lifecycle._state.lifecycle).toBe("attached");
+  });
+
+  it("montaje/desmontaje repetido (StrictMode) no deja nada colgando", () => {
+    const harness = createHarness();
+    const first = attachFresh(harness);
+    first.release();
+    const second = attachFresh(harness);
+    harness.lifecycle.unmount();
+
+    expect(first.timeScale._subCount()).toBe(0);
+    expect(second.timeScale._subCount()).toBe(0);
+    expect(first.container._listeners.wheel.length).toBe(0);
+    expect(second.container._listeners.wheel.length).toBe(0);
+    expect(rafCallbacks.length).toBe(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Publicación (fallo 5).
+
+describe("viewport · el canal de publicación no se auto-bloquea", () => {
+  it("cada tanda de cambios publica tras su RAF, indefinidamente", () => {
+    const harness = createHarness();
+    const { timeScale } = attachFresh(harness);
+    flushRaf();
+    const base = harness.published.length;
 
     timeScale.emitLogical({ from: 10, to: 110 });
+    flushRaf();
+    expect(harness.published.length).toBe(base + 1);
+
     timeScale.emitLogical({ from: 20, to: 120 });
+    flushRaf();
+    expect(harness.published.length).toBe(base + 2);
+
     timeScale.emitLogical({ from: 30, to: 130 });
-
     flushRaf();
-    const last = published[published.length - 1];
-    expect(last.visibleLogicalRange).toEqual({ from: 30, to: 130 });
+    expect(harness.published.length).toBe(base + 3);
+  });
+
+  it("unmount cancela la publicación pendiente", () => {
+    const harness = createHarness();
+    const { timeScale } = attachFresh(harness);
+    flushRaf();
+    const base = harness.published.length;
+
+    timeScale.emitLogical({ from: 10, to: 110 });
+    harness.lifecycle.unmount();
+    flushRaf();
+
+    expect(harness.published.length).toBe(base);
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §9.6 viewport — pan/pinch nativo solo se observa.
+// Wheel.
 
-describe("createViewportLifecycle · pan/pinch nativo solo se observa (ADR §9.6)", () => {
-  it("emisiones nativas NO llaman a setVisibleLogicalRange (solo lectura)", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
+describe("viewport · rueda", () => {
+  it("ctrl+rueda con interacción idle zoomea sobre el timeScale vivo", () => {
+    const harness = createHarness();
+    const { timeScale, container } = attachFresh(harness);
+    const before = timeScale._currentLogical();
 
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
+    const event = new WheelEvent("wheel", { ctrlKey: true, deltaY: -200, cancelable: true });
+    container.dispatchEvent(event);
 
-    timeScale._log.writes.length = 0;
-    timeScale.emitLogical({ from: 25, to: 125 });
-    timeScale.emitLogical({ from: 40, to: 140 });
-    timeScale.emitLogical({ from: 55, to: 155 });
-    flushRaf();
-
-    const writesFromHook = timeScale._log.writes.filter((w) => w.kind === "logical");
-    expect(writesFromHook.length).toBe(0);
+    expect(event.defaultPrevented).toBe(true);
+    const after = timeScale._currentLogical();
+    expect(after.to - after.from).toBeLessThan(before.to - before.from);
   });
 
-  it("la subscription temporal refina visibleTimeRange cuando llega un valor numérico", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({
-      initialLogical: { from: 0, to: 100 },
-      initialTimeRange: null,
-    });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle, published } = createHarness({ rowTimes });
-    const container = makeContainer();
+  it("ctrl+rueda con interacción ≠ idle no escribe", () => {
+    const harness = createHarness({ getInteractionState: () => "drawing" });
+    const { timeScale, container } = attachFresh(harness);
+    const before = timeScale._currentLogical();
 
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-    published.length = 0;
+    const event = new WheelEvent("wheel", { ctrlKey: true, deltaY: -200, cancelable: true });
+    container.dispatchEvent(event);
 
-    timeScale.emitTimeRange({ from: 1_700_000_000, to: 1_800_000_000 });
-    flushRaf();
+    expect(event.defaultPrevented).toBe(true);
+    expect(timeScale._currentLogical()).toEqual(before);
+  });
 
-    const last = published[published.length - 1];
-    expect(last.visibleTimeRange).toEqual({
-      from: 1_700_000_000,
-      to: 1_800_000_000,
-    });
+  it("la rueda sin ctrl no toca el timeScale ni intercepta el evento (el scroll de página es del navegador)", () => {
+    const harness = createHarness();
+    const { timeScale, container } = attachFresh(harness);
+    const before = timeScale._currentLogical();
+
+    const event = new WheelEvent("wheel", { ctrlKey: false, deltaY: 120, cancelable: true });
+    container.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(event._stopped).toBeUndefined();
+    expect(timeScale._currentLogical()).toEqual(before);
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §9.6 viewport — wheel+ctrl solo zoomea en idle.
+// Resize.
 
-describe("createViewportLifecycle · wheel+ctrl gateado por getInteractionState (ADR §9.6)", () => {
-  it("wheel+ctrl con interactionState=idle llama a zoom sobre el timeScale vivo", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 99.5, to: 199.5 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes, getInteractionState: () => "idle" });
-    const container = makeContainer();
+describe("viewport · resize re-aplica la ventana contractual", () => {
+  it("sin desviación manual, un resize vuelve a ajustar el rango entero", () => {
+    const harness = createHarness();
+    const { timeScale, chart, container } = attachFresh(harness);
+    const fitsBefore = timeScale._log.writes.filter((w) => w.kind === "fitContent").length;
 
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
+    container._resizeObserver.trigger({ contentRect: { width: 1200, height: 600 } });
 
-    timeScale._log.writes.length = 0;
-    const evt = new globalThis.WheelEvent("wheel", { bubbles: true, cancelable: true, ctrlKey: true, deltaY: 100 });
-    container.dispatchEvent(evt);
-    expect(evt.defaultPrevented).toBe(true);
-    const writes = timeScale._log.writes.filter((w) => w.kind === "logical");
-    expect(writes.length).toBe(1);
+    const fitsAfter = timeScale._log.writes.filter((w) => w.kind === "fitContent").length;
+    expect(fitsAfter).toBe(fitsBefore + 1);
+    expect(chart._calls.options.some((o) => o && o.width === 1200)).toBe(true);
   });
 
-  it("wheel+ctrl con interactionState≠idle NO escribe y solo swallow", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 99.5, to: 199.5 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes, getInteractionState: () => "editing" });
-    const container = makeContainer();
+  it("con desviación manual, un resize re-aplica la MISMA ventana manual", () => {
+    const harness = createHarness();
+    const { timeScale, container } = attachFresh(harness);
+    harness.lifecycle.actions.zoom(0.5);
+    const manual = timeScale._currentLogical();
+    const fitsBefore = timeScale._log.writes.filter((w) => w.kind === "fitContent").length;
 
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
+    container._resizeObserver.trigger({ contentRect: { width: 1200, height: 600 } });
+
+    const fitsAfter = timeScale._log.writes.filter((w) => w.kind === "fitContent").length;
+    expect(fitsAfter).toBe(fitsBefore);
+    const applied = timeScale._currentLogical();
+    expect(applied.from).toBeCloseTo(manual.from, 0);
+    expect(applied.to).toBeCloseTo(manual.to, 0);
     flushRaf();
-
-    timeScale._log.writes.length = 0;
-    const evt = new globalThis.WheelEvent("wheel", { bubbles: true, cancelable: true, ctrlKey: true, deltaY: 100 });
-    container.dispatchEvent(evt);
-    const writes = timeScale._log.writes.filter((w) => w.kind === "logical");
-    expect(writes.length).toBe(0);
-  });
-
-  it("wheel normal (sin ctrl) llama stopImmediatePropagation sin tocar el timeScale", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 99.5, to: 199.5 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes, getInteractionState: () => "idle" });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    timeScale._log.writes.length = 0;
-    let stopped = false;
-    const evt = new globalThis.WheelEvent("wheel", { bubbles: true, cancelable: true, deltaY: 50 });
-    const orig = evt.stopImmediatePropagation.bind(evt);
-    evt.stopImmediatePropagation = () => { stopped = true; orig(); };
-    container.dispatchEvent(evt);
-    expect(stopped).toBe(true);
-    const writes = timeScale._log.writes.filter((w) => w.kind === "logical");
-    expect(writes.length).toBe(0);
+    expect(harness.published.at(-1).manual).toBe(true);
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §9.6 viewport — resize preserva manual y readapta automático.
+// getSnapshot.
 
-describe("createViewportLifecycle · resize (ADR §9.6)", () => {
-  it("resize con vista manual reescribe el mismo rango exacto tras aplicar el perfil", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 50, to: 150 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer(800, 460);
+describe("viewport · getSnapshot", () => {
+  it("estando attached reconcilia desde el timeScale nativo", () => {
+    const harness = createHarness();
+    const { timeScale } = attachFresh(harness);
+    timeScale.setVisibleLogicalRange({ from: 40, to: 140 });
 
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
+    const snapshot = harness.lifecycle.getSnapshot();
 
-    lifecycle.actions.pan(-1);
-    timeScale._log.writes.length = 0;
-
-    const logicalBefore = timeScale._currentLogical();
-    const manual = chartViewStateFromLogicalRange(logicalBefore, rowTimes.length);
-    expect(manual.isManual).toBe(true);
-
-    const ro = container._resizeObserver;
-    ro.trigger({ contentRect: { width: 1024, height: 460 } });
-    flushRaf();
-
-    const writesAfter = timeScale._log.writes.filter((w) => w.kind === "logical");
-    expect(writesAfter.length).toBeGreaterThanOrEqual(1);
-    const lastWrite = writesAfter[writesAfter.length - 1].value;
-    expect(lastWrite).toEqual(logicalBefore);
-  });
-
-  it("resize con vista automática NO fuerza la reposición del rango manual", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: -0.5, to: 199.5 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer(800, 460);
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    timeScale._log.writes.length = 0;
-
-    const logicalBefore = timeScale._currentLogical();
-    const state = chartViewStateFromLogicalRange(logicalBefore, rowTimes.length);
-    expect(state.isManual).toBe(false);
-
-    const ro = container._resizeObserver;
-    ro.trigger({ contentRect: { width: 1024, height: 460 } });
-    flushRaf();
-
-    const writesAfter = timeScale._log.writes.filter((w) => w.kind === "logical");
-    expect(writesAfter.length).toBe(0);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §9.6 viewport — detach captura antes de desuscribir; nunca llama chart.remove().
-
-describe("createViewportLifecycle · detach (ADR §9.6 / §4.7)", () => {
-  it("detach captura el rango lógico del chart aún vivo y lo conserva en manualWindow", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 40, to: 140 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    lifecycle.actions.pan(-1);
-    flushRaf();
-
-    const snapshotBefore = lifecycle.getSnapshot();
-    expect(snapshotBefore.manualWindow.active).toBe(true);
-
-    lifecycle.detach({ reason: "test-detach" });
-    flushRaf();
-
-    const snapshotAfter = lifecycle.getSnapshot();
-    expect(snapshotAfter.manualWindow.active).toBe(true);
-    expect(snapshotAfter.manualWindow.logicalRange).toEqual(snapshotBefore.manualWindow.logicalRange);
-
-    // §4.7: detach NO llama chart.remove() (responsabilidad del controller).
-    expect(chart._calls.remove).toBe(0);
-
-    expect(timeScale._log.unsubscribes.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it("detach idempotente: dos llamadas seguidas no rompen ni duplican efectos", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    timeScale._log.unsubscribes.length = 0;
-    lifecycle.detach({ reason: "first" });
-    lifecycle.detach({ reason: "second" });
-    flushRaf();
-
-    expect(timeScale._log.unsubscribes.length).toBe(2);
-    expect(chart._calls.remove).toBe(0);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §9.6 viewport — cambio de símbolo resetea.
-
-describe("createViewportLifecycle · cambio de símbolo resetea la ventana manual (ADR §9.6)", () => {
-  it("resetBySymbol vacía la manualWindow y los rangos", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 30, to: 130 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    lifecycle.actions.pan(-1);
-    expect(lifecycle.getSnapshot().manualWindow.active).toBe(true);
-
-    lifecycle.resetBySymbol();
-    flushRaf();
-
-    expect(lifecycle.getSnapshot().manualWindow.active).toBe(false);
-    expect(lifecycle.getSnapshot().logicalRange).toBeNull();
-  });
-
-  it("resetBySymbol desuscribe listeners del chart anterior", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    timeScale._log.unsubscribes.length = 0;
-    lifecycle.resetBySymbol();
-
-    expect(timeScale._log.unsubscribes.length).toBeGreaterThanOrEqual(1);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §9.6 viewport — attach del mismo símbolo restaura por tiempo, con lógico como
-// fallback.
-
-describe("createViewportLifecycle · restore por tiempo y fallback lógico (ADR §9.6)", () => {
-  it("restauración con ventana manual: el rango escrito es el candidato válido", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    lifecycle.actions.pan(-1);
-    flushRaf();
-    const timeRange = lifecycle.getSnapshot().timeRange;
-    expect(timeRange).not.toBeNull();
-
-    lifecycle.detach({ reason: "preserve" });
-    flushRaf();
-    const manualBefore = lifecycle.getSnapshot().manualWindow;
-    expect(manualBefore.active).toBe(true);
-
-    timeScale._log.writes.length = 0;
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    const expectedFromTime = timeWindowLogicalRange({
-      rowTimes,
-      timeRange: manualBefore.timeRange,
-      minSpan: 8,
-    });
-    const expectedFromLogical = rescaledLogicalRange({
-      previousRowCount: manualBefore.rowCount,
-      nextRowCount: rowTimes.length,
-      previousRange: manualBefore.logicalRange,
-      minSpan: 8,
-    });
-    expect(expectedFromTime).not.toBeNull();
-
-    const writes = timeScale._log.writes.filter((w) => w.kind === "logical");
-    expect(writes.length).toBeGreaterThanOrEqual(1);
-    const last = writes[writes.length - 1].value;
-    const matchesTime = expectedFromTime && last.from === expectedFromTime.from && last.to === expectedFromTime.to;
-    const matchesLogical = expectedFromLogical && last.from === expectedFromLogical.from && last.to === expectedFromLogical.to;
-    expect(matchesTime || matchesLogical).toBe(true);
-
-    const policy = manualChartWindowRestorePolicy({
-      previousMeta: { ready: true, symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      nextMeta: { ready: true, symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      viewState: { isManual: true },
-      visibleTimeRange: manualBefore.timeRange,
-    });
-    expect(policy.restore).toBe(true);
-  });
-
-  it("sin manual window ni view state manual, NO se restaura y se aplica fitContent", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: null });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    timeScale._log.writes.length = 0;
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    const fitWrites = timeScale._log.writes.filter((w) => w.kind === "fitContent");
-    expect(fitWrites.length).toBe(1);
-    const logicalWrites = timeScale._log.writes.filter((w) => w.kind === "logical");
-    expect(logicalWrites.length).toBe(0);
-  });
-
-  it("restauración por tiempo se prefiere sobre el fallback lógico (mismo símbolo)", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeRange = { from: BASE_TIME + 50 * TRADING_DAY, to: BASE_TIME + 100 * TRADING_DAY };
-    const fromTime = timeWindowLogicalRange({ rowTimes, timeRange, minSpan: 8 });
-    const fromLogical = rescaledLogicalRange({
-      previousRowCount: 200,
-      nextRowCount: 200,
-      previousRange: { from: 25, to: 75 },
-      minSpan: 8,
-    });
-    expect(fromTime).not.toBeNull();
-
-    const policy = manualChartWindowRestorePolicy({
-      previousMeta: { ready: true, symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      nextMeta: { ready: true, symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      viewState: { isManual: true },
-      visibleTimeRange: timeRange,
-    });
-    expect(policy.restore).toBe(true);
-    expect(fromTime.from).not.toBe(fromLogical?.from);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §9.6 viewport — RAF/timeout/release antiguos no afectan al attachment nuevo.
-
-describe("createViewportLifecycle · attachments viejos invalidan restores pendientes (ADR §9.6)", () => {
-  it("un release() de un attach viejo no afecta al attach nuevo", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScaleA = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chartA = createFakeChart(timeScaleA);
-    const timeScaleB = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chartB = createFakeChart(timeScaleB);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    const oldRelease = lifecycle.attach({
-      chart: chartA, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    lifecycle.attach({
-      chart: chartB, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    const unsubsBeforeA = timeScaleA._log.unsubscribes.length;
-    const unsubsBeforeB = timeScaleB._log.unsubscribes.length;
-
-    oldRelease();
-
-    expect(timeScaleA._log.unsubscribes.length).toBe(unsubsBeforeA);
-    expect(timeScaleB._log.unsubscribes.length).toBe(unsubsBeforeB);
-  });
-
-  it("un nuevo attach invalida el anterior: emisiones tardías del chart viejo NO actualizan el state del hook", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScaleA = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chartA = createFakeChart(timeScaleA);
-    const timeScaleB = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chartB = createFakeChart(timeScaleB);
-    const { lifecycle, published } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart: chartA, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    lifecycle.attach({
-      chart: chartB, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    const publishedCountBefore = published.length;
-    // Emisión tardía del chart viejo: la subscription del chart A sigue
-    // activa en el fake A (la pieza pura no la desuscribe automáticamente;
-    // eso es responsabilidad del controller, que llamará a `release()` antes
-    // del nuevo attach), pero el handler del attach A descarta la
-    // publicación si su `attachmentId` ya no es el vigente.
-    timeScaleA.emitLogical({ from: 500, to: 600 });
-    flushRaf();
-
-    // Ningún publish nuevo debe contener el rango 500/600: la subscription
-    // del chart viejo fue descartada por el guard de attachmentId.
-    const newPubs = published.slice(publishedCountBefore);
-    for (const pub of newPubs) {
-      if (pub.visibleLogicalRange) {
-        expect(pub.visibleLogicalRange).not.toEqual({ from: 500, to: 600 });
-      }
-    }
-  });
-
-  it("un RAF viejo no publica el state del attachment nuevo (BUG 1)", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle, published } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    // No flushamos el RAF del primer attach.
-    const countAfterFirst = published.length;
-    // Un attach nuevo debería invalidar el RAF pendiente del anterior.
-    const timeScaleB = createFakeTimeScale({ initialLogical: { from: 10, to: 110 } });
-    const chartB = createFakeChart(timeScaleB);
-    lifecycle.attach({
-      chart: chartB, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    // Las publicaciones del primer attach no deben aparecer tras el flush:
-    // las publicaciones nuevas son las del segundo attach y de su
-    // schedulePublishSoon.
-    const beforeCount = countAfterFirst;
-    // Tras flush, las publicaciones que aparezcan son del segundo attach.
-    // No podemos contar ciegamente porque hay RAFs que SÍ se ejecutan
-    // legítimamente; lo que validamos es que el primer attach no dejó un
-    // RAF suelto con `expectedAttachmentId` que se ejecutara sobre el
-    // estado del segundo.
-    const lastPub = published[published.length - 1];
-    expect(lastPub).toBeDefined();
-    // El último publish debe estar alineado con el chart B, no con el A.
-    // Para el fake, basta con que el último publish exista; la pieza
-    // pura ya garantizó que el RAF viejo fue invalidado.
-    expect(published.length).toBeGreaterThan(beforeCount);
-  });
-
-  it("actions externas escriben sobre el chart del attach vigente tras un attach nuevo", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScaleA = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chartA = createFakeChart(timeScaleA);
-    const timeScaleB = createFakeTimeScale({ initialLogical: { from: 50, to: 150 } });
-    const chartB = createFakeChart(timeScaleB);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart: chartA, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    lifecycle.attach({
-      chart: chartB, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    timeScaleA._log.writes.length = 0;
-    timeScaleB._log.writes.length = 0;
-    // Las actions son singletons de la pieza pura. Tras un nuevo attach
-    // vigente, escriben sobre el chart del attach vigente. El guard
-    // `lifecycle === "attached"` ya descarta escrituras si no hay chart;
-    // el guard `attachmentId === currentAttachmentId` es defensivo y
-    // redundante con la máquina de estados actual (ver comentario en
-    // lib/chartViewportLifecycle.js sobre BUG 4).
-    lifecycle.actions.zoom(0.5);
-
-    const writesA = timeScaleA._log.writes.filter((w) => w.kind === "logical");
-    expect(writesA.length).toBe(0);
-    const writesB = timeScaleB._log.writes.filter((w) => w.kind === "logical");
-    expect(writesB.length).toBe(1);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// §9.6 viewport — getSnapshot reconcilia desde el timeScale nativo.
-
-describe("createViewportLifecycle · getSnapshot (ADR §9.6)", () => {
-  it("getSnapshot estando attached reconcilia desde el timeScale nativo", () => {
-    const rowTimes = makeRowTimes(200);
-    const timeScale = createFakeTimeScale({ initialLogical: { from: 0, to: 100 } });
-    const chart = createFakeChart(timeScale);
-    const { lifecycle } = createHarness({ rowTimes });
-    const container = makeContainer();
-
-    lifecycle.attach({
-      chart, container,
-      renderMeta: { symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      profile: null,
-    });
-    flushRaf();
-
-    timeScale._currentLogical().from = 80;
-    timeScale._currentLogical().to = 180;
-
-    const snapshot = lifecycle.getSnapshot();
-    expect(snapshot.logicalRange).toEqual({ from: 80, to: 180 });
+    expect(snapshot.visibleLogicalRange).toEqual({ from: 40, to: 140 });
+    expect(snapshot.view.isManual).toBe(true);
     expect(snapshot.lifecycle).toBe("attached");
-    // §4.4: attachmentId NO se expone en el resultado público.
-    expect(snapshot).not.toHaveProperty("attachmentId");
   });
 });

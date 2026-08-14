@@ -175,6 +175,65 @@ describe("chartSeriesModel · RS (rating y línea)", () => {
     expect(out[0].value).toBe(90);
   });
 
+  it("ancla cada punto RS a la vela vigente: sin columnas fantasma en el eje compartido", () => {
+    // Velas semanales con time de VIERNES; snapshots del RS en DOMINGO.
+    // lightweight-charts fusiona los tiempos de todas las series en un solo
+    // eje: un punto con fecha propia añadiría una columna vacía entre velas
+    // (docs/analisis-grafico-2026-08-14.md, A2 — medido: 58 columnas para 33
+    // velas). El contrato: todo punto proyectado lleva el time de una vela.
+    const friday = Math.floor(Date.UTC(2026, 0, 2) / 1000); // 2026-01-02 es viernes
+    const week = 7 * 86400;
+    const rows = Array.from({ length: 6 }, (_, i) => ({
+      time: friday + i * week,
+      date: new Date((friday + i * week) * 1000).toISOString().slice(0, 10),
+      open: 100, high: 101, low: 99, close: 100 + i, volume: 1000,
+    }));
+    const sunday = friday + 2 * 86400;
+    const out = projectRsRatingSeries(rows, [
+      { time: sunday, value: 60 },
+      { time: sunday + week, value: 62 },
+      { time: sunday + 2 * week, value: 64 },
+    ], { rsLine: true }, "W");
+
+    expect(out).toHaveLength(3);
+    const rowTimes = new Set(rows.map((row) => row.time));
+    for (const point of out) {
+      expect(rowTimes.has(point.time)).toBe(true);
+    }
+    expect(out.map((p) => p.time)).toEqual([rows[0].time, rows[1].time, rows[2].time]);
+  });
+
+  it("dos puntos RS que caen en la misma vela colapsan al último (el más reciente manda)", () => {
+    const rows = buildDailyRows({ count: 10 });
+    const saturday = rows[4].time + 3600; // mismo tramo que la vela rows[4]
+    const sunday = rows[4].time + 7200;
+    const out = projectRsRatingSeries(rows, [
+      { time: saturday, value: 50 },
+      { time: sunday, value: 55 },
+    ], { rsLine: true });
+
+    expect(out).toHaveLength(1);
+    expect(out[0].time).toBe(rows[4].time);
+    expect(out[0].value).toBe(55);
+  });
+
+  it("projectBenchmarkLineSeries ancla los puntos del ratio a los tiempos de las velas", () => {
+    const rows = buildDailyRows({ count: 10 });
+    const offBar = rows[3].time + 4321; // fecha propia, entre velas
+    const points = projectBenchmarkLineSeries(rows, [
+      { time: rows[0].time, rsLine: 100 },
+      { time: offBar, rsLine: 105 },
+      { time: rows.at(-1).time, rsLine: 110 },
+    ], "D", { rsLine: true });
+
+    expect(points).toHaveLength(3);
+    const rowTimes = new Set(rows.map((row) => row.time));
+    for (const point of points) {
+      expect(rowTimes.has(point.time)).toBe(true);
+    }
+    expect(points[1].time).toBe(rows[3].time);
+  });
+
   it("projectRsRatingSeries devuelve [] en intradía", () => {
     const rows = buildDailyRows({ count: 10 });
     expect(projectRsRatingSeries(rows, [{ time: rows[0].time, value: 50 }], { rsLine: true }, "15m")).toEqual([]);

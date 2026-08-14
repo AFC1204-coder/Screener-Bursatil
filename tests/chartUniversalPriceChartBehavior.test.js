@@ -21,8 +21,9 @@
 // La matriz determinista de §3.5–§3.6 vive hoy en `tests/chartDataModel.test.js`
 // (consumiendo `chartDataModel.resolve`). Este archivo conserva sólo:
 //   - la sección "guard de calidad" en sus formas remoto real/estimated/missing;
-//   - las pruebas de viewport (`manualChartWindowRestorePolicy`,
-//     `resolveRestoreRange`) que siguen siendo válidas tras el refactor;
+//   - el mapeo puro de ventana temporal→lógica que el contrato de ventana
+//     invertido reutiliza (el contrato completo vive en
+//     `tests/chartViewport.test.js`);
 //   - la documentación de las limitaciones del paso 1 (L1–L5) actualizada al
 //     estado del ADR cerrado.
 
@@ -33,8 +34,6 @@ import {
 } from "@/lib/chartDataQuality";
 import {
   chartViewStateFromLogicalRange,
-  manualChartWindowRestorePolicy,
-  rescaledLogicalRange,
   timeWindowLogicalRange,
 } from "@/lib/chartNavigation";
 import { CHART_RANGES, DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
@@ -162,66 +161,6 @@ function resolveChartRows({
 function buildChartRequest({ symbol, range, interval }) {
   const params = new URLSearchParams({ symbol, range, interval });
   return { url: `/api/chart?${params.toString()}`, key: `${symbol}|${range}|${interval}` };
-}
-
-// UniversalPriceChart.jsx:181-183 (emptyManualWindow) + 442-447 (refs iniciales).
-function emptyManualWindow() {
-  return { active: false, timeRange: null, logicalRange: null, rowCount: 0 };
-}
-
-function emptyPreviousRenderMeta() {
-  return { ready: false, symbol: "", range: "", interval: "", style: "", scale: "", rowCount: 0 };
-}
-
-// UniversalPriceChart.jsx:582-593 (efectos de reset al cambiar props) — sólo
-// la parte observable: el reset de manualWindowRef al cambiar symbol.
-function snapshotManualWindowAfter({ symbol, prevSymbol, manualWindow }) {
-  if (symbol !== prevSymbol) return emptyManualWindow();
-  return manualWindow;
-}
-
-// UniversalPriceChart.jsx:723-759 (restore del viewport en cada render nuevo).
-// Devuelve la propuesta de rango lógico (manual o null) sin tocar el chart.
-function resolveRestoreRange({
-  manualWindow,
-  previousRenderMeta,
-  nextRenderMeta,
-  viewState,
-  lastInteractiveViewState,
-  visibleTimeRange,
-  visibleLogicalRange,
-  rowTimes,
-}) {
-  const restoreViewState = manualWindow.active
-    ? { isManual: true }
-    : viewState?.isManual
-      ? viewState
-      : lastInteractiveViewState;
-  const restoreTimeRange = manualWindow.active ? manualWindow.timeRange : visibleTimeRange;
-  const restoreLogicalRange = manualWindow.active ? manualWindow.logicalRange : visibleLogicalRange;
-  const restorePreviousRowCount = manualWindow.active ? manualWindow.rowCount : previousRenderMeta?.rowCount;
-  const policy = manualChartWindowRestorePolicy({
-    previousMeta: previousRenderMeta,
-    nextMeta: nextRenderMeta,
-    viewState: restoreViewState,
-    visibleTimeRange: restoreTimeRange,
-  });
-  if (!policy.restore) return { range: null, policy };
-  const fromTime = timeWindowLogicalRange({ rowTimes, timeRange: restoreTimeRange, minSpan: 8 });
-  const fromLogical = rescaledLogicalRange({
-    previousRowCount: restorePreviousRowCount,
-    nextRowCount: nextRenderMeta.rowCount,
-    previousRange: restoreLogicalRange,
-    minSpan: 8,
-  });
-  const fromTimeState = chartViewStateFromLogicalRange(fromTime, nextRenderMeta.rowCount);
-  const fromLogicalState = chartViewStateFromLogicalRange(fromLogical, nextRenderMeta.rowCount);
-  const restored = fromTimeState.isManual
-    ? fromTime
-    : fromLogicalState.isManual
-      ? fromLogical
-      : fromTime;
-  return { range: restored, policy };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -525,139 +464,40 @@ describe("UniversalPriceChart · comportamiento actual · cambios rápidos de re
   });
 });
 
-describe("UniversalPriceChart · comportamiento actual · ventana manual: preservación y reset", () => {
-  it("cambio de symbol resetea la ventana manual (efecto línea 587-593)", () => {
-    const manual = { active: true, timeRange: { from: 1700000000, to: 1710000000 }, logicalRange: { from: 50, to: 100 }, rowCount: 200 };
-    const after = snapshotManualWindowAfter({
-      symbol: "NVDA",
-      prevSymbol: "AAPL",
-      manualWindow: manual,
-    });
-    expect(after).toEqual(emptyManualWindow());
-  });
+// ─────────────────────────────────────────────────────────────────────────────
+// Ventana visible — contrato invertido (docs/analisis-grafico-2026-08-14.md,
+// Parte C.1). La política de restauración heurística
+// (`manualChartWindowRestorePolicy` + `rescaledLogicalRange`) y la captura
+// implícita de manualWindow que este archivo caracterizaba se ELIMINARON: la
+// ventana es función pura de (settings, datos) con la desviación manual como
+// estado explícito del lifecycle (una ventana temporal). El contrato completo
+// —fit inicial, persistencia del manual entre re-attaches, clearManual por
+// cambio de símbolo/rango/intervalo, liberación de listeners— se cubre en
+// `tests/chartViewport.test.js`. Aquí queda solo el mapeo puro que el
+// contrato reutiliza.
 
-  it("mismo symbol conserva la ventana manual intacta", () => {
-    const manual = { active: true, timeRange: { from: 1700000000, to: 1710000000 }, logicalRange: { from: 50, to: 100 }, rowCount: 200 };
-    const after = snapshotManualWindowAfter({
-      symbol: "AAPL",
-      prevSymbol: "AAPL",
-      manualWindow: manual,
-    });
-    expect(after).toBe(manual);
-  });
-
-  it("política: mismo símbolo + cambio de intervalo con ventana manual → restaura por tiempo", () => {
-    const policy = manualChartWindowRestorePolicy({
-      previousMeta: { ready: true, symbol: "ASML", range: "1A", interval: "D", style: "1", scale: "price" },
-      nextMeta: { ready: true, symbol: "ASML", range: "1A", interval: "W", style: "1", scale: "price" },
-      viewState: { isManual: true },
-      visibleTimeRange: { from: 1700000000, to: 1710000000 },
-    });
-    expect(policy).toEqual({ restore: true, reason: "interval-change" });
-  });
-
-  it("política: cambio de símbolo con ventana manual → NO restaura (reset)", () => {
-    const policy = manualChartWindowRestorePolicy({
-      previousMeta: { ready: true, symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price" },
-      nextMeta: { ready: true, symbol: "NVDA", range: "1A", interval: "D", style: "1", scale: "price" },
-      viewState: { isManual: true },
-      visibleTimeRange: { from: 1700000000, to: 1710000000 },
-    });
-    expect(policy).toEqual({ restore: false, reason: "symbol-change" });
-  });
-
-  it("resolveRestoreRange: manualWindow activa + mismo símbolo + mismo rango → usa timeRange primero", () => {
+describe("UniversalPriceChart · contrato de ventana (mapeo puro reutilizado)", () => {
+  it("timeWindowLogicalRange mapea la ventana manual (tiempos) a rango lógico sobre los datos vigentes", () => {
     const rowTimes = Array.from({ length: 252 }, (_, i) => BASE_TIME + i * TRADING_DAY);
-    const manual = { active: true, timeRange: { from: rowTimes[100], to: rowTimes[180] }, logicalRange: { from: 50, to: 100 }, rowCount: 200 };
-    const previousRenderMeta = { ready: true, symbol: "ASML", range: "1A", interval: "D", style: "1", scale: "price", rowCount: 200 };
-    const nextRenderMeta = { ready: true, symbol: "ASML", range: "1A", interval: "D", style: "1", scale: "price", rowCount: 252 };
-    const { range, policy } = resolveRestoreRange({
-      manualWindow: manual,
-      previousRenderMeta,
-      nextRenderMeta,
-      viewState: null,
-      lastInteractiveViewState: null,
-      visibleTimeRange: null,
-      visibleLogicalRange: null,
+    const range = timeWindowLogicalRange({
       rowTimes,
+      timeRange: { from: rowTimes[100], to: rowTimes[180] },
+      minSpan: 8,
     });
-    expect(policy.restore).toBe(true);
-    // La ventana manual activa SIEMPRE toma el camino timeWindow; restauramos
-    // un rango lógico centrado en el tramo temporal.
     expect(range).not.toBeNull();
     expect(range.from).toBeGreaterThanOrEqual(-0.5);
     expect(range.to).toBeLessThanOrEqual(252 - 0.5);
+    expect(chartViewStateFromLogicalRange(range, rowTimes.length).isManual).toBe(true);
   });
 
-  it("resolveRestoreRange: vista automática (no manual) NO restaura ventana", () => {
+  it("una ventana manual sin solape con los datos vigentes no produce rango (el lifecycle cae a fitContent)", () => {
     const rowTimes = Array.from({ length: 100 }, (_, i) => BASE_TIME + i * TRADING_DAY);
-    const previousRenderMeta = { ready: true, symbol: "ASML", range: "1A", interval: "D", style: "1", scale: "price", rowCount: 100 };
-    const nextRenderMeta = { ready: true, symbol: "ASML", range: "1A", interval: "W", style: "1", scale: "price", rowCount: 100 };
-    const { range, policy } = resolveRestoreRange({
-      manualWindow: emptyManualWindow(),
-      previousRenderMeta,
-      nextRenderMeta,
-      viewState: { isManual: false },
-      lastInteractiveViewState: { isManual: false },
-      visibleTimeRange: null,
-      visibleLogicalRange: null,
+    const range = timeWindowLogicalRange({
       rowTimes,
+      timeRange: { from: BASE_TIME - 500 * TRADING_DAY, to: BASE_TIME - 400 * TRADING_DAY },
+      minSpan: 8,
     });
-    expect(policy).toEqual({ restore: false, reason: "automatic-view" });
     expect(range).toBeNull();
-  });
-
-  it("resolveRestoreRange: cambio de símbolo descarta snapshot aunque haya manualWindow", () => {
-    const rowTimes = Array.from({ length: 100 }, (_, i) => BASE_TIME + i * TRADING_DAY);
-    const manual = { active: true, timeRange: { from: rowTimes[10], to: rowTimes[80] }, logicalRange: { from: 5, to: 75 }, rowCount: 100 };
-    const previousRenderMeta = { ready: true, symbol: "AAPL", range: "1A", interval: "D", style: "1", scale: "price", rowCount: 100 };
-    const nextRenderMeta = { ready: true, symbol: "NVDA", range: "1A", interval: "D", style: "1", scale: "price", rowCount: 100 };
-    // El snapshot manualWindowRef persiste entre renders (refs viven más allá
-    // del render), pero la política detecta cambio de símbolo y rechaza.
-    const { policy } = resolveRestoreRange({
-      manualWindow: manual,
-      previousRenderMeta,
-      nextRenderMeta,
-      viewState: null,
-      lastInteractiveViewState: null,
-      visibleTimeRange: manual.timeRange,
-      visibleLogicalRange: manual.logicalRange,
-      rowTimes,
-    });
-    expect(policy).toEqual({ restore: false, reason: "symbol-change" });
-  });
-});
-
-describe("UniversalPriceChart · comportamiento actual · estado inicial / first-render", () => {
-  it("first-render sin previousRenderMeta previo → no restaura", () => {
-    const policy = manualChartWindowRestorePolicy({
-      previousMeta: { ready: false, symbol: "", range: "", interval: "", style: "", scale: "", rowCount: 0 },
-      nextMeta: { ready: true, symbol: "ASML", range: "1A", interval: "D", style: "1", scale: "price", rowCount: 200 },
-      viewState: { isManual: true },
-      visibleTimeRange: { from: 1700000000, to: 1710000000 },
-    });
-    expect(policy).toEqual({ restore: false, reason: "first-render" });
-  });
-
-  it("manualWindow inicial es vacío (efecto línea 587-593 antes del primer render)", () => {
-    expect(emptyManualWindow()).toEqual({
-      active: false,
-      timeRange: null,
-      logicalRange: null,
-      rowCount: 0,
-    });
-  });
-
-  it("previousRenderMeta inicial es vacío (refs inicializadas a false/''/0)", () => {
-    expect(emptyPreviousRenderMeta()).toEqual({
-      ready: false,
-      symbol: "",
-      range: "",
-      interval: "",
-      style: "",
-      scale: "",
-      rowCount: 0,
-    });
   });
 });
 

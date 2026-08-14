@@ -465,16 +465,26 @@ export function useChartDrawings({ symbol = "", interval = "D" } = {}) {
   attachFnRef.current = attach;
   detachFnRef.current = detach;
 
-  return {
+  // Identidad ESTABLE. `getInteractionState` viaja hasta el lifecycle del
+  // viewport; una identidad nueva por render fue la causa de que el viewport
+  // recreara su instancia en cada re-render y los botones hablaran con un
+  // lifecycle distinto del que gobernaba el chart
+  // (docs/analisis-grafico-2026-08-14.md, A7). Lee la máquina por ref.
+  const getInteractionState = useCallback(
+    () => interactionRef.current?.getState?.() ?? "idle",
+    [],
+  );
+
+  // Acceso a la máquina para que el caller (UniversalPriceChart) pueda
+  // gatear handlers que NO son pointer events (p.ej. wheel/trackpad, ADR §6).
+  // La máquina también está expuesta en `window.__chartInteractionState`
+  // (sólo dev) para inspección desde scripts E2E (ADR §7.6).
+  return useMemo(() => ({
     attach,
     detach,
     toolbarProps,
     setRowTimes,
-    // Acceso a la máquina para que el caller (UniversalPriceChart) pueda
-    // gatear handlers que NO son pointer events (p.ej. wheel/trackpad, ADR §6).
-    // La máquina también está expuesta en `window.__chartInteractionState`
-    // (sólo dev) para inspección desde scripts E2E (ADR §7.6).
-    getInteractionState: () => interaction.getState(),
+    getInteractionState,
     interaction,
-  };
+  }), [attach, detach, toolbarProps, setRowTimes, getInteractionState, interaction]);
 }

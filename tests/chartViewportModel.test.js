@@ -120,12 +120,18 @@ describe("chartViewportModel · perfil adaptativo", () => {
     expect(profile.timeScale.rightBarStaysOnScroll).toBe(true);
   });
 
-  it("compact cambia barSpacing y rightOffsetPixels", () => {
-    const compact = adaptiveChartProfile({ interval: "D", range: "1A", rowCount: 200, width: 480 });
-    const wide = adaptiveChartProfile({ interval: "D", range: "1A", rowCount: 200, width: 1280 });
+  it("el perfil NO fija ventana: sin barSpacing objetivo ni rightOffset (contrato C.1)", () => {
+    // La ventana visible la decide el lifecycle (fitContent o desviación
+    // manual explícita); el perfil solo aporta densidad mínima y formato.
+    // Un barSpacing objetivo aquí fue la causa de que "1A" mostrara 160
+    // barras de 243 (docs/analisis-grafico-2026-08-14.md, A1).
+    const profile = adaptiveChartProfile({ interval: "W", range: "2A" });
 
-    expect(compact.timeScale.rightOffsetPixels).toBe(10);
-    expect(wide.timeScale.rightOffsetPixels).toBe(18);
+    expect(profile.timeScale.barSpacing).toBeUndefined();
+    expect(profile.timeScale.rightOffsetPixels).toBeUndefined();
+    expect(profile.timeScale.maxBarSpacing).toBeUndefined();
+    // minBarSpacing bajo para que incluso MAX quepa entero en pantalla.
+    expect(profile.timeScale.minBarSpacing).toBe(0.5);
   });
 
   it("ajusta márgenes cuando volume está desactivado", () => {

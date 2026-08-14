@@ -1,33 +1,33 @@
-// app/useChartController.js — compositor del chart controller (ADR §5, paso 7).
+// app/useChartController.js — compositor del chart controller.
 //
 // El controller es el ÚNICO dueño del ciclo de vida del chart nativo:
-//   - crea y destruye el chart (§5.4 / §5.5);
+//   - crea y destruye el chart (transacción de creación §5.4 / §5.5 del ADR
+//     chart-controller-extraction);
 //   - compone las tres fronteras: data model, drawings/interaction, viewport;
 //   - traduce la salida de las tres a un `viewModel` declarativo para la vista.
 //
-// Reglas del contrato (ADR §5.1, §5.3, §5.4, §5.5, §6):
+// Contrato de ventana (docs/analisis-grafico-2026-08-14.md, Parte C.1): el
+// viewport es UNA instancia por montaje (`useChartViewport`); la ventana
+// visible es el rango declarado entero salvo desviación manual explícita.
+// Este controller no captura ni restaura ventanas: adjunta el chart y el
+// lifecycle aplica el contrato.
+//
+// Reglas de la transacción:
 //   - `chart.remove()` ocurre exactamente una vez por attachment, sólo aquí.
 //   - `drawings.detach()` se llama ANTES de `viewport.detach()` y ANTES de
-//     `chart.remove()`. §5.5 orden inverso.
-//   - El `controllerAttachmentId` invalida cualquier init en vuelo, incluido
-//     el `await import("lightweight-charts")`. Una respuesta tardía no puede
+//     `chart.remove()` (orden inverso de creación).
+//   - `controllerAttachmentId` invalida cualquier init en vuelo, incluido el
+//     `await import("lightweight-charts")`. Una respuesta tardía no puede
 //     instalar un chart después de que sus props hayan cambiado.
-//   - El adapter nativo (`chartNativeAdapter`) no llama `chart.remove()`.
-//     Eso es exclusivo del controller.
-//   - El controller NO toca `useChartInteraction.js` ni `chartInteractionMachine.js`;
-//     la frontera de interacción se compone con su API pública.
-//
-// Nota sobre la carrera `resetBySymbol` vs `attach`:
-//   `useChartViewport.js` documenta una posible carrera si este controller
-//   invoca un nuevo `attach` en el mismo render en que el padre cambió
-//   `symbol`. Aquí lo evitamos haciendo que el effect del controller use
-//   `symbol` como dep y ejecute la transacción de cleanup→crear explícita
-//   en cada cambio de símbolo. El reset por símbolo de viewport puede
-//   llegar antes o después; en cualquier caso, el controller reconcilia.
+//   - Las series que entran como props (`rsRatingSeries`, `relativeStrength`,
+//     `patternOverlay`) participan en las dependencias por HUELLA DE
+//     CONTENIDO, no por identidad: un fetch que devuelve el mismo contenido
+//     con arrays nuevos NO destruye el chart (antes, cada cambio de benchmark
+//     recreaba el chart entero sin cambio visual — A9 del análisis).
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CHART_RANGES, DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { resolveChartViewportConfig } from "@/lib/chartViewportModel";
 import { useChartDataModel } from "@/app/useChartDataModel";
@@ -39,34 +39,33 @@ import { userFacingSearchError } from "@/lib/screenerFormat";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
 
-/**
- * Hook orquestador del chart. Sigue el orden fijo de §5.3.
- *
- * @param {object} props
- * @param {Array}   [props.bars=[]]
- * @param {string}  [props.symbol=""]
- * @param {string}  [props.currency=""]
- * @param {object}  [props.settings]
- * @param {string}  [props.tradingViewUrl=""]
- * @param {object}  [props.relativeStrength=null]
- * @param {string}  [props.benchmarkSymbol=""]
- * @param {number}  [props.rsMainScore=null]
- * @param {Array}   [props.rsRatingSeries=[]]
- * @param {object}  [props.patternOverlay=null]
- * @param {boolean} [props.showPatternDiagnostics=false]
- * @param {object}  [props.localQuality=null]         ChartQuality canónico (ADR §3.2).
- * @param {string}  [props.className=""]
- * @param {number}  [props.height=460]
- */
-// Defaults con IDENTIDAD ESTABLE. `rsRatingSeries` entra en el array de
-// dependencias de la transacción §5.4/§5.5, que llama a `viewport.attach()`, y
-// attach publica un snapshot vía setState. Un default `[]` en línea crea un
-// array nuevo en cada render: la dependencia cambia siempre, el efecto se
-// re-ejecuta, attach vuelve a publicar y el ciclo no termina ("Maximum update
-// depth exceeded", con la pestaña colgada). Los callers que sí pasan la prop
-// —la ficha del valor— nunca vieron el fallo; lo destapó el primer caller que
-// la omite y llega a `availability: "ready"`.
+// Defaults con IDENTIDAD ESTABLE. Un default `[]` en línea crea un array
+// nuevo en cada render y convierte cualquier dependencia derivada en un
+// invalidador permanente (histórico: "Maximum update depth exceeded").
 const EMPTY_RS_RATING_SERIES = [];
+
+// Huella de contenido de una serie de puntos (array plano o `{ points }`).
+// Barata a propósito: longitud + extremos + último valor. Un cambio interior
+// que no toque longitud ni extremos no invalida — aceptable para series
+// append-only como las que llegan aquí, y documentado como límite.
+function seriesContentKey(series) {
+  const list = Array.isArray(series) ? series : Array.isArray(series?.points) ? series.points : [];
+  if (!list.length) return "0";
+  const first = list[0] || {};
+  const last = list[list.length - 1] || {};
+  const timeOf = (p) => p?.time ?? p?.date ?? p?.snapshotDate ?? p?.snapshot_date ?? "";
+  const valueOf = (p) => p?.rsRating ?? p?.rs_rating ?? p?.rating ?? p?.rsLine ?? p?.rs_line ?? p?.value ?? p?.close ?? "";
+  return `${list.length}|${timeOf(first)}|${timeOf(last)}|${valueOf(last)}`;
+}
+
+// Huella del overlay de patrón: los campos que el adaptador dibuja
+// (pivot + swings C1..C4).
+function patternContentKey(overlay) {
+  if (!overlay || typeof overlay !== "object") return "none";
+  const swings = Array.isArray(overlay.contractionSwings) ? overlay.contractionSwings : [];
+  const lastSwing = swings[swings.length - 1] || {};
+  return `${overlay.pivotPrice ?? ""}|${swings.length}|${lastSwing.toDate ?? ""}`;
+}
 
 export function useChartController(props = {}) {
   const {
@@ -86,12 +85,10 @@ export function useChartController(props = {}) {
     height = 460,
   } = props || {};
 
-  // §5.3 / 1: config canónica.
+  // 1: config canónica.
   const config = useMemo(() => resolveChartViewportConfig(settings || {}), [settings]);
 
-  // §5.3 / 2: data model. ADR §3.3 + §9: la calidad local viaja sólo como
-  // `localQuality` canónico (ChartQuality). La prop legacy `chartEstimated`
-  // ya no forma parte del contrato público del chart.
+  // 2: data model (fetch, aborto, calidad P0).
   const dataModel = useChartDataModel({
     symbol,
     localSource: { bars, quality: localQuality },
@@ -100,12 +97,14 @@ export function useChartController(props = {}) {
 
   const rows = dataModel.rows;
   const rowTimes = dataModel.rowTimes;
+  const contextRows = dataModel.contextRows;
   const notice = dataModel.notice;
 
-  // §5.3 / 3: drawings + interaction (frontera existente, sin cambios).
+  // 3: drawings + interaction (frontera existente; retorno con identidad
+  // estable — ver useChartDrawings).
   const drawings = useChartDrawings({ symbol, interval: config.interval });
 
-  // §5.3 / 4: viewport.
+  // 4: viewport — instancia única por montaje.
   const viewport = useChartViewport({
     symbol,
     config,
@@ -114,34 +113,27 @@ export function useChartController(props = {}) {
     getInteractionState: drawings.getInteractionState,
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Ref DOM del container. El badge RS flotante que se posicionaba de forma
-  // imperativa ya no existe: la línea RS vive en su propio panel y es el eje
-  // de ese panel el que rotula su último valor.
-  // ─────────────────────────────────────────────────────────────────────────
   const canvasRef = useRef(null);
-
-  // Refs internos del controller para gestionar el ciclo de vida nativo.
   const chartHandleRef = useRef(null);
   const controllerAttachmentIdRef = useRef(0);
-  const mountedRef = useRef(true);
   const [renderError, setRenderError] = useState("");
 
-  // Derivaciones puras (no son estado, son memoizadas por la naturaleza
-  // síncrona de las entradas).
+  // Derivaciones puras.
   const latest = rows.at(-1);
   const first = rows[0];
   const change = first?.close ? ((Number(latest?.close) / Number(first.close)) - 1) * 100 : null;
   const positive = !Number.isFinite(change) || change >= 0;
 
-  // Helpers para construir el viewModel.
   const intraday = config.intraday;
   const rangeLabel = (CHART_RANGES.find((item) => item.key === config.dataRange)?.label || config.dataRange || "").toUpperCase();
 
-  // Estado de la línea RS para la vista. Se deriva con las MISMAS funciones
-  // puras que usa el adaptador (`projectRsRatingSeries` + `rsLineHistory`), no
-  // con una segunda regla paralela: lo que la vista declara sobre el panel RS
-  // y lo que el panel RS dibuja no pueden discrepar.
+  // Huellas de contenido de las series-prop (ver cabecera).
+  const rsRatingSeriesKey = useMemo(() => seriesContentKey(rsRatingSeries), [rsRatingSeries]);
+  const relativeStrengthKey = useMemo(() => seriesContentKey(relativeStrength), [relativeStrength]);
+  const patternOverlayKey = useMemo(() => patternContentKey(patternOverlay), [patternOverlay]);
+
+  // Estado de la línea RS para la vista. MISMAS funciones puras que usa el
+  // adaptador: lo declarado y lo dibujado no pueden discrepar.
   const rsLineState = useMemo(() => {
     if (!config.indicators.rsLine) return { enabled: false, rendered: false, weeks: 0 };
     if (intraday) return { enabled: true, rendered: false, weeks: 0, intradayMuted: true };
@@ -162,36 +154,21 @@ export function useChartController(props = {}) {
   );
 
   // ─────────────────────────────────────────────────────────────────────────
-  // §5.4 / §5.5: transacción de creación y destrucción del chart.
+  // Transacción de creación y destrucción del chart.
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    // NOTA: NO usamos `mountedRef.current` aquí. React 18 StrictMode
-    // monta/desmonta/monta este efecto dos veces en dev; un `mountedRef`
-    // compartido puesto a false por el primer desmontaje sintético dejaría
-    // la segunda invocación sin ejecutar la transacción §5.4. La fuente
-    // de verdad para esta invocación concreta es la variable local
-    // `cancelled` del closure, que se activa sólo en el cleanup (real o
-    // sintético) y descarta trabajo tardío vía `controllerAttachmentId`.
-    // `mountedRef` se conserva únicamente para el cleanup de unmount
-    // real (al final del archivo), que sigue protegiendo contra
-    // actualizar `setRenderError`/refs tras desmontaje del todo.
     if (dataModel.availability !== "ready") {
-      // §5.4: no se crea chart si la disponibilidad no es "ready".
+      // No se crea chart si la disponibilidad no es "ready".
       return undefined;
     }
 
     let cancelled = false;
-    let myId = 0;
     let adapter = null;
-    let resizeObserver = null;
-    let lastProfile = null;
-    let lastWidth = 0;
-    let lastHeight = 0;
 
     // Incrementamos ANTES del await: cualquier respuesta tardía del import
     // dinámico se descarta al comparar myId con controllerAttachmentIdRef.
     controllerAttachmentIdRef.current += 1;
-    myId = controllerAttachmentIdRef.current;
+    const myId = controllerAttachmentIdRef.current;
 
     async function render() {
       if (cancelled) return;
@@ -202,74 +179,51 @@ export function useChartController(props = {}) {
       const lib = await import("lightweight-charts");
       if (cancelled || myId !== controllerAttachmentIdRef.current) return;
 
-      const profile = viewport.prepare(container);
+      const measured = viewport.prepare(container);
       const colors = resolveCssTokensNative();
-      lastProfile = profile;
-      const width = Math.max(container.clientWidth || 0, 280);
-      lastWidth = width;
 
       adapter = createChartNativeAdapter({
         container,
         lib,
-        profile,
+        profile: measured.profile,
+        width: measured.width,
+        height: measured.height,
         config,
         rows,
         colors,
         overrides: {
           patternOverlay,
           rsRatingSeries,
+          benchmarkSeries: relativeStrength,
+          contextRows,
           requestedHeight: height,
           positive,
         },
       });
 
-      // §5.4 / 7: viewport.attach — fit/restore/subscriptions/wheel/resize.
-      const renderMeta = {
-        ready: true,
-        symbol,
-        range: config.dataRange,
-        interval: config.interval,
-        style: config.style,
-        scale: config.scale,
-        rowCount: rows.length,
-      };
+      // setRowTimes ANTES de attach, para que la primitiva reciba los
+      // tiempos coherentes desde el primer attach.
+      drawings.setRowTimes(rows);
+
+      // Viewport: el lifecycle aplica la ventana contractual (rango entero,
+      // o la desviación manual vigente) y gestiona wheel/resize/suscripción.
       viewport.attach({
         chart: adapter.chart,
         container,
-        renderMeta,
-        profile,
+        profile: measured.profile,
         onGeometryChange: ({ width: w, height: h, profile: p }) => {
-          lastWidth = w;
-          lastHeight = h;
-          lastProfile = p;
           adapter.updateGeometry({ width: w, height: h, profile: p });
         },
       });
 
-      // §5.4 / 8: setRowTimes ANTES de attach, para que la primitiva
-      // reciba los tiempos coherentes desde el primer attach.
-      drawings.setRowTimes(rows);
       drawings.attach(adapter.chart, adapter.mainSeries, container);
 
       chartHandleRef.current = adapter;
-
-      // ResizeObserver: la geometría ya la aplica el controller vía
-      // viewport.onGeometryChange; aquí sólo observamos el container.
-      if (typeof ResizeObserver === "function") {
-        resizeObserver = new ResizeObserver(([entry]) => {
-          if (cancelled) return;
-          const nextWidth = Math.max(Math.floor(entry?.contentRect?.width || 0), 280);
-          if (nextWidth > 0) lastWidth = nextWidth;
-        });
-        resizeObserver.observe(container);
-      }
     }
-
-    const cleanupFns = [];
 
     render().catch((error) => {
       if (cancelled) return;
-      // §5.4 / 10: error en createChart o serie no muta dataModel.error;
+      // Un error en createChart o en las series no muta dataModel.error;
       // se publica como renderError separado.
       const message = error?.message || "Grafico no disponible";
       setRenderError(message);
@@ -277,18 +231,11 @@ export function useChartController(props = {}) {
 
     return () => {
       cancelled = true;
-      // §5.5 orden inverso.
-      for (const fn of cleanupFns) {
-        try { fn(); } catch { /* noop */ }
-      }
-      if (resizeObserver) {
-        try { resizeObserver.disconnect(); } catch { /* noop */ }
-        resizeObserver = null;
-      }
+      // Orden inverso de creación.
       // 1. drawings.detach (interacción → DETACH → idle, separa primitiva).
       try { drawings.detach?.(); } catch { /* noop */ }
-      // 2. viewport.detach (captura ventana manual + elimina handlers).
-      try { viewport.detach?.({ reason: "controller-cleanup" }); } catch { /* noop */ }
+      // 2. viewport.detach (libera wheel/resize/suscripciones del attachment).
+      try { viewport.detach?.(); } catch { /* noop */ }
       // 3. adapter.destroySeries (libera series, NO chart.remove).
       if (adapter && typeof adapter.destroySeries === "function") {
         try { adapter.destroySeries(); } catch { /* noop */ }
@@ -303,6 +250,9 @@ export function useChartController(props = {}) {
       }
       controllerAttachmentIdRef.current += 1;
     };
+    // Las series-prop participan por huella de contenido (rsRatingSeriesKey /
+    // relativeStrengthKey / patternOverlayKey), no por identidad: los valores
+    // del closure son equivalentes mientras la huella no cambie.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dataModel.availability,
@@ -313,8 +263,9 @@ export function useChartController(props = {}) {
     config.style,
     config.scale,
     height,
-    patternOverlay,
-    rsRatingSeries,
+    patternOverlayKey,
+    rsRatingSeriesKey,
+    relativeStrengthKey,
     config.indicators.volume,
     config.indicators.rsLine,
     config.indicators.maFast,
@@ -329,9 +280,9 @@ export function useChartController(props = {}) {
     drawings.setRowTimes?.(rows);
   }, [rows, drawings]);
 
-  // Unmount cleanup.
+  // Unmount cleanup: red de seguridad para el chart nativo si el effect de
+  // arriba no llegó a limpiar (p. ej. unmount a mitad de un init en vuelo).
   useEffect(() => () => {
-    mountedRef.current = false;
     const handle = chartHandleRef.current;
     if (handle && handle.chart && typeof handle.chart.remove === "function") {
       try { handle.chart.remove(); } catch { /* noop */ }
@@ -340,23 +291,25 @@ export function useChartController(props = {}) {
   }, []);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // viewModel — contrato §5.2.
+  // viewModel.
   // ─────────────────────────────────────────────────────────────────────────
   const status = dataModel.availability; // ready | empty | blocked
   const viewState = viewport.state.view || null;
+  const manualActive = !!viewport.state.manual;
   const viewportRail = {
     mode: viewState?.isManual ? viewState.label : "Último dato",
     window: viewport.state.visibleWindowLabel || "Sin ventana",
     bars: viewState?.visibleBars || null,
     distance: viewState?.distanceFromLatest || null,
     drawing: drawings.toolbarProps?.modeLabel || null,
-    manual: !!viewState?.isManual,
+    manual: manualActive,
     key: viewState?.key || "unknown",
   };
   const notes = {
     quality: notice && notice.kind === "quality" ? notice : null,
     expanding: notice && notice.kind === "expanding" ? notice : null,
     expansionFailed: notice && notice.kind === "error" && notice.code === "history-expansion-failed" ? notice : null,
+    info: notice && notice.kind === "info" ? notice : null,
     renderError: renderError || null,
   };
   const viewModel = useMemo(() => ({
@@ -380,8 +333,7 @@ export function useChartController(props = {}) {
       intradayMuted: intraday,
       rendered: rsLineState.rendered,
       // Ausencia con motivo, en el sitio donde falta el dato
-      // (docs/principios-producto.md §5, la excepción). Sin línea RS no se
-      // dibuja una recta de dos puntos: se dice cuánto histórico hay.
+      // (docs/principios-producto.md §5, la excepción).
       absence: config.indicators.rsLine && !intraday && !rsLineState.rendered
         ? {
           weeks: rsLineState.weeks,
@@ -397,7 +349,7 @@ export function useChartController(props = {}) {
   }), [status, symbol, latest, change, positive, rangeLabel, config.interval, config.indicators.rsLine, intraday, rsLineState, patternSummary, viewportRail, patternDiagnostic, notes, className]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // actions — contrato §5.2.
+  // actions — closures estables de la instancia única del viewport.
   // ─────────────────────────────────────────────────────────────────────────
   const actions = useMemo(() => ({
     zoom: viewport.actions.zoom,

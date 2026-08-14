@@ -105,7 +105,7 @@ afterEach(() => {
 });
 
 describe("UniversalPriceChartView · render estático de los 4 estados (ADR §9.7)", () => {
-  it("estado 'ready' (bars reales) renderiza el panel principal con header y viewport rail", () => {
+  it("estado 'ready' (bars reales) renderiza el panel principal con header y navegación", () => {
     /* UPC ya importado */
     const html = renderToStaticMarkup(
       React.createElement(UniversalPriceChart, {
@@ -114,11 +114,16 @@ describe("UniversalPriceChartView · render estático de los 4 estados (ADR §9.
         settings: { range: "1A", interval: "D", style: "1" },
       })
     );
-    // El header y el rail están presentes; el canvas es un placeholder.
+    // Header, botonera y canvas presentes. El raíl de ventana YA NO se
+    // renderiza en el estado por defecto (principio 2): solo aparece con
+    // desviación manual o herramienta de dibujo activa. Tampoco el badge
+    // «Vista rango·intervalo», que duplicaba los controles.
     expect(html).toContain("universalChartSymbol");
     expect(html).toContain("READY");
-    expect(html).toContain("universalChartViewportRail");
+    expect(html).toContain("universalChartNavGroup");
     expect(html).toContain("universalChartCanvas");
+    expect(html).not.toContain("universalChartViewportRail");
+    expect(html).not.toContain("universalChartScopeBadge");
   });
 
   it("estado 'empty' (sin bars) renderiza el fallback vacío", () => {

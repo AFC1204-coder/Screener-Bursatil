@@ -52,7 +52,9 @@ export function UniversalPriceChartView({
     rootClassName,
   } = viewModel;
 
-  const { symbol, latestClose, changePct, positive, rangeLabel, interval } = header;
+  // `header.rangeLabel` y `header.interval` siguen en el viewModel (contrato
+  // público) pero ya no se rotulan aquí: los controles activos son la fuente.
+  const { symbol, latestClose, changePct, positive } = header;
   const qualityNotice = notes?.quality || null;
   const expandingNotice = notes?.expanding || null;
   const expansionFailedNotice = notes?.expansionFailed || null;
@@ -103,15 +105,12 @@ export function UniversalPriceChartView({
             <b>{badges.pattern.evidence}</b>
           </div>
         )}
-        <div className="universalChartScopeBadge" title="Rango e intervalo aplicados">
-          <span>Vista</span>
-          <b>{rangeLabel} · {interval}</b>
-        </div>
+        {/* El badge «Vista rango·intervalo» y el chip de modo/barras se
+            eliminaron (principio 2): duplicaban los controles activos de
+            RANGO/TEMPORALIDAD —a un centímetro— y el raíl de ventana. El
+            estado por defecto no se rotula; solo la desviación manual (abajo)
+            merece aviso. */}
         <div className="universalChartNavGroup" aria-label="Navegación del gráfico">
-          <span className={`universalChartViewState ${viewportRail.manual ? "away" : ""}`} title={viewportRail.mode}>
-            <em>{viewportRail.mode}</em>
-            {viewportRail.bars ? <b>{viewportRail.bars}</b> : null}
-          </span>
           <button type="button" className="universalChartNavButton icon" onClick={() => actions.pan(-1)} disabled={!viewportRail.manual} aria-label="Mover ventana hacia el historial" title="Mover ventana hacia el historial"><ChevronLeft size={15} aria-hidden="true" /></button>
           <button type="button" className="universalChartNavButton icon" onClick={() => actions.pan(1)} disabled={!viewportRail.manual} aria-label="Mover ventana hacia el último dato" title="Mover ventana hacia el último dato"><ChevronRight size={15} aria-hidden="true" /></button>
           <button type="button" className="universalChartNavButton icon" onClick={() => actions.zoom(0.72)} aria-label="Acercar gráfico" title="Acercar"><ZoomIn size={14} aria-hidden="true" /></button>
@@ -143,40 +142,41 @@ export function UniversalPriceChartView({
           )}
         </div>
       </div>
-      <div
-        className={`universalChartViewportRail ${viewportRail.manual ? "manual" : "auto"} ${viewStateClass}`}
-        aria-label="Estado del rango visible"
-        aria-live="polite"
-        data-view-mode={viewportRail.key}
-        data-manual={viewportRail.manual ? "true" : "false"}
-        data-window-label={viewportRail.window}
-        title={viewportRail.manual ? "Ventana manual activa" : "Vista anclada al último dato"}
-      >
-        <span className="universalChartViewportChip mode">
-          <em>Modo</em>
-          <b>{viewportRail.manual ? viewportRail.mode : "Último dato"}</b>
-        </span>
-        <span className="universalChartViewportChip window">
-          <em>Ventana</em>
-          <b>{viewportRail.window}</b>
-        </span>
-        <span className="universalChartViewportChip bars">
-          <em>Barras</em>
-          <b>{viewportRail.bars ? `${viewportRail.bars}` : "Sin dato"}</b>
-        </span>
-        {viewportRail.distance ? (
-          <span className="universalChartViewportChip distance">
-            <em>Hasta último</em>
-            <b>{viewportRail.distance}</b>
-          </span>
-        ) : null}
-        {viewportRail.drawing ? (
-          <span className="universalChartViewportChip drawing">
-            <em>Dibujo</em>
-            <b>{viewportRail.drawing}</b>
-          </span>
-        ) : null}
-      </div>
+      {/* Raíl de estado: solo existe cuando hay algo que NO cuentan ya los
+          controles o el eje — una desviación manual de la ventana o la
+          herramienta de dibujo activa. El estado por defecto («todo el rango,
+          anclado al último dato») no se rotula: es el contrato. aria-live
+          anuncia la transición a manual. */}
+      {(viewportRail.manual || viewportRail.drawing) && (
+        <div
+          className={`universalChartViewportRail ${viewportRail.manual ? "manual" : "auto"} ${viewStateClass}`}
+          aria-label="Estado del rango visible"
+          aria-live="polite"
+          data-view-mode={viewportRail.key}
+          data-manual={viewportRail.manual ? "true" : "false"}
+          data-window-label={viewportRail.window}
+          title={viewportRail.manual ? "Ventana manual activa — «Restaurar» vuelve al rango completo" : "Herramienta de dibujo activa"}
+        >
+          {viewportRail.manual && (
+            <>
+              <span className="universalChartViewportChip mode">
+                <em>{viewportRail.mode}</em>
+                <b>{viewportRail.window}</b>
+              </span>
+              <span className="universalChartViewportChip bars">
+                <em>Barras</em>
+                <b>{viewportRail.bars ? `${viewportRail.bars}` : "Sin dato"}</b>
+              </span>
+            </>
+          )}
+          {viewportRail.drawing ? (
+            <span className="universalChartViewportChip drawing">
+              <em>Dibujo</em>
+              <b>{viewportRail.drawing}</b>
+            </span>
+          ) : null}
+        </div>
+      )}
       <div className="universalChartCanvas" ref={canvasRef} style={{ "--chart-target-height": "460px" }} />
       {patternDiagnostic && (
         <div className="vcpDiagnosticPanel" aria-label="Diagnóstico VCP" title={patternDiagnostic.objective?.detail || patternDiagnostic.reason || ""}>
@@ -224,6 +224,7 @@ export function UniversalPriceChartView({
       {qualityNotice && <p className="universalChartEstimatedNote" role="status" title={qualityNotice.title}>{qualityNotice.text}</p>}
       {expandingNotice && <p className="dataNote">{expandingNotice.text}</p>}
       {expansionFailedNotice && <p className="dataNote">{expansionFailedNotice.text}</p>}
+      {notes?.info && <p className="dataNote" role="status" title={notes.info.title}>{notes.info.text}</p>}
       {renderError && <p className="dataNote">{renderError}</p>}
     </div>
   );

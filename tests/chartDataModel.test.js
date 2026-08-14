@@ -32,6 +32,7 @@ import {
   aggregateRows,
   chartDataModel,
   chartRangeRows,
+  homogeneousDailyRows,
   isIntradayInterval,
   normalizeChartInterval,
   normalizeRows,
@@ -220,11 +221,11 @@ describe("chartDataModel · helpers extraídos", () => {
     expect(STYLE_AREA).toBe("3");
   });
 
-  it("NOTICE_PRIORITY expone 7 códigos únicos en orden numérico ascendente", () => {
-    expect(NOTICE_PRIORITY.length).toBe(7);
+  it("NOTICE_PRIORITY expone 8 códigos únicos en orden numérico ascendente", () => {
+    expect(NOTICE_PRIORITY.length).toBe(8);
     const codes = NOTICE_PRIORITY.map((n) => n.code);
-    expect(new Set(codes).size).toBe(7);
-    for (let i = 1; i <= 7; i += 1) {
+    expect(new Set(codes).size).toBe(8);
+    for (let i = 1; i <= 8; i += 1) {
       expect(NOTICE_PRIORITY[i - 1].priority).toBe(i);
     }
     expect(codes).toEqual([
@@ -235,6 +236,7 @@ describe("chartDataModel · helpers extraídos", () => {
       "history-expanding",
       "history-expansion-failed",
       "insufficient-history",
+      "history-coarse-dropped",
     ]);
   });
 });
@@ -813,5 +815,110 @@ describe("chartDataModel · invariante rows.length>0 ⇒ quality.status real", (
       const result = chartDataModel.resolve(input);
       assertInvariant(result, label);
     }
+  });
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// Homogeneidad de cadencia (docs/analisis-grafico-2026-08-14.md, 2ª pasada).
+//
+// Medido en vivo: /api/chart para rangos largos sirve un prefijo antiguo con
+// paso MENSUAL (herencia del merge MAX en la caché) seguido del tramo diario.
+// Dibujar esa mezcla fabricaba "semanas" de un mes: 5A·W declaraba casi cinco
+// años con 96 barras y un eje que saltaba dos años entre etiquetas.
+
+describe("chartDataModel · homogeneidad de cadencia", () => {
+  const DAY = 86400;
+  const MONTH = 30 * DAY;
+  const START = Math.floor(Date.UTC(2020, 0, 6) / 1000);
+
+  function bar(time, close = 100) {
+    return {
+      time,
+      date: new Date(time * 1000).toISOString().slice(0, 10),
+      open: close - 0.4,
+      high: close + 1,
+      low: close - 1,
+      close,
+      volume: 1000,
+    };
+  }
+
+  function mixedSeries({ monthly = 24, daily = 200 } = {}) {
+    const coarse = Array.from({ length: monthly }, (_, i) => bar(START + i * MONTH, 90 + i));
+    const dailyStart = START + monthly * MONTH;
+    const fine = Array.from({ length: daily }, (_, i) => bar(dailyStart + i * DAY, 120 + i * 0.1));
+    return [...coarse, ...fine];
+  }
+
+  it("homogeneousDailyRows se queda con el sufijo diario y reporta lo descartado", () => {
+    const rows = normalizeRows(mixedSeries({ monthly: 24, daily: 200 }));
+    const out = homogeneousDailyRows(rows);
+
+    expect(out.rows.length).toBe(200);
+    expect(out.dropped).toBe(24);
+    expect(out.coarseUntilDate).toBe(rows[23].date);
+    // El sufijo es estrictamente diario: ningún gap > 7 días naturales.
+    for (let i = 1; i < out.rows.length; i += 1) {
+      expect((out.rows[i].time - out.rows[i - 1].time) / DAY).toBeLessThanOrEqual(7);
+    }
+  });
+
+  it("una serie diaria con fines de semana y festivos NO se recorta", () => {
+    // Paso de 1-4 días naturales (viernes→lunes y algún festivo largo).
+    const rows = [];
+    let t = START;
+    for (let i = 0; i < 120; i += 1) {
+      rows.push(bar(t, 100 + i));
+      t += (i % 5 === 4 ? 3 : i % 17 === 0 ? 4 : 1) * DAY;
+    }
+    const out = homogeneousDailyRows(normalizeRows(rows));
+    expect(out.dropped).toBe(0);
+    expect(out.rows.length).toBe(120);
+  });
+
+  it("resolve dibuja solo el tramo homogéneo y lo declara con la notice informativa", () => {
+    // 6M queda cubierto por las 300 filas diarias elegibles: sin fetch en
+    // vuelo, la notice informativa del recorte es la única aplicable. (Con un
+    // fetch pendiente ganaría `history-expanding`, que tiene prioridad — la
+    // informativa es la última de la tabla.)
+    const result = chartDataModel.resolve({
+      symbol: "AAPL",
+      localSource: { bars: mixedSeries({ monthly: 24, daily: 300 }), quality: { status: "real", source: "test" } },
+      config: { dataRange: "6M", interval: "W", style: "1" },
+    });
+
+    expect(result.availability).toBe("ready");
+    // Ninguna fila dibujada procede del tramo mensual: la primera fila
+    // semanal vive dentro del sufijo diario.
+    const dailyStart = START + 24 * MONTH;
+    expect(result.rows[0].time).toBeGreaterThanOrEqual(dailyStart);
+    // Y la ausencia se declara donde falta (principio 5).
+    expect(result.notice?.code).toBe("history-coarse-dropped");
+    expect(result.notice?.kind).toBe("info");
+  });
+
+  it("resolve expone contextRows: la serie agregada sin recorte de rango, superconjunto de rows", () => {
+    const daily = mixedSeries({ monthly: 0, daily: 520 });
+    const result = chartDataModel.resolve({
+      symbol: "AAPL",
+      localSource: { bars: daily, quality: { status: "real", source: "test" } },
+      config: { dataRange: "1A", interval: "D", style: "1" },
+    });
+
+    expect(result.availability).toBe("ready");
+    expect(result.contextRows.length).toBeGreaterThan(result.rows.length);
+    const contextTimes = new Set(result.contextRows.map((row) => row.time));
+    for (const row of result.rows) {
+      expect(contextTimes.has(row.time)).toBe(true);
+    }
+    // Serie homogénea sin recorte: sin notice informativa.
+    expect(result.notice).toBeNull();
+  });
+
+  it("la suficiencia local se evalúa sobre filas elegibles: un prefijo mensual no la infla", () => {
+    // 24 mensuales + 100 diarias = 124 filas crudas; elegibles solo 100.
+    // Para 1A (252) el fetch remoto sigue siendo necesario.
+    const rows = normalizeRows(mixedSeries({ monthly: 24, daily: 100 }));
+    const eligible = homogeneousDailyRows(rows).rows;
+    expect(shouldRequestRemoteBars(eligible, "1A", "D")).toBe(true);
   });
 });

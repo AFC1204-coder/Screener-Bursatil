@@ -22,7 +22,7 @@
 //   - accede a `getComputedStyle` para resolver tokens CSS a colores;
 //   - muta el DOM del container del chart.
 
-import { adaptiveChartProfile, responsiveChartHeight } from "@/lib/chartViewportModel";
+import { responsiveChartHeight } from "@/lib/chartViewportModel";
 import {
   movingAverage,
   projectBenchmarkLineSeries,
@@ -129,11 +129,16 @@ export function createChartNativeAdapter(args) {
   const {
     patternOverlay = null,
     rsRatingSeries = null,
+    benchmarkSeries = null,
     requestedHeight = 460,
   } = overrides;
 
-  const width = Math.max(container.clientWidth || 0, 280);
-  const height = responsiveChartHeight(width, requestedHeight);
+  const width = Number.isFinite(Number(args.width)) && Number(args.width) > 0
+    ? Number(args.width)
+    : Math.max(container.clientWidth || 0, 280);
+  const height = Number.isFinite(Number(args.height)) && Number(args.height) > 0
+    ? Number(args.height)
+    : responsiveChartHeight(width, requestedHeight);
 
   const {
     AreaSeries,
@@ -279,15 +284,24 @@ export function createChartNativeAdapter(args) {
     extraSeries.push(volumeSeries);
   }
 
-  // Medias móviles
+  // Medias móviles. Se calculan sobre el CONTEXTO (la serie agregada sin
+  // recortar al rango) y se dibujan solo dentro de la ventana: así la media
+  // no pierde su warm-up al principio del rango cuando hay histórico previo
+  // (antes, una SMA200 en un rango de 1A solo cubría el tramo final). Los
+  // valores en la zona común son idénticos: misma fórmula, mismas barras.
+  const maSource = Array.isArray(overrides.contextRows) && overrides.contextRows.length >= rows.length
+    ? overrides.contextRows
+    : rows;
+  const windowStart = rows[0]?.time ?? -Infinity;
+  const maInWindow = (length) => movingAverage(maSource, length).filter((point) => point.time >= windowStart);
   if (indicators.maFast) {
     const series = chart.addSeries(LineSeries, { color: colors.soft, lineWidth: 1 });
-    series.setData(movingAverage(rows, indicators.maFastLength));
+    series.setData(maInWindow(indicators.maFastLength));
     extraSeries.push(series);
   }
   if (indicators.maSlow) {
     const series = chart.addSeries(LineSeries, { color: colors.humo, lineWidth: 1 });
-    series.setData(movingAverage(rows, indicators.maSlowLength));
+    series.setData(maInWindow(indicators.maSlowLength));
     extraSeries.push(series);
   }
 
@@ -360,11 +374,36 @@ export function createChartNativeAdapter(args) {
     extraSeries.push(rsSeries);
   }
 
-  // Benchmark line (proyección sin pintar — el controller decide si la quiere)
-  // Se proyecta aquí para que la pieza pura siga siendo la única fuente de
-  // cálculos sobre rows seguras, pero el render queda a decisión del
-  // controller; el adapter no la pinta por defecto.
-  void projectBenchmarkLineSeries(rows, overrides.benchmarkSeries, interval, indicators);
+  // ── Línea de comparación con el benchmark ("Comparar vs") ────────────────
+  //
+  // Ratio precio/benchmark (rsLine del servidor), log-rebasado al primer
+  // valor de la ventana y ANCLADO a los tiempos de las velas por la
+  // proyección (analisis A2/B2: sin anclaje, cada punto con fecha propia
+  // añade una columna fantasma al eje compartido). Vive en una escala
+  // overlay invisible con banda propia: el precio no comparte escala con él
+  // y conserva su autoescala. La línea se lee por forma (máximos y
+  // pendiente), no por valor; por eso no lleva eje ni etiqueta de último
+  // valor.
+  let benchmarkLineSeries = null;
+  const benchmarkLineData = projectBenchmarkLineSeries(rows, benchmarkSeries, interval, indicators);
+  if (!intraday && benchmarkLineData.length > 1) {
+    benchmarkLineSeries = chart.addSeries(LineSeries, {
+      color: colors.traza,
+      lineWidth: 1,
+      priceScaleId: "benchmark-ratio",
+      priceLineVisible: false,
+      lastValueVisible: false,
+      crosshairMarkerVisible: false,
+    }, 0);
+    benchmarkLineSeries.setData(benchmarkLineData.map((point) => ({ time: point.time, value: point.value })));
+    chart.priceScale("benchmark-ratio").applyOptions({
+      visible: false,
+      // Banda media-baja del panel del precio: por encima del volumen
+      // (0.82→1) y por debajo del grueso de la acción del precio.
+      scaleMargins: { top: 0.62, bottom: 0.24 },
+    });
+    extraSeries.push(benchmarkLineSeries);
+  }
 
   function updateGeometry({ width: nextWidth = width, height: nextHeight = height, profile: nextProfile = profile } = {}) {
     const w = Math.max(Number(nextWidth) || 0, 280);

@@ -1,39 +1,48 @@
-// app/useChartViewport.js — adaptador React del viewport state del chart
-// (ADR chart-controller-extraction §4, paso 6 de §9).
+// app/useChartViewport.js — adaptador React del viewport del chart.
 //
-// Wrapper delgado sobre `lib/chartViewportLifecycle.js`. La lógica del
-// ciclo de vida de viewport vive en la pieza pura; este hook conecta los
-// refs de React a esa pieza y traduce publicaciones a `setState`.
+// Contrato (docs/analisis-grafico-2026-08-14.md, Parte C.1): la ventana
+// visible es función pura de (settings, datos) con la desviación manual como
+// estado explícito del lifecycle. Este hook garantiza la mitad React del
+// contrato:
 //
-// Esta capa es el ÚNICO consumidor de `lightweight-charts` para el estado
-// de viewport. El `timeScale` nativo es la fuente de verdad operativa
-// mientras hay un chart adjunto (§4.1): las actions leen el rango nativo,
-// escriben una sola vez y dejan que la subscription confirme el resultado.
-//
-// Pieza delgada: encapsula el ciclo attach/detach, las subscriptions lógica
-// y temporal, la restauración manual por ventana temporal (con fallback al
-// rango lógico reescalado), el resize adaptativo y el gating del wheel
-// por `getInteractionState() === "idle"` (§4.6). NO conoce la máquina de
-// interacción, NO modifica `handleScroll`/`handleScale`, NO posee la vida
-// del chart (`chart.remove()` es responsabilidad del controller, §4.7).
-//
-// API pública (estable, §4.4): ver `lib/chartViewportLifecycle.js`.
+//   - UNA instancia de `createViewportLifecycle` por montaje. Nunca se
+//     recrea: los parámetros dinámicos (config, altura, rowTimes, estado de
+//     interacción) entran como getters que leen refs actualizadas en cada
+//     render. Botones, rueda y raíl hablan por construcción con la misma
+//     instancia que gobierna el chart.
+//   - El cambio de (símbolo | rango | intervalo) limpia la desviación manual
+//     vía `clearManual()` — el único reset, declarativo y explícito. Este
+//     efecto corre ANTES de la transacción del controller (los hooks se
+//     declaran antes en `useChartController`), así que el attach siguiente
+//     nace ya con el contrato puro.
+//   - `unmount()` libera el attachment vigente y cancela la publicación
+//     pendiente: nada queda colgando entre montajes (StrictMode incluido).
 
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createViewportLifecycle } from "@/lib/chartViewportLifecycle";
+import { chartViewStateFromLogicalRange } from "@/lib/chartNavigation";
+
+const INITIAL_SNAPSHOT = {
+  lifecycle: "detached",
+  view: chartViewStateFromLogicalRange(null, 0),
+  manual: false,
+  visibleLogicalRange: null,
+  visibleTimeRange: null,
+  visibleWindowLabel: "Sin ventana",
+  profile: null,
+};
 
 /**
- * Hook adaptador del viewport state. Sigue el contrato §4.4.
+ * Hook adaptador del viewport.
  *
  * @param {object} args
- * @param {string} args.symbol              Identidad vigente (cambio ⇒ reset manual).
+ * @param {string} args.symbol              Identidad vigente (cambio ⇒ clearManual).
  * @param {object} args.config              `{ dataRange, interval, style, scale }` normalizado.
  * @param {number[]} args.rowTimes          Tiempos normalizados del data model.
  * @param {number} args.requestedHeight     Altura objetivo del caller.
- * @param {() => string} [args.getInteractionState]  Inyectado por el controller desde
- *                                            useChartInteraction; devuelve 'idle' | 'armed' | ...
+ * @param {() => string} [args.getInteractionState]  'idle' | 'armed' | ... (inyectado por el controller).
  */
 export function useChartViewport({
   symbol = "",
@@ -45,92 +54,51 @@ export function useChartViewport({
   const safeConfig = config && typeof config === "object" ? config : {};
   const interval = safeConfig.interval || "D";
   const dataRange = safeConfig.dataRange || "1A";
-  const style = safeConfig.style || "1";
-  const scale = safeConfig.scale || "price";
 
-  // Row times como ref para acceso síncrono desde la pieza pura.
+  // Refs dinámicas: la instancia única lee SIEMPRE el valor vigente.
+  const configRef = useRef({ interval, dataRange });
+  configRef.current = { interval, dataRange };
+  const heightRef = useRef(requestedHeight);
+  heightRef.current = requestedHeight;
+  const interactionRef = useRef(getInteractionState);
+  interactionRef.current = getInteractionState;
   const rowTimesRef = useRef(Array.isArray(rowTimes) ? rowTimes : []);
   useEffect(() => {
     rowTimesRef.current = Array.isArray(rowTimes) ? rowTimes : [];
   }, [rowTimes]);
 
-  // `state` React: publicación agrupada por RAF.
-  const [state, setState] = useState({
-    lifecycle: "detached",
-    visibleLogicalRange: null,
-    visibleTimeRange: null,
-    visibleWindowLabel: "Sin ventana",
-    profile: null,
-  });
+  const [state, setState] = useState(INITIAL_SNAPSHOT);
 
-  // Mantener una referencia estable al lifecycle para que la pieza pura
-  // lo lea de su propio closure sin rerender.
-  const lifecycleRef = useRef(createViewportLifecycle({
-    state: undefined, // pieza pura crea su propio state interno.
-    publish: (snapshot) => setState(snapshot),
-    getInteractionState,
-    interval,
-    dataRange,
-    requestedHeight,
-    getRowTimes: () => rowTimesRef.current,
-  }));
-
-  // Si cambian interval/dataRange/style/scale/getInteractionState,
-  // recreamos la pieza. Es más simple que exponer mutadores individuales.
-  const lifecycleDepsRef = useRef({ interval, dataRange, style, scale, getInteractionState });
-  if (
-    lifecycleDepsRef.current.interval !== interval
-    || lifecycleDepsRef.current.dataRange !== dataRange
-    || lifecycleDepsRef.current.style !== style
-    || lifecycleDepsRef.current.scale !== scale
-    || lifecycleDepsRef.current.getInteractionState !== getInteractionState
-  ) {
-    lifecycleDepsRef.current = { interval, dataRange, style, scale, getInteractionState };
+  // Instancia única por montaje.
+  const lifecycleRef = useRef(null);
+  if (lifecycleRef.current === null) {
     lifecycleRef.current = createViewportLifecycle({
       publish: (snapshot) => setState(snapshot),
-      getInteractionState,
-      interval,
-      dataRange,
-      requestedHeight,
+      getInteractionState: () => {
+        const fn = interactionRef.current;
+        return typeof fn === "function" ? fn() : "idle";
+      },
+      getConfig: () => configRef.current,
+      getRequestedHeight: () => heightRef.current,
       getRowTimes: () => rowTimesRef.current,
     });
   }
-
   const lifecycle = lifecycleRef.current;
 
-  // Reset explícito cuando cambia el símbolo (§4.7 / §6 tabla "Cambio de
-  // símbolo"). BUG 8: la pieza pura desuscribe listeners y cancela timers.
-  //
-  // ORDEN DE EJECUCIÓN RESPECTO AL CONTROLLER (paso 7, app/useChartController.js):
-  // React ejecuta los effects en el orden en que los hooks se DECLARAN
-  // dentro del componente que los invoca. En useChartController.js, la
-  // llamada a useChartViewport() está en la línea 98, ANTES del useEffect
-  // grande del controller (línea 139). Por tanto, los effects internos de
-  // useChartViewport (incluido este `useEffect` de resetBySymbol) se
-  // ejecutan SIEMPRE ANTES que la transacción §5.4/§5.5 del controller
-  // en el mismo ciclo de render.
-  //
-  // Esto descarta el escenario A (carrera destructiva) en la práctica:
-  // cuando el padre cambia el símbolo, resetBySymbol() deja el state
-  // limpio ANTES de que el controller recree el chart. El scenario B
-  // es el único que ocurre: el controller hace su transacción §5.4 con
-  // un state ya reseteado, y `viewport.attach()` se ejecuta sin restos
-  // del attach anterior. No hace falta coordinación adicional entre
-  // el controller y este hook.
+  // Cambio de símbolo, rango o intervalo ⇒ la desviación manual muere.
+  // (Estilo y escala re-adjuntan el chart pero conservan la ventana manual.)
   useEffect(() => {
-    if (!symbol) return;
-    lifecycle.resetBySymbol();
-  }, [symbol, lifecycle]);
+    lifecycle.clearManual();
+  }, [symbol, interval, dataRange, lifecycle]);
 
-  // Cleanup idempotente en unmount. No captura para futuro uso (§4.8.8);
-  // sólo garantiza que no quedan listeners/timers.
+  // Unmount: libera attachment y cancela publicaciones pendientes.
   useEffect(() => () => {
     lifecycle.unmount();
   }, [lifecycle]);
 
   const prepare = useCallback((container) => lifecycle.prepare(container), [lifecycle]);
   const attach = useCallback((opts) => lifecycle.attach(opts), [lifecycle]);
-  const detach = useCallback((opts) => lifecycle.detach(opts), [lifecycle]);
+  const detach = useCallback(() => lifecycle.detach(), [lifecycle]);
   const getSnapshot = useCallback(() => lifecycle.getSnapshot(), [lifecycle]);
   const actions = lifecycle.actions;
 

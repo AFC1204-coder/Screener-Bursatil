@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chartViewStateFromLogicalRange, latestLogicalRange, manualChartWindowRestorePolicy, rescaledLogicalRange, shiftedLogicalRange, timeWindowFromLogicalRange, timeWindowLogicalRange, zoomedLogicalRange } from "@/lib/chartNavigation";
+import { chartViewStateFromLogicalRange, latestLogicalRange, shiftedLogicalRange, timeWindowFromLogicalRange, timeWindowLogicalRange, zoomedLogicalRange } from "@/lib/chartNavigation";
 
 describe("chart navigation helpers", () => {
   it("detecta zoom anclado al último dato por rango lógico", () => {
@@ -96,30 +96,6 @@ describe("chart navigation helpers", () => {
     expect(nextRange).toEqual({ from: 149.5, to: 199.5 });
   });
 
-  it("reescalada un zoom manual cuando cambia el número de barras", () => {
-    const nextRange = rescaledLogicalRange({
-      previousRowCount: 96,
-      nextRowCount: 25,
-      previousRange: { from: 26.5, to: 95.5 },
-      minSpan: 8,
-    });
-
-    expect(nextRange.from).toBeCloseTo(6.53, 2);
-    expect(nextRange.to).toBeCloseTo(24.5, 2);
-  });
-
-  it("preserva distancia al último dato al reescalar una ventana histórica", () => {
-    const nextRange = rescaledLogicalRange({
-      previousRowCount: 96,
-      nextRowCount: 25,
-      previousRange: { from: 0, to: 69 },
-      minSpan: 8,
-    });
-
-    expect(nextRange.from).toBeCloseTo(-0.37, 2);
-    expect(nextRange.to).toBeCloseTo(17.6, 2);
-  });
-
   it("convierte una ventana temporal en rango lógico para preservar contexto al cambiar temporalidad", () => {
     const rowTimes = Array.from({ length: 20 }, (_, index) => 1000 + index * 100);
     const nextRange = timeWindowLogicalRange({
@@ -156,74 +132,9 @@ describe("chart navigation helpers", () => {
     })).toEqual({ from: 1000, to: 1900 });
   });
 
-  it("preserva una ventana manual al cambiar de intervalo en el mismo ticker", () => {
-    const policy = manualChartWindowRestorePolicy({
-      previousMeta: { ready: true, symbol: "ASML", range: "1A", interval: "D", style: "1", scale: "price" },
-      nextMeta: { ready: true, symbol: "ASML", range: "1A", interval: "W", style: "1", scale: "price" },
-      viewState: { isManual: true },
-      visibleTimeRange: { from: 1710000000, to: 1720000000 },
-    });
-
-    expect(policy).toEqual({ restore: true, reason: "interval-change" });
-  });
-
-  it("preserva una ventana manual al cambiar rango, estilo o escala", () => {
-    const base = {
-      previousMeta: { ready: true, symbol: "ASML", range: "1A", interval: "D", style: "1", scale: "price" },
-      viewState: { isManual: true },
-      visibleTimeRange: { from: 1710000000, to: 1720000000 },
-    };
-
-    expect(manualChartWindowRestorePolicy({
-      ...base,
-      nextMeta: { ready: true, symbol: "ASML", range: "5A", interval: "D", style: "1", scale: "price" },
-    })).toEqual({ restore: true, reason: "range-change" });
-
-    expect(manualChartWindowRestorePolicy({
-      ...base,
-      nextMeta: { ready: true, symbol: "ASML", range: "1A", interval: "D", style: "8", scale: "price" },
-    })).toEqual({ restore: true, reason: "style-change" });
-
-    expect(manualChartWindowRestorePolicy({
-      ...base,
-      nextMeta: { ready: true, symbol: "ASML", range: "1A", interval: "D", style: "1", scale: "log" },
-    })).toEqual({ restore: true, reason: "scale-change" });
-  });
-
-  it("resetea la ventana al cambiar de ticker o cuando la vista no era manual", () => {
-    const previousMeta = { ready: true, symbol: "ASML", range: "1A", interval: "D", style: "1", scale: "price" };
-    const visibleTimeRange = { from: 1710000000, to: 1720000000 };
-
-    expect(manualChartWindowRestorePolicy({
-      previousMeta,
-      nextMeta: { ...previousMeta, symbol: "NVDA" },
-      viewState: { isManual: true },
-      visibleTimeRange,
-    })).toEqual({ restore: false, reason: "symbol-change" });
-
-    expect(manualChartWindowRestorePolicy({
-      previousMeta,
-      nextMeta: { ...previousMeta, interval: "W" },
-      viewState: { isManual: false },
-      visibleTimeRange,
-    })).toEqual({ restore: false, reason: "automatic-view" });
-  });
-
-  it("no restaura si todavia no hay render previo o falta ventana temporal valida", () => {
-    const meta = { ready: true, symbol: "ASML", range: "1A", interval: "D", style: "1", scale: "price" };
-
-    expect(manualChartWindowRestorePolicy({
-      previousMeta: { ...meta, ready: false },
-      nextMeta: { ...meta, interval: "W" },
-      viewState: { isManual: true },
-      visibleTimeRange: { from: 1710000000, to: 1720000000 },
-    })).toEqual({ restore: false, reason: "first-render" });
-
-    expect(manualChartWindowRestorePolicy({
-      previousMeta: meta,
-      nextMeta: { ...meta, interval: "W" },
-      viewState: { isManual: true },
-      visibleTimeRange: { from: 1710000000, to: 1710000000 },
-    })).toEqual({ restore: false, reason: "missing-time-window" });
-  });
+  // La política de restauración heurística (`manualChartWindowRestorePolicy`)
+  // y `rescaledLogicalRange` se eliminaron con la inversión del contrato de
+  // ventana (docs/analisis-grafico-2026-08-14.md, C.1). La desviación manual
+  // es ahora estado explícito del lifecycle y su preservación/reset se cubre
+  // en `tests/chartViewport.test.js`.
 });
