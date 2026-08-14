@@ -1671,40 +1671,13 @@
   text-transform:uppercase;
 }
 
-.universalRsLineBadge {
-  position:absolute;
-  left:0;
-  top:0;
-  z-index:5;
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  min-width:68px;
-  height:26px;
-  padding:0 8px;
-  border:1px solid var(--accent);
-  border-radius:4px;
-  background:var(--surface2);
-  box-shadow:0 6px 18px rgba(0,0,0,.35);
-  color:var(--accent);
-  opacity:0;
-  pointer-events:none;
-  transform:translate(0,0);
-  transition:opacity .12s ease;
-}
-
-.universalRsLineBadge span {
-  color:var(--accent);
-  font-size:10px;
-  font-weight:850;
-  letter-spacing:.08em;
-  white-space:nowrap;
-}
-
-.universalRsLineBadge b {
-  color:#eff6ff;
-  font-size:14px;
-  line-height:1;
+/* Ausencia de la línea RS: histórico semanal insuficiente. Va bajo el gráfico,
+   con las demás notas de dato, no flotando sobre el lienzo — ahí se
+   superponía al eje de tiempo y no se leía. Lenguaje de calidad de dato
+   (DIRECCION-VISUAL §2 regla 7): humo, sin señal. Que falte histórico no es
+   una alerta de mercado. */
+.universalRsAbsenceNote {
+  color:var(--humo);
 }
 
 .universalRsInlineLegend b {

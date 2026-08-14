@@ -5,10 +5,21 @@
 // Uso:
 //   node --env-file=.env.local --loader ./scripts/loader.mjs \
 //     scripts/rs-universe.mjs --population=equity [--dry-run] [--write] \
-//     [--limit=N] [--concurrency=8] [--min-sample=20]
+//     [--limit=N] [--concurrency=8] [--min-sample=20] [--as-of=YYYY-MM-DD]
 //
 // Por defecto corre en --dry-run (calcula y reporta, no escribe). Escribir
 // en Supabase exige --write explícito.
+//
+// --as-of=YYYY-MM-DD (opcional, añadido para medir el coste de un relleno
+// histórico — docs/adr-rs-universo-us.md, tarea de medición de UNA semana):
+// recorta las barras de cada símbolo a trade_date<=as-of ANTES de calcular
+// los rendimientos, así que bars[0] deja de ser el cierre de hoy y pasa a
+// ser el cierre más reciente disponible en o antes de esa fecha. No toca
+// RETURN_WINDOWS_WEEKS/RETURN_WEIGHTS ni la fórmula de computeReturns: la
+// única diferencia es QUÉ barras entran, no cómo se combinan. Sin --as-of,
+// el comportamiento es exactamente el de antes (barras completas, fecha de
+// hoy). Esto es solo el instrumento de medición: NO implementa el bucle de
+// 26 semanas, eso es una tarea aparte.
 //
 // Reutiliza percentileFromSorted/clamp de lib/relativeStrength.js (no se
 // toca ese archivo) y supabaseRequest/supabaseConfig/finiteOrNull/toDate de
@@ -94,6 +105,7 @@ function parseArgs(argv) {
     limit: 0,
     concurrency: 8,
     minSample: DEFAULT_MIN_SAMPLE,
+    asOf: "",
   };
   for (const arg of argv) {
     const [rawKey, rawValue] = arg.replace(/^--/, "").split("=");
@@ -104,6 +116,7 @@ function parseArgs(argv) {
     else if (key === "limit") out.limit = Math.max(0, Number(rawValue) || 0);
     else if (key === "concurrency") out.concurrency = Math.max(1, Number(rawValue) || 8);
     else if (key === "min-sample") out.minSample = Math.max(1, Number(rawValue) || DEFAULT_MIN_SAMPLE);
+    else if (key === "as-of") out.asOf = String(rawValue || "").trim();
   }
   // --write gana sobre el default dry-run=true, pero si además se pasa
   // --dry-run=true explícito junto a --write, dry-run manda (más seguro).
@@ -116,7 +129,7 @@ function usageAndExit(message) {
   console.error([
     "Uso:",
     "  node --env-file=.env.local --loader ./scripts/loader.mjs scripts/rs-universe.mjs \\",
-    "    --population=equity|etf [--dry-run] [--write] [--limit=N] [--concurrency=8] [--min-sample=20]",
+    "    --population=equity|etf [--dry-run] [--write] [--limit=N] [--concurrency=8] [--min-sample=20] [--as-of=YYYY-MM-DD]",
     "",
     "Por defecto corre en --dry-run (no escribe). --write exige confirmarlo explícitamente.",
   ].join("\n"));
@@ -208,16 +221,20 @@ function buildPopulation(universeRows, populationType) {
 
 // ── Barras y rendimientos ───────────────────────────────────────────────
 
-async function fetchBarsForSymbol(config, symbol) {
-  const rows = await supabaseRequest("daily_bars", {
-    query: [
-      `owner_id=eq.${encodeURIComponent(config.ownerId)}`,
-      `symbol=eq.${encodeURIComponent(symbol)}`,
-      "select=trade_date,close,updated_at",
-      "order=trade_date.desc",
-      `limit=${MIN_BARS_REQUIRED + 50}`,
-    ].join("&"),
-  });
+async function fetchBarsForSymbol(config, symbol, asOfDate = "") {
+  // Con --as-of, la única diferencia es este filtro adicional: barras hasta
+  // (e incluyendo) esa fecha, mismo orden desc, mismo límite. bars[0] pasa a
+  // ser el cierre más reciente <= asOfDate en vez de el de hoy. Todo lo que
+  // pasa después (computeReturns, ventanas, pesos) es idéntico.
+  const query = [
+    `owner_id=eq.${encodeURIComponent(config.ownerId)}`,
+    `symbol=eq.${encodeURIComponent(symbol)}`,
+    asOfDate ? `trade_date=lte.${encodeURIComponent(asOfDate)}` : "",
+    "select=trade_date,close,updated_at",
+    "order=trade_date.desc",
+    `limit=${MIN_BARS_REQUIRED + 50}`,
+  ].filter(Boolean).join("&");
+  const rows = await supabaseRequest("daily_bars", { query });
   if (!Array.isArray(rows)) return [];
   // daily_bars tiene unique(owner_id, symbol, trade_date, provider) — puede
   // haber más de una fila por fecha si hubo más de un proveedor. Nos
@@ -365,7 +382,16 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`=== rs-universe.mjs — población=${args.population} modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"} ===`);
+  // targetDate gobierna tres cosas: el recorte de barras (fetchBarsForSymbol),
+  // y snapshot_date/week_key si se escribe. Sin --as-of es hoy, exactamente
+  // el comportamiento previo a este parámetro.
+  let targetDate = toDate(new Date().toISOString());
+  if (args.asOf) {
+    targetDate = toDate(args.asOf);
+    if (!targetDate) usageAndExit(`--as-of no es una fecha válida: "${args.asOf}"`);
+  }
+
+  console.log(`=== rs-universe.mjs — población=${args.population} modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"}${args.asOf ? ` as-of=${targetDate}` : ""} ===`);
 
   const { snapshotId: universeSnapshotId, asOf } = await fetchLatestUsSnapshotId(config);
   console.log(`Instantánea de universo usada: ${universeSnapshotId} (creada ${asOf})`);
@@ -383,8 +409,13 @@ async function main() {
     console.log("AVISO: la población 'etf' usa instrument_type='fund' del universo, que solo reconoce ETFs/ETNs por marca de nombre (ver lib/universeEngine.js:69). No es una lista curada de ETFs de país/sector — es probable que esté muy incompleta.");
   }
 
+  // La población (qué símbolos entran) sigue viniendo de la instantánea de
+  // universo MÁS RECIENTE aunque se pida --as-of pasado: es la misma
+  // simplificación que ya tenía el script sin este parámetro (no hay
+  // instantánea histórica de universo que consultar). Se reporta como
+  // limitación conocida, no se resuelve aquí — ver informe final.
   const computed = await mapLimit(requestedPopulation, args.concurrency, async (row) => {
-    const bars = await fetchBarsForSymbol(config, row.symbol);
+    const bars = await fetchBarsForSymbol(config, row.symbol, args.asOf ? targetDate : "");
     const result = computeReturns(bars);
     return { ...row, ...result };
   });
@@ -438,11 +469,11 @@ async function main() {
   }
 
   if (args.write && !args.dryRun) {
-    const snapshotDate = toDate(new Date().toISOString());
-    const weekKey = isoWeekKey(new Date());
+    const snapshotDate = targetDate;
+    const weekKey = isoWeekKey(new Date(`${targetDate}T00:00:00Z`));
     const engineVersion = ENGINE_VERSION_BY_POPULATION[args.population];
     console.log("");
-    console.log(`Escribiendo snapshot ${weekKey} (${snapshotDate}) engine_version=${engineVersion} ...`);
+    console.log(`Escribiendo snapshot ${weekKey} (${snapshotDate}) engine_version=${engineVersion}${args.asOf ? " [as-of]" : ""} ...`);
     const snapshotId = await upsertSnapshotAndItems(config, {
       engineVersion,
       snapshotDate,

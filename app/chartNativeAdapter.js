@@ -31,10 +31,29 @@ import {
   projectPatternMarkers,
   projectRsRatingSeries,
   projectVolumeSeries,
+  rsLineHistory,
 } from "@/lib/chartSeriesModel";
 
 const PRICE_SCALE_LINE = 2;
 const PRICE_SCALE_DASHED = 2;
+
+// Panel del RS (lightweight-charts v5). El RS es un percentil 1-99 y el precio
+// una cotización en cualquier escala: en un eje común uno de los dos siempre
+// queda ilegible. El panel propio le da su escala, con el eje de tiempo
+// sincronizado por el chart.
+const RS_PANE_INDEX = 1;
+// Reparto de altura: el precio conserva la lectura principal (4/5) y el RS
+// ocupa la banda inferior (1/5).
+const PRICE_PANE_STRETCH = 4;
+const RS_PANE_STRETCH = 1;
+// Extremos del ranking. El eje se fija a ellos en vez de autoescalar: un RS de
+// 70 significa lo mismo en cualquier valor, y una escala que se reajusta a la
+// ventana visible convierte un movimiento de tres puntos en una montaña.
+const RS_SCALE_MIN = 1;
+const RS_SCALE_MAX = 99;
+// Mediana del universo. Referencia descriptiva —por encima el valor va mejor
+// que la mitad del universo, por debajo peor—, no un umbral de decisión.
+const RS_REFERENCE = 50;
 
 /**
  * @typedef {object} ChartCssTokens
@@ -83,8 +102,8 @@ function fmtPrice(price) {
  *   extraSeries: object[],
  *   markerDescriptors: object[],
  *   pivotPriceLine: object | null,
+ *   rsPane: { rendered, paneIndex, points, weeks, latestValue },
  *   updateGeometry: (next: { width, height, profile }) => void,
- *   updateRsBadge: (() => void) | null,
  *   destroySeries: () => void,
  * }}
  */
@@ -137,6 +156,14 @@ export function createChartNativeAdapter(args) {
       textColor: colors.soft,
       fontFamily: "Instrument Sans, ui-sans-serif, system-ui, sans-serif",
       fontSize: 12,
+      // Separador entre el panel del precio y el del RS: es estructura, no
+      // señal, así que usa la misma línea que la rejilla. Sin arrastre: la
+      // altura de los paneles es una decisión de producto, no del usuario.
+      panes: {
+        enableResize: false,
+        separatorColor: colors.line2,
+        separatorHoverColor: colors.line2,
+      },
     },
     grid: {
       vertLines: { color: colors.line },
@@ -264,57 +291,73 @@ export function createChartNativeAdapter(args) {
     extraSeries.push(series);
   }
 
-  // Línea RS
+  // ── Línea RS, en su propio panel ─────────────────────────────────────────
+  //
+  // Antes vivía como overlay del panel del precio sobre una escala oculta
+  // ("rs-line-overlay"), y por tanto sin eje que la leyera: el usuario veía
+  // una línea sin saber a qué altura corresponde qué valor. Ahora ocupa el
+  // panel 1, con eje visible fijado a 1-99 y el tiempo sincronizado por el
+  // chart. El panel 0 —precio, volumen, medias y marcadores— no cambia de
+  // composición; solo comparte la altura total con el panel nuevo.
   let rsSeries = null;
-  let updateRsBadge = null;
   const rsLineData = projectRsRatingSeries(rows, rsRatingSeries, indicators, interval);
-  if (!intraday && indicators.rsLine && rsLineData.length > 1) {
-    const rsScaleId = "rs-line-overlay";
-    rsSeries = chart.addSeries(LineSeries, {
-      color: colors.traza,
-      lineWidth: 2,
-      priceLineVisible: false,
-      lastValueVisible: false,
-      priceScaleId: rsScaleId,
-      priceFormat: { type: "price", precision: 0, minMove: 1 },
-      title: "",
-    });
+  const rsHistory = rsLineHistory(rsLineData);
+  const rsRendered = !intraday && !!indicators.rsLine && rsLineData.length > 1 && rsHistory.sufficient;
+  if (rsRendered) {
+    rsSeries = chart.addSeries(
+      LineSeries,
+      {
+        color: colors.traza,
+        lineWidth: 2,
+        priceLineVisible: false,
+        // La etiqueta del último valor la pinta ahora el propio eje del panel
+        // RS, con el valor del RS. Antes el número visible junto a la línea
+        // salía de un badge HTML que mostraba el cierre del precio.
+        lastValueVisible: true,
+        priceFormat: { type: "price", precision: 0, minMove: 1 },
+        title: "RS",
+        // Escala fija. El provider sustituye el cálculo del autoescalado y
+        // devuelve SIEMPRE el mismo rango, así que la escala no se reajusta
+        // a la ventana visible: un RS de 70 se dibuja a la misma altura con
+        // cualquier zoom y en cualquier valor. Sin márgenes, ni en fracción
+        // ni en píxeles: cualquier holgura ensancha el rango visible y el eje
+        // pasa a rotular valores que un percentil no puede tomar (0, 100, -50
+        // — visto en pantalla con márgenes de 6 px).
+        autoscaleInfoProvider: () => ({
+          priceRange: { minValue: RS_SCALE_MIN, maxValue: RS_SCALE_MAX },
+        }),
+      },
+      RS_PANE_INDEX,
+    );
     rsSeries.setData(rsLineData.map((point) => ({ time: point.time, value: point.value })));
     if (typeof rsSeries.createPriceLine === "function") {
+      // La referencia anterior estaba en 0, un valor que la escala 1-99 no
+      // puede contener: además de no significar nada, arrastraba la
+      // autoescala hasta cero.
       rsSeries.createPriceLine({
-        price: 0,
+        price: RS_REFERENCE,
         color: colors.line2,
         lineStyle: PRICE_SCALE_DASHED,
         lineWidth: 1,
         axisLabelVisible: false,
-        title: "RS base",
+        title: "",
       });
     }
-    chart.priceScale(rsScaleId).applyOptions({
-      visible: false,
+    chart.priceScale("right", RS_PANE_INDEX).applyOptions({
+      visible: true,
+      borderColor: colors.line2,
+      // `autoScale: false` congelaría el rango que hubiera al crear la escala
+      // y dejaría sin efecto el `autoscaleInfoProvider` de la serie, que es
+      // justo la pieza que fija el 1-99. Los `scaleMargins` se aplican como
+      // fracción del rango, así que estirarían el eje hasta rotular 0 y 100+:
+      // el margen del RS va en píxeles, en el provider.
       autoScale: true,
-      scaleMargins: indicators.volume ? { top: 0.56, bottom: 0.14 } : { top: 0.62, bottom: 0.06 },
+      scaleMargins: { top: 0, bottom: 0 },
     });
+    const panes = typeof chart.panes === "function" ? chart.panes() : [];
+    if (panes[0]?.setStretchFactor) panes[0].setStretchFactor(PRICE_PANE_STRETCH);
+    if (panes[RS_PANE_INDEX]?.setStretchFactor) panes[RS_PANE_INDEX].setStretchFactor(RS_PANE_STRETCH);
     extraSeries.push(rsSeries);
-
-    const rsBadgeRef = overrides.rsBadgeRef || null;
-    updateRsBadge = () => {
-      const badge = rsBadgeRef && rsBadgeRef.current;
-      const latestRsPoint = rsLineData.at(-1);
-      if (!badge || !latestRsPoint) return;
-      const timeScale = chart.timeScale?.();
-      if (!timeScale) return;
-      const x = timeScale.timeToCoordinate?.(latestRsPoint.time);
-      const y = rsSeries.priceToCoordinate?.(latestRsPoint.value);
-      if (!Number.isFinite(x) || !Number.isFinite(y)) {
-        badge.style.opacity = "0";
-        return;
-      }
-      const nextX = container.offsetLeft + Math.min(Math.max(x + 8, 8), Math.max(8, width - 78));
-      const nextY = container.offsetTop + Math.min(Math.max(y - 13, 18), Math.max(18, height - 30));
-      badge.style.transform = `translate(${Math.round(nextX)}px, ${Math.round(nextY)}px)`;
-      badge.style.opacity = "1";
-    };
   }
 
   // Benchmark line (proyección sin pintar — el controller decide si la quiere)
@@ -341,7 +384,6 @@ export function createChartNativeAdapter(args) {
       autoScale: true,
       scaleMargins: nextProfile.priceScaleMargins,
     });
-    if (updateRsBadge) updateRsBadge();
   }
 
   function destroySeries() {
@@ -365,8 +407,16 @@ export function createChartNativeAdapter(args) {
     extraSeries,
     markerDescriptors,
     pivotPriceLine,
+    // Lo que el panel RS acabó dibujando, para que el controller pueda
+    // declarar la ausencia con su motivo sin recalcular la serie.
+    rsPane: {
+      rendered: rsRendered,
+      paneIndex: rsRendered ? RS_PANE_INDEX : null,
+      points: rsLineData.length,
+      weeks: rsHistory.weeks,
+      latestValue: rsRendered ? (rsLineData.at(-1)?.value ?? null) : null,
+    },
     updateGeometry,
-    updateRsBadge,
     destroySeries,
   };
 }

@@ -56,17 +56,21 @@ function companyBrief() {
   };
 }
 
+// La sonda de "el gráfico publicó datos nuevos" era `.universalRsLineBadge`,
+// un badge rotulado "RS <rango>" que en realidad mostraba el ÚLTIMO CIERRE del
+// precio (por eso cambiaba al cambiar de rango). Ese badge ya no existe: la
+// línea RS vive en su propio panel y su eje rotula el RS. Lo que el badge
+// aportaba a esta prueba —rango aplicado + datos nuevos— lo cubren el scope
+// badge y la cotización del header, que son los mismos dos hechos sin el
+// rótulo equivocado.
 async function chartSnapshot(page) {
   return page.evaluate(() => {
     const panel = document.querySelector('section.stockChartPanel[aria-label="Gráfico de la ficha"]');
     const quote = panel?.querySelector(".universalChartQuote");
     const scope = panel?.querySelector(".universalChartScopeBadge b");
-    const rangeBadge = panel?.querySelector(".universalRsLineBadge");
     return {
       scope: scope?.textContent?.replace(/\s+/g, " ").trim() || "",
       quote: quote?.textContent?.replace(/\s+/g, " ").trim() || "",
-      rangeBadge: rangeBadge?.textContent?.replace(/\s+/g, " ").trim() || "",
-      rangeTitle: rangeBadge?.getAttribute("title") || "",
     };
   });
 }
@@ -81,16 +85,11 @@ async function selectRange(page, range, previousSnapshot) {
       const root = document.querySelector('section.stockChartPanel[aria-label="Gráfico de la ficha"]');
       const selected = root?.querySelector(`button[aria-label="Rango ${expectedRange}"]`);
       const scope = root?.querySelector(".universalChartScopeBadge b")?.textContent?.replace(/\s+/g, " ").trim() || "";
-      const rangeBadge = root?.querySelector(".universalRsLineBadge");
-      const rangeText = rangeBadge?.textContent?.replace(/\s+/g, " ").trim() || "";
-      const rangeTitle = rangeBadge?.getAttribute("title") || "";
       const quote = root?.querySelector(".universalChartQuote")?.textContent?.replace(/\s+/g, " ").trim() || "";
       return selected?.getAttribute("aria-pressed") === "true"
         && scope === `${expectedRange} · D`
-        && rangeText.includes(`RS ${expectedRange}`)
-        && rangeTitle.includes(`RS del rango ${expectedRange}`)
-        && quote !== previous.quote
-        && rangeText !== previous.rangeBadge;
+        && scope !== previous.scope
+        && quote !== previous.quote;
     }, { expectedRange: range, previous: previousSnapshot }, { timeout: 15000 });
   } catch {
     const current = await chartSnapshot(page);

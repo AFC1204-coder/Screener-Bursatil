@@ -169,7 +169,6 @@ describe("useChartController · viewModel composicional (ADR §5.2)", () => {
   it("UniversalPriceChartView acepta viewModel/actions/drawingToolbar como props (test estático sin controller)", () => {
     /* UniversalPriceChartView ya importado */
     const fakeRef = { current: null };
-    const fakeRsRef = { current: null };
     const viewModel = {
       status: "ready",
       header: { symbol: "FAKE", latestClose: 100, changePct: 5, positive: true, rangeLabel: "1A", interval: "D" },
@@ -188,7 +187,6 @@ describe("useChartController · viewModel composicional (ADR §5.2)", () => {
     const html = renderToStaticMarkup(
       React.createElement(UPCView, {
         canvasRef: fakeRef,
-        rsBadgeRef: fakeRsRef,
         viewModel,
         actions,
         drawingToolbar,

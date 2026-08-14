@@ -22,6 +22,8 @@ import {
   projectRsRatingSeries,
   projectRsVisibleRangeSummary,
   projectVolumeSeries,
+  rsLineHistory,
+  RS_LINE_MIN_WEEKS,
   shouldRenderRsLine,
 } from "@/lib/chartSeriesModel";
 
@@ -285,5 +287,40 @@ describe("chartSeriesModel · shouldRenderRsLine", () => {
   it("true solo con rsLine activo, no intradía y >1 punto", () => {
     expect(shouldRenderRsLine({ rsLine: true }, false, 2)).toBe(true);
     expect(shouldRenderRsLine({ rsLine: true }, false, 90)).toBe(true);
+  });
+});
+
+describe("chartSeriesModel · rsLineHistory", () => {
+  it("cuenta semanas ISO distintas, no puntos", () => {
+    // Cinco lecturas dentro de la misma semana (lunes a viernes) siguen
+    // siendo UN dato semanal: no hay serie que dibujar.
+    const sameWeek = ["2026-08-03", "2026-08-04", "2026-08-05", "2026-08-06", "2026-08-07"]
+      .map((date) => ({ date, value: 60 }));
+    expect(rsLineHistory(sameWeek)).toMatchObject({ weeks: 1, sufficient: false });
+  });
+
+  it("es suficiente justo al llegar al mínimo, y no antes", () => {
+    const weekly = (count) => Array.from({ length: count }, (_, index) => ({
+      date: new Date(Date.UTC(2026, 0, 5) + index * 7 * 86400000).toISOString().slice(0, 10),
+      value: 50,
+    }));
+    expect(rsLineHistory(weekly(RS_LINE_MIN_WEEKS - 1))).toMatchObject({
+      weeks: RS_LINE_MIN_WEEKS - 1,
+      sufficient: false,
+    });
+    expect(rsLineHistory(weekly(RS_LINE_MIN_WEEKS))).toMatchObject({
+      weeks: RS_LINE_MIN_WEEKS,
+      sufficient: true,
+    });
+  });
+
+  it("deriva la semana del timestamp cuando el punto no trae fecha", () => {
+    const points = [0, 7, 14].map((offset) => ({ time: Date.UTC(2026, 0, 5) / 1000 + offset * 86400 }));
+    expect(rsLineHistory(points).weeks).toBe(3);
+  });
+
+  it("tolera entradas vacías o no-array", () => {
+    expect(rsLineHistory([])).toMatchObject({ weeks: 0, sufficient: false });
+    expect(rsLineHistory(null)).toMatchObject({ weeks: 0, sufficient: false });
   });
 });

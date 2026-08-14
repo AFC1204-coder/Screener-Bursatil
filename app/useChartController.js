@@ -34,6 +34,7 @@ import { useChartDataModel } from "@/app/useChartDataModel";
 import { useChartDrawings } from "@/app/useChartDrawings";
 import { useChartViewport } from "@/app/useChartViewport";
 import { createChartNativeAdapter, resolveCssTokensNative } from "@/app/chartNativeAdapter";
+import { RS_LINE_MIN_WEEKS, projectRsRatingSeries, rsLineHistory } from "@/lib/chartSeriesModel";
 import { userFacingSearchError } from "@/lib/screenerFormat";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
@@ -114,11 +115,11 @@ export function useChartController(props = {}) {
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Refs DOM que la vista necesita. El badge RS se queda imperativo
-  // (§5.2) para no provocar renders React por cada cambio geométrico.
+  // Ref DOM del container. El badge RS flotante que se posicionaba de forma
+  // imperativa ya no existe: la línea RS vive en su propio panel y es el eje
+  // de ese panel el que rotula su último valor.
   // ─────────────────────────────────────────────────────────────────────────
   const canvasRef = useRef(null);
-  const rsBadgeRef = useRef(null);
 
   // Refs internos del controller para gestionar el ciclo de vida nativo.
   const chartHandleRef = useRef(null);
@@ -136,6 +137,23 @@ export function useChartController(props = {}) {
   // Helpers para construir el viewModel.
   const intraday = config.intraday;
   const rangeLabel = (CHART_RANGES.find((item) => item.key === config.dataRange)?.label || config.dataRange || "").toUpperCase();
+
+  // Estado de la línea RS para la vista. Se deriva con las MISMAS funciones
+  // puras que usa el adaptador (`projectRsRatingSeries` + `rsLineHistory`), no
+  // con una segunda regla paralela: lo que la vista declara sobre el panel RS
+  // y lo que el panel RS dibuja no pueden discrepar.
+  const rsLineState = useMemo(() => {
+    if (!config.indicators.rsLine) return { enabled: false, rendered: false, weeks: 0 };
+    if (intraday) return { enabled: true, rendered: false, weeks: 0, intradayMuted: true };
+    const points = projectRsRatingSeries(rows, rsRatingSeries, config.indicators, config.interval);
+    const history = rsLineHistory(points);
+    return {
+      enabled: true,
+      rendered: points.length > 1 && history.sufficient,
+      weeks: history.weeks,
+      intradayMuted: false,
+    };
+  }, [config.indicators, config.interval, intraday, rows, rsRatingSeries]);
 
   const patternSummary = useMemo(() => methodologyDisplayForRow(patternOverlay || {}), [patternOverlay]);
   const patternDiagnostic = useMemo(
@@ -202,7 +220,6 @@ export function useChartController(props = {}) {
           rsRatingSeries,
           requestedHeight: height,
           positive,
-          rsBadgeRef,
         },
       });
 
@@ -235,19 +252,6 @@ export function useChartController(props = {}) {
       drawings.attach(adapter.chart, adapter.mainSeries, container);
 
       chartHandleRef.current = adapter;
-
-      // §5.4 / 9: callbacks geométricos (badge RS). El adapter expone
-      // updateRsBadge si pintó la línea RS.
-      if (typeof adapter.updateRsBadge === "function") {
-        adapter.updateRsBadge();
-        const rafId = requestAnimationFrame(() => {
-          if (!cancelled && typeof adapter.updateRsBadge === "function") {
-            adapter.updateRsBadge();
-          }
-        });
-        // Guardamos para cancelar en cleanup.
-        cleanupFns.push(() => cancelAnimationFrame(rafId));
-      }
 
       // ResizeObserver: la geometría ya la aplica el controller vía
       // viewport.onGeometryChange; aquí sólo observamos el container.
@@ -374,10 +378,23 @@ export function useChartController(props = {}) {
     rsLegend: {
       enabled: !!config.indicators.rsLine,
       intradayMuted: intraday,
+      rendered: rsLineState.rendered,
+      // Ausencia con motivo, en el sitio donde falta el dato
+      // (docs/principios-producto.md §5, la excepción). Sin línea RS no se
+      // dibuja una recta de dos puntos: se dice cuánto histórico hay.
+      absence: config.indicators.rsLine && !intraday && !rsLineState.rendered
+        ? {
+          weeks: rsLineState.weeks,
+          text: rsLineState.weeks > 0
+            ? `Sin línea RS: ${rsLineState.weeks} ${rsLineState.weeks === 1 ? "semana" : "semanas"} de histórico (mínimo ${RS_LINE_MIN_WEEKS})`
+            : "Sin línea RS: este valor no tiene histórico del ranking semanal",
+          title: `El RS es un percentil semanal. Con menos de ${RS_LINE_MIN_WEEKS} semanas la línea uniría lecturas contiguas y afirmaría una tendencia que no se ha medido.`,
+        }
+        : null,
     },
     notes,
     rootClassName: className,
-  }), [status, symbol, latest, change, positive, rangeLabel, config.interval, config.indicators.rsLine, intraday, patternSummary, viewportRail, patternDiagnostic, notes, className]);
+  }), [status, symbol, latest, change, positive, rangeLabel, config.interval, config.indicators.rsLine, intraday, rsLineState, patternSummary, viewportRail, patternDiagnostic, notes, className]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // actions — contrato §5.2.
@@ -393,7 +410,6 @@ export function useChartController(props = {}) {
 
   return {
     canvasRef,
-    rsBadgeRef,
     viewModel,
     actions,
     drawingToolbar: drawings.toolbarProps,

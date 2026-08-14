@@ -32,12 +32,11 @@ const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
 /**
  * Vista declarativa. Recibe el output del controller. NO calcula nada por
  * su cuenta. Si necesita un controller falso para tests estáticos, basta
- * con pasar `canvasRef`, `rsBadgeRef`, `viewModel`, `actions` y
+ * con pasar `canvasRef`, `viewModel`, `actions` y
  * `drawingToolbar` como props.
  */
 export function UniversalPriceChartView({
   canvasRef,
-  rsBadgeRef,
   viewModel,
   actions,
   drawingToolbar,
@@ -207,21 +206,20 @@ export function UniversalPriceChartView({
           )}
         </div>
       )}
-      {Number.isFinite(Number(latestClose)) && (
-        <div
-          ref={rsBadgeRef}
-          className="universalRsLineBadge"
-          title={Number.isFinite(Number(changePct)) ? `RS del rango ${rangeLabel}: ${changePct.toFixed(1)}% vs benchmark.` : `RS del rango ${rangeLabel}`}
-        >
-          <span>RS {rangeLabel}</span>
-          <b>{fmt(latestClose)}</b>
+      {/* La leyenda flotante rotulaba la línea RS sobre el lienzo del precio,
+          que era donde la línea vivía. Ahora el RS tiene panel y eje propios,
+          y el eje ya la identifica: repetirlo flotando encima solo tapa
+          gráfico. Queda solo para intradía, donde no hay panel y hay que
+          decir por qué. La ausencia por histórico va abajo, con las demás
+          notas de dato, donde se lee. */}
+      {rsLegend?.enabled && rsLegend.intradayMuted && (
+        <div className="universalRsInlineLegend muted">
+          <span>RS</span>
+          <em>Sin serie relativa suficiente</em>
         </div>
       )}
-      {rsLegend?.enabled && (
-        <div className={`universalRsInlineLegend ${rsLegend.intradayMuted ? "muted" : ""}`}>
-          <span>{rsLegend.intradayMuted ? "RS" : "RS línea"}</span>
-          {rsLegend.intradayMuted && <em>Sin serie relativa suficiente</em>}
-        </div>
+      {rsLegend?.absence && (
+        <p className="dataNote universalRsAbsenceNote" role="status" title={rsLegend.absence.title}>{rsLegend.absence.text}</p>
       )}
       {qualityNotice && <p className="universalChartEstimatedNote" role="status" title={qualityNotice.title}>{qualityNotice.text}</p>}
       {expandingNotice && <p className="dataNote">{expandingNotice.text}</p>}
@@ -236,7 +234,6 @@ export default function UniversalPriceChart(props = {}) {
   return (
     <UniversalPriceChartView
       canvasRef={controller.canvasRef}
-      rsBadgeRef={controller.rsBadgeRef}
       viewModel={controller.viewModel}
       actions={controller.actions}
       drawingToolbar={controller.drawingToolbar}
