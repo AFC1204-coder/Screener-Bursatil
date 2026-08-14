@@ -37,7 +37,7 @@ import { buildReviewPrioritySummary, decisionProfileStateForStock, reviewPriorit
 import { buildScreenerDataHealth, dataHealthFilterLabel } from "@/lib/screenerDataHealth";
 import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
-import { cachedScreenerQuery, cachedScreenerRow, compactRowForSession, compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, shuffle, sortMetric, spreadByInitial, uid, universeScopeKey } from "@/lib/screenerPipeline";
+import { compactRowForSession, compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, shuffle, sortMetric, spreadByInitial, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import { buildSnapshotFreshnessNotice } from "@/lib/snapshotFreshness";
 import { pickBestRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
@@ -71,7 +71,6 @@ import { buildScreenerContract, buildScreenerStockContext } from "@/lib/screener
 import { createFavoriteFromRow } from "@/lib/stockRows";
 import { countryCode, marketFlag, stockUrl } from "@/lib/symbols";
 
-const CACHE_PREVIEW_TIMEOUT_MS = 3500;
 const MARKET_HEALTH_TIMEOUT_MS = 5000;
 
 function reviewQueueScoreAuditMeta(row = {}) {
@@ -1229,22 +1228,43 @@ export default function Page() {
       setSearchLoading(false);
     }
   }
+  // Hasta 2026-08-14 esto llamaba a GET /api/leaderboards, cuya proyección
+  // publicItem() está recortada a propósito para un endpoint PÚBLICO
+  // ("derived-signals-only") y nunca incluyó chartPreview ni
+  // weeklyStageState/weeklyStageLabel — la tabla del screener pintaba
+  // miniatura y etapa en blanco pese a que la serie sí existía en
+  // scan_results (docs/scan-vivo-filas-incompletas-2026-08-14.md). La tabla
+  // del producto necesita filas completas, así que la previa reutiliza
+  // GET /api/scans (getLatestScanFromCloud, la misma ruta que restaura el
+  // último snapshot al arrancar la pantalla).
+  //
+  // restoredSnapshotView (lib/snapshotRestore.js) es la MISMA función que ya
+  // usa la restauración al arrancar (línea ~432): decide si scan.rows ya
+  // viene filtrado (snapshot manual, rowsAreFilteredSnapshot=true, se pinta
+  // tal cual) o crudo (scan de servidor, rowsAreFilteredSnapshot=false —
+  // app/api/scan/route.js:58 — necesita filterAnalyzedRows contra los
+  // filtros activos). Reimplementar ese criterio a mano aquí duplicaría una
+  // decisión que ya existe y es fácil de desincronizar.
   async function loadCachedScreenerPreview(set = activeSettings) {
     try {
-      const params = cachedScreenerQuery(set, markets);
-      const data = await getJson(`/api/leaderboards?${params.toString()}`, { timeoutMs: CACHE_PREVIEW_TIMEOUT_MS });
+      const result = await getLatestScanFromCloud();
+      if (!result.ok || result.configured === false) return { rows: [], rawRows: [], generatedAt: "", configured: result.configured !== false };
+      const scan = pickBestRestorableScan(result.data?.scans || []);
+      if (!scan) return { rows: [], rawRows: [], generatedAt: "", configured: true };
       const marketSet = new Set(markets);
-      const items = data.leaderboard?.items || [];
-      const cachedRows = items
-        .map(cachedScreenerRow)
-        .filter((row) => row.symbol && (!marketSet.size || marketSet.has(row.country || countryCode(row.symbol))));
+      const scopedScan = {
+        ...scan,
+        rows: (scan.rows || []).filter((row) => row.symbol && (!marketSet.size || marketSet.has(row.country || countryCode(row.symbol)))),
+      };
+      const previewView = restoredSnapshotView(scopedScan, set, { marketHealth, useRegimeFilter }, filterAnalyzedRows);
       return {
-        rows: cachedRows,
-        generatedAt: data.leaderboard?.generatedAt || "",
-        configured: data.configured !== false,
+        rows: previewView.rows,
+        rawRows: previewView.analyzedRows,
+        generatedAt: scan.createdAt || scan.updatedAt || "",
+        configured: true,
       };
     } catch {
-      return { rows: [], generatedAt: "", configured: false };
+      return { rows: [], rawRows: [], generatedAt: "", configured: false };
     }
   }
   function setPreset(k) {
@@ -1336,6 +1356,11 @@ export default function Page() {
       let stableResultsPublished = hadVisibleRows;
       if (cachePreview.rows.length) {
         stableResultsPublished = true;
+        // "N analizadas" lee analyzedRows.length (ver ScreenerShell): sin
+        // esto se quedaba en 0 mientras la previa cacheada estaba en
+        // pantalla, porque solo se rellenaba rows y analyzedRows seguía en
+        // el [] que puso setAnalyzedRows([]) al principio de run().
+        setAnalyzedRows(cachePreview.rawRows);
         if (hadVisibleRows) {
           setPendingResults({
             rows: cachePreview.rows,

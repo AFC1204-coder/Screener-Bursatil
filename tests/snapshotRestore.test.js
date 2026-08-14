@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { pickBestRestorableScan, restorableScans, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
+import { filterAnalyzedRows } from "@/lib/screenerPipeline";
 
 function scan(id, rows, patch = {}) {
   return {
@@ -81,5 +82,52 @@ describe("snapshot restore", () => {
     expect(restored.rows.map((row) => row.symbol)).toEqual(["VISIBLE"]);
     expect(restored.analyzedRows.map((row) => row.symbol)).toEqual(["VISIBLE"]);
     expect(restored.rowsAreFilteredSnapshot).toBe(true);
+  });
+
+  // Regresión de docs/scan-vivo-filas-incompletas-2026-08-14.md: hasta el
+  // 2026-08-14, la vista previa del screener (loadCachedScreenerPreview en
+  // app/page.jsx) pintaba GET /api/leaderboards, cuya proyección
+  // publicItem() nunca incluye chartPreview ni weeklyStageState/
+  // weeklyStageLabel — la tabla mostraba miniatura y etapa en blanco. Ahora
+  // esa vista previa pasa por restoredSnapshotView + filterAnalyzedRows (la
+  // MISMA ruta que ya usa la restauración de sesión), así que estos campos
+  // deben sobrevivir en ambas ramas: snapshot ya filtrado (pasa tal cual) y
+  // snapshot raw de servidor (se refiltra con la función real, sin stub).
+  function fullResearchRow(symbol) {
+    return {
+      symbol,
+      price: 120,
+      chartBarsCount: 250,
+      chartPreview: [
+        { date: "2026-08-10", close: 118, sma50: 110, sma200: 95, volume: 120000 },
+        { date: "2026-08-11", close: 120, sma50: 111, sma200: 96, volume: 130000 },
+      ],
+      weeklyStageState: "base",
+      weeklyStageLabel: "Base / transicion",
+      weeklyStage: { state: "base", label: "Base / transicion" },
+    };
+  }
+
+  it("conserva chartPreview y etapa semanal en snapshots ya filtrados", () => {
+    const filtered = scan("filtered-full", [fullResearchRow("AAA")], { rowsAreFilteredSnapshot: true });
+    const restored = restoredSnapshotView(filtered, {}, {}, () => ({ rows: [] }));
+
+    expect(restored.rows).toHaveLength(1);
+    expect(restored.rows[0].chartPreview).toHaveLength(2);
+    expect(restored.rows[0].weeklyStageState).toBe("base");
+    expect(restored.rows[0].weeklyStageLabel).toBe("Base / transicion");
+  });
+
+  it("conserva chartPreview y etapa semanal al refiltrar snapshots raw de servidor con filterAnalyzedRows real", () => {
+    const raw = scan("raw-full", [fullResearchRow("BBB")], {
+      settings: { progress: { status: "done" } },
+    });
+    const restored = restoredSnapshotView(raw, {}, { useRegimeFilter: false, marketHealth: null }, filterAnalyzedRows);
+
+    expect(restored.rows).toHaveLength(1);
+    expect(restored.rows[0].chartPreview).toHaveLength(2);
+    expect(restored.rows[0].weeklyStageState).toBe("base");
+    expect(restored.rows[0].weeklyStageLabel).toBe("Base / transicion");
+    expect(restored.analyzedRows[0].chartPreview).toHaveLength(2);
   });
 });
