@@ -65,6 +65,27 @@
 // args.preset })` explícitamente, para cumplir el punto 7 de la tarea al
 // pie de la letra.
 //
+// ── QUÉ SE GUARDA: toda la población, no solo la que pasa ─────────────────
+// FASE 1 de docs/adr-universo-precalculado.md. Hasta el 14 de agosto de 2026
+// este script guardaba SOLO las filas que pasaban el preset — 62 de 5.608
+// analizadas esa noche, un 98,9% del trabajo a la basura. Sin población no
+// hay sobre qué filtrar: cualquier criterio distinto del preset obligaba a
+// reescanear los ~5.600 desde el navegador, que es lo que muere por timeout.
+//
+// Ahora se guarda todo lo que llega al filtro:
+//   - las que pasan el preset, con la fila COMPLETA (scanResultPayload), sin
+//     un solo cambio respecto a antes — la ficha del valor y la auditoría la
+//     necesitan entera;
+//   - las que no pasan, con la fila LIGERA (lib/scanLightProjection.js):
+//     7.233 B frente a 46.481 B medidos, un 84% menos.
+// Todas llevan `metrics.screenPassed` para que una consulta pueda
+// distinguirlas sin inferirlo de la forma de la fila.
+//
+// Ninguna señal cambia de valor: las ligeras salen del MISMO array
+// `sectorized` que ya alimentaba el filtro, así que los percentiles
+// (rsGlobalPct, sectorScore) se calculan sobre exactamente la misma
+// población que antes.
+//
 // ── RETENCIÓN: los 7 nocturnos más recientes ──────────────────────────────
 // Decisión ya tomada (docs/orden-y-sector-2026-08-11.md no la cubre; viene
 // del prompt de esta tarea): conservar los SIETE escaneos NOCTURNOS más
@@ -314,7 +335,13 @@ async function runAsVitestChild() {
       JSON.stringify({
         scanElapsedMs,
         totalElapsedMs,
-        scan: { id: result.scan.id, name: result.scan.name, rowCount: result.scan.rows.length },
+        scan: {
+          id: result.scan.id,
+          name: result.scan.name,
+          rowCount: result.scan.rows.length,
+          lightRowCount: result.scan.lightRows?.length || 0,
+          population: result.scan.settings?.population || null,
+        },
         stats: result.stats,
         savedScan,
         screenerFilters: { preset: screenerFilters.preset, enabled: screenerFilters.enabled, activeCount: screenerFilters.active.length },
@@ -356,6 +383,28 @@ async function runWriteViaVitestChild({ symbols, concurrency, preset }) {
 // sola, sin red ni Supabase.
 export function shouldPruneAfterWrite(savedScan) {
   return Boolean(savedScan?.saved);
+}
+
+// El muro de la escritura no es el número de filas: es el statement_timeout
+// de 8s del rol `authenticator` de Supabase. Lo que decide si una tanda cabe
+// es cuántos MB de JSON viajan en la petición. El escaneo del universo ya
+// murió una vez por esto (commit eb74eff), y el modo de fallo es un timeout a
+// medias, no un error limpio — por eso se mide cada tanda en vez de suponerlo.
+const STATEMENT_TIMEOUT_MS = 8000;
+
+function logWriteBatches(batches) {
+  if (!Array.isArray(batches) || !batches.length) return;
+  const worst = batches.reduce((max, b) => (b.ms > max.ms ? b : max), batches[0]);
+  const totalMs = batches.reduce((sum, b) => sum + b.ms, 0);
+  console.log("");
+  console.log(`Escritura: ${batches.length} tandas, ${(totalMs / 1000).toFixed(1)}s en total.`);
+  for (const b of batches) {
+    const mb = (b.bytes / 1048576).toFixed(2);
+    const pct = ((b.ms / STATEMENT_TIMEOUT_MS) * 100).toFixed(0);
+    console.log(`  - ${b.kind.padEnd(5)} ${String(b.rows).padStart(4)} filas · ${mb.padStart(6)} MB · ${String(b.ms).padStart(5)} ms · ${pct}% del presupuesto de ${STATEMENT_TIMEOUT_MS} ms`);
+  }
+  const worstPct = (worst.ms / STATEMENT_TIMEOUT_MS) * 100;
+  console.log(`  Peor tanda: ${worst.ms} ms (${worstPct.toFixed(0)}% del statement_timeout de ${STATEMENT_TIMEOUT_MS} ms) — ${worstPct >= 100 ? "SE PASA" : worstPct >= 60 ? "ajustado, revisar" : "cabe con margen"}.`);
 }
 
 // Reporta el resultado de pruneNightlyScans, en dry-run (candidatos, nada
@@ -417,6 +466,16 @@ async function main() {
     if (toProcess.length > 50) console.log(`  ... y ${toProcess.length - 50} más (omitidos del detalle, no del conteo).`);
     console.log("");
     console.log(`Preset a aplicar en una corrida real: ${args.preset}`);
+    console.log("");
+    console.log("Filas que escribiría una corrida real con estos parámetros:");
+    console.log(`  Techo: ${toProcess.length} filas, una por símbolo analizado.`);
+    console.log("  Las que pasen el preset se guardan COMPLETAS; el resto, LIGERAS");
+    console.log("  (proyección de lib/scanLightProjection.js, 7,2 KB frente a 46,5 KB).");
+    console.log("  El reparto exacto no es predecible sin descargar los datos: depende");
+    console.log("  de cuántos símbolos superen el cribado base (histórico, precio,");
+    console.log("  turnover, capitalización, cobertura) y de cuántos de esos pasen el");
+    console.log("  preset. Ambos números se reportan en la corrida real y quedan");
+    console.log("  persistidos en scans.settings.population.");
     console.log("Dry-run: no se descargó ni se escribió nada en Supabase. Pasa --write para persistir.");
 
     console.log("");
@@ -454,7 +513,14 @@ async function main() {
   }
   console.log(`Preset aplicado: ${screenerFilters.preset || "(ninguno, enabled=false)"} — ${screenerFilters.activeCount} reglas activas`);
   console.log(`Pasan el preset "${args.preset}": ${stats.passedFilters}`);
-  console.log(`Filas guardadas en scan_results: ${savedScan.rows || 0}`);
+  console.log("");
+  console.log(`Filas guardadas en scan_results: ${savedScan.totalRows ?? savedScan.rows ?? 0}`);
+  console.log(`  - completas (pasan el preset): ${savedScan.rows || 0}`);
+  console.log(`  - ligeras (población, no pasan): ${savedScan.lightRows || 0}`);
+  if (stats.droppedByMaxLightRows) {
+    console.log(`  - AVISO: ${stats.droppedByMaxLightRows} filas ligeras descartadas por el tope maxLightRows.`);
+  }
+  logWriteBatches(savedScan.batches);
   console.log("");
   console.log(`Escaneo creado en 'scans': id=${savedScan.scanId} local_id=${savedScan.localId}`);
   console.log(`Nombre: ${scan.name}`);

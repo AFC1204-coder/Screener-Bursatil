@@ -24,6 +24,7 @@ import { InfoHint } from "@/app/components/ui/InfoHint";
 import { cap, pct } from "@/lib/formatters";
 import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
 import { canonicalRs } from "@/lib/rsCanonical";
+import { UNRELIABLE_AUDIT_STATUS } from "@/lib/scanLightProjection";
 import { STAGE_MISSING_REASON, stageWordForState } from "@/lib/stageDisplay";
 import { CompanyMark, MiniSparkline } from "@/lib/screenerAtoms";
 import { PERFORMANCE_PERIODS, normalizePerformancePeriod, performancePeriod } from "@/lib/screenerPeriods";
@@ -58,16 +59,29 @@ export function MissingValue({ reason = "" }) {
 // marca como divergentes o no verificables contra la serie de precios. Se
 // muestran como ausentes con su motivo — es calidad de dato, no opinión
 // (principio 7, "cómo se muestra un dato no fiable").
-const UNRELIABLE_AUDIT_STATUS = new Set(["mismatch", "unverified-value", "missing-source"]);
+//
+// El criterio vive en lib/scanLightProjection.js, no aquí: la fila ligera del
+// escaneo nocturno guarda ese mismo veredicto resumido en `metricAuditFlags`
+// en vez de la auditoría entera (16 KB/fila). Con dos copias del Set, cambiar
+// el criterio en un sitio dejaría la celda y la fila diciendo cosas distintas.
+function auditIssueCopy(status = "") {
+  if (status === "mismatch") return "Dato no fiable: el valor guardado no coincide con el recalculado sobre la serie de precios de este valor.";
+  if (status === "missing-source") return "Dato no fiable: falta la serie de precios sobre la que se comprueba este valor.";
+  return "Dato no fiable: no se ha podido comprobar contra la serie de precios de este valor.";
+}
 
 function auditIssueReason(row, metricKey) {
   const audit = objectiveMetricAuditStatusForRow(row)?.audit;
   const items = Array.isArray(audit?.items) ? audit.items : [];
+  // Fila ligera del escaneo nocturno: no trae la auditoría entera, trae el
+  // mismo veredicto ya resumido (lib/scanLightProjection.js, metricAuditFlags).
+  if (!items.length) {
+    const flagged = row?.metricAuditFlags?.[metricKey] || row?.metrics?.metricAuditFlags?.[metricKey];
+    return flagged ? auditIssueCopy(flagged) : "";
+  }
   const item = items.find((entry) => entry?.key === metricKey);
   if (!item || !UNRELIABLE_AUDIT_STATUS.has(item.status)) return "";
-  if (item.status === "mismatch") return "Dato no fiable: el valor guardado no coincide con el recalculado sobre la serie de precios de este valor.";
-  if (item.status === "missing-source") return "Dato no fiable: falta la serie de precios sobre la que se comprueba este valor.";
-  return "Dato no fiable: no se ha podido comprobar contra la serie de precios de este valor.";
+  return auditIssueCopy(item.status);
 }
 
 // ── Etapa de Weinstein en una palabra ──────────────────────────────────────
