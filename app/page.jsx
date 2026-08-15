@@ -20,7 +20,8 @@ import { getJson, postJson } from "@/lib/clientApi";
 import { getLatestScanFromCloud, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
 import { dateTime, pct } from "@/lib/formatters";
 import { avg, avgVolume } from "@/lib/indicators";
-import { safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import StorageAlert from "@/app/components/StorageAlert";
+import { budgetFor, payloadChars, safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { alertsFromScan, mergeAlerts } from "@/lib/methodologyAlerts";
 import { enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
@@ -37,7 +38,7 @@ import { buildReviewPrioritySummary, decisionProfileStateForStock, reviewPriorit
 import { buildScreenerDataHealth, dataHealthFilterLabel } from "@/lib/screenerDataHealth";
 import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
-import { compactRowForSession, compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, shuffle, sortMetric, spreadByInitial, uid, universeScopeKey } from "@/lib/screenerPipeline";
+import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, fitScansForBrowser, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, shuffle, sortMetric, spreadByInitial, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import { buildSnapshotFreshnessNotice } from "@/lib/snapshotFreshness";
 import { pickBestRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
@@ -201,9 +202,6 @@ export default function Page() {
   const quickReview = useQuickReviewSession({
     activeSettings,
     presetKey,
-    searchResult,
-    rows,
-    analyzedRows,
     setStatus,
     persistScreenerSession,
     buildScreenerStockOpenContext,
@@ -466,8 +464,8 @@ export default function Page() {
       const restoredMarkets = Array.isArray(session.markets) && session.markets.length ? session.markets : DEFAULT_MARKETS;
       const restoredManual = session.manual || "";
       const restoredUniverse = Array.isArray(session.universe) ? session.universe : [];
-      const restoredRows = Array.isArray(session.rows) ? session.rows : [];
-      const restoredAnalyzedRows = Array.isArray(session.analyzedRows) ? session.analyzedRows : [];
+      let restoredRows = Array.isArray(session.rows) ? session.rows : [];
+      let restoredAnalyzedRows = Array.isArray(session.analyzedRows) ? session.analyzedRows : [];
       const restoredSettings = settingsForPreset(restoredPresetKey, session.settings || {});
       const restoredFilterLayers = restoreFilterLayers(session.filterLayers, session.filterLayersVersion, restoredPresetKey);
       const restoredFieldRules = { ...DEFAULT_FIELD_RULES, ...(session.fieldRules || {}) };
@@ -475,6 +473,20 @@ export default function Page() {
       const restoredUseRegimeFilter = session.useRegimeFilter !== false;
       const restoredActiveSettings = session.activeSettings || effectiveSettingsFromLayers(restoredSettings, restoredFilterLayers, restoredFieldRules);
       const restoredScrollY = Number(session.scrollY);
+      // Sesión con referencia en vez de filas: rehidrata desde el snapshot
+      // local y recalcula las visibles con los criterios de la SESIÓN (nunca
+      // los del scan — eso es lo que distingue esta vía de restoreSnapshot).
+      if (!restoredRows.length && !restoredAnalyzedRows.length && session.scanRef?.id && session.scanContext) {
+        const storedScans = safeRead(STORAGE_KEYS.scans, []);
+        const referencedScan = (Array.isArray(storedScans) ? storedScans : []).find((scan) => scan?.id === session.scanRef.id)
+          || pickBestRestorableScan(storedScans);
+        if (referencedScan?.rows?.length) {
+          const rehydrateContext = { ...session.scanContext, marketHealth: restoredMarketHealth, useRegimeFilter: restoredUseRegimeFilter };
+          const rehydratedView = restoredSnapshotView(referencedScan, restoredActiveSettings, rehydrateContext, filterAnalyzedRows);
+          restoredAnalyzedRows = rehydratedView.analyzedRows;
+          restoredRows = rehydratedView.rows;
+        }
+      }
       restoredRowsCount = restoredRows.length || restoredAnalyzedRows.length;
       if (restoredRowsCount) resultsOwnerRef.current = "session";
       if (Number.isFinite(restoredScrollY) && restoredScrollY > 0) restoreScrollRef.current = restoredScrollY;
@@ -505,10 +517,17 @@ export default function Page() {
       setSearchSymbol(session.searchSymbol || "");
       setSearchCandidates(Array.isArray(session.searchCandidates) ? session.searchCandidates : []);
       setSearchResult(session.searchResult || null);
-      restoreQuickReviewSession(
-        Array.isArray(session.quickReviewRows) ? session.quickReviewRows : [],
-        Number.isFinite(session.quickReviewIndex) ? session.quickReviewIndex : 0,
-      );
+      // La cola del modal se restaura de STORAGE_KEYS.review (su única copia;
+      // antes la sesión guardaba un duplicado en quickReviewRows). Las
+      // sesiones antiguas que aún lo traen conservan su vía.
+      if (Array.isArray(session.quickReviewRows) && session.quickReviewRows.length) {
+        restoreQuickReviewSession(session.quickReviewRows, Number.isFinite(session.quickReviewIndex) ? session.quickReviewIndex : 0);
+      } else {
+        const storedReview = safeRead(STORAGE_KEYS.review, {});
+        if (storedReview?.source === "current" && Array.isArray(storedReview.rows) && storedReview.rows.length) {
+          restoreQuickReviewSession(storedReview.rows, Number.isFinite(storedReview.currentIndex) ? storedReview.currentIndex : 0);
+        }
+      }
       if (restoredRows.length && restoredAnalyzedRows.length && session.scanContext) {
         fastFilterSignatureRef.current = fastFilterSignature(
           restoredAnalyzedRows,
@@ -561,7 +580,7 @@ export default function Page() {
         }
         const notice = buildSnapshotFreshnessNotice(result.data, scan);
         const storedScans = safeRead(STORAGE_KEYS.scans, []);
-        safeWrite(STORAGE_KEYS.scans, [scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])].slice(0, 50));
+        safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])]));
         restoreSnapshot(scan, { source: "cloud", notice });
         setStatus(notice?.stale
           ? `Último snapshot cacheado cargado: ${scan.rows.length} acciones. La nube no respondió al refrescar.`
@@ -576,6 +595,14 @@ export default function Page() {
       });
     }
     setSessionReady(true);
+    // Migración perezosa: snapshots locales guardados antes del presupuesto
+    // (filas con objectiveMetricAudit/decisionTrace, hasta 50 scans) se
+    // recortan una vez a la proyección de persistencia. Idempotente: dentro
+    // del presupuesto no reescribe nada.
+    const storedScansForBudget = safeRead(STORAGE_KEYS.scans, []);
+    if (payloadChars(storedScansForBudget) > (budgetFor(STORAGE_KEYS.scans) || Infinity)) {
+      safeWrite(STORAGE_KEYS.scans, fitScansForBrowser(storedScansForBudget));
+    }
     return () => {
       cancelled = true;
     };
@@ -610,6 +637,15 @@ export default function Page() {
     };
   }, []);
 
+  // La sesión ya NO guarda filas: guarda los criterios y una referencia al
+  // snapshot local (STORAGE_KEYS.scans) del que salieron los datos. Medido el
+  // 2026-08-15: la sesión pesaba 31,7 MB porque duplicaba dentro del mismo
+  // localStorage las 500 filas que scans ya tenía (analyzedRows, 18,8 MB) más
+  // las 282 visibles sin compactar (11,4 MB). Con la referencia, la sesión
+  // queda en decenas de KB y las filas viven UNA vez, en scans, en proyección
+  // de persistencia (persistRowsForBrowser). Al restaurar, restoreSessionData
+  // rehidrata analyzedRows desde esa referencia y recalcula las visibles con
+  // los criterios de la sesión.
   function buildScreenerSessionPayload(overrides = {}) {
     const previousSession = safeRead(STORAGE_KEYS.screenerSession, {});
     return {
@@ -619,10 +655,10 @@ export default function Page() {
       manual,
       settings,
       presetKey,
-      universe,
       universeScope,
-      rows,
-      analyzedRows: compactRowsForSession(analyzedRows),
+      universeCount: universe.length || null,
+      scanRef: scanContext?.id ? { id: scanContext.id, count: analyzedRows.length || null } : null,
+      rowsCount: rows.length || null,
       scanContext,
       scanPerf,
       snapshotNotice,
@@ -660,9 +696,7 @@ export default function Page() {
       fieldRules,
       viewLayers,
       searchSymbol,
-      searchCandidates,
-      searchResult,
-      quickReviewRows,
+      searchResult: persistRowForBrowser(searchResult),
       quickReviewIndex,
       scrollY: previousSession?.scrollY ?? null,
       lastOpenedStockSymbol: previousSession?.lastOpenedStockSymbol || "",
@@ -676,17 +710,16 @@ export default function Page() {
     const sessionPayload = buildScreenerSessionPayload(overrides);
     const saved = safeWrite(STORAGE_KEYS.screenerSession, sessionPayload);
     if (!saved) {
+      // Red de seguridad: sin el estado del último scan la sesión son solo
+      // criterios (~KBs) y siempre cabe. safeWrite ya notificó el fallo.
       return safeWrite(STORAGE_KEYS.screenerSession, {
         ...sessionPayload,
-        universe: [],
+        scanRef: null,
         fail: [],
         diagnostics: null,
-        searchCandidates: [],
-        searchResult: compactRowForSession(sessionPayload.searchResult),
-        quickReviewRows: compactRowsForSession(sessionPayload.quickReviewRows),
-        rows: compactRowsForSession(sessionPayload.rows),
-        analyzedRows: compactRowsForSession(sessionPayload.analyzedRows),
-        storageNote: "Sesión compactada por límite de localStorage.",
+        searchResult: null,
+        lastOpenedStockContext: null,
+        storageNote: "Sesión reducida a los criterios por falta de espacio.",
       });
     }
     return saved;
@@ -701,10 +734,6 @@ export default function Page() {
       lastOpenedStockAt: new Date().toISOString(),
       lastOpenedStockContext: buildScreenerStockOpenContext(rowOrSymbol),
       scrollY,
-      searchResult: compactRowForSession(searchResult),
-      quickReviewRows: compactRowsForSession(quickReviewRows),
-      rows: compactRowsForSession(rows),
-      analyzedRows: compactRowsForSession(analyzedRows),
     });
   }
 
@@ -712,7 +741,11 @@ export default function Page() {
     if (!sessionReady) return;
     if (restoringScan && !rows.length) return;
     persistScreenerSession();
-  }, [sessionReady, markets, manual, settings, presetKey, universe, universeScope, rows, analyzedRows, scanContext, scanPerf, snapshotNotice, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, sort, perfPeriod, scanMode, batchStart, scanBatchSize, resultPageSize, resultPage, marketHealth, restoringScan, useRegimeFilter, filterLayers, fieldRules, viewLayers, searchSymbol, searchCandidates, searchResult, quickReviewRows, quickReviewIndex]);
+    // La sesión persiste criterios y referencias, no filas: universe, rows,
+    // analyzedRows, searchCandidates y quickReviewRows salieron del payload y
+    // de estas dependencias. Los cambios de resultados llegan igualmente vía
+    // scanContext/scanPerf (scan y re-filtrados los actualizan siempre).
+  }, [sessionReady, markets, manual, settings, presetKey, universeScope, scanContext, scanPerf, snapshotNotice, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, sort, perfPeriod, scanMode, batchStart, scanBatchSize, resultPageSize, resultPage, marketHealth, restoringScan, useRegimeFilter, filterLayers, fieldRules, viewLayers, searchSymbol, searchResult, quickReviewIndex]);
 
   const chartListId = useMemo(() => `screener:${presetKey}:${markets.join(",")}`, [presetKey, markets]);
 
@@ -1503,6 +1536,30 @@ export default function Page() {
         scannedSymbols: completed,
         fastRefilters: 0,
       });
+      // Copia local del resultado (kind "auto", solo una a la vez, nunca a la
+      // nube): la sesión guarda scanRef en vez de filas, y esta copia es lo
+      // que restoreSessionData rehidrata tras un reload. Sin ella, un scan en
+      // vivo no guardado como snapshot desaparecería al volver.
+      if (!aborted && serverStatus !== "cancelled" && rawRows.length) {
+        const previousScans = (safeRead(STORAGE_KEYS.scans, []) || []).filter((item) => item?.kind !== "auto");
+        safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([{
+          id: nextScanContext.id,
+          kind: "auto",
+          createdAt: nextScanContext.scannedAt,
+          name: `Resultado del scan · ${rawRows.length} acciones · ${dateTime(new Date())}`,
+          preset: presetKey,
+          settings,
+          activeSettings,
+          filterLayers,
+          filterLayersVersion: FILTER_LAYERS_CONTRACT_VERSION,
+          fieldRules,
+          viewLayers,
+          useRegimeFilter,
+          sort,
+          rowsAreFilteredSnapshot: false,
+          rows: rawRows,
+        }, ...previousScans]));
+      }
       if (stableResultsPublished) {
         setPendingResults({
           rows: final,
@@ -1668,7 +1725,7 @@ export default function Page() {
       methodologySummary,
       rows: decisionRows,
     };
-    safeWrite(STORAGE_KEYS.scans, [scan, ...scans].slice(0, 50));
+    safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...scans]));
     const generatedAlerts = alertsFromScan(scan);
     const nextAlerts = mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), generatedAlerts).slice(0, 500);
     safeWrite(STORAGE_KEYS.alerts, nextAlerts);
@@ -1991,6 +2048,7 @@ export default function Page() {
   }, [activeFilterFamily]);
 
   return <>
+  <StorageAlert />
   <ScreenerShell
     chrome={{
       presetKey,

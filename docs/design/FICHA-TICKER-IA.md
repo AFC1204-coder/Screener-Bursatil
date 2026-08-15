@@ -34,9 +34,16 @@ label-valor se vuelve fila de tabla clave-valor.
 | Nivel | Contenido | Tratamiento | Estado |
 |---|---|---|---|
 | **N0 Veredicto** | Ticker, nombre, sector, precio+var+cierre · curva de etapa grande · acción recomendada + confianza · **freno** · score · prioridad · resumen setup («3/5 condiciones») | Única zona con color semántico. Score en `--data-l`, precio en `--data-m`. Freno en cuerpo, una frase | Siempre visible, sin scroll |
-| **N1 Lectura técnica** | RS, RS Quality, etapa+semanas, MA50/200 (dist. %), estructura de base, dist. a pivot, dist. a ATH | Tabla clave-valor: label `--text-xs` uppercase humo, valor mono `--data-m` tiza. Máx. 8 filas. Sin color | Visible |
+| **N1 Lectura técnica** | RS, RS Quality, etapa, MA50/200 (dist. %), dist. al máximo de 52 semanas | Tabla clave-valor: label `--text-xs` uppercase humo, valor mono `--data-m` tiza. Máx. 8 filas. Sin color | Visible |
 | **N2 Contexto** | Narrativa (tesis / riesgo / siguiente paso) · fundamentales operativos (ventas YoY, EPS YoY, cap.) · checklist de setup completa | Narrativa como anotación al margen (itálica, un subrayado `--senal` máx.). Fundamentales: misma tabla clave-valor, `--data-s` | Visible, subordinado (bajo el pliegue está bien) |
 | **N3 Auditoría** | Desglose del score (componentes ±) · fundamentales de contexto (empleados, IPO, subsector, descripción negocio) · detalle de calidad de datos | Barras de razón estilo Decisiones (humo, solo la dominante con tinta); resto tabla clave-valor | **Colapsado por defecto** (`<details>` o equivalente) |
+
+**Fuera de N1 desde el 2026-08-15** — `BASE` («13.0 sem») y `PIVOT`: no son medidas
+del valor sino de la ventana del detector (`lib/setupPatterns.js` mide sobre las
+últimas ~65 sesiones y toma su máximo como «pivote»). Salían constantes o idénticas
+a la distancia al máximo de 52 semanas. Vuelven cuando existan un criterio de base y
+un pivote calculados de verdad (principio 7 de `docs/principios-producto.md`).
+`ATH` pasó a `MÁX 52S`: era el máximo de 52 semanas, no el histórico.
 
 Presupuesto de color de la ficha: N0 concentra todo el color semántico (chip-curva +
 freno si es `--risk`). N1–N3 son tiza/humo puros. Si un elemento de N1–N3 pide color,
@@ -57,9 +64,9 @@ está en el nivel equivocado.
 │ RS               94          │  Tesis                              │ N1 · N2
 │ RS QUALITY       A-          │  «Líder de grupo con RS…»           │
 │ MA50 / MA200     +14% / +32% │  Riesgo                             │
-│ BASE             2ª, 8 sem   │  «Base tardía en mercado…»          │
-│ PIVOT            -2,1%       │  Siguiente paso                     │
-│ ATH              -11%        │  «Esperar contracción de…»          │
+│ MÁX 52S          -11%        │  «Base tardía en mercado…»          │
+│                              │  Siguiente paso                     │
+│                              │  «Esperar contracción de…»          │
 ├──────────────────────────────┴─────────────────────────────────────┤
 │ VENTAS YOY  +19%   EPS YOY  +34%   CAP.  598B                      │ N2
 │ ▸ Auditoría del score (7 componentes)                              │ N3 colapsado
@@ -89,7 +96,7 @@ mercado»; si la fontanería los usa, se devalúan. Lo ausente **pierde tinta**:
    izquierda (`--text-xs` uppercase, `--track-label`, humo), valor a la derecha
    (mono, alineado a la derecha). La fila crece; nada compite en horizontal.
 2. **Vocabulario cerrado de labels** (cortos por diseño, jerga que la audiencia
-   domina): `RS`, `RS QUALITY`, `ETAPA`, `MA50`, `MA200`, `BASE`, `PIVOT`, `ATH`,
+   domina): `RS`, `RS QUALITY`, `ETAPA`, `MA50`, `MA200`, `MÁX 52S`,
    `VENTAS YOY`, `EPS YOY`, `CAP.`, `SECTOR`, `EMPLEADOS`, `IPO`. Si un label nuevo
    no cabe en ~12 caracteres, se acorta el label, no se trunca el render.
 3. **Prohibido `text-overflow: ellipsis` en labels y valores numéricos.** Solo se

@@ -12,6 +12,8 @@ import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncCli
 import { clamp, dateTime, num, pct, ratio } from "@/lib/formatters";
 import { stdev } from "@/lib/indicators";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { persistReviewQueue } from "@/lib/screenerPipeline";
+import StorageAlert from "@/app/components/StorageAlert";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { objectiveStage } from "@/lib/scoring";
@@ -710,7 +712,7 @@ export default function ReviewPage() {
 
   useEffect(() => {
     if (!rows.length) return;
-    safeWrite(STORAGE_KEYS.review, {
+    persistReviewQueue({
       source,
       sourceLabel: sourceMeta.sourceLabel || "",
       sourceDetail: sourceMeta.sourceDetail || "",
@@ -804,7 +806,7 @@ export default function ReviewPage() {
     setHidden(new Set(nextReview.hiddenSymbols || []));
     setDecisionResolutions(nextReview.decisionResolutions || {});
     setDecisionResolutionLog(nextReview.decisionResolutionLog || []);
-    safeWrite(STORAGE_KEYS.review, nextReview);
+    persistReviewQueue(nextReview);
     const resolution = decisionResolutionForSymbol(nextReview, row.symbol);
     setStatus(`${row.symbol}: ${resolution?.label || "resuelta"} desde Review`);
   }
@@ -833,7 +835,7 @@ export default function ReviewPage() {
     setHidden(new Set(nextReview.hiddenSymbols || []));
     setDecisionResolutions(nextReview.decisionResolutions || {});
     setDecisionResolutionLog(nextReview.decisionResolutionLog || []);
-    safeWrite(STORAGE_KEYS.review, nextReview);
+    persistReviewQueue(nextReview);
     setStatus(`${row.symbol}: reabierta como pendiente`);
   }
   function applyResolutionFilter(nextFilter) {
@@ -897,6 +899,7 @@ export default function ReviewPage() {
   }, [activeRow, currentIndex, favorites, favoriteSymbols, reviewSettings, rows.length, source, visibleRows.length]);
 
   return <main className="page reviewPage">
+    <StorageAlert />
     <section className="card hero">
       <div className="heroTop">
         <div>

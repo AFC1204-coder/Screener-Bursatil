@@ -10,6 +10,8 @@ import { amount, dateShort, dateTime, num as sharedNum, pct as sharedPct, pctSha
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { persistReviewQueue } from "@/lib/screenerPipeline";
+import StorageAlert from "@/app/components/StorageAlert";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { methodologyCompactReasonLine, methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { dataStatusLabel } from "@/lib/patternNarrative";
@@ -26,6 +28,20 @@ import { vcpObjectiveSummary } from "@/lib/vcpDiagnostics";
 import { chartQualityFromBrief } from "@/lib/chartDataQuality";
 
 /* ── Componentes de la jerarquía N0–N3 (spec FICHA-TICKER-IA.md) ──────── */
+
+/* Texto del RS en las franjas de calidad (cabecera N0 y detalle de N3).
+   Una sola función para las dos superficies: decían cosas distintas sobre el
+   mismo dato. Sin ranking semanal no hay fecha ni muestra que mostrar —
+   la fecha caía a la del universo y la muestra a cero, que es exactamente lo
+   que el principio 3 prohíbe. */
+export function rsRankingStripValue(rsUniverse, freshness = {}) {
+  if (!Number.isFinite(rsUniverse)) return "Sin ranking";
+  if (!freshness?.rsGlobalAsOf) return "Sin snapshot";
+  const date = compactDate(freshness.rsGlobalAsOf);
+  const sample = Number(freshness.rsGlobalSample);
+  if (!Number.isFinite(sample) || sample <= 0) return date;
+  return `${date} · n=${sharedNum(Math.round(sample))}`;
+}
 
 /* Fila de tabla clave-valor de 2 columnas. Reemplaza a la píldora para
    cualquier par label-valor en N1 y N2. La fila crece verticalmente:
@@ -128,7 +144,7 @@ function StockUnavailableBlock({ symbol = "" }) {
    herramienta clasifica, no recomienda). El score sigue calculándose y se
    lee en el desglose de N3; la etapa —clasificación descriptiva— ocupa el
    sitio del veredicto con la misma palabra que la tabla del screener. */
-function N0VerdictBlock({
+export function N0VerdictBlock({
   symbol,
   data,
   priceSnapshot,
@@ -137,11 +153,22 @@ function N0VerdictBlock({
   chartEstimated,
   chartUnavailable,
   setupSummary,
+  rsUniverse,
   actions,
 }) {
   const priceHas = Number.isFinite(priceSnapshot?.price);
   // Misma palabra que la tabla y que la fila "ETAPA" de esta misma ficha.
   const stageDisplay = stageWordForState(data?.stage?.weekly?.state || "", data?.stage?.label || "");
+  // El guard acepta tanto un array de acciones como un único elemento. Antes
+  // exigía `actions.length` sobre lo que le llegaba: con un fragmento JSX
+  // (`.length === undefined`) el bloque de links desaparecía entero sin error
+  // — los botones "Screener" y "Web oficial" no se renderizaban NUNCA.
+  const actionList = (Array.isArray(actions) ? actions : [actions]).filter(Boolean);
+  // La franja no puede prometer un RS que no existe: sin ranking semanal la
+  // fecha caía a la del universo y la muestra a `|| 0`, produciendo
+  // "RS 15 ago 2026 · n=0" mientras el panel de abajo decía "Sin RS semanal"
+  // (principio 3: un dato ausente se muestra como ausente, no como cero).
+  const rsStripValue = rsRankingStripValue(rsUniverse, freshness);
   return (
     <section className="stockVerdict" data-stage={stageDisplay?.tone || "none"}>
       <div className="stockVerdictHead">
@@ -177,7 +204,7 @@ function N0VerdictBlock({
       <QualityStrip items={[
         { label: "Cierre", value: freshness.priceDate ? compactDate(freshness.priceDate) : "Sin fecha" },
         { label: "Cobertura", value: coverage.label || "Completa" },
-        { label: "RS", value: freshness.rsGlobalAsOf ? `${compactDate(freshness.rsGlobalAsOf)} · n=${sharedNum(Math.round(freshness.rsGlobalSample || 0))}` : "Sin snapshot" },
+        { label: "RS", value: rsStripValue },
         ...(chartUnavailable
           ? [{ label: "Histórico", value: "Sin serie" }]
           : chartEstimated ? [{ label: "Histórico", value: "Estimado" }] : []),
@@ -196,9 +223,9 @@ function N0VerdictBlock({
         </div>
       </div>
 
-      {actions && actions.length ? (
-        <div className="stockVerdictActions">
-          {actions}
+      {actionList.length ? (
+        <div className="stockVerdictActions stockVerdictLinks">
+          {actionList}
         </div>
       ) : null}
     </section>
@@ -483,7 +510,9 @@ function riskTone(value, warn = 60) {
 }
 
 function sampleText(value) {
-  return Number.isFinite(value) ? `n=${sharedNum(Math.round(value))}` : "sin muestra";
+  // Muestra cero es ausencia de muestra, no una muestra de tamaño cero: con
+  // `n=0` la ficha afirmaba haber medido sobre una población vacía.
+  return Number.isFinite(value) && value > 0 ? `n=${sharedNum(Math.round(value))}` : "sin muestra";
 }
 
 function compactBusinessTeaser(data = {}) {
@@ -594,8 +623,10 @@ function PeerLogo({ item }) {
    nombre "Objetivo" y tamaño de posición sugerido son exactamente lo que
    el principio 1 prohíbe — el producto diciendo cuánto arriesgar. El
    cálculo (lib/tradePlan.js) sigue existiendo sin superficie. Los datos
-   descriptivos que aquel panel duplicaba siguen a la vista: distancia al
-   pivot en N1, base/volumen seco en el desglose de N3. */
+   descriptivos que aquel panel duplicaba siguen a la vista dentro del
+   desglose del patrón en N3 (rango y volumen seco de la ventana del
+   detector); la distancia al pivote salió de N1 el 2026-08-15 por no ser un
+   pivote, sino el máximo de esa misma ventana. */
 
 function StockReviewFlowRail({ navigation = null, onOpenSymbol }) {
   if (!navigation?.totalRows) return null;
@@ -1405,8 +1436,9 @@ function MethodologyAuditPanel({ pattern, verdict, stage }) {
   // formato viejo ("Stage 2 probable") o en el nuevo.
   const stageGateInfo = stageWordForState(stage?.weekly?.state || "", stage?.label || "");
   const stageOk = stageGateInfo?.tone === "stage2";
-  // El desglose numérico del score (Base/rango, Compresiones, Última comp.,
-  // Rango 10d, Pivot, Volumen seco, Score patrón) vive ahora en stockScoreBreakdown
+  // El desglose numérico del score (Rango 65 sesiones, Compresiones, Última
+  // comp., Rango 10d, Dist. techo 65 sesiones, Volumen seco, Score patrón)
+  // vive ahora en stockScoreBreakdown
   // dentro de N3 — este panel solo conserva los gates que no son desglose del score
   // (Datos técnicos, Histórico, Etapa, Plan) más el veredicto y la confianza de
   // metodología. No duplica el breakdown.
@@ -1448,7 +1480,7 @@ function ContractionTape({ row = {}, depths = [] }) {
   return <span>{values.map((value) => `${value.toFixed(1)}%`).join(" -> ")}</span>;
 }
 
-function ComparativeContext({ rows = [], note = "", symbol = "" }) {
+export function ComparativeContext({ rows = [], note = "", symbol = "" }) {
   const countLabel = rows.length ? `${rows.length} referencias` : "sin referencias";
   return <section className="card">
     <div className="sectionTitle">
@@ -1463,7 +1495,11 @@ function ComparativeContext({ rows = [], note = "", symbol = "" }) {
     </div>
     {rows.length ? <div className="tableWrap">
       <table className="table">
-        <thead><tr>{["Ticker", "Relacion", "Estructura", "Contracciones", "Base", "Pivot", "Vol. seco", "RS grupo", "Datos"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
+        {/* "Base" (sem) y "Pivot" salieron por lo mismo que en N1: la duración
+            es la ventana fija del detector y el pivote, el máximo de esa misma
+            ventana. La columna conserva la profundidad del rango con su
+            ventana declarada. */}
+        <thead><tr>{["Ticker", "Relacion", "Estructura", "Contracciones", "Rango 65s", "Vol. seco", "RS grupo", "Datos"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
         <tbody>{rows.map((item) => {
           const current = String(item.symbol || "").toUpperCase() === String(symbol || "").toUpperCase();
           const blocked = patternClaimBlocked(item);
@@ -1473,8 +1509,7 @@ function ComparativeContext({ rows = [], note = "", symbol = "" }) {
             <td><span className="pill">{item.relation?.label || "Contexto"}</span></td>
             <td><StructureSummary row={item} compact /></td>
             <td><ContractionTape row={item} depths={item.contractionDepths} /></td>
-            <td>{Number.isFinite(item.baseDepthPct) ? `${item.baseDepthPct.toFixed(1)}%` : "Sin dato"}<br /><span className="fine">{Number.isFinite(item.baseWeeks) ? `${item.baseWeeks.toFixed(1)} sem` : ""}</span></td>
-            <td>{blocked ? blockedCell : Number.isFinite(item.distanceToPivotPct) ? sharedPct(item.distanceToPivotPct) : "Sin dato"}</td>
+            <td>{Number.isFinite(item.baseDepthPct) ? `${item.baseDepthPct.toFixed(1)}%` : "Sin dato"}</td>
             <td>{blocked ? blockedCell : Number.isFinite(item.volumeDryUpRatio) ? `${item.volumeDryUpRatio.toFixed(2)}x` : "Sin dato"}</td>
             <td>{Number.isFinite(item.rsSectorPct) ? item.rsSectorPct.toFixed(0) : "Sin dato"}</td>
             <td><DataConfidenceCell row={item} /></td>
@@ -1732,7 +1767,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       source: "stock",
       note,
     });
-    safeWrite(STORAGE_KEYS.review, nextReview);
+    persistReviewQueue(nextReview);
     syncReviewNavigation(nextReview, symbol);
     setDecisionResolution(decisionResolutionForSymbol(nextReview, symbol));
     setDecisionResolutionHistoryItems(decisionResolutionHistory(nextReview, { symbol, limit: 4 }));
@@ -1746,7 +1781,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       source: "stock",
       note: decisionResolution?.label ? `Antes: ${decisionResolution.label}` : "",
     });
-    safeWrite(STORAGE_KEYS.review, nextReview);
+    persistReviewQueue(nextReview);
     syncReviewNavigation(nextReview, symbol);
     setDecisionResolution(decisionResolutionForSymbol(nextReview, symbol));
     setDecisionResolutionHistoryItems(decisionResolutionHistory(nextReview, { symbol, limit: 4 }));
@@ -1782,7 +1817,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       hiddenCount: Math.max(0, navigation.totalRows - navigation.visibleCount),
       openedAt,
     });
-    safeWrite(STORAGE_KEYS.review, nextReview);
+    persistReviewQueue(nextReview);
     safeWrite(STORAGE_KEYS.screenerSession, {
       ...previousSession,
       version: previousSession.version || SCREENER_SESSION_VERSION,
@@ -1944,30 +1979,25 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
         ? metricSourceState(chartEstimated ? "review" : "measured", "MA200", chartSourceDetail)
         : metricSourceState("review", "MA200", "histórico insuficiente"),
     },
+    /* BASE y PIVOT salieron de la lectura técnica (2026-08-15). No eran
+       medidas del valor: `baseWeeks` es la ventana fija del detector
+       (`rows.slice(0, 65) / 5` en lib/setupPatterns.js → 13.0 sem en todas las
+       fichas) y `distanceToPivotPct` se mide contra el máximo de esas mismas
+       65 sesiones, por lo que salía idéntico a la distancia al máximo de 52
+       semanas en 4 de 5 fichas. El principio 7 ya aplazó ambas columnas en la
+       tabla por lo mismo ("un número falso con aspecto de preciso es peor que
+       no tenerlo"); vuelven aquí cuando se calculen de verdad. */
     {
-      label: "BASE",
-      value: Number.isFinite(setupPattern?.baseWeeks) ? `${(setupPattern.baseWeeks).toFixed(1)} sem` : "—",
-      state: Number.isFinite(setupPattern?.baseWeeks) ? "value" : "ghost",
-      source: Number.isFinite(setupPattern?.baseWeeks)
-        ? metricSourceState(setupPattern.consolidationCandidate === true ? "measured" : "proxy", "Base", "modelo de patrón técnico")
-        : metricSourceState("review", "Base", "sin estructura"),
-    },
-    {
-      label: "PIVOT",
-      value: Number.isFinite(setupPattern?.distanceToPivotPct) ? sharedPct(setupPattern.distanceToPivotPct) : "—",
-      state: Number.isFinite(setupPattern?.distanceToPivotPct) ? "value" : "ghost",
-      source: Number.isFinite(setupPattern?.distanceToPivotPct)
-        ? metricSourceState("measured", "Pivot", "precio relativo al pivot estructural")
-        : metricSourceState("review", "Pivot", "sin pivot calculado"),
-    },
-    {
-      label: "ATH",
+      // "ATH" afirmaba un máximo histórico: `technicalSnapshotFromBars` mide
+      // contra `last252` barras. Mismo dato y mismo nombre que la columna
+      // "Dist. máx 52s" de la tabla, abreviado al presupuesto de label de N1.
+      label: "MÁX 52S",
       value: Number.isFinite(technical.distance52w) ? sharedPct(technical.distance52w) : "—",
       state: Number.isFinite(technical.distance52w) ? (chartEstimated ? "stale" : "value") : "ghost",
       suffix: chartEstimated && Number.isFinite(technical.distance52w) ? "est" : "",
       source: Number.isFinite(technical.distance52w)
-        ? metricSourceState(chartEstimated ? "review" : "measured", "ATH", chartSourceDetail)
-        : metricSourceState("review", "ATH", "histórico insuficiente"),
+        ? metricSourceState(chartEstimated ? "review" : "measured", "Dist. máx 52s", chartSourceDetail)
+        : metricSourceState("review", "Dist. máx 52s", "histórico insuficiente"),
     },
   ];
 
@@ -1998,11 +2028,16 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   // N3 desglose del score (barras de razón estilo Decisiones)
   const n3ScoreBreakdown = setupPattern
     ? [
-        { label: "Base/rango", value: Number.isFinite(setupPattern.baseDepthPct) ? pct(setupPattern.baseDepthPct) : "—", pct: Number.isFinite(setupPattern.baseDepthPct) ? Math.min(100, setupPattern.baseDepthPct) : 0, dominant: setupPattern.consolidationCandidate === true, tone: setupPattern.consolidationCandidate === true ? "ok" : "risk" },
+        /* Etiquetas con la ventana del detector explícita: ambos números se
+           miden sobre las últimas ~65 sesiones (lib/setupPatterns.js), no
+           sobre una base ni un pivote detectados. Aquí, dentro de la
+           auditoría del patrón, el dato tiene sentido con su nombre real; en
+           la lectura técnica (N1) no lo tenía y salió. */
+        { label: "Rango 65 sesiones", value: Number.isFinite(setupPattern.baseDepthPct) ? pct(setupPattern.baseDepthPct) : "—", pct: Number.isFinite(setupPattern.baseDepthPct) ? Math.min(100, setupPattern.baseDepthPct) : 0, dominant: setupPattern.consolidationCandidate === true, tone: setupPattern.consolidationCandidate === true ? "ok" : "risk" },
         { label: "Compresiones", value: Number.isFinite(setupPattern.contractionCount) ? `${setupPattern.contractionCount} · ${setupPattern.contractionsDecreasing ? "decrecientes" : "no decrecientes"}` : "—", pct: Number.isFinite(setupPattern.contractionCount) ? Math.min(100, setupPattern.contractionCount * 25) : 0, dominant: setupPattern.contractionsDecreasing === true, tone: setupPattern.contractionsDecreasing === true ? "ok" : "risk" },
         { label: "Última comp.", value: Number.isFinite(setupPattern.lastContractionDepthPct) ? pct(setupPattern.lastContractionDepthPct) : "—", pct: Number.isFinite(setupPattern.lastContractionDepthPct) ? Math.max(0, 100 - setupPattern.lastContractionDepthPct * 4) : 0, dominant: Number.isFinite(setupPattern.lastContractionDepthPct) && setupPattern.lastContractionDepthPct <= 8, tone: "neutral" },
         { label: "Rango 10d", value: Number.isFinite(setupPattern.tightness10dPct) ? pct(setupPattern.tightness10dPct) : "—", pct: Number.isFinite(setupPattern.tightness10dPct) ? Math.max(0, 100 - setupPattern.tightness10dPct * 4) : 0, dominant: Number.isFinite(setupPattern.tightness10dPct) && setupPattern.tightness10dPct <= 12, tone: "neutral" },
-        { label: "Pivot", value: Number.isFinite(setupPattern.distanceToPivotPct) ? pct(setupPattern.distanceToPivotPct) : "—", pct: Number.isFinite(setupPattern.distanceToPivotPct) ? Math.max(0, 100 - Math.abs(setupPattern.distanceToPivotPct) * 8) : 0, dominant: Number.isFinite(setupPattern.distanceToPivotPct) && Math.abs(setupPattern.distanceToPivotPct) <= 6, tone: "neutral" },
+        { label: "Dist. techo 65 sesiones", value: Number.isFinite(setupPattern.distanceToPivotPct) ? pct(setupPattern.distanceToPivotPct) : "—", pct: Number.isFinite(setupPattern.distanceToPivotPct) ? Math.max(0, 100 - Math.abs(setupPattern.distanceToPivotPct) * 8) : 0, dominant: Number.isFinite(setupPattern.distanceToPivotPct) && Math.abs(setupPattern.distanceToPivotPct) <= 6, tone: "neutral" },
         { label: "Volumen seco", value: Number.isFinite(setupPattern.volumeDryUpRatio) ? `${setupPattern.volumeDryUpRatio.toFixed(2)}x` : "—", pct: Number.isFinite(setupPattern.volumeDryUpRatio) ? Math.max(0, 100 - setupPattern.volumeDryUpRatio * 60) : 0, dominant: Number.isFinite(setupPattern.volumeDryUpRatio) && setupPattern.volumeDryUpRatio <= 0.9, tone: "neutral" },
         { label: "Score patrón", value: Number.isFinite(setupPattern.patternQualityScore) ? Math.round(setupPattern.patternQualityScore) : "—", pct: Number.isFinite(setupPattern.patternQualityScore) ? setupPattern.patternQualityScore : 0, dominant: Number.isFinite(setupPattern.patternQualityScore) && setupPattern.patternQualityScore >= 65, tone: Number.isFinite(setupPattern.patternQualityScore) && setupPattern.patternQualityScore >= 65 ? "ok" : "risk" },
       ]
@@ -2022,21 +2057,23 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   // N3 detalle de calidad de datos por fuente
   const n3DataQualityDetail = data ? [
     { label: "Cierre", value: freshness.priceDate ? compactDate(freshness.priceDate) : "—", state: freshness.priceDate ? (chartEstimated ? "stale" : "value") : "ghost", suffix: chartEstimated && freshness.priceDate ? "est" : "", source: metricSourceState(chartEstimated ? "proxy" : "measured", "Cierre", "cierre del proveedor") },
-    { label: "RS global", value: freshness.rsGlobalAsOf ? `${compactDate(freshness.rsGlobalAsOf)} · ${sampleText(freshness.rsGlobalSample)}` : "Sin snapshot", state: freshness.rsGlobalAsOf ? "value" : "ghost", source: rsUniverseSource },
+    // Mismo texto que la franja de N0 (rsRankingStripValue): sin ranking
+    // semanal no hay fecha ni muestra que enseñar en ninguna de las dos.
+    { label: "RS global", value: rsRankingStripValue(rsUniverse, freshness), state: Number.isFinite(rsUniverse) && freshness.rsGlobalAsOf ? "value" : "ghost", source: rsUniverseSource },
     { label: "Cobertura", value: coverage.label || "Completa", state: coverage.label ? "value" : "ghost", source: coverage.label ? metricSourceState("measured", "Cobertura", "auditoría interna") : metricSourceState("review", "Cobertura", "sin dato") },
     { label: "Histórico", value: chartUnavailable ? "Sin serie de precios" : chartEstimated ? "Histórico estimado" : "Histórico en vivo", state: chartUnavailable ? "ghost" : "value", source: chartEstimated ? metricSourceState("review", "Histórico", chartSourceDetail) : metricSourceState("measured", "Histórico", "live") },
     { label: "Fundamentales", value: freshness.fundamentalsAgeDays != null ? `${freshness.fundamentalsAgeDays} días` : "Sin fecha", state: freshness.fundamentalsAgeDays != null ? "value" : "ghost", source: freshness.fundamentalsAgeDays != null ? metricSourceState("measured", "Fundamentales", "estado financiero del proveedor") : metricSourceState("review", "Fundamentales", "sin fecha") },
   ] : [];
 
-  // Acciones rápidas de la cabecera (links) — se renderizan dentro de N0
-  const n0Actions = (
-    <>
-      <a className="stockHeroLink stockBackLink" href="/">Screener</a>
-      {data?.links?.official && (
-        <a className="stockHeroLink" href={data.links.official} target="_blank" rel="noreferrer">Web oficial</a>
-      )}
-    </>
-  );
+  // Acciones rápidas de la cabecera (links) — se renderizan dentro de N0.
+  // Van como ARRAY, no como fragmento: el guard de N0 cuenta elementos y un
+  // fragmento no tiene longitud (era el bug que los borraba de la ficha).
+  const n0Actions = [
+    <a key="screener" className="stockHeroLink stockBackLink" href="/">Screener</a>,
+    data?.links?.official
+      ? <a key="official" className="stockHeroLink" href={data.links.official} target="_blank" rel="noreferrer">Web oficial</a>
+      : null,
+  ].filter(Boolean);
 
   // Símbolo sin datos: la ficha entera se sustituye por el estado vacío. No se
   // renderiza N0 (precio + decisión) ni ningún bloque derivado de barras.
@@ -2047,6 +2084,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   }
 
   return <main className="page stockPage">
+    <StorageAlert />
     {/* N0 — Cabecera: identidad + precio + etapa (siempre visible, sin scroll) */}
     <N0VerdictBlock
       symbol={symbol}
@@ -2057,6 +2095,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       chartEstimated={chartEstimated}
       chartUnavailable={chartUnavailable}
       setupSummary={setupSummary}
+      rsUniverse={rsUniverse}
       actions={n0Actions}
     />
 

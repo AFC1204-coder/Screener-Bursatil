@@ -15,6 +15,7 @@ import { buildDecisionTraceabilitySummary, decisionResolutionForRow } from "@/li
 import { buildSavedListView, listViewHref, listViewSignature, normalizeListScope, normalizeSavedListViews, savedListViewMetaLine } from "@/lib/listViews";
 import { enforceListContractRows, listContractForKey, listInclusionSummary, rowPassesListContract, summarizeListReliability } from "@/lib/listRationale";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { fitScansForBrowser } from "@/lib/screenerPipeline";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { compactDate, QualityStrip } from "@/app/components/ui/QualityStrip";
 import { canonicalRs, RS_CANONICAL_LABEL } from "@/lib/rsCanonical";
@@ -559,7 +560,7 @@ export default function ListsPage() {
     const loadedReview = safeRead(STORAGE_KEYS.review, {});
 
     setScans(loadedScans);
-    safeWrite(STORAGE_KEYS.scans, loadedScans);
+    safeWrite(STORAGE_KEYS.scans, fitScansForBrowser(loadedScans));
     setFavorites(loadedFavorites);
     setSavedListViews(loadedListViews);
     setReviewState(loadedReview);

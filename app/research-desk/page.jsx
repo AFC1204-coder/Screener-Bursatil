@@ -11,6 +11,7 @@ import { deleteFavoriteFromCloud, deleteScanFromCloud, getAlertsFromCloud, getCl
 import { dateShort, dateTime, num, pct } from "@/lib/formatters";
 import { sma } from "@/lib/indicators";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { fitScansForBrowser } from "@/lib/screenerPipeline";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { activeAlerts, alertSummary, alertsFromScan, mergeAlerts, resolveAlert } from "@/lib/methodologyAlerts";
@@ -357,7 +358,7 @@ export default function ResearchDesk() {
       document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, []);
-  function persistScans(next) { setScans(next); safeWrite(STORAGE_KEYS.scans, next); }
+  function persistScans(next) { setScans(next); safeWrite(STORAGE_KEYS.scans, fitScansForBrowser(next)); }
   function persistFavs(next) { setFavorites(next); safeWrite(STORAGE_KEYS.favorites, next); }
   function persistAlerts(next) { setAlerts(next); safeWrite(STORAGE_KEYS.alerts, next); }
 

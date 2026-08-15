@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { buildReviewProfileSummary, prepareReviewQueueRows } from "@/lib/decisionProfile";
-import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { buildDecisionQueueItem } from "@/lib/screenerExplainability";
-import { compactRowForSession, compactRowsForSession } from "@/lib/screenerPipeline";
+import { persistReviewQueue } from "@/lib/screenerPipeline";
 import {
   applyStockDecisionResolution,
   decisionResolutionForSymbol,
@@ -16,9 +16,6 @@ import {
 export function useQuickReviewSession({
   activeSettings = {},
   presetKey = "",
-  searchResult = null,
-  rows = [],
-  analyzedRows = [],
   setStatus = () => {},
   persistScreenerSession = () => {},
   buildScreenerStockOpenContext = () => null,
@@ -88,7 +85,7 @@ export function useQuickReviewSession({
     const reviewSourceDetail = String(previousReview.sourceDetail || "").trim();
     const reviewQueueMode = String(previousReview.queueMode || "screener-review").trim() || "screener-review";
     const reviewPayload = { ...quickReviewPayload(row, index, previousReview), updatedAt: openedAt };
-    safeWrite(STORAGE_KEYS.review, reviewPayload);
+    persistReviewQueue(reviewPayload);
     const context = buildReviewStockOpenContext(row, {
       settings: activeSettings,
       source: "current",
@@ -109,11 +106,7 @@ export function useQuickReviewSession({
       lastOpenedStockAt: openedAt,
       lastOpenedStockContext: context,
       scrollY: typeof window !== "undefined" ? window.scrollY : 0,
-      quickReviewRows: compactRowsForSession(contextMeta.list),
       quickReviewIndex: contextMeta.index,
-      searchResult: compactRowForSession(searchResult),
-      rows: compactRowsForSession(rows),
-      analyzedRows: compactRowsForSession(analyzedRows),
     });
   }
 
@@ -132,7 +125,7 @@ export function useQuickReviewSession({
       source: "screener-review",
       note,
     });
-    safeWrite(STORAGE_KEYS.review, nextReview);
+    persistReviewQueue(nextReview);
     setQuickReviewResolutionRevision((value) => value + 1);
     const resolution = decisionResolutionForSymbol(nextReview, row.symbol);
     setStatus(`${row.symbol}: ${resolution?.label || "resuelta"} desde Vista rápida`);
@@ -147,7 +140,7 @@ export function useQuickReviewSession({
       source: "screener-review",
       note: resolution?.label ? `Antes: ${resolution.label}` : "",
     });
-    safeWrite(STORAGE_KEYS.review, nextReview);
+    persistReviewQueue(nextReview);
     setQuickReviewResolutionRevision((value) => value + 1);
     setStatus(`${row.symbol}: reabierta desde Vista rápida`);
   }
@@ -172,7 +165,7 @@ export function useQuickReviewSession({
     setQuickReviewRows(reviewRows);
     setQuickReviewIndex(currentIndex);
     setActiveModalRow(reviewRows[currentIndex]);
-    safeWrite(STORAGE_KEYS.review, {
+    persistReviewQueue({
       source: "current",
       sourceLabel: reviewSourceLabel,
       sourceDetail: reviewSourceDetail,
@@ -201,7 +194,7 @@ export function useQuickReviewSession({
     const decisionState = reviewDecisionStateForRows(previousReview, list);
     setQuickReviewIndex(nextIndex);
     setActiveModalRow(list[nextIndex]);
-    safeWrite(STORAGE_KEYS.review, {
+    persistReviewQueue({
       source: previousReview.source || "current",
       sourceLabel: previousReview.sourceLabel || "Screener actual",
       sourceDetail: previousReview.sourceDetail || "",
