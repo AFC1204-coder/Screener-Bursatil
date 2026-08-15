@@ -165,10 +165,16 @@ describe("audit · registry ↔ matriz ↔ contrato (estructura)", () => {
     expect(v.ok).toBe(true);
   });
 
-  it("COMPOSITE_WEIGHTS suma exactamente 1.00 (verificación real)", () => {
+  it("el composite conserva la escala 0-100 renormalizando sobre los pesos declarados", () => {
+    // Antes esta invariante era "los pesos suman 1.00". Dejó de serlo el
+    // 2026-08-15, cuando el término IPO salió de COMPOSITE_WEIGHTS: suman .98
+    // y el motor divide por esa suma. Lo que hay que proteger no es el total
+    // declarado sino la escala — un composite comprimido un 2% es exactamente
+    // el defecto que se corrigió, y "suman 1.00" no lo habría detectado.
     const check = compositeWeightsCheck();
-    expect(check.ok, `pesos suman ${check.sum}, no 1.0`).toBe(true);
-    expect(check.sum).toBeCloseTo(1.0, 6);
+    expect(check.ok, `con todos los términos a 100 el composite da ${check.scaleTop}, no 100`).toBe(true);
+    expect(check.scaleTop).toBeCloseTo(100, 9);
+    expect(check.sum).toBeCloseTo(0.98, 6);
   });
 
   it("estado global expone pendingCount y acceptedCount coherentes", () => {
@@ -309,6 +315,23 @@ describe("audit · Ruta B (screenerPipeline.sectorize) equivalencia numérica vs
   const out = routeBSectorize(inputRows);
   expect(out.length).toBe(3);
   const row = out[0];
+
+  // Los nombres del composite. `totalScore` es una copia byte a byte de
+  // `compositeScore`: conviven porque `total_score` es la columna de la base y
+  // el único de los dos que llevan las filas ligeras, mientras que
+  // `compositeScore` lo leen directamente lib/leaderboards.js:385,490,
+  // lib/discoveryAudit.js:61 y lib/screenerMarket.jsx:107. Este test fija que
+  // no puedan separarse mientras convivan: dos nombres, un número.
+  it("Ruta B · los dos nombres del composite son el mismo número", () => {
+    expect(isAcceptable(row.compositeScore)).toBe(true);
+    expectSameNumber("totalScore === compositeScore", row.compositeScore, row.totalScore);
+  });
+
+  it("Ruta B · legacyTotalScore ya no se produce", () => {
+    // Era un cuarto compuesto de trece términos cuyo único consumidor era una
+    // columna del CSV. Eliminado el 2026-08-15.
+    expect(row.legacyTotalScore).toBeUndefined();
+  });
 
   // Pre-calc preservados: B no recalcula, preserva el valor de Ruta A.
   const preCalcSignals = [
@@ -516,22 +539,26 @@ describe("audit · Ruta C (materializedScanner._forTest) equivalencia numérica 
 });
 
 // ---------------------------------------------------------------------------
-// 6. DIVERGENCE_DOC #1 (ipoScore): MISMA SEMILLA, B vs C, diferencia = 0.02*ipoScore.
+// 6. DIVERGENCE_DOC #1 (ipoScore): MISMA SEMILLA, B vs C, diferencia = 0.
 // ---------------------------------------------------------------------------
 // La clave del test: la semilla pre-sectorize debe ser IDÉNTICA para B y C.
-// Solo cambia el sectorize invocado. La diferencia observable debe ser
-// exactamente 0.02 * (ipoScore_B - 0) en compositeScore y objectiveScore.
+// Solo cambia el sectorize invocado. Hasta el 2026-08-15 la diferencia
+// observable era exactamente 0.02 * ipoScore_B, porque B pasaba la señal al
+// composite y C no. Retirado el término de COMPOSITE_WEIGHTS, la divergencia
+// se queda en el CAMPO (C sigue sin calcularlo) y desaparece del score: la
+// diferencia esperada es ahora CERO, y este test lo fija para que reintroducir
+// el término por la puerta de atrás vuelva a ponerse en rojo.
 //
 // Verificaciones:
 //   1. Los inputs pre-sectorize son idénticos (mismo JSON.stringify).
 //   2. Los componentes equivalentes coinciden antes de la diferencia.
-//   3. B calcula ipoScore canónico (>0 si el seed es favorable).
+//   3. B sigue calculando ipoScore canónico (>0 si el seed es favorable).
 //   4. C omite ipoScore (no está en el sidecar).
-//   5. delta composite = delta objective = 0.02 * ipoB (en valor absoluto).
+//   5. delta composite = delta objective = 0, con ipoScore_B > 0.
 //   6. Si algún otro componente difiere, no se oculta — se reporta.
 
-describe("audit · DIVERGENCE_DOC #1 (ipoScore) — misma semilla, diferencia = 0.02*ipoScore", () => {
-  it("B y C reciben la misma semilla; la diferencia en composite y objective es exactamente 0.02*ipoScore_B", () => {
+describe("audit · DIVERGENCE_DOC #1 (ipoScore) — misma semilla, diferencia = 0", () => {
+  it("B y C reciben la misma semilla; el composite y el objective coinciden aunque solo B tenga ipoScore", () => {
     // Seed con ipoScore computable (>0).
     const seed = makePreSectorizeRow("DIVERG_SEED");
     const seedForB = deepCloneRow(seed);
@@ -581,17 +608,15 @@ describe("audit · DIVERGENCE_DOC #1 (ipoScore) — misma semilla, diferencia = 
       );
     }
 
-    // (5) La diferencia observable: composite y objective en B incluyen
-    // +0.02*ipoScore; en C no. La diferencia debe ser exactamente eso.
+    // (5) Ya no hay diferencia observable: ipoScore salió de COMPOSITE_WEIGHTS,
+    // así que da igual que B lo calcule y C no. El seed tiene ipoScore > 0
+    // (comprobado en (3)), de modo que un delta de 0 solo puede significar que
+    // el término no participa — no que la señal valga cero.
     const deltaComposite = rowB.compositeScore - rowC.compositeScore;
     const deltaObjective = rowB.objectiveScore - rowC.objectiveScore;
 
-    // Tanto compositeScore como objectiveScore usan ipoScore con peso 0.02
-    // (scoreCompositeValue invocado con ipoScore). Por tanto delta debe
-    // ser 0.02 * ipoB en ambos.
-    const expectedDelta = 0.02 * ipoB;
-    expectSameNumber("composite B - composite C debe ser 0.02 * ipoB", expectedDelta, deltaComposite);
-    expectSameNumber("objective B - objective C debe ser 0.02 * ipoB", expectedDelta, deltaObjective);
+    expectSameNumber("composite B - composite C debe ser 0 (ipoScore fuera del composite)", 0, deltaComposite);
+    expectSameNumber("objective B - objective C debe ser 0 (ipoScore fuera del composite)", 0, deltaObjective);
   });
 });
 

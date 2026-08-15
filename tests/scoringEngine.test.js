@@ -322,8 +322,18 @@ describe("scoringEngine · scoreIpo buckets de edad", () => {
 // ---------------------------------------------------------------------------
 // computeComposite — 3 perfiles
 // ---------------------------------------------------------------------------
+// El composite dejó de ser bit-idéntico al snapshot pre-consolidación el
+// 2026-08-15, cuando se retiró el término IPO (COMPOSITE_WEIGHTS). La relación
+// con el snapshot sigue siendo exacta y verificable, así que se comprueba esa
+// en vez de borrar la comparación:
+//
+//     motor(input) === (snapshot(input) − .02·ipoScore) / .98
+//
+// El snapshot NO se toca: es la referencia histórica verbatim de scoring.js.
+const sinIpoRenormalizado = (input) => (snapComposite(input) - (input.ipoScore || 0) * .02) / 0.98;
+
 describe("scoringEngine · computeComposite (composite)", () => {
-  it("perfil completo · engine === snapshot", () => {
+  it("perfil completo · el snapshot menos el término IPO, renormalizado sobre .98", () => {
     const input = {
       setupQualityScore: 70,
       rsAnchor: 75,
@@ -338,24 +348,39 @@ describe("scoringEngine · computeComposite (composite)", () => {
       momentumScore: 50,
       ipoScore: 30,
     };
-    expect(computeComposite(input)).toBe(snapComposite(input));
+    expect(computeComposite(input)).toBeCloseTo(sinIpoRenormalizado(input), 10);
+    // Y sube respecto al motor viejo: la compresión del 2% desaparece.
+    expect(computeComposite(input)).toBeGreaterThan(snapComposite({ ...input, ipoScore: 0 }));
   });
-  it("con ipoScore omitido (default 0)", () => {
+  it("ipoScore ya no es un término: pasarlo, omitirlo o pasarlo a 100 da el mismo composite", () => {
     const input = {
       setupQualityScore: 70, rsAnchor: 75, rsQualityScore: 70,
       demandScore: 65, adProxyScore: 55, growthScore: 60, epsAnchor: 60,
       sectorScore: 65, riskRewardScore: 60, riskScore: 70, momentumScore: 50,
     };
-    expect(computeComposite(input)).toBe(snapComposite(input));
+    const sinClave = computeComposite(input);
+    expect(computeComposite({ ...input, ipoScore: 0 })).toBe(sinClave);
+    expect(computeComposite({ ...input, ipoScore: 100 })).toBe(sinClave);
+    expect(computeComposite({ ...input, ipoScore: null })).toBe(sinClave);
+    expect(sinClave).toBeCloseTo(sinIpoRenormalizado(input), 10);
   });
-  it("perfil bajo · engine === snapshot", () => {
+  it("perfil bajo · el snapshot menos el término IPO, renormalizado sobre .98", () => {
     const input = {
       setupQualityScore: 20, rsAnchor: 30, rsQualityScore: 25,
       demandScore: 20, adProxyScore: 15, growthScore: 25, epsAnchor: 20,
       sectorScore: 30, riskRewardScore: 20, riskScore: 25, momentumScore: 10,
       ipoScore: 0,
     };
-    expect(computeComposite(input)).toBe(snapComposite(input));
+    expect(computeComposite(input)).toBeCloseTo(sinIpoRenormalizado(input), 10);
+  });
+  it("invariante de escala: con todos los términos al mismo valor, el composite es ese valor", () => {
+    // Es la propiedad que el atajo `if (missing === 0) return weightedSum`
+    // rompía en cuanto los pesos declarados dejaron de sumar 1.00, y la que
+    // habría detectado el término IPO desde el primer día.
+    for (const v of [0, 37.5, 55, 100]) {
+      const input = Object.fromEntries(COMPOSITE_WEIGHTS.map(({ key }) => [key, v]));
+      expect(computeComposite(input)).toBeCloseTo(v, 10);
+    }
   });
 });
 
@@ -373,17 +398,17 @@ describe("scoringEngine · computeCompositeWithCoverage (renormalización)", () 
   const fullInputExcept = (overrides) => ({
     setupQualityScore: 70, rsAnchor: 75, rsQualityScore: 70, demandScore: 65,
     adProxyScore: 55, sectorScore: 65, riskRewardScore: 60, riskScore: 70,
-    momentumScore: 50, ipoScore: 30,
+    momentumScore: 50,
     ...overrides,
   });
 
-  it("cobertura completa: coverage=1, partial=false, value bit-idéntico a computeComposite y al snapshot pre-fix", () => {
+  it("cobertura completa: coverage=1, partial=false, value idéntico a computeComposite", () => {
     const input = fullInputExcept({ growthScore: 60, epsAnchor: 60 });
     const result = computeCompositeWithCoverage(input);
     expect(result.coverage).toBe(1);
     expect(result.partial).toBe(false);
     expect(result.value).toBe(computeComposite(input));
-    expect(result.value).toBe(snapComposite(input));
+    expect(result.value).toBeCloseTo(sinIpoRenormalizado(input), 10);
   });
 
   it("growthMetrics vacío → growthScore null + epsAnchor null (sin proxy) → composite renormalizado, NO en 0", () => {
@@ -399,16 +424,17 @@ describe("scoringEngine · computeCompositeWithCoverage (renormalización)", () 
     const result = computeCompositeWithCoverage(input);
 
     expect(result.partial).toBe(true);
-    // 10 de 12 términos presentes; pesos ausentes: growthScore(.08) + epsAnchor(.08) = .16
-    expect(result.coverage).toBeCloseTo(0.84, 2);
+    // 9 de 11 términos presentes; pesos ausentes: growthScore(.08) + epsAnchor(.08)
+    // = .16 sobre un total declarado de .98 ⇒ .82/.98.
+    expect(result.coverage).toBeCloseTo(0.82 / 0.98, 6);
 
-    // Promedio ponderado SOLO de los 10 términos presentes (fórmula independiente,
+    // Promedio ponderado SOLO de los 9 términos presentes (fórmula independiente,
     // no reutiliza la implementación — para que un bug real en computeComposite
     // haga fallar este test en vez de auto-confirmarse).
     const expectedWeightedSum =
       70 * .17 + 75 * .16 + 70 * .06 + 65 * .10 + 55 * .08 +
-      65 * .10 + 60 * .08 + 70 * .05 + 50 * .02 + 30 * .02;
-    const expectedPresentWeight = .17 + .16 + .06 + .10 + .08 + .10 + .08 + .05 + .02 + .02;
+      65 * .10 + 60 * .08 + 70 * .05 + 50 * .02;
+    const expectedPresentWeight = .17 + .16 + .06 + .10 + .08 + .10 + .08 + .05 + .02;
     expect(result.value).toBeCloseTo(expectedWeightedSum / expectedPresentWeight, 6);
 
     // Y es distinto (y mayor) que tratar los ausentes como 0 — el comportamiento
@@ -454,20 +480,22 @@ describe("scoringEngine · computeCompositeWithCoverage (renormalización)", () 
   });
 
   it("todos los términos ausentes: no revienta, devuelve value=0/coverage=0 en vez de NaN", () => {
-    // ipoScore necesita override explícito a null: el default del parámetro
-    // (=0) solo se aplica a `undefined`, y un ipoScore=0 seguiría siendo un
-    // término "presente" (peso .02), impidiendo el caso realmente vacío.
-    const result = computeCompositeWithCoverage({ ipoScore: null });
+    // Antes hacía falta pasar `ipoScore: null` explícito para llegar aquí: su
+    // default de parámetro (=0) materializaba un término presente de peso .02
+    // e impedía el caso realmente vacío. Retirado el término, `{}` ya lo es.
+    const result = computeCompositeWithCoverage({});
     expect(result.value).toBe(0);
     expect(result.coverage).toBe(0);
     expect(result.partial).toBe(true);
   });
 
-  it("solo ipoScore por defecto (0) presente: no revienta, renormaliza sobre ese único término", () => {
-    const result = computeCompositeWithCoverage({});
-    expect(result.coverage).toBeCloseTo(0.02, 6);
+  it("ningún término se materializa solo: una clave desconocida no cuenta como presente", () => {
+    // Protección contra la reintroducción del patrón que tenía ipoScore: un
+    // valor que entra al promedio sin que nadie lo haya medido.
+    const result = computeCompositeWithCoverage({ ipoScore: 100, loQueSea: 100 });
+    expect(result.value).toBe(0);
+    expect(result.coverage).toBe(0);
     expect(result.partial).toBe(true);
-    expect(result.value).toBe(0); // 0 * .02 / .02 = 0
   });
 });
 
@@ -488,14 +516,16 @@ describe("scoringEngine · SIGNAL_REGISTRY integridad", () => {
     }
   });
 
-  it("los pesos del composite suman 1.00 y todas las claves existen", () => {
-    let sum = 0;
-    for (const { key, weight } of COMPOSITE_WEIGHTS) {
-      sum += weight;
-      // Las claves externas (rsAnchor, rsQualityScore, sectorScore, epsAnchor)
-      // no están en el registry — solo verificamos que las internas sí.
-    }
-    expect(sum).toBeCloseTo(1.0, 6);
+  it("los pesos del composite suman .98 y el motor renormaliza sobre esa suma", () => {
+    // La invariante ya NO es "suman 1.00": desde que el término IPO salió del
+    // promedio (2026-08-15) suman .98, y lo que define la escala 0-100 es la
+    // renormalización, no el total declarado. Se comprueban las dos cosas: el
+    // total real, y que la escala sobreviva a ese total.
+    const sum = COMPOSITE_WEIGHTS.reduce((acc, { weight }) => acc + weight, 0);
+    expect(sum).toBeCloseTo(0.98, 6);
+    expect(COMPOSITE_WEIGHTS.map((w) => w.key)).not.toContain("ipoScore");
+    const todosA100 = Object.fromEntries(COMPOSITE_WEIGHTS.map(({ key }) => [key, 100]));
+    expect(computeComposite(todosA100)).toBeCloseTo(100, 10);
   });
 
   it("computeSignal devuelve null para claves desconocidas", () => {

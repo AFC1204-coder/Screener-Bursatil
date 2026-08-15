@@ -23,6 +23,7 @@ import {
   screenOutcome,
 } from "@/lib/scanLightProjection";
 import { compactChartPreview } from "@/lib/researchRowContract";
+import { COMPOSITE_WEIGHTS } from "@/lib/scoringEngine";
 import { DISTANCE_RULES, FIELD_RULES } from "@/lib/screenerFilterCatalog";
 import { PERFORMANCE_PERIODS } from "@/lib/screenerPeriods";
 
@@ -117,6 +118,38 @@ describe("la proyección ligera cubre todo lo que se consulta", () => {
 
   it("cubre las 17 métricas que la ficha del valor lee de scan_results", () => {
     expect(STOCK_PAGE_FIELDS.filter((field) => !FIELDS.has(field))).toEqual([]);
+  });
+
+  // Los once términos de COMPOSITE_WEIGHTS. Este bloque existe porque el modo
+  // de fallo YA OCURRIÓ: setupQualityScore, demandScore y growthScore se
+  // calculaban, puntuaban y se tiraban al guardar, así que el 99,1% de las
+  // filas del nocturno llevaba un score imposible de reconstruir con lo que la
+  // fila enseña, y el desglose de la ficha imputaba +0,0 a componentes que sí
+  // habían pesado (docs/analisis-compuesto-2026-08-15.md, B.3).
+  //
+  // Dos términos no son campos de fila sino cadenas de fallback resueltas en
+  // el llamador (lib/materializedScanner.js, lib/screenerPipeline.js); para
+  // ellos basta con que la proyección lleve algún eslabón de la cadena.
+  const COMPOSITE_TERM_FIELDS = {
+    rsAnchor: ["rsGlobalPct", "rsRating"],
+    epsAnchor: ["epsGrowthProxyScore", "growthScore"],
+  };
+
+  it("cubre los once términos del composite", () => {
+    const sinCubrir = COMPOSITE_WEIGHTS
+      .map(({ key }) => ({ key, fields: COMPOSITE_TERM_FIELDS[key] || [key] }))
+      .filter(({ fields }) => !fields.some((field) => FIELDS.has(field)))
+      .map(({ key, fields }) => `${key} → ${fields.join(" | ")}`);
+    expect(sinCubrir).toEqual([]);
+  });
+
+  it("no persiste un término que el composite ya no usa", () => {
+    // ipoScore salió del composite el 2026-08-15 pero SIGUE en la proyección:
+    // lo consultan el contrato y el orden de la Lista "IPO / New Leaders"
+    // (lib/listRationale.js:177,394). Es una permanencia deliberada, no un
+    // resto: si algún día esa Lista deja de leerlo, el campo sale de aquí.
+    expect(FIELDS.has("ipoScore")).toBe(true);
+    expect(COMPOSITE_WEIGHTS.map((w) => w.key)).not.toContain("ipoScore");
   });
 });
 

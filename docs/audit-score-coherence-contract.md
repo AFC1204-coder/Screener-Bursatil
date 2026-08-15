@@ -54,7 +54,7 @@ Fuente: `Object.values(SIGNAL_REGISTRY)` en `lib/scoringEngine.js`.
 
 ### Composite (`COMPOSITE_WEIGHTS`)
 
-Suma de pesos = 0.9999999999999999 (verificado por `compositeWeightsCheck()`).
+Términos = 11. Suma de pesos declarados = 0.9799999999999999; el motor renormaliza sobre esa suma, y con todos los términos a 100 el composite da 100.00000000000001 (verificado por `compositeWeightsCheck()`).
 
 ## 2. Tabla de equivalencia por ruta (matriz canónica)
 
@@ -156,9 +156,9 @@ Cada celda (señal × ruta) tiene un `kind`: `EQUIVALENT`, `EQUIVALENT_ADAPT`, `
 
 | ID | Severidad | Descripción | ADR § | Cita literal |
 |----|-----------|-------------|-------|--------------|
-| DIVERG-DOC #1 | comportamiento-observable | ipoScore no se invoca en materializedScanner.sectorize; composite se construye con ipoScore=0 implícito. | §4.3 | `**`ipoScore` en el composite**` |
+| DIVERG-DOC #1 | campo-ausente | ipoScore no se invoca en materializedScanner.sectorize: el campo falta en las filas del cron. Desde el 2026-08-15 ya NO afecta al composite (el término salió de COMPOSITE_WEIGHTS), así que la divergencia dejó de ser observable en el score y se queda en el campo. | §4.3 | `**`ipoScore` en el composite**` |
 | DIVERG-DOC #2 | cobertura | ebitdaMargin ausente en dataCoverageForRow privado; presente en researchRow.js (13 entradas). | §4.2 | ``ebitdaMargin` en cobertura fundamental` |
-| DIVERG-DOC #3 | producto | Narrativa + legacyTotalScore + ratingModel ausentes en filas del cron. | §4.5 | `Narrativa + `legacyTotalScore` + `ratingModel`` |
+| DIVERG-DOC #3 | producto | Narrativa + ratingModel ausentes en filas del cron. El tercer campo de la divergencia original, legacyTotalScore, dejó de existir el 2026-08-15: se eliminó de la ruta B porque su único consumidor era una columna del CSV, así que ya no hay nada que diverja por ahí. | §4.5 | `Narrativa + `legacyTotalScore` + `ratingModel`` |
 | DIVERG-DOC #4 | contrato-compacto | chartPreview privado produce {date, close, volume} descendente; contrato define {date, close, sma50, sma200, volume} ascendente. | §4.6 | ``chartPreview`` |
 | DIVERG-DOC #5 | defensa-barata | normalizeBars ausente en Ruta A; presente en materializedScanner. | §4.7 | ``normalizeBars`` |
 | DIVERG-DOC #6 | politica-seleccion | Gate de 180 barras como política de selección en cron; Ruta A exige 20 (mínimo técnico) y 180 solo con requireLongHistory=true. | §4.8 | `Gate de barras` |
@@ -181,7 +181,7 @@ Permanecen en estado pendiente hasta que:
 ## 5. Reglas que el audit enforza
 
 1. **Registry ↔ matriz:** las claves de `SIGNAL_REGISTRY` coinciden con `EQUIVALENCE_MATRIX[*]`.
-2. **Pesos del composite:** `COMPOSITE_WEIGHTS` suma 1.0 (real).
+2. **Escala del composite:** con todos los términos de `COMPOSITE_WEIGHTS` al mismo valor, `computeComposite` devuelve ese valor (real). No se exige que los pesos declarados sumen 1.0: suman 0.98 y el motor renormaliza.
 3. **Equivalencia numérica:** para cada celda EQUIVALENT/EQUIVALENT_ADAPT, el valor post-ruta === `computeSignal(row, key).value`.
 4. **Override rule:** adProxy/epsGrowthProxy se preservan si finitos; fallback al canon si no.
 5. **DIVERGENCE_DOC:** cada cita literal debe aparecer en el ADR.
@@ -200,7 +200,7 @@ Permanecen en estado pendiente hasta que:
 
 ## 7. Lo que este contrato NO hace
 
-- No audita `COMPOSITE_WEIGHTS` semánticamente (las 12 claves). Solo la suma.
+- No audita `COMPOSITE_WEIGHTS` semánticamente (las 11 claves). Solo la escala.
 - No audita `scoreWeakness` semánticamente (umbrales).
 - No audita la capa de fetch ni el contrato compacto.
 - No audita `scoreCompositeValue`.

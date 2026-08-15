@@ -35,7 +35,7 @@
 // valida estructuralmente contra este módulo: los IDs de divergencia
 // deben coincidir, las claves deben coincidir y los conteos deben sumar.
 
-import { SIGNAL_REGISTRY, COMPOSITE_WEIGHTS } from "@/lib/scoringEngine";
+import { SIGNAL_REGISTRY, COMPOSITE_WEIGHTS, computeComposite } from "@/lib/scoringEngine";
 
 /**
  * Inventario de señales: se lee en runtime desde el registry.
@@ -137,7 +137,9 @@ export const EQUIVALENCE_MATRIX = Object.freeze({
 
   // Ruta C — sectorize privado.
   // Calcula las señales composite-level + percentiles. Diferencias con B:
-  //   - ipoScore NO se invoca (DIVERG-DOC #1; ADR §4.3).
+  //   - ipoScore NO se invoca (DIVERG-DOC #1; ADR §4.3). Desde el 2026-08-15
+  //     el término salió del composite, así que la ausencia del campo ya no
+  //     cambia ningún score: B y C producen el mismo composite.
   //   - sectorize opera por lote local, no por población completa (hallazgo
   //     pendiente de respaldo textual en el ADR).
   //   - scoreWeakness se invoca POST-percentiles (mismo orden que B;
@@ -205,8 +207,8 @@ export const ACCEPTED_DIVERGENCES = Object.freeze([
     id: "DIVERG-DOC #1",
     signal: "ipoScore",
     route: "materializedScanner.sectorize",
-    severity: "comportamiento-observable",
-    description: "ipoScore no se invoca en materializedScanner.sectorize; composite se construye con ipoScore=0 implícito.",
+    severity: "campo-ausente",
+    description: "ipoScore no se invoca en materializedScanner.sectorize: el campo falta en las filas del cron. Desde el 2026-08-15 ya NO afecta al composite (el término salió de COMPOSITE_WEIGHTS), así que la divergencia dejó de ser observable en el score y se queda en el campo.",
     adrQuote: "**`ipoScore` en el composite**",
     adrSection: "§4.3",
   },
@@ -221,10 +223,10 @@ export const ACCEPTED_DIVERGENCES = Object.freeze([
   },
   {
     id: "DIVERG-DOC #3",
-    signal: "compositeReasons/Risks/legacyTotalScore/ratingModel",
+    signal: "compositeReasons/Risks/ratingModel",
     route: "materializedScanner.sectorize",
     severity: "producto",
-    description: "Narrativa + legacyTotalScore + ratingModel ausentes en filas del cron.",
+    description: "Narrativa + ratingModel ausentes en filas del cron. El tercer campo de la divergencia original, legacyTotalScore, dejó de existir el 2026-08-15: se eliminó de la ruta B porque su único consumidor era una columna del CSV, así que ya no hay nada que diverja por ahí.",
     adrQuote: "Narrativa + `legacyTotalScore` + `ratingModel`",
     adrSection: "§4.5",
   },
@@ -305,11 +307,17 @@ export const PENDING_DIVERGENCES = Object.freeze([]);
  */
 export function compositeWeightsCheck() {
   const sum = COMPOSITE_WEIGHTS.reduce((acc, w) => acc + w.weight, 0);
+  // La invariante NO es que los pesos declarados sumen 1.0 —desde que el
+  // término IPO salió del composite (2026-08-15) suman 0.98—, sino que el
+  // motor renormalice sobre esa suma y conserve la escala 0-100. Con todos los
+  // términos al mismo valor, el composite tiene que devolver ese valor.
+  const scaleTop = computeComposite(Object.fromEntries(COMPOSITE_WEIGHTS.map(({ key }) => [key, 100])));
   return {
     weights: COMPOSITE_WEIGHTS,
     sum,
-    expectedSum: 1.0,
-    ok: Math.abs(sum - 1.0) < 1e-6,
+    scaleTop,
+    expectedScaleTop: 100,
+    ok: Math.abs(scaleTop - 100) < 1e-9,
   };
 }
 
@@ -401,7 +409,7 @@ export function renderContractMarkdown() {
   lines.push("");
   lines.push("### Composite (`COMPOSITE_WEIGHTS`)");
   lines.push("");
-  lines.push(`Suma de pesos = ${compositeWeightsCheck().sum} (verificado por \`compositeWeightsCheck()\`).`);
+  lines.push(`Términos = ${COMPOSITE_WEIGHTS.length}. Suma de pesos declarados = ${compositeWeightsCheck().sum}; el motor renormaliza sobre esa suma, y con todos los términos a 100 el composite da ${compositeWeightsCheck().scaleTop} (verificado por \`compositeWeightsCheck()\`).`);
   lines.push("");
 
   // Tabla de equivalencia por ruta — generada desde la matriz
@@ -479,7 +487,7 @@ export function renderContractMarkdown() {
   lines.push("## 5. Reglas que el audit enforza");
   lines.push("");
   lines.push("1. **Registry ↔ matriz:** las claves de `SIGNAL_REGISTRY` coinciden con `EQUIVALENCE_MATRIX[*]`.");
-  lines.push("2. **Pesos del composite:** `COMPOSITE_WEIGHTS` suma 1.0 (real).");
+  lines.push("2. **Escala del composite:** con todos los términos de `COMPOSITE_WEIGHTS` al mismo valor, `computeComposite` devuelve ese valor (real). No se exige que los pesos declarados sumen 1.0: suman 0.98 y el motor renormaliza.");
   lines.push("3. **Equivalencia numérica:** para cada celda EQUIVALENT/EQUIVALENT_ADAPT, el valor post-ruta === `computeSignal(row, key).value`.");
   lines.push("4. **Override rule:** adProxy/epsGrowthProxy se preservan si finitos; fallback al canon si no.");
   lines.push("5. **DIVERGENCE_DOC:** cada cita literal debe aparecer en el ADR.");
@@ -503,7 +511,7 @@ export function renderContractMarkdown() {
   // Out of scope
   lines.push("## 7. Lo que este contrato NO hace");
   lines.push("");
-  lines.push("- No audita `COMPOSITE_WEIGHTS` semánticamente (las 12 claves). Solo la suma.");
+  lines.push("- No audita `COMPOSITE_WEIGHTS` semánticamente (las 11 claves). Solo la escala.");
   lines.push("- No audita `scoreWeakness` semánticamente (umbrales).");
   lines.push("- No audita la capa de fetch ni el contrato compacto.");
   lines.push("- No audita `scoreCompositeValue`.");

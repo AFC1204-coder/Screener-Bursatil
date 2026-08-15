@@ -68,7 +68,7 @@ describe("scan_symbol_history · decisión change-only", () => {
       defaults: DEFAULTS,
     });
     expect(inserted.change_reasons).toEqual(["first_appearance"]);
-    expect(inserted.scoring_engine_version).toBe("eaee4f1");
+    expect(inserted.scoring_engine_version).toBe("composite-11t");
     expect(inserted.composite_coverage).toBe(0.84);
     expect(inserted.composite_partial).toBe(true);
     expect(inserted.data_provider).toBe("yahoo");

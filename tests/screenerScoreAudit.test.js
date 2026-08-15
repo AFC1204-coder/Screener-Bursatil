@@ -18,18 +18,39 @@ const row = {
   compositeRisks: ["Extensión a vigilar"],
 };
 
+// Los once pesos del composite (lib/scoringEngine.js, COMPOSITE_WEIGHTS) y su
+// suma declarada. El desglose reparte el peso ausente entre los presentes, así
+// que la referencia esperada se calcula aquí a mano en vez de fijar constantes
+// opacas: si el motor cambia un peso, esta cuenta cambia con él y el test dice
+// cuál es el nuevo número, no solo que algo se movió.
+const WEIGHTS = [.17, .16, .06, .10, .08, .08, .08, .10, .08, .05, .02];
+const TOTAL_WEIGHT = WEIGHTS.reduce((a, b) => a + b, 0);
+const esperado = (values) => values.reduce((sum, v, i) => sum + v * WEIGHTS[i], 0) / TOTAL_WEIGHT;
+
 describe("screenerScoreAudit", () => {
   it("calcula contribuciones del composite transparente v2", () => {
     const audit = buildScreenerScoreAudit(row);
 
+    // setup, RS, RS calidad, demanda, A/D, growth, EPS, grupo, rent/riesgo,
+    // riesgo, momentum. El ipoScore: 20 de la fila NO entra: el término salió
+    // del composite el 2026-08-15.
+    const calculado = esperado([80, 90, 74, 70, 72, 68, 66, 75, 71, 62, 58]);
     expect(audit.displayedScore).toBe(79.5);
-    expect(audit.calculatedScore).toBeCloseTo(73.76, 2);
+    expect(audit.calculatedScore).toBe(74.85);
+    // El módulo suma los puntos YA redondeados a dos decimales, así que puede
+    // separarse del valor exacto hasta 11 × 0,005 = 0,055.
+    expect(Math.abs(audit.calculatedScore - calculado)).toBeLessThan(0.056);
+    expect(audit.components.find((item) => item.key === "ipo")).toBeUndefined();
     expect(audit.components.find((item) => item.key === "setup")).toMatchObject({
       label: "Setup",
       value: 80,
-      points: 13.6,
+      points: Number((80 * 0.17 / TOTAL_WEIGHT).toFixed(2)),
       weight: 0.17,
     });
+    // La suma de los puntos ES el score calculado: el desglose cuadra consigo
+    // mismo, que es la premisa para que el residual signifique algo.
+    const suma = audit.components.reduce((sum, item) => sum + item.points, 0);
+    expect(suma).toBeCloseTo(audit.calculatedScore, 1);
     expect(audit.positive.map((item) => item.key).slice(0, 3)).toEqual(["rs", "setup", "group"]);
     expect(audit.risks[0]).toMatchObject({ label: "Extensión a vigilar" });
     expect(audit.integrityTone).toBe("warn");
@@ -56,10 +77,10 @@ describe("screenerScoreAudit", () => {
     expect(audit).toMatchObject({
       schemaVersion: 1,
       displayedScore: 79.5,
-      calculatedScore: 73.76,
+      calculatedScore: 74.85,
       integrityTone: "warn",
     });
-    expect(audit.components.find((item) => item.key === "setup")).toMatchObject({ value: 80, points: 13.6, weight: 0.17 });
+    expect(audit.components.find((item) => item.key === "setup")).toMatchObject({ value: 80, points: 13.88, weight: 0.17 });
     expect(audit.positive.map((item) => item.key).slice(0, 2)).toEqual(["rs", "setup"]);
     expect(audit.risks[0]).toMatchObject({ label: "Extensión a vigilar" });
   });

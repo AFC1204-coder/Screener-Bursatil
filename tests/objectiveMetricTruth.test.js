@@ -101,10 +101,14 @@ describe("objectiveMetricTruth", () => {
       riskRewardScore: 68,
       riskScore: 66,
       momentumScore: 62,
+      // ipoScore sigue en la fila (lo consumen las Listas) pero YA NO es
+      // término del composite: los tres scores de abajo son los once términos
+      // renormalizados sobre .98. Antes eran 71.48 / 71.48 / 68.08, con el
+      // término IPO dentro comprimiéndolos un 2%.
       ipoScore: 20,
-      totalScore: 71.48,
-      compositeScore: 71.48,
-      objectiveScore: 68.08,
+      totalScore: 72.530612,
+      compositeScore: 72.530612,
+      objectiveScore: 69.061224,
       rsGlobalSample: 40,
       rsCountryPct: 80,
       rsCountrySample: 10,
