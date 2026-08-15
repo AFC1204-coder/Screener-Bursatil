@@ -13,10 +13,10 @@ import {
   FilterFamilyModal,
   reviewProfileMeta,
 } from "@/app/screenerPanels";
-import { activeLayerCount, layerStatusText, scanFailureExplanation, scanPreparationStatus, searchText, sleep, userFacingServiceError } from "@/lib/screenerFormat";
+import { activeLayerCount, layerStatusText, scanFailureExplanation, searchText, userFacingServiceError } from "@/lib/screenerFormat";
 import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
-import { getJson, postJson } from "@/lib/clientApi";
+import { getJson } from "@/lib/clientApi";
 import { getLatestScanFromCloud, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
 import { dateTime, pct } from "@/lib/formatters";
 import { avg, avgVolume } from "@/lib/indicators";
@@ -25,20 +25,19 @@ import { budgetFor, payloadChars, safeRead, safeRemove, safeWrite, STORAGE_KEYS 
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { alertsFromScan, mergeAlerts } from "@/lib/methodologyAlerts";
 import { enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
-import { qualityGateForResearchRow } from "@/lib/qualityGate";
 import { benchmarkSymbolForRow } from "@/lib/relativeStrength";
 import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/lib/researchRow";
-import { normalizeScanErrorGroups, scanErrorTotal } from "@/lib/scanErrorGroups";
-import { classifyScanOutcome, isTerminalScanStatus, scanOutcomeLabel } from "@/lib/scanStatus";
+import { normalizeScanErrorGroups } from "@/lib/scanErrorGroups";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
-import { ASIA, DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, EUROPE, FULL_SCAN_PARTIAL_EVERY, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, SERVER_SCAN_POLL_MS, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
+import { ASIA, DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, EUROPE, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
 import { buildDecisionBrief, buildDecisionEvidenceChecklist, buildDecisionQueueItem, buildDecisionQueueSummary, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
 import { attachDecisionTrace, auditDecisionRowIssues, buildDecisionAuditExportPayload, buildDecisionTrace, decisionConfidenceLabel, decisionTraceForRow } from "@/lib/decisionAudit";
 import { buildReviewPrioritySummary, decisionProfileStateForStock, reviewPriorityForRow } from "@/lib/decisionProfile";
 import { buildScreenerDataHealth, dataHealthFilterLabel } from "@/lib/screenerDataHealth";
 import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
-import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, fitScansForBrowser, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, shuffle, sortMetric, spreadByInitial, uid, universeScopeKey } from "@/lib/screenerPipeline";
+import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, fitScansForBrowser, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
+import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
 import { buildSnapshotFreshnessNotice } from "@/lib/snapshotFreshness";
 import { pickBestRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
@@ -72,7 +71,6 @@ import { buildScreenerContract, buildScreenerStockContext } from "@/lib/screener
 import { createFavoriteFromRow } from "@/lib/stockRows";
 import { countryCode, marketFlag, stockUrl } from "@/lib/symbols";
 
-const MARKET_HEALTH_TIMEOUT_MS = 5000;
 
 function reviewQueueScoreAuditMeta(row = {}) {
   const status = scoreAuditStatusForRow(row);
@@ -172,7 +170,6 @@ export default function Page() {
   const [universe, setUniverse] = useState([]);
   const [universeScope, setUniverseScope] = useState("");
   const [rows, setRows] = useState([]);
-  const [pendingResults, setPendingResults] = useState(null);
   const [analyzedRows, setAnalyzedRows] = useState([]);
   const [scanContext, setScanContext] = useState(null);
   const [scanPerf, setScanPerf] = useState(null);
@@ -181,7 +178,6 @@ export default function Page() {
   const [status, setStatus] = useState(DEFAULT_STATUS);
   const [snapshotNotice, setSnapshotNotice] = useState(null);
   const [restoringScan, setRestoringScan] = useState(false);
-  const [running, setRunning] = useState(false);
   const [err, setErr] = useState("");
   const [scanMode, setScanMode] = useState("all");
   const [batchStart, setBatchStart] = useState(0);
@@ -228,7 +224,6 @@ export default function Page() {
   const screenerDecisionResolutions = useMemo(() => safeRead(STORAGE_KEYS.review, {})?.decisionResolutions || {}, [screenerDecisionRevision, quickReviewResolutionRevision]);
   const resultView = useResultViewModel({
     rows,
-    pendingResults,
     activeSettings,
     viewLayers,
     screenerDecisionResolutions,
@@ -284,7 +279,6 @@ export default function Page() {
     applyPendingDecisionWorkFocus,
     clearPendingDecisionWorkFocus,
     reviewPendingDecisionWork,
-    pendingFilteredCount,
     totalResultPages,
     visibleResultPage,
     resultPageStart,
@@ -387,12 +381,20 @@ export default function Page() {
   const [filterTemplateName, setFilterTemplateName] = useState("");
   const [activeFilterFamily, setActiveFilterFamily] = useState(null);
   const fastFilterSignatureRef = useRef("");
-  const scanAbortRef = useRef(false);
-  const serverScanIdRef = useRef("");
   const restoreScrollRef = useRef(null);
-  // Propiedad de los resultados visibles: "none" | "session" | "cloud" | "local" | "scan".
+  // Contexto pendiente para el próximo mensaje del re-filtrado automático:
+  // quien cambia criterios en bloque (plantilla, preset, mercados) lo deja
+  // aquí y el efecto de re-filtrado lo antepone a su estado ("Plantilla
+  // aplicada: X · 42 de 500 a la vista"). Evita que el recálculo pise el
+  // mensaje que explica QUÉ acaba de aplicarse.
+  const statusContextRef = useRef("");
+  // Aviso al que el banner de cobertura sustituyó, para devolverlo cuando la
+  // cobertura vuelva a estar completa (el snapshotNotice es un slot único).
+  const coverageReplacedNoticeRef = useRef(null);
+  // Propiedad de los resultados visibles: "none" | "session" | "cloud" | "local".
   // La restauración asíncrona desde Supabase SOLO aplica si nadie produjo
-  // resultados mientras resolvía (evita que un snapshot viejo pise un scan).
+  // resultados mientras resolvía (evita que un snapshot viejo pise resultados
+  // ya restaurados por otra vía).
   const resultsOwnerRef = useRef("none");
   function restoreSnapshot(scan, { source = "local", notice = null } = {}) {
     if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) return false;
@@ -451,6 +453,62 @@ export default function Page() {
       fastRefilters: 0,
     });
     return true;
+  }
+  // Trae los datos de anoche (nube, con la copia local como respaldo) y los
+  // restaura si nadie ha producido resultados mientras tanto. La usan el
+  // arranque y "Reset sesión": sin botón Ejecutar, este es el único camino
+  // que repuebla la tabla, así que ningún reset puede dejarla vacía sin
+  // volver a llamarlo.
+  function restoreLatestSnapshot({ isCancelled = () => false } = {}) {
+    setRestoringScan(true);
+    setStatus("Cargando los últimos datos guardados...");
+    const restoreLocalSnapshot = (reason = "") => {
+      if (isCancelled() || resultsOwnerRef.current !== "none") return false;
+      const localScan = pickBestRestorableScan(safeRead(STORAGE_KEYS.scans, []));
+      if (!localScan) return false;
+      const notice = reason ? {
+        tone: "info",
+        label: "Copia local",
+        detail: `${reason} Se restaura la última copia local disponible.`,
+        source: "local",
+      } : null;
+      const restored = restoreSnapshot(localScan, { source: "local", notice });
+      if (restored) setStatus(`Última copia local cargada: ${localScan.rows.length} acciones. Los filtros se aplican al momento sobre estos datos.`);
+      return restored;
+    };
+    getLatestScanFromCloud().then((result) => {
+      // Si mientras resolvía el fetch llegaron resultados por otra vía, el
+      // snapshot remoto NO debe pisarlos.
+      if (isCancelled() || resultsOwnerRef.current !== "none") return;
+      if (!result.ok || result.configured === false) {
+        // Este aviso lo pinta ScreenerShell tal cual (snapshotNotice.detail), así
+        // que aquí NO puede entrar ni el nombre del servicio ni el error crudo:
+        // era la vía que quedaba viva del banner "Supabase: Failed to fetch".
+        // El original va a consola, como en loadUniverse.
+        if (result.message) console.error("[snapshot] copia en la nube no disponible:", result.message);
+        if (!restoreLocalSnapshot(userFacingServiceError(result.message, "La copia guardada en la nube no está disponible."))) setStatus(DEFAULT_STATUS);
+        return;
+      }
+      const scan = pickBestRestorableScan(result.data?.scans || []);
+      if (!scan) {
+        if (!restoreLocalSnapshot("No hay ninguna copia guardada en la nube con resultados.")) setStatus(DEFAULT_STATUS);
+        return;
+      }
+      const notice = buildSnapshotFreshnessNotice(result.data, scan);
+      const storedScans = safeRead(STORAGE_KEYS.scans, []);
+      safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])]));
+      restoreSnapshot(scan, { source: "cloud", notice });
+      setStatus(notice?.stale
+        ? `Última copia cacheada cargada: ${scan.rows.length} acciones. La nube no respondió al refrescar.`
+        : notice?.truncated
+          ? `Últimos datos de la nube cargados: ${scan.rows.length} de ${notice.rowsAvailable} acciones (parcial).`
+          : `Últimos datos de la nube cargados: ${scan.rows.length} acciones. Los filtros se aplican al momento sobre este universo estable.`);
+    }).catch((error) => {
+      console.error("[snapshot] fallo al leer la copia en la nube:", error);
+      if (!isCancelled() && !restoreLocalSnapshot(userFacingServiceError(error?.message, "La copia guardada en la nube no está disponible."))) setStatus(DEFAULT_STATUS);
+    }).finally(() => {
+      if (!isCancelled()) setRestoringScan(false);
+    });
   }
   useEffect(() => {
     let cancelled = false;
@@ -544,55 +602,7 @@ export default function Page() {
       );
     }
     if (!restoredRowsCount) {
-      setRestoringScan(true);
-      setStatus("Cargando último snapshot guardado...");
-      const restoreLocalSnapshot = (reason = "") => {
-        if (cancelled || resultsOwnerRef.current !== "none") return false;
-        const localScan = pickBestRestorableScan(safeRead(STORAGE_KEYS.scans, []));
-        if (!localScan) return false;
-        const notice = reason ? {
-          tone: "info",
-          label: "Snapshot local",
-          detail: `${reason} Se restaura la última copia local disponible.`,
-          source: "local",
-        } : null;
-        const restored = restoreSnapshot(localScan, { source: "local", notice });
-        if (restored) setStatus(`Último snapshot local cargado: ${localScan.rows.length} acciones. Puedes ejecutar para refrescar datos.`);
-        return restored;
-      };
-      getLatestScanFromCloud().then((result) => {
-        // Si mientras resolvía el fetch arrancó un scan (o llegaron resultados por
-        // otra vía), el snapshot remoto NO debe pisarlos.
-        if (cancelled || resultsOwnerRef.current !== "none") return;
-        if (!result.ok || result.configured === false) {
-          // Este aviso lo pinta ScreenerShell tal cual (snapshotNotice.detail), así
-          // que aquí NO puede entrar ni el nombre del servicio ni el error crudo:
-          // era la vía que quedaba viva del banner "Supabase: Failed to fetch".
-          // El original va a consola, como en loadUniverse.
-          if (result.message) console.error("[snapshot] copia en la nube no disponible:", result.message);
-          if (!restoreLocalSnapshot(userFacingServiceError(result.message, "La copia guardada en la nube no está disponible."))) setStatus(DEFAULT_STATUS);
-          return;
-        }
-        const scan = pickBestRestorableScan(result.data?.scans || []);
-        if (!scan) {
-          if (!restoreLocalSnapshot("No hay ninguna copia guardada en la nube con resultados.")) setStatus(DEFAULT_STATUS);
-          return;
-        }
-        const notice = buildSnapshotFreshnessNotice(result.data, scan);
-        const storedScans = safeRead(STORAGE_KEYS.scans, []);
-        safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])]));
-        restoreSnapshot(scan, { source: "cloud", notice });
-        setStatus(notice?.stale
-          ? `Último snapshot cacheado cargado: ${scan.rows.length} acciones. La nube no respondió al refrescar.`
-          : notice?.truncated
-            ? `Último snapshot de la nube cargado: ${scan.rows.length} de ${notice.rowsAvailable} acciones (parcial).`
-            : `Último snapshot de la nube cargado: ${scan.rows.length} acciones. Los filtros se aplican sobre este universo estable.`);
-      }).catch((error) => {
-        console.error("[snapshot] fallo al leer la copia en la nube:", error);
-        if (!cancelled && !restoreLocalSnapshot(userFacingServiceError(error?.message, "La copia guardada en la nube no está disponible."))) setStatus(DEFAULT_STATUS);
-      }).finally(() => {
-        if (!cancelled) setRestoringScan(false);
-      });
+      restoreLatestSnapshot({ isCancelled: () => cancelled });
     }
     setSessionReady(true);
     // Migración perezosa: snapshots locales guardados antes del presupuesto
@@ -763,28 +773,36 @@ export default function Page() {
   }, [chartScope, activeModalRow?.symbol, chartListId]);
 
   const activeLayerLabel = useMemo(() => layerStatusText(filterLayers, useRegimeFilter), [filterLayers, useRegimeFilter]);
+  // Re-filtrado automático: cualquier cambio de criterios (a mano, por
+  // plantilla o por preset) se aplica al momento sobre las filas ya cargadas.
+  // No hay botón intermedio: este efecto ES la aplicación de filtros.
   useEffect(() => {
-    if (!sessionReady || running || !analyzedRows.length || !scanContext) return;
+    if (!sessionReady || !analyzedRows.length || !scanContext) return;
     const context = { ...scanContext, marketHealth, useRegimeFilter };
     const signature = fastFilterSignature(analyzedRows, activeSettings, context);
     if (fastFilterSignatureRef.current === signature) return;
     const filteredView = filterAnalyzedRows(analyzedRows, activeSettings, context);
-    const savedMs = Number.isFinite(scanPerf?.fullScanMs) ? Math.max(0, scanPerf.fullScanMs - filteredView.filterMs) : null;
     fastFilterSignatureRef.current = signature;
     setRows(filteredView.rows);
     setDiagnostics(filteredView.diagnostics);
-    setPendingResults(null);
     setResultPage(1);
     setScanPerf((prev) => ({
       ...(prev || {}),
       lastFilterMs: filteredView.filterMs,
       lastFastFilterMs: filteredView.filterMs,
-      estimatedSavedMs: savedMs,
       analyzedRows: analyzedRows.length,
       fastRefilters: (prev?.fastRefilters || 0) + 1,
     }));
-    setStatus(`Filtros recalculados sobre ${analyzedRows.length} acciones ya analizadas en ${secondsLabel(filteredView.filterMs)} · ahorro aprox ${Number.isFinite(savedMs) ? secondsLabel(savedMs) : "sin referencia"} frente a re-scan.`);
-  }, [sessionReady, running, analyzedRows, scanContext, activeSettings, marketHealth, useRegimeFilter, scanPerf?.fullScanMs]);
+    // El contexto pendiente ("Plantilla aplicada: X", "Mercados actualizados")
+    // se antepone al resultado para que el recálculo no pise la explicación.
+    const prefix = statusContextRef.current;
+    statusContextRef.current = "";
+    // El orden visible no cambia aquí: filtrar quita o repone filas; el
+    // criterio de orden solo lo mueve el usuario (selector o plantilla).
+    setStatus(filteredView.rows.length
+      ? `${prefix ? `${prefix} · ` : ""}${filteredView.rows.length} de ${analyzedRows.length} acciones a la vista (filtro aplicado en ${secondsLabel(filteredView.filterMs)}).`
+      : `${prefix ? `${prefix} · ` : ""}Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`);
+  }, [sessionReady, analyzedRows, scanContext, activeSettings, marketHealth, useRegimeFilter]);
   const executionLayerTotal = EXECUTION_LAYERS.length + 1;
   const executionLayerActive = activeLayerCount(filterLayers) + (useRegimeFilter ? 1 : 0);
   const executionRuleTotal = REGIME_LAYER.count + EXECUTION_LAYERS.reduce((sum, layer) => sum + layer.count, 0);
@@ -792,6 +810,13 @@ export default function Page() {
   const fineRuleTotal = FILTER_FIELDS.length;
   const fineRuleActive = FILTER_FIELDS.filter((field) => isFieldRuleActive(field, fieldRules, filterLayers)).length;
   const kpiUniverseCount = universe.length || scanContext?.baseCount || analyzedRows.length || rows.length;
+  // Estado vacío de la tabla, con la causa dicha (punto 4 del contrato sin
+  // botón): cargando ≠ cero-por-filtro ≠ sin datos. Nunca "Ejecuta un scan".
+  const resultsEmptyLabel = restoringScan
+    ? "Cargando los últimos datos guardados..."
+    : analyzedRows.length
+      ? `Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`
+      : "No hay datos cargados todavía. Los datos de anoche se cargan al abrir la página; si no aparecen, recarga.";
   // --- Staleness de scan-settings -------------------------------------------
   // El scan mostrado es "vigente" si markets/manual/scanMode actuales coinciden
   // con los vigentes al completar el último scan (guardados en scanContext).
@@ -810,37 +835,45 @@ export default function Page() {
   const scannedMarketsKey = (scanContext?.scannedMarkets || []).slice().sort().join(",");
   const marketsStale = scanStale && (markets.slice().sort().join(",") !== scannedMarketsKey);
   const scanModeStale = scanStale && scanContext && scanMode !== scanContext?.scannedScanMode;
-  function commitPendingResults() {
-    if (!pendingResults) return;
-    setRows(pendingResults.rows || []);
-    setDiagnostics(pendingResults.diagnostics || null);
-    setSnapshotNotice(null);
-    setPendingResults(null);
-    setStatus(`Resultados actualizados: ${pendingResults.rows?.length || 0} acciones calculadas.`);
+  // Aviso de cobertura (punto único): si la selección de mercados pide
+  // mercados sin filas en los datos cargados, se dice — nunca se vacía la
+  // tabla. Con pocos huecos se nombran; con mayoría de huecos se nombra lo
+  // cubierto (la lista de 28 mercados era ilegible). El aviso ocupa el slot
+  // del snapshotNotice y devuelve el anterior cuando deja de aplicar.
+  function announceCoverage(requestedMarkets) {
+    const gaps = snapshotCoverageGaps(requestedMarkets, analyzedRows);
+    if (gaps.length) {
+      const covered = (requestedMarkets || []).filter((code) => !gaps.includes(code));
+      const detail = gaps.length <= 3
+        ? `Los datos cargados no incluyen ${gaps.map((code) => marketName(code)).join(", ")}: esos mercados no aparecen en la tabla.`
+        : covered.length
+          ? `Los datos cargados solo incluyen ${covered.map((code) => marketName(code)).join(", ")}. Los otros ${gaps.length} mercados seleccionados no aparecen en la tabla.`
+          : `Ninguno de los ${gaps.length} mercados seleccionados tiene filas en los datos cargados.`;
+      setSnapshotNotice((prev) => {
+        if (prev?.source !== "coverage") coverageReplacedNoticeRef.current = prev || null;
+        return { tone: "warn", label: "Cobertura", detail, source: "coverage" };
+      });
+    } else {
+      setSnapshotNotice((prev) => {
+        if (prev?.source !== "coverage") return prev;
+        const replaced = coverageReplacedNoticeRef.current;
+        coverageReplacedNoticeRef.current = null;
+        return replaced;
+      });
+    }
+    return gaps;
   }
-  const clear = () => {
-    resultsOwnerRef.current = "none";
-    setRows([]);
-    setPendingResults(null);
-    setAnalyzedRows([]);
-    setScanContext(null);
-    setScanPerf(null);
-    fastFilterSignatureRef.current = "";
-    setFail([]);
-    setDiagnostics(null);
-    setSnapshotNotice(null);
-    setErr("");
-    setResultPage(1);
-  };
   function setMarketsAndInvalidate(nextMarkets, label = "Mercados actualizados.") {
     const normalized = (Array.isArray(nextMarkets) ? nextMarkets : [])
       .filter((code, index, list) => MARKET_META[code] && list.indexOf(code) === index);
     setMarkets(normalized);
     setUniverse([]);
     setUniverseScope("");
-    setBatchStart(0);
-    clear();
-    setStatus(`${label} Pulsa Cargar o Ejecutar.`);
+    announceCoverage(normalized);
+    // Los resultados cargados se conservan: cambiar mercados no filtra filas
+    // (gobernaba el universo del scan); el aviso de cobertura cuenta lo que
+    // aplica y el banner de staleness marca la divergencia. Nada que ejecutar.
+    setStatus(label);
   }
   function resetScreenerSession() {
     safeRemove(STORAGE_KEYS.screenerSession);
@@ -852,15 +885,12 @@ export default function Page() {
     setUniverse([]);
     setUniverseScope("");
     setRows([]);
-    setPendingResults(null);
     setAnalyzedRows([]);
     setScanContext(null);
     setScanPerf(null);
     fastFilterSignatureRef.current = "";
     setFail([]);
     setDiagnostics(null);
-    setStatus("Sesión reiniciada. Carga universo o ejecuta el screener cuando quieras.");
-    setRunning(false);
     resetResultView(defaultSortForSettings(settingsForPreset("balanced")));
     setErr("");
     setScanMode("all");
@@ -882,6 +912,10 @@ export default function Page() {
     setSelectedFilterTemplateId("");
     setFilterTemplateName("");
     setActiveFilterFamily(null);
+    // Sin botón Ejecutar, un reset que dejara la tabla vacía sería un camino
+    // sin salida: se recargan los datos de anoche inmediatamente.
+    setStatus("Sesión reiniciada. Recargando los datos de anoche...");
+    restoreLatestSnapshot();
   }
   function applySetupMode(mode) {
     const defaults = setupModeDefaults(mode);
@@ -896,7 +930,8 @@ export default function Page() {
     setResultPage(1);
     setSelectedFilterTemplateId("");
     setFilterTemplateName("");
-    setStatus(`Patrón aplicado: ${setupModeLabel(nextMode)}. Pulsa Ejecutar.`);
+    statusContextRef.current = `Patrón aplicado: ${setupModeLabel(nextMode)}`;
+    setStatus(`Patrón aplicado: ${setupModeLabel(nextMode)}.`);
   }
   const updateSetting = (key, value) => {
     if (key === "setupMode") {
@@ -981,6 +1016,7 @@ export default function Page() {
       decisionIssueFilter,
       decisionResolutionFilter,
       sort,
+      perfPeriod,
       scanMode,
       batchStart,
       scanBatchSize,
@@ -1016,9 +1052,25 @@ export default function Page() {
       setFilterTemplateName("");
       return;
     }
+    if (!template.config || typeof template.config !== "object") {
+      // Plantilla ilegible: no se toca nada de lo que hay en pantalla.
+      setStatus(`La plantilla ${template.name} no se pudo leer. Se conserva el filtro actual.`);
+      return;
+    }
     setFilterTemplateName(template.name);
+    // La plantilla se re-aplica sobre el snapshot ya cargado: applyFilterConfig
+    // cambia criterios (nunca datos) y el re-filtrado automático hace el resto.
+    // La evaluación previa decide el mensaje sin esperar al efecto.
+    const assessment = templateSnapshotAssessment(template.config, analyzedRows, { marketHealth });
     applyFilterConfig(template.config);
-    setStatus(`Plantilla aplicada: ${template.name}. Pulsa Ejecutar.`);
+    if (!assessment.analyzedCount) {
+      setStatus(`Plantilla aplicada: ${template.name}. Aún no hay datos cargados; se aplicará en cuanto lleguen.`);
+      return;
+    }
+    statusContextRef.current = `Plantilla aplicada: ${template.name}`;
+    setStatus(assessment.filteredCount === 0
+      ? `Plantilla aplicada: ${template.name}. Ningún valor de los ${assessment.analyzedCount} analizados la pasa; los datos siguen cargados.`
+      : `Plantilla aplicada: ${template.name}: ${assessment.filteredCount} de ${assessment.analyzedCount} acciones a la vista.`);
   }
   function deleteSavedFilterTemplate() {
     const template = savedFilterTemplates.find((item) => item.id === selectedFilterTemplateId);
@@ -1029,10 +1081,18 @@ export default function Page() {
     setFilterTemplateName("");
     setStatus(`Plantilla borrada: ${template.name}.`);
   }
+  // Aplica los criterios de una plantilla (o de la copia en nube) SIN tocar
+  // los datos cargados. Hasta 2026-08-15 esto terminaba en clear(): borraba
+  // analyzedRows y scanContext —las dos precondiciones del re-filtrado
+  // automático— y dejaba la tabla vacía pidiendo un scan sin necesidad alguna:
+  // todos los criterios de fila se resuelven en cliente. Lo único que el
+  // snapshot no puede satisfacer es cobertura de mercados, y eso se AVISA
+  // (announceCoverage), no se vacía.
   function applyFilterConfig(config = {}) {
     const nextPresetKey = PRESETS[config.presetKey] ? config.presetKey : "balanced";
     const nextPreset = PRESETS[nextPresetKey] || PRESETS.balanced;
-    setMarkets(Array.isArray(config.markets) && config.markets.length ? config.markets : DEFAULT_MARKETS);
+    const nextMarkets = Array.isArray(config.markets) && config.markets.length ? config.markets : DEFAULT_MARKETS;
+    setMarkets(nextMarkets);
     setManual(config.manual || "");
     setPresetKey(nextPresetKey);
     setSettings(settingsForPreset(nextPresetKey, config.settings || {}));
@@ -1040,13 +1100,15 @@ export default function Page() {
     setFilterLayers(restoreFilterLayers(config.filterLayers, config.filterLayersVersion, nextPresetKey));
     setFieldRules({ ...DEFAULT_FIELD_RULES, ...(config.fieldRules || {}) });
     setViewLayers({ ...DEFAULT_VIEW_LAYERS, ...(config.viewLayers || {}) });
-    restoreResultViewSession(config, nextPreset.v, { resetPage: true });
+    // Las plantillas guardadas antes de 2026-08-15 no traen perfPeriod: se
+    // conserva el periodo actual en vez de resetearlo al defecto.
+    restoreResultViewSession({ ...config, perfPeriod: config.perfPeriod ?? perfPeriod }, nextPreset.v, { resetPage: true });
     setScanMode(config.scanMode || "all");
     setBatchStart(Number.isFinite(config.batchStart) ? config.batchStart : 0);
     setScanBatchSize(SCAN_BATCH_SIZES.includes(config.scanBatchSize) ? config.scanBatchSize : DEFAULT_SCAN_BATCH_SIZE);
     setUniverse([]);
     setUniverseScope("");
-    clear();
+    announceCoverage(nextMarkets);
   }
   async function saveFilterConfigToCloud() {
     setStatus("Guardando filtros en la nube...");
@@ -1079,19 +1141,8 @@ export default function Page() {
       return;
     }
     applyFilterConfig(value);
-    setStatus("Filtros cargados desde la nube. Pulsa Cargar universo o Ejecutar.");
-  }
-  async function loadMarketHealth() {
-    setStatus("Actualizando salud de mercado...");
-    try {
-      const d = await getJson("/api/market-health", { timeoutMs: MARKET_HEALTH_TIMEOUT_MS });
-      setMarketHealth(d);
-      setStatus(`Salud de mercado: ${d.regime?.label || "sin regimen"} · Score ${Math.round(d.marketScore || 0)}`);
-      return d;
-    } catch (e) {
-      setStatus("Salud de mercado no disponible; el scan continua sin filtro de régimen.");
-      return null;
-    }
+    statusContextRef.current = "Filtros cargados desde la nube";
+    setStatus("Filtros cargados desde la nube. Se aplican al momento sobre los datos cargados.");
   }
   async function loadSearchResult(symbol, candidate = null) {
     const normalized = String(symbol || "").trim().toUpperCase();
@@ -1186,11 +1237,15 @@ export default function Page() {
       setIndustryFilter("Todos");
       const hasCountryRows = rows.some((row) => (row.country || countryCode(row.symbol)) === item.value);
       if (!hasCountryRows) {
+        // País sin filas en los datos cargados: es el caso de cobertura, no
+        // un motivo para tirar la tabla (antes: clear() + cargar universo
+        // para un scan que ya no existe). Se declara el mercado, se avisa, y
+        // el universo de tickers se refresca para KPI/búsqueda.
         setMarkets([item.value]);
         setUniverse([]);
         setUniverseScope("");
-        clear();
-        setStatus(`Cargando universo de ${marketName(item.value)}...`);
+        announceCoverage([item.value]);
+        setStatus(`Los datos cargados no incluyen ${marketName(item.value)}.`);
         await loadUniverse([item.value]);
       } else {
         setStatus(`Vista por país: ${marketName(item.value)}.`);
@@ -1261,45 +1316,6 @@ export default function Page() {
       setSearchLoading(false);
     }
   }
-  // Hasta 2026-08-14 esto llamaba a GET /api/leaderboards, cuya proyección
-  // publicItem() está recortada a propósito para un endpoint PÚBLICO
-  // ("derived-signals-only") y nunca incluyó chartPreview ni
-  // weeklyStageState/weeklyStageLabel — la tabla del screener pintaba
-  // miniatura y etapa en blanco pese a que la serie sí existía en
-  // scan_results (docs/scan-vivo-filas-incompletas-2026-08-14.md). La tabla
-  // del producto necesita filas completas, así que la previa reutiliza
-  // GET /api/scans (getLatestScanFromCloud, la misma ruta que restaura el
-  // último snapshot al arrancar la pantalla).
-  //
-  // restoredSnapshotView (lib/snapshotRestore.js) es la MISMA función que ya
-  // usa la restauración al arrancar (línea ~432): decide si scan.rows ya
-  // viene filtrado (snapshot manual, rowsAreFilteredSnapshot=true, se pinta
-  // tal cual) o crudo (scan de servidor, rowsAreFilteredSnapshot=false —
-  // app/api/scan/route.js:58 — necesita filterAnalyzedRows contra los
-  // filtros activos). Reimplementar ese criterio a mano aquí duplicaría una
-  // decisión que ya existe y es fácil de desincronizar.
-  async function loadCachedScreenerPreview(set = activeSettings) {
-    try {
-      const result = await getLatestScanFromCloud();
-      if (!result.ok || result.configured === false) return { rows: [], rawRows: [], generatedAt: "", configured: result.configured !== false };
-      const scan = pickBestRestorableScan(result.data?.scans || []);
-      if (!scan) return { rows: [], rawRows: [], generatedAt: "", configured: true };
-      const marketSet = new Set(markets);
-      const scopedScan = {
-        ...scan,
-        rows: (scan.rows || []).filter((row) => row.symbol && (!marketSet.size || marketSet.has(row.country || countryCode(row.symbol)))),
-      };
-      const previewView = restoredSnapshotView(scopedScan, set, { marketHealth, useRegimeFilter }, filterAnalyzedRows);
-      return {
-        rows: previewView.rows,
-        rawRows: previewView.analyzedRows,
-        generatedAt: scan.createdAt || scan.updatedAt || "",
-        configured: true,
-      };
-    } catch {
-      return { rows: [], rawRows: [], generatedAt: "", configured: false };
-    }
-  }
   function setPreset(k) {
     setPresetKey(k);
     setSettings(settingsForPreset(k));
@@ -1309,20 +1325,18 @@ export default function Page() {
     setUseRegimeFilter(true);
     setSelectedFilterTemplateId("");
     setFilterTemplateName("");
-    clear();
-    setStatus(`Filtro activo: ${PRESETS[k].name}. Capas del preset aplicadas. Pulsa Ejecutar.`);
+    // Cambiar de preset re-filtra el snapshot cargado al momento (el efecto
+    // de re-filtrado); los datos nunca se tiran.
+    statusContextRef.current = `Filtro activo: ${PRESETS[k].name}`;
+    setStatus(`Filtro activo: ${PRESETS[k].name}. Capas del preset aplicadas.`);
   }
-  async function loadUniverse(marketsOverride = null, options = {}) {
-    const preserveResults = Boolean(options.preserveResults);
+  // Descarga la lista de tickers del ámbito seleccionado (la usa la búsqueda
+  // por país/mercado). Nunca toca los resultados cargados: sin botón Ejecutar,
+  // ninguna preparación de universo puede costar la tabla.
+  async function loadUniverse(marketsOverride = null) {
     setErr("");
     setFail([]);
-    if (!preserveResults) {
-      setRows([]);
-      setDiagnostics(null);
-      setResultPage(1);
-    }
-    setPendingResults(null);
-    setStatus(preserveResults ? "Actualizando universo en segundo plano..." : "Descargando universos completos...");
+    setStatus("Descargando universos completos...");
     try {
       const targetMarkets = Array.isArray(marketsOverride) && marketsOverride.length ? marketsOverride : markets;
       const d = await getJson(`/api/universe?markets=${encodeURIComponent(targetMarkets.join(","))}`);
@@ -1333,312 +1347,18 @@ export default function Page() {
       setUniverse(u);
       setUniverseScope(universeScopeKey(targetMarkets, manual));
       const marketLabel = targetMarkets.length === 1 ? ` · ${marketName(targetMarkets[0])}` : "";
-      const scopeLabel = scanMode === "all" ? "todo el universo" : `lote de ${scanBatchSize}`;
-      setStatus(`Universo cargado${marketLabel}: ${u.length} tickers${ipoRadar.length ? ` · IPO Radar ${ipoRadar.length}` : ""}. Filtro: ${PRESETS[presetKey].name}. Alcance inicial: ${scopeLabel}.`);
+      setStatus(`Universo cargado${marketLabel}: ${u.length} tickers${ipoRadar.length ? ` · IPO Radar ${ipoRadar.length}` : ""}. Filtro: ${PRESETS[presetKey].name}.`);
       return u;
     } catch (e) {
       // El mensaje crudo (puede incluir detalle de red o del proveedor de
       // datos) queda en consola para depurar; el banner err (pintado por
       // ScreenerShell) es siempre lenguaje de producto — mismo criterio que
-      // el resto de errores de escaneo, ver lib/screenerFormat.js.
+      // el resto de errores de datos, ver lib/screenerFormat.js.
       console.error("[loadUniverse] fallo al cargar universo", e);
       setErr(scanFailureExplanation(e.message));
       setStatus("Proveedor no disponible al cargar universo");
       return [];
     }
-  }
-  function selected(u) {
-    const list = [...u];
-    if (scanMode === "random") return shuffle(list).slice(0, scanBatchSize);
-    const spread = spreadByInitial(list);
-    const start = Math.max(0, Math.min(batchStart, Math.max(0, spread.length - 1)));
-    if (scanMode === "all") return spread;
-    return spread.slice(start, start + scanBatchSize);
-  }
-  async function run() {
-    const scanStartedAt = perfNow();
-    const hadVisibleRows = rows.length > 0;
-    scanAbortRef.current = false;
-    resultsOwnerRef.current = "scan";
-    setRunning(true);
-    setPendingResults(null);
-    setAnalyzedRows([]);
-    setScanContext(null);
-    setScanPerf(null);
-    fastFilterSignatureRef.current = "";
-    setFail([]);
-    setErr("");
-    if (!hadVisibleRows) {
-      setSnapshotNotice(null);
-      setRows([]);
-      setDiagnostics(null);
-      setResultPage(1);
-    } else {
-      setStatus("Actualizando en segundo plano. La tabla visible se mantiene hasta que confirmes los nuevos resultados.");
-    }
-    try {
-      setStatus("Preparando scan...");
-      const mh = marketHealth || (useRegimeFilter ? await loadMarketHealth() : null);
-      const currentUniverseScope = universeScopeKey(markets, manual);
-      const base = universe.length && universeScope === currentUniverseScope ? universe : await loadUniverse(null, { preserveResults: hadVisibleRows });
-      setStatus("Preparando cache...");
-      // Los benchmarks los carga el servidor en /api/scan; aquí solo hace falta la preview cacheada.
-      const cachePreview = await loadCachedScreenerPreview(activeSettings);
-      const symbols = selected(base);
-      const fullUniverseScan = scanMode === "all";
-      let stableResultsPublished = hadVisibleRows;
-      if (cachePreview.rows.length) {
-        stableResultsPublished = true;
-        // "N analizadas" lee analyzedRows.length (ver ScreenerShell): sin
-        // esto se quedaba en 0 mientras la previa cacheada estaba en
-        // pantalla, porque solo se rellenaba rows y analyzedRows seguía en
-        // el [] que puso setAnalyzedRows([]) al principio de run().
-        setAnalyzedRows(cachePreview.rawRows);
-        if (hadVisibleRows) {
-          setPendingResults({
-            rows: cachePreview.rows,
-            diagnostics,
-            completed: 0,
-            total: symbols.length,
-            done: false,
-            updatedAt: new Date().toISOString(),
-          });
-          setStatus(`Cache precalculada lista (${cachePreview.rows.length}). La tabla visible queda congelada mientras se refina el scan actual.`);
-        } else {
-          setRows(cachePreview.rows);
-          setStatus(`Cache: ${cachePreview.rows.length} resultados precalculados. Refinando con scan actual.`);
-        }
-      } else if (fullUniverseScan) {
-        // Estado de PREPARACIÓN, no de progreso: en este punto todavía no se ha
-        // enviado el POST que crea el scan. El recuento real ("Analizando
-        // N/total") lo escribe publishPartial tras el primer sondeo con
-        // respuesta — ver scanPreparationStatus en lib/screenerFormat.js.
-        setStatus(scanPreparationStatus({ symbolsCount: symbols.length, hadVisibleRows }));
-      }
-      // `bad` son los errores del scan AGRUPADOS POR MOTIVO tal y como los
-      // publica el servidor ({ reason, kind, status, count, symbols }) — ver
-      // lib/scanErrorGroups.js. `badTotal` es el recuento entero de símbolos
-      // fallidos: los grupos y sus listas de ejemplos están topados, el total no.
-      let rawRows = [], bad = [];
-      let badTotal = 0;
-      let completed = 0;
-      let lastPartialAt = 0;
-      const partialContext = () => ({ marketHealth: mh, useRegimeFilter, symbolsCount: symbols.length, baseCount: base.length, providerErrors: bad });
-      const publishPartial = (force = false, currentSymbol = "") => {
-        const now = perfNow();
-        if (!force && completed % FULL_SCAN_PARTIAL_EVERY !== 0 && now - lastPartialAt < 800) return;
-        lastPartialAt = now;
-        const partialView = filterAnalyzedRows(rawRows, activeSettings, partialContext());
-        const payload = {
-          rows: partialView.rows,
-          diagnostics: partialView.diagnostics,
-          completed,
-          total: symbols.length,
-          done: false,
-          updatedAt: new Date().toISOString(),
-        };
-        if (!stableResultsPublished && (partialView.rows.length || force)) {
-          stableResultsPublished = true;
-          setSnapshotNotice(null);
-          setRows(partialView.rows);
-          setDiagnostics(partialView.diagnostics);
-          setPendingResults(null);
-        } else if (stableResultsPublished) {
-          setPendingResults(payload);
-        } else {
-          setDiagnostics(partialView.diagnostics);
-        }
-        const verb = scanAbortRef.current ? "Deteniendo" : "Analizando";
-        const frozenNote = stableResultsPublished ? " · tabla estable" : "";
-        setStatus(`${verb} ${completed}/${symbols.length}${currentSymbol ? `: ${currentSymbol}` : ""} · pasan ${partialView.rows.length} · errores ${badTotal}${frozenNote}`);
-      };
-      // Scan en servidor: POST /api/scan lanza el proceso (concurrencia 5 en backend,
-      // caché de Yahoo compartida) y el cliente hace polling cada 2s recogiendo los
-      // resultados incrementales de scan_results. La UI de progreso se conserva.
-      const symbolList = symbols.map((item) => item?.symbol || item).filter(Boolean);
-      const launched = await postJson("/api/scan", {
-        symbols: symbolList,
-        name: `Scan servidor ${new Date().toISOString()}`,
-        preset: presetKey,
-        settings: activeSettings,
-      });
-      if (!launched?.scanId) throw new Error(launched?.error || "No se pudo lanzar el scan en servidor");
-      serverScanIdRef.current = launched.scanId;
-      let serverStatus = "running";
-      let serverError = "";
-      // GET /api/scan ya calcula estas dos señales en cada respuesta
-      // (app/api/scan/route.js) pero hasta ahora el cliente las ignoraba —
-      // ver docs/limite-600-scan-2026-08-09.md. Se capturan aquí para poder
-      // clasificar el resultado final con classifyScanOutcome más abajo.
-      let serverPublishable = false;
-      let serverDegraded = false;
-      let resultOffset = 0;
-      while (!scanAbortRef.current) {
-        let state = null;
-        try {
-          state = await getJson(`/api/scan?id=${encodeURIComponent(launched.scanId)}&offset=${resultOffset}`);
-        } catch {
-          await sleep(SERVER_SCAN_POLL_MS);
-          continue;
-        }
-        const newRows = Array.isArray(state.rows) ? state.rows : [];
-        for (const row of newRows) {
-          rawRows.push({ ...row, qualityGate: qualityGateForResearchRow(row, activeSettings) });
-        }
-        resultOffset = Number.isFinite(state.nextOffset) ? state.nextOffset : resultOffset + newRows.length;
-        if (Array.isArray(state.progress?.errors)) {
-          bad = normalizeScanErrorGroups(state.progress.errors);
-          badTotal = scanErrorTotal(bad, state.progress.errorsTotal);
-        }
-        if (Number.isFinite(state.progress?.completed)) completed = state.progress.completed;
-        serverStatus = state.status || "running";
-        serverError = state.progress?.error || "";
-        serverPublishable = Boolean(state.publishable);
-        serverDegraded = Boolean(state.degraded);
-        publishPartial(true, state.progress?.currentSymbol || "");
-        if (isTerminalScanStatus(serverStatus)) break;
-        await sleep(SERVER_SCAN_POLL_MS);
-      }
-      if (serverStatus === "error" && !rawRows.length) throw new Error(serverError || "El scan en servidor falló");
-      publishPartial(true);
-      const filterContext = { marketHealth: mh, useRegimeFilter, symbolsCount: completed, baseCount: base.length, providerErrors: bad };
-      const filteredView = filterAnalyzedRows(rawRows, activeSettings, filterContext);
-      const final = filteredView.rows;
-      const fullScanMs = perfNow() - scanStartedAt;
-      const aborted = scanAbortRef.current;
-      const nextScanContext = {
-        id: uid(),
-        symbolsCount: completed,
-        baseCount: base.length,
-        providerErrors: bad,
-        scannedAt: new Date().toISOString(),
-        aborted,
-        // Hash de scan-settings vigente al completar el scan: lo usamos para
-        // detectar staleness si markets/manual/scanMode cambian después. Solo
-        // estas tres variables determinan el universo; activeSettings/uso de
-        // regimen/marketHealth NO entran aquí (son post-filtrado en cliente).
-        settingsSignature: scanSettingsSignature(markets, manual, scanMode),
-        // Snapshots por control para los dot indicators (orden-canónico para
-        // markets, ya que el orden no afecta al universo pero sí a la igualdad
-        // trivial === al comparar arrays).
-        scannedMarkets: [...markets].sort(),
-        scannedScanMode: scanMode,
-      };
-      fastFilterSignatureRef.current = fastFilterSignature(rawRows, activeSettings, { ...nextScanContext, marketHealth: mh, useRegimeFilter });
-      setAnalyzedRows(rawRows);
-      setScanContext(nextScanContext);
-      setScanPerf({
-        fullScanMs,
-        lastFilterMs: filteredView.filterMs,
-        lastFastFilterMs: null,
-        estimatedSavedMs: null,
-        analyzedRows: rawRows.length,
-        scannedSymbols: completed,
-        fastRefilters: 0,
-      });
-      // Copia local del resultado (kind "auto", solo una a la vez, nunca a la
-      // nube): la sesión guarda scanRef en vez de filas, y esta copia es lo
-      // que restoreSessionData rehidrata tras un reload. Sin ella, un scan en
-      // vivo no guardado como snapshot desaparecería al volver.
-      if (!aborted && serverStatus !== "cancelled" && rawRows.length) {
-        const previousScans = (safeRead(STORAGE_KEYS.scans, []) || []).filter((item) => item?.kind !== "auto");
-        safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([{
-          id: nextScanContext.id,
-          kind: "auto",
-          createdAt: nextScanContext.scannedAt,
-          name: `Resultado del scan · ${rawRows.length} acciones · ${dateTime(new Date())}`,
-          preset: presetKey,
-          settings,
-          activeSettings,
-          filterLayers,
-          filterLayersVersion: FILTER_LAYERS_CONTRACT_VERSION,
-          fieldRules,
-          viewLayers,
-          useRegimeFilter,
-          sort,
-          rowsAreFilteredSnapshot: false,
-          rows: rawRows,
-        }, ...previousScans]));
-      }
-      if (stableResultsPublished) {
-        setPendingResults({
-          rows: final,
-          diagnostics: filteredView.diagnostics,
-          completed,
-          total: symbols.length,
-          done: true,
-          updatedAt: new Date().toISOString(),
-        });
-      } else {
-        setSnapshotNotice(null);
-        setRows(final);
-        setDiagnostics(filteredView.diagnostics);
-      }
-      setFail(bad);
-      // requestedTotal = lo que este scan concreto pidió (symbols.length) —
-      // NO base.length (el universo cargado en el navegador, que en modo
-      // "lote"/"aleatorio" es mucho mayor que lo pedido y haría parecer
-      // "parcial" a un lote pequeño que sí terminó entero). En modo "todo el
-      // universo" symbols === spread(base), así que coinciden.
-      const requestedTotal = symbols.length;
-      const samplePct = requestedTotal ? (completed / requestedTotal) * 100 : 100;
-      const cancelled = aborted || serverStatus === "cancelled";
-      // classifyScanOutcome (lib/scanStatus.js) es la única fuente de verdad
-      // para esta etiqueta: cruza el estado del servidor (publishable/degraded,
-      // que ya calculaba GET /api/scan y el cliente ignoraba) con la cobertura
-      // real (completed vs. lo pedido) — ver docs/limite-600-scan-2026-08-09.md.
-      const outcome = classifyScanOutcome({
-        cancelled,
-        status: serverStatus,
-        publishable: serverPublishable,
-        degraded: serverDegraded,
-        completed,
-        requestedTotal,
-      });
-      if (outcome === "failed") {
-        // Mismo traductor y mismo banner que ya usaba el camino de fallo total
-        // (catch de más abajo) — no se inventa un segundo mecanismo.
-        setErr(scanFailureExplanation(serverError));
-      }
-      const finishLabel = scanOutcomeLabel(outcome, { rawRowsCount: rawRows.length });
-      const stableNote = stableResultsPublished ? " · resultados nuevos listos para mostrar" : "";
-      setStatus(`${finishLabel}: ${final.length} pasan ${PRESETS[presetKey].name} · muestra ${completed}/${requestedTotal} (${samplePct < 10 ? samplePct.toFixed(1) : samplePct.toFixed(0)}%) · RS calculado sobre ${filteredView.sectorized.length} acciones con datos · ${setupModeLabel(activeSettings.setupMode)} · ${activeLayerLabel}. Scan ${secondsLabel(fullScanMs)} · filtro ${secondsLabel(filteredView.filterMs)}${stableNote}.`);
-    } catch (e) {
-      // El mensaje crudo (puede ser un error literal de Postgres/PostgREST,
-      // p.ej. "canceling statement due to statement timeout") queda en
-      // consola para depurar; lo que ve el usuario en el banner err (pintado
-      // por ScreenerShell) es siempre lenguaje de producto — ver
-      // docs/timeout-scan-universo-2026-08-09.md.
-      console.error("[scan] el escaneo fallo", e);
-      setErr(scanFailureExplanation(e.message));
-      setStatus("Error");
-    } finally {
-      setRunning(false);
-      scanAbortRef.current = false;
-      serverScanIdRef.current = "";
-    }
-  }
-  function stopScan() {
-    scanAbortRef.current = true;
-    // Cancelación real en servidor: el runner relee el flag por lote, persiste lo
-    // pendiente y marca el scan como cancelled; aquí solo cortamos el polling.
-    if (serverScanIdRef.current) {
-      postJson("/api/scan/cancel", { scanId: serverScanIdRef.current }).catch(() => {});
-    }
-    setStatus("Cancelando scan en servidor... se conservara lo ya analizado.");
-  }
-  function nextBatch() {
-    const total = universe.length || 1;
-    if (scanMode === "all") {
-      setBatchStart(0);
-      setStatus("Modo Todo el universo seleccionado: Ejecutar analizara todos los tickers cargados.");
-      return;
-    }
-    const step = scanBatchSize;
-    let n = batchStart + step;
-    if (n >= total) n = 0;
-    setBatchStart(n);
-    setStatus(`Lote seleccionado: ${n + 1}-${Math.min(n + step, total)} de ${total}`);
   }
   function marketPreset(t) {
     setBatchStart(0);
@@ -1676,10 +1396,6 @@ export default function Page() {
     });
   }
   function saveSnapshot(currentRows) {
-    if (running) {
-      setStatus("Espera a que termine el scan antes de guardar el snapshot.");
-      return;
-    }
     if (!currentRows.length) {
       setStatus("Sin filas actuales para guardar snapshot.");
       return;
@@ -1779,16 +1495,6 @@ export default function Page() {
     a.href = url; a.download = `stageradar-decision-audit-${new Date().toISOString().slice(0, 10)}.json`; a.click(); URL.revokeObjectURL(url);
     setStatus(`JSON audit exportado: ${exportRows.length} resultados visibles listos para npm run audit:decisions.`);
   }
-
-  useEffect(() => {
-    if (running || filtered.length || !pendingResults?.rows?.length || pendingFilteredCount <= 0) return;
-    setRows(pendingResults.rows || []);
-    setDiagnostics(pendingResults.diagnostics || null);
-    setSnapshotNotice(null);
-    setPendingResults(null);
-    setResultPage(1);
-    setStatus(`Resultados actualizados automáticamente: ${pendingResults.rows?.length || 0} acciones calculadas.`);
-  }, [running, filtered.length, pendingFilteredCount, pendingResults]);
 
   // Preview is container-owned because it coordinates page-level UI state, even though it follows filtered rows.
   useEffect(() => {
@@ -1897,10 +1603,9 @@ export default function Page() {
     filteredCount: filtered.length,
     analyzedCount: analyzedRows.length,
     diagnostics,
-    pendingCount: pendingResults ? pendingFilteredCount : 0,
     hiddenByView,
     viewFiltersActive,
-  }), [activeSettings, presetKey, filterLayers, useRegimeFilter, executionRuleActive, executionRuleTotal, fineRuleActive, fineRuleTotal, rows.length, filtered.length, analyzedRows.length, diagnostics, pendingResults, pendingFilteredCount, hiddenByView, viewFiltersActive]);
+  }), [activeSettings, presetKey, filterLayers, useRegimeFilter, executionRuleActive, executionRuleTotal, fineRuleActive, fineRuleTotal, rows.length, filtered.length, analyzedRows.length, diagnostics, hiddenByView, viewFiltersActive]);
   function buildScreenerStockOpenContext(rowOrSymbol = null, extras = {}) {
     const row = rowOrSymbol && typeof rowOrSymbol === "object" ? rowOrSymbol : null;
     const symbol = typeof rowOrSymbol === "string" ? rowOrSymbol : row?.symbol;
@@ -1973,8 +1678,6 @@ export default function Page() {
     });
     return [...map.values()].sort((a, b) => b.count - a.count);
   }, [fail]);
-  const analysisSize = universe.length ? selected(universe).length : 0;
-  const batchLabel = universe.length ? scanMode === "all" ? `1-${analysisSize} / ${universe.length}` : `${batchStart + 1}-${Math.min(batchStart + scanBatchSize, universe.length)} / ${universe.length}` : "-";
   const modalActiveResolution = useMemo(() => activeModalRow
     ? decisionResolutionForSymbol({ decisionResolutions: screenerDecisionResolutions }, activeModalRow.symbol)
     : null,
@@ -2055,7 +1758,6 @@ export default function Page() {
       markets,
       filtered,
       filteredCount: filtered.length,
-      running,
       err,
       status,
       snapshotNotice,
@@ -2063,8 +1765,6 @@ export default function Page() {
       sidebarCollapsed,
       setShowMobileFilters,
       setSidebarCollapsed,
-      stopScan,
-      run,
       kpiUniverseCount,
       marketHealth,
       rows,
@@ -2074,7 +1774,6 @@ export default function Page() {
       savedFilterTemplates,
       selectedFilterTemplateId,
       filterTemplateName,
-      running,
       setPreset,
       applySavedFilterTemplate,
       setFilterTemplateName,
@@ -2085,7 +1784,6 @@ export default function Page() {
       markets,
       isMarketPresetActive,
       marketPreset,
-      loadUniverse,
       setMarketsAndInvalidate,
       advancedOpen,
       persistAdvancedOpen,
@@ -2114,14 +1812,6 @@ export default function Page() {
       fineRuleTotal,
       setSettings,
       setFieldRules,
-      scanMode,
-      setScanMode,
-      scanBatchSize,
-      setScanBatchSize,
-      batchStart,
-      setBatchStart,
-      nextBatch,
-      universe,
       diagnostics,
     }}
     search={{
@@ -2148,7 +1838,6 @@ export default function Page() {
       marketsStale,
       scanModeStale,
       scannedAt: scanContext?.scannedAt || null,
-      onRelaunch: () => run(),
     }}
     results={{
       rows,
@@ -2157,11 +1846,9 @@ export default function Page() {
       activeSettings,
       analyzedRows,
       universe,
-      pendingResults,
-      pendingFilteredCount,
       favoriteSymbols,
       screenerDecisionResolutions,
-      restoringScan,
+      emptyLabel: resultsEmptyLabel,
     }}
     actions={{
       openReview,
@@ -2169,7 +1856,6 @@ export default function Page() {
       saveSnapshot,
       csv,
       decisionAuditJson,
-      commitPendingResults,
       resetScreenerSession,
       saveSessionBeforeStockOpen,
     }}

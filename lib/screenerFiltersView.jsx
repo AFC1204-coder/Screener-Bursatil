@@ -116,7 +116,6 @@ export function FilterTemplatePanel({
   savedTemplates = [],
   selectedTemplateId = "",
   templateName = "",
-  running = false,
   onPreset,
   onApplySaved,
   onTemplateName,
@@ -161,8 +160,8 @@ export function FilterTemplatePanel({
           <button type="button" className="btn btnSmall btnGhost" onClick={onDelete} disabled={!selectedTemplateId}>Borrar</button>
         </div>
         <div className="cloudTemplateActions">
-          <button type="button" className="btn btnSmall btnGhost" onClick={onSaveCloud} disabled={running}>Guardar nube</button>
-          <button type="button" className="btn btnSmall btnGhost" onClick={onLoadCloud} disabled={running}>Cargar nube</button>
+          <button type="button" className="btn btnSmall btnGhost" onClick={onSaveCloud}>Guardar nube</button>
+          <button type="button" className="btn btnSmall btnGhost" onClick={onLoadCloud}>Cargar nube</button>
         </div>
       </div>
     </details>
@@ -349,14 +348,14 @@ export function FilterArchitecturePanel({ filterLayers, viewLayers, useRegimeFil
   </section>;
 }
 
-export function FilterDiagnosticsPanel({ diagnostics, rowsCount, filteredCount, running }) {
+export function FilterDiagnosticsPanel({ diagnostics, rowsCount, filteredCount }) {
   const viewHidden = Math.max(0, rowsCount - filteredCount);
-  if (!diagnostics && !running) return <section className="scanDiagnostics empty">
+  if (!diagnostics) return <section className="scanDiagnostics empty">
     <div className="scanDiagnosticsHead">
-      <span>Embudo del scan</span>
+      <span>Embudo del filtro</span>
       <strong>Sin diagnóstico</strong>
     </div>
-    <div className="scanDiagnosticHint">Ejecuta un scan para ver que bloque corta acciones y que parte solo afecta a la vista.</div>
+    <div className="scanDiagnosticHint">Cuando haya datos cargados, aquí se ve qué bloque corta acciones y qué parte solo afecta a la vista.</div>
   </section>;
   const blocks = diagnostics?.blocks || [];
   const analyzed = Number(diagnostics?.analyzed || 0);
@@ -367,8 +366,8 @@ export function FilterDiagnosticsPanel({ diagnostics, rowsCount, filteredCount, 
   const limitedSample = universeTotal > analyzed;
   return <section className="scanDiagnostics">
     <div className="scanDiagnosticsHead">
-      <span>Embudo del scan</span>
-      <strong>{running ? "Analizando..." : `${diagnostics.finalCount}/${diagnostics.analyzed} pasan`}</strong>
+      <span>Embudo del filtro</span>
+      <strong>{`${diagnostics.finalCount}/${diagnostics.analyzed} pasan`}</strong>
     </div>
     <div className="diagnosticStats">
       <span><b>{diagnostics?.analyzed ?? "-"}</b><em>analizadas</em></span>

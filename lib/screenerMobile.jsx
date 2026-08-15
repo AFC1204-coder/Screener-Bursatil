@@ -34,7 +34,7 @@ export function MobileTopMovers({ rows = [], onSelect }) {
       <button type="button" onClick={() => document.querySelector(".mobileResultList")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Ver más</button>
     </div>
     <div className="mobileMoverRail">
-      {movers.length ? movers.map((row) => <MobileMoverCard key={row.symbol} row={row} onSelect={onSelect} />) : <div className="mobileEmpty">Ejecuta un scan para llenar esta cinta.</div>}
+      {movers.length ? movers.map((row) => <MobileMoverCard key={row.symbol} row={row} onSelect={onSelect} />) : <div className="mobileEmpty">Sin datos de mercado todavía.</div>}
     </div>
   </section>;
 }
@@ -70,7 +70,7 @@ export function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenS
 // (principio 1): eran los mismos rails de auditoría interna que en escritorio.
 // Sus resúmenes se siguen calculando en useResultViewModel; simplemente ya no
 // se pintan aquí. El detalle por valor vive en la ficha.
-export function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, perfPeriod, onPerfPeriod, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados todavía. Carga universo y ejecuta el screener." }) {
+export function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, perfPeriod, onPerfPeriod, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados con este filtro." }) {
   const start = totalRows ? ((page - 1) * pageSize) + 1 : 0;
   const end = totalRows ? Math.min(page * pageSize, totalRows) : 0;
   const hasRows = totalRows > 0;

@@ -93,7 +93,6 @@ function resolveResultPageSize(size) {
 
 export function useResultViewModel({
   rows = [],
-  pendingResults = null,
   activeSettings = {},
   viewLayers = {},
   screenerDecisionResolutions = {},
@@ -324,11 +323,6 @@ export function useResultViewModel({
       resolutionFilter: "pending",
     });
   }
-
-  const pendingFilteredCount = useMemo(() => {
-    if (!pendingResults) return 0;
-    return applyResultViewFilters(pendingResults.rows || [], viewFilterState).length;
-  }, [pendingResults, viewFilterState]);
 
   const totalResultPages = Math.max(1, Math.ceil(filtered.length / resultPageSize));
   const visibleResultPage = Math.min(resultPage, totalResultPages);
@@ -796,7 +790,6 @@ export function useResultViewModel({
     applyPendingDecisionWorkFocus,
     clearPendingDecisionWorkFocus,
     reviewPendingDecisionWork,
-    pendingFilteredCount,
     totalResultPages,
     visibleResultPage,
     resultPageStart,

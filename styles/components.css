@@ -7366,10 +7366,6 @@ h2 {
   color: #f3f4f6;
 }
 
-.pendingResultsBar .btn {
-  min-height: 28px;
-  padding: 0 12px;
-}
 
 .screenerContractPanel.bullish {
   border-color: var(--decision-vigilar);

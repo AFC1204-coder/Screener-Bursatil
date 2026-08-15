@@ -12,7 +12,7 @@
 //     cargado en el navegador.
 
 import { describe, expect, it } from "vitest";
-import { analyzedCountForDisplay, scanFailureExplanation, scanPreparationStatus, userFacingScanError } from "@/lib/screenerFormat";
+import { analyzedCountForDisplay, scanFailureExplanation, userFacingScanError } from "@/lib/screenerFormat";
 
 describe("userFacingScanError · el error de Postgres no llega crudo a pantalla", () => {
   it("mapea el statement timeout de Postgres al mensaje de producto", () => {
@@ -96,46 +96,8 @@ describe("analyzedCountForDisplay · el contador refleja lo procesado, no el uni
   });
 });
 
-// scanPreparationStatus: el cartel que app/page.jsx muestra en modo "todo el
-// universo" ANTES de enviar el POST que crea el scan. Antes era
-// "Escaneando todo el universo: 10234/10234 acciones" — texto fijo, no un
-// contador, que se leía como un análisis ya terminado y se quedaba congelado
-// ahí si la creación fallaba (docs/upstream-timeout-2026-08-09.md, Parte B).
-describe("scanPreparationStatus · el cartel previo dice 'preparando', no un recuento de análisis", () => {
-  it("REGRESIÓN: no contiene un recuento con forma hechos/total", () => {
-    const message = scanPreparationStatus({ symbolsCount: 10234, hadVisibleRows: false });
-    expect(message).not.toMatch(/\d+\s*\/\s*\d+/);
-    expect(message).not.toMatch(/10234\s*\/\s*10234/);
-  });
-
-  it("dice explícitamente que está preparando y que el análisis no ha empezado", () => {
-    const message = scanPreparationStatus({ symbolsCount: 10234, hadVisibleRows: false });
-    expect(message).toMatch(/prepar/i);
-    expect(message).toMatch(/no ha empezado/i);
-    expect(message).not.toMatch(/^Escaneando/);
-  });
-
-  it("puede nombrar el tamaño del universo pedido, pero como alcance, nunca como progreso", () => {
-    const message = scanPreparationStatus({ symbolsCount: 10234, hadVisibleRows: false });
-    expect(message).toMatch(/10234 acciones/);
-    expect(message).not.toMatch(/\d+\s*\/\s*\d+/);
-  });
-
-  it("conserva las dos variantes de la UI: tabla congelada vs. aviso de que se puede detener", () => {
-    expect(scanPreparationStatus({ symbolsCount: 10234, hadVisibleRows: true })).toMatch(/congelada/i);
-    expect(scanPreparationStatus({ symbolsCount: 10234, hadVisibleRows: false })).toMatch(/detenerlo/i);
-  });
-
-  it("con un recuento inválido o ausente no pinta números raros", () => {
-    for (const value of [undefined, null, NaN, -5, "no-es-un-numero"]) {
-      const message = scanPreparationStatus({ symbolsCount: value });
-      expect(message).toMatch(/prepar/i);
-      expect(message).not.toMatch(/NaN|-\d|undefined|null/);
-      expect(message).not.toMatch(/\d+\s*\/\s*\d+/);
-    }
-    expect(scanPreparationStatus()).toMatch(/prepar/i);
-  });
-});
+// scanPreparationStatus se retiró el 2026-08-16 junto con el botón Ejecutar:
+// era el cartel previo al POST /api/scan y ya no hay escaneo desde la UI.
 
 // scanFailureExplanation: el mensaje que app/page.jsx pone en el banner `err`
 // cuando classifyScanOutcome (lib/scanStatus.js) da "failed" — el caso motivador

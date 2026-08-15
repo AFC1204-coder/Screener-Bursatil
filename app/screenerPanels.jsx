@@ -64,7 +64,7 @@ import {
   ScoreAuditSummaryRail,
 } from "@/lib/screenerDomains/audit";
 import { DataHealthPanel, DataHealthSummaryRail } from "@/lib/screenerDomains/dataHealth";
-import { CompactCountryFlag, CompactResultsTable, PendingResultsBar } from "@/lib/screenerTable";
+import { CompactCountryFlag, CompactResultsTable } from "@/lib/screenerTable";
 import {
   LeaderTape,
   MarketMiniTape,
@@ -100,7 +100,7 @@ export {
   MobileMoverCard, MobileTopMovers, MobileResultRow, buildRowTrustSignature, RowTrustSignature, DecisionQualityStrip, DecisionOperatingBrief, DecisionSummaryRail, DecisionEvidenceChecklist, DecisionEvidenceSummaryRail, DataHealthPanel, DataHealthSummaryRail, ScoreAuditPanel, ScoreAuditSummaryRail, AuditabilitySummaryRail, MobileResultList, RegimeStrip,
   PendingDecisionWorkRail,
   QuickPanel, PreviewCard, SearchCandidateList, SearchScopeList, compactTone, CompactMetric,
-  DecisionIssueBadge, ResultFilterChips, PendingResultsBar, ScreenerContractPanel,
+  DecisionIssueBadge, ResultFilterChips, ScreenerContractPanel,
   FilterTemplatePanel, FilterFamilyModal, CompactCountryFlag, CompactResultsTable,
   FilterNumber, FilterToggle, LayerToggleButton, LayerControl, FilterArchitecturePanel,
   FilterDiagnosticsPanel, activeLayerCount, ruleCountLabel, layerStatusText,

@@ -155,34 +155,6 @@
   line-height:1.45;
 }
 
-/* Variante de la franja P3 para la actualización pendiente: misma estética de
-   pizarra y tiza, pero pegada al PendingResultsBar para que el contexto sea
-   inequívoco (no son filas visibles, son filas preparadas). */
-.percentileScopeNoticePending {
-  margin:-4px 0 12px;
-  padding:9px 12px;
-  border:1px solid var(--traza);
-  border-radius:var(--radius);
-  background:var(--traza-dim);
-  color:var(--soft);
-}
-
-.percentileScopeNoticePending summary {
-  color:var(--traza);
-  cursor:pointer;
-  font-size:11px;
-  font-weight:820;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-}
-
-.percentileScopeNoticePending p {
-  margin:8px 0 2px;
-  color:var(--text);
-  font-size:13px;
-  line-height:1.45;
-}
-
 .snapshotFreshnessNotice {
   display:flex;
   align-items:flex-start;
@@ -5292,41 +5264,9 @@ button.decisionIssueBadge:hover,
   min-width: 178px;
 }
 
-.pendingResultsBar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 38px;
-  margin: 0 0 12px;
-  padding: 7px 8px 7px 12px;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--soft);
-}
 
-.pendingResultsBar span {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 760;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-}
 
-.pendingResultsBar b {
-  color: #f5f7fb;
-  font-size: 13px;
-  font-weight: 760;
-}
 
-.pendingResultsBar em {
-  min-width: 0;
-  flex: 1;
-  color: var(--muted);
-  font-size: 12px;
-  font-style: normal;
-}
 
 .screenerContractPanel {
   display: grid;
@@ -5443,14 +5383,6 @@ button.decisionIssueBadge:hover,
 }
 
 @media (max-width: 700px) {
-  .pendingResultsBar {
-    flex-wrap: wrap;
-    gap: 7px;
-  }
-  .pendingResultsBar em {
-    flex-basis: 100%;
-    order: 3;
-  }
   .screenerContractPanel {
     grid-template-columns: 1fr;
     padding: 10px;

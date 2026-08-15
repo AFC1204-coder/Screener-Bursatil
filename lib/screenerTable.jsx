@@ -31,25 +31,13 @@ export function CompactCountryFlag({ country }) {
   </span>;
 }
 
-export function PendingResultsBar({ pending, visibleCount = 0, filteredCount = 0, onCommit }) {
-  if (!pending?.rows?.length && !pending?.diagnostics) return null;
-  const pendingCount = Number(pending.filteredCount ?? pending.rows?.length ?? 0);
-  const delta = pendingCount - filteredCount;
-  return <div className="pendingResultsBar">
-    <span>{pending.done ? "Actualización lista" : "Lista congelada"}</span>
-    <b>{pendingCount} resultados</b>
-    {delta ? <em>{delta > 0 ? `+${delta}` : `${delta}`} vs visibles</em> : <em>{visibleCount} visibles</em>}
-    <button type="button" className="btn btnSmall btnPrimary" onClick={onCommit}>Mostrar</button>
-  </div>;
-}
-
 export function CompactResultsTable({
   rows = [],
   favoriteSymbols,
   onFavorite,
   onReview,
   onOpenStock,
-  emptyLabel = "Ejecuta un scan para ver resultados",
+  emptyLabel = "Sin datos cargados todavía.",
   perfPeriod,
   onPerfPeriod,
 }) {

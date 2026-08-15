@@ -24,7 +24,6 @@ import {
   FilterToggle,
   MarketMiniTape,
   MobileResultList,
-  PendingResultsBar,
   PreviewCard,
   SearchCandidateList,
   SearchScopeList,
@@ -44,7 +43,6 @@ import {
   MARKET_ORDER,
   MARKETS,
   RESULT_PAGE_SIZES,
-  SCAN_BATCH_SIZES,
   SECTOR_STRENGTH_LABELS,
   SECTOR_STRENGTH_OPTIONS,
   SORT_LABELS,
@@ -63,7 +61,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     markets,
     filtered,
     filteredCount,
-    running,
     err,
     status,
     snapshotNotice,
@@ -71,8 +68,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     sidebarCollapsed,
     setShowMobileFilters,
     setSidebarCollapsed,
-    stopScan,
-    run,
     kpiUniverseCount,
     marketHealth,
     rows,
@@ -92,7 +87,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     loadFilterConfigFromCloud,
     isMarketPresetActive,
     marketPreset,
-    loadUniverse,
     setMarketsAndInvalidate,
     advancedOpen,
     persistAdvancedOpen,
@@ -121,14 +115,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     fineRuleTotal,
     setSettings,
     setFieldRules,
-    scanMode,
-    setScanMode,
-    scanBatchSize,
-    setScanBatchSize,
-    batchStart,
-    setBatchStart,
-    nextBatch,
-    universe,
     diagnostics,
   } = sidebar;
 
@@ -218,11 +204,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     pagedRows: resultsPagedRows,
     activeSettings,
     analyzedRows,
-    pendingResults,
-    pendingFilteredCount,
     favoriteSymbols: resultsFavoriteSymbols,
     screenerDecisionResolutions: resultsDecisionResolutions,
-    restoringScan,
+    emptyLabel: resultsEmptyLabel,
   } = results;
 
   // --- actions ---
@@ -231,7 +215,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     saveSnapshot,
     csv,
     decisionAuditJson,
-    commitPendingResults,
     resetScreenerSession,
     addFavorite: actionsAddFavorite,
     saveSessionBeforeStockOpen: actionsSaveSessionBeforeStockOpen,
@@ -247,29 +230,13 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     marketsStale = false,
     scanModeStale = false,
     scannedAt = null,
-    onRelaunch,
   } = staleness || {};
   const scannedAtLabel = scannedAt ? dateTime(scannedAt) : "";
 
   // --- franja P3 (percentil por lote) ---
-  // Comunicamos honestamente los percentiles batch estén en la lista visible o
-  // en la actualización pendiente. La lista visible tiene precedencia (no
-  // duplicamos franjas); si ambos conjuntos son "final", no hay nada que decir.
-  // Nota: `results` es un prop-bag; las filas están en `resultsRows`, nunca en
-  // `results` directo (no es un array). `pendingResults?.rows` puede traer
-  // percentiles batch antes de que la lista visible cambie.
+  // Comunicamos honestamente los percentiles batch de la lista visible; si el
+  // conjunto es "final", no hay nada que decir.
   const visibleBatchRows = resultsRows.some((row) => (row.percentileScope || "batch") === "batch");
-  const pendingRows = pendingResults?.rows ?? [];
-  const pendingBatchRows = pendingRows.some((row) => (row.percentileScope || "batch") === "batch");
-  // La franja de actualización pendiente sólo aparece si la lista visible NO
-  // tiene batch (precedencia visible, sin duplicados). Se sitúa junto a
-  // PendingResultsBar para que el contexto sea inequívoco.
-  const pendingScopeNoticeEl = (!visibleBatchRows && pendingBatchRows) ? (
-    <details className="percentileScopeNoticePending">
-      <summary>Actualización preparada · percentil por lote</summary>
-      <p>La actualización preparada contiene filas con percentiles calculados sobre un lote menor. La lista visible no cambia hasta pulsar “Mostrar”; esos percentiles pueden cambiar al finalizar el universo.</p>
-    </details>
-  ) : null;
 
   // Cierre del panel de filtros en móvil: Escape en cualquier punto de la
   // página y click/tap fuera del panel (mobileFiltersRef). El botón "Filtros"
@@ -303,12 +270,11 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       </div>
       <div className="actions">
         <button className="btn btnMobileOnly" onClick={() => setShowMobileFilters(!showMobileFilters)}>Filtros</button>
-        <button className={`btn ${running ? "btnGhost" : "btnPrimary"}`} onClick={() => { if (running) stopScan(); else { setShowMobileFilters(false); run(); } }}>{running ? "Detener" : "Ejecutar"}</button>
       </div>
     </div>
     {err && <div className="error">{err}</div>}
-    <div className={`scanStatusBar ${running ? "running" : err ? "error" : ""}`} role="status" aria-live="polite">
-      <span>{running ? "En ejecución" : err ? "Incidencia" : "Estado"}</span>
+    <div className={`scanStatusBar ${err ? "error" : ""}`} role="status" aria-live="polite">
+      <span>{err ? "Incidencia" : "Estado"}</span>
       <b>{investorStatusLabel(status)}</b>
     </div>
     {snapshotNotice ? <div className={`snapshotFreshnessNotice ${snapshotNotice.tone || "info"}`} role="note">
@@ -334,7 +300,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         <div className="mobileSidebarHeader">
           <h2>Filtros</h2>
           <div className="mobileSidebarHeaderActions">
-            <button className={`btn ${running ? "btnGhost" : "btnPrimary"}`} onClick={() => { if (running) stopScan(); else { setShowMobileFilters(false); run(); } }}>{running ? "Detener" : "Aplicar"}</button>
+            {/* Los filtros se aplican solos al cambiarlos; cerrar es la única acción. */}
+            <button type="button" className="btn btnPrimary" onClick={() => setShowMobileFilters(false)}>Listo</button>
             <button type="button" className="mobileSidebarCloseBtn" onClick={() => setShowMobileFilters(false)} aria-label="Cerrar filtros" title="Cerrar filtros">✕</button>
           </div>
         </div>
@@ -348,7 +315,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           savedTemplates={savedFilterTemplates}
           selectedTemplateId={selectedFilterTemplateId}
           templateName={filterTemplateName}
-          running={running}
           onPreset={setPreset}
           onApplySaved={applySavedFilterTemplate}
           onTemplateName={setFilterTemplateName}
@@ -371,9 +337,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               ["asia", "Asia"],
               ["hk", "HK"],
             ].map(([key, label]) => <button key={key} className={`btn btnGhost btnSmall ${isMarketPresetActive(key) ? "btnActive" : ""}`} onClick={() => marketPreset(key)}>{label}</button>)}
-            <button className="btn btnSmall btnPrimary marketUniverseBtn" onClick={loadUniverse} disabled={running || !markets.length} title="Prepara la lista de tickers de los mercados seleccionados">
-              Cargar universo
-            </button>
           </div>
           <div className="marketSelector marketGrid">
             {MARKETS.map(([c, n]) => {
@@ -445,24 +408,12 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           </details>
         </div>
 
-        <details className="disclosurePanel compactDisclosure" style={{ marginBottom: 20 }}>
-          <summary><span>Cobertura y alcance{scanModeStale ? <i className="controlDot controlDotStale" aria-hidden="true" title="Modo de alcance cambiado desde el último scan" /> : null}</span></summary>
-          <div className="grid" style={{ gap: 8 }}>
-            <select className="select" value={scanMode} onChange={(e) => { setScanMode(e.target.value); setBatchStart(0); }}><option value="batch">Por lote</option><option value="random">Aleatorio</option><option value="all">Todo el universo</option></select>
-            <select className="select" value={scanBatchSize} onChange={(e) => { setScanBatchSize(Number(e.target.value)); setBatchStart(0); }} aria-label="Tickers por lote">
-              {SCAN_BATCH_SIZES.map((size) => <option key={size} value={size}>{size} tickers por lote</option>)}
-            </select>
-            <input className="input" type="number" value={batchStart} placeholder="Inicio" onChange={(e) => setBatchStart(Number(e.target.value) || 0)} />
-            <button className="btn btnGhost" onClick={nextBatch} disabled={running || !universe.length || scanMode === "all"}>Siguiente lote</button>
-          </div>
-        </details>
-
         <details className="scanDiagnosticsDisclosure">
           <summary>
             <span>Auditoría de filtros</span>
-            <em>{running ? "analizando" : diagnostics ? `${diagnostics.finalCount}/${diagnostics.analyzed} pasan` : "sin scan"}</em>
+            <em>{diagnostics ? `${diagnostics.finalCount}/${diagnostics.analyzed} pasan` : "sin datos"}</em>
           </summary>
-          <FilterDiagnosticsPanel diagnostics={diagnostics} rowsCount={resultsRows.length} filteredCount={resultsFiltered.length} running={running} />
+          <FilterDiagnosticsPanel diagnostics={diagnostics} rowsCount={resultsRows.length} filteredCount={resultsFiltered.length} />
         </details>
         </details>
 
@@ -510,13 +461,10 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           />
           {scanStale ? (
             <div className="scanStaleNotice" role="status" aria-live="polite">
-              <span className="scanStaleNoticeLabel">Desactualizado</span>
-              <b>Resultados calculados con configuración anterior.</b>
-              {onRelaunch ? <button type="button" className="btn btnSmall btnPrimary" onClick={onRelaunch}>Relanzar scan</button> : null}
+              <span className="scanStaleNoticeLabel">Cobertura</span>
+              <b>La selección de mercados cambió; los datos cargados son de la selección anterior.</b>
             </div>
           ) : null}
-          <PendingResultsBar pending={pendingResults ? { ...pendingResults, filteredCount: pendingFilteredCount } : null} visibleCount={resultsRows.length} filteredCount={resultsFiltered.length} onCommit={commitPendingResults} />
-          {pendingScopeNoticeEl}
           <MobileResultList
             rows={resultsPagedRows}
             settings={activeSettings}
@@ -532,7 +480,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onCsv={() => csv(resultsFiltered)}
             onAuditJson={() => decisionAuditJson(resultsFiltered)}
             onOpenStock={saveSessionBeforeStockOpen}
-            savingDisabled={running}
             page={visibleResultPage}
             pageSize={resultPageSize}
             totalPages={totalResultPages}
@@ -542,20 +489,17 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             decisionResolutionOptions={decisionResolutionOptions}
             onDecisionResolutionFilter={setDecisionResolutionFilter}
             decisionResolutions={resultsDecisionResolutions}
-            emptyLabel={restoringScan ? "Cargando último snapshot guardado..." : undefined}
+            emptyLabel={resultsEmptyLabel}
           />
         </section>
 
         <section className="desktopResultsSection" style={{ marginBottom: 20 }}>
           {scanStale ? (
             <div className="scanStaleNotice" role="status" aria-live="polite">
-              <span className="scanStaleNoticeLabel">Desactualizado</span>
-              <b>Resultados calculados con configuración anterior.</b>
-              {onRelaunch ? <button type="button" className="btn btnSmall btnPrimary" onClick={onRelaunch}>Relanzar scan</button> : null}
+              <span className="scanStaleNoticeLabel">Cobertura</span>
+              <b>La selección de mercados cambió; los datos cargados son de la selección anterior.</b>
             </div>
           ) : null}
-          <PendingResultsBar pending={pendingResults ? { ...pendingResults, filteredCount: pendingFilteredCount } : null} visibleCount={resultsRows.length} filteredCount={resultsFiltered.length} onCommit={commitPendingResults} />
-          {pendingScopeNoticeEl}
           <div className="resultsHeader">
             <div className="resultsTitleBlock">
               <span>Results</span>
@@ -563,12 +507,12 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               <p>{resultsRows.length} pasan · {analyzedCountForDisplay(analyzedRows)} analizadas · {SORT_LABELS[sort] || sort}{scannedAtLabel ? ` · scan ${scannedAtLabel}` : ""}</p>
             </div>
             <div className="controls">
-              {(resultsRows.length > 0 || pendingResults?.rows?.length || diagnostics) ? <button className="btn btnSmall btnGhost" onClick={resetScreenerSession}>Reset sesión</button> : null}
+              {(resultsRows.length > 0 || diagnostics) ? <button className="btn btnSmall btnGhost" onClick={resetScreenerSession}>Reset sesión</button> : null}
               {resultsFiltered.length ? <>
                 <button className="btn btnSmall btnGhost" onClick={() => csv(resultsFiltered)}>↓ CSV</button>
                 <button className="btn btnSmall btnGhost" onClick={() => decisionAuditJson(resultsFiltered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
                 <button className="btn btnSmall btnPrimary" onClick={() => openReview(resultsFiltered)}>Revisar</button>
-                <button className="btn btnSmall btnGhost" onClick={() => saveSnapshot(resultsFiltered)} disabled={running} aria-label="Guardar snapshot de resultados">Guardar</button>
+                <button className="btn btnSmall btnGhost" onClick={() => saveSnapshot(resultsFiltered)} aria-label="Guardar snapshot de resultados">Guardar</button>
               </> : null}
             </div>
           </div>
@@ -629,7 +573,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onOpenStock={saveSessionBeforeStockOpen}
             perfPeriod={perfPeriod}
             onPerfPeriod={setPerfPeriod}
-            emptyLabel={restoringScan ? "Cargando último snapshot guardado..." : undefined}
+            emptyLabel={resultsEmptyLabel}
           />
         </section>
       </main>
