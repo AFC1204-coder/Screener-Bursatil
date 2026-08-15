@@ -18,7 +18,7 @@ import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson, postJson } from "@/lib/clientApi";
 import { getLatestScanFromCloud, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
-import { pct } from "@/lib/formatters";
+import { dateTime, pct } from "@/lib/formatters";
 import { avg, avgVolume } from "@/lib/indicators";
 import { safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
@@ -1056,7 +1056,7 @@ export default function Page() {
       setStatus(`Salud de mercado: ${d.regime?.label || "sin regimen"} · Score ${Math.round(d.marketScore || 0)}`);
       return d;
     } catch (e) {
-      setStatus("Salud de mercado no disponible; el scan continua sin filtro de regimen.");
+      setStatus("Salud de mercado no disponible; el scan continua sin filtro de régimen.");
       return null;
     }
   }
@@ -1107,11 +1107,11 @@ export default function Page() {
       };
       const row = sectorize([{ ...withBenchmark, ...dataCoverageForRow(withBenchmark, profile), ...weeklyRs }])[0];
       setSearchResult(row);
-      setStatus(`Vista rapida cargada para ${row.companyName || candidate?.name || normalized} (${normalized}).`);
+      setStatus(`Vista rápida cargada para ${row.companyName || candidate?.name || normalized} (${normalized}).`);
     } catch (e) {
       setSearchResult(null);
       setSearchError(e.message || "Proveedor no disponible");
-      setStatus(`No se pudo cargar la vista rapida de ${normalized}.`);
+      setStatus(`No se pudo cargar la vista rápida de ${normalized}.`);
     } finally {
       setSearchLoading(false);
     }
@@ -1160,7 +1160,7 @@ export default function Page() {
         setStatus(`Cargando universo de ${marketName(item.value)}...`);
         await loadUniverse([item.value]);
       } else {
-        setStatus(`Vista por pais: ${marketName(item.value)}.`);
+        setStatus(`Vista por país: ${marketName(item.value)}.`);
       }
       return;
     }
@@ -1214,7 +1214,7 @@ export default function Page() {
           return;
         }
         setSearchResult(null);
-        setSearchError("No encontre candidatos. Prueba con nombre, ticker, sector, subsector, pais o sufijo de mercado.");
+        setSearchError("No encontre candidatos. Prueba con nombre, ticker, sector, subsector, país o sufijo de mercado.");
         setStatus(`Sin coincidencias para ${query}.`);
         return;
       }
@@ -1646,7 +1646,7 @@ export default function Page() {
     const scan = {
       id: uid(),
       createdAt: new Date().toISOString(),
-      name: `${PRESETS[presetKey].name} · ${decisionRows.length} acciones · ${new Date().toLocaleString()}`,
+      name: `${PRESETS[presetKey].name} · ${decisionRows.length} acciones · ${dateTime(new Date())}`,
       preset: presetKey,
       settings,
       activeSettings,
@@ -1691,7 +1691,7 @@ export default function Page() {
     });
   }
   function csv(filteredRows) {
-    const h = ["Rank", "Ticker", "Empresa", "Actividad ES", "Tema", "Pais", "Sector", "Industria", "IPO", "IPO Date", "IPO Age Months", "Benchmark", "Last Price Date", "Price Freshness Days", "Price Freshness Label", "Price Freshness Issue", "Data Coverage", "Technical Coverage", "Fundamental Coverage", "Data Issues", "Data Health", "Data Health Key", "Data Health Detail", "Data Health Topline", "Data Health Issues", "RS Benchmark", "RS", "RS Pais", "RS Grupo", "RS Quality", "RS Stability", "Speculation Risk", "RS Quality Label", "Weakness Score", "Weakness Label", "Weakness Reasons", "RS Sample", "RS Pais Sample", "RS Grupo Sample", "RS 3M", "RS 6M", "RS 12M", "Dist 20d", "Dist 50d", "Dist 52w", "Dist ATH", "Highs Spread", "3M", "6M", "12M", "SMA50", "Avg Volume 20d", "Latest Volume", "Avg Turnover 20d", "Latest Turnover", "UD Vol", "Rel Volume", "Volume Surge %", "Volume Effect Score", "A/D Proxy", "EPS/Growth Proxy", "Volume Evidence", "Short Float %", "Short Ratio", "Shares Short", "Float Shares", "Up Volume", "Max Daily Move 20d", "Max Daily Range 20d", "Avg Daily Range 20d", "Price Range 63d", "Volatility 63d", "Downside Vol 63d", "Max Drawdown 63d", "Return/Vol 3M", "Return/Drawdown 3M", "Risk/Reward Score", "Estructura", "Ruptura", "Momentum", "Risk", "Volume", "Liquidity", "Sector Score", "Objective Setup", "Pattern Score", "Pattern Contribution", "Setup Quality", "Demand", "Growth", "IPO Score", "Objective Score", "Composite", "Legacy Total", "Objective Label", "Composite Label", "Reasons", "Risks", "Decision Priority", "Decision Confidence", "Decision Confidence Score", "Decision Issues", "Decision Drivers", "Decision Watch", "Decision", "Decision Detail", "Action", "Action Detail"];
+    const h = ["Rank", "Ticker", "Empresa", "Actividad ES", "Tema", "País", "Sector", "Subsector", "IPO", "IPO Date", "IPO Age Months", "Benchmark", "Last Price Date", "Price Freshness Days", "Price Freshness Label", "Price Freshness Issue", "Data Coverage", "Technical Coverage", "Fundamental Coverage", "Data Issues", "Data Health", "Data Health Key", "Data Health Detail", "Data Health Topline", "Data Health Issues", "RS Benchmark", "RS", "RS País", "RS Grupo", "RS Quality", "RS Stability", "Speculation Risk", "RS Quality Label", "Weakness Score", "Weakness Label", "Weakness Reasons", "RS Sample", "RS País Sample", "RS Grupo Sample", "RS 3M", "RS 6M", "RS 12M", "Dist 20d", "Dist 50d", "Dist 52w", "Dist ATH", "Highs Spread", "3M", "6M", "12M", "SMA50", "Avg Volume 20d", "Latest Volume", "Avg Turnover 20d", "Latest Turnover", "UD Vol", "Rel Volume", "Volume Surge %", "Volume Effect Score", "A/D Proxy", "EPS/Growth Proxy", "Volume Evidence", "Short Float %", "Short Ratio", "Shares Short", "Float Shares", "Up Volume", "Max Daily Move 20d", "Max Daily Range 20d", "Avg Daily Range 20d", "Price Range 63d", "Volatility 63d", "Downside Vol 63d", "Max Drawdown 63d", "Return/Vol 3M", "Return/Drawdown 3M", "Risk/Reward Score", "Estructura", "Ruptura", "Momentum", "Risk", "Volume", "Liquidity", "Sector Score", "Objective Setup", "Pattern Score", "Pattern Contribution", "Setup Quality", "Demand", "Growth", "IPO Score", "Objective Score", "Composite", "Legacy Total", "Objective Label", "Composite Label", "Reasons", "Risks", "Decision Priority", "Decision Confidence", "Decision Confidence Score", "Decision Issues", "Decision Drivers", "Decision Watch", "Decision", "Decision Detail", "Action", "Action Detail"];
     const lines = filteredRows.map((r, i) => {
       const explanation = explainScreenerRank(r, activeSettings);
       const trace = buildDecisionTrace(r, explanation);
@@ -1730,7 +1730,7 @@ export default function Page() {
     setSnapshotNotice(null);
     setPendingResults(null);
     setResultPage(1);
-    setStatus(`Resultados actualizados automaticamente: ${pendingResults.rows?.length || 0} acciones calculadas.`);
+    setStatus(`Resultados actualizados automáticamente: ${pendingResults.rows?.length || 0} acciones calculadas.`);
   }, [running, filtered.length, pendingFilteredCount, pendingResults]);
 
   // Preview is container-owned because it coordinates page-level UI state, even though it follows filtered rows.
@@ -1814,7 +1814,7 @@ export default function Page() {
         value: row.symbol,
         name: row.companyName,
         label: `${row.symbol} · ${row.companyName || row.symbol}`,
-        icon: "Accion",
+        icon: "Acción",
         detail: [row.country || countryCode(row.symbol), row.theme || row.sector, row.industry].filter(Boolean).join(" · "),
         score: s + 10,
       });

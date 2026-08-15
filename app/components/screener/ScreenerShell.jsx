@@ -30,6 +30,7 @@ import {
   SearchScopeList,
   SetupChipRail,
 } from "@/app/screenerPanels";
+import { dateTime } from "@/lib/formatters";
 import { analyzedCountForDisplay, investorStatusLabel } from "@/lib/screenerFormat";
 import {
   ALL_FILTER_LAYERS,
@@ -248,7 +249,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     scannedAt = null,
     onRelaunch,
   } = staleness || {};
-  const scannedAtLabel = scannedAt ? new Date(scannedAt).toLocaleString() : "";
+  const scannedAtLabel = scannedAt ? dateTime(scannedAt) : "";
 
   // --- franja P3 (percentil por lote) ---
   // Comunicamos honestamente los percentiles batch estén en la lista visible o
@@ -417,12 +418,12 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         <div className="sidebarGroup" style={{ marginBottom: 24 }}>
           <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Condiciones</span>
           <div className={`weeklyStageControls ${filterLayers.trend ? "" : "isMuted"}`}>
-            <label><span>Media rapida semanal</span><input className="input" type="number" min="2" max="80" step="1" value={settings.stageFastWeeks || 10} onChange={(event) => updateSetting("stageFastWeeks", Number(event.target.value) || 10)} /></label>
+            <label><span>Media rápida semanal</span><input className="input" type="number" min="2" max="80" step="1" value={settings.stageFastWeeks || 10} onChange={(event) => updateSetting("stageFastWeeks", Number(event.target.value) || 10)} /></label>
             <label><span>Media lenta semanal</span><input className="input" type="number" min="3" max="120" step="1" value={settings.stageSlowWeeks || 30} onChange={(event) => updateSetting("stageSlowWeeks", Number(event.target.value) || 30)} /></label>
             <label><span>Pendiente semanas</span><input className="input" type="number" min="2" max="40" step="1" value={settings.stageSlopeWeeks || 10} onChange={(event) => updateSetting("stageSlopeWeeks", Number(event.target.value) || 10)} /></label>
           </div>
           <div className="filterSwitches">
-            <FilterToggle active={settings.requireStage2} applies={settingApplies("requireStage2", filterLayers)} detail={inactiveSettingReason("requireStage2", filterLayers)} onClick={() => toggleLayeredSetting("requireStage2")}>Stage 2</FilterToggle>
+            <FilterToggle active={settings.requireStage2} applies={settingApplies("requireStage2", filterLayers)} detail={inactiveSettingReason("requireStage2", filterLayers)} onClick={() => toggleLayeredSetting("requireStage2")}>Etapa 2</FilterToggle>
             <FilterToggle active={settings.requireUpVolume} applies={settingApplies("requireUpVolume", filterLayers)} detail={inactiveSettingReason("requireUpVolume", filterLayers)} onClick={() => toggleLayeredSetting("requireUpVolume")}>Volumen en vela alcista</FilterToggle>
             <FilterToggle active={settings.requireRecentIpo} applies={settingApplies("requireRecentIpo", filterLayers)} detail={inactiveSettingReason("requireRecentIpo", filterLayers)} onClick={() => toggleLayeredSetting("requireRecentIpo")}>IPO real reciente</FilterToggle>
           </div>
@@ -458,7 +459,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
 
         <details className="scanDiagnosticsDisclosure">
           <summary>
-            <span>Auditoria de filtros</span>
+            <span>Auditoría de filtros</span>
             <em>{running ? "analizando" : diagnostics ? `${diagnostics.finalCount}/${diagnostics.analyzed} pasan` : "sin scan"}</em>
           </summary>
           <FilterDiagnosticsPanel diagnostics={diagnostics} rowsCount={resultsRows.length} filteredCount={resultsFiltered.length} running={running} />
@@ -483,7 +484,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         <section className="searchCard" style={{ marginBottom: 20 }}>
           <div className="commandSearchPanel searchPanelBare">
               <form className="searchBar" onSubmit={runSearch} style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                <input className="input searchInput" value={searchSymbol} onChange={(e) => updateSearchSymbol(e.target.value)} placeholder="Ticker, nombre, sector, subsector o pais..." />
+                <input className="input searchInput" value={searchSymbol} onChange={(e) => updateSearchSymbol(e.target.value)} placeholder="Ticker, nombre, sector, subsector o país..." />
                 {(searchSymbol || searchCandidates.length || searchResult) && <button type="button" className="btn btnGhost" onClick={clearSearch}>Limpiar</button>}
                 <button className="btn btnPrimary" disabled={searchLoading}>{searchLoading ? "Buscando..." : "Buscar"}</button>
               </form>

@@ -12,7 +12,7 @@ import {
 } from "@/app/screenerPanels";
 import { amount, money, quickBusinessDescription, quickBusinessMarket, ratioLabel, shortBusiness } from "@/lib/screenerFormat";
 import { QuickReviewMetricValue, ReviewPriorityPanel, ReviewQueueFocusBadge } from "@/app/components/screener/ReviewWidgets";
-import { pct } from "@/lib/formatters";
+import { pct, pctShare } from "@/lib/formatters";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { PerformanceStrip } from "@/app/components/screener/PerformanceStrip";
 import { RS_QUALITY_OFF_CANON_REASON, canonicalRs } from "@/lib/rsCanonical";
@@ -65,7 +65,7 @@ export default function QuickReviewModal({
           <CompanyMark row={activeModalRow} size="lg" />
           <div>
             <div className="profileHeaderBreadcrumb">
-              Screener <span>/</span> Vista rapida <span>/</span> {modalReviewPosition + 1} de {modalReviewRows.length}
+              Screener <span>/</span> Vista rápida <span>/</span> {modalReviewPosition + 1} de {modalReviewRows.length}
             </div>
             <div className="profileTitle">
               <h2>{activeModalRow.symbol}</h2>
@@ -75,7 +75,7 @@ export default function QuickReviewModal({
               <span className="price">{money(activeModalRow.price, activeModalRow.currency)}</span>
               {Number.isFinite(activeModalRow.perf3m) && (
                 <span className={`change ${activeModalRow.perf3m >= 0 ? "up" : "down"}`}>
-                  {activeModalRow.perf3m >= 0 ? "+" : ""}{activeModalRow.perf3m.toFixed(2)}% 3M
+                  {pct(activeModalRow.perf3m)} 3M
                 </span>
               )}
             </div>
@@ -101,7 +101,7 @@ export default function QuickReviewModal({
       </div>
 
       <ScreenerOriginPanel origin={quickReviewOrigin} variant="review" />
-      <div className="reviewResolveRail quickReviewResolveRail" aria-label="Resolver decision desde Vista rápida">
+      <div className="reviewResolveRail quickReviewResolveRail" aria-label="Resolver decisión desde Vista rápida">
         <span>{modalActiveResolution ? `Resolución: ${modalActiveResolution.label}` : "Resolver cola"}</span>
         <div>
           <button
@@ -154,7 +154,7 @@ export default function QuickReviewModal({
               </button>
             ))}
           </div> : null}
-          {modalReviewPrioritySummary.length ? <div className="reviewQueueSummary reviewPrioritySummary" aria-label="Prioridad de investigacion">
+          {modalReviewPrioritySummary.length ? <div className="reviewQueueSummary reviewPrioritySummary" aria-label="Prioridad de investigación">
             {modalReviewPrioritySummary.map((group) => (
               <button
                 type="button"
@@ -182,7 +182,7 @@ export default function QuickReviewModal({
               </button>
             ))}
           </div> : null}
-          {modalReviewQueueSummary.groups.length ? <div className="reviewQueueSummary" aria-label="Resumen de cola por decision">
+          {modalReviewQueueSummary.groups.length ? <div className="reviewQueueSummary" aria-label="Resumen de cola por decisión">
             {modalReviewQueueSummary.groups.map((group) => (
               <button
                 type="button"
@@ -294,8 +294,8 @@ export default function QuickReviewModal({
                 <div className="profileRow"><span>Volumen 5d</span><QuickReviewMetricValue row={activeModalRow} metricKey="volumeSurgePct" label="Volumen 5d" value={pct(activeModalRow.volumeSurgePct)} className={(activeModalRow.volumeSurgePct || 0) > 0 ? "up" : ""} /></div>
                 <div className="profileRow"><span>Up/down ratio</span><QuickReviewMetricValue row={activeModalRow} metricKey="upDownVolRatio" label="Up/down ratio" value={ratioLabel(activeModalRow.upDownVolRatio)} /></div>
                 <div className="profileRow"><span>{metricShortLabel("shortPercentOfFloat")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="shortPercentOfFloat" label={metricShortLabel("shortPercentOfFloat")} value={pct(activeModalRow.shortPercentOfFloat)} /></div>
-                <div className="profileRow"><span>Drawdown 3M</span><QuickReviewMetricValue row={activeModalRow} metricKey="maxDrawdown63d" label="Drawdown 3M" value={Number.isFinite(activeModalRow.maxDrawdown63d) ? `${activeModalRow.maxDrawdown63d.toFixed(1)}%` : "-"} className="down" /></div>
-                <div className="profileRow"><span>Volatilidad</span><QuickReviewMetricValue row={activeModalRow} metricKey="volatility63d" label="Volatilidad" value={Number.isFinite(activeModalRow.volatility63d) ? `${activeModalRow.volatility63d.toFixed(1)}%` : "-"} /></div>
+                <div className="profileRow"><span>Drawdown 3M</span><QuickReviewMetricValue row={activeModalRow} metricKey="maxDrawdown63d" label="Drawdown 3M" value={Number.isFinite(activeModalRow.maxDrawdown63d) ? pctShare(activeModalRow.maxDrawdown63d, 1) : "-"} className="down" /></div>
+                <div className="profileRow"><span>Volatilidad</span><QuickReviewMetricValue row={activeModalRow} metricKey="volatility63d" label="Volatilidad" value={Number.isFinite(activeModalRow.volatility63d) ? pctShare(activeModalRow.volatility63d, 1) : "-"} /></div>
               </div>
             </div>
           </div>

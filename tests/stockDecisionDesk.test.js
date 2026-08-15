@@ -8,7 +8,7 @@ const baseOrigin = {
   decisionBrief: {
     thesis: { label: "Tesis", value: "Setup 82", detail: "RS fuerte", tone: "good" },
     risk: { label: "Riesgo", value: "Vigilar", detail: "Falta volumen", tone: "warn" },
-    nextAction: { label: "Siguiente", value: "Esperar confirmacion", detail: "Validar demanda", tone: "warn" },
+    nextAction: { label: "Siguiente", value: "Esperar confirmación", detail: "Validar demanda", tone: "warn" },
   },
   decisionTrace: {
     evidence: {
@@ -45,7 +45,7 @@ describe("buildStockDecisionDesk", () => {
 
     expect(desk.status).toBe("Pendiente");
     expect(desk.guardrail).toMatchObject({
-      title: "Apoyo de observacion, no señal automatica",
+      title: "Apoyo de observación, no señal automática",
     });
     expect(desk.observationChecklist.map((item) => item.key)).toEqual(["method", "focus", "evidence", "chart"]);
     expect(desk.observationChecklist[0]).toMatchObject({
@@ -149,7 +149,7 @@ describe("buildStockDecisionDesk", () => {
       focusLabel: "Liderazgo",
     });
     expect(desk.chartRead).toEqual([
-      { key: "aligned", label: "Lectura grafico", value: "Alineada", detail: "Marco y capas coherentes con la observacion", tone: "good" },
+      { key: "aligned", label: "Lectura gráfico", value: "Alineada", detail: "Marco y capas coherentes con la observación", tone: "good" },
     ]);
   });
 
@@ -170,7 +170,7 @@ describe("buildStockDecisionDesk", () => {
       setupDisplay: {},
     });
 
-    expect(desk.guardrail.title).toBe("Apoyo de observacion, no señal automatica");
+    expect(desk.guardrail.title).toBe("Apoyo de observación, no señal automática");
     expect(desk.sourceLabel).toBe("Review · Trabajo pendiente");
     expect(desk.status).toBe("Vigilar");
     expect(desk.brief).toEqual([]);

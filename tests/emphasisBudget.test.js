@@ -90,7 +90,7 @@ describe("filtros de la pantalla principal", () => {
   }
 
   it("conserva «Resolución» en ambas superficies", () => {
-    expect(FILTER_BAR).toContain("Filtrar por resolución de decision");
-    expect(MOBILE).toContain("Filtrar por resolución de decision");
+    expect(FILTER_BAR).toContain("Filtrar por resolución de decisión");
+    expect(MOBILE).toContain("Filtrar por resolución de decisión");
   });
 });

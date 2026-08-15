@@ -8,10 +8,11 @@ import RowPriceChart from "@/app/RowPriceChart";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
-import { pct } from "@/lib/formatters";
+import { pct, pctShare } from "@/lib/formatters";
 import { clamp } from "@/lib/indicators";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { RS_QUALITY_OFF_CANON_REASON, canonicalRs } from "@/lib/rsCanonical";
+import { stageWordForState } from "@/lib/stageDisplay";
 import { ipoAgeMonthsForRow } from "@/lib/scoring";
 import { GLOBAL_INDEX_TAPE } from "@/lib/screenerConfig";
 import { buildDecisionEvidenceChecklist, explainScreenerRank } from "@/lib/screenerExplainability";
@@ -217,7 +218,7 @@ export function MarketMiniTape({ marketHealth }) {
 }
 
 export function QuickPanel({ row, settings, onOpenStock }) {
-  if (!row) return <div className="quickPanel"><p className="fine">Selecciona una accion para ver sus caracteristicas.</p></div>;
+  if (!row) return <div className="quickPanel"><p className="fine">Selecciona una acción para ver sus características.</p></div>;
   // Lector único del RS (lib/rsCanonical.js): el mismo número que la tabla,
   // el modal de vista rápida, la ficha y salud de mercado.
   const panelRs = canonicalRs(row);
@@ -259,7 +260,7 @@ export function QuickPanel({ row, settings, onOpenStock }) {
     [metricShortLabel("shortPercentOfFloat"), pct(row.shortPercentOfFloat), "shortPercentOfFloat"],
     ["Short ratio", ratioLabel(row.shortRatio), "shortRatio"],
     ["Spec Risk", row.speculationRiskScore?.toFixed(0) || "-", "speculationRiskScore"],
-    ["DD 3M", Number.isFinite(row.maxDrawdown63d) ? `${row.maxDrawdown63d.toFixed(1)}%` : "-", "maxDrawdown63d"],
+    ["DD 3M", Number.isFinite(row.maxDrawdown63d) ? pctShare(row.maxDrawdown63d, 1) : "-", "maxDrawdown63d"],
     ["Rent/Risk", row.riskRewardScore?.toFixed(0) || "-", "riskRewardScore"],
     ["Bench", row.benchmarkSymbol || "-", ""],
   ];
@@ -328,8 +329,13 @@ export function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = fa
   const compact = variant === "table";
   const summary = variant === "search";
   const showSparkline = !compact && !summary;
-  const stage = stageLabel(row);
-  const stageClass = stage === "Stage 2" ? "good" : stage === "Stage 4" ? "bad" : "neutral";
+  // La etiqueta cruda del clasificador ("Stage 2", "Base / transicion") se
+  // traduce SIEMPRE con el diccionario único de la etapa (lib/stageDisplay.js):
+  // misma palabra que la columna "Etapa" de la tabla y que la ficha.
+  const rawStage = stageLabel(row);
+  const stageInfo = stageWordForState(row.weeklyStageState || "", rawStage);
+  const stage = stageInfo?.word || (rawStage === "Sin dato" ? "Sin dato" : rawStage) || "Sin dato";
+  const stageClass = stageInfo?.tone === "stage2" ? "good" : stageInfo?.tone === "stage4" ? "bad" : "neutral";
   const metricSource = compactMetricSourceLookup(row);
   // Lector único del RS (lib/rsCanonical.js).
   const cardRs = canonicalRs(row);
@@ -381,7 +387,7 @@ export function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = fa
     </div>}
     <RowTrustSignature signature={trustSignature} className={`previewTrustSignature ${compact ? "compact" : ""}`.trim()} />
     {!compact && <div className="previewActions">
-      {onSelectChart && <button type="button" className="btn btnSmall btnPrimary" onClick={() => onSelectChart(row)}>Grafico</button>}
+      {onSelectChart && <button type="button" className="btn btnSmall btnPrimary" onClick={() => onSelectChart(row)}>Gráfico</button>}
       <Link className="btn btnSmall" href={stockUrl(row.symbol)} onPointerDown={() => onOpenStock?.(row)} onClick={() => onOpenStock?.(row)}>Ficha</Link>
       <a className="btn btnSmall" href={links.tradingView} target="_blank" rel="noreferrer">TradingView</a>
       {onFavorite && <button type="button" className={`starBtn ${isFavorite ? "on" : ""}`} onClick={() => onFavorite(row)} aria-label={`Guardar favorito ${row.symbol}`}>{isFavorite ? "★ Guardada" : "★ Guardar"}</button>}

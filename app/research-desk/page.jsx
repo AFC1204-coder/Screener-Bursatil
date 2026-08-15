@@ -8,7 +8,7 @@ import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { getJson } from "@/lib/clientApi";
 import { deleteFavoriteFromCloud, deleteScanFromCloud, getAlertsFromCloud, getCloudStatus, mergeAlertsWithTimestamps, mergeFavoritesWithTombstones, mergeScansWithTombstones, pullCloudState, pushCloudState, resolveAlertInCloud, syncAlertsToCloud, syncFavoriteToCloud, syncFavoritesToCloud, syncScanToCloud } from "@/lib/cloudSyncClient";
-import { num, pct } from "@/lib/formatters";
+import { dateShort, dateTime, num, pct } from "@/lib/formatters";
 import { sma } from "@/lib/indicators";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { userFacingServiceError } from "@/lib/serviceErrors";
@@ -18,6 +18,7 @@ import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { checklistForRow, enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
 import { buildDecisionTraceabilitySummary, decisionResolutionForRow } from "@/lib/decisionTraceability";
 import { rowPassesListContract } from "@/lib/listRationale";
+import { stageWordForState } from "@/lib/stageDisplay";
 import { userFacingSearchError } from "@/lib/screenerFormat";
 import { createFavoriteFromRow, metricValue, rowTheme, shortBusiness } from "@/lib/stockRows";
 import { benchmarkForFavorite, externalLinks, stockUrl } from "@/lib/symbols";
@@ -123,7 +124,7 @@ function closeOnOrBefore(bars = [], isoDate) {
   return bars.find((bar) => bar.date <= target)?.close ?? bars.at(-1)?.close ?? null;
 }
 function stateFromBars(bars = []) {
-  if (bars.length < 210) return userFacingSearchError("Historico insuficiente");
+  if (bars.length < 210) return userFacingSearchError("Histórico insuficiente");
   const price = bars[0].close;
   const s50 = sma(bars, 50), s200 = sma(bars, 200);
   if (price > s50 && price > s200) return "Tendencia constructiva";
@@ -139,7 +140,11 @@ async function quoteWithBars(symbol) {
 }
 
 function patternLabel(row = {}) {
-  return methodologyDisplayForRow(row).label || row.methodologyTags?.[0] || row.stageLabel || "Sin estructura";
+  // El último recurso es la etiqueta cruda de etapa: se traduce con el
+  // diccionario único (lib/stageDisplay.js) para no resucitar "Stage 2" /
+  // "Base / transicion" guardados en filas viejas.
+  const stageFallback = stageWordForState(row.weeklyStageState || "", row.stageLabel || "")?.word || "";
+  return methodologyDisplayForRow(row).label || row.methodologyTags?.[0] || stageFallback || "Sin estructura";
 }
 
 function contractionText(row = {}) {
@@ -432,10 +437,10 @@ export default function ResearchDesk() {
       return;
     }
     setSelectedScan(nextScans[0]);
-    setStatus(`Ultimo scan importado: ${nextScans[0].rows?.length || 0} acciones.`);
+    setStatus(`Último scan importado: ${nextScans[0].rows?.length || 0} acciones.`);
   }
   function importManualSnapshot() {
-    const raw = prompt("Pega aqui un JSON de filas/candidatas para crear un snapshot manual.");
+    const raw = prompt("Pega aquí un JSON de filas/candidatas para crear un snapshot manual.");
     if (!raw) return;
     try {
       const rows = JSON.parse(raw);
@@ -445,7 +450,7 @@ export default function ResearchDesk() {
       const compatibilityKey = snapshotCompatibilityKey(compatibilityContext);
       const previousScan = findCompatiblePreviousScan(scans, compatibilityContext);
       const enrichedRows = enrichRowsWithMethodology(rawRows, previousScan?.rows || []);
-      const scan = { id: uid(), createdAt: new Date().toISOString(), name: `Snapshot manual · ${new Date().toLocaleString()}`, preset: "manual", marketRegime: market?.regime?.label || "sin dato", marketScore: market?.marketScore ?? null, snapshotCompatibilityKey: compatibilityKey, comparison: { compatiblePrevious: Boolean(previousScan), previousScanId: previousScan?.id || null, previousScanDate: previousScan?.createdAt || null }, methodologySummary: summarizeMethodology(enrichedRows, previousScan), rows: enrichedRows };
+      const scan = { id: uid(), createdAt: new Date().toISOString(), name: `Snapshot manual · ${dateTime(new Date())}`, preset: "manual", marketRegime: market?.regime?.label || "sin dato", marketScore: market?.marketScore ?? null, snapshotCompatibilityKey: compatibilityKey, comparison: { compatiblePrevious: Boolean(previousScan), previousScanId: previousScan?.id || null, previousScanDate: previousScan?.createdAt || null }, methodologySummary: summarizeMethodology(enrichedRows, previousScan), rows: enrichedRows };
       const generatedAlerts = alertsFromScan(scan);
       persistScans([scan, ...scans].slice(0, 50));
       persistAlerts(mergeAlerts(alerts, generatedAlerts).slice(0, 500));
@@ -458,7 +463,7 @@ export default function ResearchDesk() {
         if (result.ok && result.data?.alerts?.length) persistAlerts(mergeAlertsWithTimestamps(result.data.alerts, safeRead(STORAGE_KEYS.alerts, [])).slice(0, 500));
       });
     } catch {
-      setStatus("JSON no valido");
+      setStatus("JSON no válido");
     }
   }
   function createManualFavorites() {
@@ -491,9 +496,9 @@ export default function ResearchDesk() {
     ];
     persistFavs(next);
     setManual("");
-    setStatus(`${newFavorites.length} tickers anadidos a favoritos/watchlist`);
+    setStatus(`${newFavorites.length} tickers añadidos a favoritos/watchlist`);
     syncFavoritesToCloud(newFavorites).then((result) => {
-      if (result.configured !== false && result.ok) setStatus(`${newFavorites.length} favoritos anadidos en este dispositivo y en la nube`);
+      if (result.configured !== false && result.ok) setStatus(`${newFavorites.length} favoritos añadidos en este dispositivo y en la nube`);
     });
   }
   function favFromRow(row) {
@@ -503,9 +508,9 @@ export default function ResearchDesk() {
     }
     const fav = createFavoriteFromRow(row, { source: "scan", scan: selectedScan, market });
     persistFavs([fav, ...favorites]);
-    setStatus(`${row.symbol} anadido a favoritos`);
+    setStatus(`${row.symbol} añadido a favoritos`);
     syncFavoriteToCloud(fav).then((result) => {
-      if (result.configured !== false && result.ok) setStatus(`${row.symbol} anadido a favoritos y sincronizado con la nube`);
+      if (result.configured !== false && result.ok) setStatus(`${row.symbol} añadido a favoritos y sincronizado con la nube`);
     });
   }
   function removeFav(id) {
@@ -644,31 +649,31 @@ export default function ResearchDesk() {
 
     {/* N0/N1 — Pregunta rectora: "¿qué ha cambiado en lo que sigo?". */}
     {!!selectedEvents.length && <section className="card">
-      <div className="sectionTitle"><h2>Cambios desde snapshot anterior</h2><span className="fine">{selectedEvents.length} eventos visibles · {selectedMethodology.previousScanDate ? new Date(selectedMethodology.previousScanDate).toLocaleString() : "sin comparativo previo"}</span></div>
+      <div className="sectionTitle"><h2>Cambios desde snapshot anterior</h2><span className="fine">{selectedEvents.length} eventos visibles · {selectedMethodology.previousScanDate ? dateTime(selectedMethodology.previousScanDate) : "sin comparativo previo"}</span></div>
       <div className="grid grid3">
         <div className="kpi"><b>{selectedMethodology.severityCounts?.positive || 0}</b><span>mejoras</span></div>
         <div className="kpi"><b>{selectedMethodology.severityCounts?.warning || 0}</b><span>deterioros</span></div>
-        <div className="kpi"><b>{selectedMethodology.stageCounts?.stage2 || 0}</b><span>Stage 2</span></div>
+        <div className="kpi"><b>{selectedMethodology.stageCounts?.stage2 || 0}</b><span>Etapa 2</span></div>
       </div>
       <div className="tableWrap" style={{ marginTop: 10 }}><table className="table"><thead><tr>{["Ticker", "Evento", "Tipo", "Detalle"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{selectedEvents.map((event, index) => <tr key={`${event.symbol}-${event.type}-${index}`}><td><a className="ticker" href={stockUrl(event.symbol)}>{event.symbol}</a><br /><span className="fine">{event.companyName || ""}</span></td><td>{event.label}</td><td><span className="pill">{event.severity}</span></td><td>{event.detail}</td></tr>)}</tbody></table></div>
     </section>}
 
     <section className="card">
       <div className="sectionTitle"><h2>Alertas activas</h2><span className="fine">{alertsSummary.warnings} deterioros · {alertsSummary.positives} mejoras · {alertsSummary.neutral} contexto</span></div>
-      {visibleAlerts.length ? <div className="tableWrap"><table className="table"><thead><tr>{["Ticker", "Alerta", "Severidad", "Origen", "Detalle", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{visibleAlerts.map((alert) => <tr key={alert.id}><td><a className="ticker" href={stockUrl(alert.symbol)}>{alert.symbol}</a><br /><span className="fine">{alert.payload?.companyName || ""}</span></td><td>{alert.payload?.label || alert.alertType}</td><td><span className="pill">{alert.payload?.severity || "neutral"}</span></td><td>{alert.payload?.scanName || "Snapshot"}<br /><span className="fine">{alert.triggeredAt ? new Date(alert.triggeredAt).toLocaleString() : ""}</span></td><td>{alert.payload?.detail || "-"}</td><td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(alert.symbol)}>Ficha</a><button className="btn btnSmall btnGhost" onClick={() => resolveLocalAlert(alert)}>Resolver</button></div></td></tr>)}</tbody></table></div> : <p className="fine">Sin alertas activas. Guarda un nuevo snapshot comparable para generar cambios observables.</p>}
+      {visibleAlerts.length ? <div className="tableWrap"><table className="table"><thead><tr>{["Ticker", "Alerta", "Severidad", "Origen", "Detalle", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{visibleAlerts.map((alert) => <tr key={alert.id}><td><a className="ticker" href={stockUrl(alert.symbol)}>{alert.symbol}</a><br /><span className="fine">{alert.payload?.companyName || ""}</span></td><td>{alert.payload?.label || alert.alertType}</td><td><span className="pill">{alert.payload?.severity || "neutral"}</span></td><td>{alert.payload?.scanName || "Snapshot"}<br /><span className="fine">{alert.triggeredAt ? dateTime(alert.triggeredAt) : ""}</span></td><td>{alert.payload?.detail || "-"}</td><td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(alert.symbol)}>Ficha</a><button className="btn btnSmall btnGhost" onClick={() => resolveLocalAlert(alert)}>Resolver</button></div></td></tr>)}</tbody></table></div> : <p className="fine">Sin alertas activas. Guarda un nuevo snapshot comparable para generar cambios observables.</p>}
     </section>
 
     <DailyCommandCenter sections={commandCenter} />
 
     <section className="card">
       <h2>Favoritos / watchlist</h2>
-      <div className="tableWrap"><table className="table"><thead><tr>{["Ticker", "Empresa", "Desde", "Precio ref", "Ultimo", "Rend.", "Benchmark", "Alpha", "Evolución", "Estado", "Regimen", "Scores", "Notas", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{favorites.map((f) => {
+      <div className="tableWrap"><table className="table"><thead><tr>{["Ticker", "Empresa", "Desde", "Precio ref", "Último", "Rend.", "Benchmark", "Alpha", "Evolución", "Estado", "Régimen", "Scores", "Notas", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{favorites.map((f) => {
         const links = externalLinks(f.symbol);
         const checklist = checklistForRow(f).slice(1, 6);
         return <tr key={f.id}>
           <td><a className="ticker" href={stockUrl(f.symbol)}>{f.symbol}</a><DecisionTraceBadge resolution={decisionResolutionForRow(f, reviewState)} /></td>
           <td>{f.companyName}<br /><span className="fine">{rowTheme(f) || f.source}</span></td>
-          <td>{new Date(f.addedAt).toLocaleDateString()}</td>
+          <td>{dateShort(f.addedAt)}</td>
           <td>{Number.isFinite(f.entryPrice) ? f.entryPrice.toFixed(2) : "Sin dato"}</td>
           <td>{Number.isFinite(f.lastPrice) ? f.lastPrice.toFixed(2) : "Sin dato"}<br /><span className="fine">{f.lastDate || f.error || "sin actualizar"}</span></td>
           <td className="ticker">{pct(f.perfSinceAdd)}</td>
@@ -684,12 +689,12 @@ export default function ResearchDesk() {
           }} placeholder="tesis / alerta" /></td>
           <td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(f.symbol)}>Ficha</a><a className="btn btnSmall" href={links.tradingView} target="_blank" rel="noreferrer">TV</a><button className="starBtn on" onClick={() => removeFav(f.id)}>Eliminar</button></div></td>
         </tr>;
-      })}{!favorites.length && <tr><td colSpan="14">Aun no tienes favoritos.</td></tr>}</tbody></table></div>
+      })}{!favorites.length && <tr><td colSpan="14">Aún no tienes favoritos.</td></tr>}</tbody></table></div>
     </section>
 
     <section className="grid grid2">
-      <div className="card"><h2>Historial de scans</h2>{scans.map((s) => <div className="summaryRow" key={s.id} onClick={() => setSelectedScan(s)} style={{ cursor: "pointer", borderColor: selectedScan?.id === s.id ? "rgba(243,217,139,.7)" : undefined }}><span>{snapshotDisplayName(s)}<br /><span className="fine">{snapshotDisplaySource(s)}</span></span><span>{s.rows?.length || 0} acciones</span></div>)}{!scans.length && <p className="fine">No hay snapshots todavia. Guarda uno desde el screener o importa datos manualmente.</p>}</div>
-      <div className="card"><h2>Snapshot seleccionado</h2>{selectedScan ? <><div className="summaryRow"><span>{snapshotDisplayName(selectedScan)}</span><span>{selectedRows.length} filas</span></div><div className="controls" style={{ marginTop: 10 }}><button className="btn" onClick={() => exportJson(`scan-${selectedScan.id}.json`, selectedScan)}>Exportar scan</button><button className="btn btnGhost" onClick={() => deleteScan(selectedScan.id)}>Eliminar scan</button><a className="btn" href="/review?source=latest">Vista rapida</a><a className="btn btnPrimary" href="/lists">Ver en listas</a></div></> : <p className="fine">Selecciona un snapshot del historial.</p>}</div>
+      <div className="card"><h2>Historial de scans</h2>{scans.map((s) => <div className="summaryRow" key={s.id} onClick={() => setSelectedScan(s)} style={{ cursor: "pointer", borderColor: selectedScan?.id === s.id ? "rgba(243,217,139,.7)" : undefined }}><span>{snapshotDisplayName(s)}<br /><span className="fine">{snapshotDisplaySource(s)}</span></span><span>{s.rows?.length || 0} acciones</span></div>)}{!scans.length && <p className="fine">No hay snapshots todavía. Guarda uno desde el screener o importa datos manualmente.</p>}</div>
+      <div className="card"><h2>Snapshot seleccionado</h2>{selectedScan ? <><div className="summaryRow"><span>{snapshotDisplayName(selectedScan)}</span><span>{selectedRows.length} filas</span></div><div className="controls" style={{ marginTop: 10 }}><button className="btn" onClick={() => exportJson(`scan-${selectedScan.id}.json`, selectedScan)}>Exportar scan</button><button className="btn btnGhost" onClick={() => deleteScan(selectedScan.id)}>Eliminar scan</button><a className="btn" href="/review?source=latest">Vista rápida</a><a className="btn btnPrimary" href="/lists">Ver en listas</a></div></> : <p className="fine">Selecciona un snapshot del historial.</p>}</div>
     </section>
 
     {selectedScan && <section className="card">
@@ -704,7 +709,7 @@ export default function ResearchDesk() {
             <td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a><DecisionTraceBadge resolution={decisionResolutionForRow(r, reviewState)} /></td>
             <td>{r.companyName}<br /><span className="fine">{shortBusiness(r)}</span><RowTrustSignature signature={trustSignature} className="researchRowTrustSignature" /></td>
             <td><span className="pill">{rowTheme(r)}</span></td>
-            <td>{r.stageLabel || r.methodology?.stageState?.label || "-"}</td>
+            <td>{stageWordForState(r.weeklyStageState || r.methodology?.stageState?.key || "", r.weeklyStageLabel || r.stageLabel || r.methodology?.stageState?.label || "")?.word || "-"}</td>
             <td>{(r.methodologyEvents || []).slice(0, 2).map((event) => event.label).join(" · ") || "-"}</td>
             <td><ResearchTrustMetric row={r} metricKey="perf3m" label="3M" value={pct(r.perf3m)} /></td>
             <td><ResearchTrustMetric row={r} metricKey="perf6m" label="6M" value={pct(r.perf6m)} /></td>
@@ -741,19 +746,19 @@ export default function ResearchDesk() {
 
       <section className="grid grid2" style={{ marginTop: "var(--space-3)" }}>
         <div className="card">
-          <h3>Acciones rapidas</h3>
+          <h3>Acciones rápidas</h3>
           <div className="controls">
             <button className="btn" onClick={loadMarket}>Actualizar benchmark</button>
-            <button className="btn btnPrimary" onClick={importLatestScan}>Importar ultimo scan</button>
+            <button className="btn btnPrimary" onClick={importLatestScan}>Importar último scan</button>
             <button className="btn" onClick={importManualSnapshot}>Snapshot manual</button>
             <button className="btn" onClick={() => exportJson("stageradar-backup.json", { scans, favorites, exportedAt: new Date().toISOString() })}>Exportar backup</button>
             <button className="btn btnGhost" onClick={clearAll}>Limpiar dispositivo</button>
           </div>
         </div>
         <div className="card">
-          <h3>Anadir favoritos manuales</h3>
+          <h3>Añadir favoritos manuales</h3>
           <textarea className="textarea" value={manual} onChange={(e) => setManual(e.target.value)} placeholder={"NVDA\nASML.AS\nRHM.DE"} />
-          <button className="btn btnPrimary" style={{ marginTop: 10 }} onClick={createManualFavorites}>Anadir a watchlist</button>
+          <button className="btn btnPrimary" style={{ marginTop: 10 }} onClick={createManualFavorites}>Añadir a watchlist</button>
         </div>
       </section>
     </details>

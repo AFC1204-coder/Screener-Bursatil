@@ -31,8 +31,10 @@ export function SetupChipRail({ rows = [], presetKey, setupMode, sort, onPreset,
     rs: rows.filter((row) => (canonicalRsValue(row) ?? 0) >= 75).length,
   };
   const chips = [
-    { key: "stage2", label: "Stage 2", count: counts.stage2, active: setupMode === "leader", action: () => onMode("leader") },
-    { key: "trend", label: "Trend Template", count: counts.trend, active: presetKey === "strict", action: () => onPreset("strict") },
+    { key: "stage2", label: "Etapa 2", count: counts.stage2, active: setupMode === "leader", action: () => onMode("leader") },
+    // "Trend Template" era nombre propio de metodología (retirados de la UI);
+    // lo que cuenta el chip es la estructura de tendencia completa.
+    { key: "trend", label: "Estructura de tendencia", count: counts.trend, active: presetKey === "strict", action: () => onPreset("strict") },
     { key: "watch", label: "Vigilancia", count: counts.watch, active: setupMode === "nearPivot", action: () => onMode("nearPivot") },
     { key: "rs", label: "RS", count: counts.rs, active: sort === "rsGlobalPct", action: () => onSort("rsGlobalPct") },
   ];
@@ -48,7 +50,7 @@ export function ResultFilterChips({ chips = [], hiddenCount = 0, visibleCount = 
   const hasVisibleCounts = Number.isFinite(visibleCount) && Number.isFinite(totalCount);
   const visibleLabel = hasVisibleCounts ? `${visibleCount}/${totalCount}` : String(Math.max(0, Number(visibleCount) || 0));
   return <div className="resultFilterChips">
-    <div className="resultViewFocusSummary" aria-label="Resumen de vista de investigacion">
+    <div className="resultViewFocusSummary" aria-label="Resumen de vista de investigación">
       <span>
         <em>Vista de investigación</em>
         <b>{visibleLabel}</b>
@@ -178,7 +180,7 @@ export function FilterFamilyModal({ layerKey, settings, filterLayers, fieldRules
     .filter(([, dependency]) => dependency.layer === layerKey)
     .map(([key]) => key);
   const settingLabels = {
-    requireStage2: "Stage 2",
+    requireStage2: "Etapa 2",
     requireUpVolume: "Volumen en vela alcista",
     requireRecentIpo: "IPO real reciente",
     requireContractionsDecreasing: "Contracciones decrecientes",
@@ -211,7 +213,7 @@ export function FilterFamilyModal({ layerKey, settings, filterLayers, fieldRules
       </div>
 
       {layerKey === "trend" ? <div className={`weeklyStageControls modalWeeklyControls ${layerActive ? "" : "isMuted"}`}>
-        <label><span>Media rapida semanal</span><input className="input" type="number" min="2" max="80" step="1" value={settings.stageFastWeeks || 10} onChange={(event) => onUpdateSetting?.("stageFastWeeks", Number(event.target.value) || 10)} /></label>
+        <label><span>Media rápida semanal</span><input className="input" type="number" min="2" max="80" step="1" value={settings.stageFastWeeks || 10} onChange={(event) => onUpdateSetting?.("stageFastWeeks", Number(event.target.value) || 10)} /></label>
         <label><span>Media lenta semanal</span><input className="input" type="number" min="3" max="120" step="1" value={settings.stageSlowWeeks || 30} onChange={(event) => onUpdateSetting?.("stageSlowWeeks", Number(event.target.value) || 30)} /></label>
         <label><span>Pendiente semanas</span><input className="input" type="number" min="2" max="40" step="1" value={settings.stageSlopeWeeks || 10} onChange={(event) => onUpdateSetting?.("stageSlopeWeeks", Number(event.target.value) || 10)} /></label>
       </div> : null}
@@ -374,7 +376,7 @@ export function FilterDiagnosticsPanel({ diagnostics, rowsCount, filteredCount, 
       <span><b>{Number.isFinite(sampleRate) ? `${sampleRate < 10 ? sampleRate.toFixed(1) : sampleRate.toFixed(0)}%` : "-"}</b><em>muestra</em></span>
       <span><b>{diagnostics?.hardRejected ?? "-"}</b><em>filtros duros</em></span>
       <span><b>{diagnostics?.providerRejected ?? "-"}</b><em>datos</em></span>
-      <span><b>{diagnostics?.regimeRejected ?? "-"}</b><em>regimen</em></span>
+      <span><b>{diagnostics?.regimeRejected ?? "-"}</b><em>régimen</em></span>
       <span><b>{diagnostics?.postRejected ?? "-"}</b><em>post</em></span>
       <span><b>{viewHidden}</b><em>vista</em></span>
     </div>
@@ -387,6 +389,6 @@ export function FilterDiagnosticsPanel({ diagnostics, rowsCount, filteredCount, 
         <b>{block.count}</b>
         <ul>{block.examples.slice(0, 2).map((example, index) => <li key={`${block.key}-${example.symbol}-${index}`}><em>{example.symbol}</em>{example.detail}</li>)}</ul>
       </article>)}
-    </div> : <div className="scanDiagnosticHint">No hay rechazos registrados en el ultimo scan.</div>}
+    </div> : <div className="scanDiagnosticHint">No hay rechazos registrados en el último scan.</div>}
   </section>;
 }

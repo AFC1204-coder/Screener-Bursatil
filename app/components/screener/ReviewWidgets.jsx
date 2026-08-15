@@ -16,7 +16,7 @@ export function ReviewPriorityResultRail({ summary = [], activeKey = "all", onSe
   if (!items.length) return null;
   const activeItem = activeKey !== "all" ? items.find((item) => item.key === activeKey) : null;
   const reviewTarget = activeItem || items[0];
-  return <div className="decisionSummaryRail reviewPriorityResultRail" aria-label="Resumen por prioridad de investigacion">
+  return <div className="decisionSummaryRail reviewPriorityResultRail" aria-label="Resumen por prioridad de investigación">
     {items.map((item) => {
       const active = activeKey === item.key;
       return <button
@@ -47,7 +47,7 @@ export function ReviewPriorityPanel({ priority = null, compact = false }) {
   if (!priority) return null;
   const components = Array.isArray(priority.priority?.components) ? priority.priority.components.slice(0, compact ? 3 : 4) : [];
   const penalties = Array.isArray(priority.priority?.penalties) ? priority.priority.penalties.slice(0, compact ? 2 : 3) : [];
-  return <div className={`reviewPriorityPanel quickReviewPriorityPanel ${compact ? "compact" : ""} ${priority.tone || ""}`} aria-label="Prioridad de investigacion">
+  return <div className={`reviewPriorityPanel quickReviewPriorityPanel ${compact ? "compact" : ""} ${priority.tone || ""}`} aria-label="Prioridad de investigación">
     <div className="reviewPriorityHead">
       <span><b>{priority.label}</b><em>{priority.reason}</em></span>
       <strong>{Math.round(priority.score || 0)}</strong>

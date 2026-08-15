@@ -113,8 +113,8 @@ const API_ROWS = [
 // Lo que la ficha /stock/[symbol] enseñó en el navegador para esas mismas dos
 // acciones, en la misma sesión y el mismo día.
 const FICHA = {
-  MAR: { rs: 66, etapa: "Base", cap: "90.1B" },
-  AAPL: { rs: 70, etapa: "Base", cap: "4.57T" },
+  MAR: { rs: 66, etapa: "Base", cap: "90,1B" },
+  AAPL: { rs: 70, etapa: "Base", cap: "4,57T" },
 };
 
 const visibleText = (html = "") => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();

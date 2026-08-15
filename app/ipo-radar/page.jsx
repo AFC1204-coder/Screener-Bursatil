@@ -1,6 +1,7 @@
 "use client";
 import "../../styles/ipo-radar.css";
 import { useEffect, useMemo, useState } from "react";
+import { dateShort } from "@/lib/formatters";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { countryCode, stockUrl } from "@/lib/symbols";
 
@@ -25,29 +26,29 @@ const COUNTRIES = [
   ["ES", "España"],
   ["DE", "Alemania"],
   ["FR", "Francia"],
-  ["NL", "Paises Bajos"],
+  ["NL", "Países Bajos"],
   ["GB", "Reino Unido"],
   ["CH", "Suiza"],
   ["SE", "Suecia"],
   ["DK", "Dinamarca"],
   ["IT", "Italia"],
-  ["JP", "Japon"],
+  ["JP", "Japón"],
   ["HK", "Hong Kong"],
   ["SG", "Singapur"],
-  ["TW", "Taiwan"],
+  ["TW", "Taiwán"],
   ["KR", "Corea del Sur"],
   ["IN", "India"],
   ["IL", "Israel"],
   ["CN", "China"],
   ["AU", "Australia"],
-  ["ZA", "Sudafrica"],
+  ["ZA", "Sudáfrica"],
   ["BR", "Brasil"],
-  ["MX", "Mexico"],
+  ["MX", "México"],
 ];
 
 const STATUS_LABELS = {
   watch: "En vigilancia",
-  filed: "Documentacion presentada",
+  filed: "Documentación presentada",
   priced: "Precio fijado",
   listed: "Ya cotiza",
   delayed: "Retrasada",
@@ -73,11 +74,14 @@ function daysUntil(value) {
 function dateLabel(value) {
   const d = dateOnly(value);
   if (!d) return "Sin fecha";
+  // dateOnly (ISO) sigue siendo la clave interna de cálculo; lo que se
+  // muestra pasa por la máscara única del producto ("4 ago 2026"), no ISO.
+  const shown = dateShort(d);
   const delta = daysUntil(d);
-  if (delta === 0) return `${d} · hoy`;
-  if (delta === 1) return `${d} · mañana`;
-  if (delta > 1) return `${d} · en ${delta} dias`;
-  return `${d} · hace ${Math.abs(delta)} dias`;
+  if (delta === 0) return `${shown} · hoy`;
+  if (delta === 1) return `${shown} · mañana`;
+  if (delta > 1) return `${shown} · en ${delta} días`;
+  return `${shown} · hace ${Math.abs(delta)} días`;
 }
 function normalizeSymbol(symbol = "") {
   return String(symbol || "").trim().toUpperCase();
@@ -105,17 +109,17 @@ function IpoForm({ form, setForm, onSubmit, editing }) {
   return <section className="card ipoRadarForm">
     <div className="sectionTitle">
       <h2>{editing ? "Editar IPO" : "Nueva candidata IPO"}</h2>
-      <span className="fine">pre-IPO / primera cotizacion</span>
+      <span className="fine">pre-IPO / primera cotización</span>
     </div>
     <div className="ipoFormGrid">
       <label className="field"><span>Empresa</span><input className="input" value={form.companyName} onChange={(e) => update("companyName", e.target.value)} placeholder="Nombre de la empresa" /></label>
       <label className="field"><span>Ticker si existe</span><input className="input" value={form.symbol} onChange={(e) => update("symbol", normalizeSymbol(e.target.value))} placeholder="Ej. RDDT, 9988.HK..." /></label>
-      <label className="field"><span>Pais</span><select className="select" value={form.country} onChange={(e) => update("country", e.target.value)}>{COUNTRIES.map(([code, name]) => <option key={code} value={code}>{code} · {name}</option>)}</select></label>
+      <label className="field"><span>País</span><select className="select" value={form.country} onChange={(e) => update("country", e.target.value)}>{COUNTRIES.map(([code, name]) => <option key={code} value={code}>{code} · {name}</option>)}</select></label>
       <label className="field"><span>Bolsa prevista</span><input className="input" value={form.exchange} onChange={(e) => update("exchange", e.target.value)} placeholder="Nasdaq, HKEX, BME..." /></label>
       <label className="field"><span>Sector</span><input className="input" value={form.sector} onChange={(e) => update("sector", e.target.value)} placeholder="Technology, Healthcare..." /></label>
       <label className="field"><span>Subsector</span><input className="input" value={form.industry} onChange={(e) => update("industry", e.target.value)} placeholder="Software, Semiconductors..." /></label>
       <label className="field"><span>Fecha pricing estimada</span><input className="input" type="date" value={form.expectedPricingDate} onChange={(e) => update("expectedPricingDate", e.target.value)} /></label>
-      <label className="field"><span>Primer dia cotizacion</span><input className="input" type="date" value={form.expectedTradeDate} onChange={(e) => update("expectedTradeDate", e.target.value)} /></label>
+      <label className="field"><span>Primer día cotización</span><input className="input" type="date" value={form.expectedTradeDate} onChange={(e) => update("expectedTradeDate", e.target.value)} /></label>
       <label className="field"><span>Estado</span><select className="select" value={form.status} onChange={(e) => update("status", e.target.value)}>{Object.entries(STATUS_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       <label className="field"><span>Prioridad</span><select className="select" value={form.priority} onChange={(e) => update("priority", e.target.value)}><option value="high">Alta</option><option value="normal">Normal</option><option value="low">Baja</option></select></label>
       <label className="field wide"><span>Fuente / prospecto</span><input className="input" value={form.sourceUrl} onChange={(e) => update("sourceUrl", e.target.value)} placeholder="URL de prospecto, bolsa o noticia..." /></label>
@@ -123,10 +127,10 @@ function IpoForm({ form, setForm, onSubmit, editing }) {
     </div>
     <label className="checkLine">
       <input type="checkbox" checked={form.includeInScreener} onChange={(e) => update("includeInScreener", e.target.checked)} />
-      <span>Incluir automaticamente en el universo del screener cuando tenga ticker</span>
+      <span>Incluir automáticamente en el universo del screener cuando tenga ticker</span>
     </label>
     <div className="controls" style={{ marginTop: 12 }}>
-      <button className="btn btnPrimary" onClick={onSubmit}>{editing ? "Guardar cambios" : "Anadir IPO"}</button>
+      <button className="btn btnPrimary" onClick={onSubmit}>{editing ? "Guardar cambios" : "Añadir IPO"}</button>
     </div>
   </section>;
 }
@@ -216,7 +220,7 @@ export default function IpoRadarPage() {
       persist([...normalized, ...items]);
       setStatus(`${normalized.length} IPOs importadas.`);
     } catch {
-      setStatus("JSON no valido.");
+      setStatus("JSON no válido.");
     }
   }
 
@@ -249,12 +253,12 @@ export default function IpoRadarPage() {
       expectedTradeDate: row.ipoDate || "",
       status: "listed",
       includeInScreener: true,
-      notes: "Importada desde el ultimo snapshot por fecha IPO reciente.",
+      notes: "Importada desde el último snapshot por fecha IPO reciente.",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }));
     persist([...nextRows, ...items]);
-    setStatus(nextRows.length ? `${nextRows.length} IPOs recientes importadas desde el ultimo scan.` : "No hay IPOs recientes nuevas en el ultimo scan.");
+    setStatus(nextRows.length ? `${nextRows.length} IPOs recientes importadas desde el último scan.` : "No hay IPOs recientes nuevas en el último scan.");
   }
 
   async function notifyDue() {
@@ -306,7 +310,7 @@ export default function IpoRadarPage() {
     </section>
 
     {!!due.length && <section className="card status">
-      <div className="sectionTitle"><h2>Avisos pre-IPO</h2><span className="fine">proximos 14 dias</span></div>
+      <div className="sectionTitle"><h2>Avisos pre-IPO</h2><span className="fine">próximos 14 días</span></div>
       <div className="ipoAlertList">
         {due.map((item) => <div className="summaryRow" key={item.id}>
           <span><b>{item.companyName || item.symbol}</b><br /><span className="fine">{STATUS_LABELS[item.status] || item.status} · {item.exchange || item.country}</span></span>
@@ -319,9 +323,9 @@ export default function IpoRadarPage() {
     <IpoForm form={form} setForm={setForm} onSubmit={saveItem} editing={Boolean(editingId)} />
 
     <section className="card">
-      <div className="sectionTitle"><h2>Acciones rapidas</h2><span className="fine">control local</span></div>
+      <div className="sectionTitle"><h2>Acciones rápidas</h2><span className="fine">control local</span></div>
       <div className="controls">
-        <button className="btn" onClick={importRecentIposFromScan}>Importar IPOs recientes del ultimo scan</button>
+        <button className="btn" onClick={importRecentIposFromScan}>Importar IPOs recientes del último scan</button>
         <button className="btn" onClick={importJson}>Importar JSON</button>
         <button className="btn" onClick={exportJson} disabled={!items.length}>Exportar backup</button>
         {editingId && <button className="btn btnGhost" onClick={() => { setEditingId(""); setForm(EMPTY_FORM); }}>Cancelar edicion</button>}
@@ -332,7 +336,7 @@ export default function IpoRadarPage() {
       <div className="sectionTitle"><h2>IPOs seleccionadas</h2><span className="fine">las marcadas entran al screener cuando tengan ticker</span></div>
       <div className="tableWrap">
         <table className="table">
-          <thead><tr>{["Empresa", "Ticker", "Pais", "Sector", "Estado", "Pricing", "Cotizacion", "Screener", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
+          <thead><tr>{["Empresa", "Ticker", "País", "Sector", "Estado", "Pricing", "Cotización", "Screener", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
           <tbody>{items.map((item) => <tr key={item.id}>
             <td><b>{item.companyName || item.symbol}</b><br /><span className="fine">{item.notes || item.sourceUrl || "-"}</span></td>
             <td>{item.symbol ? <a className="ticker" href={stockUrl(item.symbol)}>{item.symbol}</a> : <span className="fine">Sin ticker</span>}</td>
@@ -341,7 +345,7 @@ export default function IpoRadarPage() {
             <td><span className={`signalStatMini ${statusTone(item.status)}`}>{STATUS_LABELS[item.status] || item.status}</span></td>
             <td>{dateLabel(item.expectedPricingDate)}</td>
             <td>{dateLabel(item.expectedTradeDate)}</td>
-            <td>{item.symbol && item.includeInScreener && item.status !== "passed" ? "Si" : "No"}</td>
+            <td>{item.symbol && item.includeInScreener && item.status !== "passed" ? "Sí" : "No"}</td>
             <td>
               <div className="controls">
                 <button className="btn btnSmall" onClick={() => editItem(item)}>Editar</button>
@@ -350,7 +354,7 @@ export default function IpoRadarPage() {
                 <button className="btn btnSmall btnGhost" onClick={() => removeItem(item.id)}>Eliminar</button>
               </div>
             </td>
-          </tr>)}{!items.length && <tr><td colSpan="9">Sin IPOs vigiladas todavia.</td></tr>}</tbody>
+          </tr>)}{!items.length && <tr><td colSpan="9">Sin IPOs vigiladas todavía.</td></tr>}</tbody>
         </table>
       </div>
     </section>

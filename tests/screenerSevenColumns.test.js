@@ -99,9 +99,9 @@ describe("tabla de resultados: las siete columnas", () => {
     expect(html).toContain("Semis / fotonica");     // 2. tema
     expect(html).toContain(">92<");                 // 3. RS semanal del universo
     expect(html).toContain("Etapa 2");              // 4. etapa en una palabra
-    expect(html).toContain("+18.4%");               // 5. rendimiento del periodo
-    expect(html).toContain("-3.2%");                // 6. distancia al máximo 52s
-    expect(html).toContain("4.2B");                 // 7. capitalización
+    expect(html).toContain("+18,4%");               // 5. rendimiento del periodo
+    expect(html).toContain("-3,2%");                // 6. distancia al máximo 52s
+    expect(html).toContain("4,2B");                 // 7. capitalización
   });
 
   it("llama Tema al grupo temático, no sector", () => {
@@ -142,7 +142,7 @@ describe("tabla de resultados: las siete columnas", () => {
   it("no recorta los porcentajes con puntos suspensivos", () => {
     const html = renderTable();
     // El valor va completo dentro de su propio <b class="cellNumber">.
-    expect(html).toContain('class="cellNumber up">+18.4%</b>');
+    expect(html).toContain('class="cellNumber up">+18,4%</b>');
     expect(html).not.toContain("…");
   });
 });
@@ -173,7 +173,7 @@ describe("dato ausente", () => {
         },
       }],
     });
-    expect(html).not.toContain("+18.4%");
+    expect(html).not.toContain("+18,4%");
     expect(html).toContain("no coincide con el recalculado sobre la serie de precios");
   });
 });
@@ -189,11 +189,11 @@ describe("selector global de periodo", () => {
 
   it("cambia la cabecera y el valor de la columna de rendimiento", () => {
     expect(renderTable({ perfPeriod: "perf3m" })).toContain("Rend. 3M");
-    expect(renderTable({ perfPeriod: "perf3m" })).toContain("+18.4%");
+    expect(renderTable({ perfPeriod: "perf3m" })).toContain("+18,4%");
     expect(renderTable({ perfPeriod: "perf6m" })).toContain("Rend. 6M");
-    expect(renderTable({ perfPeriod: "perf6m" })).toContain("+33.2%");
+    expect(renderTable({ perfPeriod: "perf6m" })).toContain("+33,2%");
     expect(renderTable({ perfPeriod: "perf12m" })).toContain("Rend. 12M");
-    expect(renderTable({ perfPeriod: "perf12m" })).toContain("+51.9%");
+    expect(renderTable({ perfPeriod: "perf12m" })).toContain("+51,9%");
   });
 
   it("es global: una sola vez por tabla, no uno por fila", () => {
@@ -251,15 +251,15 @@ describe("vista móvil", () => {
     expect(html).toContain("Semis / fotonica");
     expect(html).toContain(">92<");
     expect(html).toContain("Etapa 2");
-    expect(html).toContain("+18.4%");
-    expect(html).toContain("-3.2%");
-    expect(html).toContain("4.2B");
+    expect(html).toContain("+18,4%");
+    expect(html).toContain("-3,2%");
+    expect(html).toContain("4,2B");
     // Las seis columnas de dato, con su etiqueta.
     expect(html.match(/class="mobileResultField/g)).toHaveLength(6);
   });
 
   it("sigue al mismo selector global de periodo", () => {
-    expect(renderMobile(fullRow, "perf12m")).toContain("+51.9%");
+    expect(renderMobile(fullRow, "perf12m")).toContain("+51,9%");
     expect(renderMobile(fullRow, "perf12m")).toContain("Rend. 12M");
   });
 

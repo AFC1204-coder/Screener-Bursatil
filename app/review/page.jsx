@@ -9,7 +9,7 @@ import { metricTruthMetaForRow, rowTrustSignatureForRow } from "@/app/components
 import { getJson } from "@/lib/clientApi";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
-import { clamp, num, pct, ratio } from "@/lib/formatters";
+import { clamp, dateTime, num, pct, ratio } from "@/lib/formatters";
 import { stdev } from "@/lib/indicators";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { userFacingServiceError } from "@/lib/serviceErrors";
@@ -113,10 +113,8 @@ function ReviewQueueFocusBadge({ focus = null }) {
 }
 function shortDateTime(value = "") {
   if (!value) return "";
-  const date = new Date(value);
-  return Number.isFinite(date.getTime())
-    ? date.toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
-    : String(value).slice(0, 16);
+  const label = dateTime(value);
+  return label === "-" ? String(value).slice(0, 16) : label;
 }
 function rowSource(source, review, scans, favorites) {
   if (source === "favorites") return favoriteRows(favorites);
@@ -320,7 +318,7 @@ function MiniSparkline({ bars = [] }) {
   const trendClass = last >= first ? "up" : "down";
   const volumeMax = Math.max(...points.map((p) => p.volume || 0), 1);
   const barW = Math.max(1.2, (w - pad * 2) / points.length - 1);
-  return <svg className={`miniSparkline ${trendClass}`} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Grafico tecnico compacto">
+  return <svg className={`miniSparkline ${trendClass}`} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Gráfico técnico compacto">
     <line x1={pad} x2={w - pad} y1={y(max)} y2={y(max)} className="sparkGuide" />
     <line x1={pad} x2={w - pad} y1={y(min)} y2={y(min)} className="sparkGuide" />
     {points.map((p, i) => {
@@ -350,7 +348,7 @@ const REVIEW_CHART_SETTINGS = {
 function ReviewChartPanel({ row, loading = false }) {
   if (!row?.symbol) {
     return <div className="reviewChart">
-      <div className="previewEmpty">{loading ? "Cargando datos..." : "Sin grafico disponible"}</div>
+      <div className="previewEmpty">{loading ? "Cargando datos..." : "Sin gráfico disponible"}</div>
     </div>;
   }
   return <div className="reviewChart reviewNativeChart">
@@ -358,7 +356,7 @@ function ReviewChartPanel({ row, loading = false }) {
       row={row}
       settings={REVIEW_CHART_SETTINGS}
       height={520}
-      emptyLabel={loading ? "Cargando datos..." : "Sin grafico disponible"}
+      emptyLabel={loading ? "Cargando datos..." : "Sin gráfico disponible"}
     />
   </div>;
 }
@@ -442,7 +440,7 @@ function ReviewPriorityPanel({ priority = null }) {
   if (!priority) return null;
   const components = Array.isArray(priority.priority?.components) ? priority.priority.components.slice(0, 4) : [];
   const penalties = Array.isArray(priority.priority?.penalties) ? priority.priority.penalties.slice(0, 3) : [];
-  return <div className={`reviewPriorityPanel ${priority.tone || ""}`} aria-label="Prioridad de investigacion">
+  return <div className={`reviewPriorityPanel ${priority.tone || ""}`} aria-label="Prioridad de investigación">
     <div className="reviewPriorityHead">
       <span><b>{priority.label}</b><em>{priority.reason}</em></span>
       <strong>{Math.round(priority.score || 0)}</strong>
@@ -630,12 +628,12 @@ export default function ReviewPage() {
     ? "Cola pendiente completada"
     : queueEmptyByFilter
       ? "Sin acciones para este filtro"
-      : "Sin cola de revision";
+      : "Sin cola de revisión";
   const queueEmptyDetail = queuePendingComplete
     ? `${sourceLabel(source, sourceMeta)} · no quedan acciones pendientes en esta cola.`
     : queueEmptyByFilter
       ? `${sourceLabel(source, sourceMeta)} · ${activeQueueFilterLabels.join(" · ")} no tiene resultados ahora.`
-      : "Carga una cola desde el Screener o recupera un snapshot para iniciar la revision.";
+      : "Carga una cola desde el Screener o recupera un snapshot para iniciar la revisión.";
   const queueCompletionResolution = queuePendingComplete
     ? resolutionSummary.find((item) => ["candidate", "watch", "reject"].includes(item.key) && item.count > 0)
     : null;
@@ -903,11 +901,11 @@ export default function ReviewPage() {
       <div className="heroTop">
         <div>
           <div className="badge">StatsEdge · Rapid Review</div>
-          <h1>Vista rapida</h1>
+          <h1>Vista rápida</h1>
         </div>
         <div className="mobileActions">
           <button className={`btn ${source === "current" ? "btnActive" : ""}`} onClick={() => loadSource("current")}>Cola actual</button>
-          <button className={`btn ${source === "latest" ? "btnActive" : ""}`} onClick={() => loadSource("latest")}>Ultimo snapshot</button>
+          <button className={`btn ${source === "latest" ? "btnActive" : ""}`} onClick={() => loadSource("latest")}>Último snapshot</button>
           <button className={`btn ${source === "favorites" ? "btnActive" : ""}`} onClick={() => loadSource("favorites")}>Favoritos</button>
           <a className="btn" href="/">Screener</a>
         </div>
@@ -917,7 +915,7 @@ export default function ReviewPage() {
     <section className="card reviewStatus">
       <div className="kpis">
         <div className="kpi"><b>{visibleRows.length}</b><span>{queueFiltersActive ? "acciones filtradas" : "acciones en cola"}</span></div>
-        <div className="kpi"><b>{currentIndex + (visibleRows.length ? 1 : 0)}</b><span>posicion actual</span></div>
+        <div className="kpi"><b>{currentIndex + (visibleRows.length ? 1 : 0)}</b><span>posición actual</span></div>
         <div className="kpi"><b>{reviewed.size}</b><span>revisadas</span></div>
         <div className="kpi"><b>{resolvedVisibleCount}</b><span>resueltas ficha</span></div>
         <div className="kpi"><b>{hidden.size}</b><span>ocultas</span></div>
@@ -939,7 +937,7 @@ export default function ReviewPage() {
         <h2>{queueEmptyTitle}</h2>
         <p className="fine">{queueEmptyDetail}</p>
       </div>
-      <div className="reviewEmptyMetrics" aria-label="Resumen de cola vacia">
+      <div className="reviewEmptyMetrics" aria-label="Resumen de cola vacía">
         <span><b>{baseVisibleRows.length}</b><em>base visible</em></span>
         <span><b>{pendingVisibleCount}</b><em>pendientes</em></span>
         <span><b>{resolvedVisibleCount}</b><em>resueltas</em></span>
@@ -957,7 +955,7 @@ export default function ReviewPage() {
           {sourceMeta.sourceDetail ? <small className="reviewQueueSourceDetail">{sourceMeta.sourceDetail}</small> : null}
           <span>{resolutionFilter === "all" && digestFilter === "all" ? `${baseVisibleRows.length} visibles` : `${visibleRows.length}/${baseVisibleRows.length} visibles`}</span>
         </div>
-        {visibleDecisionSummary.groups.length ? <div className="reviewQueueSummary reviewDecisionSummary" aria-label="Resumen de cola por decision">
+        {visibleDecisionSummary.groups.length ? <div className="reviewQueueSummary reviewDecisionSummary" aria-label="Resumen de cola por decisión">
           {visibleDecisionSummary.groups.map((group) => (
             <button
               type="button"
@@ -977,7 +975,7 @@ export default function ReviewPage() {
           const facetOpenMarker = queueFiltersActive ? " · filtro activo" : "";
           return <details className="reviewQueueFacets">
             <summary className="reviewQueueFacetsLabel">Más facetas{facetCount > 1 ? ` (${facetCount})` : ""}<small>{facetOpenMarker}</small></summary>
-            {resolutionSummary.length > 1 ? <div className="reviewQueueSummary reviewResolutionSummary" aria-label="Resumen de cola por resolucion de ficha">
+            {resolutionSummary.length > 1 ? <div className="reviewQueueSummary reviewResolutionSummary" aria-label="Resumen de cola por resolución de ficha">
               {resolutionSummary.map((group) => (
                 <button
                   type="button"
@@ -1005,7 +1003,7 @@ export default function ReviewPage() {
                 </button>
               ))}
             </div> : null}
-            {visiblePrioritySummary.length ? <div className="reviewQueueSummary reviewPrioritySummary" aria-label="Prioridad de investigacion">
+            {visiblePrioritySummary.length ? <div className="reviewQueueSummary reviewPrioritySummary" aria-label="Prioridad de investigación">
               {visiblePrioritySummary.map((group) => (
                 <button
                   type="button"
@@ -1077,10 +1075,10 @@ export default function ReviewPage() {
             <span className="reviewMeta">{activeRow.country || countryCode(activeRow.symbol)} · {activeRow.theme || activeRow.sector || "Sin sector"}</span>
           </div>
           <ReviewChartPanel row={activeRow} loading={activeHydrating} />
-          <div className="reviewFloatingNav" aria-label="Navegacion de acciones">
-            <button type="button" onClick={() => move(-1)} aria-label="Accion anterior">↑</button>
+          <div className="reviewFloatingNav" aria-label="Navegación de acciones">
+            <button type="button" onClick={() => move(-1)} aria-label="Acción anterior">↑</button>
             <span>{currentIndex + 1}<em>/</em>{visibleRows.length}</span>
-            <button type="button" onClick={() => move(1)} aria-label="Accion siguiente">↓</button>
+            <button type="button" onClick={() => move(1)} aria-label="Acción siguiente">↓</button>
           </div>
           {activeRow.chartPreview?.length ? <div className="reviewSpark"><MiniSparkline bars={activeRow.chartPreview} /></div> : null}
         </div>
@@ -1092,7 +1090,7 @@ export default function ReviewPage() {
           <a className="btn" href={externalLinks(activeRow.symbol, activeRow.exchange).tradingView} target="_blank" rel="noreferrer">TradingView</a>
           <button className={`starBtn ${favoriteSymbols.has(activeSymbol) ? "on" : ""}`} onClick={() => toggleFavorite(activeRow)} aria-label={`Favorito ${activeRow.symbol}`}>★</button>
         </div>
-        {activeHydrating && <div className="dataNote" style={{ marginBottom: 10 }}>Cargando historico y metricas...</div>}
+        {activeHydrating && <div className="dataNote" style={{ marginBottom: 10 }}>Cargando histórico y métricas...</div>}
         <ReviewPriorityPanel priority={activeDecision?.reviewPriority} />
         <ReviewDecisionPanel decision={activeDecision} />
         <div className="reviewMetricGrid">
@@ -1111,9 +1109,9 @@ export default function ReviewPage() {
             <span>Resolución ficha</span>
             <b>{activeResolution.label}</b>
           </div> : null}
-          <div className="summaryRow"><span>Favorito local</span><b>{favoriteSymbols.has(activeSymbol) ? "Si" : "No"}</b></div>
+          <div className="summaryRow"><span>Favorito local</span><b>{favoriteSymbols.has(activeSymbol) ? "Sí" : "No"}</b></div>
         </div>
-        <div className="reviewResolveRail" aria-label="Resolver decision desde Review">
+        <div className="reviewResolveRail" aria-label="Resolver decisión desde Review">
           <span>Resolver desde Review</span>
           <div>
             <button

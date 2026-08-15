@@ -24,7 +24,7 @@ export function metricTruthMetaForRow(row = {}, { includeIssueDetail = false } =
   if (status.key === "bad") return { key: "blocked", label: "Bloq.", tone: "bad", detail, measuredCount, proxyCount };
   if (status.key === "warn") return { key: "review", label: "Rev.", tone: "warn", detail, measuredCount, proxyCount };
   if (status.key === "missing") {
-    return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoria numerica.", measuredCount: 0, proxyCount: 0 };
+    return { key: "missing", label: "Sin audit", tone: "warn", detail: status.detail || "Sin auditoría numérica.", measuredCount: 0, proxyCount: 0 };
   }
   return {
     key: proxyCount ? "mixed" : "measured",

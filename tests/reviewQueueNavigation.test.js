@@ -67,7 +67,7 @@ describe("buildReviewQueueNavigation", () => {
       rows: [row("AAA"), row("BBB"), row("CCC")],
     }, "BBB");
 
-    expect(navigation.sourceLabel).toBe("Ultimo snapshot");
+    expect(navigation.sourceLabel).toBe("Último snapshot");
     expect(navigation.positionLabel).toBe("2/3");
     expect(navigation.previousSymbol).toBe("AAA");
     expect(navigation.previousHref).toBe("/stock/AAA");
@@ -84,7 +84,7 @@ describe("buildReviewQueueNavigation", () => {
 
     expect(navigation.sourceLabel).toBe("Trabajo pendiente");
     expect(navigation.reviewHref).toBe("/review?source=current&symbol=AAA");
-    expect(reviewQueueSourceLabel("latest", { sourceLabel: "Trabajo pendiente" })).toBe("Ultimo snapshot");
+    expect(reviewQueueSourceLabel("latest", { sourceLabel: "Trabajo pendiente" })).toBe("Último snapshot");
   });
 
   it("redirige el retorno a Review al primer visible si el actual queda fuera del filtro", () => {
@@ -145,7 +145,7 @@ describe("buildReviewQueueNavigation", () => {
 
   it("expone etiquetas de origen estables", () => {
     expect(reviewQueueSourceLabel("favorites")).toBe("Favoritos");
-    expect(reviewQueueSourceLabel("latest")).toBe("Ultimo snapshot");
+    expect(reviewQueueSourceLabel("latest")).toBe("Último snapshot");
     expect(reviewQueueSourceLabel("other")).toBe("Cola guardada");
   });
 });

@@ -51,7 +51,7 @@ describe("explainScreenerRank", () => {
     const labels = explanation.drivers.map((item) => item.label);
     expect(explanation.mode).toBe("long");
     expect(explanation.tone).toBe("good");
-    expect(labels).toContain("Plan valido");
+    expect(labels).toContain("Plan válido");
     // El chip dejó de llamarse "RS universo": su número es el percentil del
     // lote (rsGlobalPct), no el RS semanal del universo que enseña la interfaz.
     expect(labels).toContain("Percentil lote");
@@ -61,7 +61,7 @@ describe("explainScreenerRank", () => {
     expect(explanation.action.label).toBe("Candidato largo");
     expect(explanation.readiness.key).toBe("operable");
     expect(explanation.readiness.label).toBe("Operable");
-    expect(explanation.line).toMatch(/Plan valido/);
+    expect(explanation.line).toMatch(/Plan válido/);
   });
 
   it("eleva riesgos de datos, frescura y deterioro en modo largo", () => {
@@ -288,7 +288,7 @@ describe("explainScreenerRank", () => {
   it("construye una sintesis accionable para revision de candidatos operables", () => {
     const brief = buildDecisionBrief(baseRow, {});
     expect(brief.thesis.label).toBe("Tesis");
-    expect(brief.thesis.value).toMatch(/Plan valido/);
+    expect(brief.thesis.value).toMatch(/Plan válido/);
     expect(brief.risk.value).toBe("Sin alerta principal");
     expect(brief.nextAction.value).toBe("Preparar entrada");
     expect(brief.nextAction.tone).toBe("good");
@@ -301,7 +301,7 @@ describe("explainScreenerRank", () => {
       riskRewardScore: 42,
     }, {});
     expect(brief.risk.value).toMatch(/Extendida|Rent/);
-    expect(brief.nextAction.value).toBe("Esperar confirmacion");
+    expect(brief.nextAction.value).toBe("Esperar confirmación");
     expect(brief.nextAction.tone).toBe("warn");
   });
 
@@ -506,7 +506,7 @@ describe("explainScreenerRank", () => {
     expect(readyDigest.stateLabel).toBe("Pruebas OK");
     expect(readyDigest.ratio).toBe("9/9");
     expect(readyDigest.headline).toBe("Preparar entrada");
-    expect(readyDigest.thesis).toMatch(/Plan valido/);
+    expect(readyDigest.thesis).toMatch(/Plan válido/);
     expect(readyDigest.risk).toBe("Sin alerta principal");
     expect(readyDigest.checkLine).toMatch(/Setup accionable|Liderazgo global/);
 
@@ -565,7 +565,7 @@ describe("explainScreenerRank", () => {
         schemaVersion: DECISION_TRACE_SCHEMA_VERSION,
         engineVersion: DECISION_TRACE_ENGINE_VERSION,
         action: { key: "candidate-with-watch", label: "Candidato", tone: "warn", detail: "Buen perfil, timing pendiente." },
-        readiness: { key: "watch", label: "Vigilar", tone: "warn", detail: "Esperar confirmacion." },
+        readiness: { key: "watch", label: "Vigilar", tone: "warn", detail: "Esperar confirmación." },
         confidence: { key: "medium", score: 64, label: "Media", tone: "warn" },
         priority: {
           score: 820,
@@ -580,12 +580,12 @@ describe("explainScreenerRank", () => {
         brief: {
           thesis: { label: "Tesis", value: "RS universo 88", detail: "Buen liderazgo", tone: "good" },
           risk: { label: "Riesgo", value: "Extendida SMA50 24.0%", detail: "No perseguir", tone: "warn" },
-          nextAction: { label: "Siguiente", value: "Esperar confirmacion", detail: "Buscar pullback", tone: "warn" },
+          nextAction: { label: "Siguiente", value: "Esperar confirmación", detail: "Buscar pullback", tone: "warn" },
         },
       },
     }, {});
     expect(item.readiness.key).toBe("watch");
-    expect(item.label).toBe("Esperar confirmacion");
+    expect(item.label).toBe("Esperar confirmación");
     expect(item.detail).toBe("Extendida SMA50 24.0%");
   });
 
@@ -598,7 +598,7 @@ describe("explainScreenerRank", () => {
         readiness: { key: "watch", label: "Vigilar", tone: "warn", detail: "Trace antigua." },
         confidence: { key: "medium", score: 64, label: "Media", tone: "warn" },
         brief: {
-          nextAction: { label: "Siguiente", value: "Esperar confirmacion", detail: "Trace antigua", tone: "warn" },
+          nextAction: { label: "Siguiente", value: "Esperar confirmación", detail: "Trace antigua", tone: "warn" },
         },
       },
     }, {});
@@ -628,7 +628,7 @@ describe("explainScreenerRank", () => {
           penalties: [],
         },
         brief: {
-          nextAction: { label: "Siguiente", value: "Esperar confirmacion", detail: "Trace de otra vista.", tone: "warn" },
+          nextAction: { label: "Siguiente", value: "Esperar confirmación", detail: "Trace de otra vista.", tone: "warn" },
         },
       },
     }, { setupMode: "leader" });

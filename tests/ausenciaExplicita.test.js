@@ -38,11 +38,12 @@ describe("tira de rendimiento de la vista rápida", () => {
     expect(html).not.toContain(">YTD<");
   });
 
-  it("un periodo sin dato sale como ausencia con motivo, no como +0.0%", () => {
+  it("un periodo sin dato sale como ausencia con motivo, no como 0,0%", () => {
     const html = render(PerformanceStrip, { row: { perf3m: 5.2, perf6m: null, perf12m: undefined } });
 
-    expect(html).toContain("+5.2%");
-    expect(html).not.toContain("+0.0%");
+    // Formato es-ES de la capa única (lib/formatters.js): coma decimal.
+    expect(html).toContain("+5,2%");
+    expect(html).not.toContain("0,0%");
     expect(html).toContain("cellMissing");
     expect(html).toContain("Sin dato");
     expect(html).toContain("rendimiento a 6 meses");
@@ -52,7 +53,11 @@ describe("tira de rendimiento de la vista rápida", () => {
   it("un rendimiento que de verdad fue 0,0% se sigue mostrando como 0,0%", () => {
     const html = render(PerformanceStrip, { row: { perf3m: 0, perf6m: -0.04, perf12m: 0 } });
 
-    expect(html.match(/\+0\.0%/g) || []).toHaveLength(2);
+    // El cero (y el -0,04 que redondea a cero) sale SIN signo: "-0.0%" era un
+    // signo sin significado y "+0,0%" afirmaba una subida que no existe.
+    expect(html.match(/(?<![+\-\d])0,0%/g) || []).toHaveLength(3);
+    expect(html).not.toContain("+0,0%");
+    expect(html).not.toContain("-0,0%");
     expect(html).not.toContain("cellMissing");
   });
 });

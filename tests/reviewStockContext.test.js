@@ -61,9 +61,9 @@ describe("buildReviewStockOpenContext", () => {
     expect(context.queueSize).toBe(7);
     expect(context.decisionProfile).toEqual({
       key: "operable-fragile",
-      label: "Operable fragil",
+      label: "Operable frágil",
       tone: "warn",
-      detail: "Operable, pero con confianza limitada o confluencia minima.",
+      detail: "Operable, pero con confianza limitada o confluencia mínima.",
     });
     expect(context.readiness.key).toBe("operable");
     expect(context.decisionTrace.confidence.key).not.toBe("high");

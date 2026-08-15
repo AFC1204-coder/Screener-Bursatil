@@ -57,12 +57,12 @@ describe("buildResearchRow · serie stage 4", () => {
 describe("buildResearchRow · histórico insuficiente", () => {
   it("rechaza series con menos de 20 barras", () => {
     expect(() => buildResearchRow("SHORT", { bars: shortHistoryBars() }, {}, { requireLongHistory: false }, {}))
-      .toThrow("Historico insuficiente");
+      .toThrow("Histórico insuficiente");
   });
   it("con requireLongHistory exige 180 barras", () => {
     const bars = stage2Bars().slice(0, 100);
     expect(() => buildResearchRow("MID", { bars }, {}, { requireLongHistory: true }, {}))
-      .toThrow("Historico insuficiente");
+      .toThrow("Histórico insuficiente");
   });
 });
 

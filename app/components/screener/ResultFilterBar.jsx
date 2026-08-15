@@ -67,7 +67,7 @@ export default function ResultFilterBar({
             se siguen calculando en useResultViewModel.
             «Resolución» se conserva: filtra por lo que el usuario ha marcado en
             Review/Ficha, no por un juicio del sistema. */}
-        <select className="select resultFilterSelect" value={decisionResolutionFilter} onChange={(e) => onDecisionResolutionFilter(e.target.value)} aria-label="Filtrar por resolución de decision" data-active={decisionResolutionFilter !== "all" ? "true" : "false"}>
+        <select className="select resultFilterSelect" value={decisionResolutionFilter} onChange={(e) => onDecisionResolutionFilter(e.target.value)} aria-label="Filtrar por resolución de decisión" data-active={decisionResolutionFilter !== "all" ? "true" : "false"}>
           {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
         </select>
         {/* Ordenar solo por lo que la tabla muestra (lib/screenerColumns.jsx).
@@ -82,7 +82,7 @@ export default function ResultFilterBar({
           <details className="disclosurePanel compactDisclosure viewLayerFilters">
             <summary><span>Más filtros</span><em>{viewFiltersActive} activos</em></summary>
             <div className="controls resultFilterBar viewLayerFilterGrid">
-              {viewLayers.country ? <select className="select resultFilterSelect" value={countryFilter} onChange={(e) => onCountryFilter(e.target.value)} aria-label="Filtrar por pais" data-active={countryFilter !== "Todos" ? "true" : "false"}>
+              {viewLayers.country ? <select className="select resultFilterSelect" value={countryFilter} onChange={(e) => onCountryFilter(e.target.value)} aria-label="Filtrar por país" data-active={countryFilter !== "Todos" ? "true" : "false"}>
                 {countryOptions.map((x) => <option key={x} value={x}>{optionLabel("País", x, countryCounts, (code) => `${code} · ${marketName(code)}`)}</option>)}
               </select> : null}
               {viewLayers.theme ? <select className="select resultFilterSelect" value={themeFilter} onChange={(e) => { onThemeFilter(e.target.value); onSectorFilter("Todos"); onIndustryFilter("Todos"); }} aria-label="Filtrar por tema" data-active={themeFilter !== "Todos" ? "true" : "false"}>

@@ -9,7 +9,7 @@ import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { CountValue } from "@/app/components/ui/CountValue";
 import { MissingValue } from "@/lib/screenerColumns";
 import { getJson } from "@/lib/clientApi";
-import { num, pct, pctShare } from "@/lib/formatters";
+import { dateShort, num, pct, pctShare } from "@/lib/formatters";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";
 import { buildDecisionTraceabilitySummary, decisionResolutionForRow } from "@/lib/decisionTraceability";
 import { buildSavedListView, listViewHref, listViewSignature, normalizeListScope, normalizeSavedListViews, savedListViewMetaLine } from "@/lib/listViews";
@@ -207,8 +207,8 @@ function CoverageAuditPanel({ audit }) {
 
   return <div className="marketReliabilityBlock">
     <div className="marketReliabilityBlockHead">
-      <h3>Auditoria cobertura</h3>
-      <span className={`discoveryStatus ${status}`}>{audit.label || "Sin auditoria"}</span>
+      <h3>Auditoría cobertura</h3>
+      <span className={`discoveryStatus ${status}`}>{audit.label || "Sin auditoría"}</span>
     </div>
     <div className="coverageAuditGrid">
       <span><b><CountValue value={audit.universeRows} reason={AUDIT_COUNT_MISSING} /></b><em>universo scope</em></span>
@@ -300,7 +300,7 @@ function ListScopeSummary({ filter, rowsCount, rankingAppearances, activeRanking
   const hasLegacySavedRows = !hasScopeRows && Number.isFinite(savedRows) && savedRows > 0 && savedRows !== rowsCount;
   const source = discoveryLoading ? "Cargando" : useDiscovery ? "Ranking en vivo" : "Copia local";
   const note = hasScopeRows && scopeRows !== rowsCount
-    ? "El grupo completo puede contener mas acciones que los rankings visibles; Listas muestra candidatos unicos deduplicados por estrategia."
+    ? "El grupo completo puede contener más acciones que los rankings visibles; Listas muestra candidatos unicos deduplicados por estrategia."
     : hasLegacySavedRows
       ? "El conteo guardado pertenece al alcance original de la vista; Listas muestra candidatos unicos deduplicados con los rankings actuales."
     : scope.group
@@ -316,7 +316,7 @@ function ListScopeSummary({ filter, rowsCount, rankingAppearances, activeRanking
       <span><b>{scope.label}</b><em>scope</em></span>
       {hasScopeRows && <span><b>{scopeRows}</b><em>acciones en grupo</em></span>}
       {hasLegacySavedRows && <span><b>{savedRows}</b><em>conteo guardado</em></span>}
-      <span><b>{rowsCount}</b><em>acciones unicas</em></span>
+      <span><b>{rowsCount}</b><em>acciones únicas</em></span>
       <span><b>{rankingAppearances}</b><em>apariciones visibles</em></span>
       <span><b>{activeRankingCount}</b><em>listas con datos</em></span>
       <span><b>{source}</b><em>fuente</em></span>
@@ -374,7 +374,7 @@ function MiniSparkline({ bars = [] }) {
   const trendClass = last >= first ? "up" : "down";
   const volumeMax = Math.max(...points.map((p) => p.volume || 0), 1);
   const barW = Math.max(1.2, (w - pad * 2) / points.length - 1);
-  return <svg className={`miniSparkline ${trendClass}`} style={{ width: "100%", height: "40px", display: "block" }} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Grafico tecnico compacto">
+  return <svg className={`miniSparkline ${trendClass}`} style={{ width: "100%", height: "40px", display: "block" }} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Gráfico técnico compacto">
     <line x1={pad} x2={w - pad} y1={y(max)} y2={y(max)} className="sparkGuide" />
     <line x1={pad} x2={w - pad} y1={y(min)} y2={y(min)} className="sparkGuide" />
     {points.map((p, i) => {
@@ -444,7 +444,7 @@ function ListReliabilityStrip({ summary, contractRejected = 0 }) {
 function ListsEmptyState({ loading, hasSnapshot, discoveryError, absence }) {
   const title = loading ? "Cargando rankings" : absence ? "Sin listas: falta el escaneo del día" : "Sin listas disponibles";
   const detail = loading
-    ? "Se esta consultando discovery. Si no hay datos remotos, se usara el ultimo snapshot local."
+    ? "Se esta consultando discovery. Si no hay datos remotos, se usara el último snapshot local."
     : absence
       ? absence
       : hasSnapshot
@@ -467,7 +467,7 @@ function ListsEmptyState({ loading, hasSnapshot, discoveryError, absence }) {
   </section>;
 }
 
-function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey = "leaders", scoreKey = "objectiveScore", collapsible = true, emptyLabel = "Sin datos todavia.", contractRejected = 0 }) {
+function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey = "leaders", scoreKey = "objectiveScore", collapsible = true, emptyLabel = "Sin datos todavía.", contractRejected = 0 }) {
   const visibleRows = rows.slice(0, 18);
   const reliability = summarizeListReliability(rows);
   const table = <div className="tableWrap">
@@ -657,7 +657,7 @@ export default function ListsPage() {
     { key: "rsQuality", title: "RS Quality Leaders", desc: "RS alto con volatilidad/drawdown controlados", rows: rsQuality, scoreKey: "rsQualityScore", contractRejected: discoveryRejectedByKey.rsQuality || 0 },
     { key: "weakness", title: "Deterioro técnico", desc: "Debilidad observable para evitar largos o estudiar cortos", rows: weakness, scoreKey: "weaknessScore", contractRejected: discoveryRejectedByKey.weakness || 0 },
     { key: "weinstein", title: "Tendencia establecida", desc: "Mejor estructura de etapa/tendencia", rows: weinstein, scoreKey: "weinsteinScore", contractRejected: discoveryRejectedByKey.weinstein || 0 },
-    { key: "minervini", title: "Rupturas con contracción", desc: "Trend template, momentum y máximos", rows: minervini, scoreKey: "minerviniScore", contractRejected: discoveryRejectedByKey.minervini || 0 },
+    { key: "minervini", title: "Rupturas con contracción", desc: "Estructura de tendencia, momentum y máximos", rows: minervini, scoreKey: "minerviniScore", contractRejected: discoveryRejectedByKey.minervini || 0 },
     { key: "nearPivot", title: "Vigilancia pivot", desc: "Setup observable cerca de pivot; no equivale a plan automático", rows: nearPivot, contractRejected: discoveryRejectedByKey.nearPivot || 0 },
     { key: "ipo", title: "IPO / New Leaders", desc: "Solo IPOs reales verificables <= 5 años", rows: ipo, scoreKey: "ipoScore", contractRejected: discoveryRejectedByKey.ipo || 0 },
     { key: "extended", title: "Extended but strong", desc: "Muy fuertes, pero vigilar extensión sobre SMA50", rows: extended, contractRejected: discoveryRejectedByKey.extended || 0 },
@@ -741,7 +741,7 @@ export default function ListsPage() {
               }
             }
           } catch (e) {
-            console.error(`Error al cargar grafico real para ${symbol}:`, e);
+            console.error(`Error al cargar gráfico real para ${symbol}:`, e);
             if (active) {
               setChartsCache((prev) => ({ ...prev, [symbol]: null }));
             }
@@ -783,11 +783,11 @@ export default function ListsPage() {
     <section className="card hero">
       <div className="heroTop">
         <div><div className="badge">StatsEdge · Listas</div><h1>Listas rápidas</h1><p className="muted">Líderes, favoritos y setups desde discovery derivado o snapshot local.</p></div>
-        <div className="mobileActions"><a className="btn" href="/">Screener</a><a className="btn" href="/review?source=latest">Vista rapida</a><a className="btn" href="/ipo-radar">IPO Radar</a><a className="btn" href="/research-desk">Research</a><a className="btn btnPrimary" href="/sectors">Sectores</a></div>
+        <div className="mobileActions"><a className="btn" href="/">Screener</a><a className="btn" href="/review?source=latest">Vista rápida</a><a className="btn" href="/ipo-radar">IPO Radar</a><a className="btn" href="/research-desk">Research</a><a className="btn btnPrimary" href="/sectors">Sectores</a></div>
       </div>
     </section>
     {useDiscovery && <QualityStrip items={listsQualityItems({ dataAsOf: discovery?.dataAsOf, rsAsOf: discovery?.rsAsOf, nightly: discovery?.nightly })} />}
-    <section className="card"><div className="kpis"><div className="kpi"><b>{loaded ? rows.length : "-"}</b><span>acciones unicas</span></div><div className="kpi"><b>{loaded ? favorites.length : "-"}</b><span>favoritos</span></div><div className="kpi"><b>{discoveryLoading ? "..." : useDiscovery ? "Datos actualizados" : loaded ? "Datos guardados" : "-"}</b><span>fuente rankings</span></div><div className="kpi"><b>{loaded && latest ? new Date(latest.createdAt).toLocaleDateString() : "-"}</b><span>ultimo snapshot local</span></div></div></section>
+    <section className="card"><div className="kpis"><div className="kpi"><b>{loaded ? rows.length : "-"}</b><span>acciones únicas</span></div><div className="kpi"><b>{loaded ? favorites.length : "-"}</b><span>favoritos</span></div><div className="kpi"><b>{discoveryLoading ? "..." : useDiscovery ? "Datos actualizados" : loaded ? "Datos guardados" : "-"}</b><span>fuente rankings</span></div><div className="kpi"><b>{loaded && latest ? dateShort(latest.createdAt) : "-"}</b><span>último snapshot local</span></div></div></section>
     <ListsInfraStrip
       discovery={discovery}
       discoveryError={discoveryError}

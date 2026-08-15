@@ -155,7 +155,7 @@ export function useQuickReviewSession({
   function openReview(currentRows, startSymbol = "", options = {}) {
     const reviewRows = prepareReviewQueueRows(currentRows, activeSettings);
     if (!reviewRows.length) {
-      setStatus("Sin filas actuales para abrir vista rapida.");
+      setStatus("Sin filas actuales para abrir vista rápida.");
       return;
     }
     const reviewSourceLabel = options.sourceLabel || "Screener actual";
@@ -191,7 +191,7 @@ export function useQuickReviewSession({
       selectedSymbol: startSymbol || reviewRows[0]?.symbol || "",
       updatedAt: new Date().toISOString(),
     });
-    setStatus(`${reviewSourceLabel}: ${reviewRows.length} acciones en cola · ${cleanCount} limpias · ${fragileCount} fragiles.`);
+    setStatus(`${reviewSourceLabel}: ${reviewRows.length} acciones en cola · ${cleanCount} limpias · ${fragileCount} frágiles.`);
   }
 
   function selectQuickReview(index, list = quickReviewRows) {

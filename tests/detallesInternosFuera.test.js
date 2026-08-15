@@ -144,11 +144,12 @@ describe("página 404 del producto", () => {
   });
 });
 
-// El SCORE de la cabecera de la ficha salía en guion tanto en AAPL como en MAR
-// con el dato calculado y visible en el desglose de auditoría de esa misma
-// ficha: no era una ausencia, era una lectura mal dirigida. patternQualityScore
-// vive en `setupPattern`, nunca en la raíz de la respuesta de company-brief.
-describe("score de estructura en la cabecera de la ficha", () => {
+// El score de estructura se retiró de la cabecera junto con el veredicto del
+// sistema (principio 1: la herramienta clasifica, no recomienda). El dato
+// sigue calculándose y se lee en el desglose de N3, SIEMPRE desde
+// `setupPattern` — nunca desde la raíz de la respuesta de company-brief, que
+// era el bug original (cabecera en guion con el dato calculado).
+describe("score de estructura en la ficha", () => {
   const client = readFileSync("app/stock/[symbol]/StockClient.jsx", "utf8");
 
   it("no se lee de la raíz de la respuesta", () => {
@@ -156,8 +157,12 @@ describe("score de estructura en la cabecera de la ficha", () => {
     expect(code).not.toMatch(/\bdata\??\.patternQualityScore/);
   });
 
-  it("la cabecera recibe el score del patrón calculado", () => {
-    expect(client).toMatch(/patternQualityScore=\{setupPattern\?\.patternQualityScore \?\? null\}/);
+  it("la cabecera ya no pinta el score del sistema", () => {
+    expect(client).not.toMatch(/stockVerdictScore/);
+  });
+
+  it("el desglose de N3 lo lee del patrón calculado", () => {
+    expect(client).toMatch(/label: "Score patrón", value: Number\.isFinite\(setupPattern\.patternQualityScore\)/);
   });
 });
 

@@ -9,13 +9,15 @@ import "../../../styles/quality-strip.css";
    con el mismo aspecto y el mismo sitio.
    Los items son { label, value } y se pintan en el orden recibido: el
    primero es la fecha que manda. */
-/* Mismo formato de fecha en todas las pantallas que montan la franja: "12 ago
-   2026". Vivía dentro de la ficha; se mueve aquí con el componente para que
-   dos superficies no puedan escribir la misma fecha de dos maneras. */
+/* Mismo formato de fecha en todas las pantallas que montan la franja.
+   Delegado en la capa única (lib/formatters.js, dateShort): tener aquí una
+   máscara propia era una tercera manera de escribir la misma fecha. */
+import { dateShort } from "@/lib/formatters";
+
 export function compactDate(value) {
   if (!value) return "";
-  const d = new Date(value);
-  return Number.isFinite(d.getTime()) ? d.toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }) : "";
+  const label = dateShort(value);
+  return label === "-" ? "" : label;
 }
 
 export function QualityStrip({ items = [] }) {

@@ -44,7 +44,7 @@ export function DataHealthPanel({ health = null, compact = false, activeKey = "T
   return <div className={`dataHealthPanel ${tone}`} aria-label="Salud de datos del resultado">
     <div className="dataHealthHead">
       <span>Salud datos</span>
-      <b>{health.status?.label || "Sin auditoria"}</b>
+      <b>{health.status?.label || "Sin auditoría"}</b>
       <em>{health.status?.detail || health.topLine}</em>
     </div>
     <div className="dataHealthMetrics">

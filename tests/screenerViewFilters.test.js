@@ -472,7 +472,7 @@ describe("screener result view filters", () => {
     expect(sector.toneSummary).toContain("1 neutral");
   });
 
-  it("prioriza la cola de revision por operables limpios y fragiles", () => {
+  it("la cola de revisión respeta el orden de llegada y los perfiles solo resumen", () => {
     const fragileOperable = {
       ...strongRow,
       symbol: "FRAG",
@@ -496,14 +496,17 @@ describe("screener result view filters", () => {
       setupQualityScore: 55,
     };
 
+    // La cola conserva el orden visible del usuario (principio 1: el sistema
+    // no reordena por su propio juicio); el resumen de perfiles apunta con
+    // firstIndex a la posición real dentro de ese orden.
     const queue = prepareReviewQueueRows([watchRow, fragileOperable, strongRow], { setupMode: "leader" });
-    expect(queue.map((row) => row.symbol)).toEqual(["HIGH", "FRAG", "WAIT"]);
+    expect(queue.map((row) => row.symbol)).toEqual(["WAIT", "FRAG", "HIGH"]);
 
     const summary = buildReviewProfileSummary(queue, { setupMode: "leader" });
     expect(summary.map((group) => [group.key, group.count, group.firstIndex])).toEqual([
-      ["operable-clean", 1, 0],
+      ["operable-clean", 1, 2],
       ["operable-fragile", 1, 1],
-      ["other", 1, 2],
+      ["other", 1, 0],
     ]);
   });
 });

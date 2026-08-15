@@ -80,14 +80,14 @@ export function DecisionQualityStrip({ audit, compact = false, activeIssueKey = 
       className={`decisionQualityMetric ${metricTone} ${active ? "active" : ""}`}
       onClick={() => onProfileSelect(active ? "Todos" : key)}
       aria-pressed={active}
-      title={key === "operable-fragile" ? fragileSample || "Operables con confianza no alta o confluencia minima" : undefined}
+      title={key === "operable-fragile" ? fragileSample || "Operables con confianza no alta o confluencia mínima" : undefined}
     >
       {body}
     </button> : <span className={`decisionQualityMetric ${metricTone}`}>{body}</span>;
   };
   return <div className={`decisionQualityStrip ${compact ? "compact" : ""} ${tone}`}>
     {metricButton("operable-clean", cleanOperableCount, "limpios", "good")}
-    {metricButton("operable-fragile", fragileOperableCount, "fragiles", fragileOperableCount ? "warn" : "")}
+    {metricButton("operable-fragile", fragileOperableCount, "frágiles", fragileOperableCount ? "warn" : "")}
     <span className="decisionQualityMetric">
       <b data-zero={!riskCount ? "true" : "false"}>{riskCount}</b>
       <em>riesgo cola</em>
@@ -96,7 +96,7 @@ export function DecisionQualityStrip({ audit, compact = false, activeIssueKey = 
       <b data-zero={!auditCount ? "true" : "false"}>{auditCount}</b>
       <em>auditar</em>
     </span>
-    <div className="decisionQualityIssueList" aria-label="Alertas principales de decision">
+    <div className="decisionQualityIssueList" aria-label="Alertas principales de decisión">
       {topIssues.length ? topIssues.map(issueChip) : issueChip(null)}
     </div>
   </div>;
@@ -175,7 +175,7 @@ export function DecisionOperatingBrief({ audit = null, rows = [], compact = fals
 
 export function DecisionSummaryRail({ summary = [], activeKey = "Todos", onSelect, className = "" }) {
   if (!summary.length) return null;
-  return <div className={`decisionRail ${className}`.trim()} aria-label="Resumen por calidad de decision">
+  return <div className={`decisionRail ${className}`.trim()} aria-label="Resumen por calidad de decisión">
     <span className="decisionRailEyebrow">Calidad de decisión</span>
     <div className="decisionRailItems">
       {summary.map((item) => {
@@ -200,7 +200,7 @@ export function PendingDecisionWorkRail({ summary = null, active = false, onFocu
   const top = summary.top || null;
   const highCount = summary.highConfidenceCount || 0;
   const reviewableCount = summary.reviewableCount || 0;
-  return <div className={`decisionRail pendingDecisionWorkRail ${active ? "active" : ""} ${className}`.trim()} aria-label="Trabajo pendiente de decision">
+  return <div className={`decisionRail pendingDecisionWorkRail ${active ? "active" : ""} ${className}`.trim()} aria-label="Trabajo pendiente de decisión">
     <span className="decisionRailEyebrow">Trabajo pendiente</span>
     <div className="decisionRailItems">
       <span className="decisionRailItem neutral">

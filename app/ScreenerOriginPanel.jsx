@@ -501,14 +501,14 @@ export default function ScreenerOriginPanel({ origin, variant = "" }) {
         </span>)}
       </div>
     </div> : null}
-    {issues.length ? <div className="screenerOriginIssues" aria-label="Alertas de decision del screener">
+    {issues.length ? <div className="screenerOriginIssues" aria-label="Alertas de decisión del screener">
       {issues.map((issue, index) => <span key={`${issue.key || issue.label}-${index}`} className={issue.severity || "warn"} title={issue.detail || issue.label}>
         <b>{issue.label}</b>
       </span>)}
     </div> : null}
     {drivers.length || watch.length || priorityItems.length || traceLine ? <div
       className="screenerOriginTrace"
-      aria-label={detailTitle("Trazabilidad de decision del screener", traceLine)}
+      aria-label={detailTitle("Trazabilidad de decisión del screener", traceLine)}
       title={traceLine || undefined}
     >
       {priorityItems.length ? <div className="screenerOriginTraceGroup priority">

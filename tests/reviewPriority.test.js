@@ -55,20 +55,25 @@ describe("review priority", () => {
     expect(reviewPriorityForRow(blockedRow, { setupMode: "leader" }).key).toBe("blocked");
   });
 
-  it("ordena review por prioridad antes de caer al orden original", () => {
+  it("la cola respeta el orden de llegada: el sistema no reordena por su prioridad", () => {
+    // Antes esta función reordenaba por REVIEW_PRIORITY_RANK y la cola abría
+    // por el valor que el sistema priorizaba, no por el que el usuario miraba
+    // (principio 1: la ordenación debe ser elegible y su criterio, explícito).
     const queue = prepareReviewQueueRows([blockedRow, fragileRow, strongRow], { setupMode: "leader" });
 
-    expect(queue.map((row) => row.symbol)).toEqual(["HIGH", "FRAG", "BLOCK"]);
+    expect(queue.map((row) => row.symbol)).toEqual(["BLOCK", "FRAG", "HIGH"]);
   });
 
-  it("resume grupos con primer indice y score maximo para saltos de UI", () => {
+  it("resume grupos con primer indice sobre el orden de llegada", () => {
     const rows = prepareReviewQueueRows([blockedRow, fragileRow, strongRow], { setupMode: "leader" });
     const summary = buildReviewPrioritySummary(rows, { setupMode: "leader" });
 
+    // Los grupos del resumen conservan su orden propio (meta), pero
+    // firstIndex apunta a la posición REAL en la cola del usuario.
     expect(summary.map((group) => [group.key, group.count, group.firstIndex])).toEqual([
-      ["focus-now", 1, 0],
+      ["focus-now", 1, 2],
       ["validate-first", 1, 1],
-      ["blocked", 1, 2],
+      ["blocked", 1, 0],
     ]);
     expect(summary[0].topSymbol).toBe("HIGH");
     expect(summary[0].topScore).toBeGreaterThan(summary[1].topScore);

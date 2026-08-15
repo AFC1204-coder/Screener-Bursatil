@@ -27,7 +27,7 @@ export function MiniSparkline({ bars = [], className = "" }) {
   const trendClass = last >= first ? "up" : "down";
   const volumeMax = Math.max(...points.map((p) => p.volume || 0), 1);
   const barW = Math.max(1.2, (w - pad * 2) / points.length - 1);
-  return <svg className={`miniSparkline ${trendClass} ${className}`.trim()} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Grafico tecnico compacto">
+  return <svg className={`miniSparkline ${trendClass} ${className}`.trim()} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Gráfico técnico compacto">
     <line x1={pad} x2={w - pad} y1={y(max)} y2={y(max)} className="sparkGuide" />
     <line x1={pad} x2={w - pad} y1={y(min)} y2={y(min)} className="sparkGuide" />
     {points.map((p, i) => {

@@ -117,7 +117,7 @@ describe("decision audit", () => {
       readiness: { key: "operable" },
       action: { key: "candidate-long" },
       confidence: { key: "high", label: "Alta" },
-      evidence: { status: "ready", summary: "Pruebas metodologicas confirmadas" },
+      evidence: { status: "ready", summary: "Pruebas metodológicas confirmadas" },
     });
     expect(payload.scans[0].rows[0].decisionTrace.priorityScore).toBeGreaterThan(0);
     expect(payload.scans[0].rows[0].decisionTrace.drivers.length).toBeGreaterThan(0);
@@ -306,14 +306,14 @@ describe("decision audit", () => {
     expect(trace.priorityScore).toBeTypeOf("number");
     expect(trace.action.key).toBeTruthy();
     expect(trace.readiness.key).toBeTruthy();
-    expect(trace.brief.nextAction.value).toBe("Esperar confirmacion");
+    expect(trace.brief.nextAction.value).toBe("Esperar confirmación");
     expect(trace.issues.map((item) => item.key)).toEqual(expect.arrayContaining(["missing-global-rs", "overextended-sma50", "low-risk-reward"]));
     expect(trace.drivers.length).toBeGreaterThan(0);
     expect(trace.confidence).toMatchObject({ label: expect.any(String), score: expect.any(Number) });
     expect(trace.priority).toMatchObject({
       // "percentil de lote", no "RS": el componente es rsGlobalPct, la
       // entrada real de la prioridad, no el RS semanal que enseña la interfaz.
-      formula: "decision + accion + score + percentil de lote + rent/riesgo - issues",
+      formula: "decisión + acción + score + percentil de lote + rent/riesgo - issues",
       issuePenalty: expect.any(Number),
     });
   });

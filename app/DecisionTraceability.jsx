@@ -28,7 +28,7 @@ export function DecisionTracePanel({ summary = null, title = "Trazabilidad Revie
       <span><b>{summary.resolvedCount}</b><em>resueltas</em></span>
       <span><b>{summary.latest?.length || 0}</b><em>eventos recientes</em></span>
     </div>
-    <div className="decisionTraceChips" aria-label="Resoluciones de decision visibles">
+    <div className="decisionTraceChips" aria-label="Resoluciones de decisión visibles">
       {summary.resolvedGroups.map((group) => <a
         className={`decisionTraceChip ${group.tone || "neutral"}`}
         href={reviewHref(summary.source, group.sampleSymbols?.[0] || "")}

@@ -21,17 +21,17 @@ describe("userFacingSearchError · mapeo del guard estimated (screener)", () => 
   it("mapea 'Serie estimada excluida de research row' a mensaje user-facing", () => {
     // El contexto que usa lib/researchRow.js vía assertDecisionGrade.
     expect(userFacingSearchError("Serie estimada excluida de research row")).toBe(
-      "Datos no disponibles para este simbolo en este momento.",
+      "Datos no disponibles para este símbolo en este momento.",
     );
   });
 
   it("mapea cualquier otro contexto del guard al mismo mensaje user-facing", () => {
     // Otros callers usan contextos distintos (scoring, decisión, materialized...).
     expect(userFacingSearchError("Serie estimada excluida de scoring")).toBe(
-      "Datos no disponibles para este simbolo en este momento.",
+      "Datos no disponibles para este símbolo en este momento.",
     );
     expect(userFacingSearchError("Serie estimada excluida de decisión")).toBe(
-      "Datos no disponibles para este simbolo en este momento.",
+      "Datos no disponibles para este símbolo en este momento.",
     );
   });
 
@@ -57,7 +57,7 @@ describe("userFacingSearchError · mapeo del guard de review", () => {
     // El string interno exacto que lanza app/review/page.jsx cuando el chart
     // de la ficha review no es decision-grade.
     expect(userFacingSearchError("Historico estimado/no disponible")).toBe(
-      "Historico no disponible para este simbolo.",
+      "Histórico no disponible para este símbolo.",
     );
   });
 
@@ -78,16 +78,16 @@ describe("userFacingSearchError · mapeo del guard de review", () => {
 });
 
 describe("reviewChartPlaceholder · prioridad error > carga > vacío", () => {
-  it("con error muestra el mensaje de error (NO 'Sin grafico disponible' silencioso)", () => {
+  it("con error muestra el mensaje de error (NO 'Sin gráfico disponible' silencioso)", () => {
     // Caso central de la tarea: hidratación en status:"error" debe ser visible.
-    expect(reviewChartPlaceholder({ error: "Historico no disponible para este simbolo." })).toBe(
-      "Historico no disponible para este simbolo.",
+    expect(reviewChartPlaceholder({ error: "Histórico no disponible para este símbolo." })).toBe(
+      "Histórico no disponible para este símbolo.",
     );
   });
 
   it("el error gana incluso cuando loading es true (error > carga)", () => {
-    expect(reviewChartPlaceholder({ error: "Historico no disponible para este simbolo.", loading: true })).toBe(
-      "Historico no disponible para este simbolo.",
+    expect(reviewChartPlaceholder({ error: "Histórico no disponible para este símbolo.", loading: true })).toBe(
+      "Histórico no disponible para este símbolo.",
     );
   });
 
@@ -95,14 +95,14 @@ describe("reviewChartPlaceholder · prioridad error > carga > vacío", () => {
     expect(reviewChartPlaceholder({ loading: true })).toBe("Cargando datos...");
   });
 
-  it("sin error y sin cargar → 'Sin grafico disponible' (comportamiento previo preservado)", () => {
-    expect(reviewChartPlaceholder({})).toBe("Sin grafico disponible");
-    expect(reviewChartPlaceholder({ loading: false })).toBe("Sin grafico disponible");
+  it("sin error y sin cargar → 'Sin gráfico disponible' (comportamiento previo preservado)", () => {
+    expect(reviewChartPlaceholder({})).toBe("Sin gráfico disponible");
+    expect(reviewChartPlaceholder({ loading: false })).toBe("Sin gráfico disponible");
   });
 
   it("error vacío o solo espacios se trata como sin error (no muestra vacío engañoso)", () => {
-    expect(reviewChartPlaceholder({ error: "" })).toBe("Sin grafico disponible");
-    expect(reviewChartPlaceholder({ error: "   " })).toBe("Sin grafico disponible");
+    expect(reviewChartPlaceholder({ error: "" })).toBe("Sin gráfico disponible");
+    expect(reviewChartPlaceholder({ error: "   " })).toBe("Sin gráfico disponible");
   });
 
   it("flujo integrado: guard interno → mapper → placeholder muestra el user-facing", () => {
@@ -110,8 +110,8 @@ describe("reviewChartPlaceholder · prioridad error > carga > vacío", () => {
     // guard → pasa por userFacingSearchError → entra como placeholder.
     const internal = "Historico estimado/no disponible";
     const shown = reviewChartPlaceholder({ error: userFacingSearchError(internal) });
-    expect(shown).toBe("Historico no disponible para este simbolo.");
+    expect(shown).toBe("Histórico no disponible para este símbolo.");
     expect(shown).not.toMatch(/estimado/);
-    expect(shown).not.toBe("Sin grafico disponible");
+    expect(shown).not.toBe("Sin gráfico disponible");
   });
 });

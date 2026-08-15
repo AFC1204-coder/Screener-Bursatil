@@ -20,7 +20,7 @@ function activeForPath(pathname = "/", href = "/") {
 export function AppHeaderNav() {
   const pathname = usePathname() || "/";
   return (
-    <nav className="appHeaderNav" aria-label="Navegacion principal superior">
+    <nav className="appHeaderNav" aria-label="Navegación principal superior">
       {NAV_ITEMS.map(({ href, label, Icon }) => {
         const active = activeForPath(pathname, href);
         return (

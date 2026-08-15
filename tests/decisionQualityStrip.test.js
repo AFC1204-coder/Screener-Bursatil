@@ -210,9 +210,9 @@ describe("DecisionQualityStrip", () => {
     expect(html).toContain("mobileResultGrid");
     expect(html).toContain("Software / IA");
     expect(html).toContain("Etapa 2");
-    expect(html).toContain("+12.5%");
-    expect(html).toContain("-6.4%");
-    expect(html).toContain("2.4B");
+    expect(html).toContain("+12,5%");
+    expect(html).toContain("-6,4%");
+    expect(html).toContain("2,4B");
 
     // La maquinaria de fiabilidad y el veredicto ya no viven en la fila.
     expect(html).not.toContain("mobileResultTrustLine");
@@ -591,11 +591,11 @@ describe("DecisionQualityStrip", () => {
       },
     }));
 
-    expect(html).toContain("Foco revision");
+    expect(html).toContain("Foco revisión");
     expect(html).toContain("Demanda/volumen");
     expect(html).toContain("<em>demanda debil</em>");
     expect(html).not.toContain("<em>Validar acumulacion");
     expect(html).toContain("Validar acumulacion");
-    expect(html).toContain("Foco de revision metodologica");
+    expect(html).toContain("Foco de revisión metodológica");
   });
 });

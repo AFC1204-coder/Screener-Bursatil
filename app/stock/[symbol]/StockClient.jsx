@@ -6,13 +6,13 @@ import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { compactDate, QualityStrip } from "@/app/components/ui/QualityStrip";
 import { InfoHint } from "@/app/components/ui/InfoHint";
+import { amount, dateShort, dateTime, num as sharedNum, pct as sharedPct, pctShare, priceMoney as sharedPriceMoney, signedPriceMoney as sharedSignedPriceMoney } from "@/lib/formatters";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { methodologyCompactReasonLine, methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { dataStatusLabel } from "@/lib/patternNarrative";
-import { MissingValue } from "@/lib/screenerColumns";
 import { screenerStockContextFromSession } from "@/lib/screenerContracts";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
@@ -22,7 +22,6 @@ import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { DECISION_CHART_PRESETS, buildStockDecisionDesk } from "@/lib/stockDecisionDesk";
 import { STOCK_DECISION_ACTIONS, STOCK_DECISION_VALIDATION_STATES, applyStockDecisionResolution, buildStockDecisionResolutionNote, decisionResolutionForSymbol, decisionResolutionHistory, reopenStockDecisionResolution } from "@/lib/stockDecisionResolution";
-import { computeTradePlan, tradePlanEligibility } from "@/lib/tradePlan";
 import { vcpObjectiveSummary } from "@/lib/vcpDiagnostics";
 import { chartQualityFromBrief } from "@/lib/chartDataQuality";
 
@@ -49,20 +48,19 @@ function KVRow({ label, value, state = "value", detail = "", source = null, suff
   );
 }
 
-/* Curva de etapa como glifo SVG. Geometría canónica de tokens-v2. */
-function StockCurveSvg({ decision = "vigilar", width = 96, height = 32 }) {
-  const color = decision === "vigilar"
-    ? "var(--decision-vigilar)"
-    : decision === "auditar"
-      ? "var(--decision-auditar)"
-      : decision === "descartar"
-        ? "var(--decision-descartar)"
-        : "var(--curve-track)";
-  const dotX = decision === "vigilar" ? 38 : decision === "auditar" ? 70 : 96;
-  const dotY = decision === "vigilar" ? 22 : decision === "auditar" ? 10 : 32;
-  // "sin-dato": la curva se dibuja pero SIN punto. Situar el punto en algún
-  // sitio sería afirmar una posición en la curva que no se ha medido.
-  const hasDot = decision === "vigilar" || decision === "auditar" || decision === "descartar";
+/* Curva de etapa como glifo SVG. Geometría canónica de tokens-v2.
+   El punto marca la FASE del ciclo que ya clasificó lib/weeklyStage.js:
+   base → tramo plano inicial, etapa 2 → tramo ascendente, etapa 4 → tramo
+   descendente. "mixed" y la ausencia se dibujan SIN punto: situar el punto
+   sería afirmar una posición en el ciclo que la clasificación no da. */
+function StockCurveSvg({ stage = "", width = 96, height = 32 }) {
+  const dot = stage === "base"
+    ? { x: 16, y: 34 }
+    : stage === "stage2"
+      ? { x: 42, y: 21 }
+      : stage === "stage4"
+        ? { x: 88, y: 27 }
+        : null;
   return (
     <svg className="stockCurveSvg" viewBox="0 0 120 44" width={width} height={height} aria-hidden="true">
       <path
@@ -72,28 +70,30 @@ function StockCurveSvg({ decision = "vigilar", width = 96, height = 32 }) {
         strokeWidth="var(--curve-stroke)"
         strokeLinecap="round"
       />
-      {hasDot ? <circle cx={dotX} cy={dotY} r="var(--curve-dot)" fill={color} /> : null}
+      {dot ? <circle cx={dot.x} cy={dot.y} r="var(--curve-dot)" fill="var(--tiza)" /> : null}
     </svg>
   );
 }
 
-/* Chip-curva de decisión: EL ÚNICO chip que sobrevive en la ficha
-   (spec §1, regla estructural nº1). Curva + etiqueta + decisión. */
-function DecisionCurveChip({ decision = "vigilar", label = "Etapa", stageLabel = "" }) {
-  const decisionLabel = decision === "vigilar"
-    ? "Vigilar"
-    : decision === "auditar"
-      ? "Auditar"
-      : decision === "sin-dato"
-        ? "Sin dato"
-        : "Descartar";
+/* Chip-curva de etapa: EL ÚNICO chip que sobrevive en la ficha (spec §1,
+   regla estructural nº1). Curva + etiqueta + etapa.
+   Antes mostraba la decisión del sistema ("Vigilar/Auditar/Descartar") —
+   el veredicto que la tabla del screener ya retiró y que el principio 1 de
+   docs/principios-producto.md prohíbe. La etapa es clasificación técnica
+   descriptiva (dónde está el precio respecto a sus medias, no qué hacer) y
+   se escribe con la MISMA palabra que la columna "Etapa" de la tabla
+   (lib/stageDisplay.js). */
+function StageCurveChip({ stageTone = "", stageWord = "", missingReason = "" }) {
+  const word = stageWord || "Sin dato";
   return (
-    <div className="stockDecisionChip" data-decision={decision} aria-label={`Decisión: ${decisionLabel}`}>
-      <StockCurveSvg decision={decision} />
+    <div className="stockDecisionChip" data-stage={stageTone || "none"} aria-label={`Etapa: ${word}`}>
+      <StockCurveSvg stage={stageTone} />
       <div className="stockDecisionChipBody">
-        <span className="stockDecisionChipLabel">{label}</span>
-        <span className="stockDecisionChipDecision">{decisionLabel}</span>
-        {stageLabel ? <span className="stockDecisionChipLabel">{stageLabel}</span> : null}
+        <span className="stockDecisionChipLabel">Etapa</span>
+        <span className="stockDecisionChipDecision">
+          {word}
+          {!stageWord && missingReason ? <InfoHint text={missingReason} /> : null}
+        </span>
       </div>
     </div>
   );
@@ -121,31 +121,29 @@ function StockUnavailableBlock({ symbol = "" }) {
 /* QualityStrip vivía aquí; ahora es compartida con Listas.
    Ver app/components/ui/QualityStrip.jsx. */
 
-/* Bloque N0 (Veredicto). Estructura: identidad + precio + decisión + freno
-   + score + resumen de setup. Única zona con color semántico. */
+/* Bloque N0 (Cabecera). Estructura: identidad + precio + etapa + calidad
+   de dato + resumen de setup. Única zona con color semántico.
+   El veredicto del sistema (decisión Vigilar/Auditar/Descartar), el FRENO
+   y el score de estructura se retiraron de aquí (principio 1: la
+   herramienta clasifica, no recomienda). El score sigue calculándose y se
+   lee en el desglose de N3; la etapa —clasificación descriptiva— ocupa el
+   sitio del veredicto con la misma palabra que la tabla del screener. */
 function N0VerdictBlock({
   symbol,
   data,
-  patternQualityScore = null,
   priceSnapshot,
   freshness,
   coverage,
   chartEstimated,
   chartUnavailable,
-  decisionDesk,
-  setupDisplay,
-  brake,
   setupSummary,
-  decision,
   actions,
 }) {
   const priceHas = Number.isFinite(priceSnapshot?.price);
   // Misma palabra que la tabla y que la fila "ETAPA" de esta misma ficha.
-  const stageLabel = stageWordForState(data?.stage?.weekly?.state || "", data?.stage?.label || "")?.word
-    || setupDisplay?.shortLabel
-    || "Etapa sin clasificar";
+  const stageDisplay = stageWordForState(data?.stage?.weekly?.state || "", data?.stage?.label || "");
   return (
-    <section className="stockVerdict" data-decision={decision}>
+    <section className="stockVerdict" data-stage={stageDisplay?.tone || "none"}>
       <div className="stockVerdictHead">
         <div className="stockVerdictIdentity">
           <div className="stockLogoPro">
@@ -166,46 +164,32 @@ function N0VerdictBlock({
             {data?.currency && <span className="stockVerdictCurrency">{data.currency}</span>}
             {Number.isFinite(priceSnapshot?.dayChangePct) && (
               <span className="stockVerdictChange">
-                {signedPriceMoney(priceSnapshot.dayChange)} ({pct(priceSnapshot.dayChangePct)})
+                {signedPriceMoney(priceSnapshot.dayChange)} ({sharedPct(priceSnapshot.dayChangePct)})
               </span>
             )}
           </div>
         </div>
         <div className="stockVerdictActions">
-          <DecisionCurveChip decision={decision} label="Decisión" stageLabel={stageLabel} />
+          <StageCurveChip stageTone={stageDisplay?.tone || ""} stageWord={stageDisplay?.word || ""} missingReason={STAGE_MISSING_REASON} />
         </div>
       </div>
 
       <QualityStrip items={[
         { label: "Cierre", value: freshness.priceDate ? compactDate(freshness.priceDate) : "Sin fecha" },
         { label: "Cobertura", value: coverage.label || "Completa" },
-        { label: "RS", value: freshness.rsGlobalAsOf ? `${compactDate(freshness.rsGlobalAsOf)} · n=${Math.round(freshness.rsGlobalSample || 0)}` : "Sin snapshot" },
+        { label: "RS", value: freshness.rsGlobalAsOf ? `${compactDate(freshness.rsGlobalAsOf)} · n=${sharedNum(Math.round(freshness.rsGlobalSample || 0))}` : "Sin snapshot" },
         ...(chartUnavailable
           ? [{ label: "Histórico", value: "Sin serie" }]
           : chartEstimated ? [{ label: "Histórico", value: "Estimado" }] : []),
         ...(!priceSnapshot?.coherent ? [{ label: "Cotización", value: "Intradía distinta" }] : []),
       ]} />
 
-      <div className="stockVerdictBrake">
-        <span className="stockVerdictBrakeLabel">Freno</span>
-        {brake || "Sin freno explícito: la decisión se sostiene con los criterios técnicos del setup."}
-      </div>
-
+      {/* El FRENO ("la razón por la que no comprar todavía") y el score de
+          estructura se retiraron: eran el veredicto del sistema con otra ropa.
+          La checklist del setup se queda porque es descriptiva —cuenta
+          condiciones estructurales medidas y cuáles faltan, sin decir qué
+          hacer—; el score sigue disponible en el desglose de N3. */}
       <div className="stockVerdictFoot">
-        <div className="stockVerdictScore">
-          <span className="stockVerdictScoreLabel">Score</span>
-          {/* El score de estructura vive dentro de setupPattern, no en la raíz
-              de la respuesta de company-brief. Leerlo de la raíz dejaba la
-              cabecera en guion SIEMPRE, incluso con el dato calculado y visible
-              en el desglose de auditoría de esta misma ficha. Un 0 aquí es un
-              valor real —el valor no está formando base— y se muestra como 0;
-              el guion queda solo para la ausencia de verdad. */}
-          <span className="stockVerdictScoreValue" data-state={Number.isFinite(patternQualityScore) ? "value" : "ghost"}>
-            {Number.isFinite(patternQualityScore)
-              ? Math.round(patternQualityScore)
-              : <MissingValue reason="Sin score de estructura: la serie de precios de este valor no da para evaluar su base (histórico corto, precio desactualizado o barras incompletas)." />}
-          </span>
-        </div>
         <div className="stockVerdictSetup">
           <span className="stockVerdictSetupLabel">Setup</span>
           <span className="stockVerdictSetupText">{setupSummary || "Setup sin checklist disponible."}</span>
@@ -338,11 +322,15 @@ function N3AuditBlock({ scoreBreakdown = [], company = null, dataQualityDetail =
           {company ? (
             <>
               <div className="stockCompanyTable">
+                {/* Mismos nombres que el cajón de filtros del screener
+                    (Tema/Sector/Subsector): antes esta tabla llamaba
+                    "Industria" al subsector del screener y "Subsector" al
+                    tema — la taxonomía cruzada entre pantallas. */}
                 <KVRow label="Sector" value={company.sector || "—"} state={company.sector ? "value" : "ghost"} />
-                <KVRow label="Industria" value={company.industry || "—"} state={company.industry ? "value" : "ghost"} />
-                <KVRow label="Subsector" value={company.subsector || "—"} state={company.subsector ? "value" : "ghost"} />
+                <KVRow label="Subsector" value={company.industry || "—"} state={company.industry ? "value" : "ghost"} />
+                <KVRow label="Tema" value={company.subsector || "—"} state={company.subsector ? "value" : "ghost"} />
                 <KVRow label="Empleados" value={fmt(company.employees)} state={Number.isFinite(company.employees) ? "value" : "ghost"} />
-                <KVRow label="IPO" value={company.ipoDate || "—"} state={company.ipoDate ? "value" : "ghost"} detail={company.listingDateSource} />
+                <KVRow label="IPO" value={company.ipoDate ? dateShort(company.ipoDate) : "—"} state={company.ipoDate ? "value" : "ghost"} detail={company.listingDateSource} />
               </div>
               <p className="stockCompanyDescription">{company.description || "Sin descripción de negocio."}</p>
             </>
@@ -381,37 +369,30 @@ function N3AuditBlock({ scoreBreakdown = [], company = null, dataQualityDetail =
   );
 }
 
-const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
+/* Formato: TODO delega en la capa única es-ES (lib/formatters.js). Aquí solo
+   quedan los envoltorios con la etiqueta de ausencia de la ficha ("Sin dato")
+   y las semánticas locales (rsFmt/scoreFmt con clamp 0-99). Antes la ficha
+   tenía su propio juego (coma en precios, punto en porcentajes: "490,99 USD ·
+   -0.7%" en la misma línea). */
+const fmt = (n) => Number.isFinite(n) ? sharedNum(n) : "Sin dato";
 const rsFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
 const scoreFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
-const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
-const ratio = (n) => Number.isFinite(n) ? n.toFixed(2) : "Sin dato";
+// Proporción sin signo (márgenes, volatilidad, cuotas); las VARIACIONES con
+// signo usan sharedPct directamente en su sitio.
+const pct = (n) => Number.isFinite(n) ? pctShare(n, 1) : "Sin dato";
+const ratio = (n) => Number.isFinite(n) ? sharedNum(n, 2) : "Sin dato";
 const margin = (numerator, denominator) => Number.isFinite(numerator) && Number.isFinite(denominator) && denominator !== 0 ? pct((numerator / denominator) * 100) : "Sin dato";
-const dateFmt = (value) => {
-  if (!value) return "Sin dato";
-  const d = new Date(value);
-  return Number.isFinite(d.getTime()) ? d.toLocaleDateString("es-ES", { year: "numeric", month: "short", day: "2-digit" }) : "Sin dato";
-};
+const dateFmt = (value) => value ? dateShort(value) : "Sin dato";
 const dateTimeFmt = (value) => {
   if (!value) return "";
-  const d = new Date(value);
-  return Number.isFinite(d.getTime()) ? d.toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : String(value).slice(0, 16);
+  const label = dateTime(value);
+  return label === "-" ? String(value).slice(0, 16) : label;
 };
-const money = (n, currency = "") => {
-  if (!Number.isFinite(n)) return "Sin dato";
-  const abs = Math.abs(n);
-  const value = abs >= 1e12 ? `${(n / 1e12).toFixed(2)}T` : abs >= 1e9 ? `${(n / 1e9).toFixed(1)}B` : abs >= 1e6 ? `${(n / 1e6).toFixed(0)}M` : fmt(n);
-  return currency ? `${value} ${currency}` : value;
-};
-const priceMoney = (n, currency = "") => {
-  if (!Number.isFinite(n)) return "Sin dato";
-  const value = n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return currency ? `${value} ${currency}` : value;
-};
+const money = (n, currency = "") => Number.isFinite(n) ? amount(n, currency) : "Sin dato";
+const priceMoney = (n, currency = "") => Number.isFinite(n) ? sharedPriceMoney(n, currency) : "Sin dato";
 const signedPriceMoney = (n, currency = "") => {
   if (!Number.isFinite(n)) return "";
-  const sign = n > 0 ? "+" : "";
-  return `${sign}${priceMoney(n, currency)}`;
+  return sharedSignedPriceMoney(n, currency);
 };
 const sentimentClass = (label = "") => label === "alcista" ? "bullish" : label === "bajista" ? "bearish" : "neutral";
 const compactTitle = (...parts) => parts.map((part) => String(part || "").trim()).filter(Boolean).join(" · ");
@@ -502,7 +483,7 @@ function riskTone(value, warn = 60) {
 }
 
 function sampleText(value) {
-  return Number.isFinite(value) ? `n=${Math.round(value)}` : "sin muestra";
+  return Number.isFinite(value) ? `n=${sharedNum(Math.round(value))}` : "sin muestra";
 }
 
 function compactBusinessTeaser(data = {}) {
@@ -562,7 +543,7 @@ function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" 
     : metricSourceState("review", "RS bench", "sin benchmark suficiente");
   const sourceLine = weekly
     ? `RS global semanal USD · ${sampleText(globalSample)}${globalDate ? ` · ${globalDate}` : ""}`
-    : "Sin RS semanal: este simbolo no entra en el ranking del universo";
+    : "Sin RS semanal: este símbolo no entra en el ranking del universo";
 
   return <section className="card rsPanel">
     <div className="sectionTitle rsPanelTitle">
@@ -575,14 +556,14 @@ function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" 
     <div className="rsPanelGrid">
       <RsGroup title="Ranking" subtitle="percentil 1-99">
         <RsMetric label="RS global" value={rsFmt(globalScore)} detail={sampleText(globalSample)} tone={scoreTone(globalScore)} source={sourceForSample("RS global", globalScore, globalSample, 20, sourceLine)} />
-        <RsMetric label="RS pais" value={rsFmt(rs.rsCountryPct)} detail={countryDetail} tone={scoreTone(rs.rsCountryPct)} source={sourceForSample("RS pais", rs.rsCountryPct, rs.rsCountrySample, 5, countryDetail)} />
+        <RsMetric label="RS país" value={rsFmt(rs.rsCountryPct)} detail={countryDetail} tone={scoreTone(rs.rsCountryPct)} source={sourceForSample("RS país", rs.rsCountryPct, rs.rsCountrySample, 5, countryDetail)} />
         <RsMetric label="Grupo" value={rsFmt(rs.rsSectorPct)} detail={groupDetail} tone={scoreTone(rs.rsSectorPct)} source={sourceForSample("Grupo", rs.rsSectorPct, groupSample, 5, groupDetail)} />
       </RsGroup>
       <RsGroup title={`Benchmark ${benchmarkSymbol}`} subtitle="precio relativo">
         <RsMetric label="RS bench" value={rsFmt(rsBenchmark)} detail="modelo técnico" tone={scoreTone(rsBenchmark)} source={benchmarkSource} />
-        <RsMetric label="3M" value={pct(rs.rs3m)} detail="vs benchmark" tone={valueTone(rs.rs3m)} source={metricSourceForValue(rs.rs3m, "RS 3M", "vs benchmark")} />
-        <RsMetric label="6M" value={pct(rs.rs6m)} detail="vs benchmark" tone={valueTone(rs.rs6m)} source={metricSourceForValue(rs.rs6m, "RS 6M", "vs benchmark")} />
-        <RsMetric label="12M" value={pct(rs.rs12m)} detail="vs benchmark" tone={valueTone(rs.rs12m)} source={metricSourceForValue(rs.rs12m, "RS 12M", "vs benchmark")} />
+        <RsMetric label="3M" value={sharedPct(rs.rs3m)} detail="vs benchmark" tone={valueTone(rs.rs3m)} source={metricSourceForValue(rs.rs3m, "RS 3M", "vs benchmark")} />
+        <RsMetric label="6M" value={sharedPct(rs.rs6m)} detail="vs benchmark" tone={valueTone(rs.rs6m)} source={metricSourceForValue(rs.rs6m, "RS 6M", "vs benchmark")} />
+        <RsMetric label="12M" value={sharedPct(rs.rs12m)} detail="vs benchmark" tone={valueTone(rs.rs12m)} source={metricSourceForValue(rs.rs12m, "RS 12M", "vs benchmark")} />
       </RsGroup>
       <RsGroup title="Calidad y riesgo" subtitle="datos técnicos">
         <RsMetric label="RS quality" value={scoreFmt(rs.rsQualityScore)} detail={rs.rsQualityLabel || "estabilidad"} tone={scoreTone(rs.rsQualityScore, 70, 45)} source={Number.isFinite(rs.rsQualityScore) ? metricSourceState("proxy", "RS quality", "score compuesto técnico") : metricSourceState("review", "RS quality", "sin dato")} />
@@ -591,8 +572,8 @@ function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" 
         <RsMetric label="Drawdown 63d" value={pct(rs.maxDrawdown63d)} detail="maximo" tone={riskTone(rs.maxDrawdown63d, 25)} source={metricSourceForValue(rs.maxDrawdown63d, "Drawdown 63d", "maximo")} />
       </RsGroup>
       <RsGroup title="Precio" subtitle="contexto">
-        <RsMetric label="Perf 3M" value={pct(rs.perf3m)} detail="precio absoluto" tone={valueTone(rs.perf3m)} source={metricSourceForValue(rs.perf3m, "Perf 3M", "precio absoluto")} />
-        <RsMetric label="Dist. 52W high" value={pct(rs.distance52w)} detail="desde maximo" tone={Number.isFinite(rs.distance52w) && rs.distance52w >= -15 ? "good" : "neutral"} source={metricSourceForValue(rs.distance52w, "Dist. 52W high", "desde maximo")} />
+        <RsMetric label="Perf 3M" value={sharedPct(rs.perf3m)} detail="precio absoluto" tone={valueTone(rs.perf3m)} source={metricSourceForValue(rs.perf3m, "Perf 3M", "precio absoluto")} />
+        <RsMetric label="Dist. 52W high" value={sharedPct(rs.distance52w)} detail="desde maximo" tone={Number.isFinite(rs.distance52w) && rs.distance52w >= -15 ? "good" : "neutral"} source={metricSourceForValue(rs.distance52w, "Dist. 52W high", "desde maximo")} />
       </RsGroup>
     </div>
   </section>;
@@ -608,127 +589,13 @@ function PeerLogo({ item }) {
   </span>;
 }
 
-function SignalStat({ label, value, detail, tone = "" }) {
-  return <div className={`signalStat ${tone}`}>
-    <span>{label}</span>
-    <b>{value}</b>
-    {detail && <small>{detail}</small>}
-  </div>;
-}
-
-const TRADE_PLAN_STORAGE_KEY = "statsedge:tradePlan";
-function readTradePlanPrefs() {
-  if (typeof window === "undefined") return { accountSize: "", accountRiskPct: "1" };
-  try {
-    const raw = window.localStorage.getItem(TRADE_PLAN_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const accountRiskPct = Number(parsed.accountRiskPct);
-      return {
-        accountSize: parsed.accountSize != null ? String(parsed.accountSize) : "",
-        accountRiskPct: Number.isFinite(accountRiskPct) && accountRiskPct > 0 ? String(accountRiskPct) : "1",
-      };
-    }
-  } catch {}
-  return { accountSize: "", accountRiskPct: "1" };
-}
-
-function tradePlanContext(plan) {
-  const distance = plan?.distanceToPivotPct;
-  if (!Number.isFinite(distance)) return { label: "Sin precio", detail: "Precio actual no disponible", tone: "neutral" };
-  const absoluteDistance = Math.abs(distance);
-  if (distance < -3) return { label: "Bajo pivot", detail: `a ${pct(absoluteDistance)} del pivot`, tone: "below" };
-  if (distance <= 3) {
-    return {
-      label: "Zona pivot",
-      detail: distance >= 0 ? `precio ${pct(distance)} sobre pivot` : `a ${pct(absoluteDistance)} del pivot`,
-      tone: "ready",
-    };
-  }
-  return { label: "Sobre pivot", detail: `precio ${pct(distance)} sobre pivot`, tone: distance > 8 ? "extended" : "neutral" };
-}
-
-function TradePlanPanel({ pattern, price, currency, structure, display }) {
-  // Initialise with SSR-safe defaults; read localStorage only after mount so the
-  // server and first client render agree (no hydration mismatch).
-  const [prefs, setPrefs] = useState({ accountSize: "", accountRiskPct: "1" });
-  const hydratedRef = useRef(false);
-  useEffect(() => {
-    setPrefs(readTradePlanPrefs());
-    hydratedRef.current = true;
-  }, []);
-  useEffect(() => {
-    if (!hydratedRef.current || typeof window === "undefined") return;
-    try { window.localStorage.setItem(TRADE_PLAN_STORAGE_KEY, JSON.stringify(prefs)); } catch {}
-  }, [prefs]);
-
-  const accountSize = Number(prefs.accountSize);
-  const accountRiskPct = Number(prefs.accountRiskPct);
-  const displayGate = display || methodologyDisplayForRow(pattern || {});
-  const gate = useMemo(() => {
-    if (displayGate.blocksPatternClaim) return { actionable: false, reason: displayGate.reason || displayGate.line || "Datos insuficientes para derivar plan." };
-    if (!displayGate.actionable || !displayGate.tradePlanEligible) return { actionable: false, reason: displayGate.tradePlanReason || displayGate.reason || "Plan no válido para esta estructura." };
-    return tradePlanEligibility({
-      ...(pattern || {}),
-      setupStructureKey: structure?.key,
-      setupStructureStrict: structure?.strict,
-      setupStructureReason: structure?.reason,
-    });
-  }, [pattern, structure, displayGate]);
-  const plan = useMemo(() => computeTradePlan(
-    { ...(pattern || {}), price },
-    {
-      accountSize: Number.isFinite(accountSize) && accountSize > 0 ? accountSize : undefined,
-      accountRiskPct: Number.isFinite(accountRiskPct) && accountRiskPct > 0 ? accountRiskPct : 1,
-    },
-  ), [pattern, price, accountSize, accountRiskPct]);
-  const context = plan.available ? tradePlanContext(plan) : null;
-  if (!gate.actionable) return null;
-
-  return <section className="card terminalPanel tradePlanPanel">
-    <div className="sectionTitle tradePlanTitle">
-      <div>
-        <h2>Plan de operación</h2>
-        <span className="fine">Niveles derivados de la base · referencia técnica, no recomendación</span>
-      </div>
-      {context && <span className={`tradePlanStatus ${context.tone}`.trim()}>{context.label}</span>}
-    </div>
-    {!plan.available
-      ? <p className="fine">{plan.reason || "Sin estructura medible para derivar un plan."}</p>
-      : <>
-        <div className="signalStrip tradePlanLevels">
-          <SignalStat
-            label="Pivot técnico"
-            value={priceMoney(plan.pivot, currency)}
-            detail={context?.detail || ""}
-            tone={plan.abovePivot ? "neutral" : ""}
-          />
-          <SignalStat label="Stop referencia" value={priceMoney(plan.stop, currency)} detail={`${plan.stopType} · riesgo ${pct(plan.riskPct)}`} tone="bad" />
-          <SignalStat label="Objetivo 2R" value={priceMoney(plan.target2R, currency)} tone="good" />
-          <SignalStat label="Objetivo 3R" value={priceMoney(plan.target3R, currency)} tone="good" />
-        </div>
-        {plan.deepBase && <p className="fine tradePlanNotice">Base profunda: el mínimo estructural queda más allá del {plan.cappedStopPct}% bajo el pivot. El stop se acota al {plan.cappedStopPct}% para limitar la pérdida por acción.</p>}
-        <div className="tradePlanSizing">
-          <div className="tradePlanSizingHead">
-            <span>Dimensionamiento por riesgo</span>
-            <small>{plan.sizing ? `Presupuesto ${priceMoney(plan.sizing.riskBudget, currency)}` : "Completa capital y riesgo"}</small>
-          </div>
-          <div className="tradePlanFields">
-            <label className="field tradePlanField"><span>Capital de cuenta</span><input className="input" type="number" inputMode="decimal" min="0" value={prefs.accountSize} placeholder="ej. 10000" onChange={(event) => setPrefs((previous) => ({ ...previous, accountSize: event.target.value }))} /></label>
-            <label className="field tradePlanField"><span>Riesgo por operación %</span><input className="input" type="number" inputMode="decimal" min="0.1" step="0.25" value={prefs.accountRiskPct} onChange={(event) => setPrefs((previous) => ({ ...previous, accountRiskPct: event.target.value }))} /></label>
-          </div>
-        </div>
-        {plan.sizing
-          ? <div className="signalStrip tradePlanSizingResults">
-            <SignalStat label="Acciones" value={fmt(plan.sizing.shares)} detail={`presupuesto de riesgo ${priceMoney(plan.sizing.riskBudget, currency)}`} />
-            <SignalStat label="Importe posición" value={money(plan.sizing.positionValue, currency)} detail={`${pct(plan.sizing.positionPctOfAccount)} de la cuenta`} tone={plan.sizing.leveraged ? "bad" : ""} />
-            <SignalStat label="Riesgo / acción" value={priceMoney(plan.riskPerShare, currency)} />
-          </div>
-          : <p className="fine tradePlanEmpty">Introduce tu capital para calcular tamaño de posición.</p>}
-        {plan.sizing?.shares === 0 && <p className="fine tradePlanEmpty">El presupuesto de riesgo no alcanza una acción completa con este stop.</p>}
-      </>}
-  </section>;
-}
+/* El "Plan de operación" (pivot autogenerado, stop, objetivos 2R/3R y
+   calculadora de posición) se retiró de la ficha: niveles de precio con
+   nombre "Objetivo" y tamaño de posición sugerido son exactamente lo que
+   el principio 1 prohíbe — el producto diciendo cuánto arriesgar. El
+   cálculo (lib/tradePlan.js) sigue existiendo sin superficie. Los datos
+   descriptivos que aquel panel duplicaba siguen a la vista: distancia al
+   pivot en N1, base/volumen seco en el desglose de N3. */
 
 function StockReviewFlowRail({ navigation = null, onOpenSymbol }) {
   if (!navigation?.totalRows) return null;
@@ -825,7 +692,7 @@ function fallbackObservationChecklist(origin = null) {
     },
     {
       key: "chart",
-      label: "Grafico",
+      label: "Gráfico",
       value: "Revisar",
       detail: "Comprueba temporalidad, volumen, RS y estructura.",
       tone: "neutral",
@@ -835,8 +702,8 @@ function fallbackObservationChecklist(origin = null) {
 
 function StockMethodGuardrails({ desk = null, origin = null }) {
   const guardrail = desk?.guardrail || (origin ? {
-    title: "Apoyo de observacion, no señal automatica",
-    detail: "El screener ordena evidencias; la entrada, salida o descarte debe salir de tu metodo y revision manual.",
+    title: "Apoyo de observación, no señal automática",
+    detail: "El screener ordena evidencias; la entrada, salida o descarte debe salir de tu metodo y revisión manual.",
   } : null);
   const checklist = desk?.observationChecklist?.length ? desk.observationChecklist : fallbackObservationChecklist(origin);
   if (!guardrail && !checklist.length) return null;
@@ -928,7 +795,7 @@ function StockDecisionDesk({
         </div>
       </div>
       <div className="stockDecisionChartRail">
-        <span>Coherencia grafico</span>
+        <span>Coherencia gráfico</span>
         <div>
           {desk.chartRead.map((item) => <b key={item.key} className={item.tone || ""} title={item.detail || item.value}>
             <em>{item.label}</em>{item.value}
@@ -936,7 +803,7 @@ function StockDecisionDesk({
         </div>
       </div>
     </div>
-    <div className="stockDecisionPresetRail" aria-label="Vistas de observación del grafico">
+    <div className="stockDecisionPresetRail" aria-label="Vistas de observación del gráfico">
       {DECISION_CHART_PRESETS.map((item) => <button
         type="button"
         key={item.key}
@@ -1010,7 +877,7 @@ function HolderTable({ title, rows }) {
     <div className="tableWrap">
       <table className="table">
         <thead><tr>{["Nombre", "%", "Posicion", "Valor", "Fecha"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
-        <tbody>{rows?.length ? rows.map((r) => <tr key={`${title}-${r.name}`}><td>{r.name}</td><td>{pct(r.pctHeld)}</td><td>{fmt(r.position)}</td><td>{fmt(r.value)}</td><td>{r.reportDate || "Sin dato"}</td></tr>) : <tr><td colSpan="5">Sin dato</td></tr>}</tbody>
+        <tbody>{rows?.length ? rows.map((r) => <tr key={`${title}-${r.name}`}><td>{r.name}</td><td>{pct(r.pctHeld)}</td><td>{fmt(r.position)}</td><td>{fmt(r.value)}</td><td>{r.reportDate ? dateShort(r.reportDate) : "Sin dato"}</td></tr>) : <tr><td colSpan="5">Sin dato</td></tr>}</tbody>
       </table>
     </div>
   </section>;
@@ -1020,7 +887,7 @@ function EarningsSection({ calendar = {}, currency = "" }) {
   if (!calendar) return null;
   return <section className="card">
     <div className="sectionTitle">
-      <h2>Resultados y calendario <InfoHint text={calendar.source || "Calendario y estimaciones segun proveedor disponible."} /></h2>
+      <h2>Resultados y calendario <InfoHint text={calendar.source || "Calendario y estimaciones según proveedor disponible."} /></h2>
     </div>
     <div className="calendarGrid">
       <Metric label="Proxima fecha resultados" value={calendar.earningsDate || (calendar.earningsStart && calendar.earningsEnd ? `${calendar.earningsStart} / ${calendar.earningsEnd}` : "Sin dato")} />
@@ -1143,7 +1010,7 @@ function ResultsSection({ results = {}, currency = "", embedded = false, snapsho
     </div>
     {isSnapshot ? <div className="fundamentalSnapshotPane">{snapshot}</div> : visiblePeriods.length && visibleRows.length ? <div className="tableWrap statementMatrix">
       <table className="table">
-        <thead><tr><th>Magnitud</th>{visiblePeriods.map((row) => <th key={`${period}-${row.date}`}>{row.date || "Sin dato"}</th>)}</tr></thead>
+        <thead><tr><th>Magnitud</th>{visiblePeriods.map((row) => <th key={`${period}-${row.date}`}>{row.date ? dateShort(row.date) : "Sin dato"}</th>)}</tr></thead>
         <tbody>{visibleRows.map((row) => <tr key={`${statement}-${row.label}`}>
           <td>{row.label}</td>
           {visiblePeriods.map((periodRow) => {
@@ -1152,7 +1019,7 @@ function ResultsSection({ results = {}, currency = "", embedded = false, snapsho
           })}
         </tr>)}</tbody>
       </table>
-    </div> : <div className="dataNote" style={{ marginTop: 12 }}>Historico insuficiente del proveedor para esta vista. Se mantienen las metricas disponibles y el resto queda como Sin dato.</div>}
+    </div> : <div className="dataNote" style={{ marginTop: 12 }}>Histórico insuficiente del proveedor para esta vista. Se mantienen las métricas disponibles y el resto queda como Sin dato.</div>}
   </section>;
 }
 
@@ -1221,7 +1088,7 @@ function CompactHolderList({ title, rows = [] }) {
     <div>
       {visibleRows.length ? visibleRows.map((row) => <div className="compactHolderRow" key={`${title}-${row.name}`}>
         <span>{row.name || "Sin nombre"}</span>
-        <b>{Number.isFinite(row.pctHeld) ? pct(row.pctHeld) : row.reportDate || ""}</b>
+        <b>{Number.isFinite(row.pctHeld) ? pct(row.pctHeld) : row.reportDate ? dateShort(row.reportDate) : ""}</b>
       </div>) : <div className="compactHolderEmpty">Sin dato</div>}
     </div>
   </div>;
@@ -1378,7 +1245,7 @@ function FundamentalMiniTable({ results = {}, currency = "", metrics = {}, share
     </div>;
   }
 
-  return <div className="fundamentalMiniTable" aria-label="Historico fundamental compacto">
+  return <div className="fundamentalMiniTable" aria-label="Histórico fundamental compacto">
     <div className="fundamentalMiniRow head">
       <span>{useAnnual ? "Año" : "Per."}</span>
       <span>Ventas</span>
@@ -1416,8 +1283,8 @@ function NewsSection({ rows = [] }) {
   </>;
   return <section className="card">
     <div className="sectionTitle">
-      <h2>Noticias relevantes <InfoHint text="Noticias recuperadas desde fuentes disponibles. La relevancia y el sesgo son heuristicas, no una clasificacion editorial." /></h2>
-      <span className="fine">sesgo heuristico</span>
+      <h2>Noticias relevantes <InfoHint text="Noticias recuperadas desde fuentes disponibles. La relevancia y el sesgo son heurísticas, no una clasificación editorial." /></h2>
+      <span className="fine">sesgo heurístico</span>
     </div>
     <div className="newsGrid">
       {rows?.length ? rows.map((item, index) => {
@@ -1443,7 +1310,7 @@ function SocialPulseSection({ social = null, loading = false, symbol = "" }) {
   const hasRows = !!social?.rows?.length;
   return <section className="card">
     <div className="sectionTitle">
-      <h2>Pulso X / cashtag <InfoHint text="Busca posts recientes con cashtag tipo $TICKER si hay integracion social configurada. No se usa como fuente de precio." /></h2>
+      <h2>Pulso X / cashtag <InfoHint text="Busca posts recientes con cashtag tipo $TICKER si hay integración social configurada. No se usa como fuente de precio." /></h2>
       <span className="fine">{loading ? "cargando" : hasRows ? "muestra reciente" : "sin datos"}</span>
     </div>
     {social?.error && <div className="dataNote" style={{ marginBottom: 12 }}>{social.error}</div>}
@@ -1533,7 +1400,11 @@ function MethodologyAuditPanel({ pattern, verdict, stage }) {
   const currentVerdict = verdict || display.verdict;
   const confidence = display.confidence;
   const objective = vcpObjectiveSummary(pattern);
-  const stageOk = /stage 2/i.test(stage?.label || "");
+  // Diccionario único de la etapa (lib/stageDisplay.js): el gate escribe la
+  // MISMA palabra que la tabla y la cabecera, venga el label guardado en el
+  // formato viejo ("Stage 2 probable") o en el nuevo.
+  const stageGateInfo = stageWordForState(stage?.weekly?.state || "", stage?.label || "");
+  const stageOk = stageGateInfo?.tone === "stage2";
   // El desglose numérico del score (Base/rango, Compresiones, Última comp.,
   // Rango 10d, Pivot, Volumen seco, Score patrón) vive ahora en stockScoreBreakdown
   // dentro de N3 — este panel solo conserva los gates que no son desglose del score
@@ -1559,7 +1430,7 @@ function MethodologyAuditPanel({ pattern, verdict, stage }) {
     <div className="auditGrid">
       <AuditCheck label="Datos técnicos" value={confidence.label} state={confidence.state} detail={confidence.detail || currentVerdict.dataLabel || dataStatusLabel(pattern.patternDataStatus)} />
       <AuditCheck label="Histórico" value={objective.history?.value || "Sin dato"} state={objective.history?.state || "neutral"} detail={objective.history?.detail || ""} />
-      <AuditCheck label="Etapa" value={stage?.label || "Sin dato"} state={stageOk ? "pass" : "warn"} />
+      <AuditCheck label="Etapa" value={stageGateInfo?.word || "Sin dato"} state={stageOk ? "pass" : "warn"} />
       <AuditCheck label="Plan" value={planValid ? "Válido" : "No válido"} state={planValid ? "pass" : "fail"} detail={display.tradePlanReason || currentVerdict.tradePlanReason || display.reason || ""} />
     </div>
   </section>;
@@ -1603,7 +1474,7 @@ function ComparativeContext({ rows = [], note = "", symbol = "" }) {
             <td><StructureSummary row={item} compact /></td>
             <td><ContractionTape row={item} depths={item.contractionDepths} /></td>
             <td>{Number.isFinite(item.baseDepthPct) ? `${item.baseDepthPct.toFixed(1)}%` : "Sin dato"}<br /><span className="fine">{Number.isFinite(item.baseWeeks) ? `${item.baseWeeks.toFixed(1)} sem` : ""}</span></td>
-            <td>{blocked ? blockedCell : Number.isFinite(item.distanceToPivotPct) ? pct(item.distanceToPivotPct) : "Sin dato"}</td>
+            <td>{blocked ? blockedCell : Number.isFinite(item.distanceToPivotPct) ? sharedPct(item.distanceToPivotPct) : "Sin dato"}</td>
             <td>{blocked ? blockedCell : Number.isFinite(item.volumeDryUpRatio) ? `${item.volumeDryUpRatio.toFixed(2)}x` : "Sin dato"}</td>
             <td>{Number.isFinite(item.rsSectorPct) ? item.rsSectorPct.toFixed(0) : "Sin dato"}</td>
             <td><DataConfidenceCell row={item} /></td>
@@ -1793,7 +1664,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const chartEstimated = localQuality.status !== "real";
   const chartSourceDetail = chartUnavailable
     ? "sin serie de precios real"
-    : chartEstimated ? "historico estimado por fallback operativo" : "calculada desde barras";
+    : chartEstimated ? "histórico estimado por fallback operativo" : "calculada desde barras";
   const compactProfile = data ? [data.sector, data.industry, data.country].filter(Boolean).join(" · ") : "";
   const setupPattern = useMemo(() => {
     const pattern = data?.setupPattern || (data?.chartBars?.length ? setupPatternForBars(data.chartBars) : null);
@@ -1801,7 +1672,6 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   }, [data?.setupPattern, data?.chartBars]);
   const setupDisplay = useMemo(() => methodologyDisplayForRow(setupPattern || {}), [setupPattern]);
   const setupVerdict = setupDisplay.verdict;
-  const setupStructure = setupDisplay.structure;
   const setupTradePlanEligible = setupDisplay.actionable && setupDisplay.tradePlanEligible && !setupDisplay.blocksPatternClaim;
   const actionableSetupPattern = setupTradePlanEligible ? setupPattern : null;
   const decisionDesk = buildStockDecisionDesk({
@@ -1952,9 +1822,9 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const canExpandCompanyBrief = companySummary.length > 80;
   const rsUniverseSource = Number.isFinite(rsUniverse)
     ? Number.isFinite(rs.rsGlobalSample) && rs.rsGlobalSample >= 20
-      ? metricSourceState("measured", "RS", `n=${Math.round(rs.rsGlobalSample)}`)
+      ? metricSourceState("measured", "RS", `n=${sharedNum(Math.round(rs.rsGlobalSample))}`)
       : metricSourceState("review", "RS", "muestra insuficiente o snapshot sin muestra")
-    : metricSourceState("review", "RS", "sin ranking semanal para este simbolo");
+    : metricSourceState("review", "RS", "sin ranking semanal para este símbolo");
   const setupSource = chartEstimated
     ? metricSourceState("review", "Estructura", chartSourceDetail)
     : setupDisplay.blocksPatternClaim || setupDisplay.dataLimited
@@ -1968,29 +1838,10 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
 
   /* ── Cálculos para N0–N3 (jerarquía FICHA-TICKER-IA.md) ─────────── */
 
-  // Decisión (vigilar / auditar / descartar): se deriva del estado del
-  // foco metodológico. Si no hay foco, se mira el verdict del setup.
-  const decisionState = (() => {
-    // Sin serie real no hay decisión que emitir. El default histórico era
-    // "auditar", que convertía la ausencia de dato en un veredicto técnico
-    // sobre valores de los que el sistema no sabe nada.
-    if (chartUnavailable) return "sin-dato";
-    const focusState = decisionDesk?.decisionFocus?.state || decisionDesk?.status || "";
-    const validated = decisionResolution?.key || decisionValidationKey;
-    if (validated === "vigilar" || /listo|ready/i.test(focusState)) return "vigilar";
-    if (validated === "descartar" || /bloquead|blocked/i.test(focusState)) return "descartar";
-    if (validated === "auditar" || /pendiente|partial|review/i.test(focusState)) return "auditar";
-    // Sin foco explícito: auditar por defecto (curva neutra)
-    return "auditar";
-  })();
-
-  // Freno (una sola frase): si hay razón metodológica, esa; si no, la
-  // distancia al pivot o la nota del setup.
-  const brake = setupDisplay?.reason
-    || decisionDesk?.decisionFocus?.detail
-    || (Number.isFinite(setupPattern?.distanceToPivotPct)
-      ? `A ${pct(Math.abs(setupPattern.distanceToPivotPct))} del pivot${setupPattern.distanceToPivotPct > 0 ? " por encima" : " por debajo"}.`
-      : "");
+  // La "decisión" (vigilar/auditar/descartar) y el "freno" del sistema ya no
+  // se calculan para la cabecera: el veredicto se retiró de N0 (principio 1).
+  // La resolución del USUARIO (candidata/vigilar/descartar) sigue viva en la
+  // mesa de decisión y en la cola de Review — esa sí es suya.
 
   // Resumen de setup ("3/5 · falta: ...") — alimentado por el score
   // del patrón cuando está disponible.
@@ -2077,7 +1928,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     },
     {
       label: "MA50",
-      value: Number.isFinite(technical.distanceSma50) ? pct(technical.distanceSma50) : "—",
+      value: Number.isFinite(technical.distanceSma50) ? sharedPct(technical.distanceSma50) : "—",
       state: Number.isFinite(technical.distanceSma50) ? (chartEstimated ? "stale" : "value") : "ghost",
       suffix: chartEstimated && Number.isFinite(technical.distanceSma50) ? "est" : "",
       source: Number.isFinite(technical.distanceSma50)
@@ -2086,7 +1937,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     },
     {
       label: "MA200",
-      value: Number.isFinite(technical.distanceSma200) ? pct(technical.distanceSma200) : "—",
+      value: Number.isFinite(technical.distanceSma200) ? sharedPct(technical.distanceSma200) : "—",
       state: Number.isFinite(technical.distanceSma200) ? (chartEstimated ? "stale" : "value") : "ghost",
       suffix: chartEstimated && Number.isFinite(technical.distanceSma200) ? "est" : "",
       source: Number.isFinite(technical.distanceSma200)
@@ -2103,7 +1954,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     },
     {
       label: "PIVOT",
-      value: Number.isFinite(setupPattern?.distanceToPivotPct) ? pct(setupPattern.distanceToPivotPct) : "—",
+      value: Number.isFinite(setupPattern?.distanceToPivotPct) ? sharedPct(setupPattern.distanceToPivotPct) : "—",
       state: Number.isFinite(setupPattern?.distanceToPivotPct) ? "value" : "ghost",
       source: Number.isFinite(setupPattern?.distanceToPivotPct)
         ? metricSourceState("measured", "Pivot", "precio relativo al pivot estructural")
@@ -2111,7 +1962,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     },
     {
       label: "ATH",
-      value: Number.isFinite(technical.distance52w) ? pct(technical.distance52w) : "—",
+      value: Number.isFinite(technical.distance52w) ? sharedPct(technical.distance52w) : "—",
       state: Number.isFinite(technical.distance52w) ? (chartEstimated ? "stale" : "value") : "ghost",
       suffix: chartEstimated && Number.isFinite(technical.distance52w) ? "est" : "",
       source: Number.isFinite(technical.distance52w)
@@ -2124,13 +1975,13 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const n2Fundamentals = [
     {
       label: "VENTAS YOY",
-      value: pct(g.revenueGrowth),
+      value: sharedPct(g.revenueGrowth),
       state: Number.isFinite(g.revenueGrowth) ? "value" : "ghost",
       source: metricSourceForValue(g.revenueGrowth, "Ventas YoY", "proveedor financiero"),
     },
     {
       label: "EPS YOY",
-      value: pct(heroEpsYoY),
+      value: sharedPct(heroEpsYoY),
       state: Number.isFinite(heroEpsYoY) ? "value" : "ghost",
       source: heroEpsSource,
     },
@@ -2196,21 +2047,16 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   }
 
   return <main className="page stockPage">
-    {/* N0 — Veredicto (siempre visible, sin scroll) */}
+    {/* N0 — Cabecera: identidad + precio + etapa (siempre visible, sin scroll) */}
     <N0VerdictBlock
       symbol={symbol}
       data={data}
-      patternQualityScore={setupPattern?.patternQualityScore ?? null}
       priceSnapshot={priceSnapshot}
       freshness={freshness}
       coverage={coverage}
       chartEstimated={chartEstimated}
       chartUnavailable={chartUnavailable}
-      decisionDesk={decisionDesk}
-      setupDisplay={setupDisplay}
-      brake={brake}
       setupSummary={setupSummary}
-      decision={decisionState}
       actions={n0Actions}
     />
 
@@ -2310,9 +2156,8 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
         }
       />
 
-      {/* Plan de operación y comparativos: viven al final, fuera de la
-          jerarquía N0–N3, como soporte secundario. */}
-      <TradePlanPanel pattern={setupPattern} structure={setupStructure} display={setupDisplay} price={priceSnapshot.price} currency={data.currency} />
+      {/* Comparativos y contexto: viven al final, fuera de la jerarquía
+          N0–N3, como soporte secundario. */}
       <SimilarStocks rows={similar} />
       <ComparativeContext rows={comparables.rows} note={comparables.note} symbol={symbol} />
       <RelativeStrengthPanel rs={rs} rsUniverse={rsUniverse} rsBenchmark={rsBenchmark} country={data.country} />

@@ -7,7 +7,7 @@ import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { CountValue } from "@/app/components/ui/CountValue";
 import { getJson, requestHeaders } from "@/lib/clientApi";
-import { num, pct, pctShare } from "@/lib/formatters";
+import { dateTime, num, pct, pctShare } from "@/lib/formatters";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";
 import { filterGroupsByStrength, groupRows, STRENGTH_FILTERS } from "@/lib/grouping";
 import { buildGroupListDrilldown } from "@/lib/listRationale";
@@ -44,7 +44,7 @@ function listHref(dimension, key) {
 }
 
 function dimensionLabel(dimension) {
-  return { theme: "tematica", sector: "sector", industry: "industria" }[dimension] || dimension;
+  return { theme: "tema", sector: "sector", industry: "subsector" }[dimension] || dimension;
 }
 
 function listText(items = []) {
@@ -120,7 +120,7 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, countryFil
       : usingDiscovery
         ? health.note
         : countryFilter !== "Todos"
-          ? "Filtro de pais activo: usando snapshot local para no mezclar universos."
+          ? "Filtro de país activo: usando snapshot local para no mezclar universos."
           : "Usando snapshot/favoritos locales hasta tener scans persistidos suficientes.";
 
   return <div className="marketReliabilityBlock">
@@ -149,8 +149,8 @@ function SectorCoverageAuditPanel({ audit, dimension }) {
 
   return <div className="marketReliabilityBlock">
     <div className="marketReliabilityBlockHead">
-      <h3>Auditoria sector/listas</h3>
-      <span className={`discoveryStatus ${status}`}>{audit.label || "Sin auditoria"}</span>
+      <h3>Auditoría sector/listas</h3>
+      <span className={`discoveryStatus ${status}`}>{audit.label || "Sin auditoría"}</span>
     </div>
     <div className="coverageAuditGrid">
       <span><b><CountValue value={audit.universeRows} reason={AUDIT_COUNT_MISSING} /></b><em>universo scope</em></span>
@@ -171,7 +171,11 @@ function SectorCoverageAuditPanel({ audit, dimension }) {
         <span>{thinGroups.length ? thinGroups.slice(0, 5).map((item) => `${item.key} ${item.count}`).join(" · ") : "Sin alertas"}</span>
       </div>
       <div>
-        <b>Accion recomendada</b>
+        {/* Esta cabecera decía al usuario qué hacer — el vocabulario que el
+            principio 1 prohíbe literalmente (y tests/vocabularioProhibido.test.js
+            vigila). El contenido (avisos de sesgo del ranking) es descriptivo;
+            solo la cabecera era prescriptiva. */}
+        <b>Sesgos detectados</b>
         <span>{issues.length ? issues.join(" · ") : "Ranking sectorial sin sesgos fuertes detectados"}</span>
       </div>
     </div>
@@ -254,7 +258,7 @@ function MarketSectorOverview({ data, error }) {
     {!!sectors.length && <>
       <div className="kpis">
         <div className="kpi"><b>{num(data.marketScore)}</b><span>market score</span></div>
-        <div className="kpi"><b>{textLabel(data.regime)}</b><span>regimen</span></div>
+        <div className="kpi"><b>{textLabel(data.regime)}</b><span>régimen</span></div>
         <div className="kpi"><b>{num(summary.avgScore)}</b><span>score medio</span></div>
         <div className="kpi"><b>{summary.above50 ?? "-"}/{summary.count ?? "-"}</b><span>sobre SMA50</span></div>
         <div className="kpi"><b>{summary.best1m || "-"}</b><span>mejor 1M</span></div>
@@ -281,14 +285,14 @@ function MarketSectorOverview({ data, error }) {
             <td>{pct(sector.perf1m)}</td>
             <td>{pct(sector.perf3m)}</td>
             <td>{pct(sector.rs1m)}</td>
-            <td>{sector.price > sector.sma50 ? "Si" : "No"}</td>
-            <td>{sector.price > sector.sma200 ? "Si" : "No"}</td>
+            <td>{sector.price > sector.sma50 ? "Sí" : "No"}</td>
+            <td>{sector.price > sector.sma200 ? "Sí" : "No"}</td>
             <td>{Number.isFinite(sector.distributionDays20) ? `${sector.distributionDays20}/${sector.accumulationDays20}` : "-"}</td>
             <td>{pct(sector.distance52w)}</td>
           </tr>)}</tbody>
         </table>
       </div>
-      <p className="fine sectorCoverageNote">Proxy inicial mediante ETFs sectoriales USA. La capa por snapshot cubre Europa, Hong Kong, Japon y el resto de mercados cuando hay resultados guardados.</p>
+      <p className="fine sectorCoverageNote">Proxy inicial mediante ETFs sectoriales USA. La capa por snapshot cubre Europa, Hong Kong, Japón y el resto de mercados cuando hay resultados guardados.</p>
     </>}
   </section>;
 }
@@ -352,7 +356,7 @@ function GroupDrilldownPanel({ group, dimension }) {
     </div>
     <div className="controls">
       <a className="btn btnPrimary" href={listHref(dimension, group.key)}>Abrir listas completas del grupo</a>
-      <span className="fine">{visible.length ? `${visible.length} sublistas con candidatos coherentes.` : "La vista completa puede encontrar candidatos si el grupo tiene mas filas que la muestra."}</span>
+      <span className="fine">{visible.length ? `${visible.length} sublistas con candidatos coherentes.` : "La vista completa puede encontrar candidatos si el grupo tiene más filas que la muestra."}</span>
     </div>
   </section>;
 }
@@ -427,7 +431,7 @@ export default function SectorsPage() {
     return [...map.entries()].sort((a, b) => b[1] - a[1]).map(([code, count]) => ({ code, count }));
   }, [baseRows]);
   const rows = useMemo(() => countryFilter === "Todos" ? baseRows : baseRows.filter((row) => rowCountry(row) === countryFilter), [baseRows, countryFilter]);
-  const sourceLabel = snapshotRows.length ? `Snapshot · ${new Date(selectedScan.createdAt).toLocaleString()}` : fallbackRows.length ? "Favoritos guardados" : "Sin datos locales";
+  const sourceLabel = snapshotRows.length ? `Snapshot · ${dateTime(selectedScan.createdAt)}` : fallbackRows.length ? "Favoritos guardados" : "Sin datos locales";
   const discoveryGroups = discovery?.groups?.[dimension] || [];
   const useDiscoveryGroups = discovery?.configured === true && !discoveryError && countryFilter === "Todos" && discoveryGroups.length > 0;
   const groups = useMemo(() => useDiscoveryGroups ? discoveryGroups : groupRows(rows, dimension), [useDiscoveryGroups, discoveryGroups, rows, dimension]);
@@ -441,7 +445,7 @@ export default function SectorsPage() {
   const sectorSourceLabel = discoveryLoading
     ? "Cargando discovery derivado..."
     : useDiscoveryGroups
-      ? `Ranking en vivo · ${discovery?.generatedAt ? new Date(discovery.generatedAt).toLocaleString() : "escaneos guardados"}`
+      ? `Ranking en vivo · ${discovery?.generatedAt ? dateTime(discovery.generatedAt) : "escaneos guardados"}`
       : sourceLabel;
   const coverageAudit = useMemo(() => {
     if (useDiscoveryGroups && discovery?.audit) return discovery.audit;
@@ -498,12 +502,12 @@ export default function SectorsPage() {
         <div>
           <div className="badge">StatsEdge · Sectores</div>
           <h1>Sectores y temáticas</h1>
-          <p className="muted">Ranking por temática, sector e industria desde discovery derivado o snapshot local.</p>
+          <p className="muted">Ranking por tema, sector y subsector desde discovery derivado o snapshot local.</p>
         </div>
         <div className="mobileActions">
           <a className="btn" href="/">Screener</a>
           <a className="btn" href="/lists">Listas</a>
-          <a className="btn" href="/review?source=latest">Vista rapida</a>
+          <a className="btn" href="/review?source=latest">Vista rápida</a>
           <a className="btn btnPrimary" href="/research-desk">Research</a>
           <button className="btn" onClick={reloadLocal}>Recargar local</button>
         </div>
@@ -514,8 +518,8 @@ export default function SectorsPage() {
       <div className="kpis">
         <div className="kpi"><b>{groups.length}</b><span>grupos</span></div>
         <div className="kpi"><b>{visibleRowsCount}</b><span>{useDiscoveryGroups ? "acciones derivadas" : snapshotRows.length ? "acciones en snapshot" : "favoritos agrupados"}</span></div>
-        <div className="kpi"><b>{groups[0]?.key || "-"}</b><span>grupo lider</span></div>
-        <div className="kpi"><b>{weakestGroup?.key || "-"}</b><span>grupo debil</span></div>
+        <div className="kpi"><b>{groups[0]?.key || "-"}</b><span>grupo líder</span></div>
+        <div className="kpi"><b>{weakestGroup?.key || "-"}</b><span>grupo débil</span></div>
       </div>
       <div className="sectorToolbar">
         <label className="field">
@@ -553,7 +557,7 @@ export default function SectorsPage() {
     <section className="card">
       <h2>Agrupar por</h2>
       <div className="controls">
-        {[["theme", "Tematica"], ["sector", "Sector"], ["industry", "Industria"]].map(([key, label]) => <button key={key} className={`btn ${dimension === key ? "btnActive" : ""}`} onClick={() => { setDimension(key); setActive(""); }}>{label}</button>)}
+        {[["theme", "Tema"], ["sector", "Sector"], ["industry", "Subsector"]].map(([key, label]) => <button key={key} className={`btn ${dimension === key ? "btnActive" : ""}`} onClick={() => { setDimension(key); setActive(""); }}>{label}</button>)}
       </div>
       <h2 style={{ marginTop: 18 }}>Filtrar fuerza</h2>
       <div className="controls">
@@ -603,7 +607,7 @@ export default function SectorsPage() {
       <div className="sectionTitle"><h2>Lideres de {selected.key}</h2><span className="fine">{groupRowsLabel(selected)}</span></div>
       <div className="tableWrap">
         <table className="table">
-          <thead><tr>{["Ticker", "Empresa", "País", "Temática", "Sector", "Industria", metricShortLabel("rsGlobalPct"), metricShortLabel("weaknessScore"), "3M", "6M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("riskScore"), metricShortLabel("objectiveScore"), "Acciones"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
+          <thead><tr>{["Ticker", "Empresa", "País", "Tema", "Sector", "Subsector", metricShortLabel("rsGlobalPct"), metricShortLabel("weaknessScore"), "3M", "6M", "52w", "SMA50", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("riskScore"), metricShortLabel("objectiveScore"), "Acciones"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
           <tbody>{selected.items.slice(0, 40).map((row) => {
             const trustSignature = rowTrustSignatureForRow(row);
             return <tr key={row.symbol}>

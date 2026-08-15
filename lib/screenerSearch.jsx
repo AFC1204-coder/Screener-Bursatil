@@ -27,7 +27,7 @@ export function SearchCandidateList({ candidates = [], activeSymbol = "", onPick
 export function SearchScopeList({ items = [], onPick }) {
   if (!items.length) return null;
   return <div className="searchCandidates searchScopePanel">
-    <div className="sectionTitle"><h2>Busqueda asistida</h2><span className="fine">Activa vistas sin abrir mas filtros</span></div>
+    <div className="sectionTitle"><h2>Busqueda asistida</h2><span className="fine">Activa vistas sin abrir más filtros</span></div>
     <div className="searchScopeGrid">
       {items.map((item) => <button type="button" className="searchScopeChip" key={`${item.type}-${item.value}`} onClick={() => onPick?.(item)}>
         <span>{item.icon}</span>

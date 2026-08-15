@@ -7,7 +7,7 @@ import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { getJson } from "@/lib/clientApi";
-import { num, pct, pctShare } from "@/lib/formatters";
+import { dateShort, dateTime, num, pct, pctShare } from "@/lib/formatters";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { canonicalRsValue } from "@/lib/rsCanonical";
@@ -19,11 +19,7 @@ import { snapshotDisplayUpdate } from "@/lib/snapshotDisplay";
 import { metricValue, rowRsBenchmark, rowTheme, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
 
-const dateFmt = (value) => {
-  if (!value) return "-";
-  const d = new Date(value);
-  return Number.isFinite(d.getTime()) ? d.toLocaleDateString("es-ES", { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "-";
-};
+const dateFmt = (value) => value ? dateTime(value) : "-";
 
 const sentimentClass = (label = "") => label === "alcista" ? "bullish" : label === "bajista" ? "bearish" : "neutral";
 const sentimentDirection = (label = "") => label === "alcista" ? "up" : label === "bajista" ? "down" : "flat";
@@ -204,7 +200,7 @@ function SentimentRow({ data, title = "Lectura contraria", sampleLabel = "titula
   return (
     <div className="marketSentimentRow">
       <div className="marketSentimentRowHead">
-        <small>{title} · {data?.regime || "sin regimen"}</small>
+        <small>{title} · {data?.regime || "sin régimen"}</small>
         <span className="marketSentimentIndex">{pessimismValue === null
           ? <MissingValue reason="El servidor no ha devuelto índice de pesimismo para esta muestra." />
           : num(pessimismValue)}</span>
@@ -670,7 +666,7 @@ export default function MarketHealthPage() {
               </div>
               <div className="marketRegimeKpi">
                 <b>{pctShare(data.weinsteinTape?.pctSectorsStage2)}</b>
-                <span>Sectores E2</span>
+                <span>Sectores en etapa 2</span>
                 <span className="marketRegimeKpiMeter"><i style={{ width: `${Math.min(100, Math.max(0, data.weinsteinTape?.pctSectorsStage2 ?? 0))}%` }} /></span>
               </div>
               <div className="marketRegimeKpi">
@@ -690,7 +686,7 @@ export default function MarketHealthPage() {
               <div className="marketTapeKpis">
                 <div className="marketTapeKpi"><b>{data.weinsteinTape.indexesAbove30w ?? "—"}/{data.weinsteinTape.indexesTotal ?? data.indexes?.length ?? "—"}</b><span>Sobre MM30s</span></div>
                 <div className="marketTapeKpi"><b>{pctShare(data.weinsteinTape.pctSectorsAbove30w)}</b><span>Sectores sobre MM30s</span></div>
-                <div className="marketTapeKpi"><b>{pctShare(data.weinsteinTape.pctSectorsStage4)}</b><span>Sectores E4</span></div>
+                <div className="marketTapeKpi"><b>{pctShare(data.weinsteinTape.pctSectorsStage4)}</b><span>Sectores en etapa 4</span></div>
                 <div className="marketTapeKpi"><b>{pctShare(data.weinsteinTape.pctSectorsAbove50 ?? data.sectorSummary?.above50)}</b><span>Sobre SMA50</span></div>
               </div>
               <div className="marketPulseEvidence">
@@ -724,7 +720,7 @@ export default function MarketHealthPage() {
               <div className="marketSectorTapeRow">
                 <div>
                   <b>Tipo de liderazgo</b>
-                  <span>Ofensivo E2: {data.weinsteinTape.offensiveStage2 ?? "—"} · Defensivo E2: {data.weinsteinTape.defensiveStage2 ?? "—"}</span>
+                  <span>Ofensivos en etapa 2: {data.weinsteinTape.offensiveStage2 ?? "—"} · Defensivos en etapa 2: {data.weinsteinTape.defensiveStage2 ?? "—"}</span>
                 </div>
                 <div>
                   <b>Sensores seleccionados</b>
@@ -887,7 +883,7 @@ export default function MarketHealthPage() {
                             <td data-col="data">{pct(x.distanceSma30w)}</td>
                             <td data-col="data">{pct(x.sma200Slope)}</td>
                             <td data-col="data">{Number.isFinite(x.distributionDays20) ? `${x.distributionDays20}/${x.accumulationDays20}` : "—"}</td>
-                            <td data-col="data">{x.lastDate || "—"}</td>
+                            <td data-col="data">{x.lastDate ? dateShort(x.lastDate) : "—"}</td>
                           </tr>
                         ))}</tbody>
                       </table>

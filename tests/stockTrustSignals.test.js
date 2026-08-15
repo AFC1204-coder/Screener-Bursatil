@@ -296,7 +296,7 @@ describe("stock trust signals", () => {
     expect(stackRule[0]).toMatch(/gap:/);
   });
 
-  it("paneles complementarios (RS, Fundamentals holders, TradePlan, Similar, News) tienen reglas CSS de display/gap para evitar label-valor pegados", () => {
+  it("paneles complementarios (RS, Fundamentals holders, Similar, News) tienen reglas CSS de display/gap para evitar label-valor pegados", () => {
     // Regresión del bug visual detectado en captura: tras reducir
     // styles/stock.css de ~3617 a ~1018 líneas se perdieron las reglas
     // .stockPage .rsMetric, .stockPage .compactHolderRow, etc., y los
@@ -329,16 +329,12 @@ describe("stock trust signals", () => {
         why: "logo + texto en grid; sin display:grid se apilan raro" },
       { selector: ".stockPage .similarGrid", display: true, gap: false,
         why: "grid de tarjetas similares; sin display:grid se apilan en columna única" },
-      { selector: ".stockPage .tradePlanPanel", display: true, gap: true,
-        why: "sección con secciones internas; gap entre filas" },
-      { selector: ".stockPage .tradePlanFields", display: true, gap: true,
-        why: "formulario capital/riesgo en grid 2-col; sin gap se pegan" },
+      // tradePlanPanel / tradePlanFields / signalStrip vivían aquí: el Plan de
+      // operación se retiró de la ficha (principio 1) y su CSS con él.
       { selector: ".stockPage .auditGrid", display: true, gap: true,
         why: "gates de metodología en grid; sin gap las celdas se pegan" },
       { selector: ".stockPage .statementMatrix", display: false, gap: false,
         why: "wrapper de tabla (table-layout); no necesita display" },
-      { selector: ".stockPage .signalStrip", display: true, gap: false,
-        why: "franja de stats de trade plan; grid 5-col" },
     ];
 
     for (const { selector, display, gap, why } of requirements) {

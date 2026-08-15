@@ -78,8 +78,8 @@ export function DecisionEvidenceChecklist({ evidence = null, compact = false, ac
         <em>{item.statusLabel || item.status}</em>
       </strong>)}
     </div>
-    {!compact && reviewFocus.length ? <section className="decisionEvidenceReviewFocus" aria-label="Foco de revision metodologica">
-      <span>{evidence?.manualReviewRequired ? "Foco revision" : "Contexto observado"}</span>
+    {!compact && reviewFocus.length ? <section className="decisionEvidenceReviewFocus" aria-label="Foco de revisión metodológica">
+      <span>{evidence?.manualReviewRequired ? "Foco revisión" : "Contexto observado"}</span>
       {reviewFocus.map((item) => {
         const visibleDetail = item.detail || item.statusLabel || item.status || "Validar";
         const fullDetail = [item.action, item.detail].filter(Boolean).join(" · ") || undefined;
@@ -103,7 +103,7 @@ export function DecisionEvidenceChecklist({ evidence = null, compact = false, ac
       {body}
     </button>;
   }
-  return <div className={className} aria-label="Pruebas de decision">{body}</div>;
+  return <div className={className} aria-label="Pruebas de decisión">{body}</div>;
 }
 
 export function ScoreAuditPanel({ audit = null, compact = false, activeKey = "all", onFilter }) {
@@ -171,7 +171,7 @@ export function DecisionEvidenceSummaryRail({ summary = null, activeKey = "all",
     if (!item?.key) return;
     onSelect?.(activeKey === item.key ? "all" : item.key);
   };
-  return <section className={railClass} aria-label="Resumen de pruebas de decision">
+  return <section className={railClass} aria-label="Resumen de pruebas de decisión">
     <div className="dataHealthSummaryIntro" title={summary.verdict?.detail || `${summary.rows} filas evaluadas`}>
       <span>Pruebas</span>
       <b>{summary.verdict?.label || "Checklist"}</b>

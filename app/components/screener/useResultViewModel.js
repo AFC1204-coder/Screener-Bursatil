@@ -315,8 +315,8 @@ export function useResultViewModel({
   function reviewPendingDecisionWork() {
     const reviewRows = pendingDecisionWorkSummary.rows?.length ? pendingDecisionWorkSummary.rows : filtered;
     const detail = pendingDecisionWorkSummary.usesHighConfidence
-      ? "Sin decidir · confianza alta · prioridad decision"
-      : "Sin decidir · prioridad decision";
+      ? "Sin decidir · confianza alta · prioridad decisión"
+      : "Sin decidir · prioridad decisión";
     openReview(reviewRows, pendingDecisionWorkSummary.top?.symbol || "", {
       sourceLabel: "Trabajo pendiente",
       sourceDetail: detail,
@@ -481,7 +481,7 @@ export function useResultViewModel({
     }
     openReview(reviewRows, reviewRows[0]?.symbol || "", {
       sourceLabel: `Prioridad: ${priority.label}`,
-      sourceDetail: `Filtro de prioridad de investigacion · ${reviewRows.length} acciones`,
+      sourceDetail: `Filtro de prioridad de investigación · ${reviewRows.length} acciones`,
       queueMode: "priority-focus",
     });
   }
@@ -505,7 +505,7 @@ export function useResultViewModel({
     }
     openReview(reviewRows, reviewRows[0]?.symbol || "", {
       sourceLabel: `Pruebas: ${label}`,
-      sourceDetail: `Checklist de decision · ${reviewRows.length} acciones`,
+      sourceDetail: `Checklist de decisión · ${reviewRows.length} acciones`,
       queueMode: "evidence-focus",
     });
   }
@@ -531,7 +531,7 @@ export function useResultViewModel({
     }
     openReview(reviewRows, reviewRows[0]?.symbol || "", {
       sourceLabel: `Score audit: ${label}`,
-      sourceDetail: `Auditoria de score · ${reviewRows.length} acciones`,
+      sourceDetail: `Auditoría de score · ${reviewRows.length} acciones`,
       queueMode: "score-audit-focus",
     });
   }
