@@ -239,11 +239,22 @@ async function fetchUniverseRows(config, snapshotId) {
   return rows;
 }
 
+// ETF de referencia de mercado (decisión 2026-08-16): los índices del producto
+// son ETF (SPY/QQQ/IWM/DIA/ACWI, más VTI como mercado total) y necesitan
+// histórico en daily_bars como cualquier otro valor. No vienen en
+// universe_snapshot_symbols (no son equities del universo investable), así que
+// se anclan aquí para que cada corrida los refresque con el resto.
+const REFERENCE_ETF_SYMBOLS = ["SPY", "QQQ", "IWM", "DIA", "VTI", "ACWI"];
+
 function buildEquityPopulation(universeRows) {
   const passedEquity = universeRows.filter((row) => row.passed === true && (row.instrument_type === "equity" || row.instrument_type === "listed-vehicle"));
   const closedEndFunds = passedEquity.filter((row) => CLOSED_END_FUND_NAME_PATTERN.test(row.name || ""));
   const clean = passedEquity.filter((row) => !CLOSED_END_FUND_NAME_PATTERN.test(row.name || ""));
-  return { rows: clean, excludedAsClosedEndFund: closedEndFunds };
+  const present = new Set(clean.map((row) => String(row.symbol || "").toUpperCase()));
+  const referenceRows = REFERENCE_ETF_SYMBOLS
+    .filter((symbol) => !present.has(symbol))
+    .map((symbol) => ({ symbol, name: `Referencia de mercado (${symbol})`, instrument_type: "reference-etf", passed: true }));
+  return { rows: [...referenceRows, ...clean], excludedAsClosedEndFund: closedEndFunds };
 }
 
 // ── Concurrencia simple (mismo patrón que mapLimit en rs-universe.mjs) ────

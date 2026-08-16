@@ -1250,7 +1250,12 @@ function priceSnapshotFromBars(bars = [], quote = {}) {
   };
 }
 
-const BENCHMARK_OPTIONS = ["SPY", "QQQ", "ACWI", "IWM", "^GSPC", "^IXIC", "^N225", "^HSI", "^STOXX50E", "^AXJO"];
+// Los benchmarks de índice US van por su ETF (decisión 2026-08-16): fuera
+// ^GSPC y ^IXIC, que duplicaban SPY y QQQ con un símbolo que el sistema no
+// acumula en daily_bars. Los cuatro últimos (^N225, ^HSI, ^STOXX50E, ^AXJO)
+// son benchmarks extranjeros que no encajan con una versión solo-US; quedan
+// señalados aquí pero su retirada es una decisión aparte.
+const BENCHMARK_OPTIONS = ["SPY", "QQQ", "ACWI", "IWM", "DIA", "VTI", "^N225", "^HSI", "^STOXX50E", "^AXJO"];
 
 function cleanBenchmarkSymbol(value = "") {
   return String(value || "").trim().toUpperCase().replace(/\s+/g, "").slice(0, 24);

@@ -7,12 +7,16 @@ const DEFAULT_MARKET_HEALTH_MAX_AGE_HOURS = 4;
 const MARKET_HEALTH_RESPONSE_TIMEOUT_MS = Number(process.env.MARKET_HEALTH_RESPONSE_TIMEOUT_MS || 7500);
 const MARKET_HEALTH_CACHE_READ_TIMEOUT_MS = Number(process.env.MARKET_HEALTH_CACHE_READ_TIMEOUT_MS || 1500);
 
+// Los índices de referencia son ETF, no símbolos con prefijo (^GSPC, ^IXIC...):
+// los ETF se descargan y calculan como cualquier otro valor del sistema, y el
+// nocturno puede acumularles histórico en daily_bars. Decisión 2026-08-16.
+// QQQ replica el Nasdaq-100 (no el Composite) y DIA el Dow: el nombre lo dice.
 const INDEXES = [
-  { symbol: "^GSPC", name: "S&P 500", weight: 30 },
-  { symbol: "^IXIC", name: "Nasdaq Composite", weight: 30 },
-  { symbol: "^RUT", name: "Russell 2000", weight: 20 },
-  { symbol: "^DJI", name: "Dow Jones", weight: 10 },
-  { symbol: "ACWI", name: "MSCI ACWI ETF", weight: 10 },
+  { symbol: "SPY", name: "S&P 500", weight: 30 },
+  { symbol: "QQQ", name: "Nasdaq 100", weight: 30 },
+  { symbol: "IWM", name: "Russell 2000", weight: 20 },
+  { symbol: "DIA", name: "Dow Jones", weight: 10 },
+  { symbol: "ACWI", name: "MSCI ACWI", weight: 10 },
 ];
 
 const SECTOR_ETFS = [
@@ -306,8 +310,23 @@ function sectorState(score) {
   return { label: "Muy débil", bias: "bajista" };
 }
 
+// Guard de identidad: si el proveedor eco-a un símbolo distinto del pedido, la
+// serie es de OTRO instrumento (un fallback que remapeó el ticker, por
+// ejemplo). Un índice de referencia que no está debe fallar visiblemente — la
+// fila cae a `failures`, que la pantalla ya lista — nunca sustituirse en
+// silencio. Los proveedores que no ecoan símbolo (Stooq no lo trae) no pueden
+// validarse por esta vía; Yahoo, que es la principal, sí.
+function assertServedSymbol(requested, chartMeta = {}) {
+  const served = String(chartMeta.symbol || "").trim().toUpperCase();
+  const asked = String(requested || "").trim().toUpperCase();
+  if (served && asked && served !== asked) {
+    throw new Error(`El proveedor sirvió ${served} en lugar de ${asked}`);
+  }
+}
+
 async function analyzeIndex(meta) {
-  const { bars } = await fetchYahooChart(meta.symbol);
+  const { bars, meta: chartMeta } = await fetchYahooChart(meta.symbol);
+  assertServedSymbol(meta.symbol, chartMeta);
   if (!bars || bars.length < 220) throw new Error("Histórico insuficiente");
   const price = bars[0].close;
   const s50 = sma(bars, 50);
@@ -337,7 +356,8 @@ async function analyzeIndex(meta) {
 }
 
 async function analyzeSector(meta, benchmarkBars = []) {
-  const { bars } = await fetchYahooChart(meta.symbol);
+  const { bars, meta: chartMeta } = await fetchYahooChart(meta.symbol);
+  assertServedSymbol(meta.symbol, chartMeta);
   if (!bars || bars.length < 220) throw new Error("Histórico insuficiente");
   const p1w = perf(bars, 5);
   const p1m = perf(bars, 21);
