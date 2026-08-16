@@ -3,6 +3,7 @@ import "../../styles/market-health.css";
 import { useEffect, useState } from "react";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import RegimeConstellation, { aggregatePosition, regimeTone } from "./RegimeConstellation";
+import UniverseBreadthCard from "./UniverseBreadth";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
@@ -403,7 +404,26 @@ function MethodologyDetail({ health, loading }) {
 }
 
 /* ─── Regiones (cards compactas; N1) ───────────────────────────────── */
-function GlobalRegionsPanel({ rows = [] }) {
+// La amplitud por región sale de la agregación por país del escaneo nocturno
+// (/api/market-breadth), no de las filas del navegador: misma cifra para
+// todos los usuarios y con fecha declarada. Las filas del snapshot local solo
+// alimentan la lista de líderes y su recuento, que se etiquetan como tales.
+function regionBreadth(breadth, regionCountries, otherCountries, isGlobal) {
+  if (!breadth || breadth.error) return null;
+  let total = 0;
+  let measured = 0;
+  let above = 0;
+  for (const [country, bucket] of Object.entries(breadth.countries || {})) {
+    const inRegion = isGlobal ? !otherCountries.has(country) : regionCountries.includes(country);
+    if (!inRegion) continue;
+    total += bucket.total || 0;
+    measured += bucket.sma50Measured || 0;
+    above += bucket.sma50Above || 0;
+  }
+  return { total, measured, above, pct: measured ? (above / measured) * 100 : null };
+}
+
+function GlobalRegionsPanel({ rows = [], breadth = null }) {
   const REGIONS = [
     { key: "US", name: "Estados Unidos", flag: "🇺🇸", benchmark: "S&P 500 (SPY)", countries: ["US"] },
     { key: "EU", name: "Europa", flag: "🇪🇺", benchmark: "Euro Stoxx 50 (FEZ)", countries: ["ES", "DE", "FR", "NL", "CH", "SE", "IT", "BE", "PT", "AT", "IE", "GB"] },
@@ -411,25 +431,19 @@ function GlobalRegionsPanel({ rows = [] }) {
     { key: "Global", name: "Global / Emergentes", flag: "🌐", benchmark: "MSCI ACWI (ACWI)", countries: [] },
   ];
 
+  const otherCountries = new Set([
+    ...REGIONS[0].countries, ...REGIONS[1].countries, ...REGIONS[2].countries,
+  ]);
   const regionCards = REGIONS.map((region) => {
     let filtered = [];
     if (region.key === "Global") {
-      const otherCountries = new Set([
-        ...REGIONS[0].countries, ...REGIONS[1].countries, ...REGIONS[2].countries,
-      ]);
       filtered = rows.filter((r) => !otherCountries.has(r.country || "US"));
     } else {
       filtered = rows.filter((r) => region.countries.includes(r.country || "US"));
     }
 
     const total = filtered.length;
-    // La amplitud se calcula SOLO sobre los valores que traen extensión sobre
-    // la SMA50. Antes `(r.extSma50 ?? 0) >= 0` contaba a los que no la traen
-    // como si estuvieran por encima, y con la región vacía el resultado era
-    // "+0.0% amplitud" junto a "Sin activos analizados": un cero fabricado.
-    const measured = filtered.filter((r) => Number.isFinite(r.extSma50));
-    const above50 = measured.filter((r) => r.extSma50 >= 0).length;
-    const amplitudePct = measured.length ? (above50 / measured.length) * 100 : null;
+    const amplitude = regionBreadth(breadth, region.countries, otherCountries, region.key === "Global");
     // Promedio del MISMO RS que el resto del producto. Los símbolos sin
     // ranking semanal quedan fuera del promedio en vez de entrar con el
     // percentil de su lote, que no es comparable entre valores.
@@ -456,12 +470,21 @@ function GlobalRegionsPanel({ rows = [] }) {
           <span className="marketRegionTag">{rsLabel}</span>
         </div>
         <div className="marketRegionMetrics">
-          <div className="marketRegionMetric">
-            {Number.isFinite(amplitudePct)
-              ? <b>{pct(amplitudePct)}</b>
-              : <b><MissingValue reason={total
-                ? "Ningún valor de esta región trae la distancia a su SMA50, así que no se puede medir la amplitud."
-                : "Sin valores de esta región en el último snapshot: no hay muestra sobre la que medir amplitud."} /></b>}
+          <div
+            className="marketRegionMetric"
+            title={Number.isFinite(amplitude?.pct)
+              ? `Sobre SMA50: ${amplitude.above} de ${amplitude.measured} valores del escaneo nocturno (cierre ${dateShort(breadth?.dataAsOf)})`
+              : ""}
+          >
+            {/* Proporción, no variación: pctShare (sin signo). El "+67,7%" de
+                antes usaba el formateador de variaciones para una amplitud. */}
+            {Number.isFinite(amplitude?.pct)
+              ? <b>{pctShare(amplitude.pct)}</b>
+              : <b><MissingValue reason={!amplitude
+                ? "La amplitud se calcula en el servidor sobre el escaneo nocturno y ahora mismo no está disponible."
+                : amplitude.total
+                  ? "Ningún valor de esta región trae la distancia a su SMA50 en el escaneo nocturno."
+                  : "Sin valores de esta región en el universo del escaneo nocturno."} /></b>}
             <span>Amplitud (SMA50)</span>
           </div>
           <div className="marketRegionMetric" title={Number.isFinite(avgRs) ? `Media del RS semanal de ${validRs.length} de ${total} valores del snapshot` : ""}>
@@ -472,7 +495,7 @@ function GlobalRegionsPanel({ rows = [] }) {
                 : "Sin valores de esta región en el último snapshot: no hay RS que promediar."} /></b>}
             <span>RS promedio</span>
           </div>
-          <div className="marketRegionMetric"><b>{total}</b><span>En snapshot</span></div>
+          <div className="marketRegionMetric"><b>{total}</b><span>En snapshot local</span></div>
         </div>
         <div className="marketRegionLeaders">
           {leaders.map((leader) => {
@@ -512,6 +535,7 @@ function GlobalRegionsPanel({ rows = [] }) {
 
 export default function MarketHealthPage() {
   const [data, setData] = useState(null);
+  const [breadth, setBreadth] = useState(null);
   const [news, setNews] = useState(null);
   const [social, setSocial] = useState(null);
   const [scanPulse, setScanPulse] = useState(null);
@@ -531,11 +555,18 @@ export default function MarketHealthPage() {
     setError("");
     refreshScanPulse();
     try {
-      const [marketResult, newsResult, socialResult] = await Promise.allSettled([
+      const [marketResult, breadthResult, newsResult, socialResult] = await Promise.allSettled([
         fetchJsonWithTimeout("/api/market-health", 25000),
+        fetchJsonWithTimeout("/api/market-breadth", 20000),
         fetchJsonWithTimeout("/api/market-news", 8000),
         fetchJsonWithTimeout("/api/social-sentiment", 8000),
       ]);
+      // La amplitud del universo tiene su propio estado: si falla, su tarjeta
+      // declara la ausencia sin tumbar el resto de la pantalla.
+      if (breadthResult.status === "rejected") console.error("[salud de mercado] amplitud del universo no disponible:", breadthResult.reason);
+      setBreadth(breadthResult.status === "fulfilled"
+        ? breadthResult.value
+        : { error: userFacingServiceError(breadthResult.reason?.message, "La amplitud del universo no está disponible ahora mismo.") });
       if (newsResult.status === "rejected") console.error("[salud de mercado] titulares no disponibles:", newsResult.reason);
       if (socialResult.status === "rejected") console.error("[salud de mercado] pulso social no disponible:", socialResult.reason);
       setNews(newsResult.status === "fulfilled" ? newsResult.value : { error: userFacingServiceError(newsResult.reason?.message, "Los titulares de mercado no están disponibles ahora mismo."), rows: [] });
@@ -730,12 +761,17 @@ export default function MarketHealthPage() {
             </section>
           )}
 
+          <UniverseBreadthCard breadth={breadth} loading={loading} />
+
           <section className="card">
             <div className="sectionTitle">
               <h2>Liderazgo y fuerza relativa global</h2>
-              <span className="fine">Amplitud y líderes por regiones principales</span>
+              {/* Dos poblaciones conviven en estas tarjetas y se declaran: la
+                  amplitud es del escaneo nocturno; los líderes, del snapshot
+                  local del navegador. */}
+              <span className="fine">Amplitud del escaneo nocturno · líderes del snapshot local</span>
             </div>
-            <GlobalRegionsPanel rows={scanPulse?.rows || []} />
+            <GlobalRegionsPanel rows={scanPulse?.rows || []} breadth={breadth} />
           </section>
 
           <section className="card">
