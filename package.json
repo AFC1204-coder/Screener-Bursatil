@@ -6,6 +6,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "test": "vitest run",
+    "lint": "eslint .",
     "test:integration:ephemeral": "node --test tests/integration/bootstrap-control.contract.test.mjs tests/integration/ephemeral-roles.real.test.mjs tests/integration/scan-result-set-integrity.real.test.mjs tests/integration/scan-result-set-concurrency.real.test.mjs tests/integration/scan-execution-lifecycle.real.test.mjs tests/integration/scan-result-set-finalization-publication.real.test.mjs tests/integration/scan-result-set-published-read.real.test.mjs tests/integration/schema-parity.real.test.mjs",
     "test:integration:ephemeral:reset": "bash scripts/reset-ephemeral-db.sh && npm run test:integration:ephemeral",
     "test:integration:legacy": "vitest run tests/integration/check-daily-bars-cap.real.test.mjs tests/integration/check-scan-finalize.real.test.mjs tests/integration/check-signal-contradictions.real.test.mjs tests/integration/coverage-scan-summary.real.test.mjs tests/integration/diagnose-isolation.test.mjs tests/integration/scan-coverage-breakdown.real.test.mjs",
@@ -43,6 +44,9 @@
   },
   "devDependencies": {
     "@next/swc-wasm-nodejs": "^16.2.6",
+    "eslint": "^10.8.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.11.0",
     "playwright": "^1.60.0",
     "vitest": "^4.1.8"
   }

@@ -230,6 +230,35 @@ fi
 rm -f "$TEST_LOG"
 
 ################################################################################
+# PARTE C.1 — LINT (npm run lint)
+#
+# Motivo: el proyecto no tenía linter. Dos fallos llegaron a producción por
+# referencias a funciones/variables sin definir (ReferenceError en runtime,
+# invisible a los tests si el camino que las dispara no está cubierto).
+# ESLint con no-undef los detecta de forma estática sobre todo el árbol.
+################################################################################
+header "PARTE C.1 — Lint (npm run lint)"
+
+LINT_LOG=$(mktemp)
+if npm run lint > "$LINT_LOG" 2>&1; then
+  LINT_STATUS=0
+else
+  LINT_STATUS=1
+fi
+
+if [ "$LINT_STATUS" -eq 0 ]; then
+  ok "npm run lint terminó sin errores."
+else
+  bad "npm run lint terminó con errores (código de salida != 0)."
+  NEEDS_REVIEW+=("npm run lint falló")
+  EXIT_CODE=1
+  echo
+  cat "$LINT_LOG" | sed 's/^/  /'
+fi
+
+rm -f "$LINT_LOG"
+
+################################################################################
 # PARTE D — EL ENTORNO
 #
 # Motivo: esta semana hubo dos servidores de desarrollo corriendo a la vez
@@ -386,6 +415,12 @@ if [ "$TEST_STATUS" -eq 0 ]; then
   ok "Tests: pasan."
 else
   bad "Tests: fallan (ver Parte C)."
+fi
+
+if [ "$LINT_STATUS" -eq 0 ]; then
+  ok "Lint: sin errores."
+else
+  bad "Lint: falla (ver Parte C.1)."
 fi
 
 if [ "$DEV_COUNT" -le 1 ]; then
