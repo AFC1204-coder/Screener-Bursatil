@@ -111,10 +111,15 @@
 //     una tanda de pruebas no desplaza escaneos buenos;
 //   - scripts/purge-scans.mjs lo reconoce y lo borra por lo que es.
 //
-// ── RETENCIÓN: los 7 nocturnos más recientes ──────────────────────────────
-// Decisión ya tomada (docs/orden-y-sector-2026-08-11.md no la cubre; viene
-// del prompt de esta tarea): conservar los SIETE escaneos NOCTURNOS más
-// recientes, con todos sus símbolos analizados. Los anteriores se borran.
+// ── RETENCIÓN: las 7 NOCHES más recientes ─────────────────────────────────
+// Decisión ya tomada: conservar SIETE noches de escaneo nocturno, con todos
+// sus símbolos analizados. Desde 2026-08-16 la unidad es la NOCHE, no la fila
+// de `scans`: cada corrida lleva t<HHMMSS> en el local_id (un reintento ya no
+// sobrescribe a la corrida anterior), así que la retención agrupa por la
+// fecha del local_id, conserva la corrida más reciente de cada una de las 7
+// noches más recientes, y borra el resto (noches viejas y corridas superadas
+// de la misma noche). Antes, tres corridas del 12-08 ocupaban tres de los
+// siete huecos y "7 escaneos" eran solo 5 noches [medido].
 //
 // Existe una RPC de retención en el esquema (upsert_scan_newer_wins,
 // supabase/schema.sql:230-272) pero NO sirve tal cual: purga TOP-3 POR
@@ -175,7 +180,8 @@ const DEFAULT_PRESET = "balanced";
 // Prefijo de local_id que identifica un escaneo nocturno de este script — ver
 // "RETENCIÓN" en la cabecera para el porqué y el caveat conocido.
 const NIGHTLY_LOCAL_ID_PREFIX = NIGHTLY_US_LOCAL_ID_PREFIX;
-// Política ya decidida: conservar los 7 escaneos nocturnos más recientes.
+// Política ya decidida: conservar las 7 noches de escaneo más recientes
+// (la corrida más reciente de cada noche — ver "RETENCIÓN" en la cabecera).
 const DEFAULT_RETENTION_COUNT = 7;
 // Cortesía con la instancia Supabase Micro (ver AVISO en el prompt de la
 // tarea: se ha saturado dos veces esta semana): timeout generoso para que
@@ -247,13 +253,25 @@ export function localIdPrefixFor(args = {}) {
 // dryRun:true nunca llama DELETE — reporta `candidates` (lo que se borraría)
 // y dejan deletedScanCount/deletedRowCount en 0, para separar claramente
 // "esto es lo que pasaría" de "esto pasó".
+// La noche a la que pertenece un escaneo nocturno: la fecha de su local_id
+// (materialized:US:<YYYY-MM-DD>[:t<HHMMSS>]:o<offset>:l<count>). Fallback a la
+// fecha de created_at para cualquier local_id que no la lleve — no debería
+// existir, pero un formato raro no debe hacer que la retención lo agrupe todo
+// bajo una sola "noche" y borre de más.
+const NIGHTLY_LOCAL_ID_DATE_RE = /^materialized:US:(\d{4}-\d{2}-\d{2})(?::|$)/;
+export function nightOfNightlyScan(row = {}) {
+  const match = NIGHTLY_LOCAL_ID_DATE_RE.exec(String(row.local_id || ""));
+  if (match) return match[1];
+  return String(row.created_at || "").slice(0, 10) || "sin-fecha";
+}
+
 export async function pruneNightlyScans(config, options = {}) {
   const retentionCount = Number.isFinite(options.retentionCount) && options.retentionCount > 0
     ? Math.floor(options.retentionCount)
     : DEFAULT_RETENTION_COUNT;
   const dryRun = Boolean(options.dryRun);
   if (options.skip) {
-    return { skipped: true, dryRun, retentionCount, kept: [], candidates: [], deletedScanCount: 0, deletedRowCount: 0 };
+    return { skipped: true, dryRun, retentionCount, kept: [], keptNights: [], candidates: [], deletedScanCount: 0, deletedRowCount: 0 };
   }
   const rows = await supabaseRequest("scans", {
     query: [
@@ -265,27 +283,52 @@ export async function pruneNightlyScans(config, options = {}) {
     ].join("&"),
   });
   const nightly = Array.isArray(rows) ? rows : [];
-  const kept = nightly.slice(0, retentionCount);
-  const overflow = nightly.slice(retentionCount);
-  const candidates = overflow.map((row) => ({
-    id: row.id,
-    localId: row.local_id,
-    rowCount: Number(row.row_count || 0),
-    createdAt: row.created_at,
-  }));
+
+  // Retención por NOCHES distintas, no por número de filas en `scans`.
+  // Motivo medido (2026-08-16): con el conteo plano, tres corridas del 12 de
+  // agosto ocupaban tres de los siete huecos y "7 escaneos" eran solo 5
+  // noches. Y desde que cada corrida es un escaneo distinto (t<HHMMSS> en el
+  // local_id), un reintento nocturno añadiría filas sin esta agrupación y
+  // desplazaría noches buenas. Regla: se conservan las `retentionCount`
+  // noches más recientes, y de cada noche SOLO su corrida más reciente — una
+  // corrida superada de la misma noche es exactamente lo que el upsert
+  // antiguo sobrescribía, solo que ahora se borra DESPUÉS de que la nueva
+  // esté confirmada, no antes de escribirla.
+  const keptNights = [];
+  const kept = [];
+  const candidates = [];
+  for (const row of nightly) {
+    const night = nightOfNightlyScan(row);
+    const isNewNight = !keptNights.includes(night);
+    if (isNewNight && keptNights.length < retentionCount) {
+      keptNights.push(night);
+      kept.push(row);
+      continue;
+    }
+    candidates.push({
+      id: row.id,
+      localId: row.local_id,
+      rowCount: Number(row.row_count || 0),
+      createdAt: row.created_at,
+      night,
+      reason: isNewNight ? "noche fuera de la retención" : "corrida superada de una noche conservada",
+    });
+  }
+
+  const base = { skipped: false, dryRun, retentionCount, kept: kept.map((row) => row.id), keptNights };
   if (!candidates.length) {
-    return { skipped: false, dryRun, retentionCount, kept: kept.map((row) => row.id), candidates: [], deletedScanCount: 0, deletedRowCount: 0 };
+    return { ...base, candidates: [], deletedScanCount: 0, deletedRowCount: 0 };
   }
   if (dryRun) {
-    return { skipped: false, dryRun, retentionCount, kept: kept.map((row) => row.id), candidates, deletedScanCount: 0, deletedRowCount: 0 };
+    return { ...base, candidates, deletedScanCount: 0, deletedRowCount: 0 };
   }
-  const ids = overflow.map((row) => row.id);
+  const ids = candidates.map((row) => row.id);
   await supabaseRequest("scans", {
     method: "DELETE",
     query: `id=in.(${ids.map(encodeURIComponent).join(",")})`,
   });
   const deletedRowCount = candidates.reduce((sum, row) => sum + row.rowCount, 0);
-  return { skipped: false, dryRun, retentionCount, kept: kept.map((row) => row.id), candidates, deletedScanCount: candidates.length, deletedRowCount };
+  return { ...base, candidates, deletedScanCount: candidates.length, deletedRowCount };
 }
 
 // ── Población: mismo criterio "equity" que scripts/refresh-bars.mjs ───────
@@ -349,11 +392,14 @@ async function runAsVitestChild() {
   test("scan-universe-write", async () => {
     const { runMaterializedScan, writeMaterializedScan } = await import("@/lib/materializedScanner.js");
     const { screenerFiltersFromParams } = await import("@/lib/screenerFilters.js");
+    const { writeScanSymbolHistory } = await import("@/lib/scanHistory.js");
+    const { supabaseConfig } = await import("@/lib/supabaseServer.js");
 
     const symbols = String(process.env.SCAN_UNIVERSE_SYMBOLS || "").split(",").map((s) => s.trim()).filter(Boolean);
     const concurrency = Number(process.env.SCAN_UNIVERSE_CONCURRENCY || DEFAULT_CONCURRENCY);
     const preset = process.env.SCAN_UNIVERSE_PRESET || DEFAULT_PRESET;
     const localIdPrefix = process.env.SCAN_UNIVERSE_LOCAL_ID_PREFIX || "";
+    const historyAuthoritative = process.env.SCAN_UNIVERSE_HISTORY_AUTHORITATIVE === "1";
     const screenerFilters = screenerFiltersFromParams({ filterPreset: preset });
 
     const startedAt = Date.now();
@@ -372,10 +418,40 @@ async function runAsVitestChild() {
       minCoverageScore: 40,
       screenerFilters,
       localIdPrefix,
+      // Cada corrida es un escaneo DISTINTO (t<HHMMSS> en el local_id). Sin
+      // esto, un reintento o disparo manual del mismo día upsertaba sobre el
+      // mismo local_id y writeMaterializedScan BORRABA los scan_results de la
+      // corrida anterior antes de reinsertar — la vía por la que una noche
+      // podía quedarse sin datos si el reintento moría a medias.
+      localIdRunStamp: true,
     });
     const scanElapsedMs = Date.now() - startedAt;
 
     const savedScan = await writeMaterializedScan(result.scan);
+
+    // El histórico de símbolos, ANTES descartado: runMaterializedScan lleva
+    // construyendo result.history desde el estreno de la tabla, y este script
+    // lo tiraba — por eso scan_symbol_history tenía CERO filas del nocturno.
+    // Mismo contrato que el cron de Vercel (app/api/cron/scan-refresh):
+    // solo si el escaneo se confirmó guardado, y un fallo aquí no tumba la
+    // corrida — se reporta, el escaneo ya está a salvo.
+    //
+    // authoritativeUniverse: el snapshot de resolveSymbols es null cuando los
+    // símbolos llegan explícitos (como aquí), así que result.history llega
+    // siempre con authoritativeUniverse=false. Pero este script SÍ analiza el
+    // universo US completo cuando corre sin --limit: su población ES el
+    // snapshot autoritativo, y las salidas del universo deben registrarse
+    // (absence_reason='not_in_universe'). Con --limit NUNCA: una corrida de
+    // 300 símbolos marcaría como "fuera del universo" a los ~5.300 restantes.
+    const history = savedScan.saved && result.history
+      ? await writeScanSymbolHistory({
+        ownerId: supabaseConfig().ownerId,
+        sourceScanId: savedScan.scanId,
+        ...result.history,
+        authoritativeUniverse: historyAuthoritative,
+        universeSymbols: historyAuthoritative ? symbols : [],
+      }).catch((error) => ({ saved: false, error: error?.message || String(error) }))
+      : { skipped: true, saved: 0 };
     const totalElapsedMs = Date.now() - startedAt;
 
     fs.writeFileSync(
@@ -392,19 +468,21 @@ async function runAsVitestChild() {
         },
         stats: result.stats,
         savedScan,
+        history,
         screenerFilters: { preset: screenerFilters.preset, enabled: screenerFilters.enabled, activeCount: screenerFilters.active.length },
       }),
     );
   }, VITEST_TEST_TIMEOUT_MS);
 }
 
-async function runWriteViaVitestChild({ symbols, concurrency, preset, localIdPrefix }) {
+async function runWriteViaVitestChild({ symbols, concurrency, preset, localIdPrefix, historyAuthoritative }) {
   const resultFile = path.join(os.tmpdir(), `scan-universe-write-result-${process.pid}.json`);
   process.env.SCAN_UNIVERSE_MODE = "vitest-child";
   process.env.SCAN_UNIVERSE_SYMBOLS = symbols.join(",");
   process.env.SCAN_UNIVERSE_CONCURRENCY = String(concurrency);
   process.env.SCAN_UNIVERSE_PRESET = preset;
   process.env.SCAN_UNIVERSE_LOCAL_ID_PREFIX = localIdPrefix || "";
+  process.env.SCAN_UNIVERSE_HISTORY_AUTHORITATIVE = historyAuthoritative ? "1" : "";
   process.env.SCAN_UNIVERSE_RESULT_FILE = resultFile;
 
   const { startVitest } = await import("vitest/node");
@@ -460,17 +538,17 @@ function logWriteBatches(batches) {
 // borrado) o en real (candidatos == lo que se borró).
 function logRetentionReport(retention) {
   if (retention.skipped) {
-    console.log("Retención saltada (--sin-retencion).");
+    console.log("Retención saltada.");
     return;
   }
-  console.log(`Escaneos nocturnos conservados (de los ${retention.retentionCount} más recientes): ${retention.kept.length}`);
+  console.log(`Noches conservadas (las ${retention.retentionCount} más recientes, la corrida más reciente de cada una): ${retention.keptNights.length}${retention.keptNights.length ? ` — ${retention.keptNights.join(", ")}` : ""}`);
   if (!retention.candidates.length) {
     console.log(retention.dryRun ? "No hay escaneos nocturnos de sobra: nada que borraría." : "No había escaneos nocturnos de sobra: no se borró nada.");
     return;
   }
   console.log(`${retention.dryRun ? "Se borrarían" : "Se borraron"} ${retention.candidates.length} escaneos nocturnos, ${retention.dryRun ? "sumando" : "sumaron"} ${retention.candidates.reduce((sum, c) => sum + c.rowCount, 0)} filas de scan_results (vía cascade desde 'scans'):`);
   for (const candidate of retention.candidates) {
-    console.log(`  - ${candidate.localId} (${candidate.rowCount} filas, creado ${candidate.createdAt})`);
+    console.log(`  - ${candidate.localId} (${candidate.rowCount} filas, creado ${candidate.createdAt}) — ${candidate.reason}`);
   }
 }
 
@@ -494,7 +572,8 @@ async function main() {
   } else if (args.limit > 0) {
     console.log("--nocturno-real: esta corrida acotada SÍ escribe en el espacio de nombres del nocturno.");
   }
-  console.log(`Retención: conserva los ${DEFAULT_RETENTION_COUNT} escaneos nocturnos (local_id "${NIGHTLY_LOCAL_ID_PREFIX}*") más recientes${args.skipRetention ? " — SALTADA por --sin-retencion" : ""}.`);
+  const retentionSkip = args.skipRetention || Boolean(localIdPrefix);
+  console.log(`Retención: conserva las ${DEFAULT_RETENTION_COUNT} NOCHES nocturnas (local_id "${NIGHTLY_LOCAL_ID_PREFIX}*") más recientes, con la corrida más reciente de cada noche${args.skipRetention ? " — SALTADA por --sin-retencion" : localIdPrefix ? " — SALTADA: una corrida de prueba no toca la retención de los nocturnos reales" : ""}.`);
   console.log("");
 
   const { snapshotId, asOf } = await fetchLatestUsSnapshotId(config);
@@ -537,7 +616,7 @@ async function main() {
 
     console.log("");
     console.log("=== RETENCIÓN (vista previa, no borra nada) ===");
-    const retentionPreview = await pruneNightlyScans(config, { dryRun: true, skip: args.skipRetention, retentionCount: DEFAULT_RETENTION_COUNT });
+    const retentionPreview = await pruneNightlyScans(config, { dryRun: true, skip: retentionSkip, retentionCount: DEFAULT_RETENTION_COUNT });
     logRetentionReport(retentionPreview);
 
     console.log("");
@@ -554,9 +633,13 @@ async function main() {
     concurrency: args.concurrency,
     preset: args.preset,
     localIdPrefix,
+    // Solo una corrida del universo COMPLETO es autoritativa sobre quién está
+    // dentro y fuera: con --limit, los símbolos no analizados no están "fuera
+    // del universo", simplemente no se miraron esta vez.
+    historyAuthoritative: args.limit === 0,
   });
 
-  const { stats, scan, savedScan, scanElapsedMs, totalElapsedMs, screenerFilters } = payload;
+  const { stats, scan, savedScan, history, scanElapsedMs, totalElapsedMs, screenerFilters } = payload;
 
   console.log("");
   console.log("=== REPORTE ===");
@@ -583,6 +666,19 @@ async function main() {
   console.log(`Escaneo creado en 'scans': id=${savedScan.scanId} local_id=${savedScan.localId}`);
   console.log(`Nombre: ${scan.name}`);
 
+  // Histórico de símbolos (scan_symbol_history) — la memoria larga de deltas.
+  console.log("");
+  console.log("=== HISTÓRICO DE SÍMBOLOS (scan_symbol_history) ===");
+  if (history?.skipped) {
+    console.log("Escritura omitida: el escaneo no se confirmó como guardado.");
+  } else if (history?.error) {
+    console.log(`AVISO: la escritura del histórico FALLÓ (el escaneo en 'scans' NO se ve afectado): ${history.error}`);
+  } else {
+    console.log(`Filas nuevas escritas (change-only): ${history?.saved ?? 0} de ${history?.candidates ?? 0} observaciones, en ${history?.batches ?? 0} tandas.`);
+    console.log(`Salidas del universo registradas (not_in_universe): ${history?.notInUniverse ?? 0}${args.limit > 0 ? " (corrida acotada: detección de salidas desactivada a propósito)" : ""}`);
+    console.log("Pocas filas NO es una avería: solo se escribe lo que cambió desde la última observación registrada de cada símbolo (o su primera aparición, o el ancla semanal).");
+  }
+
   // Retención DESPUÉS de confirmar la escritura (punto 9 de la tarea): si
   // savedScan.saved no es true, el escaneo no se persistió y no hay nada que
   // retener sobre — no se llama a pruneNightlyScans. Si saved sí es true pero
@@ -594,7 +690,9 @@ async function main() {
     console.log("Escaneo no confirmado como guardado (savedScan.saved !== true) — retención omitida por seguridad.");
   } else {
     try {
-      const retention = await pruneNightlyScans(config, { dryRun: false, skip: args.skipRetention, retentionCount: DEFAULT_RETENTION_COUNT });
+      // retentionSkip incluye las corridas de prueba (localIdPrefix): una
+      // corrida acotada no debe decidir qué noches reales se conservan.
+      const retention = await pruneNightlyScans(config, { dryRun: false, skip: retentionSkip, retentionCount: DEFAULT_RETENTION_COUNT });
       logRetentionReport(retention);
     } catch (error) {
       console.log(`AVISO: la retención falló y se omitió (el escaneo recién escrito NO se ve afectado): ${error?.message || error}`);

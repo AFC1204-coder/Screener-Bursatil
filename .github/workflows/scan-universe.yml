@@ -4,9 +4,12 @@
 # Ejecuta scripts/scan-universe.mjs --write cada noche para analizar el
 # universo estadounidense investable completo (~5.605 símbolos), aplicar el
 # preset "balanced" (el mismo que usa el escaneo interactivo por defecto) y
-# guardar UN escaneo nocturno en scans/scan_results. Al terminar, aplica la
-# retención propia del script (conserva los 7 escaneos nocturnos
-# "materialized:US:*" más recientes, borra el resto vía DELETE en cascada).
+# guardar UN escaneo nocturno en scans/scan_results, más el histórico
+# change-only por símbolo en scan_symbol_history. Al terminar, aplica la
+# retención propia del script (conserva las 7 NOCHES "materialized:US:*" más
+# recientes — la corrida más reciente de cada una —, borra el resto vía
+# DELETE en cascada; scan_symbol_history no tiene retención: es la memoria
+# larga).
 # El propio script ya implementa dry-run por defecto, retención y el
 # arranque de Vitest para --write (ver cabecera de scripts/scan-universe.mjs)
 # — este workflow no añade lógica propia, delega en el script, mismo

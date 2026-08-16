@@ -1325,6 +1325,8 @@ create table if not exists public.scan_symbol_history (
   rs_sector numeric,
 
   composite_score numeric,
+  -- Distancia al máximo de 52 semanas (%, ≤ 0) — migración 20260816140000.
+  distance_52w numeric,
   composite_coverage numeric not null,
   composite_partial boolean not null,
 
@@ -1414,6 +1416,7 @@ create table if not exists public.scan_symbol_history (
         and rs_country is null
         and rs_sector is null
         and composite_score is null
+        and distance_52w is null
         and composite_coverage = 0
         and composite_partial = true
       )

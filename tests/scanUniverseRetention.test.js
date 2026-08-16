@@ -19,7 +19,7 @@ vi.mock("@/lib/supabaseServer.js", () => ({
 }));
 
 import { supabaseRequest } from "@/lib/supabaseServer.js";
-import { parseArgs, pruneNightlyScans, shouldPruneAfterWrite } from "@/scripts/scan-universe.mjs";
+import { nightOfNightlyScan, parseArgs, pruneNightlyScans, shouldPruneAfterWrite } from "@/scripts/scan-universe.mjs";
 
 const CONFIG = { ownerId: "personal" };
 
@@ -144,6 +144,81 @@ describe("pruneNightlyScans — conserva los N nocturnos más recientes", () => 
 
     expect(result.skipped).toBe(true);
     expect(vi.mocked(supabaseRequest)).not.toHaveBeenCalled();
+  });
+});
+
+describe("nightOfNightlyScan — la noche de un escaneo es la fecha de su local_id", () => {
+  it("extrae la fecha del formato sin y con marca de hora", () => {
+    expect(nightOfNightlyScan({ local_id: "materialized:US:2026-08-15:o0:l5609" })).toBe("2026-08-15");
+    expect(nightOfNightlyScan({ local_id: "materialized:US:2026-08-16:t035758:o0:l5609" })).toBe("2026-08-16");
+  });
+
+  it("con un local_id raro cae a la fecha de created_at, nunca agrupa todo junto", () => {
+    expect(nightOfNightlyScan({ local_id: "materialized:US-extra", created_at: "2026-08-14T04:59:30.126Z" })).toBe("2026-08-14");
+    expect(nightOfNightlyScan({})).toBe("sin-fecha");
+  });
+});
+
+describe("pruneNightlyScans — la unidad de retención es la NOCHE, no la fila de scans", () => {
+  it("dos corridas de la misma noche cuentan como una: se conserva la más reciente y la superada es candidata", async () => {
+    // El caso real medido el 2026-08-16: tres corridas del 12-08 ocupaban
+    // tres de los siete huecos y "7 escaneos" eran solo 5 noches.
+    const rows = [
+      { id: "n16-b", local_id: "materialized:US:2026-08-16:t051200:o0:l5609", row_count: 3313, created_at: "2026-08-16T05:12:00Z" },
+      { id: "n16-a", local_id: "materialized:US:2026-08-16:t035758:o0:l5609", row_count: 3313, created_at: "2026-08-16T03:57:58Z" },
+      { id: "n15", local_id: "materialized:US:2026-08-15:o0:l5609", row_count: 3314, created_at: "2026-08-15T03:50:28Z" },
+    ];
+    vi.mocked(supabaseRequest).mockResolvedValueOnce(rows);
+    vi.mocked(supabaseRequest).mockResolvedValueOnce([]);
+
+    const result = await pruneNightlyScans(CONFIG, { retentionCount: 7 });
+
+    expect(result.kept).toEqual(["n16-b", "n15"]);
+    expect(result.keptNights).toEqual(["2026-08-16", "2026-08-15"]);
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0]).toMatchObject({
+      id: "n16-a",
+      night: "2026-08-16",
+      reason: "corrida superada de una noche conservada",
+    });
+  });
+
+  it("con 8 noches distintas y retención 7, la octava (la más vieja) es candidata aunque haya menos de 7+1 filas por noche", async () => {
+    const rows = Array.from({ length: 8 }, (_, i) => nightlyScan(i));
+    vi.mocked(supabaseRequest).mockResolvedValueOnce(rows);
+    vi.mocked(supabaseRequest).mockResolvedValueOnce([]);
+
+    const result = await pruneNightlyScans(CONFIG, { retentionCount: 7 });
+
+    expect(result.keptNights).toHaveLength(7);
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].reason).toBe("noche fuera de la retención");
+  });
+
+  it("una noche con reintentos no desplaza noches buenas: 7 noches + 3 reintentos de la última siguen conservando las 7 noches", async () => {
+    const retries = Array.from({ length: 3 }, (_, i) => ({
+      id: `retry-${i}`,
+      local_id: `materialized:US:2026-08-10:t0${i}0000:o0:l5605`,
+      row_count: 100,
+      created_at: `2026-08-10T0${i}:00:00Z`,
+    })).reverse();
+    const nights = Array.from({ length: 7 }, (_, i) => nightlyScan(i));
+    // nightlyScan(0) también es del 2026-08-10: esa noche acumula 4 corridas
+    // (3 reintentos + la original) y aun así solo debe contar como UNA noche.
+    const rows = [...nights, ...retries].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    vi.mocked(supabaseRequest).mockResolvedValueOnce(rows);
+    vi.mocked(supabaseRequest).mockResolvedValueOnce([]);
+
+    const result = await pruneNightlyScans(CONFIG, { retentionCount: 7 });
+
+    expect(result.keptNights).toHaveLength(7);
+    // Ningún candidato es "noche fuera de la retención" de las 7 conservadas:
+    // los reintentos superados se borran, las noches distintas se quedan.
+    for (const candidate of result.candidates) {
+      if (candidate.reason === "corrida superada de una noche conservada") {
+        expect(result.keptNights).toContain(candidate.night);
+      }
+    }
   });
 });
 
