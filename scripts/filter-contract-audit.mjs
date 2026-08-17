@@ -62,8 +62,6 @@ const FIELD_THRESHOLDS = {
   maxContraction3DepthPct: 8,
   maxLastContractionDepthPct: 8,
   maxBaseDepthPct: 35,
-  minBaseWeeks: 7,
-  maxBaseWeeks: 22,
   maxAbsDistanceToPivotPct: 6,
   maxVolumeDryUpRatio: 0.9,
   maxTightness10dPct: 12,
