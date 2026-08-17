@@ -2,7 +2,7 @@
 import "../../styles/market-health.css";
 import { useEffect, useState } from "react";
 import RowTrustSignature from "@/app/RowTrustSignature";
-import RegimeConstellation, { aggregatePosition, regimeTone } from "./RegimeConstellation";
+import StageStrip, { regimeTone } from "./StageStrip";
 import UniverseBreadthCard from "./UniverseBreadth";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
@@ -629,7 +629,13 @@ export default function MarketHealthPage() {
     loadCoverage();
   }, []);
 
-  const tone = data ? regimeTone(data, data.indexes) : "humo";
+  const tone = data ? regimeTone(data.indexes, breadth) : "humo";
+  // Amplitud del universo para el KPI del hero: el indicador «sobre su media
+  // de 30 semanas» del escaneo nocturno (/api/market-breadth), con su
+  // cobertura declarada. Sustituye al «5/5 sobre MM30s» de los cinco índices,
+  // que decía 100% mientras la amplitud real del universo era del 68%.
+  const universeAbove30w = breadth?.indicators?.find?.((item) => item.key === "above30w") || null;
+  const participationSummary = breadth?.participation?.summary || null;
   // `configured: false` = la integración con X no está activada en este
   // entorno. Eso no es un dato del mercado ni un fallo que el usuario pueda
   // resolver: su sitio es el log del servidor, no la pantalla.
@@ -683,7 +689,7 @@ export default function MarketHealthPage() {
                   {data.regime?.stance || "Lectura pendiente."}
                 </p>
               </div>
-              <RegimeConstellation indexes={data.indexes} />
+              <StageStrip indexes={data.indexes} stages={breadth?.stages} tone={tone} />
             </div>
             <div className="marketRegimeKpis">
               <div className="marketRegimeKpi">
@@ -691,9 +697,19 @@ export default function MarketHealthPage() {
                 <span>Market score</span>
                 <span className="marketRegimeKpiMeter"><i style={{ width: `${Math.min(100, Math.max(0, data.marketScore ?? 0))}%` }} /></span>
               </div>
-              <div className="marketRegimeKpi">
-                <b>{data.breadthProxy?.indexesAbove30w ?? data.breadthProxy?.above30w ?? "—"}/{data.indexes?.length ?? "—"}</b>
-                <span>Sobre MM30s</span>
+              <div
+                className="marketRegimeKpi"
+                title={universeAbove30w?.available
+                  ? `${num(universeAbove30w.count)} de ${num(universeAbove30w.measured)} valores del escaneo nocturno sobre su media de 30 semanas (cierre ${dateShort(breadth?.dataAsOf)}).`
+                  : ""}
+              >
+                {universeAbove30w?.available
+                  ? <b>{pctShare(universeAbove30w.pct)}</b>
+                  : <b><MissingValue reason={universeAbove30w?.reason || breadth?.error || "La amplitud del universo no está disponible ahora mismo."} /></b>}
+                <span>Universo sobre MM30s</span>
+                {universeAbove30w?.available && (
+                  <span className="marketRegimeKpiMeter"><i style={{ width: `${Math.min(100, Math.max(0, universeAbove30w.pct ?? 0))}%` }} /></span>
+                )}
               </div>
               <div className="marketRegimeKpi">
                 <b>{pctShare(data.weinsteinTape?.pctSectorsStage2)}</b>
@@ -701,10 +717,22 @@ export default function MarketHealthPage() {
                 <span className="marketRegimeKpiMeter"><i style={{ width: `${Math.min(100, Math.max(0, data.weinsteinTape?.pctSectorsStage2 ?? 0))}%` }} /></span>
               </div>
               <div className="marketRegimeKpi">
-                <b>{Number.isFinite(data.weinsteinTape?.distributionDays20Avg) && Number.isFinite(data.weinsteinTape?.accumulationDays20Avg) ? `${data.weinsteinTape.distributionDays20Avg.toFixed(1)}/${data.weinsteinTape.accumulationDays20Avg.toFixed(1)}` : "—"}</b>
+                <b>{Number.isFinite(data.weinsteinTape?.distributionDays20Avg) && Number.isFinite(data.weinsteinTape?.accumulationDays20Avg) ? `${num(data.weinsteinTape.distributionDays20Avg, 1)}/${num(data.weinsteinTape.accumulationDays20Avg, 1)}` : "—"}</b>
                 <span>Dist/Acc 20d</span>
               </div>
             </div>
+            {participationSummary && (
+              <p
+                className="marketRegimeParticipation"
+                title="Participación: valores del universo RS con retorno ponderado positivo esa semana. Serie completa en «Amplitud del universo»."
+              >
+                En las últimas {num(participationSummary.weeks)} semanas{" "}
+                {breadth?.participation?.index?.symbol || "el índice"} varió {pct(participationSummary.indexChangePct)} y
+                la participación pasó del {pctShare(participationSummary.participationStartPct)} al{" "}
+                {pctShare(participationSummary.participationEndPct)}.
+                {participationSummary.divergence && <b> El índice sube y cada vez menos valores lo acompañan.</b>}
+              </p>
+            )}
           </section>
 
           {/* ─── N1 Evidencia interna ─────────────────────────────── */}
@@ -718,7 +746,11 @@ export default function MarketHealthPage() {
                 <div className="marketTapeKpi"><b>{data.weinsteinTape.indexesAbove30w ?? "—"}/{data.weinsteinTape.indexesTotal ?? data.indexes?.length ?? "—"}</b><span>Sobre MM30s</span></div>
                 <div className="marketTapeKpi"><b>{pctShare(data.weinsteinTape.pctSectorsAbove30w)}</b><span>Sectores sobre MM30s</span></div>
                 <div className="marketTapeKpi"><b>{pctShare(data.weinsteinTape.pctSectorsStage4)}</b><span>Sectores en etapa 4</span></div>
-                <div className="marketTapeKpi"><b>{pctShare(data.weinsteinTape.pctSectorsAbove50 ?? data.sectorSummary?.above50)}</b><span>Sobre SMA50</span></div>
+                {/* Conteo como conteo: `above50` son sectores (de 11), no un
+                    porcentaje. Pintarlo con pctShare producía el «6%» del
+                    análisis 2026-08-16 (B.1). Misma forma que su gemela de
+                    «Amplitud sectorial». */}
+                <div className="marketTapeKpi"><b>{data.sectorSummary?.above50 ?? "—"}/{data.sectorSummary?.count ?? "—"}</b><span>Sobre SMA50</span></div>
               </div>
               <div className="marketPulseEvidence">
                 <div className="evidencePanel">
@@ -903,11 +935,13 @@ export default function MarketHealthPage() {
                   <div className="tableWrap">
                     <div className="marketIndexesTableWrap">
                       <table className="marketIndexesTable">
-                        <thead><tr>{["Índice", "Etapa", "Etapa 30s", "Score", "Estructura", "1M", "3M", "6M", "52w", "Desde mín 52w", "MM30s", "SMA200 slope", "Dist/Acc", "Fecha"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
+                        <thead><tr>{["Índice", "Etapa", "Score", "Estructura", "1M", "3M", "6M", "52w", "Desde mín 52w", "MM30s", "SMA200 slope", "Dist/Acc", "Fecha"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
                         <tbody>{data.indexes?.map((x) => (
                           <tr key={x.symbol}>
                             <td><b>{x.name}</b><small>{x.symbol}</small></td>
-                            <td data-col="stage">{x.stage || "—"}</td>
+                            {/* Una sola etapa: la canónica de lib/weeklyStage.js. La
+                                columna diaria («Etapa 2 / alcista») era otra
+                                implementación del mismo concepto en la misma tabla. */}
                             <td data-col="stage">{x.stage30w || "—"}</td>
                             <td data-col="data">{num(x.score)}</td>
                             <td data-col="data">{num(x.weinsteinScore)}</td>

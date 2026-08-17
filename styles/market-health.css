@@ -113,83 +113,145 @@
 .marketRegimeLabel p u[data-tone="oxido"] { text-decoration-color: var(--oxido); }
 .marketRegimeLabel p u[data-tone="humo"]  { text-decoration-color: var(--humo); }
 
-/* Curva de Etapa — variante constelación.
-   Contenedor con aspect-ratio 120:48 = viewBox del SVG. El SVG se escala
-   uniformemente (sin preserveAspectRatio="none") para que el texto NO se
-   distorsione y los puntos se vean nítidos en cualquier ancho de columna. */
-.marketRegimeConstellation {
+/* Franja de etapas — sustituye a la constelación (2026-08-17). Cada índice es
+   un chip HTML en la franja de su etapa canónica: compartir etapa forma una
+   lista legible, nunca una superposición. La Curva de Etapa queda como firma
+   visual de fondo (aria-hidden), con el marcador del régimen — el ÚNICO color
+   de convicción de la vista — sobre el tramo de la etapa dominante. */
+.stageStrip {
   display: grid;
+  gap: var(--space-2);
   width: 100%;
-  max-width: 100%;
   min-width: 0;
 }
 
-.marketRegimeConstellationSvg {
+.stageStripCurve {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 120 / 56;
-  max-width: 100%;
-  overflow: visible; /* los puntos pueden pintarse ligeramente fuera del viewBox
-                        por el stroke; el contenedor del panel los recorta con
-                        el border-radius del panel de régimen. */
+  aspect-ratio: 120 / 28;
 }
 
-.marketRegimeConstellation .curve-track {
+.stageStripCurve path {
   fill: none;
   stroke: var(--curve-track);
   stroke-width: var(--curve-stroke);
   stroke-linecap: round;
 }
 
-.marketRegimeConstellation .curve-index-dot {
-  fill: var(--tiza);
-  stroke: var(--surface);
-  stroke-width: 0.6;
+.stageStripMarker { stroke: var(--surface); stroke-width: 1; }
+.stageStripMarker[data-tone="senal"] { fill: var(--senal); }
+.stageStripMarker[data-tone="oxido"] { fill: var(--oxido); }
+.stageStripMarker[data-tone="humo"]  { fill: var(--humo); }
+
+.stageStripZones {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
 }
 
-.marketRegimeConstellation .curve-index-label {
-  fill: var(--muted);
-  font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
-  font-size: 4.5px;  /* unidades del viewBox: a 600px de ancho se ven ~22px,
-                         a 1200px ~45px. Proporcional, sin distorsión. */
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  /* Permitimos que el navegador use anti-aliasing nativo del viewBox */
+.stageStripZone {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  background: var(--surface-inset);
 }
 
-.marketRegimeConstellation .curve-marker {
-  stroke: var(--surface);
-  stroke-width: 1;
-}
+/* La franja dominante gana contorno, no color: el color ya lo lleva el
+   marcador de la curva (regla: un solo --senal por vista). */
+.stageStripZone[data-dominant="true"] { border-color: var(--line3); }
 
-.marketRegimeConstellation .curve-marker[data-tone="senal"] { fill: var(--senal); }
-.marketRegimeConstellation .curve-marker[data-tone="oxido"] { fill: var(--oxido); }
-.marketRegimeConstellation .curve-marker[data-tone="humo"]  { fill: var(--humo); }
-
-.marketRegimeConstellation .curve-zone-tick {
-  fill: var(--muted);
+.stageStripZoneName {
+  display: flex;
+  gap: var(--space-1);
+  align-items: baseline;
+  color: var(--muted);
   font-family: var(--font-body);
-  font-size: 3.5px;  /* unidades del viewBox: a 600px de ancho se ven ~17px */
+  font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: 0.04em;
   text-transform: uppercase;
+  letter-spacing: var(--track-label);
+  white-space: nowrap;
 }
 
-/* Leader lines: solo aparecen cuando un label se ha desplazado >5 unidades
-   del punto (típicamente por solape). Humo tenue, sin desaparecer la pista
-   que asocia cada ticker a su posición real en la curva. */
-.marketRegimeConstellation .curve-leader {
-  stroke: var(--humo);
-  stroke-width: 0.4;
-  stroke-dasharray: 1 1;  /* discontinua — distingue de la curva principal */
-  opacity: .55;
-  fill: none;
+.stageStripZoneName b { color: var(--soft); font-weight: 700; }
+
+.stageStripChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
 }
 
-/* El contenedor padre (marketRegimePanel) ya recorta con border-radius; el SVG
-   con aspect-ratio propio evita texto estirado y mantiene proporciones. */
+.stageStripChip {
+  display: inline-flex;
+  gap: var(--space-1);
+  align-items: baseline;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius-s);
+  background: var(--surface);
+}
+
+.stageStripChip b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-size: var(--data-s);
+  font-weight: 600;
+}
+
+.stageStripChip em {
+  color: var(--soft);
+  font-style: normal;
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sufijo de confirmación (tentativa / sin contexto): pierde tinta, sin color
+   semántico — es calidad de la clasificación, no una decisión. */
+.stageStripChip i {
+  color: var(--muted);
+  font-style: normal;
+  font-size: var(--text-xs);
+}
+
+.stageStripZoneUniverse {
+  color: var(--muted);
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Franja sin índices: hecho, no dato ausente — tinta fantasma. */
+.stageStripZoneEmpty {
+  color: var(--ghost);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+}
+
+.stageStripNote {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  line-height: var(--lh-body);
+}
+
+/* La frase de participación del hero: el hecho índice-vs-amplitud en una
+   línea, bajo los KPIs. La divergencia, si existe, en negrita de tiza. */
+.marketRegimeParticipation {
+  margin: 0;
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  line-height: var(--lh-body);
+}
+
+.marketRegimeParticipation b { color: var(--text); }
 
 .marketRegimeKpis {
   display: grid;
@@ -263,6 +325,10 @@
 
 @media (max-width: 760px) {
   .marketRegimeLead { grid-template-columns: 1fr; }
+  /* En estrecho las cuatro franjas pasan a 2×2; la curva de fondo se oculta
+     porque sus tramos ya no quedan alineados con las columnas. */
+  .stageStripZones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stageStripCurve { display: none; }
   .marketRegimeKpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .marketRegimeKpi:nth-child(2) { border-right: 0; }
   .marketRegimeKpi:nth-child(1),

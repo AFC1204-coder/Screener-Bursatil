@@ -109,13 +109,13 @@ describe("la etapa se escribe con el diccionario único (lib/stageDisplay.js)", 
     expect(offenders).toEqual([]);
   });
 
-  it('no queda la abreviatura "E2"/"E4" como texto de pantalla fuera del eje de la constelación', () => {
-    // Excepciones: los ticks E1–E4 del eje SVG de RegimeConstellation (no
-    // caben las palabras y su aria-label ya dice "Curva de Etapa"), y
-    // lib/screenerDomains/decision.jsx, donde "E2" es el token del prop
-    // `emphasis` (acaba en data-emphasis=, nunca como texto en pantalla).
+  it('no queda la abreviatura "E2"/"E4" como texto de pantalla', () => {
+    // Excepción: lib/screenerDomains/decision.jsx, donde "E2" es el token del
+    // prop `emphasis` (acaba en data-emphasis=, nunca como texto en pantalla).
+    // La constelación — que abreviaba los ticks del eje a E1–E4 — se retiró el
+    // 2026-08-17; su sustituta (StageStrip) escribe las palabras completas.
     const offenders = literalOffenders(/^["'`]E[124]["'`]$|Sectores E[24]|Ofensivo E2|Defensivo E2/, {
-      skipFiles: ["app/market-health/RegimeConstellation.jsx", "lib/screenerDomains/decision.jsx"],
+      skipFiles: ["lib/screenerDomains/decision.jsx"],
     });
     expect(offenders).toEqual([]);
   });

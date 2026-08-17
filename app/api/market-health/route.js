@@ -1,5 +1,6 @@
 import { fetchYahooChart } from "@/lib/marketData";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
+import { weeklyStageForBars } from "@/lib/weeklyStage";
 
 const MARKET_HEALTH_CACHE_TYPE = "market_health_cache";
 const MARKET_HEALTH_CACHE_KEY = "default";
@@ -91,10 +92,15 @@ function neutralMarketHealth(error = {}) {
     distance52w: null,
     advanceFrom52wLow: null,
     weeklyBars: 0,
+    // Sin proveedor no hay etapa: estado nulo y ausencia explícita, nunca una
+    // etiqueta con aspecto de clasificación ni un score con aspecto de medida.
     stage30w: "Proveedor no disponible",
-    stage: "Sin dato",
-    score: 50,
-    weinsteinScore: 50,
+    stageState: null,
+    stageConfirmation: null,
+    priceAboveSlowMa: null,
+    distanceSma30w: null,
+    score: null,
+    weinsteinScore: null,
   }));
   const marketScore = 50;
   return {
@@ -177,59 +183,24 @@ async function writeMarketHealthCache(payload = {}) {
   }
 }
 
-function weekKey(date = "") {
-  const d = new Date(`${date}T00:00:00Z`);
-  if (!Number.isFinite(d.getTime())) return date;
-  const day = (d.getUTCDay() + 6) % 7;
-  d.setUTCDate(d.getUTCDate() - day);
-  return d.toISOString().slice(0, 10);
-}
-
-function weeklyBarsFromDaily(bars = []) {
-  const buckets = new Map();
-  [...bars]
-    .filter((bar) => bar?.date && Number.isFinite(bar.close))
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
-    .forEach((bar) => {
-      const key = weekKey(bar.date);
-      const bucket = buckets.get(key) || {
-        date: key,
-        close: bar.close,
-        high: bar.high || bar.close,
-        low: bar.low || bar.close,
-        volume: 0,
-      };
-      bucket.close = bar.close;
-      bucket.high = Math.max(bucket.high, bar.high || bar.close);
-      bucket.low = Math.min(bucket.low, bar.low || bar.close);
-      bucket.volume += Number.isFinite(bar.volume) ? bar.volume : 0;
-      buckets.set(key, bucket);
-    });
-  return [...buckets.values()].sort((a, b) => new Date(b.date) - new Date(a.date));
-}
-
-function stage30wLabel(x = {}) {
-  if (!Number.isFinite(x.price) || !Number.isFinite(x.sma30w) || !Number.isFinite(x.sma30wSlope)) return "Histórico insuficiente";
-  if (x.price > x.sma30w && x.sma30wSlope > 0) return "Etapa 2 probable";
-  if (x.price > x.sma30w && x.sma30wSlope <= 0) return "Base / transición";
-  if (x.price < x.sma30w && x.sma30wSlope >= 0) return "Bajo MM30s";
-  if (x.price < x.sma30w && x.sma30wSlope < 0) return "Etapa 4 probable";
-  return "Neutral";
-}
-
+// La etapa de índices y sectores la decide lib/weeklyStage.js, el MISMO
+// clasificador que la tabla y la ficha. Esta ruta tenía su propia versión
+// («Etapa 2 probable» con umbrales fijos y sin banda muerta) y la constelación
+// deducía la zona buscando dígitos en ese texto, con lo que «Bajo MM30s» caía
+// en la zona de techo por el 3 de «MM30s» (auditoría 2026-08-16, C-19).
 function weeklyStage(bars = []) {
-  const weeks = weeklyBarsFromDaily(bars);
-  const s30 = sma(weeks, 30);
-  const s30p = sma(weeks, 30, 10);
-  const price = weeks[0]?.close ?? bars[0]?.close;
-  const item = {
-    weeklyBars: weeks.length,
-    sma30w: s30,
-    sma30wSlope: s30 && s30p ? ((s30 / s30p) - 1) * 100 : null,
-    distanceSma30w: price && s30 ? ((price / s30) - 1) * 100 : null,
+  const stage = weeklyStageForBars(bars);
+  return {
+    weeklyBars: stage.weeklyBars,
+    sma30w: stage.slowMa,
+    sma30wSlope: stage.slowMaSlopePct,
+    distanceSma30w: stage.distanceSlowMaPct,
+    priceAboveSlowMa: stage.priceAboveSlowMa,
+    stageState: stage.state,
+    stageConfirmation: stage.confirmation,
+    stageWeeks: stage.weekInStage,
+    stage30w: stage.label,
   };
-  item.stage30w = stage30wLabel({ price, ...item });
-  return item;
 }
 
 function volumeTape(bars = [], days = 20) {
@@ -254,9 +225,9 @@ function volumeTape(bars = [], days = 20) {
 
 function scoreWeinsteinTape(x = {}) {
   let s = 0;
-  if (x.price > x.sma30w) s += 25;
+  if (x.priceAboveSlowMa === true) s += 25;
   if (x.sma30wSlope > 0) s += 25;
-  if (x.stage30w === "Etapa 2 probable") s += 20;
+  if (x.stageState === "stage2") s += 20;
   if (x.distance52w >= -10) s += 10;
   if (x.perf3m > 0) s += 10;
   if (Number.isFinite(x.volumePressure20)) {
@@ -274,17 +245,26 @@ function stageLabel(x) {
   return "Neutral";
 }
 
-function scoreIndex(x) {
-  let s = 0;
-  if (x.price > x.sma50) s += 15;
-  if (x.price > x.sma200) s += 20;
-  if (x.sma50 > x.sma200) s += 15;
-  if (x.sma200Slope > 0) s += 20;
-  if (x.perf1m > 0) s += 8;
-  if (x.perf3m > 0) s += 10;
-  if (x.distance52w >= -10) s += 7;
-  if (x.distance52w >= -5) s += 5;
-  return clamp(s);
+// El score de un índice es una proyección de su ETAPA a la escala 0-100 del
+// termómetro — no una suma de umbrales diarios. Antes se puntuaba con
+// SMA50/SMA200 y momentum (8 sumandos) y salía 97,6 sin mirar la etapa ni la
+// amplitud; el número decía «100» por encima de la misma pantalla que
+// enseñaba la divergencia. Los valores son decisión de producto, documentada:
+// el centro de cada franja del régimen (E2 avance 90 · E1 suelo ~55 ·
+// E3 techo ~40 · E4 declive 10), y la tentativa se acerca a la etapa de la
+// que viene el precio (una E1 tentativa sigue siendo un declive hasta que la
+// media se aplane; una E3 tentativa, un avance que se está perdiendo).
+const STAGE_SCORE = {
+  stage2: { confirmed: 90 },
+  stage1: { confirmed: 55, tentative: 50, unknown_context: 50 },
+  stage3: { confirmed: 35, tentative: 45, unknown_context: 40 },
+  stage4: { confirmed: 10 },
+};
+
+function stageScore(stageState, stageConfirmation) {
+  const byState = STAGE_SCORE[stageState];
+  if (!byState) return null;
+  return byState[stageConfirmation] ?? byState.confirmed ?? null;
 }
 
 function scoreSector(x) {
@@ -349,8 +329,7 @@ async function analyzeIndex(meta) {
     ...weeklyStage(bars),
     ...volumeTape(bars),
   };
-  item.stage = stageLabel(item);
-  item.score = scoreIndex(item);
+  item.score = stageScore(item.stageState, item.stageConfirmation);
   item.weinsteinScore = scoreWeinsteinTape(item);
   return item;
 }
@@ -421,10 +400,10 @@ function sectorSummary(sectors = []) {
 }
 
 function weinsteinTape(indexes = [], sectors = []) {
-  const indexAbove30w = indexes.filter((x) => x.price > x.sma30w).length;
-  const sectorAbove30w = sectors.filter((x) => x.price > x.sma30w).length;
-  const sectorStage2 = sectors.filter((x) => x.stage30w === "Etapa 2 probable").length;
-  const sectorStage4 = sectors.filter((x) => x.stage30w === "Etapa 4 probable").length;
+  const indexAbove30w = indexes.filter((x) => x.priceAboveSlowMa === true).length;
+  const sectorAbove30w = sectors.filter((x) => x.priceAboveSlowMa === true).length;
+  const sectorStage2 = sectors.filter((x) => x.stageState === "stage2").length;
+  const sectorStage4 = sectors.filter((x) => x.stageState === "stage4").length;
   const distributionAvg = avg(sectors.map((x) => x.distributionDays20).filter(Number.isFinite));
   const accumulationAvg = avg(sectors.map((x) => x.accumulationDays20).filter(Number.isFinite));
   const indexPct = pctPart(indexAbove30w, indexes.length);
@@ -432,14 +411,14 @@ function weinsteinTape(indexes = [], sectors = []) {
   const stage2Pct = pctPart(sectorStage2, sectors.length);
   const stage4Pct = pctPart(sectorStage4, sectors.length);
   const offensiveGroups = new Set(["Crecimiento", "Cíclico", "Valor / materias"]);
-  const offensiveStage2 = sectors.filter((x) => offensiveGroups.has(x.group) && x.stage30w === "Etapa 2 probable").length;
-  const defensiveStage2 = sectors.filter((x) => x.group === "Defensivo" && x.stage30w === "Etapa 2 probable").length;
+  const offensiveStage2 = sectors.filter((x) => offensiveGroups.has(x.group) && x.stageState === "stage2").length;
+  const defensiveStage2 = sectors.filter((x) => x.group === "Defensivo" && x.stageState === "stage2").length;
   const leadingSectors = [...sectors]
-    .filter((x) => x.stage30w === "Etapa 2 probable" && ((x.rs1m ?? -99) > 0 || (x.rs3m ?? -99) > 0))
+    .filter((x) => x.stageState === "stage2" && ((x.rs1m ?? -99) > 0 || (x.rs3m ?? -99) > 0))
     .sort((a, b) => (b.weinsteinScore - a.weinsteinScore) || (b.score - a.score))
     .slice(0, 5);
   const weakSectors = [...sectors]
-    .filter((x) => x.stage30w === "Etapa 4 probable" || x.weinsteinScore < 35)
+    .filter((x) => x.stageState === "stage4" || x.weinsteinScore < 35)
     .sort((a, b) => (a.weinsteinScore - b.weinsteinScore) || (a.score - b.score))
     .slice(0, 5);
   const divergences = [];
@@ -481,7 +460,7 @@ function weinsteinTape(indexes = [], sectors = []) {
     indicators: [
       "Índices principales respecto a MM30 semanas",
       "Porcentaje de sectores sobre MM30 semanas",
-      "Sectores en Etapa 2 / Etapa 4 probable",
+      "Sectores en etapa 2 / etapa 4",
       "Días de distribución y acumulación en 20 sesiones",
       "Divergencias entre índices, sectores y tipo de liderazgo",
     ],
@@ -501,11 +480,17 @@ async function computeMarketHealth() {
   const sectorFailures = sectorResults.map((result, index) => ({ result, index }))
     .filter(({ result }) => result.status === "rejected")
     .map(({ result, index }) => ({ symbol: SECTOR_ETFS[index].symbol, name: SECTOR_ETFS[index].name, reason: result.reason?.message || "Proveedor no disponible" }));
-  const totalWeight = results.reduce((a, x) => a + x.weight, 0) || 1;
-  const marketScore = results.reduce((a, x) => a + x.score * x.weight, 0) / totalWeight;
+  // El score de mercado promedia los scores POR ETAPA de los índices que
+  // clasifican; un índice sin etapa (histórico corto) queda fuera del promedio
+  // en vez de entrar con un número inventado.
+  const scored = results.filter((x) => Number.isFinite(x.score));
+  const totalWeight = scored.reduce((a, x) => a + x.weight, 0) || 1;
+  const marketScore = scored.length
+    ? scored.reduce((a, x) => a + x.score * x.weight, 0) / totalWeight
+    : 50;
   const above50 = results.filter((x) => x.price > x.sma50).length;
   const above200 = results.filter((x) => x.price > x.sma200).length;
-  const above30w = results.filter((x) => x.price > x.sma30w).length;
+  const above30w = results.filter((x) => x.priceAboveSlowMa === true).length;
   const positiveSlope = results.filter((x) => x.sma200Slope > 0).length;
   const nearHighs = results.filter((x) => x.distance52w >= -10).length;
   return {

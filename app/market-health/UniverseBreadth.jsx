@@ -56,16 +56,27 @@ function StageDistribution({ stages }) {
       </div>
     );
   }
+  // Mientras el escaneo venga del criterio anterior (quedan filas «base» /
+  // «mixed»), las etapas que ese criterio NO emitía (1 y 3) no se muestran a
+  // cero: un «Etapa 1 · 0%» junto a un 32% de «Base» se lee como "nadie
+  // construye suelo", cuando lo cierto es que aquel clasificador no podía
+  // medirlo. No medible ≠ cero (principio 3).
+  const legacyCount = stages.buckets
+    .filter((bucket) => bucket.key === "base" || bucket.key === "mixed")
+    .reduce((sum, bucket) => sum + (bucket.count || 0), 0);
+  const buckets = legacyCount > 0
+    ? stages.buckets.filter((bucket) => (bucket.count || 0) > 0)
+    : stages.buckets;
   return (
     <div className="marketBreadthStages">
       <h3>Distribución por etapas</h3>
       <div className="marketStageBar" role="img" aria-label="Distribución del universo por etapas semanales">
-        {stages.buckets.map((bucket) => (
+        {buckets.map((bucket) => (
           <i key={bucket.key} data-stage={bucket.key} style={{ width: `${Math.max(0, bucket.pct ?? 0)}%` }} />
         ))}
       </div>
       <div className="marketStageLegend">
-        {stages.buckets.map((bucket) => (
+        {buckets.map((bucket) => (
           <span key={bucket.key} data-stage={bucket.key}>
             <i aria-hidden="true" />
             {bucket.label} <b>{pctShare(bucket.pct)}</b> ({num(bucket.count)})
@@ -75,6 +86,12 @@ function StageDistribution({ stages }) {
           <span data-stage="none">{num(stages.unclassified)} sin etapa clasificable</span>
         )}
       </div>
+      {legacyCount > 0 && (
+        <p className="fine">
+          Escaneo clasificado con el criterio anterior: las etapas 1 y 3 no existían y no se
+          muestran a cero. El reparto completo llegará con el próximo escaneo nocturno.
+        </p>
+      )}
     </div>
   );
 }
