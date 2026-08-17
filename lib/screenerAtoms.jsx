@@ -13,7 +13,14 @@ import {
 } from "@/lib/screenerFormat";
 
 export function MiniSparkline({ bars = [], className = "" }) {
-  const points = bars.filter((x) => Number.isFinite(x.close));
+  // Tolerante al orden: filas persistidas antes del fix de 2026-08-17 (nocturno
+  // previo a esa fecha) guardaron chartPreview descendente. Ordenar por fecha
+  // acá evita que una fila vieja se dibuje invertida hasta que corra el próximo
+  // scan; barato porque `bars` ya viene acotado a ~48 puntos.
+  const points = bars
+    .filter((x) => Number.isFinite(x.close))
+    .slice()
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
   if (points.length < 2) return <div className={`previewEmpty ${className}`.trim()}>Sin dato</div>;
   const w = 260, h = 118, pad = 10;
   const values = points.flatMap((p) => [p.close, p.sma50, p.sma200].filter(Number.isFinite));

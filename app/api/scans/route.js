@@ -3,6 +3,8 @@ import { compactResearchRow } from "@/lib/researchRowContract";
 import { isPublicScanStatus } from "@/lib/scanStatus";
 import { prepareScanDecisionRow, scanDecisionMetrics, scanDecisionRaw, scanDecisionRowFromDb } from "@/lib/scanDecisionProjection";
 import { clearScansApiCache, LATEST_SCAN_TTL_MS, scansApiCache } from "@/lib/scansApiCache";
+import { readNightlyUsScan } from "@/lib/nightlyUsScan";
+import { NIGHTLY_US_ANCHOR } from "@/lib/scanLocalId";
 import { snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { attachCachedMarketCap, readMarketCapForSymbols } from "@/lib/fundamentalsCache";
 import { attachWeeklyRs, readGlobalRsForSymbols } from "@/lib/globalRs";
@@ -422,11 +424,33 @@ export async function GET(req) {
   const resultSelectFull = "scan_id,rank_index,raw,symbol,company_name,country,sector,industry,theme,total_score,weinstein_score,minervini_score,risk_score,rs_rating,metrics";
   const resultSelectDecision = "scan_id,rank_index,symbol,company_name,country,sector,industry,theme,total_score,weinstein_score,minervini_score,risk_score,rs_rating,metrics";
   const resultSelect = decisionProjection ? resultSelectDecision : resultSelectFull;
+  // ?anchor=nightly-us pide UN escaneo concreto —el último nocturno
+  // estadounidense— en lugar del más reciente de la base. No es un lujo: el
+  // cron europeo corre a las 22-23h, después del nocturno de las 03:57, así que
+  // "el más reciente" es a partir de esa hora un escaneo de otro mercado (el 16
+  // de agosto de 2026, UNA acción italiana frente a las 3.313 estadounidenses).
+  // Ver lib/nightlyUsScan.js.
+  const anchoredToNightlyUs = searchParams.get("anchor") === NIGHTLY_US_ANCHOR;
   try {
     const cacheableLatest = includeRows && !includeDeleted && limit === 1 && rowsLimit <= 5000;
-    const cacheKey = `latest:${config.ownerId}:${rowsLimit}:${decisionProjection ? "decision" : full ? "full" : "compact"}`;
+    const cacheKey = `latest:${config.ownerId}:${rowsLimit}:${decisionProjection ? "decision" : full ? "full" : "compact"}:${anchoredToNightlyUs ? NIGHTLY_US_ANCHOR : "any"}`;
     const loadPayload = async () => {
-      const scans = await supabaseRequest("scans", {
+      const nightly = anchoredToNightlyUs
+        ? await readNightlyUsScan({ timeoutMs: SCANS_SUPABASE_TIMEOUT_MS, columns: scanSelect })
+        : null;
+      // Sin nocturno no se sirve el escaneo de otro mercado "para que haya
+      // algo": se devuelve la ausencia con su motivo y la pantalla lo dice.
+      if (anchoredToNightlyUs && !nightly.scan) {
+        return {
+          configured: true,
+          ok: true,
+          projection: decisionProjection ? "decision" : full ? "full" : "compact",
+          scans: [],
+          scanTombstones: [],
+          nightly: { found: false, reason: nightly.reason || "no-nightly-scan", rejectedScan: nightly.rejectedScan || null },
+        };
+      }
+      const scans = anchoredToNightlyUs ? [nightly.row] : await supabaseRequest("scans", {
         query: `owner_id=eq.${encodeURIComponent(config.ownerId)}${includeDeleted ? "" : "&deleted_at=is.null"}&select=${scanSelect}&order=created_at.desc&limit=${limit}`,
         timeoutMs: SCANS_SUPABASE_TIMEOUT_MS,
       });
@@ -461,6 +485,7 @@ export async function GET(req) {
         projection: decisionProjection ? "decision" : full ? "full" : "compact",
         scans: activeScans.map((scan) => scanFromDb(scan, results, { decisionProjection, includeRows, weeklyRsBySymbol: weeklyRs.bySymbol, marketCapBySymbol: marketCaps.bySymbol })),
         scanTombstones: includeDeleted ? deletedScans.map(scanTombstoneFromDb) : [],
+        ...(anchoredToNightlyUs ? { nightly: { found: true, ...nightly.scan } } : {}),
       };
     };
     return Response.json(cacheableLatest ? await cachedLatestScans(cacheKey, loadPayload) : await loadPayload());

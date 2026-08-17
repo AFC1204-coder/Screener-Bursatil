@@ -33,6 +33,9 @@ describe("getLatestScanFromCloud · el arranque pide un escaneo, no diez", () =>
     expect(parsed.pathname).toBe("/api/scans");
     expect(parsed.searchParams.get("limit")).toBe("1");
     expect(parsed.searchParams.get("includeRows")).toBe("1");
+    // Y ese escaneo es el nocturno estadounidense, no "el más reciente": el
+    // cron europeo corre después (tests/screenerStartupAnchor.test.js).
+    expect(parsed.searchParams.get("anchor")).toBe("nightly-us");
 
     const rowsLimit = Number(parsed.searchParams.get("rowsLimit"));
     expect(Number.isFinite(rowsLimit)).toBe(true);

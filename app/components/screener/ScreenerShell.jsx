@@ -384,9 +384,11 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             <label><span>Media rápida semanal</span><input className="input" type="number" min="2" max="80" step="1" value={settings.stageFastWeeks || 10} onChange={(event) => updateSetting("stageFastWeeks", Number(event.target.value) || 10)} /></label>
             <label><span>Media lenta semanal</span><input className="input" type="number" min="3" max="120" step="1" value={settings.stageSlowWeeks || 30} onChange={(event) => updateSetting("stageSlowWeeks", Number(event.target.value) || 30)} /></label>
             <label><span>Pendiente semanas</span><input className="input" type="number" min="2" max="40" step="1" value={settings.stageSlopeWeeks || 10} onChange={(event) => updateSetting("stageSlopeWeeks", Number(event.target.value) || 10)} /></label>
+            <label><span>Media plana ±%</span><input className="input" type="number" min="0" max="20" step="0.5" value={settings.stageFlatPct ?? 2} onChange={(event) => updateSetting("stageFlatPct", Number(event.target.value))} /></label>
           </div>
           <div className="filterSwitches">
             <FilterToggle active={settings.requireStage2} applies={settingApplies("requireStage2", filterLayers)} detail={inactiveSettingReason("requireStage2", filterLayers)} onClick={() => toggleLayeredSetting("requireStage2")}>Etapa 2</FilterToggle>
+            <FilterToggle active={settings.requirePulso} applies={settingApplies("requirePulso", filterLayers)} detail={inactiveSettingReason("requirePulso", filterLayers)} onClick={() => toggleLayeredSetting("requirePulso")}>Pulso</FilterToggle>
             <FilterToggle active={settings.requireUpVolume} applies={settingApplies("requireUpVolume", filterLayers)} detail={inactiveSettingReason("requireUpVolume", filterLayers)} onClick={() => toggleLayeredSetting("requireUpVolume")}>Volumen en vela alcista</FilterToggle>
             <FilterToggle active={settings.requireRecentIpo} applies={settingApplies("requireRecentIpo", filterLayers)} detail={inactiveSettingReason("requireRecentIpo", filterLayers)} onClick={() => toggleLayeredSetting("requireRecentIpo")}>IPO real reciente</FilterToggle>
           </div>
@@ -507,7 +509,11 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               <p>{resultsRows.length} pasan · {analyzedCountForDisplay(analyzedRows)} analizadas · {SORT_LABELS[sort] || sort}{scannedAtLabel ? ` · scan ${scannedAtLabel}` : ""}</p>
             </div>
             <div className="controls">
-              {(resultsRows.length > 0 || diagnostics) ? <button className="btn btnSmall btnGhost" onClick={resetScreenerSession}>Reset sesión</button> : null}
+              {/* Siempre visible, incluso con la tabla vacía. Sin botón
+                  Ejecutar, este es el único camino de vuelta a un estado bueno;
+                  esconderlo justo cuando no hay resultados —que es cuando hace
+                  falta— dejaba la sesión sin salida. */}
+              <button className="btn btnSmall btnGhost" onClick={resetScreenerSession}>Reset sesión</button>
               {resultsFiltered.length ? <>
                 <button className="btn btnSmall btnGhost" onClick={() => csv(resultsFiltered)}>↓ CSV</button>
                 <button className="btn btnSmall btnGhost" onClick={() => decisionAuditJson(resultsFiltered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>

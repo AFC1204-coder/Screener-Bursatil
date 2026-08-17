@@ -8950,6 +8950,20 @@ button.decisionOperatingIssue:hover {
   color:var(--muted);
 }
 
+/* Etapa tentativa: el precio ha cruzado su media de 30 semanas pero la media
+   sigue en la dirección anterior. Es la MISMA etapa con menos confirmación,
+   así que no cambia de palabra ni de color — se marca con un punto y el
+   borde discontinuo. Lleno/hueco, no una categoría nueva. */
+.stageTag.stageTagTentative {
+  border-style:dashed;
+}
+
+.stageTagMark {
+  margin-left:4px;
+  color:var(--muted);
+  font-style:normal;
+}
+
 /* Columnas numéricas — el problema de los porcentajes truncados con puntos
    suspensivos era `text-overflow:ellipsis` sobre celdas estrechas. Con siete
    columnas sobra espacio: el número se muestra entero, nunca se recorta. */

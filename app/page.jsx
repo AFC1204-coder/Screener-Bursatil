@@ -39,7 +39,8 @@ import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
 import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, fitScansForBrowser, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
 import { buildSnapshotFreshnessNotice } from "@/lib/snapshotFreshness";
-import { pickBestRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
+import { dropForeignMarketSnapshots, pickNightlyUsRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
+import { nightlyAbsenceNotice, nightlyAbsenceReasonText, nightlyAbsenceStatus } from "@/lib/nightlyAbsence";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 import {
   ALL_FILTER_LAYERS,
@@ -459,17 +460,29 @@ export default function Page() {
   // arranque y "Reset sesión": sin botón Ejecutar, este es el único camino
   // que repuebla la tabla, así que ningún reset puede dejarla vacía sin
   // volver a llamarlo.
+  //
+  // "Los datos de anoche" es UN escaneo concreto: el último nocturno
+  // estadounidense (lib/nightlyUsScan.js). Ni el más reciente de la base —el
+  // cron europeo de las 22-23h corre después y traía una acción italiana— ni el
+  // más reciente del navegador. Cuando ese escaneo no está, la pantalla lo dice
+  // con su motivo y se queda vacía; sustituirlo en silencio es lo que rompió el
+  // arranque el 16 de agosto de 2026.
   function restoreLatestSnapshot({ isCancelled = () => false } = {}) {
     setRestoringScan(true);
-    setStatus("Cargando los últimos datos guardados...");
+    setStatus("Cargando el escaneo nocturno...");
+    const declareNightlyAbsence = (nightly) => {
+      if (isCancelled() || resultsOwnerRef.current !== "none") return;
+      setSnapshotNotice(nightlyAbsenceNotice(nightly));
+      setStatus(nightlyAbsenceStatus(nightly));
+    };
     const restoreLocalSnapshot = (reason = "") => {
       if (isCancelled() || resultsOwnerRef.current !== "none") return false;
-      const localScan = pickBestRestorableScan(safeRead(STORAGE_KEYS.scans, []));
+      const localScan = pickNightlyUsRestorableScan(safeRead(STORAGE_KEYS.scans, []));
       if (!localScan) return false;
       const notice = reason ? {
         tone: "info",
         label: "Copia local",
-        detail: `${reason} Se restaura la última copia local disponible.`,
+        detail: `${reason} Se restaura la última copia local del escaneo nocturno estadounidense.`,
         source: "local",
       } : null;
       const restored = restoreSnapshot(localScan, { source: "local", notice });
@@ -486,12 +499,18 @@ export default function Page() {
         // era la vía que quedaba viva del banner "Supabase: Failed to fetch".
         // El original va a consola, como en loadUniverse.
         if (result.message) console.error("[snapshot] copia en la nube no disponible:", result.message);
-        if (!restoreLocalSnapshot(userFacingServiceError(result.message, "La copia guardada en la nube no está disponible."))) setStatus(DEFAULT_STATUS);
+        if (!restoreLocalSnapshot(userFacingServiceError(result.message, "La copia guardada en la nube no está disponible."))) {
+          declareNightlyAbsence({ reason: result.configured === false ? "supabase-disabled" : "cloud-unavailable" });
+        }
         return;
       }
-      const scan = pickBestRestorableScan(result.data?.scans || []);
+      // El servidor ya devolvió cero escaneos con el motivo: no se busca "otro
+      // que valga" ni en la nube ni localmente más allá del propio nocturno.
+      const nightly = result.data?.nightly || null;
+      const scan = pickNightlyUsRestorableScan(result.data?.scans || []);
       if (!scan) {
-        if (!restoreLocalSnapshot("No hay ninguna copia guardada en la nube con resultados.")) setStatus(DEFAULT_STATUS);
+        const absence = nightly?.found === false ? nightly : { reason: "no-nightly-scan" };
+        if (!restoreLocalSnapshot(nightlyAbsenceReasonText(absence))) declareNightlyAbsence(absence);
         return;
       }
       const notice = buildSnapshotFreshnessNotice(result.data, scan);
@@ -505,7 +524,10 @@ export default function Page() {
           : `Últimos datos de la nube cargados: ${scan.rows.length} acciones. Los filtros se aplican al momento sobre este universo estable.`);
     }).catch((error) => {
       console.error("[snapshot] fallo al leer la copia en la nube:", error);
-      if (!isCancelled() && !restoreLocalSnapshot(userFacingServiceError(error?.message, "La copia guardada en la nube no está disponible."))) setStatus(DEFAULT_STATUS);
+      if (isCancelled()) return;
+      if (!restoreLocalSnapshot(userFacingServiceError(error?.message, "La copia guardada en la nube no está disponible."))) {
+        declareNightlyAbsence({ reason: "nightly-read-failed" });
+      }
     }).finally(() => {
       if (!isCancelled()) setRestoringScan(false);
     });
@@ -536,8 +558,11 @@ export default function Page() {
       // los del scan — eso es lo que distingue esta vía de restoreSnapshot).
       if (!restoredRows.length && !restoredAnalyzedRows.length && session.scanRef?.id && session.scanContext) {
         const storedScans = safeRead(STORAGE_KEYS.scans, []);
+        // Si el escaneo referenciado ya no está, el respaldo es el nocturno
+        // estadounidense — no "el mejor snapshot local que haya", que podía ser
+        // el de otro mercado.
         const referencedScan = (Array.isArray(storedScans) ? storedScans : []).find((scan) => scan?.id === session.scanRef.id)
-          || pickBestRestorableScan(storedScans);
+          || pickNightlyUsRestorableScan(storedScans);
         if (referencedScan?.rows?.length) {
           const rehydrateContext = { ...session.scanContext, marketHealth: restoredMarketHealth, useRegimeFilter: restoredUseRegimeFilter };
           const rehydratedView = restoredSnapshotView(referencedScan, restoredActiveSettings, rehydrateContext, filterAnalyzedRows);
@@ -605,11 +630,19 @@ export default function Page() {
       restoreLatestSnapshot({ isCancelled: () => cancelled });
     }
     setSessionReady(true);
-    // Migración perezosa: snapshots locales guardados antes del presupuesto
-    // (filas con objectiveMetricAudit/decisionTrace, hasta 50 scans) se
-    // recortan una vez a la proyección de persistencia. Idempotente: dentro
-    // del presupuesto no reescribe nada.
-    const storedScansForBudget = safeRead(STORAGE_KEYS.scans, []);
+    // Migración perezosa. Dos cosas, ambas idempotentes:
+    //
+    // 1. Los snapshots del cron de OTROS mercados que el arranque llegó a
+    //    cachear mientras pedía "el más reciente" (JP, IT-ES…). No los borra
+    //    solo esta pantalla: encabezan la lista local que leen el radar de
+    //    OPVs, sectores y el pulso de escaneos de salud de mercado.
+    // 2. El recorte al presupuesto de los snapshots guardados antes de que
+    //    existiera (filas con objectiveMetricAudit/decisionTrace, hasta 50).
+    const storedScansOnStartup = safeRead(STORAGE_KEYS.scans, []);
+    const storedScansForBudget = dropForeignMarketSnapshots(storedScansOnStartup);
+    if (storedScansForBudget.length !== (Array.isArray(storedScansOnStartup) ? storedScansOnStartup.length : 0)) {
+      safeWrite(STORAGE_KEYS.scans, storedScansForBudget);
+    }
     if (payloadChars(storedScansForBudget) > (budgetFor(STORAGE_KEYS.scans) || Infinity)) {
       safeWrite(STORAGE_KEYS.scans, fitScansForBrowser(storedScansForBudget));
     }
@@ -912,9 +945,17 @@ export default function Page() {
     setSelectedFilterTemplateId("");
     setFilterTemplateName("");
     setActiveFilterFamily(null);
+    // Un reset tiene que dejar al usuario en un estado BUENO, no repetir el que
+    // le hizo pulsarlo. Antes de recargar se tiran los snapshots cacheados de
+    // otros mercados —el residuo del arranque que pedía "el más reciente"—; si
+    // no, la copia local seguía sirviendo el mismo escaneo equivocado.
+    const storedScans = safeRead(STORAGE_KEYS.scans, []);
+    const cleanedScans = dropForeignMarketSnapshots(storedScans);
+    if (cleanedScans.length !== (Array.isArray(storedScans) ? storedScans.length : 0)) safeWrite(STORAGE_KEYS.scans, cleanedScans);
+    setSnapshotNotice(null);
     // Sin botón Ejecutar, un reset que dejara la tabla vacía sería un camino
     // sin salida: se recargan los datos de anoche inmediatamente.
-    setStatus("Sesión reiniciada. Recargando los datos de anoche...");
+    setStatus("Sesión reiniciada. Recargando el escaneo nocturno...");
     restoreLatestSnapshot();
   }
   function applySetupMode(mode) {

@@ -19,7 +19,7 @@ import { screenerStockContextFromSession } from "@/lib/screenerContracts";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { setupPatternForBars } from "@/lib/setupPatterns";
-import { STAGE_MISSING_REASON, stageWordForState } from "@/lib/stageDisplay";
+import { STAGE_MISSING_REASON, stageConfirmationMark, stageWordForState } from "@/lib/stageDisplay";
 import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { DECISION_CHART_PRESETS, buildStockDecisionDesk } from "@/lib/stockDecisionDesk";
@@ -65,18 +65,34 @@ function KVRow({ label, value, state = "value", detail = "", source = null, suff
 }
 
 /* Curva de etapa como glifo SVG. Geometría canónica de tokens-v2.
-   El punto marca la FASE del ciclo que ya clasificó lib/weeklyStage.js:
-   base → tramo plano inicial, etapa 2 → tramo ascendente, etapa 4 → tramo
-   descendente. "mixed" y la ausencia se dibujan SIN punto: situar el punto
-   sería afirmar una posición en el ciclo que la clasificación no da. */
-function StockCurveSvg({ stage = "", width = 96, height = 32 }) {
-  const dot = stage === "base"
-    ? { x: 16, y: 34 }
-    : stage === "stage2"
-      ? { x: 42, y: 21 }
-      : stage === "stage4"
-        ? { x: 88, y: 27 }
-        : null;
+   El punto marca la FASE del ciclo que ya clasificó lib/weeklyStage.js, cada
+   una sobre su tramo: etapa 1 → suelo inicial, etapa 2 → tramo ascendente,
+   etapa 3 → techo, etapa 4 → tramo descendente.
+
+   La etapa TENTATIVA se dibuja con el punto HUECO (mismo sitio, mismo color,
+   sin relleno): el precio ha cruzado su media de 30 semanas pero la media
+   sigue en la dirección anterior. Es la misma etapa con menos confirmación,
+   no una etapa distinta, así que no cambia de posición ni de color — sólo de
+   relleno. Ver docs/diseno-salud-y-cambio-2026-08-16.md (D.15).
+
+   La posición se decide con el ESTADO, nunca buscando dígitos dentro de un
+   texto: `/3/.test("Bajo MM30s")` es cierto por el 3 de "MM30s", y así es
+   como la constelación acababa pintando en el techo un valor que estaba por
+   debajo de su media (auditoría C-19).
+
+   Los estados de la taxonomía anterior ("base"/"mixed") y la ausencia se
+   dibujan SIN punto: situar el punto sería afirmar una posición en el ciclo
+   que esa clasificación no da. */
+const CURVE_DOT_BY_STAGE = {
+  stage1: { x: 16, y: 34 },
+  stage2: { x: 42, y: 21 },
+  stage3: { x: 64, y: 10 },
+  stage4: { x: 88, y: 27 },
+};
+
+function StockCurveSvg({ stage = "", confirmation = "", width = 96, height = 32 }) {
+  const dot = CURVE_DOT_BY_STAGE[stage] || null;
+  const hollow = confirmation === "tentative" || confirmation === "unknown_context";
   return (
     <svg className="stockCurveSvg" viewBox="0 0 120 44" width={width} height={height} aria-hidden="true">
       <path
@@ -86,7 +102,17 @@ function StockCurveSvg({ stage = "", width = 96, height = 32 }) {
         strokeWidth="var(--curve-stroke)"
         strokeLinecap="round"
       />
-      {dot ? <circle cx={dot.x} cy={dot.y} r="var(--curve-dot)" fill="var(--tiza)" /> : null}
+      {dot ? (
+        <circle
+          cx={dot.x}
+          cy={dot.y}
+          r="var(--curve-dot)"
+          fill={hollow ? "none" : "var(--tiza)"}
+          stroke={hollow ? "var(--tiza)" : "none"}
+          strokeWidth={hollow ? 1.5 : 0}
+          strokeDasharray={confirmation === "unknown_context" ? "2 2" : undefined}
+        />
+      ) : null}
     </svg>
   );
 }
@@ -99,15 +125,17 @@ function StockCurveSvg({ stage = "", width = 96, height = 32 }) {
    descriptiva (dónde está el precio respecto a sus medias, no qué hacer) y
    se escribe con la MISMA palabra que la columna "Etapa" de la tabla
    (lib/stageDisplay.js). */
-function StageCurveChip({ stageTone = "", stageWord = "", missingReason = "" }) {
+function StageCurveChip({ stageTone = "", stageWord = "", confirmation = "", confirmationInfo = null, missingReason = "" }) {
   const word = stageWord || "Sin dato";
+  const suffix = confirmationInfo?.suffix || "";
   return (
-    <div className="stockDecisionChip" data-stage={stageTone || "none"} aria-label={`Etapa: ${word}`}>
-      <StockCurveSvg stage={stageTone} />
+    <div className="stockDecisionChip" data-stage={stageTone || "none"} aria-label={`Etapa: ${word}${suffix ? ` (${suffix})` : ""}`}>
+      <StockCurveSvg stage={stageTone} confirmation={confirmation} />
       <div className="stockDecisionChipBody">
         <span className="stockDecisionChipLabel">Etapa</span>
         <span className="stockDecisionChipDecision">
           {word}
+          {suffix ? <span className="stockStageTentative"> · {suffix}<InfoHint text={confirmationInfo.title} /></span> : null}
           {!stageWord && missingReason ? <InfoHint text={missingReason} /> : null}
         </span>
       </div>
@@ -197,7 +225,13 @@ export function N0VerdictBlock({
           </div>
         </div>
         <div className="stockVerdictActions">
-          <StageCurveChip stageTone={stageDisplay?.tone || ""} stageWord={stageDisplay?.word || ""} missingReason={STAGE_MISSING_REASON} />
+          <StageCurveChip
+            stageTone={stageDisplay?.tone || ""}
+            stageWord={stageDisplay?.word || ""}
+            confirmation={data?.stage?.weekly?.confirmation || ""}
+            confirmationInfo={stageConfirmationMark(data?.stage?.weekly?.confirmation || "")}
+            missingReason={STAGE_MISSING_REASON}
+          />
         </div>
       </div>
 

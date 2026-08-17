@@ -25,7 +25,7 @@ import { cap, pct } from "@/lib/formatters";
 import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
 import { canonicalRs } from "@/lib/rsCanonical";
 import { UNRELIABLE_AUDIT_STATUS } from "@/lib/scanLightProjection";
-import { STAGE_MISSING_REASON, stageWordForState } from "@/lib/stageDisplay";
+import { STAGE_LEGACY_REASON, STAGE_MISSING_REASON, stageConfirmationMark, stageWordForState } from "@/lib/stageDisplay";
 import { CompanyMark, MiniSparkline } from "@/lib/screenerAtoms";
 import { PERFORMANCE_PERIODS, normalizePerformancePeriod, performancePeriod } from "@/lib/screenerPeriods";
 import { countryName, marketFlag, stockUrl } from "@/lib/symbols";
@@ -91,6 +91,13 @@ function auditIssueReason(row, metricKey) {
 // decía "Base" y la ficha "Base / transición" para la misma clasificación.
 export function stageWord(row = {}) {
   return stageWordForState(row.weeklyStageState || "", row.weeklyStageLabel || "");
+}
+
+// Una etapa 1 o 3 tentativa es la misma etapa con menos confirmación, no una
+// etapa distinta: se marca con un punto medio, no con otra palabra ni con
+// otro color. Ver docs/diseno-salud-y-cambio-2026-08-16.md (D.15).
+export function stageConfirmation(row = {}) {
+  return stageConfirmationMark(row.weeklyStageConfirmation || "");
 }
 
 function moveTone(value) {
@@ -186,7 +193,14 @@ export const SCREENER_COLUMNS = [
       if (!stage) {
         return <MissingValue reason={STAGE_MISSING_REASON} />;
       }
-      return <span className={`stageTag stage-${stage.tone}`}>{stage.word}</span>;
+      const confirmation = stageConfirmation(row);
+      const title = stage.legacy ? STAGE_LEGACY_REASON : confirmation?.title || "";
+      return (
+        <span className={`stageTag stage-${stage.tone}${confirmation?.suffix ? " stageTagTentative" : ""}`} title={title || undefined}>
+          {stage.word}
+          {confirmation?.mark ? <i className="stageTagMark" aria-label={confirmation.suffix}>{confirmation.mark}</i> : null}
+        </span>
+      );
     },
   },
   {

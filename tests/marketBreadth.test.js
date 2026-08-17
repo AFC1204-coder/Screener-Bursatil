@@ -20,6 +20,7 @@ function row(overrides = {}) {
     symbol: "AAA",
     country: "US",
     stage: "stage2",
+    priceAboveSlowMa: true,
     extSma50: 5,
     sma200Slope: 1,
     distance52w: -4,
@@ -33,16 +34,22 @@ describe("aggregateUniverseBreadth", () => {
   it("cuenta cada indicador sobre su población medida y declara la fecha del dato", () => {
     const rows = [
       row(),
-      row({ symbol: "BBB", stage: "base", extSma50: -2, sma200Slope: -1, distance52w: -0.5, upDownVolRatio: 0.8 }),
-      row({ symbol: "CCC", stage: "stage4", extSma50: -30, sma200Slope: -2, distance52w: -45, upDownVolRatio: 0.5 }),
-      row({ symbol: "DDD", stage: "mixed", extSma50: 0, distance52w: -31 }),
+      // Etapa 1 tentativa: el precio ha recuperado su media de 30 semanas
+      // pero la media sigue cayendo. Está POR ENCIMA de la media, y la
+      // etiqueta de etapa ya no lo dice — por eso above30w lee el booleano.
+      row({ symbol: "BBB", stage: "stage1", priceAboveSlowMa: true, extSma50: -2, sma200Slope: -1, distance52w: -0.5, upDownVolRatio: 0.8 }),
+      row({ symbol: "CCC", stage: "stage4", priceAboveSlowMa: false, extSma50: -30, sma200Slope: -2, distance52w: -45, upDownVolRatio: 0.5 }),
+      // Etapa 3 tentativa: el precio ha perdido la media, la media aún sube.
+      row({ symbol: "DDD", stage: "stage3", priceAboveSlowMa: false, extSma50: 0, distance52w: -31 }),
     ];
     const breadth = aggregateUniverseBreadth(rows);
     expect(breadth.population).toBe(4);
     expect(breadth.dataAsOf).toBe("2026-08-14");
     expect(breadth.staleRows).toBe(0);
     const byKey = Object.fromEntries(breadth.indicators.map((item) => [item.key, item]));
-    // stage2 + base = sobre la media de 30 semanas (lib/weeklyStage.js).
+    // "Sobre su media de 30 semanas" sale del booleano weeklyPriceAboveSlowMa,
+    // no de la etiqueta: con cuatro etapas la etiqueta ya no dice de qué lado
+    // de la media está el precio.
     expect(byKey.above30w.count).toBe(2);
     expect(byKey.above30w.measured).toBe(4);
     // extSma50 >= 0 cuenta el 0 exacto como sobre la media, igual que el screener.

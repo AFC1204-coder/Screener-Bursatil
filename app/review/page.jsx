@@ -306,7 +306,11 @@ async function hydrateReviewRow(row = {}, signal) {
   return deriveTechnicalFromBars(chart.bars || []);
 }
 function MiniSparkline({ bars = [] }) {
-  const points = bars.filter((x) => Number.isFinite(x.close));
+  // Tolerante al orden: ver lib/screenerAtoms.jsx MiniSparkline.
+  const points = bars
+    .filter((x) => Number.isFinite(x.close))
+    .slice()
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
   if (points.length < 2) return <div className="previewEmpty">Sin dato</div>;
   const w = 260, h = 118, pad = 10;
   const values = points.flatMap((p) => [p.close, p.sma50, p.sma200].filter(Number.isFinite));

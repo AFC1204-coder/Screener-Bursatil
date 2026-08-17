@@ -188,6 +188,14 @@
   border-color: var(--line3);
 }
 
+/* "tentativa" / "sin contexto": el grado de confirmación de la etapa, no una
+   etapa distinta. Se escribe en secundario, junto a la palabra, nunca en su
+   lugar. El glifo lo dice a la vez con el punto hueco. */
+.stockStageTentative {
+  color: var(--muted);
+  font-weight: 400;
+}
+
 .stockDecisionChip svg {
   flex: 0 0 auto;
   width: 96px;
