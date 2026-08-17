@@ -12,6 +12,27 @@ import { userFacingServiceError } from "@/lib/serviceErrors";
 
 const SCANS_SUPABASE_TIMEOUT_MS = 8000;
 
+// ── El techo de PostgREST y por qué hay que paginar ────────────────────────
+// PostgREST nunca devuelve más de 1.000 filas por respuesta, diga lo que diga
+// el `limit`. Medido contra producción el 2026-08-17: pidiendo `limit=3400`
+// sobre el nocturno de 3.312 filas, la respuesta trae 1.000 y
+// `content-range: 0-999/3312`. Es decir: subir `rowsLimit` sin paginar NO trae
+// una fila más — el arranque se quedaba en 1.000 pasara lo que pasara.
+//
+// Coste medido de leer el nocturno entero con esta paginación (4 páginas,
+// mismo select que usa la ruta): 29,4 MB y 4,4 s en serie; 2,2-2,7 s en
+// paralelo. Cada página tarda 0,6-2,7 s, muy por debajo del timeout de 8 s de
+// SCANS_SUPABASE_TIMEOUT_MS, que es por página, no por lectura completa.
+const POSTGREST_MAX_ROWS = 1000;
+const RESULT_PAGE_CONCURRENCY = 4;
+
+// Techo de rowsLimit por debajo del cual la respuesta se cachea 2 minutos
+// (cacheableLatest). Antes eran 5.000, dimensionado cuando el arranque pedía
+// 500 filas; con el universo completo (3.312 filas hoy, tope de 6.000 filas
+// pedidas por lib/cloudSyncClient.js) el arranque caía fuera de la caché justo
+// cuando más falta hace, porque es la petición más cara de la app.
+const CACHEABLE_ROWS_LIMIT = 8000;
+
 function scanPayload(scan = {}, ownerId) {
   const rows = Array.isArray(scan.rows) ? scan.rows : [];
   const progressStatus = textOrNull(scan.settings?.progress?.status);
@@ -243,12 +264,72 @@ export function resultPayload(row = {}, scanId, ownerId, index, settingsOrExplan
   };
 }
 
+// ── Cómo se reparten las páginas cuando no caben todas ─────────────────────
+// Si el escaneo tiene más filas que el tope pedido, el recorte NO puede ser
+// "las primeras por rank_index": rank_index ordena por puntuación, así que
+// quedarse con el principio deja fuera todos los valores débiles y cualquier
+// filtro que los busque (etapa 4, RS bajo) devuelve vacío sin que el usuario
+// sepa por qué. Eso es exactamente lo que hacía el arranque con rowsLimit=500
+// sobre 3.313 filas: el usuario filtraba sobre la mejor sexta parte creyendo
+// que filtraba sobre el universo.
+//
+// En su lugar, las páginas se reparten por todo el rango del ranking (muestreo
+// sistemático): con 20.000 filas y tope de 6.000 se leen 6 páginas de 1.000
+// espaciadas cada 3.333 puestos, así que la muestra cubre cabeza, medio y cola.
+// Sigue siendo una muestra —y se dice, con su motivo, en el aviso de la
+// pantalla (lib/snapshotFreshness.js)— pero no está sesgada hacia los mejores.
+export function scanResultPageOffsets(rowsAvailable, rowsLimit) {
+  const available = Math.max(Number(rowsAvailable) || 0, 0);
+  const limit = Math.max(Number(rowsLimit) || 0, 0);
+  if (!limit) return { offsets: [], sampled: false, step: 0 };
+  const target = available > 0 ? Math.min(available, limit) : limit;
+  const pageCount = Math.max(1, Math.ceil(target / POSTGREST_MAX_ROWS));
+  const sampled = available > limit;
+  const step = sampled ? Math.max(POSTGREST_MAX_ROWS, Math.floor(available / pageCount)) : POSTGREST_MAX_ROWS;
+  return {
+    offsets: Array.from({ length: pageCount }, (_, index) => index * step),
+    sampled,
+    step,
+  };
+}
+
+async function readScanResultPages({ ownerId, scanIds, select, rowsLimit, rowsAvailable }) {
+  const { offsets, sampled, step } = scanResultPageOffsets(rowsAvailable, rowsLimit);
+  const rows = [];
+  for (let index = 0; index < offsets.length; index += RESULT_PAGE_CONCURRENCY) {
+    const batch = offsets.slice(index, index + RESULT_PAGE_CONCURRENCY);
+    const pages = await Promise.all(batch.map((offset) => supabaseRequest("scan_results", {
+      query: `owner_id=eq.${encodeURIComponent(ownerId)}&scan_id=in.(${scanIds})&select=${select}&order=rank_index.asc&limit=${POSTGREST_MAX_ROWS}&offset=${offset}`,
+      timeoutMs: SCANS_SUPABASE_TIMEOUT_MS,
+    })));
+    for (const page of pages) rows.push(...page);
+    // Página corta = se acabaron las filas. Solo vale cuando las páginas van
+    // seguidas; con muestreo repartido una página corta no dice nada del
+    // resto del rango.
+    if (!sampled && pages.some((page) => page.length < POSTGREST_MAX_ROWS)) break;
+  }
+  // Con muestreo NO se recorta al tope exacto: el sobrante es de menos de una
+  // página y cortarlo volvería a tirar precisamente la cola del ranking.
+  return { rows: sampled ? rows : rows.slice(0, rowsLimit), sampled, step };
+}
+
 // La hidratación del RS semanal vive en lib/globalRs.js (attachWeeklyRs) para
 // que TODAS las rutas que producen filas la apliquen, no solo esta.
 export function scanFromDb(row, results = [], options = {}) {
   const decisionSettings = row.settings?.activeSettings || row.settings || {};
   const weeklyRsBySymbol = options.weeklyRsBySymbol || null;
   const marketCapBySymbol = options.marketCapBySymbol || null;
+  // decisionTrace se RECONSTRUYE fila a fila al servir (prepareScanDecisionRow
+  // → decisionTraceForRow). Medido el 2026-08-17 sobre la respuesta real:
+  // 6.682 B por fila, el 52,6% del peso de la respuesta del arranque — y es el
+  // mismo campo que la proyección ligera del nocturno excluye a propósito y que
+  // la proyección de persistencia del navegador tampoco guarda. Los consumidores
+  // ya lo rehacen cuando falta (decisionTraceForRow, explanationFromTrace), así
+  // que la proyección compacta —la que pide la pantalla principal— deja de
+  // cargar con él. ?full=1 y ?projection=decision lo siguen llevando.
+  const prepareRow = options.omitDecisionTrace
+    ? (item) => item
+    : (item) => prepareScanDecisionRow(item, decisionSettings);
   const rows = results
     .filter((item) => item.scan_id === row.id)
     .sort((a, b) => (a.rank_index || 0) - (b.rank_index || 0))
@@ -258,7 +339,7 @@ export function scanFromDb(row, results = [], options = {}) {
     // mismas tablas en vivo; sin esto, un snapshot de días atrás enseñaba en
     // el screener números que la ficha del mismo símbolo desmentía.
     .map((item) => attachCachedMarketCap(
-      attachWeeklyRs(prepareScanDecisionRow(scanDecisionRowFromDb(item, options), decisionSettings), weeklyRsBySymbol),
+      attachWeeklyRs(prepareRow(scanDecisionRowFromDb(item, options)), weeklyRsBySymbol),
       marketCapBySymbol,
     ));
   // rowsAvailable es el total real del escaneo (columna scans.row_count);
@@ -294,6 +375,10 @@ export function scanFromDb(row, results = [], options = {}) {
     rowsAvailable,
     rowsReturned,
     rowsTruncated,
+    // Cómo se eligieron las filas que sí llegaron: `true` = muestra repartida
+    // por todo el ranking (scanResultPageOffsets), `false` = las primeras por
+    // rank_index porque cabían todas. La pantalla lo dice tal cual.
+    rowsSampled: Boolean(options.rowsSampled) && rowsTruncated,
     ...(options.decisionProjection
       ? { decisionProjectionPartialRows: rows.filter((item) => item.decisionProjectionPartial).length }
       : {}),
@@ -432,7 +517,7 @@ export async function GET(req) {
   // Ver lib/nightlyUsScan.js.
   const anchoredToNightlyUs = searchParams.get("anchor") === NIGHTLY_US_ANCHOR;
   try {
-    const cacheableLatest = includeRows && !includeDeleted && limit === 1 && rowsLimit <= 5000;
+    const cacheableLatest = includeRows && !includeDeleted && limit === 1 && rowsLimit <= CACHEABLE_ROWS_LIMIT;
     const cacheKey = `latest:${config.ownerId}:${rowsLimit}:${decisionProjection ? "decision" : full ? "full" : "compact"}:${anchoredToNightlyUs ? NIGHTLY_US_ANCHOR : "any"}`;
     const loadPayload = async () => {
       const nightly = anchoredToNightlyUs
@@ -457,12 +542,18 @@ export async function GET(req) {
       const activeScans = scans.filter((scan) => !scan.deleted_at);
       const deletedScans = scans.filter((scan) => scan.deleted_at);
       let results = [];
+      let rowsSampled = false;
       if (includeRows && activeScans.length && rowsLimit > 0) {
         const ids = activeScans.map((scan) => scan.id).join(",");
-        results = await supabaseRequest("scan_results", {
-          query: `owner_id=eq.${encodeURIComponent(config.ownerId)}&scan_id=in.(${ids})&select=${resultSelect}&order=rank_index.asc&limit=${rowsLimit}`,
-          timeoutMs: SCANS_SUPABASE_TIMEOUT_MS,
+        const page = await readScanResultPages({
+          ownerId: config.ownerId,
+          scanIds: ids,
+          select: resultSelect,
+          rowsLimit,
+          rowsAvailable: activeScans.reduce((total, scan) => total + (Number(scan.row_count) || 0), 0),
         });
+        results = page.rows;
+        rowsSampled = page.sampled;
         if (!full && !decisionProjection) results = results.map((item) => ({ ...item, raw: compactResearchRow(item.raw) }));
       }
       // Lote único de RS semanal para todos los símbolos de todos los scans
@@ -483,7 +574,14 @@ export async function GET(req) {
         configured: true,
         ok: true,
         projection: decisionProjection ? "decision" : full ? "full" : "compact",
-        scans: activeScans.map((scan) => scanFromDb(scan, results, { decisionProjection, includeRows, weeklyRsBySymbol: weeklyRs.bySymbol, marketCapBySymbol: marketCaps.bySymbol })),
+        scans: activeScans.map((scan) => scanFromDb(scan, results, {
+          decisionProjection,
+          includeRows,
+          rowsSampled,
+          omitDecisionTrace: !full && !decisionProjection,
+          weeklyRsBySymbol: weeklyRs.bySymbol,
+          marketCapBySymbol: marketCaps.bySymbol,
+        })),
         scanTombstones: includeDeleted ? deletedScans.map(scanTombstoneFromDb) : [],
         ...(anchoredToNightlyUs ? { nightly: { found: true, ...nightly.scan } } : {}),
       };

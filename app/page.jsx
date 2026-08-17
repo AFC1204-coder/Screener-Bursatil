@@ -479,14 +479,26 @@ export default function Page() {
       if (isCancelled() || resultsOwnerRef.current !== "none") return false;
       const localScan = pickNightlyUsRestorableScan(safeRead(STORAGE_KEYS.scans, []));
       if (!localScan) return false;
+      // El universo entero no cabe en localStorage (25 M de caracteres frente
+      // a 4,5 M de presupuesto), así que la copia local puede ser una muestra
+      // repartida del escaneo — nunca "las mejores". Si lo es, se dice aquí:
+      // los filtros sobre esa copia ven menos acciones que los de la nube.
+      const sampled = Boolean(localScan.rowsSampled) && Number(localScan.rowsAvailable) > localScan.rows.length;
+      const sampleDetail = sampled
+        ? ` La copia local guarda ${localScan.rows.length} de ${localScan.rowsAvailable} acciones, repartidas por todo el ranking, porque el escaneo entero no cabe en este navegador.`
+        : "";
       const notice = reason ? {
         tone: "info",
         label: "Copia local",
-        detail: `${reason} Se restaura la última copia local del escaneo nocturno estadounidense.`,
+        detail: `${reason} Se restaura la última copia local del escaneo nocturno estadounidense.${sampleDetail}`,
         source: "local",
       } : null;
       const restored = restoreSnapshot(localScan, { source: "local", notice });
-      if (restored) setStatus(`Última copia local cargada: ${localScan.rows.length} acciones. Los filtros se aplican al momento sobre estos datos.`);
+      if (restored) {
+        setStatus(sampled
+          ? `Última copia local cargada: ${localScan.rows.length} de ${localScan.rowsAvailable} acciones (muestra repartida). Los filtros se aplican al momento sobre estos datos.`
+          : `Última copia local cargada: ${localScan.rows.length} acciones. Los filtros se aplican al momento sobre estos datos.`);
+      }
       return restored;
     };
     getLatestScanFromCloud().then((result) => {

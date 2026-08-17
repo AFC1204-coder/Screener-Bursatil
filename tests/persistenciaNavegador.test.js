@@ -197,6 +197,38 @@ describe("fitScansForBrowser", () => {
     const fitted = fitScansForBrowser([{ id: "solo", rows: [bigRow()] }], 10);
     expect(fitted.map((item) => item.id)).toEqual(["solo"]);
   });
+
+  // El universo entero se transporta (para poder filtrarlo) pero NO cabe en
+  // localStorage: 3.312 filas en proyección de persistencia son del orden de
+  // 25 M de caracteres frente a los 4,5 M de presupuesto de la clave. Lo que
+  // se guarda es una muestra REPARTIDA, no las primeras: las filas llegan
+  // ordenadas por rank_index (puntuación), así que quedarse con la cabeza
+  // dejaría la copia local sin un solo valor débil.
+  it("recorta las filas del scan más reciente a una muestra repartida cuando no cabe", () => {
+    const rows = Array.from({ length: 300 }, (_, index) => bigRow(`S${String(index).padStart(3, "0")}`));
+    const entero = fitScansForBrowser([{ id: "grande", rowsAvailable: 300, rows }], Infinity)[0];
+    const budget = Math.floor(payloadChars(entero) / 3);
+
+    const fitted = fitScansForBrowser([{ id: "grande", rowsAvailable: 300, rows }], budget)[0];
+
+    expect(payloadChars(fitted)).toBeLessThanOrEqual(budget);
+    expect(fitted.rows.length).toBeGreaterThan(1);
+    expect(fitted.rows.length).toBeLessThan(300);
+    expect(fitted.rowsAvailable).toBe(300);
+    expect(fitted.rowsReturned).toBe(fitted.rows.length);
+    expect(fitted.rowsTruncated).toBe(true);
+    expect(fitted.rowsSampled).toBe(true);
+    // Reparto real: la muestra llega hasta el final de la lista, no se queda
+    // en la cabeza del ranking.
+    expect(fitted.rows[0].symbol).toBe("S000");
+    expect(Number(fitted.rows.at(-1).symbol.slice(1))).toBeGreaterThan(200);
+  });
+
+  it("no marca muestra cuando el scan cabe entero", () => {
+    const fitted = fitScansForBrowser([{ id: "cabe", rows: [bigRow("AAA"), bigRow("BBB")] }], 4_500_000)[0];
+    expect(fitted.rowsSampled).toBeUndefined();
+    expect(fitted.rows).toHaveLength(2);
+  });
 });
 
 describe("safeWrite con cuota llena", () => {
@@ -326,5 +358,38 @@ describe("presupuestos y medición", () => {
     const freed = freeUpLocalScans(1);
     expect(freed).toBeGreaterThan(0);
     expect(JSON.parse(fake.getItem(STORAGE_KEYS.scans)).map((scan) => scan.id)).toEqual(["a"]);
+  });
+});
+
+// El quality gate y las filas ligeras ya guardadas (2026-08-17).
+//
+// El nocturno guarda la población entera, pero su proyección ligera no
+// incluía chartBarsCount, y qualityGateForResearchRow exige 180 barras. Medido
+// sobre el nocturno servido entero ese día: 41 de 3.312 filas llevaban el
+// campo. Es decir, el usuario filtraba sobre 41 acciones —justo las que ya
+// habían pasado el preset del nocturno— creyendo filtrar sobre el universo.
+describe("qualityGateForResearchRow · filas en proyección ligera", () => {
+  it("acepta la fila ligera sin chartBarsCount: el productor ya exigió 180 barras", () => {
+    const gate = qualityGateForResearchRow({ symbol: "LIG", price: 12, rowProjection: "light" }, {});
+    expect(gate.passed).toBe(true);
+    expect(gate.reasons).toEqual([]);
+  });
+
+  it("pero NO acepta una fila ligera con histórico explícitamente corto", () => {
+    const gate = qualityGateForResearchRow({ symbol: "LIG", price: 12, rowProjection: "light", chartBarsCount: 40 }, {});
+    expect(gate.passed).toBe(false);
+    expect(gate.reasons[0]).toContain("histórico 40/180");
+  });
+
+  it("ni una fila normal sin histórico: la excepción es solo para la proyección ligera", () => {
+    const gate = qualityGateForResearchRow({ symbol: "NOR", price: 12 }, {});
+    expect(gate.passed).toBe(false);
+    expect(gate.reasons[0]).toContain("histórico 0/180");
+  });
+
+  it("el precio se sigue exigiendo siempre", () => {
+    const gate = qualityGateForResearchRow({ symbol: "LIG", rowProjection: "light" }, {});
+    expect(gate.passed).toBe(false);
+    expect(gate.reasons).toEqual(["precio no disponible"]);
   });
 });

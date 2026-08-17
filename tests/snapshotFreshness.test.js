@@ -67,6 +67,35 @@ describe("snapshot freshness", () => {
     expect(notice.detail).toContain("9918");
   });
 
+  // El criterio del recorte importa tanto como el número (2026-08-17): si la
+  // muestra fueran "las primeras", que ordenan por puntuación, cualquier
+  // filtro de valores débiles devolvería vacío sin que el usuario supiera por
+  // qué. Cuando el servidor reparte las páginas por todo el ranking, el aviso
+  // lo dice.
+  it("dice que la muestra va repartida cuando el servidor la repartió", () => {
+    const notice = buildSnapshotFreshnessNotice({ stale: false }, {
+      rowsAvailable: 20000,
+      rowsReturned: 6000,
+      rowsTruncated: true,
+      rowsSampled: true,
+    });
+
+    expect(notice.sampled).toBe(true);
+    expect(notice.detail).toContain("muestra repartida por todo el ranking");
+    expect(notice.detail).not.toContain("el resto no se cargó");
+  });
+
+  it("mantiene el texto anterior cuando el recorte NO va repartido", () => {
+    const notice = buildSnapshotFreshnessNotice({ stale: false }, {
+      rowsAvailable: 9918,
+      rowsReturned: 500,
+      rowsTruncated: true,
+    });
+
+    expect(notice.sampled).toBe(false);
+    expect(notice.detail).toContain("el resto no se cargó por el límite de tamaño de la restauración");
+  });
+
   it("no avisa de recorte si rowsTruncated es false, aunque vengan los conteos", () => {
     const notice = buildSnapshotFreshnessNotice({ stale: false }, {
       rowsAvailable: 42,
