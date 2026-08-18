@@ -1244,12 +1244,21 @@ async function fetchProfileForCache(symbol) {
   return mergeAsicShortInterest(profile, asicShort);
 }
 
+// `persist: false` (lo usa la llamada de range "MAX") desactiva la caché
+// daily_bars para ESA llamada: ni lee ni escribe. Motivo: con range=MAX, Yahoo
+// ignora el interval=1d que se le pide y devuelve granularidad mensual o
+// semanal (declarada en meta.dataGranularity). Esa serie se usa solo en memoria
+// para listingDate/ATH —lo dice el comentario de su llamador— pero hasta hoy
+// pasaba igualmente por writeDailyBarsCache y acababa persistida como si fuera
+// diaria. El guard de cadencia de lib/dailyBarsCache.js ya la rechazaría; esto
+// evita además que el rechazo se coma la escritura útil y ahorra la lectura de
+// caché de una serie que nadie va a cachear.
 function fetchChartForBrief(symbol, chartOptions = {}, options = {}) {
   return withDailyBarsCache(symbol, {
     range: chartOptions.range || "5A",
     interval: "D",
     refresh: options.refreshChart === true,
-    useCache: options.chartCache !== false,
+    useCache: chartOptions.persist === false ? false : options.chartCache !== false,
     maxAgeDays: options.maxPriceFreshnessDays ?? 5,
     timeoutMs: options.chartCacheReadTimeoutMs ?? BRIEF_CACHE_READ_TIMEOUT_MS,
   }, fetchYahooChart);
@@ -1493,7 +1502,7 @@ export async function getCompanyBrief(symbol, options = {}) {
         useCache: options.profileCache !== false,
         maxAgeDays: options.profileMaxAgeDays,
       }, fetchProfileForCache).catch((error) => ({ profileProviderError: error.message || "Proveedor no disponible" })),
-      fetchChartForBrief(symbol, { range: "MAX" }, options).catch((error) => fallbackChartForBrief(symbol, { range: "MAX" }, error)),
+      fetchChartForBrief(symbol, { range: "MAX", persist: false }, options).catch((error) => fallbackChartForBrief(symbol, { range: "MAX" }, error)),
       fetchChartForBrief(symbol, { range: "5A" }, options).catch((error) => fallbackChartForBrief(symbol, { range: "5A" }, error)),
     ]);
     // listingDate/ATH se calculan en memoria sobre la respuesta cruda del
