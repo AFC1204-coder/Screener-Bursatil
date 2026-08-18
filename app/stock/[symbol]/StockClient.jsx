@@ -7,6 +7,7 @@ import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { compactDate, QualityStrip } from "@/app/components/ui/QualityStrip";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { amount, dateShort, dateTime, num as sharedNum, pct as sharedPct, pctShare, priceMoney as sharedPriceMoney, signedPriceMoney as sharedSignedPriceMoney } from "@/lib/formatters";
+import { MissingValue } from "@/lib/screenerColumns";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
@@ -19,6 +20,8 @@ import { screenerStockContextFromSession } from "@/lib/screenerContracts";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { setupPatternForBars } from "@/lib/setupPatterns";
+import { udVol } from "@/lib/indicators";
+import { stockVolumeState } from "@/lib/stockVolume";
 import { STAGE_MISSING_REASON, stageConfirmationMark, stageWordForState } from "@/lib/stageDisplay";
 import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
@@ -581,6 +584,59 @@ function RsGroup({ title, subtitle = "", children }) {
     </div>
     <div className="rsMetricGroupGrid">{children}</div>
   </div>;
+}
+
+// Estado del volumen del valor — documento
+// docs/diseno-indicadores-mercado-2026-08-17.md, C.3 #5. Tres KPIs:
+// reparto up/down (50d), volumen seco (10d/50d) e impulso (5d/20d).
+// Mismo vocabulario que la sección de salud de mercado. Sin semáforo de
+// color: describe — no predice.
+const STOCK_VOLUME_KPI_FORMATTERS = {
+  upDownVolumeRatio: (value) => `${value.toFixed(2)}×`,
+  volumeDryUp: (value) => `${value.toFixed(2)}×`,
+  volumeSurge: (value) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`,
+  latestVolume: (value) => (value >= 1_000_000 ? `${(value / 1_000_000).toFixed(1)}M` : `${Math.round(value / 1000)}k`),
+  relativeVolume: (value) => `${value.toFixed(2)}×`,
+};
+const STOCK_VOLUME_KPI_LABELS = {
+  upDownVolumeRatio: "Reparto del volumen",
+  volumeDryUp: "Volumen seco",
+  volumeSurge: "Impulso de volumen",
+  latestVolume: "Volumen última sesión",
+  relativeVolume: "Volumen relativo",
+};
+const STOCK_VOLUME_KPI_ORDER = ["upDownVolumeRatio", "volumeDryUp", "volumeSurge", "latestVolume"];
+
+function StockVolumePanel({ stockVolume }) {
+  if (!stockVolume) return null;
+  const items = STOCK_VOLUME_KPI_ORDER
+    .map((key) => ({ key, item: stockVolume[key] }))
+    .filter(({ item }) => item);
+  const allMissing = items.every(({ item }) => !item.available);
+  return (
+    <section className="card stockVolumePanel">
+      <div className="sectionTitle">
+        <div>
+          <h2>Estado del volumen</h2>
+          <p className="fine">Tres indicadores del briefing sobre la serie diaria del valor.</p>
+        </div>
+      </div>
+      {allMissing && (
+        <p className="fine">Sin datos de volumen suficientes en la serie del valor para declarar los tres indicadores.</p>
+      )}
+      <div className="marketTapeKpis marketBreadthKpis">
+        {items.map(({ key, item }) => (
+          <div className="marketTapeKpi" key={key}>
+            {item.available
+              ? <b>{STOCK_VOLUME_KPI_FORMATTERS[key](item.value)}</b>
+              : <b><MissingValue reason={item.reason} /></b>}
+            <span>{STOCK_VOLUME_KPI_LABELS[key]}</span>
+            {item.available && <small>{item.window}</small>}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" }) {
@@ -1744,6 +1800,17 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     const pattern = data?.setupPattern || (data?.chartBars?.length ? setupPatternForBars(data.chartBars) : null);
     return withPatternHistoryCoverage(pattern, data?.chartBars || []);
   }, [data?.setupPattern, data?.chartBars]);
+  // Reparto up/down del valor a 50 sesiones. setupPattern ya trae el resto
+  // de campos de volumen del briefing; este se calcula localmente sobre la
+  // serie que llega en data.chartBars (mismo cómputo que lib/indicators.js:154).
+  const upDown50 = useMemo(() => {
+    const bars = Array.isArray(data?.chartBars) ? data.chartBars : [];
+    return bars.length >= 50 ? udVol(bars, 50) : null;
+  }, [data?.chartBars]);
+  const stockVolume = useMemo(
+    () => stockVolumeState({ setupPattern, bars: data?.chartBars || [], scanVolume: { upDownVolRatio: upDown50 } }),
+    [setupPattern, data?.chartBars, upDown50],
+  );
   const setupDisplay = useMemo(() => methodologyDisplayForRow(setupPattern || {}), [setupPattern]);
   const setupVerdict = setupDisplay.verdict;
   const setupTradePlanEligible = setupDisplay.actionable && setupDisplay.tradePlanEligible && !setupDisplay.blocksPatternClaim;
@@ -2238,6 +2305,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           N0–N3, como soporte secundario. */}
       <SimilarStocks rows={similar} />
       <ComparativeContext rows={comparables.rows} note={comparables.note} symbol={symbol} />
+      <StockVolumePanel stockVolume={stockVolume} />
       <RelativeStrengthPanel rs={rs} rsUniverse={rsUniverse} rsBenchmark={rsBenchmark} country={data.country} />
       <FundamentalsPanel data={data} growth={g} valuation={v} quote={q} calendar={data.earningsCalendar} currency={statementCurrency} />
       <NewsSection rows={data.news} />

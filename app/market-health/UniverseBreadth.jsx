@@ -46,6 +46,58 @@ function BreadthKpi({ item }) {
   );
 }
 
+// Cuatro KPIs de volumen agregados sobre los campos que ya publica el
+// escaneo (upDownVolRatio, volumeDryUpRatio, volumeSurgePct). Mismo
+// contrato que BreadthKpi pero declara además la ventana y el umbral
+// del briefing en la línea bajo el porcentaje. Sin semáforo de color
+// (principio 1: describe, no predice).
+function VolumeIndicatorsPanel({ volume }) {
+  if (!volume) return null;
+  const indicators = volume.indicators || {};
+  const order = [
+    { key: "upDownVolumeRatio", label: "Reparto del volumen (50d)" },
+    { key: "volumeDryUp", label: "Volumen seco (10d/50d)" },
+    { key: "volumeSurge", label: "Impulso de volumen (5d/20d)" },
+    { key: "participationUp", label: "Reparto de volumen alto (≥1.25×)" },
+  ];
+  const allMissing = order.every(({ key }) => !indicators[key]?.available);
+  return (
+    <div className="marketBreadthVolume">
+      <h3>Volumen del universo</h3>
+      {volume.dataAsOf && (
+        <p className="fine">Precio del cierre del {dateShort(volume.dataAsOf)}.</p>
+      )}
+      {allMissing && (
+        <p className="fine"><MissingValue reason={`Cobertura insuficiente en los cuatro indicadores del bloque de volumen.`} /> Los cuatro campos faltan en demasiadas filas del escaneo.</p>
+      )}
+      <div className="marketTapeKpis marketBreadthKpis">
+        {order.map(({ key, label }) => {
+          const item = indicators[key];
+          if (!item) return null;
+          return (
+            <div className="marketTapeKpi" key={key}>
+              {item.available
+                ? <b>{pctShare(item.pct)}</b>
+                : <b><MissingValue reason={item.reason} /></b>}
+              <span>{item.label}</span>
+              {item.available && (
+                <small>
+                  {num(item.count)} de {num(item.measured)} · {item.thresholdLabel}
+                </small>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {Number.isFinite(volume.upDownMean) && (
+        <p className="marketBreadthFact">
+          En las últimas 50 sesiones, la media del cociente up/down del universo es {volume.upDownMean.toFixed(2)}× ({num(volume.upDownAbove)} valores por encima de 1×, {num(volume.upDownBelow)} por debajo).
+        </p>
+      )}
+    </div>
+  );
+}
+
 function StageDistribution({ stages }) {
   if (!stages) return null;
   if (!stages.available) {
@@ -139,7 +191,17 @@ function ParticipationPanel({ participation }) {
           {participation.index
             ? <>En las últimas {num(summary.weeks)} semanas {participation.index.symbol} varió {pct(summary.indexChangePct)}; la participación — valores del universo RS con retorno ponderado positivo — pasó del {pctShare(summary.participationStartPct)} al {pctShare(summary.participationEndPct)}.</>
             : <>En las últimas {num(summary.weeks)} semanas la participación pasó del {pctShare(summary.participationStartPct)} al {pctShare(summary.participationEndPct)}.</>}
-          {summary.divergence && <b> El índice sube y cada vez menos valores lo acompañan.</b>}
+          {summary.threshold
+            ? (() => {
+                const windowShort = summary.weeks < summary.threshold.windowWeeks;
+                const verdict = windowShort
+                  ? "ventana insuficiente para evaluar el umbral"
+                  : (summary.thresholdMet ? "SÍ hay divergencia con el umbral del briefing" : "NO hay divergencia con el umbral del briefing");
+                return windowShort
+                  ? <> En las últimas {num(summary.threshold.windowWeeks)} semanas, el índice varió {pct(summary.indexChangePct)} y la participación cambió {pct(summary.participationDeltaPp)}: la serie solo cubre {num(summary.weeks)} semanas, <b>ventana insuficiente</b> para el umbral del briefing (≥+{summary.threshold.indexUpPct}% / ≤{summary.threshold.participationDownPp} pp).</>
+                  : <> En las últimas {num(summary.threshold.windowWeeks)} semanas, el índice {pct(summary.indexChangePct)} y la participación cambió {pct(summary.participationDeltaPp)}: <b>{summary.thresholdMet ? "SÍ" : "NO"}</b> hay divergencia con el umbral del briefing (≥+{summary.threshold.indexUpPct}% / ≤{summary.threshold.participationDownPp} pp).</>;
+              })()
+            : (summary.divergence && <b> El índice sube y cada vez menos valores lo acompañan.</b>)}
         </p>
       )}
       <details className="marketBreadthTable">
@@ -198,6 +260,7 @@ export default function UniverseBreadthCard({ breadth, loading }) {
       </div>
       <StageDistribution stages={breadth.stages} />
       <ParticipationPanel participation={breadth.participation} />
+      <VolumeIndicatorsPanel volume={breadth.volume} />
     </section>
   );
 }
