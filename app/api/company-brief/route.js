@@ -1624,8 +1624,15 @@ export async function getCompanyBrief(symbol, options = {}) {
       : rawStage;
     const requestedBenchmark = cleanBenchmarkSymbol(options.benchmarkSymbol);
     const benchmarkSymbol = requestedBenchmark || benchmarkForProfile(symbol, profile, theme.key);
+    // Mismo caso que longChart del símbolo principal (ver el comentario junto a
+    // fetchChartForBrief): esta llamada MAX solo alarga la cola vieja de
+    // benchmarkChart vía mergeChartHistory — RS y su serie se calculan sobre
+    // ventanas de 3m/6m/12m, dentro de lo que ya cubre benchmarkRecentChart
+    // (5A). Hasta este fix le faltaba el persist:false que la llamada
+    // equivalente del símbolo principal recibió en a24957c (2026-08-18): cada
+    // ficha reescribía también la caché del benchmark sin necesidad.
     const [benchmarkLongChart, benchmarkRecentChart] = await Promise.all([
-      fetchChartForBrief(benchmarkSymbol, { range: "MAX" }, options).catch(() => ({ bars: [] })),
+      fetchChartForBrief(benchmarkSymbol, { range: "MAX", persist: false }, options).catch(() => ({ bars: [] })),
       fetchChartForBrief(benchmarkSymbol, { range: "5A" }, options).catch(() => ({ bars: [] })),
     ]);
     const benchmarkChart = mergeChartHistory(benchmarkLongChart, benchmarkRecentChart);
