@@ -1,0 +1,4464 @@
+[
+ {
+  "sym": "AAL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AAOI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ABBV",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ABCL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ABG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ABT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ACHC",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     25.7,
+     8.1
+    ],
+    "f": [
+     "2026-07-22→2026-07-30",
+     "2026-08-05→2026-08-07"
+    ],
+    "dur": 2
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "ADEA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ADI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ADP",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ADPT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ADSK",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AEHR",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AEO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AEP",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AFL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AGCO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AIZ",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ALC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ALHC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ALM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ALV",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     14.3,
+     9.8,
+     5.3
+    ],
+    "f": [
+     "2026-06-02→2026-07-01",
+     "2026-07-16→2026-07-23",
+     "2026-07-30→2026-08-12"
+    ],
+    "dur": 10
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "AME",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AMGN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     18.1,
+     6.8,
+     5.7
+    ],
+    "f": [
+     "2026-03-02→2026-05-05",
+     "2026-06-11→2026-06-18",
+     "2026-07-07→2026-07-15"
+    ],
+    "dur": 19
+   }
+  }
+ },
+ {
+  "sym": "AMH",
+  "res": {
+   "corta": {
+    "seq": [
+     4.4,
+     2.6
+    ],
+    "f": [
+     "2026-08-06→2026-08-12",
+     "2026-08-13→2026-08-17"
+    ],
+    "dur": 2
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AMT",
+  "res": {
+   "corta": {
+    "seq": [
+     9.9,
+     3.6
+    ],
+    "f": [
+     "2026-07-29→2026-08-05",
+     "2026-08-14→2026-08-17"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": {
+    "seq": [
+     17.6,
+     9.9
+    ],
+    "f": [
+     "2026-06-05→2026-07-06",
+     "2026-07-29→2026-08-05"
+    ],
+    "dur": 9
+   }
+  }
+ },
+ {
+  "sym": "AMZN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     19,
+     12.4
+    ],
+    "f": [
+     "2026-05-05→2026-06-25",
+     "2026-07-16→2026-07-29"
+    ],
+    "dur": 12
+   }
+  }
+ },
+ {
+  "sym": "AN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ANF",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AON",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "APPS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "APTV",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ARCB",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ARM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ASB",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ASND",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     15.1,
+     6.9
+    ],
+    "f": [
+     "2026-07-09→2026-08-04",
+     "2026-08-12→2026-08-14"
+    ],
+    "dur": 5
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "ATI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ATO",
+  "res": {
+   "corta": {
+    "seq": [
+     8.5,
+     1.9
+    ],
+    "f": [
+     "2026-07-28→2026-08-10",
+     "2026-08-13→2026-08-17"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AVGO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AVY",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "AXSM",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     20.5,
+     6.5
+    ],
+    "f": [
+     "2026-06-18→2026-08-03",
+     "2026-08-10→2026-08-14"
+    ],
+    "dur": 8
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "BA",
+  "res": {
+   "corta": {
+    "seq": [
+     14.1,
+     4.2
+    ],
+    "f": [
+     "2026-07-07→2026-07-21",
+     "2026-08-05→2026-08-07"
+    ],
+    "dur": 4
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "BBY",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "BCO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "BDC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "BEKE",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     30.1,
+     10.4,
+     3.7
+    ],
+    "f": [
+     "2026-05-13→2026-06-26",
+     "2026-07-16→2026-07-24",
+     "2026-08-03→2026-08-06"
+    ],
+    "dur": 12
+   },
+   "larga": {
+    "seq": [
+     30.1,
+     10.4
+    ],
+    "f": [
+     "2026-05-13→2026-06-26",
+     "2026-07-16→2026-07-24"
+    ],
+    "dur": 10
+   }
+  }
+ },
+ {
+  "sym": "BG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "BKD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     31.5,
+     15.3
+    ],
+    "f": [
+     "2026-02-17→2026-06-04",
+     "2026-06-30→2026-07-10"
+    ],
+    "dur": 20
+   }
+  }
+ },
+ {
+  "sym": "BMY",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "BP",
+  "res": {
+   "corta": {
+    "seq": [
+     9,
+     2.7
+    ],
+    "f": [
+     "2026-07-31→2026-08-05",
+     "2026-08-11→2026-08-13"
+    ],
+    "dur": 2
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "BRK-B",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "BRZE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "BTDR",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "BTG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "BWA",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     23.8,
+     7.4,
+     4.9
+    ],
+    "f": [
+     "2026-06-03→2026-07-17",
+     "2026-07-22→2026-08-04",
+     "2026-08-12→2026-08-13"
+    ],
+    "dur": 10
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "BWXT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "BXP",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     31.4,
+     6.6,
+     6,
+     5.9
+    ],
+    "f": [
+     "2025-11-25→2026-03-09",
+     "2026-06-10→2026-06-17",
+     "2026-07-07→2026-07-10",
+     "2026-07-17→2026-07-23"
+    ],
+    "dur": 34
+   }
+  }
+ },
+ {
+  "sym": "CAG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CAKE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CALM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     19.6,
+     8.4,
+     7
+    ],
+    "f": [
+     "2026-03-12→2026-04-20",
+     "2026-05-14→2026-06-03",
+     "2026-06-12→2026-06-22"
+    ],
+    "dur": 15
+   }
+  }
+ },
+ {
+  "sym": "CARR",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CASY",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     18,
+     17.8,
+     8.3
+    ],
+    "f": [
+     "2026-05-14→2026-06-01",
+     "2026-06-11→2026-06-24",
+     "2026-07-29→2026-08-06"
+    ],
+    "dur": 12
+   }
+  }
+ },
+ {
+  "sym": "CAVA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CBOE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CBRL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CBSH",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CCC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CCI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CDW",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CELC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CGON",
+  "res": {
+   "corta": {
+    "seq": [
+     12.4,
+     11.5,
+     7.4
+    ],
+    "f": [
+     "2026-06-30→2026-07-08",
+     "2026-07-10→2026-07-30",
+     "2026-08-12→2026-08-14"
+    ],
+    "dur": 6
+   },
+   "media": {
+    "seq": [
+     29.5,
+     12.8,
+     7.4
+    ],
+    "f": [
+     "2026-05-14→2026-06-08",
+     "2026-06-30→2026-07-30",
+     "2026-08-12→2026-08-14"
+    ],
+    "dur": 13
+   },
+   "larga": {
+    "seq": [
+     29.5,
+     12.8
+    ],
+    "f": [
+     "2026-05-14→2026-06-08",
+     "2026-06-30→2026-07-30"
+    ],
+    "dur": 11
+   }
+  }
+ },
+ {
+  "sym": "CHWY",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CLBK",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CLF",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CM",
+  "res": {
+   "corta": {
+    "seq": [
+     5.5,
+     3.5,
+     2.5
+    ],
+    "f": [
+     "2026-07-17→2026-07-23",
+     "2026-07-28→2026-07-29",
+     "2026-08-04→2026-08-05"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CMCSA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CMG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CNI",
+  "res": {
+   "corta": {
+    "seq": [
+     5.6,
+     2.6,
+     1.8
+    ],
+    "f": [
+     "2026-07-24→2026-08-04",
+     "2026-08-06→2026-08-10",
+     "2026-08-14→2026-08-17"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "COO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CPB",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CPNG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CPRI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CPT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CRBG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CRH",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CROX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CRSP",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CSX",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     7.8,
+     3.6
+    ],
+    "f": [
+     "2026-07-27→2026-08-04",
+     "2026-08-06→2026-08-12"
+    ],
+    "dur": 2
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "CTAS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     22.9,
+     9
+    ],
+    "f": [
+     "2026-03-05→2026-05-13",
+     "2026-07-29→2026-08-06"
+    ],
+    "dur": 22
+   }
+  }
+ },
+ {
+  "sym": "CUZ",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CVCO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "CW",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "D",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "DAR",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     22.9,
+     12.1
+    ],
+    "f": [
+     "2026-05-05→2026-06-24",
+     "2026-07-23→2026-08-05"
+    ],
+    "dur": 13
+   }
+  }
+ },
+ {
+  "sym": "DB",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "DDS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "DECK",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "DEO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "DFTX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "DHT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "DIOD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "DIS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "DLTR",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "DOCS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "DOW",
+  "res": {
+   "corta": {
+    "seq": [
+     13.7,
+     6.3,
+     4
+    ],
+    "f": [
+     "2026-07-23→2026-07-27",
+     "2026-07-29→2026-08-04",
+     "2026-08-11→2026-08-13"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "DRI",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     12.2,
+     5.1
+    ],
+    "f": [
+     "2026-06-18→2026-07-23",
+     "2026-07-30→2026-07-31"
+    ],
+    "dur": 6
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "DXCM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     25.3,
+     14.7,
+     11.8
+    ],
+    "f": [
+     "2026-01-22→2026-04-29",
+     "2026-06-10→2026-06-30",
+     "2026-07-16→2026-07-24"
+    ],
+    "dur": 26
+   }
+  }
+ },
+ {
+  "sym": "DY",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "EAT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "EGP",
+  "res": {
+   "corta": {
+    "seq": [
+     9.7,
+     6.4,
+     3.3
+    ],
+    "f": [
+     "2026-07-17→2026-07-29",
+     "2026-08-03→2026-08-12",
+     "2026-08-13→2026-08-17"
+    ],
+    "dur": 4
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ELAN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ELV",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     16.8,
+     4.7
+    ],
+    "f": [
+     "2026-07-14→2026-07-28",
+     "2026-07-29→2026-08-05"
+    ],
+    "dur": 3
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "EMBJ",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ENPH",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ENVA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ERIE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ESE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ESTA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "EXC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "EXE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "EXK",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "EXLS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "EXPD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "FAST",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "FCX",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     22.5,
+     10.9,
+     11.1,
+     7.9
+    ],
+    "f": [
+     "2026-06-17→2026-07-08",
+     "2026-07-15→2026-07-17",
+     "2026-07-23→2026-07-29",
+     "2026-08-10→2026-08-14"
+    ],
+    "dur": 8
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "FDS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "FDX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "FICO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "FISV",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "FIVE",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     26.6,
+     5.9
+    ],
+    "f": [
+     "2026-04-21→2026-06-09",
+     "2026-07-20→2026-07-23"
+    ],
+    "dur": 13
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "FLG",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     11.7,
+     4.6
+    ],
+    "f": [
+     "2026-07-16→2026-07-27",
+     "2026-08-03→2026-08-10"
+    ],
+    "dur": 4
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "FNV",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     19.9,
+     18.5,
+     6.9
+    ],
+    "f": [
+     "2026-04-08→2026-05-28",
+     "2026-06-04→2026-07-17",
+     "2026-08-07→2026-08-13"
+    ],
+    "dur": 18
+   },
+   "larga": {
+    "seq": [
+     28.2,
+     17.7
+    ],
+    "f": [
+     "2026-03-02→2026-06-12",
+     "2026-06-17→2026-07-17"
+    ],
+    "dur": 20
+   }
+  }
+ },
+ {
+  "sym": "FOX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "FRPT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "FTV",
+  "res": {
+   "corta": {
+    "seq": [
+     11,
+     2.8
+    ],
+    "f": [
+     "2026-07-28→2026-07-30",
+     "2026-08-11→2026-08-12"
+    ],
+    "dur": 2
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "GDS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "GEHC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "GEN",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     19.2,
+     8.5
+    ],
+    "f": [
+     "2026-06-01→2026-06-22",
+     "2026-07-07→2026-07-23"
+    ],
+    "dur": 7
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "GEV",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     24.9,
+     8
+    ],
+    "f": [
+     "2026-07-06→2026-07-29",
+     "2026-08-04→2026-08-07"
+    ],
+    "dur": 5
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "GFL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "GLNG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "GLW",
+  "res": {
+   "corta": {
+    "seq": [
+     30.4,
+     7.3
+    ],
+    "f": [
+     "2026-07-21→2026-07-28",
+     "2026-08-07→2026-08-13"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "GM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "GOOG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "GPC",
+  "res": {
+   "corta": {
+    "seq": [
+     19.2,
+     6.6,
+     4
+    ],
+    "f": [
+     "2026-07-02→2026-07-21",
+     "2026-07-28→2026-07-31",
+     "2026-08-11→2026-08-12"
+    ],
+    "dur": 6
+   },
+   "media": {
+    "seq": [
+     19.2,
+     6.6,
+     4
+    ],
+    "f": [
+     "2026-07-02→2026-07-21",
+     "2026-07-28→2026-07-31",
+     "2026-08-11→2026-08-12"
+    ],
+    "dur": 6
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "GSK",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "HAE",
+  "res": {
+   "corta": {
+    "seq": [
+     8.8,
+     3.5
+    ],
+    "f": [
+     "2026-08-03→2026-08-06",
+     "2026-08-13→2026-08-17"
+    ],
+    "dur": 2
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "HALO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "HAS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     22,
+     8.1
+    ],
+    "f": [
+     "2026-02-12→2026-06-11",
+     "2026-07-29→2026-08-04"
+    ],
+    "dur": 25
+   }
+  }
+ },
+ {
+  "sym": "HBAN",
+  "res": {
+   "corta": {
+    "seq": [
+     9.5,
+     3.2
+    ],
+    "f": [
+     "2026-07-16→2026-07-29",
+     "2026-08-06→2026-08-07"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "HD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "HDB",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "HIMS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "HLI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "HOMB",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     16.1,
+     10.3,
+     4.7,
+     4.5,
+     3.8
+    ],
+    "f": [
+     "2026-02-06→2026-03-19",
+     "2026-04-09→2026-05-15",
+     "2026-06-15→2026-06-17",
+     "2026-06-26→2026-07-08",
+     "2026-07-29→2026-08-07"
+    ],
+    "dur": 26
+   },
+   "larga": {
+    "seq": [
+     16.1,
+     10.3,
+     4.7,
+     4.5,
+     3.8
+    ],
+    "f": [
+     "2026-02-06→2026-03-19",
+     "2026-04-09→2026-05-15",
+     "2026-06-15→2026-06-17",
+     "2026-06-26→2026-07-08",
+     "2026-07-29→2026-08-07"
+    ],
+    "dur": 26
+   }
+  }
+ },
+ {
+  "sym": "HRL",
+  "res": {
+   "corta": {
+    "seq": [
+     9.5,
+     3.1
+    ],
+    "f": [
+     "2026-07-28→2026-08-12",
+     "2026-08-13→2026-08-17"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "HSBC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "HUBB",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "IAG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "IBM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "IBN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ICE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "IDA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "IDCC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "IEX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     15.7,
+     9.1,
+     6.1,
+     5.7
+    ],
+    "f": [
+     "2026-02-06→2026-03-30",
+     "2026-04-29→2026-05-20",
+     "2026-06-25→2026-07-08",
+     "2026-07-17→2026-07-21"
+    ],
+    "dur": 24
+   }
+  }
+ },
+ {
+  "sym": "ILMN",
+  "res": {
+   "corta": {
+    "seq": [
+     9.8,
+     3.6
+    ],
+    "f": [
+     "2026-08-03→2026-08-10",
+     "2026-08-13→2026-08-13"
+    ],
+    "dur": 1
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "INDV",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     27.2,
+     21,
+     16.5
+    ],
+    "f": [
+     "2025-12-08→2026-03-24",
+     "2026-05-07→2026-06-02",
+     "2026-06-26→2026-08-04"
+    ],
+    "dur": 34
+   }
+  }
+ },
+ {
+  "sym": "INVH",
+  "res": {
+   "corta": {
+    "seq": [
+     4.6,
+     2.6
+    ],
+    "f": [
+     "2026-08-06→2026-08-12",
+     "2026-08-14→2026-08-17"
+    ],
+    "dur": 2
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "IP",
+  "res": {
+   "corta": {
+    "seq": [
+     10.7,
+     4.1
+    ],
+    "f": [
+     "2026-07-28→2026-08-07",
+     "2026-08-12→2026-08-17"
+    ],
+    "dur": 3
+   },
+   "media": {
+    "seq": [
+     32.5,
+     10.7
+    ],
+    "f": [
+     "2026-02-12→2026-03-20",
+     "2026-07-28→2026-08-07"
+    ],
+    "dur": 25
+   },
+   "larga": {
+    "seq": [
+     32.5,
+     10.7
+    ],
+    "f": [
+     "2026-02-12→2026-03-20",
+     "2026-07-28→2026-08-07"
+    ],
+    "dur": 25
+   }
+  }
+ },
+ {
+  "sym": "IQV",
+  "res": {
+   "corta": {
+    "seq": [
+     9.6,
+     4.7
+    ],
+    "f": [
+     "2026-07-29→2026-08-04",
+     "2026-08-11→2026-08-17"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "IRDM",
+  "res": {
+   "corta": {
+    "seq": [
+     19.9,
+     8.7,
+     4.1
+    ],
+    "f": [
+     "2026-07-02→2026-07-17",
+     "2026-07-22→2026-07-28",
+     "2026-08-04→2026-08-06"
+    ],
+    "dur": 5
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "IT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "JAZZ",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "JBTM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "JD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "JNJ",
+  "res": {
+   "corta": {
+    "seq": [
+     8.9,
+     3.4
+    ],
+    "f": [
+     "2026-07-28→2026-08-04",
+     "2026-08-11→2026-08-12"
+    ],
+    "dur": 2
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "JOBY",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "JPM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "KGS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "KNTK",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "LEGN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "LEU",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "LKQ",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "LLY",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "LOGI",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     29.6,
+     10.7,
+     7.8
+    ],
+    "f": [
+     "2026-06-02→2026-06-30",
+     "2026-07-28→2026-07-30",
+     "2026-08-04→2026-08-12"
+    ],
+    "dur": 10
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "LOPE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "LRCX",
+  "res": {
+   "corta": {
+    "seq": [
+     31.9,
+     23.7,
+     13.4,
+     9.3
+    ],
+    "f": [
+     "2026-06-30→2026-07-17",
+     "2026-07-21→2026-07-29",
+     "2026-07-30→2026-08-03",
+     "2026-08-05→2026-08-06"
+    ],
+    "dur": 5
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "LSCC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "LUV",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     34.9,
+     16.8
+    ],
+    "f": [
+     "2026-02-17→2026-04-02",
+     "2026-06-26→2026-07-30"
+    ],
+    "dur": 23
+   }
+  }
+ },
+ {
+  "sym": "LYFT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "LYV",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MAA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MAR",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MARA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MATX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MCD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MCHP",
+  "res": {
+   "corta": {
+    "seq": [
+     21.6,
+     21.6,
+     8.3
+    ],
+    "f": [
+     "2026-06-22→2026-07-07",
+     "2026-07-09→2026-07-29",
+     "2026-08-04→2026-08-06"
+    ],
+    "dur": 6
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MDGL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MEDP",
+  "res": {
+   "corta": {
+    "seq": [
+     16.9,
+     6.1
+    ],
+    "f": [
+     "2026-07-23→2026-08-04",
+     "2026-08-11→2026-08-17"
+    ],
+    "dur": 4
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MELI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MET",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "META",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MGNI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MHK",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     33.2,
+     14.2
+    ],
+    "f": [
+     "2026-02-13→2026-05-19",
+     "2026-06-25→2026-07-21"
+    ],
+    "dur": 23
+   }
+  }
+ },
+ {
+  "sym": "MIDD",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     13.8,
+     5.9
+    ],
+    "f": [
+     "2026-07-07→2026-07-21",
+     "2026-07-28→2026-07-29"
+    ],
+    "dur": 3
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "MIR",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MKC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MKTX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MLM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MMM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MMYT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MORN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MOS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MRX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MSGS",
+  "res": {
+   "corta": {
+    "seq": [
+     8,
+     6.2,
+     3.6
+    ],
+    "f": [
+     "2026-07-01→2026-07-10",
+     "2026-07-15→2026-08-03",
+     "2026-08-06→2026-08-10"
+    ],
+    "dur": 6
+   },
+   "media": {
+    "seq": [
+     9.8,
+     8,
+     6.2,
+     3.6
+    ],
+    "f": [
+     "2026-06-12→2026-06-17",
+     "2026-07-01→2026-07-10",
+     "2026-07-15→2026-08-03",
+     "2026-08-06→2026-08-10"
+    ],
+    "dur": 8
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "MSM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MTD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MTH",
+  "res": {
+   "corta": {
+    "seq": [
+     15.1,
+     12.2,
+     5.3
+    ],
+    "f": [
+     "2026-06-26→2026-07-14",
+     "2026-07-17→2026-07-30",
+     "2026-08-05→2026-08-10"
+    ],
+    "dur": 6
+   },
+   "media": {
+    "seq": [
+     19,
+     5.3
+    ],
+    "f": [
+     "2026-06-26→2026-07-30",
+     "2026-08-05→2026-08-10"
+    ],
+    "dur": 6
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "MTN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     21.6,
+     13,
+     9.9,
+     10,
+     8.5
+    ],
+    "f": [
+     "2025-12-15→2026-03-30",
+     "2026-04-22→2026-04-27",
+     "2026-06-08→2026-06-09",
+     "2026-06-18→2026-06-30",
+     "2026-07-10→2026-07-23"
+    ],
+    "dur": 31
+   }
+  }
+ },
+ {
+  "sym": "MTRN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MTSI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MUSA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MXL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "MYRG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NCNO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NDSN",
+  "res": {
+   "corta": {
+    "seq": [
+     8.9,
+     4.6,
+     3.5,
+     2.8
+    ],
+    "f": [
+     "2026-06-25→2026-07-08",
+     "2026-07-17→2026-07-20",
+     "2026-07-28→2026-07-31",
+     "2026-08-06→2026-08-13"
+    ],
+    "dur": 7
+   },
+   "media": {
+    "seq": [
+     8.9,
+     4.6,
+     3.5
+    ],
+    "f": [
+     "2026-06-25→2026-07-08",
+     "2026-07-17→2026-07-20",
+     "2026-07-28→2026-07-31"
+    ],
+    "dur": 5
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "NEM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NFLX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NNN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NOV",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     17.4,
+     10.7
+    ],
+    "f": [
+     "2026-06-04→2026-07-06",
+     "2026-07-29→2026-07-29"
+    ],
+    "dur": 8
+   }
+  }
+ },
+ {
+  "sym": "NOVT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NRG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NSC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NTR",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NTRA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NU",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NVMI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NVST",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     26.5,
+     9.6,
+     5.9
+    ],
+    "f": [
+     "2026-02-11→2026-06-03",
+     "2026-07-06→2026-07-10",
+     "2026-07-16→2026-07-23"
+    ],
+    "dur": 23
+   }
+  }
+ },
+ {
+  "sym": "NVTS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "NXT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "OLN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "OMC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ONON",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ORA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ORKA",
+  "res": {
+   "corta": {
+    "seq": [
+     17.4,
+     11.6,
+     3.5
+    ],
+    "f": [
+     "2026-06-30→2026-07-17",
+     "2026-07-20→2026-07-29",
+     "2026-07-31→2026-08-10"
+    ],
+    "dur": 6
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "OVV",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     17.9,
+     10.5
+    ],
+    "f": [
+     "2026-05-05→2026-07-01",
+     "2026-07-24→2026-08-05"
+    ],
+    "dur": 13
+   }
+  }
+ },
+ {
+  "sym": "OZK",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     8.5,
+     6.9,
+     3.4
+    ],
+    "f": [
+     "2026-07-01→2026-07-08",
+     "2026-07-16→2026-07-23",
+     "2026-08-05→2026-08-10"
+    ],
+    "dur": 6
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "PAYC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PEN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PENG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PENN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PEP",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PGR",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PH",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     21.1,
+     7.4,
+     5.8
+    ],
+    "f": [
+     "2026-02-25→2026-06-01",
+     "2026-06-25→2026-07-07",
+     "2026-07-24→2026-07-29"
+    ],
+    "dur": 22
+   }
+  }
+ },
+ {
+  "sym": "PINS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PLTR",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PLXS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PODD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "POET",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PPG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PRM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PSA",
+  "res": {
+   "corta": {
+    "seq": [
+     8.3,
+     3.3,
+     2.4
+    ],
+    "f": [
+     "2026-07-29→2026-07-30",
+     "2026-08-06→2026-08-10",
+     "2026-08-14→2026-08-17"
+    ],
+    "dur": 3
+   },
+   "media": {
+    "seq": [
+     8.3,
+     3.3
+    ],
+    "f": [
+     "2026-07-29→2026-07-30",
+     "2026-08-06→2026-08-10"
+    ],
+    "dur": 2
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "PSMT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PSNL",
+  "res": {
+   "corta": {
+    "seq": [
+     29.7,
+     6.3
+    ],
+    "f": [
+     "2026-07-17→2026-07-29",
+     "2026-08-10→2026-08-12"
+    ],
+    "dur": 4
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PTCT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PUMP",
+  "res": {
+   "corta": {
+    "seq": [
+     29.4,
+     6.3
+    ],
+    "f": [
+     "2026-07-15→2026-07-29",
+     "2026-08-04→2026-08-06"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "PYPL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "QBTS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "QGEN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "QRVO",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     25.7,
+     7.4
+    ],
+    "f": [
+     "2026-05-27→2026-07-15",
+     "2026-07-29→2026-07-29"
+    ],
+    "dur": 9
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "RBC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RDNT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RDW",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "REGN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RELX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "REPL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RF",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RGLD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RH",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RIOT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RITM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RIVN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RLAY",
+  "res": {
+   "corta": {
+    "seq": [
+     14.8,
+     8.6,
+     6.5
+    ],
+    "f": [
+     "2026-07-09→2026-07-28",
+     "2026-07-30→2026-08-03",
+     "2026-08-10→2026-08-14"
+    ],
+    "dur": 5
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RLI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RMD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ROAD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ROIV",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ROK",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ROST",
+  "res": {
+   "corta": {
+    "seq": [
+     15.2,
+     2.6
+    ],
+    "f": [
+     "2026-06-12→2026-06-30",
+     "2026-08-03→2026-08-04"
+    ],
+    "dur": 8
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RTX",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     20.2,
+     6.8,
+     6.8,
+     5.4,
+     3.5
+    ],
+    "f": [
+     "2026-03-03→2026-05-05",
+     "2026-06-18→2026-06-22",
+     "2026-07-07→2026-07-21",
+     "2026-07-28→2026-07-30",
+     "2026-08-10→2026-08-13"
+    ],
+    "dur": 23
+   },
+   "larga": {
+    "seq": [
+     20.4,
+     6.8,
+     6.8
+    ],
+    "f": [
+     "2026-03-03→2026-05-15",
+     "2026-06-18→2026-06-22",
+     "2026-07-07→2026-07-21"
+    ],
+    "dur": 20
+   }
+  }
+ },
+ {
+  "sym": "RVTY",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RY",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "RYAN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SAM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SAN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SBAC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SCCO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SDOT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SEDG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SEIC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SF",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SFM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SGI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SHW",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     20,
+     17.1,
+     14.9,
+     5.5
+    ],
+    "f": [
+     "2026-02-13→2026-03-20",
+     "2026-04-17→2026-06-02",
+     "2026-07-07→2026-07-23",
+     "2026-07-28→2026-07-31"
+    ],
+    "dur": 24
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "SIRI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SJM",
+  "res": {
+   "corta": {
+    "seq": [
+     9.4,
+     4.3,
+     3.3
+    ],
+    "f": [
+     "2026-07-29→2026-08-04",
+     "2026-08-06→2026-08-12",
+     "2026-08-14→2026-08-17"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SLGN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SLM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SMG",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     21.2,
+     11.2,
+     11.1
+    ],
+    "f": [
+     "2026-04-29→2026-06-02",
+     "2026-06-26→2026-07-14",
+     "2026-07-17→2026-07-23"
+    ],
+    "dur": 12
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "SMMT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SNAP",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SNDK",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SNPS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SNY",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SOLV",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SPGI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SPHR",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SQM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SSB",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SSNC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SSRM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "STE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "STI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "STLA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "STNG",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     21.7,
+     8.9
+    ],
+    "f": [
+     "2026-05-05→2026-06-30",
+     "2026-07-13→2026-08-11"
+    ],
+    "dur": 14
+   },
+   "larga": {
+    "seq": [
+     21.7,
+     8.9
+    ],
+    "f": [
+     "2026-05-05→2026-06-30",
+     "2026-07-13→2026-08-11"
+    ],
+    "dur": 14
+   }
+  }
+ },
+ {
+  "sym": "STRL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "STT",
+  "res": {
+   "corta": {
+    "seq": [
+     8.8,
+     3.6
+    ],
+    "f": [
+     "2026-07-16→2026-07-29",
+     "2026-08-05→2026-08-07"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "STWD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "STX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SW",
+  "res": {
+   "corta": {
+    "seq": [
+     12.9,
+     4.5
+    ],
+    "f": [
+     "2026-07-28→2026-07-31",
+     "2026-08-05→2026-08-07"
+    ],
+    "dur": 1
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SWKS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "SXT",
+  "res": {
+   "corta": {
+    "seq": [
+     7.5,
+     2.3
+    ],
+    "f": [
+     "2026-07-27→2026-08-03",
+     "2026-08-06→2026-08-14"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TD",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TECK",
+  "res": {
+   "corta": {
+    "seq": [
+     21.3,
+     13.1,
+     7.5,
+     5.5
+    ],
+    "f": [
+     "2026-06-02→2026-06-24",
+     "2026-07-06→2026-07-17",
+     "2026-07-24→2026-07-29",
+     "2026-07-30→2026-08-03"
+    ],
+    "dur": 9
+   },
+   "media": {
+    "seq": [
+     24.6,
+     7.5
+    ],
+    "f": [
+     "2026-06-02→2026-07-17",
+     "2026-07-24→2026-07-29"
+    ],
+    "dur": 8
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "TER",
+  "res": {
+   "corta": {
+    "seq": [
+     20.6,
+     11.1
+    ],
+    "f": [
+     "2026-07-21→2026-07-28",
+     "2026-08-04→2026-08-10"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TIGO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TJX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TKO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TMUS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TNGX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TPC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TRNO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TSCO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TSM",
+  "res": {
+   "corta": {
+    "seq": [
+     19.4,
+     12.4,
+     4.3
+    ],
+    "f": [
+     "2026-06-30→2026-07-17",
+     "2026-07-21→2026-07-29",
+     "2026-08-05→2026-08-06"
+    ],
+    "dur": 5
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TSN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TTEK",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TXG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TXRH",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "TXT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "UAA",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "UAL",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     19.6,
+     8.7
+    ],
+    "f": [
+     "2026-06-30→2026-07-23",
+     "2026-08-05→2026-08-10"
+    ],
+    "dur": 6
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "UBS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "UFPT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "UHS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "UMBF",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "UNH",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "UNM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "UNP",
+  "res": {
+   "corta": {
+    "seq": [
+     9.9,
+     2.6
+    ],
+    "f": [
+     "2026-07-23→2026-07-30",
+     "2026-08-06→2026-08-11"
+    ],
+    "dur": 3
+   },
+   "media": {
+    "seq": [
+     9.9,
+     2.6
+    ],
+    "f": [
+     "2026-07-23→2026-07-30",
+     "2026-08-06→2026-08-11"
+    ],
+    "dur": 3
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "UPST",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "URBN",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "VC",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     26.1,
+     12.7,
+     7,
+     6.4
+    ],
+    "f": [
+     "2026-06-22→2026-06-29",
+     "2026-07-10→2026-07-23",
+     "2026-07-29→2026-08-04",
+     "2026-08-05→2026-08-10"
+    ],
+    "dur": 7
+   },
+   "larga": {
+    "seq": [
+     26.1,
+     12.7
+    ],
+    "f": [
+     "2026-06-22→2026-06-29",
+     "2026-07-10→2026-07-23"
+    ],
+    "dur": 4
+   }
+  }
+ },
+ {
+  "sym": "VECO",
+  "res": {
+   "corta": {
+    "seq": [
+     30,
+     12
+    ],
+    "f": [
+     "2026-07-15→2026-07-29",
+     "2026-08-06→2026-08-10"
+    ],
+    "dur": 4
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "VG",
+  "res": {
+   "corta": null,
+   "media": {
+    "seq": [
+     21.6,
+     9
+    ],
+    "f": [
+     "2026-07-23→2026-07-28",
+     "2026-07-31→2026-08-05"
+    ],
+    "dur": 2
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "VKTX",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "VMI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "VPG",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "VRNS",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "VRT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "VTI",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     4.9,
+     3.4,
+     3.4
+    ],
+    "f": [
+     "2026-06-02→2026-06-09",
+     "2026-06-15→2026-06-26",
+     "2026-07-10→2026-07-29"
+    ],
+    "dur": 8
+   }
+  }
+ },
+ {
+  "sym": "VVV",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "VZ",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "W",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "WAB",
+  "res": {
+   "corta": {
+    "seq": [
+     6.2,
+     3.6,
+     2.2
+    ],
+    "f": [
+     "2026-07-29→2026-07-30",
+     "2026-08-04→2026-08-10",
+     "2026-08-11→2026-08-13"
+    ],
+    "dur": 2
+   },
+   "media": {
+    "seq": [
+     11,
+     6.2,
+     3.6
+    ],
+    "f": [
+     "2026-06-25→2026-07-07",
+     "2026-07-29→2026-07-30",
+     "2026-08-04→2026-08-10"
+    ],
+    "dur": 7
+   },
+   "larga": null
+  }
+ },
+ {
+  "sym": "WAL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "WAT",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": {
+    "seq": [
+     31.7,
+     10.4
+    ],
+    "f": [
+     "2025-11-25→2026-03-13",
+     "2026-05-29→2026-07-21"
+    ],
+    "dur": 34
+   }
+  }
+ },
+ {
+  "sym": "WDC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "WEC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "WHR",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "WM",
+  "res": {
+   "corta": {
+    "seq": [
+     10.1,
+     3.5
+    ],
+    "f": [
+     "2026-07-17→2026-08-04",
+     "2026-08-07→2026-08-12"
+    ],
+    "dur": 4
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "WMB",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "WPM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "WRB",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "WRBY",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "WSO",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "WTRG",
+  "res": {
+   "corta": {
+    "seq": [
+     7.5,
+     2.6
+    ],
+    "f": [
+     "2026-07-29→2026-08-04",
+     "2026-08-13→2026-08-17"
+    ],
+    "dur": 3
+   },
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "WULF",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "XEL",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "XENE",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "XP",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "YOU",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "YUM",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "YUMC",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ },
+ {
+  "sym": "ZBH",
+  "res": {
+   "corta": null,
+   "media": null,
+   "larga": null
+  }
+ }
+]

@@ -1,0 +1,1799 @@
+[
+  {
+    "id": "ICE-2026-01",
+    "symbol": "ICE",
+    "asOf": "2026-04-13",
+    "tanda": 1,
+    "etiqueta": "BASE",
+    "v4": "no",
+    "motivo4": "contexto_no_etapa2",
+    "v5": "no",
+    "motivo5": "contexto_no_etapa2",
+    "ok4": false,
+    "ok5": false,
+    "contracciones": null,
+    "fechasDet": null,
+    "fechasEt": [
+      "2026-01-29→2026-02-12",
+      "2026-03-02→2026-03-27",
+      "2026-04-08→2026-04-10"
+    ],
+    "primeraEnAtr": null,
+    "dispRatio": null,
+    "volRatio": null,
+    "atrBase": null,
+    "smaSlopePct": -1.46,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": 3.9,
+      "rango52": 24.2,
+      "precioVsMax52": 87.6,
+      "eficiencia": 0.026,
+      "densidadPivotes": 14.3,
+      "gapVsAtr": 0.15,
+      "atr20": 2.27,
+      "anid": null
+    },
+    "zona": null,
+    "geo": null,
+    "barras": 312,
+    "ultimaBarra": "2026-04-13"
+  },
+  {
+    "id": "GOOGL-2026-02",
+    "symbol": "GOOGL",
+    "asOf": "2026-04-24",
+    "tanda": 1,
+    "etiqueta": "BASE",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "BASE",
+    "motivo5": "ok",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": [
+      15.7,
+      12.9,
+      3.2
+    ],
+    "fechasDet": [
+      "2026-02-03→2026-03-09",
+      "2026-03-18→2026-03-30",
+      "2026-04-17→2026-04-21"
+    ],
+    "fechasEt": [
+      "2026-02-03→2026-03-30",
+      "2026-04-17→2026-04-21"
+    ],
+    "primeraEnAtr": 6,
+    "dispRatio": -0.12,
+    "volRatio": 0.71,
+    "atrBase": 2.61,
+    "smaSlopePct": 4.16,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": {
+      "nDet": 3,
+      "nEt": 2,
+      "dAnclaSesiones": 0,
+      "dFinSesiones": 0,
+      "solape": 1
+    },
+    "metricas": {
+      "avance130": 36.1,
+      "rango52": 57.8,
+      "precioVsMax52": 98.8,
+      "eficiencia": 0.168,
+      "densidadPivotes": 15,
+      "gapVsAtr": 0.22,
+      "atr20": 2.66,
+      "anid": {
+        "profSeq": 22,
+        "profMayor": 22,
+        "pesoRel": 1,
+        "techoSeqVsMaxMayor": 100,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2026-02-03",
+        "duracionSeqBarras": 53
+      }
+    },
+    "zona": {
+      "banda": "+4.0/-3.1%",
+      "salida": null,
+      "tipo": null,
+      "hace": null,
+      "caduca": false
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 23,
+          "profPct": 15.7,
+          "peorBarraPct": 2.5,
+          "concentracion": 0.16
+        },
+        {
+          "barras": 8,
+          "profPct": 12.9,
+          "peorBarraPct": 3.8,
+          "concentracion": 0.3
+        },
+        {
+          "barras": 2,
+          "profPct": 3.2,
+          "peorBarraPct": 1.5,
+          "concentracion": 0.47
+        }
+      ],
+      "minimos": [
+        293.9,
+        271.95,
+        331.15
+      ],
+      "techos": [
+        348.55,
+        312.28,
+        342.12
+      ],
+      "perforacionPct": 7.47,
+      "dondePerfora": "2026-03-30",
+      "techoCaePct": 10.4,
+      "huecoBarras": 13,
+      "dondeHueco": "2026-03-30→2026-04-17",
+      "minFueraPct": 0,
+      "fechaMinVentana": "2026-03-30",
+      "profTotal": 22,
+      "semanasExigidas": 8.6,
+      "semanasSeq": 10.6,
+      "semanasHastaCorte": 11.2,
+      "cumpleTiempo": true
+    },
+    "barras": 319,
+    "ultimaBarra": "2026-04-24"
+  },
+  {
+    "id": "PNC-2026-02",
+    "symbol": "PNC",
+    "asOf": "2026-06-08",
+    "tanda": 1,
+    "etiqueta": "BASE",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "BASE",
+    "motivo5": "ok",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": [
+      19,
+      8.9,
+      3.5
+    ],
+    "fechasDet": [
+      "2026-02-06→2026-03-19",
+      "2026-04-21→2026-05-13",
+      "2026-05-27→2026-06-02"
+    ],
+    "fechasEt": [
+      "2026-02-06→2026-03-09",
+      "2026-04-21→2026-05-13",
+      "2026-05-27→2026-06-02"
+    ],
+    "primeraEnAtr": 8.5,
+    "dispRatio": -0.41,
+    "volRatio": 1.04,
+    "atrBase": 2.23,
+    "smaSlopePct": 2.34,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": {
+      "nDet": 3,
+      "nEt": 3,
+      "dAnclaSesiones": 0,
+      "dFinSesiones": 0,
+      "solape": 1
+    },
+    "metricas": {
+      "avance130": 19.9,
+      "rango52": 31,
+      "precioVsMax52": 93.8,
+      "eficiencia": 0.122,
+      "densidadPivotes": 12.9,
+      "gapVsAtr": 0.19,
+      "atr20": 2.04,
+      "anid": {
+        "profSeq": 19,
+        "profMayor": 19,
+        "pesoRel": 1,
+        "techoSeqVsMaxMayor": 100,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2026-02-06",
+        "duracionSeqBarras": 79
+      }
+    },
+    "zona": {
+      "banda": "+3.5/-2.7%",
+      "salida": null,
+      "tipo": null,
+      "hace": null,
+      "caduca": false
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 28,
+          "profPct": 19,
+          "peorBarraPct": 5.2,
+          "concentracion": 0.28
+        },
+        {
+          "barras": 16,
+          "profPct": 8.9,
+          "peorBarraPct": 2.5,
+          "concentracion": 0.28
+        },
+        {
+          "barras": 4,
+          "profPct": 3.5,
+          "peorBarraPct": 2.3,
+          "concentracion": 0.65
+        }
+      ],
+      "minimos": [
+        194.5,
+        208.04,
+        213.5
+      ],
+      "techos": [
+        240.17,
+        228.43,
+        221.28
+      ],
+      "perforacionPct": 0,
+      "dondePerfora": null,
+      "techoCaePct": 4.89,
+      "huecoBarras": 22,
+      "dondeHueco": "2026-03-19→2026-04-21",
+      "minFueraPct": 0,
+      "fechaMinVentana": "2026-03-19",
+      "profTotal": 19,
+      "semanasExigidas": 6.2,
+      "semanasSeq": 15.8,
+      "semanasHastaCorte": 16.6,
+      "cumpleTiempo": true
+    },
+    "barras": 350,
+    "ultimaBarra": "2026-06-08"
+  },
+  {
+    "id": "KO-2026-02",
+    "symbol": "KO",
+    "asOf": "2026-05-13",
+    "tanda": 1,
+    "etiqueta": "BASE",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "BASE",
+    "motivo5": "ok",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": [
+      9,
+      4.8,
+      3.2
+    ],
+    "fechasDet": [
+      "2026-02-27→2026-03-25",
+      "2026-04-09→2026-04-22",
+      "2026-04-28→2026-05-04"
+    ],
+    "fechasEt": [
+      "2026-02-27→2026-03-25",
+      "2026-04-09→2026-04-21",
+      "2026-04-28→2026-05-04"
+    ],
+    "primeraEnAtr": 5.1,
+    "dispRatio": -0.15,
+    "volRatio": 0.98,
+    "atrBase": 1.79,
+    "smaSlopePct": 2.23,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": {
+      "nDet": 3,
+      "nEt": 3,
+      "dAnclaSesiones": 0,
+      "dFinSesiones": 0,
+      "solape": 1
+    },
+    "metricas": {
+      "avance130": 18.8,
+      "rango52": 20.9,
+      "precioVsMax52": 98.6,
+      "eficiencia": 0.164,
+      "densidadPivotes": 13.6,
+      "gapVsAtr": 0.15,
+      "atr20": 1.73,
+      "anid": {
+        "profSeq": 9,
+        "profMayor": 9,
+        "pesoRel": 1,
+        "techoSeqVsMaxMayor": 100,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2026-02-27",
+        "duracionSeqBarras": 45
+      }
+    },
+    "zona": {
+      "banda": "+2.4/-2.1%",
+      "salida": null,
+      "tipo": null,
+      "hace": null,
+      "caduca": false
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 18,
+          "profPct": 9,
+          "peorBarraPct": 2.1,
+          "concentracion": 0.23
+        },
+        {
+          "barras": 9,
+          "profPct": 4.8,
+          "peorBarraPct": 1.4,
+          "concentracion": 0.29
+        },
+        {
+          "barras": 4,
+          "profPct": 3.2,
+          "peorBarraPct": 0.5,
+          "concentracion": 0.15
+        }
+      ],
+      "minimos": [
+        73.59,
+        74.07,
+        77.23
+      ],
+      "techos": [
+        80.92,
+        77.79,
+        79.8
+      ],
+      "perforacionPct": 0,
+      "dondePerfora": null,
+      "techoCaePct": 3.87,
+      "huecoBarras": 10,
+      "dondeHueco": "2026-03-25→2026-04-09",
+      "minFueraPct": 0,
+      "fechaMinVentana": "2026-03-25",
+      "profTotal": 9,
+      "semanasExigidas": 3,
+      "semanasSeq": 9,
+      "semanasHastaCorte": 10.4,
+      "cumpleTiempo": true
+    },
+    "barras": 332,
+    "ultimaBarra": "2026-05-13"
+  },
+  {
+    "id": "MPC-2026-03-asc",
+    "symbol": "MPC",
+    "asOf": "2026-06-02",
+    "tanda": 1,
+    "etiqueta": "BASE",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "BASE",
+    "motivo5": "ok",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": [
+      17.6,
+      10.5,
+      8.6
+    ],
+    "fechasDet": [
+      "2026-03-30→2026-04-17",
+      "2026-05-05→2026-05-07",
+      "2026-05-20→2026-05-27"
+    ],
+    "fechasEt": [
+      "2026-03-30→2026-04-17",
+      "2026-05-05→2026-05-07",
+      "2026-05-20→2026-05-27"
+    ],
+    "primeraEnAtr": 4.5,
+    "dispRatio": 0.21,
+    "volRatio": 0.95,
+    "atrBase": 3.91,
+    "smaSlopePct": 4.43,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": {
+      "nDet": 3,
+      "nEt": 3,
+      "dAnclaSesiones": 0,
+      "dFinSesiones": 0,
+      "solape": 1
+    },
+    "metricas": {
+      "avance130": 39.5,
+      "rango52": 42.3,
+      "precioVsMax52": 99.3,
+      "eficiencia": 0.158,
+      "densidadPivotes": 15.7,
+      "gapVsAtr": 0.17,
+      "atr20": 3.58,
+      "anid": {
+        "profSeq": 20.6,
+        "profMayor": 3,
+        "pesoRel": 6.92,
+        "techoSeqVsMaxMayor": 99.7,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2026-06-02",
+        "duracionSeqBarras": 40
+      }
+    },
+    "zona": {
+      "banda": "+4.9/-4.2%",
+      "salida": null,
+      "tipo": null,
+      "hace": null,
+      "caduca": false
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 13,
+          "profPct": 17.6,
+          "peorBarraPct": 5.5,
+          "concentracion": 0.31
+        },
+        {
+          "barras": 2,
+          "profPct": 10.5,
+          "peorBarraPct": 5.7,
+          "concentracion": 0.54
+        },
+        {
+          "barras": 4,
+          "profPct": 8.6,
+          "peorBarraPct": 3.8,
+          "concentracion": 0.45
+        }
+      ],
+      "minimos": [
+        209.27,
+        232.61,
+        240.7
+      ],
+      "techos": [
+        254.1,
+        259.9,
+        263.42
+      ],
+      "perforacionPct": 0,
+      "dondePerfora": null,
+      "techoCaePct": 0,
+      "huecoBarras": 12,
+      "dondeHueco": "2026-04-17→2026-05-05",
+      "minFueraPct": 0,
+      "fechaMinVentana": "2026-04-17",
+      "profTotal": 20.6,
+      "semanasExigidas": 7.4,
+      "semanasSeq": 8,
+      "semanasHastaCorte": 8.8,
+      "cumpleTiempo": true
+    },
+    "barras": 345,
+    "ultimaBarra": "2026-06-02"
+  },
+  {
+    "id": "MPC-2026-02-sierra",
+    "symbol": "MPC",
+    "asOf": "2026-03-30",
+    "tanda": 1,
+    "etiqueta": "NO",
+    "v4": "no",
+    "motivo4": "reexpansion",
+    "v5": "no",
+    "motivo5": "reexpansion",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": null,
+    "fechasDet": null,
+    "fechasEt": [
+      "2026-03-05→2026-03-10",
+      "2026-03-12→2026-03-16",
+      "2026-03-19→2026-03-23"
+    ],
+    "primeraEnAtr": null,
+    "dispRatio": null,
+    "volRatio": null,
+    "atrBase": null,
+    "smaSlopePct": 4.95,
+    "legs": [
+      "2025-09-26→2025-10-16 10.6%",
+      "2025-10-24→2025-10-29 4.3%",
+      "2025-10-30→2025-11-04 12.8%",
+      "2025-11-14→2025-12-31 19.6%",
+      "2026-01-14→2026-01-28 7.3%",
+      "2026-02-12→2026-02-27 9.1%",
+      "2026-03-05→2026-03-10 7.1%",
+      "2026-03-12→2026-03-23 4.3%"
+    ],
+    "mejor": null,
+    "seqRech": [
+      19.6,
+      7.3
+    ],
+    "corta": 9.1,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": 29.7,
+      "rango52": 55.9,
+      "precioVsMax52": 95.9,
+      "eficiencia": 0.143,
+      "densidadPivotes": 14.3,
+      "gapVsAtr": 0.14,
+      "atr20": 3.91,
+      "anid": null
+    },
+    "zona": null,
+    "geo": null,
+    "barras": 301,
+    "ultimaBarra": "2026-03-30"
+  },
+  {
+    "id": "NDAQ-2025-11",
+    "symbol": "NDAQ",
+    "asOf": "2025-12-17",
+    "tanda": 1,
+    "etiqueta": "NO",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "BASE",
+    "motivo5": "ok",
+    "ok4": false,
+    "ok5": false,
+    "contracciones": [
+      11.2,
+      8.8,
+      3.8
+    ],
+    "fechasDet": [
+      "2025-08-11→2025-10-02",
+      "2025-10-21→2025-11-18",
+      "2025-11-28→2025-12-03"
+    ],
+    "fechasEt": [
+      "2025-11-12→2025-11-18",
+      "2025-11-28→2025-12-03",
+      "2025-12-11→2025-12-16"
+    ],
+    "primeraEnAtr": 5.8,
+    "dispRatio": -0.56,
+    "volRatio": 1.05,
+    "atrBase": 1.93,
+    "smaSlopePct": 2.19,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": {
+      "nDet": 3,
+      "nEt": 3,
+      "dAnclaSesiones": -66,
+      "dFinSesiones": -9,
+      "solape": 0.16
+    },
+    "metricas": {
+      "avance130": 10.1,
+      "rango52": 33.8,
+      "precioVsMax52": 96.5,
+      "eficiencia": 0.083,
+      "densidadPivotes": 13.6,
+      "gapVsAtr": 0.12,
+      "atr20": 1.79,
+      "anid": {
+        "profSeq": 12.9,
+        "profMayor": 12.9,
+        "pesoRel": 1,
+        "techoSeqVsMaxMayor": 100,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2025-08-11",
+        "duracionSeqBarras": 80
+      }
+    },
+    "zona": {
+      "banda": "+2.8/-2.3%",
+      "salida": null,
+      "tipo": null,
+      "hace": null,
+      "caduca": false
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 37,
+          "profPct": 11.2,
+          "peorBarraPct": 4.5,
+          "concentracion": 0.41
+        },
+        {
+          "barras": 20,
+          "profPct": 8.8,
+          "peorBarraPct": 3.2,
+          "concentracion": 0.37
+        },
+        {
+          "barras": 3,
+          "profPct": 3.8,
+          "peorBarraPct": 1.7,
+          "concentracion": 0.45
+        }
+      ],
+      "minimos": [
+        85.61,
+        83.94,
+        86.94
+      ],
+      "techos": [
+        96.41,
+        92.02,
+        90.38
+      ],
+      "perforacionPct": 1.95,
+      "dondePerfora": "2025-11-18",
+      "techoCaePct": 4.56,
+      "huecoBarras": 13,
+      "dondeHueco": "2025-10-02→2025-10-21",
+      "minFueraPct": 0,
+      "fechaMinVentana": "2025-11-18",
+      "profTotal": 12.9,
+      "semanasExigidas": 3,
+      "semanasSeq": 16,
+      "semanasHastaCorte": 18,
+      "cumpleTiempo": true
+    },
+    "barras": 234,
+    "ultimaBarra": "2025-12-17"
+  },
+  {
+    "id": "V-2026-07",
+    "symbol": "V",
+    "asOf": "2026-07-24",
+    "tanda": 1,
+    "etiqueta": "NO",
+    "v4": "no",
+    "motivo4": "tendencia_no_lateral",
+    "v5": "no",
+    "motivo5": "tendencia_no_lateral",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": null,
+    "fechasDet": null,
+    "fechasEt": [
+      "2026-07-06→2026-07-09",
+      "2026-07-16→2026-07-23"
+    ],
+    "primeraEnAtr": null,
+    "dispRatio": 0.74,
+    "volRatio": null,
+    "atrBase": null,
+    "smaSlopePct": 0.91,
+    "legs": [
+      "2026-04-08→2026-04-13 2.8%",
+      "2026-04-17→2026-04-24 4.7%",
+      "2026-04-29→2026-06-03 9.5%",
+      "2026-07-06→2026-07-09 5.6%"
+    ],
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": 8.8,
+      "rango52": 19.7,
+      "precioVsMax52": 97.4,
+      "eficiencia": 0.063,
+      "densidadPivotes": 17.1,
+      "gapVsAtr": 0.17,
+      "atr20": 2.33,
+      "anid": null
+    },
+    "zona": null,
+    "geo": null,
+    "barras": 381,
+    "ultimaBarra": "2026-07-24"
+  },
+  {
+    "id": "ORCL-2026-04",
+    "symbol": "ORCL",
+    "asOf": "2026-05-28",
+    "tanda": 1,
+    "etiqueta": "NO",
+    "v4": "no",
+    "motivo4": "contexto_no_etapa2",
+    "v5": "no",
+    "motivo5": "contexto_no_etapa2",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": null,
+    "fechasDet": null,
+    "fechasEt": [
+      "2026-04-22→2026-04-30",
+      "2026-05-07→2026-05-20",
+      "2026-05-22→2026-05-27"
+    ],
+    "primeraEnAtr": null,
+    "dispRatio": null,
+    "volRatio": null,
+    "atrBase": null,
+    "smaSlopePct": -6.81,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": -9.1,
+      "rango52": 60.8,
+      "precioVsMax52": 59.4,
+      "eficiencia": 0.034,
+      "densidadPivotes": 16.4,
+      "gapVsAtr": 0.25,
+      "atr20": 4.77,
+      "anid": null
+    },
+    "zona": null,
+    "geo": null,
+    "barras": 342,
+    "ultimaBarra": "2026-05-28"
+  },
+  {
+    "id": "AMT-2026-08",
+    "symbol": "AMT",
+    "asOf": "2026-08-19",
+    "tanda": 2,
+    "etiqueta": "NO",
+    "v4": "no",
+    "motivo4": "ultima_contraccion_ancha",
+    "v5": "no",
+    "motivo5": "ultima_contraccion_ancha",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": null,
+    "fechasDet": null,
+    "fechasEt": null,
+    "primeraEnAtr": null,
+    "dispRatio": null,
+    "volRatio": null,
+    "atrBase": null,
+    "smaSlopePct": 0.1,
+    "legs": [
+      "2026-04-09→2026-04-14 4.2%",
+      "2026-04-20→2026-04-28 5.0%",
+      "2026-05-01→2026-05-15 9.1%",
+      "2026-05-27→2026-06-03 3.8%",
+      "2026-06-05→2026-07-06 17.6%",
+      "2026-07-17→2026-07-21 5.6%",
+      "2026-07-29→2026-08-05 9.9%"
+    ],
+    "mejor": null,
+    "seqRech": [
+      17.6,
+      9.9
+    ],
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": -5.5,
+      "rango52": 22.6,
+      "precioVsMax52": 84.4,
+      "eficiencia": 0.032,
+      "densidadPivotes": 15.7,
+      "gapVsAtr": 0.17,
+      "atr20": 3.04,
+      "anid": null
+    },
+    "zona": null,
+    "geo": null,
+    "barras": 400,
+    "ultimaBarra": "2026-08-19"
+  },
+  {
+    "id": "BEKE-2026-08",
+    "symbol": "BEKE",
+    "asOf": "2026-08-19",
+    "tanda": 2,
+    "etiqueta": "NO",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "BASE",
+    "motivo5": "ok",
+    "ok4": false,
+    "ok5": false,
+    "contracciones": [
+      30.1,
+      10.4,
+      3.7
+    ],
+    "fechasDet": [
+      "2026-05-13→2026-06-26",
+      "2026-07-16→2026-07-24",
+      "2026-08-03→2026-08-06"
+    ],
+    "fechasEt": null,
+    "primeraEnAtr": 8.9,
+    "dispRatio": -0.41,
+    "volRatio": 0.55,
+    "atrBase": 3.38,
+    "smaSlopePct": 0.56,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": -0.2,
+      "rango52": 33,
+      "precioVsMax52": 84.4,
+      "eficiencia": 0.001,
+      "densidadPivotes": 12.9,
+      "gapVsAtr": 0.58,
+      "atr20": 2.29,
+      "anid": {
+        "profSeq": 30.1,
+        "profMayor": 33,
+        "pesoRel": 0.91,
+        "techoSeqVsMaxMayor": 96,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2025-09-17",
+        "duracionSeqBarras": 58
+      }
+    },
+    "zona": {
+      "banda": "+5.1/-3.9%",
+      "salida": null,
+      "tipo": null,
+      "hace": null,
+      "caduca": false
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 30,
+          "profPct": 30.1,
+          "peorBarraPct": 6.5,
+          "concentracion": 0.22
+        },
+        {
+          "barras": 6,
+          "profPct": 10.4,
+          "peorBarraPct": 3.1,
+          "concentracion": 0.3
+        },
+        {
+          "barras": 3,
+          "profPct": 3.7,
+          "peorBarraPct": 1.5,
+          "concentracion": 0.39
+        }
+      ],
+      "minimos": [
+        13.81,
+        15.84,
+        16.67
+      ],
+      "techos": [
+        19.76,
+        17.67,
+        17.31
+      ],
+      "perforacionPct": 0,
+      "dondePerfora": null,
+      "techoCaePct": 10.57,
+      "huecoBarras": 13,
+      "dondeHueco": "2026-06-26→2026-07-16",
+      "minFueraPct": 0,
+      "fechaMinVentana": "2026-06-26",
+      "profTotal": 30.1,
+      "semanasExigidas": 15.1,
+      "semanasSeq": 11.6,
+      "semanasHastaCorte": 13.4,
+      "cumpleTiempo": false
+    },
+    "barras": 401,
+    "ultimaBarra": "2026-08-19"
+  },
+  {
+    "id": "CPT-2026-08",
+    "symbol": "CPT",
+    "asOf": "2026-08-19",
+    "tanda": 2,
+    "etiqueta": "NO",
+    "v4": "no",
+    "motivo4": "menos_de_2_contracciones",
+    "v5": "no",
+    "motivo5": "menos_de_2_contracciones",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": null,
+    "fechasDet": null,
+    "fechasEt": null,
+    "primeraEnAtr": null,
+    "dispRatio": null,
+    "volRatio": null,
+    "atrBase": null,
+    "smaSlopePct": 0.6,
+    "legs": [
+      "2026-02-04→2026-02-05 4.9%",
+      "2026-02-11→2026-03-27 14.2%",
+      "2026-04-08→2026-04-16 2.9%",
+      "2026-04-20→2026-04-23 4.0%",
+      "2026-04-29→2026-05-15 4.1%",
+      "2026-05-27→2026-06-02 3.8%",
+      "2026-06-11→2026-06-22 7.4%",
+      "2026-07-07→2026-07-15 7.0%",
+      "2026-07-17→2026-07-22 3.6%",
+      "2026-07-29→2026-08-12 8.1%"
+    ],
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": 2.9,
+      "rango52": 21.3,
+      "precioVsMax52": 90.5,
+      "eficiencia": 0.022,
+      "densidadPivotes": 19.3,
+      "gapVsAtr": 0.22,
+      "atr20": 1.96,
+      "anid": null
+    },
+    "zona": null,
+    "geo": null,
+    "barras": 402,
+    "ultimaBarra": "2026-08-19"
+  },
+  {
+    "id": "DECK-2026-02",
+    "symbol": "DECK",
+    "asOf": "2026-08-19",
+    "tanda": 2,
+    "etiqueta": "BASE",
+    "v4": "no",
+    "motivo4": "contexto_no_etapa2",
+    "v5": "no",
+    "motivo5": "contexto_no_etapa2",
+    "ok4": false,
+    "ok5": false,
+    "contracciones": null,
+    "fechasDet": null,
+    "fechasEt": [
+      "2026-02-26→2026-03-27",
+      "2026-04-21→2026-05-15",
+      "2026-05-27→2026-06"
+    ],
+    "primeraEnAtr": null,
+    "dispRatio": null,
+    "volRatio": null,
+    "atrBase": null,
+    "smaSlopePct": -0.89,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": -21.1,
+      "rango52": 37.1,
+      "precioVsMax52": 73,
+      "eficiencia": 0.095,
+      "densidadPivotes": 15.7,
+      "gapVsAtr": 0.2,
+      "atr20": 3.67,
+      "anid": null
+    },
+    "zona": null,
+    "geo": null,
+    "barras": 399,
+    "ultimaBarra": "2026-08-19"
+  },
+  {
+    "id": "ELV-2026-08",
+    "symbol": "ELV",
+    "asOf": "2026-08-19",
+    "tanda": 2,
+    "etiqueta": "NO",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "BASE",
+    "motivo5": "ok",
+    "ok4": false,
+    "ok5": false,
+    "contracciones": [
+      16.8,
+      4.7
+    ],
+    "fechasDet": [
+      "2026-07-14→2026-07-28",
+      "2026-07-29→2026-08-05"
+    ],
+    "fechasEt": null,
+    "primeraEnAtr": 6.1,
+    "dispRatio": -0.65,
+    "volRatio": 0.74,
+    "atrBase": 2.73,
+    "smaSlopePct": 1.34,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": 19.8,
+      "rango52": 37.6,
+      "precioVsMax52": 91.3,
+      "eficiencia": 0.087,
+      "densidadPivotes": 12.9,
+      "gapVsAtr": 0.19,
+      "atr20": 2.74,
+      "anid": {
+        "profSeq": 16.8,
+        "profMayor": 16.8,
+        "pesoRel": 1,
+        "techoSeqVsMaxMayor": 100,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2026-07-14",
+        "duracionSeqBarras": 16
+      }
+    },
+    "zona": {
+      "banda": "+3.7/-3.1%",
+      "salida": null,
+      "tipo": null,
+      "hace": null,
+      "caduca": false
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 10,
+          "profPct": 16.8,
+          "peorBarraPct": 8.5,
+          "concentracion": 0.51
+        },
+        {
+          "barras": 5,
+          "profPct": 4.7,
+          "peorBarraPct": 1.2,
+          "concentracion": 0.27
+        }
+      ],
+      "minimos": [
+        362.98,
+        370.47
+      ],
+      "techos": [
+        436.24,
+        388.73
+      ],
+      "perforacionPct": 0,
+      "dondePerfora": null,
+      "techoCaePct": 10.89,
+      "huecoBarras": 1,
+      "dondeHueco": "2026-07-28→2026-07-29",
+      "minFueraPct": 0,
+      "fechaMinVentana": "2026-07-28",
+      "profTotal": 16.8,
+      "semanasExigidas": 4.4,
+      "semanasSeq": 3.2,
+      "semanasHastaCorte": 5.2,
+      "cumpleTiempo": true
+    },
+    "barras": 402,
+    "ultimaBarra": "2026-08-19"
+  },
+  {
+    "id": "FCX-2026-08",
+    "symbol": "FCX",
+    "asOf": "2026-08-19",
+    "tanda": 2,
+    "etiqueta": "BASE",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "BASE",
+    "motivo5": "ok",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": [
+      22.5,
+      10.9,
+      11.1,
+      7.9
+    ],
+    "fechasDet": [
+      "2026-06-17→2026-07-08",
+      "2026-07-15→2026-07-17",
+      "2026-07-23→2026-07-29",
+      "2026-08-10→2026-08-14"
+    ],
+    "fechasEt": null,
+    "primeraEnAtr": 4.6,
+    "dispRatio": -0.05,
+    "volRatio": 0.66,
+    "atrBase": 4.86,
+    "smaSlopePct": 3.06,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": 11.9,
+      "rango52": 51.8,
+      "precioVsMax52": 95.8,
+      "eficiencia": 0.035,
+      "densidadPivotes": 14.3,
+      "gapVsAtr": 0.33,
+      "atr20": 4.15,
+      "anid": {
+        "profSeq": 22.5,
+        "profMayor": 22.5,
+        "pesoRel": 1,
+        "techoSeqVsMaxMayor": 100,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2026-06-17",
+        "duracionSeqBarras": 40
+      }
+    },
+    "zona": {
+      "banda": "+5.7/-5.1%",
+      "salida": null,
+      "tipo": null,
+      "hace": null,
+      "caduca": false
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 13,
+          "profPct": 22.5,
+          "peorBarraPct": 6.9,
+          "concentracion": 0.31
+        },
+        {
+          "barras": 2,
+          "profPct": 10.9,
+          "peorBarraPct": 4,
+          "concentracion": 0.36
+        },
+        {
+          "barras": 4,
+          "profPct": 11.1,
+          "peorBarraPct": 2.7,
+          "concentracion": 0.24
+        },
+        {
+          "barras": 4,
+          "profPct": 7.9,
+          "peorBarraPct": 3.5,
+          "concentracion": 0.44
+        }
+      ],
+      "minimos": [
+        55.86,
+        56,
+        58.19,
+        65.57
+      ],
+      "techos": [
+        72.1,
+        62.88,
+        65.43,
+        71.22
+      ],
+      "perforacionPct": 0,
+      "dondePerfora": null,
+      "techoCaePct": 12.79,
+      "huecoBarras": 8,
+      "dondeHueco": "2026-07-29→2026-08-10",
+      "minFueraPct": 0,
+      "fechaMinVentana": "2026-07-08",
+      "profTotal": 22.5,
+      "semanasExigidas": 9,
+      "semanasSeq": 8,
+      "semanasHastaCorte": 8.6,
+      "cumpleTiempo": false
+    },
+    "barras": 399,
+    "ultimaBarra": "2026-08-19"
+  },
+  {
+    "id": "FLG-2026-02",
+    "symbol": "FLG",
+    "asOf": "2026-08-19",
+    "tanda": 2,
+    "etiqueta": "BASE",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "BASE",
+    "motivo5": "ok",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": [
+      11.7,
+      4.6
+    ],
+    "fechasDet": [
+      "2026-07-16→2026-07-27",
+      "2026-08-03→2026-08-10"
+    ],
+    "fechasEt": null,
+    "primeraEnAtr": 4.8,
+    "dispRatio": -0.53,
+    "volRatio": 0.79,
+    "atrBase": 2.46,
+    "smaSlopePct": 1.23,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": -0.8,
+      "rango52": 31.7,
+      "precioVsMax52": 88.7,
+      "eficiencia": 0.005,
+      "densidadPivotes": 16.4,
+      "gapVsAtr": 0.26,
+      "atr20": 2.22,
+      "anid": {
+        "profSeq": 11.7,
+        "profMayor": 12.2,
+        "pesoRel": 0.96,
+        "techoSeqVsMaxMayor": 100,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2026-07-16",
+        "duracionSeqBarras": 17
+      }
+    },
+    "zona": {
+      "banda": "+3.1/-2.8%",
+      "salida": null,
+      "tipo": null,
+      "hace": null,
+      "caduca": false
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 7,
+          "profPct": 11.7,
+          "peorBarraPct": 5.8,
+          "concentracion": 0.5
+        },
+        {
+          "barras": 5,
+          "profPct": 4.6,
+          "peorBarraPct": 1.5,
+          "concentracion": 0.33
+        }
+      ],
+      "minimos": [
+        13.63,
+        13.82
+      ],
+      "techos": [
+        15.44,
+        14.48
+      ],
+      "perforacionPct": 0,
+      "dondePerfora": null,
+      "techoCaePct": 6.22,
+      "huecoBarras": 5,
+      "dondeHueco": "2026-07-27→2026-08-03",
+      "minFueraPct": 0.51,
+      "fechaMinVentana": "2026-08-19",
+      "profTotal": 11.7,
+      "semanasExigidas": 3,
+      "semanasSeq": 3.4,
+      "semanasHastaCorte": 4.8,
+      "cumpleTiempo": true
+    },
+    "barras": 402,
+    "ultimaBarra": "2026-08-19"
+  },
+  {
+    "id": "IP-2026-02",
+    "symbol": "IP",
+    "asOf": "2026-08-19",
+    "tanda": 2,
+    "etiqueta": "BASE",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "no",
+    "motivo5": "fuera_de_rango",
+    "ok4": true,
+    "ok5": false,
+    "contracciones": [
+      32.5,
+      10.7
+    ],
+    "fechasDet": [
+      "2026-02-12→2026-03-20",
+      "2026-07-28→2026-08-07"
+    ],
+    "fechasEt": null,
+    "primeraEnAtr": 7.5,
+    "dispRatio": -0.26,
+    "volRatio": 0.94,
+    "atrBase": 4.32,
+    "smaSlopePct": 0.87,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": -13.4,
+      "rango52": 41.2,
+      "precioVsMax52": 84.7,
+      "eficiencia": 0.065,
+      "densidadPivotes": 13.6,
+      "gapVsAtr": 0.25,
+      "atr20": 3.85,
+      "anid": {
+        "profSeq": 32.5,
+        "profMayor": 44.5,
+        "pesoRel": 0.73,
+        "techoSeqVsMaxMayor": 94.4,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2025-01-14",
+        "duracionSeqBarras": 121
+      }
+    },
+    "zona": {
+      "banda": "+6.1/-4.8%",
+      "salida": "2026-05-01",
+      "tipo": "rotura",
+      "hace": 75,
+      "caduca": true
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 25,
+          "profPct": 32.5,
+          "peorBarraPct": 7.8,
+          "concentracion": 0.24
+        },
+        {
+          "barras": 8,
+          "profPct": 10.7,
+          "peorBarraPct": 5.4,
+          "concentracion": 0.5
+        }
+      ],
+      "minimos": [
+        32.7,
+        39.58
+      ],
+      "techos": [
+        48.47,
+        44.32
+      ],
+      "perforacionPct": 0,
+      "dondePerfora": null,
+      "techoCaePct": 8.57,
+      "huecoBarras": 88,
+      "dondeHueco": "2026-03-20→2026-07-28",
+      "minFueraPct": 12.84,
+      "fechaMinVentana": "2026-05-20",
+      "profTotal": 32.5,
+      "semanasExigidas": 17,
+      "semanasSeq": 24.2,
+      "semanasHastaCorte": 25.8,
+      "cumpleTiempo": true
+    },
+    "barras": 401,
+    "ultimaBarra": "2026-08-19"
+  },
+  {
+    "id": "MSGS-2026-08",
+    "symbol": "MSGS",
+    "asOf": "2026-08-19",
+    "tanda": 2,
+    "etiqueta": "NO",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "BASE",
+    "motivo5": "ok",
+    "ok4": false,
+    "ok5": false,
+    "contracciones": [
+      9.8,
+      8,
+      6.2,
+      3.6
+    ],
+    "fechasDet": [
+      "2026-06-12→2026-06-17",
+      "2026-07-01→2026-07-10",
+      "2026-07-15→2026-08-03",
+      "2026-08-06→2026-08-10"
+    ],
+    "fechasEt": null,
+    "primeraEnAtr": 3.5,
+    "dispRatio": 0.05,
+    "volRatio": 0.73,
+    "atrBase": 2.8,
+    "smaSlopePct": 5.85,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": 44.8,
+      "rango52": 55.8,
+      "precioVsMax52": 91.8,
+      "eficiencia": 0.203,
+      "densidadPivotes": 19.3,
+      "gapVsAtr": 0.16,
+      "atr20": 2.95,
+      "anid": {
+        "profSeq": 13.1,
+        "profMayor": 8.9,
+        "pesoRel": 1.47,
+        "techoSeqVsMaxMayor": 93.8,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2026-08-13",
+        "duracionSeqBarras": 39
+      }
+    },
+    "zona": {
+      "banda": "+3.5/-3.1%",
+      "salida": null,
+      "tipo": null,
+      "hace": null,
+      "caduca": false
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 3,
+          "profPct": 9.8,
+          "peorBarraPct": 3.8,
+          "concentracion": 0.38
+        },
+        {
+          "barras": 6,
+          "profPct": 8,
+          "peorBarraPct": 2.3,
+          "concentracion": 0.28
+        },
+        {
+          "barras": 13,
+          "profPct": 6.2,
+          "peorBarraPct": 2.8,
+          "concentracion": 0.46
+        },
+        {
+          "barras": 2,
+          "profPct": 3.6,
+          "peorBarraPct": 0.4,
+          "concentracion": 0.11
+        }
+      ],
+      "minimos": [
+        357.97,
+        378.81,
+        382.65,
+        384.86
+      ],
+      "techos": [
+        397,
+        411.73,
+        407.74,
+        399.05
+      ],
+      "perforacionPct": 0,
+      "dondePerfora": null,
+      "techoCaePct": 2.13,
+      "huecoBarras": 9,
+      "dondeHueco": "2026-06-17→2026-07-01",
+      "minFueraPct": 0,
+      "fechaMinVentana": "2026-06-17",
+      "profTotal": 13.1,
+      "semanasExigidas": 3,
+      "semanasSeq": 7.8,
+      "semanasHastaCorte": 9.2,
+      "cumpleTiempo": true
+    },
+    "barras": 402,
+    "ultimaBarra": "2026-08-19"
+  },
+  {
+    "id": "NDSN-2026-02",
+    "symbol": "NDSN",
+    "asOf": "2026-08-19",
+    "tanda": 2,
+    "etiqueta": "BASE",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "BASE",
+    "motivo5": "ok",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": [
+      8.9,
+      4.6,
+      3.5
+    ],
+    "fechasDet": [
+      "2026-06-25→2026-07-08",
+      "2026-07-17→2026-07-20",
+      "2026-07-28→2026-07-31"
+    ],
+    "fechasEt": [
+      "2026-02-19→2026-04-01",
+      "2026-05-07→2026-05-19",
+      "2026-05-26→2026-06-10",
+      "2026-06-29→2026-07-07",
+      "2026-07-28→2026-07-30",
+      "2026-08-06→en curso"
+    ],
+    "primeraEnAtr": 3.6,
+    "dispRatio": -0.16,
+    "volRatio": 0.9,
+    "atrBase": 2.45,
+    "smaSlopePct": 2.88,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": {
+      "nDet": 3,
+      "nEt": 6,
+      "dAnclaSesiones": 87,
+      "dFinSesiones": -13,
+      "solape": 0.2
+    },
+    "metricas": {
+      "avance130": 5.8,
+      "rango52": 33.3,
+      "precioVsMax52": 98.2,
+      "eficiencia": 0.041,
+      "densidadPivotes": 17.9,
+      "gapVsAtr": 0.22,
+      "atr20": 1.89,
+      "anid": {
+        "profSeq": 8.9,
+        "profMayor": 4,
+        "pesoRel": 2.2,
+        "techoSeqVsMaxMayor": 97.5,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2026-08-06",
+        "duracionSeqBarras": 25
+      }
+    },
+    "zona": {
+      "banda": "+2.8/-2.7%",
+      "salida": null,
+      "tipo": null,
+      "hace": null,
+      "caduca": false
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 8,
+          "profPct": 8.9,
+          "peorBarraPct": 2.6,
+          "concentracion": 0.29
+        },
+        {
+          "barras": 1,
+          "profPct": 4.6,
+          "peorBarraPct": 1.3,
+          "concentracion": 0.28
+        },
+        {
+          "barras": 3,
+          "profPct": 3.5,
+          "peorBarraPct": 2.5,
+          "concentracion": 0.73
+        }
+      ],
+      "minimos": [
+        280.38,
+        283.01,
+        292.97
+      ],
+      "techos": [
+        307.74,
+        296.74,
+        303.49
+      ],
+      "perforacionPct": 0,
+      "dondePerfora": null,
+      "techoCaePct": 3.57,
+      "huecoBarras": 7,
+      "dondeHueco": "2026-07-08→2026-07-17",
+      "minFueraPct": 0,
+      "fechaMinVentana": "2026-07-08",
+      "profTotal": 8.9,
+      "semanasExigidas": 3,
+      "semanasSeq": 5,
+      "semanasHastaCorte": 7.6,
+      "cumpleTiempo": true
+    },
+    "barras": 402,
+    "ultimaBarra": "2026-08-19"
+  },
+  {
+    "id": "QRVO-2026-08",
+    "symbol": "QRVO",
+    "asOf": "2026-08-19",
+    "tanda": 2,
+    "etiqueta": "BASE",
+    "v4": "BASE",
+    "motivo4": "ok",
+    "v5": "BASE",
+    "motivo5": "ok",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": [
+      25.7,
+      7.4
+    ],
+    "fechasDet": [
+      "2026-05-27→2026-07-15",
+      "2026-07-29→2026-07-29"
+    ],
+    "fechasEt": null,
+    "primeraEnAtr": 5.6,
+    "dispRatio": -0.61,
+    "volRatio": null,
+    "atrBase": 4.55,
+    "smaSlopePct": 1.36,
+    "legs": null,
+    "mejor": null,
+    "seqRech": null,
+    "corta": null,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": 16.8,
+      "rango52": 31.6,
+      "precioVsMax52": 88.4,
+      "eficiencia": 0.066,
+      "densidadPivotes": 15,
+      "gapVsAtr": 0.21,
+      "atr20": 3.25,
+      "anid": {
+        "profSeq": 25.7,
+        "profMayor": 25.7,
+        "pesoRel": 1,
+        "techoSeqVsMaxMayor": 100,
+        "mayorSinResolver": true,
+        "fechaMaxMayor": "2026-05-27",
+        "duracionSeqBarras": 43
+      }
+    },
+    "zona": {
+      "banda": "+5.7/-4.9%",
+      "salida": null,
+      "tipo": null,
+      "hace": null,
+      "caduca": false
+    },
+    "geo": {
+      "tramoInfo": [
+        {
+          "barras": 33,
+          "profPct": 25.7,
+          "peorBarraPct": 5.5,
+          "concentracion": 0.21
+        },
+        {
+          "barras": 0,
+          "profPct": 7.4,
+          "peorBarraPct": 0,
+          "concentracion": 0
+        }
+      ],
+      "minimos": [
+        81.39,
+        85.51
+      ],
+      "techos": [
+        109.49,
+        92.39
+      ],
+      "perforacionPct": 0,
+      "dondePerfora": null,
+      "techoCaePct": 15.62,
+      "huecoBarras": 10,
+      "dondeHueco": "2026-07-15→2026-07-29",
+      "minFueraPct": 0,
+      "fechaMinVentana": "2026-07-15",
+      "profTotal": 25.7,
+      "semanasExigidas": 11.5,
+      "semanasSeq": 8.6,
+      "semanasHastaCorte": 11.6,
+      "cumpleTiempo": true
+    },
+    "barras": 402,
+    "ultimaBarra": "2026-08-19"
+  },
+  {
+    "id": "VPG-2026-08",
+    "symbol": "VPG",
+    "asOf": "2026-08-19",
+    "tanda": 2,
+    "etiqueta": "NO",
+    "v4": "no",
+    "motivo4": "reexpansion",
+    "v5": "no",
+    "motivo5": "reexpansion",
+    "ok4": true,
+    "ok5": true,
+    "contracciones": null,
+    "fechasDet": null,
+    "fechasEt": null,
+    "primeraEnAtr": null,
+    "dispRatio": null,
+    "volRatio": null,
+    "atrBase": null,
+    "smaSlopePct": 7.81,
+    "legs": [
+      "2026-02-09→2026-03-19 30.4%",
+      "2026-03-25→2026-03-27 16.3%",
+      "2026-04-24→2026-04-29 10.2%",
+      "2026-05-18→2026-05-19 16.7%",
+      "2026-06-02→2026-06-09 17.5%",
+      "2026-06-15→2026-06-26 17.2%",
+      "2026-06-30→2026-08-10 57.6%"
+    ],
+    "mejor": null,
+    "seqRech": [
+      30.4,
+      16.3,
+      10.2
+    ],
+    "corta": 16.7,
+    "cmpFechas": null,
+    "metricas": {
+      "avance130": 35.2,
+      "rango52": 82.4,
+      "precioVsMax52": 41.6,
+      "eficiencia": 0.034,
+      "densidadPivotes": 15.7,
+      "gapVsAtr": 0.19,
+      "atr20": 10.16,
+      "anid": null
+    },
+    "zona": null,
+    "geo": null,
+    "barras": 401,
+    "ultimaBarra": "2026-08-19"
+  }
+]

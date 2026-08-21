@@ -1,0 +1,6947 @@
+[
+ {
+  "sym": "AAL",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.51,
+  "priceVsSma": 0.9
+ },
+ {
+  "sym": "AAOI",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 10.45,
+  "priceVsSma": 2.9,
+  "mejor": 4.2,
+  "legs": [
+   "2026-02-11→2026-02-17 19.1%",
+   "2026-03-11→2026-03-31 39.1%",
+   "2026-04-21→2026-04-23 23.5%",
+   "2026-05-01→2026-05-08 25.2%",
+   "2026-05-13→2026-07-17 60.8%",
+   "2026-07-21→2026-07-29 36.8%"
+  ]
+ },
+ {
+  "sym": "ABBV",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.93,
+  "priceVsSma": 18.7,
+  "legs": [
+   "2026-02-17→2026-02-26 6.0%",
+   "2026-03-04→2026-04-07 15.0%",
+   "2026-04-10→2026-04-13 5.2%",
+   "2026-04-17→2026-04-29 10.2%",
+   "2026-04-30→2026-05-08 6.9%",
+   "2026-05-22→2026-06-02 5.0%",
+   "2026-06-05→2026-06-18 6.6%",
+   "2026-07-02→2026-07-14 7.1%",
+   "2026-07-17→2026-07-22 3.3%",
+   "2026-07-29→2026-08-06 9.8%"
+  ]
+ },
+ {
+  "sym": "ABCL",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 12.15,
+  "priceVsSma": 140.6,
+  "seq": [
+   30,
+   26.2
+  ],
+  "corta": 41,
+  "legs": [
+   "2026-02-10→2026-02-12 10.7%",
+   "2026-03-02→2026-04-07 16.0%",
+   "2026-04-27→2026-04-29 14.2%",
+   "2026-05-11→2026-05-18 30.0%",
+   "2026-06-01→2026-06-16 26.2%",
+   "2026-07-07→2026-07-28 41.0%"
+  ]
+ },
+ {
+  "sym": "ABG",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.34,
+  "priceVsSma": 1.8
+ },
+ {
+  "sym": "ABT",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.03,
+  "priceVsSma": 14.4
+ },
+ {
+  "sym": "ACHC",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 9.93,
+  "priceVsSma": 11.2,
+  "atr": 5.29,
+  "contracciones": [
+   25.7,
+   8.1
+  ],
+  "fechas": [
+   "2026-07-22→2026-07-30",
+   "2026-08-05→2026-08-07"
+  ],
+  "primeraEnAtr": 4.9,
+  "dispRatio": -0.31,
+  "volRatio": 0.48,
+  "techo": 35.83
+ },
+ {
+  "sym": "ADEA",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 6.06,
+  "priceVsSma": 6.1,
+  "seq": [
+   25.1,
+   13.9
+  ],
+  "corta": 32.6,
+  "legs": [
+   "2026-02-03→2026-02-05 11.0%",
+   "2026-02-10→2026-02-24 11.7%",
+   "2026-02-26→2026-03-03 8.5%",
+   "2026-03-16→2026-03-19 4.7%",
+   "2026-03-25→2026-03-30 13.5%",
+   "2026-04-23→2026-04-28 3.6%",
+   "2026-05-04→2026-05-21 25.1%",
+   "2026-06-09→2026-06-24 13.9%",
+   "2026-06-30→2026-07-29 32.6%",
+   "2026-08-04→2026-08-11 14.8%"
+  ]
+ },
+ {
+  "sym": "ADI",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 3.64,
+  "priceVsSma": 2.2,
+  "legs": [
+   "2026-02-25→2026-03-30 17.0%",
+   "2026-04-10→2026-04-15 3.7%",
+   "2026-04-23→2026-04-28 6.3%",
+   "2026-05-13→2026-05-21 12.5%",
+   "2026-05-27→2026-06-01 7.7%",
+   "2026-06-03→2026-06-09 12.8%",
+   "2026-06-22→2026-07-29 20.9%"
+  ]
+ },
+ {
+  "sym": "ADP",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 0.66,
+  "priceVsSma": 22.5,
+  "mejor": 3,
+  "legs": [
+   "2026-04-21→2026-04-24 5.4%",
+   "2026-05-01→2026-05-13 5.5%",
+   "2026-05-19→2026-05-28 5.2%",
+   "2026-06-04→2026-06-22 9.1%",
+   "2026-07-07→2026-07-09 5.3%",
+   "2026-07-17→2026-07-23 8.0%"
+  ]
+ },
+ {
+  "sym": "ADPT",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 6.08,
+  "priceVsSma": 47.4,
+  "mejor": 6.4,
+  "legs": [
+   "2026-02-03→2026-03-12 39.4%",
+   "2026-03-25→2026-03-27 17.2%",
+   "2026-04-08→2026-04-10 20.8%",
+   "2026-04-21→2026-05-18 17.5%",
+   "2026-06-12→2026-06-16 18.6%",
+   "2026-07-02→2026-07-08 13.3%",
+   "2026-07-16→2026-07-21 9.7%"
+  ]
+ },
+ {
+  "sym": "ADSK",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.86,
+  "priceVsSma": 7.2
+ },
+ {
+  "sym": "AEHR",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 17.33,
+  "priceVsSma": 52.5,
+  "mejor": 3.8,
+  "legs": [
+   "2026-02-11→2026-02-17 30.6%",
+   "2026-03-04→2026-03-30 38.0%",
+   "2026-04-24→2026-04-28 25.1%",
+   "2026-05-14→2026-05-19 29.4%",
+   "2026-05-27→2026-06-01 22.7%",
+   "2026-06-03→2026-06-09 30.5%",
+   "2026-06-15→2026-07-08 50.0%",
+   "2026-07-15→2026-07-29 42.1%"
+  ]
+ },
+ {
+  "sym": "AEO",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -6.17,
+  "priceVsSma": -10.7
+ },
+ {
+  "sym": "AEP",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.53,
+  "priceVsSma": -1.4,
+  "legs": [
+   "2026-02-27→2026-03-03 3.7%",
+   "2026-03-17→2026-03-20 7.3%",
+   "2026-04-09→2026-04-22 4.7%",
+   "2026-05-05→2026-06-01 10.6%",
+   "2026-06-16→2026-06-18 3.3%",
+   "2026-06-29→2026-07-01 3.5%",
+   "2026-07-07→2026-08-10 12.4%"
+  ]
+ },
+ {
+  "sym": "AFL",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.78,
+  "priceVsSma": 1.7,
+  "legs": [
+   "2026-02-05→2026-03-24 10.9%",
+   "2026-04-09→2026-04-13 4.1%",
+   "2026-04-28→2026-04-30 6.4%",
+   "2026-05-19→2026-06-01 7.3%",
+   "2026-06-05→2026-06-09 3.7%",
+   "2026-06-12→2026-06-18 3.3%",
+   "2026-07-13→2026-07-15 2.8%",
+   "2026-07-17→2026-07-23 2.6%",
+   "2026-07-29→2026-08-13 8.0%"
+  ]
+ },
+ {
+  "sym": "AGCO",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.03,
+  "priceVsSma": -14.7
+ },
+ {
+  "sym": "AIZ",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.57,
+  "priceVsSma": 13.4,
+  "legs": [
+   "2026-02-06→2026-02-12 14.8%",
+   "2026-03-02→2026-03-20 10.6%",
+   "2026-03-25→2026-03-27 4.5%",
+   "2026-05-18→2026-05-29 5.9%",
+   "2026-07-07→2026-07-23 5.0%",
+   "2026-07-29→2026-07-30 3.1%",
+   "2026-08-06→2026-08-12 8.4%"
+  ]
+ },
+ {
+  "sym": "ALC",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.5,
+  "priceVsSma": 1.4
+ },
+ {
+  "sym": "ALHC",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.34,
+  "priceVsSma": -33.4
+ },
+ {
+  "sym": "ALM",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 3.97,
+  "priceVsSma": -2.1,
+  "mejor": 5.4,
+  "legs": [
+   "2026-02-09→2026-02-12 17.5%",
+   "2026-03-02→2026-03-09 15.3%",
+   "2026-03-11→2026-03-30 40.0%",
+   "2026-04-17→2026-06-09 39.8%",
+   "2026-06-22→2026-07-29 45.3%"
+  ]
+ },
+ {
+  "sym": "ALV",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 0.18,
+  "priceVsSma": 3.7,
+  "atr": 2.88,
+  "contracciones": [
+   14.3,
+   9.8,
+   5.3
+  ],
+  "fechas": [
+   "2026-06-02→2026-07-01",
+   "2026-07-16→2026-07-23",
+   "2026-07-30→2026-08-12"
+  ],
+  "primeraEnAtr": 5,
+  "dispRatio": -0.28,
+  "volRatio": 0.76,
+  "techo": 132.17
+ },
+ {
+  "sym": "AME",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.46,
+  "priceVsSma": 5.5,
+  "seq": [
+   9.5,
+   4.5
+  ],
+  "corta": 4.7,
+  "legs": [
+   "2026-02-12→2026-02-13 5.8%",
+   "2026-03-02→2026-03-30 14.2%",
+   "2026-04-10→2026-04-16 3.5%",
+   "2026-04-17→2026-04-28 6.0%",
+   "2026-05-06→2026-05-19 9.5%",
+   "2026-05-26→2026-06-01 4.5%",
+   "2026-06-09→2026-06-10 4.7%",
+   "2026-06-25→2026-07-08 7.4%"
+  ]
+ },
+ {
+  "sym": "AMGN",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 3,
+  "priceVsSma": 23.8,
+  "seq": [
+   18.1,
+   5.3
+  ],
+  "corta": 6.8,
+  "legs": [
+   "2026-02-06→2026-02-11 6.3%",
+   "2026-03-02→2026-05-05 18.1%",
+   "2026-05-15→2026-05-19 4.5%",
+   "2026-05-22→2026-06-02 6.3%",
+   "2026-06-05→2026-06-10 5.3%",
+   "2026-06-11→2026-06-18 6.8%",
+   "2026-07-07→2026-07-15 5.7%",
+   "2026-07-17→2026-07-23 5.1%",
+   "2026-07-28→2026-08-03 5.5%"
+  ]
+ },
+ {
+  "sym": "AMH",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.29,
+  "priceVsSma": 9.8,
+  "seq": [
+   7.2,
+   2.5
+  ],
+  "corta": 5.6,
+  "legs": [
+   "2026-05-07→2026-05-15 7.2%",
+   "2026-05-26→2026-05-29 2.5%",
+   "2026-06-10→2026-06-22 5.6%",
+   "2026-07-07→2026-07-09 4.7%",
+   "2026-07-17→2026-07-31 5.3%",
+   "2026-08-06→2026-08-12 4.4%"
+  ]
+ },
+ {
+  "sym": "AMT",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 0.1,
+  "priceVsSma": -0.9,
+  "ultima": 3.6,
+  "seq": [
+   17.6,
+   9.9
+  ],
+  "legs": [
+   "2026-04-09→2026-04-14 4.2%",
+   "2026-04-20→2026-04-28 5.0%",
+   "2026-05-01→2026-05-15 9.1%",
+   "2026-05-27→2026-06-03 3.8%",
+   "2026-06-05→2026-07-06 17.6%",
+   "2026-07-17→2026-07-21 5.6%",
+   "2026-07-29→2026-08-05 9.9%"
+  ]
+ },
+ {
+  "sym": "AMZN",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.43,
+  "priceVsSma": 10.9,
+  "seq": [
+   19,
+   4.6
+  ],
+  "corta": 12.4,
+  "legs": [
+   "2026-02-03→2026-02-17 20.4%",
+   "2026-02-25→2026-03-03 4.3%",
+   "2026-03-05→2026-03-27 9.7%",
+   "2026-04-17→2026-04-30 0.0%",
+   "2026-05-05→2026-06-25 19.0%",
+   "2026-06-29→2026-07-09 4.6%",
+   "2026-07-16→2026-07-29 12.4%"
+  ]
+ },
+ {
+  "sym": "AN",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.04,
+  "priceVsSma": 0.6,
+  "legs": [
+   "2026-02-06→2026-03-19 19.3%",
+   "2026-03-31→2026-04-06 4.5%",
+   "2026-05-01→2026-05-20 18.9%",
+   "2026-05-27→2026-07-02 8.6%",
+   "2026-07-16→2026-07-21 8.3%",
+   "2026-07-29→2026-07-31 17.3%"
+  ]
+ },
+ {
+  "sym": "ANF",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.28,
+  "priceVsSma": 15.1
+ },
+ {
+  "sym": "AON",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.31,
+  "priceVsSma": 4.6,
+  "seq": [
+   10.9,
+   5.8
+  ],
+  "corta": 8,
+  "legs": [
+   "2026-02-17→2026-02-24 5.2%",
+   "2026-03-04→2026-04-30 10.9%",
+   "2026-05-19→2026-06-03 5.8%",
+   "2026-06-10→2026-06-22 8.0%",
+   "2026-07-07→2026-07-15 4.4%",
+   "2026-07-17→2026-07-22 6.9%",
+   "2026-07-28→2026-08-04 8.4%"
+  ]
+ },
+ {
+  "sym": "APPS",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 13.85,
+  "priceVsSma": 74.8,
+  "mejor": 6.9,
+  "legs": [
+   "2026-02-04→2026-04-02 55.7%",
+   "2026-04-08→2026-04-13 18.9%",
+   "2026-04-17→2026-04-29 19.2%",
+   "2026-05-07→2026-05-12 7.1%",
+   "2026-06-10→2026-06-18 24.0%",
+   "2026-07-02→2026-07-31 42.3%",
+   "2026-08-07→2026-08-12 21.4%"
+  ]
+ },
+ {
+  "sym": "APTV",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -5.38,
+  "priceVsSma": -24.7
+ },
+ {
+  "sym": "ARCB",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 7.38,
+  "priceVsSma": 13.1,
+  "legs": [
+   "2026-02-06→2026-03-16 26.6%",
+   "2026-04-08→2026-04-13 5.0%",
+   "2026-04-29→2026-05-14 18.5%",
+   "2026-06-12→2026-08-11 24.0%"
+  ]
+ },
+ {
+  "sym": "ARM",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 247,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 10.14,
+  "priceVsSma": 13.4,
+  "mejor": 4.4,
+  "legs": [
+   "2026-02-10→2026-02-13 8.6%",
+   "2026-02-16→2026-02-23 6.5%",
+   "2026-02-26→2026-03-09 17.1%",
+   "2026-03-25→2026-03-30 18.4%",
+   "2026-04-01→2026-04-07 13.1%",
+   "2026-04-24→2026-04-29 18.4%",
+   "2026-05-06→2026-05-12 16.1%",
+   "2026-05-14→2026-05-18 11.2%",
+   "2026-06-02→2026-06-09 30.3%",
+   "2026-06-18→2026-08-03 51.5%",
+   "2026-08-07→2026-08-11 11.3%"
+  ]
+ },
+ {
+  "sym": "ASB",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.63,
+  "priceVsSma": 9.6,
+  "seq": [
+   18.4,
+   5.1
+  ],
+  "corta": 6.8,
+  "legs": [
+   "2026-02-06→2026-03-09 18.4%",
+   "2026-04-17→2026-04-24 5.1%",
+   "2026-05-07→2026-05-19 6.8%",
+   "2026-05-26→2026-06-03 4.9%",
+   "2026-06-15→2026-06-17 4.2%",
+   "2026-07-02→2026-07-08 6.7%",
+   "2026-07-16→2026-07-24 6.0%",
+   "2026-08-04→2026-08-07 3.4%"
+  ]
+ },
+ {
+  "sym": "ASND",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 2.39,
+  "priceVsSma": 9.8,
+  "atr": 4.26,
+  "contracciones": [
+   15.1,
+   6.9
+  ],
+  "fechas": [
+   "2026-07-09→2026-08-04",
+   "2026-08-12→2026-08-14"
+  ],
+  "primeraEnAtr": 3.5,
+  "dispRatio": -0.55,
+  "volRatio": 1.23,
+  "techo": 282.15
+ },
+ {
+  "sym": "ATI",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 8.03,
+  "priceVsSma": 29.3,
+  "legs": [
+   "2026-03-02→2026-03-30 19.4%",
+   "2026-04-14→2026-04-16 6.6%",
+   "2026-04-21→2026-04-29 14.6%",
+   "2026-05-07→2026-05-19 14.5%",
+   "2026-06-22→2026-07-29 14.9%"
+  ]
+ },
+ {
+  "sym": "ATO",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.51,
+  "priceVsSma": -3.2,
+  "seq": [
+   13.1,
+   3.7
+  ],
+  "corta": 8.5,
+  "legs": [
+   "2026-03-02→2026-03-11 3.1%",
+   "2026-03-16→2026-03-24 5.7%",
+   "2026-04-09→2026-06-04 13.1%",
+   "2026-07-17→2026-07-21 3.7%",
+   "2026-07-28→2026-08-10 8.5%"
+  ]
+ },
+ {
+  "sym": "AVGO",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.04,
+  "priceVsSma": -2.5,
+  "legs": [
+   "2026-02-03→2026-02-04 12.9%",
+   "2026-02-09→2026-03-02 12.8%",
+   "2026-03-10→2026-03-30 17.7%",
+   "2026-04-23→2026-04-28 8.1%",
+   "2026-05-06→2026-05-13 7.5%",
+   "2026-05-14→2026-05-19 8.3%",
+   "2026-06-03→2026-07-02 27.9%",
+   "2026-07-09→2026-07-17 12.2%",
+   "2026-07-22→2026-07-29 7.3%"
+  ]
+ },
+ {
+  "sym": "AVY",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.61,
+  "priceVsSma": 7.5
+ },
+ {
+  "sym": "AXSM",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 4.1,
+  "priceVsSma": 7,
+  "atr": 3.58,
+  "contracciones": [
+   20.5,
+   6.5
+  ],
+  "fechas": [
+   "2026-06-18→2026-08-03",
+   "2026-08-10→2026-08-14"
+  ],
+  "primeraEnAtr": 5.7,
+  "dispRatio": -0.69,
+  "volRatio": 0.89,
+  "techo": 260.19
+ },
+ {
+  "sym": "BA",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.26,
+  "priceVsSma": -0.9,
+  "seq": [
+   14.8,
+   7.5
+  ],
+  "corta": 14.1,
+  "legs": [
+   "2026-04-24→2026-05-04 6.5%",
+   "2026-05-14→2026-06-10 14.8%",
+   "2026-06-15→2026-06-29 7.5%",
+   "2026-07-07→2026-07-21 14.1%"
+  ]
+ },
+ {
+  "sym": "BBY",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 3.51,
+  "priceVsSma": 29,
+  "legs": [
+   "2026-02-06→2026-03-02 14.2%",
+   "2026-03-04→2026-04-13 11.3%",
+   "2026-04-21→2026-05-13 19.2%",
+   "2026-05-29→2026-06-05 10.9%",
+   "2026-06-15→2026-06-17 8.1%",
+   "2026-06-25→2026-06-30 4.9%",
+   "2026-07-16→2026-07-21 4.9%",
+   "2026-07-29→2026-08-07 13.4%"
+  ]
+ },
+ {
+  "sym": "BCO",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.47,
+  "priceVsSma": -2
+ },
+ {
+  "sym": "BDC",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 0.72,
+  "priceVsSma": 6.8,
+  "ultima": 6.7,
+  "seq": [
+   31.4,
+   26.1
+  ],
+  "legs": [
+   "2026-02-12→2026-03-30 31.4%",
+   "2026-04-27→2026-05-19 26.1%",
+   "2026-05-27→2026-06-01 7.9%",
+   "2026-06-02→2026-06-10 6.8%",
+   "2026-06-18→2026-07-17 23.7%"
+  ]
+ },
+ {
+  "sym": "BEKE",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 0.56,
+  "priceVsSma": 4.6,
+  "atr": 3.38,
+  "contracciones": [
+   30.1,
+   10.4,
+   3.7
+  ],
+  "fechas": [
+   "2026-05-13→2026-06-26",
+   "2026-07-16→2026-07-24",
+   "2026-08-03→2026-08-06"
+  ],
+  "primeraEnAtr": 8.9,
+  "dispRatio": -0.41,
+  "volRatio": 0.55,
+  "techo": 19.76
+ },
+ {
+  "sym": "BG",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.32,
+  "priceVsSma": -3.4,
+  "legs": [
+   "2026-02-23→2026-03-05 10.3%",
+   "2026-03-17→2026-03-20 9.2%",
+   "2026-03-27→2026-04-01 5.0%",
+   "2026-04-06→2026-04-17 10.8%",
+   "2026-04-29→2026-04-29 6.4%",
+   "2026-05-05→2026-05-20 11.6%",
+   "2026-06-03→2026-07-30 23.8%"
+  ]
+ },
+ {
+  "sym": "BKD",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.91,
+  "priceVsSma": -13.9,
+  "seq": [
+   23.5,
+   19.6,
+   5.9
+  ],
+  "corta": 15.3,
+  "legs": [
+   "2026-02-17→2026-04-21 23.5%",
+   "2026-05-01→2026-06-04 19.6%",
+   "2026-06-15→2026-06-18 5.9%",
+   "2026-06-30→2026-07-10 15.3%",
+   "2026-07-17→2026-08-04 12.2%"
+  ]
+ },
+ {
+  "sym": "BMY",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.65,
+  "priceVsSma": 16.1,
+  "seq": [
+   10.2
+  ],
+  "corta": 12,
+  "legs": [
+   "2026-02-06→2026-02-19 4.5%",
+   "2026-03-02→2026-03-24 10.2%",
+   "2026-04-01→2026-06-02 12.0%",
+   "2026-06-05→2026-06-18 7.6%",
+   "2026-07-07→2026-07-14 2.9%",
+   "2026-08-03→2026-08-12 7.5%"
+  ]
+ },
+ {
+  "sym": "BP",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 3.12,
+  "priceVsSma": 6.3,
+  "seq": [
+   13.8,
+   4.8
+  ],
+  "corta": 18.4,
+  "legs": [
+   "2026-02-04→2026-02-10 8.5%",
+   "2026-02-19→2026-02-26 4.4%",
+   "2026-03-19→2026-03-23 8.8%",
+   "2026-03-31→2026-05-28 13.8%",
+   "2026-06-03→2026-06-09 4.8%",
+   "2026-06-11→2026-07-01 18.4%",
+   "2026-07-23→2026-07-28 6.4%",
+   "2026-07-31→2026-08-05 9.0%"
+  ]
+ },
+ {
+  "sym": "BRK-B",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.26,
+  "priceVsSma": 2.1,
+  "legs": [
+   "2026-02-04→2026-03-27 8.8%",
+   "2026-04-01→2026-04-07 1.4%",
+   "2026-04-09→2026-04-16 4.9%",
+   "2026-05-04→2026-05-05 3.2%",
+   "2026-05-12→2026-06-01 4.4%",
+   "2026-06-05→2026-06-11 2.0%",
+   "2026-06-16→2026-06-18 2.8%",
+   "2026-07-07→2026-07-23 5.2%"
+  ]
+ },
+ {
+  "sym": "BRZE",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.94,
+  "priceVsSma": 37
+ },
+ {
+  "sym": "BTDR",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.13,
+  "priceVsSma": -21.1
+ },
+ {
+  "sym": "BTG",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.33,
+  "priceVsSma": 13.4
+ },
+ {
+  "sym": "BWA",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 4.67,
+  "priceVsSma": 10.1,
+  "atr": 4.88,
+  "contracciones": [
+   23.8,
+   7.4,
+   4.9
+  ],
+  "fechas": [
+   "2026-06-03→2026-07-17",
+   "2026-07-22→2026-08-04",
+   "2026-08-12→2026-08-13"
+  ],
+  "primeraEnAtr": 4.9,
+  "dispRatio": -0.42,
+  "volRatio": 0.68,
+  "techo": 78.82
+ },
+ {
+  "sym": "BWXT",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.87,
+  "priceVsSma": -18.2
+ },
+ {
+  "sym": "BXP",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 0.57,
+  "priceVsSma": 10.4,
+  "mejor": 2.6,
+  "legs": [
+   "2026-03-13→2026-04-02 6.5%",
+   "2026-04-08→2026-04-09 5.1%",
+   "2026-04-21→2026-04-23 5.9%",
+   "2026-05-14→2026-05-15 5.7%",
+   "2026-05-27→2026-06-02 4.2%",
+   "2026-06-10→2026-06-17 6.6%",
+   "2026-07-07→2026-07-10 6.0%",
+   "2026-07-17→2026-07-23 5.9%"
+  ]
+ },
+ {
+  "sym": "CAG",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.01,
+  "priceVsSma": 7.3
+ },
+ {
+  "sym": "CAKE",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 10.74,
+  "priceVsSma": 52.2,
+  "seq": [
+   20.2,
+   5.2
+  ],
+  "corta": 14.3,
+  "legs": [
+   "2026-02-09→2026-02-13 9.2%",
+   "2026-02-26→2026-03-27 20.2%",
+   "2026-04-23→2026-04-24 5.2%",
+   "2026-04-30→2026-05-13 14.3%",
+   "2026-05-29→2026-06-04 6.0%",
+   "2026-07-01→2026-07-08 6.6%",
+   "2026-07-20→2026-07-24 5.7%"
+  ]
+ },
+ {
+  "sym": "CALM",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.95,
+  "priceVsSma": -0.6,
+  "seq": [
+   19.6,
+   8.4,
+   7
+  ],
+  "corta": 8.1,
+  "legs": [
+   "2026-02-04→2026-02-17 10.6%",
+   "2026-03-12→2026-04-20 19.6%",
+   "2026-04-28→2026-05-11 6.2%",
+   "2026-05-14→2026-06-03 8.4%",
+   "2026-06-12→2026-06-22 7.0%",
+   "2026-07-10→2026-07-14 8.1%",
+   "2026-07-17→2026-07-22 11.2%"
+  ]
+ },
+ {
+  "sym": "CARR",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.33,
+  "priceVsSma": -3.3,
+  "legs": [
+   "2026-02-12→2026-03-30 21.3%",
+   "2026-04-01→2026-04-07 5.4%",
+   "2026-04-14→2026-04-15 11.2%",
+   "2026-04-30→2026-05-21 11.2%",
+   "2026-06-25→2026-07-30 22.8%"
+  ]
+ },
+ {
+  "sym": "CASY",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 5.27,
+  "priceVsSma": 9.6,
+  "seq": [
+   17.8,
+   7.4
+  ],
+  "corta": 8.3,
+  "legs": [
+   "2026-03-11→2026-03-20 6.6%",
+   "2026-04-09→2026-04-13 5.8%",
+   "2026-05-14→2026-06-01 18.0%",
+   "2026-06-03→2026-06-09 5.0%",
+   "2026-06-11→2026-06-24 17.8%",
+   "2026-07-14→2026-07-15 7.4%",
+   "2026-07-29→2026-08-06 8.3%"
+  ]
+ },
+ {
+  "sym": "CAVA",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.83,
+  "priceVsSma": -6.4,
+  "seq": [
+   29.8
+  ],
+  "corta": 34.8,
+  "legs": [
+   "2026-02-09→2026-02-17 16.2%",
+   "2026-02-25→2026-03-06 13.5%",
+   "2026-03-18→2026-03-27 20.9%",
+   "2026-04-08→2026-04-13 8.0%",
+   "2026-04-21→2026-06-03 29.8%",
+   "2026-06-12→2026-08-11 34.8%"
+  ]
+ },
+ {
+  "sym": "CBOE",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.8,
+  "priceVsSma": -3.6,
+  "seq": [
+   11,
+   5.2
+  ],
+  "corta": 38.7,
+  "legs": [
+   "2026-02-10→2026-02-12 5.5%",
+   "2026-03-02→2026-03-27 11.0%",
+   "2026-04-16→2026-04-22 5.2%",
+   "2026-05-19→2026-06-29 38.7%",
+   "2026-07-31→2026-08-12 10.3%"
+  ]
+ },
+ {
+  "sym": "CBRL",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 11.78,
+  "priceVsSma": 49,
+  "seq": [
+   24.4,
+   9.6
+  ],
+  "corta": 11.3,
+  "legs": [
+   "2026-02-04→2026-02-13 12.1%",
+   "2026-02-20→2026-02-25 11.2%",
+   "2026-03-05→2026-03-27 24.4%",
+   "2026-04-10→2026-04-14 9.6%",
+   "2026-04-20→2026-04-24 11.3%",
+   "2026-04-30→2026-05-05 11.4%",
+   "2026-05-08→2026-05-20 12.9%",
+   "2026-05-27→2026-06-05 10.7%",
+   "2026-06-10→2026-06-17 12.9%",
+   "2026-07-02→2026-07-08 14.7%",
+   "2026-07-22→2026-07-27 10.0%",
+   "2026-08-03→2026-08-10 7.4%"
+  ]
+ },
+ {
+  "sym": "CBSH",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.73,
+  "priceVsSma": 10.1,
+  "seq": [
+   15.4,
+   2.6
+  ],
+  "corta": 3.9,
+  "legs": [
+   "2026-02-09→2026-03-19 15.4%",
+   "2026-04-09→2026-04-13 2.6%",
+   "2026-04-20→2026-04-21 3.9%",
+   "2026-05-06→2026-05-21 6.5%",
+   "2026-05-26→2026-06-03 3.6%",
+   "2026-06-15→2026-06-17 3.0%",
+   "2026-07-07→2026-07-08 3.8%",
+   "2026-07-16→2026-07-23 4.9%",
+   "2026-07-29→2026-08-07 4.2%"
+  ]
+ },
+ {
+  "sym": "CCC",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.51,
+  "priceVsSma": 30.1
+ },
+ {
+  "sym": "CCI",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.55,
+  "priceVsSma": -10.7
+ },
+ {
+  "sym": "CDW",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.43,
+  "priceVsSma": 7.2,
+  "legs": [
+   "2026-02-10→2026-03-12 21.4%",
+   "2026-03-23→2026-03-31 4.9%",
+   "2026-04-22→2026-05-12 32.4%",
+   "2026-06-01→2026-06-22 13.0%",
+   "2026-07-01→2026-07-06 8.9%",
+   "2026-07-13→2026-07-21 12.6%",
+   "2026-08-04→2026-08-05 26.9%"
+  ]
+ },
+ {
+  "sym": "CE",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.43,
+  "priceVsSma": -13.4,
+  "seq": [
+   24.7,
+   14.8,
+   11
+  ],
+  "corta": 13.3,
+  "legs": [
+   "2026-02-12→2026-03-02 24.7%",
+   "2026-03-05→2026-03-09 14.8%",
+   "2026-03-18→2026-03-24 11.0%",
+   "2026-03-31→2026-04-08 13.3%",
+   "2026-04-16→2026-04-17 10.6%",
+   "2026-05-05→2026-07-01 37.2%",
+   "2026-07-08→2026-07-20 11.7%",
+   "2026-07-23→2026-08-05 17.2%",
+   "2026-08-11→2026-08-13 7.0%"
+  ]
+ },
+ {
+  "sym": "CELC",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.63,
+  "priceVsSma": -13.6
+ },
+ {
+  "sym": "CGON",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 7.03,
+  "priceVsSma": 24.9,
+  "atr": 4.75,
+  "contracciones": [
+   29.5,
+   12.8,
+   7.4
+  ],
+  "fechas": [
+   "2026-05-14→2026-06-08",
+   "2026-06-30→2026-07-30",
+   "2026-08-12→2026-08-14"
+  ],
+  "primeraEnAtr": 6.2,
+  "dispRatio": 0.17,
+  "volRatio": 0.65,
+  "techo": 79.39
+ },
+ {
+  "sym": "CHWY",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -5.21,
+  "priceVsSma": -0.5
+ },
+ {
+  "sym": "CI",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.38,
+  "priceVsSma": -0.7,
+  "legs": [
+   "2026-02-06→2026-03-11 12.8%",
+   "2026-03-17→2026-03-23 4.6%",
+   "2026-03-26→2026-03-30 5.6%",
+   "2026-04-09→2026-04-15 5.2%",
+   "2026-04-21→2026-04-24 4.7%",
+   "2026-04-30→2026-05-05 6.7%",
+   "2026-05-13→2026-06-03 10.8%",
+   "2026-06-12→2026-07-01 8.6%",
+   "2026-07-14→2026-08-05 13.9%"
+  ]
+ },
+ {
+  "sym": "CLBK",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 6.14,
+  "priceVsSma": 31.3,
+  "seq": [
+   7.7,
+   5.2
+  ],
+  "corta": 10.5,
+  "legs": [
+   "2026-03-23→2026-03-27 3.6%",
+   "2026-04-09→2026-04-21 4.9%",
+   "2026-05-01→2026-05-05 5.2%",
+   "2026-05-26→2026-06-01 4.8%",
+   "2026-06-10→2026-06-23 7.7%",
+   "2026-07-01→2026-07-13 5.2%",
+   "2026-07-20→2026-08-04 10.5%"
+  ]
+ },
+ {
+  "sym": "CLF",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.47,
+  "priceVsSma": 1
+ },
+ {
+  "sym": "CM",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 3.74,
+  "priceVsSma": 11,
+  "seq": [
+   9.6,
+   3.7,
+   3.4
+  ],
+  "corta": 5.5,
+  "legs": [
+   "2026-02-11→2026-02-13 4.2%",
+   "2026-02-26→2026-03-30 12.4%",
+   "2026-04-21→2026-04-23 3.1%",
+   "2026-05-01→2026-05-08 3.4%",
+   "2026-05-27→2026-06-01 9.6%",
+   "2026-06-15→2026-06-18 3.7%",
+   "2026-07-01→2026-07-08 3.4%",
+   "2026-07-17→2026-07-23 5.5%",
+   "2026-07-28→2026-07-29 3.5%",
+   "2026-08-04→2026-08-05 2.5%"
+  ]
+ },
+ {
+  "sym": "CMCSA",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.08,
+  "priceVsSma": 0
+ },
+ {
+  "sym": "CMG",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.55,
+  "priceVsSma": 0.7
+ },
+ {
+  "sym": "CNI",
+  "base": false,
+  "motivo": "tendencia_no_lateral",
+  "barras": 243,
+  "reason": "tendencia_no_lateral",
+  "smaSlopePct": 3.67,
+  "priceVsSma": 13.3,
+  "dispRatio": 0.67,
+  "legs": [
+   "2026-02-23→2026-02-25 2.4%",
+   "2026-03-02→2026-03-20 12.8%",
+   "2026-04-14→2026-04-16 3.0%",
+   "2026-04-27→2026-04-29 7.6%",
+   "2026-06-03→2026-06-18 7.6%",
+   "2026-07-24→2026-08-04 5.6%",
+   "2026-08-06→2026-08-10 2.6%"
+  ]
+ },
+ {
+  "sym": "COO",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.55,
+  "priceVsSma": 6.9
+ },
+ {
+  "sym": "CPB",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.16,
+  "priceVsSma": 5.6
+ },
+ {
+  "sym": "CPNG",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -4.94,
+  "priceVsSma": -8.1
+ },
+ {
+  "sym": "CPRI",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -6.38,
+  "priceVsSma": -24.2
+ },
+ {
+  "sym": "CPT",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.6,
+  "priceVsSma": 1.8,
+  "legs": [
+   "2026-02-04→2026-02-05 4.9%",
+   "2026-02-11→2026-03-27 14.2%",
+   "2026-04-08→2026-04-16 2.9%",
+   "2026-04-20→2026-04-23 4.0%",
+   "2026-04-29→2026-05-15 4.1%",
+   "2026-05-27→2026-06-02 3.8%",
+   "2026-06-11→2026-06-22 7.4%",
+   "2026-07-07→2026-07-15 7.0%",
+   "2026-07-17→2026-07-22 3.6%",
+   "2026-07-29→2026-08-12 8.1%"
+  ]
+ },
+ {
+  "sym": "CRBG",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.25,
+  "priceVsSma": 15.8,
+  "seq": [
+   12.1,
+   6.1
+  ],
+  "corta": 8.9,
+  "legs": [
+   "2026-03-18→2026-03-20 6.0%",
+   "2026-03-26→2026-03-27 11.2%",
+   "2026-04-08→2026-04-13 7.0%",
+   "2026-04-17→2026-04-22 6.7%",
+   "2026-05-05→2026-05-12 12.1%",
+   "2026-05-14→2026-05-20 6.1%",
+   "2026-05-22→2026-06-03 8.9%",
+   "2026-06-17→2026-06-24 7.7%",
+   "2026-07-17→2026-07-23 5.2%",
+   "2026-07-28→2026-08-03 5.0%",
+   "2026-08-10→2026-08-11 6.5%"
+  ]
+ },
+ {
+  "sym": "CRH",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.23,
+  "priceVsSma": -13.2
+ },
+ {
+  "sym": "CROX",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 5.95,
+  "priceVsSma": 18.4,
+  "legs": [
+   "2026-02-03→2026-02-11 6.6%",
+   "2026-02-12→2026-03-20 26.0%",
+   "2026-04-21→2026-05-15 16.2%",
+   "2026-05-28→2026-06-01 5.5%",
+   "2026-06-17→2026-06-25 9.5%",
+   "2026-06-26→2026-07-08 6.4%",
+   "2026-07-17→2026-07-30 19.5%"
+  ]
+ },
+ {
+  "sym": "CRSP",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.02,
+  "priceVsSma": 14.1
+ },
+ {
+  "sym": "CSX",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 4.65,
+  "priceVsSma": 14.4,
+  "atr": 2.15,
+  "contracciones": [
+   7.8,
+   3.6
+  ],
+  "fechas": [
+   "2026-07-27→2026-08-04",
+   "2026-08-06→2026-08-12"
+  ],
+  "primeraEnAtr": 3.6,
+  "dispRatio": -0.48,
+  "volRatio": 0.72,
+  "techo": 53.6
+ },
+ {
+  "sym": "CTAS",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.17,
+  "priceVsSma": 10,
+  "seq": [
+   20.8,
+   6.5
+  ],
+  "corta": 9,
+  "legs": [
+   "2026-02-11→2026-02-13 4.8%",
+   "2026-03-05→2026-03-27 20.8%",
+   "2026-04-17→2026-05-13 10.8%",
+   "2026-05-19→2026-06-02 4.4%",
+   "2026-06-05→2026-06-09 5.1%",
+   "2026-06-11→2026-06-30 9.0%",
+   "2026-07-07→2026-07-09 3.9%",
+   "2026-07-17→2026-07-21 6.5%",
+   "2026-07-29→2026-08-06 9.0%"
+  ]
+ },
+ {
+  "sym": "CUZ",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.94,
+  "priceVsSma": 12.2,
+  "legs": [
+   "2026-02-19→2026-03-27 12.9%",
+   "2026-05-06→2026-05-15 6.1%",
+   "2026-06-10→2026-06-17 7.3%",
+   "2026-07-07→2026-07-08 4.4%",
+   "2026-07-17→2026-07-23 4.0%",
+   "2026-07-29→2026-08-10 12.1%"
+  ]
+ },
+ {
+  "sym": "CVCO",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.8,
+  "priceVsSma": 8.6
+ },
+ {
+  "sym": "CW",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 2.78,
+  "priceVsSma": -5.3,
+  "ultima": 3.1,
+  "seq": [
+   17.1,
+   11.6
+  ],
+  "legs": [
+   "2026-02-03→2026-02-05 11.1%",
+   "2026-02-12→2026-02-26 4.6%",
+   "2026-03-02→2026-03-30 14.3%",
+   "2026-04-14→2026-04-29 7.2%",
+   "2026-05-07→2026-05-07 5.5%",
+   "2026-05-14→2026-05-19 9.9%",
+   "2026-05-28→2026-06-09 7.5%",
+   "2026-06-18→2026-06-29 8.7%",
+   "2026-07-07→2026-07-29 17.1%",
+   "2026-08-05→2026-08-10 11.6%"
+  ]
+ },
+ {
+  "sym": "D",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.4,
+  "priceVsSma": 5.7,
+  "legs": [
+   "2026-03-06→2026-03-12 2.3%",
+   "2026-03-17→2026-03-20 7.7%",
+   "2026-04-10→2026-04-22 7.2%",
+   "2026-05-01→2026-05-08 7.0%",
+   "2026-05-18→2026-06-01 5.5%",
+   "2026-06-05→2026-06-09 3.0%",
+   "2026-06-25→2026-07-01 4.0%",
+   "2026-07-17→2026-08-07 9.6%"
+  ]
+ },
+ {
+  "sym": "DAR",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 6.43,
+  "priceVsSma": 17.3,
+  "ultima": 3.1,
+  "seq": [
+   22.9,
+   12.1
+  ],
+  "legs": [
+   "2026-03-02→2026-03-10 5.9%",
+   "2026-03-18→2026-03-20 5.8%",
+   "2026-04-07→2026-04-17 14.0%",
+   "2026-05-05→2026-06-24 22.9%",
+   "2026-07-23→2026-08-05 12.1%"
+  ]
+ },
+ {
+  "sym": "DB",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.08,
+  "priceVsSma": 13.8
+ },
+ {
+  "sym": "DDS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.06,
+  "priceVsSma": 4.3
+ },
+ {
+  "sym": "DECK",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.89,
+  "priceVsSma": -12.7
+ },
+ {
+  "sym": "DEO",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.59,
+  "priceVsSma": 10.5,
+  "legs": [
+   "2026-02-12→2026-02-18 7.1%",
+   "2026-02-24→2026-03-24 29.5%",
+   "2026-03-26→2026-04-02 3.2%",
+   "2026-04-20→2026-04-29 6.8%",
+   "2026-05-06→2026-05-13 6.5%",
+   "2026-05-27→2026-07-01 11.1%",
+   "2026-07-07→2026-07-09 6.7%",
+   "2026-07-17→2026-07-23 5.2%",
+   "2026-07-28→2026-08-04 2.9%"
+  ]
+ },
+ {
+  "sym": "DFTX",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 17.88,
+  "priceVsSma": 71.7,
+  "seq": [
+   26.4,
+   13.8
+  ],
+  "corta": 18.1,
+  "legs": [
+   "2026-02-18→2026-02-23 7.0%",
+   "2026-03-10→2026-03-13 12.1%",
+   "2026-03-20→2026-03-30 12.9%",
+   "2026-04-20→2026-05-19 26.4%",
+   "2026-06-04→2026-06-09 13.8%",
+   "2026-06-30→2026-07-28 18.1%",
+   "2026-08-07→2026-08-11 18.3%"
+  ]
+ },
+ {
+  "sym": "DHT",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 5.88,
+  "priceVsSma": 25.1,
+  "seq": [
+   19.1,
+   7.3
+  ],
+  "corta": 8.1,
+  "legs": [
+   "2026-03-02→2026-03-13 19.0%",
+   "2026-04-02→2026-04-10 9.2%",
+   "2026-04-21→2026-04-22 9.6%",
+   "2026-05-06→2026-06-01 16.6%",
+   "2026-06-24→2026-07-01 19.1%",
+   "2026-07-06→2026-07-09 7.3%",
+   "2026-07-14→2026-07-17 8.1%",
+   "2026-08-03→2026-08-11 6.5%"
+  ]
+ },
+ {
+  "sym": "DIOD",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 6.79,
+  "priceVsSma": 9,
+  "seq": [
+   22.7,
+   20.4
+  ],
+  "corta": 41,
+  "legs": [
+   "2026-02-11→2026-03-09 28.6%",
+   "2026-03-17→2026-03-20 6.1%",
+   "2026-03-25→2026-03-30 15.0%",
+   "2026-04-24→2026-04-28 12.0%",
+   "2026-05-07→2026-05-19 22.7%",
+   "2026-06-03→2026-06-09 20.4%",
+   "2026-06-22→2026-07-29 41.0%"
+  ]
+ },
+ {
+  "sym": "DIS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.47,
+  "priceVsSma": 5.2
+ },
+ {
+  "sym": "DLTR",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.02,
+  "priceVsSma": 14.5
+ },
+ {
+  "sym": "DOCS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -10.14,
+  "priceVsSma": 4.1
+ },
+ {
+  "sym": "DOW",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.76,
+  "priceVsSma": -4.4,
+  "seq": [
+   21,
+   8.8
+  ],
+  "corta": 25.6,
+  "legs": [
+   "2026-02-11→2026-02-26 16.0%",
+   "2026-03-19→2026-03-23 7.9%",
+   "2026-03-31→2026-05-29 21.0%",
+   "2026-06-03→2026-06-09 8.8%",
+   "2026-06-11→2026-07-01 25.6%",
+   "2026-07-14→2026-07-16 6.4%",
+   "2026-07-23→2026-07-27 13.7%"
+  ]
+ },
+ {
+  "sym": "DRI",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 1.6,
+  "priceVsSma": 9.8,
+  "atr": 2.79,
+  "contracciones": [
+   12.2,
+   5.1
+  ],
+  "fechas": [
+   "2026-06-18→2026-07-23",
+   "2026-07-30→2026-07-31"
+  ],
+  "primeraEnAtr": 4.4,
+  "dispRatio": -0.17,
+  "volRatio": 1.03,
+  "techo": 217.62
+ },
+ {
+  "sym": "DXCM",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 3.06,
+  "priceVsSma": 27.2,
+  "seq": [
+   19.6,
+   14.6,
+   6.3
+  ],
+  "corta": 14.7,
+  "legs": [
+   "2026-02-03→2026-04-02 19.6%",
+   "2026-04-09→2026-04-29 14.6%",
+   "2026-05-01→2026-05-14 8.3%",
+   "2026-06-01→2026-06-04 6.3%",
+   "2026-06-10→2026-06-30 14.7%",
+   "2026-07-16→2026-07-24 11.8%",
+   "2026-08-04→2026-08-07 6.6%"
+  ]
+ },
+ {
+  "sym": "DY",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.15,
+  "priceVsSma": -2.3,
+  "seq": [
+   23.8,
+   9.6
+  ],
+  "corta": 27.9,
+  "legs": [
+   "2026-02-03→2026-02-04 13.1%",
+   "2026-02-12→2026-03-30 27.3%",
+   "2026-04-23→2026-04-29 7.6%",
+   "2026-05-06→2026-05-19 14.3%",
+   "2026-05-27→2026-06-09 23.8%",
+   "2026-06-16→2026-06-23 9.6%",
+   "2026-06-30→2026-07-29 27.9%",
+   "2026-08-05→2026-08-07 7.6%"
+  ]
+ },
+ {
+  "sym": "EAT",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 5.94,
+  "priceVsSma": 43.9,
+  "seq": [
+   26.4,
+   5.8
+  ],
+  "corta": 15.6,
+  "legs": [
+   "2026-02-09→2026-03-09 26.4%",
+   "2026-03-16→2026-03-19 5.8%",
+   "2026-03-25→2026-03-27 15.6%",
+   "2026-04-08→2026-04-13 8.8%",
+   "2026-04-17→2026-05-20 22.7%",
+   "2026-05-29→2026-06-04 8.8%",
+   "2026-06-25→2026-06-29 8.3%",
+   "2026-07-14→2026-07-15 7.6%",
+   "2026-07-20→2026-07-23 7.8%"
+  ]
+ },
+ {
+  "sym": "EGP",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.93,
+  "priceVsSma": 3.1,
+  "legs": [
+   "2026-02-10→2026-02-12 4.0%",
+   "2026-02-17→2026-02-25 2.5%",
+   "2026-02-27→2026-03-20 8.3%",
+   "2026-04-21→2026-04-30 3.8%",
+   "2026-05-08→2026-05-15 3.6%",
+   "2026-05-26→2026-06-02 7.2%",
+   "2026-06-16→2026-06-17 4.7%",
+   "2026-07-07→2026-07-10 4.8%",
+   "2026-07-17→2026-08-12 12.0%"
+  ]
+ },
+ {
+  "sym": "ELAN",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.93,
+  "priceVsSma": 2,
+  "legs": [
+   "2026-02-12→2026-02-24 9.8%",
+   "2026-02-25→2026-04-29 22.0%",
+   "2026-05-06→2026-05-19 26.2%",
+   "2026-06-04→2026-06-11 13.2%",
+   "2026-06-15→2026-06-23 8.0%",
+   "2026-07-17→2026-07-23 6.8%",
+   "2026-08-05→2026-08-10 23.8%"
+  ]
+ },
+ {
+  "sym": "ELV",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 1.34,
+  "priceVsSma": 11.3,
+  "atr": 2.73,
+  "contracciones": [
+   16.8,
+   4.7
+  ],
+  "fechas": [
+   "2026-07-14→2026-07-28",
+   "2026-07-29→2026-08-05"
+  ],
+  "primeraEnAtr": 6.1,
+  "dispRatio": -0.65,
+  "volRatio": 0.75,
+  "techo": 436.24
+ },
+ {
+  "sym": "EMBJ",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.09,
+  "priceVsSma": 19,
+  "seq": [
+   25.3,
+   5.9,
+   4.7
+  ],
+  "corta": 7.1,
+  "legs": [
+   "2026-03-25→2026-03-30 9.1%",
+   "2026-04-14→2026-06-11 25.3%",
+   "2026-06-17→2026-06-23 5.9%",
+   "2026-06-25→2026-06-30 4.7%",
+   "2026-07-06→2026-07-17 7.1%",
+   "2026-08-10→2026-08-11 10.8%"
+  ]
+ },
+ {
+  "sym": "ENPH",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 1.74,
+  "priceVsSma": -9.2,
+  "mejor": 5.5,
+  "legs": [
+   "2026-02-04→2026-04-09 41.7%",
+   "2026-04-24→2026-04-29 19.1%",
+   "2026-05-29→2026-07-29 52.6%"
+  ]
+ },
+ {
+  "sym": "ENVA",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 7.28,
+  "priceVsSma": 41.2,
+  "seq": [
+   24.9,
+   10.6
+  ],
+  "corta": 12.9,
+  "legs": [
+   "2026-02-03→2026-03-16 24.9%",
+   "2026-03-17→2026-03-20 4.0%",
+   "2026-03-23→2026-03-27 8.4%",
+   "2026-04-28→2026-05-22 10.6%",
+   "2026-07-01→2026-07-23 12.9%",
+   "2026-08-05→2026-08-10 7.3%"
+  ]
+ },
+ {
+  "sym": "ERIE",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.83,
+  "priceVsSma": 9.6
+ },
+ {
+  "sym": "ESE",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 5.18,
+  "priceVsSma": -1.5,
+  "legs": [
+   "2026-02-12→2026-03-09 12.2%",
+   "2026-03-25→2026-03-30 8.4%",
+   "2026-04-01→2026-04-16 0.1%",
+   "2026-04-24→2026-04-29 5.4%",
+   "2026-05-06→2026-06-01 18.3%",
+   "2026-06-25→2026-08-07 18.6%"
+  ]
+ },
+ {
+  "sym": "ESTA",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.31,
+  "priceVsSma": 1.7,
+  "legs": [
+   "2026-02-04→2026-02-24 12.2%",
+   "2026-02-25→2026-03-31 36.2%",
+   "2026-04-21→2026-04-29 11.0%",
+   "2026-05-06→2026-05-15 16.0%",
+   "2026-05-26→2026-06-02 11.9%",
+   "2026-06-12→2026-06-17 7.5%",
+   "2026-06-26→2026-06-30 6.3%",
+   "2026-07-06→2026-07-14 9.7%",
+   "2026-07-21→2026-07-29 7.8%",
+   "2026-08-03→2026-08-11 24.3%"
+  ]
+ },
+ {
+  "sym": "EXC",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.89,
+  "priceVsSma": -1.8,
+  "seq": [
+   14.6,
+   3.9
+  ],
+  "corta": 8.7,
+  "legs": [
+   "2026-02-17→2026-02-19 4.4%",
+   "2026-03-02→2026-03-03 3.6%",
+   "2026-03-06→2026-03-12 2.1%",
+   "2026-03-17→2026-05-15 14.6%",
+   "2026-05-28→2026-06-04 4.6%",
+   "2026-06-16→2026-06-17 3.9%",
+   "2026-07-07→2026-08-11 8.7%"
+  ]
+ },
+ {
+  "sym": "EXE",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.71,
+  "priceVsSma": -1.4
+ },
+ {
+  "sym": "EXK",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.09,
+  "priceVsSma": 11
+ },
+ {
+  "sym": "EXLS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.7,
+  "priceVsSma": 18.7
+ },
+ {
+  "sym": "EXPD",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.19,
+  "priceVsSma": 18,
+  "legs": [
+   "2026-02-03→2026-02-12 22.5%",
+   "2026-02-20→2026-02-24 13.6%",
+   "2026-03-04→2026-03-12 7.0%",
+   "2026-03-19→2026-03-23 5.5%",
+   "2026-04-09→2026-04-13 3.8%",
+   "2026-04-22→2026-05-04 10.4%",
+   "2026-05-11→2026-05-14 5.0%",
+   "2026-05-27→2026-06-01 3.7%",
+   "2026-06-12→2026-06-24 5.7%",
+   "2026-07-02→2026-07-08 2.9%",
+   "2026-07-17→2026-07-30 10.4%"
+  ]
+ },
+ {
+  "sym": "FAST",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.62,
+  "priceVsSma": 12.5,
+  "seq": [
+   13.1,
+   3.8
+  ],
+  "corta": 6.6,
+  "legs": [
+   "2026-02-04→2026-03-20 10.3%",
+   "2026-04-10→2026-05-21 13.1%",
+   "2026-05-27→2026-06-01 3.8%",
+   "2026-06-05→2026-06-17 6.6%",
+   "2026-07-14→2026-07-21 10.1%",
+   "2026-07-28→2026-07-30 5.7%",
+   "2026-08-11→2026-08-14 4.2%"
+  ]
+ },
+ {
+  "sym": "FCX",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 3.06,
+  "priceVsSma": 10,
+  "atr": 4.86,
+  "contracciones": [
+   22.5,
+   10.9,
+   11.1,
+   7.9
+  ],
+  "fechas": [
+   "2026-06-17→2026-07-08",
+   "2026-07-15→2026-07-17",
+   "2026-07-23→2026-07-29",
+   "2026-08-10→2026-08-14"
+  ],
+  "primeraEnAtr": 4.6,
+  "dispRatio": -0.05,
+  "volRatio": 0.66,
+  "techo": 72.1
+ },
+ {
+  "sym": "FDS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.69,
+  "priceVsSma": 26.7
+ },
+ {
+  "sym": "FDX",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 3.75,
+  "priceVsSma": 8.3,
+  "seq": [
+   11.6,
+   4.5
+  ],
+  "corta": 5.9,
+  "legs": [
+   "2026-02-27→2026-03-30 12.8%",
+   "2026-04-09→2026-04-15 5.1%",
+   "2026-04-21→2026-04-28 4.4%",
+   "2026-04-30→2026-05-04 12.3%",
+   "2026-05-11→2026-05-19 6.0%",
+   "2026-06-01→2026-06-10 6.5%",
+   "2026-06-15→2026-07-09 11.6%",
+   "2026-07-15→2026-07-20 4.5%",
+   "2026-07-22→2026-07-28 5.9%"
+  ]
+ },
+ {
+  "sym": "FICO",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -5.92,
+  "priceVsSma": -4
+ },
+ {
+  "sym": "FISV",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 242,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.34,
+  "priceVsSma": -8.4
+ },
+ {
+  "sym": "FIVE",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 2.26,
+  "priceVsSma": 13.8,
+  "atr": 4.1,
+  "contracciones": [
+   26.6,
+   5.9
+  ],
+  "fechas": [
+   "2026-04-21→2026-06-09",
+   "2026-07-20→2026-07-23"
+  ],
+  "primeraEnAtr": 6.5,
+  "dispRatio": -0.6,
+  "volRatio": 1.04,
+  "techo": 251.63
+ },
+ {
+  "sym": "FLG",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 1.23,
+  "priceVsSma": -1.3,
+  "atr": 2.46,
+  "contracciones": [
+   11.7,
+   4.6
+  ],
+  "fechas": [
+   "2026-07-16→2026-07-27",
+   "2026-08-03→2026-08-10"
+  ],
+  "primeraEnAtr": 4.8,
+  "dispRatio": -0.53,
+  "volRatio": 0.8,
+  "techo": 15.44
+ },
+ {
+  "sym": "FNV",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 0.67,
+  "priceVsSma": 6.6,
+  "atr": 4.3,
+  "contracciones": [
+   19.9,
+   18.5,
+   6.9
+  ],
+  "fechas": [
+   "2026-04-08→2026-05-28",
+   "2026-06-04→2026-07-17",
+   "2026-08-07→2026-08-13"
+  ],
+  "primeraEnAtr": 4.6,
+  "dispRatio": -0.49,
+  "volRatio": 1.03,
+  "techo": 272.4
+ },
+ {
+  "sym": "FOX",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.38,
+  "priceVsSma": 9.6
+ },
+ {
+  "sym": "FRPT",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 0.66,
+  "priceVsSma": 18.5,
+  "mejor": 8.7,
+  "legs": [
+   "2026-02-03→2026-02-05 10.6%",
+   "2026-02-10→2026-02-13 8.0%",
+   "2026-03-05→2026-03-24 39.2%",
+   "2026-04-17→2026-05-20 35.5%",
+   "2026-05-28→2026-06-02 11.4%",
+   "2026-06-17→2026-06-22 12.8%",
+   "2026-06-29→2026-07-01 14.1%",
+   "2026-07-13→2026-07-24 5.2%",
+   "2026-07-29→2026-08-03 8.2%"
+  ]
+ },
+ {
+  "sym": "FTV",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.34,
+  "priceVsSma": 0,
+  "legs": [
+   "2026-02-11→2026-03-30 14.2%",
+   "2026-04-30→2026-05-20 8.6%",
+   "2026-05-27→2026-06-01 4.6%",
+   "2026-06-10→2026-06-11 7.4%",
+   "2026-06-17→2026-06-24 5.1%",
+   "2026-07-06→2026-07-23 9.4%",
+   "2026-07-28→2026-07-30 11.0%"
+  ]
+ },
+ {
+  "sym": "GDS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.51,
+  "priceVsSma": -14.1
+ },
+ {
+  "sym": "GEHC",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.65,
+  "priceVsSma": 6.1
+ },
+ {
+  "sym": "GEN",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 0.6,
+  "priceVsSma": 17.7,
+  "atr": 4.18,
+  "contracciones": [
+   19.2,
+   8.5
+  ],
+  "fechas": [
+   "2026-06-01→2026-06-22",
+   "2026-07-07→2026-07-23"
+  ],
+  "primeraEnAtr": 4.6,
+  "dispRatio": -0.1,
+  "volRatio": 0.7,
+  "techo": 27.69
+ },
+ {
+  "sym": "GEV",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 5.18,
+  "priceVsSma": 4.5,
+  "atr": 5.5,
+  "contracciones": [
+   24.9,
+   8
+  ],
+  "fechas": [
+   "2026-07-06→2026-07-29",
+   "2026-08-04→2026-08-07"
+  ],
+  "primeraEnAtr": 4.5,
+  "dispRatio": -0.5,
+  "volRatio": 0.69,
+  "techo": 1195.94
+ },
+ {
+  "sym": "GFL",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.7,
+  "priceVsSma": 3.5
+ },
+ {
+  "sym": "GLNG",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 3.6,
+  "priceVsSma": 6,
+  "seq": [
+   16.1,
+   7.5,
+   5.6
+  ],
+  "corta": 9.3,
+  "legs": [
+   "2026-02-11→2026-02-17 3.6%",
+   "2026-02-23→2026-02-25 9.8%",
+   "2026-03-09→2026-03-13 9.4%",
+   "2026-03-26→2026-04-01 5.6%",
+   "2026-04-07→2026-04-17 10.8%",
+   "2026-05-05→2026-05-07 7.1%",
+   "2026-05-12→2026-05-29 16.1%",
+   "2026-06-03→2026-06-18 7.5%",
+   "2026-06-22→2026-07-02 5.6%",
+   "2026-07-14→2026-07-30 9.3%"
+  ]
+ },
+ {
+  "sym": "GLW",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 5.79,
+  "priceVsSma": -3.3,
+  "seq": [
+   25.8,
+   15.7,
+   10.3
+  ],
+  "corta": 17.3,
+  "legs": [
+   "2026-02-12→2026-02-13 8.8%",
+   "2026-02-25→2026-03-09 25.8%",
+   "2026-03-25→2026-03-30 15.7%",
+   "2026-04-10→2026-04-16 10.3%",
+   "2026-04-24→2026-04-29 17.3%",
+   "2026-05-13→2026-05-19 19.8%",
+   "2026-05-26→2026-06-01 13.6%",
+   "2026-06-03→2026-06-09 20.4%",
+   "2026-06-30→2026-07-28 57.9%"
+  ]
+ },
+ {
+  "sym": "GM",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.81,
+  "priceVsSma": 6.8,
+  "seq": [
+   18.1,
+   14.8,
+   5.7
+  ],
+  "corta": 7.2,
+  "legs": [
+   "2026-02-04→2026-04-07 18.1%",
+   "2026-04-17→2026-05-19 14.8%",
+   "2026-05-28→2026-06-03 5.7%",
+   "2026-06-09→2026-06-10 7.2%",
+   "2026-06-16→2026-07-02 13.1%",
+   "2026-07-10→2026-07-21 4.9%",
+   "2026-07-29→2026-08-04 6.3%"
+  ]
+ },
+ {
+  "sym": "GOOG",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.15,
+  "priceVsSma": 0.6,
+  "seq": [
+   17.4,
+   6
+  ],
+  "corta": 15.9,
+  "legs": [
+   "2026-02-03→2026-03-30 22.4%",
+   "2026-04-17→2026-04-21 3.0%",
+   "2026-05-18→2026-06-26 17.4%",
+   "2026-07-07→2026-07-09 6.0%",
+   "2026-07-16→2026-07-23 15.9%"
+  ]
+ },
+ {
+  "sym": "GPC",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 0.82,
+  "priceVsSma": 16.5,
+  "atr": 3.72,
+  "contracciones": [
+   19.2,
+   6.6,
+   4
+  ],
+  "fechas": [
+   "2026-07-02→2026-07-21",
+   "2026-07-28→2026-07-31",
+   "2026-08-11→2026-08-12"
+  ],
+  "primeraEnAtr": 5.1,
+  "dispRatio": 0.07,
+  "volRatio": 0.61,
+  "techo": 137.16
+ },
+ {
+  "sym": "GSK",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.8,
+  "priceVsSma": 0.7,
+  "seq": [
+   15.8
+  ],
+  "corta": 17.7,
+  "legs": [
+   "2026-02-06→2026-02-11 3.9%",
+   "2026-02-18→2026-03-20 15.8%",
+   "2026-04-14→2026-06-02 17.7%",
+   "2026-06-05→2026-06-09 3.1%",
+   "2026-06-12→2026-06-18 5.7%",
+   "2026-07-07→2026-07-23 8.1%",
+   "2026-07-28→2026-08-14 11.6%"
+  ]
+ },
+ {
+  "sym": "HAE",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.32,
+  "priceVsSma": 59.5,
+  "seq": [
+   20.3,
+   7.7
+  ],
+  "corta": 18.8,
+  "legs": [
+   "2026-02-05→2026-03-27 20.3%",
+   "2026-04-08→2026-04-10 7.7%",
+   "2026-04-16→2026-05-08 18.8%",
+   "2026-05-14→2026-05-20 5.0%",
+   "2026-05-28→2026-06-01 5.2%",
+   "2026-06-11→2026-07-09 12.4%",
+   "2026-07-16→2026-07-23 6.3%",
+   "2026-08-03→2026-08-06 8.8%"
+  ]
+ },
+ {
+  "sym": "HALO",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 4.33,
+  "priceVsSma": 47.3,
+  "seq": [
+   25.4,
+   11.2,
+   7.3
+  ],
+  "corta": 10.2,
+  "legs": [
+   "2026-02-09→2026-03-27 25.4%",
+   "2026-04-01→2026-04-07 5.7%",
+   "2026-04-23→2026-05-01 11.3%",
+   "2026-05-05→2026-05-11 5.7%",
+   "2026-05-12→2026-06-02 11.2%",
+   "2026-06-09→2026-06-18 7.3%",
+   "2026-07-07→2026-07-15 10.2%",
+   "2026-07-17→2026-07-23 3.4%",
+   "2026-07-28→2026-07-30 3.8%",
+   "2026-08-11→2026-08-14 6.3%"
+  ]
+ },
+ {
+  "sym": "HAS",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.65,
+  "priceVsSma": 3.9,
+  "seq": [
+   17.8,
+   10.4
+  ],
+  "corta": 16.5,
+  "legs": [
+   "2026-02-04→2026-02-09 4.2%",
+   "2026-02-12→2026-04-02 17.8%",
+   "2026-04-17→2026-04-21 10.4%",
+   "2026-04-23→2026-06-11 16.5%",
+   "2026-06-16→2026-07-08 13.2%",
+   "2026-07-29→2026-08-04 8.1%"
+  ]
+ },
+ {
+  "sym": "HBAN",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.03,
+  "priceVsSma": 2.3,
+  "seq": [
+   22.7,
+   12.6,
+   4.8
+  ],
+  "corta": 5.6,
+  "legs": [
+   "2026-02-06→2026-03-19 22.7%",
+   "2026-03-25→2026-03-30 5.0%",
+   "2026-04-21→2026-05-15 12.6%",
+   "2026-05-29→2026-06-02 3.7%",
+   "2026-06-15→2026-06-17 4.8%",
+   "2026-07-02→2026-07-08 5.6%",
+   "2026-07-16→2026-07-29 9.5%"
+  ]
+ },
+ {
+  "sym": "HD",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.26,
+  "priceVsSma": 1
+ },
+ {
+  "sym": "HDB",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -5.44,
+  "priceVsSma": -13.9
+ },
+ {
+  "sym": "HIMS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.31,
+  "priceVsSma": 18
+ },
+ {
+  "sym": "HLI",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -4.02,
+  "priceVsSma": -12.6
+ },
+ {
+  "sym": "HOMB",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 1.54,
+  "priceVsSma": 9,
+  "atr": 2.27,
+  "contracciones": [
+   16.1,
+   10.3,
+   4.7,
+   4.5,
+   3.8
+  ],
+  "fechas": [
+   "2026-02-06→2026-03-19",
+   "2026-04-09→2026-05-15",
+   "2026-06-15→2026-06-17",
+   "2026-06-26→2026-07-08",
+   "2026-07-29→2026-08-07"
+  ],
+  "primeraEnAtr": 7.1,
+  "dispRatio": 0.27,
+  "volRatio": 0.74,
+  "techo": 31.46
+ },
+ {
+  "sym": "HRL",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.3,
+  "priceVsSma": 5.5,
+  "legs": [
+   "2026-02-05→2026-02-17 9.3%",
+   "2026-02-26→2026-04-13 21.4%",
+   "2026-04-24→2026-05-15 10.6%",
+   "2026-05-28→2026-06-03 4.1%",
+   "2026-06-16→2026-06-22 4.3%",
+   "2026-06-26→2026-07-06 9.9%",
+   "2026-07-17→2026-07-23 5.6%",
+   "2026-07-28→2026-08-12 9.5%"
+  ]
+ },
+ {
+  "sym": "HSBC",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 4.22,
+  "priceVsSma": 13.3,
+  "seq": [
+   9.9,
+   3.8,
+   3.6
+  ],
+  "corta": 5.7,
+  "legs": [
+   "2026-04-17→2026-05-05 8.4%",
+   "2026-05-14→2026-05-15 3.6%",
+   "2026-06-02→2026-06-10 9.9%",
+   "2026-06-22→2026-06-26 3.8%",
+   "2026-07-06→2026-07-08 3.6%",
+   "2026-08-03→2026-08-05 5.7%"
+  ]
+ },
+ {
+  "sym": "HUBB",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 1.14,
+  "priceVsSma": -4.2,
+  "ultima": 5.4,
+  "seq": [
+   19.8,
+   16.9
+  ],
+  "legs": [
+   "2026-02-03→2026-02-04 8.1%",
+   "2026-02-12→2026-03-09 14.0%",
+   "2026-03-10→2026-03-13 6.5%",
+   "2026-03-25→2026-03-30 8.4%",
+   "2026-04-14→2026-04-16 5.7%",
+   "2026-04-23→2026-05-21 19.8%",
+   "2026-05-27→2026-06-01 5.9%",
+   "2026-06-09→2026-06-10 5.8%",
+   "2026-06-25→2026-07-29 16.9%"
+  ]
+ },
+ {
+  "sym": "IAG",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.29,
+  "priceVsSma": 9
+ },
+ {
+  "sym": "IBM",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.48,
+  "priceVsSma": -5.7
+ },
+ {
+  "sym": "IBN",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.18,
+  "priceVsSma": 3.7
+ },
+ {
+  "sym": "ICE",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.85,
+  "priceVsSma": 2.8
+ },
+ {
+  "sym": "IDA",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.74,
+  "priceVsSma": -0.4,
+  "legs": [
+   "2026-02-17→2026-03-24 7.2%",
+   "2026-04-10→2026-06-02 9.5%",
+   "2026-06-16→2026-06-18 3.0%",
+   "2026-07-06→2026-08-11 10.0%"
+  ]
+ },
+ {
+  "sym": "IDCC",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.33,
+  "priceVsSma": 10.5
+ },
+ {
+  "sym": "IEX",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 3.57,
+  "priceVsSma": 11.5,
+  "seq": [
+   15.7,
+   2.8
+  ],
+  "corta": 9.1,
+  "legs": [
+   "2026-02-06→2026-03-30 15.7%",
+   "2026-04-21→2026-04-28 2.8%",
+   "2026-04-29→2026-05-20 9.1%",
+   "2026-06-18→2026-06-22 4.4%",
+   "2026-06-25→2026-07-08 6.1%",
+   "2026-07-17→2026-07-21 5.7%",
+   "2026-07-29→2026-08-07 4.8%"
+  ]
+ },
+ {
+  "sym": "ILMN",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 5.35,
+  "priceVsSma": 35.5,
+  "mejor": 3.4,
+  "legs": [
+   "2026-02-27→2026-03-12 14.4%",
+   "2026-03-25→2026-03-27 9.3%",
+   "2026-04-08→2026-04-10 10.9%",
+   "2026-04-21→2026-04-29 13.5%",
+   "2026-05-14→2026-05-15 8.1%",
+   "2026-06-04→2026-06-09 12.2%",
+   "2026-06-12→2026-06-17 6.2%",
+   "2026-07-07→2026-07-21 9.0%",
+   "2026-07-23→2026-07-28 5.8%",
+   "2026-08-03→2026-08-10 9.8%"
+  ]
+ },
+ {
+  "sym": "INDV",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.3,
+  "priceVsSma": 9.1,
+  "legs": [
+   "2026-03-26→2026-03-30 6.9%",
+   "2026-04-01→2026-04-13 3.7%",
+   "2026-05-07→2026-06-02 21.0%",
+   "2026-06-26→2026-07-06 8.4%",
+   "2026-07-08→2026-07-13 5.6%",
+   "2026-07-16→2026-08-04 14.5%"
+  ]
+ },
+ {
+  "sym": "INVH",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 1.73,
+  "priceVsSma": 9.4,
+  "mejor": 3.5,
+  "legs": [
+   "2026-04-30→2026-05-15 5.6%",
+   "2026-05-29→2026-06-03 3.4%",
+   "2026-06-05→2026-06-22 6.2%",
+   "2026-07-07→2026-07-09 4.6%",
+   "2026-07-17→2026-07-31 4.5%",
+   "2026-08-06→2026-08-12 4.6%"
+  ]
+ },
+ {
+  "sym": "IP",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 0.87,
+  "priceVsSma": 10.1,
+  "atr": 4.32,
+  "contracciones": [
+   32.5,
+   10.7
+  ],
+  "fechas": [
+   "2026-02-12→2026-03-20",
+   "2026-07-28→2026-08-07"
+  ],
+  "primeraEnAtr": 7.5,
+  "dispRatio": -0.26,
+  "volRatio": 0.94,
+  "techo": 48.47
+ },
+ {
+  "sym": "IQV",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.32,
+  "priceVsSma": 30.8,
+  "seq": [
+   14.9,
+   4.7
+  ],
+  "corta": 7,
+  "legs": [
+   "2026-03-05→2026-03-12 11.3%",
+   "2026-03-23→2026-03-27 6.0%",
+   "2026-04-08→2026-04-10 7.5%",
+   "2026-04-21→2026-04-30 14.6%",
+   "2026-05-06→2026-05-26 11.5%",
+   "2026-06-01→2026-06-03 7.8%",
+   "2026-06-09→2026-06-18 14.9%",
+   "2026-07-07→2026-07-08 4.7%",
+   "2026-07-13→2026-07-22 7.0%",
+   "2026-07-29→2026-08-04 9.6%"
+  ]
+ },
+ {
+  "sym": "IRDM",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 12.35,
+  "priceVsSma": 31.2,
+  "ultima": 3.6,
+  "seq": [
+   24.3,
+   22.7
+  ],
+  "legs": [
+   "2026-02-24→2026-02-27 9.5%",
+   "2026-03-02→2026-03-05 5.9%",
+   "2026-03-25→2026-03-30 13.0%",
+   "2026-04-17→2026-04-27 19.3%",
+   "2026-06-03→2026-06-25 24.3%",
+   "2026-07-02→2026-07-28 22.7%"
+  ]
+ },
+ {
+  "sym": "IT",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -5.98,
+  "priceVsSma": 20.1
+ },
+ {
+  "sym": "JAZZ",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 5.72,
+  "priceVsSma": 19.5,
+  "seq": [
+   10.8,
+   4.9,
+   4.1
+  ],
+  "corta": 6.1,
+  "legs": [
+   "2026-02-03→2026-02-11 4.8%",
+   "2026-02-26→2026-03-06 10.8%",
+   "2026-03-26→2026-03-30 4.9%",
+   "2026-04-01→2026-04-06 4.1%",
+   "2026-04-20→2026-04-24 6.1%",
+   "2026-05-06→2026-05-11 4.0%",
+   "2026-05-22→2026-06-18 9.3%",
+   "2026-07-09→2026-07-15 6.8%",
+   "2026-07-28→2026-08-04 5.3%",
+   "2026-08-05→2026-08-14 9.2%"
+  ]
+ },
+ {
+  "sym": "JBTM",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.43,
+  "priceVsSma": -16.3
+ },
+ {
+  "sym": "JD",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.46,
+  "priceVsSma": 2.1,
+  "legs": [
+   "2026-03-16→2026-03-20 7.4%",
+   "2026-03-25→2026-04-07 6.3%",
+   "2026-04-17→2026-04-28 8.2%",
+   "2026-04-30→2026-05-06 2.9%",
+   "2026-05-13→2026-06-26 28.4%",
+   "2026-07-21→2026-07-23 3.3%"
+  ]
+ },
+ {
+  "sym": "JNJ",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 3.21,
+  "priceVsSma": 14.2,
+  "legs": [
+   "2026-02-12→2026-02-20 2.5%",
+   "2026-03-02→2026-04-22 11.1%",
+   "2026-04-30→2026-05-11 4.7%",
+   "2026-05-22→2026-06-01 5.7%",
+   "2026-06-11→2026-06-22 5.8%",
+   "2026-07-07→2026-07-21 8.9%",
+   "2026-07-28→2026-08-04 8.9%"
+  ]
+ },
+ {
+  "sym": "JOBY",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -8.59,
+  "priceVsSma": -19.4
+ },
+ {
+  "sym": "JPM",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 245,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.64,
+  "priceVsSma": 13.7,
+  "seq": [
+   14.5,
+   5.3
+  ],
+  "corta": 8.3,
+  "legs": [
+   "2026-02-09→2026-03-12 14.5%",
+   "2026-03-25→2026-03-27 5.3%",
+   "2026-04-21→2026-05-20 8.3%",
+   "2026-05-26→2026-05-29 4.8%",
+   "2026-06-25→2026-07-01 5.4%",
+   "2026-07-07→2026-07-14 4.6%",
+   "2026-07-28→2026-07-29 4.3%",
+   "2026-08-04→2026-08-07 2.7%"
+  ]
+ },
+ {
+  "sym": "KGS",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 5.68,
+  "priceVsSma": 0.1,
+  "seq": [
+   16.6,
+   7
+  ],
+  "corta": 30,
+  "legs": [
+   "2026-02-11→2026-02-20 6.2%",
+   "2026-03-05→2026-03-13 8.2%",
+   "2026-03-24→2026-04-01 5.9%",
+   "2026-04-14→2026-04-17 5.1%",
+   "2026-05-11→2026-05-14 6.6%",
+   "2026-05-20→2026-06-01 16.6%",
+   "2026-06-12→2026-06-18 7.0%",
+   "2026-06-30→2026-08-07 30.0%"
+  ]
+ },
+ {
+  "sym": "KNTK",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 5.25,
+  "priceVsSma": 19.5,
+  "seq": [
+   14.1,
+   5.8
+  ],
+  "corta": 8.3,
+  "legs": [
+   "2026-02-10→2026-02-17 5.5%",
+   "2026-02-19→2026-02-25 9.4%",
+   "2026-02-26→2026-03-16 10.0%",
+   "2026-03-20→2026-03-23 4.8%",
+   "2026-03-30→2026-04-08 10.0%",
+   "2026-04-13→2026-04-17 6.0%",
+   "2026-04-30→2026-05-07 10.4%",
+   "2026-05-15→2026-06-18 14.1%",
+   "2026-06-29→2026-07-02 5.8%",
+   "2026-07-23→2026-08-04 8.3%"
+  ]
+ },
+ {
+  "sym": "LEGN",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.04,
+  "priceVsSma": -1.8
+ },
+ {
+  "sym": "LEU",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -5.5,
+  "priceVsSma": -8
+ },
+ {
+  "sym": "LKQ",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.5,
+  "priceVsSma": -8.9
+ },
+ {
+  "sym": "LLY",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 1.61,
+  "priceVsSma": 21.7,
+  "mejor": 3.3,
+  "legs": [
+   "2026-05-06→2026-05-11 5.3%",
+   "2026-05-13→2026-05-18 4.1%",
+   "2026-05-28→2026-06-02 8.4%",
+   "2026-06-08→2026-06-23 8.8%",
+   "2026-07-07→2026-08-03 11.2%"
+  ]
+ },
+ {
+  "sym": "LOGI",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 0.25,
+  "priceVsSma": 1.5,
+  "atr": 4.09,
+  "contracciones": [
+   29.6,
+   10.7,
+   7.8
+  ],
+  "fechas": [
+   "2026-06-02→2026-06-30",
+   "2026-07-28→2026-07-30",
+   "2026-08-04→2026-08-12"
+  ],
+  "primeraEnAtr": 7.2,
+  "dispRatio": -0.53,
+  "volRatio": 0.71,
+  "techo": 129.66
+ },
+ {
+  "sym": "LOPE",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.8,
+  "priceVsSma": -7.5
+ },
+ {
+  "sym": "LRCX",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 6.26,
+  "priceVsSma": 9.7,
+  "mejor": 5.5,
+  "legs": [
+   "2026-03-11→2026-03-19 3.0%",
+   "2026-03-24→2026-03-30 17.7%",
+   "2026-04-14→2026-04-15 6.6%",
+   "2026-04-24→2026-04-29 12.4%",
+   "2026-05-14→2026-05-19 12.7%",
+   "2026-05-27→2026-06-01 7.9%",
+   "2026-06-03→2026-06-05 12.6%",
+   "2026-06-22→2026-06-24 11.8%",
+   "2026-06-30→2026-07-29 42.9%"
+  ]
+ },
+ {
+  "sym": "LSCC",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 5.97,
+  "priceVsSma": 1.7,
+  "legs": [
+   "2026-02-12→2026-03-09 23.0%",
+   "2026-03-25→2026-03-30 16.9%",
+   "2026-04-24→2026-04-28 13.5%",
+   "2026-05-04→2026-05-05 10.1%",
+   "2026-05-13→2026-05-19 9.7%",
+   "2026-05-27→2026-06-01 7.8%",
+   "2026-06-03→2026-06-09 16.8%",
+   "2026-06-22→2026-07-29 28.3%"
+  ]
+ },
+ {
+  "sym": "LUV",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.14,
+  "priceVsSma": -6.3,
+  "legs": [
+   "2026-04-08→2026-04-13 12.0%",
+   "2026-04-17→2026-04-23 18.0%",
+   "2026-05-07→2026-05-19 12.2%",
+   "2026-05-27→2026-06-03 8.1%",
+   "2026-06-26→2026-07-30 16.8%"
+  ]
+ },
+ {
+  "sym": "LYFT",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.76,
+  "priceVsSma": 18.1
+ },
+ {
+  "sym": "LYV",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 3.23,
+  "priceVsSma": 12.2,
+  "seq": [
+   14.6,
+   10.4,
+   8.7,
+   5.6
+  ],
+  "corta": 9,
+  "legs": [
+   "2026-02-20→2026-03-27 14.6%",
+   "2026-04-14→2026-04-24 10.4%",
+   "2026-05-14→2026-06-09 8.7%",
+   "2026-06-15→2026-06-24 5.6%",
+   "2026-07-06→2026-07-31 9.0%"
+  ]
+ },
+ {
+  "sym": "MA",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.13,
+  "priceVsSma": 10.9
+ },
+ {
+  "sym": "MAA",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.14,
+  "priceVsSma": 1.3,
+  "legs": [
+   "2026-02-04→2026-02-05 5.0%",
+   "2026-02-11→2026-03-27 12.7%",
+   "2026-04-10→2026-04-16 3.1%",
+   "2026-05-06→2026-05-15 5.7%",
+   "2026-05-22→2026-06-02 3.2%",
+   "2026-06-10→2026-06-22 7.0%",
+   "2026-07-07→2026-08-12 8.6%"
+  ]
+ },
+ {
+  "sym": "MAR",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.84,
+  "priceVsSma": 1.7,
+  "legs": [
+   "2026-02-12→2026-03-09 15.7%",
+   "2026-03-17→2026-03-20 4.1%",
+   "2026-03-23→2026-03-27 5.1%",
+   "2026-04-21→2026-05-04 9.1%",
+   "2026-05-06→2026-05-13 5.1%",
+   "2026-05-28→2026-06-01 4.6%",
+   "2026-06-15→2026-08-04 17.1%"
+  ]
+ },
+ {
+  "sym": "MARA",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 0.65,
+  "priceVsSma": -11.8,
+  "mejor": 4.7,
+  "legs": [
+   "2026-02-27→2026-03-06 19.8%",
+   "2026-03-13→2026-03-31 23.9%",
+   "2026-04-23→2026-04-29 16.0%",
+   "2026-05-11→2026-05-19 16.4%",
+   "2026-05-26→2026-05-29 8.7%",
+   "2026-06-01→2026-06-05 22.7%",
+   "2026-06-22→2026-07-29 39.0%"
+  ]
+ },
+ {
+  "sym": "MATX",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 6.63,
+  "priceVsSma": 21.2,
+  "legs": [
+   "2026-02-04→2026-02-12 8.9%",
+   "2026-02-25→2026-03-12 19.1%",
+   "2026-03-24→2026-03-30 5.5%",
+   "2026-04-08→2026-04-13 4.6%",
+   "2026-04-17→2026-04-22 7.1%",
+   "2026-04-27→2026-05-05 10.7%",
+   "2026-05-06→2026-05-12 7.4%",
+   "2026-05-21→2026-05-22 6.8%",
+   "2026-06-12→2026-06-30 6.7%",
+   "2026-07-16→2026-07-23 16.1%"
+  ]
+ },
+ {
+  "sym": "MC",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.58,
+  "priceVsSma": 6.7
+ },
+ {
+  "sym": "MCD",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.61,
+  "priceVsSma": -8.8
+ },
+ {
+  "sym": "MCHP",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 1.83,
+  "priceVsSma": -4.7,
+  "ultima": 4.9,
+  "seq": [
+   22.6,
+   21.6
+  ],
+  "legs": [
+   "2026-02-04→2026-02-06 8.1%",
+   "2026-02-12→2026-03-30 28.4%",
+   "2026-04-23→2026-04-28 9.0%",
+   "2026-05-08→2026-07-07 22.6%",
+   "2026-07-09→2026-07-29 21.6%"
+  ]
+ },
+ {
+  "sym": "MDGL",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.23,
+  "priceVsSma": 8
+ },
+ {
+  "sym": "MEDP",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.29,
+  "priceVsSma": 21.8,
+  "legs": [
+   "2026-02-23→2026-02-25 6.8%",
+   "2026-03-09→2026-03-12 8.4%",
+   "2026-04-16→2026-04-23 29.8%",
+   "2026-05-06→2026-05-20 7.3%",
+   "2026-06-12→2026-06-22 7.2%",
+   "2026-07-06→2026-07-21 9.4%",
+   "2026-07-23→2026-08-04 16.9%"
+  ]
+ },
+ {
+  "sym": "MELI",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.41,
+  "priceVsSma": 5.7
+ },
+ {
+  "sym": "MET",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.98,
+  "priceVsSma": 17.7,
+  "seq": [
+   17.6,
+   4.1
+  ],
+  "corta": 5.3,
+  "legs": [
+   "2026-02-05→2026-03-27 17.6%",
+   "2026-04-17→2026-04-23 4.1%",
+   "2026-05-06→2026-05-12 5.3%",
+   "2026-05-22→2026-06-03 5.6%",
+   "2026-06-15→2026-06-24 6.1%",
+   "2026-07-17→2026-07-24 3.7%",
+   "2026-07-29→2026-08-04 3.4%",
+   "2026-08-06→2026-08-12 4.6%"
+  ]
+ },
+ {
+  "sym": "META",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.54,
+  "priceVsSma": -11.8
+ },
+ {
+  "sym": "MGNI",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 4.98,
+  "priceVsSma": 54.7,
+  "mejor": 3.3,
+  "legs": [
+   "2026-02-20→2026-02-23 11.1%",
+   "2026-03-05→2026-03-27 21.5%",
+   "2026-04-08→2026-04-09 9.6%",
+   "2026-04-20→2026-04-23 13.0%",
+   "2026-04-27→2026-05-07 7.9%",
+   "2026-05-08→2026-05-15 13.8%",
+   "2026-06-01→2026-06-03 9.9%",
+   "2026-06-17→2026-06-25 10.4%",
+   "2026-07-10→2026-07-23 17.2%"
+  ]
+ },
+ {
+  "sym": "MHK",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 2.11,
+  "priceVsSma": 19.5,
+  "ultima": 4.3,
+  "seq": [
+   32,
+   14.2
+  ],
+  "legs": [
+   "2026-02-13→2026-04-07 32.0%",
+   "2026-04-17→2026-05-19 17.5%",
+   "2026-05-27→2026-06-08 6.7%",
+   "2026-06-15→2026-06-17 7.7%",
+   "2026-06-25→2026-07-21 14.2%"
+  ]
+ },
+ {
+  "sym": "MIDD",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 0.67,
+  "priceVsSma": -9.1,
+  "atr": 3.56,
+  "contracciones": [
+   13.8,
+   5.9
+  ],
+  "fechas": [
+   "2026-07-07→2026-07-21",
+   "2026-07-28→2026-07-29"
+  ],
+  "primeraEnAtr": 3.9,
+  "dispRatio": -0.48,
+  "volRatio": 0.61,
+  "techo": 148.55
+ },
+ {
+  "sym": "MIR",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -5.65,
+  "priceVsSma": -18.9
+ },
+ {
+  "sym": "MKC",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.3,
+  "priceVsSma": 4.1
+ },
+ {
+  "sym": "MKTX",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.16,
+  "priceVsSma": 7
+ },
+ {
+  "sym": "MLM",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.93,
+  "priceVsSma": -10.7
+ },
+ {
+  "sym": "MMM",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.55,
+  "priceVsSma": 14.3,
+  "seq": [
+   21.1,
+   10.6,
+   5.3
+  ],
+  "corta": 6.9,
+  "legs": [
+   "2026-02-12→2026-03-20 21.1%",
+   "2026-03-25→2026-03-30 5.0%",
+   "2026-04-21→2026-05-04 10.6%",
+   "2026-05-06→2026-05-12 4.2%",
+   "2026-05-27→2026-06-01 5.3%",
+   "2026-06-10→2026-06-10 6.9%",
+   "2026-06-25→2026-07-08 9.5%"
+  ]
+ },
+ {
+  "sym": "MMYT",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -6.03,
+  "priceVsSma": 19.1
+ },
+ {
+  "sym": "MORN",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.24,
+  "priceVsSma": 19.8
+ },
+ {
+  "sym": "MOS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.98,
+  "priceVsSma": -8.6
+ },
+ {
+  "sym": "MRX",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 7.51,
+  "priceVsSma": 35.2,
+  "seq": [
+   14.7,
+   13.9
+  ],
+  "corta": 17,
+  "legs": [
+   "2026-02-19→2026-02-24 9.3%",
+   "2026-03-02→2026-03-09 23.6%",
+   "2026-04-15→2026-04-21 8.3%",
+   "2026-04-28→2026-05-06 12.4%",
+   "2026-05-14→2026-06-03 14.7%",
+   "2026-06-24→2026-06-30 13.9%",
+   "2026-07-09→2026-07-17 17.0%",
+   "2026-07-22→2026-07-28 7.5%",
+   "2026-07-31→2026-08-11 11.4%"
+  ]
+ },
+ {
+  "sym": "MSGS",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 5.85,
+  "priceVsSma": 16.5,
+  "atr": 2.8,
+  "contracciones": [
+   9.8,
+   8,
+   6.2,
+   3.6
+  ],
+  "fechas": [
+   "2026-06-12→2026-06-17",
+   "2026-07-01→2026-07-10",
+   "2026-07-15→2026-08-03",
+   "2026-08-06→2026-08-10"
+  ],
+  "primeraEnAtr": 3.5,
+  "dispRatio": 0.05,
+  "volRatio": 0.73,
+  "techo": 411.73
+ },
+ {
+  "sym": "MSM",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 5.45,
+  "priceVsSma": 16.1,
+  "seq": [
+   12.2,
+   4.8
+  ],
+  "corta": 6.7,
+  "legs": [
+   "2026-02-12→2026-03-20 12.2%",
+   "2026-04-28→2026-04-30 4.8%",
+   "2026-05-14→2026-05-19 6.7%",
+   "2026-06-09→2026-06-15 4.3%",
+   "2026-06-18→2026-06-29 2.8%",
+   "2026-07-01→2026-07-08 7.3%",
+   "2026-07-13→2026-07-21 3.5%",
+   "2026-07-23→2026-07-30 7.1%",
+   "2026-08-05→2026-08-12 9.8%"
+  ]
+ },
+ {
+  "sym": "MTD",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.25,
+  "priceVsSma": 10.8
+ },
+ {
+  "sym": "MTH",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 0.99,
+  "priceVsSma": 6,
+  "atr": 3.9,
+  "contracciones": [
+   19,
+   5.3
+  ],
+  "fechas": [
+   "2026-06-26→2026-07-30",
+   "2026-08-05→2026-08-10"
+  ],
+  "primeraEnAtr": 4.9,
+  "dispRatio": -0.62,
+  "volRatio": 0.73,
+  "techo": 85.38
+ },
+ {
+  "sym": "MTN",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.26,
+  "priceVsSma": 14.1,
+  "legs": [
+   "2026-04-08→2026-04-14 6.4%",
+   "2026-04-22→2026-04-27 13.0%",
+   "2026-05-01→2026-05-13 6.6%",
+   "2026-06-08→2026-06-09 9.9%",
+   "2026-06-18→2026-06-30 10.0%",
+   "2026-07-10→2026-07-23 8.5%",
+   "2026-07-29→2026-08-13 12.7%"
+  ]
+ },
+ {
+  "sym": "MTRN",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 9.09,
+  "priceVsSma": 24.1,
+  "seq": [
+   24.6,
+   8.4
+  ],
+  "corta": 15.6,
+  "legs": [
+   "2026-02-12→2026-03-20 24.6%",
+   "2026-03-25→2026-03-30 8.4%",
+   "2026-04-29→2026-04-29 15.6%",
+   "2026-05-14→2026-05-19 10.2%",
+   "2026-06-30→2026-07-29 36.9%"
+  ]
+ },
+ {
+  "sym": "MTSI",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 5.12,
+  "priceVsSma": -5.5,
+  "mejor": 7.6,
+  "legs": [
+   "2026-03-16→2026-03-19 8.8%",
+   "2026-03-25→2026-03-30 16.4%",
+   "2026-04-24→2026-04-28 11.3%",
+   "2026-05-14→2026-05-19 15.9%",
+   "2026-05-27→2026-07-29 45.6%"
+  ]
+ },
+ {
+  "sym": "MUSA",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 4.55,
+  "priceVsSma": 10.9,
+  "legs": [
+   "2026-02-04→2026-02-11 21.3%",
+   "2026-02-17→2026-02-18 9.7%",
+   "2026-03-19→2026-03-23 7.3%",
+   "2026-03-30→2026-04-01 4.8%",
+   "2026-04-07→2026-04-17 10.5%",
+   "2026-04-23→2026-04-29 5.2%",
+   "2026-05-06→2026-05-29 17.6%",
+   "2026-06-11→2026-08-06 19.0%"
+  ]
+ },
+ {
+  "sym": "MXL",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 15.22,
+  "priceVsSma": 23.3,
+  "mejor": 4.5,
+  "legs": [
+   "2026-03-16→2026-03-19 10.8%",
+   "2026-03-25→2026-03-30 13.4%",
+   "2026-05-11→2026-05-15 23.0%",
+   "2026-05-26→2026-06-09 36.2%",
+   "2026-06-22→2026-06-24 17.0%",
+   "2026-06-30→2026-07-29 56.2%"
+  ]
+ },
+ {
+  "sym": "MYRG",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 4.62,
+  "priceVsSma": -6.9,
+  "mejor": 6.8,
+  "legs": [
+   "2026-02-11→2026-02-19 9.4%",
+   "2026-02-26→2026-03-09 13.5%",
+   "2026-03-10→2026-03-20 6.2%",
+   "2026-03-25→2026-03-30 10.5%",
+   "2026-05-06→2026-05-07 11.9%",
+   "2026-05-18→2026-05-19 12.0%",
+   "2026-05-28→2026-06-10 17.0%",
+   "2026-06-30→2026-07-29 37.4%"
+  ]
+ },
+ {
+  "sym": "NCNO",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -4.66,
+  "priceVsSma": 19.1
+ },
+ {
+  "sym": "NDSN",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 2.88,
+  "priceVsSma": 9,
+  "atr": 2.45,
+  "contracciones": [
+   8.9,
+   4.6,
+   3.5
+  ],
+  "fechas": [
+   "2026-06-25→2026-07-08",
+   "2026-07-17→2026-07-20",
+   "2026-07-28→2026-07-31"
+  ],
+  "primeraEnAtr": 3.6,
+  "dispRatio": -0.16,
+  "volRatio": 0.9,
+  "techo": 307.74
+ },
+ {
+  "sym": "NEM",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 0.24,
+  "priceVsSma": 14.3,
+  "ultima": 4.4,
+  "seq": [
+   24.4,
+   20.9
+  ],
+  "legs": [
+   "2026-04-08→2026-06-11 24.4%",
+   "2026-06-17→2026-07-17 20.9%",
+   "2026-07-22→2026-07-29 8.2%"
+  ]
+ },
+ {
+  "sym": "NFLX",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.81,
+  "priceVsSma": -5.2
+ },
+ {
+  "sym": "NNN",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.64,
+  "priceVsSma": 5,
+  "legs": [
+   "2026-03-02→2026-03-30 9.6%",
+   "2026-04-20→2026-04-29 4.6%",
+   "2026-05-06→2026-05-15 3.7%",
+   "2026-05-20→2026-06-01 5.0%",
+   "2026-06-11→2026-06-18 4.4%",
+   "2026-06-26→2026-07-01 2.3%",
+   "2026-07-07→2026-07-10 3.8%",
+   "2026-07-17→2026-08-12 8.2%"
+  ]
+ },
+ {
+  "sym": "NOV",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 2.95,
+  "priceVsSma": 6.5,
+  "ultima": 3.4,
+  "seq": [
+   17.4,
+   10.7
+  ],
+  "legs": [
+   "2026-02-24→2026-03-19 14.2%",
+   "2026-03-27→2026-04-02 9.1%",
+   "2026-04-10→2026-04-17 6.1%",
+   "2026-04-27→2026-05-08 8.6%",
+   "2026-05-21→2026-05-29 7.2%",
+   "2026-06-04→2026-07-06 17.4%",
+   "2026-07-29→2026-07-29 10.7%"
+  ]
+ },
+ {
+  "sym": "NOVT",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 3.08,
+  "priceVsSma": 2.6,
+  "legs": [
+   "2026-02-12→2026-02-12 7.6%",
+   "2026-02-24→2026-03-20 25.4%",
+   "2026-03-25→2026-03-30 8.5%",
+   "2026-04-01→2026-04-07 6.8%",
+   "2026-04-21→2026-04-29 12.4%",
+   "2026-05-13→2026-05-19 12.9%",
+   "2026-05-26→2026-05-28 7.0%",
+   "2026-06-02→2026-07-29 20.9%"
+  ]
+ },
+ {
+  "sym": "NRG",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.6,
+  "priceVsSma": -16.9
+ },
+ {
+  "sym": "NSC",
+  "base": false,
+  "motivo": "volumen_no_seco",
+  "barras": 243,
+  "reason": "volumen_no_seco",
+  "smaSlopePct": 2.27,
+  "priceVsSma": 11.9,
+  "volRatio": 1.85,
+  "seq": [
+   8.3,
+   3.4
+  ],
+  "ultimaLeg": "2026-08-06→2026-08-10",
+  "legs": [
+   "2026-02-12→2026-03-20 13.1%",
+   "2026-04-17→2026-04-22 2.8%",
+   "2026-04-24→2026-05-12 4.1%",
+   "2026-05-19→2026-05-20 3.4%",
+   "2026-05-27→2026-06-17 8.8%",
+   "2026-07-17→2026-07-22 3.7%",
+   "2026-07-23→2026-07-30 8.3%",
+   "2026-08-06→2026-08-10 3.4%"
+  ]
+ },
+ {
+  "sym": "NTR",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.4,
+  "priceVsSma": 1.1,
+  "seq": [
+   15.4,
+   5.5
+  ],
+  "corta": 13.4,
+  "legs": [
+   "2026-02-04→2026-02-05 5.2%",
+   "2026-02-12→2026-02-17 6.1%",
+   "2026-03-02→2026-03-04 7.4%",
+   "2026-03-13→2026-03-23 15.4%",
+   "2026-03-26→2026-04-01 5.5%",
+   "2026-04-07→2026-05-29 13.4%",
+   "2026-06-02→2026-06-29 15.2%",
+   "2026-07-14→2026-07-21 4.9%",
+   "2026-07-23→2026-07-27 5.9%",
+   "2026-07-30→2026-08-06 10.1%"
+  ]
+ },
+ {
+  "sym": "NTRA",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 3.22,
+  "priceVsSma": 42.2,
+  "seq": [
+   23.5,
+   16.4,
+   13.6
+  ],
+  "corta": 16.6,
+  "legs": [
+   "2026-02-03→2026-03-27 23.5%",
+   "2026-04-08→2026-04-10 16.4%",
+   "2026-04-15→2026-04-29 13.6%",
+   "2026-05-07→2026-05-15 16.6%",
+   "2026-05-29→2026-06-03 9.5%",
+   "2026-06-04→2026-06-12 8.4%",
+   "2026-07-06→2026-07-29 13.9%",
+   "2026-08-10→2026-08-14 6.5%"
+  ]
+ },
+ {
+  "sym": "NU",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.33,
+  "priceVsSma": 0.6
+ },
+ {
+  "sym": "NVMI",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.56,
+  "priceVsSma": -18.2,
+  "seq": [
+   18.1,
+   13.1,
+   11.5
+  ],
+  "corta": 42.1,
+  "legs": [
+   "2026-03-24→2026-03-30 17.5%",
+   "2026-04-24→2026-05-12 13.3%",
+   "2026-05-14→2026-05-19 18.1%",
+   "2026-05-27→2026-06-01 13.1%",
+   "2026-06-03→2026-06-09 11.5%",
+   "2026-06-15→2026-07-29 42.1%",
+   "2026-07-31→2026-08-07 10.1%"
+  ]
+ },
+ {
+  "sym": "NVST",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.77,
+  "priceVsSma": 5.7,
+  "seq": [
+   20.5,
+   5.3
+  ],
+  "corta": 24.3,
+  "legs": [
+   "2026-02-11→2026-03-30 20.5%",
+   "2026-04-01→2026-04-07 5.3%",
+   "2026-05-07→2026-06-03 24.3%",
+   "2026-06-17→2026-06-30 0.9%",
+   "2026-07-06→2026-07-10 9.6%",
+   "2026-07-16→2026-07-23 5.9%"
+  ]
+ },
+ {
+  "sym": "NVTS",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 3.92,
+  "priceVsSma": -9,
+  "mejor": 4.8,
+  "legs": [
+   "2026-02-09→2026-02-20 16.9%",
+   "2026-02-25→2026-03-09 26.4%",
+   "2026-03-16→2026-03-30 34.1%",
+   "2026-04-08→2026-04-13 8.9%",
+   "2026-04-24→2026-04-29 28.5%",
+   "2026-05-11→2026-05-19 26.5%",
+   "2026-05-26→2026-06-01 30.2%",
+   "2026-06-03→2026-07-28 72.4%"
+  ]
+ },
+ {
+  "sym": "NXT",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.96,
+  "priceVsSma": -19.9,
+  "seq": [
+   21.2,
+   12.5
+  ],
+  "corta": 25.1,
+  "legs": [
+   "2026-02-04→2026-02-05 11.8%",
+   "2026-02-18→2026-03-03 24.3%",
+   "2026-03-16→2026-03-19 9.1%",
+   "2026-03-25→2026-04-16 21.2%",
+   "2026-04-23→2026-04-29 12.5%",
+   "2026-05-13→2026-05-22 25.1%",
+   "2026-05-29→2026-08-03 46.5%"
+  ]
+ },
+ {
+  "sym": "OLN",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.67,
+  "priceVsSma": -22.6
+ },
+ {
+  "sym": "OMC",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.95,
+  "priceVsSma": 13.7,
+  "legs": [
+   "2026-02-10→2026-02-12 8.9%",
+   "2026-03-05→2026-03-27 14.8%",
+   "2026-04-08→2026-04-09 5.2%",
+   "2026-04-17→2026-05-20 12.6%",
+   "2026-05-27→2026-05-29 5.0%",
+   "2026-06-17→2026-06-22 10.0%",
+   "2026-07-17→2026-07-23 8.6%",
+   "2026-07-28→2026-07-30 12.5%"
+  ]
+ },
+ {
+  "sym": "ONON",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -4.26,
+  "priceVsSma": -19.2
+ },
+ {
+  "sym": "ORA",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.91,
+  "priceVsSma": -5.6
+ },
+ {
+  "sym": "ORKA",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 17.84,
+  "priceVsSma": 76,
+  "mejor": 5.5,
+  "legs": [
+   "2026-02-13→2026-02-19 8.5%",
+   "2026-02-25→2026-03-12 14.3%",
+   "2026-03-18→2026-03-20 12.4%",
+   "2026-04-27→2026-06-01 41.1%",
+   "2026-06-30→2026-07-17 17.4%",
+   "2026-07-20→2026-07-29 11.6%"
+  ]
+ },
+ {
+  "sym": "OVV",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 6.18,
+  "priceVsSma": 19.7,
+  "legs": [
+   "2026-02-11→2026-02-12 7.3%",
+   "2026-02-24→2026-02-26 7.1%",
+   "2026-03-27→2026-04-17 18.5%",
+   "2026-05-05→2026-07-01 17.9%",
+   "2026-07-24→2026-08-05 10.5%"
+  ]
+ },
+ {
+  "sym": "OZK",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 1.48,
+  "priceVsSma": 2.8,
+  "atr": 2.3,
+  "contracciones": [
+   8.5,
+   6.9,
+   3.4
+  ],
+  "fechas": [
+   "2026-07-01→2026-07-08",
+   "2026-07-16→2026-07-23",
+   "2026-08-05→2026-08-10"
+  ],
+  "primeraEnAtr": 3.7,
+  "dispRatio": -0.07,
+  "volRatio": 0.66,
+  "techo": 53.18
+ },
+ {
+  "sym": "PAYC",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.93,
+  "priceVsSma": 59.7,
+  "seq": [
+   20.1,
+   9.2
+  ],
+  "corta": 10.7,
+  "legs": [
+   "2026-03-09→2026-04-10 20.4%",
+   "2026-04-21→2026-04-24 11.5%",
+   "2026-05-12→2026-05-14 7.4%",
+   "2026-05-19→2026-05-27 9.2%",
+   "2026-06-01→2026-06-18 20.1%",
+   "2026-07-07→2026-07-09 9.2%",
+   "2026-07-16→2026-07-23 10.7%",
+   "2026-08-07→2026-08-12 8.1%"
+  ]
+ },
+ {
+  "sym": "PEN",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.38,
+  "priceVsSma": -0.9,
+  "seq": [
+   5.2,
+   1
+  ],
+  "corta": 2,
+  "legs": [
+   "2026-02-19→2026-02-25 1.0%",
+   "2026-02-27→2026-03-30 5.2%",
+   "2026-04-08→2026-04-09 1.0%",
+   "2026-04-16→2026-04-21 2.0%",
+   "2026-04-23→2026-06-22 6.0%",
+   "2026-06-26→2026-06-30 1.3%",
+   "2026-07-07→2026-07-15 1.4%",
+   "2026-07-17→2026-07-23 1.3%"
+  ]
+ },
+ {
+  "sym": "PENG",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 13.59,
+  "priceVsSma": 33.3,
+  "seq": [
+   23.9,
+   20.1
+  ],
+  "corta": 22.7,
+  "legs": [
+   "2026-02-18→2026-02-20 5.8%",
+   "2026-02-25→2026-03-30 23.9%",
+   "2026-05-13→2026-05-19 20.1%",
+   "2026-06-02→2026-06-09 22.7%",
+   "2026-06-22→2026-07-02 24.3%",
+   "2026-07-09→2026-07-29 51.5%"
+  ]
+ },
+ {
+  "sym": "PENN",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 4.28,
+  "priceVsSma": 9,
+  "mejor": 2.8,
+  "legs": [
+   "2026-02-19→2026-02-23 11.4%",
+   "2026-03-05→2026-03-20 14.0%",
+   "2026-03-31→2026-04-13 2.0%",
+   "2026-04-16→2026-04-22 11.2%",
+   "2026-04-28→2026-05-13 15.1%",
+   "2026-06-01→2026-06-08 8.7%",
+   "2026-06-16→2026-07-14 11.4%",
+   "2026-07-16→2026-07-24 6.9%"
+  ]
+ },
+ {
+  "sym": "PEP",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.16,
+  "priceVsSma": -4.2
+ },
+ {
+  "sym": "PGR",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.08,
+  "priceVsSma": 5.3
+ },
+ {
+  "sym": "PH",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.84,
+  "priceVsSma": 8.3,
+  "seq": [
+   17
+  ],
+  "corta": 20.6,
+  "legs": [
+   "2026-02-25→2026-03-30 17.0%",
+   "2026-04-17→2026-06-01 20.6%",
+   "2026-06-25→2026-07-07 7.4%",
+   "2026-07-16→2026-07-17 4.4%",
+   "2026-07-24→2026-07-29 5.8%"
+  ]
+ },
+ {
+  "sym": "PINS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.75,
+  "priceVsSma": 12.6
+ },
+ {
+  "sym": "PLTR",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 247,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.73,
+  "priceVsSma": 23.3
+ },
+ {
+  "sym": "PLXS",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 6.33,
+  "priceVsSma": 2.7,
+  "legs": [
+   "2026-02-03→2026-02-04 7.4%",
+   "2026-02-09→2026-03-09 15.0%",
+   "2026-03-25→2026-03-30 14.0%",
+   "2026-04-14→2026-04-15 6.6%",
+   "2026-04-24→2026-04-30 10.1%",
+   "2026-05-06→2026-05-19 10.7%",
+   "2026-06-03→2026-06-09 7.7%",
+   "2026-06-22→2026-07-30 25.1%"
+  ]
+ },
+ {
+  "sym": "PODD",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -8.55,
+  "priceVsSma": -21.2
+ },
+ {
+  "sym": "POET",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 1.88,
+  "priceVsSma": -2.5,
+  "mejor": 4.7,
+  "legs": [
+   "2026-02-09→2026-02-17 14.8%",
+   "2026-03-03→2026-03-09 17.9%",
+   "2026-03-12→2026-03-30 41.1%",
+   "2026-04-24→2026-04-29 58.9%",
+   "2026-05-14→2026-07-17 65.4%",
+   "2026-07-21→2026-07-28 25.7%"
+  ]
+ },
+ {
+  "sym": "PPG",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.48,
+  "priceVsSma": 1.3,
+  "seq": [
+   27.6,
+   6
+  ],
+  "corta": 12.9,
+  "legs": [
+   "2026-02-12→2026-03-19 27.6%",
+   "2026-04-01→2026-04-07 8.2%",
+   "2026-04-10→2026-04-15 4.5%",
+   "2026-04-17→2026-05-19 15.0%",
+   "2026-06-15→2026-06-17 6.0%",
+   "2026-06-25→2026-07-31 12.9%"
+  ]
+ },
+ {
+  "sym": "PRM",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.63,
+  "priceVsSma": 2.5,
+  "legs": [
+   "2026-02-12→2026-03-20 27.8%",
+   "2026-03-25→2026-03-30 6.9%",
+   "2026-04-01→2026-04-07 8.1%",
+   "2026-04-23→2026-05-06 20.4%",
+   "2026-05-14→2026-06-03 15.1%",
+   "2026-06-18→2026-07-15 14.9%",
+   "2026-07-20→2026-07-27 7.5%",
+   "2026-07-30→2026-08-03 23.0%"
+  ]
+ },
+ {
+  "sym": "PSA",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 2.93,
+  "priceVsSma": 7.9,
+  "atr": 2.28,
+  "contracciones": [
+   8.3,
+   3.3
+  ],
+  "fechas": [
+   "2026-07-29→2026-07-30",
+   "2026-08-06→2026-08-10"
+  ],
+  "primeraEnAtr": 3.7,
+  "dispRatio": -0.17,
+  "volRatio": 0.87,
+  "techo": 335.55
+ },
+ {
+  "sym": "PSMT",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 4.85,
+  "priceVsSma": 7,
+  "legs": [
+   "2026-02-06→2026-02-11 7.1%",
+   "2026-02-12→2026-02-19 4.9%",
+   "2026-03-02→2026-03-20 12.0%",
+   "2026-03-25→2026-03-27 5.6%",
+   "2026-04-09→2026-05-04 7.7%",
+   "2026-06-12→2026-06-17 3.7%",
+   "2026-07-06→2026-08-11 17.1%"
+  ]
+ },
+ {
+  "sym": "PSNL",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 7.53,
+  "priceVsSma": 65.5,
+  "mejor": 3.2,
+  "legs": [
+   "2026-05-06→2026-05-08 13.0%",
+   "2026-06-04→2026-06-09 27.5%",
+   "2026-07-17→2026-07-29 29.7%"
+  ]
+ },
+ {
+  "sym": "PTCT",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.72,
+  "priceVsSma": 1.6
+ },
+ {
+  "sym": "PUMP",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.97,
+  "priceVsSma": -12.5,
+  "seq": [
+   26.8
+  ],
+  "corta": 33.8,
+  "legs": [
+   "2026-02-03→2026-02-05 14.6%",
+   "2026-02-18→2026-02-23 19.9%",
+   "2026-03-18→2026-03-23 10.0%",
+   "2026-03-30→2026-04-08 16.6%",
+   "2026-04-29→2026-06-24 26.8%",
+   "2026-06-30→2026-07-29 33.8%"
+  ]
+ },
+ {
+  "sym": "PYPL",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.02,
+  "priceVsSma": 27.6
+ },
+ {
+  "sym": "QBTS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -5.02,
+  "priceVsSma": -6.4
+ },
+ {
+  "sym": "QGEN",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.06,
+  "priceVsSma": 7.3
+ },
+ {
+  "sym": "QRVO",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 1.36,
+  "priceVsSma": 10.4,
+  "atr": 4.55,
+  "contracciones": [
+   25.7,
+   7.4
+  ],
+  "fechas": [
+   "2026-05-27→2026-07-15",
+   "2026-07-29→2026-07-29"
+  ],
+  "primeraEnAtr": 5.6,
+  "dispRatio": -0.61,
+  "volRatio": null,
+  "techo": 109.49
+ },
+ {
+  "sym": "RBC",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.39,
+  "priceVsSma": -8.8,
+  "legs": [
+   "2026-03-02→2026-03-30 11.6%",
+   "2026-04-14→2026-04-16 6.0%",
+   "2026-04-23→2026-04-29 4.4%",
+   "2026-05-07→2026-05-18 13.7%",
+   "2026-05-26→2026-06-01 5.6%",
+   "2026-06-25→2026-07-31 17.9%"
+  ]
+ },
+ {
+  "sym": "RDNT",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.94,
+  "priceVsSma": 20.6
+ },
+ {
+  "sym": "RDW",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 3.11,
+  "priceVsSma": 9.1,
+  "mejor": 4.9,
+  "legs": [
+   "2026-02-20→2026-02-23 13.3%",
+   "2026-03-02→2026-03-30 28.6%",
+   "2026-04-08→2026-04-13 14.3%",
+   "2026-04-22→2026-05-05 32.5%",
+   "2026-05-28→2026-07-29 70.9%"
+  ]
+ },
+ {
+  "sym": "REGN",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.23,
+  "priceVsSma": 17.3
+ },
+ {
+  "sym": "RELX",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.93,
+  "priceVsSma": 4.9
+ },
+ {
+  "sym": "REPL",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 4.41,
+  "priceVsSma": 89.3,
+  "mejor": 11,
+  "legs": [
+   "2026-02-23→2026-03-03 23.0%",
+   "2026-03-09→2026-04-13 83.5%",
+   "2026-04-16→2026-04-21 23.2%",
+   "2026-04-23→2026-04-29 21.1%",
+   "2026-05-21→2026-05-27 19.5%",
+   "2026-06-04→2026-06-11 24.0%",
+   "2026-06-23→2026-06-26 19.2%",
+   "2026-06-30→2026-07-29 61.9%"
+  ]
+ },
+ {
+  "sym": "RF",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.91,
+  "priceVsSma": 7.4,
+  "seq": [
+   20.8,
+   3.5
+  ],
+  "corta": 8.9,
+  "legs": [
+   "2026-02-12→2026-03-19 20.8%",
+   "2026-03-23→2026-03-30 4.8%",
+   "2026-04-21→2026-04-24 3.5%",
+   "2026-04-28→2026-05-15 8.9%",
+   "2026-05-27→2026-06-02 4.0%",
+   "2026-06-15→2026-06-17 3.8%",
+   "2026-07-02→2026-07-08 4.8%",
+   "2026-07-16→2026-07-23 7.3%",
+   "2026-08-05→2026-08-07 3.6%"
+  ]
+ },
+ {
+  "sym": "RGLD",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.76,
+  "priceVsSma": 3.8
+ },
+ {
+  "sym": "RH",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.95,
+  "priceVsSma": 5.6
+ },
+ {
+  "sym": "RIOT",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 4.55,
+  "priceVsSma": -1.1,
+  "mejor": 5.8,
+  "legs": [
+   "2026-04-24→2026-04-29 19.7%",
+   "2026-05-11→2026-05-19 16.0%",
+   "2026-06-02→2026-06-10 18.2%",
+   "2026-06-22→2026-07-17 42.5%",
+   "2026-07-23→2026-07-29 28.0%"
+  ]
+ },
+ {
+  "sym": "RITM",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.66,
+  "priceVsSma": 8.7
+ },
+ {
+  "sym": "RIVN",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.29,
+  "priceVsSma": -0.3
+ },
+ {
+  "sym": "RL",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.85,
+  "priceVsSma": 2.8,
+  "seq": [
+   19.4,
+   9.5
+  ],
+  "corta": 12.8,
+  "legs": [
+   "2026-02-04→2026-02-05 10.7%",
+   "2026-02-20→2026-03-09 16.5%",
+   "2026-03-17→2026-03-20 7.1%",
+   "2026-03-25→2026-03-27 8.1%",
+   "2026-04-09→2026-04-16 5.4%",
+   "2026-04-21→2026-05-20 19.4%",
+   "2026-05-26→2026-06-04 9.5%",
+   "2026-06-15→2026-07-24 12.8%",
+   "2026-08-06→2026-08-06 9.5%"
+  ]
+ },
+ {
+  "sym": "RLAY",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 12.28,
+  "priceVsSma": 50.9,
+  "seq": [
+   32.9,
+   13.9
+  ],
+  "corta": 26,
+  "legs": [
+   "2026-02-13→2026-02-20 11.7%",
+   "2026-02-27→2026-03-06 20.7%",
+   "2026-03-13→2026-03-24 19.4%",
+   "2026-03-26→2026-03-30 9.1%",
+   "2026-04-17→2026-05-20 32.9%",
+   "2026-05-21→2026-06-01 13.9%",
+   "2026-06-02→2026-06-05 26.0%",
+   "2026-07-09→2026-07-28 14.8%",
+   "2026-07-30→2026-08-07 5.7%",
+   "2026-08-10→2026-08-14 6.5%"
+  ]
+ },
+ {
+  "sym": "RLI",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 0.64,
+  "priceVsSma": 14.2,
+  "ultima": 4,
+  "seq": [
+   10.6,
+   10.6
+  ],
+  "legs": [
+   "2026-02-12→2026-02-24 5.9%",
+   "2026-03-03→2026-04-01 12.0%",
+   "2026-04-17→2026-05-13 20.9%",
+   "2026-05-19→2026-05-29 5.8%",
+   "2026-06-12→2026-06-18 5.6%",
+   "2026-07-07→2026-07-23 10.6%",
+   "2026-07-28→2026-08-04 10.6%"
+  ]
+ },
+ {
+  "sym": "RMD",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.75,
+  "priceVsSma": 3.7
+ },
+ {
+  "sym": "ROAD",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.13,
+  "priceVsSma": -1
+ },
+ {
+  "sym": "ROIV",
+  "base": false,
+  "motivo": "tendencia_no_lateral",
+  "barras": 243,
+  "reason": "tendencia_no_lateral",
+  "smaSlopePct": 6.24,
+  "priceVsSma": 25.9,
+  "dispRatio": 0.86,
+  "legs": [
+   "2026-02-10→2026-02-13 6.1%",
+   "2026-02-25→2026-03-03 7.7%",
+   "2026-03-11→2026-03-30 14.4%",
+   "2026-04-17→2026-04-24 10.3%",
+   "2026-05-12→2026-05-19 6.5%",
+   "2026-05-20→2026-06-02 14.8%",
+   "2026-07-10→2026-08-03 12.2%"
+  ]
+ },
+ {
+  "sym": "ROK",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.76,
+  "priceVsSma": 2.3,
+  "legs": [
+   "2026-02-04→2026-03-30 20.5%",
+   "2026-04-21→2026-04-29 5.9%",
+   "2026-05-06→2026-05-19 9.4%",
+   "2026-05-27→2026-06-01 2.8%",
+   "2026-06-03→2026-06-10 6.1%",
+   "2026-06-30→2026-07-16 9.5%",
+   "2026-07-22→2026-07-29 4.1%",
+   "2026-08-03→2026-08-04 11.5%"
+  ]
+ },
+ {
+  "sym": "ROST",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 4,
+  "priceVsSma": 7.2,
+  "legs": [
+   "2026-03-04→2026-03-09 5.8%",
+   "2026-03-10→2026-03-13 4.7%",
+   "2026-03-26→2026-03-30 4.6%",
+   "2026-04-01→2026-04-07 3.1%",
+   "2026-04-09→2026-04-14 3.3%",
+   "2026-04-20→2026-04-28 2.9%",
+   "2026-05-07→2026-05-19 9.9%",
+   "2026-05-27→2026-06-02 6.5%",
+   "2026-06-04→2026-06-09 3.8%",
+   "2026-06-12→2026-06-30 15.2%"
+  ]
+ },
+ {
+  "sym": "RTX",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 2.49,
+  "priceVsSma": 13.5,
+  "atr": 2.73,
+  "contracciones": [
+   20.2,
+   6.8,
+   6.8,
+   5.4,
+   3.5
+  ],
+  "fechas": [
+   "2026-03-03→2026-05-05",
+   "2026-06-18→2026-06-22",
+   "2026-07-07→2026-07-21",
+   "2026-07-28→2026-07-30",
+   "2026-08-10→2026-08-13"
+  ],
+  "primeraEnAtr": 7.4,
+  "dispRatio": 0.31,
+  "volRatio": 0.66,
+  "techo": 226.13
+ },
+ {
+  "sym": "RVTY",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2,
+  "priceVsSma": 18.4,
+  "seq": [
+   16.3,
+   9.7,
+   7.1
+  ],
+  "corta": 8.8,
+  "legs": [
+   "2026-03-17→2026-03-30 6.8%",
+   "2026-04-15→2026-04-16 6.5%",
+   "2026-04-21→2026-04-29 16.3%",
+   "2026-05-11→2026-05-21 9.7%",
+   "2026-05-29→2026-06-05 7.1%",
+   "2026-06-10→2026-06-17 8.8%",
+   "2026-06-26→2026-07-21 11.8%",
+   "2026-07-23→2026-07-27 7.3%",
+   "2026-08-04→2026-08-04 8.2%"
+  ]
+ },
+ {
+  "sym": "RY",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 3.26,
+  "priceVsSma": 13.2,
+  "legs": [
+   "2026-02-10→2026-03-30 10.9%",
+   "2026-04-21→2026-04-23 3.5%",
+   "2026-05-07→2026-05-13 2.0%",
+   "2026-05-26→2026-05-28 2.7%",
+   "2026-07-16→2026-07-29 5.2%"
+  ]
+ },
+ {
+  "sym": "RYAN",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.82,
+  "priceVsSma": 10.2
+ },
+ {
+  "sym": "SAM",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.11,
+  "priceVsSma": -9.4
+ },
+ {
+  "sym": "SAN",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.86,
+  "priceVsSma": 13,
+  "seq": [
+   21.1,
+   6.4
+  ],
+  "corta": 10.7,
+  "legs": [
+   "2026-02-03→2026-02-13 10.5%",
+   "2026-02-25→2026-03-20 21.1%",
+   "2026-03-23→2026-03-27 6.4%",
+   "2026-04-17→2026-05-04 10.7%",
+   "2026-05-07→2026-05-15 6.9%",
+   "2026-05-27→2026-06-10 6.4%",
+   "2026-06-17→2026-06-24 3.4%",
+   "2026-07-07→2026-07-23 8.6%"
+  ]
+ },
+ {
+  "sym": "SBAC",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.42,
+  "priceVsSma": -5.5
+ },
+ {
+  "sym": "SCCO",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 241,
+  "reason": "reexpansion",
+  "smaSlopePct": 3.23,
+  "priceVsSma": 6.5,
+  "seq": [
+   20.6,
+   8.6
+  ],
+  "corta": 12.9,
+  "legs": [
+   "2026-04-14→2026-05-04 16.6%",
+   "2026-05-13→2026-05-19 15.2%",
+   "2026-06-02→2026-07-08 20.6%",
+   "2026-07-14→2026-07-17 8.6%",
+   "2026-07-22→2026-07-28 12.9%",
+   "2026-08-05→2026-08-14 8.8%"
+  ]
+ },
+ {
+  "sym": "SDOT",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -11.32,
+  "priceVsSma": -70
+ },
+ {
+  "sym": "SE",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.07,
+  "priceVsSma": 20.9
+ },
+ {
+  "sym": "SEDG",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.94,
+  "priceVsSma": -28.3,
+  "seq": [
+   32.9,
+   23.3
+  ],
+  "corta": 53.2,
+  "legs": [
+   "2026-02-10→2026-02-12 11.5%",
+   "2026-02-18→2026-02-19 20.2%",
+   "2026-02-25→2026-03-09 29.1%",
+   "2026-03-20→2026-03-30 14.0%",
+   "2026-04-01→2026-04-20 32.9%",
+   "2026-04-27→2026-05-07 23.3%",
+   "2026-05-29→2026-07-28 53.2%",
+   "2026-08-04→2026-08-07 36.8%"
+  ]
+ },
+ {
+  "sym": "SEIC",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 3.12,
+  "priceVsSma": 21.9,
+  "mejor": 3.3,
+  "legs": [
+   "2026-04-23→2026-05-08 4.4%",
+   "2026-05-14→2026-06-03 7.7%",
+   "2026-06-09→2026-06-11 4.1%",
+   "2026-06-18→2026-06-29 6.5%",
+   "2026-07-17→2026-07-23 5.3%",
+   "2026-08-06→2026-08-07 3.1%"
+  ]
+ },
+ {
+  "sym": "SF",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.27,
+  "priceVsSma": 7.6
+ },
+ {
+  "sym": "SFM",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.52,
+  "priceVsSma": 1,
+  "seq": [
+   19,
+   8.7
+  ],
+  "corta": 23,
+  "legs": [
+   "2026-02-04→2026-02-11 9.4%",
+   "2026-02-17→2026-02-20 8.4%",
+   "2026-03-06→2026-03-11 6.6%",
+   "2026-03-18→2026-03-25 14.5%",
+   "2026-03-31→2026-04-01 4.3%",
+   "2026-04-07→2026-04-29 12.6%",
+   "2026-04-30→2026-05-06 7.9%",
+   "2026-05-19→2026-06-18 19.0%",
+   "2026-06-24→2026-06-26 8.7%",
+   "2026-07-06→2026-07-23 23.0%"
+  ]
+ },
+ {
+  "sym": "SGI",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.86,
+  "priceVsSma": -14.1
+ },
+ {
+  "sym": "SHW",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 0.81,
+  "priceVsSma": 6.1,
+  "atr": 2.24,
+  "contracciones": [
+   20,
+   17.1,
+   14.9,
+   5.5
+  ],
+  "fechas": [
+   "2026-02-13→2026-03-20",
+   "2026-04-17→2026-06-02",
+   "2026-07-07→2026-07-23",
+   "2026-07-28→2026-07-31"
+  ],
+  "primeraEnAtr": 8.9,
+  "dispRatio": -0.25,
+  "volRatio": 0.98,
+  "techo": 375.96
+ },
+ {
+  "sym": "SIRI",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 5.16,
+  "priceVsSma": 13,
+  "legs": [
+   "2026-02-05→2026-02-20 11.3%",
+   "2026-03-05→2026-03-09 7.0%",
+   "2026-03-17→2026-03-20 4.5%",
+   "2026-04-06→2026-04-09 4.5%",
+   "2026-04-23→2026-04-30 12.8%",
+   "2026-05-11→2026-05-15 7.2%",
+   "2026-05-26→2026-06-05 12.1%",
+   "2026-06-09→2026-06-11 7.2%",
+   "2026-07-07→2026-07-23 7.1%",
+   "2026-07-29→2026-08-13 13.7%"
+  ]
+ },
+ {
+  "sym": "SJM",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 3.02,
+  "priceVsSma": 17,
+  "mejor": 3.2,
+  "legs": [
+   "2026-04-29→2026-05-05 4.0%",
+   "2026-05-19→2026-05-21 5.8%",
+   "2026-05-29→2026-06-02 5.1%",
+   "2026-06-12→2026-06-22 9.0%",
+   "2026-07-02→2026-07-15 8.4%",
+   "2026-07-29→2026-08-04 9.4%"
+  ]
+ },
+ {
+  "sym": "SLGN",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.55,
+  "priceVsSma": -2.3,
+  "seq": [
+   24.3,
+   8.4
+  ],
+  "corta": 17.5,
+  "legs": [
+   "2026-02-06→2026-03-30 24.3%",
+   "2026-04-10→2026-04-15 5.0%",
+   "2026-04-17→2026-06-04 15.3%",
+   "2026-07-07→2026-07-08 8.4%",
+   "2026-07-17→2026-07-31 17.5%",
+   "2026-08-06→2026-08-12 6.3%"
+  ]
+ },
+ {
+  "sym": "SLM",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.2,
+  "priceVsSma": 13.6
+ },
+ {
+  "sym": "SMG",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 1.46,
+  "priceVsSma": -3.8,
+  "atr": 4.72,
+  "contracciones": [
+   21.2,
+   11.2,
+   11.1
+  ],
+  "fechas": [
+   "2026-04-29→2026-06-02",
+   "2026-06-26→2026-07-14",
+   "2026-07-17→2026-07-23"
+  ],
+  "primeraEnAtr": 4.5,
+  "dispRatio": 0.51,
+  "volRatio": 0.79,
+  "techo": 75.34
+ },
+ {
+  "sym": "SMMT",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.35,
+  "priceVsSma": -19.3
+ },
+ {
+  "sym": "SNAP",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -6.76,
+  "priceVsSma": -2.1
+ },
+ {
+  "sym": "SNDK",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 14.56,
+  "priceVsSma": 36.2,
+  "mejor": 6.5,
+  "legs": [
+   "2026-02-03→2026-02-10 25.5%",
+   "2026-02-12→2026-02-18 14.0%",
+   "2026-02-23→2026-03-09 25.2%",
+   "2026-03-20→2026-03-30 28.2%",
+   "2026-05-11→2026-05-18 20.2%",
+   "2026-06-03→2026-06-05 18.6%",
+   "2026-06-22→2026-07-29 57.6%"
+  ]
+ },
+ {
+  "sym": "SNPS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.55,
+  "priceVsSma": -10.1
+ },
+ {
+  "sym": "SNY",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.55,
+  "priceVsSma": 4.6
+ },
+ {
+  "sym": "SOLV",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.65,
+  "priceVsSma": 17,
+  "seq": [
+   12.4,
+   7.2
+  ],
+  "corta": 7.9,
+  "legs": [
+   "2026-04-17→2026-04-30 8.4%",
+   "2026-05-12→2026-05-20 4.2%",
+   "2026-05-27→2026-05-28 4.7%",
+   "2026-06-05→2026-06-23 12.4%",
+   "2026-06-26→2026-07-08 7.2%",
+   "2026-07-17→2026-07-23 7.9%",
+   "2026-08-06→2026-08-07 9.8%"
+  ]
+ },
+ {
+  "sym": "SPGI",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -2.44,
+  "priceVsSma": 2.7
+ },
+ {
+  "sym": "SPHR",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 6.78,
+  "priceVsSma": 22.3,
+  "legs": [
+   "2026-02-18→2026-02-24 6.5%",
+   "2026-02-27→2026-03-03 8.9%",
+   "2026-03-10→2026-03-27 14.3%",
+   "2026-04-08→2026-04-13 5.6%",
+   "2026-04-17→2026-04-23 8.7%",
+   "2026-05-05→2026-05-12 16.7%",
+   "2026-05-14→2026-05-22 7.3%",
+   "2026-06-01→2026-06-09 10.3%",
+   "2026-06-30→2026-07-23 24.0%"
+  ]
+ },
+ {
+  "sym": "SQM",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.09,
+  "priceVsSma": -3,
+  "legs": [
+   "2026-02-12→2026-02-13 9.4%",
+   "2026-02-25→2026-03-03 19.6%",
+   "2026-03-16→2026-03-20 10.8%",
+   "2026-03-30→2026-04-07 9.4%",
+   "2026-04-16→2026-04-23 12.0%",
+   "2026-05-07→2026-06-29 29.2%",
+   "2026-07-02→2026-07-17 13.5%",
+   "2026-07-23→2026-07-28 7.9%",
+   "2026-08-07→2026-08-13 4.7%"
+  ]
+ },
+ {
+  "sym": "SSB",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.77,
+  "priceVsSma": 9.1,
+  "seq": [
+   19.3,
+   3.1
+  ],
+  "corta": 9.2,
+  "legs": [
+   "2026-02-06→2026-03-19 19.3%",
+   "2026-03-23→2026-03-27 4.0%",
+   "2026-04-09→2026-04-13 3.1%",
+   "2026-04-17→2026-05-15 9.2%",
+   "2026-05-26→2026-06-02 4.2%",
+   "2026-06-15→2026-06-17 4.7%",
+   "2026-07-02→2026-07-08 5.2%",
+   "2026-07-16→2026-07-23 4.1%",
+   "2026-07-27→2026-08-03 2.9%"
+  ]
+ },
+ {
+  "sym": "SSNC",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.56,
+  "priceVsSma": 14.9
+ },
+ {
+  "sym": "SSRM",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 3.28,
+  "priceVsSma": 22.6,
+  "ultima": 3.8,
+  "seq": [
+   33.2,
+   28.6
+  ],
+  "legs": [
+   "2026-03-04→2026-03-20 32.6%",
+   "2026-04-09→2026-06-11 33.2%",
+   "2026-06-17→2026-07-29 28.6%"
+  ]
+ },
+ {
+  "sym": "STE",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.37,
+  "priceVsSma": 4.8
+ },
+ {
+  "sym": "STI",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.87,
+  "priceVsSma": -2.7
+ },
+ {
+  "sym": "STLA",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -9.36,
+  "priceVsSma": -24.6
+ },
+ {
+  "sym": "STNG",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 4.87,
+  "priceVsSma": 7.1,
+  "atr": 4.03,
+  "contracciones": [
+   21.7,
+   8.9
+  ],
+  "fechas": [
+   "2026-05-05→2026-06-30",
+   "2026-07-13→2026-08-11"
+  ],
+  "primeraEnAtr": 5.4,
+  "dispRatio": -0.32,
+  "volRatio": 0.86,
+  "techo": 86.37
+ },
+ {
+  "sym": "STRL",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 6.39,
+  "priceVsSma": -7.4,
+  "seq": [
+   23.4,
+   8.8
+  ],
+  "corta": 47.4,
+  "legs": [
+   "2026-02-12→2026-02-19 16.0%",
+   "2026-02-26→2026-03-06 21.1%",
+   "2026-03-11→2026-03-13 9.1%",
+   "2026-03-25→2026-04-07 21.3%",
+   "2026-04-14→2026-04-16 6.9%",
+   "2026-04-24→2026-04-28 9.2%",
+   "2026-05-06→2026-05-12 9.3%",
+   "2026-05-14→2026-05-19 21.3%",
+   "2026-06-04→2026-06-10 23.4%",
+   "2026-06-15→2026-06-18 8.8%",
+   "2026-06-22→2026-07-29 47.4%",
+   "2026-08-03→2026-08-04 19.1%"
+  ]
+ },
+ {
+  "sym": "STT",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 5.34,
+  "priceVsSma": 23.3,
+  "seq": [
+   14.2,
+   5.6,
+   5.2
+  ],
+  "corta": 5.6,
+  "legs": [
+   "2026-02-03→2026-02-05 4.8%",
+   "2026-02-10→2026-03-09 14.2%",
+   "2026-03-11→2026-03-19 5.6%",
+   "2026-03-25→2026-03-27 5.2%",
+   "2026-04-21→2026-05-04 5.6%",
+   "2026-06-23→2026-06-26 6.1%",
+   "2026-07-16→2026-07-29 8.8%",
+   "2026-08-05→2026-08-07 3.6%"
+  ]
+ },
+ {
+  "sym": "STWD",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.58,
+  "priceVsSma": -1.5
+ },
+ {
+  "sym": "STX",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 13,
+  "priceVsSma": 27.5,
+  "mejor": 5.7,
+  "legs": [
+   "2026-02-03→2026-02-11 14.9%",
+   "2026-02-12→2026-03-09 25.6%",
+   "2026-03-10→2026-03-19 2.5%",
+   "2026-03-20→2026-03-30 19.9%",
+   "2026-04-23→2026-04-28 9.0%",
+   "2026-05-11→2026-05-19 17.4%",
+   "2026-06-03→2026-06-09 17.1%",
+   "2026-06-18→2026-07-28 38.9%",
+   "2026-07-31→2026-08-07 17.4%"
+  ]
+ },
+ {
+  "sym": "SW",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 3.05,
+  "priceVsSma": 14.5,
+  "seq": [
+   31.1,
+   17.3,
+   11.7,
+   4.9
+  ],
+  "corta": 14.1,
+  "legs": [
+   "2026-02-19→2026-03-20 31.1%",
+   "2026-03-26→2026-03-30 7.0%",
+   "2026-04-10→2026-04-15 5.0%",
+   "2026-04-17→2026-05-20 17.3%",
+   "2026-06-04→2026-06-10 11.7%",
+   "2026-06-15→2026-06-18 4.9%",
+   "2026-06-25→2026-07-08 14.1%",
+   "2026-07-17→2026-07-21 7.1%",
+   "2026-07-28→2026-07-31 12.9%",
+   "2026-08-05→2026-08-07 4.5%"
+  ]
+ },
+ {
+  "sym": "SWKS",
+  "base": false,
+  "motivo": "volumen_no_seco",
+  "barras": 243,
+  "reason": "volumen_no_seco",
+  "smaSlopePct": 0.77,
+  "priceVsSma": 8.9,
+  "volRatio": 3.07,
+  "seq": [
+   34.9,
+   12.2
+  ],
+  "ultimaLeg": "2026-07-28→2026-07-29",
+  "legs": [
+   "2026-02-11→2026-03-09 17.8%",
+   "2026-03-11→2026-03-19 7.8%",
+   "2026-03-26→2026-03-30 9.8%",
+   "2026-05-05→2026-05-06 15.5%",
+   "2026-05-27→2026-07-15 34.9%",
+   "2026-07-28→2026-07-29 12.2%"
+  ]
+ },
+ {
+  "sym": "SXT",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 4.26,
+  "priceVsSma": 24.1,
+  "seq": [
+   12.9,
+   6.5
+  ],
+  "corta": 14.6,
+  "legs": [
+   "2026-02-27→2026-03-20 18.6%",
+   "2026-04-08→2026-04-15 5.1%",
+   "2026-04-17→2026-04-23 7.7%",
+   "2026-04-28→2026-04-30 15.7%",
+   "2026-05-11→2026-06-01 8.1%",
+   "2026-06-15→2026-06-17 12.9%",
+   "2026-06-25→2026-06-29 6.5%",
+   "2026-07-07→2026-07-22 14.6%",
+   "2026-07-27→2026-08-03 7.5%"
+  ]
+ },
+ {
+  "sym": "TD",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 3.7,
+  "priceVsSma": 11.4,
+  "legs": [
+   "2026-02-11→2026-02-13 5.2%",
+   "2026-02-27→2026-03-27 8.8%",
+   "2026-04-21→2026-04-23 2.8%",
+   "2026-05-07→2026-05-12 3.1%",
+   "2026-05-29→2026-06-01 3.4%",
+   "2026-07-01→2026-07-08 4.4%",
+   "2026-07-15→2026-07-29 6.4%"
+  ]
+ },
+ {
+  "sym": "TE",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.48,
+  "priceVsSma": -33.8
+ },
+ {
+  "sym": "TECK",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 3.76,
+  "priceVsSma": 12.8,
+  "atr": 4.16,
+  "contracciones": [
+   24.6,
+   7.5
+  ],
+  "fechas": [
+   "2026-06-02→2026-07-17",
+   "2026-07-24→2026-07-29"
+  ],
+  "primeraEnAtr": 5.9,
+  "dispRatio": -0.56,
+  "volRatio": 0.95,
+  "techo": 71.15
+ },
+ {
+  "sym": "TER",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 7.19,
+  "priceVsSma": 10.5,
+  "seq": [
+   28.5,
+   19.2,
+   11.4
+  ],
+  "corta": 19.1,
+  "legs": [
+   "2026-02-12→2026-02-17 8.4%",
+   "2026-02-26→2026-03-09 23.7%",
+   "2026-03-11→2026-03-19 9.3%",
+   "2026-03-24→2026-03-30 16.6%",
+   "2026-04-10→2026-04-15 5.6%",
+   "2026-04-24→2026-04-29 28.5%",
+   "2026-05-06→2026-05-19 19.2%",
+   "2026-05-27→2026-06-01 11.4%",
+   "2026-06-03→2026-06-09 19.1%",
+   "2026-06-30→2026-07-17 39.2%",
+   "2026-07-21→2026-07-28 20.6%",
+   "2026-08-04→2026-08-10 11.1%"
+  ]
+ },
+ {
+  "sym": "TIGO",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 7.8,
+  "priceVsSma": 11.4,
+  "seq": [
+   17.7,
+   6.1
+  ],
+  "corta": 9.6,
+  "legs": [
+   "2026-02-09→2026-02-11 8.2%",
+   "2026-02-17→2026-02-19 4.2%",
+   "2026-03-02→2026-03-09 10.0%",
+   "2026-03-17→2026-03-19 4.6%",
+   "2026-03-25→2026-03-30 6.3%",
+   "2026-04-10→2026-04-15 10.0%",
+   "2026-04-22→2026-04-28 6.1%",
+   "2026-05-01→2026-05-12 17.7%",
+   "2026-05-14→2026-05-19 6.1%",
+   "2026-05-26→2026-05-26 9.6%",
+   "2026-06-03→2026-06-05 8.4%",
+   "2026-06-15→2026-06-22 11.4%",
+   "2026-07-14→2026-07-15 8.6%",
+   "2026-07-22→2026-08-03 10.9%"
+  ]
+ },
+ {
+  "sym": "TJX",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.11,
+  "priceVsSma": -7.2,
+  "seq": [
+   12.8,
+   3.8
+  ],
+  "corta": 4.7,
+  "legs": [
+   "2026-02-10→2026-02-11 4.4%",
+   "2026-02-25→2026-02-25 4.8%",
+   "2026-03-04→2026-03-09 4.2%",
+   "2026-03-10→2026-03-19 6.4%",
+   "2026-04-01→2026-04-07 3.0%",
+   "2026-04-09→2026-05-13 11.9%",
+   "2026-05-27→2026-06-02 5.3%",
+   "2026-06-11→2026-07-15 12.8%",
+   "2026-07-17→2026-07-24 3.8%",
+   "2026-07-29→2026-08-04 4.7%"
+  ]
+ },
+ {
+  "sym": "TKO",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.27,
+  "priceVsSma": 2.8
+ },
+ {
+  "sym": "TMUS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.26,
+  "priceVsSma": -5.4
+ },
+ {
+  "sym": "TNGX",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 11.91,
+  "priceVsSma": 15.4,
+  "seq": [
+   31.9,
+   12.6
+  ],
+  "corta": 17.3,
+  "legs": [
+   "2026-02-06→2026-02-11 8.0%",
+   "2026-02-13→2026-02-20 10.8%",
+   "2026-02-23→2026-03-02 20.6%",
+   "2026-04-02→2026-04-07 13.3%",
+   "2026-04-21→2026-05-15 31.9%",
+   "2026-05-21→2026-05-28 12.6%",
+   "2026-06-01→2026-06-05 17.3%",
+   "2026-06-17→2026-08-14 28.0%"
+  ]
+ },
+ {
+  "sym": "TPC",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 3.52,
+  "priceVsSma": 12.5,
+  "ultima": 3.7,
+  "seq": [
+   31.3,
+   14.4,
+   13.7
+  ],
+  "legs": [
+   "2026-02-11→2026-02-19 10.5%",
+   "2026-02-26→2026-03-12 25.3%",
+   "2026-03-17→2026-03-20 6.9%",
+   "2026-03-25→2026-03-30 7.9%",
+   "2026-04-16→2026-04-17 4.2%",
+   "2026-05-06→2026-06-10 31.3%",
+   "2026-06-24→2026-07-07 14.4%",
+   "2026-07-21→2026-07-29 13.7%"
+  ]
+ },
+ {
+  "sym": "TRNO",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.36,
+  "priceVsSma": 5.1,
+  "legs": [
+   "2026-02-06→2026-02-12 4.5%",
+   "2026-02-17→2026-04-17 10.9%",
+   "2026-04-20→2026-06-02 6.6%",
+   "2026-06-10→2026-06-18 7.1%",
+   "2026-07-17→2026-08-10 14.2%"
+  ]
+ },
+ {
+  "sym": "TSCO",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -5.52,
+  "priceVsSma": -10.4
+ },
+ {
+  "sym": "TSM",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 3.88,
+  "priceVsSma": 6.4,
+  "legs": [
+   "2026-02-12→2026-02-12 15.2%",
+   "2026-02-25→2026-03-30 19.4%",
+   "2026-04-14→2026-04-16 5.7%",
+   "2026-05-07→2026-05-12 8.1%",
+   "2026-05-14→2026-05-19 8.7%",
+   "2026-06-03→2026-06-09 9.9%",
+   "2026-06-22→2026-06-26 12.1%",
+   "2026-06-30→2026-07-29 22.2%"
+  ]
+ },
+ {
+  "sym": "TSN",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 0.24,
+  "priceVsSma": -4.3,
+  "ultima": 5.3,
+  "seq": [
+   20.7,
+   13.5
+  ],
+  "legs": [
+   "2026-02-06→2026-03-23 12.1%",
+   "2026-04-10→2026-05-04 5.5%",
+   "2026-05-05→2026-06-18 20.7%",
+   "2026-07-07→2026-07-23 6.6%",
+   "2026-07-28→2026-08-03 13.5%"
+  ]
+ },
+ {
+  "sym": "TTEK",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.03,
+  "priceVsSma": 13.7
+ },
+ {
+  "sym": "TXG",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 18.66,
+  "priceVsSma": 113.8,
+  "seq": [
+   26.1,
+   14.4
+  ],
+  "corta": 21.4,
+  "legs": [
+   "2026-02-13→2026-02-23 12.3%",
+   "2026-03-03→2026-03-16 31.8%",
+   "2026-04-17→2026-04-29 26.1%",
+   "2026-05-06→2026-05-08 14.4%",
+   "2026-06-04→2026-06-11 21.4%",
+   "2026-07-15→2026-07-20 9.5%",
+   "2026-07-23→2026-07-27 9.1%",
+   "2026-07-31→2026-08-07 11.8%"
+  ]
+ },
+ {
+  "sym": "TXRH",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.5,
+  "priceVsSma": 13,
+  "seq": [
+   17.8,
+   7.9
+  ],
+  "corta": 13.4,
+  "legs": [
+   "2026-02-09→2026-04-02 17.8%",
+   "2026-04-08→2026-05-04 9.0%",
+   "2026-05-12→2026-05-20 7.9%",
+   "2026-05-29→2026-06-04 13.4%",
+   "2026-06-26→2026-07-08 7.8%",
+   "2026-07-17→2026-07-23 5.6%",
+   "2026-08-03→2026-08-07 4.1%"
+  ]
+ },
+ {
+  "sym": "TXT",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.1,
+  "priceVsSma": -5.8
+ },
+ {
+  "sym": "UAA",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.59,
+  "priceVsSma": -16.7,
+  "seq": [
+   33.5,
+   29.8,
+   9,
+   8.7
+  ],
+  "corta": 30.7,
+  "legs": [
+   "2026-02-20→2026-04-02 33.5%",
+   "2026-04-21→2026-05-12 29.8%",
+   "2026-05-28→2026-06-03 12.1%",
+   "2026-06-12→2026-06-18 9.0%",
+   "2026-07-06→2026-07-08 8.7%",
+   "2026-07-17→2026-08-12 30.7%"
+  ]
+ },
+ {
+  "sym": "UAL",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 1.27,
+  "priceVsSma": 7,
+  "atr": 4.53,
+  "contracciones": [
+   19.6,
+   8.7
+  ],
+  "fechas": [
+   "2026-06-30→2026-07-23",
+   "2026-08-05→2026-08-10"
+  ],
+  "primeraEnAtr": 4.3,
+  "dispRatio": -0.13,
+  "volRatio": 0.53,
+  "techo": 138.77
+ },
+ {
+  "sym": "UBS",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.28,
+  "priceVsSma": 16.7,
+  "seq": [
+   18.5,
+   7.9,
+   3.2,
+   3.1
+  ],
+  "corta": 3.5,
+  "legs": [
+   "2026-02-10→2026-03-27 18.5%",
+   "2026-04-21→2026-04-23 7.9%",
+   "2026-05-07→2026-05-12 3.2%",
+   "2026-05-26→2026-05-28 3.1%",
+   "2026-06-02→2026-06-05 3.5%",
+   "2026-06-22→2026-06-26 4.4%",
+   "2026-07-15→2026-07-28 6.9%"
+  ]
+ },
+ {
+  "sym": "UFPT",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 3.32,
+  "priceVsSma": 33.2,
+  "seq": [
+   18.3,
+   9.7,
+   3.9
+  ],
+  "corta": 8.5,
+  "legs": [
+   "2026-05-06→2026-05-18 10.5%",
+   "2026-05-27→2026-06-02 10.0%",
+   "2026-06-12→2026-06-17 8.1%",
+   "2026-07-07→2026-07-14 18.3%",
+   "2026-07-17→2026-07-23 9.7%",
+   "2026-07-28→2026-07-31 3.9%",
+   "2026-08-04→2026-08-10 8.5%"
+  ]
+ },
+ {
+  "sym": "UHS",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -3.75,
+  "priceVsSma": -2.6
+ },
+ {
+  "sym": "UMBF",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 3.01,
+  "priceVsSma": 13,
+  "seq": [
+   9,
+   4.4
+  ],
+  "corta": 7.5,
+  "legs": [
+   "2026-02-06→2026-03-19 21.0%",
+   "2026-03-26→2026-03-27 4.7%",
+   "2026-04-09→2026-04-13 2.8%",
+   "2026-04-17→2026-04-27 5.8%",
+   "2026-05-07→2026-05-15 8.1%",
+   "2026-05-27→2026-06-03 6.6%",
+   "2026-06-15→2026-06-16 9.0%",
+   "2026-07-07→2026-07-08 4.4%",
+   "2026-07-16→2026-07-23 7.5%",
+   "2026-08-04→2026-08-07 4.1%"
+  ]
+ },
+ {
+  "sym": "UNH",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 3.09,
+  "priceVsSma": 10.6,
+  "legs": [
+   "2026-02-17→2026-02-24 7.6%",
+   "2026-03-02→2026-03-27 12.6%",
+   "2026-04-22→2026-04-27 2.7%",
+   "2026-05-01→2026-05-06 3.9%",
+   "2026-05-13→2026-06-02 7.3%",
+   "2026-06-15→2026-06-17 3.8%",
+   "2026-07-09→2026-07-15 4.6%",
+   "2026-07-16→2026-08-05 13.8%"
+  ]
+ },
+ {
+  "sym": "UNM",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 1.99,
+  "priceVsSma": 8.8,
+  "legs": [
+   "2026-02-05→2026-03-03 12.0%",
+   "2026-03-17→2026-03-30 5.2%",
+   "2026-04-17→2026-04-22 5.1%",
+   "2026-05-06→2026-05-07 3.4%",
+   "2026-05-21→2026-05-28 3.6%",
+   "2026-06-15→2026-07-29 11.4%"
+  ]
+ },
+ {
+  "sym": "UNP",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 3.44,
+  "priceVsSma": 14.7,
+  "atr": 2.22,
+  "contracciones": [
+   9.9,
+   2.6
+  ],
+  "fechas": [
+   "2026-07-23→2026-07-30",
+   "2026-08-06→2026-08-11"
+  ],
+  "primeraEnAtr": 4.4,
+  "dispRatio": -0.57,
+  "volRatio": 0.77,
+  "techo": 315.99
+ },
+ {
+  "sym": "UPST",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -7.24,
+  "priceVsSma": -2.9
+ },
+ {
+  "sym": "URBN",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.48,
+  "priceVsSma": 5.5
+ },
+ {
+  "sym": "VC",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 0.88,
+  "priceVsSma": 3.3,
+  "atr": 4.19,
+  "contracciones": [
+   26.1,
+   12.7,
+   7,
+   6.4
+  ],
+  "fechas": [
+   "2026-06-22→2026-06-29",
+   "2026-07-10→2026-07-23",
+   "2026-07-29→2026-08-04",
+   "2026-08-05→2026-08-10"
+  ],
+  "primeraEnAtr": 6.2,
+  "dispRatio": -0.53,
+  "volRatio": 0.66,
+  "techo": 126.95
+ },
+ {
+  "sym": "VECO",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 6.02,
+  "priceVsSma": 0.5,
+  "mejor": 6.3,
+  "legs": [
+   "2026-03-04→2026-03-09 12.5%",
+   "2026-03-12→2026-03-20 8.5%",
+   "2026-03-25→2026-03-31 14.0%",
+   "2026-04-24→2026-04-28 12.4%",
+   "2026-05-06→2026-05-19 20.6%",
+   "2026-05-27→2026-06-01 14.5%",
+   "2026-06-15→2026-07-29 50.5%",
+   "2026-08-06→2026-08-10 12.0%"
+  ]
+ },
+ {
+  "sym": "VG",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 7.83,
+  "priceVsSma": 12.5,
+  "atr": 5.47,
+  "contracciones": [
+   21.6,
+   9
+  ],
+  "fechas": [
+   "2026-07-23→2026-07-28",
+   "2026-07-31→2026-08-05"
+  ],
+  "primeraEnAtr": 3.9,
+  "dispRatio": -0.57,
+  "volRatio": 0.73,
+  "techo": 15.45
+ },
+ {
+  "sym": "VKTX",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.24,
+  "priceVsSma": 8.9
+ },
+ {
+  "sym": "VMI",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.12,
+  "priceVsSma": 0.7,
+  "legs": [
+   "2026-02-11→2026-03-30 22.1%",
+   "2026-04-08→2026-04-16 10.0%",
+   "2026-05-06→2026-05-20 8.2%",
+   "2026-05-27→2026-06-01 5.7%",
+   "2026-06-03→2026-06-10 6.9%",
+   "2026-06-25→2026-07-29 22.2%"
+  ]
+ },
+ {
+  "sym": "VPG",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 7.81,
+  "priceVsSma": -17.6,
+  "seq": [
+   30.4,
+   16.3,
+   10.2
+  ],
+  "corta": 16.7,
+  "legs": [
+   "2026-02-09→2026-03-19 30.4%",
+   "2026-03-25→2026-03-27 16.3%",
+   "2026-04-24→2026-04-29 10.2%",
+   "2026-05-18→2026-05-19 16.7%",
+   "2026-06-02→2026-06-09 17.5%",
+   "2026-06-15→2026-06-26 17.2%",
+   "2026-06-30→2026-08-10 57.6%"
+  ]
+ },
+ {
+  "sym": "VRNS",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 4.14,
+  "priceVsSma": 33.6,
+  "seq": [
+   27.1,
+   3.6
+  ],
+  "corta": 22.6,
+  "legs": [
+   "2026-02-11→2026-02-24 27.1%",
+   "2026-02-26→2026-03-10 3.6%",
+   "2026-03-17→2026-04-10 22.6%",
+   "2026-04-21→2026-04-23 9.8%",
+   "2026-04-29→2026-05-14 11.0%",
+   "2026-06-01→2026-06-09 13.2%",
+   "2026-06-16→2026-06-18 8.3%",
+   "2026-07-15→2026-07-31 21.4%"
+  ]
+ },
+ {
+  "sym": "VRT",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 5.39,
+  "priceVsSma": -6.5,
+  "seq": [
+   28.1
+  ],
+  "corta": 29.6,
+  "legs": [
+   "2026-02-25→2026-03-03 11.4%",
+   "2026-03-11→2026-03-13 7.5%",
+   "2026-03-25→2026-03-30 17.9%",
+   "2026-04-14→2026-04-16 6.3%",
+   "2026-04-24→2026-04-28 11.0%",
+   "2026-05-14→2026-07-17 28.1%",
+   "2026-07-23→2026-07-29 29.6%",
+   "2026-08-06→2026-08-10 6.6%"
+  ]
+ },
+ {
+  "sym": "VTI",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.51,
+  "priceVsSma": 8,
+  "seq": [
+   4.9,
+   3.4,
+   1.9
+  ],
+  "corta": 3.4,
+  "legs": [
+   "2026-04-17→2026-04-23 1.5%",
+   "2026-05-14→2026-05-19 2.6%",
+   "2026-06-02→2026-06-09 4.9%",
+   "2026-06-15→2026-06-26 3.4%",
+   "2026-07-06→2026-07-08 1.9%",
+   "2026-07-10→2026-07-29 3.4%"
+  ]
+ },
+ {
+  "sym": "VVV",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 2.35,
+  "priceVsSma": -4.1,
+  "legs": [
+   "2026-02-12→2026-03-19 18.0%",
+   "2026-03-26→2026-04-06 7.1%",
+   "2026-04-08→2026-05-05 12.9%",
+   "2026-05-08→2026-05-20 15.4%",
+   "2026-05-29→2026-06-01 5.8%",
+   "2026-06-15→2026-06-23 5.2%",
+   "2026-06-29→2026-07-08 7.9%",
+   "2026-07-17→2026-08-12 20.1%"
+  ]
+ },
+ {
+  "sym": "VZ",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.62,
+  "priceVsSma": 7.8,
+  "seq": [
+   13,
+   5.8
+  ],
+  "corta": 16.7,
+  "legs": [
+   "2026-02-12→2026-02-18 4.8%",
+   "2026-02-23→2026-02-26 3.2%",
+   "2026-03-04→2026-03-12 3.1%",
+   "2026-03-13→2026-03-19 5.3%",
+   "2026-03-24→2026-04-14 13.0%",
+   "2026-04-27→2026-05-18 5.8%",
+   "2026-05-27→2026-07-02 16.7%",
+   "2026-07-28→2026-08-05 8.0%"
+  ]
+ },
+ {
+  "sym": "W",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -1.11,
+  "priceVsSma": 29.3
+ },
+ {
+  "sym": "WAB",
+  "base": true,
+  "motivo": "ok",
+  "barras": 243,
+  "reason": "ok",
+  "smaSlopePct": 4.18,
+  "priceVsSma": 11.9,
+  "atr": 2.73,
+  "contracciones": [
+   11,
+   6.2,
+   3.6
+  ],
+  "fechas": [
+   "2026-06-25→2026-07-07",
+   "2026-07-29→2026-07-30",
+   "2026-08-04→2026-08-10"
+  ],
+  "primeraEnAtr": 4,
+  "dispRatio": 0.52,
+  "volRatio": 0.91,
+  "techo": 306.32
+ },
+ {
+  "sym": "WAL",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.64,
+  "priceVsSma": 0.3
+ },
+ {
+  "sym": "WAT",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.34,
+  "priceVsSma": 19.1,
+  "seq": [
+   27.5,
+   9.4,
+   8.7,
+   4.3
+  ],
+  "corta": 10,
+  "legs": [
+   "2026-02-04→2026-03-13 27.5%",
+   "2026-03-26→2026-03-27 6.4%",
+   "2026-04-21→2026-04-29 17.2%",
+   "2026-05-11→2026-05-20 9.4%",
+   "2026-05-29→2026-06-17 8.7%",
+   "2026-06-25→2026-06-30 4.3%",
+   "2026-07-07→2026-07-21 10.0%"
+  ]
+ },
+ {
+  "sym": "WDC",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 10.95,
+  "priceVsSma": 11,
+  "mejor": 6.2,
+  "legs": [
+   "2026-02-18→2026-03-09 23.2%",
+   "2026-03-18→2026-03-30 22.1%",
+   "2026-04-23→2026-04-28 10.2%",
+   "2026-05-11→2026-05-19 17.4%",
+   "2026-06-03→2026-06-09 20.2%",
+   "2026-06-18→2026-08-06 49.1%"
+  ]
+ },
+ {
+  "sym": "WEC",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.82,
+  "priceVsSma": -2.2,
+  "legs": [
+   "2026-02-05→2026-02-09 5.2%",
+   "2026-02-17→2026-02-20 3.7%",
+   "2026-03-04→2026-03-11 4.0%",
+   "2026-03-17→2026-03-24 6.1%",
+   "2026-04-09→2026-06-01 8.4%",
+   "2026-06-16→2026-06-18 3.7%",
+   "2026-06-29→2026-07-01 2.8%",
+   "2026-07-07→2026-08-11 12.0%"
+  ]
+ },
+ {
+  "sym": "WHR",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -7.91,
+  "priceVsSma": -25.7
+ },
+ {
+  "sym": "WM",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.68,
+  "priceVsSma": -0.7,
+  "legs": [
+   "2026-02-17→2026-02-25 4.8%",
+   "2026-03-06→2026-03-25 11.3%",
+   "2026-04-02→2026-04-17 6.2%",
+   "2026-04-24→2026-04-29 4.8%",
+   "2026-05-01→2026-06-02 10.8%",
+   "2026-06-11→2026-06-18 6.0%",
+   "2026-07-17→2026-08-04 10.1%"
+  ]
+ },
+ {
+  "sym": "WMB",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 2.56,
+  "priceVsSma": 1.8,
+  "seq": [
+   12.6,
+   4
+  ],
+  "corta": 13.3,
+  "legs": [
+   "2026-02-04→2026-02-04 4.9%",
+   "2026-03-02→2026-03-10 5.7%",
+   "2026-03-17→2026-03-23 4.1%",
+   "2026-03-27→2026-04-17 8.0%",
+   "2026-05-05→2026-05-08 7.3%",
+   "2026-05-20→2026-06-02 12.6%",
+   "2026-06-12→2026-06-15 4.0%",
+   "2026-06-26→2026-08-04 13.3%"
+  ]
+ },
+ {
+  "sym": "WPM",
+  "base": false,
+  "motivo": "ultima_contraccion_ancha",
+  "barras": 243,
+  "reason": "ultima_contraccion_ancha",
+  "smaSlopePct": 0.29,
+  "priceVsSma": 12.6,
+  "ultima": 6.8,
+  "seq": [
+   31.6,
+   30.6
+  ],
+  "legs": [
+   "2026-02-11→2026-02-17 8.6%",
+   "2026-03-02→2026-03-20 31.6%",
+   "2026-04-17→2026-06-10 30.6%",
+   "2026-06-17→2026-07-17 23.6%",
+   "2026-07-22→2026-07-29 6.8%"
+  ]
+ },
+ {
+  "sym": "WRB",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 0.63,
+  "priceVsSma": 1.9,
+  "legs": [
+   "2026-02-06→2026-02-10 4.9%",
+   "2026-02-12→2026-02-24 4.1%",
+   "2026-03-02→2026-03-25 13.3%",
+   "2026-04-09→2026-04-21 4.2%",
+   "2026-04-23→2026-05-13 5.3%",
+   "2026-05-19→2026-06-01 9.0%",
+   "2026-06-16→2026-06-18 2.8%",
+   "2026-07-13→2026-07-16 7.2%",
+   "2026-07-28→2026-08-12 10.5%"
+  ]
+ },
+ {
+  "sym": "WRBY",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.36,
+  "priceVsSma": 13.2,
+  "seq": [
+   29.5,
+   11.9
+  ],
+  "corta": 21.1,
+  "legs": [
+   "2026-02-20→2026-02-25 11.5%",
+   "2026-03-04→2026-04-06 29.5%",
+   "2026-04-08→2026-04-13 11.9%",
+   "2026-04-21→2026-04-30 21.1%",
+   "2026-05-01→2026-05-06 8.2%",
+   "2026-05-19→2026-06-05 26.7%",
+   "2026-06-15→2026-06-17 13.6%",
+   "2026-06-30→2026-07-22 23.9%",
+   "2026-08-05→2026-08-06 20.8%"
+  ]
+ },
+ {
+  "sym": "WSO",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.55,
+  "priceVsSma": -16.4
+ },
+ {
+  "sym": "WTRG",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.81,
+  "priceVsSma": 6.9,
+  "seq": [
+   12,
+   5.3,
+   5.2
+  ],
+  "corta": 6.1,
+  "legs": [
+   "2026-02-03→2026-02-09 6.6%",
+   "2026-02-17→2026-02-20 4.4%",
+   "2026-02-27→2026-03-03 4.9%",
+   "2026-03-13→2026-05-07 12.0%",
+   "2026-05-14→2026-06-01 5.3%",
+   "2026-06-10→2026-06-18 5.2%",
+   "2026-07-07→2026-07-15 6.1%",
+   "2026-07-29→2026-08-04 7.5%"
+  ]
+ },
+ {
+  "sym": "WULF",
+  "base": false,
+  "motivo": "primera_contraccion_superficial",
+  "barras": 243,
+  "reason": "primera_contraccion_superficial",
+  "smaSlopePct": 3.48,
+  "priceVsSma": -19.3,
+  "mejor": 6.3,
+  "legs": [
+   "2026-02-03→2026-02-05 24.7%",
+   "2026-02-10→2026-02-23 19.2%",
+   "2026-02-25→2026-03-09 29.7%",
+   "2026-03-16→2026-03-20 13.9%",
+   "2026-03-25→2026-03-30 25.6%",
+   "2026-04-14→2026-04-16 13.0%",
+   "2026-04-23→2026-04-29 9.4%",
+   "2026-05-06→2026-05-19 23.9%",
+   "2026-06-02→2026-06-05 16.3%",
+   "2026-06-22→2026-07-29 50.4%",
+   "2026-08-04→2026-08-10 18.6%"
+  ]
+ },
+ {
+  "sym": "XEL",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 1.04,
+  "priceVsSma": 0.7,
+  "seq": [
+   9.2,
+   4.2
+  ],
+  "corta": 8.2,
+  "legs": [
+   "2026-02-26→2026-03-20 8.9%",
+   "2026-04-09→2026-04-22 7.0%",
+   "2026-05-01→2026-06-01 9.2%",
+   "2026-06-16→2026-06-18 4.2%",
+   "2026-06-25→2026-08-07 8.2%"
+  ]
+ },
+ {
+  "sym": "XENE",
+  "base": false,
+  "motivo": "menos_de_2_contracciones",
+  "barras": 243,
+  "reason": "menos_de_2_contracciones",
+  "smaSlopePct": 5.3,
+  "priceVsSma": 14.2,
+  "legs": [
+   "2026-02-03→2026-02-05 5.2%",
+   "2026-02-10→2026-02-11 6.7%",
+   "2026-02-27→2026-03-06 12.6%",
+   "2026-03-10→2026-03-24 17.8%",
+   "2026-04-01→2026-04-07 6.0%",
+   "2026-04-14→2026-06-08 15.1%",
+   "2026-07-09→2026-08-03 15.8%"
+  ]
+ },
+ {
+  "sym": "XP",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.02,
+  "priceVsSma": -8.2,
+  "seq": [
+   24.3,
+   0.7
+  ],
+  "corta": 31.2,
+  "legs": [
+   "2026-02-11→2026-02-13 10.3%",
+   "2026-02-20→2026-03-30 24.3%",
+   "2026-04-01→2026-04-13 0.7%",
+   "2026-04-17→2026-06-11 31.2%",
+   "2026-06-15→2026-07-08 10.2%",
+   "2026-07-10→2026-07-17 5.3%",
+   "2026-07-22→2026-07-29 6.7%",
+   "2026-07-31→2026-08-12 11.8%"
+  ]
+ },
+ {
+  "sym": "YOU",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 4.28,
+  "priceVsSma": -9.7,
+  "seq": [
+   20.9,
+   8.7
+  ],
+  "corta": 12.9,
+  "legs": [
+   "2026-02-09→2026-02-11 6.1%",
+   "2026-02-26→2026-03-12 12.9%",
+   "2026-03-26→2026-04-10 19.7%",
+   "2026-04-21→2026-04-30 12.6%",
+   "2026-05-07→2026-05-14 12.1%",
+   "2026-05-26→2026-06-15 20.9%",
+   "2026-06-29→2026-07-02 8.7%",
+   "2026-07-07→2026-07-23 12.9%"
+  ]
+ },
+ {
+  "sym": "YUM",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.22,
+  "priceVsSma": -6.1
+ },
+ {
+  "sym": "YUMC",
+  "base": false,
+  "motivo": "contexto_no_etapa2",
+  "barras": 243,
+  "reason": "contexto_no_etapa2",
+  "smaSlopePct": -0.18,
+  "priceVsSma": -0.3
+ },
+ {
+  "sym": "ZBH",
+  "base": false,
+  "motivo": "reexpansion",
+  "barras": 243,
+  "reason": "reexpansion",
+  "smaSlopePct": 0.9,
+  "priceVsSma": 11.6,
+  "seq": [
+   21.1,
+   5
+  ],
+  "corta": 10.3,
+  "legs": [
+   "2026-02-26→2026-04-29 21.1%",
+   "2026-05-06→2026-05-11 6.4%",
+   "2026-05-20→2026-05-29 6.5%",
+   "2026-06-10→2026-06-11 5.0%",
+   "2026-06-16→2026-06-17 3.5%",
+   "2026-06-26→2026-06-30 10.3%",
+   "2026-07-13→2026-07-22 8.0%",
+   "2026-07-28→2026-07-31 6.7%",
+   "2026-08-05→2026-08-12 7.4%"
+  ]
+ }
+]

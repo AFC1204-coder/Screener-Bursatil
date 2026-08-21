@@ -13,11 +13,17 @@ reproducirlos.
 ```
 detector/
   v4.mjs              prototipo principal — el que mejor reproduce las lecturas del dueño
-  v5.mjs              v4 + zona de salida de v3. Mide PEOR (14/21 frente a 15/21)
+  v5.mjs              v4 + zona de salida de v3. 14/21 frente a 15/21, pero el
+                      único caso que cambia (IP) lo rechaza por la razón correcta
 
 arneses/
   v4-test.mjs         v4 contra los 9 casos de la tanda 1
-  v5-test.mjs         v4 y v5 contra los 21 casos de las tandas 1 y 2   <- el principal
+  v5-test.mjs         v4 y v5 contra los 21 casos, solo el sí/no
+  medicion-corpus.mjs v4/v5 contra los 21 comparando también LAS FECHAS   <- el principal
+  reglas-simulacion.mjs   qué cambiaría cada regla candidata, sobre lo ya detectado
+  reglas-universo.mjs     qué cortarían esas reglas sobre los 37 marcados del universo
+  estabilidad-ventana.mjs ¿cambia la lectura al mover el lookback? (respuesta: casi nunca)
+  inspect.mjs         resumen semanal de un símbolo, para mirar los datos crudos
   corpus-test.mjs     v4/v5 contra el corpus antiguo (docs/methodology/vcp-corpus.json)
   v4-universo.mjs     corrida sobre la muestra aleatoria de 400 valores
   fractal.mjs         ¿cambia lo detectado al mover la ventana? (respuesta: casi nada)
@@ -32,6 +38,7 @@ resultados/
   universo-v4.json    veredicto de v4 sobre los 400
   fractal.json        experimento de ventanas
   fractal2.json       experimento de escalas
+  medicion-v4-corpus.json  la medición con fechas, caso por caso (medicion-corpus.mjs)
 
 corpus-manual.json    LOS 21 CASOS ETIQUETADOS A MANO, con fechas y profundidades
                       verificadas contra daily_bars. Es el activo real de todo esto.
@@ -54,7 +61,8 @@ Supabase ni ejecuta escaneos.
 | | |
 |---|---|
 | Casos etiquetados a mano | **21** (9 + 12, los 12 a ciegas) |
-| v4 contra esos 21 | **15/21** · 4 falsos positivos · 2 falsos negativos |
+| v4 contra esos 21, sí/no | **15/21** · 4 falsos positivos · 2 falsos negativos |
+| v4 contra esos 21, **sí/no y estructura** | **7/21** — ocho aciertos son de veredicto pero con las fechas en otro sitio |
 | Precisión sobre lo que enseñaría | **5 de 8 (62,5%)** en la corrida ciega |
 | Cobertura | **9,3%** del universo líquido |
 
@@ -86,8 +94,17 @@ De ellas, la única lista para implementar es **R2 (anidamiento)**: sale de dos
 casos etiquetados, está escrita como regla y **reduce** falsos positivos en vez
 de multiplicarlos.
 
+A esas seis, la medición con fechas del 21 de agosto añade dos que sí tienen
+evidencia y no dependen de un umbral fino —**R7**, la primera contracción tiene
+que ser un proceso y no un desplome de una sesión, y **R8**, la base no puede
+saltarse su propio suelo— y deja constancia de que **R1 y R3 siguen sin medida
+después de probar siete candidatas**. Está todo en
+`docs/medicion-detector-v4-corpus-2026-08-21.md`.
+
 ## Documentos relacionados
 
+- `docs/medicion-detector-v4-corpus-2026-08-21.md` — la medición con fechas, las
+  reglas candidatas y las etiquetas que hay que revisar
 - `docs/diseno-contracciones-v4-2026-08-18.md` — dónde termina la base, y la
   revisión del corpus antiguo
 - `docs/temporalidad-contracciones-2026-08-21.md` — fractalidad, escalas y peso
