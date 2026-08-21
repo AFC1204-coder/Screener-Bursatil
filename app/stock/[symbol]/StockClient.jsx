@@ -4,6 +4,7 @@ import { ScanSearch } from "lucide-react";
 import ChartPreferences from "@/app/ChartPreferences";
 import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
+import DescriptiveStrip from "./DescriptiveStrip";
 import { compactDate, QualityStrip } from "@/app/components/ui/QualityStrip";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { amount, dateShort, dateTime, num as sharedNum, pct as sharedPct, pctShare, priceMoney as sharedPriceMoney, signedPriceMoney as sharedSignedPriceMoney } from "@/lib/formatters";
@@ -2269,6 +2270,17 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           showPatternDiagnostics={showVcpDiagnostics}
           localQuality={localQuality}
           height={600}
+        />
+        {/* Franja descriptiva (diseño "Ficha StatsEdge", variante 2a):
+            identidad, etapa, fuerza relativa, estructura y crecimiento,
+            pegada al gráfico. Los campos sin dato demostrable se muestran
+            ausentes con su motivo (ver lib/descriptiveStrip.js). */}
+        <DescriptiveStrip
+          symbol={symbol}
+          data={data}
+          rsUniverse={rsUniverse}
+          freshness={freshness}
+          setupPattern={setupPattern}
         />
       </section>
 
