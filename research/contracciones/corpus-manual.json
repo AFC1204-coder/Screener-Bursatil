@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "generado": "2026-08-21",
+  "descripcion": "Corpus de bases etiquetadas a mano por el dueño (Alejandro), agosto 2026. Sustituye en la práctica al corpus antiguo docs/methodology/vcp-corpus.json, cuyas etiquetas se revisaron en docs/diseno-contracciones-v4-2026-08-18.md. Las profundidades están VERIFICADAS contra daily_bars, no transcritas de la conversación.",
+  "convenciones": {
+    "tramo": "un par maximo->minimo. La profundidad es (max-min)/max*100 medida sobre high del maximo y low del minimo.",
+    "asOf": "fecha de corte para evaluar el detector: la estructura ya esta completa pero aun no resuelta.",
+    "veredicto": "BASE | NO — el juicio del dueño sobre si es una base valida, INDEPENDIENTE de si funciono.",
+    "desenlace": "que hizo el precio despues. 'base valida' y 'operacion ganadora' son etiquetas distintas: ICE es si a la primera y no a la segunda.",
+    "ciego": "true si el dueño etiqueto sin ver el veredicto del detector."
+  },
+  "casos": [
+    {
+      "id": "ICE-2026-01", "symbol": "ICE", "asOf": "2026-04-13", "tanda": 1, "ciego": false,
+      "veredicto": "BASE",
+      "tramos": [
+        {"max": "2026-01-29", "maxPrecio": 174.83, "min": "2026-02-12", "minPrecio": 143.18, "profPct": 18.1},
+        {"max": "2026-03-02", "maxPrecio": 166.84, "min": "2026-03-27", "minPrecio": 151.82, "profPct": 9.0},
+        {"max": "2026-04-08", "maxPrecio": 167.58, "min": "2026-04-10", "minPrecio": 157.20, "profPct": 6.2}
+      ],
+      "techo": 167.58, "disparo": 167.58,
+      "contexto": {"smaSlope20d": -0.67, "precioVsSma": 4.5, "techoVsMax52": 94},
+      "desenlace": {"disparo": false, "maxPosterior": 165.28, "retornoPct": null, "peorPct": -27.3,
+                    "nota": "nunca cerro sobre el techo; perdio el minimo del 12-feb el 2-jun"},
+      "notaDueño": "el patron mas claro que he visto, aunque acabo sin funcionar bien"
+    },
+    {
+      "id": "GOOGL-2026-02", "symbol": "GOOGL", "asOf": "2026-04-24", "tanda": 1, "ciego": false,
+      "veredicto": "BASE",
+      "tramos": [
+        {"max": "2026-02-03", "maxPrecio": 348.55, "min": "2026-03-30", "minPrecio": 271.95, "profPct": 22.0},
+        {"max": "2026-04-17", "maxPrecio": 342.12, "min": "2026-04-21", "minPrecio": 331.15, "profPct": 3.2}
+      ],
+      "techo": 348.55, "disparo": 348.55,
+      "contexto": {"smaSlope20d": 8.9, "precioVsSma": 30.9, "techoVsMax52": 100},
+      "desenlace": {"disparo": true, "fechaDisparo": "2026-04-27", "maxPosterior": 408.37, "retornoPct": 17.2},
+      "notaDueño": "taza con asa; la correccion ultima es muy pequena (asa de 1,3x ATR)",
+      "patron": "taza_con_asa"
+    },
+    {
+      "id": "PNC-2026-02", "symbol": "PNC", "asOf": "2026-06-08", "tanda": 1, "ciego": false,
+      "veredicto": "BASE",
+      "tramos": [
+        {"max": "2026-02-06", "maxPrecio": 240.17, "min": "2026-03-09", "minPrecio": 194.98, "profPct": 18.8},
+        {"max": "2026-04-21", "maxPrecio": 228.43, "min": "2026-05-13", "minPrecio": 208.04, "profPct": 8.9},
+        {"max": "2026-05-27", "maxPrecio": 221.28, "min": "2026-06-02", "minPrecio": 213.50, "profPct": 3.5}
+      ],
+      "techo": 240.17, "disparo": 221.28,
+      "disparoAlternativo": {"nivel": 240.17, "fecha": "2026-06-25", "retornoPct": 7.8},
+      "contexto": {"smaSlope20d": 3.2, "precioVsSma": 22.7, "techoVsMax52": 100},
+      "desenlace": {"disparo": true, "fechaDisparo": "2026-06-04", "maxPosterior": 258.96, "retornoPct": 17.6},
+      "notaDueño": "funciono bien y bastante claro; duda entre dos disparos, y el volumen es mejor en el primero (0,90x frente a 1,81x)"
+    },
+    {
+      "id": "KO-2026-02", "symbol": "KO", "asOf": "2026-05-13", "tanda": 1, "ciego": false,
+      "veredicto": "BASE",
+      "tramos": [
+        {"max": "2026-02-27", "maxPrecio": 80.92, "min": "2026-03-25", "minPrecio": 73.59, "profPct": 9.1},
+        {"max": "2026-04-09", "maxPrecio": 77.79, "min": "2026-04-21", "minPrecio": 74.14, "profPct": 4.7},
+        {"max": "2026-04-28", "maxPrecio": 79.80, "min": "2026-05-04", "minPrecio": 77.23, "profPct": 3.2}
+      ],
+      "techo": 80.92, "disparo": 80.92,
+      "contexto": {"smaSlope20d": 1.9, "precioVsSma": 16.1, "techoVsMax52": 100},
+      "desenlace": {"disparo": true, "fechaDisparo": "2026-05-19", "maxPosterior": 85.68, "retornoPct": 5.9},
+      "notaDueño": "VCP positivo, mas tipico de una base algo mas larga",
+      "relevancia": "es el caso que decide que la unidad de la primera contraccion es el ATR y no el porcentaje: 9,06% = 5,1x ATR"
+    },
+    {
+      "id": "MPC-2026-03-asc", "symbol": "MPC", "asOf": "2026-06-02", "tanda": 1, "ciego": false,
+      "veredicto": "BASE", "patron": "base_ascendente",
+      "tramos": [
+        {"max": "2026-03-30", "maxPrecio": 254.10, "min": "2026-04-17", "minPrecio": 209.27, "profPct": 17.6, "volEnMinimo": 1.45},
+        {"max": "2026-05-05", "maxPrecio": 259.90, "min": "2026-05-07", "minPrecio": 232.61, "profPct": 10.5, "volEnMinimo": 0.92},
+        {"max": "2026-05-20", "maxPrecio": 263.42, "min": "2026-05-27", "minPrecio": 240.70, "profPct": 8.6, "volEnMinimo": 0.81}
+      ],
+      "techo": 263.42, "disparo": 263.42,
+      "contexto": {"smaSlope20d": 5.0, "precioVsSma": 28.4, "techoVsMax52": 100},
+      "desenlace": {"disparo": true, "fechaDisparo": "2026-06-03", "maxPosterior": 366.24, "retornoPct": 41.0,
+                    "nota": "rompio con volumen 0,99x, sin expansion"},
+      "notaDueño": "el dueño corrigio la clasificacion inicial de 'falso positivo de escalera'; los maximos Y minimos ascienden",
+      "relevancia": "unico ejemplo de base ascendente etiquetado; produccion lo rechazaria por ceiling_break con escalones algo mayores"
+    },
+    {
+      "id": "MPC-2026-02-sierra", "symbol": "MPC", "asOf": "2026-03-30", "tanda": 1, "ciego": false,
+      "veredicto": "NO", "patron": "sierra_dientes",
+      "tramos": [
+        {"max": "2026-03-05", "maxPrecio": 227.06, "min": "2026-03-10", "minPrecio": 210.99, "profPct": 7.1, "volEnMinimo": 0.88},
+        {"max": "2026-03-12", "maxPrecio": 234.57, "min": "2026-03-16", "minPrecio": 223.78, "profPct": 4.6, "volEnMinimo": 1.08},
+        {"max": "2026-03-19", "maxPrecio": 241.40, "min": "2026-03-23", "minPrecio": 224.45, "profPct": 7.0, "volEnMinimo": 1.06}
+      ],
+      "contexto": {"smaSlope20d": 2.2, "precioVsSma": 18.8, "techoVsMax52": 100},
+      "motivoRechazo": "profundidades oscilan (7,1 -> 4,6 -> 7,0), volumen no se seca, techo avanza 3,3%/semana",
+      "relevancia": "contraste directo con MPC-2026-03-asc: mismo valor, tramo contiguo, todo lo demas igualado"
+    },
+    {
+      "id": "NDAQ-2025-11", "symbol": "NDAQ", "asOf": "2025-12-17", "tanda": 1, "ciego": false,
+      "veredicto": "NO",
+      "tramos": [
+        {"max": "2025-11-12", "maxPrecio": 88.33, "min": "2025-11-18", "minPrecio": 83.94, "profPct": 5.0},
+        {"max": "2025-11-28", "maxPrecio": 90.38, "min": "2025-12-03", "minPrecio": 86.94, "profPct": 3.8},
+        {"max": "2025-12-11", "maxPrecio": 93.75, "min": "2025-12-16", "minPrecio": 91.76, "profPct": 2.1}
+      ],
+      "contexto": {"smaSlope20d": 2.1, "precioVsSma": 1.9, "techoVsMax52": 92},
+      "motivoRechazo": "geometria ascendente limpia pero primera contraccion de solo 2,7x ATR",
+      "desenlace": {"disparo": true, "fechaDisparo": "2025-12-18", "maxPosterior": 101.11, "peorPct": -24.0,
+                    "nota": "subio 7,8% y luego se desplomo; perdio el minimo del 18-nov el 10-feb"},
+      "relevancia": "demuestra que la geometria ascendente NO basta: la escala decide"
+    },
+    {
+      "id": "V-2026-07", "symbol": "V", "asOf": "2026-07-24", "tanda": 1, "ciego": false,
+      "veredicto": "NO",
+      "tramos": [
+        {"max": "2026-07-06", "maxPrecio": 364.34, "min": "2026-07-09", "minPrecio": 343.78, "profPct": 5.6},
+        {"max": "2026-07-16", "maxPrecio": 364.46, "min": "2026-07-23", "minPrecio": 347.85, "profPct": 4.6}
+      ],
+      "contexto": {"smaSlope20d": 0.0, "precioVsSma": 10.1, "techoVsMax52": 100},
+      "motivoRechazo": "hay consolidacion pero no contraccion suficiente: 2,4x ATR",
+      "notaDueño": "el dueño escribio '3 jul' pero ese dia el mercado estaba cerrado (4-jul en sabado); el pico es 2-jul o 6-jul",
+      "relevancia": "pasa el criterio de lateralidad y falla el de profundidad: demuestra que los dos criterios son independientes"
+    },
+    {
+      "id": "ORCL-2026-04", "symbol": "ORCL", "asOf": "2026-05-28", "tanda": 1, "ciego": false,
+      "veredicto": "NO",
+      "tramos": [
+        {"max": "2026-04-22", "maxPrecio": 188.52, "min": "2026-04-30", "minPrecio": 159.77, "profPct": 15.3},
+        {"max": "2026-05-07", "maxPrecio": 199.46, "min": "2026-05-20", "minPrecio": 178.18, "profPct": 10.7},
+        {"max": "2026-05-22", "maxPrecio": 196.32, "min": "2026-05-27", "minPrecio": 187.27, "profPct": 4.6}
+      ],
+      "contexto": {"smaSlope20d": -5.9, "precioVsSma": -7.4, "techoVsMax52": 55},
+      "motivoRechazo": "CONTEXTO: etapa 4, viene de tendencia bajista mayor y la contraccion esta dentro de un rebote",
+      "desenlace": {"disparo": true, "fechaDisparo": "2026-06-01", "maxPosterior": 249.38, "peorPct": -45.0,
+                    "nota": "rompio con volumen 1,85x y luego cayo a 137,07"},
+      "notaDueño": "cogido con pinzas; el tamano del patron es muy pequeno comparado con el patron mayor",
+      "relevancia": "el unico caso donde la geometria es defendible, el disparo se activo, y aun asi fue un desastre. Es lo que obliga al filtro de contexto."
+    },
+
+    {
+      "id": "AMT-2026-08", "symbol": "AMT", "asOf": "2026-08-19", "tanda": 2, "ciego": true,
+      "veredicto": "NO", "tramos": [],
+      "contexto": {"smaSlope20d": 0.1},
+      "motivoRechazo": "lateral perpetuo: avance de -1,4% en 130 sesiones y todo el ano cabe en un rango del 29%",
+      "notaDueño": "tremendamente lateral; es como un bucle infinito de posibles patrones de volatilidad comprimida",
+      "reglaNueva": "R1_lateral_perpetuo"
+    },
+    {
+      "id": "BEKE-2026-08", "symbol": "BEKE", "asOf": "2026-08-19", "tanda": 2, "ciego": true,
+      "veredicto": "NO", "tramos": [],
+      "contexto": {"smaSlope20d": 0.56},
+      "motivoRechazo": "el unico patron claro (desde 17-jul) es pequeno y vive dentro de uno mucho mayor sin resolver",
+      "notaDueño": "muy pequeno y no tiene gran peso por ese contexto de ser pequeno en un patron mucho mas grande",
+      "reglaNueva": "R2_jerarquia_anidamiento"
+    },
+    {
+      "id": "CPT-2026-08", "symbol": "CPT", "asOf": "2026-08-19", "tanda": 2, "ciego": true,
+      "veredicto": "NO", "tramos": [], "motivoRechazo": "intentos de VCP, ninguno claro"
+    },
+    {
+      "id": "DECK-2026-02", "symbol": "DECK", "asOf": "2026-08-19", "tanda": 2, "ciego": true,
+      "veredicto": "BASE",
+      "tramos": [
+        {"max": "2026-02-26", "min": "2026-03-27"},
+        {"max": "2026-04-21", "min": "2026-05-15"},
+        {"max": "2026-05-27", "min": "2026-06"}
+      ],
+      "contexto": {"smaSlope20d": -0.89},
+      "desenlace": {"nota": "acabo fracasando"},
+      "notaDueño": "se podria considerar un intento; tampoco tenia una tendencia demasiado buena",
+      "confianza": "baja"
+    },
+    {
+      "id": "ELV-2026-08", "symbol": "ELV", "asOf": "2026-08-19", "tanda": 2, "ciego": true,
+      "veredicto": "NO", "tramos": [],
+      "motivoRechazo": "grafico ruidoso, nada claro",
+      "reglaNueva": "R3_calidad_del_trazo"
+    },
+    {
+      "id": "FCX-2026-08", "symbol": "FCX", "asOf": "2026-08-19", "tanda": 2, "ciego": true,
+      "veredicto": "BASE",
+      "detectorV4": [22.5, 10.9, 11.1, 7.9],
+      "notaDueño": "cuatro o cinco contracciones, bastante erratico, se va haciendo mas grande en fractalidad; si rompe la resistencia presenta buen aspecto",
+      "reglaNueva": "R5_tolerancia_no_monotonia",
+      "relevancia": "la secuencia reexpande (10,9 -> 11,1) y el dueño la acepta"
+    },
+    {
+      "id": "FLG-2026-02", "symbol": "FLG", "asOf": "2026-08-19", "tanda": 2, "ciego": true,
+      "veredicto": "BASE",
+      "basesMultiples": [
+        {"desde": "2025-12-18", "hasta": "2026-01-28", "escala": "pequena"},
+        {"desde": "2026-02-09", "hasta": "2026-06-05", "escala": "grande"}
+      ],
+      "notaDueño": "hay uno pequeno entre 18-dic y 28-ene, y otro mas grande entre 9-feb y 5-jun",
+      "relevancia": "dos bases EN SECUENCIA (no anidadas): las dos valen. Contraste con BEKE."
+    },
+    {
+      "id": "IP-2026-02", "symbol": "IP", "asOf": "2026-08-19", "tanda": 2, "ciego": true,
+      "veredicto": "BASE", "patron": "taza_con_asa_cheat",
+      "detectorV4": [32.5, 10.7],
+      "notaDueño": "posible taza con asa, con dos contracciones de profundidad similar, lo que Minervini llamaria cheats; como el de GOOGL",
+      "reglaNueva": "R4_cheat_es_patron",
+      "relevancia": "a escala corta el detector ve [10,7 -> 4,1] de 3 semanas; a escala media [32,5 -> 10,7] de 25. El dueño lee la media."
+    },
+    {
+      "id": "MSGS-2026-08", "symbol": "MSGS", "asOf": "2026-08-19", "tanda": 2, "ciego": true,
+      "veredicto": "NO",
+      "detectorV4": [9.8, 8, 6.2, 3.6],
+      "motivoRechazo": "demasiada poca profundidad; poco volumen y bastante erratico",
+      "reglaNueva": "R3_calidad_del_trazo"
+    },
+    {
+      "id": "NDSN-2026-02", "symbol": "NDSN", "asOf": "2026-08-19", "tanda": 2, "ciego": true,
+      "veredicto": "BASE",
+      "tramos": [
+        {"max": "2026-02-19", "min": "2026-04-01"},
+        {"max": "2026-05-07", "min": "2026-05-19"},
+        {"max": "2026-05-26", "min": "2026-06-10"},
+        {"max": "2026-06-29", "min": "2026-07-07", "nota": "tras reconfiguracion"},
+        {"max": "2026-07-28", "min": "2026-07-30"},
+        {"max": "2026-08-06", "min": "en curso"}
+      ],
+      "detectorV4": [8.9, 4.6, 3.5],
+      "notaDueño": "no rompe bien y se reconfigura; luego tampoco rompe con fuerza, sino que hace otra contraccion mas",
+      "reglaNueva": "R6_reconfiguracion",
+      "relevancia": "el dueño lee SEIS contracciones de feb a ago; el detector ve tres de may a jul. Ni la escala 'larga' lo captura."
+    },
+    {
+      "id": "QRVO-2026-08", "symbol": "QRVO", "asOf": "2026-08-19", "tanda": 2, "ciego": true,
+      "veredicto": "BASE", "patron": "cheat",
+      "detectorV4": [25.7, 7.4],
+      "notaDueño": "posible cheat; seria una unica contraccion mas alla de la primera caida",
+      "confianza": "media"
+    },
+    {
+      "id": "VPG-2026-08", "symbol": "VPG", "asOf": "2026-08-19", "tanda": 2, "ciego": true,
+      "veredicto": "NO", "tramos": [],
+      "motivoRechazo": "solo tendencias al alza muy fuertes y a la baja tambien"
+    }
+  ],
+  "reglasPendientes": {
+    "R1_lateral_perpetuo": "Un valor que lleva un ano sin ir a ningun sitio genera VCPs espurios sin fin. AMT: -1,4% en 130 sesiones, rango anual 29%. OJO: la regla de v3 (avance previo >=25% en 130 sesiones) mataria los CINCO positivos de la tanda 2 (+6,0 / -1,8 / -13,5 / +5,9 / +12,8). El numero correcto NO se conoce.",
+    "R2_jerarquia_anidamiento": "Si B esta contenida en A y A no ha resuelto, reportar A y nunca B. Si A resolvio antes de que empezara B, son secuenciales y las dos valen. Deducida de BEKE (anidada) y FLG (secuencial). SIN IMPLEMENTAR.",
+    "R3_calidad_del_trazo": "MSGS mueve 98M$/dia y ELV 582M$/dia: los dos pasan cualquier filtro de liquidez y el dueño los rechaza por erraticos. Falta una medida de limpieza del grafico distinta del volumen negociado.",
+    "R4_cheat_es_patron": "Caida profunda + UNA sola contraccion es un patron con nombre propio (el cheat de Minervini), no un caso degenerado. Confirma que exigir >=3 contracciones esta mal. Ejemplos: GOOGL, IP, QRVO.",
+    "R5_tolerancia_no_monotonia": "FCX es 22,5 -> 10,9 -> 11,1 -> 7,9 y el dueño lo acepta. Su tolerancia a que un tramo crezca es mayor que la de cualquier regla monotona estricta.",
+    "R6_reconfiguracion": "Una base que falla la ruptura y se rehace, encadenando. El detector lo ve como reexpansion y lo rechaza. NDSN es el ejemplo."
+  },
+  "medicionesClave": {
+    "primeraContraccionEnATR": {"positivos": "4,4x - 9,1x", "negativos": "1,9x - 3,0x", "umbral": "~3,5x", "nota": "la unidad correcta es el ATR, no el porcentaje bruto; lo decidio KO"},
+    "lateralidad": {"definicion": "avance del techo / profundidad de la primera contraccion", "positivos": "-0,42 a +0,21", "negativos": "+1,23 y +1,68"},
+    "contexto": {"definicion": "pendiente de la media de 30 semanas a 20 sesiones", "positivosQueFuncionaron": "+1,9% a +8,9%", "losDosFracasos": "ICE -0,67%, ORCL -5,9%"},
+    "volumen": {"conclusion": "NO discrimina como puerta. Positivos 0,71-1,04 y el negativo 1,05. Activarla a 0,85 quitaba tres positivos y ningun negativo."},
+    "precisionCiega": {"marcados": 8, "buenos": 5, "precision": "62,5%", "cobertura": "9,3% del universo liquido"},
+    "pesoPorEscala": {"nota": "con horizonte proporcional (2x la duracion), la escala corta queda 0,44 pts POR DEBAJO del universo en rendimiento; media y larga +5,11. Fiabilidad (rompio/aguanto/caida) mejora monotonamente con la escala."}
+  }
+}
