@@ -32,6 +32,9 @@ const P = {
   lastContractionMaxAtr: 3.0,
   displacementMaxRatio: 0.6,   // entre +0,21 (MPC, positivo) y +1,23 (NDAQ, negativo)
   minContractions: 2,
+  topeRepunteEnAncla: false,  // VARIANTE, apagada: ningún tramo intermedio puede
+                              // ser más profundo que el ancla. No es un umbral
+                              // nuevo — el tope es la primera contracción.
   maxContractions: 6,
   decreaseTol: 1.02,      // heredado de v4 y SIN USAR: la monotonía estricta la
                           // sustituye la puerta de la última contracción. Se deja
@@ -185,6 +188,11 @@ export function detectV6(bars, opts = {}) {
   }
   if (seq.length < p.minContractions) return rejL("menos_de_2_contracciones", ctx);
 
+  // Variante medida en el documento, apagada por defecto.
+  if (p.topeRepunteEnAncla && seq.some((s, k) => k > 0 && s.depth > seq[0].depth)) {
+    return rejL("repunte_supera_el_ancla", { ...ctx, seq: seq.map((s) => +s.depth.toFixed(1)) });
+  }
+
   // ── Monotonía relajada: la última es la más superficial ─────────────────
   // Sustituye a la comparación par a par de v4. Es una condición sobre la
   // secuencia entera, no sobre cada paso: da igual el camino, importa dónde
@@ -223,7 +231,8 @@ export function detectV6(bars, opts = {}) {
     ...ctx,
     atr: +atr.toFixed(2),
     contracciones: seq.map((s) => +s.depth.toFixed(1)),
-    repunteIntermedio: seq.some((s, k) => k > 0 && s.depth > seq[k - 1].depth * p.decreaseTol),
+    repunteIntermedio: seq.some((s, k) => k > 0 && s.depth > seq[k - 1].depth),
+    repunteSobreTolerancia: seq.some((s, k) => k > 0 && s.depth > seq[k - 1].depth * p.decreaseTol),
     repuntaSobreElAncla: seq.some((s, k) => k > 0 && s.depth > seq[0].depth),
     fechas: seq.map((s) => `${s.hi.d}→${s.lo.d}`),
     primeraEnAtr: +(seq[0].depth / atr).toFixed(1),

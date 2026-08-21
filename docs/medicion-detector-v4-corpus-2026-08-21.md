@@ -465,3 +465,276 @@ casos y no debe tratarse como una medida.
    este corpus no aparece ninguno de los cinco, así que la medición no está
    contaminada — pero la corrida del corpus antiguo sí (AAPL@2026-06-01 sigue
    saliendo BASE por la barra corrupta del 2026-03-01).
+
+---
+
+# ANEXO — La monotonía relajada, implementada y medida
+
+<!-- añadido el 2026-08-21, misma sesión · BASE_SHA: 0184bfa -->
+
+Encargo: implementar la monotonía relajada —*un tramo intermedio puede repuntar,
+pero la última contracción tiene que ser la más superficial de toda la
+secuencia*— y medir qué cambia, sin tocar ningún otro umbral.
+
+**Una precisión de origen**: esta regla es **R5 del corpus**
+(`corpus-manual.json` → `reglasPendientes`, «tolerancia a la no-monotonía»),
+que reveló FCX. El cuerpo de este documento la daba por pendiente; las que
+formula como nuevas son R7 a R10. La formulación exacta que se implementa aquí
+es la de Alejandro.
+
+## A — Qué se ha implementado
+
+`research/contracciones/detector/v6.mjs`, prototipo de research. Producción sin
+tocar. El diff contra v4 es de tres piezas y **ningún umbral cambia de valor**:
+
+```js
+// v4, dentro del bucle que encadena tramos:
+if (leg.depth > seq.at(-1).depth * p.decreaseTol) {
+  return rejL("reexpansion", …);        // ABORTA la detección entera
+}
+seq.push(leg);
+
+// v6:
+seq.push(leg);                          // un repunte intermedio ya no corta
+
+// …y una sola comprobación al final, sobre la secuencia completa:
+if (seq.at(-1).depth > Math.min(...seq.map((s) => s.depth))) {
+  return rejL("ultima_no_es_la_mas_superficial", …);
+}
+```
+
+`decreaseTol: 1.02` **sigue en el fichero pero ya no decide nada**; se deja para
+poder correr los dos detectores con los mismos parámetros. La comprobación final
+es sin tolerancia: «la más superficial» significa el mínimo de la secuencia.
+
+Se reproduce con:
+
+```bash
+node --env-file=.env.local --loader ./scripts/loader.mjs research/contracciones/arneses/monotonia-test.mjs
+```
+
+y `monotonia-universo.mjs` / `monotonia-adelante.mjs` para los otros dos cortes.
+
+## B — Contra los 21 casos: no cambia ni un veredicto ni una fecha
+
+| | v4 | v6 |
+|---|---|---|
+| Aciertos | 15/21 | **15/21** |
+| Falsos positivos | 4 (NDAQ, BEKE, ELV, MSGS) | **los mismos 4** |
+| Falsos negativos | 2 (ICE, DECK) | **los mismos 2** |
+| Estructuras (fechas) | — | **idénticas en los 13 casos con base** |
+
+**Ningún caso que antes acertaba falla ahora.** La respuesta al punto 4 del
+encargo es que no hay nada que detallar: cero regresiones en el corpus.
+
+Lo que sí cambia son **dos motivos de rechazo**, y uno de ellos es una mejora
+real:
+
+| Caso | v4 | v6 |
+|---|---|---|
+| **MPC-sierra** | `reexpansion` sobre `[19,6 → 7,3]`, cortando al llegar al 9,1 | `tendencia_no_lateral` |
+| **VPG** | `reexpansion` sobre `[30,4 → 16,3 → 10,2]`, cortando al llegar al 16,7 | `ultima_no_es_la_mas_superficial` sobre `[30,4 → 16,3 → 10,2 → 16,7 → 17,5 → 17,2]` |
+
+En **MPC-sierra** el motivo pasa a ser **el que dio el dueño**. Su nota decía:
+«profundidades oscilan, volumen no se seca, **techo avanza 3,3 %/semana**». v4 lo
+rechazaba por la oscilación; v6 deja que la secuencia se complete y entonces la
+mata el criterio de lateralidad — el avance del techo. Es el mismo veredicto por
+la razón correcta, que es justo lo que este documento venía señalando como
+problema en cinco casos más.
+
+### Y un beneficio que no se ve en el marcador: FCX deja de colgar de un hilo
+
+FCX es `[22,5 → 10,9 → 11,1 → 7,9]` y el dueño lo acepta sin reparos. Su tercer
+tramo repunta un **1,13 %** sobre el segundo (10,9415 % → 11,0653 %) y la
+tolerancia de v4 es del 2 %: lo salvaba **por 0,095 puntos porcentuales**
+(el límite estaba en 11,1603). Medido bajando solo esa tolerancia:
+
+| | v4 con `decreaseTol` 1,02 | 1,01 | 1,00 | v6 |
+|---|---|---|---|---|
+| FCX | BASE | **rechazado** | **rechazado** | **BASE** |
+
+Un positivo etiquetado dependía de que la tolerancia fuera 1,02 y no 1,01. Con
+v6 no depende de nada: el repunte está permitido por definición. **Ese es el
+argumento a favor de la regla, y no aparece en ningún marcador.**
+
+## C — Contra la muestra de 400: ensancha el filtro un 21 %
+
+| | v4 | v6 |
+|---|---|---|
+| Marcados | 38 (9,5 %) | **46 (11,5 %)** |
+| Nuevos | — | **8** |
+| Perdidos | — | **0** |
+| Con la misma base y otras fechas | — | **0** |
+
+> v4 marca hoy 38 y no los 37 de `universo-v4.json`: la corrida original es del
+> 21 de agosto y hay una sesión más de datos. Entran MEDP y RLI, sale SMG. No
+> afecta a la comparación, que corre las dos versiones sobre las mismas barras.
+
+El reparto de motivos enseña la mecánica: `reexpansion` pasa de **106 a 0**, y
+de esos 106, **91 reaparecen** como `ultima_no_es_la_mas_superficial`, 8 pasan a
+`ok`, y el resto se reparte entre `tendencia_no_lateral` (3 → 9) y
+`ultima_contraccion_ancha` (15 → 16). La regla no es un colador: filtra casi lo
+mismo, por una condición distinta.
+
+Los ocho nuevos, con su estructura:
+
+| | Estructura | Reparo a simple vista |
+|---|---|---|
+| CM | [9,6 → 3,7 → 3,4 → **5,5** → 3,5 → 2,5] | primera contracción en 3 sesiones |
+| DHT | [19,1 → 7,3 → **8,1** → 6,5] | — |
+| **DY** | [23,8 → 9,6 → **27,9** → 7,6] | **el tramo intermedio es más profundo que el ancla** |
+| GM | [18,1 → 14,8 → 5,7 → **7,2** → **13,1** → 4,9] | seis tramos, de febrero a julio |
+| HAS | [17,8 → 10,4 → **16,5** → 8,1] | el mínimo real queda un 8,5 % por debajo de la secuencia |
+| JPM | [14,5 → 5,3 → **8,3** → 4,8 → **5,4** → 4,6] | JPM tiene barras mensuales residuales conocidas |
+| SAN | [21,1 → 6,4 → **10,7** → 6,9 → 6,4 → 3,4] | — |
+| **TER** | [28,5 → 19,2 → 11,4 → **19,1** → **39,2** → 11,1] | **un tramo del 39,2 %, más profundo que el ancla** |
+
+Dos de los ocho contienen un tramo **más profundo que la primera contracción**.
+Eso no necesita etiqueta para juzgarse: contradice la definición de contracción
+de volatilidad. La regla, tal como está formulada, **no pone techo al repunte**,
+y ahí es por donde entran.
+
+## D — La prueba hacia delante: lo que añade rinde peor que no filtrar
+
+Sin etiquetas humanas, con el método de `peso-escala.mjs`: tres cortes pasados
+(15-dic-2025, 13-feb-2026, 15-abr-2026), 1.200 pares valor-fecha, y se mira qué
+hizo el precio después.
+
+| Grupo | n | Duración | Horizonte | Rendimiento | Caída máx | Rompió | Y aguantó |
+|---|---|---|---|---|---|---|---|
+| universo | 1200 | — | 50 ses | 3,22 % | −10,09 % | — | — |
+| **común** (v4 y v6) | 97 | 6 sem | 59 ses | **8,33 %** | **−6,58 %** | 79 % | 59 % |
+| **nuevo** (solo v6) | 10 | 18 sem | 160 ses | **−5,21 %** | **−17,37 %** | 70 % | 60 % |
+
+Con el mismo horizonte que el universo, que es la única comparación limpia
+—el proporcional le da 160 sesiones a los nuevos y 50 al universo—:
+
+| Grupo | n | Rendimiento a 50 ses | Contra el universo |
+|---|---|---|---|
+| común | 97 | 8,53 % | **+5,31 pts** · caída **+4,35 pts** mejor |
+| nuevo | 10 | −5,00 % | **−8,22 pts** · caída −0,57 pts |
+
+**Siete de los diez pierden dinero**, y los cuatro que llevan un tramo más
+profundo que el ancla tienen una mediana del −6,50 % frente al +2,70 % de los
+otros seis. Lo que la regla añade no solo no bate al universo: queda ocho puntos
+por debajo.
+
+**n = 10.** Es ruido, y lo digo antes de que lo diga nadie. Pero no hay ni un
+indicio en la otra dirección.
+
+### Cruzado con las reglas del cuerpo de este documento
+
+Aplicando a los ocho nuevos R7 (§C.1, proceso frente a evento) y R8 (§C.2, la
+base no se salta su suelo):
+
+| Sobrevive | Cae por R7 | Cae por R8 |
+|---|---|---|
+| DY, GM, JPM | CM (54 %), DHT (35 %), SAN (37 %), TER (68 %) | HAS (8,5 % por debajo) |
+
+**Cinco de los ocho caen solos** en cuanto R7 y R8 estén. De los tres que
+sobreviven, DY moriría con el tope del repunte en el ancla y JPM arrastra barras
+corruptas conocidas. Es decir: **la regla es inofensiva acompañada y arriesgada
+sola.**
+
+## E — Punto 5: no arregla ninguna fecha, y no puede
+
+La pregunta era si la regla ayudaría en los casos donde el detector acertaba el
+sí/no pero situaba mal las contracciones — FLG, IP, NDSN. **La respuesta medida
+es no: cero cambios de fechas en los 21 del corpus y cero en los 400 del
+universo.**
+
+Y no es casualidad, es estructural. v4 **aborta** la detección en cuanto
+encuentra un repunte; por tanto, ninguna base que v4 acepte contiene uno. v6
+solo puede añadir casos que v4 rechazaba, nunca reescribir los que aceptaba:
+**v6 ⊇ v4, y las estructuras de la intersección son idénticas.** La regla es
+puramente aditiva, así que por construcción no puede corregir un ancla mal
+puesta.
+
+### Y de paso, por qué NDSN sigue anclando en junio
+
+Es la pregunta natural —el dueño lo lee desde el 19 de febrero con una
+reconfiguración en medio, que suena a lo que la monotonía relajada debería
+arreglar— y la respuesta descarta la sospecha. Los tramos de NDSN dentro de la
+ventana del detector (2026-01-29 → 2026-08-19, así que **febrero sí entra**),
+medidos contra el ATR de su fecha:
+
+| Tramo | Profundidad | En ATR | Máximo |
+|---|---|---|---|
+| 19-feb → 20-feb | 5,9 % | 2,9x | 303,48 |
+| **25-feb → 09-mar** | **11,2 %** | **4,9x** ✓ | **296,42** |
+| 06-may → 19-may | 6,8 % | 3,3x | 289,20 |
+| **25-jun → 08-jul** | **8,9 %** | **3,6x** ✓ | **307,74** |
+
+Solo dos pasan el umbral de 3,5x ATR, y el ancla se define como **el máximo más
+alto de los que lo pasan**: 307,74 (junio) gana a 296,42 (febrero). El tramo de
+febrero existe, es más profundo y pasa el umbral — pero arranca de un máximo
+once puntos más bajo.
+
+**Lo que impide leer NDSN como el dueño no es la monotonía: es la regla del
+máximo más alto**, la misma que en la tanda 1 arregló PNC, KO y MPC. En una base
+con techo ascendente —una reconfiguración— esa regla ancla siempre en el tramo
+más reciente. Es un hallazgo nuevo, va a la causa 2 de §B, y no se arregla con
+esta regla ni con ninguna de las de §C.
+
+## F — La variante que la medición pide: acotar el repunte al ancla
+
+No es un umbral nuevo —el tope es la propia primera contracción—, así que se ha
+medido, con la opción `topeRepunteEnAncla` **apagada por defecto** para no
+mezclarla con lo que se pidió implementar.
+
+| | Corpus | Universo | Nuevos que deja pasar | Rendimiento de esos |
+|---|---|---|---|---|
+| v6 tal cual | 15/21, 0 cambios | 46 (11,5 %) | 8 | −8,22 pts contra el universo |
+| v6 + tope en el ancla | **15/21, 0 cambios** | 43 (10,8 %) | 5 | −8,22 pts (n=6) |
+
+Quita DY, TER y RLI. Los dos primeros son los que llevan un tramo más profundo
+que el ancla; RLI (`[10,6 → 10,6 → 4,9]`) ya lo marcaba v4 y **se pierde**, así
+que el tope no es gratis. Sobre el corpus no cambia nada.
+
+Mi lectura: el tope tapa el agujero más evidente y no cuesta nada en el corpus,
+pero **con horizonte comparable sigue sin batir al universo**. Es una mejora de
+la formulación, no una solución.
+
+## G — Recomendación
+
+**La regla está bien planteada y no debería activarse sola.** Las dos cosas a la
+vez:
+
+1. **Bien planteada**: FCX es un positivo etiquetado que hoy sobrevive por
+   0,095 puntos porcentuales de tolerancia —su repunte es del 1,13 % y el margen
+   del 2 %, así que con un 1 % se caería—, y eso no se sostiene. La condición
+   «la última es la más superficial» expresa lo que el dueño lee y no depende de
+   un margen arbitrario. Además arregla el motivo de rechazo de MPC-sierra.
+2. **No sola**: cuesta **+8 marcados en 400** (9,5 % → 11,5 %) y lo que entra
+   rinde **8 puntos por debajo del universo** en la prueba hacia delante, con
+   siete de diez en pérdidas. En un detector cuyo problema declarado es la
+   precisión (62,5 %), ensanchar un 21 % la superficie va en dirección
+   contraria.
+
+**Orden que propongo**: entra **después** de R7 y R8, no antes. Con las dos
+puestas, cinco de los ocho nuevos caen solos, y el coste de la regla baja a tres
+marcados —de los cuales uno (DY) muere también con el tope en el ancla y otro
+(JPM) tiene barras corruptas. Entonces sí es lo que dice ser: una regla que
+recupera FCX sin ensanchar nada.
+
+Mientras tanto queda implementada, medida y apagada, en `detector/v6.mjs`.
+
+## Lo que no he verificado en este anexo
+
+1. **n = 10 en la prueba hacia delante**, y n = 6 para la variante. Es
+   demasiado poco para concluir nada por sí solo; solo sirve porque apunta en la
+   misma dirección que el reparo estructural (dos de los ocho tienen un tramo
+   más profundo que el ancla).
+2. **Los tres cortes están dentro de la misma ventana alcista** y se solapan.
+   Mismo aviso que en v3 D.4 y en el documento de temporalidad §8.4.
+3. **Nadie ha etiquetado los ocho nuevos.** Que DY y TER sean absurdos se ve en
+   la estructura; de CM, DHT, GM, HAS, JPM y SAN solo tengo el rendimiento
+   posterior, que no es lo mismo que el juicio del dueño — este corpus tiene un
+   caso, ICE, donde base válida y operación ganadora no coinciden.
+4. **JPM está entre los cinco símbolos con barras mensuales residuales.** Su
+   base nueva es sospechosa por esa vía, no solo por la regla.
+5. **La variante del tope en el ancla no se ha medido en el corpus antiguo** ni
+   se ha cruzado con la zona de salida de v5.
+6. **v6 no incluye nada más**: ni la zona de salida, ni R7, ni R8. La medición
+   de la combinación R5+R7+R8 de §D es un cruce a posteriori sobre los ocho
+   nuevos, no una corrida de un detector que las tenga todas.
