@@ -2,22 +2,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ScanSearch } from "lucide-react";
 import ChartPreferences from "@/app/ChartPreferences";
-import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
+import ChartIdentityCard from "./ChartIdentityCard";
 import DescriptiveStrip from "./DescriptiveStrip";
-import { compactDate, QualityStrip } from "@/app/components/ui/QualityStrip";
+import { compactDate } from "@/app/components/ui/QualityStrip";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { amount, dateShort, dateTime, num as sharedNum, pct as sharedPct, pctShare, priceMoney as sharedPriceMoney, signedPriceMoney as sharedSignedPriceMoney } from "@/lib/formatters";
-import { MissingValue } from "@/lib/screenerColumns";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
+import { buildChartIdentityCard } from "@/lib/chartIdentityCard";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { persistReviewQueue } from "@/lib/screenerPipeline";
 import StorageAlert from "@/app/components/StorageAlert";
 import { metricShortLabel } from "@/lib/metricCatalog";
-import { methodologyCompactReasonLine, methodologyDisplayForRow } from "@/lib/methodologyDisplay";
+import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { dataStatusLabel } from "@/lib/patternNarrative";
-import { screenerStockContextFromSession } from "@/lib/screenerContracts";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { setupPatternForBars } from "@/lib/setupPatterns";
@@ -26,16 +25,17 @@ import { stockVolumeState } from "@/lib/stockVolume";
 import { STAGE_MISSING_REASON, stageConfirmationMark, stageWordForState } from "@/lib/stageDisplay";
 import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
-import { DECISION_CHART_PRESETS, buildStockDecisionDesk } from "@/lib/stockDecisionDesk";
-import { STOCK_DECISION_ACTIONS, STOCK_DECISION_VALIDATION_STATES, applyStockDecisionResolution, buildStockDecisionResolutionNote, decisionResolutionForSymbol, decisionResolutionHistory, reopenStockDecisionResolution } from "@/lib/stockDecisionResolution";
+import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, decisionResolutionForSymbol, decisionResolutionHistory, reopenStockDecisionResolution } from "@/lib/stockDecisionResolution";
 import { vcpObjectiveSummary } from "@/lib/vcpDiagnostics";
 import { chartQualityFromBrief } from "@/lib/chartDataQuality";
 
 /* ── Componentes de la jerarquía N0–N3 (spec FICHA-TICKER-IA.md) ──────── */
 
-/* Texto del RS en las franjas de calidad (cabecera N0 y detalle de N3).
-   Una sola función para las dos superficies: decían cosas distintas sobre el
-   mismo dato. Sin ranking semanal no hay fecha ni muestra que mostrar —
+/* Texto del RS para el detalle auditable de N3 ("RS global"). Vivía también
+   en la franja "Calidad de dato" de N0, retirada el 2026-08-22 — una sola
+   función para las dos superficies evitaba que dijeran cosas distintas
+   sobre el mismo dato; ahora queda un único consumidor pero el criterio
+   sigue vigente: sin ranking semanal no hay fecha ni muestra que mostrar —
    la fecha caía a la del universo y la muestra a cero, que es exactamente lo
    que el principio 3 prohíbe. */
 export function rsRankingStripValue(rsUniverse, freshness = {}) {
@@ -167,25 +167,32 @@ function StockUnavailableBlock({ symbol = "" }) {
 }
 
 /* QualityStrip vivía aquí; ahora es compartida con Listas.
-   Ver app/components/ui/QualityStrip.jsx. */
+   Ver app/components/ui/QualityStrip.jsx. Su uso en N0 (franja "Calidad de
+   dato": Cierre/Cobertura/RS·n=) se retiró el 2026-08-22 — ver el
+   comentario junto a N0VerdictBlock. */
 
-/* Bloque N0 (Cabecera). Estructura: identidad + precio + etapa + calidad
-   de dato + resumen de setup. Única zona con color semántico.
+/* Bloque N0 (Cabecera). Estructura: identidad + precio + etapa. Única zona
+   con color semántico.
    El veredicto del sistema (decisión Vigilar/Auditar/Descartar), el FRENO
    y el score de estructura se retiraron de aquí (principio 1: la
    herramienta clasifica, no recomienda). El score sigue calculándose y se
    lee en el desglose de N3; la etapa —clasificación descriptiva— ocupa el
-   sitio del veredicto con la misma palabra que la tabla del screener. */
+   sitio del veredicto con la misma palabra que la tabla del screener.
+
+   La franja "Calidad de dato" (Cierre/Cobertura/RS·n=) y el resumen de
+   Setup se retiraron el 2026-08-22: cobertura y tamaño de muestra son
+   diagnóstico interno, y el resumen de setup enumeraba condiciones que el
+   detector no evalúa de forma fiable (base = constante 13 en el 100% de
+   las filas; contracciones sin integrar en producción). El detalle
+   auditable —Cierre, RS global, Cobertura, Histórico, Cotización— vive en
+   N3 "Calidad de datos" (n3DataQualityDetail); la fecha de cierre, lo
+   único que el usuario necesitaba sin abrir un desglose, queda aquí junto
+   al precio. */
 export function N0VerdictBlock({
   symbol,
   data,
   priceSnapshot,
   freshness,
-  coverage,
-  chartEstimated,
-  chartUnavailable,
-  setupSummary,
-  rsUniverse,
   actions,
 }) {
   const priceHas = Number.isFinite(priceSnapshot?.price);
@@ -196,11 +203,6 @@ export function N0VerdictBlock({
   // (`.length === undefined`) el bloque de links desaparecía entero sin error
   // — los botones "Screener" y "Web oficial" no se renderizaban NUNCA.
   const actionList = (Array.isArray(actions) ? actions : [actions]).filter(Boolean);
-  // La franja no puede prometer un RS que no existe: sin ranking semanal la
-  // fecha caía a la del universo y la muestra a `|| 0`, produciendo
-  // "RS 15 ago 2026 · n=0" mientras el panel de abajo decía "Sin RS semanal"
-  // (principio 3: un dato ausente se muestra como ausente, no como cero).
-  const rsStripValue = rsRankingStripValue(rsUniverse, freshness);
   return (
     <section className="stockVerdict" data-stage={stageDisplay?.tone || "none"}>
       <div className="stockVerdictHead">
@@ -215,7 +217,10 @@ export function N0VerdictBlock({
           </div>
         </div>
         <div className="stockVerdictQuote">
-          <span className="stockVerdictQuoteLabel">Cierre del gráfico</span>
+          <span className="stockVerdictQuoteLabel">
+            Cierre del gráfico
+            {freshness?.priceDate ? <span className="stockVerdictQuoteDate">{compactDate(freshness.priceDate)}</span> : null}
+          </span>
           <div className="stockVerdictQuoteValue">
             <span className="stockVerdictPrice" data-state={priceHas ? "value" : "ghost"}>
               {priceHas ? priceMoney(priceSnapshot.price) : "—"}
@@ -239,28 +244,6 @@ export function N0VerdictBlock({
         </div>
       </div>
 
-      <QualityStrip items={[
-        { label: "Cierre", value: freshness.priceDate ? compactDate(freshness.priceDate) : "Sin fecha" },
-        { label: "Cobertura", value: coverage.label || "Completa" },
-        { label: "RS", value: rsStripValue },
-        ...(chartUnavailable
-          ? [{ label: "Histórico", value: "Sin serie" }]
-          : chartEstimated ? [{ label: "Histórico", value: "Estimado" }] : []),
-        ...(!priceSnapshot?.coherent ? [{ label: "Cotización", value: "Intradía distinta" }] : []),
-      ]} />
-
-      {/* El FRENO ("la razón por la que no comprar todavía") y el score de
-          estructura se retiraron: eran el veredicto del sistema con otra ropa.
-          La checklist del setup se queda porque es descriptiva —cuenta
-          condiciones estructurales medidas y cuáles faltan, sin decir qué
-          hacer—; el score sigue disponible en el desglose de N3. */}
-      <div className="stockVerdictFoot">
-        <div className="stockVerdictSetup">
-          <span className="stockVerdictSetupLabel">Setup</span>
-          <span className="stockVerdictSetupText">{setupSummary || "Setup sin checklist disponible."}</span>
-        </div>
-      </div>
-
       {actionList.length ? (
         <div className="stockVerdictActions stockVerdictLinks">
           {actionList}
@@ -270,82 +253,11 @@ export function N0VerdictBlock({
   );
 }
 
-/* Bloque N1 (Lectura técnica). Tabla clave-valor en mono, máx. 8 filas,
-   sin color. Vocabulario cerrado de labels (FICHA-TICKER-IA.md §5). */
-function N1TechTable({ rows = [] }) {
-  if (!rows.length) return null;
-  return (
-    <section className="stockPanel" aria-label="Lectura técnica">
-      <h2 className="stockNarrativeTitle" style={{ padding: "var(--space-5) var(--space-5) var(--space-3)" }}>
-        Lectura técnica
-      </h2>
-      <div className="stockTechTable">
-        {rows.map((row, index) => (
-          <KVRow
-            key={`${row.label}-${index}`}
-            label={row.label}
-            value={row.value}
-            state={row.state}
-            detail={row.detail}
-            suffix={row.suffix}
-            source={row.source}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* Bloque N2 (Contexto). Narrativa como anotación al margen + fundamentales
-   operativos (ventas YoY, EPS YoY, cap). */
-function N2ContextBlock({ narrative = null, fundamentals = [] }) {
-  return (
-    <div className="stockContext" aria-label="Contexto">
-      <section className="stockNarrative" aria-label="Tesis y siguiente paso">
-        <div className="stockNarrativeHead">
-          <h2 className="stockNarrativeTitle">Contexto</h2>
-        </div>
-        {narrative?.tesis ? (
-          <div className="stockNarrativeItem">
-            <span className="stockNarrativeItemLabel">Tesis</span>
-            <p className="stockNarrativeItemText">{narrative.tesis}</p>
-          </div>
-        ) : null}
-        {narrative?.riesgo ? (
-          <div className="stockNarrativeItem">
-            <span className="stockNarrativeItemLabel">Riesgo</span>
-            <p className="stockNarrativeItemText">{narrative.riesgo}</p>
-          </div>
-        ) : null}
-        {narrative?.siguientePaso ? (
-          <div className="stockNarrativeItem">
-            <span className="stockNarrativeItemLabel">Siguiente paso</span>
-            <p className="stockNarrativeItemText">{narrative.siguientePaso}</p>
-          </div>
-        ) : null}
-        {!narrative?.tesis && !narrative?.riesgo && !narrative?.siguientePaso ? (
-          <p className="stockNarrativeItemText">Sin narrativa del screener para esta ficha.</p>
-        ) : null}
-      </section>
-      <section className="stockContextFundamentals" aria-label="Fundamentales operativos">
-        <h2 className="stockContextFundamentalsTitle">Fundamentales operativos</h2>
-        <div className="stockTechTable" style={{ background: "var(--surface-inset)" }}>
-          {fundamentals.length ? fundamentals.map((row, index) => (
-            <KVRow
-              key={`${row.label}-${index}`}
-              label={row.label}
-              value={row.value}
-              state={row.state}
-              detail={row.detail}
-              suffix={row.suffix}
-              source={row.source}
-            />
-          )) : <p className="stockNarrativeItemText">Sin fundamentales operativos.</p>}
-        </div>
-      </section>
-    </div>
-  );
-}
+/* N1TechTable («Lectura técnica») y N2ContextBlock («Contexto» +
+   «Fundamentales operativos») vivían aquí. Retirados el 2026-08-21 — el
+   comentario largo con qué contenía cada uno está en el punto del render
+   donde se montaban, y el porqué completo en
+   docs/analisis-ficha-cuadro-grafico-2026-08-21.md (Parte B). */
 
 /* Bloque N3 (Auditoría). Tres sub-bloques colapsados por defecto:
    desglose del score, bloque empresa, detalle de calidad de datos. */
@@ -435,13 +347,12 @@ function N3AuditBlock({ scoreBreakdown = [], company = null, dataQualityDetail =
 }
 
 /* Formato: TODO delega en la capa única es-ES (lib/formatters.js). Aquí solo
-   quedan los envoltorios con la etiqueta de ausencia de la ficha ("Sin dato")
-   y las semánticas locales (rsFmt/scoreFmt con clamp 0-99). Antes la ficha
-   tenía su propio juego (coma en precios, punto en porcentajes: "490,99 USD ·
-   -0.7%" en la misma línea). */
+   quedan los envoltorios con la etiqueta de ausencia de la ficha ("Sin dato").
+   Antes la ficha tenía su propio juego (coma en precios, punto en
+   porcentajes: "490,99 USD · -0.7%" en la misma línea). rsFmt/scoreFmt (el
+   clamp 0-99) se fueron el 2026-08-21 con el panel Fuerza relativa, su único
+   consumidor. */
 const fmt = (n) => Number.isFinite(n) ? sharedNum(n) : "Sin dato";
-const rsFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
-const scoreFmt = (n) => Number.isFinite(n) ? String(Math.round(Math.max(0, Math.min(99, n)))) : "Sin dato";
 // Proporción sin signo (márgenes, volatilidad, cuotas); las VARIACIONES con
 // signo usan sharedPct directamente en su sitio.
 const pct = (n) => Number.isFinite(n) ? pctShare(n, 1) : "Sin dato";
@@ -490,12 +401,6 @@ function metricSourceFromState(state = "pass", label = "Métrica", detail = "") 
   return metricSourceState("measured", label, detail);
 }
 
-function metricSourceForValue(value, label = "Métrica", detail = "") {
-  return Number.isFinite(Number(value))
-    ? metricSourceState("measured", label, detail)
-    : metricSourceState("review", label, detail || "sin dato");
-}
-
 function sourceClass(source = null) {
   return source?.key ? `source-${source.key}` : "";
 }
@@ -535,23 +440,10 @@ function Metric({ label, value, tone = "", source = null, detail = "" }) {
   </div>;
 }
 
-function scoreTone(value, good = 75, bad = 45) {
-  if (!Number.isFinite(value)) return "neutral";
-  if (value >= good) return "good";
-  if (value < bad) return "bad";
-  return "neutral";
-}
-
-function riskTone(value, warn = 60) {
-  if (!Number.isFinite(value)) return "neutral";
-  return value >= warn ? "warn" : "neutral";
-}
-
-function sampleText(value) {
-  // Muestra cero es ausencia de muestra, no una muestra de tamaño cero: con
-  // `n=0` la ficha afirmaba haber medido sobre una población vacía.
-  return Number.isFinite(value) && value > 0 ? `n=${sharedNum(Math.round(value))}` : "sin muestra";
-}
+/* scoreTone, riskTone, sampleText y metricSourceForValue se fueron el
+   2026-08-21 con el panel Fuerza relativa, su último consumidor. La regla de
+   sampleText («muestra cero es ausencia de muestra, no n=0») sigue vigente
+   en rsRankingStripValue. */
 
 function compactBusinessTeaser(data = {}) {
   data = data || {};
@@ -569,135 +461,13 @@ function latestWeeklyRs(rs = {}) {
   return Array.isArray(rs.globalRsSeries) ? rs.globalRsSeries.at(-1) : null;
 }
 
-function RsMetric({ label, value, detail = "", tone = "neutral", compact = false, source = null }) {
-  const title = trustTitle(label, value, detail, source);
-  return <div className={`rsMetric ${tone} ${compact ? "compact" : ""} ${sourceClass(source)}`.trim()} title={title} aria-label={title}>
-    <span>{label}</span>
-    <b>{value}<MetricSourceMark source={source} /></b>
-  </div>;
-}
-
-function RsGroup({ title, subtitle = "", children }) {
-  return <div className="rsMetricGroup">
-    <div className="rsMetricGroupHead">
-      <span>{title}</span>
-      {subtitle && <em>{subtitle}</em>}
-    </div>
-    <div className="rsMetricGroupGrid">{children}</div>
-  </div>;
-}
-
-// Estado del volumen del valor — documento
-// docs/diseno-indicadores-mercado-2026-08-17.md, C.3 #5. Tres KPIs:
-// reparto up/down (50d), volumen seco (10d/50d) e impulso (5d/20d).
-// Mismo vocabulario que la sección de salud de mercado. Sin semáforo de
-// color: describe — no predice.
-const STOCK_VOLUME_KPI_FORMATTERS = {
-  upDownVolumeRatio: (value) => `${value.toFixed(2)}×`,
-  volumeDryUp: (value) => `${value.toFixed(2)}×`,
-  volumeSurge: (value) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`,
-  latestVolume: (value) => (value >= 1_000_000 ? `${(value / 1_000_000).toFixed(1)}M` : `${Math.round(value / 1000)}k`),
-  relativeVolume: (value) => `${value.toFixed(2)}×`,
-};
-const STOCK_VOLUME_KPI_LABELS = {
-  upDownVolumeRatio: "Reparto del volumen",
-  volumeDryUp: "Volumen seco",
-  volumeSurge: "Impulso de volumen",
-  latestVolume: "Volumen última sesión",
-  relativeVolume: "Volumen relativo",
-};
-const STOCK_VOLUME_KPI_ORDER = ["upDownVolumeRatio", "volumeDryUp", "volumeSurge", "latestVolume"];
-
-function StockVolumePanel({ stockVolume }) {
-  if (!stockVolume) return null;
-  const items = STOCK_VOLUME_KPI_ORDER
-    .map((key) => ({ key, item: stockVolume[key] }))
-    .filter(({ item }) => item);
-  const allMissing = items.every(({ item }) => !item.available);
-  return (
-    <section className="card stockVolumePanel">
-      <div className="sectionTitle">
-        <div>
-          <h2>Estado del volumen</h2>
-          <p className="fine">Tres indicadores del briefing sobre la serie diaria del valor.</p>
-        </div>
-      </div>
-      {allMissing && (
-        <p className="fine">Sin datos de volumen suficientes en la serie del valor para declarar los tres indicadores.</p>
-      )}
-      <div className="marketTapeKpis marketBreadthKpis">
-        {items.map(({ key, item }) => (
-          <div className="marketTapeKpi" key={key}>
-            {item.available
-              ? <b>{STOCK_VOLUME_KPI_FORMATTERS[key](item.value)}</b>
-              : <b><MissingValue reason={item.reason} /></b>}
-            <span>{STOCK_VOLUME_KPI_LABELS[key]}</span>
-            {item.available && <small>{item.window}</small>}
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function RelativeStrengthPanel({ rs = {}, rsUniverse, rsBenchmark, country = "" }) {
-  const weekly = latestWeeklyRs(rs);
-  const weeklyScore = finiteValue(weekly?.rsRating);
-  // "RS global" del panel = ranking semanal del universo, sin caer al
-  // percentil del lote (rs.rsGlobalPct): ese percentil ya tiene su propio
-  // sitio y su propio nombre, y no puede ocupar el del RS.
-  const globalScore = finiteValue(rsUniverse, weeklyScore);
-  const globalSample = finiteValue(weekly?.sampleSize, rs.rsGlobalSample);
-  const globalDate = compactDate(weekly?.date || rs.universe?.asOf);
-  const benchmarkSymbol = rs.benchmarkSymbol || "benchmark";
-  const countryDetail = [country, sampleText(rs.rsCountrySample)].filter(Boolean).join(" · ");
-  const groupSample = finiteValue(rs.rsSectorSample);
-  const groupDetail = `${sampleText(groupSample)}${groupSample && groupSample < 20 ? " · muestra baja" : ""}`;
-  const sourceForSample = (label, value, sample, minSample = 1, detail = "") => {
-    if (!Number.isFinite(value)) return metricSourceState("review", label, detail || "sin dato");
-    if (!Number.isFinite(sample) || sample < minSample) return metricSourceState("review", label, detail || "muestra insuficiente");
-    return metricSourceState("measured", label, detail);
-  };
-  const benchmarkSource = Number.isFinite(rsBenchmark)
-    ? metricSourceState("proxy", "RS bench", "modelo técnico vs benchmark")
-    : metricSourceState("review", "RS bench", "sin benchmark suficiente");
-  const sourceLine = weekly
-    ? `RS global semanal USD · ${sampleText(globalSample)}${globalDate ? ` · ${globalDate}` : ""}`
-    : "Sin RS semanal: este símbolo no entra en el ranking del universo";
-
-  return <section className="card rsPanel">
-    <div className="sectionTitle rsPanelTitle">
-      <div>
-        <h2>Fuerza relativa</h2>
-        <p className="fine">{sourceLine}</p>
-      </div>
-      <span className="rsPanelBadge">{rs.ratingSource === "weekly-universe" || weekly ? "RS real" : "Sin RS semanal"}</span>
-    </div>
-    <div className="rsPanelGrid">
-      <RsGroup title="Ranking" subtitle="percentil 1-99">
-        <RsMetric label="RS global" value={rsFmt(globalScore)} detail={sampleText(globalSample)} tone={scoreTone(globalScore)} source={sourceForSample("RS global", globalScore, globalSample, 20, sourceLine)} />
-        <RsMetric label="RS país" value={rsFmt(rs.rsCountryPct)} detail={countryDetail} tone={scoreTone(rs.rsCountryPct)} source={sourceForSample("RS país", rs.rsCountryPct, rs.rsCountrySample, 5, countryDetail)} />
-        <RsMetric label="Grupo" value={rsFmt(rs.rsSectorPct)} detail={groupDetail} tone={scoreTone(rs.rsSectorPct)} source={sourceForSample("Grupo", rs.rsSectorPct, groupSample, 5, groupDetail)} />
-      </RsGroup>
-      <RsGroup title={`Benchmark ${benchmarkSymbol}`} subtitle="precio relativo">
-        <RsMetric label="RS bench" value={rsFmt(rsBenchmark)} detail="modelo técnico" tone={scoreTone(rsBenchmark)} source={benchmarkSource} />
-        <RsMetric label="3M" value={sharedPct(rs.rs3m)} detail="vs benchmark" tone={valueTone(rs.rs3m)} source={metricSourceForValue(rs.rs3m, "RS 3M", "vs benchmark")} />
-        <RsMetric label="6M" value={sharedPct(rs.rs6m)} detail="vs benchmark" tone={valueTone(rs.rs6m)} source={metricSourceForValue(rs.rs6m, "RS 6M", "vs benchmark")} />
-        <RsMetric label="12M" value={sharedPct(rs.rs12m)} detail="vs benchmark" tone={valueTone(rs.rs12m)} source={metricSourceForValue(rs.rs12m, "RS 12M", "vs benchmark")} />
-      </RsGroup>
-      <RsGroup title="Calidad y riesgo" subtitle="datos técnicos">
-        <RsMetric label="RS quality" value={scoreFmt(rs.rsQualityScore)} detail={rs.rsQualityLabel || "estabilidad"} tone={scoreTone(rs.rsQualityScore, 70, 45)} source={Number.isFinite(rs.rsQualityScore) ? metricSourceState("proxy", "RS quality", "score compuesto técnico") : metricSourceState("review", "RS quality", "sin dato")} />
-        <RsMetric label="Riesgo técnico" value={scoreFmt(rs.speculationRiskScore)} detail="0 bajo · 99 alto" tone={riskTone(rs.speculationRiskScore)} source={Number.isFinite(rs.speculationRiskScore) ? metricSourceState("proxy", "Riesgo técnico", "score compuesto técnico") : metricSourceState("review", "Riesgo técnico", "sin dato")} />
-        <RsMetric label="Volatilidad 63d" value={pct(rs.volatility63d)} detail="anualizada" tone={riskTone(rs.volatility63d, 70)} source={metricSourceForValue(rs.volatility63d, "Volatilidad 63d", "anualizada")} />
-        <RsMetric label="Drawdown 63d" value={pct(rs.maxDrawdown63d)} detail="maximo" tone={riskTone(rs.maxDrawdown63d, 25)} source={metricSourceForValue(rs.maxDrawdown63d, "Drawdown 63d", "maximo")} />
-      </RsGroup>
-      <RsGroup title="Precio" subtitle="contexto">
-        <RsMetric label="Perf 3M" value={sharedPct(rs.perf3m)} detail="precio absoluto" tone={valueTone(rs.perf3m)} source={metricSourceForValue(rs.perf3m, "Perf 3M", "precio absoluto")} />
-        <RsMetric label="Dist. 52W high" value={sharedPct(rs.distance52w)} detail="desde maximo" tone={Number.isFinite(rs.distance52w) && rs.distance52w >= -15 ? "good" : "neutral"} source={metricSourceForValue(rs.distance52w, "Dist. 52W high", "desde maximo")} />
-      </RsGroup>
-    </div>
-  </section>;
-}
+/* RsMetric, RsGroup, StockVolumePanel (con sus constantes KPI) y
+   RelativeStrengthPanel vivían aquí. Retirados el 2026-08-21 — el comentario
+   largo con qué contenía cada panel está en el punto del render donde se
+   montaban, y el porqué completo en
+   docs/analisis-ficha-cuadro-grafico-2026-08-21.md (Parte B). El cómputo del
+   volumen (stockVolumeState) sigue vivo: alimenta las celdas de reparto e
+   impulso de la franja descriptiva. */
 
 function PeerLogo({ item }) {
   const [index, setIndex] = useState(0);
@@ -784,181 +554,66 @@ function StockReviewFlowRail({ navigation = null, onOpenSymbol }) {
   </div>;
 }
 
-function fallbackObservationChecklist(origin = null) {
-  if (!origin) return [];
-  const focus = origin.reviewFocus?.label || origin.decisionFocus?.label || origin.readiness?.label || origin.statusText || "Observacion";
-  const evidence = origin.decisionEvidence || origin.decisionTrace?.evidence || null;
-  const pendingCount = Array.isArray(evidence?.pending) ? evidence.pending.length : 0;
-  const firstPending = Array.isArray(evidence?.pending) ? evidence.pending[0] : null;
-  return [
-    {
-      key: "method",
-      label: "Criterio propio",
-      value: "Obligatorio",
-      detail: "Contrasta el foco con tus reglas antes de clasificar.",
-      tone: "neutral",
-    },
-    {
-      key: "focus",
-      label: "Foco",
-      value: focus,
-      detail: origin.reviewFocus?.detail || origin.decisionFocus?.detail || origin.readiness?.detail || origin.sourceDetail || "",
-      tone: origin.reviewFocus?.tone || origin.decisionFocus?.tone || origin.readiness?.tone || origin.tone || "neutral",
-    },
-    {
-      key: "evidence",
-      label: "Evidencia",
-      value: pendingCount ? `${pendingCount} por validar` : evidence?.status === "ready" ? "Completa" : "Revisar",
-      detail: firstPending?.detail || evidence?.summary || origin.statusText || "",
-      tone: pendingCount ? "warn" : evidence?.tone || "neutral",
-    },
-    {
-      key: "chart",
-      label: "Gráfico",
-      value: "Revisar",
-      detail: "Comprueba temporalidad, volumen, RS y estructura.",
-      tone: "neutral",
-    },
-  ];
-}
+/* ── La «mesa de observación» (StockDecisionDesk) vivía aquí — retirada el
+   2026-08-22, NO reponer sin releer docs/principios-producto.md (principio 1)
+   y docs/analisis-ficha-2026-08-15.md (A2/B1) ──────────────────────────────
 
-function StockMethodGuardrails({ desk = null, origin = null }) {
-  const guardrail = desk?.guardrail || (origin ? {
-    title: "Apoyo de observación, no señal automática",
-    detail: "El screener ordena evidencias; la entrada, salida o descarte debe salir de tu metodo y revisión manual.",
-  } : null);
-  const checklist = desk?.observationChecklist?.length ? desk.observationChecklist : fallbackObservationChecklist(origin);
-  if (!guardrail && !checklist.length) return null;
-  return <>
-    {guardrail ? <div className="stockDecisionGuardrail" aria-label="Límite metodológico">
-      <b>{guardrail.title}</b>
-      <p>{guardrail.detail}</p>
-    </div> : null}
-    {checklist.length ? <div className="stockObservationChecklist" aria-label="Checklist metodológico de observación">
-      {checklist.map((item) => <span key={item.key} className={item.tone || ""}>
-        <em>{item.label}</em>
-        <b title={item.value}>{item.value}</b>
-        {item.detail ? <small title={item.detail}>{item.detail}</small> : null}
-      </span>)}
-    </div> : null}
-  </>;
-}
+   Qué mostraba: la cabecera «OBSERVACIÓN: PENDIENTE · BEARISH» con contador
+   de pruebas (7/9), el foco del motor, el brief tesis/riesgo/siguiente paso
+   («tesis de deterioro», «tratar como riesgo», «Auditar antes»), las
+   evidencias pendientes, la «coherencia gráfico» («RS overlay Oculto»,
+   «VCP Apagado») y los presets de vista («D · 1A · RS/volumen»,
+   «D · 3M · VCP»). Todo salía de buildStockDecisionDesk sobre el
+   decisionTrace/readiness que viaja en lastOpenedStockContext, así que SOLO
+   aparecía al entrar desde el screener/review: la ficha tenía dos caras
+   según la ruta de entrada (análisis del 15, A2).
 
-function StockDecisionDesk({
-  desk = null,
+   Se retiró por tres motivos:
+   1. Principio 1 (la herramienta clasifica, no recomienda): «tesis de
+      deterioro», «tratar como riesgo» o «Auditar antes» son veredictos
+      operativos del sistema — la retirada del chip de N0 se había hecho en
+      el chip y no en la fuente, y el mismo veredicto resucitaba aquí.
+   2. Coherencia entre rutas: por URL directa la ficha era descriptiva; desde
+      el screener recuperaba el veredicto. Ahora se ve igual por ambas vías.
+   3. Estado interno visible: «RS overlay oculto», «VCP apagado» o el nombre
+      de las vistas son configuración de la aplicación, no información del
+      valor. Y el veredicto («bearish») contradecía a la tarjeta de identidad
+      pegada debajo (etapa 2, RS alto, cerca de máximos).
+
+   lib/stockDecisionDesk.js y tests/stockDecisionDesk.test.js se fueron con
+   el bloque. tests/fichaRetiradas.test.js vigila que no vuelva.
+
+   Lo que SÍ era del usuario se conserva justo debajo, ahora en TODAS las
+   entradas (por URL incluida — B2 del análisis del 15): la clasificación
+   manual (Candidata/Vigilar/Descartar + Reabrir + nota), que escribe en
+   la cola de Review (decisionResolutions) y alimenta el filtro «Resolución»
+   del screener, y el rail de navegación de la cola de Review. El trío
+   Validado/Pendiente/Bloquea se retiró con la mesa: calificaba «la prueba
+   de foco» del motor, que ya no existe en la ficha. */
+
+function StockUserClassification({
   resolution = null,
   resolutionHistory = [],
   reviewNavigation = null,
-  showMethodGuardrails = true,
-  validationKey = "pending",
-  validationNote = "",
-  onValidationKeyChange,
-  onValidationNoteChange,
+  note = "",
+  onNoteChange,
   onOpenReviewSymbol,
-  onApplyPreset,
-  onFocusEvidence,
   onResolveDecision,
   onReopenDecision,
 }) {
-  if (!desk) return null;
-  const evidenceItems = desk.pending.length ? desk.pending : desk.confirmed;
-  return <section className={`stockDecisionDesk ${desk.tone || ""}`.trim()} aria-label="Mesa de observación metodológica de la ficha">
-    <div className="stockDecisionDeskHead">
-      <div>
-        <span>{desk.sourceLabel}</span>
-        <h3>Observación: {desk.status}{desk.profileLabel ? ` · ${desk.profileLabel}` : ""}</h3>
-        {desk.focus && <p title={desk.focus}>{desk.focus}</p>}
-      </div>
-      <b title="Pruebas confirmadas">{desk.ratio || desk.status}</b>
-    </div>
-    {showMethodGuardrails ? <StockMethodGuardrails desk={desk} /> : null}
+  return <section className="stockUserClassification" aria-label="Clasificación manual del inversor">
     <StockReviewFlowRail navigation={reviewNavigation} onOpenSymbol={onOpenReviewSymbol} />
-    {desk.decisionFocus ? <div className={`stockDecisionFocus ${desk.decisionFocus.tone || ""}`.trim()}>
-      <div>
-        <span>Foco a observar</span>
-        <b>{desk.decisionFocus.queueFilterLabel || desk.decisionFocus.stateLabel || desk.decisionFocus.filterLabel || "Validar"}</b>
-        {desk.decisionFocus.ratio ? <em>{desk.decisionFocus.ratio}</em> : null}
-      </div>
-      <p title={[desk.decisionFocus.label, desk.decisionFocus.detail, desk.decisionFocus.checkLine].filter(Boolean).join(" · ")}>
-        <strong>{desk.decisionFocus.label || desk.decisionFocus.headline}</strong>
-        {desk.decisionFocus.detail ? ` · ${desk.decisionFocus.detail}` : ""}
-      </p>
-      {desk.decisionFocus.focusPresetKey ? <button type="button" onClick={() => onFocusEvidence?.(desk.decisionFocus)} title={desk.decisionFocus.focusDetail || desk.decisionFocus.focusLabel}>
-        {desk.decisionFocus.focusLabel || "Ver gráfico"}
-      </button> : null}
-    </div> : null}
-    {desk.brief.length ? <div className="stockDecisionBriefGrid">
-      {desk.brief.map((item) => <div key={item.key} className={`stockDecisionBrief ${item.tone || ""}`.trim()}>
-        <span>{item.label || item.key}</span>
-        <b title={item.value}>{item.value}</b>
-        {item.detail ? <em title={item.detail}>{item.detail}</em> : null}
-      </div>)}
-    </div> : null}
-    <div className="stockDecisionDeskBody">
-      <div className="stockDecisionMetricStrip">
-        {desk.metrics.map((item) => <span key={item.key}>
-          <em>{item.label}</em>
-          <b>{item.value}</b>
-        </span>)}
-      </div>
-      <div className="stockDecisionEvidenceRail">
-        <span>{desk.pending.length ? "Pendiente" : "Confirmado"}</span>
-        <div>
-          {evidenceItems.map((item, index) => <button
-            type="button"
-            key={`${item.key || item.label}-${index}`}
-            className={item.tone || ""}
-            title={[item.detail || item.label, item.focusDetail].filter(Boolean).join(" · ")}
-            onClick={() => onFocusEvidence?.(item)}
-          >
-            <b>{item.label}</b>
-            {item.focusLabel ? <em>{item.focusLabel}</em> : null}
-          </button>)}
-        </div>
-      </div>
-      <div className="stockDecisionChartRail">
-        <span>Coherencia gráfico</span>
-        <div>
-          {desk.chartRead.map((item) => <b key={item.key} className={item.tone || ""} title={item.detail || item.value}>
-            <em>{item.label}</em>{item.value}
-          </b>)}
-        </div>
-      </div>
-    </div>
-    <div className="stockDecisionPresetRail" aria-label="Vistas de observación del gráfico">
-      {DECISION_CHART_PRESETS.map((item) => <button
-        type="button"
-        key={item.key}
-        className={`${desk.activePresetKey === item.key ? "active" : ""} ${desk.presetKey === item.key ? "recommended" : ""}`.trim()}
-        onClick={() => onApplyPreset?.(item.key)}
-        title={item.detail}
-      >
-        <span>{item.label}</span>
-        <em>{item.detail}</em>
-      </button>)}
-    </div>
-    <div className="stockDecisionResolveRail" aria-label="Clasificar observación de la ficha">
-      <span>{resolution ? `Clasificación: ${resolution.label}` : "Clasificar observación"}</span>
+    <div className="stockDecisionResolveRail" aria-label="Clasificar el valor">
+      <span>{resolution ? `Clasificación: ${resolution.label}` : "Tu clasificación"}</span>
       <label className="stockDecisionValidationNote">
         <span>Nota del inversor</span>
         <input
-          value={validationNote}
+          value={note}
           maxLength={120}
-          onChange={(event) => onValidationNoteChange?.(event.target.value)}
-          placeholder={desk.decisionFocus?.label || "Qué observas en la ficha"}
+          onChange={(event) => onNoteChange?.(event.target.value)}
+          placeholder="Qué observas en la ficha"
         />
       </label>
-      <div className="stockDecisionValidationState" aria-label="Estado de observación del foco">
-        {STOCK_DECISION_VALIDATION_STATES.map((item) => <button
-          type="button"
-          key={item.key}
-          className={`${item.tone || ""} ${validationKey === item.key ? "active" : ""}`.trim()}
-          onClick={() => onValidationKeyChange?.(item.key)}
-          title={item.detail}
-        >
-          {item.label}
-        </button>)}
-      </div>
       <div>
         <button
           type="button"
@@ -1490,27 +1145,9 @@ function SimilarStocks({ rows = [] }) {
   </section>;
 }
 
-function StructureSummary({ row = {}, compact = false }) {
-  const display = methodologyDisplayForRow(row);
-  const confidence = display.confidence;
-  const score = Number.isFinite(row.patternQualityScore) ? `Calidad ${row.patternQualityScore.toFixed(0)}` : "";
-  const reason = methodologyCompactReasonLine(row) || score || display.structure?.dataLabel;
-  const detail = confidence.key === "partial" ? `${confidence.shortLabel} · ${reason}` : reason;
-  return <div className={`structureSummary ${compact ? "compact" : ""} ${display.tone || ""}`} title={display.reason || ""}>
-    <span>{display.label}</span>
-    <small>{detail}</small>
-  </div>;
-}
-
-function DataConfidenceCell({ row = {} }) {
-  const confidence = methodologyDisplayForRow(row).confidence;
-  return <span className={`dataConfidencePill ${confidence.state}`.trim()} title={confidence.detail}>{confidence.label}</span>;
-}
-
-function patternClaimBlocked(row = {}) {
-  const display = methodologyDisplayForRow(row);
-  return display.blocksPatternClaim === true || display.dataLimited === true ? display : null;
-}
+/* StructureSummary, DataConfidenceCell y patternClaimBlocked vivían aquí:
+   solo los consumía ComparativeContext (retirado el 2026-08-21, ver el
+   comentario en el render). */
 
 function AuditCheck({ label, value, state = "neutral", detail = "" }) {
   const source = metricSourceFromState(state, label, detail);
@@ -1564,57 +1201,14 @@ function MethodologyAuditPanel({ pattern, verdict, stage }) {
   </section>;
 }
 
-function ContractionTape({ row = {}, depths = [] }) {
-  const blocked = patternClaimBlocked(row);
-  if (blocked) return <span title={blocked.reason || blocked.line || ""}>No validado</span>;
-  const objective = vcpObjectiveSummary(row);
-  if (objective.sequence && objective.sequence !== "sin compresiones") {
-    return <span title={objective.rejectedContractionText || ""}>{objective.sequence}</span>;
-  }
-  const values = (Array.isArray(depths) ? depths : []).filter(Number.isFinite).slice(0, 4);
-  if (!values.length) return <span>Sin dato</span>;
-  return <span>{values.map((value) => `${value.toFixed(1)}%`).join(" -> ")}</span>;
-}
-
-export function ComparativeContext({ rows = [], note = "", symbol = "" }) {
-  const countLabel = rows.length ? `${rows.length} referencias` : "sin referencias";
-  return <section className="card">
-    <div className="sectionTitle">
-      <div>
-        <h2>Contexto comparativo</h2>
-        <p className="fine">Mismo grupo o mercado · perfiles técnicos comparables</p>
-      </div>
-      <span className="fine">{countLabel}</span>
-    </div>
-    <div className="dataNote" style={{ marginBottom: 12 }}>
-      {note || "Sin referencias comparables en los snapshots recientes con los datos actuales."}
-    </div>
-    {rows.length ? <div className="tableWrap">
-      <table className="table">
-        {/* "Base" (sem) y "Pivot" salieron por lo mismo que en N1: la duración
-            es la ventana fija del detector y el pivote, el máximo de esa misma
-            ventana. La columna conserva la profundidad del rango con su
-            ventana declarada. */}
-        <thead><tr>{["Ticker", "Relacion", "Estructura", "Contracciones", "Rango 65s", "Vol. seco", "RS grupo", "Datos"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
-        <tbody>{rows.map((item) => {
-          const current = String(item.symbol || "").toUpperCase() === String(symbol || "").toUpperCase();
-          const blocked = patternClaimBlocked(item);
-          const blockedCell = <span title={blocked?.reason || blocked?.line || ""}>No validado</span>;
-          return <tr key={item.symbol} className={current ? "active" : ""}>
-            <td><a className="ticker" href={`/stock/${encodeURIComponent(item.symbol)}`}>{item.symbol}</a><br /><span className="fine">{item.companyName || ""}</span></td>
-            <td><span className="pill">{item.relation?.label || "Contexto"}</span></td>
-            <td><StructureSummary row={item} compact /></td>
-            <td><ContractionTape row={item} depths={item.contractionDepths} /></td>
-            <td>{Number.isFinite(item.baseDepthPct) ? `${item.baseDepthPct.toFixed(1)}%` : "Sin dato"}</td>
-            <td>{blocked ? blockedCell : Number.isFinite(item.volumeDryUpRatio) ? `${item.volumeDryUpRatio.toFixed(2)}x` : "Sin dato"}</td>
-            <td>{Number.isFinite(item.rsSectorPct) ? item.rsSectorPct.toFixed(0) : "Sin dato"}</td>
-            <td><DataConfidenceCell row={item} /></td>
-          </tr>;
-        })}</tbody>
-      </table>
-    </div> : <p className="fine">La seccion queda activa y se completara cuando haya snapshots suficientes del mismo sector, industria, tema o mercado.</p>}
-  </section>;
-}
+/* ContractionTape y ComparativeContext («Contexto comparativo», con su
+   tabla Ticker/Relación/Estructura/Contracciones/Rango 65s/Vol. seco/
+   RS grupo/Datos) vivían aquí. Retirados el 2026-08-21 junto con su fetch a
+   /api/comparables — el comentario largo está en el punto del render donde
+   se montaba, y el porqué completo en
+   docs/analisis-ficha-cuadro-grafico-2026-08-21.md (Parte B): la tabla era
+   una cadena de «No validado» para casi cualquier valor; vuelve cuando el
+   detector valide estructura de verdad. */
 
 export default function StockClient({ initialSymbol = "", initialData = null, initialError = "" }) {
   const symbol = String(initialSymbol || "").toUpperCase();
@@ -1624,20 +1218,26 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const [logoIndex, setLogoIndex] = useState(0);
   const [logoLoaded, setLogoLoaded] = useState(false);
   const [similar, setSimilar] = useState([]);
-  const [comparables, setComparables] = useState({ rows: [], note: "" });
   const [social, setSocial] = useState(null);
   const [socialLoading, setSocialLoading] = useState(false);
   const [chartSettings, setChartSettings] = useState(DEFAULT_CHART_SETTINGS);
   const [chartScope, setChartScope] = useState("global");
   const [benchmarkDraft, setBenchmarkDraft] = useState("");
   const [companyBriefExpanded, setCompanyBriefExpanded] = useState(false);
-  const [screenerOrigin, setScreenerOrigin] = useState(null);
   const [reviewNavigation, setReviewNavigation] = useState(null);
   const [decisionResolution, setDecisionResolution] = useState(null);
   const [decisionResolutionHistoryItems, setDecisionResolutionHistoryItems] = useState([]);
-  const [decisionValidationKey, setDecisionValidationKey] = useState("pending");
   const [decisionValidationNote, setDecisionValidationNote] = useState("");
   const [showVcpDiagnostics, setShowVcpDiagnostics] = useState(false);
+  // Pliegue del cuadro de identidad del lienzo. DELIBERADAMENTE efímero:
+  // estado de React, sin localStorage ni preferencia global, y se reabre al
+  // cambiar de símbolo (ver el useEffect [symbol]). El cuadro existe para que
+  // una captura del gráfico lleve la identidad sin componer nada; un pliegue
+  // recordado convertiría «lo oculté una vez en este valor» en «todas mis
+  // capturas futuras salen sin identidad» (análisis 2026-08-21, A3). Además
+  // la persistencia local ya opera al borde de la cuota (análisis del 15,
+  // C9) y este estado ni siquiera queremos recordarlo.
+  const [identityCardCollapsed, setIdentityCardCollapsed] = useState(false);
 
   function updateChartSettings(nextSettings) {
     setChartSettings(writeChartSettings(nextSettings, { scope: chartScope, symbol }));
@@ -1669,19 +1269,10 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       .catch(() => setSimilar([]));
   }
 
-  function loadComparablesFor(payload) {
-    if (!symbol || !payload) return;
-    const qs = new URLSearchParams({
-      symbol,
-      sector: payload.sector || "",
-      industry: payload.industry || "",
-      theme: payload.theme || "",
-      country: payload.country || "",
-    });
-    getJson(`/api/comparables?${qs.toString()}`, { timeoutMs: 12000 })
-      .then((result) => setComparables({ rows: result.results || [], note: result.note || "" }))
-      .catch(() => setComparables({ rows: [], note: "Contexto comparativo no disponible en este momento." }));
-  }
+  /* loadComparablesFor (fetch a /api/comparables) vivía aquí: alimentaba el
+     «Contexto comparativo», retirado el 2026-08-21 (ver el comentario en el
+     render). Se retira también la petición: sin bloque no hay motivo para
+     el viaje al servidor. */
 
   function loadSocialFor(payload) {
     if (!symbol) return;
@@ -1710,7 +1301,6 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       const d = await getJson(`/api/company-brief?${qs.toString()}`);
       setData(d);
       loadSimilarFor(d);
-      loadComparablesFor(d);
       loadSocialFor(d);
     } catch (e) {
       // El detalle técnico va a consola; la ficha enseña lenguaje de producto.
@@ -1725,18 +1315,21 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     const nextSettings = readChartSettings({ scope: chartScope, symbol });
     const reviewState = safeRead(STORAGE_KEYS.review, {});
     setChartSettings(nextSettings);
-    setScreenerOrigin(screenerStockContextFromSession(safeRead(STORAGE_KEYS.screenerSession, null), symbol));
     syncReviewNavigation(reviewState, symbol);
     setDecisionResolution(decisionResolutionForSymbol(reviewState, symbol));
     setDecisionResolutionHistoryItems(decisionResolutionHistory(reviewState, { symbol, limit: 4 }));
+    setDecisionValidationNote("");
     setLogoIndex(0);
     setLogoLoaded(false);
     setCompanyBriefExpanded(false);
     setShowVcpDiagnostics(false);
+    // Cada valor entra con el cuadro de identidad visible: el pliegue es una
+    // corrección puntual para UN gráfico donde tapa precio, no una
+    // preferencia (análisis 2026-08-21, A3).
+    setIdentityCardCollapsed(false);
     const savedBenchmark = cleanBenchmarkSymbol(nextSettings.benchmarks?.[symbol]);
     if (initialData) {
       loadSimilarFor(initialData);
-      loadComparablesFor(initialData);
       loadSocialFor(initialData);
       if (savedBenchmark && savedBenchmark !== cleanBenchmarkSymbol(initialData.relativeStrength?.benchmarkSymbol)) {
         load({ benchmarkSymbol: savedBenchmark });
@@ -1760,7 +1353,13 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   // del último lote— y ahí nacía la contradicción entre pantallas. Sin
   // semanal se muestra ausente con motivo, no un número de otro ranking.
   const rsUniverse = finiteValue(weeklyGlobalRs?.rsRating, rs.rating);
-  const rsBenchmark = finiteValue(rs.benchmarkRating, rs.rsRating);
+  // rsBenchmark (benchmarkRating) alimentaba solo el panel Fuerza relativa,
+  // retirado el 2026-08-21; la comparación vs. benchmark vive en el gráfico.
+  // La tarjeta de identidad del lienzo (variante 2c encogida: raíl de etapa,
+  // identidad, FR, estructura, crecimiento y pie de marcas) — modelo en
+  // lib/chartIdentityCard.js, vista en ChartIdentityCard.jsx. Sustituye al
+  // sello de tres líneas de la primera iteración de este mismo día.
+  const identityCardModel = buildChartIdentityCard({ symbol, data, rsUniverse });
   const priceSnapshot = priceSnapshotFromBars(data?.chartBars || [], q);
   const technical = technicalSnapshotFromBars(data?.chartBars || [], q);
   const statementCurrency = data?.financialResults?.currency || g.financialCurrency || data?.currency || "";
@@ -1816,63 +1415,21 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const setupVerdict = setupDisplay.verdict;
   const setupTradePlanEligible = setupDisplay.actionable && setupDisplay.tradePlanEligible && !setupDisplay.blocksPatternClaim;
   const actionableSetupPattern = setupTradePlanEligible ? setupPattern : null;
-  const decisionDesk = buildStockDecisionDesk({
-    origin: screenerOrigin,
-    chartSettings,
-    setupDisplay,
-    setupPattern,
-    technical,
-    rsUniverse,
-    activeBenchmark,
-    showVcpDiagnostics,
-  });
-  const decisionFocusKey = decisionDesk?.decisionFocus?.key || decisionDesk?.focus || symbol;
-  useEffect(() => {
-    const focusState = decisionDesk?.decisionFocus?.state || "";
-    setDecisionValidationKey(focusState === "ready" ? "validated" : focusState === "blocked" ? "blocked" : "pending");
-    setDecisionValidationNote("");
-  }, [symbol, decisionFocusKey]);
 
   useEffect(() => {
     setBenchmarkDraft(activeBenchmark);
   }, [activeBenchmark]);
 
-  function applyDecisionChartPreset(presetKey) {
-    const preset = DECISION_CHART_PRESETS.find((item) => item.key === presetKey);
-    if (!preset) return;
-    const nextIndicators = {
-      ...DEFAULT_CHART_SETTINGS.indicators,
-      ...(chartSettings.indicators || {}),
-      ...(preset.indicators || {}),
-    };
-    updateChartSettings({
-      ...chartSettings,
-      range: preset.range,
-      interval: preset.interval,
-      indicators: nextIndicators,
-    });
-    setShowVcpDiagnostics(preset.diagnostics ? Boolean(setupPattern) : false);
-  }
-
-  function focusDecisionEvidence(item) {
-    if (!item?.focusPresetKey) return;
-    applyDecisionChartPreset(item.focusPresetKey);
-  }
-
   function resolveStockDecision(actionKey) {
     if (!symbol) return;
     const previousReview = safeRead(STORAGE_KEYS.review, {});
-    const note = buildStockDecisionResolutionNote({
-      validationKey: decisionValidationKey,
-      focusLabel: decisionDesk?.decisionFocus?.label || decisionDesk?.focus || "",
-      comment: decisionValidationNote,
-      fallback: decisionDesk?.focus || "",
-    });
+    // La nota es SOLO lo que escribió el inversor: sin el prefijo
+    // «Validado: <foco del motor>» que componía la mesa retirada.
     const nextReview = applyStockDecisionResolution(previousReview, {
       symbol,
       actionKey,
       source: "stock",
-      note,
+      note: decisionValidationNote.trim(),
     });
     persistReviewQueue(nextReview);
     syncReviewNavigation(nextReview, symbol);
@@ -1945,19 +1502,12 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     load({ benchmarkSymbol: nextBenchmark });
   }
 
-  const annualRowsForHero = sortLatestFirst(data?.financialResults?.incomeAnnual || []);
-  const quarterRowsForHero = sortLatestFirst(data?.financialResults?.incomeQuarterly || []);
-  const heroEpsRows = annualRowsForHero.length >= 2 ? annualRowsForHero : quarterRowsForHero;
-  const heroEpsCompareOffset = annualRowsForHero.length >= 2 ? 1 : 4;
-  const heroEpsYoY = heroEpsRows.length ? epsGrowth(heroEpsRows[0], heroEpsRows, 0, heroEpsCompareOffset, v.sharesOutstanding || g.sharesOutstanding) : g.earningsGrowth;
-  // MISMA palabra que la celda "Etapa" de la tabla del screener
-  // (lib/stageDisplay.js). Antes la ficha imprimía el label largo del
-  // clasificador ("Base / transicion", "Stage 2 probable") y la tabla la
-  // versión corta en español: la misma clasificación se leía como dos datos
-  // distintos. La clasificación no cambia, solo cómo se escribe.
-  const stageState = data?.stage?.weekly?.state || "";
-  const stageDisplay = stageWordForState(stageState, data?.stage?.label || "");
-  const stageShortLabel = stageDisplay?.word || "";
+  /* El bloque hero-EPS (annualRowsForHero → heroEpsYoY → heroEpsSource) y los
+     locals de etapa (stageState/stageDisplay/stageShortLabel) alimentaban las
+     filas EPS YOY de N2 y ETAPA de N1, retiradas el 2026-08-21 (ver el
+     comentario en el render). La palabra canónica de etapa sigue saliendo de
+     lib/stageDisplay.js allí donde se pinta (N0, franja, cuadro, gate de N3);
+     el EPS YoY por trimestre vive en la banda de crecimiento de la franja. */
   const businessTeaser = compactBusinessTeaser(data);
   const companySummary = data?.summary || "Sin descripción de negocio disponible.";
   const companySummaryId = `hero-company-summary-${symbol || "stock"}`;
@@ -1967,16 +1517,6 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       ? metricSourceState("measured", "RS", `n=${sharedNum(Math.round(rs.rsGlobalSample))}`)
       : metricSourceState("review", "RS", "muestra insuficiente o snapshot sin muestra")
     : metricSourceState("review", "RS", "sin ranking semanal para este símbolo");
-  const setupSource = chartEstimated
-    ? metricSourceState("review", "Estructura", chartSourceDetail)
-    : setupDisplay.blocksPatternClaim || setupDisplay.dataLimited
-    ? metricSourceState("blocked", "Estructura", setupDisplay.reason || "datos insuficientes")
-    : metricSourceState("proxy", "Estructura", setupDisplay.reason || "modelo de patrón técnico");
-  const heroEpsSource = Number.isFinite(heroEpsYoY)
-    ? heroEpsRows.length
-      ? metricSourceState("measured", "EPS YoY", "estado financiero")
-      : metricSourceState("proxy", "EPS YoY", "fallback de proveedor")
-    : metricSourceState("review", "EPS YoY", "sin dato");
 
   /* ── Cálculos para N0–N3 (jerarquía FICHA-TICKER-IA.md) ─────────── */
 
@@ -1985,152 +1525,28 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   // La resolución del USUARIO (candidata/vigilar/descartar) sigue viva en la
   // mesa de decisión y en la cola de Review — esa sí es suya.
 
-  // Resumen de setup ("3/5 · falta: ...") — alimentado por el score
-  // del patrón cuando está disponible.
-  const setupSummary = (() => {
-    if (!setupPattern) return "Sin estructura medible.";
-    const checks = [
-      setupPattern.consolidationCandidate === true,
-      Number.isFinite(setupPattern.contractionCount) && setupPattern.contractionCount >= 2,
-      setupPattern.contractionsDecreasing === true,
-      Number.isFinite(setupPattern.distanceToPivotPct) && Math.abs(setupPattern.distanceToPivotPct) <= 6,
-      Number.isFinite(setupPattern.volumeDryUpRatio) && setupPattern.volumeDryUpRatio <= 0.9,
-    ];
-    const passed = checks.filter(Boolean).length;
-    const total = checks.length;
-    const missing = [];
-    if (!checks[0]) missing.push("base");
-    if (!checks[1]) missing.push("contracciones");
-    if (!checks[2]) missing.push("contracción decreciente");
-    if (!checks[3]) missing.push("cierre sobre pivot");
-    if (!checks[4]) missing.push("volumen seco");
-    return `${passed}/${total} condiciones${missing.length ? ` · falta: ${missing.join(", ")}` : " · setup completo"}`;
-  })();
+  /* El resumen de setup ("3/5 condiciones · falta: base, contracciones…")
+     vivía aquí y se retiró de N0 el 2026-08-22: enumeraba condiciones que
+     el detector no evalúa de forma fiable hoy — `base` es la ventana fija
+     del detector (13.0 semanas en el 100% de las filas, no una base
+     medida; ver docs/analisis-ficha-2026-08-15.md, A3) y `contracciones`
+     está en calibración sin integrar en producción (ver
+     research/contracciones/). Una checklist con apariencia de precisión
+     sobre datos que no la tienen es justo lo que el principio 7 advierte.
+     El cálculo del patrón (setupPattern) sigue existiendo y alimenta el
+     desglose auditable de N3 (n3ScoreBreakdown); vuelve a N0 cuando el
+     detector esté validado. */
 
-  // Narrativa (tesis / riesgo / siguiente paso). Las fuentes (decisionBrief,
-  // decisionTrace, screenerOrigin) pueden entregar strings O objetos
-  // `{label, value, detail, tone}` (forma compacta de briefItems en
-  // stockDecisionDesk / screenerContracts). Normalizamos a string antes de
-  // pasarlas al JSX para evitar el crash "Objects are not valid as a
-  // React child".
-  const narrativeString = (input) => {
-    if (input == null) return "";
-    if (typeof input === "string") return input.trim();
-    if (typeof input === "number" || typeof input === "boolean") return String(input);
-    if (typeof input === "object") {
-      const candidate = input.value ?? input.label ?? input.detail ?? "";
-      if (typeof candidate === "string") return candidate.trim();
-      if (candidate != null) return String(candidate);
-    }
-    return "";
-  };
-  const narrative = (() => {
-    const origin = screenerOrigin || {};
-    const trace = origin.decisionTrace || {};
-    const brief = origin.decisionBrief || {};
-    const focus = decisionDesk?.decisionFocus;
-    return {
-      tesis: narrativeString(brief.thesis)
-        || narrativeString(trace.thesis)
-        || narrativeString(origin.thesis)
-        || narrativeString(focus?.label)
-        || "",
-      riesgo: narrativeString(brief.risk)
-        || narrativeString(trace.risk)
-        || narrativeString(origin.risk)
-        || narrativeString(setupDisplay?.reason)
-        || "",
-      siguientePaso: narrativeString(focus?.detail)
-        || narrativeString(origin.nextStep)
-        || narrativeString(brief.nextStep)
-        || "",
-    };
-  })();
-
-  // N1: 8 filas máximo, sin color, tabla clave-valor
-  const n1Rows = [
-    {
-      label: "RS",
-      value: Number.isFinite(rsUniverse) ? String(Math.round(rsUniverse)) : "—",
-      state: Number.isFinite(rsUniverse) ? "value" : "ghost",
-      source: rsUniverseSource,
-      detail: trustTitle("RS", Number.isFinite(rsUniverse) ? Math.round(rsUniverse) : "—", sampleText(rs?.rsGlobalSample), rsUniverseSource),
-    },
-    {
-      label: "RS QUALITY",
-      value: Number.isFinite(rs?.rsQualityScore) ? String(Math.round(rs.rsQualityScore)) : "—",
-      state: Number.isFinite(rs?.rsQualityScore) ? "value" : "ghost",
-      source: Number.isFinite(rs?.rsQualityScore) ? metricSourceState("proxy", "RS Quality", "score compuesto técnico") : metricSourceState("review", "RS Quality", "sin dato"),
-    },
-    {
-      label: "ETAPA",
-      value: stageShortLabel || "—",
-      state: stageShortLabel ? "value" : "ghost",
-      source: stageShortLabel ? metricSourceState(chartEstimated ? "review" : "proxy", "Etapa", chartEstimated ? chartSourceDetail : "modelo técnico") : metricSourceState("review", "Etapa", STAGE_MISSING_REASON),
-    },
-    {
-      label: "MA50",
-      value: Number.isFinite(technical.distanceSma50) ? sharedPct(technical.distanceSma50) : "—",
-      state: Number.isFinite(technical.distanceSma50) ? (chartEstimated ? "stale" : "value") : "ghost",
-      suffix: chartEstimated && Number.isFinite(technical.distanceSma50) ? "est" : "",
-      source: Number.isFinite(technical.distanceSma50)
-        ? metricSourceState(chartEstimated ? "review" : "measured", "MA50", chartSourceDetail)
-        : metricSourceState("review", "MA50", "histórico insuficiente"),
-    },
-    {
-      label: "MA200",
-      value: Number.isFinite(technical.distanceSma200) ? sharedPct(technical.distanceSma200) : "—",
-      state: Number.isFinite(technical.distanceSma200) ? (chartEstimated ? "stale" : "value") : "ghost",
-      suffix: chartEstimated && Number.isFinite(technical.distanceSma200) ? "est" : "",
-      source: Number.isFinite(technical.distanceSma200)
-        ? metricSourceState(chartEstimated ? "review" : "measured", "MA200", chartSourceDetail)
-        : metricSourceState("review", "MA200", "histórico insuficiente"),
-    },
-    /* BASE y PIVOT salieron de la lectura técnica (2026-08-15). No eran
-       medidas del valor: `baseWeeks` es la ventana fija del detector
-       (`rows.slice(0, 65) / 5` en lib/setupPatterns.js → 13.0 sem en todas las
-       fichas) y `distanceToPivotPct` se mide contra el máximo de esas mismas
-       65 sesiones, por lo que salía idéntico a la distancia al máximo de 52
-       semanas en 4 de 5 fichas. El principio 7 ya aplazó ambas columnas en la
-       tabla por lo mismo ("un número falso con aspecto de preciso es peor que
-       no tenerlo"); vuelven aquí cuando se calculen de verdad. */
-    {
-      // "ATH" afirmaba un máximo histórico: `technicalSnapshotFromBars` mide
-      // contra `last252` barras. Mismo dato y mismo nombre que la columna
-      // "Dist. máx 52s" de la tabla, abreviado al presupuesto de label de N1.
-      label: "MÁX 52S",
-      value: Number.isFinite(technical.distance52w) ? sharedPct(technical.distance52w) : "—",
-      state: Number.isFinite(technical.distance52w) ? (chartEstimated ? "stale" : "value") : "ghost",
-      suffix: chartEstimated && Number.isFinite(technical.distance52w) ? "est" : "",
-      source: Number.isFinite(technical.distance52w)
-        ? metricSourceState(chartEstimated ? "review" : "measured", "Dist. máx 52s", chartSourceDetail)
-        : metricSourceState("review", "Dist. máx 52s", "histórico insuficiente"),
-    },
-  ];
-
-  // N2 fundamentales operativos (3): Ventas YoY, EPS YoY, Cap.
-  const n2Fundamentals = [
-    {
-      label: "VENTAS YOY",
-      value: sharedPct(g.revenueGrowth),
-      state: Number.isFinite(g.revenueGrowth) ? "value" : "ghost",
-      source: metricSourceForValue(g.revenueGrowth, "Ventas YoY", "proveedor financiero"),
-    },
-    {
-      label: "EPS YOY",
-      value: sharedPct(heroEpsYoY),
-      state: Number.isFinite(heroEpsYoY) ? "value" : "ghost",
-      source: heroEpsSource,
-    },
-    {
-      label: "CAP.",
-      value: money(data?.marketCap, data?.marketCapCurrency || data?.currency),
-      state: Number.isFinite(data?.marketCap) ? "value" : "ghost",
-      source: Number.isFinite(data?.marketCap)
-        ? metricSourceState("measured", "Cap.", "capitalización de mercado del proveedor")
-        : metricSourceState("review", "Cap.", "sin dato"),
-    },
-  ];
+  /* Aquí vivían `narrative`/`narrativeString` (la narrativa de N2), `n1Rows`
+     (las 6 filas de la Lectura técnica: RS, RS QUALITY, ETAPA, MA50, MA200,
+     MÁX 52S — con las notas sobre BASE/PIVOT y el renombrado de «ATH» del
+     2026-08-15) y `n2Fundamentals` (VENTAS YOY, EPS YOY, CAP.). Retirados el
+     2026-08-21 con sus bloques: ver el comentario en el render y
+     docs/analisis-ficha-cuadro-grafico-2026-08-21.md (Parte B). MA50/MA200
+     bajan a la franja vía `technical`; CAP. vive en el cuadro de identidad;
+     la regla BASE/PIVOT («un número falso con aspecto de preciso es peor que
+     no tenerlo») sigue documentada en lib/setupPatterns.js y en el propio
+     doc. */
 
   // N3 desglose del score (barras de razón estilo Decisiones)
   const n3ScoreBreakdown = setupPattern
@@ -2161,14 +1577,21 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     description: data.summary || data.description || "Sin descripción de negocio.",
   } : null;
 
-  // N3 detalle de calidad de datos por fuente
+  // N3 detalle de calidad de datos por fuente. Único sitio de la ficha para
+  // cobertura, tamaño de muestra del RS y estado del histórico desde el
+  // 2026-08-22 (franja "Calidad de dato" de N0 retirada — diagnóstico
+  // interno, no información del valor; ver el comentario junto a
+  // N0VerdictBlock). La fecha de cierre se queda también en N0 (junto al
+  // precio) porque esa sí la necesita el usuario sin abrir este desglose.
   const n3DataQualityDetail = data ? [
     { label: "Cierre", value: freshness.priceDate ? compactDate(freshness.priceDate) : "—", state: freshness.priceDate ? (chartEstimated ? "stale" : "value") : "ghost", suffix: chartEstimated && freshness.priceDate ? "est" : "", source: metricSourceState(chartEstimated ? "proxy" : "measured", "Cierre", "cierre del proveedor") },
-    // Mismo texto que la franja de N0 (rsRankingStripValue): sin ranking
-    // semanal no hay fecha ni muestra que enseñar en ninguna de las dos.
     { label: "RS global", value: rsRankingStripValue(rsUniverse, freshness), state: Number.isFinite(rsUniverse) && freshness.rsGlobalAsOf ? "value" : "ghost", source: rsUniverseSource },
     { label: "Cobertura", value: coverage.label || "Completa", state: coverage.label ? "value" : "ghost", source: coverage.label ? metricSourceState("measured", "Cobertura", "auditoría interna") : metricSourceState("review", "Cobertura", "sin dato") },
     { label: "Histórico", value: chartUnavailable ? "Sin serie de precios" : chartEstimated ? "Histórico estimado" : "Histórico en vivo", state: chartUnavailable ? "ghost" : "value", source: chartEstimated ? metricSourceState("review", "Histórico", chartSourceDetail) : metricSourceState("measured", "Histórico", "live") },
+    // Antes solo aparecía en la franja de N0, y solo cuando había desvío
+    // (principio 3 lo prohíbe: mostrar un dato solo cuando es "malo" oculta
+    // el caso bueno). Aquí, como el resto del desglose, se muestra siempre.
+    { label: "Cotización", value: priceSnapshot?.coherent === false ? "Distinta del cierre" : "Coincide con el cierre", state: priceSnapshot?.coherent === false ? "stale" : "value", detail: "cotización intradía frente al cierre dibujado en el gráfico", source: priceSnapshot?.coherent === false ? metricSourceState("review", "Cotización", "cotización intradía distinta del cierre dibujado") : metricSourceState("measured", "Cotización", "cotización intradía coincide con el cierre dibujado") },
     { label: "Fundamentales", value: freshness.fundamentalsAgeDays != null ? `${freshness.fundamentalsAgeDays} días` : "Sin fecha", state: freshness.fundamentalsAgeDays != null ? "value" : "ghost", source: freshness.fundamentalsAgeDays != null ? metricSourceState("measured", "Fundamentales", "estado financiero del proveedor") : metricSourceState("review", "Fundamentales", "sin fecha") },
   ] : [];
 
@@ -2198,33 +1621,26 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       data={data}
       priceSnapshot={priceSnapshot}
       freshness={freshness}
-      coverage={coverage}
-      chartEstimated={chartEstimated}
-      chartUnavailable={chartUnavailable}
-      setupSummary={setupSummary}
-      rsUniverse={rsUniverse}
       actions={n0Actions}
     />
 
-    {/* Decisión metodológica — bloque secundario que vive entre N0 y N1 */}
-    {decisionDesk && (
-      <StockDecisionDesk
-        desk={decisionDesk}
-        resolution={decisionResolution}
-        resolutionHistory={decisionResolutionHistoryItems}
-        reviewNavigation={reviewNavigation}
-        showMethodGuardrails={false}
-        validationKey={decisionValidationKey}
-        validationNote={decisionValidationNote}
-        onValidationKeyChange={setDecisionValidationKey}
-        onValidationNoteChange={setDecisionValidationNote}
-        onOpenReviewSymbol={openReviewFlowSymbol}
-        onApplyPreset={applyDecisionChartPreset}
-        onFocusEvidence={focusDecisionEvidence}
-        onResolveDecision={resolveStockDecision}
-        onReopenDecision={reopenStockDecision}
-      />
-    )}
+    {/* Aquí vivía la mesa de observación (StockDecisionDesk), que solo
+        aparecía al entrar desde el screener y reimprimía el veredicto del
+        motor — retirada el 2026-08-22; el porqué completo está en el
+        comentario largo junto a StockUserClassification. Queda lo que era
+        del usuario, ahora por CUALQUIER ruta de entrada: su clasificación
+        manual y la navegación de la cola de Review. */}
+    <StockUserClassification
+      resolution={decisionResolution}
+      resolutionHistory={decisionResolutionHistoryItems}
+      reviewNavigation={reviewNavigation}
+      note={decisionValidationNote}
+      onNoteChange={setDecisionValidationNote}
+      onOpenReviewSymbol={openReviewFlowSymbol}
+      onResolveDecision={resolveStockDecision}
+      onReopenDecision={reopenStockDecision}
+    />
+
 
     {error && <p className="stockPageError" role="alert">{error}</p>}
 
@@ -2270,28 +1686,57 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           showPatternDiagnostics={showVcpDiagnostics}
           localQuality={localQuality}
           height={600}
+          identityCard={identityCardModel ? <ChartIdentityCard card={identityCardModel} /> : null}
+          identityCollapsed={identityCardCollapsed}
+          onToggleIdentity={() => setIdentityCardCollapsed((value) => !value)}
         />
         {/* Franja descriptiva (diseño "Ficha StatsEdge", variante 2a):
             identidad, etapa, fuerza relativa, estructura y crecimiento,
             pegada al gráfico. Los campos sin dato demostrable se muestran
             ausentes con su motivo (ver lib/descriptiveStrip.js). */}
         <DescriptiveStrip
-          symbol={symbol}
           data={data}
-          rsUniverse={rsUniverse}
-          freshness={freshness}
           setupPattern={setupPattern}
+          technical={technical}
+          stockVolume={stockVolume}
         />
+        {/* Convención para añadir un bloque nuevo bajo el gráfico (p. ej.
+            detector de contracciones, salud de corto plazo): renderízalo
+            aquí como un <section>/<div> hermano más, DESPUÉS de
+            DescriptiveStrip. `.stockChartPanel` no es grid ni flex —es
+            flujo normal—, así que cada hermano se apila con su alto real
+            (auto) sin que nadie tenga que recalcular nada. El único deber
+            del bloque nuevo es declarar su propia separación con
+            `margin-top` (ver `.stockDescStrip` en styles/stock.css), igual
+            que hace la franja. NUNCA reservar alto fijo por adelantado
+            (min-height ni grid-template-rows con un track fijo para un
+            hijo condicional): esa fue la causa del hueco vacío bajo el
+            gráfico que se corrigió en `.universalChart`
+            (styles/components.css) el 2026-08-21 —una tercera fila de
+            grid de 300px reservada para un panel que no siempre existe. */}
       </section>
 
-      {/* N1 — Lectura técnica (tabla clave-valor, sin color, máx. 8 filas) */}
-      <N1TechTable rows={n1Rows} />
+      {/* ── Bloques retirados el 2026-08-21 (docs/analisis-ficha-cuadro-
+          grafico-2026-08-21.md, Parte B) — NO reponer sin releer ese doc ──
 
-      {/* N2 — Contexto (narrativa + fundamentales operativos) */}
-      <N2ContextBlock
-        narrative={narrative}
-        fundamentals={n2Fundamentals}
-      />
+          N1 «Lectura técnica» (N1TechTable): 6 filas — RS, RS QUALITY,
+          ETAPA, MA50, MA200, MÁX 52S. Se retiró por repetición: RS, ETAPA y
+          MÁX 52S ya estaban en la franja descriptiva a 300 px; MA50 y MA200
+          eran los únicos datos propios y viven ahora como celdas «Media 50d»
+          y «Media 200d» de la banda de estructura de la franja. RS QUALITY
+          (score compuesto) queda sin superficie hasta decidir su cajón en
+          N3 — está en el brief (relativeStrength.rsQualityScore).
+
+          N2 «Contexto» (N2ContextBlock): narrativa tesis/riesgo/siguiente
+          paso + fundamentales operativos (VENTAS YOY, EPS YOY, CAP.). Se
+          retiró porque la narrativa por URL directa era la razón interna del
+          detector disfrazada de riesgo (análisis del 15) y los operativos
+          eran el último punto de la serie que la franja ya muestra con seis
+          trimestres. CAP., el único dato único, vive ahora en el cuadro de
+          identidad del lienzo (lib/chartIdentityCard.js).
+
+          tests/fichaRetiradas.test.js vigila que ninguno vuelva por
+          accidente. */}
 
       {/* N3 — Auditoría (colapsado por defecto). Incluye ahora dentro de un
           cuarto <details> ("Metodología y gates") el antiguo
@@ -2316,9 +1761,34 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       {/* Comparativos y contexto: viven al final, fuera de la jerarquía
           N0–N3, como soporte secundario. */}
       <SimilarStocks rows={similar} />
-      <ComparativeContext rows={comparables.rows} note={comparables.note} symbol={symbol} />
-      <StockVolumePanel stockVolume={stockVolume} />
-      <RelativeStrengthPanel rs={rs} rsUniverse={rsUniverse} rsBenchmark={rsBenchmark} country={data.country} />
+      {/* ── Bloques retirados el 2026-08-21 (docs/analisis-ficha-cuadro-
+          grafico-2026-08-21.md, Parte B) — NO reponer sin releer ese doc ──
+
+          «Contexto comparativo» (ComparativeContext + /api/comparables):
+          tabla de referencias del mismo grupo con Estructura/Contracciones/
+          Rango 65s/Vol. seco/RS grupo. Se retiró porque para casi cualquier
+          valor era una cadena de «No validado» (la tabla de negaciones de
+          los análisis del 14 y el 15): vuelve cuando el detector valide
+          estructura de verdad. Con el bloque se retiró también su fetch.
+
+          «Estado del volumen» (StockVolumePanel): reparto up/down 50d,
+          volumen seco 10d/50d, impulso 5d/20d. El volumen seco era el mismo
+          cociente que la celda «Volumen 10d/50d» de la franja en otro
+          formato (0,88× ≡ −12%); reparto e impulso, los dos datos propios,
+          viven ahora como celdas de la banda de estructura de la franja
+          (stockVolume sigue calculándose aquí y baja como prop).
+
+          «Fuerza relativa» (RelativeStrengthPanel): RS global (su quinta
+          aparición en la ficha), RS país y grupo (percentiles del LOTE del
+          escaneo que contradecían la ausencia declarada con motivo por la
+          franja — principio 3), benchmark 3M/6M/12M (la comparación vive en
+          el propio gráfico: línea RS + «Comparar vs»), y los scores
+          compuestos RS quality / riesgo técnico / volatilidad / drawdown,
+          que quedan sin superficie hasta decidir su cajón en N3 (siguen en
+          el brief: relativeStrength.*).
+
+          tests/fichaRetiradas.test.js vigila que ninguno vuelva por
+          accidente. */}
       <FundamentalsPanel data={data} growth={g} valuation={v} quote={q} calendar={data.earningsCalendar} currency={statementCurrency} />
       <NewsSection rows={data.news} />
       <SocialPulseSection social={social} loading={socialLoading} symbol={symbol} />

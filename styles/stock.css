@@ -15,8 +15,11 @@
 }
 
 /* ─── N0 Veredicto (siempre visible, sin scroll) ─────────────────── */
-/* Identidad + precio · curva de etapa grande · acción + confianza ·
-   freno · score · resumen de setup. Única zona con color semántico. */
+/* Identidad + precio + fecha de cierre · curva de etapa grande. Única zona
+   con color semántico. (Acción/confianza, freno, score, resumen de setup y
+   la franja "Calidad de dato" se retiraron por etapas — principio 1 y
+   principio 3; ver los comentarios junto a N0VerdictBlock en
+   app/stock/[symbol]/StockClient.jsx.) */
 
 .stockVerdict {
   position: relative;
@@ -122,12 +125,26 @@
 }
 
 .stockVerdictQuoteLabel {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
   color: var(--muted);
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: var(--track-label);
+}
+
+/* Fecha de cierre, discreta junto a la etiqueta del precio. Es lo único que
+   sobrevivió de la franja "Calidad de dato" retirada el 2026-08-22 — el
+   resto (cobertura, tamaño de muestra del RS) es diagnóstico interno y
+   quedó en el desglose auditable de N3. */
+.stockVerdictQuoteDate {
+  color: var(--soft);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .stockVerdictQuoteValue {
@@ -230,37 +247,16 @@
 .stockDecisionChip[data-stage="stage2"] .stockDecisionChipDecision { color: var(--text); }
 .stockDecisionChip[data-stage="stage4"] .stockDecisionChipDecision { color: var(--muted); }
 
-/* Resumen de setup, al pie de N0. (El freno y el score del sistema se
-   retiraron con el veredicto; el score sigue en el desglose de N3.) */
-.stockVerdictFoot {
-  display: grid;
-  gap: var(--space-6);
-  align-items: center;
-}
-
-.stockVerdictSetup {
-  display: grid;
-  gap: var(--space-1);
-}
-
-.stockVerdictSetupLabel {
-  color: var(--muted);
-  font-family: var(--font-body);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
-}
-
-.stockVerdictSetupText {
-  color: var(--soft);
-  font-family: var(--font-body);
-  font-size: var(--text-m);
-  line-height: var(--lh-body);
-}
-
-/* La franja de calidad de dato vive ahora en styles/quality-strip.css,
-   importada por app/components/ui/QualityStrip.jsx. */
+/* El resumen de setup ("Setup 1/5 condiciones · falta: …") y la franja
+   "Calidad de dato" (Cierre/Cobertura/RS·n=) vivían al pie de N0 —
+   stockVerdictFoot/stockVerdictSetup* y <QualityStrip> respectivamente.
+   Se retiraron el 2026-08-22: el resumen de setup enumeraba condiciones
+   que el detector no evalúa de forma fiable (base = ventana fija del
+   detector, contracciones sin integrar en producción), y la franja era
+   diagnóstico interno (cobertura, tamaño de muestra) que ya vive en el
+   desglose auditable de N3. Ver el comentario junto a N0VerdictBlock en
+   app/stock/[symbol]/StockClient.jsx. styles/quality-strip.css (el CSS de
+   QualityStrip) sigue en pie: el componente lo sigue usando Listas. */
 
 /* ─── N1 Lectura técnica: tabla clave-valor de 2 columnas ────────── */
 
@@ -861,76 +857,11 @@
   opacity: 0.55;
 }
 
-/* ─── Decisión: bloque de observación metodológica (en N0 si cabe,
-       pero originalmente ocupaba su propia zona — la integramos como
-       sub-bloque secundario bajo N0) ──────────────────────────────── */
-
-.stockDecisionDesk {
-  padding: var(--space-5);
-  border: 1px solid var(--line2);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--shadow-panel);
-  display: grid;
-  gap: var(--space-4);
-}
-
-.stockDecisionDeskHead {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-4);
-  align-items: start;
-}
-
-.stockDecisionDeskHead h3 {
-  margin: 0;
-  color: var(--text);
-  font-family: var(--font-display);
-  font-stretch: var(--stretch-display);
-  font-weight: 600;
-  font-size: var(--display-s);
-  text-transform: uppercase;
-  letter-spacing: var(--track-display);
-}
-
-.stockDecisionDeskHead p {
-  margin: var(--space-1) 0 0;
-  color: var(--soft);
-  font-family: var(--font-body);
-  font-size: var(--text-s);
-  line-height: var(--lh-body);
-}
-
-.stockDecisionDeskBody {
-  display: grid;
-  gap: var(--space-4);
-}
-
-.stockDecisionFocus {
-  padding: var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface-inset);
-}
-
-.stockDecisionFocusLabel {
-  display: block;
-  color: var(--muted);
-  font-family: var(--font-body);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
-  margin-bottom: var(--space-1);
-}
-
-.stockDecisionFocusText {
-  margin: 0;
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: var(--text-m);
-  line-height: var(--lh-body);
-}
+/* Los estilos de la mesa de observación (stockDecisionDesk*, focos,
+   checklist) vivían aquí: el bloque se retiró de la ficha el 2026-08-22
+   (principio 1 — reimprimía el veredicto del motor al entrar desde el
+   screener). Ver el comentario junto a StockUserClassification en
+   app/stock/[symbol]/StockClient.jsx. */
 
 /* ─── Esquema de superficie — variantes puntuales ────────────────── */
 
@@ -1067,9 +998,6 @@
   .stockVerdictHead {
     grid-template-columns: 1fr;
     gap: var(--space-4);
-  }
-  .stockVerdictFoot {
-    grid-template-columns: 1fr;
   }
   .stockContext {
     grid-template-columns: 1fr;
@@ -1622,9 +1550,362 @@
 /* Los estilos del Plan de operación (tradePlan*) vivían aquí: el panel se
    retiró de la ficha (principio 1) y el cálculo sigue en lib/tradePlan.js. */
 /* ─── Franja descriptiva (cuadro que acompaña al gráfico) ─────────── */
+/* ── Tarjeta 2c sobre el lienzo (ChartIdentityCard.jsx) ─────────────────
+   Cuarta iteración: DENSA, a la manera de MarketSmith — todo el contenido
+   (identidad+precio, resumen, tema·rango·cap, raíl de etapa, FR,
+   estructura, crecimiento, pie) en ~560×~250 con tipografía de 9-11 px e
+   interlineado corto. La legibilidad la da la densidad ordenada, no el
+   aire. El contenedor (posición pegada al borde real, elevación flotante,
+   plegado) vive en styles/components.css. */
+
+.stockPage .chartIdCard {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+  color: var(--text);
+  text-align: left;
+}
+
+/* Fila 1 — ticker + precio + variación + nombre·mercado, fusionados. */
+.chartIdCardQuoteRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 10px 3px;
+  border-bottom: 1px solid var(--line2);
+}
+
+.chartIdCardQuoteRow .chartIdCardQuoteSymbol {
+  font-family: var(--font-data);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.chartIdCardQuoteRow .chartIdCardQuotePrice {
+  font-family: var(--font-data);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.chartIdCardQuoteRow .chartIdCardQuoteChange {
+  font-style: normal;
+  font-family: var(--font-data);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.chartIdCardQuoteRow .chartIdCardName {
+  min-width: 0;
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chartIdCardExchange {
+  font-style: normal;
+  font-family: var(--font-data);
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.chartIdCardMain {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.chartIdCardStageRail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 54px;
+  padding: 5px 8px 5px;
+  border-right: 1px solid var(--line);
+}
+
+.chartIdCardStageLabel {
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.chartIdCardStageDigit {
+  font-family: var(--font-data);
+  font-size: 26px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.chartIdCardStageDigit.ghost {
+  color: var(--ghost);
+}
+
+.chartIdCardStageWeek {
+  font-size: 9px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.chartIdCardStageSteps {
+  margin-top: auto;
+  padding-top: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.chartIdCardStageStep {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chartIdCardStageStep em {
+  font-style: normal;
+  font-family: var(--font-data);
+  font-size: 7.5px;
+  color: var(--humo);
+  width: 6px;
+  text-align: right;
+}
+
+.chartIdCardStageStep i {
+  flex: 1;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--curve-track);
+}
+
+.chartIdCardStageStep.active em {
+  color: var(--tiza);
+}
+
+.chartIdCardStageStep.active i {
+  height: 4px;
+  background: var(--tiza);
+}
+
+.chartIdCardBody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Resumen de negocio: dos líneas, 10 px, interlineado corto. */
+.chartIdCardSummary {
+  margin: 0;
+  padding: 4px 10px 2px;
+  font-size: 10px;
+  line-height: 1.28;
+  color: var(--soft);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.chartIdCardSummary.ghost {
+  color: var(--ghost);
+}
+
+.chartIdCardClassRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  padding: 1px 10px 3px;
+  border-bottom: 1px solid var(--line);
+  font-size: 9.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.chartIdCardClassRow .chartIdCardTheme {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chartIdCardClassRow .chartIdCardRank::before,
+.chartIdCardClassRow .chartIdCardCap::before {
+  content: "·";
+  margin-right: 4px;
+}
+
+.chartIdCardClassRow .chartIdCardCap b {
+  font-family: var(--font-data);
+  font-weight: 600;
+  color: var(--text);
+  font-size: 10px;
+}
+
+/* FR + estructura en una sola fila densa. */
+.chartIdCardRsRow {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+  padding: 3px 10px 3px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.chartIdCardRsLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.chartIdCardRsSwatch {
+  width: 10px;
+  height: 2px;
+  background: var(--traza);
+}
+
+.chartIdCardRsValue {
+  font-family: var(--font-data);
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.chartIdCardRsCaption {
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.chartIdCardStructCell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding-left: 8px;
+  border-left: 1px solid var(--line);
+}
+
+.chartIdCardStructCell em {
+  font-style: normal;
+  font-size: 8.5px;
+  color: var(--muted);
+}
+
+.chartIdCardStructCell b {
+  font-family: var(--font-data);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.chartIdCardRsRow .chartIdCardStructCell:first-of-type {
+  margin-left: auto;
+}
+
+/* Crecimiento trimestral, compactado sobre la rejilla de la franja. */
+.chartIdCardGrowth {
+  padding: 3px 10px 4px;
+}
+
+.chartIdCardGrowthLabel {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1px;
+}
+
+.chartIdCardGrowth .stockDescGrowthGrid {
+  min-width: 0;
+  row-gap: 0;
+  column-gap: 6px;
+  grid-template-columns: 36px repeat(6, minmax(42px, 1fr));
+}
+
+.chartIdCardGrowth .stockDescQuarterHead,
+.chartIdCardGrowth .stockDescGrowthRowLabel {
+  font-size: 9px;
+  line-height: 1.3;
+}
+
+.chartIdCardGrowth .stockDescGrowthValue {
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.chartIdCardFoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px 4px;
+  border-top: 1px solid var(--line);
+}
+
+.chartIdCardFootBrand {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--tiza);
+}
+
+.chartIdCardFootRule {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.chartIdCardFootSources {
+  font-family: var(--font-data);
+  font-size: 8px;
+  color: var(--humo);
+  white-space: nowrap;
+}
+
+.chartIdCardMissing {
+  color: var(--ghost);
+  font-family: var(--font-data);
+  font-size: 10.5px;
+}
+
+/* A menos de 640 px la tarjeta densa no cabe: se degrada a su miniatura
+   reconocible —fila de precio+nombre, raíl de etapa y FR— ocultando
+   resumen, clasificación, estructura, crecimiento y pie. */
+@media (max-width: 640px) {
+  .chartIdCardSummary,
+  .chartIdCardClassRow,
+  .chartIdCardGrowth,
+  .chartIdCardFoot,
+  .chartIdCardRsRow .chartIdCardStructCell {
+    display: none;
+  }
+  .chartIdCardQuoteRow .chartIdCardName {
+    display: none;
+  }
+  .chartIdCardStageDigit {
+    font-size: 22px;
+  }
+  .chartIdCardRsValue {
+    font-size: 15px;
+  }
+}
+
 /* Variante 2a del diseño "Ficha StatsEdge": bandas apiladas al pie del
    panel del gráfico. Superficies y tinta salen de tokens-v2 (el lienzo
    del diseño muestreó estos mismos tonos del gráfico real). */
+/* Primer bloque de la zona de extensión bajo el gráfico (más bloques
+   previstos: contracciones, salud de corto plazo…). El `margin-top` de
+   aquí abajo ES la convención: cada bloque nuevo se apila como hermano
+   dentro de `.stockChartPanel` (flujo normal, sin grid/flex) y declara su
+   propia separación así. Ningún bloque debe reservar alto fijo. */
 
 .stockDescStrip {
   margin-top: var(--space-4);
@@ -1652,7 +1933,8 @@
 
 /* La clase de lector de pantalla vive en screener.css, que la ficha no
    importa: sin esta copia, el "Sin dato" oculto se pintaba en la franja. */
-.stockDescStrip .srOnly {
+.stockDescStrip .srOnly,
+.chartIdentityCard .srOnly {
   position: absolute;
   width: 1px;
   height: 1px;

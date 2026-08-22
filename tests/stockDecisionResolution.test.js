@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   applyStockDecisionResolution,
-  buildStockDecisionResolutionNote,
   buildStockDecisionResolutionSummary,
   decisionResolutionHistory,
   decisionResolutionForSymbol,
   filterRowsByDecisionResolution,
   reopenStockDecisionResolution,
   reviewDecisionStateForRows,
-  stockDecisionValidationState,
 } from "@/lib/stockDecisionResolution";
 
 describe("stock decision resolution", () => {
@@ -69,26 +67,10 @@ describe("stock decision resolution", () => {
     expect(applyStockDecisionResolution(original, { symbol: "A", actionKey: "noop" })).toBe(original);
   });
 
-  it("compone notas de validación de foco para el historial de ficha", () => {
-    expect(stockDecisionValidationState("validated")).toMatchObject({
-      label: "Validado",
-      tone: "good",
-    });
-    expect(stockDecisionValidationState("unknown")).toMatchObject({
-      key: "pending",
-      label: "Pendiente",
-    });
-    expect(buildStockDecisionResolutionNote({
-      validationKey: "validated",
-      focusLabel: "Setup accionable",
-      comment: "Volumen confirma el pivot",
-    })).toBe("Validado: Setup accionable · Volumen confirma el pivot");
-    expect(buildStockDecisionResolutionNote({
-      validationKey: "blocked",
-      focusLabel: "Precio perseguible",
-      comment: "Demasiado extendida para entrada limpia",
-    })).toBe("Bloquea: Precio perseguible · Demasiado extendida para entrada limpia");
-  });
+  /* El test de buildStockDecisionResolutionNote / stockDecisionValidationState
+     («Validado: <foco> · …») vivía aquí: esa maquinaria se retiró el
+     2026-08-22 con la mesa de observación — la nota es ahora solo la del
+     inversor, sin prefijo del motor. */
 
   it("resume pendientes y resoluciones por orden de cola", () => {
     const review = {

@@ -167,8 +167,13 @@ describe("useChartController · viewModel composicional (ADR §5.2)", () => {
     expect(html).toContain("COMPOSE");
     // El close del último bar formateado aparece (131.44).
     expect(html).toContain("131,44");
-    // El changePct aparece.
-    expect(html).toMatch(/4[0-9]\.[0-9]%/);
+    // El changePct es la variación de la ÚLTIMA barra (vs. la anterior), no
+    // de toda la serie servida (cambio de contrato 2026-08-21: antes medía
+    // rows[0]→latest y el header decía "+46%" —o "+474%" en una ficha real—
+    // mientras la cabecera de la ficha decía la variación del día). Con
+    // makeBars (+0,16/día sobre ~131), la última sesión es +0.1%.
+    expect(html).toContain("0.1%");
+    expect(html).not.toMatch(/4[0-9]\.[0-9]%/);
   });
 
   it("UniversalPriceChartView acepta viewModel/actions/drawingToolbar como props (test estático sin controller)", () => {

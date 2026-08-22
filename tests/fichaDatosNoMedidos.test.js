@@ -1,7 +1,7 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import StockClient, { ComparativeContext, N0VerdictBlock, rsRankingStripValue } from "@/app/stock/[symbol]/StockClient";
+import StockClient, { N0VerdictBlock, rsRankingStripValue } from "@/app/stock/[symbol]/StockClient";
 
 /* Regresiones del análisis de la ficha (docs/analisis-ficha-2026-08-15.md):
    datos que parecían medidas del valor y no lo eran, más el guard que
@@ -95,9 +95,6 @@ describe("cabecera N0: los botones se renderizan", () => {
       data: { name: "Fragmento Inc." },
       priceSnapshot: { price: 10 },
       freshness: {},
-      coverage: {},
-      setupSummary: "",
-      rsUniverse: null,
       actions: fragment,
     }));
     expect(html).toContain("stockVerdictLinks");
@@ -110,16 +107,19 @@ describe("cabecera N0: los botones se renderizan", () => {
       data: { name: "Sin acciones Inc." },
       priceSnapshot: { price: 10 },
       freshness: {},
-      coverage: {},
-      setupSummary: "",
-      rsUniverse: null,
       actions: [],
     }));
     expect(html).not.toContain("stockVerdictLinks");
   });
 });
 
-describe("N1: fuera los datos que no son medidas del valor", () => {
+describe("fuera los datos que no son medidas del valor", () => {
+  // La «Lectura técnica» (N1) se retiró entera el 2026-08-21 por repetición
+  // con la franja descriptiva (docs/analisis-ficha-cuadro-grafico-2026-08-21
+  // .md, Parte B; tests/fichaRetiradas.test.js cubre la retirada). Las
+  // garantías de ESTE describe siguen vigentes sobre las superficies que
+  // quedan: ni BASE/PIVOT del detector ni la etiqueta «ATH» pueden volver a
+  // ninguna fila clave-valor, y las medidas reales viven en franja + cuadro.
   it("no muestra BASE ni PIVOT (ventana fija del detector y su máximo)", () => {
     const html = renderToStaticMarkup(React.createElement(StockClient, {
       initialSymbol: "NOBASE",
@@ -131,24 +131,25 @@ describe("N1: fuera los datos que no son medidas del valor", () => {
     expect(html).not.toContain("sem<");
   });
 
-  it("la distancia al máximo de 52 semanas no se llama ATH", () => {
+  it("la distancia al máximo de 52 semanas no se llama ATH en ninguna superficie", () => {
     const html = renderToStaticMarkup(React.createElement(StockClient, {
       initialSymbol: "MAX52",
       initialData: stockData(),
     }));
-    const labels = techLabels(html);
-    expect(labels).not.toContain("ATH");
-    expect(labels).toContain("MÁX 52S");
+    expect(techLabels(html)).not.toContain("ATH");
+    expect(html).not.toContain(">ATH<");
+    // El dato vive con su nombre honesto en la tarjeta 2c del lienzo
+    // («Máx. 52s») — y solo ahí: la franja se lo cedió.
+    expect(html).toContain("Máx. 52s");
   });
 
-  it("la lectura técnica conserva las filas que sí son medidas", () => {
+  it("las medidas que N1 aportaba viven ahora en la franja (Media 50d/200d)", () => {
     const html = renderToStaticMarkup(React.createElement(StockClient, {
       initialSymbol: "KEEP",
       initialData: stockData(),
     }));
-    expect(techLabels(html)).toEqual(
-      expect.arrayContaining(["RS", "RS QUALITY", "ETAPA", "MA50", "MA200", "MÁX 52S"]),
-    );
+    expect(html).toContain("Media 50d");
+    expect(html).toContain("Media 200d");
   });
 
   it("el desglose del patrón nombra la ventana del detector", () => {
@@ -161,41 +162,20 @@ describe("N1: fuera los datos que no son medidas del valor", () => {
   });
 });
 
-describe("contexto comparativo: mismas retiradas que N1", () => {
-  const rows = [
-    {
-      symbol: "PEER",
-      companyName: "Peer Inc.",
-      relation: { label: "Mismo grupo" },
-      baseDepthPct: 18.4,
-      baseWeeks: 13,
-      distanceToPivotPct: -4.2,
-      volumeDryUpRatio: 0.82,
-      rsSectorPct: 71,
-      contractionDepths: [12, 7],
-      patternDataStatus: "ok",
-      patternEligible: true,
-    },
-  ];
-
-  it("no publica la duración de base ni la distancia al pivote", () => {
-    const html = renderToStaticMarkup(React.createElement(ComparativeContext, { rows, symbol: "PEER" }));
-    expect(html).not.toContain("sem");
-    expect(html).not.toContain(">Pivot<");
-    expect(html).not.toContain(">Base<");
-    expect(html).toContain(">Rango 65s<");
-  });
-
-  it("las celdas siguen cuadrando con las cabeceras", () => {
-    const html = renderToStaticMarkup(React.createElement(ComparativeContext, { rows, symbol: "PEER" }));
-    const headers = [...html.matchAll(/<th>([^<]*)<\/th>/g)].length;
-    const cells = [...html.matchAll(/<td>/g)].length;
-    expect(headers).toBe(8);
-    expect(cells).toBe(headers);
-  });
-});
+/* El describe «contexto comparativo: mismas retiradas que N1» vivía aquí:
+   probaba que ComparativeContext no publicaba base/pivote y que sus celdas
+   cuadraban. El bloque entero se retiró de la ficha el 2026-08-21 (era la
+   tabla de negaciones — docs/analisis-ficha-cuadro-grafico-2026-08-21.md,
+   Parte B) y tests/fichaRetiradas.test.js vigila que no vuelva. Si vuelve
+   algún día con un detector que valide de verdad, recuperar del historial
+   estas dos garantías: sin «sem» ni «Pivot»/«Base», y celdas = cabeceras. */
 
 describe("franja de calidad: el RS ausente se muestra ausente", () => {
+  // La franja "Calidad de dato" de N0 (donde vivía "Sin ranking"/"n=0") se
+  // retiró el 2026-08-22; el mismo texto, con el mismo criterio de
+  // ausencia, vive ahora en el detalle auditable de N3 ("RS global"). Las
+  // garantías de este describe siguen probando el criterio sobre el HTML
+  // completo de la ficha, ahora vía esa superficie.
   it("sin ranking semanal no inventa fecha ni muestra cero", () => {
     expect(rsRankingStripValue(null, { rsGlobalAsOf: "2026-08-15", rsGlobalSample: 0 })).toBe("Sin ranking");
     expect(rsRankingStripValue(undefined, { rsGlobalAsOf: "2026-08-15" })).toBe("Sin ranking");

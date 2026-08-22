@@ -99,10 +99,13 @@ describe("stock trust signals", () => {
       },
     }));
 
-    expect(html).toContain("source-proxy");
+    // Las marcas de fiabilidad sobrevivieron a la limpieza del 2026-08-21 en
+    // las superficies que quedan: N3 (calidad de datos + gates de
+    // metodología). Las marcas de N1 ("RS Quality: proxy/estimada"), N2
+    // ("EPS YoY: proxy/estimada") y el panel RS se fueron con sus bloques —
+    // ver docs/analisis-ficha-cuadro-grafico-2026-08-21.md (Parte B) y
+    // tests/fichaRetiradas.test.js.
     expect(html).toContain("source-review");
-    expect(html).toContain("RS Quality: proxy/estimada");
-    expect(html).toContain("EPS YoY: proxy/estimada");
     expect(html).toContain("RS: revisar");
 
     // El desglose del score vive únicamente en stockScoreBreakdown (barras de
@@ -120,60 +123,13 @@ describe("stock trust signals", () => {
     expect(auditCheckLabels).toEqual(["Datos técnicos", "Histórico", "Etapa", "Plan"]);
   });
 
-  it("la narrativa N2 normaliza objetos {label,value,detail,tone} a strings antes de renderizar", () => {
-    // Regresión específica del bug detectado en producción:
-    //   "Objects are not valid as a React child (found: object with keys
-    //   {label, value, detail, tone})"
-    //
-    // Causa raíz: compactDecisionBriefItem (lib/screenerContracts.js,
-    // lib/stockDecisionDesk.js) devuelve SIEMPRE la forma
-    // `{label, value, detail, tone}`. La narrativa N2 leía esas fuentes
-    // y las asignaba directamente a `narrative.tesis | .riesgo |
-    // .siguientePaso`, que el JSX intentaba renderizar como texto
-    // (`<p>{narrative.tesis}</p>`) → crash de React.
-    //
-    // El helper `narrativeString` extrae `.value` (con fallback a
-    // `.label` y `.detail`) para que el JSX siempre reciba un string.
-    // Probamos ese contrato directamente simulando el shape exacto de
-    // compactDecisionBriefItem.
-    const compactShape = {
-      label: "Tesis",
-      value: "RS 60 con base consolidada",
-      detail: "Muestra suficiente, etapa 2",
-      tone: "good",
-    };
-    // Replicamos la lógica in-test para documentar el contrato esperado.
-    const narrativeString = (input) => {
-      if (input == null) return "";
-      if (typeof input === "string") return input.trim();
-      if (typeof input === "number" || typeof input === "boolean") return String(input);
-      if (typeof input === "object") {
-        const candidate = input.value ?? input.label ?? input.detail ?? "";
-        if (typeof candidate === "string") return candidate.trim();
-        if (candidate != null) return String(candidate);
-      }
-      return "";
-    };
-
-    // Strings directos: se devuelven tal cual.
-    expect(narrativeString("hola")).toBe("hola");
-    expect(narrativeString("  hola  ")).toBe("hola");
-    expect(narrativeString(null)).toBe("");
-    expect(narrativeString(undefined)).toBe("");
-
-    // Forma compacta (la que disparaba el bug): se extrae .value.
-    expect(narrativeString(compactShape)).toBe("RS 60 con base consolidada");
-
-    // Forma sin .value: cae a .label.
-    expect(narrativeString({ label: "Fallback label", detail: "x" })).toBe("Fallback label");
-
-    // Forma sin .value ni .label: cae a .detail.
-    expect(narrativeString({ detail: "Solo detail" })).toBe("Solo detail");
-
-    // Números y booleanos: se convierten.
-    expect(narrativeString(42)).toBe("42");
-    expect(narrativeString(true)).toBe("true");
-  });
+  /* El test «la narrativa N2 normaliza objetos {label,value,detail,tone}»
+     vivía aquí: documentaba el helper `narrativeString` de la narrativa de
+     N2, retirada de la ficha el 2026-08-21 junto con su bloque
+     (docs/analisis-ficha-cuadro-grafico-2026-08-21.md, Parte B). Si la
+     narrativa vuelve algún día, el bug que motivaba aquel helper sigue
+     descrito en el historial de este archivo: compactDecisionBriefItem
+     devuelve `{label, value, detail, tone}` y React no renderiza objetos. */
 
   it("compacta el diagnóstico VCP del gráfico en gates con marcas", () => {
     const html = renderToStaticMarkup(React.createElement(UniversalPriceChart, {

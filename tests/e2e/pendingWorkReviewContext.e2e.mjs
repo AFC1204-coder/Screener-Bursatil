@@ -197,10 +197,12 @@ export async function run({ context, baseUrl, sessionSeed }) {
   await waitForStage(page, () => {
     const session = JSON.parse(localStorage.getItem("statsedge.screenerSession.v1") || "{}");
     const context = session.lastOpenedStockContext || {};
-    const focusText = document.querySelector(".stockDecisionFocus")?.innerText || "";
+    // El contexto viaja aunque la ficha ya no pinte el foco del motor: la
+    // mesa de observación se retiró el 2026-08-22 (principio 1) y en
+    // pantalla solo queda la clasificación manual + el rail de Review.
     return context.decisionFocus?.resolutionFilterKey === "candidate"
       && context.decisionFocus?.queueFilterLabel === "Candidata"
-      && focusText.includes("Candidata");
+      && !document.querySelector(".stockDecisionFocus");
   }, "Ficha conserva subcola candidata desde Review");
 
   await page.locator(".stockDecisionResolveRail button.neutral", { hasText: "Reabrir" }).click();

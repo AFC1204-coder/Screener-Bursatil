@@ -120,8 +120,15 @@ export function useChartController(props = {}) {
 
   // Derivaciones puras.
   const latest = rows.at(-1);
-  const first = rows[0];
-  const change = first?.close ? ((Number(latest?.close) / Number(first.close)) - 1) * 100 : null;
+  // Variación de la ÚLTIMA barra (vs. la anterior), no de toda la serie
+  // servida: antes se medía contra rows[0] —la primera barra de TODO lo que
+  // el proveedor entregó, ignorando el rango elegido— y la cabecera del
+  // gráfico decía "+474,2%" (dos años de serie) mientras la de la ficha
+  // decía "+1,5%" (el día) para el mismo valor. En intervalo D esto es la
+  // variación de la última sesión, coherente con N0; en W/M, de la última
+  // semana/mes. Ver docs/analisis-ficha-cuadro-grafico-2026-08-21.md (A0).
+  const previous = rows.length > 1 ? rows[rows.length - 2] : null;
+  const change = previous?.close ? ((Number(latest?.close) / Number(previous.close)) - 1) * 100 : null;
   const positive = !Number.isFinite(change) || change >= 0;
 
   const intraday = config.intraday;

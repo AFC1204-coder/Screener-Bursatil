@@ -1092,7 +1092,7 @@
   position:relative;
   min-height:520px;
   display:grid;
-  grid-template-rows:auto auto minmax(300px,1fr);
+  grid-template-rows:auto auto auto;
   gap:10px;
   padding:12px;
   border:1px solid var(--line2);
@@ -1516,6 +1516,13 @@
   color:#ff8b8b;
 }
 
+/* Ancla del cuadro de identidad sobre el área de dibujo. Solo posiciona: el
+   div del canvas sigue siendo el mismo nodo que observa lightweight-charts. */
+.universalChartCanvasWrap {
+  position:relative;
+  min-width:0;
+}
+
 .universalChartCanvas {
   width:100%;
   min-width:0;
@@ -1523,6 +1530,86 @@
   border-top:1px solid var(--line2);
   border-bottom:1px solid var(--line2);
   touch-action:pan-y;
+}
+
+/* Tarjeta de identidad del lienzo — contenedor (tercera iteración,
+   2026-08-21 tarde: estrecha y fusionada con la fila del ticker y el
+   precio, que se pinta aquí dentro como primera fila). El contenido vive en
+   app/stock/[symbol]/ChartIdentityCard.jsx y su CSS en styles/stock.css.
+
+   Elevación según la doctrina de tokens-v2 (rol FLOTANTE): entre campos
+   verdes del mismo matiz el delta de luminosidad no basta — la separación
+   la dan el contorno y la sombra. Fondo --surface (panel elevado, un
+   escalón sobre el lienzo) casi opaco, borde --line2 y --shadow-float. La
+   iteración anterior usaba el mismo --surface2 del lienzo sin sombra y se
+   camuflaba: era el "bug de ejecución" que la doctrina describe.
+
+   Acoplada a la esquina (top/left 0, radio solo inferior-derecha): tarjeta
+   y fila de precio son UNA cabecera en la esquina del lienzo, no una caja
+   flotando bajo otra fila. El clic en toda la tarjeta pliega; el control
+   primario vive en la botonera, fuera del lienzo, para que ninguna captura
+   lo lleve. */
+.chartIdentityCard {
+  position:absolute;
+  top:0;
+  left:0;
+  z-index:6;
+  /* Cuarta iteración (densidad MarketSmith): ancho intermedio entre la
+     versión de 940 (demasiado aireada) y la de 396 (se quedaba corta) — el
+     mínimo donde el crecimiento de 6 trimestres y la fila FR+estructura
+     caben sin partirse con tipografía de 9-11 px. */
+  width:min(560px, calc(100% - 140px));
+  background:color-mix(in srgb, var(--surface) 94%, transparent);
+  border:1px solid var(--line2);
+  border-top:none;
+  border-left:none;
+  border-radius:0 0 10px 0;
+  box-shadow:var(--shadow-float);
+  cursor:pointer;
+  color:var(--text);
+  overflow:hidden;
+}
+
+/* Con la tarjeta visible, el badge de patrón y la botonera flotan sobre la
+   esquina superior derecha del lienzo: su fila del head era la banda muerta
+   que impedía a la tarjeta llegar al borde superior real del panel.
+   Aparecen SOLO al pasar el ratón por el lienzo (o con foco de teclado):
+   así una captura del área de dibujo sigue saliendo sin controles — el
+   requisito del plegado desde el primer diseño. En pantallas táctiles, sin
+   hover, quedan siempre visibles. */
+.universalChartFloatControls {
+  position:absolute;
+  top:6px;
+  right:6px;
+  z-index:7;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .12s ease;
+}
+
+.universalChartCanvasWrap:hover .universalChartFloatControls,
+.universalChartFloatControls:focus-within {
+  opacity:1;
+  pointer-events:auto;
+}
+
+@media (hover: none) {
+  .universalChartFloatControls {
+    opacity:1;
+    pointer-events:auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .chartIdentityCard {
+    max-width:calc(100% - 64px);
+  }
+  .universalChartFloatControls .universalChartPatternBadge {
+    display:none;
+  }
 }
 
 .vcpDiagnosticPanel {
@@ -5808,7 +5895,7 @@ h2 {
   padding:0 0 8px;
 }
 
-.stockPage .stockDecisionDesk {
+.stockPage .stockUserClassification {
   display:grid;
   gap:9px;
   margin:0 0 10px;
@@ -5816,102 +5903,6 @@ h2 {
   border:1px solid var(--stock-line);
   border-radius:9px;
   background:linear-gradient(180deg,var(--surface2),var(--surface2)),#0a0c10;
-}
-
-.stockPage .stockDecisionDesk.good {
-  border-color:var(--decision-vigilar);
-}
-
-.stockPage .stockDecisionDesk.warn,
-.stockPage .stockDecisionDesk.watch {
-  border-color:var(--line2);
-}
-
-.stockPage .stockDecisionDesk.bad {
-  border-color:var(--risk);
-}
-
-.stockPage .stockDecisionDeskHead {
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:12px;
-  min-width:0;
-  padding-bottom:8px;
-  border-bottom:1px solid var(--stock-line-soft);
-}
-
-.stockPage .stockDecisionDeskHead > div {
-  min-width:0;
-}
-
-.stockPage .stockDecisionDeskHead span,
-.stockPage .stockDecisionBrief span,
-.stockPage .stockDecisionEvidenceRail > span,
-.stockPage .stockDecisionChartRail > span,
-.stockPage .stockDecisionMetricStrip em,
-.stockPage .stockDecisionPresetRail em {
-  color:var(--stock-muted);
-  font-size:11px;
-  font-style:normal;
-  font-weight:720;
-  letter-spacing:0;
-  text-transform:uppercase;
-}
-
-.stockPage .stockDecisionDeskHead h3 {
-  margin:3px 0 2px;
-  color:var(--stock-text);
-  font-size:15px;
-  font-weight:760;
-  letter-spacing:0;
-}
-
-.stockPage .stockDecisionDeskHead p {
-  max-width:100%;
-  margin:0;
-  overflow:hidden;
-  color:#d7d9e1;
-  font-size:12px;
-  line-height:1.35;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.stockPage .stockDecisionDeskHead > b {
-  flex:0 0 auto;
-  min-width:44px;
-  padding:6px 8px;
-  border:1px solid var(--line2);
-  border-radius:7px;
-  color:#f4f5f8;
-  font-family:var(--font-data);
-  font-variant-numeric:tabular-nums;
-  font-size:13px;
-  text-align:center;
-}
-
-.stockPage .stockDecisionGuardrail {
-  display:grid;
-  gap:3px;
-  padding:8px 9px;
-  border:1px solid var(--accent);
-  border-radius:7px;
-  background:var(--senal-dim);
-}
-
-.stockPage .stockDecisionGuardrail b {
-  color:var(--accent);
-  font-size:11px;
-  font-weight:780;
-  letter-spacing:0;
-}
-
-.stockPage .stockDecisionGuardrail p {
-  margin:0;
-  color:#aeb8c8;
-  font-size:11.5px;
-  line-height:1.35;
 }
 
 .stockPage .stockReviewFlowRail {
@@ -6043,405 +6034,12 @@ h2 {
   opacity:.46;
 }
 
-.stockPage .stockDecisionFocus {
-  display:grid;
-  grid-template-columns:minmax(92px,.22fr) minmax(0,1fr) auto;
-  gap:9px;
-  align-items:center;
-  min-width:0;
-  padding:8px;
-  border:1px solid var(--accent);
-  border-radius:7px;
-  background:var(--senal-dim);
-}
-
-.stockPage .stockDecisionFocus.good {
-  border-color:var(--decision-vigilar);
-  background:var(--senal-dim);
-}
-
-.stockPage .stockDecisionFocus.warn,
-.stockPage .stockDecisionFocus.watch {
-  border-color:var(--line2);
-  background:var(--surface2);
-}
-
-.stockPage .stockDecisionFocus.bad {
-  border-color:var(--risk);
-  background:var(--oxido-dim);
-}
-
-.stockPage .stockDecisionFocus > div,
-.stockPage .stockDecisionFocus p {
-  min-width:0;
-}
-
-.stockPage .stockDecisionFocus span {
-  display:block;
-  color:var(--stock-muted);
-  font-size:9px;
-  font-weight:780;
-  letter-spacing:.06em;
-  text-transform:uppercase;
-}
-
-.stockPage .stockDecisionFocus b,
-.stockPage .stockDecisionFocus em,
-.stockPage .stockDecisionFocus strong,
-.stockPage .stockDecisionFocus p {
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.stockPage .stockDecisionFocus b {
-  display:inline-block;
-  max-width:100%;
-  color:#f2f4f8;
-  font-size:12px;
-  font-weight:780;
-}
-
-.stockPage .stockDecisionFocus em {
-  display:inline-block;
-  margin-left:5px;
-  color:var(--stock-muted);
-  font-family:var(--font-data);
-  font-variant-numeric:tabular-nums;
-  font-size:10px;
-  font-style:normal;
-}
-
-.stockPage .stockDecisionFocus p {
-  margin:0;
-  color:#b9c0ce;
-  font-size:12px;
-  line-height:1.3;
-}
-
-.stockPage .stockDecisionFocus strong {
-  color:#f0f2f6;
-  font-weight:760;
-}
-
-.stockPage .stockDecisionFocus button {
-  min-height:28px;
-  padding:5px 9px;
-  border:1px solid var(--line2);
-  border-radius:7px;
-  background:var(--surface);
-  color:#d9dce4;
-  font-size:11px;
-  font-weight:760;
-}
-
-.stockPage .stockDecisionFocus button:hover {
-  border-color:var(--accent);
-  background:var(--senal-dim);
-  color:#eef5ff;
-}
-
-.stockPage .stockObservationChecklist {
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:7px;
-}
-
-.stockPage .stockObservationChecklist span {
-  display:grid;
-  align-content:start;
-  gap:3px;
-  min-width:0;
-  min-height:72px;
-  padding:8px;
-  border:1px solid var(--stock-line-soft);
-  border-radius:7px;
-  background:var(--surface2);
-}
-
-.stockPage .stockObservationChecklist span.good {
-  border-color:var(--decision-vigilar);
-  background:var(--senal-dim);
-}
-
-.stockPage .stockObservationChecklist span.warn,
-.stockPage .stockObservationChecklist span.watch {
-  border-color:var(--line2);
-  background:var(--surface2);
-}
-
-.stockPage .stockObservationChecklist span.bad {
-  border-color:var(--risk);
-  background:var(--oxido-dim);
-}
-
-.stockPage .stockObservationChecklist em,
-.stockPage .stockObservationChecklist small {
-  overflow:hidden;
-  color:var(--stock-muted);
-  font-style:normal;
-  text-overflow:ellipsis;
-}
-
-.stockPage .stockObservationChecklist em {
-  font-size:9px;
-  font-weight:800;
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  white-space:nowrap;
-}
-
-.stockPage .stockObservationChecklist b {
-  overflow:hidden;
-  color:#f2f4f8;
-  font-size:12px;
-  font-weight:760;
-  letter-spacing:0;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.stockPage .stockObservationChecklist small {
-  display:-webkit-box;
-  font-size:10.5px;
-  line-height:1.25;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:2;
-}
-
-.stockPage .stockDecisionBriefGrid {
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:8px;
-}
-
-.stockPage .stockDecisionBrief {
-  min-width:0;
-  padding:8px 0 7px;
-  border-bottom:1px solid var(--stock-line-soft);
-}
-
-.stockPage .stockDecisionBrief b {
-  display:block;
-  overflow:hidden;
-  color:#f2f3f6;
-  font-size:13px;
-  font-weight:720;
-  letter-spacing:0;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.stockPage .stockDecisionBrief em {
-  display:block;
-  overflow:hidden;
-  margin-top:2px;
-  color:var(--stock-muted);
-  font-size:11px;
-  font-style:normal;
-  line-height:1.25;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.stockPage .stockDecisionBrief.good b {
-  color:#9ee8b1;
-}
-
-.stockPage .stockDecisionBrief.warn b,
-.stockPage .stockDecisionBrief.watch b {
-  color:#f2d28c;
-}
-
-.stockPage .stockDecisionBrief.bad b {
-  color:#ffaaa4;
-}
-
-.stockPage .stockDecisionDeskBody {
-  display:grid;
-  grid-template-columns:minmax(180px,.8fr) minmax(0,1fr) minmax(0,1.1fr);
-  gap:8px;
-  align-items:stretch;
-}
-
-.stockPage .stockDecisionMetricStrip,
-.stockPage .stockDecisionEvidenceRail,
-.stockPage .stockDecisionChartRail {
-  min-width:0;
-  padding:8px;
-  border:1px solid var(--stock-line-soft);
-  border-radius:7px;
-  background:var(--surface2);
-}
-
-.stockPage .stockDecisionMetricStrip {
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:7px;
-}
-
-.stockPage .stockDecisionMetricStrip span {
-  min-width:0;
-}
-
-.stockPage .stockDecisionMetricStrip b {
-  display:block;
-  overflow:hidden;
-  margin-top:2px;
-  color:#f0f1f4;
-  font-family:var(--font-data);
-  font-variant-numeric:tabular-nums;
-  font-size:12px;
-  font-weight:720;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.stockPage .stockDecisionEvidenceRail div,
-.stockPage .stockDecisionChartRail div {
-  display:flex;
-  flex-wrap:wrap;
-  gap:6px;
-  margin-top:7px;
-}
-
-.stockPage .stockDecisionEvidenceRail button,
-.stockPage .stockDecisionChartRail b {
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  max-width:100%;
-  min-height:24px;
-  padding:5px 8px;
-  overflow:hidden;
-  border:1px solid var(--line2);
-  border-radius:999px;
-  background:transparent;
-  color:#d9dce4;
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:0;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.stockPage .stockDecisionEvidenceRail button {
-  cursor:pointer;
-}
-
-.stockPage .stockDecisionEvidenceRail button:hover {
-  border-color:var(--accent);
-  background:var(--senal-dim);
-  color:#e8f1ff;
-}
-
-.stockPage .stockDecisionEvidenceRail button b,
-.stockPage .stockDecisionEvidenceRail button em {
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.stockPage .stockDecisionEvidenceRail button b {
-  font-size:11px;
-  font-weight:760;
-}
-
-.stockPage .stockDecisionEvidenceRail button em {
-  max-width:72px;
-  color:inherit;
-  font-size:9px;
-  font-style:normal;
-  font-weight:780;
-  opacity:.68;
-  text-transform:uppercase;
-}
-
-.stockPage .stockDecisionChartRail b em {
-  margin-right:5px;
-  color:var(--stock-muted);
-  font-style:normal;
-  font-weight:700;
-}
-
-.stockPage .stockDecisionEvidenceRail button.good,
-.stockPage .stockDecisionChartRail b.good {
-  border-color:var(--decision-vigilar);
-  color:#9ee8b1;
-}
-
-.stockPage .stockDecisionEvidenceRail button.warn,
-.stockPage .stockDecisionEvidenceRail button.watch,
-.stockPage .stockDecisionChartRail b.warn,
-.stockPage .stockDecisionChartRail b.watch {
-  border-color:var(--line2);
-  color:#f2d28c;
-}
-
-.stockPage .stockDecisionEvidenceRail button.bad,
-.stockPage .stockDecisionChartRail b.bad {
-  border-color:var(--risk);
-  color:#ffaaa4;
-}
-
-.stockPage .stockDecisionPresetRail {
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:7px;
-}
-
-.stockPage .stockDecisionPresetRail button {
-  min-width:0;
-  min-height:42px;
-  padding:7px 9px;
-  border:1px solid var(--stock-line);
-  border-radius:7px;
-  background:var(--surface);
-  color:#d3d5dc;
-  text-align:left;
-}
-
-.stockPage .stockDecisionPresetRail button.active {
-  border-color:var(--line2);
-  background:#e8e9ed;
-  color:var(--bg);
-}
-
-.stockPage .stockDecisionPresetRail button.recommended:not(.active) {
-  border-color:var(--line2);
-  background:var(--surface2);
-}
-
-.stockPage .stockDecisionPresetRail span {
-  display:block;
-  overflow:hidden;
-  font-size:12px;
-  font-weight:760;
-  letter-spacing:0;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.stockPage .stockDecisionPresetRail em {
-  display:block;
-  overflow:hidden;
-  margin-top:2px;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.stockPage .stockDecisionPresetRail button.active em {
-  color:#30333b;
-}
-
 .stockPage .stockDecisionResolveRail {
   display:grid;
-  grid-template-columns:minmax(94px,.45fr) minmax(170px,1fr) auto auto;
+  grid-template-columns:minmax(94px,.45fr) minmax(170px,1fr) auto;
   align-items:center;
   gap:8px;
   min-width:0;
-  padding-top:8px;
-  border-top:1px solid var(--stock-line-soft);
 }
 
 .stockPage .stockDecisionResolveRail > span {
@@ -6494,10 +6092,6 @@ h2 {
 
 .stockPage .stockDecisionValidationNote input::placeholder {
   color:#6f7786;
-}
-
-.stockPage .stockDecisionValidationState {
-  min-width:max-content;
 }
 
 .stockPage .stockDecisionResolveRail button {
@@ -6729,13 +6323,7 @@ h2 {
 }
 
 @media(max-width:760px) {
-  .stockPage .stockDecisionDeskHead,
-  .stockPage .stockDecisionDeskBody {
-    grid-template-columns:1fr;
-  }
-  .stockPage .stockDecisionDeskHead {
-    display:grid;
-  }
+
   .stockPage .stockReviewFlowRail {
     grid-template-columns:1fr;
   }
@@ -6750,17 +6338,7 @@ h2 {
     flex:1 1 auto;
     text-align:center;
   }
-  .stockPage .stockDecisionFocus {
-    grid-template-columns:1fr;
-  }
-  .stockPage .stockDecisionFocus button {
-    justify-self:start;
-  }
-  .stockPage .stockDecisionBriefGrid,
-  .stockPage .stockObservationChecklist,
-  .stockPage .stockDecisionPresetRail {
-    grid-template-columns:1fr;
-  }
+
   .stockPage .stockDecisionResolveRail {
     display:grid;
   }
@@ -6770,11 +6348,7 @@ h2 {
   .stockPage .stockDecisionResolveRail button {
     flex:1 1 auto;
   }
-  .stockPage .stockDecisionDeskHead p,
-  .stockPage .stockDecisionBrief b,
-  .stockPage .stockDecisionBrief em {
-    white-space:normal;
-  }
+
   .stockPage .chartPrefsLine,
   .stockPage .chartBenchmarkControl {
     flex-wrap:wrap;
@@ -7049,7 +6623,7 @@ h2 {
   }
   .stockPage .universalChart {
     min-height:0;
-    grid-template-rows:auto auto minmax(330px,auto);
+    grid-template-rows:auto auto auto;
     gap:8px;
     padding:8px;
     overflow:hidden;
@@ -7240,7 +6814,7 @@ h2 {
     width:100%;
     max-width:100%;
     min-height:0;
-    grid-template-rows:auto auto minmax(330px,auto);
+    grid-template-rows:auto auto auto;
     overflow:visible;
   }
   .stockPage .universalChartHead {

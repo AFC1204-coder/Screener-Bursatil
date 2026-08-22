@@ -22,7 +22,8 @@
 
 "use client";
 
-import { ChevronLeft, ChevronRight, Maximize2, SkipForward, TrendingUp, Trash2, ZoomIn, ZoomOut } from "lucide-react";
+import { cloneElement, isValidElement } from "react";
+import { BadgeInfo, ChevronLeft, ChevronRight, Maximize2, SkipForward, TrendingUp, Trash2, ZoomIn, ZoomOut } from "lucide-react";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { useChartController } from "@/app/useChartController";
 
@@ -40,6 +41,12 @@ export function UniversalPriceChartView({
   viewModel,
   actions,
   drawingToolbar,
+  // Cuadro de identidad del lienzo (solo la ficha lo pasa; el resto de
+  // superficies del chart —previews del screener, quick review— no lo tienen).
+  // El estado del pliegue vive en el caller: aquí solo se pinta.
+  identityCard = null,
+  identityCollapsed = false,
+  onToggleIdentity = null,
 }) {
   const {
     status,
@@ -76,41 +83,27 @@ export function UniversalPriceChartView({
 
   const toolActive = drawingToolbar?.toolActive || false;
   const viewStateClass = viewportRail.key === "unknown" ? "" : viewportRail.key;
-
-  return (
-    <div className={`universalChart ${toolActive ? "drawing" : ""} ${rootClassName}`.trim()}>
-      <div className="universalChartHead">
-        <div className="universalChartIdentity">
-          <span className="universalChartSymbol">{symbol}</span>
-          <div className="universalChartQuote">
-            <b>{fmt(latestClose)}</b>
-            <em className={positive ? "positive" : "negative"}>{pct(changePct)}</em>
-          </div>
-        </div>
-        {rsLegend?.enabled && (
-          <div className={`universalChartBadges ${Number.isFinite(Number(badges?.rsMainScore)) ? "" : "muted"}`} title="RS global del snapshot activo. No cambia con el rango del grafico.">
-            <span>RS global</span>
-            <b>{Number.isFinite(Number(badges?.rsMainScore)) ? Number(badges.rsMainScore).toFixed(0) : "Sin dato"}</b>
-          </div>
-        )}
-        {rsLegend?.enabled && rsLegend.intradayMuted && (
-          <div className="universalChartBadges muted" title="La linea RS se calcula con cierre diario y se oculta en intradia">
-            <span>RS</span>
-            <b>D</b>
-          </div>
-        )}
-        {badges?.pattern && (
-          <div className={`universalChartPatternBadge ${badges.pattern.tone || ""}`} title={badges.pattern.reason || ""}>
-            <span>{badges.pattern.shortLabel}</span>
-            <b>{badges.pattern.evidence}</b>
-          </div>
-        )}
-        {/* El badge «Vista rango·intervalo» y el chip de modo/barras se
-            eliminaron (principio 2): duplicaban los controles activos de
-            RANGO/TEMPORALIDAD —a un centímetro— y el raíl de ventana. El
-            estado por defecto no se rotula; solo la desviación manual (abajo)
-            merece aviso. */}
-        <div className="universalChartNavGroup" aria-label="Navegación del gráfico">
+  // Con la tarjeta de identidad VISIBLE, la fila del head desaparece: su
+  // ticker/precio/badge de RS viven dentro de la tarjeta, y el badge de
+  // patrón + la botonera flotan sobre la esquina superior derecha del lienzo
+  // (cuarta iteración, 2026-08-21: la fila dejaba una banda muerta encima de
+  // la tarjeta). Al plegar la tarjeta —o donde no la hay (previews del
+  // screener)— el head vuelve como fila normal con todo dentro.
+  const identityCardShown = Boolean(identityCard) && !identityCollapsed;
+  const patternBadge = badges?.pattern ? (
+    <div className={`universalChartPatternBadge ${badges.pattern.tone || ""}`} title={badges.pattern.reason || ""}>
+      <span>{badges.pattern.shortLabel}</span>
+      <b>{badges.pattern.evidence}</b>
+    </div>
+  ) : null;
+  const intradayRsBadge = rsLegend?.enabled && rsLegend.intradayMuted ? (
+    <div className="universalChartBadges muted" title="La linea RS se calcula con cierre diario y se oculta en intradia">
+      <span>RS</span>
+      <b>D</b>
+    </div>
+  ) : null;
+  const navGroup = (
+    <div className="universalChartNavGroup" aria-label="Navegación del gráfico">
           <button type="button" className="universalChartNavButton icon" onClick={() => actions.pan(-1)} disabled={!viewportRail.manual} aria-label="Mover ventana hacia el historial" title="Mover ventana hacia el historial"><ChevronLeft size={15} aria-hidden="true" /></button>
           <button type="button" className="universalChartNavButton icon" onClick={() => actions.pan(1)} disabled={!viewportRail.manual} aria-label="Mover ventana hacia el último dato" title="Mover ventana hacia el último dato"><ChevronRight size={15} aria-hidden="true" /></button>
           <button type="button" className="universalChartNavButton icon" onClick={() => actions.zoom(0.72)} aria-label="Acercar gráfico" title="Acercar"><ZoomIn size={14} aria-hidden="true" /></button>
@@ -126,6 +119,22 @@ export function UniversalPriceChartView({
           >
             <TrendingUp size={14} aria-hidden="true" />
           </button>
+          {/* Toggle de la tarjeta de identidad. Vive AQUÍ, en la botonera
+              —fuera del lienzo— a propósito: una captura del área de dibujo
+              no debe llevar nunca el control de plegar (análisis 2026-08-21,
+              A3). */}
+          {identityCard && (
+            <button
+              type="button"
+              className={`universalChartNavButton icon ${identityCollapsed ? "" : "active"}`.trim()}
+              onClick={() => onToggleIdentity?.()}
+              aria-pressed={!identityCollapsed}
+              aria-label={identityCollapsed ? "Mostrar tarjeta de identidad" : "Plegar tarjeta de identidad"}
+              title={identityCollapsed ? "Mostrar la tarjeta de identidad sobre el gráfico" : "Plegar la tarjeta de identidad (se vuelve a mostrar al cambiar de valor)"}
+            >
+              <BadgeInfo size={14} aria-hidden="true" />
+            </button>
+          )}
           {drawingToolbar?.hasSelection && (
             <button
               type="button"
@@ -140,8 +149,39 @@ export function UniversalPriceChartView({
           {viewportRail.distance && (
             <button type="button" className="universalChartNavButton icon accent" onClick={actions.scrollToLatest} aria-label="Volver al último dato sin cambiar el zoom" title="Volver al último dato sin cambiar el zoom"><SkipForward size={14} aria-hidden="true" /></button>
           )}
+    </div>
+  );
+
+  return (
+    <div className={`universalChart ${toolActive ? "drawing" : ""} ${identityCardShown ? "identityCardShown" : ""} ${rootClassName}`.trim()}>
+      {!identityCardShown && (
+        <div className="universalChartHead">
+          <div className="universalChartIdentity">
+            <span className="universalChartSymbol">{symbol}</span>
+            <div className="universalChartQuote">
+              <b>{fmt(latestClose)}</b>
+              <em
+                className={positive ? "positive" : "negative"}
+                title="Variación de la última barra del intervalo activo (en diario, la última sesión)"
+              >
+                {pct(changePct)}
+              </em>
+            </div>
+          </div>
+          {rsLegend?.enabled && (
+            <div className={`universalChartBadges ${Number.isFinite(Number(badges?.rsMainScore)) ? "" : "muted"}`} title="RS global del snapshot activo. No cambia con el rango del grafico.">
+              <span>RS global</span>
+              <b>{Number.isFinite(Number(badges?.rsMainScore)) ? Number(badges.rsMainScore).toFixed(0) : "Sin dato"}</b>
+            </div>
+          )}
+          {intradayRsBadge}
+          {patternBadge}
+          {/* El badge «Vista rango·intervalo» y el chip de modo/barras se
+              eliminaron (principio 2): duplicaban los controles activos de
+              RANGO/TEMPORALIDAD —a un centímetro— y el raíl de ventana. */}
+          {navGroup}
         </div>
-      </div>
+      )}
       {/* Raíl de estado: solo existe cuando hay algo que NO cuentan ya los
           controles o el eje — una desviación manual de la ventana o la
           herramienta de dibujo activa. El estado por defecto («todo el rango,
@@ -177,7 +217,64 @@ export function UniversalPriceChartView({
           ) : null}
         </div>
       )}
-      <div className="universalChartCanvas" ref={canvasRef} style={{ "--chart-target-height": "460px" }} />
+      {/* El wrapper existe solo para anclar el cuadro de identidad al área de
+          dibujo (position:relative). No toca el comportamiento del chart: el
+          div del ref sigue siendo el mismo y lightweight-charts monta dentro
+          de él exactamente igual. */}
+      <div className="universalChartCanvasWrap">
+        <div className="universalChartCanvas" ref={canvasRef} style={{ "--chart-target-height": "460px" }} />
+        {identityCardShown && (
+          /* Con la tarjeta visible, el badge de patrón y la botonera flotan
+             sobre la esquina superior derecha del lienzo: la fila del head
+             que ocupaban era la banda muerta que impedía a la tarjeta llegar
+             al borde superior real del panel. */
+          <div className="universalChartFloatControls">
+            {intradayRsBadge}
+            {patternBadge}
+            {navGroup}
+          </div>
+        )}
+        {identityCard && !identityCollapsed && (
+          /* Tarjeta de identidad sobre el lienzo (variante 2c encogida —
+             ChartIdentityCard.jsx en la ficha construye el contenido; aquí
+             solo se posiciona). Clic en la tarjeta = plegar (gesto
+             secundario; el control primario está en la botonera, fuera del
+             lienzo). Sin icono de cierre DENTRO: saldría en todas las
+             capturas, que es lo que se quiere evitar. Los InfoHint de las
+             ausencias son interactivos y no deben plegar. */
+          <div
+            className="chartIdentityCard"
+            role="button"
+            tabIndex={0}
+            aria-label="Tarjeta de identidad del valor. Activar para plegarla; se vuelve a mostrar al cambiar de valor."
+            title="Clic para plegar la tarjeta (el botón ⓘ de la botonera la devuelve)"
+            onClick={(event) => {
+              if (event.target.closest?.(".infoHint")) return;
+              onToggleIdentity?.();
+            }}
+            onKeyDown={(event) => {
+              if ((event.key === "Enter" || event.key === " ") && event.target === event.currentTarget) {
+                event.preventDefault();
+                onToggleIdentity?.();
+              }
+            }}
+          >
+            {/* La fila del ticker y el precio la pinta la propia tarjeta:
+                se le inyecta aquí el `quote` con la misma fuente (el header
+                del viewModel) que el head muestra cuando está plegada. */}
+            {isValidElement(identityCard)
+              ? cloneElement(identityCard, {
+                  quote: {
+                    symbol,
+                    priceText: fmt(latestClose),
+                    changeText: pct(changePct),
+                    positive,
+                  },
+                })
+              : identityCard}
+          </div>
+        )}
+      </div>
       {patternDiagnostic && (
         <div className="vcpDiagnosticPanel" aria-label="Diagnóstico VCP" title={patternDiagnostic.objective?.detail || patternDiagnostic.reason || ""}>
           <div className="vcpDiagnosticHead">
@@ -238,6 +335,9 @@ export default function UniversalPriceChart(props = {}) {
       viewModel={controller.viewModel}
       actions={controller.actions}
       drawingToolbar={controller.drawingToolbar}
+      identityCard={props.identityCard}
+      identityCollapsed={props.identityCollapsed}
+      onToggleIdentity={props.onToggleIdentity}
     />
   );
 }

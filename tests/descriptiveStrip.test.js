@@ -9,7 +9,9 @@
 import { describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import ChartIdentityCard from "@/app/stock/[symbol]/ChartIdentityCard";
 import DescriptiveStrip from "@/app/stock/[symbol]/DescriptiveStrip";
+import { buildChartIdentityCard } from "@/lib/chartIdentityCard";
 import {
   DESCRIPTIVE_ABSENCE,
   lowAdvance52wFromBars,
@@ -177,16 +179,30 @@ describe("quarterlyGrowthCells", () => {
   });
 });
 
-// ── Render de la franja ───────────────────────────────────────────────────
+// ── Render: franja + tarjeta 2c ───────────────────────────────────────────
+//
+// Desde el 2026-08-21 por la tarde el contenido está repartido: la tarjeta
+// 2c del lienzo (ChartIdentityCard, modelo en lib/chartIdentityCard.js)
+// lleva etapa, RS, Máx/mín/Base, crecimiento y pie; la franja conserva el
+// resumen, la industria y la banda de medias y volumen. Los tests de render
+// siguen ese reparto — nada se aserta en las dos superficies a la vez.
 
 function stripMarkup(data, extra = {}) {
   return renderToStaticMarkup(createElement(DescriptiveStrip, {
+    data,
+    setupPattern: extra.setupPattern ?? data?.setupPattern ?? null,
+    technical: extra.technical ?? null,
+    stockVolume: extra.stockVolume ?? null,
+  }));
+}
+
+function cardMarkup(data, extra = {}) {
+  const card = buildChartIdentityCard({
     symbol: "AGL",
     data,
     rsUniverse: extra.rsUniverse ?? null,
-    freshness: extra.freshness ?? {},
-    setupPattern: extra.setupPattern ?? null,
-  }));
+  });
+  return renderToStaticMarkup(createElement(ChartIdentityCard, { card }));
 }
 
 const fullData = {
@@ -196,6 +212,8 @@ const fullData = {
   theme: "Medtech / biotech",
   industry: "Health Information Services",
   summary: "Provides healthcare services for seniors.",
+  marketCap: 12000000000,
+  currency: "USD",
   chartProvider: "Yahoo Finance",
   chartBars: dailyBars(300, { startPrice: 92, minLow: 46 }),
   stage: {
@@ -227,38 +245,42 @@ const fullData = {
   setupPattern: { volumeDryUpRatio: 0.58 },
 };
 
-describe("DescriptiveStrip · render", () => {
-  it("pinta etapa con semana, RS con muestra, estructura y volumen", () => {
-    const html = stripMarkup(fullData, { rsUniverse: 99, freshness: { priceDate: "2026-08-20" } });
-    expect(html).toContain("semana 14");
-    expect(html).toContain("Etapa 2");
-    // es-ES no agrupa los números de cuatro cifras: n=4868, sin punto.
-    expect(html).toContain("n=4868");
+describe("ChartIdentityCard · render (tarjeta 2c densa sobre el lienzo)", () => {
+  it("pinta identidad, resumen, tema·cap, raíl con semana, RS con desde, estructura, crecimiento y pie", () => {
+    const html = cardMarkup(fullData, { rsUniverse: 99 });
+    expect(html).toContain("agilon health, inc.");
+    expect(html).toContain("· NYSE");
+    expect(html).toContain("Provides healthcare services");
+    expect(html).toContain("Medtech / biotech");
+    expect(html).toContain("12,0B");
+    expect(html).toContain("sem. 14");
+    expect(html).toContain("chartIdCardStageRail");
     // El punto de 2026-05-10 está exactamente 13 semanas antes del último:
     // el valor de partida se afirma.
     expect(html).toContain("desde 74");
-    expect(html).toContain("secado");
-    expect(html).toContain("ascendente");
-    expect(html).toContain("Volumen 10d/50d");
-  });
-
-  it("las ausencias estructurales llevan su motivo: base, RS sector, RS país y rango", () => {
-    const html = stripMarkup(fullData, { rsUniverse: 99 });
-    expect(html).toContain(DESCRIPTIVE_ABSENCE.base.slice(0, 40));
-    expect(html).toContain(DESCRIPTIVE_ABSENCE.rsSector.slice(0, 40));
-    expect(html).toContain(DESCRIPTIVE_ABSENCE.rsCountry.slice(0, 40));
-    expect(html).toContain(DESCRIPTIVE_ABSENCE.sectorRank.slice(0, 40));
-  });
-
-  it("el pie declara el proveedor real de datos, nunca uno no contratado", () => {
-    const html = stripMarkup(fullData, { rsUniverse: 99, freshness: { priceDate: "2026-08-20" } });
+    expect(html).toContain(">99<");
+    expect(html).toContain("Máx. 52s");
+    expect(html).toContain("-30,3%");
+    expect(html).toContain("Crecimiento trimestral");
+    expect(html).toContain("2T26");
+    // El pie declara el proveedor real de datos, nunca uno no contratado.
     expect(html).toContain("Gráfico TradingView");
     expect(html).toContain("Datos Yahoo Finance");
     expect(html).not.toMatch(/Twelve ?Data/i);
   });
 
-  it("sin RS semanal, sin etapa y sin trimestres: ausencias con motivo, nunca ceros", () => {
-    const html = stripMarkup({
+  it("las ausencias estructurales llevan su motivo: base y rango de sector", () => {
+    // El RS de sector y el de país ya no tienen superficie: 2c mostraba
+    // país + global y, con un universo de un solo país, se muestra uno
+    // (encargo 2026-08-21, punto 6). Sus motivos siguen en
+    // DESCRIPTIVE_ABSENCE por si algún día vuelven a tener hueco.
+    const html = cardMarkup(fullData, { rsUniverse: 99 });
+    expect(html).toContain(DESCRIPTIVE_ABSENCE.base.slice(0, 40));
+    expect(html).toContain(DESCRIPTIVE_ABSENCE.sectorRank.slice(0, 40));
+  });
+
+  it("sin RS semanal, etapa, mínimo, trimestres ni cap: ausencias con motivo, nunca ceros", () => {
+    const html = cardMarkup({
       name: "Valor sin datos",
       chartBars: dailyBars(100),
       stage: { weekly: { state: "insufficient_history", detail: "Requiere al menos 40 semanas." } },
@@ -266,18 +288,53 @@ describe("DescriptiveStrip · render", () => {
       financialResults: {},
     });
     expect(html).toContain(DESCRIPTIVE_ABSENCE.rs.slice(0, 30));
-    expect(html).toContain(DESCRIPTIVE_ABSENCE.quarters.slice(0, 30));
     expect(html).toContain(DESCRIPTIVE_ABSENCE.lowAdvance.slice(0, 30));
+    expect(html).toContain(DESCRIPTIVE_ABSENCE.quarters.slice(0, 30));
+    expect(html).toContain("Sin capitalización de mercado");
+    expect(html).toContain("Sin descripción de negocio");
     // "semanas" aparece dentro de los motivos de ausencia; lo que no puede
-    // aparecer es la semana de etapa afirmada ("semana N").
-    expect(html).not.toMatch(/semana \d/);
+    // aparecer es la semana de etapa afirmada ("sem. N").
+    expect(html).not.toMatch(/sem\. \d/);
     // Nada de "0" como relleno de RS o de estructura.
     expect(html).not.toMatch(/>0</);
   });
 
   it("con el RS presente pero sin serie histórica no se afirma el valor de partida", () => {
-    const html = stripMarkup({ ...fullData, relativeStrength: { distance52w: -30.3, globalRsSeries: [] } }, { rsUniverse: 99 });
+    const html = cardMarkup({ ...fullData, relativeStrength: { distance52w: -30.3, globalRsSeries: [] } }, { rsUniverse: 99 });
     expect(html).not.toContain("desde");
     expect(html).toContain(">99<");
+  });
+});
+
+describe("DescriptiveStrip · render (la franja tras el reparto denso)", () => {
+  it("pinta la banda de medias y volumen — lo único que conserva", () => {
+    const html = stripMarkup(fullData, {
+      technical: { distanceSma50: 12.4, distanceSma200: 31.5 },
+      stockVolume: {
+        upDownVolumeRatio: { available: true, value: 1.25, window: "50" },
+        volumeSurge: { available: true, value: -4.1, window: "5 vs 20" },
+      },
+    });
+    expect(html).toContain("ascendente");
+    expect(html).toContain("Volumen 10d/50d");
+    expect(html).toContain("secado");
+    expect(html).toContain("Media 50d");
+    expect(html).toContain("Media 200d");
+    expect(html).toContain("Reparto vol. 50d");
+    expect(html).toContain("Impulso vol. 5/20d");
+  });
+
+  it("no repite nada de la tarjeta densa: sin identidad, resumen, clasificación, FR, estructura, crecimiento ni pie", () => {
+    const html = stripMarkup(fullData, { technical: { distanceSma50: 12.4, distanceSma200: 31.5 } });
+    expect(html).not.toContain("Provides healthcare services");
+    expect(html).not.toContain("Medtech / biotech");
+    expect(html).not.toContain("Etapa");
+    expect(html).not.toContain("Fuerza relativa");
+    expect(html).not.toContain("Máx. 52s");
+    expect(html).not.toContain("Sobre mín.");
+    expect(html).not.toContain('stockDescStructLabel">Base<');
+    expect(html).not.toContain("Crecimiento trimestral");
+    expect(html).not.toContain("StatsEdge");
+    expect(html).not.toContain("rango");
   });
 });
