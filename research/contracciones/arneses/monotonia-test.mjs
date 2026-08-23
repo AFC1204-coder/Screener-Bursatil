@@ -48,7 +48,8 @@ for (const c of corpus.casos) {
   const ok = (r) => (r.base && c.veredicto === "BASE") || (!r.base && c.veredicto === "NO");
   filas.push({ id: c.id, et: c.veredicto, r4, r6, ok4: ok(r4), ok6: ok(r6),
     cmp4: contraEtiqueta(bars, r4, c.tramos), cmp6: contraEtiqueta(bars, r6, c.tramos),
-    mismasFechas: JSON.stringify(r4.fechas ?? null) === JSON.stringify(r6.fechas ?? null) });
+    mismasFechas: JSON.stringify(r4.fechas ?? null) === JSON.stringify(r6.fechas ?? null),
+    mismoMotivo: r4.reason === r6.reason });
 }
 
 const pad = (s, n) => String(s ?? "").padEnd(n);
@@ -57,7 +58,8 @@ const est = (r) => r.base ? `[${r.contracciones.join(" → ")}]` : `(${r.reason}
 console.log("### v4 FRENTE A v6, CASO POR CASO ###\n");
 console.log(pad("caso", 20) + pad("dueño", 6) + pad("v4", 6) + pad("v6", 6) + "qué cambia");
 for (const f of filas) {
-  const marca = f.ok4 === f.ok6 ? (f.mismasFechas ? "=" : "≠ FECHAS") : (f.ok6 ? "MEJORA" : "EMPEORA");
+  const marca = f.ok4 !== f.ok6 ? (f.ok6 ? "MEJORA" : "EMPEORA")
+    : !f.mismasFechas ? "≠ FECHAS" : !f.mismoMotivo ? `≠ motivo: ${f.r4.reason} → ${f.r6.reason}` : "=";
   console.log(pad(f.id, 20) + pad(f.et, 6) + pad(f.r4.base ? "BASE" : "no", 6)
     + pad(f.r6.base ? "BASE" : "no", 6) + marca);
 }
@@ -68,7 +70,7 @@ console.log(`v6: ${a6}/21 · ${filas.filter(f=>f.r6.base&&f.et==="NO").length} F
 
 console.log("\n### DETALLE DE TODO LO QUE CAMBIA ###");
 for (const f of filas) {
-  if (f.ok4 === f.ok6 && f.mismasFechas) continue;
+  if (f.ok4 === f.ok6 && f.mismasFechas && f.mismoMotivo) continue;
   console.log(`\n${f.id}  (dueño: ${f.et})`);
   console.log(`  v4: ${pad(f.r4.base ? "BASE" : "no", 5)} ${est(f.r4)}  ${f.r4.fechas ? f.r4.fechas.join("  ") : (f.r4.seq ? `seq=[${f.r4.seq}] corta=${f.r4.corta}` : "")}`);
   console.log(`  v6: ${pad(f.r6.base ? "BASE" : "no", 5)} ${est(f.r6)}  ${f.r6.fechas ? f.r6.fechas.join("  ") : (f.r6.seq ? `seq=[${f.r6.seq}] ultima=${f.r6.ultima} masSuperficial=${f.r6.masSuperficial}` : "")}`);

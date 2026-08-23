@@ -15,6 +15,9 @@ detector/
   v4.mjs              prototipo principal — el que mejor reproduce las lecturas del dueño
   v5.mjs              v4 + zona de salida de v3. 14/21 frente a 15/21, pero el
                       único caso que cambia (IP) lo rechaza por la razón correcta
+  v6.mjs              v4 + monotonía relajada (R5). Mismo 15/21 y las mismas
+                      fechas; en el universo marca 8 más, y esos 8 rinden 8 pts
+                      por debajo del universo. Implementada y APAGADA
 
 arneses/
   v4-test.mjs         v4 contra los 9 casos de la tanda 1
@@ -24,6 +27,9 @@ arneses/
   reglas-universo.mjs     qué cortarían esas reglas sobre los 37 marcados del universo
   estabilidad-ventana.mjs ¿cambia la lectura al mover el lookback? (respuesta: casi nunca)
   inspect.mjs         resumen semanal de un símbolo, para mirar los datos crudos
+  monotonia-test.mjs      v4 frente a v6 sobre los 21, comparando también fechas
+  monotonia-universo.mjs  v4 frente a v6 sobre los 400: qué añade y qué quita
+  monotonia-adelante.mjs  prueba hacia delante: ¿vale algo lo que v6 añade?
   corpus-test.mjs     v4/v5 contra el corpus antiguo (docs/methodology/vcp-corpus.json)
   v4-universo.mjs     corrida sobre la muestra aleatoria de 400 valores
   fractal.mjs         ¿cambia lo detectado al mover la ventana? (respuesta: casi nada)
@@ -39,6 +45,7 @@ resultados/
   fractal.json        experimento de ventanas
   fractal2.json       experimento de escalas
   medicion-v4-corpus.json  la medición con fechas, caso por caso (medicion-corpus.mjs)
+  monotonia-universo.json  v4 frente a v6 sobre los 400
 
 corpus-manual.json    LOS 21 CASOS ETIQUETADOS A MANO, con fechas y profundidades
                       verificadas contra daily_bars. Es el activo real de todo esto.

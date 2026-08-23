@@ -9096,3 +9096,239 @@ button.decisionOperatingIssue:hover {
   align-items:center;
   justify-content:center;
 }
+
+/* ── Cambios de la semana (WeeklyChangesLine) ────────────────────────────
+   La línea comparte jerarquía tipográfica con el subtítulo del hero: texto
+   secundario, sin caja, sin fondo, sin icono de aviso — es información, no
+   una alerta. Solo las cifras suben a color de texto y peso alto. */
+.weeklyChangesLine {
+  margin:0;
+  color:#7f8794;
+  font-size:12px;
+  font-weight:560;
+  line-height:1.5;
+}
+
+.weeklyChangesLine b {
+  color:var(--text);
+  font-weight:700;
+}
+
+.weeklyChangesQuiet {
+  opacity:.85;
+}
+
+.weeklyChangesFigure,
+.weeklyChangesDetailBtn {
+  padding:0;
+  border:0;
+  background:none;
+  color:inherit;
+  font:inherit;
+  cursor:pointer;
+}
+
+.weeklyChangesFigure:hover b,
+.weeklyChangesFigure:focus-visible b {
+  text-decoration:underline;
+}
+
+.weeklyChangesDetailBtn {
+  color:var(--text);
+  border-bottom:1px dashed rgba(255,255,255,.35);
+}
+
+.weeklyChangesPanel {
+  margin-top:12px;
+  padding:14px 16px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--surface2);
+  display:grid;
+  gap:12px;
+  font-size:12px;
+  font-weight:480;
+  color:var(--muted);
+}
+
+.weeklyChangesPanelHead {
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.weeklyChangesPanelHead h2 {
+  margin:0;
+  color:var(--text);
+  font-size:14px;
+  font-weight:700;
+}
+
+.weeklyChangesPanelTools {
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.weeklyChangesPanelTools label {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  color:var(--muted);
+}
+
+.weeklyChangesPanelTools select {
+  padding:3px 6px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--surface);
+  color:var(--text);
+  font-size:11px;
+}
+
+.weeklyChangesCloseBtn {
+  width:26px;
+  height:26px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--surface);
+  color:var(--muted);
+  cursor:pointer;
+}
+
+.weeklyChangesNote {
+  margin:0;
+  font-size:11px;
+  line-height:1.5;
+}
+
+.weeklyChangesSection {
+  border-top:1px solid var(--line);
+  padding-top:10px;
+  scroll-margin-top:12px;
+}
+
+.weeklyChangesSection summary {
+  cursor:pointer;
+  color:var(--text);
+  font-size:12px;
+  font-weight:680;
+}
+
+.weeklyChangesList {
+  margin-top:10px;
+}
+
+.weeklyChangesList h3 {
+  margin:0 0 6px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:680;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+.weeklyChangesList ul {
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+
+.weeklyChangesRow {
+  display:grid;
+  grid-template-columns:64px minmax(0,1fr) minmax(0,190px) minmax(0,170px);
+  gap:2px 10px;
+  align-items:baseline;
+  padding:5px 0;
+  border-top:1px solid rgba(255,255,255,.04);
+}
+
+.weeklyChangesRow:first-child {
+  border-top:0;
+}
+
+.weeklyChangesTicker {
+  color:var(--text);
+  font-weight:700;
+  text-decoration:none;
+}
+
+.weeklyChangesTicker:hover {
+  text-decoration:underline;
+}
+
+.weeklyChangesName {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.weeklyChangesName em {
+  font-style:normal;
+  opacity:.75;
+}
+
+.weeklyChangesShift {
+  color:var(--text);
+}
+
+.weeklyChangesCtx {
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+
+.weeklyChangesEmpty {
+  margin:6px 0 0;
+  font-size:11px;
+}
+
+.weeklyChangesMoreBtn {
+  margin-top:8px;
+  padding:4px 10px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--surface);
+  color:var(--muted);
+  font-size:11px;
+  cursor:pointer;
+}
+
+.weeklyChangesFoot {
+  border-top:1px solid var(--line);
+  padding-top:10px;
+  display:grid;
+  gap:4px;
+}
+
+.weeklyChangesFoot p {
+  margin:0;
+  font-size:11px;
+  line-height:1.5;
+}
+
+@media(max-width:760px) {
+  .weeklyChangesLine {
+    font-size:11px;
+  }
+
+  .weeklyChangesPanel {
+    padding:12px;
+  }
+
+  .weeklyChangesPanelHead {
+    flex-wrap:wrap;
+  }
+
+  .weeklyChangesRow {
+    grid-template-columns:56px minmax(0,1fr);
+  }
+
+  .weeklyChangesShift,
+  .weeklyChangesCtx {
+    grid-column:2;
+    text-align:left;
+    font-size:11px;
+  }
+}

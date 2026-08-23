@@ -16,6 +16,7 @@ import { useEffect, useRef } from "react";
 import GlobalCoveragePanel from "@/app/components/screener/GlobalCoveragePanel";
 import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
 import ResultPagerTable from "@/app/components/screener/ResultPagerTable";
+import WeeklyChangesLine from "@/app/components/screener/WeeklyChangesLine";
 import {
   FilterArchitecturePanel,
   FilterDiagnosticsPanel,
@@ -267,6 +268,10 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         <span className="screenerEyebrow">StatsEdge · Screener</span>
         <h1 className="title">Global Leaders</h1>
         <p>{PRESETS[presetKey]?.name || "Filtro activo"} · {markets.length} mercados · {resultsFiltered.length} resultados visibles</p>
+        {/* Autocontenido, como GlobalCoveragePanel: posee su fetch a
+            GET /api/weekly-changes y no bloquea la primera pintura. Es la
+            segunda excepción a la nota de cabecera de este archivo. */}
+        <WeeklyChangesLine onOpenStock={saveSessionBeforeStockOpen} />
       </div>
       <div className="actions">
         <button className="btn btnMobileOnly" onClick={() => setShowMobileFilters(!showMobileFilters)}>Filtros</button>
