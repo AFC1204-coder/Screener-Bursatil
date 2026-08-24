@@ -28,6 +28,7 @@
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { barsAreCandleGrade, chartQuality } from "@/lib/chartDataQuality";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
+import { canonicalRsValue } from "@/lib/rsCanonical";
 import { externalLinks } from "@/lib/symbols";
 
 // Estilos que dibujan una sola serie de cierres: "8" = Línea, "3" = Área
@@ -83,7 +84,12 @@ export default function RowPriceChart({
       tradingViewUrl={links.tradingView}
       settings={settings}
       relativeStrength={row.relativeStrength || row.relativeStrengthSeries}
-      rsMainScore={row.rsGlobalPct}
+      // El badge «RS global» del chart lleva el RS canónico (ranking semanal
+      // del universo, lib/rsCanonical.js), como en la ficha. Antes recibía
+      // row.rsGlobalPct —el percentil del lote del escaneo— y estas dos
+      // superficies enseñaban un número bajo la etiqueta RS que contradecía a
+      // la tabla y a la ficha (docs/analisis-vista-rapida-2026-08-24.md, B1).
+      rsMainScore={canonicalRsValue(row)}
       benchmarkSymbol={row.benchmarkSymbol}
       localQuality={localQuality}
       className={className}

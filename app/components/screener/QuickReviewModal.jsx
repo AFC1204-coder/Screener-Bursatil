@@ -1,54 +1,82 @@
 "use client";
 
+// Vista rápida del screener, tras la limpieza del 2026-08-24
+// (docs/analisis-vista-rapida-2026-08-24.md). Es la misma operación que se
+// hizo en la ficha el 22 de agosto: el producto clasifica, no recomienda
+// (docs/principios-producto.md §1), y el diagnóstico interno del programa no
+// es un dato del valor (§2).
+//
+// RETIRADO de esta superficie, con su contenido:
+//
+//   - El panel de origen (ScreenerOriginPanel): contrato, «Acción / Confianza
+//     / Freno», «prioridad N», «Métricas objetivas bloqueadas», «N proxy», el
+//     snapshot con el percentil del lote bajo la etiqueta «RS», el desglose
+//     del score con «Growth sin dato», y los avisos de revisión manual
+//     («Riesgo severo: requiere revisión manual antes de entrar en cola»).
+//     Era la mesa de observación retirada de la ficha el 22-08, resucitada
+//     aquí por la otra dirección.
+//   - La barra de tesis (acción + preparación del motor).
+//   - La prioridad de investigación (ReviewPriorityPanel): «Decisión 260 ·
+//     Acción −80 · Score objetivo 183» son constantes internas del motor de
+//     ordenación (lib/decisionAudit.js), no datos del valor.
+//   - El checklist de pruebas y el desglose del score (ScoreAuditPanel):
+//     «pendiente 5/9», «bloqueadas», «arrastres», «componentes sin dato».
+//     Su sitio auditable es N3 de la ficha, colapsado.
+//   - Los rails de resumen de la cola (auditoría/prioridad/perfil/decisión) y
+//     los nueve chips de veredicto por fila («Auditar antes», «Esperar
+//     confirmación», foco, método, datos, métricas, score). La cola conserva
+//     identidad, clasificación del inversor y RS canónico.
+//   - De «Métricas técnicas», los siete scores compuestos (score, composite,
+//     RS quality, A/D, EPS proxy, setup, growth, rent/riesgo) y las marcas de
+//     procedencia proxy/bloqueada. Quedan los datos del valor: etapa, RS
+//     canónico y capitalización.
+//   - El bloque «Origen cola», que triplicaba el contador de la cabecera.
+//
+// El RS es ÚNICO en toda la superficie: el ranking semanal del universo
+// (lib/rsCanonical.js). El percentil del lote no puede aparecer bajo esa
+// etiqueta ni bajo ninguna otra en superficie de lectura.
+//
+// PENDIENTE SEÑALADO (fuera de este cambio): el gráfico muestra «Sin dato»
+// durante la carga y ante cualquier error, porque el texto explicativo del
+// controller (emptyFallback, app/useChartController.js) no lo consume nadie
+// y el preview close-only de la fila se descarta en estilo velas. Es un fallo
+// del chart compartido, documentado en el análisis (B2), no de esta vista.
+
 import Link from "next/link";
 import ChartPreferences from "@/app/ChartPreferences";
-import RowTrustSignature from "@/app/RowTrustSignature";
-import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
-import {
-  CompanyMark,
-  DecisionEvidenceChecklist,
-  ScoreAuditPanel,
-  RowPreviewChart,
-} from "@/app/screenerPanels";
+import { CompanyMark, RowPreviewChart } from "@/app/screenerPanels";
 import { amount, money, quickBusinessDescription, quickBusinessMarket, ratioLabel, shortBusiness } from "@/lib/screenerFormat";
-import { QuickReviewMetricValue, ReviewPriorityPanel, ReviewQueueFocusBadge } from "@/app/components/screener/ReviewWidgets";
 import { pct, pctShare } from "@/lib/formatters";
-import { metricShortLabel } from "@/lib/metricCatalog";
 import { PerformanceStrip } from "@/app/components/screener/PerformanceStrip";
-import { RS_QUALITY_OFF_CANON_REASON, canonicalRs } from "@/lib/rsCanonical";
-import { buildDecisionQueueItem } from "@/lib/screenerExplainability";
+import { canonicalRs } from "@/lib/rsCanonical";
+import { stageWordForState } from "@/lib/stageDisplay";
+import { stageLabel } from "@/lib/screenerPipeline";
 import { externalLinks, stockUrl } from "@/lib/symbols";
 import { STOCK_DECISION_ACTIONS, decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
 
+// La palabra de etapa sale del diccionario único (lib/stageDisplay.js): la
+// misma que la columna «Etapa» de la tabla y que la ficha.
+function stageWord(row = {}) {
+  const rawStage = stageLabel(row);
+  const stageInfo = stageWordForState(row.weeklyStageState || "", rawStage);
+  return stageInfo?.word || (rawStage === "Sin dato" ? "Sin dato" : rawStage) || "Sin dato";
+}
+
 export default function QuickReviewModal({
   activeModalRow = null,
-  activeSettings = {},
   chartListId = "",
   chartScope = "global",
   chartSettings = {},
   modalActiveResolution = null,
-  modalActiveReviewPriority = null,
-  modalDecisionEvidence = null,
   modalDecisionResolutions = {},
-  modalRankExplain = null,
-  modalReviewAuditSummary = [],
   modalReviewPosition = 0,
-  modalReviewPrioritySummary = [],
-  modalReviewProfileSummary = [],
-  modalReviewQueueItems = [],
-  modalReviewQueueMode = "",
-  modalReviewQueueSummary = { groups: [] },
   modalReviewRows = [],
-  modalReviewSourceDetail = "",
   modalOriginLabel = "",
-  modalScoreAudit = null,
-  quickReviewOrigin = null,
   closeQuickReview,
   moveQuickReview,
   reopenQuickReviewDecision,
   resolveQuickReviewDecision,
   saveQuickReviewStockOpen,
-  selectQuickReview,
   updateChartScope,
   updateChartSettings,
 }) {
@@ -65,7 +93,7 @@ export default function QuickReviewModal({
           <CompanyMark row={activeModalRow} size="lg" />
           <div>
             <div className="profileHeaderBreadcrumb">
-              Screener <span>/</span> Vista rápida <span>/</span> {modalReviewPosition + 1} de {modalReviewRows.length}
+              {modalOriginLabel || "Screener"} <span>/</span> Vista rápida <span>/</span> {modalReviewPosition + 1} de {modalReviewRows.length}
             </div>
             <div className="profileTitle">
               <h2>{activeModalRow.symbol}</h2>
@@ -91,18 +119,8 @@ export default function QuickReviewModal({
         </div>
       </div>
 
-      <div className={`quickReviewSourceBrief mode-${modalReviewQueueMode}`} aria-label="Origen de la cola Review">
-        <span>
-          <em>Origen cola</em>
-          <b>{modalOriginLabel}</b>
-        </span>
-        {modalReviewSourceDetail ? <p>{modalReviewSourceDetail}</p> : <p>{modalReviewRows.length} acciones abiertas desde el Screener.</p>}
-        <small>{modalReviewRows.length} acciones · {modalReviewPosition + 1}/{modalReviewRows.length}</small>
-      </div>
-
-      <ScreenerOriginPanel origin={quickReviewOrigin} variant="review" />
-      <div className="reviewResolveRail quickReviewResolveRail" aria-label="Resolver decisión desde Vista rápida">
-        <span>{modalActiveResolution ? `Resolución: ${modalActiveResolution.label}` : "Resolver cola"}</span>
+      <div className="reviewResolveRail quickReviewResolveRail" aria-label="Clasificar desde Vista rápida">
+        <span>{modalActiveResolution ? `Clasificación: ${modalActiveResolution.label}` : "Clasificar"}</span>
         <div>
           <button
             type="button"
@@ -117,21 +135,13 @@ export default function QuickReviewModal({
             type="button"
             key={item.key}
             className={`${item.tone || ""} ${modalActiveResolution?.key === item.key ? "active" : ""}`.trim()}
-            onClick={() => resolveQuickReviewDecision(item.key, activeModalRow, modalReviewPosition, modalReviewQueueItems)}
+            onClick={() => resolveQuickReviewDecision(item.key, activeModalRow, modalReviewPosition)}
             title={item.detail}
           >
             {item.label}
           </button>)}
         </div>
       </div>
-      {!quickReviewOrigin?.decisionBrief && modalRankExplain ? <div className={`reviewThesisBar ${modalRankExplain.readiness.tone}`}>
-        <span className="reviewDecisionPills">
-          <span className={`rankActionBadge ${modalRankExplain.action.tone}`}>{modalRankExplain.action.label}</span>
-          <span className={`rankDecisionBadge ${modalRankExplain.readiness.tone}`}>{modalRankExplain.readiness.label}</span>
-        </span>
-        <b>{modalRankExplain.line}</b>
-        <small>{modalRankExplain.readiness.detail}</small>
-      </div> : null}
 
       <div className="screenerReviewLayout">
         <aside className="reviewQueue screenerReviewQueue" aria-label="Cola de acciones del screener">
@@ -139,95 +149,28 @@ export default function QuickReviewModal({
             <h2>Cola</h2>
             <span>{modalReviewRows.length}</span>
           </div>
-          {modalReviewAuditSummary.length ? <div className="reviewQueueSummary reviewQueueAuditSummary" aria-label="Resumen de auditoría de la cola">
-            {modalReviewAuditSummary.map((item) => (
-              <button
-                type="button"
-                key={item.key}
-                className={`reviewQueueSummaryChip audit-${item.key} ${item.tone || "neutral"} ${item.active ? "active" : ""}`}
-                onClick={() => selectQuickReview(item.firstIndex, modalReviewRows)}
-                disabled={!item.count}
-                title={item.detail}
-              >
-                <b>{item.count}</b>
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </div> : null}
-          {modalReviewPrioritySummary.length ? <div className="reviewQueueSummary reviewPrioritySummary" aria-label="Prioridad de investigación">
-            {modalReviewPrioritySummary.map((group) => (
-              <button
-                type="button"
-                key={group.key}
-                className={`reviewQueueSummaryChip priority-${group.key} ${group.tone || "neutral"} ${modalReviewQueueItems[modalReviewPosition]?.reviewPriority?.key === group.key ? "active" : ""}`}
-                onClick={() => selectQuickReview(group.firstIndex, modalReviewRows)}
-                title={[group.topSymbol ? `${group.topSymbol} · ${Math.round(group.topScore || 0)}` : "", group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label].filter(Boolean).join(" · ")}
-              >
-                <b>{group.count}</b>
-                <span>{group.shortLabel || group.label}</span>
-              </button>
-            ))}
-          </div> : null}
-          {modalReviewProfileSummary.length ? <div className="reviewQueueSummary reviewQueueProfileSummary" aria-label="Prioridad de cola por perfil">
-            {modalReviewProfileSummary.map((group) => (
-              <button
-                type="button"
-                key={group.key}
-                className={`reviewQueueSummaryChip profile-${group.key} ${group.tone || "neutral"} ${modalReviewQueueItems[modalReviewPosition]?.profileKey === group.key ? "active" : ""}`}
-                onClick={() => selectQuickReview(group.firstIndex, modalReviewRows)}
-                title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
-              >
-                <b>{group.count}</b>
-                <span>{group.label}</span>
-              </button>
-            ))}
-          </div> : null}
-          {modalReviewQueueSummary.groups.length ? <div className="reviewQueueSummary" aria-label="Resumen de cola por decisión">
-            {modalReviewQueueSummary.groups.map((group) => (
-              <button
-                type="button"
-                key={group.key}
-                className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${modalReviewQueueItems[modalReviewPosition]?.readiness?.key === group.key ? "active" : ""}`}
-                onClick={() => selectQuickReview(group.firstIndex, modalReviewRows)}
-                title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
-              >
-                <b>{group.count}</b>
-                <span>{group.label}</span>
-              </button>
-            ))}
-          </div> : null}
           <div className="reviewQueueList">
             {modalReviewRows.map((row, index) => {
-              const decision = modalReviewQueueItems[index] || buildDecisionQueueItem(row, activeSettings);
               const resolution = decisionResolutionForSymbol({ decisionResolutions: modalDecisionResolutions }, row.symbol);
+              const rowRs = canonicalRs(row);
               return <Link
                 key={`${row.symbol}-${index}`}
                 href={stockUrl(row.symbol)}
                 onPointerDown={() => saveQuickReviewStockOpen(row, index)}
                 onClick={() => saveQuickReviewStockOpen(row, index)}
-                className={`reviewQueueItem ${index === modalReviewPosition ? "active" : ""} decision-${decision.readiness?.key || "unknown"} score-audit-${decision.scoreAudit?.key || "unknown"} data-health-${decision.dataHealth?.key || "unknown"} metric-truth-${decision.metricTruth?.key || "unknown"} focus-${decision.focus?.key || "none"} ${resolution ? `resolved-${resolution.key}` : ""}`}
+                className={`reviewQueueItem ${index === modalReviewPosition ? "active" : ""} ${resolution ? `resolved-${resolution.key}` : ""}`}
                 aria-current={index === modalReviewPosition ? "true" : undefined}
-                title={resolution ? `${resolution.label} · ${resolution.detail}` : [decision.focus ? `Foco ${decision.focus.label}: ${decision.focus.detail || ""}` : "", `${decision.nextAction?.value || "Revisar"} · ${decision.risk?.value || row.symbol}`].filter(Boolean).join(" · ")}
+                title={resolution ? `${resolution.label} · ${resolution.detail}` : row.companyName || row.symbol}
               >
                 <CompanyMark row={row} size="sm" />
                 <span className="reviewQueueBody">
                   <b>{row.symbol}</b>
                   <em>{row.companyName || row.name || row.symbol}</em>
-                  <RowTrustSignature signature={decision.trustSignature} className="reviewQueueTrustSignature" />
-                  <span className="reviewQueueDecisionLine">
-                    <span className={`reviewQueueDecisionBadge ${decision.tone || "neutral"}`}>{decision.nextAction?.value || decision.action?.label || "Revisar"}</span>
-                    {resolution ? <span className={`reviewQueueResolutionBadge ${resolution.tone || "neutral"}`}>{resolution.label}</span> : null}
-                    <ReviewQueueFocusBadge focus={decision.focus} />
-                    {decision.reviewPriority ? <span className={`reviewQueuePriorityBadge ${decision.reviewPriority.tone || "neutral"}`} title={decision.reviewPriority.reason}>{decision.reviewPriority.shortLabel || decision.reviewPriority.label}</span> : null}
-                    {decision.profileKey && decision.profileKey !== "other" ? <span className={`reviewQueueProfileBadge ${decision.profileTone || "neutral"}`}>{decision.profileLabel}</span> : null}
-                    {decision.methodologyFocus ? <span className={`reviewQueueMethodologyBadge ${decision.methodologyFocus.tone || "neutral"}`} title={decision.methodologyFocus.detail || decision.methodologyFocus.label}>Método: {decision.methodologyFocus.shortLabel || decision.methodologyFocus.label}</span> : null}
-                    {decision.dataHealth ? <span className={`reviewQueueDataHealthBadge ${decision.dataHealth.tone || "neutral"} data-${decision.dataHealth.key || "unknown"}`} title={decision.dataHealth.detail || decision.dataHealth.label}>{decision.dataHealth.label}</span> : null}
-                    {decision.metricTruth ? <span className={`reviewQueueMetricTruthBadge ${decision.metricTruth.tone || "neutral"} metric-${decision.metricTruth.key || "unknown"}`} title={decision.metricTruth.detail || decision.metricTruth.label}>{decision.metricTruth.label}</span> : null}
-                    {decision.scoreAudit ? <span className={`reviewQueueScoreAuditBadge ${decision.scoreAudit.tone || "neutral"} score-${decision.scoreAudit.key || "unknown"}`} title={decision.scoreAudit.detail || decision.scoreAudit.label}>{decision.scoreAudit.label}</span> : null}
-                    {decision.risk?.value ? <small>{decision.risk.value}</small> : null}
-                  </span>
+                  {resolution ? <span className="reviewQueueDecisionLine">
+                    <span className={`reviewQueueResolutionBadge ${resolution.tone || "neutral"}`}>{resolution.label}</span>
+                  </span> : null}
                 </span>
-                <i>{decision.score ?? (Number.isFinite(row.objectiveScore) ? Math.round(row.objectiveScore) : Number.isFinite(row.totalScore) ? Math.round(row.totalScore) : "-")}</i>
+                <i title={rowRs.available ? "RS semanal del universo" : rowRs.reason}>{rowRs.available ? rowRs.value.toFixed(0) : "-"}</i>
               </Link>;
             })}
           </div>
@@ -244,10 +187,6 @@ export default function QuickReviewModal({
             </div>
 
             <div className="profileSide">
-              <ReviewPriorityPanel priority={modalActiveReviewPriority} compact />
-              <DecisionEvidenceChecklist evidence={modalDecisionEvidence} compact />
-              <ScoreAuditPanel audit={modalScoreAudit} />
-
               <div className="profileCard quickBusinessCard">
                 <div className="profileCardHeader">
                   <h3>Negocio</h3>
@@ -262,27 +201,13 @@ export default function QuickReviewModal({
 
               <div className="profileCard">
                 <div className="profileCardHeader">
-                  <h3>Métricas técnicas</h3>
-                  <span>Score</span>
+                  <h3>El valor</h3>
+                  <span>Clasificación</span>
                 </div>
+                <div className="profileRow"><span>Etapa</span><b>{stageWord(activeModalRow)}</b></div>
+                <div className="profileRow"><span>RS</span><b title={quickRs.available ? "RS semanal del universo" : quickRs.reason}>{quickRs.available ? quickRs.value.toFixed(0) : "-"}</b></div>
                 <div className="profileRow"><span>Capitalización</span><b>{amount(activeModalRow.marketCap, activeModalRow.currency) || "-"}</b></div>
-                <div className="profileRow"><span>{metricShortLabel("objectiveScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="objectiveScore" label={metricShortLabel("objectiveScore")} value={activeModalRow.objectiveScore?.toFixed(0) || activeModalRow.totalScore?.toFixed(0) || "-"} className="up" /></div>
-                <div className="profileRow"><span>{metricShortLabel("totalScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="totalScore" label={metricShortLabel("totalScore")} value={activeModalRow.totalScore?.toFixed(0) || "-"} /></div>
-                <div className="profileRow"><span>{metricShortLabel("rsGlobalPct")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="rsGlobalPct" label={metricShortLabel("rsGlobalPct")} value={quickRs.available ? quickRs.value.toFixed(0) : "-"} title={quickRs.available ? "" : quickRs.reason} /></div>
-                {/* RS Quality NO es el RS: es un ajuste de calidad SOBRE un RS.
-                    El que trae la fila del escaneo está calculado sobre el
-                    percentil del lote, no sobre el ranking semanal que esta
-                    misma pantalla enseña como RS. Enseñar los dos juntos era
-                    exactamente la contradicción reportada ("RS – y RS Quality
-                    88" en el mismo panel). Mientras la fila no traiga un RS
-                    Quality derivado del RS canónico, se muestra ausente con su
-                    motivo: la ficha del valor sí lo calcula sobre el RS bueno. */}
-                <div className="profileRow"><span>{metricShortLabel("rsQualityScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="rsQualityScore" label={metricShortLabel("rsQualityScore")} value="-" title={RS_QUALITY_OFF_CANON_REASON} /></div>
-                <div className="profileRow"><span>{metricShortLabel("adProxyScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="adProxyScore" label={metricShortLabel("adProxyScore")} value={activeModalRow.adProxyScore?.toFixed(0) || "-"} /></div>
-                <div className="profileRow"><span>{metricShortLabel("epsGrowthProxyScore")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="epsGrowthProxyScore" label={metricShortLabel("epsGrowthProxyScore")} value={activeModalRow.epsGrowthProxyScore?.toFixed(0) || "-"} /></div>
-                <div className="profileRow"><span>Setup quality</span><QuickReviewMetricValue row={activeModalRow} metricKey="setupQualityScore" label="Setup quality" value={activeModalRow.setupQualityScore?.toFixed(0) || "-"} /></div>
-                <div className="profileRow"><span>Growth</span><QuickReviewMetricValue row={activeModalRow} metricKey="growthScore" label="Growth" value={activeModalRow.growthScore?.toFixed(0) || "-"} /></div>
-                <div className="profileRow"><span>Rentabilidad/riesgo</span><QuickReviewMetricValue row={activeModalRow} metricKey="riskRewardScore" label="Rentabilidad/riesgo" value={activeModalRow.riskRewardScore?.toFixed(0) || "-"} /></div>
+                <div className="profileRow"><span>Dist. máx 52s</span><b>{Number.isFinite(activeModalRow.distance52w) ? pct(activeModalRow.distance52w) : "-"}</b></div>
               </div>
 
               <div className="profileCard">
@@ -290,12 +215,12 @@ export default function QuickReviewModal({
                   <h3>Volumen y riesgo</h3>
                   <span>Datos</span>
                 </div>
-                <div className="profileRow"><span>Volumen sesión</span><QuickReviewMetricValue row={activeModalRow} metricKey="latestTurnover" label="Volumen sesión" value={amount(activeModalRow.latestTurnover, activeModalRow.currency) || "-"} /></div>
-                <div className="profileRow"><span>Volumen 5d</span><QuickReviewMetricValue row={activeModalRow} metricKey="volumeSurgePct" label="Volumen 5d" value={pct(activeModalRow.volumeSurgePct)} className={(activeModalRow.volumeSurgePct || 0) > 0 ? "up" : ""} /></div>
-                <div className="profileRow"><span>Up/down ratio</span><QuickReviewMetricValue row={activeModalRow} metricKey="upDownVolRatio" label="Up/down ratio" value={ratioLabel(activeModalRow.upDownVolRatio)} /></div>
-                <div className="profileRow"><span>{metricShortLabel("shortPercentOfFloat")}</span><QuickReviewMetricValue row={activeModalRow} metricKey="shortPercentOfFloat" label={metricShortLabel("shortPercentOfFloat")} value={pct(activeModalRow.shortPercentOfFloat)} /></div>
-                <div className="profileRow"><span>Drawdown 3M</span><QuickReviewMetricValue row={activeModalRow} metricKey="maxDrawdown63d" label="Drawdown 3M" value={Number.isFinite(activeModalRow.maxDrawdown63d) ? pctShare(activeModalRow.maxDrawdown63d, 1) : "-"} className="down" /></div>
-                <div className="profileRow"><span>Volatilidad</span><QuickReviewMetricValue row={activeModalRow} metricKey="volatility63d" label="Volatilidad" value={Number.isFinite(activeModalRow.volatility63d) ? pctShare(activeModalRow.volatility63d, 1) : "-"} /></div>
+                <div className="profileRow"><span>Volumen sesión</span><b>{amount(activeModalRow.latestTurnover, activeModalRow.currency) || "-"}</b></div>
+                <div className="profileRow"><span>Volumen 5d</span><b className={(activeModalRow.volumeSurgePct || 0) > 0 ? "up" : ""}>{pct(activeModalRow.volumeSurgePct)}</b></div>
+                <div className="profileRow"><span>Up/down ratio</span><b>{ratioLabel(activeModalRow.upDownVolRatio)}</b></div>
+                <div className="profileRow"><span>Short float</span><b>{pct(activeModalRow.shortPercentOfFloat)}</b></div>
+                <div className="profileRow"><span>Drawdown 3M</span><b className="down">{Number.isFinite(activeModalRow.maxDrawdown63d) ? pctShare(activeModalRow.maxDrawdown63d, 1) : "-"}</b></div>
+                <div className="profileRow"><span>Volatilidad</span><b>{Number.isFinite(activeModalRow.volatility63d) ? pctShare(activeModalRow.volatility63d, 1) : "-"}</b></div>
               </div>
             </div>
           </div>

@@ -1,7 +1,6 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import ScreenerOriginPanel from "@/app/ScreenerOriginPanel";
 import { AuditabilitySummaryRail, CompactResultsTable, DataHealthPanel, DataHealthSummaryRail, DecisionEvidenceChecklist, DecisionIssueBadge, DecisionOperatingBrief, DecisionQualityStrip, DecisionSummaryRail, MobileResultList, PendingDecisionWorkRail, PreviewCard, QuickPanel, ResultFilterChips, ScoreAuditPanel, ScoreAuditSummaryRail } from "@/app/screenerPanels";
 
 describe("DecisionQualityStrip", () => {
@@ -329,57 +328,11 @@ describe("DecisionQualityStrip", () => {
     expect(html).not.toContain(">Observación, no señal automática<");
   });
 
-  it("renderiza una lectura compacta de decisión en el origen", () => {
-    const html = renderToStaticMarkup(React.createElement(ScreenerOriginPanel, {
-      origin: {
-        key: "bullish",
-        label: "Operable",
-        tone: "watch",
-        sourceLabel: "Screener actual",
-        text: "Setup de alta prioridad con validación pendiente.",
-        readiness: { key: "operable", label: "Operable", detail: "Puede pasar a Review" },
-        decisionProfile: { key: "operable-fragile", label: "Operable fragil", tone: "warn", detail: "Confluencia incompleta" },
-        decisionBrief: {
-          nextAction: { label: "Siguiente", value: "Validar primero", detail: "Revisar demanda antes de marcar candidata", tone: "warn" },
-        },
-        decisionTrace: {
-          confidence: { key: "medium", score: 62, label: "Media", tone: "warn", detail: "Falta confirmacion de volumen" },
-          evidence: {
-            status: "needs-work",
-            tone: "warn",
-            passedCount: 4,
-            totalCount: 6,
-            pending: [{ key: "demanda-volumen", label: "Demanda/volumen", detail: "Sin volumen relativo suficiente", tone: "warn" }],
-          },
-        },
-        dataHealth: {
-          status: { label: "Datos aptos", tone: "good", detail: "Cobertura suficiente" },
-          coverageScore: 88,
-          issues: [],
-        },
-        scoreAudit: {
-          displayedScore: 82,
-          calculatedScore: 70,
-          residual: 12,
-          integrityTone: "warn",
-          topLine: "Score mostrado por encima del cálculo auditado",
-          positive: [],
-          drags: [{ key: "setup", label: "Setup", value: 40 }],
-          missing: [],
-        },
-      },
-      variant: "review",
-    }));
-
-    expect(html).toContain("screenerOriginDecisionRead warn");
-    expect(html).toContain("Lectura rápida de decisión del screener");
-    expect(html).toContain("Acción");
-    expect(html).toContain("Validar primero");
-    expect(html).toContain("Confianza");
-    expect(html).toContain("Media 62");
-    expect(html).toContain("Freno");
-    expect(html).toContain("Setup");
-  });
+  // El test «lectura compacta de decisión en el origen» se retiró el
+  // 2026-08-24: ScreenerOriginPanel (su único consumidor era la vista rápida)
+  // se eliminó con la limpieza de veredictos operativos
+  // (docs/analisis-vista-rapida-2026-08-24.md). El guard de que no vuelva
+  // vive en tests/vistaRapidaRetiradas.test.js.
 
   it("muestra motivos concretos dentro del panel de auditoría de score", () => {
     const html = renderToStaticMarkup(React.createElement(ScoreAuditPanel, {

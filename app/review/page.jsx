@@ -1,33 +1,69 @@
 "use client";
 import "../../styles/review.css";
 
+// Cola de revisión, tras la limpieza del 2026-08-24
+// (docs/analisis-vista-rapida-2026-08-24.md). La misma operación que la ficha
+// el 22-08 y la vista rápida hoy: el producto clasifica, no recomienda
+// (docs/principios-producto.md §1) y el diagnóstico interno no es un dato del
+// valor (§2).
+//
+// RETIRADO de esta pantalla, con su contenido:
+//
+//   - El resumen de cola por decisión del motor («357 ESPERAR · 150 AUDITAR ·
+//     69 DESCARTAR») y las facetas de digest/prioridad/perfil. Queda la
+//     faceta de RESOLUCIÓN, que es la clasificación del propio inversor.
+//   - Los chips de veredicto por fila («Esperar confirmación», «Auditar
+//     antes», foco, método, datos, métricas, score, digest «PRUEBAS OK 9/9 ·
+//     Setup objetivo 100») y la firma de confianza. La fila conserva
+//     identidad, la clasificación del inversor y el RS canónico.
+//   - La prioridad de investigación («889 · DECISION 660 · ACCIÓN 55 · SCORE
+//     OBJETIVO 195 · PERCENTIL LOTE 114 · −190 Candidato no operable»):
+//     constantes del motor de ordenación (lib/decisionAudit.js), no datos.
+//   - El panel «Decisión Screener» (tesis/riesgo/siguiente) y la tira de
+//     pruebas: eran la recomendación («Esperar confirmación», «Resolver o
+//     esperar: …») que el principio 1 prohíbe.
+//   - Del grid de métricas: el «RS» que en realidad era el percentil del
+//     lote (rsGlobalPct) — prohibido bajo esa etiqueta por
+//     lib/rsCanonical.js —, RS Benchmark, RS país/grupo (percentiles del
+//     mismo lote, que la ficha declara ausentes con motivo), y los scores
+//     del motor (Composite, A/D, EPS proxy, Volume Effect). El RS que se
+//     muestra es ÚNICO: el ranking semanal del universo (canonicalRs).
+//   - De la evidencia medible: «Deterioro» (score interno) y «Evidencia
+//     volumen» (el criterio del motor como texto).
+//   - Las marcas de procedencia por celda (proxy «p», bloqueada «x»):
+//     diagnóstico del programa presentado como atributo del dato.
+//   - La nota automática de la resolución, que guardaba el veredicto del
+//     motor pegado a la decisión del inversor.
+//
+// SE CONSERVA lo que es de esta pantalla: la navegación entre valores (su
+// razón de ser), los botones de clasificar con su historial, favoritos,
+// ocultar/revisada, y los datos del valor (gráfico, rendimientos, etapa con
+// su evidencia, RS canónico, volumen, volatilidad).
+//
+// PENDIENTE SEÑALADO (fuera de este cambio): el gráfico muestra «Sin dato»
+// durante la carga y ante errores — fallo del chart compartido documentado en
+// el análisis (B2, emptyFallback sin consumidor en useChartController).
+
 import { useEffect, useMemo, useRef, useState } from "react";
-import RowTrustSignature from "@/app/RowTrustSignature";
 import RowPriceChart from "@/app/RowPriceChart";
-import { TrustMetric } from "@/app/components/ui/MetricSource";
-import { metricTruthMetaForRow, rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { getJson } from "@/lib/clientApi";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
-import { clamp, dateTime, num, pct, ratio } from "@/lib/formatters";
+import { clamp, dateTime, pct, ratio } from "@/lib/formatters";
 import { stdev } from "@/lib/indicators";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { persistReviewQueue } from "@/lib/screenerPipeline";
 import StorageAlert from "@/app/components/StorageAlert";
 import { userFacingServiceError } from "@/lib/serviceErrors";
-import { metricShortLabel } from "@/lib/metricCatalog";
 import { objectiveStage } from "@/lib/scoring";
-import { DECISION_QUEUE_DIGEST_FILTERS, buildDecisionQueueDigest, buildDecisionQueueDigestSummary, buildDecisionQueueItem, buildDecisionQueueSummary } from "@/lib/screenerExplainability";
-import { buildReviewPrioritySummary, buildReviewProfileSummary, decisionProfileForRow, prepareReviewQueueRows, reviewPriorityForRow, reviewProfileMeta } from "@/lib/decisionProfile";
-import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
-import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
+import { canonicalRs } from "@/lib/rsCanonical";
+import { prepareReviewQueueRows } from "@/lib/decisionProfile";
 import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, buildStockDecisionResolutionSummary, decisionResolutionForSymbol, decisionResolutionHistory, filterRowsByDecisionResolution, reopenStockDecisionResolution, reviewDecisionStateForRows, stockDecisionResolutionFilter } from "@/lib/stockDecisionResolution";
 import { createFavoriteFromRow } from "@/lib/stockRows";
 import { countryCode, externalLinks, stockUrl } from "@/lib/symbols";
-import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 
 function value(row = {}, key) {
   return row[key] ?? row.snapshot?.[key] ?? null;
@@ -67,51 +103,6 @@ function investorStatusLabel(text = "") {
     .replaceAll("favoritos locales", "favoritos")
     .replaceAll("localmente", "en este dispositivo")
     .replaceAll("Proveedor", "Datos");
-}
-function ReviewTrustMetric({ row = {}, metricKey = "", label = "", value: displayValue = "-" }) {
-  return <TrustMetric row={row} metricKey={metricKey} label={label} value={displayValue} baseClass="reviewTrustMetric" variant="strong" valueTag="em" />;
-}
-function reviewQueueDataHealthMeta(row = {}, settings = {}) {
-  const health = buildScreenerDataHealth(row, settings);
-  const key = health.status?.key || "unknown";
-  return {
-    key,
-    label: key === "ready" ? "OK" : key === "blocked" ? "Bloq." : key === "stale" ? "Viejo" : key === "thin" || key === "limited" ? "Parcial" : health.status?.label || "Datos",
-    tone: health.status?.tone || "neutral",
-    detail: [health.status?.detail, health.topLine].filter(Boolean).join(" · "),
-  };
-}
-function reviewQueueScoreAuditMeta(row = {}) {
-  const audit = buildScreenerScoreAudit(row);
-  const residualWarn = Number.isFinite(audit?.residual) && Math.abs(audit.residual) >= 4;
-  const missing = Array.isArray(audit?.missing) && audit.missing.length;
-  const key = residualWarn ? "mismatch" : missing ? "missing" : audit?.integrityTone === "good" ? "clean" : "attention";
-  return {
-    key,
-    label: key === "clean" ? "Traz." : key === "mismatch" ? "Desc." : key === "missing" ? "Inc." : "Rev.",
-    tone: key === "clean" ? "good" : "warn",
-    detail: [audit?.topLine, Number.isFinite(audit?.residual) ? `Delta ${audit.residual.toFixed(1)}` : ""].filter(Boolean).join(" · "),
-  };
-}
-function reviewQueueFocusMeta({ dataHealth = null, metricTruth = null, scoreAudit = null, evidence = null, methodologyFocus = null, vcp = null } = {}) {
-  const candidates = [];
-  const add = (item) => { if (item?.key && item?.label) candidates.push(item); };
-  if (dataHealth?.key === "blocked") add({ priority: 100, key: "data", label: "Datos", tone: "bad", detail: dataHealth.detail });
-  if (metricTruth?.key === "blocked") add({ priority: 95, key: "metrics", label: "Metr.", tone: "bad", detail: metricTruth.detail });
-  if (scoreAudit?.key === "mismatch") add({ priority: 86, key: "score", label: "Score", tone: "warn", detail: scoreAudit.detail });
-  if (["review", "missing"].includes(metricTruth?.key)) add({ priority: 82, key: "metrics", label: "Metr.", tone: "warn", detail: metricTruth.detail });
-  if (["blocked", "inconsistent", "needs-data"].includes(vcp?.key)) add({ priority: vcp.key === "blocked" ? 80 : 70, key: "vcp", label: "VCP", tone: vcp.tone || "warn", detail: vcp.summary || vcp.note });
-  if (dataHealth?.key && dataHealth.key !== "ready") add({ priority: 72, key: "data", label: "Datos", tone: dataHealth.tone || "warn", detail: dataHealth.detail });
-  if (scoreAudit?.key === "missing") add({ priority: 70, key: "score", label: "Score", tone: "warn", detail: scoreAudit.detail });
-  if (evidence?.status === "blocked") add({ priority: 68, key: "evidence", label: "Pruebas", tone: "bad", detail: evidence.summary });
-  if (methodologyFocus?.tone === "bad" || methodologyFocus?.tone === "warn") add({ priority: methodologyFocus.tone === "bad" ? 66 : 54, key: "method", label: "Método", tone: methodologyFocus.tone, detail: methodologyFocus.detail || methodologyFocus.label });
-  if (evidence?.status === "needs-work") add({ priority: 62, key: "evidence", label: "Pruebas", tone: evidence.tone || "warn", detail: evidence.pending?.[0]?.detail || evidence.pending?.[0]?.label || evidence.summary });
-  if (scoreAudit?.key === "attention") add({ priority: 50, key: "score", label: "Score", tone: "warn", detail: scoreAudit.detail });
-  return candidates.sort((a, b) => b.priority - a.priority)[0] || null;
-}
-function ReviewQueueFocusBadge({ focus = null }) {
-  if (!focus) return null;
-  return <span className={`reviewQueueFocusBadge ${focus.tone || "warn"} focus-${focus.key || "other"}`} title={focus.detail || focus.label}>Foco {focus.label}</span>;
 }
 function shortDateTime(value = "") {
   if (!value) return "";
@@ -366,111 +357,35 @@ function ReviewChartPanel({ row, loading = false }) {
     />
   </div>;
 }
+// Métricas del valor: medidas y ratios aritméticos, sin scores del motor. El
+// RS es el canónico (ranking semanal del universo); su ausencia viaja con el
+// motivo en el title, como en la tabla y la ficha.
 function metricRows(row = {}) {
+  const rs = canonicalRs(row);
   return [
-    [metricShortLabel("totalScore"), num(value(row, "totalScore")), "totalScore"],
-    [metricShortLabel("rsGlobalPct"), num(value(row, "rsGlobalPct")), "rsGlobalPct"],
-    [metricShortLabel("rsRating"), num(value(row, "rsRating")), "rsRating"],
-    [metricShortLabel("rsCountryPct"), num(value(row, "rsCountryPct")), "rsCountryPct"],
-    [metricShortLabel("rsSectorPct"), num(value(row, "rsSectorPct")), "rsSectorPct"],
-    [metricShortLabel("adProxyScore"), num(value(row, "adProxyScore")), "adProxyScore"],
-    [metricShortLabel("epsGrowthProxyScore"), num(value(row, "epsGrowthProxyScore")), "epsGrowthProxyScore"],
-    ["3M", pct(value(row, "perf3m")), "perf3m"],
-    ["6M", pct(value(row, "perf6m")), "perf6m"],
-    ["12M", pct(value(row, "perf12m")), "perf12m"],
-    ["SMA50", pct(value(row, "extSma50")), "extSma50"],
-    ["Vol rel 20d", ratio(value(row, "relativeVolume")), "relativeVolume"],
-    [metricShortLabel("volumeEffectScore"), num(value(row, "volumeEffectScore")), "volumeEffectScore"],
-    [metricShortLabel("shortPercentOfFloat"), pct(value(row, "shortPercentOfFloat")), "shortPercentOfFloat"],
-    ["Vol 63d", pct(value(row, "volatility63d")), "volatility63d"],
-    ["DD 63d", pct(Number.isFinite(value(row, "maxDrawdown63d")) ? -value(row, "maxDrawdown63d") : null), "maxDrawdown63d"],
-    ["R/Vol 3M", ratio(value(row, "returnToVol3m")), "returnToVol3m"],
-    ["R/DD 3M", ratio(value(row, "returnToDrawdown3m")), "returnToDrawdown3m"],
+    ["RS", rs.available ? rs.value.toFixed(0) : "-", rs.available ? "RS semanal del universo" : rs.reason],
+    ["3M", pct(value(row, "perf3m"))],
+    ["6M", pct(value(row, "perf6m"))],
+    ["12M", pct(value(row, "perf12m"))],
+    ["SMA50", pct(value(row, "extSma50"))],
+    ["Vol rel 20d", ratio(value(row, "relativeVolume"))],
+    ["Short float", pct(value(row, "shortPercentOfFloat"))],
+    ["Vol 63d", pct(value(row, "volatility63d"))],
+    ["DD 63d", pct(Number.isFinite(value(row, "maxDrawdown63d")) ? -value(row, "maxDrawdown63d") : null)],
+    ["R/Vol 3M", ratio(value(row, "returnToVol3m"))],
+    ["R/DD 3M", ratio(value(row, "returnToDrawdown3m"))],
   ];
 }
 function evidenceRows(row = {}) {
   return [
-    [metricShortLabel("stage"), objectiveStage(row)],
+    ["Etapa", objectiveStage(row)],
     ["Distancia 20d high", pct(value(row, "distance20d"))],
     ["Distancia 52w high", pct(value(row, "distance52w"))],
     ["Extension SMA50", pct(value(row, "extSma50"))],
     ["Highs spread", pct(value(row, "highsSpreadPct"))],
     ["Volumen relativo", ratio(value(row, "relativeVolume"))],
-    ["Evidencia volumen", value(row, "volumeEvidence") || "-"],
-    [metricShortLabel("shortPercentOfFloat"), pct(value(row, "shortPercentOfFloat"))],
     ["Benchmark", value(row, "benchmarkSymbol") || "-"],
-    [metricShortLabel("weaknessScore"), num(value(row, "weaknessScore"))],
   ];
-}
-
-function DecisionEvidenceStrip({ evidence = null }) {
-  if (!evidence || typeof evidence !== "object") return null;
-  const pending = Array.isArray(evidence.pending) ? evidence.pending.filter((item) => item?.label || item?.key) : [];
-  const confirmed = Array.isArray(evidence.items) ? evidence.items.filter((item) => item?.status === "confirmed" && (item.label || item.key)) : [];
-  const items = (pending.length ? pending : confirmed).slice(0, pending.length ? 3 : 2);
-  if (!items.length) return null;
-  const ratio = Number.isFinite(Number(evidence.passedCount)) && Number.isFinite(Number(evidence.totalCount))
-    ? `${Number(evidence.passedCount)}/${Number(evidence.totalCount)}`
-    : "";
-  return <div className={`reviewDecisionEvidence ${evidence.tone || ""}`}>
-    <span><b>{pending.length ? "Pruebas pendientes" : "Pruebas confirmadas"}</b>{ratio ? <em>{ratio}</em> : null}</span>
-    <div>
-      {items.map((item) => <small key={item.key || item.label} className={item.tone || ""} title={item.detail || item.label}>
-        {item.label || item.key}
-      </small>)}
-    </div>
-  </div>;
-}
-
-function ReviewDecisionPanel({ decision = null }) {
-  if (!decision) return null;
-  const cards = [
-    decision.thesis ? { key: "thesis", ...decision.thesis } : null,
-    decision.risk ? { key: "risk", ...decision.risk } : null,
-    decision.nextAction ? { key: "nextAction", ...decision.nextAction } : null,
-  ].filter((item) => item?.value || item?.detail);
-  return <div className={`reviewDecisionPanel ${decision.tone || ""}`}>
-    <div className="sectionTitle"><h2>Decisión Screener</h2></div>
-    {cards.length ? <div className="reviewDecisionCards">
-      {cards.map((item) => <span key={item.key} className={item.tone || ""}>
-        <em>{item.label || item.key}</em>
-        <b title={item.value}>{item.value}</b>
-        {item.detail ? <small title={item.detail}>{item.detail}</small> : null}
-      </span>)}
-    </div> : null}
-    <DecisionEvidenceStrip evidence={decision.evidence} />
-  </div>;
-}
-
-function ReviewPriorityPanel({ priority = null }) {
-  if (!priority) return null;
-  const components = Array.isArray(priority.priority?.components) ? priority.priority.components.slice(0, 4) : [];
-  const penalties = Array.isArray(priority.priority?.penalties) ? priority.priority.penalties.slice(0, 3) : [];
-  return <div className={`reviewPriorityPanel ${priority.tone || ""}`} aria-label="Prioridad de investigación">
-    <div className="reviewPriorityHead">
-      <span><b>{priority.label}</b><em>{priority.reason}</em></span>
-      <strong>{Math.round(priority.score || 0)}</strong>
-    </div>
-    {components.length ? <div className="reviewPriorityComponents">
-      {components.map((item) => <span key={item.key} title={item.detail || item.label}>
-        <em>{item.label}</em>
-        <b>{Math.round(item.value || 0)}</b>
-      </span>)}
-    </div> : null}
-    {penalties.length ? <div className="reviewPriorityPenalties">
-      {penalties.map((item) => <small className={item.severity || "warn"} key={item.key}>-{Math.round(item.value || 0)} {item.label}</small>)}
-    </div> : null}
-  </div>;
-}
-
-function QueueDecisionDigest({ digest = null }) {
-  if (!digest) return null;
-  const evidenceLine = digest.checkLine || digest.actionDetail || digest.risk || "";
-  return <span className={`reviewQueueDigest ${digest.state || ""}`.trim()}>
-    <em>{digest.ratio ? `${digest.stateLabel} ${digest.ratio}` : digest.stateLabel}</em>
-    <b title={digest.thesis}>{digest.thesis || digest.headline || "Sin tesis clara"}</b>
-    <small title={evidenceLine}>{evidenceLine || "Sin pruebas destacadas"}</small>
-  </span>;
 }
 
 export default function ReviewPage() {
@@ -486,7 +401,6 @@ export default function ReviewPage() {
   const [decisionResolutions, setDecisionResolutions] = useState({});
   const [decisionResolutionLog, setDecisionResolutionLog] = useState([]);
   const [resolutionFilter, setResolutionFilter] = useState("all");
-  const [digestFilter, setDigestFilter] = useState("all");
   const [sourceMeta, setSourceMeta] = useState({});
   const [hydration, setHydration] = useState({});
   const sourceRequestRef = useRef(0);
@@ -503,7 +417,6 @@ export default function ReviewPage() {
     const nextRows = prepareReviewQueueRows(rowSource(nextSource, review, scans, favs), nextSettings || {});
     const decisionState = reviewDecisionStateForRows(review, nextRows);
     const nextResolutionFilter = keepState ? review.resolutionFilter || "all" : "all";
-    const nextDigestFilter = keepState ? review.digestFilter || "all" : "all";
     const nextSourceMeta = sourceMetaForReview(nextSource, review);
     const navigation = buildReviewQueueNavigation({
       ...review,
@@ -513,7 +426,7 @@ export default function ReviewPage() {
       hiddenSymbols: decisionState.hiddenSymbols,
       decisionResolutions: decisionState.decisionResolutions,
       resolutionFilter: nextResolutionFilter,
-      digestFilter: nextDigestFilter,
+      digestFilter: "all",
     }, startSymbol || review.selectedSymbol || "");
     const symbolIndex = navigation.currentIndex;
     setSource(nextSource);
@@ -527,7 +440,6 @@ export default function ReviewPage() {
     setDecisionResolutions(decisionState.decisionResolutions);
     setDecisionResolutionLog(decisionState.decisionResolutionLog);
     setResolutionFilter(nextResolutionFilter);
-    setDigestFilter(nextDigestFilter);
     setStatus(`${sourceLabel(nextSource, nextSourceMeta)} · ${nextRows.length} acciones`);
     if (nextSource === "latest" && !nextRows.length) {
       const controller = new AbortController();
@@ -549,7 +461,7 @@ export default function ReviewPage() {
             hiddenSymbols: discoveryDecisionState.hiddenSymbols,
             decisionResolutions: discoveryDecisionState.decisionResolutions,
             resolutionFilter: nextResolutionFilter,
-            digestFilter: nextDigestFilter,
+            digestFilter: "all",
           }, startSymbol || review.selectedSymbol || "");
           const discoveryIndex = discoveryNavigation.currentIndex;
           setRows(orderedRows);
@@ -576,57 +488,14 @@ export default function ReviewPage() {
   const favoriteSymbols = useMemo(() => new Set(favorites.map((f) => String(f.symbol).toUpperCase())), [favorites]);
   const baseVisibleRows = useMemo(() => showHidden ? rows : rows.filter((row) => !hidden.has(row.symbol)), [rows, hidden, showHidden]);
   const resolutionSummary = useMemo(() => buildStockDecisionResolutionSummary(baseVisibleRows, { decisionResolutions }), [baseVisibleRows, decisionResolutions]);
-  const resolutionRows = useMemo(() => filterRowsByDecisionResolution(baseVisibleRows, { decisionResolutions }, resolutionFilter), [baseVisibleRows, decisionResolutions, resolutionFilter]);
+  const visibleRows = useMemo(() => filterRowsByDecisionResolution(baseVisibleRows, { decisionResolutions }, resolutionFilter), [baseVisibleRows, decisionResolutions, resolutionFilter]);
   const resolvedVisibleCount = useMemo(() => {
     const all = resolutionSummary.find((item) => item.key === "all")?.count || 0;
     const pending = resolutionSummary.find((item) => item.key === "pending")?.count || 0;
     return Math.max(0, all - pending);
   }, [resolutionSummary]);
-  const resolutionDecisionItems = useMemo(() => resolutionRows.map((row) => {
-    const item = buildDecisionQueueItem(row, reviewSettings);
-    const profileKey = decisionProfileForRow(row, reviewSettings);
-    const profile = reviewProfileMeta(profileKey);
-    const reviewPriority = reviewPriorityForRow(row, reviewSettings);
-    const metricTruth = metricTruthMetaForRow(row);
-    const dataHealth = reviewQueueDataHealthMeta(row, reviewSettings);
-    const scoreAudit = reviewQueueScoreAuditMeta(row);
-    const vcp = vcpReliabilityAudit(row);
-    const focus = reviewQueueFocusMeta({ dataHealth, metricTruth, scoreAudit, evidence: item.evidence, methodologyFocus: item.methodologyFocus, vcp });
-    const trustSignature = rowTrustSignatureForRow(row, { dataHealth, metricTruth, scoreAudit, evidence: item.evidence, vcpReliability: vcp });
-    return {
-      ...item,
-      row,
-      profileKey,
-      profileLabel: profile.label,
-      profileTone: profile.tone,
-      reviewPriority,
-      metricTruth,
-      dataHealth,
-      scoreAudit,
-      focus,
-      trustSignature,
-      digest: buildDecisionQueueDigest(item),
-    };
-  }), [resolutionRows, reviewSettings]);
-  const digestSummary = useMemo(() => buildDecisionQueueDigestSummary(resolutionDecisionItems), [resolutionDecisionItems]);
-  const visibleDecisionItems = useMemo(() => digestFilter === "all"
-    ? resolutionDecisionItems
-    : resolutionDecisionItems.filter((item) => item.digest?.state === digestFilter),
-  [resolutionDecisionItems, digestFilter]);
-  const visibleRows = useMemo(() => visibleDecisionItems.map((item) => item.row).filter(Boolean), [visibleDecisionItems]);
-  const visiblePrioritySummary = useMemo(() => buildReviewPrioritySummary(visibleDecisionItems), [visibleDecisionItems]);
-  const visibleDecisionSummary = useMemo(() => buildDecisionQueueSummary(visibleDecisionItems), [visibleDecisionItems]);
-  const visibleProfileSummary = useMemo(() => buildReviewProfileSummary(visibleDecisionItems), [visibleDecisionItems]);
   const activeResolutionFilter = useMemo(() => stockDecisionResolutionFilter(resolutionFilter), [resolutionFilter]);
-  const activeDigestFilter = useMemo(
-    () => DECISION_QUEUE_DIGEST_FILTERS.find((item) => item.key === digestFilter) || DECISION_QUEUE_DIGEST_FILTERS[0],
-    [digestFilter],
-  );
-  const activeQueueFilterLabels = [
-    resolutionFilter !== "all" ? activeResolutionFilter.label : "",
-    digestFilter !== "all" ? activeDigestFilter.label : "",
-  ].filter(Boolean);
-  const queueFiltersActive = activeQueueFilterLabels.length > 0;
+  const queueFiltersActive = resolutionFilter !== "all";
   const pendingVisibleCount = resolutionSummary.find((item) => item.key === "pending")?.count || 0;
   const queueEmptyByFilter = queueFiltersActive && baseVisibleRows.length > 0 && !visibleRows.length;
   const queuePendingComplete = queueEmptyByFilter && resolutionFilter === "pending" && !pendingVisibleCount;
@@ -638,7 +507,7 @@ export default function ReviewPage() {
   const queueEmptyDetail = queuePendingComplete
     ? `${sourceLabel(source, sourceMeta)} · no quedan acciones pendientes en esta cola.`
     : queueEmptyByFilter
-      ? `${sourceLabel(source, sourceMeta)} · ${activeQueueFilterLabels.join(" · ")} no tiene resultados ahora.`
+      ? `${sourceLabel(source, sourceMeta)} · ${activeResolutionFilter.label} no tiene resultados ahora.`
       : "Carga una cola desde el Screener o recupera un snapshot para iniciar la revisión.";
   const queueCompletionResolution = queuePendingComplete
     ? resolutionSummary.find((item) => ["candidate", "watch", "reject"].includes(item.key) && item.count > 0)
@@ -653,9 +522,9 @@ export default function ReviewPage() {
   const reviewStatusText = queuePendingComplete
     ? `${sourceLabel(source, sourceMeta)} · cola pendiente completada · ${resolvedVisibleCount}/${baseVisibleRows.length} resueltas`
     : queueEmptyByFilter
-      ? `${sourceLabel(source, sourceMeta)} · ${activeQueueFilterLabels.join(" · ")} · 0/${baseVisibleRows.length} visibles`
+      ? `${sourceLabel(source, sourceMeta)} · ${activeResolutionFilter.label} · 0/${baseVisibleRows.length} visibles`
       : queueFiltersActive
-        ? `${sourceLabel(source, sourceMeta)} · ${activeQueueFilterLabels.join(" · ")} · ${visibleRows.length}/${baseVisibleRows.length} visibles`
+        ? `${sourceLabel(source, sourceMeta)} · ${activeResolutionFilter.label} · ${visibleRows.length}/${baseVisibleRows.length} visibles`
         : status;
   const reviewStatusLineClassName = [
     "reviewStatusLine",
@@ -673,20 +542,6 @@ export default function ReviewPage() {
     () => decisionResolutionHistory({ decisionResolutions, decisionResolutionLog }, { symbol: activeSymbol, limit: 4 }),
     [decisionResolutions, decisionResolutionLog, activeSymbol],
   );
-  const activeDecision = useMemo(() => {
-    if (!activeRow) return null;
-    const item = buildDecisionQueueItem(activeRow, reviewSettings);
-    const profileKey = decisionProfileForRow(activeRow, reviewSettings);
-    const profile = reviewProfileMeta(profileKey);
-    const reviewPriority = reviewPriorityForRow(activeRow, reviewSettings);
-    return {
-      ...item,
-      profileKey,
-      profileLabel: profile.label,
-      profileTone: profile.tone,
-      reviewPriority,
-    };
-  }, [activeRow, reviewSettings]);
 
   useEffect(() => {
     if (currentIndex >= visibleRows.length) setCurrentIndex(Math.max(0, visibleRows.length - 1));
@@ -730,10 +585,10 @@ export default function ReviewPage() {
       decisionResolutions,
       decisionResolutionLog,
       resolutionFilter,
-      digestFilter,
+      digestFilter: "all",
       updatedAt: new Date().toISOString(),
     });
-  }, [source, sourceMeta, rows, reviewSettings, currentIndex, reviewed, hidden, decisionResolutions, decisionResolutionLog, resolutionFilter, digestFilter, activeSymbol]);
+  }, [source, sourceMeta, rows, reviewSettings, currentIndex, reviewed, hidden, decisionResolutions, decisionResolutionLog, resolutionFilter, activeSymbol]);
 
   function move(delta) {
     setCurrentIndex((index) => visibleRows.length ? (index + delta + visibleRows.length) % visibleRows.length : 0);
@@ -780,12 +635,12 @@ export default function ReviewPage() {
     setStatus(`${row.symbol} oculto de esta cola`);
     move(1);
   }
+  // La nota de la resolución viaja vacía: antes se componía con el veredicto
+  // del motor (nextAction/risk) y la clasificación del inversor quedaba
+  // registrada con una recomendación pegada. Mismo criterio que la ficha
+  // (22-08) y la vista rápida (24-08).
   function resolveActiveDecision(actionKey, row = activeRow) {
     if (!row?.symbol) return;
-    const note = [
-      activeDecision?.nextAction?.value || "",
-      activeDecision?.risk?.value || "",
-    ].filter(Boolean).join(" · ");
     const nextReview = applyStockDecisionResolution({
       source,
       sourceLabel: sourceMeta.sourceLabel || "",
@@ -804,7 +659,7 @@ export default function ReviewPage() {
       symbol: row.symbol,
       actionKey,
       source: "review",
-      note,
+      note: "",
     });
     setReviewed(new Set(nextReview.reviewedSymbols || []));
     setHidden(new Set(nextReview.hiddenSymbols || []));
@@ -846,18 +701,12 @@ export default function ReviewPage() {
     setResolutionFilter(nextFilter);
     setCurrentIndex(0);
   }
-  function applyDigestFilter(nextFilter) {
-    setDigestFilter(nextFilter);
-    setCurrentIndex(0);
-  }
   function clearQueueFilters() {
     setResolutionFilter("all");
-    setDigestFilter("all");
     setCurrentIndex(0);
   }
   function showResolutionQueue(filterKey = "all") {
     setResolutionFilter(filterKey);
-    setDigestFilter("all");
     setCurrentIndex(0);
   }
   function saveStockOpenContext(row = activeRow, index = currentIndex) {
@@ -870,7 +719,7 @@ export default function ReviewPage() {
       sourceLabel: sourceLabel(source, sourceMeta),
       sourceDetail: sourceMeta.sourceDetail || "",
       queueMode: sourceMeta.queueMode || "",
-      digestFilter,
+      digestFilter: "all",
       resolutionFilter,
       rank: Number.isFinite(index) ? index + 1 : null,
       queueSize: visibleRows.length,
@@ -887,7 +736,6 @@ export default function ReviewPage() {
       lastOpenedStockContext: context,
     });
   }
-
   useEffect(() => {
     function onKeyDown(event) {
       const tag = event.target?.tagName?.toLowerCase();
@@ -960,15 +808,15 @@ export default function ReviewPage() {
         <div className="reviewQueueHead">
           <h2>{sourceLabel(source, sourceMeta)}</h2>
           {sourceMeta.sourceDetail ? <small className="reviewQueueSourceDetail">{sourceMeta.sourceDetail}</small> : null}
-          <span>{resolutionFilter === "all" && digestFilter === "all" ? `${baseVisibleRows.length} visibles` : `${visibleRows.length}/${baseVisibleRows.length} visibles`}</span>
+          <span>{resolutionFilter === "all" ? `${baseVisibleRows.length} visibles` : `${visibleRows.length}/${baseVisibleRows.length} visibles`}</span>
         </div>
-        {visibleDecisionSummary.groups.length ? <div className="reviewQueueSummary reviewDecisionSummary" aria-label="Resumen de cola por decisión">
-          {visibleDecisionSummary.groups.map((group) => (
+        {resolutionSummary.length > 1 ? <div className="reviewQueueSummary reviewResolutionSummary" aria-label="Resumen de cola por clasificación del inversor">
+          {resolutionSummary.map((group) => (
             <button
               type="button"
               key={group.key}
-              className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${visibleDecisionItems[currentIndex]?.readiness?.key === group.key ? "active" : ""}`}
-              onClick={() => setCurrentIndex(group.firstIndex)}
+              className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${resolutionFilter === group.key ? "active" : ""}`}
+              onClick={() => applyResolutionFilter(group.key)}
               title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
             >
               <b>{group.count}</b>
@@ -976,100 +824,26 @@ export default function ReviewPage() {
             </button>
           ))}
         </div> : null}
-        {(() => {
-          const facetCount = (resolutionSummary.length > 1 ? 1 : 0) + (digestSummary.length > 1 ? 1 : 0) + (visiblePrioritySummary.length ? 1 : 0) + (visibleProfileSummary.length ? 1 : 0);
-          if (!facetCount) return null;
-          const facetOpenMarker = queueFiltersActive ? " · filtro activo" : "";
-          return <details className="reviewQueueFacets">
-            <summary className="reviewQueueFacetsLabel">Más facetas{facetCount > 1 ? ` (${facetCount})` : ""}<small>{facetOpenMarker}</small></summary>
-            {resolutionSummary.length > 1 ? <div className="reviewQueueSummary reviewResolutionSummary" aria-label="Resumen de cola por resolución de ficha">
-              {resolutionSummary.map((group) => (
-                <button
-                  type="button"
-                  key={group.key}
-                  className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${resolutionFilter === group.key ? "active" : ""}`}
-                  onClick={() => applyResolutionFilter(group.key)}
-                  title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
-                >
-                  <b>{group.count}</b>
-                  <span>{group.label}</span>
-                </button>
-              ))}
-            </div> : null}
-            {digestSummary.length > 1 ? <div className="reviewQueueSummary reviewDigestSummary" aria-label="Resumen de cola por estado de pruebas">
-              {digestSummary.map((group) => (
-                <button
-                  type="button"
-                  key={group.key}
-                  className={`reviewQueueSummaryChip ${group.tone || "neutral"} ${digestFilter === group.key ? "active" : ""}`}
-                  onClick={() => applyDigestFilter(group.key)}
-                  title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
-                >
-                  <b>{group.count}</b>
-                  <span>{group.label}</span>
-                </button>
-              ))}
-            </div> : null}
-            {visiblePrioritySummary.length ? <div className="reviewQueueSummary reviewPrioritySummary" aria-label="Prioridad de investigación">
-              {visiblePrioritySummary.map((group) => (
-                <button
-                  type="button"
-                  key={group.key}
-                  className={`reviewQueueSummaryChip priority-${group.key} ${group.tone || "neutral"} ${visibleDecisionItems[currentIndex]?.reviewPriority?.key === group.key ? "active" : ""}`}
-                  onClick={() => setCurrentIndex(group.firstIndex)}
-                  title={[group.topSymbol ? `${group.topSymbol} · ${Math.round(group.topScore || 0)}` : "", group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label].filter(Boolean).join(" · ")}
-                >
-                  <b>{group.count}</b>
-                  <span>{group.shortLabel || group.label}</span>
-                </button>
-              ))}
-            </div> : null}
-            {visibleProfileSummary.length ? <div className="reviewQueueSummary reviewQueueProfileSummary" aria-label="Prioridad de cola por perfil">
-              {visibleProfileSummary.map((group) => (
-                <button
-                  type="button"
-                  key={group.key}
-                  className={`reviewQueueSummaryChip profile-${group.key} ${group.tone || "neutral"} ${visibleDecisionItems[currentIndex]?.profileKey === group.key ? "active" : ""}`}
-                  onClick={() => setCurrentIndex(group.firstIndex)}
-                  title={group.sampleSymbols.length ? group.sampleSymbols.join(", ") : group.label}
-                >
-                  <b>{group.count}</b>
-                  <span>{group.label}</span>
-                </button>
-              ))}
-            </div> : null}
-          </details>;
-        })()}
         <div className="reviewQueueList">
           {visibleRows.map((row, index) => {
             const active = activeRow?.symbol === row.symbol;
-            const decision = visibleDecisionItems[index] || buildDecisionQueueItem(row, reviewSettings);
             const resolution = decisionResolutionForSymbol({ decisionResolutions }, row.symbol);
+            const rowRs = canonicalRs(row);
             return <button
               key={row.symbol}
-              className={`reviewQueueItem ${active ? "active" : ""} decision-${decision.readiness?.key || "unknown"} data-health-${decision.dataHealth?.key || "unknown"} score-audit-${decision.scoreAudit?.key || "unknown"} metric-truth-${decision.metricTruth?.key || "unknown"} focus-${decision.focus?.key || "none"} ${resolution ? `resolved-${resolution.key}` : ""}`}
+              className={`reviewQueueItem ${active ? "active" : ""} ${resolution ? `resolved-${resolution.key}` : ""}`}
               onClick={() => setCurrentIndex(index)}
-              title={resolution ? `${resolution.label} · ${resolution.detail}` : [decision.focus ? `Foco ${decision.focus.label}: ${decision.focus.detail || ""}` : "", decision.digest?.tooltip || `${decision.nextAction?.value || "Revisar"} · ${decision.risk?.value || row.symbol}`].filter(Boolean).join(" · ")}
+              title={resolution ? `${resolution.label} · ${resolution.detail}` : row.companyName || row.symbol}
             >
               <CompanyMark row={row} size="sm" />
               <span className="reviewQueueBody">
                 <b>{row.symbol}</b>
                 <em>{row.companyName || row.symbol}</em>
-                <RowTrustSignature signature={decision.trustSignature} className="reviewQueueTrustSignature" />
-                <span className="reviewQueueDecisionLine">
-                  <span className={`reviewQueueDecisionBadge ${decision.tone || "neutral"}`}>{decision.nextAction?.value || decision.action?.label || "Revisar"}</span>
-                  {resolution ? <span className={`reviewQueueResolutionBadge ${resolution.tone || "neutral"}`}>{resolution.label}</span> : null}
-                  <ReviewQueueFocusBadge focus={decision.focus} />
-                  {decision.dataHealth ? <span className={`reviewQueueDataHealthBadge ${decision.dataHealth.tone || "neutral"} data-${decision.dataHealth.key || "unknown"}`} title={decision.dataHealth.detail || decision.dataHealth.label}>{decision.dataHealth.label}</span> : null}
-                  {decision.reviewPriority ? <span className={`reviewQueuePriorityBadge ${decision.reviewPriority.tone || "neutral"}`} title={decision.reviewPriority.reason}>{decision.reviewPriority.shortLabel || decision.reviewPriority.label}</span> : null}
-                  {decision.profileKey && decision.profileKey !== "other" ? <span className={`reviewQueueProfileBadge ${decision.profileTone || "neutral"}`}>{decision.profileLabel}</span> : null}
-                  {decision.metricTruth ? <span className={`reviewQueueMetricTruthBadge ${decision.metricTruth.tone || "neutral"} metric-${decision.metricTruth.key || "unknown"}`} title={decision.metricTruth.detail || decision.metricTruth.label}>{decision.metricTruth.label}</span> : null}
-                  {decision.scoreAudit ? <span className={`reviewQueueScoreAuditBadge ${decision.scoreAudit.tone || "neutral"} score-${decision.scoreAudit.key || "unknown"}`} title={decision.scoreAudit.detail || decision.scoreAudit.label}>{decision.scoreAudit.label}</span> : null}
-                  {decision.risk?.value ? <small>{decision.risk.value}</small> : null}
-                </span>
-                <QueueDecisionDigest digest={decision.digest} />
+                {resolution ? <span className="reviewQueueDecisionLine">
+                  <span className={`reviewQueueResolutionBadge ${resolution.tone || "neutral"}`}>{resolution.label}</span>
+                </span> : null}
               </span>
-              <i>{decision.score ?? num(value(row, "totalScore") ?? value(row, "compositeScore"))}</i>
+              <i title={rowRs.available ? "RS semanal del universo" : rowRs.reason}>{rowRs.available ? rowRs.value.toFixed(0) : "-"}</i>
             </button>;
           })}
         </div>
@@ -1098,12 +872,10 @@ export default function ReviewPage() {
           <button className={`starBtn ${favoriteSymbols.has(activeSymbol) ? "on" : ""}`} onClick={() => toggleFavorite(activeRow)} aria-label={`Favorito ${activeRow.symbol}`}>★</button>
         </div>
         {activeHydrating && <div className="dataNote" style={{ marginBottom: 10 }}>Cargando histórico y métricas...</div>}
-        <ReviewPriorityPanel priority={activeDecision?.reviewPriority} />
-        <ReviewDecisionPanel decision={activeDecision} />
         <div className="reviewMetricGrid">
-          {metricRows(activeRow).map(([label, metric, key]) => <span key={label}>
+          {metricRows(activeRow).map(([label, metric, title = ""]) => <span key={label}>
             <b>{label}</b>
-            <ReviewTrustMetric row={activeRow} metricKey={key} label={label} value={metric} />
+            <em title={title || undefined}>{metric}</em>
           </span>)}
         </div>
         <div className="reviewEvidence">
@@ -1113,13 +885,13 @@ export default function ReviewPage() {
         <div className="reviewNotes">
           <div className="summaryRow"><span>Estado local</span><b>{reviewed.has(activeSymbol) ? "Revisada" : "Pendiente"}</b></div>
           {activeResolution ? <div className="summaryRow">
-            <span>Resolución ficha</span>
+            <span>Clasificación</span>
             <b>{activeResolution.label}</b>
           </div> : null}
           <div className="summaryRow"><span>Favorito local</span><b>{favoriteSymbols.has(activeSymbol) ? "Sí" : "No"}</b></div>
         </div>
-        <div className="reviewResolveRail" aria-label="Resolver decisión desde Review">
-          <span>Resolver desde Review</span>
+        <div className="reviewResolveRail" aria-label="Clasificar desde Review">
+          <span>Clasificar</span>
           <div>
             <button
               type="button"

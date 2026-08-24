@@ -6,13 +6,8 @@ import QuickReviewModal from "@/app/components/screener/QuickReviewModal";
 import ScreenerShell from "@/app/components/screener/ScreenerShell";
 import { useQuickReviewSession } from "@/app/components/screener/useQuickReviewSession";
 import { useResultViewModel } from "@/app/components/screener/useResultViewModel";
-import { metricTruthMetaForRow, rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
-import {
-  buildReviewProfileSummary,
-  decisionProfileForRow,
-  FilterFamilyModal,
-  reviewProfileMeta,
-} from "@/app/screenerPanels";
+import { metricTruthMetaForRow } from "@/app/components/ui/TrustSignals";
+import { FilterFamilyModal } from "@/app/screenerPanels";
 import { activeLayerCount, layerStatusText, scanFailureExplanation, searchText, userFacingServiceError } from "@/lib/screenerFormat";
 import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
@@ -30,9 +25,9 @@ import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/l
 import { normalizeScanErrorGroups } from "@/lib/scanErrorGroups";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
 import { ASIA, DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, EUROPE, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
-import { buildDecisionBrief, buildDecisionEvidenceChecklist, buildDecisionQueueItem, buildDecisionQueueSummary, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
+import { buildDecisionBrief, buildDecisionEvidenceChecklist, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
 import { attachDecisionTrace, auditDecisionRowIssues, buildDecisionAuditExportPayload, buildDecisionTrace, decisionConfidenceLabel, decisionTraceForRow } from "@/lib/decisionAudit";
-import { buildReviewPrioritySummary, decisionProfileStateForStock, reviewPriorityForRow } from "@/lib/decisionProfile";
+import { decisionProfileStateForStock } from "@/lib/decisionProfile";
 import { buildScreenerDataHealth, dataHealthFilterLabel } from "@/lib/screenerDataHealth";
 import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
@@ -120,49 +115,6 @@ function reviewQueueFocusMeta({ dataHealth = null, metricTruth = null, scoreAudi
   return candidates.sort((a, b) => b.priority - a.priority)[0] || null;
 }
 
-function buildReviewQueueAuditSummary(items = [], activeIndex = 0) {
-  const firstIndex = (predicate) => {
-    const index = items.findIndex(predicate);
-    return index >= 0 ? index : 0;
-  };
-  const dataCount = items.filter((item) => item.dataHealth?.key && item.dataHealth.key !== "ready").length;
-  const dataBlocked = items.filter((item) => item.dataHealth?.key === "blocked").length;
-  const scoreCount = items.filter((item) => item.scoreAudit?.key && item.scoreAudit.key !== "clean").length;
-  const scoreMismatch = items.filter((item) => item.scoreAudit?.key === "mismatch").length;
-  const evidenceCount = items.filter((item) => item.evidence?.status && item.evidence.status !== "ready").length;
-  const evidenceBlocked = items.filter((item) => item.evidence?.status === "blocked").length;
-  const activeItem = items[activeIndex] || null;
-  return [
-    {
-      key: "data",
-      label: dataCount ? (dataBlocked ? "Datos bloqueados" : "Datos revisar") : "Datos OK",
-      count: dataCount,
-      tone: dataBlocked ? "bad" : dataCount ? "warn" : "good",
-      firstIndex: firstIndex((item) => item.dataHealth?.key && item.dataHealth.key !== "ready"),
-      active: Boolean(activeItem?.dataHealth?.key && activeItem.dataHealth.key !== "ready"),
-      detail: dataBlocked ? `${dataBlocked} bloqueadas · ${dataCount} a revisar` : `${dataCount} con datos a revisar`,
-    },
-    {
-      key: "score",
-      label: scoreCount ? (scoreMismatch ? "Score descuadre" : "Score revisar") : "Score OK",
-      count: scoreCount,
-      tone: scoreCount ? "warn" : "good",
-      firstIndex: firstIndex((item) => item.scoreAudit?.key && item.scoreAudit.key !== "clean"),
-      active: Boolean(activeItem?.scoreAudit?.key && activeItem.scoreAudit.key !== "clean"),
-      detail: scoreMismatch ? `${scoreMismatch} con descuadre · ${scoreCount} a revisar` : `${scoreCount} con score a revisar`,
-    },
-    {
-      key: "evidence",
-      label: evidenceCount ? (evidenceBlocked ? "Pruebas bloqueadas" : "Pruebas validar") : "Pruebas OK",
-      count: evidenceCount,
-      tone: evidenceBlocked ? "bad" : evidenceCount ? "warn" : "good",
-      firstIndex: firstIndex((item) => item.evidence?.status && item.evidence.status !== "ready"),
-      active: Boolean(activeItem?.evidence?.status && activeItem.evidence.status !== "ready"),
-      detail: evidenceBlocked ? `${evidenceBlocked} bloqueadas · ${evidenceCount} a validar` : `${evidenceCount} con pruebas pendientes`,
-    },
-  ];
-}
-
 export default function Page() {
   const [markets, setMarkets] = useState(DEFAULT_MARKETS);
   const [manual, setManual] = useState("");
@@ -214,7 +166,6 @@ export default function Page() {
     restoreQuickReviewSession,
     resetQuickReview,
     openReview,
-    selectQuickReview,
     moveQuickReview,
     closeQuickReview,
     saveQuickReviewStockOpen,
@@ -1736,63 +1687,16 @@ export default function Page() {
     : null,
   [activeModalRow?.symbol, screenerDecisionResolutions]);
   const modalDecisionResolutions = screenerDecisionResolutions;
-  const modalReviewQueueItems = useMemo(() => modalReviewRows.map((row) => {
-    const item = buildDecisionQueueItem(row, activeSettings);
-    const profileKey = decisionProfileForRow(row, activeSettings);
-    const profile = reviewProfileMeta(profileKey);
-    const reviewPriority = reviewPriorityForRow(row, activeSettings);
-    const scoreAudit = reviewQueueScoreAuditMeta(row);
-    const dataHealth = reviewQueueDataHealthMeta(row, activeSettings);
-    const metricTruth = metricTruthMetaForRow(row, { includeIssueDetail: true });
-    const vcp = vcpReliabilityAudit(row);
-    const focus = reviewQueueFocusMeta({ dataHealth, metricTruth, scoreAudit, evidence: item.evidence, methodologyFocus: item.methodologyFocus, vcp });
-    const trustSignature = rowTrustSignatureForRow(row, { dataHealth, metricTruth, scoreAudit, evidence: item.evidence, vcpReliability: vcp });
-    return {
-      ...item,
-      profileKey,
-      profileLabel: profile.label,
-      profileTone: profile.tone,
-      reviewPriority,
-      scoreAudit,
-      dataHealth,
-      metricTruth,
-      focus,
-      trustSignature,
-    };
-  }), [modalReviewRows, activeSettings]);
-  const modalReviewAuditSummary = useMemo(() => buildReviewQueueAuditSummary(modalReviewQueueItems, modalReviewPosition), [modalReviewQueueItems, modalReviewPosition]);
-  const modalReviewPrioritySummary = useMemo(() => buildReviewPrioritySummary(modalReviewQueueItems), [modalReviewQueueItems]);
-  const modalReviewQueueSummary = useMemo(() => buildDecisionQueueSummary(modalReviewQueueItems), [modalReviewQueueItems]);
-  const modalReviewProfileSummary = useMemo(() => buildReviewProfileSummary(modalReviewQueueItems), [modalReviewQueueItems]);
-  const modalActiveReviewPriority = modalReviewQueueItems[modalReviewPosition]?.reviewPriority || (activeModalRow ? reviewPriorityForRow(activeModalRow, activeSettings) : null);
-  const modalRankExplain = useMemo(() => activeModalRow ? explainScreenerRank(activeModalRow, activeSettings) : null, [activeModalRow, activeSettings]);
-  const modalDecisionIssues = useMemo(() => activeModalRow ? auditDecisionRowIssues(activeModalRow, modalRankExplain || activeSettings) : [], [activeModalRow, modalRankExplain, activeSettings]);
-  const modalDecisionEvidence = useMemo(() => activeModalRow ? buildDecisionEvidenceChecklist(activeModalRow, modalRankExplain || activeSettings) : null, [activeModalRow, modalRankExplain, activeSettings]);
-  const modalDecisionTrace = useMemo(() => activeModalRow ? decisionTraceForRow(activeModalRow, modalRankExplain || activeSettings) : null, [activeModalRow, modalRankExplain, activeSettings]);
-  const modalDecisionBrief = useMemo(() => activeModalRow ? (modalDecisionTrace?.brief || buildDecisionBrief(activeModalRow, modalRankExplain || activeSettings)) : null, [activeModalRow, modalRankExplain, activeSettings, modalDecisionTrace]);
-  const modalDataHealth = useMemo(() => activeModalRow ? buildScreenerDataHealth(activeModalRow, activeSettings) : null, [activeModalRow, activeSettings]);
-  const modalScoreAudit = useMemo(() => activeModalRow ? buildScreenerScoreAudit(activeModalRow) : null, [activeModalRow]);
+  // La maquinaria de veredictos del modal —los items de cola con nueve chips,
+  // los resúmenes de auditoría/prioridad/perfil/decisión, el rank-explain, la
+  // evidencia, el score-audit y el contexto de origen (quickReviewOrigin)—
+  // se retiró el 2026-08-24 con la limpieza de la vista rápida
+  // (docs/analisis-vista-rapida-2026-08-24.md): eran veredictos operativos y
+  // diagnóstico interno del motor. El modal recibe ahora la fila, la cola y
+  // la clasificación del inversor; nada más.
   const modalReviewSourceMeta = activeModalRow ? safeRead(STORAGE_KEYS.review, {}) : {};
   const modalReviewSourceLabel = String(modalReviewSourceMeta.sourceLabel || "Screener actual").trim() || "Screener actual";
-  const modalReviewSourceDetail = String(modalReviewSourceMeta.sourceDetail || "").trim();
-  const modalReviewQueueMode = String(modalReviewSourceMeta.queueMode || "screener-review").trim() || "screener-review";
   const modalOriginLabel = modalReviewSourceLabel === "Screener actual" ? "Revisión Screener" : modalReviewSourceLabel;
-  const quickReviewOrigin = useMemo(() => activeModalRow ? buildScreenerStockContext(screenerContract, {
-    symbol: activeModalRow.symbol,
-    row: activeModalRow,
-    rank: modalReviewPosition + 1,
-    queueSize: modalReviewRows.length,
-    sourceLabel: modalOriginLabel,
-    action: modalRankExplain?.action,
-    readiness: modalRankExplain?.readiness,
-    decisionProfile: decisionProfileStateForStock(activeModalRow, modalRankExplain || activeSettings),
-    decisionIssues: modalDecisionIssues,
-    decisionEvidence: modalDecisionEvidence,
-    decisionTrace: modalDecisionTrace,
-    decisionBrief: modalDecisionBrief,
-    dataHealth: modalDataHealth,
-    scoreAudit: modalScoreAudit,
-  }) : null, [activeModalRow, screenerContract, modalReviewPosition, modalReviewRows.length, modalOriginLabel, modalRankExplain, modalDecisionIssues, modalDecisionEvidence, modalDecisionTrace, modalDecisionBrief, modalDataHealth, modalScoreAudit, activeSettings]);
 
   useEffect(() => {
     if (!activeFilterFamily) return undefined;
@@ -1929,33 +1833,19 @@ export default function Page() {
 
     <QuickReviewModal
       activeModalRow={activeModalRow}
-      activeSettings={activeSettings}
       chartListId={chartListId}
       chartScope={chartScope}
       chartSettings={chartSettings}
       modalActiveResolution={modalActiveResolution}
-      modalActiveReviewPriority={modalActiveReviewPriority}
-      modalDecisionEvidence={modalDecisionEvidence}
       modalDecisionResolutions={modalDecisionResolutions}
-      modalRankExplain={modalRankExplain}
-      modalReviewAuditSummary={modalReviewAuditSummary}
       modalReviewPosition={modalReviewPosition}
-      modalReviewPrioritySummary={modalReviewPrioritySummary}
-      modalReviewProfileSummary={modalReviewProfileSummary}
-      modalReviewQueueItems={modalReviewQueueItems}
-      modalReviewQueueMode={modalReviewQueueMode}
-      modalReviewQueueSummary={modalReviewQueueSummary}
       modalReviewRows={modalReviewRows}
-      modalReviewSourceDetail={modalReviewSourceDetail}
       modalOriginLabel={modalOriginLabel}
-      modalScoreAudit={modalScoreAudit}
-      quickReviewOrigin={quickReviewOrigin}
       closeQuickReview={closeQuickReview}
       moveQuickReview={moveQuickReview}
       reopenQuickReviewDecision={reopenQuickReviewDecision}
       resolveQuickReviewDecision={resolveQuickReviewDecision}
       saveQuickReviewStockOpen={saveQuickReviewStockOpen}
-      selectQuickReview={selectQuickReview}
       updateChartScope={updateChartScope}
       updateChartSettings={updateChartSettings}
     />

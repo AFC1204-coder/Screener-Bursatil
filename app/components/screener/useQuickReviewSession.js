@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { buildReviewProfileSummary, prepareReviewQueueRows } from "@/lib/decisionProfile";
+import { prepareReviewQueueRows } from "@/lib/decisionProfile";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
-import { buildDecisionQueueItem } from "@/lib/screenerExplainability";
 import { persistReviewQueue } from "@/lib/screenerPipeline";
 import {
   applyStockDecisionResolution,
@@ -110,20 +109,21 @@ export function useQuickReviewSession({
     });
   }
 
-  function resolveQuickReviewDecision(actionKey, row = activeModalRow, index = modalReviewPosition, queueItems = []) {
+  // La nota del historial se guardaba compuesta con el veredicto del motor
+  // («Auditar antes · Extendida SMA50 38.2%»): la resolución del inversor
+  // llevaba pegada una recomendación. Retirado el 2026-08-24 con la limpieza
+  // de la vista rápida — la nota es del inversor, y esta superficie no tiene
+  // campo de nota, así que viaja vacía (mismo criterio que la ficha el 22-08:
+  // «la nota del historial es ahora solo lo que escribe el inversor»,
+  // lib/stockDecisionResolution.js).
+  function resolveQuickReviewDecision(actionKey, row = activeModalRow, index = modalReviewPosition) {
     if (!row?.symbol) return;
     const previousReview = safeRead(STORAGE_KEYS.review, {});
-    const decisionQueueItems = Array.isArray(queueItems) ? queueItems : [];
-    const decision = decisionQueueItems[index] || buildDecisionQueueItem(row, activeSettings);
-    const note = [
-      decision?.nextAction?.value || "",
-      decision?.risk?.value || "",
-    ].filter(Boolean).join(" · ");
     const nextReview = applyStockDecisionResolution(quickReviewPayload(row, index, previousReview), {
       symbol: row.symbol,
       actionKey,
       source: "screener-review",
-      note,
+      note: "",
     });
     persistReviewQueue(nextReview);
     setQuickReviewResolutionRevision((value) => value + 1);
@@ -157,9 +157,6 @@ export function useQuickReviewSession({
     const nextResolutionFilter = options.resolutionFilter || "all";
     const nextDigestFilter = options.digestFilter || "all";
     const currentIndex = Math.max(0, reviewRows.findIndex((row) => row.symbol === startSymbol));
-    const profileSummary = buildReviewProfileSummary(reviewRows, activeSettings);
-    const cleanCount = profileSummary.find((group) => group.key === "operable-clean")?.count || 0;
-    const fragileCount = profileSummary.find((group) => group.key === "operable-fragile")?.count || 0;
     const previousReview = safeRead(STORAGE_KEYS.review, {});
     const decisionState = reviewDecisionStateForRows(previousReview, reviewRows);
     setQuickReviewRows(reviewRows);
@@ -184,7 +181,9 @@ export function useQuickReviewSession({
       selectedSymbol: startSymbol || reviewRows[0]?.symbol || "",
       updatedAt: new Date().toISOString(),
     });
-    setStatus(`${reviewSourceLabel}: ${reviewRows.length} acciones en cola · ${cleanCount} limpias · ${fragileCount} frágiles.`);
+    // Sin recuento de «limpias · frágiles»: era el perfil interno del motor
+    // como texto de estado (retirado 2026-08-24 con la limpieza de la vista).
+    setStatus(`${reviewSourceLabel}: ${reviewRows.length} acciones en cola.`);
   }
 
   function selectQuickReview(index, list = quickReviewRows) {

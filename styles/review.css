@@ -298,54 +298,6 @@
   text-transform:uppercase;
 }
 
-.reviewTrustMetric {
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  max-width:100%;
-}
-
-.reviewTrustMetric em {
-  overflow:hidden;
-  color:#cccccc;
-  font-style:normal;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.reviewTrustMetric i {
-  display:inline-grid;
-  place-items:center;
-  width:15px;
-  height:15px;
-  border:1px solid var(--line);
-  border-radius:999px;
-  background:var(--surface2);
-  color:#aeb7c6;
-  font-size:9px;
-  font-style:normal;
-  font-weight:850;
-  line-height:1;
-}
-
-.reviewTrustMetric.source-proxy i {
-  border-color:var(--accent);
-  background:var(--senal-dim);
-  color:var(--accent);
-}
-
-.reviewTrustMetric.source-review i {
-  border-color:var(--risk);
-  background:var(--oxido-dim);
-  color:var(--oxido);
-}
-
-.reviewTrustMetric.source-blocked i {
-  border-color:var(--risk);
-  background:var(--oxido-dim);
-  color:var(--risk);
-}
-
 .reviewEvidence {
   margin-top:12px;
 }
