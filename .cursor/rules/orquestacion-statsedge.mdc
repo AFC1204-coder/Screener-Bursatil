@@ -65,6 +65,19 @@ Sin commit ni push.
 
 Programación **nunca** commit/push.
 
-## Smoke visual (agente)
+## Smoke visual y verificación en página (agente, no el dueño)
 
-Si el diff toca layout/chart/JSX estructural/CSS de composición: hard-reload real (preferible `:3300` aislado; memoria `verificacion-navegador-aislada`). Panel usable. Anotar evidencia. Fallo → no commit. `./vfc` no sustituye el smoke.
+**Regla:** todo lo que sea **comprobar en la página** (¿está bien? ¿se ve? ¿responde el gesto?) lo hace el **orquestador con Browser Use** antes de commit o al cerrar un ticket. El dueño **no** hace smoke mecánico.
+
+**El dueño solo entra cuando:**
+- decisión de producto / trading («¿importa esto?»),
+- scoring, nocturno, auth, datos, licencia,
+- algo que Browser Use no puede ver (token, MFA, sesión que no comparte el Chrome conectado).
+
+**Cómo verificar (Browser Use):**
+1. Chrome con remote debugging (`127.0.0.1:9222`); pestaña **`http://localhost:3000`** (misma origin que la sesión logueada).
+2. Hard-reload tras commits de UI; esperar datos completos (3319 analizadas, no muestra parcial si el ticket lo exige).
+3. Anotar evidencia breve (texto del status, botones, columnas, ms del gesto).
+4. Si el debug no conecta → decirlo; no pedir al dueño que repita un checklist que el agente puede hacer.
+
+También aplica a layout/chart/JSX/CSS: hard-reload real antes de commit. Preferir `:3300` aislado si hay riesgo de pisar el dev del dueño (memoria `verificacion-navegador-aislada`). `./vfc` no sustituye esto.
