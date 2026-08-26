@@ -33,9 +33,10 @@ import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
 import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, fitScansForBrowser, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
-import { buildSnapshotFreshnessNotice } from "@/lib/snapshotFreshness";
+import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, localScanIsSampled, localSampleDetail, screenerSessionRefreshReason } from "@/lib/snapshotFreshness";
 import { dropForeignMarketSnapshots, pickNightlyUsRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { nightlyAbsenceNotice, nightlyAbsenceReasonText, nightlyAbsenceStatus } from "@/lib/nightlyAbsence";
+import { screenerSessionDataExpired } from "@/lib/nightlyBoundary";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 import {
   ALL_FILTER_LAYERS,
@@ -434,10 +435,8 @@ export default function Page() {
       // a 4,5 M de presupuesto), así que la copia local puede ser una muestra
       // repartida del escaneo — nunca "las mejores". Si lo es, se dice aquí:
       // los filtros sobre esa copia ven menos acciones que los de la nube.
-      const sampled = Boolean(localScan.rowsSampled) && Number(localScan.rowsAvailable) > localScan.rows.length;
-      const sampleDetail = sampled
-        ? ` La copia local guarda ${localScan.rows.length} de ${localScan.rowsAvailable} acciones, repartidas por todo el ranking, porque el escaneo entero no cabe en este navegador.`
-        : "";
+      const sampled = localScanIsSampled(localScan);
+      const sampleDetail = sampled ? ` ${localSampleDetail(localScan)}` : "";
       const notice = reason ? {
         tone: "info",
         label: "Copia local",
@@ -495,9 +494,120 @@ export default function Page() {
       if (!isCancelled()) setRestoringScan(false);
     });
   }
+  // ── Caducidad y población de los DATOS de la sesión ───────────────────────
+  // La sesión persiste dos cosas de naturaleza distinta: los CRITERIOS del
+  // usuario (preset, capas, orden, filtros de vista, búsqueda, scroll), que
+  // no caducan nunca, y una referencia a los DATOS (scanRef → copia local),
+  // que caducan cada noche cuando corre el nocturno. Hasta el 25-08-2026 la
+  // restauración no comparaba fechas y una sesión del 16 de agosto enseñó
+  // "scan 16 ago" durante una semana, hasta que el dueño borró el
+  // almacenamiento a mano (docs/analisis-screener-uso-real-2026-08-23.md A3).
+  // Es el mismo defecto que la caché de discovery del 13-08, y se aplica el
+  // mismo criterio: la frontera nocturna de lib/nightlyBoundary.js.
+  //
+  // P2 (26-08): la copia local es casi siempre una MUESTRA (~576 de ~3309)
+  // porque el universo no cabe en localStorage. Rehidratar por scanRef sin
+  // pedir la nube filtraba en silencio el 17% del universo. Esta misma
+  // función cubre los dos disparadores: caducidad (P1) y muestra (P2).
+  //
+  // Esta función renueva SOLO los datos. Trae el último nocturno US (misma
+  // petición anclada que el arranque en frío) y sustituye analyzedRows y
+  // scanContext; las filas visibles las recalcula el efecto de re-filtrado
+  // automático con los criterios de la sesión (el id nuevo del escaneo cambia
+  // la firma de fastFilterSignature). No puede usar restoreSnapshot: esa vía
+  // restaura también preset/capas/orden del escaneo, y pisaría la
+  // configuración que la sesión existe para conservar — está bien para
+  // "Reset sesión", que promete exactamente eso, no aquí.
+  function refreshSessionSnapshotData({ isCancelled = () => false, scanSignature = null, sampledScan = null } = {}) {
+    setRestoringScan(true);
+    const sampled = localScanIsSampled(sampledScan);
+    setStatus(sampled
+      ? "Sesión restaurada. Cargando el universo completo del escaneo nocturno..."
+      : "Sesión restaurada. Actualizando al último escaneo nocturno...");
+    if (sampled) setSnapshotNotice(buildSessionKeepNotice({ scan: sampledScan }));
+    // Si la renovación no puede completarse, la sesión se queda como estaba
+    // (datos viejos o muestra local, con su fecha real visible) y se dice:
+    // nunca se vacía la tabla ni se sustituye por otro escaneo que "valga".
+    const keepSessionData = (reason = "") => {
+      if (isCancelled() || resultsOwnerRef.current !== "session") return;
+      setSnapshotNotice(buildSessionKeepNotice({ reason, scan: sampledScan }));
+      setStatus(sampled
+        ? `No se pudo actualizar el escaneo nocturno; se muestran ${sampledScan.rows.length} de ${sampledScan.rowsAvailable} acciones (muestra repartida).`
+        : "No se pudo actualizar el escaneo nocturno; se muestran los datos guardados de la sesión.");
+    };
+    getLatestScanFromCloud().then((result) => {
+      // Si mientras resolvía el fetch los resultados cambiaron de dueño (un
+      // reset, un scan), esta renovación ya no aplica.
+      if (isCancelled() || resultsOwnerRef.current !== "session") return;
+      if (!result.ok || result.configured === false) {
+        if (result.message) console.error("[snapshot] renovación de sesión: la nube no está disponible:", result.message);
+        keepSessionData(userFacingServiceError(result.message, "La copia guardada en la nube no está disponible."));
+        return;
+      }
+      const nightly = result.data?.nightly || null;
+      const scan = pickNightlyUsRestorableScan(result.data?.scans || []);
+      if (!scan) {
+        keepSessionData(nightlyAbsenceReasonText(nightly?.found === false ? nightly : { reason: "no-nightly-scan" }));
+        return;
+      }
+      // La copia local pasa a ser la del nocturno vigente, para que la
+      // rehidratación por scanRef de la próxima recarga lo encuentre.
+      const storedScans = safeRead(STORAGE_KEYS.scans, []);
+      safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])]));
+      applyFreshSnapshotData(scan, {
+        notice: buildSnapshotFreshnessNotice(result.data, scan),
+        scanSignature,
+      });
+    }).catch((error) => {
+      console.error("[snapshot] renovación de sesión: fallo al leer la nube:", error);
+      if (isCancelled()) return;
+      keepSessionData(userFacingServiceError(error?.message, "La copia guardada en la nube no está disponible."));
+    }).finally(() => {
+      if (!isCancelled()) setRestoringScan(false);
+    });
+  }
+  // El complemento de restoreSnapshot: datos nuevos, criterios intactos.
+  // scanSignature trae markets/manual/scanMode de la SESIÓN restaurada — no
+  // puede leerlos del estado porque este closure se creó en el primer render,
+  // antes de que la restauración los aplicara.
+  function applyFreshSnapshotData(scan, { notice = null, scanSignature = null } = {}) {
+    if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) return false;
+    resultsOwnerRef.current = "cloud";
+    const signedMarkets = Array.isArray(scanSignature?.markets) && scanSignature.markets.length ? scanSignature.markets : markets;
+    const signedManual = scanSignature?.manual ?? manual;
+    const signedScanMode = scanSignature?.scanMode || scanMode;
+    const nextScanContext = {
+      id: scan.id || uid(),
+      symbolsCount: scan.rows.length,
+      baseCount: scan.rows.length,
+      providerErrors: [],
+      scannedAt: scan.updatedAt || scan.createdAt || new Date().toISOString(),
+      snapshotSource: "supabase",
+      snapshotRowsAreFiltered: snapshotRowsAreFiltered(scan),
+      // Igual que en restoreSnapshot: el snapshot renovado se considera
+      // vigente respecto a los criterios con los que convive (los de la
+      // sesión); si markets/manual/scanMode cambian después, el banner de
+      // staleness lo reflejará.
+      settingsSignature: scanSettingsSignature(signedMarkets, signedManual, signedScanMode),
+      scannedMarkets: [...signedMarkets].sort(),
+      scannedScanMode: signedScanMode,
+    };
+    setAnalyzedRows(scan.rows);
+    setScanContext(nextScanContext);
+    setSnapshotNotice(notice);
+    // Los errores de proveedor persistidos eran del escaneo viejo; con los
+    // datos renovados, mantenerlos sería atribuirle al nocturno de hoy los
+    // fallos de otro día.
+    setFail([]);
+    // El re-filtrado automático pondrá su propio estado ("N de M a la
+    // vista"); este prefijo hace que además diga de dónde salen los datos.
+    statusContextRef.current = `Datos actualizados al escaneo nocturno (${dateTime(nextScanContext.scannedAt)}); tus filtros se mantienen`;
+    return true;
+  }
   useEffect(() => {
     let cancelled = false;
     let restoredRowsCount = 0;
+    let sampledScan = null;
     setFavoriteSymbols(new Set(safeRead(STORAGE_KEYS.favorites, []).map((x) => x.symbol)));
     setChartSettings(readChartSettings());
     setSavedFilterTemplates(normalizeFilterTemplates(safeRead(STORAGE_KEYS.screenerFilterTemplates, [])));
@@ -519,13 +629,18 @@ export default function Page() {
       // Sesión con referencia en vez de filas: rehidrata desde el snapshot
       // local y recalcula las visibles con los criterios de la SESIÓN (nunca
       // los del scan — eso es lo que distingue esta vía de restoreSnapshot).
+      // El lookup sale del if de rehidratación porque P2 también aplica cuando
+      // la sesión ya trae analyzedRows: hay que saber si el escaneo local
+      // referenciado es una muestra (~576 de ~3309) para pedir el universo.
+      const storedScans = safeRead(STORAGE_KEYS.scans, []);
+      const referencedScan = session.scanRef?.id
+        ? ((Array.isArray(storedScans) ? storedScans : []).find((scan) => scan?.id === session.scanRef.id)
+          || pickNightlyUsRestorableScan(storedScans))
+        : null;
       if (!restoredRows.length && !restoredAnalyzedRows.length && session.scanRef?.id && session.scanContext) {
-        const storedScans = safeRead(STORAGE_KEYS.scans, []);
         // Si el escaneo referenciado ya no está, el respaldo es el nocturno
         // estadounidense — no "el mejor snapshot local que haya", que podía ser
         // el de otro mercado.
-        const referencedScan = (Array.isArray(storedScans) ? storedScans : []).find((scan) => scan?.id === session.scanRef.id)
-          || pickNightlyUsRestorableScan(storedScans);
         if (referencedScan?.rows?.length) {
           const rehydrateContext = { ...session.scanContext, marketHealth: restoredMarketHealth, useRegimeFilter: restoredUseRegimeFilter };
           const rehydratedView = restoredSnapshotView(referencedScan, restoredActiveSettings, rehydrateContext, filterAnalyzedRows);
@@ -533,6 +648,7 @@ export default function Page() {
           restoredRows = rehydratedView.rows;
         }
       }
+      if (localScanIsSampled(referencedScan)) sampledScan = referencedScan;
       restoredRowsCount = restoredRows.length || restoredAnalyzedRows.length;
       if (restoredRowsCount) resultsOwnerRef.current = "session";
       if (Number.isFinite(restoredScrollY) && restoredScrollY > 0) restoreScrollRef.current = restoredScrollY;
@@ -589,8 +705,27 @@ export default function Page() {
             : DEFAULT_STATUS
       );
     }
+    const refreshReason = restoredRowsCount
+      ? screenerSessionRefreshReason({
+        expired: screenerSessionDataExpired(session),
+        sampled: Boolean(sampledScan),
+      })
+      : null;
     if (!restoredRowsCount) {
       restoreLatestSnapshot({ isCancelled: () => cancelled });
+    } else if (refreshReason) {
+      // P1: datos anteriores a la frontera nocturna. P2: copia local muestreada
+      // (fitScansForBrowser deja ~576 de ~3309). Las dos disparan el MISMO
+      // getLatestScanFromCloud + applyFreshSnapshotData; no se dobla el fetch.
+      refreshSessionSnapshotData({
+        isCancelled: () => cancelled,
+        sampledScan,
+        scanSignature: {
+          markets: Array.isArray(session?.markets) && session.markets.length ? session.markets : DEFAULT_MARKETS,
+          manual: session?.manual || "",
+          scanMode: session?.scanMode || "all",
+        },
+      });
     }
     setSessionReady(true);
     // Migración perezosa. Dos cosas, ambas idempotentes:

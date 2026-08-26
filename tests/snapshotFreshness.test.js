@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { buildSnapshotFreshnessNotice, staleDurationLabel } from "@/lib/snapshotFreshness";
+import {
+  buildSessionKeepNotice,
+  buildSnapshotFreshnessNotice,
+  localScanIsSampled,
+  localSampleDetail,
+  screenerSessionRefreshReason,
+  staleDurationLabel,
+} from "@/lib/snapshotFreshness";
 
 describe("snapshot freshness", () => {
   it("no muestra aviso para snapshots frescos y completos", () => {
@@ -120,5 +127,63 @@ describe("snapshot freshness", () => {
     expect(notice.detail).toContain("última disponible");
     expect(notice.detail).toContain("500");
     expect(notice.detail).toContain("9918");
+  });
+});
+
+const sampledScan = {
+  id: "scan-sampled",
+  rowsSampled: true,
+  rowsAvailable: 3309,
+  rows: Array.from({ length: 576 }, (_, index) => ({ symbol: `S${index}` })),
+};
+
+describe("copia local muestreada (P2)", () => {
+  it("detecta la muestra repartida que fitScansForBrowser deja en el navegador", () => {
+    expect(localScanIsSampled(sampledScan)).toBe(true);
+    expect(localScanIsSampled({ ...sampledScan, rowsSampled: false })).toBe(false);
+    expect(localScanIsSampled({ ...sampledScan, rowsAvailable: 576 })).toBe(false);
+    expect(localScanIsSampled({ rowsSampled: true, rowsAvailable: 3309 })).toBe(false);
+    expect(localScanIsSampled(null)).toBe(false);
+  });
+
+  it("el aviso de muestra usa el mismo texto que restoreLocalSnapshot", () => {
+    expect(localSampleDetail(sampledScan)).toBe(
+      "La copia local guarda 576 de 3309 acciones, repartidas por todo el ranking, porque el escaneo entero no cabe en este navegador.",
+    );
+    expect(localSampleDetail({ ...sampledScan, rowsSampled: false })).toBe("");
+  });
+
+  it("si la nube falla, el aviso de sesión nombra la muestra y no vacía el contrato", () => {
+    const notice = buildSessionKeepNotice({
+      reason: "La copia guardada en la nube no está disponible.",
+      scan: sampledScan,
+    });
+    expect(notice).not.toBeNull();
+    expect(notice.tone).toBe("warn");
+    expect(notice.source).toBe("session-sample");
+    expect(notice.detail).toContain("576");
+    expect(notice.detail).toContain("3309");
+    expect(notice.detail).toMatch(/repartidas por todo el ranking/i);
+    expect(notice.detail).toMatch(/nube no está disponible/i);
+  });
+
+  it("sin muestra, el aviso de sesión sigue siendo el de datos sin renovar (P1)", () => {
+    const notice = buildSessionKeepNotice({
+      reason: "La copia guardada en la nube no está disponible.",
+      scan: { id: "completo", rows: sampledScan.rows, rowsAvailable: sampledScan.rows.length },
+    });
+    expect(notice.label).toBe("Datos sin renovar");
+    expect(notice.source).toBe("session-stale");
+    expect(notice.detail).toMatch(/datos guardados en este navegador/i);
+    expect(notice.detail).not.toMatch(/repartidas por todo el ranking/i);
+  });
+});
+
+describe("un solo refresh de sesión (P1+P2)", () => {
+  it("caducada, muestreada o las dos: una sola razón de renovación", () => {
+    expect(screenerSessionRefreshReason({ expired: false, sampled: false })).toBeNull();
+    expect(screenerSessionRefreshReason({ expired: true, sampled: false })).toBe("expired");
+    expect(screenerSessionRefreshReason({ expired: false, sampled: true })).toBe("sampled");
+    expect(screenerSessionRefreshReason({ expired: true, sampled: true })).toBe("expired-and-sampled");
   });
 });
