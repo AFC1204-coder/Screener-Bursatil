@@ -56,6 +56,7 @@ export function UniversalPriceChartView({
     patternDiagnostic,
     rsLegend,
     notes,
+    emptyFallback,
     rootClassName,
   } = viewModel;
 
@@ -68,15 +69,16 @@ export function UniversalPriceChartView({
   const renderError = notes?.renderError || null;
 
   if (status !== "ready") {
+    const emptyText = String(emptyFallback?.text || "").trim() || "Sin dato";
     return (
       <div className={`universalChart empty ${rootClassName}`}>
-        {notes && (qualityNotice || notes.expanding || notes.expansionFailed || notes.renderError) ? (
-          <span className="universalChartEstimatedNote" role="status" title={qualityNotice?.title || ""}>
-            {qualityNotice?.text || notes.expanding?.text || notes.expansionFailed?.text || notes.renderError || "Sin dato"}
-          </span>
-        ) : (
-          <span className="universalChartEstimatedNote" role="status">Sin dato</span>
-        )}
+        <span
+          className="universalChartEstimatedNote"
+          role="status"
+          title={emptyFallback?.title || ""}
+        >
+          {emptyText}
+        </span>
       </div>
     );
   }

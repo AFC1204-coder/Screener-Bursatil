@@ -319,6 +319,14 @@ export function useChartController(props = {}) {
     info: notice && notice.kind === "info" ? notice : null,
     renderError: renderError || null,
   };
+  const emptyFallback = useMemo(() => ({
+    text: notice && notice.kind === "quality" ? notice.text
+      : notice && notice.kind === "loading" ? notice.text
+        : notice && notice.kind === "error" ? notice.text
+          : notice && notice.kind === "empty" ? notice.text
+            : userFacingSearchError("Historico insuficiente"),
+    title: notice && notice.kind === "quality" ? notice.title : "",
+  }), [notice]);
   const viewModel = useMemo(() => ({
     status,
     header: {
@@ -352,8 +360,9 @@ export function useChartController(props = {}) {
         : null,
     },
     notes,
+    emptyFallback,
     rootClassName: className,
-  }), [status, symbol, latest, change, positive, rangeLabel, config.interval, config.indicators.rsLine, intraday, rsLineState, patternSummary, viewportRail, patternDiagnostic, notes, className]);
+  }), [status, symbol, latest, change, positive, rangeLabel, config.interval, config.indicators.rsLine, intraday, rsLineState, patternSummary, viewportRail, patternDiagnostic, notes, emptyFallback, className]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // actions — closures estables de la instancia única del viewport.
@@ -372,14 +381,7 @@ export function useChartController(props = {}) {
     viewModel,
     actions,
     drawingToolbar: drawings.toolbarProps,
-    emptyFallback: {
-      text: notice && notice.kind === "quality" ? notice.text
-        : notice && notice.kind === "loading" ? notice.text
-          : notice && notice.kind === "error" ? notice.text
-            : notice && notice.kind === "empty" ? notice.text
-              : userFacingSearchError("Historico insuficiente"),
-      title: notice && notice.kind === "quality" ? notice.title : "",
-    },
+    emptyFallback,
   };
 }
 

@@ -126,7 +126,7 @@ describe("UniversalPriceChartView · render estático de los 4 estados (ADR §9.
     expect(html).not.toContain("universalChartScopeBadge");
   });
 
-  it("estado 'empty' (sin bars) renderiza el fallback vacío", () => {
+  it("estado 'empty' (sin bars) renderiza emptyFallback, no el literal fijo", () => {
     /* UPC ya importado */
     const html = renderToStaticMarkup(
       React.createElement(UniversalPriceChart, {
@@ -136,6 +136,10 @@ describe("UniversalPriceChartView · render estático de los 4 estados (ADR §9.
       })
     );
     expect(html).toContain("universalChart empty");
+    // Con símbolo y sin barras locales el data model pide remoto: el vacío
+    // muestra carga (no el literal «Sin dato» que era el fallo B2).
+    expect(html).toContain("Cargando histórico...");
+    expect(html).not.toMatch(/>Sin dato</);
   });
 
   it("estado 'blocked' (localQuality.status='estimated') renderiza el fallback vacío", () => {
@@ -150,6 +154,65 @@ describe("UniversalPriceChartView · render estático de los 4 estados (ADR §9.
     );
     // El guard P0 del data model fuerza availability: 'blocked' → [] → empty.
     expect(html).toContain("universalChart empty");
+    expect(html).toContain("Datos estimados");
+    expect(html).not.toMatch(/>Sin dato</);
+  });
+});
+
+describe("UniversalPriceChartView · emptyFallback (regresión B2)", () => {
+  function renderEmptyState(emptyFallback, status = "empty") {
+    const fakeRef = { current: null };
+    const viewModel = {
+      status,
+      header: { symbol: "TEST", latestClose: null, changePct: null, positive: true, rangeLabel: "1A", interval: "D" },
+      badges: { rsMainScore: null, pattern: null },
+      viewportRail: { mode: "Último dato", window: "Sin ventana", bars: null, distance: null, drawing: null, manual: false, key: "unknown" },
+      patternDiagnostic: null,
+      rsLegend: { enabled: false, intradayMuted: false },
+      notes: { quality: null, expanding: null, expansionFailed: null, renderError: null },
+      emptyFallback,
+      rootClassName: "",
+    };
+  return renderToStaticMarkup(
+      React.createElement(UPCView, {
+        canvasRef: fakeRef,
+        viewModel,
+        actions: {
+          zoom: () => {}, pan: () => {}, reset: () => {}, scrollToLatest: () => {},
+          toggleDrawing: () => {}, removeSelectedDrawing: () => {},
+        },
+        drawingToolbar: { toolActive: false, hasSelection: false, modeLabel: null },
+      })
+    );
+  }
+
+  it("muestra texto de carga, no el literal «Sin dato»", () => {
+    const html = renderEmptyState({ text: "Cargando histórico...", title: "" });
+    expect(html).toContain("Cargando histórico...");
+    expect(html).not.toMatch(/>Sin dato</);
+  });
+
+  it("muestra mensaje de error user-facing del proveedor", () => {
+    const html = renderEmptyState({
+      text: "Proveedor de gráfico no disponible: timeout de red",
+      title: "",
+    });
+    expect(html).toContain("Proveedor de gráfico no disponible");
+    expect(html).not.toMatch(/>Sin dato</);
+  });
+
+  it("muestra motivo de histórico insuficiente cuando emptyFallback lo trae", () => {
+    const html = renderEmptyState({
+      text: "Histórico no disponible para este símbolo.",
+      title: "",
+    });
+    expect(html).toContain("Histórico no disponible para este símbolo.");
+    expect(html).not.toMatch(/>Sin dato</);
+  });
+
+  it("usa «Sin dato» solo cuando emptyFallback no tiene texto", () => {
+    const html = renderEmptyState({ text: "", title: "" });
+    expect(html).toContain("Sin dato");
   });
 });
 
@@ -187,6 +250,7 @@ describe("useChartController · viewModel composicional (ADR §5.2)", () => {
       patternDiagnostic: null,
       rsLegend: { enabled: true, intradayMuted: false },
       notes: { quality: null, expanding: null, expansionFailed: null, renderError: null },
+      emptyFallback: { text: "", title: "" },
       rootClassName: "x",
     };
     const actions = {
