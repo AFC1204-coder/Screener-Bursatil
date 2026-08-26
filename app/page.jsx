@@ -61,6 +61,7 @@ import {
   inactiveFieldReason,
   inactiveSettingReason,
   isFieldRuleActive,
+  layerToggleImpact,
   restoreFilterLayers,
   settingApplies,
   settingLayerDependency,
@@ -1160,7 +1161,13 @@ export default function Page() {
     }
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
-  const toggleFilterLayer = (key) => setFilterLayers((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleFilterLayer = (key) => {
+    if (filterLayers[key] !== false) {
+      const impact = layerToggleImpact({ settings, filterLayers, fieldRules, layerKey: key, nextOn: false });
+      if (impact.warnings.length && !window.confirm(`${impact.warnings.join("\n\n")}\n\n¿Apagar igualmente?`)) return;
+    }
+    setFilterLayers((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
   const toggleLayeredSetting = (key) => {
     const dependency = settingLayerDependency(key);
     if (dependency && filterLayers[dependency.layer] === false) {

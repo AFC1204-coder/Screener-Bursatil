@@ -13,6 +13,7 @@ import {
 import {
   FILTER_LAYERS_CONTRACT_VERSION,
   effectiveSettingsFromLayers,
+  layerToggleImpact,
   restoreFilterLayers,
 } from "@/lib/screenerFilterLayers";
 import { applyScreenerFilters, screenerFiltersFromParams } from "@/lib/screenerFilters";
@@ -217,6 +218,75 @@ describe("restoreFilterLayers · configuración guardada en el navegador", () =>
     for (const regla of REGLAS_SOLO_NOCTURNAS) {
       expect(pantalla[regla]).toBe(ajustesDelCron("balanced")[regla]);
     }
+  });
+});
+
+describe("layerToggleImpact · aviso al apagar capas", () => {
+  it("preset Deterioro + apagar Scores avisa que el modo pasa a Exploratorio", () => {
+    const settings = settingsForPreset("weakness");
+    const filterLayers = filterLayersForPreset("weakness");
+    const impact = layerToggleImpact({
+      settings,
+      filterLayers,
+      fieldRules: DEFAULT_FIELD_RULES,
+      layerKey: "score",
+      nextOn: false,
+    });
+    expect(impact.willChangeSetupMode).toBe(true);
+    expect(impact.fromMode).toBe("weakness");
+    expect(impact.toMode).toBe("any");
+    expect(impact.warnings[0]).toContain("Apagar Scores quita el modo Deterioro técnico");
+    expect(impact.warnings[0]).toContain("Exploratorio");
+  });
+
+  it("apagar Tendencia con modo Líder avisa degradación a Exploratorio", () => {
+    const settings = { ...settingsForPreset("balanced"), setupMode: "leader" };
+    const impact = layerToggleImpact({
+      settings,
+      filterLayers: DEFAULT_FILTER_LAYERS,
+      fieldRules: DEFAULT_FIELD_RULES,
+      layerKey: "trend",
+      nextOn: false,
+    });
+    expect(impact.willChangeSetupMode).toBe(true);
+    expect(impact.fromMode).toBe("leader");
+    expect(impact.toMode).toBe("any");
+    expect(impact.warnings[0]).toContain("Apagar Tendencia quita el modo Líder etapa 2");
+  });
+
+  it("encender una capa no genera avisos", () => {
+    const impact = layerToggleImpact({
+      settings: settingsForPreset("balanced"),
+      filterLayers: { ...DEFAULT_FILTER_LAYERS, trend: false },
+      fieldRules: DEFAULT_FIELD_RULES,
+      layerKey: "trend",
+      nextOn: true,
+    });
+    expect(impact.warnings).toEqual([]);
+    expect(impact.willChangeSetupMode).toBe(false);
+  });
+
+  it("apagar Liquidez con minVolumeScore activo avisa la regla de doble capa", () => {
+    const impact = layerToggleImpact({
+      settings: settingsForPreset("balanced"),
+      filterLayers: DEFAULT_FILTER_LAYERS,
+      fieldRules: DEFAULT_FIELD_RULES,
+      layerKey: "liquidity",
+      nextOn: false,
+    });
+    expect(impact.warnings.some((line) => line.includes("Volume score min"))).toBe(true);
+    expect(impact.warnings.some((line) => line.includes("Scores y Liquidez"))).toBe(true);
+  });
+
+  it("si la capa ya estaba apagada no recalcula avisos", () => {
+    const impact = layerToggleImpact({
+      settings: settingsForPreset("weakness"),
+      filterLayers: { ...DEFAULT_FILTER_LAYERS, score: false },
+      fieldRules: DEFAULT_FIELD_RULES,
+      layerKey: "score",
+      nextOn: false,
+    });
+    expect(impact.warnings).toEqual([]);
   });
 });
 

@@ -5,7 +5,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-26 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: ninguno. Siguiente sugerido: **P5** (aviso capas) o uso real 15–20 min antes de más tickets.
+Ticket en curso: ninguno. Siguiente: **uso real** 15–20 min antes de más tickets.
 
 ## Hecho (esta oleada)
 
@@ -18,12 +18,11 @@ Ticket en curso: ninguno. Siguiente sugerido: **P5** (aviso capas) o uso real 15
 | P4 | «Traer datos frescos» vs «Resetear criterios» | `5cc8c6c` |
 | P3 | Gesto de filtro &lt;200 ms (fast-path / no sectorize / sort / debounce) | `3558ad5` |
 | RS smoke | RS canónico en tabla, vista rápida y `/review` (Browser Use 2026-08-26) | (código previo `1f20345` / guards tests) |
+| P5 | Aviso al apagar capas que degradan `setupMode` / reglas doble capa | _(este commit)_ |
 
 ## Siguiente (orden sugerido)
 
-| ID | Qué | Notas | Modelo sugerido |
-|---|---|---|---|
-| P5 | Capas: avisar si apagar una degrada `setupMode` / otras reglas | Solo si usas el panel avanzado | Composer |
+_(vacío — oleada P1–P6 + P5 cerrada; siguiente ítem tras uso real)_
 
 ## Aplazado / no oleada UI
 
