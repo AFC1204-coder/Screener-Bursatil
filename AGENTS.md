@@ -34,6 +34,13 @@ múltiples casos de bugs de runtime invisibles a Vitest (loops
 infinitos, APIs inválidas de librerías, builds cacheados) que solo
 aparecieron con verificación real.
 
+En Cursor esa verificación la hace el **agente** (orquestador o
+programación bajo su gate), preferiblemente en instancia aislada
+(`:3300` / scratchpad; ver memoria Claude
+`verificacion-navegador-aislada`). No bloquear al dueño para un smoke
+de UI. Detalle del ciclo de tickets, commits y backlog:
+`.cursor/rules/orquestacion-statsedge.mdc` y `docs/backlog-activo.md`.
+
 ## Política de commits
 
 - Cambios estructurales/alto riesgo: verificar y comitear uno por uno.

@@ -1,0 +1,22 @@
+---
+description: Consultar el historial local de Claude Code (memory + transcripts) cuando haga falta contexto de sesiones previas.
+alwaysApply: true
+---
+
+# Historial Claude Code de este repo
+
+No reexpliques el proyecto desde cero si la pregunta o la tarea depende de una decisión, análisis o WIP de sesiones anteriores de Claude Code. Ese historial está en disco en esta máquina; no hace falta importar chats a Cursor.
+
+Ruta:
+
+`~/.claude/projects/-Users-alejandrofrutos1204-Documents-Codex-2026-05-13-estoy-desarrollando-un-screener-investment-research-Statsedge-v0-1/`
+
+Orden de consulta:
+
+1. `memory/MEMORY.md` — índice de decisiones y análisis.
+2. El `memory/*.md` concreto del tema.
+3. Solo si el markdown no basta: `rg` sobre `*.jsonl` (mensajes `type:user` / `type:assistant`). No leas un JSONL entero.
+
+El índice `MEMORY.md` no sustituye al filesystem/git: un bullet puede estar desfasado respecto a HEAD o a cambios sin commit. Verifica contra el repo antes de actuar.
+
+No copies transcripts al repositorio. No uses este historial para inventar archivos o APIs que no existan hoy en el código.
