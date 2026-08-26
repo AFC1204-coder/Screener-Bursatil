@@ -10,7 +10,9 @@ import { MobileResultRow } from "@/lib/screenerMobile";
 import {
   PERFORMANCE_PERIODS,
   SCREENER_COLUMNS,
+  screenerShowsWeaknessColumn,
   screenerSortOptions,
+  screenerVisibleColumns,
   stageWord,
 } from "@/lib/screenerColumns";
 import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
@@ -45,6 +47,7 @@ const fullRow = {
   rsQualityScore: 78,
   rsSectorPct: 71,
   weaknessScore: 12,
+  weaknessLabel: "Sin deterioro claro",
   sma50: 76.4,
   objectiveScore: 88,
 };
@@ -74,6 +77,8 @@ function renderTable(props = {}) {
     onOpenStock: () => {},
     perfPeriod: DEFAULT_PERFORMANCE_PERIOD,
     onPerfPeriod: () => {},
+    sort: "",
+    setupMode: "",
     ...props,
   }));
 }
@@ -216,6 +221,30 @@ describe("selector global de periodo", () => {
   });
 });
 
+describe("columna Deterioro (modo weakness / orden weaknessScore)", () => {
+  it("muestra la columna cuando el modo es weakness o el orden es weaknessScore", () => {
+    expect(screenerShowsWeaknessColumn({ setupMode: "weakness" })).toBe(true);
+    expect(screenerShowsWeaknessColumn({ sort: "weaknessScore" })).toBe(true);
+    expect(screenerShowsWeaknessColumn({})).toBe(false);
+    expect(screenerVisibleColumns({ setupMode: "weakness" }).map((c) => c.key))
+      .toEqual(["ticker", "theme", "rs", "stage", "weakness", "performance", "distance52w", "marketCap"]);
+  });
+
+  it("pinta cabecera y valor de deterioro en escritorio", () => {
+    const html = renderTable({ setupMode: "weakness", sort: "weaknessScore" });
+    expect(html.match(/<th /g)).toHaveLength(8);
+    expect(html.match(/<td /g)).toHaveLength(8);
+    expect(html).toContain(">Deterioro<");
+    expect(html).toContain(">12</b>");
+    expect(html).toContain("Sin deterioro claro");
+  });
+
+  it("incluye weaknessScore en opciones de orden cuando la columna es visible", () => {
+    const values = screenerSortOptions({ setupMode: "weakness", sort: "weaknessScore" }).map((item) => item.value);
+    expect(values).toContain("weaknessScore");
+  });
+});
+
 describe("etapa de Weinstein en una palabra", () => {
   it("traduce cada estado semanal", () => {
     expect(stageWord({ weeklyStageState: "stage2" }).word).toBe("Etapa 2");
@@ -233,10 +262,12 @@ describe("etapa de Weinstein en una palabra", () => {
 });
 
 describe("vista móvil", () => {
-  function renderMobile(row = fullRow, perfPeriod = DEFAULT_PERFORMANCE_PERIOD) {
+  function renderMobile(row = fullRow, perfPeriod = DEFAULT_PERFORMANCE_PERIOD, options = {}) {
     return renderToStaticMarkup(React.createElement(MobileResultRow, {
       row,
       perfPeriod,
+      sort: options.sort || "",
+      setupMode: options.setupMode || "",
       onReview: () => {},
       onFavorite: () => {},
       onOpenStock: () => {},
@@ -261,6 +292,13 @@ describe("vista móvil", () => {
   it("sigue al mismo selector global de periodo", () => {
     expect(renderMobile(fullRow, "perf12m")).toContain("+51,9%");
     expect(renderMobile(fullRow, "perf12m")).toContain("Rend. 12M");
+  });
+
+  it("muestra deterioro en móvil cuando el modo es weakness", () => {
+    const html = renderMobile(fullRow, DEFAULT_PERFORMANCE_PERIOD, { setupMode: "weakness" });
+    expect(html).toContain(">Deterioro<");
+    expect(html).toContain(">12</b>");
+    expect(html.match(/class="mobileResultField/g)).toHaveLength(7);
   });
 
   it("muestra las ausencias igual que escritorio", () => {

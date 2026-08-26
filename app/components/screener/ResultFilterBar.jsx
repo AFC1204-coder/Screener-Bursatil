@@ -19,6 +19,7 @@ export default function ResultFilterBar({
   sort,
   onSort,
   perfPeriod,
+  setupMode = "",
   // View-layer selects
   viewLayers,
   viewFiltersActive,
@@ -53,7 +54,7 @@ export default function ResultFilterBar({
   onClearAll,
   onReview,
 }) {
-  const sortOptions = screenerSortOptions({ perfPeriod });
+  const sortOptions = screenerSortOptions({ perfPeriod, sort, setupMode });
   const legacySort = sort && !sortOptions.some((item) => item.value === sort)
     ? { value: sort, label: SORT_LABELS[sort] || sort }
     : null;

@@ -29,6 +29,7 @@ import { STAGE_LEGACY_REASON, STAGE_MISSING_REASON, stageConfirmationMark, stage
 import { CompanyMark, MiniSparkline } from "@/lib/screenerAtoms";
 import { PERFORMANCE_PERIODS, normalizePerformancePeriod, performancePeriod } from "@/lib/screenerPeriods";
 import { countryName, marketFlag, stockUrl } from "@/lib/symbols";
+import { weaknessScore } from "@/lib/stockRows";
 
 // ── Periodos de rendimiento ────────────────────────────────────────────────
 // Sustituyen a las tres columnas fijas 3M/6M/12M por UNA columna con selector
@@ -255,6 +256,45 @@ export const SCREENER_COLUMNS = [
   },
 ];
 
+// Columna contextual: solo cuando el preset/modo weakness o el orden activo
+// usan weaknessScore. Evita ordenar por un número invisible (P6e).
+const WEAKNESS_SCORE_COLUMN = {
+  key: "weakness",
+  label: () => "Deterioro",
+  legend: "Evidencia técnica de debilidad o distribución. De 0 a 100; más alto significa más deterioro.",
+  align: "right",
+  className: "colWeakness",
+  sortKey: () => "weaknessScore",
+  cell: (row) => {
+    const value = weaknessScore(row);
+    const label = String(row.weaknessLabel || "").trim();
+    if (!Number.isFinite(value)) {
+      return <MissingValue reason="Sin señales suficientes para estimar el deterioro técnico de este valor." />;
+    }
+    return <span className="weaknessCell">
+      <b className={`cellNumber ${value >= 65 ? "weak" : ""}`.trim()} title={label || undefined}>{value.toFixed(0)}</b>
+      {label ? <small className="weaknessLabel">{label}</small> : null}
+    </span>;
+  },
+};
+
+export function screenerShowsWeaknessColumn(ctx = {}) {
+  if (ctx.setupMode === "weakness") return true;
+  if (ctx.sort === "weaknessScore") return true;
+  return false;
+}
+
+export function screenerVisibleColumns(ctx = {}) {
+  if (!screenerShowsWeaknessColumn(ctx)) return SCREENER_COLUMNS;
+  const stageIndex = SCREENER_COLUMNS.findIndex((column) => column.key === "stage");
+  if (stageIndex < 0) return [...SCREENER_COLUMNS, WEAKNESS_SCORE_COLUMN];
+  return [
+    ...SCREENER_COLUMNS.slice(0, stageIndex + 1),
+    WEAKNESS_SCORE_COLUMN,
+    ...SCREENER_COLUMNS.slice(stageIndex + 1),
+  ];
+}
+
 export function screenerColumnLabel(column, ctx = {}) {
   return typeof column.label === "function" ? column.label(ctx) : column.label;
 }
@@ -268,7 +308,7 @@ export function screenerColumnSortKey(column, ctx = {}) {
 // posible desde estos controles (principio 1: la ordenación debe ser elegible y
 // su criterio, explícito).
 export function screenerSortOptions(ctx = {}) {
-  return SCREENER_COLUMNS
+  return screenerVisibleColumns(ctx)
     .map((column) => ({ column, value: screenerColumnSortKey(column, ctx) }))
     .filter((item) => Boolean(item.value))
     .map(({ column, value }) => ({

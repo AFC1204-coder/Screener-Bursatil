@@ -496,6 +496,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             sort={sort}
             onSort={setSort}
             perfPeriod={perfPeriod}
+            setupMode={activeSettings.setupMode}
             onPerfPeriod={setPerfPeriod}
             onReview={(symbol) => openReview(resultsFiltered, symbol)}
             onFavorite={addFavorite}
@@ -553,6 +554,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             sort={sort}
             onSort={setSort}
             perfPeriod={perfPeriod}
+            setupMode={activeSettings.setupMode}
             viewLayers={viewLayers}
             viewFiltersActive={viewFiltersActive}
             countryFilter={countryFilter}
@@ -603,6 +605,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onSelectRow={onSelectResultRow}
             perfPeriod={perfPeriod}
             onPerfPeriod={setPerfPeriod}
+            sort={sort}
+            setupMode={activeSettings.setupMode}
             emptyLabel={resultsEmptyLabel}
           />
         </section>

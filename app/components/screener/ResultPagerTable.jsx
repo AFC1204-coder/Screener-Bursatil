@@ -29,6 +29,8 @@ export default function ResultPagerTable({
   onSelectRow,
   perfPeriod,
   onPerfPeriod,
+  sort = "",
+  setupMode = "",
   emptyLabel,
 }) {
   // El pie ocupaba una franja entera para repetir un dato que ya está en la
@@ -61,6 +63,8 @@ export default function ResultPagerTable({
         onSelectRow={onSelectRow}
         perfPeriod={perfPeriod}
         onPerfPeriod={onPerfPeriod}
+        sort={sort}
+        setupMode={setupMode}
         emptyLabel={emptyLabel}
       />
     </>

@@ -14,8 +14,8 @@
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import {
   PerformancePeriodPicker,
-  SCREENER_COLUMNS,
   screenerColumnLabel,
+  screenerVisibleColumns,
 } from "@/lib/screenerColumns";
 import { countryName, marketFlag } from "@/lib/symbols";
 
@@ -42,8 +42,11 @@ export function CompactResultsTable({
   emptyLabel = "Sin datos cargados todavía.",
   perfPeriod,
   onPerfPeriod,
+  sort = "",
+  setupMode = "",
 }) {
-  const ctx = { perfPeriod, favoriteSymbols, onFavorite, onOpenStock };
+  const ctx = { perfPeriod, favoriteSymbols, onFavorite, onOpenStock, sort, setupMode };
+  const columns = screenerVisibleColumns(ctx);
   return <div className="resultsTableBlock">
     <div className="resultsTableControls">
       <PerformancePeriodPicker value={perfPeriod} onChange={onPerfPeriod} />
@@ -52,7 +55,7 @@ export function CompactResultsTable({
       <table className="table compactResultsTable">
         <thead>
           <tr>
-            {SCREENER_COLUMNS.map((column) => (
+            {columns.map((column) => (
               <th key={column.key} className={column.className} data-align={column.align}>
                 <span className="columnHead">
                   {screenerColumnLabel(column, ctx)}
@@ -75,14 +78,14 @@ export function CompactResultsTable({
                 onReview?.(row.symbol);
               }}
             >
-              {SCREENER_COLUMNS.map((column) => (
+              {columns.map((column) => (
                 <td key={column.key} className={column.className} data-align={column.align}>
                   {column.cell(row, ctx)}
                 </td>
               ))}
             </tr>
           ))}
-          {!rows.length && <tr><td colSpan={SCREENER_COLUMNS.length} className="emptyResultsCell">{emptyLabel}</td></tr>}
+          {!rows.length && <tr><td colSpan={columns.length} className="emptyResultsCell">{emptyLabel}</td></tr>}
         </tbody>
       </table>
     </div>

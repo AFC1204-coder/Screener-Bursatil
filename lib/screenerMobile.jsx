@@ -9,9 +9,9 @@ import { DEFAULT_RESULT_PAGE_SIZE, RESULT_PAGE_SIZES, SORT_LABELS } from "@/lib/
 import { money } from "@/lib/screenerFormat";
 import {
   PerformancePeriodPicker,
-  SCREENER_COLUMNS,
   screenerColumnLabel,
   screenerSortOptions,
+  screenerVisibleColumns,
 } from "@/lib/screenerColumns";
 import { CompanyMark, MiniSparkline, ResultsDisclosureGroup } from "@/lib/screenerAtoms";
 
@@ -43,14 +43,16 @@ export function MobileTopMovers({ rows = [], onSelect }) {
 // (lib/screenerColumns.jsx): la primera —ticker con miniatura— hace de cabecera
 // de la tarjeta y las otras seis se pintan como pares etiqueta/valor. Dejarla
 // con quince datos mientras escritorio tiene siete sería peor que no tocar nada.
-export function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenStock, perfPeriod }) {
-  const [identityColumn, ...dataColumns] = SCREENER_COLUMNS;
+export function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenStock, perfPeriod, sort = "", setupMode = "" }) {
   const ctx = {
     perfPeriod,
     favoriteSymbols: isFavorite ? new Set([row.symbol]) : new Set(),
     onFavorite,
     onOpenStock,
+    sort,
+    setupMode,
   };
+  const [identityColumn, ...dataColumns] = screenerVisibleColumns(ctx);
   return <article className="mobileResultRow" onClick={(event) => { if (!event.target.closest("button, a")) onReview?.(row.symbol); }}>
     <div className="mobileResultHead">
       {identityColumn.cell(row, ctx)}
@@ -75,11 +77,13 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
   const end = totalRows ? Math.min(page * pageSize, totalRows) : 0;
   const hasRows = totalRows > 0;
   const mobileFiltersActive = decisionResolutionFilter !== "all" ? 1 : 0;
+  const setupMode = settings?.setupMode || "";
+  const sortCtx = { perfPeriod, sort, setupMode };
   // El orden móvil solo ofrece las columnas que la tabla muestra. Si la sesión
   // guardada traía un criterio antiguo (score compuesto, deterioro...), se
   // mantiene visible como opción para no cambiar el orden a espaldas del
   // usuario, pero ya no se puede elegir de nuevo.
-  const sortOptions = screenerSortOptions({ perfPeriod });
+  const sortOptions = screenerSortOptions(sortCtx);
   const legacySort = sort && !sortOptions.some((item) => item.value === sort)
     ? { value: sort, label: SORT_LABELS[sort] || sort }
     : null;
@@ -123,7 +127,7 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
       <button type="button" onClick={() => onPage?.(page + 1)} disabled={page >= totalPages} aria-label="Página siguiente">›</button>
     </div> : null}
     <div className="mobileRows">
-      {rows.length ? rows.map((row) => <MobileResultRow key={row.symbol} row={row} perfPeriod={perfPeriod} onReview={onReview} onFavorite={onFavorite} onOpenStock={onOpenStock} isFavorite={favoriteSymbols?.has(row.symbol)} />) : <div className="mobileEmpty">{emptyLabel}</div>}
+      {rows.length ? rows.map((row) => <MobileResultRow key={row.symbol} row={row} perfPeriod={perfPeriod} sort={sort} setupMode={setupMode} onReview={onReview} onFavorite={onFavorite} onOpenStock={onOpenStock} isFavorite={favoriteSymbols?.has(row.symbol)} />) : <div className="mobileEmpty">{emptyLabel}</div>}
     </div>
   </section>;
 }
