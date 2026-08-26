@@ -18,7 +18,7 @@ Ticket en curso: ninguno. Siguiente: **uso real** 15–20 min antes de más tick
 | P4 | «Traer datos frescos» vs «Resetear criterios» | `5cc8c6c` |
 | P3 | Gesto de filtro &lt;200 ms (fast-path / no sectorize / sort / debounce) | `3558ad5` |
 | RS smoke | RS canónico en tabla, vista rápida y `/review` (Browser Use 2026-08-26) | (código previo `1f20345` / guards tests) |
-| P5 | Aviso al apagar capas que degradan `setupMode` / reglas doble capa | _(este commit)_ |
+| P5 | Aviso al apagar capas que degradan `setupMode` / reglas doble capa | `9ee5775` |
 
 ## Siguiente (orden sugerido)
 
