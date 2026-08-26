@@ -5,6 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-26 · rama `codex/statsedge-ui-polish`
 
+Ticket en curso: **P6e** → `docs/tickets/activo.md` (abrir en Agent chat **aparte**).
+
 ## Hecho (esta oleada)
 
 | ID | Qué | Commit |

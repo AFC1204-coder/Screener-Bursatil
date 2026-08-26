@@ -10,39 +10,46 @@ alwaysApply: true
 | Rol | Quién | Hace |
 |---|---|---|
 | Producto / QA de trading | Alejandro | Decide qué importa; valida con uso real |
-| Orquestador | Este chat (o el marcado como tal) | Backlog, prompts, verify vs git/tests, smoke visual, commit |
-| Programación | Otro chat / Task / worktree | Solo el ticket; sin commit ni push |
+| Orquestador | Este chat (marcado como tal) | Backlog, escribe ticket, verify, smoke, commit |
+| Programación | **Otro Agent chat** (nunca anidado aquí) | Solo el ticket; sin commit ni push |
 
-Backlog vivo: `docs/backlog-activo.md`. Historial Claude: regla `claude-code-history`. Gobernanza: `AGENTS.md`.
+Backlog: `docs/backlog-activo.md`. Ticket activo: `docs/tickets/activo.md`. Historial Claude: regla `claude-code-history`. Gobernanza: `AGENTS.md`.
+
+## Handoff (no saturar el orquestador)
+
+- El orquestador **no** ejecuta programación con Task/subagente en este hilo.
+- Escribe el prompt en `docs/tickets/activo.md` (y copia con id si conviene) y abre el archivo.
+- El dueño (o un Automation) abre un **Agent chat nuevo** con `@docs/tickets/activo.md` y Composer/modelo indicado.
+- Al terminar, el dueño pega aquí solo el **resumen de retorno** (o «listo» + link al chat). El orquestador verifica y comitea.
 
 ## Anti-colisión
 
 - Un solo agente escribe en el working tree principal a la vez.
-- Trabajo paralelo → **worktree** o cloud agent en rama propia, no el mismo checkout.
-- Al empezar: `git status`. Al cerrar: atribuir solo el diff del ticket.
+- Paralelo → worktree o cloud agent en rama propia.
+- Al empezar: `git status`. Al cerrar: solo el diff del ticket.
 
 ## Ciclo de ticket
 
-1. Orquestador elige el siguiente ítem del backlog y emite **prompt listo** (modelo + esfuerzo + alcance + fuera de alcance + verificación).
-2. Programación implementa y responde con la **plantilla de retorno**.
-3. Orquestador verifica contra filesystem/git (nunca solo el reporte): `git diff`, tests reales, `./vfc [patrones]` si aplica.
-4. Si toca layout/chart/JSX estructural → **smoke visual del agente** (abajo) antes de commit.
-5. Gates de commit → commit o rechazo explícito. Actualizar `docs/backlog-activo.md`.
+1. Orquestador elige ítem del backlog → escribe `docs/tickets/activo.md`.
+2. Programación en chat aparte → plantilla de retorno.
+3. Orquestador: `git diff`, tests, `./vfc` si aplica.
+4. Layout/chart → smoke visual del agente (abajo) antes de commit.
+5. Gates → commit o rechazo. Actualizar `docs/backlog-activo.md`.
 
 ## Plantilla de retorno (programación)
 
 ```
 ## Resumen
-(1–4 bullets de qué cambió y por qué)
+(1–4 bullets)
 
 ## Archivos
 (lista real)
 
 ## Tests
-(comando + resultado crudo)
+(comando + resultado)
 
 ## LO QUE NO VERIFIQUÉ
-(hard-reload, E2E, etc.)
+(…)
 
 Sin commit ni push.
 ```
@@ -51,21 +58,13 @@ Sin commit ni push.
 
 | Situación | Acción |
 |---|---|
-| Alcance OK + tests OK + (smoke OK si aplica) + sin secretos | **Commit** sin pedir permiso |
-| Scoring / nocturno / auth / datos / licencia | **No commit** hasta OK explícito del dueño |
-| Diff fuera de alcance o tests fallan | Rechazo; ticket de fix; no commit |
-| Layout/chart sin smoke visual del agente | No commit |
+| Alcance OK + tests OK + (smoke OK si aplica) | **Commit** |
+| Scoring / nocturno / auth / datos / licencia | **No commit** hasta OK del dueño |
+| Fuera de alcance o tests fallan | Rechazo; no commit |
+| Layout/chart sin smoke | No commit |
 
-Programación **nunca** hace commit/push.
+Programación **nunca** commit/push.
 
-## Smoke visual (agente, no el dueño)
+## Smoke visual (agente)
 
-Obligatorio antes de commit si el diff toca layout, chart, JSX de UI estructural o CSS de composición.
-
-1. Preferir instancia aislada (`:3300` / scratchpad): ver memoria Claude `verificacion-navegador-aislada.md`.
-2. Si el dueño ya tiene `next dev` y lo autoriza, usar ese origen.
-3. Hard-reload real; comprobar el gesto del ticket (no solo “la página carga”).
-4. Panel visible / viewport usable; no confiar en panel 0×0.
-5. Anotar evidencia breve en el veredicto (URL, qué se vio). Si el smoke falla → no commit.
-
-`./vfc` no sustituye el smoke visual.
+Si el diff toca layout/chart/JSX estructural/CSS de composición: hard-reload real (preferible `:3300` aislado; memoria `verificacion-navegador-aislada`). Panel usable. Anotar evidencia. Fallo → no commit. `./vfc` no sustituye el smoke.
