@@ -33,7 +33,7 @@ import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
 import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, fitScansForBrowser, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
-import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, localScanIsSampled, localSampleDetail, screenerSessionRefreshReason } from "@/lib/snapshotFreshness";
+import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, localScanIsSampled, localSampleDetail, manualDataRefreshStatus, screenerSessionRefreshReason, sessionAutoRefreshStatus } from "@/lib/snapshotFreshness";
 import { dropForeignMarketSnapshots, pickNightlyUsRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { nightlyAbsenceNotice, nightlyAbsenceReasonText, nightlyAbsenceStatus } from "@/lib/nightlyAbsence";
 import { screenerSessionDataExpired } from "@/lib/nightlyBoundary";
@@ -363,6 +363,7 @@ export default function Page() {
   // resultados mientras resolvía (evita que un snapshot viejo pise resultados
   // ya restaurados por otra vía).
   const resultsOwnerRef = useRef("none");
+  const manualRefreshGenRef = useRef(0);
   function restoreSnapshot(scan, { source = "local", notice = null } = {}) {
     if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) return false;
     resultsOwnerRef.current = source;
@@ -533,27 +534,41 @@ export default function Page() {
   // restaura también preset/capas/orden del escaneo, y pisaría la
   // configuración que la sesión existe para conservar — está bien para
   // "Reset sesión", que promete exactamente eso, no aquí.
-  function refreshSessionSnapshotData({ isCancelled = () => false, scanSignature = null, sampledScan = null } = {}) {
+  function refreshSessionSnapshotData({ isCancelled = () => false, scanSignature = null, sampledScan = null, manual = false } = {}) {
+    const refreshStillApplies = () => {
+      if (isCancelled()) return false;
+      if (manual) return true;
+      return resultsOwnerRef.current === "session";
+    };
     setRestoringScan(true);
     const sampled = localScanIsSampled(sampledScan);
-    setStatus(sampled
-      ? "Sesión restaurada. Cargando el universo completo del escaneo nocturno..."
-      : "Sesión restaurada. Actualizando al último escaneo nocturno...");
+    setStatus(manual
+      ? manualDataRefreshStatus({ sampled })
+      : sessionAutoRefreshStatus({ sampled }));
     if (sampled) setSnapshotNotice(buildSessionKeepNotice({ scan: sampledScan }));
     // Si la renovación no puede completarse, la sesión se queda como estaba
     // (datos viejos o muestra local, con su fecha real visible) y se dice:
     // nunca se vacía la tabla ni se sustituye por otro escaneo que "valga".
     const keepSessionData = (reason = "") => {
-      if (isCancelled() || resultsOwnerRef.current !== "session") return;
+      if (!refreshStillApplies()) return;
+      if (manual && resultsOwnerRef.current === "none") {
+        setSnapshotNotice(buildSessionKeepNotice({ reason, scan: sampledScan }));
+        setStatus(reason || "No se pudo cargar el escaneo nocturno.");
+        return;
+      }
+      if (!manual && resultsOwnerRef.current !== "session") return;
       setSnapshotNotice(buildSessionKeepNotice({ reason, scan: sampledScan }));
       setStatus(sampled
         ? `No se pudo actualizar el escaneo nocturno; se muestran ${sampledScan.rows.length} de ${sampledScan.rowsAvailable} acciones (muestra repartida).`
-        : "No se pudo actualizar el escaneo nocturno; se muestran los datos guardados de la sesión.");
+        : manual
+          ? "No se pudo actualizar el escaneo nocturno; se muestran los datos cargados."
+          : "No se pudo actualizar el escaneo nocturno; se muestran los datos guardados de la sesión.");
     };
     getLatestScanFromCloud().then((result) => {
       // Si mientras resolvía el fetch los resultados cambiaron de dueño (un
-      // reset, un scan), esta renovación ya no aplica.
-      if (isCancelled() || resultsOwnerRef.current !== "session") return;
+      // reset, un scan), esta renovación ya no aplica — salvo refresh manual
+      // explícito (P4), que sigue hasta que el usuario lo cancele.
+      if (!refreshStillApplies()) return;
       if (!result.ok || result.configured === false) {
         if (result.message) console.error("[snapshot] renovación de sesión: la nube no está disponible:", result.message);
         keepSessionData(userFacingServiceError(result.message, "La copia guardada en la nube no está disponible."));
@@ -575,10 +590,12 @@ export default function Page() {
       });
     }).catch((error) => {
       console.error("[snapshot] renovación de sesión: fallo al leer la nube:", error);
-      if (isCancelled()) return;
+      if (!refreshStillApplies()) return;
       keepSessionData(userFacingServiceError(error?.message, "La copia guardada en la nube no está disponible."));
     }).finally(() => {
-      if (!isCancelled()) setRestoringScan(false);
+      if (isCancelled()) return;
+      if (!manual && resultsOwnerRef.current === "none") return;
+      setRestoringScan(false);
     });
   }
   // El complemento de restoreSnapshot: datos nuevos, criterios intactos.
@@ -1025,6 +1042,7 @@ export default function Page() {
     setStatus(label);
   }
   function resetScreenerSession() {
+    manualRefreshGenRef.current += 1;
     safeRemove(STORAGE_KEYS.screenerSession);
     resultsOwnerRef.current = "none";
     const nextSettings = settingsForPreset("balanced");
@@ -1075,8 +1093,23 @@ export default function Page() {
     setSnapshotNotice(null);
     // Sin botón Ejecutar, un reset que dejara la tabla vacía sería un camino
     // sin salida: se recargan los datos de anoche inmediatamente.
-    setStatus("Sesión reiniciada. Recargando el escaneo nocturno...");
+    setStatus("Criterios reiniciados. Recargando el escaneo nocturno...");
     restoreLatestSnapshot();
+  }
+  function refreshScreenerSnapshotData() {
+    if (restoringScan) return;
+    const storedScans = safeRead(STORAGE_KEYS.scans, []);
+    const referencedScan = scanContext?.id
+      ? (Array.isArray(storedScans) ? storedScans : []).find((scan) => scan?.id === scanContext.id)
+      : null;
+    const sampledScan = localScanIsSampled(referencedScan) ? referencedScan : null;
+    const gen = ++manualRefreshGenRef.current;
+    refreshSessionSnapshotData({
+      manual: true,
+      isCancelled: () => manualRefreshGenRef.current !== gen,
+      sampledScan,
+      scanSignature: { markets, manual, scanMode },
+    });
   }
   function applySetupMode(mode) {
     const defaults = setupModeDefaults(mode);
@@ -1922,6 +1955,7 @@ export default function Page() {
       err,
       status,
       snapshotNotice,
+      restoringScan,
       showMobileFilters,
       sidebarCollapsed,
       setShowMobileFilters,
@@ -2019,6 +2053,7 @@ export default function Page() {
       csv,
       decisionAuditJson,
       resetScreenerSession,
+      refreshScreenerSnapshotData,
       saveSessionBeforeStockOpen,
       selectedResultSymbol,
       onSelectResultRow,

@@ -65,6 +65,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     err,
     status,
     snapshotNotice,
+    restoringScan,
     showMobileFilters,
     sidebarCollapsed,
     setShowMobileFilters,
@@ -218,6 +219,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     csv,
     decisionAuditJson,
     resetScreenerSession,
+    refreshScreenerSnapshotData,
     addFavorite: actionsAddFavorite,
     saveSessionBeforeStockOpen: actionsSaveSessionBeforeStockOpen,
     selectedResultSymbol,
@@ -536,7 +538,22 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
                   Ejecutar, este es el único camino de vuelta a un estado bueno;
                   esconderlo justo cuando no hay resultados —que es cuando hace
                   falta— dejaba la sesión sin salida. */}
-              <button className="btn btnSmall btnGhost" onClick={resetScreenerSession}>Reset sesión</button>
+              <button
+                className="btn btnSmall btnGhost"
+                onClick={refreshScreenerSnapshotData}
+                disabled={restoringScan}
+                title="Trae el último escaneo nocturno sin cambiar tus filtros ni plantilla"
+              >
+                {restoringScan ? "Actualizando…" : "Traer datos frescos"}
+              </button>
+              <button
+                className="btn btnSmall btnGhost"
+                onClick={resetScreenerSession}
+                disabled={restoringScan}
+                title="Borra criterios y vuelve al preset equilibrado con datos nuevos"
+              >
+                Resetear criterios
+              </button>
               {resultsFiltered.length ? <>
                 <button className="btn btnSmall btnGhost" onClick={() => csv(resultsFiltered)}>↓ CSV</button>
                 <button className="btn btnSmall btnGhost" onClick={() => decisionAuditJson(resultsFiltered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>

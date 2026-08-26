@@ -1,7 +1,5 @@
 # Ticket activo
 
-Ninguno. Último cerrado: **P6e** (`1572e80`).
+Ninguno. Último cerrado: **P4** (Traer datos frescos / Resetear criterios).
 
-Siguiente sugerido: **P4** — separar «traer datos frescos» de «resetear criterios».
-
-Cuando el orquestador prepare el siguiente, sustituye este archivo.
+Siguiente: decidir **P3** (rendimiento del gesto) vs **P5** (aviso de capas) tras uso real.

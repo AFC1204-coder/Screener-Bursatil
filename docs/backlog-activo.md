@@ -5,7 +5,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-26 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: ninguno. Siguiente sugerido: **P4**.
+Ticket en curso: ninguno. Siguiente sugerido: **P5** o **P3** (decidir tras uso real).
 
 ## Hecho (esta oleada)
 
@@ -19,14 +19,14 @@ Ticket en curso: ninguno. Siguiente sugerido: **P4**.
 | P6c | Enter → ficha (fila seleccionada) | `cd20747` |
 | P6d | Cajón «Más filtros» `grid-column: 1 / -1` | `cd20747` |
 | P6e | Columna Deterioro cuando sort/modo weakness | `1572e80` |
+| P4 | «Traer datos frescos» vs «Resetear criterios» | (este commit) |
 
 ## Siguiente (orden sugerido)
 
 | ID | Qué | Notas | Modelo sugerido |
 |---|---|---|---|
-| P4 | Separar «traer datos frescos» (conserva criterios) de «resetear criterios» | P1 ya refresca; el botón Reset sigue siendo nuclear | Composer / medio |
-| P5 | Capas: avisar si apagar una degrada `setupMode` / otras reglas | C11 medido en análisis | Composer / medio |
-| P3 | Rendimiento del gesto (<200 ms): fast-path `screenPassed`, memo por orden, debounce save | Más delicado; medir antes/después | Grok o Composer / alto; smoke de gesto |
+| P3 | Rendimiento del gesto (<200 ms): fast-path `screenPassed`, memo por orden, debounce save | Medido ~1,0–1,5 s por filtro en QA | Grok o Composer / alto |
+| P5 | Capas: avisar si apagar una degrada `setupMode` / otras reglas | C11; solo si usas el panel avanzado | Composer / medio |
 
 ## Aplazado / no oleada UI
 
@@ -34,9 +34,10 @@ Ticket en curso: ninguno. Siguiente sugerido: **P4**.
 - Contracciones / VCP en producto — `research/contracciones/`; no shipping.
 - Merge `refactor/chart-controller-*` — divergencia grande; no trivial.
 - Traducir inglés estructural restante (Results, Leadership pulse, …).
+- RS de lote etiquetado «RS» en vista rápida/review.
 
 ## Convención
 
 - Un ticket = un tema verificable.
-- Programación: sin commit/push; plantilla de retorno en `.cursor/rules/orquestacion-statsedge.mdc`.
+- Programación: sin commit/push; prompt en el chat orquestador (no depender del archivo).
 - Orquestador: verify + smoke visual si aplica + commit + marcar fila aquí.

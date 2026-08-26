@@ -44,6 +44,7 @@ function makeProps({ resultsRows = [] } = {}) {
       err: null,
       status: "idle",
       snapshotNotice: null,
+      restoringScan: false,
       showMobileFilters: false,
       sidebarCollapsed: false,
       setShowMobileFilters: () => {},
@@ -130,6 +131,7 @@ function makeProps({ resultsRows = [] } = {}) {
       csv: () => {},
       decisionAuditJson: () => {},
       resetScreenerSession: () => {},
+      refreshScreenerSnapshotData: () => {},
       addFavorite: () => {},
       saveSessionBeforeStockOpen: () => {},
     },
@@ -178,5 +180,12 @@ describe("ScreenerShell · franja P3 (percentil por lote)", () => {
     expect(html).not.toContain("pendingResultsBar");
     expect(html).not.toContain(">Ejecutar<");
     expect(html).not.toContain(">Detener<");
+  });
+
+  it("muestra Traer datos frescos y Resetear criterios (P4)", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW] })));
+    expect(html).toContain("Traer datos frescos");
+    expect(html).toContain("Resetear criterios");
+    expect(html).not.toContain("Reset sesión");
   });
 });
