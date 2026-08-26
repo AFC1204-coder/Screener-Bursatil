@@ -37,6 +37,8 @@ export function CompactResultsTable({
   onFavorite,
   onReview,
   onOpenStock,
+  selectedSymbol = "",
+  onSelectRow,
   emptyLabel = "Sin datos cargados todavía.",
   perfPeriod,
   onPerfPeriod,
@@ -64,7 +66,14 @@ export function CompactResultsTable({
           {rows.map((row) => (
             <tr
               key={row.symbol}
-              onClick={(event) => { if (!event.target.closest("button, a")) onReview?.(row.symbol); }}
+              className={selectedSymbol === row.symbol ? "isSelected" : ""}
+              tabIndex={selectedSymbol === row.symbol ? 0 : -1}
+              aria-selected={selectedSymbol === row.symbol}
+              onClick={(event) => {
+                if (event.target.closest("button, a")) return;
+                onSelectRow?.(row.symbol);
+                onReview?.(row.symbol);
+              }}
             >
               {SCREENER_COLUMNS.map((column) => (
                 <td key={column.key} className={column.className} data-align={column.align}>

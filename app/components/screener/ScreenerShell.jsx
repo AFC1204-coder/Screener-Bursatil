@@ -117,6 +117,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     setSettings,
     setFieldRules,
     diagnostics,
+    markAdvancedBaseline,
   } = sidebar;
 
   // --- search ---
@@ -219,6 +220,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     resetScreenerSession,
     addFavorite: actionsAddFavorite,
     saveSessionBeforeStockOpen: actionsSaveSessionBeforeStockOpen,
+    selectedResultSymbol,
+    onSelectResultRow,
+    openResultReview,
   } = actions;
 
   // --- staleness ---
@@ -266,7 +270,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     <div className="topbar screenerHeroBar">
       <div className="screenerHeroTitle">
         <span className="screenerEyebrow">StatsEdge · Screener</span>
-        <h1 className="title">Global Leaders</h1>
+        <h1 className="title">{PRESETS[presetKey]?.name || "Screener"}</h1>
         <p>{PRESETS[presetKey]?.name || "Filtro activo"} · {markets.length} mercados · {resultsFiltered.length} resultados visibles</p>
         {/* Autocontenido, como GlobalCoveragePanel: posee su fetch a
             GET /api/weekly-changes y no bloquea la primera pintura. Es la
@@ -379,7 +383,12 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           viewFiltersActive={viewFiltersActive}
         />
         <div className="controls filterLayerActions">
-          <button className="btn btnSmall btnGhost" onClick={() => { setFilterLayers(filterLayersForPreset(presetKey)); setUseRegimeFilter(true); }}>Base preset</button>
+          <button className="btn btnSmall btnGhost" onClick={() => {
+            const nextLayers = filterLayersForPreset(presetKey);
+            setFilterLayers(nextLayers);
+            setUseRegimeFilter(true);
+            markAdvancedBaseline?.(settings, nextLayers);
+          }}>Base preset</button>
           <button className="btn btnSmall btnGhost" onClick={() => { setFilterLayers(ALL_FILTER_LAYERS); setUseRegimeFilter(true); }}>Todo activo</button>
         </div>
 
@@ -410,7 +419,15 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               })}
             </div>
             <div className="controls filterFooter" style={{ marginTop: 12 }}>
-              <button className="btn btnGhost btnSmall" style={{ width: "100%" }} onClick={() => { setSettings(settingsForPreset(presetKey)); setFieldRules(DEFAULT_FIELD_RULES); setFilterLayers(filterLayersForPreset(presetKey)); setUseRegimeFilter(true); }}>Resetear condiciones</button>
+              <button className="btn btnGhost btnSmall" style={{ width: "100%" }} onClick={() => {
+                const nextSettings = settingsForPreset(presetKey);
+                const nextLayers = filterLayersForPreset(presetKey);
+                setSettings(nextSettings);
+                setFieldRules(DEFAULT_FIELD_RULES);
+                setFilterLayers(nextLayers);
+                setUseRegimeFilter(true);
+                markAdvancedBaseline?.(nextSettings, nextLayers);
+              }}>Resetear condiciones</button>
             </div>
           </details>
         </div>
@@ -580,8 +597,10 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             pagedRows={resultsPagedRows}
             favoriteSymbols={resultsFavoriteSymbols}
             onFavorite={addFavorite}
-            onReview={(symbol) => openReview(resultsFiltered, symbol)}
+            onReview={openResultReview}
             onOpenStock={saveSessionBeforeStockOpen}
+            selectedSymbol={selectedResultSymbol}
+            onSelectRow={onSelectResultRow}
             perfPeriod={perfPeriod}
             onPerfPeriod={setPerfPeriod}
             emptyLabel={resultsEmptyLabel}

@@ -315,19 +315,33 @@ export default function Page() {
     setAdvancedOpen(open);
     safeWrite("statsedge.screenerAdvancedOpen.v1", open);
   }
-  // Badge del panel avanzado: nº de ajustes (umbrales + capas) que difieren del preset activo.
+  const advancedBaselineRef = useRef(null);
+  const [advancedBaselineVersion, setAdvancedBaselineVersion] = useState(0);
+  function syncAdvancedBaseline(nextSettings, nextFilterLayers) {
+    advancedBaselineRef.current = {
+      settings: { ...nextSettings },
+      filterLayers: { ...nextFilterLayers },
+    };
+    setAdvancedBaselineVersion((value) => value + 1);
+  }
+  function markAdvancedBaseline(nextSettings, nextFilterLayers) {
+    syncAdvancedBaseline(nextSettings, nextFilterLayers);
+  }
+  // Badge del panel avanzado: ajustes que el usuario ha cambiado respecto al
+  // preset/base aplicado al arranque (o al último reset explícito de preset).
   const advancedChangeCount = useMemo(() => {
-    const baseSettings = settingsForPreset(presetKey);
+    const baseline = advancedBaselineRef.current;
+    if (!baseline) return 0;
     let count = 0;
-    for (const key of new Set([...Object.keys(baseSettings), ...Object.keys(settings)])) {
-      if ((settings[key] ?? null) !== (baseSettings[key] ?? null)) count += 1;
+    for (const key of new Set([...Object.keys(baseline.settings), ...Object.keys(settings)])) {
+      if ((settings[key] ?? null) !== (baseline.settings[key] ?? null)) count += 1;
     }
-    const baseLayers = filterLayersForPreset(presetKey);
-    for (const key of new Set([...Object.keys(baseLayers), ...Object.keys(filterLayers)])) {
-      if (Boolean(filterLayers[key]) !== Boolean(baseLayers[key])) count += 1;
+    for (const key of new Set([...Object.keys(baseline.filterLayers), ...Object.keys(filterLayers)])) {
+      if (Boolean(filterLayers[key]) !== Boolean(baseline.filterLayers[key])) count += 1;
     }
     return count;
-  }, [settings, filterLayers, presetKey]);
+  }, [settings, filterLayers, advancedBaselineVersion]);
+  const [selectedResultSymbol, setSelectedResultSymbol] = useState("");
   const [sessionReady, setSessionReady] = useState(false);
   const [savedFilterTemplates, setSavedFilterTemplates] = useState([]);
   const [selectedFilterTemplateId, setSelectedFilterTemplateId] = useState("");
@@ -391,6 +405,7 @@ export default function Page() {
     setViewLayers(restoredViewLayers);
     setUseRegimeFilter(restoredUseRegimeFilter);
     setSort(scan.sort || scan.settings?.sort || defaultSortForSettings(restoredActiveSettings));
+    syncAdvancedBaseline(restoredSettings, restoredFilterLayers);
     setRows(restoredFilterView.rows);
     setAnalyzedRows(scan.rows);
     setScanContext(nextScanContext);
@@ -704,6 +719,9 @@ export default function Page() {
             ? `Sesión restaurada: ${restoredAnalyzedRows.length} acciones analizadas; recalculando filtros.`
             : DEFAULT_STATUS
       );
+      syncAdvancedBaseline(restoredSettings, restoredFilterLayers);
+    } else {
+      syncAdvancedBaseline(settingsForPreset("balanced"), filterLayersForPreset("balanced"));
     }
     const refreshReason = restoredRowsCount
       ? screenerSessionRefreshReason({
@@ -1009,9 +1027,12 @@ export default function Page() {
   function resetScreenerSession() {
     safeRemove(STORAGE_KEYS.screenerSession);
     resultsOwnerRef.current = "none";
+    const nextSettings = settingsForPreset("balanced");
+    const nextLayers = filterLayersForPreset("balanced");
+    syncAdvancedBaseline(nextSettings, nextLayers);
     setMarkets(DEFAULT_MARKETS);
     setManual("");
-    setSettings(settingsForPreset("balanced"));
+    setSettings(nextSettings);
     setPresetKey("balanced");
     setUniverse([]);
     setUniverseScope("");
@@ -1029,7 +1050,7 @@ export default function Page() {
     setScanBatchSize(DEFAULT_SCAN_BATCH_SIZE);
     setMarketHealth(null);
     setUseRegimeFilter(true);
-    setFilterLayers(filterLayersForPreset("balanced"));
+    setFilterLayers(nextLayers);
     setFieldRules(DEFAULT_FIELD_RULES);
     setViewLayers(DEFAULT_VIEW_LAYERS);
     setSearchSymbol("");
@@ -1043,6 +1064,7 @@ export default function Page() {
     setSelectedFilterTemplateId("");
     setFilterTemplateName("");
     setActiveFilterFamily(null);
+    setSelectedResultSymbol("");
     // Un reset tiene que dejar al usuario en un estado BUENO, no repetir el que
     // le hizo pulsarlo. Antes de recargar se tiran los snapshots cacheados de
     // otros mercados —el residuo del arranque que pedía "el más reciente"—; si
@@ -1231,12 +1253,15 @@ export default function Page() {
     const nextPresetKey = PRESETS[config.presetKey] ? config.presetKey : "balanced";
     const nextPreset = PRESETS[nextPresetKey] || PRESETS.balanced;
     const nextMarkets = Array.isArray(config.markets) && config.markets.length ? config.markets : DEFAULT_MARKETS;
+    const nextSettings = settingsForPreset(nextPresetKey, config.settings || {});
+    const nextFilterLayers = restoreFilterLayers(config.filterLayers, config.filterLayersVersion, nextPresetKey);
+    syncAdvancedBaseline(nextSettings, nextFilterLayers);
     setMarkets(nextMarkets);
     setManual(config.manual || "");
     setPresetKey(nextPresetKey);
-    setSettings(settingsForPreset(nextPresetKey, config.settings || {}));
+    setSettings(nextSettings);
     setUseRegimeFilter(config.useRegimeFilter !== false);
-    setFilterLayers(restoreFilterLayers(config.filterLayers, config.filterLayersVersion, nextPresetKey));
+    setFilterLayers(nextFilterLayers);
     setFieldRules({ ...DEFAULT_FIELD_RULES, ...(config.fieldRules || {}) });
     setViewLayers({ ...DEFAULT_VIEW_LAYERS, ...(config.viewLayers || {}) });
     // Las plantillas guardadas antes de 2026-08-15 no traen perfPeriod: se
@@ -1456,11 +1481,14 @@ export default function Page() {
     }
   }
   function setPreset(k) {
+    const nextSettings = settingsForPreset(k);
+    const nextLayers = filterLayersForPreset(k);
+    syncAdvancedBaseline(nextSettings, nextLayers);
     setPresetKey(k);
-    setSettings(settingsForPreset(k));
+    setSettings(nextSettings);
     setSort(defaultSortForSettings(PRESETS[k].v));
     setFieldRules(DEFAULT_FIELD_RULES);
-    setFilterLayers(filterLayersForPreset(k));
+    setFilterLayers(nextLayers);
     setUseRegimeFilter(true);
     setSelectedFilterTemplateId("");
     setFilterTemplateName("");
@@ -1842,6 +1870,47 @@ export default function Page() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeFilterFamily]);
 
+  function onSelectResultRow(symbol = "") {
+    setSelectedResultSymbol(String(symbol || "").trim());
+  }
+
+  function openResultReview(symbol = "") {
+    if (symbol) onSelectResultRow(symbol);
+    openReview(filtered, symbol);
+  }
+
+  useEffect(() => {
+    if (!selectedResultSymbol) return;
+    if (!pagedRows.some((row) => row.symbol === selectedResultSymbol)) {
+      setSelectedResultSymbol("");
+    }
+  }, [pagedRows, selectedResultSymbol]);
+
+  useEffect(() => {
+    if (!sessionReady || activeModalRow) return undefined;
+    function shouldIgnoreKeyboardTarget(target) {
+      if (!(target instanceof HTMLElement)) return false;
+      const tag = target.tagName;
+      return tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA" || target.isContentEditable;
+    }
+    function onKeyDown(event) {
+      if (event.defaultPrevented || shouldIgnoreKeyboardTarget(event.target)) return;
+      if (!pagedRows.length) return;
+      const currentIndex = selectedResultSymbol
+        ? pagedRows.findIndex((row) => row.symbol === selectedResultSymbol)
+        : -1;
+      if (event.key === "Enter" && currentIndex >= 0) {
+        const row = pagedRows[currentIndex];
+        if (!row?.symbol) return;
+        event.preventDefault();
+        saveSessionBeforeStockOpen(row);
+        window.location.href = stockUrl(row.symbol);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [sessionReady, activeModalRow, pagedRows, selectedResultSymbol]);
+
   return <>
   <StorageAlert />
   <ScreenerShell
@@ -1905,6 +1974,7 @@ export default function Page() {
       setSettings,
       setFieldRules,
       diagnostics,
+      markAdvancedBaseline,
     }}
     search={{
       searchSymbol,
@@ -1950,6 +2020,9 @@ export default function Page() {
       decisionAuditJson,
       resetScreenerSession,
       saveSessionBeforeStockOpen,
+      selectedResultSymbol,
+      onSelectResultRow,
+      openResultReview,
     }}
   />
 

@@ -8168,6 +8168,7 @@ button.decisionOperatingIssue:hover {
 /* "Más filtros" — mismo eje y altura que los selects, sin hueco muerto */
 .screenerTerminalPage .viewLayerFilters {
   margin-top: 0;
+  grid-column: 1 / -1;
 }
 .screenerTerminalPage .viewLayerFilters > summary {
   min-height: 36px;
@@ -8210,6 +8211,10 @@ button.decisionOperatingIssue:hover {
   padding: 0;
   border-top: 1px solid var(--line);
   padding-top: var(--space-2);
+}
+
+.screenerTerminalPage .compactResultsTable tbody tr.isSelected td {
+  background: rgba(59, 120, 240, .08);
 }
 
 /* Botones del header — jerarquía: 1 primario + 4 tertiary iguales */

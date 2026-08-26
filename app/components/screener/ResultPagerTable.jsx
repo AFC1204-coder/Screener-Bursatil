@@ -25,6 +25,8 @@ export default function ResultPagerTable({
   onFavorite,
   onReview,
   onOpenStock,
+  selectedSymbol,
+  onSelectRow,
   perfPeriod,
   onPerfPeriod,
   emptyLabel,
@@ -55,6 +57,8 @@ export default function ResultPagerTable({
         onFavorite={onFavorite}
         onReview={onReview}
         onOpenStock={onOpenStock}
+        selectedSymbol={selectedSymbol}
+        onSelectRow={onSelectRow}
         perfPeriod={perfPeriod}
         onPerfPeriod={onPerfPeriod}
         emptyLabel={emptyLabel}
