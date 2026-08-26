@@ -5,7 +5,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-26 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **P6e** → `docs/tickets/activo.md` (abrir en Agent chat **aparte**).
+Ticket en curso: ninguno (P6e verificado; commit pendiente de actualizar tras push de este mensaje).
 
 ## Hecho (esta oleada)
 
