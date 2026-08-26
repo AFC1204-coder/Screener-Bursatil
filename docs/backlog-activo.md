@@ -16,7 +16,7 @@ Ticket en curso: ninguno. Siguiente sugerido: **P5** o RS mentiroso en vista rá
 | B2 / chart | Vacío usa `emptyFallback`, no «Sin dato» fijo | `219e075` |
 | P6a–e | Título, badge, Enter→ficha, Más filtros, columna Deterioro | `cd20747` / `1572e80` |
 | P4 | «Traer datos frescos» vs «Resetear criterios» | `5cc8c6c` |
-| P3 | Gesto de filtro &lt;200 ms (fast-path / no sectorize / sort / debounce) | (este commit) |
+| P3 | Gesto de filtro &lt;200 ms (fast-path / no sectorize / sort / debounce) | `3558ad5` |
 
 ## Siguiente (orden sugerido)
 
