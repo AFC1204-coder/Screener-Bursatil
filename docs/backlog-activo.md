@@ -5,7 +5,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-26 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: ninguno (P6e verificado; commit pendiente de actualizar tras push de este mensaje).
+Ticket en curso: ninguno. Siguiente sugerido: **P4**.
 
 ## Hecho (esta oleada)
 
@@ -18,12 +18,12 @@ Ticket en curso: ninguno (P6e verificado; commit pendiente de actualizar tras pu
 | P6b | Badge avanzado vs baseline de sesión | `cd20747` |
 | P6c | Enter → ficha (fila seleccionada) | `cd20747` |
 | P6d | Cajón «Más filtros» `grid-column: 1 / -1` | `cd20747` |
+| P6e | Columna Deterioro cuando sort/modo weakness | `1572e80` |
 
 ## Siguiente (orden sugerido)
 
 | ID | Qué | Notas | Modelo sugerido |
 |---|---|---|---|
-| P6e | Ordenar por columna invisible (Deterioro): mostrar columna cuando el preset la usa, o no ordenar por ella | Resto de P6; barato | Composer / bajo |
 | P4 | Separar «traer datos frescos» (conserva criterios) de «resetear criterios» | P1 ya refresca; el botón Reset sigue siendo nuclear | Composer / medio |
 | P5 | Capas: avisar si apagar una degrada `setupMode` / otras reglas | C11 medido en análisis | Composer / medio |
 | P3 | Rendimiento del gesto (<200 ms): fast-path `screenPassed`, memo por orden, debounce save | Más delicado; medir antes/después | Grok o Composer / alto; smoke de gesto |
