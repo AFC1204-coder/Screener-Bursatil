@@ -1,5 +1,5 @@
 # Ticket activo
 
-Ninguno. Último cerrado: **P4** (Traer datos frescos / Resetear criterios).
+Ninguno. Último cerrado: **P3** (rendimiento del gesto).
 
-Siguiente: decidir **P3** (rendimiento del gesto) vs **P5** (aviso de capas) tras uso real.
+Siguiente: **P5** (aviso de capas) o **RS de lote** en vista rápida — decidir según uso.

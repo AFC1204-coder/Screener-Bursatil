@@ -1,6 +1,7 @@
 // P4: separar «traer datos frescos» (conserva criterios) de «resetear criterios».
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  createDebouncedSessionSaver,
   criteriaPreservedAcrossDataRefresh,
   dataRefreshEligibleOwner,
   pickScreenerCriteria,
@@ -57,5 +58,36 @@ describe("P4 · textos de estado del refresh", () => {
     expect(sessionAutoRefreshStatus({ sampled: false })).toContain("Sesión restaurada");
     expect(manualDataRefreshStatus({ sampled: false })).not.toContain("Sesión restaurada");
     expect(manualDataRefreshStatus({ sampled: true })).toContain("universo completo");
+  });
+});
+
+describe("P3 · debounce del autoguardado de sesión", () => {
+  it("no escribe en el gesto; unifica varios cambios en una sola escritura", () => {
+    vi.useFakeTimers();
+    const writes = [];
+    const saver = createDebouncedSessionSaver(250);
+    saver.schedule(() => writes.push("a"));
+    saver.schedule(() => writes.push("b"));
+    saver.schedule(() => writes.push("c"));
+    expect(writes).toEqual([]);
+    vi.advanceTimersByTime(249);
+    expect(writes).toEqual([]);
+    vi.advanceTimersByTime(1);
+    expect(writes).toEqual(["c"]);
+    vi.useRealTimers();
+  });
+
+  it("flush escribe lo pendiente y cancel lo descarta", () => {
+    vi.useFakeTimers();
+    const writes = [];
+    const saver = createDebouncedSessionSaver(250);
+    saver.schedule(() => writes.push("flush"));
+    saver.flush();
+    expect(writes).toEqual(["flush"]);
+    saver.schedule(() => writes.push("cancelled"));
+    saver.cancel();
+    vi.advanceTimersByTime(500);
+    expect(writes).toEqual(["flush"]);
+    vi.useRealTimers();
   });
 });

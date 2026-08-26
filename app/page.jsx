@@ -32,6 +32,7 @@ import { buildScreenerDataHealth, dataHealthFilterLabel } from "@/lib/screenerDa
 import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
 import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, fitScansForBrowser, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
+import { createDebouncedSessionSaver, screenerFiltersFromScan, withScanScreenerFilters } from "@/lib/screenerFilterFastPath";
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
 import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, localScanIsSampled, localSampleDetail, manualDataRefreshStatus, screenerSessionRefreshReason, sessionAutoRefreshStatus } from "@/lib/snapshotFreshness";
 import { dropForeignMarketSnapshots, pickNightlyUsRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
@@ -349,6 +350,8 @@ export default function Page() {
   const [activeFilterFamily, setActiveFilterFamily] = useState(null);
   const fastFilterSignatureRef = useRef("");
   const restoreScrollRef = useRef(null);
+  const sessionAutosaveRef = useRef(null);
+  if (!sessionAutosaveRef.current) sessionAutosaveRef.current = createDebouncedSessionSaver();
   // Contexto pendiente para el próximo mensaje del re-filtrado automático:
   // quien cambia criterios en bloque (plantilla, preset, mercados) lo deja
   // aquí y el efecto de re-filtrado lo antepone a su estado ("Plantilla
@@ -391,6 +394,7 @@ export default function Page() {
       settingsSignature: scanSettingsSignature(markets, manual, scanMode),
       scannedMarkets: [...markets].sort(),
       scannedScanMode: scanMode,
+      screenerFilters: screenerFiltersFromScan(scan),
     };
     const restoreFilterContext = {
       ...nextScanContext,
@@ -623,6 +627,7 @@ export default function Page() {
       settingsSignature: scanSettingsSignature(signedMarkets, signedManual, signedScanMode),
       scannedMarkets: [...signedMarkets].sort(),
       scannedScanMode: signedScanMode,
+      screenerFilters: screenerFiltersFromScan(scan),
     };
     setAnalyzedRows(scan.rows);
     setScanContext(nextScanContext);
@@ -674,7 +679,7 @@ export default function Page() {
         // estadounidense — no "el mejor snapshot local que haya", que podía ser
         // el de otro mercado.
         if (referencedScan?.rows?.length) {
-          const rehydrateContext = { ...session.scanContext, marketHealth: restoredMarketHealth, useRegimeFilter: restoredUseRegimeFilter };
+          const rehydrateContext = withScanScreenerFilters({ ...session.scanContext, marketHealth: restoredMarketHealth, useRegimeFilter: restoredUseRegimeFilter }, referencedScan);
           const rehydratedView = restoredSnapshotView(referencedScan, restoredActiveSettings, rehydrateContext, filterAnalyzedRows);
           restoredAnalyzedRows = rehydratedView.analyzedRows;
           restoredRows = rehydratedView.rows;
@@ -692,7 +697,7 @@ export default function Page() {
       setUniverseScope(session.universeScope || (restoredUniverse.length ? universeScopeKey(restoredMarkets, restoredManual) : ""));
       setRows(restoredRows);
       setAnalyzedRows(restoredAnalyzedRows);
-      setScanContext(session.scanContext || null);
+      setScanContext(withScanScreenerFilters(session.scanContext || null, referencedScan));
       setScanPerf(session.scanPerf || null);
       setSnapshotNotice(session.snapshotNotice || null);
       // normalizeScanErrorGroups cubre las sesiones guardadas con el formato
@@ -726,7 +731,7 @@ export default function Page() {
         fastFilterSignatureRef.current = fastFilterSignature(
           restoredAnalyzedRows,
           restoredActiveSettings,
-          { ...session.scanContext, marketHealth: restoredMarketHealth, useRegimeFilter: restoredUseRegimeFilter },
+          { ...withScanScreenerFilters(session.scanContext, referencedScan), marketHealth: restoredMarketHealth, useRegimeFilter: restoredUseRegimeFilter },
         );
       }
       setStatus(
@@ -905,6 +910,7 @@ export default function Page() {
     const row = rowOrSymbol && typeof rowOrSymbol === "object" ? rowOrSymbol : null;
     const symbol = typeof rowOrSymbol === "string" ? rowOrSymbol : row?.symbol;
     const scrollY = typeof window !== "undefined" ? window.scrollY : 0;
+    sessionAutosaveRef.current?.cancel();
     persistScreenerSession({
       lastOpenedStockSymbol: symbol || "",
       lastOpenedStockAt: new Date().toISOString(),
@@ -916,12 +922,30 @@ export default function Page() {
   useEffect(() => {
     if (!sessionReady) return;
     if (restoringScan && !rows.length) return;
-    persistScreenerSession();
+    sessionAutosaveRef.current?.schedule(persistScreenerSession);
     // La sesión persiste criterios y referencias, no filas: universe, rows,
     // analyzedRows, searchCandidates y quickReviewRows salieron del payload y
     // de estas dependencias. Los cambios de resultados llegan igualmente vía
     // scanContext/scanPerf (scan y re-filtrados los actualizan siempre).
+    // Debounce: el gesto (preset/orden) disparaba 4 setItem en 9 s; el
+    // guardado no va en el hot path. pagehide/unmount hace flush.
   }, [sessionReady, markets, manual, settings, presetKey, universeScope, scanContext, scanPerf, snapshotNotice, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, actionFilter, readinessFilter, decisionProfileFilter, reviewPriorityFilter, reliabilityFilter, decisionEvidenceFilter, confidenceFilter, dataHealthFilter, scoreAuditFilter, decisionIssueFilter, decisionResolutionFilter, sort, perfPeriod, scanMode, batchStart, scanBatchSize, resultPageSize, resultPage, marketHealth, restoringScan, useRegimeFilter, filterLayers, fieldRules, viewLayers, searchSymbol, searchResult, quickReviewIndex]);
+
+  useEffect(() => {
+    function flushSessionAutosave() {
+      sessionAutosaveRef.current?.flush();
+    }
+    function onVisibility() {
+      if (document.visibilityState === "hidden") flushSessionAutosave();
+    }
+    window.addEventListener("pagehide", flushSessionAutosave);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flushSessionAutosave);
+      document.removeEventListener("visibilitychange", onVisibility);
+      flushSessionAutosave();
+    };
+  }, []);
 
   const chartListId = useMemo(() => `screener:${presetKey}:${markets.join(",")}`, [presetKey, markets]);
 
@@ -956,6 +980,8 @@ export default function Page() {
       ...(prev || {}),
       lastFilterMs: filteredView.filterMs,
       lastFastFilterMs: filteredView.filterMs,
+      lastFilterPath: filteredView.path || "rules",
+      lastFilterRescored: Boolean(filteredView.rescored),
       analyzedRows: analyzedRows.length,
       fastRefilters: (prev?.fastRefilters || 0) + 1,
     }));

@@ -236,10 +236,15 @@ export function useResultViewModel({
 
   const annotatedRows = useMemo(() => rows.map(annotateRow), [rows, setupMode]);
 
-  const filtered = useMemo(() => {
-    const list = applyResultViewFilters(annotatedRows, viewFilterState);
-    return [...list].sort((a, b) => sortMetric(b, sort, activeSettings) - sortMetric(a, sort, activeSettings));
-  }, [annotatedRows, viewFilterState, sort, activeSettings]);
+  const viewFilteredRows = useMemo(
+    () => applyResultViewFilters(annotatedRows, viewFilterState),
+    [annotatedRows, viewFilterState],
+  );
+
+  const filtered = useMemo(
+    () => [...viewFilteredRows].sort((a, b) => sortMetric(b, sort, activeSettings) - sortMetric(a, sort, activeSettings)),
+    [viewFilteredRows, sort, activeSettings],
+  );
 
   const reviewPriorityBaseRows = useMemo(() => applyResultViewFilters(annotatedRows, {
     ...viewFilterState,
@@ -263,7 +268,7 @@ export function useResultViewModel({
   }), [annotatedRows, viewFilterState]);
 
   const pendingDecisionWorkSummary = useMemo(() => {
-    const pendingItems = filtered.map((row) => {
+    const pendingItems = viewFilteredRows.map((row) => {
       if (decisionResolutionForSymbol({ decisionResolutions: screenerDecisionResolutions }, row.symbol)) return null;
       const annotation = row.__screenerAnnotation;
       if (!annotation) return null;
@@ -286,7 +291,7 @@ export function useResultViewModel({
       top: focusItems[0] || null,
       rows: focusItems.map((item) => item.row),
     };
-  }, [filtered, screenerDecisionResolutions, activeSettings]);
+  }, [viewFilteredRows, screenerDecisionResolutions]);
 
   const pendingDecisionWorkActive = decisionResolutionFilter === "pending"
     && sort === "decisionPriority"
@@ -329,9 +334,9 @@ export function useResultViewModel({
   const resultPageStart = (visibleResultPage - 1) * resultPageSize;
   const resultPageEnd = Math.min(resultPageStart + resultPageSize, filtered.length);
   const pagedRows = filtered.slice(resultPageStart, resultPageEnd);
-  const visibleDecisionAudit = useMemo(() => filtered.length
-    ? auditDecisionScan({ id: "visible-results", name: "Resultados visibles", rows: filtered, activeSettings })
-    : null, [filtered, activeSettings]);
+  const visibleDecisionAudit = useMemo(() => viewFilteredRows.length
+    ? auditDecisionScan({ id: "visible-results", name: "Resultados visibles", rows: viewFilteredRows, activeSettings })
+    : null, [viewFilteredRows, activeSettings]);
   const setResultPageClamped = (page) => setResultPage(Math.max(1, Math.min(page, totalResultPages)));
 
   function updateResultPageSize(size) {
@@ -340,7 +345,7 @@ export function useResultViewModel({
     setResultPage(1);
   }
 
-  const opportunities = useMemo(() => opportunityBuckets(filtered), [filtered]);
+  const opportunities = useMemo(() => opportunityBuckets(viewFilteredRows), [viewFilteredRows]);
 
   useEffect(() => {
     setResultPage(1);
@@ -571,11 +576,11 @@ export function useResultViewModel({
     }));
   }, [scoreAuditCounts]);
   const scoreAuditSummary = useMemo(() => buildScreenerScoreAuditSummary(scoreAuditBaseRows), [scoreAuditBaseRows]);
-  const visibleDecisionBrief = useMemo(() => buildScreenerDecisionBrief({ audit: visibleDecisionAudit, rows: filtered }), [visibleDecisionAudit, filtered]);
-  const visibleDataHealthSummary = useMemo(() => buildScreenerDataHealthSummary(filtered, activeSettings), [filtered, activeSettings]);
-  const visibleDecisionEvidenceSummary = useMemo(() => buildDecisionEvidenceSummary(filtered, activeSettings), [filtered, activeSettings]);
-  const visibleScoreAuditSummary = useMemo(() => buildScreenerScoreAuditSummary(filtered), [filtered]);
-  const visibleAuditabilitySummary = useMemo(() => buildScreenerAuditabilitySummary(filtered, activeSettings), [filtered, activeSettings]);
+  const visibleDecisionBrief = useMemo(() => buildScreenerDecisionBrief({ audit: visibleDecisionAudit, rows: viewFilteredRows }), [visibleDecisionAudit, viewFilteredRows]);
+  const visibleDataHealthSummary = useMemo(() => buildScreenerDataHealthSummary(viewFilteredRows, activeSettings), [viewFilteredRows, activeSettings]);
+  const visibleDecisionEvidenceSummary = useMemo(() => buildDecisionEvidenceSummary(viewFilteredRows, activeSettings), [viewFilteredRows, activeSettings]);
+  const visibleScoreAuditSummary = useMemo(() => buildScreenerScoreAuditSummary(viewFilteredRows), [viewFilteredRows]);
+  const visibleAuditabilitySummary = useMemo(() => buildScreenerAuditabilitySummary(viewFilteredRows, activeSettings), [viewFilteredRows, activeSettings]);
   const decisionResolutionOptions = useMemo(() => buildStockDecisionResolutionSummary(rows, { decisionResolutions: screenerDecisionResolutions })
     .map((item) => ({
       ...item,

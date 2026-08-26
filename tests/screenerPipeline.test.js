@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
-import { defaultSortForSettings, scanSettingsSignature, sortMetric, sortRowsForMode } from "@/lib/screenerPipeline";
+import { defaultSortForSettings, scanSettingsSignature, sortMetric, sortRowsForMode, fastFilterSignature } from "@/lib/screenerPipeline";
 
 const cleanCandidate = {
   symbol: "CLEAN",
@@ -189,3 +189,33 @@ describe("scanSettingsSignature", () => {
     expect(mixed).toBe(upper);
   });
 });
+
+describe("fastFilterSignature · solo orden no refiltra", () => {
+  const rows = [{ symbol: "A", totalScore: 70 }];
+  const settings = { setupMode: "leader", minPrice: 2 };
+  const context = { id: "scan-1", useRegimeFilter: true, marketHealth: { marketScore: 80 } };
+
+  it("no cambia cuando solo cambia el criterio de orden", () => {
+    const base = fastFilterSignature(rows, settings, context);
+    expect(fastFilterSignature(rows, settings, { ...context, sort: "weaknessScore" })).toBe(base);
+    expect(fastFilterSignature(rows, settings, { ...context, sort: "perf12m" })).toBe(base);
+  });
+
+  it("cambia cuando cambian umbrales o el modo de setup", () => {
+    const base = fastFilterSignature(rows, settings, context);
+    expect(fastFilterSignature(rows, { ...settings, minPrice: 8 }, context)).not.toBe(base);
+    expect(fastFilterSignature(rows, { ...settings, setupMode: "weakness" }, context)).not.toBe(base);
+  });
+
+  it("ordenar el mismo conjunto no cambia los símbolos, solo el orden", () => {
+    const list = [
+      { symbol: "LOW", weaknessScore: 20, perf3m: 30 },
+      { symbol: "HIGH", weaknessScore: 80, perf3m: 5 },
+    ];
+    const byPerf = sortRowsForMode(list, { setupMode: "leader" }, "perf3m");
+    const byWeak = sortRowsForMode(list, { setupMode: "weakness" }, "weaknessScore");
+    expect(byPerf.map((row) => row.symbol).sort()).toEqual(byWeak.map((row) => row.symbol).sort());
+    expect(byPerf.map((row) => row.symbol)).not.toEqual(byWeak.map((row) => row.symbol));
+  });
+});
+
