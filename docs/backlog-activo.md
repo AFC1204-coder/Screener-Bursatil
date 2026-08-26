@@ -19,7 +19,7 @@ Ticket en curso: ninguno. Siguiente sugerido: **P5** o **P3** (decidir tras uso 
 | P6c | Enter → ficha (fila seleccionada) | `cd20747` |
 | P6d | Cajón «Más filtros» `grid-column: 1 / -1` | `cd20747` |
 | P6e | Columna Deterioro cuando sort/modo weakness | `1572e80` |
-| P4 | «Traer datos frescos» vs «Resetear criterios» | (este commit) |
+| P4 | «Traer datos frescos» vs «Resetear criterios» | `5cc8c6c` |
 
 ## Siguiente (orden sugerido)
 
