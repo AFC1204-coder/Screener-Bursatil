@@ -5,8 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **INT-1** (elegir fixes del informe INT-0).  
-Informe: **`docs/tickets/INT-0-audit.md`**  
+Ticket en curso: **INT-1-P1** (cargar materializado por mercado).  
+Prompt: **`docs/tickets/INT-1-P1-market-scan-load.md`**  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
 ## Hecho (esta oleada)
@@ -28,7 +28,7 @@ Informe: **`docs/tickets/INT-0-audit.md`**
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
 | INT-0 | **Auditoría multi-mercado** — qué filtra/muestra mal hoy | Informe `docs/tickets/INT-0-audit.md` (2026-08-27) | Orquestador ✓ |
-| INT-1+ | Fixes derivados de INT-0 | Ver §7 del informe (P0: copy/banner mercados, TW failed) | Tras decisión dueño |
+| INT-1+ | Fixes derivados de INT-0 | **En curso:** INT-1-P1 materializado por mercado (`docs/tickets/INT-1-P1-market-scan-load.md`) | Composer |
 
 ## Track internacional (privado, pre-licencia pública)
 

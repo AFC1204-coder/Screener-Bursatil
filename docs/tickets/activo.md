@@ -1,11 +1,9 @@
-# Ticket activo — INT-1 (pendiente decisión)
+# Ticket activo — INT-1-P1
 
-Informe base: **`docs/tickets/INT-0-audit.md`**
+Ver prompt completo: **`docs/tickets/INT-1-P1-market-scan-load.md`**
 
-Estado: **esperando priorización** — INT-0 cerrado 2026-08-27.
+Abrir **Agent chat nuevo** con `@docs/tickets/INT-1-P1-market-scan-load.md` · modelo **Composer**.
 
-Candidatos P0 del informe:
-1. Copy/banner honesto cuando mercados seleccionados ≠ scan cargado (US 3319 al abrir).
-2. TW scan `failed` (0 filas) — diagnosticar o ocultar mercado.
+Estado: **pendiente programación** (dueño eligió P1 del informe INT-0).
 
-Abrir Agent chat con ticket INT-1 cuando el dueño elija ítems.
+Contexto: al seleccionar **un mercado** (CA, JP, GB…), cargar su último scan materializado desde Supabase; arranque US intacto; HK/AU con umbral mínimo de filas.
