@@ -25,8 +25,13 @@ import {
   buildDecisionEvidenceSummary,
   explainScreenerRank,
 } from "@/lib/screenerExplainability";
-import { DEFAULT_PERFORMANCE_PERIOD, normalizePerformancePeriod } from "@/lib/screenerPeriods";
+import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
 import { sortMetric, defaultSortForSettings } from "@/lib/screenerPipeline";
+import {
+  alignRestoredSortSession,
+  applyPerfPeriodSelection,
+  applySortSelection,
+} from "@/lib/screenerSortInvariant";
 import {
   buildScreenerAuditabilitySummary,
 } from "@/lib/screenerReliability";
@@ -83,7 +88,8 @@ export function useResultViewModel({
   const [sectorStrength, setSectorStrength] = useState("Todos");
   const [ipo, setIpo] = useState("Todos");
   const [decisionResolutionFilter, setDecisionResolutionFilter] = useState("all");
-  const [sort, setSort] = useState(DEFAULT_PERFORMANCE_PERIOD);
+  const [sort, setSortState] = useState(DEFAULT_PERFORMANCE_PERIOD);
+  const [sortAsc, setSortAsc] = useState(false);
   // Periodo de la columna de rendimiento. Es GLOBAL (una sola elección para
   // toda la tabla) porque si fuera por fila se perdería la comparación entre
   // valores — docs/principios-producto.md, principio 7.5.
@@ -91,15 +97,44 @@ export function useResultViewModel({
   const [resultPageSize, setResultPageSize] = useState(DEFAULT_RESULT_PAGE_SIZE);
   const [resultPage, setResultPage] = useState(1);
 
+  function setSort(value, options = {}) {
+    const { sort: nextSort, perfPeriod: nextPerf } = applySortSelection(value, { perfPeriod });
+    if (options.toggle && value === sort) {
+      setSortAsc((prev) => !prev);
+    } else {
+      setSortAsc(false);
+    }
+    setSortState(nextSort);
+    setPerfPeriodState(nextPerf);
+    if (!options.skipPageReset) setResultPage(1);
+  }
+
   // El orden sigue al selector: mirar a tres meses es ordenar por tres meses.
   function setPerfPeriod(value) {
-    const next = normalizePerformancePeriod(value);
-    setPerfPeriodState(next);
-    setSort(next);
+    const { sort: nextSort, perfPeriod: nextPerf } = applyPerfPeriodSelection(value);
+    setPerfPeriodState(nextPerf);
+    setSortState(nextSort);
+    setSortAsc(false);
     setResultPage(1);
   }
 
+  function toggleSortColumn(columnSortKey = "") {
+    const key = String(columnSortKey || "").trim();
+    if (!key) return;
+    if (key === sort) {
+      setSortAsc((prev) => !prev);
+      setResultPage(1);
+      return;
+    }
+    setSort(key);
+  }
+
   function restoreResultViewSession(session = {}, fallbackSettings = activeSettings, options = {}) {
+    const aligned = alignRestoredSortSession({
+      sort: session.sort,
+      perfPeriod: session.perfPeriod,
+      fallbackSort: defaultSortForSettings(fallbackSettings),
+    });
     setThemeFilter(session.themeFilter || "Todos");
     setSectorFilter(session.sectorFilter || "Todos");
     setIndustryFilter(session.industryFilter || "Todos");
@@ -107,13 +142,19 @@ export function useResultViewModel({
     setSectorStrength(normalizeSectorStrength(session.sectorStrength));
     setIpo(session.ipo || "Todos");
     setDecisionResolutionFilter(session.decisionResolutionFilter || "all");
-    setSort(session.sort || defaultSortForSettings(fallbackSettings));
-    setPerfPeriodState(normalizePerformancePeriod(session.perfPeriod));
+    setSortState(aligned.sort);
+    setPerfPeriodState(aligned.perfPeriod);
+    setSortAsc(session.sortAsc === true);
     setResultPageSize(resolveResultPageSize(session.resultPageSize));
     setResultPage(options.resetPage ? 1 : (Number.isFinite(session.resultPage) && session.resultPage > 0 ? session.resultPage : 1));
   }
 
   function resetResultView(nextSort = defaultSortForSettings(activeSettings)) {
+    const aligned = alignRestoredSortSession({
+      sort: nextSort,
+      perfPeriod: DEFAULT_PERFORMANCE_PERIOD,
+      fallbackSort: nextSort,
+    });
     setThemeFilter("Todos");
     setSectorFilter("Todos");
     setIndustryFilter("Todos");
@@ -121,8 +162,9 @@ export function useResultViewModel({
     setSectorStrength("Todos");
     setIpo("Todos");
     setDecisionResolutionFilter("all");
-    setSort(nextSort);
-    setPerfPeriodState(DEFAULT_PERFORMANCE_PERIOD);
+    setSortState(aligned.sort);
+    setPerfPeriodState(aligned.perfPeriod);
+    setSortAsc(false);
     setResultPageSize(DEFAULT_RESULT_PAGE_SIZE);
     setResultPage(1);
   }
@@ -178,10 +220,12 @@ export function useResultViewModel({
     [annotatedRows, viewFilterState],
   );
 
-  const filtered = useMemo(
-    () => [...viewFilteredRows].sort((a, b) => sortMetric(b, sort, activeSettings) - sortMetric(a, sort, activeSettings)),
-    [viewFilteredRows, sort, activeSettings],
-  );
+  const filtered = useMemo(() => {
+    const sorted = [...viewFilteredRows].sort(
+      (a, b) => sortMetric(b, sort, activeSettings) - sortMetric(a, sort, activeSettings),
+    );
+    return sortAsc ? sorted.reverse() : sorted;
+  }, [viewFilteredRows, sort, sortAsc, activeSettings]);
 
   const pendingDecisionWorkSummary = useMemo(() => {
     const pendingItems = viewFilteredRows.map((row) => {
@@ -405,6 +449,8 @@ export function useResultViewModel({
     setDecisionResolutionFilter,
     sort,
     setSort,
+    sortAsc,
+    toggleSortColumn,
     perfPeriod,
     setPerfPeriod,
     resultPageSize,

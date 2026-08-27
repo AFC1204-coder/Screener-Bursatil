@@ -207,6 +207,7 @@ export default function Page() {
     setDecisionResolutionFilter,
     sort,
     setSort,
+    sortAsc,
     perfPeriod,
     resultPageSize,
     resultPage,
@@ -843,6 +844,7 @@ export default function Page() {
       ipo,
       decisionResolutionFilter,
       sort,
+      sortAsc,
       perfPeriod,
       scanMode,
       batchStart,
@@ -908,7 +910,7 @@ export default function Page() {
     // scanContext/scanPerf (scan y re-filtrados los actualizan siempre).
     // Debounce: el gesto (preset/orden) disparaba 4 setItem en 9 s; el
     // guardado no va en el hot path. pagehide/unmount hace flush.
-  }, [sessionReady, markets, manual, settings, presetKey, universeScope, scanContext, scanPerf, snapshotNotice, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, decisionResolutionFilter, sort, perfPeriod, scanMode, batchStart, scanBatchSize, resultPageSize, resultPage, marketHealth, restoringScan, useRegimeFilter, filterLayers, fieldRules, viewLayers, searchSymbol, searchResult, quickReviewIndex]);
+  }, [sessionReady, markets, manual, settings, presetKey, universeScope, scanContext, scanPerf, snapshotNotice, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, decisionResolutionFilter, sort, sortAsc, perfPeriod, scanMode, batchStart, scanBatchSize, resultPageSize, resultPage, marketHealth, restoringScan, useRegimeFilter, filterLayers, fieldRules, viewLayers, searchSymbol, searchResult, quickReviewIndex]);
 
   useEffect(() => {
     function flushSessionAutosave() {
@@ -1364,6 +1366,7 @@ export default function Page() {
       ipo,
       decisionResolutionFilter,
       sort,
+      sortAsc,
       perfPeriod,
       scanMode,
       batchStart,

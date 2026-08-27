@@ -153,6 +153,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   const {
     sort,
     setSort,
+    sortAsc,
+    toggleSortColumn,
     perfPeriod,
     setPerfPeriod,
     updateSetting: resultUpdateSetting,
@@ -637,6 +639,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             perfPeriod={perfPeriod}
             onPerfPeriod={setPerfPeriod}
             sort={sort}
+            sortAsc={sortAsc}
+            onSortColumn={toggleSortColumn}
             setupMode={activeSettings.setupMode}
             emptyLabel={resultsEmptyLabel}
           />

@@ -15,6 +15,7 @@ import { InfoHint } from "@/app/components/ui/InfoHint";
 import {
   PerformancePeriodPicker,
   screenerColumnLabel,
+  screenerColumnSortKey,
   screenerVisibleColumns,
 } from "@/lib/screenerColumns";
 import { countryName, marketFlag } from "@/lib/symbols";
@@ -43,6 +44,8 @@ export function CompactResultsTable({
   perfPeriod,
   onPerfPeriod,
   sort = "",
+  sortAsc = false,
+  onSortColumn,
   setupMode = "",
 }) {
   const ctx = { perfPeriod, favoriteSymbols, onFavorite, onOpenStock, sort, setupMode };
@@ -55,14 +58,34 @@ export function CompactResultsTable({
       <table className="table compactResultsTable">
         <thead>
           <tr>
-            {columns.map((column) => (
-              <th key={column.key} className={column.className} data-align={column.align}>
-                <span className="columnHead">
-                  {screenerColumnLabel(column, ctx)}
-                  {column.legend ? <InfoHint text={column.legend} /> : null}
-                </span>
-              </th>
-            ))}
+            {columns.map((column) => {
+              const columnSortKey = screenerColumnSortKey(column, ctx);
+              const isSortable = Boolean(columnSortKey && onSortColumn);
+              const isActive = columnSortKey && columnSortKey === sort;
+              const headLabel = screenerColumnLabel(column, ctx);
+              return (
+                <th key={column.key} className={column.className} data-align={column.align}>
+                  {isSortable ? (
+                    <button
+                      type="button"
+                      className={`columnHead columnHeadBtn${isActive ? " isActive" : ""}`}
+                      onClick={() => onSortColumn(columnSortKey)}
+                      aria-sort={isActive ? (sortAsc ? "ascending" : "descending") : "none"}
+                      title={`Ordenar por ${headLabel}`}
+                    >
+                      <span className="columnHeadText">{headLabel}</span>
+                      {isActive ? <span className="sortIndicator" aria-hidden="true">{sortAsc ? "↑" : "↓"}</span> : null}
+                      {column.legend ? <InfoHint text={column.legend} /> : null}
+                    </button>
+                  ) : (
+                    <span className="columnHead">
+                      {headLabel}
+                      {column.legend ? <InfoHint text={column.legend} /> : null}
+                    </span>
+                  )}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>

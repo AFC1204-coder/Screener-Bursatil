@@ -30,6 +30,8 @@ export default function ResultPagerTable({
   perfPeriod,
   onPerfPeriod,
   sort = "",
+  sortAsc = false,
+  onSortColumn,
   setupMode = "",
   emptyLabel,
 }) {
@@ -64,6 +66,8 @@ export default function ResultPagerTable({
         perfPeriod={perfPeriod}
         onPerfPeriod={onPerfPeriod}
         sort={sort}
+        sortAsc={sortAsc}
+        onSortColumn={onSortColumn}
         setupMode={setupMode}
         emptyLabel={emptyLabel}
       />

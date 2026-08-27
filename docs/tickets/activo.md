@@ -1,5 +1,5 @@
-# Ticket activo — UX-3
+# Ticket activo — UX-2
 
-Ver: **`docs/tickets/UX-3-sort-visible-invariant.md`**
+Ver: **`docs/tickets/UX-2-truth-line-market-banner.md`**
 
-Último cerrado: UX-4. Siguiente tras este: UX-2.
+Último cerrado: UX-3. Tras este: P0 de cáscara cerrado; siguiente oleada UX-5+.

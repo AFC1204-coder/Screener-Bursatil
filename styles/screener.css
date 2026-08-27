@@ -8698,6 +8698,37 @@ button.decisionOperatingIssue:hover {
   width:100%;
 }
 
+.compactResultsTable th .columnHeadBtn {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  font-weight:inherit;
+  cursor:pointer;
+  white-space:nowrap;
+  text-align:inherit;
+}
+
+.compactResultsTable th[data-align="right"] .columnHeadBtn {
+  justify-content:flex-end;
+  width:100%;
+}
+
+.compactResultsTable th .columnHeadBtn.isActive .sortIndicator {
+  opacity:1;
+}
+
+.compactResultsTable th .sortIndicator {
+  opacity:0.72;
+  font-size:0.85em;
+  line-height:1;
+}
+
 .compactResultsTable td[data-align="right"] {
   text-align:right;
 }

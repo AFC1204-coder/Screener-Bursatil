@@ -245,6 +245,32 @@ describe("columna Deterioro (modo weakness / orden weaknessScore)", () => {
   });
 });
 
+describe("cabeceras ordenables", () => {
+  it("marca la columna activa con indicador de dirección", () => {
+    const html = renderTable({
+      perfPeriod: "perf6m",
+      sort: "perf6m",
+      sortAsc: false,
+      onSortColumn: () => {},
+    });
+    expect(html).toContain("columnHeadBtn isActive");
+    expect(html).toContain("aria-sort=\"descending\"");
+    expect(html).toContain("sortIndicator");
+    expect(html).toContain("↓");
+    expect(html).toContain("Rend. 6M");
+  });
+
+  it("muestra flecha ascendente cuando sortAsc es true", () => {
+    const html = renderTable({
+      sort: "rsGlobalPct",
+      sortAsc: true,
+      onSortColumn: () => {},
+    });
+    expect(html).toContain("aria-sort=\"ascending\"");
+    expect(html).toContain("↑");
+  });
+});
+
 describe("etapa de Weinstein en una palabra", () => {
   it("traduce cada estado semanal", () => {
     expect(stageWord({ weeklyStageState: "stage2" }).word).toBe("Etapa 2");
