@@ -1,5 +1,9 @@
-# Ticket activo — libre
+# Ticket activo — INT-1-KR-IN
 
-Último cerrado: **INT-1-merge** (fusión materializados multi-mercado).
+Ver prompt completo: **`docs/tickets/INT-1-KR-IN.md`**
 
-Siguiente: ver `docs/backlog-activo.md`.
+Abrir **Agent chat nuevo** con `@docs/tickets/INT-1-KR-IN.md` · **Composer Medium**.
+
+Estado: **pendiente programación**.
+
+Después (orquestador, sin Agent): opción B — smoke chart `.HK` / `.AX`.

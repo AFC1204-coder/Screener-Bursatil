@@ -5,8 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **siguiente** (ver backlog).  
+Ticket en curso: **INT-1-KR-IN**.  
+Prompt: **`docs/tickets/INT-1-KR-IN.md`**  
 Último cerrado: **INT-1-merge**.  
+Orden acordado: **A** (KR/IN cron) → **B** (smoke chart intl, orquestador).  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
 ## Hecho (esta oleada)
@@ -34,8 +36,9 @@ Ticket en curso: **siguiente** (ver backlog).
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| INT-1+ | KR/IN/… cron curado; ampliar EXTRA AU | Tras merge | Composer |
-| INT-1-chart-intl | Smoke chart `.HK` / `.AX` | Bajo riesgo | Orquestador |
+| INT-1-KR-IN | Cohorts cron KR + IN + EXTRA KR + curated-core | Opción A | Composer Medium |
+| INT-1-chart-intl | Smoke chart `.HK` / `.AX` | Opción B tras A | Orquestador |
+| INT-1+ | IL/CN/BR/MX; ampliar EXTRA AU | Después | Composer |
 
 ## Track internacional (privado, pre-licencia pública)
 
