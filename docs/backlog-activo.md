@@ -5,9 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-6** (+ **UX-P3** Día 2).  
-Prompt: **`docs/tickets/UX-6-expert-editor-sidebar.md`** · **`docs/tickets/UX-P3-markets-compact.md`**.  
-Último cerrado: **UX-P1 + UX-P2**.  
+Ticket en curso: **libre**.  
+Último cerrado: **UX-6 + UX-P3**.  
 **Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas.  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
@@ -49,13 +48,13 @@ Prompt: **`docs/tickets/UX-6-expert-editor-sidebar.md`** · **`docs/tickets/UX-P
 | UX-P | Brief producto final (Gemini); chrome laboratorio → podar | `f9588a0` + análisis |
 | UX-P1 | Chrome superior: sin Estado OK; percentil = badge; smoke | `58c2aa4` |
 | UX-P2 | Toolbar: JSON audit en ⋯; Revisar primario; «Resultados» | `58c2aa4` |
+| UX-6 | Sidebar: Ajustes de sesión; bases en advanced; smoke EE.UU. 47/3321 | (este commit) |
+| UX-P3 | Banderas en Personalizar mercados; presets regionales; smoke | (mismo commit) |
 
 ## Siguiente — producto final (inmediato)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-6 | Editor experto + presets fuera del flujo diario | **en curso** · Día 2 | Composer |
-| UX-P3 | Mercados: regiones + banderas colapsables | Día 2 · hermano | Composer |
 | UX-7 | Chips de vista + «+ Filtro» | Día 3 | Composer |
 | UX-P4 | Cabecera vista rápida / triage | Día 3 · P2 | Composer |
 | UX-P5 | Móvil ~390px | Día 4 · P2 | Composer |

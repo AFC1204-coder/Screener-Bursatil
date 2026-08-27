@@ -1,9 +1,5 @@
-# Ticket activo — UX-6 (+ UX-P3 Día 2)
+# Ticket activo — libre
 
-Prompt principal: **`docs/tickets/UX-6-expert-editor-sidebar.md`**  
-Hermano mismo día: **`docs/tickets/UX-P3-markets-compact.md`**
+Último cerrado: **UX-6 + UX-P3** (Día 2).
 
-**Modelo:** Composer  
-
-Orden sugerido en el chat de programación: **UX-6 → UX-P3** (o P3 primero si UX-6 se atasca en editor; no mezclar diffs confusos).  
-Sin commit ni push. Pegar retorno(s) al orquestador.
+Siguiente: **UX-7 + UX-P4** (Día 3). Backlog: `docs/backlog-activo.md`.

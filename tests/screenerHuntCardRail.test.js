@@ -1,7 +1,7 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi, beforeAll } from "vitest";
-import { FilterTemplatePanel } from "@/lib/screenerFiltersView";
+import { FilterTemplatePanel, OptionalBasePresetsPanel } from "@/lib/screenerFiltersView";
 import { HUNT_CARDS } from "@/lib/screenerHuntCards";
 
 const Stub = ({ marker }) => React.createElement("div", { "data-stub": marker });
@@ -157,8 +157,27 @@ function makeProps({ presetKey = "balanced", markets = ["US"] } = {}) {
 }
 
 describe("FilterTemplatePanel bases opcionales", () => {
-  it("lista solo los presets fuera del rail diario", () => {
+  it("no expone bases opcionales en el primer viewport del panel", () => {
     const html = renderToStaticMarkup(React.createElement(FilterTemplatePanel, { presetKey: "balanced" }));
+    expect(html).toContain("Ajustes de sesión");
+    expect(html).toContain("Mercados y afinado");
+    expect(html).not.toContain("Bases opcionales");
+    expect(html).not.toContain("Líderes estrictos");
+    expect(templateButtonNames(html)).toEqual([]);
+  });
+
+  it("muestra el nombre interno solo fuera del rail diario", () => {
+    const html = renderToStaticMarkup(React.createElement(FilterTemplatePanel, { presetKey: "strict" }));
+    expect(html).toContain("Base Líderes estrictos");
+    expect(html).not.toContain("Mercados y afinado");
+  });
+});
+
+describe("OptionalBasePresetsPanel", () => {
+  it("lista solo los presets fuera del rail diario dentro de advanced", () => {
+    const html = renderToStaticMarkup(React.createElement(OptionalBasePresetsPanel, { presetKey: "balanced" }));
+    expect(html).toContain("Más bases de filtro");
+    expect(html).toContain("No sustituyen las fichas del centro");
     expect(templateButtonNames(html)).toEqual(["Líderes estrictos", "Etapa 2 temprana", "Exploratorio amplio"]);
   });
 });
@@ -194,5 +213,21 @@ describe("ScreenerShell hunt rail", () => {
     })));
     expect(html).toContain("pasan «Líderes intl»");
     expect(html).toMatch(/aria-selected="true"[^>]*>Líderes intl/);
+  });
+
+  it("mantiene presets regionales visibles y la rejilla de banderas colapsada", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
+    expect(html).toContain("marketPresetBar");
+    expect(html).toContain("Core intl");
+    expect(html).toContain("marketCustomizeDisclosure");
+    expect(html).toContain("Personalizar mercados");
+    expect(html).toMatch(/<details class="marketCustomizeDisclosure">[\s\S]*?marketGrid/);
+    expect(html).not.toMatch(/<details class="marketCustomizeDisclosure"[^>]*open=/);
+  });
+
+  it("anida bases opcionales dentro de configuración avanzada", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
+    expect(html).toMatch(/<details class="disclosurePanel advancedConfigPanel"[\s\S]*?Más bases de filtro/);
+    expect(html).not.toMatch(/filterTemplatePanel[\s\S]*?Líderes estrictos/);
   });
 });

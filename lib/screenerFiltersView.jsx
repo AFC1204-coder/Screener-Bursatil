@@ -21,7 +21,7 @@ import {
   isFieldRuleActive,
   settingApplies,
 } from "@/lib/screenerFilterLayers";
-import { optionalBasePresetEntries } from "@/lib/screenerHuntCards";
+import { isHuntCardPreset, optionalBasePresetEntries } from "@/lib/screenerHuntCards";
 import { ruleCountLabel } from "@/lib/screenerFormat";
 
 export function SetupChipRail({ rows = [], presetKey, setupMode, sort, onPreset, onMode, onSort }) {
@@ -125,28 +125,13 @@ export function FilterTemplatePanel({
   onSaveCloud,
   onLoadCloud,
 }) {
-  const optionalBases = optionalBasePresetEntries();
+  const internalPresetName = PRESETS[presetKey]?.name;
+  const showInternalPreset = !isHuntCardPreset(presetKey) && internalPresetName;
   return <section className="filterTemplatePanel">
     <div className="filterTemplateHead">
-      <span>Filtro editable</span>
-      <em>Base {PRESETS[presetKey]?.name || "personal"}</em>
+      <span>Ajustes de sesión</span>
+      <em>{showInternalPreset ? `Base ${internalPresetName}` : "Mercados y afinado"}</em>
     </div>
-
-    <details className="templateQuickPresets">
-      <summary><span>Bases opcionales</span><em>{optionalBases.length}</em></summary>
-      <div className="filterTemplateGrid">
-        {optionalBases.map(([key, preset]) => <button
-          type="button"
-          key={key}
-          className={`filterTemplateBtn ${presetKey === key ? "active" : ""}`}
-          onClick={() => onPreset?.(key)}
-          title={preset.desc}
-        >
-          <b>{preset.name}</b>
-          <small>{preset.desc}</small>
-        </button>)}
-      </div>
-    </details>
 
     <details className="savedTemplatesDisclosure">
       <summary><span>Mis plantillas</span><em>{savedTemplates.length} guardadas</em></summary>
@@ -168,6 +153,26 @@ export function FilterTemplatePanel({
       </div>
     </details>
   </section>;
+}
+
+export function OptionalBasePresetsPanel({ presetKey, onPreset }) {
+  const optionalBases = optionalBasePresetEntries();
+  return <details className="templateQuickPresets optionalBasePresets">
+    <summary><span>Más bases de filtro</span><em>{optionalBases.length}</em></summary>
+    <p className="optionalBasePresetsHint">No sustituyen las fichas del centro; cambian umbrales del filtro.</p>
+    <div className="filterTemplateGrid">
+      {optionalBases.map(([key, preset]) => <button
+        type="button"
+        key={key}
+        className={`filterTemplateBtn ${presetKey === key ? "active" : ""}`}
+        onClick={() => onPreset?.(key)}
+        title={preset.desc}
+      >
+        <b>{preset.name}</b>
+        <small>{preset.desc}</small>
+      </button>)}
+    </div>
+  </details>;
 }
 
 export function FilterFamilyModal({ layerKey, settings, filterLayers, fieldRules, onClose, onToggleLayer, onApplyAction, onUpdateSetting, onToggleFieldRule, onToggleLayeredSetting }) {

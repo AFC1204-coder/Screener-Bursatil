@@ -4703,6 +4703,32 @@ button.decisionIssueBadge:hover,
   gap:7px;
 }
 
+.marketCustomizeDisclosure {
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--surface2);
+}
+
+.marketCustomizeDisclosure summary {
+  min-height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:0 9px;
+  color:var(--soft);
+  cursor:pointer;
+}
+
+.marketCustomizeDisclosure summary span {
+  font-size:11px;
+  font-weight:700;
+}
+
+.marketCustomizeDisclosure .marketGrid {
+  padding:0 8px 8px;
+}
+
 .countryMarketChip {
   position:relative;
   min-width:0;
@@ -5057,6 +5083,13 @@ button.decisionIssueBadge:hover,
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   padding: 0 8px 8px;
+}
+
+.optionalBasePresetsHint {
+  margin: 0 8px 8px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
 }
 
 .filterTemplateBtn {
@@ -6439,6 +6472,20 @@ h2:not(.topbar h2) {
 .screenerTerminalPage .marketUniverseBtn {
   grid-column:1 / -1;
   margin-top:2px;
+}
+
+.screenerTerminalPage .marketCustomizeDisclosure {
+  border-color:var(--line);
+  background:var(--surface2);
+}
+
+.screenerTerminalPage .marketCustomizeDisclosure summary {
+  min-height:36px;
+  padding:0 10px;
+}
+
+.screenerTerminalPage .marketCustomizeDisclosure .marketGrid {
+  margin-top:0;
 }
 
 .screenerTerminalPage .marketGrid {

@@ -32,6 +32,7 @@ import {
 } from "@/app/screenerPanels";
 import { investorStatusLabel } from "@/lib/screenerFormat";
 import { huntDisplayName } from "@/lib/screenerHuntCards";
+import { OptionalBasePresetsPanel } from "@/lib/screenerFiltersView";
 import { buildMarketsStaleNotice } from "@/lib/marketAvailability";
 import { buildScreenerTruthLine, marketCountLabel } from "@/lib/screenerTruthLine";
 import {
@@ -57,6 +58,7 @@ import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 
 const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
+const MARKET_REGION_PRESETS = ["global", "us", "core-intl", "europe", "asia", "hk"];
 
 function showScanStatusBar(err, status = "") {
   if (err) return true;
@@ -260,6 +262,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     sortAsc,
     scannedAt,
   });
+  const selectableMarketCount = MARKETS.filter(([code]) => isMarketSelectable(code)).length;
+  const hasActiveMarketPreset = MARKET_REGION_PRESETS.some((key) => isMarketPresetActive(key));
+  const marketCustomizeLabel = `Personalizar mercados (${markets.length}/${selectableMarketCount})${hasActiveMarketPreset ? "" : " · personalizado"}`;
   const marketsMisalignment = marketsStale
     ? buildMarketsStaleNotice({
       scannedMarkets,
@@ -372,7 +377,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               ["hk", "HK"],
             ].map(([key, label]) => <button key={key} className={`btn btnGhost btnSmall ${isMarketPresetActive(key) ? "btnActive" : ""}`} onClick={() => marketPreset(key)}>{label}</button>)}
           </div>
-          <div className="marketSelector marketGrid">
+          <details className="marketCustomizeDisclosure">
+            <summary><span>{marketCustomizeLabel}</span></summary>
+            <div className="marketSelector marketGrid">
             {MARKETS.map(([c, n]) => {
               const active = markets.includes(c);
               const selectable = isMarketSelectable(c);
@@ -396,7 +403,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
                 <span className="marketChipCode">{c}</span>
               </button>;
             })}
-          </div>
+            </div>
+          </details>
         </div>
 
         {/* Configuración avanzada: agrupa capas, umbrales, reglas de campo, alcance de
@@ -406,6 +414,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             <span>Configuración avanzada</span>
             <em>{advancedChangeCount > 0 ? `Avanzado · ${advancedChangeCount} ${advancedChangeCount === 1 ? "cambio" : "cambios"}` : "Sin cambios sobre el preset"}</em>
           </summary>
+
+        <OptionalBasePresetsPanel presetKey={presetKey} onPreset={setPreset} />
 
         <FilterArchitecturePanel
           filterLayers={filterLayers}
