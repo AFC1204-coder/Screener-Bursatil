@@ -16,7 +16,7 @@
 // que mantiene viva la caché de la ruta (CACHEABLE_ROWS_LIMIT = 8.000).
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getLatestScanFromCloud, STARTUP_ROWS_LIMIT } from "@/lib/cloudSyncClient";
+import { getLatestScanFromCloud, getLatestScanFromCloudForMarkets, STARTUP_ROWS_LIMIT } from "@/lib/cloudSyncClient";
 
 function jsonResponse(body, ok = true) {
   return { ok, json: async () => body };
@@ -54,5 +54,18 @@ describe("getLatestScanFromCloud · el arranque pide un escaneo, no diez", () =>
     // (CACHEABLE_ROWS_LIMIT): por encima, cada arranque en frío repetiría la
     // consulta más cara de la app contra Supabase.
     expect(rowsLimit).toBeLessThanOrEqual(8000);
+  });
+
+  it("getLatestScanFromCloudForMarkets normaliza mercados en la URL", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, configured: true, scans: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getLatestScanFromCloudForMarkets(["jp"]);
+
+    const [url] = fetchMock.mock.calls[0];
+    const parsed = new URL(String(url), "https://statsedge.test");
+    expect(parsed.searchParams.get("anchor")).toBe("markets");
+    expect(parsed.searchParams.get("markets")).toBe("JP");
+    expect(parsed.searchParams.get("rowsLimit")).toBe(String(STARTUP_ROWS_LIMIT));
   });
 });

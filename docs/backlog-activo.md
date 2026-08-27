@@ -5,8 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **INT-1-P1** (cargar materializado por mercado).  
-Prompt: **`docs/tickets/INT-1-P1-market-scan-load.md`**  
+Ticket en curso: **INT-1** (siguiente: P0 TW / banner mercados stale, o HK cron).  
+Informe INT-0: **`docs/tickets/INT-0-audit.md`**  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
 ## Hecho (esta oleada)
@@ -22,13 +22,15 @@ Prompt: **`docs/tickets/INT-1-P1-market-scan-load.md`**
 | RS smoke | RS canónico en tabla, vista rápida y `/review` (Browser Use 2026-08-26) | (código previo `1f20345` / guards tests) |
 | P5 | Aviso al apagar capas que degradan `setupMode` / reglas doble capa | `9ee5775` |
 | B2-chart | Preview línea instantáneo + transición velas; timeout 15s fetch; smoke modal/review OK | `5d28d5f` |
+| INT-0 | Auditoría multi-mercado (repo ↔ Supabase) | `36cbcdd` |
+| INT-1-P1 | Cargar materializado al elegir 1 mercado; aviso HK sin scan; smoke CA/US/HK | (este commit) |
 
 ## Siguiente (orden sugerido)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| INT-0 | **Auditoría multi-mercado** — qué filtra/muestra mal hoy | Informe `docs/tickets/INT-0-audit.md` (2026-08-27) | Orquestador ✓ |
-| INT-1+ | Fixes derivados de INT-0 | **En curso:** INT-1-P1 materializado por mercado (`docs/tickets/INT-1-P1-market-scan-load.md`) | Composer |
+| INT-1 P0 | TW failed / banner mercados stale | Ver §7 INT-0 | Composer |
+| INT-1+ | HK/AU materializado usable; fusión multi-mercado | Tras P0 | Composer |
 
 ## Track internacional (privado, pre-licencia pública)
 

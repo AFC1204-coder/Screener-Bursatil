@@ -6,13 +6,13 @@ import QuickReviewModal from "@/app/components/screener/QuickReviewModal";
 import ScreenerShell from "@/app/components/screener/ScreenerShell";
 import { useQuickReviewSession } from "@/app/components/screener/useQuickReviewSession";
 import { useResultViewModel } from "@/app/components/screener/useResultViewModel";
-import { metricTruthMetaForRow } from "@/app/components/ui/TrustSignals";
+import { normalizeMarketList } from "@/lib/markets";
 import { FilterFamilyModal } from "@/app/screenerPanels";
 import { activeLayerCount, layerStatusText, scanFailureExplanation, searchText, userFacingServiceError } from "@/lib/screenerFormat";
 import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
-import { getLatestScanFromCloud, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
+import { getLatestScanFromCloud, getLatestScanFromCloudForMarkets, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
 import { dateTime, pct } from "@/lib/formatters";
 import { avg, avgVolume } from "@/lib/indicators";
 import StorageAlert from "@/app/components/StorageAlert";
@@ -368,6 +368,7 @@ export default function Page() {
   // ya restaurados por otra vía).
   const resultsOwnerRef = useRef("none");
   const manualRefreshGenRef = useRef(0);
+  const marketLoadGenRef = useRef(0);
   function restoreSnapshot(scan, { source = "local", notice = null } = {}) {
     if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) return false;
     resultsOwnerRef.current = source;
@@ -1056,6 +1057,99 @@ export default function Page() {
     }
     return gaps;
   }
+  function loadScanForMarketSelection(nextMarkets, label = "Mercados actualizados.") {
+    const normalized = normalizeMarketList(nextMarkets, []);
+    const nextKey = normalized.slice().sort().join(",");
+    const scannedKey = (scanContext?.scannedMarkets || []).slice().sort().join(",");
+    if (nextKey === scannedKey) {
+      setStatus(label);
+      return;
+    }
+    // v1: solo auto-carga con un mercado; multi-mercado conserva filas + banner stale.
+    if (normalized.length !== 1) {
+      setStatus(label);
+      return;
+    }
+    const marketCode = normalized[0];
+    const useNightlyUs = marketCode === "US";
+    const loadGen = ++marketLoadGenRef.current;
+    setRestoringScan(true);
+    setStatus(useNightlyUs
+      ? "Cargando el escaneo nocturno..."
+      : `Cargando materializado ${marketName(marketCode)}…`);
+    const fetchPromise = useNightlyUs ? getLatestScanFromCloud() : getLatestScanFromCloudForMarkets(normalized);
+    fetchPromise.then((result) => {
+      if (marketLoadGenRef.current !== loadGen) return;
+      if (!result.ok || result.configured === false) {
+        if (result.message) console.error("[snapshot] materializado por mercado:", result.message);
+        setStatus(userFacingServiceError(result.message, "No se pudo cargar el materializado de ese mercado."));
+        return;
+      }
+      if (useNightlyUs) {
+        const nightly = result.data?.nightly || null;
+        const scan = pickNightlyUsRestorableScan(result.data?.scans || []);
+        if (!scan) {
+          setSnapshotNotice(nightlyAbsenceNotice(nightly?.found === false ? nightly : { reason: "no-nightly-scan" }));
+          setStatus(nightlyAbsenceStatus(nightly?.found === false ? nightly : { reason: "no-nightly-scan" }));
+          return;
+        }
+        const storedScans = safeRead(STORAGE_KEYS.scans, []);
+        safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])]));
+        applyFreshSnapshotData(scan, {
+          notice: buildSnapshotFreshnessNotice(result.data, scan),
+          scanSignature: { markets: normalized, manual, scanMode },
+        });
+        setStatus(`Últimos datos de la nube cargados: ${scan.rows.length} acciones (${marketName("US")}).`);
+        return;
+      }
+      const marketsMeta = result.data?.markets || null;
+      if (marketsMeta?.found === false) {
+        if (marketsMeta.reason === "insufficient-rows") {
+          setSnapshotNotice({
+            tone: "warn",
+            label: "Materializado",
+            detail: `${marketName(marketCode)}: materializado insuficiente (${marketsMeta.rowCount ?? 0} filas). Usa escaneo manual o espera al cron.`,
+            source: "materialized",
+          });
+        } else if (marketsMeta.reason === "materialized-not-publishable") {
+          setSnapshotNotice({
+            tone: "warn",
+            label: "Materializado",
+            detail: `${marketName(marketCode)}: el último materializado no es publicable (${marketsMeta.rejectedScan?.status || "failed"}). Usa escaneo manual o espera al cron.`,
+            source: "materialized",
+          });
+        } else {
+          // sin scan exacto (p. ej. HK/AU solo tienen lotes mixtos US,HK,AU)
+          setSnapshotNotice({
+            tone: "warn",
+            label: "Materializado",
+            detail: `${marketName(marketCode)}: no hay materializado publicable para este mercado. Usa escaneo manual o espera al cron.`,
+            source: "materialized",
+          });
+        }
+        setStatus(label);
+        return;
+      }
+      const scan = (result.data?.scans || [])[0];
+      if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) {
+        setStatus(`${marketName(marketCode)}: sin materializado publicable en la nube.`);
+        return;
+      }
+      const storedScans = safeRead(STORAGE_KEYS.scans, []);
+      safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])]));
+      applyFreshSnapshotData(scan, {
+        notice: buildSnapshotFreshnessNotice(result.data, scan),
+        scanSignature: { markets: normalized, manual, scanMode },
+      });
+      setStatus(`Materializado ${marketName(marketCode)} cargado: ${scan.rows.length} acciones.`);
+    }).catch((error) => {
+      console.error("[snapshot] materializado por mercado:", error);
+      if (marketLoadGenRef.current !== loadGen) return;
+      setStatus(userFacingServiceError(error?.message, "No se pudo cargar el materializado de ese mercado."));
+    }).finally(() => {
+      if (marketLoadGenRef.current === loadGen) setRestoringScan(false);
+    });
+  }
   function setMarketsAndInvalidate(nextMarkets, label = "Mercados actualizados.") {
     const normalized = (Array.isArray(nextMarkets) ? nextMarkets : [])
       .filter((code, index, list) => MARKET_META[code] && list.indexOf(code) === index);
@@ -1063,10 +1157,7 @@ export default function Page() {
     setUniverse([]);
     setUniverseScope("");
     announceCoverage(normalized);
-    // Los resultados cargados se conservan: cambiar mercados no filtra filas
-    // (gobernaba el universo del scan); el aviso de cobertura cuenta lo que
-    // aplica y el banner de staleness marca la divergencia. Nada que ejecutar.
-    setStatus(label);
+    loadScanForMarketSelection(normalized, label);
   }
   function resetScreenerSession() {
     manualRefreshGenRef.current += 1;

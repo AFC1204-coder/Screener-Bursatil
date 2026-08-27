@@ -1,9 +1,9 @@
-# Ticket activo — INT-1-P1
+# Ticket activo — INT-1 (siguiente)
 
-Ver prompt completo: **`docs/tickets/INT-1-P1-market-scan-load.md`**
+INT-1-P1 cerrado 2026-08-27 (materializado por mercado).
 
-Abrir **Agent chat nuevo** con `@docs/tickets/INT-1-P1-market-scan-load.md` · modelo **Composer**.
+Candidatos siguientes (INT-0 §7):
+1. **P0** — banner/copy cuando mercados ≠ scan cargado; TW `failed`.
+2. **P1+** — cron HK/AU usable; fusión multi-mercado.
 
-Estado: **pendiente programación** (dueño eligió P1 del informe INT-0).
-
-Contexto: al seleccionar **un mercado** (CA, JP, GB…), cargar su último scan materializado desde Supabase; arranque US intacto; HK/AU con umbral mínimo de filas.
+Esperando priorización del dueño.

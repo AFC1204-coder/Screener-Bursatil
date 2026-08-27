@@ -3,8 +3,9 @@ import { compactResearchRow } from "@/lib/researchRowContract";
 import { isPublicScanStatus } from "@/lib/scanStatus";
 import { prepareScanDecisionRow, scanDecisionMetrics, scanDecisionRaw, scanDecisionRowFromDb } from "@/lib/scanDecisionProjection";
 import { clearScansApiCache, LATEST_SCAN_TTL_MS, scansApiCache } from "@/lib/scansApiCache";
+import { readLatestMaterializedScanForMarkets, sortedMarketsForLookup } from "@/lib/materializedScanLookup";
 import { readNightlyUsScan } from "@/lib/nightlyUsScan";
-import { NIGHTLY_US_ANCHOR } from "@/lib/scanLocalId";
+import { MARKETS_ANCHOR, NIGHTLY_US_ANCHOR } from "@/lib/scanLocalId";
 import { snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { attachCachedMarketCap, readMarketCapForSymbols } from "@/lib/fundamentalsCache";
 import { attachWeeklyRs, readGlobalRsForSymbols } from "@/lib/globalRs";
@@ -516,10 +517,92 @@ export async function GET(req) {
   // de agosto de 2026, UNA acción italiana frente a las 3.313 estadounidenses).
   // Ver lib/nightlyUsScan.js.
   const anchoredToNightlyUs = searchParams.get("anchor") === NIGHTLY_US_ANCHOR;
+  const anchoredToMarkets = searchParams.get("anchor") === MARKETS_ANCHOR;
+  const requestedMarkets = anchoredToMarkets
+    ? sortedMarketsForLookup(String(searchParams.get("markets") || searchParams.get("market") || "").split(","))
+    : [];
   try {
     const cacheableLatest = includeRows && !includeDeleted && limit === 1 && rowsLimit <= CACHEABLE_ROWS_LIMIT;
-    const cacheKey = `latest:${config.ownerId}:${rowsLimit}:${decisionProjection ? "decision" : full ? "full" : "compact"}:${anchoredToNightlyUs ? NIGHTLY_US_ANCHOR : "any"}`;
+    const marketsCacheKey = anchoredToMarkets ? requestedMarkets.join(",") : "";
+    const cacheKey = `latest:${config.ownerId}:${rowsLimit}:${decisionProjection ? "decision" : full ? "full" : "compact"}:${anchoredToNightlyUs ? NIGHTLY_US_ANCHOR : anchoredToMarkets ? `${MARKETS_ANCHOR}:${marketsCacheKey}` : "any"}`;
     const loadPayload = async () => {
+      if (anchoredToMarkets) {
+        if (!requestedMarkets.length) {
+          return {
+            configured: true,
+            ok: true,
+            projection: decisionProjection ? "decision" : full ? "full" : "compact",
+            scans: [],
+            scanTombstones: [],
+            markets: { found: false, reason: "no-markets", requested: [], matchedScanId: null, rowCount: 0 },
+          };
+        }
+        const materialized = await readLatestMaterializedScanForMarkets(requestedMarkets, {
+          timeoutMs: SCANS_SUPABASE_TIMEOUT_MS,
+          columns: scanSelect,
+        });
+        if (!materialized.scan) {
+          return {
+            configured: true,
+            ok: true,
+            projection: decisionProjection ? "decision" : full ? "full" : "compact",
+            scans: [],
+            scanTombstones: [],
+            markets: {
+              found: false,
+              reason: materialized.reason || "no-materialized-scan",
+              requested: requestedMarkets,
+              matchedScanId: materialized.rejectedScan?.id || null,
+              rowCount: materialized.rejectedScan?.rowCount ?? 0,
+              rejectedScan: materialized.rejectedScan || null,
+            },
+          };
+        }
+        const scans = [materialized.row];
+        const activeScans = scans.filter((scan) => !scan.deleted_at);
+        let results = [];
+        let rowsSampled = false;
+        if (includeRows && activeScans.length && rowsLimit > 0) {
+          const ids = activeScans.map((scan) => scan.id).join(",");
+          const page = await readScanResultPages({
+            ownerId: config.ownerId,
+            scanIds: ids,
+            select: resultSelect,
+            rowsLimit,
+            rowsAvailable: activeScans.reduce((total, scan) => total + (Number(scan.row_count) || 0), 0),
+          });
+          results = page.rows;
+          rowsSampled = page.sampled;
+          if (!full && !decisionProjection) results = results.map((item) => ({ ...item, raw: compactResearchRow(item.raw) }));
+        }
+        const scanSymbols = results.map((item) => item.symbol).filter(Boolean);
+        const [weeklyRs, marketCaps] = await Promise.all([
+          readGlobalRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
+          readMarketCapForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
+        ]);
+        return {
+          configured: true,
+          ok: true,
+          projection: decisionProjection ? "decision" : full ? "full" : "compact",
+          scans: activeScans.map((scan) => scanFromDb(scan, results, {
+            decisionProjection,
+            includeRows,
+            rowsSampled,
+            omitDecisionTrace: !full && !decisionProjection,
+            weeklyRsBySymbol: weeklyRs.bySymbol,
+            marketCapBySymbol: marketCaps.bySymbol,
+          })),
+          scanTombstones: [],
+          markets: {
+            found: true,
+            reason: null,
+            requested: requestedMarkets,
+            matchedScanId: materialized.scan.id,
+            rowCount: materialized.scan.rowCount,
+            localId: materialized.scan.localId,
+          },
+        };
+      }
       const nightly = anchoredToNightlyUs
         ? await readNightlyUsScan({ timeoutMs: SCANS_SUPABASE_TIMEOUT_MS, columns: scanSelect })
         : null;
