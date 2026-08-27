@@ -1,6 +1,5 @@
-# Ticket activo — libre (esperando decisión producto)
+# Ticket activo — UX-4
 
-Último cerrado: **UX-1-filter-ia-redesign** (análisis).  
-Retorno: `docs/analisis-ux-filtros-ia-2026-08-27.md`.
+Ver: **`docs/tickets/UX-4-ghost-view-filters.md`**
 
-**Siguiente:** el dueño elige qué P0 implementar primero (UX-2 / UX-3 / UX-4).
+Orden: UX-4 → UX-3 → UX-2. Purga filtros fantasma de la vista.

@@ -5,11 +5,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre** (dueño elige P0 UX).  
+Ticket en curso: **UX-4**.  
+Prompt: **`docs/tickets/UX-4-ghost-view-filters.md`**  
 Último cerrado: **UX-1-filter-ia-redesign** (análisis → `docs/analisis-ux-filtros-ia-2026-08-27.md`).  
 **Prioridad dueño:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.  
-**Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; tickets UX-2…UX-9 abajo.
+**Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; orden implementación **UX-4 → UX-3 → UX-2**.
 
 ## Hecho (esta oleada)
 
@@ -43,9 +44,9 @@ Ticket en curso: **libre** (dueño elige P0 UX).
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-2 | Línea de verdad única + banner mercados con 1 CTA | P0 · bug/IA cáscara | Composer Medium |
-| UX-3 | Invariante orden=columna visible + sort por cabecera | P0 · principio 7.5 | Composer Medium |
-| UX-4 | Purga filtros fantasma de vista (10 juicios) | P0 · «lo que no está no filtra» | Composer Medium |
+| UX-4 | Purga filtros fantasma de vista (10 juicios) | P0 · **en curso** | Composer Medium |
+| UX-3 | Invariante orden=columna visible + sort por cabecera | P0 · siguiente | Composer Medium |
+| UX-2 | Línea de verdad única + banner mercados con 1 CTA | P0 · después | Composer Medium |
 | UX-5 | Rail de fichas de caza (5) | P1 · propuesta A | Composer / Fable si diseño |
 | UX-6 | Editor experto honesto (sin reglas muertas; capas→secciones) | P1 | Composer Medium |
 | UX-7 | Chips de vista con impacto + «+ Filtro» | P1 | Composer Medium |
