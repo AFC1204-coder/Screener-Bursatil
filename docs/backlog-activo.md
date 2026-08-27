@@ -7,9 +7,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Ticket en curso: **libre**.  
 Último cerrado: **UX-5**.  
-**Prioridad dueño:** US (base) · HK · CA · Europa.  
-**Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.  
-**Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 + UX-5 hechos.
+**Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas.  
+**Prioridad mercados:** US (base) · HK · CA · Europa.  
+**Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
+**Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 + UX-5 hechos.  
+**Decisión métricas (2026-08-27, no inmediato):** RS **global** = un solo ranking del universo privado con **ajuste por divisa**; RS **país** = calidad dentro del propio país; RS **tema** = por a qué se dedica la empresa (theme). Más adelante: muletas de tendencia + índice 0–100 de salud de etapa. VCP e indicadores nuevos = track paralelo, no bloquean UI.
 
 ## Hecho (esta oleada)
 
@@ -43,15 +45,29 @@ Ticket en curso: **libre**.
 | UX-2 | Línea de verdad + 1 banner mercados con CTA; smoke CTA resuelve stale | `60985a3` |
 | UX-5 | Rail 5 fichas de caza; smoke US/Deterioro/pivot/Core intl 198/210 | `2690ed7` |
 
-## Siguiente (orden sugerido)
+## Siguiente — producto final (inmediato)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-6 | Editor experto honesto (sin reglas muertas; capas→secciones) | P1 · opcional | Composer Medium |
-| UX-7 | Chips de vista con impacto + «+ Filtro» | P1 · opcional | Composer Medium |
-| UX-8 | Desglose «qué está filtrando ahora» | P2 | Composer Medium |
-| UX-9 | Copy / jerga percentil (parcial en UX-2) | P2 | MiniMax / Composer fast |
-| ~~IL/CN/BR/MX~~ | Aplazado | — | — |
+| UX-6 | Editor experto honesto (sin reglas muertas; capas→secciones) | P0 producto | Composer |
+| UX-7 | Chips de vista con impacto + «+ Filtro» | P0 producto | Composer |
+| UX-P | Pasada visual “producto final” (densidad, tipografía, rail, ficha/modal, vacío) | Brief Opus/Fable → tickets Composer | Opus brief + Composer |
+| UX-8 | Desglose «qué está filtrando ahora» | P1 | Composer |
+| UX-9 | Copy / jerga percentil (parcial en UX-2) | P1 | Composer fast |
+
+## Track métricas (paralelo, no inmediato)
+
+| ID | Qué | Estado |
+|---|---|---|
+| MET-1 | Spec RS global multi-mercado + factor divisa (un ranking) | Decisión dueño; sin ticket |
+| MET-2 | Spec RS país (calidad intra-país) | Decisión dueño; sin ticket |
+| MET-3 | Spec RS tema (ocupación / theme) | Decisión dueño; sin ticket |
+| MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | Ideas; sin ticket |
+| MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | Ambicioso; tras MET-1…4 |
+| MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
+| VCP | Detector producto vs corpus `research/contracciones/` | Aplazado / investigación |
+
+~~IL/CN/BR/MX~~ aplazado.
 
 ## Track internacional (privado, pre-licencia pública)
 
