@@ -39,7 +39,7 @@ Prompt: **`docs/tickets/UX-3-sort-visible-invariant.md`**
 | INT-1-intl-preset | Preset `intl` + mercados `core-intl` + auto fuera/US; smoke GB 23, Core 198/210, US Balanceado 3321 | `840ba52` |
 | INT-1-EU-secondary-JP | EU2→cohorts por país + curated-core JP/secondary; cron JP24/DK24/NO23; smoke chips OK | `b1247de` |
 | UX-1 | Encargo IA filtros/cáscara (stage analysis); dirección = mesa de vistas | `2c441a0` + análisis |
-| UX-4 | Purga filtros fantasma de vista; smoke 47=47 con claves fantasma | (este commit) |
+| UX-4 | Purga filtros fantasma de vista; smoke 47=47 con claves fantasma | `a890fa8` |
 
 ## Siguiente (orden sugerido)
 
