@@ -1,5 +1,7 @@
-# Ticket activo
+# Ticket activo — B2-chart
 
-Ninguno. Último cerrado: **P5** (aviso al apagar capas).
+Ver prompt completo: **`docs/tickets/B2-chart.md`**
 
-Siguiente: uso real 15–20 min; luego decidir si hay fix puntual o backlog aplazado.
+Abrir **Agent chat nuevo** con `@docs/tickets/B2-chart.md` · modelo **Composer**.
+
+Estado: **pendiente programación** (orquestador espera retorno).

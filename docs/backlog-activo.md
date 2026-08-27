@@ -3,9 +3,10 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-08-26 · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: ninguno. Siguiente: **uso real** 15–20 min antes de más tickets.
+Ticket en curso: **B2-chart** (gráfico vista rápida / review).  
+**Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
 ## Hecho (esta oleada)
 
@@ -22,14 +23,38 @@ Ticket en curso: ninguno. Siguiente: **uso real** 15–20 min antes de más tick
 
 ## Siguiente (orden sugerido)
 
-_(vacío — oleada P1–P6 + P5 cerrada; siguiente ítem tras uso real)_
+| ID | Qué | Notas | Modelo |
+|---|---|---|---|
+| B2-chart | Gráfico vista rápida/review: loading infinito + preview | Dueño reprodujo; afecta US e intl por igual | Composer |
+| INT-0 | **Auditoría multi-mercado** — qué filtra/muestra mal hoy | Alcance = `DEFAULT_MARKETS` + listas `lib/universes.js` (CURATED/EXTRA/EXPANDED); cruce con filas ya en Supabase/local | Orquestador + SQL/DOM |
+| INT-1+ | Fixes derivados de INT-0 | Benchmarks, universo FIRDS, RS ausente honesto, nocturno por mercado, etc. | Tras auditoría |
+
+## Track internacional (privado, pre-licencia pública)
+
+Objetivo: las filas **no-US ya persistidas** entran en presets, filtros, tabla, vista rápida y ficha con la **misma dinámica** que US (salvo ausencias declaradas con motivo).
+
+**Alcance de la auditoría INT-0:** leer del repo, no preguntar al dueño — `DEFAULT_MARKETS` (`lib/screenerConfig.js`), `CURATED` / `EXTRA_UNIVERSES` / `EXPANDED_CORE` (`lib/universes.js`), `DEFAULT_SCAN_MARKETS` (`lib/markets.js`), y cruzar con símbolos que ya existen en scans/`scan_results`.
+
+| Capa | Estado conocido | Riesgo |
+|---|---|---|
+| Universo / símbolos | `lib/universes.js` + FIRDS/HKEX/J-Quants/TWSE/ASIC; Europa puede degradar a listas curadas si flags off | Población parcial sin aviso |
+| Scan / benchmarks | `serverScanRunner.loadBenchmarks` hidrata ^IBEX, ^GDAXI, etc. (fix documentado) | Verificar en scans vivos, no asumir |
+| RS canónico | Ranking semanal **solo universo US** (`rs_weekly_items`); intl → «–» + motivo (correcto) | No confundir con bug |
+| RS vs benchmark / composite | Percentiles de **lote**; mezcla multi-mercado cambia semántica | Producto: ¿filtrar por país antes de comparar? |
+| Nocturno / «qué cambió» | `weekly-changes` acotado a MIC US | Intl sin franja comparable |
+| Fundamentales ficha | EDGAR solo US; intl limitado | OK en privado con aviso |
+| Chart / API | Mismo B2-chart | Bloquea vista rápida intl |
+
+Licencia pública: Twelve Data Venture (~499 $/mes exhibición) u equivalente — **aplazado** hasta decisión de monetización (`docs/analisis-datos-financieros-2026-08-22.md` C.3–C.4).
 
 ## Aplazado / no oleada UI
 
-- Cutover Hito 1, tenancy, Twelve Data, contracciones/VCP, merge chart-controller.
+- Cutover Hito 1, tenancy, Twelve Data, merge chart-controller.
+- **VCP / contracciones en producto** — investigación activa en `research/contracciones/` + docs (`diseno-contracciones*.md`, citas Minervini/O'Neil/Weinstein); detector producto sigue en `lib/setupPatterns.js`.
 - Traducir inglés estructural restante.
-- Dos colas modal vs `/review` (estructural).
-- Badge «RS global» en chart: smoke pendiente si el histórico no termina de cargar (B2 / API histórico; no reimplementación RS).
+- Dos colas modal vs `/review` (estructural; baja prioridad si el modal basta).
+- ~~Resoluciones en nube~~ — **descartado** (dueño: no relevante).
+- Badge «RS global» en chart — subsumed by B2-chart smoke.
 
 ## Convención
 
