@@ -1,5 +1,5 @@
-# Ticket activo — libre
+# Ticket activo — UX-1-filter-ia-redesign
 
-Último cerrado: **INT-1-EU-secondary-JP**.
+Ver: **`docs/tickets/UX-1-filter-ia-redesign.md`**
 
-Backlog: `docs/backlog-activo.md`.
+Tipo: encargo de análisis (Fable 5 / Opus). Sin código. Sin commit ni push en el chat de programación.

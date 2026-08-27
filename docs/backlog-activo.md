@@ -5,7 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre**.  
+Ticket en curso: **UX-1-filter-ia-redesign**.  
+Prompt: **`docs/tickets/UX-1-filter-ia-redesign.md`**  
 Último cerrado: **INT-1-EU-secondary-JP**.  
 **Prioridad dueño:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
@@ -41,6 +42,7 @@ Ticket en curso: **libre**.
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
+| UX-1-filter-ia-redesign | Encargo: crítica + IA filtros/cáscara (stage analysis) | En curso · solo análisis | Fable 5 / Opus |
 | ~~IL/CN/BR/MX~~ | Aplazado | — | — |
 
 ## Track internacional (privado, pre-licencia pública)
