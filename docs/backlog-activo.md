@@ -20,7 +20,7 @@ Ticket en curso: **INT-0** (auditoría multi-mercado).
 | P3 | Gesto de filtro &lt;200 ms (fast-path / no sectorize / sort / debounce) | `3558ad5` |
 | RS smoke | RS canónico en tabla, vista rápida y `/review` (Browser Use 2026-08-26) | (código previo `1f20345` / guards tests) |
 | P5 | Aviso al apagar capas que degradan `setupMode` / reglas doble capa | `9ee5775` |
-| B2-chart | Preview línea instantáneo + transición velas; timeout 15s fetch; smoke modal/review OK | `9674498` |
+| B2-chart | Preview línea instantáneo + transición velas; timeout 15s fetch; smoke modal/review OK | `5d28d5f` |
 
 ## Siguiente (orden sugerido)
 
