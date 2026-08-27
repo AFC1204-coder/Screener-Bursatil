@@ -46,8 +46,8 @@ Ticket en curso: **libre**.
 | UX-2 | Línea de verdad + 1 banner mercados con CTA; smoke CTA resuelve stale | `60985a3` |
 | UX-5 | Rail 5 fichas de caza; smoke US/Deterioro/pivot/Core intl 198/210 | `2690ed7` |
 | UX-P | Brief producto final (Gemini); chrome laboratorio → podar | `f9588a0` + análisis |
-| UX-P1 | Chrome superior: sin Estado OK; percentil = badge; smoke | (este commit) |
-| UX-P2 | Toolbar: JSON audit en ⋯; Revisar primario; «Resultados» | (mismo commit) |
+| UX-P1 | Chrome superior: sin Estado OK; percentil = badge; smoke | `58c2aa4` |
+| UX-P2 | Toolbar: JSON audit en ⋯; Revisar primario; «Resultados» | `58c2aa4` |
 
 ## Siguiente — producto final (inmediato)
 
