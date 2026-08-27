@@ -6,6 +6,7 @@ import QuickReviewModal from "@/app/components/screener/QuickReviewModal";
 import ScreenerShell from "@/app/components/screener/ScreenerShell";
 import { useQuickReviewSession } from "@/app/components/screener/useQuickReviewSession";
 import { useResultViewModel } from "@/app/components/screener/useResultViewModel";
+import { metricTruthMetaForRow } from "@/app/components/ui/TrustSignals";
 import { normalizeMarketList } from "@/lib/markets";
 import { FilterFamilyModal } from "@/app/screenerPanels";
 import { activeLayerCount, layerStatusText, scanFailureExplanation, searchText, userFacingServiceError } from "@/lib/screenerFormat";
