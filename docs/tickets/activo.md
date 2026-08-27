@@ -1,9 +1,5 @@
-# Ticket activo — UX-7 (+ UX-P4 Día 3)
+# Ticket activo — libre
 
-Prompt principal: **`docs/tickets/UX-7-view-filter-chips.md`**  
-Hermano: **`docs/tickets/UX-P4-quick-review-header.md`**
+Último cerrado: **UX-7 + UX-P4** (Día 3).
 
-**Modelo:** Composer  
-
-Orden: **UX-7 → UX-P4**. Sin commit ni push.  
-Al cerrar, el orquestador corre tests + **`./vfc`** + smoke Browser Use.
+Siguiente: **UX-P5 + UX-8** (Día 4). Backlog: `docs/backlog-activo.md`.

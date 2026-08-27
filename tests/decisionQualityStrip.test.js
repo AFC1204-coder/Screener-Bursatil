@@ -387,8 +387,8 @@ describe("DecisionQualityStrip", () => {
   it("explica la vista filtrada sin emitir un veredicto sobre ella", () => {
     const html = renderToStaticMarkup(React.createElement(ResultFilterChips, {
       chips: [
-        { key: "evidence", label: "Pruebas: Validar", onClear: () => {} },
-        { key: "score", label: "Score: Descuadre", onClear: () => {} },
+        { key: "evidence", label: "Pruebas: Validar", impact: 8, onClear: () => {} },
+        { key: "score", label: "Score: Descuadre", impact: 4, onClear: () => {} },
       ],
       hiddenCount: 58,
       visibleCount: 12,
@@ -398,16 +398,19 @@ describe("DecisionQualityStrip", () => {
     }));
 
     expect(html).toContain("resultViewFocusSummary");
-    expect(html).toContain("Vista de investigación");
-    expect(html).toContain("12/70");
-    expect(html).toContain("58");
+    expect(html).toContain("Vista: 12/70");
+    expect(html).toContain("2 filtros");
+    expect(html).toContain("−58 ocultas");
     expect(html).toContain("Revisar vista");
     expect(html).toContain("Pruebas: Validar");
     expect(html).toContain("Score: Descuadre");
+    expect(html).toContain("resultFilterChipImpact");
+    expect(html).toContain(">8<");
     expect(html).toContain("Limpiar vista");
 
     expect(html).not.toContain("resultViewBrief");
     expect(html).not.toContain("Brief vista");
+    expect(html).not.toContain("Vista de investigación");
     expect(html).not.toContain("Lectura frágil");
     expect(html).not.toContain("Freno");
   });

@@ -104,12 +104,16 @@ export default function QuickReviewModal({
           </div>
         </div>
         <div className="profileHeaderRight quickReviewActions">
-          <button className="btn" onClick={() => moveQuickReview(-1)} disabled={modalReviewRows.length < 2}>Anterior</button>
-          <span className="quickReviewCounter">{modalReviewPosition + 1}/{modalReviewRows.length}</span>
-          <button className="btn btnPrimary" onClick={() => moveQuickReview(1)} disabled={modalReviewRows.length < 2}>Siguiente</button>
-          <Link className="btn" href={stockUrl(activeModalRow.symbol)} onPointerDown={() => saveQuickReviewStockOpen(activeModalRow, modalReviewPosition)} onClick={() => saveQuickReviewStockOpen(activeModalRow, modalReviewPosition)}>Ficha</Link>
-          <a className="btn" href={externalLinks(activeModalRow.symbol, activeModalRow.exchange).tradingView} target="_blank" rel="noreferrer">TradingView</a>
-          <button className="btn" onClick={closeQuickReview}>Cerrar</button>
+          <div className="quickReviewNavGroup" aria-label="Navegación de cola">
+            <button className="btn" onClick={() => moveQuickReview(-1)} disabled={modalReviewRows.length < 2}>Anterior</button>
+            <span className="quickReviewCounter">{modalReviewPosition + 1}/{modalReviewRows.length}</span>
+            <button className="btn btnPrimary" onClick={() => moveQuickReview(1)} disabled={modalReviewRows.length < 2}>Siguiente</button>
+          </div>
+          <div className="quickReviewExitGroup" aria-label="Salida">
+            <Link className="btn" href={stockUrl(activeModalRow.symbol)} onPointerDown={() => saveQuickReviewStockOpen(activeModalRow, modalReviewPosition)} onClick={() => saveQuickReviewStockOpen(activeModalRow, modalReviewPosition)}>Ficha</Link>
+            <a className="btn" href={externalLinks(activeModalRow.symbol, activeModalRow.exchange).tradingView} target="_blank" rel="noreferrer">TradingView</a>
+            <button className="btn" onClick={closeQuickReview}>Cerrar</button>
+          </div>
         </div>
       </div>
 

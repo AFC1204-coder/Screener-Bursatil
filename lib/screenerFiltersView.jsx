@@ -50,33 +50,26 @@ export function ResultFilterChips({ chips = [], hiddenCount = 0, visibleCount = 
   if (!chips.length && !hiddenCount) return null;
   const hasVisibleCounts = Number.isFinite(visibleCount) && Number.isFinite(totalCount);
   const visibleLabel = hasVisibleCounts ? `${visibleCount}/${totalCount}` : String(Math.max(0, Number(visibleCount) || 0));
+  const filterSummary = chips.length
+    ? `${chips.length} filtro${chips.length === 1 ? "" : "s"}`
+    : "sin filtros";
+  const hiddenSummary = hiddenCount > 0 ? ` · −${hiddenCount} ocultas` : "";
   return <div className="resultFilterChips">
-    <div className="resultViewFocusSummary" aria-label="Resumen de vista de investigación">
-      <span>
-        <em>Vista de investigación</em>
-        <b>{visibleLabel}</b>
-      </span>
-      <span>
-        <em>filtros</em>
-        <b>{chips.length}</b>
-      </span>
-      <span>
-        <em>ocultas</em>
-        <b>{hiddenCount}</b>
-      </span>
+    <div className="resultViewFocusSummary" aria-label="Resumen de vista activa">
+      <p className="resultViewFocusLine">
+        <b>Vista: {visibleLabel}</b>
+        <span> · {filterSummary}{hiddenSummary}</span>
+      </p>
       {onReview && Number(visibleCount) > 0 ? <button type="button" onClick={onReview}>Revisar vista</button> : null}
     </div>
     {/* El "Brief vista" (veredicto + Freno + Primero) se retiró: era el mismo
         juicio operativo que el panel Decisiones, solo que condicionado a tener
         filtros activos. buildResultViewBrief sigue calculándose. */}
     <div className="resultViewChipRail">
-      {hiddenCount > 0 ? <div className="resultFilterChipSummary">
-        <b>{hiddenCount}</b>
-        <span>ocultas por vista</span>
-      </div> : null}
-      {chips.map((chip) => <button type="button" key={chip.key} className="resultFilterChip" onClick={chip.onClear}>
+      {chips.map((chip) => <button type="button" key={chip.key} className="resultFilterChip" onClick={chip.onClear} title={chip.impact ? `${chip.impact} en esta opción` : undefined}>
         <span>{chip.label}</span>
-        <b>×</b>
+        {chip.impact ? <i className="resultFilterChipImpact">{chip.impact}</i> : null}
+        <b aria-hidden="true">×</b>
       </button>)}
       {chips.length ? <button type="button" className="resultFilterClear" onClick={onClearAll}>Limpiar vista</button> : null}
     </div>

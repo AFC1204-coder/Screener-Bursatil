@@ -177,6 +177,8 @@ describe("vista rápida: veredictos y estado interno retirados el 2026-08-24", (
   it("conserva la información legítima del valor y la navegación", () => {
     expect(html).toContain(">RETQ<");
     expect(html).toContain("Retirada Quick Corp.");
+    expect(html).toContain("quickReviewNavGroup");
+    expect(html).toContain("quickReviewExitGroup");
     expect(html).toContain("Anterior");
     expect(html).toContain("Siguiente");
     expect(html).toContain(">Ficha<");

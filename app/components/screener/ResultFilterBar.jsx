@@ -2,7 +2,7 @@
 
 // ResultFilterBar — slice presentacional de ScreenerShell.
 // Contiene los selects de resolución y orden, el
-// disclosure "Más filtros" (view-layers) y los ResultFilterChips.
+// CTA «+ Filtro» (view-layers) y los ResultFilterChips.
 // Recibe SOLO los slices que consume este bloque (no el prop-bag completo).
 
 import { ResultFilterChips } from "@/app/screenerPanels";
@@ -74,10 +74,10 @@ export default function ResultFilterBar({
           {legacySort ? <option value={legacySort.value}>Ordenar: {legacySort.label}</option> : null}
           {sortOptions.map((item) => <option key={item.value} value={item.value}>Ordenar: {item.label}</option>)}
         </select>
-        {/* View-layers: colapsados para reducir saturación de la barra de filtros. */}
+        {/* View-layers: CTA compacto; el prefijo «+» lo aporta el CSS del summary. */}
         {(viewLayers.country || viewLayers.theme || viewLayers.sector || viewLayers.industry || viewLayers.sectorStrength || viewLayers.ipo) ? (
           <details className="disclosurePanel compactDisclosure viewLayerFilters">
-            <summary><span>Más filtros</span><em>{viewFiltersActive} activos</em></summary>
+            <summary aria-label="Añadir filtro de vista"><span>Filtro</span>{viewFiltersActive ? <em>{viewFiltersActive} activo{viewFiltersActive === 1 ? "" : "s"}</em> : null}</summary>
             <div className="controls resultFilterBar viewLayerFilterGrid">
               {viewLayers.country ? <select className="select resultFilterSelect" value={countryFilter} onChange={(e) => onCountryFilter(e.target.value)} aria-label="Filtrar por país" data-active={countryFilter !== "Todos" ? "true" : "false"}>
                 {countryOptions.map((x) => <option key={x} value={x}>{optionLabel("País", x, countryCounts, (code) => `${code} · ${marketName(code)}`)}</option>)}

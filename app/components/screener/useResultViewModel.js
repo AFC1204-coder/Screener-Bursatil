@@ -368,13 +368,48 @@ export function useResultViewModel({
   const resolutionFilterActive = decisionResolutionFilter !== "all" ? 1 : 0;
   const viewFiltersActive = resolutionFilterActive + VIEW_LAYERS.reduce((sum, layer) => sum + (viewLayers[layer.key] ? viewFilterCounts[layer.key] : 0), 0);
   const resultFilterChips = [
-    viewLayers.country && countryFilter !== "Todos" ? { key: "country", label: `País: ${marketName(countryFilter)}`, onClear: () => setCountryFilter("Todos") } : null,
-    viewLayers.theme && themeFilter !== "Todos" ? { key: "theme", label: `Tema: ${themeFilter}`, onClear: () => setThemeFilter("Todos") } : null,
-    viewLayers.sector && sectorFilter !== "Todos" ? { key: "sector", label: `Sector: ${sectorFilter}`, onClear: () => setSectorFilter("Todos") } : null,
-    viewLayers.industry && industryFilter !== "Todos" ? { key: "industry", label: `Subsector: ${industryFilter}`, onClear: () => setIndustryFilter("Todos") } : null,
-    viewLayers.sectorStrength && sectorStrength !== "Todos" ? { key: "sectorStrength", label: `Fuerza: ${SECTOR_STRENGTH_LABELS[sectorStrength] || sectorStrength}`, onClear: () => setSectorStrength("Todos") } : null,
-    viewLayers.ipo && ipo !== "Todos" ? { key: "ipo", label: `IPO: ${ipo}`, onClear: () => setIpo("Todos") } : null,
-    decisionResolutionFilter !== "all" ? { key: "decisionResolution", label: `Resolución: ${decisionResolutionDisplayLabel(decisionResolutionFilter)}`, onClear: () => setDecisionResolutionFilter("all") } : null,
+    viewLayers.country && countryFilter !== "Todos" ? {
+      key: "country",
+      label: `País: ${marketName(countryFilter)}`,
+      impact: countryCounts.get(countryFilter) || 0,
+      onClear: () => setCountryFilter("Todos"),
+    } : null,
+    viewLayers.theme && themeFilter !== "Todos" ? {
+      key: "theme",
+      label: `Tema: ${themeFilter}`,
+      impact: themeCounts.get(themeFilter) || 0,
+      onClear: () => setThemeFilter("Todos"),
+    } : null,
+    viewLayers.sector && sectorFilter !== "Todos" ? {
+      key: "sector",
+      label: `Sector: ${sectorFilter}`,
+      impact: sectorCounts.get(sectorFilter) || 0,
+      onClear: () => setSectorFilter("Todos"),
+    } : null,
+    viewLayers.industry && industryFilter !== "Todos" ? {
+      key: "industry",
+      label: `Subsector: ${industryFilter}`,
+      impact: industryCounts.get(industryFilter) || 0,
+      onClear: () => setIndustryFilter("Todos"),
+    } : null,
+    viewLayers.sectorStrength && sectorStrength !== "Todos" ? {
+      key: "sectorStrength",
+      label: `Fuerza: ${SECTOR_STRENGTH_LABELS[sectorStrength] || sectorStrength}`,
+      impact: sectorStrengthCounts.get(sectorStrength) || 0,
+      onClear: () => setSectorStrength("Todos"),
+    } : null,
+    viewLayers.ipo && ipo !== "Todos" ? {
+      key: "ipo",
+      label: `IPO: ${ipo}`,
+      impact: ipoCounts.get(ipo) || 0,
+      onClear: () => setIpo("Todos"),
+    } : null,
+    decisionResolutionFilter !== "all" ? {
+      key: "decisionResolution",
+      label: `Resolución: ${decisionResolutionDisplayLabel(decisionResolutionFilter)}`,
+      impact: decisionResolutionOptions.find((item) => item.key === decisionResolutionFilter)?.count || 0,
+      onClear: () => setDecisionResolutionFilter("all"),
+    } : null,
   ].filter(Boolean);
   const resultViewBrief = useMemo(() => buildResultViewBrief({
     chips: resultFilterChips,

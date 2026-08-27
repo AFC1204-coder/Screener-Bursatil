@@ -5,9 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-7** (+ **UX-P4** Día 3).  
-Prompt: **`docs/tickets/UX-7-view-filter-chips.md`** · **`docs/tickets/UX-P4-quick-review-header.md`**.  
-Último cerrado: **UX-6 + UX-P3** (+ fix vfc `2ef71b9`).  
+Ticket en curso: **libre**.  
+Último cerrado: **UX-7 + UX-P4**.  
 **Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas.  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
@@ -52,13 +51,13 @@ Prompt: **`docs/tickets/UX-7-view-filter-chips.md`** · **`docs/tickets/UX-P4-qu
 | UX-P2 | Toolbar: JSON audit en ⋯; Revisar primario; «Resultados» | `58c2aa4` |
 | UX-6 | Sidebar: Ajustes de sesión; bases en advanced; smoke EE.UU. 47/3321 | `52d2f47` |
 | UX-P3 | Banderas en Personalizar mercados; presets regionales; smoke | `52d2f47` |
+| UX-7 | «+ Filtro»; chips con impacto; Vista N/M; smoke tema −46 | (este commit) |
+| UX-P4 | Modal nav/salida agrupados; triage active; smoke Candidata | (mismo commit) |
 
 ## Siguiente — producto final (inmediato)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-7 | Chips de vista + «+ Filtro» | **en curso** · Día 3 | Composer |
-| UX-P4 | Cabecera vista rápida / triage | Día 3 · hermano | Composer |
 | UX-P5 | Móvil ~390px | Día 4 · P2 | Composer |
 | UX-8 | Desglose «qué filtra ahora» | Día 4 · P2 | Composer |
 | UX-9 | Copy / jerga percentil (parcial) | P2 | Composer fast |

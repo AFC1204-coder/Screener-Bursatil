@@ -2641,6 +2641,19 @@ button.dataHealthSummaryItem:hover,
 .quickReviewActions {
   flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 12px;
+}
+
+.quickReviewNavGroup,
+.quickReviewExitGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quickReviewExitGroup {
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
 }
 
 .quickReviewCounter {
@@ -4442,7 +4455,51 @@ button.decisionIssueBadge:hover,
 }
 
 .quickReviewResolveRail {
-  margin:10px 0;
+  margin: 10px 0;
+  border-color: var(--line2);
+  background: rgba(8, 10, 14, .92);
+}
+
+.quickReviewResolveRail > span {
+  color: #c7ced9;
+  letter-spacing: .1em;
+}
+
+.quickReviewResolveRail button {
+  border-color: rgba(148, 163, 184, .35);
+  background: rgba(15, 17, 22, .94);
+  color: #e8edf5;
+}
+
+.quickReviewResolveRail button.good {
+  border-color: rgba(74, 222, 128, .55);
+  color: #bbf7d0;
+}
+
+.quickReviewResolveRail button.warn {
+  border-color: rgba(251, 191, 36, .55);
+  color: #fde68a;
+}
+
+.quickReviewResolveRail button.bad {
+  border-color: rgba(248, 113, 113, .55);
+  color: #fecaca;
+}
+
+.quickReviewResolveRail button.neutral {
+  border-color: rgba(148, 163, 184, .4);
+  color: #dbe4f0;
+}
+
+.quickReviewResolveRail button.active {
+  border-color: #f8fafc;
+  background: #f8fafc;
+  color: #0b0d12;
+  box-shadow: 0 0 0 1px rgba(248, 250, 252, .18);
+}
+
+.quickReviewResolveRail button:disabled {
+  opacity: .42;
 }
 
 .screenerReviewLayout {
@@ -4897,9 +4954,17 @@ button.decisionIssueBadge:hover,
     min-width:0;
   }
   .quickReviewActions {
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:7px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .quickReviewNavGroup,
+  .quickReviewExitGroup {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    padding-left: 0;
+    border-left: 0;
   }
   .quickReviewCounter {
     display:grid;
@@ -5406,10 +5471,37 @@ button.decisionIssueBadge:hover,
 }
 
 .resultViewFocusSummary {
-  display: grid;
-  grid-template-columns: minmax(0,1fr) auto auto auto;
+  display: flex;
   align-items: center;
-  gap: 1px;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 7px 12px;
+}
+
+.resultViewFocusLine {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  min-width: 0;
+  color: #d8dce5;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.resultViewFocusLine b {
+  color: #f8fafc;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.resultViewFocusLine span {
+  color: #8f98a8;
+  font-size: 11px;
 }
 
 .resultViewFocusSummary > span {
@@ -5602,6 +5694,24 @@ button.decisionIssueBadge:hover,
   font-size: 13px;
 }
 
+.resultFilterChipImpact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  min-height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(59, 120, 240, .14);
+  color: #bfdbfe;
+  font-family: var(--font-data);
+  font-size: 10px;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  font-weight: 760;
+  line-height: 1;
+}
+
 .resultFilterClear {
   color: var(--muted);
 }
@@ -5616,7 +5726,8 @@ button.decisionIssueBadge:hover,
   }
 
   .resultViewFocusSummary {
-    grid-template-columns: repeat(3,minmax(0,1fr));
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .resultViewBrief {
@@ -8364,10 +8475,9 @@ button.decisionOperatingIssue:hover {
   background: rgba(59, 120, 240, .06);
 }
 
-/* "Más filtros" — mismo eje y altura que los selects, sin hueco muerto */
+/* "+ Filtro" — mismo eje y altura que los selects, sin ocupar toda la fila */
 .screenerTerminalPage .viewLayerFilters {
   margin-top: 0;
-  grid-column: 1 / -1;
 }
 .screenerTerminalPage .viewLayerFilters > summary {
   min-height: 36px;
