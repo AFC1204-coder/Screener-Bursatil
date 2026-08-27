@@ -1,5 +1,5 @@
-# Ticket activo — libre
+# Ticket activo — UX-5
 
-Último cerrado: **UX-2** (P0 cáscara: UX-4 → UX-3 → UX-2).
+Ver: **`docs/tickets/UX-5-hunt-card-rail.md`**
 
-Siguiente oleada sugerida: **UX-5** (rail de fichas). Backlog: `docs/backlog-activo.md`.
+Rail de 5 fichas de caza (mesa de vistas). Tras cerrar: resumen de oleada UX con el dueño.

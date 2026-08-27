@@ -5,11 +5,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre**.  
+Ticket en curso: **UX-5**.  
+Prompt: **`docs/tickets/UX-5-hunt-card-rail.md`**  
 Último cerrado: **UX-2** (P0 UX-4→3→2 cerrado).  
 **Prioridad dueño:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.  
-**Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 hecho; siguiente **UX-5**.
+**Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 hecho; **UX-5 en curso**.
 
 ## Hecho (esta oleada)
 
@@ -46,7 +47,7 @@ Ticket en curso: **libre**.
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-5 | Rail de fichas de caza (5) | P1 · **siguiente** | Composer / Fable si diseño |
+| UX-5 | Rail de fichas de caza (5) | P1 · **en curso** | Composer Medium |
 | UX-6 | Editor experto honesto (sin reglas muertas; capas→secciones) | P1 | Composer Medium |
 | UX-7 | Chips de vista con impacto + «+ Filtro» | P1 | Composer Medium |
 | UX-8 | Desglose «qué está filtrando ahora» | P2 | Composer Medium |
