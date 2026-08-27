@@ -300,6 +300,62 @@
   color:var(--accent);
 }
 
+.screenerFilterBreakdown {
+  margin:6px 0 0;
+}
+
+.screenerFilterBreakdown > summary {
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  padding:0;
+  color:var(--accent);
+  cursor:pointer;
+  list-style:none;
+}
+
+.screenerFilterBreakdown > summary::-webkit-details-marker {
+  display:none;
+}
+
+.screenerFilterBreakdown > summary span {
+  font-size:11px;
+  font-weight:640;
+  letter-spacing:.01em;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+
+.screenerFilterBreakdownBody {
+  margin-top:4px;
+  padding:0 0 2px;
+}
+
+.screenerFilterBreakdownBody p {
+  margin:0 0 4px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:520;
+  line-height:1.45;
+}
+
+.screenerFilterBreakdownBody p:last-of-type {
+  margin-bottom:0;
+}
+
+.screenerFilterBreakdownAuditLink {
+  margin-top:6px;
+  border:0;
+  padding:0;
+  background:transparent;
+  color:var(--accent);
+  font-size:11px;
+  font-weight:620;
+  text-decoration:underline;
+  text-underline-offset:2px;
+  cursor:pointer;
+}
+
 /* Dot indicator para controles cuyo valor actual difiere del último scan
    mostrado. Va inline junto al label del control (markets / cobertura).
    --oxido: riesgo real / "algo no encaja"; spec v2 §2 regla 5. */
@@ -4561,6 +4617,66 @@ button.decisionIssueBadge:hover,
 }
 
 @media(max-width:480px) {
+  .huntCardRailScroll {
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+    scroll-snap-type:x proximity;
+    scrollbar-width:none;
+    margin:6px -8px 0;
+    padding:0 8px 2px;
+    gap:6px;
+  }
+  .huntCardRailScroll::-webkit-scrollbar {
+    display:none;
+  }
+  .huntCardRailScroll button {
+    flex:0 0 auto;
+    min-width:max-content;
+    scroll-snap-align:start;
+  }
+  .screenerTerminalPage {
+    padding:12px 10px 72px;
+  }
+  .screenerHeroBar {
+    padding:8px 0 6px;
+    margin-bottom:6px;
+    border-bottom:0;
+  }
+  .screenerHeroBar .title {
+    font-size:22px;
+  }
+  .screenerHeroTitle {
+    gap:3px;
+  }
+  .screenerEyebrow {
+    padding:3px 6px;
+    font-size:9px;
+  }
+  .screenerHeroTitle > p {
+    font-size:11px;
+  }
+  .screenerTerminalPage .searchCard {
+    margin-bottom:4px !important;
+  }
+  .screenerTerminalPage .searchPanelBare {
+    padding:8px;
+  }
+  .screenerTruthLine {
+    margin:5px 0 0;
+    font-size:11px;
+    gap:4px 6px;
+  }
+  .screenerFilterBreakdown {
+    margin-top:4px;
+  }
+  .mobileMarketTape {
+    margin-bottom:6px !important;
+  }
+  .mobileIndexTapeHeader {
+    margin-bottom:4px !important;
+  }
   .searchBar {
     grid-template-columns:minmax(0,1fr) auto!important;
   }
@@ -4842,7 +4958,7 @@ button.decisionIssueBadge:hover,
 @media(max-width:760px) {
   .huntCardRail {
     gap:6px;
-    margin:10px 0 0;
+    margin:8px 0 0;
   }
   .huntCardRail button {
     min-height:34px;
@@ -4885,6 +5001,8 @@ button.decisionIssueBadge:hover,
     z-index:90;
     max-height:none;
     padding:12px 14px calc(120px + env(safe-area-inset-bottom));
+    border-radius:14px 14px 0 0;
+    box-shadow:0 -10px 36px rgba(0,0,0,.34);
     background:var(--surface) ;
   }
   .sidebar.mobileOpen .mobileSidebarHeader {

@@ -34,6 +34,7 @@ import { investorStatusLabel } from "@/lib/screenerFormat";
 import { huntDisplayName } from "@/lib/screenerHuntCards";
 import { OptionalBasePresetsPanel } from "@/lib/screenerFiltersView";
 import { buildMarketsStaleNotice } from "@/lib/marketAvailability";
+import { buildScreenerFilterBreakdown } from "@/lib/screenerFilterBreakdown";
 import { buildScreenerTruthLine, marketCountLabel } from "@/lib/screenerTruthLine";
 import {
   ALL_FILTER_LAYERS,
@@ -261,6 +262,13 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     sort,
     sortAsc,
     scannedAt,
+  });
+  const filterBreakdown = buildScreenerFilterBreakdown({
+    diagnostics,
+    passCount: resultsRows.length,
+    presetName: huntLabel,
+    hiddenByView,
+    viewChips: resultFilterChips,
   });
   const selectableMarketCount = MARKETS.filter(([code]) => isMarketSelectable(code)).length;
   const hasActiveMarketPreset = MARKET_REGION_PRESETS.some((key) => isMarketPresetActive(key));
@@ -522,6 +530,26 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             <span>{truthLine}</span>
             {visibleBatchRows ? <span className="percentileScopeBadge" title={PERCENTILE_BATCH_NOTE} aria-label={`Muestra parcial · percentil por lote. ${PERCENTILE_BATCH_NOTE}`}>Muestra parcial · percentil por lote</span> : null}
           </p>
+          <details className="screenerFilterBreakdown">
+            <summary><span>{filterBreakdown.summaryLabel}</span></summary>
+            <div className="screenerFilterBreakdownBody">
+              {filterBreakdown.lines.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
+              {filterBreakdown.hasDiagnostics ? (
+                <button
+                  type="button"
+                  className="screenerFilterBreakdownAuditLink"
+                  onClick={() => {
+                    persistAdvancedOpen(true);
+                    setShowMobileFilters(true);
+                  }}
+                >
+                  Ver auditoría
+                </button>
+              ) : null}
+            </div>
+          </details>
         </section>
 
         <section className="mobileResearchHome">

@@ -5,13 +5,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-P5** (+ **UX-8** Día 4).  
-Prompt: **`docs/tickets/UX-P5-mobile-390.md`** · **`docs/tickets/UX-8-filter-breakdown.md`**.  
-Último cerrado: **UX-7 + UX-P4**.  
+Ticket en curso: **libre**.  
+Último cerrado: **UX-P5 + UX-8** (plan 4 días producto-final cerrado).  
 **Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas.  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
-**Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 + UX-5 hechos.  
+**Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 + UX-5 + oleada producto-final (P1…P5, UX-6…8) hechos.  
 **Decisión métricas (2026-08-27, no inmediato):** RS **global** = un solo ranking del universo privado con **ajuste por divisa**; RS **país** = calidad dentro del propio país; RS **tema** = por a qué se dedica la empresa (theme). Más adelante: muletas de tendencia + índice 0–100 de salud de etapa. VCP e indicadores nuevos = track paralelo, no bloquean UI.  
 **Gate cierre:** tests del ticket + **`./vfc`** + smoke Browser Use.  
 **Modelo brief UX-P:** Gemini 3.7 Flash (aceptado).
@@ -54,14 +53,15 @@ Prompt: **`docs/tickets/UX-P5-mobile-390.md`** · **`docs/tickets/UX-8-filter-br
 | UX-P3 | Banderas en Personalizar mercados; presets regionales; smoke | `52d2f47` |
 | UX-7 | «+ Filtro»; chips con impacto; Vista N/M; smoke tema −46 | `7882d82` |
 | UX-P4 | Modal nav/salida agrupados; triage active; smoke Candidata | `7882d82` |
+| UX-P5 | Móvil 390: rail scroll; drawer sheet; smoke | (este commit) |
+| UX-8 | Desglose «¿Qué recorta?» bajo verdad; smoke 47/3321 | (mismo commit) |
 
 ## Siguiente — producto final (inmediato)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-P5 | Móvil ~390px | **en curso** · Día 4 | Composer |
-| UX-8 | Desglose «qué filtra ahora» | Día 4 · hermano | Composer |
-| UX-9 | Copy / jerga percentil (parcial) | P2 · opcional tras Día 4 | Composer fast |
+| UX-9 | Copy / jerga percentil (parcial) | P2 · opcional | Composer fast |
+| ~~plan 4 días brief~~ | P1–P5 + UX-6…8 | **cerrado** | — |
 
 ## Track métricas (paralelo, no inmediato)
 

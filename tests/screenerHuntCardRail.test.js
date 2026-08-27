@@ -190,6 +190,7 @@ describe("HuntCardRail", () => {
       onSelect: () => {},
     }));
     expect(html).toContain("huntCardRail");
+    expect(html).toContain("huntCardRailScroll");
     for (const card of HUNT_CARDS) {
       expect(html).toContain(card.label);
     }
@@ -201,6 +202,7 @@ describe("ScreenerShell hunt rail", () => {
   it("título y línea de verdad usan el nombre de la ficha, no Balanceado", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
     expect(html).toContain("huntCardRail");
+    expect(html).toContain("huntCardRailScroll");
     expect(html).toContain('class="title">Líderes Etapa 2</h1>');
     expect(html).toContain("pasan «Líderes Etapa 2»");
     expect(html).not.toContain("pasan «Balanceado»");
@@ -223,6 +225,19 @@ describe("ScreenerShell hunt rail", () => {
     expect(html).toContain("Personalizar mercados");
     expect(html).toMatch(/<details class="marketCustomizeDisclosure">[\s\S]*?marketGrid/);
     expect(html).not.toMatch(/<details class="marketCustomizeDisclosure"[^>]*open=/);
+  });
+
+  it("monta el desglose colapsable bajo la línea de verdad", () => {
+    const props = makeProps();
+    props.sidebar.diagnostics = {
+      analyzed: 3321,
+      finalCount: 47,
+      blocks: [{ label: "Etapa mínima", count: 2100 }],
+    };
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
+    expect(html).toContain("screenerFilterBreakdown");
+    expect(html).toContain("¿Qué recorta?");
+    expect(html).toContain("Ficha «Líderes Etapa 2» deja 47 de 3321");
   });
 
   it("anida bases opcionales dentro de configuración avanzada", () => {
