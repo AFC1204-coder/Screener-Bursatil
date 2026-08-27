@@ -5,7 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **INT-0** (auditoría multi-mercado).  
+Ticket en curso: **INT-1** (elegir fixes del informe INT-0).  
+Informe: **`docs/tickets/INT-0-audit.md`**  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
 ## Hecho (esta oleada)
@@ -26,8 +27,8 @@ Ticket en curso: **INT-0** (auditoría multi-mercado).
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| INT-0 | **Auditoría multi-mercado** — qué filtra/muestra mal hoy | Alcance = `DEFAULT_MARKETS` + listas `lib/universes.js` (CURATED/EXTRA/EXPANDED); cruce con filas ya en Supabase/local | Orquestador + SQL/DOM |
-| INT-1+ | Fixes derivados de INT-0 | Benchmarks, universo FIRDS, RS ausente honesto, nocturno por mercado, etc. | Tras auditoría |
+| INT-0 | **Auditoría multi-mercado** — qué filtra/muestra mal hoy | Informe `docs/tickets/INT-0-audit.md` (2026-08-27) | Orquestador ✓ |
+| INT-1+ | Fixes derivados de INT-0 | Ver §7 del informe (P0: copy/banner mercados, TW failed) | Tras decisión dueño |
 
 ## Track internacional (privado, pre-licencia pública)
 

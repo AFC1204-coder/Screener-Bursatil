@@ -1,7 +1,11 @@
-# Ticket activo — INT-0
+# Ticket activo — INT-1 (pendiente decisión)
 
-Ver backlog: **`docs/backlog-activo.md`** (track internacional).
+Informe base: **`docs/tickets/INT-0-audit.md`**
 
-Estado: **pendiente orquestador** — auditoría multi-mercado (lectura repo + cruce datos; sin programación hasta informe).
+Estado: **esperando priorización** — INT-0 cerrado 2026-08-27.
 
-B2-chart cerrado 2026-08-27 (smoke Browser Use: canvas + RS global en vista rápida y `/review` al instante).
+Candidatos P0 del informe:
+1. Copy/banner honesto cuando mercados seleccionados ≠ scan cargado (US 3319 al abrir).
+2. TW scan `failed` (0 filas) — diagnosticar o ocultar mercado.
+
+Abrir Agent chat con ticket INT-1 cuando el dueño elija ítems.
