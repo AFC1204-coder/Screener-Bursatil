@@ -41,7 +41,6 @@ Ticket en curso: **libre**.
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| — | Corridas restantes secondary (FI/BE/PT/AT/IE) | Orquestador si hace falta | — |
 | ~~IL/CN/BR/MX~~ | Aplazado | — | — |
 
 ## Track internacional (privado, pre-licencia pública)
