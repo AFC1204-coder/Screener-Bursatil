@@ -5,7 +5,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **B2-chart** (gráfico vista rápida / review).  
+Ticket en curso: **INT-0** (auditoría multi-mercado).  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
 ## Hecho (esta oleada)
@@ -20,12 +20,12 @@ Ticket en curso: **B2-chart** (gráfico vista rápida / review).
 | P3 | Gesto de filtro &lt;200 ms (fast-path / no sectorize / sort / debounce) | `3558ad5` |
 | RS smoke | RS canónico en tabla, vista rápida y `/review` (Browser Use 2026-08-26) | (código previo `1f20345` / guards tests) |
 | P5 | Aviso al apagar capas que degradan `setupMode` / reglas doble capa | `9ee5775` |
+| B2-chart | Preview línea instantáneo + transición velas; timeout 15s fetch; smoke modal/review OK | `9674498` |
 
 ## Siguiente (orden sugerido)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| B2-chart | Gráfico vista rápida/review: loading infinito + preview | Dueño reprodujo; afecta US e intl por igual | Composer |
 | INT-0 | **Auditoría multi-mercado** — qué filtra/muestra mal hoy | Alcance = `DEFAULT_MARKETS` + listas `lib/universes.js` (CURATED/EXTRA/EXPANDED); cruce con filas ya en Supabase/local | Orquestador + SQL/DOM |
 | INT-1+ | Fixes derivados de INT-0 | Benchmarks, universo FIRDS, RS ausente honesto, nocturno por mercado, etc. | Tras auditoría |
 
@@ -43,7 +43,7 @@ Objetivo: las filas **no-US ya persistidas** entran en presets, filtros, tabla, 
 | RS vs benchmark / composite | Percentiles de **lote**; mezcla multi-mercado cambia semántica | Producto: ¿filtrar por país antes de comparar? |
 | Nocturno / «qué cambió» | `weekly-changes` acotado a MIC US | Intl sin franja comparable |
 | Fundamentales ficha | EDGAR solo US; intl limitado | OK en privado con aviso |
-| Chart / API | Mismo B2-chart | Bloquea vista rápida intl |
+| Chart / API | B2-chart cerrado (preview línea + fetch OHLC) | Verificar intl en INT-0 |
 
 Licencia pública: Twelve Data Venture (~499 $/mes exhibición) u equivalente — **aplazado** hasta decisión de monetización (`docs/analisis-datos-financieros-2026-08-22.md` C.3–C.4).
 

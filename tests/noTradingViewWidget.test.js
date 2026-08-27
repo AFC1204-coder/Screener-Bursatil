@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { localBarsForRow } from "@/app/RowPriceChart";
+import { localBarsForRow, resolveRowChartSource } from "@/app/RowPriceChart";
 
 // El widget incrustado de TradingView se retiró de la vista rápida y de la
 // pantalla de revisión: las tres superficies (ficha, vista rápida, revisión)
@@ -83,5 +83,33 @@ describe("localBarsForRow · qué preview vale como fuente local", () => {
   it("fila sin preview → sin barras locales", () => {
     expect(localBarsForRow(null, "1")).toEqual([]);
     expect(localBarsForRow({}, "1")).toEqual([]);
+  });
+});
+
+describe("resolveRowChartSource · preview interino en línea (B2)", () => {
+  const closeOnly = [
+    { date: "2026-07-01", close: 100, volume: 10 },
+    { date: "2026-07-02", close: 101, volume: 12 },
+  ];
+  const settings = { range: "1A", interval: "D", style: "1", scale: "price" };
+
+  it("con vela + preview close-only usa línea interina y conserva preferredStyle", () => {
+    const out = resolveRowChartSource({ chartPreview: closeOnly }, settings);
+    expect(out.bars).toHaveLength(2);
+    expect(out.settings.style).toBe("8");
+    expect(out.preferredStyle).toBe("1");
+  });
+
+  it("con línea pedida devuelve el preview directamente", () => {
+    const out = resolveRowChartSource({ chartPreview: closeOnly }, { ...settings, style: "8" });
+    expect(out.bars).toHaveLength(2);
+    expect(out.settings.style).toBe("8");
+    expect(out.preferredStyle).toBeNull();
+  });
+
+  it("sin preview no inventa barras", () => {
+    const out = resolveRowChartSource({ symbol: "TEST" }, settings);
+    expect(out.bars).toEqual([]);
+    expect(out.preferredStyle).toBeNull();
   });
 });

@@ -81,12 +81,28 @@ export function useChartController(props = {}) {
     patternOverlay = null,
     showPatternDiagnostics = false,
     localQuality = null,
+    preferredStyle = null,
     className = "",
     height = 460,
   } = props || {};
 
-  // 1: config canónica.
-  const config = useMemo(() => resolveChartViewportConfig(settings || {}), [settings]);
+  // 1: config canónica. Depende de valores, no de la identidad del objeto
+  // settings (el caller puede pasar literales nuevos cada render).
+  const config = useMemo(
+    () => resolveChartViewportConfig(settings || {}),
+    [
+      settings?.range,
+      settings?.interval,
+      settings?.style,
+      settings?.scale,
+      settings?.indicators?.volume,
+      settings?.indicators?.rsLine,
+      settings?.indicators?.maFast,
+      settings?.indicators?.maFastLength,
+      settings?.indicators?.maSlow,
+      settings?.indicators?.maSlowLength,
+    ],
+  );
 
   // 2: data model (fetch, aborto, calidad P0).
   const dataModel = useChartDataModel({
@@ -94,6 +110,25 @@ export function useChartController(props = {}) {
     localSource: { bars, quality: localQuality },
     config: { dataRange: config.dataRange, interval: config.interval, style: config.style },
   });
+
+  // Tras el fetch remoto, el estilo de dibujo puede ser distinto al interino
+  // (preview close-only en línea mientras llegan velas OHLC).
+  const renderConfig = useMemo(() => {
+    const targetStyle = preferredStyle || config.style;
+    const remoteReady = dataModel.requestState === "settled"
+      && dataModel.availability === "ready"
+      && (dataModel.rows?.length || 0) > 0;
+    if (preferredStyle && remoteReady && targetStyle !== config.style) {
+      return { ...config, style: targetStyle };
+    }
+    return config;
+  }, [
+    config,
+    preferredStyle,
+    dataModel.requestState,
+    dataModel.availability,
+    dataModel.rows?.length,
+  ]);
 
   const rows = dataModel.rows;
   const rowTimes = dataModel.rowTimes;
@@ -195,7 +230,7 @@ export function useChartController(props = {}) {
         profile: measured.profile,
         width: measured.width,
         height: measured.height,
-        config,
+        config: renderConfig,
         rows,
         colors,
         overrides: {
@@ -267,7 +302,7 @@ export function useChartController(props = {}) {
     symbol,
     config.dataRange,
     config.interval,
-    config.style,
+    renderConfig.style,
     config.scale,
     height,
     patternOverlayKey,

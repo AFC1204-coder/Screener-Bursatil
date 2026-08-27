@@ -329,10 +329,8 @@ function MiniSparkline({ bars = [] }) {
   </svg>;
 }
 // Gráfico de la pantalla de revisión: el mismo de la ficha, vía el envoltorio
-// compartido. Aquí hay más espacio que en la vista rápida, así que la altura
-// es mayor. `RowPriceChart` decide si el `chartPreview` de la fila sirve como
-// fuente local o hay que pedir la serie real — el preview del screener es
-// close-only y no se puede dibujar como velas.
+// compartido. `RowPriceChart` pinta el preview close-only en línea al instante
+// y pide OHLC real para velas cuando el estilo pedido es vela.
 const REVIEW_CHART_SETTINGS = {
   ...DEFAULT_CHART_SETTINGS,
   range: "6M",

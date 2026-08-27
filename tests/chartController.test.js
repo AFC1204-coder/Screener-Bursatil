@@ -315,7 +315,7 @@ describe("useChartController · ciclo de vida (ADR §5.4, §5.5)", () => {
     expect(deps).toContain("symbol");
     expect(deps).toContain("config.dataRange");
     expect(deps).toContain("config.interval");
-    expect(deps).toContain("config.style");
+    expect(deps).toContain("renderConfig.style");
     expect(deps).toContain("config.scale");
     expect(deps).toContain("height");
     // Dependencias de overlays e indicadores (regresión del paso 7 al

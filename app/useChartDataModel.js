@@ -36,6 +36,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { chartDataModel, shouldRequestRemoteBars } from "@/lib/chartDataModel";
 import { getJson } from "@/lib/clientApi";
 
+// Presupuesto cliente: evita «Cargando histórico…» infinito si la red cuelga.
+const CHART_FETCH_TIMEOUT_MS = 15000;
+
 // Clave estable del request: identifica la combinación (symbol, dataRange,
 // interval) cuya respuesta debe invalidar a la anterior. Misma forma que la
 // caracterización de `tests/chartUniversalPriceChartBehavior.test.js`.
@@ -268,7 +271,7 @@ export function useChartDataModel(input = {}) {
     const params = new URLSearchParams({ symbol, range: dataRange, interval });
     const url = `/api/chart?${params.toString()}`;
 
-    getJson(url, { signal: controller.signal })
+    getJson(url, { signal: controller.signal, timeoutMs: CHART_FETCH_TIMEOUT_MS })
       .then((payload) => {
         // §3.7.1: respuesta vieja tras cambio de key/rango/intervalo. El
         // abort por sí solo no se considera suficiente; comparamos

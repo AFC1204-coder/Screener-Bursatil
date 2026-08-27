@@ -1,7 +1,7 @@
-# Ticket activo — B2-chart
+# Ticket activo — INT-0
 
-Ver prompt completo: **`docs/tickets/B2-chart.md`**
+Ver backlog: **`docs/backlog-activo.md`** (track internacional).
 
-Abrir **Agent chat nuevo** con `@docs/tickets/B2-chart.md` · modelo **Composer**.
+Estado: **pendiente orquestador** — auditoría multi-mercado (lectura repo + cruce datos; sin programación hasta informe).
 
-Estado: **pendiente programación** (orquestador espera retorno).
+B2-chart cerrado 2026-08-27 (smoke Browser Use: canvas + RS global en vista rápida y `/review` al instante).

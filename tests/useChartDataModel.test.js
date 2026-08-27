@@ -226,6 +226,23 @@ describe("useChartDataModel · dispatchResolve · contrato §3.4", () => {
     expect(out.notice?.code).toBe("history-expanding");
   });
 
+  it("plan loading + preview close-only en línea (B2): chart visible mientras llega OHLC", () => {
+    const closeOnly = [
+      { date: "2026-06-01", close: 100, volume: 10 },
+      { date: "2026-06-02", close: 101, volume: 12 },
+      { date: "2026-06-03", close: 102, volume: 11 },
+    ];
+    const out = dispatchResolve({
+      symbol: "AAPL",
+      localSource: { bars: closeOnly, quality: { status: "real" } },
+      config: { ...STANDARD_CONFIG, style: "8" },
+      plan: { generation: 5, needsRemote: true, requestState: "loading" },
+    });
+    expect(out.availability).toBe("ready");
+    expect(out.rows.length).toBeGreaterThan(1);
+    expect(out.notice?.code).toBe("history-expanding");
+  });
+
   it("plan loading + local estimado (cubre el rango): blocked + requestState=loading + quality notice", () => {
     const out = dispatchResolve({
       symbol: "AAPL",

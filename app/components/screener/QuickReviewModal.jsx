@@ -35,12 +35,6 @@
 // El RS es ÚNICO en toda la superficie: el ranking semanal del universo
 // (lib/rsCanonical.js). El percentil del lote no puede aparecer bajo esa
 // etiqueta ni bajo ninguna otra en superficie de lectura.
-//
-// PENDIENTE SEÑALADO (fuera de este cambio): el gráfico muestra «Sin dato»
-// durante la carga y ante cualquier error, porque el texto explicativo del
-// controller (emptyFallback, app/useChartController.js) no lo consume nadie
-// y el preview close-only de la fila se descarta en estilo velas. Es un fallo
-// del chart compartido, documentado en el análisis (B2), no de esta vista.
 
 import Link from "next/link";
 import ChartPreferences from "@/app/ChartPreferences";

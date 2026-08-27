@@ -16,15 +16,13 @@
 //   2. Decide si `row.chartPreview` sirve como fuente local. El preview del
 //      screener es close-only (lib/screenerPipeline.js → contractCompactChartPreview
 //      guarda {date, close, volume, sma50, sma200}), así que en estilo vela
-//      no es dibujable: `barsAreCandleGrade` lo rechaza y el data model
-//      devolvería "Sin dato" sin llegar a pedir OHLC real, porque la
-//      suficiencia se decide por número de barras, no por su forma. Pasando
-//      `[]` en ese caso, el chart pide la serie real a /api/chart y pinta
-//      velas de verdad. En estilo línea/área el preview sí vale y se usa tal
-//      cual: pinta al instante y evita una petición.
+//      no es dibujable como tal: `resolveRowChartSource` lo pinta en línea al
+//      instante (`preferredStyle` conserva velas para cuando llegue /api/chart).
+//      En estilo línea/área el preview se usa directamente.
 
 "use client";
 
+import { useMemo } from "react";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { barsAreCandleGrade, chartQuality } from "@/lib/chartDataQuality";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
@@ -52,6 +50,35 @@ export function localBarsForRow(row = null, style = DEFAULT_CHART_SETTINGS.style
   return barsAreCandleGrade(preview) ? preview : NO_LOCAL_BARS;
 }
 
+/**
+ * Fuente local + ajustes efectivos para filas del screener.
+ * Si el estilo pedido es vela pero el preview es close-only, pinta el preview
+ * en línea al instante y conserva `preferredStyle` para pasar a velas cuando
+ * /api/chart devuelva OHLC real.
+ */
+export function resolveRowChartSource(row = null, settings = DEFAULT_CHART_SETTINGS) {
+  const requestedStyle = String(settings?.style || DEFAULT_CHART_SETTINGS.style);
+  const directBars = localBarsForRow(row, requestedStyle);
+  if (directBars.length) {
+    return { bars: directBars, settings, preferredStyle: null };
+  }
+
+  const preview = Array.isArray(row?.chartPreview) ? row.chartPreview : NO_LOCAL_BARS;
+  if (
+    preview.length >= 2
+    && !LINE_STYLES.has(requestedStyle)
+    && !barsAreCandleGrade(preview)
+  ) {
+    return {
+      bars: preview,
+      settings: { ...settings, style: "8" },
+      preferredStyle: requestedStyle,
+    };
+  }
+
+  return { bars: NO_LOCAL_BARS, settings, preferredStyle: null };
+}
+
 export default function RowPriceChart({
   row = null,
   settings = DEFAULT_CHART_SETTINGS,
@@ -62,7 +89,17 @@ export default function RowPriceChart({
   if (!row?.symbol) return <div className="previewEmpty">{emptyLabel}</div>;
 
   const links = externalLinks(row.symbol, row.exchange);
-  const bars = localBarsForRow(row, settings?.style);
+  const {
+    bars,
+    settings: chartSettings,
+    preferredStyle,
+  } = useMemo(() => resolveRowChartSource(row, settings), [
+    row,
+    settings?.range,
+    settings?.interval,
+    settings?.style,
+    settings?.scale,
+  ]);
   // ADR §3.2/§9: la calidad local viaja explícita. Solo tiene sentido cuando
   // efectivamente pasamos barras locales; si las descartamos, el veredicto lo
   // pone el payload remoto de /api/chart.
@@ -82,7 +119,8 @@ export default function RowPriceChart({
       symbol={row.symbol}
       currency={row.currency}
       tradingViewUrl={links.tradingView}
-      settings={settings}
+      settings={chartSettings}
+      preferredStyle={preferredStyle}
       relativeStrength={row.relativeStrength || row.relativeStrengthSeries}
       // El badge «RS global» del chart lleva el RS canónico (ranking semanal
       // del universo, lib/rsCanonical.js), como en la ficha. Antes recibía
