@@ -53,8 +53,8 @@ Ticket en curso: **libre**.
 | UX-P3 | Banderas en Personalizar mercados; presets regionales; smoke | `52d2f47` |
 | UX-7 | «+ Filtro»; chips con impacto; Vista N/M; smoke tema −46 | `7882d82` |
 | UX-P4 | Modal nav/salida agrupados; triage active; smoke Candidata | `7882d82` |
-| UX-P5 | Móvil 390: rail scroll; drawer sheet; smoke | (este commit) |
-| UX-8 | Desglose «¿Qué recorta?» bajo verdad; smoke 47/3321 | (mismo commit) |
+| UX-P5 | Móvil 390: rail scroll; drawer sheet; smoke | `0f42cda` |
+| UX-8 | Desglose «¿Qué recorta?» bajo verdad; smoke 47/3321 | `0f42cda` |
 
 ## Siguiente — producto final (inmediato)
 
