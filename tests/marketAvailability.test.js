@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ASIA, DEFAULT_MARKETS } from "@/lib/screenerConfig";
+import { EUROPE_PRIORITY_MARKETS } from "@/lib/markets";
 import {
   buildMarketsStaleNotice,
   isMarketSelectable,
@@ -25,6 +26,12 @@ describe("marketPresetMarkets", () => {
   it("DEFAULT_MARKETS no incluye TW", () => {
     expect(DEFAULT_MARKETS).not.toContain("TW");
     expect(marketPresetMarkets("global")).not.toContain("TW");
+  });
+
+  it("core-intl fusiona HK, CA y EU priority", () => {
+    const coreIntl = marketPresetMarkets("core-intl");
+    expect(coreIntl).toEqual(expect.arrayContaining(["HK", "CA", ...EUROPE_PRIORITY_MARKETS]));
+    expect(coreIntl).not.toContain("US");
   });
 });
 

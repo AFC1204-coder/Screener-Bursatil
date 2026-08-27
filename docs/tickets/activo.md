@@ -1,5 +1,5 @@
-# Ticket activo — INT-1-intl-preset
+# Ticket activo — libre
 
-Ver: **`docs/tickets/INT-1-intl-preset.md`**
+Último cerrado: **INT-1-intl-preset**.
 
-Prioridad: filtro + mercados para usar HK/CA/Europa sin tabla vacía.
+Backlog: `docs/backlog-activo.md`.

@@ -51,9 +51,13 @@ import {
   SCREENER_FILTER_PRESETS as PRESETS,
   filterLayersForPreset,
   filterStrictnessForPreset,
+  intlPresetAutoApplyStatus,
   settingsForPreset,
   setupModeDefaults,
   setupModeLayerRequirements,
+  shouldAutoApplyIntlFilterPreset,
+  shouldAutoRestoreBalancedFilterPreset,
+  uiSettingsOverridesFromScan,
 } from "@/lib/screenerFilterCatalog";
 import {
   FILTER_LAYERS_CONTRACT_VERSION,
@@ -374,15 +378,29 @@ export default function Page() {
   function restoreSnapshot(scan, { source = "local", notice = null } = {}) {
     if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) return false;
     resultsOwnerRef.current = source;
-    const restoredPresetKey = PRESETS[scan.preset] ? scan.preset : "balanced";
-    const restoredSettings = settingsForPreset(restoredPresetKey, scan.settings || {});
+    const actualScannedMarkets = scannedMarketsFromScan(scan, scan.rows);
+    const restoredPresetKeyRaw = PRESETS[scan.preset] ? scan.preset : "balanced";
+    const restoredMarketsForPreset = filterSelectableMarkets(
+      actualScannedMarkets.length ? actualScannedMarkets : [...markets].sort(),
+    );
+    let restoredPresetKey = shouldAutoApplyIntlFilterPreset(restoredMarketsForPreset, restoredPresetKeyRaw)
+      ? "intl"
+      : restoredPresetKeyRaw;
+    if (shouldAutoRestoreBalancedFilterPreset(restoredMarketsForPreset, restoredPresetKey)) {
+      restoredPresetKey = "balanced";
+    }
+    // El materializado trae minMarketCap/minAvgTurnover del cron: no pueden
+    // pisar el preset Intl (si no, la UI dice Intl pero filtra como Balanceado).
+    const restoredSettings = settingsForPreset(
+      restoredPresetKey,
+      uiSettingsOverridesFromScan(scan.settings || {}, restoredPresetKey),
+    );
     const restoredFilterLayers = restoreFilterLayers(scan.filterLayers, scan.filterLayersVersion, restoredPresetKey);
     const restoredFieldRules = { ...DEFAULT_FIELD_RULES, ...(scan.fieldRules || {}) };
     const restoredViewLayers = scan.viewLayers || DEFAULT_VIEW_LAYERS;
     const restoredUseRegimeFilter = scan.useRegimeFilter !== false;
     const restoredActiveSettings = scan.activeSettings || effectiveSettingsFromLayers(restoredSettings, restoredFilterLayers, restoredFieldRules);
     const restoredRowsAreFiltered = snapshotRowsAreFiltered(scan);
-    const actualScannedMarkets = scannedMarketsFromScan(scan, scan.rows);
     const signedMarkets = actualScannedMarkets.length ? actualScannedMarkets : [...markets].sort();
     const nextScanContext = {
       id: scan.id || uid(),
@@ -657,15 +675,26 @@ export default function Page() {
     setSavedFilterTemplates(normalizeFilterTemplates(safeRead(STORAGE_KEYS.screenerFilterTemplates, [])));
     const session = safeRead(STORAGE_KEYS.screenerSession, null);
     if (session?.version === SCREENER_SESSION_VERSION) {
-      const restoredPresetKey = PRESETS[session.presetKey] ? session.presetKey : "balanced";
+      const restoredPresetKeyRaw = PRESETS[session.presetKey] ? session.presetKey : "balanced";
       const restoredMarkets = filterSelectableMarkets(
         Array.isArray(session.markets) && session.markets.length ? session.markets : DEFAULT_MARKETS,
       );
+      let restoredPresetKey = shouldAutoApplyIntlFilterPreset(restoredMarkets, restoredPresetKeyRaw)
+        ? "intl"
+        : restoredPresetKeyRaw;
+      if (shouldAutoRestoreBalancedFilterPreset(restoredMarkets, restoredPresetKey)) {
+        restoredPresetKey = "balanced";
+      }
       const restoredManual = session.manual || "";
       const restoredUniverse = Array.isArray(session.universe) ? session.universe : [];
       let restoredRows = Array.isArray(session.rows) ? session.rows : [];
       let restoredAnalyzedRows = Array.isArray(session.analyzedRows) ? session.analyzedRows : [];
-      const restoredSettings = settingsForPreset(restoredPresetKey, session.settings || {});
+      // Si el preset se auto-corrigió (intl↔balanced), no rehidratar settings
+      // de la sesión: mezclarían umbrales del preset anterior.
+      const sessionSettingsOverrides = restoredPresetKey !== restoredPresetKeyRaw || restoredPresetKey === "intl"
+        ? {}
+        : (session.settings || {});
+      const restoredSettings = settingsForPreset(restoredPresetKey, sessionSettingsOverrides);
       const restoredFilterLayers = restoreFilterLayers(session.filterLayers, session.filterLayersVersion, restoredPresetKey);
       const restoredFieldRules = { ...DEFAULT_FIELD_RULES, ...(session.fieldRules || {}) };
       const restoredMarketHealth = session.marketHealth || null;
@@ -1203,6 +1232,20 @@ export default function Page() {
       if (marketLoadGenRef.current === loadGen) setRestoringScan(false);
     });
   }
+  function maybeAutoApplyIntlPreset(nextMarkets, currentPresetKey = presetKey) {
+    if (shouldAutoRestoreBalancedFilterPreset(nextMarkets, currentPresetKey)) {
+      setPreset("balanced");
+      statusContextRef.current = "Preset Balanceado (US)";
+      setStatus("Preset Balanceado restaurado (US). Capas del preset aplicadas.");
+      return "balanced";
+    }
+    if (!shouldAutoApplyIntlFilterPreset(nextMarkets, currentPresetKey)) return false;
+    const msg = intlPresetAutoApplyStatus();
+    setPreset("intl");
+    statusContextRef.current = msg;
+    setStatus(`${msg}. Capas del preset aplicadas.`);
+    return "intl";
+  }
   function setMarketsAndInvalidate(nextMarkets, label = "Mercados actualizados.") {
     const normalized = filterSelectableMarkets(
       (Array.isArray(nextMarkets) ? nextMarkets : [])
@@ -1212,6 +1255,7 @@ export default function Page() {
     setUniverse([]);
     setUniverseScope("");
     announceCoverage(normalized);
+    maybeAutoApplyIntlPreset(normalized);
     loadScanForMarketSelection(normalized, label);
   }
   function resetScreenerSession() {

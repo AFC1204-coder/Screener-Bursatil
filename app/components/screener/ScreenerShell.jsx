@@ -345,6 +345,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             {[
               ["global", "Global"],
               ["us", "EE. UU."],
+              ["core-intl", "Core intl"],
               ["europe", "Europa"],
               ["asia", "Asia"],
               ["hk", "HK"],

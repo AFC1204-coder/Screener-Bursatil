@@ -5,9 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **INT-1-intl-preset**.  
-Prompt: **`docs/tickets/INT-1-intl-preset.md`**  
-Último cerrado: **INT-1-EU-run**.  
+Ticket en curso: **libre**.  
+Último cerrado: **INT-1-intl-preset**.  
 **Prioridad dueño:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
@@ -35,12 +34,12 @@ Prompt: **`docs/tickets/INT-1-intl-preset.md`**
 | INT-1-chart-intl | Smoke ficha `/stock/0005.HK` y `/stock/BHP.AX` (chart API + UI) | (orquestador) |
 | INT-1-CA-EU | Curated-core CA + 8 cohorts EU priority; cron CA/GB/DE ≥15 | `56704e1` |
 | INT-1-EU-run | Corridas FR/NL/CH/SE/IT/ES (NL/IT 2ª pasada por cursor) | (orquestador) |
+| INT-1-intl-preset | Preset `intl` + mercados `core-intl` + auto fuera/US; smoke GB 23, Core 198/210, US Balanceado 3321 | (este commit) |
 
 ## Siguiente (orden sugerido)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| INT-1-intl-preset | Preset filtro Intl + Core intl mercados + auto fuera de US | Tabla vacía con Balanceado | Composer Medium |
 | — | Europa secondary / JP | Solo si dueño lo pide | — |
 | ~~IL/CN/BR/MX~~ | Aplazado | — | — |
 
