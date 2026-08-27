@@ -40,7 +40,7 @@ Ticket en curso: **libre**.
 | UX-1 | Encargo IA filtros/cáscara (stage analysis); dirección = mesa de vistas | `2c441a0` + análisis |
 | UX-4 | Purga filtros fantasma de vista; smoke 47=47 con claves fantasma | `a890fa8` |
 | UX-3 | Invariante sort↔periodo + cabeceras clicables; smoke 3M/6M/↑ + reload | `2ad795e` |
-| UX-2 | Línea de verdad + 1 banner mercados con CTA; smoke CTA resuelve stale | (este commit) |
+| UX-2 | Línea de verdad + 1 banner mercados con CTA; smoke CTA resuelve stale | `60985a3` |
 
 ## Siguiente (orden sugerido)
 
