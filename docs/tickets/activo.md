@@ -1,8 +1,9 @@
-# Ticket activo — UX-P
+# Ticket activo — UX-P1
 
-Prompt: **`docs/tickets/UX-P-producto-final-brief.md`**
+Prompt: **`docs/tickets/UX-P1-top-chrome-consolidation.md`**
 
-**Modelo:** Gemini 3.7 Flash (brief). Composer para implementar después.
+**Modelo:** Composer  
+**Siguiente (mismo día):** `docs/tickets/UX-P2-results-toolbar.md` (tras retorno P1, o mismo chat si P1 cierra limpio).
 
-Chat de programación/análisis: Agent nuevo con `@docs/tickets/UX-P-producto-final-brief.md`.  
-Sin commit ni push en ese chat. Pegar aquí el resumen de retorno.
+Análisis: `docs/analisis-ux-producto-final-2026-08-27.md`.  
+Sin commit ni push en el chat de programación.

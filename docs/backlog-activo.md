@@ -5,15 +5,15 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-P**.  
-Prompt: **`docs/tickets/UX-P-producto-final-brief.md`**  
-Último cerrado: **UX-5**.  
+Ticket en curso: **UX-P1**.  
+Prompt: **`docs/tickets/UX-P1-top-chrome-consolidation.md`** · Día 1 también `UX-P2`.  
+Último cerrado: **UX-P** (brief Gemini).  
 **Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas.  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
 **Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 + UX-5 hechos.  
 **Decisión métricas (2026-08-27, no inmediato):** RS **global** = un solo ranking del universo privado con **ajuste por divisa**; RS **país** = calidad dentro del propio país; RS **tema** = por a qué se dedica la empresa (theme). Más adelante: muletas de tendencia + índice 0–100 de salud de etapa. VCP e indicadores nuevos = track paralelo, no bloquean UI.  
-**Modelo brief UX-P:** Gemini 3.7 Flash (barato + capturas); Opus solo si hace falta desempate.
+**Modelo brief UX-P:** Gemini 3.7 Flash (aceptado).
 
 ## Hecho (esta oleada)
 
@@ -46,17 +46,21 @@ Prompt: **`docs/tickets/UX-P-producto-final-brief.md`**
 | UX-3 | Invariante sort↔periodo + cabeceras clicables; smoke 3M/6M/↑ + reload | `2ad795e` |
 | UX-2 | Línea de verdad + 1 banner mercados con CTA; smoke CTA resuelve stale | `60985a3` |
 | UX-5 | Rail 5 fichas de caza; smoke US/Deterioro/pivot/Core intl 198/210 | `2690ed7` |
+| UX-P | Brief producto final (Gemini); chrome laboratorio → podar | `f9588a0` + análisis |
 
 ## Siguiente — producto final (inmediato)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-P | Brief “producto final” (visual + superficie → tickets) | **en curso** · Gemini Flash | Gemini 3.7 Flash |
-| UX-6 | Editor experto honesto (sin reglas muertas; capas→secciones) | Tras UX-P o en paralelo si brief lo prioriza | Composer |
-| UX-7 | Chips de vista con impacto + «+ Filtro» | Tras UX-P | Composer |
-| UX-P1… | Tickets de pulido que salgan del brief | — | Composer |
-| UX-8 | Desglose «qué está filtrando ahora» | P1 | Composer |
-| UX-9 | Copy / jerga percentil (parcial en UX-2) | P1 | Composer fast |
+| UX-P1 | Consolidar hero / estado / percentil / verdad | **en curso** · Día 1 | Composer |
+| UX-P2 | Toolbar: ocultar JSON audit, jerarquía Revisar | Día 1 | Composer fast |
+| UX-6 | Editor experto + presets fuera del flujo diario | Día 2 | Composer |
+| UX-P3 | Mercados: regiones + banderas colapsables | Día 2 | Composer |
+| UX-7 | Chips de vista + «+ Filtro» | Día 3 | Composer |
+| UX-P4 | Cabecera vista rápida / triage | Día 3 · P2 | Composer |
+| UX-P5 | Móvil ~390px | Día 4 · P2 | Composer |
+| UX-8 | Desglose «qué filtra ahora» | Día 4 · P2 | Composer |
+| UX-9 | Copy / jerga percentil (parcial) | P2 | Composer fast |
 
 ## Track métricas (paralelo, no inmediato)
 
