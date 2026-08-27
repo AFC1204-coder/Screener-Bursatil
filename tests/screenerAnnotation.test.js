@@ -75,10 +75,7 @@ describe("screener row annotation cache", () => {
 
     const filters = {
       activeSettings: settings,
-      actionFilter: "Todos",
-      readinessFilter: "Todos",
-      confidenceFilter: "Todos",
-      dataHealthFilter: "ready",
+      countryFilter: "Todos",
       decisionResolutionFilter: "all",
     };
 

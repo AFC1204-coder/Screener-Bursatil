@@ -61,13 +61,9 @@ export default function ResultFilterBar({
   return (
     <>
       <div className="controls resultFilterBar">
-        {/* «Fiabilidad», «Confianza» y «Acción» se retiraron: filtraban por
-            juicios del SISTEMA sobre cuánto fiarse o qué hacer —«Vigilancia»,
-            «Auditar»— que el principio 1 prohíbe, y además por dimensiones que
-            la tabla de siete columnas ya no muestra. Sus filtros y contadores
-            se siguen calculando en useResultViewModel.
-            «Resolución» se conserva: filtra por lo que el usuario ha marcado en
-            Review/Ficha, no por un juicio del sistema. */}
+        {/* «Resolución» filtra por lo que el usuario ha marcado en Review/Ficha,
+            no por un juicio del sistema. Los filtros fantasma de auditoría/decisión
+            se retiraron de la vista (UX-4): ya no ocultan filas en silencio. */}
         <select className="select resultFilterSelect" value={decisionResolutionFilter} onChange={(e) => onDecisionResolutionFilter(e.target.value)} aria-label="Filtrar por resolución de decisión" data-active={decisionResolutionFilter !== "all" ? "true" : "false"}>
           {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
         </select>

@@ -40,149 +40,28 @@ const cleanReliableRow = {
 };
 
 describe("screener result view filters", () => {
-  it("filtra por banda de confianza de decision", () => {
+  it("ignora filtros fantasma de juicio del sistema", () => {
     const partialRow = {
       ...strongRow,
       symbol: "LOW",
       decisionProjectionPartial: true,
       decisionProjectionMissing: ["chartBarsCount", "price"],
     };
+    const rows = [strongRow, partialRow];
 
-    expect(applyResultViewFilters([strongRow, partialRow], {
+    expect(applyResultViewFilters(rows, {
       confidenceFilter: "high",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["HIGH"]);
-
-    expect(applyResultViewFilters([strongRow, partialRow], {
-      confidenceFilter: "very-low",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["LOW"]);
-  });
-
-  it("filtra operables limpios y operables fragiles por separado", () => {
-    const fragileOperable = {
-      ...strongRow,
-      symbol: "FRAG",
-      rsGlobalPct: 74,
-      rsSectorPct: 71,
-      rsQualityScore: 52,
-      weinsteinScore: 55,
-      minerviniScore: 54,
-      volumeEffectScore: 69,
-      adProxyScore: 50,
-      growthScore: 45,
-      epsGrowthProxyScore: 45,
-      riskRewardScore: 68,
-    };
-
-    expect(applyResultViewFilters([strongRow, fragileOperable], {
+      readinessFilter: "operable",
+      actionFilter: "watch",
       decisionProfileFilter: "operable-clean",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["HIGH"]);
-
-    expect(applyResultViewFilters([strongRow, fragileOperable], {
-      decisionProfileFilter: "operable-fragile",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["FRAG"]);
-  });
-
-  it("filtra por prioridad de investigacion", () => {
-    const fragileOperable = {
-      ...strongRow,
-      symbol: "FRAG",
-      rsGlobalPct: 74,
-      rsSectorPct: 71,
-      rsQualityScore: 52,
-      weinsteinScore: 55,
-      minerviniScore: 54,
-      volumeEffectScore: 69,
-      adProxyScore: 50,
-      growthScore: 45,
-      epsGrowthProxyScore: 45,
-      riskRewardScore: 68,
-    };
-    const blockedRow = {
-      ...strongRow,
-      symbol: "BLOCK",
-      decisionProjectionPartial: true,
-      decisionProjectionMissing: ["price", "chartBarsCount"],
-    };
-
-    expect(applyResultViewFilters([strongRow, fragileOperable, blockedRow], {
       reviewPriorityFilter: "focus-now",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["HIGH"]);
-
-    expect(applyResultViewFilters([strongRow, fragileOperable, blockedRow], {
-      reviewPriorityFilter: "validate-first",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["FRAG"]);
-
-    expect(applyResultViewFilters([strongRow, fragileOperable, blockedRow], {
-      reviewPriorityFilter: "blocked",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["BLOCK"]);
-  });
-
-  it("filtra por estado de pruebas de decision", () => {
-    const fragileOperable = {
-      ...strongRow,
-      symbol: "FRAG",
-      rsGlobalPct: 74,
-      rsSectorPct: 71,
-      rsQualityScore: 52,
-      weinsteinScore: 55,
-      minerviniScore: 54,
-      volumeEffectScore: 69,
-      adProxyScore: 50,
-      growthScore: 45,
-      epsGrowthProxyScore: 45,
-      riskRewardScore: 68,
-    };
-    const blockedRow = {
-      ...strongRow,
-      symbol: "BLOCK",
-      decisionProjectionPartial: true,
-      decisionProjectionMissing: ["price", "chartBarsCount"],
-    };
-
-    expect(applyResultViewFilters([strongRow, fragileOperable, blockedRow], {
+      reliabilityFilter: "reliable",
       decisionEvidenceFilter: "ready",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["HIGH"]);
-
-    expect(applyResultViewFilters([strongRow, fragileOperable, blockedRow], {
-      decisionEvidenceFilter: "needs-work",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["FRAG"]);
-
-    expect(applyResultViewFilters([strongRow, fragileOperable, blockedRow], {
-      decisionEvidenceFilter: "blocked",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["BLOCK"]);
-  });
-
-  it("filtra por incidencia de decision accionable", () => {
-    const missingEvidence = {
-      ...strongRow,
-      symbol: "MISS",
-      fundamentalCoverageScore: undefined,
-    };
-    const overextended = {
-      ...strongRow,
-      symbol: "EXT",
-      extSma50: 36,
-    };
-
-    expect(applyResultViewFilters([strongRow, missingEvidence, overextended], {
+      dataHealthFilter: "ready",
+      scoreAuditFilter: "clean",
       decisionIssueFilter: "incomplete-decision-evidence",
       activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["MISS"]);
-
-    expect(applyResultViewFilters([strongRow, missingEvidence, overextended], {
-      decisionIssueFilter: "overextended-sma50",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["EXT"]);
+    }).map((row) => row.symbol)).toEqual(["HIGH", "LOW"]);
   });
 
   it("filtra por resolución guardada de decision", () => {
@@ -209,86 +88,19 @@ describe("screener result view filters", () => {
     }).map((row) => row.symbol)).toEqual(["PEND"]);
   });
 
-  it("filtra por salud de datos accionable", () => {
-    const partialRow = {
-      ...strongRow,
-      symbol: "PART",
-      dataCoverageScore: 52,
-      technicalCoverageScore: 58,
-      fundamentalCoverageScore: 20,
-    };
-    const staleRow = {
-      ...strongRow,
-      symbol: "STALE",
-      priceFreshnessOk: false,
-      priceFreshnessDays: 9,
-      priceFreshnessMaxDays: 4,
-      priceFreshnessIssue: "precio viejo: 9d > 4d",
-    };
-    const blockedRow = {
-      ...strongRow,
-      symbol: "BLOCK",
-      chartBarsCount: 35,
-    };
+  it("filtra por capas visibles de vista", () => {
+    const usRow = { ...strongRow, symbol: "US1", country: "US", theme: "Software / IA", sector: "Software", industry: "Apps" };
+    const euRow = { ...strongRow, symbol: "EU1", country: "DE", theme: "Industrial", sector: "Machinery", industry: "Tools" };
 
-    expect(applyResultViewFilters([strongRow, partialRow, staleRow, blockedRow], {
-      dataHealthFilter: "ready",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["HIGH"]);
+    expect(applyResultViewFilters([usRow, euRow], {
+      viewLayers: { country: true },
+      countryFilter: "US",
+    }).map((row) => row.symbol)).toEqual(["US1"]);
 
-    expect(applyResultViewFilters([strongRow, partialRow, staleRow, blockedRow], {
-      dataHealthFilter: "partial",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["PART"]);
-
-    expect(applyResultViewFilters([strongRow, partialRow, staleRow, blockedRow], {
-      dataHealthFilter: "stale",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["STALE"]);
-
-    expect(applyResultViewFilters([strongRow, partialRow, staleRow, blockedRow], {
-      dataHealthFilter: "blocked",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["BLOCK"]);
-  });
-
-  it("filtra por auditoría accionable del score", () => {
-    const cleanScore = {
-      ...strongRow,
-      symbol: "CLEAN",
-      totalScore: 73.76,
-      setupQualityScore: 80,
-      demandScore: 70,
-      sectorScore: 75,
-      riskScore: 62,
-      momentumScore: 58,
-      ipoScore: 20,
-    };
-    const mismatchScore = {
-      ...cleanScore,
-      symbol: "MIS",
-      totalScore: 90,
-    };
-    const missingScore = {
-      ...cleanScore,
-      symbol: "MISS",
-      totalScore: 50,
-      demandScore: undefined,
-      sectorScore: undefined,
-      riskRewardScore: undefined,
-    };
-
-    expect(applyResultViewFilters([cleanScore, mismatchScore, missingScore], {
-      scoreAuditFilter: "clean",
-    }).map((row) => row.symbol)).toEqual(["CLEAN"]);
-
-    expect(applyResultViewFilters([cleanScore, mismatchScore, missingScore], {
-      scoreAuditFilter: "mismatch",
-    }).map((row) => row.symbol)).toEqual(["MIS", "MISS"]);
-
-    expect(applyResultViewFilters([cleanScore, mismatchScore, missingScore], {
-      scoreAuditFilter: "missing",
-    }).map((row) => row.symbol)).toEqual(["MISS"]);
+    expect(applyResultViewFilters([usRow, euRow], {
+      viewLayers: { theme: true },
+      themeFilter: "Industrial",
+    }).map((row) => row.symbol)).toEqual(["EU1"]);
   });
 
   it("clasifica la fiabilidad combinando datos, score, pruebas y confianza", () => {
@@ -338,38 +150,6 @@ describe("screener result view filters", () => {
     expect(state.auditabilityKey).toBe("audit-ready");
     expect(state.evidenceKey).toBe("ready");
     expect(state.methodologyWarningKeys).toContain("methodology-demand");
-  });
-
-  it("filtra por fiabilidad metodológica sin convertirlo en recomendación", () => {
-    const needsValidationRow = {
-      ...cleanReliableRow,
-      symbol: "VAL",
-      priceFreshnessOk: false,
-      priceFreshnessDays: 9,
-      priceFreshnessMaxDays: 4,
-      priceFreshnessIssue: "precio viejo: 9d > 4d",
-    };
-    const blockedRow = {
-      ...cleanReliableRow,
-      symbol: "BLOCK",
-      decisionProjectionPartial: true,
-      decisionProjectionMissing: ["price", "chartBarsCount"],
-    };
-
-    expect(applyResultViewFilters([cleanReliableRow, needsValidationRow, blockedRow], {
-      reliabilityFilter: "reliable",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["REL"]);
-
-    expect(applyResultViewFilters([cleanReliableRow, needsValidationRow, blockedRow], {
-      reliabilityFilter: "needs-validation",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["VAL"]);
-
-    expect(applyResultViewFilters([cleanReliableRow, needsValidationRow, blockedRow], {
-      reliabilityFilter: "blocked",
-      activeSettings: { setupMode: "leader" },
-    }).map((row) => row.symbol)).toEqual(["BLOCK"]);
   });
 
   it("marca como limitada una fila restaurada sin score mostrado", () => {
@@ -496,9 +276,6 @@ describe("screener result view filters", () => {
       setupQualityScore: 55,
     };
 
-    // La cola conserva el orden visible del usuario (principio 1: el sistema
-    // no reordena por su propio juicio); el resumen de perfiles apunta con
-    // firstIndex a la posición real dentro de ese orden.
     const queue = prepareReviewQueueRows([watchRow, fragileOperable, strongRow], { setupMode: "leader" });
     expect(queue.map((row) => row.symbol)).toEqual(["WAIT", "FRAG", "HIGH"]);
 

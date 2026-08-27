@@ -1,5 +1,5 @@
-# Ticket activo — UX-4
+# Ticket activo — UX-3
 
-Ver: **`docs/tickets/UX-4-ghost-view-filters.md`**
+Ver: **`docs/tickets/UX-3-sort-visible-invariant.md`**
 
-Orden: UX-4 → UX-3 → UX-2. Purga filtros fantasma de la vista.
+Último cerrado: UX-4. Siguiente tras este: UX-2.
