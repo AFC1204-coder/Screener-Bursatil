@@ -104,42 +104,32 @@ await page.goto(URL, { waitUntil: "networkidle", timeout: 60000 });
 // Damos tiempo al restoreSnapshot (ocurre tras cargar universo en effect).
 await page.waitForTimeout(6000);
 
-// Expandimos el <details> de la franja para que el párrafo sea visible en la captura.
-const summary = page.locator(".percentileScopeNotice summary");
-const notice = page.locator(".percentileScopeNotice");
-const noticeCount = await notice.count();
-const noticeVisible = noticeCount > 0 ? await notice.isVisible() : false;
-console.log(`[fixture] Franja presente en DOM: ${noticeVisible} (count=${noticeCount})`);
-if (noticeVisible) {
-  // Forzamos el <details> abierto vía atributo (robusto frente a cualquier
-  // pegada de CSS/eventos) y hacemos click en el summary como respaldo.
-  await notice.evaluate((el) => { el.setAttribute("open", ""); }).catch(() => {});
-  try { await summary.click({ timeout: 3000 }); } catch {}
-  await notice.evaluate((el) => { el.setAttribute("open", ""); }).catch(() => {});
-  // Hacemos scroll para que la franja quede en la zona visible.
-  await notice.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
+// Badge inline junto a la línea de verdad (ya no es un <details>).
+const badge = page.locator(".percentileScopeBadge");
+const badgeCount = await badge.count();
+const badgeVisible = badgeCount > 0 ? await badge.isVisible() : false;
+console.log(`[fixture] Badge presente en DOM: ${badgeVisible} (count=${badgeCount})`);
+if (badgeVisible) {
+  await badge.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(500);
 }
 
-// Captura full-page + captura recortada a la franja.
+// Captura full-page + captura recortada al badge.
 await page.screenshot({ path: OUT_PATH, fullPage: false });
-if (noticeVisible) {
-  await notice.screenshot({ path: ZOOM_PATH }).catch(() => {});
+if (badgeVisible) {
+  await badge.screenshot({ path: ZOOM_PATH }).catch(() => {});
 }
 
-// Validación de contenido: el texto del banner debe estar en el DOM renderizado.
-// Leemos textContent del propio notice (no depende de la visibilidad del <p>
-// colapsado) Y del body (confirmación de que está en el render real).
-const noticeText = noticeCount > 0 ? await notice.textContent() : "";
-const bannerTextPresent = Boolean(noticeText)
-  && noticeText.includes("Muestra parcial")
-  && noticeText.includes("percentil por lote");
-console.log(`[fixture] Texto del banner renderizado: ${bannerTextPresent}`);
+const badgeText = badgeCount > 0 ? await badge.textContent() : "";
+const bannerTextPresent = Boolean(badgeText)
+  && badgeText.includes("Muestra parcial")
+  && badgeText.includes("percentil por lote");
+console.log(`[fixture] Texto del badge renderizado: ${bannerTextPresent}`);
 
 await browser.close();
 
-if (!noticeVisible || !bannerTextPresent) {
-  console.error("[fixture] BLOQUEO: la franja no se renderizó con el fixture local.");
+if (!badgeVisible || !bannerTextPresent) {
+  console.error("[fixture] BLOQUEO: el badge no se renderizó con el fixture local.");
   console.error("[fixture] Recuerda: este script es solo render-fixture, no ejecuta scans reales.");
   console.error("[fixture] Errores de consola capturados:", consoleErrors.slice(0, 8).join("\n  "));
   process.exit(2);

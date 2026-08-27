@@ -56,6 +56,14 @@ import { metricShortLabel } from "@/lib/metricCatalog";
 import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 
+const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
+
+function showScanStatusBar(err, status = "") {
+  if (err) return true;
+  const text = String(status || "").trim();
+  return /^(Cargando|Actualizando|Sincronizando|Descargando|Guardando|Importando|Subiendo)/i.test(text);
+}
+
 export default function ScreenerShell({ chrome, sidebar, search, resultView, results, actions, staleness }) {
   // --- chrome ---
   const {
@@ -265,6 +273,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   // Comunicamos honestamente los percentiles batch de la lista visible; si el
   // conjunto es "final", no hay nada que decir.
   const visibleBatchRows = resultsRows.some((row) => (row.percentileScope || "batch") === "batch");
+  const statusLabel = investorStatusLabel(status);
+  const scanStatusVisible = showScanStatusBar(err, status);
 
   // Cierre del panel de filtros en móvil: Escape en cualquier punto de la
   // página y click/tap fuera del panel (mobileFiltersRef). El botón "Filtros"
@@ -305,18 +315,14 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       </div>
     </div>
     {err && <div className="error">{err}</div>}
-    <div className={`scanStatusBar ${err ? "error" : ""}`} role="status" aria-live="polite">
+    {scanStatusVisible ? <div className={`scanStatusBar ${err ? "error" : "running"}`} role="status" aria-live="polite">
       <span>{err ? "Incidencia" : "Estado"}</span>
-      <b>{investorStatusLabel(status)}</b>
-    </div>
+      <b>{statusLabel}</b>
+    </div> : null}
     {showSnapshotNotice ? <div className={`snapshotFreshnessNotice ${snapshotNotice.tone || "info"}`} role="note">
       <span>{snapshotNotice.label}</span>
       <b>{snapshotNotice.detail}</b>
     </div> : null}
-    {visibleBatchRows ? <details className="percentileScopeNotice">
-      <summary>Muestra parcial · percentil por lote</summary>
-      <p>Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.</p>
-    </details> : null}
 
     <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}`}>
       <button
@@ -487,7 +493,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       </aside>
 
       <main className="mainContent">
-        <section className="searchCard" style={{ marginBottom: 20 }}>
+        <section className="searchCard">
           <div className="commandSearchPanel searchPanelBare">
               <form className="searchBar" onSubmit={runSearch} style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
                 <input className="input searchInput" value={searchSymbol} onChange={(e) => updateSearchSymbol(e.target.value)} placeholder="Ticker, nombre, sector, subsector o país..." />
@@ -502,7 +508,10 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               <SearchCandidateList candidates={searchCandidates} activeSymbol={searchResult?.symbol} onPick={(item) => { setSearchSymbol(item.symbol); loadSearchResult(item.symbol, item); }} />
           </div>
           <HuntCardRail presetKey={presetKey} markets={markets} onSelect={applyHuntCard} />
-          <p className="screenerTruthLine" role="status" aria-live="polite">{truthLine}</p>
+          <p className="screenerTruthLine" role="status" aria-live="polite">
+            <span>{truthLine}</span>
+            {visibleBatchRows ? <span className="percentileScopeBadge" title={PERCENTILE_BATCH_NOTE} aria-label={`Muestra parcial · percentil por lote. ${PERCENTILE_BATCH_NOTE}`}>Muestra parcial · percentil por lote</span> : null}
+          </p>
         </section>
 
         <section className="mobileResearchHome">
@@ -593,35 +602,43 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           ) : null}
           <div className="resultsHeader">
             <div className="resultsTitleBlock">
-              <span>Results</span>
               <h2>Resultados</h2>
             </div>
-            <div className="controls">
+            <div className="controls resultsToolbar">
               {/* Siempre visible, incluso con la tabla vacía. Sin botón
                   Ejecutar, este es el único camino de vuelta a un estado bueno;
                   esconderlo justo cuando no hay resultados —que es cuando hace
                   falta— dejaba la sesión sin salida. */}
-              <button
-                className="btn btnSmall btnGhost"
-                onClick={refreshScreenerSnapshotData}
-                disabled={restoringScan}
-                title="Trae el último escaneo nocturno sin cambiar tus filtros ni plantilla"
-              >
-                {restoringScan ? "Actualizando…" : "Traer datos frescos"}
-              </button>
-              <button
-                className="btn btnSmall btnGhost"
-                onClick={resetScreenerSession}
-                disabled={restoringScan}
-                title="Borra criterios y vuelve al preset equilibrado con datos nuevos"
-              >
-                Resetear criterios
-              </button>
+              <div className="resultsToolbarSecondary">
+                <button
+                  className="btn btnSmall btnGhost"
+                  onClick={refreshScreenerSnapshotData}
+                  disabled={restoringScan}
+                  title="Trae el último escaneo nocturno sin cambiar tus filtros ni plantilla"
+                >
+                  {restoringScan ? "Actualizando…" : "Traer datos frescos"}
+                </button>
+                <button
+                  className="btn btnSmall btnGhost"
+                  onClick={resetScreenerSession}
+                  disabled={restoringScan}
+                  title="Borra criterios y vuelve al preset equilibrado con datos nuevos"
+                >
+                  Resetear criterios
+                </button>
+                {resultsFiltered.length ? <>
+                  <button className="btn btnSmall btnGhost" onClick={() => csv(resultsFiltered)}>↓ CSV</button>
+                  <button className="btn btnSmall btnGhost" onClick={() => saveSnapshot(resultsFiltered)} aria-label="Guardar snapshot de resultados">Guardar</button>
+                </> : null}
+              </div>
               {resultsFiltered.length ? <>
-                <button className="btn btnSmall btnGhost" onClick={() => csv(resultsFiltered)}>↓ CSV</button>
-                <button className="btn btnSmall btnGhost" onClick={() => decisionAuditJson(resultsFiltered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
                 <button className="btn btnSmall btnPrimary" onClick={() => openReview(resultsFiltered)}>Revisar</button>
-                <button className="btn btnSmall btnGhost" onClick={() => saveSnapshot(resultsFiltered)} aria-label="Guardar snapshot de resultados">Guardar</button>
+                <details className="resultsMoreMenu">
+                  <summary className="btn btnSmall btnGhost" aria-label="Más herramientas" title="Más herramientas">⋯</summary>
+                  <div className="resultsMoreMenuPanel">
+                    <button type="button" className="btn btnSmall btnGhost" onClick={() => decisionAuditJson(resultsFiltered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
+                  </div>
+                </details>
               </> : null}
             </div>
           </div>

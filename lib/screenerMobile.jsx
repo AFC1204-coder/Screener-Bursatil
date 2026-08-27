@@ -96,9 +96,12 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
           {sortOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
         </select>
         <button type="button" onClick={onCsv} disabled={!rows.length}>CSV</button>
-        <button type="button" onClick={onAuditJson} disabled={!rows.length} title="Exportar JSON compatible con audit:decisions">JSON</button>
         <button type="button" onClick={onSave} disabled={!rows.length || savingDisabled} aria-label="Guardar snapshot de resultados">Guardar</button>
-        <button type="button" onClick={() => onReview()} disabled={!rows.length}>Revisar</button>
+        <button type="button" className="mobileReviewBtn" onClick={() => onReview()} disabled={!rows.length}>Revisar</button>
+        <details className="mobileResultsMoreMenu">
+          <summary aria-label="Más herramientas" title="Más herramientas">⋯</summary>
+          <button type="button" onClick={onAuditJson} disabled={!rows.length} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
+        </details>
       </div> : null}
     </div>
     {hasRows ? <div className="mobileResultPeriodBar">

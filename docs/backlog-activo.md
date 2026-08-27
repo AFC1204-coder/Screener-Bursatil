@@ -5,9 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-P1**.  
-Prompt: **`docs/tickets/UX-P1-top-chrome-consolidation.md`** · Día 1 también `UX-P2`.  
-Último cerrado: **UX-P** (brief Gemini).  
+Ticket en curso: **libre**.  
+Último cerrado: **UX-P1 + UX-P2**.  
 **Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas.  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
@@ -47,13 +46,13 @@ Prompt: **`docs/tickets/UX-P1-top-chrome-consolidation.md`** · Día 1 también 
 | UX-2 | Línea de verdad + 1 banner mercados con CTA; smoke CTA resuelve stale | `60985a3` |
 | UX-5 | Rail 5 fichas de caza; smoke US/Deterioro/pivot/Core intl 198/210 | `2690ed7` |
 | UX-P | Brief producto final (Gemini); chrome laboratorio → podar | `f9588a0` + análisis |
+| UX-P1 | Chrome superior: sin Estado OK; percentil = badge; smoke | (este commit) |
+| UX-P2 | Toolbar: JSON audit en ⋯; Revisar primario; «Resultados» | (mismo commit) |
 
 ## Siguiente — producto final (inmediato)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-P1 | Consolidar hero / estado / percentil / verdad | **en curso** · Día 1 | Composer |
-| UX-P2 | Toolbar: ocultar JSON audit, jerarquía Revisar | Día 1 | Composer fast |
 | UX-6 | Editor experto + presets fuera del flujo diario | Día 2 | Composer |
 | UX-P3 | Mercados: regiones + banderas colapsables | Día 2 | Composer |
 | UX-7 | Chips de vista + «+ Filtro» | Día 3 | Composer |

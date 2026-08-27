@@ -73,7 +73,7 @@ describe("banner P3 · captura visual local (fixture)", () => {
 
     const css = `<style>
       body{background:#0b0e14;margin:0;padding:24px}
-      .percentileScopeNotice,.percentileScopeNoticePending{margin:8px 0;padding:9px 12px;border:1px solid #6b7280;border-radius:6px;background:rgba(107,114,128,.12)}
+      .percentileScopeBadge,.percentileScopeNotice,.percentileScopeNoticePending{margin:0;padding:2px 8px;border:1px solid #6b7280;border-radius:999px;background:rgba(107,114,128,.12);font-size:10px}
       .pendingResultsBar{display:flex;gap:10px;align-items:center;min-height:38px;margin:0 0 8px;padding:7px 12px;border:1px solid #3b82f6;border-radius:8px;background:#111827}
       [data-stub]{opacity:.3;font-size:11px}
     </style>`;

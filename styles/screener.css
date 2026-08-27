@@ -130,6 +130,25 @@
   border-color:var(--risk);
   background:var(--oxido-dim);
 }
+.percentileScopeBadge {
+  display:inline-flex;
+  align-items:center;
+  margin-left:8px;
+  padding:2px 8px;
+  border:1px solid var(--traza);
+  border-radius:999px;
+  background:var(--traza-dim);
+  color:var(--traza);
+  font-size:10px;
+  font-weight:760;
+  letter-spacing:.06em;
+  line-height:1.35;
+  text-transform:uppercase;
+  vertical-align:middle;
+  white-space:nowrap;
+  cursor:help;
+}
+
 .percentileScopeNotice {
   margin:calc(var(--space-4) * -0.55) 0 var(--space-4);
   padding:9px 12px;
@@ -243,7 +262,11 @@
 }
 
 .screenerTruthLine {
-  margin:12px 0 0;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px 8px;
+  margin:10px 0 0;
   color:var(--muted);
   font-size:var(--text-s);
   font-weight:520;
@@ -254,7 +277,7 @@
   display:flex;
   flex-wrap:wrap;
   gap:8px;
-  margin:12px 0 0;
+  margin:10px 0 0;
 }
 
 .huntCardRail button {
@@ -3758,6 +3781,41 @@ button.decisionIssueBadge:hover,
   font-size:11px;
 }
 
+.mobileResultListHead .mobileReviewBtn {
+  color:var(--text);
+  font-weight:700;
+}
+
+.mobileResultsMoreMenu {
+  position:relative;
+}
+
+.mobileResultsMoreMenu > summary {
+  list-style:none;
+  cursor:pointer;
+  color:var(--muted);
+  font-size:16px;
+  line-height:1;
+}
+
+.mobileResultsMoreMenu > summary::-webkit-details-marker {
+  display:none;
+}
+
+.mobileResultsMoreMenu[open] > button {
+  position:absolute;
+  top:calc(100% + 4px);
+  right:0;
+  z-index:3;
+  min-width:7.5rem;
+  padding:6px 10px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--surface2);
+  color:var(--text);
+  text-align:left;
+}
+
 /* Disclosures del listado móvil: mismo patrón que el bloque desktop
    (resultsDecisionGroup/resultsAuditGroup) con padding reducido. */
 .mobileResultList .resultsDecisionGroup,
@@ -6410,7 +6468,7 @@ h2:not(.topbar h2) {
 }
 
 .screenerTerminalPage .searchCard {
-  margin:0 0 14px !important;
+  margin:0 0 12px !important;
   border:1px solid var(--line);
   border-radius:6px;
   background:var(--surface2);
@@ -6470,6 +6528,48 @@ h2:not(.topbar h2) {
   font-weight:780 !important;
   letter-spacing:0 !important;
   text-transform:none !important;
+}
+
+.screenerTerminalPage .resultsToolbar {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.screenerTerminalPage .resultsToolbarSecondary {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+}
+
+.screenerTerminalPage .resultsMoreMenu {
+  position:relative;
+}
+
+.screenerTerminalPage .resultsMoreMenu > summary {
+  list-style:none;
+}
+
+.screenerTerminalPage .resultsMoreMenu > summary::-webkit-details-marker {
+  display:none;
+}
+
+.screenerTerminalPage .resultsMoreMenuPanel {
+  position:absolute;
+  top:calc(100% + 4px);
+  right:0;
+  z-index:4;
+  display:grid;
+  gap:4px;
+  min-width:9rem;
+  padding:6px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--surface2);
+  box-shadow:0 10px 24px rgba(0,0,0,.28);
 }
 
 .screenerTerminalPage .resultsTitleBlock p {

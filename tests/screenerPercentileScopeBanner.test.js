@@ -148,20 +148,24 @@ const UNSCOPED_ROW = { symbol: "OLD" }; // percentileScope ausente ⇒ tratado c
 // congelada y el botón Ejecutar: sin actualización pendiente no hay nada que
 // anunciar. La franja de la LISTA VISIBLE sigue vigente y aquí fijada.
 describe("ScreenerShell · franja P3 (percentil por lote)", () => {
-  it("mantiene la franja visible cuando resultsRows contiene filas batch", () => {
+  it("mantiene el aviso visible cuando resultsRows contiene filas batch", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW, BATCH_ROW] })));
     expect(html).toContain("Muestra parcial · percentil por lote");
-    expect(html).toContain("percentileScopeNotice");
+    expect(html).toContain("percentileScopeBadge");
+    expect(html).toContain("screenerTruthLine");
+    expect(html).not.toContain("percentileScopeNotice");
   });
 
   it("trata percentileScope ausente como batch en la lista visible", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [UNSCOPED_ROW] })));
     expect(html).toContain("Muestra parcial · percentil por lote");
+    expect(html).toContain("percentileScopeBadge");
   });
 
-  it("no muestra la franja cuando la lista visible es exclusivamente final", () => {
+  it("no muestra el aviso cuando la lista visible es exclusivamente final", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW] })));
     expect(html).not.toContain("Muestra parcial · percentil por lote");
+    expect(html).not.toContain("percentileScopeBadge");
   });
 
   it("no llama .some sobre el prop-bag results: usa resultsRows", () => {
@@ -187,5 +191,49 @@ describe("ScreenerShell · franja P3 (percentil por lote)", () => {
     expect(html).toContain("Traer datos frescos");
     expect(html).toContain("Resetear criterios");
     expect(html).not.toContain("Reset sesión");
+  });
+
+  it("oculta scanStatusBar en estado OK (idle sin err)", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW] })));
+    expect(html).not.toContain("scanStatusBar");
+    expect(html).toContain("screenerTruthLine");
+  });
+
+  it("muestra scanStatusBar mientras carga datos", () => {
+    const props = makeProps({ resultsRows: [FINAL_ROW] });
+    props.chrome.status = "Cargando el escaneo nocturno...";
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
+    expect(html).toContain("scanStatusBar");
+    expect(html).toContain("Cargando el escaneo nocturno");
+  });
+
+  it("muestra scanStatusBar cuando hay incidencia (err)", () => {
+    const props = makeProps({ resultsRows: [FINAL_ROW] });
+    props.chrome.err = "No se pudo cargar el escaneo.";
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
+    expect(html).toContain("scanStatusBar");
+    expect(html).toContain("No se pudo cargar el escaneo.");
+  });
+});
+
+describe("ScreenerShell · toolbar resultados (UX-P2)", () => {
+  it("oculta JSON audit de la toolbar principal y lo deja en el menú Más", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW, BATCH_ROW] })));
+    expect(html).toContain("resultsMoreMenu");
+    const moreMenu = html.match(/<details class="resultsMoreMenu">[\s\S]*?<\/details>/);
+    expect(moreMenu?.[0]).toContain("JSON audit");
+    expect((html.match(/>JSON audit</g) || []).length).toBe(1);
+  });
+
+  it("unifica el título a Resultados sin rótulo Results", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW] })));
+    expect(html).toContain(">Resultados<");
+    expect(html).not.toContain(">Results<");
+  });
+
+  it("mantiene Revisar como acción primaria visible", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW] })));
+    expect(html).toContain("btnPrimary");
+    expect(html).toContain(">Revisar<");
   });
 });
