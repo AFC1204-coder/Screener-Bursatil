@@ -1,9 +1,5 @@
-# Ticket activo — INT-1-CA-EU
+# Ticket activo — libre
 
-Ver prompt completo: **`docs/tickets/INT-1-CA-EU.md`**
+Último cerrado: **INT-1-CA-EU**.
 
-Abrir **Agent chat nuevo** con `@docs/tickets/INT-1-CA-EU.md` · **Composer Medium**.
-
-Estado: **pendiente programación**.
-
-Prioridad dueño: US (base) → HK (hecho) → **CA + Europa priority**. No IL/CN/BR/MX.
+Siguiente natural: corridas orquestador `europe-fr`…`europe-es` (INT-1-EU-run), o parar.
