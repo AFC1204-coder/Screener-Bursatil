@@ -1,9 +1,5 @@
-# Ticket activo — INT-1-KR-IN
+# Ticket activo — libre
 
-Ver prompt completo: **`docs/tickets/INT-1-KR-IN.md`**
+Último cerrado: **INT-1-KR-IN** (cron KR/IN) + smoke chart intl (`.HK` / `.AX`).
 
-Abrir **Agent chat nuevo** con `@docs/tickets/INT-1-KR-IN.md` · **Composer Medium**.
-
-Estado: **pendiente programación**.
-
-Después (orquestador, sin Agent): opción B — smoke chart `.HK` / `.AX`.
+Siguiente: ver `docs/backlog-activo.md` (IL/CN/BR/MX opcional).
