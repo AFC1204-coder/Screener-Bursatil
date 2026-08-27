@@ -5,7 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre**.  
+Ticket en curso: **INT-1-EU-secondary-JP**.  
+Prompt: **`docs/tickets/INT-1-EU-secondary-JP.md`**  
 Último cerrado: **INT-1-intl-preset**.  
 **Prioridad dueño:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
@@ -40,7 +41,7 @@ Ticket en curso: **libre**.
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| — | Europa secondary / JP | Solo si dueño lo pide | — |
+| INT-1-EU-secondary-JP | Cohorts EU2→por país + curated-core JP/secondary | En curso | Composer Medium |
 | ~~IL/CN/BR/MX~~ | Aplazado | — | — |
 
 ## Track internacional (privado, pre-licencia pública)
