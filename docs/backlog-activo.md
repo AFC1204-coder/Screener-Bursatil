@@ -48,8 +48,8 @@ Ticket en curso: **libre**.
 | UX-P | Brief producto final (Gemini); chrome laboratorio → podar | `f9588a0` + análisis |
 | UX-P1 | Chrome superior: sin Estado OK; percentil = badge; smoke | `58c2aa4` |
 | UX-P2 | Toolbar: JSON audit en ⋯; Revisar primario; «Resultados» | `58c2aa4` |
-| UX-6 | Sidebar: Ajustes de sesión; bases en advanced; smoke EE.UU. 47/3321 | (este commit) |
-| UX-P3 | Banderas en Personalizar mercados; presets regionales; smoke | (mismo commit) |
+| UX-6 | Sidebar: Ajustes de sesión; bases en advanced; smoke EE.UU. 47/3321 | `52d2f47` |
+| UX-P3 | Banderas en Personalizar mercados; presets regionales; smoke | `52d2f47` |
 
 ## Siguiente — producto final (inmediato)
 
