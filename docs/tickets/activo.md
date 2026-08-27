@@ -1,9 +1,9 @@
-# Ticket activo — INT-1 (siguiente)
+# Ticket activo — INT-1-P0
 
-INT-1-P1 cerrado 2026-08-27 (materializado por mercado).
+Ver prompt completo: **`docs/tickets/INT-1-P0-stale-banner-tw.md`**
 
-Candidatos siguientes (INT-0 §7):
-1. **P0** — banner/copy cuando mercados ≠ scan cargado; TW `failed`.
-2. **P1+** — cron HK/AU usable; fusión multi-mercado.
+Abrir **Agent chat nuevo** con `@docs/tickets/INT-1-P0-stale-banner-tw.md` · modelo **Composer**.
 
-Esperando priorización del dueño.
+Estado: **pendiente programación**.
+
+Push previo: rama `codex/statsedge-ui-polish` en origin hasta `794e962` (INT-1-P1 cerrado).

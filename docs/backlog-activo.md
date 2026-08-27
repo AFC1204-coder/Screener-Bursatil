@@ -5,8 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **INT-1** (siguiente: P0 TW / banner mercados stale, o HK cron).  
-Informe INT-0: **`docs/tickets/INT-0-audit.md`**  
+Ticket en curso: **INT-1-P0** (banner mercados stale + TW).  
+Prompt: **`docs/tickets/INT-1-P0-stale-banner-tw.md`**  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
 ## Hecho (esta oleada)
@@ -29,7 +29,7 @@ Informe INT-0: **`docs/tickets/INT-0-audit.md`**
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| INT-1 P0 | TW failed / banner mercados stale | Ver §7 INT-0 | Composer |
+| INT-1 P0 | Banner mercados stale + TW no seleccionable | Prompt `docs/tickets/INT-1-P0-stale-banner-tw.md` | Composer |
 | INT-1+ | HK/AU materializado usable; fusión multi-mercado | Tras P0 | Composer |
 
 ## Track internacional (privado, pre-licencia pública)
