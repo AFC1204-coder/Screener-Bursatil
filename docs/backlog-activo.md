@@ -26,7 +26,7 @@ Ticket en curso: **siguiente** (AU en vivo opcional / INT-1+).
 | INT-1-P1 | Cargar materializado al elegir 1 mercado; aviso HK sin scan; smoke CA/US/HK | `b46dfb1` |
 | INT-1-P0 | Banner mercados stale + TW no seleccionable; smoke arranque/Asia/CA | `9911f84` |
 | INT-1-HK-AU | Cohorts cron HK/AU dedicados (plan); 1ª corrida HK = 4 filas (penny @ offset 130) | `0cc62ba` |
-| INT-1-HK-select | Curado primero en cola HK/AU; cron HK → 23 filas; chip carga 23 | _(hash tras commit)_ |
+| INT-1-HK-select | Curado primero en cola HK/AU; cron HK → 23 filas; chip carga 23 | `6602485` |
 
 ## Siguiente (orden sugerido)
 
