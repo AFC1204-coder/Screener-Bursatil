@@ -5,7 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre**.  
+Ticket en curso: **UX-P5** (+ **UX-8** Día 4).  
+Prompt: **`docs/tickets/UX-P5-mobile-390.md`** · **`docs/tickets/UX-8-filter-breakdown.md`**.  
 Último cerrado: **UX-7 + UX-P4**.  
 **Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas.  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
@@ -58,9 +59,9 @@ Ticket en curso: **libre**.
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-P5 | Móvil ~390px | Día 4 · P2 | Composer |
-| UX-8 | Desglose «qué filtra ahora» | Día 4 · P2 | Composer |
-| UX-9 | Copy / jerga percentil (parcial) | P2 | Composer fast |
+| UX-P5 | Móvil ~390px | **en curso** · Día 4 | Composer |
+| UX-8 | Desglose «qué filtra ahora» | Día 4 · hermano | Composer |
+| UX-9 | Copy / jerga percentil (parcial) | P2 · opcional tras Día 4 | Composer fast |
 
 ## Track métricas (paralelo, no inmediato)
 
