@@ -1,5 +1,6 @@
-# Ticket activo — UX-1-filter-ia-redesign
+# Ticket activo — libre (esperando decisión producto)
 
-Ver: **`docs/tickets/UX-1-filter-ia-redesign.md`**
+Último cerrado: **UX-1-filter-ia-redesign** (análisis).  
+Retorno: `docs/analisis-ux-filtros-ia-2026-08-27.md`.
 
-Tipo: encargo de análisis (Fable 5 / Opus). Sin código. Sin commit ni push en el chat de programación.
+**Siguiente:** el dueño elige qué P0 implementar primero (UX-2 / UX-3 / UX-4).
