@@ -25,7 +25,7 @@ INT-1-HK-AU: plan cron cerrado — pendiente primera corrida ≥15 filas.
 | INT-0 | Auditoría multi-mercado (repo ↔ Supabase) | `36cbcdd` |
 | INT-1-P1 | Cargar materializado al elegir 1 mercado; aviso HK sin scan; smoke CA/US/HK | `b46dfb1` |
 | INT-1-P0 | Banner mercados stale + TW no seleccionable; smoke arranque/Asia/CA | `9911f84` |
-| INT-1-HK-AU | Cohorts cron HK/AU dedicados (plan); pendiente 1ª corrida ≥15 filas | (este commit) |
+| INT-1-HK-AU | Cohorts cron HK/AU dedicados (plan); pendiente 1ª corrida ≥15 filas | `0cc62ba` |
 
 ## Siguiente (orden sugerido)
 
