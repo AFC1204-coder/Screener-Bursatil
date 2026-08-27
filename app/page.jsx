@@ -1093,19 +1093,25 @@ export default function Page() {
       setStatus(label);
       return;
     }
-    // v1: solo auto-carga con un mercado; multi-mercado conserva filas + banner stale.
-    if (normalized.length !== 1) {
+    const marketCode = normalized.length === 1 ? normalized[0] : null;
+    const useNightlyUs = marketCode === "US";
+    if (!normalized.length) {
       setStatus(label);
       return;
     }
-    const marketCode = normalized[0];
-    const useNightlyUs = marketCode === "US";
     const loadGen = ++marketLoadGenRef.current;
     setRestoringScan(true);
+    const marketLabel = normalized.length === 1
+      ? marketName(marketCode)
+      : normalized.map((code) => marketName(code)).join(" + ");
     setStatus(useNightlyUs
       ? "Cargando el escaneo nocturno..."
-      : `Cargando materializado ${marketName(marketCode)}…`);
-    const fetchPromise = useNightlyUs ? getLatestScanFromCloud() : getLatestScanFromCloudForMarkets(normalized);
+      : normalized.length === 1
+        ? `Cargando materializado ${marketLabel}…`
+        : `Cargando materializados (${marketLabel})…`);
+    const fetchPromise = useNightlyUs
+      ? getLatestScanFromCloud()
+      : getLatestScanFromCloudForMarkets(normalized);
     fetchPromise.then((result) => {
       if (marketLoadGenRef.current !== loadGen) return;
       if (!result.ok || result.configured === false) {
@@ -1132,26 +1138,35 @@ export default function Page() {
       }
       const marketsMeta = result.data?.markets || null;
       if (marketsMeta?.found === false) {
-        if (marketsMeta.reason === "insufficient-rows") {
+        if (marketsMeta.reason === "partial-markets") {
+          const missing = (marketsMeta.missingMarkets || []).map((code) => marketName(code)).join(", ");
           setSnapshotNotice({
             tone: "warn",
             label: "Materializado",
-            detail: `${marketName(marketCode)}: materializado insuficiente (${marketsMeta.rowCount ?? 0} filas). Usa escaneo manual o espera al cron.`,
+            detail: missing
+              ? `Falta materializado publicable para: ${missing}. Se mantienen los datos cargados.`
+              : "No hay materializado publicable para todos los mercados seleccionados.",
+            source: "materialized",
+          });
+        } else if (marketsMeta.reason === "insufficient-rows") {
+          setSnapshotNotice({
+            tone: "warn",
+            label: "Materializado",
+            detail: `${marketLabel}: materializado insuficiente (${marketsMeta.rowCount ?? 0} filas). Usa escaneo manual o espera al cron.`,
             source: "materialized",
           });
         } else if (marketsMeta.reason === "materialized-not-publishable") {
           setSnapshotNotice({
             tone: "warn",
             label: "Materializado",
-            detail: `${marketName(marketCode)}: el último materializado no es publicable (${marketsMeta.rejectedScan?.status || "failed"}). Usa escaneo manual o espera al cron.`,
+            detail: `${marketLabel}: el último materializado no es publicable (${marketsMeta.rejectedScan?.status || "failed"}). Usa escaneo manual o espera al cron.`,
             source: "materialized",
           });
         } else {
-          // sin scan exacto (p. ej. HK/AU solo tienen lotes mixtos US,HK,AU)
           setSnapshotNotice({
             tone: "warn",
             label: "Materializado",
-            detail: `${marketName(marketCode)}: no hay materializado publicable para este mercado. Usa escaneo manual o espera al cron.`,
+            detail: `${marketLabel}: no hay materializado publicable para esta selección. Usa escaneo manual o espera al cron.`,
             source: "materialized",
           });
         }
@@ -1160,16 +1175,26 @@ export default function Page() {
       }
       const scan = (result.data?.scans || [])[0];
       if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) {
-        setStatus(`${marketName(marketCode)}: sin materializado publicable en la nube.`);
+        setStatus(`${marketLabel}: sin materializado publicable en la nube.`);
         return;
       }
       const storedScans = safeRead(STORAGE_KEYS.scans, []);
       safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])]));
+      const mergedNotice = marketsMeta?.merged
+        ? {
+          tone: "info",
+          label: "Fusión",
+          detail: "Mezcla de materializados por mercado; los percentiles RS de cada fila son los del lote de origen.",
+          source: "merged-materialized",
+        }
+        : buildSnapshotFreshnessNotice(result.data, scan);
       applyFreshSnapshotData(scan, {
-        notice: buildSnapshotFreshnessNotice(result.data, scan),
+        notice: mergedNotice,
         scanSignature: { markets: normalized, manual, scanMode },
       });
-      setStatus(`Materializado ${marketName(marketCode)} cargado: ${scan.rows.length} acciones.`);
+      setStatus(normalized.length === 1
+        ? `Materializado ${marketLabel} cargado: ${scan.rows.length} acciones.`
+        : `Materializados fusionados (${marketLabel}): ${scan.rows.length} acciones.`);
     }).catch((error) => {
       console.error("[snapshot] materializado por mercado:", error);
       if (marketLoadGenRef.current !== loadGen) return;

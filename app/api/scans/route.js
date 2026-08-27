@@ -294,6 +294,37 @@ export function scanResultPageOffsets(rowsAvailable, rowsLimit) {
   };
 }
 
+function dedupeScanResultsBySymbol(results = []) {
+  const seen = new Set();
+  const deduped = [];
+  for (const item of results) {
+    const symbol = String(item?.symbol || "").trim().toUpperCase();
+    if (!symbol || seen.has(symbol)) continue;
+    seen.add(symbol);
+    deduped.push(item);
+  }
+  return deduped;
+}
+
+async function readMergedMaterializedResults({
+  ownerId,
+  sourceScans = [],
+  select,
+  rowsLimit,
+}) {
+  const ids = sourceScans.map((scan) => scan.id).filter(Boolean).join(",");
+  if (!ids) return { rows: [], sampled: false, step: 0 };
+  const rowsAvailable = sourceScans.reduce((total, scan) => total + (Number(scan.row_count) || 0), 0);
+  const page = await readScanResultPages({
+    ownerId,
+    scanIds: ids,
+    select,
+    rowsLimit: Math.max(rowsLimit, rowsAvailable),
+    rowsAvailable,
+  });
+  return { ...page, rows: dedupeScanResultsBySymbol(page.rows) };
+}
+
 async function readScanResultPages({ ownerId, scanIds, select, rowsLimit, rowsAvailable }) {
   const { offsets, sampled, step } = scanResultPageOffsets(rowsAvailable, rowsLimit);
   const rows = [];
@@ -332,7 +363,7 @@ export function scanFromDb(row, results = [], options = {}) {
     ? (item) => item
     : (item) => prepareScanDecisionRow(item, decisionSettings);
   const rows = results
-    .filter((item) => item.scan_id === row.id)
+    .filter((item) => options.matchAllResults || item.scan_id === row.id)
     .sort((a, b) => (a.rank_index || 0) - (b.rank_index || 0))
     // Dos rehidrataciones desde la fuente compartida, ambas sobre la fila ya
     // construida: el RS del ranking semanal (rs_weekly_items) y la
@@ -555,6 +586,8 @@ export async function GET(req) {
               matchedScanId: materialized.rejectedScan?.id || null,
               rowCount: materialized.rejectedScan?.rowCount ?? 0,
               rejectedScan: materialized.rejectedScan || null,
+              missingMarkets: materialized.missingMarkets || null,
+              missingDetails: materialized.missingDetails || null,
             },
           };
         }
@@ -563,16 +596,27 @@ export async function GET(req) {
         let results = [];
         let rowsSampled = false;
         if (includeRows && activeScans.length && rowsLimit > 0) {
-          const ids = activeScans.map((scan) => scan.id).join(",");
-          const page = await readScanResultPages({
-            ownerId: config.ownerId,
-            scanIds: ids,
-            select: resultSelect,
-            rowsLimit,
-            rowsAvailable: activeScans.reduce((total, scan) => total + (Number(scan.row_count) || 0), 0),
-          });
-          results = page.rows;
-          rowsSampled = page.sampled;
+          if (materialized.merged && Array.isArray(materialized.sourceScans) && materialized.sourceScans.length) {
+            const page = await readMergedMaterializedResults({
+              ownerId: config.ownerId,
+              sourceScans: materialized.sourceScans,
+              select: resultSelect,
+              rowsLimit,
+            });
+            results = page.rows;
+            rowsSampled = page.sampled;
+          } else {
+            const ids = activeScans.map((scan) => scan.id).join(",");
+            const page = await readScanResultPages({
+              ownerId: config.ownerId,
+              scanIds: ids,
+              select: resultSelect,
+              rowsLimit,
+              rowsAvailable: activeScans.reduce((total, scan) => total + (Number(scan.row_count) || 0), 0),
+            });
+            results = page.rows;
+            rowsSampled = page.sampled;
+          }
           if (!full && !decisionProjection) results = results.map((item) => ({ ...item, raw: compactResearchRow(item.raw) }));
         }
         const scanSymbols = results.map((item) => item.symbol).filter(Boolean);
@@ -591,6 +635,7 @@ export async function GET(req) {
             omitDecisionTrace: !full && !decisionProjection,
             weeklyRsBySymbol: weeklyRs.bySymbol,
             marketCapBySymbol: marketCaps.bySymbol,
+            matchAllResults: Boolean(materialized.merged),
           })),
           scanTombstones: [],
           markets: {
@@ -598,8 +643,10 @@ export async function GET(req) {
             reason: null,
             requested: requestedMarkets,
             matchedScanId: materialized.scan.id,
-            rowCount: materialized.scan.rowCount,
+            rowCount: results.length || materialized.scan.rowCount,
             localId: materialized.scan.localId,
+            source: materialized.scan.source || null,
+            merged: Boolean(materialized.merged),
           },
         };
       }

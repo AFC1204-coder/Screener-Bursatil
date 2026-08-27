@@ -1,9 +1,5 @@
-# Ticket activo — INT-1-merge
+# Ticket activo — libre
 
-Ver prompt completo: **`docs/tickets/INT-1-merge.md`**
+Último cerrado: **INT-1-merge** (fusión materializados multi-mercado).
 
-Abrir **Agent chat nuevo** con `@docs/tickets/INT-1-merge.md` · **Composer Medium** (High si API+cliente se complica).
-
-Estado: **pendiente programación**.
-
-Contexto: HK (23) y AU (15) ya cargan en solitario; al marcar ambos el banner «no coincide» bloquea la unión.
+Siguiente: ver `docs/backlog-activo.md`.

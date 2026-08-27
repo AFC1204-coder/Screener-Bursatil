@@ -47,6 +47,8 @@ const NIGHTLY_US = scanRow("materialized:US:2026-08-26:o0:l5609", ["US"], 3319, 
 const SCAN_CA = scanRow("materialized:CA:2026-08-26:o0:l100", ["CA"], 22, "2026-08-26T22:00:00.000Z");
 const SCAN_TW_FAILED = scanRow("materialized:TW:2026-08-25:o0:l0", ["TW"], 0, "2026-08-25T22:00:00.000Z", "failed");
 const SCAN_HK_SMALL = scanRow("materialized:HK:2026-08-21:o0:l12", ["HK"], 2, "2026-08-21T22:00:00.000Z");
+const SCAN_HK = scanRow("materialized:HK:2026-08-26:o0:l23", ["HK"], 23, "2026-08-26T22:00:00.000Z");
+const SCAN_AU = scanRow("materialized:AU:2026-08-26:o0:l15", ["AU"], 15, "2026-08-26T22:30:00.000Z");
 
 function configureBackend(scans) {
   supabaseRequest.mockImplementation(async (path, options) => {
@@ -107,11 +109,86 @@ describe("readLatestMaterializedScanForMarkets", () => {
     expect(result.reason).toBe("insufficient-rows");
     expect(result.rejectedScan?.rowCount).toBe(2);
   });
+
+  it("HK+AU publicables → scan fusionado con metadatos honestos", async () => {
+    configureBackend([SCAN_HK, SCAN_AU]);
+
+    const result = await readLatestMaterializedScanForMarkets(["HK", "AU"]);
+
+    expect(result.merged).toBe(true);
+    expect(result.reason).toBeNull();
+    expect(result.scan?.source).toBe("merged-materialized");
+    expect(result.scan?.rowCount).toBe(38);
+    expect(result.scan?.markets).toEqual(["AU", "HK"]);
+    expect(result.row?.settings?.markets).toEqual(["AU", "HK"]);
+    expect(result.row?.settings?.source).toBe("merged-materialized");
+    expect(result.sourceScans).toHaveLength(2);
+  });
+
+  it("HK+TW → partial-markets sin fusionar (TW no publicable)", async () => {
+    configureBackend([SCAN_HK, SCAN_TW_FAILED]);
+
+    const result = await readLatestMaterializedScanForMarkets(["HK", "TW"]);
+
+    expect(result.scan).toBeNull();
+    expect(result.reason).toBe("partial-markets");
+    expect(result.missingMarkets).toEqual(["TW"]);
+  });
 });
 
 const { GET } = await import("@/app/api/scans/route");
 const { clearScansApiCache } = await import("@/lib/scansApiCache");
 const { MARKETS_ANCHOR } = await import("@/lib/scanLocalId");
+
+function scanResultRow(scanId, symbol, rankIndex) {
+  return {
+    scan_id: scanId,
+    rank_index: rankIndex,
+    symbol,
+    company_name: symbol,
+    country: symbol.endsWith(".HK") ? "HK" : "AU",
+    sector: "Tech",
+    industry: "Software",
+    theme: null,
+    total_score: 80,
+    weinstein_score: 70,
+    minervini_score: 75,
+    risk_score: 20,
+    rs_rating: 90,
+    metrics: {},
+    raw: {},
+  };
+}
+
+function configureBackendWithResults(scans, resultsByScanId = {}) {
+  supabaseRequest.mockImplementation(async (path, options) => {
+    if (path === "scan_results") {
+      const query = decodeURIComponent(String(options?.query || ""));
+      const idMatch = query.match(/scan_id=in\.\(([^)]+)\)/);
+      if (!idMatch) return [];
+      const ids = idMatch[1].split(",");
+      const rows = [];
+      for (const id of ids) {
+        rows.push(...(resultsByScanId[id] || []));
+      }
+      return rows.sort((a, b) => (a.rank_index || 0) - (b.rank_index || 0));
+    }
+    if (path !== "scans") return [];
+    const query = decodeURIComponent(String(options?.query || ""));
+    let filtered = scans.filter((scan) => scan.preset === "materialized-cache" && !scan.deleted_at);
+    if (query.includes("settings->markets=cs.")) {
+      const marketMatch = query.match(/settings->markets=cs\.(\[[^\]]+\])/);
+      if (marketMatch) {
+        const wanted = JSON.parse(marketMatch[1]);
+        filtered = filtered.filter((scan) => {
+          const stored = scan.settings?.markets || [];
+          return wanted.every((code) => stored.includes(code));
+        });
+      }
+    }
+    return filtered.slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  });
+}
 
 describe("GET /api/scans?anchor=markets", () => {
   beforeEach(() => {
@@ -136,5 +213,40 @@ describe("GET /api/scans?anchor=markets", () => {
 
     expect(payload.scans).toEqual([]);
     expect(payload.markets).toMatchObject({ found: false, reason: "materialized-not-publishable" });
+  });
+
+  it("HK+AU fusiona filas de ambos materializados", async () => {
+    const hkResults = Array.from({ length: 23 }, (_, index) => scanResultRow(SCAN_HK.id, `0700${index}.HK`, index + 1));
+    const auResults = Array.from({ length: 15 }, (_, index) => scanResultRow(SCAN_AU.id, `BHP${index}.AX`, index + 1));
+    configureBackendWithResults([SCAN_HK, SCAN_AU], {
+      [SCAN_HK.id]: hkResults,
+      [SCAN_AU.id]: auResults,
+    });
+
+    const payload = await (await GET(new Request(`https://statsedge.test/api/scans?includeRows=1&limit=1&rowsLimit=100&anchor=${MARKETS_ANCHOR}&markets=HK,AU`))).json();
+
+    expect(payload.markets).toMatchObject({
+      found: true,
+      merged: true,
+      source: "merged-materialized",
+      requested: ["AU", "HK"],
+      rowCount: 38,
+    });
+    expect(payload.scans).toHaveLength(1);
+    expect(payload.scans[0].rows).toHaveLength(38);
+    expect(payload.scans[0].settings?.markets).toEqual(["AU", "HK"]);
+  });
+
+  it("HK+TW → partial-markets, sin sustituir tabla", async () => {
+    configureBackend([SCAN_HK, SCAN_TW_FAILED]);
+
+    const payload = await (await GET(new Request(`https://statsedge.test/api/scans?includeRows=1&limit=1&rowsLimit=100&anchor=${MARKETS_ANCHOR}&markets=HK,TW`))).json();
+
+    expect(payload.scans).toEqual([]);
+    expect(payload.markets).toMatchObject({
+      found: false,
+      reason: "partial-markets",
+      missingMarkets: ["TW"],
+    });
   });
 });

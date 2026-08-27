@@ -5,9 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **INT-1-merge**.  
-Prompt: **`docs/tickets/INT-1-merge.md`**  
-Último cerrado: **INT-1-AU-run** (orquestador).  
+Ticket en curso: **siguiente** (ver backlog).  
+Último cerrado: **INT-1-merge**.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
 ## Hecho (esta oleada)
@@ -29,13 +28,14 @@ Prompt: **`docs/tickets/INT-1-merge.md`**
 | INT-1-HK-AU | Cohorts cron HK/AU dedicados (plan); 1ª corrida HK = 4 filas (penny @ offset 130) | `0cc62ba` |
 | INT-1-HK-select | Curado primero en cola HK/AU; cron HK → 23 filas; chip carga 23 | `6602485` |
 | INT-1-AU-run | Cron `oceania-australia` → 15 filas; chip AU carga 15 (Browser Use) | (orquestador, sin código) |
+| INT-1-merge | Fusión materializados N≥2; smoke HK+AU=38 sin «no coincide» | _(hash)_ |
 
 ## Siguiente (orden sugerido)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| INT-1-merge | Unir materializados al elegir 2+ mercados | HK+AU ya duelen en smoke | Composer Medium |
 | INT-1+ | KR/IN/… cron curado; ampliar EXTRA AU | Tras merge | Composer |
+| INT-1-chart-intl | Smoke chart `.HK` / `.AX` | Bajo riesgo | Orquestador |
 
 ## Track internacional (privado, pre-licencia pública)
 
