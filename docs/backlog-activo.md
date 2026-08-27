@@ -5,9 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **INT-1-CA-EU**.  
-Prompt: **`docs/tickets/INT-1-CA-EU.md`**  
-Último cerrado: **INT-1-KR-IN** + chart intl.  
+Ticket en curso: **siguiente** (ver backlog).  
+Último cerrado: **INT-1-CA-EU**.  
 **Prioridad dueño:** US (base) · HK · **CA** · **Europa**. KR/IN hechos pero no foco; IL/CN/BR/MX aplazados.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
@@ -33,14 +32,15 @@ Prompt: **`docs/tickets/INT-1-CA-EU.md`**
 | INT-1-merge | Fusión materializados N≥2; smoke HK+AU=38 sin «no coincide» | `94b88cd` |
 | INT-1-KR-IN | Cohorts KR/IN + EXTRA KR + curated-core; cron 24/22; chips OK | `6305f51` |
 | INT-1-chart-intl | Smoke ficha `/stock/0005.HK` y `/stock/BHP.AX` (chart API + UI) | (orquestador) |
+| INT-1-CA-EU | Curated-core CA + 8 cohorts EU priority; cron CA/GB/DE ≥15 | _(hash)_ |
 
 ## Siguiente (orden sugerido)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| INT-1-CA-EU | Curated-core CA + cohorts Europa priority (1 país) | Sustituye EU1@3/país | Composer Medium |
-| — | Europa secondary / JP calidad | Después si hace falta | — |
-| ~~IL/CN/BR/MX~~ | Aplazado (poco relevantes para el dueño) | — | — |
+| INT-1-EU-run | Corridas restantes FR/NL/CH/SE/IT/ES + smoke | Orquestador | — |
+| — | Europa secondary / JP calidad | Si hace falta | — |
+| ~~IL/CN/BR/MX~~ | Aplazado | — | — |
 
 ## Track internacional (privado, pre-licencia pública)
 

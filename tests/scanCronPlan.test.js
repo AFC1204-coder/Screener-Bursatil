@@ -5,6 +5,7 @@ import {
   scanCronGroupAt,
   scanCronGroupByKey,
 } from "@/lib/cronPlan";
+import { EUROPE_PRIORITY_MARKETS } from "@/lib/markets";
 
 describe("scan-refresh cron plan", () => {
   it("expone cohorts HK, AU, KR e IN separados con limit/perMarket ≥24", () => {
@@ -66,5 +67,30 @@ describe("scan-refresh cron plan", () => {
     expect(keys.has("asia-korea")).toBe(true);
     expect(keys.has("asia-india")).toBe(true);
     expect(keys.size).toBe(groups.length);
+  });
+
+  it("no incluye el grupo obsoleto europe-priority con alias EU1", () => {
+    expect(scanCronGroupByKey("europe-priority")).toBeNull();
+    expect(SCAN_CRON_GROUPS.some((group) => group.key === "europe-priority")).toBe(false);
+    for (const group of expandedScanCronGroups()) {
+      expect(group.markets).not.toEqual(["EU1"]);
+      expect(group.markets.includes("EU1")).toBe(false);
+    }
+  });
+
+  it("expone cohorts Europa priority de un solo país con limit/perMarket ≥24", () => {
+    for (const market of EUROPE_PRIORITY_MARKETS) {
+      const group = scanCronGroupByKey(`europe-${market.toLowerCase()}`);
+      expect(group?.markets).toEqual([market]);
+      expect(group?.limit).toBeGreaterThanOrEqual(24);
+      expect(group?.perMarket).toBeGreaterThanOrEqual(24);
+    }
+  });
+
+  it("mantiene north-america-canada como cohort de un solo mercado con limit/perMarket ≥24", () => {
+    const ca = scanCronGroupByKey("north-america-canada");
+    expect(ca?.markets).toEqual(["CA"]);
+    expect(ca?.limit).toBeGreaterThanOrEqual(24);
+    expect(ca?.perMarket).toBeGreaterThanOrEqual(24);
   });
 });

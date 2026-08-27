@@ -145,7 +145,7 @@ function officialDumpSnapshot(market, count, { skipCurated = true } = {}) {
   };
 }
 
-describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU/KR/IN", () => {
+describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU/KR/IN/CA/Europa priority", () => {
   it("con markets [HK], prioriza marketSymbols(HK) y no usa el offset 130 del dump HKEX", async () => {
     const curated = marketSymbols("HK");
     expect(curated.length).toBeGreaterThanOrEqual(24);
@@ -265,6 +265,47 @@ describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU/KR/IN",
 
     expect(plan.symbols).toEqual(curated.slice(0, 24));
     expect(plan.settings.marketOffsets.IN).toBe(0);
+    expect(plan.stats.selection.priorityMode).toBe("curated-core");
+  });
+
+  it("con markets [CA], prioriza marketSymbols(CA) y resetea offset alto", async () => {
+    const curated = marketSymbols("CA");
+    expect(curated.length).toBeGreaterThanOrEqual(24);
+    const highOffset = curated.length + 50;
+    getUniverseEngineSnapshot.mockResolvedValue(officialDumpSnapshot("CA", 200));
+
+    const plan = await planMaterializedScan({
+      markets: ["CA"],
+      perMarket: 24,
+      limit: 24,
+      offset: highOffset,
+      marketOffsets: { CA: highOffset },
+      cronUniverseSnapshot: true,
+      prioritizeMaterialization: false,
+    });
+
+    expect(plan.symbols).toEqual(curated.slice(0, 24));
+    expect(plan.settings.marketOffsets.CA).toBe(0);
+    expect(plan.stats.selection.priorityMode).toBe("curated-core");
+  });
+
+  it("con markets [GB], prioriza marketSymbols(GB) y resetea offset alto", async () => {
+    const curated = marketSymbols("GB");
+    expect(curated.length).toBeGreaterThanOrEqual(24);
+    getUniverseEngineSnapshot.mockResolvedValue(officialDumpSnapshot("GB", 120));
+
+    const plan = await planMaterializedScan({
+      markets: ["GB"],
+      perMarket: 24,
+      limit: 24,
+      offset: 130,
+      marketOffsets: { GB: 130 },
+      cronUniverseSnapshot: true,
+      prioritizeMaterialization: false,
+    });
+
+    expect(plan.symbols).toEqual(curated.slice(0, 24));
+    expect(plan.settings.marketOffsets.GB).toBe(0);
     expect(plan.stats.selection.priorityMode).toBe("curated-core");
   });
 });

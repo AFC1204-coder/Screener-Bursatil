@@ -49,6 +49,9 @@ const SCAN_TW_FAILED = scanRow("materialized:TW:2026-08-25:o0:l0", ["TW"], 0, "2
 const SCAN_HK_SMALL = scanRow("materialized:HK:2026-08-21:o0:l12", ["HK"], 2, "2026-08-21T22:00:00.000Z");
 const SCAN_KR_SMALL = scanRow("materialized:KR:2026-08-21:o0:l4", ["KR"], 4, "2026-08-21T22:00:00.000Z");
 const SCAN_IN_SMALL = scanRow("materialized:IN:2026-08-21:o0:l8", ["IN"], 8, "2026-08-21T22:00:00.000Z");
+const SCAN_CA_SMALL = scanRow("materialized:CA:2026-08-21:o0:l10", ["CA"], 10, "2026-08-21T22:00:00.000Z");
+const SCAN_GB_SMALL = scanRow("materialized:GB:2026-08-21:o0:l8", ["GB"], 8, "2026-08-21T22:00:00.000Z");
+const SCAN_GB = scanRow("materialized:GB:2026-08-26:o0:l18", ["GB"], 18, "2026-08-26T22:15:00.000Z");
 const SCAN_HK = scanRow("materialized:HK:2026-08-26:o0:l23", ["HK"], 23, "2026-08-26T22:00:00.000Z");
 const SCAN_AU = scanRow("materialized:AU:2026-08-26:o0:l15", ["AU"], 15, "2026-08-26T22:30:00.000Z");
 
@@ -130,6 +133,35 @@ describe("readLatestMaterializedScanForMarkets", () => {
     expect(result.scan).toBeNull();
     expect(result.reason).toBe("insufficient-rows");
     expect(result.rejectedScan?.rowCount).toBe(8);
+  });
+
+  it("CA con pocas filas → insufficient-rows", async () => {
+    configureBackend([SCAN_CA_SMALL]);
+
+    const result = await readLatestMaterializedScanForMarkets(["CA"]);
+
+    expect(result.scan).toBeNull();
+    expect(result.reason).toBe("insufficient-rows");
+    expect(result.rejectedScan?.rowCount).toBe(10);
+  });
+
+  it("GB con pocas filas → insufficient-rows", async () => {
+    configureBackend([SCAN_GB_SMALL]);
+
+    const result = await readLatestMaterializedScanForMarkets(["GB"]);
+
+    expect(result.scan).toBeNull();
+    expect(result.reason).toBe("insufficient-rows");
+    expect(result.rejectedScan?.rowCount).toBe(8);
+  });
+
+  it("GB con ≥15 filas → publicable", async () => {
+    configureBackend([SCAN_GB]);
+
+    const result = await readLatestMaterializedScanForMarkets(["GB"]);
+
+    expect(result.scan?.localId).toBe("materialized:GB:2026-08-26:o0:l18");
+    expect(result.reason).toBeNull();
   });
 
   it("HK+AU publicables → scan fusionado con metadatos honestos", async () => {
