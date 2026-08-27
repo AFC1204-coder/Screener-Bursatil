@@ -5,13 +5,15 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre**.  
+Ticket en curso: **UX-P**.  
+Prompt: **`docs/tickets/UX-P-producto-final-brief.md`**  
 Último cerrado: **UX-5**.  
 **Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas.  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
 **Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 + UX-5 hechos.  
-**Decisión métricas (2026-08-27, no inmediato):** RS **global** = un solo ranking del universo privado con **ajuste por divisa**; RS **país** = calidad dentro del propio país; RS **tema** = por a qué se dedica la empresa (theme). Más adelante: muletas de tendencia + índice 0–100 de salud de etapa. VCP e indicadores nuevos = track paralelo, no bloquean UI.
+**Decisión métricas (2026-08-27, no inmediato):** RS **global** = un solo ranking del universo privado con **ajuste por divisa**; RS **país** = calidad dentro del propio país; RS **tema** = por a qué se dedica la empresa (theme). Más adelante: muletas de tendencia + índice 0–100 de salud de etapa. VCP e indicadores nuevos = track paralelo, no bloquean UI.  
+**Modelo brief UX-P:** Gemini 3.7 Flash (barato + capturas); Opus solo si hace falta desempate.
 
 ## Hecho (esta oleada)
 
@@ -49,9 +51,10 @@ Ticket en curso: **libre**.
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-6 | Editor experto honesto (sin reglas muertas; capas→secciones) | P0 producto | Composer |
-| UX-7 | Chips de vista con impacto + «+ Filtro» | P0 producto | Composer |
-| UX-P | Pasada visual “producto final” (densidad, tipografía, rail, ficha/modal, vacío) | Brief Opus/Fable → tickets Composer | Opus brief + Composer |
+| UX-P | Brief “producto final” (visual + superficie → tickets) | **en curso** · Gemini Flash | Gemini 3.7 Flash |
+| UX-6 | Editor experto honesto (sin reglas muertas; capas→secciones) | Tras UX-P o en paralelo si brief lo prioriza | Composer |
+| UX-7 | Chips de vista con impacto + «+ Filtro» | Tras UX-P | Composer |
+| UX-P1… | Tickets de pulido que salgan del brief | — | Composer |
 | UX-8 | Desglose «qué está filtrando ahora» | P1 | Composer |
 | UX-9 | Copy / jerga percentil (parcial en UX-2) | P1 | Composer fast |
 

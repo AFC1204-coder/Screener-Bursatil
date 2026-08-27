@@ -1,5 +1,8 @@
-# Ticket activo — libre
+# Ticket activo — UX-P
 
-Último cerrado: **UX-5** (rail de fichas de caza).
+Prompt: **`docs/tickets/UX-P-producto-final-brief.md`**
 
-P0 UX + UX-5 hechos. Siguiente opcional: UX-6…UX-9. Backlog: `docs/backlog-activo.md`.
+**Modelo:** Gemini 3.7 Flash (brief). Composer para implementar después.
+
+Chat de programación/análisis: Agent nuevo con `@docs/tickets/UX-P-producto-final-brief.md`.  
+Sin commit ni push en ese chat. Pegar aquí el resumen de retorno.
