@@ -1,9 +1,14 @@
-# Ticket activo — INT-1-HK-AU
+# Ticket activo — INT-1-HK-AU-run (pendiente)
 
-Ver prompt completo: **`docs/tickets/INT-1-HK-AU-materialized.md`**
+Plan cron **INT-1-HK-AU** cerrado (cohorts `asia-hongkong` / `oceania-australia`).
 
-Abrir **Agent chat nuevo** con `@docs/tickets/INT-1-HK-AU-materialized.md` · modelo **Composer**.
+Estado: **pendiente primera corrida** ≥15 filas en Supabase + smoke chip HK/AU.
 
-Estado: **pendiente programación**.
+Manual (con `CRON_SECRET`):
 
-INT-1-P0 cerrado (banner stale + TW deshabilitado).
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  "http://localhost:3000/api/cron/scan-refresh?group=asia-hongkong"
+```
+
+Análogo: `group=oceania-australia`.

@@ -134,8 +134,8 @@
 //
 // Cómo se distingue un escaneo nocturno: local_id empieza por
 // "materialized:US:" (mercado exacto ["US"], sin combinar con otros — el
-// cron de Vercel, vía SCAN_CRON_GROUPS en lib/cronPlan.js, JAMÁS agrupa "US"
-// solo: el único grupo que lo incluye es "US-HK-AU"). Confirmado con datos
+// cron de Vercel, vía SCAN_CRON_GROUPS en lib/cronPlan.js, no incluye "US":
+// US queda solo en este nocturno). Confirmado con datos
 // reales: de 92 escaneos existentes en producción (todo el historial de
 // `scans`, consultado 2026-08-11), solo 2 local_id empiezan por
 // "materialized:US:" — ambos de hoy, ninguno de ningún otro origen.
