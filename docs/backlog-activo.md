@@ -51,8 +51,8 @@ Ticket en curso: **libre**.
 | UX-P2 | Toolbar: JSON audit en ⋯; Revisar primario; «Resultados» | `58c2aa4` |
 | UX-6 | Sidebar: Ajustes de sesión; bases en advanced; smoke EE.UU. 47/3321 | `52d2f47` |
 | UX-P3 | Banderas en Personalizar mercados; presets regionales; smoke | `52d2f47` |
-| UX-7 | «+ Filtro»; chips con impacto; Vista N/M; smoke tema −46 | (este commit) |
-| UX-P4 | Modal nav/salida agrupados; triage active; smoke Candidata | (mismo commit) |
+| UX-7 | «+ Filtro»; chips con impacto; Vista N/M; smoke tema −46 | `7882d82` |
+| UX-P4 | Modal nav/salida agrupados; triage active; smoke Candidata | `7882d82` |
 
 ## Siguiente — producto final (inmediato)
 
