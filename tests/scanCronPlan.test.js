@@ -7,15 +7,23 @@ import {
 } from "@/lib/cronPlan";
 
 describe("scan-refresh cron plan", () => {
-  it("expone cohorts HK y AU separados con limit/perMarket ≥24", () => {
+  it("expone cohorts HK, AU, KR e IN separados con limit/perMarket ≥24", () => {
     const hk = scanCronGroupByKey("asia-hongkong");
     const au = scanCronGroupByKey("oceania-australia");
+    const kr = scanCronGroupByKey("asia-korea");
+    const ind = scanCronGroupByKey("asia-india");
     expect(hk?.markets).toEqual(["HK"]);
     expect(au?.markets).toEqual(["AU"]);
+    expect(kr?.markets).toEqual(["KR"]);
+    expect(ind?.markets).toEqual(["IN"]);
     expect(hk?.limit).toBeGreaterThanOrEqual(24);
     expect(hk?.perMarket).toBeGreaterThanOrEqual(24);
     expect(au?.limit).toBeGreaterThanOrEqual(24);
     expect(au?.perMarket).toBeGreaterThanOrEqual(24);
+    expect(kr?.limit).toBeGreaterThanOrEqual(24);
+    expect(kr?.perMarket).toBeGreaterThanOrEqual(24);
+    expect(ind?.limit).toBeGreaterThanOrEqual(24);
+    expect(ind?.perMarket).toBeGreaterThanOrEqual(24);
   });
 
   it("ningún grupo mezcla US, HK y AU en el mismo settings.markets", () => {
@@ -45,7 +53,7 @@ describe("scan-refresh cron plan", () => {
     expect(scanCronGroupByKey(null)).toBeNull();
   });
 
-  it("scanCronGroupAt incluye las cohorts HK/AU en la rotación diaria", () => {
+  it("scanCronGroupAt incluye las cohorts HK/AU/KR/IN en la rotación diaria", () => {
     const groups = expandedScanCronGroups();
     const keys = new Set();
     for (let i = 0; i < groups.length; i += 1) {
@@ -55,6 +63,8 @@ describe("scan-refresh cron plan", () => {
     }
     expect(keys.has("asia-hongkong")).toBe(true);
     expect(keys.has("oceania-australia")).toBe(true);
+    expect(keys.has("asia-korea")).toBe(true);
+    expect(keys.has("asia-india")).toBe(true);
     expect(keys.size).toBe(groups.length);
   });
 });

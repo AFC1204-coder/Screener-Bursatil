@@ -47,6 +47,8 @@ const NIGHTLY_US = scanRow("materialized:US:2026-08-26:o0:l5609", ["US"], 3319, 
 const SCAN_CA = scanRow("materialized:CA:2026-08-26:o0:l100", ["CA"], 22, "2026-08-26T22:00:00.000Z");
 const SCAN_TW_FAILED = scanRow("materialized:TW:2026-08-25:o0:l0", ["TW"], 0, "2026-08-25T22:00:00.000Z", "failed");
 const SCAN_HK_SMALL = scanRow("materialized:HK:2026-08-21:o0:l12", ["HK"], 2, "2026-08-21T22:00:00.000Z");
+const SCAN_KR_SMALL = scanRow("materialized:KR:2026-08-21:o0:l4", ["KR"], 4, "2026-08-21T22:00:00.000Z");
+const SCAN_IN_SMALL = scanRow("materialized:IN:2026-08-21:o0:l8", ["IN"], 8, "2026-08-21T22:00:00.000Z");
 const SCAN_HK = scanRow("materialized:HK:2026-08-26:o0:l23", ["HK"], 23, "2026-08-26T22:00:00.000Z");
 const SCAN_AU = scanRow("materialized:AU:2026-08-26:o0:l15", ["AU"], 15, "2026-08-26T22:30:00.000Z");
 
@@ -108,6 +110,26 @@ describe("readLatestMaterializedScanForMarkets", () => {
     expect(result.scan).toBeNull();
     expect(result.reason).toBe("insufficient-rows");
     expect(result.rejectedScan?.rowCount).toBe(2);
+  });
+
+  it("KR con pocas filas → insufficient-rows", async () => {
+    configureBackend([SCAN_KR_SMALL]);
+
+    const result = await readLatestMaterializedScanForMarkets(["KR"]);
+
+    expect(result.scan).toBeNull();
+    expect(result.reason).toBe("insufficient-rows");
+    expect(result.rejectedScan?.rowCount).toBe(4);
+  });
+
+  it("IN con pocas filas → insufficient-rows", async () => {
+    configureBackend([SCAN_IN_SMALL]);
+
+    const result = await readLatestMaterializedScanForMarkets(["IN"]);
+
+    expect(result.scan).toBeNull();
+    expect(result.reason).toBe("insufficient-rows");
+    expect(result.rejectedScan?.rowCount).toBe(8);
   });
 
   it("HK+AU publicables → scan fusionado con metadatos honestos", async () => {
