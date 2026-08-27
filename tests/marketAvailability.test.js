@@ -60,6 +60,7 @@ describe("buildMarketsStaleNotice", () => {
     expect(notice.source).toBe("markets-stale");
     expect(notice.detail).toContain("Datos cargados: US (3319)");
     expect(notice.detail).toContain("no coincide");
+    expect(notice.ctaLabel).toBe("Cargar datos de la selección");
   });
 
   it("no avisa cuando selección y scan coinciden", () => {

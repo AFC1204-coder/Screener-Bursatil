@@ -25,7 +25,7 @@ import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/l
 import { normalizeScanErrorGroups } from "@/lib/scanErrorGroups";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
 import { DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
-import { buildMarketsStaleNotice, filterSelectableMarkets, marketPresetMarkets, scannedMarketsFromScan } from "@/lib/marketAvailability";
+import { filterSelectableMarkets, marketPresetMarkets, scannedMarketsFromScan } from "@/lib/marketAvailability";
 import { buildDecisionBrief, buildDecisionEvidenceChecklist, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
 import { attachDecisionTrace, auditDecisionRowIssues, buildDecisionAuditExportPayload, buildDecisionTrace, decisionConfidenceLabel, decisionTraceForRow } from "@/lib/decisionAudit";
 import { decisionProfileStateForStock } from "@/lib/decisionProfile";
@@ -319,7 +319,6 @@ export default function Page() {
   // Aviso al que el banner de cobertura sustituyó, para devolverlo cuando la
   // cobertura vuelva a estar completa (el snapshotNotice es un slot único).
   const coverageReplacedNoticeRef = useRef(null);
-  const marketsStaleReplacedNoticeRef = useRef(null);
   // Propiedad de los resultados visibles: "none" | "session" | "cloud" | "local".
   // La restauración asíncrona desde Supabase SOLO aplica si nadie produjo
   // resultados mientras resolvía (evita que un snapshot viejo pise resultados
@@ -1008,33 +1007,27 @@ export default function Page() {
   const scannedMarketsKey = (scanContext?.scannedMarkets || []).slice().sort().join(",");
   const marketsStale = scanStale && (markets.slice().sort().join(",") !== scannedMarketsKey);
   const scanModeStale = scanStale && scanContext && scanMode !== scanContext?.scannedScanMode;
-  useEffect(() => {
-    if (!sessionReady || !marketsStale) {
-      setSnapshotNotice((prev) => {
-        if (prev?.source !== "markets-stale") return prev;
-        const replaced = marketsStaleReplacedNoticeRef.current;
-        marketsStaleReplacedNoticeRef.current = null;
-        return replaced;
-      });
-      return;
-    }
-    const notice = buildMarketsStaleNotice({
-      scannedMarkets: scanContext?.scannedMarkets || [],
-      selectedMarkets: markets,
-      rowCount: analyzedRows.length,
-    });
-    if (!notice) return;
-    setSnapshotNotice((prev) => {
-      if (prev?.source !== "markets-stale") marketsStaleReplacedNoticeRef.current = prev || null;
-      return notice;
-    });
-  }, [sessionReady, marketsStale, scanContext?.scannedMarkets, markets, analyzedRows.length]);
+  // La desalineación mercados↔scan se pinta en ScreenerShell (un banner + CTA).
+  // No ocupamos snapshotNotice para evitar duplicar el aviso naranja.
   // Aviso de cobertura (punto único): si la selección de mercados pide
   // mercados sin filas en los datos cargados, se dice — nunca se vacía la
   // tabla. Con pocos huecos se nombran; con mayoría de huecos se nombra lo
   // cubierto (la lista de 28 mercados era ilegible). El aviso ocupa el slot
   // del snapshotNotice y devuelve el anterior cuando deja de aplicar.
   function announceCoverage(requestedMarkets) {
+    const requestedKey = (requestedMarkets || []).slice().sort().join(",");
+    const scannedKey = (scanContext?.scannedMarkets || []).slice().sort().join(",");
+    // Si la selección no coincide con el scan cargado, el banner de mercados en
+    // ScreenerShell ya comunica la desalineación — no apilar aviso de cobertura.
+    if (scannedKey && requestedKey !== scannedKey) {
+      setSnapshotNotice((prev) => {
+        if (prev?.source !== "coverage") return prev;
+        const replaced = coverageReplacedNoticeRef.current;
+        coverageReplacedNoticeRef.current = null;
+        return replaced;
+      });
+      return snapshotCoverageGaps(requestedMarkets, analyzedRows);
+    }
     const gaps = snapshotCoverageGaps(requestedMarkets, analyzedRows);
     if (gaps.length) {
       const covered = (requestedMarkets || []).filter((code) => !gaps.includes(code));
@@ -2184,6 +2177,7 @@ export default function Page() {
       marketsStale,
       scanModeStale,
       scannedAt: scanContext?.scannedAt || null,
+      scannedMarkets: scanContext?.scannedMarkets || [],
     }}
     results={{
       rows,
@@ -2204,6 +2198,7 @@ export default function Page() {
       decisionAuditJson,
       resetScreenerSession,
       refreshScreenerSnapshotData,
+      loadScanForMarketSelection,
       saveSessionBeforeStockOpen,
       selectedResultSymbol,
       onSelectResultRow,

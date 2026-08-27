@@ -30,8 +30,9 @@ import {
   SearchScopeList,
   SetupChipRail,
 } from "@/app/screenerPanels";
-import { dateTime } from "@/lib/formatters";
-import { analyzedCountForDisplay, investorStatusLabel } from "@/lib/screenerFormat";
+import { investorStatusLabel } from "@/lib/screenerFormat";
+import { buildMarketsStaleNotice } from "@/lib/marketAvailability";
+import { buildScreenerTruthLine, marketCountLabel } from "@/lib/screenerTruthLine";
 import {
   ALL_FILTER_LAYERS,
   DEFAULT_FIELD_RULES,
@@ -46,7 +47,6 @@ import {
   RESULT_PAGE_SIZES,
   SECTOR_STRENGTH_LABELS,
   SECTOR_STRENGTH_OPTIONS,
-  SORT_LABELS,
   marketExchange,
   marketName,
 } from "@/lib/screenerConfig";
@@ -71,7 +71,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     sidebarCollapsed,
     setShowMobileFilters,
     setSidebarCollapsed,
-    kpiUniverseCount,
     marketHealth,
     rows,
   } = chrome;
@@ -223,6 +222,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     decisionAuditJson,
     resetScreenerSession,
     refreshScreenerSnapshotData,
+    loadScanForMarketSelection,
     addFavorite: actionsAddFavorite,
     saveSessionBeforeStockOpen: actionsSaveSessionBeforeStockOpen,
     selectedResultSymbol,
@@ -238,10 +238,27 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   const {
     scanStale = false,
     marketsStale = false,
-    scanModeStale = false,
     scannedAt = null,
+    scannedMarkets = [],
   } = staleness || {};
-  const scannedAtLabel = scannedAt ? dateTime(scannedAt) : "";
+  const presetLabel = PRESETS[presetKey]?.name || "Filtro activo";
+  const truthLine = buildScreenerTruthLine({
+    analyzedRows,
+    passCount: resultsRows.length,
+    visibleCount: resultsFiltered.length,
+    presetName: presetLabel,
+    sort,
+    sortAsc,
+    scannedAt,
+  });
+  const marketsMisalignment = marketsStale
+    ? buildMarketsStaleNotice({
+      scannedMarkets,
+      selectedMarkets: markets,
+      rowCount: analyzedRows.length,
+    })
+    : null;
+  const showSnapshotNotice = snapshotNotice && snapshotNotice.source !== "markets-stale";
 
   // --- franja P3 (percentil por lote) ---
   // Comunicamos honestamente los percentiles batch de la lista visible; si el
@@ -276,7 +293,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       <div className="screenerHeroTitle">
         <span className="screenerEyebrow">StatsEdge · Screener</span>
         <h1 className="title">{PRESETS[presetKey]?.name || "Screener"}</h1>
-        <p>{PRESETS[presetKey]?.name || "Filtro activo"} · {markets.length} mercados · {resultsFiltered.length} resultados visibles</p>
+        <p>{presetLabel} · {marketCountLabel(markets.length)}</p>
         {/* Autocontenido, como GlobalCoveragePanel: posee su fetch a
             GET /api/weekly-changes y no bloquea la primera pintura. Es la
             segunda excepción a la nota de cabecera de este archivo. */}
@@ -291,7 +308,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       <span>{err ? "Incidencia" : "Estado"}</span>
       <b>{investorStatusLabel(status)}</b>
     </div>
-    {snapshotNotice ? <div className={`snapshotFreshnessNotice ${snapshotNotice.tone || "info"}`} role="note">
+    {showSnapshotNotice ? <div className={`snapshotFreshnessNotice ${snapshotNotice.tone || "info"}`} role="note">
       <span>{snapshotNotice.label}</span>
       <b>{snapshotNotice.detail}</b>
     </div> : null}
@@ -318,11 +335,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             <button type="button" className="btn btnPrimary" onClick={() => setShowMobileFilters(false)}>Listo</button>
             <button type="button" className="mobileSidebarCloseBtn" onClick={() => setShowMobileFilters(false)} aria-label="Cerrar filtros" title="Cerrar filtros">✕</button>
           </div>
-        </div>
-        <div className="kpis" style={{ marginBottom: 20 }}>
-          <div className="kpi"><b>{kpiUniverseCount}</b><span>universo</span></div>
-          <div className="kpi"><b>{resultsRows.length}</b><span>pasan</span></div>
-          <div className="kpi"><b>{marketHealth ? Math.round(marketHealth.marketScore) : "-"}</b><span>{marketHealth?.regime?.label || "score"}</span></div>
         </div>
         <FilterTemplatePanel
           presetKey={presetKey}
@@ -488,6 +500,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               </div> : null}
               <SearchCandidateList candidates={searchCandidates} activeSymbol={searchResult?.symbol} onPick={(item) => { setSearchSymbol(item.symbol); loadSearchResult(item.symbol, item); }} />
           </div>
+          <p className="screenerTruthLine" role="status" aria-live="polite">{truthLine}</p>
         </section>
 
         <section className="mobileResearchHome">
@@ -501,10 +514,31 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onMode={(mode) => { updateSetting("setupMode", mode); if (mode === "weakness") setSort("weaknessScore"); }}
             onSort={setSort}
           />
-          {scanStale ? (
+          {marketsMisalignment ? (
+            <div className="scanStaleNotice" role="status" aria-live="polite">
+              <span className="scanStaleNoticeLabel">{marketsMisalignment.label}</span>
+              <b>{marketsMisalignment.detail}</b>
+              <button
+                type="button"
+                className="btn btnSmall btnPrimary"
+                onClick={() => loadScanForMarketSelection(markets, "Cargando datos de la selección…")}
+                disabled={restoringScan}
+              >
+                {restoringScan ? "Cargando…" : marketsMisalignment.ctaLabel}
+              </button>
+            </div>
+          ) : scanStale ? (
             <div className="scanStaleNotice" role="status" aria-live="polite">
               <span className="scanStaleNoticeLabel">Cobertura</span>
-              <b>La selección de mercados cambió; los datos cargados son de la selección anterior.</b>
+              <b>Los criterios de cobertura cambiaron; los datos cargados son de la selección anterior.</b>
+              <button
+                type="button"
+                className="btn btnSmall btnPrimary"
+                onClick={refreshScreenerSnapshotData}
+                disabled={restoringScan}
+              >
+                {restoringScan ? "Actualizando…" : "Traer datos frescos"}
+              </button>
             </div>
           ) : null}
           <MobileResultList
@@ -537,17 +571,37 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         </section>
 
         <section className="desktopResultsSection" style={{ marginBottom: 20 }}>
-          {scanStale ? (
+          {marketsMisalignment ? (
+            <div className="scanStaleNotice" role="status" aria-live="polite">
+              <span className="scanStaleNoticeLabel">{marketsMisalignment.label}</span>
+              <b>{marketsMisalignment.detail}</b>
+              <button
+                type="button"
+                className="btn btnSmall btnPrimary"
+                onClick={() => loadScanForMarketSelection(markets, "Cargando datos de la selección…")}
+                disabled={restoringScan}
+              >
+                {restoringScan ? "Cargando…" : marketsMisalignment.ctaLabel}
+              </button>
+            </div>
+          ) : scanStale ? (
             <div className="scanStaleNotice" role="status" aria-live="polite">
               <span className="scanStaleNoticeLabel">Cobertura</span>
-              <b>La selección de mercados cambió; los datos cargados son de la selección anterior.</b>
+              <b>Los criterios de cobertura cambiaron; los datos cargados son de la selección anterior.</b>
+              <button
+                type="button"
+                className="btn btnSmall btnPrimary"
+                onClick={refreshScreenerSnapshotData}
+                disabled={restoringScan}
+              >
+                {restoringScan ? "Actualizando…" : "Traer datos frescos"}
+              </button>
             </div>
           ) : null}
           <div className="resultsHeader">
             <div className="resultsTitleBlock">
               <span>Results</span>
-              <h2>{resultsFiltered.length} resultados</h2>
-              <p>{resultsRows.length} pasan · {analyzedCountForDisplay(analyzedRows)} analizadas · {SORT_LABELS[sort] || sort}{scannedAtLabel ? ` · scan ${scannedAtLabel}` : ""}</p>
+              <h2>Resultados</h2>
             </div>
             <div className="controls">
               {/* Siempre visible, incluso con la tabla vacía. Sin botón

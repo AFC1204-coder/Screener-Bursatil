@@ -242,6 +242,14 @@
   flex:0 0 auto;
 }
 
+.screenerTruthLine {
+  margin:12px 0 0;
+  color:var(--muted);
+  font-size:var(--text-s);
+  font-weight:520;
+  line-height:1.45;
+}
+
 /* Dot indicator para controles cuyo valor actual difiere del último scan
    mostrado. Va inline junto al label del control (markets / cobertura).
    --oxido: riesgo real / "algo no encaja"; spec v2 §2 regla 5. */
