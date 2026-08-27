@@ -41,7 +41,7 @@ Ticket en curso: **libre**.
 | UX-4 | Purga filtros fantasma de vista; smoke 47=47 con claves fantasma | `a890fa8` |
 | UX-3 | Invariante sort↔periodo + cabeceras clicables; smoke 3M/6M/↑ + reload | `2ad795e` |
 | UX-2 | Línea de verdad + 1 banner mercados con CTA; smoke CTA resuelve stale | `60985a3` |
-| UX-5 | Rail 5 fichas de caza; smoke US/Deterioro/pivot/Core intl 198/210 | (este commit) |
+| UX-5 | Rail 5 fichas de caza; smoke US/Deterioro/pivot/Core intl 198/210 | `2690ed7` |
 
 ## Siguiente (orden sugerido)
 
