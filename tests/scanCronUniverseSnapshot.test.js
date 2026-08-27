@@ -24,6 +24,7 @@ vi.mock("@/lib/universeEngine", () => ({
 import { getUniverseEngineSnapshot } from "@/lib/universeEngine";
 import { planMaterializedScan } from "@/lib/materializedScanner";
 import { CRON_UNIVERSE_MARKETS } from "@/lib/cronPlan";
+import { marketSymbols } from "@/lib/universes";
 
 function combinedSnapshotFixture() {
   const universe = [];
@@ -115,5 +116,115 @@ describe("resolveSymbols · resolución de instantánea del universo para el cro
     });
 
     expect(getUniverseEngineSnapshot).toHaveBeenCalledWith(expect.objectContaining({ markets: ["US"] }));
+  });
+});
+
+function officialDumpSnapshot(market, count, { skipCurated = true } = {}) {
+  const curated = new Set(marketSymbols(market).map((symbol) => String(symbol).toUpperCase()));
+  const suffix = market === "AU" ? ".AX" : `.${market}`;
+  const universe = [];
+  let i = 0;
+  while (universe.length < count) {
+    i += 1;
+    const symbol = market === "HK"
+      ? `${String(2000 + i).padStart(4, "0")}.HK`
+      : `DUMP${i}${suffix}`;
+    if (skipCurated && curated.has(symbol.toUpperCase())) continue;
+    universe.push({ symbol, name: `Dump ${i}`, market, country: market, source: "official-dump" });
+  }
+  return {
+    key: `universe:${market}`,
+    markets: [market],
+    count: universe.length,
+    totalBeforeGate: universe.length,
+    excludedCount: 0,
+    universe,
+    excluded: [],
+    coverage: { byMarket: {}, bySource: {}, bySourceByMarket: {}, byInstrumentType: {} },
+    cache: { hit: true, status: "supabase" },
+  };
+}
+
+describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU", () => {
+  it("con markets [HK], prioriza marketSymbols(HK) y no usa el offset 130 del dump HKEX", async () => {
+    const curated = marketSymbols("HK");
+    expect(curated.length).toBeGreaterThanOrEqual(24);
+    getUniverseEngineSnapshot.mockResolvedValue(officialDumpSnapshot("HK", 400));
+
+    const plan = await planMaterializedScan({
+      markets: ["HK"],
+      perMarket: 24,
+      limit: 24,
+      offset: 130,
+      marketOffsets: { HK: 130 },
+      cronUniverseSnapshot: true,
+      prioritizeMaterialization: false,
+    });
+
+    expect(plan.symbols).toEqual(curated.slice(0, 24));
+    expect(plan.settings.marketOffsets.HK).toBe(0);
+    expect(plan.stats.selection.priorityMode).toBe("curated-core");
+  });
+
+  it("con markets [AU], antepone marketSymbols(AU) y rellena el limit desde el dump tras reset del offset", async () => {
+    const curated = marketSymbols("AU");
+    expect(curated.length).toBeGreaterThan(0);
+    expect(curated.length).toBeLessThan(24);
+    const snapshot = officialDumpSnapshot("AU", 80);
+    getUniverseEngineSnapshot.mockResolvedValue(snapshot);
+
+    const plan = await planMaterializedScan({
+      markets: ["AU"],
+      perMarket: 24,
+      limit: 24,
+      offset: 130,
+      marketOffsets: { AU: 130 },
+      cronUniverseSnapshot: true,
+      prioritizeMaterialization: false,
+    });
+
+    expect(plan.symbols).toHaveLength(24);
+    expect(plan.symbols.slice(0, curated.length)).toEqual(curated);
+    expect(plan.symbols.slice(curated.length)).toEqual(
+      snapshot.universe.slice(0, 24 - curated.length).map((row) => row.symbol),
+    );
+    expect(plan.settings.marketOffsets.AU).toBe(0);
+    expect(plan.stats.selection.priorityMode).toBe("curated-core");
+  });
+
+  it("conserva un offset interior a la cola curada HK (rotación dentro del núcleo)", async () => {
+    const curated = marketSymbols("HK");
+    getUniverseEngineSnapshot.mockResolvedValue(officialDumpSnapshot("HK", 50));
+
+    const plan = await planMaterializedScan({
+      markets: ["HK"],
+      perMarket: 8,
+      limit: 8,
+      offset: 5,
+      marketOffsets: { HK: 5 },
+      cronUniverseSnapshot: true,
+      prioritizeMaterialization: false,
+    });
+
+    expect(plan.symbols).toEqual(curated.slice(5, 13));
+    expect(plan.settings.marketOffsets.HK).toBe(5);
+  });
+
+  it("no aplica cola curada a un mercado que no es HK/AU", async () => {
+    const snapshot = officialDumpSnapshot("JP", 40, { skipCurated: false });
+    getUniverseEngineSnapshot.mockResolvedValue(snapshot);
+
+    const plan = await planMaterializedScan({
+      markets: ["JP"],
+      perMarket: 8,
+      limit: 8,
+      offset: 10,
+      marketOffsets: { JP: 10 },
+      cronUniverseSnapshot: true,
+      prioritizeMaterialization: false,
+    });
+
+    expect(plan.symbols).toEqual(snapshot.universe.slice(10, 18).map((row) => row.symbol));
+    expect(plan.stats.selection.priorityMode).not.toBe("curated-core");
   });
 });

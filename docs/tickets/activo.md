@@ -1,9 +1,5 @@
-# Ticket activo — INT-1-HK-select
+# Ticket activo — libre
 
-Ver prompt completo: **`docs/tickets/INT-1-HK-select.md`**
+Último cerrado: **INT-1-HK-select** (curado HK/AU en selección cron).
 
-Abrir **Agent chat nuevo** con `@docs/tickets/INT-1-HK-select.md` · **Composer Medium**.
-
-Estado: **pendiente programación**.
-
-Contexto: cron HK ya cableado; la corrida manual guardó solo 4/24 (penny stocks en offset 130). Objetivo: priorizar `marketSymbols(HK|AU)` para ≥15 filas/corrida.
+Siguiente: ver `docs/backlog-activo.md` (AU en vivo / INT-1+).
