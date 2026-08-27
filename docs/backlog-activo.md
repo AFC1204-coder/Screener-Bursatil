@@ -5,7 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre**.  
+Ticket en curso: **UX-6** (+ **UX-P3** Día 2).  
+Prompt: **`docs/tickets/UX-6-expert-editor-sidebar.md`** · **`docs/tickets/UX-P3-markets-compact.md`**.  
 Último cerrado: **UX-P1 + UX-P2**.  
 **Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas.  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
@@ -53,8 +54,8 @@ Ticket en curso: **libre**.
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-6 | Editor experto + presets fuera del flujo diario | Día 2 | Composer |
-| UX-P3 | Mercados: regiones + banderas colapsables | Día 2 | Composer |
+| UX-6 | Editor experto + presets fuera del flujo diario | **en curso** · Día 2 | Composer |
+| UX-P3 | Mercados: regiones + banderas colapsables | Día 2 · hermano | Composer |
 | UX-7 | Chips de vista + «+ Filtro» | Día 3 | Composer |
 | UX-P4 | Cabecera vista rápida / triage | Día 3 · P2 | Composer |
 | UX-P5 | Móvil ~390px | Día 4 · P2 | Composer |
