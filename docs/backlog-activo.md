@@ -24,7 +24,7 @@ Prompt: **`docs/tickets/INT-1-HK-AU-materialized.md`**
 | B2-chart | Preview línea instantáneo + transición velas; timeout 15s fetch; smoke modal/review OK | `5d28d5f` |
 | INT-0 | Auditoría multi-mercado (repo ↔ Supabase) | `36cbcdd` |
 | INT-1-P1 | Cargar materializado al elegir 1 mercado; aviso HK sin scan; smoke CA/US/HK | `b46dfb1` |
-| INT-1-P0 | Banner mercados stale + TW no seleccionable; smoke arranque/Asia/CA | (este commit) |
+| INT-1-P0 | Banner mercados stale + TW no seleccionable; smoke arranque/Asia/CA | `9911f84` |
 
 ## Siguiente (orden sugerido)
 
