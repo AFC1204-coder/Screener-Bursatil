@@ -1,5 +1,5 @@
 # Ticket activo — libre
 
-Último cerrado: **INT-1-CA-EU**.
+Último cerrado: **INT-1-EU-run** (corridas Europa priority completas).
 
-Siguiente natural: corridas orquestador `europe-fr`…`europe-es` (INT-1-EU-run), o parar.
+Track CA/HK/Europa priority operativo. Siguiente solo si el dueño pide más.
