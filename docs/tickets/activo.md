@@ -1,5 +1,5 @@
-# Ticket activo — libre
+# Ticket activo — INT-1-intl-preset
 
-Último cerrado: **INT-1-EU-run** (corridas Europa priority completas).
+Ver: **`docs/tickets/INT-1-intl-preset.md`**
 
-Track CA/HK/Europa priority operativo. Siguiente solo si el dueño pide más.
+Prioridad: filtro + mercados para usar HK/CA/Europa sin tabla vacía.

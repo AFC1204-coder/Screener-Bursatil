@@ -5,9 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre**.  
-Último cerrado: **INT-1-EU-run** (orquestador).  
-**Prioridad dueño:** US (base) · HK · **CA** · **Europa**. KR/IN hechos pero no foco; IL/CN/BR/MX aplazados.  
+Ticket en curso: **INT-1-intl-preset**.  
+Prompt: **`docs/tickets/INT-1-intl-preset.md`**  
+Último cerrado: **INT-1-EU-run**.  
+**Prioridad dueño:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
 ## Hecho (esta oleada)
@@ -39,7 +40,8 @@ Ticket en curso: **libre**.
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| — | Europa secondary / JP calidad | Solo si dueño lo pide | — |
+| INT-1-intl-preset | Preset filtro Intl + Core intl mercados + auto fuera de US | Tabla vacía con Balanceado | Composer Medium |
+| — | Europa secondary / JP | Solo si dueño lo pide | — |
 | ~~IL/CN/BR/MX~~ | Aplazado | — | — |
 
 ## Track internacional (privado, pre-licencia pública)
