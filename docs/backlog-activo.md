@@ -5,9 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **INT-1-EU-secondary-JP**.  
-Prompt: **`docs/tickets/INT-1-EU-secondary-JP.md`**  
-Último cerrado: **INT-1-intl-preset**.  
+Ticket en curso: **libre**.  
+Último cerrado: **INT-1-EU-secondary-JP**.  
 **Prioridad dueño:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
@@ -36,12 +35,13 @@ Prompt: **`docs/tickets/INT-1-EU-secondary-JP.md`**
 | INT-1-CA-EU | Curated-core CA + 8 cohorts EU priority; cron CA/GB/DE ≥15 | `56704e1` |
 | INT-1-EU-run | Corridas FR/NL/CH/SE/IT/ES (NL/IT 2ª pasada por cursor) | (orquestador) |
 | INT-1-intl-preset | Preset `intl` + mercados `core-intl` + auto fuera/US; smoke GB 23, Core 198/210, US Balanceado 3321 | `840ba52` |
+| INT-1-EU-secondary-JP | EU2→cohorts por país + curated-core JP/secondary; cron JP24/DK24/NO23; smoke chips OK | (este commit) |
 
 ## Siguiente (orden sugerido)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| INT-1-EU-secondary-JP | Cohorts EU2→por país + curated-core JP/secondary | En curso | Composer Medium |
+| — | Corridas restantes secondary (FI/BE/PT/AT/IE) | Orquestador si hace falta | — |
 | ~~IL/CN/BR/MX~~ | Aplazado | — | — |
 
 ## Track internacional (privado, pre-licencia pública)

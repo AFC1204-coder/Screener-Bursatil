@@ -210,22 +210,44 @@ describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU/KR/IN/C
     expect(plan.settings.marketOffsets.HK).toBe(5);
   });
 
-  it("no aplica cola curada a un mercado fuera del núcleo curado (p.ej. JP)", async () => {
-    const snapshot = officialDumpSnapshot("JP", 40, { skipCurated: false });
-    getUniverseEngineSnapshot.mockResolvedValue(snapshot);
+  it("con markets [JP], prioriza marketSymbols(JP) y resetea offset alto", async () => {
+    const curated = marketSymbols("JP");
+    expect(curated.length).toBeGreaterThanOrEqual(24);
+    getUniverseEngineSnapshot.mockResolvedValue(officialDumpSnapshot("JP", 80));
 
     const plan = await planMaterializedScan({
       markets: ["JP"],
-      perMarket: 8,
-      limit: 8,
-      offset: 10,
-      marketOffsets: { JP: 10 },
+      perMarket: 24,
+      limit: 24,
+      offset: 130,
+      marketOffsets: { JP: 130 },
       cronUniverseSnapshot: true,
       prioritizeMaterialization: false,
     });
 
-    expect(plan.symbols).toEqual(snapshot.universe.slice(10, 18).map((row) => row.symbol));
-    expect(plan.stats.selection.priorityMode).not.toBe("curated-core");
+    expect(plan.symbols).toEqual(curated.slice(0, 24));
+    expect(plan.settings.marketOffsets.JP).toBe(0);
+    expect(plan.stats.selection.priorityMode).toBe("curated-core");
+  });
+
+  it("con markets [DK], prioriza marketSymbols(DK) y resetea offset alto", async () => {
+    const curated = marketSymbols("DK");
+    expect(curated.length).toBeGreaterThanOrEqual(24);
+    getUniverseEngineSnapshot.mockResolvedValue(officialDumpSnapshot("DK", 80));
+
+    const plan = await planMaterializedScan({
+      markets: ["DK"],
+      perMarket: 24,
+      limit: 24,
+      offset: 130,
+      marketOffsets: { DK: 130 },
+      cronUniverseSnapshot: true,
+      prioritizeMaterialization: false,
+    });
+
+    expect(plan.symbols).toEqual(curated.slice(0, 24));
+    expect(plan.settings.marketOffsets.DK).toBe(0);
+    expect(plan.stats.selection.priorityMode).toBe("curated-core");
   });
 
   it("con markets [KR], prioriza marketSymbols(KR) y resetea offset alto", async () => {

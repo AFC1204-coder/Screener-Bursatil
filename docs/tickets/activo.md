@@ -1,5 +1,5 @@
-# Ticket activo — INT-1-EU-secondary-JP
+# Ticket activo — libre
 
-Ver: **`docs/tickets/INT-1-EU-secondary-JP.md`**
+Último cerrado: **INT-1-EU-secondary-JP**.
 
-Prioridad: Europa secondary (DK…IE) + JP curated-core; sin EU2 mezclado.
+Backlog: `docs/backlog-activo.md`.

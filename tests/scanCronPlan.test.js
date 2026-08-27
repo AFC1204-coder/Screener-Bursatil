@@ -5,7 +5,7 @@ import {
   scanCronGroupAt,
   scanCronGroupByKey,
 } from "@/lib/cronPlan";
-import { EUROPE_PRIORITY_MARKETS } from "@/lib/markets";
+import { EUROPE_PRIORITY_MARKETS, EUROPE_SECONDARY_MARKETS } from "@/lib/markets";
 
 describe("scan-refresh cron plan", () => {
   it("expone cohorts HK, AU, KR e IN separados con limit/perMarket ≥24", () => {
@@ -92,5 +92,30 @@ describe("scan-refresh cron plan", () => {
     expect(ca?.markets).toEqual(["CA"]);
     expect(ca?.limit).toBeGreaterThanOrEqual(24);
     expect(ca?.perMarket).toBeGreaterThanOrEqual(24);
+  });
+
+  it("no incluye el grupo obsoleto europe-secondary con alias EU2", () => {
+    expect(scanCronGroupByKey("europe-secondary")).toBeNull();
+    expect(SCAN_CRON_GROUPS.some((group) => group.key === "europe-secondary")).toBe(false);
+    for (const group of expandedScanCronGroups()) {
+      expect(group.markets).not.toEqual(["EU2"]);
+      expect(group.markets.includes("EU2")).toBe(false);
+    }
+  });
+
+  it("expone cohorts Europa secondary de un solo país con limit/perMarket ≥24", () => {
+    for (const market of EUROPE_SECONDARY_MARKETS) {
+      const group = scanCronGroupByKey(`europe-${market.toLowerCase()}`);
+      expect(group?.markets).toEqual([market]);
+      expect(group?.limit).toBeGreaterThanOrEqual(24);
+      expect(group?.perMarket).toBeGreaterThanOrEqual(24);
+    }
+  });
+
+  it("mantiene asia-japan como cohort JP sola con limit/perMarket ≥24", () => {
+    const jp = scanCronGroupByKey("asia-japan");
+    expect(jp?.markets).toEqual(["JP"]);
+    expect(jp?.limit).toBeGreaterThanOrEqual(24);
+    expect(jp?.perMarket).toBeGreaterThanOrEqual(24);
   });
 });
