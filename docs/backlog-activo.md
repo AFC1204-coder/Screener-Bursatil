@@ -5,8 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **INT-1-P0** (banner mercados stale + TW).  
-Prompt: **`docs/tickets/INT-1-P0-stale-banner-tw.md`**  
+Ticket en curso: **INT-1-HK-AU** (materializado usable).  
+Prompt: **`docs/tickets/INT-1-HK-AU-materialized.md`**  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**.
 
 ## Hecho (esta oleada)
@@ -24,13 +24,14 @@ Prompt: **`docs/tickets/INT-1-P0-stale-banner-tw.md`**
 | B2-chart | Preview línea instantáneo + transición velas; timeout 15s fetch; smoke modal/review OK | `5d28d5f` |
 | INT-0 | Auditoría multi-mercado (repo ↔ Supabase) | `36cbcdd` |
 | INT-1-P1 | Cargar materializado al elegir 1 mercado; aviso HK sin scan; smoke CA/US/HK | `b46dfb1` |
+| INT-1-P0 | Banner mercados stale + TW no seleccionable; smoke arranque/Asia/CA | (este commit) |
 
 ## Siguiente (orden sugerido)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| INT-1 P0 | Banner mercados stale + TW no seleccionable | Prompt `docs/tickets/INT-1-P0-stale-banner-tw.md` | Composer |
-| INT-1+ | HK/AU materializado usable; fusión multi-mercado | Tras P0 | Composer |
+| INT-1-HK-AU | Materializado HK/AU usable (>15 filas) o fuera del default | Cron `core-us-hk-au` hoy ~2 filas | Composer |
+| INT-1+ | Fusión multi-mercado; KR/IN/… | Tras HK/AU | Composer |
 
 ## Track internacional (privado, pre-licencia pública)
 

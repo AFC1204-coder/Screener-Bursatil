@@ -50,6 +50,7 @@ import {
   marketExchange,
   marketName,
 } from "@/lib/screenerConfig";
+import { isMarketSelectable, marketUnavailabilityReason } from "@/lib/marketAvailability";
 import { marketFlag } from "@/lib/symbols";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { rankActionLabel } from "@/lib/screenerExplainability";
@@ -352,11 +353,23 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           <div className="marketSelector marketGrid">
             {MARKETS.map(([c, n]) => {
               const active = markets.includes(c);
-              return <button key={c} className={`marketChip countryMarketChip ${active ? "active" : ""}`} title={`${n} · ${marketExchange(c)}`} aria-pressed={active} onClick={() => {
-                const selectedMarkets = active ? markets.filter((x) => x !== c) : [...markets, c];
-                const nextMarkets = MARKET_ORDER.filter((code) => selectedMarkets.includes(code));
-                setMarketsAndInvalidate(nextMarkets, `Mercados actualizados: ${nextMarkets.length}`);
-              }}>
+              const selectable = isMarketSelectable(c);
+              const disabledReason = selectable ? null : marketUnavailabilityReason(c);
+              return <button
+                key={c}
+                type="button"
+                className={`marketChip countryMarketChip ${active ? "active" : ""} ${selectable ? "" : "isDisabled"}`}
+                title={disabledReason || `${n} · ${marketExchange(c)}`}
+                aria-pressed={active}
+                aria-disabled={selectable ? undefined : true}
+                disabled={!selectable}
+                onClick={() => {
+                  if (!selectable) return;
+                  const selectedMarkets = active ? markets.filter((x) => x !== c) : [...markets, c];
+                  const nextMarkets = MARKET_ORDER.filter((code) => selectedMarkets.includes(code));
+                  setMarketsAndInvalidate(nextMarkets, `Mercados actualizados: ${nextMarkets.length}`);
+                }}
+              >
                 <span className="marketChipFlag">{marketFlag(c)}</span>
                 <span className="marketChipCode">{c}</span>
               </button>;

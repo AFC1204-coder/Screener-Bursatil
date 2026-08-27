@@ -24,7 +24,8 @@ import { benchmarkSymbolForRow } from "@/lib/relativeStrength";
 import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/lib/researchRow";
 import { normalizeScanErrorGroups } from "@/lib/scanErrorGroups";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
-import { ASIA, DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, EUROPE, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
+import { DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
+import { buildMarketsStaleNotice, filterSelectableMarkets, marketPresetMarkets, scannedMarketsFromScan } from "@/lib/marketAvailability";
 import { buildDecisionBrief, buildDecisionEvidenceChecklist, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
 import { attachDecisionTrace, auditDecisionRowIssues, buildDecisionAuditExportPayload, buildDecisionTrace, decisionConfidenceLabel, decisionTraceForRow } from "@/lib/decisionAudit";
 import { decisionProfileStateForStock } from "@/lib/decisionProfile";
@@ -362,6 +363,7 @@ export default function Page() {
   // Aviso al que el banner de cobertura sustituyó, para devolverlo cuando la
   // cobertura vuelva a estar completa (el snapshotNotice es un slot único).
   const coverageReplacedNoticeRef = useRef(null);
+  const marketsStaleReplacedNoticeRef = useRef(null);
   // Propiedad de los resultados visibles: "none" | "session" | "cloud" | "local".
   // La restauración asíncrona desde Supabase SOLO aplica si nadie produjo
   // resultados mientras resolvía (evita que un snapshot viejo pise resultados
@@ -380,6 +382,8 @@ export default function Page() {
     const restoredUseRegimeFilter = scan.useRegimeFilter !== false;
     const restoredActiveSettings = scan.activeSettings || effectiveSettingsFromLayers(restoredSettings, restoredFilterLayers, restoredFieldRules);
     const restoredRowsAreFiltered = snapshotRowsAreFiltered(scan);
+    const actualScannedMarkets = scannedMarketsFromScan(scan, scan.rows);
+    const signedMarkets = actualScannedMarkets.length ? actualScannedMarkets : [...markets].sort();
     const nextScanContext = {
       id: scan.id || uid(),
       symbolsCount: scan.rows.length,
@@ -388,13 +392,10 @@ export default function Page() {
       scannedAt: scan.updatedAt || scan.createdAt || new Date().toISOString(),
       snapshotSource: source === "cloud" ? "supabase" : "local",
       snapshotRowsAreFiltered: restoredRowsAreFiltered,
-      // El snapshot restaurado se considera "vigente" respecto a los settings
-      // efectivos al restaurar; si markets/manual/scanMode cambian después, el
-      // banner de staleness lo reflejará. Firmamos contra el estado actual del
-      // componente (los snapshots locales/cloud no persisten markets/manual, y
-      // en este punto el caller ya ha seteado los mercados que aplican).
-      settingsSignature: scanSettingsSignature(markets, manual, scanMode),
-      scannedMarkets: [...markets].sort(),
+      // El snapshot restaurado se considera "vigente" respecto a los mercados
+      // que realmente cubre (no a la selección UI si divergen).
+      settingsSignature: scanSettingsSignature(signedMarkets, manual, scanMode),
+      scannedMarkets: signedMarkets,
       scannedScanMode: scanMode,
       screenerFilters: screenerFiltersFromScan(scan),
     };
@@ -611,7 +612,11 @@ export default function Page() {
   function applyFreshSnapshotData(scan, { notice = null, scanSignature = null } = {}) {
     if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) return false;
     resultsOwnerRef.current = "cloud";
-    const signedMarkets = Array.isArray(scanSignature?.markets) && scanSignature.markets.length ? scanSignature.markets : markets;
+    const signedMarkets = (() => {
+      const fromScan = scannedMarketsFromScan(scan, scan.rows);
+      if (fromScan.length) return fromScan;
+      return Array.isArray(scanSignature?.markets) && scanSignature.markets.length ? scanSignature.markets : markets;
+    })();
     const signedManual = scanSignature?.manual ?? manual;
     const signedScanMode = scanSignature?.scanMode || scanMode;
     const nextScanContext = {
@@ -653,7 +658,9 @@ export default function Page() {
     const session = safeRead(STORAGE_KEYS.screenerSession, null);
     if (session?.version === SCREENER_SESSION_VERSION) {
       const restoredPresetKey = PRESETS[session.presetKey] ? session.presetKey : "balanced";
-      const restoredMarkets = Array.isArray(session.markets) && session.markets.length ? session.markets : DEFAULT_MARKETS;
+      const restoredMarkets = filterSelectableMarkets(
+        Array.isArray(session.markets) && session.markets.length ? session.markets : DEFAULT_MARKETS,
+      );
       const restoredManual = session.manual || "";
       const restoredUniverse = Array.isArray(session.universe) ? session.universe : [];
       let restoredRows = Array.isArray(session.rows) ? session.rows : [];
@@ -1029,6 +1036,27 @@ export default function Page() {
   const scannedMarketsKey = (scanContext?.scannedMarkets || []).slice().sort().join(",");
   const marketsStale = scanStale && (markets.slice().sort().join(",") !== scannedMarketsKey);
   const scanModeStale = scanStale && scanContext && scanMode !== scanContext?.scannedScanMode;
+  useEffect(() => {
+    if (!sessionReady || !marketsStale) {
+      setSnapshotNotice((prev) => {
+        if (prev?.source !== "markets-stale") return prev;
+        const replaced = marketsStaleReplacedNoticeRef.current;
+        marketsStaleReplacedNoticeRef.current = null;
+        return replaced;
+      });
+      return;
+    }
+    const notice = buildMarketsStaleNotice({
+      scannedMarkets: scanContext?.scannedMarkets || [],
+      selectedMarkets: markets,
+      rowCount: analyzedRows.length,
+    });
+    if (!notice) return;
+    setSnapshotNotice((prev) => {
+      if (prev?.source !== "markets-stale") marketsStaleReplacedNoticeRef.current = prev || null;
+      return notice;
+    });
+  }, [sessionReady, marketsStale, scanContext?.scannedMarkets, markets, analyzedRows.length]);
   // Aviso de cobertura (punto único): si la selección de mercados pide
   // mercados sin filas en los datos cargados, se dice — nunca se vacía la
   // tabla. Con pocos huecos se nombran; con mayoría de huecos se nombra lo
@@ -1151,8 +1179,10 @@ export default function Page() {
     });
   }
   function setMarketsAndInvalidate(nextMarkets, label = "Mercados actualizados.") {
-    const normalized = (Array.isArray(nextMarkets) ? nextMarkets : [])
-      .filter((code, index, list) => MARKET_META[code] && list.indexOf(code) === index);
+    const normalized = filterSelectableMarkets(
+      (Array.isArray(nextMarkets) ? nextMarkets : [])
+        .filter((code, index, list) => MARKET_META[code] && list.indexOf(code) === index),
+    );
     setMarkets(normalized);
     setUniverse([]);
     setUniverseScope("");
@@ -1687,13 +1717,6 @@ export default function Page() {
   function marketPreset(t) {
     setBatchStart(0);
     setMarketsAndInvalidate(marketPresetMarkets(t), "Preset cambiado.");
-  }
-  function marketPresetMarkets(t) {
-    if (t === "us") return ["US"];
-    if (t === "europe") return EUROPE;
-    if (t === "asia") return ASIA;
-    if (t === "hk") return ["HK"];
-    return DEFAULT_MARKETS;
   }
   function isMarketPresetActive(t) {
     const next = marketPresetMarkets(t);
