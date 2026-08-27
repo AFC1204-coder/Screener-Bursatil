@@ -1,14 +1,9 @@
-# Ticket activo — INT-1-HK-AU-run (pendiente)
+# Ticket activo — INT-1-HK-select
 
-Plan cron **INT-1-HK-AU** cerrado (cohorts `asia-hongkong` / `oceania-australia`).
+Ver prompt completo: **`docs/tickets/INT-1-HK-select.md`**
 
-Estado: **pendiente primera corrida** ≥15 filas en Supabase + smoke chip HK/AU.
+Abrir **Agent chat nuevo** con `@docs/tickets/INT-1-HK-select.md` · **Composer Medium**.
 
-Manual (con `CRON_SECRET`):
+Estado: **pendiente programación**.
 
-```bash
-curl -H "Authorization: Bearer $CRON_SECRET" \
-  "http://localhost:3000/api/cron/scan-refresh?group=asia-hongkong"
-```
-
-Análogo: `group=oceania-australia`.
+Contexto: cron HK ya cableado; la corrida manual guardó solo 4/24 (penny stocks en offset 130). Objetivo: priorizar `marketSymbols(HK|AU)` para ≥15 filas/corrida.
