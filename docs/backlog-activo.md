@@ -28,7 +28,7 @@ Ticket en curso: **siguiente** (ver backlog).
 | INT-1-HK-AU | Cohorts cron HK/AU dedicados (plan); 1ª corrida HK = 4 filas (penny @ offset 130) | `0cc62ba` |
 | INT-1-HK-select | Curado primero en cola HK/AU; cron HK → 23 filas; chip carga 23 | `6602485` |
 | INT-1-AU-run | Cron `oceania-australia` → 15 filas; chip AU carga 15 (Browser Use) | (orquestador, sin código) |
-| INT-1-merge | Fusión materializados N≥2; smoke HK+AU=38 sin «no coincide» | _(hash)_ |
+| INT-1-merge | Fusión materializados N≥2; smoke HK+AU=38 sin «no coincide» | `94b88cd` |
 
 ## Siguiente (orden sugerido)
 
