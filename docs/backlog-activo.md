@@ -32,7 +32,7 @@ Ticket en curso: **siguiente** (ver backlog).
 | INT-1-merge | Fusión materializados N≥2; smoke HK+AU=38 sin «no coincide» | `94b88cd` |
 | INT-1-KR-IN | Cohorts KR/IN + EXTRA KR + curated-core; cron 24/22; chips OK | `6305f51` |
 | INT-1-chart-intl | Smoke ficha `/stock/0005.HK` y `/stock/BHP.AX` (chart API + UI) | (orquestador) |
-| INT-1-CA-EU | Curated-core CA + 8 cohorts EU priority; cron CA/GB/DE ≥15 | _(hash)_ |
+| INT-1-CA-EU | Curated-core CA + 8 cohorts EU priority; cron CA/GB/DE ≥15 | `56704e1` |
 
 ## Siguiente (orden sugerido)
 
