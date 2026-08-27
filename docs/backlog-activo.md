@@ -23,7 +23,7 @@ Informe INT-0: **`docs/tickets/INT-0-audit.md`**
 | P5 | Aviso al apagar capas que degradan `setupMode` / reglas doble capa | `9ee5775` |
 | B2-chart | Preview línea instantáneo + transición velas; timeout 15s fetch; smoke modal/review OK | `5d28d5f` |
 | INT-0 | Auditoría multi-mercado (repo ↔ Supabase) | `36cbcdd` |
-| INT-1-P1 | Cargar materializado al elegir 1 mercado; aviso HK sin scan; smoke CA/US/HK | (este commit) |
+| INT-1-P1 | Cargar materializado al elegir 1 mercado; aviso HK sin scan; smoke CA/US/HK | `b46dfb1` |
 
 ## Siguiente (orden sugerido)
 
