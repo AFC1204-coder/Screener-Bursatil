@@ -16,6 +16,7 @@ import { useEffect, useRef } from "react";
 import GlobalCoveragePanel from "@/app/components/screener/GlobalCoveragePanel";
 import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
 import ResultPagerTable from "@/app/components/screener/ResultPagerTable";
+import HuntCardRail from "@/app/components/screener/HuntCardRail";
 import WeeklyChangesLine from "@/app/components/screener/WeeklyChangesLine";
 import {
   FilterArchitecturePanel,
@@ -28,16 +29,15 @@ import {
   PreviewCard,
   SearchCandidateList,
   SearchScopeList,
-  SetupChipRail,
 } from "@/app/screenerPanels";
 import { investorStatusLabel } from "@/lib/screenerFormat";
+import { huntDisplayName } from "@/lib/screenerHuntCards";
 import { buildMarketsStaleNotice } from "@/lib/marketAvailability";
 import { buildScreenerTruthLine, marketCountLabel } from "@/lib/screenerTruthLine";
 import {
   ALL_FILTER_LAYERS,
   DEFAULT_FIELD_RULES,
   FILTER_GROUPS,
-  SCREENER_FILTER_PRESETS as PRESETS,
   filterLayersForPreset,
   settingsForPreset,
 } from "@/lib/screenerFilterCatalog";
@@ -81,6 +81,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     selectedFilterTemplateId,
     filterTemplateName,
     setPreset,
+    applyHuntCard,
     applySavedFilterTemplate,
     setFilterTemplateName,
     saveCurrentFilterTemplate,
@@ -241,12 +242,12 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     scannedAt = null,
     scannedMarkets = [],
   } = staleness || {};
-  const presetLabel = PRESETS[presetKey]?.name || "Filtro activo";
+  const huntLabel = huntDisplayName(presetKey, markets);
   const truthLine = buildScreenerTruthLine({
     analyzedRows,
     passCount: resultsRows.length,
     visibleCount: resultsFiltered.length,
-    presetName: presetLabel,
+    presetName: huntLabel,
     sort,
     sortAsc,
     scannedAt,
@@ -292,8 +293,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     <div className="topbar screenerHeroBar">
       <div className="screenerHeroTitle">
         <span className="screenerEyebrow">StatsEdge · Screener</span>
-        <h1 className="title">{PRESETS[presetKey]?.name || "Screener"}</h1>
-        <p>{presetLabel} · {marketCountLabel(markets.length)}</p>
+        <h1 className="title">{huntLabel}</h1>
+        <p>{marketCountLabel(markets.length)}</p>
         {/* Autocontenido, como GlobalCoveragePanel: posee su fetch a
             GET /api/weekly-changes y no bloquea la primera pintura. Es la
             segunda excepción a la nota de cabecera de este archivo. */}
@@ -500,20 +501,12 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               </div> : null}
               <SearchCandidateList candidates={searchCandidates} activeSymbol={searchResult?.symbol} onPick={(item) => { setSearchSymbol(item.symbol); loadSearchResult(item.symbol, item); }} />
           </div>
+          <HuntCardRail presetKey={presetKey} markets={markets} onSelect={applyHuntCard} />
           <p className="screenerTruthLine" role="status" aria-live="polite">{truthLine}</p>
         </section>
 
         <section className="mobileResearchHome">
           <MarketMiniTape marketHealth={marketHealth} />
-          <SetupChipRail
-            rows={resultsFiltered}
-            presetKey={presetKey}
-            setupMode={activeSettings.setupMode}
-            sort={sort}
-            onPreset={setPreset}
-            onMode={(mode) => { updateSetting("setupMode", mode); if (mode === "weakness") setSort("weaknessScore"); }}
-            onSort={setSort}
-          />
           {marketsMisalignment ? (
             <div className="scanStaleNotice" role="status" aria-live="polite">
               <span className="scanStaleNoticeLabel">{marketsMisalignment.label}</span>

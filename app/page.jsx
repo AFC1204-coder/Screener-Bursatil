@@ -59,6 +59,7 @@ import {
   shouldAutoRestoreBalancedFilterPreset,
   uiSettingsOverridesFromScan,
 } from "@/lib/screenerFilterCatalog";
+import { huntCardSelection, huntDisplayName } from "@/lib/screenerHuntCards";
 import {
   FILTER_LAYERS_CONTRACT_VERSION,
   effectiveSettingsFromLayers,
@@ -1170,14 +1171,14 @@ export default function Page() {
   }
   function maybeAutoApplyIntlPreset(nextMarkets, currentPresetKey = presetKey) {
     if (shouldAutoRestoreBalancedFilterPreset(nextMarkets, currentPresetKey)) {
-      setPreset("balanced");
+      setPreset("balanced", { markets: nextMarkets });
       statusContextRef.current = "Preset Balanceado (US)";
       setStatus("Preset Balanceado restaurado (US). Capas del preset aplicadas.");
       return "balanced";
     }
     if (!shouldAutoApplyIntlFilterPreset(nextMarkets, currentPresetKey)) return false;
     const msg = intlPresetAutoApplyStatus();
-    setPreset("intl");
+    setPreset("intl", { markets: nextMarkets });
     statusContextRef.current = msg;
     setStatus(`${msg}. Capas del preset aplicadas.`);
     return "intl";
@@ -1663,13 +1664,13 @@ export default function Page() {
       setSearchLoading(false);
     }
   }
-  function setPreset(k) {
+  function setPreset(k, options = {}) {
     const nextSettings = settingsForPreset(k);
     const nextLayers = filterLayersForPreset(k);
     syncAdvancedBaseline(nextSettings, nextLayers);
     setPresetKey(k);
     setSettings(nextSettings);
-    setSort(defaultSortForSettings(PRESETS[k].v));
+    setSort(options.sort || defaultSortForSettings(PRESETS[k].v));
     setFieldRules(DEFAULT_FIELD_RULES);
     setFilterLayers(nextLayers);
     setUseRegimeFilter(true);
@@ -1677,8 +1678,14 @@ export default function Page() {
     setFilterTemplateName("");
     // Cambiar de preset re-filtra el snapshot cargado al momento (el efecto
     // de re-filtrado); los datos nunca se tiran.
-    statusContextRef.current = `Filtro activo: ${PRESETS[k].name}`;
-    setStatus(`Filtro activo: ${PRESETS[k].name}. Capas del preset aplicadas.`);
+    const huntLabel = huntDisplayName(k, options.markets || markets);
+    statusContextRef.current = `Filtro activo: ${huntLabel}`;
+    setStatus(`Filtro activo: ${huntLabel}. Capas del preset aplicadas.`);
+  }
+  function applyHuntCard(cardId) {
+    const selection = huntCardSelection(cardId, { perfPeriod });
+    if (!selection) return;
+    setPreset(selection.presetKey, { sort: selection.sort });
   }
   // Descarga la lista de tickers del ámbito seleccionado (la usa la búsqueda
   // por país/mercado). Nunca toca los resultados cargados: sin botón Ejecutar,
@@ -2113,6 +2120,7 @@ export default function Page() {
       selectedFilterTemplateId,
       filterTemplateName,
       setPreset,
+      applyHuntCard,
       applySavedFilterTemplate,
       setFilterTemplateName,
       saveCurrentFilterTemplate,

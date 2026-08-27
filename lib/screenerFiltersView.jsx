@@ -21,6 +21,7 @@ import {
   isFieldRuleActive,
   settingApplies,
 } from "@/lib/screenerFilterLayers";
+import { optionalBasePresetEntries } from "@/lib/screenerHuntCards";
 import { ruleCountLabel } from "@/lib/screenerFormat";
 
 export function SetupChipRail({ rows = [], presetKey, setupMode, sort, onPreset, onMode, onSort }) {
@@ -124,6 +125,7 @@ export function FilterTemplatePanel({
   onSaveCloud,
   onLoadCloud,
 }) {
+  const optionalBases = optionalBasePresetEntries();
   return <section className="filterTemplatePanel">
     <div className="filterTemplateHead">
       <span>Filtro editable</span>
@@ -131,9 +133,9 @@ export function FilterTemplatePanel({
     </div>
 
     <details className="templateQuickPresets">
-      <summary><span>Bases opcionales</span><em>{Object.keys(PRESETS).length}</em></summary>
+      <summary><span>Bases opcionales</span><em>{optionalBases.length}</em></summary>
       <div className="filterTemplateGrid">
-        {Object.entries(PRESETS).map(([key, preset]) => <button
+        {optionalBases.map(([key, preset]) => <button
           type="button"
           key={key}
           className={`filterTemplateBtn ${presetKey === key ? "active" : ""}`}

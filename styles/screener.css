@@ -250,6 +250,33 @@
   line-height:1.45;
 }
 
+.huntCardRail {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:12px 0 0;
+}
+
+.huntCardRail button {
+  flex:1 1 auto;
+  min-height:38px;
+  min-width:7.5rem;
+  padding:8px 12px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--surface2);
+  color:var(--muted);
+  font-size:12px;
+  font-weight:680;
+  letter-spacing:-.01em;
+}
+
+.huntCardRail button.active {
+  border-color:var(--accent);
+  background:var(--senal-dim);
+  color:var(--accent);
+}
+
 /* Dot indicator para controles cuyo valor actual difiere del último scan
    mostrado. Va inline junto al label del control (markets / cobertura).
    --oxido: riesgo real / "algo no encaja"; spec v2 §2 regla 5. */
@@ -4672,6 +4699,16 @@ button.decisionIssueBadge:hover,
 }
 
 @media(max-width:760px) {
+  .huntCardRail {
+    gap:6px;
+    margin:10px 0 0;
+  }
+  .huntCardRail button {
+    min-height:34px;
+    min-width:0;
+    padding:7px 10px;
+    font-size:11px;
+  }
   .mobileChipRail {
     gap:5px;
     margin:8px 0 14px;
