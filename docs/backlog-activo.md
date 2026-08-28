@@ -69,7 +69,7 @@ Anterior: **UX-FILTERS-1**.
 | IPO-1a | `ipoDate` desde chart meta v8 + hydrate/patch caché + proyecciones | `eb3053a` |
 | IPO-1b | Preset `ipoDiscovery` + empty state CTA `/ipo-radar` | `0dea0bf` |
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | `b6cfafa` |
-| UX-FILTERS-2 | Taxonomía única de familias | (commit pendiente hash) |
+| UX-FILTERS-2 | Taxonomía única de familias | `745043a` |
 
 ## Siguiente — datos IPO + filtros
 
