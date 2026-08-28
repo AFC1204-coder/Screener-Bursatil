@@ -1,5 +1,7 @@
-# Ticket activo — libre
+# Ticket activo — UX-9
 
-Último cerrado: **UX-P5 + UX-8** (Día 4 — plan producto-final del brief).
+Prompt: **`docs/tickets/UX-9-copy-jerga.md`**
 
-Opcional restante: **UX-9** (copy). Backlog: `docs/backlog-activo.md`.
+**Modelo:** Composer fast  
+
+Sin commit ni push. Orquestador: tests + **`./vfc`** + smoke breve.

@@ -5,7 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre**.  
+Ticket en curso: **UX-9**.  
+Prompt: **`docs/tickets/UX-9-copy-jerga.md`**.  
 Último cerrado: **UX-P5 + UX-8** (plan 4 días producto-final cerrado).  
 **Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas.  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
@@ -60,7 +61,7 @@ Ticket en curso: **libre**.
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-9 | Copy / jerga percentil (parcial) | P2 · opcional | Composer fast |
+| UX-9 | Copy / jerga percentil (parcial) | **en curso** · P2 | Composer fast |
 | ~~plan 4 días brief~~ | P1–P5 + UX-6…8 | **cerrado** | — |
 
 ## Track métricas (paralelo, no inmediato)
