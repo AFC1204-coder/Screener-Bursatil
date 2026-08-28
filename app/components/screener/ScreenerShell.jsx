@@ -85,6 +85,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     setSidebarCollapsed,
     marketHealth,
     rows,
+    huntTruthOverride = null,
+    isHuntTransitionPending = false,
   } = chrome;
 
   // --- sidebar ---
@@ -256,19 +258,24 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     scannedMarkets = [],
   } = staleness || {};
   const huntLabel = huntDisplayName(presetKey, markets);
+  const passCountForTruth = huntTruthOverride?.passCount ?? resultsRows.length;
+  const presetNameForTruth = huntTruthOverride?.presetName ?? huntLabel;
+  const visibleCountForTruth = huntTruthOverride
+    ? (huntTruthOverride.passCount ?? resultsFiltered.length)
+    : resultsFiltered.length;
   const truthLine = buildScreenerTruthLine({
     analyzedRows,
-    passCount: resultsRows.length,
-    visibleCount: resultsFiltered.length,
-    presetName: huntLabel,
+    passCount: passCountForTruth,
+    visibleCount: visibleCountForTruth,
+    presetName: presetNameForTruth,
     sort,
     sortAsc,
     scannedAt,
   });
   const filterBreakdown = buildScreenerFilterBreakdown({
     diagnostics,
-    passCount: resultsRows.length,
-    presetName: huntLabel,
+    passCount: passCountForTruth,
+    presetName: presetNameForTruth,
     hiddenByView,
     viewChips: resultFilterChips,
   });
@@ -527,7 +534,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               </div> : null}
               <SearchCandidateList candidates={searchCandidates} activeSymbol={searchResult?.symbol} onPick={(item) => { setSearchSymbol(item.symbol); loadSearchResult(item.symbol, item); }} />
           </div>
-          <HuntCardRail presetKey={presetKey} markets={markets} onSelect={applyHuntCard} />
+          <HuntCardRail presetKey={presetKey} markets={markets} onSelect={applyHuntCard} pending={isHuntTransitionPending} />
           <p className="screenerTruthLine" role="status" aria-live="polite">
             <span>{truthLine}</span>
             {visibleBatchRows ? <span className="percentileScopeBadge" title={PERCENTILE_BATCH_NOTE} aria-label={`${PERCENTILE_BATCH_BADGE}. ${PERCENTILE_BATCH_NOTE}`}>{PERCENTILE_BATCH_BADGE}</span> : null}

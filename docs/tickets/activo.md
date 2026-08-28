@@ -1,5 +1,5 @@
-# Siguiente — UX-11 latencia rail
+# Siguiente — UX-14 CTA stale mercados
 
-Tras UX-12. Ver `docs/analisis-ux-screener-review-2026-08-28.md` H-02.
+Ver H-05 en `docs/analisis-ux-screener-review-2026-08-28.md`.
 
-Ticket aún no escrito; orquestador lo redacta al activar.
+Ticket a redactar al activar.

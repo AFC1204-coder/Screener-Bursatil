@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useDeferredValue } from "react";
 import { buildResultViewBrief } from "@/app/components/screener/resultViewBrief";
 import { applyResultViewFilters, opportunityBuckets, passesSectorStrength, verifiedIpoCategory } from "@/lib/screenerResultView";
 import { auditDecisionRowIssues, auditDecisionScan, decisionConfidenceSummary, decisionPriorityBreakdown } from "@/lib/decisionAudit";
@@ -197,6 +197,7 @@ export function useResultViewModel({
   // CONTRATO: si añades una 7ª función a annotateRow que lea OTRA clave de
   // activeSettings, amplia este useMemo para incluirla.
   const setupMode = activeSettings?.setupMode;
+  const deferredRows = useDeferredValue(rows);
   function annotateRow(row) {
     const explanation = explainScreenerRank(row, activeSettings);
     const issues = auditDecisionRowIssues(row, explanation);
@@ -213,7 +214,7 @@ export function useResultViewModel({
     };
   }
 
-  const annotatedRows = useMemo(() => rows.map(annotateRow), [rows, setupMode]);
+  const annotatedRows = useMemo(() => deferredRows.map(annotateRow), [deferredRows, setupMode]);
 
   const viewFilteredRows = useMemo(
     () => applyResultViewFilters(annotatedRows, viewFilterState),

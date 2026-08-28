@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { HUNT_CARDS, resolveActiveHuntCard } from "@/lib/screenerHuntCards";
 
-export default function HuntCardRail({ presetKey = "", markets = [], onSelect }) {
+export default function HuntCardRail({ presetKey = "", markets = [], onSelect, pending = false }) {
   const active = resolveActiveHuntCard(presetKey, markets);
   const activeButtonRef = useRef(null);
 
@@ -16,7 +16,7 @@ export default function HuntCardRail({ presetKey = "", markets = [], onSelect })
   }, [active?.id]);
 
   return (
-    <div className="huntCardRail huntCardRailScroll" role="tablist" aria-label="Fichas de caza">
+    <div className={`huntCardRail huntCardRailScroll${pending ? " huntCardRailPending" : ""}`} role="tablist" aria-label="Fichas de caza" aria-busy={pending}>
       {HUNT_CARDS.map((card) => {
         const selected = active?.id === card.id;
         return (

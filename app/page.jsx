@@ -1,7 +1,8 @@
 "use client";
 // tokens-v2.css se importa globalmente desde app/layout.jsx.
 import "../styles/screener.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import QuickReviewModal from "@/app/components/screener/QuickReviewModal";
 import ScreenerShell from "@/app/components/screener/ScreenerShell";
@@ -62,6 +63,7 @@ import {
   shouldAutoRestoreBalancedFilterPreset,
   uiSettingsOverridesFromScan,
 } from "@/lib/screenerFilterCatalog";
+import { getOrComputeHuntFilter, huntFilterCacheKey, huntPresetActiveSettings, warmHuntFilterCache } from "@/lib/screenerHuntFilterCache";
 import { huntCardSelection, huntDisplayName } from "@/lib/screenerHuntCards";
 import {
   FILTER_LAYERS_CONTRACT_VERSION,
@@ -312,7 +314,11 @@ export default function Page() {
   const [selectedFilterTemplateId, setSelectedFilterTemplateId] = useState("");
   const [filterTemplateName, setFilterTemplateName] = useState("");
   const [activeFilterFamily, setActiveFilterFamily] = useState(null);
+  const [huntTruthOverride, setHuntTruthOverride] = useState(null);
+  const [isHuntTransitionPending, startHuntTransition] = useTransition();
   const fastFilterSignatureRef = useRef("");
+  const huntFilterCacheRef = useRef(new Map());
+  const huntWarmCancelRef = useRef(null);
   const restoreScrollRef = useRef(null);
   const sessionAutosaveRef = useRef(null);
   if (!sessionAutosaveRef.current) sessionAutosaveRef.current = createDebouncedSessionSaver();
@@ -949,15 +955,8 @@ export default function Page() {
   }, [chartScope, activeModalRow?.symbol, chartListId]);
 
   const activeLayerLabel = useMemo(() => layerStatusText(filterLayers, useRegimeFilter), [filterLayers, useRegimeFilter]);
-  // Re-filtrado automático: cualquier cambio de criterios (a mano, por
-  // plantilla o por preset) se aplica al momento sobre las filas ya cargadas.
-  // No hay botón intermedio: este efecto ES la aplicación de filtros.
-  useEffect(() => {
-    if (!sessionReady || !analyzedRows.length || !scanContext) return;
-    const context = { ...scanContext, marketHealth, useRegimeFilter };
-    const signature = fastFilterSignature(analyzedRows, activeSettings, context);
-    if (fastFilterSignatureRef.current === signature) return;
-    const filteredView = filterAnalyzedRows(analyzedRows, activeSettings, context);
+
+  function commitFilteredView(filteredView, signature, { preserveStatusPrefix = true } = {}) {
     fastFilterSignatureRef.current = signature;
     setRows(filteredView.rows);
     setDiagnostics(filteredView.diagnostics);
@@ -971,16 +970,44 @@ export default function Page() {
       analyzedRows: analyzedRows.length,
       fastRefilters: (prev?.fastRefilters || 0) + 1,
     }));
-    // El contexto pendiente ("Plantilla aplicada: X", "Mercados actualizados")
-    // se antepone al resultado para que el recálculo no pise la explicación.
-    const prefix = statusContextRef.current;
-    statusContextRef.current = "";
-    // El orden visible no cambia aquí: filtrar quita o repone filas; el
-    // criterio de orden solo lo mueve el usuario (selector o plantilla).
+    const prefix = preserveStatusPrefix ? statusContextRef.current : "";
+    if (preserveStatusPrefix) statusContextRef.current = "";
     setStatus(filteredView.rows.length
       ? `${prefix ? `${prefix} · ` : ""}${filteredView.rows.length} de ${analyzedRows.length} acciones a la vista (filtro aplicado en ${secondsLabel(filteredView.filterMs)}).`
       : `${prefix ? `${prefix} · ` : ""}Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`);
+  }
+
+  // Re-filtrado automático: cualquier cambio de criterios (a mano, por
+  // plantilla o por preset) se aplica al momento sobre las filas ya cargadas.
+  // No hay botón intermedio: este efecto ES la aplicación de filtros.
+  // applyHuntCard hace el mismo trabajo de forma síncrona en el gesto del rail.
+  useEffect(() => {
+    if (!sessionReady || !analyzedRows.length || !scanContext) return;
+    const context = { ...scanContext, marketHealth, useRegimeFilter };
+    const signature = fastFilterSignature(analyzedRows, activeSettings, context);
+    if (fastFilterSignatureRef.current === signature) return;
+    const filteredView = filterAnalyzedRows(analyzedRows, activeSettings, context);
+    commitFilteredView(filteredView, signature);
   }, [sessionReady, analyzedRows, scanContext, activeSettings, marketHealth, useRegimeFilter]);
+
+  useEffect(() => {
+    huntWarmCancelRef.current?.();
+    huntFilterCacheRef.current = new Map();
+    if (!sessionReady || !analyzedRows.length || !scanContext) return undefined;
+    const context = { ...scanContext, marketHealth, useRegimeFilter };
+    huntWarmCancelRef.current = warmHuntFilterCache(
+      huntFilterCacheRef.current,
+      analyzedRows,
+      context,
+      filterAnalyzedRows,
+    );
+    return () => huntWarmCancelRef.current?.();
+  }, [sessionReady, analyzedRows, scanContext, marketHealth, useRegimeFilter]);
+
+  useEffect(() => {
+    if (!huntTruthOverride || huntTruthOverride.passCount == null) return;
+    if (rows.length === huntTruthOverride.passCount) setHuntTruthOverride(null);
+  }, [rows, huntTruthOverride]);
   const executionLayerTotal = EXECUTION_LAYERS.length + 1;
   const executionLayerActive = activeLayerCount(filterLayers) + (useRegimeFilter ? 1 : 0);
   const executionRuleTotal = REGIME_LAYER.count + EXECUTION_LAYERS.reduce((sum, layer) => sum + layer.count, 0);
@@ -1218,6 +1245,8 @@ export default function Page() {
     setScanContext(null);
     setScanPerf(null);
     fastFilterSignatureRef.current = "";
+    huntWarmCancelRef.current?.();
+    huntFilterCacheRef.current = new Map();
     setFail([]);
     setDiagnostics(null);
     resetResultView(defaultSortForSettings(settingsForPreset("balanced")));
@@ -1683,14 +1712,58 @@ export default function Page() {
     setFilterTemplateName("");
     // Cambiar de preset re-filtra el snapshot cargado al momento (el efecto
     // de re-filtrado); los datos nunca se tiran.
-    const huntLabel = huntDisplayName(k, options.markets || markets);
-    statusContextRef.current = `Filtro activo: ${huntLabel}`;
-    setStatus(`Filtro activo: ${huntLabel}. Capas del preset aplicadas.`);
+    if (options.status !== false) {
+      const huntLabel = huntDisplayName(k, options.markets || markets);
+      statusContextRef.current = `Filtro activo: ${huntLabel}`;
+      setStatus(`Filtro activo: ${huntLabel}. Capas del preset aplicadas.`);
+    }
   }
   function applyHuntCard(cardId) {
     const selection = huntCardSelection(cardId, { perfPeriod });
     if (!selection) return;
-    setPreset(selection.presetKey, { sort: selection.sort });
+    const huntLabel = huntDisplayName(selection.presetKey, markets);
+    if (!analyzedRows.length || !scanContext) {
+      setPreset(selection.presetKey, { sort: selection.sort });
+      return;
+    }
+
+    const nextActiveSettings = huntPresetActiveSettings(selection.presetKey);
+    const context = { ...scanContext, marketHealth, useRegimeFilter: true };
+    const cacheKey = huntFilterCacheKey(selection.presetKey, analyzedRows.length, context);
+    const cachedView = huntFilterCacheRef.current.get(cacheKey);
+    flushSync(() => {
+      setPreset(selection.presetKey, { sort: selection.sort, status: false });
+      setHuntTruthOverride(cachedView
+        ? { passCount: cachedView.rows.length, presetName: huntLabel }
+        : { passCount: null, presetName: huntLabel });
+    });
+
+    startHuntTransition(() => {
+      const startedAt = perfNow();
+      const resolved = cachedView
+        ? { view: cachedView, fromCache: true }
+        : getOrComputeHuntFilter(
+          huntFilterCacheRef.current,
+          selection.presetKey,
+          analyzedRows,
+          context,
+          filterAnalyzedRows,
+        );
+      const filteredView = resolved?.view;
+      if (!filteredView) return;
+      const signature = fastFilterSignature(analyzedRows, nextActiveSettings, context);
+      setHuntTruthOverride({ passCount: filteredView.rows.length, presetName: huntLabel });
+      commitFilteredView(filteredView, signature, { preserveStatusPrefix: false });
+      setScanPerf((prev) => ({
+        ...(prev || {}),
+        lastHuntCardMs: perfNow() - startedAt,
+        lastHuntCardCacheHit: Boolean(resolved.fromCache),
+        lastHuntCardPreset: selection.presetKey,
+      }));
+      setStatus(filteredView.rows.length
+        ? `Filtro activo: ${huntLabel} · ${filteredView.rows.length} de ${analyzedRows.length} acciones a la vista (filtro aplicado en ${secondsLabel(filteredView.filterMs)}).`
+        : `Filtro activo: ${huntLabel} · Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`);
+    });
   }
   // Descarga la lista de tickers del ámbito seleccionado (la usa la búsqueda
   // por país/mercado). Nunca toca los resultados cargados: sin botón Ejecutar,
@@ -2129,6 +2202,8 @@ export default function Page() {
       kpiUniverseCount,
       marketHealth,
       rows,
+      huntTruthOverride,
+      isHuntTransitionPending,
     }}
     sidebar={{
       presetKey,
