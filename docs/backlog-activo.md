@@ -68,7 +68,7 @@ Anterior: **IPO-1b**.
 | UX-FILTERS | Spec rediseño presentación filtros (tickets 1…7) | `docs/analisis-ux-filters-presentacion-2026-08-28.md` |
 | IPO-1a | `ipoDate` desde chart meta v8 + hydrate/patch caché + proyecciones | `eb3053a` |
 | IPO-1b | Preset `ipoDiscovery` + empty state CTA `/ipo-radar` | `0dea0bf` |
-| UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | (commit pendiente hash) |
+| UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | `b6cfafa` |
 
 ## Siguiente — datos IPO + filtros
 
