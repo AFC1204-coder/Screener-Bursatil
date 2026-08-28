@@ -5,9 +5,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-28 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre**.  
-Último cerrado: **MET-1b** (código; pipeline `--write` pendiente).  
-**Prioridad dueño (inmediato):** MET-1b **pendiente de autorización explícita** de implementación (addendum §13).  
+Ticket en curso: **UX-12** (`docs/tickets/activo.md`).  
+Último cerrado: **UX-10** (copy familia RS MET-1b).  
+Anterior: **UX-REVIEW** → `docs/analisis-ux-screener-review-2026-08-28.md`.  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
 **Decisión producto (2026-08-28):** RS global FX = track **privado** (`statsedge-private-global-rs-usd-v1`). Público v1 previsto **US-only** (`statsedge-us-equity-rs-v1` pinneado) — el global no contamina la versión pública. Spec: `docs/spec-rs-global-multi-mercado-fx.md`.  
@@ -58,12 +58,34 @@ Ticket en curso: **libre**.
 | UX-8 | Desglose «¿Qué recorta?» bajo verdad; smoke 47/3321 | `0f42cda` |
 | UX-9 | Ranking provisional + corte; Datos *; smoke | `86224c0` |
 | MET-1 | Spec RS global multi-mercado + FX (aceptado; privado global / público US-only) | `877c318` |
+| UX-REVIEW | Pasada extensa screener filtros/navegación (Browser Use; sin P0) | `docs/analisis-ux-screener-review-2026-08-28.md` |
 
-## Siguiente — track métricas
+## Siguiente — oleada post-review (P1)
 
 | ID | Qué | Estado |
 |---|---|---|
-| MET-1b | Motor global privado + pin + fallback; **write W35** `7c3a1792…` | `060cf08` + pipeline 2026-08-28 |
+| UX-10 | Copy familia RS alineado MET-1b | **Activo** |
+| UX-12 | Revisar screener → `/review` | Pendiente |
+| UX-11 | Latencia ficha rail (<200 ms o feedback) | Pendiente |
+| UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | Pendiente · **decisión dueño** |
+| UX-14 | CTA stale mercados consistente | Pendiente |
+| UX-15 | Toggle familia RS vs expandir reglas | Pendiente |
+| UX-16 | Líderes intl guardrail datos ≠ mercados | Pendiente |
+
+## P2 (post-review)
+
+UX-17…21 — vista rápida, móvil tabla, localStorage, «visibles» vs paginación, botones Ordenar redundantes. Ver informe §Tickets propuestos.
+
+## Chart (pendiente oleada screener)
+
+| ID | Qué | Estado |
+|---|---|---|
+| CHART-RS | RS solo overlay en gráfico (sin panel duplicado) | Pendiente · `docs/tickets/CHART-RS-overlay-sin-pane.md` |
+
+## Track métricas (pendiente)
+
+| ID | Qué | Estado |
+|---|---|---|
 | MET-1c | Cron semanal motor global privado | Tras smoke OK dueño |
 | MET-2 | Spec RS país (calidad intra-país) | Decisión dueño; sin ticket |
 | MET-3 | Spec RS tema (ocupación / theme) | Decisión dueño; sin ticket |
@@ -84,7 +106,7 @@ Objetivo: las filas **no-US ya persistidas** entran en presets, filtros, tabla, 
 |---|---|---|
 | Universo / símbolos | `lib/universes.js` + FIRDS/HKEX/J-Quants/TWSE/ASIC; Europa puede degradar a listas curadas si flags off | Población parcial sin aviso |
 | Scan / benchmarks | `serverScanRunner.loadBenchmarks` hidrata ^IBEX, ^GDAXI, etc. (fix documentado) | Verificar en scans vivos, no asumir |
-| RS canónico | Ranking semanal **solo universo US** (`rs_weekly_items`); intl → «–» + motivo (correcto) | No confundir con bug |
+| RS canónico | Ranking semanal **global privado** (`statsedge-private-global-rs-usd-v1`); intl sin snapshot → «–» + motivo | MET-1b activo |
 | RS vs benchmark / composite | Percentiles de **lote**; mezcla multi-mercado cambia semántica | Producto: ¿filtrar por país antes de comparar? |
 | Nocturno / «qué cambió» | `weekly-changes` acotado a MIC US | Intl sin franja comparable |
 | Fundamentales ficha | EDGAR solo US; intl limitado | OK en privado con aviso |

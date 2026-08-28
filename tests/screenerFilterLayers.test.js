@@ -4,6 +4,7 @@ import {
   DEFAULT_FIELD_RULES,
   DEFAULT_FILTER_LAYERS,
   EXECUTION_LAYERS,
+  FILTER_FAMILY_PRESETS,
   PRESET_LAYER_OVERRIDES,
   SCREENER_WEB_FILTER_PRESETS,
   filterLayersForPreset,
@@ -17,6 +18,7 @@ import {
   restoreFilterLayers,
 } from "@/lib/screenerFilterLayers";
 import { applyScreenerFilters, screenerFiltersFromParams } from "@/lib/screenerFilters";
+import { PRIVATE_GLOBAL_RS_DISCLOSURE } from "@/lib/rsEngines";
 
 const PRESET_KEYS = Object.keys(SCREENER_WEB_FILTER_PRESETS);
 
@@ -117,6 +119,19 @@ function ajustesDeLaPantalla(presetKey) {
     DEFAULT_FIELD_RULES,
   );
 }
+
+describe("copy familia RS (MET-1b)", () => {
+  it("sidebar y modal alinean RS global; bench/país/grupo quedan como auxiliares", () => {
+    const layer = EXECUTION_LAYERS.find((item) => item.key === "relativeStrength");
+    const family = FILTER_FAMILY_PRESETS.relativeStrength;
+    expect(layer.detail).toContain(PRIVATE_GLOBAL_RS_DISCLOSURE);
+    expect(layer.detail).toMatch(/auxiliar/i);
+    expect(layer.detail).not.toContain("universo, benchmark, país y grupo");
+    expect(family.intro).toMatch(/ranking semanal global/i);
+    expect(family.intro).toMatch(/auxiliar/i);
+    expect(family.intro).not.toContain("Ranking contra universo, benchmark, país y grupo");
+  });
+});
 
 describe("ninguna capa viene apagada de fábrica", () => {
   it("DEFAULT_FILTER_LAYERS tiene las trece capas de ejecución encendidas", () => {
