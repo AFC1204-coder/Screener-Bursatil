@@ -79,7 +79,7 @@ Anterior: **INT-3c** (`24a8e93`).
 | INT-3 | Universo intl amplio HK/CA official-broad + gates | `2e3507d` |
 | INT-3b | Caps scan-refresh official-broad (sin techo 25) | `13985cc` |
 | INT-3c | Gates HK/CA minPrice moneda local | `24a8e93` |
-| INT-3e | Selección HK Main Board/short-sell + metadatos en snapshot | (pendiente hash) |
+| INT-3e | Selección HK Main Board/short-sell + metadatos en snapshot | `506bbf6` |
 
 ## Siguiente — datos IPO + filtros
 
