@@ -82,6 +82,14 @@ import {
 import { buildScreenerContract, buildScreenerStockContext } from "@/lib/screenerContracts";
 import { createFavoriteFromRow } from "@/lib/stockRows";
 import { countryCode, marketFlag, stockUrl } from "@/lib/symbols";
+import {
+  INTENSITY_PILOT_FAMILIES,
+  familyHasIntensity,
+  inferFamilyIntensity,
+  intensityManagedKeys,
+  isFamilyIntensityCustom,
+  settingsAtFamilyIntensity,
+} from "@/lib/filterFamilyIntensity";
 
 
 function reviewQueueScoreAuditMeta(row = {}) {
@@ -155,6 +163,72 @@ export default function Page() {
   const [useRegimeFilter, setUseRegimeFilter] = useState(true);
   const [filterLayers, setFilterLayers] = useState(DEFAULT_FILTER_LAYERS);
   const [fieldRules, setFieldRules] = useState(DEFAULT_FIELD_RULES);
+  const [familyIntensity, setFamilyIntensity] = useState({ ipo: 50, relativeStrength: 50 });
+  const [familyIntensityCustom, setFamilyIntensityCustom] = useState({ ipo: false, relativeStrength: false });
+  const activeSettings = useMemo(() => effectiveSettingsFromLayers(settings, filterLayers, fieldRules), [settings, filterLayers, fieldRules]);
+  function restoreFamilyIntensityState(nextSettings, nextFieldRules, savedIntensity = {}) {
+    const nextIntensity = {};
+    const nextCustom = {};
+    INTENSITY_PILOT_FAMILIES.forEach((key) => {
+      const stored = savedIntensity[key];
+      if (Number.isFinite(stored)) {
+        nextIntensity[key] = stored;
+        nextCustom[key] = isFamilyIntensityCustom(nextSettings, nextFieldRules, key, stored);
+        return;
+      }
+      const inferred = inferFamilyIntensity(nextSettings, nextFieldRules, key);
+      nextIntensity[key] = inferred ?? 50;
+      nextCustom[key] = inferred == null;
+    });
+    setFamilyIntensity(nextIntensity);
+    setFamilyIntensityCustom(nextCustom);
+  }
+  function syncFamilyIntensityCustom(nextSettings, nextFieldRules) {
+    setFamilyIntensityCustom((prev) => {
+      const next = { ...prev };
+      INTENSITY_PILOT_FAMILIES.forEach((key) => {
+        const stored = familyIntensity[key];
+        next[key] = isFamilyIntensityCustom(nextSettings, nextFieldRules, key, stored);
+      });
+      return next;
+    });
+  }
+  function commitFamilyIntensity(layerKey, intensity) {
+    if (!familyHasIntensity(layerKey)) return;
+    const { settings: patch, fieldRules: rulePatch } = settingsAtFamilyIntensity(layerKey, intensity);
+    setFamilyIntensity((prev) => ({ ...prev, [layerKey]: intensity }));
+    setFamilyIntensityCustom((prev) => ({ ...prev, [layerKey]: false }));
+    setFilterLayers((prev) => ({
+      ...prev,
+      [layerKey]: true,
+      ...setupModeLayerRequirements(patch.setupMode),
+    }));
+    setSettings((prev) => {
+      const nextSettings = { ...prev, ...patch };
+      return nextSettings;
+    });
+    if (Object.keys(rulePatch).length) {
+      setFieldRules((prev) => ({ ...prev, ...rulePatch }));
+    }
+    setSelectedFilterTemplateId("");
+    setStatus(`Intensidad ${layerKey === "ipo" ? "IPO" : "RS"}: ${intensity}.`);
+  }
+  function previewFamilyIntensity(layerKey, intensity) {
+    if (!familyHasIntensity(layerKey)) return;
+    setFamilyIntensity((prev) => ({ ...prev, [layerKey]: intensity }));
+  }
+  function touchFamilyIntensityFromSettings(nextSettings, nextFieldRules, layerKey = null) {
+    const keys = layerKey ? [layerKey] : INTENSITY_PILOT_FAMILIES;
+    setFamilyIntensity((prev) => {
+      const next = { ...prev };
+      keys.forEach((key) => {
+        const inferred = inferFamilyIntensity(nextSettings, nextFieldRules, key);
+        if (inferred != null) next[key] = inferred;
+      });
+      return next;
+    });
+    syncFamilyIntensityCustom(nextSettings, nextFieldRules);
+  }
   const [viewLayers, setViewLayers] = useState(DEFAULT_VIEW_LAYERS);
   const [favoriteSymbols, setFavoriteSymbols] = useState(new Set());
   const [searchSymbol, setSearchSymbol] = useState("");
@@ -163,7 +237,6 @@ export default function Page() {
   const [searchError, setSearchError] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const [activePreviewRow, setActivePreviewRow] = useState(null);
-  const activeSettings = useMemo(() => effectiveSettingsFromLayers(settings, filterLayers, fieldRules), [settings, filterLayers, fieldRules]);
   const quickReview = useQuickReviewSession({
     activeSettings,
     presetKey,
@@ -715,6 +788,7 @@ export default function Page() {
       setUseRegimeFilter(restoredUseRegimeFilter);
       setFilterLayers(restoredFilterLayers);
       setFieldRules(restoredFieldRules);
+      restoreFamilyIntensityState(restoredSettings, restoredFieldRules, session.familyIntensity || {});
       setViewLayers(session.viewLayers || DEFAULT_VIEW_LAYERS);
       setSearchSymbol(session.searchSymbol || "");
       setSearchCandidates(Array.isArray(session.searchCandidates) ? session.searchCandidates : []);
@@ -746,7 +820,9 @@ export default function Page() {
       );
       syncAdvancedBaseline(restoredSettings, restoredFilterLayers);
     } else {
-      syncAdvancedBaseline(settingsForPreset("balanced"), filterLayersForPreset("balanced"));
+      const baselineSettings = settingsForPreset("balanced");
+      restoreFamilyIntensityState(baselineSettings, DEFAULT_FIELD_RULES, {});
+      syncAdvancedBaseline(baselineSettings, filterLayersForPreset("balanced"));
     }
     const refreshReason = restoredRowsCount
       ? screenerSessionRefreshReason({
@@ -869,6 +945,7 @@ export default function Page() {
       filterLayers,
       filterLayersVersion: FILTER_LAYERS_CONTRACT_VERSION,
       fieldRules,
+      familyIntensity,
       viewLayers,
       searchSymbol,
       searchResult: persistRowForBrowser(searchResult),
@@ -923,7 +1000,7 @@ export default function Page() {
     // scanContext/scanPerf (scan y re-filtrados los actualizan siempre).
     // Debounce: el gesto (preset/orden) disparaba 4 setItem en 9 s; el
     // guardado no va en el hot path. pagehide/unmount hace flush.
-  }, [sessionReady, markets, manual, settings, presetKey, universeScope, scanContext, scanPerf, snapshotNotice, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, decisionResolutionFilter, sort, sortAsc, perfPeriod, scanMode, batchStart, scanBatchSize, resultPageSize, resultPage, marketHealth, restoringScan, useRegimeFilter, filterLayers, fieldRules, viewLayers, searchSymbol, searchResult, quickReviewIndex]);
+  }, [sessionReady, markets, manual, settings, presetKey, universeScope, scanContext, scanPerf, snapshotNotice, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, decisionResolutionFilter, sort, sortAsc, perfPeriod, scanMode, batchStart, scanBatchSize, resultPageSize, resultPage, marketHealth, restoringScan, useRegimeFilter, filterLayers, fieldRules, familyIntensity, viewLayers, searchSymbol, searchResult, quickReviewIndex]);
 
   useEffect(() => {
     function flushSessionAutosave() {
@@ -1339,7 +1416,12 @@ export default function Page() {
       applySetupMode(value);
       return;
     }
-    setSettings((prev) => ({ ...prev, [key]: value }));
+    setSettings((prev) => {
+      const nextSettings = { ...prev, [key]: value };
+      const managedFamily = INTENSITY_PILOT_FAMILIES.find((familyKey) => intensityManagedKeys(familyKey).includes(key));
+      if (managedFamily) touchFamilyIntensityFromSettings(nextSettings, fieldRules, managedFamily);
+      return nextSettings;
+    });
   };
   const toggleFilterLayer = (key) => {
     if (filterLayers[key] !== false) {
@@ -1371,8 +1453,11 @@ export default function Page() {
       .filter((key) => DEFAULT_FIELD_RULES[key] !== undefined)
       .map((key) => [key, true]));
     setFilterLayers((prev) => ({ ...prev, ...nextLayers }));
-    if (action.settings) setSettings((prev) => ({ ...prev, ...action.settings }));
-    if (Object.keys(ruleUpdates).length || action.fieldRules) setFieldRules((prev) => ({ ...prev, ...ruleUpdates, ...(action.fieldRules || {}) }));
+    const nextSettings = action.settings ? { ...settings, ...action.settings } : settings;
+    const nextFieldRules = { ...fieldRules, ...ruleUpdates, ...(action.fieldRules || {}) };
+    if (action.settings) setSettings(nextSettings);
+    if (Object.keys(ruleUpdates).length || action.fieldRules) setFieldRules(nextFieldRules);
+    if (familyHasIntensity(layerKey) && action.settings) touchFamilyIntensityFromSettings(nextSettings, nextFieldRules, layerKey);
     if (action.sort) setSort(action.sort);
     setSelectedFilterTemplateId("");
     setStatus(`Ajuste aplicado: ${action.label || layerKey}.`);
@@ -1380,10 +1465,20 @@ export default function Page() {
   const toggleFieldRule = (field) => {
     const currentlyActive = isFieldRuleActive(field, fieldRules, filterLayers);
     if (currentlyActive) {
-      setFieldRules((prev) => ({ ...prev, [field.key]: false }));
+      setFieldRules((prev) => {
+        const nextFieldRules = { ...prev, [field.key]: false };
+        const managedFamily = INTENSITY_PILOT_FAMILIES.find((familyKey) => intensityManagedKeys(familyKey).includes(field.key));
+        if (managedFamily) touchFamilyIntensityFromSettings(settings, nextFieldRules, managedFamily);
+        return nextFieldRules;
+      });
       return;
     }
-    setFieldRules((prev) => ({ ...prev, [field.key]: true }));
+    setFieldRules((prev) => {
+      const nextFieldRules = { ...prev, [field.key]: true };
+      const managedFamily = INTENSITY_PILOT_FAMILIES.find((familyKey) => intensityManagedKeys(familyKey).includes(field.key));
+      if (managedFamily) touchFamilyIntensityFromSettings(settings, nextFieldRules, managedFamily);
+      return nextFieldRules;
+    });
     const neededLayers = fieldLayerKeys(field);
     if (neededLayers.length) setFilterLayers((prev) => ({ ...prev, ...Object.fromEntries(neededLayers.map((key) => [key, true])) }));
   };
@@ -2270,6 +2365,10 @@ export default function Page() {
       setFieldRules,
       diagnostics,
       markAdvancedBaseline,
+      familyIntensity,
+      familyIntensityCustom,
+      previewFamilyIntensity,
+      commitFamilyIntensity,
     }}
     search={{
       searchSymbol,
@@ -2330,12 +2429,16 @@ export default function Page() {
       settings={settings}
       filterLayers={filterLayers}
       fieldRules={fieldRules}
+      familyIntensity={familyIntensity[activeFilterFamily]}
+      familyIntensityCustom={familyIntensityCustom[activeFilterFamily]}
       onClose={() => setActiveFilterFamily(null)}
       onToggleLayer={toggleFilterLayer}
       onApplyAction={applyLayerAction}
       onUpdateSetting={updateSetting}
       onToggleFieldRule={toggleFieldRule}
       onToggleLayeredSetting={toggleLayeredSetting}
+      onFamilyIntensityChange={previewFamilyIntensity}
+      onFamilyIntensityCommit={commitFamilyIntensity}
     />}
 
     <QuickReviewModal

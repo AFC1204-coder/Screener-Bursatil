@@ -166,6 +166,15 @@ describe("taxonomía única de familias (UX-FILTERS-2)", () => {
   });
 });
 
+describe("Volumen+ no escribe minAdProxyScore", () => {
+  it("la acción Acumulacion no cruza a la familia Scores", () => {
+    const action = FILTER_FAMILIES.volumeSurge.actions.find((item) => item.label === "Acumulacion");
+    expect(action.settings).not.toHaveProperty("minAdProxyScore");
+    const offAction = FILTER_FAMILIES.volumeSurge.actions.find((item) => item.label === "Sin volumen+");
+    expect(offAction.settings).not.toHaveProperty("minAdProxyScore");
+  });
+});
+
 describe("copy familia RS (MET-1b)", () => {
   it("sidebar y modal alinean RS global; bench/país/grupo quedan como auxiliares", () => {
     const layer = EXECUTION_LAYERS.find((item) => item.key === "relativeStrength");

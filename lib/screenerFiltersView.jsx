@@ -15,6 +15,12 @@ import {
   SETTING_LAYER_DEPENDENCIES,
 } from "@/lib/screenerFilterCatalog";
 import {
+  familyHasIntensity,
+  intensityAuxiliaryFieldKeys,
+  intensityTickLabel,
+  summarizeFamilyIntensity,
+} from "@/lib/filterFamilyIntensity";
+import {
   fieldLayerKeys,
   inactiveFieldReason,
   inactiveSettingReason,
@@ -168,13 +174,82 @@ export function OptionalBasePresetsPanel({ presetKey, onPreset }) {
   </details>;
 }
 
-export function FilterFamilyModal({ layerKey, settings, filterLayers, fieldRules, onClose, onToggleLayer, onApplyAction, onUpdateSetting, onToggleFieldRule, onToggleLayeredSetting }) {
+export function FilterIntensitySlider({
+  value = 50,
+  custom = false,
+  disabled = false,
+  onChange,
+  onCommit,
+  summary = "",
+  compact = false,
+}) {
+  const intensity = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 50;
+  const handleInput = (event) => {
+    const next = Number(event.target.value);
+    onChange?.(next);
+  };
+  const handleCommit = (event) => {
+    const next = Number(event.target.value);
+    onCommit?.(next);
+  };
+  return <div className={`filterIntensityBlock ${compact ? "compact" : ""} ${custom ? "isCustom" : ""} ${disabled ? "isDisabled" : ""}`}>
+    <div className="filterIntensityRail" aria-hidden="true">
+      <span>Abierto</span>
+      <span>Medio</span>
+      <span>Estricto</span>
+    </div>
+    <input
+      className="filterIntensitySlider"
+      type="range"
+      min="0"
+      max="100"
+      step="1"
+      value={intensity}
+      disabled={disabled}
+      aria-label="Intensidad del filtro"
+      aria-valuetext={`${intensity}${custom ? ", personalizado" : ""}`}
+      onChange={handleInput}
+      onMouseUp={handleCommit}
+      onTouchEnd={handleCommit}
+      onKeyUp={handleCommit}
+    />
+    <div className="filterIntensityFooter">
+      {custom ? <span className="filterIntensityCustom">Personalizado</span> : <span className="filterIntensityValue">{intensityTickLabel(intensity) || `${intensity}`}</span>}
+      {summary ? <em className="filterIntensitySummary">{summary}</em> : null}
+    </div>
+    {custom ? <p className="filterIntensityHint">Mover la barra restablece el ajuste fino desde el mapa de intensidad.</p> : null}
+  </div>;
+}
+
+export function FilterFamilyModal({
+  layerKey,
+  settings,
+  filterLayers,
+  fieldRules,
+  familyIntensity = null,
+  familyIntensityCustom = false,
+  onClose,
+  onToggleLayer,
+  onApplyAction,
+  onUpdateSetting,
+  onToggleFieldRule,
+  onToggleLayeredSetting,
+  onFamilyIntensityChange,
+  onFamilyIntensityCommit,
+}) {
   if (!layerKey) return null;
   const layer = EXECUTION_LAYERS.find((item) => item.key === layerKey);
   if (!layer) return null;
   const family = FILTER_FAMILY_PRESETS[layerKey] || { title: layer.label, intro: layer.detail, actions: [] };
   const layerActive = filterLayers[layerKey] !== false;
   const familyFields = FILTER_FIELDS.filter((field) => fieldLayerKeys(field).includes(layerKey));
+  const auxiliaryKeys = intensityAuxiliaryFieldKeys(layerKey);
+  const primaryFields = familyFields.filter((field) => !auxiliaryKeys.includes(field.key));
+  const auxiliaryFields = familyFields.filter((field) => auxiliaryKeys.includes(field.key));
+  const intensitySummary = familyHasIntensity(layerKey)
+    ? summarizeFamilyIntensity(layerKey, settings, fieldRules)
+    : "";
+  const showIntensity = familyHasIntensity(layerKey);
   const familySettingKeys = Object.entries(SETTING_LAYER_DEPENDENCIES)
     .filter(([, dependency]) => dependency.layer === layerKey)
     .map(([key]) => key);
@@ -209,6 +284,17 @@ export function FilterFamilyModal({ layerKey, settings, filterLayers, fieldRules
         </div>
       </header>
 
+      {showIntensity ? <div className="filterFamilyIntensityPanel">
+        <FilterIntensitySlider
+          value={familyIntensity ?? 50}
+          custom={familyIntensityCustom}
+          disabled={!layerActive}
+          summary={intensitySummary}
+          onChange={(next) => onFamilyIntensityChange?.(layerKey, next)}
+          onCommit={(next) => onFamilyIntensityCommit?.(layerKey, next)}
+        />
+      </div> : null}
+
       {family.actions.length ? <div className="filterFamilyToolbar">
         <div className="filterFamilyPresetRail" aria-label="Ajustes rápidos de exigencia">
           <span>Exigencia</span>
@@ -242,10 +328,10 @@ export function FilterFamilyModal({ layerKey, settings, filterLayers, fieldRules
       <div className="filterFamilyFields">
         <div className="filterFamilySubhead">
           <span>Ajustes finos</span>
-          <em>{familyFields.filter((field) => isFieldRuleActive(field, fieldRules, filterLayers)).length}/{familyFields.length}</em>
+          <em>{primaryFields.filter((field) => isFieldRuleActive(field, fieldRules, filterLayers)).length}/{primaryFields.length}</em>
         </div>
-        {familyFields.length ? <div className="filterFields">
-          {familyFields.map((field) => <FilterNumber
+        {primaryFields.length ? <div className="filterFields">
+          {primaryFields.map((field) => <FilterNumber
             key={field.key}
             field={field}
             value={settings[field.key]}
@@ -255,6 +341,20 @@ export function FilterFamilyModal({ layerKey, settings, filterLayers, fieldRules
             onToggle={() => onToggleFieldRule?.(field)}
           />)}
         </div> : <p className="filterFamilyEmpty">Esta familia se controla con los botones superiores.</p>}
+        {auxiliaryFields.length ? <details className="filterFamilyAuxiliaries">
+          <summary><span>Auxiliares</span><em>{auxiliaryFields.filter((field) => isFieldRuleActive(field, fieldRules, filterLayers)).length}/{auxiliaryFields.length}</em></summary>
+          <div className="filterFields">
+            {auxiliaryFields.map((field) => <FilterNumber
+              key={field.key}
+              field={field}
+              value={settings[field.key]}
+              onChange={onUpdateSetting}
+              active={isFieldRuleActive(field, fieldRules, filterLayers)}
+              inactiveReason={inactiveFieldReason(field, fieldRules, filterLayers)}
+              onToggle={() => onToggleFieldRule?.(field)}
+            />)}
+          </div>
+        </details> : null}
       </div>
     </div>
   </dialog>;
@@ -322,12 +422,28 @@ export function LayerToggleButton({ active, onClick, label }) {
   </button>;
 }
 
-export function LayerControl({ active, onClick, onOpen, label, detail, countLabel }) {
-  return <div className={`layerControlRow ${active ? "on" : "off"} ${onOpen ? "hasOpen" : "simple"}`}>
+export function LayerControl({
+  active,
+  onClick,
+  onOpen,
+  label,
+  detail,
+  countLabel,
+  intensity = null,
+  intensityCustom = false,
+  intensitySummary = "",
+  onIntensityChange,
+  onIntensityCommit,
+}) {
+  const hasIntensity = Number.isFinite(intensity);
+  const rowClass = ["layerControlRow", active ? "on" : "off", onOpen ? "hasOpen" : "simple", hasIntensity ? "hasIntensity" : ""].filter(Boolean).join(" ");
+  return <div className={rowClass}>
     <LayerToggleButton active={active} onClick={onClick} label={label} />
     <div className="layerControlBody">
       <strong className="layerControlLabel">{label}</strong>
-      {(detail || countLabel) ? <span className="layerControlMeta">
+      {(detail || countLabel || intensitySummary) ? <span className="layerControlMeta">
+        {intensitySummary ? <small className="layerIntensitySummary">{intensitySummary}</small> : null}
+        {intensitySummary && (detail || countLabel) ? <span className="layerControlSep" aria-hidden="true">·</span> : null}
         {detail ? <small>{detail}</small> : null}
         {detail && countLabel ? <span className="layerControlSep" aria-hidden="true">·</span> : null}
         {countLabel ? <em>{countLabel}</em> : null}
@@ -335,11 +451,59 @@ export function LayerControl({ active, onClick, onOpen, label, detail, countLabe
     </div>
     {detail ? <InfoHint text={detail} /> : null}
     {onOpen ? <button type="button" className="layerOpenBtn" onClick={onOpen} aria-label={`Abrir ${label}`}>Abrir ▸</button> : null}
+    {hasIntensity ? <div className="layerIntensityWrap">
+      <FilterIntensitySlider
+        compact
+        value={intensity}
+        custom={intensityCustom}
+        disabled={!active}
+        summary=""
+        onChange={onIntensityChange}
+        onCommit={onIntensityCommit}
+      />
+    </div> : null}
   </div>;
 }
 
-export function FilterArchitecturePanel({ filterLayers, viewLayers, useRegimeFilter, onToggleLayer, onOpenLayer, onToggleViewLayer, onToggleRegime, executionRuleActive, executionRuleTotal, viewFiltersActive }) {
+export function FilterArchitecturePanel({
+  filterLayers,
+  viewLayers,
+  useRegimeFilter,
+  onToggleLayer,
+  onOpenLayer,
+  onToggleViewLayer,
+  onToggleRegime,
+  executionRuleActive,
+  executionRuleTotal,
+  viewFiltersActive,
+  settings = {},
+  fieldRules = {},
+  familyIntensity = {},
+  familyIntensityCustom = {},
+  onFamilyIntensityChange,
+  onFamilyIntensityCommit,
+}) {
   const layerByKey = Object.fromEntries(EXECUTION_LAYERS.map((layer) => [layer.key, layer]));
+  const renderLayer = (key) => {
+    const layer = layerByKey[key];
+    const pilot = familyHasIntensity(key);
+    const storedIntensity = familyIntensity[key];
+    const intensityValue = storedIntensity ?? (pilot ? 50 : null);
+    return <LayerControl
+      key={key}
+      active={filterLayers[key]}
+      onClick={() => onToggleLayer(key)}
+      onOpen={() => onOpenLayer?.(key)}
+      label={layer.label}
+      detail={pilot ? "" : layer.detail}
+      countLabel={ruleCountLabel(layer.count)}
+      intensity={pilot ? intensityValue : null}
+      intensityCustom={Boolean(familyIntensityCustom[key])}
+      intensitySummary={pilot ? summarizeFamilyIntensity(key, settings, fieldRules) : ""}
+      onIntensityChange={(next) => onFamilyIntensityChange?.(key, next)}
+      onIntensityCommit={(next) => onFamilyIntensityCommit?.(key, next)}
+    />;
+  };
   return <section className="filterArchitecture">
     <div className="filterArchitectureHead">
       <div>
@@ -349,17 +513,11 @@ export function FilterArchitecturePanel({ filterLayers, viewLayers, useRegimeFil
     </div>
     <div className="filterLayerBlock">
       <h3>Núcleo</h3>
-      {CORE_LAYER_KEYS.map((key) => {
-        const layer = layerByKey[key];
-        return <LayerControl key={key} active={filterLayers[key]} onClick={() => onToggleLayer(key)} onOpen={() => onOpenLayer?.(key)} label={layer.label} detail={layer.detail} countLabel={ruleCountLabel(layer.count)} />;
-      })}
+      {CORE_LAYER_KEYS.map(renderLayer)}
     </div>
     <div className="filterLayerBlock">
       <h3>Adicionales</h3>
-      {OPTIONAL_LAYER_KEYS.map((key) => {
-        const layer = layerByKey[key];
-        return <LayerControl key={key} active={filterLayers[key]} onClick={() => onToggleLayer(key)} onOpen={() => onOpenLayer?.(key)} label={layer.label} detail={layer.detail} countLabel={ruleCountLabel(layer.count)} />;
-      })}
+      {OPTIONAL_LAYER_KEYS.map(renderLayer)}
       <LayerControl active={useRegimeFilter} onClick={onToggleRegime} label={REGIME_LAYER.label} detail={REGIME_LAYER.detail} countLabel={ruleCountLabel(REGIME_LAYER.count)} />
     </div>
     <details className="viewLayerMini">

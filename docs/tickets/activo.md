@@ -1,3 +1,5 @@
-# Siguiente — UX-FILTERS-3 (IPO+RS modos) o IPO-1c
+# Siguiente — INT-2 MULTI-MESA (recomendado)
 
-UX-FILTERS-2 cerrado (taxonomía única). Siguiente natural: FILTERS-3 con pilotos IPO/RS.
+UX-FILTERS-3 cerrado. Dolor dueño: marcar US+EU+HK no carga bien / selección vs datos / filtros incoherentes.
+
+Ver diagnóstico en chat orquestador (fusión US nocturno + intl materializado; Global exige todos; auto intl/balanced).

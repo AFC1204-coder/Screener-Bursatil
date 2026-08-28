@@ -2,6 +2,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { FilterFamilyModal, LayerControl, LayerToggleButton } from "@/lib/screenerFiltersView";
+import { PRIVATE_GLOBAL_RS_DISCLOSURE } from "@/lib/rsEngines";
 
 function walkElements(node, predicate, results = []) {
   if (!node) return results;
@@ -79,6 +80,34 @@ describe("LayerControl · toggle vs abrir", () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
     expect(onToggle).not.toHaveBeenCalled();
   });
+
+  it("muestra barra de intensidad solo en pilotos IPO y RS", () => {
+    const rsHtml = renderToStaticMarkup(React.createElement(LayerControl, {
+      active: true,
+      onClick: () => {},
+      onOpen: () => {},
+      label: "RS",
+      detail: "",
+      countLabel: "6 reglas",
+      intensity: 50,
+      intensityCustom: false,
+      intensitySummary: "RS global ≥ 55",
+      onIntensityChange: () => {},
+      onIntensityCommit: () => {},
+    }));
+    const liqHtml = renderToStaticMarkup(React.createElement(LayerControl, {
+      active: true,
+      onClick: () => {},
+      onOpen: () => {},
+      label: "Liquidez",
+      detail: "precio, cap, importe",
+      countLabel: "5 reglas",
+    }));
+
+    expect(rsHtml).toContain("filterIntensitySlider");
+    expect(rsHtml).toContain("RS global ≥ 55");
+    expect(liqHtml).not.toContain("filterIntensitySlider");
+  });
 });
 
 describe("FilterFamilyModal · power toggle aislado", () => {
@@ -119,5 +148,19 @@ describe("FilterFamilyModal · power toggle aislado", () => {
 
     expect(onToggleLayer).toHaveBeenCalledWith("relativeStrength");
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("muestra barra de intensidad y pliegue Auxiliares en RS", () => {
+    const html = renderToStaticMarkup(React.createElement(FilterFamilyModal, {
+      ...baseProps,
+      familyIntensity: 55,
+      familyIntensityCustom: false,
+      onFamilyIntensityChange: () => {},
+      onFamilyIntensityCommit: () => {},
+    }));
+
+    expect(html).toContain("filterIntensitySlider");
+    expect(html).toContain("Auxiliares");
+    expect(html).toContain(PRIVATE_GLOBAL_RS_DISCLOSURE.split(" ")[0]);
   });
 });

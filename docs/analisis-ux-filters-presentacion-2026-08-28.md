@@ -92,21 +92,23 @@
 │ IPO                                        [Cerrar ×] │
 │ Cobertura del dato: ipoDate en 12/3321 filas del lote │
 │                                                       │
-│ Modo:  ( Discovery )  ( Estricto )      [⏻ familia]   │
+│ Intensidad  [====|---------] 0…100      [⏻ familia]   │
+│   Abierto · Medio · Estricto   (ticks; continuo)      │
+│ Resumen: edad ≤ 60m · IPO real                        │
 │                                                       │
 │ REGLAS                        valor      impacto      │
 │ [✓] Edad IPO máxima           60 m       −3309        │
 │ [✓] IPO real requerida        sí         (dato: 12)   │
-│ ─ informativas en discovery ─                         │
-│ [ ] Perf 3M mínima            10 %       apagada      │
-│                                                       │
+│ …                                                     │
 │ Esta familia deja 0 de 3321 · principal corte: edad   │
 └──────────────────────────────────────────────────────┘
 ```
 
-- **Modo** sustituye al rail «Exigencia»: elegir modo enseña el diff de reglas que va a fijar (P2) y lo aplica solo al confirmar. Las acciones actuales de `FILTER_FAMILY_PRESETS` se convierten en definiciones de modo (2 por familia: discovery/estricto; una tercera «personalizado» aparece sola cuando el usuario toca algo).
-- El pie es el «¿Qué recorta?» local de la familia, en vivo.
-- El power toggle vive en la esquina, lejos del modo y de las reglas (P1).
+- **Decisión dueño 2026-08-28 (opción B):** el control primario es una **barra continua 0…100**, no un toggle Discovery/Estricto. Los ticks «Abierto / Medio / Estricto» orientan; el thumb puede quedar entre medias. Las anclas 0 / 50 / 100 (y la interpolación) viven en datos testeables; la barra escribe settings reales. Edición manual de una regla → estado **Personalizado** hasta que se vuelva a mover la barra.
+- El rail «Exigencia» (acciones opacas) se sustituye por intensidad + reglas visibles (P2).
+- El pie es el «¿Qué recorta?» local de la familia, en vivo (FILTERS-5 puede completar −N).
+- El power toggle vive en la esquina, lejos de la barra y de las reglas (P1).
+- Pilotos de implementación: **IPO** y **RS** (UX-FILTERS-3); resto de familias después.
 
 ### 3.1 Familia IPO (piloto — alineada con IPO-1b/1d)
 
@@ -160,7 +162,7 @@ Orden pensado para que IPO-1d pueda montarse sobre 1-3 sin esperar al resto.
 |---|---|---|---|
 | **UX-FILTERS-1** | Separar toggle de abrir/editar: nueva tarjeta de familia en sidebar (`LayerControl` → tarjeta P1) y power toggle aislado en el editor. **Absorbe y cierra UX-15.** | — | Bajo (presentación pura) |
 | **UX-FILTERS-2** | Taxonomía única de familias: una estructura fuente (key, label, intro-generada, fields, dato de cobertura, modos); `EXECUTION_LAYERS`/`FILTER_GROUPS`/`FILTER_FAMILY_PRESETS` derivan de ella. Resolver dobles pertenencias (`minRiskScore`, ratings proxy, deterioro). | — | Medio; si renombra capas → contrato v3 con mapeo (§4) |
-| **UX-FILTERS-3** | Editor de familia con modo Discovery/Estricto y reglas visibles (diff antes de aplicar); resumen de reglas activas generado en la tarjeta. Pilotos: **IPO y RS**. | 1, 2 | Medio |
+| **UX-FILTERS-3** | Barra de **intensidad continua 0…100** (opción B dueño) + resumen generado + editor de reglas al Abrir. Pilotos: **IPO y RS**. Personalizado si el usuario afina a mano. | 1, 2 | Medio |
 | **UX-FILTERS-4** | Cobertura de dato por familia («dato en N/M del lote») + aviso al activar regla sobre dato mayoritariamente ausente + empty state con motivo dominante. | 2 | Medio (necesita conteo por métrica en el lote) |
 | **UX-FILTERS-5** | Impacto −N por familia (tarjeta y pie del editor), reutilizando el cálculo de impact de chips/breakdown. Vigilar coste: mismo presupuesto <200 ms del gesto (UX-11/P3). | 1, 2 | Medio-alto (perf) |
 | **UX-FILTERS-6** | Ficha hunt declara modo y puertas (panel «qué aplica esta ficha» con enlace a sus familias); `filterStrictness` visible como atributo de la ficha. | 3 | Bajo |

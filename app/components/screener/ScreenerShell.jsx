@@ -134,6 +134,10 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     setFieldRules,
     diagnostics,
     markAdvancedBaseline,
+    familyIntensity,
+    familyIntensityCustom,
+    previewFamilyIntensity,
+    commitFamilyIntensity,
   } = sidebar;
 
   // --- search ---
@@ -443,6 +447,12 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           executionRuleActive={executionRuleActive}
           executionRuleTotal={executionRuleTotal}
           viewFiltersActive={viewFiltersActive}
+          settings={settings}
+          fieldRules={fieldRules}
+          familyIntensity={familyIntensity}
+          familyIntensityCustom={familyIntensityCustom}
+          onFamilyIntensityChange={previewFamilyIntensity}
+          onFamilyIntensityCommit={commitFamilyIntensity}
         />
         <div className="controls filterLayerActions">
           <button className="btn btnSmall btnGhost" onClick={() => {
