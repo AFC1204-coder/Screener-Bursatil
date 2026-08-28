@@ -76,6 +76,7 @@ Anterior: **INT-3**.
 | INT-2 | Fusión híbrida US+intl; Global=US+Core; revert en partial-markets | `c11668b` |
 | INT-3 | Universo intl amplio HK/CA official-broad + gates | `2e3507d` |
 | INT-3b | Caps scan-refresh official-broad (sin techo 25) | `13985cc` |
+| INT-3c | Gates HK/CA minPrice moneda local | `24a8e93` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -87,7 +88,7 @@ Anterior: **INT-3**.
 | INT-2 | Mesa US+EU+HK: fusión híbrida nocturno+materializado; selección honestamente cargable | **Hecho** · smoke US+HK 3343, US+Core 3538 |
 | INT-3 | Universo intl amplio: oficial HK+CA, gates calidad, menos curated-core techo | **Hecho** · `2e3507d` · corrida HK universeTotal 2760 pero selected 25 por cap ruta |
 | INT-3b | Quitar cap `perMarket≤25` / `limit≤80` en scan-refresh para official-broad | **Hecho** · `13985cc` · cron selected 84 → passedBase 21 (minPrice USD) |
-| INT-3c | Gates baseReject HK/CA en moneda local (sin subir lote) | **Código OK** · pending cron smoke |
+| INT-3c | Gates baseReject HK/CA en moneda local (sin subir lote) | **Hecho** · `24a8e93` · smoke cron pendiente |
 | INT-3d | Acumular lotes HK (unión histórica) en una mesa | Opcional tras 3c |
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | **Hecho** · `b6cfafa` |
 | UX-FILTERS-2 | Taxonomía única de familias | **Hecho** · `745043a` |
