@@ -61,14 +61,14 @@ Anterior: **UX-12** (`54399d0`).
 | UX-REVIEW | Pasada extensa screener filtros/navegación (Browser Use; sin P0) | `docs/analisis-ux-screener-review-2026-08-28.md` |
 | UX-10 | Copy familia RS alineado MET-1b (sidebar + modal) | `d3dfce9` |
 | UX-12 | Revisar toolbar → `/review?source=current&symbol=…` | `54399d0` |
+| UX-11 | Latencia rail fichas: caché hunt + verdad optimista + deferred rows | `8a16197` |
 
 ## Siguiente — oleada post-review (P1)
 
 | ID | Qué | Estado |
 |---|---|---|
-| UX-11 | Latencia ficha rail (<200 ms o feedback) | **Activo** · `docs/tickets/UX-11-latencia-rail-fichas.md` |
+| UX-14 | CTA stale mercados consistente | **Siguiente** |
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | Pendiente · **decisión dueño** |
-| UX-14 | CTA stale mercados consistente | Pendiente |
 | UX-15 | Toggle familia RS vs expandir reglas | Pendiente |
 | UX-16 | Líderes intl guardrail datos ≠ mercados | Pendiente |
 
