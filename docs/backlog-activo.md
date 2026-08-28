@@ -75,6 +75,7 @@ Anterior: **INT-2**.
 | UX-FILTERS-3 | Intensidad continua 0–100 (IPO + RS) | `417969f` |
 | INT-2 | Fusión híbrida US+intl; Global=US+Core; revert en partial-markets | `c11668b` |
 | INT-3 | Universo intl amplio HK/CA official-broad + gates | `2e3507d` |
+| INT-3b | Caps scan-refresh official-broad (sin techo 25) | `13985cc` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -85,7 +86,7 @@ Anterior: **INT-2**.
 | IPO-1c | Nav + merge vigiladas `/ipo-radar` | Tras nocturno / smoke filas |
 | INT-2 | Mesa US+EU+HK: fusión híbrida nocturno+materializado; selección honestamente cargable | **Hecho** · smoke US+HK 3343, US+Core 3538 |
 | INT-3 | Universo intl amplio: oficial HK+CA, gates calidad, menos curated-core techo | **Hecho** · `2e3507d` · corrida HK universeTotal 2760 pero selected 25 por cap ruta |
-| INT-3b | Quitar cap `perMarket≤25` / `limit≤80` en scan-refresh para official-broad | **Código OK** · pending cron smoke |
+| INT-3b | Quitar cap `perMarket≤25` / `limit≤80` en scan-refresh para official-broad | **Hecho** · `13985cc` · smoke cron pendiente |
 | INT-3c | Acumular lotes HK (unión histórica) en una mesa | Opcional tras 3b |
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | **Hecho** · `b6cfafa` |
 | UX-FILTERS-2 | Taxonomía única de familias | **Hecho** · `745043a` |
