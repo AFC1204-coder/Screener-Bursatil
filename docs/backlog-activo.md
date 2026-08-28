@@ -5,10 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-28 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **INT-3 UNIVERSO INTL AMPLIO** (HK broad + gates calidad).  
-Último cerrado: **INT-2 MULTI-MESA** (fusión US+intl).  
-Anterior: **UX-FILTERS-3**.  
-**Cola:** UX-FILTERS-4 · MET-1c/UX-13 · IPO-1d · nocturno → IPO-1c…  
+Ticket en curso: **INT-3b** (caps cron) · pendiente smoke cron HK.  
+Último cerrado: **INT-3** (`2e3507d`).  
+Anterior: **INT-2**.  
+**Cola:** INT-3c acumulado HK (opcional) · UX-FILTERS-4 · MET-1c/UX-13 · nocturno → IPO-1c…  
 **Decisión producto (2026-08-28 · universo intl):** menos curación manual; universo oficial + gates (liquidez, errática, parada); curado = semilla.  
 **Decisión producto (2026-08-28 · filtros):** control primario = **barra continua** (grados), no todo-o-nada; Abrir = profundidad. Spec §3 actualizada (opción B).  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
@@ -84,7 +84,9 @@ Anterior: **UX-FILTERS-3**.
 | Nocturno | Materializado con `ipoDate` en filas scan | **Pendiente** (smoke filas Radar) |
 | IPO-1c | Nav + merge vigiladas `/ipo-radar` | Tras nocturno / smoke filas |
 | INT-2 | Mesa US+EU+HK: fusión híbrida nocturno+materializado; selección honestamente cargable | **Hecho** · smoke US+HK 3343, US+Core 3538 |
-| INT-3 | Universo intl amplio: oficial HK+CA, gates calidad, menos curated-core techo | **Hecho** · cron HK pendiente smoke N>23 |
+| INT-3 | Universo intl amplio: oficial HK+CA, gates calidad, menos curated-core techo | **Hecho** · `2e3507d` · corrida HK universeTotal 2760 pero selected 25 por cap ruta |
+| INT-3b | Quitar cap `perMarket≤25` / `limit≤80` en scan-refresh para official-broad | **Código OK** · pending cron smoke |
+| INT-3c | Acumular lotes HK (unión histórica) en una mesa | Opcional tras 3b |
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | **Hecho** · `b6cfafa` |
 | UX-FILTERS-2 | Taxonomía única de familias | **Hecho** · `745043a` |
 | UX-FILTERS-3 | Intensidad continua 0–100 + Abrir (IPO + RS) | **Hecho** |

@@ -1,5 +1,6 @@
 import { scanCronGroupAt, scanCronGroupByKey } from "@/lib/cronPlan";
 import { isInternalRequest } from "@/lib/internalAuth";
+import { scanRefreshParamCaps } from "@/lib/intlUniverseGates";
 import {
   readScanBatchCursor,
   runMaterializedScan,
@@ -177,8 +178,11 @@ export async function GET(request) {
   const rotated = scanCronGroupAt(rotation.value?.nextIndex || 0);
   const group = manualGroup || rotated.group;
   const groupIndex = manualGroup ? rotated.groups.findIndex((item) => item.key === manualGroup.key) : rotated.index;
-  const limit = numberParam(searchParams, "limit", group.limit, 1, Math.min(group.limit, 80));
-  const perMarket = numberParam(searchParams, "perMarket", group.perMarket, 1, Math.min(group.perMarket, 25));
+  // Official-broad (HK/CA): el plan INT-3 usa intlBroadPerMarketLimit (~84). El techo
+  // legacy 25/80 anulaba la selección aunque el grupo pidiera el lote completo.
+  const { limitMax, perMarketMax } = scanRefreshParamCaps(group);
+  const limit = numberParam(searchParams, "limit", group.limit, 1, limitMax);
+  const perMarket = numberParam(searchParams, "perMarket", group.perMarket, 1, perMarketMax);
   const cursor = await readScanBatchCursor().catch(() => ({ value: {} }));
   const options = {
     markets: group.markets,

@@ -1,5 +1,5 @@
 # Ticket activo
 
-**Estado:** INT-3 implementado (working tree) · pendiente **corrida cron HK** + smoke N>23 antes de cerrar del todo.
+**Estado:** INT-3b código OK · pendiente **corrida cron HK** (`selected` ~84) + smoke UI.
 
-Ver `docs/tickets/INT-3-intl-universe-broad.md`. Siguiente candidato en cola: UX-FILTERS-4.
+Ver `docs/tickets/INT-3b-scan-refresh-caps.md`.
