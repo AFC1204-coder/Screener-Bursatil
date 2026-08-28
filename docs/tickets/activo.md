@@ -1,3 +1,3 @@
-# IPO-1b — Radar discovery
+# Siguiente — nocturno o IPO-1c / UX-FILTERS-1
 
-**Copia:** `docs/tickets/IPO-1b-preset-discovery.md`
+IPO-1b cerrado. Radar IPO muestra empty state + CTA hasta que el materializado lleve `ipoDate`.

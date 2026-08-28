@@ -65,6 +65,8 @@ import {
 } from "@/lib/screenerFilterCatalog";
 import { getOrComputeHuntFilter, huntFilterCacheKey, huntPresetActiveSettings, warmHuntFilterCache } from "@/lib/screenerHuntFilterCache";
 import { huntCardSelection, huntDisplayName } from "@/lib/screenerHuntCards";
+import { IpoDiscoveryEmptyLabel } from "@/lib/ipoDiscoveryEmpty";
+import { IPO_DISCOVERY_PRESET_KEY, ipoDateCoverageStats } from "@/lib/ipoDiscoveryView";
 import {
   FILTER_LAYERS_CONTRACT_VERSION,
   effectiveSettingsFromLayers,
@@ -1015,12 +1017,18 @@ export default function Page() {
   const fineRuleTotal = FILTER_FIELDS.length;
   const fineRuleActive = FILTER_FIELDS.filter((field) => isFieldRuleActive(field, fieldRules, filterLayers)).length;
   const kpiUniverseCount = universe.length || scanContext?.baseCount || analyzedRows.length || rows.length;
+  const ipoDateCoverage = useMemo(
+    () => (presetKey === IPO_DISCOVERY_PRESET_KEY ? ipoDateCoverageStats(analyzedRows) : null),
+    [presetKey, analyzedRows],
+  );
   // Estado vacío de la tabla, con la causa dicha (punto 4 del contrato sin
   // botón): cargando ≠ cero-por-filtro ≠ sin datos. Nunca "Ejecuta un scan".
   const resultsEmptyLabel = restoringScan
     ? "Cargando los últimos datos guardados..."
     : analyzedRows.length
-      ? `Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`
+      ? (presetKey === IPO_DISCOVERY_PRESET_KEY && !rows.length
+        ? <IpoDiscoveryEmptyLabel analyzedCount={analyzedRows.length} coverage={ipoDateCoverage} />
+        : `Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`)
       : "No hay datos cargados todavía. Los datos de anoche se cargan al abrir la página; si no aparecen, recarga.";
   // --- Staleness de scan-settings -------------------------------------------
   // El scan mostrado es "vigente" si markets/manual/scanMode actuales coinciden

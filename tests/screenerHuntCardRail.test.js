@@ -179,7 +179,7 @@ describe("OptionalBasePresetsPanel", () => {
     const html = renderToStaticMarkup(React.createElement(OptionalBasePresetsPanel, { presetKey: "balanced" }));
     expect(html).toContain("Más bases de filtro");
     expect(html).toContain("No sustituyen las fichas del centro");
-    expect(templateButtonNames(html)).toEqual(["Líderes estrictos", "Etapa 2 temprana", "Exploratorio amplio"]);
+    expect(templateButtonNames(html)).toEqual(["Líderes estrictos", "Etapa 2 temprana", "Exploratorio amplio", "IPO / nuevos líderes"]);
   });
 });
 

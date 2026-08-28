@@ -3591,6 +3591,11 @@ button.decisionIssueBadge:hover,
   color:var(--muted);
 }
 
+.emptyResultsCell .emptyResultsCta {
+  margin-top:12px;
+  display:inline-flex;
+}
+
 .diagnosticBlock li em,
 .diagnosticBlock>b {
   color:var(--text);

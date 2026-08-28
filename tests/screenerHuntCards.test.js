@@ -17,16 +17,16 @@ describe("HUNT_CARDS", () => {
       ["cerca-pivot", "Cerca de pivot", "nearPivot"],
       ["deterioro", "Deterioro", "weakness"],
       ["lideres-intl", "Líderes intl", "intl"],
-      ["radar-ipo", "Radar IPO", "ipo"],
+      ["radar-ipo", "Radar IPO", "ipoDiscovery"],
     ]);
     for (const card of HUNT_CARDS) {
       expect(SCREENER_FILTER_PRESETS[card.presetKey]).toBeTruthy();
     }
   });
 
-  it("deja strict, early y broad fuera del rail diario", () => {
+  it("deja strict, early, broad e ipo institucional fuera del rail diario", () => {
     const keys = optionalBasePresetEntries().map(([key]) => key);
-    expect(keys).toEqual(["strict", "early", "broad"]);
+    expect(keys).toEqual(["strict", "early", "broad", "ipo"]);
     expect(HUNT_CARDS.some((card) => keys.includes(card.presetKey))).toBe(false);
   });
 });
@@ -46,10 +46,11 @@ describe("resolveActiveHuntCard", () => {
     expect(resolveActiveHuntCard("intl", ["US", "CA"])?.id).toBe("lideres-intl");
   });
 
-  it("mapea nearPivot, weakness e ipo cuando el auto-switch no aplica", () => {
+  it("mapea nearPivot, weakness e ipoDiscovery cuando el auto-switch no aplica", () => {
     expect(resolveActiveHuntCard("nearPivot", ["US"])?.id).toBe("cerca-pivot");
     expect(resolveActiveHuntCard("weakness", ["US"])?.id).toBe("deterioro");
     expect(resolveActiveHuntCard("weakness", ["CA"])?.id).toBe("deterioro");
+    expect(resolveActiveHuntCard("ipoDiscovery", ["US"])?.id).toBe("radar-ipo");
     expect(resolveActiveHuntCard("ipo", ["US"])?.id).toBe("radar-ipo");
     expect(resolveActiveHuntCard("intl", ["CA"])?.id).toBe("lideres-intl");
   });

@@ -151,10 +151,10 @@ describe("UX-11 · gesto hunt rail sobre ~3309 filas", () => {
     for (const timing of timings) {
       expect(timing.ms).toBeLessThan(200);
     }
-    expect(timings.find((t) => t.preset === "ipo")?.rows).toBeGreaterThanOrEqual(0);
+    expect(timings.find((t) => t.preset === "ipoDiscovery")?.rows).toBeGreaterThanOrEqual(0);
 
     const coldStartedAt = performance.now();
-    getOrComputeHuntFilter(new Map(), "ipo", stamped, context, filterAnalyzedRows);
+    getOrComputeHuntFilter(new Map(), "ipoDiscovery", stamped, context, filterAnalyzedRows);
     const coldMs = performance.now() - coldStartedAt;
     process.stdout.write(`[UX-11] ipo cold-path=${coldMs.toFixed(1)}ms (empty state ok)\n`);
     expect(coldMs).toBeLessThan(200);
