@@ -5,9 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-28 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-14** (pendiente ticket).  
-Último cerrado: **UX-11** (latencia rail fichas).  
-Anterior: **UX-12** (`54399d0`).  
+Ticket en curso: **UX-14** (`docs/tickets/activo.md`).  
+Último cerrado: **UX-11** (`8a16197`).  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
 **Decisión producto (2026-08-28):** RS global FX = track **privado** …  
