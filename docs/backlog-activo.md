@@ -63,7 +63,7 @@ Ticket en curso: **libre**.
 
 | ID | Qué | Estado |
 |---|---|---|
-| MET-1b | Motor global privado + pin + fallback pre-cutover | (pendiente commit orquestador) |
+| MET-1b | Motor global privado + pin + fallback pre-cutover | `060cf08` |
 | MET-2 | Spec RS país (calidad intra-país) | Decisión dueño; sin ticket |
 | MET-3 | Spec RS tema (ocupación / theme) | Decisión dueño; sin ticket |
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | Ideas; sin ticket |
