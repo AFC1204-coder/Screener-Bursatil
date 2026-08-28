@@ -6,7 +6,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-28 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: **libre**.  
-Último cerrado: **MET-1** (spec aceptado).  
+Último cerrado: **MET-1b** (código; pipeline `--write` pendiente).  
 **Prioridad dueño (inmediato):** MET-1b **pendiente de autorización explícita** de implementación (addendum §13).  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
@@ -63,7 +63,7 @@ Ticket en curso: **libre**.
 
 | ID | Qué | Estado |
 |---|---|---|
-| MET-1b | Implementación motor global privado (`statsedge-private-global-rs-usd-v1`) | Spec OK; **falta autorización explícita** dueño (§13) |
+| MET-1b | Motor global privado + pin + fallback pre-cutover | (pendiente commit orquestador) |
 | MET-2 | Spec RS país (calidad intra-país) | Decisión dueño; sin ticket |
 | MET-3 | Spec RS tema (ocupación / theme) | Decisión dueño; sin ticket |
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | Ideas; sin ticket |

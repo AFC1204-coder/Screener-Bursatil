@@ -24,6 +24,7 @@ import { InfoHint } from "@/app/components/ui/InfoHint";
 import { cap, pct } from "@/lib/formatters";
 import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
 import { canonicalRs } from "@/lib/rsCanonical";
+import { canonicalRsDisclosure } from "@/lib/rsEngines";
 import { UNRELIABLE_AUDIT_STATUS } from "@/lib/scanLightProjection";
 import { STAGE_LEGACY_REASON, STAGE_MISSING_REASON, stageConfirmationMark, stageWordForState } from "@/lib/stageDisplay";
 import { CompanyMark, MiniSparkline } from "@/lib/screenerAtoms";
@@ -170,7 +171,10 @@ export const SCREENER_COLUMNS = [
   {
     key: "rs",
     label: () => "RS",
-    legend: "Fuerza relativa semanal: posición del valor, de 0 a 99, frente a todo el universo escaneado.",
+    // Declaración obligatoria del universo (spec MET-1 § Superficies): el
+    // ranking privado se etiqueta con su moneda y su universo curado, nunca
+    // como "global" a secas. El denominador es US-céntrico y eso se dice.
+    legend: `${canonicalRsDisclosure()}. Fuerza relativa semanal: posición del valor, de 0 a 99, dentro del universo del ranking.`,
     align: "right",
     className: "colRs",
     sortKey: () => "rsGlobalPct",

@@ -1,8 +1,11 @@
 # Ticket activo — libre
 
-Último cerrado: **MET-1** (spec RS global multi-mercado + FX; aceptado 2026-08-28).
+Último cerrado: **MET-1b** (código + fallback pre-cutover; sin `--write` ni smoke).
 
-Spec: `docs/spec-rs-global-multi-mercado-fx.md`  
-Matiz dueño: **privado** = RS global FX; **público v1** (salvo imprevisto) = US-only, motor `statsedge-us-equity-rs-v1`.
+Pendiente operativo (orquestador/dueño, no programación):
+1. `rs-fx-ingest.mjs --write`
+2. `rs-global-private.mjs --write` (1 semana, tras dry-run OK)
+3. Smoke Browser Use tras write
+4. MET-1c cron (después)
 
-Siguiente en cola: **MET-1b** (implementación) — **no activar** hasta autorización explícita de implementación (addendum §13). Ver backlog `docs/backlog-activo.md`.
+Spec: `docs/spec-rs-global-multi-mercado-fx.md`
