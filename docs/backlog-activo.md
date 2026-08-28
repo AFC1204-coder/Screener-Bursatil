@@ -68,7 +68,7 @@ Anterior: **UX-12** (`54399d0`).
 
 | ID | Qué | Estado |
 |---|---|---|
-| UX-14 | CTA stale mercados consistente | **Siguiente** |
+| UX-14 | CTA stale mercados consistente | **Activo** · `docs/tickets/UX-14-cta-stale-mercados.md` |
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | Pendiente · **decisión dueño** |
 | UX-15 | Toggle familia RS vs expandir reglas | Pendiente |
 | UX-16 | Líderes intl guardrail datos ≠ mercados | Pendiente |
