@@ -230,6 +230,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   // --- actions ---
   const {
     openReview,
+    openPrimaryReview,
     saveSnapshot,
     csv,
     decisionAuditJson,
@@ -671,7 +672,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
                 </> : null}
               </div>
               {resultsFiltered.length ? <>
-                <button className="btn btnSmall btnPrimary" onClick={() => openReview(resultsFiltered)}>Revisar</button>
+                <button className="btn btnSmall btnPrimary" onClick={openPrimaryReview}>Revisar</button>
                 <details className="resultsMoreMenu">
                   <summary className="btn btnSmall btnGhost" aria-label="Más herramientas" title="Más herramientas">⋯</summary>
                   <div className="resultsMoreMenuPanel">

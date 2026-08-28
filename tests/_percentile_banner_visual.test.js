@@ -45,7 +45,7 @@ function baseBag(resultsRows, pendingResults) {
     search: { searchSymbol: "", updateSearchSymbol: () => {}, searchCandidates: [], searchResult: null, searchScopeItems: [], searchLoading: false, searchError: null, runSearch: () => {}, clearSearch: () => {}, applySearchScope: () => {}, setSearchSymbol: () => {}, loadSearchResult: () => {}, favoriteSymbols: new Set(), screenerDecisionResolutions: {}, addFavorite: () => {}, saveSessionBeforeStockOpen: () => {} },
     resultView: {},
     results: { filtered: resultsRows, rows: resultsRows, pagedRows: resultsRows, activeSettings: {}, analyzedRows: [], universe: [], pendingResults, pendingFilteredCount: pendingResults?.rows?.length ?? 0, favoriteSymbols: new Set(), screenerDecisionResolutions: {}, restoringScan: false },
-    actions: { openReview: () => {}, saveSnapshot: () => {}, csv: () => {}, decisionAuditJson: () => {}, commitPendingResults: () => {}, resetScreenerSession: () => {}, refreshScreenerSnapshotData: () => {}, addFavorite: () => {}, saveSessionBeforeStockOpen: () => {} },
+    actions: { openReview: () => {}, openPrimaryReview: () => {}, saveSnapshot: () => {}, csv: () => {}, decisionAuditJson: () => {}, commitPendingResults: () => {}, resetScreenerSession: () => {}, refreshScreenerSnapshotData: () => {}, addFavorite: () => {}, saveSessionBeforeStockOpen: () => {} },
     staleness: { scanStale: false },
   };
 }

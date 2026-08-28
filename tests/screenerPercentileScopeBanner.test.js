@@ -1,4 +1,6 @@
 import React from "react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi, beforeAll } from "vitest";
 
@@ -127,6 +129,7 @@ function makeProps({ resultsRows = [] } = {}) {
     },
     actions: {
       openReview: () => {},
+      openPrimaryReview: () => {},
       saveSnapshot: () => {},
       csv: () => {},
       decisionAuditJson: () => {},
@@ -238,5 +241,11 @@ describe("ScreenerShell · toolbar resultados (UX-P2)", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW] })));
     expect(html).toContain("btnPrimary");
     expect(html).toContain(">Revisar<");
+  });
+
+  it("el botón Revisar primario enlaza openPrimaryReview en ScreenerShell", () => {
+    const source = readFileSync(resolve(import.meta.dirname, "../app/components/screener/ScreenerShell.jsx"), "utf8");
+    expect(source).toMatch(/btnPrimary" onClick=\{openPrimaryReview\}>Revisar<\/button>/);
+    expect(source).not.toContain("onClick={() => openReview(resultsFiltered)}");
   });
 });

@@ -127,6 +127,7 @@ function makeProps({ marketsStale = false, snapshotNotice = null } = {}) {
     },
     actions: {
       openReview: () => {},
+      openPrimaryReview: () => {},
       saveSnapshot: () => {},
       csv: () => {},
       decisionAuditJson: () => {},

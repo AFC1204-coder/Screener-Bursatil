@@ -135,6 +135,7 @@ function makeProps({ presetKey = "balanced", markets = ["US"] } = {}) {
     },
     actions: {
       openReview: () => {},
+      openPrimaryReview: () => {},
       saveSnapshot: () => {},
       csv: () => {},
       decisionAuditJson: () => {},

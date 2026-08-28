@@ -5,9 +5,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-28 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-12** (`docs/tickets/activo.md`).  
-Último cerrado: **UX-10** (copy familia RS MET-1b).  
-Anterior: **UX-REVIEW** → `docs/analisis-ux-screener-review-2026-08-28.md`.  
+Ticket en curso: **UX-11** (pendiente ticket) · siguiente lógico tras UX-12.  
+Último cerrado: **UX-12** (Revisar → `/review`).  
+Anterior: **UX-10** (`d3dfce9`).  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
 **Decisión producto (2026-08-28):** RS global FX = track **privado** (`statsedge-private-global-rs-usd-v1`). Público v1 previsto **US-only** (`statsedge-us-equity-rs-v1` pinneado) — el global no contamina la versión pública. Spec: `docs/spec-rs-global-multi-mercado-fx.md`.  
@@ -60,13 +60,13 @@ Anterior: **UX-REVIEW** → `docs/analisis-ux-screener-review-2026-08-28.md`.
 | MET-1 | Spec RS global multi-mercado + FX (aceptado; privado global / público US-only) | `877c318` |
 | UX-REVIEW | Pasada extensa screener filtros/navegación (Browser Use; sin P0) | `docs/analisis-ux-screener-review-2026-08-28.md` |
 | UX-10 | Copy familia RS alineado MET-1b (sidebar + modal) | `d3dfce9` |
+| UX-12 | Revisar toolbar → `/review?source=current&symbol=…` | (pending) |
 
 ## Siguiente — oleada post-review (P1)
 
 | ID | Qué | Estado |
 |---|---|---|
-| UX-12 | Revisar screener → `/review` | **Activo** |
-| UX-11 | Latencia ficha rail (<200 ms o feedback) | Pendiente |
+| UX-11 | Latencia ficha rail (<200 ms o feedback) | **Siguiente** |
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | Pendiente · **decisión dueño** |
 | UX-14 | CTA stale mercados consistente | Pendiente |
 | UX-15 | Toggle familia RS vs expandir reglas | Pendiente |

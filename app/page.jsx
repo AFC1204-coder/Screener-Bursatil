@@ -2,6 +2,7 @@
 // tokens-v2.css se importa globalmente desde app/layout.jsx.
 import "../styles/screener.css";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import QuickReviewModal from "@/app/components/screener/QuickReviewModal";
 import ScreenerShell from "@/app/components/screener/ScreenerShell";
 import { useQuickReviewSession } from "@/app/components/screener/useQuickReviewSession";
@@ -10,6 +11,7 @@ import { metricTruthMetaForRow } from "@/app/components/ui/TrustSignals";
 import { normalizeMarketList } from "@/lib/markets";
 import { FilterFamilyModal } from "@/app/screenerPanels";
 import { activeLayerCount, layerStatusText, scanFailureExplanation, searchText, userFacingServiceError } from "@/lib/screenerFormat";
+import { resolvePrimaryReviewStartSymbol } from "@/lib/screenerReviewLaunch";
 import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
@@ -176,6 +178,7 @@ export default function Page() {
     restoreQuickReviewSession,
     resetQuickReview,
     openReview,
+    openReviewPage,
     moveQuickReview,
     closeQuickReview,
     saveQuickReviewStockOpen,
@@ -303,6 +306,7 @@ export default function Page() {
     return count;
   }, [settings, filterLayers, advancedBaselineVersion]);
   const [selectedResultSymbol, setSelectedResultSymbol] = useState("");
+  const router = useRouter();
   const [sessionReady, setSessionReady] = useState(false);
   const [savedFilterTemplates, setSavedFilterTemplates] = useState([]);
   const [selectedFilterTemplateId, setSelectedFilterTemplateId] = useState("");
@@ -2063,6 +2067,17 @@ export default function Page() {
     openReview(filtered, symbol);
   }
 
+  function openPrimaryReview() {
+    const storedSelectedSymbol = safeRead(STORAGE_KEYS.review, {})?.selectedSymbol || "";
+    const startSymbol = resolvePrimaryReviewStartSymbol({
+      selectedResultSymbol,
+      selectedSymbol: storedSelectedSymbol,
+      rows: filtered,
+    });
+    const href = openReviewPage(filtered, startSymbol);
+    if (href) router.push(href);
+  }
+
   useEffect(() => {
     if (!selectedResultSymbol) return;
     if (!pagedRows.some((row) => row.symbol === selectedResultSymbol)) {
@@ -2201,6 +2216,7 @@ export default function Page() {
     }}
     actions={{
       openReview,
+      openPrimaryReview,
       addFavorite,
       saveSnapshot,
       csv,
