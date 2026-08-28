@@ -65,7 +65,7 @@ Anterior: **UX-FILTERS** spec.
 | UX-11 | Latencia rail fichas: caché hunt + verdad optimista + deferred rows | `8a16197` |
 | UX-14 | CTA stale mercados: misalignment sin depender de scanStale | `f657410` |
 | UX-FILTERS | Spec rediseño presentación filtros (tickets 1…7) | `docs/analisis-ux-filters-presentacion-2026-08-28.md` |
-| IPO-1a | `ipoDate` desde chart meta v8 + hydrate/patch caché + proyecciones | (este commit) |
+| IPO-1a | `ipoDate` desde chart meta v8 + hydrate/patch caché + proyecciones | `eb3053a` |
 
 ## Siguiente — datos IPO + filtros
 
