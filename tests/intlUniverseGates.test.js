@@ -4,8 +4,12 @@ import {
   INTL_UNIVERSE_GATE_THRESHOLDS,
   intlBroadPerMarketLimit,
   intlUniverseGateRejectReason,
+  isHkLiquidDeprioritized,
+  isHkPreferredBoard,
   isOfficialBroadMarket,
+  isPriorPolicyBaseReject,
   officialBroadMarketFromList,
+  priorPolicyBaseRejectReason,
   resolveBaseRejectThresholds,
 } from "@/lib/intlUniverseGates";
 import { _forTest } from "@/lib/materializedScanner";
@@ -129,5 +133,23 @@ describe("intlUniverseGates", () => {
     expect(baseRejectReason({ ...baseOk, price: 0.6, symbol: "0700.HK", country: "HK" }, { market: "HK" })).toBe("");
     expect(baseRejectReason({ ...baseOk, price: 0.05, symbol: "9999.HK", country: "HK" }, { market: "HK" })).toMatch(/precio bajo/);
     expect(baseRejectReason({ ...baseOk, price: 0.6, symbol: "PENNY", country: "US" }, { market: "US" })).toMatch(/precio bajo/);
+  });
+
+  it("INT-3e: clasifica Main Board+short-sell vs GEM y rechazos previos de política", () => {
+    const mainBoard = {
+      exchangeSubCategory: "Equity Securities (Main Board)",
+      shortSellEligible: true,
+    };
+    const gem = {
+      exchangeSubCategory: "Equity Securities (GEM)",
+      shortSellEligible: false,
+    };
+    expect(isHkPreferredBoard(mainBoard)).toBe(true);
+    expect(isHkLiquidDeprioritized(mainBoard)).toBe(false);
+    expect(isHkLiquidDeprioritized(gem)).toBe(true);
+    expect(isHkLiquidDeprioritized({ symbol: "2001.HK" })).toBe(false);
+    expect(priorPolicyBaseRejectReason({ policyRejectReason: "precio bajo 0.2" })).toBe("precio bajo 0.2");
+    expect(isPriorPolicyBaseReject({ screenRejectReason: "importe medio bajo 1000" })).toBe(true);
+    expect(isPriorPolicyBaseReject({ screenRejectReason: "histórico insuficiente 50/180" })).toBe(false);
   });
 });

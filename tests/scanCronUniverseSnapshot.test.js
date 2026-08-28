@@ -145,10 +145,57 @@ function officialDumpSnapshot(market, count, { skipCurated = true } = {}) {
   };
 }
 
+function hkLiquidBandSnapshot({ gemCount = 80, mainBoardCount = 40, skipCurated = true } = {}) {
+  const curated = new Set(marketSymbols("HK").map((symbol) => String(symbol).toUpperCase()));
+  const universe = [];
+  for (let i = 0; i < gemCount; i += 1) {
+    const symbol = `${String(1000 + i).padStart(4, "0")}.HK`;
+    if (skipCurated && curated.has(symbol.toUpperCase())) continue;
+    universe.push({
+      symbol,
+      name: `GEM ${i}`,
+      market: "HK",
+      country: "HK",
+      source: "HKEX Full List of Securities",
+      exchangeSubCategory: "Equity Securities (GEM)",
+      shortSellEligible: false,
+    });
+  }
+  for (let i = 0; i < mainBoardCount; i += 1) {
+    const symbol = `${String(3000 + i).padStart(4, "0")}.HK`;
+    if (skipCurated && curated.has(symbol.toUpperCase())) continue;
+    universe.push({
+      symbol,
+      name: `Main ${i}`,
+      market: "HK",
+      country: "HK",
+      source: "HKEX Full List of Securities",
+      exchangeSubCategory: "Equity Securities (Main Board)",
+      shortSellEligible: true,
+    });
+  }
+  return {
+    key: "universe:HK",
+    markets: ["HK"],
+    count: universe.length,
+    totalBeforeGate: universe.length,
+    excludedCount: 0,
+    universe,
+    excluded: [],
+    coverage: { byMarket: {}, bySource: {}, bySourceByMarket: {}, byInstrumentType: {} },
+    cache: { hit: true, status: "supabase" },
+  };
+}
+
+function isHkMainBoardRow(symbol, rows = []) {
+  const row = rows.find((item) => item.symbol === symbol);
+  return Boolean(row?.exchangeSubCategory?.includes("Main Board") && row?.shortSellEligible === true);
+}
+
 describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU/KR/IN/CA/Europa priority", () => {
   it("con markets [HK], usa official-broad y no resetea offset alto del dump HKEX", async () => {
-    const curated = new Set(marketSymbols("HK").map((symbol) => symbol.toUpperCase()));
-    getUniverseEngineSnapshot.mockResolvedValue(officialDumpSnapshot("HK", 400));
+    const snapshot = hkLiquidBandSnapshot({ gemCount: 200, mainBoardCount: 120 });
+    getUniverseEngineSnapshot.mockResolvedValue(snapshot);
 
     const plan = await planMaterializedScan({
       markets: ["HK"],
@@ -163,8 +210,10 @@ describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU/KR/IN/C
     expect(plan.stats.selection.priorityMode).toBe("official-broad");
     expect(plan.settings.marketOffsets.HK).toBe(130);
     expect(plan.symbols.length).toBe(24);
-    const nonCurated = plan.symbols.filter((symbol) => !curated.has(symbol.toUpperCase()));
-    expect(nonCurated.length).toBeGreaterThan(0);
+    const mainBoardCount = plan.symbols.filter((symbol) => isHkMainBoardRow(symbol, snapshot.universe)).length;
+    expect(mainBoardCount).toBeGreaterThanOrEqual(13);
+    expect(plan.settings.nextMarketOffsets.HK).toBeGreaterThan(130);
+    expect(plan.stats.selection.skippedLiquid).toBeGreaterThan(0);
   });
 
   it("con markets [AU], antepone marketSymbols(AU) y rellena el limit desde el dump tras reset del offset", async () => {
