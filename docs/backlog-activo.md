@@ -3,13 +3,14 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-08-28 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: **libre**.  
-Último cerrado: **UX-9**.  
-**Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas — **oleada UI cerrada**.  
+Último cerrado: **MET-1** (spec aceptado).  
+**Prioridad dueño (inmediato):** MET-1b **pendiente de autorización explícita** de implementación (addendum §13).  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
+**Decisión producto (2026-08-28):** RS global FX = track **privado** (`statsedge-private-global-rs-usd-v1`). Público v1 previsto **US-only** (`statsedge-us-equity-rs-v1` pinneado) — el global no contamina la versión pública. Spec: `docs/spec-rs-global-multi-mercado-fx.md`.  
 **Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 + UX-5 + oleada producto-final (P1…P5, UX-6…9) hechos.  
 **Decisión métricas (2026-08-27, no inmediato):** RS **global** = un solo ranking del universo privado con **ajuste por divisa**; RS **país** = calidad dentro del propio país; RS **tema** = por a qué se dedica la empresa (theme). Más adelante: muletas de tendencia + índice 0–100 de salud de etapa. VCP e indicadores nuevos = track paralelo.  
 **Gate cierre:** tests del ticket + **`./vfc`** + smoke Browser Use.  
@@ -56,18 +57,13 @@ Ticket en curso: **libre**.
 | UX-P5 | Móvil 390: rail scroll; drawer sheet; smoke | `0f42cda` |
 | UX-8 | Desglose «¿Qué recorta?» bajo verdad; smoke 47/3321 | `0f42cda` |
 | UX-9 | Ranking provisional + corte; Datos *; smoke | `86224c0` |
+| MET-1 | Spec RS global multi-mercado + FX (aceptado; privado global / público US-only) | (docs, pendiente commit) |
 
-## Siguiente — producto final (inmediato)
-
-| ID | Qué | Notas | Modelo |
-|---|---|---|---|
-| ~~oleada UI brief~~ | P1–P5 + UX-5…9 | **cerrada** | — |
-
-## Track métricas (siguiente oleada)
+## Siguiente — track métricas
 
 | ID | Qué | Estado |
 |---|---|---|
-| MET-1 | Spec RS global multi-mercado + factor divisa (un ranking) | Decisión dueño; sin ticket |
+| MET-1b | Implementación motor global privado (`statsedge-private-global-rs-usd-v1`) | Spec OK; **falta autorización explícita** dueño (§13) |
 | MET-2 | Spec RS país (calidad intra-país) | Decisión dueño; sin ticket |
 | MET-3 | Spec RS tema (ocupación / theme) | Decisión dueño; sin ticket |
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | Ideas; sin ticket |

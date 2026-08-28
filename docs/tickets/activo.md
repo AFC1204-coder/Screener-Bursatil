@@ -1,6 +1,8 @@
 # Ticket activo — libre
 
-Último cerrado: **UX-9** (copy sin jerga de laboratorio).
+Último cerrado: **MET-1** (spec RS global multi-mercado + FX; aceptado 2026-08-28).
 
-Oleada producto-final (brief UX-P + UX-5…9) **cerrada**.  
-Siguiente track: métricas (MET-1…) o VCP — ver `docs/backlog-activo.md`.
+Spec: `docs/spec-rs-global-multi-mercado-fx.md`  
+Matiz dueño: **privado** = RS global FX; **público v1** (salvo imprevisto) = US-only, motor `statsedge-us-equity-rs-v1`.
+
+Siguiente en cola: **MET-1b** (implementación) — **no activar** hasta autorización explícita de implementación (addendum §13). Ver backlog `docs/backlog-activo.md`.
