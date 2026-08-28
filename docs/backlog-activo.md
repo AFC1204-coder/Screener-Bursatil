@@ -10,7 +10,8 @@ Ticket en curso: **UX-14** (pendiente ticket).
 Anterior: **UX-12** (`54399d0`).  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
-**Decisión producto (2026-08-28):** RS global FX = track **privado** (`statsedge-private-global-rs-usd-v1`). Público v1 previsto **US-only** (`statsedge-us-equity-rs-v1` pinneado) — el global no contamina la versión pública. Spec: `docs/spec-rs-global-multi-mercado-fx.md`.  
+**Decisión producto (2026-08-28):** RS global FX = track **privado** …  
+**Decisión producto (2026-08-28 · IPO):** Radar IPO = **todos los mercados**; preset **discovery abierto**; fuente v1 = backfill `ipoDate` multi-mercado + curado `/ipo-radar`; rediseño filtros vía **UX-FILTERS** (raíz, no parche IPO).  
 **Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 + UX-5 + oleada producto-final (P1…P5, UX-6…9) hechos.  
 **Decisión métricas (2026-08-27, no inmediato):** RS **global** = un solo ranking del universo privado con **ajuste por divisa**; RS **país** = calidad dentro del propio país; RS **tema** = por a qué se dedica la empresa (theme). Más adelante: muletas de tendencia + índice 0–100 de salud de etapa. VCP e indicadores nuevos = track paralelo.  
 **Gate cierre:** tests del ticket + **`./vfc`** + smoke Browser Use.  
@@ -75,6 +76,15 @@ Anterior: **UX-12** (`54399d0`).
 ## P2 (post-review)
 
 UX-17…21 — vista rápida, móvil tabla, localStorage, «visibles» vs paginación, botones Ordenar redundantes. Ver informe §Tickets propuestos.
+
+## Track IPO / salidas a bolsa (dueño 2026-08-28)
+
+| ID | Qué | Estado |
+|---|---|---|
+| IPO-1 | Radar IPO multi-mercado + datos + ficha discovery | **Aceptado** · `docs/tickets/IPO-1-radar-producto.md` |
+| UX-FILTERS | Rediseño raíz presentación/config filtros (IPO piloto) | **Propuesto** · spec antes de IPO-1d |
+
+Orden sugerido: **UX-14** (CTA stale) → **UX-FILTERS spec** → **IPO-1a datos** → **IPO-1b–c** (+ 1d con UX-FILTERS).
 
 ## Chart (pendiente oleada screener)
 
