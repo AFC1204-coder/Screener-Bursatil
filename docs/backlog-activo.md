@@ -62,7 +62,7 @@ Ticket en curso: **UX-FILTERS** (spec).
 | UX-10 | Copy familia RS alineado MET-1b (sidebar + modal) | `d3dfce9` |
 | UX-12 | Revisar toolbar → `/review?source=current&symbol=…` | `54399d0` |
 | UX-11 | Latencia rail fichas: caché hunt + verdad optimista + deferred rows | `8a16197` |
-| UX-14 | CTA stale mercados: misalignment sin depender de scanStale | (este commit) |
+| UX-14 | CTA stale mercados: misalignment sin depender de scanStale | `f657410` |
 
 ## Siguiente — oleada post-review (P1)
 
