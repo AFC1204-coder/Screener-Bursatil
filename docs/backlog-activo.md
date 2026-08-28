@@ -72,7 +72,7 @@ Anterior: **UX-FILTERS-3**.
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | `b6cfafa` |
 | UX-FILTERS-2 | Taxonomía única de familias | `745043a` |
 | UX-FILTERS-3 | Intensidad continua 0–100 (IPO + RS) | `417969f` |
-| INT-2 | Fusión híbrida US+intl; Global=US+Core; revert en partial-markets | (commit pendiente hash) |
+| INT-2 | Fusión híbrida US+intl; Global=US+Core; revert en partial-markets | `c11668b` |
 
 ## Siguiente — datos IPO + filtros
 
