@@ -57,7 +57,7 @@ Ticket en curso: **libre**.
 | UX-P5 | Móvil 390: rail scroll; drawer sheet; smoke | `0f42cda` |
 | UX-8 | Desglose «¿Qué recorta?» bajo verdad; smoke 47/3321 | `0f42cda` |
 | UX-9 | Ranking provisional + corte; Datos *; smoke | `86224c0` |
-| MET-1 | Spec RS global multi-mercado + FX (aceptado; privado global / público US-only) | (docs, pendiente commit) |
+| MET-1 | Spec RS global multi-mercado + FX (aceptado; privado global / público US-only) | `877c318` |
 
 ## Siguiente — track métricas
 
