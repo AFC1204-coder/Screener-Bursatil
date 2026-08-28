@@ -5,8 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-28 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-14** (`docs/tickets/activo.md`).  
-Último cerrado: **UX-11** (`8a16197`).  
+Ticket en curso: **UX-FILTERS** (spec).  
+Último cerrado: **UX-14** (CTA stale mercados).  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
 **Decisión producto (2026-08-28):** RS global FX = track **privado** …  
@@ -62,14 +62,16 @@ Ticket en curso: **UX-14** (`docs/tickets/activo.md`).
 | UX-10 | Copy familia RS alineado MET-1b (sidebar + modal) | `d3dfce9` |
 | UX-12 | Revisar toolbar → `/review?source=current&symbol=…` | `54399d0` |
 | UX-11 | Latencia rail fichas: caché hunt + verdad optimista + deferred rows | `8a16197` |
+| UX-14 | CTA stale mercados: misalignment sin depender de scanStale | (este commit) |
 
 ## Siguiente — oleada post-review (P1)
 
 | ID | Qué | Estado |
 |---|---|---|
-| UX-14 | CTA stale mercados consistente | **Activo** · `docs/tickets/UX-14-cta-stale-mercados.md` |
+| UX-FILTERS | Spec rediseño presentación/config filtros | **Siguiente** · `docs/tickets/UX-FILTERS-rediseno-presentacion.md` |
+| IPO-1a | Backfill `ipoDate` multi-mercado | Tras UX-FILTERS spec |
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | Pendiente · **decisión dueño** |
-| UX-15 | Toggle familia RS vs expandir reglas | Pendiente |
+| UX-15 | Toggle familia RS vs expandir → subsumible en UX-FILTERS | Pendiente |
 | UX-16 | Líderes intl guardrail datos ≠ mercados | Pendiente |
 
 ## P2 (post-review)

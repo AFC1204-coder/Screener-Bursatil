@@ -1032,13 +1032,24 @@ export default function Page() {
   const currentSettingsSignature = useMemo(() => scanSettingsSignature(markets, manual, scanMode), [markets, manual, scanMode]);
   const scannedSettingsSignature = scanContext?.settingsSignature || null;
   const scanStale = Boolean(scanContext && scannedSettingsSignature && scannedSettingsSignature !== currentSettingsSignature);
-  // Dots por control: comparan el valor actual de cada campo con el capturado
-  // en el último scan. marketsStale y scanModeStale solo son true cuando el
-  // banner global también lo es (no señalamos "cambió y luego se deshizo" si
-  // el resultado final coincide). manual no tiene control visible en el shell,
-  // así que no expone dot (lo cubre el banner global).
-  const scannedMarketsKey = (scanContext?.scannedMarkets || []).slice().sort().join(",");
-  const marketsStale = scanStale && (markets.slice().sort().join(",") !== scannedMarketsKey);
+  // Mercados realmente cubiertos por el scan cargado. Si scanContext no trae
+  // scannedMarkets (sesión vieja o incompleta), inferimos desde las filas.
+  const effectiveScannedMarkets = useMemo(() => {
+    const fromContext = scanContext?.scannedMarkets;
+    if (Array.isArray(fromContext) && fromContext.length) {
+      return fromContext.slice().sort();
+    }
+    if (analyzedRows.length) {
+      return scannedMarketsFromScan({ rows: analyzedRows }, analyzedRows);
+    }
+    return [];
+  }, [scanContext?.scannedMarkets, analyzedRows]);
+  // Dots por control: marketsStale compara selección vs datos cargados sin
+  // depender de scanStale (p. ej. sesión con firma HK pero filas US).
+  // scanModeStale sigue acoplado a scanStale. manual no tiene dot visible.
+  const scannedMarketsKey = effectiveScannedMarkets.join(",");
+  const selectedMarketsKey = markets.slice().sort().join(",");
+  const marketsStale = Boolean(effectiveScannedMarkets.length) && selectedMarketsKey !== scannedMarketsKey;
   const scanModeStale = scanStale && scanContext && scanMode !== scanContext?.scannedScanMode;
   // La desalineación mercados↔scan se pinta en ScreenerShell (un banner + CTA).
   // No ocupamos snapshotNotice para evitar duplicar el aviso naranja.
@@ -1049,7 +1060,7 @@ export default function Page() {
   // del snapshotNotice y devuelve el anterior cuando deja de aplicar.
   function announceCoverage(requestedMarkets) {
     const requestedKey = (requestedMarkets || []).slice().sort().join(",");
-    const scannedKey = (scanContext?.scannedMarkets || []).slice().sort().join(",");
+    const scannedKey = scannedMarketsKey;
     // Si la selección no coincide con el scan cargado, el banner de mercados en
     // ScreenerShell ya comunica la desalineación — no apilar aviso de cobertura.
     if (scannedKey && requestedKey !== scannedKey) {
@@ -1086,7 +1097,7 @@ export default function Page() {
   function loadScanForMarketSelection(nextMarkets, label = "Mercados actualizados.") {
     const normalized = normalizeMarketList(nextMarkets, []);
     const nextKey = normalized.slice().sort().join(",");
-    const scannedKey = (scanContext?.scannedMarkets || []).slice().sort().join(",");
+    const scannedKey = scannedMarketsKey;
     if (nextKey === scannedKey) {
       setStatus(label);
       return;
@@ -2276,7 +2287,7 @@ export default function Page() {
       marketsStale,
       scanModeStale,
       scannedAt: scanContext?.scannedAt || null,
-      scannedMarkets: scanContext?.scannedMarkets || [],
+      scannedMarkets: effectiveScannedMarkets,
     }}
     results={{
       rows,

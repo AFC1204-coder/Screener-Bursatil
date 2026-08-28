@@ -1,5 +1,5 @@
-# UX-14 — CTA stale mercados
+# UX-FILTERS — Spec presentación filtros
 
-**Copia:** `docs/tickets/UX-14-cta-stale-mercados.md`
+**Copia:** `docs/tickets/UX-FILTERS-rediseno-presentacion.md`
 
-Tras cerrar: **UX-FILTERS** spec → **IPO-1a**.
+Tras UX-14. Siguiente código: **IPO-1a** tras OK dueño al brief.

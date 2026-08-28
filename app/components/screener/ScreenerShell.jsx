@@ -282,13 +282,11 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   const selectableMarketCount = MARKETS.filter(([code]) => isMarketSelectable(code)).length;
   const hasActiveMarketPreset = MARKET_REGION_PRESETS.some((key) => isMarketPresetActive(key));
   const marketCustomizeLabel = `Personalizar mercados (${markets.length}/${selectableMarketCount})${hasActiveMarketPreset ? "" : " · personalizado"}`;
-  const marketsMisalignment = marketsStale
-    ? buildMarketsStaleNotice({
-      scannedMarkets,
-      selectedMarkets: markets,
-      rowCount: analyzedRows.length,
-    })
-    : null;
+  const marketsMisalignment = buildMarketsStaleNotice({
+    scannedMarkets,
+    selectedMarkets: markets,
+    rowCount: analyzedRows.length,
+  });
   const showSnapshotNotice = snapshotNotice && snapshotNotice.source !== "markets-stale";
 
   // --- franja P3 (percentil por lote) ---

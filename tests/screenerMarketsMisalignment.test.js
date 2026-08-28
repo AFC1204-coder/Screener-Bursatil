@@ -30,12 +30,18 @@ beforeAll(async () => {
   ({ default: ScreenerShell } = await import("@/app/components/screener/ScreenerShell"));
 });
 
-function makeProps({ marketsStale = false, snapshotNotice = null } = {}) {
+function makeProps({
+  marketsStale = false,
+  scanStale = marketsStale,
+  scannedMarkets = ["US"],
+  selectedMarkets = ["US", "CA"],
+  snapshotNotice = null,
+} = {}) {
   const resultsRows = [{ symbol: "AAPL", country: "US" }];
   return {
     chrome: {
       presetKey: "balanced",
-      markets: ["US", "CA"],
+      markets: selectedMarkets,
       filtered: resultsRows,
       filteredCount: 1,
       err: null,
@@ -141,10 +147,10 @@ function makeProps({ marketsStale = false, snapshotNotice = null } = {}) {
       openResultReview: () => {},
     },
     staleness: {
-      scanStale: marketsStale,
+      scanStale,
       marketsStale,
       scannedAt: "2026-08-27T14:07:00.000Z",
-      scannedMarkets: ["US"],
+      scannedMarkets,
     },
   };
 }
@@ -172,5 +178,29 @@ describe("ScreenerShell markets misalignment", () => {
     })));
     expect(html.match(/snapshotFreshnessNotice/g) || []).toHaveLength(0);
     expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
+  });
+
+  it("muestra CTA de mercados aunque scanStale sea false (firma alineada, datos US)", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      marketsStale: true,
+      scanStale: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["HK"],
+    })));
+    expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
+    expect(html).not.toContain("Los criterios de cobertura cambiaron");
+    expect((html.match(/class="scanStaleNotice"/g) || []).length).toBe(2);
+  });
+
+  it("muestra Traer datos frescos solo cuando mercados coinciden pero scanStale", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      marketsStale: false,
+      scanStale: true,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+    })));
+    expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
+    expect(html).toContain("Los criterios de cobertura cambiaron");
+    expect((html.match(/Los criterios de cobertura cambiaron/g) || []).length).toBe(2);
   });
 });

@@ -5,6 +5,7 @@ import {
   buildMarketsStaleNotice,
   isMarketSelectable,
   marketPresetMarkets,
+  marketsSelectionMisaligned,
   scannedMarketsFromScan,
 } from "@/lib/marketAvailability";
 
@@ -49,7 +50,29 @@ describe("scannedMarketsFromScan", () => {
   });
 });
 
+describe("marketsSelectionMisaligned", () => {
+  it("detecta HK seleccionado con datos US cargados", () => {
+    expect(marketsSelectionMisaligned(["US"], ["HK"])).toBe(true);
+  });
+
+  it("no avisa sin mercados escaneados", () => {
+    expect(marketsSelectionMisaligned([], ["HK"])).toBe(false);
+  });
+});
+
 describe("buildMarketsStaleNotice", () => {
+  it("avisa cuando solo HK está seleccionado y el scan es US", () => {
+    const notice = buildMarketsStaleNotice({
+      scannedMarkets: ["US"],
+      selectedMarkets: ["HK"],
+      rowCount: 3321,
+    });
+    expect(notice).not.toBeNull();
+    expect(notice.detail).toContain("Datos cargados: US (3321)");
+    expect(notice.detail).toContain("(HK)");
+    expect(notice.ctaLabel).toBe("Cargar datos de la selección");
+  });
+
   it("avisa cuando la selección multi no coincide con el scan US", () => {
     const notice = buildMarketsStaleNotice({
       scannedMarkets: ["US"],
