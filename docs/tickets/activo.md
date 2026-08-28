@@ -1,5 +1,5 @@
-# Siguiente — INT-2 MULTI-MESA (recomendado)
+# Ticket activo
 
-UX-FILTERS-3 cerrado. Dolor dueño: marcar US+EU+HK no carga bien / selección vs datos / filtros incoherentes.
+**Estado:** INT-2 cerrado · pendiente elegir siguiente (UX-FILTERS-4, MET-1c/UX-13, IPO-1c…).
 
-Ver diagnóstico en chat orquestador (fusión US nocturno + intl materializado; Global exige todos; auto intl/balanced).
+Ver `docs/backlog-activo.md`.

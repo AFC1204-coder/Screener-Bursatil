@@ -5,10 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-28 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **INT-2 MULTI-MESA** (siguiente) o FILTERS-4.  
-Último cerrado: **UX-FILTERS-3** (intensidad continua IPO/RS).  
-Anterior: **UX-FILTERS-2**.  
-**Cola:** INT-2 (US+intl carga real) · MET-1c/UX-13 · FILTERS-4/5 → IPO-1d · nocturno → IPO-1c…  
+Ticket en curso: **UX-FILTERS-4** o MET-1c/UX-13 (siguiente).  
+Último cerrado: **INT-2 MULTI-MESA** (fusión US+intl).  
+Anterior: **UX-FILTERS-3**.  
+**Cola:** FILTERS-4/5 → IPO-1d · nocturno → IPO-1c…  
 **Decisión producto (2026-08-28 · filtros):** control primario = **barra continua** (grados), no todo-o-nada; Abrir = profundidad. Spec §3 actualizada (opción B).  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
@@ -72,6 +72,7 @@ Anterior: **UX-FILTERS-2**.
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | `b6cfafa` |
 | UX-FILTERS-2 | Taxonomía única de familias | `745043a` |
 | UX-FILTERS-3 | Intensidad continua 0–100 (IPO + RS) | `417969f` |
+| INT-2 | Fusión híbrida US+intl; Global=US+Core; revert en partial-markets | (commit pendiente hash) |
 
 ## Siguiente — datos IPO + filtros
 
@@ -80,7 +81,7 @@ Anterior: **UX-FILTERS-2**.
 | IPO-1a write | `scripts/backfill-ipo-date.mjs --write` en Supabase | **Hecho** US 5893 + intl ~586 |
 | Nocturno | Materializado con `ipoDate` en filas scan | **Pendiente** (smoke filas Radar) |
 | IPO-1c | Nav + merge vigiladas `/ipo-radar` | Tras nocturno / smoke filas |
-| INT-2 | Mesa US+EU+HK: fusión híbrida nocturno+materializado; selección honestamente cargable | **Siguiente** (dolor dueño) |
+| INT-2 | Mesa US+EU+HK: fusión híbrida nocturno+materializado; selección honestamente cargable | **Hecho** · smoke US+HK 3343, US+Core 3538 |
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | **Hecho** · `b6cfafa` |
 | UX-FILTERS-2 | Taxonomía única de familias | **Hecho** · `745043a` |
 | UX-FILTERS-3 | Intensidad continua 0–100 + Abrir (IPO + RS) | **Hecho** |

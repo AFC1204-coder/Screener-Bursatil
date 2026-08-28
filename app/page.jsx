@@ -29,7 +29,7 @@ import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/l
 import { normalizeScanErrorGroups } from "@/lib/scanErrorGroups";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
 import { DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
-import { filterSelectableMarkets, marketPresetMarkets, scannedMarketsFromScan } from "@/lib/marketAvailability";
+import { filterSelectableMarkets, formatMissingMarketsDetail, marketPresetMarkets, scannedMarketsFromScan } from "@/lib/marketAvailability";
 import { buildDecisionBrief, buildDecisionEvidenceChecklist, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
 import { attachDecisionTrace, auditDecisionRowIssues, buildDecisionAuditExportPayload, buildDecisionTrace, decisionConfidenceLabel, decisionTraceForRow } from "@/lib/decisionAudit";
 import { decisionProfileStateForStock } from "@/lib/decisionProfile";
@@ -61,6 +61,7 @@ import {
   setupModeLayerRequirements,
   shouldAutoApplyIntlFilterPreset,
   shouldAutoRestoreBalancedFilterPreset,
+  marketSelectionIncludesUs,
   uiSettingsOverridesFromScan,
 } from "@/lib/screenerFilterCatalog";
 import { getOrComputeHuntFilter, huntFilterCacheKey, huntPresetActiveSettings, warmHuntFilterCache } from "@/lib/screenerHuntFilterCache";
@@ -1188,7 +1189,7 @@ export default function Page() {
       return;
     }
     const marketCode = normalized.length === 1 ? normalized[0] : null;
-    const useNightlyUs = marketCode === "US";
+    const useNightlyUs = normalized.length === 1 && marketCode === "US";
     if (!normalized.length) {
       setStatus(label);
       return;
@@ -1232,14 +1233,18 @@ export default function Page() {
       }
       const marketsMeta = result.data?.markets || null;
       if (marketsMeta?.found === false) {
+        const missingDetail = formatMissingMarketsDetail(
+          marketsMeta.missingMarkets,
+          marketsMeta.missingDetails,
+        );
+        if (effectiveScannedMarkets.length) {
+          setMarkets([...effectiveScannedMarkets]);
+        }
         if (marketsMeta.reason === "partial-markets") {
-          const missing = (marketsMeta.missingMarkets || []).map((code) => marketName(code)).join(", ");
           setSnapshotNotice({
             tone: "warn",
             label: "Materializado",
-            detail: missing
-              ? `Falta materializado publicable para: ${missing}. Se mantienen los datos cargados.`
-              : "No hay materializado publicable para todos los mercados seleccionados.",
+            detail: `${missingDetail}. Se restauró la selección de mercados al último lote cargado.`,
             source: "materialized",
           });
         } else if (marketsMeta.reason === "insufficient-rows") {
@@ -1247,6 +1252,15 @@ export default function Page() {
             tone: "warn",
             label: "Materializado",
             detail: `${marketLabel}: materializado insuficiente (${marketsMeta.rowCount ?? 0} filas). Usa escaneo manual o espera al cron.`,
+            source: "materialized",
+          });
+        } else if (marketsMeta.reason === "no-nightly-scan" || marketsMeta.reason === "nightly-not-publishable") {
+          setSnapshotNotice({
+            tone: "warn",
+            label: "Nocturno US",
+            detail: marketsMeta.reason === "nightly-not-publishable"
+              ? "Falta nocturno US publicable. Usa escaneo manual o espera al cron."
+              : "Falta nocturno US. Usa escaneo manual o espera al cron.",
             source: "materialized",
           });
         } else if (marketsMeta.reason === "materialized-not-publishable") {
@@ -1260,11 +1274,13 @@ export default function Page() {
           setSnapshotNotice({
             tone: "warn",
             label: "Materializado",
-            detail: `${marketLabel}: no hay materializado publicable para esta selección. Usa escaneo manual o espera al cron.`,
+            detail: missingDetail || `${marketLabel}: no hay materializado publicable para esta selección. Usa escaneo manual o espera al cron.`,
             source: "materialized",
           });
         }
-        setStatus(label);
+        setStatus(effectiveScannedMarkets.length
+          ? `No se pudo cargar la selección (${missingDetail}). Mercados restaurados al último lote.`
+          : `No se pudo cargar la selección (${missingDetail}).`);
         return;
       }
       const scan = (result.data?.scans || [])[0];
@@ -1278,8 +1294,10 @@ export default function Page() {
         ? {
           tone: "info",
           label: "Fusión",
-          detail: "Mezcla de materializados por mercado; los percentiles RS de cada fila son los del lote de origen.",
-          source: "merged-materialized",
+          detail: marketsMeta.source === "merged-nightly-materialized"
+            ? "Mezcla de nocturno US y materializados internacionales; los percentiles RS de cada fila son los del lote de origen."
+            : "Mezcla de materializados por mercado; los percentiles RS de cada fila son los del lote de origen.",
+          source: marketsMeta.source || "merged-materialized",
         }
         : buildSnapshotFreshnessNotice(result.data, scan);
       applyFreshSnapshotData(scan, {
@@ -1298,6 +1316,9 @@ export default function Page() {
     });
   }
   function maybeAutoApplyIntlPreset(nextMarkets, currentPresetKey = presetKey) {
+    if (nextMarkets.length > 1 && marketSelectionIncludesUs(nextMarkets)) {
+      return false;
+    }
     if (shouldAutoRestoreBalancedFilterPreset(nextMarkets, currentPresetKey)) {
       setPreset("balanced", { markets: nextMarkets });
       statusContextRef.current = "Preset Balanceado (US)";

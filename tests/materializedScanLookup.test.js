@@ -61,7 +61,12 @@ function configureBackend(scans) {
   supabaseRequest.mockImplementation(async (path, options) => {
     if (path !== "scans") return [];
     const query = decodeURIComponent(String(options?.query || ""));
-    let filtered = scans.filter((scan) => scan.preset === "materialized-cache" && !scan.deleted_at);
+    let filtered = scans.filter((scan) => !scan.deleted_at);
+    if (query.includes("local_id=like.")) {
+      filtered = filtered.filter((scan) => scan.local_id?.startsWith("materialized:US:") && !scan.local_id.startsWith("test:"));
+      return filtered.slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1)).slice(0, 1);
+    }
+    filtered = filtered.filter((scan) => scan.preset === "materialized-cache");
     if (query.includes("settings->markets=cs.")) {
       const marketMatch = query.match(/settings->markets=cs\.(\[[^\]]+\])/);
       if (marketMatch) {
@@ -210,6 +215,40 @@ describe("readLatestMaterializedScanForMarkets", () => {
     expect(result.reason).toBe("partial-markets");
     expect(result.missingMarkets).toEqual(["TW"]);
   });
+
+  it("US solo → nocturno US (no materializado por settings)", async () => {
+    configureBackend([NIGHTLY_US, SCAN_CA]);
+
+    const result = await readLatestMaterializedScanForMarkets(["US"]);
+
+    expect(result.scan?.localId).toBe("materialized:US:2026-08-26:o0:l5609");
+    expect(result.scan?.source).toBe("nightly-us");
+    expect(result.reason).toBeNull();
+  });
+
+  it("US+HK publicables → fusión híbrida nocturno+materializado", async () => {
+    configureBackend([NIGHTLY_US, SCAN_HK]);
+
+    const result = await readLatestMaterializedScanForMarkets(["US", "HK"]);
+
+    expect(result.merged).toBe(true);
+    expect(result.reason).toBeNull();
+    expect(result.scan?.source).toBe("merged-nightly-materialized");
+    expect(result.scan?.rowCount).toBe(3319 + 23);
+    expect(result.scan?.markets).toEqual(["HK", "US"]);
+    expect(result.row?.settings?.source).toBe("merged-nightly-materialized");
+    expect(result.sourceScans).toHaveLength(2);
+  });
+
+  it("US+HK sin nocturno → partial-markets con US en faltantes", async () => {
+    configureBackend([SCAN_HK]);
+
+    const result = await readLatestMaterializedScanForMarkets(["US", "HK"]);
+
+    expect(result.scan).toBeNull();
+    expect(result.reason).toBe("partial-markets");
+    expect(result.missingMarkets).toEqual(["US"]);
+  });
 });
 
 const { GET } = await import("@/app/api/scans/route");
@@ -251,7 +290,12 @@ function configureBackendWithResults(scans, resultsByScanId = {}) {
     }
     if (path !== "scans") return [];
     const query = decodeURIComponent(String(options?.query || ""));
-    let filtered = scans.filter((scan) => scan.preset === "materialized-cache" && !scan.deleted_at);
+    let filtered = scans.filter((scan) => !scan.deleted_at);
+    if (query.includes("local_id=like.")) {
+      filtered = filtered.filter((scan) => scan.local_id?.startsWith("materialized:US:") && !scan.local_id.startsWith("test:"));
+      return filtered.slice().sort((a, b) => (a.created_at < b.created_at ? 1 : -1)).slice(0, 1);
+    }
+    filtered = filtered.filter((scan) => scan.preset === "materialized-cache");
     if (query.includes("settings->markets=cs.")) {
       const marketMatch = query.match(/settings->markets=cs\.(\[[^\]]+\])/);
       if (marketMatch) {
@@ -324,5 +368,27 @@ describe("GET /api/scans?anchor=markets", () => {
       reason: "partial-markets",
       missingMarkets: ["TW"],
     });
+  });
+
+  it("US+HK fusiona nocturno US con materializado HK", async () => {
+    const usResults = Array.from({ length: 10 }, (_, index) => scanResultRow(NIGHTLY_US.id, `SYM${index}`, index + 1));
+    const hkResults = Array.from({ length: 5 }, (_, index) => scanResultRow(SCAN_HK.id, `0700${index}.HK`, index + 1));
+    configureBackendWithResults([NIGHTLY_US, SCAN_HK], {
+      [NIGHTLY_US.id]: usResults,
+      [SCAN_HK.id]: hkResults,
+    });
+
+    const payload = await (await GET(new Request(`https://statsedge.test/api/scans?includeRows=1&limit=1&rowsLimit=100&anchor=${MARKETS_ANCHOR}&markets=US,HK`))).json();
+
+    expect(payload.markets).toMatchObject({
+      found: true,
+      merged: true,
+      source: "merged-nightly-materialized",
+      requested: ["HK", "US"],
+      rowCount: 15,
+    });
+    expect(payload.scans).toHaveLength(1);
+    expect(payload.scans[0].rows).toHaveLength(15);
+    expect(payload.scans[0].settings?.markets).toEqual(["HK", "US"]);
   });
 });

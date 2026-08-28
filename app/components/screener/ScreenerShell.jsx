@@ -60,7 +60,7 @@ import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 
 const PERCENTILE_BATCH_BADGE = "Ranking provisional";
 const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
-const MARKET_REGION_PRESETS = ["global", "us", "core-intl", "europe", "asia", "hk"];
+const MARKET_REGION_PRESETS = ["global", "us", "us-core-intl", "core-intl", "europe", "asia", "hk"];
 
 function showScanStatusBar(err, status = "") {
   if (err) return true;
@@ -390,6 +390,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             {[
               ["global", "Global"],
               ["us", "EE. UU."],
+              ["us-core-intl", "US+Core"],
               ["core-intl", "Core intl"],
               ["europe", "Europa"],
               ["asia", "Asia"],

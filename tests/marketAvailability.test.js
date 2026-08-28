@@ -3,6 +3,7 @@ import { ASIA, DEFAULT_MARKETS } from "@/lib/screenerConfig";
 import { EUROPE_PRIORITY_MARKETS } from "@/lib/markets";
 import {
   buildMarketsStaleNotice,
+  formatMissingMarketsDetail,
   isMarketSelectable,
   marketPresetMarkets,
   marketsSelectionMisaligned,
@@ -29,6 +30,16 @@ describe("marketPresetMarkets", () => {
     expect(marketPresetMarkets("global")).not.toContain("TW");
   });
 
+  it("global y us-core-intl son US + Core intl cargable", () => {
+    const global = marketPresetMarkets("global");
+    const usCoreIntl = marketPresetMarkets("us-core-intl");
+    expect(global).toEqual(usCoreIntl);
+    expect(global).toContain("US");
+    expect(global).toContain("HK");
+    expect(global).toContain("CA");
+    expect(global).not.toEqual(DEFAULT_MARKETS);
+  });
+
   it("core-intl fusiona HK, CA y EU priority", () => {
     const coreIntl = marketPresetMarkets("core-intl");
     expect(coreIntl).toEqual(expect.arrayContaining(["HK", "CA", ...EUROPE_PRIORITY_MARKETS]));
@@ -47,6 +58,19 @@ describe("scannedMarketsFromScan", () => {
       settings: { markets: ["CA"] },
       rows: [],
     })).toEqual(["CA"]);
+  });
+});
+
+describe("formatMissingMarketsDetail", () => {
+  it("distingue nocturno US de materializado intl", () => {
+    expect(formatMissingMarketsDetail(["US", "HK"], [
+      { market: "US", reason: "no-nightly-scan" },
+      { market: "HK", reason: "no-materialized-scan" },
+    ])).toContain("Falta nocturno US");
+    expect(formatMissingMarketsDetail(["US", "HK"], [
+      { market: "US", reason: "no-nightly-scan" },
+      { market: "HK", reason: "no-materialized-scan" },
+    ])).toContain("Falta materializado:");
   });
 });
 
