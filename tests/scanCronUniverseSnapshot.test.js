@@ -146,9 +146,8 @@ function officialDumpSnapshot(market, count, { skipCurated = true } = {}) {
 }
 
 describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU/KR/IN/CA/Europa priority", () => {
-  it("con markets [HK], prioriza marketSymbols(HK) y no usa el offset 130 del dump HKEX", async () => {
-    const curated = marketSymbols("HK");
-    expect(curated.length).toBeGreaterThanOrEqual(24);
+  it("con markets [HK], usa official-broad y no resetea offset alto del dump HKEX", async () => {
+    const curated = new Set(marketSymbols("HK").map((symbol) => symbol.toUpperCase()));
     getUniverseEngineSnapshot.mockResolvedValue(officialDumpSnapshot("HK", 400));
 
     const plan = await planMaterializedScan({
@@ -161,9 +160,11 @@ describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU/KR/IN/C
       prioritizeMaterialization: false,
     });
 
-    expect(plan.symbols).toEqual(curated.slice(0, 24));
-    expect(plan.settings.marketOffsets.HK).toBe(0);
-    expect(plan.stats.selection.priorityMode).toBe("curated-core");
+    expect(plan.stats.selection.priorityMode).toBe("official-broad");
+    expect(plan.settings.marketOffsets.HK).toBe(130);
+    expect(plan.symbols.length).toBe(24);
+    const nonCurated = plan.symbols.filter((symbol) => !curated.has(symbol.toUpperCase()));
+    expect(nonCurated.length).toBeGreaterThan(0);
   });
 
   it("con markets [AU], antepone marketSymbols(AU) y rellena el limit desde el dump tras reset del offset", async () => {
@@ -192,9 +193,8 @@ describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU/KR/IN/C
     expect(plan.stats.selection.priorityMode).toBe("curated-core");
   });
 
-  it("conserva un offset interior a la cola curada HK (rotación dentro del núcleo)", async () => {
-    const curated = marketSymbols("HK");
-    getUniverseEngineSnapshot.mockResolvedValue(officialDumpSnapshot("HK", 50));
+  it("con markets [HK], conserva offset interior sobre universo amplio ordenado", async () => {
+    getUniverseEngineSnapshot.mockResolvedValue(officialDumpSnapshot("HK", 200));
 
     const plan = await planMaterializedScan({
       markets: ["HK"],
@@ -206,8 +206,9 @@ describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU/KR/IN/C
       prioritizeMaterialization: false,
     });
 
-    expect(plan.symbols).toEqual(curated.slice(5, 13));
+    expect(plan.stats.selection.priorityMode).toBe("official-broad");
     expect(plan.settings.marketOffsets.HK).toBe(5);
+    expect(plan.symbols).toHaveLength(8);
   });
 
   it("con markets [JP], prioriza marketSymbols(JP) y resetea offset alto", async () => {
@@ -290,10 +291,9 @@ describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU/KR/IN/C
     expect(plan.stats.selection.priorityMode).toBe("curated-core");
   });
 
-  it("con markets [CA], prioriza marketSymbols(CA) y resetea offset alto", async () => {
-    const curated = marketSymbols("CA");
-    expect(curated.length).toBeGreaterThanOrEqual(24);
-    const highOffset = curated.length + 50;
+  it("con markets [CA], usa official-broad y no resetea offset alto", async () => {
+    const curated = new Set(marketSymbols("CA").map((symbol) => symbol.toUpperCase()));
+    const highOffset = 60;
     getUniverseEngineSnapshot.mockResolvedValue(officialDumpSnapshot("CA", 200));
 
     const plan = await planMaterializedScan({
@@ -306,9 +306,11 @@ describe("resolveSymbols · cola curada para cohorts de un mercado HK/AU/KR/IN/C
       prioritizeMaterialization: false,
     });
 
-    expect(plan.symbols).toEqual(curated.slice(0, 24));
-    expect(plan.settings.marketOffsets.CA).toBe(0);
-    expect(plan.stats.selection.priorityMode).toBe("curated-core");
+    expect(plan.stats.selection.priorityMode).toBe("official-broad");
+    expect(plan.settings.marketOffsets.CA).toBe(highOffset);
+    expect(plan.symbols.length).toBe(24);
+    const nonCurated = plan.symbols.filter((symbol) => !curated.has(symbol.toUpperCase()));
+    expect(nonCurated.length).toBeGreaterThan(0);
   });
 
   it("con markets [GB], prioriza marketSymbols(GB) y resetea offset alto", async () => {

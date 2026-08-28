@@ -29,7 +29,7 @@ import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/l
 import { normalizeScanErrorGroups } from "@/lib/scanErrorGroups";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
 import { DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
-import { filterSelectableMarkets, formatMissingMarketsDetail, marketPresetMarkets, scannedMarketsFromScan } from "@/lib/marketAvailability";
+import { filterSelectableMarkets, formatMissingMarketsDetail, intlBroadStatusDetail, marketPresetMarkets, scannedMarketsFromScan } from "@/lib/marketAvailability";
 import { buildDecisionBrief, buildDecisionEvidenceChecklist, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
 import { attachDecisionTrace, auditDecisionRowIssues, buildDecisionAuditExportPayload, buildDecisionTrace, decisionConfidenceLabel, decisionTraceForRow } from "@/lib/decisionAudit";
 import { decisionProfileStateForStock } from "@/lib/decisionProfile";
@@ -1304,9 +1304,17 @@ export default function Page() {
         notice: mergedNotice,
         scanSignature: { markets: normalized, manual, scanMode },
       });
-      setStatus(normalized.length === 1
-        ? `Materializado ${marketLabel} cargado: ${scan.rows.length} acciones.`
-        : `Materializados fusionados (${marketLabel}): ${scan.rows.length} acciones.`);
+      const broadDetail = normalized.length === 1
+        ? intlBroadStatusDetail({
+          market: normalized[0],
+          analyzedCount: scan.rows.length,
+          priorityMode: scan.settings?.priorityMode,
+        })
+        : "";
+      setStatus(broadDetail
+        || (normalized.length === 1
+          ? `Materializado ${marketLabel} cargado: ${scan.rows.length} acciones.`
+          : `Materializados fusionados (${marketLabel}): ${scan.rows.length} acciones.`));
     }).catch((error) => {
       console.error("[snapshot] materializado por mercado:", error);
       if (marketLoadGenRef.current !== loadGen) return;

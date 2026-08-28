@@ -4,6 +4,7 @@ import { EUROPE_PRIORITY_MARKETS } from "@/lib/markets";
 import {
   buildMarketsStaleNotice,
   formatMissingMarketsDetail,
+  intlBroadStatusDetail,
   isMarketSelectable,
   marketPresetMarkets,
   marketsSelectionMisaligned,
@@ -116,5 +117,20 @@ describe("buildMarketsStaleNotice", () => {
       selectedMarkets: ["US"],
       rowCount: 3319,
     })).toBeNull();
+  });
+});
+
+describe("intlBroadStatusDetail", () => {
+  it("devuelve copy honesto solo para official-broad HK/CA", () => {
+    expect(intlBroadStatusDetail({
+      market: "HK",
+      analyzedCount: 95,
+      priorityMode: "official-broad",
+    })).toBe("Hong Kong: 95 analizadas · universo amplio filtrado (liquidez/cobertura) · rotación nocturna");
+    expect(intlBroadStatusDetail({
+      market: "HK",
+      analyzedCount: 95,
+      priorityMode: "curated-core",
+    })).toBe("");
   });
 });

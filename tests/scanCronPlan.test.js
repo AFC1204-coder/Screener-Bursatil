@@ -8,6 +8,19 @@ import {
 import { EUROPE_PRIORITY_MARKETS, EUROPE_SECONDARY_MARKETS } from "@/lib/markets";
 
 describe("scan-refresh cron plan", () => {
+  it("expone cohorts HK y CA con perMarket broad ≥72 (INT-3)", () => {
+    const hk = scanCronGroupByKey("asia-hongkong");
+    const ca = scanCronGroupByKey("north-america-canada");
+    expect(hk?.markets).toEqual(["HK"]);
+    expect(ca?.markets).toEqual(["CA"]);
+    expect(hk?.perMarket).toBeGreaterThanOrEqual(72);
+    expect(hk?.perMarket).toBeLessThanOrEqual(96);
+    expect(ca?.perMarket).toBeGreaterThanOrEqual(72);
+    expect(ca?.perMarket).toBeLessThanOrEqual(96);
+    expect(hk?.limit).toBe(hk?.perMarket);
+    expect(ca?.limit).toBe(ca?.perMarket);
+  });
+
   it("expone cohorts HK, AU, KR e IN separados con limit/perMarket ≥24", () => {
     const hk = scanCronGroupByKey("asia-hongkong");
     const au = scanCronGroupByKey("oceania-australia");
@@ -87,11 +100,11 @@ describe("scan-refresh cron plan", () => {
     }
   });
 
-  it("mantiene north-america-canada como cohort de un solo mercado con limit/perMarket ≥24", () => {
+  it("mantiene north-america-canada como cohort de un solo mercado con perMarket broad", () => {
     const ca = scanCronGroupByKey("north-america-canada");
     expect(ca?.markets).toEqual(["CA"]);
-    expect(ca?.limit).toBeGreaterThanOrEqual(24);
-    expect(ca?.perMarket).toBeGreaterThanOrEqual(24);
+    expect(ca?.perMarket).toBeGreaterThanOrEqual(72);
+    expect(ca?.limit).toBeGreaterThanOrEqual(72);
   });
 
   it("no incluye el grupo obsoleto europe-secondary con alias EU2", () => {

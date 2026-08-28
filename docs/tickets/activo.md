@@ -1,5 +1,5 @@
 # Ticket activo
 
-**Estado:** INT-2 cerrado · pendiente elegir siguiente (UX-FILTERS-4, MET-1c/UX-13, IPO-1c…).
+**Estado:** INT-3 implementado (working tree) · pendiente **corrida cron HK** + smoke N>23 antes de cerrar del todo.
 
-Ver `docs/backlog-activo.md`.
+Ver `docs/tickets/INT-3-intl-universe-broad.md`. Siguiente candidato en cola: UX-FILTERS-4.

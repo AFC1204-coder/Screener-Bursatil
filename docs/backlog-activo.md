@@ -5,10 +5,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-28 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-FILTERS-4** o MET-1c/UX-13 (siguiente).  
+Ticket en curso: **INT-3 UNIVERSO INTL AMPLIO** (HK broad + gates calidad).  
 Último cerrado: **INT-2 MULTI-MESA** (fusión US+intl).  
 Anterior: **UX-FILTERS-3**.  
-**Cola:** FILTERS-4/5 → IPO-1d · nocturno → IPO-1c…  
+**Cola:** UX-FILTERS-4 · MET-1c/UX-13 · IPO-1d · nocturno → IPO-1c…  
+**Decisión producto (2026-08-28 · universo intl):** menos curación manual; universo oficial + gates (liquidez, errática, parada); curado = semilla.  
 **Decisión producto (2026-08-28 · filtros):** control primario = **barra continua** (grados), no todo-o-nada; Abrir = profundidad. Spec §3 actualizada (opción B).  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
@@ -82,6 +83,7 @@ Anterior: **UX-FILTERS-3**.
 | Nocturno | Materializado con `ipoDate` en filas scan | **Pendiente** (smoke filas Radar) |
 | IPO-1c | Nav + merge vigiladas `/ipo-radar` | Tras nocturno / smoke filas |
 | INT-2 | Mesa US+EU+HK: fusión híbrida nocturno+materializado; selección honestamente cargable | **Hecho** · smoke US+HK 3343, US+Core 3538 |
+| INT-3 | Universo intl amplio: oficial HK+CA, gates calidad, menos curated-core techo | **Código OK** · commit pendiente; smoke N>23 tras cron `asia-hongkong` |
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | **Hecho** · `b6cfafa` |
 | UX-FILTERS-2 | Taxonomía única de familias | **Hecho** · `745043a` |
 | UX-FILTERS-3 | Intensidad continua 0–100 + Abrir (IPO + RS) | **Hecho** |
