@@ -74,6 +74,7 @@ Anterior: **UX-FILTERS-3**.
 | UX-FILTERS-2 | Taxonomía única de familias | `745043a` |
 | UX-FILTERS-3 | Intensidad continua 0–100 (IPO + RS) | `417969f` |
 | INT-2 | Fusión híbrida US+intl; Global=US+Core; revert en partial-markets | `c11668b` |
+| INT-3 | Universo intl amplio HK/CA official-broad + gates | `2e3507d` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -83,7 +84,7 @@ Anterior: **UX-FILTERS-3**.
 | Nocturno | Materializado con `ipoDate` en filas scan | **Pendiente** (smoke filas Radar) |
 | IPO-1c | Nav + merge vigiladas `/ipo-radar` | Tras nocturno / smoke filas |
 | INT-2 | Mesa US+EU+HK: fusión híbrida nocturno+materializado; selección honestamente cargable | **Hecho** · smoke US+HK 3343, US+Core 3538 |
-| INT-3 | Universo intl amplio: oficial HK+CA, gates calidad, menos curated-core techo | **Código OK** · commit pendiente; smoke N>23 tras cron `asia-hongkong` |
+| INT-3 | Universo intl amplio: oficial HK+CA, gates calidad, menos curated-core techo | **Hecho** · cron HK pendiente smoke N>23 |
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | **Hecho** · `b6cfafa` |
 | UX-FILTERS-2 | Taxonomía única de familias | **Hecho** · `745043a` |
 | UX-FILTERS-3 | Intensidad continua 0–100 + Abrir (IPO + RS) | **Hecho** |
