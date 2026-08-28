@@ -55,7 +55,7 @@ Ticket en curso: **libre**.
 | UX-P4 | Modal nav/salida agrupados; triage active; smoke Candidata | `7882d82` |
 | UX-P5 | Móvil 390: rail scroll; drawer sheet; smoke | `0f42cda` |
 | UX-8 | Desglose «¿Qué recorta?» bajo verdad; smoke 47/3321 | `0f42cda` |
-| UX-9 | Ranking provisional + corte; Datos *; smoke | (este commit) |
+| UX-9 | Ranking provisional + corte; Datos *; smoke | `86224c0` |
 
 ## Siguiente — producto final (inmediato)
 
