@@ -194,6 +194,7 @@ export async function GET(request) {
     maxPriceFreshnessDays: 5,
     maxFundamentalsAgeDays: 14,
     minBars: 180,
+    // Defaults US (USD). HK/CA official-broad resuelven por fila en baseRejectReason (INT-3c).
     minPrice: 1,
     minAvgTurnover: 250000,
     minMarketCap: 300000000,

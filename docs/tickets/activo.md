@@ -1,5 +1,5 @@
 # Ticket activo
 
-**Estado:** INT-3b código OK · pendiente **corrida cron HK** (`selected` ~84) + smoke UI.
+**Estado:** INT-3c código OK · pendiente **corrida cron HK** (`passedBase` ≫ 21) + smoke UI.
 
-Ver `docs/tickets/INT-3b-scan-refresh-caps.md`.
+Tras cerrar smoke → **migrar a chat orquestador nuevo** (este hilo ya va largo).

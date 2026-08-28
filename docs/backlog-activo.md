@@ -5,11 +5,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-28 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **INT-3b** (caps cron) · pendiente smoke cron HK.  
-Último cerrado: **INT-3** (`2e3507d`).  
-Anterior: **INT-2**.  
-**Cola:** INT-3c acumulado HK (opcional) · UX-FILTERS-4 · MET-1c/UX-13 · nocturno → IPO-1c…  
-**Decisión producto (2026-08-28 · universo intl):** menos curación manual; universo oficial + gates (liquidez, errática, parada); curado = semilla.  
+Ticket en curso: **INT-3c** (gates HKD) · pendiente smoke cron.  
+Último cerrado: **INT-3b** (`13985cc`).  
+Anterior: **INT-3**.  
+**Cola:** INT-3d acumulado HK (opcional) · UX-FILTERS-4 · MET-1c/UX-13 · nocturno → IPO-1c…  
+**Decisión producto (2026-08-28 · universo intl):** menos curación; official-broad + gates; **mejor yield por lote**, no más símbolos/noche (Pro MICRO + spend-cap 8 GB).  
 **Decisión producto (2026-08-28 · filtros):** control primario = **barra continua** (grados), no todo-o-nada; Abrir = profundidad. Spec §3 actualizada (opción B).  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
@@ -86,8 +86,9 @@ Anterior: **INT-2**.
 | IPO-1c | Nav + merge vigiladas `/ipo-radar` | Tras nocturno / smoke filas |
 | INT-2 | Mesa US+EU+HK: fusión híbrida nocturno+materializado; selección honestamente cargable | **Hecho** · smoke US+HK 3343, US+Core 3538 |
 | INT-3 | Universo intl amplio: oficial HK+CA, gates calidad, menos curated-core techo | **Hecho** · `2e3507d` · corrida HK universeTotal 2760 pero selected 25 por cap ruta |
-| INT-3b | Quitar cap `perMarket≤25` / `limit≤80` en scan-refresh para official-broad | **Hecho** · `13985cc` · smoke cron pendiente |
-| INT-3c | Acumular lotes HK (unión histórica) en una mesa | Opcional tras 3b |
+| INT-3b | Quitar cap `perMarket≤25` / `limit≤80` en scan-refresh para official-broad | **Hecho** · `13985cc` · cron selected 84 → passedBase 21 (minPrice USD) |
+| INT-3c | Gates baseReject HK/CA en moneda local (sin subir lote) | **Código OK** · pending cron smoke |
+| INT-3d | Acumular lotes HK (unión histórica) en una mesa | Opcional tras 3c |
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | **Hecho** · `b6cfafa` |
 | UX-FILTERS-2 | Taxonomía única de familias | **Hecho** · `745043a` |
 | UX-FILTERS-3 | Intensidad continua 0–100 + Abrir (IPO + RS) | **Hecho** |

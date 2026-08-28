@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  BASE_REJECT_DEFAULTS,
   INTL_UNIVERSE_GATE_THRESHOLDS,
   intlBroadPerMarketLimit,
   intlUniverseGateRejectReason,
   isOfficialBroadMarket,
   officialBroadMarketFromList,
+  resolveBaseRejectThresholds,
 } from "@/lib/intlUniverseGates";
 import { _forTest } from "@/lib/materializedScanner";
 
@@ -95,5 +97,37 @@ describe("intlUniverseGates", () => {
   it("expone umbrales HK/CA en mapa único", () => {
     expect(INTL_UNIVERSE_GATE_THRESHOLDS.HK.minLiquidityScore).toBe(25);
     expect(INTL_UNIVERSE_GATE_THRESHOLDS.CA.maxErraticDailyMovePct).toBe(14);
+    expect(INTL_UNIVERSE_GATE_THRESHOLDS.HK.minPrice).toBe(0.5);
+    expect(INTL_UNIVERSE_GATE_THRESHOLDS.CA.minPrice).toBe(1);
+  });
+
+  it("resolveBaseRejectThresholds aplica overrides HK/CA en moneda local", () => {
+    expect(resolveBaseRejectThresholds("HK")).toEqual({
+      minPrice: 0.5,
+      minAvgTurnover: 250000,
+    });
+    expect(resolveBaseRejectThresholds("CA")).toEqual({
+      minPrice: 1,
+      minAvgTurnover: 250000,
+    });
+    expect(resolveBaseRejectThresholds("US", { minPrice: 1, minAvgTurnover: 250000 })).toEqual({
+      minPrice: BASE_REJECT_DEFAULTS.minPrice,
+      minAvgTurnover: BASE_REJECT_DEFAULTS.minAvgTurnover,
+    });
+  });
+
+  it("baseRejectReason HK: 0.60 HKD pasa; 0.05 rechaza; US 0.60 sigue rechazando", () => {
+    const baseOk = {
+      chartBarsCount: 200,
+      priceFreshnessOk: true,
+      avgTurnover: 800000,
+      marketCap: 5000000000,
+      dataCoverageScore: 60,
+      liquidityScore: 55,
+      maxDailyMove20dPct: 6,
+    };
+    expect(baseRejectReason({ ...baseOk, price: 0.6, symbol: "0700.HK", country: "HK" }, { market: "HK" })).toBe("");
+    expect(baseRejectReason({ ...baseOk, price: 0.05, symbol: "9999.HK", country: "HK" }, { market: "HK" })).toMatch(/precio bajo/);
+    expect(baseRejectReason({ ...baseOk, price: 0.6, symbol: "PENNY", country: "US" }, { market: "US" })).toMatch(/precio bajo/);
   });
 });
