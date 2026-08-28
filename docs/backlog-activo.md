@@ -5,8 +5,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-28 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-FILTERS** (spec).  
-Último cerrado: **UX-14** (CTA stale mercados).  
+Ticket en curso: **IPO-1a** (`docs/tickets/activo.md`).  
+Último cerrado: **UX-FILTERS** spec (`docs/analisis-ux-filters-presentacion-2026-08-28.md`).  
+Anterior: **UX-14** (`f657410`).  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
 **Decisión producto (2026-08-28):** RS global FX = track **privado** …  
@@ -63,16 +64,20 @@ Ticket en curso: **UX-FILTERS** (spec).
 | UX-12 | Revisar toolbar → `/review?source=current&symbol=…` | `54399d0` |
 | UX-11 | Latencia rail fichas: caché hunt + verdad optimista + deferred rows | `8a16197` |
 | UX-14 | CTA stale mercados: misalignment sin depender de scanStale | `f657410` |
+| UX-FILTERS | Spec rediseño presentación filtros (tickets 1…7) | `docs/analisis-ux-filters-presentacion-2026-08-28.md` |
 
-## Siguiente — oleada post-review (P1)
+## Siguiente — datos IPO + filtros
 
 | ID | Qué | Estado |
 |---|---|---|
-| UX-FILTERS | Spec rediseño presentación/config filtros | **Siguiente** · `docs/tickets/UX-FILTERS-rediseno-presentacion.md` |
-| IPO-1a | Backfill `ipoDate` multi-mercado | Tras UX-FILTERS spec |
+| IPO-1a | Backfill `ipoDate` multi-mercado | **Activo** · `docs/tickets/IPO-1a-backfill-ipodate.md` |
+| UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | Paralelo posible |
+| UX-FILTERS-2 | Taxonomía única familias | Paralelo posible |
+| IPO-1b | Preset `ipoDiscovery` + ficha Radar | Tras IPO-1a + wire UX-FILTERS |
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | Pendiente · **decisión dueño** |
-| UX-15 | Toggle familia RS vs expandir → subsumible en UX-FILTERS | Pendiente |
 | UX-16 | Líderes intl guardrail datos ≠ mercados | Pendiente |
+
+~~UX-15~~ subsumido en UX-FILTERS-1.
 
 ## P2 (post-review)
 
@@ -83,9 +88,10 @@ UX-17…21 — vista rápida, móvil tabla, localStorage, «visibles» vs pagina
 | ID | Qué | Estado |
 |---|---|---|
 | IPO-1 | Radar IPO multi-mercado + datos + ficha discovery | **Aceptado** · `docs/tickets/IPO-1-radar-producto.md` |
-| UX-FILTERS | Rediseño raíz presentación/config filtros (IPO piloto) | **Propuesto** · spec antes de IPO-1d |
+| UX-FILTERS | Spec presentación filtros (IPO piloto) | **Aceptado** · `docs/analisis-ux-filters-presentacion-2026-08-28.md` |
+| IPO-1a | Backfill `ipoDate` | **Activo** |
 
-Orden sugerido: **UX-14** (CTA stale) → **UX-FILTERS spec** → **IPO-1a datos** → **IPO-1b–c** (+ 1d con UX-FILTERS).
+Orden: IPO-1a → IPO-1b–c (+ 1d = UX-FILTERS-3+4 sobre IPO).
 
 ## Chart (pendiente oleada screener)
 

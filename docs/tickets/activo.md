@@ -1,5 +1,5 @@
-# UX-FILTERS — Spec presentación filtros
+# IPO-1a — Backfill ipoDate
 
-**Copia:** `docs/tickets/UX-FILTERS-rediseno-presentacion.md`
+**Copia:** `docs/tickets/IPO-1a-backfill-ipodate.md`
 
-Tras UX-14. Siguiente código: **IPO-1a** tras OK dueño al brief.
+UX-FILTERS spec aceptada: `docs/analisis-ux-filters-presentacion-2026-08-28.md`.
