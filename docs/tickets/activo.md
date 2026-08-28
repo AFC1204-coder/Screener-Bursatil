@@ -1,11 +1,12 @@
 # Ticket activo — libre
 
-Último cerrado: **MET-1b** (código + fallback pre-cutover; sin `--write` ni smoke).
+Último cerrado: **MET-1b** (código `060cf08` + pipeline write 2026-08-28).
 
-Pendiente operativo (orquestador/dueño, no programación):
-1. `rs-fx-ingest.mjs --write`
-2. `rs-global-private.mjs --write` (1 semana, tras dry-run OK)
-3. Smoke Browser Use tras write
-4. MET-1c cron (después)
+**Pipeline ejecutado (orquestador):**
+- `rs-fx-ingest.mjs --write` → 10/10 divisas OK (GBP 400 barras nuevas)
+- `rs-global-private.mjs --write` → snapshot `7c3a1792-d97b-4c6e-8cba-bf0692135235` · W35 · 3224 rankeados + 476 exclusiones
+- Cutover activo: lectura usa `statsedge-private-global-rs-usd-v1` (fallback US ya no aplica)
 
-Spec: `docs/spec-rs-global-multi-mercado-fx.md`
+**Smoke:** disclosure columna RS OK en `:3000` («RS global · USD · universo privado curado»). API node: MU=99, AAPL=61, 0005.HK=83 (motor global). Hard-reload dev si la tabla no refresca RS.
+
+**Pendiente:** MET-1c cron · backfill intl opcional (96 símbolos BE/PT/AT/IE sin barras).
