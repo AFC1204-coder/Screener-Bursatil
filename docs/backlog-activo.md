@@ -59,13 +59,13 @@ Anterior: **UX-REVIEW** → `docs/analisis-ux-screener-review-2026-08-28.md`.
 | UX-9 | Ranking provisional + corte; Datos *; smoke | `86224c0` |
 | MET-1 | Spec RS global multi-mercado + FX (aceptado; privado global / público US-only) | `877c318` |
 | UX-REVIEW | Pasada extensa screener filtros/navegación (Browser Use; sin P0) | `docs/analisis-ux-screener-review-2026-08-28.md` |
+| UX-10 | Copy familia RS alineado MET-1b (sidebar + modal) | `d3dfce9` |
 
 ## Siguiente — oleada post-review (P1)
 
 | ID | Qué | Estado |
 |---|---|---|
-| UX-10 | Copy familia RS alineado MET-1b | **Activo** |
-| UX-12 | Revisar screener → `/review` | Pendiente |
+| UX-12 | Revisar screener → `/review` | **Activo** |
 | UX-11 | Latencia ficha rail (<200 ms o feedback) | Pendiente |
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | Pendiente · **decisión dueño** |
 | UX-14 | CTA stale mercados consistente | Pendiente |
