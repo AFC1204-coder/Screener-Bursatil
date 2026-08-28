@@ -60,7 +60,7 @@ Anterior: **UX-10** (`d3dfce9`).
 | MET-1 | Spec RS global multi-mercado + FX (aceptado; privado global / público US-only) | `877c318` |
 | UX-REVIEW | Pasada extensa screener filtros/navegación (Browser Use; sin P0) | `docs/analisis-ux-screener-review-2026-08-28.md` |
 | UX-10 | Copy familia RS alineado MET-1b (sidebar + modal) | `d3dfce9` |
-| UX-12 | Revisar toolbar → `/review?source=current&symbol=…` | (pending) |
+| UX-12 | Revisar toolbar → `/review?source=current&symbol=…` | `54399d0` |
 
 ## Siguiente — oleada post-review (P1)
 
