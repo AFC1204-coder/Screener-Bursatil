@@ -171,8 +171,11 @@ else
   # Aserciones debilitadas: se detectan en las líneas AÑADIDAS del diff que
   # contienen expect.anything()/toBeDefined()/toBeTruthy(). Se reportan sin
   # juzgar, porque pueden ser legítimas — la decisión es del dueño.
+  # macOS grep rechaza '^\+\+\+' (repetition-operator invalid) y el pipe
+  # fallaba en silencio: el chequeo de aserciones debilitadas daba falso
+  # negativo. '^+++' sin escapes es el literal de cabecera de diff.
   WEAK_HITS=$(git --no-pager diff -- $TEST_FILES_CHANGED 2>/dev/null \
-    | grep -E '^\+' | grep -v '^\+\+\+' \
+    | grep -E '^\+' | grep -v '^+++' \
     | grep -E 'expect\.anything\(\)|toBeDefined\(\)|toBeTruthy\(\)|toBeFalsy\(\)' || true)
   if [ -n "$WEAK_HITS" ]; then
     info "Aserciones potencialmente debilitadas en el diff (revisar si es intencional):"

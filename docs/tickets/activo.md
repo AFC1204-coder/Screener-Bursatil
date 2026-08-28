@@ -1,5 +1,5 @@
-# IPO-1a — Backfill ipoDate
+# Pendiente — IPO-1a `--write` o IPO-1b
 
-**Copia:** `docs/tickets/IPO-1a-backfill-ipodate.md`
+Código IPO-1a listo (fuente chart meta). Falta OK dueño para backfill write.
 
-UX-FILTERS spec aceptada: `docs/analisis-ux-filters-presentacion-2026-08-28.md`.
+Siguiente producto: **IPO-1b** (`ipoDiscovery`) o **UX-FILTERS-1**.
