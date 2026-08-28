@@ -1,3 +1,3 @@
-# Siguiente — nocturno o IPO-1c / UX-FILTERS-1
+# Siguiente — UX-FILTERS-2 o IPO-1c
 
-IPO-1b cerrado. Radar IPO muestra empty state + CTA hasta que el materializado lleve `ipoDate`.
+UX-FILTERS-1 cerrado (toggle ≠ Abrir). Elegir: taxonomía única (FILTERS-2) o IPO-1c tras nocturno.

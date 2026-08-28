@@ -2314,7 +2314,7 @@ button.dataHealthSummaryItem:hover,
   font-variant-numeric: tabular-nums;
 }
 
-.viewLayerBar .layerToggle {
+.viewLayerBar .layerControlRow {
   flex:0 0 auto;
 }
 
@@ -4326,7 +4326,7 @@ button.decisionIssueBadge:hover,
   margin:8px 0 0;
 }
 
-.viewLayerBar .layerToggle {
+.viewLayerBar .layerControlRow {
   width:100%;
 }
 
@@ -5333,18 +5333,123 @@ button.decisionIssueBadge:hover,
 
 .layerControlRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 24px 68px;
-  gap: 6px;
+  grid-template-columns: auto minmax(0, 1fr) 24px auto;
+  grid-template-rows: auto auto;
+  gap: 2px 8px;
   align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface2);
+  transition: opacity .14s ease, border-color .14s ease;
 }
 
 .layerControlRow.simple {
-  grid-template-columns: minmax(0, 1fr) 24px;
+  grid-template-columns: auto minmax(0, 1fr) 24px;
 }
 
-.layerControlRow .layerToggle {
-  width: 100%;
+.layerControlRow.off {
+  opacity: .72;
+}
+
+.layerControlRow.off .layerControlLabel,
+.layerControlRow.off .layerControlMeta {
+  color: var(--muted);
+}
+
+.layerPowerToggle {
+  grid-row: 1 / -1;
+  align-self: start;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-top: 1px;
+  padding: 0;
+  border: 1px solid var(--line2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--soft);
+  cursor: pointer;
+  transition: background .14s ease, border-color .14s ease, color .14s ease;
+}
+
+.layerPowerToggle:hover {
+  border-color: var(--line2);
+  color: #fff;
+}
+
+.layerPowerToggle.on {
+  border-color: var(--accent);
+  background: var(--senal-dim);
+  color: #f3f4f6;
+}
+
+.layerPowerIcon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.layerControlBody {
   min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.layerControlLabel {
+  color: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.layerControlMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.layerControlMeta small,
+.layerControlMeta em {
+  font-style: normal;
+  color: inherit;
+}
+
+.layerControlSep {
+  opacity: .7;
+}
+
+.layerControlRow > .infoHint {
+  grid-row: 1 / -1;
+  align-self: center;
+  justify-self: center;
+}
+
+.layerOpenBtn {
+  grid-row: 1 / -1;
+  align-self: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--soft);
+  font-size: 10px;
+  font-weight: 720;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .14s ease, border-color .14s ease, color .14s ease;
+}
+
+.layerOpenBtn:hover {
+  border-color: var(--line2);
+  background: var(--surface2);
+  color: #fff;
 }
 
 .layerEditBtn {
@@ -5903,6 +6008,17 @@ button.decisionIssueBadge:hover,
   border-bottom: 1px solid var(--line);
 }
 
+.filterFamilyHeaderActions {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.filterFamilyHeaderActions .filterFamilyPower {
+  min-width: 112px;
+}
+
 .filterFamilyHeader h2 {
   margin: 4px 0 0;
   color: #f4f4f5;
@@ -5921,10 +6037,7 @@ button.decisionIssueBadge:hover,
 }
 
 .filterFamilyToolbar {
-  display: grid;
-  grid-template-columns: minmax(112px, 140px) minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
+  display: block;
 }
 
 .filterFamilyPower {
@@ -6041,8 +6154,7 @@ button.decisionIssueBadge:hover,
   .diagnosticStats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .filterTemplateGrid,
-  .filterFamilyToolbar {
+  .filterTemplateGrid {
     grid-template-columns: 1fr;
   }
   .filterFamilyPresetRail {

@@ -194,23 +194,31 @@ export function FilterFamilyModal({ layerKey, settings, filterLayers, fieldRules
           <h2>{family.title}</h2>
           <p>{family.intro}</p>
         </div>
-        <button type="button" className="stockModalClose" onClick={onClose} aria-label="Cerrar">×</button>
+        <div className="filterFamilyHeaderActions">
+          <button
+            type="button"
+            className={`filterFamilyPower ${layerActive ? "on" : "off"}`}
+            aria-pressed={layerActive}
+            onClick={() => onToggleLayer?.(layerKey)}
+            title={layerActive ? "Familia activa — clic para apagar" : "Familia apagada — clic para activar"}
+          >
+            <b>{layerActive ? "Activa" : "Apagada"}</b>
+            <span>{ruleCountLabel(layer.count)}</span>
+          </button>
+          <button type="button" className="stockModalClose" onClick={onClose} aria-label="Cerrar">×</button>
+        </div>
       </header>
 
-      <div className="filterFamilyToolbar">
-        <button type="button" className={`filterFamilyPower ${layerActive ? "on" : "off"}`} onClick={() => onToggleLayer?.(layerKey)}>
-          <b>{layerActive ? "Activa" : "Apagada"}</b>
-          <span>{ruleCountLabel(layer.count)}</span>
-        </button>
-        {family.actions.length ? <div className="filterFamilyPresetRail" aria-label="Ajustes rápidos de exigencia">
+      {family.actions.length ? <div className="filterFamilyToolbar">
+        <div className="filterFamilyPresetRail" aria-label="Ajustes rápidos de exigencia">
           <span>Exigencia</span>
           <div>
             {family.actions.map((action) => <button type="button" className="filterFamilyPreset" key={action.label} onClick={() => onApplyAction?.(layerKey, action)} title={action.detail}>
               {action.label}
             </button>)}
           </div>
-        </div> : null}
-      </div>
+        </div>
+      </div> : null}
 
       {layerKey === "trend" ? <div className={`weeklyStageControls modalWeeklyControls ${layerActive ? "" : "isMuted"}`}>
         <label><span>Media rápida semanal</span><input className="input" type="number" min="2" max="80" step="1" value={settings.stageFastWeeks || 10} onChange={(event) => onUpdateSetting?.("stageFastWeeks", Number(event.target.value) || 10)} /></label>
@@ -301,19 +309,32 @@ export function FilterToggle({ active, applies = true, detail = "", onClick, chi
   </label>;
 }
 
-export function LayerToggleButton({ active, onClick, label, detail, countLabel }) {
-  return <button type="button" className={`layerToggle ${active ? "on" : "off"}`} aria-pressed={active} onClick={onClick} title={detail || label}>
-    <span className="layerToggleState"><i>{active ? "✓" : "X"}</i><b>{active ? "Activo" : "Quitado"}</b></span>
-    <span className="layerToggleText"><strong>{label}</strong></span>
-    <span className="layerToggleCount">{countLabel}</span>
+export function LayerToggleButton({ active, onClick, label }) {
+  return <button
+    type="button"
+    className={`layerPowerToggle ${active ? "on" : "off"}`}
+    aria-pressed={active}
+    aria-label={`${active ? "Desactivar" : "Activar"} ${label}`}
+    onClick={onClick}
+    title={active ? "Activa — clic para apagar" : "Apagada — clic para activar"}
+  >
+    <span className="layerPowerIcon" aria-hidden="true">⏻</span>
   </button>;
 }
 
 export function LayerControl({ active, onClick, onOpen, label, detail, countLabel }) {
-  return <div className={`layerControlRow ${active ? "on" : "off"} ${onOpen ? "" : "simple"}`}>
-    <LayerToggleButton active={active} onClick={onClick} label={label} detail={detail} countLabel={countLabel} />
+  return <div className={`layerControlRow ${active ? "on" : "off"} ${onOpen ? "hasOpen" : "simple"}`}>
+    <LayerToggleButton active={active} onClick={onClick} label={label} />
+    <div className="layerControlBody">
+      <strong className="layerControlLabel">{label}</strong>
+      {(detail || countLabel) ? <span className="layerControlMeta">
+        {detail ? <small>{detail}</small> : null}
+        {detail && countLabel ? <span className="layerControlSep" aria-hidden="true">·</span> : null}
+        {countLabel ? <em>{countLabel}</em> : null}
+      </span> : null}
+    </div>
     {detail ? <InfoHint text={detail} /> : null}
-    {onOpen ? <button type="button" className="layerEditBtn" onClick={onOpen}>Ajustar</button> : null}
+    {onOpen ? <button type="button" className="layerOpenBtn" onClick={onOpen} aria-label={`Abrir ${label}`}>Abrir ▸</button> : null}
   </div>;
 }
 
