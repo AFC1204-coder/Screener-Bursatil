@@ -4,7 +4,11 @@ import {
   DEFAULT_FIELD_RULES,
   DEFAULT_FILTER_LAYERS,
   EXECUTION_LAYERS,
+  FILTER_FAMILIES,
   FILTER_FAMILY_PRESETS,
+  FILTER_FIELDS,
+  FILTER_FIELD_LAYERS,
+  FILTER_FAMILY_ORDER,
   PRESET_LAYER_OVERRIDES,
   SCREENER_WEB_FILTER_PRESETS,
   filterLayersForPreset,
@@ -119,6 +123,48 @@ function ajustesDeLaPantalla(presetKey) {
     DEFAULT_FIELD_RULES,
   );
 }
+
+describe("taxonomía única de familias (UX-FILTERS-2)", () => {
+  it("cada field pertenece a exactamente una capa", () => {
+    for (const [key, layers] of Object.entries(FILTER_FIELD_LAYERS)) {
+      expect(layers, `${key} debe tener una sola capa`).toHaveLength(1);
+    }
+  });
+
+  it("toda key de FILTER_FIELDS aparece en exactamente una familia", () => {
+    const fieldKeys = new Set(FILTER_FIELDS.map((field) => field.key));
+    const familyFieldKeys = FILTER_FAMILY_ORDER.flatMap((key) => FILTER_FAMILIES[key].fields.map((field) => field.key));
+    expect(new Set(familyFieldKeys).size).toBe(familyFieldKeys.length);
+    expect([...fieldKeys].sort()).toEqual([...new Set(familyFieldKeys)].sort());
+  });
+
+  it("EXECUTION_LAYERS keys coinciden con DEFAULT_FILTER_LAYERS y familias", () => {
+    const executionKeys = EXECUTION_LAYERS.map((layer) => layer.key).sort();
+    expect(executionKeys).toEqual(Object.keys(DEFAULT_FILTER_LAYERS).sort());
+    expect(executionKeys).toEqual([...FILTER_FAMILY_ORDER].sort());
+  });
+
+  it("con proximity off y score on, minRiskScore sigue aplicando (P5)", () => {
+    const layers = { ...DEFAULT_FILTER_LAYERS, proximity: false, score: true };
+    const settings = { ...settingsForPreset("balanced"), minRiskScore: 40 };
+    const effective = effectiveSettingsFromLayers(settings, layers, DEFAULT_FIELD_RULES);
+    expect(effective.minRiskScore).toBe(40);
+    const resultado = applyScreenerFilters([filaLider({ riskScore: 10 })], {
+      enabled: true,
+      preset: "balanced",
+      values: effective,
+    });
+    expect(resultado.rows).toHaveLength(0);
+    expect(resultado.rejections.some((item) => item.field === "minRiskScore")).toBe(true);
+  });
+
+  it("ajustes finos no exponen grupos huérfanos Ratings proxy / Deterioro / Scores técnicos", () => {
+    const titles = FILTER_FAMILY_ORDER.map((key) => FILTER_FAMILIES[key].title);
+    expect(titles).not.toContain("Ratings proxy");
+    expect(titles).not.toContain("Deterioro técnico");
+    expect(titles).not.toContain("Scores técnicos");
+  });
+});
 
 describe("copy familia RS (MET-1b)", () => {
   it("sidebar y modal alinean RS global; bench/país/grupo quedan como auxiliares", () => {
@@ -281,16 +327,15 @@ describe("layerToggleImpact · aviso al apagar capas", () => {
     expect(impact.willChangeSetupMode).toBe(false);
   });
 
-  it("apagar Liquidez con minVolumeScore activo avisa la regla de doble capa", () => {
+  it("apagar Cercanía con minRiskScore activo ya no genera aviso de doble capa", () => {
     const impact = layerToggleImpact({
       settings: settingsForPreset("balanced"),
       filterLayers: DEFAULT_FILTER_LAYERS,
       fieldRules: DEFAULT_FIELD_RULES,
-      layerKey: "liquidity",
+      layerKey: "proximity",
       nextOn: false,
     });
-    expect(impact.warnings.some((line) => line.includes("Volume score min"))).toBe(true);
-    expect(impact.warnings.some((line) => line.includes("Scores y Liquidez"))).toBe(true);
+    expect(impact.warnings.some((line) => line.includes("Risk score min"))).toBe(false);
   });
 
   it("si la capa ya estaba apagada no recalcula avisos", () => {

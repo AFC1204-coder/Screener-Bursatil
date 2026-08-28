@@ -5,10 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-28 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-FILTERS-2** o **IPO-1c** (tras nocturno).  
-Último cerrado: **UX-FILTERS-1** (toggle ≠ abrir; cierra UX-15).  
-Anterior: **IPO-1b**.  
-**Cola:** nocturno → smoke Radar · IPO-1c · UX-FILTERS-2…  
+Ticket en curso: **UX-FILTERS-3** (modos Discovery/Estricto · pilotos IPO/RS) o **IPO-1c** tras nocturno.  
+Último cerrado: **UX-FILTERS-2** (taxonomía única).  
+Anterior: **UX-FILTERS-1**.  
+**Cola:** FILTERS-3/4 → IPO-1d · nocturno → IPO-1c…  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
 **Decisión producto (2026-08-28):** RS global FX = track **privado** …  
@@ -69,6 +69,7 @@ Anterior: **IPO-1b**.
 | IPO-1a | `ipoDate` desde chart meta v8 + hydrate/patch caché + proyecciones | `eb3053a` |
 | IPO-1b | Preset `ipoDiscovery` + empty state CTA `/ipo-radar` | `0dea0bf` |
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | `b6cfafa` |
+| UX-FILTERS-2 | Taxonomía única de familias | (commit pendiente hash) |
 
 ## Siguiente — datos IPO + filtros
 
@@ -77,8 +78,9 @@ Anterior: **IPO-1b**.
 | IPO-1a write | `scripts/backfill-ipo-date.mjs --write` en Supabase | **Hecho** US 5893 + intl ~586 |
 | Nocturno | Materializado con `ipoDate` en filas scan | **Pendiente** (smoke filas Radar) |
 | IPO-1c | Nav + merge vigiladas `/ipo-radar` | Tras nocturno / smoke filas |
-| UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | **Hecho** |
-| UX-FILTERS-2 | Taxonomía única de familias | Siguiente UX filtros |
+| UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | **Hecho** · `b6cfafa` |
+| UX-FILTERS-2 | Taxonomía única de familias | **Hecho** |
+| UX-FILTERS-3 | Editor modo Discovery/Estricto (pilotos IPO + RS) | Siguiente UX filtros |
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | Pendiente · **decisión dueño** |
 | UX-16 | Líderes intl guardrail datos ≠ mercados | Pendiente |
 
