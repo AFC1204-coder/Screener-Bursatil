@@ -23,7 +23,7 @@ describe("snapshot freshness", () => {
       staleReason: "Timeout consultando Supabase.",
     });
 
-    expect(notice.label).toBe("Snapshot cacheado");
+    expect(notice.label).toBe("Datos cacheados");
     expect(notice.tone).toBe("warn");
     expect(notice.detail).toContain("última disponible");
     expect(notice.detail).toContain("2 min");
@@ -45,7 +45,7 @@ describe("snapshot freshness", () => {
   it("advierte cuando la proyeccion de decision queda parcial", () => {
     const notice = buildSnapshotFreshnessNotice({}, { decisionProjectionPartialRows: 3 });
 
-    expect(notice.label).toBe("Snapshot parcial");
+    expect(notice.label).toBe("Datos parciales");
     expect(notice.tone).toBe("info");
     expect(notice.detail).toContain("3 filas");
   });
@@ -67,7 +67,7 @@ describe("snapshot freshness", () => {
     });
 
     expect(notice).not.toBeNull();
-    expect(notice.label).toBe("Snapshot incompleto");
+    expect(notice.label).toBe("Datos incompletos");
     expect(notice.tone).toBe("warn");
     expect(notice.truncated).toBe(true);
     expect(notice.detail).toContain("500");
@@ -123,7 +123,7 @@ describe("snapshot freshness", () => {
       rowsTruncated: true,
     });
 
-    expect(notice.label).toBe("Snapshot cacheado");
+    expect(notice.label).toBe("Datos cacheados");
     expect(notice.detail).toContain("última disponible");
     expect(notice.detail).toContain("500");
     expect(notice.detail).toContain("9918");

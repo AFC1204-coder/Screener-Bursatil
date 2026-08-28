@@ -58,6 +58,7 @@ import { metricShortLabel } from "@/lib/metricCatalog";
 import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 
+const PERCENTILE_BATCH_BADGE = "Ranking provisional";
 const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
 const MARKET_REGION_PRESETS = ["global", "us", "core-intl", "europe", "asia", "hk"];
 
@@ -372,7 +373,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
 
         <div className="sidebarGroup marketPanel" style={{ marginBottom: 24 }}>
           <div className="marketPanelHead">
-            <span>Mercados{marketsStale ? <i className="controlDot controlDotStale" aria-hidden="true" title="Mercados cambiados desde el último scan" /> : null}</span>
+            <span>Mercados{marketsStale ? <i className="controlDot controlDotStale" aria-hidden="true" title="Mercados cambiados desde el último corte de datos" /> : null}</span>
             <em>{markets.length}/{MARKETS.length}</em>
           </div>
           <div className="marketPresetBar">
@@ -528,7 +529,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           <HuntCardRail presetKey={presetKey} markets={markets} onSelect={applyHuntCard} />
           <p className="screenerTruthLine" role="status" aria-live="polite">
             <span>{truthLine}</span>
-            {visibleBatchRows ? <span className="percentileScopeBadge" title={PERCENTILE_BATCH_NOTE} aria-label={`Muestra parcial · percentil por lote. ${PERCENTILE_BATCH_NOTE}`}>Muestra parcial · percentil por lote</span> : null}
+            {visibleBatchRows ? <span className="percentileScopeBadge" title={PERCENTILE_BATCH_NOTE} aria-label={`${PERCENTILE_BATCH_BADGE}. ${PERCENTILE_BATCH_NOTE}`}>{PERCENTILE_BATCH_BADGE}</span> : null}
           </p>
           <details className="screenerFilterBreakdown">
             <summary><span>{filterBreakdown.summaryLabel}</span></summary>
@@ -666,7 +667,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
                 </button>
                 {resultsFiltered.length ? <>
                   <button className="btn btnSmall btnGhost" onClick={() => csv(resultsFiltered)}>↓ CSV</button>
-                  <button className="btn btnSmall btnGhost" onClick={() => saveSnapshot(resultsFiltered)} aria-label="Guardar snapshot de resultados">Guardar</button>
+                  <button className="btn btnSmall btnGhost" onClick={() => saveSnapshot(resultsFiltered)} aria-label="Guardar copia de resultados">Guardar</button>
                 </> : null}
               </div>
               {resultsFiltered.length ? <>

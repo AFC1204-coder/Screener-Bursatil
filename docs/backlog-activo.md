@@ -5,14 +5,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-27 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-9**.  
-Prompt: **`docs/tickets/UX-9-copy-jerga.md`**.  
-Último cerrado: **UX-P5 + UX-8** (plan 4 días producto-final cerrado).  
-**Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas.  
+Ticket en curso: **libre**.  
+Último cerrado: **UX-9**.  
+**Prioridad dueño (inmediato):** aspecto de **producto final** (UI/cáscara/copy/flujo), no métricas nuevas — **oleada UI cerrada**.  
 **Prioridad mercados:** US (base) · HK · CA · Europa.  
 **Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
-**Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 + UX-5 + oleada producto-final (P1…P5, UX-6…8) hechos.  
-**Decisión métricas (2026-08-27, no inmediato):** RS **global** = un solo ranking del universo privado con **ajuste por divisa**; RS **país** = calidad dentro del propio país; RS **tema** = por a qué se dedica la empresa (theme). Más adelante: muletas de tendencia + índice 0–100 de salud de etapa. VCP e indicadores nuevos = track paralelo, no bloquean UI.  
+**Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 + UX-5 + oleada producto-final (P1…P5, UX-6…9) hechos.  
+**Decisión métricas (2026-08-27, no inmediato):** RS **global** = un solo ranking del universo privado con **ajuste por divisa**; RS **país** = calidad dentro del propio país; RS **tema** = por a qué se dedica la empresa (theme). Más adelante: muletas de tendencia + índice 0–100 de salud de etapa. VCP e indicadores nuevos = track paralelo.  
 **Gate cierre:** tests del ticket + **`./vfc`** + smoke Browser Use.  
 **Modelo brief UX-P:** Gemini 3.7 Flash (aceptado).
 
@@ -56,15 +55,15 @@ Prompt: **`docs/tickets/UX-9-copy-jerga.md`**.
 | UX-P4 | Modal nav/salida agrupados; triage active; smoke Candidata | `7882d82` |
 | UX-P5 | Móvil 390: rail scroll; drawer sheet; smoke | `0f42cda` |
 | UX-8 | Desglose «¿Qué recorta?» bajo verdad; smoke 47/3321 | `0f42cda` |
+| UX-9 | Ranking provisional + corte; Datos *; smoke | (este commit) |
 
 ## Siguiente — producto final (inmediato)
 
 | ID | Qué | Notas | Modelo |
 |---|---|---|---|
-| UX-9 | Copy / jerga percentil (parcial) | **en curso** · P2 | Composer fast |
-| ~~plan 4 días brief~~ | P1–P5 + UX-6…8 | **cerrado** | — |
+| ~~oleada UI brief~~ | P1–P5 + UX-5…9 | **cerrada** | — |
 
-## Track métricas (paralelo, no inmediato)
+## Track métricas (siguiente oleada)
 
 | ID | Qué | Estado |
 |---|---|---|

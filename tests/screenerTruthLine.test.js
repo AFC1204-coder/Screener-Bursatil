@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildScreenerTruthLine, marketCountLabel } from "@/lib/screenerTruthLine";
 
 describe("buildScreenerTruthLine", () => {
-  it("compone analizadas, pasan, visibles, orden y scan", () => {
+  it("compone analizadas, pasan, visibles, orden y corte", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: [{ symbol: "A" }, { symbol: "B" }],
       passCount: 1,
@@ -16,10 +16,10 @@ describe("buildScreenerTruthLine", () => {
     expect(line).toContain("1 pasan «Balanceado»");
     expect(line).toContain("1 visibles");
     expect(line).toContain("orden: Rendimiento 6M ↓");
-    expect(line).toContain("scan ");
+    expect(line).toContain("corte ");
   });
 
-  it("omite scan si no hay fecha", () => {
+  it("omite corte si no hay fecha", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: [],
       passCount: 0,
@@ -29,7 +29,7 @@ describe("buildScreenerTruthLine", () => {
       sortAsc: true,
       scannedAt: null,
     });
-    expect(line).not.toContain("scan ");
+    expect(line).not.toContain("corte ");
     expect(line).toContain("↑");
   });
 });

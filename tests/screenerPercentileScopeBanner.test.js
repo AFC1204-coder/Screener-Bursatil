@@ -143,14 +143,17 @@ const FINAL_ROW = { symbol: "FIN", percentileScope: "final" };
 const BATCH_ROW = { symbol: "BAT", percentileScope: "batch" };
 const UNSCOPED_ROW = { symbol: "OLD" }; // percentileScope ausente ⇒ tratado como batch
 
+const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
+
 // La VARIANTE PENDIENTE de la franja ("Actualización preparada · percentil por
 // lote", pegada a PendingResultsBar) se retiró el 2026-08-16 junto con la lista
 // congelada y el botón Ejecutar: sin actualización pendiente no hay nada que
 // anunciar. La franja de la LISTA VISIBLE sigue vigente y aquí fijada.
-describe("ScreenerShell · franja P3 (percentil por lote)", () => {
+describe("ScreenerShell · franja P3 (ranking provisional)", () => {
   it("mantiene el aviso visible cuando resultsRows contiene filas batch", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW, BATCH_ROW] })));
-    expect(html).toContain("Muestra parcial · percentil por lote");
+    expect(html).toContain("Ranking provisional");
+    expect(html).toContain(PERCENTILE_BATCH_NOTE);
     expect(html).toContain("percentileScopeBadge");
     expect(html).toContain("screenerTruthLine");
     expect(html).not.toContain("percentileScopeNotice");
@@ -158,13 +161,13 @@ describe("ScreenerShell · franja P3 (percentil por lote)", () => {
 
   it("trata percentileScope ausente como batch en la lista visible", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [UNSCOPED_ROW] })));
-    expect(html).toContain("Muestra parcial · percentil por lote");
+    expect(html).toContain("Ranking provisional");
     expect(html).toContain("percentileScopeBadge");
   });
 
   it("no muestra el aviso cuando la lista visible es exclusivamente final", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW] })));
-    expect(html).not.toContain("Muestra parcial · percentil por lote");
+    expect(html).not.toContain("Ranking provisional");
     expect(html).not.toContain("percentileScopeBadge");
   });
 
@@ -174,7 +177,7 @@ describe("ScreenerShell · franja P3 (percentil por lote)", () => {
     const props = makeProps({ resultsRows: [FINAL_ROW] });
     expect(() => renderToStaticMarkup(React.createElement(ScreenerShell, props))).not.toThrow();
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
-    expect(html).not.toContain("percentil por lote");
+    expect(html).not.toContain("Ranking provisional");
   });
 
   it("REGRESIÓN 2026-08-16: la lista congelada no vuelve a la superficie", () => {

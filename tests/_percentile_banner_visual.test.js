@@ -57,7 +57,7 @@ describe("banner P3 · captura visual local (fixture)", () => {
     const FIN = { symbol: "FIN", percentileScope: "final" };
     const BAT = { symbol: "BAT", percentileScope: "batch" };
     const scenarios = [
-      ["1 · visible batch (Muestra parcial)", baseBag([FIN, BAT], null)],
+      ["1 · visible batch (Ranking provisional)", baseBag([FIN, BAT], null)],
       ["2 · solo pending batch (Actualización preparada)", baseBag([FIN], { rows: [FIN, BAT] })],
       ["3 · ambos batch (prevalece visible)", baseBag([BAT], { rows: [BAT] })],
       ["4 · ambos final (sin franja)", baseBag([FIN], { rows: [FIN] })],

@@ -1,7 +1,6 @@
-# Ticket activo — UX-9
+# Ticket activo — libre
 
-Prompt: **`docs/tickets/UX-9-copy-jerga.md`**
+Último cerrado: **UX-9** (copy sin jerga de laboratorio).
 
-**Modelo:** Composer fast  
-
-Sin commit ni push. Orquestador: tests + **`./vfc`** + smoke breve.
+Oleada producto-final (brief UX-P + UX-5…9) **cerrada**.  
+Siguiente track: métricas (MET-1…) o VCP — ver `docs/backlog-activo.md`.
