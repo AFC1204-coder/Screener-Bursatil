@@ -66,7 +66,7 @@ Anterior: **IPO-1a** write.
 | UX-14 | CTA stale mercados: misalignment sin depender de scanStale | `f657410` |
 | UX-FILTERS | Spec rediseño presentación filtros (tickets 1…7) | `docs/analisis-ux-filters-presentacion-2026-08-28.md` |
 | IPO-1a | `ipoDate` desde chart meta v8 + hydrate/patch caché + proyecciones | `eb3053a` |
-| IPO-1b | Preset `ipoDiscovery` + empty state CTA `/ipo-radar` | (este commit) |
+| IPO-1b | Preset `ipoDiscovery` + empty state CTA `/ipo-radar` | `0dea0bf` |
 
 ## Siguiente — datos IPO + filtros
 
