@@ -71,7 +71,7 @@ Anterior: **UX-FILTERS-2**.
 | IPO-1b | Preset `ipoDiscovery` + empty state CTA `/ipo-radar` | `0dea0bf` |
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | `b6cfafa` |
 | UX-FILTERS-2 | Taxonomía única de familias | `745043a` |
-| UX-FILTERS-3 | Intensidad continua 0–100 (IPO + RS) | (commit pendiente hash) |
+| UX-FILTERS-3 | Intensidad continua 0–100 (IPO + RS) | `417969f` |
 
 ## Siguiente — datos IPO + filtros
 
