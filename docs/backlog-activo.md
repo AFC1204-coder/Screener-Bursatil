@@ -71,7 +71,7 @@ Anterior: **UX-FILTERS** spec.
 
 | ID | Qué | Estado |
 |---|---|---|
-| IPO-1a write | `scripts/backfill-ipo-date.mjs --write` en Supabase | **Pendiente OK dueño** |
+| IPO-1a write | `scripts/backfill-ipo-date.mjs --write` en Supabase | **Hecho** US 5893 + intl ~586 |
 | IPO-1b | Preset `ipoDiscovery` + ficha Radar | Tras write o en paralelo UI |
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | Paralelo posible |
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | Pendiente · **decisión dueño** |
@@ -89,7 +89,7 @@ UX-17…21 — vista rápida, móvil tabla, localStorage, «visibles» vs pagina
 |---|---|---|
 | IPO-1 | Radar IPO multi-mercado + datos + ficha discovery | **Aceptado** · `docs/tickets/IPO-1-radar-producto.md` |
 | UX-FILTERS | Spec presentación filtros (IPO piloto) | **Aceptado** · `docs/analisis-ux-filters-presentacion-2026-08-28.md` |
-| IPO-1a | Backfill `ipoDate` (código listo; write pendiente) | Código OK · wait `--write` |
+| IPO-1a | Backfill `ipoDate` (código + write US/intl) | `eb3053a` + write 2026-08-28 |
 
 Orden: IPO-1a → IPO-1b–c (+ 1d = UX-FILTERS-3+4 sobre IPO).
 
