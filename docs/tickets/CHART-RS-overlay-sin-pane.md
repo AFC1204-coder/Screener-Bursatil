@@ -1,6 +1,6 @@
 # CHART-RS — Línea RS solo en gráfico (sin panel duplicado)
 
-**Estado:** Pendiente · oleada chart (dueño reconfirmó 2026-08-29: RS en el gráfico, no abajo)  
+**Estado:** Hecho · oleada chart (smoke Browser Use `/stock/OKTA` 2026-08-29)  
 **Rama:** `codex/statsedge-ui-polish`  
 **Hermano:** `docs/tickets/CHART-NAV-navegacion-libre.md` (pan/zoom libre)
 
