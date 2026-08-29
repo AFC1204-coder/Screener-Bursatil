@@ -124,7 +124,7 @@ Anterior: **UX-BTN-3** (`ae37bfa`).
 | UX-BTN-1 | Segmented / keycaps unificados | `59bbc52` |
 | UX-BTN-2 | Primary / Ghost / Pager | `74d7085` |
 | UX-BTN-3 | Chart floating nav | `ae37bfa` |
-| UX-BTN-4 | Stock decision rail | *(pendiente stamp)* |
+| UX-BTN-4 | Stock decision rail | `27c63fb` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -167,7 +167,7 @@ Anterior: **UX-BTN-3** (`ae37bfa`).
 | UX-BTN-2 | Primary / Ghost / Pager | **Hecho** · `74d7085` · smoke Revisar + pager |
 | UX-BTN-2 | Primary / Ghost / Pager | Pendiente |
 | UX-BTN-3 | Chart floating nav | **Hecho** · `ae37bfa` · smoke AAPL |
-| UX-BTN-4 | Stock decision rail | **Hecho** · smoke AAPL |
+| UX-BTN-4 | Stock decision rail | **Hecho** · `27c63fb` · smoke AAPL |
 | UX-BTN-5 | Hunt rail + «+ Filtro» | Pendiente |
 | UX-BTN-6 | Market / country chips | Pendiente |
 
