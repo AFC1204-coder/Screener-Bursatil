@@ -93,4 +93,10 @@ describe("filtros de la pantalla principal", () => {
     expect(FILTER_BAR).toContain("Filtrar por resolución de decisión");
     expect(MOBILE).toContain("Filtrar por resolución de decisión");
   });
+
+  it("orden solo en móvil: escritorio sin resultSortSelect, móvil con Orden movil", () => {
+    expect(FILTER_BAR).not.toContain("resultSortSelect");
+    expect(FILTER_BAR).not.toContain("Ordenar resultados");
+    expect(MOBILE).toContain('aria-label="Orden movil"');
+  });
 });

@@ -1,25 +1,19 @@
 "use client";
 
 // ResultFilterBar — slice presentacional de ScreenerShell.
-// Contiene los selects de resolución y orden, el
+// Contiene el select de resolución, el
 // CTA «+ Filtro» (view-layers) y los ResultFilterChips.
 // Recibe SOLO los slices que consume este bloque (no el prop-bag completo).
 
 import { ResultFilterChips } from "@/app/screenerPanels";
-import { SECTOR_STRENGTH_LABELS, SECTOR_STRENGTH_OPTIONS, SORT_LABELS, marketName } from "@/lib/screenerConfig";
-import { screenerSortOptions } from "@/lib/screenerColumns";
-import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
+import { SECTOR_STRENGTH_LABELS, SECTOR_STRENGTH_OPTIONS, marketName } from "@/lib/screenerConfig";
 
 export default function ResultFilterBar({
   optionLabel,
-  // Sort/control selects
+  // Filter selects
   decisionResolutionFilter,
   decisionResolutionOptions,
   onDecisionResolutionFilter,
-  sort,
-  onSort,
-  perfPeriod,
-  setupMode = "",
   // View-layer selects
   viewLayers,
   viewFiltersActive,
@@ -54,10 +48,6 @@ export default function ResultFilterBar({
   onClearAll,
   onReview,
 }) {
-  const sortOptions = screenerSortOptions({ perfPeriod, sort, setupMode });
-  const legacySort = sort && !sortOptions.some((item) => item.value === sort)
-    ? { value: sort, label: SORT_LABELS[sort] || sort }
-    : null;
   return (
     <>
       <div className="controls resultFilterBar">
@@ -67,13 +57,7 @@ export default function ResultFilterBar({
         <select className="select resultFilterSelect" value={decisionResolutionFilter} onChange={(e) => onDecisionResolutionFilter(e.target.value)} aria-label="Filtrar por resolución de decisión" data-active={decisionResolutionFilter !== "all" ? "true" : "false"}>
           {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
         </select>
-        {/* Ordenar solo por lo que la tabla muestra (lib/screenerColumns.jsx).
-            Un criterio antiguo restaurado de sesión se conserva visible para no
-            reordenar a espaldas del usuario, pero deja de poder elegirse. */}
-        <select className="select resultFilterSelect resultSortSelect" value={sort} onChange={(e) => onSort(e.target.value)} aria-label="Ordenar resultados" data-active={sort !== DEFAULT_PERFORMANCE_PERIOD ? "true" : "false"}>
-          {legacySort ? <option value={legacySort.value}>Ordenar: {legacySort.label}</option> : null}
-          {sortOptions.map((item) => <option key={item.value} value={item.value}>Ordenar: {item.label}</option>)}
-        </select>
+        {/* Orden en escritorio: cabeceras de columna (CompactResultsTable). Móvil: select en MobileResultList. */}
         {/* View-layers: CTA compacto; el prefijo «+» lo aporta el CSS del summary. */}
         {(viewLayers.country || viewLayers.theme || viewLayers.sector || viewLayers.industry || viewLayers.sectorStrength || viewLayers.ipo) ? (
           <details className="disclosurePanel compactDisclosure viewLayerFilters">

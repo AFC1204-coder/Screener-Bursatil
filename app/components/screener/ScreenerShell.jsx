@@ -762,10 +762,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             decisionResolutionFilter={decisionResolutionFilter}
             decisionResolutionOptions={decisionResolutionOptions}
             onDecisionResolutionFilter={setDecisionResolutionFilter}
-            sort={sort}
-            onSort={setSort}
-            perfPeriod={perfPeriod}
-            setupMode={activeSettings.setupMode}
             viewLayers={viewLayers}
             viewFiltersActive={viewFiltersActive}
             countryFilter={countryFilter}

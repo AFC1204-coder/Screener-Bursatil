@@ -6,12 +6,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **UX-20** (`en lista` + hint página).  
-Anterior: **UX-19** (`260bcdc`).  
-**Cola:** UX-21 (P2) · (Supabase aplazado)  
-**Nota UX-20 (2026-08-29):** smoke Deterioro — `1045 en lista · 50/página`; sin «visibles».  
-**Nota UX-19 (2026-08-29):** StorageAlert compacto; dismiss sessionStorage.  
-**Nota UX-18 (2026-08-29):** smoke 390×844 — primera fila legible.  
+Último cerrado: **UX-21** (orden cabeceras desktop; sin select Ordenar).  
+Anterior: **UX-20** (`a8a540e`).  
+**Cola:** (P2 review cerrada UX-18…21) · (Supabase aplazado)  
+**Nota UX-21 (2026-08-29):** smoke — sin `.resultSortSelect` / «Ordenar:»; cabecera RS → `orden: RS ↓` (filas 98…). Residual: CSS muerto `.resultSortSelect`.  
+**Nota UX-20 (2026-08-29):** smoke Deterioro — `1045 en lista · 50/página`.  
+**Nota UX-19 (2026-08-29):** StorageAlert compacto.  
+**Nota UX-18 (2026-08-29):** smoke 390×844.  
 **Nota UX-17 (2026-08-29):** smoke clic/Enter/doble clic → Vista rápida; ticker → `/stock/NVCT`.  
 **Nota UX-16 (2026-08-29):** smoke H-07 — Líderes intl + US 3318 → banner + CTAs; E2 quita aviso.  
 **Nota UX-FILTERS-7 (2026-08-29):** restore cosmética + `resolveStoredFilterConfig`; audit 562/562.  
@@ -111,6 +112,7 @@ Anterior: **UX-19** (`260bcdc`).
 | UX-18 | Móvil ≤480: chrome compacto, 1ª fila legible | `620ae28` |
 | UX-19 | StorageAlert compacto + dismiss + liberar | `260bcdc` |
 | UX-20 | Truth line «en lista» + hint /página | `a8a540e` |
+| UX-21 | Desktop: orden solo cabeceras (sin select) | *(pendiente stamp)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -144,8 +146,8 @@ Anterior: **UX-19** (`260bcdc`).
 |---|---|---|
 | UX-18 | Móvil 390: resultados accesibles | **Hecho** · `620ae28` · smoke 390×844 |
 | UX-19 | Banner localStorage lleno | **Hecho** · `260bcdc` |
-| UX-20 | Copy «visibles» vs página | **Hecho** · smoke Deterioro |
-| UX-21 | Botones Ordenar vs cabeceras | Pendiente |
+| UX-20 | Copy «visibles» vs página | **Hecho** · `a8a540e` · smoke Deterioro |
+| UX-21 | Botones Ordenar vs cabeceras | **Hecho** · smoke RS header |
 
 Ver informe §Tickets propuestos · `docs/analisis-ux-screener-review-2026-08-28.md`.
 
