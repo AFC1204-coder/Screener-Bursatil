@@ -128,7 +128,7 @@ Anterior: **UX-BTN-5** (`035c22b`).
 | UX-BTN-3 | Chart floating nav | `ae37bfa` |
 | UX-BTN-4 | Stock decision rail | `27c63fb` |
 | UX-BTN-5 | Hunt rail + «+ Filtro» | `035c22b` |
-| UX-BTN-6 | Market / country chips | *(pendiente stamp)* |
+| UX-BTN-6 | Market / country chips |  |
 
 ## Siguiente — datos IPO + filtros
 
