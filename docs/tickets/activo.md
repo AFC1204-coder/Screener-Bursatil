@@ -1,8 +1,10 @@
 # Ticket activo — liberado
 
-Último cerrado: **UX-FILTERS-4** (cobertura N/M IPO+RS).  
-Copia: `docs/tickets/UX-FILTERS-4-cobertura-dato.md`.
+Último cerrado: **IPO-NOCT** (parche `ipoDate` en scan US · SQL bulk 3289/3320).  
+Copia: `docs/tickets/IPO-NOCT-patch-ipodate-scan.md`.
 
-**Siguiente (cola):** nocturno → IPO-1c · (salida Supabase aplazada).
+**Smoke:** Radar IPO US → **285 pasan** / 3320 (tras Traer datos frescos).
+
+**Siguiente (cola):** IPO-1c (nav + merge vigiladas `/ipo-radar`).
 
 Orquestador escribe aquí el próximo prompt antes de abrir Agent chat de programación.

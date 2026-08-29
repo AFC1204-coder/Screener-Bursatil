@@ -5,10 +5,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: _(liberado)_ · siguiente = nocturno → IPO-1c.  
-Último cerrado: **UX-FILTERS-4** (`48faa89`).  
-Anterior: **INT-3d** (`7017bf3`).  
-**Cola:** nocturno → IPO-1c… · (luego salida Supabase)  
+Ticket en curso: _(liberado)_ · siguiente = IPO-1c.  
+Último cerrado: **IPO-NOCT** (parche `ipoDate` scan US).  
+Anterior: **UX-FILTERS-4** (`48faa89`).  
+**Cola:** IPO-1c… · (luego salida Supabase)  
+**Nota IPO-NOCT (2026-08-29):** SQL patch US scan → **3289/3320** con `ipoDate`; smoke Radar IPO → **285 pasan**. Script `scripts/patch-scan-ipodate.mjs` + merge puro.  
 **Nota UX-FILTERS-4 (2026-08-29):** smoke RS `⚠ 1701/3320` + modal «Cobertura del dato»; Radar IPO `⚠ ipoDate en 0/3320` + empty CTA.  
 **Nota INT-3d (2026-08-29):** smoke HK → **122 analizadas** (5 noches; latest sola era 33).  
 **Nota producto (2026-08-29):** Supabase migrate aplazado; margen renovación ~2–3 días.  
@@ -85,14 +86,15 @@ Anterior: **INT-3d** (`7017bf3`).
 | INT-3e | Selección HK Main Board/short-sell + metadatos en snapshot | `506bbf6` |
 | INT-3d | Acumular noches HK/CA en mesa (N=7) | `7017bf3` |
 | UX-FILTERS-4 | Cobertura N/M + aviso dato ausente (IPO + RS) | `48faa89` |
+| IPO-NOCT | Parche `ipoDate` en scan US desde perfil (SQL + script) | _(hash)_ |
 
 ## Siguiente — datos IPO + filtros
 
 | ID | Qué | Estado |
 |---|---|---|
 | IPO-1a write | `scripts/backfill-ipo-date.mjs --write` en Supabase | **Hecho** US 5893 + intl ~586 |
-| Nocturno | Materializado con `ipoDate` en filas scan | **Pendiente** (smoke filas Radar) |
-| IPO-1c | Nav + merge vigiladas `/ipo-radar` | Tras nocturno / smoke filas |
+| Nocturno / IPO-NOCT | Parche `ipoDate` en scan US desde perfil | **Hecho** · 3289/3320 · smoke Radar **285** |
+| IPO-1c | Nav + merge vigiladas `/ipo-radar` | **Siguiente** |
 | INT-2 | Mesa US+EU+HK: fusión híbrida nocturno+materializado; selección honestamente cargable | **Hecho** · smoke US+HK 3343, US+Core 3538 |
 | INT-3 | Universo intl amplio: oficial HK+CA, gates calidad, menos curated-core techo | **Hecho** · `2e3507d` · corrida HK universeTotal 2760 pero selected 25 por cap ruta |
 | INT-3b | Quitar cap `perMarket≤25` / `limit≤80` en scan-refresh para official-broad | **Hecho** · `13985cc` · cron selected 84 → passedBase 21 (minPrice USD) |
