@@ -275,6 +275,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     analyzedRows,
     passCount: passCountForTruth,
     visibleCount: visibleCountForTruth,
+    pageSize: resultPageSize,
+    totalPages: totalResultPages,
     presetName: presetNameForTruth,
     sort,
     sortAsc,

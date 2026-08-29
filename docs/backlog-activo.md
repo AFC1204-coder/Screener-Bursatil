@@ -6,11 +6,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **UX-19** (StorageAlert compacto).  
-Anterior: **UX-18** (`620ae28`).  
-**Cola:** UX-20…21 (P2) · (Supabase aplazado)  
-**Nota UX-19 (2026-08-29):** tests 6 + persistencia; smoke CSS compact `6px 10px` / 12px; dismiss sessionStorage.  
-**Nota UX-18 (2026-08-29):** smoke 390×844 US — primera fila legible (~140px); tape oculto.  
+Último cerrado: **UX-20** (`en lista` + hint página).  
+Anterior: **UX-19** (`260bcdc`).  
+**Cola:** UX-21 (P2) · (Supabase aplazado)  
+**Nota UX-20 (2026-08-29):** smoke Deterioro — `1045 en lista · 50/página`; sin «visibles».  
+**Nota UX-19 (2026-08-29):** StorageAlert compacto; dismiss sessionStorage.  
+**Nota UX-18 (2026-08-29):** smoke 390×844 — primera fila legible.  
 **Nota UX-17 (2026-08-29):** smoke clic/Enter/doble clic → Vista rápida; ticker → `/stock/NVCT`.  
 **Nota UX-16 (2026-08-29):** smoke H-07 — Líderes intl + US 3318 → banner + CTAs; E2 quita aviso.  
 **Nota UX-FILTERS-7 (2026-08-29):** restore cosmética + `resolveStoredFilterConfig`; audit 562/562.  
@@ -109,6 +110,7 @@ Anterior: **UX-18** (`620ae28`).
 | CHART-NAV | fixLeftEdge false + manual lógico en resize | `cb99525` |
 | UX-18 | Móvil ≤480: chrome compacto, 1ª fila legible | `620ae28` |
 | UX-19 | StorageAlert compacto + dismiss + liberar | `260bcdc` |
+| UX-20 | Truth line «en lista» + hint /página | *(commit siguiente)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -141,8 +143,8 @@ Anterior: **UX-18** (`620ae28`).
 | ID | Qué | Estado |
 |---|---|---|
 | UX-18 | Móvil 390: resultados accesibles | **Hecho** · `620ae28` · smoke 390×844 |
-| UX-19 | Banner localStorage lleno | **Hecho** · smoke CSS compact |
-| UX-20 | Copy «visibles» vs página | Pendiente |
+| UX-19 | Banner localStorage lleno | **Hecho** · `260bcdc` |
+| UX-20 | Copy «visibles» vs página | **Hecho** · smoke Deterioro |
 | UX-21 | Botones Ordenar vs cabeceras | Pendiente |
 
 Ver informe §Tickets propuestos · `docs/analisis-ux-screener-review-2026-08-28.md`.
