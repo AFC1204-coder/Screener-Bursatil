@@ -132,7 +132,7 @@ Anterior: **UX-23** (`9244496`).
 | UX-BTN-5 | Hunt rail + «+ Filtro» | `035c22b` |
 | UX-BTN-6 | Market / country chips | `969b97e` |
 | UX-23 | InfoHints cabecera tabla | `9244496` |
-| CLEAN-2 | Dual DOM móvil/desktop | *(pendiente stamp)* |
+| CLEAN-2 | Dual DOM móvil/desktop | `e69c3af` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -178,7 +178,7 @@ Anterior: **UX-23** (`9244496`).
 | UX-BTN-5 | Hunt rail + «+ Filtro» | **Hecho** · `035c22b` · smoke `/` |
 | UX-BTN-6 | Market / country chips | **Hecho** · `969b97e` · smoke `/` |
 | UX-23 | InfoHints cabecera tabla | **Hecho** · `9244496` · smoke `/` |
-| CLEAN-2 | Dual DOM móvil/desktop | **Hecho** · smoke desktop+390 |
+| CLEAN-2 | Dual DOM móvil/desktop | **Hecho** · `e69c3af` · smoke desktop+390 |
 
 Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 
