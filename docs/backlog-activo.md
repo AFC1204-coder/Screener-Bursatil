@@ -128,7 +128,7 @@ Anterior: **UX-BTN-5** (`035c22b`).
 | UX-BTN-3 | Chart floating nav | `ae37bfa` |
 | UX-BTN-4 | Stock decision rail | `27c63fb` |
 | UX-BTN-5 | Hunt rail + «+ Filtro» | `035c22b` |
-| UX-BTN-6 | Market / country chips |  |
+| UX-BTN-6 | Market / country chips | `969b97e` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -173,7 +173,7 @@ Anterior: **UX-BTN-5** (`035c22b`).
 | UX-BTN-3 | Chart floating nav | **Hecho** · `ae37bfa` · smoke AAPL |
 | UX-BTN-4 | Stock decision rail | **Hecho** · `27c63fb` · smoke AAPL |
 | UX-BTN-5 | Hunt rail + «+ Filtro» | **Hecho** · `035c22b` · smoke `/` |
-| UX-BTN-6 | Market / country chips | **Hecho** · smoke `/` |
+| UX-BTN-6 | Market / country chips | **Hecho** · `969b97e` · smoke `/` |
 
 Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 
