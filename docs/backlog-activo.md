@@ -6,7 +6,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: _(liberado)_ · siguiente = nocturno → IPO-1c.  
-Último cerrado: **UX-FILTERS-4** (cobertura N/M IPO+RS).  
+Último cerrado: **UX-FILTERS-4** (`48faa89`).  
 Anterior: **INT-3d** (`7017bf3`).  
 **Cola:** nocturno → IPO-1c… · (luego salida Supabase)  
 **Nota UX-FILTERS-4 (2026-08-29):** smoke RS `⚠ 1701/3320` + modal «Cobertura del dato»; Radar IPO `⚠ ipoDate en 0/3320` + empty CTA.  
@@ -84,7 +84,7 @@ Anterior: **INT-3d** (`7017bf3`).
 | INT-3c | Gates HK/CA minPrice moneda local | `24a8e93` |
 | INT-3e | Selección HK Main Board/short-sell + metadatos en snapshot | `506bbf6` |
 | INT-3d | Acumular noches HK/CA en mesa (N=7) | `7017bf3` |
-| UX-FILTERS-4 | Cobertura N/M + aviso dato ausente (IPO + RS) | _(hash en commit docs)_ |
+| UX-FILTERS-4 | Cobertura N/M + aviso dato ausente (IPO + RS) | `48faa89` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -102,7 +102,7 @@ Anterior: **INT-3d** (`7017bf3`).
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | **Hecho** · `b6cfafa` |
 | UX-FILTERS-2 | Taxonomía única de familias | **Hecho** · `745043a` |
 | UX-FILTERS-3 | Intensidad continua 0–100 + Abrir (IPO + RS) | **Hecho** |
-| UX-FILTERS-4 | Cobertura N/M + aviso dato ausente | **Hecho** · pilotos IPO+RS · smoke Browser Use |
+| UX-FILTERS-4 | Cobertura N/M + aviso dato ausente | **Hecho** · `48faa89` · smoke Browser Use |
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | Pendiente · **decisión dueño** |
 | UX-16 | Líderes intl guardrail datos ≠ mercados | Pendiente |
 
