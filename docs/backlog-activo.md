@@ -126,6 +126,7 @@ Anterior: **UX-BTN-4** (`27c63fb`).
 | UX-BTN-2 | Primary / Ghost / Pager | `74d7085` |
 | UX-BTN-3 | Chart floating nav | `ae37bfa` |
 | UX-BTN-4 | Stock decision rail | `27c63fb` |
+| UX-BTN-5 | Hunt rail + «+ Filtro» | `035c22b` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -169,7 +170,7 @@ Anterior: **UX-BTN-4** (`27c63fb`).
 | UX-BTN-2 | Primary / Ghost / Pager | Pendiente |
 | UX-BTN-3 | Chart floating nav | **Hecho** · `ae37bfa` · smoke AAPL |
 | UX-BTN-4 | Stock decision rail | **Hecho** · `27c63fb` · smoke AAPL |
-| UX-BTN-5 | Hunt rail + «+ Filtro» | **Activo** · `docs/tickets/UX-BTN-5-hunt-rail.md` |
+| UX-BTN-5 | Hunt rail + «+ Filtro» | **Hecho** · `035c22b` · smoke `/` |
 | UX-BTN-6 | Market / country chips | Pendiente |
 
 Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
