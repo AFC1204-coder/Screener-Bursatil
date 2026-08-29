@@ -6,9 +6,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **CHART-NAV** (gesto libre + `fixLeftEdge:false`).  
-Anterior: **CHART-RS** (`0728afe`).  
-**Cola:** UX-18…21 (P2) · (Supabase aplazado)  
+Último cerrado: **UX-18** (móvil 390; primera fila legible).  
+Anterior: **CHART-NAV** (`cb99525`).  
+**Cola:** UX-19…21 (P2) · (Supabase aplazado)  
+**Nota UX-18 (2026-08-29):** smoke 390×844 US — `mobileResearchHome:block`, desktop none, tape oculto; firstTop~702, visiblePx≥140. Orquestador densificó CSS tras primer smoke (solo 6px visibles).  
 **Nota chart (2026-08-29):** dueño — RS en el gráfico (no abajo); navegación libre tipo TradingView. Specs: `CHART-RS-overlay-sin-pane.md`, `CHART-NAV-navegacion-libre.md`.  
 **Nota CHART-NAV (2026-08-29):** smoke AAPL — `fixLeftEdge:false`; ctrl+rueda zoom + pan; resize conserva rango manual (sin fit). Drag DOM sintético no llega a LW (gesto real = pressedMouseMove ya ON).  
 **Nota CHART-RS (2026-08-29):** smoke `/stock/OKTA` — RS ON, 1 pane grande (572+28), línea overlay abajo, sin franja RS.  
@@ -112,6 +113,7 @@ Anterior: **CHART-RS** (`0728afe`).
 | CHART-NAV-fix | Chevrons/zoom/reset vivos (sync manual/fit) | `0d5298a` |
 | CHART-RS | RS overlay sin pane inferior | `0728afe` |
 | CHART-NAV | fixLeftEdge false + manual lógico en resize | `cb99525` |
+| UX-18 | Móvil ≤480: chrome compacto, 1ª fila legible | *(commit siguiente)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -141,7 +143,14 @@ Anterior: **CHART-RS** (`0728afe`).
 
 ## P2 (post-review)
 
-UX-18…21 — móvil tabla, localStorage, «visibles» vs paginación, botones Ordenar. Ver informe §Tickets propuestos.
+| ID | Qué | Estado |
+|---|---|---|
+| UX-18 | Móvil 390: resultados accesibles | **Hecho** · smoke 390×844 |
+| UX-19 | Banner localStorage lleno | Pendiente |
+| UX-20 | Copy «visibles» vs página | Pendiente |
+| UX-21 | Botones Ordenar vs cabeceras | Pendiente |
+
+Ver informe §Tickets propuestos · `docs/analisis-ux-screener-review-2026-08-28.md`.
 
 ## Track IPO / salidas a bolsa (dueño 2026-08-28)
 

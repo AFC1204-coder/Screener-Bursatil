@@ -1,11 +1,11 @@
-# Sin ticket activo (tras CHART-NAV)
+# Sin ticket activo (tras UX-18)
 
 ## Cerrado
 
-**CHART-NAV** — `fixLeftEdge: false` + manual lógico/whitespace; resize no hace fit. Botones ya en `0d5298a`.
+**UX-18** — móvil ≤480px: chrome compacto; primera fila legible en 390×844.
 
 ## Candidatos siguientes
 
-**P2 mesa:** UX-18 → 19 → 20 → 21
+**P2:** UX-19 → 20 → 21
 
-**Cola:** UX-18…21 · (Supabase aplazado)
+**Cola:** UX-19…21 · (Supabase aplazado)
