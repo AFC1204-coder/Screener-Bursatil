@@ -111,7 +111,7 @@ Anterior: **CHART-RS** (`0728afe`).
 | UX-17 | Enter/doble clic → Vista rápida | `a2e06c2` |
 | CHART-NAV-fix | Chevrons/zoom/reset vivos (sync manual/fit) | `0d5298a` |
 | CHART-RS | RS overlay sin pane inferior | `0728afe` |
-| CHART-NAV | fixLeftEdge false + manual lógico en resize | *(commit siguiente)* |
+| CHART-NAV | fixLeftEdge false + manual lógico en resize | `cb99525` |
 
 ## Siguiente — datos IPO + filtros
 
