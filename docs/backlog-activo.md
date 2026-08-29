@@ -117,7 +117,7 @@ Anterior: **UX-22** (`332d2e4`).
 | UX-20 | Truth line «en lista» + hint /página | `a8a540e` |
 | UX-21 | Desktop: orden solo cabeceras (sin select) | `e415815` |
 | UX-22 | Verdad pasan/lista alineada (deferred hunt) | `332d2e4` |
-| CLEAN-1 | Purga CSS `.resultSortSelect` | *(pendiente stamp)* |
+| CLEAN-1 | Purga CSS `.resultSortSelect` | `fb9188a` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -154,7 +154,7 @@ Anterior: **UX-22** (`332d2e4`).
 | UX-20 | Copy «visibles» vs página | **Hecho** · `a8a540e` · smoke Deterioro |
 | UX-21 | Botones Ordenar vs cabeceras | **Hecho** · `e415815` · smoke RS header |
 | UX-22 | Verdad pasan vs en lista (deferred hunt) | **Hecho** · `332d2e4` · smoke 3318 |
-| CLEAN-1 | Purga CSS `.resultSortSelect` | **Hecho** |
+| CLEAN-1 | Purga CSS `.resultSortSelect` | **Hecho** · `fb9188a` |
 
 Ver informe · `docs/analisis-ux-pagina-2026-08-29.md`.
 
