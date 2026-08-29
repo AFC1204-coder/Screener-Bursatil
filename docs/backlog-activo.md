@@ -106,7 +106,7 @@ Anterior: **CHART-NAV-fix** (`0d5298a`).
 | UX-16 | Guardrail Líderes intl datos ≠ mercados | `8b58b48` |
 | UX-17 | Enter/doble clic → Vista rápida | `a2e06c2` |
 | CHART-NAV-fix | Chevrons/zoom/reset vivos (sync manual/fit) | `0d5298a` |
-| CHART-RS | RS overlay sin pane inferior | *(commit siguiente)* |
+| CHART-RS | RS overlay sin pane inferior | `0728afe` |
 
 ## Siguiente — datos IPO + filtros
 
