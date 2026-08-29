@@ -280,6 +280,21 @@ describe("viewport · acciones sobre la instancia única", () => {
     expect(after.to - after.from).toBeCloseTo(before.to - before.from, 5);
   });
 
+  it("pan hacia historial desde fit completo acerca y desplaza (no no-op)", () => {
+    const harness = createHarness();
+    const { timeScale } = attachFresh(harness);
+    const before = timeScale._currentLogical();
+    expect(before.from).toBeCloseTo(-0.5, 5);
+
+    harness.lifecycle.actions.pan(-1);
+
+    const after = timeScale._currentLogical();
+    expect(after.to - after.from).toBeLessThan(before.to - before.from);
+    expect(after.from).toBeGreaterThanOrEqual(-0.5);
+    flushRaf();
+    expect(harness.published.at(-1).manual).toBe(true);
+  });
+
   it("reset limpia la desviación manual y vuelve al rango entero", () => {
     const harness = createHarness();
     const { timeScale } = attachFresh(harness);
@@ -603,15 +618,19 @@ describe("viewport · resize re-aplica la ventana contractual", () => {
 // getSnapshot.
 
 describe("viewport · getSnapshot", () => {
-  it("estando attached reconcilia desde el timeScale nativo", () => {
+  it("es solo lectura: no reconcilia ni pisa el estado desde el timeScale", () => {
     const harness = createHarness();
     const { timeScale } = attachFresh(harness);
-    timeScale.setVisibleLogicalRange({ from: 40, to: 140 });
+    harness.lifecycle.actions.zoom(0.5);
+    const afterZoom = harness.lifecycle.getSnapshot();
+    expect(afterZoom.manual).toBe(true);
 
+    // Cambio nativo sin pasar por derive: getSnapshot no debe absorberlo.
+    timeScale.setVisibleLogicalRange({ from: 40, to: 140 });
     const snapshot = harness.lifecycle.getSnapshot();
 
-    expect(snapshot.visibleLogicalRange).toEqual({ from: 40, to: 140 });
-    expect(snapshot.view.isManual).toBe(true);
+    expect(snapshot.visibleLogicalRange).toEqual(afterZoom.visibleLogicalRange);
+    expect(snapshot.manual).toBe(true);
     expect(snapshot.lifecycle).toBe("attached");
   });
 });

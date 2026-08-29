@@ -104,13 +104,18 @@ export function UniversalPriceChartView({
       <b>D</b>
     </div>
   ) : null;
+  // Izquierda: en fit completo (!manual) siempre; con manual solo si queda historial.
+  // Derecha: solo con hueco hacia el último dato tras haber desplazado.
+  const panLeftOff = viewportRail.manual && !viewportRail.canPanLeft;
+  const panRightOff = viewportRail.manual && !viewportRail.canPanRight;
+  const resetDisabled = !viewportRail.manual;
   const navGroup = (
     <div className="universalChartNavGroup" aria-label="Navegación del gráfico">
-          <button type="button" className="universalChartNavButton icon" onClick={() => actions.pan(-1)} disabled={!viewportRail.manual} aria-label="Mover ventana hacia el historial" title="Mover ventana hacia el historial"><ChevronLeft size={15} aria-hidden="true" /></button>
-          <button type="button" className="universalChartNavButton icon" onClick={() => actions.pan(1)} disabled={!viewportRail.manual} aria-label="Mover ventana hacia el último dato" title="Mover ventana hacia el último dato"><ChevronRight size={15} aria-hidden="true" /></button>
+          <button type="button" className="universalChartNavButton icon" onClick={() => actions.pan(-1)} disabled={panLeftOff} aria-label="Mover ventana hacia el historial" title={panLeftOff ? "No hay más historial en esta ventana" : "Mover ventana hacia el historial"}><ChevronLeft size={15} aria-hidden="true" /></button>
+          <button type="button" className="universalChartNavButton icon" onClick={() => actions.pan(1)} disabled={panRightOff} aria-label="Mover ventana hacia el último dato" title={panRightOff ? "Ya estás en el extremo reciente" : "Mover ventana hacia el último dato"}><ChevronRight size={15} aria-hidden="true" /></button>
           <button type="button" className="universalChartNavButton icon" onClick={() => actions.zoom(0.72)} aria-label="Acercar gráfico" title="Acercar"><ZoomIn size={14} aria-hidden="true" /></button>
           <button type="button" className="universalChartNavButton icon" onClick={() => actions.zoom(1.38)} aria-label="Alejar gráfico" title="Alejar"><ZoomOut size={14} aria-hidden="true" /></button>
-          <button type="button" className="universalChartNavButton icon" onClick={actions.reset} disabled={!viewportRail.manual} aria-label="Restaurar rango seleccionado" title="Restaurar el rango seleccionado"><Maximize2 size={14} aria-hidden="true" /></button>
+          <button type="button" className="universalChartNavButton icon" onClick={actions.reset} disabled={resetDisabled} aria-label="Restaurar rango seleccionado" title={resetDisabled ? "Sin ventana manual que restaurar" : "Restaurar el rango seleccionado"}><Maximize2 size={14} aria-hidden="true" /></button>
           <button
             type="button"
             className={`universalChartNavButton icon ${toolActive ? "active" : ""}`.trim()}

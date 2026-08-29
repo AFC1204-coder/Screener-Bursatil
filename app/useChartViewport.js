@@ -24,6 +24,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createViewportLifecycle } from "@/lib/chartViewportLifecycle";
 import { chartViewStateFromLogicalRange } from "@/lib/chartNavigation";
 
+// Cambia en cada HMR del módulo para recrear el lifecycle (publish fresco).
+const VIEWPORT_MODULE_EPOCH = Math.random();
+
 const INITIAL_SNAPSHOT = {
   lifecycle: "detached",
   view: chartViewStateFromLogicalRange(null, 0),
@@ -63,17 +66,33 @@ export function useChartViewport({
   const interactionRef = useRef(getInteractionState);
   interactionRef.current = getInteractionState;
   const rowTimesRef = useRef(Array.isArray(rowTimes) ? rowTimes : []);
-  useEffect(() => {
-    rowTimesRef.current = Array.isArray(rowTimes) ? rowTimes : [];
-  }, [rowTimes]);
+  // Síncrono en render (como configRef): un ResizeObserver/pan justo tras
+  // cargar datos no debe ver rowTimes vacío y descartar la ventana manual.
+  rowTimesRef.current = Array.isArray(rowTimes) ? rowTimes : [];
 
   const [state, setState] = useState(INITIAL_SNAPSHOT);
+  const publishRef = useRef((snapshot) => setState(snapshot));
+  publishRef.current = (snapshot) => {
+    if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+      window.__chartViewportPublishCount = (window.__chartViewportPublishCount || 0) + 1;
+      window.__chartViewportLastPublishedManual = snapshot?.manual;
+    }
+    setState(snapshot);
+  };
 
-  // Instancia única por montaje.
+  // Instancia única por montaje (y por epoch de módulo tras HMR).
   const lifecycleRef = useRef(null);
+  const epochRef = useRef(VIEWPORT_MODULE_EPOCH);
+  if (epochRef.current !== VIEWPORT_MODULE_EPOCH) {
+    try { lifecycleRef.current?.unmount?.(); } catch { /* noop */ }
+    lifecycleRef.current = null;
+    epochRef.current = VIEWPORT_MODULE_EPOCH;
+  }
   if (lifecycleRef.current === null) {
     lifecycleRef.current = createViewportLifecycle({
-      publish: (snapshot) => setState(snapshot),
+      // getPublish: siempre el setState del render vigente (HMR / StrictMode).
+      getPublish: () => publishRef.current,
+      publish: (snapshot) => publishRef.current(snapshot),
       getInteractionState: () => {
         const fn = interactionRef.current;
         return typeof fn === "function" ? fn() : "idle";

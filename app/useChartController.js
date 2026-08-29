@@ -345,6 +345,13 @@ export function useChartController(props = {}) {
     distance: viewState?.distanceFromLatest || null,
     drawing: drawings.toolbarProps?.modeLabel || null,
     manual: manualActive,
+    // Pan/reset UI must follow the visible logical range, not only manualView.
+    // Contract/reference windows can be zoomed while manualView is still null —
+    // gating on `manual` left the chevrons dead (CHART-NAV / dueño 2026-08-29).
+    canPanLeft: Boolean(viewState?.canPanLeft),
+    canPanRight: Boolean(viewState?.canPanRight),
+    // Full fit: pan-left still useful (lifecycle zooms then shifts).
+    canEnterHistory: Boolean(viewState?.visibleBars > 16 && !viewState?.canPanLeft && !viewState?.isZoomed),
     key: viewState?.key || "unknown",
   };
   const notes = {
@@ -410,6 +417,11 @@ export function useChartController(props = {}) {
     toggleDrawing: drawings.toolbarProps?.toggleTool || (() => {}),
     removeSelectedDrawing: drawings.toolbarProps?.removeSelected || (() => {}),
   }), [viewport.actions, drawings.toolbarProps]);
+
+  if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+    window.__chartViewportSnapshot = () => viewport.getSnapshot?.() || viewport.state;
+    window.__chartViewportActions = actions;
+  }
 
   return {
     canvasRef,
