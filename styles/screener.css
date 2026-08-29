@@ -300,6 +300,128 @@
   color:var(--accent);
 }
 
+.huntCardModeStrip {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px 10px;
+  margin:8px 0 0;
+}
+
+.huntCardModeBadge {
+  flex:0 0 auto;
+  padding:3px 8px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:var(--surface2);
+  color:var(--muted);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.huntCardModeBadge--discovery {
+  border-color:color-mix(in srgb, var(--accent) 35%, var(--line));
+  background:color-mix(in srgb, var(--accent) 8%, var(--surface2));
+  color:var(--accent);
+}
+
+.huntCardModeBadge--strict {
+  border-color:color-mix(in srgb, var(--senal) 35%, var(--line));
+  background:color-mix(in srgb, var(--senal) 10%, var(--surface2));
+  color:var(--senal);
+}
+
+.huntCardModeBadge--balanced {
+  border-color:var(--line);
+  background:var(--surface2);
+  color:var(--text);
+}
+
+.huntCardModeDisclosure {
+  flex:1 1 12rem;
+  min-width:0;
+}
+
+.huntCardModeDisclosure > summary {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:4px 8px;
+  min-height:24px;
+  padding:0;
+  color:var(--accent);
+  cursor:pointer;
+  list-style:none;
+}
+
+.huntCardModeDisclosure > summary::-webkit-details-marker {
+  display:none;
+}
+
+.huntCardModeDisclosure > summary span {
+  font-size:11px;
+  font-weight:640;
+  letter-spacing:.01em;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+
+.huntCardModeDisclosure > summary em {
+  color:var(--muted);
+  font-size:10px;
+  font-style:normal;
+  font-weight:520;
+}
+
+.huntCardModeDisclosureBody {
+  margin-top:4px;
+  padding:0 0 2px;
+}
+
+.huntCardModeIntro {
+  margin:0 0 4px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:520;
+  line-height:1.45;
+}
+
+.huntCardModeDoors {
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+
+.huntCardModeDoors li {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:4px 8px;
+  margin:0 0 4px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:520;
+  line-height:1.45;
+}
+
+.huntCardModeDoors li:last-child {
+  margin-bottom:0;
+}
+
+.huntCardModeFamilyLink {
+  border:0;
+  padding:0;
+  background:transparent;
+  color:var(--accent);
+  font-size:11px;
+  font-weight:620;
+  text-decoration:underline;
+  text-underline-offset:2px;
+  cursor:pointer;
+}
+
 .screenerFilterBreakdown {
   margin:6px 0 0;
 }

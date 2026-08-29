@@ -17,6 +17,7 @@ import GlobalCoveragePanel from "@/app/components/screener/GlobalCoveragePanel";
 import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
 import ResultPagerTable from "@/app/components/screener/ResultPagerTable";
 import HuntCardRail from "@/app/components/screener/HuntCardRail";
+import HuntCardModeStrip from "@/app/components/screener/HuntCardModeStrip";
 import WeeklyChangesLine from "@/app/components/screener/WeeklyChangesLine";
 import {
   FilterArchitecturePanel,
@@ -548,6 +549,15 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               <SearchCandidateList candidates={searchCandidates} activeSymbol={searchResult?.symbol} onPick={(item) => { setSearchSymbol(item.symbol); loadSearchResult(item.symbol, item); }} />
           </div>
           <HuntCardRail presetKey={presetKey} markets={markets} onSelect={applyHuntCard} pending={isHuntTransitionPending} />
+          <HuntCardModeStrip
+            presetKey={presetKey}
+            markets={markets}
+            onOpenFamily={(familyKey) => {
+              persistAdvancedOpen(true);
+              setShowMobileFilters(true);
+              setActiveFilterFamily(familyKey);
+            }}
+          />
           <p className="screenerTruthLine" role="status" aria-live="polite">
             <span>{truthLine}</span>
             {visibleBatchRows ? <span className="percentileScopeBadge" title={PERCENTILE_BATCH_NOTE} aria-label={`${PERCENTILE_BATCH_BADGE}. ${PERCENTILE_BATCH_NOTE}`}>{PERCENTILE_BATCH_BADGE}</span> : null}

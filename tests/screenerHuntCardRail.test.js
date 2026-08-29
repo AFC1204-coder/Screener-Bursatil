@@ -27,10 +27,12 @@ vi.mock("@/app/components/screener/GlobalCoveragePanel", () => ({ default: () =>
 
 let ScreenerShell;
 let HuntCardRail;
+let HuntCardModeStrip;
 
 beforeAll(async () => {
   ({ default: ScreenerShell } = await import("@/app/components/screener/ScreenerShell"));
   ({ default: HuntCardRail } = await import("@/app/components/screener/HuntCardRail"));
+  ({ default: HuntCardModeStrip } = await import("@/app/components/screener/HuntCardModeStrip"));
 });
 
 function templateButtonNames(html) {
@@ -199,11 +201,37 @@ describe("HuntCardRail", () => {
   });
 });
 
+describe("HuntCardModeStrip", () => {
+  it("muestra badge de modo y panel Qué aplica para la ficha activa", () => {
+    const html = renderToStaticMarkup(React.createElement(HuntCardModeStrip, {
+      presetKey: "ipoDiscovery",
+      markets: ["US"],
+    }));
+    expect(html).toContain("huntCardModeStrip");
+    expect(html).toContain("huntCardModeBadge--discovery");
+    expect(html).toContain("Discovery");
+    expect(html).toContain("Qué aplica esta ficha");
+    expect(html).toMatch(/IPO reciente ≤ 72m/);
+  });
+
+  it("marca Deterioro como strict", () => {
+    const html = renderToStaticMarkup(React.createElement(HuntCardModeStrip, {
+      presetKey: "weakness",
+      markets: ["US"],
+    }));
+    expect(html).toContain("huntCardModeBadge--strict");
+    expect(html).toContain("Strict");
+    expect(html).toMatch(/Deterioro ≥/);
+  });
+});
+
 describe("ScreenerShell hunt rail", () => {
   it("título y línea de verdad usan el nombre de la ficha, no Balanceado", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
     expect(html).toContain("huntCardRail");
     expect(html).toContain("huntCardRailScroll");
+    expect(html).toContain("huntCardModeStrip");
+    expect(html).toContain("Qué aplica esta ficha");
     expect(html).toContain('class="title">Líderes Etapa 2</h1>');
     expect(html).toContain("pasan «Líderes Etapa 2»");
     expect(html).not.toContain("pasan «Balanceado»");
