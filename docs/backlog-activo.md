@@ -5,11 +5,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-FILTERS-7** (migración / restore compat).  
-Último cerrado: **UX-13** (`08c10fe`).  
-Anterior: **UX-FILTERS-6** (`28c472a`).  
-**Cola:** UX-FILTERS-7 · UX-16 · (Supabase aplazado)  
-**Nota UX-13 (2026-08-29):** smoke Líderes E2 chip `RS 7/14` + copy; sort RS ↓ con Sin dato al final (7/7); Deterioro sin chip. Commit `08c10fe`.  
+Ticket en curso: **UX-16** (Líderes intl · guardrail datos ≠ mercados).  
+Último cerrado: **UX-FILTERS-7** (`2dacad6`).  
+Anterior: **UX-13** (`08c10fe`).  
+**Cola:** UX-16 · P2 UX-17…21 · (Supabase aplazado)  
+**Nota UX-FILTERS-7 (2026-08-29):** restore cosmética + `resolveStoredFilterConfig`; audit 562/562; smoke reload 3318 sin vaciar; plantilla + hunt Radar IPO → 290 Discovery.  
+**Nota UX-13 (2026-08-29):** smoke Líderes E2 chip `RS 7/14` + copy; sort RS ↓ con Sin dato al final; Deterioro sin chip. Commit `08c10fe`.  
 **Nota UX-FILTERS-6 (2026-08-29):** smoke Radar IPO→Discovery, Deterioro→Strict, Líderes E2→Balanceado, intl→Discovery; Abrir familia → modal IPO. Cherry-pick `adb3137` → `28c472a` (sin checkpoint lecciones).  
 **Nota UX-FILTERS-5 (2026-08-29):** smoke IPO `recorta −2619` / pie 699 de 3318; RS `sin recorte`. Cloud PR #1 mergeado FF.  
 **Nota handoff móvil (2026-08-29):** Cloud Agent OK; smoke Browser Use al volver.  
@@ -96,6 +97,7 @@ Anterior: **UX-FILTERS-6** (`28c472a`).
 | UX-FILTERS-5 | Impacto −N por familia (IPO + RS) | `0e69c73` |
 | UX-FILTERS-6 | Ficha hunt declara modo + puertas | `28c472a` |
 | UX-13 | RS Líderes E2 opción D (sort + chip) | `08c10fe` |
+| UX-FILTERS-7 | Restore intensidad cosmética + compat | `2dacad6` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -117,8 +119,8 @@ Anterior: **UX-FILTERS-6** (`28c472a`).
 | UX-FILTERS-5 | Impacto −N por familia (tarjeta + pie editor) | **Hecho** · `0e69c73` · smoke Browser Use |
 | UX-FILTERS-6 | Ficha hunt declara modo + puertas | **Hecho** · `28c472a` · smoke Browser Use |
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | **Hecho** · `08c10fe` · opción D · smoke Browser Use |
-| UX-FILTERS-7 | Migración / restore compat | **En curso** · `docs/tickets/activo.md` |
-| UX-16 | Líderes intl guardrail datos ≠ mercados | Pendiente |
+| UX-FILTERS-7 | Migración / restore compat | **Hecho** · `2dacad6` · audit 562 · smoke restore |
+| UX-16 | Líderes intl guardrail datos ≠ mercados | **En curso** · `docs/tickets/activo.md` |
 
 ~~UX-15~~ subsumido en UX-FILTERS-1.
 
