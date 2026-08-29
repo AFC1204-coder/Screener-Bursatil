@@ -2636,7 +2636,21 @@
   color:var(--text);
 }
 
-.marketChip.active {box-shadow:inset 2px 0 0 var(--accent);border-color:var(--accent);background:var(--accent);
+.marketChip.active {
+  border-color:var(--active-border);
+  background:var(--active-bg);
+  color:var(--active-fg);
+  box-shadow:inset 0 0 0 1px var(--line2);
+}
+
+.marketChip.isDisabled,
+.marketChip:disabled,
+.countryMarketChip.isDisabled,
+.countryMarketChip:disabled {
+  opacity:0.40;
+  color:var(--ghost);
+  cursor:not-allowed;
+  pointer-events:none;
 }
 
 .marketFlag {
@@ -4474,7 +4488,7 @@ h2 {
   color:var(--text);
 }
 
-.layerToggle.on, .marketChip.active, .searchScopeChip:hover {
+.layerToggle.on, .searchScopeChip:hover {
   border-color:var(--accent);
   background:var(--senal-dim);
   color:var(--text);
@@ -5755,10 +5769,10 @@ h2 {
 }
 
 .countryMarketChip.active {
-  border-color:var(--accent);
-  background:linear-gradient(180deg,var(--senal-dim),var(--senal-dim)),#0b1220;
-  color:#f8fbff;
-  box-shadow:inset 0 1px 0 rgba(147,197,253,.22),0 0 0 1px var(--accent);
+  border-color:var(--active-border);
+  background:var(--active-bg);
+  color:var(--active-fg);
+  box-shadow:inset 0 0 0 1px var(--line2);
 }
 
 .countryMarketChip.active:before {
@@ -5769,8 +5783,7 @@ h2 {
   width:5px;
   height:5px;
   border-radius:999px;
-  background:var(--accent);
-  box-shadow:0 0 10px var(--accent);
+  background:var(--active-fg);
 }
 
 .page {

@@ -5125,13 +5125,14 @@ button.decisionIssueBadge:hover,
   gap:2px;
   padding:6px 5px;
   border-color:var(--line);
-  background:linear-gradient(180deg,var(--surface2),var(--surface2)),#0b0d11;
-  color:#b7bdc8;
+  background:var(--surface2);
+  color:var(--soft);
 }
 
 .countryMarketChip:hover {
-  border-color:var(--line);
-  background:linear-gradient(180deg,var(--surface2),var(--surface2)),#11141a;
+  border-color:var(--line2);
+  background:var(--surface2);
+  color:var(--text);
 }
 
 .countryMarketChip .marketChipFlag {
@@ -7203,8 +7204,11 @@ h2:not(.topbar h2) {
 }
 
 .screenerTerminalPage .marketChip.isDisabled,
-.screenerTerminalPage .marketChip:disabled {
-  opacity:0.45;
+.screenerTerminalPage .marketChip:disabled,
+.screenerTerminalPage .countryMarketChip.isDisabled,
+.screenerTerminalPage .countryMarketChip:disabled {
+  opacity:0.40;
+  color:var(--ghost);
   cursor:not-allowed;
   pointer-events:none;
 }

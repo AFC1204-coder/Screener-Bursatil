@@ -6,9 +6,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **UX-BTN-5** (hunt rail + «+ Filtro»).  
-Anterior: **UX-BTN-4** (`27c63fb`).  
-**Cola:** UX-BTN-6 · UX-23 · CLEAN-2 · (Supabase aplazado)  
+Último cerrado: **UX-BTN-6** (market/country chips) — **oleada UX-BTN completa**.  
+Anterior: **UX-BTN-5** (`035c22b`).  
+**Cola:** UX-23 · CLEAN-2 · (Supabase aplazado)  
+**Nota UX-BTN-6 (2026-08-29):** smoke — chips país activo tiza/`--active-*` inset, sin fill tiza ni ámbar.  
 **Nota UX-BTN-5 (2026-08-29):** smoke — Deterioro/Líderes activo `--active-*` sin ámbar; select data-active sin azul.  
 **Nota UX-BTN-4 (2026-08-29):** smoke AAPL — Candidata/Vigilar/Descartar tokens; activo `--active-*`; Reabrir disabled ghost.  
 **Nota UX-BTN-3 (2026-08-29):** smoke AAPL — reposo soft/`rgba(23,41,31,.85)`; activo dibujo distinto (`--active-*`); icon 32×32.  
@@ -127,6 +128,7 @@ Anterior: **UX-BTN-4** (`27c63fb`).
 | UX-BTN-3 | Chart floating nav | `ae37bfa` |
 | UX-BTN-4 | Stock decision rail | `27c63fb` |
 | UX-BTN-5 | Hunt rail + «+ Filtro» | `035c22b` |
+| UX-BTN-6 | Market / country chips | *(pendiente stamp)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -171,7 +173,7 @@ Anterior: **UX-BTN-4** (`27c63fb`).
 | UX-BTN-3 | Chart floating nav | **Hecho** · `ae37bfa` · smoke AAPL |
 | UX-BTN-4 | Stock decision rail | **Hecho** · `27c63fb` · smoke AAPL |
 | UX-BTN-5 | Hunt rail + «+ Filtro» | **Hecho** · `035c22b` · smoke `/` |
-| UX-BTN-6 | Market / country chips | Pendiente |
+| UX-BTN-6 | Market / country chips | **Hecho** · smoke `/` |
 
 Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 

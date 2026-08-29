@@ -2,4 +2,4 @@
 
 *(Ninguno. Orquestador escribe el siguiente aquí.)*
 
-Último cerrado: **UX-BTN-5** — hunt rail + «+ Filtro» sin senal-dim/azul.
+Último cerrado: **UX-BTN-6** — market/country chips (cierra oleada UX-BTN).
