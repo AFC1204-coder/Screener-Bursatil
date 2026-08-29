@@ -5,15 +5,16 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: *(ninguno P1 — cola P2 UX-17…21)*.  
-Último cerrado: **UX-16** (`8b58b48`).  
-Anterior: **UX-FILTERS-7** (`2dacad6`).  
-**Cola:** UX-17…21 (P2) · (Supabase aplazado)  
-**Nota UX-16 (2026-08-29):** smoke H-07 — Líderes intl + US 3318 → banner + CTAs; E2 quita aviso; Quitar US / Core intl no vacían tabla.  
-**Nota UX-FILTERS-7 (2026-08-29):** restore cosmética + `resolveStoredFilterConfig`; audit 562/562; smoke reload 3318 sin vaciar.  
-**Nota UX-13 (2026-08-29):** smoke Líderes E2 chip `RS 7/14` + copy; sort RS ↓ con Sin dato al final; Deterioro sin chip. Commit `08c10fe`.  
-**Nota UX-FILTERS-6 (2026-08-29):** smoke Radar IPO→Discovery, Deterioro→Strict, Líderes E2→Balanceado, intl→Discovery; Abrir familia → modal IPO. Cherry-pick `adb3137` → `28c472a` (sin checkpoint lecciones).  
-**Nota UX-FILTERS-5 (2026-08-29):** smoke IPO `recorta −2619` / pie 699 de 3318; RS `sin recorte`. Cloud PR #1 mergeado FF.  
+Ticket en curso: *(ninguno — cola P2 UX-18…21)*.  
+Último cerrado: **UX-17** (`a2e06c2`).  
+Anterior: **UX-16** (`8b58b48`).  
+**Cola:** UX-18 · UX-19 · UX-20 · UX-21 · (Supabase aplazado)  
+**Nota UX-17 (2026-08-29):** smoke clic/Enter/doble clic → Vista rápida; ticker → `/stock/NVCT`.  
+**Nota UX-16 (2026-08-29):** smoke H-07 — Líderes intl + US 3318 → banner + CTAs; E2 quita aviso.  
+**Nota UX-FILTERS-7 (2026-08-29):** restore cosmética + `resolveStoredFilterConfig`; audit 562/562.  
+**Nota UX-13 (2026-08-29):** smoke Líderes E2 chip RS + sort Sin dato al final. Commit `08c10fe`.  
+**Nota UX-FILTERS-6 (2026-08-29):** smoke modos hunt + Abrir familia → modal IPO. `28c472a`.  
+**Nota UX-FILTERS-5 (2026-08-29):** smoke impacto −N IPO/RS. `0e69c73`.  
 **Nota handoff móvil (2026-08-29):** Cloud Agent OK; smoke Browser Use al volver.  
 **Nota IPO-1c (2026-08-29):** smoke nav IPO; banda 14d; merge **Vigilada** en Radar IPO (ZZSMOKE + pre-IPO).  
 **Nota IPO-NOCT (2026-08-29):** SQL patch US scan → **3289/3320** con `ipoDate`; smoke Radar IPO → **285 pasan**. Script `scripts/patch-scan-ipodate.mjs` + merge puro.  
@@ -100,6 +101,7 @@ Anterior: **UX-FILTERS-7** (`2dacad6`).
 | UX-13 | RS Líderes E2 opción D (sort + chip) | `08c10fe` |
 | UX-FILTERS-7 | Restore intensidad cosmética + compat | `2dacad6` |
 | UX-16 | Guardrail Líderes intl datos ≠ mercados | `8b58b48` |
+| UX-17 | Enter/doble clic → Vista rápida | `a2e06c2` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -123,12 +125,13 @@ Anterior: **UX-FILTERS-7** (`2dacad6`).
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | **Hecho** · `08c10fe` · opción D · smoke Browser Use |
 | UX-FILTERS-7 | Migración / restore compat | **Hecho** · `2dacad6` · audit 562 · smoke restore |
 | UX-16 | Líderes intl guardrail datos ≠ mercados | **Hecho** · `8b58b48` · smoke H-07 Browser Use |
+| UX-17 | Vista rápida: Enter / doble clic → modal | **Hecho** · `a2e06c2` · smoke Browser Use |
 
 ~~UX-15~~ subsumido en UX-FILTERS-1.
 
 ## P2 (post-review)
 
-UX-17…21 — vista rápida, móvil tabla, localStorage, «visibles» vs paginación, botones Ordenar redundantes. Ver informe §Tickets propuestos.
+UX-18…21 — móvil tabla, localStorage, «visibles» vs paginación, botones Ordenar. Ver informe §Tickets propuestos.
 
 ## Track IPO / salidas a bolsa (dueño 2026-08-28)
 
