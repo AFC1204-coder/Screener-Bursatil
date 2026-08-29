@@ -137,6 +137,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     familyIntensity,
     familyIntensityCustom,
     familyCoverage,
+    familyImpact,
     previewFamilyIntensity,
     commitFamilyIntensity,
   } = sidebar;
@@ -454,6 +455,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           familyIntensity={familyIntensity}
           familyIntensityCustom={familyIntensityCustom}
           familyCoverage={familyCoverage}
+          familyImpact={familyImpact}
           onFamilyIntensityChange={previewFamilyIntensity}
           onFamilyIntensityCommit={commitFamilyIntensity}
         />

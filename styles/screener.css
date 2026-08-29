@@ -5466,6 +5466,32 @@ button.decisionIssueBadge:hover,
   color: var(--soft);
 }
 
+/* UX-FILTERS-5 — impacto −N por familia en la tarjeta. Un corte real se
+   enfatiza; «sin recorte» queda en gris para no competir con la señal. */
+.layerImpactSummary {
+  font-weight: 600;
+}
+
+.layerImpactSummary.cut {
+  color: var(--text, #e5e7eb);
+}
+
+.layerImpactSummary.none {
+  color: var(--soft);
+  font-weight: 400;
+  opacity: .75;
+}
+
+/* Pie del editor de familia con el impacto agregado local (FilterFamilyModal). */
+.filterFamilyImpactFooter {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border, rgba(148, 163, 184, 0.2));
+  color: var(--soft);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .filterIntensityBlock {
   display: grid;
   gap: 6px;

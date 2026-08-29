@@ -69,6 +69,7 @@ import { getOrComputeHuntFilter, huntFilterCacheKey, huntPresetActiveSettings, w
 import { huntCardSelection, huntDisplayName } from "@/lib/screenerHuntCards";
 import { FilterFamilyEmptyLabel } from "@/lib/filterFamilyEmpty";
 import { filterFamilyCoverageByPilot, shouldUseFamilyEmptyLabel } from "@/lib/filterFamilyCoverage";
+import { filterFamilyImpactByPilot } from "@/lib/filterFamilyImpact";
 import {
   FILTER_LAYERS_CONTRACT_VERSION,
   effectiveSettingsFromLayers,
@@ -1120,6 +1121,13 @@ export default function Page() {
   const familyCoverage = useMemo(
     () => filterFamilyCoverageByPilot(analyzedRows),
     [analyzedRows],
+  );
+  // Impacto −N por familia sobre el lote cargado (UX-FILTERS-5). Un solo pase
+  // O(n) memoizado por cambio de lote/ajustes/capas/reglas — no por tecla —
+  // para no añadir longtasks al gesto de toggle/intensidad (P3/UX-11).
+  const familyImpact = useMemo(
+    () => filterFamilyImpactByPilot({ analyzedRows, settings, filterLayers, fieldRules }),
+    [analyzedRows, settings, filterLayers, fieldRules],
   );
   // Estado vacío de la tabla, con la causa dicha (punto 4 del contrato sin
   // botón): cargando ≠ cero-por-filtro ≠ sin datos. Nunca "Ejecuta un scan".
@@ -2457,6 +2465,7 @@ export default function Page() {
       familyIntensity,
       familyIntensityCustom,
       familyCoverage,
+      familyImpact,
       previewFamilyIntensity,
       commitFamilyIntensity,
     }}
@@ -2520,6 +2529,7 @@ export default function Page() {
       filterLayers={filterLayers}
       fieldRules={fieldRules}
       familyCoverage={familyCoverage[activeFilterFamily]}
+      familyImpact={familyImpact[activeFilterFamily]}
       familyIntensity={familyIntensity[activeFilterFamily]}
       familyIntensityCustom={familyIntensityCustom[activeFilterFamily]}
       onClose={() => setActiveFilterFamily(null)}

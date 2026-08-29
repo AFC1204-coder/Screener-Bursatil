@@ -31,6 +31,10 @@ import {
   filterFamilyCoverageCardWarning,
   filterFamilyCoverageModalLine,
 } from "@/lib/filterFamilyCoverage";
+import {
+  filterFamilyImpactCardLabel,
+  filterFamilyImpactModalLine,
+} from "@/lib/filterFamilyImpact";
 import { isHuntCardPreset, optionalBasePresetEntries } from "@/lib/screenerHuntCards";
 import { ruleCountLabel } from "@/lib/screenerFormat";
 
@@ -231,6 +235,7 @@ export function FilterFamilyModal({
   filterLayers,
   fieldRules,
   familyCoverage = null,
+  familyImpact = null,
   familyIntensity = null,
   familyIntensityCustom = false,
   onClose,
@@ -256,6 +261,7 @@ export function FilterFamilyModal({
     : "";
   const showIntensity = familyHasIntensity(layerKey);
   const coverageLine = filterFamilyCoverageModalLine(layerKey, familyCoverage);
+  const impactLine = filterFamilyImpactModalLine(familyImpact);
   const familySettingKeys = Object.entries(SETTING_LAYER_DEPENDENCIES)
     .filter(([, dependency]) => dependency.layer === layerKey)
     .map(([key]) => key);
@@ -364,6 +370,8 @@ export function FilterFamilyModal({
           </div>
         </details> : null}
       </div>
+
+      {impactLine ? <p className="filterFamilyImpactFooter">{impactLine}</p> : null}
     </div>
   </dialog>;
 }
@@ -438,6 +446,7 @@ export function LayerControl({
   detail,
   countLabel,
   coverageWarning = "",
+  impactLabel = null,
   intensity = null,
   intensityCustom = false,
   intensitySummary = "",
@@ -446,11 +455,14 @@ export function LayerControl({
 }) {
   const hasIntensity = Number.isFinite(intensity);
   const rowClass = ["layerControlRow", active ? "on" : "off", onOpen ? "hasOpen" : "simple", hasIntensity ? "hasIntensity" : ""].filter(Boolean).join(" ");
+  const hasMeta = detail || countLabel || intensitySummary || coverageWarning || impactLabel;
   return <div className={rowClass}>
     <LayerToggleButton active={active} onClick={onClick} label={label} />
     <div className="layerControlBody">
       <strong className="layerControlLabel">{label}</strong>
-      {(detail || countLabel || intensitySummary || coverageWarning) ? <span className="layerControlMeta">
+      {hasMeta ? <span className="layerControlMeta">
+        {impactLabel ? <small className={`layerImpactSummary ${impactLabel.tone}`}>{impactLabel.text}</small> : null}
+        {impactLabel && (intensitySummary || detail || countLabel || coverageWarning) ? <span className="layerControlSep" aria-hidden="true">·</span> : null}
         {intensitySummary ? <small className="layerIntensitySummary">{intensitySummary}</small> : null}
         {intensitySummary && (detail || countLabel || coverageWarning) ? <span className="layerControlSep" aria-hidden="true">·</span> : null}
         {detail ? <small>{detail}</small> : null}
@@ -490,6 +502,7 @@ export function FilterArchitecturePanel({
   settings = {},
   fieldRules = {},
   familyCoverage = {},
+  familyImpact = {},
   familyIntensity = {},
   familyIntensityCustom = {},
   onFamilyIntensityChange,
@@ -510,6 +523,7 @@ export function FilterArchitecturePanel({
       detail={pilot ? "" : layer.detail}
       countLabel={ruleCountLabel(layer.count)}
       coverageWarning={filterFamilyCoverageCardWarning(key, familyCoverage[key], { active: filterLayers[key] })}
+      impactLabel={filterFamilyImpactCardLabel(familyImpact[key])}
       intensity={pilot ? intensityValue : null}
       intensityCustom={Boolean(familyIntensityCustom[key])}
       intensitySummary={pilot ? summarizeFamilyIntensity(key, settings, fieldRules) : ""}
