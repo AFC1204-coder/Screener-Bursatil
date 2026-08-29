@@ -59,6 +59,7 @@ import { marketFlag } from "@/lib/symbols";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
+import { useScreenerMobileViewport } from "@/lib/useScreenerMobileViewport";
 
 const PERCENTILE_BATCH_BADGE = "Ranking provisional";
 const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
@@ -336,6 +337,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   // página y click/tap fuera del panel (mobileFiltersRef). El botón "Filtros"
   // de la topbar y el propio botón de cierre siguen cerrando via su onClick
   // normal; esto cubre los dos casos que no tenían manejador.
+  const isMobileViewport = useScreenerMobileViewport();
   const mobileFiltersRef = useRef(null);
   useEffect(() => {
     if (!showMobileFilters) return undefined;
@@ -633,7 +635,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           </details>
         </section>
 
-        <section className="mobileResearchHome">
+        {isMobileViewport ? <section className="mobileResearchHome">
           <MarketMiniTape marketHealth={marketHealth} />
           {marketsMisalignment ? (
             <div className="scanStaleNotice" role="status" aria-live="polite">
@@ -689,9 +691,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             decisionResolutions={resultsDecisionResolutions}
             emptyLabel={resultsEmptyLabel}
           />
-        </section>
+        </section> : null}
 
-        <section className="desktopResultsSection" style={{ marginBottom: 20 }}>
+        {!isMobileViewport ? <section className="desktopResultsSection" style={{ marginBottom: 20 }}>
           {marketsMisalignment ? (
             <div className="scanStaleNotice" role="status" aria-live="polite">
               <span className="scanStaleNoticeLabel">{marketsMisalignment.label}</span>
@@ -823,7 +825,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             setupMode={activeSettings.setupMode}
             emptyLabel={resultsEmptyLabel}
           />
-        </section>
+        </section> : null}
       </main>
     </div>
     <footer className="footer" style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,.04)", paddingTop: 16, fontSize: 11, opacity: 0.5 }}>StatsEdge · Datos orientativos · {investorStatusLabel(status)}</footer>

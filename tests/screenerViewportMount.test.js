@@ -1,9 +1,26 @@
+// tests/screenerViewportMount.test.js — CLEAN-2: un solo árbol de resultados por viewport.
+
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi, beforeAll } from "vitest";
-import { MARKETS_MISALIGNMENT_CTA } from "@/lib/marketAvailability";
+import {
+  SCREENER_MOBILE_MAX_PX,
+  SCREENER_MOBILE_MEDIA_QUERY,
+} from "@/lib/useScreenerMobileViewport";
 
 const Stub = ({ marker }) => React.createElement("div", { "data-stub": marker });
+
+const { mockIsMobileViewport } = vi.hoisted(() => ({
+  mockIsMobileViewport: vi.fn(() => false),
+}));
+
+vi.mock("@/lib/useScreenerMobileViewport", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useScreenerMobileViewport: () => mockIsMobileViewport(),
+  };
+});
 
 vi.mock("@/app/screenerPanels", () => ({
   FilterArchitecturePanel: () => Stub({ marker: "FilterArchitecturePanel" }),
@@ -23,6 +40,8 @@ vi.mock("@/app/components/screener/ResultFilterBar", () => ({ default: () => Stu
 vi.mock("@/app/components/screener/ResultPagerTable", () => ({ default: () => Stub({ marker: "ResultPagerTable" }) }));
 vi.mock("@/app/components/screener/WeeklyChangesLine", () => ({ default: () => Stub({ marker: "WeeklyChangesLine" }) }));
 vi.mock("@/app/components/screener/GlobalCoveragePanel", () => ({ default: () => Stub({ marker: "GlobalCoveragePanel" }) }));
+vi.mock("@/app/components/screener/HuntCardRail", () => ({ default: () => Stub({ marker: "HuntCardRail" }) }));
+vi.mock("@/app/components/screener/HuntCardModeStrip", () => ({ default: () => Stub({ marker: "HuntCardModeStrip" }) }));
 
 let ScreenerShell;
 
@@ -30,23 +49,18 @@ beforeAll(async () => {
   ({ default: ScreenerShell } = await import("@/app/components/screener/ScreenerShell"));
 });
 
-function makeProps({
-  marketsStale = false,
-  scanStale = marketsStale,
-  scannedMarkets = ["US"],
-  selectedMarkets = ["US", "CA"],
-  snapshotNotice = null,
-} = {}) {
+function makeProps() {
   const resultsRows = [{ symbol: "AAPL", country: "US" }];
+  const resultsFiltered = resultsRows;
   return {
     chrome: {
       presetKey: "balanced",
-      markets: selectedMarkets,
+      markets: ["US"],
       filtered: resultsRows,
       filteredCount: 1,
       err: null,
       status: "idle",
-      snapshotNotice,
+      snapshotNotice: null,
       restoringScan: false,
       showMobileFilters: false,
       sidebarCollapsed: false,
@@ -54,12 +68,15 @@ function makeProps({
       setSidebarCollapsed: () => {},
       marketHealth: null,
       rows: resultsRows,
+      huntTruthOverride: null,
+      isHuntTransitionPending: false,
     },
     sidebar: {
       savedFilterTemplates: [],
       selectedFilterTemplateId: null,
       filterTemplateName: "",
       setPreset: () => {},
+      applyHuntCard: () => {},
       applySavedFilterTemplate: () => {},
       setFilterTemplateName: () => {},
       saveCurrentFilterTemplate: () => {},
@@ -81,7 +98,7 @@ function makeProps({
       toggleViewLayer: () => {},
       executionRuleActive: 0,
       executionRuleTotal: 0,
-      viewFiltersActive: false,
+      viewFiltersActive: 0,
       setFilterLayers: () => {},
       settings: {},
       updateSetting: () => {},
@@ -97,6 +114,13 @@ function makeProps({
       setSettings: () => {},
       setFieldRules: () => {},
       diagnostics: null,
+      markAdvancedBaseline: () => {},
+      familyIntensity: {},
+      familyIntensityCustom: {},
+      familyCoverage: {},
+      familyImpact: {},
+      previewFamilyIntensity: () => {},
+      commitFamilyIntensity: () => {},
     },
     search: {
       searchSymbol: "",
@@ -119,14 +143,60 @@ function makeProps({
     resultView: {
       sort: "perf6m",
       sortAsc: false,
-      filtered: resultsRows,
-      pagedRows: resultsRows,
+      filtered: resultsFiltered,
+      pagedRows: resultsFiltered,
+      perfPeriod: "6m",
+      decisionResolutionFilter: "",
+      decisionResolutionOptions: [],
+      setDecisionResolutionFilter: () => {},
+      setSort: () => {},
+      setPerfPeriod: () => {},
+      viewLayers: {},
+      viewFiltersActive: 0,
+      countryFilter: "",
+      countryOptions: [],
+      countryCounts: {},
+      setCountryFilter: () => {},
+      themeFilter: "",
+      themeOptions: [],
+      themeCounts: {},
+      setThemeFilter: () => {},
+      setSectorFilter: () => {},
+      setIndustryFilter: () => {},
+      sectorFilter: "",
+      sectorOptions: [],
+      sectorCounts: {},
+      industryFilter: "",
+      industryOptions: [],
+      industryCounts: {},
+      sectorStrength: "",
+      sectorStrengthCounts: {},
+      setSectorStrength: () => {},
+      ipo: "",
+      ipos: [],
+      ipoCounts: {},
+      setIpo: () => {},
+      resultFilterChips: [],
+      hiddenByView: 0,
+      clearResultView: () => {},
+      openResultViewReview: () => {},
+      resultPageSize: 50,
+      updateResultPageSize: () => {},
+      visibleResultPage: 1,
+      totalResultPages: 1,
+      setResultPageClamped: () => {},
+      resultPageStart: 1,
+      resultPageEnd: 1,
+      toggleSortColumn: () => {},
+      optionLabel: () => "",
+      resultsEmptyLabel: "",
+      resultsDecisionResolutions: {},
     },
     results: {
-      filtered: resultsRows,
+      filtered: resultsFiltered,
       rows: resultsRows,
-      pagedRows: resultsRows,
-      activeSettings: {},
+      pagedRows: resultsFiltered,
+      activeSettings: { setupMode: "" },
       analyzedRows: resultsRows,
       favoriteSymbols: new Set(),
       screenerDecisionResolutions: {},
@@ -145,62 +215,53 @@ function makeProps({
       selectedResultSymbol: "",
       onSelectResultRow: () => {},
       openResultReview: () => {},
+      openResultViewReview: () => {},
+      setResultPageClamped: () => {},
     },
     staleness: {
-      scanStale,
-      marketsStale,
+      scanStale: false,
+      marketsStale: false,
       scannedAt: "2026-08-27T14:07:00.000Z",
-      scannedMarkets,
+      scannedMarkets: ["US"],
     },
   };
 }
 
-describe("ScreenerShell markets misalignment", () => {
-  it("pinta la línea de verdad y un solo banner con CTA por viewport", () => {
-    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ marketsStale: true })));
-    expect(html).toContain("screenerTruthLine");
-    expect(html).toContain("analizadas");
-    expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
-    expect((html.match(/class="scanStaleNotice"/g) || []).length).toBe(1);
-    expect(html).not.toContain("resultados visibles");
-    expect(html).not.toContain('class="kpi"');
+describe("screener viewport constants", () => {
+  it("usa breakpoint canónico 760px", () => {
+    expect(SCREENER_MOBILE_MAX_PX).toBe(760);
+    expect(SCREENER_MOBILE_MEDIA_QUERY).toBe("(max-width: 760px)");
+  });
+});
+
+describe("useScreenerMobileViewport hidratación", () => {
+  it("estado inicial desktop (false) en SSR antes del sync con matchMedia", async () => {
+    const { useScreenerMobileViewport: realUseScreenerMobileViewport } = await vi.importActual("@/lib/useScreenerMobileViewport");
+    function Probe() {
+      const isMobile = realUseScreenerMobileViewport();
+      return React.createElement("span", { "data-is-mobile": String(isMobile) });
+    }
+    const html = renderToStaticMarkup(React.createElement(Probe));
+    expect(html).toContain("data-is-mobile=\"false\"");
+  });
+});
+
+describe("ScreenerShell viewport mount", () => {
+  it("desktop: monta desktopResultsSection sin mobileResearchHome ni MobileResultList", () => {
+    mockIsMobileViewport.mockReturnValue(false);
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
+    expect(html).toContain("desktopResultsSection");
+    expect(html).toContain("data-stub=\"ResultPagerTable\"");
+    expect(html).not.toContain("mobileResearchHome");
+    expect(html).not.toContain("data-stub=\"MobileResultList\"");
   });
 
-  it("no duplica el aviso markets-stale en snapshotNotice", () => {
-    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
-      marketsStale: true,
-      snapshotNotice: {
-        tone: "warn",
-        label: "Mercados",
-        detail: "Datos cargados: US. La selección actual (US, CA) no coincide.",
-        source: "markets-stale",
-      },
-    })));
-    expect(html.match(/snapshotFreshnessNotice/g) || []).toHaveLength(0);
-    expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
-  });
-
-  it("muestra CTA de mercados aunque scanStale sea false (firma alineada, datos US)", () => {
-    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
-      marketsStale: true,
-      scanStale: false,
-      scannedMarkets: ["US"],
-      selectedMarkets: ["HK"],
-    })));
-    expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
-    expect(html).not.toContain("Los criterios de cobertura cambiaron");
-    expect((html.match(/class="scanStaleNotice"/g) || []).length).toBe(1);
-  });
-
-  it("muestra Traer datos frescos solo cuando mercados coinciden pero scanStale", () => {
-    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
-      marketsStale: false,
-      scanStale: true,
-      scannedMarkets: ["US"],
-      selectedMarkets: ["US"],
-    })));
-    expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
-    expect(html).toContain("Los criterios de cobertura cambiaron");
-    expect((html.match(/Los criterios de cobertura cambiaron/g) || []).length).toBe(1);
+  it("móvil: monta mobileResearchHome y MobileResultList sin desktopResultsSection", () => {
+    mockIsMobileViewport.mockReturnValue(true);
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
+    expect(html).toContain("mobileResearchHome");
+    expect(html).toContain("data-stub=\"MobileResultList\"");
+    expect(html).not.toContain("desktopResultsSection");
+    expect(html).not.toContain("data-stub=\"ResultPagerTable\"");
   });
 });

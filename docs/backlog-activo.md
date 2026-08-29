@@ -6,9 +6,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **UX-23** (InfoHints cabecera).  
-Anterior: **UX-BTN-6** (`969b97e`).  
-**Cola:** CLEAN-2 · (Supabase aplazado)  
+Último cerrado: **CLEAN-2** (dual DOM) — **higiene página R-02/R-04 cerrada**.  
+Anterior: **UX-23** (`9244496`).  
+**Cola:** (Supabase aplazado)  
+**Nota CLEAN-2 (2026-08-29):** smoke — desktop 0× mobileHome; 390px 1× mobile / 0× desktop.  
 **Nota UX-23 (2026-08-29):** smoke — thead 3× «i» (Tema/RS/Etapa); Ticker/Rend/Dist/Cap sin «i».  
 **Nota UX-BTN-6 (2026-08-29):** smoke — chips país activo tiza/`--active-*` inset, sin fill tiza ni ámbar.  
 **Nota UX-BTN-5 (2026-08-29):** smoke — Deterioro/Líderes activo `--active-*` sin ámbar; select data-active sin azul.  
@@ -131,6 +132,7 @@ Anterior: **UX-BTN-6** (`969b97e`).
 | UX-BTN-5 | Hunt rail + «+ Filtro» | `035c22b` |
 | UX-BTN-6 | Market / country chips | `969b97e` |
 | UX-23 | InfoHints cabecera tabla | `9244496` |
+| CLEAN-2 | Dual DOM móvil/desktop | *(pendiente stamp)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -176,6 +178,7 @@ Anterior: **UX-BTN-6** (`969b97e`).
 | UX-BTN-5 | Hunt rail + «+ Filtro» | **Hecho** · `035c22b` · smoke `/` |
 | UX-BTN-6 | Market / country chips | **Hecho** · `969b97e` · smoke `/` |
 | UX-23 | InfoHints cabecera tabla | **Hecho** · `9244496` · smoke `/` |
+| CLEAN-2 | Dual DOM móvil/desktop | **Hecho** · smoke desktop+390 |
 
 Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 
