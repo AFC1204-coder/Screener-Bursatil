@@ -5,10 +5,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: _(liberado)_.  
+Ticket en curso: **UX-FILTERS-5** (impacto −N por familia · IPO/RS).  
 Último cerrado: **IPO-1c** (`165724d`).  
 Anterior: **IPO-NOCT** (`d3e932f`).  
-**Cola:** salida Supabase (aplazada) · UX-FILTERS-5 / UX-13…  
+**Cola:** UX-FILTERS-5 · (Supabase aplazado) · UX-13…  
+**Nota handoff móvil (2026-08-29):** Cloud Agent OK en FILTERS-5; smoke Browser Use al volver.  
 **Nota IPO-1c (2026-08-29):** smoke nav IPO; banda 14d; merge **Vigilada** en Radar IPO (ZZSMOKE + pre-IPO).  
 **Nota IPO-NOCT (2026-08-29):** SQL patch US scan → **3289/3320** con `ipoDate`; smoke Radar IPO → **285 pasan**. Script `scripts/patch-scan-ipodate.mjs` + merge puro.  
 **Nota UX-FILTERS-4 (2026-08-29):** smoke RS `⚠ 1701/3320` + modal «Cobertura del dato»; Radar IPO `⚠ ipoDate en 0/3320` + empty CTA.  
@@ -107,6 +108,7 @@ Anterior: **IPO-NOCT** (`d3e932f`).
 | UX-FILTERS-2 | Taxonomía única de familias | **Hecho** · `745043a` |
 | UX-FILTERS-3 | Intensidad continua 0–100 + Abrir (IPO + RS) | **Hecho** |
 | UX-FILTERS-4 | Cobertura N/M + aviso dato ausente | **Hecho** · `48faa89` · smoke Browser Use |
+| UX-FILTERS-5 | Impacto −N por familia (tarjeta + pie editor) | **En curso** · `docs/tickets/activo.md` · pilotos IPO+RS · Cloud OK |
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | Pendiente · **decisión dueño** |
 | UX-16 | Líderes intl guardrail datos ≠ mercados | Pendiente |
 
