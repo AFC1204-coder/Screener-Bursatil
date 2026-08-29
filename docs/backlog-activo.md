@@ -110,7 +110,7 @@ Anterior: **UX-19** (`260bcdc`).
 | CHART-NAV | fixLeftEdge false + manual lógico en resize | `cb99525` |
 | UX-18 | Móvil ≤480: chrome compacto, 1ª fila legible | `620ae28` |
 | UX-19 | StorageAlert compacto + dismiss + liberar | `260bcdc` |
-| UX-20 | Truth line «en lista» + hint /página | *(commit siguiente)* |
+| UX-20 | Truth line «en lista» + hint /página | `a8a540e` |
 
 ## Siguiente — datos IPO + filtros
 
