@@ -339,6 +339,28 @@
   color:var(--text);
 }
 
+.huntCardRsChip {
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  padding:3px 8px;
+  border:1px solid var(--traza);
+  border-radius:999px;
+  background:var(--traza-dim);
+  color:var(--traza);
+  font-size:10px;
+  font-weight:760;
+  letter-spacing:.04em;
+  line-height:1.35;
+}
+
+.huntCardRsNote {
+  margin:0 0 10px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+}
+
 .huntCardModeDisclosure {
   flex:1 1 12rem;
   min-width:0;

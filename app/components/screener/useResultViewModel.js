@@ -26,7 +26,7 @@ import {
   explainScreenerRank,
 } from "@/lib/screenerExplainability";
 import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
-import { sortMetric, defaultSortForSettings } from "@/lib/screenerPipeline";
+import { compareRowsForSort, defaultSortForSettings } from "@/lib/screenerPipeline";
 import {
   alignRestoredSortSession,
   applyPerfPeriodSelection,
@@ -221,12 +221,13 @@ export function useResultViewModel({
     [annotatedRows, viewFilterState],
   );
 
-  const filtered = useMemo(() => {
-    const sorted = [...viewFilteredRows].sort(
-      (a, b) => sortMetric(b, sort, activeSettings) - sortMetric(a, sort, activeSettings),
-    );
-    return sortAsc ? sorted.reverse() : sorted;
-  }, [viewFilteredRows, sort, sortAsc, activeSettings]);
+  const filtered = useMemo(() => (
+    [...viewFilteredRows].sort((a, b) => compareRowsForSort(a, b, {
+      sort,
+      sortAsc,
+      settings: activeSettings,
+    }))
+  ), [viewFilteredRows, sort, sortAsc, activeSettings]);
 
   const pendingDecisionWorkSummary = useMemo(() => {
     const pendingItems = viewFilteredRows.map((row) => {

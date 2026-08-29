@@ -223,6 +223,21 @@ describe("HuntCardModeStrip", () => {
     expect(html).toContain("Strict");
     expect(html).toMatch(/Deterioro ≥/);
   });
+
+  it("muestra chip RS N/M en Líderes Etapa 2 sobre filas que pasan", () => {
+    const html = renderToStaticMarkup(React.createElement(HuntCardModeStrip, {
+      presetKey: "balanced",
+      markets: ["US"],
+      passedRows: [
+        { symbol: "AAA", weeklyRsAvailable: true, weeklyRsRating: 80 },
+        { symbol: "BBB", weeklyRsAvailable: true, weeklyRsRating: 70 },
+        { symbol: "CCC", weeklyRsAvailable: false },
+      ],
+    }));
+    expect(html).toContain("huntCardRsChip");
+    expect(html).toContain("RS 2/3");
+    expect(html).toContain("ranking semanal del universo privado");
+  });
 });
 
 describe("ScreenerShell hunt rail", () => {

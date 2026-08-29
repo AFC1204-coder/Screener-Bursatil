@@ -552,6 +552,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           <HuntCardModeStrip
             presetKey={presetKey}
             markets={markets}
+            passedRows={resultsRows}
             onOpenFamily={(familyKey) => {
               persistAdvancedOpen(true);
               setShowMobileFilters(true);
