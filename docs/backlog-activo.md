@@ -6,9 +6,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **CHART-RS** (overlay sin pane; smoke OKTA).  
-Anterior: **CHART-NAV-fix** (`0d5298a`).  
-**Cola:** CHART-NAV completo · UX-18…21 (P2) · (Supabase aplazado)  
+Último cerrado: **CHART-NAV** (gesto libre + `fixLeftEdge:false`).  
+Anterior: **CHART-RS** (`0728afe`).  
+**Cola:** UX-18…21 (P2) · (Supabase aplazado)  
+**Nota chart (2026-08-29):** dueño — RS en el gráfico (no abajo); navegación libre tipo TradingView. Specs: `CHART-RS-overlay-sin-pane.md`, `CHART-NAV-navegacion-libre.md`.  
+**Nota CHART-NAV (2026-08-29):** smoke AAPL — `fixLeftEdge:false`; ctrl+rueda zoom + pan; resize conserva rango manual (sin fit). Drag DOM sintético no llega a LW (gesto real = pressedMouseMove ya ON).  
+**Nota CHART-RS (2026-08-29):** smoke `/stock/OKTA` — RS ON, 1 pane grande (572+28), línea overlay abajo, sin franja RS.  
+**Nota CHART-NAV-fix (2026-08-29):** chevrons/zoom/reset OK en `/stock/AAPL` (Browser Use).  
 **Nota chart (2026-08-29):** dueño — RS en el gráfico (no abajo); navegación libre tipo TradingView. Specs: `CHART-RS-overlay-sin-pane.md`, `CHART-NAV-navegacion-libre.md`.  
 **Nota CHART-RS (2026-08-29):** smoke `/stock/OKTA` — RS ON, 1 pane grande (572+28), línea overlay abajo, sin franja RS.  
 **Nota CHART-NAV-fix (2026-08-29):** chevrons/zoom/reset OK en `/stock/AAPL` (Browser Use). Causas: UI gated solo por `manualView`; `getSnapshot` pisaba gestos; fit+`minBarSpacing` re-marcaba manual; `rowTimes` async vacío. Residual: cold hunt ~1–2s (UX-11 warm OK); pan drag nativo = CHART-NAV completo.  
@@ -107,6 +111,7 @@ Anterior: **CHART-NAV-fix** (`0d5298a`).
 | UX-17 | Enter/doble clic → Vista rápida | `a2e06c2` |
 | CHART-NAV-fix | Chevrons/zoom/reset vivos (sync manual/fit) | `0d5298a` |
 | CHART-RS | RS overlay sin pane inferior | `0728afe` |
+| CHART-NAV | fixLeftEdge false + manual lógico en resize | *(commit siguiente)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -154,8 +159,8 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 
 | ID | Qué | Estado |
 |---|---|---|
-| CHART-RS | RS solo overlay en gráfico (sin panel duplicado) | **Hecho** · smoke OKTA |
-| CHART-NAV | Pan/zoom libre; zona de interés marcada, no secuestrada | **Parcial:** botones chevron/zoom/reset vivos (CHART-NAV-fix). Resta: gesto drag/wheel TradingView · `docs/tickets/CHART-NAV-navegacion-libre.md` |
+| CHART-RS | RS solo overlay en gráfico (sin panel duplicado) | **Hecho** · `0728afe` · smoke OKTA |
+| CHART-NAV | Pan/zoom libre; zona de interés marcada, no secuestrada | **Hecho** · smoke AAPL · `fixLeftEdge:false` + manual lógico |
 
 **Orden sugerido:** CHART-RS (cambio de representación) → CHART-NAV (gesto timeScale); o paralelo en ramas si no tocan el mismo helper de rango.  
 **No** mezclar con UX-18…21 (P2 mesa) en el mismo ticket.

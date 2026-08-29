@@ -341,6 +341,31 @@ describe("viewport · gestos nativos", () => {
     expect(snapshot.visibleLogicalRange).toEqual({ from: 50, to: 120 });
   });
 
+  it("pan nativo con whitespace izquierdo persiste tras resize (no fitContent)", () => {
+    const harness = createHarness();
+    const { timeScale, container } = attachFresh(harness);
+    flushRaf();
+
+    // Simula arrastre horizontal con fixLeftEdge:false: whitespace a la izquierda
+    // pero el último dato sigue en el borde derecho.
+    timeScale.emitLogical({ from: -30, to: 199.5 });
+    flushRaf();
+    expect(harness.published.at(-1).manual).toBe(true);
+
+    const manual = timeScale._currentLogical();
+    const fitsBefore = timeScale._log.writes.filter((w) => w.kind === "fitContent").length;
+
+    container._resizeObserver.trigger({ contentRect: { width: 1200, height: 600 } });
+
+    const fitsAfter = timeScale._log.writes.filter((w) => w.kind === "fitContent").length;
+    expect(fitsAfter).toBe(fitsBefore);
+    const applied = timeScale._currentLogical();
+    expect(applied.from).toBeCloseTo(manual.from, 0);
+    expect(applied.to).toBeCloseTo(manual.to, 0);
+    flushRaf();
+    expect(harness.published.at(-1).manual).toBe(true);
+  });
+
   it("los estados intermedios de una aplicación diferida NO se convierten en desviación manual", () => {
     // lightweight-charts aplica fitContent en su propio animation frame: un
     // chart recién creado emite primero su ventana de espaciado por defecto

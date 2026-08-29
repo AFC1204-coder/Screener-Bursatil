@@ -116,7 +116,7 @@ describe("chartViewportModel · perfil adaptativo", () => {
     expect(tickFormatter("2025-01-15")).toBe("ene 25");
     expect(timeFormatter("2025-01-15")).toBe("15 ene 2025");
     expect(profile.priceScaleMargins).toEqual({ top: 0.08, bottom: 0.25 });
-    expect(profile.timeScale.fixLeftEdge).toBe(true);
+    expect(profile.timeScale.fixLeftEdge).toBe(false);
     expect(profile.timeScale.rightBarStaysOnScroll).toBe(true);
   });
 

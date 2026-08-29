@@ -1,6 +1,6 @@
 # CHART-NAV — Navegación libre del gráfico (tipo TradingView)
 
-**Estado:** Pendiente · oleada chart (junto a CHART-RS)  
+**Estado:** Hecho · oleada chart (smoke Browser Use `/stock/AAPL` 2026-08-29)  
 **Origen:** dueño 2026-08-29 — el gráfico se queda «encasillado» en la zona de referencia; quiere moverse como en TradingView.
 
 ## Problema

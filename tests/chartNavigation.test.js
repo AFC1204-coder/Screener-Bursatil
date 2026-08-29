@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chartViewStateFromLogicalRange, latestLogicalRange, shiftedLogicalRange, timeWindowFromLogicalRange, timeWindowLogicalRange, zoomedLogicalRange } from "@/lib/chartNavigation";
+import { chartViewStateFromLogicalRange, hasLeftWhitespaceLogicalRange, latestLogicalRange, shiftedLogicalRange, timeWindowFromLogicalRange, timeWindowLogicalRange, zoomedLogicalRange } from "@/lib/chartNavigation";
 
 describe("chart navigation helpers", () => {
   it("detecta zoom anclado al último dato por rango lógico", () => {
@@ -23,6 +23,15 @@ describe("chart navigation helpers", () => {
     expect(state.visibleBars).toBe(200);
     expect(state.canPanLeft).toBe(false);
     expect(state.canPanRight).toBe(false);
+  });
+
+  it("hasLeftWhitespaceLogicalRange detecta whitespace sin clasificar como manual por zoom", () => {
+    const state = chartViewStateFromLogicalRange({ from: -30, to: 199.5 }, 200);
+
+    expect(state.isManual).toBe(false);
+    expect(state.key).toBe("latest");
+    expect(hasLeftWhitespaceLogicalRange({ from: -30, to: 199.5 })).toBe(true);
+    expect(hasLeftWhitespaceLogicalRange({ from: -0.5, to: 199.5 })).toBe(false);
   });
 
   it("detecta exploración histórica aunque el rango temporal sea válido", () => {
