@@ -118,7 +118,7 @@ Anterior: **CLEAN-1** (`fb9188a`).
 | UX-21 | Desktop: orden solo cabeceras (sin select) | `e415815` |
 | UX-22 | Verdad pasan/lista alineada (deferred hunt) | `332d2e4` |
 | CLEAN-1 | Purga CSS `.resultSortSelect` | `fb9188a` |
-| UX-BTN-1 | Segmented / keycaps unificados | *(pendiente stamp)* |
+| UX-BTN-1 | Segmented / keycaps unificados | `59bbc52` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -157,7 +157,7 @@ Anterior: **CLEAN-1** (`fb9188a`).
 | UX-22 | Verdad pasan vs en lista (deferred hunt) | **Hecho** · `332d2e4` · smoke 3318 |
 | CLEAN-1 | Purga CSS `.resultSortSelect` | **Hecho** · `fb9188a` |
 | UX-BTN | Brief acabados botones/teclas | **Hecho** · `docs/analisis-ux-btn-acabados-2026-08-29.md` |
-| UX-BTN-1 | Segmented / keycaps unificados | **Hecho** · smoke 3M/6M/12M |
+| UX-BTN-1 | Segmented / keycaps unificados | **Hecho** · `59bbc52` · smoke 3M/6M/12M |
 | UX-BTN-2 | Primary / Ghost / Pager | Pendiente |
 | UX-BTN-3 | Chart floating nav | Pendiente |
 | UX-BTN-4 | Stock decision rail | Pendiente |
