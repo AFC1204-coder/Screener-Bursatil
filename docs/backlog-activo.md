@@ -112,7 +112,7 @@ Anterior: **UX-20** (`a8a540e`).
 | UX-18 | Móvil ≤480: chrome compacto, 1ª fila legible | `620ae28` |
 | UX-19 | StorageAlert compacto + dismiss + liberar | `260bcdc` |
 | UX-20 | Truth line «en lista» + hint /página | `a8a540e` |
-| UX-21 | Desktop: orden solo cabeceras (sin select) | *(pendiente stamp)* |
+| UX-21 | Desktop: orden solo cabeceras (sin select) | `e415815` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -147,7 +147,7 @@ Anterior: **UX-20** (`a8a540e`).
 | UX-18 | Móvil 390: resultados accesibles | **Hecho** · `620ae28` · smoke 390×844 |
 | UX-19 | Banner localStorage lleno | **Hecho** · `260bcdc` |
 | UX-20 | Copy «visibles» vs página | **Hecho** · `a8a540e` · smoke Deterioro |
-| UX-21 | Botones Ordenar vs cabeceras | **Hecho** · smoke RS header |
+| UX-21 | Botones Ordenar vs cabeceras | **Hecho** · `e415815` · smoke RS header |
 
 Ver informe §Tickets propuestos · `docs/analisis-ux-screener-review-2026-08-28.md`.
 
