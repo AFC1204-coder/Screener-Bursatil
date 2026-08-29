@@ -120,7 +120,7 @@ Anterior: **UX-BTN-1** (`59bbc52`).
 | UX-22 | Verdad pasan/lista alineada (deferred hunt) | `332d2e4` |
 | CLEAN-1 | Purga CSS `.resultSortSelect` | `fb9188a` |
 | UX-BTN-1 | Segmented / keycaps unificados | `59bbc52` |
-| UX-BTN-2 | Primary / Ghost / Pager | *(pendiente stamp)* |
+| UX-BTN-2 | Primary / Ghost / Pager | `74d7085` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -160,7 +160,7 @@ Anterior: **UX-BTN-1** (`59bbc52`).
 | CLEAN-1 | Purga CSS `.resultSortSelect` | **Hecho** · `fb9188a` |
 | UX-BTN | Brief acabados botones/teclas | **Hecho** · `docs/analisis-ux-btn-acabados-2026-08-29.md` |
 | UX-BTN-1 | Segmented / keycaps unificados | **Hecho** · `59bbc52` · smoke 3M/6M/12M |
-| UX-BTN-2 | Primary / Ghost / Pager | **Hecho** · smoke Revisar + pager |
+| UX-BTN-2 | Primary / Ghost / Pager | **Hecho** · `74d7085` · smoke Revisar + pager |
 | UX-BTN-2 | Primary / Ghost / Pager | Pendiente |
 | UX-BTN-3 | Chart floating nav | Pendiente |
 | UX-BTN-4 | Stock decision rail | Pendiente |
