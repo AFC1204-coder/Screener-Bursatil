@@ -344,7 +344,7 @@
   min-width:7.5rem;
   padding:8px 12px;
   border:1px solid var(--line);
-  border-radius:8px;
+  border-radius:var(--radius);
   background:var(--surface2);
   color:var(--muted);
   font-size:12px;
@@ -352,10 +352,15 @@
   letter-spacing:-.01em;
 }
 
+.huntCardRail button:not(.active):hover {
+  border-color:var(--line2);
+  color:var(--text);
+}
+
 .huntCardRail button.active {
-  border-color:var(--accent);
-  background:var(--senal-dim);
-  color:var(--accent);
+  border-color:var(--active-border);
+  background:var(--active-bg);
+  color:var(--active-fg);
 }
 
 .huntCardModeStrip {
@@ -9206,10 +9211,10 @@ button.decisionOperatingIssue:hover {
   color: var(--text);
 }
 
-/* Filtro activo (valor no-default) — borde --accent sutil + fondo */
+/* Filtro activo (valor no-default) — elevación de superficie, sin azul legado */
 .screenerTerminalPage .resultFilterSelect[data-active="true"] {
-  border-color: rgba(59, 120, 240, .45);
-  background: rgba(59, 120, 240, .06);
+  border-color: var(--active-border);
+  background: var(--active-bg);
 }
 
 /* "+ Filtro" — mismo eje y altura que los selects, sin ocupar toda la fila */
@@ -9229,6 +9234,12 @@ button.decisionOperatingIssue:hover {
   font-size: 12px;
   cursor: pointer;
   list-style: none;
+}
+.screenerTerminalPage .viewLayerFilters > summary:hover {
+  border-color: var(--line2);
+}
+.screenerTerminalPage .viewLayerFilters[open] > summary {
+  border-color: var(--line2);
 }
 .screenerTerminalPage .viewLayerFilters > summary::before {
   content: "+";

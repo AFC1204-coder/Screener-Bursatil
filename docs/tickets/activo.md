@@ -2,4 +2,4 @@
 
 *(Ninguno. Orquestador escribe el siguiente aquí.)*
 
-Último cerrado: **UX-BTN-4** — stock decision rail tokens v2.
+Último cerrado: **UX-BTN-5** — hunt rail + «+ Filtro» sin senal-dim/azul.
