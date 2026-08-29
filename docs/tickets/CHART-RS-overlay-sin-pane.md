@@ -1,8 +1,8 @@
 # CHART-RS — Línea RS solo en gráfico (sin panel duplicado)
 
-**Estado:** Pendiente · tras cerrar **UX-REVIEW** (tanda actual)  
+**Estado:** Pendiente · oleada chart (dueño reconfirmó 2026-08-29: RS en el gráfico, no abajo)  
 **Rama:** `codex/statsedge-ui-polish`  
-**Evidencia:** capturas dueño 2026-08-28 (`/stock/OKTA`) — línea azul «RS 94» en panel precio **y** panel inferior.
+**Hermano:** `docs/tickets/CHART-NAV-navegacion-libre.md` (pan/zoom libre)
 
 ## Problema
 

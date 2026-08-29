@@ -8,7 +8,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Ticket en curso: *(ninguno — cola P2 UX-18…21)*.  
 Último cerrado: **UX-17** (`a2e06c2`).  
 Anterior: **UX-16** (`8b58b48`).  
-**Cola:** UX-18 · UX-19 · UX-20 · UX-21 · (Supabase aplazado)  
+**Cola:** UX-18…21 (P2 mesa) · **oleada chart** CHART-RS + CHART-NAV · (Supabase aplazado)  
+**Nota chart (2026-08-29):** dueño — RS en el gráfico (no abajo); navegación libre tipo TradingView. Specs: `CHART-RS-overlay-sin-pane.md`, `CHART-NAV-navegacion-libre.md`.  
 **Nota UX-17 (2026-08-29):** smoke clic/Enter/doble clic → Vista rápida; ticker → `/stock/NVCT`.  
 **Nota UX-16 (2026-08-29):** smoke H-07 — Líderes intl + US 3318 → banner + CTAs; E2 quita aviso.  
 **Nota UX-FILTERS-7 (2026-08-29):** restore cosmética + `resolveStoredFilterConfig`; audit 562/562.  
@@ -143,11 +144,17 @@ UX-18…21 — móvil tabla, localStorage, «visibles» vs paginación, botones 
 
 Orden: IPO-1a → IPO-1b–c (+ 1d = UX-FILTERS-3+4 sobre IPO).
 
-## Chart (pendiente oleada screener)
+## Chart (pendiente · oleada post-screener P2)
+
+Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no panel abajo); **navegación libre** tipo TradingView (pan/zoom), sin quedar encasillado en la zona de referencia.
 
 | ID | Qué | Estado |
 |---|---|---|
 | CHART-RS | RS solo overlay en gráfico (sin panel duplicado) | Pendiente · `docs/tickets/CHART-RS-overlay-sin-pane.md` |
+| CHART-NAV | Pan/zoom libre; zona de interés marcada, no secuestrada | Pendiente · `docs/tickets/CHART-NAV-navegacion-libre.md` |
+
+**Orden sugerido:** CHART-RS (cambio de representación) → CHART-NAV (gesto timeScale); o paralelo en ramas si no tocan el mismo helper de rango.  
+**No** mezclar con UX-18…21 (P2 mesa) en el mismo ticket.
 
 ## Track métricas (pendiente)
 

@@ -1,19 +1,13 @@
 # Sin ticket activo (tras UX-17)
 
-## Siguiente candidato P2 — UX-18 (móvil resultados)
+## Candidatos
 
-```
-@docs/tickets/activo.md
+**P2 mesa:** UX-18 (móvil) → 19 → 20 → 21
 
-Rama base: codex/statsedge-ui-polish.
-Modelo: Composer 2.5 · MED.
-Cloud Agent OK. Smoke Browser Use = orquestador (viewport 390).
+**Oleada chart (prioridad producto dueño 2026-08-29):**
+1. **CHART-RS** — RS solo overlay en el gráfico (`docs/tickets/CHART-RS-overlay-sin-pane.md`)
+2. **CHART-NAV** — pan/zoom libre tipo TradingView (`docs/tickets/CHART-NAV-navegacion-libre.md`)
 
-UX-18 (P2): en móvil 390px, resultados visibles sin depender solo del drawer de filtros.
-Spec: docs/analisis-ux-screener-review-2026-08-28.md UX-18.
-Fuera: scoring, nocturno, rediseño desktop.
-Tests + ./vfc. Plantilla de retorno.
-Cloud: commit solo en rama del agent; no merge a statsedge-ui-polish.
-```
+Abrir ticket formal + prompt Agent cuando el dueño elija mesa P2 vs chart.
 
-**Cola:** UX-18 · UX-19 · UX-20 · UX-21 · (Supabase aplazado)
+**Cola:** UX-18…21 · CHART-RS · CHART-NAV · (Supabase aplazado)
