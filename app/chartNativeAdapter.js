@@ -37,15 +37,13 @@ import {
 const PRICE_SCALE_LINE = 2;
 const PRICE_SCALE_DASHED = 2;
 
-// Panel del RS (lightweight-charts v5). El RS es un percentil 1-99 y el precio
-// una cotización en cualquier escala: en un eje común uno de los dos siempre
-// queda ilegible. El panel propio le da su escala, con el eje de tiempo
-// sincronizado por el chart.
-const RS_PANE_INDEX = 1;
-// Reparto de altura: el precio conserva la lectura principal (4/5) y el RS
-// ocupa la banda inferior (1/5).
-const PRICE_PANE_STRETCH = 4;
-const RS_PANE_STRETCH = 1;
+// Overlay del RS rating en el panel de precio (lightweight-charts v5). El RS es
+// un percentil 1-99 y el precio una cotización en cualquier escala: una escala
+// overlay invisible con rango fijo y banda inferior propia evita compartir eje
+// con el precio sin reservar un panel aparte (patrón B2/B3).
+const RS_OVERLAY_SCALE_ID = "rs-rating";
+// Banda inferior ~25% del panel de precio (top 0.75 → franja 75%–98%).
+const RS_OVERLAY_MARGINS = { top: 0.75, bottom: 0.02 };
 // Extremos del ranking. El eje se fija a ellos en vez de autoescalar: un RS de
 // 70 significa lo mismo en cualquier valor, y una escala que se reajusta a la
 // ventana visible convierte un movimiento de tres puntos en una montaña.
@@ -161,9 +159,6 @@ export function createChartNativeAdapter(args) {
       textColor: colors.soft,
       fontFamily: "Instrument Sans, ui-sans-serif, system-ui, sans-serif",
       fontSize: 12,
-      // Separador entre el panel del precio y el del RS: es estructura, no
-      // señal, así que usa la misma línea que la rejilla. Sin arrastre: la
-      // altura de los paneles es una decisión de producto, no del usuario.
       panes: {
         enableResize: false,
         separatorColor: colors.line2,
@@ -305,14 +300,10 @@ export function createChartNativeAdapter(args) {
     extraSeries.push(series);
   }
 
-  // ── Línea RS, en su propio panel ─────────────────────────────────────────
+  // ── Línea RS rating (overlay en panel de precio) ───────────────────────────
   //
-  // Antes vivía como overlay del panel del precio sobre una escala oculta
-  // ("rs-line-overlay"), y por tanto sin eje que la leyera: el usuario veía
-  // una línea sin saber a qué altura corresponde qué valor. Ahora ocupa el
-  // panel 1, con eje visible fijado a 1-99 y el tiempo sincronizado por el
-  // chart. El panel 0 —precio, volumen, medias y marcadores— no cambia de
-  // composición; solo comparte la altura total con el panel nuevo.
+  // Percentil semanal 1-99 en escala overlay invisible con rango fijo y banda
+  // inferior propia. No comparte eje con el precio ni reserva panel aparte.
   let rsSeries = null;
   const rsLineData = projectRsRatingSeries(rows, rsRatingSeries, indicators, interval);
   const rsHistory = rsLineHistory(rsLineData);
@@ -323,31 +314,19 @@ export function createChartNativeAdapter(args) {
       {
         color: colors.traza,
         lineWidth: 2,
+        priceScaleId: RS_OVERLAY_SCALE_ID,
         priceLineVisible: false,
-        // La etiqueta del último valor la pinta ahora el propio eje del panel
-        // RS, con el valor del RS. Antes el número visible junto a la línea
-        // salía de un badge HTML que mostraba el cierre del precio.
         lastValueVisible: true,
         priceFormat: { type: "price", precision: 0, minMove: 1 },
         title: "RS",
-        // Escala fija. El provider sustituye el cálculo del autoescalado y
-        // devuelve SIEMPRE el mismo rango, así que la escala no se reajusta
-        // a la ventana visible: un RS de 70 se dibuja a la misma altura con
-        // cualquier zoom y en cualquier valor. Sin márgenes, ni en fracción
-        // ni en píxeles: cualquier holgura ensancha el rango visible y el eje
-        // pasa a rotular valores que un percentil no puede tomar (0, 100, -50
-        // — visto en pantalla con márgenes de 6 px).
         autoscaleInfoProvider: () => ({
           priceRange: { minValue: RS_SCALE_MIN, maxValue: RS_SCALE_MAX },
         }),
       },
-      RS_PANE_INDEX,
+      0,
     );
     rsSeries.setData(rsLineData.map((point) => ({ time: point.time, value: point.value })));
     if (typeof rsSeries.createPriceLine === "function") {
-      // La referencia anterior estaba en 0, un valor que la escala 1-99 no
-      // puede contener: además de no significar nada, arrastraba la
-      // autoescala hasta cero.
       rsSeries.createPriceLine({
         price: RS_REFERENCE,
         color: colors.line2,
@@ -357,20 +336,11 @@ export function createChartNativeAdapter(args) {
         title: "",
       });
     }
-    chart.priceScale("right", RS_PANE_INDEX).applyOptions({
-      visible: true,
-      borderColor: colors.line2,
-      // `autoScale: false` congelaría el rango que hubiera al crear la escala
-      // y dejaría sin efecto el `autoscaleInfoProvider` de la serie, que es
-      // justo la pieza que fija el 1-99. Los `scaleMargins` se aplican como
-      // fracción del rango, así que estirarían el eje hasta rotular 0 y 100+:
-      // el margen del RS va en píxeles, en el provider.
+    chart.priceScale(RS_OVERLAY_SCALE_ID).applyOptions({
+      visible: false,
       autoScale: true,
-      scaleMargins: { top: 0, bottom: 0 },
+      scaleMargins: RS_OVERLAY_MARGINS,
     });
-    const panes = typeof chart.panes === "function" ? chart.panes() : [];
-    if (panes[0]?.setStretchFactor) panes[0].setStretchFactor(PRICE_PANE_STRETCH);
-    if (panes[RS_PANE_INDEX]?.setStretchFactor) panes[RS_PANE_INDEX].setStretchFactor(RS_PANE_STRETCH);
     extraSeries.push(rsSeries);
   }
 
@@ -388,7 +358,7 @@ export function createChartNativeAdapter(args) {
   const benchmarkLineData = projectBenchmarkLineSeries(rows, benchmarkSeries, interval, indicators);
   if (!intraday && benchmarkLineData.length > 1) {
     benchmarkLineSeries = chart.addSeries(LineSeries, {
-      color: colors.traza,
+      color: colors.soft,
       lineWidth: 1,
       priceScaleId: "benchmark-ratio",
       priceLineVisible: false,
@@ -446,11 +416,11 @@ export function createChartNativeAdapter(args) {
     extraSeries,
     markerDescriptors,
     pivotPriceLine,
-    // Lo que el panel RS acabó dibujando, para que el controller pueda
+    // Lo que el overlay RS acabó dibujando, para que el controller pueda
     // declarar la ausencia con su motivo sin recalcular la serie.
     rsPane: {
       rendered: rsRendered,
-      paneIndex: rsRendered ? RS_PANE_INDEX : null,
+      paneIndex: rsRendered ? 0 : null,
       points: rsLineData.length,
       weeks: rsHistory.weeks,
       latestValue: rsRendered ? (rsLineData.at(-1)?.value ?? null) : null,

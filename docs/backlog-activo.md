@@ -5,11 +5,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: *(ninguno — cola P2 UX-18…21)*.  
-Último cerrado: **CHART-NAV-fix** (chevrons/reset sync).  
-Anterior: **UX-17** (`a2e06c2`).  
-**Cola:** UX-18…21 (P2 mesa) · **oleada chart** CHART-RS + CHART-NAV (resto TradingView) · (Supabase aplazado)  
+Ticket en curso: *(ninguno)*.  
+Último cerrado: **CHART-RS** (overlay sin pane; smoke OKTA).  
+Anterior: **CHART-NAV-fix** (`0d5298a`).  
+**Cola:** CHART-NAV completo · UX-18…21 (P2) · (Supabase aplazado)  
 **Nota chart (2026-08-29):** dueño — RS en el gráfico (no abajo); navegación libre tipo TradingView. Specs: `CHART-RS-overlay-sin-pane.md`, `CHART-NAV-navegacion-libre.md`.  
+**Nota CHART-RS (2026-08-29):** smoke `/stock/OKTA` — RS ON, 1 pane grande (572+28), línea overlay abajo, sin franja RS.  
 **Nota CHART-NAV-fix (2026-08-29):** chevrons/zoom/reset OK en `/stock/AAPL` (Browser Use). Causas: UI gated solo por `manualView`; `getSnapshot` pisaba gestos; fit+`minBarSpacing` re-marcaba manual; `rowTimes` async vacío. Residual: cold hunt ~1–2s (UX-11 warm OK); pan drag nativo = CHART-NAV completo.  
 **Nota UX-17 (2026-08-29):** smoke clic/Enter/doble clic → Vista rápida; ticker → `/stock/NVCT`.  
 **Nota UX-16 (2026-08-29):** smoke H-07 — Líderes intl + US 3318 → banner + CTAs; E2 quita aviso.  
@@ -104,6 +105,8 @@ Anterior: **UX-17** (`a2e06c2`).
 | UX-FILTERS-7 | Restore intensidad cosmética + compat | `2dacad6` |
 | UX-16 | Guardrail Líderes intl datos ≠ mercados | `8b58b48` |
 | UX-17 | Enter/doble clic → Vista rápida | `a2e06c2` |
+| CHART-NAV-fix | Chevrons/zoom/reset vivos (sync manual/fit) | `0d5298a` |
+| CHART-RS | RS overlay sin pane inferior | *(commit siguiente)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -151,7 +154,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 
 | ID | Qué | Estado |
 |---|---|---|
-| CHART-RS | RS solo overlay en gráfico (sin panel duplicado) | Pendiente · `docs/tickets/CHART-RS-overlay-sin-pane.md` |
+| CHART-RS | RS solo overlay en gráfico (sin panel duplicado) | **Hecho** · smoke OKTA |
 | CHART-NAV | Pan/zoom libre; zona de interés marcada, no secuestrada | **Parcial:** botones chevron/zoom/reset vivos (CHART-NAV-fix). Resta: gesto drag/wheel TradingView · `docs/tickets/CHART-NAV-navegacion-libre.md` |
 
 **Orden sugerido:** CHART-RS (cambio de representación) → CHART-NAV (gesto timeScale); o paralelo en ramas si no tocan el mismo helper de rango.  

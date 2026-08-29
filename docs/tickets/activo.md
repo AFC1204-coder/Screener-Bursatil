@@ -1,13 +1,12 @@
-# Sin ticket activo (tras UX-17)
+# Sin ticket activo (tras CHART-RS)
 
-## Candidatos
+## Cerrado
 
-**P2 mesa:** UX-18 (móvil) → 19 → 20 → 21
+**CHART-RS** — RS rating solo overlay en panel precio (`rs-rating`), sin pane 1. Commit pendiente en orquestador.
 
-**Oleada chart (prioridad producto dueño 2026-08-29):**
-1. **CHART-RS** — RS solo overlay en el gráfico (`docs/tickets/CHART-RS-overlay-sin-pane.md`)
-2. **CHART-NAV** — pan/zoom libre tipo TradingView (`docs/tickets/CHART-NAV-navegacion-libre.md`)
+## Candidatos siguientes
 
-Abrir ticket formal + prompt Agent cuando el dueño elija mesa P2 vs chart.
+1. **CHART-NAV** — pan/zoom libre tipo TradingView (`docs/tickets/CHART-NAV-navegacion-libre.md`); botones ya vivos (`0d5298a`).
+2. **P2 mesa:** UX-18 → 19 → 20 → 21
 
-**Cola:** UX-18…21 · CHART-RS · CHART-NAV · (Supabase aplazado)
+**Cola:** CHART-NAV · UX-18…21 · (Supabase aplazado)

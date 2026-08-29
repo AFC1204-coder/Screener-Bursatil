@@ -106,17 +106,13 @@ describe("chartNativeAdapter · contrato de tokens CSS", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Panel del RS. Lo que se protege aquí es que el RS NO vuelva a compartir el
-// eje del precio: si la serie se creara sin índice de panel (o con 0) volvería
-// al panel del precio, que es el fallo que se está corrigiendo.
+// Overlay del RS rating. Lo que se protege aquí es que el RS NO comparta el
+// eje del precio ni vuelva a un panel inferior aparte: escala overlay dedicada
+// con rango fijo 1-99 y banda inferior propia.
 
 function rsAdapterHarness({ rsRatingSeries, rows }) {
   const priceScaleCalls = [];
   const addedSeries = [];
-  const panes = [
-    { setStretchFactor: vi.fn() },
-    { setStretchFactor: vi.fn() },
-  ];
   const makeSeries = () => ({
     setData: vi.fn(),
     priceScale: () => ({ applyOptions: vi.fn() }),
@@ -130,7 +126,6 @@ function rsAdapterHarness({ rsRatingSeries, rows }) {
       return series;
     }),
     applyOptions: vi.fn(),
-    panes: vi.fn(() => panes),
     priceScale: vi.fn((id, paneIndex) => {
       const entry = { id, paneIndex, options: null };
       priceScaleCalls.push(entry);
@@ -162,7 +157,7 @@ function rsAdapterHarness({ rsRatingSeries, rows }) {
     colors,
     overrides: { rsRatingSeries },
   });
-  return { result, addedSeries, priceScaleCalls, panes };
+  return { result, addedSeries, priceScaleCalls };
 }
 
 function dailyRows(count) {
@@ -177,8 +172,8 @@ function dailyRows(count) {
   });
 }
 
-describe("chartNativeAdapter · panel del RS", () => {
-  it("dibuja el RS en su propio panel, con escala fija 1-99 y eje visible", () => {
+describe("chartNativeAdapter · overlay del RS rating", () => {
+  it("dibuja el RS como overlay en panel 0, escala rs-rating invisible y rango fijo 1-99", () => {
     const rows = dailyRows(120);
     // Un punto por semana, doce semanas: por encima del mínimo.
     const rsRatingSeries = Array.from({ length: 12 }, (_, index) => ({
@@ -186,35 +181,31 @@ describe("chartNativeAdapter · panel del RS", () => {
       rsRating: 40 + index,
     }));
 
-    const { result, addedSeries, priceScaleCalls, panes } = rsAdapterHarness({ rsRatingSeries, rows });
+    const { result, addedSeries, priceScaleCalls } = rsAdapterHarness({ rsRatingSeries, rows });
 
     const rsEntry = addedSeries.find((entry) => entry.options?.title === "RS");
     expect(rsEntry).toBeTruthy();
-    // El panel: si esto fuera 0 o undefined, la línea volvería al eje del precio.
-    expect(rsEntry.paneIndex).toBe(1);
-    expect(rsEntry.options.color).toBe("#93B8CE"); // --traza, análisis
-    // La etiqueta del último valor la pinta el eje del panel, con el RS.
+    expect(rsEntry.paneIndex).toBe(0);
+    expect(rsEntry.options.priceScaleId).toBe("rs-rating");
+    expect(rsEntry.options.color).toBe("#93B8CE"); // --traza
     expect(rsEntry.options.lastValueVisible).toBe(true);
     expect(rsEntry.options.autoscaleInfoProvider()).toEqual({
       priceRange: { minValue: 1, maxValue: 99 },
     });
-    // La serie principal sigue sin índice de panel: el precio no se movió.
-    expect(addedSeries[0].paneIndex).toBeUndefined();
+    // La serie principal no usa escala overlay.
+    expect(addedSeries[0].options?.priceScaleId).toBeUndefined();
 
-    const rsScale = priceScaleCalls.find((call) => call.paneIndex === 1);
-    expect(rsScale.id).toBe("right");
-    // autoScale sigue activo A PROPÓSITO: es lo que hace que se consulte el
-    // autoscaleInfoProvider, y el provider devuelve siempre 1-99.
+    const rsScale = priceScaleCalls.find((call) => call.id === "rs-rating");
+    expect(rsScale).toBeTruthy();
     expect(rsScale.options).toMatchObject({
-      visible: true,
+      visible: false,
       autoScale: true,
-      scaleMargins: { top: 0, bottom: 0 },
+      scaleMargins: { top: 0.75, bottom: 0.02 },
     });
+    // Sin panel inferior RS.
+    expect(priceScaleCalls.some((call) => call.paneIndex === 1)).toBe(false);
 
-    expect(panes[0].setStretchFactor).toHaveBeenCalledWith(4);
-    expect(panes[1].setStretchFactor).toHaveBeenCalledWith(1);
-
-    expect(result.rsPane).toMatchObject({ rendered: true, paneIndex: 1, weeks: 12, latestValue: 51 });
+    expect(result.rsPane).toMatchObject({ rendered: true, paneIndex: 0, weeks: 12, latestValue: 51 });
   });
 
   it("no dibuja nada cuando el histórico semanal no llega al mínimo", () => {
@@ -229,6 +220,7 @@ describe("chartNativeAdapter · panel del RS", () => {
     const { result, addedSeries, priceScaleCalls } = rsAdapterHarness({ rsRatingSeries, rows });
 
     expect(addedSeries.some((entry) => entry.options?.title === "RS")).toBe(false);
+    expect(priceScaleCalls.some((call) => call.id === "rs-rating")).toBe(false);
     expect(priceScaleCalls.some((call) => call.paneIndex === 1)).toBe(false);
     expect(result.rsPane).toMatchObject({ rendered: false, paneIndex: null, points: 2, weeks: 1 });
   });
