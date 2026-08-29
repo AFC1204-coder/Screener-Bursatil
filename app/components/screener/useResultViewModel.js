@@ -198,6 +198,7 @@ export function useResultViewModel({
   // activeSettings, amplia este useMemo para incluirla.
   const setupMode = activeSettings?.setupMode;
   const deferredRows = useDeferredValue(rows);
+  const rowsDeferredStale = deferredRows !== rows;
   function annotateRow(row) {
     const explanation = explainScreenerRank(row, activeSettings);
     const issues = auditDecisionRowIssues(row, explanation);
@@ -538,5 +539,6 @@ export function useResultViewModel({
     openResultViewReview,
     clearResultViewLayer,
     clearResultView,
+    rowsDeferredStale,
   };
 }

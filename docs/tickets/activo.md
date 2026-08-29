@@ -2,4 +2,4 @@
 
 *(Ninguno. Orquestador escribe el siguiente aquí.)*
 
-Último cerrado: **UX-21** — orden solo por cabeceras (desktop); select móvil intacto.
+Último cerrado: **UX-22** — verdad pasan/en lista alineada en transición hunt + deferred.

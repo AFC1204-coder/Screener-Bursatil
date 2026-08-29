@@ -1,6 +1,7 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi, beforeAll } from "vitest";
+import { buildScreenerTruthLine, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
 import { FilterTemplatePanel, OptionalBasePresetsPanel } from "@/lib/screenerFiltersView";
 import { HUNT_CARDS } from "@/lib/screenerHuntCards";
 
@@ -44,8 +45,17 @@ function makeProps({
   markets = ["US"],
   analyzedRows = null,
   scannedMarkets = null,
+  huntTruthOverride = null,
+  isHuntTransitionPending = false,
+  rowsDeferredStale = false,
+  viewFiltersActive = 0,
+  filteredVisibleCount = null,
 } = {}) {
   const resultsRows = analyzedRows || [{ symbol: "AAPL", country: "US" }];
+  const resultsFilteredCount = filteredVisibleCount ?? resultsRows.length;
+  const resultsFiltered = Array.from({ length: resultsFilteredCount }, (_, index) => (
+    resultsRows[index] || { symbol: `ROW${index}`, country: "US" }
+  ));
   return {
     chrome: {
       presetKey,
@@ -62,6 +72,8 @@ function makeProps({
       setSidebarCollapsed: () => {},
       marketHealth: null,
       rows: resultsRows,
+      huntTruthOverride,
+      isHuntTransitionPending,
     },
     sidebar: {
       savedFilterTemplates: [],
@@ -90,7 +102,7 @@ function makeProps({
       toggleViewLayer: () => {},
       executionRuleActive: 0,
       executionRuleTotal: 0,
-      viewFiltersActive: false,
+      viewFiltersActive,
       setFilterLayers: () => {},
       settings: {},
       updateSetting: () => {},
@@ -128,13 +140,14 @@ function makeProps({
     resultView: {
       sort: "perf6m",
       sortAsc: false,
-      filtered: resultsRows,
-      pagedRows: resultsRows,
+      filtered: resultsFiltered,
+      pagedRows: resultsFiltered,
+      rowsDeferredStale,
     },
     results: {
-      filtered: resultsRows,
+      filtered: resultsFiltered,
       rows: resultsRows,
-      pagedRows: resultsRows,
+      pagedRows: resultsFiltered,
       activeSettings: {},
       analyzedRows: resultsRows,
       favoriteSymbols: new Set(),
@@ -317,5 +330,40 @@ describe("ScreenerShell hunt rail", () => {
       markets: ["US"],
     })));
     expect(html).not.toContain("lideresIntlGuardrail");
+  });
+
+  it("UX-22: no mezcla pasan de ficha nueva con en lista de la anterior bajo override", () => {
+    const analyzedRows = Array.from({ length: 1045 }, (_, index) => ({ symbol: `S${index}`, country: "US" }));
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      presetKey: "weakness",
+      markets: ["US"],
+      analyzedRows,
+      huntTruthOverride: { passCount: 1045, presetName: "Deterioro" },
+      filteredVisibleCount: 290,
+      rowsDeferredStale: true,
+    })));
+    expect(html).toContain("1045 pasan «Deterioro»");
+    expect(html).toContain("1045 en lista");
+    expect(html).not.toContain("290 en lista");
+  });
+
+  it("UX-22: con filtros de vista activos permite en lista menor que pasan", () => {
+    const { passCount, visibleCount } = resolveScreenerTruthCounts({
+      eagerPassCount: 1045,
+      filteredVisibleCount: 120,
+      rowsDeferredStale: true,
+      huntTruthOverride: { passCount: 1045, presetName: "Deterioro" },
+      viewFiltersActive: 1,
+    });
+    const line = buildScreenerTruthLine({
+      analyzedRows: Array.from({ length: 3321 }),
+      passCount,
+      visibleCount,
+      presetName: "Deterioro",
+      sort: "perf3m",
+      sortAsc: false,
+    });
+    expect(line).toContain("1045 pasan «Deterioro»");
+    expect(line).toContain("120 en lista");
   });
 });

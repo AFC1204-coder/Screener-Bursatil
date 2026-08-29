@@ -37,7 +37,7 @@ import { OptionalBasePresetsPanel } from "@/lib/screenerFiltersView";
 import { buildMarketsStaleNotice } from "@/lib/marketAvailability";
 import { buildLideresIntlGuardrailNotice, LIDERES_INTL_CTA } from "@/lib/lideresIntlGuardrail";
 import { buildScreenerFilterBreakdown } from "@/lib/screenerFilterBreakdown";
-import { buildScreenerTruthLine, marketCountLabel } from "@/lib/screenerTruthLine";
+import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
 import {
   ALL_FILTER_LAYERS,
   DEFAULT_FIELD_RULES,
@@ -220,6 +220,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     hiddenByView,
     clearResultView,
     openResultViewReview,
+    rowsDeferredStale = false,
   } = resultView;
 
   // El container pasa `filtered` y `rows` también por `results` para no
@@ -266,11 +267,15 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     scannedMarkets = [],
   } = staleness || {};
   const huntLabel = huntDisplayName(presetKey, markets);
-  const passCountForTruth = huntTruthOverride?.passCount ?? resultsRows.length;
   const presetNameForTruth = huntTruthOverride?.presetName ?? huntLabel;
-  const visibleCountForTruth = huntTruthOverride
-    ? (huntTruthOverride.passCount ?? resultsFiltered.length)
-    : resultsFiltered.length;
+  const { passCount: passCountForTruth, visibleCount: visibleCountForTruth } = resolveScreenerTruthCounts({
+    eagerPassCount: resultsRows.length,
+    filteredVisibleCount: resultsFiltered.length,
+    huntTruthOverride,
+    isHuntTransitionPending,
+    rowsDeferredStale,
+    viewFiltersActive,
+  });
   const truthLine = buildScreenerTruthLine({
     analyzedRows,
     passCount: passCountForTruth,

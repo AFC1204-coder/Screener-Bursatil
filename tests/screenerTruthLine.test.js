@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildScreenerTruthLine, marketCountLabel } from "@/lib/screenerTruthLine";
+import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
 
 describe("buildScreenerTruthLine", () => {
   it("compone analizadas, pasan, en lista, orden y corte", () => {
@@ -74,6 +74,78 @@ describe("buildScreenerTruthLine", () => {
     });
     expect(line).toContain("47 en lista");
     expect(line).not.toContain("/página");
+  });
+});
+
+describe("resolveScreenerTruthCounts", () => {
+  it("alinea en lista con pasan durante override hunt sin filtros de vista", () => {
+    const counts = resolveScreenerTruthCounts({
+      eagerPassCount: 290,
+      filteredVisibleCount: 488,
+      huntTruthOverride: { passCount: 1045, presetName: "Deterioro" },
+      viewFiltersActive: 0,
+    });
+    expect(counts).toEqual({ passCount: 1045, visibleCount: 1045 });
+  });
+
+  it("alinea en lista con pasan cuando deferred está desfasado", () => {
+    const counts = resolveScreenerTruthCounts({
+      eagerPassCount: 1045,
+      filteredVisibleCount: 290,
+      rowsDeferredStale: true,
+      viewFiltersActive: 0,
+    });
+    expect(counts).toEqual({ passCount: 1045, visibleCount: 1045 });
+  });
+
+  it("alinea durante transición hunt pendiente", () => {
+    const counts = resolveScreenerTruthCounts({
+      eagerPassCount: 290,
+      filteredVisibleCount: 290,
+      isHuntTransitionPending: true,
+      huntTruthOverride: { passCount: 488, presetName: "Radar IPO" },
+      viewFiltersActive: 0,
+    });
+    expect(counts).toEqual({ passCount: 488, visibleCount: 488 });
+  });
+
+  it("respeta lista filtrada real con chips de vista activos", () => {
+    const counts = resolveScreenerTruthCounts({
+      eagerPassCount: 1045,
+      filteredVisibleCount: 120,
+      rowsDeferredStale: true,
+      huntTruthOverride: { passCount: 1045, presetName: "Deterioro" },
+      viewFiltersActive: 1,
+    });
+    expect(counts).toEqual({ passCount: 1045, visibleCount: 120 });
+  });
+
+  it("usa filtered cuando no hay transición ni override", () => {
+    const counts = resolveScreenerTruthCounts({
+      eagerPassCount: 47,
+      filteredVisibleCount: 47,
+      viewFiltersActive: 0,
+    });
+    expect(counts).toEqual({ passCount: 47, visibleCount: 47 });
+  });
+
+  it("no publica pasan≠lista imposible en línea compuesta bajo override", () => {
+    const { passCount, visibleCount } = resolveScreenerTruthCounts({
+      eagerPassCount: 290,
+      filteredVisibleCount: 488,
+      huntTruthOverride: { passCount: 1045, presetName: "Deterioro" },
+    });
+    const line = buildScreenerTruthLine({
+      analyzedRows: Array.from({ length: 3321 }),
+      passCount,
+      visibleCount,
+      presetName: "Deterioro",
+      sort: "perf3m",
+      sortAsc: false,
+    });
+    expect(line).toContain("1045 pasan «Deterioro»");
+    expect(line).toContain("1045 en lista");
+    expect(line).not.toContain("488 en lista");
   });
 });
 

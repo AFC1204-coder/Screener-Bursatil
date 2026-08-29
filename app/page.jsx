@@ -334,6 +334,7 @@ export default function Page() {
     ipoCounts,
     hiddenByView,
     viewFiltersActive,
+    rowsDeferredStale,
     resultFilterChips,
     resultViewBrief,
     openResultViewReview,
@@ -1099,8 +1100,10 @@ export default function Page() {
 
   useEffect(() => {
     if (!huntTruthOverride || huntTruthOverride.passCount == null) return;
-    if (rows.length === huntTruthOverride.passCount) setHuntTruthOverride(null);
-  }, [rows, huntTruthOverride]);
+    if (rows.length === huntTruthOverride.passCount && !rowsDeferredStale) {
+      setHuntTruthOverride(null);
+    }
+  }, [rows, huntTruthOverride, rowsDeferredStale]);
   const executionLayerTotal = EXECUTION_LAYERS.length + 1;
   const executionLayerActive = activeLayerCount(filterLayers) + (useRegimeFilter ? 1 : 0);
   const executionRuleTotal = REGIME_LAYER.count + EXECUTION_LAYERS.reduce((sum, layer) => sum + layer.count, 0);
