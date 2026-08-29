@@ -70,15 +70,16 @@ export function CompactResultsTable({
               const isSortable = Boolean(columnSortKey && onSortColumn);
               const isActive = columnSortKey && columnSortKey === sort;
               const headLabel = screenerColumnLabel(column, ctx);
+              const headTitle = column.title || (isSortable ? `Ordenar por ${headLabel}` : undefined);
               return (
-                <th key={column.key} className={column.className} data-align={column.align}>
+                <th key={column.key} className={column.className} data-align={column.align} title={!isSortable ? headTitle : undefined}>
                   {isSortable ? (
                     <button
                       type="button"
                       className={`columnHead columnHeadBtn${isActive ? " isActive" : ""}`}
                       onClick={() => onSortColumn(columnSortKey)}
                       aria-sort={isActive ? (sortAsc ? "ascending" : "descending") : "none"}
-                      title={`Ordenar por ${headLabel}`}
+                      title={headTitle}
                     >
                       <span className="columnHeadText">{headLabel}</span>
                       {isActive ? <span className="sortIndicator" aria-hidden="true">{sortAsc ? "↑" : "↓"}</span> : null}

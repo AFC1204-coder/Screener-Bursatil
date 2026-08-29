@@ -2,4 +2,4 @@
 
 *(Ninguno. Orquestador escribe el siguiente aquí.)*
 
-Último cerrado: **UX-BTN-6** — market/country chips (cierra oleada UX-BTN).
+Último cerrado: **UX-23** — InfoHints solo en Tema/RS/Etapa (± Deterioro).

@@ -61,7 +61,7 @@ export function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenS
     <dl className="mobileResultGrid">
       {dataColumns.map((column) => (
         <div key={column.key} className={`mobileResultField ${column.className}`} data-align={column.align}>
-          <dt title={column.legend}>{screenerColumnLabel(column, ctx)}</dt>
+          <dt title={column.legend || column.title}>{screenerColumnLabel(column, ctx)}</dt>
           <dd>{column.cell(row, ctx)}</dd>
         </div>
       ))}

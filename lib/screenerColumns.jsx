@@ -128,7 +128,7 @@ export const SCREENER_COLUMNS = [
   {
     key: "ticker",
     label: () => "Ticker",
-    legend: "Símbolo, país y forma del gráfico de las últimas sesiones.",
+    title: "Símbolo, país y forma del gráfico de las últimas sesiones.",
     align: "left",
     className: "colTicker",
     sortKey: null,
@@ -225,7 +225,7 @@ export const SCREENER_COLUMNS = [
   {
     key: "performance",
     label: (ctx = {}) => performancePeriod(ctx.perfPeriod).columnLabel,
-    legend: "Variación del precio en el periodo elegido arriba. El selector es global para poder comparar valores entre sí.",
+    title: "Variación del precio en el periodo elegido arriba. El selector es global para poder comparar valores entre sí.",
     align: "right",
     className: "colPerformance",
     sortKey: (ctx = {}) => normalizePerformancePeriod(ctx.perfPeriod),
@@ -243,7 +243,7 @@ export const SCREENER_COLUMNS = [
   {
     key: "distance52w",
     label: () => "Dist. máx 52s",
-    legend: "Distancia al máximo de las últimas 52 semanas. 0% es estar en máximos.",
+    title: "Distancia al máximo de las últimas 52 semanas. 0% es estar en máximos.",
     align: "right",
     className: "colDistance",
     sortKey: () => "distance52w",
@@ -260,7 +260,7 @@ export const SCREENER_COLUMNS = [
   {
     key: "marketCap",
     label: () => "Capitaliz.",
-    legend: "Capitalización bursátil del proveedor. Un valor de 200 millones y uno de 200.000 no se operan igual.",
+    title: "Capitalización bursátil del proveedor.",
     align: "right",
     className: "colCap",
     sortKey: () => "marketCap",
