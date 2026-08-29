@@ -2,7 +2,15 @@
 import "../../styles/ipo-radar.css";
 import { useEffect, useMemo, useState } from "react";
 import { dateShort } from "@/lib/formatters";
+import {
+  alertDate,
+  dateOnly,
+  daysUntil,
+  filterIpoRadarDueItems,
+  IPO_ALERT_WINDOW_DAYS,
+} from "@/lib/ipoRadarAlerts";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { buildReviewPageHref } from "@/lib/screenerReviewLaunch";
 import { countryCode, stockUrl } from "@/lib/symbols";
 
 const EMPTY_FORM = {
@@ -58,18 +66,8 @@ const STATUS_LABELS = {
 function uid() {
   return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
-function dateOnly(value) {
-  if (!value) return "";
-  const date = new Date(value);
-  return Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : "";
-}
-function daysUntil(value) {
-  const d = dateOnly(value);
-  if (!d) return null;
-  const today = new Date();
-  const target = new Date(`${d}T12:00:00`);
-  const base = new Date(`${today.toISOString().slice(0, 10)}T12:00:00`);
-  return Math.round((target - base) / 86400000);
+function normalizeSymbol(symbol = "") {
+  return String(symbol || "").trim().toUpperCase();
 }
 function dateLabel(value) {
   const d = dateOnly(value);
@@ -82,16 +80,6 @@ function dateLabel(value) {
   if (delta === 1) return `${shown} · mañana`;
   if (delta > 1) return `${shown} · en ${delta} días`;
   return `${shown} · hace ${Math.abs(delta)} días`;
-}
-function normalizeSymbol(symbol = "") {
-  return String(symbol || "").trim().toUpperCase();
-}
-function alertDate(item = {}) {
-  return item.expectedTradeDate || item.expectedPricingDate || "";
-}
-function isDue(item = {}, windowDays = 14) {
-  const delta = daysUntil(alertDate(item));
-  return Number.isFinite(delta) && delta >= 0 && delta <= windowDays && item.status !== "listed" && item.status !== "passed";
 }
 function latestScanRows() {
   const scans = safeRead(STORAGE_KEYS.scans, []);
@@ -155,7 +143,7 @@ export default function IpoRadarPage() {
     persist(safeRead(STORAGE_KEYS.ipoRadar, []));
   }, []);
 
-  const due = useMemo(() => items.filter((item) => isDue(item, 14) && !item.alertAcknowledgedAt), [items]);
+  const due = useMemo(() => filterIpoRadarDueItems(items, { windowDays: IPO_ALERT_WINDOW_DAYS }), [items]);
   const withTicker = useMemo(() => items.filter((item) => normalizeSymbol(item.symbol)), [items]);
   const included = useMemo(() => withTicker.filter((item) => item.includeInScreener && item.status !== "passed"), [withTicker]);
   const listed = useMemo(() => items.filter((item) => item.status === "listed"), [items]);
@@ -309,16 +297,22 @@ export default function IpoRadarPage() {
       <p className="fine" style={{ marginTop: 10 }}>{status}</p>
     </section>
 
-    {!!due.length && <section className="card status">
-      <div className="sectionTitle"><h2>Avisos pre-IPO</h2><span className="fine">próximos 14 días</span></div>
-      <div className="ipoAlertList">
+    <section className="card status">
+      <div className="sectionTitle"><h2>Avisos pre-IPO</h2><span className="fine">próximos {IPO_ALERT_WINDOW_DAYS} días</span></div>
+      {due.length ? <div className="ipoAlertList">
         {due.map((item) => <div className="summaryRow" key={item.id}>
           <span><b>{item.companyName || item.symbol}</b><br /><span className="fine">{STATUS_LABELS[item.status] || item.status} · {item.exchange || item.country}</span></span>
           <span>{dateLabel(alertDate(item))}</span>
-          <button className="btn btnSmall" onClick={() => updateItem(item.id, { alertAcknowledgedAt: new Date().toISOString() })}>Marcar avisada</button>
+          <div className="controls">
+            {item.symbol ? <>
+              <a className="btn btnSmall" href={stockUrl(item.symbol)}>Ficha</a>
+              <a className="btn btnSmall" href={buildReviewPageHref(item.symbol, "current")}>Revisar</a>
+            </> : null}
+            <button className="btn btnSmall" onClick={() => updateItem(item.id, { alertAcknowledgedAt: new Date().toISOString() })}>Marcar avisada</button>
+          </div>
         </div>)}
-      </div>
-    </section>}
+      </div> : <p className="fine">Ninguna salida en los próximos {IPO_ALERT_WINDOW_DAYS} días.</p>}
+    </section>
 
     <IpoForm form={form} setForm={setForm} onSubmit={saveItem} editing={Boolean(editingId)} />
 
@@ -349,8 +343,13 @@ export default function IpoRadarPage() {
             <td>
               <div className="controls">
                 <button className="btn btnSmall" onClick={() => editItem(item)}>Editar</button>
-                {item.symbol && <button className="btn btnSmall" onClick={() => updateItem(item.id, { includeInScreener: !item.includeInScreener })}>{item.includeInScreener ? "Quitar screener" : "Incluir"}</button>}
-                {item.symbol && <button className="btn btnSmall" onClick={() => updateItem(item.id, { status: "listed", includeInScreener: true })}>Ya cotiza</button>}
+                {item.symbol ? <>
+                  <a className="btn btnSmall" href={stockUrl(item.symbol)}>Ficha</a>
+                  <a className="btn btnSmall" href={buildReviewPageHref(item.symbol, "current")}>Revisar</a>
+                  <a className="btn btnSmall" href="/lists">Listas</a>
+                  <button className="btn btnSmall" onClick={() => updateItem(item.id, { includeInScreener: !item.includeInScreener })}>{item.includeInScreener ? "Quitar screener" : "Incluir"}</button>
+                  <button className="btn btnSmall" onClick={() => updateItem(item.id, { status: "listed", includeInScreener: true })}>Ya cotiza</button>
+                </> : null}
                 <button className="btn btnSmall btnGhost" onClick={() => removeItem(item.id)}>Eliminar</button>
               </div>
             </td>

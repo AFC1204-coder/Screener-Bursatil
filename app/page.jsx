@@ -20,7 +20,8 @@ import { getLatestScanFromCloud, getLatestScanFromCloudForMarkets, getSettingFro
 import { dateTime, pct } from "@/lib/formatters";
 import { avg, avgVolume } from "@/lib/indicators";
 import StorageAlert from "@/app/components/StorageAlert";
-import { budgetFor, payloadChars, safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { budgetFor, payloadChars, readIpoRadar, safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { augmentIpoDiscoveryFilteredView } from "@/lib/mergeIpoDiscoveryRows";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { alertsFromScan, mergeAlerts } from "@/lib/methodologyAlerts";
 import { enrichRowsWithMethodology, findCompatiblePreviousScan, snapshotCompatibilityKey, summarizeMethodology } from "@/lib/methodologyEngine";
@@ -138,6 +139,21 @@ function reviewQueueFocusMeta({ dataHealth = null, metricTruth = null, scoreAudi
   if (evidence?.status === "needs-work") add({ priority: 62, key: "evidence", label: "Pruebas", tone: evidence.tone || "warn", detail: evidence.pending?.[0]?.detail || evidence.pending?.[0]?.label || evidence.summary });
   if (scoreAudit?.key === "attention") add({ priority: 50, key: "score", label: "Score", tone: "warn", detail: scoreAudit.detail });
   return candidates.sort((a, b) => b.priority - a.priority)[0] || null;
+}
+
+function withIpoDiscoveryWatchMerge(filteredView, { presetKey, markets }) {
+  return augmentIpoDiscoveryFilteredView(filteredView, {
+    presetKey,
+    markets,
+    watchItems: readIpoRadar(),
+  });
+}
+
+function filterAnalyzedRowsForView(analyzedRows, activeSettings, context, { presetKey, markets }) {
+  return withIpoDiscoveryWatchMerge(
+    filterAnalyzedRows(analyzedRows, activeSettings, context),
+    { presetKey, markets },
+  );
 }
 
 export default function Page() {
@@ -461,7 +477,10 @@ export default function Page() {
       marketHealth,
       useRegimeFilter: restoredUseRegimeFilter,
     };
-    const restoredFilterView = restoredSnapshotView(scan, restoredActiveSettings, restoreFilterContext, filterAnalyzedRows);
+    const restoredFilterView = withIpoDiscoveryWatchMerge(
+      restoredSnapshotView(scan, restoredActiveSettings, restoreFilterContext, filterAnalyzedRows),
+      { presetKey: restoredPresetKey, markets },
+    );
     fastFilterSignatureRef.current = fastFilterSignature(scan.rows, restoredActiveSettings, restoreFilterContext);
     setPresetKey(restoredPresetKey);
     setSettings(restoredSettings);
@@ -757,7 +776,10 @@ export default function Page() {
         // el de otro mercado.
         if (referencedScan?.rows?.length) {
           const rehydrateContext = withScanScreenerFilters({ ...session.scanContext, marketHealth: restoredMarketHealth, useRegimeFilter: restoredUseRegimeFilter }, referencedScan);
-          const rehydratedView = restoredSnapshotView(referencedScan, restoredActiveSettings, rehydrateContext, filterAnalyzedRows);
+          const rehydratedView = withIpoDiscoveryWatchMerge(
+            restoredSnapshotView(referencedScan, restoredActiveSettings, rehydrateContext, filterAnalyzedRows),
+            { presetKey: restoredPresetKey, markets: restoredMarkets },
+          );
           restoredAnalyzedRows = rehydratedView.analyzedRows;
           restoredRows = rehydratedView.rows;
         }
@@ -1066,9 +1088,9 @@ export default function Page() {
     const context = { ...scanContext, marketHealth, useRegimeFilter };
     const signature = fastFilterSignature(analyzedRows, activeSettings, context);
     if (fastFilterSignatureRef.current === signature) return;
-    const filteredView = filterAnalyzedRows(analyzedRows, activeSettings, context);
+    const filteredView = filterAnalyzedRowsForView(analyzedRows, activeSettings, context, { presetKey, markets });
     commitFilteredView(filteredView, signature);
-  }, [sessionReady, analyzedRows, scanContext, activeSettings, marketHealth, useRegimeFilter]);
+  }, [sessionReady, analyzedRows, scanContext, activeSettings, marketHealth, useRegimeFilter, presetKey, markets]);
 
   useEffect(() => {
     huntWarmCancelRef.current?.();
@@ -1927,7 +1949,10 @@ export default function Page() {
           context,
           filterAnalyzedRows,
         );
-      const filteredView = resolved?.view;
+      const filteredView = withIpoDiscoveryWatchMerge(resolved?.view, {
+        presetKey: selection.presetKey,
+        markets,
+      });
       if (!filteredView) return;
       const signature = fastFilterSignature(analyzedRows, nextActiveSettings, context);
       setHuntTruthOverride({ passCount: filteredView.rows.length, presetName: huntLabel });

@@ -18,6 +18,7 @@ import {
   screenerColumnSortKey,
   screenerVisibleColumns,
 } from "@/lib/screenerColumns";
+import { ipoWatchRowKey } from "@/lib/mergeIpoDiscoveryRows";
 import { countryName, marketFlag } from "@/lib/symbols";
 
 export function CompactCountryFlag({ country }) {
@@ -89,16 +90,18 @@ export function CompactResultsTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {rows.map((row) => {
+            const rowKey = ipoWatchRowKey(row);
+            return (
             <tr
-              key={row.symbol}
-              className={selectedSymbol === row.symbol ? "isSelected" : ""}
-              tabIndex={selectedSymbol === row.symbol ? 0 : -1}
-              aria-selected={selectedSymbol === row.symbol}
+              key={rowKey}
+              className={selectedSymbol === rowKey ? "isSelected" : ""}
+              tabIndex={selectedSymbol === rowKey ? 0 : -1}
+              aria-selected={selectedSymbol === rowKey}
               onClick={(event) => {
                 if (event.target.closest("button, a")) return;
-                onSelectRow?.(row.symbol);
-                onReview?.(row.symbol);
+                onSelectRow?.(rowKey);
+                if (!row.ipoWatchOnly || row.symbol) onReview?.(row.symbol);
               }}
             >
               {columns.map((column) => (
@@ -107,7 +110,8 @@ export function CompactResultsTable({
                 </td>
               ))}
             </tr>
-          ))}
+            );
+          })}
           {!rows.length && <tr><td colSpan={columns.length} className="emptyResultsCell">{emptyLabel}</td></tr>}
         </tbody>
       </table>

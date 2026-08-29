@@ -1,10 +1,10 @@
 # Ticket activo — liberado
 
-Último cerrado: **IPO-NOCT** (parche `ipoDate` en scan US · SQL bulk 3289/3320).  
-Copia: `docs/tickets/IPO-NOCT-patch-ipodate-scan.md`.
+Último cerrado: **IPO-1c** (nav + superficie `/ipo-radar` + merge vigiladas).  
+Copia: `docs/tickets/IPO-1c-superficie-ipo-radar.md`.
 
-**Smoke:** Radar IPO US → **285 pasan** / 3320 (tras Traer datos frescos).
+**Smoke:** nav «IPO»; banda 14d; Radar IPO muestra filas **Vigilada** (ZZSMOKE + pre-IPO).
 
-**Siguiente (cola):** IPO-1c (nav + merge vigiladas `/ipo-radar`).
+**Siguiente (cola):** salida Supabase (aplazada) · o UX-FILTERS-5 / UX-13 según dueño.
 
-Orquestador escribe aquí el próximo prompt antes de abrir Agent chat de programación.
+Orquestador escribe aquí el próximo prompt (con bloque «Prompt para Agent chat») antes de abrir Agent.

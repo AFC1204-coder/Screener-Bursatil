@@ -19,7 +19,9 @@ Backlog: `docs/backlog-activo.md`. Ticket activo: `docs/tickets/activo.md`. Hist
 
 - El orquestador **no** ejecuta programación con Task/subagente en este hilo.
 - Escribe el prompt en `docs/tickets/activo.md` (y copia con id si conviene) y abre el archivo.
-- El dueño (o un Automation) abre un **Agent chat nuevo** con `@docs/tickets/activo.md` y Composer/modelo indicado.
+- **Siempre** incluir al inicio de `activo.md` un bloque `## Prompt para Agent chat (copiar tal cual)` con un fenced code listo para pegar (incluye `@docs/tickets/activo.md`, rama, modelo, 2–5 líneas de alcance, tests/`./vfc`, sin commit/push).
+- **Siempre** pegar ese mismo bloque en el mensaje al dueño al escribir/activar el ticket (no obligar a abrir el archivo para copiar).
+- El dueño abre un **Agent chat nuevo**, pega el prompt y usa Composer/modelo indicado.
 - Al terminar, el dueño pega aquí solo el **resumen de retorno** (o «listo» + link al chat). El orquestador verifica y comitea.
 
 ## Anti-colisión

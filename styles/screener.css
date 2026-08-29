@@ -9483,6 +9483,31 @@ button.decisionOperatingIssue:hover {
   white-space:nowrap;
 }
 
+.ipoWatchBadge {
+  display:inline-flex;
+  align-items:center;
+  margin-left:6px;
+  padding:1px 6px;
+  border-radius:999px;
+  background:color-mix(in srgb, var(--accent) 18%, transparent);
+  color:var(--accent);
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  vertical-align:middle;
+}
+
+.tickerPlaceholder {
+  color:var(--text);
+  font-weight:600;
+}
+
+.starBtnDisabled {
+  opacity:.25;
+  pointer-events:none;
+}
+
 /* Columna 4 — etapa de Weinstein, una palabra. */
 .stageTag {
   display:inline-block;

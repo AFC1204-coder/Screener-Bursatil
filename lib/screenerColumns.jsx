@@ -29,6 +29,7 @@ import { UNRELIABLE_AUDIT_STATUS } from "@/lib/scanLightProjection";
 import { STAGE_LEGACY_REASON, STAGE_MISSING_REASON, stageConfirmationMark, stageWordForState } from "@/lib/stageDisplay";
 import { CompanyMark, MiniSparkline } from "@/lib/screenerAtoms";
 import { PERFORMANCE_PERIODS, normalizePerformancePeriod, performancePeriod } from "@/lib/screenerPeriods";
+import { isIpoWatchPlaceholderSymbol } from "@/lib/mergeIpoDiscoveryRows";
 import { countryName, marketFlag, stockUrl } from "@/lib/symbols";
 import { weaknessScore } from "@/lib/stockRows";
 
@@ -115,6 +116,10 @@ function CountryFlag({ country = "" }) {
   </span>;
 }
 
+function IpoWatchBadge() {
+  return <span className="ipoWatchBadge" title="Vigilada en IPO Radar sin fila de scan">Vigilada</span>;
+}
+
 // ── Las siete columnas ─────────────────────────────────────────────────────
 // Cada entrada define: cabecera, leyenda (una sola vez, en el <th>), clave de
 // ordenación, y cómo se pinta la celda. `ctx` lleva el periodo activo y los
@@ -127,29 +132,38 @@ export const SCREENER_COLUMNS = [
     align: "left",
     className: "colTicker",
     sortKey: null,
-    cell: (row, ctx = {}) => <div className="tickerCell">
-      <button
-        type="button"
-        className={`starBtn ${ctx.favoriteSymbols?.has(row.symbol) ? "on" : ""}`}
-        onClick={(event) => { event.stopPropagation(); ctx.onFavorite?.(row); }}
-        aria-label={`Guardar favorito ${row.symbol}`}
-      >
-        ★
-      </button>
+    cell: (row, ctx = {}) => {
+      const placeholder = isIpoWatchPlaceholderSymbol(row.symbol);
+      const tickerLabel = placeholder ? (row.companyName || "IPO vigilada") : row.symbol;
+      return <div className="tickerCell">
+      {placeholder ? <span className="starBtn starBtnDisabled" aria-hidden="true">★</span> : (
+        <button
+          type="button"
+          className={`starBtn ${ctx.favoriteSymbols?.has(row.symbol) ? "on" : ""}`}
+          onClick={(event) => { event.stopPropagation(); ctx.onFavorite?.(row); }}
+          aria-label={`Guardar favorito ${row.symbol}`}
+        >
+          ★
+        </button>
+      )}
       <CompanyMark row={row} size="sm" />
       <span className="tickerIdentity">
         <span className="tickerLine">
-          <Link className="ticker" href={stockUrl(row.symbol)} onPointerDown={() => ctx.onOpenStock?.(row)} onClick={() => ctx.onOpenStock?.(row)}>{row.symbol}</Link>
+          {placeholder
+            ? <span className="ticker tickerPlaceholder">{tickerLabel}</span>
+            : <Link className="ticker" href={stockUrl(row.symbol)} onPointerDown={() => ctx.onOpenStock?.(row)} onClick={() => ctx.onOpenStock?.(row)}>{row.symbol}</Link>}
           <CountryFlag country={row.country} />
+          {row.ipoWatchOnly ? <IpoWatchBadge /> : null}
         </span>
         <span className="tickerName" title={row.companyName || row.symbol}>{row.companyName || row.symbol}</span>
       </span>
       {Array.isArray(row.chartPreview) && row.chartPreview.filter((bar) => Number.isFinite(bar?.close)).length > 1
         ? <MiniSparkline bars={row.chartPreview} className="rowSparkline" />
         : <span className="rowSparkline rowSparklineMissing">
-          <MissingValue reason="Sin miniatura: no hay serie de precios suficiente para dibujarla." />
+          <MissingValue reason={row.ipoWatchOnly ? "Vigilada local en IPO Radar: sin serie de scan todavía." : "Sin miniatura: no hay serie de precios suficiente para dibujarla."} />
         </span>}
-    </div>,
+    </div>;
+    },
   },
   {
     key: "theme",

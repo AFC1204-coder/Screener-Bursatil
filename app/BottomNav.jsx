@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Gauge, Layers3, List, Search, Star } from "lucide-react";
+import { Gauge, Layers3, List, Rocket, Search, Star } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 export const NAV_ITEMS = [
   { href: "/", label: "Screener", Icon: Search },
   { href: "/lists", label: "Listas", Icon: List },
   { href: "/sectors", label: "Sectores", Icon: Layers3 },
+  { href: "/ipo-radar", label: "IPO", Icon: Rocket },
   { href: "/research-desk", label: "Research", Icon: Star },
   { href: "/market-health", label: "Mercado", Icon: Gauge },
 ];

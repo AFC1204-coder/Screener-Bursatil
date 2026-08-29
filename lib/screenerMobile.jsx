@@ -14,6 +14,7 @@ import {
   screenerVisibleColumns,
 } from "@/lib/screenerColumns";
 import { CompanyMark, MiniSparkline, ResultsDisclosureGroup } from "@/lib/screenerAtoms";
+import { ipoWatchRowKey } from "@/lib/mergeIpoDiscoveryRows";
 
 export function MobileMoverCard({ row, onSelect }) {
   const change = Number.isFinite(row.perf3m) ? row.perf3m : row.rs3m;
@@ -130,7 +131,7 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
       <button type="button" onClick={() => onPage?.(page + 1)} disabled={page >= totalPages} aria-label="Página siguiente">›</button>
     </div> : null}
     <div className="mobileRows">
-      {rows.length ? rows.map((row) => <MobileResultRow key={row.symbol} row={row} perfPeriod={perfPeriod} sort={sort} setupMode={setupMode} onReview={onReview} onFavorite={onFavorite} onOpenStock={onOpenStock} isFavorite={favoriteSymbols?.has(row.symbol)} />) : <div className="mobileEmpty">{emptyLabel}</div>}
+      {rows.length ? rows.map((row) => <MobileResultRow key={ipoWatchRowKey(row)} row={row} perfPeriod={perfPeriod} sort={sort} setupMode={setupMode} onReview={onReview} onFavorite={onFavorite} onOpenStock={onOpenStock} isFavorite={favoriteSymbols?.has(row.symbol)} />) : <div className="mobileEmpty">{emptyLabel}</div>}
     </div>
   </section>;
 }
