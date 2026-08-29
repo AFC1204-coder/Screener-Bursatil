@@ -6,13 +6,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **CLEAN-1** (purga CSS `.resultSortSelect`).  
-Anterior: **UX-22** (`332d2e4`).  
-**Cola:** brief estética botones (Gemini 3.7 Flash) · UX-23 infoHints · CLEAN-2 dual DOM · (Supabase aplazado)  
-**Nota CLEAN-1 (2026-08-29):** CSS huérfano eliminado; `rg` limpio fuera de tests de negación.  
-**Nota producto (2026-08-29):** acabados botones/teclas → brief Gemini 3.7 Flash (como UX-P), no Composer libre.  
-**Nota UX-22 (2026-08-29):** smoke 3318 — flips intl↔Deterioro sin pasan≠lista.  
-**Nota UX-21 (2026-08-29):** residual CSS cerrado en CLEAN-1.  
+Último cerrado: **UX-BTN-1** (segmented/keycaps).  
+Anterior: **CLEAN-1** (`fb9188a`).  
+**Cola:** UX-BTN-2…6 · UX-23 · CLEAN-2 · (Supabase aplazado)  
+**Nota UX-BTN-1 (2026-08-29):** smoke 3M/6M/12M OK tras quitar transition shorthand (CSSTransitions stuck). Chart TF/rangos OK.  
+**Nota UX-BTN (2026-08-29):** brief → `docs/analisis-ux-btn-acabados-2026-08-29.md`.  
+**Nota CLEAN-1 (2026-08-29):** CSS huérfano eliminado.  
+**Nota UX-22 (2026-08-29):** smoke 3318 verdad pasan/lista.  
 **Nota UX-20 (2026-08-29):** smoke Deterioro — `1045 en lista · 50/página`.  
 **Nota UX-19 (2026-08-29):** StorageAlert compacto.  
 **Nota UX-18 (2026-08-29):** smoke 390×844.  
@@ -118,6 +118,7 @@ Anterior: **UX-22** (`332d2e4`).
 | UX-21 | Desktop: orden solo cabeceras (sin select) | `e415815` |
 | UX-22 | Verdad pasan/lista alineada (deferred hunt) | `332d2e4` |
 | CLEAN-1 | Purga CSS `.resultSortSelect` | `fb9188a` |
+| UX-BTN-1 | Segmented / keycaps unificados | *(pendiente stamp)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -155,8 +156,15 @@ Anterior: **UX-22** (`332d2e4`).
 | UX-21 | Botones Ordenar vs cabeceras | **Hecho** · `e415815` · smoke RS header |
 | UX-22 | Verdad pasan vs en lista (deferred hunt) | **Hecho** · `332d2e4` · smoke 3318 |
 | CLEAN-1 | Purga CSS `.resultSortSelect` | **Hecho** · `fb9188a` |
+| UX-BTN | Brief acabados botones/teclas | **Hecho** · `docs/analisis-ux-btn-acabados-2026-08-29.md` |
+| UX-BTN-1 | Segmented / keycaps unificados | **Hecho** · smoke 3M/6M/12M |
+| UX-BTN-2 | Primary / Ghost / Pager | Pendiente |
+| UX-BTN-3 | Chart floating nav | Pendiente |
+| UX-BTN-4 | Stock decision rail | Pendiente |
+| UX-BTN-5 | Hunt rail + «+ Filtro» | Pendiente |
+| UX-BTN-6 | Market / country chips | Pendiente |
 
-Ver informe · `docs/analisis-ux-pagina-2026-08-29.md`.
+Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 
 ## Track IPO / salidas a bolsa (dueño 2026-08-28)
 

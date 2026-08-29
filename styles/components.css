@@ -908,15 +908,20 @@
   white-space:nowrap;
 }
 
+/* UX-BTN-1: segmented / keycap family */
+.compactSeg,
 .chartSegmented {
   display:flex;
   align-items:center;
   gap:2px;
   min-width:0;
   padding:2px;
-  border:1px solid var(--line2);
+  border:1px solid var(--line);
   border-radius:var(--radius);
-  background:var(--surface2);
+  background:var(--surface-inset);
+}
+
+.chartSegmented {
   overflow-x:auto;
   scrollbar-width:none;
 }
@@ -925,52 +930,56 @@
   display:none;
 }
 
+.compactSeg button,
 .chartSegmented button {
   flex:0 0 auto;
   min-width:30px;
   height:26px;
-  border:0;
-  border-radius:calc(var(--radius) - 1px);
-  background:transparent;
-  color:#85858d;
+  min-height:26px;
+  padding:0 8px;
+  border:1px solid transparent;
+  border-radius:var(--radius-s);
+  /* Longhands only: transitioning the `background` shorthand to/from
+     transparent left CSSTransitions stuck (fill:backwards) on desktop
+     period pickers so the active keycap never painted. */
+  background-color:transparent;
+  color:var(--soft);
+  font-family:var(--font-data);
   font-size:11px;
-  font-weight:750;
+  font-weight:650;
+  box-shadow:none;
+  transition:none;
 }
 
-.chartSegmented button.active {
-  color:#f5f5f5;
-  background:var(--senal-dim);
+.compactSeg button:hover,
+.chartSegmented button:hover {
+  color:var(--text);
+  background-color:transparent;
+  border-color:transparent;
+  box-shadow:none;
+  transform:none;
+}
+
+.compactSeg button.active,
+.compactSeg button[aria-pressed="true"],
+.chartSegmented button.active,
+.chartSegmented button[aria-pressed="true"] {
+  border-color:var(--line2);
+  background-color:var(--surface);
+  color:var(--text);
+  box-shadow:0 1px 2px rgba(0,0,0,.35);
+  font-weight:720;
 }
 
 .chartSegmented button:disabled {
-  color:#4f535c;
+  color:var(--ghost);
   cursor:not-allowed;
   opacity:.58;
 }
 
-.compactSeg {
-  display:flex;
-  align-items:center;
-  padding:2px;
-  border:1px solid var(--line2);
-  border-radius:var(--radius);
-  background:var(--surface2);
-}
-
-.compactSeg button {
-  min-width:30px;
-  height:26px;
-  border:0;
-  border-radius:calc(var(--radius) - 1px);
-  background:transparent;
-  color:#85858d;
-  font-size:11px;
-  font-weight:750;
-}
-
-.compactSeg button.active {
-  color:#f5f5f5;
-  background:var(--senal-dim);
+.chartSegmented button:disabled.active,
+.chartSegmented button:disabled[aria-pressed="true"] {
+  opacity:.82;
 }
 
 .chartPrefs select {
@@ -4418,7 +4427,7 @@ h2 {
   box-shadow:0 0 0 3px var(--accent);
 }
 
-.btn, .btnSmall, .btnGhost, .btnPrimary, .compactSeg button {
+.btn, .btnSmall, .btnGhost, .btnPrimary {
   min-height:34px;
   border:1px solid var(--line);
   border-radius:var(--radius);
@@ -4624,7 +4633,6 @@ h2 {
 }
 
 .chartPrefs select,
-.chartPrefs .compactSeg,
 .chartPrefs .chartIndicators summary,
 .chartPrefs .chartNotes summary {
   height:40px;
@@ -4638,6 +4646,12 @@ h2 {
   font-weight:650;
 }
 
+.chartPrefs .compactSeg,
+.chartPrefs .chartSegmented {
+  height:40px;
+  min-height:40px;
+}
+
 .chartPrefs select {
   min-width:118px;
   appearance:none;
@@ -4649,8 +4663,6 @@ h2 {
 }
 
 .chartPrefs select:hover,
-.chartPrefs .chartPrefGroup:hover .chartSegmented,
-.chartPrefs .compactSeg:hover,
 .chartPrefs .chartIndicators summary:hover,
 .chartPrefs .chartNotes summary:hover {
   border-color:var(--line2);
@@ -4684,14 +4696,8 @@ h2 {
 
 .chartPrefs .chartSegmented {
   max-width:min(100%,560px);
-  height:40px;
-  min-height:40px;
   gap:2px;
   padding:3px;
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  background:var(--surface);
-  box-shadow:none;
 }
 
 .chartPrefs .chartSegmented button {
@@ -4699,28 +4705,16 @@ h2 {
   height:32px;
   min-height:32px;
   padding:0 10px;
-  border:0;
-  border-radius:calc(var(--radius) - 2px);
-  background:transparent;
-  color:var(--soft);
   font-size:12px;
   font-weight:720;
 }
 
-.chartPrefs .chartSegmented button.active {
-  border-color:var(--accent);
-  background:var(--senal-dim);
-  color:#f5f5f5;
-}
-
 .chartPrefs .chartSegmented button:disabled {
-  color:#535861;
-  cursor:not-allowed;
   opacity:.54;
 }
 
-.chartPrefs .chartSegmented button:disabled.active {
-  color:#cbd5e1;
+.chartPrefs .chartSegmented button:disabled.active,
+.chartPrefs .chartSegmented button:disabled[aria-pressed="true"] {
   opacity:.82;
 }
 
@@ -4728,21 +4722,18 @@ h2 {
   height:32px;
   min-height:32px;
   min-width:44px;
-  border:0;
-  border-radius:calc(var(--radius) - 2px);
-  background:transparent;
-  color:var(--soft);
   padding:0 12px;
   font-size:13px;
   font-weight:650;
 }
 
-.chartPrefs .compactSeg button.active,
 .chartPrefs .chartIndicators[open] summary,
 .chartPrefs .chartNotes[open] summary {
-  border-color:var(--accent);
-  background:var(--senal-dim);
-  color:#f5f5f5;
+  border-color:var(--line2);
+  background:#f4f4f5;
+  color:var(--bg);
+  box-shadow:none;
+  font-weight:720;
 }
 
 .chartPrefs .chartIndicators summary,
@@ -4940,7 +4931,7 @@ h2 {
 
 /* Button sobriety pass: neutral, squared, and aligned with the research UI. */
 
-.btn, .btnSmall, .btnGhost, .btnPrimary, .starBtn, .stockHeroLink, .marketChip, .compactSeg button, .chartPrefs .chartIndicators summary, .chartPrefs .chartNotes summary {
+.btn, .btnSmall, .btnGhost, .btnPrimary, .starBtn, .stockHeroLink, .marketChip, .chartPrefs .chartIndicators summary, .chartPrefs .chartNotes summary {
   min-height:36px;
   border:1px solid var(--line2);
   border-radius:7px;
@@ -4960,7 +4951,7 @@ h2 {
   font-size:12px;
 }
 
-.btn:hover, .btnGhost:hover, .starBtn:hover, .stockHeroLink:hover, .marketChip:hover, .compactSeg button:hover, .chartPrefs .chartIndicators summary:hover, .chartPrefs .chartNotes summary:hover {
+.btn:hover, .btnGhost:hover, .starBtn:hover, .stockHeroLink:hover, .marketChip:hover, .chartPrefs .chartIndicators summary:hover, .chartPrefs .chartNotes summary:hover {
   border-color:var(--line2);
   background:var(--surface);
   color:var(--text);
@@ -4973,7 +4964,7 @@ h2 {
   color:#050506;
 }
 
-.btnActive, .compactSeg button.active, .chartPrefs .compactSeg button.active, .chartPrefs .chartIndicators[open] summary, .chartPrefs .chartNotes[open] summary {
+.btnActive, .chartPrefs .chartIndicators[open] summary, .chartPrefs .chartNotes[open] summary {
   border-color:var(--line2);
   background:#f4f4f5;
   color:var(--bg);
@@ -5071,7 +5062,7 @@ h2 {
   font-size:13px;
 }
 
-.stockPage .chartBenchmarkControl input, .stockPage .chartBenchmarkControl button, .stockPage .fundamentalToolbar button, .stockPage .compactSeg button {
+.stockPage .chartBenchmarkControl input, .stockPage .chartBenchmarkControl button, .stockPage .fundamentalToolbar button {
   border:1px solid var(--stock-line);
   border-radius:7px;
   background:var(--surface);
@@ -5082,7 +5073,7 @@ h2 {
   box-shadow:none;
 }
 
-.stockPage .fundamentalToolbar button.active, .stockPage .compactSeg button.active {
+.stockPage .fundamentalToolbar button.active {
   border-color:var(--line2);
   background:#e8e9ed;
   color:#07080a;
@@ -5493,7 +5484,6 @@ h2 {
 
 .stockPage .chartPrefs select,
 .stockPage .chartPrefs .chartPrefGroup,
-.stockPage .chartPrefs .compactSeg,
 .stockPage .chartPrefs .chartIndicators summary,
 .stockPage .chartPrefs .chartNotes summary {
   flex:0 0 auto;
@@ -5501,6 +5491,13 @@ h2 {
   min-height:32px;
   border-radius:7px;
   font-size:12px;
+}
+
+.stockPage .chartPrefs .compactSeg,
+.stockPage .chartPrefs .chartSegmented {
+  flex:0 0 auto;
+  height:32px;
+  min-height:32px;
 }
 
 .stockPage .chartPrefs .chartPrefGroup {
@@ -5636,12 +5633,16 @@ h2 {
   }
   .stockPage .chartPrefs select,
   .stockPage .chartPrefs .chartPrefGroup,
-  .stockPage .chartPrefs .compactSeg,
   .stockPage .chartPrefs .chartIndicators summary,
   .stockPage .chartPrefs .chartNotes summary {
     height:28px;
     min-height:28px;
     font-size:11px;
+  }
+  .stockPage .chartPrefs .compactSeg,
+  .stockPage .chartPrefs .chartSegmented {
+    height:28px;
+    min-height:28px;
   }
   .stockPage .chartPrefs select {
     min-width:84px;
@@ -5833,12 +5834,16 @@ h2 {
   }
   .stockPage .chartPrefs select,
   .stockPage .chartPrefs .chartPrefGroup,
-  .stockPage .chartPrefs .compactSeg,
   .stockPage .chartPrefs .chartIndicators summary,
   .stockPage .chartPrefs .chartNotes summary {
     height:30px;
     min-height:30px;
     font-size:11px;
+  }
+  .stockPage .chartPrefs .compactSeg,
+  .stockPage .chartPrefs .chartSegmented {
+    height:30px;
+    min-height:30px;
   }
   .stockPage .chartPrefs select {
     width:100%;
@@ -6364,7 +6369,7 @@ h2 {
   margin-top: 3px;
 }
 
-.btn, .btnSmall, .btnGhost, .btnPrimary, .starBtn, .compactSeg button {
+.btn, .btnSmall, .btnGhost, .btnPrimary, .starBtn {
   border-radius: 7px;
 }
 
@@ -7335,7 +7340,6 @@ h2 {
   }
   .stockPage .chartPrefs select,
   .stockPage .chartPrefs .chartPrefGroup,
-  .stockPage .chartPrefs .compactSeg,
   .stockPage .chartPrefs .btnSmall,
   .stockPage .chartPrefs .chartIndicators summary,
   .stockPage .chartPrefs .chartNotes summary {
@@ -7345,6 +7349,13 @@ h2 {
     min-height: 32px !important;
     border-radius: 7px;
     font-size: 10px;
+  }
+  .stockPage .chartPrefs .compactSeg,
+  .stockPage .chartPrefs .chartSegmented {
+    width: 100%;
+    min-width: 0;
+    height: 32px !important;
+    min-height: 32px !important;
   }
   .stockPage .chartPrefs select {
     padding: 0 16px 0 7px;
