@@ -113,7 +113,7 @@ Anterior: **CHART-NAV** (`cb99525`).
 | CHART-NAV-fix | Chevrons/zoom/reset vivos (sync manual/fit) | `0d5298a` |
 | CHART-RS | RS overlay sin pane inferior | `0728afe` |
 | CHART-NAV | fixLeftEdge false + manual lógico en resize | `cb99525` |
-| UX-18 | Móvil ≤480: chrome compacto, 1ª fila legible | *(commit siguiente)* |
+| UX-18 | Móvil ≤480: chrome compacto, 1ª fila legible | `620ae28` |
 
 ## Siguiente — datos IPO + filtros
 
