@@ -35,6 +35,7 @@ import { investorStatusLabel } from "@/lib/screenerFormat";
 import { huntDisplayName } from "@/lib/screenerHuntCards";
 import { OptionalBasePresetsPanel } from "@/lib/screenerFiltersView";
 import { buildMarketsStaleNotice } from "@/lib/marketAvailability";
+import { buildLideresIntlGuardrailNotice, LIDERES_INTL_CTA } from "@/lib/lideresIntlGuardrail";
 import { buildScreenerFilterBreakdown } from "@/lib/screenerFilterBreakdown";
 import { buildScreenerTruthLine, marketCountLabel } from "@/lib/screenerTruthLine";
 import {
@@ -294,7 +295,28 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     selectedMarkets: markets,
     rowCount: analyzedRows.length,
   });
+  const lideresIntlGuardrail = buildLideresIntlGuardrailNotice({
+    presetKey,
+    markets,
+    scannedMarkets,
+    analyzedRows,
+  });
   const showSnapshotNotice = snapshotNotice && snapshotNotice.source !== "markets-stale";
+
+  function handleLideresIntlGuardrailCta(ctaId) {
+    if (ctaId === LIDERES_INTL_CTA.LOAD_CORE_INTL) {
+      marketPreset("core-intl");
+      return;
+    }
+    if (ctaId === LIDERES_INTL_CTA.REMOVE_US) {
+      const nextMarkets = markets.filter((code) => String(code || "").toUpperCase() !== "US");
+      setMarketsAndInvalidate(nextMarkets, "US quitado de la selección.");
+      return;
+    }
+    if (ctaId === LIDERES_INTL_CTA.SWITCH_ETAPA_2) {
+      applyHuntCard("lideres-etapa-2");
+    }
+  }
 
   // --- franja P3 (percentil por lote) ---
   // Comunicamos honestamente los percentiles batch de la lista visible; si el
@@ -559,6 +581,25 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               setActiveFilterFamily(familyKey);
             }}
           />
+          {lideresIntlGuardrail ? (
+            <div className="scanStaleNotice lideresIntlGuardrail" role="status" aria-live="polite">
+              <span className="scanStaleNoticeLabel">{lideresIntlGuardrail.label}</span>
+              <b>{lideresIntlGuardrail.detail}</b>
+              <div className="lideresIntlGuardrailActions">
+                {lideresIntlGuardrail.ctas.map((cta) => (
+                  <button
+                    key={cta.id}
+                    type="button"
+                    className={`btn btnSmall ${cta.primary ? "btnPrimary" : "btnGhost"}`}
+                    onClick={() => handleLideresIntlGuardrailCta(cta.id)}
+                    disabled={restoringScan}
+                  >
+                    {cta.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <p className="screenerTruthLine" role="status" aria-live="polite">
             <span>{truthLine}</span>
             {visibleBatchRows ? <span className="percentileScopeBadge" title={PERCENTILE_BATCH_NOTE} aria-label={`${PERCENTILE_BATCH_BADGE}. ${PERCENTILE_BATCH_NOTE}`}>{PERCENTILE_BATCH_BADGE}</span> : null}

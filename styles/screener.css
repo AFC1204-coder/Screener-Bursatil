@@ -261,6 +261,13 @@
   flex:0 0 auto;
 }
 
+.lideresIntlGuardrailActions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  width:100%;
+}
+
 .screenerTruthLine {
   display:flex;
   flex-wrap:wrap;

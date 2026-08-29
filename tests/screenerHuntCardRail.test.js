@@ -39,8 +39,13 @@ function templateButtonNames(html) {
   return [...html.matchAll(/class="filterTemplateBtn[^"]*"[^>]*>[\s\S]*?<b>([^<]+)<\/b>/g)].map((match) => match[1]);
 }
 
-function makeProps({ presetKey = "balanced", markets = ["US"] } = {}) {
-  const resultsRows = [{ symbol: "AAPL", country: "US" }];
+function makeProps({
+  presetKey = "balanced",
+  markets = ["US"],
+  analyzedRows = null,
+  scannedMarkets = null,
+} = {}) {
+  const resultsRows = analyzedRows || [{ symbol: "AAPL", country: "US" }];
   return {
     chrome: {
       presetKey,
@@ -154,7 +159,7 @@ function makeProps({ presetKey = "balanced", markets = ["US"] } = {}) {
       scanStale: false,
       marketsStale: false,
       scannedAt: "2026-08-27T14:07:00.000Z",
-      scannedMarkets: markets,
+      scannedMarkets: scannedMarkets ?? markets,
     },
   };
 }
@@ -288,5 +293,29 @@ describe("ScreenerShell hunt rail", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
     expect(html).toMatch(/<details class="disclosurePanel advancedConfigPanel"[\s\S]*?Más bases de filtro/);
     expect(html).not.toMatch(/filterTemplatePanel[\s\S]*?Líderes estrictos/);
+  });
+
+  it("UX-16: avisa en rail cuando Líderes intl y datos solo US", () => {
+    const usRows = Array.from({ length: 50 }, (_, index) => ({ symbol: `U${index}`, country: "US" }));
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      presetKey: "intl",
+      markets: ["US", "HK", "CA"],
+      analyzedRows: usRows,
+      scannedMarkets: ["US"],
+    })));
+    expect(html).toContain("lideresIntlGuardrail");
+    expect(html).toContain("Datos cargados: US (50)");
+    expect(html).toContain("Cargar Core intl");
+    expect(html).toContain("Quitar US");
+    expect(html).toContain("Cambiar a Líderes E2");
+    expect(html).toContain("pasan «Líderes intl»");
+  });
+
+  it("UX-16: no avisa en Líderes Etapa 2 con solo US", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      presetKey: "balanced",
+      markets: ["US"],
+    })));
+    expect(html).not.toContain("lideresIntlGuardrail");
   });
 });
