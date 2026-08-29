@@ -130,7 +130,7 @@ Anterior: **UX-BTN-6** (`969b97e`).
 | UX-BTN-4 | Stock decision rail | `27c63fb` |
 | UX-BTN-5 | Hunt rail + «+ Filtro» | `035c22b` |
 | UX-BTN-6 | Market / country chips | `969b97e` |
-| UX-23 | InfoHints cabecera tabla | *(pendiente stamp)* |
+| UX-23 | InfoHints cabecera tabla | `9244496` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -175,7 +175,7 @@ Anterior: **UX-BTN-6** (`969b97e`).
 | UX-BTN-4 | Stock decision rail | **Hecho** · `27c63fb` · smoke AAPL |
 | UX-BTN-5 | Hunt rail + «+ Filtro» | **Hecho** · `035c22b` · smoke `/` |
 | UX-BTN-6 | Market / country chips | **Hecho** · `969b97e` · smoke `/` |
-| UX-23 | InfoHints cabecera tabla | **Hecho** · smoke `/` |
+| UX-23 | InfoHints cabecera tabla | **Hecho** · `9244496` · smoke `/` |
 
 Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 
