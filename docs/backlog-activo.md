@@ -6,9 +6,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **UX-BTN-3** (chart floating nav).  
-Anterior: **UX-BTN-2** (`74d7085`).  
-**Cola:** UX-BTN-4…6 · UX-23 · CLEAN-2 · (Supabase aplazado)  
+Último cerrado: **UX-BTN-4** (stock decision rail).  
+Anterior: **UX-BTN-3** (`ae37bfa`).  
+**Cola:** UX-BTN-5…6 · UX-23 · CLEAN-2 · (Supabase aplazado)  
+**Nota UX-BTN-4 (2026-08-29):** smoke AAPL — Candidata/Vigilar/Descartar tokens; activo `--active-*`; Reabrir disabled ghost.  
 **Nota UX-BTN-3 (2026-08-29):** smoke AAPL — reposo soft/`rgba(23,41,31,.85)`; activo dibujo distinto (`--active-*`); icon 32×32.  
 **Nota UX-BTN-2 (2026-08-29):** smoke Revisar CTA tiza; pager 32×32.  
 **Nota UX-BTN-1 (2026-08-29):** smoke 3M/6M/12M OK.  
@@ -123,6 +124,7 @@ Anterior: **UX-BTN-2** (`74d7085`).
 | UX-BTN-1 | Segmented / keycaps unificados | `59bbc52` |
 | UX-BTN-2 | Primary / Ghost / Pager | `74d7085` |
 | UX-BTN-3 | Chart floating nav | `ae37bfa` |
+| UX-BTN-4 | Stock decision rail | *(pendiente stamp)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -165,7 +167,7 @@ Anterior: **UX-BTN-2** (`74d7085`).
 | UX-BTN-2 | Primary / Ghost / Pager | **Hecho** · `74d7085` · smoke Revisar + pager |
 | UX-BTN-2 | Primary / Ghost / Pager | Pendiente |
 | UX-BTN-3 | Chart floating nav | **Hecho** · `ae37bfa` · smoke AAPL |
-| UX-BTN-4 | Stock decision rail | Pendiente |
+| UX-BTN-4 | Stock decision rail | **Hecho** · smoke AAPL |
 | UX-BTN-5 | Hunt rail + «+ Filtro» | Pendiente |
 | UX-BTN-6 | Market / country chips | Pendiente |
 

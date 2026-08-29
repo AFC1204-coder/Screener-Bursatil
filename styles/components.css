@@ -5350,57 +5350,59 @@ h2 {
   min-height:30px;
   padding:5px 8px;
   border:1px solid var(--stock-line);
-  border-radius:7px;
+  border-radius:var(--radius);
   background:var(--surface);
-  color:#e5e7eb;
+  color:var(--text);
   font-size:11px;
   font-weight:650;
 }
 
 .stockPage .stockDecisionValidationNote input::placeholder {
-  color:#6f7786;
+  color:var(--ghost);
 }
 
 .stockPage .stockDecisionResolveRail button {
   min-height:30px;
   padding:5px 9px;
   border:1px solid var(--stock-line);
-  border-radius:7px;
+  border-radius:var(--radius);
   background:var(--surface);
-  color:#d3d5dc;
+  color:var(--soft);
   font-size:11px;
   font-weight:760;
 }
 
 .stockPage .stockDecisionResolveRail button.good {
   border-color:var(--decision-vigilar);
-  color:#9ee8b1;
+  color:var(--decision-vigilar);
 }
 
 .stockPage .stockDecisionResolveRail button.warn {
-  border-color:var(--line2);
-  color:#f2d28c;
+  border-color:var(--decision-auditar);
+  color:var(--decision-auditar);
 }
 
 .stockPage .stockDecisionResolveRail button.bad {
   border-color:var(--risk);
-  color:#ffaaa4;
+  color:var(--risk);
 }
 
 .stockPage .stockDecisionResolveRail button.neutral {
-  border-color:var(--line);
-  color:#cbd5e1;
+  border-color:var(--line2);
+  color:var(--soft);
 }
 
+/* Activo por elevación de superficie (--active-*), no blanco invertido. */
 .stockPage .stockDecisionResolveRail button.active {
-  border-color:var(--line2);
-  background:#e8e9ed;
-  color:var(--bg);
+  border-color:var(--active-border);
+  background:var(--active-bg);
+  color:var(--active-fg);
 }
 
 .stockPage .stockDecisionResolveRail button:disabled {
   cursor:not-allowed;
-  opacity:.48;
+  opacity:.40;
+  color:var(--ghost);
 }
 
 .stockPage .stockDecisionHistory {
