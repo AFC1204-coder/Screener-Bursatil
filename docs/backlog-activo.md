@@ -108,7 +108,7 @@ Anterior: **UX-18** (`620ae28`).
 | CHART-RS | RS overlay sin pane inferior | `0728afe` |
 | CHART-NAV | fixLeftEdge false + manual lógico en resize | `cb99525` |
 | UX-18 | Móvil ≤480: chrome compacto, 1ª fila legible | `620ae28` |
-| UX-19 | StorageAlert compacto + dismiss + liberar | *(commit siguiente)* |
+| UX-19 | StorageAlert compacto + dismiss + liberar | `260bcdc` |
 
 ## Siguiente — datos IPO + filtros
 
