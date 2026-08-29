@@ -1,6 +1,6 @@
 # UX-13 — RS en Líderes Etapa 2 (opción D)
 
-**Estado:** Decisión dueño **aceptada 2026-08-29** · **en programación** (activo tras FILTERS-6 `28c472a`)  
+**Estado:** **Hecho** 2026-08-29 · `08c10fe` · smoke Browser Use (chip + sort Sin dato al final)  
 **Origen:** H-04 / `docs/analisis-ux-screener-review-2026-08-28.md`  
 **Decisión:** opción **D (híbrido)** — no ensanchar ranking; no expulsar Sin dato del filtro de etapa por defecto.
 
