@@ -294,10 +294,22 @@ export function scanResultPageOffsets(rowsAvailable, rowsLimit) {
   };
 }
 
-function dedupeScanResultsBySymbol(results = []) {
+function dedupeScanResultsBySymbol(results = [], { sourceScans = [] } = {}) {
+  const ordered = sourceScans.length
+    ? results.slice().sort((left, right) => {
+      const orderFor = (item) => {
+        const index = sourceScans.findIndex((scan) => scan.id === item.scan_id);
+        return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+      };
+      const leftOrder = orderFor(left);
+      const rightOrder = orderFor(right);
+      if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+      return (left.rank_index || 0) - (right.rank_index || 0);
+    })
+    : results;
   const seen = new Set();
   const deduped = [];
-  for (const item of results) {
+  for (const item of ordered) {
     const symbol = String(item?.symbol || "").trim().toUpperCase();
     if (!symbol || seen.has(symbol)) continue;
     seen.add(symbol);
@@ -312,9 +324,12 @@ async function readMergedMaterializedResults({
   select,
   rowsLimit,
 }) {
-  const ids = sourceScans.map((scan) => scan.id).filter(Boolean).join(",");
+  const orderedScans = sourceScans.slice().sort((left, right) => (
+    (left.created_at < right.created_at ? 1 : -1)
+  ));
+  const ids = orderedScans.map((scan) => scan.id).filter(Boolean).join(",");
   if (!ids) return { rows: [], sampled: false, step: 0 };
-  const rowsAvailable = sourceScans.reduce((total, scan) => total + (Number(scan.row_count) || 0), 0);
+  const rowsAvailable = orderedScans.reduce((total, scan) => total + (Number(scan.row_count) || 0), 0);
   const page = await readScanResultPages({
     ownerId,
     scanIds: ids,
@@ -322,7 +337,7 @@ async function readMergedMaterializedResults({
     rowsLimit: Math.max(rowsLimit, rowsAvailable),
     rowsAvailable,
   });
-  return { ...page, rows: dedupeScanResultsBySymbol(page.rows) };
+  return { ...page, rows: dedupeScanResultsBySymbol(page.rows, { sourceScans: orderedScans }) };
 }
 
 async function readScanResultPages({ ownerId, scanIds, select, rowsLimit, rowsAvailable }) {
@@ -596,7 +611,7 @@ export async function GET(req) {
         let results = [];
         let rowsSampled = false;
         if (includeRows && activeScans.length && rowsLimit > 0) {
-          if (materialized.merged && Array.isArray(materialized.sourceScans) && materialized.sourceScans.length) {
+          if ((materialized.merged || materialized.accumulated) && Array.isArray(materialized.sourceScans) && materialized.sourceScans.length) {
             const page = await readMergedMaterializedResults({
               ownerId: config.ownerId,
               sourceScans: materialized.sourceScans,
@@ -635,7 +650,7 @@ export async function GET(req) {
             omitDecisionTrace: !full && !decisionProjection,
             weeklyRsBySymbol: weeklyRs.bySymbol,
             marketCapBySymbol: marketCaps.bySymbol,
-            matchAllResults: Boolean(materialized.merged),
+            matchAllResults: Boolean(materialized.merged || materialized.accumulated),
           })),
           scanTombstones: [],
           markets: {
@@ -647,6 +662,8 @@ export async function GET(req) {
             localId: materialized.scan.localId,
             source: materialized.scan.source || null,
             merged: Boolean(materialized.merged),
+            accumulated: Boolean(materialized.accumulated),
+            accumulatedNights: materialized.scan?.accumulatedNights || materialized.row?.settings?.accumulatedNights || null,
           },
         };
       }

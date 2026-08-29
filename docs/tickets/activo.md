@@ -1,10 +1,9 @@
 # Ticket activo
 
-**Estado:** libre tras INT-3e (+ fix metadatos HKEX).
+**Estado:** libre tras INT-3d.
 
-INT-3e: selección official-broad prioriza Main Board/short-sell; snapshot conserva board metadata.  
-Smoke cron o217: selected 84, passedBase **33** (vs 21 en o133), withMeta 2675/2760.
+INT-3d: mesa HK = unión de hasta 7 noches publishables. Smoke Browser Use: **122 analizadas** (5 noches en DB; antes ~33).
 
-**Siguiente:** INT-3d acumular · UX-FILTERS-4 · nocturno → IPO-1c.
+**Siguiente:** UX-FILTERS-4 · nocturno → IPO-1c · (margen: salida Supabase).
 
 Ver `docs/backlog-activo.md`.

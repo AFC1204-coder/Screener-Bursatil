@@ -29,7 +29,7 @@ import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/l
 import { normalizeScanErrorGroups } from "@/lib/scanErrorGroups";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
 import { DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
-import { filterSelectableMarkets, formatMissingMarketsDetail, intlBroadStatusDetail, marketPresetMarkets, scannedMarketsFromScan } from "@/lib/marketAvailability";
+import { filterSelectableMarkets, formatMissingMarketsDetail, accumulatedMaterializedStatusDetail, intlBroadStatusDetail, marketPresetMarkets, scannedMarketsFromScan } from "@/lib/marketAvailability";
 import { buildDecisionBrief, buildDecisionEvidenceChecklist, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
 import { attachDecisionTrace, auditDecisionRowIssues, buildDecisionAuditExportPayload, buildDecisionTrace, decisionConfidenceLabel, decisionTraceForRow } from "@/lib/decisionAudit";
 import { decisionProfileStateForStock } from "@/lib/decisionProfile";
@@ -1305,11 +1305,18 @@ export default function Page() {
         scanSignature: { markets: normalized, manual, scanMode },
       });
       const broadDetail = normalized.length === 1
-        ? intlBroadStatusDetail({
-          market: normalized[0],
-          analyzedCount: scan.rows.length,
-          priorityMode: scan.settings?.priorityMode,
-        })
+        ? (
+          accumulatedMaterializedStatusDetail({
+            market: normalized[0],
+            accumulatedNights: scan.settings?.accumulatedNights,
+            symbolCount: scan.rows.length,
+          })
+          || intlBroadStatusDetail({
+            market: normalized[0],
+            analyzedCount: scan.rows.length,
+            priorityMode: scan.settings?.priorityMode,
+          })
+        )
         : "";
       setStatus(broadDetail
         || (normalized.length === 1

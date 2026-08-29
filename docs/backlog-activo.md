@@ -6,10 +6,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: libre.  
-Último cerrado: **INT-3e** (+ INT-3e-fix metadatos HKEX).  
-Anterior: **INT-3c** (`24a8e93`).  
-**Cola:** INT-3d acumulado · UX-FILTERS-4 · nocturno → IPO-1c…  
-**Nota INT-3e (2026-08-29):** rebuild HK → withMeta 2675/2760; cron o217 selected 84, passedBase 33 (vs 21 o133). Skip GEM vía sort+cursor; `minPrice` 0,50 intacto.  
+Último cerrado: **INT-3d** (acumular noches HK/CA).  
+Anterior: **INT-3e** (`506bbf6`).  
+**Cola:** UX-FILTERS-4 · nocturno → IPO-1c… · (luego salida Supabase)  
+**Nota INT-3d (2026-08-29):** smoke HK → **122 analizadas** (5 noches; latest sola era 33).  
+**Nota producto (2026-08-29):** Supabase migrate aplazado; margen renovación ~2–3 días.  
+**Nota INT-3e (2026-08-29):** rebuild HK → withMeta 2675/2760; cron o217 selected 84, passedBase 33.  
 **Nota INT-3c (2026-08-28):** cron o133 → passedBase 21 porque 0169–0219 es casi toda &lt;0,50 HKD; umbral OK. Yield = selección más líquida o acumular noches, **no** bajar más el precio.  
 **Decisión producto (2026-08-28 · universo intl):** menos curación; official-broad + gates; **mejor yield por lote**, no más símbolos/noche (Pro MICRO + spend-cap 8 GB).  
 **Decisión producto (2026-08-28 · filtros):** control primario = **barra continua** (grados), no todo-o-nada; Abrir = profundidad. Spec §3 actualizada (opción B).  
@@ -80,6 +82,7 @@ Anterior: **INT-3c** (`24a8e93`).
 | INT-3b | Caps scan-refresh official-broad (sin techo 25) | `13985cc` |
 | INT-3c | Gates HK/CA minPrice moneda local | `24a8e93` |
 | INT-3e | Selección HK Main Board/short-sell + metadatos en snapshot | `506bbf6` |
+| INT-3d | Acumular noches HK/CA en mesa (N=7) | (pendiente hash) |
 
 ## Siguiente — datos IPO + filtros
 
@@ -93,7 +96,7 @@ Anterior: **INT-3c** (`24a8e93`).
 | INT-3b | Quitar cap `perMarket≤25` / `limit≤80` en scan-refresh para official-broad | **Hecho** · `13985cc` · cron selected 84 → passedBase 21 (minPrice USD) |
 | INT-3c | Gates baseReject HK/CA en moneda local (sin subir lote) | **Hecho** · `24a8e93` · smoke o133→21 |
 | INT-3e | Selección HK: Main Board/short-sell + preservar metadatos en snapshot | **Hecho** · smoke o217→passedBase 33; withMeta 2675 |
-| INT-3d | Acumular lotes HK (unión histórica) en una mesa | Siguiente |
+| INT-3d | Acumular lotes HK/CA (unión N noches) en una mesa | **Hecho** · smoke HK 122 analizadas (5 noches) |
 | UX-FILTERS-1 | Toggle ≠ abrir editor (cierra UX-15) | **Hecho** · `b6cfafa` |
 | UX-FILTERS-2 | Taxonomía única de familias | **Hecho** · `745043a` |
 | UX-FILTERS-3 | Intensidad continua 0–100 + Abrir (IPO + RS) | **Hecho** |
