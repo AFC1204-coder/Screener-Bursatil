@@ -1,9 +1,8 @@
-# Ticket activo
+# Ticket activo — liberado
 
-**Estado:** libre tras INT-3d.
+Último cerrado: **UX-FILTERS-4** (cobertura N/M IPO+RS).  
+Copia: `docs/tickets/UX-FILTERS-4-cobertura-dato.md`.
 
-INT-3d: mesa HK = unión de hasta 7 noches publishables. Smoke Browser Use: **122 analizadas** (5 noches en DB; antes ~33).
+**Siguiente (cola):** nocturno → IPO-1c · (salida Supabase aplazada).
 
-**Siguiente:** UX-FILTERS-4 · nocturno → IPO-1c · (margen: salida Supabase).
-
-Ver `docs/backlog-activo.md`.
+Orquestador escribe aquí el próximo prompt antes de abrir Agent chat de programación.

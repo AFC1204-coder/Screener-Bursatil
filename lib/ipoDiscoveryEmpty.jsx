@@ -1,13 +1,14 @@
-import Link from "next/link";
-import { ipoDiscoveryEmptyMessage } from "@/lib/ipoDiscoveryView";
+import { FilterFamilyEmptyLabel } from "@/lib/filterFamilyEmpty";
 
+/** @deprecated Usar FilterFamilyEmptyLabel con familyKey="ipo". */
 export function IpoDiscoveryEmptyLabel({ analyzedCount = 0, coverage = {} }) {
   return (
-    <span className="emptyResultsCopy">
-      {ipoDiscoveryEmptyMessage({ analyzedCount, coverage })}{" "}
-      <Link href="/ipo-radar" className="btn btnSmall emptyResultsCta">
-        Abrir IPO Radar
-      </Link>
-    </span>
+    <FilterFamilyEmptyLabel
+      familyKey="ipo"
+      analyzedCount={analyzedCount}
+      coverage={coverage}
+      filterLayers={{ ipo: true }}
+      settings={{ requireRecentIpo: true }}
+    />
   );
 }

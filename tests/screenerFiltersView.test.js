@@ -108,6 +108,20 @@ describe("LayerControl · toggle vs abrir", () => {
     expect(rsHtml).toContain("RS global ≥ 55");
     expect(liqHtml).not.toContain("filterIntensitySlider");
   });
+
+  it("muestra aviso de cobertura baja en tarjeta activa", () => {
+    const html = renderToStaticMarkup(React.createElement(LayerControl, {
+      active: true,
+      onClick: () => {},
+      onOpen: () => {},
+      label: "RS",
+      detail: "",
+      countLabel: "6 reglas",
+      coverageWarning: "⚠ RS con dato en 25/47",
+    }));
+    expect(html).toContain("layerCoverageWarning");
+    expect(html).toContain("25/47");
+  });
 });
 
 describe("FilterFamilyModal · power toggle aislado", () => {
@@ -162,5 +176,14 @@ describe("FilterFamilyModal · power toggle aislado", () => {
     expect(html).toContain("filterIntensitySlider");
     expect(html).toContain("Auxiliares");
     expect(html).toContain(PRIVATE_GLOBAL_RS_DISCLOSURE.split(" ")[0]);
+  });
+
+  it("muestra cobertura N/M en cabecera del modal", () => {
+    const html = renderToStaticMarkup(React.createElement(FilterFamilyModal, {
+      ...baseProps,
+      familyCoverage: { total: 47, withRsData: 25, low: true },
+    }));
+    expect(html).toContain("filterFamilyCoverage");
+    expect(html).toContain("RS semanal en 25/47 del lote");
   });
 });

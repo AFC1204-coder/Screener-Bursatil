@@ -5424,6 +5424,22 @@ button.decisionIssueBadge:hover,
   opacity: .7;
 }
 
+.layerCoverageWarning {
+  color: var(--warn, #f59e0b);
+  font-weight: 600;
+}
+
+.filterFamilyCoverage {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  color: var(--warn, #f59e0b);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .layerControlRow > .infoHint {
   grid-row: 1 / -1;
   align-self: center;
