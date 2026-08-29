@@ -91,6 +91,7 @@ import {
   inferFamilyIntensity,
   intensityManagedKeys,
   isFamilyIntensityCustom,
+  restoreFamilyIntensity,
   settingsAtFamilyIntensity,
 } from "@/lib/filterFamilyIntensity";
 
@@ -185,21 +186,9 @@ export default function Page() {
   const [familyIntensityCustom, setFamilyIntensityCustom] = useState({ ipo: false, relativeStrength: false });
   const activeSettings = useMemo(() => effectiveSettingsFromLayers(settings, filterLayers, fieldRules), [settings, filterLayers, fieldRules]);
   function restoreFamilyIntensityState(nextSettings, nextFieldRules, savedIntensity = {}) {
-    const nextIntensity = {};
-    const nextCustom = {};
-    INTENSITY_PILOT_FAMILIES.forEach((key) => {
-      const stored = savedIntensity[key];
-      if (Number.isFinite(stored)) {
-        nextIntensity[key] = stored;
-        nextCustom[key] = isFamilyIntensityCustom(nextSettings, nextFieldRules, key, stored);
-        return;
-      }
-      const inferred = inferFamilyIntensity(nextSettings, nextFieldRules, key);
-      nextIntensity[key] = inferred ?? 50;
-      nextCustom[key] = inferred == null;
-    });
-    setFamilyIntensity(nextIntensity);
-    setFamilyIntensityCustom(nextCustom);
+    const { intensity, custom } = restoreFamilyIntensity(nextSettings, nextFieldRules, savedIntensity);
+    setFamilyIntensity(intensity);
+    setFamilyIntensityCustom(custom);
   }
   function syncFamilyIntensityCustom(nextSettings, nextFieldRules) {
     setFamilyIntensityCustom((prev) => {
@@ -1688,7 +1677,9 @@ export default function Page() {
     setSettings(nextSettings);
     setUseRegimeFilter(config.useRegimeFilter !== false);
     setFilterLayers(nextFilterLayers);
-    setFieldRules({ ...DEFAULT_FIELD_RULES, ...(config.fieldRules || {}) });
+    const nextFieldRules = { ...DEFAULT_FIELD_RULES, ...(config.fieldRules || {}) };
+    setFieldRules(nextFieldRules);
+    restoreFamilyIntensityState(nextSettings, nextFieldRules, config.familyIntensity || {});
     setViewLayers({ ...DEFAULT_VIEW_LAYERS, ...(config.viewLayers || {}) });
     // Las plantillas guardadas antes de 2026-08-15 no traen perfPeriod: se
     // conserva el periodo actual en vez de resetearlo al defecto.
