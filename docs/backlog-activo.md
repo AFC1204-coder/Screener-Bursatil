@@ -5,11 +5,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-FILTERS-6** (ficha hunt declara modo + puertas).  
-Último cerrado: **UX-FILTERS-5** (`0e69c73`).  
-Anterior: **IPO-1c** (`165724d`).  
-**Cola:** UX-FILTERS-6 · UX-13 (**D aceptada** · programar tras 6) · (Supabase aplazado)  
-**Nota UX-13 (2026-08-29):** decisión **D** — sort Sin dato al final + chip `RS N/M` en ficha líderes + copy; sin exigir RS en balanced; sin ampliar ranking. Spec: `docs/tickets/UX-13-rs-lideres-opcion-d.md`.  
+Ticket en curso: **UX-13** (RS Líderes E2 · opción D).  
+Último cerrado: **UX-FILTERS-6** (`28c472a`).  
+Anterior: **UX-FILTERS-5** (`0e69c73`).  
+**Cola:** UX-13 · UX-FILTERS-7 · (Supabase aplazado)  
+**Nota UX-FILTERS-6 (2026-08-29):** smoke Radar IPO→Discovery, Deterioro→Strict, Líderes E2→Balanceado, intl→Discovery; Abrir familia → modal IPO. Cherry-pick `adb3137` → `28c472a` (sin checkpoint lecciones).  
+**Nota UX-13 (2026-08-29):** decisión **D** — sort Sin dato al final + chip `RS N/M` + copy; sin exigir RS en balanced; sin ampliar ranking. Spec: `docs/tickets/UX-13-rs-lideres-opcion-d.md`.  
 **Nota UX-FILTERS-5 (2026-08-29):** smoke IPO `recorta −2619` / pie 699 de 3318; RS `sin recorte`. Cloud PR #1 mergeado FF.  
 **Nota handoff móvil (2026-08-29):** Cloud Agent OK; smoke Browser Use al volver.  
 **Nota IPO-1c (2026-08-29):** smoke nav IPO; banda 14d; merge **Vigilada** en Radar IPO (ZZSMOKE + pre-IPO).  
@@ -93,6 +94,7 @@ Anterior: **IPO-1c** (`165724d`).
 | IPO-NOCT | Parche `ipoDate` en scan US desde perfil (SQL + script) | `d3e932f` |
 | IPO-1c | Nav + superficie `/ipo-radar` + merge vigiladas | `165724d` |
 | UX-FILTERS-5 | Impacto −N por familia (IPO + RS) | `0e69c73` |
+| UX-FILTERS-6 | Ficha hunt declara modo + puertas | `28c472a` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -112,8 +114,8 @@ Anterior: **IPO-1c** (`165724d`).
 | UX-FILTERS-3 | Intensidad continua 0–100 + Abrir (IPO + RS) | **Hecho** |
 | UX-FILTERS-4 | Cobertura N/M + aviso dato ausente | **Hecho** · `48faa89` · smoke Browser Use |
 | UX-FILTERS-5 | Impacto −N por familia (tarjeta + pie editor) | **Hecho** · `0e69c73` · smoke Browser Use |
-| UX-FILTERS-6 | Ficha hunt declara modo + puertas | **En curso** · `docs/tickets/activo.md` |
-| UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | **Decisión D** · spec lista · programar tras FILTERS-6 |
+| UX-FILTERS-6 | Ficha hunt declara modo + puertas | **Hecho** · `28c472a` · smoke Browser Use |
+| UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | **En curso** · opción D · `docs/tickets/activo.md` |
 | UX-16 | Líderes intl guardrail datos ≠ mercados | Pendiente |
 
 ~~UX-15~~ subsumido en UX-FILTERS-1.

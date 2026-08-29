@@ -1,4 +1,4 @@
-# UX-FILTERS-6 — Ficha hunt declara modo + puertas
+# UX-13 — RS en Líderes Etapa 2 (opción D)
 
 ## Prompt para Agent chat / Cloud Agent (copiar tal cual)
 
@@ -9,14 +9,15 @@ Rama base: codex/statsedge-ui-polish.
 Modelo: Composer 2.5 · MED–HIGH.
 Cloud Agent OK (rama propia). Smoke Browser Use = orquestador.
 
-UX-FILTERS-6: cada ficha hunt declara su modo (discovery|strict) y un panel corto «Qué aplica esta ficha» con las puertas/familias relevantes + enlace a Abrir familia cuando exista.
-filterStrictness visible como atributo de la ficha activa (no solo clave enterrada en settings).
-Fuente: presets en screenerFilterCatalog + HUNT_CARDS; helper puro testeable (p.ej. huntCardModeDisclosure).
-Pilot: badge/chip en rail o franja bajo rail al activar ficha; panel expandible o popover — sin rediseñar todo el screener.
-Pilot Radar IPO → discovery; Deterioro/Líderes estrictos → strict; balanced/intl según catalog.
+UX-13 opción D (aceptada): en Líderes Etapa 2 / balanced — presentación honesta de RS sin tocar el motor ni exigir weeklyRsAvailable.
 
-Spec: docs/analisis-ux-filters-presentacion-2026-08-28.md §2 P3, §5 FILTERS-6.
-Copia: docs/tickets/UX-FILTERS-6-ficha-modo-puertas.md.
+1) Sort por RS: filas con RS arriba; «Sin dato» al final (tie-break estable).
+2) Chip/verdad local en resultados de la ficha: `RS N/M` (pasan la ficha, no el lote entero).
+3) Copy corto: RS = ranking semanal universo privado; ausencia ≠ fallo de etapa.
+Fuera v1: ampliar rs_weekly; inventar RS de lote; toggle «Solo con RS» (follow-up); cambiar minRsRating del preset.
+
+Spec: docs/tickets/UX-13-rs-lideres-opcion-d.md
+También: docs/analisis-ux-screener-review-2026-08-28.md H-04.
 Tests + ./vfc. Plantilla de retorno.
 Cloud: commit solo en rama del agent; no merge a statsedge-ui-polish.
 ```
@@ -25,34 +26,30 @@ Cloud: commit solo en rama del agent; no merge a statsedge-ui-polish.
 
 **Rama base:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer 2.5 · MED–HIGH  
-**Prioridad:** P1 presentación filtros · **Tras:** FILTERS-5 (`0e69c73`)  
-**Spec:** `docs/analisis-ux-filters-presentacion-2026-08-28.md` §2 P3, §5  
+**Prioridad:** P1 presentación RS · **Tras:** FILTERS-6 (`28c472a`)  
+**Spec:** `docs/tickets/UX-13-rs-lideres-opcion-d.md`  
 **Cloud:** sí
-
-Copia: `docs/tickets/UX-FILTERS-6-ficha-modo-puertas.md`
 
 ## Problema
 
-`filterStrictness` vive en settings pero la ficha hunt no lo declara (P3). El usuario no ve si Radar IPO es *discovery* o si Deterioro es *strict*, ni qué puertas/familias definen la ficha.
+~47 % de filas que pasan Líderes Etapa 2 muestran «– Sin dato» en RS. El ranking semanal no cubre todo el lote; no ensanchamos el universo ni exigimos RS en balanced.
 
 ## Objetivo
 
-1. **Modo por ficha:** helper que, dado `presetKey` / `cardId`, devuelve `{ mode: "discovery"|"strict", label, doors[] }` a partir del preset (`filterStrictness` + setup/puertas relevantes).  
-2. **UI:** al activar una ficha del rail, mostrar el modo (badge o texto corto) y un control «Qué aplica» (panel/popover) listando puertas mínimas o familias clave — no volcar las 66 reglas.  
-3. **Enlace:** desde una puerta/familia del panel → abrir `FilterFamilyModal` de esa familia si el cableado ya existe (`setActiveFilterFamily`); si no cabe limpio, solo texto + «Abrir en Filtros».  
-4. **Piloto de copy:** al menos **Radar IPO** (discovery) y **Deterioro** o **Líderes Etapa 2** (balanced/strict según catalog). Resto de fichas con el mismo helper.  
-5. Tests del helper (preset → mode + doors); smoke render opcional en tests de HuntCardRail.
+1. Sort RS: con dato arriba; Sin dato al final.  
+2. Chip `RS N/M` sobre los que pasan la ficha.  
+3. Copy corto honesto (tooltip/línea).  
+4. Tests del helper de conteo/orden.
 
 ## Fuera
 
-- FILTERS-7 (migración restore). UX-13 (decisión de producto RS). Cambiar umbrales/scoring.  
-- Rediseño grande del rail. Browser Use (orquestador).
+- Opción C (ampliar ranking). RS inventado. Toggle «Solo con RS». FILTERS-7. Scoring/nocturno.
 
 ## Verificación
 
 ```bash
-npm test -- huntCardMode HuntCard screenerHunt filterStrictness
-./vfc 'huntCard|HuntCard|filterStrictness|screenerHunt'
+npm test -- weeklyRs RS lideres huntCardMode
+./vfc 'weeklyRs|rsRating|Sin dato|lideres'
 ```
 
 ## Retorno
