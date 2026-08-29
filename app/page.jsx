@@ -84,7 +84,8 @@ import {
 } from "@/lib/screenerFilterLayers";
 import { buildScreenerContract, buildScreenerStockContext } from "@/lib/screenerContracts";
 import { createFavoriteFromRow } from "@/lib/stockRows";
-import { countryCode, marketFlag, stockUrl } from "@/lib/symbols";
+import { screenerEnterReviewSymbol } from "@/lib/screenerResultKeyboard";
+import { countryCode, marketFlag } from "@/lib/symbols";
 import {
   INTENSITY_PILOT_FAMILIES,
   familyHasIntensity,
@@ -2362,24 +2363,18 @@ export default function Page() {
 
   useEffect(() => {
     if (!sessionReady || activeModalRow) return undefined;
-    function shouldIgnoreKeyboardTarget(target) {
-      if (!(target instanceof HTMLElement)) return false;
-      const tag = target.tagName;
-      return tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA" || target.isContentEditable;
-    }
     function onKeyDown(event) {
-      if (event.defaultPrevented || shouldIgnoreKeyboardTarget(event.target)) return;
-      if (!pagedRows.length) return;
-      const currentIndex = selectedResultSymbol
-        ? pagedRows.findIndex((row) => row.symbol === selectedResultSymbol)
-        : -1;
-      if (event.key === "Enter" && currentIndex >= 0) {
-        const row = pagedRows[currentIndex];
-        if (!row?.symbol) return;
-        event.preventDefault();
-        saveSessionBeforeStockOpen(row);
-        window.location.href = stockUrl(row.symbol);
-      }
+      if (event.defaultPrevented) return;
+      const symbol = screenerEnterReviewSymbol({
+        key: event.key,
+        target: event.target,
+        selectedResultSymbol,
+        pagedRows,
+        activeModalRow,
+      });
+      if (!symbol) return;
+      event.preventDefault();
+      openResultReview(symbol);
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);

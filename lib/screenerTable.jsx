@@ -21,6 +21,12 @@ import {
 import { ipoWatchRowKey } from "@/lib/mergeIpoDiscoveryRows";
 import { countryName, marketFlag } from "@/lib/symbols";
 
+function activateResultRow(event, row, rowKey, { onSelectRow, onReview }) {
+  if (event.target.closest("button, a")) return;
+  onSelectRow?.(rowKey);
+  if (!row.ipoWatchOnly || row.symbol) onReview?.(row.symbol);
+}
+
 export function CompactCountryFlag({ country }) {
   const code = String(country || "").toUpperCase();
   const safeCode = /^[A-Z]{2}$/.test(code) ? code : "XX";
@@ -98,11 +104,9 @@ export function CompactResultsTable({
               className={selectedSymbol === rowKey ? "isSelected" : ""}
               tabIndex={selectedSymbol === rowKey ? 0 : -1}
               aria-selected={selectedSymbol === rowKey}
-              onClick={(event) => {
-                if (event.target.closest("button, a")) return;
-                onSelectRow?.(rowKey);
-                if (!row.ipoWatchOnly || row.symbol) onReview?.(row.symbol);
-              }}
+              title="Clic o doble clic: Vista rápida. El ticker abre la ficha."
+              onClick={(event) => activateResultRow(event, row, rowKey, { onSelectRow, onReview })}
+              onDoubleClick={(event) => activateResultRow(event, row, rowKey, { onSelectRow, onReview })}
             >
               {columns.map((column) => (
                 <td key={column.key} className={column.className} data-align={column.align}>
