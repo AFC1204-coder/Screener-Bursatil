@@ -20,6 +20,7 @@ import { DecisionOperatingBrief } from "@/lib/screenerDomains/decision";
 
 const SHELL = readFileSync(new URL("../app/components/screener/ScreenerShell.jsx", import.meta.url), "utf8");
 const MOBILE = readFileSync(new URL("../lib/screenerMobile.jsx", import.meta.url), "utf8");
+const SCREENER_CSS = readFileSync(new URL("../styles/screener.css", import.meta.url), "utf8");
 
 const RETIRADOS = [
   "DecisionGroups",
@@ -98,5 +99,9 @@ describe("filtros de la pantalla principal", () => {
     expect(FILTER_BAR).not.toContain("resultSortSelect");
     expect(FILTER_BAR).not.toContain("Ordenar resultados");
     expect(MOBILE).toContain('aria-label="Orden movil"');
+  });
+
+  it("screener.css no contiene .resultSortSelect", () => {
+    expect(SCREENER_CSS).not.toContain("resultSortSelect");
   });
 });

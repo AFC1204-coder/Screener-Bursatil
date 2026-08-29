@@ -5903,11 +5903,6 @@ button.decisionIssueBadge:hover,
   padding: 4px 8px;
 }
 
-.resultSortSelect {
-  min-width: 178px;
-}
-
-
 
 
 
@@ -6512,8 +6507,7 @@ button.decisionIssueBadge:hover,
     min-width: 0;
     max-width: 100%;
   }
-  .resultFilterSelect,
-  .resultSortSelect {
+  .resultFilterSelect {
     flex: 1 1 100%;
     min-width: 0;
     max-width: 100%;
@@ -6636,8 +6630,7 @@ button.decisionIssueBadge:hover,
   gap: 8px !important;
 }
 
-.resultFilterSelect,
-.resultSortSelect {
+.resultFilterSelect {
   width: 100%;
   min-height: 36px;
   max-width: none;
@@ -7900,8 +7893,7 @@ button.decisionOperatingIssue:hover {
   margin:0 0 10px !important;
 }
 
-.screenerTerminalPage .resultFilterSelect,
-.screenerTerminalPage .resultSortSelect {
+.screenerTerminalPage .resultFilterSelect {
   min-height:36px;
   font-size:12px;
 }
@@ -9223,8 +9215,7 @@ button.decisionOperatingIssue:hover {
   padding: var(--space-3);
   margin: 0 0 var(--space-3);
 }
-.screenerTerminalPage .resultFilterSelect,
-.screenerTerminalPage .resultSortSelect {
+.screenerTerminalPage .resultFilterSelect {
   width: 100%;
   min-height: 36px;
   max-width: none;

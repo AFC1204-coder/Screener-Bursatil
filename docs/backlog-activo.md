@@ -6,12 +6,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **UX-22** (verdad pasan/lista en hunt+deferred).  
-Anterior: **UX-21** (`e415815`).  
-**Cola:** CLEAN-1 CSS · UX-23 infoHints · (Supabase aplazado)  
-**Nota UX-22 (2026-08-29):** smoke 3318 — flips intl↔Deterioro sin pasan≠lista; final `1044 pasan · 1044 en lista`.  
-**Nota review (2026-08-29):** R-01 rail = flake; bug real = UX-22.  
-**Nota UX-21 (2026-08-29):** smoke — sin `.resultSortSelect` / «Ordenar:»; cabecera RS → `orden: RS ↓`. Residual CSS `.resultSortSelect`.  
+Último cerrado: **CLEAN-1** (purga CSS `.resultSortSelect`).  
+Anterior: **UX-22** (`332d2e4`).  
+**Cola:** brief estética botones (Gemini 3.7 Flash) · UX-23 infoHints · CLEAN-2 dual DOM · (Supabase aplazado)  
+**Nota CLEAN-1 (2026-08-29):** CSS huérfano eliminado; `rg` limpio fuera de tests de negación.  
+**Nota producto (2026-08-29):** acabados botones/teclas → brief Gemini 3.7 Flash (como UX-P), no Composer libre.  
+**Nota UX-22 (2026-08-29):** smoke 3318 — flips intl↔Deterioro sin pasan≠lista.  
+**Nota UX-21 (2026-08-29):** residual CSS cerrado en CLEAN-1.  
 **Nota UX-20 (2026-08-29):** smoke Deterioro — `1045 en lista · 50/página`.  
 **Nota UX-19 (2026-08-29):** StorageAlert compacto.  
 **Nota UX-18 (2026-08-29):** smoke 390×844.  
@@ -116,6 +117,7 @@ Anterior: **UX-21** (`e415815`).
 | UX-20 | Truth line «en lista» + hint /página | `a8a540e` |
 | UX-21 | Desktop: orden solo cabeceras (sin select) | `e415815` |
 | UX-22 | Verdad pasan/lista alineada (deferred hunt) | `332d2e4` |
+| CLEAN-1 | Purga CSS `.resultSortSelect` | *(pendiente stamp)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -152,6 +154,7 @@ Anterior: **UX-21** (`e415815`).
 | UX-20 | Copy «visibles» vs página | **Hecho** · `a8a540e` · smoke Deterioro |
 | UX-21 | Botones Ordenar vs cabeceras | **Hecho** · `e415815` · smoke RS header |
 | UX-22 | Verdad pasan vs en lista (deferred hunt) | **Hecho** · `332d2e4` · smoke 3318 |
+| CLEAN-1 | Purga CSS `.resultSortSelect` | **Hecho** |
 
 Ver informe · `docs/analisis-ux-pagina-2026-08-29.md`.
 
