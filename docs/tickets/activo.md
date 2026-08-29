@@ -1,11 +1,11 @@
-# Sin ticket activo (tras UX-18)
+# Sin ticket activo (tras UX-19)
 
 ## Cerrado
 
-**UX-18** — móvil ≤480px: chrome compacto; primera fila legible en 390×844.
+**UX-19** — StorageAlert compacto + dismiss sessionStorage + Liberar espacio.
 
 ## Candidatos siguientes
 
-**P2:** UX-19 → 20 → 21
+**P2:** UX-20 → UX-21
 
-**Cola:** UX-19…21 · (Supabase aplazado)
+**Cola:** UX-20…21 · (Supabase aplazado)

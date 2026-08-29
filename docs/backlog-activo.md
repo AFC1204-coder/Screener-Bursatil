@@ -6,17 +6,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **UX-18** (móvil 390; primera fila legible).  
-Anterior: **CHART-NAV** (`cb99525`).  
-**Cola:** UX-19…21 (P2) · (Supabase aplazado)  
-**Nota UX-18 (2026-08-29):** smoke 390×844 US — `mobileResearchHome:block`, desktop none, tape oculto; firstTop~702, visiblePx≥140. Orquestador densificó CSS tras primer smoke (solo 6px visibles).  
-**Nota chart (2026-08-29):** dueño — RS en el gráfico (no abajo); navegación libre tipo TradingView. Specs: `CHART-RS-overlay-sin-pane.md`, `CHART-NAV-navegacion-libre.md`.  
-**Nota CHART-NAV (2026-08-29):** smoke AAPL — `fixLeftEdge:false`; ctrl+rueda zoom + pan; resize conserva rango manual (sin fit). Drag DOM sintético no llega a LW (gesto real = pressedMouseMove ya ON).  
-**Nota CHART-RS (2026-08-29):** smoke `/stock/OKTA` — RS ON, 1 pane grande (572+28), línea overlay abajo, sin franja RS.  
-**Nota CHART-NAV-fix (2026-08-29):** chevrons/zoom/reset OK en `/stock/AAPL` (Browser Use).  
-**Nota chart (2026-08-29):** dueño — RS en el gráfico (no abajo); navegación libre tipo TradingView. Specs: `CHART-RS-overlay-sin-pane.md`, `CHART-NAV-navegacion-libre.md`.  
-**Nota CHART-RS (2026-08-29):** smoke `/stock/OKTA` — RS ON, 1 pane grande (572+28), línea overlay abajo, sin franja RS.  
-**Nota CHART-NAV-fix (2026-08-29):** chevrons/zoom/reset OK en `/stock/AAPL` (Browser Use). Causas: UI gated solo por `manualView`; `getSnapshot` pisaba gestos; fit+`minBarSpacing` re-marcaba manual; `rowTimes` async vacío. Residual: cold hunt ~1–2s (UX-11 warm OK); pan drag nativo = CHART-NAV completo.  
+Último cerrado: **UX-19** (StorageAlert compacto).  
+Anterior: **UX-18** (`620ae28`).  
+**Cola:** UX-20…21 (P2) · (Supabase aplazado)  
+**Nota UX-19 (2026-08-29):** tests 6 + persistencia; smoke CSS compact `6px 10px` / 12px; dismiss sessionStorage.  
+**Nota UX-18 (2026-08-29):** smoke 390×844 US — primera fila legible (~140px); tape oculto.  
 **Nota UX-17 (2026-08-29):** smoke clic/Enter/doble clic → Vista rápida; ticker → `/stock/NVCT`.  
 **Nota UX-16 (2026-08-29):** smoke H-07 — Líderes intl + US 3318 → banner + CTAs; E2 quita aviso.  
 **Nota UX-FILTERS-7 (2026-08-29):** restore cosmética + `resolveStoredFilterConfig`; audit 562/562.  
@@ -114,6 +108,7 @@ Anterior: **CHART-NAV** (`cb99525`).
 | CHART-RS | RS overlay sin pane inferior | `0728afe` |
 | CHART-NAV | fixLeftEdge false + manual lógico en resize | `cb99525` |
 | UX-18 | Móvil ≤480: chrome compacto, 1ª fila legible | `620ae28` |
+| UX-19 | StorageAlert compacto + dismiss + liberar | *(commit siguiente)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -145,8 +140,8 @@ Anterior: **CHART-NAV** (`cb99525`).
 
 | ID | Qué | Estado |
 |---|---|---|
-| UX-18 | Móvil 390: resultados accesibles | **Hecho** · smoke 390×844 |
-| UX-19 | Banner localStorage lleno | Pendiente |
+| UX-18 | Móvil 390: resultados accesibles | **Hecho** · `620ae28` · smoke 390×844 |
+| UX-19 | Banner localStorage lleno | **Hecho** · smoke CSS compact |
 | UX-20 | Copy «visibles» vs página | Pendiente |
 | UX-21 | Botones Ordenar vs cabeceras | Pendiente |
 

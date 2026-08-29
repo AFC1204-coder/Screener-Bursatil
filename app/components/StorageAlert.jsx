@@ -10,54 +10,125 @@
 // snapshotFreshnessNotice (el mismo tono visual que los avisos de snapshot).
 
 import { useEffect, useState } from "react";
-import { STORAGE_KEYS, subscribeStorageWriteFailures } from "@/lib/localState";
+import {
+  STORAGE_KEYS,
+  freeUpLocalScans,
+  lastStorageWriteFailure,
+  subscribeStorageWriteFailures,
+} from "@/lib/localState";
+
+export const STORAGE_ALERT_DISMISS_PREFIX = "statsedge.storageAlert.dismiss";
 
 const MESSAGES = {
-  [STORAGE_KEYS.review]: "La cola de revisión no se ha podido guardar: al abrir una ficha puede faltar la navegación Anterior/Siguiente.",
-  [STORAGE_KEYS.screenerSession]: "La sesión del screener no se ha podido guardar entera: al volver puede no restaurarse como la dejaste.",
-  [STORAGE_KEYS.scans]: "El snapshot no se ha podido guardar en este dispositivo. La copia de la nube sigue disponible.",
-  [STORAGE_KEYS.favorites]: "Los favoritos no se han podido guardar en este dispositivo.",
-  [STORAGE_KEYS.alerts]: "Las alertas no se han podido guardar en este dispositivo.",
+  [STORAGE_KEYS.review]: "La cola de revisión no se guardó; en la ficha puede faltar Anterior/Siguiente.",
+  [STORAGE_KEYS.screenerSession]: "La sesión no se guardó entera; al volver puede no restaurarse.",
+  [STORAGE_KEYS.scans]: "No cabe el snapshot local; la copia en nube sigue disponible.",
+  [STORAGE_KEYS.favorites]: "Los favoritos no se guardaron en este dispositivo.",
+  [STORAGE_KEYS.alerts]: "Las alertas no se guardaron en este dispositivo.",
 };
+
+function sameFailureSignature(a, b) {
+  return a.key === b.key
+    && a.quota === b.quota
+    && Boolean(a.failed) === Boolean(b.failed)
+    && Boolean(a.degraded) === Boolean(b.degraded);
+}
+
+export function storageAlertDismissKey(failure) {
+  if (!failure?.key) return "";
+  const quota = failure.quota ? 1 : 0;
+  const degraded = failure.degraded ? 1 : 0;
+  const failed = failure.failed ? 1 : 0;
+  return `${STORAGE_ALERT_DISMISS_PREFIX}:${failure.key}:${quota}:${degraded}:${failed}`;
+}
+
+export function isStorageAlertDismissed(failure, storage = typeof sessionStorage !== "undefined" ? sessionStorage : null) {
+  if (!failure || !storage) return false;
+  const key = storageAlertDismissKey(failure);
+  if (!key) return false;
+  try {
+    return storage.getItem(key) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function dismissStorageAlert(failure, storage = typeof sessionStorage !== "undefined" ? sessionStorage : null) {
+  if (!failure || !storage) return;
+  const key = storageAlertDismissKey(failure);
+  if (!key) return;
+  try {
+    storage.setItem(key, "1");
+  } catch {
+    // sessionStorage lleno o bloqueado: el aviso puede volver al recargar.
+  }
+}
+
+export function buildStorageAlertMessage(failure) {
+  const reduced = failure.degraded && !failure.failed;
+  let text;
+  if (reduced) {
+    text = failure.key === STORAGE_KEYS.review
+      ? "Cola guardada sin miniaturas para que quepa; el espacio local está casi lleno."
+      : "Versión reducida guardada; el espacio local está casi lleno.";
+  } else {
+    text = MESSAGES[failure.key] || "Parte del trabajo no se guardó en este dispositivo.";
+    text += failure.quota
+      ? " Lo que ves no se pierde, pero puede no guardarse para la próxima visita."
+      : " El navegador no permite guardar ahora (modo privado o restricción).";
+  }
+  const showFreeSpace = Boolean(failure.quota || failure.key === STORAGE_KEYS.scans);
+  return { text, reduced, showFreeSpace };
+}
 
 export default function StorageAlert() {
   const [failure, setFailure] = useState(null);
-  const [dismissedAt, setDismissedAt] = useState("");
+  const [hidden, setHidden] = useState(false);
 
-  useEffect(() => subscribeStorageWriteFailures((next) => {
-    setFailure((current) => {
-      // El mismo problema repetido no reabre un aviso ya descartado; un cambio
-      // de gravedad (reducido → imposible) sí.
-      if (current && current.key === next.key && current.quota === next.quota
-        && Boolean(current.failed) === Boolean(next.failed) && Boolean(current.degraded) === Boolean(next.degraded)) return current;
-      setDismissedAt("");
-      return next;
+  useEffect(() => {
+    const last = lastStorageWriteFailure();
+    if (last) {
+      setFailure(last);
+      setHidden(isStorageAlertDismissed(last));
+    }
+    return subscribeStorageWriteFailures((next) => {
+      setFailure((current) => {
+        if (current && sameFailureSignature(current, next)) return current;
+        setHidden(isStorageAlertDismissed(next));
+        return next;
+      });
     });
-  }), []);
+  }, []);
 
-  if (!failure || dismissedAt === failure.at + failure.key) return null;
-  const reduced = failure.degraded && !failure.failed;
-  const detail = reduced
-    ? (failure.key === STORAGE_KEYS.review
-      ? "La cola de revisión se ha guardado sin miniaturas para que quepa. La navegación y tus resoluciones se conservan."
-      : "Para que quepa, se ha guardado una versión reducida.")
-    : (MESSAGES[failure.key] || "Una parte del trabajo no se ha podido guardar en este dispositivo.");
-  const meaning = reduced
-    ? "El espacio de guardado de este dispositivo está casi lleno."
-    : failure.quota
-      ? "El espacio de guardado de este dispositivo está lleno; lo que ves en pantalla no se pierde, pero no todo quedará guardado para la próxima visita."
-      : "El navegador no permite guardar datos ahora (modo privado o una restricción del navegador).";
+  if (!failure || hidden) return null;
+
+  const { text, reduced, showFreeSpace } = buildStorageAlertMessage(failure);
+
+  function handleDismiss() {
+    dismissStorageAlert(failure);
+    setHidden(true);
+  }
+
+  function handleFreeSpace() {
+    freeUpLocalScans(1);
+    dismissStorageAlert(failure);
+    setHidden(true);
+  }
+
   return (
-    <div className={`snapshotFreshnessNotice ${reduced ? "info" : "warn"}`} role="note" aria-live="polite">
+    <div className={`snapshotFreshnessNotice compact ${reduced ? "info" : "warn"}`} role="note" aria-live="polite">
       <span>Guardado local</span>
-      <b>{detail} {meaning}</b>
-      <button
-        type="button"
-        onClick={() => setDismissedAt(failure.at + failure.key)}
-        style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", font: "inherit", textDecoration: "underline" }}
-      >
-        Entendido
-      </button>
+      <b>{text}</b>
+      <div className="storageAlertActions">
+        {showFreeSpace ? (
+          <button type="button" className="storageAlertFree" onClick={handleFreeSpace}>
+            Liberar espacio
+          </button>
+        ) : null}
+        <button type="button" onClick={handleDismiss}>
+          Entendido
+        </button>
+      </div>
     </div>
   );
 }

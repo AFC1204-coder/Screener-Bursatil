@@ -219,6 +219,57 @@
   }
 }
 
+.snapshotFreshnessNotice.compact {
+  align-items:center;
+  margin:0 0 var(--space-3);
+  padding:6px 10px;
+  gap:8px;
+}
+
+.snapshotFreshnessNotice.compact span {
+  font-size:10px;
+}
+
+.snapshotFreshnessNotice.compact b {
+  flex:1 1 auto;
+  font-size:12px;
+  font-weight:560;
+  line-height:1.35;
+}
+
+.snapshotFreshnessNotice.compact .storageAlertActions {
+  display:flex;
+  flex:0 0 auto;
+  gap:10px;
+  margin-left:auto;
+}
+
+.snapshotFreshnessNotice.compact .storageAlertActions button {
+  background:none;
+  border:none;
+  cursor:pointer;
+  font:inherit;
+  font-size:12px;
+  color:var(--text);
+  padding:0;
+  white-space:nowrap;
+}
+
+.snapshotFreshnessNotice.compact .storageAlertActions button.storageAlertFree {
+  color:var(--oxido);
+  text-decoration:underline;
+}
+
+.snapshotFreshnessNotice.compact .storageAlertActions button:not(.storageAlertFree) {
+  text-decoration:underline;
+}
+
+@media (max-width: 720px) {
+  .snapshotFreshnessNotice.compact .storageAlertActions {
+    margin-left:0;
+  }
+}
+
 /* Banner no-modal de staleness del scan: los datos siguen siendo válidos pero
    corresponden al universo anterior (markets/manual/scanMode cambiaron). No
    oculta ni degrada la tabla; solo invita a relanzar. Tono v2: --oxido-dim
