@@ -6759,41 +6759,105 @@ h2 {
   margin: 0 !important;
 }
 
-/* ── 8. Buttons ── */
+/* ── 8. Buttons (UX-BTN-2: Primary / Ghost / Pager — tokens v2) ── */
 
-.btn {
-  font-size: 12px !important;
-  font-weight: 510 !important;
-  border-radius: 6px !important;
-  letter-spacing: 0 !important;
-}
-
-.btn:hover {
-  background: var(--surface2) !important;
-  color: #dce2ec !important;
-}
-
-/* Primary: crisp light button on dark — professional default */
-
+.btn,
+.btnGhost,
+.btnSmall,
 .btnPrimary {
-  background: linear-gradient(180deg, #f6f8fc 0%, #dde3ed 100%) !important;
-  color: #090b0e !important;
-  font-weight: 610 !important;
-  font-size: 12px !important;
-  border: 1px solid var(--line2) !important;
-  box-shadow:
-    0 1px 2px rgba(0,0,0,.28),
-    inset 0 1px 0 var(--line) !important;
-  letter-spacing: -.005em !important;
-  transform: none !important;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 510;
+  letter-spacing: 0;
+  box-shadow: none;
+  transition: background .14s ease, border-color .14s ease, color .14s ease, opacity .14s ease;
+}
+
+.btn,
+.btnGhost {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--soft);
+}
+
+.btnGhost {
+  background: var(--surface2);
+}
+
+.btnSmall {
+  min-height: 32px;
+  padding: 0 10px;
+}
+
+.btn:hover,
+.btnGhost:hover {
+  border-color: var(--line2);
+  background: var(--surface2);
+  color: var(--text);
+  transform: none;
+}
+
+/* CTA sólido invertido (Pizarra y Tiza): --cta-bg / --cta-fg / --cta-border.
+   !important solo en background/color para ganar al bloque "sobriety pass" (~4934)
+   que agrupa .btnPrimary con .marketChip (BTN-6, no tocar). */
+.btnPrimary {
+  min-height: 36px;
+  border: 1px solid var(--cta-border);
+  background: var(--cta-bg) !important;
+  color: var(--cta-fg) !important;
+  font-weight: 610;
+  box-shadow: var(--shadow-1);
+  transform: none;
 }
 
 .btnPrimary:hover {
-  background: linear-gradient(180deg, #ffffff 0%, #e6eaf4 100%) !important;
-  box-shadow:
-    0 2px 6px rgba(0,0,0,.22),
-    inset 0 1px 0 var(--line) !important;
-  transform: translateY(-0.5px) !important;
+  border-color: var(--cta-border);
+  background: var(--cta-bg) !important;
+  color: var(--cta-fg) !important;
+  opacity: .92;
+  box-shadow: var(--shadow-1);
+  transform: none;
+}
+
+.btn:disabled,
+.btnGhost:disabled,
+.btnSmall:disabled,
+.btnPrimary:disabled {
+  color: var(--ghost);
+  opacity: .40;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Pager ‹ › — ghost/secondary, cuadrado 32×32 alineado con toolbar */
+.resultPagerStep {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  line-height: 1;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface2);
+  color: var(--soft);
+  font-size: 14px;
+}
+
+.resultPagerStep:hover:not(:disabled) {
+  border-color: var(--line2);
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.resultPagerStep:disabled {
+  color: var(--ghost);
+  opacity: .40;
 }
 
 /* Active / selected state for filter pills */

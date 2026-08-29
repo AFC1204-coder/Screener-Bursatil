@@ -6990,25 +6990,9 @@ h2:not(.topbar h2) {
   color:var(--text);
 }
 
-/* CTA sólido invertido (Pizarra y Tiza): fondo tiza, texto pizarra. NO comparte
-   --senal con Vigilar — visualmente el elemento más prominente de la pantalla.
-   Tokens v2: --cta-bg / --cta-fg / --cta-border (definidos en tokens-v2.css).
-   Regla 1 de tokens-v2: "Fuera de la zona de resultados, máximo UN elemento
-   --senal por vista: el CTA" — aquí el CTA usa tiza sólida, ni --senal. */
+/* CTA: acabado global en components.css §8 (UX-BTN-2); aquí solo énfasis toolbar. */
 .screenerTerminalPage .btnPrimary {
-  border:1px solid var(--cta-border) !important;
-  background:var(--cta-bg) !important;
-  color:var(--cta-fg) !important;
-  font-weight:720 !important;
-  box-shadow:var(--shadow-1) !important;
-}
-
-.screenerTerminalPage .btnPrimary:hover {
-  border-color:var(--cta-border) !important;
-  background:var(--cta-bg) !important;
-  color:var(--cta-fg) !important;
-  opacity:.92;
-  box-shadow:var(--shadow-1) !important;
+  font-weight:720;
 }
 
 /* Estado activo de preset markets: regla v2 §4 ("toggle activo: borde --line2
@@ -7922,17 +7906,12 @@ button.decisionOperatingIssue:hover {
 
 .screenerTerminalPage .resultPagerSize {
   width:auto;
-  min-height:26px;
-  padding:2px 6px;
+  min-height:32px;
+  padding:2px 8px;
   font-size:11px;
 }
 
-.screenerTerminalPage .resultPagerStep {
-  min-width:26px;
-  min-height:26px;
-  padding:0 8px;
-  line-height:1;
-}
+/* Hereda .resultPagerStep global (32×32); sin override de caja. */
 
 /* Regla 8 (pozo): tabla densa sobre --surface-inset, borde 1px --line, sin sombra.
    Cabecera en --surface (panel) con border-bottom --line2 y micro-labels display. */
@@ -9300,13 +9279,11 @@ button.decisionOperatingIssue:hover {
   background: rgba(255, 255, 255, .03);
 }
 .screenerTerminalPage .resultsHeader .controls .btnPrimary {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
-  font-weight: 600;
+  /* UX-BTN-2: hereda CTA global (--cta-bg/--cta-fg); sin --accent/#fff. */
+  font-weight: 720;
 }
 .screenerTerminalPage .resultsHeader .controls .btnPrimary:hover {
-  background: var(--accent2);
+  opacity: .92;
 }
 
 /* ---------------------------------------------------------------------------

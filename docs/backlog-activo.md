@@ -6,10 +6,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **UX-BTN-1** (segmented/keycaps).  
-Anterior: **CLEAN-1** (`fb9188a`).  
-**Cola:** UX-BTN-2…6 · UX-23 · CLEAN-2 · (Supabase aplazado)  
-**Nota UX-BTN-1 (2026-08-29):** smoke 3M/6M/12M OK tras quitar transition shorthand (CSSTransitions stuck). Chart TF/rangos OK.  
+Último cerrado: **UX-BTN-2** (Primary/Ghost/Pager).  
+Anterior: **UX-BTN-1** (`59bbc52`).  
+**Cola:** UX-BTN-3…6 · UX-23 · CLEAN-2 · (Supabase aplazado)  
+**Nota UX-BTN-2 (2026-08-29):** smoke Revisar CTA tiza; pager 32×32; quitado override accent/#fff en resultsHeader.  
+**Nota UX-BTN-1 (2026-08-29):** smoke 3M/6M/12M OK.  
 **Nota UX-BTN (2026-08-29):** brief → `docs/analisis-ux-btn-acabados-2026-08-29.md`.  
 **Nota CLEAN-1 (2026-08-29):** CSS huérfano eliminado.  
 **Nota UX-22 (2026-08-29):** smoke 3318 verdad pasan/lista.  
@@ -119,6 +120,7 @@ Anterior: **CLEAN-1** (`fb9188a`).
 | UX-22 | Verdad pasan/lista alineada (deferred hunt) | `332d2e4` |
 | CLEAN-1 | Purga CSS `.resultSortSelect` | `fb9188a` |
 | UX-BTN-1 | Segmented / keycaps unificados | `59bbc52` |
+| UX-BTN-2 | Primary / Ghost / Pager | *(pendiente stamp)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -158,6 +160,7 @@ Anterior: **CLEAN-1** (`fb9188a`).
 | CLEAN-1 | Purga CSS `.resultSortSelect` | **Hecho** · `fb9188a` |
 | UX-BTN | Brief acabados botones/teclas | **Hecho** · `docs/analisis-ux-btn-acabados-2026-08-29.md` |
 | UX-BTN-1 | Segmented / keycaps unificados | **Hecho** · `59bbc52` · smoke 3M/6M/12M |
+| UX-BTN-2 | Primary / Ghost / Pager | **Hecho** · smoke Revisar + pager |
 | UX-BTN-2 | Primary / Ghost / Pager | Pendiente |
 | UX-BTN-3 | Chart floating nav | Pendiente |
 | UX-BTN-4 | Stock decision rail | Pendiente |
