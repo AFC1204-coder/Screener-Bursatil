@@ -1244,7 +1244,7 @@
   justify-content:flex-end;
   flex:0 1 auto;
   flex-wrap:wrap;
-  gap:4px;
+  gap:6px;
 }
 
 .universalChartViewState {
@@ -1295,51 +1295,55 @@
   text-align:center;
 }
 
+/* UX-BTN-3: nav flotante del chart — reposo pizarra/tiza; activo solo con .active / aria-pressed.
+   Icon 32×32 (no 30): alinea con height base 32px y viewState; hit-target cómodo sobre canvas. */
 .universalChartNavButton {
   flex:0 0 auto;
   height:32px;
   padding:0 11px;
-  border:1px solid var(--accent);
+  border:1px solid var(--line2);
   border-radius:var(--radius);
-  background:var(--senal-dim);
-  color:var(--accent);
+  background:rgba(23,41,31,.85);
+  color:var(--soft);
   font-size:11px;
-  font-weight:850;
+  font-weight:600;
   letter-spacing:.02em;
 }
 
 .universalChartNavButton:disabled {
   border-color:var(--line);
   background:var(--surface2);
-  color:#626b78;
+  color:var(--ghost);
   cursor:not-allowed;
-  opacity:.72;
+  opacity:.40;
 }
 
-.universalChartNavButton:hover {
-  border-color:var(--accent);
-  background:var(--senal-dim);
-  color:#eff6ff;
+.universalChartNavButton:not(:disabled):hover {
+  border-color:var(--line3);
+  color:var(--text);
 }
 
 .universalChartNavButton:disabled:hover {
   border-color:var(--line);
   background:var(--surface2);
-  color:#626b78;
+  color:var(--ghost);
+  opacity:.40;
 }
 
 .universalChartNavButton.icon {
   display:inline-grid;
   place-items:center;
   width:32px;
+  height:32px;
   padding:0;
+  border-radius:var(--radius-s);
   line-height:1;
 }
 
 .universalChartNavButton.accent {
   border-color:var(--line2);
-  background:var(--surface2);
-  color:#f8d999;
+  background:rgba(23,41,31,.85);
+  color:var(--text);
 }
 
 /* Botón de herramienta de dibujo de líneas (D3): estado activo por doctrina

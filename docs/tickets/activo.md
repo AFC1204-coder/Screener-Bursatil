@@ -2,4 +2,4 @@
 
 *(Ninguno. Orquestador escribe el siguiente aquí.)*
 
-Último cerrado: **UX-BTN-2** — Primary CTA tokens / Ghost / Pager 32×32.
+Último cerrado: **UX-BTN-3** — chart nav flotante reposo sobrio.
