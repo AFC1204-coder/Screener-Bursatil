@@ -5,10 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: _(liberado)_.  
+Ticket en curso: **UX-FILTERS-6** (ficha hunt declara modo + puertas).  
 Último cerrado: **UX-FILTERS-5** (`0e69c73`).  
 Anterior: **IPO-1c** (`165724d`).  
-**Cola:** UX-13 (decisión) · UX-FILTERS-6… · (Supabase aplazado)  
+**Cola:** UX-FILTERS-6 · UX-13 (decisión) · (Supabase aplazado)  
 **Nota UX-FILTERS-5 (2026-08-29):** smoke IPO `recorta −2619` / pie 699 de 3318; RS `sin recorte`. Cloud PR #1 mergeado FF.  
 **Nota handoff móvil (2026-08-29):** Cloud Agent OK; smoke Browser Use al volver.  
 **Nota IPO-1c (2026-08-29):** smoke nav IPO; banda 14d; merge **Vigilada** en Radar IPO (ZZSMOKE + pre-IPO).  
@@ -111,6 +111,7 @@ Anterior: **IPO-1c** (`165724d`).
 | UX-FILTERS-3 | Intensidad continua 0–100 + Abrir (IPO + RS) | **Hecho** |
 | UX-FILTERS-4 | Cobertura N/M + aviso dato ausente | **Hecho** · `48faa89` · smoke Browser Use |
 | UX-FILTERS-5 | Impacto −N por familia (tarjeta + pie editor) | **Hecho** · `0e69c73` · smoke Browser Use |
+| UX-FILTERS-6 | Ficha hunt declara modo + puertas | **En curso** · `docs/tickets/activo.md` |
 | UX-13 | Cobertura RS ~47 % Sin dato en Líderes E2 | Pendiente · **decisión dueño** |
 | UX-16 | Líderes intl guardrail datos ≠ mercados | Pendiente |
 
