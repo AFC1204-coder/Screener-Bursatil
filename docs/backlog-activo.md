@@ -3,12 +3,13 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-08-29 · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-08-30 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **CLEAN-2** (dual DOM) — **higiene página R-02/R-04 cerrada**.  
-Anterior: **UX-23** (`9244496`).  
-**Cola:** (Supabase aplazado)  
+Último cerrado: **CLEAN-3** (MarketMiniTape 900→760) — higiene post-CLEAN-2.  
+Anterior: **CLEAN-2** (`e69c3af`).  
+**Cola:** (Supabase migrate **aplazado** — margen renovación ~2–3 días; no activar sin OK dueño) · siguiente UI candidato: **CHART-UI-1**  
+**Nota CLEAN-3 (2026-08-30):** smoke — 390: mobileHome 1 / desktop 0 / tape DOM 29 tiles «Índices» (CSS `display:none` intencional UX-18); ≥760: mobileHome 0 / desktop 1 / tape 0.  
 **Nota CLEAN-2 (2026-08-29):** smoke — desktop 0× mobileHome; 390px 1× mobile / 0× desktop.  
 **Nota UX-23 (2026-08-29):** smoke — thead 3× «i» (Tema/RS/Etapa); Ticker/Rend/Dist/Cap sin «i».  
 **Nota UX-BTN-6 (2026-08-29):** smoke — chips país activo tiza/`--active-*` inset, sin fill tiza ni ámbar.  
@@ -133,6 +134,7 @@ Anterior: **UX-23** (`9244496`).
 | UX-BTN-6 | Market / country chips | `969b97e` |
 | UX-23 | InfoHints cabecera tabla | `9244496` |
 | CLEAN-2 | Dual DOM móvil/desktop | `e69c3af` |
+| CLEAN-3 | MarketMiniTape breakpoint 900→760 | *(stamp al commit)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -179,6 +181,7 @@ Anterior: **UX-23** (`9244496`).
 | UX-BTN-6 | Market / country chips | **Hecho** · `969b97e` · smoke `/` |
 | UX-23 | InfoHints cabecera tabla | **Hecho** · `9244496` · smoke `/` |
 | CLEAN-2 | Dual DOM móvil/desktop | **Hecho** · `e69c3af` · smoke desktop+390 |
+| CLEAN-3 | MarketMiniTape media query canónica 760 | **Hecho** · smoke 390 tape DOM + ≥760 sin mobileHome |
 
 Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 

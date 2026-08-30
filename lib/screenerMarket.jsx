@@ -24,6 +24,7 @@ import { buildScreenerScoreAudit } from "@/lib/screenerScoreAudit";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 import { buildRowTrustSignature } from "@/lib/rowTrustSignature";
 import { externalLinks, stockUrl } from "@/lib/symbols";
+import { SCREENER_MOBILE_MEDIA_QUERY } from "@/lib/useScreenerMobileViewport";
 import {
   amount,
   compactMetricSourceLookup,
@@ -155,7 +156,8 @@ export function MarketMiniTape({ marketHealth }) {
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     let cancelled = false;
-    const shouldLoad = typeof window === "undefined" || window.matchMedia("(max-width: 900px)").matches;
+    // Breakpoint canónico (760px); ScreenerShell solo monta este componente en rama móvil.
+    const shouldLoad = typeof window === "undefined" || window.matchMedia(SCREENER_MOBILE_MEDIA_QUERY).matches;
     if (!shouldLoad) return undefined;
     async function loadIndexTape() {
       setLoading(true);
