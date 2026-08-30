@@ -141,7 +141,7 @@ Anterior: **CHART-UI-1** (`cd8e8d3`).
 | CLEAN-2 | Dual DOM móvil/desktop | `e69c3af` |
 | CLEAN-3 | MarketMiniTape breakpoint 900→760 | `03eb7fa` |
 | CHART-UI-1 | ChartPreferences compact · 2 clusters TF/rango | `cd8e8d3` |
-| MET-1c | Cron GHA RS global privado (dom 06:00 UTC) | *(stamp al commit)* |
+| MET-1c | Cron GHA RS global privado (dom 06:00 UTC) | `368670f` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -219,7 +219,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 
 | ID | Qué | Estado |
 |---|---|---|
-| MET-1c | Cron semanal motor global privado | **Hecho** · `rs-global-private.yml` · smoke lectura OK |
+| MET-1c | Cron semanal motor global privado | **Hecho** · `368670f` · `rs-global-private.yml` · smoke lectura OK |
 | MET-2 | Spec RS país (calidad intra-país) | Decisión dueño; sin ticket |
 | MET-3 | Spec RS tema (ocupación / theme) | Decisión dueño; sin ticket |
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | Ideas; sin ticket |
