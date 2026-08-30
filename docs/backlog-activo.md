@@ -6,11 +6,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-30 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **CHART-RS-2** (overlay RS país en chart).  
-Anterior: **MET-2c**.  
-**Cola:** MIGRATE Mini aparcado hasta **mar 2 sep** · relleno: MET-3 / R-06 / yield intl  
-**Nota CHART-RS-2 (2026-08-31):** tests 86 OK; serie AAPL **29** semanas latest **64**; smoke AAPL — toggles RS + RS país active, canvas 7, franja «RS país»; hydrate solo en API (sin crypto client).  
-**Nota cola (2026-08-31):** dueño pide seguir oleada reciente **sin MIGRATE**; CHART-RS-2 cerrado.  
+Último cerrado: **RS-SERIES-1** (dedupe weekKey series RS).  
+Anterior: **CHART-RS-2** (`f6746d2`).  
+**Cola:** MIGRATE aparcado **mar 2 sep** · relleno MET-3 / R-06 / yield  
+**Nota RS-SERIES-1 (2026-08-31):** tests 9 OK; AAPL país live **27** pts (era 29), W32 único **70**, latest **64** W35, dups=[].  
+**Nota CHART-RS-2 (2026-08-31):** tests 86 OK; smoke toggles OK.  
 **Nota MET-2c (2026-08-30):** workflow `rs-country-private.yml` · cron `0 7 * * 0` + dispatch · US→intl · flags OK.  
 **Nota MET-2c Actions (2026-08-30):** `workflow_dispatch` [33336486687](https://github.com/AFC1204-coder/Screener-Bursatil/actions/runs/33336486687) · **success** ~2,5 min.  
 **Nota MET-2b write HK (2026-08-30):** `--write --markets=HK` · snapshot `57f94e01-…` · 74/76 · 0005.HK país **95**.  
@@ -151,7 +151,8 @@ Anterior: **MET-2c**.
 | MET-2 | Spec RS país (columna 2ª · US motor congelado · intl local sin FX) | (docs) |
 | MET-2b | Impl RS país (lector + motor + columna; fix client crypto) | `9c147c6` |
 | MET-2c | Cron GHA RS país privado (dom 07:00 UTC) | `a6b9408` |
-| CHART-RS-2 | Overlay RS país en chart (toggle + --soft) | |
+| CHART-RS-2 | Overlay RS país en chart (toggle + --soft) | `f6746d2` |
+| RS-SERIES-1 | Dedupe weekKey en series RS ficha/chart | |
 
 ## Siguiente — datos IPO + filtros
 

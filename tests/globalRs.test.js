@@ -135,4 +135,52 @@ describe("readGlobalRsSeriesForSymbol", () => {
     expect(result.series).toEqual([]);
     expect(result.latest).toBeNull();
   });
+
+  it("dedupe por weekKey: dos filas W32 conservan la de snapshot_date más reciente", async () => {
+    supabaseRequest.mockResolvedValueOnce([
+      {
+        symbol: "AAPL",
+        snapshot_date: "2026-08-29",
+        week_key: "2026-W35",
+        base_currency: "USD",
+        engine_version: "statsedge-us-equity-rs-v1",
+        rank_index: 120,
+        rs_rating: 64,
+        rs_raw: 50,
+        sample_size: 4200,
+        metrics: {},
+      },
+      {
+        symbol: "AAPL",
+        snapshot_date: "2026-08-08",
+        week_key: "2026-W32",
+        base_currency: "USD",
+        engine_version: "statsedge-us-equity-rs-v1",
+        rank_index: 80,
+        rs_rating: 70,
+        rs_raw: 55,
+        sample_size: 4200,
+        metrics: {},
+      },
+      {
+        symbol: "AAPL",
+        snapshot_date: "2026-08-01",
+        week_key: "2026-W32",
+        base_currency: "USD",
+        engine_version: "statsedge-us-equity-rs-v1",
+        rank_index: 90,
+        rs_rating: 80,
+        rs_raw: 60,
+        sample_size: 4200,
+        metrics: {},
+      },
+    ]);
+
+    const result = await readGlobalRsSeriesForSymbol("AAPL");
+
+    expect(result.series).toHaveLength(2);
+    expect(result.series.map((p) => p.weekKey)).toEqual(["2026-W32", "2026-W35"]);
+    expect(result.series[0].rsRating).toBe(70);
+    expect(result.latest).toMatchObject({ weekKey: "2026-W35", rsRating: 64 });
+  });
 });
