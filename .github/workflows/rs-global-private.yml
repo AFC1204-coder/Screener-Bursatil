@@ -1,0 +1,103 @@
+# .github/workflows/rs-global-private.yml
+#
+# QUÉ HACE
+# Pipeline semanal del motor RS global privado (MET-1c). Tras el cierre semanal
+# de los mercados del universo v1, refresca las series FX en daily_bars y
+# escribe un snapshot semanal en rs_weekly_snapshots / rs_weekly_items con
+# engine_version statsedge-private-global-rs-usd-v1 (scripts/rs-global-private.mjs).
+# No toca el pin de lib/rsEngines.js, scoring ni UI — solo dispara los scripts
+# ya verificados en corrida manual (W35, smoke orquestador 2026-08-30).
+#
+# PASOS (en orden)
+#   1. rs-fx-ingest.mjs --write — diez pares {CCY}USD=X vía withDailyBarsCache.
+#   2. rs-global-private.mjs --write — ranking global US + intl curado (~3.2k símbolos).
+# rs-intl-bars.mjs no va en este workflow: el backfill inicial ya se hizo en MET-1b;
+# el refresco incremental de barras intl puede añadirse aparte si hiciera falta.
+#
+# POR QUÉ DOMINGO 06:00 UTC
+# El motor corre tras el cierre semanal de todos los mercados del universo v1
+# (spec §8 anti-lookahead). Domingo de madrugada UTC deja margen sobre el cierre
+# del viernes US y los cierres Asia/Europa de la semana anterior, y no compite
+# con refresh-bars (02:00 UTC diario) ni scan-universe (03:00 UTC diario).
+# GitHub puede retrasar los horarios 5-30 minutos; en cadencia semanal no importa.
+# Post-MIGRATE Mini (MIGRATE-3) el mismo par de scripts puede correr por launchd;
+# este workflow es el disparador primario hasta entonces.
+#
+# SECRETOS QUE NECESITA (Settings → Secrets and variables → Actions →
+# Repository secrets de este repositorio en GitHub, NO en este archivo):
+#   - SUPABASE_URL              (o NEXT_PUBLIC_SUPABASE_URL, el script acepta
+#                                 cualquiera de los dos — ver lib/supabaseServer.js)
+#   - SUPABASE_SERVICE_ROLE_KEY
+# Opcional: STATSEDGE_OWNER_ID — solo si el proyecto usa un owner_id distinto
+# de "personal" (el valor por defecto). No hace falta si nunca se ha tocado.
+# Mismos secretos que refresh-bars.yml / scan-universe.yml.
+#
+# VARIABLE DE ENTORNO ADICIONAL (no es secret)
+#   STATSEDGE_UNIVERSES_GIT_SHA — git rev-parse HEAD en el checkout del job;
+#   se persiste en stats del snapshot para trazabilidad del universo curado.
+#
+# QUÉ RAMA LO DISPARA
+# Los workflows programados (schedule) de GitHub Actions SOLO se disparan
+# desde la rama por defecto del repositorio. Este repo tiene
+# codex/statsedge-ui-polish como rama por defecto — si cambia, este workflow
+# deja de correr en cron hasta que se mueva con ella o se ajuste de nuevo.
+
+name: RS global privado (semanal)
+
+on:
+  schedule:
+    # Domingo 06:00 UTC — post-cierres semanales, ver "POR QUÉ DOMINGO 06:00 UTC".
+    - cron: "0 6 * * 0"
+  workflow_dispatch: {}
+    # Disparo manual desde la pestaña Actions (smoke o recuperación sin esperar
+    # al domingo). Usa --write en ambos pasos; para probar flags sin escribir,
+    # ejecutar localmente sin --write (dry-run por defecto de los scripts).
+
+# No solapar dos corridas semanales sobre el mismo snapshot (p. ej. manual
+# mientras el cron sigue en vuelo).
+concurrency:
+  group: rs-global-private
+  cancel-in-progress: false
+
+jobs:
+  rs-global-private:
+    runs-on: ubuntu-latest
+    # FX (~10 pares) + motor ~3.2k símbolos: margen amplio sobre corrida manual
+    # MET-1b; primera ejecución real en Actions confirmará duración.
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve universes git SHA
+        id: universes
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Ingest FX pairs (--write)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          STATSEDGE_OWNER_ID: ${{ secrets.STATSEDGE_OWNER_ID }}
+        # Sin --env-file: credenciales vía env:, igual que refresh-bars.yml.
+        run: |
+          node --loader ./scripts/loader.mjs scripts/rs-fx-ingest.mjs \
+            --write --concurrency=4
+
+      - name: Compute global RS snapshot (--write)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          STATSEDGE_OWNER_ID: ${{ secrets.STATSEDGE_OWNER_ID }}
+          STATSEDGE_UNIVERSES_GIT_SHA: ${{ steps.universes.outputs.sha }}
+        run: |
+          node --loader ./scripts/loader.mjs scripts/rs-global-private.mjs \
+            --write --concurrency=8

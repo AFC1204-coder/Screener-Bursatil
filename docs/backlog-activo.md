@@ -6,9 +6,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-30 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **CHART-UI-1** (ChartPreferences compact · 2 clusters) — R-05 cerrado.  
-Anterior: **CLEAN-3** (`03eb7fa`).  
+Último cerrado: **MET-1c** (cron GHA RS global privado) — domingo 06:00 UTC.  
+Anterior: **CHART-UI-1** (`cd8e8d3`).  
 **Cola:** **MIGRATE Mini** · día acordado **mar 2 sep 2026** (reserva mié 3) · billing hasta **5 sep** · no activar antes  
+**Nota MET-1c (2026-08-30):** workflow `rs-global-private.yml` · cron `0 6 * * 0` + dispatch · fx-ingest→rs-global-private · flags OK · pin tests 18/18. `workflow_dispatch` real pendiente en Actions tras push.  
+**Nota MET-1c smoke (2026-08-30):** pin OK — AAPL **61** · 0005.HK **83** · SHOP.TO 74 · 0700.HK 20 (W35, `canonicalRs` = DB). UI `/stock` bloqueada por token en tab nueva (no bloquea cron).  
 **Nota R-06 (2026-08-30):** medido Browser Use (sesión logueada) — truth al cambiar ficha: E2 **1980 ms**, pivot **964**, intl **2522**, IPO **946**, Deterioro **1879**. Warm UX-11 no cumple &lt;200 ms en cold/secuencial; **sin ticket** salvo prioridad producto (chase perf). Intl/IPO muestran lag pasan vs en lista en transición (UX-22 ya tratado).  
 **Nota MIGRATE (2026-08-30):** Mac Mini M4 · ruta B · MIGRATE-1…3 · **ventana 2–3 sep** · invoice end **5 sep**.  
 **Nota CHART-UI-1 (2026-08-30):** smoke AAPL — `chartPrefClusterScope`+`Display` apilados; TF D y escala Precio OK; nav 7 botones.  
@@ -139,6 +141,7 @@ Anterior: **CLEAN-3** (`03eb7fa`).
 | CLEAN-2 | Dual DOM móvil/desktop | `e69c3af` |
 | CLEAN-3 | MarketMiniTape breakpoint 900→760 | `03eb7fa` |
 | CHART-UI-1 | ChartPreferences compact · 2 clusters TF/rango | `cd8e8d3` |
+| MET-1c | Cron GHA RS global privado (dom 06:00 UTC) | *(stamp al commit)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -216,7 +219,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 
 | ID | Qué | Estado |
 |---|---|---|
-| MET-1c | Cron semanal motor global privado | Tras smoke OK dueño |
+| MET-1c | Cron semanal motor global privado | **Hecho** · `rs-global-private.yml` · smoke lectura OK |
 | MET-2 | Spec RS país (calidad intra-país) | Decisión dueño; sin ticket |
 | MET-3 | Spec RS tema (ocupación / theme) | Decisión dueño; sin ticket |
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | Ideas; sin ticket |
