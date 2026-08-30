@@ -6,9 +6,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-30 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **CLEAN-3** (MarketMiniTape 900→760) — higiene post-CLEAN-2.  
-Anterior: **CLEAN-2** (`e69c3af`).  
-**Cola:** (Supabase migrate **aplazado** — margen renovación ~2–3 días; no activar sin OK dueño) · siguiente UI candidato: **CHART-UI-1**  
+Último cerrado: **CHART-UI-1** (ChartPreferences compact · 2 clusters) — R-05 cerrado.  
+Anterior: **CLEAN-3** (`03eb7fa`).  
+**Cola:** (Supabase migrate **aplazado** — margen renovación ~2–3 días; no activar sin OK dueño)  
+**Nota CHART-UI-1 (2026-08-30):** smoke AAPL — `chartPrefClusterScope`+`Display` apilados; TF D y escala Precio OK; nav 7 botones.  
 **Nota CLEAN-3 (2026-08-30):** smoke — 390: mobileHome 1 / desktop 0 / tape DOM 29 tiles «Índices» (CSS `display:none` intencional UX-18); ≥760: mobileHome 0 / desktop 1 / tape 0.  
 **Nota CLEAN-2 (2026-08-29):** smoke — desktop 0× mobileHome; 390px 1× mobile / 0× desktop.  
 **Nota UX-23 (2026-08-29):** smoke — thead 3× «i» (Tema/RS/Etapa); Ticker/Rend/Dist/Cap sin «i».  
@@ -135,6 +136,7 @@ Anterior: **CLEAN-2** (`e69c3af`).
 | UX-23 | InfoHints cabecera tabla | `9244496` |
 | CLEAN-2 | Dual DOM móvil/desktop | `e69c3af` |
 | CLEAN-3 | MarketMiniTape breakpoint 900→760 | `03eb7fa` |
+| CHART-UI-1 | ChartPreferences compact · 2 clusters TF/rango | *(stamp al commit)* |
 
 ## Siguiente — datos IPO + filtros
 
@@ -203,6 +205,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 |---|---|---|
 | CHART-RS | RS solo overlay en gráfico (sin panel duplicado) | **Hecho** · `0728afe` · smoke OKTA |
 | CHART-NAV | Pan/zoom libre; zona de interés marcada, no secuestrada | **Hecho** · smoke AAPL · `fixLeftEdge:false` + manual lógico |
+| CHART-UI-1 | Densidad toolbar ChartPreferences compact (agrupar TF/rango) | **Hecho** · smoke AAPL · 2 clusters |
 
 **Orden sugerido:** CHART-RS (cambio de representación) → CHART-NAV (gesto timeScale); o paralelo en ramas si no tocan el mismo helper de rango.  
 **No** mezclar con UX-18…21 (P2 mesa) en el mismo ticket.

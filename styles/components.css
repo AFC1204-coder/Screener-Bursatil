@@ -891,6 +891,28 @@
   flex-wrap:wrap;
 }
 
+.chartPrefCluster {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+  min-width:0;
+}
+
+.chartPrefs.compact .chartPrefsLine {
+  flex-direction:column;
+  align-items:stretch;
+  gap:6px;
+}
+
+.chartPrefs.compact .chartPrefClusterScope {
+  flex:1 1 auto;
+}
+
+.chartPrefs.compact .chartPrefClusterDisplay {
+  flex:1 1 auto;
+}
+
 .chartPrefGroup {
   min-width:0;
   display:inline-flex;
@@ -5498,6 +5520,14 @@ h2 {
   scrollbar-width:none;
 }
 
+.stockPage .chartPrefs.compact .chartPrefsLine {
+  flex-direction:column;
+  flex-wrap:nowrap;
+  align-items:stretch;
+  overflow-x:visible;
+  padding-bottom:0;
+}
+
 .stockPage .chartPrefsLine::-webkit-scrollbar {
   display:none;
 }
@@ -5850,6 +5880,33 @@ h2 {
     overflow:visible;
     margin:0;
     padding:0;
+  }
+  .stockPage .chartPrefs.compact .chartPrefsLine {
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:6px;
+    overflow:visible;
+  }
+  .stockPage .chartPrefs.compact .chartPrefCluster {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px;
+    width:100%;
+    min-width:0;
+  }
+  .stockPage .chartPrefs.compact .chartPrefGroup {
+    grid-column:auto;
+    width:auto;
+    flex:1 1 auto;
+    min-width:0;
+  }
+  .stockPage .chartPrefs.compact .compactSeg {
+    grid-column:auto;
+    width:auto;
+    flex:1 1 auto;
+    min-width:0;
   }
   .stockPage .chartPrefs select,
   .stockPage .chartPrefs .chartPrefGroup,
@@ -7417,6 +7474,33 @@ h2 {
     grid-template-columns: repeat(5,minmax(0,1fr));
     gap: 5px;
     overflow: visible;
+  }
+  .stockPage .chartPrefs.compact .chartPrefsLine {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    overflow: visible;
+  }
+  .stockPage .chartPrefs.compact .chartPrefCluster {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+  }
+  .stockPage .chartPrefs.compact .chartPrefGroup {
+    grid-column: auto;
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .stockPage .chartPrefs.compact .compactSeg {
+    grid-column: auto;
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
   }
   .stockPage .chartPrefs select:first-of-type {
     grid-column: span 2;

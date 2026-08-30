@@ -79,59 +79,103 @@ export default function ChartPreferences({ settings, onChange, symbol = "", list
   };
   const updateIndicators = (patch) => update({ indicators: { ...indicators, ...patch } });
   const updateNote = (value) => update({ notes: { ...(settings?.notes || {}), [symbol]: value } });
+
+  const scopeSelect = scopes.length > 1 ? (
+    <select aria-label="Preset de grafico" value={scope} onChange={(event) => onScopeChange?.(event.target.value)}>
+      {scopes.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+    </select>
+  ) : null;
+  const rangeControl = (
+    <ChartSegmentedControl
+      label="Rango"
+      options={rangeOptions}
+      value={activeRange}
+      onChange={(value) => update({ range: value })}
+      disabledOption={(item) => !rangeIsCompatibleWithInterval(interval, item.key)}
+    />
+  );
+  const intervalControl = (
+    <ChartSegmentedControl
+      label="Temporalidad"
+      options={CHART_INTERVALS}
+      value={interval}
+      onChange={updateInterval}
+    />
+  );
+  const styleSelect = (
+    <select aria-label="Tipo de grafico" value={settings?.style || "1"} onChange={(event) => update({ style: event.target.value })}>
+      {CHART_STYLES.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+    </select>
+  );
+  const scaleControl = (
+    <div className="segmented compactSeg">
+      {CHART_SCALE_MODES.map((item) => (
+        <button type="button" key={item.key} className={(settings?.scale || "price") === item.key ? "active" : ""} onClick={() => update({ scale: item.key })}>
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+  const rsToggle = (
+    <button
+      type="button"
+      className={`btn btnSmall ${indicators.rsLine ? "btnActive" : "btnGhost"}`}
+      style={{ padding: "4px 10px", fontSize: 11, height: 32, display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600, borderRadius: "var(--radius)" }}
+      onClick={() => updateIndicators({ rsLine: !indicators.rsLine })}
+      title="Mostrar u ocultar la capa de fuerza relativa"
+    >
+      <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: indicators.rsLine ? "var(--accent)" : "rgba(255,255,255,0.2)" }} />
+      RS
+    </button>
+  );
+  const indicatorsPanel = (
+    <details className="chartIndicators">
+      <summary>Indicadores</summary>
+      <div className="chartIndicatorPanel">
+        <label><input type="checkbox" checked={indicators.volume} onChange={(event) => updateIndicators({ volume: event.target.checked })} /> Volumen</label>
+        <label><input type="checkbox" checked={indicators.rsLine} onChange={(event) => updateIndicators({ rsLine: event.target.checked })} /> Fuerza relativa</label>
+        <label><input type="checkbox" checked={indicators.maFast} onChange={(event) => updateIndicators({ maFast: event.target.checked })} /> Media 1</label>
+        <input aria-label="Periodo media 1" type="number" min="2" max="400" value={indicators.maFastLength} onChange={(event) => updateIndicators({ maFastLength: event.target.value })} />
+        <label><input type="checkbox" checked={indicators.maSlow} onChange={(event) => updateIndicators({ maSlow: event.target.checked })} /> Media 2</label>
+        <input aria-label="Periodo media 2" type="number" min="2" max="600" value={indicators.maSlowLength} onChange={(event) => updateIndicators({ maSlowLength: event.target.value })} />
+      </div>
+    </details>
+  );
+  const notesPanel = symbol ? (
+    <details className="chartNotes">
+      <summary>Notas</summary>
+      <textarea value={note} onChange={(event) => updateNote(event.target.value)} placeholder="Anotaciones privadas..." />
+    </details>
+  ) : null;
+
   return <div className={`chartPrefs ${compact ? "compact" : ""}`}>
     <div className="chartPrefsLine">
-      {scopes.length > 1 && <select aria-label="Preset de grafico" value={scope} onChange={(event) => onScopeChange?.(event.target.value)}>
-        {scopes.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
-      </select>}
-      <ChartSegmentedControl
-        label="Rango"
-        options={rangeOptions}
-        value={activeRange}
-        onChange={(value) => update({ range: value })}
-        disabledOption={(item) => !rangeIsCompatibleWithInterval(interval, item.key)}
-      />
-      <ChartSegmentedControl
-        label="Temporalidad"
-        options={CHART_INTERVALS}
-        value={interval}
-        onChange={updateInterval}
-      />
-      <select aria-label="Tipo de grafico" value={settings?.style || "1"} onChange={(event) => update({ style: event.target.value })}>
-        {CHART_STYLES.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
-      </select>
-      <div className="segmented compactSeg">
-        {CHART_SCALE_MODES.map((item) => (
-          <button type="button" key={item.key} className={(settings?.scale || "price") === item.key ? "active" : ""} onClick={() => update({ scale: item.key })}>
-            {item.label}
-          </button>
-        ))}
-      </div>
-      <button
-        type="button"
-        className={`btn btnSmall ${indicators.rsLine ? "btnActive" : "btnGhost"}`}
-        style={{ padding: "4px 10px", fontSize: 11, height: 32, display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600, borderRadius: "var(--radius)" }}
-        onClick={() => updateIndicators({ rsLine: !indicators.rsLine })}
-        title="Mostrar u ocultar la capa de fuerza relativa"
-      >
-        <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: indicators.rsLine ? "var(--accent)" : "rgba(255,255,255,0.2)" }} />
-        RS
-      </button>
-      <details className="chartIndicators">
-        <summary>Indicadores</summary>
-        <div className="chartIndicatorPanel">
-          <label><input type="checkbox" checked={indicators.volume} onChange={(event) => updateIndicators({ volume: event.target.checked })} /> Volumen</label>
-          <label><input type="checkbox" checked={indicators.rsLine} onChange={(event) => updateIndicators({ rsLine: event.target.checked })} /> Fuerza relativa</label>
-          <label><input type="checkbox" checked={indicators.maFast} onChange={(event) => updateIndicators({ maFast: event.target.checked })} /> Media 1</label>
-          <input aria-label="Periodo media 1" type="number" min="2" max="400" value={indicators.maFastLength} onChange={(event) => updateIndicators({ maFastLength: event.target.value })} />
-          <label><input type="checkbox" checked={indicators.maSlow} onChange={(event) => updateIndicators({ maSlow: event.target.checked })} /> Media 2</label>
-          <input aria-label="Periodo media 2" type="number" min="2" max="600" value={indicators.maSlowLength} onChange={(event) => updateIndicators({ maSlowLength: event.target.value })} />
-        </div>
-      </details>
-      {symbol && <details className="chartNotes">
-        <summary>Notas</summary>
-        <textarea value={note} onChange={(event) => updateNote(event.target.value)} placeholder="Anotaciones privadas..." />
-      </details>}
+      {scopeSelect}
+      {compact ? (
+        <>
+          <div className="chartPrefCluster chartPrefClusterScope">
+            {rangeControl}
+            {intervalControl}
+          </div>
+          <div className="chartPrefCluster chartPrefClusterDisplay">
+            {styleSelect}
+            {scaleControl}
+            {rsToggle}
+            {indicatorsPanel}
+            {notesPanel}
+          </div>
+        </>
+      ) : (
+        <>
+          {rangeControl}
+          {intervalControl}
+          {styleSelect}
+          {scaleControl}
+          {rsToggle}
+          {indicatorsPanel}
+          {notesPanel}
+        </>
+      )}
     </div>
   </div>;
 }
