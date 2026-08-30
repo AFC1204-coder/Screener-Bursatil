@@ -9,7 +9,8 @@ Ticket en curso: *(ninguno)*.
 Último cerrado: **MET-1c** (cron GHA RS global privado) — domingo 06:00 UTC.  
 Anterior: **CHART-UI-1** (`cd8e8d3`).  
 **Cola:** **MIGRATE Mini** · día acordado **mar 2 sep 2026** (reserva mié 3) · billing hasta **5 sep** · no activar antes  
-**Nota MET-1c (2026-08-30):** workflow `rs-global-private.yml` · cron `0 6 * * 0` + dispatch · fx-ingest→rs-global-private · flags OK · pin tests 18/18. `workflow_dispatch` real pendiente en Actions tras push.  
+**Nota MET-1c (2026-08-30):** workflow `rs-global-private.yml` · cron `0 6 * * 0` + dispatch · fx-ingest→rs-global-private · flags OK · pin tests 18/18.  
+**Nota MET-1c Actions (2026-08-30):** `workflow_dispatch` [33325290704](https://github.com/AFC1204-coder/Screener-Bursatil/actions/runs/33325290704) · **success** ~2,5 min · FX 10/10 · universo 6437 · rankeadas **5567** · exclusiones 870 · snapshot `e21c86c0-…`.  
 **Nota MET-1c smoke (2026-08-30):** pin OK — AAPL **61** · 0005.HK **83** · SHOP.TO 74 · 0700.HK 20 (W35, `canonicalRs` = DB). UI `/stock` bloqueada por token en tab nueva (no bloquea cron).  
 **Nota R-06 (2026-08-30):** medido Browser Use (sesión logueada) — truth al cambiar ficha: E2 **1980 ms**, pivot **964**, intl **2522**, IPO **946**, Deterioro **1879**. Warm UX-11 no cumple &lt;200 ms en cold/secuencial; **sin ticket** salvo prioridad producto (chase perf). Intl/IPO muestran lag pasan vs en lista en transición (UX-22 ya tratado).  
 **Nota MIGRATE (2026-08-30):** Mac Mini M4 · ruta B · MIGRATE-1…3 · **ventana 2–3 sep** · invoice end **5 sep**.  
