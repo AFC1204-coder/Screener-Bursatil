@@ -6,10 +6,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-30 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **MET-1c** (cron GHA RS global privado) — domingo 06:00 UTC.  
-Anterior: **CHART-UI-1** (`cd8e8d3`).  
-**Cola:** **MIGRATE Mini** · día acordado **mar 2 sep 2026** (reserva mié 3) · billing hasta **5 sep** · no activar antes  
-**Nota MET-1c (2026-08-30):** workflow `rs-global-private.yml` · cron `0 6 * * 0` + dispatch · fx-ingest→rs-global-private · flags OK · pin tests 18/18.  
+Último cerrado: **MET-2** (spec RS país) — `docs/spec-rs-pais.md` · pendiente aceptación dueño → MET-2b.  
+Anterior: **MET-1c** (`368670f` + Actions OK).  
+**Cola:** **MIGRATE Mini** · **mar 2 sep 2026** (reserva mié 3) · billing hasta **5 sep** · no activar antes · MET-2b solo con OK al spec  
+**Nota MET-2 (2026-08-30):** verificado filesystem — 8 preguntas + alts; sin diff código; US=`statsedge-us-equity-rs-v1`; intl=`statsedge-private-country-rs-local-v1` + scope; scoring prohibido; pin global intacto.  
 **Nota MET-1c Actions (2026-08-30):** `workflow_dispatch` [33325290704](https://github.com/AFC1204-coder/Screener-Bursatil/actions/runs/33325290704) · **success** ~2,5 min · FX 10/10 · universo 6437 · rankeadas **5567** · exclusiones 870 · snapshot `e21c86c0-…`.  
 **Nota MET-1c smoke (2026-08-30):** pin OK — AAPL **61** · 0005.HK **83** · SHOP.TO 74 · 0700.HK 20 (W35, `canonicalRs` = DB). UI `/stock` bloqueada por token en tab nueva (no bloquea cron).  
 **Nota R-06 (2026-08-30):** medido Browser Use (sesión logueada) — truth al cambiar ficha: E2 **1980 ms**, pivot **964**, intl **2522**, IPO **946**, Deterioro **1879**. Warm UX-11 no cumple &lt;200 ms en cold/secuencial; **sin ticket** salvo prioridad producto (chase perf). Intl/IPO muestran lag pasan vs en lista en transición (UX-22 ya tratado).  
@@ -143,6 +143,7 @@ Anterior: **CHART-UI-1** (`cd8e8d3`).
 | CLEAN-3 | MarketMiniTape breakpoint 900→760 | `03eb7fa` |
 | CHART-UI-1 | ChartPreferences compact · 2 clusters TF/rango | `cd8e8d3` |
 | MET-1c | Cron GHA RS global privado (dom 06:00 UTC) | `368670f` |
+| MET-2 | Spec RS país (columna 2ª · US motor congelado · intl local sin FX) | (docs) |
 
 ## Siguiente — datos IPO + filtros
 
@@ -221,7 +222,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | ID | Qué | Estado |
 |---|---|---|
 | MET-1c | Cron semanal motor global privado | **Hecho** · `368670f` · `rs-global-private.yml` · smoke lectura OK |
-| MET-2 | Spec RS país (calidad intra-país) | Decisión dueño; sin ticket |
+| MET-2 | Spec RS país (calidad intra-país) | **Hecho** · `docs/spec-rs-pais.md` · pendiente OK dueño → MET-2b |
 | MET-3 | Spec RS tema (ocupación / theme) | Decisión dueño; sin ticket |
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | Ideas; sin ticket |
 | MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | Ambicioso; tras MET-1…4 |
