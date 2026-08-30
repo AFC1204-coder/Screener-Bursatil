@@ -8,7 +8,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Ticket en curso: *(ninguno)*.  
 Último cerrado: **CHART-UI-1** (ChartPreferences compact · 2 clusters) — R-05 cerrado.  
 Anterior: **CLEAN-3** (`03eb7fa`).  
-**Cola:** (Supabase migrate **aplazado** — margen renovación ~2–3 días; no activar sin OK dueño)  
+**Cola:** **MIGRATE Mini** · día acordado **mar 2 sep 2026** (reserva mié 3) · billing hasta **5 sep** · no activar antes  
+**Nota MIGRATE (2026-08-30):** Mac Mini M4 · ruta B · MIGRATE-1…3 · **ventana 2–3 sep** · invoice end **5 sep**.  
 **Nota CHART-UI-1 (2026-08-30):** smoke AAPL — `chartPrefClusterScope`+`Display` apilados; TF D y escala Precio OK; nav 7 botones.  
 **Nota CLEAN-3 (2026-08-30):** smoke — 390: mobileHome 1 / desktop 0 / tape DOM 29 tiles «Índices» (CSS `display:none` intencional UX-18); ≥760: mobileHome 0 / desktop 1 / tape 0.  
 **Nota CLEAN-2 (2026-08-29):** smoke — desktop 0× mobileHome; 390px 1× mobile / 0× desktop.  
@@ -245,6 +246,7 @@ Licencia pública: Twelve Data Venture (~499 $/mes exhibición) u equivalente �
 ## Aplazado / no oleada UI
 
 - Cutover Hito 1, tenancy, Twelve Data, merge chart-controller.
+- **Salida Supabase Pro → Mac Mini M4** — plan `docs/plan-migrate-postgres-mac-mini-2026-08-30.md` · tickets MIGRATE-1…3 · **activar con OK dueño + fecha billing**.
 - **VCP / contracciones en producto** — investigación activa en `research/contracciones/` + docs (`diseno-contracciones*.md`, citas Minervini/O'Neil/Weinstein); detector producto sigue en `lib/setupPatterns.js`.
 - Traducir inglés estructural restante.
 - Dos colas modal vs `/review` (estructural; baja prioridad si el modal basta).
