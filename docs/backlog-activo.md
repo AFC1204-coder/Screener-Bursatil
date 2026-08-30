@@ -9,6 +9,7 @@ Ticket en curso: *(ninguno)*.
 Último cerrado: **CHART-UI-1** (ChartPreferences compact · 2 clusters) — R-05 cerrado.  
 Anterior: **CLEAN-3** (`03eb7fa`).  
 **Cola:** **MIGRATE Mini** · día acordado **mar 2 sep 2026** (reserva mié 3) · billing hasta **5 sep** · no activar antes  
+**Nota R-06 (2026-08-30):** medido Browser Use (sesión logueada) — truth al cambiar ficha: E2 **1980 ms**, pivot **964**, intl **2522**, IPO **946**, Deterioro **1879**. Warm UX-11 no cumple &lt;200 ms en cold/secuencial; **sin ticket** salvo prioridad producto (chase perf). Intl/IPO muestran lag pasan vs en lista en transición (UX-22 ya tratado).  
 **Nota MIGRATE (2026-08-30):** Mac Mini M4 · ruta B · MIGRATE-1…3 · **ventana 2–3 sep** · invoice end **5 sep**.  
 **Nota CHART-UI-1 (2026-08-30):** smoke AAPL — `chartPrefClusterScope`+`Display` apilados; TF D y escala Precio OK; nav 7 botones.  
 **Nota CLEAN-3 (2026-08-30):** smoke — 390: mobileHome 1 / desktop 0 / tape DOM 29 tiles «Índices» (CSS `display:none` intencional UX-18); ≥760: mobileHome 0 / desktop 1 / tape 0.  
