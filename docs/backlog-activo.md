@@ -9,7 +9,8 @@ Ticket en curso: *(ninguno)*.
 Último cerrado: **MET-2c** (cron GHA RS país) — domingo 07:00 UTC.  
 Anterior: **MET-2b** (`9c147c6`).  
 **Cola:** **MIGRATE Mini** · **mar 2 sep 2026** (reserva mié 3) · billing hasta **5 sep**  
-**Nota MET-2c (2026-08-30):** workflow `rs-country-private.yml` · cron `0 7 * * 0` + dispatch · US `rs-universe --population=equity --write` → intl `rs-country-private --write` · flags OK.  
+**Nota MET-2c (2026-08-30):** workflow `rs-country-private.yml` · cron `0 7 * * 0` + dispatch · US→intl · flags OK.  
+**Nota MET-2c Actions (2026-08-30):** `workflow_dispatch` [33336486687](https://github.com/AFC1204-coder/Screener-Bursatil/actions/runs/33336486687) · **success** ~2,5 min.  
 **Nota MET-2b write HK (2026-08-30):** `--write --markets=HK` · snapshot `57f94e01-…` · 74/76 · 0005.HK país **95**.  
 **Nota MET-2b (2026-08-30):** verify — tests 108 OK; AAPL país **70**; fix client `node:crypto`.  
 **Nota MET-2 aceptación (2026-08-30):** dueño OK — columna 2ª · curado · scoring off · cron.  
