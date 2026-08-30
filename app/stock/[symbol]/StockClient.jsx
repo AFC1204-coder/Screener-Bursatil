@@ -1681,6 +1681,8 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           relativeStrength={rs.series}
           rsMainScore={rsUniverse}
           rsRatingSeries={rs.globalRsSeries}
+          rsCountrySeries={rs.countryRsSeries}
+          rsCountryMainScore={rs.countryRsRating}
           benchmarkSymbol={rs.benchmarkSymbol}
           patternOverlay={showVcpDiagnostics ? setupPattern : actionableSetupPattern}
           showPatternDiagnostics={showVcpDiagnostics}

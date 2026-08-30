@@ -20,6 +20,7 @@ import {
   projectMovingAverages,
   projectPatternMarkers,
   projectRsRatingSeries,
+  projectRsCountryRatingSeries,
   projectRsVisibleRangeSummary,
   projectVolumeSeries,
   rsLineHistory,
@@ -242,6 +243,15 @@ describe("chartSeriesModel · RS (rating y línea)", () => {
   it("projectRsRatingSeries devuelve [] si rsLine está desactivado", () => {
     const rows = buildDailyRows({ count: 10 });
     expect(projectRsRatingSeries(rows, [{ time: rows[0].time, value: 50 }], { rsLine: false })).toEqual([]);
+  });
+
+  it("projectRsCountryRatingSeries respeta rsCountryLine y reutiliza la proyección del RS global", () => {
+    const rows = buildDailyRows({ count: 10 });
+    const series = [{ time: rows[0].time, value: 50 }, { time: rows.at(-1).time, value: 60 }];
+    expect(projectRsCountryRatingSeries(rows, series, { rsCountryLine: false })).toEqual([]);
+    const projected = projectRsCountryRatingSeries(rows, series, { rsCountryLine: true });
+    expect(projected).toHaveLength(2);
+    expect(projected.at(-1).value).toBe(60);
   });
 
   it("projectBenchmarkLineSeries produce rawValue (lineal) y value (log) desde base", () => {

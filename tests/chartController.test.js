@@ -322,8 +322,10 @@ describe("useChartController · ciclo de vida (ADR §5.4, §5.5)", () => {
     // commit 5722d84: estas NO estaban; se añadieron tras tu revisión).
     expect(deps).toContain("patternOverlay");
     expect(deps).toContain("rsRatingSeries");
+    expect(deps).toContain("rsCountrySeries");
     expect(deps).toContain("config.indicators.volume");
     expect(deps).toContain("config.indicators.rsLine");
+    expect(deps).toContain("config.indicators.rsCountryLine");
     expect(deps).toContain("config.indicators.maFast");
     expect(deps).toContain("config.indicators.maFastLength");
     expect(deps).toContain("config.indicators.maSlow");
@@ -349,12 +351,15 @@ describe("useChartController · ciclo de vida (ADR §5.4, §5.5)", () => {
 // renderToStaticMarkup. Se verifica la invariante en la fuente — el default
 // tiene que ser una constante de módulo con identidad estable.
 describe("useChartController · defaults con identidad estable", () => {
-  it("rsRatingSeries no usa un array literal como default", async () => {
+  it("rsRatingSeries y rsCountrySeries no usan arrays literales como default", async () => {
     const { readFileSync } = await import("node:fs");
     const source = readFileSync("app/useChartController.js", "utf8");
 
     expect(source).toMatch(/const EMPTY_RS_RATING_SERIES = \[\];/);
+    expect(source).toMatch(/const EMPTY_RS_COUNTRY_SERIES = \[\];/);
     expect(source).toMatch(/rsRatingSeries = EMPTY_RS_RATING_SERIES,/);
+    expect(source).toMatch(/rsCountrySeries = EMPTY_RS_COUNTRY_SERIES,/);
     expect(source).not.toMatch(/rsRatingSeries = \[\],/);
+    expect(source).not.toMatch(/rsCountrySeries = \[\],/);
   });
 });

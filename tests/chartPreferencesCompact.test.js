@@ -40,6 +40,7 @@ describe("CHART-UI-1 · ChartPreferences compact", () => {
       expect(html).toContain(`>${mode.label}<`);
     }
     expect(html).toContain(">RS<");
+    expect(html).toContain("RS país");
     expect(html).toContain("Indicadores");
     expect(html).toContain("Notas");
   });

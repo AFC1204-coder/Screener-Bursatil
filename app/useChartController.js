@@ -34,7 +34,7 @@ import { useChartDataModel } from "@/app/useChartDataModel";
 import { useChartDrawings } from "@/app/useChartDrawings";
 import { useChartViewport } from "@/app/useChartViewport";
 import { createChartNativeAdapter, resolveCssTokensNative } from "@/app/chartNativeAdapter";
-import { RS_LINE_MIN_WEEKS, projectRsRatingSeries, rsLineHistory } from "@/lib/chartSeriesModel";
+import { RS_LINE_MIN_WEEKS, projectRsCountryRatingSeries, projectRsRatingSeries, rsLineHistory } from "@/lib/chartSeriesModel";
 import { userFacingSearchError } from "@/lib/screenerFormat";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
@@ -43,6 +43,7 @@ import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
 // nuevo en cada render y convierte cualquier dependencia derivada en un
 // invalidador permanente (histórico: "Maximum update depth exceeded").
 const EMPTY_RS_RATING_SERIES = [];
+const EMPTY_RS_COUNTRY_SERIES = [];
 
 // Huella de contenido de una serie de puntos (array plano o `{ points }`).
 // Barata a propósito: longitud + extremos + último valor. Un cambio interior
@@ -78,6 +79,8 @@ export function useChartController(props = {}) {
     benchmarkSymbol = "",
     rsMainScore = null,
     rsRatingSeries = EMPTY_RS_RATING_SERIES,
+    rsCountrySeries = EMPTY_RS_COUNTRY_SERIES,
+    rsCountryMainScore = null,
     patternOverlay = null,
     showPatternDiagnostics = false,
     localQuality = null,
@@ -97,6 +100,7 @@ export function useChartController(props = {}) {
       settings?.scale,
       settings?.indicators?.volume,
       settings?.indicators?.rsLine,
+      settings?.indicators?.rsCountryLine,
       settings?.indicators?.maFast,
       settings?.indicators?.maFastLength,
       settings?.indicators?.maSlow,
@@ -171,6 +175,7 @@ export function useChartController(props = {}) {
 
   // Huellas de contenido de las series-prop (ver cabecera).
   const rsRatingSeriesKey = useMemo(() => seriesContentKey(rsRatingSeries), [rsRatingSeries]);
+  const rsCountrySeriesKey = useMemo(() => seriesContentKey(rsCountrySeries), [rsCountrySeries]);
   const relativeStrengthKey = useMemo(() => seriesContentKey(relativeStrength), [relativeStrength]);
   const patternOverlayKey = useMemo(() => patternContentKey(patternOverlay), [patternOverlay]);
 
@@ -188,6 +193,19 @@ export function useChartController(props = {}) {
       intradayMuted: false,
     };
   }, [config.indicators, config.interval, intraday, rows, rsRatingSeries]);
+
+  const rsCountryLineState = useMemo(() => {
+    if (!config.indicators.rsCountryLine) return { enabled: false, rendered: false, weeks: 0 };
+    if (intraday) return { enabled: true, rendered: false, weeks: 0, intradayMuted: true };
+    const points = projectRsCountryRatingSeries(rows, rsCountrySeries, config.indicators, config.interval);
+    const history = rsLineHistory(points);
+    return {
+      enabled: true,
+      rendered: points.length > 1 && history.sufficient,
+      weeks: history.weeks,
+      intradayMuted: false,
+    };
+  }, [config.indicators, config.interval, intraday, rows, rsCountrySeries]);
 
   const patternSummary = useMemo(() => methodologyDisplayForRow(patternOverlay || {}), [patternOverlay]);
   const patternDiagnostic = useMemo(
@@ -236,6 +254,7 @@ export function useChartController(props = {}) {
         overrides: {
           patternOverlay,
           rsRatingSeries,
+          rsCountrySeries,
           benchmarkSeries: relativeStrength,
           contextRows,
           requestedHeight: height,
@@ -307,9 +326,11 @@ export function useChartController(props = {}) {
     height,
     patternOverlayKey,
     rsRatingSeriesKey,
+    rsCountrySeriesKey,
     relativeStrengthKey,
     config.indicators.volume,
     config.indicators.rsLine,
+    config.indicators.rsCountryLine,
     config.indicators.maFast,
     config.indicators.maFastLength,
     config.indicators.maSlow,
@@ -381,6 +402,7 @@ export function useChartController(props = {}) {
     },
     badges: {
       rsMainScore: Number.isFinite(Number(rsMainScore)) ? Number(rsMainScore) : null,
+      countryRsScore: Number.isFinite(Number(rsCountryMainScore)) ? Number(rsCountryMainScore) : null,
       pattern: patternSummary,
     },
     viewportRail,
@@ -401,10 +423,24 @@ export function useChartController(props = {}) {
         }
         : null,
     },
+    rsCountryLegend: {
+      enabled: !!config.indicators.rsCountryLine,
+      intradayMuted: intraday,
+      rendered: rsCountryLineState.rendered,
+      absence: config.indicators.rsCountryLine && !intraday && !rsCountryLineState.rendered
+        ? {
+          weeks: rsCountryLineState.weeks,
+          text: rsCountryLineState.weeks > 0
+            ? `Sin línea RS país: ${rsCountryLineState.weeks} ${rsCountryLineState.weeks === 1 ? "semana" : "semanas"} de histórico (mínimo ${RS_LINE_MIN_WEEKS})`
+            : "Sin línea RS país: este valor no tiene histórico del ranking semanal intra-mercado",
+          title: `El RS país es un percentil semanal dentro del mercado del símbolo. Con menos de ${RS_LINE_MIN_WEEKS} semanas la línea uniría lecturas contiguas y afirmaría una tendencia que no se ha medido.`,
+        }
+        : null,
+    },
     notes,
     emptyFallback,
     rootClassName: className,
-  }), [status, symbol, latest, change, positive, rangeLabel, config.interval, config.indicators.rsLine, intraday, rsLineState, patternSummary, viewportRail, patternDiagnostic, notes, emptyFallback, className]);
+  }), [status, symbol, latest, change, positive, rangeLabel, config.interval, config.indicators.rsLine, config.indicators.rsCountryLine, intraday, rsLineState, rsCountryLineState, rsCountryMainScore, patternSummary, viewportRail, patternDiagnostic, notes, emptyFallback, className, rsMainScore]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // actions — closures estables de la instancia única del viewport.

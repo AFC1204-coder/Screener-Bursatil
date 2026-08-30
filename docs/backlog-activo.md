@@ -6,9 +6,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-30 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **MET-2c** (cron GHA RS país) — domingo 07:00 UTC.  
-Anterior: **MET-2b** (`9c147c6`).  
-**Cola:** **MIGRATE Mini** · **mar 2 sep 2026** (reserva mié 3) · billing hasta **5 sep**  
+Último cerrado: **CHART-RS-2** (overlay RS país en chart).  
+Anterior: **MET-2c**.  
+**Cola:** MIGRATE Mini aparcado hasta **mar 2 sep** · relleno: MET-3 / R-06 / yield intl  
+**Nota CHART-RS-2 (2026-08-31):** tests 86 OK; serie AAPL **29** semanas latest **64**; smoke AAPL — toggles RS + RS país active, canvas 7, franja «RS país»; hydrate solo en API (sin crypto client).  
+**Nota cola (2026-08-31):** dueño pide seguir oleada reciente **sin MIGRATE**; CHART-RS-2 cerrado.  
 **Nota MET-2c (2026-08-30):** workflow `rs-country-private.yml` · cron `0 7 * * 0` + dispatch · US→intl · flags OK.  
 **Nota MET-2c Actions (2026-08-30):** `workflow_dispatch` [33336486687](https://github.com/AFC1204-coder/Screener-Bursatil/actions/runs/33336486687) · **success** ~2,5 min.  
 **Nota MET-2b write HK (2026-08-30):** `--write --markets=HK` · snapshot `57f94e01-…` · 74/76 · 0005.HK país **95**.  
@@ -148,7 +150,8 @@ Anterior: **MET-2b** (`9c147c6`).
 | MET-1c | Cron GHA RS global privado (dom 06:00 UTC) | `368670f` |
 | MET-2 | Spec RS país (columna 2ª · US motor congelado · intl local sin FX) | (docs) |
 | MET-2b | Impl RS país (lector + motor + columna; fix client crypto) | `9c147c6` |
-| MET-2c | Cron GHA RS país privado (dom 07:00 UTC) | |
+| MET-2c | Cron GHA RS país privado (dom 07:00 UTC) | `a6b9408` |
+| CHART-RS-2 | Overlay RS país en chart (toggle + --soft) | |
 
 ## Siguiente — datos IPO + filtros
 
@@ -218,6 +221,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | CHART-RS | RS solo overlay en gráfico (sin panel duplicado) | **Hecho** · `0728afe` · smoke OKTA |
 | CHART-NAV | Pan/zoom libre; zona de interés marcada, no secuestrada | **Hecho** · smoke AAPL · `fixLeftEdge:false` + manual lógico |
 | CHART-UI-1 | Densidad toolbar ChartPreferences compact (agrupar TF/rango) | **Hecho** · `cd8e8d3` · smoke AAPL · 2 clusters |
+| CHART-RS-2 | Overlay RS país (tercer tono; post MET-2) | **Hecho** |
 
 **Orden sugerido:** CHART-RS (cambio de representación) → CHART-NAV (gesto timeScale); o paralelo en ramas si no tocan el mismo helper de rango.  
 **No** mezclar con UX-18…21 (P2 mesa) en el mismo ticket.

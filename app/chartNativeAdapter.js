@@ -29,6 +29,7 @@ import {
   projectCandles,
   projectLineSeries,
   projectPatternMarkers,
+  projectRsCountryRatingSeries,
   projectRsRatingSeries,
   projectVolumeSeries,
   rsLineHistory,
@@ -42,6 +43,7 @@ const PRICE_SCALE_DASHED = 2;
 // overlay invisible con rango fijo y banda inferior propia evita compartir eje
 // con el precio sin reservar un panel aparte (patrón B2/B3).
 const RS_OVERLAY_SCALE_ID = "rs-rating";
+const RS_COUNTRY_OVERLAY_SCALE_ID = "rs-country";
 // Banda inferior ~25% del panel de precio (top 0.75 → franja 75%–98%).
 const RS_OVERLAY_MARGINS = { top: 0.75, bottom: 0.02 };
 // Extremos del ranking. El eje se fija a ellos en vez de autoescalar: un RS de
@@ -127,6 +129,7 @@ export function createChartNativeAdapter(args) {
   const {
     patternOverlay = null,
     rsRatingSeries = null,
+    rsCountrySeries = null,
     benchmarkSeries = null,
     requestedHeight = 460,
   } = overrides;
@@ -344,6 +347,37 @@ export function createChartNativeAdapter(args) {
     extraSeries.push(rsSeries);
   }
 
+  // ── Línea RS país (overlay en panel precio, tercer tono) ───────────────────
+  let rsCountrySeriesHandle = null;
+  const rsCountryLineData = projectRsCountryRatingSeries(rows, rsCountrySeries, indicators, interval);
+  const rsCountryHistory = rsLineHistory(rsCountryLineData);
+  const rsCountryRendered = !intraday && !!indicators.rsCountryLine && rsCountryLineData.length > 1 && rsCountryHistory.sufficient;
+  if (rsCountryRendered) {
+    rsCountrySeriesHandle = chart.addSeries(
+      LineSeries,
+      {
+        color: colors.soft,
+        lineWidth: 2,
+        priceScaleId: RS_COUNTRY_OVERLAY_SCALE_ID,
+        priceLineVisible: false,
+        lastValueVisible: true,
+        priceFormat: { type: "price", precision: 0, minMove: 1 },
+        title: "RS país",
+        autoscaleInfoProvider: () => ({
+          priceRange: { minValue: RS_SCALE_MIN, maxValue: RS_SCALE_MAX },
+        }),
+      },
+      0,
+    );
+    rsCountrySeriesHandle.setData(rsCountryLineData.map((point) => ({ time: point.time, value: point.value })));
+    chart.priceScale(RS_COUNTRY_OVERLAY_SCALE_ID).applyOptions({
+      visible: false,
+      autoScale: true,
+      scaleMargins: RS_OVERLAY_MARGINS,
+    });
+    extraSeries.push(rsCountrySeriesHandle);
+  }
+
   // ── Línea de comparación con el benchmark ("Comparar vs") ────────────────
   //
   // Ratio precio/benchmark (rsLine del servidor), log-rebasado al primer
@@ -424,6 +458,13 @@ export function createChartNativeAdapter(args) {
       points: rsLineData.length,
       weeks: rsHistory.weeks,
       latestValue: rsRendered ? (rsLineData.at(-1)?.value ?? null) : null,
+    },
+    rsCountryPane: {
+      rendered: rsCountryRendered,
+      paneIndex: rsCountryRendered ? 0 : null,
+      points: rsCountryLineData.length,
+      weeks: rsCountryHistory.weeks,
+      latestValue: rsCountryRendered ? (rsCountryLineData.at(-1)?.value ?? null) : null,
     },
     updateGeometry,
     destroySeries,

@@ -122,10 +122,22 @@ export default function ChartPreferences({ settings, onChange, symbol = "", list
       className={`btn btnSmall ${indicators.rsLine ? "btnActive" : "btnGhost"}`}
       style={{ padding: "4px 10px", fontSize: 11, height: 32, display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600, borderRadius: "var(--radius)" }}
       onClick={() => updateIndicators({ rsLine: !indicators.rsLine })}
-      title="Mostrar u ocultar la capa de fuerza relativa"
+      title="Mostrar u ocultar la capa de RS global"
     >
       <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: indicators.rsLine ? "var(--accent)" : "rgba(255,255,255,0.2)" }} />
       RS
+    </button>
+  );
+  const rsCountryToggle = (
+    <button
+      type="button"
+      className={`btn btnSmall ${indicators.rsCountryLine ? "btnActive" : "btnGhost"}`}
+      style={{ padding: "4px 10px", fontSize: 11, height: 32, display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600, borderRadius: "var(--radius)" }}
+      onClick={() => updateIndicators({ rsCountryLine: !indicators.rsCountryLine })}
+      title="Mostrar u ocultar la capa de RS país (ranking intra-mercado)"
+    >
+      <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: indicators.rsCountryLine ? "var(--soft)" : "rgba(255,255,255,0.2)" }} />
+      RS país
     </button>
   );
   const indicatorsPanel = (
@@ -133,7 +145,8 @@ export default function ChartPreferences({ settings, onChange, symbol = "", list
       <summary>Indicadores</summary>
       <div className="chartIndicatorPanel">
         <label><input type="checkbox" checked={indicators.volume} onChange={(event) => updateIndicators({ volume: event.target.checked })} /> Volumen</label>
-        <label><input type="checkbox" checked={indicators.rsLine} onChange={(event) => updateIndicators({ rsLine: event.target.checked })} /> Fuerza relativa</label>
+        <label><input type="checkbox" checked={indicators.rsLine} onChange={(event) => updateIndicators({ rsLine: event.target.checked })} /> Fuerza relativa (global)</label>
+        <label><input type="checkbox" checked={indicators.rsCountryLine} onChange={(event) => updateIndicators({ rsCountryLine: event.target.checked })} /> RS país</label>
         <label><input type="checkbox" checked={indicators.maFast} onChange={(event) => updateIndicators({ maFast: event.target.checked })} /> Media 1</label>
         <input aria-label="Periodo media 1" type="number" min="2" max="400" value={indicators.maFastLength} onChange={(event) => updateIndicators({ maFastLength: event.target.value })} />
         <label><input type="checkbox" checked={indicators.maSlow} onChange={(event) => updateIndicators({ maSlow: event.target.checked })} /> Media 2</label>
@@ -161,6 +174,7 @@ export default function ChartPreferences({ settings, onChange, symbol = "", list
             {styleSelect}
             {scaleControl}
             {rsToggle}
+            {rsCountryToggle}
             {indicatorsPanel}
             {notesPanel}
           </div>
@@ -172,6 +186,7 @@ export default function ChartPreferences({ settings, onChange, symbol = "", list
           {styleSelect}
           {scaleControl}
           {rsToggle}
+          {rsCountryToggle}
           {indicatorsPanel}
           {notesPanel}
         </>

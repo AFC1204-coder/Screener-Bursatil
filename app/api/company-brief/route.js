@@ -10,7 +10,7 @@ import { withDailyBarsCache } from "@/lib/dailyBarsCache";
 import { peerIdentityForSymbol } from "@/lib/peers";
 import { scoreRsBenchmarkModel, scoreRsQuality } from "@/lib/relativeStrength";
 import { readGlobalRsSeriesForSymbol } from "@/lib/globalRs";
-import { readCountryRsForSymbols } from "@/lib/countryRsHydrate";
+import { readCountryRsForSymbols, readCountryRsSeriesForSymbol } from "@/lib/countryRsHydrate";
 import { setupPatternForBars } from "@/lib/setupPatterns";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
 import { CURATED_NAMES } from "@/lib/universes";
@@ -906,7 +906,7 @@ async function readUniverseRsSnapshot(symbol = "") {
 // sigue viajando en `rsGlobalPct` con su propio nombre y su propio significado
 // —y sigue alimentando el scoring, que no se toca—, pero deja de poder
 // ocupar el sitio del RS.
-export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, weeklyGlobal = null, countryWeeklyEntry = null) {
+export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, weeklyGlobal = null, countryWeeklyEntry = null, countryWeeklySeries = null) {
   const benchmarkRating = benchmarkStrength.rating;
   const weeklyLatest = weeklyGlobal?.latest
     || (Array.isArray(weeklyGlobal?.series) ? weeklyGlobal.series.at(-1) : null)
@@ -984,6 +984,7 @@ export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe =
     }),
     universe: universeAvailable ? universe : null,
     globalRsSeries: weeklyGlobal?.series || [],
+    countryRsSeries: countryWeeklySeries?.series || [],
     countryRsRating: countryRating,
     countryRsSampleSize: countryEntry?.available ? countryEntry.sampleSize : null,
     countryRsWeekKey: countryEntry?.available ? countryEntry.weekKey : null,
@@ -1648,13 +1649,14 @@ export async function getCompanyBrief(symbol, options = {}) {
       benchmarkSymbol,
       ...relativeStrengthFromBars(chart.bars || [], benchmarkChart.bars || []),
     };
-    const [universeSnapshot, weeklyGlobalRs, weeklyCountryRs] = await Promise.all([
+    const [universeSnapshot, weeklyGlobalRs, weeklyCountryRs, weeklyCountryRsSeries] = await Promise.all([
       readUniverseRsSnapshot(symbol).catch(() => null),
       readGlobalRsSeriesForSymbol(symbol).catch(() => ({ series: [], latest: null })),
       readCountryRsForSymbols([symbol]).catch(() => ({ configured: false, bySymbol: new Map() })),
+      readCountryRsSeriesForSymbol(symbol).catch(() => ({ series: [], latest: null })),
     ]);
     const countryEntry = weeklyCountryRs.bySymbol?.get(symbol.trim().toUpperCase()) || null;
-    const relativeStrength = mergeUniverseRelativeStrength(benchmarkStrength, universeSnapshot, weeklyGlobalRs, countryEntry);
+    const relativeStrength = mergeUniverseRelativeStrength(benchmarkStrength, universeSnapshot, weeklyGlobalRs, countryEntry, weeklyCountryRsSeries);
     relativeStrength.series = relativeStrengthSeriesFromBars(chart.bars || [], benchmarkChart.bars || []);
     const website = normalizeWebsite(profile.website);
     const domain = assetDomainForSymbol(symbol, website);

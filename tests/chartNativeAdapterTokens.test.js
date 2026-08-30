@@ -110,7 +110,7 @@ describe("chartNativeAdapter · contrato de tokens CSS", () => {
 // eje del precio ni vuelva a un panel inferior aparte: escala overlay dedicada
 // con rango fijo 1-99 y banda inferior propia.
 
-function rsAdapterHarness({ rsRatingSeries, rows }) {
+function rsAdapterHarness({ rsRatingSeries, rsCountrySeries, indicators, rows }) {
   const priceScaleCalls = [];
   const addedSeries = [];
   const makeSeries = () => ({
@@ -149,13 +149,13 @@ function rsAdapterHarness({ rsRatingSeries, rows }) {
       interval: "D",
       style: "1",
       scale: "price",
-      indicators: { volume: false, maFast: false, maSlow: false, rsLine: true },
+      indicators: { volume: false, maFast: false, maSlow: false, rsLine: true, rsCountryLine: true, ...(indicators || {}) },
       intraday: false,
     },
     rows,
     rowTimes: rows.map((row) => row.time),
     colors,
-    overrides: { rsRatingSeries },
+    overrides: { rsRatingSeries, rsCountrySeries },
   });
   return { result, addedSeries, priceScaleCalls };
 }
@@ -223,5 +223,28 @@ describe("chartNativeAdapter · overlay del RS rating", () => {
     expect(priceScaleCalls.some((call) => call.id === "rs-rating")).toBe(false);
     expect(priceScaleCalls.some((call) => call.paneIndex === 1)).toBe(false);
     expect(result.rsPane).toMatchObject({ rendered: false, paneIndex: null, points: 2, weeks: 1 });
+  });
+
+  it("dibuja RS país como overlay en panel 0 con escala rs-country y tono --soft", () => {
+    const rows = dailyRows(120);
+    const rsCountrySeries = Array.from({ length: 12 }, (_, index) => ({
+      date: rows[index * 7].date,
+      rsRating: 30 + index,
+    }));
+
+    const { result, addedSeries, priceScaleCalls } = rsAdapterHarness({
+      rsRatingSeries: [],
+      rsCountrySeries,
+      indicators: { rsLine: false, rsCountryLine: true },
+      rows,
+    });
+
+    const countryEntry = addedSeries.find((entry) => entry.options?.title === "RS país");
+    expect(countryEntry).toBeTruthy();
+    expect(countryEntry.paneIndex).toBe(0);
+    expect(countryEntry.options.priceScaleId).toBe("rs-country");
+    expect(countryEntry.options.color).toBe("#B9BFB2"); // --soft
+    expect(priceScaleCalls.some((call) => call.id === "rs-country")).toBe(true);
+    expect(result.rsCountryPane).toMatchObject({ rendered: true, paneIndex: 0, weeks: 12, latestValue: 41 });
   });
 });
