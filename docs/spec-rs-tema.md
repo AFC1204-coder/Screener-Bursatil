@@ -2,7 +2,8 @@
 
 - **Fecha:** 2026-08-31
 - **Rama:** `codex/statsedge-ui-polish`
-- **Estado:** **borrador para aceptación del dueño** — spec only; no autoriza implementación (MET-3b).
+- **Estado:** **aceptado** (dueño 2026-08-31 · review Grok 4.6 + parche orquestador) — autoriza **MET-3b** cuando el dueño lo active.
+- **Addendum aceptación:** denominador = solo 12 `THEME_RULES`; residual/`General`/sector Yahoo → no ranking; perfil vacío → `theme-profile-missing`; ejemplos sin TW; overlay `--rs-theme` (nunca `--soft`).
 - **Contratos reconciliados:** `docs/spec-rs-global-multi-mercado-fx.md` (aceptado) · `docs/spec-rs-pais.md` (aceptado) · `docs/tickets/MET-1-rs-global-fx.md` · `docs/tickets/MET-2-rs-pais.md` · `docs/adr-discovery-global-curated.md` invariante 10 · decisión dueño 2026-08-27 (`docs/backlog-activo.md`) · código vivo (`lib/rsCanonical.js`, `lib/rsEngines.js`, `lib/countryRs.js`, `lib/businessTheme.js`, `lib/relativeStrength.js`) · CHART-RS v2 (`docs/tickets/CHART-RS-overlay-sin-pane.md`, `docs/tickets/CHART-RS-2-overlay-pais.md`)
 
 ---
@@ -17,7 +18,7 @@ El producto privado expone **tres rankings semanales independientes** sobre el m
 
 3. **`RS tema`** (nuevo eje, MET-3) — «¿qué tan fuerte es **dentro de su ocupación de negocio** (theme), frente a pares del mismo tema en todo el universo privado curado?» Tercera columna analítica, etiqueta corta **`RS tema`**, con tooltip que declara el theme y denominador («RS tema · Semis / fotonica · universo privado curado · N símbolos · semana W»).
 
-El ranking tema cruza mercados (US + intl del universo MET-1) bajo la **misma taxonomía `businessTheme`** que ya usa la ficha y el screener (`lib/businessTheme.js`), calculado con la **misma fórmula 40/20/20/20** que global y país pero sobre **precios en USD vía FX** (como MET-1), porque un NVDA y un 2330.TW en «Semis / fotonica» deben compararse en una moneda común.
+El ranking tema cruza mercados (US + intl del universo MET-1) bajo las **12 claves curadas** de `THEME_RULES` en `lib/businessTheme.js` (misma inferencia que ficha/screener, **sin** el fallback a `sector` Yahoo como denominador de ranking), calculado con la **misma fórmula 40/20/20/20** que global y país pero sobre **precios en USD vía FX** (como MET-1), porque un NVDA y un 0981.HK en «Semis / fotonica» deben compararse en una moneda común.
 
 El percentil de lote `rsSectorPct` que hoy escribe `lib/relativeStrength.js:244` sobre `theme || sector` del batch **deja de mostrarse como RS tema** en tabla, vista rápida, ficha y chart. Sigue existiendo en `scan_results` para compatibilidad de filtros legacy y scoring batch (`minRsSectorPct`, `weaknessScore`); no se reinterpreta como métrica de producto (misma lección que `rsGlobalPct` / `rsCountryPct` vs rankings semanales).
 
@@ -35,8 +36,8 @@ Nada de esto entra en `objectiveScore`, `compositeScore`, `totalScore` ni en los
 | Invariante 10: ranking solo sobre universo canónico versionado; nunca lote de cron ni merge N≥2 | `docs/adr-discovery-global-curated.md` §1.6, capa 3 | **Se conserva sin relajación.** Población tema = símbolos del universo privado curado MET-1 agrupados por `businessTheme.key`; nunca el lote de la sesión ni `rsSectorPct` batch. |
 | Aislamiento del scoring | Addendum §4, MET-1/2 pregunta 7 | **Se conserva.** RS tema semanal no alimenta scores. |
 | `rs_weekly_*` fuera de `scan_results` | ADR US, MET-1 | **Se conserva.** El motor tema escribe en las mismas tablas con `engine_version` distinto al global y al país. |
-| Taxonomía de producto = `businessTheme`, no sector GICS crudo | `lib/businessTheme.js`, ficha (`StockClient.jsx` campo Tema), `lib/researchRow.js:38` | **Se adopta como definición de «tema».** Sector/industria Yahoo alimentan la inferencia; el ranking agrupa por `theme.key`, no por `sector` ni `industry` sueltos. |
-| CHART-RS v2: RS sector aparcado hasta spec tema | `docs/tickets/CHART-RS-overlay-sin-pane.md` §v2, CHART-RS-2 | **Se resuelve:** la línea overlay «RS sector» pendiente pasa a ser **RS tema** (cuarto tono tras global + país + benchmark), no `rsSectorPct` de lote. |
+| Taxonomía de producto = `businessTheme`, no sector GICS crudo | `lib/businessTheme.js`, ficha (`StockClient.jsx` campo Tema), `lib/researchRow.js:38` · review Grok 2026-08-31 | **Se adopta con cierre:** denominador RS tema = **solo** las 12 keys de `THEME_RULES`. El fallback UI `sector` Yahoo / `General` de `inferBusinessTheme` **no** crea `engine_version` ni percentil. |
+| CHART-RS v2: RS sector aparcado hasta spec tema | `docs/tickets/CHART-RS-overlay-sin-pane.md` §v2, CHART-RS-2 | **Se resuelve:** overlay «RS tema» con token dedicado **`--rs-theme`** (cuarto tono; **nunca** `--soft`, reservado a país en CHART-RS-2). |
 
 ---
 
@@ -58,30 +59,33 @@ Los tres lectores (`canonicalRs`, `countryRs`, `themeRs`) son **módulos distint
 
 | Aspecto | Decisión |
 |---|---|
-| **Taxonomía** | Claves de `lib/businessTheme.js` (`THEME_RULES`): 12 themes curados + fallback **`General`**. Ejemplos: `Semis / fotonica`, `Software / IA`, `Medtech / biotech`. **No** sector GICS/Yahoo crudo ni industry como denominador de ranking. |
-| **Asignación** | `businessThemeKey(sector, industry, businessSummary)` — misma función que `lib/researchRow.js:38`, `lib/materializedScanner.js:296` y `app/api/company-brief/route.js:1608`. Orden: match sector+industry (`SECTOR_INDUSTRY_RULES`) → match texto ampliado (`THEME_RULES` con summary) → fallback `sector` o **`General`**. |
-| **Estabilidad semana a semana** | El theme de un símbolo es **determinista** dado `(sector, industry, summary)` y la versión de `businessTheme.js`. Cambia solo si cambian esos inputs (p. ej. Yahoo actualiza sector/industria) o si se publica una nueva versión de reglas (→ `engine_version` nuevo o minor documentado en `stats.themeRulesSha`). No depende del lote del escaneo. |
-| **Quién asigna si falta sector/industria** | El motor tema, en tiempo de ranking: lee `sector`/`industry`/`businessSummary` de la fuente de perfil acordada en MET-3b (preferencia: campos ya persistidos en universo o último perfil conocido por símbolo — decisión de implementación). Si todo está vacío → theme **`General`**. Si el símbolo está en universo pero no hay perfil mínimo → `null` + motivo `theme-profile-missing` (no inventar theme). |
-| **Versionado** | Cada snapshot tema registra en `stats`: `scopeTheme` (= `theme.key`), git SHA de `lib/businessTheme.js`, conteo definido/computable del theme, hash de la lista de símbolos de ese theme. Recalcular desde esa lista reproduce percentiles idénticos (invariante 10). |
+| **Taxonomía (ranking)** | **Solo** las 12 keys de `THEME_RULES` en `lib/businessTheme.js`. Ejemplos: `Semis / fotonica`, `Software / IA`, `Medtech / biotech`. **Prohibido** usar como denominador: `sector` Yahoo crudo, `industry`, o el fallback UI `General` / sector string que emite hoy `inferBusinessTheme` (L129–131). |
+| **Asignación** | Misma inferencia que ficha/screener (`SECTOR_INDUSTRY_RULES` → `THEME_RULES` + summary). Para el **motor RS tema**, si el key resultante **no** está en las 12 `THEME_RULES` → residual: **no rankear** (`theme-residual`). La columna «Tema» de UI puede seguir mostrando el fallback de `businessThemeKey`; RS tema no. |
+| **Estabilidad semana a semana** | El theme rankeable es **determinista** dado `(sector, industry, summary)` y la versión de `businessTheme.js`, restringido a las 12 keys. Cambia solo si cambian esos inputs o las reglas (→ `engine_version` nuevo o minor en `stats.themeRulesSha`). No depende del lote del escaneo. |
+| **Quién asigna si falta perfil** | Una sola regla: sin `sector`/`industry`/`businessSummary` mínimos → `null` + motivo **`theme-profile-missing`**. **No** inventar `General` ni mapear a sector Yahoo. |
+| **Residual / `General`** | Símbolos cuyo key UI cae fuera de las 12 (incl. `General` y p. ej. «Basic Materials») → siempre «–» + **`theme-residual`** (tooltip orientativo: «residual, no ocupación»). **No** hay `engine_version` ni snapshot para `general` ni para sectores Yahoo. |
+| **Versionado** | Cada snapshot tema registra en `stats`: `scopeTheme` (= una de las 12 keys), git SHA de `lib/businessTheme.js`, conteo definido/computable del theme, hash de la lista. Recalcular desde esa lista reproduce percentiles idénticos (invariante 10). |
 
-**Alternativa rechazada:** ranking por `sector` Yahoo (11 sectores estándar). Rechazada porque (a) el dueño pidió «ocupación / a qué se dedica» — más granular que sector y ya modelado en producto como `businessTheme`; (b) sector crudo mezcla negocios heterogéneos («Technology» incluye semis, software y hardware); (c) la etiqueta «Tema» de la ficha ya muestra `theme.key`, no sector.
+**Alternativa rechazada:** ranking por `sector` Yahoo (11 sectores estándar) o por el fallback `sector \|\| General` de `inferBusinessTheme`. Rechazada porque (a) el dueño pidió ocupación curada; (b) sector crudo mezcla negocios heterogéneos; (c) reabriría GICS por la puerta de atrás del fallback UI (hallazgo review Grok 2026-08-31).
 
-**Alternativa rechazada:** taxonomía GICS-like de 4 niveles (sector/industry/sub-industry). Rechazada porque no existe hoy en el repo con cobertura homogénea US+intl, exigiría proveedor/licencia nueva, y contradice la decisión de reutilizar `businessTheme` ya validado en UI y brief.
+**Alternativa rechazada:** rankear el cajón `General` / residual con `min_sample=20`. Rechazada: un «RS tema 80» en un mixto no responde «dentro de su ocupación» (mismo criterio que rechazó Technology crudo).
+
+**Alternativa rechazada:** taxonomía GICS-like de 4 niveles (sector/industry/sub-industry). Rechazada porque no existe hoy en el repo con cobertura homogénea US+intl, exigiría proveedor/licencia nueva, y contradice la decisión de reutilizar las 12 `THEME_RULES`.
 
 ### Pregunta 3 — Población del ranking
 
-**Propuesta:** para cada `theme.key`, la población es **todos los símbolos de ese theme en el universo privado curado MET-1** (US investable + listas curadas intl de `lib/universes.js` — mismos ~5,7k definidos que MET-1), **sin segmentar por mercado**. Un símbolo HK en «Semis / fotonica» compite contra todos los semis del universo (US + HK + CA + EU + AU + JP), no solo contra HK ni solo contra US.
+**Propuesta:** para cada una de las **12** keys de `THEME_RULES`, la población es **todos los símbolos de ese theme en el universo privado curado MET-1** (US investable + listas curadas intl de `lib/universes.js` — mismos ~5,7k definidos que MET-1; **TW fuera de v1** según MET-1), **sin segmentar por mercado**. Un símbolo HK en «Semis / fotonica» (p. ej. 0981.HK) compite contra todos los semis del universo (US + HK + CA + EU + AU + JP), no solo contra HK ni solo contra US.
 
 Criterios de pertenencia al denominador de un theme (misma semana W):
 
 1. Símbolo en universo MET-1 (mismas reglas de inclusión/exclusión que `scripts/rs-global-private.mjs`).
-2. Theme asignado (reglas §pregunta 2).
+2. Theme asignado a **una de las 12** `THEME_RULES` (reglas §pregunta 2); residual / perfil missing fuera del denominador.
 3. Serie computable: ≥261 barras, sin discontinuidad ≥3× en serie local, FX apto (mismas reglas MET-1b).
 4. `min_sample=20` computables en ese theme para esa semana (ver §Fórmula).
 
-**Prohibido (heredado, no relajado):** rankear el lote de la sesión, el materializado del cron, el merge N≥2 de presets, `rsSectorPct` de `enrichRelativePercentiles`, ni official-broad como denominador.
+**Prohibido (heredado, no relajado):** rankear el lote de la sesión, el materializado del cron, el merge N≥2 de presets, `rsSectorPct` de `enrichRelativePercentiles`, official-broad, ni buckets residuales/`General`/sector Yahoo.
 
-**Alternativa rechazada:** ranking tema **solo US** (población `statsedge-us-equity-rs-v1`). Rechazada porque el dueño caza intl en themes concretos (semis HK/TW, defensa EU) y un RS tema US-only dejaría esos valores en «–» tema perpetuo — el mismo dolor que MET-1 resolvió para el eje global.
+**Alternativa rechazada:** ranking tema **solo US** (población `statsedge-us-equity-rs-v1`). Rechazada porque el dueño caza intl en themes concretos (semis HK, defensa EU) y un RS tema US-only dejaría esos valores en «–» tema perpetuo — el mismo dolor que MET-1 resolvió para el eje global.
 
 **Alternativa rechazada:** ranking tema **por mercado dentro del theme** (p. ej. «Semis US», «Semis HK»). Rechazada porque fragmenta la ocupación en silos geográficos que el eje país ya cubre; un líder en semis globales puede no ser líder en semis US, y eso es información distinta que el usuario quiere en columnas separadas (global / país / tema), no anidada.
 
@@ -97,13 +101,15 @@ Criterios de pertenencia al denominador de un theme (misma semana W):
 | RS país US / intl (MET-2) | `statsedge-us-equity-rs-v1` / `statsedge-private-country-rs-local-{market}-v1` | Constantes en lector país — **sin cambio** |
 | RS tema | `statsedge-private-theme-rs-usd-{slug}-v1` | Constante prefijo `THEME_RS_ENGINE_PREFIX` + slug normalizado del `theme.key` + sufijo `-v1`; lector `themeRs()` resuelve por theme del símbolo |
 
-**Slug del theme** (normalización para `engine_version`): minúsculas, ASCII, espacios y `/` → guión, sin acentos. Ej.: `Semis / fotonica` → `semis-fotonica`; `Software / IA` → `software-ia`; `General` → `general`.
+**Slug del theme** (normalización para `engine_version`): minúsculas, ASCII, espacios y `/` → guión, sin acentos. **Solo** sobre las 12 keys. Ej.: `Semis / fotonica` → `semis-fotonica`; `Software / IA` → `software-ia`. **No** existen slugs `general`, `basic-materials`, ni ningún sector Yahoo.
 
-**Convivencia:** hasta **tres familias** de filas en `rs_weekly_items` para el mismo símbolo US en la misma semana es esperado (global USD, país US local, tema p. ej. Software/IA). El pin global no cambia; los lectores país y tema filtran sus `engine_version` + scope propio.
+**Convivencia:** hasta **tres familias** de filas en `rs_weekly_items` para el mismo símbolo US en la misma semana es esperado (global USD, país US local, tema p. ej. Software/IA) **si** el símbolo cae en una de las 12; residuales solo tienen global/país. El pin global no cambia; los lectores país y tema filtran sus `engine_version` + scope propio.
 
-**Extensión de esquema:** el patrón MET-2 (sufijo en `engine_version` por scope) **se replica** para evitar migración DDL del UNIQUE `(owner_id, snapshot_date, engine_version, base_currency)`. Un snapshot por theme por semana. `stats.scopeTheme` registra el `theme.key` legible además del slug en `engine_version`.
+**Extensión de esquema:** el patrón MET-2 (sufijo en `engine_version` por scope) **se replica** para evitar migración DDL del UNIQUE `(owner_id, snapshot_date, engine_version, base_currency)`. Un snapshot por theme curado por semana (≤12). `stats.scopeTheme` registra el `theme.key` legible además del slug en `engine_version`.
 
 **Alternativa rechazada:** un solo `engine_version` `statsedge-private-theme-rs-usd-v1` con todos los themes en un snapshot y percentiles calculados en lectura. Rechazada porque (a) el denominador por theme debe ser auditable y versionado por separado (invariante 10); (b) mezclar ~12 poblaciones en un snapshot dificulta reproducibilidad y motivos de exclusión por theme; (c) el patrón país ya demostró que un bucle por scope con snapshots separados escala mejor operativamente.
+
+**Alternativa rechazada:** `engine_version` derivado del fallback `sector` Yahoo. Rechazada (review Grok): reabre taxonomía abierta y colisiones de slug.
 
 **Alternativa rechazada:** extraer sub-percentiles tema del snapshot global MET-1. Rechazada por la misma razón que MET-2 rechazó extraer país del global: población y exclusiones distintas (tema agrupa cross-market; global rankea todos); no deja denominador tema auditable.
 
@@ -122,7 +128,7 @@ Criterios de pertenencia al denominador de un theme (misma semana W):
 | Mínimo barras | 261 (`52×5+1`) |
 | Percentil | `percentileFromSorted`, escala 1–99 |
 | `min_sample` por theme | **20** (igual que global MET-1 y país MET-2; **no** el `min_sample=5` de `rsSectorPct` batch en `lib/relativeStrength.js:5`) |
-| Exclusiones, en orden | (1) fuera de universo MET-1; (2) theme no asignable (`theme-profile-missing`); (3) barras insuficientes; (4) discontinuidad ≥3× serie local; (5) FX no apto; (6) theme con `<20` computables esa semana → **todo el theme** sin percentiles (`theme-sample-insufficient` por símbolo afectado) |
+| Exclusiones, en orden | (1) fuera de universo MET-1; (2) perfil insuficiente (`theme-profile-missing`); (3) fuera de las 12 keys (`theme-residual`); (4) barras insuficientes; (5) discontinuidad ≥3× serie local; (6) FX no apto; (7) theme curado con `<20` computables esa semana → **todo ese theme** sin percentiles (`theme-sample-insufficient`) |
 
 Themes con N pequeño (p. ej. `Inmobiliario / REIT` con pocos intl curados): si N≥20 computables, ranking válido; si N<20, «–» + motivo honesto — **no** bajar `min_sample` a 5 para «rellenar». El batch legacy usa 5 precisamente porque el lote es pequeño y variable; el ranking semanal tema hereda la disciplina del universo versionado.
 
@@ -143,7 +149,7 @@ Themes con N pequeño (p. ej. `Inmobiliario / REIT` con pocos intl curados): si 
 | **Tabla** — columna nueva `RS tema` (sort/filtro propios, p. ej. `minThemeRsRating`) | `weeklyThemeRsRating` del motor tema del `theme.key` del símbolo | «–» + motivo persistido (ver tabla motivos abajo). Sort: ausentes al final (`THEME_RS_SORT_ABSENT`, misma disciplina que `RS_SORT_ABSENT`) |
 | **Vista rápida / `/review`** | Mismo lector tema que tabla | Mismo «–» + motivo; nunca `rsSectorPct` del batch |
 | **Ficha** — badge / franja descriptiva | Número + serie histórica tema; muestra `theme.key` junto al valor | Serie de un solo engine tema; no mezclar con global ni país |
-| **Chart overlay** (post CHART-RS-2) | **Cuarto tono** claro (`--soft` o token dedicado) desde serie tema semanal; leyenda «RS tema» | Toggle independiente; sin panel extra. Sustituye la línea «RS sector» aparcada en CHART-RS v2 |
+| **Chart overlay** (post CHART-RS-2) | **Cuarto tono** con token dedicado **`--rs-theme`** (nunca `--soft` = país); leyenda «RS tema» | Toggle independiente; sin panel extra. Sustituye la línea «RS sector» aparcada en CHART-RS v2 |
 | **Cabecera/tooltip columna** | «RS tema · {theme} · universo privado curado», N, semana | — |
 | **`rsSectorPct` / `minRsSectorPct` legacy** | **No se muestran como RS tema** en superficies de producto | El filtro `minRsSectorPct` se **migra** en MET-3b a leer ranking semanal tema (o se depreca con aviso) — no en este spec |
 | **Scoring, leaderboards, `market-health`** | Sin cambio | Siguen con percentiles de lote donde ya lo hacen |
@@ -153,14 +159,15 @@ Themes con N pequeño (p. ej. `Inmobiliario / REIT` con pocos intl curados): si 
 | Código | Texto UX (orientativo) |
 |---|---|
 | `not-in-universe` | Sin RS tema: el símbolo no está en el universo privado curado. |
-| `theme-profile-missing` | Sin RS tema: no hay sector/industria suficientes para asignar ocupación. |
+| `theme-profile-missing` | Sin RS tema: no hay sector/industria/summary suficientes para asignar ocupación. |
+| `theme-residual` | Sin RS tema: clasificación residual (no es una de las 12 ocupaciones curadas). |
 | `insufficient-bars` | Sin RS tema: histórico insuficiente (52 semanas). |
 | `discontinuous` / `discontinuous-series` | Sin RS tema: salto sin ajustar en precios. |
 | `fx-unavailable` / `fx-stale` / `fx-discontinuous` | Sin RS tema: conversión USD no apta (mismos códigos MET-1). |
 | `theme-sample-insufficient` | Sin RS tema: la ocupación «{theme}» tiene menos de 20 valores computables esta semana (N={n}). |
 | `theme-not-supported` | Reservado si en el futuro un theme se retira de la taxonomía. |
 
-**Relación con columna «Tema» del screener:** la columna de clasificación (`theme` / capa de vista) sigue mostrando el `theme.key`; la columna `RS tema` muestra el **percentil** dentro de ese theme. Son complementarias, no duplicadas.
+**Relación con columna «Tema» del screener:** la columna de clasificación puede mostrar el key UI (incl. fallback sector/`General`); la columna `RS tema` solo tiene número si el key está en las **12** `THEME_RULES`. Complementarias, no equivalentes.
 
 ---
 
@@ -178,7 +185,7 @@ Themes con N pequeño (p. ej. `Inmobiliario / REIT` con pocos intl curados): si 
 
 **Orden:** FX + global → país → **tema**. El tema **depende de FX** (precios USD) y de perfiles sector/industria actualizados; no depende del snapshot global para calcular, pero compartir infra tras cierre semanal evita carreras con `refresh-bars` (02:00 UTC).
 
-**Idempotencia:** un snapshot por `(theme.slug, semana W)`; recorrido de ~12 themes en un solo job (bucle interno, como país recorre mercados).
+**Idempotencia:** un snapshot por `(theme.slug, semana W)`; recorrido de las **12** keys curadas en un solo job (bucle interno; residuales no generan snapshot).
 
 **Alternativa rechazada:** fundir tema dentro del workflow global (`rs-global-private.mjs`). Rechazada: acopla fallos, mezcla motores con poblaciones y scopes distintos, y viola la separación acordada en MET-1b/2b.
 
@@ -227,15 +234,15 @@ MET-3 (y su eventual MET-3b) **no** incluye:
 4. Fuente de perfiles sector/industria para asignación theme en ranking (reutilizar campos de universo o tabla de perfiles; no el lote del scan).
 5. Cron domingo 07:30 UTC.
 6. Migración filtro `minRsSectorPct` → `minThemeRsRating` y columna tabla.
-7. CHART-RS-3 overlay línea RS tema (cuarto tono; puede ser ticket UI separado tras hidratación serie).
+7. CHART-RS-3 overlay línea RS tema con token **`--rs-theme`** (puede ser ticket UI separado tras hidratación serie).
 
 ---
 
-## Tickets siguientes (MET-3b solo si dueño OK)
+## Tickets siguientes
 
 | Ticket | Contenido | Condición |
 |---|---|---|
-| **MET-3b** (implementación) | Lector tema + `rs-theme-private.mjs` + motivos persistidos + columna tabla + migración filtro + tests (pin global y país intactos, scoring untouched) | Aceptación de este spec **y** autorización explícita del dueño |
+| **MET-3b** (implementación) | Lector tema + `rs-theme-private.mjs` + motivos persistidos + columna tabla + migración filtro + tests (pin global y país intactos, scoring untouched; residual sin ranking) | Spec **aceptado**; activar cuando el dueño lo pida |
 | **MET-3c** (cron ops) | Workflow GHA «RS tema privado» dom 07:30 UTC + documentación launchd post-MIGRATE | Tras MET-3b verificado en corrida manual |
 | **CHART-RS-3** (opcional) | Overlay cuarto tono RS tema en lienzo precio | Tras serie tema en ficha; puede paralelizarse |
 | **MET-4…** | Muletas tendencia, índice etapa, etc. | No empiezan aquí |
@@ -246,7 +253,7 @@ MET-3 (y su eventual MET-3b) **no** incluye:
 
 - **Nada contra Supabase en esta sesión:** poblaciones reales por theme, últimos snapshots MET-1/2, cobertura intl por theme — tomado de specs MET-1/2 y conteos aproximados del universo, no recontado.
 - **Distribución N por `theme.key`** sobre el universo MET-1 (~5,7k): cuántos themes quedan bajo `min_sample=20` es estimación cualitativa (themes amplios OK; `Inmobiliario / REIT`, `Autos / movilidad` intl pueden quedar cortos), no ejecutada.
-- **Disponibilidad sector/industria/summary** para todos los símbolos intl curados: asumido que la misma fuente que alimenta `theme` en scan/ficha cubre la mayoría; huecos → `theme-profile-missing` o `General`.
+- **Disponibilidad sector/industria/summary** para todos los símbolos intl curados: asumido que la misma fuente que alimenta `theme` en scan/ficha cubre la mayoría; huecos → `theme-profile-missing` o `theme-residual` (nunca inventar ranking).
 - **Coste/duración** de `rs-theme-private.mjs` (~12 bucles × lectura USD): extrapolación desde MET-1b/2b, no medido.
 - **Slug collision** entre theme keys al normalizar: revisado a ojo sobre las 12 claves de `THEME_RULES`; no hay test automatizado.
 - **Comportamiento de filtros** `minRsSectorPct` con presets guardados — diseño objetivo de migración, no probado.

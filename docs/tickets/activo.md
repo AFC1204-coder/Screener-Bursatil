@@ -2,7 +2,8 @@
 
 *(Ninguno. Orquestador escribe el siguiente aquí.)*
 
-Último cerrado: **MET-3** — spec RS tema (`docs/spec-rs-tema.md`) · entrega OK · **aceptación dueño pendiente** antes de MET-3b.
+**MET-3 aceptado** (2026-08-31) · `docs/spec-rs-tema.md` · parche post-Grok aplicado.
 
-**Siguiente preparado:** MIGRATE-1 · **martes 2 sep 2026**.  
-Relleno: R-06 · yield intl · MET-3b solo con OK.
+**Mañana:** activar **MET-3b** (impl) cuando el dueño lo pida.  
+**Prep.:** MIGRATE-1 · **martes 2 sep 2026**.  
+Relleno: R-06 · yield intl.

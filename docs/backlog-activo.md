@@ -6,10 +6,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-30 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **MET-3** (spec RS tema) — `docs/spec-rs-tema.md` · pendiente aceptación dueño → MET-3b.  
+Último cerrado: **MET-3** aceptado (parche post-Grok) — `docs/spec-rs-tema.md` → **MET-3b** mañana si el dueño lo pide.  
 Anterior: **RS-SERIES-1** (`2fe65aa`).  
-**Cola:** MIGRATE aparcado **mar 2 sep** · MET-3b solo con OK · R-06 / yield aparcados  
-**Nota MET-3 (2026-08-31):** verificado filesystem — 9 preguntas + alts; sin código; theme=`businessTheme`; USD cross-market; min_sample=20; scoring off. Modelo de generación pudo ser Composer (pedido Fable); contenido coherente — gate = OK dueño.  
+**Cola:** MET-3b · MIGRATE aparcado **mar 2 sep** · R-06 / yield aparcados  
+**Nota MET-3 aceptación (2026-08-31):** dueño OK + Grok ACEPTAR CON CAMBIOS · denominador 12 THEME_RULES · residual sin ranking · `theme-profile-missing` único · sin TW · overlay `--rs-theme`.  
+**Nota MET-3-R (2026-08-31):** review Grok 4.6 Medium cerrada → parche orquestador.  
+**Nota MET-3 (2026-08-31):** spec + addendum aceptación; sin código.  
 **Nota RS-SERIES-1 (2026-08-31):** AAPL país 27 pts, W32 único 70, latest 64.  
 **Nota MET-2c (2026-08-30):** workflow `rs-country-private.yml` · cron `0 7 * * 0` + dispatch · US→intl · flags OK.  
 **Nota MET-2c Actions (2026-08-30):** `workflow_dispatch` [33336486687](https://github.com/AFC1204-coder/Screener-Bursatil/actions/runs/33336486687) · **success** ~2,5 min.  
@@ -235,7 +237,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-2 | Spec RS país (calidad intra-país) | **Aceptado dueño 2026-08-30** · `docs/spec-rs-pais.md` · `4f82d6d` |
 | MET-2b | Impl lector + motor intl + columna/filtro | **Hecho** · `9c147c6` · write HK OK |
 | MET-2c | Cron GHA RS país (dom 07:00 UTC) | **Hecho** · `rs-country-private.yml` |
-| MET-3 | Spec RS tema (ocupación / theme) | **Hecho** · `docs/spec-rs-tema.md` · pendiente OK dueño → MET-3b |
+| MET-3 | Spec RS tema (ocupación / theme) | **Aceptado** · `docs/spec-rs-tema.md` (parche Grok) → MET-3b |
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | Ideas; sin ticket |
 | MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | Ambicioso; tras MET-1…4 |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
