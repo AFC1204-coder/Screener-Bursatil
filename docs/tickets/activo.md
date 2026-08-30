@@ -2,6 +2,6 @@
 
 *(Ninguno. Orquestador escribe el siguiente aquí.)*
 
-Último cerrado: **MET-2b** — impl RS país (lector + motor + columna). Fix bundle: `countryRs` puro + `rsIntlMarkets` sin `node:crypto`.
+Último cerrado: **MET-2c** — cron GHA RS país (dom 07:00 UTC).
 
-**Siguiente:** MET-2c (cron GHA) tras `--write` HK verificado · **MIGRATE-1** mar 2 sep.
+**Siguiente preparado:** MIGRATE-1 · **martes 2 sep 2026** (reserva mié 3).
