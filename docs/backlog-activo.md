@@ -136,7 +136,7 @@ Anterior: **CLEAN-3** (`03eb7fa`).
 | UX-23 | InfoHints cabecera tabla | `9244496` |
 | CLEAN-2 | Dual DOM móvil/desktop | `e69c3af` |
 | CLEAN-3 | MarketMiniTape breakpoint 900→760 | `03eb7fa` |
-| CHART-UI-1 | ChartPreferences compact · 2 clusters TF/rango | *(stamp al commit)* |
+| CHART-UI-1 | ChartPreferences compact · 2 clusters TF/rango | `cd8e8d3` |
 
 ## Siguiente — datos IPO + filtros
 
@@ -205,7 +205,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 |---|---|---|
 | CHART-RS | RS solo overlay en gráfico (sin panel duplicado) | **Hecho** · `0728afe` · smoke OKTA |
 | CHART-NAV | Pan/zoom libre; zona de interés marcada, no secuestrada | **Hecho** · smoke AAPL · `fixLeftEdge:false` + manual lógico |
-| CHART-UI-1 | Densidad toolbar ChartPreferences compact (agrupar TF/rango) | **Hecho** · smoke AAPL · 2 clusters |
+| CHART-UI-1 | Densidad toolbar ChartPreferences compact (agrupar TF/rango) | **Hecho** · `cd8e8d3` · smoke AAPL · 2 clusters |
 
 **Orden sugerido:** CHART-RS (cambio de representación) → CHART-NAV (gesto timeScale); o paralelo en ramas si no tocan el mismo helper de rango.  
 **No** mezclar con UX-18…21 (P2 mesa) en el mismo ticket.
