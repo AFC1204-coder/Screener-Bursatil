@@ -38,7 +38,7 @@ No implementar. Entregar spec que el dueño acepte o rechace. Implementación = 
 - [x] Las 8 preguntas tienen **propuesta + alternativa rechazada**.
 - [x] No contradice MET-1 aceptado ni mueve el pin global.
 - [x] Sin diff de código.
-- [ ] Dueño acepta o pide recorte **antes** de MET-2b.
+- [x] Dueño acepta o pide recorte **antes** de MET-2b. (2026-08-30 · 4 cláusulas OK)
 
 ## Fuera de alcance
 

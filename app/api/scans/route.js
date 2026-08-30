@@ -9,6 +9,7 @@ import { MARKETS_ANCHOR, NIGHTLY_US_ANCHOR } from "@/lib/scanLocalId";
 import { snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { attachCachedMarketCap, readMarketCapForSymbols } from "@/lib/fundamentalsCache";
 import { attachWeeklyRs, readGlobalRsForSymbols } from "@/lib/globalRs";
+import { attachWeeklyCountryRs, readCountryRsForSymbols } from "@/lib/countryRsHydrate";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 
 const SCANS_SUPABASE_TIMEOUT_MS = 8000;
@@ -365,6 +366,7 @@ async function readScanResultPages({ ownerId, scanIds, select, rowsLimit, rowsAv
 export function scanFromDb(row, results = [], options = {}) {
   const decisionSettings = row.settings?.activeSettings || row.settings || {};
   const weeklyRsBySymbol = options.weeklyRsBySymbol || null;
+  const weeklyCountryRsBySymbol = options.weeklyCountryRsBySymbol || null;
   const marketCapBySymbol = options.marketCapBySymbol || null;
   // decisionTrace se RECONSTRUYE fila a fila al servir (prepareScanDecisionRow
   // → decisionTraceForRow). Medido el 2026-08-17 sobre la respuesta real:
@@ -386,7 +388,10 @@ export function scanFromDb(row, results = [], options = {}) {
     // mismas tablas en vivo; sin esto, un snapshot de días atrás enseñaba en
     // el screener números que la ficha del mismo símbolo desmentía.
     .map((item) => attachCachedMarketCap(
-      attachWeeklyRs(prepareRow(scanDecisionRowFromDb(item, options)), weeklyRsBySymbol),
+      attachWeeklyCountryRs(
+        attachWeeklyRs(prepareRow(scanDecisionRowFromDb(item, options)), weeklyRsBySymbol),
+        weeklyCountryRsBySymbol,
+      ),
       marketCapBySymbol,
     ));
   // rowsAvailable es el total real del escaneo (columna scans.row_count);
@@ -635,8 +640,9 @@ export async function GET(req) {
           if (!full && !decisionProjection) results = results.map((item) => ({ ...item, raw: compactResearchRow(item.raw) }));
         }
         const scanSymbols = results.map((item) => item.symbol).filter(Boolean);
-        const [weeklyRs, marketCaps] = await Promise.all([
+        const [weeklyRs, weeklyCountryRs, marketCaps] = await Promise.all([
           readGlobalRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
+          readCountryRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
           readMarketCapForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
         ]);
         return {
@@ -649,6 +655,7 @@ export async function GET(req) {
             rowsSampled,
             omitDecisionTrace: !full && !decisionProjection,
             weeklyRsBySymbol: weeklyRs.bySymbol,
+            weeklyCountryRsBySymbol: weeklyCountryRs.bySymbol,
             marketCapBySymbol: marketCaps.bySymbol,
             matchAllResults: Boolean(materialized.merged || materialized.accumulated),
           })),
@@ -710,8 +717,9 @@ export async function GET(req) {
       // no disponible y el criterio se omite aguas abajo, igual que un
       // símbolo que de verdad no esté en el ranking.
       const scanSymbols = results.map((item) => item.symbol).filter(Boolean);
-      const [weeklyRs, marketCaps] = await Promise.all([
+      const [weeklyRs, weeklyCountryRs, marketCaps] = await Promise.all([
         readGlobalRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
+        readCountryRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
         // Misma idea para la capitalización: la ficha la lee de
         // fundamental_snapshots en vivo, así que el snapshot del escaneo no
         // puede seguir siendo la única copia que ve el screener.
@@ -727,6 +735,7 @@ export async function GET(req) {
           rowsSampled,
           omitDecisionTrace: !full && !decisionProjection,
           weeklyRsBySymbol: weeklyRs.bySymbol,
+          weeklyCountryRsBySymbol: weeklyCountryRs.bySymbol,
           marketCapBySymbol: marketCaps.bySymbol,
         })),
         scanTombstones: includeDeleted ? deletedScans.map(scanTombstoneFromDb) : [],

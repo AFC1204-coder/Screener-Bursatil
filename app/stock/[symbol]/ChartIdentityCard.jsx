@@ -30,7 +30,7 @@ function Absent({ reason = "" }) {
 
 export default function ChartIdentityCard({ card = null, quote = null }) {
   if (!card) return null;
-  const { stage, rs, structure, growth, foot } = card;
+  const { stage, rs, countryRs, structure, growth, foot } = card;
   return (
     <div className="chartIdCard">
       {/* Fila 1 — identidad y precio fusionados: ticker, cierre, variación
@@ -108,6 +108,12 @@ export default function ChartIdentityCard({ card = null, quote = null }) {
               </>
             ) : (
               <Absent reason={rs.absenceReason} />
+            )}
+            <span className="chartIdCardRsLabel">RS país</span>
+            {countryRs?.value !== null && countryRs?.value !== undefined ? (
+              <b className="chartIdCardRsValue">{countryRs.value}</b>
+            ) : (
+              <Absent reason={countryRs?.absenceReason || DESCRIPTIVE_ABSENCE.rsCountry} />
             )}
             <span className="chartIdCardStructCell">
               <em>Máx. 52s</em>

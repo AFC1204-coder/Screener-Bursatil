@@ -36,6 +36,7 @@ const FIELDS = new Set(SCAN_LIGHT_FIELDS);
 const HANDCODED_RULE_FIELDS = [
   "priceFreshnessDays", "lastDate",       // maxPriceFreshnessDays
   "weeklyRsAvailable", "weeklyRsRating",  // minRsRating
+  "weeklyCountryRsAvailable", "weeklyCountryRsRating", // minRsCountryPct
   "weaknessScore",                        // minWeaknessScore
   "ipoAgeMonths", "ipoDate",              // maxIpoAgeMonths / requireRecentIpo
 ];
@@ -100,14 +101,16 @@ describe("la proyección ligera cubre todo lo que se consulta", () => {
     expect(PERFORMANCE_PERIODS.map((item) => item.key).filter((key) => !FIELDS.has(key))).toEqual([]);
   });
 
-  it("cubre la identidad y la miniatura de la tabla de siete columnas", () => {
-    // Ticker, tema, etapa, distancia a 52s y capitalización. El RS lo resuelve
+  it("cubre la identidad y la miniatura de la tabla de ocho columnas", () => {
+    // Ticker, tema, RS, RS país, etapa, distancia a 52s y capitalización. El RS lo resuelve
     // canonicalRs sobre los weeklyRs*, que se hidratan al leer.
     const tableFields = [
       "symbol", "companyName", "country", "chartPreview", "theme",
       "weeklyStageState", "weeklyStageLabel", "distance52w", "marketCap",
       "weeklyRsAvailable", "weeklyRsRating", "weeklyRsAsOf", "weeklyRsWeekKey",
       "weeklyRsRank", "weeklyRsSampleSize", "weeklyRsEngineVersion", "weeklyRsReason",
+      "weeklyCountryRsAvailable", "weeklyCountryRsRating", "weeklyCountryRsRank",
+      "weeklyCountryRsSampleSize", "weeklyCountryRsWeekKey", "weeklyCountryRsReason",
     ];
     expect(tableFields.filter((field) => !FIELDS.has(field))).toEqual([]);
   });

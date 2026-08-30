@@ -29,6 +29,8 @@ const fullRow = {
   industry: "Semiconductors",
   weeklyRsAvailable: true,
   weeklyRsRating: 92,
+  weeklyCountryRsAvailable: true,
+  weeklyCountryRsRating: 55,
   weeklyStageState: "stage2",
   weeklyStageLabel: "Stage 2 probable",
   perf3m: 18.4,
@@ -83,18 +85,18 @@ function renderTable(props = {}) {
   }));
 }
 
-describe("tabla de resultados: las siete columnas", () => {
-  it("define exactamente siete columnas en un solo sitio", () => {
-    expect(SCREENER_COLUMNS).toHaveLength(7);
+describe("tabla de resultados: las ocho columnas", () => {
+  it("define exactamente ocho columnas en un solo sitio", () => {
+    expect(SCREENER_COLUMNS).toHaveLength(8);
     expect(SCREENER_COLUMNS.map((column) => column.key)).toEqual([
-      "ticker", "theme", "rs", "stage", "performance", "distance52w", "marketCap",
+      "ticker", "theme", "rs", "rsCountry", "stage", "performance", "distance52w", "marketCap",
     ]);
   });
 
-  it("pinta siete cabeceras y siete celdas por fila", () => {
+  it("pinta ocho cabeceras y ocho celdas por fila", () => {
     const html = renderTable();
-    expect(html.match(/<th /g)).toHaveLength(7);
-    expect(html.match(/<td /g)).toHaveLength(7);
+    expect(html.match(/<th /g)).toHaveLength(8);
+    expect(html.match(/<td /g)).toHaveLength(8);
   });
 
   it("muestra los siete datos de la fila", () => {
@@ -103,7 +105,8 @@ describe("tabla de resultados: las siete columnas", () => {
     expect(html).toContain("miniSparkline");        // 1. ticker con miniatura
     expect(html).toContain("Semis / fotonica");     // 2. tema
     expect(html).toContain(">92<");                 // 3. RS semanal del universo
-    expect(html).toContain("Etapa 2");              // 4. etapa en una palabra
+    expect(html).toContain(">55<");                 // 4. RS país
+    expect(html).toContain("Etapa 2");              // 5. etapa en una palabra
     expect(html).toContain("+18,4%");               // 5. rendimiento del periodo
     expect(html).toContain("-3,2%");                // 6. distancia al máximo 52s
     expect(html).toContain("4,2B");                 // 7. capitalización
@@ -136,10 +139,12 @@ describe("tabla de resultados: las siete columnas", () => {
     expect(html).not.toContain("Deterioro");
   });
 
-  it("deja un solo RS y lo explica en la cabecera", () => {
+  it("deja RS global y RS país y los explica en la cabecera", () => {
     const html = renderTable();
     expect(html.match(/>RS</g)).toHaveLength(1);
+    expect(html).toContain(">RS país<");
     expect(html).toContain("Fuerza relativa semanal");
+    expect(html).toContain("universo privado curado");
     expect(html).not.toContain(">Grp<");
     expect(html).not.toContain(">Q<");
   });
@@ -156,7 +161,7 @@ describe("dato ausente", () => {
   it("muestra un guion con el motivo, sin etiquetas de estado", () => {
     const html = renderTable({ rows: [emptyRow] });
     // Seis columnas de dato + la miniatura, que también falta en esta fila.
-    expect(html.match(/class="cellMissing"/g)).toHaveLength(7);
+    expect(html.match(/class="cellMissing"/g)).toHaveLength(8);
     expect(html).toContain("Sin miniatura");
     expect(html).toContain("Sin RS semanal");
     expect(html).toContain("Histórico semanal insuficiente para clasificar la etapa");
@@ -208,8 +213,8 @@ describe("selector global de periodo", () => {
 
   it("el orden sigue al periodo elegido", () => {
     expect(screenerSortOptions({ perfPeriod: "perf6m" }).map((item) => item.value))
-      .toEqual(["rsGlobalPct", "perf6m", "distance52w", "marketCap"]);
-    expect(screenerSortOptions({ perfPeriod: "perf12m" })[1])
+      .toEqual(["rsGlobalPct", "weeklyCountryRsRating", "perf6m", "distance52w", "marketCap"]);
+    expect(screenerSortOptions({ perfPeriod: "perf12m" })[2])
       .toEqual({ value: "perf12m", label: "Rendimiento 12M" });
   });
 
@@ -227,13 +232,13 @@ describe("columna Deterioro (modo weakness / orden weaknessScore)", () => {
     expect(screenerShowsWeaknessColumn({ sort: "weaknessScore" })).toBe(true);
     expect(screenerShowsWeaknessColumn({})).toBe(false);
     expect(screenerVisibleColumns({ setupMode: "weakness" }).map((c) => c.key))
-      .toEqual(["ticker", "theme", "rs", "stage", "weakness", "performance", "distance52w", "marketCap"]);
+      .toEqual(["ticker", "theme", "rs", "rsCountry", "stage", "weakness", "performance", "distance52w", "marketCap"]);
   });
 
   it("pinta cabecera y valor de deterioro en escritorio", () => {
     const html = renderTable({ setupMode: "weakness", sort: "weaknessScore" });
-    expect(html.match(/<th /g)).toHaveLength(8);
-    expect(html.match(/<td /g)).toHaveLength(8);
+    expect(html.match(/<th /g)).toHaveLength(9);
+    expect(html.match(/<td /g)).toHaveLength(9);
     expect(html).toContain(">Deterioro<");
     expect(html).toContain(">12</b>");
     expect(html).toContain("Sin deterioro claro");
@@ -301,18 +306,19 @@ describe("vista móvil", () => {
     }));
   }
 
-  it("lee las mismas siete columnas que escritorio", () => {
+  it("lee las mismas ocho columnas que escritorio", () => {
     const html = renderMobile();
     expect(html).toContain(">TREN<");
     expect(html).toContain("miniSparkline");
     expect(html).toContain("Semis / fotonica");
     expect(html).toContain(">92<");
+    expect(html).toContain(">55<");
     expect(html).toContain("Etapa 2");
     expect(html).toContain("+18,4%");
     expect(html).toContain("-3,2%");
     expect(html).toContain("4,2B");
-    // Las seis columnas de dato, con su etiqueta.
-    expect(html.match(/class="mobileResultField/g)).toHaveLength(6);
+    // Las siete columnas de dato, con su etiqueta.
+    expect(html.match(/class="mobileResultField/g)).toHaveLength(7);
   });
 
   it("sigue al mismo selector global de periodo", () => {
@@ -324,12 +330,12 @@ describe("vista móvil", () => {
     const html = renderMobile(fullRow, DEFAULT_PERFORMANCE_PERIOD, { setupMode: "weakness" });
     expect(html).toContain(">Deterioro<");
     expect(html).toContain(">12</b>");
-    expect(html.match(/class="mobileResultField/g)).toHaveLength(7);
+    expect(html.match(/class="mobileResultField/g)).toHaveLength(8);
   });
 
   it("muestra las ausencias igual que escritorio", () => {
     const html = renderMobile(emptyRow);
-    expect(html.match(/class="cellMissing"/g)).toHaveLength(7);
+    expect(html.match(/class="cellMissing"/g)).toHaveLength(8);
     expect(html).toContain("Sin RS semanal");
   });
 });

@@ -57,6 +57,7 @@ import StorageAlert from "@/app/components/StorageAlert";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { objectiveStage } from "@/lib/scoring";
 import { canonicalRs } from "@/lib/rsCanonical";
+import { countryRs } from "@/lib/countryRs";
 import { prepareReviewQueueRows } from "@/lib/decisionProfile";
 import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
@@ -265,7 +266,9 @@ async function hydrateReviewRow(row = {}, signal) {
     const technical = deriveTechnicalFromBars(brief.chartBars || []);
     const rs = brief.relativeStrength || {};
     const benchmarkRating = rs.benchmarkRating ?? rs.rsRating ?? null;
+    const countryAvailable = Number.isFinite(rs.countryRsRating);
     return cleanObject({
+      ...row,
       ...technical,
       companyName: brief.name || row.companyName,
       sector: brief.sector || row.sector,
@@ -291,6 +294,12 @@ async function hydrateReviewRow(row = {}, signal) {
       perf12m: rs.perf12m ?? technical.perf12m ?? row.perf12m,
       shortPercentOfFloat: brief.growthMetrics?.shortPercentOfFloat ?? row.shortPercentOfFloat,
       relativeStrength: rs.series || null,
+      weeklyCountryRsAvailable: countryAvailable ? true : row.weeklyCountryRsAvailable,
+      weeklyCountryRsRating: countryAvailable ? rs.countryRsRating : row.weeklyCountryRsRating,
+      weeklyCountryRsSampleSize: countryAvailable ? rs.countryRsSampleSize : row.weeklyCountryRsSampleSize,
+      weeklyCountryRsWeekKey: countryAvailable ? rs.countryRsWeekKey : row.weeklyCountryRsWeekKey,
+      weeklyCountryRsEngineVersion: countryAvailable ? rs.countryRsEngineVersion : row.weeklyCountryRsEngineVersion,
+      weeklyCountryRsReason: countryAvailable ? null : (rs.countryRsReason ?? row.weeklyCountryRsReason),
     });
   }
   const chart = await fetchJson(`/api/chart?symbol=${encodeURIComponent(symbol)}`, signal, 9000);
@@ -360,8 +369,10 @@ function ReviewChartPanel({ row, loading = false }) {
 // motivo en el title, como en la tabla y la ficha.
 function metricRows(row = {}) {
   const rs = canonicalRs(row);
+  const crs = countryRs(row);
   return [
     ["RS", rs.available ? rs.value.toFixed(0) : "-", rs.available ? "RS semanal del universo" : rs.reason],
+    ["RS país", crs.available ? crs.value.toFixed(0) : "-", crs.available ? "RS semanal del mercado local" : crs.reason],
     ["3M", pct(value(row, "perf3m"))],
     ["6M", pct(value(row, "perf6m"))],
     ["12M", pct(value(row, "perf12m"))],

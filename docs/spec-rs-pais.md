@@ -2,7 +2,7 @@
 
 - **Fecha:** 2026-08-30
 - **Rama:** `codex/statsedge-ui-polish`
-- **Estado:** **propuesta para aceptación del dueño** — no autoriza implementación (MET-2b requiere OK explícito aparte).
+- **Estado:** **aceptado dueño 2026-08-30** (4 cláusulas). Implementación = MET-2b; cron = MET-2c.
 - **Contratos reconciliados:** `docs/spec-rs-global-multi-mercado-fx.md` (aceptado) · `docs/tickets/MET-1-rs-global-fx.md` · `docs/tickets/MET-1b-rs-global-impl.md` · `docs/tickets/MET-1c-cron-rs-global.md` · `docs/adr-rs-universo-us.md` · `docs/adr-discovery-global-curated.md` invariante 10 · decisión dueño 2026-08-27 (`docs/backlog-activo.md`) · código vivo (`lib/rsCanonical.js`, `lib/rsEngines.js`, `lib/globalRs.js`, `scripts/rs-universe.mjs`, `scripts/rs-global-private.mjs`).
 
 ---

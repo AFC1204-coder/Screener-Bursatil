@@ -6,11 +6,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-30 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **MET-2** (spec RS país) — `docs/spec-rs-pais.md` · pendiente aceptación dueño → MET-2b.  
-Anterior: **MET-1c** (`368670f` + Actions OK).  
-**Cola:** **MIGRATE Mini** · **mar 2 sep 2026** (reserva mié 3) · billing hasta **5 sep** · no activar antes · MET-2b solo con OK al spec  
-**Nota MET-2 (2026-08-30):** verificado filesystem — 8 preguntas + alts; sin diff código; US=`statsedge-us-equity-rs-v1`; intl=`statsedge-private-country-rs-local-v1` + scope; scoring prohibido; pin global intacto.  
-**Nota MET-1c Actions (2026-08-30):** `workflow_dispatch` [33325290704](https://github.com/AFC1204-coder/Screener-Bursatil/actions/runs/33325290704) · **success** ~2,5 min · FX 10/10 · universo 6437 · rankeadas **5567** · exclusiones 870 · snapshot `e21c86c0-…`.  
+Último cerrado: **MET-2b** (impl RS país) — columna + lector + motor; pin global OK; US AAPL país **70**.  
+Anterior: **MET-2** (spec aceptado 2026-08-30).  
+**Cola:** MET-2c cron · **MIGRATE Mini** · **mar 2 sep**  
+**Nota MET-2b (2026-08-30):** verify — tests 108 OK; hydrate AAPL **70** / MSFT **56** (US engine); HK «–» sin `--write`; smoke Browser Use bloqueado por token wall; fix orquestador: split `countryRs`/`countryRsHydrate` + `rsIntlMarkets` (evita 500 `node:crypto` en cliente).  
+**Nota MET-2 aceptación (2026-08-30):** dueño OK — columna 2ª · curado intl · scoring off · cron domingo (MET-2c).  
 **Nota MET-1c smoke (2026-08-30):** pin OK — AAPL **61** · 0005.HK **83** · SHOP.TO 74 · 0700.HK 20 (W35, `canonicalRs` = DB). UI `/stock` bloqueada por token en tab nueva (no bloquea cron).  
 **Nota R-06 (2026-08-30):** medido Browser Use (sesión logueada) — truth al cambiar ficha: E2 **1980 ms**, pivot **964**, intl **2522**, IPO **946**, Deterioro **1879**. Warm UX-11 no cumple &lt;200 ms en cold/secuencial; **sin ticket** salvo prioridad producto (chase perf). Intl/IPO muestran lag pasan vs en lista en transición (UX-22 ya tratado).  
 **Nota MIGRATE (2026-08-30):** Mac Mini M4 · ruta B · MIGRATE-1…3 · **ventana 2–3 sep** · invoice end **5 sep**.  
@@ -144,6 +144,7 @@ Anterior: **MET-1c** (`368670f` + Actions OK).
 | CHART-UI-1 | ChartPreferences compact · 2 clusters TF/rango | `cd8e8d3` |
 | MET-1c | Cron GHA RS global privado (dom 06:00 UTC) | `368670f` |
 | MET-2 | Spec RS país (columna 2ª · US motor congelado · intl local sin FX) | (docs) |
+| MET-2b | Impl RS país (lector + motor + columna; fix client crypto) | |
 
 ## Siguiente — datos IPO + filtros
 
@@ -222,7 +223,8 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | ID | Qué | Estado |
 |---|---|---|
 | MET-1c | Cron semanal motor global privado | **Hecho** · `368670f` · `rs-global-private.yml` · smoke lectura OK |
-| MET-2 | Spec RS país (calidad intra-país) | **Hecho** · `docs/spec-rs-pais.md` · pendiente OK dueño → MET-2b |
+| MET-2 | Spec RS país (calidad intra-país) | **Aceptado dueño 2026-08-30** · `docs/spec-rs-pais.md` · `4f82d6d` |
+| MET-2b | Impl lector + motor intl + columna/filtro | **Hecho** · US hydrate OK · intl pendiente `--write`/MET-2c |
 | MET-3 | Spec RS tema (ocupación / theme) | Decisión dueño; sin ticket |
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | Ideas; sin ticket |
 | MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | Ambicioso; tras MET-1…4 |

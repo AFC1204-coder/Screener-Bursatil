@@ -74,6 +74,9 @@ function stockData(overrides = {}) {
       rsSectorSample: 40,
       benchmarkSymbol: "SPY",
       benchmarkRating: 58,
+      countryRsRating: 72,
+      countryRsSampleSize: 900,
+      countryRsWeekKey: "2026-W35",
       rs3m: 12,
       rs6m: 18,
       rs12m: 24,
@@ -115,11 +118,13 @@ describe("bloques retirados el 2026-08-21: no vuelven por accidente", () => {
     expect(html).not.toContain("Sin narrativa del screener");
   });
 
-  it("el panel «Fuerza relativa» no se renderiza aunque haya país/grupo/bench en el brief", () => {
+  it("el panel «Fuerza relativa» retirado no se renderiza aunque haya país/grupo/bench en el brief", () => {
     expect(html).not.toContain("rsPanel");
     expect(html).not.toContain("RS bench");
-    expect(html).not.toContain("RS país");
     expect(html).not.toContain("Riesgo técnico");
+    // RS país en la tarjeta de identidad (MET-2) es ranking semanal, no el panel retirado.
+    expect(html).toContain("RS país");
+    expect(html).not.toContain("rsCountryPct");
   });
 
   it("el panel «Estado del volumen» no se renderiza", () => {

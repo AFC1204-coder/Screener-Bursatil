@@ -51,6 +51,7 @@ import {
   PRIVATE_GLOBAL_RS_ENGINE_VERSION,
   RS_LINE_PRIVATE,
   US_EQUITY_RS_ENGINE_VERSION,
+  US_COUNTRY_RS_ENGINE_VERSION,
 } from "@/lib/rsEngines";
 import { canonicalRs } from "@/lib/rsCanonical";
 import { attachWeeklyRs } from "@/lib/globalRs";
@@ -65,6 +66,8 @@ describe("pin del engine canónico", () => {
   it("el motor US sigue existiendo, congelado y distinto — es el canónico de la línea pública futura", () => {
     expect(US_EQUITY_RS_ENGINE_VERSION).toBe("statsedge-us-equity-rs-v1");
     expect(US_EQUITY_RS_ENGINE_VERSION).not.toBe(PRIVATE_GLOBAL_RS_ENGINE_VERSION);
+    expect(US_COUNTRY_RS_ENGINE_VERSION).toBe(US_EQUITY_RS_ENGINE_VERSION);
+    expect(canonicalRsEngineVersion()).not.toBe(US_COUNTRY_RS_ENGINE_VERSION);
   });
 
   it("el motor europeo de mayo de 2026 NO es candidato a canónico", () => {
