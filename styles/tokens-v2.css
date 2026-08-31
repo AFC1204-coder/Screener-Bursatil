@@ -26,6 +26,7 @@
   --humo       : #7E8B82;   /* secundario, bordes, descartes */
   --senal      : #E0A93F;   /* ámbar dorado: atención / Vigilar (nunca crema: eso es CTA) */
   --traza      : #93B8CE;   /* tiza azul: análisis / Auditar */
+  --rs-theme   : #C4A5E8;   /* lavanda: overlay RS tema en chart (CHART-RS-3; nunca --soft) */
   --oxido      : #C4614C;   /* arcilla quemada: riesgo real (uso escaso) */
 
   /* Superficies derivadas (nunca inventar otras) */

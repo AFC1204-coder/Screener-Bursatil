@@ -70,12 +70,13 @@ describe("chartViewportModel · resolveChartViewportConfig", () => {
     expect(huge.indicators.maSlowLength).toBe(600);
   });
 
-  it("respeta los flags booleanos de indicadores (volume/rsLine/rsCountryLine/maFast/maSlow)", () => {
+  it("respeta los flags booleanos de indicadores (volume/rsLine/rsCountryLine/rsThemeLine/maFast/maSlow)", () => {
     const config = resolveChartViewportConfig({
       indicators: {
         volume: false,
         rsLine: false,
         rsCountryLine: false,
+        rsThemeLine: false,
         maFast: false,
         maSlow: false,
       },
@@ -84,6 +85,7 @@ describe("chartViewportModel · resolveChartViewportConfig", () => {
     expect(config.indicators.volume).toBe(false);
     expect(config.indicators.rsLine).toBe(false);
     expect(config.indicators.rsCountryLine).toBe(false);
+    expect(config.indicators.rsThemeLine).toBe(false);
     expect(config.indicators.maFast).toBe(false);
     expect(config.indicators.maSlow).toBe(false);
   });

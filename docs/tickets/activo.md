@@ -1,7 +1,5 @@
-# Ticket activo
+# Ticket activo — (ninguno)
 
-*(Ninguno. Orquestador escribe el siguiente aquí.)*
+CHART-RS-3 cerrado (orquestador). Siguiente: MIGRATE **mar 2 sep** · UX-NAC / R-06 / yield.
 
-Último cerrado: **MET-3c** (cron RS tema privado).  
-**Siguiente:** CHART-RS-3 (overlay) o MIGRATE-1 · **mar 2 sep**.  
-Relleno: R-06 · yield intl.
+Ver `docs/backlog-activo.md`.

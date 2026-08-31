@@ -18,6 +18,7 @@ const EXPECTED_TOKENS = [
   ["senal", "--senal", "#E0A93F"],
   ["traza", "--traza", "#93B8CE"],
   ["trazaDim", "--traza-dim", "rgba(147, 184, 206, .12)"],
+  ["rsTheme", "--rs-theme", "#C4A5E8"],
 ];
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -110,7 +111,7 @@ describe("chartNativeAdapter · contrato de tokens CSS", () => {
 // eje del precio ni vuelva a un panel inferior aparte: escala overlay dedicada
 // con rango fijo 1-99 y banda inferior propia.
 
-function rsAdapterHarness({ rsRatingSeries, rsCountrySeries, indicators, rows }) {
+function rsAdapterHarness({ rsRatingSeries, rsCountrySeries, rsThemeSeries, indicators, rows }) {
   const priceScaleCalls = [];
   const addedSeries = [];
   const makeSeries = () => ({
@@ -149,13 +150,13 @@ function rsAdapterHarness({ rsRatingSeries, rsCountrySeries, indicators, rows })
       interval: "D",
       style: "1",
       scale: "price",
-      indicators: { volume: false, maFast: false, maSlow: false, rsLine: true, rsCountryLine: true, ...(indicators || {}) },
+      indicators: { volume: false, maFast: false, maSlow: false, rsLine: true, rsCountryLine: true, rsThemeLine: true, ...(indicators || {}) },
       intraday: false,
     },
     rows,
     rowTimes: rows.map((row) => row.time),
     colors,
-    overrides: { rsRatingSeries, rsCountrySeries },
+    overrides: { rsRatingSeries, rsCountrySeries, rsThemeSeries },
   });
   return { result, addedSeries, priceScaleCalls };
 }
@@ -246,5 +247,28 @@ describe("chartNativeAdapter · overlay del RS rating", () => {
     expect(countryEntry.options.color).toBe("#B9BFB2"); // --soft
     expect(priceScaleCalls.some((call) => call.id === "rs-country")).toBe(true);
     expect(result.rsCountryPane).toMatchObject({ rendered: true, paneIndex: 0, weeks: 12, latestValue: 41 });
+  });
+
+  it("dibuja RS tema como overlay en panel 0 con escala rs-theme y tono --rs-theme", () => {
+    const rows = dailyRows(120);
+    const rsThemeSeries = Array.from({ length: 12 }, (_, index) => ({
+      date: rows[index * 7].date,
+      rsRating: 20 + index,
+    }));
+
+    const { result, addedSeries, priceScaleCalls } = rsAdapterHarness({
+      rsRatingSeries: [],
+      rsThemeSeries,
+      indicators: { rsLine: false, rsCountryLine: false, rsThemeLine: true },
+      rows,
+    });
+
+    const themeEntry = addedSeries.find((entry) => entry.options?.title === "RS tema");
+    expect(themeEntry).toBeTruthy();
+    expect(themeEntry.paneIndex).toBe(0);
+    expect(themeEntry.options.priceScaleId).toBe("rs-theme");
+    expect(themeEntry.options.color).toBe("#C4A5E8"); // --rs-theme
+    expect(priceScaleCalls.some((call) => call.id === "rs-theme")).toBe(true);
+    expect(result.rsThemePane).toMatchObject({ rendered: true, paneIndex: 0, weeks: 12, latestValue: 31 });
   });
 });

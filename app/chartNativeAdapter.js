@@ -31,6 +31,7 @@ import {
   projectPatternMarkers,
   projectRsCountryRatingSeries,
   projectRsRatingSeries,
+  projectRsThemeRatingSeries,
   projectVolumeSeries,
   rsLineHistory,
 } from "@/lib/chartSeriesModel";
@@ -44,6 +45,7 @@ const PRICE_SCALE_DASHED = 2;
 // con el precio sin reservar un panel aparte (patrón B2/B3).
 const RS_OVERLAY_SCALE_ID = "rs-rating";
 const RS_COUNTRY_OVERLAY_SCALE_ID = "rs-country";
+const RS_THEME_OVERLAY_SCALE_ID = "rs-theme";
 // Banda inferior ~25% del panel de precio (top 0.75 → franja 75%–98%).
 const RS_OVERLAY_MARGINS = { top: 0.75, bottom: 0.02 };
 // Extremos del ranking. El eje se fija a ellos en vez de autoescalar: un RS de
@@ -67,6 +69,7 @@ const RS_REFERENCE = 50;
  * @property {string} senal
  * @property {string} traza
  * @property {string} trazaDim
+ * @property {string} rsTheme
  */
 
 function safeNumber(value) {
@@ -130,6 +133,7 @@ export function createChartNativeAdapter(args) {
     patternOverlay = null,
     rsRatingSeries = null,
     rsCountrySeries = null,
+    rsThemeSeries = null,
     benchmarkSeries = null,
     requestedHeight = 460,
   } = overrides;
@@ -378,6 +382,37 @@ export function createChartNativeAdapter(args) {
     extraSeries.push(rsCountrySeriesHandle);
   }
 
+  // ── Línea RS tema (overlay en panel precio, cuarto tono) ────────────────────
+  let rsThemeSeriesHandle = null;
+  const rsThemeLineData = projectRsThemeRatingSeries(rows, rsThemeSeries, indicators, interval);
+  const rsThemeHistory = rsLineHistory(rsThemeLineData);
+  const rsThemeRendered = !intraday && !!indicators.rsThemeLine && rsThemeLineData.length > 1 && rsThemeHistory.sufficient;
+  if (rsThemeRendered) {
+    rsThemeSeriesHandle = chart.addSeries(
+      LineSeries,
+      {
+        color: colors.rsTheme,
+        lineWidth: 2,
+        priceScaleId: RS_THEME_OVERLAY_SCALE_ID,
+        priceLineVisible: false,
+        lastValueVisible: true,
+        priceFormat: { type: "price", precision: 0, minMove: 1 },
+        title: "RS tema",
+        autoscaleInfoProvider: () => ({
+          priceRange: { minValue: RS_SCALE_MIN, maxValue: RS_SCALE_MAX },
+        }),
+      },
+      0,
+    );
+    rsThemeSeriesHandle.setData(rsThemeLineData.map((point) => ({ time: point.time, value: point.value })));
+    chart.priceScale(RS_THEME_OVERLAY_SCALE_ID).applyOptions({
+      visible: false,
+      autoScale: true,
+      scaleMargins: RS_OVERLAY_MARGINS,
+    });
+    extraSeries.push(rsThemeSeriesHandle);
+  }
+
   // ── Línea de comparación con el benchmark ("Comparar vs") ────────────────
   //
   // Ratio precio/benchmark (rsLine del servidor), log-rebasado al primer
@@ -466,6 +501,13 @@ export function createChartNativeAdapter(args) {
       weeks: rsCountryHistory.weeks,
       latestValue: rsCountryRendered ? (rsCountryLineData.at(-1)?.value ?? null) : null,
     },
+    rsThemePane: {
+      rendered: rsThemeRendered,
+      paneIndex: rsThemeRendered ? 0 : null,
+      points: rsThemeLineData.length,
+      weeks: rsThemeHistory.weeks,
+      latestValue: rsThemeRendered ? (rsThemeLineData.at(-1)?.value ?? null) : null,
+    },
     updateGeometry,
     destroySeries,
   };
@@ -491,6 +533,7 @@ export function resolveCssTokensNative() {
       senal: "#E0A93F",
       traza: "#93B8CE",
       trazaDim: "rgba(147, 184, 206, .12)",
+      rsTheme: "#C4A5E8",
     };
   }
   const root = document.documentElement;
@@ -509,5 +552,6 @@ export function resolveCssTokensNative() {
     senal: get("--senal", "#E0A93F"),
     traza: get("--traza", "#93B8CE"),
     trazaDim: get("--traza-dim", "rgba(147, 184, 206, .12)"),
+    rsTheme: get("--rs-theme", "#C4A5E8"),
   };
 }

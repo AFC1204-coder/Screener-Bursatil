@@ -1683,6 +1683,8 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           rsRatingSeries={rs.globalRsSeries}
           rsCountrySeries={rs.countryRsSeries}
           rsCountryMainScore={rs.countryRsRating}
+          rsThemeSeries={rs.themeRsSeries}
+          rsThemeMainScore={rs.themeRsRating}
           benchmarkSymbol={rs.benchmarkSymbol}
           patternOverlay={showVcpDiagnostics ? setupPattern : actionableSetupPattern}
           showPatternDiagnostics={showVcpDiagnostics}

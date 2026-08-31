@@ -37,6 +37,9 @@
   --warning    : #eab308;
   --neutral    : #838894;
 
+  /* Chart overlay RS tema (CHART-RS-3): cuarto tono; nunca --soft (país) ni --traza (global). */
+  --rs-theme   : #c4a5e8;
+
   /* Espaciado — tokens oficiales (4-24px). Prohibido hardcodear px de espaciado. */
   --space-1    : 4px;
   --space-2    : 8px;

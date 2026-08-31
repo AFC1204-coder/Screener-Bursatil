@@ -56,6 +56,7 @@ export function UniversalPriceChartView({
     patternDiagnostic,
     rsLegend,
     rsCountryLegend,
+    rsThemeLegend,
     notes,
     emptyFallback,
     rootClassName,
@@ -186,6 +187,12 @@ export function UniversalPriceChartView({
             <div className={`universalChartBadges ${Number.isFinite(Number(badges?.countryRsScore)) ? "" : "muted"}`} title="RS país · ranking semanal intra-mercado. No cambia con el rango del gráfico.">
               <span>RS país</span>
               <b>{Number.isFinite(Number(badges?.countryRsScore)) ? Number(badges.countryRsScore).toFixed(0) : "Sin dato"}</b>
+            </div>
+          )}
+          {rsThemeLegend?.enabled && (
+            <div className={`universalChartBadges ${Number.isFinite(Number(badges?.themeRsScore)) ? "" : "muted"}`} title="RS tema · ranking semanal intra-ocupación. No cambia con el rango del gráfico.">
+              <span>RS tema</span>
+              <b>{Number.isFinite(Number(badges?.themeRsScore)) ? Number(badges.themeRsScore).toFixed(0) : "Sin dato"}</b>
             </div>
           )}
           {intradayRsBadge}
@@ -334,6 +341,9 @@ export function UniversalPriceChartView({
       )}
       {rsCountryLegend?.absence && (
         <p className="dataNote universalRsAbsenceNote" role="status" title={rsCountryLegend.absence.title}>{rsCountryLegend.absence.text}</p>
+      )}
+      {rsThemeLegend?.absence && (
+        <p className="dataNote universalRsAbsenceNote" role="status" title={rsThemeLegend.absence.title}>{rsThemeLegend.absence.text}</p>
       )}
       {qualityNotice && <p className="universalChartEstimatedNote" role="status" title={qualityNotice.title}>{qualityNotice.text}</p>}
       {expandingNotice && <p className="dataNote">{expandingNotice.text}</p>}

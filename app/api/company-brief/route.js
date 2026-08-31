@@ -11,6 +11,7 @@ import { peerIdentityForSymbol } from "@/lib/peers";
 import { scoreRsBenchmarkModel, scoreRsQuality } from "@/lib/relativeStrength";
 import { readGlobalRsSeriesForSymbol } from "@/lib/globalRs";
 import { readCountryRsForSymbols, readCountryRsSeriesForSymbol } from "@/lib/countryRsHydrate";
+import { readThemeRsForSymbols, readThemeRsSeriesForSymbol } from "@/lib/themeRsHydrate";
 import { setupPatternForBars } from "@/lib/setupPatterns";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
 import { CURATED_NAMES } from "@/lib/universes";
@@ -906,7 +907,7 @@ async function readUniverseRsSnapshot(symbol = "") {
 // sigue viajando en `rsGlobalPct` con su propio nombre y su propio significado
 // —y sigue alimentando el scoring, que no se toca—, pero deja de poder
 // ocupar el sitio del RS.
-export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, weeklyGlobal = null, countryWeeklyEntry = null, countryWeeklySeries = null) {
+export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, weeklyGlobal = null, countryWeeklyEntry = null, countryWeeklySeries = null, themeWeeklyEntry = null, themeWeeklySeries = null) {
   const benchmarkRating = benchmarkStrength.rating;
   const weeklyLatest = weeklyGlobal?.latest
     || (Array.isArray(weeklyGlobal?.series) ? weeklyGlobal.series.at(-1) : null)
@@ -914,6 +915,8 @@ export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe =
   const weeklyRating = Number.isFinite(weeklyLatest?.rsRating) ? weeklyLatest.rsRating : null;
   const countryEntry = countryWeeklyEntry || null;
   const countryRating = countryEntry?.available ? countryEntry.rsRating : null;
+  const themeEntry = themeWeeklyEntry || null;
+  const themeRating = themeEntry?.available ? themeEntry.rsRating : null;
   const universeAvailable = Boolean(universe) && Number.isFinite(universe.rsGlobalPct);
   const rating = weeklyRating;
   const ratingSource = weeklyRating !== null ? "weekly-universe" : "weekly-missing";
@@ -990,6 +993,13 @@ export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe =
     countryRsWeekKey: countryEntry?.available ? countryEntry.weekKey : null,
     countryRsEngineVersion: countryEntry?.available ? countryEntry.engineVersion : null,
     countryRsReason: countryEntry?.available ? null : (countryEntry?.reason || null),
+    themeRsSeries: themeWeeklySeries?.series || [],
+    themeRsRating: themeRating,
+    themeRsSampleSize: themeEntry?.available ? themeEntry.sampleSize : null,
+    themeRsWeekKey: themeEntry?.available ? themeEntry.weekKey : null,
+    themeRsEngineVersion: themeEntry?.available ? themeEntry.engineVersion : null,
+    themeRsThemeKey: themeEntry?.available ? (themeEntry.themeKey || themeWeeklySeries?.themeKey || null) : (themeWeeklySeries?.themeKey || null),
+    themeRsReason: themeEntry?.available ? null : (themeEntry?.reason || null),
     note,
   };
 }
@@ -1649,14 +1659,24 @@ export async function getCompanyBrief(symbol, options = {}) {
       benchmarkSymbol,
       ...relativeStrengthFromBars(chart.bars || [], benchmarkChart.bars || []),
     };
-    const [universeSnapshot, weeklyGlobalRs, weeklyCountryRs, weeklyCountryRsSeries] = await Promise.all([
+    const [universeSnapshot, weeklyGlobalRs, weeklyCountryRs, weeklyCountryRsSeries, weeklyThemeRs, weeklyThemeRsSeries] = await Promise.all([
       readUniverseRsSnapshot(symbol).catch(() => null),
       readGlobalRsSeriesForSymbol(symbol).catch(() => ({ series: [], latest: null })),
       readCountryRsForSymbols([symbol]).catch(() => ({ configured: false, bySymbol: new Map() })),
       readCountryRsSeriesForSymbol(symbol).catch(() => ({ series: [], latest: null })),
+      readThemeRsForSymbols([symbol], {
+        rowBySymbol: new Map([[symbol.trim().toUpperCase(), {
+          symbol,
+          sector: profile.sector,
+          industry: profile.industry,
+          theme: theme.key,
+        }]]),
+      }).catch(() => ({ configured: false, bySymbol: new Map() })),
+      readThemeRsSeriesForSymbol(symbol, { themeKey: theme.key }).catch(() => ({ series: [], latest: null })),
     ]);
     const countryEntry = weeklyCountryRs.bySymbol?.get(symbol.trim().toUpperCase()) || null;
-    const relativeStrength = mergeUniverseRelativeStrength(benchmarkStrength, universeSnapshot, weeklyGlobalRs, countryEntry, weeklyCountryRsSeries);
+    const themeEntry = weeklyThemeRs.bySymbol?.get(symbol.trim().toUpperCase()) || null;
+    const relativeStrength = mergeUniverseRelativeStrength(benchmarkStrength, universeSnapshot, weeklyGlobalRs, countryEntry, weeklyCountryRsSeries, themeEntry, weeklyThemeRsSeries);
     relativeStrength.series = relativeStrengthSeriesFromBars(chart.bars || [], benchmarkChart.bars || []);
     const website = normalizeWebsite(profile.website);
     const domain = assetDomainForSymbol(symbol, website);

@@ -21,6 +21,7 @@ import {
   projectPatternMarkers,
   projectRsRatingSeries,
   projectRsCountryRatingSeries,
+  projectRsThemeRatingSeries,
   projectRsVisibleRangeSummary,
   projectVolumeSeries,
   rsLineHistory,
@@ -252,6 +253,15 @@ describe("chartSeriesModel · RS (rating y línea)", () => {
     const projected = projectRsCountryRatingSeries(rows, series, { rsCountryLine: true });
     expect(projected).toHaveLength(2);
     expect(projected.at(-1).value).toBe(60);
+  });
+
+  it("projectRsThemeRatingSeries respeta rsThemeLine y reutiliza la proyección del RS global", () => {
+    const rows = buildDailyRows({ count: 10 });
+    const series = [{ time: rows[0].time, value: 44 }, { time: rows.at(-1).time, value: 55 }];
+    expect(projectRsThemeRatingSeries(rows, series, { rsThemeLine: false })).toEqual([]);
+    const projected = projectRsThemeRatingSeries(rows, series, { rsThemeLine: true });
+    expect(projected).toHaveLength(2);
+    expect(projected.at(-1).value).toBe(55);
   });
 
   it("projectBenchmarkLineSeries produce rawValue (lineal) y value (log) desde base", () => {

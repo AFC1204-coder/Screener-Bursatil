@@ -6,11 +6,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **MET-3c** (cron RS tema · `rs-theme-private.yml` · `30 7 * * 0`).  
-Anterior: **MET-3b write+hydrate** (`98bd0a8`).  
-**Cola:** CHART-RS-3 · MIGRATE **mar 2 sep** · R-06 / yield  
-**Nota MET-3c (2026-08-31):** `45eacc1` · cron `30 7 * * 0` · `workflow_dispatch` dueño → **Success** (2026-08-31).  
-**Nota MET-3c Actions (2026-08-31):** run manual Success · sellado por dueño (gh API Forbidden en orquestador).  
+Último cerrado: **CHART-RS-3** (overlay RS tema · `--rs-theme` · badge + toggle).  
+Anterior: **MET-3c** Success + guard perfiles `8e9c861`.  
+**Cola:** MIGRATE **mar 2 sep** · UX-NAC / R-06 / yield  
+**Nota CHART-RS-3 smoke (2026-08-31):** MSFT — toggle «RS tema» · badge **68** · token `#C4A5E8` · ausencia línea (1 sem &lt; 8) OK; brief cache `refresh=1` para ver campos nuevos.  
+**Nota MET-3c guard (2026-08-31):** abort write si perfiles &lt;75% · timeout 60s (`8e9c861`).  
+**Nota MET-3c Actions (2026-08-31):** `workflow_dispatch` Success · N Software/IA Actions 244 (local 570) → guard.  
+**Nota MET-3c (2026-08-31):** `45eacc1` · cron `30 7 * * 0`.  
 **Nota MET-3b write (2026-08-31):** `--write` 12/12 · MSFT **64** · AGX **52**.  
 **Nota MET-3b (2026-08-31):** impl `b18860f` + hydrate scans `98bd0a8`.  
 **Nota MET-3 aceptación (2026-08-31):** dueño OK + Grok · 12 THEME_RULES.  
