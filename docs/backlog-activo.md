@@ -5,14 +5,14 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **THEME-SERIES** — inventario hecho; **espera vía A/B/C del dueño**.  
+Ticket en curso: **THEME-SERIES vía B** (backfill FX as-of · Composer 2.5) — `docs/tickets/activo.md`.  
 Último cerrado: **MET-4 spec** propuesto (`54050e0`) — **pendiente OK dueño** antes de MET-4b.  
-**Cola acordada (dueño):** ~~BUG-HUNT~~ → ~~R-06~~ → ~~MET-4 spec~~ → **THEME-SERIES (gate A/B/C)** · MIGRATE aparcado · MET-4b tras OK.  
-**Nota THEME-SERIES inventario (2026-08-31):** 12/12 engines · **1** `week_key` (`2026-W36`) · AAPL/MSFT/NVDA/0981.HK = 1 pt · déficit **7** sem · sin write.  
-**Nota MET-4 (2026-08-31):** `docs/spec-muletas-tendencia.md` · 3 muletas · solo ficha «Sostén de la tendencia» · scoring off · sin fusionar MET-5.  
+**Cola acordada (dueño):** ~~BUG-HUNT~~ → ~~R-06~~ → ~~MET-4 spec~~ → **THEME-SERIES B** · MIGRATE aparcado · MET-4b tras OK.  
+**Nota THEME-SERIES (2026-08-31):** dueño elige **B estricta** — FX por fecha de barra; no spot hoy; no `--as-of` en motor global. Inventario 1/8 (`2026-W36`).  
+**Nota THEME-SERIES inventario (2026-08-31):** 12/12 engines · **1** `week_key` · déficit **7** sem.  
+**Nota MET-4 (2026-08-31):** `docs/spec-muletas-tendencia.md` · 3 muletas · solo ficha · scoring off.  
 **Nota BUG-HUNT-1b (2026-08-31):** cerrado `e90dc59`.  
-**Nota R-06 (2026-08-31):** re-medida post-fix (gesto→truth, mesa 1715): Deterioro **~1030** · E2 **~333** · pivot **~249** · intl **~1544** · IPO **~435** (baseline 30-ago: 1879 / 1980 / 964 / 2522 / 946).  
-**Nota BUG-HUNT-1 (2026-08-31):** 1ª entrega rechazada (solo quitó flushSync); causa real = loop paint.  
+**Nota R-06 (2026-08-31):** Deterioro **~1030** · E2 **~333** · pivot **~249** · intl **~1544** · IPO **~435**.  
 **Nota YIELD-1 smoke (2026-08-31):** Global → 1583 · mesa CA+…+US.  
 **Nota MIGRATE (2026-08-31):** aparcado por dueño.  
 **Nota MET-3c guard (2026-08-31):** abort write si perfiles &lt;75% · timeout 60s (`8e9c861`).  

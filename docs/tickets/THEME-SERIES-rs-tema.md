@@ -1,27 +1,36 @@
-# THEME-SERIES — Serie histórica RS tema ≥8 semanas
+# THEME-SERIES — Serie histórica RS tema ≥8 semanas (vía B)
 
 **Rama:** `codex/statsedge-ui-polish`  
-**Tipo:** inventario + plan de escritura (y write solo si el dueño eligió vía)  
-**Modelo:** Composer 2.5 (mecánico) o Claude Code si toca decisión FX  
-**Bloqueo:** MET-1 **prohíbe backfill histórico as-of** bajo el motor FX/USD. El motor tema reutiliza el mismo camino FX (`scripts/rs-theme-private.mjs`). **No escribir semanas históricas a ciegas.**
+**Modelo:** Composer 2.5  
+**Decisión dueño (2026-08-31):** vía **B estricta** — backfill con FX **por fecha de cada barra/semana** (no FX spot de hoy para todo el histórico). Excepción documentada a la prohibición MET-1 de `--as-of` en el motor **global**; **no** reabrir `--as-of` en `rs-global-private.mjs`.
 
-## Meta
+## Inventario (ya hecho)
 
-Chart overlay / ficha necesitan serie tema con **≥8 `weekKey`** por símbolo (mismo `engine_version` tema), no un solo snapshot W actual.
+12/12 engines · 1 `week_key` (`2026-W36`) · déficit 7 semanas.
 
-## Alcance (en orden)
+## Qué construir / ejecutar
 
-1. **Inventario** (solo lectura DB/código): cuántas semanas tema hay hoy por `engine_version` / theme; ejemplos AAPL/MSFT/NVDA + 1 intl.
-2. **Cerrar vía con dueño** (no inventar):
-   - **A)** Acumular solo hacia adelante (cron domingo) — ≥8 sem = ~2 meses.
-   - **B)** Write histórico con FX `trade_date ≤ sesión` declarado (excepción documentada a MET-1 as-of; OK explícito dueño).
-   - **C)** Otra vía que proponga el agente **sin** violar invariante 10 / scoring.
-3. Si el dueño ya eligió en el chat orquestador: ejecutar **solo esa vía**, con dry-run → `--write`, tests de dedupe serie (`weekKey`), smoke ficha/chart si aplica.
-4. Documentar resultado en backlog.
+1. **Flag solo-tema** (p. ej. `--backfill-weeks=7` o lista de `week_key` / fechas fin de semana ISO), **sin** habilitar `--as-of` en el motor global.
+2. Por cada semana objetivo (las 7 anteriores a W36, o hasta completar ≥8 puntos totales):
+   - `targetDate` = último día de esa semana ISO (o viernes de sesión acordado).
+   - Truncar `daily_bars` a `trade_date ≤ targetDate` **antes** de `computeSymbol` (hoy `bars[0]` es “ahora”).
+   - FX: seguir `pickFxObservation` por fecha de barra (ya en `computeSymbol`) — **prohibido** aplicar una sola tasa FX de hoy a toda la serie.
+   - Escribir snapshot + items con ese `week_key` / `engine_version` tema (12 themes).
+3. Subir `limit` de barras si 320 no alcanza lookback+atraso (p. ej. ≥400).
+4. Flujo: dry-run **1 theme × 1 semana** → dry-run acotado → `--write` completo deficitario.
+5. Verificar lectura: `readThemeRsSeriesForSymbol` AAPL/MSFT/NVDA/0981.HK → **≥8** `weekKey` dedupe.
+6. Documentar en cabecera del script + nota backlog: excepción dueño B + limitación Yahoo `fxPublishedAt`.
+
+## Guardrails
+
+- No tocar scoring / pin global / motor país.
+- No escribir W36 de nuevo si ya existe (idempotente / skip).
+- Respetar guard cobertura perfiles (&lt;75% abort) si aplica al write.
+- Sin commit/push (orquestador).
 
 ## Fuera
 
-MET-4b, scoring, MIGRATE, cambiar fórmula tema, commit/push (orquestador).
+MET-4b, MIGRATE, overlay UI nuevo, vía A/C.
 
 ## Plantilla de retorno
 
