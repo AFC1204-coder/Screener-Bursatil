@@ -26,6 +26,7 @@ import {
   slopeWord,
   volumeDryUpDisplay,
 } from "@/lib/descriptiveStrip";
+import { buildTrendSupportLines } from "@/lib/trendSupport";
 
 function Missing({ reason = "" }) {
   return (
@@ -78,6 +79,16 @@ export function GrowthGrid({ cells }) {
   );
 }
 
+function TrendSupportLine({ line }) {
+  return (
+    <li className="stockDescTrendItem">
+      {line.available
+        ? <span>{line.text}</span>
+        : <Missing reason={line.reason} />}
+    </li>
+  );
+}
+
 export default function DescriptiveStrip({ data = null, setupPattern = null, technical = null, stockVolume = null }) {
   if (!data) return null;
   const weekly = data.stage?.weekly || {};
@@ -108,6 +119,14 @@ export default function DescriptiveStrip({ data = null, setupPattern = null, tec
   const ma200Daily = Number.isFinite(technical?.distanceSma200) ? technical.distanceSma200 : null;
   const upDownVol = stockVolume?.upDownVolumeRatio || null;
   const volSurge = stockVolume?.volumeSurge || null;
+  const chartBars = Array.isArray(data?.chartBars) ? data.chartBars : [];
+  const trendSupport = buildTrendSupportLines(chartBars, {
+    stage: data?.stage,
+    perf6m: data?.perf6m,
+    upDownVolRatio: upDownVol?.available ? upDownVol.value : data?.upDownVolRatio ?? setupPattern?.upDownVolRatio,
+    advanceRecentPct: data?.advanceRecentPct,
+    advancePriorPct: data?.advancePriorPct,
+  });
 
   return (
     <section className="stockDescStrip" aria-label="Ficha descriptiva del valor">
@@ -150,6 +169,14 @@ export default function DescriptiveStrip({ data = null, setupPattern = null, tec
           value={volSurge?.available && Number.isFinite(volSurge.value) ? sharedPct(volSurge.value) : null}
           reason={volSurge?.reason || "Sin medias de volumen comparables a 5 y 20 sesiones."}
         />
+      </div>
+      <div className="stockDescTrendSupport" aria-label={trendSupport.title}>
+        <h3 className="stockDescLabel">{trendSupport.title}</h3>
+        <ul className="stockDescTrendList">
+          {trendSupport.lines.map((line) => (
+            <TrendSupportLine key={line.key} line={line} />
+          ))}
+        </ul>
       </div>
     </section>
   );

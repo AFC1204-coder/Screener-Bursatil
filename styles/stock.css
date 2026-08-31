@@ -2207,6 +2207,35 @@
   font-size: var(--data-s);
 }
 
+.stockDescTrendSupport {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.stockDescTrendList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.stockDescTrendItem {
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  line-height: var(--lh-body);
+}
+
+.stockDescTrendItem .stockDescMissing {
+  font-size: var(--text-s);
+}
+
 /* Banda 4 — crecimiento trimestral */
 .stockDescGrowth {
   display: flex;
