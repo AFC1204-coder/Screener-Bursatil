@@ -9,7 +9,7 @@
 
 1. **Etapas con índice (v1):** solo **2 y 4** (analizadas). Coherente con la propuesta del spec.
 2. **Etapas 1 y 3:** **fuera de v1** — quedan como **potenciales** para un track futuro **combinado con VCP / bases** (perfil propio de insumos, no reabrir aquí). No se muestra número 0–100 de «salud de etapa» en 1/3 hasta ese ticket.
-3. **Umbrales (26 / 10 sem · extensión 15/50%):** muestreo **MET-5-calibrate** hecho (`scripts/stage-health-calibrate.mjs`, informe `docs/scratch/stage-health-calibrate.md`). Sobre lote nocturno US (~1208 filas; 505 E2 / 176 E4 con índice): salud p50≈70/66,5; p90−p10≈44 pts; ~30% E2 en techo 26 sem; extensión ≥50% casi nula en E4. **Recomendación orquestador: mantener 26/10/15/50.** Pendiente **OK explícito del dueño** → MET-5b.
+3. **Umbrales (26 / 10 sem · extensión 15/50%):** muestreo **MET-5-calibrate** (`docs/scratch/stage-health-calibrate.md`). Dueño **OK 2026-08-31**: **mantener 26/10/15/50** → **MET-5b** activo.
 4. Resto del spec (5 insumos, pesos, solo ficha, scoring off, `weeklyStage` intacto) **aceptado**.
 
 ---
@@ -291,9 +291,9 @@ MET-5 (y su eventual MET-5b) **no** incluye:
 
 | Ticket | Contenido | Condición |
 |---|---|---|
-| **MET-5-calibrate** (pre-5b) | Script read-only: distribución persistencia 30/10, `|distanceSlowMaPct|`, índice propuesto en Etapa 2 y 4; percentiles y ejemplos; **sin write** | **Activo** tras aceptación 2026-08-31 |
-| **MET-5b** (implementación) | Módulo puro + campo scan + línea ficha + metodología + tests + smoke | Tras calibrate + OK umbrales del dueño |
-| **Salud etapas 1/3 + VCP** (futuro) | Perfil propio de «potencial» / madurez de base·techo, no el mismo 0–100 de tendencia | Track VCP; no empieza aquí |
+| **MET-5-calibrate** (pre-5b) | Distribución umbrales · informe scratch | **Cerrado** · umbrales OK dueño |
+| **MET-5b** (implementación) | Módulo puro + campo scan + línea ficha + metodología + tests + smoke | **Activo** tras OK umbrales 2026-08-31 |
+| **Salud etapas 1/3 + VCP** (futuro) | Perfil propio de «potencial» / madurez de base·techo | Track VCP; no empieza aquí |
 | **Filtro de salud** (futuro) | Lectura de `stageHealthScore` como filtro hunt | Tras uso real de MET-5b + decisión explícita |
 | **Serie histórica de salud** (futuro) | Snapshots si el dueño quiere evolución temporal | Spec propio |
 

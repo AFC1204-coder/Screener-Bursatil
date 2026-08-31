@@ -5,10 +5,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre** — espera OK umbrales MET-5 → MET-5b.  
-Último cerrado: **MET-5-calibrate** (verificado; commit pendiente en este cierre).  
-**Cola acordada (dueño):** ~~MET-5-calibrate~~ → **OK umbrales** → MET-5b · 1/3→VCP · MIGRATE aparcado.  
-**Nota MET-5-calibrate (2026-08-31):** n=1208 scan · 505 E2 / 176 E4 · recomendar **mantener 26/10/15/50** · `docs/scratch/stage-health-calibrate.md`.  
+Ticket en curso: **MET-5b** (impl salud de etapa · Composer 2.5) — `docs/tickets/activo.md`.  
+Último cerrado: **MET-5-calibrate** (`4d3ba11`) · umbrales OK dueño.  
+**Cola acordada (dueño):** ~~MET-5-calibrate~~ → ~~OK umbrales~~ → **MET-5b** · 1/3→VCP · MIGRATE aparcado.  
+**Nota MET-5b (2026-08-31):** umbrales **26/10/15/50** confirmados · solo Etapas 2/4.  
+**Nota MET-5-calibrate (2026-08-31):** n=1208 · recomendar mantener · `docs/scratch/stage-health-calibrate.md`.  
 **Nota MET-5 aceptación (2026-08-31):** solo **2/4** · 1/3 potenciales+VCP.  
 **Nota MET-4b (2026-08-31):** `c46938b`.  
 **Nota BUG-HUNT-1b (2026-08-31):** cerrado `e90dc59`.  
@@ -264,8 +265,8 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | **Aceptado** 2026-08-31 · `54050e0` |
 | MET-4b | Impl ficha «Sostén de la tendencia» | **Hecho** (`c46938b`) |
 | MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | **Aceptado** 2026-08-31 · solo 2/4 · 1/3→VCP |
-| MET-5-calibrate | Muestreo umbrales 26/10 / 15–50% (read-only) | **Cerrado** · recomendar mantener · espera OK dueño |
-| MET-5b | Impl ficha «Salud de etapa» | Tras OK umbrales |
+| MET-5-calibrate | Muestreo umbrales 26/10 / 15–50% (read-only) | **Cerrado** · umbrales OK dueño |
+| MET-5b | Impl ficha «Salud de etapa» | **Activo** · `docs/tickets/activo.md` |
 | MET-4c | Vista rápida / filtro persistencia (opcional) | Ideas; tras uso real MET-4b |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
 | VCP | Detector producto vs corpus `research/contracciones/` | Aplazado / investigación |
