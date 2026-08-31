@@ -6,7 +6,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: **MET-4** (spec muletas tendencia · Fable 5) — `docs/tickets/activo.md`.  
-Último cerrado: **BUG-HUNT-1b** (hash al stamp).  
+Último cerrado: **BUG-HUNT-1b** (`e90dc59`).  
 **Cola acordada (dueño):** ~~BUG-HUNT-1b~~ → ~~R-06~~ → **MET-4** spec → **THEME-SERIES** (≥8 sem) · MIGRATE aparcado.  
 **Nota BUG-HUNT-1b (2026-08-31):** cerrado — update-depth loop truth-line + mesa acotada; smoke 1715 sin crash.  
 **Nota R-06 (2026-08-31):** re-medida post-fix (gesto→truth, mesa 1715): Deterioro **~1030** · E2 **~333** · pivot **~249** · intl **~1544** · IPO **~435** (baseline 30-ago: 1879 / 1980 / 964 / 2522 / 946).  
@@ -259,7 +259,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-3 | Spec RS tema (ocupación / theme) | **Aceptado** · `docs/spec-rs-tema.md` (parche Grok) |
 | MET-3b | Impl lector + motor tema + columna/filtro | **Hecho** · `b18860f`/`98bd0a8` · write 12/12 |
 | MET-3c | Cron GHA RS tema (dom 07:30 UTC) | **Hecho** · `rs-theme-private.yml` |
-| MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | Ideas; sin ticket |
+| MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | **Activo** · spec · `docs/tickets/activo.md` |
 | MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | Ambicioso; tras MET-1…4 |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
 | VCP | Detector producto vs corpus `research/contracciones/` | Aplazado / investigación |
