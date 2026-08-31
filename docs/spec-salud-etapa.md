@@ -9,7 +9,7 @@
 
 1. **Etapas con índice (v1):** solo **2 y 4** (analizadas). Coherente con la propuesta del spec.
 2. **Etapas 1 y 3:** **fuera de v1** — quedan como **potenciales** para un track futuro **combinado con VCP / bases** (perfil propio de insumos, no reabrir aquí). No se muestra número 0–100 de «salud de etapa» en 1/3 hasta ese ticket.
-3. **Umbrales (26 / 10 sem · extensión 15/50%):** el orquestador decide **muestreo read-only obligatorio antes de MET-5b** (ticket MET-5-calibrate). Tras ver distribución, el dueño confirma o recorta constantes; luego MET-5b.
+3. **Umbrales (26 / 10 sem · extensión 15/50%):** muestreo **MET-5-calibrate** hecho (`scripts/stage-health-calibrate.mjs`, informe `docs/scratch/stage-health-calibrate.md`). Sobre lote nocturno US (~1208 filas; 505 E2 / 176 E4 con índice): salud p50≈70/66,5; p90−p10≈44 pts; ~30% E2 en techo 26 sem; extensión ≥50% casi nula en E4. **Recomendación orquestador: mantener 26/10/15/50.** Pendiente **OK explícito del dueño** → MET-5b.
 4. Resto del spec (5 insumos, pesos, solo ficha, scoring off, `weeklyStage` intacto) **aceptado**.
 
 ---
