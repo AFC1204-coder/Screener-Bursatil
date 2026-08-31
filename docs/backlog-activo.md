@@ -9,7 +9,7 @@ Ticket en curso: *(ninguno)*.
 Último cerrado: **MET-3c** (cron RS tema · `rs-theme-private.yml` · `30 7 * * 0`).  
 Anterior: **MET-3b write+hydrate** (`98bd0a8`).  
 **Cola:** CHART-RS-3 · MIGRATE **mar 2 sep** · R-06 / yield  
-**Nota MET-3c (2026-08-31):** workflow + `workflow_dispatch` pendiente tras push.  
+**Nota MET-3c (2026-08-31):** `45eacc1` pusheado · cron `30 7 * * 0` · `workflow_dispatch` pendiente (gh Actions API Forbidden en este entorno — disparar a mano en Actions).  
 **Nota MET-3b write (2026-08-31):** `--write` 12/12 · MSFT **64** · AGX **52**.  
 **Nota MET-3b (2026-08-31):** impl `b18860f` + hydrate scans `98bd0a8`.  
 **Nota MET-3 aceptación (2026-08-31):** dueño OK + Grok · 12 THEME_RULES.  
