@@ -5,9 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **THEME-SERIES** (serie RS tema ≥8 sem) — `docs/tickets/activo.md`.  
+Ticket en curso: **THEME-SERIES** — inventario hecho; **espera vía A/B/C del dueño**.  
 Último cerrado: **MET-4 spec** propuesto (`54050e0`) — **pendiente OK dueño** antes de MET-4b.  
-**Cola acordada (dueño):** ~~BUG-HUNT~~ → ~~R-06~~ → ~~MET-4 spec~~ → **THEME-SERIES** · MIGRATE aparcado · MET-4b tras OK.  
+**Cola acordada (dueño):** ~~BUG-HUNT~~ → ~~R-06~~ → ~~MET-4 spec~~ → **THEME-SERIES (gate A/B/C)** · MIGRATE aparcado · MET-4b tras OK.  
+**Nota THEME-SERIES inventario (2026-08-31):** 12/12 engines · **1** `week_key` (`2026-W36`) · AAPL/MSFT/NVDA/0981.HK = 1 pt · déficit **7** sem · sin write.  
 **Nota MET-4 (2026-08-31):** `docs/spec-muletas-tendencia.md` · 3 muletas · solo ficha «Sostén de la tendencia» · scoring off · sin fusionar MET-5.  
 **Nota BUG-HUNT-1b (2026-08-31):** cerrado `e90dc59`.  
 **Nota R-06 (2026-08-31):** re-medida post-fix (gesto→truth, mesa 1715): Deterioro **~1030** · E2 **~333** · pivot **~249** · intl **~1544** · IPO **~435** (baseline 30-ago: 1879 / 1980 / 964 / 2522 / 946).  

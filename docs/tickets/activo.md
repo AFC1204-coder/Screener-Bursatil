@@ -39,13 +39,15 @@ Sin commit ni push.
 | Rama | `codex/statsedge-ui-polish` |
 | Commit/push | **Prohibido** |
 
-## Gate dueño (elige una)
+## Gate dueño (elige una) — inventario 2026-08-31: **1/8** semanas (`2026-W36`)
 
 | Vía | Qué |
 |---|---|
-| **A** | Solo cron hacia adelante (~8 domingos) |
+| **A** | Solo cron hacia adelante (~7 domingos más) — más segura vs MET-1 |
 | **B** | Write histórico con FX declarado (excepción MET-1; OK explícito) |
-| **C** | Otra (propuesta del inventario) |
+| **C** | Otra (p. ej. ocultar overlay hasta ≥8, o backfill parcial documentado) |
+
+**Orquestador recomienda A** si no urge el overlay; **B** si quieres ≥8 pts en días.
 
 ## Cola
 
