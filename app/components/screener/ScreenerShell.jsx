@@ -34,7 +34,7 @@ import {
 import { investorStatusLabel } from "@/lib/screenerFormat";
 import { huntDisplayName } from "@/lib/screenerHuntCards";
 import { OptionalBasePresetsPanel } from "@/lib/screenerFiltersView";
-import { buildMarketsStaleNotice } from "@/lib/marketAvailability";
+import { buildMarketsStaleNotice, isMarketSelectable, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketUnavailabilityReason } from "@/lib/marketAvailability";
 import { buildLideresIntlGuardrailNotice, LIDERES_INTL_CTA } from "@/lib/lideresIntlGuardrail";
 import { buildScreenerFilterBreakdown } from "@/lib/screenerFilterBreakdown";
 import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
@@ -54,7 +54,6 @@ import {
   marketExchange,
   marketName,
 } from "@/lib/screenerConfig";
-import { isMarketSelectable, marketUnavailabilityReason } from "@/lib/marketAvailability";
 import { marketFlag } from "@/lib/symbols";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { rankActionLabel } from "@/lib/screenerExplainability";
@@ -257,10 +256,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   } = actions;
 
   // --- staleness ---
-  // El container (app/page.jsx) calcula si el scan mostrado quedó desactualizado
-  // respecto a markets/manual/scanMode actuales. El banner es no-modal: NO oculta
-  // ni degrada la tabla (los datos siguen siendo válidos, solo del universo previo).
-  // Los dot indicators marcan el control concreto que diverge del último scan.
+  // El container calcula si la selección de mercados diverge del scan cargado.
+  // UX-NAC-1: con desalineación la mesa no enseña filas del mercado equivocado
+  // como caza usable — solo banner + CTA (UX-14) y empty state bloqueante.
   const {
     scanStale = false,
     marketsStale = false,
@@ -269,16 +267,28 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   } = staleness || {};
   const huntLabel = huntDisplayName(presetKey, markets);
   const presetNameForTruth = huntTruthOverride?.presetName ?? huntLabel;
+  const marketsMisalignment = buildMarketsStaleNotice({
+    scannedMarkets,
+    selectedMarkets: markets,
+    rowCount: analyzedRows.length,
+  });
+  const resultsBlockedByMarketMisalignment = Boolean(marketsMisalignment);
+  const huntResultsRows = resultsBlockedByMarketMisalignment ? [] : resultsRows;
+  const huntResultsFiltered = resultsBlockedByMarketMisalignment ? [] : resultsFiltered;
+  const huntResultsPagedRows = resultsBlockedByMarketMisalignment ? [] : resultsPagedRows;
+  const huntResultsEmptyLabel = resultsBlockedByMarketMisalignment
+    ? MARKETS_MISALIGNMENT_EMPTY_LABEL
+    : resultsEmptyLabel;
   const { passCount: passCountForTruth, visibleCount: visibleCountForTruth } = resolveScreenerTruthCounts({
-    eagerPassCount: resultsRows.length,
-    filteredVisibleCount: resultsFiltered.length,
+    eagerPassCount: huntResultsRows.length,
+    filteredVisibleCount: huntResultsFiltered.length,
     huntTruthOverride,
     isHuntTransitionPending,
     rowsDeferredStale,
     viewFiltersActive,
   });
   const truthLine = buildScreenerTruthLine({
-    analyzedRows,
+    analyzedRows: resultsBlockedByMarketMisalignment ? [] : analyzedRows,
     passCount: passCountForTruth,
     visibleCount: visibleCountForTruth,
     pageSize: resultPageSize,
@@ -298,11 +308,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   const selectableMarketCount = MARKETS.filter(([code]) => isMarketSelectable(code)).length;
   const hasActiveMarketPreset = MARKET_REGION_PRESETS.some((key) => isMarketPresetActive(key));
   const marketCustomizeLabel = `Personalizar mercados (${markets.length}/${selectableMarketCount})${hasActiveMarketPreset ? "" : " · personalizado"}`;
-  const marketsMisalignment = buildMarketsStaleNotice({
-    scannedMarkets,
-    selectedMarkets: markets,
-    rowCount: analyzedRows.length,
-  });
   const lideresIntlGuardrail = buildLideresIntlGuardrailNotice({
     presetKey,
     markets,
@@ -329,7 +334,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   // --- franja P3 (percentil por lote) ---
   // Comunicamos honestamente los percentiles batch de la lista visible; si el
   // conjunto es "final", no hay nada que decir.
-  const visibleBatchRows = resultsRows.some((row) => (row.percentileScope || "batch") === "batch");
+  const visibleBatchRows = huntResultsRows.some((row) => (row.percentileScope || "batch") === "batch");
   const statusLabel = investorStatusLabel(status);
   const scanStatusVisible = showScanStatusBar(err, status);
 
@@ -665,20 +670,20 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             </div>
           ) : null}
           <MobileResultList
-            rows={resultsPagedRows}
+            rows={huntResultsPagedRows}
             settings={activeSettings}
-            totalRows={resultsFiltered.length}
+            totalRows={huntResultsFiltered.length}
             sort={sort}
             onSort={setSort}
             perfPeriod={perfPeriod}
             setupMode={activeSettings.setupMode}
             onPerfPeriod={setPerfPeriod}
-            onReview={(symbol) => openReview(resultsFiltered, symbol)}
+            onReview={(symbol) => openReview(huntResultsFiltered, symbol)}
             onFavorite={addFavorite}
             favoriteSymbols={resultsFavoriteSymbols}
-            onSave={() => saveSnapshot(resultsFiltered)}
-            onCsv={() => csv(resultsFiltered)}
-            onAuditJson={() => decisionAuditJson(resultsFiltered)}
+            onSave={() => saveSnapshot(huntResultsFiltered)}
+            onCsv={() => csv(huntResultsFiltered)}
+            onAuditJson={() => decisionAuditJson(huntResultsFiltered)}
             onOpenStock={saveSessionBeforeStockOpen}
             page={visibleResultPage}
             pageSize={resultPageSize}
@@ -689,7 +694,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             decisionResolutionOptions={decisionResolutionOptions}
             onDecisionResolutionFilter={setDecisionResolutionFilter}
             decisionResolutions={resultsDecisionResolutions}
-            emptyLabel={resultsEmptyLabel}
+            emptyLabel={huntResultsEmptyLabel}
           />
         </section> : null}
 
@@ -747,17 +752,17 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
                 >
                   Resetear criterios
                 </button>
-                {resultsFiltered.length ? <>
-                  <button className="btn btnSmall btnGhost" onClick={() => csv(resultsFiltered)}>↓ CSV</button>
-                  <button className="btn btnSmall btnGhost" onClick={() => saveSnapshot(resultsFiltered)} aria-label="Guardar copia de resultados">Guardar</button>
+                {huntResultsFiltered.length ? <>
+                  <button className="btn btnSmall btnGhost" onClick={() => csv(huntResultsFiltered)}>↓ CSV</button>
+                  <button className="btn btnSmall btnGhost" onClick={() => saveSnapshot(huntResultsFiltered)} aria-label="Guardar copia de resultados">Guardar</button>
                 </> : null}
               </div>
-              {resultsFiltered.length ? <>
+              {huntResultsFiltered.length ? <>
                 <button className="btn btnSmall btnPrimary" onClick={openPrimaryReview}>Revisar</button>
                 <details className="resultsMoreMenu">
                   <summary className="btn btnSmall btnGhost" aria-label="Más herramientas" title="Más herramientas">⋯</summary>
                   <div className="resultsMoreMenuPanel">
-                    <button type="button" className="btn btnSmall btnGhost" onClick={() => decisionAuditJson(resultsFiltered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
+                    <button type="button" className="btn btnSmall btnGhost" onClick={() => decisionAuditJson(huntResultsFiltered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
                   </div>
                 </details>
               </> : null}
@@ -796,13 +801,13 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onIpo={setIpo}
             chips={resultFilterChips}
             hiddenCount={hiddenByView}
-            visibleCount={resultsFiltered.length}
-            totalCount={resultsRows.length}
+            visibleCount={huntResultsFiltered.length}
+            totalCount={huntResultsRows.length}
             onClearAll={clearResultView}
-            onReview={resultsFiltered.length ? openResultViewReview : undefined}
+            onReview={huntResultsFiltered.length ? openResultViewReview : undefined}
           />
           <ResultPagerTable
-            visibleCount={resultsFiltered.length}
+            visibleCount={huntResultsFiltered.length}
             resultPageStart={resultPageStart}
             resultPageEnd={resultPageEnd}
             resultPageSize={resultPageSize}
@@ -810,7 +815,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             visibleResultPage={visibleResultPage}
             totalResultPages={totalResultPages}
             onSetResultPage={setResultPageClamped}
-            pagedRows={resultsPagedRows}
+            pagedRows={huntResultsPagedRows}
             favoriteSymbols={resultsFavoriteSymbols}
             onFavorite={addFavorite}
             onReview={openResultReview}
@@ -823,7 +828,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             sortAsc={sortAsc}
             onSortColumn={toggleSortColumn}
             setupMode={activeSettings.setupMode}
-            emptyLabel={resultsEmptyLabel}
+            emptyLabel={huntResultsEmptyLabel}
           />
         </section> : null}
       </main>

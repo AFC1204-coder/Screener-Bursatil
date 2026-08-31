@@ -8,6 +8,7 @@ import {
   isMarketSelectable,
   marketPresetMarkets,
   marketsSelectionMisaligned,
+  restoreSessionMarketAlignAction,
   scannedMarketsFromScan,
 } from "@/lib/marketAvailability";
 
@@ -82,6 +83,35 @@ describe("marketsSelectionMisaligned", () => {
 
   it("no avisa sin mercados escaneados", () => {
     expect(marketsSelectionMisaligned([], ["HK"])).toBe(false);
+  });
+});
+
+describe("restoreSessionMarketAlignAction", () => {
+  it("pide auto-carga cuando la sesión restaurada tiene HK pero el scan es US", () => {
+    expect(restoreSessionMarketAlignAction({
+      restoredMarkets: ["HK"],
+      scanContext: { scannedMarkets: ["US"] },
+      analyzedRows: [{ symbol: "AAON", country: "US" }],
+      hasVisibleRows: true,
+    })).toEqual(["HK"]);
+  });
+
+  it("no auto-carga cuando selección y scan coinciden", () => {
+    expect(restoreSessionMarketAlignAction({
+      restoredMarkets: ["US"],
+      scanContext: { scannedMarkets: ["US"] },
+      analyzedRows: [{ symbol: "AAPL", country: "US" }],
+      hasVisibleRows: true,
+    })).toBeNull();
+  });
+
+  it("no auto-carga sin filas visibles", () => {
+    expect(restoreSessionMarketAlignAction({
+      restoredMarkets: ["HK"],
+      scanContext: { scannedMarkets: ["US"] },
+      analyzedRows: [{ symbol: "AAON", country: "US" }],
+      hasVisibleRows: false,
+    })).toBeNull();
   });
 });
 

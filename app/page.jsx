@@ -30,7 +30,7 @@ import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/l
 import { normalizeScanErrorGroups } from "@/lib/scanErrorGroups";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
 import { DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
-import { filterSelectableMarkets, formatMissingMarketsDetail, accumulatedMaterializedStatusDetail, intlBroadStatusDetail, marketPresetMarkets, scannedMarketsFromScan } from "@/lib/marketAvailability";
+import { filterSelectableMarkets, formatMissingMarketsDetail, accumulatedMaterializedStatusDetail, intlBroadStatusDetail, marketPresetMarkets, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketsSelectionMisaligned, restoreSessionMarketAlignAction, scannedMarketsFromScan } from "@/lib/marketAvailability";
 import { buildDecisionBrief, buildDecisionEvidenceChecklist, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
 import { attachDecisionTrace, auditDecisionRowIssues, buildDecisionAuditExportPayload, buildDecisionTrace, decisionConfidenceLabel, decisionTraceForRow } from "@/lib/decisionAudit";
 import { decisionProfileStateForStock } from "@/lib/decisionProfile";
@@ -422,6 +422,7 @@ export default function Page() {
   const resultsOwnerRef = useRef("none");
   const manualRefreshGenRef = useRef(0);
   const marketLoadGenRef = useRef(0);
+  const restoreMarketAlignRef = useRef(null);
   function restoreSnapshot(scan, { source = "local", notice = null } = {}) {
     if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) return false;
     resultsOwnerRef.current = source;
@@ -778,6 +779,23 @@ export default function Page() {
       }
       if (localScanIsSampled(referencedScan)) sampledScan = referencedScan;
       restoredRowsCount = restoredRows.length || restoredAnalyzedRows.length;
+      const restoreScanContext = withScanScreenerFilters(session.scanContext || null, referencedScan);
+      const restoreMarketAlignMarkets = restoreSessionMarketAlignAction({
+        restoredMarkets,
+        scanContext: restoreScanContext,
+        analyzedRows: restoredAnalyzedRows,
+        referencedScan,
+        hasVisibleRows: Boolean(restoredRowsCount),
+      });
+      if (restoreMarketAlignMarkets) {
+        restoredRows = [];
+        restoredAnalyzedRows = [];
+        restoredRowsCount = 0;
+        restoreMarketAlignRef.current = {
+          markets: restoreMarketAlignMarkets,
+          label: "Restaurando sesión: cargando datos de la selección…",
+        };
+      }
       if (restoredRowsCount) resultsOwnerRef.current = "session";
       if (Number.isFinite(restoredScrollY) && restoredScrollY > 0) restoreScrollRef.current = restoredScrollY;
       setMarkets(restoredMarkets);
@@ -788,7 +806,7 @@ export default function Page() {
       setUniverseScope(session.universeScope || (restoredUniverse.length ? universeScopeKey(restoredMarkets, restoredManual) : ""));
       setRows(restoredRows);
       setAnalyzedRows(restoredAnalyzedRows);
-      setScanContext(withScanScreenerFilters(session.scanContext || null, referencedScan));
+      setScanContext(restoreScanContext);
       setScanPerf(session.scanPerf || null);
       setSnapshotNotice(session.snapshotNotice || null);
       // normalizeScanErrorGroups cubre las sesiones guardadas con el formato
@@ -823,15 +841,17 @@ export default function Page() {
         fastFilterSignatureRef.current = fastFilterSignature(
           restoredAnalyzedRows,
           restoredActiveSettings,
-          { ...withScanScreenerFilters(session.scanContext, referencedScan), marketHealth: restoredMarketHealth, useRegimeFilter: restoredUseRegimeFilter },
+          { ...restoreScanContext, marketHealth: restoredMarketHealth, useRegimeFilter: restoredUseRegimeFilter },
         );
       }
       setStatus(
-        restoredRows.length
-          ? `Sesión restaurada: ${restoredRows.length} acciones en el screener.`
-          : restoredAnalyzedRows.length
-            ? `Sesión restaurada: ${restoredAnalyzedRows.length} acciones analizadas; recalculando filtros.`
-            : DEFAULT_STATUS
+        restoreMarketAlignRef.current
+          ? "Sesión restaurada: cargando datos de la selección…"
+          : restoredRows.length
+            ? `Sesión restaurada: ${restoredRows.length} acciones en el screener.`
+            : restoredAnalyzedRows.length
+              ? `Sesión restaurada: ${restoredAnalyzedRows.length} acciones analizadas; recalculando filtros.`
+              : DEFAULT_STATUS
       );
       syncAdvancedBaseline(restoredSettings, restoredFilterLayers);
     } else {
@@ -847,7 +867,7 @@ export default function Page() {
       : null;
     if (!restoredRowsCount) {
       restoreLatestSnapshot({ isCancelled: () => cancelled });
-    } else if (refreshReason) {
+    } else if (refreshReason && !restoreMarketAlignRef.current) {
       // P1: datos anteriores a la frontera nocturna. P2: copia local muestreada
       // (fitScansForBrowser deja ~576 de ~3309). Las dos disparan el MISMO
       // getLatestScanFromCloud + applyFreshSnapshotData; no se dobla el fetch.
@@ -1122,43 +1142,6 @@ export default function Page() {
     () => filterFamilyImpactByPilot({ analyzedRows, settings, filterLayers, fieldRules }),
     [analyzedRows, settings, filterLayers, fieldRules],
   );
-  // Estado vacío de la tabla, con la causa dicha (punto 4 del contrato sin
-  // botón): cargando ≠ cero-por-filtro ≠ sin datos. Nunca "Ejecuta un scan".
-  const resultsEmptyLabel = restoringScan
-    ? "Cargando los últimos datos guardados..."
-    : analyzedRows.length
-      ? (!rows.length
-        ? (shouldUseFamilyEmptyLabel("ipo", {
-          rows,
-          analyzedRows,
-          presetKey,
-          filterLayers,
-          settings: activeSettings,
-        })
-          ? <FilterFamilyEmptyLabel
-            familyKey="ipo"
-            analyzedCount={analyzedRows.length}
-            coverage={familyCoverage.ipo}
-            filterLayers={filterLayers}
-            settings={activeSettings}
-          />
-          : shouldUseFamilyEmptyLabel("relativeStrength", {
-            rows,
-            analyzedRows,
-            presetKey,
-            filterLayers,
-            settings: activeSettings,
-          })
-            ? <FilterFamilyEmptyLabel
-              familyKey="relativeStrength"
-              analyzedCount={analyzedRows.length}
-              coverage={familyCoverage.relativeStrength}
-              filterLayers={filterLayers}
-              settings={activeSettings}
-            />
-            : `Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`)
-        : `Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`)
-      : "No hay datos cargados todavía. Los datos de anoche se cargan al abrir la página; si no aparecen, recarga.";
   // --- Staleness de scan-settings -------------------------------------------
   // El scan mostrado es "vigente" si markets/manual/scanMode actuales coinciden
   // con los vigentes al completar el último scan (guardados en scanContext).
@@ -1188,6 +1171,45 @@ export default function Page() {
   const selectedMarketsKey = markets.slice().sort().join(",");
   const marketsStale = Boolean(effectiveScannedMarkets.length) && selectedMarketsKey !== scannedMarketsKey;
   const scanModeStale = scanStale && scanContext && scanMode !== scanContext?.scannedScanMode;
+  // Estado vacío de la tabla, con la causa dicha (punto 4 del contrato sin
+  // botón): cargando ≠ desalineación mercados ≠ cero-por-filtro ≠ sin datos.
+  const resultsEmptyLabel = restoringScan
+    ? "Cargando los últimos datos guardados..."
+    : marketsStale
+      ? MARKETS_MISALIGNMENT_EMPTY_LABEL
+      : analyzedRows.length
+        ? (!rows.length
+          ? (shouldUseFamilyEmptyLabel("ipo", {
+            rows,
+            analyzedRows,
+            presetKey,
+            filterLayers,
+            settings: activeSettings,
+          })
+            ? <FilterFamilyEmptyLabel
+              familyKey="ipo"
+              analyzedCount={analyzedRows.length}
+              coverage={familyCoverage.ipo}
+              filterLayers={filterLayers}
+              settings={activeSettings}
+            />
+            : shouldUseFamilyEmptyLabel("relativeStrength", {
+              rows,
+              analyzedRows,
+              presetKey,
+              filterLayers,
+              settings: activeSettings,
+            })
+              ? <FilterFamilyEmptyLabel
+                familyKey="relativeStrength"
+                analyzedCount={analyzedRows.length}
+                coverage={familyCoverage.relativeStrength}
+                filterLayers={filterLayers}
+                settings={activeSettings}
+              />
+              : `Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`)
+          : `Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`)
+        : "No hay datos cargados todavía. Los datos de anoche se cargan al abrir la página; si no aparecen, recarga.";
   // La desalineación mercados↔scan se pinta en ScreenerShell (un banner + CTA).
   // No ocupamos snapshotNotice para evitar duplicar el aviso naranja.
   // Aviso de cobertura (punto único): si la selección de mercados pide
@@ -1381,6 +1403,13 @@ export default function Page() {
       if (marketLoadGenRef.current === loadGen) setRestoringScan(false);
     });
   }
+  useEffect(() => {
+    if (!sessionReady) return;
+    const pending = restoreMarketAlignRef.current;
+    if (!pending?.markets?.length) return;
+    restoreMarketAlignRef.current = null;
+    loadScanForMarketSelection(pending.markets, pending.label || "Restaurando sesión: cargando datos de la selección…");
+  }, [sessionReady]);
   function maybeAutoApplyIntlPreset(nextMarkets, currentPresetKey = presetKey) {
     if (nextMarkets.length > 1 && marketSelectionIncludesUs(nextMarkets)) {
       return false;
@@ -1694,6 +1723,18 @@ export default function Page() {
     setUniverse([]);
     setUniverseScope("");
     announceCoverage(nextMarkets);
+    const scanned = (() => {
+      const fromContext = scanContext?.scannedMarkets;
+      if (Array.isArray(fromContext) && fromContext.length) return fromContext;
+      if (analyzedRows.length) return scannedMarketsFromScan({ rows: analyzedRows }, analyzedRows);
+      return [];
+    })();
+    if (marketsSelectionMisaligned(scanned, nextMarkets)) {
+      loadScanForMarketSelection(
+        filterSelectableMarkets(nextMarkets),
+        "Plantilla aplicada: cargando datos de la selección…",
+      );
+    }
   }
   async function saveFilterConfigToCloud() {
     setStatus("Guardando filtros en la nube...");
@@ -1830,6 +1871,7 @@ export default function Page() {
         setUniverse([]);
         setUniverseScope("");
         announceCoverage([item.value]);
+        loadScanForMarketSelection([item.value], `Cargando datos de ${marketName(item.value)}…`);
         setStatus(`Los datos cargados no incluyen ${marketName(item.value)}.`);
         await loadUniverse([item.value]);
       } else {

@@ -192,6 +192,21 @@ describe("ScreenerShell markets misalignment", () => {
     expect((html.match(/class="scanStaleNotice"/g) || []).length).toBe(1);
   });
 
+  it("HK seleccionado + scan US no muestra filas US como caza usable", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      marketsStale: true,
+      scanStale: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["HK"],
+    })));
+    expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
+    expect(html).toContain("0 analizadas");
+    expect(html).toContain("0 en lista");
+    expect(html).not.toContain("AAPL");
+    expect(html).not.toContain(">Revisar<");
+    expect(html).not.toContain("1 en lista");
+  });
+
   it("muestra Traer datos frescos solo cuando mercados coinciden pero scanStale", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
       marketsStale: false,

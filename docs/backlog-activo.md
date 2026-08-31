@@ -5,11 +5,14 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: *(ninguno)*.  
-Último cerrado: **CHART-RS-3** (overlay RS tema · `--rs-theme` · badge + toggle).  
-Anterior: **MET-3c** Success + guard perfiles `8e9c861`.  
-**Cola:** MIGRATE **mar 2 sep** · UX-NAC / R-06 / yield  
-**Nota CHART-RS-3 smoke (2026-08-31):** MSFT — toggle «RS tema» · badge **68** · token `#C4A5E8` · ausencia línea (1 sem &lt; 8) OK; brief cache `refresh=1` para ver campos nuevos.  
+Ticket en curso: **UX-NAC-2** (verdad mercados en mesa · Composer 2.5) — `docs/tickets/activo.md`.  
+Último cerrado: **UX-NAC-1** (bloqueo mesa desalineada + restore auto-load).  
+Anterior: **CHART-RS-3** (`b21701c`).  
+**Cola:** UX-NAC-2 → PERF-NAC / R-06 → YIELD · **MIGRATE aparcado** (dueño: mañana/pasado).  
+**Nota UX-NAC-1 smoke (2026-08-31):** Global → truth 0 + empty «selección… no coincide» (sin filas US); HK chip → 122 auto. Global multi-merge puede quedar en CTA (bloqueo OK).  
+**Nota MIGRATE (2026-08-31):** dueño aparca migrate a **mañana o pasado**; no activar MIGRATE-1 sin OK.  
+**Nota UX-NAC (2026-08-31):** track «mesa multi-mercado seria» — NAC-1 coherencia · NAC-2 verdad · PERF-NAC espera · YIELD filas intl.  
+**Nota CHART-RS-3 smoke (2026-08-31):** MSFT — toggle «RS tema» · badge **68** · token `#C4A5E8`.  
 **Nota MET-3c guard (2026-08-31):** abort write si perfiles &lt;75% · timeout 60s (`8e9c861`).  
 **Nota MET-3c Actions (2026-08-31):** `workflow_dispatch` Success · N Software/IA Actions 244 (local 570) → guard.  
 **Nota MET-3c (2026-08-31):** `45eacc1` · cron `30 7 * * 0`.  
@@ -218,6 +221,18 @@ Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 | IPO-1a | Backfill `ipoDate` (código + write US/intl) | `eb3053a` + write 2026-08-28 |
 
 Orden: IPO-1a → IPO-1b–c (+ 1d = UX-FILTERS-3+4 sobre IPO).
+
+## Track mesa multi-mercado seria (UX-NAC · 2026-08-31)
+
+Feedback dueño: profundidad OK, fricción al filtrar nacionalidades + sensación de fallo/espera.
+
+| ID | Qué | Estado |
+|---|---|---|
+| UX-NAC-1 | Restore/cambio mercado: nunca filas ajenas cazables; auto-load o bloqueo | **Hecho** |
+| UX-NAC-2 | Línea de verdad fija: N analizadas · mercados en mesa · qué falta | **Activo** |
+| PERF-NAC | Recorte latencia cambio vista (R-06) + hydrate RS sin colgar scans | Cola |
+| YIELD | Más filas intl reales en mesa (ops/cron, no solo chips) | Cola |
+| MIGRATE-1…3 | Postgres Mini | **Aparcado** (dueño: mañana/pasado) |
 
 ## Chart (pendiente · oleada post-screener P2)
 
