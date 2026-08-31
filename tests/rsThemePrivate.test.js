@@ -5,8 +5,12 @@ import { rankableThemeForProfile } from "@/lib/themeRsAssign";
 import { themeRsEngineVersion } from "@/lib/rsEngines";
 import {
   EXCLUSION_REASONS,
+  isoWeekEndDateFromKey,
+  isoWeekKey,
   parseArgs,
   runThemeRanking,
+  truncateBarsToDate,
+  weekTargetsForBackfill,
 } from "@/scripts/rs-theme-private.mjs";
 import { computeSymbol } from "@/scripts/rs-global-private.mjs";
 
@@ -35,6 +39,46 @@ describe("rs-theme-private parseArgs", () => {
   it("acepta --themes=Software / IA", () => {
     const args = parseArgs(["--themes=Software / IA"]);
     expect(args.themes).toEqual(["Software / IA"]);
+  });
+
+  it("acepta --backfill-weeks=7", () => {
+    const args = parseArgs(["--backfill-weeks=7"]);
+    expect(args.backfillWeeks).toBe(7);
+    expect(args.skipExisting).toBe(true);
+  });
+
+  it("acepta --week-keys explícitas", () => {
+    const args = parseArgs(["--week-keys=2026-W29,2026-W30"]);
+    expect(args.weekKeys).toEqual(["2026-W29", "2026-W30"]);
+  });
+});
+
+describe("weekTargetsForBackfill", () => {
+  it("genera N semanas anteriores al anchor", () => {
+    const targets = weekTargetsForBackfill("2026-08-31", 3);
+    expect(targets.length).toBe(3);
+    expect(targets[0].snapshotDate < targets.at(-1).snapshotDate).toBe(true);
+    for (const t of targets) {
+      expect(t.weekKey).toMatch(/^\d{4}-W\d{2}$/);
+    }
+  });
+
+  it("resuelve week-keys explícitas a fin de semana ISO", () => {
+    const targets = weekTargetsForBackfill("", 0, ["2026-W36"]);
+    expect(targets).toEqual([{ weekKey: "2026-W36", snapshotDate: isoWeekEndDateFromKey("2026-W36") }]);
+    expect(isoWeekKey(new Date(`${targets[0].snapshotDate}T00:00:00Z`))).toBe("2026-W36");
+  });
+});
+
+describe("truncateBarsToDate", () => {
+  it("filtra barras posteriores al cutoff", () => {
+    const bars = [
+      { date: "2026-08-31", close: 100 },
+      { date: "2026-08-28", close: 99 },
+      { date: "2026-08-01", close: 90 },
+    ];
+    const out = truncateBarsToDate(bars, "2026-08-15");
+    expect(out.map((b) => b.date)).toEqual(["2026-08-01"]);
   });
 });
 

@@ -2,11 +2,20 @@
 // engine_version: statsedge-private-theme-rs-usd-{slug}-v1 por cada una de las
 // 12 THEME_RULES. Población = universo MET-1; precios USD vía FX.
 //
+// BACKFILL SERIE (THEME-SERIES vía B, dueño 2026-08-31): excepción documentada a
+// la prohibición MET-1 de --as-of en rs-global-private.mjs. Solo este motor tema
+// admite --backfill-weeks=N o --week-keys=2026-W29,… para rellenar week_key
+// históricos. Por cada semana objetivo: truncar daily_bars (y series FX) a
+// trade_date ≤ snapshot_date ANTES de computeSymbol; FX por fecha de barra vía
+// pickFxObservation (prohibido FX spot de hoy sobre el pasado). Limitación Yahoo:
+// sin fxPublishedAt — el anti-lookahead asume disponibilidad ≥1 día tras cierre.
+//
 // Uso:
 //   node --env-file=.env.local --loader ./scripts/loader.mjs \
 //     scripts/rs-theme-private.mjs [--dry-run] [--write] [--limit=N] \
 //     [--concurrency=8] [--min-sample=20] [--markets=HK,CA] [--skip-us] \
-//     [--themes=Software / IA,Semis / fotonica]
+//     [--themes=Software / IA,Semis / fotonica] \
+//     [--backfill-weeks=7] [--week-keys=2026-W29,2026-W30] [--skip-existing=true]
 
 import { pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
@@ -26,6 +35,8 @@ import { computeSymbol, parseArgs as parseGlobalArgs } from "@/scripts/rs-global
 
 const EXCLUDED_RANK_INDEX = 0;
 const DEFAULT_MIN_SAMPLE = 20;
+/** ≥ lookback 52w×5 + margen; 320 era corto para backfill con lte. */
+export const THEME_BARS_LIMIT = 400;
 
 export const EXCLUSION_REASONS = {
   THEME_PROFILE_MISSING: "theme-profile-missing",
@@ -37,21 +48,37 @@ export const EXCLUSION_REASONS = {
 export function parseArgs(argv) {
   const base = parseGlobalArgs(argv);
   const themes = rankableThemeKeys();
+  base.backfillWeeks = 0;
+  base.weekKeys = [];
+  base.skipExisting = true;
+  base.barLimit = THEME_BARS_LIMIT;
   for (const arg of argv) {
     const [rawKey, rawValue] = arg.replace(/^--/, "").split("=");
-    if (rawKey.trim() === "themes") {
+    const key = rawKey.trim();
+    if (key === "themes") {
       const picked = String(rawValue || "")
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean);
-      if (picked.length) base.themes = picked.filter((key) => themes.includes(key));
+      if (picked.length) base.themes = picked.filter((t) => themes.includes(t));
+    } else if (key === "backfill-weeks") {
+      base.backfillWeeks = Math.max(0, Number(rawValue) || 0);
+    } else if (key === "week-keys") {
+      base.weekKeys = String(rawValue || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => /^\d{4}-W\d{2}$/.test(item));
+    } else if (key === "skip-existing") {
+      base.skipExisting = rawValue === undefined ? true : rawValue !== "false";
+    } else if (key === "bar-limit") {
+      base.barLimit = Math.max(261, Number(rawValue) || THEME_BARS_LIMIT);
     }
   }
   if (!base.themes) base.themes = themes;
   return base;
 }
 
-function isoWeekKey(date) {
+export function isoWeekKey(date) {
   const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   const dayNr = (target.getUTCDay() + 6) % 7;
   target.setUTCDate(target.getUTCDate() - dayNr + 3);
@@ -62,6 +89,47 @@ function isoWeekKey(date) {
   }
   const weekNumber = 1 + Math.round((firstThursday - target.valueOf()) / 604800000);
   return `${target.getUTCFullYear()}-W${String(weekNumber).padStart(2, "0")}`;
+}
+
+/** Último día (domingo ISO) de una week_key YYYY-Www. */
+export function isoWeekEndDateFromKey(weekKey = "") {
+  const match = /^(\d{4})-W(\d{2})$/.exec(String(weekKey || "").trim());
+  if (!match) return "";
+  const year = Number(match[1]);
+  const week = Number(match[2]);
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const dayNr = (jan4.getUTCDay() + 6) % 7;
+  const monday = new Date(jan4);
+  monday.setUTCDate(jan4.getUTCDate() - dayNr + (week - 1) * 7);
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  return toDate(sunday.toISOString());
+}
+
+/** Semanas anteriores al anchor (excluye la semana del anchor). */
+export function weekTargetsForBackfill(anchorDate = "", count = 0, explicitWeekKeys = []) {
+  if (explicitWeekKeys.length) {
+    return explicitWeekKeys.map((weekKey) => ({
+      weekKey,
+      snapshotDate: isoWeekEndDateFromKey(weekKey),
+    })).filter((t) => t.snapshotDate);
+  }
+  const anchor = toDate(anchorDate) || toDate(new Date().toISOString());
+  const targets = [];
+  for (let i = count; i >= 1; i -= 1) {
+    const d = new Date(`${anchor}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() - i * 7);
+    const snapshotDate = toDate(d.toISOString());
+    const weekKey = isoWeekKey(new Date(`${snapshotDate}T00:00:00Z`));
+    targets.push({ weekKey, snapshotDate });
+  }
+  return targets.sort((a, b) => (a.snapshotDate < b.snapshotDate ? -1 : a.snapshotDate > b.snapshotDate ? 1 : 0));
+}
+
+export function truncateBarsToDate(bars = [], asOfDate = "") {
+  const cutoff = toDate(asOfDate);
+  if (!cutoff) return bars;
+  return bars.filter((bar) => bar.date && bar.date <= cutoff);
 }
 
 const CLOSED_END_FUND_NAME_PATTERN = /\b(FUND|BDC|BUSINESS DEVELOPMENT (CORP(ORATION)?|COMPANY)|CLOSED[- ]END)\b/i;
@@ -118,14 +186,15 @@ function buildUsPopulation(universeRows) {
   return { rows: clean };
 }
 
-async function fetchBarsForSymbol(config, symbol) {
+async function fetchBarsForSymbol(config, symbol, asOfDate = "", barLimit = THEME_BARS_LIMIT) {
   const query = [
     `owner_id=eq.${encodeURIComponent(config.ownerId)}`,
     `symbol=eq.${encodeURIComponent(symbol)}`,
+    asOfDate ? `trade_date=lte.${encodeURIComponent(asOfDate)}` : "",
     "select=trade_date,close",
     "order=trade_date.desc",
-    "limit=320",
-  ].join("&");
+    `limit=${barLimit}`,
+  ].filter(Boolean).join("&");
   const rows = await supabaseRequest("daily_bars", { query });
   if (!Array.isArray(rows)) return [];
   const byDate = new Map();
@@ -138,27 +207,43 @@ async function fetchBarsForSymbol(config, symbol) {
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 }
 
-async function loadFxSeries(config, deps) {
+async function loadFxSeries(config, deps = {}) {
   const fetchBars = deps.fetchBarsForSymbol || fetchBarsForSymbol;
+  const asOfDate = deps.asOfDate || "";
+  const barLimit = deps.barLimit || THEME_BARS_LIMIT;
   const byCurrency = new Map();
   for (const currency of FX_CURRENCIES) {
     const { fxPairsFor, fxSeriesDiscontinuity } = await import("@/lib/rsFx.js");
     const [direct, inverse] = fxPairsFor(currency);
-    let bars = await fetchBars(config, direct).catch(() => []);
+    let bars = await fetchBars(config, direct, asOfDate, barLimit).catch(() => []);
     let usedPair = direct;
     let isInverse = false;
     if (bars.length < 261) {
-      const inverseBars = await fetchBars(config, inverse).catch(() => []);
+      const inverseBars = await fetchBars(config, inverse, asOfDate, barLimit).catch(() => []);
       if (inverseBars.length > bars.length) {
         bars = inverseBars;
         usedPair = inverse;
         isInverse = true;
       }
     }
+    if (asOfDate) bars = truncateBarsToDate(bars, asOfDate);
     const discontinuity = fxSeriesDiscontinuity(bars);
     byCurrency.set(currency, { currency, pair: usedPair, inverse: isInverse, bars, discontinuity });
   }
   return byCurrency;
+}
+
+async function fetchExistingThemeWeekKeys(config, engineVersion) {
+  const rows = await supabaseRequest("rs_weekly_snapshots", {
+    query: [
+      `owner_id=eq.${encodeURIComponent(config.ownerId)}`,
+      `engine_version=eq.${encodeURIComponent(engineVersion)}`,
+      "select=week_key",
+      "order=week_key.asc",
+      "limit=200",
+    ].join("&"),
+  }).catch(() => []);
+  return new Set((rows || []).map((row) => row.week_key).filter(Boolean));
 }
 
 async function mapLimit(items, limit, worker) {
@@ -356,7 +441,7 @@ async function main() {
     process.exit(1);
   }
 
-  const targetDate = toDate(new Date().toISOString());
+  const anchorDate = toDate(new Date().toISOString());
   console.log(`=== rs-theme-private.mjs — modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"} themes=${args.themes.length} ===`);
 
   let usRows = [];
@@ -412,60 +497,96 @@ async function main() {
     };
   });
 
-  const fxSeries = await loadFxSeries(config, {});
-  console.log(`Series FX cargadas: ${FX_CURRENCIES.length}`);
+  const weekRuns = (args.backfillWeeks > 0 || args.weekKeys.length)
+    ? weekTargetsForBackfill(anchorDate, args.backfillWeeks, args.weekKeys)
+    : [{
+      weekKey: isoWeekKey(new Date(`${anchorDate}T00:00:00Z`)),
+      snapshotDate: anchorDate,
+    }];
+
+  console.log(`Semanas a procesar: ${weekRuns.map((w) => w.weekKey).join(", ")} (backfill=${args.backfillWeeks || args.weekKeys.length || "no"})`);
 
   const themeReports = [];
-  for (const themeKey of args.themes) {
-    const population = assigned.filter((row) => row.themeKey === themeKey);
+  for (const weekRun of weekRuns) {
+    const { weekKey, snapshotDate } = weekRun;
     console.log("");
-    console.log(`--- Theme: ${themeKey} (${population.length} en universo) ---`);
-    if (!population.length) {
-      console.log("Sin población en universo para este theme — no se genera snapshot.");
-      continue;
-    }
-    const report = await runThemeRanking(config, themeKey, population, args, { fxSeriesByCurrency: fxSeries });
-    themeReports.push(report);
-    console.log(`Computables: ${report.included}/${report.populationDefined}`);
-    console.log(`Excluidos técnicos: ${report.excluded.length}`);
-    console.log(`engine_version: ${report.engineVersion}`);
-    if (report.sampleInsufficient) {
-      console.log(`AVISO: muestra ${report.included} < min-sample ${args.minSample} → theme-sample-insufficient`);
-    }
-    for (const row of report.ranked.slice(0, 5)) {
-      console.log(`  #${row.rankIndex} ${row.symbol.padEnd(12)} rs=${String(row.rsRating).padStart(4)} raw=${row.raw?.toFixed?.(2) || "-"}`);
-    }
+    console.log(`=== Semana ${weekKey} (snapshot_date=${snapshotDate}) ===`);
 
-    if (args.write && !args.dryRun) {
-      const weekKey = isoWeekKey(new Date(`${targetDate}T00:00:00Z`));
-      const stats = {
-        scopeTheme: themeKey,
-        themeRulesSha: themeRulesSha(),
-        universesGitSha: process.env.STATSEDGE_UNIVERSES_GIT_SHA || null,
-        businessThemeGitSha: process.env.STATSEDGE_BUSINESS_THEME_GIT_SHA || null,
-        usUniverseSnapshotId: usSnapshotId || null,
-        universeFingerprint: report.fingerprint.hash,
-        universeSymbolCount: report.fingerprint.count,
-        themePopulationDefined: report.populationDefined,
-        themePopulationRanked: report.included,
-        sampleInsufficient: report.sampleInsufficient,
-        exclusionCount: report.excluded.length,
-        fxMaxAgeSessions: FX_MAX_AGE_SESSIONS,
-        baseCurrency: FX_BASE_CURRENCY,
-        generatedBy: "scripts/rs-theme-private.mjs",
-      };
-      const result = await upsertThemeSnapshot(config, {
-        engineVersion: report.engineVersion,
-        themeKey,
-        snapshotDate: targetDate,
-        weekKey,
-        minSample: args.minSample,
-        ranked: report.ranked,
-        excluded: report.excluded,
-        stats,
-        persistExclusions: args.persistExclusions,
+    const fetchBarsAsOf = async (cfg, symbol) =>
+      fetchBarsForSymbol(cfg, symbol, snapshotDate, args.barLimit);
+
+    const fxSeries = await loadFxSeries(config, {
+      fetchBarsForSymbol: fetchBarsAsOf,
+      asOfDate: snapshotDate,
+      barLimit: args.barLimit,
+    });
+
+    for (const themeKey of args.themes) {
+      const population = assigned.filter((row) => row.themeKey === themeKey);
+      const engineVersion = themeRsEngineVersion(themeKey);
+      console.log("");
+      console.log(`--- Theme: ${themeKey} (${population.length} en universo) · ${weekKey} ---`);
+      if (!population.length) {
+        console.log("Sin población en universo para este theme — no se genera snapshot.");
+        continue;
+      }
+
+      if (args.skipExisting && args.write && !args.dryRun) {
+        const existing = await fetchExistingThemeWeekKeys(config, engineVersion);
+        if (existing.has(weekKey)) {
+          console.log(`Skip ${weekKey} — ya existe para ${engineVersion}`);
+          continue;
+        }
+      }
+
+      const report = await runThemeRanking(config, themeKey, population, args, {
+        fetchBarsForSymbol: fetchBarsAsOf,
+        fxSeriesByCurrency: fxSeries,
       });
-      console.log(`Escrito theme ${themeKey}: snapshot id=${result.snapshotId}, rankeados=${result.rankedWritten}, exclusiones=${result.excludedWritten}`);
+      themeReports.push({ ...report, weekKey, snapshotDate });
+      console.log(`Computables: ${report.included}/${report.populationDefined}`);
+      console.log(`Excluidos técnicos: ${report.excluded.length}`);
+      console.log(`engine_version: ${report.engineVersion}`);
+      if (report.sampleInsufficient) {
+        console.log(`AVISO: muestra ${report.included} < min-sample ${args.minSample} → theme-sample-insufficient`);
+      }
+      for (const row of report.ranked.slice(0, 5)) {
+        console.log(`  #${row.rankIndex} ${row.symbol.padEnd(12)} rs=${String(row.rsRating).padStart(4)} raw=${row.raw?.toFixed?.(2) || "-"}`);
+      }
+
+      if (args.write && !args.dryRun) {
+        const stats = {
+          scopeTheme: themeKey,
+          themeRulesSha: themeRulesSha(),
+          universesGitSha: process.env.STATSEDGE_UNIVERSES_GIT_SHA || null,
+          businessThemeGitSha: process.env.STATSEDGE_BUSINESS_THEME_GIT_SHA || null,
+          usUniverseSnapshotId: usSnapshotId || null,
+          universeFingerprint: report.fingerprint.hash,
+          universeSymbolCount: report.fingerprint.count,
+          themePopulationDefined: report.populationDefined,
+          themePopulationRanked: report.included,
+          sampleInsufficient: report.sampleInsufficient,
+          exclusionCount: report.excluded.length,
+          fxMaxAgeSessions: FX_MAX_AGE_SESSIONS,
+          baseCurrency: FX_BASE_CURRENCY,
+          generatedBy: "scripts/rs-theme-private.mjs",
+          backfillWeekKey: weekKey,
+          barsTruncatedTo: snapshotDate,
+          backfillMode: args.backfillWeeks > 0 || args.weekKeys.length > 0,
+        };
+        const result = await upsertThemeSnapshot(config, {
+          engineVersion: report.engineVersion,
+          themeKey,
+          snapshotDate,
+          weekKey,
+          minSample: args.minSample,
+          ranked: report.ranked,
+          excluded: report.excluded,
+          stats,
+          persistExclusions: args.persistExclusions,
+        });
+        console.log(`Escrito theme ${themeKey} ${weekKey}: snapshot id=${result.snapshotId}, rankeados=${result.rankedWritten}, exclusiones=${result.excludedWritten}`);
+      }
     }
   }
 

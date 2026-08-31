@@ -5,11 +5,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **THEME-SERIES vía B** (backfill FX as-of · Composer 2.5) — `docs/tickets/activo.md`.  
-Último cerrado: **MET-4 spec** propuesto (`54050e0`) — **pendiente OK dueño** antes de MET-4b.  
-**Cola acordada (dueño):** ~~BUG-HUNT~~ → ~~R-06~~ → ~~MET-4 spec~~ → **THEME-SERIES B** · MIGRATE aparcado · MET-4b tras OK.  
-**Nota THEME-SERIES (2026-08-31):** dueño elige **B estricta** — FX por fecha de barra; no spot hoy; no `--as-of` en motor global. Inventario 1/8 (`2026-W36`).  
-**Nota THEME-SERIES inventario (2026-08-31):** 12/12 engines · **1** `week_key` · déficit **7** sem.  
+Ticket en curso: **libre** — cola THEME-SERIES cerrada; espera OK MET-4 / MIGRATE.  
+Último cerrado: **THEME-SERIES B** (hash al stamp) · MET-4 spec propuesto (`54050e0`) — **pendiente OK dueño** antes de MET-4b.  
+**Cola acordada (dueño):** ~~BUG-HUNT~~ → ~~R-06~~ → ~~MET-4 spec~~ → ~~THEME-SERIES B~~ · MIGRATE aparcado · MET-4b tras OK.  
+**Nota THEME-SERIES B (2026-08-31):** backfill W29–W35 × 12 themes · verify AAPL/MSFT/NVDA/0981.HK **8** weekKeys · `--backfill-weeks` solo tema · global sin `--as-of`. Ficha puede mostrar serie vieja hasta refresh de `company_brief_cache`.  
+**Nota THEME-SERIES (2026-08-31):** dueño elige **B estricta** — FX por fecha de barra; no spot hoy.  
+**Nota THEME-SERIES inventario (2026-08-31):** era 1/8 (`2026-W36`); resuelto con B.  
 **Nota MET-4 (2026-08-31):** `docs/spec-muletas-tendencia.md` · 3 muletas · solo ficha · scoring off.  
 **Nota BUG-HUNT-1b (2026-08-31):** cerrado `e90dc59`.  
 **Nota R-06 (2026-08-31):** Deterioro **~1030** · E2 **~333** · pivot **~249** · intl **~1544** · IPO **~435**.  
