@@ -199,6 +199,9 @@ export function useResultViewModel({
   const setupMode = activeSettings?.setupMode;
   const deferredRows = useDeferredValue(rows);
   const rowsDeferredStale = deferredRows !== rows;
+  // Si rows acaba de cambiar (p. ej. hunt acota mesa) deferredRows sigue en el lote
+  // anterior: re-anotar ese lote con setupMode nuevo tumba el hilo (BUG-HUNT-1b).
+  const annotateSourceRows = rowsDeferredStale ? rows : deferredRows;
   function annotateRow(row) {
     const explanation = explainScreenerRank(row, activeSettings);
     const issues = auditDecisionRowIssues(row, explanation);
@@ -215,7 +218,7 @@ export function useResultViewModel({
     };
   }
 
-  const annotatedRows = useMemo(() => deferredRows.map(annotateRow), [deferredRows, setupMode]);
+  const annotatedRows = useMemo(() => annotateSourceRows.map(annotateRow), [annotateSourceRows, setupMode]);
 
   const viewFilteredRows = useMemo(
     () => applyResultViewFilters(annotatedRows, viewFilterState),

@@ -36,4 +36,10 @@ describe("screenerHuntPerf · PERF-NAC", () => {
   it("recordTruthLinePaint sin gesto previo devuelve null", () => {
     expect(recordTruthLinePaint()).toBeNull();
   });
+
+  it("recordTruthLinePaint solo reporta una vez por gesto", () => {
+    markHuntGesture("hunt-card");
+    expect(recordTruthLinePaint({ presetName: "Deterioro" })).not.toBeNull();
+    expect(recordTruthLinePaint({ presetName: "Deterioro" })).toBeNull();
+  });
 });

@@ -92,6 +92,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     isHuntTransitionPending = false,
     onHuntTruthLinePaint,
   } = chrome;
+  const onHuntTruthLinePaintRef = useRef(onHuntTruthLinePaint);
+  onHuntTruthLinePaintRef.current = onHuntTruthLinePaint;
 
   // --- sidebar ---
   const {
@@ -310,8 +312,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       presetName: presetNameForTruth,
       pending: isHuntTransitionPending,
     });
-    if (ms != null) onHuntTruthLinePaint?.(ms);
-  }, [truthLine, presetNameForTruth, isHuntTransitionPending, onHuntTruthLinePaint]);
+    if (ms != null) onHuntTruthLinePaintRef.current?.(ms);
+  }, [truthLine, presetNameForTruth, isHuntTransitionPending]);
   const filterBreakdown = buildScreenerFilterBreakdown({
     diagnostics,
     passCount: passCountForTruth,

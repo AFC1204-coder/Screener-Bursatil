@@ -1,8 +1,7 @@
 "use client";
 // tokens-v2.css se importa globalmente desde app/layout.jsx.
 import "../styles/screener.css";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { flushSync } from "react-dom";
+import { useEffect, useMemo, useRef, useState, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import QuickReviewModal from "@/app/components/screener/QuickReviewModal";
 import ScreenerShell from "@/app/components/screener/ScreenerShell";
@@ -171,6 +170,9 @@ export default function Page() {
   const [analyzedRows, setAnalyzedRows] = useState([]);
   const [scanContext, setScanContext] = useState(null);
   const [scanPerf, setScanPerf] = useState(null);
+  const onHuntTruthLinePaint = useCallback((ms) => {
+    setScanPerf((prev) => ({ ...(prev || {}), lastHuntTruthLineMs: ms }));
+  }, []);
   const [fail, setFail] = useState([]);
   const [diagnostics, setDiagnostics] = useState(null);
   const [status, setStatus] = useState(DEFAULT_STATUS);
@@ -1095,15 +1097,15 @@ export default function Page() {
   // Re-filtrado automático: cualquier cambio de criterios (a mano, por
   // plantilla o por preset) se aplica al momento sobre las filas ya cargadas.
   // No hay botón intermedio: este efecto ES la aplicación de filtros.
-  // applyHuntCard hace el mismo trabajo de forma síncrona en el gesto del rail.
+  // applyHuntCard aplica el filtro en startHuntTransition; no duplicar aquí.
   useEffect(() => {
-    if (!sessionReady || !analyzedRows.length || !scanContext) return;
+    if (!sessionReady || !analyzedRows.length || !scanContext || isHuntTransitionPending) return;
     const context = { ...scanContext, marketHealth, useRegimeFilter };
     const signature = fastFilterSignature(analyzedRows, activeSettings, context);
     if (fastFilterSignatureRef.current === signature) return;
     const filteredView = filterAnalyzedRowsForView(analyzedRows, activeSettings, context, { presetKey, markets });
     commitFilteredView(filteredView, signature);
-  }, [sessionReady, analyzedRows, scanContext, activeSettings, marketHealth, useRegimeFilter, presetKey, markets]);
+  }, [sessionReady, analyzedRows, scanContext, activeSettings, marketHealth, useRegimeFilter, presetKey, markets, isHuntTransitionPending]);
 
   useEffect(() => {
     huntWarmCancelRef.current?.();
@@ -1990,14 +1992,25 @@ export default function Page() {
     const cacheKey = huntFilterCacheKey(selection.presetKey, analyzedRows.length, context);
     const cachedView = huntFilterCacheRef.current.get(cacheKey);
     markHuntGesture("hunt-card");
-    flushSync(() => {
-      setPreset(selection.presetKey, { sort: selection.sort, status: false });
-      setHuntTruthOverride(cachedView
-        ? { passCount: cachedView.rows.length, presetName: huntLabel }
-        : { passCount: null, presetName: huntLabel });
-      // Evita que el efecto de re-filtrado duplique el trabajo síncrono antes del transition.
-      fastFilterSignatureRef.current = signature;
-    });
+    // Truth line inmediata sin flushSync: evita re-anotar ~1–3k filas con preset
+    // nuevo mientras rows sigue en el lote anterior (BUG-HUNT-1 / PERF-NAC).
+    fastFilterSignatureRef.current = signature;
+    setHuntTruthOverride(cachedView
+      ? { passCount: cachedView.rows.length, presetName: huntLabel }
+      : { passCount: null, presetName: huntLabel });
+
+    // Caché caliente: acota mesa en el gesto antes de setPreset (setupMode nuevo
+    // solo re-anota el subconjunto, no analyzedRows ~1,7k — BUG-HUNT-1b).
+    let precommittedView = null;
+    if (cachedView) {
+      precommittedView = withIpoDiscoveryWatchMerge(cachedView, {
+        presetKey: selection.presetKey,
+        markets,
+      });
+      if (precommittedView) {
+        commitFilteredView(precommittedView, signature, { preserveStatusPrefix: false });
+      }
+    }
 
     startHuntTransition(() => {
       const startedAt = perfNow();
@@ -2010,14 +2023,17 @@ export default function Page() {
           context,
           filterAnalyzedRows,
         );
-      const filteredView = withIpoDiscoveryWatchMerge(resolved?.view, {
+      const filteredView = precommittedView || withIpoDiscoveryWatchMerge(resolved?.view, {
         presetKey: selection.presetKey,
         markets,
       });
       if (!filteredView) return;
-      const signature = fastFilterSignature(analyzedRows, nextActiveSettings, context);
-      setHuntTruthOverride({ passCount: filteredView.rows.length, presetName: huntLabel });
-      commitFilteredView(filteredView, signature, { preserveStatusPrefix: false });
+      const commitSignature = fastFilterSignature(analyzedRows, nextActiveSettings, context);
+      if (!precommittedView) {
+        setHuntTruthOverride({ passCount: filteredView.rows.length, presetName: huntLabel });
+        commitFilteredView(filteredView, commitSignature, { preserveStatusPrefix: false });
+      }
+      setPreset(selection.presetKey, { sort: selection.sort, status: false });
       setScanPerf((prev) => ({
         ...(prev || {}),
         lastHuntCardMs: perfNow() - startedAt,
@@ -2463,9 +2479,7 @@ export default function Page() {
       rows,
       huntTruthOverride,
       isHuntTransitionPending,
-      onHuntTruthLinePaint: (ms) => {
-        setScanPerf((prev) => ({ ...(prev || {}), lastHuntTruthLineMs: ms }));
-      },
+      onHuntTruthLinePaint,
     }}
     sidebar={{
       presetKey,

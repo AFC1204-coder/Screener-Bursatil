@@ -5,12 +5,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: *(ninguno)*.  
-Último cerrado: **YIELD-1** (fusión parcial Global/Core · sin todo-o-nada).  
-Anterior: **PERF-NAC** (`7572d2c`).  
-**Cola:** **MIGRATE aparcado** (dueño: mañana/pasado) · MET-4/ideas.  
-**Nota YIELD-1 smoke (2026-08-31):** Global → **1583** analizadas · `mesa: CA+CH+DE+ES+FR+GB+HK+IT+NL+SE+US` · filas CA/HK/US; cobertura parcial no bloquea.  
-**Nota PERF-NAC (2026-08-31):** hunt cold + `hydrateRs=1` cliente.  
+Ticket en curso: **MET-4** (spec muletas tendencia · Fable 5) — `docs/tickets/activo.md`.  
+Último cerrado: **BUG-HUNT-1b** (hash al stamp).  
+**Cola acordada (dueño):** ~~BUG-HUNT-1b~~ → ~~R-06~~ → **MET-4** spec → **THEME-SERIES** (≥8 sem) · MIGRATE aparcado.  
+**Nota BUG-HUNT-1b (2026-08-31):** cerrado — update-depth loop truth-line + mesa acotada; smoke 1715 sin crash.  
+**Nota R-06 (2026-08-31):** re-medida post-fix (gesto→truth, mesa 1715): Deterioro **~1030** · E2 **~333** · pivot **~249** · intl **~1544** · IPO **~435** (baseline 30-ago: 1879 / 1980 / 964 / 2522 / 946).  
+**Nota BUG-HUNT-1 (2026-08-31):** 1ª entrega rechazada (solo quitó flushSync); causa real = loop paint.  
+**Nota YIELD-1 smoke (2026-08-31):** Global → 1583 · mesa CA+…+US.  
 **Nota MIGRATE (2026-08-31):** aparcado por dueño.  
 **Nota MET-3c guard (2026-08-31):** abort write si perfiles &lt;75% · timeout 60s (`8e9c861`).  
 **Nota MET-3c Actions (2026-08-31):** `workflow_dispatch` Success · N Software/IA Actions 244 (local 570) → guard.  
