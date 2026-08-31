@@ -158,6 +158,41 @@ describe("buildTrendSupportLines", () => {
     expect(block.lines[1].text).toMatch(/Avance:/);
     expect(block.lines[2].text).toMatch(/Volumen: acompaña/);
   });
+
+  it("reutiliza campos de fila del scan sin barras en modal", () => {
+    const block = buildTrendSupportLines([], {
+      weeklyStageState: "stage2",
+      weeklySlowMaSlope: 4.2,
+      weeksAboveSma30w: 23,
+      weeksAboveSma30wAbove: true,
+      weeksAboveSma10w: 8,
+      weeksAboveSma10wAbove: true,
+      advanceRecentPct: 6,
+      advancePriorPct: 19,
+      perf6m: 28,
+      upDownVolRatio: 1.4,
+    });
+    expect(block.lines.every((line) => line.available)).toBe(true);
+    expect(block.lines[0].text).toMatch(/Sobre la media de 30 semanas: 23 semanas/);
+    expect(block.lines[1].text).toMatch(/se frena/);
+    expect(block.lines[2].text).toMatch(/Volumen: acompaña/);
+  });
+
+  it("usa perf3m/perf6m cuando faltan advance* en la fila (vista rápida)", () => {
+    const block = buildTrendSupportLines([], {
+      weeklyStageState: "stage2",
+      weeklySlowMaSlope: 4.2,
+      weeksAboveSma30w: 12,
+      weeksAboveSma30wAbove: true,
+      weeksAboveSma10w: 4,
+      weeksAboveSma10wAbove: true,
+      perf3m: 12,
+      perf6m: 30,
+      upDownVolRatio: 1.1,
+    });
+    expect(block.lines[1].available).toBe(true);
+    expect(block.lines[1].text).toMatch(/Avance:/);
+  });
 });
 
 describe("weeklyStage intact", () => {

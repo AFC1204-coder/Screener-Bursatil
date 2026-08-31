@@ -39,6 +39,7 @@
 import Link from "next/link";
 import ChartPreferences from "@/app/ChartPreferences";
 import { CompanyMark, RowPreviewChart } from "@/app/screenerPanels";
+import { InfoHint } from "@/app/components/ui/InfoHint";
 import { amount, money, quickBusinessDescription, quickBusinessMarket, ratioLabel, shortBusiness } from "@/lib/screenerFormat";
 import { pct, pctShare } from "@/lib/formatters";
 import { PerformanceStrip } from "@/app/components/screener/PerformanceStrip";
@@ -47,6 +48,7 @@ import { stageWordForState } from "@/lib/stageDisplay";
 import { stageLabel } from "@/lib/screenerPipeline";
 import { externalLinks, stockUrl } from "@/lib/symbols";
 import { STOCK_DECISION_ACTIONS, decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
+import { buildTrendSupportLines, trendSupportInputFromScanRow } from "@/lib/trendSupport";
 
 // La palabra de etapa sale del diccionario único (lib/stageDisplay.js): la
 // misma que la columna «Etapa» de la tabla y que la ficha.
@@ -54,6 +56,43 @@ function stageWord(row = {}) {
   const rawStage = stageLabel(row);
   const stageInfo = stageWordForState(row.weeklyStageState || "", rawStage);
   return stageInfo?.word || (rawStage === "Sin dato" ? "Sin dato" : rawStage) || "Sin dato";
+}
+
+function TrendSupportMissing({ reason = "" }) {
+  return (
+    <span className="stockDescMissing">
+      <span aria-hidden="true">–</span>
+      <span className="srOnly">Sin dato</span>
+      {reason ? <InfoHint text={reason} /> : null}
+    </span>
+  );
+}
+
+function TrendSupportLine({ line }) {
+  return (
+    <li className="stockDescTrendItem">
+      {line.available
+        ? <span>{line.text}</span>
+        : <TrendSupportMissing reason={line.reason} />}
+    </li>
+  );
+}
+
+function QuickReviewTrendSupport({ row }) {
+  const trendSupport = buildTrendSupportLines([], trendSupportInputFromScanRow(row));
+  return (
+    <div className="profileCard quickReviewTrendSupport" aria-label={trendSupport.title}>
+      <div className="profileCardHeader">
+        <h3>{trendSupport.title}</h3>
+        <span>Lecturas</span>
+      </div>
+      <ul className="stockDescTrendList quickReviewTrendList">
+        {trendSupport.lines.map((line) => (
+          <TrendSupportLine key={line.key} line={line} />
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 export default function QuickReviewModal({
@@ -207,6 +246,8 @@ export default function QuickReviewModal({
                 <div className="profileRow"><span>Capitalización</span><b>{amount(activeModalRow.marketCap, activeModalRow.currency) || "-"}</b></div>
                 <div className="profileRow"><span>Dist. máx 52s</span><b>{Number.isFinite(activeModalRow.distance52w) ? pct(activeModalRow.distance52w) : "-"}</b></div>
               </div>
+
+              <QuickReviewTrendSupport row={activeModalRow} />
 
               <div className="profileCard">
                 <div className="profileCardHeader">

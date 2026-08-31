@@ -317,3 +317,50 @@ describe("los componentes retirados no existen", () => {
     expect(source).not.toContain("ScreenerOriginPanel");
   });
 });
+
+describe("vista rápida: sostén de la tendencia (MET-4c)", () => {
+  it("muestra el bloque con las tres lecturas desde campos de fila", () => {
+    const html = renderModal({
+      weeksAboveSma30w: 23,
+      weeksAboveSma30wAbove: true,
+      weeksAboveSma10w: 8,
+      weeksAboveSma10wAbove: true,
+      weeklySlowMaSlope: 3.5,
+      advanceRecentPct: 6,
+      advancePriorPct: 19,
+      perf6m: 28,
+      upDownVolRatio: 1.4,
+    });
+    expect(html).toContain("Sostén de la tendencia");
+    expect(html).toMatch(/Sobre la media de 30 semanas: 23 semanas/);
+    expect(html).toMatch(/Avance: se frena/);
+    expect(html).toMatch(/Volumen: acompaña/);
+    expect(html.toLowerCase()).not.toContain("muleta");
+  });
+
+  it("declara ausencias honestas sin campos de scan", () => {
+    const html = renderModal({
+      weeksAboveSma30w: null,
+      weeksAboveSma10w: null,
+      advanceRecentPct: null,
+      advancePriorPct: null,
+      perf6m: null,
+      upDownVolRatio: null,
+      weeklyStageState: "insufficient_history",
+    });
+    expect(html).toContain("Sostén de la tendencia");
+    expect(html).toContain("Sin lectura de medias");
+    expect(html).toContain("Sin lectura de aceleración");
+    expect(html).toContain("Sin reparto de volumen");
+  });
+
+  it("no pinta salud de etapa ni semáforos de muletas", () => {
+    const html = renderModal({
+      weeksAboveSma30w: 20,
+      weeksAboveSma30wAbove: true,
+      stageHealthScore: 78,
+    });
+    expect(html).not.toContain("Salud de etapa");
+    expect(html).not.toMatch(/stockDescHealth/);
+  });
+});

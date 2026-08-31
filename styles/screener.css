@@ -2952,6 +2952,11 @@ button.dataHealthSummaryItem:hover,
   background:transparent;
 }
 
+.quickReviewTrendSupport .quickReviewTrendList {
+  margin: 0;
+  padding: var(--space-2) var(--space-4) var(--space-3);
+}
+
 .profileGrid {
   display: grid;
   grid-template-columns: 2.5fr 1fr;
