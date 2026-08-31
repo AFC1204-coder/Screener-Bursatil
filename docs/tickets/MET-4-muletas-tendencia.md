@@ -37,11 +37,11 @@ Cada pregunta: **propuesta + alternativa rechazada** (formato MET-1/2/3).
 
 ## Criterios de aceptación
 
-- [ ] Existe `docs/spec-muletas-tendencia.md` (o nombre acordado) con secciones del formato MET.
-- [ ] Las 9 preguntas tienen propuesta + alternativa rechazada.
-- [ ] No contradice MET-1…3; no introduce scoring por defecto; no fusiona MET-5.
-- [ ] Sin diff de código de producto.
-- [ ] Dueño acepta o pide recorte **antes** de MET-4b.
+- [x] Existe `docs/spec-muletas-tendencia.md` (o nombre acordado) con secciones del formato MET.
+- [x] Las 9 preguntas tienen propuesta + alternativa rechazada.
+- [x] No contradice MET-1…3; no introduce scoring por defecto; no fusiona MET-5.
+- [x] Sin diff de código de producto (spec).
+- [x] Dueño acepta **2026-08-31** → MET-4b activo.
 
 ## Fuera de alcance
 

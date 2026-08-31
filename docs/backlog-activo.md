@@ -5,13 +5,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre** — cola THEME-SERIES cerrada; espera OK MET-4 / MIGRATE.  
-Último cerrado: **THEME-SERIES B** (`859e988`) · MET-4 spec propuesto (`54050e0`) — **pendiente OK dueño** antes de MET-4b.  
-**Cola acordada (dueño):** ~~BUG-HUNT~~ → ~~R-06~~ → ~~MET-4 spec~~ → ~~THEME-SERIES B~~ · MIGRATE aparcado · MET-4b tras OK.  
-**Nota THEME-SERIES B (2026-08-31):** backfill W29–W35 × 12 themes · verify AAPL/MSFT/NVDA/0981.HK **8** weekKeys · `--backfill-weeks` solo tema · global sin `--as-of`. Ficha puede mostrar serie vieja hasta refresh de `company_brief_cache`.  
-**Nota THEME-SERIES (2026-08-31):** dueño elige **B estricta** — FX por fecha de barra; no spot hoy.  
-**Nota THEME-SERIES inventario (2026-08-31):** era 1/8 (`2026-W36`); resuelto con B.  
-**Nota MET-4 (2026-08-31):** `docs/spec-muletas-tendencia.md` · 3 muletas · solo ficha · scoring off.  
+Ticket en curso: **MET-4b** (impl muletas · Composer 2.5) — `docs/tickets/activo.md`.  
+Último cerrado: **THEME-SERIES B** (`859e988`) · MET-4 spec **aceptado** (`54050e0`).  
+**Cola acordada (dueño):** ~~BUG-HUNT~~ → ~~R-06~~ → ~~MET-4 spec~~ → ~~THEME-SERIES B~~ → **MET-4b** · MIGRATE aparcado.  
+**Nota MET-4 aceptación (2026-08-31):** dueño OK → MET-4b. Spec `docs/spec-muletas-tendencia.md`.  
+**Nota THEME-SERIES B (2026-08-31):** backfill W29–W35 × 12 themes · 8 weekKeys · brief cache puede ir atrasado hasta refresh.  
+**Nota THEME-SERIES (2026-08-31):** vía B estricta FX por fecha.  
+**Nota MET-4 (2026-08-31):** 3 muletas · solo ficha «Sostén de la tendencia» · scoring off.  
 **Nota BUG-HUNT-1b (2026-08-31):** cerrado `e90dc59`.  
 **Nota R-06 (2026-08-31):** Deterioro **~1030** · E2 **~333** · pivot **~249** · intl **~1544** · IPO **~435**.  
 **Nota YIELD-1 smoke (2026-08-31):** Global → 1583 · mesa CA+…+US.  
@@ -262,7 +262,8 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-3 | Spec RS tema (ocupación / theme) | **Aceptado** · `docs/spec-rs-tema.md` (parche Grok) |
 | MET-3b | Impl lector + motor tema + columna/filtro | **Hecho** · `b18860f`/`98bd0a8` · write 12/12 |
 | MET-3c | Cron GHA RS tema (dom 07:30 UTC) | **Hecho** · `rs-theme-private.yml` |
-| MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | **Spec propuesto** `54050e0` · OK dueño → MET-4b |
+| MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | **Aceptado** 2026-08-31 · `54050e0` |
+| MET-4b | Impl ficha «Sostén de la tendencia» | **Activo** · `docs/tickets/activo.md` |
 | MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | Ambicioso; tras MET-1…4 |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
 | VCP | Detector producto vs corpus `research/contracciones/` | Aplazado / investigación |

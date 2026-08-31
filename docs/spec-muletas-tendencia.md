@@ -2,7 +2,7 @@
 
 - **Fecha:** 2026-08-31
 - **Rama:** `codex/statsedge-ui-polish`
-- **Estado:** **propuesto** — pendiente de aceptación o recorte del dueño antes de cualquier MET-4b.
+- **Estado:** **aceptado** por el dueño 2026-08-31 — MET-4b autorizado.
 - **Contratos reconciliados:** `docs/spec-rs-global-multi-mercado-fx.md` (aceptado) · `docs/spec-rs-pais.md` (aceptado) · `docs/spec-rs-tema.md` (aceptado) · `docs/principios-producto.md` · `docs/tickets/MET-4-muletas-tendencia.md` · decisión dueño 2026-08-27 (`docs/backlog-activo.md`) · código vivo (`lib/weeklyStage.js`, `lib/trendStructure.js`, `lib/indicators.js`, `lib/marketVolume.js`, `lib/stockVolume.js`, `lib/descriptiveStrip.js`, `lib/setupPatterns.js`, `lib/materializedScanner.js`) · auditoría etapas (`docs/auditoria-etapas-2026-08-16.md`, C-15).
 
 ---
