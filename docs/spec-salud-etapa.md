@@ -28,7 +28,7 @@ Propiedades duras:
 
 Las muletas MET-4 son **insumo** (sus mismos datos, ventanas y umbrales — una definición por métrica), pero el bloque «Sostén de la tendencia» de la ficha **sigue existiendo como tres lecturas independientes**: el índice las agrega bajo contrato propio, no las sustituye ni las colorea. La cláusula de MET-4 «no fusionar las muletas en un score sin spec MET-5» queda satisfecha precisamente por este documento.
 
-Implementación = **MET-5b**, solo con OK explícito del dueño sobre este spec.
+Implementación = **MET-5-calibrate** (umbrales) → **MET-5b** (ficha), en ese orden.
 
 ---
 
