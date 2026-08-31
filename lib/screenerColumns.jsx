@@ -25,6 +25,7 @@ import { cap, pct } from "@/lib/formatters";
 import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
 import { canonicalRs } from "@/lib/rsCanonical";
 import { countryRs } from "@/lib/countryRs";
+import { themeRs } from "@/lib/themeRs";
 import { canonicalRsDisclosure } from "@/lib/rsEngines";
 import { UNRELIABLE_AUDIT_STATUS } from "@/lib/scanLightProjection";
 import { STAGE_LEGACY_REASON, STAGE_MISSING_REASON, stageConfirmationMark, stageWordForState } from "@/lib/stageDisplay";
@@ -212,6 +213,19 @@ export const SCREENER_COLUMNS = [
       const crs = countryRs(row);
       if (!crs.available) return <MissingValue reason={crs.reason} />;
       return <b className={`cellNumber ${crs.value >= 75 ? "strong" : crs.value < 45 ? "weak" : ""}`.trim()}>{crs.value.toFixed(0)}</b>;
+    },
+  },
+  {
+    key: "rsTheme",
+    label: () => "RS tema",
+    legend: "RS tema · ocupación curada · universo privado curado. Ranking semanal intra-ocupación en USD (FX), solo las 12 themes curadas.",
+    align: "right",
+    className: "colRsTheme",
+    sortKey: () => "weeklyThemeRsRating",
+    cell: (row) => {
+      const trs = themeRs(row);
+      if (!trs.available) return <MissingValue reason={trs.reason} />;
+      return <b className={`cellNumber ${trs.value >= 75 ? "strong" : trs.value < 45 ? "weak" : ""}`.trim()}>{trs.value.toFixed(0)}</b>;
     },
   },
   {

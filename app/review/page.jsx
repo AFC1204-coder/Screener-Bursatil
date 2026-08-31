@@ -58,6 +58,7 @@ import { userFacingServiceError } from "@/lib/serviceErrors";
 import { objectiveStage } from "@/lib/scoring";
 import { canonicalRs } from "@/lib/rsCanonical";
 import { countryRs } from "@/lib/countryRs";
+import { themeRs } from "@/lib/themeRs";
 import { prepareReviewQueueRows } from "@/lib/decisionProfile";
 import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
@@ -370,9 +371,11 @@ function ReviewChartPanel({ row, loading = false }) {
 function metricRows(row = {}) {
   const rs = canonicalRs(row);
   const crs = countryRs(row);
+  const trs = themeRs(row);
   return [
     ["RS", rs.available ? rs.value.toFixed(0) : "-", rs.available ? "RS semanal del universo" : rs.reason],
     ["RS país", crs.available ? crs.value.toFixed(0) : "-", crs.available ? "RS semanal del mercado local" : crs.reason],
+    ["RS tema", trs.available ? trs.value.toFixed(0) : "-", trs.available ? "RS semanal de la ocupación curada" : trs.reason],
     ["3M", pct(value(row, "perf3m"))],
     ["6M", pct(value(row, "perf6m"))],
     ["12M", pct(value(row, "perf12m"))],

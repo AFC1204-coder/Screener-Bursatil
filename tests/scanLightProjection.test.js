@@ -37,6 +37,7 @@ const HANDCODED_RULE_FIELDS = [
   "priceFreshnessDays", "lastDate",       // maxPriceFreshnessDays
   "weeklyRsAvailable", "weeklyRsRating",  // minRsRating
   "weeklyCountryRsAvailable", "weeklyCountryRsRating", // minRsCountryPct
+  "weeklyThemeRsAvailable", "weeklyThemeRsRating", // minThemeRsRating
   "weaknessScore",                        // minWeaknessScore
   "ipoAgeMonths", "ipoDate",              // maxIpoAgeMonths / requireRecentIpo
 ];

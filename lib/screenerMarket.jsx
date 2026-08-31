@@ -13,6 +13,7 @@ import { clamp } from "@/lib/indicators";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { RS_QUALITY_OFF_CANON_REASON, canonicalRs } from "@/lib/rsCanonical";
 import { countryRs } from "@/lib/countryRs";
+import { themeRs } from "@/lib/themeRs";
 import { stageWordForState } from "@/lib/stageDisplay";
 import { ipoAgeMonthsForRow } from "@/lib/scoring";
 import { GLOBAL_INDEX_TAPE } from "@/lib/screenerConfig";
@@ -226,6 +227,7 @@ export function QuickPanel({ row, settings, onOpenStock }) {
   // el modal de vista rápida, la ficha y salud de mercado.
   const panelRs = canonicalRs(row);
   const panelCountryRs = countryRs(row);
+  const panelThemeRs = themeRs(row);
   const rankExplain = explainScreenerRank(row, settings);
   const rowIssues = auditDecisionRowIssues(row, rankExplain);
   const confidence = decisionConfidenceForRow(row, rankExplain);
@@ -244,11 +246,11 @@ export function QuickPanel({ row, settings, onOpenStock }) {
     [metricShortLabel("patternScore"), row.patternScore?.toFixed(0) || "-", "patternScore"],
     [metricShortLabel("rsGlobalPct"), panelRs.available ? panelRs.value.toFixed(0) : "-", "rsGlobalPct", panelRs.available ? "" : panelRs.reason],
     ["RS país", panelCountryRs.available ? panelCountryRs.value.toFixed(0) : "-", "weeklyCountryRsRating", panelCountryRs.available ? "" : panelCountryRs.reason],
+    ["RS tema", panelThemeRs.available ? panelThemeRs.value.toFixed(0) : "-", "weeklyThemeRsRating", panelThemeRs.available ? "" : panelThemeRs.reason],
     [metricShortLabel("rsQualityScore"), "-", "rsQualityScore", RS_QUALITY_OFF_CANON_REASON],
     [metricShortLabel("adProxyScore"), row.adProxyScore?.toFixed(0) || "-", "adProxyScore"],
     [metricShortLabel("epsGrowthProxyScore"), row.epsGrowthProxyScore?.toFixed(0) || "-", "epsGrowthProxyScore"],
     [metricShortLabel("weaknessScore"), row.weaknessScore?.toFixed(0) || "-", "weaknessScore"],
-    [metricShortLabel("rsSectorPct"), row.rsSectorPct?.toFixed(0) || "-", "rsSectorPct"],
     [metricShortLabel("objectiveSetupScore"), row.objectiveSetupScore?.toFixed(0) || "-", "objectiveSetupScore"],
     ["Growth", row.growthScore?.toFixed(0) || "-", "growthScore"],
     ["Cobertura", row.dataCoverageScore?.toFixed(0) || "-", "dataCoverageScore"],
