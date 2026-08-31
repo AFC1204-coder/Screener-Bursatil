@@ -5,12 +5,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre** — MET-4b cerrado.  
-Último cerrado: **MET-4b** (`c46938b`) · THEME-SERIES B (`859e988`).  
-**Cola acordada (dueño):** ~~BUG-HUNT~~ → ~~R-06~~ → ~~MET-4~~ → ~~THEME-SERIES B~~ → ~~MET-4b~~ · MIGRATE aparcado.  
-**Nota MET-4b (2026-08-31):** ficha «Sostén de la tendencia» · smoke AAPL OK (persistencia / mantiene / volumen neutro) · sin scoring · `weeklyStage` intacto.  
+Ticket en curso: **MET-5** (spec salud etapa 0–100 · Fable 5) — `docs/tickets/activo.md`.  
+Último cerrado: **MET-4b** (`c46938b`).  
+**Cola acordada (dueño):** ~~MET-4b~~ → **MET-5** spec · MET-4c opcional · MIGRATE aparcado.  
+**Nota MET-5 (2026-08-31):** spec índice salud etapa; muletas = insumo candidato; no interruptor 1–4.  
+**Nota MET-4b (2026-08-31):** ficha «Sostén de la tendencia» · `c46938b`.  
 **Nota MET-4 aceptación (2026-08-31):** dueño OK · `54050e0`.  
-**Nota THEME-SERIES B (2026-08-31):** 8 weekKeys · brief cache puede ir atrasado.  
+**Nota THEME-SERIES B (2026-08-31):** 8 weekKeys · `859e988`.  
 **Nota BUG-HUNT-1b (2026-08-31):** cerrado `e90dc59`.  
 **Nota R-06 (2026-08-31):** Deterioro **~1030** · E2 **~333** · pivot **~249** · intl **~1544** · IPO **~435**.  
 **Nota YIELD-1 smoke (2026-08-31):** Global → 1583 · mesa CA+…+US.  
@@ -263,7 +264,8 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-3c | Cron GHA RS tema (dom 07:30 UTC) | **Hecho** · `rs-theme-private.yml` |
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | **Aceptado** 2026-08-31 · `54050e0` |
 | MET-4b | Impl ficha «Sostén de la tendencia» | **Hecho** (`c46938b`) |
-| MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | Ambicioso; tras MET-1…4 |
+| MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | **Activo** · spec · `docs/tickets/activo.md` |
+| MET-4c | Vista rápida / filtro persistencia (opcional) | Ideas; tras uso real MET-4b |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
 | VCP | Detector producto vs corpus `research/contracciones/` | Aplazado / investigación |
 
