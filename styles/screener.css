@@ -2946,11 +2946,18 @@ button.dataHealthSummaryItem:hover,
   gap: 16px;
 }
 
+/* CHART-QR-3: el canvas/escala de precios con overflow:visible tapaba la
+   columna de valores de «El valor» / «Volumen y riesgo». Contener el chart. */
+.quickReviewChart {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .quickReviewChart .rowPreviewBox {
   padding:0;
   border:0;
   background:transparent;
-  overflow:visible;
+  overflow:hidden;
 }
 
 .quickReviewTrendSupport .quickReviewTrendList {
@@ -2969,6 +2976,8 @@ button.dataHealthSummaryItem:hover,
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .perfStrip {
@@ -3007,6 +3016,9 @@ button.dataHealthSummaryItem:hover,
   display: flex;
   flex-direction: column;
   gap: 24px;
+  position: relative;
+  z-index: 2;
+  min-width: 0;
 }
 
 .quickBusinessCard {
@@ -3077,13 +3089,16 @@ button.dataHealthSummaryItem:hover,
   text-transform: uppercase;
 }
 
+/* Misma rejilla que .quickBusinessCard: la columna de valor no se pierde
+   por overflow:hidden del card (flex + min-width:auto). */
 .profileRow {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(76px, .45fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
   padding: 10px 16px;
   border-bottom: 1px solid var(--line);
   font-size: 13px;
-  align-items: baseline;
 }
 
 .profileRow:last-child {
@@ -3092,12 +3107,17 @@ button.dataHealthSummaryItem:hover,
 
 .profileRow span {
   color: var(--soft);
+  min-width: 0;
 }
 
 .profileRow b {
-  color: #fff;
+  color: var(--tiza);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  min-width: 0;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 1024px) {
@@ -5326,11 +5346,12 @@ button.decisionIssueBadge:hover,
     height:auto!important;
     min-height:0!important;
     max-width:100%;
-    overflow:visible;
+    overflow:hidden;
   }
   .quickReviewChart .rowPreviewBox {
     height:auto!important;
     min-height:0!important;
+    overflow:hidden;
   }
   .perfStrip {
     grid-template-columns:repeat(3,minmax(0,1fr));

@@ -5,11 +5,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 noche · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **CHART-QR-3** (panel «El valor» vacío).  
-**Cola chart:** ~~CHART-QR-1~~ · ~~CHART-QR-2~~ · QR-3 · luego MET-5 uso real → VCP.  
-Último cerrado: **CHART-QR-2** (scope quickReview + RowPriceChart indicators deps).  
+Ticket en curso: **MET-5 uso real** (decisión dueño A/B/C).  
+**Cola chart:** ~~CHART-QR-1~~ · ~~CHART-QR-2~~ · ~~CHART-QR-3~~ · luego MET-5 uso real → VCP.  
+Último cerrado: **CHART-QR-3** (overflow chart tapaba «El valor»).  
 MIGRATE aparcado.  
-**Nota CHART-QR-2 (2026-08-31 noche):** tests 4/4 · smoke CTRN toggles país/tema OFF sin bandas; AAPL ficha ON; preset localStorage contaminado limpiado en smoke.  
+**Nota CHART-QR-3 (2026-08-31 noche):** smoke 2269.HK — Etapa 2 · RS 90 · Cap 208,0B HKD · Dist −7,0%; `elementFromPoint` → `<b>`; chart `overflow:hidden` · sideZ 2.  
+**Nota CHART-QR-2 (2026-08-31 noche):** `67dcb75` · tests 4/4 · smoke CTRN país/tema OFF sin bandas.  
 **Nota MET-4e (2026-08-31):** write 1208 filas · above8=521 · smoke filtro 17→**10** pasan · vista rápida «12 semanas».  
 **Nota MET-4d (2026-08-31):** `b883085`.  
 **Nota MIGRATE (2026-08-31):** aparcado por dueño.  
@@ -250,7 +251,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | CHART-RS-2 | Overlay RS país (tercer tono; post MET-2) | **Hecho** |
 | CHART-QR-1 | Vista rápida: preview línea → velas tras `/api/chart` | **Hecho** · smoke IFP.TO canvas 2s + «Ampliando histórico…» |
 | CHART-QR-2 | RS país/tema OFF por defecto en modal/review | **Hecho** · smoke CTRN OFF sin bandas |
-| CHART-QR-3 | Panel «El valor» vacío en vista rápida | **Activo** |
+| CHART-QR-3 | Panel «El valor» vacío en vista rápida | **Hecho** · smoke 2269.HK hit-test `<b>` |
 
 **Orden sugerido:** CHART-QR-1…3 (dueño 2026-08-31) → MET-5 uso real → VCP.  
 **No** mezclar con UX-18…21 (P2 mesa) en el mismo ticket.
