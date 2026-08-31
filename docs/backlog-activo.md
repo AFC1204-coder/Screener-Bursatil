@@ -5,10 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **MET-5** (spec salud etapa 0–100 · Fable 5) — `docs/tickets/activo.md`.  
-Último cerrado: **MET-4b** (`c46938b`).  
-**Cola acordada (dueño):** ~~MET-4b~~ → **MET-5** spec · MET-4c opcional · MIGRATE aparcado.  
-**Nota MET-5 (2026-08-31):** spec índice salud etapa; muletas = insumo candidato; no interruptor 1–4.  
+Ticket en curso: **libre** — MET-5 spec propuesto; espera OK dueño.  
+Último cerrado: **MET-5 spec** propuesto (`a625bba`) · MET-4b (`c46938b`).  
+**Cola acordada (dueño):** ~~MET-4b~~ → ~~MET-5 spec~~ (OK dueño → MET-5b) · MET-4c opcional · MIGRATE aparcado.  
+**Nota MET-5 (2026-08-31):** `docs/spec-salud-etapa.md` · 0–100 ponderado · solo Etapas 2/4 · 5 insumos (muletas+extensión) · solo ficha · scoring off · `weeklyStage` intacto.  
 **Nota MET-4b (2026-08-31):** ficha «Sostén de la tendencia» · `c46938b`.  
 **Nota MET-4 aceptación (2026-08-31):** dueño OK · `54050e0`.  
 **Nota THEME-SERIES B (2026-08-31):** 8 weekKeys · `859e988`.  
@@ -264,7 +264,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-3c | Cron GHA RS tema (dom 07:30 UTC) | **Hecho** · `rs-theme-private.yml` |
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | **Aceptado** 2026-08-31 · `54050e0` |
 | MET-4b | Impl ficha «Sostén de la tendencia» | **Hecho** (`c46938b`) |
-| MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | **Activo** · spec · `docs/tickets/activo.md` |
+| MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | **Spec propuesto** · OK dueño → MET-5b |
 | MET-4c | Vista rápida / filtro persistencia (opcional) | Ideas; tras uso real MET-4b |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
 | VCP | Detector producto vs corpus `research/contracciones/` | Aplazado / investigación |
