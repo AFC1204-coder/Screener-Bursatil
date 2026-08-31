@@ -5,14 +5,15 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 noche · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre** — siguiente **VCP (1/3)**.  
-**Cola:** ~~CHART-QR~~ · ~~MET-5 uso real~~ · ~~UX-NAC-3~~ · VCP → carga/premium.  
-Último cerrado: **UX-NAC-3** (auto-cargar mesa sin CTA rojo).  
+Ticket en curso: **VCP-1** (etiquetado tanda 3 · research).  
+**Cola:** ~~CHART-QR~~ · ~~MET-5~~ · ~~UX-NAC-3~~ · VCP-1 → VCP-2 (si aplica) → carga/premium.  
+Último cerrado: **UX-NAC-3** `db2ea89`.  
 MIGRATE aparcado.  
-**Nota UX-NAC-3 (2026-08-31 noche):** tests 57 · smoke US→Core intl / HK «Actualizando mesa» sin CTA error; filtro Deterioro sin aviso mercados. Nota: durante carga Core intl aún aparece guardrail «Líderes intl» (UX-16) — follow-up premium aparte.  
-**Nota MET-5 uso real (2026-08-31 noche):** dueño **A** — fórmula v1 OK.  
+**Nota VCP (2026-08-31 noche):** dueño confirma marco fractal / potencial / no exacto; etiquetado útil sin relleno; retomar bucle gráficos→corpus (no producto).  
+**Nota UX-NAC-3 (2026-08-31 noche):** tests 57 · smoke US→Core intl / HK.  
+**Nota MET-5 uso real (2026-08-31 noche):** dueño **A**.  
 **Nota CHART-QR-3 (2026-08-31 noche):** `803dba4`.  
-**Nota MET-4e (2026-08-31):** write 1208 filas · above8=521 · smoke filtro 17→**10** pasan.  
+**Nota MET-4e (2026-08-31):** write 1208 · above8=521 · filtro 17→**10**.  
 **Nota MET-4d (2026-08-31):** `b883085`.  
 **Nota MIGRATE (2026-08-31):** aparcado por dueño.  
 **Nota BUG-HUNT-1b (2026-08-31):** cerrado `e90dc59`.  
@@ -279,7 +280,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-4d | Filtro hunt persistencia MA 30s | **Hecho** (`b883085`) |
 | MET-4e | Backfill weeksAbove* + smoke 4c/4d | **Hecho** · write 1208 · smoke OK |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
-| VCP | Detector producto vs corpus `research/contracciones/` | Aplazado / investigación |
+| VCP | Detector producto vs corpus `research/contracciones/` | **VCP-1 activo** · etiquetado tanda 3 |
 
 ~~IL/CN/BR/MX~~ aplazado.
 
