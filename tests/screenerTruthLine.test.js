@@ -151,6 +151,16 @@ describe("resolveScreenerTruthCounts", () => {
     expect(counts).toEqual({ passCount: 1045, visibleCount: 1045 });
   });
 
+  it("PERF-NAC: override cold con passCount null alinea en lista con pasan eager", () => {
+    const counts = resolveScreenerTruthCounts({
+      eagerPassCount: 290,
+      filteredVisibleCount: 488,
+      huntTruthOverride: { passCount: null, presetName: "Deterioro" },
+      viewFiltersActive: 0,
+    });
+    expect(counts).toEqual({ passCount: 290, visibleCount: 290 });
+  });
+
   it("alinea en lista con pasan cuando deferred está desfasado", () => {
     const counts = resolveScreenerTruthCounts({
       eagerPassCount: 1045,

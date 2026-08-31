@@ -66,6 +66,7 @@ import {
   uiSettingsOverridesFromScan,
 } from "@/lib/screenerFilterCatalog";
 import { getOrComputeHuntFilter, huntFilterCacheKey, huntPresetActiveSettings, warmHuntFilterCache } from "@/lib/screenerHuntFilterCache";
+import { markHuntGesture } from "@/lib/screenerHuntPerf";
 import { huntCardSelection, huntDisplayName } from "@/lib/screenerHuntCards";
 import { FilterFamilyEmptyLabel } from "@/lib/filterFamilyEmpty";
 import { filterFamilyCoverageByPilot, shouldUseFamilyEmptyLabel } from "@/lib/filterFamilyCoverage";
@@ -1974,13 +1975,17 @@ export default function Page() {
 
     const nextActiveSettings = huntPresetActiveSettings(selection.presetKey);
     const context = { ...scanContext, marketHealth, useRegimeFilter: true };
+    const signature = fastFilterSignature(analyzedRows, nextActiveSettings, context);
     const cacheKey = huntFilterCacheKey(selection.presetKey, analyzedRows.length, context);
     const cachedView = huntFilterCacheRef.current.get(cacheKey);
+    markHuntGesture("hunt-card");
     flushSync(() => {
       setPreset(selection.presetKey, { sort: selection.sort, status: false });
       setHuntTruthOverride(cachedView
         ? { passCount: cachedView.rows.length, presetName: huntLabel }
         : { passCount: null, presetName: huntLabel });
+      // Evita que el efecto de re-filtrado duplique el trabajo síncrono antes del transition.
+      fastFilterSignatureRef.current = signature;
     });
 
     startHuntTransition(() => {
@@ -2007,6 +2012,7 @@ export default function Page() {
         lastHuntCardMs: perfNow() - startedAt,
         lastHuntCardCacheHit: Boolean(resolved.fromCache),
         lastHuntCardPreset: selection.presetKey,
+        lastHuntTruthLineMs: null,
       }));
       setStatus(filteredView.rows.length
         ? `Filtro activo: ${huntLabel} · ${filteredView.rows.length} de ${analyzedRows.length} acciones a la vista (filtro aplicado en ${secondsLabel(filteredView.filterMs)}).`
@@ -2446,6 +2452,9 @@ export default function Page() {
       rows,
       huntTruthOverride,
       isHuntTransitionPending,
+      onHuntTruthLinePaint: (ms) => {
+        setScanPerf((prev) => ({ ...(prev || {}), lastHuntTruthLineMs: ms }));
+      },
     }}
     sidebar={{
       presetKey,

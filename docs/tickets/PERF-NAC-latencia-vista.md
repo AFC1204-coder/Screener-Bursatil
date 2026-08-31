@@ -2,10 +2,11 @@
 
 Copia de referencia. Ejecutar desde `docs/tickets/activo.md`.
 
-**Estado:** Activo  
+**Estado:** Cerrado  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer 2.5  
-**Origen:** R-06 · UX-NAC track · 2026-08-31
+**Origen:** R-06 · UX-NAC track · 2026-08-31  
+**Cierre:** hunt cold (signature prefetch) · scans `core`/`hydrateRs=1` en cloudSync · engines país en paralelo · smoke ms auth-blocked
 
 ## Objetivo
 

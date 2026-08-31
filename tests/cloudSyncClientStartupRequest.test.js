@@ -43,6 +43,8 @@ describe("getLatestScanFromCloud · el arranque pide un escaneo, no diez", () =>
     // Y ese escaneo es el nocturno estadounidense, no "el más reciente": el
     // cron europeo corre después (tests/screenerStartupAnchor.test.js).
     expect(parsed.searchParams.get("anchor")).toBe("nightly-us");
+    // PERF-NAC: API compact default es core; arranque de producto pide país/tema.
+    expect(parsed.searchParams.get("hydrateRs")).toBe("1");
 
     const rowsLimit = Number(parsed.searchParams.get("rowsLimit"));
     expect(Number.isFinite(rowsLimit)).toBe(true);
@@ -67,5 +69,6 @@ describe("getLatestScanFromCloud · el arranque pide un escaneo, no diez", () =>
     expect(parsed.searchParams.get("anchor")).toBe("markets");
     expect(parsed.searchParams.get("markets")).toBe("JP");
     expect(parsed.searchParams.get("rowsLimit")).toBe(String(STARTUP_ROWS_LIMIT));
+    expect(parsed.searchParams.get("hydrateRs")).toBe("1");
   });
 });

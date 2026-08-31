@@ -5,13 +5,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **PERF-NAC** (latencia vista · Composer 2.5) — `docs/tickets/activo.md`.  
-Último cerrado: **UX-NAC-2** (verdad `mesa:` / `selección ≠ mesa`).  
-Anterior: **UX-NAC-1** (`2f8223f`).  
-**Cola:** PERF-NAC → YIELD · **MIGRATE aparcado** (dueño: mañana/pasado).  
-**Nota UX-NAC-2 smoke (2026-08-31):** HK `mesa: HK`; Global → `mesa: HK · datos: HK · selección: CA+…+US · selección ≠ mesa`.  
-**Nota UX-NAC-1 smoke (2026-08-31):** Global → 0 filas + empty; HK → 122 auto.  
-**Nota MIGRATE (2026-08-31):** dueño aparca migrate; no activar sin OK.  
+Ticket en curso: **YIELD-1** (mesa intl yield · Composer 2.5) — `docs/tickets/activo.md`.  
+Último cerrado: **PERF-NAC** (hunt cold + scans core/extended · cliente `hydrateRs=1`).  
+Anterior: **UX-NAC-2** (`a818932`).  
+**Cola:** YIELD-1 · **MIGRATE aparcado** (dueño: mañana/pasado).  
+**Nota PERF-NAC (2026-08-31):** cold hunt sin doble filter; API compact=`core`; arranque producto `&hydrateRs=1`. Smoke ms Browser Use **bloqueado** (sesión «Comprobando acceso»).  
+**Nota UX-NAC-2 smoke (2026-08-31):** `mesa: HK` · Global → `selección ≠ mesa`.  
+**Nota MIGRATE (2026-08-31):** aparcado por dueño.  
 **Nota MET-3c guard (2026-08-31):** abort write si perfiles &lt;75% · timeout 60s (`8e9c861`).  
 **Nota MET-3c Actions (2026-08-31):** `workflow_dispatch` Success · N Software/IA Actions 244 (local 570) → guard.  
 **Nota MET-3c (2026-08-31):** `45eacc1` · cron `30 7 * * 0`.  
@@ -229,8 +229,8 @@ Feedback dueño: profundidad OK, fricción al filtrar nacionalidades + sensació
 |---|---|---|
 | UX-NAC-1 | Restore/cambio mercado: nunca filas ajenas cazables; auto-load o bloqueo | **Hecho** |
 | UX-NAC-2 | Línea de verdad fija: N analizadas · mercados en mesa · qué falta | **Hecho** |
-| PERF-NAC | Recorte latencia cambio vista (R-06) + hydrate RS sin colgar scans | **Activo** |
-| YIELD | Más filas intl reales en mesa (ops/cron, no solo chips) | Cola |
+| PERF-NAC | Recorte latencia cambio vista (R-06) + hydrate RS sin colgar scans | **Hecho** |
+| YIELD | Más filas intl reales en mesa (ops/cron, no solo chips) | **YIELD-1 activo** |
 | MIGRATE-1…3 | Postgres Mini | **Aparcado** (dueño: mañana/pasado) |
 
 ## Chart (pendiente · oleada post-screener P2)

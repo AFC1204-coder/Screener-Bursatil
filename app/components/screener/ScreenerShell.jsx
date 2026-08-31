@@ -12,7 +12,7 @@
 // estado de negocio — mantenerlo aquí evita subir un ref del DOM del propio
 // panel al container solo para esto.
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import GlobalCoveragePanel from "@/app/components/screener/GlobalCoveragePanel";
 import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
 import ResultPagerTable from "@/app/components/screener/ResultPagerTable";
@@ -38,6 +38,7 @@ import { buildMarketsStaleNotice, isMarketSelectable, MARKETS_MISALIGNMENT_EMPTY
 import { buildLideresIntlGuardrailNotice, LIDERES_INTL_CTA } from "@/lib/lideresIntlGuardrail";
 import { buildScreenerFilterBreakdown } from "@/lib/screenerFilterBreakdown";
 import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
+import { recordTruthLinePaint } from "@/lib/screenerHuntPerf";
 import {
   ALL_FILTER_LAYERS,
   DEFAULT_FIELD_RULES,
@@ -89,6 +90,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     rows,
     huntTruthOverride = null,
     isHuntTransitionPending = false,
+    onHuntTruthLinePaint,
   } = chrome;
 
   // --- sidebar ---
@@ -301,6 +303,13 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     selectedMarkets: markets,
     marketsMisaligned: resultsBlockedByMarketMisalignment,
   });
+  useLayoutEffect(() => {
+    const ms = recordTruthLinePaint({
+      presetName: presetNameForTruth,
+      pending: isHuntTransitionPending,
+    });
+    if (ms != null) onHuntTruthLinePaint?.(ms);
+  }, [truthLine, presetNameForTruth, isHuntTransitionPending, onHuntTruthLinePaint]);
   const filterBreakdown = buildScreenerFilterBreakdown({
     diagnostics,
     passCount: passCountForTruth,

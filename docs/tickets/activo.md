@@ -1,4 +1,4 @@
-# Ticket activo — PERF-NAC (latencia cambio de vista multi-mercado)
+# Ticket activo — YIELD-1 (mesa intl: más filas útiles sin subir lote)
 
 ## Prompt para Agent chat (copiar tal cual)
 
@@ -7,22 +7,22 @@
 
 Rama: codex/statsedge-ui-polish
 Modelo: Composer 2.5
-Track: mesa multi-mercado seria · post UX-NAC-1/2
+Track: mesa multi-mercado · post UX-NAC / PERF-NAC
 NO MIGRATE · NO scoring
 
-Implementa PERF-NAC. Sin commit ni push.
+Implementa YIELD-1. Sin commit ni push.
 
-Contexto medido (R-06, 2026-08-30, Browser Use): cambio ficha rail cold — E2 ~1980 ms, pivot ~964, intl ~2522, IPO ~946, Deterioro ~1879. UX-11 ya dio warm/optimistic; residual = cold/secuencial + hydrate RS en /api/scans.
+Contexto producto (2026-08-28): mejor yield por lote, no más símbolos/noche (Pro MICRO + spend-cap). INT-3c/e/d hechos (gates HKD, líquidos Main Board, acumular N noches). Dolor residual: mesa Global/Core a veces no fusiona; HK ~122 tras acumular.
 
-Objetivo: al cambiar ficha hunt o mercados, la UI no «se queda muerta» 1–2,5 s. Preferir feedback <200 ms percibido; el cálculo pesado puede seguir en transición.
+Objetivo: más filas intl **útiles** en mesa sin romper caps de lote ni bajar umbrales de precio.
 
-Alcance (elige el mínimo que mueva la aguja; documenta qué hiciste):
-1. Instrumentar o reutilizar marcas: tiempo desde clic hunt/preset hasta update de `.screenerTruthLine` (test o harness ligero).
-2. Camino cold hunt: `startTransition` / deferred rows / skeleton de verdad ya existentes — asegurar que cold path no bloquee el paint del rail activo y de la truth line (aunque N aún stale un frame).
-3. Si `/api/scans` hidrata RS país/tema en serie y alarga la respuesta de mesa: paralelizar o defer hydrate no-bloqueante para el primer paint de filas (sin mentir RS: ausencias honestas hasta hydrate). No tocar motores RS ni pins.
-4. Tests del área + `./vfc`. Smoke ms: orquestador.
+Alcance (elige 1–2 palancas con evidencia; documenta):
+1. Auditoría corta en código: por qué `getLatestScanFromCloudForMarkets` / merge Global puede fallar o quedar en CTA (UX-NAC-1 smoke: Global sticky). Fix honesto de merge/lookup si hay bug claro.
+2. O: mejorar copy/estado cuando merge parcial (qué mercados faltan) — sin inventar filas.
+3. O: acumular CA igual que HK (INT-3d patrón) si CA sigue en 1 noche pobre — solo si el código de accumulate no cubre CA hoy.
+4. Tests del área + `./vfc`. Smoke: orquestador.
 
-Fuera: MIGRATE, YIELD cron/volumen filas, UX-NAC copy, scoring, commit/push.
+Fuera: MIGRATE, subir concurrency/lote cron a lo bruto, scoring, PERF hunt, commit/push.
 
 Plantilla de retorno:
 ## Resumen
@@ -38,16 +38,11 @@ Sin commit ni push.
 
 | Campo | Valor |
 |---|---|
-| Id | PERF-NAC |
-| Tipo | perf UX |
+| Id | YIELD-1 |
+| Tipo | datos / mesa intl |
 | Modelo | **Composer 2.5** |
 | Rama | `codex/statsedge-ui-polish` |
-| Prerreq | UX-NAC-1/2 |
-
-## Objetivo
-
-Menos espera percibida al cambiar vista/nacionalidad (R-06 residual).
 
 ## Fuera
 
-MIGRATE · YIELD · scoring
+MIGRATE · scoring · subir lote a ciegas

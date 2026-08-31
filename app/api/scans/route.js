@@ -11,6 +11,7 @@ import { attachCachedMarketCap, readMarketCapForSymbols } from "@/lib/fundamenta
 import { attachWeeklyRs, readGlobalRsForSymbols } from "@/lib/globalRs";
 import { attachWeeklyCountryRs, readCountryRsForSymbols } from "@/lib/countryRsHydrate";
 import { attachWeeklyThemeRs, readThemeRsForSymbols } from "@/lib/themeRsHydrate";
+import { scanRsHydrationMode } from "@/lib/scansRsHydration";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 
 const SCANS_SUPABASE_TIMEOUT_MS = 8000;
@@ -360,6 +361,35 @@ async function readMergedMaterializedResults({
   return { ...page, rows: dedupeScanResultsBySymbol(page.rows, { sourceScans: orderedScans }) };
 }
 
+async function readScanRowHydration(scanSymbols = [], results = [], { hydrationMode = "core" } = {}) {
+  const emptyRs = { configured: false, bySymbol: new Map() };
+  const [weeklyRs, marketCaps] = await Promise.all([
+    readGlobalRsForSymbols(scanSymbols).catch(() => emptyRs),
+    readMarketCapForSymbols(scanSymbols).catch(() => emptyRs),
+  ]);
+  if (hydrationMode !== "extended") {
+    return {
+      weeklyRsBySymbol: weeklyRs.bySymbol,
+      weeklyCountryRsBySymbol: null,
+      weeklyThemeRsBySymbol: null,
+      marketCapBySymbol: marketCaps.bySymbol,
+      rsHydration: "core",
+    };
+  }
+  const themeRows = themeHydrateRowBySymbol(results);
+  const [weeklyCountryRs, weeklyThemeRs] = await Promise.all([
+    readCountryRsForSymbols(scanSymbols).catch(() => emptyRs),
+    readThemeRsForSymbols(scanSymbols, { rowBySymbol: themeRows }).catch(() => emptyRs),
+  ]);
+  return {
+    weeklyRsBySymbol: weeklyRs.bySymbol,
+    weeklyCountryRsBySymbol: weeklyCountryRs.bySymbol,
+    weeklyThemeRsBySymbol: weeklyThemeRs.bySymbol,
+    marketCapBySymbol: marketCaps.bySymbol,
+    rsHydration: "extended",
+  };
+}
+
 async function readScanResultPages({ ownerId, scanIds, select, rowsLimit, rowsAvailable }) {
   const { offsets, sampled, step } = scanResultPageOffsets(rowsAvailable, rowsLimit);
   const rows = [];
@@ -578,6 +608,11 @@ export async function GET(req) {
   const full = searchParams.get("full") === "1";
   const projection = searchParams.get("projection") || "";
   const decisionProjection = projection === "decision" && !full;
+  const rsHydrationMode = scanRsHydrationMode({
+    full,
+    decisionProjection,
+    hydrateRsParam: searchParams.get("hydrateRs"),
+  });
   const limit = Math.min(Number(searchParams.get("limit") || 50), 100);
   const rowsLimit = Math.min(Math.max(Number(searchParams.get("rowsLimit") || 5000), 0), 20000);
   const scanSelect = "id,local_id,created_at,updated_at,deleted_at,name,preset,settings,market_score,market_regime,row_count";
@@ -663,26 +698,21 @@ export async function GET(req) {
           if (!full && !decisionProjection) results = results.map((item) => ({ ...item, raw: compactResearchRow(item.raw) }));
         }
         const scanSymbols = results.map((item) => item.symbol).filter(Boolean);
-        const themeRows = themeHydrateRowBySymbol(results);
-        const [weeklyRs, weeklyCountryRs, weeklyThemeRs, marketCaps] = await Promise.all([
-          readGlobalRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
-          readCountryRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
-          readThemeRsForSymbols(scanSymbols, { rowBySymbol: themeRows }).catch(() => ({ configured: false, bySymbol: new Map() })),
-          readMarketCapForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
-        ]);
+        const hydration = await readScanRowHydration(scanSymbols, results, { hydrationMode: rsHydrationMode });
         return {
           configured: true,
           ok: true,
           projection: decisionProjection ? "decision" : full ? "full" : "compact",
+          rsHydration: hydration.rsHydration,
           scans: activeScans.map((scan) => scanFromDb(scan, results, {
             decisionProjection,
             includeRows,
             rowsSampled,
             omitDecisionTrace: !full && !decisionProjection,
-            weeklyRsBySymbol: weeklyRs.bySymbol,
-            weeklyCountryRsBySymbol: weeklyCountryRs.bySymbol,
-            weeklyThemeRsBySymbol: weeklyThemeRs.bySymbol,
-            marketCapBySymbol: marketCaps.bySymbol,
+            weeklyRsBySymbol: hydration.weeklyRsBySymbol,
+            weeklyCountryRsBySymbol: hydration.weeklyCountryRsBySymbol,
+            weeklyThemeRsBySymbol: hydration.weeklyThemeRsBySymbol,
+            marketCapBySymbol: hydration.marketCapBySymbol,
             matchAllResults: Boolean(materialized.merged || materialized.accumulated),
           })),
           scanTombstones: [],
@@ -743,29 +773,21 @@ export async function GET(req) {
       // no disponible y el criterio se omite aguas abajo, igual que un
       // símbolo que de verdad no esté en el ranking.
       const scanSymbols = results.map((item) => item.symbol).filter(Boolean);
-      const themeRows = themeHydrateRowBySymbol(results);
-      const [weeklyRs, weeklyCountryRs, weeklyThemeRs, marketCaps] = await Promise.all([
-        readGlobalRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
-        readCountryRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
-        readThemeRsForSymbols(scanSymbols, { rowBySymbol: themeRows }).catch(() => ({ configured: false, bySymbol: new Map() })),
-        // Misma idea para la capitalización: la ficha la lee de
-        // fundamental_snapshots en vivo, así que el snapshot del escaneo no
-        // puede seguir siendo la única copia que ve el screener.
-        readMarketCapForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
-      ]);
+      const hydration = await readScanRowHydration(scanSymbols, results, { hydrationMode: rsHydrationMode });
       return {
         configured: true,
         ok: true,
         projection: decisionProjection ? "decision" : full ? "full" : "compact",
+        rsHydration: hydration.rsHydration,
         scans: activeScans.map((scan) => scanFromDb(scan, results, {
           decisionProjection,
           includeRows,
           rowsSampled,
           omitDecisionTrace: !full && !decisionProjection,
-          weeklyRsBySymbol: weeklyRs.bySymbol,
-          weeklyCountryRsBySymbol: weeklyCountryRs.bySymbol,
-          weeklyThemeRsBySymbol: weeklyThemeRs.bySymbol,
-          marketCapBySymbol: marketCaps.bySymbol,
+          weeklyRsBySymbol: hydration.weeklyRsBySymbol,
+          weeklyCountryRsBySymbol: hydration.weeklyCountryRsBySymbol,
+          weeklyThemeRsBySymbol: hydration.weeklyThemeRsBySymbol,
+          marketCapBySymbol: hydration.marketCapBySymbol,
         })),
         scanTombstones: includeDeleted ? deletedScans.map(scanTombstoneFromDb) : [],
         ...(anchoredToNightlyUs ? { nightly: { found: true, ...nightly.scan } } : {}),
