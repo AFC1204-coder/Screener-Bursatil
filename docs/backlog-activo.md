@@ -6,12 +6,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **MET-3b write+hydrate** — 12 themes en DB · UI AGX tema **52**.  
-Anterior: **MET-3b** impl (`b18860f`).  
-**Cola:** MET-3c (cron dom 07:30) · CHART-RS-3 · MIGRATE **mar 2 sep** · R-06 / yield  
-**Nota MET-3b write (2026-08-31):** `--write` 12/12 · ~115s · Software/IA 570 · Semis 174 · MSFT **64** · AGX **52** · smoke thead con números tras cablear `/api/scans`.  
-**Nota MET-3b (2026-08-31):** impl `b18860f` + fix hydrate/scans.  
-**Nota MET-3 aceptación (2026-08-31):** dueño OK + Grok · 12 THEME_RULES · residual sin ranking · `--rs-theme`.  
+Último cerrado: **MET-3c** (cron RS tema · `rs-theme-private.yml` · `30 7 * * 0`).  
+Anterior: **MET-3b write+hydrate** (`98bd0a8`).  
+**Cola:** CHART-RS-3 · MIGRATE **mar 2 sep** · R-06 / yield  
+**Nota MET-3c (2026-08-31):** workflow + `workflow_dispatch` pendiente tras push.  
+**Nota MET-3b write (2026-08-31):** `--write` 12/12 · MSFT **64** · AGX **52**.  
+**Nota MET-3b (2026-08-31):** impl `b18860f` + hydrate scans `98bd0a8`.  
+**Nota MET-3 aceptación (2026-08-31):** dueño OK + Grok · 12 THEME_RULES.  
 **Nota RS-SERIES-1 (2026-08-31):** AAPL país 27 pts, W32 único 70, latest 64.  
 **Nota MET-2c (2026-08-30):** workflow `rs-country-private.yml` · cron `0 7 * * 0` + dispatch · US→intl · flags OK.  
 **Nota MET-2c Actions (2026-08-30):** `workflow_dispatch` [33336486687](https://github.com/AFC1204-coder/Screener-Bursatil/actions/runs/33336486687) · **success** ~2,5 min.  
@@ -238,7 +239,8 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-2b | Impl lector + motor intl + columna/filtro | **Hecho** · `9c147c6` · write HK OK |
 | MET-2c | Cron GHA RS país (dom 07:00 UTC) | **Hecho** · `rs-country-private.yml` |
 | MET-3 | Spec RS tema (ocupación / theme) | **Aceptado** · `docs/spec-rs-tema.md` (parche Grok) |
-| MET-3b | Impl lector + motor tema + columna/filtro | **Hecho** · pendiente write DB / MET-3c |
+| MET-3b | Impl lector + motor tema + columna/filtro | **Hecho** · `b18860f`/`98bd0a8` · write 12/12 |
+| MET-3c | Cron GHA RS tema (dom 07:30 UTC) | **Hecho** · `rs-theme-private.yml` |
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | Ideas; sin ticket |
 | MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | Ambicioso; tras MET-1…4 |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
