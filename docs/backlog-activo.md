@@ -5,12 +5,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **YIELD-1** (mesa intl yield · Composer 2.5) — `docs/tickets/activo.md`.  
-Último cerrado: **PERF-NAC** (hunt cold + scans core/extended · cliente `hydrateRs=1`).  
-Anterior: **UX-NAC-2** (`a818932`).  
-**Cola:** YIELD-1 · **MIGRATE aparcado** (dueño: mañana/pasado).  
-**Nota PERF-NAC (2026-08-31):** cold hunt sin doble filter; API compact=`core`; arranque producto `&hydrateRs=1`. Smoke ms Browser Use **bloqueado** (sesión «Comprobando acceso»).  
-**Nota UX-NAC-2 smoke (2026-08-31):** `mesa: HK` · Global → `selección ≠ mesa`.  
+Ticket en curso: *(ninguno)*.  
+Último cerrado: **YIELD-1** (fusión parcial Global/Core · sin todo-o-nada).  
+Anterior: **PERF-NAC** (`7572d2c`).  
+**Cola:** **MIGRATE aparcado** (dueño: mañana/pasado) · MET-4/ideas.  
+**Nota YIELD-1 smoke (2026-08-31):** Global → **1583** analizadas · `mesa: CA+CH+DE+ES+FR+GB+HK+IT+NL+SE+US` · filas CA/HK/US; cobertura parcial no bloquea.  
+**Nota PERF-NAC (2026-08-31):** hunt cold + `hydrateRs=1` cliente.  
 **Nota MIGRATE (2026-08-31):** aparcado por dueño.  
 **Nota MET-3c guard (2026-08-31):** abort write si perfiles &lt;75% · timeout 60s (`8e9c861`).  
 **Nota MET-3c Actions (2026-08-31):** `workflow_dispatch` Success · N Software/IA Actions 244 (local 570) → guard.  
@@ -230,7 +230,7 @@ Feedback dueño: profundidad OK, fricción al filtrar nacionalidades + sensació
 | UX-NAC-1 | Restore/cambio mercado: nunca filas ajenas cazables; auto-load o bloqueo | **Hecho** |
 | UX-NAC-2 | Línea de verdad fija: N analizadas · mercados en mesa · qué falta | **Hecho** |
 | PERF-NAC | Recorte latencia cambio vista (R-06) + hydrate RS sin colgar scans | **Hecho** |
-| YIELD | Más filas intl reales en mesa (ops/cron, no solo chips) | **YIELD-1 activo** |
+| YIELD | Más filas intl reales en mesa (ops/cron, no solo chips) | **YIELD-1 Hecho** |
 | MIGRATE-1…3 | Postgres Mini | **Aparcado** (dueño: mañana/pasado) |
 
 ## Chart (pendiente · oleada post-screener P2)

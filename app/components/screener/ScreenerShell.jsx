@@ -274,7 +274,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     selectedMarkets: markets,
     rowCount: analyzedRows.length,
   });
-  const resultsBlockedByMarketMisalignment = Boolean(marketsMisalignment);
+  const resultsBlockedByMarketMisalignment = Boolean(
+    marketsMisalignment && marketsMisalignment.blocksResults !== false,
+  );
   const huntResultsRows = resultsBlockedByMarketMisalignment ? [] : resultsRows;
   const huntResultsFiltered = resultsBlockedByMarketMisalignment ? [] : resultsFiltered;
   const huntResultsPagedRows = resultsBlockedByMarketMisalignment ? [] : resultsPagedRows;

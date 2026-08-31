@@ -206,14 +206,18 @@ describe("readLatestMaterializedScanForMarkets", () => {
     expect(result.sourceScans).toHaveLength(2);
   });
 
-  it("HK+TW → partial-markets sin fusionar (TW no publicable)", async () => {
+  it("HK+TW → fusión parcial con HK (TW no publicable)", async () => {
     configureBackend([SCAN_HK, SCAN_TW_FAILED]);
 
     const result = await readLatestMaterializedScanForMarkets(["HK", "TW"]);
 
-    expect(result.scan).toBeNull();
+    expect(result.merged).toBe(true);
+    expect(result.partial).toBe(true);
     expect(result.reason).toBe("partial-markets");
     expect(result.missingMarkets).toEqual(["TW"]);
+    expect(result.scan?.rowCount).toBe(23);
+    expect(result.row?.settings?.markets).toEqual(["HK"]);
+    expect(result.row?.settings?.missingMarkets).toEqual(["TW"]);
   });
 
   it("US solo → nocturno US (no materializado por settings)", async () => {
@@ -240,14 +244,17 @@ describe("readLatestMaterializedScanForMarkets", () => {
     expect(result.sourceScans).toHaveLength(2);
   });
 
-  it("US+HK sin nocturno → partial-markets con US en faltantes", async () => {
+  it("US+HK sin nocturno → fusión parcial solo HK", async () => {
     configureBackend([SCAN_HK]);
 
     const result = await readLatestMaterializedScanForMarkets(["US", "HK"]);
 
-    expect(result.scan).toBeNull();
+    expect(result.merged).toBe(true);
+    expect(result.partial).toBe(true);
     expect(result.reason).toBe("partial-markets");
     expect(result.missingMarkets).toEqual(["US"]);
+    expect(result.row?.settings?.markets).toEqual(["HK"]);
+    expect(result.scan?.rowCount).toBe(23);
   });
 });
 
@@ -357,17 +364,24 @@ describe("GET /api/scans?anchor=markets", () => {
     expect(payload.scans[0].settings?.markets).toEqual(["AU", "HK"]);
   });
 
-  it("HK+TW → partial-markets, sin sustituir tabla", async () => {
-    configureBackend([SCAN_HK, SCAN_TW_FAILED]);
+  it("HK+TW → fusión parcial con filas HK", async () => {
+    const hkResults = Array.from({ length: 5 }, (_, index) => scanResultRow(SCAN_HK.id, `0700${index}.HK`, index + 1));
+    configureBackendWithResults([SCAN_HK, SCAN_TW_FAILED], {
+      [SCAN_HK.id]: hkResults,
+    });
 
     const payload = await (await GET(new Request(`https://statsedge.test/api/scans?includeRows=1&limit=1&rowsLimit=100&anchor=${MARKETS_ANCHOR}&markets=HK,TW`))).json();
 
-    expect(payload.scans).toEqual([]);
     expect(payload.markets).toMatchObject({
-      found: false,
+      found: true,
+      partial: true,
       reason: "partial-markets",
       missingMarkets: ["TW"],
+      merged: true,
     });
+    expect(payload.scans).toHaveLength(1);
+    expect(payload.scans[0].rows).toHaveLength(5);
+    expect(payload.scans[0].settings?.markets).toEqual(["HK"]);
   });
 
   it("US+HK fusiona nocturno US con materializado HK", async () => {

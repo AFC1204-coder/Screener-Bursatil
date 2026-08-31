@@ -9,7 +9,9 @@ import {
   intlBroadStatusDetail,
   isMarketSelectable,
   marketPresetMarkets,
+  marketsSelectionBlockingMisalignment,
   marketsSelectionMisaligned,
+  marketsSelectionPartialCoverage,
   restoreSessionMarketAlignAction,
   scannedMarketsFromScan,
 } from "@/lib/marketAvailability";
@@ -75,6 +77,26 @@ describe("formatMissingMarketsDetail", () => {
       { market: "US", reason: "no-nightly-scan" },
       { market: "HK", reason: "no-materialized-scan" },
     ])).toContain("Falta materializado:");
+  });
+
+  it("detalla pocas filas e no publicable", () => {
+    expect(formatMissingMarketsDetail(["IT"], [{ market: "IT", reason: "insufficient-rows" }])).toContain("pocas filas");
+    expect(formatMissingMarketsDetail(["TW"], [{ market: "TW", reason: "materialized-not-publishable" }])).toContain("no publicable");
+  });
+});
+
+describe("marketsSelectionPartialCoverage", () => {
+  it("detecta subconjunto honesto de la selección", () => {
+    expect(marketsSelectionPartialCoverage(["US", "HK"], ["US", "HK", "CA"])).toBe(true);
+    expect(marketsSelectionPartialCoverage(["US", "HK"], ["HK", "US"])).toBe(false);
+    expect(marketsSelectionPartialCoverage(["US"], ["HK"])).toBe(false);
+  });
+});
+
+describe("marketsSelectionBlockingMisalignment", () => {
+  it("bloquea datos con mercado fuera de selección", () => {
+    expect(marketsSelectionBlockingMisalignment(["US"], ["HK"])).toBe(true);
+    expect(marketsSelectionBlockingMisalignment(["US", "HK"], ["US", "HK", "CA"])).toBe(false);
   });
 });
 
@@ -167,18 +189,20 @@ describe("buildMarketsStaleNotice", () => {
     expect(notice.detail).toContain("Datos cargados: US (3321)");
     expect(notice.detail).toContain("(HK)");
     expect(notice.ctaLabel).toBe("Cargar datos de la selección");
+    expect(notice.blocksResults).toBe(true);
   });
 
-  it("avisa cuando la selección multi no coincide con el scan US", () => {
+  it("avisa cobertura parcial cuando el scan es subconjunto de la selección", () => {
     const notice = buildMarketsStaleNotice({
       scannedMarkets: ["US"],
       selectedMarkets: DEFAULT_MARKETS,
       rowCount: 3319,
     });
     expect(notice).not.toBeNull();
-    expect(notice.source).toBe("markets-stale");
+    expect(notice.source).toBe("markets-partial-coverage");
+    expect(notice.blocksResults).toBe(false);
     expect(notice.detail).toContain("Datos cargados: US (3319)");
-    expect(notice.detail).toContain("no coincide");
+    expect(notice.detail).toContain("Faltan en mesa:");
     expect(notice.ctaLabel).toBe("Cargar datos de la selección");
   });
 

@@ -2,9 +2,10 @@
 
 Copia de referencia. Ejecutar desde `docs/tickets/activo.md`.
 
-**Estado:** Activo  
+**Estado:** Cerrado  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer 2.5  
+**Cierre:** fusión parcial Global · smoke 1583 analizadas · mesa CA+…+US
 
 ## Objetivo
 
