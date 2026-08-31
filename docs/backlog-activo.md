@@ -5,11 +5,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **MET-4d** (filtro persistencia MA 30s · Composer 2.5) — `docs/tickets/activo.md`.  
-Último cerrado: **MET-4c** (`9914cc4`).  
-**Cola acordada (dueño):** ~~MET-4c~~ → **MET-4d** · 1/3→VCP · MIGRATE aparcado.  
-**Nota MET-4d (2026-08-31):** `minWeeksAboveSma30w` · solo lado «sobre» · neutro 0 · sin scoring.  
-**Nota MET-4c (2026-08-31):** QuickReview «Sostén» · `9914cc4`.  
+Ticket en curso: **libre**.  
+Último cerrado: **MET-4d** (filtro persistencia MA 30s).  
+**Cola acordada (dueño):** ~~MET-4d~~ · 1/3→VCP · MIGRATE aparcado.  
+**Nota MET-4d (2026-08-31):** `minWeeksAboveSma30w` · Tendencia · chip ≥8 · smoke 17→0 pasan (pre-nocturno sin dato).  
+**Nota MET-4c (2026-08-31):** `9914cc4`.  
 **Nota MET-5b (2026-08-31):** `72b6194`.  
 **Nota MIGRATE (2026-08-31):** aparcado por dueño.  
 **Nota BUG-HUNT-1b (2026-08-31):** cerrado `e90dc59`.  
@@ -268,7 +268,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-5-calibrate | Muestreo umbrales 26/10 / 15–50% (read-only) | **Cerrado** · umbrales OK dueño |
 | MET-5b | Impl ficha «Salud de etapa» | **Hecho** |
 | MET-4c | Vista rápida «Sostén de la tendencia» | **Hecho** (`9914cc4`) |
-| MET-4d | Filtro hunt persistencia MA 30s | **Activo** · `docs/tickets/activo.md` |
+| MET-4d | Filtro hunt persistencia MA 30s | **Hecho** |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
 | VCP | Detector producto vs corpus `research/contracciones/` | Aplazado / investigación |
 

@@ -40,6 +40,7 @@ const HANDCODED_RULE_FIELDS = [
   "weeklyThemeRsAvailable", "weeklyThemeRsRating", // minThemeRsRating
   "weaknessScore",                        // minWeaknessScore
   "ipoAgeMonths", "ipoDate",              // maxIpoAgeMonths / requireRecentIpo
+  "weeksAboveSma30w", "weeksAboveSma30wAbove", // minWeeksAboveSma30w
 ];
 
 // Campos que leen los seis interruptores de sí/no y las tres puertas

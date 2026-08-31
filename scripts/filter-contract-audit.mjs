@@ -417,6 +417,10 @@ function specialCases() {
     caseItem({ id: "setupMode-extended-underextension-reject", area: "synthetic-mode", field: "setupMode", metric: "extSma50", threshold: "extended", input: 14.9, row: baseRow({ price: 114.9, sma50: 100, extSma50: 14.9, momentumScore: 80 }), filters: { ...BASE_FILTERS, setupMode: "extended", maxExtensionSma50: 25, minMomentumScore: 50 }, expectPass: false, rejectField: "setupMode" }),
     caseItem({ id: "setupMode-weakness-boundary-pass", area: "synthetic-mode", field: "minWeaknessScore", metric: "weaknessScore", threshold: 55, input: 55, row: baseRow({ weaknessScore: 55 }), filters: { ...BASE_FILTERS, setupMode: "weakness", minWeaknessScore: 55 }, expectPass: true }),
     caseItem({ id: "setupMode-weakness-below-reject", area: "synthetic-mode", field: "minWeaknessScore", metric: "weaknessScore", threshold: 55, input: 54.9, row: baseRow({ weaknessScore: 54.9 }), filters: { ...BASE_FILTERS, setupMode: "weakness", minWeaknessScore: 55 }, expectPass: false, rejectField: "minWeaknessScore" }),
+
+    caseItem({ id: "minWeeksAboveSma30w-above-boundary-pass", area: "synthetic-special", field: "minWeeksAboveSma30w", metric: "weeksAboveSma30w", threshold: 8, input: 12, row: baseRow({ weeksAboveSma30w: 12, weeksAboveSma30wAbove: true }), filters: withFilter("minWeeksAboveSma30w", 8), expectPass: true }),
+    caseItem({ id: "minWeeksAboveSma30w-below-ma-reject", area: "synthetic-special", field: "minWeeksAboveSma30w", metric: "weeksAboveSma30wAbove", threshold: 8, input: false, row: baseRow({ weeksAboveSma30w: 12, weeksAboveSma30wAbove: false }), filters: withFilter("minWeeksAboveSma30w", 8), expectPass: false, rejectField: "minWeeksAboveSma30w" }),
+    caseItem({ id: "minWeeksAboveSma30w-null-reject", area: "synthetic-null", field: "minWeeksAboveSma30w", metric: "weeksAboveSma30w", threshold: 8, input: null, row: baseRow({ weeksAboveSma30w: null, weeksAboveSma30wAbove: true }), filters: withFilter("minWeeksAboveSma30w", 8), expectPass: false, rejectField: "minWeeksAboveSma30w" }),
   ];
 }
 
@@ -470,6 +474,7 @@ function coverageFailures() {
     ...Object.keys(FIELD_RULES),
     ...Object.keys(DISTANCE_RULES),
     "minRsRating",
+    "minWeeksAboveSma30w",
     "maxPriceFreshnessDays",
     "maxIpoAgeMonths",
     "minWeaknessScore",

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildScreenerFilterExplainPlan, screenerFilterRejectReason } from "@/lib/screenerFilters";
+import { SCREENER_WEB_FILTER_PRESETS } from "@/lib/screenerFilterCatalog";
+import { scoreWeakness } from "@/lib/scoring";
 
 describe("minWeaknessScore", () => {
   it("se omite en leader aunque esté configurado y deja un trace observable", () => {
@@ -82,5 +84,78 @@ describe("minRsRating (RS semanal)", () => {
 
     const notInRanking = buildScreenerFilterExplainPlan({ weeklyRsAvailable: false }, { minRsRating: 75 });
     expect([...notInRanking.passed, ...notInRanking.failed, ...notInRanking.near, ...notInRanking.missing]).not.toContainEqual(expect.objectContaining({ field: "minRsRating" }));
+  });
+});
+
+describe("minWeeksAboveSma30w (persistencia MA 30s)", () => {
+  const filters = { minWeeksAboveSma30w: 8 };
+
+  it("acepta 12 semanas sobre la media cuando el umbral es 8", () => {
+    const row = { weeksAboveSma30w: 12, weeksAboveSma30wAbove: true };
+    expect(screenerFilterRejectReason(row, filters)).toBe("");
+  });
+
+  it("rechaza 12 semanas bajo la media aunque el contador sea alto", () => {
+    const row = { weeksAboveSma30w: 12, weeksAboveSma30wAbove: false };
+    expect(screenerFilterRejectReason(row, filters)).toMatchObject({
+      field: "minWeeksAboveSma30w",
+      reason: expect.stringContaining("bajo la media"),
+    });
+  });
+
+  it("rechaza sin dato cuando el umbral es >0", () => {
+    expect(screenerFilterRejectReason({}, filters)).toMatchObject({
+      field: "minWeeksAboveSma30w",
+      reason: expect.stringContaining("sin dato"),
+    });
+    expect(screenerFilterRejectReason({ weeksAboveSma30wAbove: true }, filters)).toMatchObject({
+      field: "minWeeksAboveSma30w",
+      reason: expect.stringContaining("sin dato"),
+    });
+  });
+
+  it("con umbral 0 no evalúa el criterio", () => {
+    expect(screenerFilterRejectReason({}, { minWeeksAboveSma30w: 0 })).toBe("");
+    expect(screenerFilterRejectReason({ weeksAboveSma30wAbove: false }, { minWeeksAboveSma30w: 0 })).toBe("");
+  });
+
+  it("los presets de fábrica dejan el filtro en neutro 0", () => {
+    for (const preset of Object.values(SCREENER_WEB_FILTER_PRESETS)) {
+      expect(preset.minWeeksAboveSma30w ?? 0).toBe(0);
+    }
+  });
+
+  it("el plan de explicación distingue bajo la media de umbral insuficiente", () => {
+    const below = buildScreenerFilterExplainPlan(
+      { weeksAboveSma30w: 12, weeksAboveSma30wAbove: false },
+      filters,
+    );
+    expect(below.failed).toContainEqual(expect.objectContaining({
+      field: "minWeeksAboveSma30w",
+      detail: expect.stringContaining("bajo la media"),
+    }));
+
+    const low = buildScreenerFilterExplainPlan(
+      { weeksAboveSma30w: 5, weeksAboveSma30wAbove: true },
+      filters,
+    );
+    expect(low.failed).toContainEqual(expect.objectContaining({ field: "minWeeksAboveSma30w" }));
+  });
+});
+
+describe("minWeeksAboveSma30w · scoring untouched", () => {
+  it("el filtro no altera objectiveScore ni weaknessScore", () => {
+    const row = {
+      symbol: "TEST",
+      objectiveScore: 72,
+      totalScore: 70,
+      weaknessScore: 18,
+      weeksAboveSma30w: 12,
+      weeksAboveSma30wAbove: true,
+    };
+    const beforeWeak = scoreWeakness(row).weaknessScore;
+    screenerFilterRejectReason(row, { minWeeksAboveSma30w: 8 });
+    expect(scoreWeakness(row).weaknessScore).toBe(beforeWeak);
+    expect(row.objectiveScore).toBe(72);
   });
 });
