@@ -75,6 +75,69 @@ describe("buildScreenerTruthLine", () => {
     expect(line).toContain("47 en lista");
     expect(line).not.toContain("/página");
   });
+
+  it("incluye mesa cuando hay scan cargado y mercados alineados", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: [{ symbol: "AAPL" }],
+      passCount: 1,
+      visibleCount: 1,
+      presetName: "Balanceado",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+    });
+    expect(line).toContain("mesa: US");
+    expect(line).not.toContain("selección ≠ mesa");
+    expect(line).not.toContain("datos:");
+  });
+
+  it("une varios mercados de mesa con +", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: [{ symbol: "A" }, { symbol: "B" }],
+      passCount: 2,
+      visibleCount: 2,
+      presetName: "Balanceado",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedMarkets: ["CA", "HK"],
+      selectedMarkets: ["CA", "HK"],
+    });
+    expect(line).toContain("mesa: CA+HK");
+  });
+
+  it("con desalineación mantiene 0 analizadas y aclara datos vs selección", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: [],
+      passCount: 0,
+      visibleCount: 0,
+      presetName: "HK",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["HK"],
+      marketsMisaligned: true,
+    });
+    expect(line).toContain("0 analizadas");
+    expect(line).toContain("mesa: US");
+    expect(line).toContain("datos: US · selección: HK");
+    expect(line).toContain("selección ≠ mesa");
+  });
+
+  it("omite segmentos de mercado sin scan cargado", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: [],
+      passCount: 0,
+      visibleCount: 0,
+      presetName: "Balanceado",
+      sort: "perf6m",
+      sortAsc: true,
+      scannedMarkets: [],
+      selectedMarkets: ["US"],
+    });
+    expect(line).not.toContain("mesa:");
+    expect(line).not.toContain("selección ≠ mesa");
+  });
 });
 
 describe("resolveScreenerTruthCounts", () => {

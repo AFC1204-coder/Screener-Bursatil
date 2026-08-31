@@ -3,6 +3,8 @@ import { ASIA, DEFAULT_MARKETS } from "@/lib/screenerConfig";
 import { EUROPE_PRIORITY_MARKETS } from "@/lib/markets";
 import {
   buildMarketsStaleNotice,
+  buildScreenerTruthMarketSegments,
+  formatMarketCodesShort,
   formatMissingMarketsDetail,
   intlBroadStatusDetail,
   isMarketSelectable,
@@ -112,6 +114,45 @@ describe("restoreSessionMarketAlignAction", () => {
       analyzedRows: [{ symbol: "AAON", country: "US" }],
       hasVisibleRows: false,
     })).toBeNull();
+  });
+});
+
+describe("formatMarketCodesShort", () => {
+  it("une códigos ordenados con +", () => {
+    expect(formatMarketCodesShort(["HK", "US"])).toBe("HK+US");
+    expect(formatMarketCodesShort(["CA", "HK"])).toBe("CA+HK");
+  });
+
+  it("devuelve vacío sin mercados", () => {
+    expect(formatMarketCodesShort([])).toBe("");
+  });
+});
+
+describe("buildScreenerTruthMarketSegments", () => {
+  it("incluye mesa cuando hay scan cargado", () => {
+    expect(buildScreenerTruthMarketSegments({
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+    })).toEqual(["mesa: US"]);
+  });
+
+  it("añade aviso corto de desalineación", () => {
+    expect(buildScreenerTruthMarketSegments({
+      scannedMarkets: ["US"],
+      selectedMarkets: ["HK"],
+      marketsMisaligned: true,
+    })).toEqual([
+      "mesa: US",
+      "datos: US · selección: HK",
+      "selección ≠ mesa",
+    ]);
+  });
+
+  it("no emite segmentos sin scan", () => {
+    expect(buildScreenerTruthMarketSegments({
+      scannedMarkets: [],
+      selectedMarkets: ["US"],
+    })).toEqual([]);
   });
 });
 

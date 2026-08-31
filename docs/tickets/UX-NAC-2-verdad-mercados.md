@@ -2,10 +2,11 @@
 
 Copia de referencia. Ejecutar desde `docs/tickets/activo.md`.
 
-**Estado:** Activo  
+**Estado:** Cerrado  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer 2.5  
-**Prerreq:** UX-NAC-1
+**Prerreq:** UX-NAC-1  
+**Cierre:** smoke `mesa: HK` · Global → `selección ≠ mesa` + datos/selección
 
 ## Objetivo
 

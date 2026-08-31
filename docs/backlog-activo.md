@@ -5,14 +5,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-NAC-2** (verdad mercados en mesa · Composer 2.5) — `docs/tickets/activo.md`.  
-Último cerrado: **UX-NAC-1** (bloqueo mesa desalineada + restore auto-load).  
-Anterior: **CHART-RS-3** (`b21701c`).  
-**Cola:** UX-NAC-2 → PERF-NAC / R-06 → YIELD · **MIGRATE aparcado** (dueño: mañana/pasado).  
-**Nota UX-NAC-1 smoke (2026-08-31):** Global → truth 0 + empty «selección… no coincide» (sin filas US); HK chip → 122 auto. Global multi-merge puede quedar en CTA (bloqueo OK).  
-**Nota MIGRATE (2026-08-31):** dueño aparca migrate a **mañana o pasado**; no activar MIGRATE-1 sin OK.  
-**Nota UX-NAC (2026-08-31):** track «mesa multi-mercado seria» — NAC-1 coherencia · NAC-2 verdad · PERF-NAC espera · YIELD filas intl.  
-**Nota CHART-RS-3 smoke (2026-08-31):** MSFT — toggle «RS tema» · badge **68** · token `#C4A5E8`.  
+Ticket en curso: **PERF-NAC** (latencia vista · Composer 2.5) — `docs/tickets/activo.md`.  
+Último cerrado: **UX-NAC-2** (verdad `mesa:` / `selección ≠ mesa`).  
+Anterior: **UX-NAC-1** (`2f8223f`).  
+**Cola:** PERF-NAC → YIELD · **MIGRATE aparcado** (dueño: mañana/pasado).  
+**Nota UX-NAC-2 smoke (2026-08-31):** HK `mesa: HK`; Global → `mesa: HK · datos: HK · selección: CA+…+US · selección ≠ mesa`.  
+**Nota UX-NAC-1 smoke (2026-08-31):** Global → 0 filas + empty; HK → 122 auto.  
+**Nota MIGRATE (2026-08-31):** dueño aparca migrate; no activar sin OK.  
 **Nota MET-3c guard (2026-08-31):** abort write si perfiles &lt;75% · timeout 60s (`8e9c861`).  
 **Nota MET-3c Actions (2026-08-31):** `workflow_dispatch` Success · N Software/IA Actions 244 (local 570) → guard.  
 **Nota MET-3c (2026-08-31):** `45eacc1` · cron `30 7 * * 0`.  
@@ -229,8 +228,8 @@ Feedback dueño: profundidad OK, fricción al filtrar nacionalidades + sensació
 | ID | Qué | Estado |
 |---|---|---|
 | UX-NAC-1 | Restore/cambio mercado: nunca filas ajenas cazables; auto-load o bloqueo | **Hecho** |
-| UX-NAC-2 | Línea de verdad fija: N analizadas · mercados en mesa · qué falta | **Activo** |
-| PERF-NAC | Recorte latencia cambio vista (R-06) + hydrate RS sin colgar scans | Cola |
+| UX-NAC-2 | Línea de verdad fija: N analizadas · mercados en mesa · qué falta | **Hecho** |
+| PERF-NAC | Recorte latencia cambio vista (R-06) + hydrate RS sin colgar scans | **Activo** |
 | YIELD | Más filas intl reales en mesa (ops/cron, no solo chips) | Cola |
 | MIGRATE-1…3 | Postgres Mini | **Aparcado** (dueño: mañana/pasado) |
 

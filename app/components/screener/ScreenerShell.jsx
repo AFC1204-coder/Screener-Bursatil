@@ -297,6 +297,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     sort,
     sortAsc,
     scannedAt,
+    scannedMarkets,
+    selectedMarkets: markets,
+    marketsMisaligned: resultsBlockedByMarketMisalignment,
   });
   const filterBreakdown = buildScreenerFilterBreakdown({
     diagnostics,

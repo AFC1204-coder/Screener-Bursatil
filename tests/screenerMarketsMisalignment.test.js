@@ -202,9 +202,23 @@ describe("ScreenerShell markets misalignment", () => {
     expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
     expect(html).toContain("0 analizadas");
     expect(html).toContain("0 en lista");
+    expect(html).toContain("mesa: US");
+    expect(html).toContain("datos: US · selección: HK");
+    expect(html).toContain("selección ≠ mesa");
     expect(html).not.toContain("AAPL");
     expect(html).not.toContain(">Revisar<");
     expect(html).not.toContain("1 en lista");
+  });
+
+  it("con mercados alineados la verdad incluye mesa sin aviso de desalineación", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      marketsStale: false,
+      scanStale: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+    })));
+    expect(html).toContain("mesa: US");
+    expect(html).not.toContain("selección ≠ mesa");
   });
 
   it("muestra Traer datos frescos solo cuando mercados coinciden pero scanStale", () => {
