@@ -5,13 +5,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre** — MET-5 spec propuesto; espera OK dueño.  
-Último cerrado: **MET-5 spec** propuesto (`a625bba`) · MET-4b (`c46938b`).  
-**Cola acordada (dueño):** ~~MET-4b~~ → ~~MET-5 spec~~ (OK dueño → MET-5b) · MET-4c opcional · MIGRATE aparcado.  
-**Nota MET-5 (2026-08-31):** `docs/spec-salud-etapa.md` · 0–100 ponderado · solo Etapas 2/4 · 5 insumos (muletas+extensión) · solo ficha · scoring off · `weeklyStage` intacto.  
-**Nota MET-4b (2026-08-31):** ficha «Sostén de la tendencia» · `c46938b`.  
-**Nota MET-4 aceptación (2026-08-31):** dueño OK · `54050e0`.  
-**Nota THEME-SERIES B (2026-08-31):** 8 weekKeys · `859e988`.  
+Ticket en curso: **MET-5-calibrate** (muestreo umbrales · Composer 2.5) — `docs/tickets/activo.md`.  
+Último cerrado: **MET-5 spec** aceptado (`a625bba` + addendum).  
+**Cola acordada (dueño):** ~~MET-5 spec~~ → **MET-5-calibrate** → MET-5b · etapas 1/3 diferidas a VCP · MIGRATE aparcado.  
+**Nota MET-5 aceptación (2026-08-31):** dueño OK · solo Etapas **2/4** · 1/3 potenciales+VCP · muestreo umbrales antes de 5b.  
+**Nota MET-5 (2026-08-31):** `docs/spec-salud-etapa.md` · 0–100 · 5 insumos · solo ficha · scoring off.  
+**Nota MET-4b (2026-08-31):** `c46938b`.  
 **Nota BUG-HUNT-1b (2026-08-31):** cerrado `e90dc59`.  
 **Nota R-06 (2026-08-31):** Deterioro **~1030** · E2 **~333** · pivot **~249** · intl **~1544** · IPO **~435**.  
 **Nota YIELD-1 smoke (2026-08-31):** Global → 1583 · mesa CA+…+US.  
@@ -264,7 +263,9 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-3c | Cron GHA RS tema (dom 07:30 UTC) | **Hecho** · `rs-theme-private.yml` |
 | MET-4 | Muletas tendencia (persistencia MA, aceleración, volumen) | **Aceptado** 2026-08-31 · `54050e0` |
 | MET-4b | Impl ficha «Sostén de la tendencia» | **Hecho** (`c46938b`) |
-| MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | **Spec propuesto** · OK dueño → MET-5b |
+| MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | **Aceptado** 2026-08-31 · solo 2/4 · 1/3→VCP |
+| MET-5-calibrate | Muestreo umbrales 26/10 / 15–50% (read-only) | **Activo** · `docs/tickets/activo.md` |
+| MET-5b | Impl ficha «Salud de etapa» | Tras calibrate + OK umbrales |
 | MET-4c | Vista rápida / filtro persistencia (opcional) | Ideas; tras uso real MET-4b |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
 | VCP | Detector producto vs corpus `research/contracciones/` | Aplazado / investigación |

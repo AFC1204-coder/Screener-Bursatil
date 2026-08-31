@@ -2,8 +2,15 @@
 
 - **Fecha:** 2026-08-31
 - **Rama:** `codex/statsedge-ui-polish`
-- **Estado:** **propuesto** — pendiente de aceptación o recorte del dueño. Implementación = **MET-5b**, solo con OK explícito.
+- **Estado:** **aceptado** por el dueño 2026-08-31 (con addendum abajo). Implementación = muestreo pre-5b → **MET-5b**.
 - **Contratos reconciliados:** `docs/spec-muletas-tendencia.md` (aceptado, MET-4) · `docs/spec-rs-global-multi-mercado-fx.md` (MET-1) · `docs/spec-rs-pais.md` (MET-2) · `docs/spec-rs-tema.md` (MET-3) · `docs/principios-producto.md` · decisión dueño 2026-08-27 (`docs/backlog-activo.md`) · código vivo (`lib/weeklyStage.js`, `lib/trendSupport.js`, `lib/descriptiveStrip.js`, `lib/indicators.js`, `lib/marketVolume.js`, `lib/materializedScanner.js`) · auditoría etapas (`docs/auditoria-etapas-2026-08-16.md`, C-15, vía comentarios del código vivo).
+
+### Addendum aceptación dueño (2026-08-31)
+
+1. **Etapas con índice (v1):** solo **2 y 4** (analizadas). Coherente con la propuesta del spec.
+2. **Etapas 1 y 3:** **fuera de v1** — quedan como **potenciales** para un track futuro **combinado con VCP / bases** (perfil propio de insumos, no reabrir aquí). No se muestra número 0–100 de «salud de etapa» en 1/3 hasta ese ticket.
+3. **Umbrales (26 / 10 sem · extensión 15/50%):** el orquestador decide **muestreo read-only obligatorio antes de MET-5b** (ticket MET-5-calibrate). Tras ver distribución, el dueño confirma o recorta constantes; luego MET-5b.
+4. Resto del spec (5 insumos, pesos, solo ficha, scoring off, `weeklyStage` intacto) **aceptado**.
 
 ---
 
@@ -284,10 +291,11 @@ MET-5 (y su eventual MET-5b) **no** incluye:
 
 | Ticket | Contenido | Condición |
 |---|---|---|
-| **MET-5b** (implementación) | Módulo puro `lib/stageHealth.js` (subscores + pesos + constantes con nombre) + campo `stageHealthScore` en scan + línea «Salud de etapa» con desglose en ficha + motivos de ausencia + sección de metodología + tests (etapa intacta, scoring untouched, espejo Etapa 4, todo-o-nada, ausencias honestas) + smoke visual ficha | Spec **aceptado** por el dueño; activar cuando lo pida |
-| **(opcional, pre-5b)** Muestreo de calibración | Distribución de `distanceSlowMaPct`, contadores de persistencia y del índice resultante sobre el universo actual (script read-only), para que el dueño valide 26/10 sem y 15/50% con datos delante | Solo si el dueño lo pide antes de aceptar los umbrales |
-| **Filtro de salud** (futuro) | Lectura de `stageHealthScore` como filtro hunt | Tras uso real de MET-5b + decisión explícita del dueño (pregunta 6) |
-| **Serie histórica de salud** (futuro) | Snapshots versionados si el dueño quiere evolución temporal | Spec propio; no empieza aquí |
+| **MET-5-calibrate** (pre-5b) | Script read-only: distribución persistencia 30/10, `|distanceSlowMaPct|`, índice propuesto en Etapa 2 y 4; percentiles y ejemplos; **sin write** | **Activo** tras aceptación 2026-08-31 |
+| **MET-5b** (implementación) | Módulo puro + campo scan + línea ficha + metodología + tests + smoke | Tras calibrate + OK umbrales del dueño |
+| **Salud etapas 1/3 + VCP** (futuro) | Perfil propio de «potencial» / madurez de base·techo, no el mismo 0–100 de tendencia | Track VCP; no empieza aquí |
+| **Filtro de salud** (futuro) | Lectura de `stageHealthScore` como filtro hunt | Tras uso real de MET-5b + decisión explícita |
+| **Serie histórica de salud** (futuro) | Snapshots si el dueño quiere evolución temporal | Spec propio |
 
 ---
 
