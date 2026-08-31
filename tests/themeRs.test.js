@@ -65,6 +65,21 @@ describe("themeRs lector", () => {
     expect(trs.available).toBe(false);
     expect(trs.reason).toBe(THEME_RS_NOT_HYDRATED_REASON);
   });
+
+  it("fila ligera con theme curado (sin sector) sigue siendo rankeable para hidratar", () => {
+    const row = {
+      symbol: "MSFT",
+      theme: "Software / IA",
+      weeklyThemeRsAvailable: true,
+      weeklyThemeRsRating: 64,
+      weeklyThemeRsThemeKey: "Software / IA",
+      weeklyThemeRsSampleSize: 570,
+    };
+    const trs = themeRs(row);
+    expect(trs.available).toBe(true);
+    expect(trs.value).toBe(64);
+    expect(trs.themeKey).toBe("Software / IA");
+  });
 });
 
 describe("themeRsEngineVersion slug", () => {

@@ -10,9 +10,28 @@ import { snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { attachCachedMarketCap, readMarketCapForSymbols } from "@/lib/fundamentalsCache";
 import { attachWeeklyRs, readGlobalRsForSymbols } from "@/lib/globalRs";
 import { attachWeeklyCountryRs, readCountryRsForSymbols } from "@/lib/countryRsHydrate";
+import { attachWeeklyThemeRs, readThemeRsForSymbols } from "@/lib/themeRsHydrate";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 
 const SCANS_SUPABASE_TIMEOUT_MS = 8000;
+
+function themeHydrateRowBySymbol(results = []) {
+  const rowBySymbol = new Map();
+  for (const item of results || []) {
+    const symbol = String(item?.symbol || item?.raw?.symbol || "").trim().toUpperCase();
+    if (!symbol || rowBySymbol.has(symbol)) continue;
+    const raw = item?.raw && typeof item.raw === "object" ? item.raw : {};
+    const metrics = item?.metrics && typeof item.metrics === "object" ? item.metrics : {};
+    rowBySymbol.set(symbol, {
+      symbol,
+      theme: raw.theme || metrics.theme || "",
+      sector: raw.sector || metrics.sector || "",
+      industry: raw.industry || metrics.industry || "",
+      businessSummary: raw.businessSummary || metrics.businessSummary || "",
+    });
+  }
+  return rowBySymbol;
+}
 
 // ── El techo de PostgREST y por qué hay que paginar ────────────────────────
 // PostgREST nunca devuelve más de 1.000 filas por respuesta, diga lo que diga
@@ -367,6 +386,7 @@ export function scanFromDb(row, results = [], options = {}) {
   const decisionSettings = row.settings?.activeSettings || row.settings || {};
   const weeklyRsBySymbol = options.weeklyRsBySymbol || null;
   const weeklyCountryRsBySymbol = options.weeklyCountryRsBySymbol || null;
+  const weeklyThemeRsBySymbol = options.weeklyThemeRsBySymbol || null;
   const marketCapBySymbol = options.marketCapBySymbol || null;
   // decisionTrace se RECONSTRUYE fila a fila al servir (prepareScanDecisionRow
   // → decisionTraceForRow). Medido el 2026-08-17 sobre la respuesta real:
@@ -388,9 +408,12 @@ export function scanFromDb(row, results = [], options = {}) {
     // mismas tablas en vivo; sin esto, un snapshot de días atrás enseñaba en
     // el screener números que la ficha del mismo símbolo desmentía.
     .map((item) => attachCachedMarketCap(
-      attachWeeklyCountryRs(
-        attachWeeklyRs(prepareRow(scanDecisionRowFromDb(item, options)), weeklyRsBySymbol),
-        weeklyCountryRsBySymbol,
+      attachWeeklyThemeRs(
+        attachWeeklyCountryRs(
+          attachWeeklyRs(prepareRow(scanDecisionRowFromDb(item, options)), weeklyRsBySymbol),
+          weeklyCountryRsBySymbol,
+        ),
+        weeklyThemeRsBySymbol,
       ),
       marketCapBySymbol,
     ));
@@ -640,9 +663,11 @@ export async function GET(req) {
           if (!full && !decisionProjection) results = results.map((item) => ({ ...item, raw: compactResearchRow(item.raw) }));
         }
         const scanSymbols = results.map((item) => item.symbol).filter(Boolean);
-        const [weeklyRs, weeklyCountryRs, marketCaps] = await Promise.all([
+        const themeRows = themeHydrateRowBySymbol(results);
+        const [weeklyRs, weeklyCountryRs, weeklyThemeRs, marketCaps] = await Promise.all([
           readGlobalRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
           readCountryRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
+          readThemeRsForSymbols(scanSymbols, { rowBySymbol: themeRows }).catch(() => ({ configured: false, bySymbol: new Map() })),
           readMarketCapForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
         ]);
         return {
@@ -656,6 +681,7 @@ export async function GET(req) {
             omitDecisionTrace: !full && !decisionProjection,
             weeklyRsBySymbol: weeklyRs.bySymbol,
             weeklyCountryRsBySymbol: weeklyCountryRs.bySymbol,
+            weeklyThemeRsBySymbol: weeklyThemeRs.bySymbol,
             marketCapBySymbol: marketCaps.bySymbol,
             matchAllResults: Boolean(materialized.merged || materialized.accumulated),
           })),
@@ -717,9 +743,11 @@ export async function GET(req) {
       // no disponible y el criterio se omite aguas abajo, igual que un
       // símbolo que de verdad no esté en el ranking.
       const scanSymbols = results.map((item) => item.symbol).filter(Boolean);
-      const [weeklyRs, weeklyCountryRs, marketCaps] = await Promise.all([
+      const themeRows = themeHydrateRowBySymbol(results);
+      const [weeklyRs, weeklyCountryRs, weeklyThemeRs, marketCaps] = await Promise.all([
         readGlobalRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
         readCountryRsForSymbols(scanSymbols).catch(() => ({ configured: false, bySymbol: new Map() })),
+        readThemeRsForSymbols(scanSymbols, { rowBySymbol: themeRows }).catch(() => ({ configured: false, bySymbol: new Map() })),
         // Misma idea para la capitalización: la ficha la lee de
         // fundamental_snapshots en vivo, así que el snapshot del escaneo no
         // puede seguir siendo la única copia que ve el screener.
@@ -736,6 +764,7 @@ export async function GET(req) {
           omitDecisionTrace: !full && !decisionProjection,
           weeklyRsBySymbol: weeklyRs.bySymbol,
           weeklyCountryRsBySymbol: weeklyCountryRs.bySymbol,
+          weeklyThemeRsBySymbol: weeklyThemeRs.bySymbol,
           marketCapBySymbol: marketCaps.bySymbol,
         })),
         scanTombstones: includeDeleted ? deletedScans.map(scanTombstoneFromDb) : [],

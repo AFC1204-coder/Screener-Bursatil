@@ -6,10 +6,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
 Ticket en curso: *(ninguno)*.  
-Último cerrado: **MET-3b** (impl RS tema) — lector + motor + columna/filtro.  
-Anterior: **MET-3** aceptado (`6094365`).  
-**Cola:** MET-3c (cron) tras write verificado · CHART-RS-3 · MIGRATE **mar 2 sep** · R-06 / yield  
-**Nota MET-3b (2026-08-31):** verify — tests 2416 OK · `./vfc` OK · smoke thead «RS tema» (valores «–» sin write) · serie ficha/chart fuera.  
+Último cerrado: **MET-3b write+hydrate** — 12 themes en DB · UI AGX tema **52**.  
+Anterior: **MET-3b** impl (`b18860f`).  
+**Cola:** MET-3c (cron dom 07:30) · CHART-RS-3 · MIGRATE **mar 2 sep** · R-06 / yield  
+**Nota MET-3b write (2026-08-31):** `--write` 12/12 · ~115s · Software/IA 570 · Semis 174 · MSFT **64** · AGX **52** · smoke thead con números tras cablear `/api/scans`.  
+**Nota MET-3b (2026-08-31):** impl `b18860f` + fix hydrate/scans.  
 **Nota MET-3 aceptación (2026-08-31):** dueño OK + Grok · 12 THEME_RULES · residual sin ranking · `--rs-theme`.  
 **Nota RS-SERIES-1 (2026-08-31):** AAPL país 27 pts, W32 único 70, latest 64.  
 **Nota MET-2c (2026-08-30):** workflow `rs-country-private.yml` · cron `0 7 * * 0` + dispatch · US→intl · flags OK.  

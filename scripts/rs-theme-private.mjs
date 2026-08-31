@@ -373,7 +373,17 @@ async function main() {
   const universe = [...usRows, ...intlRows];
   console.log(`Intl curado: ${intlRows.length} · Universo total: ${universe.length}`);
 
-  const profiles = await readProfilesForSymbols(universe.map((row) => row.symbol), { concurrency: 4 });
+  const profiles = await readProfilesForSymbols(universe.map((row) => row.symbol), {
+    concurrency: 4,
+    chunkSize: 100,
+    // El default de fundamentalsCache (1.5s) es para UI; a escala universo MET-1
+    // las páginas fallan en silencio (.catch → []) y todo queda theme-profile-missing.
+    timeoutMs: 30000,
+  });
+  console.log(`Perfiles cargados: ${profiles.bySymbol.size}/${universe.length}`);
+  if (profiles.bySymbol.size === 0) {
+    throw new Error("readProfilesForSymbols devolvió 0 perfiles — abortando (timeout/red). Reintenta o sube timeoutMs.");
+  }
   const assigned = universe.map((row) => {
     const profile = profiles.bySymbol.get(row.symbol) || {};
     const sector = profile.sector || "";
