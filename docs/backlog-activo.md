@@ -272,7 +272,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | **Aceptado** 2026-08-31 · solo 2/4 · 1/3→VCP |
 | MET-5-calibrate | Muestreo umbrales 26/10 / 15–50% (read-only) | **Cerrado** · umbrales OK dueño |
 | MET-5b | Impl ficha «Salud de etapa» | **Hecho** · `72b6194` |
-| MET-5 uso real | Validación dueño fórmula v1 (ficha only) | **Pausado** · smoke OK · retoma tras CHART-QR |
+| MET-5 uso real | Validación dueño fórmula v1 (ficha only) | **Activo** · decisión A/B/C · smoke previo OK |
 | MET-4c | Vista rápida «Sostén de la tendencia» | **Hecho** (`9914cc4`) |
 | MET-4d | Filtro hunt persistencia MA 30s | **Hecho** (`b883085`) |
 | MET-4e | Backfill weeksAbove* + smoke 4c/4d | **Hecho** · write 1208 · smoke OK |
