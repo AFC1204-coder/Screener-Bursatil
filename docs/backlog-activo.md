@@ -5,12 +5,14 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 noche · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **MET-5 uso real** (decisión dueño A/B/C).  
-**Cola chart:** ~~CHART-QR-1~~ · ~~CHART-QR-2~~ · ~~CHART-QR-3~~ · luego MET-5 uso real → VCP.  
-Último cerrado: **CHART-QR-3** (overflow chart tapaba «El valor»).  
+Ticket en curso: **UX-NAC-3** (auto-cargar mesa sin CTA rojo).  
+**Cola:** ~~CHART-QR~~ · ~~MET-5 uso real~~ · UX-NAC-3 → VCP (1/3) → carga/premium.  
+Último cerrado: **MET-5 uso real** (fórmula v1 **aceptada** dueño A).  
 MIGRATE aparcado.  
-**Nota CHART-QR-3 (2026-08-31 noche):** smoke 2269.HK — Etapa 2 · RS 90 · Cap 208,0B HKD · Dist −7,0%; `elementFromPoint` → `<b>`; chart `overflow:hidden` · sideZ 2.  
-**Nota CHART-QR-2 (2026-08-31 noche):** `67dcb75` · tests 4/4 · smoke CTRN país/tema OFF sin bandas.  
+**Nota MET-5 uso real (2026-08-31 noche):** dueño **A** — fórmula v1 OK; superficie filtro/vista rápida/columna no pedida aún.  
+**Nota dueño UX (2026-08-31 noche):** avisos rojos al cambiar filtros/mercados («cargar otros países») → deben auto-resolverse; track UX-NAC-3.  
+**Nota CHART-QR-3 (2026-08-31 noche):** `803dba4` · smoke 2269.HK hit-test `<b>`.  
+**Nota CHART-QR-2 (2026-08-31 noche):** `67dcb75`.  
 **Nota MET-4e (2026-08-31):** write 1208 filas · above8=521 · smoke filtro 17→**10** pasan · vista rápida «12 semanas».  
 **Nota MET-4d (2026-08-31):** `b883085`.  
 **Nota MIGRATE (2026-08-31):** aparcado por dueño.  
@@ -235,6 +237,7 @@ Feedback dueño: profundidad OK, fricción al filtrar nacionalidades + sensació
 |---|---|---|
 | UX-NAC-1 | Restore/cambio mercado: nunca filas ajenas cazables; auto-load o bloqueo | **Hecho** |
 | UX-NAC-2 | Línea de verdad fija: N analizadas · mercados en mesa · qué falta | **Hecho** |
+| UX-NAC-3 | Auto-cargar mesa al desalinearse; sin CTA rojo obligatorio | **Activo** |
 | PERF-NAC | Recorte latencia cambio vista (R-06) + hydrate RS sin colgar scans | **Hecho** |
 | YIELD | Más filas intl reales en mesa (ops/cron, no solo chips) | **YIELD-1 Hecho** |
 | MIGRATE-1…3 | Postgres Mini | **Aparcado** (dueño: mañana/pasado) |
@@ -253,7 +256,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | CHART-QR-2 | RS país/tema OFF por defecto en modal/review | **Hecho** · smoke CTRN OFF sin bandas |
 | CHART-QR-3 | Panel «El valor» vacío en vista rápida | **Hecho** · smoke 2269.HK hit-test `<b>` |
 
-**Orden sugerido:** CHART-QR-1…3 (dueño 2026-08-31) → MET-5 uso real → VCP.  
+**Orden sugerido:** ~~CHART-QR~~ · ~~MET-5 uso real~~ · **UX-NAC-3** → VCP → oleada carga/premium.  
 **No** mezclar con UX-18…21 (P2 mesa) en el mismo ticket.
 
 ## Track métricas (pendiente)
@@ -272,7 +275,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | **Aceptado** 2026-08-31 · solo 2/4 · 1/3→VCP |
 | MET-5-calibrate | Muestreo umbrales 26/10 / 15–50% (read-only) | **Cerrado** · umbrales OK dueño |
 | MET-5b | Impl ficha «Salud de etapa» | **Hecho** · `72b6194` |
-| MET-5 uso real | Validación dueño fórmula v1 (ficha only) | **Activo** · decisión A/B/C · smoke previo OK |
+| MET-5 uso real | Validación dueño fórmula v1 (ficha only) | **Cerrado** · aceptado A 2026-08-31 |
 | MET-4c | Vista rápida «Sostén de la tendencia» | **Hecho** (`9914cc4`) |
 | MET-4d | Filtro hunt persistencia MA 30s | **Hecho** (`b883085`) |
 | MET-4e | Backfill weeksAbove* + smoke 4c/4d | **Hecho** · write 1208 · smoke OK |

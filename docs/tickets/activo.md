@@ -1,9 +1,17 @@
-# Ticket activo — MET-5 uso real (decisión dueño)
+# Ticket activo — UX-NAC-3
 
-**Cola:** ~~CHART-QR-1~~ · ~~CHART-QR-2~~ · ~~CHART-QR-3~~ · **MET-5 uso real** → VCP.
+**Cola:** ~~MET-5 uso real~~ (aceptado A) · **UX-NAC-3** → VCP (1/3) · oleada carga/premium después.
 
-Detalle: retomar validación dueño fórmula v1 (ficha). Smoke orquestador previo OK (AAPL 70, NVDA 44, META 74, GOOGL E3 ausente). Falta decisión A/B/C.
+Detalle: `docs/tickets/UX-NAC-3-auto-cargar-mesa.md`
 
-## Prompt para Agent chat
+## Prompt para Agent chat (copiar tal cual)
 
-No hay programación pendiente hasta que el dueño elija A/B/C sobre la fórmula v1. No abrir Agent chat de código para MET-5 todavía.
+```
+@docs/tickets/UX-NAC-3-auto-cargar-mesa.md
+@docs/tickets/activo.md
+
+Rama: codex/statsedge-ui-polish
+Modelo: Composer 2.5
+
+Ticket UX-NAC-3: si selección de mercados ≠ mesa, auto-cargar sin obligar al CTA rojo «Cargar datos de la selección». Progreso neutro mientras carga; CTA solo si falla. Filtros que no cambian mercados no deben disparar ese aviso. Tests + smoke. Sin commit ni push.
+```
