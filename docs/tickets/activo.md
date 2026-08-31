@@ -1,27 +1,29 @@
-# Ticket activo — MET-4 (spec muletas de tendencia)
+# Ticket activo — THEME-SERIES (serie RS tema ≥8 sem)
 
 ## Prompt para Agent chat (copiar tal cual)
 
 ```
 @docs/tickets/activo.md
-@docs/tickets/MET-4-muletas-tendencia.md
+@docs/tickets/THEME-SERIES-rs-tema.md
 
 Rama: codex/statsedge-ui-polish
-Modelo: Fable 5 (juicio metodológico). Fallback Opus. No Composer para este spec.
-Tipo: SOLO SPEC — sin código, sin schema, sin UI, sin scoring, sin commit/push.
+Modelo: Composer 2.5
+Prioridad: siguiente tras MET-4 spec (54050e0). MET-4b NO — espera OK dueño del spec.
 
-Escribe docs/spec-muletas-tendencia.md respondiendo las 9 preguntas de MET-4
-(propuesta + alternativa rechazada cada una). Hereda contratos MET-1/2/3 y
-principios-producto. No fusionar con MET-5 (índice salud etapa).
+THEME-SERIES: inventariar profundidad de serie RS tema y NO hacer backfill
+as-of a ciegas (MET-1 lo prohíbe; tema usa mismo FX USD).
 
-Alcance: spec aceptable por dueño antes de cualquier MET-4b.
-Fuera: impl, THEME-SERIES, MIGRATE, scoring, commit/push.
+1) Solo lectura: cuántas weekKey tema hay hoy (engines + ejemplos AAPL/MSFT + 1 intl).
+2) Si el dueño aún no eligió vía A/B/C del ticket: PARA y reporta inventario + opciones.
+3) Si el dueño ya eligió vía en el chat orquestador: ejecuta solo esa (dry-run→write).
+4) Tests dedupe serie / lectura ficha si tocas código. Sin commit/push.
+
+Fuera: MET-4b, scoring, MIGRATE, commit/push.
 
 Plantilla de retorno:
 ## Resumen
 ## Archivos
 ## Tests
-(n/a spec)
 ## LO QUE NO VERIFIQUÉ
 Sin commit ni push.
 ```
@@ -32,14 +34,21 @@ Sin commit ni push.
 
 | Campo | Valor |
 |---|---|
-| Id | MET-4 |
-| Tipo | Spec |
-| Modelo | **Fable 5** |
+| Id | THEME-SERIES |
+| Modelo | Composer 2.5 |
 | Rama | `codex/statsedge-ui-polish` |
-| Entrega | `docs/spec-muletas-tendencia.md` |
 | Commit/push | **Prohibido** |
 
-## Contexto reciente
+## Gate dueño (elige una)
 
-- BUG-HUNT-1b cerrado `e90dc59` · R-06 re-medida 2026-08-31.
-- Siguiente tras aceptación MET-4: THEME-SERIES (≥8 sem; FX `--as-of` a decidir) · MIGRATE aparcado.
+| Vía | Qué |
+|---|---|
+| **A** | Solo cron hacia adelante (~8 domingos) |
+| **B** | Write histórico con FX declarado (excepción MET-1; OK explícito) |
+| **C** | Otra (propuesta del inventario) |
+
+## Cola
+
+- MET-4 spec `54050e0` → **pendiente aceptación dueño** antes de MET-4b  
+- **THEME-SERIES** (este)  
+- MIGRATE aparcado
