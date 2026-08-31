@@ -374,15 +374,27 @@ async function main() {
   console.log(`Intl curado: ${intlRows.length} · Universo total: ${universe.length}`);
 
   const profiles = await readProfilesForSymbols(universe.map((row) => row.symbol), {
-    concurrency: 4,
-    chunkSize: 100,
+    concurrency: 2,
+    chunkSize: 80,
     // El default de fundamentalsCache (1.5s) es para UI; a escala universo MET-1
     // las páginas fallan en silencio (.catch → []) y todo queda theme-profile-missing.
-    timeoutMs: 30000,
+    // En GHA la red es más lenta: 60s + concurrency baja. Abortar si el hit-rate
+    // es pobre evita sobrescribir un snapshot bueno con un ranking a medias
+    // (Actions 2026-08-31: Software/IA N 570→244).
+    timeoutMs: 60000,
   });
-  console.log(`Perfiles cargados: ${profiles.bySymbol.size}/${universe.length}`);
+  const profileHitRate = universe.length ? profiles.bySymbol.size / universe.length : 0;
+  console.log(`Perfiles cargados: ${profiles.bySymbol.size}/${universe.length} (${(profileHitRate * 100).toFixed(1)}%)`);
   if (profiles.bySymbol.size === 0) {
     throw new Error("readProfilesForSymbols devolvió 0 perfiles — abortando (timeout/red). Reintenta o sube timeoutMs.");
+  }
+  const minHitRate = Number(process.env.STATSEDGE_THEME_RS_MIN_PROFILE_HIT || 0.75);
+  if (profileHitRate < minHitRate) {
+    throw new Error(
+      `Perfiles insuficientes para un ranking tema fiable: ${(profileHitRate * 100).toFixed(1)}% `
+      + `(${profiles.bySymbol.size}/${universe.length}) < mínimo ${(minHitRate * 100).toFixed(0)}%. `
+      + "No se escribe. Sube timeoutMs/baja concurrency o reintenta.",
+    );
   }
   const assigned = universe.map((row) => {
     const profile = profiles.bySymbol.get(row.symbol) || {};
