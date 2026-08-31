@@ -34,7 +34,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { chartDataModel, shouldRequestRemoteBars } from "@/lib/chartDataModel";
+import { barsAreCandleGrade } from "@/lib/chartDataQuality";
 import { getJson } from "@/lib/clientApi";
+
+const LINE_STYLES = new Set(["8", "3"]);
 
 // Presupuesto cliente: evita «Cargando histórico…» infinito si la red cuelga.
 const CHART_FETCH_TIMEOUT_MS = 15000;
@@ -134,20 +137,26 @@ function dispatchResolve({ symbol, localSource, config, plan }) {
 // parte de la API pública: el resolver puro ya encapsula esta regla
 // (`shouldRequestRemoteBars`). Aquí se duplica sólo para construir el plan
 // antes de tener un `request` que alimentar al resolver.
-function shouldFetch({ symbol, localSource, dataRange, interval }) {
+function shouldFetch({ symbol, localSource, dataRange, interval, preferredStyle = null }) {
   if (!symbol) return false;
-  return shouldRequestRemoteBars(
-    Array.isArray(localSource?.bars) ? localSource.bars : [],
-    dataRange,
-    interval,
-  );
+  const bars = Array.isArray(localSource?.bars) ? localSource.bars : [];
+  const pendingStyle = String(preferredStyle || "");
+  if (
+    pendingStyle
+    && !LINE_STYLES.has(pendingStyle)
+    && bars.length >= 2
+    && !barsAreCandleGrade(bars)
+  ) {
+    return true;
+  }
+  return shouldRequestRemoteBars(bars, dataRange, interval);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Hook.
 
 export function useChartDataModel(input = {}) {
-  const { symbol = "", localSource = null, config = null } = input || {};
+  const { symbol = "", localSource = null, config = null, preferredStyle = null } = input || {};
 
   // Configuración canónica: el hook NO resuelve `resolveChartViewportConfig`
   // (esa pieza vive en el paso 5 del ADR). Acepta config ya normalizada
@@ -242,6 +251,7 @@ export function useChartDataModel(input = {}) {
       localSource: normalizedLocalSource,
       dataRange,
       interval,
+      preferredStyle,
     });
 
     if (!needsRemote) {
@@ -313,7 +323,7 @@ export function useChartDataModel(input = {}) {
     // solicita, no del objeto caller. La key estable + huella localSource
     // ya cubren esa invariante. eslint no puede inferirlo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestKey, buildLocalSourceKey(normalizedLocalSource), dataRange, interval, style]);
+  }, [requestKey, buildLocalSourceKey(normalizedLocalSource), dataRange, interval, style, preferredStyle]);
 
   // Unmount cleanup.
   useEffect(() => {

@@ -459,6 +459,10 @@
   line-height:1.4;
 }
 
+.universalChartExpandingNote {
+  margin:0;
+}
+
 .discoveryHealthPanel,
 .coverageAuditPanel {
   display:grid;

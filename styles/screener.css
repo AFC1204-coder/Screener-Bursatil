@@ -2950,6 +2950,7 @@ button.dataHealthSummaryItem:hover,
   padding:0;
   border:0;
   background:transparent;
+  overflow:visible;
 }
 
 .quickReviewTrendSupport .quickReviewTrendList {

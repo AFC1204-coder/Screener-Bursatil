@@ -112,4 +112,17 @@ describe("resolveRowChartSource · preview interino en línea (B2)", () => {
     expect(out.bars).toEqual([]);
     expect(out.preferredStyle).toBeNull();
   });
+
+  it("preview interino + preferredStyle dispara fetch OHLC aunque cubra 1M", async () => {
+    const { __test__ } = await import("@/app/useChartDataModel");
+    const out = resolveRowChartSource({ chartPreview: closeOnly }, { ...settings, range: "1M" });
+    expect(out.preferredStyle).toBe("1");
+    expect(__test__.shouldFetch({
+      symbol: "AMPL",
+      localSource: { bars: out.bars },
+      dataRange: "1M",
+      interval: "D",
+      preferredStyle: out.preferredStyle,
+    })).toBe(true);
+  });
 });

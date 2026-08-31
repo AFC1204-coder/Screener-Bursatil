@@ -165,6 +165,20 @@ describe("useChartDataModel · shouldFetch (ADR §3.7.4 / §3.7.5)", () => {
   it("localSource ausente se trata como barras vacías → pide", () => {
     expect(shouldFetch({ symbol: "AAPL", localSource: null, dataRange: "1A", interval: "D" })).toBe(true);
   });
+
+  it("preview close-only + preferredStyle vela pide OHLC aunque cubra el rango", () => {
+    const closeOnly = Array.from({ length: 48 }, (_, i) => ({
+      date: `2024-01-${String(i + 1).padStart(2, "0")}`,
+      close: 100 + i,
+    }));
+    expect(shouldFetch({
+      symbol: "AAPL",
+      localSource: { bars: closeOnly },
+      dataRange: "1M",
+      interval: "D",
+      preferredStyle: "1",
+    })).toBe(true);
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

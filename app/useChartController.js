@@ -34,6 +34,7 @@ import { useChartDataModel } from "@/app/useChartDataModel";
 import { useChartDrawings } from "@/app/useChartDrawings";
 import { useChartViewport } from "@/app/useChartViewport";
 import { createChartNativeAdapter, resolveCssTokensNative } from "@/app/chartNativeAdapter";
+import { barsAreCandleGrade } from "@/lib/chartDataQuality";
 import { RS_LINE_MIN_WEEKS, projectRsCountryRatingSeries, projectRsRatingSeries, projectRsThemeRatingSeries, rsLineHistory } from "@/lib/chartSeriesModel";
 import { userFacingSearchError } from "@/lib/screenerFormat";
 import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
@@ -67,6 +68,21 @@ function patternContentKey(overlay) {
   const swings = Array.isArray(overlay.contractionSwings) ? overlay.contractionSwings : [];
   const lastSwing = swings[swings.length - 1] || {};
   return `${overlay.pivotPrice ?? ""}|${swings.length}|${lastSwing.toDate ?? ""}`;
+}
+
+// Estilo efectivo de dibujo: preview close-only se pinta en línea al instante
+// y pasa a velas solo cuando /api/chart devuelve OHLC real (no al contar barras
+// locales suficientes en close-only).
+export function resolveRenderConfig(config, preferredStyle, dataModel) {
+  const targetStyle = preferredStyle || config.style;
+  const remoteOhlcReady = dataModel.requestState === "settled"
+    && dataModel.availability === "ready"
+    && (dataModel.rows?.length || 0) > 0
+    && barsAreCandleGrade(dataModel.rows);
+  if (preferredStyle && remoteOhlcReady && targetStyle !== config.style) {
+    return { ...config, style: targetStyle };
+  }
+  return config;
 }
 
 export function useChartController(props = {}) {
@@ -117,26 +133,21 @@ export function useChartController(props = {}) {
     symbol,
     localSource: { bars, quality: localQuality },
     config: { dataRange: config.dataRange, interval: config.interval, style: config.style },
+    preferredStyle,
   });
 
   // Tras el fetch remoto, el estilo de dibujo puede ser distinto al interino
   // (preview close-only en línea mientras llegan velas OHLC).
-  const renderConfig = useMemo(() => {
-    const targetStyle = preferredStyle || config.style;
-    const remoteReady = dataModel.requestState === "settled"
-      && dataModel.availability === "ready"
-      && (dataModel.rows?.length || 0) > 0;
-    if (preferredStyle && remoteReady && targetStyle !== config.style) {
-      return { ...config, style: targetStyle };
-    }
-    return config;
-  }, [
-    config,
-    preferredStyle,
-    dataModel.requestState,
-    dataModel.availability,
-    dataModel.rows?.length,
-  ]);
+  const renderConfig = useMemo(
+    () => resolveRenderConfig(config, preferredStyle, dataModel),
+    [
+      config,
+      preferredStyle,
+      dataModel.requestState,
+      dataModel.availability,
+      dataModel.rows,
+    ],
+  );
 
   const rows = dataModel.rows;
   const rowTimes = dataModel.rowTimes;
@@ -337,6 +348,7 @@ export function useChartController(props = {}) {
   }, [
     dataModel.availability,
     dataModel.rowTimes,
+    dataModel.rows?.length,
     symbol,
     config.dataRange,
     config.interval,

@@ -5,9 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre**.  
+Ticket en curso: **CHART-QR-2** (RS defaults modal/review).  
+**Cola chart:** ~~CHART-QR-1~~ · QR-2 → QR-3 · luego MET-5 uso real → VCP.  
 Último cerrado: **MET-4e** (backfill+verify persistencia).  
-**Cola acordada (dueño):** ~~MET-4e~~ · 1/3→VCP · MIGRATE aparcado.  
+MIGRATE aparcado.  
 **Nota MET-4e (2026-08-31):** write 1208 filas · above8=521 · smoke filtro 17→**10** pasan · vista rápida «12 semanas».  
 **Nota MET-4d (2026-08-31):** `b883085`.  
 **Nota MIGRATE (2026-08-31):** aparcado por dueño.  
@@ -246,8 +247,11 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | CHART-NAV | Pan/zoom libre; zona de interés marcada, no secuestrada | **Hecho** · smoke AAPL · `fixLeftEdge:false` + manual lógico |
 | CHART-UI-1 | Densidad toolbar ChartPreferences compact (agrupar TF/rango) | **Hecho** · `cd8e8d3` · smoke AAPL · 2 clusters |
 | CHART-RS-2 | Overlay RS país (tercer tono; post MET-2) | **Hecho** |
+| CHART-QR-1 | Vista rápida: preview línea → velas tras `/api/chart` | **Hecho** · smoke IFP.TO canvas 2s + «Ampliando histórico…» |
+| CHART-QR-2 | RS país/tema OFF por defecto en modal/review | **Activo** |
+| CHART-QR-3 | Panel «El valor» vacío en vista rápida | Pendiente (tras QR-2) |
 
-**Orden sugerido:** CHART-RS (cambio de representación) → CHART-NAV (gesto timeScale); o paralelo en ramas si no tocan el mismo helper de rango.  
+**Orden sugerido:** CHART-QR-1…3 (dueño 2026-08-31) → MET-5 uso real → VCP.  
 **No** mezclar con UX-18…21 (P2 mesa) en el mismo ticket.
 
 ## Track métricas (pendiente)
@@ -265,7 +269,8 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-4b | Impl ficha «Sostén de la tendencia» | **Hecho** (`c46938b`) |
 | MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | **Aceptado** 2026-08-31 · solo 2/4 · 1/3→VCP |
 | MET-5-calibrate | Muestreo umbrales 26/10 / 15–50% (read-only) | **Cerrado** · umbrales OK dueño |
-| MET-5b | Impl ficha «Salud de etapa» | **Hecho** |
+| MET-5b | Impl ficha «Salud de etapa» | **Hecho** · `72b6194` |
+| MET-5 uso real | Validación dueño fórmula v1 (ficha only) | **Pausado** · smoke OK · retoma tras CHART-QR |
 | MET-4c | Vista rápida «Sostén de la tendencia» | **Hecho** (`9914cc4`) |
 | MET-4d | Filtro hunt persistencia MA 30s | **Hecho** (`b883085`) |
 | MET-4e | Backfill weeksAbove* + smoke 4c/4d | **Hecho** · write 1208 · smoke OK |

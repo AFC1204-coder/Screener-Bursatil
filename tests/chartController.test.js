@@ -30,6 +30,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import UniversalPriceChart, { UniversalPriceChartView } from "@/app/UniversalPriceChart";
+import { resolveRenderConfig } from "@/app/useChartController";
 const UPCView = UniversalPriceChartView;
 
 let getJsonCalls = [];
@@ -316,6 +317,7 @@ describe("useChartController · ciclo de vida (ADR §5.4, §5.5)", () => {
     expect(deps).toContain("config.dataRange");
     expect(deps).toContain("config.interval");
     expect(deps).toContain("renderConfig.style");
+    expect(deps).toContain("dataModel.rows?.length");
     expect(deps).toContain("config.scale");
     expect(deps).toContain("height");
     // Dependencias de overlays e indicadores (regresión del paso 7 al
@@ -352,6 +354,53 @@ describe("useChartController · ciclo de vida (ADR §5.4, §5.5)", () => {
 // Sin DOM no se puede observar el bucle: los efectos no corren en
 // renderToStaticMarkup. Se verifica la invariante en la fuente — el default
 // tiene que ser una constante de módulo con identidad estable.
+describe("resolveRenderConfig · preview línea → velas OHLC", () => {
+  const config = {
+    dataRange: "1A",
+    interval: "D",
+    style: "8",
+    scale: "price",
+    indicators: {},
+  };
+
+  const closeOnlyRows = [
+    { time: 1, date: "2024-01-01", open: 100, high: 100, low: 100, close: 100, volume: 1 },
+    { time: 2, date: "2024-01-02", open: 101, high: 101, low: 101, close: 101, volume: 1 },
+  ];
+
+  const ohlcRows = [
+    { time: 1, date: "2024-01-01", open: 99, high: 102, low: 98, close: 100, volume: 1 },
+    { time: 2, date: "2024-01-02", open: 100, high: 104, low: 99, close: 101, volume: 1 },
+  ];
+
+  it("mantiene línea interina mientras el remoto no trae OHLC real", () => {
+    const out = resolveRenderConfig(config, "1", {
+      requestState: "settled",
+      availability: "ready",
+      rows: closeOnlyRows,
+    });
+    expect(out.style).toBe("8");
+  });
+
+  it("pasa a velas cuando el remoto settled trae OHLC real", () => {
+    const out = resolveRenderConfig(config, "1", {
+      requestState: "settled",
+      availability: "ready",
+      rows: ohlcRows,
+    });
+    expect(out.style).toBe("1");
+  });
+
+  it("no cambia el estilo sin preferredStyle", () => {
+    const out = resolveRenderConfig(config, null, {
+      requestState: "settled",
+      availability: "ready",
+      rows: ohlcRows,
+    });
+    expect(out.style).toBe("8");
+  });
+});
+
 describe("useChartController · defaults con identidad estable", () => {
   it("rsRatingSeries y rsCountrySeries no usan arrays literales como default", async () => {
     const { readFileSync } = await import("node:fs");

@@ -203,6 +203,26 @@ export function UniversalPriceChartView({
           {navGroup}
         </div>
       )}
+      {expandingNotice && (
+        <p
+          className="universalChartEstimatedNote universalChartExpandingNote"
+          role="status"
+          aria-live="polite"
+          title={expandingNotice.title || ""}
+        >
+          {expandingNotice.text}
+        </p>
+      )}
+      {expansionFailedNotice && (
+        <p
+          className="dataNote universalChartExpansionFailedNote"
+          role="status"
+          aria-live="polite"
+          title={expansionFailedNotice.title || ""}
+        >
+          {expansionFailedNotice.text}
+        </p>
+      )}
       {/* Raíl de estado: solo existe cuando hay algo que NO cuentan ya los
           controles o el eje — una desviación manual de la ventana o la
           herramienta de dibujo activa. El estado por defecto («todo el rango,
@@ -346,8 +366,6 @@ export function UniversalPriceChartView({
         <p className="dataNote universalRsAbsenceNote" role="status" title={rsThemeLegend.absence.title}>{rsThemeLegend.absence.text}</p>
       )}
       {qualityNotice && <p className="universalChartEstimatedNote" role="status" title={qualityNotice.title}>{qualityNotice.text}</p>}
-      {expandingNotice && <p className="dataNote">{expandingNotice.text}</p>}
-      {expansionFailedNotice && <p className="dataNote">{expansionFailedNotice.text}</p>}
       {notes?.info && <p className="dataNote" role="status" title={notes.info.title}>{notes.info.text}</p>}
       {renderError && <p className="dataNote">{renderError}</p>}
     </div>
