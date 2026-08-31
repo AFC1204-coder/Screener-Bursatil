@@ -1,7 +1,7 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi, beforeAll } from "vitest";
-import { MARKETS_MISALIGNMENT_CTA } from "@/lib/marketAvailability";
+import { MARKETS_MISALIGNMENT_CTA, MARKETS_AUTO_LOAD_LOADING_LABEL } from "@/lib/marketAvailability";
 
 const Stub = ({ marker }) => React.createElement("div", { "data-stub": marker });
 
@@ -36,6 +36,9 @@ function makeProps({
   scannedMarkets = ["US"],
   selectedMarkets = ["US", "CA"],
   snapshotNotice = null,
+  restoringScan = false,
+  marketsLoadFailed = false,
+  marketsLoadFailedDetail = "",
 } = {}) {
   const resultsRows = [{ symbol: "AAPL", country: "US" }];
   return {
@@ -47,7 +50,7 @@ function makeProps({
       err: null,
       status: "idle",
       snapshotNotice,
-      restoringScan: false,
+      restoringScan,
       showMobileFilters: false,
       sidebarCollapsed: false,
       setShowMobileFilters: () => {},
@@ -151,17 +154,20 @@ function makeProps({
       marketsStale,
       scannedAt: "2026-08-27T14:07:00.000Z",
       scannedMarkets,
+      marketsLoadFailed,
+      marketsLoadFailedDetail,
     },
   };
 }
 
 describe("ScreenerShell markets misalignment", () => {
-  it("pinta la línea de verdad y un solo banner con CTA por viewport", () => {
+  it("pinta la línea de verdad y un solo banner de carga (sin CTA) por viewport", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ marketsStale: true })));
     expect(html).toContain("screenerTruthLine");
     expect(html).toContain("analizadas");
-    expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
-    expect((html.match(/class="scanStaleNotice"/g) || []).length).toBe(1);
+    expect(html).toContain(MARKETS_AUTO_LOAD_LOADING_LABEL);
+    expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
+    expect((html.match(/scanStaleNotice--loading/g) || []).length).toBe(1);
     expect(html).not.toContain("resultados visibles");
     expect(html).not.toContain('class="kpi"');
   });
@@ -177,19 +183,21 @@ describe("ScreenerShell markets misalignment", () => {
       },
     })));
     expect(html.match(/snapshotFreshnessNotice/g) || []).toHaveLength(0);
-    expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
+    expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
+    expect(html).toContain(MARKETS_AUTO_LOAD_LOADING_LABEL);
   });
 
-  it("muestra CTA de mercados aunque scanStale sea false (firma alineada, datos US)", () => {
+  it("muestra aviso de carga aunque scanStale sea false (firma alineada, datos US)", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
       marketsStale: true,
       scanStale: false,
       scannedMarkets: ["US"],
-      selectedMarkets: ["HK"],
+      selectedMarkets: ["CA"],
     })));
-    expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
+    expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
+    expect(html).toContain(MARKETS_AUTO_LOAD_LOADING_LABEL);
     expect(html).not.toContain("Los criterios de cobertura cambiaron");
-    expect((html.match(/class="scanStaleNotice"/g) || []).length).toBe(1);
+    expect((html.match(/scanStaleNotice--loading/g) || []).length).toBe(1);
   });
 
   it("HK seleccionado + scan US no muestra filas US como caza usable", () => {
@@ -199,12 +207,11 @@ describe("ScreenerShell markets misalignment", () => {
       scannedMarkets: ["US"],
       selectedMarkets: ["HK"],
     })));
-    expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
+    expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
     expect(html).toContain("0 analizadas");
     expect(html).toContain("0 en lista");
     expect(html).toContain("mesa: US");
-    expect(html).toContain("datos: US · selección: HK");
-    expect(html).toContain("selección ≠ mesa");
+    expect(html).not.toContain("selección ≠ mesa");
     expect(html).not.toContain("AAPL");
     expect(html).not.toContain(">Revisar<");
     expect(html).not.toContain("1 en lista");
@@ -231,5 +238,29 @@ describe("ScreenerShell markets misalignment", () => {
     expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
     expect(html).toContain("Los criterios de cobertura cambiaron");
     expect((html.match(/Los criterios de cobertura cambiaron/g) || []).length).toBe(1);
+  });
+
+  it("muestra CTA solo si falló la carga de mercados", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      marketsStale: true,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["HK"],
+      marketsLoadFailed: true,
+      marketsLoadFailedDetail: "No se pudo cargar Hong Kong.",
+    })));
+    expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
+    expect(html).toContain("No se pudo cargar Hong Kong.");
+    expect(html).toContain("selección ≠ mesa");
+  });
+
+  it("no muestra aviso de mercados si solo cambian filtros (mercados alineados)", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      marketsStale: false,
+      scanStale: true,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+    })));
+    expect(html).not.toContain(MARKETS_AUTO_LOAD_LOADING_LABEL);
+    expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
   });
 });

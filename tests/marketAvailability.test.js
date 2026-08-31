@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ASIA, DEFAULT_MARKETS } from "@/lib/screenerConfig";
 import { EUROPE_PRIORITY_MARKETS } from "@/lib/markets";
 import {
+  buildMarketsLoadingNotice,
   buildMarketsStaleNotice,
   buildScreenerTruthMarketSegments,
   formatMarketCodesShort,
@@ -12,8 +13,10 @@ import {
   marketsSelectionBlockingMisalignment,
   marketsSelectionMisaligned,
   marketsSelectionPartialCoverage,
+  resolveMarketsMisalignmentNotice,
   restoreSessionMarketAlignAction,
   scannedMarketsFromScan,
+  shouldAutoLoadMarketSelection,
 } from "@/lib/marketAvailability";
 
 describe("isMarketSelectable", () => {
@@ -212,6 +215,76 @@ describe("buildMarketsStaleNotice", () => {
       selectedMarkets: ["US"],
       rowCount: 3319,
     })).toBeNull();
+  });
+});
+
+describe("resolveMarketsMisalignmentNotice (UX-NAC-3)", () => {
+  it("devuelve aviso de carga sin CTA cuando hay desalineación", () => {
+    const notice = resolveMarketsMisalignmentNotice({
+      scannedMarkets: ["US"],
+      selectedMarkets: ["HK"],
+      rowCount: 100,
+    });
+    expect(notice?.showCta).toBe(false);
+    expect(notice?.tone).toBe("loading");
+    expect(notice?.detail).toContain("Cargando datos");
+  });
+
+  it("devuelve CTA solo si loadFailed", () => {
+    const notice = resolveMarketsMisalignmentNotice({
+      scannedMarkets: ["US"],
+      selectedMarkets: ["HK"],
+      loadFailed: true,
+      loadFailedDetail: "Sin materializado HK.",
+    });
+    expect(notice?.showCta).toBe(true);
+    expect(notice?.tone).toBe("error");
+    expect(notice?.detail).toBe("Sin materializado HK.");
+  });
+
+  it("no avisa si mercados alineados", () => {
+    expect(resolveMarketsMisalignmentNotice({
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+    })).toBeNull();
+  });
+});
+
+describe("shouldAutoLoadMarketSelection", () => {
+  it("dispara cuando hay mesa y selección diverge", () => {
+    expect(shouldAutoLoadMarketSelection({
+      sessionReady: true,
+      marketsStale: true,
+      hasScannedMarkets: true,
+    })).toBe(true);
+  });
+
+  it("no dispara si ya carga, falló o no hay mesa", () => {
+    expect(shouldAutoLoadMarketSelection({
+      sessionReady: true,
+      marketsStale: true,
+      restoringScan: true,
+      hasScannedMarkets: true,
+    })).toBe(false);
+    expect(shouldAutoLoadMarketSelection({
+      sessionReady: true,
+      marketsStale: true,
+      loadFailed: true,
+      hasScannedMarkets: true,
+    })).toBe(false);
+    expect(shouldAutoLoadMarketSelection({
+      sessionReady: true,
+      marketsStale: true,
+      hasScannedMarkets: false,
+    })).toBe(false);
+  });
+});
+
+describe("buildMarketsLoadingNotice", () => {
+  it("copy neutro para un mercado", () => {
+    const notice = buildMarketsLoadingNotice({ selectedMarkets: ["HK"] });
+    expect(notice.detail).toContain("Hong Kong");
+    expect(notice.showCta).toBe(false);
   });
 });
 

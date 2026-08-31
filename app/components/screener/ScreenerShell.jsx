@@ -34,7 +34,7 @@ import {
 import { investorStatusLabel } from "@/lib/screenerFormat";
 import { huntDisplayName } from "@/lib/screenerHuntCards";
 import { OptionalBasePresetsPanel } from "@/lib/screenerFiltersView";
-import { buildMarketsStaleNotice, isMarketSelectable, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketUnavailabilityReason } from "@/lib/marketAvailability";
+import { isMarketSelectable, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketUnavailabilityReason, resolveMarketsMisalignmentNotice } from "@/lib/marketAvailability";
 import { buildLideresIntlGuardrailNotice, LIDERES_INTL_CTA } from "@/lib/lideresIntlGuardrail";
 import { buildScreenerFilterBreakdown } from "@/lib/screenerFilterBreakdown";
 import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
@@ -263,18 +263,24 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   // El container calcula si la selección de mercados diverge del scan cargado.
   // UX-NAC-1: con desalineación la mesa no enseña filas del mercado equivocado
   // como caza usable — solo banner + CTA (UX-14) y empty state bloqueante.
+  // UX-NAC-3: auto-carga sin CTA obligatorio; progreso neutro; CTA solo si falla.
   const {
     scanStale = false,
     marketsStale = false,
     scannedAt = null,
     scannedMarkets = [],
+    marketsLoadFailed = false,
+    marketsLoadFailedDetail = "",
   } = staleness || {};
   const huntLabel = huntDisplayName(presetKey, markets);
   const presetNameForTruth = huntTruthOverride?.presetName ?? huntLabel;
-  const marketsMisalignment = buildMarketsStaleNotice({
+  const marketsMisalignment = resolveMarketsMisalignmentNotice({
     scannedMarkets,
     selectedMarkets: markets,
     rowCount: analyzedRows.length,
+    restoringScan,
+    loadFailed: marketsLoadFailed,
+    loadFailedDetail: marketsLoadFailedDetail,
   });
   const resultsBlockedByMarketMisalignment = Boolean(
     marketsMisalignment && marketsMisalignment.blocksResults !== false,
@@ -305,7 +311,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     scannedAt,
     scannedMarkets,
     selectedMarkets: markets,
-    marketsMisaligned: resultsBlockedByMarketMisalignment,
+    marketsMisaligned: resultsBlockedByMarketMisalignment && marketsLoadFailed,
+    suppressMisalignmentAlarm: resultsBlockedByMarketMisalignment && !marketsLoadFailed,
   });
   useLayoutEffect(() => {
     const ms = recordTruthLinePaint({
@@ -345,6 +352,31 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     if (ctaId === LIDERES_INTL_CTA.SWITCH_ETAPA_2) {
       applyHuntCard("lideres-etapa-2");
     }
+  }
+
+  function renderMarketsMisalignmentNotice() {
+    if (!marketsMisalignment) return null;
+    const toneClass = marketsMisalignment.tone === "loading"
+      ? " scanStaleNotice--loading"
+      : marketsMisalignment.tone === "error"
+        ? " scanStaleNotice--error"
+        : "";
+    return (
+      <div className={`scanStaleNotice${toneClass}`} role="status" aria-live="polite">
+        <span className="scanStaleNoticeLabel">{marketsMisalignment.label}</span>
+        <b>{marketsMisalignment.detail}</b>
+        {marketsMisalignment.showCta !== false ? (
+          <button
+            type="button"
+            className="btn btnSmall btnPrimary"
+            onClick={() => loadScanForMarketSelection(markets, "Cargando datos de la selección…")}
+            disabled={restoringScan}
+          >
+            {restoringScan ? "Cargando…" : marketsMisalignment.ctaLabel}
+          </button>
+        ) : null}
+      </div>
+    );
   }
 
   // --- franja P3 (percentil por lote) ---
@@ -658,20 +690,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
 
         {isMobileViewport ? <section className="mobileResearchHome">
           <MarketMiniTape marketHealth={marketHealth} />
-          {marketsMisalignment ? (
-            <div className="scanStaleNotice" role="status" aria-live="polite">
-              <span className="scanStaleNoticeLabel">{marketsMisalignment.label}</span>
-              <b>{marketsMisalignment.detail}</b>
-              <button
-                type="button"
-                className="btn btnSmall btnPrimary"
-                onClick={() => loadScanForMarketSelection(markets, "Cargando datos de la selección…")}
-                disabled={restoringScan}
-              >
-                {restoringScan ? "Cargando…" : marketsMisalignment.ctaLabel}
-              </button>
-            </div>
-          ) : scanStale ? (
+          {renderMarketsMisalignmentNotice()}
+          {marketsMisalignment ? null : scanStale ? (
             <div className="scanStaleNotice" role="status" aria-live="polite">
               <span className="scanStaleNoticeLabel">Cobertura</span>
               <b>Los criterios de cobertura cambiaron; los datos cargados son de la selección anterior.</b>
@@ -715,20 +735,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         </section> : null}
 
         {!isMobileViewport ? <section className="desktopResultsSection" style={{ marginBottom: 20 }}>
-          {marketsMisalignment ? (
-            <div className="scanStaleNotice" role="status" aria-live="polite">
-              <span className="scanStaleNoticeLabel">{marketsMisalignment.label}</span>
-              <b>{marketsMisalignment.detail}</b>
-              <button
-                type="button"
-                className="btn btnSmall btnPrimary"
-                onClick={() => loadScanForMarketSelection(markets, "Cargando datos de la selección…")}
-                disabled={restoringScan}
-              >
-                {restoringScan ? "Cargando…" : marketsMisalignment.ctaLabel}
-              </button>
-            </div>
-          ) : scanStale ? (
+          {renderMarketsMisalignmentNotice()}
+          {marketsMisalignment ? null : scanStale ? (
             <div className="scanStaleNotice" role="status" aria-live="polite">
               <span className="scanStaleNoticeLabel">Cobertura</span>
               <b>Los criterios de cobertura cambiaron; los datos cargados son de la selección anterior.</b>

@@ -5,15 +5,14 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 noche · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-NAC-3** (auto-cargar mesa sin CTA rojo).  
-**Cola:** ~~CHART-QR~~ · ~~MET-5 uso real~~ · UX-NAC-3 → VCP (1/3) → carga/premium.  
-Último cerrado: **MET-5 uso real** (fórmula v1 **aceptada** dueño A).  
+Ticket en curso: **libre** — siguiente **VCP (1/3)**.  
+**Cola:** ~~CHART-QR~~ · ~~MET-5 uso real~~ · ~~UX-NAC-3~~ · VCP → carga/premium.  
+Último cerrado: **UX-NAC-3** (auto-cargar mesa sin CTA rojo).  
 MIGRATE aparcado.  
-**Nota MET-5 uso real (2026-08-31 noche):** dueño **A** — fórmula v1 OK; superficie filtro/vista rápida/columna no pedida aún.  
-**Nota dueño UX (2026-08-31 noche):** avisos rojos al cambiar filtros/mercados («cargar otros países») → deben auto-resolverse; track UX-NAC-3.  
-**Nota CHART-QR-3 (2026-08-31 noche):** `803dba4` · smoke 2269.HK hit-test `<b>`.  
-**Nota CHART-QR-2 (2026-08-31 noche):** `67dcb75`.  
-**Nota MET-4e (2026-08-31):** write 1208 filas · above8=521 · smoke filtro 17→**10** pasan · vista rápida «12 semanas».  
+**Nota UX-NAC-3 (2026-08-31 noche):** tests 57 · smoke US→Core intl / HK «Actualizando mesa» sin CTA error; filtro Deterioro sin aviso mercados. Nota: durante carga Core intl aún aparece guardrail «Líderes intl» (UX-16) — follow-up premium aparte.  
+**Nota MET-5 uso real (2026-08-31 noche):** dueño **A** — fórmula v1 OK.  
+**Nota CHART-QR-3 (2026-08-31 noche):** `803dba4`.  
+**Nota MET-4e (2026-08-31):** write 1208 filas · above8=521 · smoke filtro 17→**10** pasan.  
 **Nota MET-4d (2026-08-31):** `b883085`.  
 **Nota MIGRATE (2026-08-31):** aparcado por dueño.  
 **Nota BUG-HUNT-1b (2026-08-31):** cerrado `e90dc59`.  
@@ -237,7 +236,7 @@ Feedback dueño: profundidad OK, fricción al filtrar nacionalidades + sensació
 |---|---|---|
 | UX-NAC-1 | Restore/cambio mercado: nunca filas ajenas cazables; auto-load o bloqueo | **Hecho** |
 | UX-NAC-2 | Línea de verdad fija: N analizadas · mercados en mesa · qué falta | **Hecho** |
-| UX-NAC-3 | Auto-cargar mesa al desalinearse; sin CTA rojo obligatorio | **Activo** |
+| UX-NAC-3 | Auto-cargar mesa al desalinearse; sin CTA rojo obligatorio | **Hecho** · smoke Core intl / HK |
 | PERF-NAC | Recorte latencia cambio vista (R-06) + hydrate RS sin colgar scans | **Hecho** |
 | YIELD | Más filas intl reales en mesa (ops/cron, no solo chips) | **YIELD-1 Hecho** |
 | MIGRATE-1…3 | Postgres Mini | **Aparcado** (dueño: mañana/pasado) |

@@ -312,6 +312,24 @@
   flex:0 0 auto;
 }
 
+.scanStaleNotice--loading {
+  border-color:var(--border);
+  background:var(--panel);
+}
+
+.scanStaleNotice--loading .scanStaleNoticeLabel {
+  color:var(--muted);
+}
+
+.scanStaleNotice--error {
+  border-color:var(--oxido);
+  background:var(--oxido-dim);
+}
+
+.scanStaleNotice--error .scanStaleNoticeLabel {
+  color:var(--oxido);
+}
+
 .lideresIntlGuardrailActions {
   display:flex;
   flex-wrap:wrap;

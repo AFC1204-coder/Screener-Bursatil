@@ -1,17 +1,10 @@
-# Ticket activo — UX-NAC-3
+# Ticket activo — libre (siguiente: VCP 1/3)
 
-**Cola:** ~~MET-5 uso real~~ (aceptado A) · **UX-NAC-3** → VCP (1/3) · oleada carga/premium después.
+**Cola:** ~~MET-5 uso real~~ · ~~UX-NAC-3~~ · **VCP (1/3)** → oleada carga/premium.
 
-Detalle: `docs/tickets/UX-NAC-3-auto-cargar-mesa.md`
+Detalle VCP: investigación en `research/contracciones/` · detector en `lib/setupPatterns.js`.  
+Escribir ticket + prompt Agent cuando el dueño active VCP.
 
-## Prompt para Agent chat (copiar tal cual)
+## Prompt para Agent chat
 
-```
-@docs/tickets/UX-NAC-3-auto-cargar-mesa.md
-@docs/tickets/activo.md
-
-Rama: codex/statsedge-ui-polish
-Modelo: Composer 2.5
-
-Ticket UX-NAC-3: si selección de mercados ≠ mesa, auto-cargar sin obligar al CTA rojo «Cargar datos de la selección». Progreso neutro mientras carga; CTA solo si falla. Filtros que no cambian mercados no deben disparar ese aviso. Tests + smoke. Sin commit ni push.
-```
+(ninguno — esperar activación VCP o siguiente ítem del dueño)

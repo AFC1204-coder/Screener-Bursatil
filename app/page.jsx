@@ -29,7 +29,7 @@ import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/l
 import { normalizeScanErrorGroups } from "@/lib/scanErrorGroups";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
 import { DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
-import { filterSelectableMarkets, formatMissingMarketsDetail, accumulatedMaterializedStatusDetail, intlBroadStatusDetail, marketPresetMarkets, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketsSelectionBlockingMisalignment, marketsSelectionMisaligned, restoreSessionMarketAlignAction, scannedMarketsFromScan } from "@/lib/marketAvailability";
+import { filterSelectableMarkets, formatMissingMarketsDetail, accumulatedMaterializedStatusDetail, intlBroadStatusDetail, marketPresetMarkets, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketsSelectionBlockingMisalignment, marketsSelectionMisaligned, restoreSessionMarketAlignAction, scannedMarketsFromScan, shouldAutoLoadMarketSelection } from "@/lib/marketAvailability";
 import { buildDecisionBrief, buildDecisionEvidenceChecklist, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
 import { attachDecisionTrace, auditDecisionRowIssues, buildDecisionAuditExportPayload, buildDecisionTrace, decisionConfidenceLabel, decisionTraceForRow } from "@/lib/decisionAudit";
 import { decisionProfileStateForStock } from "@/lib/decisionProfile";
@@ -178,6 +178,8 @@ export default function Page() {
   const [status, setStatus] = useState(DEFAULT_STATUS);
   const [snapshotNotice, setSnapshotNotice] = useState(null);
   const [restoringScan, setRestoringScan] = useState(false);
+  const [marketsLoadFailed, setMarketsLoadFailed] = useState(false);
+  const [marketsLoadFailedDetail, setMarketsLoadFailedDetail] = useState("");
   const [err, setErr] = useState("");
   const [scanMode, setScanMode] = useState("all");
   const [batchStart, setBatchStart] = useState(0);
@@ -425,6 +427,7 @@ export default function Page() {
   const resultsOwnerRef = useRef("none");
   const manualRefreshGenRef = useRef(0);
   const marketLoadGenRef = useRef(0);
+  const activeMarketLoadKeyRef = useRef("");
   const restoreMarketAlignRef = useRef(null);
   function restoreSnapshot(scan, { source = "local", notice = null } = {}) {
     if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) return false;
@@ -1190,8 +1193,10 @@ export default function Page() {
   // botón): cargando ≠ desalineación mercados ≠ cero-por-filtro ≠ sin datos.
   const resultsEmptyLabel = restoringScan
     ? "Cargando los últimos datos guardados..."
-    : marketsBlockingMisalignment
-      ? MARKETS_MISALIGNMENT_EMPTY_LABEL
+    : marketsBlockingMisalignment && !marketsLoadFailed
+      ? "Cargando datos de la selección…"
+      : marketsBlockingMisalignment
+        ? MARKETS_MISALIGNMENT_EMPTY_LABEL
       : analyzedRows.length
         ? (!rows.length
           ? (shouldUseFamilyEmptyLabel("ipo", {
@@ -1268,20 +1273,32 @@ export default function Page() {
     }
     return gaps;
   }
+  function markMarketsLoadFailed(detail = "") {
+    setMarketsLoadFailed(true);
+    setMarketsLoadFailedDetail(detail);
+  }
   function loadScanForMarketSelection(nextMarkets, label = "Mercados actualizados.") {
     const normalized = normalizeMarketList(nextMarkets, []);
     const nextKey = normalized.slice().sort().join(",");
     const scannedKey = scannedMarketsKey;
     if (nextKey === scannedKey) {
+      setMarketsLoadFailed(false);
+      setMarketsLoadFailedDetail("");
       setStatus(label);
       return;
     }
     const marketCode = normalized.length === 1 ? normalized[0] : null;
     const useNightlyUs = normalized.length === 1 && marketCode === "US";
     if (!normalized.length) {
+      setMarketsLoadFailed(false);
+      setMarketsLoadFailedDetail("");
       setStatus(label);
       return;
     }
+    if (activeMarketLoadKeyRef.current === nextKey) return;
+    activeMarketLoadKeyRef.current = nextKey;
+    setMarketsLoadFailed(false);
+    setMarketsLoadFailedDetail("");
     const loadGen = ++marketLoadGenRef.current;
     setRestoringScan(true);
     const marketLabel = normalized.length === 1
@@ -1299,15 +1316,19 @@ export default function Page() {
       if (marketLoadGenRef.current !== loadGen) return;
       if (!result.ok || result.configured === false) {
         if (result.message) console.error("[snapshot] materializado por mercado:", result.message);
-        setStatus(userFacingServiceError(result.message, "No se pudo cargar el materializado de ese mercado."));
+        const detail = userFacingServiceError(result.message, "No se pudo cargar el materializado de ese mercado.");
+        markMarketsLoadFailed(detail);
+        setStatus(detail);
         return;
       }
       if (useNightlyUs) {
         const nightly = result.data?.nightly || null;
         const scan = pickNightlyUsRestorableScan(result.data?.scans || []);
         if (!scan) {
+          const nightlyDetail = nightlyAbsenceStatus(nightly?.found === false ? nightly : { reason: "no-nightly-scan" });
           setSnapshotNotice(nightlyAbsenceNotice(nightly?.found === false ? nightly : { reason: "no-nightly-scan" }));
-          setStatus(nightlyAbsenceStatus(nightly?.found === false ? nightly : { reason: "no-nightly-scan" }));
+          markMarketsLoadFailed(nightlyDetail);
+          setStatus(nightlyDetail);
           return;
         }
         const storedScans = safeRead(STORAGE_KEYS.scans, []);
@@ -1374,11 +1395,16 @@ export default function Page() {
         setStatus(effectiveScannedMarkets.length
           ? `No se pudo cargar la selección (${missingDetail}). Mercados restaurados al último lote.`
           : `No se pudo cargar la selección (${missingDetail}).`);
+        if (!shouldRevertMarkets) {
+          markMarketsLoadFailed(missingDetail || `No se pudo cargar la selección (${marketLabel}).`);
+        }
         return;
       }
       const scan = (result.data?.scans || [])[0];
       if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) {
-        setStatus(`${marketLabel}: sin materializado publicable en la nube.`);
+        const emptyDetail = `${marketLabel}: sin materializado publicable en la nube.`;
+        markMarketsLoadFailed(emptyDetail);
+        setStatus(emptyDetail);
         return;
       }
       const storedScans = safeRead(STORAGE_KEYS.scans, []);
@@ -1420,11 +1446,31 @@ export default function Page() {
     }).catch((error) => {
       console.error("[snapshot] materializado por mercado:", error);
       if (marketLoadGenRef.current !== loadGen) return;
-      setStatus(userFacingServiceError(error?.message, "No se pudo cargar el materializado de ese mercado."));
+      const detail = userFacingServiceError(error?.message, "No se pudo cargar el materializado de ese mercado.");
+      markMarketsLoadFailed(detail);
+      setStatus(detail);
     }).finally(() => {
-      if (marketLoadGenRef.current === loadGen) setRestoringScan(false);
+      if (marketLoadGenRef.current === loadGen) {
+        activeMarketLoadKeyRef.current = "";
+        setRestoringScan(false);
+      }
     });
   }
+  useEffect(() => {
+    if (!marketsStale) {
+      setMarketsLoadFailed(false);
+      setMarketsLoadFailedDetail("");
+      return;
+    }
+    if (!shouldAutoLoadMarketSelection({
+      marketsStale,
+      restoringScan,
+      loadFailed: marketsLoadFailed,
+      hasScannedMarkets: effectiveScannedMarkets.length > 0,
+      sessionReady,
+    })) return;
+    loadScanForMarketSelection(markets, "Cargando datos de la selección…");
+  }, [sessionReady, marketsStale, restoringScan, marketsLoadFailed, markets, effectiveScannedMarkets.length, scannedMarketsKey]);
   useEffect(() => {
     if (!sessionReady) return;
     const pending = restoreMarketAlignRef.current;
@@ -2567,6 +2613,8 @@ export default function Page() {
       scanModeStale,
       scannedAt: scanContext?.scannedAt || null,
       scannedMarkets: effectiveScannedMarkets,
+      marketsLoadFailed,
+      marketsLoadFailedDetail,
     }}
     results={{
       rows,
