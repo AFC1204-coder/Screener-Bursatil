@@ -23,12 +23,18 @@ En **QuickReviewModal** y **`/review`** solamente:
 - Scope o preset de chart settings para modal + review.
 - Tests de normalización de settings por scope.
 - Smoke: abrir vista rápida → toggles RS país/tema off; sin banda «Sin línea RS país» salvo que el usuario los active.
+- **Reabrir 2026-08-31:** fix deps `useMemo` en `app/RowPriceChart.jsx` (propagar `settings.indicators` al chart; sin eso el scope quickReview no llega a `UniversalPriceChart`).
 
 ## Fuera
 
 - Quitar overlays RS país/tema de la ficha.
 - Backfill datos MET-2b/3b.
 - commit/push.
+
+## Verify orquestador 2026-08-31 noche — CERRADO
+
+1ª pasada: smoke FAIL (RowPriceChart memo sin `indicators`).  
+2ª pasada: fix deps + smoke CTRN — prefs país/tema OFF, sin bandas país/tema; AAPL ficha ON. Nota: `quickReviewPreset` en localStorage podía forzar ON tras pruebas; smoke de defaults tras borrar preset.
 
 ## Plantilla de retorno
 

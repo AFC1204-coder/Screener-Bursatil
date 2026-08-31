@@ -49,7 +49,7 @@ function ChartSegmentedControl({ label = "", options = [], value = "", onChange,
   </div>;
 }
 
-export default function ChartPreferences({ settings, onChange, symbol = "", listId = "", scope = "global", onScopeChange, compact = false }) {
+export default function ChartPreferences({ settings, onChange, symbol = "", listId = "", scope = "global", onScopeChange, compact = false, scopeLocked = false }) {
   const note = settings?.notes?.[symbol] || "";
   const indicators = { ...DEFAULT_CHART_SETTINGS.indicators, ...(settings?.indicators || {}) };
   const interval = normalizeChartInterval(settings?.interval || DEFAULT_CHART_SETTINGS.interval);
@@ -80,7 +80,7 @@ export default function ChartPreferences({ settings, onChange, symbol = "", list
   const updateIndicators = (patch) => update({ indicators: { ...indicators, ...patch } });
   const updateNote = (value) => update({ notes: { ...(settings?.notes || {}), [symbol]: value } });
 
-  const scopeSelect = scopes.length > 1 ? (
+  const scopeSelect = !scopeLocked && scopes.length > 1 ? (
     <select aria-label="Preset de grafico" value={scope} onChange={(event) => onScopeChange?.(event.target.value)}>
       {scopes.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
     </select>

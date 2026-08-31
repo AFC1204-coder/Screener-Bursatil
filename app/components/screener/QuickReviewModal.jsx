@@ -216,7 +216,7 @@ export default function QuickReviewModal({
         <div className="screenerReviewMain">
           <div className="profileGrid quickReviewGrid">
             <div className="profileChartArea">
-              <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={activeModalRow.symbol} listId={chartListId} scope={chartScope} onScopeChange={updateChartScope} compact />
+              <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={activeModalRow.symbol} listId={chartListId} scope={chartScope} onScopeChange={updateChartScope} scopeLocked compact />
               <div className="quickReviewChart">
                 <RowPreviewChart row={activeModalRow} chartSettings={chartSettings} />
               </div>

@@ -99,6 +99,9 @@ export default function RowPriceChart({
     settings?.interval,
     settings?.style,
     settings?.scale,
+    // CHART-QR-2: sin indicators, UniversalPriceChart sigue con el snapshot
+    // memoizado (rsCountryLine/rsThemeLine true) aunque quickReview los apague.
+    settings?.indicators,
   ]);
   // ADR §3.2/§9: la calidad local viaja explícita. Solo tiene sentido cuando
   // efectivamente pasamos barras locales; si las descartamos, el veredicto lo

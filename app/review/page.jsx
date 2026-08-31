@@ -47,7 +47,7 @@ import "../../styles/review.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import RowPriceChart from "@/app/RowPriceChart";
 import { getJson } from "@/lib/clientApi";
-import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
+import { readChartSettings } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
 import { clamp, dateTime, pct, ratio } from "@/lib/formatters";
 import { stdev } from "@/lib/indicators";
@@ -342,12 +342,11 @@ function MiniSparkline({ bars = [] }) {
 // compartido. `RowPriceChart` pinta el preview close-only en línea al instante
 // y pide OHLC real para velas cuando el estilo pedido es vela.
 const REVIEW_CHART_SETTINGS = {
-  ...DEFAULT_CHART_SETTINGS,
+  ...readChartSettings({ scope: "quickReview" }),
   range: "6M",
   interval: "D",
   style: "1",
   scale: "price",
-  indicators: { ...DEFAULT_CHART_SETTINGS.indicators, rsLine: true },
 };
 
 function ReviewChartPanel({ row, loading = false }) {

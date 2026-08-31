@@ -1057,19 +1057,27 @@ export default function Page() {
   }, []);
 
   const chartListId = useMemo(() => `screener:${presetKey}:${markets.join(",")}`, [presetKey, markets]);
+  const effectiveChartScope = activeModalRow ? "quickReview" : chartScope;
 
   function updateChartSettings(nextSettings) {
-    setChartSettings(writeChartSettings(nextSettings, { scope: chartScope, symbol: activeModalRow?.symbol, listId: chartListId }));
+    setChartSettings(writeChartSettings(nextSettings, { scope: effectiveChartScope, symbol: activeModalRow?.symbol, listId: chartListId }));
   }
 
   function updateChartScope(nextScope) {
+    if (activeModalRow) return;
     setChartScope(nextScope);
     setChartSettings(readChartSettings({ scope: nextScope, symbol: activeModalRow?.symbol, listId: chartListId }));
   }
 
   useEffect(() => {
-    if (chartScope !== "global") setChartSettings(readChartSettings({ scope: chartScope, symbol: activeModalRow?.symbol, listId: chartListId }));
-  }, [chartScope, activeModalRow?.symbol, chartListId]);
+    if (!activeModalRow) return;
+    setChartSettings(readChartSettings({ scope: "quickReview", symbol: activeModalRow.symbol, listId: chartListId }));
+  }, [activeModalRow, chartListId]);
+
+  useEffect(() => {
+    if (activeModalRow || chartScope === "quickReview") return;
+    setChartSettings(readChartSettings({ scope: chartScope, symbol: activeModalRow?.symbol, listId: chartListId }));
+  }, [chartScope, activeModalRow?.symbol, chartListId, activeModalRow]);
 
   const activeLayerLabel = useMemo(() => layerStatusText(filterLayers, useRegimeFilter), [filterLayers, useRegimeFilter]);
 
@@ -2610,7 +2618,7 @@ export default function Page() {
     <QuickReviewModal
       activeModalRow={activeModalRow}
       chartListId={chartListId}
-      chartScope={chartScope}
+      chartScope={effectiveChartScope}
       chartSettings={chartSettings}
       modalActiveResolution={modalActiveResolution}
       modalDecisionResolutions={modalDecisionResolutions}
