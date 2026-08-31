@@ -5,13 +5,15 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **libre**.  
-Último cerrado: **MET-5b** (impl salud de etapa).  
-**Cola acordada (dueño):** ~~MET-5b~~ · MET-4c opcional · 1/3→VCP · MIGRATE aparcado.  
-**Nota MET-5b (2026-08-31):** ficha «Salud de etapa» · umbrales 26/10/15/50 · solo 2/4 · smoke AAPL 70/100.  
+Ticket en curso: **MET-4c** (muletas en vista rápida · Composer 2.5) — `docs/tickets/activo.md`.  
+Último cerrado: **MET-5b** (`72b6194`).  
+**Cola acordada (dueño):** ~~MET-5b~~ → **MET-4c** · filtro persistencia aparte · 1/3→VCP · MIGRATE aparcado.  
+**Nota MET-4c (2026-08-31):** solo QuickReview «Sostén»; sin filtro hunt; sin MIGRATE.  
+**Nota MET-5b (2026-08-31):** ficha «Salud de etapa» · `72b6194`.  
 **Nota MET-5-calibrate (2026-08-31):** `4d3ba11`.  
 **Nota MET-5 aceptación (2026-08-31):** solo **2/4** · 1/3 potenciales+VCP.  
 **Nota MET-4b (2026-08-31):** `c46938b`.  
+**Nota MIGRATE (2026-08-31):** aparcado por dueño.  
 **Nota BUG-HUNT-1b (2026-08-31):** cerrado `e90dc59`.  
 **Nota R-06 (2026-08-31):** Deterioro **~1030** · E2 **~333** · pivot **~249** · intl **~1544** · IPO **~435**.  
 **Nota YIELD-1 smoke (2026-08-31):** Global → 1583 · mesa CA+…+US.  
@@ -267,7 +269,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-5 | Índice 0–100 salud de etapa (ponderado; no interruptor 1–4) | **Aceptado** 2026-08-31 · solo 2/4 · 1/3→VCP |
 | MET-5-calibrate | Muestreo umbrales 26/10 / 15–50% (read-only) | **Cerrado** · umbrales OK dueño |
 | MET-5b | Impl ficha «Salud de etapa» | **Hecho** |
-| MET-4c | Vista rápida / filtro persistencia (opcional) | Ideas; tras uso real MET-4b |
+| MET-4c | Vista rápida «Sostén de la tendencia» | **Activo** · `docs/tickets/activo.md` · sin filtro/MIGRATE |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
 | VCP | Detector producto vs corpus `research/contracciones/` | Aplazado / investigación |
 
