@@ -27,6 +27,7 @@ import {
   volumeDryUpDisplay,
 } from "@/lib/descriptiveStrip";
 import { buildTrendSupportLines } from "@/lib/trendSupport";
+import { buildStageHealthLine } from "@/lib/stageHealth";
 
 function Missing({ reason = "" }) {
   return (
@@ -89,6 +90,30 @@ function TrendSupportLine({ line }) {
   );
 }
 
+function StageHealthBlock({ block }) {
+  if (!block) return null;
+  return (
+    <div className="stockDescHealth" aria-label="Salud de etapa">
+      <div className="stockDescHealthRow">
+        <span className="stockDescLabel">Salud de etapa:</span>
+        {block.available ? (
+          <>
+            <b className="stockDescHealthScore">{block.score}/100</b>
+            {block.breakdown ? (
+              <details className="stockDescHealthDetails">
+                <summary>Desglose</summary>
+                <p className="stockDescHealthBreakdown">{block.breakdown}</p>
+              </details>
+            ) : null}
+          </>
+        ) : (
+          <Missing reason={block.reason} />
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DescriptiveStrip({ data = null, setupPattern = null, technical = null, stockVolume = null }) {
   if (!data) return null;
   const weekly = data.stage?.weekly || {};
@@ -126,6 +151,22 @@ export default function DescriptiveStrip({ data = null, setupPattern = null, tec
     upDownVolRatio: upDownVol?.available ? upDownVol.value : data?.upDownVolRatio ?? setupPattern?.upDownVolRatio,
     advanceRecentPct: data?.advanceRecentPct,
     advancePriorPct: data?.advancePriorPct,
+  });
+  const stageHealth = buildStageHealthLine(chartBars, {
+    stage: data?.stage,
+    weeklyStageState: data?.stage?.weekly?.state || data?.weeklyStageState,
+    perf3m: data?.perf3m,
+    perf6m: data?.perf6m,
+    upDownVolRatio: upDownVol?.available ? upDownVol.value : data?.upDownVolRatio ?? setupPattern?.upDownVolRatio,
+    advanceRecentPct: data?.advanceRecentPct,
+    advancePriorPct: data?.advancePriorPct,
+    weeksAboveSma30w: data?.weeksAboveSma30w,
+    weeksAboveSma30wAbove: data?.weeksAboveSma30wAbove,
+    weeksAboveSma10w: data?.weeksAboveSma10w,
+    weeksAboveSma10wAbove: data?.weeksAboveSma10wAbove,
+    distanceSma30w: data?.distanceSma30w ?? data?.weeklyDistanceSlowMa,
+    stageHealthScore: data?.stageHealthScore,
+    stageHealthAbsenceCode: data?.stageHealthAbsenceCode,
   });
 
   return (
@@ -170,6 +211,7 @@ export default function DescriptiveStrip({ data = null, setupPattern = null, tec
           reason={volSurge?.reason || "Sin medias de volumen comparables a 5 y 20 sesiones."}
         />
       </div>
+      <StageHealthBlock block={stageHealth} />
       <div className="stockDescTrendSupport" aria-label={trendSupport.title}>
         <h3 className="stockDescLabel">{trendSupport.title}</h3>
         <ul className="stockDescTrendList">

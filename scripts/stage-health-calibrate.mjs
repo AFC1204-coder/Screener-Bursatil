@@ -11,27 +11,27 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { readDailyBarsCache } from "@/lib/dailyBarsCache.js";
-import { detectPriceDiscontinuities } from "@/lib/indicators.js";
-import {
-  UP_DOWN_VOLUME_RATIO_BALANCED,
-  UP_DOWN_VOLUME_THRESHOLD,
-} from "@/lib/marketVolume.js";
 import { readNightlyUsScan } from "@/lib/nightlyUsScan.js";
 import {
-  ADVANCE_DEAD_BAND_PP,
-  advancePriorPct,
-  PRICE_DISCONTINUITY_FACTOR,
-  trendSupportFieldsFromBars,
-} from "@/lib/trendSupport.js";
+  computeStageHealth,
+  STAGE_HEALTH_PERSISTENCE_10_SAT,
+  STAGE_HEALTH_PERSISTENCE_30_SAT,
+  STAGE_HEALTH_EXTENSION_BAD_PCT,
+  STAGE_HEALTH_EXTENSION_GOOD_PCT,
+  STAGE_HEALTH_WEIGHTS,
+} from "@/lib/stageHealth.js";
+import { trendSupportFieldsFromBars } from "@/lib/trendSupport.js";
 import { scanDecisionRowFromDb } from "@/lib/scanDecisionProjection.js";
 import { supabaseConfig, supabaseRequest } from "@/lib/supabaseServer.js";
 
 const POSTGREST_MAX_ROWS = 1000;
-const PERSISTENCE_30_SAT = 26;
-const PERSISTENCE_10_SAT = 10;
-const EXTENSION_GOOD_PCT = 15;
-const EXTENSION_BAD_PCT = 50;
-const WEIGHTS = { p30: 25, p10: 10, accel: 20, vol: 25, ext: 20 };
+const WEIGHTS = {
+  p30: STAGE_HEALTH_WEIGHTS.persistence30,
+  p10: STAGE_HEALTH_WEIGHTS.persistence10,
+  accel: STAGE_HEALTH_WEIGHTS.acceleration,
+  vol: STAGE_HEALTH_WEIGHTS.volume,
+  ext: STAGE_HEALTH_WEIGHTS.extension,
+};
 const CONCURRENCY = Math.max(1, Number(process.env.STAGE_HEALTH_CALIBRATE_CONCURRENCY || 12));
 const MARKDOWN_PATH = process.env.STAGE_HEALTH_CALIBRATE_MARKDOWN || "";
 const EXAMPLE_SYMBOLS = new Set(
@@ -48,113 +48,23 @@ function finite(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-function stageSideAbove(stageState) {
-  return stageState === "stage2";
-}
-
-function persistence30Subscore(weeks, stageState) {
-  const n = finite(weeks);
-  if (n === null || n <= 0) return null;
-  return Math.min(n / PERSISTENCE_30_SAT, 1);
-}
-
-function persistence10Subscore(weeks, weeksAbove, stageState) {
-  const n = finite(weeks);
-  const above = weeksAbove;
-  const expectedAbove = stageSideAbove(stageState);
-  if (n === null || n <= 0 || above === null) return null;
-  if (above !== expectedAbove) return 0;
-  return Math.min(n / PERSISTENCE_10_SAT, 1);
-}
-
-function accelerationSubscore(recent, prior, stageState) {
-  const r1 = finite(recent);
-  const r0 = finite(prior);
-  if (r1 === null || r0 === null) return null;
-  const delta = r1 - r0;
-  const directed = stageState === "stage4" ? -delta : delta;
-  if (directed > ADVANCE_DEAD_BAND_PP) return 1;
-  if (Math.abs(directed) <= ADVANCE_DEAD_BAND_PP) return 0.75;
-  return 0;
-}
-
-function volumeSubscore(ratio, stageState) {
-  const n = finite(ratio);
-  if (n === null) return null;
-  if (stageState === "stage2") {
-    if (n >= UP_DOWN_VOLUME_THRESHOLD) return 1;
-    if (n >= UP_DOWN_VOLUME_RATIO_BALANCED) return 0.6;
-    return 0;
+function calibrateHealth(row = {}, trend = {}, bars = []) {
+  const health = computeStageHealth(row, trend, bars);
+  if (!health.available) {
+    return {
+      available: false,
+      reason: health.absenceCode || "unavailable",
+      components: health.components,
+    };
   }
-  if (n < UP_DOWN_VOLUME_RATIO_BALANCED) return 1;
-  if (n < UP_DOWN_VOLUME_THRESHOLD) return 0.6;
-  return 0;
-}
-
-function extensionSubscore(distanceSlowMaPct) {
-  const e = Math.abs(finite(distanceSlowMaPct) ?? NaN);
-  if (!Number.isFinite(e)) return null;
-  if (e <= EXTENSION_GOOD_PCT) return 1;
-  if (e >= EXTENSION_BAD_PCT) return 0;
-  return (EXTENSION_BAD_PCT - e) / (EXTENSION_BAD_PCT - EXTENSION_GOOD_PCT);
-}
-
-function computeStageHealth(row = {}, trend = {}, bars = []) {
-  const stageState = String(row.weeklyStageState || "").trim();
-  if (stageState !== "stage2" && stageState !== "stage4") {
-    return { available: false, reason: "non-trending-stage" };
-  }
-
-  const discontinuity = detectPriceDiscontinuities(bars, PRICE_DISCONTINUITY_FACTOR);
-  if (discontinuity.discontinuous) {
-    return { available: false, reason: "discontinuous" };
-  }
-
   const recent = finite(row.perf3m) ?? finite(trend.advanceRecentPct);
-  const prior = finite(trend.advancePriorPct) ?? advancePriorPct(recent, finite(row.perf6m));
+  const prior = finite(trend.advancePriorPct) ?? finite(row.advancePriorPct);
   const distance =
     finite(row.distanceSma30w)
     ?? finite(row.weeklyDistanceSlowMa)
     ?? finite(row.weeklyStage?.distanceSlowMaPct);
-
-  const components = {
-    persistence30: persistence30Subscore(trend.weeksAboveSma30w, stageState),
-    persistence10: persistence10Subscore(
-      trend.weeksAboveSma10w,
-      trend.weeksAboveSma10wAbove,
-      stageState,
-    ),
-    acceleration: accelerationSubscore(recent, prior, stageState),
-    volume: volumeSubscore(row.upDownVolRatio ?? trend.upDownVolRatio, stageState),
-    extension: extensionSubscore(distance),
-  };
-
-  const missing = Object.entries(components).filter(([, v]) => v === null).map(([k]) => k);
-  if (missing.length) {
-    return { available: false, reason: `missing:${missing.join(",")}`, components };
-  }
-
-  const points = {
-    persistence30: components.persistence30 * WEIGHTS.p30,
-    persistence10: components.persistence10 * WEIGHTS.p10,
-    acceleration: components.acceleration * WEIGHTS.accel,
-    volume: components.volume * WEIGHTS.vol,
-    extension: components.extension * WEIGHTS.ext,
-  };
-  const score = Math.round(
-    points.persistence30
-    + points.persistence10
-    + points.acceleration
-    + points.volume
-    + points.extension,
-  );
-
   return {
-    available: true,
-    stageState,
-    score,
-    components,
-    points,
+    ...health,
     inputs: {
       weeksAboveSma30w: trend.weeksAboveSma30w,
       weeksAboveSma10w: trend.weeksAboveSma10w,
@@ -288,15 +198,15 @@ function recommendThresholds(stage2, stage4) {
 
   const p75w30 = percentile(w30, 75);
   const p90w30 = percentile(w30, 90);
-  const sat26share = w30.filter((v) => v >= PERSISTENCE_30_SAT).length / Math.max(w30.length, 1);
-  const sat10share = w10.filter((v) => v >= PERSISTENCE_10_SAT).length / Math.max(w10.length, 1);
-  const extGoodShare = ext.filter((v) => v <= EXTENSION_GOOD_PCT).length / Math.max(ext.length, 1);
-  const extZeroShare = ext.filter((v) => v >= EXTENSION_BAD_PCT).length / Math.max(ext.length, 1);
+  const sat26share = w30.filter((v) => v >= STAGE_HEALTH_PERSISTENCE_30_SAT).length / Math.max(w30.length, 1);
+  const sat10share = w10.filter((v) => v >= STAGE_HEALTH_PERSISTENCE_10_SAT).length / Math.max(w10.length, 1);
+  const extGoodShare = ext.filter((v) => v <= STAGE_HEALTH_EXTENSION_GOOD_PCT).length / Math.max(ext.length, 1);
+  const extZeroShare = ext.filter((v) => v >= STAGE_HEALTH_EXTENSION_BAD_PCT).length / Math.max(ext.length, 1);
   const healthSpread = (percentile(health, 90) ?? 0) - (percentile(health, 10) ?? 0);
 
-  if (sat26share < 0.15 && p90w30 < PERSISTENCE_30_SAT) {
+  if (sat26share < 0.15 && p90w30 < STAGE_HEALTH_PERSISTENCE_30_SAT) {
     lines.push(
-      `- Persistencia 30w: recortar saturación 26 → ${Math.max(10, Math.round(p90w30))} sem`
+      `- Persistencia 30w: recortar saturación ${STAGE_HEALTH_PERSISTENCE_30_SAT} → ${Math.max(10, Math.round(p90w30))} sem`
         + ` (solo ${(sat26share * 100).toFixed(0)}% alcanza 26; p90=${p90w30?.toFixed(1)}).`,
     );
   } else {
@@ -390,7 +300,7 @@ async function main() {
     const cache = await readDailyBarsCache(row.symbol, { limit: 400, timeoutMs: 20000 });
     const bars = cache.bars || [];
     const trend = trendSupportFieldsFromBars(bars);
-    const health = computeStageHealth(row, trend, bars);
+    const health = calibrateHealth(row, trend, bars);
     return { symbol: row.symbol, row, trend, health, barsCount: bars.length };
   });
 

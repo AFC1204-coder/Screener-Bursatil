@@ -84,6 +84,23 @@ Stage labels:
 - `Stage 4`
 - `Insufficient history`
 
+### Stage health index (MET-5)
+
+Question: how firmly does the value sustain the stage it is in?
+
+- Scope: **Stage 2 and Stage 4 only**. Integer 0–100; weighted sum, not a verdict or traffic light.
+- Formula: `round(25·p30 + 10·p10 + 20·accel + 25·vol + 20·ext)` — constants in `lib/stageHealth.js`.
+- Components (all read in the **direction of the stage**):
+  - **30-week MA persistence** (25): `min(weeks on stage side / 26, 1)`.
+  - **10-week MA persistence** (10): full ramp if on stage side; **0** if on the wrong side.
+  - **Acceleration** (20): recent vs prior 3-month advance; dead band 5 pp; sign inverted in Stage 4.
+  - **Volume** (25): 50-session up/down ratio; Stage 4 uses mirrored thresholds (same constants as trend support).
+  - **Extension** (20): `|distance to 30-week MA|`; ≤15% → 1; linear ramp to 0 at ≥50%.
+- **Stage 4 mirror**: same numbers, decline direction — slowing advance and selling volume score higher health.
+- **All-or-nothing**: if any component is missing, there is no index — only an absence reason (no renormalization).
+- **Worked example** (Stage 2): 23 wks above 30w MA, 8 wks above 10w MA, advance “holds”, volume 1.4×, extension +12% → **90/100**.
+- **Not in scores**: `stageHealthScore` does not feed `objectiveScore`, `compositeScore`, `weaknessScore`, or hunt filters (v1 = stock card only).
+
 ## 4. Setup Quality
 
 Setup quality should measure whether the chart is orderly enough for further research.
