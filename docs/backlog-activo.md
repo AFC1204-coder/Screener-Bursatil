@@ -5,7 +5,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-01 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **(ninguno)** — STAGE-1 cerrado, pendiente commit orquestador.  
+Ticket en curso: **(ninguno)** — STAGE-1 cerrado `9cc7924`.  
 **Cola:** nocturno (mesa Pre-fuga) → VCP-1 pausado → carga/premium.  
 Último cerrado: **STAGE-1** (verify 2026-09-01).  
 MIGRATE aparcado.  

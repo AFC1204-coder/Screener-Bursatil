@@ -1,6 +1,6 @@
 # Ticket activo — (ninguno)
 
-**Último cerrado:** STAGE-1 `pending-commit` — subestado `weeklyStageStructure` en producto.
+**Último cerrado:** STAGE-1 `9cc7924` — subestado `weeklyStageStructure` en producto.
 
 **Cola sugerida:**
 1. Nocturno / scan refresh → mesa muestra Pre-fuga en columna Etapa
