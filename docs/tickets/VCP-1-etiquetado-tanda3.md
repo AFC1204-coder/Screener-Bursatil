@@ -1,6 +1,6 @@
 # VCP-1 — Etiquetado tanda 3 (research, fractal)
 
-**Estado:** activo 2026-09-01 (retomado tras STAGE-1 `9cc7924`)  
+**Estado:** arnés cerrado 2026-09-01 · HTML `/tmp/etiquetado-tanda3.html` · **pendiente:** etiquetado dueño  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer 2.5 (arnés HTML + brief)  
 **Tipo:** research — **sin** tocar `lib/setupPatterns.js` ni UI producto  

@@ -1,24 +1,23 @@
-# Ticket activo — VCP-1
+# Ticket activo — (ninguno)
 
-**Último cerrado:** STAGE-1 `9cc7924`  
-**Nota mesa:** columna Etapa con Pre-fuga tras **próximo nocturno** (scan persistido); ficha ya OK.
+**Último cerrado (arnés):** VCP-1 — HTML tanda 3 + brief STAGE-1 alineado.
 
-Detalle: `docs/tickets/VCP-1-etiquetado-tanda3.md`
+**Tu turno:** abrir `/tmp/etiquetado-tanda3.html` y etiquetar (plantilla en `research/contracciones/plantilla-tanda3-vcp1.txt`).
 
-## Prompt para Agent chat (copiar tal cual)
-
+Formato mínimo por símbolo:
 ```
-@docs/tickets/VCP-1-etiquetado-tanda3.md
-@docs/tickets/activo.md
-@lib/weeklyStageStructure.js
-@lib/stageDisplay.js
-@docs/auditoria-etapa1-etapa2-2026-09-01.md
-@research/contracciones/tanda3-simbolos.md
-@research/contracciones/arneses/build-charts.mjs
-@research/contracciones/arneses/chart-brief.mjs
+SYM · BASE|NO|POTENCIAL · PERIODO: fecha→fecha · nota
+```
 
-Rama: codex/statsedge-ui-polish
-Modelo: Composer 2.5
+**MSI ancla sugerida:**
+```
+MSI · POTENCIAL · PERIODO: 2025-09-11→2026-08-31 · base larga sin ruptura · semanal E1 potencial
+```
 
-VCP-1: cerrar arnés tanda 3 (research). build-charts + chart-brief: ventana 290s; brief usa weeklyStageStructureForBars + stageDisplay (Pre-fuga/Con fuga), no lógica vieja «Etapa 2 + avance 6m». MSI debe coincidir con ficha producto. Generar /tmp/etiquetado-tanda3.html. Solo research/contracciones/. Sin commit ni push.
+**Cola:** etiquetado dueño tanda 3 → nocturno (mesa Pre-fuga) → carga/premium.
+
+Regenerar HTML:
+```bash
+node --env-file=.env.local --loader ./scripts/loader.mjs \
+  research/contracciones/arneses/build-charts.mjs
 ```

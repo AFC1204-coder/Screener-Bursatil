@@ -1,15 +1,33 @@
-// Genera la página de etiquetado: doce gráficos diarios (velas + volumen),
+// Genera la página de etiquetado: gráficos diarios (velas + volumen),
 // SIN ninguna marca del detector. Orden alfabético, deliberadamente neutro:
 // no agrupa ni insinúa qué opina el detector de cada valor.
+//
+// La ventana visible coincide con la del detector v4: lookback (140) + media
+// de 30 semanas (150) = 290 sesiones. Antes se fijaba FROM=2025-11-03 (199
+// sesiones) y el dueño veía menos historia que el detector — NDAQ es el caso
+// documentado en memory/corpus-etiquetado-ventana-del-grafico.md.
 //
 // Solo lee daily_bars. No escribe en Supabase.
 
 import fs from "node:fs/promises";
 import { supabaseRequestAll, supabaseConfig } from "@/lib/supabaseServer";
+import { briefForSymbol } from "./chart-brief.mjs";
 
-const SYMBOLS = (process.env.SYMBOLS || "ADBE,DASH,GOOGL,ICE,INTC,KO,MPC,NDAQ,NKE,ORCL,PNC,V").split(",").map((s) => s.trim());
-const FROM = "2025-11-03";
-const OUT = process.env.OUT || "/tmp/etiquetado.html";
+// Espejo de research/contracciones/detector/v4.mjs P.lookback / P.smaLen
+const DETECTOR_LOOKBACK = 140;
+const DETECTOR_SMA_LEN = 150;
+const CHART_BARS = DETECTOR_LOOKBACK + DETECTOR_SMA_LEN;
+const FETCH_ROWS = CHART_BARS + 30;
+
+const TANDA3_DEFAULT =
+  "APH,DELL,F,GE,HPE,MDLZ,MMM,MSI,NVDA,SCHW,STX,VLO";
+// Doce valores fuera del corpus de 21; diseño original tanda 3 (avance/contexto).
+// Override: SYMBOLS=... Excluir AAPL/JPM/MSFT/TXN/WELL (barras corruptas).
+
+const SYMBOLS = (process.env.SYMBOLS || TANDA3_DEFAULT).split(",").map((s) => s.trim());
+const TANDA = process.env.TANDA || "3";
+const OUT = process.env.OUT || "/tmp/etiquetado-tanda3.html";
+const PRICE_SCALE = (process.env.PRICE_SCALE || "log").toLowerCase(); // log | linear
 
 const W = 1440, ML = 62, MR = 16, MT = 14;
 const HP = 380;   // panel de precio
@@ -37,31 +55,68 @@ function fmtVol(v) {
   return String(v);
 }
 
+function log10(v) {
+  return Math.log(v) / Math.LN10;
+}
+
+function priceDomain(bars, logScale) {
+  const lows = bars.map((b) => b.l), highs = bars.map((b) => b.h);
+  let pMin = Math.max(0.01, Math.min(...lows));
+  let pMax = Math.max(...highs);
+  if (logScale) {
+    const pad = (log10(pMax) - log10(pMin)) * 0.04;
+    pMin = Math.pow(10, log10(pMin) - pad);
+    pMax = Math.pow(10, log10(pMax) + pad);
+  } else {
+    const pad = (pMax - pMin) * 0.04;
+    pMin -= pad;
+    pMax += pad;
+  }
+  return { pMin, pMax, logScale };
+}
+
+function yPrice(p, domain) {
+  const { pMin, pMax, logScale } = domain;
+  const t = logScale
+    ? (log10(p) - log10(pMin)) / (log10(pMax) - log10(pMin))
+    : (p - pMin) / (pMax - pMin);
+  return MT + HP - t * HP;
+}
+
+function priceTicks(domain, nTicks = 6) {
+  const { pMin, pMax, logScale } = domain;
+  const ticks = [];
+  for (let k = 0; k <= nTicks; k++) {
+    ticks.push(logScale
+      ? Math.pow(10, log10(pMin) + (log10(pMax) - log10(pMin)) * (k / nTicks))
+      : pMin + ((pMax - pMin) * k) / nTicks);
+  }
+  return ticks;
+}
+
 function chartSvg(symbol, bars) {
   const n = bars.length;
   const barW = PLOTW / n;
   const bodyW = Math.max(2, barW * 0.62);
-
-  const lows = bars.map((b) => b.l), highs = bars.map((b) => b.h);
-  let pMin = Math.min(...lows), pMax = Math.max(...highs);
-  const pad = (pMax - pMin) * 0.04;
-  pMin -= pad; pMax += pad;
+  const domain = priceDomain(bars, PRICE_SCALE === "log");
+  const { pMin, pMax } = domain;
   const vMax = Math.max(...bars.map((b) => b.v || 0)) || 1;
 
   const x = (i) => ML + (i + 0.5) * barW;
-  const yP = (p) => MT + HP - ((p - pMin) / (pMax - pMin)) * HP;
+  const yP = (p) => yPrice(p, domain);
   const vTop = MT + HP + GAP;
   const yV = (v) => vTop + HV - (v / vMax) * HV;
 
   const parts = [];
 
   // Rejilla horizontal de precio + etiquetas del eje Y
-  const nTicks = 6;
-  for (let k = 0; k <= nTicks; k++) {
-    const p = pMin + ((pMax - pMin) * k) / nTicks;
+  for (const p of priceTicks(domain)) {
     const y = yP(p);
     parts.push(`<line x1="${ML}" y1="${y.toFixed(1)}" x2="${W - MR}" y2="${y.toFixed(1)}" stroke="#e6e8ec" stroke-width="1"/>`);
     parts.push(`<text x="${ML - 8}" y="${(y + 3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="#6b7280">${fmtPrice(p)}</text>`);
+  }
+  if (domain.logScale) {
+    parts.push(`<text x="${W - MR}" y="${MT + 10}" text-anchor="end" font-size="9" fill="#9ca3af">log</text>`);
   }
   // Eje de volumen: solo el máximo, para no recargar
   parts.push(`<line x1="${ML}" y1="${vTop + HV}" x2="${W - MR}" y2="${vTop + HV}" stroke="#d1d5db" stroke-width="1"/>`);
@@ -123,26 +178,30 @@ async function main() {
         select: "trade_date,open,high,low,close,volume",
         owner_id: `eq.${cfg.ownerId}`,
         symbol: `eq.${symbol}`,
-        trade_date: `gte.${FROM}`,
-        order: "trade_date.asc",
+        order: "trade_date.desc",
       },
       timeoutMs: 20000,
-    }, { maxRows: 400 });
-    data[symbol] = rows
+    }, { maxRows: FETCH_ROWS });
+    const bars = rows
       .map((r) => ({
         d: String(r.trade_date).slice(0, 10),
         o: Number(r.open), h: Number(r.high), l: Number(r.low), c: Number(r.close),
         v: r.volume === null ? 0 : Number(r.volume),
       }))
-      .filter((b) => [b.o, b.h, b.l, b.c].every(Number.isFinite));
+      .filter((b) => [b.o, b.h, b.l, b.c].every(Number.isFinite))
+      .reverse();
+    data[symbol] = bars.length > CHART_BARS ? bars.slice(-CHART_BARS) : bars;
     process.stderr.write(`${symbol}:${data[symbol].length} `);
   }
   process.stderr.write("\n");
 
   const cards = SYMBOLS.map((s) => {
     const bars = data[s];
+    const { html: briefHtml } = briefForSymbol(s, bars);
+    const scaleLabel = PRICE_SCALE === "log" ? " · escala log" : "";
     return `<section class="card" id="s-${s}">
-  <header><h2>${esc(s)}</h2><span class="rango">${bars[0].d} → ${bars.at(-1).d} · ${bars.length} sesiones</span></header>
+  <header><h2>${esc(s)}</h2><span class="rango">${bars[0].d} → ${bars.at(-1).d} · ${bars.length} sesiones${scaleLabel}</span></header>
+  ${briefHtml}
   <div class="chart">${chartSvg(s, bars)}<div class="tip"></div></div>
 </section>`;
   }).join("\n");
@@ -152,7 +211,7 @@ async function main() {
   const html = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Etiquetado de bases — 12 valores</title>
+<title>Etiquetado de bases — tanda ${esc(TANDA)}</title>
 <style>
 :root{--bg:#fff;--fg:#111827;--mut:#6b7280;--line:#e5e7eb}
 *{box-sizing:border-box}
@@ -172,6 +231,13 @@ nav a:hover{background:#f3f4f6}
 .card header{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
 .card h2{font-size:17px;margin:0;letter-spacing:.02em}
 .rango{color:var(--mut);font-size:12px}
+.brief{margin:0 0 10px;padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;max-width:1100px}
+.brief h3{font-size:13px;margin:0 0 6px;font-weight:600}
+.brief .tag{font-size:10px;font-weight:500;color:#6b7280;border:1px solid #d1d5db;border-radius:4px;padding:1px 5px;margin-left:6px}
+.brief p{margin:5px 0;font-size:13px;color:#374151;line-height:1.45}
+.brief .q{margin:8px 0 4px;font-size:12.5px}
+.brief ul{margin:0 0 0 18px;padding:0;font-size:12.5px;color:#4b5563}
+.brief li{margin:2px 0}
 .chart{position:relative}
 .tip{position:absolute;pointer-events:none;background:#111827;color:#fff;padding:6px 9px;
   border-radius:6px;font-size:11.5px;line-height:1.45;white-space:pre;opacity:0;
@@ -181,15 +247,15 @@ svg{display:block}
 </style></head><body>
 <nav>${nav}</nav>
 <div class="intro">
-  <h1>Etiquetado a mano — tanda 2</h1>
-  <p>Gráfico diario, últimos 9 meses. Solo precio, volumen y fechas: <strong>ninguna marca del
-  detector</strong>. Los doce están en orden alfabético; el orden no dice nada de ellos.</p>
-  <p><strong>Pasa el ratón por encima</strong> para ver la fecha exacta, apertura/máximo/mínimo/cierre
-  y volumen de cada sesión. El eje inferior lleva una marca cada 5 sesiones en formato
-  <code>día/mes</code>, y la línea vertical discontinua separa los meses.</p>
-  <p>Para cada valor anota la fecha del <strong>máximo que inicia la base</strong> y la fecha del
-  <strong>mínimo de cada caída</strong> dentro de ella. Si no ves base, escríbelo: es igual de útil.
-  La plantilla está en <code>plantilla-etiquetas.txt</code>.</p>
+  <h1>Etiquetado a mano — tanda ${esc(TANDA)}</h1>
+  <p>Gráfico diario, <strong>${CHART_BARS} sesiones</strong>, precio en <strong>escala ${PRICE_SCALE === "log" ? "logarítmica" : "lineal"}</strong>
+  (las bases tempranas de etapa 2 se ven mejor en log; el volumen sigue lineal). Ventana alineada con v4.
+  <strong>Sin marcas del detector</strong> en el dibujo.</p>
+  <p>Debajo del título de cada valor hay una <strong>lectura propuesta</strong> (código MM30s + calificador
+  Pre-fuga/Con fuga, como la ficha de producto; pullbacks diarios solo como pista). Es borrador para
+  contrastar contigo — no sustituye tu etiqueta.</p>
+  <p><strong>Pasa el ratón</strong> sobre el gráfico para OHLCV. Plantilla:
+  <code>SYM · BASE|NO|POTENCIAL · PERIODO · nota</code></p>
 </div>
 ${cards}
 <script>
@@ -240,6 +306,7 @@ document.querySelectorAll('.chart').forEach((wrap)=>{
 
   await fs.writeFile(OUT, html);
   console.log(`escrito: ${OUT}`);
+  console.log(`tanda: ${TANDA} · ventana: ${CHART_BARS} sesiones · precio: ${PRICE_SCALE}`);
   console.log(`símbolos: ${SYMBOLS.join(", ")}`);
   for (const s of SYMBOLS) console.log(`  ${s.padEnd(6)} ${data[s].length} barras  ${data[s][0].d} → ${data[s].at(-1).d}`);
 }

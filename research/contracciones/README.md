@@ -37,7 +37,7 @@ arneses/
   peso-escala.mjs     prueba hacia delante por escala, con horizonte proporcional
   classify.mjs        clasificador con el detector de PRODUCCIÓN, por puertas
   build-charts.mjs    páginas de etiquetado (log por defecto, ventana v4, lectura breve)
-  chart-brief.mjs     texto colaborativo por símbolo (etapa Weinstein, pullbacks)
+  chart-brief.mjs     texto colaborativo por símbolo (stageDisplay + Pre-fuga/Con fuga, pullbacks)
   etapa-codigo-vs-candidato.mjs  VCP-0: weeklyStage vs techo/ruptura/HH-HL (read-only)
   aapl-check.mjs      demuestra que la base de AAPL es una barra corrupta
 

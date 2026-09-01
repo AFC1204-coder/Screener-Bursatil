@@ -1,0 +1,16 @@
+ETIQUETADO — TANDA 3 (VCP-1)
+Gráficos: graficos-tanda3-vcp1.html · escala LOG en precio · lectura propuesta por símbolo
+Ventana: 290 sesiones (alineada v4)
+
+Formato mínimo (una línea por símbolo basta):
+
+  SYM · BASE|NO|POTENCIAL · PERIODO: fecha→fecha · (opcional) max→min · nota
+
+Puedes responder al bloque «Lectura propuesta» de cada valor: corrige, matiza o
+dice «de acuerdo / no». No hace falta párrafo largo.
+
+Pregunta de esta tanda: ¿primera base del avance o ya van varias?
+
+Símbolos (ninguno en corpus de 21): APH DELL F GE HPE MDLZ MMM MSI NVDA SCHW STX VLO
+
+Lineal (si lo necesitas): PRICE_SCALE=linear al regenerar build-charts.mjs
