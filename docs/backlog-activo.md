@@ -5,8 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-01 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **(ninguno)** — STAGE-1 cerrado `9cc7924`.  
-**Cola:** nocturno (mesa Pre-fuga) → VCP-1 pausado → carga/premium.  
+Ticket en curso: **VCP-1** (tanda 3 research · brief STAGE-1).  
+**Cola:** nocturno (mesa Pre-fuga) · VCP-1 → carga/premium.  
 Último cerrado: **STAGE-1** (verify 2026-09-01).  
 MIGRATE aparcado.  
 **Nota VCP (2026-09-01 tarde):** dueño prioriza **STAGE-1 producto** (subestado en screener) sobre VCP tanda 3.  
@@ -283,7 +283,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
 | STAGE-1 | Subestado semanal paralelo (E2_ma_only / E2_structural) en screener | **Cerrado** verify 2026-09-01 · mesa tras nocturno |
 | VCP-0 | Auditoría E1/E2 semanal | **Cerrado** fae1880 · ADR aceptado |
-| VCP | Detector / etiquetado research | **Pausado** hasta STAGE-1 |
+| VCP | Detector / etiquetado research | **VCP-1 activo** · brief con weeklyStageStructure |
 
 ~~IL/CN/BR/MX~~ aplazado.
 
