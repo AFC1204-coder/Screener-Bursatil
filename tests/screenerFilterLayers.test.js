@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   ALL_FILTER_LAYERS,
   CORE_LAYER_KEYS,
@@ -23,6 +23,10 @@ import {
   FILTER_LAYERS_CONTRACT_VERSION,
   effectiveSettingsFromLayers,
   layerToggleImpact,
+  buildFilterLayersUpgradeNotice,
+  filterLayersContractWasUpgraded,
+  filterLayersUpgradeNoticeIfNeeded,
+  resolveSnapshotNotice,
   restoreFilterLayers,
 } from "@/lib/screenerFilterLayers";
 import { applyScreenerFilters, screenerFiltersFromParams } from "@/lib/screenerFilters";
@@ -366,6 +370,32 @@ describe("restoreFilterLayers · configuración guardada en el navegador", () =>
       const pantalla = effectiveSettingsFromLayers(settingsForPreset("balanced"), capas, DEFAULT_FIELD_RULES);
       expect(pantalla[regla]).toBe(NEUTRAL_FIELD_VALUES[regla]);
     }
+  });
+});
+
+describe("aviso one-shot al migrar filterLayersVersion < 3 (C-03)", () => {
+  afterEach(() => {
+    sessionStorage.clear();
+  });
+
+  it("detecta contratos v1/v2 como actualizados", () => {
+    expect(filterLayersContractWasUpgraded(1)).toBe(true);
+    expect(filterLayersContractWasUpgraded(2)).toBe(true);
+    expect(filterLayersContractWasUpgraded(undefined)).toBe(true);
+    expect(filterLayersContractWasUpgraded(FILTER_LAYERS_CONTRACT_VERSION)).toBe(false);
+  });
+
+  it("filterLayersUpgradeNoticeIfNeeded solo avisa una vez por pestaña", () => {
+    expect(filterLayersUpgradeNoticeIfNeeded(2)?.source).toBe("filter-layers-upgrade");
+    expect(filterLayersUpgradeNoticeIfNeeded(2)).toBeNull();
+  });
+
+  it("resolveSnapshotNotice prioriza auth sobre aviso de capas", () => {
+    const auth = { requiresReauth: true, label: "Sesión caducada", detail: "x", source: "auth-required" };
+    expect(resolveSnapshotNotice({ primary: auth, filterLayersVersion: 1 })).toBe(auth);
+    expect(resolveSnapshotNotice({ primary: null, filterLayersVersion: 1 })?.label).toBe(
+      buildFilterLayersUpgradeNotice().label,
+    );
   });
 });
 

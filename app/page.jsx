@@ -80,6 +80,8 @@ import {
   isFieldRuleActive,
   layerToggleImpact,
   restoreFilterLayers,
+  filterLayersUpgradeNoticeIfNeeded,
+  resolveSnapshotNotice,
   settingApplies,
   settingLayerDependency,
 } from "@/lib/screenerFilterLayers";
@@ -494,7 +496,7 @@ export default function Page() {
     setAnalyzedRows(scan.rows);
     setScanContext(nextScanContext);
     setDiagnostics(restoredFilterView.diagnostics);
-    setSnapshotNotice(notice);
+    setSnapshotNotice(resolveSnapshotNotice({ primary: notice, filterLayersVersion: scan.filterLayersVersion }));
     setScanPerf({
       fullScanMs: null,
       lastFilterMs: restoredFilterView.filterMs,
@@ -825,7 +827,10 @@ export default function Page() {
       setAnalyzedRows(restoredAnalyzedRows);
       setScanContext(restoreScanContext);
       setScanPerf(session.scanPerf || null);
-      setSnapshotNotice(session.snapshotNotice || null);
+      setSnapshotNotice(resolveSnapshotNotice({
+        primary: session.snapshotNotice || null,
+        filterLayersVersion: session.filterLayersVersion,
+      }));
       // normalizeScanErrorGroups cubre las sesiones guardadas con el formato
       // plano anterior (una entrada por símbolo).
       setFail(normalizeScanErrorGroups(session.fail));
@@ -1792,6 +1797,8 @@ export default function Page() {
     const nextFieldRules = { ...DEFAULT_FIELD_RULES, ...(config.fieldRules || {}) };
     setFieldRules(nextFieldRules);
     restoreFamilyIntensityState(nextSettings, nextFieldRules, config.familyIntensity || {});
+    const upgradeNotice = filterLayersUpgradeNoticeIfNeeded(config.filterLayersVersion);
+    if (upgradeNotice) setSnapshotNotice(upgradeNotice);
     setViewLayers({ ...DEFAULT_VIEW_LAYERS, ...(config.viewLayers || {}) });
     // Las plantillas guardadas antes de 2026-08-15 no traen perfPeriod: se
     // conserva el periodo actual en vez de resetearlo al defecto.
