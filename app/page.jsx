@@ -488,6 +488,7 @@ export default function Page() {
     setSettings(restoredSettings);
     setFilterLayers(restoredFilterLayers);
     setFieldRules(restoredFieldRules);
+    restoreFamilyIntensityState(restoredSettings, restoredFieldRules, scan.familyIntensity || {});
     setViewLayers(restoredViewLayers);
     setUseRegimeFilter(restoredUseRegimeFilter);
     setSort(scan.sort || scan.settings?.sort || defaultSortForSettings(restoredActiveSettings));

@@ -206,3 +206,49 @@ describe("restoreFamilyIntensity · cosmética pura", () => {
     expect(resolved.effectiveSettings.minRsRating).toBe(72);
   });
 });
+
+// C-04: restoreSnapshot debe alinear sliders con settings/fieldRules del scan
+// (misma cadena que la sesión vía restoreFamilyIntensityState).
+describe("scan restore familyIntensity (C-04)", () => {
+  function resolveScanFilterIntensity(scan) {
+    const presetKey = SCREENER_FILTER_PRESETS[scan.preset] ? scan.preset : "balanced";
+    const settings = settingsForPreset(presetKey, scan.settings || {});
+    const fieldRules = { ...DEFAULT_FIELD_RULES, ...(scan.fieldRules || {}) };
+    return resolveStoredFilterConfig({
+      presetKey,
+      settings,
+      filterLayers: scan.filterLayers,
+      filterLayersVersion: scan.filterLayersVersion,
+      fieldRules,
+      familyIntensity: scan.familyIntensity || {},
+    });
+  }
+
+  it("scan ipoDiscovery sin familyIntensity infiere intensidad IPO desde settings", () => {
+    const openIpo = settingsAtFamilyIntensity("ipo", 0);
+    const scan = {
+      preset: "ipoDiscovery",
+      settings: { ...settingsForPreset("ipoDiscovery"), ...openIpo.settings },
+      filterLayers: { ...DEFAULT_FILTER_LAYERS },
+      filterLayersVersion: FILTER_LAYERS_CONTRACT_VERSION,
+      fieldRules: { ...DEFAULT_FIELD_RULES },
+    };
+    const resolved = resolveScanFilterIntensity(scan);
+    expect(resolved.familyIntensity.ipo).toBe(0);
+    expect(resolved.familyIntensityCustom.ipo).toBe(false);
+  });
+
+  it("scan con familyIntensity guardado respeta el valor almacenado", () => {
+    const scan = {
+      preset: "balanced",
+      settings: settingsForPreset("balanced"),
+      filterLayers: { ...DEFAULT_FILTER_LAYERS },
+      filterLayersVersion: FILTER_LAYERS_CONTRACT_VERSION,
+      fieldRules: { ...DEFAULT_FIELD_RULES },
+      familyIntensity: { relativeStrength: 75, ipo: 25 },
+    };
+    const resolved = resolveScanFilterIntensity(scan);
+    expect(resolved.familyIntensity.relativeStrength).toBe(75);
+    expect(resolved.familyIntensity.ipo).toBe(25);
+  });
+});
