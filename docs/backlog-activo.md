@@ -5,11 +5,12 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-08-31 noche · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **VCP-1** (etiquetado tanda 3 · research).  
-**Cola:** ~~CHART-QR~~ · ~~MET-5~~ · ~~UX-NAC-3~~ · VCP-1 → VCP-2 (si aplica) → carga/premium.  
+Ticket en curso: **VCP-0** (auditoría E1/E2 semanal · MSI ancla).  
+**Cola:** ~~CHART-QR~~ · ~~MET-5~~ · ~~UX-NAC-3~~ · **VCP-0** → VCP-1 tanda 3 → VCP-2 → carga/premium.  
 Último cerrado: **UX-NAC-3** `db2ea89`.  
 MIGRATE aparcado.  
-**Nota VCP (2026-08-31 noche):** dueño confirma marco fractal / potencial / no exacto; etiquetado útil sin relleno; retomar bucle gráficos→corpus (no producto).  
+**Nota VCP (2026-09-01):** MSI expone gap E1/E2 — código MM30s≠E2 operable; **VCP-0** antes de tanda 3; MSI = POTENCIAL E1.  
+**Nota VCP (2026-08-31 noche):** fractal / potencial / no exacto; etiquetado sin relleno.  
 **Nota UX-NAC-3 (2026-08-31 noche):** tests 57 · smoke US→Core intl / HK.  
 **Nota MET-5 uso real (2026-08-31 noche):** dueño **A**.  
 **Nota CHART-QR-3 (2026-08-31 noche):** `803dba4`.  
@@ -280,7 +281,8 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-4d | Filtro hunt persistencia MA 30s | **Hecho** (`b883085`) |
 | MET-4e | Backfill weeksAbove* + smoke 4c/4d | **Hecho** · write 1208 · smoke OK |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
-| VCP | Detector producto vs corpus `research/contracciones/` | **VCP-1 activo** · etiquetado tanda 3 |
+| VCP-0 | Auditoría E1/E2 semanal (ruptura + HH/HL vs MM30s) | **Activo** · MSI ancla |
+| VCP | Detector producto vs corpus `research/contracciones/` | VCP-1 pausado · tanda 3 tras VCP-0 |
 
 ~~IL/CN/BR/MX~~ aplazado.
 

@@ -1,21 +1,23 @@
-# Ticket activo — VCP-1
+# Ticket activo — VCP-0
 
-**Cola:** ~~UX-NAC-3~~ · **VCP-1** (etiquetado tanda 3) → VCP-2 (reglas si la tanda aporta) → carga/premium.
+**Cola:** ~~VCP-1~~ (pausado) · **VCP-0** → retomar VCP-1 tanda 3 → VCP-2.
 
-Detalle: `docs/tickets/VCP-1-etiquetado-tanda3.md`
+Detalle: `docs/tickets/VCP-0-auditoria-etapa1-etapa2.md`  
+Propuesta: `docs/auditoria-etapa1-etapa2-semanal-propuesta-2026-09-01.md`
 
-**Contrato dueño:** fractal / multi-periodo / potencial; respuestas útiles sin relleno; casos cortos OK.
+**MSI ancla:** POTENCIAL · E1 semanal sin ruptura (no E2 cazable).
 
 ## Prompt para Agent chat (copiar tal cual)
 
 ```
-@docs/tickets/VCP-1-etiquetado-tanda3.md
+@docs/tickets/VCP-0-auditoria-etapa1-etapa2.md
+@docs/auditoria-etapa1-etapa2-semanal-propuesta-2026-09-01.md
 @docs/tickets/activo.md
-@research/contracciones/README.md
-@docs/temporalidad-contracciones-2026-08-21.md
+@lib/weeklyStage.js
+@docs/auditoria-etapas-2026-08-16.md
 
 Rama: codex/statsedge-ui-polish
-Modelo: Composer 2.5
+Modelo: Fable 5
 
-Ticket VCP-1: research only. Alinear ventana de build-charts con el detector; generar página HTML tanda 3 (8–12 símbolos frontera, sin marcas del detector); plantilla corta de etiquetado. No tocar producto ni setupPatterns. Sin commit ni push.
+Ticket VCP-0: auditoría read-only Etapa 1 vs 2 semanal. Citas desde research/books/ (PDFs locales). Tabla libro→criterio→medible; muestra 15–20 con MSI ancla; script comparación weeklyStage vs criterio candidato; ADR recomendación (clasificador vs campo paralelo vs UI). No tocar weeklyStage ni producto. Sin commit ni push.
 ```
