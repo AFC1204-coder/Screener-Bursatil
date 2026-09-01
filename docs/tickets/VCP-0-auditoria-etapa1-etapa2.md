@@ -1,7 +1,8 @@
 # VCP-0 — Auditoría Etapa 1 vs Etapa 2 (semanal)
 
 **Rama:** `codex/statsedge-ui-polish`  
-**Modelo:** Fable 5 (juicio metodológico + citas) · fallback Opus  
+**Estado:** cerrado 2026-09-01 · ADR **aceptado** (campo paralelo; no tocar `weeklyStage.js`)  
+**Modelo:** Grok 4.6 · esfuerzo High · fallback Fable 5 si citas PDF fallan  
 **Tipo:** diseño/medición read-only — **sin** cambiar `weeklyStage.js` ni producto hasta ADR  
 **Origen:** MSI tanda 3 + `docs/auditoria-etapa1-etapa2-semanal-propuesta-2026-09-01.md`  
 **Bloquea:** retomar etiquetado VCP tanda 3 con brief honesto  

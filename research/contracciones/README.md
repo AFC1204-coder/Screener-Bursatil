@@ -36,7 +36,9 @@ arneses/
   fractal2.mjs        ¿y al escalar TODOS los parámetros? (respuesta: sí)
   peso-escala.mjs     prueba hacia delante por escala, con horizonte proporcional
   classify.mjs        clasificador con el detector de PRODUCCIÓN, por puertas
-  build-charts.mjs    genera las páginas de gráficos para etiquetar
+  build-charts.mjs    páginas de etiquetado (log por defecto, ventana v4, lectura breve)
+  chart-brief.mjs     texto colaborativo por símbolo (etapa Weinstein, pullbacks)
+  etapa-codigo-vs-candidato.mjs  VCP-0: weeklyStage vs techo/ruptura/HH-HL (read-only)
   aapl-check.mjs      demuestra que la base de AAPL es una barra corrupta
 
 resultados/
