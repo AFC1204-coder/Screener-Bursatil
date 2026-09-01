@@ -12,7 +12,7 @@ import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
 import { canonicalRsDisclosure } from "@/lib/rsEngines";
 
 const NO_LEGEND_KEYS = ["ticker", "performance", "distance52w", "marketCap"];
-const LEGEND_KEYS = ["theme", "rs", "rsCountry", "rsTheme", "stage"];
+const LEGEND_KEYS = ["theme", "rs", "rsCountry", "rsTheme", "stage", "vcp"];
 
 function columnByKey(key, columns = SCREENER_COLUMNS) {
   return columns.find((column) => column.key === key);
@@ -85,14 +85,14 @@ describe("UX-23: leyendas de cabecera en SCREENER_COLUMNS", () => {
 });
 
 describe("UX-23: cabecera de escritorio sin ruido de InfoHint", () => {
-  it("pinta como máximo cinco InfoHint en thead por defecto (tema, RS, RS país, RS tema, etapa)", () => {
+  it("pinta como máximo seis InfoHint en thead por defecto (tema, RS, RS país, RS tema, etapa, VCP)", () => {
     const html = renderTableHead();
-    expect(countTheadInfoHints(html)).toBe(5);
+    expect(countTheadInfoHints(html)).toBe(6);
   });
 
-  it("añade un sexto InfoHint en thead cuando Deterioro es visible", () => {
+  it("añade un séptimo InfoHint en thead cuando Deterioro es visible", () => {
     const html = renderTableHead({ setupMode: "weakness" });
-    expect(countTheadInfoHints(html)).toBe(6);
+    expect(countTheadInfoHints(html)).toBe(7);
   });
 
   it("no pinta InfoHint en ticker, rendimiento, distancia ni capitalización", () => {

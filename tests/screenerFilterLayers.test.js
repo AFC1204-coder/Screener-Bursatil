@@ -41,6 +41,8 @@ const REGLAS_CAPAS_OPCIONALES = [
   "minReturnToDrawdown3m",
   "minContractionCount",
   "maxAbsDistanceToPivotPct",
+  "vcpMinContractionCount",
+  "vcpMaxLastContractionDepthPct",
   "minShortFloatPct",
   "maxShortFloatPct",
 ];
@@ -346,8 +348,7 @@ describe("restoreFilterLayers · configuración guardada en el navegador", () =>
       FILTER_LAYERS_CONTRACT_VERSION,
       "balanced",
     );
-    expect(restored).toEqual({ ...filterLayersForPreset("balanced"), pattern: true });
-    expect(restored).not.toHaveProperty("vcp");
+    expect(restored).toEqual({ ...filterLayersForPreset("balanced"), vcp: true, pattern: true });
     expect(restored).not.toHaveProperty("removedFamily");
   });
 

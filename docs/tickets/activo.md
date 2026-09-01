@@ -1,31 +1,27 @@
 # Ticket activo — VCP-4-screener-panel
 
-**Último cerrado:** UX-FILTERS-8 (verify orquestador 2026-09-01) — **pendiente commit**  
+**Estado:** verify orquestador OK (2026-09-01 noche) — pendiente commit dueño  
 **Spec:** `docs/tickets/VCP-4-screener-panel.md`
 
-## Verificación UX-FILTERS-8 ✓
+## Verificación ✓
 
-- Tests filtro: **79/79** (bloque UX-FILTERS-8: **67/67**)
-- Defaults v3: núcleo on, opcionales (`pattern`, `ipo`, etc.) **off**
-- Hunt E2 (`balanced`, `nearPivot`, …) **no** activan `pattern`
-- `FILTER_LAYERS_CONTRACT_VERSION` = **3** (sesiones v1/v2 → defaults nuevos)
+- Tests VCP-4: **84/84** · `tests/screenerFilter`: **79/79**
+- Familia `vcp` en `OPTIONAL_LAYER_KEYS` → **off** por defecto
+- Columna **VCP** tras Etapa; etiquetas `2C`, `2C·form`, `2C·PV-2%`
+- Presets Minervini / en formación / Apagado solo capa `vcp`
+- Sin `minPatternQualityScore` en familia vcp
 
-## Prompt para Agent chat — VCP-4 (copiar tal cual)
+## Para ver en la app
 
-```
-@docs/tickets/VCP-4-screener-panel.md
-@docs/rubrica-vcp-producto-2026-09-01.md
-@lib/screenerFilterCatalog.js
-@lib/screenerFilterLayers.js
-@lib/screenerColumns.jsx
-@lib/vcpEngine.mjs
+1. `STATSEDGE_VCP_UNIFIED=1` en entorno del scan (ya en tu `.env.local`)
+2. **Refrescar análisis** (scan cacheado no tiene `vcpCandidate` nuevo)
+3. Más filtros → familia **VCP** → preset «Minervini» o «en formación»
 
-Rama: codex/statsedge-ui-polish
-Modelo: Composer 2.5
+## Pendiente
 
-Panel familia VCP en Más filtros: umbrales concretos (contracciones, % pivot, volumen, vcpCandidate motor unificado). Columna tabla etiqueta Minervini (2C, form, PV). Sin minPatternQualityScore ni hunt nueva. Familia vcp off por defecto (OPTIONAL). Tests label+filtro. Sin commit ni push.
-```
+- Smoke columna VCP en navegador (orquestador)
+- Commit si dueño dice OK
 
----
+## Cola
 
-Pendiente: commit UX-FILTERS-8 si dueño dice OK · smoke Browser Use filtros (orquestador).
+— (cerrar VCP-4 tras commit)

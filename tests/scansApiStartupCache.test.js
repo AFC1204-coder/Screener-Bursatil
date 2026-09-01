@@ -78,7 +78,7 @@ function getRequest(query) {
   return new Request(`https://statsedge.test/api/scans?${query}`);
 }
 
-describe("GET /api/scans · la caché de 2 minutos solo se activa con limit=1", () => {
+describe("GET /api/scans · la caché de 15 minutos solo se activa con limit=1", () => {
   beforeEach(() => {
     supabaseRequest.mockReset();
     clearScansApiCache();

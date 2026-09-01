@@ -14,7 +14,7 @@ import { attachWeeklyThemeRs, readThemeRsForSymbols } from "@/lib/themeRsHydrate
 import { scanRsHydrationMode } from "@/lib/scansRsHydration";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 
-const SCANS_SUPABASE_TIMEOUT_MS = 8000;
+const SCANS_SUPABASE_TIMEOUT_MS = 12000;
 
 function themeHydrateRowBySymbol(results = []) {
   const rowBySymbol = new Map();

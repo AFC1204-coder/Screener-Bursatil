@@ -33,6 +33,7 @@ import { CompanyMark, MiniSparkline } from "@/lib/screenerAtoms";
 import { PERFORMANCE_PERIODS, normalizePerformancePeriod, performancePeriod } from "@/lib/screenerPeriods";
 import { isIpoWatchPlaceholderSymbol } from "@/lib/mergeIpoDiscoveryRows";
 import { countryName, marketFlag, stockUrl } from "@/lib/symbols";
+import { vcpMinerviniLabel } from "@/lib/vcpMinerviniLabel";
 import { weaknessScore } from "@/lib/stockRows";
 
 // ── Periodos de rendimiento ────────────────────────────────────────────────
@@ -253,6 +254,25 @@ export const SCREENER_COLUMNS = [
             {confirmation?.mark ? <i className="stageTagMark" aria-label={confirmation.suffix}>{confirmation.mark}</i> : null}
           </span>
           {stage.qualifier ? <small className="stageTagQualifier">{stage.qualifier}</small> : null}
+        </span>
+      );
+    },
+  },
+  {
+    key: "vcp",
+    label: () => "VCP",
+    legend: "Código Minervini de compresión: contracciones (2C), formación (·form) y distancia al pivot (PV%). Sin puntuación de patrón.",
+    align: "left",
+    className: "colVcp",
+    sortKey: () => "contractionCount",
+    cell: (row) => {
+      const vcp = vcpMinerviniLabel(row);
+      if (!vcp.label) {
+        return <MissingValue reason={vcp.title || "Sin compresión VCP operable en este valor."} />;
+      }
+      return (
+        <span className={`vcpTag vcpTag-${vcp.tone || "neutral"}`} title={vcp.title}>
+          {vcp.label}
         </span>
       );
     },

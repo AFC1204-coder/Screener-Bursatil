@@ -3,11 +3,11 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-01 · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-01 (noche) · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-FILTERS-8** — `docs/tickets/UX-FILTERS-8-coherencia-defaults.md`  
-**Después:** VCP-4-screener-panel (panel Minervini).  
-Último commit: `6179414` feat(vcp) motor unificado.  
+Ticket en curso: **CLEANUP-shadow-2026-09-01** — `docs/tickets/CLEANUP-shadow-2026-09-01.md`  
+Último cerrado: **VCP-4-screener-panel** (columna VCP + filtros + caché arranque).  
+Último cerrado: **UX-FILTERS-8** (`dac98a3`).  
 **Rúbrica VCP:** `docs/rubrica-vcp-producto-2026-09-01.md` · gap `docs/evidence/vcp-gap-mecanico-2026-09-01.md`  
 Último cerrado: **VCP-1 arnés** (verify 2026-09-01).  
 Último cerrado: **STAGE-1** (verify 2026-09-01).  

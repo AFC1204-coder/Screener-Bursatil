@@ -54,6 +54,9 @@ const fullRow = {
   weaknessLabel: "Sin deterioro claro",
   sma50: 76.4,
   objectiveScore: 88,
+  contractionCount: 2,
+  vcpCandidate: true,
+  distanceToPivotPct: -2,
 };
 
 const emptyRow = {
@@ -87,18 +90,18 @@ function renderTable(props = {}) {
   }));
 }
 
-describe("tabla de resultados: las nueve columnas", () => {
-  it("define exactamente nueve columnas en un solo sitio", () => {
-    expect(SCREENER_COLUMNS).toHaveLength(9);
+describe("tabla de resultados: las diez columnas", () => {
+  it("define exactamente diez columnas en un solo sitio", () => {
+    expect(SCREENER_COLUMNS).toHaveLength(10);
     expect(SCREENER_COLUMNS.map((column) => column.key)).toEqual([
-      "ticker", "theme", "rs", "rsCountry", "rsTheme", "stage", "performance", "distance52w", "marketCap",
+      "ticker", "theme", "rs", "rsCountry", "rsTheme", "stage", "vcp", "performance", "distance52w", "marketCap",
     ]);
   });
 
-  it("pinta nueve cabeceras y nueve celdas por fila", () => {
+  it("pinta diez cabeceras y diez celdas por fila", () => {
     const html = renderTable();
-    expect(html.match(/<th /g)).toHaveLength(9);
-    expect(html.match(/<td /g)).toHaveLength(9);
+    expect(html.match(/<th /g)).toHaveLength(10);
+    expect(html.match(/<td /g)).toHaveLength(10);
   });
 
   it("muestra los siete datos de la fila", () => {
@@ -165,7 +168,7 @@ describe("dato ausente", () => {
   it("muestra un guion con el motivo, sin etiquetas de estado", () => {
     const html = renderTable({ rows: [emptyRow] });
     // Seis columnas de dato + la miniatura, que también falta en esta fila.
-    expect(html.match(/class="cellMissing"/g)).toHaveLength(9);
+    expect(html.match(/class="cellMissing"/g)).toHaveLength(10);
     expect(html).toContain("Sin miniatura");
     expect(html).toContain("Sin RS semanal");
     expect(html).toContain("Histórico semanal insuficiente para clasificar la etapa");
@@ -217,8 +220,8 @@ describe("selector global de periodo", () => {
 
   it("el orden sigue al periodo elegido", () => {
     expect(screenerSortOptions({ perfPeriod: "perf6m" }).map((item) => item.value))
-      .toEqual(["rsGlobalPct", "weeklyCountryRsRating", "weeklyThemeRsRating", "perf6m", "distance52w", "marketCap"]);
-    expect(screenerSortOptions({ perfPeriod: "perf12m" })[3])
+      .toEqual(["rsGlobalPct", "weeklyCountryRsRating", "weeklyThemeRsRating", "contractionCount", "perf6m", "distance52w", "marketCap"]);
+    expect(screenerSortOptions({ perfPeriod: "perf12m" })[4])
       .toEqual({ value: "perf12m", label: "Rendimiento 12M" });
   });
 
@@ -236,13 +239,13 @@ describe("columna Deterioro (modo weakness / orden weaknessScore)", () => {
     expect(screenerShowsWeaknessColumn({ sort: "weaknessScore" })).toBe(true);
     expect(screenerShowsWeaknessColumn({})).toBe(false);
     expect(screenerVisibleColumns({ setupMode: "weakness" }).map((c) => c.key))
-      .toEqual(["ticker", "theme", "rs", "rsCountry", "rsTheme", "stage", "weakness", "performance", "distance52w", "marketCap"]);
+      .toEqual(["ticker", "theme", "rs", "rsCountry", "rsTheme", "stage", "weakness", "vcp", "performance", "distance52w", "marketCap"]);
   });
 
   it("pinta cabecera y valor de deterioro en escritorio", () => {
     const html = renderTable({ setupMode: "weakness", sort: "weaknessScore" });
-    expect(html.match(/<th /g)).toHaveLength(10);
-    expect(html.match(/<td /g)).toHaveLength(10);
+    expect(html.match(/<th /g)).toHaveLength(11);
+    expect(html.match(/<td /g)).toHaveLength(11);
     expect(html).toContain(">Deterioro<");
     expect(html).toContain(">12</b>");
     expect(html).toContain("Sin deterioro claro");
@@ -335,7 +338,7 @@ describe("vista móvil", () => {
     expect(html).toContain("-3,2%");
     expect(html).toContain("4,2B");
     // Las siete columnas de dato, con su etiqueta.
-    expect(html.match(/class="mobileResultField/g)).toHaveLength(8);
+    expect(html.match(/class="mobileResultField/g)).toHaveLength(9);
   });
 
   it("sigue al mismo selector global de periodo", () => {
@@ -347,12 +350,12 @@ describe("vista móvil", () => {
     const html = renderMobile(fullRow, DEFAULT_PERFORMANCE_PERIOD, { setupMode: "weakness" });
     expect(html).toContain(">Deterioro<");
     expect(html).toContain(">12</b>");
-    expect(html.match(/class="mobileResultField/g)).toHaveLength(9);
+    expect(html.match(/class="mobileResultField/g)).toHaveLength(10);
   });
 
   it("muestra las ausencias igual que escritorio", () => {
     const html = renderMobile(emptyRow);
-    expect(html.match(/class="cellMissing"/g)).toHaveLength(9);
+    expect(html.match(/class="cellMissing"/g)).toHaveLength(10);
     expect(html).toContain("Sin RS semanal");
   });
 });

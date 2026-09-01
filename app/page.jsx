@@ -39,7 +39,7 @@ import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
 import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, fitScansForBrowser, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import { createDebouncedSessionSaver, screenerFiltersFromScan, withScanScreenerFilters } from "@/lib/screenerFilterFastPath";
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
-import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, localScanIsSampled, localSampleDetail, manualDataRefreshStatus, screenerSessionRefreshReason, sessionAutoRefreshStatus } from "@/lib/snapshotFreshness";
+import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, localScanIsSampled, localSampleDetail, manualDataRefreshStatus, screenerSessionRefreshReason, sessionAutoRefreshStatus, snapshotCloudFallbackReason } from "@/lib/snapshotFreshness";
 import { dropForeignMarketSnapshots, pickNightlyUsRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { nightlyAbsenceNotice, nightlyAbsenceReasonText, nightlyAbsenceStatus } from "@/lib/nightlyAbsence";
 import { screenerSessionDataExpired } from "@/lib/nightlyBoundary";
@@ -559,7 +559,7 @@ export default function Page() {
         // era la vía que quedaba viva del banner "Supabase: Failed to fetch".
         // El original va a consola, como en loadUniverse.
         if (result.message) console.error("[snapshot] copia en la nube no disponible:", result.message);
-        if (!restoreLocalSnapshot(userFacingServiceError(result.message, "La copia guardada en la nube no está disponible."))) {
+        if (!restoreLocalSnapshot(snapshotCloudFallbackReason(result.message, { configured: result.configured }))) {
           declareNightlyAbsence({ reason: result.configured === false ? "supabase-disabled" : "cloud-unavailable" });
         }
         return;
@@ -585,7 +585,7 @@ export default function Page() {
     }).catch((error) => {
       console.error("[snapshot] fallo al leer la copia en la nube:", error);
       if (isCancelled()) return;
-      if (!restoreLocalSnapshot(userFacingServiceError(error?.message, "La copia guardada en la nube no está disponible."))) {
+      if (!restoreLocalSnapshot(snapshotCloudFallbackReason(error?.message))) {
         declareNightlyAbsence({ reason: "nightly-read-failed" });
       }
     }).finally(() => {
@@ -653,7 +653,7 @@ export default function Page() {
       if (!refreshStillApplies()) return;
       if (!result.ok || result.configured === false) {
         if (result.message) console.error("[snapshot] renovación de sesión: la nube no está disponible:", result.message);
-        keepSessionData(userFacingServiceError(result.message, "La copia guardada en la nube no está disponible."));
+        keepSessionData(snapshotCloudFallbackReason(result.message, { configured: result.configured }));
         return;
       }
       const nightly = result.data?.nightly || null;
@@ -673,7 +673,7 @@ export default function Page() {
     }).catch((error) => {
       console.error("[snapshot] renovación de sesión: fallo al leer la nube:", error);
       if (!refreshStillApplies()) return;
-      keepSessionData(userFacingServiceError(error?.message, "La copia guardada en la nube no está disponible."));
+      keepSessionData(snapshotCloudFallbackReason(error?.message));
     }).finally(() => {
       if (isCancelled()) return;
       if (!manual && resultsOwnerRef.current === "none") return;

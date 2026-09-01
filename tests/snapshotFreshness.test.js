@@ -5,6 +5,7 @@ import {
   localScanIsSampled,
   localSampleDetail,
   screenerSessionRefreshReason,
+  snapshotCloudFallbackReason,
   staleDurationLabel,
 } from "@/lib/snapshotFreshness";
 
@@ -25,7 +26,7 @@ describe("snapshot freshness", () => {
 
     expect(notice.label).toBe("Datos cacheados");
     expect(notice.tone).toBe("warn");
-    expect(notice.detail).toContain("última disponible");
+    expect(notice.detail).toContain("escaneo guardado");
     expect(notice.detail).toContain("2 min");
     expect(notice.detail).toMatch(/tardó demasiado en responder/i);
     expect(notice.detail).not.toMatch(/supabase/i);
@@ -124,7 +125,7 @@ describe("snapshot freshness", () => {
     });
 
     expect(notice.label).toBe("Datos cacheados");
-    expect(notice.detail).toContain("última disponible");
+    expect(notice.detail).toContain("escaneo guardado");
     expect(notice.detail).toContain("500");
     expect(notice.detail).toContain("9918");
   });
@@ -136,6 +137,20 @@ const sampledScan = {
   rowsAvailable: 3309,
   rows: Array.from({ length: 576 }, (_, index) => ({ symbol: `S${index}` })),
 };
+
+describe("snapshotCloudFallbackReason", () => {
+  it("conserva el mensaje de producto cuando la nube está desactivada", () => {
+    const msg = "La copia en la nube no está activada. La app sigue funcionando con los datos de este dispositivo.";
+    expect(snapshotCloudFallbackReason(msg, { configured: false })).toBe(msg);
+  });
+
+  it("traduce errores técnicos al fallback genérico", () => {
+    expect(snapshotCloudFallbackReason("", { configured: true })).toBe(
+      "La copia guardada en la nube no está disponible.",
+    );
+    expect(snapshotCloudFallbackReason("No autorizado", { configured: true })).toMatch(/vuelve a entrar/i);
+  });
+});
 
 describe("copia local muestreada (P2)", () => {
   it("detecta la muestra repartida que fitScansForBrowser deja en el navegador", () => {

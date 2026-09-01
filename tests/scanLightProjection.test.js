@@ -110,6 +110,7 @@ describe("la proyección ligera cubre todo lo que se consulta", () => {
       "symbol", "companyName", "country", "chartPreview", "theme",
       "weeklyStageState", "weeklyStageLabel", "weeklyStageStructure", "weeklyStageStructureLabel",
       "distance52w", "marketCap",
+      "contractionCount", "distanceToPivotPct", "vcpCandidate",
       "weeklyRsAvailable", "weeklyRsRating", "weeklyRsAsOf", "weeklyRsWeekKey",
       "weeklyRsRank", "weeklyRsSampleSize", "weeklyRsEngineVersion", "weeklyRsReason",
       "weeklyCountryRsAvailable", "weeklyCountryRsRating", "weeklyCountryRsRank",

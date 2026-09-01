@@ -271,6 +271,8 @@ export function FilterFamilyModal({
     requireUpVolume: "Volumen en vela alcista",
     requireRecentIpo: "IPO real reciente",
     requireContractionsDecreasing: "Contracciones decrecientes",
+    requireVcpCandidate: "Candidato VCP (motor unificado)",
+    vcpRequireStage2: "Solo etapa 2",
   };
 
   return <dialog className="filterFamilyModal stockModal" open onClick={(event) => { if (event.target === event.currentTarget) onClose?.(); }}>

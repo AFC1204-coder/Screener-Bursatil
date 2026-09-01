@@ -16,7 +16,7 @@
 // que mantiene viva la caché de la ruta (CACHEABLE_ROWS_LIMIT = 8.000).
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getLatestScanFromCloud, getLatestScanFromCloudForMarkets, STARTUP_ROWS_LIMIT } from "@/lib/cloudSyncClient";
+import { getLatestScanFromCloud, getLatestScanFromCloudForMarkets, pullCloudState, STARTUP_ROWS_LIMIT } from "@/lib/cloudSyncClient";
 
 function jsonResponse(body, ok = true) {
   return { ok, json: async () => body };
@@ -70,5 +70,30 @@ describe("getLatestScanFromCloud · el arranque pide un escaneo, no diez", () =>
     expect(parsed.searchParams.get("markets")).toBe("JP");
     expect(parsed.searchParams.get("rowsLimit")).toBe(String(STARTUP_ROWS_LIMIT));
     expect(parsed.searchParams.get("hydrateRs")).toBe("1");
+  });
+});
+
+describe("pullCloudState · importación Research Desk alineada con arranque", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("pide filas completas e hidratación RS, no el default truncado", async () => {
+    const fetchMock = vi.fn(async (url) => {
+      const parsed = new URL(String(url), "https://statsedge.test");
+      if (parsed.pathname === "/api/scans") return jsonResponse({ ok: true, configured: true, scans: [] });
+      return jsonResponse({ ok: true, configured: true, favorites: [], alerts: [] });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await pullCloudState();
+
+    const scanCall = fetchMock.mock.calls.find(([url]) => String(url).includes("/api/scans"));
+    expect(scanCall).toBeTruthy();
+    const parsed = new URL(String(scanCall[0]), "https://statsedge.test");
+    expect(parsed.searchParams.get("includeDeleted")).toBe("1");
+    expect(parsed.searchParams.get("rowsLimit")).toBe(String(STARTUP_ROWS_LIMIT));
+    expect(parsed.searchParams.get("hydrateRs")).toBe("1");
+    expect(Number(parsed.searchParams.get("limit"))).toBeGreaterThanOrEqual(1);
   });
 });
