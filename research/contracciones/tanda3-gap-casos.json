@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "descripcion": "Casos tanda 3 para rubric-gap.mjs (no están en corpus-manual.json hasta cierre de tanda).",
+  "casos": [
+    {
+      "id": "MSI-tanda3",
+      "symbol": "MSI",
+      "asOf": "2026-08-31",
+      "veredicto": "POTENCIAL",
+      "periodo": ["2025-09-11", "2026-08-31"],
+      "nota": "ancla selectividad; base larga sin fuga; ~3 contracciones dueño; no setup bajo riesgo tight"
+    },
+    {
+      "symbol": "HPE",
+      "asOf": "2026-04-17",
+      "veredicto": "BASE",
+      "periodo": ["2025-10-13", "2026-04-17"],
+      "nota": "dueño: lateral previo; v4 sí en gap preliminar"
+    },
+    {
+      "id": "VLO-tanda3",
+      "symbol": "VLO",
+      "asOf": "2026-07-08",
+      "veredicto": "BASE",
+      "periodo": ["2026-03-31", "2026-07-08"],
+      "reconfig": true,
+      "nota": "reconfig FN v4 al cierre del bloque unido",
+      "episodios": [
+        {
+          "id": "vcp1",
+          "label": "VCP1 pre-ruptura (objetivo detector)",
+          "asOf": "2026-05-15",
+          "veredicto": "BASE",
+          "ruptura": "2026-05-18",
+          "fallo": "2026-05-26",
+          "nota": "detectar antes 18-may; stop ~26-may; desenlace fuera alcance producto"
+        },
+        {
+          "id": "vcp1-fallo",
+          "label": "VCP1 post-stop (contexto, no objetivo detector)",
+          "asOf": "2026-05-26",
+          "veredicto": "BASE",
+          "nota": "patrón roto operativamente; no medir win/loss en producto aún"
+        },
+        {
+          "id": "vcp2",
+          "label": "VCP2 reconfig (prioridad detector)",
+          "asOf": "2026-07-08",
+          "veredicto": "BASE",
+          "nota": "reconfiguración tight; FN v4 en corrida sep-2026"
+        }
+      ]
+    }
+  ]
+}

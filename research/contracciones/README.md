@@ -18,6 +18,9 @@ detector/
   v6.mjs              v4 + monotonía relajada (R5). Mismo 15/21 y las mismas
                       fechas; en el universo marca 8 más, y esos 8 rinden 8 pts
                       por debajo del universo. Implementada y APAGADA
+  v7.mjs              v4 + episodios (cierre por fallo de ruptura / reexpansión +
+                      re-ancla post-fallo). Arnés sep-2026: 11/13 recall primary,
+                      VLO vcp2 match; misma especificidad NO que v4 (6/10)
 
 arneses/
   v4-test.mjs         v4 contra los 9 casos de la tanda 1
@@ -39,6 +42,7 @@ arneses/
   build-charts.mjs    páginas de etiquetado (log por defecto, ventana v4, lectura breve)
   chart-brief.mjs     texto colaborativo por símbolo (stageDisplay + Pre-fuga/Con fuga, pullbacks)
   etapa-codigo-vs-candidato.mjs  VCP-0: weeklyStage vs techo/ruptura/HH-HL (read-only)
+  rubric-gap.mjs      VCP-2/3: gap mecánico corpus + tanda3 vs v4/v5/v7/prod + etapa
   aapl-check.mjs      demuestra que la base de AAPL es una barra corrupta
 
 resultados/
@@ -47,6 +51,9 @@ resultados/
   fractal.json        experimento de ventanas
   fractal2.json       experimento de escalas
   medicion-v4-corpus.json  la medición con fechas, caso por caso (medicion-corpus.mjs)
+  rubric-gap-YYYY-MM-DD.json  gap mecánico v4/v5/v7/prod + etapa (rubric-gap.mjs)
+
+tanda3-gap-casos.json   HPE/VLO para rubric-gap (hasta cierre de tanda 3)
   monotonia-universo.json  v4 frente a v6 sobre los 400
 
 corpus-manual.json    LOS 21 CASOS ETIQUETADOS A MANO, con fechas y profundidades
@@ -60,6 +67,9 @@ Desde la raíz del repo (el loader resuelve `@/` contra `process.cwd()`):
 ```bash
 node --env-file=.env.local --loader ./scripts/loader.mjs \
   research/contracciones/arneses/v5-test.mjs
+
+node --env-file=.env.local --loader ./scripts/loader.mjs \
+  research/contracciones/arneses/rubric-gap.mjs
 ```
 
 Todos los arneses son de **solo lectura** sobre `daily_bars`. Ninguno escribe en

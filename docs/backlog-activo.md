@@ -5,8 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-01 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **(ninguno)** — VCP-1 arnés cerrado; **dueño etiqueta** tanda 3.  
-**Cola:** etiquetado tanda 3 → nocturno (mesa Pre-fuga) → carga/premium.  
+Ticket en curso: **VCP-3-prod-bridge** (P2) — `docs/tickets/activo.md`  
+VCP-3-gates **cerrado** (golden OK 2026-09-01) · VCP-3-reconfig **cerrado** (v7).  
+**Cola:** VCP-3-prod-bridge (P2) → nocturno Pre-fuga → carga/premium.  
+**Rúbrica VCP:** `docs/rubrica-vcp-producto-2026-09-01.md` · gap `docs/evidence/vcp-gap-mecanico-2026-09-01.md`  
 Último cerrado: **VCP-1 arnés** (verify 2026-09-01).  
 Último cerrado: **STAGE-1** (verify 2026-09-01).  
 MIGRATE aparcado.  
