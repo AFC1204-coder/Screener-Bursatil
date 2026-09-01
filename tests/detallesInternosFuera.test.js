@@ -194,12 +194,79 @@ const INTERNAL_STRING = [
 const NAME_EXEMPT = [
   "app/research-desk/page.jsx",
   "app/review/page.jsx",
-  "lib/screenerFormat.js",
   "lib/coveragePlan.js",
+  "lib/screenerFormat.js",
   "lib/screenerPipeline.js",
 ];
 
 const STRING_LITERAL = /(?:"[^"\n]*"|'[^'\n]*'|`[^`\n]*`)/g;
+
+// ── Jerga de implementación no llega a la pantalla ─────────────────────────
+// Complementa el barrido de Supabase: frases que explican cómo está hecho el
+// sistema en lugar de qué le pasa a los datos del usuario (UX-COPY-1).
+const FORBIDDEN_UI_PHRASES = [
+  "contrato de capas",
+  "antes de v3",
+  "proyección de decisión",
+  "audítalas",
+  "límite de tamaño de la restauración",
+  "no cabe entero en la restauración",
+  "actualización en segundo plano",
+  "Datos cacheados",
+  "Capas del preset",
+  "copia en la nube no está activada",
+  "la copia en la nube",
+  "Inventario sin materializar",
+  "Proveedor parcial",
+  "filtros guardados en la nube",
+];
+const FORBIDDEN_UI_WORDS = [
+  /\bhydrate\b/i,
+  /\blocalStorage\b/i,
+];
+// Módulos donde «contrato» es terminología de metodología de listas o
+// diagnósticos internos, no copy de producto del screener principal.
+const JARGON_EXEMPT = [
+  "app/lists/page.jsx",
+  "lib/screenerContracts.js",
+  "lib/listRationale.js",
+  "lib/screenerFilters.js",
+  "lib/rcReadiness.js",
+  "lib/screenerFilterCatalog.js",
+  "lib/scanLightProjection.js",
+  "lib/screenerPipeline.js",
+  "lib/cloudSyncClient.js",
+  "lib/supabaseServer.js",
+  "lib/nightlyAbsence.js",
+  "lib/marketBreadth.js",
+  "app/research-desk/page.jsx",
+  "app/review/page.jsx",
+  "app/components/screener/WeeklyChangesLine.jsx",
+  "lib/screenerFormat.js",
+];
+
+describe("jerga de implementación fuera de la interfaz", () => {
+  it("ninguna cadena de app/ ni lib/ repite frases prohibidas de UX-COPY-1", () => {
+    const offenders = [];
+    for (const file of UI_FILES) {
+      if (JARGON_EXEMPT.some((exempt) => file.endsWith(exempt))) continue;
+      readFileSync(file, "utf8").split("\n").forEach((line, index) => {
+        const trimmed = line.trimStart();
+        if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) return;
+        if (line.includes("console.")) return;
+        for (const literal of line.match(STRING_LITERAL) || []) {
+          for (const phrase of FORBIDDEN_UI_PHRASES) {
+            if (literal.includes(phrase)) offenders.push(`${file}:${index + 1} «${phrase}» en ${literal.trim().slice(0, 80)}`);
+          }
+          for (const pattern of FORBIDDEN_UI_WORDS) {
+            if (pattern.test(literal)) offenders.push(`${file}:${index + 1} ${pattern} en ${literal.trim().slice(0, 80)}`);
+          }
+        }
+      });
+    }
+    expect(offenders).toEqual([]);
+  });
+});
 
 describe("el nombre del servicio de base de datos no llega a la pantalla", () => {
   it("ninguna cadena de app/ ni lib/ lo nombra", () => {

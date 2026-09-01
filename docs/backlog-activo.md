@@ -3,10 +3,11 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-01 (noche) · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-02 (madrugada) · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **CLEANUP-shadow-2026-09-01** — `docs/tickets/CLEANUP-shadow-2026-09-01.md`  
-Último cerrado: **VCP-4-screener-panel** (columna VCP + filtros + caché arranque).  
+Ticket en curso: **UX-COPY-1** — `docs/tickets/UX-COPY-1-mensajes-usuario.md` (delegar a Agent chat)  
+Auditoría shadow: **CLEANUP-shadow-2026-09-01** — C-02…C-04 cerrados · C-05 en cola  
+Último cerrado programación: **C-04** familyIntensity restore (`946e7d0`).  
 Último cerrado: **UX-FILTERS-8** (`dac98a3`).  
 **Rúbrica VCP:** `docs/rubrica-vcp-producto-2026-09-01.md` · gap `docs/evidence/vcp-gap-mecanico-2026-09-01.md`  
 Último cerrado: **VCP-1 arnés** (verify 2026-09-01).  
@@ -173,6 +174,15 @@ MIGRATE aparcado.
 | MET-2c | Cron GHA RS país privado (dom 07:00 UTC) | `a6b9408` |
 | CHART-RS-2 | Overlay RS país en chart (toggle + --soft) | `f6746d2` |
 | RS-SERIES-1 | Dedupe weekKey en series RS ficha/chart | |
+
+## Siguiente — CLEANUP shadow + copy usuario
+
+| ID | Qué | Estado |
+|---|---|---|
+| UX-COPY-1 | Banners/status sin jerga dev (contrato v3, cacheados, materializar…) | **Activo** · `docs/tickets/UX-COPY-1-mensajes-usuario.md` |
+| C-05 | Test contrato `hydrateRs=1` en mesa | Cola · `docs/tickets/C-05-hydrate-rs-contrato.md` |
+| C-01 | VCP nocturno con `STATSEDGE_VCP_UNIFIED=1` | **Ops dueño** · `docs/tickets/C-01-vcp-vercel-ops.md` |
+| C-06…C-10 | Ver `docs/tickets/CLEANUP-shadow-2026-09-01.md` | Abierto |
 
 ## Siguiente — datos IPO + filtros
 

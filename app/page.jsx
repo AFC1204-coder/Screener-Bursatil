@@ -1354,7 +1354,7 @@ export default function Page() {
           notice: buildSnapshotFreshnessNotice(result.data, scan),
           scanSignature: { markets: normalized, manual, scanMode },
         });
-        setStatus(`Últimos datos de la nube cargados: ${scan.rows.length} acciones (${marketName("US")}).`);
+        setStatus(`Últimos datos de tu cuenta cargados: ${scan.rows.length} acciones (${marketName("US")}).`);
         return;
       }
       const marketsMeta = result.data?.markets || null;
@@ -1419,7 +1419,7 @@ export default function Page() {
       }
       const scan = (result.data?.scans || [])[0];
       if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) {
-        const emptyDetail = `${marketLabel}: sin materializado publicable en la nube.`;
+        const emptyDetail = `${marketLabel}: aún no hay datos listos en tu cuenta.`;
         markMarketsLoadFailed(emptyDetail);
         setStatus(emptyDetail);
         return;
@@ -1502,14 +1502,14 @@ export default function Page() {
     if (shouldAutoRestoreBalancedFilterPreset(nextMarkets, currentPresetKey)) {
       setPreset("balanced", { markets: nextMarkets });
       statusContextRef.current = "Preset Balanceado (US)";
-      setStatus("Preset Balanceado restaurado (US). Capas del preset aplicadas.");
+      setStatus("Preset Balanceado aplicado (US). Filtros del modo aplicados.");
       return "balanced";
     }
     if (!shouldAutoApplyIntlFilterPreset(nextMarkets, currentPresetKey)) return false;
     const msg = intlPresetAutoApplyStatus();
     setPreset("intl", { markets: nextMarkets });
     statusContextRef.current = msg;
-    setStatus(`${msg}. Capas del preset aplicadas.`);
+    setStatus(`${msg}. Filtros del modo aplicados.`);
     return "intl";
   }
   function setMarketsAndInvalidate(nextMarkets, label = "Mercados actualizados.") {
@@ -1824,38 +1824,38 @@ export default function Page() {
     }
   }
   async function saveFilterConfigToCloud() {
-    setStatus("Guardando filtros en la nube...");
+    setStatus("Guardando filtros en tu cuenta...");
     const result = await syncSettingToCloud({ ...SCREENER_FILTER_SETTING, value: currentFilterConfig() });
-    if (result.configured === false) setStatus("Filtros guardados en este dispositivo: la copia en la nube no está activada.");
-    else if (result.ok) setStatus("Filtros guardados en la nube.");
+    if (result.configured === false) setStatus("Filtros guardados en este dispositivo: la sincronización con tu cuenta no está disponible.");
+    else if (result.ok) setStatus("Filtros guardados en tu cuenta.");
     else {
       // El mensaje de la nube puede ser cualquier cosa: "Failed to fetch", un
       // código HTTP, texto del proveedor. A pantalla va traducido y sin nombre
       // de servicio; el original, a consola.
       console.error("[filtros] no se pudieron guardar en la nube:", result.message);
-      setStatus(`No se pudieron guardar los filtros en la nube. ${userFacingServiceError(result.message, "Inténtalo de nuevo en unos minutos.")}`);
+      setStatus(`No se pudieron guardar los filtros en tu cuenta. ${userFacingServiceError(result.message, "Inténtalo de nuevo en unos minutos.")}`);
     }
   }
   async function loadFilterConfigFromCloud() {
-    setStatus("Cargando filtros desde la nube...");
+    setStatus("Cargando filtros desde tu cuenta...");
     const result = await getSettingFromCloud(SCREENER_FILTER_SETTING.type, SCREENER_FILTER_SETTING.key);
     if (result.configured === false) {
-      setStatus("La copia en la nube no está activada. Se mantienen los filtros de este dispositivo.");
+      setStatus("La sincronización con tu cuenta no está disponible. Se mantienen los filtros de este dispositivo.");
       return;
     }
     if (!result.ok) {
       console.error("[filtros] no se pudieron cargar de la nube:", result.message);
-      setStatus(`No se pudieron cargar los filtros de la nube. ${userFacingServiceError(result.message, "Inténtalo de nuevo en unos minutos.")}`);
+      setStatus(`No se pudieron cargar los filtros de tu cuenta. ${userFacingServiceError(result.message, "Inténtalo de nuevo en unos minutos.")}`);
       return;
     }
     const value = result.data?.setting?.value;
     if (!value) {
-      setStatus("Todavía no hay filtros guardados en la nube.");
+      setStatus("Todavía no hay filtros guardados en tu cuenta.");
       return;
     }
     applyFilterConfig(value);
-    statusContextRef.current = "Filtros cargados desde la nube";
-    setStatus("Filtros cargados desde la nube. Se aplican al momento sobre los datos cargados.");
+    statusContextRef.current = "Filtros cargados desde tu cuenta";
+    setStatus("Filtros cargados desde tu cuenta. Se aplican al momento sobre los datos cargados.");
   }
   async function loadSearchResult(symbol, candidate = null) {
     const normalized = String(symbol || "").trim().toUpperCase();
@@ -2047,7 +2047,7 @@ export default function Page() {
     if (options.status !== false) {
       const huntLabel = huntDisplayName(k, options.markets || markets);
       statusContextRef.current = `Filtro activo: ${huntLabel}`;
-      setStatus(`Filtro activo: ${huntLabel}. Capas del preset aplicadas.`);
+      setStatus(`Filtro activo: ${huntLabel}.`);
     }
   }
   function applyHuntCard(cardId) {
@@ -2167,13 +2167,13 @@ export default function Page() {
     const next = [favorite, ...favs].slice(0, 250);
     safeWrite(STORAGE_KEYS.favorites, next);
     setFavoriteSymbols(new Set(next.map((x) => x.symbol)));
-    setStatus(`${row.symbol} guardado en favoritos de este dispositivo. Sincronizando con la nube...`);
+    setStatus(`${row.symbol} guardado en favoritos de este dispositivo. Sincronizando con tu cuenta...`);
     syncFavoriteToCloud(favorite).then((result) => {
-      if (result.configured === false) setStatus(`${row.symbol} guardado en este dispositivo: la copia en la nube no está activada.`);
-      else if (result.ok) setStatus(`${row.symbol} guardado en favoritos y sincronizado con la nube.`);
+      if (result.configured === false) setStatus(`${row.symbol} guardado en este dispositivo: la sincronización con tu cuenta no está disponible.`);
+      else if (result.ok) setStatus(`${row.symbol} guardado en favoritos y sincronizado con tu cuenta.`);
       else {
         console.error("[favoritos] no se pudo sincronizar con la nube:", result.message);
-        setStatus(`${row.symbol} guardado en este dispositivo. ${userFacingServiceError(result.message, "No se pudo sincronizar con la nube.")}`);
+        setStatus(`${row.symbol} guardado en este dispositivo. ${userFacingServiceError(result.message, "No se pudo sincronizar con tu cuenta.")}`);
       }
     });
   }
@@ -2227,14 +2227,14 @@ export default function Page() {
     const generatedAlerts = alertsFromScan(scan);
     const nextAlerts = mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), generatedAlerts).slice(0, 500);
     safeWrite(STORAGE_KEYS.alerts, nextAlerts);
-    setStatus(`Snapshot guardado en este dispositivo: ${decisionRows.length} acciones · ${eventTotal} eventos · ${generatedAlerts.length} alertas. Sincronizando con la nube...`);
+    setStatus(`Snapshot guardado en este dispositivo: ${decisionRows.length} acciones · ${eventTotal} eventos · ${generatedAlerts.length} alertas. Sincronizando con tu cuenta...`);
     setSnapshotNotice(null);
     syncScanToCloud(scan).then((result) => {
-      if (result.configured === false) setStatus(`Snapshot guardado en este dispositivo: ${decisionRows.length} acciones · ${generatedAlerts.length} alertas. La copia en la nube no está activada.`);
-      else if (result.ok) setStatus(`Snapshot guardado: ${decisionRows.length} acciones · ${generatedAlerts.length} alertas. Disponible en este dispositivo y en la nube.`);
+      if (result.configured === false) setStatus(`Snapshot guardado en este dispositivo: ${decisionRows.length} acciones · ${generatedAlerts.length} alertas. La sincronización con tu cuenta no está disponible.`);
+      else if (result.ok) setStatus(`Snapshot guardado: ${decisionRows.length} acciones · ${generatedAlerts.length} alertas. Disponible en este dispositivo y en tu cuenta.`);
       else {
         console.error("[snapshot] no se pudo sincronizar con la nube:", result.message);
-        setStatus(`Snapshot guardado en este dispositivo. ${userFacingServiceError(result.message, "La copia en la nube no se pudo actualizar ahora mismo.")}`);
+        setStatus(`Snapshot guardado en este dispositivo. ${userFacingServiceError(result.message, "No se pudo actualizar tu copia en la cuenta ahora mismo.")}`);
       }
     });
     syncAlertsToCloud(generatedAlerts).then((result) => {

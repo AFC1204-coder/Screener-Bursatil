@@ -15,8 +15,20 @@
 // (5.609 símbolos analizados el 17 de agosto de 2026) sin pasarse del techo
 // que mantiene viva la caché de la ruta (CACHEABLE_ROWS_LIMIT = 8.000).
 
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getLatestScanFromCloud, getLatestScanFromCloudForMarkets, pullCloudState, STARTUP_ROWS_LIMIT } from "@/lib/cloudSyncClient";
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const CLOUD_SYNC_SOURCE = readFileSync(resolve(ROOT, "lib/cloudSyncClient.js"), "utf8");
+
+const MESA_GET_SCAN_FUNCTIONS = [
+  "getLatestScanFromCloud",
+  "getLatestScanFromCloudForMarkets",
+  "pullCloudState",
+];
 
 function jsonResponse(body, ok = true) {
   return { ok, json: async () => body };
@@ -70,6 +82,32 @@ describe("getLatestScanFromCloud · el arranque pide un escaneo, no diez", () =>
     expect(parsed.searchParams.get("markets")).toBe("JP");
     expect(parsed.searchParams.get("rowsLimit")).toBe(String(STARTUP_ROWS_LIMIT));
     expect(parsed.searchParams.get("hydrateRs")).toBe("1");
+  });
+});
+
+describe("call sites GET /api/scans · mesa de producto exige hydrateRs=1", () => {
+  function functionBody(name) {
+    return CLOUD_SYNC_SOURCE.match(new RegExp(`export async function ${name}[\\s\\S]*?(?=\\nexport |$)`))?.[0] || "";
+  }
+
+  it.each(MESA_GET_SCAN_FUNCTIONS)("%s pide filas con hydrateRs=1", (name) => {
+    const body = functionBody(name);
+    expect(body).toMatch(/\/api\/scans/);
+    expect(body).toMatch(/includeRows/);
+    expect(body).toMatch(/hydrateRs\s*[=:]\s*["']?1/);
+  });
+
+  it("no hay otro GET con includeRows sin hydrateRs en cloudSyncClient", () => {
+    const getCalls = [...CLOUD_SYNC_SOURCE.matchAll(/requestJson\((`[^`]*\/api\/scans[^`]*`|"[^"]*\/api\/scans[^"]*")/g)];
+    const rowFetchingGets = getCalls
+      .map((match) => match[1].replace(/^[`"]|[`"]$/g, ""))
+      .filter((url) => url.includes("includeRows"));
+    expect(rowFetchingGets.length).toBeGreaterThan(0);
+    for (const url of rowFetchingGets) {
+      expect(url).toMatch(/hydrateRs=1/);
+    }
+    const hydrateRsParams = [...CLOUD_SYNC_SOURCE.matchAll(/hydrateRs:\s*"1"/g)];
+    expect(hydrateRsParams.length).toBeGreaterThan(0);
   });
 });
 

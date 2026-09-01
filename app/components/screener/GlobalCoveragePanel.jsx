@@ -43,8 +43,8 @@ function coverageStateText(readiness = {}) {
   if (state === "operational") return { text: label || "Cobertura operativa", tone: "operational" };
   if (state === "coverage_gap") return { text: label || "Cobertura baja (brecha)", tone: "gap" };
   if (state === "official_source_missing") return { text: label || "Fuente oficial ausente", tone: "gap" };
-  if (state === "inventory_not_materialized") return { text: label || "Inventario sin materializar", tone: "partial" };
-  if (state === "partial_provider") return { text: label || "Proveedor parcial", tone: "partial" };
+  if (state === "inventory_not_materialized") return { text: label || "Datos de este mercado aún no están listos", tone: "partial" };
+  if (state === "partial_provider") return { text: label || "Datos limitados", tone: "partial" };
   if (state === "curated_core") return { text: label || "Core curado", tone: "partial" };
   if (state === "deferred_curated") return { text: label || "Mercado diferido", tone: "deferred" };
   if (state === "operational-timeout") return { text: label || "Informe parcial", tone: "partial" };
@@ -94,7 +94,7 @@ export function renderGlobalCoverageView({ report = null, loading = false, error
     return (
       <div className="globalCoveragePanel globalCoverageEmpty" role="status">
         <b>Sin cobertura accesible todavía</b>
-        <p>La cobertura por mercado aparece cuando hay universos inventariables y resultados materializados.</p>
+        <p>La cobertura por mercado aparece cuando hay datos disponibles para cada mercado.</p>
       </div>
     );
   }
@@ -140,9 +140,9 @@ export function renderGlobalCoverageView({ report = null, loading = false, error
                   <span className="globalCoverageMetricHint">con precio reciente</span>
                 </div>
                 <div className="globalCoverageMetric">
-                  <span className="globalCoverageMetricLabel">Materializados</span>
+                  <span className="globalCoverageMetricLabel">Con datos</span>
                   <b className="globalCoverageMetricValue" data-metric="materialized">{materialized}</b>
-                  <span className="globalCoverageMetricHint">filas recientes</span>
+                  <span className="globalCoverageMetricHint">acciones con filas recientes</span>
                 </div>
                 <div className="globalCoverageMetric">
                   <span className="globalCoverageMetricLabel">Elegibles por calidad</span>

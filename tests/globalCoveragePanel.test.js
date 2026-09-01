@@ -131,7 +131,7 @@ describe("GlobalCoveragePanel · renderGlobalCoverageView", () => {
     const text = visibleText(html);
 
     expect(text).toContain("Sin cobertura accesible todavía");
-    expect(text).toContain("resultados materializados");
+    expect(text).toContain("datos disponibles para cada mercado");
     expect(html).not.toContain("globalCoverageMarketList");
     expect(html).not.toContain("globalCoverageMetric");
   });
@@ -204,10 +204,10 @@ describe("GlobalCoveragePanel · renderGlobalCoverageView", () => {
     // Las etiquetas textuales están separadas.
     const text = visibleText(html);
     expect(text).toContain("Frescos");
-    expect(text).toContain("Materializados");
+    expect(text).toContain("Con datos");
     expect(text).toContain("Universo");
     expect(text).toContain("con precio reciente");
-    expect(text).toContain("filas recientes");
+    expect(text).toContain("acciones con filas recientes");
   });
 
   it("7. la etiqueta de elegibles no afirma publicación ni ranking global comparable", () => {

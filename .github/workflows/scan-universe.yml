@@ -111,6 +111,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           STATSEDGE_OWNER_ID: ${{ secrets.STATSEDGE_OWNER_ID }}
+          STATSEDGE_VCP_UNIFIED: ${{ vars.STATSEDGE_VCP_UNIFIED || '1' }}
         # Sin --env-file: en Actions las credenciales llegan por variables de
         # entorno normales (bloque `env:` de arriba) — igual que
         # refresh-bars.yml. --preset no se pasa explícito: "balanced" es el

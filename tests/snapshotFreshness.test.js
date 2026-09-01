@@ -27,12 +27,13 @@ describe("snapshot freshness", () => {
       staleReason: "Timeout consultando Supabase.",
     });
 
-    expect(notice.label).toBe("Datos cacheados");
+    expect(notice.label).toBe("Sin actualizar hoy");
     expect(notice.tone).toBe("warn");
-    expect(notice.detail).toContain("escaneo guardado");
+    expect(notice.detail).toContain("escaneo de hace");
     expect(notice.detail).toContain("2 min");
     expect(notice.detail).toMatch(/tardó demasiado en responder/i);
     expect(notice.detail).not.toMatch(/supabase/i);
+    expect(notice.detail).toMatch(/última sincronización/i);
   });
 
   it("descarta el motivo crudo del servidor cuando no lo reconoce", () => {
@@ -52,6 +53,8 @@ describe("snapshot freshness", () => {
     expect(notice.label).toBe("Datos parciales");
     expect(notice.tone).toBe("info");
     expect(notice.detail).toContain("3 filas");
+    expect(notice.detail).toMatch(/datos incompletos/i);
+    expect(notice.detail).toMatch(/revísalas antes de decidir/i);
   });
 
   it("formatea duraciones stale compactas", () => {
@@ -104,7 +107,7 @@ describe("snapshot freshness", () => {
     });
 
     expect(notice.sampled).toBe(false);
-    expect(notice.detail).toContain("el resto no se cargó por el límite de tamaño de la restauración");
+    expect(notice.detail).toContain("solo se cargó parte del universo en este dispositivo");
   });
 
   it("no avisa de recorte si rowsTruncated es false, aunque vengan los conteos", () => {
@@ -127,8 +130,8 @@ describe("snapshot freshness", () => {
       rowsTruncated: true,
     });
 
-    expect(notice.label).toBe("Datos cacheados");
-    expect(notice.detail).toContain("escaneo guardado");
+    expect(notice.label).toBe("Sin actualizar hoy");
+    expect(notice.detail).toContain("escaneo de hace");
     expect(notice.detail).toContain("500");
     expect(notice.detail).toContain("9918");
   });
@@ -149,7 +152,7 @@ describe("snapshotCloudFallbackReason", () => {
 
   it("traduce errores técnicos al fallback genérico", () => {
     expect(snapshotCloudFallbackReason("", { configured: true })).toBe(
-      "La copia guardada en la nube no está disponible.",
+      "No se pudo cargar desde tu cuenta.",
     );
     expect(snapshotCloudFallbackReason("No autorizado", { configured: true })).toMatch(/vuelve a entrar/i);
   });
@@ -205,7 +208,7 @@ describe("copia local muestreada (P2)", () => {
 
   it("si la nube falla, el aviso de sesión nombra la muestra y no vacía el contrato", () => {
     const notice = buildSessionKeepNotice({
-      reason: "La copia guardada en la nube no está disponible.",
+      reason: "No se pudo cargar desde tu cuenta.",
       scan: sampledScan,
     });
     expect(notice).not.toBeNull();
@@ -214,12 +217,12 @@ describe("copia local muestreada (P2)", () => {
     expect(notice.detail).toContain("576");
     expect(notice.detail).toContain("3309");
     expect(notice.detail).toMatch(/repartidas por todo el ranking/i);
-    expect(notice.detail).toMatch(/nube no está disponible/i);
+    expect(notice.detail).toMatch(/no se pudo cargar desde tu cuenta/i);
   });
 
   it("sin muestra, el aviso de sesión sigue siendo el de datos sin renovar (P1)", () => {
     const notice = buildSessionKeepNotice({
-      reason: "La copia guardada en la nube no está disponible.",
+      reason: "No se pudo cargar desde tu cuenta.",
       scan: { id: "completo", rows: sampledScan.rows, rowsAvailable: sampledScan.rows.length },
     });
     expect(notice.label).toBe("Datos sin renovar");
