@@ -152,7 +152,7 @@ export function toProdDailyBars(researchBarsAsc = []) {
  * @param {ReturnType<typeof toResearchBars>} researchBarsAsc
  * @param {string} asOf
  */
-export function evaluateAtAsOf(researchBarsAsc, asOf) {
+export function evaluateAtAsOf(researchBarsAsc, asOf, options = {}) {
   const bars = researchBarsAsc.filter((b) => b.d <= asOf);
   const dailyAsc = bars.map((b) => ({
     date: b.d,
@@ -163,6 +163,8 @@ export function evaluateAtAsOf(researchBarsAsc, asOf) {
     volume: b.v,
   }));
   const prodBars = toProdDailyBars(bars);
+  const stage = weeklyStageForBars(dailyAsc);
+  const structure = weeklyStageStructureForBars(dailyAsc, { weeklyStageState: stage.state });
   const r4 = detectV4(bars);
   const r5 = detectV5(bars);
   const r7 = detectV7(bars);
@@ -170,9 +172,10 @@ export function evaluateAtAsOf(researchBarsAsc, asOf) {
     rawBars: prodBars,
     referenceDate: `${asOf}T23:59:59Z`,
     asOfDate: asOf,
+    vcpUnified: options.vcpUnified ?? process.env.STATSEDGE_VCP_UNIFIED === "1",
+    weeklyStage: stage,
+    weeklyStageStructure: structure,
   });
-  const stage = weeklyStageForBars(dailyAsc);
-  const structure = weeklyStageStructureForBars(dailyAsc, { weeklyStageState: stage.state });
   const gateMetrics = episodeGateMetrics(bars, r7);
   const shadow = evaluateShadowGates({
     detectorHit: r7.base === true,
@@ -303,6 +306,7 @@ export function printSummaryTable(rows, metricas) {
 }
 
 export async function runRubricGap(options = {}) {
+  const vcpUnified = options.vcpUnified ?? process.env.STATSEDGE_VCP_UNIFIED === "1";
   const corpusPath = options.corpusPath ?? path.join(ROOT, "corpus-manual.json");
   const tanda3Path = options.tanda3Path ?? path.join(ROOT, "tanda3-gap-casos.json");
   const outDir = options.outDir ?? path.join(ROOT, "resultados");
@@ -343,7 +347,7 @@ export async function runRubricGap(options = {}) {
   for (const evalCase of evalCases) {
     const allBars = barsBySymbol.get(evalCase.symbol) ?? [];
     const asOf = evalCase.evalAsOf ?? evalCase.asOf;
-    const detection = evaluateAtAsOf(allBars, asOf);
+    const detection = evaluateAtAsOf(allBars, asOf, { ...options, vcpUnified });
     rows.push(buildResultRow(evalCase, detection));
   }
 
@@ -370,6 +374,7 @@ export async function runRubricGap(options = {}) {
       g3: "primeraEnAtr >= 3.5; ultimaEnAtr <= 3; tightRatio <= 0.72; ventana 35s si episodeBars > 70",
       propuestaProducto: "v7.base && G1 && G2 && G3",
     },
+    prodVcpUnified: vcpUnified,
     casos: rows,
   };
 

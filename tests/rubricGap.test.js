@@ -258,6 +258,59 @@ describe("shadow gates G1–G3", () => {
   });
 });
 
+describe("prod unified bridge (Supabase)", () => {
+  const mustReject = [
+    "NDAQ-2025-11",
+    "ELV-2026-08",
+    "MSGS-2026-08",
+    "MSI-tanda3",
+    "BEKE-2026-08",
+  ];
+  const mustAccept = [
+    "GOOGL-2026-02",
+    "VLO-tanda3::vcp1",
+    "VLO-tanda3::vcp2",
+  ];
+
+  it("prod vcpUnified alinea con propuestaProducto en anclas golden", async () => {
+    const { supabaseRequestAll, supabaseConfig } = await import("@/lib/supabaseServer");
+    const { toResearchBars, evaluateAtAsOf } = await import("../research/contracciones/arneses/rubric-gap.mjs");
+    const cfg = supabaseConfig();
+    if (!cfg.configured) return;
+
+    const evalCases = expandEvaluationCases(corpus.casos, tanda3.casos);
+    const targets = [...mustReject, ...mustAccept];
+    const hpe = evalCases.find((c) => c.symbol === "HPE" && c.primary);
+    if (hpe) targets.push(hpe.evalId ?? "HPE-tanda3");
+
+    for (const id of targets) {
+      const evalCase = evalCases.find((c) => c.evalId === id)
+        ?? (id === "HPE-tanda3" ? hpe : null);
+      expect(evalCase).toBeTruthy();
+
+      const rows = await supabaseRequestAll("daily_bars", {
+        query: {
+          select: "trade_date,open,high,low,close,adj_close,volume",
+          owner_id: `eq.${cfg.ownerId}`,
+          symbol: `eq.${evalCase.symbol}`,
+          order: "trade_date.asc",
+        },
+        timeoutMs: 25000,
+      }, { maxRows: 5000 });
+      const detection = evaluateAtAsOf(toResearchBars(rows), evalCase.evalAsOf ?? evalCase.asOf, { vcpUnified: true });
+      const row = buildResultRow(evalCase, detection);
+
+      expect(detection.prod.vcpCandidate, id).toBe(detection.shadow.propuestaProducto);
+      if (mustReject.includes(id) || id === "HPE-tanda3") {
+        expect(row.prod, id).toBe("no");
+      }
+      if (mustAccept.includes(id)) {
+        expect(row.prod, id).toBe("BASE");
+      }
+    }
+  }, 90000);
+});
+
 describe("shadow gates corpus anchors", () => {
   const mustReject = [
     "NDAQ-2025-11",

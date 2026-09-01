@@ -1,8 +1,9 @@
 # Contracciones — prototipo y corpus
 
 Trabajo de investigación del detector de contracciones de volatilidad, agosto de
-2026. **Nada de esto es código de producto**: el detector que corre en el
-producto sigue siendo `lib/setupPatterns.js`, sin tocar.
+2026. El detector de **producto** con `STATSEDGE_VCP_UNIFIED=1` es el mismo motor
+que v7 + G1–G3 en `lib/vcpEngine.mjs` (vía `lib/setupPatterns.js` → `vcpCandidate`).
+Con el flag **OFF**, producto sigue en la lógica legacy de `setupPatterns.js`.
 
 Vive aquí, y no en el scratchpad de una sesión, porque el scratchpad se pierde
 al cerrar la sesión y los documentos cuentan los resultados pero no permiten
@@ -43,6 +44,7 @@ arneses/
   chart-brief.mjs     texto colaborativo por símbolo (stageDisplay + Pre-fuga/Con fuga, pullbacks)
   etapa-codigo-vs-candidato.mjs  VCP-0: weeklyStage vs techo/ruptura/HH-HL (read-only)
   rubric-gap.mjs      VCP-2/3: gap mecánico corpus + tanda3 vs v4/v5/v7/prod + etapa
+                      (prod con STATSEDGE_VCP_UNIFIED=1 o vcpUnified: true ≈ shadow)
   aapl-check.mjs      demuestra que la base de AAPL es una barra corrupta
 
 resultados/

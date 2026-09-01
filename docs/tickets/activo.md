@@ -1,22 +1,39 @@
-# Ticket activo — VCP-3-prod-bridge
+# Ticket activo — pendiente commit bridge + cola VCP-4
 
-**Último cerrado:** VCP-3-gates — shadow G1–G3 (golden OK dueño 2026-09-01).  
-**Spec:** pendiente (`docs/tickets/VCP-3-prod-bridge.md` o escribir al activar)  
-**ADR:** `docs/adr-vcp-reconfig-selectividad-2026-09-01.md` (§5 fases 3–4)
+**Código WIP:** VCP-3-prod-bridge (motor unificado) — verify OK, **sin commit**  
+**Flag local:** `STATSEDGE_VCP_UNIFIED=1` en `.env.local` (dueño probando ficha)
 
-## Verificación VCP-3-gates ✓
+## Siguiente trabajo (orden dueño)
 
-- `npm test -- tests/rubricGap.test.js` → **13/13**
-- shadow especificidad NO **10/10** (0 FP en anclas)
-- recall E2 **8/8** propuesta; golden dueño OK
-- MSI/HPE/NDAQ/ELV/MSGS/BEKE → 0 propuestas; GOOGL + VLO `::vcp1`/`::vcp2` → propuesta
+1. **Commit** paquete bridge cuando dueño diga (tras smoke opcional).
+2. **VCP-4-screener-panel** — sección VCP con criterios Minervini (% y nº contracciones), columna código, sin score. Spec: `docs/tickets/VCP-4-screener-panel.md`
+3. **UX-FILTERS-8** — defaults y duplicados en filtros (en paralelo o antes de VCP-4 UI). Spec: `docs/tickets/UX-FILTERS-8-coherencia-defaults.md`
 
-## Cola
+## Prompt Agent — VCP-4 (copiar cuando bridge esté commiteado)
 
-VCP-3-prod-bridge (P2): shadow → mesa (cap, retirada episodio N tras fallo, sin copiar v4 a prod).
+```
+@docs/tickets/VCP-4-screener-panel.md
+@docs/rubrica-vcp-producto-2026-09-01.md
+@lib/screenerFilterCatalog.js
+@lib/screenerFilterLayers.js
+@lib/screenerColumns.jsx
+@lib/vcpEngine.mjs
 
----
+Rama: codex/statsedge-ui-polish
+Modelo: Composer 2.5
 
-## Prompt para Agent chat (copiar al activar bridge)
+Panel familia VCP en Más filtros: umbrales concretos (contracciones, % pivot, volumen, vcpCandidate motor unificado). Columna tabla con etiqueta Minervini (2C, form, PV). Sin minPatternQualityScore ni hunt nueva. Familia off por defecto. Tests label+filtro. Sin commit ni push.
+```
 
-_Pendiente — escribir tras definir alcance mesa con dueño._
+## Prompt Agent — UX-FILTERS-8 (puede ir antes, otro chat)
+
+```
+@docs/tickets/UX-FILTERS-8-coherencia-defaults.md
+@lib/screenerFilterCatalog.js
+@lib/screenerFilterLayers.js
+
+Rama: codex/statsedge-ui-polish
+Modelo: Composer 2.5
+
+Auditoría defaults/duplicados filterLayers; familias opcionales off en frío; preset hunt no activa pattern/VCP sin usuario; test auditoría. Sin commit ni push.
+```
