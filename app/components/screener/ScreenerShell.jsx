@@ -563,7 +563,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             <label><span>Media plana ±%</span><input className="input" type="number" min="0" max="20" step="0.5" value={settings.stageFlatPct ?? 2} onChange={(event) => updateSetting("stageFlatPct", Number(event.target.value))} /></label>
           </div>
           <div className="filterSwitches">
-            <FilterToggle active={settings.requireStage2} applies={settingApplies("requireStage2", filterLayers)} detail={inactiveSettingReason("requireStage2", filterLayers)} onClick={() => toggleLayeredSetting("requireStage2")}>Etapa 2</FilterToggle>
+            <FilterToggle active={settings.requireStage2} applies={settingApplies("requireStage2", filterLayers)} detail={inactiveSettingReason("requireStage2", filterLayers)} hint="Mira solo la etapa MM30s; no distingue pre-fuga de avance con fuga." onClick={() => toggleLayeredSetting("requireStage2")}>Etapa 2</FilterToggle>
             <FilterToggle active={settings.requirePulso} applies={settingApplies("requirePulso", filterLayers)} detail={inactiveSettingReason("requirePulso", filterLayers)} onClick={() => toggleLayeredSetting("requirePulso")}>Pulso</FilterToggle>
             <FilterToggle active={settings.requireUpVolume} applies={settingApplies("requireUpVolume", filterLayers)} detail={inactiveSettingReason("requireUpVolume", filterLayers)} onClick={() => toggleLayeredSetting("requireUpVolume")}>Volumen en vela alcista</FilterToggle>
             <FilterToggle active={settings.requireRecentIpo} applies={settingApplies("requireRecentIpo", filterLayers)} detail={inactiveSettingReason("requireRecentIpo", filterLayers)} onClick={() => toggleLayeredSetting("requireRecentIpo")}>IPO real reciente</FilterToggle>

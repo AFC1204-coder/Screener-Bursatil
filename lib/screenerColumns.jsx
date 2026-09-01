@@ -28,7 +28,7 @@ import { countryRs } from "@/lib/countryRs";
 import { themeRs } from "@/lib/themeRs";
 import { canonicalRsDisclosure } from "@/lib/rsEngines";
 import { UNRELIABLE_AUDIT_STATUS } from "@/lib/scanLightProjection";
-import { STAGE_LEGACY_REASON, STAGE_MISSING_REASON, stageConfirmationMark, stageWordForState } from "@/lib/stageDisplay";
+import { STAGE_CODE_VS_OPERATIVE_HINT, STAGE_LEGACY_REASON, STAGE_MISSING_REASON, stageConfirmationMark, stageDisplayForRow, stageWordForState } from "@/lib/stageDisplay";
 import { CompanyMark, MiniSparkline } from "@/lib/screenerAtoms";
 import { PERFORMANCE_PERIODS, normalizePerformancePeriod, performancePeriod } from "@/lib/screenerPeriods";
 import { isIpoWatchPlaceholderSymbol } from "@/lib/mergeIpoDiscoveryRows";
@@ -96,6 +96,10 @@ function auditIssueReason(row, metricKey) {
 // decía "Base" y la ficha "Base / transición" para la misma clasificación.
 export function stageWord(row = {}) {
   return stageWordForState(row.weeklyStageState || "", row.weeklyStageLabel || "");
+}
+
+export function stageDisplay(row = {}) {
+  return stageDisplayForRow(row);
 }
 
 // Una etapa 1 o 3 tentativa es la misma etapa con menos confirmación, no una
@@ -231,21 +235,24 @@ export const SCREENER_COLUMNS = [
   {
     key: "stage",
     label: () => "Etapa",
-    legend: "Fase del ciclo de precio sobre el gráfico semanal: describe dónde está el precio respecto a sus medias de largo plazo.",
+    legend: `Fase del ciclo de precio sobre el gráfico semanal (código MM30s). ${STAGE_CODE_VS_OPERATIVE_HINT}`,
     align: "left",
     className: "colStage",
     sortKey: null,
     cell: (row) => {
-      const stage = stageWord(row);
+      const stage = stageDisplay(row);
       if (!stage) {
         return <MissingValue reason={STAGE_MISSING_REASON} />;
       }
-      const confirmation = stageConfirmation(row);
-      const title = stage.legacy ? STAGE_LEGACY_REASON : confirmation?.title || "";
+      const confirmation = stage.confirmation;
+      const title = stage.title || (stage.legacy ? STAGE_LEGACY_REASON : confirmation?.title || "");
       return (
         <span className={`stageTag stage-${stage.tone}${confirmation?.suffix ? " stageTagTentative" : ""}`} title={title || undefined}>
-          {stage.word}
-          {confirmation?.mark ? <i className="stageTagMark" aria-label={confirmation.suffix}>{confirmation.mark}</i> : null}
+          <span className="stageTagWord">
+            {stage.word}
+            {confirmation?.mark ? <i className="stageTagMark" aria-label={confirmation.suffix}>{confirmation.mark}</i> : null}
+          </span>
+          {stage.qualifier ? <small className="stageTagQualifier">{stage.qualifier}</small> : null}
         </span>
       );
     },

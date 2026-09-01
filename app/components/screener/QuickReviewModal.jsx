@@ -44,7 +44,7 @@ import { amount, money, quickBusinessDescription, quickBusinessMarket, ratioLabe
 import { pct, pctShare } from "@/lib/formatters";
 import { PerformanceStrip } from "@/app/components/screener/PerformanceStrip";
 import { canonicalRs } from "@/lib/rsCanonical";
-import { stageWordForState } from "@/lib/stageDisplay";
+import { stageDisplayForRow, stageWordForState } from "@/lib/stageDisplay";
 import { stageLabel } from "@/lib/screenerPipeline";
 import { externalLinks, stockUrl } from "@/lib/symbols";
 import { STOCK_DECISION_ACTIONS, decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
@@ -53,6 +53,10 @@ import { buildTrendSupportLines, trendSupportInputFromScanRow } from "@/lib/tren
 // La palabra de etapa sale del diccionario único (lib/stageDisplay.js): la
 // misma que la columna «Etapa» de la tabla y que la ficha.
 function stageWord(row = {}) {
+  const display = stageDisplayForRow(row);
+  if (display) {
+    return display.qualifier ? `${display.word} · ${display.qualifier}` : display.word;
+  }
   const rawStage = stageLabel(row);
   const stageInfo = stageWordForState(row.weeklyStageState || "", rawStage);
   return stageInfo?.word || (rawStage === "Sin dato" ? "Sin dato" : rawStage) || "Sin dato";
@@ -241,7 +245,7 @@ export default function QuickReviewModal({
                   <h3>El valor</h3>
                   <span>Clasificación</span>
                 </div>
-                <div className="profileRow"><span>Etapa</span><b>{stageWord(activeModalRow)}</b></div>
+                <div className="profileRow"><span>Etapa</span><b title={stageDisplayForRow(activeModalRow)?.title || undefined}>{stageWord(activeModalRow)}</b></div>
                 <div className="profileRow"><span>RS</span><b title={quickRs.available ? "RS semanal del universo" : quickRs.reason}>{quickRs.available ? quickRs.value.toFixed(0) : "-"}</b></div>
                 <div className="profileRow"><span>Capitalización</span><b>{amount(activeModalRow.marketCap, activeModalRow.currency) || "-"}</b></div>
                 <div className="profileRow"><span>Dist. máx 52s</span><b>{Number.isFinite(activeModalRow.distance52w) ? pct(activeModalRow.distance52w) : "-"}</b></div>

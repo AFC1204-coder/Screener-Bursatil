@@ -3,14 +3,14 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-08-31 noche · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-01 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **VCP-0** (auditoría E1/E2 semanal · MSI ancla).  
-**Cola:** ~~CHART-QR~~ · ~~MET-5~~ · ~~UX-NAC-3~~ · **VCP-0** → VCP-1 tanda 3 → VCP-2 → carga/premium.  
-Último cerrado: **UX-NAC-3** `db2ea89`.  
+Ticket en curso: **(ninguno)** — STAGE-1 cerrado, pendiente commit orquestador.  
+**Cola:** nocturno (mesa Pre-fuga) → VCP-1 pausado → carga/premium.  
+Último cerrado: **STAGE-1** (verify 2026-09-01).  
 MIGRATE aparcado.  
-**Nota VCP (2026-09-01 tarde):** VCP-0 cerrado — weeklyStage OK pero pregunta distinta; ADR = campo paralelo, no tocar MET-5. MSI E1 confirmado mecánico.  
-**Nota VCP (2026-09-01):** MSI expone gap E1/E2 — código MM30s≠E2 operable; **VCP-0** antes de tanda 3; MSI = POTENCIAL E1.  
+**Nota VCP (2026-09-01 tarde):** dueño prioriza **STAGE-1 producto** (subestado en screener) sobre VCP tanda 3.  
+**Nota VCP (2026-09-01):** VCP-0 cerrado — campo paralelo ADR aceptado; MSI E1 operativo / E2 código.  
 **Nota UX-NAC-3 (2026-08-31 noche):** tests 57 · smoke US→Core intl / HK.  
 **Nota MET-5 uso real (2026-08-31 noche):** dueño **A**.  
 **Nota CHART-QR-3 (2026-08-31 noche):** `803dba4`.  
@@ -281,8 +281,9 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-4d | Filtro hunt persistencia MA 30s | **Hecho** (`b883085`) |
 | MET-4e | Backfill weeksAbove* + smoke 4c/4d | **Hecho** · write 1208 · smoke OK |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
-| VCP-0 | Auditoría E1/E2 semanal (ruptura + HH/HL vs MM30s) | **Cerrado** verify 2026-09-01 · ADR pendiente dueño |
-| VCP | Detector producto vs corpus `research/contracciones/` | VCP-1 pausado · tras ADR o spec subestado |
+| STAGE-1 | Subestado semanal paralelo (E2_ma_only / E2_structural) en screener | **Cerrado** verify 2026-09-01 · mesa tras nocturno |
+| VCP-0 | Auditoría E1/E2 semanal | **Cerrado** fae1880 · ADR aceptado |
+| VCP | Detector / etiquetado research | **Pausado** hasta STAGE-1 |
 
 ~~IL/CN/BR/MX~~ aplazado.
 

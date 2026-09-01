@@ -108,7 +108,8 @@ describe("la proyección ligera cubre todo lo que se consulta", () => {
     // canonicalRs sobre los weeklyRs*, que se hidratan al leer.
     const tableFields = [
       "symbol", "companyName", "country", "chartPreview", "theme",
-      "weeklyStageState", "weeklyStageLabel", "distance52w", "marketCap",
+      "weeklyStageState", "weeklyStageLabel", "weeklyStageStructure", "weeklyStageStructureLabel",
+      "distance52w", "marketCap",
       "weeklyRsAvailable", "weeklyRsRating", "weeklyRsAsOf", "weeklyRsWeekKey",
       "weeklyRsRank", "weeklyRsSampleSize", "weeklyRsEngineVersion", "weeklyRsReason",
       "weeklyCountryRsAvailable", "weeklyCountryRsRating", "weeklyCountryRsRank",

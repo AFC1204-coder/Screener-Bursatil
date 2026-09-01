@@ -333,6 +333,7 @@ export function FilterFamilyModal({
           active={settings[key]}
           applies={settingApplies(key, filterLayers)}
           detail={inactiveSettingReason(key, filterLayers)}
+          hint={key === "requireStage2" ? "Mira solo la etapa MM30s; no distingue pre-fuga de avance con fuga." : ""}
           onClick={() => onToggleLayeredSetting?.(key)}
         >
           {settingLabels[key] || key}
@@ -416,9 +417,10 @@ export function FilterNumber({ field, value, onChange, active = true, inactiveRe
   </div>;
 }
 
-export function FilterToggle({ active, applies = true, detail = "", onClick, children }) {
+export function FilterToggle({ active, applies = true, detail = "", hint = "", onClick, children }) {
   const checked = Boolean(active && applies);
-  return <label className={`filterToggleLine ${checked ? "on" : ""} ${applies ? "" : "isMuted"}`} title={detail}>
+  const title = [hint, detail].filter(Boolean).join(" — ");
+  return <label className={`filterToggleLine ${checked ? "on" : ""} ${applies ? "" : "isMuted"}`} title={title || undefined}>
     <input type="checkbox" checked={checked} onChange={onClick} />
     <span>{children}</span>
     {detail ? <small>{detail}</small> : null}

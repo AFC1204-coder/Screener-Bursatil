@@ -16,11 +16,12 @@ import { setupPatternForBars } from "@/lib/setupPatterns";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
 import { CURATED_NAMES } from "@/lib/universes";
 import { weeklyStageForBars } from "@/lib/weeklyStage";
+import { weeklyStageStructureForBars } from "@/lib/weeklyStageStructure";
 import { ESTIMATED_CHART_PROVIDER, UNAVAILABLE_CHART_PROVIDER, unavailableChartForSymbol } from "@/lib/estimatedBars";
 import { userFacingSearchError } from "@/lib/screenerFormat";
 
 const BRIEF_CACHE_TYPE = "company_brief_cache";
-const BRIEF_CACHE_VERSION = 3;
+const BRIEF_CACHE_VERSION = 4;
 const DEFAULT_BRIEF_MAX_AGE_DAYS = 1;
 const BRIEF_RESPONSE_TIMEOUT_MS = Number(process.env.BRIEF_RESPONSE_TIMEOUT_MS || 6500);
 const BRIEF_CACHE_READ_TIMEOUT_MS = Number(process.env.BRIEF_CACHE_READ_TIMEOUT_MS || 1500);
@@ -161,10 +162,22 @@ async function marketCapUsdInfo(marketCap, currency = "", options = {}) {
 }
 function stageFromBars(bars = []) {
   const weekly = weeklyStageForBars(bars);
+  const structure = weeklyStageStructureForBars(bars, { weeklyStageState: weekly.state });
   return {
     label: weekly.label,
     detail: weekly.detail,
-    weekly,
+    weekly: {
+      ...weekly,
+      structure: structure.structure,
+      structureLabel: structure.label,
+      structureDetail: structure.detail,
+      resistance: structure.resistance,
+      resistanceDate: structure.resistanceDate,
+      distResistancePct: structure.distResistancePct,
+      rng26Pct: structure.rng26Pct,
+      ruptura: structure.ruptura,
+      hhhl: structure.hhhl,
+    },
   };
 }
 function avg(a) { return a.length ? a.reduce((x, y) => x + y, 0) / a.length : null; }

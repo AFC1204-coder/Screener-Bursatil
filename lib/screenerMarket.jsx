@@ -14,7 +14,7 @@ import { metricShortLabel } from "@/lib/metricCatalog";
 import { RS_QUALITY_OFF_CANON_REASON, canonicalRs } from "@/lib/rsCanonical";
 import { countryRs } from "@/lib/countryRs";
 import { themeRs } from "@/lib/themeRs";
-import { stageWordForState } from "@/lib/stageDisplay";
+import { stageDisplayForRow, stageWordForState } from "@/lib/stageDisplay";
 import { ipoAgeMonthsForRow } from "@/lib/scoring";
 import { GLOBAL_INDEX_TAPE } from "@/lib/screenerConfig";
 import { buildDecisionEvidenceChecklist, explainScreenerRank } from "@/lib/screenerExplainability";
@@ -339,9 +339,13 @@ export function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = fa
   // traduce SIEMPRE con el diccionario único de la etapa (lib/stageDisplay.js):
   // misma palabra que la columna "Etapa" de la tabla y que la ficha.
   const rawStage = stageLabel(row);
-  const stageInfo = stageWordForState(row.weeklyStageState || "", rawStage);
-  const stage = stageInfo?.word || (rawStage === "Sin dato" ? "Sin dato" : rawStage) || "Sin dato";
+  const stageDisplay = stageDisplayForRow(row);
+  const stageInfo = stageDisplay || stageWordForState(row.weeklyStageState || "", rawStage);
+  const stage = stageDisplay
+    ? (stageDisplay.qualifier ? `${stageDisplay.word} · ${stageDisplay.qualifier}` : stageDisplay.word)
+    : (stageInfo?.word || (rawStage === "Sin dato" ? "Sin dato" : rawStage) || "Sin dato");
   const stageClass = stageInfo?.tone === "stage2" ? "good" : stageInfo?.tone === "stage4" ? "bad" : "neutral";
+  const stageTitle = stageDisplay?.title || undefined;
   const metricSource = compactMetricSourceLookup(row);
   // Lector único del RS (lib/rsCanonical.js).
   const cardRs = canonicalRs(row);
@@ -382,8 +386,8 @@ export function PreviewCard({ row, variant = "grid", onFavorite, isFavorite = fa
       {summary ? <div className="previewHeaderMeta">
         <strong>{money(row.price, row.currency)}</strong>
         <DecisionResolutionBadge resolution={resolution} />
-        <span className={`previewStage ${stageClass}`}>{stage}</span>
-      </div> : <span className={`previewStage ${stageClass}`}>{stage}</span>}
+        <span className={`previewStage ${stageClass}`} title={stageTitle}>{stage}</span>
+      </div> : <span className={`previewStage ${stageClass}`} title={stageTitle}>{stage}</span>}
     </div>
     {showSparkline && <MiniSparkline bars={row.chartPreview || []} />}
     {summary ? <div className="previewSummaryGrid">

@@ -74,4 +74,16 @@ describe("CHART-QR-3 · panel El valor", () => {
     expect(block).toContain("Etapa 2");
     expect(block).toContain("95");
   });
+
+  it("MSI-like: Etapa 2 + Pre-fuga en el panel El valor", () => {
+    const html = renderModal(amplRow({
+      weeklyStageStructure: "E2_ma_only",
+      weeklyStageStructureLabel: "Pre-fuga",
+    }));
+    const start = html.indexOf(">El valor<");
+    const end = html.indexOf("Sostén", start);
+    const block = html.slice(start, end > start ? end : start + 2500);
+    expect(block).toContain("Etapa 2");
+    expect(block).toContain("Pre-fuga");
+  });
 });

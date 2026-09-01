@@ -51,7 +51,7 @@ export default function ChartIdentityCard({ card = null, quote = null }) {
 
       <div className="chartIdCardMain">
         {/* Raíl vertical de etapa: dígito grande + semana + los 4 tramos. */}
-        <div className="chartIdCardStageRail" aria-label={stage.digit ? `Etapa ${stage.digit}` : "Etapa sin dato"}>
+        <div className="chartIdCardStageRail" aria-label={stage.digit ? `Etapa ${stage.digit}${stage.qualifier ? ` · ${stage.qualifier}` : ""}` : "Etapa sin dato"}>
           <span className="chartIdCardStageLabel">Etapa</span>
           {stage.digit ? (
             <b className="chartIdCardStageDigit">{stage.digit}</b>
@@ -60,6 +60,9 @@ export default function ChartIdentityCard({ card = null, quote = null }) {
           )}
           {stage.digit && stage.week !== null ? (
             <span className="chartIdCardStageWeek">sem. {sharedNum(stage.week)}</span>
+          ) : null}
+          {stage.digit && stage.qualifier ? (
+            <span className="chartIdCardStageQualifier" title={stage.qualifierTitle || undefined}>{stage.qualifier}</span>
           ) : null}
           {!stage.digit ? <Absent reason={stage.missingReason} /> : null}
           <div className="chartIdCardStageSteps" aria-hidden="true">

@@ -294,6 +294,19 @@ describe("etapa de Weinstein en una palabra", () => {
     expect(stageWord({ weeklyStageLabel: "Base / transicion" }).word).toBe("Base");
     expect(stageWord({})).toBeNull();
   });
+
+  it("pinta el calificador Pre-fuga bajo Etapa 2", () => {
+    const html = renderTable({
+      rows: [{
+        ...fullRow,
+        weeklyStageStructure: "E2_ma_only",
+        weeklyStageStructureLabel: "Pre-fuga",
+      }],
+    });
+    expect(html).toContain("Etapa 2");
+    expect(html).toContain("Pre-fuga");
+    expect(html).toContain("stageTagQualifier");
+  });
 });
 
 describe("vista móvil", () => {

@@ -22,7 +22,7 @@ import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { setupPatternForBars } from "@/lib/setupPatterns";
 import { udVol } from "@/lib/indicators";
 import { stockVolumeState } from "@/lib/stockVolume";
-import { STAGE_MISSING_REASON, stageConfirmationMark, stageWordForState } from "@/lib/stageDisplay";
+import { STAGE_MISSING_REASON, stageConfirmationMark, stageDisplayForRow, stageWordForState } from "@/lib/stageDisplay";
 import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, decisionResolutionForSymbol, decisionResolutionHistory, reopenStockDecisionResolution } from "@/lib/stockDecisionResolution";
@@ -129,11 +129,11 @@ function StockCurveSvg({ stage = "", confirmation = "", width = 96, height = 32 
    descriptiva (dónde está el precio respecto a sus medias, no qué hacer) y
    se escribe con la MISMA palabra que la columna "Etapa" de la tabla
    (lib/stageDisplay.js). */
-function StageCurveChip({ stageTone = "", stageWord = "", confirmation = "", confirmationInfo = null, missingReason = "" }) {
+function StageCurveChip({ stageTone = "", stageWord = "", confirmation = "", confirmationInfo = null, qualifier = "", qualifierTitle = "", missingReason = "" }) {
   const word = stageWord || "Sin dato";
   const suffix = confirmationInfo?.suffix || "";
   return (
-    <div className="stockDecisionChip" data-stage={stageTone || "none"} aria-label={`Etapa: ${word}${suffix ? ` (${suffix})` : ""}`}>
+    <div className="stockDecisionChip" data-stage={stageTone || "none"} aria-label={`Etapa: ${word}${suffix ? ` (${suffix})` : ""}${qualifier ? ` · ${qualifier}` : ""}`} title={qualifierTitle || undefined}>
       <StockCurveSvg stage={stageTone} confirmation={confirmation} />
       <div className="stockDecisionChipBody">
         <span className="stockDecisionChipLabel">Etapa</span>
@@ -142,6 +142,7 @@ function StageCurveChip({ stageTone = "", stageWord = "", confirmation = "", con
           {suffix ? <span className="stockStageTentative"> · {suffix}<InfoHint text={confirmationInfo.title} /></span> : null}
           {!stageWord && missingReason ? <InfoHint text={missingReason} /> : null}
         </span>
+        {qualifier ? <span className="stockStageQualifier">{qualifier}</span> : null}
       </div>
     </div>
   );
@@ -197,7 +198,12 @@ export function N0VerdictBlock({
 }) {
   const priceHas = Number.isFinite(priceSnapshot?.price);
   // Misma palabra que la tabla y que la fila "ETAPA" de esta misma ficha.
-  const stageDisplay = stageWordForState(data?.stage?.weekly?.state || "", data?.stage?.label || "");
+  const stageDisplay = stageDisplayForRow({
+    weeklyStageState: data?.stage?.weekly?.state || "",
+    weeklyStageLabel: data?.stage?.label || "",
+    weeklyStageConfirmation: data?.stage?.weekly?.confirmation || "",
+    weeklyStageStructure: data?.stage?.weekly?.structure || "",
+  });
   // El guard acepta tanto un array de acciones como un único elemento. Antes
   // exigía `actions.length` sobre lo que le llegaba: con un fragmento JSX
   // (`.length === undefined`) el bloque de links desaparecía entero sin error
@@ -239,6 +245,8 @@ export function N0VerdictBlock({
             stageWord={stageDisplay?.word || ""}
             confirmation={data?.stage?.weekly?.confirmation || ""}
             confirmationInfo={stageConfirmationMark(data?.stage?.weekly?.confirmation || "")}
+            qualifier={stageDisplay?.qualifier || ""}
+            qualifierTitle={stageDisplay?.title || ""}
             missingReason={STAGE_MISSING_REASON}
           />
         </div>

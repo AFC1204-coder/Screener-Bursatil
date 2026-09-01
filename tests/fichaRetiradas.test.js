@@ -359,6 +359,7 @@ describe("buildChartIdentityCard: modelo de la tarjeta 2c", () => {
     expect(card.sectorRankReason).toMatch(/rango/i);
     expect(card.stage.digit).toBe("2");
     expect(card.stage.week).toBe(12);
+    expect(card.stage.qualifier).toBe("");
     expect(card.rs.value).toBe(94);
     expect(card.structure.distance52w).toBeCloseTo(-7.4);
     expect(card.structure.baseReason).toMatch(/base/i);
