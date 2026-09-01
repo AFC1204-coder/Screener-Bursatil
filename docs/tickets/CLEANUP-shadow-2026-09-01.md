@@ -14,7 +14,7 @@ Auditoría tras VCP-4 + fixes de caché. Prioridad para tickets siguientes.
 | ID | Tema | Acción |
 |----|------|--------|
 | C-01 | VCP en datos del nocturno **anterior** al flag `STATSEDGE_VCP_UNIFIED` | Re-correr nocturno US con flag ON en Vercel; hasta entonces columna/filtro VCP parcial |
-| C-02 | Sesión caducada → 401 → copia local sin empujar re-login | Banner explícito «Vuelve a entrar» + botón en `ScreenerShell` cuando `staleReason` es auth |
+| C-02 | Sesión caducada → 401 → copia local sin empujar re-login | **Cerrado** — banner «Sesión caducada» + botón «Vuelve a entrar» (`715575b` + fix C-02) |
 
 ## P1 — Datos silenciosamente distintos
 

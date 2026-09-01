@@ -39,7 +39,8 @@ import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
 import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, fitScansForBrowser, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import { createDebouncedSessionSaver, screenerFiltersFromScan, withScanScreenerFilters } from "@/lib/screenerFilterFastPath";
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
-import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, localScanIsSampled, localSampleDetail, manualDataRefreshStatus, screenerSessionRefreshReason, sessionAutoRefreshStatus, snapshotCloudFallbackReason } from "@/lib/snapshotFreshness";
+import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, buildLocalFallbackNotice, buildCloudAuthRequiredNotice, localScanIsSampled, manualDataRefreshStatus, screenerSessionRefreshReason, sessionAutoRefreshStatus, snapshotCloudFallbackReason } from "@/lib/snapshotFreshness";
+import { isCloudAuthFailure } from "@/lib/serviceErrors";
 import { dropForeignMarketSnapshots, pickNightlyUsRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { nightlyAbsenceNotice, nightlyAbsenceReasonText, nightlyAbsenceStatus } from "@/lib/nightlyAbsence";
 import { screenerSessionDataExpired } from "@/lib/nightlyBoundary";
@@ -525,22 +526,12 @@ export default function Page() {
       setSnapshotNotice(nightlyAbsenceNotice(nightly));
       setStatus(nightlyAbsenceStatus(nightly));
     };
-    const restoreLocalSnapshot = (reason = "") => {
+    const restoreLocalSnapshot = (rawMessage = "", { configured = true } = {}) => {
       if (isCancelled() || resultsOwnerRef.current !== "none") return false;
       const localScan = pickNightlyUsRestorableScan(safeRead(STORAGE_KEYS.scans, []));
       if (!localScan) return false;
-      // El universo entero no cabe en localStorage (25 M de caracteres frente
-      // a 4,5 M de presupuesto), así que la copia local puede ser una muestra
-      // repartida del escaneo — nunca "las mejores". Si lo es, se dice aquí:
-      // los filtros sobre esa copia ven menos acciones que los de la nube.
       const sampled = localScanIsSampled(localScan);
-      const sampleDetail = sampled ? ` ${localSampleDetail(localScan)}` : "";
-      const notice = reason ? {
-        tone: "info",
-        label: "Copia local",
-        detail: `${reason} Se restaura la última copia local del escaneo nocturno estadounidense.${sampleDetail}`,
-        source: "local",
-      } : null;
+      const notice = buildLocalFallbackNotice({ rawMessage, configured, scan: localScan });
       const restored = restoreSnapshot(localScan, { source: "local", notice });
       if (restored) {
         setStatus(sampled
@@ -559,8 +550,13 @@ export default function Page() {
         // era la vía que quedaba viva del banner "Supabase: Failed to fetch".
         // El original va a consola, como en loadUniverse.
         if (result.message) console.error("[snapshot] copia en la nube no disponible:", result.message);
-        if (!restoreLocalSnapshot(snapshotCloudFallbackReason(result.message, { configured: result.configured }))) {
-          declareNightlyAbsence({ reason: result.configured === false ? "supabase-disabled" : "cloud-unavailable" });
+        if (!restoreLocalSnapshot(result.message, { configured: result.configured })) {
+          if (isCloudAuthFailure(result.message)) {
+            setSnapshotNotice(buildCloudAuthRequiredNotice());
+            setStatus("Sesión caducada. Vuelve a entrar para cargar el escaneo nocturno.");
+          } else {
+            declareNightlyAbsence({ reason: result.configured === false ? "supabase-disabled" : "cloud-unavailable" });
+          }
         }
         return;
       }
@@ -585,8 +581,13 @@ export default function Page() {
     }).catch((error) => {
       console.error("[snapshot] fallo al leer la copia en la nube:", error);
       if (isCancelled()) return;
-      if (!restoreLocalSnapshot(snapshotCloudFallbackReason(error?.message))) {
-        declareNightlyAbsence({ reason: "nightly-read-failed" });
+      if (!restoreLocalSnapshot(error?.message)) {
+        if (isCloudAuthFailure(error?.message)) {
+          setSnapshotNotice(buildCloudAuthRequiredNotice());
+          setStatus("Sesión caducada. Vuelve a entrar para cargar el escaneo nocturno.");
+        } else {
+          declareNightlyAbsence({ reason: "nightly-read-failed" });
+        }
       }
     }).finally(() => {
       if (!isCancelled()) setRestoringScan(false);
@@ -631,20 +632,30 @@ export default function Page() {
     // Si la renovación no puede completarse, la sesión se queda como estaba
     // (datos viejos o muestra local, con su fecha real visible) y se dice:
     // nunca se vacía la tabla ni se sustituye por otro escaneo que "valga".
-    const keepSessionData = (reason = "") => {
+    const keepSessionData = (rawMessage = "", { configured = true } = {}) => {
       if (!refreshStillApplies()) return;
+      const reason = isCloudAuthFailure(rawMessage)
+        ? ""
+        : snapshotCloudFallbackReason(rawMessage, { configured });
+      const notice = isCloudAuthFailure(rawMessage)
+        ? buildCloudAuthRequiredNotice({ scan: sampledScan })
+        : buildSessionKeepNotice({ reason, scan: sampledScan });
       if (manual && resultsOwnerRef.current === "none") {
-        setSnapshotNotice(buildSessionKeepNotice({ reason, scan: sampledScan }));
-        setStatus(reason || "No se pudo cargar el escaneo nocturno.");
+        setSnapshotNotice(notice);
+        setStatus(isCloudAuthFailure(rawMessage)
+          ? "Sesión caducada. Vuelve a entrar para cargar el escaneo nocturno."
+          : reason || "No se pudo cargar el escaneo nocturno.");
         return;
       }
       if (!manual && resultsOwnerRef.current !== "session") return;
-      setSnapshotNotice(buildSessionKeepNotice({ reason, scan: sampledScan }));
-      setStatus(sampled
-        ? `No se pudo actualizar el escaneo nocturno; se muestran ${sampledScan.rows.length} de ${sampledScan.rowsAvailable} acciones (muestra repartida).`
-        : manual
-          ? "No se pudo actualizar el escaneo nocturno; se muestran los datos cargados."
-          : "No se pudo actualizar el escaneo nocturno; se muestran los datos guardados de la sesión.");
+      setSnapshotNotice(notice);
+      setStatus(isCloudAuthFailure(rawMessage)
+        ? "Sesión caducada. Vuelve a entrar para recuperar el universo completo."
+        : sampled
+          ? `No se pudo actualizar el escaneo nocturno; se muestran ${sampledScan.rows.length} de ${sampledScan.rowsAvailable} acciones (muestra repartida).`
+          : manual
+            ? "No se pudo actualizar el escaneo nocturno; se muestran los datos cargados."
+            : "No se pudo actualizar el escaneo nocturno; se muestran los datos guardados de la sesión.");
     };
     getLatestScanFromCloud().then((result) => {
       // Si mientras resolvía el fetch los resultados cambiaron de dueño (un
@@ -653,7 +664,7 @@ export default function Page() {
       if (!refreshStillApplies()) return;
       if (!result.ok || result.configured === false) {
         if (result.message) console.error("[snapshot] renovación de sesión: la nube no está disponible:", result.message);
-        keepSessionData(snapshotCloudFallbackReason(result.message, { configured: result.configured }));
+        keepSessionData(result.message, { configured: result.configured });
         return;
       }
       const nightly = result.data?.nightly || null;
@@ -673,7 +684,7 @@ export default function Page() {
     }).catch((error) => {
       console.error("[snapshot] renovación de sesión: fallo al leer la nube:", error);
       if (!refreshStillApplies()) return;
-      keepSessionData(snapshotCloudFallbackReason(error?.message));
+      keepSessionData(error?.message);
     }).finally(() => {
       if (isCancelled()) return;
       if (!manual && resultsOwnerRef.current === "none") return;

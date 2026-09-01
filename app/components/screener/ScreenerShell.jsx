@@ -13,6 +13,7 @@
 // panel al container solo para esto.
 
 import { useEffect, useLayoutEffect, useRef } from "react";
+import { restartStatsEdgeSession } from "@/lib/cloudReauth";
 import GlobalCoveragePanel from "@/app/components/screener/GlobalCoveragePanel";
 import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
 import ResultPagerTable from "@/app/components/screener/ResultPagerTable";
@@ -430,9 +431,16 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       <span>{err ? "Incidencia" : "Estado"}</span>
       <b>{statusLabel}</b>
     </div> : null}
-    {showSnapshotNotice ? <div className={`snapshotFreshnessNotice ${snapshotNotice.tone || "info"}`} role="note">
+    {showSnapshotNotice ? <div className={`snapshotFreshnessNotice ${snapshotNotice.requiresReauth ? "compact warn" : snapshotNotice.tone || "info"}`} role="alert" aria-live="polite">
       <span>{snapshotNotice.label}</span>
       <b>{snapshotNotice.detail}</b>
+      {snapshotNotice.requiresReauth ? (
+        <div className="storageAlertActions">
+          <button type="button" className="btn btnSmall btnPrimary" onClick={() => { void restartStatsEdgeSession(); }}>
+            Vuelve a entrar
+          </button>
+        </div>
+      ) : null}
     </div> : null}
 
     <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}`}>

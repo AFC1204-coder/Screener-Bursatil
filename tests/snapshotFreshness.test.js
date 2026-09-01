@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildCloudAuthRequiredNotice,
+  buildLocalFallbackNotice,
   buildSessionKeepNotice,
   buildSnapshotFreshnessNotice,
   localScanIsSampled,
@@ -8,6 +10,7 @@ import {
   snapshotCloudFallbackReason,
   staleDurationLabel,
 } from "@/lib/snapshotFreshness";
+import { isCloudAuthFailure } from "@/lib/serviceErrors";
 
 describe("snapshot freshness", () => {
   it("no muestra aviso para snapshots frescos y completos", () => {
@@ -149,6 +152,38 @@ describe("snapshotCloudFallbackReason", () => {
       "La copia guardada en la nube no está disponible.",
     );
     expect(snapshotCloudFallbackReason("No autorizado", { configured: true })).toMatch(/vuelve a entrar/i);
+  });
+});
+
+describe("sesión caducada (C-02)", () => {
+  it("detecta fallos de autenticación en el mensaje crudo", () => {
+    expect(isCloudAuthFailure("No autorizado")).toBe(true);
+    expect(isCloudAuthFailure("HTTP 401")).toBe(true);
+    expect(isCloudAuthFailure("Failed to fetch")).toBe(false);
+  });
+
+  it("buildCloudAuthRequiredNotice pide re-login y marca requiresReauth", () => {
+    const notice = buildCloudAuthRequiredNotice({
+      scan: { rows: Array.from({ length: 545 }), rowsAvailable: 3693, rowsSampled: true },
+    });
+    expect(notice.label).toBe("Sesión caducada");
+    expect(notice.requiresReauth).toBe(true);
+    expect(notice.source).toBe("auth-required");
+    expect(notice.detail).toMatch(/Vuelve a entrar/i);
+    expect(notice.detail).toContain("545");
+  });
+
+  it("buildLocalFallbackNotice usa aviso de sesión cuando la nube devuelve 401", () => {
+    const notice = buildLocalFallbackNotice({
+      rawMessage: "No autorizado",
+      scan: { rows: Array.from({ length: 2 }), rowsAvailable: 10, rowsSampled: false },
+    });
+    expect(notice?.requiresReauth).toBe(true);
+  });
+
+  it("buildSessionKeepNotice enruta auth a buildCloudAuthRequiredNotice", () => {
+    const notice = buildSessionKeepNotice({ reason: "No autorizado" });
+    expect(notice.requiresReauth).toBe(true);
   });
 });
 
