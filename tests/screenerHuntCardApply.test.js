@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { DEFAULT_FIELD_RULES, DEFAULT_FILTER_LAYERS, effectiveSettingsFromLayers } from "@/lib/screenerFilterLayers";
-import { filterLayersForPreset, settingsForPreset } from "@/lib/screenerFilterCatalog";
+import { DEFAULT_FIELD_RULES, effectiveSettingsFromLayers } from "@/lib/screenerFilterLayers";
+import { DEFAULT_FILTER_LAYERS, filterLayersForPreset, settingsForPreset } from "@/lib/screenerFilterCatalog";
 import { HUNT_CARDS } from "@/lib/screenerHuntCards";
 import {
   getOrComputeHuntFilter,
@@ -125,6 +125,17 @@ describe("BUG-HUNT-1 · applyHuntCard sin flushSync", () => {
         DEFAULT_FIELD_RULES,
       );
       expect(fromHunt).toEqual(fromPreset);
+    }
+  });
+
+  it("huntPresetActiveSettings no activa pattern en Líderes E2 ni Cerca de pivot", () => {
+    for (const presetKey of ["balanced", "nearPivot"]) {
+      const layers = filterLayersForPreset(presetKey);
+      expect(layers.pattern, presetKey).toBe(false);
+      const settings = huntPresetActiveSettings(presetKey);
+      expect(settings.requireContractionsDecreasing).toBe(false);
+      expect(settings.minContractionCount).toBe(0);
+      expect(settings.maxAbsDistanceToPivotPct).toBe(999);
     }
   });
 

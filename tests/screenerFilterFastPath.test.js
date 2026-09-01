@@ -6,7 +6,7 @@ import {
   populationNeedsRescore,
   screenerFiltersFromScan,
 } from "@/lib/screenerFilterFastPath";
-import { DEFAULT_FILTER_LAYERS, settingsForPreset } from "@/lib/screenerFilterCatalog";
+import { DEFAULT_FILTER_LAYERS, ALL_FILTER_LAYERS, settingsForPreset } from "@/lib/screenerFilterCatalog";
 import { effectiveSettingsFromLayers } from "@/lib/screenerFilterLayers";
 import { screenerFilterRejectReason, screenerFiltersFromParams } from "@/lib/screenerFilters";
 import { filterAnalyzedRows, sectorize, splitByFilter } from "@/lib/screenerPipeline";
@@ -98,44 +98,62 @@ function legacyHotPath(rows, settings) {
 }
 
 const balancedSettings = effectiveSettingsFromLayers(settingsForPreset("balanced"), DEFAULT_FILTER_LAYERS);
+const balancedCronAlignedSettings = effectiveSettingsFromLayers(settingsForPreset("balanced"), ALL_FILTER_LAYERS);
 const weaknessSettings = effectiveSettingsFromLayers(settingsForPreset("weakness"), DEFAULT_FILTER_LAYERS);
 const balancedPrecomputed = screenerFiltersFromParams({ filterPreset: "balanced" });
 
 describe("P3 · fast-path screenPassed", () => {
-  it("el preset Balanceado de pantalla coincide con el del nocturno", () => {
-    expect(filterCriteriaMatchPrecomputed(balancedSettings, balancedPrecomputed.values)).toBe(true);
+  it("en frío la pantalla no coincide con el nocturno (capas opcionales off)", () => {
+    expect(filterCriteriaMatchPrecomputed(balancedSettings, balancedPrecomputed.values)).toBe(false);
     expect(filterCriteriaMatchPrecomputed(weaknessSettings, balancedPrecomputed.values)).toBe(false);
   });
 
-  it("no usa screenPassed si el usuario cambió el modo o apagó una capa", () => {
+  it("con todas las capas on, la pantalla vuelve a coincidir con el nocturno", () => {
+    const allLayersSettings = effectiveSettingsFromLayers(settingsForPreset("balanced"), ALL_FILTER_LAYERS);
+    expect(filterCriteriaMatchPrecomputed(allLayersSettings, balancedPrecomputed.values)).toBe(true);
+  });
+
+  it("no usa screenPassed si el usuario cambió el modo o apagó una capa núcleo", () => {
     const rows = stampScreenPassed([scoredRow(1), scoredRow(2)], balancedSettings);
     const context = { screenerFilters: balancedPrecomputed };
-    expect(canUseScreenPassedFastPath(rows, balancedSettings, context)).toBe(true);
+    expect(canUseScreenPassedFastPath(rows, balancedSettings, context)).toBe(false);
     expect(canUseScreenPassedFastPath(rows, weaknessSettings, context)).toBe(false);
     const layeredOff = effectiveSettingsFromLayers(settingsForPreset("balanced"), { ...DEFAULT_FILTER_LAYERS, trend: false });
     expect(canUseScreenPassedFastPath(rows, layeredOff, context)).toBe(false);
+    const allLayersSettings = effectiveSettingsFromLayers(settingsForPreset("balanced"), ALL_FILTER_LAYERS);
+    const allOnRows = stampScreenPassed([scoredRow(1), scoredRow(2)], allLayersSettings);
+    expect(canUseScreenPassedFastPath(allOnRows, allLayersSettings, context)).toBe(true);
   });
 
-  it("el fast-path devuelve los mismos símbolos que el motor de 68 reglas", () => {
+  it("el fast-path devuelve los mismos símbolos que el motor de 68 reglas (capas alineadas con cron)", () => {
     const raw = Array.from({ length: 80 }, (_, index) => scoredRow(index, {
       perf6m: index % 3 === 0 ? 2 : 22,
       weinsteinScore: index % 5 === 0 ? 20 : 72,
     }));
-    const stamped = stampScreenPassed(raw, balancedSettings);
+    const stamped = stampScreenPassed(raw, balancedCronAlignedSettings);
     const context = {
       id: "nightly",
       screenerFilters: balancedPrecomputed,
       useRegimeFilter: false,
       marketHealth: null,
     };
-    const fast = filterAnalyzedRows(stamped, balancedSettings, context);
+    const fast = filterAnalyzedRows(stamped, balancedCronAlignedSettings, context);
     const viaRules = filterAnalyzedRows(stamped.map((row) => {
       const { screenPassed, screenRejectField, screenRejectReason, ...rest } = row;
       return rest;
-    }), balancedSettings, { ...context, screenerFilters: null });
+    }), balancedCronAlignedSettings, { ...context, screenerFilters: null });
     expect(fast.path).toBe("screen-passed");
     expect(viaRules.path).toBe("rules");
     expect(fast.rows.map((row) => row.symbol)).toEqual(viaRules.rows.map((row) => row.symbol));
+  });
+
+  it("con capas opcionales off, el fast-path cae a rules aunque haya screenPassed del cron", () => {
+    const stamped = stampScreenPassed([scoredRow(1), scoredRow(2)], balancedSettings);
+    const view = filterAnalyzedRows(stamped, balancedSettings, {
+      screenerFilters: balancedPrecomputed,
+      useRegimeFilter: false,
+    });
+    expect(view.path).toBe("rules");
   });
 
   it("Balanceado → Deterioro no usa screenPassed del nocturno", () => {
@@ -155,11 +173,11 @@ describe("P3 · medición del gesto sobre ~3309 filas", () => {
       perf6m: index % 4 === 0 ? 3 : 24,
       minerviniScore: index % 7 === 0 ? 18 : 68,
     }));
-    const stamped = stampScreenPassed(raw, balancedSettings);
+    const stamped = stampScreenPassed(raw, balancedCronAlignedSettings);
     expect(populationNeedsRescore(stamped)).toBe(false);
 
-    const legacy = legacyHotPath(stamped, balancedSettings);
-    const fast = filterAnalyzedRows(stamped, balancedSettings, {
+    const legacy = legacyHotPath(stamped, balancedCronAlignedSettings);
+    const fast = filterAnalyzedRows(stamped, balancedCronAlignedSettings, {
       screenerFilters: balancedPrecomputed,
       useRegimeFilter: false,
     });

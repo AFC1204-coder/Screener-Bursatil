@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ALL_FILTER_LAYERS,
+  CORE_LAYER_KEYS,
   DEFAULT_FIELD_RULES,
   DEFAULT_FILTER_LAYERS,
   EXECUTION_LAYERS,
@@ -9,7 +10,10 @@ import {
   FILTER_FIELDS,
   FILTER_FIELD_LAYERS,
   FILTER_FAMILY_ORDER,
+  NEUTRAL_FIELD_VALUES,
+  OPTIONAL_LAYER_KEYS,
   PRESET_LAYER_OVERRIDES,
+  SETTING_LAYER_DEPENDENCIES,
   SCREENER_WEB_FILTER_PRESETS,
   filterLayersForPreset,
   settingsForPreset,
@@ -26,17 +30,19 @@ import { PRIVATE_GLOBAL_RS_DISCLOSURE } from "@/lib/rsEngines";
 
 const PRESET_KEYS = Object.keys(SCREENER_WEB_FILTER_PRESETS);
 
-// Las seis reglas que antes de este cambio sólo actuaban en el escaneo
-// nocturno: el cron aplica el preset crudo y la pantalla lo pasaba por las
-// capas, con volumeSurge y riskReward apagadas de fábrica.
-// Ver docs/auditoria-filtros-2026-08-13.md, sección D.5.
-const REGLAS_SOLO_NOCTURNAS = [
+// Reglas de familias opcionales que el cron aplica en el preset crudo pero la
+// pantalla neutraliza con capas off (UX-FILTERS-8).
+const REGLAS_CAPAS_OPCIONALES = [
   "minRelativeVolume",
   "minVolumeSurgePct",
   "minUpDownVolRatio",
   "minRiskRewardScore",
   "minReturnToVol3m",
   "minReturnToDrawdown3m",
+  "minContractionCount",
+  "maxAbsDistanceToPivotPct",
+  "minShortFloatPct",
+  "maxShortFloatPct",
 ];
 
 // Fila base que pasa el preset balanced con holgura. Cada caso de prueba la
@@ -124,6 +130,34 @@ function ajustesDeLaPantalla(presetKey) {
   );
 }
 
+describe("auditoría campo → familia única (UX-FILTERS-8)", () => {
+  it("cada setting key de familia pertenece a una sola capa", () => {
+    const seen = new Map();
+    for (const key of FILTER_FAMILY_ORDER) {
+      const family = FILTER_FAMILIES[key];
+      for (const settingKey of family.settingKeys || []) {
+        expect(seen.has(settingKey), `${settingKey} duplicado en ${seen.get(settingKey)} y ${key}`).toBe(false);
+        seen.set(settingKey, key);
+      }
+    }
+    for (const [settingKey, dependency] of Object.entries(SETTING_LAYER_DEPENDENCIES)) {
+      expect(dependency.layer, settingKey).toBe(seen.get(settingKey));
+    }
+  });
+
+  it("cada field de FILTER_FIELDS tiene exactamente una familia en FILTER_FIELD_LAYERS", () => {
+    const assignments = new Map();
+    for (const [fieldKey, layers] of Object.entries(FILTER_FIELD_LAYERS)) {
+      expect(layers, fieldKey).toHaveLength(1);
+      const family = layers[0];
+      expect(assignments.has(fieldKey), `${fieldKey} ya asignado a ${assignments.get(fieldKey)}`).toBe(false);
+      assignments.set(fieldKey, family);
+      expect(FILTER_FAMILIES[family].fields.some((field) => field.key === fieldKey)).toBe(true);
+    }
+    expect(assignments.size).toBe(FILTER_FIELDS.length);
+  });
+});
+
 describe("taxonomía única de familias (UX-FILTERS-2)", () => {
   it("cada field pertenece a exactamente una capa", () => {
     for (const [key, layers] of Object.entries(FILTER_FIELD_LAYERS)) {
@@ -188,23 +222,42 @@ describe("copy familia RS (MET-1b)", () => {
   });
 });
 
-describe("ninguna capa viene apagada de fábrica", () => {
-  it("DEFAULT_FILTER_LAYERS tiene las trece capas de ejecución encendidas", () => {
-    const apagadas = Object.entries(DEFAULT_FILTER_LAYERS).filter(([, on]) => on !== true).map(([key]) => key);
-    expect(apagadas).toEqual([]);
+describe("defaults conservadores (UX-FILTERS-8)", () => {
+  it("núcleo on y familias opcionales off en frío", () => {
+    for (const key of CORE_LAYER_KEYS) {
+      expect(DEFAULT_FILTER_LAYERS[key], `${key} debe estar on`).toBe(true);
+    }
+    for (const key of OPTIONAL_LAYER_KEYS) {
+      expect(DEFAULT_FILTER_LAYERS[key], `${key} debe estar off`).toBe(false);
+    }
     expect(Object.keys(DEFAULT_FILTER_LAYERS).sort()).toEqual(EXECUTION_LAYERS.map((layer) => layer.key).sort());
   });
 
-  it("ningún preset apaga capas por su cuenta", () => {
-    expect(PRESET_LAYER_OVERRIDES).toEqual({});
-    for (const presetKey of PRESET_KEYS) {
-      const apagadas = Object.entries(filterLayersForPreset(presetKey)).filter(([, on]) => on !== true).map(([key]) => key);
-      expect(apagadas, `el preset ${presetKey} apaga capas`).toEqual([]);
-    }
+  it("ALL_FILTER_LAYERS sigue siendo el alias de todas encendidas (auditoría)", () => {
+    expect(ALL_FILTER_LAYERS).toEqual(Object.fromEntries(FILTER_FAMILY_ORDER.map((key) => [key, true])));
+    expect(ALL_FILTER_LAYERS).not.toEqual(DEFAULT_FILTER_LAYERS);
   });
 
-  it("ALL_FILTER_LAYERS coincide con el estado de fábrica", () => {
-    expect(ALL_FILTER_LAYERS).toEqual(DEFAULT_FILTER_LAYERS);
+  it("balanced / nearPivot / leader no activan pattern sin acción explícita", () => {
+    for (const presetKey of ["balanced", "nearPivot"]) {
+      expect(filterLayersForPreset(presetKey).pattern, presetKey).toBe(false);
+    }
+    const leaderLayers = filterLayersForPreset("balanced");
+    expect(leaderLayers.pattern).toBe(false);
+    expect(settingsForPreset("balanced").setupMode).toBe("leader");
+  });
+
+  it("sólo presets IPO encienden la capa ipo por override", () => {
+    expect(PRESET_LAYER_OVERRIDES).toEqual({ ipo: { ipo: true }, ipoDiscovery: { ipo: true } });
+    expect(filterLayersForPreset("ipo").ipo).toBe(true);
+    expect(filterLayersForPreset("ipoDiscovery").ipo).toBe(true);
+    expect(filterLayersForPreset("balanced").ipo).toBe(false);
+  });
+
+  it("ningún preset hunt E2 enciende pattern", () => {
+    for (const presetKey of ["balanced", "nearPivot", "strict", "early"]) {
+      expect(filterLayersForPreset(presetKey).pattern, presetKey).toBe(false);
+    }
   });
 
   it("setupModeLayerRequirements sólo pide capas encendidas, nunca las apaga", () => {
@@ -212,81 +265,105 @@ describe("ninguna capa viene apagada de fábrica", () => {
       const pedidas = Object.values(setupModeLayerRequirements(mode));
       expect(pedidas.every((value) => value === true), `el modo ${mode} apaga alguna capa`).toBe(true);
     }
-    // El modo weakness necesita la capa `score`: sin ella
-    // effectiveSettingsFromLayers degrada el modo a "any".
     expect(setupModeLayerRequirements("weakness")).toEqual({ score: true });
   });
 });
 
-describe("la pantalla y el escaneo nocturno aplican el mismo preset", () => {
-  it.each(PRESET_KEYS)("los ajustes efectivos coinciden en el preset %s", (presetKey) => {
+describe("pantalla con capas vs cron con preset crudo (UX-FILTERS-8)", () => {
+  const CORE_PRESET_KEYS = PRESET_KEYS.filter((key) => !["ipo", "ipoDiscovery"].includes(key));
+
+  it.each(CORE_PRESET_KEYS)("núcleo activo coincide en el preset %s", (presetKey) => {
     const cron = ajustesDelCron(presetKey);
     const pantalla = ajustesDeLaPantalla(presetKey);
+    const coreFields = FILTER_FAMILY_ORDER
+      .filter((key) => CORE_LAYER_KEYS.includes(key))
+      .flatMap((key) => FILTER_FAMILIES[key].fields.map((field) => field.key));
+    const distintos = coreFields.filter((key) => cron[key] !== pantalla[key]);
+    expect(distintos).toEqual([]);
+  });
+
+  it("en frío, la pantalla neutraliza reglas de familias opcionales apagadas", () => {
+    const pantalla = ajustesDeLaPantalla("balanced");
+    const cron = ajustesDelCron("balanced");
+    for (const regla of REGLAS_CAPAS_OPCIONALES) {
+      expect(pantalla[regla], `${regla} no debería cortar en pantalla fría`).toBe(NEUTRAL_FIELD_VALUES[regla] ?? pantalla[regla]);
+      if (cron[regla] !== pantalla[regla]) {
+        expect(cron[regla], `${regla} sigue activa en el cron`).not.toBe(NEUTRAL_FIELD_VALUES[regla]);
+      }
+    }
+  });
+
+  it("con todas las capas on, la pantalla vuelve a coincidir con el cron", () => {
+    const cron = ajustesDelCron("balanced");
+    const pantalla = effectiveSettingsFromLayers(
+      settingsForPreset("balanced"),
+      ALL_FILTER_LAYERS,
+      DEFAULT_FIELD_RULES,
+    );
     const distintos = [...new Set([...Object.keys(cron), ...Object.keys(pantalla)])]
-      // maxSymbols es el tope de símbolos del escaneo, no una regla de filtro:
-      // stripInternalPresetFields lo quita de la vista web del preset y no está
-      // en SCREENER_FILTER_QUERY_KEYS, FIELD_RULES ni DISTANCE_RULES.
       .filter((key) => key !== "maxSymbols")
       .filter((key) => cron[key] !== pantalla[key]);
     expect(distintos).toEqual([]);
   });
 
-  it.each(PRESET_KEYS)("el conjunto de filas que pasa es el mismo en el preset %s", (presetKey) => {
-    const porElCron = applyScreenerFilters(POBLACION, screenerFiltersFromParams({ filterPreset: presetKey }));
-    const porLaPantalla = applyScreenerFilters(POBLACION, {
-      enabled: true,
-      preset: presetKey,
-      values: ajustesDeLaPantalla(presetKey),
-    });
-    expect(porLaPantalla.rows.map((row) => row.symbol)).toEqual(porElCron.rows.map((row) => row.symbol));
-    expect(porLaPantalla.rejections.map((item) => `${item.symbol}:${item.field}`))
-      .toEqual(porElCron.rejections.map((item) => `${item.symbol}:${item.field}`));
-  });
-
-  it("las seis reglas que sólo actuaban de noche ahora también cortan en la pantalla", () => {
+  it("las reglas opcionales del preset balanced cortan en el cron pero no en pantalla fría", () => {
     const pantalla = ajustesDeLaPantalla("balanced");
-    const cron = ajustesDelCron("balanced");
-    for (const regla of REGLAS_SOLO_NOCTURNAS) {
-      expect(pantalla[regla], `${regla} sigue neutralizado en la pantalla`).toBe(cron[regla]);
-    }
-    const rechazadas = applyScreenerFilters(POBLACION, {
+    const rechazadasPantalla = applyScreenerFilters(POBLACION, {
       enabled: true,
       preset: "balanced",
       values: pantalla,
     }).rejections.map((item) => item.field);
-    for (const regla of REGLAS_SOLO_NOCTURNAS) {
-      expect(rechazadas, `${regla} no rechazó ninguna fila en la pantalla`).toContain(regla);
+    const rechazadasCron = applyScreenerFilters(POBLACION, screenerFiltersFromParams({ filterPreset: "balanced" }))
+      .rejections.map((item) => item.field);
+    for (const regla of ["minRelativeVolume", "minVolumeSurgePct", "minUpDownVolRatio", "minRiskRewardScore", "minReturnToVol3m", "minReturnToDrawdown3m"]) {
+      expect(rechazadasCron, `${regla} no rechazó en cron`).toContain(regla);
+      expect(rechazadasPantalla, `${regla} no debería rechazar en pantalla fría`).not.toContain(regla);
     }
   });
 });
 
 describe("restoreFilterLayers · configuración guardada en el navegador", () => {
   const guardadoAntiguo = { pattern: false, volumeSurge: false, shortInterest: false, riskReward: false, trend: true };
+  const guardadoV2TodasOn = Object.fromEntries(FILTER_FAMILY_ORDER.map((key) => [key, true]));
 
-  it("descarta las capas guardadas antes de la v2 del contrato", () => {
-    expect(restoreFilterLayers(guardadoAntiguo, undefined, "balanced")).toEqual(DEFAULT_FILTER_LAYERS);
-    expect(restoreFilterLayers(guardadoAntiguo, 1, "balanced")).toEqual(DEFAULT_FILTER_LAYERS);
-    expect(restoreFilterLayers(guardadoAntiguo, null, "weakness")).toEqual(DEFAULT_FILTER_LAYERS);
+  it("descarta capas guardadas antes de la v3 del contrato", () => {
+    expect(restoreFilterLayers(guardadoAntiguo, undefined, "balanced")).toEqual(filterLayersForPreset("balanced"));
+    expect(restoreFilterLayers(guardadoAntiguo, 1, "balanced")).toEqual(filterLayersForPreset("balanced"));
+    expect(restoreFilterLayers(guardadoV2TodasOn, 2, "balanced")).toEqual(filterLayersForPreset("balanced"));
+    expect(restoreFilterLayers(guardadoAntiguo, null, "weakness")).toEqual(filterLayersForPreset("weakness"));
   });
 
-  it("respeta las capas guardadas a partir de la v2", () => {
-    expect(restoreFilterLayers({ pattern: false }, FILTER_LAYERS_CONTRACT_VERSION, "balanced"))
-      .toEqual({ ...DEFAULT_FILTER_LAYERS, pattern: false });
-    expect(restoreFilterLayers({ volumeSurge: false, riskReward: false }, FILTER_LAYERS_CONTRACT_VERSION, "strict"))
-      .toEqual({ ...DEFAULT_FILTER_LAYERS, volumeSurge: false, riskReward: false });
+  it("respeta las capas guardadas a partir de la v3", () => {
+    expect(restoreFilterLayers({ pattern: true }, FILTER_LAYERS_CONTRACT_VERSION, "balanced"))
+      .toEqual({ ...filterLayersForPreset("balanced"), pattern: true });
+    expect(restoreFilterLayers({ volumeSurge: true, riskReward: true }, FILTER_LAYERS_CONTRACT_VERSION, "strict"))
+      .toEqual({ ...filterLayersForPreset("strict"), volumeSurge: true, riskReward: true });
+  });
+
+  it("no reencende capas obsoletas ni arrastra keys fuera del catálogo", () => {
+    const restored = restoreFilterLayers(
+      { vcp: true, pattern: true, removedFamily: false },
+      FILTER_LAYERS_CONTRACT_VERSION,
+      "balanced",
+    );
+    expect(restored).toEqual({ ...filterLayersForPreset("balanced"), pattern: true });
+    expect(restored).not.toHaveProperty("vcp");
+    expect(restored).not.toHaveProperty("removedFamily");
   });
 
   it("cae al estado de fábrica sin capas guardadas o con un valor corrupto", () => {
-    expect(restoreFilterLayers(null, FILTER_LAYERS_CONTRACT_VERSION, "balanced")).toEqual(DEFAULT_FILTER_LAYERS);
-    expect(restoreFilterLayers("nada", FILTER_LAYERS_CONTRACT_VERSION, "balanced")).toEqual(DEFAULT_FILTER_LAYERS);
-    expect(restoreFilterLayers({ pattern: false }, "no-es-un-numero", "balanced")).toEqual(DEFAULT_FILTER_LAYERS);
+    expect(restoreFilterLayers(null, FILTER_LAYERS_CONTRACT_VERSION, "balanced")).toEqual(filterLayersForPreset("balanced"));
+    expect(restoreFilterLayers("nada", FILTER_LAYERS_CONTRACT_VERSION, "balanced")).toEqual(filterLayersForPreset("balanced"));
+    expect(restoreFilterLayers({ pattern: true }, "no-es-un-numero", "balanced")).toEqual(filterLayersForPreset("balanced"));
   });
 
-  it("una sesión antigua ya no puede reintroducir la divergencia con el cron", () => {
-    const capas = restoreFilterLayers(guardadoAntiguo, 1, "balanced");
-    const pantalla = effectiveSettingsFromLayers(settingsForPreset("balanced"), capas, DEFAULT_FIELD_RULES);
-    for (const regla of REGLAS_SOLO_NOCTURNAS) {
-      expect(pantalla[regla]).toBe(ajustesDelCron("balanced")[regla]);
+  it("una sesión v2 ya no reintroduce todas las capas opcionales encendidas", () => {
+    const capas = restoreFilterLayers(guardadoV2TodasOn, 2, "balanced");
+    expect(capas.pattern).toBe(false);
+    expect(capas.volumeSurge).toBe(false);
+    for (const regla of ["minRelativeVolume", "minRiskRewardScore"]) {
+      const pantalla = effectiveSettingsFromLayers(settingsForPreset("balanced"), capas, DEFAULT_FIELD_RULES);
+      expect(pantalla[regla]).toBe(NEUTRAL_FIELD_VALUES[regla]);
     }
   });
 });

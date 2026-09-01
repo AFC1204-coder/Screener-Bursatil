@@ -1,15 +1,16 @@
-# Ticket activo — pendiente commit bridge + cola VCP-4
+# Ticket activo — VCP-4-screener-panel
 
-**Código WIP:** VCP-3-prod-bridge (motor unificado) — verify OK, **sin commit**  
-**Flag local:** `STATSEDGE_VCP_UNIFIED=1` en `.env.local` (dueño probando ficha)
+**Último cerrado:** UX-FILTERS-8 (verify orquestador 2026-09-01) — **pendiente commit**  
+**Spec:** `docs/tickets/VCP-4-screener-panel.md`
 
-## Siguiente trabajo (orden dueño)
+## Verificación UX-FILTERS-8 ✓
 
-1. **Commit** paquete bridge cuando dueño diga (tras smoke opcional).
-2. **VCP-4-screener-panel** — sección VCP con criterios Minervini (% y nº contracciones), columna código, sin score. Spec: `docs/tickets/VCP-4-screener-panel.md`
-3. **UX-FILTERS-8** — defaults y duplicados en filtros (en paralelo o antes de VCP-4 UI). Spec: `docs/tickets/UX-FILTERS-8-coherencia-defaults.md`
+- Tests filtro: **79/79** (bloque UX-FILTERS-8: **67/67**)
+- Defaults v3: núcleo on, opcionales (`pattern`, `ipo`, etc.) **off**
+- Hunt E2 (`balanced`, `nearPivot`, …) **no** activan `pattern`
+- `FILTER_LAYERS_CONTRACT_VERSION` = **3** (sesiones v1/v2 → defaults nuevos)
 
-## Prompt Agent — VCP-4 (copiar cuando bridge esté commiteado)
+## Prompt para Agent chat — VCP-4 (copiar tal cual)
 
 ```
 @docs/tickets/VCP-4-screener-panel.md
@@ -22,18 +23,9 @@
 Rama: codex/statsedge-ui-polish
 Modelo: Composer 2.5
 
-Panel familia VCP en Más filtros: umbrales concretos (contracciones, % pivot, volumen, vcpCandidate motor unificado). Columna tabla con etiqueta Minervini (2C, form, PV). Sin minPatternQualityScore ni hunt nueva. Familia off por defecto. Tests label+filtro. Sin commit ni push.
+Panel familia VCP en Más filtros: umbrales concretos (contracciones, % pivot, volumen, vcpCandidate motor unificado). Columna tabla etiqueta Minervini (2C, form, PV). Sin minPatternQualityScore ni hunt nueva. Familia vcp off por defecto (OPTIONAL). Tests label+filtro. Sin commit ni push.
 ```
 
-## Prompt Agent — UX-FILTERS-8 (puede ir antes, otro chat)
+---
 
-```
-@docs/tickets/UX-FILTERS-8-coherencia-defaults.md
-@lib/screenerFilterCatalog.js
-@lib/screenerFilterLayers.js
-
-Rama: codex/statsedge-ui-polish
-Modelo: Composer 2.5
-
-Auditoría defaults/duplicados filterLayers; familias opcionales off en frío; preset hunt no activa pattern/VCP sin usuario; test auditoría. Sin commit ni push.
-```
+Pendiente: commit UX-FILTERS-8 si dueño dice OK · smoke Browser Use filtros (orquestador).

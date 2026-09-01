@@ -141,7 +141,7 @@ describe("resolveStoredFilterConfig · sesión pre-rediseño", () => {
     expect(resolved.effectiveSettings).toEqual(baselineEffectiveSettings(config));
   });
 
-  it("capas v1 se descartan: activeSettings alineados con contrato v2", () => {
+  it("capas v1/v2 se descartan: activeSettings alineados con contrato v3", () => {
     const expected = baselineEffectiveSettings(preRedesignTemplateLayersV1);
     const resolved = resolveStoredFilterConfig(preRedesignTemplateLayersV1);
     expect(resolved.effectiveSettings).toEqual(expected);

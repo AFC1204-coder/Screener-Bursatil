@@ -5,9 +5,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-01 · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **commit bridge pendiente** → **VCP-4-screener-panel** + **UX-FILTERS-8**  
-VCP-3-prod-bridge **código listo** (verify OK; flag en `.env.local`). Sin commit aún.  
-**Cola:** commit bridge → VCP-4 panel Minervini → UX-FILTERS-8 coherencia → nocturno Pre-fuga.  
+Ticket en curso: **UX-FILTERS-8** — `docs/tickets/UX-FILTERS-8-coherencia-defaults.md`  
+**Después:** VCP-4-screener-panel (panel Minervini).  
+Último commit: `6179414` feat(vcp) motor unificado.  
 **Rúbrica VCP:** `docs/rubrica-vcp-producto-2026-09-01.md` · gap `docs/evidence/vcp-gap-mecanico-2026-09-01.md`  
 Último cerrado: **VCP-1 arnés** (verify 2026-09-01).  
 Último cerrado: **STAGE-1** (verify 2026-09-01).  
