@@ -5,9 +5,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-02 (tarde) · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **ninguno** — CLEANUP-shadow C-01…C-10 cerrado  
-Último cerrado: **C-09+C-10** (tests pullCloudState + docs TTL 15 min).  
-Auditoría shadow: **completa**.  
+**RECORDATORIO dueño (sin falta):** **jueves 3 sep 2026** → activar **MIGRATE-1** Mac Mini (margen Pro ~5 sep).  
+Ticket en curso: **MIGRATE** (mañana) — plan `docs/plan-migrate-postgres-mac-mini-2026-08-30.md`  
+Último cerrado: **C-09+C-10** · CLEANUP-shadow completa (`963c145`).  
 Último cerrado: **UX-FILTERS-8** (`dac98a3`).  
 **Rúbrica VCP:** `docs/rubrica-vcp-producto-2026-09-01.md` · gap `docs/evidence/vcp-gap-mecanico-2026-09-01.md`  
 Último cerrado: **VCP-1 arnés** (verify 2026-09-01).  
@@ -255,7 +255,7 @@ Feedback dueño: profundidad OK, fricción al filtrar nacionalidades + sensació
 | UX-NAC-3 | Auto-cargar mesa al desalinearse; sin CTA rojo obligatorio | **Hecho** · smoke Core intl / HK |
 | PERF-NAC | Recorte latencia cambio vista (R-06) + hydrate RS sin colgar scans | **Hecho** |
 | YIELD | Más filas intl reales en mesa (ops/cron, no solo chips) | **YIELD-1 Hecho** |
-| MIGRATE-1…3 | Postgres Mini | **Aparcado** (dueño: mañana/pasado) |
+| MIGRATE-1…3 | Postgres Mini | **Mañana sin falta (3 sep)** · margen Pro ~5 sep · plan `docs/plan-migrate-postgres-mac-mini-2026-08-30.md` |
 
 ## Chart (pendiente · oleada post-screener P2)
 
