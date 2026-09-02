@@ -857,6 +857,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onSave={() => saveSnapshot(huntResultsFiltered)}
             onCsv={() => csv(huntResultsFiltered)}
             onAuditJson={() => decisionAuditJson(huntResultsFiltered)}
+            onRefresh={refreshScreenerSnapshotData}
+            onReset={resetScreenerSession}
+            refreshing={restoringScan}
             onOpenStock={saveSessionBeforeStockOpen}
             page={visibleResultPage}
             pageSize={resultPageSize}
@@ -892,41 +895,41 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               <h2>Resultados</h2>
             </div>
             <div className="controls resultsToolbar">
+              {huntResultsFiltered.length ? (
+                <button className="btn btnSmall btnPrimary" onClick={openPrimaryReview}>Revisar</button>
+              ) : null}
               {/* Siempre visible, incluso con la tabla vacía. Sin botón
                   Ejecutar, este es el único camino de vuelta a un estado bueno;
                   esconderlo justo cuando no hay resultados —que es cuando hace
                   falta— dejaba la sesión sin salida. */}
-              <div className="resultsToolbarSecondary">
-                <button
-                  className="btn btnSmall btnGhost"
-                  onClick={refreshScreenerSnapshotData}
-                  disabled={restoringScan}
-                  title="Trae el último escaneo nocturno sin cambiar tus filtros ni plantilla"
-                >
-                  {restoringScan ? "Actualizando…" : "Traer datos frescos"}
-                </button>
-                <button
-                  className="btn btnSmall btnGhost"
-                  onClick={resetScreenerSession}
-                  disabled={restoringScan}
-                  title="Borra criterios y vuelve al preset equilibrado con datos nuevos"
-                >
-                  Resetear criterios
-                </button>
-                {huntResultsFiltered.length ? <>
-                  <button className="btn btnSmall btnGhost" onClick={() => csv(huntResultsFiltered)}>↓ CSV</button>
-                  <button className="btn btnSmall btnGhost" onClick={() => saveSnapshot(huntResultsFiltered)} aria-label="Guardar copia de resultados">Guardar</button>
-                </> : null}
-              </div>
-              {huntResultsFiltered.length ? <>
-                <button className="btn btnSmall btnPrimary" onClick={openPrimaryReview}>Revisar</button>
-                <details className="resultsMoreMenu">
-                  <summary className="btn btnSmall btnGhost" aria-label="Más herramientas" title="Más herramientas">⋯</summary>
-                  <div className="resultsMoreMenuPanel">
+              <details className="resultsMoreMenu">
+                <summary className="btn btnSmall btnGhost" aria-label="Más herramientas" title="Más herramientas">⋯</summary>
+                <div className="resultsMoreMenuPanel">
+                  <button
+                    type="button"
+                    className="btn btnSmall btnGhost"
+                    onClick={refreshScreenerSnapshotData}
+                    disabled={restoringScan}
+                    title="Trae el último escaneo nocturno sin cambiar tus filtros ni plantilla"
+                  >
+                    {restoringScan ? "Actualizando…" : "Traer datos frescos"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btnSmall btnGhost"
+                    onClick={resetScreenerSession}
+                    disabled={restoringScan}
+                    title="Borra criterios y vuelve al preset equilibrado con datos nuevos"
+                  >
+                    Resetear criterios
+                  </button>
+                  {huntResultsFiltered.length ? <>
+                    <button type="button" className="btn btnSmall btnGhost" onClick={() => csv(huntResultsFiltered)}>↓ CSV</button>
+                    <button type="button" className="btn btnSmall btnGhost" onClick={() => saveSnapshot(huntResultsFiltered)} aria-label="Guardar copia de resultados">Guardar</button>
                     <button type="button" className="btn btnSmall btnGhost" onClick={() => decisionAuditJson(huntResultsFiltered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
-                  </div>
-                </details>
-              </> : null}
+                  </> : null}
+                </div>
+              </details>
             </div>
           </div>
 

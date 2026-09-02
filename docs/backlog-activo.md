@@ -5,12 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-02 (tarde) · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño (sin falta):** **jueves 3 sep 2026** → activar **MIGRATE-1** Mac Mini (margen Pro ~5 sep).  
-**Hoy:** desarrollo normal (no migrate). Último cerrado: **FILTER-SHELL-1** — Diagnóstico agrupado.  
-Ticket en curso: ninguno (elige siguiente o mañana MIGRATE).  
+**RECORDATORIO dueño (sin falta):** **jueves 3 sep 2026** → **MIGRATE-1** Mac Mini.  
+**Hoy:** Último cerrado **FILTER-SHELL-2** — toolbar → ⋯.  
+Último cerrado: **FILTER-SHELL-1** — `21da8b0`.  
 Último cerrado: **MOBILE-FIRE-3** — `1ae4418`.  
-Último cerrado: **MOBILE-FIRE-2** — `a7d14df`.  
-Último cerrado: **MOBILE-FIRE-1** — `15843af`.  
 Último cerrado: **C-09+C-10** · CLEANUP-shadow completa (`963c145`).  
 Último cerrado: **UX-FILTERS-8** (`dac98a3`).  
 **Rúbrica VCP:** `docs/rubrica-vcp-producto-2026-09-01.md` · gap `docs/evidence/vcp-gap-mecanico-2026-09-01.md`  
@@ -191,11 +189,12 @@ MIGRATE aparcado.
 | MOBILE-FIRE-1 | Primer resultado en fold 390 · bottomNav 82px | **Cerrado** · `15843af` |
 | MOBILE-FIRE-2 | Copy compacto carga/verdad/status · sticky head | **Cerrado** · `a7d14df` |
 | MOBILE-FIRE-3 | Fold densificado · firstTop ≤520 | **Cerrado** · `1ae4418` |
-| FILTER-SHELL-1 | Diagnóstico agrupa auditoría + cobertura | **Cerrado** (verify 2026-09-02) |
+| FILTER-SHELL-1 | Diagnóstico agrupa auditoría + cobertura | **Cerrado** · `21da8b0` |
+| FILTER-SHELL-2 | Toolbar secundaria → menú ⋯ | **Cerrado** (verify 2026-09-02) |
 
 ## Siguiente — desarrollo normal (MIGRATE mañana)
 
-Candidatos: más poda UI toolbar secundaria · **VCP-3-gates** (calidad, no más UI VCP) · `/stock` móvil. Dueño elige.
+Candidatos: **VCP-3-gates** · `/stock` móvil · poda menor. Dueño elige.
 
 ## Siguiente — datos IPO + filtros
 

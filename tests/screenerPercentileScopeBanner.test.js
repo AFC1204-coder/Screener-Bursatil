@@ -192,11 +192,14 @@ describe("ScreenerShell · franja P3 (ranking provisional)", () => {
     expect(html).not.toContain(">Detener<");
   });
 
-  it("muestra Traer datos frescos y Resetear criterios (P4)", () => {
+  it("muestra Traer datos frescos y Resetear criterios en el menú ⋯ (P4)", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW] })));
     expect(html).toContain("Traer datos frescos");
     expect(html).toContain("Resetear criterios");
     expect(html).not.toContain("Reset sesión");
+    const moreMenu = html.match(/<details class="resultsMoreMenu">[\s\S]*?<\/details>/);
+    expect(moreMenu?.[0]).toContain("Traer datos frescos");
+    expect(moreMenu?.[0]).toContain("Resetear criterios");
   });
 
   it("oculta scanStatusBar en estado OK (idle sin err)", () => {
@@ -229,6 +232,31 @@ describe("ScreenerShell · toolbar resultados (UX-P2)", () => {
     const moreMenu = html.match(/<details class="resultsMoreMenu">[\s\S]*?<\/details>/);
     expect(moreMenu?.[0]).toContain("JSON audit");
     expect((html.match(/>JSON audit</g) || []).length).toBe(1);
+  });
+
+  it("FILTER-SHELL-2: secundarios (CSV, Guardar, Traer, Resetear) solo en el menú ⋯", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW] })));
+    const toolbar = html.match(/<div class="controls resultsToolbar">[\s\S]*?<\/div>\s*<\/div>/);
+    expect(toolbar?.[0]).toContain(">Revisar<");
+    expect(toolbar?.[0]).toContain("resultsMoreMenu");
+    expect(toolbar?.[0]).not.toContain("resultsToolbarSecondary");
+    const moreMenu = html.match(/<details class="resultsMoreMenu">[\s\S]*?<\/details>/);
+    expect(moreMenu?.[0]).toContain("Traer datos frescos");
+    expect(moreMenu?.[0]).toContain("Resetear criterios");
+    expect(moreMenu?.[0]).toContain(">↓ CSV<");
+    expect(moreMenu?.[0]).toContain(">Guardar<");
+    expect(moreMenu?.[0]).toContain("JSON audit");
+  });
+
+  it("FILTER-SHELL-2: sin filas, el menú ⋯ sigue montado con Traer y Resetear", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [] })));
+    expect(html).toContain("resultsMoreMenu");
+    expect(html).not.toContain(">Revisar<");
+    const moreMenu = html.match(/<details class="resultsMoreMenu">[\s\S]*?<\/details>/);
+    expect(moreMenu?.[0]).toContain("Traer datos frescos");
+    expect(moreMenu?.[0]).toContain("Resetear criterios");
+    expect(moreMenu?.[0]).not.toContain(">↓ CSV<");
+    expect(moreMenu?.[0]).not.toContain(">Guardar<");
   });
 
   it("unifica el título a Resultados sin rótulo Results", () => {

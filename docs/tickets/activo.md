@@ -1,16 +1,20 @@
-# Ticket activo — pendiente elegir (MIGRATE mañana)
+# Ticket activo — siguiente / MIGRATE mañana
 
-**Estado:** FILTER-SHELL-1 cerrado · **MIGRATE-1 mañana 3 sep** (no hoy)  
-**Último cerrado:** FILTER-SHELL-1 — Diagnóstico agrupado en aside
+**Estado:** FILTER-SHELL-2 cerrado · desarrollo normal OK · **MIGRATE-1 mañana 3 sep**  
+**Último cerrado:** FILTER-SHELL-2 — toolbar secundaria en ⋯
 
-## Cerrado 2026-09-02 noche
+## Cerrado esta noche
 
-- FILTER-SHELL-1 · Diagnóstico (auditoría + cobertura)
+- FILTER-SHELL-2 · toolbar → ⋯
+- FILTER-SHELL-1 · Diagnóstico
 - MOBILE-FIRE-1…3
-- CLEANUP C-01…C-10
 
-## Mañana sin falta — MIGRATE-1
+## Candidatos si sigues hoy
 
-Ver checklist y prompt en historial / `docs/tickets/MIGRATE-1-mini-dump-restore.md` · plan `docs/plan-migrate-postgres-mac-mini-2026-08-30.md`.
+- VCP-3-gates  
+- `/stock` móvil  
+- Más poda UI menor  
 
-Si hoy sigue el desarrollo normal: siguiente candidato **VCP-3-gates** o más poda UI — orquestador escribe ticket al pedir.
+## Mañana
+
+MIGRATE-1 · `docs/tickets/MIGRATE-1-mini-dump-restore.md`

@@ -8573,8 +8573,12 @@ button.decisionOperatingIssue:hover {
   }
 
   /* MOBILE-FIRE-1: toolbar secundaria al menú ⋯; solo orden + Revisar visibles. */
-  .mobileResultListHead button:not(.mobileReviewBtn) {
+  .mobileResultListHead > div > button:not(.mobileReviewBtn) {
     display:none !important;
+  }
+
+  .mobileResultListHead .mobileResultsMoreMenu[open] > button {
+    display:block !important;
   }
 
   .mobileResultListHead .mobileResultsMoreMenu {
