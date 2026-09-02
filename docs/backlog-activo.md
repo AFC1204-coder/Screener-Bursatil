@@ -6,9 +6,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-02 (tarde) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño (sin falta):** **jueves 3 sep 2026** → **MIGRATE-1** Mac Mini.  
-**Hoy:** Último cerrado **FILTER-SHELL-2** — toolbar → ⋯.  
+**Hoy:** Último cerrado **VCP-3-gates** — shadow OK (NO 10/10 · recall BASE 8/13).  
+Último cerrado: **FILTER-SHELL-2** — `765dc04`.  
 Último cerrado: **FILTER-SHELL-1** — `21da8b0`.  
-Último cerrado: **MOBILE-FIRE-3** — `1ae4418`.  
 Último cerrado: **C-09+C-10** · CLEANUP-shadow completa (`963c145`).  
 Último cerrado: **UX-FILTERS-8** (`dac98a3`).  
 **Rúbrica VCP:** `docs/rubrica-vcp-producto-2026-09-01.md` · gap `docs/evidence/vcp-gap-mecanico-2026-09-01.md`  
@@ -190,11 +190,13 @@ MIGRATE aparcado.
 | MOBILE-FIRE-2 | Copy compacto carga/verdad/status · sticky head | **Cerrado** · `a7d14df` |
 | MOBILE-FIRE-3 | Fold densificado · firstTop ≤520 | **Cerrado** · `1ae4418` |
 | FILTER-SHELL-1 | Diagnóstico agrupa auditoría + cobertura | **Cerrado** · `21da8b0` |
-| FILTER-SHELL-2 | Toolbar secundaria → menú ⋯ | **Cerrado** (verify 2026-09-02) |
+| FILTER-SHELL-2 | Toolbar secundaria → menú ⋯ | **Cerrado** · `765dc04` |
+| VCP-3-gates | Shadow G1–G3 verify corpus (sin calibrar) | **Cerrado** (verify 2026-09-02) |
 
-## Siguiente — desarrollo normal (MIGRATE mañana)
+## Siguiente — desarrollo / mañana MIGRATE
 
-Candidatos: **VCP-3-gates** · `/stock` móvil · poda menor. Dueño elige.
+Candidatos hoy: **VCP-3-prod-bridge** (solo con OK dueño) · `/stock` móvil · parar.  
+**Mañana:** MIGRATE-1.
 
 ## Siguiente — datos IPO + filtros
 
@@ -308,7 +310,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
 | STAGE-1 | Subestado semanal paralelo (E2_ma_only / E2_structural) en screener | **Cerrado** verify 2026-09-01 · mesa tras nocturno |
 | VCP-0 | Auditoría E1/E2 semanal | **Cerrado** fae1880 · ADR aceptado |
-| VCP | Detector / etiquetado research | **Arnés VCP-1 OK** · dueño etiqueta tanda 3 |
+| VCP | Detector / etiquetado research | **VCP-3-gates cerrado** 2026-09-02 · bridge pendiente OK dueño |
 
 ~~IL/CN/BR/MX~~ aplazado.
 
