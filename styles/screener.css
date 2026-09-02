@@ -9523,6 +9523,22 @@ button.decisionOperatingIssue:hover {
    Nunca --senal: ese ámbar está reservado a la decisión "Vigilar".
    Panel de solo lectura: sin botones ni enlaces que ejecuten scan/backfill.
    --------------------------------------------------------------------------- */
+.screenerDiagnosticsDisclosure {
+  margin-bottom: 20px;
+}
+
+.screenerDiagnosticsDisclosure > *:not(summary) {
+  margin-top: 12px;
+}
+
+.screenerDiagnosticsDisclosure .scanDiagnosticsDisclosure {
+  margin-bottom: 0;
+}
+
+.screenerDiagnosticsDisclosure .globalCoverageDisclosure {
+  margin-bottom: 0;
+}
+
 .globalCoverageDisclosure {
   margin-bottom: 20px;
 }

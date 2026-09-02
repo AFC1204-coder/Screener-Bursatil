@@ -675,8 +675,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           </details>
         </div>
 
-        {/* Configuración avanzada: agrupa capas, umbrales, reglas de campo, alcance de
-            lote y diagnóstico. Cerrada por defecto; el colapso persiste en localStorage. */}
+        {/* Configuración avanzada: capas, umbrales, reglas de campo y alcance de lote.
+            Cerrada por defecto; el colapso persiste en localStorage. */}
         <details className="disclosurePanel advancedConfigPanel" open={advancedOpen} onToggle={(event) => persistAdvancedOpen(event.currentTarget.open)}>
           <summary>
             <span>Configuración avanzada</span>
@@ -754,27 +754,34 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             </div>
           </details>
         </div>
-
-        <details className="scanDiagnosticsDisclosure">
-          <summary>
-            <span>Auditoría de filtros</span>
-            <em>{diagnostics ? `${diagnostics.finalCount}/${diagnostics.analyzed} pasan` : "sin datos"}</em>
-          </summary>
-          <FilterDiagnosticsPanel diagnostics={diagnostics} rowsCount={resultsRows.length} filteredCount={resultsFiltered.length} />
-        </details>
         </details>
 
-        {/* Cobertura internacional por mercado (solo lectura). Carga asíncrona
-            desde GET /api/coverage; no bloquea la primera pintura. Comunica que
-            los lotes son trabajo interno del escáner, no el universo completo,
-            y distingue inventario de elegibles para ranking. Sin acciones que
-            ejecuten scan/backfill. */}
-        <details className="disclosurePanel globalCoverageDisclosure">
+        {/* Diagnóstico: paneles de laboratorio (auditoría + cobertura). Cerrado por
+            defecto para no competir con la config diaria de la mesa de caza. */}
+        <details className="disclosurePanel screenerDiagnosticsDisclosure">
           <summary>
-            <span>Cobertura internacional por mercado</span>
-            <em>informativo</em>
+            <span>Diagnóstico</span>
+            <em>auditoría · cobertura</em>
           </summary>
-          <GlobalCoveragePanel />
+          <details className="scanDiagnosticsDisclosure">
+            <summary>
+              <span>Auditoría de filtros</span>
+              <em>{diagnostics ? `${diagnostics.finalCount}/${diagnostics.analyzed} pasan` : "sin datos"}</em>
+            </summary>
+            <FilterDiagnosticsPanel diagnostics={diagnostics} rowsCount={resultsRows.length} filteredCount={resultsFiltered.length} />
+          </details>
+          {/* Cobertura internacional por mercado (solo lectura). Carga asíncrona
+              desde GET /api/coverage; no bloquea la primera pintura. Comunica que
+              los lotes son trabajo interno del escáner, no el universo completo,
+              y distingue inventario de elegibles para ranking. Sin acciones que
+              ejecuten scan/backfill. */}
+          <details className="disclosurePanel globalCoverageDisclosure">
+            <summary>
+              <span>Cobertura internacional por mercado</span>
+              <em>informativo</em>
+            </summary>
+            <GlobalCoveragePanel />
+          </details>
         </details>
       </aside>
 
