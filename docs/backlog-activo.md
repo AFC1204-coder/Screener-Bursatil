@@ -6,9 +6,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-02 (tarde) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño (sin falta):** **jueves 3 sep 2026** → **MIGRATE-1** Mac Mini.  
-**Hoy:** Último cerrado **VCP-3-gates** — shadow OK (NO 10/10 · recall BASE 8/13).  
+**Hoy:** Último cerrado **VCP-3-prod-bridge** — verify OFF/ON + smoke ficha.  
+Último cerrado: **VCP-3-gates** — `7b8040d`.  
 Último cerrado: **FILTER-SHELL-2** — `765dc04`.  
-Último cerrado: **FILTER-SHELL-1** — `21da8b0`.  
 Último cerrado: **C-09+C-10** · CLEANUP-shadow completa (`963c145`).  
 Último cerrado: **UX-FILTERS-8** (`dac98a3`).  
 **Rúbrica VCP:** `docs/rubrica-vcp-producto-2026-09-01.md` · gap `docs/evidence/vcp-gap-mecanico-2026-09-01.md`  
@@ -191,12 +191,12 @@ MIGRATE aparcado.
 | MOBILE-FIRE-3 | Fold densificado · firstTop ≤520 | **Cerrado** · `1ae4418` |
 | FILTER-SHELL-1 | Diagnóstico agrupa auditoría + cobertura | **Cerrado** · `21da8b0` |
 | FILTER-SHELL-2 | Toolbar secundaria → menú ⋯ | **Cerrado** · `765dc04` |
-| VCP-3-gates | Shadow G1–G3 verify corpus (sin calibrar) | **Cerrado** (verify 2026-09-02) |
+| VCP-3-gates | Shadow G1–G3 verify corpus (sin calibrar) | **Cerrado** · `7b8040d` |
+| VCP-3-prod-bridge | Verify motor unificado OFF/ON + smoke ficha | **Cerrado** (verify 2026-09-02) |
 
-## Siguiente — desarrollo / mañana MIGRATE
+## Siguiente — mañana MIGRATE
 
-Candidatos hoy: **VCP-3-prod-bridge** (solo con OK dueño) · `/stock` móvil · parar.  
-**Mañana:** MIGRATE-1.
+**MIGRATE-1** Mac Mini. Post-migrate: `/stock` móvil u otra poda si duele.
 
 ## Siguiente — datos IPO + filtros
 
@@ -310,7 +310,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
 | STAGE-1 | Subestado semanal paralelo (E2_ma_only / E2_structural) en screener | **Cerrado** verify 2026-09-01 · mesa tras nocturno |
 | VCP-0 | Auditoría E1/E2 semanal | **Cerrado** fae1880 · ADR aceptado |
-| VCP | Detector / etiquetado research | **VCP-3-gates cerrado** 2026-09-02 · bridge pendiente OK dueño |
+| VCP | Detector / etiquetado research | **Bridge cerrado** 2026-09-02 · flag UNIFIED |
 
 ~~IL/CN/BR/MX~~ aplazado.
 
