@@ -371,9 +371,9 @@ producto —por ejemplo, pedir solo el escaneo más reciente
 timeout de anoche (mucho menos que barajar) y el bug de recorte silencioso
 (si solo se pide un escaneo, `rank_index` sí es un orden significativo
 dentro de él). Además: `limit === 1` es exactamente la condición que activa
-la caché de 1 minuto ya existente
-(`cacheableLatest`, `app/api/scans/route.js:402`,
-`LATEST_SCAN_TTL_MS` en `lib/scansApiCache.js`) — hoy `limit=10` la
+la caché de 15 minutos ya existente (`cacheableLatest`,
+`app/api/scans/route.js:402`, `LATEST_SCAN_TTL_MS` en `lib/scansApiCache.js`)
+— hoy `limit=10` la
 desactiva sin que nadie lo haya decidido explícitamente, así que cada
 arranque en frío repite la consulta cara contra Supabase en vez de servir
 caché.

@@ -31,8 +31,8 @@ Auditoría tras VCP-4 + fixes de caché. Prioridad para tickets siguientes.
 | ID | Tema | Acción |
 |----|------|--------|
 | C-08 | `readPersistenceToken` / Bearer legacy sin callers | **Cerrado** — eliminados; cookie same-origin |
-| C-09 | Tests `pullCloudState` / cloud failure E2E | Ampliar suite (parcial en `cloudSyncClientStartupRequest.test.js`) |
-| C-10 | Comentarios «caché 2 min» en docs viejos | Barrido `docs/` + ADR |
+| C-09 | Tests `pullCloudState` / cloud failure E2E | **Cerrado** — configured:false + HTTP 500 |
+| C-10 | Comentarios «caché 2 min» en docs viejos | **Cerrado** — 3 docs → 15 min (`LATEST_SCAN_TTL_MS`) |
 
 ## Verificación recomendada (orquestador)
 

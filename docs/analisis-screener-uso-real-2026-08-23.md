@@ -150,7 +150,7 @@ Medido con instrumentación de storage y red [MEDIDO]:
 |---|---|
 | +3 ms | `removeItem("statsedge.screenerSession.v1")` (única clave borrada) |
 | +30 ms | `GET /api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us` |
-| +6,3 s | respuesta: 27 MB, 3.309 filas (server frío; 2,9 s con caché de 2 min caliente; hasta 21 s bajo contención) |
+| +6,3 s | respuesta: 27 MB, 3.309 filas (server frío; 2,9 s con caché de 15 min caliente; hasta 21 s bajo contención) |
 | +7,0 s | reescribe `statsedge.scans.v1` (4,50 MB, muestra de 576) |
 | +8,7 s | reescribe la sesión nueva |
 | — | cabecera: "56 pasan · 3309 analizadas" — coincide con `passedScreen: 56` del nocturno en la base ✓ |
@@ -181,7 +181,7 @@ del dueño) [MEDIDO]:
 
 | Fase | Tiempo | Detalle |
 |---|---|---|
-| `/api/scans` en el servidor | 5,7–11,7 s | 4 páginas PostgREST + RS semanal + serialización; 189 ms cacheado (TTL 2 min) |
+| `/api/scans` en el servidor | 5,7–11,7 s | 4 páginas PostgREST + RS semanal + serialización; 189 ms cacheado (TTL 15 min, `LATEST_SCAN_TTL_MS`) |
 | `/api/scans` hasta el navegador | 13,9 s | 27 MB sin comprimir en dev (27.001 KB medidos) |
 | …duplicada por StrictMode (solo dev) | 21,3 s | **dos** descargas de 27 MB en paralelo en cada arranque dev |
 | `/api/weekly-changes` (51 KB) | 14,0 s ×2 | compite con los 27 MB en el mismo pipe |

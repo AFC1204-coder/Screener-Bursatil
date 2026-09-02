@@ -5,9 +5,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-02 (tarde) · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **C-09+C-10** — `docs/tickets/activo.md` (delegar)  
-Auditoría shadow: C-01…C-08 + UX-COPY-1 **cerrados**  
-Último cerrado: **C-06/07/08** (Bearer docs + `.env.example` + token legacy).  
+Ticket en curso: **ninguno** — CLEANUP-shadow C-01…C-10 cerrado  
+Último cerrado: **C-09+C-10** (tests pullCloudState + docs TTL 15 min).  
+Auditoría shadow: **completa**.  
 Último cerrado: **UX-FILTERS-8** (`dac98a3`).  
 **Rúbrica VCP:** `docs/rubrica-vcp-producto-2026-09-01.md` · gap `docs/evidence/vcp-gap-mecanico-2026-09-01.md`  
 Último cerrado: **VCP-1 arnés** (verify 2026-09-01).  
@@ -182,8 +182,8 @@ MIGRATE aparcado.
 | UX-COPY-1 | Banners/status sin jerga | **Cerrado** · `d06010b` |
 | C-05 | Test contrato `hydrateRs=1` | **Cerrado** · `d06010b` |
 | C-01 | VCP nocturno con flag | **Cerrado** · nocturno success 2026-09-02 |
-| C-06+C-07+C-08 | Bearer docs + `.env.example` + token legacy | **Cerrado** (verify 2026-09-02) |
-| C-09…C-10 | Tests cloud + docs caché TTL | **Activo** · `docs/tickets/activo.md` |
+| C-06+C-07+C-08 | Bearer docs + `.env.example` + token legacy | **Cerrado** · `71ce0ab` |
+| C-09…C-10 | Tests cloud + docs caché TTL | **Cerrado** (verify 2026-09-02) |
 
 ## Siguiente — datos IPO + filtros
 

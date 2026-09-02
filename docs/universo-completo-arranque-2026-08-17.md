@@ -143,7 +143,7 @@ después: 1024 resultados de 3312 analizadas (filtro aplicado en 1,27 s)
   pasaran el filtro base, y queda por debajo del techo de la caché.
 - **`CACHEABLE_ROWS_LIMIT = 8.000`** (`app/api/scans/route.js`): antes eran
   5.000, dimensionados cuando el arranque pedía 500 filas. Con 6.000, el
-  arranque caía fuera de la caché de 2 minutos justo en la petición más cara de
+  arranque caía fuera de la caché de 15 minutos justo en la petición más cara de
   la app.
 - **Páginas de 1.000**: el techo real de PostgREST, medido, no una elección.
 - **4 páginas en paralelo**: 3.312 filas son 4 páginas; más concurrencia no
@@ -153,9 +153,9 @@ después: 1024 resultados de 3312 analizadas (filtro aplicado en 1,27 s)
 
 - **Producción.** Todas las cifras de tiempo son de `next dev` en un Mac, con
   la latencia de red de esta máquina hasta Supabase. La forma del coste (una
-  petición grande, cacheada 2 minutos, cuatro páginas paralelas) es la misma en
+  petición grande, cacheada 15 minutos, cuatro páginas paralelas) es la misma en
   Vercel, pero los segundos no.
-- **El coste de memoria del servidor.** La caché de 2 minutos guarda ahora un
+- **El coste de memoria del servidor.** La caché de 15 minutos guarda ahora un
   payload de 26 MB de JSON como objetos JS. No he medido cuánta memoria ocupa
   en una función de Vercel ni si acerca el límite de la instancia.
 - **Navegadores que no sean el del panel** ni dispositivos móviles: 26 MB de

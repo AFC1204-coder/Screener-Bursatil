@@ -3,7 +3,7 @@
 // Contexto (docs/timeout-arranque-2026-08-13.md): el arranque pedía
 // `/api/scans?includeRows=1&limit=10&rowsLimit=2000` — diez escaneos
 // mezclados, hasta 20.202 filas candidatas en producción, y `limit=10`
-// desactivaba sin querer la caché de 2 minutos de app/api/scans/route.js
+// desactivaba sin querer la caché de 15 minutos de app/api/scans/route.js
 // (cacheableLatest exige limit===1). Este test fija que el arranque pide
 // UN escaneo, el nocturno estadounidense.
 //
@@ -64,7 +64,7 @@ describe("getLatestScanFromCloud · el arranque pide un escaneo, no diez", () =>
     // Cubre el universo estadounidense completo con margen: el nocturno del
     // 17 de agosto de 2026 analizó 5.609 símbolos y guardó 3.312 filas.
     expect(rowsLimit).toBeGreaterThanOrEqual(5609);
-    // Y no se pasa del techo de la caché de 2 minutos de /api/scans
+    // Y no se pasa del techo de la caché de 15 minutos de /api/scans
     // (CACHEABLE_ROWS_LIMIT): por encima, cada arranque en frío repetiría la
     // consulta más cara de la app contra Supabase.
     expect(rowsLimit).toBeLessThanOrEqual(8000);
@@ -133,5 +133,43 @@ describe("pullCloudState · importación Research Desk alineada con arranque", (
     expect(parsed.searchParams.get("rowsLimit")).toBe(String(STARTUP_ROWS_LIMIT));
     expect(parsed.searchParams.get("hydrateRs")).toBe("1");
     expect(Number(parsed.searchParams.get("limit"))).toBeGreaterThanOrEqual(1);
+  });
+
+  it("propaga configured false y vacía datos cuando la nube no está activa", async () => {
+    const fetchMock = vi.fn(async (url) => {
+      const parsed = new URL(String(url), "https://statsedge.test");
+      if (parsed.pathname === "/api/scans") {
+        return jsonResponse({ ok: false, configured: false, message: "Supabase no configurado" });
+      }
+      return jsonResponse({ ok: true, configured: true, favorites: [], alerts: [] });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await pullCloudState();
+
+    expect(result.configured).toBe(false);
+    expect(result.ok).toBe(false);
+    expect(result.message).toBe("La copia en la nube no está activada");
+    expect(result.scans).toEqual([]);
+    expect(result.favorites).toEqual([]);
+    expect(result.alerts).toEqual([]);
+  });
+
+  it("devuelve ok false cuando /api/scans responde HTTP 500", async () => {
+    const fetchMock = vi.fn(async (url) => {
+      const parsed = new URL(String(url), "https://statsedge.test");
+      if (parsed.pathname === "/api/scans") {
+        return jsonResponse({ error: "Error interno" }, false);
+      }
+      return jsonResponse({ ok: true, configured: true, favorites: [], alerts: [] });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await pullCloudState();
+
+    expect(result.configured).toBe(true);
+    expect(result.ok).toBe(false);
+    expect(result.message).toBe("Error interno");
+    expect(result.scans).toEqual([]);
   });
 });
