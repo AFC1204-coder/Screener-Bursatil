@@ -138,6 +138,25 @@ describe("buildScreenerTruthLine", () => {
     expect(line).not.toContain("mesa:");
     expect(line).not.toContain("selección ≠ mesa");
   });
+
+  it("modo compacto resume mercados en móvil sin mentir conteos", () => {
+    const many = ["AT", "AU", "BE", "CA", "CH", "DE", "ES", "FR"];
+    const line = buildScreenerTruthLine({
+      analyzedRows: Array.from({ length: 120 }, (_, i) => ({ symbol: `S${i}` })),
+      passCount: 47,
+      visibleCount: 47,
+      presetName: "Balanceado",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedMarkets: many,
+      selectedMarkets: many,
+      compactMarketSegments: true,
+    });
+    expect(line).toContain("120 analizadas");
+    expect(line).toContain("47 pasan");
+    expect(line).toContain("8 mercados en mesa");
+    expect(line).not.toContain("mesa: AT+");
+  });
 });
 
 describe("resolveScreenerTruthCounts", () => {

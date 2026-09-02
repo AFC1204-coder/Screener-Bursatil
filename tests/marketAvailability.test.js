@@ -173,6 +173,28 @@ describe("buildScreenerTruthMarketSegments", () => {
     ]);
   });
 
+  it("modo compacto resume mercados sin listar códigos", () => {
+    const many = ["AT", "AU", "BE", "CA", "CH", "DE", "ES", "FR"];
+    expect(buildScreenerTruthMarketSegments({
+      scannedMarkets: many,
+      selectedMarkets: many,
+      compact: true,
+    })).toEqual(["8 mercados en mesa"]);
+  });
+
+  it("modo compacto mantiene aviso de desalineación sin volcar códigos", () => {
+    expect(buildScreenerTruthMarketSegments({
+      scannedMarkets: ["US", "CA", "HK"],
+      selectedMarkets: DEFAULT_MARKETS,
+      marketsMisaligned: true,
+      compact: true,
+    })).toEqual([
+      "3 mercados en mesa",
+      `${DEFAULT_MARKETS.length} mercados en selección`,
+      "selección ≠ mesa",
+    ]);
+  });
+
   it("no emite segmentos sin scan", () => {
     expect(buildScreenerTruthMarketSegments({
       scannedMarkets: [],
@@ -284,7 +306,23 @@ describe("buildMarketsLoadingNotice", () => {
   it("copy neutro para un mercado", () => {
     const notice = buildMarketsLoadingNotice({ selectedMarkets: ["HK"] });
     expect(notice.detail).toContain("Hong Kong");
+    expect(notice.peekDetail).toContain("Hong Kong");
     expect(notice.showCta).toBe(false);
+  });
+
+  it("mantiene códigos para 2–3 mercados", () => {
+    const notice = buildMarketsLoadingNotice({ selectedMarkets: ["US", "CA", "HK"] });
+    expect(notice.detail).toContain("CA+HK+US");
+    expect(notice.peekDetail).toBe(notice.detail);
+  });
+
+  it("resume N mercados en peek sin volcar códigos", () => {
+    const many = DEFAULT_MARKETS.slice(0, 10);
+    const notice = buildMarketsLoadingNotice({ selectedMarkets: many });
+    expect(notice.peekDetail).toBe("Cargando 10 mercados…");
+    expect(notice.bodyDetail).toBe("Cargando 10 mercados…");
+    expect(notice.detail).toMatch(/Cargando datos de la selección \([A-Z+]+\)…/);
+    expect(notice.peekDetail).not.toContain("+");
   });
 });
 

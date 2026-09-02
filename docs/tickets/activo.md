@@ -3,18 +3,19 @@
 **Estado:** PREP listo · **no ejecutar hasta OK dueño el 3 sep**  
 **Plan:** `docs/plan-migrate-postgres-mac-mini-2026-08-30.md`  
 **Spec:** `docs/tickets/MIGRATE-1-mini-dump-restore.md`  
-**Rama sugerida:** `migrate/mac-mini-postgres` (worktree/rama aparte de UI) o `codex/statsedge-ui-polish` si dueño prefiere  
+**Rama sugerida:** `migrate/mac-mini-postgres` (worktree/rama aparte de UI)  
 **Margen billing:** renovación Pro ~**5 sep** — Pro sigue activo; no cancelar
 
-## Cerrado 2026-09-02 tarde
+## Cerrado 2026-09-02 noche
 
-**MOBILE-FIRE-1** — primer resultado en fold 390 · `firstTop≈668` · bottomNav 82px · dual-DOM desktop OK · residual TTL comentarios 15 min.
+- **MOBILE-FIRE-2** — copy compacto carga/verdad/status 390 · sticky list head  
+- **MOBILE-FIRE-1** — fold + bottomNav 82px (`15843af`)
 
 ## Checklist dueño (antes del Agent)
 
 - [ ] Mac Mini M4 encendido y accesible (sesión local o SSH)
 - [ ] Postgres 16/17 instalable (o ya instalado)
-- [ ] Connection string / password DB Pro (`db.dzovggfbcoymjgikkbno.supabase.co`) a mano — **no pegar en chat** si no quieres; pasar en el Mini
+- [ ] Connection string / password DB Pro a mano **en el Mini** (no pegar en chat)
 - [ ] Sitio en disco Mini para dump + copia externa / Time Machine
 - [ ] ~30–90 min activos + dump en background (puede 1–3 h)
 
@@ -43,4 +44,4 @@ Sin commit de dumps ni secretos. Sin push de binarios. Devuelve plantilla de ret
 
 ## Tras MIGRATE-1 OK
 
-Orquestador activa MIGRATE-2 (`docs/tickets/MIGRATE-2-pg-adapter.md`), luego MIGRATE-3 (dueño presente ~45–90 min).
+Orquestador activa MIGRATE-2, luego MIGRATE-3 (dueño presente ~45–90 min).

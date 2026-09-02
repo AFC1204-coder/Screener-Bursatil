@@ -2,8 +2,22 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi, beforeAll } from "vitest";
 import { MARKETS_MISALIGNMENT_CTA, MARKETS_AUTO_LOAD_LOADING_LABEL } from "@/lib/marketAvailability";
+import { DEFAULT_MARKETS } from "@/lib/screenerConfig";
+import { compactMobileScanStatus } from "@/lib/screenerFormat";
 
 const Stub = ({ marker }) => React.createElement("div", { "data-stub": marker });
+
+const { mockIsMobileViewport } = vi.hoisted(() => ({
+  mockIsMobileViewport: vi.fn(() => false),
+}));
+
+vi.mock("@/lib/useScreenerMobileViewport", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useScreenerMobileViewport: () => mockIsMobileViewport(),
+  };
+});
 
 vi.mock("@/app/screenerPanels", () => ({
   FilterArchitecturePanel: () => Stub({ marker: "FilterArchitecturePanel" }),
@@ -262,5 +276,31 @@ describe("ScreenerShell markets misalignment", () => {
     })));
     expect(html).not.toContain(MARKETS_AUTO_LOAD_LOADING_LABEL);
     expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
+  });
+
+  it("móvil: peek de carga multi-mercado sin cadena de códigos en summary", () => {
+    mockIsMobileViewport.mockReturnValue(true);
+    const many = DEFAULT_MARKETS.slice(0, 10);
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      marketsStale: true,
+      scannedMarkets: ["US"],
+      selectedMarkets: many,
+    })));
+    expect(html).toContain("Cargando 10 mercados…");
+    expect(html).not.toMatch(/screenerMobileNoticePeek[^<]*AT\+AU/);
+    expect(html).toContain("1 mercado en mesa");
+    expect(html).toContain("10 mercados en selección");
+    mockIsMobileViewport.mockReturnValue(false);
+  });
+});
+
+describe("compactMobileScanStatus", () => {
+  it("resume materializados multi-mercado en una línea", () => {
+    const long = "Cargando materializados (Estados Unidos + España + Francia + Alemania + Italia + Reino Unido + Canadá + Australia)…";
+    expect(compactMobileScanStatus(long)).toBe("Cargando 8 materializados…");
+  });
+
+  it("deja intacto un mercado único", () => {
+    expect(compactMobileScanStatus("Cargando materializado Estados Unidos…")).toBe("Cargando materializado Estados Unidos…");
   });
 });

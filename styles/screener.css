@@ -313,13 +313,14 @@
     flex:1 1 auto;
     min-width:0;
     overflow:hidden;
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:1;
     color:var(--soft);
     font-size:11px;
     font-style:normal;
     font-weight:560;
     line-height:1.25;
-    text-overflow:ellipsis;
-    white-space:nowrap;
   }
 
   .screenerMobileNotice[open] > summary .screenerMobileNoticePeek {
@@ -374,14 +375,21 @@
     min-height:28px !important;
     margin:0 !important;
     padding:4px 8px !important;
+    flex-wrap:nowrap !important;
   }
 
   .screenerTerminalPage .scanStatusBar--mobileFold span {
     font-size:9px !important;
+    flex:0 0 auto !important;
   }
 
   .screenerTerminalPage .scanStatusBar--mobileFold b {
     font-size:11px !important;
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
   }
 
   .screenerHeroTitle .screenerEyebrow,
@@ -8469,10 +8477,15 @@ button.decisionOperatingIssue:hover {
   }
 
   .mobileResultListHead {
+    position:sticky;
+    top:0;
+    z-index:2;
     margin:0 0 4px !important;
     flex-wrap:nowrap !important;
     align-items:center !important;
     gap:6px !important;
+    padding:4px 0;
+    background:var(--bg);
   }
 
   .mobileResultListHead > span {

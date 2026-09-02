@@ -7,7 +7,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 **RECORDATORIO dueño (sin falta):** **jueves 3 sep 2026** → activar **MIGRATE-1** Mac Mini (margen Pro ~5 sep).  
 Ticket en curso: **MIGRATE** (mañana) — plan `docs/plan-migrate-postgres-mac-mini-2026-08-30.md`  
-Último cerrado: **MOBILE-FIRE-1** — fold 390 `firstTop≈668` · bottomNav 82px · dual-DOM OK · TTL comentarios 15 min.  
+Último cerrado: **MOBILE-FIRE-2** — copy compacto 390 (carga/verdad/status) · sticky list head · smoke `Cargando 28 mercados…`.  
+Último cerrado: **MOBILE-FIRE-1** — fold 390 · bottomNav 82px (`15843af`).  
 Último cerrado: **C-09+C-10** · CLEANUP-shadow completa (`963c145`).  
 Último cerrado: **UX-FILTERS-8** (`dac98a3`).  
 **Rúbrica VCP:** `docs/rubrica-vcp-producto-2026-09-01.md` · gap `docs/evidence/vcp-gap-mecanico-2026-09-01.md`  
@@ -185,11 +186,12 @@ MIGRATE aparcado.
 | C-01 | VCP nocturno con flag | **Cerrado** · nocturno success 2026-09-02 |
 | C-06+C-07+C-08 | Bearer docs + `.env.example` + token legacy | **Cerrado** · `71ce0ab` |
 | C-09…C-10 | Tests cloud + docs caché TTL | **Cerrado** (verify 2026-09-02) |
-| MOBILE-FIRE-1 | Primer resultado en fold 390 · bottomNav 82px | **Cerrado** (verify 2026-09-02) |
+| MOBILE-FIRE-1 | Primer resultado en fold 390 · bottomNav 82px | **Cerrado** · `15843af` |
+| MOBILE-FIRE-2 | Copy compacto carga/verdad/status · sticky head | **Cerrado** (verify 2026-09-02) |
 
-## Siguiente — fuego UI / fluidez (post MOBILE-FIRE-1)
+## Siguiente — fuego UI / fluidez (post MOBILE-FIRE-2)
 
-Cola corta solo si dueño pide más: banners loading multi-línea en 390; densidad columnas desktop con VCP. No VCP producto hasta después de MIGRATE.
+Cola corta si dueño pide: densificar más fold bajo carga (`firstTop` aún ~660); ficha `/stock` móvil; densidad columnas desktop+VCP. **Prioridad mañana: MIGRATE-1.**
 
 ## Siguiente — datos IPO + filtros
 

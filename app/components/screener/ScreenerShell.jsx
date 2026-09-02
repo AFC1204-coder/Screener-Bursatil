@@ -32,7 +32,7 @@ import {
   SearchCandidateList,
   SearchScopeList,
 } from "@/app/screenerPanels";
-import { investorStatusLabel } from "@/lib/screenerFormat";
+import { investorStatusLabel, compactMobileScanStatus } from "@/lib/screenerFormat";
 import { huntDisplayName } from "@/lib/screenerHuntCards";
 import { OptionalBasePresetsPanel } from "@/lib/screenerFiltersView";
 import { isMarketSelectable, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketUnavailabilityReason, resolveMarketsMisalignmentNotice } from "@/lib/marketAvailability";
@@ -75,11 +75,15 @@ function showScanStatusBar(err, status = "") {
 function MobileCollapsibleNotice({
   label,
   detail,
+  peekDetail,
+  bodyDetail,
   tone = "",
   defaultOpen = false,
   role = "status",
   children,
 }) {
+  const peek = peekDetail ?? detail;
+  const body = bodyDetail ?? detail;
   return (
     <details
       className={`screenerMobileNotice${tone ? ` screenerMobileNotice--${tone}` : ""}`}
@@ -87,10 +91,10 @@ function MobileCollapsibleNotice({
     >
       <summary>
         <span className="screenerMobileNoticeLabel">{label}</span>
-        <em className="screenerMobileNoticePeek">{detail}</em>
+        <em className="screenerMobileNoticePeek">{peek}</em>
       </summary>
       <div className="screenerMobileNoticeBody" role={role} aria-live="polite">
-        <p>{detail}</p>
+        <p>{body}</p>
         {children}
       </div>
     </details>
@@ -298,6 +302,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     marketsLoadFailed = false,
     marketsLoadFailedDetail = "",
   } = staleness || {};
+  const isMobileViewport = useScreenerMobileViewport();
   const huntLabel = huntDisplayName(presetKey, markets);
   const presetNameForTruth = huntTruthOverride?.presetName ?? huntLabel;
   const marketsMisalignment = resolveMarketsMisalignmentNotice({
@@ -339,6 +344,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     selectedMarkets: markets,
     marketsMisaligned: resultsBlockedByMarketMisalignment && marketsLoadFailed,
     suppressMisalignmentAlarm: resultsBlockedByMarketMisalignment && !marketsLoadFailed,
+    compactMarketSegments: isMobileViewport,
   });
   useLayoutEffect(() => {
     const ms = recordTruthLinePaint({
@@ -364,7 +370,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     analyzedRows,
   });
   const showSnapshotNotice = snapshotNotice && snapshotNotice.source !== "markets-stale";
-  const isMobileViewport = useScreenerMobileViewport();
 
   function handleLideresIntlGuardrailCta(ctaId) {
     if (ctaId === LIDERES_INTL_CTA.LOAD_CORE_INTL) {
@@ -403,6 +408,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         <MobileCollapsibleNotice
           label={marketsMisalignment.label}
           detail={marketsMisalignment.detail}
+          peekDetail={marketsMisalignment.peekDetail}
+          bodyDetail={marketsMisalignment.bodyDetail}
           tone={mobileTone}
           defaultOpen={marketsMisalignment.tone === "loading"}
         >
@@ -506,6 +513,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   // conjunto es "final", no hay nada que decir.
   const visibleBatchRows = huntResultsRows.some((row) => (row.percentileScope || "batch") === "batch");
   const statusLabel = investorStatusLabel(status);
+  const mobileStatusLabel = compactMobileScanStatus(status);
   const scanStatusVisible = showScanStatusBar(err, status);
 
   // Cierre del panel de filtros en móvil: Escape en cualquier punto de la
@@ -550,7 +558,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     {isMobileViewport && (scanStatusVisible || showSnapshotNotice) ? <div className="screenerMobileNoticeStack">
       {scanStatusVisible ? <div className={`scanStatusBar scanStatusBar--mobileFold ${err ? "error" : "running"}`} role="status" aria-live="polite">
         <span>{err ? "Incidencia" : "Estado"}</span>
-        <b>{statusLabel}</b>
+        <b>{mobileStatusLabel}</b>
       </div> : null}
       {showSnapshotNotice && !snapshotNotice.requiresReauth ? (
         <MobileCollapsibleNotice
