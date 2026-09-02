@@ -411,7 +411,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           peekDetail={marketsMisalignment.peekDetail}
           bodyDetail={marketsMisalignment.bodyDetail}
           tone={mobileTone}
-          defaultOpen={marketsMisalignment.tone === "loading"}
+          defaultOpen={false}
         >
           {cta}
         </MobileCollapsibleNotice>
@@ -564,6 +564,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         <MobileCollapsibleNotice
           label={snapshotNotice.label}
           detail={snapshotNotice.detail}
+          peekDetail={snapshotNotice.peekDetail}
+          bodyDetail={snapshotNotice.bodyDetail}
           tone={snapshotNotice.tone || "info"}
           role="alert"
         />

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_MARKETS } from "@/lib/screenerConfig";
 import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
 
 describe("buildScreenerTruthLine", () => {
@@ -151,11 +152,32 @@ describe("buildScreenerTruthLine", () => {
       scannedMarkets: many,
       selectedMarkets: many,
       compactMarketSegments: true,
+      scannedAt: "2026-08-27T14:07:00.000Z",
     });
     expect(line).toContain("120 analizadas");
     expect(line).toContain("47 pasan");
     expect(line).toContain("8 mercados en mesa");
     expect(line).not.toContain("mesa: AT+");
+    expect(line).not.toContain("orden:");
+    expect(line).not.toContain("corte ");
+  });
+
+  it("modo compacto desalineado omite conteo redundante de selección", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: Array.from({ length: 100 }, (_, i) => ({ symbol: `S${i}` })),
+      passCount: 20,
+      visibleCount: 20,
+      presetName: "Balanceado",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: DEFAULT_MARKETS,
+      marketsMisaligned: true,
+      compactMarketSegments: true,
+    });
+    expect(line).toContain("1 mercado en mesa");
+    expect(line).toContain("selección ≠ mesa");
+    expect(line).not.toMatch(/\d+ mercados en selección/);
   });
 });
 

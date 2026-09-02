@@ -8443,20 +8443,26 @@ button.decisionOperatingIssue:hover {
   }
 
   .huntCardModeStrip {
-    margin:2px 0 0 !important;
-    gap:4px 6px !important;
-  }
-
-  .huntCardModeDisclosure > summary em {
-    display:none;
+    display:none !important;
   }
 
   .screenerTruthLine {
     margin:2px 0 0 !important;
     font-size:11px !important;
     line-height:1.25 !important;
-    max-height:2.6em;
+  }
+
+  .screenerTruthLine > span:first-child {
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
     overflow:hidden;
+    min-width:0;
+    flex:1 1 auto;
+  }
+
+  .screenerTruthLine .percentileScopeBadge {
+    display:none !important;
   }
 
   .screenerFilterBreakdown {
@@ -8465,6 +8471,11 @@ button.decisionOperatingIssue:hover {
 
   .mobileResearchHome {
     display:block;
+    margin-top:2px;
+  }
+
+  .mobileResearchHome > .screenerMobileNotice {
+    margin-bottom:2px;
   }
 
   /* Tape de índices: no bloquea resultados en el primer viewport. */
@@ -8515,13 +8526,11 @@ button.decisionOperatingIssue:hover {
   }
 
   .mobileResultPeriodBar {
-    margin-bottom:2px !important;
+    display:none !important;
   }
 
-  .mobileResultPeriodBar .periodPicker,
-  .mobileResultPeriodBar button {
-    min-height:24px !important;
-    font-size:10px !important;
+  .mobileResultList > .controls.mobileResultPager {
+    display:none !important;
   }
 
   /* Disclosure cerrado: solo summary compacto (el select no debe reservar altura). */
@@ -8529,10 +8538,19 @@ button.decisionOperatingIssue:hover {
     margin:0 0 4px !important;
   }
 
-  .mobileFilterDisclosure > summary {
-    min-height:22px !important;
+  .mobileFilterDisclosure.disclosurePanel > summary {
+    min-height:0 !important;
+    height:22px !important;
     padding:2px 0 !important;
     font-size:11px !important;
+    gap:4px !important;
+    align-items:center !important;
+  }
+
+  .mobileFilterDisclosure.disclosurePanel > summary:before {
+    width:16px !important;
+    height:16px !important;
+    font-size:10px !important;
   }
 
   .mobileFilterDisclosure:not([open]) > *:not(summary) {
@@ -8540,8 +8558,7 @@ button.decisionOperatingIssue:hover {
   }
 
   .mobileResultPager {
-    margin-bottom:4px !important;
-    gap:4px !important;
+    display:none !important;
   }
 
   .mobileResultPager select,

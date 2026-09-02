@@ -8,8 +8,10 @@
 
 ## Cerrado 2026-09-02 noche
 
-- **MOBILE-FIRE-2** — copy compacto carga/verdad/status 390 · sticky list head  
-- **MOBILE-FIRE-1** — fold + bottomNav 82px (`15843af`)
+- **MOBILE-FIRE-3** — fold densificado · `firstTop≈463` ≤520  
+- **MOBILE-FIRE-2** `a7d14df` · **MOBILE-FIRE-1** `15843af`
+
+**Orden acordado:** MIGRATE mañana → post-migrate **una** de: poda cáscara filtros **o** VCP-3-gates.
 
 ## Checklist dueño (antes del Agent)
 

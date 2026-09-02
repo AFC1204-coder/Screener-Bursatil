@@ -4,6 +4,7 @@ import { EUROPE_PRIORITY_MARKETS } from "@/lib/markets";
 import {
   buildMarketsLoadingNotice,
   buildMarketsStaleNotice,
+  buildMergedSnapshotNotice,
   buildScreenerTruthMarketSegments,
   formatMarketCodesShort,
   formatMissingMarketsDetail,
@@ -13,6 +14,7 @@ import {
   marketsSelectionBlockingMisalignment,
   marketsSelectionMisaligned,
   marketsSelectionPartialCoverage,
+  missingMarketsPeekDetail,
   resolveMarketsMisalignmentNotice,
   restoreSessionMarketAlignAction,
   scannedMarketsFromScan,
@@ -85,6 +87,49 @@ describe("formatMissingMarketsDetail", () => {
   it("detalla pocas filas e no publicable", () => {
     expect(formatMissingMarketsDetail(["IT"], [{ market: "IT", reason: "insufficient-rows" }])).toContain("pocas filas");
     expect(formatMissingMarketsDetail(["TW"], [{ market: "TW", reason: "materialized-not-publishable" }])).toContain("no publicable");
+  });
+});
+
+describe("missingMarketsPeekDetail", () => {
+  it("resume N mercados sin enumerar países", () => {
+    expect(missingMarketsPeekDetail(["AT", "BE"])).toBe("Faltan 2 mercados");
+    expect(missingMarketsPeekDetail(["US"])).toBe("Falta 1 mercado");
+    expect(missingMarketsPeekDetail([])).toBe("Faltan mercados");
+  });
+});
+
+describe("buildMergedSnapshotNotice", () => {
+  it("fusión parcial: peek corto y detalle largo en body", () => {
+    const notice = buildMergedSnapshotNotice({
+      merged: true,
+      partial: true,
+      missingMarkets: ["AT", "BE", "CH"],
+      missingDetails: [
+        { market: "AT", reason: "no-materialized-scan" },
+        { market: "BE", reason: "no-materialized-scan" },
+        { market: "CH", reason: "no-materialized-scan" },
+      ],
+    });
+    expect(notice.label).toBe("Fusión parcial");
+    expect(notice.peekDetail).toBe("Faltan 3 mercados");
+    expect(notice.bodyDetail).toContain("Falta materializado:");
+    expect(notice.peekDetail).not.toContain("Austria");
+    expect(notice.source).toBe("merged-materialized-partial");
+  });
+
+  it("fusión completa sin peek extra", () => {
+    const notice = buildMergedSnapshotNotice({
+      merged: true,
+      partial: false,
+      source: "merged-materialized",
+    });
+    expect(notice.label).toBe("Fusión");
+    expect(notice.peekDetail).toBeUndefined();
+    expect(notice.detail).toContain("materializados por mercado");
+  });
+
+  it("devuelve null sin merged", () => {
+    expect(buildMergedSnapshotNotice({ merged: false })).toBeNull();
   });
 });
 
@@ -182,7 +227,7 @@ describe("buildScreenerTruthMarketSegments", () => {
     })).toEqual(["8 mercados en mesa"]);
   });
 
-  it("modo compacto mantiene aviso de desalineación sin volcar códigos", () => {
+  it("modo compacto mantiene aviso de desalineación sin volcar códigos ni repetir selección", () => {
     expect(buildScreenerTruthMarketSegments({
       scannedMarkets: ["US", "CA", "HK"],
       selectedMarkets: DEFAULT_MARKETS,
@@ -190,7 +235,6 @@ describe("buildScreenerTruthMarketSegments", () => {
       compact: true,
     })).toEqual([
       "3 mercados en mesa",
-      `${DEFAULT_MARKETS.length} mercados en selección`,
       "selección ≠ mesa",
     ]);
   });
@@ -228,6 +272,8 @@ describe("buildMarketsStaleNotice", () => {
     expect(notice.blocksResults).toBe(false);
     expect(notice.detail).toContain("Datos cargados: US (3319)");
     expect(notice.detail).toContain("Faltan en mesa:");
+    expect(notice.peekDetail).toBe(`Faltan ${DEFAULT_MARKETS.length - 1} mercados`);
+    expect(notice.peekDetail).not.toContain("Austria");
     expect(notice.ctaLabel).toBe("Cargar datos de la selección");
   });
 

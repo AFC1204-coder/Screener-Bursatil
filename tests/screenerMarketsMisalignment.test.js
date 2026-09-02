@@ -289,7 +289,27 @@ describe("ScreenerShell markets misalignment", () => {
     expect(html).toContain("Cargando 10 mercados…");
     expect(html).not.toMatch(/screenerMobileNoticePeek[^<]*AT\+AU/);
     expect(html).toContain("1 mercado en mesa");
-    expect(html).toContain("10 mercados en selección");
+    expect(html).toContain("selección ≠ mesa");
+    expect(html).not.toMatch(/\d+ mercados en selección/);
+    mockIsMobileViewport.mockReturnValue(false);
+  });
+
+  it("móvil: fusión parcial en snapshotNotice usa peek corto sin países", () => {
+    mockIsMobileViewport.mockReturnValue(true);
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      snapshotNotice: {
+        tone: "warn",
+        label: "Fusión parcial",
+        detail: "Falta materializado: Austria · Bélgica. Mesa con mercados disponibles; percentiles RS del lote de origen.",
+        peekDetail: "Faltan 2 mercados",
+        bodyDetail: "Falta materializado: Austria · Bélgica. Mesa con mercados disponibles; percentiles RS del lote de origen.",
+        source: "merged-materialized-partial",
+      },
+    })));
+    expect(html).toContain("Fusión parcial");
+    expect(html).toContain("Faltan 2 mercados");
+    expect(html).not.toMatch(/screenerMobileNoticePeek[^<]*Austria/);
+    expect(html).toContain("Falta materializado: Austria");
     mockIsMobileViewport.mockReturnValue(false);
   });
 });

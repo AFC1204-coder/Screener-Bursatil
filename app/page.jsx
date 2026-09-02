@@ -29,7 +29,7 @@ import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/l
 import { normalizeScanErrorGroups } from "@/lib/scanErrorGroups";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
 import { DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
-import { filterSelectableMarkets, formatMissingMarketsDetail, accumulatedMaterializedStatusDetail, intlBroadStatusDetail, marketPresetMarkets, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketsSelectionBlockingMisalignment, marketsSelectionMisaligned, restoreSessionMarketAlignAction, scannedMarketsFromScan, shouldAutoLoadMarketSelection } from "@/lib/marketAvailability";
+import { buildMergedSnapshotNotice, filterSelectableMarkets, formatMissingMarketsDetail, accumulatedMaterializedStatusDetail, intlBroadStatusDetail, marketPresetMarkets, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketsSelectionBlockingMisalignment, marketsSelectionMisaligned, restoreSessionMarketAlignAction, scannedMarketsFromScan, shouldAutoLoadMarketSelection } from "@/lib/marketAvailability";
 import { buildDecisionBrief, buildDecisionEvidenceChecklist, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
 import { attachDecisionTrace, auditDecisionRowIssues, buildDecisionAuditExportPayload, buildDecisionTrace, decisionConfidenceLabel, decisionTraceForRow } from "@/lib/decisionAudit";
 import { decisionProfileStateForStock } from "@/lib/decisionProfile";
@@ -1427,16 +1427,7 @@ export default function Page() {
       const storedScans = safeRead(STORAGE_KEYS.scans, []);
       safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])]));
       const mergedNotice = marketsMeta?.merged
-        ? {
-          tone: marketsMeta.partial ? "warn" : "info",
-          label: marketsMeta.partial ? "Fusión parcial" : "Fusión",
-          detail: marketsMeta.partial
-            ? `${formatMissingMarketsDetail(marketsMeta.missingMarkets, marketsMeta.missingDetails)}. Mesa con mercados disponibles; percentiles RS del lote de origen.`
-            : marketsMeta.source === "merged-nightly-materialized"
-              ? "Mezcla de nocturno US y materializados internacionales; los percentiles RS de cada fila son los del lote de origen."
-              : "Mezcla de materializados por mercado; los percentiles RS de cada fila son los del lote de origen.",
-          source: marketsMeta.partial ? "merged-materialized-partial" : (marketsMeta.source || "merged-materialized"),
-        }
+        ? buildMergedSnapshotNotice(marketsMeta)
         : buildSnapshotFreshnessNotice(result.data, scan);
       applyFreshSnapshotData(scan, {
         notice: mergedNotice,
