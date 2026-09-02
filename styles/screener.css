@@ -3328,11 +3328,10 @@ button.dataHealthSummaryItem:hover,
   }
 }
 
-/* Tabla de resultados — siete columnas (docs/principios-producto.md, principio 7).
-   `min-width:0` anula el min-width:1580px de `.table`: con siete columnas la
-   tabla cabe en pantalla y ya no hay columnas fuera del viewport. */
+/* Tabla de resultados — diez columnas (docs/principios-producto.md, principio 7).
+   Anula el min-width:1580px de `.table`; el piso real vive en el bloque final
+   de `.compactResultsTable` (min-width + anchos por clase). */
 .compactResultsTable {
-  min-width:0;
   table-layout:fixed;
 }
 
@@ -4779,7 +4778,7 @@ button.decisionIssueBadge:hover,
 }
 
 .compactTableWrap {
-  overflow-x:hidden;
+  overflow-x:auto;
 }
 
 .compactResultsTable {
@@ -8596,7 +8595,7 @@ button.decisionOperatingIssue:hover {
 
 /* Contenedor + tabla */
 .compactTableWrap {
-  overflow-x: hidden;
+  overflow-x: auto;
   border-top: 1px solid var(--line);
   background: var(--surface);
 }
@@ -9932,7 +9931,7 @@ button.decisionOperatingIssue:hover {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Tabla de resultados — las siete columnas
+   Tabla de resultados — diez columnas (+ Deterioro opcional)
    docs/principios-producto.md, principio 7. Definición de columnas:
    lib/screenerColumns.jsx (fuente única, compartida con la vista móvil).
    Paleta y tipografía sin cambios: tokens de «Pizarra y Tiza» (tokens-v2.css).
@@ -10021,13 +10020,23 @@ button.decisionOperatingIssue:hover {
   text-align:right;
 }
 
-.compactResultsTable .colTicker { width:29%; }
-.compactResultsTable .colTheme { width:16%; }
-.compactResultsTable .colRs { width:8%; }
-.compactResultsTable .colStage { width:12%; }
-.compactResultsTable .colPerformance { width:12%; }
-.compactResultsTable .colDistance { width:12%; }
-.compactResultsTable .colCap { width:11%; }
+/* Piso de ancho: evita columnas a width:0 con table-layout:fixed en viewport
+   estrecho (≥761). El wrap hace scroll horizontal si el contenedor es menor. */
+.compactResultsTable {
+  min-width:720px;
+}
+
+.compactResultsTable .colTicker { width:20%; min-width:112px; }
+.compactResultsTable .colTheme { width:11%; min-width:56px; }
+.compactResultsTable .colRs { width:6%; min-width:36px; }
+.compactResultsTable .colRsCountry { width:7%; min-width:52px; }
+.compactResultsTable .colRsTheme { width:7%; min-width:52px; }
+.compactResultsTable .colStage { width:10%; min-width:72px; }
+.compactResultsTable .colVcp { width:8%; min-width:48px; }
+.compactResultsTable .colWeakness { width:7%; min-width:48px; }
+.compactResultsTable .colPerformance { width:10%; min-width:56px; }
+.compactResultsTable .colDistance { width:10%; min-width:64px; }
+.compactResultsTable .colCap { width:11%; min-width:56px; }
 
 /* Columna 1 — ticker con miniatura. */
 .tickerCell {
