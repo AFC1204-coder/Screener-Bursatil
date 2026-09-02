@@ -3,11 +3,11 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-02 (madrugada) · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-02 (tarde) · rama `codex/statsedge-ui-polish`
 
-Ticket en curso: **UX-COPY-1** — `docs/tickets/UX-COPY-1-mensajes-usuario.md` (delegar a Agent chat)  
-Auditoría shadow: **CLEANUP-shadow-2026-09-01** — C-02…C-04 cerrados · C-05 en cola  
-Último cerrado programación: **C-04** familyIntensity restore (`946e7d0`).  
+Ticket en curso: **C-09+C-10** — `docs/tickets/activo.md` (delegar)  
+Auditoría shadow: C-01…C-08 + UX-COPY-1 **cerrados**  
+Último cerrado: **C-06/07/08** (Bearer docs + `.env.example` + token legacy).  
 Último cerrado: **UX-FILTERS-8** (`dac98a3`).  
 **Rúbrica VCP:** `docs/rubrica-vcp-producto-2026-09-01.md` · gap `docs/evidence/vcp-gap-mecanico-2026-09-01.md`  
 Último cerrado: **VCP-1 arnés** (verify 2026-09-01).  
@@ -179,10 +179,11 @@ MIGRATE aparcado.
 
 | ID | Qué | Estado |
 |---|---|---|
-| UX-COPY-1 | Banners/status sin jerga dev (contrato v3, cacheados, materializar…) | **Activo** · `docs/tickets/UX-COPY-1-mensajes-usuario.md` |
-| C-05 | Test contrato `hydrateRs=1` en mesa | Cola · `docs/tickets/C-05-hydrate-rs-contrato.md` |
-| C-01 | VCP nocturno con `STATSEDGE_VCP_UNIFIED=1` | **Ops dueño** · `docs/tickets/C-01-vcp-vercel-ops.md` |
-| C-06…C-10 | Ver `docs/tickets/CLEANUP-shadow-2026-09-01.md` | Abierto |
+| UX-COPY-1 | Banners/status sin jerga | **Cerrado** · `d06010b` |
+| C-05 | Test contrato `hydrateRs=1` | **Cerrado** · `d06010b` |
+| C-01 | VCP nocturno con flag | **Cerrado** · nocturno success 2026-09-02 |
+| C-06+C-07+C-08 | Bearer docs + `.env.example` + token legacy | **Cerrado** (verify 2026-09-02) |
+| C-09…C-10 | Tests cloud + docs caché TTL | **Activo** · `docs/tickets/activo.md` |
 
 ## Siguiente — datos IPO + filtros
 

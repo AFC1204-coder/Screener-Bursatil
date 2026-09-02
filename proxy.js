@@ -1,6 +1,11 @@
 // proxy.js — colocar en la RAÍZ del repo (junto a package.json).
 // Cierra el perímetro de /api/* con token servidor-servidor o sesión HttpOnly.
 //
+// Perímetro (C-06): solo x-statsedge-token o cookie de sesión válida.
+// NO acepta Authorization Bearer — los scripts usan internalFetchHeaders()
+// (x-statsedge-token); las rutas /api/cron y /api/jobs validan Bearer vía
+// lib/internalAuth.js después de pasar este proxy.
+//
 // Env requerida (Vercel + .env.local):
 //   STATSEDGE_ACCESS_TOKEN=<cadena larga aleatoria, ej: openssl rand -hex 32>
 //   STATSEDGE_SESSION_SECRET=<cadena larga aleatoria independiente en producción>

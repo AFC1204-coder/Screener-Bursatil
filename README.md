@@ -40,7 +40,7 @@ STATSEDGE_OWNER_ID=personal
 STATSEDGE_API_TOKEN=
 ```
 
-`STATSEDGE_API_TOKEN` is optional. When set, `/api/scans`, `/api/favorites`, `/api/alerts`, and `/api/settings` require the same value through `x-statsedge-token` or a bearer token. The client reads it from `localStorage["statsedge.persistenceToken.v1"]`.
+`STATSEDGE_API_TOKEN` is optional. When set, server-side callers pass it via `x-statsedge-token` or `Authorization: Bearer`. The browser client uses the HttpOnly session cookie instead (`credentials: "same-origin"` in `lib/cloudSyncClient.js`).
 
 Optional admin connector:
 

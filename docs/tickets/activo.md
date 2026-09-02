@@ -1,46 +1,34 @@
-# Ticket activo — UX-COPY-1-mensajes-usuario
+# Ticket activo — CLEANUP-C-09-C-10
 
 **Estado:** listo para Agent chat de programación  
-**Spec:** `docs/tickets/UX-COPY-1-mensajes-usuario.md`  
-**Rama:** `codex/statsedge-ui-polish`
+**Rama:** `codex/statsedge-ui-polish`  
+**Specs:** `docs/tickets/CLEANUP-shadow-2026-09-01.md` (C-09, C-10)
 
 ## Prompt para Agent chat (copiar tal cual)
 
 ```
-@docs/tickets/activo.md @docs/tickets/UX-COPY-1-mensajes-usuario.md
+@docs/tickets/activo.md @docs/tickets/CLEANUP-shadow-2026-09-01.md
 
 Rama: codex/statsedge-ui-polish
-Modelo: Composer (o el que prefieras para copy + tests)
+Modelo: Composer
 
-Alcance: UX-COPY-1 — reescribir banners (snapshotFreshness, screenerFilterLayers auth/upgrade), setStatus ruidosos en page.jsx, etiquetas GlobalCoveragePanel. Ampliar tests/detallesInternosFuera.test.js con palabras prohibidas en UI. Sin cambiar lógica de negocio.
+Alcance CLEANUP P2 final:
+1) C-09 — Ampliar tests de pullCloudState / fallo de nube (partir de tests/cloudSyncClientStartupRequest.test.js). Cubrir al menos un caso de fallo (respuesta no ok / configured false) sin inventar E2E de navegador.
+2) C-10 — Barrido docs/ (+ ADR si aplica) de comentarios «caché 2 min» / TTL desfasado → alinear a 15 min (LATEST_SCAN_TTL_MS) o borrar nota obsoleta. No reescribir historia de análisis enteros; solo correcciones puntuales de cifras/TTL.
 
-Tests: npm test -- tests/detallesInternosFuera.test.js tests/snapshotFreshness.test.js (y los que toques).
+Fuera: scoring, nocturno, auth, UI copy.
 
-Sin commit ni push. Devuelve plantilla de retorno del ticket.
+Tests: npm test -- tests/cloudSyncClientStartupRequest.test.js (y los nuevos que crees).
+Sin commit ni push. Devuelve plantilla de retorno.
 ```
 
-## Cola (siguiente chat)
+## Cerrado (verify 2026-09-02 tarde)
 
-| Orden | ID | Archivo |
-|-------|-----|---------|
-| 2 | C-05 | `docs/tickets/C-05-hydrate-rs-contrato.md` |
-| — | C-01 | `docs/tickets/C-01-vcp-vercel-ops.md` (ops dueño, no agente) |
+| ID | Evidencia |
+|----|-----------|
+| C-06 + C-07 + C-08 | tests 35/35 · diff real OK · commit pendiente orquestador |
+| UX-COPY-1 · C-01…C-05 | `d06010b` |
 
-### Prompt C-05 (cuando UX-COPY-1 esté en verify)
+## Verificación orquestador pendiente
 
-```
-@docs/tickets/C-05-hydrate-rs-contrato.md
-
-Rama: codex/statsedge-ui-polish
-Alcance: tests de contrato hydrateRs core vs extended + call sites cliente con hydrateRs=1 en mesa.
-Tests: npm test -- tests/scansRsHydration.test.js tests/cloudSyncClientStartupRequest.test.js tests/scansApiRsHydrateDefer.test.js
-Sin commit ni push.
-```
-
-## Cerrado recientemente (orquestador)
-
-- C-02 auth banner · C-03 filter layers notice · C-04 familyIntensity en restoreSnapshot (`946e7d0`)
-
-## Para el dueño (ops, no agente)
-
-C-01 VCP: ver `docs/tickets/C-01-vcp-vercel-ops.md`
+Smoke VCP en screener (local o Vercel logueado): columna con etiquetas tras nocturno 2026-09-02.
