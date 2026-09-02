@@ -48,8 +48,8 @@ function themeHydrateRowBySymbol(results = []) {
 const POSTGREST_MAX_ROWS = 1000;
 const RESULT_PAGE_CONCURRENCY = 4;
 
-// Techo de rowsLimit por debajo del cual la respuesta se cachea 2 minutos
-// (cacheableLatest). Antes eran 5.000, dimensionado cuando el arranque pedía
+// Techo de rowsLimit por debajo del cual la respuesta se cachea 15 minutos
+// (cacheableLatest / LATEST_SCAN_TTL_MS). Antes eran 5.000, dimensionado cuando el arranque pedía
 // 500 filas; con el universo completo (3.312 filas hoy, tope de 6.000 filas
 // pedidas por lib/cloudSyncClient.js) el arranque caía fuera de la caché justo
 // cuando más falta hace, porque es la petición más cara de la app.

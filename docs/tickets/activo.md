@@ -6,6 +6,10 @@
 **Rama sugerida:** `migrate/mac-mini-postgres` (worktree/rama aparte de UI) o `codex/statsedge-ui-polish` si dueño prefiere  
 **Margen billing:** renovación Pro ~**5 sep** — Pro sigue activo; no cancelar
 
+## Cerrado 2026-09-02 tarde
+
+**MOBILE-FIRE-1** — primer resultado en fold 390 · `firstTop≈668` · bottomNav 82px · dual-DOM desktop OK · residual TTL comentarios 15 min.
+
 ## Checklist dueño (antes del Agent)
 
 - [ ] Mac Mini M4 encendido y accesible (sesión local o SSH)
@@ -40,7 +44,3 @@ Sin commit de dumps ni secretos. Sin push de binarios. Devuelve plantilla de ret
 ## Tras MIGRATE-1 OK
 
 Orquestador activa MIGRATE-2 (`docs/tickets/MIGRATE-2-pg-adapter.md`), luego MIGRATE-3 (dueño presente ~45–90 min).
-
-## Cerrado 2026-09-02
-
-CLEANUP-shadow C-01…C-10 + UX-COPY-1 (`963c145`).

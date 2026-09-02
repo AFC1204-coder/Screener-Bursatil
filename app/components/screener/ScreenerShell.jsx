@@ -72,6 +72,31 @@ function showScanStatusBar(err, status = "") {
   return /^(Cargando|Actualizando|Sincronizando|Descargando|Guardando|Importando|Subiendo)/i.test(text);
 }
 
+function MobileCollapsibleNotice({
+  label,
+  detail,
+  tone = "",
+  defaultOpen = false,
+  role = "status",
+  children,
+}) {
+  return (
+    <details
+      className={`screenerMobileNotice${tone ? ` screenerMobileNotice--${tone}` : ""}`}
+      open={defaultOpen}
+    >
+      <summary>
+        <span className="screenerMobileNoticeLabel">{label}</span>
+        <em className="screenerMobileNoticePeek">{detail}</em>
+      </summary>
+      <div className="screenerMobileNoticeBody" role={role} aria-live="polite">
+        <p>{detail}</p>
+        {children}
+      </div>
+    </details>
+  );
+}
+
 export default function ScreenerShell({ chrome, sidebar, search, resultView, results, actions, staleness }) {
   // --- chrome ---
   const {
@@ -339,6 +364,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     analyzedRows,
   });
   const showSnapshotNotice = snapshotNotice && snapshotNotice.source !== "markets-stale";
+  const isMobileViewport = useScreenerMobileViewport();
 
   function handleLideresIntlGuardrailCta(ctaId) {
     if (ctaId === LIDERES_INTL_CTA.LOAD_CORE_INTL) {
@@ -357,6 +383,33 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
 
   function renderMarketsMisalignmentNotice() {
     if (!marketsMisalignment) return null;
+    const cta = marketsMisalignment.showCta !== false ? (
+      <button
+        type="button"
+        className="btn btnSmall btnPrimary"
+        onClick={() => loadScanForMarketSelection(markets, "Cargando datos de la selección…")}
+        disabled={restoringScan}
+      >
+        {restoringScan ? "Cargando…" : marketsMisalignment.ctaLabel}
+      </button>
+    ) : null;
+    if (isMobileViewport) {
+      const mobileTone = marketsMisalignment.tone === "loading"
+        ? "loading"
+        : marketsMisalignment.tone === "error"
+          ? "error"
+          : "warn";
+      return (
+        <MobileCollapsibleNotice
+          label={marketsMisalignment.label}
+          detail={marketsMisalignment.detail}
+          tone={mobileTone}
+          defaultOpen={marketsMisalignment.tone === "loading"}
+        >
+          {cta}
+        </MobileCollapsibleNotice>
+      );
+    }
     const toneClass = marketsMisalignment.tone === "loading"
       ? " scanStaleNotice--loading"
       : marketsMisalignment.tone === "error"
@@ -366,16 +419,84 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       <div className={`scanStaleNotice${toneClass}`} role="status" aria-live="polite">
         <span className="scanStaleNoticeLabel">{marketsMisalignment.label}</span>
         <b>{marketsMisalignment.detail}</b>
-        {marketsMisalignment.showCta !== false ? (
+        {cta}
+      </div>
+    );
+  }
+
+  function renderScanStaleNotice() {
+    const notice = (
+      <>
+        <span className="scanStaleNoticeLabel">Cobertura</span>
+        <b>Los criterios de cobertura cambiaron; los datos cargados son de la selección anterior.</b>
+        <button
+          type="button"
+          className="btn btnSmall btnPrimary"
+          onClick={refreshScreenerSnapshotData}
+          disabled={restoringScan}
+        >
+          {restoringScan ? "Actualizando…" : "Traer datos frescos"}
+        </button>
+      </>
+    );
+    if (isMobileViewport) {
+      return (
+        <MobileCollapsibleNotice
+          label="Cobertura"
+          detail="Criterios de cobertura cambiados; datos de la selección anterior."
+          tone="warn"
+        >
           <button
             type="button"
             className="btn btnSmall btnPrimary"
-            onClick={() => loadScanForMarketSelection(markets, "Cargando datos de la selección…")}
+            onClick={refreshScreenerSnapshotData}
             disabled={restoringScan}
           >
-            {restoringScan ? "Cargando…" : marketsMisalignment.ctaLabel}
+            {restoringScan ? "Actualizando…" : "Traer datos frescos"}
           </button>
-        ) : null}
+        </MobileCollapsibleNotice>
+      );
+    }
+    return (
+      <div className="scanStaleNotice" role="status" aria-live="polite">
+        {notice}
+      </div>
+    );
+  }
+
+  function renderLideresIntlGuardrail() {
+    if (!lideresIntlGuardrail) return null;
+    const actions = (
+      <div className="lideresIntlGuardrailActions">
+        {lideresIntlGuardrail.ctas.map((cta) => (
+          <button
+            key={cta.id}
+            type="button"
+            className={`btn btnSmall ${cta.primary ? "btnPrimary" : "btnGhost"}`}
+            onClick={() => handleLideresIntlGuardrailCta(cta.id)}
+            disabled={restoringScan}
+          >
+            {cta.label}
+          </button>
+        ))}
+      </div>
+    );
+    if (isMobileViewport) {
+      return (
+        <MobileCollapsibleNotice
+          label={lideresIntlGuardrail.label}
+          detail={lideresIntlGuardrail.detail}
+          tone="warn"
+        >
+          {actions}
+        </MobileCollapsibleNotice>
+      );
+    }
+    return (
+      <div className="scanStaleNotice lideresIntlGuardrail" role="status" aria-live="polite">
+        <span className="scanStaleNoticeLabel">{lideresIntlGuardrail.label}</span>
+        <b>{lideresIntlGuardrail.detail}</b>
+        {actions}
       </div>
     );
   }
@@ -391,7 +512,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   // página y click/tap fuera del panel (mobileFiltersRef). El botón "Filtros"
   // de la topbar y el propio botón de cierre siguen cerrando via su onClick
   // normal; esto cubre los dos casos que no tenían manejador.
-  const isMobileViewport = useScreenerMobileViewport();
   const mobileFiltersRef = useRef(null);
   useEffect(() => {
     if (!showMobileFilters) return undefined;
@@ -427,11 +547,25 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       </div>
     </div>
     {err && <div className="error">{err}</div>}
-    {scanStatusVisible ? <div className={`scanStatusBar ${err ? "error" : "running"}`} role="status" aria-live="polite">
+    {isMobileViewport && (scanStatusVisible || showSnapshotNotice) ? <div className="screenerMobileNoticeStack">
+      {scanStatusVisible ? <div className={`scanStatusBar scanStatusBar--mobileFold ${err ? "error" : "running"}`} role="status" aria-live="polite">
+        <span>{err ? "Incidencia" : "Estado"}</span>
+        <b>{statusLabel}</b>
+      </div> : null}
+      {showSnapshotNotice && !snapshotNotice.requiresReauth ? (
+        <MobileCollapsibleNotice
+          label={snapshotNotice.label}
+          detail={snapshotNotice.detail}
+          tone={snapshotNotice.tone || "info"}
+          role="alert"
+        />
+      ) : null}
+    </div> : null}
+    {!isMobileViewport && scanStatusVisible ? <div className={`scanStatusBar ${err ? "error" : "running"}`} role="status" aria-live="polite">
       <span>{err ? "Incidencia" : "Estado"}</span>
       <b>{statusLabel}</b>
     </div> : null}
-    {showSnapshotNotice ? <div className={`snapshotFreshnessNotice ${snapshotNotice.requiresReauth ? "compact warn" : snapshotNotice.tone || "info"}`} role="alert" aria-live="polite">
+    {!isMobileViewport && showSnapshotNotice ? <div className={`snapshotFreshnessNotice ${snapshotNotice.requiresReauth ? "compact warn" : snapshotNotice.tone || "info"}`} role="alert" aria-live="polite">
       <span>{snapshotNotice.label}</span>
       <b>{snapshotNotice.detail}</b>
       {snapshotNotice.requiresReauth ? (
@@ -441,6 +575,15 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           </button>
         </div>
       ) : null}
+    </div> : null}
+    {isMobileViewport && showSnapshotNotice && snapshotNotice.requiresReauth ? <div className="snapshotFreshnessNotice compact warn" role="alert" aria-live="polite">
+      <span>{snapshotNotice.label}</span>
+      <b>{snapshotNotice.detail}</b>
+      <div className="storageAlertActions">
+        <button type="button" className="btn btnSmall btnPrimary" onClick={() => { void restartStatsEdgeSession(); }}>
+          Vuelve a entrar
+        </button>
+      </div>
     </div> : null}
 
     <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}`}>
@@ -651,25 +794,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               setActiveFilterFamily(familyKey);
             }}
           />
-          {lideresIntlGuardrail ? (
-            <div className="scanStaleNotice lideresIntlGuardrail" role="status" aria-live="polite">
-              <span className="scanStaleNoticeLabel">{lideresIntlGuardrail.label}</span>
-              <b>{lideresIntlGuardrail.detail}</b>
-              <div className="lideresIntlGuardrailActions">
-                {lideresIntlGuardrail.ctas.map((cta) => (
-                  <button
-                    key={cta.id}
-                    type="button"
-                    className={`btn btnSmall ${cta.primary ? "btnPrimary" : "btnGhost"}`}
-                    onClick={() => handleLideresIntlGuardrailCta(cta.id)}
-                    disabled={restoringScan}
-                  >
-                    {cta.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
+          {renderLideresIntlGuardrail()}
           <p className="screenerTruthLine" role="status" aria-live="polite">
             <span>{truthLine}</span>
             {visibleBatchRows ? <span className="percentileScopeBadge" title={PERCENTILE_BATCH_NOTE} aria-label={`${PERCENTILE_BATCH_BADGE}. ${PERCENTILE_BATCH_NOTE}`}>{PERCENTILE_BATCH_BADGE}</span> : null}
@@ -699,20 +824,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         {isMobileViewport ? <section className="mobileResearchHome">
           <MarketMiniTape marketHealth={marketHealth} />
           {renderMarketsMisalignmentNotice()}
-          {marketsMisalignment ? null : scanStale ? (
-            <div className="scanStaleNotice" role="status" aria-live="polite">
-              <span className="scanStaleNoticeLabel">Cobertura</span>
-              <b>Los criterios de cobertura cambiaron; los datos cargados son de la selección anterior.</b>
-              <button
-                type="button"
-                className="btn btnSmall btnPrimary"
-                onClick={refreshScreenerSnapshotData}
-                disabled={restoringScan}
-              >
-                {restoringScan ? "Actualizando…" : "Traer datos frescos"}
-              </button>
-            </div>
-          ) : null}
+          {marketsMisalignment ? null : scanStale ? renderScanStaleNotice() : null}
           <MobileResultList
             rows={huntResultsPagedRows}
             settings={activeSettings}

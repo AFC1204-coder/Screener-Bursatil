@@ -270,6 +270,138 @@
   }
 }
 
+/* MOBILE-FIRE-1: avisos colapsables y chrome compacto ≤760. */
+@media (max-width: 760px) {
+  .screenerMobileNoticeStack {
+    display:grid;
+    gap:4px;
+    margin:0 0 6px;
+  }
+
+  .screenerMobileNotice {
+    margin:0;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--surface2);
+    overflow:hidden;
+  }
+
+  .screenerMobileNotice > summary {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    min-height:28px;
+    padding:4px 8px;
+    list-style:none;
+    cursor:pointer;
+  }
+
+  .screenerMobileNotice > summary::-webkit-details-marker {
+    display:none;
+  }
+
+  .screenerMobileNoticeLabel {
+    flex:0 0 auto;
+    color:var(--muted);
+    font-size:10px;
+    font-weight:820;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+
+  .screenerMobileNoticePeek {
+    flex:1 1 auto;
+    min-width:0;
+    overflow:hidden;
+    color:var(--soft);
+    font-size:11px;
+    font-style:normal;
+    font-weight:560;
+    line-height:1.25;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .screenerMobileNotice[open] > summary .screenerMobileNoticePeek {
+    display:none;
+  }
+
+  .screenerMobileNoticeBody {
+    padding:0 8px 6px;
+  }
+
+  .screenerMobileNoticeBody p {
+    margin:0 0 6px;
+    color:var(--text);
+    font-size:12px;
+    font-weight:560;
+    line-height:1.35;
+  }
+
+  .screenerMobileNotice--warn {
+    border-color:var(--oxido);
+    background:var(--oxido-dim);
+  }
+
+  .screenerMobileNotice--warn .screenerMobileNoticeLabel {
+    color:var(--oxido);
+  }
+
+  .screenerMobileNotice--info {
+    border-color:var(--accent);
+    background:var(--senal-dim);
+  }
+
+  .screenerMobileNotice--info .screenerMobileNoticeLabel {
+    color:var(--traza);
+  }
+
+  .screenerMobileNotice--loading {
+    border-color:var(--line);
+    background:var(--panel);
+  }
+
+  .screenerMobileNotice--error {
+    border-color:var(--oxido);
+    background:var(--oxido-dim);
+  }
+
+  .screenerMobileNotice--error .screenerMobileNoticeLabel {
+    color:var(--oxido);
+  }
+
+  .screenerTerminalPage .scanStatusBar--mobileFold {
+    min-height:28px !important;
+    margin:0 !important;
+    padding:4px 8px !important;
+  }
+
+  .screenerTerminalPage .scanStatusBar--mobileFold span {
+    font-size:9px !important;
+  }
+
+  .screenerTerminalPage .scanStatusBar--mobileFold b {
+    font-size:11px !important;
+  }
+
+  .screenerHeroTitle .screenerEyebrow,
+  .screenerHeroTitle > p {
+    display:none;
+  }
+
+  .screenerHeroTitle .weeklyChangesLine {
+    display:none;
+  }
+
+  .mobileResearchHome .mobileMarketTape {
+    display:none !important;
+  }
+
+  .screenerFilterBreakdown {
+    display:none !important;
+  }
+}
+
 /* Banner no-modal de staleness del scan: los datos siguen siendo válidos pero
    corresponden al universo anterior (markets/manual/scanMode cambiaron). No
    oculta ni degrada la tabla; solo invita a relanzar. Tono v2: --oxido-dim
@@ -8408,6 +8540,15 @@ button.decisionOperatingIssue:hover {
 
   .mobileResultRow {
     min-height:56px !important;
+  }
+
+  /* MOBILE-FIRE-1: toolbar secundaria al menú ⋯; solo orden + Revisar visibles. */
+  .mobileResultListHead button:not(.mobileReviewBtn) {
+    display:none !important;
+  }
+
+  .mobileResultListHead .mobileResultsMoreMenu {
+    display:inline-flex !important;
   }
 }
 

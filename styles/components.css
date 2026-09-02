@@ -7639,8 +7639,8 @@ h2 {
   .page {
     padding-left: 10px !important;
     padding-right: 10px !important;
-    padding-bottom: calc(152px + env(safe-area-inset-bottom)) !important;
-    scroll-padding-bottom: calc(112px + env(safe-area-inset-bottom));
+    padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important;
+    scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
   .bottomNav {
     left: 10px !important;
@@ -7659,9 +7659,9 @@ h2 {
     box-shadow: 0 14px 36px rgba(0,0,0,.64), inset 0 1px 0 var(--line2) !important;
   }
   .bottomNav .navItem {
-    min-height: 52px !important;
+    min-height: 44px !important;
     gap: 3px !important;
-    padding: 6px 2px 5px !important;
+    padding: 5px 2px 4px !important;
     border-radius: 12px !important;
   }
   .bottomNav .navItem.active:before {
@@ -8086,4 +8086,48 @@ h2 {
   font-style: normal;
   color: var(--muted);
   font-size: var(--text-xs);
+}
+
+/* MOBILE-FIRE-1 — bottomNav compacto ≤480 (pisa reglas 760px con labels). */
+
+@media (max-width: 480px) {
+  .page {
+    padding-bottom: calc(58px + env(safe-area-inset-bottom)) !important;
+    scroll-padding-bottom: calc(52px + env(safe-area-inset-bottom));
+  }
+
+  .bottomNav {
+    left: 50% !important;
+    right: auto !important;
+    width: min(360px, calc(100vw - 16px)) !important;
+    padding: 3px !important;
+    gap: 2px !important;
+    bottom: max(6px, env(safe-area-inset-bottom)) !important;
+    transform: translateX(-50%) !important;
+    border-radius: 14px !important;
+  }
+
+  .bottomNav .navItem {
+    min-height: 36px !important;
+    padding: 4px 2px !important;
+    gap: 0 !important;
+    border-radius: 10px !important;
+  }
+
+  .bottomNav .navIcon,
+  .bottomNav .navIcon svg {
+    width: 17px !important;
+    height: 17px !important;
+  }
+
+  .bottomNav .navLabel {
+    display: none !important;
+  }
+
+  .stockPage .chartPanel,
+  .reviewPage .reviewWorkbench,
+  .discoveryHealthPanel,
+  .coverageAuditPanel {
+    scroll-margin-bottom: calc(52px + env(safe-area-inset-bottom));
+  }
 }
