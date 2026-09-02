@@ -3,85 +3,12 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-02 (tarde) · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-02 (noche) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño (sin falta):** **jueves 3 sep 2026** → **MIGRATE-1** Mac Mini.  
-**Hoy:** Último cerrado **VCP-3-prod-bridge** — verify OFF/ON + smoke ficha.  
-Último cerrado: **VCP-3-gates** — `7b8040d`.  
-Último cerrado: **FILTER-SHELL-2** — `765dc04`.  
-Último cerrado: **C-09+C-10** · CLEANUP-shadow completa (`963c145`).  
-Último cerrado: **UX-FILTERS-8** (`dac98a3`).  
-**Rúbrica VCP:** `docs/rubrica-vcp-producto-2026-09-01.md` · gap `docs/evidence/vcp-gap-mecanico-2026-09-01.md`  
-Último cerrado: **VCP-1 arnés** (verify 2026-09-01).  
-Último cerrado: **STAGE-1** (verify 2026-09-01).  
-MIGRATE aparcado.  
-**Nota VCP (2026-09-01 tarde):** dueño prioriza **STAGE-1 producto** (subestado en screener) sobre VCP tanda 3.  
-**Nota VCP (2026-09-01):** VCP-0 cerrado — campo paralelo ADR aceptado; MSI E1 operativo / E2 código.  
-**Nota UX-NAC-3 (2026-08-31 noche):** tests 57 · smoke US→Core intl / HK.  
-**Nota MET-5 uso real (2026-08-31 noche):** dueño **A**.  
-**Nota CHART-QR-3 (2026-08-31 noche):** `803dba4`.  
-**Nota MET-4e (2026-08-31):** write 1208 · above8=521 · filtro 17→**10**.  
-**Nota MET-4d (2026-08-31):** `b883085`.  
-**Nota MIGRATE (2026-08-31):** aparcado por dueño.  
-**Nota BUG-HUNT-1b (2026-08-31):** cerrado `e90dc59`.  
-**Nota R-06 (2026-08-31):** Deterioro **~1030** · E2 **~333** · pivot **~249** · intl **~1544** · IPO **~435**.  
-**Nota YIELD-1 smoke (2026-08-31):** Global → 1583 · mesa CA+…+US.  
-**Nota MIGRATE (2026-08-31):** aparcado por dueño.  
-**Nota MET-3c guard (2026-08-31):** abort write si perfiles &lt;75% · timeout 60s (`8e9c861`).  
-**Nota MET-3c Actions (2026-08-31):** `workflow_dispatch` Success · N Software/IA Actions 244 (local 570) → guard.  
-**Nota MET-3c (2026-08-31):** `45eacc1` · cron `30 7 * * 0`.  
-**Nota MET-3b write (2026-08-31):** `--write` 12/12 · MSFT **64** · AGX **52**.  
-**Nota MET-3b (2026-08-31):** impl `b18860f` + hydrate scans `98bd0a8`.  
-**Nota MET-3 aceptación (2026-08-31):** dueño OK + Grok · 12 THEME_RULES.  
-**Nota RS-SERIES-1 (2026-08-31):** AAPL país 27 pts, W32 único 70, latest 64.  
-**Nota MET-2c (2026-08-30):** workflow `rs-country-private.yml` · cron `0 7 * * 0` + dispatch · US→intl · flags OK.  
-**Nota MET-2c Actions (2026-08-30):** `workflow_dispatch` [33336486687](https://github.com/AFC1204-coder/Screener-Bursatil/actions/runs/33336486687) · **success** ~2,5 min.  
-**Nota MET-2b write HK (2026-08-30):** `--write --markets=HK` · snapshot `57f94e01-…` · 74/76 · 0005.HK país **95**.  
-**Nota MET-2b (2026-08-30):** verify — tests 108 OK; AAPL país **70**; fix client `node:crypto`.  
-**Nota MET-2 aceptación (2026-08-30):** dueño OK — columna 2ª · curado · scoring off · cron.  
-**Nota MET-1c smoke (2026-08-30):** pin OK — AAPL **61** · 0005.HK **83** · SHOP.TO 74 · 0700.HK 20 (W35, `canonicalRs` = DB). UI `/stock` bloqueada por token en tab nueva (no bloquea cron).  
-**Nota R-06 (2026-08-30):** medido Browser Use (sesión logueada) — truth al cambiar ficha: E2 **1980 ms**, pivot **964**, intl **2522**, IPO **946**, Deterioro **1879**. Warm UX-11 no cumple &lt;200 ms en cold/secuencial; **sin ticket** salvo prioridad producto (chase perf). Intl/IPO muestran lag pasan vs en lista en transición (UX-22 ya tratado).  
-**Nota MIGRATE (2026-08-30):** Mac Mini M4 · ruta B · MIGRATE-1…3 · **ventana 2–3 sep** · invoice end **5 sep**.  
-**Nota CHART-UI-1 (2026-08-30):** smoke AAPL — `chartPrefClusterScope`+`Display` apilados; TF D y escala Precio OK; nav 7 botones.  
-**Nota CLEAN-3 (2026-08-30):** smoke — 390: mobileHome 1 / desktop 0 / tape DOM 29 tiles «Índices» (CSS `display:none` intencional UX-18); ≥760: mobileHome 0 / desktop 1 / tape 0.  
-**Nota CLEAN-2 (2026-08-29):** smoke — desktop 0× mobileHome; 390px 1× mobile / 0× desktop.  
-**Nota UX-23 (2026-08-29):** smoke — thead 3× «i» (Tema/RS/Etapa); Ticker/Rend/Dist/Cap sin «i».  
-**Nota UX-BTN-6 (2026-08-29):** smoke — chips país activo tiza/`--active-*` inset, sin fill tiza ni ámbar.  
-**Nota UX-BTN-5 (2026-08-29):** smoke — Deterioro/Líderes activo `--active-*` sin ámbar; select data-active sin azul.  
-**Nota UX-BTN-4 (2026-08-29):** smoke AAPL — Candidata/Vigilar/Descartar tokens; activo `--active-*`; Reabrir disabled ghost.  
-**Nota UX-BTN-3 (2026-08-29):** smoke AAPL — reposo soft/`rgba(23,41,31,.85)`; activo dibujo distinto (`--active-*`); icon 32×32.  
-**Nota UX-BTN-2 (2026-08-29):** smoke Revisar CTA tiza; pager 32×32.  
-**Nota UX-BTN-1 (2026-08-29):** smoke 3M/6M/12M OK.  
-**Nota UX-BTN (2026-08-29):** brief → `docs/analisis-ux-btn-acabados-2026-08-29.md`.  
-**Nota CLEAN-1 (2026-08-29):** CSS huérfano eliminado.  
-**Nota UX-22 (2026-08-29):** smoke 3318 verdad pasan/lista.  
-**Nota UX-20 (2026-08-29):** smoke Deterioro — `1045 en lista · 50/página`.  
-**Nota UX-19 (2026-08-29):** StorageAlert compacto.  
-**Nota UX-18 (2026-08-29):** smoke 390×844.  
-**Nota UX-17 (2026-08-29):** smoke clic/Enter/doble clic → Vista rápida; ticker → `/stock/NVCT`.  
-**Nota UX-16 (2026-08-29):** smoke H-07 — Líderes intl + US 3318 → banner + CTAs; E2 quita aviso.  
-**Nota UX-FILTERS-7 (2026-08-29):** restore cosmética + `resolveStoredFilterConfig`; audit 562/562.  
-**Nota UX-13 (2026-08-29):** smoke Líderes E2 chip RS + sort Sin dato al final. Commit `08c10fe`.  
-**Nota UX-FILTERS-6 (2026-08-29):** smoke modos hunt + Abrir familia → modal IPO. `28c472a`.  
-**Nota UX-FILTERS-5 (2026-08-29):** smoke impacto −N IPO/RS. `0e69c73`.  
-**Nota handoff móvil (2026-08-29):** Cloud Agent OK; smoke Browser Use al volver.  
-**Nota IPO-1c (2026-08-29):** smoke nav IPO; banda 14d; merge **Vigilada** en Radar IPO (ZZSMOKE + pre-IPO).  
-**Nota IPO-NOCT (2026-08-29):** SQL patch US scan → **3289/3320** con `ipoDate`; smoke Radar IPO → **285 pasan**. Script `scripts/patch-scan-ipodate.mjs` + merge puro.  
-**Nota UX-FILTERS-4 (2026-08-29):** smoke RS `⚠ 1701/3320` + modal «Cobertura del dato»; Radar IPO `⚠ ipoDate en 0/3320` + empty CTA.  
-**Nota INT-3d (2026-08-29):** smoke HK → **122 analizadas** (5 noches; latest sola era 33).  
-**Nota producto (2026-08-29):** Supabase migrate aplazado; margen renovación ~2–3 días.  
-**Nota INT-3e (2026-08-29):** rebuild HK → withMeta 2675/2760; cron o217 selected 84, passedBase 33.  
-**Nota INT-3c (2026-08-28):** cron o133 → passedBase 21 porque 0169–0219 es casi toda &lt;0,50 HKD; umbral OK. Yield = selección más líquida o acumular noches, **no** bajar más el precio.  
-**Decisión producto (2026-08-28 · universo intl):** menos curación; official-broad + gates; **mejor yield por lote**, no más símbolos/noche (Pro MICRO + spend-cap 8 GB).  
-**Decisión producto (2026-08-28 · filtros):** control primario = **barra continua** (grados), no todo-o-nada; Abrir = profundidad. Spec §3 actualizada (opción B).  
-**Prioridad mercados:** US (base) · HK · CA · Europa.  
-**Decisión producto (2026-08-27):** versión **privada multi-mercado** para uso propio; lanzamiento público condicionado a viabilidad de licencia de datos. Resoluciones en nube **no relevantes**. Conservar esta línea (git/rama) como base de una eventual versión pública.  
-**Decisión producto (2026-08-28):** RS global FX = track **privado** …  
-**Decisión producto (2026-08-28 · IPO):** Radar IPO = **todos los mercados**; preset **discovery abierto**; fuente v1 = backfill `ipoDate` multi-mercado + curado `/ipo-radar`; rediseño filtros vía **UX-FILTERS** (raíz, no parche IPO).  
-**Decisión IA filtros (2026-08-27):** dirección **propuesta A (mesa de vistas)**; P0 + UX-5 + oleada producto-final (P1…P5, UX-6…9) hechos.  
-**Decisión métricas (2026-08-27, no inmediato):** RS **global** = un solo ranking del universo privado con **ajuste por divisa**; RS **país** = calidad dentro del propio país; RS **tema** = por a qué se dedica la empresa (theme). Más adelante: muletas de tendencia + índice 0–100 de salud de etapa. VCP e indicadores nuevos = track paralelo.  
-**Gate cierre:** tests del ticket + **`./vfc`** + smoke Browser Use.  
-**Modelo brief UX-P:** Gemini 3.7 Flash (aceptado).
+**Ahora:** **STOCK-FIRE-1** — gráfico de ficha en fold 390 (activo).  
+**Hoy cerrado:** VCP-3-prod-bridge · VCP-3-gates · FILTER-SHELL-2 · MOBILE-FIRE-1…3.  
+**Gate cierre:** tests del ticket + **`./vfc`** + smoke Browser Use.
 
 ## Hecho (esta oleada)
 
@@ -192,11 +119,12 @@ MIGRATE aparcado.
 | FILTER-SHELL-1 | Diagnóstico agrupa auditoría + cobertura | **Cerrado** · `21da8b0` |
 | FILTER-SHELL-2 | Toolbar secundaria → menú ⋯ | **Cerrado** · `765dc04` |
 | VCP-3-gates | Shadow G1–G3 verify corpus (sin calibrar) | **Cerrado** · `7b8040d` |
-| VCP-3-prod-bridge | Verify motor unificado OFF/ON + smoke ficha | **Cerrado** (verify 2026-09-02) |
+| VCP-3-prod-bridge | Verify motor unificado OFF/ON + smoke ficha | **Cerrado** (verify 2026-09-02) · `1dc82f3` |
+| STOCK-FIRE-1 | Ficha `/stock`: canvas visible en fold 390 | **Activo** |
 
 ## Siguiente — mañana MIGRATE
 
-**MIGRATE-1** Mac Mini. Post-migrate: `/stock` móvil u otra poda si duele.
+**MIGRATE-1** Mac Mini (3 sep). No mezclar con STOCK-FIRE.
 
 ## Siguiente — datos IPO + filtros
 

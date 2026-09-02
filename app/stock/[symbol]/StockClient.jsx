@@ -613,15 +613,18 @@ function StockUserClassification({
     <StockReviewFlowRail navigation={reviewNavigation} onOpenSymbol={onOpenReviewSymbol} />
     <div className="stockDecisionResolveRail" aria-label="Clasificar el valor">
       <span>{resolution ? `Clasificación: ${resolution.label}` : "Tu clasificación"}</span>
-      <label className="stockDecisionValidationNote">
-        <span>Nota del inversor</span>
-        <input
-          value={note}
-          maxLength={120}
-          onChange={(event) => onNoteChange?.(event.target.value)}
-          placeholder="Qué observas en la ficha"
-        />
-      </label>
+      <details className="stockDecisionNoteFold">
+        <summary>Nota del inversor</summary>
+        <label className="stockDecisionValidationNote">
+          <span className="srOnly">Nota del inversor</span>
+          <input
+            value={note}
+            maxLength={120}
+            onChange={(event) => onNoteChange?.(event.target.value)}
+            placeholder="Qué observas en la ficha"
+          />
+        </label>
+      </details>
       <div>
         <button
           type="button"
@@ -1658,27 +1661,32 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           tras el precio/decisión, antes de la tabla técnica. */}
       <section className="stockChartPanel" aria-label="Gráfico de la ficha">
         <h2 className="stockChartTitle">Gráfico</h2>
-        <div className="stockChartBenchmarkControl">
-          <label htmlFor={`benchmark-${symbol}`}>Comparar vs</label>
-          <input id={`benchmark-${symbol}`} list={`benchmark-options-${symbol}`} value={benchmarkDraft} onChange={(event) => setBenchmarkDraft(cleanBenchmarkSymbol(event.target.value))} onKeyDown={(event) => { if (event.key === "Enter") updateBenchmark(benchmarkDraft); }} placeholder={rs.benchmarkSymbol || "SPY"} disabled={loading} />
-          <datalist id={`benchmark-options-${symbol}`}>
-            {BENCHMARK_OPTIONS.map((item) => <option key={item} value={item} />)}
-          </datalist>
-          <button type="button" onClick={() => updateBenchmark(benchmarkDraft)} disabled={loading || !benchmarkDraft}>Aplicar</button>
-          <button type="button" onClick={() => updateBenchmark("")} disabled={loading || !benchmarkOverride}>Auto</button>
-          <button
-            type="button"
-            className={`chartToolButton ${showVcpDiagnostics ? "active" : ""}`.trim()}
-            onClick={() => setShowVcpDiagnostics((value) => !value)}
-            disabled={!setupPattern}
-            aria-pressed={showVcpDiagnostics}
-            title="Mostrar contracciones VCP, pivot y motivo de bloqueo en el gráfico."
-          >
-            <ScanSearch aria-hidden="true" size={14} />
-            VCP
-          </button>
-          <InfoHint text="Activa C1/C2/C3, pivot y gates mínimos de diagnóstico. No cambia filtros ni verdictos." />
-        </div>
+        <details className="stockChartBenchmarkFold">
+          <summary className="stockChartBenchmarkFoldSummary">
+            Comparar vs <span className="stockChartBenchmarkFoldValue">{benchmarkDraft || rs.benchmarkSymbol || "SPY"}</span>
+          </summary>
+          <div className="stockChartBenchmarkControl">
+            <label htmlFor={`benchmark-${symbol}`}>Comparar vs</label>
+            <input id={`benchmark-${symbol}`} list={`benchmark-options-${symbol}`} value={benchmarkDraft} onChange={(event) => setBenchmarkDraft(cleanBenchmarkSymbol(event.target.value))} onKeyDown={(event) => { if (event.key === "Enter") updateBenchmark(benchmarkDraft); }} placeholder={rs.benchmarkSymbol || "SPY"} disabled={loading} />
+            <datalist id={`benchmark-options-${symbol}`}>
+              {BENCHMARK_OPTIONS.map((item) => <option key={item} value={item} />)}
+            </datalist>
+            <button type="button" onClick={() => updateBenchmark(benchmarkDraft)} disabled={loading || !benchmarkDraft}>Aplicar</button>
+            <button type="button" onClick={() => updateBenchmark("")} disabled={loading || !benchmarkOverride}>Auto</button>
+            <button
+              type="button"
+              className={`chartToolButton ${showVcpDiagnostics ? "active" : ""}`.trim()}
+              onClick={() => setShowVcpDiagnostics((value) => !value)}
+              disabled={!setupPattern}
+              aria-pressed={showVcpDiagnostics}
+              title="Mostrar contracciones VCP, pivot y motivo de bloqueo en el gráfico."
+            >
+              <ScanSearch aria-hidden="true" size={14} />
+              VCP
+            </button>
+            <InfoHint text="Activa C1/C2/C3, pivot y gates mínimos de diagnóstico. No cambia filtros ni verdictos." />
+          </div>
+        </details>
         <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={symbol} scope={chartScope} onScopeChange={updateChartScope} compact />
         <UniversalPriceChart
           bars={data.chartBars}

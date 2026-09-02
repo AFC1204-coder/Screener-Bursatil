@@ -1022,13 +1022,220 @@
   }
 }
 
-@media (max-width: 640px) {
+/* STOCK-FIRE-1 — ficha móvil ≤480: veredicto + clasificación + chrome pre-canvas
+   compactos para que el canvas entre en el fold (~390×844). Desktop ≥761 sin
+   degradar (reglas solo aquí). */
+@media (max-width: 480px) {
+  .stockPage {
+    gap: var(--space-3);
+  }
+
+  .stockVerdict {
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+
+  .stockVerdictHead {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    gap: var(--space-2) var(--space-3);
+    align-items: start;
+  }
+
+  .stockVerdictIdentity {
+    grid-column: 1;
+    grid-row: 1;
+    gap: var(--space-2);
+  }
+
+  .stockLogoPro {
+    width: 36px;
+    height: 36px;
+  }
+
+  .stockIdentityKicker {
+    font-size: 9px;
+    line-height: 1.2;
+  }
+
+  .stockIdentityCompany {
+    display: none;
+  }
+
+  .stockIdentityTitle {
+    font-size: 22px;
+    line-height: 1.05;
+  }
+
+  .stockVerdictQuote {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    text-align: right;
+    gap: 0;
+  }
+
+  .stockVerdictQuoteLabel {
+    font-size: 9px;
+    line-height: 1.2;
+  }
+
+  .stockVerdictQuoteDate {
+    display: block;
+    font-size: 9px;
+  }
+
+  .stockVerdictPrice {
+    font-size: var(--data-m);
+    line-height: 1.1;
+  }
+
+  .stockVerdictCurrency,
+  .stockVerdictChange {
+    font-size: var(--data-s);
+  }
+
+  .stockVerdictQuoteValue {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-1) var(--space-2);
+  }
+
+  .stockVerdictHead > .stockVerdictActions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+  }
+
+  .stockDecisionChip {
+    width: 100%;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .stockDecisionChip svg {
+    width: 52px;
+    height: calc(var(--curve-hero-h) * 0.72);
+  }
+
+  .stockDecisionChipDecision {
+    font-size: var(--text-m);
+    line-height: 1.1;
+  }
+
+  .stockDecisionChipLabel {
+    font-size: 9px;
+  }
+
+  .stockVerdictLinks {
+    gap: var(--space-2);
+  }
+
+  .stockChartPanel {
+    padding: var(--space-3);
+  }
+
+  .stockChartTitle {
+    display: none;
+  }
+
+  .stockChartBenchmarkFold {
+    margin-bottom: var(--space-2);
+  }
+
+  .stockChartBenchmarkFold > summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 28px;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--track-label);
+  }
+
+  .stockChartBenchmarkFold > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .stockChartBenchmarkFold > summary::after {
+    content: "▸";
+    margin-left: auto;
+    color: var(--soft);
+    font-size: var(--text-s);
+  }
+
+  .stockChartBenchmarkFold[open] > summary::after {
+    content: "▾";
+  }
+
+  .stockChartBenchmarkFoldValue {
+    color: var(--text);
+    font-family: var(--font-data);
+    font-size: var(--text-s);
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  .stockChartBenchmarkControl {
+    margin-top: var(--space-2);
+    margin-bottom: 0;
+    padding: var(--space-2);
+    gap: var(--space-2);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .stockChartBenchmarkControl::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stockChartBenchmarkControl label {
+    flex: 0 0 auto;
+  }
+
+  .stockChartBenchmarkControl input {
+    width: 72px;
+    flex: 0 0 auto;
+  }
+
+  .stockChartBenchmarkControl input,
+  .stockChartBenchmarkControl button {
+    height: 28px;
+    min-height: 28px;
+  }
+}
+
+@media (min-width: 761px) {
+  .stockChartBenchmarkFold > summary {
+    display: none;
+  }
+
+  .stockChartBenchmarkFold .stockChartBenchmarkControl {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 640px) and (min-width: 481px) {
   .stockPage {
     gap: var(--space-5);
   }
   .stockVerdict {
     padding: var(--space-4);
   }
+}
+@media (max-width: 640px) {
   .stockTechRow {
     grid-template-columns: 1fr;
     gap: var(--space-1);

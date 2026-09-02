@@ -8130,4 +8130,197 @@ h2 {
   .coverageAuditPanel {
     scroll-margin-bottom: calc(52px + env(safe-area-inset-bottom));
   }
+
+  /* STOCK-FIRE-1 — clasificación + chartPrefs en rail horizontal (pisa 760px). */
+  .stockPage .stockUserClassification {
+    margin-bottom: 6px;
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .stockPage .stockReviewFlowRail {
+    padding: 6px;
+    gap: 4px;
+  }
+
+  .stockPage .stockReviewFlowActions a {
+    min-height: 26px;
+    padding: 4px 7px;
+    font-size: 10px;
+  }
+
+  .stockPage .stockDecisionResolveRail {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .stockPage .stockDecisionResolveRail > span {
+    grid-column: 1 / -1;
+    font-size: 10px;
+  }
+
+  .stockPage .stockDecisionNoteFold {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .stockPage .stockDecisionNoteFold > summary {
+    cursor: pointer;
+    list-style: none;
+    min-height: 28px;
+    padding: 5px 8px;
+    border: 1px solid var(--stock-line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--stock-muted);
+    font-size: 10px;
+    font-weight: 760;
+    text-transform: uppercase;
+  }
+
+  .stockPage .stockDecisionNoteFold > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .stockPage .stockDecisionNoteFold > summary::after {
+    content: "▸";
+    float: right;
+    color: var(--soft);
+  }
+
+  .stockPage .stockDecisionNoteFold[open] > summary::after {
+    content: "▾";
+  }
+
+  .stockPage .stockDecisionNoteFold .stockDecisionValidationNote {
+    margin-top: 6px;
+  }
+
+  .stockPage .stockDecisionNoteFold .stockDecisionValidationNote input {
+    min-height: 28px;
+    font-size: 11px;
+  }
+
+  .stockPage .stockDecisionResolveRail > div {
+    grid-column: 2;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+
+  .stockPage .stockDecisionResolveRail button {
+    min-height: 28px;
+    padding: 4px 6px;
+    font-size: 10px;
+    flex: 0 0 auto;
+  }
+
+  .stockPage .chartPrefs {
+    margin-bottom: 4px;
+  }
+
+  .stockPage .chartPrefs.compact .chartPrefsLine {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin: 0;
+    padding: 0 0 2px;
+  }
+
+  .stockPage .chartPrefs.compact .chartPrefsLine::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stockPage .chartPrefs.compact .chartPrefCluster {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 4px;
+    width: auto;
+    min-width: 0;
+    flex: 0 0 auto;
+  }
+
+  .stockPage .chartPrefs.compact .chartPrefGroup {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    width: auto;
+    min-width: 0;
+    flex: 0 0 auto;
+    grid-column: auto;
+  }
+
+  .stockPage .chartPrefs.compact .chartPrefGroupLabel {
+    display: none;
+  }
+
+  .stockPage .chartPrefs.compact .chartSegmented {
+    width: auto;
+    min-width: 0;
+    height: 28px !important;
+    min-height: 28px !important;
+    flex: 0 0 auto;
+  }
+
+  .stockPage .chartPrefs.compact .chartSegmented button {
+    min-height: 24px !important;
+    min-width: 28px !important;
+    padding: 0 5px;
+    font-size: 9px;
+  }
+
+  .stockPage .chartPrefs.compact .compactSeg {
+    width: auto;
+    min-width: 0;
+    height: 28px !important;
+    min-height: 28px !important;
+    flex: 0 0 auto;
+    grid-column: auto;
+  }
+
+  .stockPage .chartPrefs.compact .compactSeg button {
+    min-height: 24px !important;
+    min-width: 28px !important;
+    padding: 0 5px;
+    font-size: 9px;
+  }
+
+  .stockPage .chartPrefs select,
+  .stockPage .chartPrefs .btnSmall,
+  .stockPage .chartPrefs .chartIndicators summary,
+  .stockPage .chartPrefs .chartNotes summary {
+    width: auto;
+    min-width: 0;
+    flex: 0 0 auto;
+    height: 28px !important;
+    min-height: 28px !important;
+    font-size: 9px;
+    grid-column: auto;
+  }
+
+  .stockPage .chartPrefs select {
+    min-width: 72px;
+    padding: 0 14px 0 6px;
+  }
+
+  .stockPage .chartPrefs .chartIndicators summary::before {
+    font-size: 9px;
+  }
+
+  .stockPage .universalChart {
+    min-height: 0;
+    padding: 6px;
+    gap: 4px;
+  }
 }
