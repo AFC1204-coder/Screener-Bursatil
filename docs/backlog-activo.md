@@ -6,8 +6,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-02 (noche) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño (sin falta):** **jueves 3 sep 2026** → **MIGRATE-1** Mac Mini.  
-**Ahora:** **STOCK-FIRE-1** — gráfico de ficha en fold 390 (activo).  
-**Hoy cerrado:** VCP-3-prod-bridge · VCP-3-gates · FILTER-SHELL-2 · MOBILE-FIRE-1…3.  
+**Último cerrado:** **STOCK-FIRE-1** — smoke 390 `usefulChartPx: 298` · `b82629d`.  
+**Hoy cerrado:** STOCK-FIRE-1 · VCP-3-prod-bridge · VCP-3-gates · FILTER-SHELL · MOBILE-FIRE.  
+**Mañana:** MIGRATE-1 Mac Mini.  
 **Gate cierre:** tests del ticket + **`./vfc`** + smoke Browser Use.
 
 ## Hecho (esta oleada)
@@ -120,11 +121,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 | FILTER-SHELL-2 | Toolbar secundaria → menú ⋯ | **Cerrado** · `765dc04` |
 | VCP-3-gates | Shadow G1–G3 verify corpus (sin calibrar) | **Cerrado** · `7b8040d` |
 | VCP-3-prod-bridge | Verify motor unificado OFF/ON + smoke ficha | **Cerrado** (verify 2026-09-02) · `1dc82f3` |
-| STOCK-FIRE-1 | Ficha `/stock`: canvas visible en fold 390 | **Activo** |
+| STOCK-FIRE-1 | Ficha `/stock`: canvas visible en fold 390 | **Cerrado** · `b82629d` · smoke usefulChartPx 298 |
 
 ## Siguiente — mañana MIGRATE
 
-**MIGRATE-1** Mac Mini (3 sep). No mezclar con STOCK-FIRE.
+**MIGRATE-1** Mac Mini (3 sep). Post: más `/stock` móvil solo si duele.
 
 ## Siguiente — datos IPO + filtros
 

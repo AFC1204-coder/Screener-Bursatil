@@ -8202,6 +8202,10 @@ h2 {
     font-size: 11px;
   }
 
+  .stockPage .stockDecisionValidationNoteLabel {
+    display: none;
+  }
+
   .stockPage .stockDecisionResolveRail > div {
     grid-column: 2;
     display: flex;
@@ -8322,5 +8326,15 @@ h2 {
     min-height: 0;
     padding: 6px;
     gap: 4px;
+  }
+}
+
+@media (min-width: 761px) {
+  .stockPage .stockDecisionNoteFold > summary {
+    display: none;
+  }
+
+  .stockPage .stockDecisionNoteFold .stockDecisionValidationNote {
+    margin-top: 0;
   }
 }

@@ -1,8 +1,9 @@
 # STOCK-FIRE-1 — Gráfico visible en el fold (ficha móvil)
 
-**Estado:** listo para Agent  
+**Estado:** Cerrado 2026-09-02 (verify orquestador · smoke 390)  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer  
+**Commit:** `b82629d` (+ polish nota/desktop)  
 **Prioridad:** fuego UI · ficha `/stock` ≤480 · sin features nuevas  
 **Previo:** MOBILE-FIRE-1…3 (mesa) · CHART-UI-1 (prefs compact desktop)
 
@@ -61,8 +62,8 @@ const visible = Math.max(0, Math.min(r.bottom, innerHeight - bottomH) - Math.max
 
 Sin `document.documentElement.scrollWidth > clientWidth`. Desktop 1280: chart usable como hoy (smoke spot).
 
-## Verificación
+## Verificación (orquestador 2026-09-02)
 
-- Browser Use / CDP en `:3310` tras hard-reload.
-- Tests CSS/viewport existentes del stock si aplica; no inventar suite enorme.
-- Sin commit ni push (programación).
+- Browser Use (Chrome sesión): `:3310/stock/AAPL` · **390×844** · `usefulChartPx: **298**` · `canvasTop≈464` · `inFold: true` · sin overflow-x · veredicto ~197 · nota/bench colapsados · prefs ~34 px.
+- Desktop: summaries nota/benchmark `display:none`; canvas visible.
+- Tests: `stockFire1MobileFold` (+ ficha/prefs/decision rail en retorno Agent) verdes.

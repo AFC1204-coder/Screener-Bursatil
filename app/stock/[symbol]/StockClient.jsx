@@ -616,7 +616,7 @@ function StockUserClassification({
       <details className="stockDecisionNoteFold">
         <summary>Nota del inversor</summary>
         <label className="stockDecisionValidationNote">
-          <span className="srOnly">Nota del inversor</span>
+          <span className="stockDecisionValidationNoteLabel">Nota del inversor</span>
           <input
             value={note}
             maxLength={120}
