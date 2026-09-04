@@ -30,6 +30,15 @@ SHELL-B (independiente de A): plomería del aside a ⋯.
 
 No hizo falta completar cobertura del modal antes de retirar el árbol. Test de contrato: `FilterFamilyModal · cobertura por familia (gate SHELL-A)`.
 
+## Verificación
+
+- `npx vitest run tests/screenerFiltersView.test.js tests/screenerViewportMount.test.js` → 20/20.
+- `npx eslint` de archivos tocados + `npm run lint` → OK.
+- `./vfc` → lint OK; `npm test` de la suite completa falla en **4 tests preexistentes** ajenos a SHELL-A (`sessionStorage` en node en C-03; copy «Sesión restaurada» vs «Sesión recuperada» en P4). No tocados.
+- Smoke en página: no (este entorno no tiene sesión logueada en `:3000`).
+
+PR: `https://github.com/AFC1204-coder/Screener-Bursatil/pull/2`
+
 ## Ahora (SHELL-A)
 
 Un solo editor: el aside pierde el árbol «Condiciones + Ajustes finos». Las medias de etapa viven solo en Tendencia. Los interruptores huérfanos viven en su familia. Queda **Resetear criterios** (⋯ / móvil).
