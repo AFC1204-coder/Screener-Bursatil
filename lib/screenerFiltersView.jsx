@@ -4,14 +4,13 @@
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { rowPassesListContract } from "@/lib/listRationale";
 import { canonicalRsValue } from "@/lib/rsCanonical";
-import { CORE_LAYER_KEYS, OPTIONAL_LAYER_KEYS, VIEW_LAYERS } from "@/lib/screenerConfig";
+import { CORE_LAYER_KEYS, OPTIONAL_LAYER_KEYS } from "@/lib/screenerConfig";
 import {
   EXECUTION_LAYERS,
   FILTER_FAMILY_PRESETS,
   FILTER_FIELDS,
   NEUTRAL_FIELD_VALUES,
   REGIME_LAYER,
-  SCREENER_FILTER_PRESETS as PRESETS,
   SETTING_LAYER_DEPENDENCIES,
 } from "@/lib/screenerFilterCatalog";
 import {
@@ -35,7 +34,7 @@ import {
   filterFamilyImpactCardLabel,
   filterFamilyImpactModalLine,
 } from "@/lib/filterFamilyImpact";
-import { isHuntCardPreset, optionalBasePresetEntries } from "@/lib/screenerHuntCards";
+import { optionalBasePresetEntries } from "@/lib/screenerHuntCards";
 import { ruleCountLabel } from "@/lib/screenerFormat";
 
 export function SetupChipRail({ rows = [], presetKey, setupMode, sort, onPreset, onMode, onSort }) {
@@ -120,11 +119,9 @@ export function ScreenerContractPanel({ contract }) {
 }
 
 export function FilterTemplatePanel({
-  presetKey,
   savedTemplates = [],
   selectedTemplateId = "",
   templateName = "",
-  onPreset,
   onApplySaved,
   onTemplateName,
   onSave,
@@ -132,16 +129,12 @@ export function FilterTemplatePanel({
   onSaveCloud,
   onLoadCloud,
 }) {
-  const internalPresetName = PRESETS[presetKey]?.name;
-  const showInternalPreset = !isHuntCardPreset(presetKey) && internalPresetName;
   return <section className="filterTemplatePanel">
-    <div className="filterTemplateHead">
-      <span>Ajustes de sesión</span>
-      <em>{showInternalPreset ? `Base ${internalPresetName}` : "Mercados y afinado"}</em>
-    </div>
-
-    <details className="savedTemplatesDisclosure">
-      <summary><span>Mis plantillas</span><em>{savedTemplates.length} guardadas</em></summary>
+    <div className="savedTemplatesDisclosure">
+      <div className="filterTemplateHead">
+        <span>Plantillas</span>
+        <em>{savedTemplates.length} guardadas</em>
+      </div>
       <div className="savedTemplateTools">
         <select className="select" value={selectedTemplateId} onChange={(event) => onApplySaved?.(event.target.value)} aria-label="Plantillas guardadas">
           <option value="">Mis plantillas guardadas</option>
@@ -158,14 +151,17 @@ export function FilterTemplatePanel({
           <button type="button" className="btn btnSmall btnGhost" onClick={onLoadCloud}>Cargar nube</button>
         </div>
       </div>
-    </details>
+    </div>
   </section>;
 }
 
 export function OptionalBasePresetsPanel({ presetKey, onPreset }) {
   const optionalBases = optionalBasePresetEntries();
-  return <details className="templateQuickPresets optionalBasePresets">
-    <summary><span>Más bases de filtro</span><em>{optionalBases.length}</em></summary>
+  return <section className="templateQuickPresets optionalBasePresets">
+    <div className="filterTemplateHead">
+      <span>Más bases de filtro</span>
+      <em>{optionalBases.length}</em>
+    </div>
     <p className="optionalBasePresetsHint">No sustituyen las fichas del centro; cambian umbrales del filtro.</p>
     <div className="filterTemplateGrid">
       {optionalBases.map(([key, preset]) => <button
@@ -179,7 +175,36 @@ export function OptionalBasePresetsPanel({ presetKey, onPreset }) {
         <small>{preset.desc}</small>
       </button>)}
     </div>
-  </details>;
+  </section>;
+}
+
+export function SessionPlumbingPanel({
+  presetKey,
+  savedTemplates,
+  selectedTemplateId,
+  templateName,
+  onPreset,
+  onApplySaved,
+  onTemplateName,
+  onSave,
+  onDelete,
+  onSaveCloud,
+  onLoadCloud,
+}) {
+  return <div className="sessionPlumbingBlock">
+    <FilterTemplatePanel
+      savedTemplates={savedTemplates}
+      selectedTemplateId={selectedTemplateId}
+      templateName={templateName}
+      onApplySaved={onApplySaved}
+      onTemplateName={onTemplateName}
+      onSave={onSave}
+      onDelete={onDelete}
+      onSaveCloud={onSaveCloud}
+      onLoadCloud={onLoadCloud}
+    />
+    <OptionalBasePresetsPanel presetKey={presetKey} onPreset={onPreset} />
+  </div>;
 }
 
 export function FilterIntensitySlider({
@@ -494,15 +519,12 @@ export function LayerControl({
 
 export function FilterArchitecturePanel({
   filterLayers,
-  viewLayers,
   useRegimeFilter,
   onToggleLayer,
   onOpenLayer,
-  onToggleViewLayer,
   onToggleRegime,
   executionRuleActive,
   executionRuleTotal,
-  viewFiltersActive,
   settings = {},
   fieldRules = {},
   familyCoverage = {},
@@ -551,12 +573,6 @@ export function FilterArchitecturePanel({
       {OPTIONAL_LAYER_KEYS.map(renderLayer)}
       <LayerControl active={useRegimeFilter} onClick={onToggleRegime} label={REGIME_LAYER.label} detail={REGIME_LAYER.detail} countLabel={ruleCountLabel(REGIME_LAYER.count)} />
     </div>
-    <details className="viewLayerMini">
-      <summary><span>Vista de resultados</span><em>{viewFiltersActive} activos</em></summary>
-      <div className="viewLayerBar">
-        {VIEW_LAYERS.map((layer) => <LayerControl key={layer.key} active={viewLayers[layer.key]} onClick={() => onToggleViewLayer(layer.key)} label={layer.label} detail={layer.detail} countLabel="vista" />)}
-      </div>
-    </details>
   </section>;
 }
 

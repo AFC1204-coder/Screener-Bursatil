@@ -125,7 +125,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 | UX-SHELL-1 | Brief Fable: sobrecarga aside/filtros (sin código) | **Cerrado (juicio)** · análisis 2026-09-03 |
 | TABLE-FIRE-1 | Tabla resultados: sin solape al resize ≥761 | **Cerrado** · smoke overlaps 0 |
 | SHELL-A | Un solo editor (retirar árbol finos/condiciones) | **Cola post-MIGRATE** · P0 |
-| SHELL-B | Plomería plantillas/bases → ⋯ | **Cola post-MIGRATE** · P0 ∥ A |
+| SHELL-B | Plomería plantillas/bases → ⋯ | **En curso** · P0 ∥ A |
 | SHELL-C | Aside = Mercados + familias de ficha | **Cola post-MIGRATE** · P1 tras A+B |
 | SHELL-D | Laboratorio fuera + ScreenerSidebar + purga CSS | **Cola post-MIGRATE** · P2 |
 

@@ -73,7 +73,7 @@ export function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenS
 // (principio 1): eran los mismos rails de auditoría interna que en escritorio.
 // Sus resúmenes se siguen calculando en useResultViewModel; simplemente ya no
 // se pintan aquí. El detalle por valor vive en la ficha.
-export function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, perfPeriod, onPerfPeriod, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onRefresh, onReset, refreshing = false, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados con este filtro." }) {
+export function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, perfPeriod, onPerfPeriod, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onRefresh, onReset, sessionPlumbing = null, refreshing = false, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados con este filtro." }) {
   const start = totalRows ? ((page - 1) * pageSize) + 1 : 0;
   const end = totalRows ? Math.min(page * pageSize, totalRows) : 0;
   const hasRows = totalRows > 0;
@@ -99,13 +99,16 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
         {hasRows ? <button type="button" className="mobileReviewBtn" onClick={() => onReview()} disabled={!rows.length}>Revisar</button> : null}
         <details className="mobileResultsMoreMenu">
           <summary aria-label="Más herramientas" title="Más herramientas">⋯</summary>
-          {onRefresh ? <button type="button" onClick={onRefresh} disabled={refreshing}>{refreshing ? "Actualizando…" : "Traer datos frescos"}</button> : null}
-          {onReset ? <button type="button" onClick={onReset} disabled={refreshing}>Resetear criterios</button> : null}
-          {hasRows ? <>
-            <button type="button" onClick={onCsv} disabled={!rows.length}>CSV</button>
-            <button type="button" onClick={onSave} disabled={!rows.length || savingDisabled} aria-label="Guardar snapshot de resultados">Guardar</button>
-            <button type="button" onClick={onAuditJson} disabled={!rows.length} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
-          </> : null}
+          <div className="mobileResultsMoreMenuPanel">
+            {sessionPlumbing}
+            {onRefresh ? <button type="button" onClick={onRefresh} disabled={refreshing}>{refreshing ? "Actualizando…" : "Traer datos frescos"}</button> : null}
+            {onReset ? <button type="button" onClick={onReset} disabled={refreshing}>Resetear criterios</button> : null}
+            {hasRows ? <>
+              <button type="button" onClick={onCsv} disabled={!rows.length}>CSV</button>
+              <button type="button" onClick={onSave} disabled={!rows.length || savingDisabled} aria-label="Guardar snapshot de resultados">Guardar</button>
+              <button type="button" onClick={onAuditJson} disabled={!rows.length} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
+            </> : null}
+          </div>
         </details>
       </div>
     </div>

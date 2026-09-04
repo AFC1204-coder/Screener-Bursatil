@@ -1,7 +1,7 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import { FilterFamilyModal, LayerControl, LayerToggleButton } from "@/lib/screenerFiltersView";
+import { FilterArchitecturePanel, FilterFamilyModal, LayerControl, LayerToggleButton } from "@/lib/screenerFiltersView";
 import { PRIVATE_GLOBAL_RS_DISCLOSURE } from "@/lib/rsEngines";
 
 function walkElements(node, predicate, results = []) {
@@ -185,5 +185,22 @@ describe("FilterFamilyModal · power toggle aislado", () => {
     }));
     expect(html).toContain("filterFamilyCoverage");
     expect(html).toContain("RS semanal en 25/47 del lote");
+  });
+});
+
+describe("FilterArchitecturePanel · SHELL-B", () => {
+  it("ya no duplica Vista de resultados (chips UX-7 + «+ Filtro»)", () => {
+    const html = renderToStaticMarkup(React.createElement(FilterArchitecturePanel, {
+      filterLayers: { trend: true },
+      useRegimeFilter: true,
+      onToggleLayer: () => {},
+      onToggleRegime: () => {},
+      executionRuleActive: 1,
+      executionRuleTotal: 2,
+    }));
+    expect(html).toContain("filterArchitecture");
+    expect(html).toContain("Núcleo");
+    expect(html).not.toContain("viewLayerMini");
+    expect(html).not.toContain("Vista de resultados");
   });
 });

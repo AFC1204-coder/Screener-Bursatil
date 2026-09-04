@@ -1,7 +1,8 @@
-# Ticket activo — MIGRATE-1
+# Ticket activo — SHELL-B
 
-**Estado:** TABLE-FIRE-1 cerrado · **MIGRATE-1 = 3 sep**  
-**Último cerrado:** TABLE-FIRE-1 — tabla sin solape al resize · smoke 820 `overlaps:0`
+**Estado:** SHELL-B en curso · **MIGRATE-1 permanece aparcado**  
+**Último cerrado:** TABLE-FIRE-1 — tabla sin solape al resize · smoke 820 `overlaps:0`  
+**Paralelo:** SHELL-A (otro agente; no tocar árbol `FILTER_GROUPS`)
 
 ## Cerrado esta sesión
 
@@ -10,6 +11,12 @@
 - STOCK-FIRE-1
 
 ## Ahora
+
+SHELL-B · plomería plantillas / nube / bases / chrome de sesión → menú ⋯  
+Retirar `viewLayerMini`. Mercados y tarjetas de familia se quedan en el aside.  
+Análisis: `docs/analisis-ux-shell-aside-2026-09-03.md`
+
+## Aparcado
 
 MIGRATE-1 · `docs/tickets/MIGRATE-1-mini-dump-restore.md`
 

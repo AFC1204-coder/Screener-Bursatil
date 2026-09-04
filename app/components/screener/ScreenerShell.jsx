@@ -24,7 +24,6 @@ import {
   FilterArchitecturePanel,
   FilterDiagnosticsPanel,
   FilterNumber,
-  FilterTemplatePanel,
   FilterToggle,
   MarketMiniTape,
   MobileResultList,
@@ -34,7 +33,7 @@ import {
 } from "@/app/screenerPanels";
 import { investorStatusLabel, compactMobileScanStatus } from "@/lib/screenerFormat";
 import { huntDisplayName } from "@/lib/screenerHuntCards";
-import { OptionalBasePresetsPanel } from "@/lib/screenerFiltersView";
+import { SessionPlumbingPanel } from "@/lib/screenerFiltersView";
 import { isMarketSelectable, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketUnavailabilityReason, resolveMarketsMisalignmentNotice } from "@/lib/marketAvailability";
 import { buildLideresIntlGuardrailNotice, LIDERES_INTL_CTA } from "@/lib/lideresIntlGuardrail";
 import { buildScreenerFilterBreakdown } from "@/lib/screenerFilterBreakdown";
@@ -150,7 +149,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     setUseRegimeFilter,
     toggleFilterLayer,
     setActiveFilterFamily,
-    toggleViewLayer,
     executionRuleActive,
     executionRuleTotal,
     viewFiltersActive,
@@ -539,6 +537,22 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     };
   }, [showMobileFilters, setShowMobileFilters]);
 
+  const sessionPlumbing = (
+    <SessionPlumbingPanel
+      presetKey={presetKey}
+      savedTemplates={savedFilterTemplates}
+      selectedTemplateId={selectedFilterTemplateId}
+      templateName={filterTemplateName}
+      onPreset={setPreset}
+      onApplySaved={applySavedFilterTemplate}
+      onTemplateName={setFilterTemplateName}
+      onSave={saveCurrentFilterTemplate}
+      onDelete={deleteSavedFilterTemplate}
+      onSaveCloud={saveFilterConfigToCloud}
+      onLoadCloud={loadFilterConfigFromCloud}
+    />
+  );
+
   return <main className="page screenerTerminalPage">
     <div className="topbar screenerHeroBar">
       <div className="screenerHeroTitle">
@@ -615,19 +629,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             <button type="button" className="mobileSidebarCloseBtn" onClick={() => setShowMobileFilters(false)} aria-label="Cerrar filtros" title="Cerrar filtros">✕</button>
           </div>
         </div>
-        <FilterTemplatePanel
-          presetKey={presetKey}
-          savedTemplates={savedFilterTemplates}
-          selectedTemplateId={selectedFilterTemplateId}
-          templateName={filterTemplateName}
-          onPreset={setPreset}
-          onApplySaved={applySavedFilterTemplate}
-          onTemplateName={setFilterTemplateName}
-          onSave={saveCurrentFilterTemplate}
-          onDelete={deleteSavedFilterTemplate}
-          onSaveCloud={saveFilterConfigToCloud}
-          onLoadCloud={loadFilterConfigFromCloud}
-        />
 
         <div className="sidebarGroup marketPanel" style={{ marginBottom: 24 }}>
           <div className="marketPanelHead">
@@ -683,19 +684,14 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             <em>{advancedChangeCount > 0 ? `Avanzado · ${advancedChangeCount} ${advancedChangeCount === 1 ? "cambio" : "cambios"}` : "Sin cambios sobre el preset"}</em>
           </summary>
 
-        <OptionalBasePresetsPanel presetKey={presetKey} onPreset={setPreset} />
-
         <FilterArchitecturePanel
           filterLayers={filterLayers}
-          viewLayers={viewLayers}
           useRegimeFilter={useRegimeFilter}
           onToggleLayer={toggleFilterLayer}
           onOpenLayer={setActiveFilterFamily}
-          onToggleViewLayer={toggleViewLayer}
           onToggleRegime={() => setUseRegimeFilter((prev) => !prev)}
           executionRuleActive={executionRuleActive}
           executionRuleTotal={executionRuleTotal}
-          viewFiltersActive={viewFiltersActive}
           settings={settings}
           fieldRules={fieldRules}
           familyIntensity={familyIntensity}
@@ -859,6 +855,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onAuditJson={() => decisionAuditJson(huntResultsFiltered)}
             onRefresh={refreshScreenerSnapshotData}
             onReset={resetScreenerSession}
+            sessionPlumbing={sessionPlumbing}
             refreshing={restoringScan}
             onOpenStock={saveSessionBeforeStockOpen}
             page={visibleResultPage}
@@ -905,6 +902,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               <details className="resultsMoreMenu">
                 <summary className="btn btnSmall btnGhost" aria-label="Más herramientas" title="Más herramientas">⋯</summary>
                 <div className="resultsMoreMenuPanel">
+                  {sessionPlumbing}
                   <button
                     type="button"
                     className="btn btnSmall btnGhost"
