@@ -3,12 +3,12 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-02 (noche) · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-04 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño (sin falta):** **jueves 3 sep 2026** → **MIGRATE-1** Mac Mini.  
+**RECORDATORIO dueño:** **MIGRATE-1** aparcado por el dueño el 4 sep.  
 **Último cerrado:** **TABLE-FIRE-1** — smoke 820 `overlaps:0` · columnas RS país/tema con ancho.  
-**Ahora:** **MIGRATE-1** Mac Mini (3 sep).  
-**Post-migrate:** SHELL-A∥B → C → D.  
+**Ahora:** **SHELL-A** — un solo editor (retirar árbol finos/condiciones).  
+**Siguiente:** **SHELL-B** (independiente, puede seguir) → C → D.  
 **Gate cierre:** tests del ticket + **`./vfc`** + smoke Browser Use.
 
 ## Hecho (esta oleada)
@@ -124,14 +124,14 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 | STOCK-FIRE-1 | Ficha `/stock`: canvas visible en fold 390 | **Cerrado** · `b82629d` · smoke usefulChartPx 298 |
 | UX-SHELL-1 | Brief Fable: sobrecarga aside/filtros (sin código) | **Cerrado (juicio)** · análisis 2026-09-03 |
 | TABLE-FIRE-1 | Tabla resultados: sin solape al resize ≥761 | **Cerrado** · smoke overlaps 0 |
-| SHELL-A | Un solo editor (retirar árbol finos/condiciones) | **Cola post-MIGRATE** · P0 |
+| SHELL-A | Un solo editor (retirar árbol finos/condiciones) | **En curso** · P0 · gate modal 14/14 ya cubierto |
 | SHELL-B | Plomería plantillas/bases → ⋯ | **Cola post-MIGRATE** · P0 ∥ A |
 | SHELL-C | Aside = Mercados + familias de ficha | **Cola post-MIGRATE** · P1 tras A+B |
 | SHELL-D | Laboratorio fuera + ScreenerSidebar + purga CSS | **Cola post-MIGRATE** · P2 |
 
 ## Siguiente — MIGRATE
 
-**MIGRATE-1** Mac Mini (3 sep). Luego SHELL-A.
+**MIGRATE-1** Mac Mini — **aparcado por el dueño el 4 sep**. SHELL-A no espera a migrate.
 
 ## Siguiente — datos IPO + filtros
 

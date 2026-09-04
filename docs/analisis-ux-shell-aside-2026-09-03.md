@@ -8,6 +8,8 @@ Verificación puntual contra repo: tres editores en `ScreenerShell` (árbol `FIL
 
 **Gate pre-SHELL-A:** confirmar que `FilterFamilyModal` expone reglas por familia para todas las familias (no solo IPO/RS); si no, completar modal antes de retirar el árbol.
 
+**Verificación gate (4 sep, HEAD `066ffbe`):** el modal ya cubría las 14 familias (`FILTER_FIELDS` + `fieldLayerKeys` + `SETTING_LAYER_DEPENDENCIES` + medias de etapa en Tendencia). Intensidad/cobertura/−N siguen siendo piloto IPO+RS; no es hueco de reglas de campo. El árbol legado se retiró sin ampliar el modal.
+
 ---
 
 ## Resumen

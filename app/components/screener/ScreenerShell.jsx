@@ -23,9 +23,7 @@ import WeeklyChangesLine from "@/app/components/screener/WeeklyChangesLine";
 import {
   FilterArchitecturePanel,
   FilterDiagnosticsPanel,
-  FilterNumber,
   FilterTemplatePanel,
-  FilterToggle,
   MarketMiniTape,
   MobileResultList,
   PreviewCard,
@@ -40,13 +38,6 @@ import { buildLideresIntlGuardrailNotice, LIDERES_INTL_CTA } from "@/lib/lideres
 import { buildScreenerFilterBreakdown } from "@/lib/screenerFilterBreakdown";
 import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
 import { recordTruthLinePaint } from "@/lib/screenerHuntPerf";
-import {
-  ALL_FILTER_LAYERS,
-  DEFAULT_FIELD_RULES,
-  FILTER_GROUPS,
-  filterLayersForPreset,
-  settingsForPreset,
-} from "@/lib/screenerFilterCatalog";
 import {
   MARKET_ORDER,
   MARKETS,
@@ -154,22 +145,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     executionRuleActive,
     executionRuleTotal,
     viewFiltersActive,
-    setFilterLayers,
     settings,
-    updateSetting,
-    settingApplies,
-    inactiveSettingReason,
-    toggleLayeredSetting,
     fieldRules,
-    isFieldRuleActive,
-    inactiveFieldReason,
-    toggleFieldRule,
-    fineRuleActive,
-    fineRuleTotal,
-    setSettings,
-    setFieldRules,
     diagnostics,
-    markAdvancedBaseline,
     familyIntensity,
     familyIntensityCustom,
     familyCoverage,
@@ -705,55 +683,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           onFamilyIntensityChange={previewFamilyIntensity}
           onFamilyIntensityCommit={commitFamilyIntensity}
         />
-        <div className="controls filterLayerActions">
-          <button className="btn btnSmall btnGhost" onClick={() => {
-            const nextLayers = filterLayersForPreset(presetKey);
-            setFilterLayers(nextLayers);
-            setUseRegimeFilter(true);
-            markAdvancedBaseline?.(settings, nextLayers);
-          }}>Base preset</button>
-          <button className="btn btnSmall btnGhost" onClick={() => { setFilterLayers(ALL_FILTER_LAYERS); setUseRegimeFilter(true); }}>Todo activo</button>
-        </div>
-
-        <div className="sidebarGroup" style={{ marginBottom: 24 }}>
-          <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Condiciones</span>
-          <div className={`weeklyStageControls ${filterLayers.trend ? "" : "isMuted"}`}>
-            <label><span>Media rápida semanal</span><input className="input" type="number" min="2" max="80" step="1" value={settings.stageFastWeeks || 10} onChange={(event) => updateSetting("stageFastWeeks", Number(event.target.value) || 10)} /></label>
-            <label><span>Media lenta semanal</span><input className="input" type="number" min="3" max="120" step="1" value={settings.stageSlowWeeks || 30} onChange={(event) => updateSetting("stageSlowWeeks", Number(event.target.value) || 30)} /></label>
-            <label><span>Pendiente semanas</span><input className="input" type="number" min="2" max="40" step="1" value={settings.stageSlopeWeeks || 10} onChange={(event) => updateSetting("stageSlopeWeeks", Number(event.target.value) || 10)} /></label>
-            <label><span>Media plana ±%</span><input className="input" type="number" min="0" max="20" step="0.5" value={settings.stageFlatPct ?? 2} onChange={(event) => updateSetting("stageFlatPct", Number(event.target.value))} /></label>
-          </div>
-          <div className="filterSwitches">
-            <FilterToggle active={settings.requireStage2} applies={settingApplies("requireStage2", filterLayers)} detail={inactiveSettingReason("requireStage2", filterLayers)} hint="Mira solo la etapa MM30s; no distingue pre-fuga de avance con fuga." onClick={() => toggleLayeredSetting("requireStage2")}>Etapa 2</FilterToggle>
-            <FilterToggle active={settings.requirePulso} applies={settingApplies("requirePulso", filterLayers)} detail={inactiveSettingReason("requirePulso", filterLayers)} onClick={() => toggleLayeredSetting("requirePulso")}>Pulso</FilterToggle>
-            <FilterToggle active={settings.requireUpVolume} applies={settingApplies("requireUpVolume", filterLayers)} detail={inactiveSettingReason("requireUpVolume", filterLayers)} onClick={() => toggleLayeredSetting("requireUpVolume")}>Volumen en vela alcista</FilterToggle>
-            <FilterToggle active={settings.requireRecentIpo} applies={settingApplies("requireRecentIpo", filterLayers)} detail={inactiveSettingReason("requireRecentIpo", filterLayers)} onClick={() => toggleLayeredSetting("requireRecentIpo")}>IPO real reciente</FilterToggle>
-          </div>
-
-          <details className="advancedFiltersDetails" style={{ marginTop: 12 }}>
-            <summary style={{ cursor: 'pointer', color: '#a1a1aa', fontSize: 12, fontWeight: 500, display: 'inline-block', borderBottom: '1px dashed rgba(255,255,255,.2)', paddingBottom: 2 }}>Ajustes finos ({fineRuleActive}/{fineRuleTotal})</summary>
-            <div className="filterGroups" style={{ marginTop: 16 }}>
-              {FILTER_GROUPS.map((group) => {
-                const activeInGroup = group.fields.filter((field) => isFieldRuleActive(field, fieldRules, filterLayers)).length;
-                return <details className="filterGroup" key={group.title}>
-                  <summary className="filterGroupHead"><h3>{group.title}</h3><span>{activeInGroup}/{group.fields.length}</span></summary>
-                  <div className="filterFields">{group.fields.map((field) => <FilterNumber key={field.key} field={field} value={settings[field.key]} onChange={updateSetting} active={isFieldRuleActive(field, fieldRules, filterLayers)} inactiveReason={inactiveFieldReason(field, fieldRules, filterLayers)} onToggle={() => toggleFieldRule(field)} />)}</div>
-                </details>;
-              })}
-            </div>
-            <div className="controls filterFooter" style={{ marginTop: 12 }}>
-              <button className="btn btnGhost btnSmall" style={{ width: "100%" }} onClick={() => {
-                const nextSettings = settingsForPreset(presetKey);
-                const nextLayers = filterLayersForPreset(presetKey);
-                setSettings(nextSettings);
-                setFieldRules(DEFAULT_FIELD_RULES);
-                setFilterLayers(nextLayers);
-                setUseRegimeFilter(true);
-                markAdvancedBaseline?.(nextSettings, nextLayers);
-              }}>Resetear condiciones</button>
-            </div>
-          </details>
-        </div>
         </details>
 
         {/* Diagnóstico: paneles de laboratorio (auditoría + cobertura). Cerrado por

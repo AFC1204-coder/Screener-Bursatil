@@ -296,3 +296,21 @@ describe("ScreenerShell · FILTER-SHELL-1 diagnóstico agrupado", () => {
     expect(advancedBlock).not.toContain("scanDiagnosticsDisclosure");
   });
 });
+
+describe("ScreenerShell · SHELL-A un solo editor", () => {
+  it("aside: sin árbol legado ni resets que compitan con Resetear criterios", () => {
+    mockIsMobileViewport.mockReturnValue(false);
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
+    const aside = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)?.[1] ?? "";
+    expect(aside).not.toContain("Ajustes finos");
+    expect(aside).not.toContain("Resetear condiciones");
+    expect(aside).not.toContain("Base preset");
+    expect(aside).not.toContain("Todo activo");
+    expect(aside).not.toContain("Media rápida semanal");
+    expect(aside).not.toContain("advancedFiltersDetails");
+    expect(aside).not.toContain("Volumen en vela alcista");
+    expect(aside).toContain("data-stub=\"FilterArchitecturePanel\"");
+    expect(html).toContain("Resetear criterios");
+    expect(html.match(/Resetear criterios/g)).toHaveLength(1);
+  });
+});

@@ -1,7 +1,8 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import { FilterFamilyModal, LayerControl, LayerToggleButton } from "@/lib/screenerFiltersView";
+import { FilterFamilyModal, FilterNumber, FilterToggle, LayerControl, LayerToggleButton } from "@/lib/screenerFiltersView";
+import { FILTER_FAMILIES, FILTER_FAMILY_ORDER, SETTING_LAYER_DEPENDENCIES } from "@/lib/screenerFilterCatalog";
 import { PRIVATE_GLOBAL_RS_DISCLOSURE } from "@/lib/rsEngines";
 
 function walkElements(node, predicate, results = []) {
@@ -185,5 +186,62 @@ describe("FilterFamilyModal · power toggle aislado", () => {
     }));
     expect(html).toContain("filterFamilyCoverage");
     expect(html).toContain("RS semanal en 25/47 del lote");
+  });
+});
+
+const allLayersOn = Object.fromEntries(FILTER_FAMILY_ORDER.map((key) => [key, true]));
+
+function familyModalProps(layerKey) {
+  return {
+    layerKey,
+    settings: {},
+    filterLayers: allLayersOn,
+    fieldRules: {},
+    onClose: () => {},
+    onToggleLayer: () => {},
+    onApplyAction: () => {},
+    onUpdateSetting: () => {},
+    onToggleFieldRule: () => {},
+    onToggleLayeredSetting: () => {},
+  };
+}
+
+describe("FilterFamilyModal · cobertura por familia (gate SHELL-A)", () => {
+  it("expone reglas de campo de las 14 familias, no solo IPO/RS", () => {
+    expect(FILTER_FAMILY_ORDER).toHaveLength(14);
+    for (const key of FILTER_FAMILY_ORDER) {
+      const family = FILTER_FAMILIES[key];
+      const tree = FilterFamilyModal(familyModalProps(key));
+      const fieldNodes = walkElements(tree, (node) => node?.type === FilterNumber);
+      expect(fieldNodes.map((node) => node.props.field.key).sort()).toEqual(
+        family.fields.map((field) => field.key).sort(),
+      );
+
+      const expectedSettings = Object.entries(SETTING_LAYER_DEPENDENCIES)
+        .filter(([, dependency]) => dependency.layer === key)
+        .map(([settingKey]) => settingKey)
+        .sort();
+      expect(expectedSettings).toEqual([...(family.settingKeys || [])].sort());
+      const toggleNodes = walkElements(tree, (node) => node?.type === FilterToggle);
+      expect(toggleNodes).toHaveLength(expectedSettings.length);
+    }
+  });
+
+  it("Tendencia incluye definición de etapa y los interruptores de la familia", () => {
+    const html = renderToStaticMarkup(React.createElement(FilterFamilyModal, familyModalProps("trend")));
+    expect(html).toContain("Definición de etapa");
+    expect(html).toContain("Media rápida semanal");
+    expect(html).toContain("Media lenta semanal");
+    expect(html).toContain("Pendiente semanas");
+    expect(html).toContain("Media plana");
+    expect(html).toContain("Etapa 2");
+    expect(html).toContain("Pulso");
+  });
+
+  it("Volumen+ e IPO reciben los interruptores huérfanos del aside", () => {
+    const volumeHtml = renderToStaticMarkup(React.createElement(FilterFamilyModal, familyModalProps("volumeSurge")));
+    const ipoHtml = renderToStaticMarkup(React.createElement(FilterFamilyModal, familyModalProps("ipo")));
+    expect(volumeHtml).toContain("Volumen en vela alcista");
+    expect(ipoHtml).toContain("IPO real reciente");
   });
 });
