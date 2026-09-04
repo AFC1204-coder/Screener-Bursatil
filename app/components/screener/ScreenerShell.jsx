@@ -14,15 +14,14 @@
 
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { restartStatsEdgeSession } from "@/lib/cloudReauth";
-import GlobalCoveragePanel from "@/app/components/screener/GlobalCoveragePanel";
 import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
 import ResultPagerTable from "@/app/components/screener/ResultPagerTable";
 import HuntCardRail from "@/app/components/screener/HuntCardRail";
 import HuntCardModeStrip from "@/app/components/screener/HuntCardModeStrip";
 import WeeklyChangesLine from "@/app/components/screener/WeeklyChangesLine";
+import ScreenerSidebar from "@/app/components/screener/ScreenerSidebar";
+import ScreenerLaboratoryPanel from "@/app/components/screener/ScreenerLaboratoryPanel";
 import {
-  FilterArchitecturePanel,
-  FilterDiagnosticsPanel,
   MarketMiniTape,
   MobileResultList,
   PreviewCard,
@@ -33,21 +32,17 @@ import { investorStatusLabel, compactMobileScanStatus } from "@/lib/screenerForm
 import { huntDisplayName } from "@/lib/screenerHuntCards";
 import { huntCardSheetFamilyKeys } from "@/lib/huntCardModeDisclosure";
 import { SessionPlumbingPanel } from "@/lib/screenerFiltersView";
-import { isMarketSelectable, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketUnavailabilityReason, resolveMarketsMisalignmentNotice } from "@/lib/marketAvailability";
+import { MARKETS_MISALIGNMENT_EMPTY_LABEL, resolveMarketsMisalignmentNotice } from "@/lib/marketAvailability";
 import { buildLideresIntlGuardrailNotice, LIDERES_INTL_CTA } from "@/lib/lideresIntlGuardrail";
 import { buildScreenerFilterBreakdown } from "@/lib/screenerFilterBreakdown";
 import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
 import { recordTruthLinePaint } from "@/lib/screenerHuntPerf";
 import {
-  MARKET_ORDER,
-  MARKETS,
   RESULT_PAGE_SIZES,
   SECTOR_STRENGTH_LABELS,
   SECTOR_STRENGTH_OPTIONS,
-  marketExchange,
   marketName,
 } from "@/lib/screenerConfig";
-import { marketFlag } from "@/lib/symbols";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
@@ -55,8 +50,6 @@ import { useScreenerMobileViewport } from "@/lib/useScreenerMobileViewport";
 
 const PERCENTILE_BATCH_BADGE = "Ranking provisional";
 const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
-const MARKET_REGION_PRESETS = ["global", "us", "us-core-intl", "core-intl", "europe", "asia", "hk"];
-
 function showScanStatusBar(err, status = "") {
   if (err) return true;
   const text = String(status || "").trim();
@@ -333,9 +326,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     hiddenByView,
     viewChips: resultFilterChips,
   });
-  const selectableMarketCount = MARKETS.filter(([code]) => isMarketSelectable(code)).length;
-  const hasActiveMarketPreset = MARKET_REGION_PRESETS.some((key) => isMarketPresetActive(key));
-  const marketCustomizeLabel = `Personalizar mercados (${markets.length}/${selectableMarketCount})${hasActiveMarketPreset ? "" : " · personalizado"}`;
   const lideresIntlGuardrail = buildLideresIntlGuardrailNotice({
     presetKey,
     markets,
@@ -494,6 +484,17 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   // de la topbar y el propio botón de cierre siguen cerrando via su onClick
   // normal; esto cubre los dos casos que no tenían manejador.
   const mobileFiltersRef = useRef(null);
+  const desktopMoreMenuRef = useRef(null);
+  const mobileMoreMenuRef = useRef(null);
+
+  function openLaboratoryPanel() {
+    const menu = isMobileViewport ? mobileMoreMenuRef.current : desktopMoreMenuRef.current;
+    if (!menu) return;
+    menu.open = true;
+    const lab = menu.querySelector(".screenerLaboratoryPanel");
+    if (lab instanceof HTMLDetailsElement) lab.open = true;
+  }
+
   useEffect(() => {
     if (!showMobileFilters) return undefined;
     function handleKeyDown(event) {
@@ -525,6 +526,14 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       onDelete={deleteSavedFilterTemplate}
       onSaveCloud={saveFilterConfigToCloud}
       onLoadCloud={loadFilterConfigFromCloud}
+    />
+  );
+
+  const laboratoryPanel = (
+    <ScreenerLaboratoryPanel
+      diagnostics={diagnostics}
+      resultsRows={resultsRows}
+      resultsFiltered={resultsFiltered}
     />
   );
 
@@ -595,108 +604,31 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       >
         {sidebarCollapsed ? "Filtros" : "‹"}
       </button>
-      <aside ref={mobileFiltersRef} className={`sidebar ${showMobileFilters ? "mobileOpen" : ""}`}>
-        <div className="mobileSidebarHeader">
-          <h2>Filtros</h2>
-          <div className="mobileSidebarHeaderActions">
-            {/* Los filtros se aplican solos al cambiarlos; cerrar es la única acción. */}
-            <button type="button" className="btn btnPrimary" onClick={() => setShowMobileFilters(false)}>Listo</button>
-            <button type="button" className="mobileSidebarCloseBtn" onClick={() => setShowMobileFilters(false)} aria-label="Cerrar filtros" title="Cerrar filtros">✕</button>
-          </div>
-        </div>
-
-        <div className="sidebarGroup marketPanel" style={{ marginBottom: 24 }}>
-          <div className="marketPanelHead">
-            <span>Mercados{marketsStale ? <i className="controlDot controlDotStale" aria-hidden="true" title="Mercados cambiados desde el último corte de datos" /> : null}</span>
-            <em>{markets.length}/{MARKETS.length}</em>
-          </div>
-          <div className="marketPresetBar">
-            {[
-              ["global", "Global"],
-              ["us", "EE. UU."],
-              ["us-core-intl", "US+Core"],
-              ["core-intl", "Core intl"],
-              ["europe", "Europa"],
-              ["asia", "Asia"],
-              ["hk", "HK"],
-            ].map(([key, label]) => <button key={key} className={`btn btnGhost btnSmall ${isMarketPresetActive(key) ? "btnActive" : ""}`} onClick={() => marketPreset(key)}>{label}</button>)}
-          </div>
-          <details className="marketCustomizeDisclosure">
-            <summary><span>{marketCustomizeLabel}</span></summary>
-            <div className="marketSelector marketGrid">
-            {MARKETS.map(([c, n]) => {
-              const active = markets.includes(c);
-              const selectable = isMarketSelectable(c);
-              const disabledReason = selectable ? null : marketUnavailabilityReason(c);
-              return <button
-                key={c}
-                type="button"
-                className={`marketChip countryMarketChip ${active ? "active" : ""} ${selectable ? "" : "isDisabled"}`}
-                title={disabledReason || `${n} · ${marketExchange(c)}`}
-                aria-pressed={active}
-                aria-disabled={selectable ? undefined : true}
-                disabled={!selectable}
-                onClick={() => {
-                  if (!selectable) return;
-                  const selectedMarkets = active ? markets.filter((x) => x !== c) : [...markets, c];
-                  const nextMarkets = MARKET_ORDER.filter((code) => selectedMarkets.includes(code));
-                  setMarketsAndInvalidate(nextMarkets, `Mercados actualizados: ${nextMarkets.length}`);
-                }}
-              >
-                <span className="marketChipFlag">{marketFlag(c)}</span>
-                <span className="marketChipCode">{c}</span>
-              </button>;
-            })}
-            </div>
-          </details>
-        </div>
-
-        <FilterArchitecturePanel
-          filterLayers={filterLayers}
-          useRegimeFilter={useRegimeFilter}
-          onToggleLayer={toggleFilterLayer}
-          onOpenLayer={setActiveFilterFamily}
-          onToggleRegime={() => setUseRegimeFilter((prev) => !prev)}
-          sheetFamilyKeys={sheetFamilyKeys}
-          cardLabel={huntLabel}
-          settings={settings}
-          fieldRules={fieldRules}
-          familyIntensity={familyIntensity}
-          familyIntensityCustom={familyIntensityCustom}
-          familyCoverage={familyCoverage}
-          familyImpact={familyImpact}
-          onFamilyIntensityChange={previewFamilyIntensity}
-          onFamilyIntensityCommit={commitFamilyIntensity}
-        />
-
-        {/* Diagnóstico: paneles de laboratorio (auditoría + cobertura). Cerrado por
-            defecto para no competir con la config diaria de la mesa de caza. */}
-        <details className="disclosurePanel screenerDiagnosticsDisclosure">
-          <summary>
-            <span>Diagnóstico</span>
-            <em>auditoría · cobertura</em>
-          </summary>
-          <details className="scanDiagnosticsDisclosure">
-            <summary>
-              <span>Auditoría de filtros</span>
-              <em>{diagnostics ? `${diagnostics.finalCount}/${diagnostics.analyzed} pasan` : "sin datos"}</em>
-            </summary>
-            <FilterDiagnosticsPanel diagnostics={diagnostics} rowsCount={resultsRows.length} filteredCount={resultsFiltered.length} />
-          </details>
-          {/* Cobertura internacional por mercado (solo lectura). Carga asíncrona
-              desde GET /api/coverage; no bloquea la primera pintura. Comunica que
-              los lotes son trabajo interno del escáner, no el universo completo,
-              y distingue inventario de elegibles para ranking. Sin acciones que
-              ejecuten scan/backfill. */}
-          <details className="disclosurePanel globalCoverageDisclosure">
-            <summary>
-              <span>Cobertura internacional por mercado</span>
-              <em>informativo</em>
-            </summary>
-            <GlobalCoveragePanel />
-          </details>
-        </details>
-      </aside>
+      <ScreenerSidebar
+        mobileFiltersRef={mobileFiltersRef}
+        showMobileFilters={showMobileFilters}
+        onCloseMobileFilters={() => setShowMobileFilters(false)}
+        markets={markets}
+        marketsStale={marketsStale}
+        isMarketPresetActive={isMarketPresetActive}
+        marketPreset={marketPreset}
+        setMarketsAndInvalidate={setMarketsAndInvalidate}
+        filterLayers={filterLayers}
+        useRegimeFilter={useRegimeFilter}
+        toggleFilterLayer={toggleFilterLayer}
+        setActiveFilterFamily={setActiveFilterFamily}
+        setUseRegimeFilter={setUseRegimeFilter}
+        sheetFamilyKeys={sheetFamilyKeys}
+        cardLabel={huntLabel}
+        settings={settings}
+        fieldRules={fieldRules}
+        familyIntensity={familyIntensity}
+        familyIntensityCustom={familyIntensityCustom}
+        familyCoverage={familyCoverage}
+        familyImpact={familyImpact}
+        previewFamilyIntensity={previewFamilyIntensity}
+        commitFamilyIntensity={commitFamilyIntensity}
+      />
 
       <main className="mainContent">
         <section className="searchCard">
@@ -738,9 +670,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
                 <button
                   type="button"
                   className="screenerFilterBreakdownAuditLink"
-                  onClick={() => {
-                    setShowMobileFilters(true);
-                  }}
+                  onClick={openLaboratoryPanel}
                 >
                   Ver auditoría
                 </button>
@@ -771,6 +701,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onRefresh={refreshScreenerSnapshotData}
             onReset={resetScreenerSession}
             sessionPlumbing={sessionPlumbing}
+            laboratoryPanel={laboratoryPanel}
+            moreMenuRef={mobileMoreMenuRef}
             refreshing={restoringScan}
             onOpenStock={saveSessionBeforeStockOpen}
             page={visibleResultPage}
@@ -814,10 +746,13 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
                   Ejecutar, este es el único camino de vuelta a un estado bueno;
                   esconderlo justo cuando no hay resultados —que es cuando hace
                   falta— dejaba la sesión sin salida. */}
-              <details className="resultsMoreMenu">
+              <details ref={desktopMoreMenuRef} className="resultsMoreMenu">
                 <summary className="btn btnSmall btnGhost" aria-label="Más herramientas" title="Más herramientas">⋯</summary>
                 <div className="resultsMoreMenuPanel">
                   {sessionPlumbing}
+                  <div className="resultsMoreMenuLaboratory">
+                    {laboratoryPanel}
+                  </div>
                   <button
                     type="button"
                     className="btn btnSmall btnGhost"

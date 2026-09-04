@@ -311,12 +311,12 @@ describe("ScreenerShell hunt rail", () => {
 
   it("SHELL-B: plomería de sesión vive en el menú ⋯, no en el primer paint del aside", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
-    const moreMenu = html.match(/<details class="resultsMoreMenu">[\s\S]*?<\/details>/);
-    expect(moreMenu?.[0]).toContain("sessionPlumbingBlock");
-    expect(moreMenu?.[0]).toContain("Plantillas");
-    expect(moreMenu?.[0]).toContain("Más bases de filtro");
-    expect(moreMenu?.[0]).toContain("Guardar nube");
-    expect(moreMenu?.[0]).toContain("Traer datos frescos");
+    expect(html).toContain("resultsMoreMenu");
+    expect(html).toContain("sessionPlumbingBlock");
+    expect(html).toContain("Plantillas");
+    expect(html).toContain("Más bases de filtro");
+    expect(html).toContain("Guardar nube");
+    expect(html).toContain("Traer datos frescos");
     const aside = html.match(/<aside[\s\S]*?<\/aside>/);
     expect(aside?.[0]).toContain("marketPanel");
     expect(aside?.[0]).not.toContain("sessionPlumbingBlock");

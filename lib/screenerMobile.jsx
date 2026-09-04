@@ -73,7 +73,7 @@ export function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenS
 // (principio 1): eran los mismos rails de auditoría interna que en escritorio.
 // Sus resúmenes se siguen calculando en useResultViewModel; simplemente ya no
 // se pintan aquí. El detalle por valor vive en la ficha.
-export function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, perfPeriod, onPerfPeriod, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onRefresh, onReset, sessionPlumbing = null, refreshing = false, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados con este filtro." }) {
+export function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, perfPeriod, onPerfPeriod, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onRefresh, onReset, sessionPlumbing = null, laboratoryPanel = null, moreMenuRef = null, refreshing = false, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados con este filtro." }) {
   const start = totalRows ? ((page - 1) * pageSize) + 1 : 0;
   const end = totalRows ? Math.min(page * pageSize, totalRows) : 0;
   const hasRows = totalRows > 0;
@@ -97,10 +97,11 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
           {sortOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
         </select> : null}
         {hasRows ? <button type="button" className="mobileReviewBtn" onClick={() => onReview()} disabled={!rows.length}>Revisar</button> : null}
-        <details className="mobileResultsMoreMenu">
+        <details ref={moreMenuRef} className="mobileResultsMoreMenu">
           <summary aria-label="Más herramientas" title="Más herramientas">⋯</summary>
           <div className="mobileResultsMoreMenuPanel">
             {sessionPlumbing}
+            {laboratoryPanel ? <div className="mobileResultsMoreMenuLaboratory">{laboratoryPanel}</div> : null}
             {onRefresh ? <button type="button" onClick={onRefresh} disabled={refreshing}>{refreshing ? "Actualizando…" : "Traer datos frescos"}</button> : null}
             {onReset ? <button type="button" onClick={onReset} disabled={refreshing}>Resetear criterios</button> : null}
             {hasRows ? <>

@@ -266,37 +266,46 @@ describe("ScreenerShell viewport mount", () => {
   });
 });
 
-describe("ScreenerShell · FILTER-SHELL-1 diagnóstico agrupado", () => {
-  it("aside: un solo Diagnóstico cerrado agrupa auditoría y cobertura", () => {
+describe("ScreenerShell · SHELL-D laboratorio fuera del aside", () => {
+  it("aside: sin Diagnóstico ni paneles de laboratorio", () => {
     mockIsMobileViewport.mockReturnValue(false);
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
-    expect(html).toMatch(/<details class="disclosurePanel screenerDiagnosticsDisclosure">[\s\S]*?<span>Diagnóstico<\/span>[\s\S]*?scanDiagnosticsDisclosure[\s\S]*?Auditoría de filtros[\s\S]*?globalCoverageDisclosure[\s\S]*?Cobertura internacional por mercado/);
+    const aside = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)?.[1] ?? "";
+    expect(aside).toContain("data-stub=\"FilterArchitecturePanel\"");
+    expect(aside).not.toContain("screenerDiagnosticsDisclosure");
+    expect(aside).not.toContain("Auditoría de filtros");
+    expect(aside).not.toContain("Cobertura internacional por mercado");
+  });
+
+  it("menú ⋯ escritorio: Diagnóstico agrupa auditoría y cobertura", () => {
+    mockIsMobileViewport.mockReturnValue(false);
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
+    expect(html).toContain("resultsMoreMenuLaboratory");
+    expect(html).toMatch(/screenerDiagnosticsDisclosure[\s\S]*?<span>Diagnóstico<\/span>[\s\S]*?scanDiagnosticsDisclosure[\s\S]*?Auditoría de filtros[\s\S]*?globalCoverageDisclosure[\s\S]*?Cobertura internacional por mercado/);
     expect(html).not.toMatch(/<details class="disclosurePanel screenerDiagnosticsDisclosure"[^>]*open=/);
     expect(html).toContain("data-stub=\"FilterDiagnosticsPanel\"");
     expect(html).toContain("data-stub=\"GlobalCoveragePanel\"");
   });
 
-  it("drawer móvil: misma agrupación Diagnóstico en el aside compartido", () => {
+  it("drawer móvil: sin Diagnóstico en el aside compartido", () => {
     mockIsMobileViewport.mockReturnValue(true);
     const props = makeProps();
     props.chrome.showMobileFilters = true;
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
-    expect(html).toContain("screenerDiagnosticsDisclosure");
-    expect(html).toContain("Auditoría de filtros");
-    expect(html).toContain("Cobertura internacional por mercado");
+    const aside = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)?.[1] ?? "";
+    expect(aside).not.toContain("screenerDiagnosticsDisclosure");
+    expect(aside).not.toContain("Auditoría de filtros");
   });
 
-  it("familias de ficha y diagnóstico son hermanos en el aside (sin Configuración avanzada)", () => {
+  it("familias de ficha en aside sin Configuración avanzada ni diagnóstico", () => {
     mockIsMobileViewport.mockReturnValue(false);
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
     const aside = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)?.[1] ?? "";
     expect(aside).toContain("data-stub=\"FilterArchitecturePanel\"");
     expect(aside).not.toContain("advancedConfigPanel");
-    expect(aside).toContain("screenerDiagnosticsDisclosure");
+    expect(aside).not.toContain("screenerDiagnosticsDisclosure");
     const archIdx = aside.indexOf("data-stub=\"FilterArchitecturePanel\"");
-    const diagIdx = aside.indexOf("screenerDiagnosticsDisclosure");
     expect(archIdx).toBeGreaterThan(-1);
-    expect(diagIdx).toBeGreaterThan(archIdx);
   });
 });
 

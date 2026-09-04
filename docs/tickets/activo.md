@@ -1,43 +1,33 @@
-# Ticket activo — SHELL-D
+# Ticket activo — SHELL-D (cerrado)
 
-**Estado:** SHELL-C cerrado · **siguiente SHELL-D**  
-**Último cerrado:** SHELL-C — aside = Mercados + familias de ficha; sin `advancedOpen` forzado; contadores duplicados retirados del aside  
-**Base:** merge SHELL-A (`cursor/shell-a-aside-editor-685f`) + SHELL-B (`cursor/shell-b-plomeria-menu-f44f`)
+**Estado:** SHELL-D cerrado · **siguiente:** post-SHELL (ninguno en cola UX-SHELL)  
+**Último cerrado:** SHELL-D — laboratorio fuera del aside; `ScreenerSidebar.jsx` + `ScreenerLaboratoryPanel.jsx`; purga CSS `filterArchitectureHead`  
+**Base:** SHELL-C (`cursor/shell-c-aside-families-62d8`)
 
-## Prompt para Agent chat (copiar tal cual)
+## SHELL-D (cerrado)
 
-```
-@docs/tickets/activo.md
-Rama: cursor/shell-c-aside-families-62d8 (o rama SHELL-D nueva desde HEAD de SHELL-C)
-Modelo: Composer
+- **Laboratorio fuera del aside:** Diagnóstico (auditoría de filtros + cobertura internacional) movido al menú ⋯ (`resultsMoreMenu` escritorio, `mobileResultsMoreMenu` móvil).
+- **Extracción:** `ScreenerSidebar.jsx` (Mercados + familias de ficha); `ScreenerLaboratoryPanel.jsx` (paneles de diagnóstico).
+- **«Ver auditoría»** en desglose de filtros abre el menú ⋯ y expande Diagnóstico (ya no abre el drawer de filtros).
+- **CSS purgado:** bloque `.filterArchitectureHead` (huérfano desde SHELL-A). Estilos de laboratorio reubicados bajo `.resultsMoreMenuLaboratory` / `.mobileResultsMoreMenuLaboratory`.
 
-SHELL-D: laboratorio fuera del aside + ScreenerSidebar.jsx + purga CSS.
-- Sacar Diagnóstico / auditoría / cobertura intl del aside (no colapsar: retirar).
-- Extraer aside a ScreenerSidebar.jsx si conviene.
-- Borrar CSS huérfano acumulado (advancedConfigPanel, filterArchitectureHead, etc.).
-- No tocar scoring, hunt rail, VCP, settings keys, sesión v4, MIGRATE, taxonomía UX-FILTERS.
-- Tests de superficies tocadas + ./vfc.
-- Sin commit ni push.
-```
+## Verificación SHELL-D
 
-## SHELL-C (cerrado)
-
-- Aside primer nivel: **Mercados** + tarjetas de familia de la ficha activa (`huntCardSheetFamilyKeys`).
-- Otras familias en `<details>` con «Volver a la ficha»; Régimen en otras familias.
-- Retirado panel «Configuración avanzada» del aside (y sus contadores `advancedChangeCount` / `executionRuleActive`).
-- `persistAdvancedOpen(true)` eliminado de ModeStrip «Abrir familia» y «Ver auditoría».
-
-## Verificación SHELL-C
-
-- `npx vitest run tests/screenerFiltersView.test.js tests/screenerViewportMount.test.js tests/huntCardModeDisclosure.test.js`
-- `npx eslint` archivos tocados + `npm run lint`
-- `./vfc` si aplica
+- `npx vitest run tests/screenerFiltersView.test.js tests/screenerViewportMount.test.js tests/huntCardModeDisclosure.test.js tests/screenerHuntCardRail.test.js tests/decisionQualityStrip.test.js tests/screenerPercentileScopeBanner.test.js` — OK
+- `npx eslint` archivos tocados + `npm run lint` — OK
+- `./vfc` — lint OK; fallos preexistentes en `screenerFilterLayers.test.js` y `screenerSessionActions.test.js` (no tocados)
 - Smoke en página: no (este entorno no tiene sesión logueada en `:3000`)
 
 ## Qué no se tocó
 
 Scoring, hunt rail semántica, VCP, settings keys, sesión v4, MIGRATE, `/stock`, tokens nuevos, taxonomía UX-FILTERS intensidad/−N.
 
+## Deuda residual / aparcado
+
+- CSS `.weeklyStageControls` / `.filterSwitches` en `screener.css`: siguen usados en el modal de familia (`screenerFiltersView.jsx`), no en aside — no purgados.
+- `advancedConfigPanel` / `viewLayerMini`: ya retirados del JSX en oleadas A–B; sin reglas CSS dedicadas encontradas en HEAD.
+- Smoke visual del menú ⋯ con Diagnóstico expandido: pendiente en instancia con sesión.
+
 ## Post-MIGRATE
 
-SHELL-D · `docs/analisis-ux-shell-aside-2026-09-03.md`
+Oleada UX-SHELL completa (A→B→C→D). Ver `docs/analisis-ux-shell-aside-2026-09-03.md`.
