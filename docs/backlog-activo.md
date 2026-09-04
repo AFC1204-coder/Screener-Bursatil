@@ -6,9 +6,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-04 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** **MIGRATE-1** aparcado por el dueño el 4 sep.  
-**Último cerrado:** **TABLE-FIRE-1** — smoke 820 `overlaps:0` · columnas RS país/tema con ancho.  
-**Ahora:** **SHELL-A** — un solo editor (retirar árbol finos/condiciones).  
-**Siguiente:** **SHELL-B** (independiente, puede seguir) → C → D.  
+**Último cerrado:** **UX-SHELL A→D** aterrizado en polish (`41b542a`) · higiene tests C-03/P4 (`47400ac`).  
+**Ahora:** sin ticket UX-SHELL en cola — oleada cerrada.  
+**Siguiente:** higiene **CLEAN-4** (CSS residual post-SHELL) aparcada · smoke menú ⋯/Diagnóstico pendiente — sin ticket de producto nuevo.  
 **Gate cierre:** tests del ticket + **`./vfc`** + smoke Browser Use.
 
 ## Hecho (esta oleada)
@@ -127,11 +127,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 | SHELL-A | Un solo editor (retirar árbol finos/condiciones) | **Cerrado** · PR #2 |
 | SHELL-B | Plomería plantillas/bases → ⋯ | **Cerrado** · PR #3 · `f50ff8f` |
 | SHELL-C | Aside = Mercados + familias de ficha | **Cerrado** · P1 tras A+B |
-| SHELL-D | Laboratorio fuera + ScreenerSidebar + purga CSS | **Cola post-MIGRATE** · P2 |
+| SHELL-D | Laboratorio fuera + ScreenerSidebar + purga CSS | **Cerrado** · `d6dd808` · aterrizaje polish |
 
 ## Siguiente — MIGRATE
 
-**MIGRATE-1** Mac Mini — **aparcado por el dueño el 4 sep**. SHELL-A no espera a migrate.
+**MIGRATE-1** Mac Mini — **aparcado por el dueño el 4 sep**. Oleada UX-SHELL (A→D) cerrada; no bloquea migrate.
 
 ## Siguiente — datos IPO + filtros
 
