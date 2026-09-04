@@ -39,6 +39,7 @@
     "lightweight-charts": "^5.2.0",
     "lucide-react": "latest",
     "next": "latest",
+    "pg": "^8.23.0",
     "react": "latest",
     "react-dom": "latest"
   },

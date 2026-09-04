@@ -1,8 +1,9 @@
 # MIGRATE-2 — Adaptador `pg` (ruta B)
 
-**Estado:** Tras MIGRATE-1 OK  
-**Depende:** restore verificado en Mini  
-**Plan:** `docs/plan-migrate-postgres-mac-mini-2026-08-30.md`
+**Estado:** Cerrado 2026-09-04 (verify orquestador · smoke dueño MacBook)  
+**Depende:** restore verificado en Mini (MIGRATE-1)  
+**Plan:** `docs/plan-migrate-postgres-mac-mini-2026-08-30.md`  
+**Evidencia:** `docs/evidence/migrate-2-pg-adapter-2026-09-04.md`
 
 ## Objetivo
 

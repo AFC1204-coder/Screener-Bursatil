@@ -1,41 +1,17 @@
-# Ticket activo — UX-SHELL A→D (aterrizado)
+# Ticket activo — STORAGE-1 (post rebase)
 
-**Estado:** Oleada UX-SHELL **aterrizada** en `codex/statsedge-ui-polish` · **siguiente:** post-SHELL (ninguno en cola UX-SHELL)  
-**Último cerrado:** SHELL-D — laboratorio fuera del aside; `ScreenerSidebar.jsx` + `ScreenerLaboratoryPanel.jsx`; purga CSS `filterArchitectureHead`  
-**Rama de trabajo:** `codex/statsedge-ui-polish` (aterrizaje 4 sep 2026; fast-forward desde `cursor/shell-d-laboratorio-sidebar-4cdb`)
+**Estado:** MIGRATE-2 en rebase · **STORAGE-1** siguiente en cola (commit siguiente)  
+**Rama:** `codex/statsedge-ui-polish`  
+**Nota:** UX-SHELL A→D ya aterrizado en remoto (`41b542a`…). Este commit solo trae adaptador `pg`.
 
-## Aterrizaje (4 sep 2026)
+## Hecho en remoto (no perder)
 
-- Merge **fast-forward** de `cursor/shell-d-laboratorio-sidebar-4cdb` → `codex/statsedge-ui-polish`.
-- Sin conflictos. Sin reintroducción de árbol legado, `viewLayerMini`, plomería en primer paint ni diagnóstico en aside.
-- PRs draft #2–#5 (SHELL A/B/C/D por rama) quedan **supersedidos** por este aterrizaje directo en polish.
+SHELL-A→D aterrizado · higiene tests C-03/P4.
 
-## SHELL A→D (resumen)
+## Este commit (MIGRATE-2)
 
-| Oleada | Qué |
-|---|---|
-| **A** | Un solo editor de filtros; retira árbol «Condiciones + Ajustes finos». |
-| **B** | Plomería de sesión al menú ⋯; retira `viewLayerMini`. |
-| **C** | Aside = Mercados + familias de ficha activa; retira `advancedConfigPanel`. |
-| **D** | Laboratorio (Diagnóstico) al menú ⋯; extrae `ScreenerSidebar` + `ScreenerLaboratoryPanel`. |
+`STATSEDGE_DB_MODE=pg` + `DATABASE_URL` · `lib/pgPostgrestAdapter.js`
 
-## Verificación aterrizaje
+## Siguiente
 
-- `npx vitest run tests/screenerFiltersView.test.js tests/screenerViewportMount.test.js tests/huntCardModeDisclosure.test.js tests/screenerHuntCardRail.test.js tests/decisionQualityStrip.test.js tests/screenerPercentileScopeBanner.test.js` — **81/81 OK**
-- `npm run lint` — OK
-- `./vfc` — lint OK; 4 fallos preexistentes en `screenerFilterLayers.test.js` (C-03 sessionStorage) y `screenerSessionActions.test.js` (P4 copy) — no tocados
-- Smoke en página: no (este entorno no tiene sesión logueada en `:3000`)
-
-## Qué no se tocó
-
-Scoring, hunt rail semántica, VCP, settings keys, sesión v4, MIGRATE, `/stock`, tokens nuevos, taxonomía UX-FILTERS intensidad/−N.
-
-## Deuda residual / aparcado
-
-- CSS `.weeklyStageControls` / `.filterSwitches` en `screener.css`: siguen usados en el modal de familia (`screenerFiltersView.jsx`), no en aside — no purgados.
-- `advancedConfigPanel` / `viewLayerMini`: ya retirados del JSX en oleadas A–B; sin reglas CSS dedicadas encontradas en HEAD.
-- Smoke visual del menú ⋯ con Diagnóstico expandido: pendiente en instancia con sesión.
-
-## Post-MIGRATE
-
-Oleada UX-SHELL completa (A→B→C→D). Ver `docs/analisis-ux-shell-aside-2026-09-03.md`.
+STORAGE-1 (cuota local) → MIGRATE-3 cutover.

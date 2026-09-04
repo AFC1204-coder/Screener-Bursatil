@@ -3,12 +3,12 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-04 · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** **MIGRATE-1** aparcado por el dueño el 4 sep.  
-**Último cerrado:** **UX-SHELL A→D** aterrizado en polish (`41b542a`) · higiene tests C-03/P4 (`47400ac`).  
-**Ahora:** sin ticket UX-SHELL en cola — oleada cerrada.  
-**Siguiente:** higiene **CLEAN-4** (CSS residual post-SHELL) aparcada · smoke menú ⋯/Diagnóstico pendiente — sin ticket de producto nuevo.  
+**RECORDATORIO dueño:** UX-SHELL A→D **cerrado** · MIGRATE-1+2 **hechos** · **STORAGE-1** luego MIGRATE-3.  
+**Último cerrado (código):** **MIGRATE-2** adaptador `pg` (este commit en rebase).  
+**Ahora:** **STORAGE-1** (commit siguiente) · luego **MIGRATE-3**.  
+**SHELL:** oleada A→D aterrizada en polish.  
 **Gate cierre:** tests del ticket + **`./vfc`** + smoke Browser Use.
 
 ## Hecho (esta oleada)
@@ -129,9 +129,17 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 | SHELL-C | Aside = Mercados + familias de ficha | **Cerrado** · P1 tras A+B |
 | SHELL-D | Laboratorio fuera + ScreenerSidebar + purga CSS | **Cerrado** · `d6dd808` · aterrizaje polish |
 
+## Siguiente — STORAGE (fuego)
+
+| ID | Qué | Estado |
+|---|---|---|
+| STORAGE-1 | Snapshot local: no QuotaExceeded con mesa US 3k+; remoto = fuente de verdad | **Activo** · `docs/tickets/STORAGE-1-local-snapshot-quota.md` |
+
 ## Siguiente — MIGRATE
 
-**MIGRATE-1** Mac Mini — **aparcado por el dueño el 4 sep**. Oleada UX-SHELL (A→D) cerrada; no bloquea migrate.
+**MIGRATE-1** restore Mini · **hecho**.  
+**MIGRATE-2** adaptador `pg` · **hecho** (este rebase).  
+**MIGRATE-3** cutover + launchd · **después de STORAGE-1**.
 
 ## Siguiente — datos IPO + filtros
 
