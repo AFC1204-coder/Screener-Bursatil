@@ -256,7 +256,8 @@ describe("ScreenerShell · toolbar resultados (UX-P2)", () => {
     expect(moreMenu?.[0]).toContain("Traer datos frescos");
     expect(moreMenu?.[0]).toContain("Resetear criterios");
     expect(moreMenu?.[0]).not.toContain(">↓ CSV<");
-    expect(moreMenu?.[0]).not.toContain(">Guardar<");
+    expect(moreMenu?.[0]).not.toContain("Guardar copia de resultados");
+    expect(moreMenu?.[0]).toContain(">Guardar<");
   });
 
   it("unifica el título a Resultados sin rótulo Results", () => {

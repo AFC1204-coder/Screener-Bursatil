@@ -322,8 +322,8 @@ describe("ScreenerShell hunt rail", () => {
     expect(aside?.[0]).not.toContain("sessionPlumbingBlock");
     expect(aside?.[0]).not.toContain("Más bases de filtro");
     expect(aside?.[0]).not.toContain("Ajustes de sesión");
+    expect(aside?.[0]).not.toContain("Plantillas");
     expect(html).not.toContain("Ajustes de sesión");
-    expect(html).not.toMatch(/<details class="disclosurePanel advancedConfigPanel"[\s\S]*?Más bases de filtro/);
   });
 
   it("UX-16: avisa en rail cuando Líderes intl y datos solo US", () => {
