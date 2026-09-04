@@ -144,6 +144,23 @@ describe("DecisionQualityStrip", () => {
     expect(html).toContain("mobileFilterDisclosure");
   });
 
+  it("SHELL-B: el menú ⋯ móvil admite plomería de sesión", () => {
+    const html = renderToStaticMarkup(React.createElement(MobileResultList, {
+      rows: [],
+      totalRows: 0,
+      sort: "rsGlobalPct",
+      onRefresh: () => {},
+      onReset: () => {},
+      sessionPlumbing: React.createElement("div", { className: "sessionPlumbingBlock" }, "Plantillas"),
+    }));
+    expect(html).toContain("mobileResultsMoreMenu");
+    expect(html).toContain("mobileResultsMoreMenuPanel");
+    expect(html).toContain("sessionPlumbingBlock");
+    expect(html).toContain("Plantillas");
+    expect(html).toContain("Traer datos frescos");
+    expect(html).toContain("Resetear criterios");
+  });
+
   // La fila móvil ya no lleva veredicto ni maquinaria de fiabilidad: muestra
   // las mismas siete columnas que escritorio (docs/principios-producto.md,
   // principios 1 y 7). El contrato completo de columnas se prueba en

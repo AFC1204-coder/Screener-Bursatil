@@ -1,52 +1,43 @@
-# Ticket activo — SHELL-A
+# Ticket activo — SHELL-D
 
-**Estado:** MIGRATE-1 aparcado por el dueño (4 sep) · **SHELL-A en curso**  
-**Último cerrado:** TABLE-FIRE-1 — tabla sin solape al resize · smoke 820 `overlaps:0`  
-**Siguiente (independiente):** SHELL-B — plomería plantillas/bases → ⋯
+**Estado:** SHELL-C cerrado · **siguiente SHELL-D**  
+**Último cerrado:** SHELL-C — aside = Mercados + familias de ficha; sin `advancedOpen` forzado; contadores duplicados retirados del aside  
+**Base:** merge SHELL-A (`cursor/shell-a-aside-editor-685f`) + SHELL-B (`cursor/shell-b-plomeria-menu-f44f`)
 
 ## Prompt para Agent chat (copiar tal cual)
 
 ```
 @docs/tickets/activo.md
-Rama: codex/statsedge-ui-polish (o la rama del PR SHELL-A si ya está fusionada)
-Modelo: Composer / el que indique el orquestador
+Rama: cursor/shell-c-aside-families-62d8 (o rama SHELL-D nueva desde HEAD de SHELL-C)
+Modelo: Composer
 
-SHELL-B (independiente de A): plomería del aside a ⋯.
-- Meter plantillas / nube / «Más bases» / Ajustes de sesión en el menú ⋯.
-- Retirar FilterTemplatePanel + OptionalBasePresets + viewLayerMini del aside (retirar, no colapsar).
-- No tocar scoring, hunt rail, VCP, settings keys, sesión v4, MIGRATE, ni el editor de familia de SHELL-A.
+SHELL-D: laboratorio fuera del aside + ScreenerSidebar.jsx + purga CSS.
+- Sacar Diagnóstico / auditoría / cobertura intl del aside (no colapsar: retirar).
+- Extraer aside a ScreenerSidebar.jsx si conviene.
+- Borrar CSS huérfano acumulado (advancedConfigPanel, filterArchitectureHead, etc.).
+- No tocar scoring, hunt rail, VCP, settings keys, sesión v4, MIGRATE, taxonomía UX-FILTERS.
 - Tests de superficies tocadas + ./vfc.
 - Sin commit ni push.
 ```
 
-## Gate SHELL-A (HEAD `066ffbe` → este PR)
+## SHELL-C (cerrado)
 
-**Hallazgo:** `FilterFamilyModal` **ya** exponía reglas de campo por familia para las **14** familias (`FILTER_FAMILY_ORDER`), no solo IPO/RS.
+- Aside primer nivel: **Mercados** + tarjetas de familia de la ficha activa (`huntCardSheetFamilyKeys`).
+- Otras familias en `<details>` con «Volver a la ficha»; Régimen en otras familias.
+- Retirado panel «Configuración avanzada» del aside (y sus contadores `advancedChangeCount` / `executionRuleActive`).
+- `persistAdvancedOpen(true)` eliminado de ModeStrip «Abrir familia» y «Ver auditoría».
 
-- Campos: `FILTER_FIELDS.filter(field => fieldLayerKeys(field).includes(layerKey))` — misma fuente que el árbol legado.
-- Interruptores: `SETTING_LAYER_DEPENDENCIES` (Etapa 2 / Pulso / Volumen+ / IPO / Estructura / VCP).
-- Medias semanales de etapa: ya estaban en el modal Tendencia (`stageFastWeeks` / `stageSlowWeeks` / `stageSlopeWeeks` / `stageFlatPct`).
-- Intensidad / cobertura / −N siguen siendo piloto IPO+RS (UX-FILTERS-3…5). Eso no es hueco de reglas de campo.
+## Verificación SHELL-C
 
-No hizo falta completar cobertura del modal antes de retirar el árbol. Test de contrato: `FilterFamilyModal · cobertura por familia (gate SHELL-A)`.
+- `npx vitest run tests/screenerFiltersView.test.js tests/screenerViewportMount.test.js tests/huntCardModeDisclosure.test.js`
+- `npx eslint` archivos tocados + `npm run lint`
+- `./vfc` si aplica
+- Smoke en página: no (este entorno no tiene sesión logueada en `:3000`)
 
-## Verificación
+## Qué no se tocó
 
-- `npx vitest run tests/screenerFiltersView.test.js tests/screenerViewportMount.test.js` → 20/20.
-- `npx eslint` de archivos tocados + `npm run lint` → OK.
-- `./vfc` → lint OK; `npm test` de la suite completa falla en **4 tests preexistentes** ajenos a SHELL-A (`sessionStorage` en node en C-03; copy «Sesión restaurada» vs «Sesión recuperada» en P4). No tocados.
-- Smoke en página: no (este entorno no tiene sesión logueada en `:3000`).
-
-PR: `https://github.com/AFC1204-coder/Screener-Bursatil/pull/2`
-
-## Ahora (SHELL-A)
-
-Un solo editor: el aside pierde el árbol «Condiciones + Ajustes finos». Las medias de etapa viven solo en Tendencia. Los interruptores huérfanos viven en su familia. Queda **Resetear criterios** (⋯ / móvil).
-
-## Qué no se toca
-
-Scoring, hunt rail, VCP, semántica de settings, sesión v4, MIGRATE, taxonomía UX-FILTERS, tarjetas de familia, Mercados.
+Scoring, hunt rail semántica, VCP, settings keys, sesión v4, MIGRATE, `/stock`, tokens nuevos, taxonomía UX-FILTERS intensidad/−N.
 
 ## Post-MIGRATE
 
-SHELL-B (independiente) → C → D · `docs/analisis-ux-shell-aside-2026-09-03.md`
+SHELL-D · `docs/analisis-ux-shell-aside-2026-09-03.md`

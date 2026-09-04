@@ -124,9 +124,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 | STOCK-FIRE-1 | Ficha `/stock`: canvas visible en fold 390 | **Cerrado** · `b82629d` · smoke usefulChartPx 298 |
 | UX-SHELL-1 | Brief Fable: sobrecarga aside/filtros (sin código) | **Cerrado (juicio)** · análisis 2026-09-03 |
 | TABLE-FIRE-1 | Tabla resultados: sin solape al resize ≥761 | **Cerrado** · smoke overlaps 0 |
-| SHELL-A | Un solo editor (retirar árbol finos/condiciones) | **En curso** · P0 · PR #2 · gate modal 14/14 |
-| SHELL-B | Plomería plantillas/bases → ⋯ | **Cola post-MIGRATE** · P0 ∥ A |
-| SHELL-C | Aside = Mercados + familias de ficha | **Cola post-MIGRATE** · P1 tras A+B |
+| SHELL-A | Un solo editor (retirar árbol finos/condiciones) | **Cerrado** · PR #2 |
+| SHELL-B | Plomería plantillas/bases → ⋯ | **Cerrado** · PR #3 · `f50ff8f` |
+| SHELL-C | Aside = Mercados + familias de ficha | **Cerrado** · P1 tras A+B |
 | SHELL-D | Laboratorio fuera + ScreenerSidebar + purga CSS | **Cola post-MIGRATE** · P2 |
 
 ## Siguiente — MIGRATE

@@ -286,14 +286,17 @@ describe("ScreenerShell · FILTER-SHELL-1 diagnóstico agrupado", () => {
     expect(html).toContain("Cobertura internacional por mercado");
   });
 
-  it("auditoría de filtros ya no cuelga de Configuración avanzada", () => {
+  it("familias de ficha y diagnóstico son hermanos en el aside (sin Configuración avanzada)", () => {
     mockIsMobileViewport.mockReturnValue(false);
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
     const aside = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)?.[1] ?? "";
-    const advancedBlock = aside.match(
-      /<details class="disclosurePanel advancedConfigPanel">([\s\S]*?)<\/details>\s*<details class="disclosurePanel screenerDiagnosticsDisclosure">/
-    )?.[1] ?? "";
-    expect(advancedBlock).not.toContain("scanDiagnosticsDisclosure");
+    expect(aside).toContain("data-stub=\"FilterArchitecturePanel\"");
+    expect(aside).not.toContain("advancedConfigPanel");
+    expect(aside).toContain("screenerDiagnosticsDisclosure");
+    const archIdx = aside.indexOf("data-stub=\"FilterArchitecturePanel\"");
+    const diagIdx = aside.indexOf("screenerDiagnosticsDisclosure");
+    expect(archIdx).toBeGreaterThan(-1);
+    expect(diagIdx).toBeGreaterThan(archIdx);
   });
 });
 
@@ -312,5 +315,20 @@ describe("ScreenerShell · SHELL-A un solo editor", () => {
     expect(aside).toContain("data-stub=\"FilterArchitecturePanel\"");
     expect(html).toContain("Resetear criterios");
     expect(html.match(/Resetear criterios/g)).toHaveLength(1);
+  });
+});
+
+describe("ScreenerShell · SHELL-C familias de ficha", () => {
+  it("aside: Mercados antes que familias; sin contadores duplicados de avanzado", () => {
+    mockIsMobileViewport.mockReturnValue(false);
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
+    const aside = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)?.[1] ?? "";
+    const marketsIdx = aside.indexOf("marketPanel");
+    const archIdx = aside.indexOf("data-stub=\"FilterArchitecturePanel\"");
+    expect(marketsIdx).toBeGreaterThan(-1);
+    expect(archIdx).toBeGreaterThan(marketsIdx);
+    expect(aside).not.toContain("Configuración avanzada");
+    expect(aside).not.toContain("Avanzado ·");
+    expect(aside).not.toContain("Filtro activo");
   });
 });

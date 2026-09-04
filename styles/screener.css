@@ -2485,14 +2485,6 @@ button.dataHealthSummaryItem:hover,
   font-weight:800;
 }
 
-.viewLayerMini {
-  padding-top:10px;
-}
-
-.viewLayerMini summary {
-  cursor:pointer;
-}
-
 .scanDiagnostics {
   margin:0 0 18px;
   border:1px solid var(--line);
@@ -2634,10 +2626,6 @@ button.dataHealthSummaryItem:hover,
 .filterSwitches {display:flex;flex-direction:column;gap:10px
 }
 
-.viewLayerBar {
-  flex-wrap:wrap;
-}
-
 .layerToggle {
   display:flex;
   align-items:center;
@@ -2677,10 +2665,6 @@ button.dataHealthSummaryItem:hover,
   margin-left:auto;
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
-}
-
-.viewLayerBar .layerControlRow {
-  flex:0 0 auto;
 }
 
 .filterGroups {
@@ -4266,18 +4250,44 @@ button.decisionIssueBadge:hover,
   display:none;
 }
 
-.mobileResultsMoreMenu[open] > button {
+.mobileResultsMoreMenuPanel {
   position:absolute;
   top:calc(100% + 4px);
   right:0;
   z-index:3;
-  min-width:7.5rem;
+  display:grid;
+  gap:4px;
+  min-width:min(18rem, calc(100vw - 24px));
+  max-height:min(70vh, 28rem);
+  overflow:auto;
+  padding:6px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:var(--surface2);
+  box-shadow:0 10px 24px rgba(0,0,0,.28);
+}
+
+.mobileResultsMoreMenuPanel > button {
+  min-width:0;
   padding:6px 10px;
   border:1px solid var(--line);
   border-radius:6px;
   background:var(--surface2);
   color:var(--text);
   text-align:left;
+}
+
+.mobileResultsMoreMenuPanel .sessionPlumbingBlock {
+  display:grid;
+  gap:8px;
+  padding:2px 0 8px;
+  border-bottom:1px solid var(--line);
+}
+
+.mobileResultsMoreMenuPanel .filterTemplatePanel {
+  margin:0;
+  padding:0;
+  border-bottom:0;
 }
 
 /* Disclosures del listado móvil: mismo patrón que el bloque desktop
@@ -4600,6 +4610,73 @@ button.decisionIssueBadge:hover,
   background:transparent;
 }
 
+.filterSheetFamiliesHead {
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 0 8px;
+  padding:0 0 10px;
+  border-bottom:1px solid var(--line);
+}
+
+.filterSheetFamiliesHead span {
+  color:var(--muted);
+  font-size:11px;
+  font-weight:720;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+
+.filterSheetFamiliesHead strong {
+  margin:4px 0 0;
+  color:var(--text);
+  font-size:13px;
+  font-weight:720;
+}
+
+.filterSheetFamiliesBlock {
+  border-bottom:0;
+  padding-bottom:4px;
+}
+
+.filterOtherFamiliesDisclosure {
+  margin-top:4px;
+}
+
+.filterOtherFamiliesDisclosure > summary {
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:8px 0;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:600;
+  list-style:none;
+}
+
+.filterOtherFamiliesDisclosure > summary::-webkit-details-marker {
+  display:none;
+}
+
+.filterOtherFamiliesDisclosure > summary em {
+  font-style:normal;
+  font-size:11px;
+  color:var(--muted);
+}
+
+.filterOtherFamiliesBody {
+  display:grid;
+  gap:8px;
+  padding:4px 0 8px;
+}
+
+.filterBackToSheetBtn {
+  justify-self:start;
+}
+
 .filterArchitectureHead {
   display:flex;
   align-items:flex-end;
@@ -4686,38 +4763,6 @@ button.decisionIssueBadge:hover,
 .layerToggleCount {
   color:var(--muted);
   font-size:10px;
-}
-
-.viewLayerMini {
-  padding:10px 0 0;
-  border-top:0;
-}
-
-.viewLayerMini summary {
-  min-height:34px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  color:var(--soft);
-  font-size:12px;
-  font-weight:650;
-}
-
-.viewLayerMini summary em {
-  color:var(--muted);
-  font-style:normal;
-  font-size:10px;
-  font-weight:650;
-}
-
-.viewLayerBar {
-  display:grid;
-  gap:2px;
-  margin:8px 0 0;
-}
-
-.viewLayerBar .layerControlRow {
-  width:100%;
 }
 
 .scanDiagnosticsDisclosure {
@@ -5656,6 +5701,12 @@ button.decisionIssueBadge:hover,
   color: var(--muted);
   font-size: 10px;
   font-style: normal;
+}
+
+.templateQuickPresets .filterTemplateHead,
+.savedTemplatesDisclosure .filterTemplateHead {
+  min-height: 34px;
+  padding: 8px 9px 0;
 }
 
 .filterTemplateGrid {
@@ -7498,12 +7549,34 @@ h2:not(.topbar h2) {
   z-index:4;
   display:grid;
   gap:4px;
-  min-width:9rem;
+  min-width:18rem;
+  max-width:min(22rem, calc(100vw - 24px));
+  max-height:min(70vh, 32rem);
+  overflow:auto;
   padding:6px;
   border:1px solid var(--line);
   border-radius:6px;
   background:var(--surface2);
   box-shadow:0 10px 24px rgba(0,0,0,.28);
+}
+
+.screenerTerminalPage .resultsMoreMenuPanel .sessionPlumbingBlock {
+  display:grid;
+  gap:8px;
+  padding:4px 2px 8px;
+  margin-bottom:2px;
+  border-bottom:1px solid var(--line);
+}
+
+.screenerTerminalPage .resultsMoreMenuPanel .filterTemplatePanel {
+  margin:0;
+  padding:0;
+  border-bottom:0;
+}
+
+.screenerTerminalPage .resultsMoreMenuPanel .filterTemplateHead {
+  min-height:34px;
+  padding:0 9px;
 }
 
 .screenerTerminalPage .resultsTitleBlock p {
@@ -8580,7 +8653,11 @@ button.decisionOperatingIssue:hover {
     display:none !important;
   }
 
-  .mobileResultListHead .mobileResultsMoreMenu[open] > button {
+  .mobileResultListHead .mobileResultsMoreMenu[open] .mobileResultsMoreMenuPanel {
+    display:grid !important;
+  }
+
+  .mobileResultListHead .mobileResultsMoreMenu[open] .mobileResultsMoreMenuPanel > button {
     display:block !important;
   }
 

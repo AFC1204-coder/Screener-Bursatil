@@ -23,7 +23,6 @@ import WeeklyChangesLine from "@/app/components/screener/WeeklyChangesLine";
 import {
   FilterArchitecturePanel,
   FilterDiagnosticsPanel,
-  FilterTemplatePanel,
   MarketMiniTape,
   MobileResultList,
   PreviewCard,
@@ -32,7 +31,8 @@ import {
 } from "@/app/screenerPanels";
 import { investorStatusLabel, compactMobileScanStatus } from "@/lib/screenerFormat";
 import { huntDisplayName } from "@/lib/screenerHuntCards";
-import { OptionalBasePresetsPanel } from "@/lib/screenerFiltersView";
+import { huntCardSheetFamilyKeys } from "@/lib/huntCardModeDisclosure";
+import { SessionPlumbingPanel } from "@/lib/screenerFiltersView";
 import { isMarketSelectable, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketUnavailabilityReason, resolveMarketsMisalignmentNotice } from "@/lib/marketAvailability";
 import { buildLideresIntlGuardrailNotice, LIDERES_INTL_CTA } from "@/lib/lideresIntlGuardrail";
 import { buildScreenerFilterBreakdown } from "@/lib/screenerFilterBreakdown";
@@ -132,18 +132,12 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     isMarketPresetActive,
     marketPreset,
     setMarketsAndInvalidate,
-    advancedOpen,
-    persistAdvancedOpen,
-    advancedChangeCount,
     filterLayers,
     viewLayers,
     useRegimeFilter,
     setUseRegimeFilter,
     toggleFilterLayer,
     setActiveFilterFamily,
-    toggleViewLayer,
-    executionRuleActive,
-    executionRuleTotal,
     viewFiltersActive,
     settings,
     fieldRules,
@@ -282,6 +276,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   } = staleness || {};
   const isMobileViewport = useScreenerMobileViewport();
   const huntLabel = huntDisplayName(presetKey, markets);
+  const sheetFamilyKeys = huntCardSheetFamilyKeys({ presetKey, markets });
   const presetNameForTruth = huntTruthOverride?.presetName ?? huntLabel;
   const marketsMisalignment = resolveMarketsMisalignmentNotice({
     scannedMarkets,
@@ -517,6 +512,22 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     };
   }, [showMobileFilters, setShowMobileFilters]);
 
+  const sessionPlumbing = (
+    <SessionPlumbingPanel
+      presetKey={presetKey}
+      savedTemplates={savedFilterTemplates}
+      selectedTemplateId={selectedFilterTemplateId}
+      templateName={filterTemplateName}
+      onPreset={setPreset}
+      onApplySaved={applySavedFilterTemplate}
+      onTemplateName={setFilterTemplateName}
+      onSave={saveCurrentFilterTemplate}
+      onDelete={deleteSavedFilterTemplate}
+      onSaveCloud={saveFilterConfigToCloud}
+      onLoadCloud={loadFilterConfigFromCloud}
+    />
+  );
+
   return <main className="page screenerTerminalPage">
     <div className="topbar screenerHeroBar">
       <div className="screenerHeroTitle">
@@ -593,19 +604,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             <button type="button" className="mobileSidebarCloseBtn" onClick={() => setShowMobileFilters(false)} aria-label="Cerrar filtros" title="Cerrar filtros">✕</button>
           </div>
         </div>
-        <FilterTemplatePanel
-          presetKey={presetKey}
-          savedTemplates={savedFilterTemplates}
-          selectedTemplateId={selectedFilterTemplateId}
-          templateName={filterTemplateName}
-          onPreset={setPreset}
-          onApplySaved={applySavedFilterTemplate}
-          onTemplateName={setFilterTemplateName}
-          onSave={saveCurrentFilterTemplate}
-          onDelete={deleteSavedFilterTemplate}
-          onSaveCloud={saveFilterConfigToCloud}
-          onLoadCloud={loadFilterConfigFromCloud}
-        />
 
         <div className="sidebarGroup marketPanel" style={{ marginBottom: 24 }}>
           <div className="marketPanelHead">
@@ -653,27 +651,14 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           </details>
         </div>
 
-        {/* Configuración avanzada: capas, umbrales, reglas de campo y alcance de lote.
-            Cerrada por defecto; el colapso persiste en localStorage. */}
-        <details className="disclosurePanel advancedConfigPanel" open={advancedOpen} onToggle={(event) => persistAdvancedOpen(event.currentTarget.open)}>
-          <summary>
-            <span>Configuración avanzada</span>
-            <em>{advancedChangeCount > 0 ? `Avanzado · ${advancedChangeCount} ${advancedChangeCount === 1 ? "cambio" : "cambios"}` : "Sin cambios sobre el preset"}</em>
-          </summary>
-
-        <OptionalBasePresetsPanel presetKey={presetKey} onPreset={setPreset} />
-
         <FilterArchitecturePanel
           filterLayers={filterLayers}
-          viewLayers={viewLayers}
           useRegimeFilter={useRegimeFilter}
           onToggleLayer={toggleFilterLayer}
           onOpenLayer={setActiveFilterFamily}
-          onToggleViewLayer={toggleViewLayer}
           onToggleRegime={() => setUseRegimeFilter((prev) => !prev)}
-          executionRuleActive={executionRuleActive}
-          executionRuleTotal={executionRuleTotal}
-          viewFiltersActive={viewFiltersActive}
+          sheetFamilyKeys={sheetFamilyKeys}
+          cardLabel={huntLabel}
           settings={settings}
           fieldRules={fieldRules}
           familyIntensity={familyIntensity}
@@ -683,7 +668,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           onFamilyIntensityChange={previewFamilyIntensity}
           onFamilyIntensityCommit={commitFamilyIntensity}
         />
-        </details>
 
         {/* Diagnóstico: paneles de laboratorio (auditoría + cobertura). Cerrado por
             defecto para no competir con la config diaria de la mesa de caza. */}
@@ -735,7 +719,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             markets={markets}
             passedRows={resultsRows}
             onOpenFamily={(familyKey) => {
-              persistAdvancedOpen(true);
               setShowMobileFilters(true);
               setActiveFilterFamily(familyKey);
             }}
@@ -756,7 +739,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
                   type="button"
                   className="screenerFilterBreakdownAuditLink"
                   onClick={() => {
-                    persistAdvancedOpen(true);
                     setShowMobileFilters(true);
                   }}
                 >
@@ -788,6 +770,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onAuditJson={() => decisionAuditJson(huntResultsFiltered)}
             onRefresh={refreshScreenerSnapshotData}
             onReset={resetScreenerSession}
+            sessionPlumbing={sessionPlumbing}
             refreshing={restoringScan}
             onOpenStock={saveSessionBeforeStockOpen}
             page={visibleResultPage}
@@ -834,6 +817,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               <details className="resultsMoreMenu">
                 <summary className="btn btnSmall btnGhost" aria-label="Más herramientas" title="Más herramientas">⋯</summary>
                 <div className="resultsMoreMenuPanel">
+                  {sessionPlumbing}
                   <button
                     type="button"
                     className="btn btnSmall btnGhost"

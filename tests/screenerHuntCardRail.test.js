@@ -2,7 +2,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi, beforeAll } from "vitest";
 import { buildScreenerTruthLine, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
-import { FilterTemplatePanel, OptionalBasePresetsPanel } from "@/lib/screenerFiltersView";
+import { FilterTemplatePanel, OptionalBasePresetsPanel, SessionPlumbingPanel } from "@/lib/screenerFiltersView";
 import { HUNT_CARDS } from "@/lib/screenerHuntCards";
 
 const Stub = ({ marker }) => React.createElement("div", { "data-stub": marker });
@@ -178,19 +178,26 @@ function makeProps({
 }
 
 describe("FilterTemplatePanel bases opcionales", () => {
-  it("no expone bases opcionales en el primer viewport del panel", () => {
-    const html = renderToStaticMarkup(React.createElement(FilterTemplatePanel, { presetKey: "balanced" }));
-    expect(html).toContain("Ajustes de sesión");
-    expect(html).toContain("Mercados y afinado");
+  it("no expone bases opcionales ni cabecera de sesión", () => {
+    const html = renderToStaticMarkup(React.createElement(FilterTemplatePanel, {}));
+    expect(html).toContain("Plantillas");
+    expect(html).not.toContain("Ajustes de sesión");
+    expect(html).not.toContain("Mercados y afinado");
     expect(html).not.toContain("Bases opcionales");
     expect(html).not.toContain("Líderes estrictos");
     expect(templateButtonNames(html)).toEqual([]);
   });
+});
 
-  it("muestra el nombre interno solo fuera del rail diario", () => {
-    const html = renderToStaticMarkup(React.createElement(FilterTemplatePanel, { presetKey: "strict" }));
-    expect(html).toContain("Base Líderes estrictos");
-    expect(html).not.toContain("Mercados y afinado");
+describe("SessionPlumbingPanel", () => {
+  it("junta plantillas, nube y más bases en una superficie secundaria", () => {
+    const html = renderToStaticMarkup(React.createElement(SessionPlumbingPanel, { presetKey: "balanced" }));
+    expect(html).toContain("sessionPlumbingBlock");
+    expect(html).toContain("Plantillas");
+    expect(html).toContain("Guardar nube");
+    expect(html).toContain("Cargar nube");
+    expect(html).toContain("Más bases de filtro");
+    expect(html).not.toContain("Ajustes de sesión");
   });
 });
 
@@ -302,10 +309,21 @@ describe("ScreenerShell hunt rail", () => {
     expect(html).toContain("Ficha «Líderes Etapa 2» deja 47 de 3321");
   });
 
-  it("anida bases opcionales dentro de configuración avanzada", () => {
+  it("SHELL-B: plomería de sesión vive en el menú ⋯, no en el primer paint del aside", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
-    expect(html).toMatch(/<details class="disclosurePanel advancedConfigPanel"[\s\S]*?Más bases de filtro/);
-    expect(html).not.toMatch(/filterTemplatePanel[\s\S]*?Líderes estrictos/);
+    const moreMenu = html.match(/<details class="resultsMoreMenu">[\s\S]*?<\/details>/);
+    expect(moreMenu?.[0]).toContain("sessionPlumbingBlock");
+    expect(moreMenu?.[0]).toContain("Plantillas");
+    expect(moreMenu?.[0]).toContain("Más bases de filtro");
+    expect(moreMenu?.[0]).toContain("Guardar nube");
+    expect(moreMenu?.[0]).toContain("Traer datos frescos");
+    const aside = html.match(/<aside[\s\S]*?<\/aside>/);
+    expect(aside?.[0]).toContain("marketPanel");
+    expect(aside?.[0]).not.toContain("sessionPlumbingBlock");
+    expect(aside?.[0]).not.toContain("Más bases de filtro");
+    expect(aside?.[0]).not.toContain("Ajustes de sesión");
+    expect(aside?.[0]).not.toContain("Plantillas");
+    expect(html).not.toContain("Ajustes de sesión");
   });
 
   it("UX-16: avisa en rail cuando Líderes intl y datos solo US", () => {

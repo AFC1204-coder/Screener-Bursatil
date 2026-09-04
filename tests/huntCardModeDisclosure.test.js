@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { huntCardModeDisclosure } from "@/lib/huntCardModeDisclosure";
+import { huntCardModeDisclosure, huntCardSheetFamilyKeys } from "@/lib/huntCardModeDisclosure";
 
 describe("huntCardModeDisclosure", () => {
   it("Radar IPO → discovery con puerta IPO ≤72m", () => {
@@ -67,5 +67,15 @@ describe("huntCardModeDisclosure", () => {
       expect(door.familyKey).toBeTruthy();
       expect(door.familyLabel).toBeTruthy();
     }
+  });
+});
+
+describe("huntCardSheetFamilyKeys", () => {
+  it("devuelve familias de la ficha activa por preset", () => {
+    expect(huntCardSheetFamilyKeys({ cardId: "lideres-etapa-2" })).toEqual([
+      "trend", "liquidity", "momentum", "relativeStrength", "score", "proximity",
+    ]);
+    expect(huntCardSheetFamilyKeys({ cardId: "radar-ipo" })).toEqual(["ipo", "liquidity"]);
+    expect(huntCardSheetFamilyKeys({ cardId: "lideres-intl" })).toEqual(["liquidity", "coverage"]);
   });
 });

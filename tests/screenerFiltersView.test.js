@@ -1,7 +1,14 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import { FilterFamilyModal, FilterNumber, FilterToggle, LayerControl, LayerToggleButton } from "@/lib/screenerFiltersView";
+import {
+  FilterArchitecturePanel,
+  FilterFamilyModal,
+  FilterNumber,
+  FilterToggle,
+  LayerControl,
+  LayerToggleButton,
+} from "@/lib/screenerFiltersView";
 import { FILTER_FAMILIES, FILTER_FAMILY_ORDER, SETTING_LAYER_DEPENDENCIES } from "@/lib/screenerFilterCatalog";
 import { PRIVATE_GLOBAL_RS_DISCLOSURE } from "@/lib/rsEngines";
 
@@ -243,5 +250,43 @@ describe("FilterFamilyModal · cobertura por familia (gate SHELL-A)", () => {
     const ipoHtml = renderToStaticMarkup(React.createElement(FilterFamilyModal, familyModalProps("ipo")));
     expect(volumeHtml).toContain("Volumen en vela alcista");
     expect(ipoHtml).toContain("IPO real reciente");
+  });
+});
+
+describe("FilterArchitecturePanel · SHELL-B", () => {
+  it("ya no duplica Vista de resultados (chips UX-7 + «+ Filtro»)", () => {
+    const html = renderToStaticMarkup(React.createElement(FilterArchitecturePanel, {
+      filterLayers: { trend: true },
+      useRegimeFilter: true,
+      onToggleLayer: () => {},
+      onToggleRegime: () => {},
+      sheetFamilyKeys: ["trend"],
+      cardLabel: "Líderes Etapa 2",
+    }));
+    expect(html).toContain("filterArchitecture");
+    expect(html).not.toContain("viewLayerMini");
+    expect(html).not.toContain("Vista de resultados");
+  });
+});
+
+describe("FilterArchitecturePanel · SHELL-C familias de ficha", () => {
+  it("muestra familias de la ficha al primer nivel y otras plegadas", () => {
+    const html = renderToStaticMarkup(React.createElement(FilterArchitecturePanel, {
+      filterLayers: { trend: true, ipo: true },
+      useRegimeFilter: false,
+      onToggleLayer: () => {},
+      onToggleRegime: () => {},
+      sheetFamilyKeys: ["trend", "liquidity", "momentum", "relativeStrength", "score", "proximity"],
+      cardLabel: "Líderes Etapa 2",
+    }));
+    expect(html).toContain("filterSheetFamilies");
+    expect(html).toContain("Ficha activa");
+    expect(html).toContain("Líderes Etapa 2");
+    expect(html).toContain("filterOtherFamiliesDisclosure");
+    expect(html).toContain("Otras familias");
+    expect(html).toContain("Volver a la ficha");
+    expect(html).not.toContain("filterArchitectureHead");
+    expect(html).not.toContain("Núcleo");
+    expect(html).not.toContain("Adicionales");
   });
 });
