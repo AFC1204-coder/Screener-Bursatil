@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   ALL_FILTER_LAYERS,
   CORE_LAYER_KEYS,
@@ -373,9 +373,25 @@ describe("restoreFilterLayers · configuración guardada en el navegador", () =>
   });
 });
 
+function fakeSessionStorage() {
+  const store = new Map();
+  return {
+    getItem(key) { return store.has(key) ? store.get(key) : null; },
+    setItem(key, value) { store.set(key, String(value)); },
+    clear() { store.clear(); },
+  };
+}
+
 describe("aviso one-shot al migrar filterLayersVersion < 3 (C-03)", () => {
+  let previousSessionStorage;
+
+  beforeEach(() => {
+    previousSessionStorage = globalThis.sessionStorage;
+    globalThis.sessionStorage = fakeSessionStorage();
+  });
+
   afterEach(() => {
-    sessionStorage.clear();
+    globalThis.sessionStorage = previousSessionStorage;
   });
 
   it("detecta contratos v1/v2 como actualizados", () => {

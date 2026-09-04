@@ -55,8 +55,8 @@ describe("P4 · criterios vs datos", () => {
 
 describe("P4 · textos de estado del refresh", () => {
   it("distingue el arranque automático del botón manual", () => {
-    expect(sessionAutoRefreshStatus({ sampled: false })).toContain("Sesión restaurada");
-    expect(manualDataRefreshStatus({ sampled: false })).not.toContain("Sesión restaurada");
+    expect(sessionAutoRefreshStatus({ sampled: false })).toContain("Sesión recuperada");
+    expect(manualDataRefreshStatus({ sampled: false })).not.toContain("Sesión recuperada");
     expect(manualDataRefreshStatus({ sampled: true })).toContain("universo completo");
   });
 });
