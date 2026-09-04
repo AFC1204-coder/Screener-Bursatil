@@ -2,7 +2,7 @@
 
 **Estado:** Oleada UX-SHELL **aterrizada** en `codex/statsedge-ui-polish` · **siguiente:** post-SHELL (ninguno en cola UX-SHELL)  
 **Último cerrado:** SHELL-D — laboratorio fuera del aside; `ScreenerSidebar.jsx` + `ScreenerLaboratoryPanel.jsx`; purga CSS `filterArchitectureHead`  
-**Rama de trabajo:** `codex/statsedge-ui-polish` @ `4654e6a` (fast-forward SHELL A→D + docs aterrizaje)
+**Rama de trabajo:** `codex/statsedge-ui-polish` (aterrizaje 4 sep 2026; fast-forward desde `cursor/shell-d-laboratorio-sidebar-4cdb`)
 
 ## Aterrizaje (4 sep 2026)
 
