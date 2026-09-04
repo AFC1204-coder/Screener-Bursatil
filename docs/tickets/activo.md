@@ -1,21 +1,29 @@
-# Ticket activo — SHELL-D (cerrado)
+# Ticket activo — UX-SHELL A→D (aterrizado)
 
-**Estado:** SHELL-D cerrado · **siguiente:** post-SHELL (ninguno en cola UX-SHELL)  
+**Estado:** Oleada UX-SHELL **aterrizada** en `codex/statsedge-ui-polish` · **siguiente:** post-SHELL (ninguno en cola UX-SHELL)  
 **Último cerrado:** SHELL-D — laboratorio fuera del aside; `ScreenerSidebar.jsx` + `ScreenerLaboratoryPanel.jsx`; purga CSS `filterArchitectureHead`  
-**Base:** SHELL-C (`cursor/shell-c-aside-families-62d8`)
+**Rama de trabajo:** `codex/statsedge-ui-polish` @ `d6dd808` (fast-forward desde `cursor/shell-d-laboratorio-sidebar-4cdb`)
 
-## SHELL-D (cerrado)
+## Aterrizaje (4 sep 2026)
 
-- **Laboratorio fuera del aside:** Diagnóstico (auditoría de filtros + cobertura internacional) movido al menú ⋯ (`resultsMoreMenu` escritorio, `mobileResultsMoreMenu` móvil).
-- **Extracción:** `ScreenerSidebar.jsx` (Mercados + familias de ficha); `ScreenerLaboratoryPanel.jsx` (paneles de diagnóstico).
-- **«Ver auditoría»** en desglose de filtros abre el menú ⋯ y expande Diagnóstico (ya no abre el drawer de filtros).
-- **CSS purgado:** bloque `.filterArchitectureHead` (huérfano desde SHELL-A). Estilos de laboratorio reubicados bajo `.resultsMoreMenuLaboratory` / `.mobileResultsMoreMenuLaboratory`.
+- Merge **fast-forward** de `cursor/shell-d-laboratorio-sidebar-4cdb` → `codex/statsedge-ui-polish`.
+- Sin conflictos. Sin reintroducción de árbol legado, `viewLayerMini`, plomería en primer paint ni diagnóstico en aside.
+- PRs draft #2–#5 (SHELL A/B/C/D por rama) quedan **supersedidos** por este aterrizaje directo en polish.
 
-## Verificación SHELL-D
+## SHELL A→D (resumen)
 
-- `npx vitest run tests/screenerFiltersView.test.js tests/screenerViewportMount.test.js tests/huntCardModeDisclosure.test.js tests/screenerHuntCardRail.test.js tests/decisionQualityStrip.test.js tests/screenerPercentileScopeBanner.test.js` — OK
-- `npx eslint` archivos tocados + `npm run lint` — OK
-- `./vfc` — lint OK; fallos preexistentes en `screenerFilterLayers.test.js` y `screenerSessionActions.test.js` (no tocados)
+| Oleada | Qué |
+|---|---|
+| **A** | Un solo editor de filtros; retira árbol «Condiciones + Ajustes finos». |
+| **B** | Plomería de sesión al menú ⋯; retira `viewLayerMini`. |
+| **C** | Aside = Mercados + familias de ficha activa; retira `advancedConfigPanel`. |
+| **D** | Laboratorio (Diagnóstico) al menú ⋯; extrae `ScreenerSidebar` + `ScreenerLaboratoryPanel`. |
+
+## Verificación aterrizaje
+
+- `npx vitest run tests/screenerFiltersView.test.js tests/screenerViewportMount.test.js tests/huntCardModeDisclosure.test.js tests/screenerHuntCardRail.test.js tests/decisionQualityStrip.test.js tests/screenerPercentileScopeBanner.test.js` — **81/81 OK**
+- `npm run lint` — OK
+- `./vfc` — lint OK; 4 fallos preexistentes en `screenerFilterLayers.test.js` (C-03 sessionStorage) y `screenerSessionActions.test.js` (P4 copy) — no tocados
 - Smoke en página: no (este entorno no tiene sesión logueada en `:3000`)
 
 ## Qué no se tocó
