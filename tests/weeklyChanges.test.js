@@ -230,6 +230,27 @@ describe("normalizeScanRows / dataAsOfFromRows", () => {
     expect(bySymbol.get("AAPL").d52).toBeNull();
     expect(dataAsOfFromRows(bySymbol)).toBe("2026-08-21");
   });
+
+  it("mapea filas pg (company_name + metrics) al shape interno", () => {
+    const bySymbol = normalizeScanRows([
+      {
+        symbol: "MSFT",
+        company_name: "Microsoft",
+        theme: "Software",
+        metrics: {
+          weeklyStageState: "stage2",
+          distance52w: "-2.5",
+          lastDate: "2026-08-21",
+        },
+      },
+    ]);
+    const row = bySymbol.get("MSFT");
+    expect(row.name).toBe("Microsoft");
+    expect(row.stage).toBe("stage2");
+    expect(row.d52).toBe(-2.5);
+    expect(row.lastDate).toBe("2026-08-21");
+    expect(dataAsOfFromRows(bySymbol)).toBe("2026-08-21");
+  });
 });
 
 describe("stageWord", () => {

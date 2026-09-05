@@ -13,7 +13,7 @@
 // conteos solo viajan cuando la comparación existe.
 
 import { hydrateRowsWithWeeklyRs } from "@/lib/globalRs";
-import { PUBLISHABLE_PARENT_STATUS } from "@/lib/nightlyUsScan";
+import { PUBLISHABLE_PARENT_STATUS, scanProgressStatus } from "@/lib/nightlyUsScan";
 import { nightlyUsLocalIdPattern } from "@/lib/scanLocalId";
 import { createTtlCache } from "@/lib/serverCache";
 import { userFacingServiceError } from "@/lib/serviceErrors";
@@ -57,14 +57,7 @@ const weeklyChangesCache =
     ? existingCache
     : (globalThis[cacheKeyGlobal] = createTtlCache({ maxEntries: 4, name: "weekly-changes" }));
 
-const LIGHT_ROW_SELECT = [
-  "symbol",
-  "name:company_name",
-  "theme",
-  "stage:metrics->>weeklyStageState",
-  "d52:metrics->>distance52w",
-  "lastDate:metrics->>lastDate",
-].join(",");
+const LIGHT_ROW_SELECT = "symbol,company_name,theme,metrics";
 
 async function readScanRows(scanId) {
   const rows = await supabaseRequestAll(
@@ -167,7 +160,7 @@ export async function GET(req) {
         `owner_id=eq.${encodeURIComponent(config.ownerId)}`,
         `local_id=like.${encodeURIComponent(nightlyUsLocalIdPattern())}`,
         "deleted_at=is.null",
-        "select=id,local_id,created_at,row_count,progress_status:settings->progress->>status",
+        "select=id,local_id,created_at,row_count,settings",
         "order=created_at.desc",
         "limit=12",
       ].join("&"),
@@ -175,7 +168,7 @@ export async function GET(req) {
     });
 
     const publishable = (Array.isArray(scans) ? scans : [])
-      .filter((scan) => PUBLISHABLE_PARENT_STATUS.includes(String(scan.progress_status || "").trim()))
+      .filter((scan) => PUBLISHABLE_PARENT_STATUS.includes(scanProgressStatus(scan)))
       .map((scan) => ({ id: scan.id, localId: scan.local_id, createdAt: scan.created_at, rowCount: scan.row_count }));
 
     const pair = pickComparisonPair(publishable);
