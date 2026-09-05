@@ -274,6 +274,16 @@ describe("RS: hidratación en TODAS las rutas que producen filas", () => {
     expect(source).toMatch(/weeklyRsAvailable: true/);
   });
 
+  it("RowPriceChart pide series RS semanales para el overlay del gráfico", () => {
+    const rowChart = readSource("app/RowPriceChart.jsx");
+    const propsLib = readSource("lib/chartRsRowProps.js");
+    expect(rowChart).toMatch(/rsWeeklyChartQuery/);
+    expect(rowChart).toMatch(/rsRatingSeries=/);
+    expect(rowChart).toMatch(/rsCountrySeries=/);
+    expect(rowChart).toMatch(/rsThemeSeries=/);
+    expect(propsLib).toMatch(/api\/rs-weekly/);
+  });
+
   it("attachWeeklyRs marca explícitamente los tres estados posibles", () => {
     const bySymbol = new Map([
       ["MAR", { available: true, rsRating: WEEKLY_RS, sampleSize: 4868, asOf: "2026-08-09" }],

@@ -236,6 +236,15 @@ describe("chartSeriesModel · RS (rating y línea)", () => {
     expect(points[1].time).toBe(rows[3].time);
   });
 
+  it("projectBenchmarkLineSeries no depende del toggle rsLine (línea benchmark vs ranking)", () => {
+    const rows = buildDailyRows({ count: 10 });
+    const points = projectBenchmarkLineSeries(rows, [
+      { time: rows[0].time, rsLine: 100 },
+      { time: rows.at(-1).time, rsLine: 110 },
+    ], "D", { rsLine: false });
+    expect(points).toHaveLength(2);
+  });
+
   it("projectRsRatingSeries devuelve [] en intradía", () => {
     const rows = buildDailyRows({ count: 10 });
     expect(projectRsRatingSeries(rows, [{ time: rows[0].time, value: 50 }], { rsLine: true }, "15m")).toEqual([]);

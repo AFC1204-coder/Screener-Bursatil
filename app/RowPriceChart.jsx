@@ -22,10 +22,16 @@
 
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import { barsAreCandleGrade, chartQuality } from "@/lib/chartDataQuality";
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
+import {
+  chartRsPropsFromRow,
+  chartRsPropsFromWeeklyResponse,
+  rowHasChartRsSeries,
+  rsWeeklyChartQuery,
+} from "@/lib/chartRsRowProps";
 import { canonicalRsValue } from "@/lib/rsCanonical";
 import { externalLinks } from "@/lib/symbols";
 
@@ -86,6 +92,41 @@ export default function RowPriceChart({
   className = "",
   emptyLabel = "Sin dato",
 }) {
+  const [fetchedRs, setFetchedRs] = useState(null);
+
+  useEffect(() => {
+    if (!row?.symbol) {
+      setFetchedRs(null);
+      return undefined;
+    }
+    if (rowHasChartRsSeries(row)) {
+      setFetchedRs(null);
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    const url = rsWeeklyChartQuery(row.symbol, row);
+    fetch(url, { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (controller.signal.aborted) return;
+        setFetchedRs(chartRsPropsFromWeeklyResponse(payload));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setFetchedRs(null);
+      });
+
+    return () => controller.abort();
+  }, [
+    row?.symbol,
+    row?.sector,
+    row?.industry,
+    row?.theme,
+    row?.globalRsSeries,
+    row?.countryRsSeries,
+    row?.themeRsSeries,
+  ]);
+
   if (!row?.symbol) return <div className="previewEmpty">{emptyLabel}</div>;
 
   const links = externalLinks(row.symbol, row.exchange);
@@ -103,6 +144,10 @@ export default function RowPriceChart({
     // memoizado (rsCountryLine/rsThemeLine true) aunque quickReview los apague.
     settings?.indicators,
   ]);
+  const rsChartProps = useMemo(
+    () => chartRsPropsFromRow(row, fetchedRs),
+    [row, fetchedRs],
+  );
   // ADR §3.2/§9: la calidad local viaja explícita. Solo tiene sentido cuando
   // efectivamente pasamos barras locales; si las descartamos, el veredicto lo
   // pone el payload remoto de /api/chart.
@@ -131,6 +176,11 @@ export default function RowPriceChart({
       // superficies enseñaban un número bajo la etiqueta RS que contradecía a
       // la tabla y a la ficha (docs/analisis-vista-rapida-2026-08-24.md, B1).
       rsMainScore={canonicalRsValue(row)}
+      rsRatingSeries={rsChartProps.rsRatingSeries}
+      rsCountrySeries={rsChartProps.rsCountrySeries}
+      rsCountryMainScore={rsChartProps.rsCountryMainScore}
+      rsThemeSeries={rsChartProps.rsThemeSeries}
+      rsThemeMainScore={rsChartProps.rsThemeMainScore}
       benchmarkSymbol={row.benchmarkSymbol}
       localQuality={localQuality}
       className={className}

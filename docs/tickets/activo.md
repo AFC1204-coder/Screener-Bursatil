@@ -1,18 +1,25 @@
-# Ticket activo — MIGRATE-5 cerrado
+# Ticket activo — RS en el gráfico (overlay series)
 
-**Estado:** Verify OK · soft-delete smoke limit · **commit**  
-**Evidencia:** `docs/evidence/migrate-5-nocturno-us-mini-2026-09-05.md`
+**Estado:** Cerrado · verify tests · **commit pendiente orquestador**  
+**Rama:** `cursor/chart-rs-series-d8d3` → PR contra `codex/statsedge-ui-polish`  
+**Modelo:** Composer
+
+## Problema
+
+- Vista rápida y `/review` mostraban badge RS pero **no la línea** (RowPriceChart no pasaba `rsRatingSeries` / país / tema).
+- La línea benchmark ratio se ocultaba al apagar el toggle RS global (`projectBenchmarkLineSeries` atado a `rsLine`).
 
 ## Hecho
 
-- Wrapper + plist nocturno US 05:00 local
-- Smoke `--limit=75` write OK en Mini (luego soft-deleted: no debe ser fuente diaria)
-- launchd cargado · full documentado para 05:00 / manual
+- `RowPriceChart` hidrata series vía `/api/rs-weekly` (ampliado: global + país + tema) o desde fila (`globalRsSeries`… del brief en review).
+- `hydrateReviewRow` propaga series y scores país/tema del company-brief.
+- Benchmark ratio independiente del toggle RS ranking.
+- Tests: `chartRsRowProps`, `chartSeriesModel`, `rsSurfaceConsistency`.
 
-## Nota
+## LO QUE NO VERIFIQUÉ
 
-No usar `--nocturno-real` con `--limit` en producción Mini sin borrar después.
+- Smoke Browser Use en ficha / vista rápida / review (hard-reload, toggles RS, línea visible).
 
 ## Siguiente
 
-Corrida full US (manual o esperar 05:00) · opcional CLEAN-4 · desactivar GHA cuando Mini sea canónico.
+Orquestador: `./vfc` subset chart + smoke visual si aplica.

@@ -268,6 +268,7 @@ async function hydrateReviewRow(row = {}, signal) {
     const rs = brief.relativeStrength || {};
     const benchmarkRating = rs.benchmarkRating ?? rs.rsRating ?? null;
     const countryAvailable = Number.isFinite(rs.countryRsRating);
+    const themeAvailable = Number.isFinite(rs.themeRsRating);
     return cleanObject({
       ...row,
       ...technical,
@@ -295,12 +296,23 @@ async function hydrateReviewRow(row = {}, signal) {
       perf12m: rs.perf12m ?? technical.perf12m ?? row.perf12m,
       shortPercentOfFloat: brief.growthMetrics?.shortPercentOfFloat ?? row.shortPercentOfFloat,
       relativeStrength: rs.series || null,
+      globalRsSeries: rs.globalRsSeries || [],
+      countryRsSeries: rs.countryRsSeries || [],
+      themeRsSeries: rs.themeRsSeries || [],
+      countryRsRating: countryAvailable ? rs.countryRsRating : null,
+      themeRsRating: themeAvailable ? rs.themeRsRating : null,
       weeklyCountryRsAvailable: countryAvailable ? true : row.weeklyCountryRsAvailable,
       weeklyCountryRsRating: countryAvailable ? rs.countryRsRating : row.weeklyCountryRsRating,
       weeklyCountryRsSampleSize: countryAvailable ? rs.countryRsSampleSize : row.weeklyCountryRsSampleSize,
       weeklyCountryRsWeekKey: countryAvailable ? rs.countryRsWeekKey : row.weeklyCountryRsWeekKey,
       weeklyCountryRsEngineVersion: countryAvailable ? rs.countryRsEngineVersion : row.weeklyCountryRsEngineVersion,
       weeklyCountryRsReason: countryAvailable ? null : (rs.countryRsReason ?? row.weeklyCountryRsReason),
+      weeklyThemeRsAvailable: themeAvailable ? true : row.weeklyThemeRsAvailable,
+      weeklyThemeRsRating: themeAvailable ? rs.themeRsRating : row.weeklyThemeRsRating,
+      weeklyThemeRsSampleSize: themeAvailable ? rs.themeRsSampleSize : row.weeklyThemeRsSampleSize,
+      weeklyThemeRsWeekKey: themeAvailable ? rs.themeRsWeekKey : row.weeklyThemeRsWeekKey,
+      weeklyThemeRsEngineVersion: themeAvailable ? rs.themeRsEngineVersion : row.weeklyThemeRsEngineVersion,
+      weeklyThemeRsReason: themeAvailable ? null : (rs.themeRsReason ?? row.weeklyThemeRsReason),
     });
   }
   const chart = await fetchJson(`/api/chart?symbol=${encodeURIComponent(symbol)}`, signal, 9000);
