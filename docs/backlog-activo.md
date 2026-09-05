@@ -6,7 +6,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** FILTER-NOTICE-1 cerrado · Grok → un escritor.  
-**Último cerrado:** **FILTER-NOTICE-1** · banner filtros upgrade one-shot · smoke Mini.  
+**Último cerrado:** **FILTER-NOTICE-1** `f46e586` · banner filtros upgrade one-shot · smoke Mini.  
 **Ahora:** siguiente calidad de página / apagar GHA / leaderboards RPC.  
 **Aparcado:** túnel móvil→Mini.  
 **SHELL:** A→D aterrizado.
