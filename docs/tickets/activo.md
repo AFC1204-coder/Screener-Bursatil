@@ -1,19 +1,14 @@
-# Ticket activo — CLEAN-4 cerrado · RS overlay en cola de smoke
+# Ticket activo — MIGRATE-6 cerrado
 
-**Estado:** CLEAN-4 comiteado · remoto traía fix chart RS (Grok/cloud)  
-**Evidencia CLEAN-4:** `docs/evidence/clean-4-css-residual-shell-2026-09-05.md`  
-**Chart RS (remoto):** `7adc830` / `fd907ab` — escala `rs-rating` compartida; smoke visual con datos reales **pendiente**
+**Estado:** Verify + smoke Mini historia **10/10** · listo commit  
+**Evidencia:** `docs/evidence/migrate-6-pg-rpc-scan-history-2026-09-05.md`
 
-## CLEAN-4
+## Hecho
 
-- CSS huérfano post-SHELL purgado · tests OK · smoke shell Mini OK
-
-## Anti-colisión
-
-Push rechazado: remoto iba **4 commits** por delante (chart RS). Rebase local CLEAN-4 encima.
+- `scan_symbol_history_latest_v1` en modo pg  
+- POST historia con `text[]`  
+- Smoke `test:…:l10` · 10 filas historia · soft-delete
 
 ## Siguiente
 
-- Smoke visual RS overlay en Mini/túnel (OKTA/AAPL con series semanales)  
-- RPC pg o apagar GHA cuando digas  
-- Aplazado: túnel móvil→Mini  
+Commit/push · apagar GHA cuando digas · smoke RS overlay cuando LAN+series · leaderboards RPC aparte

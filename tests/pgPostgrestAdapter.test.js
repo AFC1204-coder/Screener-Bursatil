@@ -4,11 +4,14 @@ import {
   buildPostgrestDeleteSql,
   buildPostgrestInsertSql,
   buildPostgrestSelectSql,
+  buildScanSymbolHistoryLatestSql,
+  isPgRpcSupported,
   normalizePostgrestQuery,
   parseOnConflict,
   parsePreferHeader,
   pgCount,
   pgRequest,
+  pgRpc,
 } from "@/lib/pgPostgrestAdapter";
 
 describe("pgPostgrestAdapter SQL builder", () => {
@@ -170,6 +173,58 @@ describe("pgPostgrestAdapter SQL builder", () => {
       returnMinimal: false,
     });
   });
+
+  it("traduce insert scan_symbol_history con change_reasons text[]", () => {
+    const { sql, values } = buildPostgrestInsertSql("scan_symbol_history", [{
+      owner_id: "personal",
+      symbol: "AAPL",
+      mic_code: "XNAS",
+      observed_at: "2026-09-05T10:00:00.000Z",
+      observed_week: "2026-09-01",
+      source_scan_id: "7f4e2e8f-bdd8-4652-b23d-c0466b7949d5",
+      source_pipeline: "materialized_scan",
+      composite_coverage: 0.5,
+      composite_partial: true,
+      scoring_engine_version: "statsedge-v1",
+      data_provider: "yahoo",
+      passed_screen: true,
+      change_reasons: ["first_appearance"],
+    }], {
+      query: "on_conflict=owner_id,source_scan_id,mic_code,symbol",
+      prefer: "resolution=ignore-duplicates,return=representation",
+    });
+    expect(sql).toContain('INSERT INTO "scan_symbol_history"');
+    expect(sql).toContain('ON CONFLICT ("owner_id", "source_scan_id", "mic_code", "symbol") DO NOTHING');
+    expect(sql).not.toContain("::jsonb");
+    expect(values).toContainEqual(["first_appearance"]);
+  });
+});
+
+describe("pgPostgrestAdapter RPC scan_symbol_history_latest_v1", () => {
+  it("expone solo scan_symbol_history_latest_v1 como RPC soportada", () => {
+    expect(isPgRpcSupported("scan_symbol_history_latest_v1")).toBe(true);
+    expect(isPgRpcSupported("finalize_scan_results")).toBe(false);
+  });
+
+  it("buildScanSymbolHistoryLatestSql replica DISTINCT ON de la migración", () => {
+    const { sql, values } = buildScanSymbolHistoryLatestSql("personal", ["XNAS", "XNYS"]);
+    expect(sql).toContain("SELECT DISTINCT ON (h.owner_id, h.mic_code, h.symbol)");
+    expect(sql).toContain('FROM "scan_symbol_history" AS h');
+    expect(sql).toContain("h.owner_id = $1");
+    expect(sql).toContain("h.mic_code = ANY($2::text[])");
+    expect(values).toEqual(["personal", ["XNAS", "XNYS"]]);
+  });
+
+  it("acepta p_mic_codes null (sin filtro MIC)", () => {
+    const { sql, values } = buildScanSymbolHistoryLatestSql("personal", null);
+    expect(sql).toContain("$2::text[] IS NULL");
+    expect(values).toEqual(["personal", null]);
+  });
+
+  it("rechaza owner vacío", () => {
+    expect(() => buildScanSymbolHistoryLatestSql("", null))
+      .toThrow(/p_owner_id/);
+  });
 });
 
 describe("pgPostgrestAdapter executor (stub pool)", () => {
@@ -247,5 +302,29 @@ describe("pgPostgrestAdapter executor (stub pool)", () => {
   it("rechaza métodos no soportados", async () => {
     await expect(pgRequest(pool, "daily_bars", { method: "PUT", body: {} }))
       .rejects.toMatchObject({ code: "PG_WRITE_UNSUPPORTED" });
+  });
+
+  it("ejecuta scan_symbol_history_latest_v1 vía pgRpc", async () => {
+    pool.query.mockResolvedValueOnce({
+      rows: [{
+        owner_id: "personal",
+        symbol: "AAPL",
+        mic_code: "XNAS",
+        observed_at: "2026-09-05T10:00:00.000Z",
+        change_reasons: ["first_appearance"],
+      }],
+    });
+    const rows = await pgRpc(pool, "scan_symbol_history_latest_v1", {
+      p_owner_id: "personal",
+      p_mic_codes: ["XNAS"],
+    });
+    expect(rows).toHaveLength(1);
+    expect(pool.query.mock.calls[0][0]).toContain("DISTINCT ON");
+    expect(pool.query.mock.calls[0][1]).toEqual(["personal", ["XNAS"]]);
+  });
+
+  it("pgRpc rechaza RPC no implementada", async () => {
+    await expect(pgRpc(pool, "finalize_scan_results", {}))
+      .rejects.toMatchObject({ code: "PG_RPC_UNSUPPORTED" });
   });
 });

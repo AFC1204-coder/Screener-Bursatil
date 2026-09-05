@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const pgRequest = vi.fn();
 const pgCount = vi.fn();
+const pgRpc = vi.fn();
 const getPgPool = vi.fn(() => ({ query: vi.fn() }));
 
 vi.mock("@/lib/pgPostgrestAdapter", () => ({
   pgRequest,
   pgCount,
+  pgRpc,
   getPgPool,
   buildPostgrestSelectSql: vi.fn(),
   buildPostgrestCountSql: vi.fn(),
@@ -21,6 +23,7 @@ describe("supabaseServer en modo pg", () => {
     vi.resetModules();
     pgRequest.mockReset();
     pgCount.mockReset();
+    pgRpc.mockReset();
     getPgPool.mockClear();
     process.env = {
       ...originalEnv,
@@ -71,7 +74,26 @@ describe("supabaseServer en modo pg", () => {
     expect(pgCount).toHaveBeenCalledWith(expect.anything(), "scans", expect.any(Object));
   });
 
-  it("supabaseRpc lanza error claro en modo pg", async () => {
+  it("supabaseRpc delega scan_symbol_history_latest_v1 a pgRpc", async () => {
+    pgRpc.mockResolvedValueOnce([{ symbol: "AAPL", mic_code: "XNAS" }]);
+    const { supabaseRpc } = await import("@/lib/supabaseServer");
+    const rows = await supabaseRpc("scan_symbol_history_latest_v1", {
+      p_owner_id: "personal",
+      p_mic_codes: ["XNAS"],
+    });
+    expect(rows).toEqual([{ symbol: "AAPL", mic_code: "XNAS" }]);
+    expect(pgRpc).toHaveBeenCalledWith(
+      expect.anything(),
+      "scan_symbol_history_latest_v1",
+      { p_owner_id: "personal", p_mic_codes: ["XNAS"] },
+    );
+  });
+
+  it("supabaseRpc lanza error claro para RPC no soportada en modo pg", async () => {
+    pgRpc.mockRejectedValueOnce(Object.assign(
+      new Error("RPC finalize_scan_results no disponible en modo pg local"),
+      { code: "PG_RPC_UNSUPPORTED" },
+    ));
     const { supabaseRpc } = await import("@/lib/supabaseServer");
     await expect(supabaseRpc("finalize_scan_results", {}))
       .rejects.toMatchObject({ code: "PG_RPC_UNSUPPORTED" });
