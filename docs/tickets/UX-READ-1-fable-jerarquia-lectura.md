@@ -1,6 +1,10 @@
 # UX-READ-1 — Brief Fable: jerarquía de lectura (mesa → ficha)
 
-**Estado:** listo para Fable  
+**Estado:** Cerrado (dueño 2026-09-05 noche)  
+**Retorno:** `docs/analisis-ux-read-jerarquia-2026-09-05.md`  
+**Impl:** READ-A′ `82417e5` · READ-C `557deb3` · READ-D `edab7ab` · READ-E `6a481f1` · READ-F `67da5b3`  
+**No hecho (a propósito):** READ-B (lente por ficha; VCP se queda en mesa).  
+**Aparcado:** discordancia cifras RS · badge opacity.  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Fable 5.1  
 **Tipo:** brief + kill list + oleadas. **Sin código.**  

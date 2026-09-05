@@ -5,13 +5,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** Hoy = calidad UI (no Mini). Mañana = GHA + leaderboards RPC.  
-**Último cerrado:** **READ-F** `67da5b3`.  
-**Ahora:** idle — residual calidad UI o mañana Mini.  
-**Nota orquestador:** UX-READ-1 decisiones dueño: VCP se queda; RS tema→ficha; RS país si ≠ US-only.  
+**RECORDATORIO dueño:** Mañana = Mini (GHA off · leaderboards RPC · finalize percentil).  
+**Último cerrado:** **UX-READ** oleada (A′/C/D/E/F) · último código **READ-F** `67da5b3`.  
+**Ahora:** idle — oleada UX-READ **cerrada** (dueño 2026-09-05 noche).  
+**Nota cierre UX-READ:** VCP se queda; RS tema→ficha; RS país si ≠ US-only; **READ-B** aplazada a propósito; discordancia cifras RS overlay/tarjeta/QR y badge opacity → aparcado (no bloquean).  
 **Hecho ops:** Supabase Pro **cancelado** (dueño).  
 **Mañana (Mini):** apagar GHA `scan-universe` · leaderboards RPC pg · finalize percentil pg.  
-**Aparcado:** túnel móvil→Mini.  
+**Aparcado:** túnel móvil→Mini · residuales Fable (RS 72≠64, badge opacity).  
 **SHELL:** A→D aterrizado.
 
 ## Hecho (esta oleada)

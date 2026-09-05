@@ -1,6 +1,10 @@
 # Ticket activo — (ninguno)
 
 **Estado:** idle  
-**Último cerrado:** **READ-F** — etiqueta RS (no FR) en tarjeta de identidad.  
+**Oleada UX-READ:** **cerrada** (dueño 2026-09-05).  
 
-**Siguiente (dueño):** residual calidad UI, o mañana Mini (GHA off · leaderboards RPC · finalize percentil).
+Hecho: A′ · C · D · E · F.  
+Aplazado a propósito: **READ-B** (lente VCP).  
+Aparcado: cifras RS overlay≠tarjeta≠QR · badge opacity.
+
+**Siguiente:** mañana Mini (GHA · leaderboards RPC · finalize percentil).

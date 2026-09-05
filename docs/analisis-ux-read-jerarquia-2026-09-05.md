@@ -1,5 +1,22 @@
 # UX-READ-1 — Retorno Fable: jerarquía de lectura (mesa → ficha) · 2026-09-05
 
+## Cierre (dueño 2026-09-05 noche)
+
+Oleada **cerrada**. No se abren más tickets READ-* de este análisis.
+
+| Ítem | Estado |
+|---|---|
+| READ-A′ (RS tema fuera · RS país condicional · VCP se queda) | Hecho |
+| READ-B (lente por ficha) | **Aplazada a propósito** — VCP fijo en mesa |
+| READ-C (verdad compacta) | Hecho |
+| READ-D (ficha menos ruido) | Hecho |
+| READ-E (un RS overlay default) | Hecho |
+| READ-F (etiqueta RS, no FR) | Hecho (extra jerga) |
+| Cifras RS distintas (72 / 64 / 57) | Aparcado |
+| Badge opacity + tarjeta | Aparcado |
+
+---
+
 Fuente: brief `docs/tickets/UX-READ-1-fable-jerarquia-lectura.md`.  
 Modelo: Fable 5.1. Sin código. HEAD citado: `a810d2f` (rama `codex/statsedge-ui-polish`).  
 Smoke propio: hard-reload Mini `http://127.0.0.1:13000/` (Líderes Etapa 2, 50 filas) y `/stock/AAPL`. La sesión del Mini tenía selección Global (28 mercados, 17 en mesa) en vez de la mesa US del orquestador; las proporciones coinciden con la evidencia del brief y se citan las medidas propias.
