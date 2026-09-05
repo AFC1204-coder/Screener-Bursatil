@@ -1,14 +1,14 @@
-# Ticket activo — MIGRATE-6 cerrado
+# Ticket activo — RS-CHART-HISTORY-1 cerrado
 
-**Estado:** Verify + smoke Mini historia **10/10** · listo commit  
-**Evidencia:** `docs/evidence/migrate-6-pg-rpc-scan-history-2026-09-05.md`
+**Estado:** Verify + smoke Mini OK · listo (ya comiteado o en cola de commit)  
+**Evidencia:** `docs/evidence/rs-chart-history-1-2026-09-05.md`
 
 ## Hecho
 
-- `scan_symbol_history_latest_v1` en modo pg  
-- POST historia con `text[]`  
-- Smoke `test:…:l10` · 10 filas historia · soft-delete
+- Serie overlay: fallback si pin &lt; 8 semanas  
+- Rating ficha: `ratingLatest` (pin) en API + `stockRsUniverse` en UI  
+- Smoke AAPL: FR 64 · serie 54 · sin «Sin línea RS»
 
 ## Siguiente
 
-Commit/push · apagar GHA cuando digas · smoke RS overlay cuando LAN+series · leaderboards RPC aparte
+Apagar GHA cuando digas · leaderboards RPC · túnel móvil aparcado

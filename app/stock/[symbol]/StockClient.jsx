@@ -47,6 +47,12 @@ export function rsRankingStripValue(rsUniverse, freshness = {}) {
   return `${date} · n=${sharedNum(Math.round(sample))}`;
 }
 
+/** RS de la ficha (FR del cuadro y franja): pin del brief antes que la cola de la serie overlay. */
+export function stockRsUniverse(rs = {}) {
+  const seriesTail = Array.isArray(rs.globalRsSeries) ? rs.globalRsSeries.at(-1) : null;
+  return [rs.rating, seriesTail?.rsRating].find(Number.isFinite);
+}
+
 /* Fila de tabla clave-valor de 2 columnas. Reemplaza a la píldora para
    cualquier par label-valor en N1 y N2. La fila crece verticalmente:
    nada de ellipsis en label ni en cifra. */
@@ -463,10 +469,6 @@ function compactBusinessTeaser(data = {}) {
   if (raw.length <= 92) return raw;
   const clipped = raw.slice(0, 89).replace(/\s+\S*$/, "").trim();
   return clipped ? `${clipped}...` : raw.slice(0, 89);
-}
-
-function latestWeeklyRs(rs = {}) {
-  return Array.isArray(rs.globalRsSeries) ? rs.globalRsSeries.at(-1) : null;
 }
 
 /* RsMetric, RsGroup, StockVolumePanel (con sus constantes KPI) y
@@ -1357,13 +1359,10 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const rs = data?.relativeStrength || {};
   const benchmarkOverride = cleanBenchmarkSymbol(chartSettings?.benchmarks?.[symbol]);
   const activeBenchmark = benchmarkOverride || cleanBenchmarkSymbol(rs.benchmarkSymbol);
-  const weeklyGlobalRs = latestWeeklyRs(rs);
-  // El RS de la ficha es el del ranking semanal del universo y nada más: el
-  // mismo número que la tabla del screener, la vista rápida y salud de
-  // mercado (lib/rsCanonical.js). Antes caía a rs.rsGlobalPct —el percentil
-  // del último lote— y ahí nacía la contradicción entre pantallas. Sin
-  // semanal se muestra ausente con motivo, no un número de otro ranking.
-  const rsUniverse = finiteValue(weeklyGlobalRs?.rsRating, rs.rating);
+  // El FR es el rating pinneado del brief (ratingLatest en API); la cola de
+  // globalRsSeries alimenta solo el overlay del gráfico. Mismo número que la
+  // tabla del screener, vista rápida y salud de mercado (lib/rsCanonical.js).
+  const rsUniverse = stockRsUniverse(rs);
   // rsBenchmark (benchmarkRating) alimentaba solo el panel Fuerza relativa,
   // retirado el 2026-08-21; la comparación vs. benchmark vive en el gráfico.
   // La tarjeta de identidad del lienzo (variante 2c encogida: raíl de etapa,

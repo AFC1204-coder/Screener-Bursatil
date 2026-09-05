@@ -36,6 +36,7 @@ vi.mock("@/lib/supabaseServer", () => ({
 }));
 
 import { supabaseRequest } from "@/lib/supabaseServer";
+import { RS_LINE_MIN_WEEKS } from "@/lib/chartSeriesModel";
 import { readGlobalRsSeriesForSymbol } from "@/lib/globalRs";
 
 describe("readGlobalRsSeriesForSymbol", () => {
@@ -134,6 +135,48 @@ describe("readGlobalRsSeriesForSymbol", () => {
 
     expect(result.series).toEqual([]);
     expect(result.latest).toBeNull();
+    expect(result.ratingLatest).toBeNull();
+  });
+
+  it("pin pobre con legacy suficiente: la serie usa el legacy, no el pin de 1 semana", async () => {
+    const legacyRows = Array.from({ length: RS_LINE_MIN_WEEKS }, (_, index) => ({
+      symbol: "AAPL",
+      snapshot_date: `2026-07-${String(index + 1).padStart(2, "0")}`,
+      week_key: `2026-W${String(20 + index).padStart(2, "0")}`,
+      base_currency: "USD",
+      engine_version: "statsedge-global-rs-usd-v1",
+      rank_index: index + 1,
+      rs_rating: 60 + index,
+      rs_raw: 100 + index,
+      sample_size: 500,
+      metrics: {},
+    }));
+    supabaseRequest.mockResolvedValueOnce([
+      {
+        symbol: "AAPL",
+        snapshot_date: "2026-08-29",
+        week_key: "2026-W35",
+        base_currency: "USD",
+        engine_version: "statsedge-private-global-rs-usd-v1",
+        rank_index: 120,
+        rs_rating: 64,
+        rs_raw: 50,
+        sample_size: 6442,
+        metrics: {},
+      },
+      ...legacyRows,
+    ]);
+
+    const result = await readGlobalRsSeriesForSymbol("AAPL");
+
+    expect(result.series.length).toBeGreaterThanOrEqual(RS_LINE_MIN_WEEKS);
+    expect(result.series.every((point) => point.engineVersion === "statsedge-global-rs-usd-v1")).toBe(true);
+    expect(result.latest.engineVersion).toBe("statsedge-global-rs-usd-v1");
+    expect(result.ratingLatest).toMatchObject({
+      engineVersion: "statsedge-private-global-rs-usd-v1",
+      rsRating: 64,
+    });
+    expect(result.latest.rsRating).not.toBe(result.ratingLatest.rsRating);
   });
 
   it("dedupe por weekKey: dos filas W32 conservan la de snapshot_date más reciente", async () => {

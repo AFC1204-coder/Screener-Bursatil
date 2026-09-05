@@ -5,9 +5,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** MIGRATE-6 **cerrado** `6108f14` · Grok → un escritor.  
-**Último cerrado:** **MIGRATE-6** RPC historia pg · smoke Mini 10/10.  
-**Ahora:** push si pides · apagar GHA / RS smoke / leaderboards RPC.  
+**RECORDATORIO dueño:** RS-CHART-HISTORY-1 cerrado · Grok → un escritor.  
+**Último cerrado:** **RS-CHART-HISTORY-1** (1+1b+1c) serie overlay fallback + FR pin · smoke Mini AAPL FR 64.  
+**Ahora:** apagar GHA / leaderboards RPC / siguiente backlog.  
 **Aparcado:** túnel móvil→Mini.  
 **SHELL:** A→D aterrizado.
 

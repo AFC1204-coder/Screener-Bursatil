@@ -922,7 +922,8 @@ async function readUniverseRsSnapshot(symbol = "") {
 // ocupar el sitio del RS.
 export function mergeUniverseRelativeStrength(benchmarkStrength = {}, universe = null, weeklyGlobal = null, countryWeeklyEntry = null, countryWeeklySeries = null, themeWeeklyEntry = null, themeWeeklySeries = null) {
   const benchmarkRating = benchmarkStrength.rating;
-  const weeklyLatest = weeklyGlobal?.latest
+  const weeklyLatest = weeklyGlobal?.ratingLatest
+    || weeklyGlobal?.latest
     || (Array.isArray(weeklyGlobal?.series) ? weeklyGlobal.series.at(-1) : null)
     || null;
   const weeklyRating = Number.isFinite(weeklyLatest?.rsRating) ? weeklyLatest.rsRating : null;
@@ -1674,7 +1675,7 @@ export async function getCompanyBrief(symbol, options = {}) {
     };
     const [universeSnapshot, weeklyGlobalRs, weeklyCountryRs, weeklyCountryRsSeries, weeklyThemeRs, weeklyThemeRsSeries] = await Promise.all([
       readUniverseRsSnapshot(symbol).catch(() => null),
-      readGlobalRsSeriesForSymbol(symbol).catch(() => ({ series: [], latest: null })),
+      readGlobalRsSeriesForSymbol(symbol).catch(() => ({ series: [], latest: null, ratingLatest: null })),
       readCountryRsForSymbols([symbol]).catch(() => ({ configured: false, bySymbol: new Map() })),
       readCountryRsSeriesForSymbol(symbol).catch(() => ({ series: [], latest: null })),
       readThemeRsForSymbols([symbol], {

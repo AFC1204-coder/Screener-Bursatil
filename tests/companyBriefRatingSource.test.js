@@ -150,4 +150,23 @@ describe("mergeUniverseRelativeStrength: origen del rating", () => {
     expect(result.rsQualityScore ?? null).toBe(null);
     expect(result.rsQualityLabel ?? "").toBe("");
   });
+
+  it("con fallback de serie, el rating sigue el pin (ratingLatest), no el latest de la serie alternativa", () => {
+    const weeklyGlobalWithFallback = {
+      series: Array.from({ length: 8 }, (_, index) => ({
+        date: `2026-07-${String(index + 1).padStart(2, "0")}`,
+        rsRating: 70 + index,
+        sampleSize: 500,
+        engineVersion: "statsedge-global-rs-usd-v1",
+      })),
+      latest: { date: "2026-07-08", rsRating: 72, sampleSize: 500, engineVersion: "statsedge-global-rs-usd-v1" },
+      ratingLatest: { date: "2026-08-29", rsRating: 64, sampleSize: 6442, engineVersion: "statsedge-private-global-rs-usd-v1" },
+    };
+    const result = mergeUniverseRelativeStrength(benchmarkStrength, universe, weeklyGlobalWithFallback);
+
+    expect(result.rating).toBe(64);
+    expect(result.rating).not.toBe(weeklyGlobalWithFallback.latest.rsRating);
+    expect(result.rsGlobalSample).toBe(6442);
+    expect(result.globalRsSeries).toBe(weeklyGlobalWithFallback.series);
+  });
 });

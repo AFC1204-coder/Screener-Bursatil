@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import StockClient from "@/app/stock/[symbol]/StockClient";
+import StockClient, { stockRsUniverse } from "@/app/stock/[symbol]/StockClient";
 import { buildChartIdentityCard } from "@/lib/chartIdentityCard";
 import { compactDate } from "@/app/components/ui/QualityStrip";
 
@@ -343,6 +343,29 @@ describe("tarjeta de identidad del lienzo (variante 2c encogida)", () => {
     expect(html).toContain("stockDescStrip");
     expect(html).toContain("Media 50d");
     expect(html).toContain("Reparto vol. 50d");
+  });
+});
+
+describe("stockRsUniverse: FR de la ficha", () => {
+  it("con serie legacy y rating pin, el FR sigue el pin y no la cola de la serie", () => {
+    const rs = {
+      rating: 64,
+      globalRsSeries: Array.from({ length: 8 }, (_, index) => ({
+        date: `2026-07-${String(index + 1).padStart(2, "0")}`,
+        rsRating: 70 + index,
+        sampleSize: 500,
+      })),
+    };
+    expect(stockRsUniverse(rs)).toBe(64);
+    expect(stockRsUniverse(rs)).not.toBe(rs.globalRsSeries.at(-1).rsRating);
+    expect(buildChartIdentityCard({ symbol: "AAPL", data: stockData({ relativeStrength: rs }), rsUniverse: stockRsUniverse(rs) }).rs.value).toBe(64);
+  });
+
+  it("sin pin, cae al último punto de la serie", () => {
+    const rs = {
+      globalRsSeries: [{ date: "2025-09-17", rsRating: 94, sampleSize: 4868 }],
+    };
+    expect(stockRsUniverse(rs)).toBe(94);
   });
 });
 
