@@ -751,6 +751,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onSort={setSort}
             perfPeriod={perfPeriod}
             setupMode={activeSettings.setupMode}
+            scannedMarkets={scannedMarkets}
             onPerfPeriod={setPerfPeriod}
             onReview={(symbol) => openReview(huntResultsFiltered, symbol)}
             onFavorite={addFavorite}
@@ -900,6 +901,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             sortAsc={sortAsc}
             onSortColumn={toggleSortColumn}
             setupMode={activeSettings.setupMode}
+            scannedMarkets={scannedMarkets}
             emptyLabel={huntResultsEmptyLabel}
           />
         </section> : null}

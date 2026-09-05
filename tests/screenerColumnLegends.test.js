@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { CompactResultsTable } from "@/lib/screenerTable";
 import {
+  RS_THEME_COLUMN,
   SCREENER_COLUMNS,
   screenerVisibleColumns,
 } from "@/lib/screenerColumns";
@@ -12,7 +13,7 @@ import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
 import { canonicalRsDisclosure } from "@/lib/rsEngines";
 
 const NO_LEGEND_KEYS = ["ticker", "performance", "distance52w", "marketCap"];
-const LEGEND_KEYS = ["theme", "rs", "rsCountry", "rsTheme", "stage", "vcp"];
+const LEGEND_KEYS = ["theme", "rs", "rsCountry", "stage", "vcp"];
 
 function columnByKey(key, columns = SCREENER_COLUMNS) {
   return columns.find((column) => column.key === key);
@@ -41,6 +42,7 @@ function renderTableHead(props = {}) {
     onPerfPeriod: () => {},
     sort: "",
     setupMode: "",
+    scannedMarkets: ["US"],
     ...props,
   }));
 }
@@ -70,6 +72,11 @@ describe("UX-23: leyendas de cabecera en SCREENER_COLUMNS", () => {
     expect(columnByKey("rs").legend).toContain(canonicalRsDisclosure());
   });
 
+  it("RS tema conserva legend aunque no esté en la parrilla", () => {
+    expect(RS_THEME_COLUMN.legend).toBeTruthy();
+    expect(String(RS_THEME_COLUMN.legend).length).toBeGreaterThan(0);
+  });
+
   it("weakness conserva legend cuando la columna es visible", () => {
     const weakness = columnByKey("weakness", screenerVisibleColumns({ setupMode: "weakness" }));
     expect(weakness?.legend).toBeTruthy();
@@ -85,14 +92,19 @@ describe("UX-23: leyendas de cabecera en SCREENER_COLUMNS", () => {
 });
 
 describe("UX-23: cabecera de escritorio sin ruido de InfoHint", () => {
-  it("pinta como máximo seis InfoHint en thead por defecto (tema, RS, RS país, RS tema, etapa, VCP)", () => {
+  it("pinta cuatro InfoHint en thead por defecto en mesa US (tema, RS, etapa, VCP)", () => {
     const html = renderTableHead();
-    expect(countTheadInfoHints(html)).toBe(6);
+    expect(countTheadInfoHints(html)).toBe(4);
   });
 
-  it("añade un séptimo InfoHint en thead cuando Deterioro es visible", () => {
+  it("añade InfoHint de RS país en mesa mixta", () => {
+    const html = renderTableHead({ scannedMarkets: ["US", "HK"] });
+    expect(countTheadInfoHints(html)).toBe(5);
+  });
+
+  it("añade un InfoHint más en thead cuando Deterioro es visible", () => {
     const html = renderTableHead({ setupMode: "weakness" });
-    expect(countTheadInfoHints(html)).toBe(7);
+    expect(countTheadInfoHints(html)).toBe(5);
   });
 
   it("no pinta InfoHint en ticker, rendimiento, distancia ni capitalización", () => {

@@ -3,13 +3,14 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { MissingValue, SCREENER_COLUMNS } from "@/lib/screenerColumns";
+import { MissingValue, RS_THEME_COLUMN, SCREENER_COLUMNS } from "@/lib/screenerColumns";
 import { THEME_RS_NOT_HYDRATED_REASON } from "@/lib/themeRs";
 import { vcpMinerviniLabel } from "@/lib/vcpMinerviniLabel";
 
 const render = (component, props) => renderToStaticMarkup(React.createElement(component, props));
 
 function columnCell(key) {
+  if (key === "rsTheme") return RS_THEME_COLUMN.cell;
   const column = SCREENER_COLUMNS.find((entry) => entry.key === key);
   if (!column) throw new Error(`column not found: ${key}`);
   return column.cell;

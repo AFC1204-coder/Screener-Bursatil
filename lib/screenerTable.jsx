@@ -54,8 +54,9 @@ export function CompactResultsTable({
   sortAsc = false,
   onSortColumn,
   setupMode = "",
+  scannedMarkets = [],
 }) {
-  const ctx = { perfPeriod, favoriteSymbols, onFavorite, onOpenStock, sort, setupMode };
+  const ctx = { perfPeriod, favoriteSymbols, onFavorite, onOpenStock, sort, setupMode, scannedMarkets };
   const columns = screenerVisibleColumns(ctx);
   return <div className="resultsTableBlock">
     <div className="resultsTableControls">

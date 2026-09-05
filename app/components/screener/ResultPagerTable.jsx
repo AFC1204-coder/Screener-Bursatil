@@ -33,6 +33,7 @@ export default function ResultPagerTable({
   sortAsc = false,
   onSortColumn,
   setupMode = "",
+  scannedMarkets = [],
   emptyLabel,
 }) {
   // El pie ocupaba una franja entera para repetir un dato que ya está en la
@@ -69,6 +70,7 @@ export default function ResultPagerTable({
         sortAsc={sortAsc}
         onSortColumn={onSortColumn}
         setupMode={setupMode}
+        scannedMarkets={scannedMarkets}
         emptyLabel={emptyLabel}
       />
     </>

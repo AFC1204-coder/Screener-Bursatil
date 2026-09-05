@@ -1,6 +1,6 @@
 // tests/screenerSevenColumns.test.js — contrato de la tabla de resultados.
-// docs/principios-producto.md, principio 7: siete columnas, definidas en UN
-// sitio (lib/screenerColumns.jsx), iguales en escritorio y en móvil.
+// docs/principios-producto.md, principio 7 + READ-A: parrilla base sin RS tema;
+// RS país solo si la mesa no es US-only.
 
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -9,7 +9,9 @@ import { CompactResultsTable } from "@/lib/screenerTable";
 import { MobileResultRow } from "@/lib/screenerMobile";
 import {
   PERFORMANCE_PERIODS,
+  RS_THEME_COLUMN,
   SCREENER_COLUMNS,
+  screenerShowsCountryRsColumn,
   screenerShowsWeaknessColumn,
   screenerSortOptions,
   screenerVisibleColumns,
@@ -86,36 +88,48 @@ function renderTable(props = {}) {
     onPerfPeriod: () => {},
     sort: "",
     setupMode: "",
+    scannedMarkets: ["US"],
     ...props,
   }));
 }
 
-describe("tabla de resultados: las diez columnas", () => {
-  it("define exactamente diez columnas en un solo sitio", () => {
-    expect(SCREENER_COLUMNS).toHaveLength(10);
+describe("tabla de resultados: parrilla READ-A", () => {
+  it("define nueve columnas base en un solo sitio (sin RS tema)", () => {
+    expect(SCREENER_COLUMNS).toHaveLength(9);
     expect(SCREENER_COLUMNS.map((column) => column.key)).toEqual([
-      "ticker", "theme", "rs", "rsCountry", "rsTheme", "stage", "vcp", "performance", "distance52w", "marketCap",
+      "ticker", "theme", "rs", "rsCountry", "stage", "vcp", "performance", "distance52w", "marketCap",
     ]);
+    expect(RS_THEME_COLUMN.key).toBe("rsTheme");
+    expect(SCREENER_COLUMNS.some((column) => column.key === "rsTheme")).toBe(false);
   });
 
-  it("pinta diez cabeceras y diez celdas por fila", () => {
-    const html = renderTable();
-    expect(html.match(/<th /g)).toHaveLength(10);
-    expect(html.match(/<td /g)).toHaveLength(10);
+  it("mesa US-only: ocho columnas visibles sin RS país ni RS tema", () => {
+    const html = renderTable({ scannedMarkets: ["US"] });
+    expect(html.match(/<th /g)).toHaveLength(8);
+    expect(html.match(/<td /g)).toHaveLength(8);
+    expect(html).not.toContain(">RS país<");
+    expect(html).not.toContain(">RS tema<");
   });
 
-  it("muestra los siete datos de la fila", () => {
-    const html = renderTable();
+  it("mesa mixta: nueve columnas con RS país y sin RS tema", () => {
+    const html = renderTable({ scannedMarkets: ["US", "HK"] });
+    expect(html.match(/<th /g)).toHaveLength(9);
+    expect(html).toContain(">RS país<");
+    expect(html).not.toContain(">RS tema<");
+    expect(html).toContain(">55<");
+  });
+
+  it("muestra los datos de la fila en mesa US", () => {
+    const html = renderTable({ scannedMarkets: ["US"] });
     expect(html).toContain(">TREN<");
-    expect(html).toContain("miniSparkline");        // 1. ticker con miniatura
-    expect(html).toContain("Semis / fotonica");     // 2. tema
-    expect(html).toContain(">92<");                 // 3. RS semanal del universo
-    expect(html).toContain(">55<");                 // 4. RS país
-    expect(html).toContain(">84<");                 // 5. RS tema
-    expect(html).toContain("Etapa 2");              // 6. etapa en una palabra
-    expect(html).toContain("+18,4%");               // 5. rendimiento del periodo
-    expect(html).toContain("-3,2%");                // 6. distancia al máximo 52s
-    expect(html).toContain("4,2B");                 // 7. capitalización
+    expect(html).toContain("miniSparkline");
+    expect(html).toContain("Semis / fotonica");
+    expect(html).toContain(">92<");
+    expect(html).not.toContain(">84<"); // RS tema fuera de mesa
+    expect(html).toContain("Etapa 2");
+    expect(html).toContain("+18,4%");
+    expect(html).toContain("-3,2%");
+    expect(html).toContain("4,2B");
   });
 
   it("llama Tema al grupo temático, no sector", () => {
@@ -137,19 +151,19 @@ describe("tabla de resultados: las diez columnas", () => {
 
   it("no muestra los scores que se mudaron a la ficha del valor", () => {
     const html = renderTable();
-    expect(html).not.toContain(">82<");   // minerviniScore
-    expect(html).not.toContain(">86<");   // weinsteinScore
-    expect(html).not.toContain(">78<");   // rsQualityScore
-    expect(html).not.toContain(">71<");   // rsSectorPct (RS de grupo)
+    expect(html).not.toContain(">82<");
+    expect(html).not.toContain(">86<");
+    expect(html).not.toContain(">78<");
+    expect(html).not.toContain(">71<");
     expect(html).not.toContain("SMA50");
     expect(html).not.toContain("Deterioro");
   });
 
-  it("deja RS global, RS país y RS tema y los explica en la cabecera", () => {
-    const html = renderTable();
+  it("deja RS global y lo explica en la cabecera; RS tema fuera de mesa", () => {
+    const html = renderTable({ scannedMarkets: ["US", "HK"] });
     expect(html.match(/>RS</g)).toHaveLength(1);
     expect(html).toContain(">RS país<");
-    expect(html).toContain(">RS tema<");
+    expect(html).not.toContain(">RS tema<");
     expect(html).toContain("Fuerza relativa semanal");
     expect(html).toContain("universo privado curado");
     expect(html).not.toContain(">Grp<");
@@ -158,17 +172,30 @@ describe("tabla de resultados: las diez columnas", () => {
 
   it("no recorta los porcentajes con puntos suspensivos", () => {
     const html = renderTable();
-    // El valor va completo dentro de su propio <b class="cellNumber">.
     expect(html).toContain('class="cellNumber up">+18,4%</b>');
     expect(html).not.toContain("…");
   });
 });
 
+describe("RS país condicional a mercados en mesa", () => {
+  it("oculta RS país en mesa US-only o sin mesa cargada", () => {
+    expect(screenerShowsCountryRsColumn({ scannedMarkets: ["US"] })).toBe(false);
+    expect(screenerShowsCountryRsColumn({ scannedMarkets: [] })).toBe(false);
+    expect(screenerVisibleColumns({ scannedMarkets: ["US"] }).map((c) => c.key))
+      .not.toContain("rsCountry");
+  });
+
+  it("muestra RS país cuando hay otros mercados en mesa", () => {
+    expect(screenerShowsCountryRsColumn({ scannedMarkets: ["US", "HK"] })).toBe(true);
+    expect(screenerVisibleColumns({ scannedMarkets: ["HK"] }).map((c) => c.key))
+      .toContain("rsCountry");
+  });
+});
+
 describe("dato ausente", () => {
   it("muestra un guion con el motivo, sin etiquetas de estado", () => {
-    const html = renderTable({ rows: [emptyRow] });
-    // Seis columnas de dato + la miniatura, que también falta en esta fila.
-    expect(html.match(/class="cellMissing"/g)).toHaveLength(10);
+    const html = renderTable({ rows: [emptyRow], scannedMarkets: ["US"] });
+    expect(html.match(/class="cellMissing"/g)).toHaveLength(8);
     expect(html).toContain("Sin miniatura");
     expect(html).toContain("Sin RS semanal");
     expect(html).toContain("Histórico semanal insuficiente para clasificar la etapa");
@@ -181,6 +208,7 @@ describe("dato ausente", () => {
 
   it("trata como ausente el dato que la auditoría no puede verificar", () => {
     const html = renderTable({
+      scannedMarkets: ["US"],
       rows: [{
         ...fullRow,
         objectiveMetricAudit: {
@@ -218,18 +246,26 @@ describe("selector global de periodo", () => {
     expect(html.match(/screenerPeriodPicker/g)).toHaveLength(1);
   });
 
-  it("el orden sigue al periodo elegido", () => {
-    expect(screenerSortOptions({ perfPeriod: "perf6m" }).map((item) => item.value))
-      .toEqual(["rsGlobalPct", "weeklyCountryRsRating", "weeklyThemeRsRating", "contractionCount", "perf6m", "distance52w", "marketCap"]);
-    expect(screenerSortOptions({ perfPeriod: "perf12m" })[4])
+  it("el orden sigue al periodo elegido (mesa US: sin RS país ni RS tema)", () => {
+    expect(screenerSortOptions({ perfPeriod: "perf6m", scannedMarkets: ["US"] }).map((item) => item.value))
+      .toEqual(["rsGlobalPct", "contractionCount", "perf6m", "distance52w", "marketCap"]);
+    expect(screenerSortOptions({ perfPeriod: "perf12m", scannedMarkets: ["US"] })[2])
       .toEqual({ value: "perf12m", label: "Rendimiento 12M" });
   });
 
+  it("incluye RS país en orden cuando la mesa no es US-only", () => {
+    const values = screenerSortOptions({ scannedMarkets: ["US", "HK"] }).map((item) => item.value);
+    expect(values).toContain("weeklyCountryRsRating");
+    expect(values).not.toContain("weeklyThemeRsRating");
+  });
+
   it("solo deja ordenar por columnas visibles", () => {
-    const values = screenerSortOptions({}).map((item) => item.value);
+    const values = screenerSortOptions({ scannedMarkets: ["US"] }).map((item) => item.value);
     expect(values).not.toContain("objectiveScore");
     expect(values).not.toContain("weaknessScore");
     expect(values).not.toContain("decisionPriority");
+    expect(values).not.toContain("weeklyThemeRsRating");
+    expect(values).not.toContain("weeklyCountryRsRating");
   });
 });
 
@@ -238,21 +274,21 @@ describe("columna Deterioro (modo weakness / orden weaknessScore)", () => {
     expect(screenerShowsWeaknessColumn({ setupMode: "weakness" })).toBe(true);
     expect(screenerShowsWeaknessColumn({ sort: "weaknessScore" })).toBe(true);
     expect(screenerShowsWeaknessColumn({})).toBe(false);
-    expect(screenerVisibleColumns({ setupMode: "weakness" }).map((c) => c.key))
-      .toEqual(["ticker", "theme", "rs", "rsCountry", "rsTheme", "stage", "weakness", "vcp", "performance", "distance52w", "marketCap"]);
+    expect(screenerVisibleColumns({ setupMode: "weakness", scannedMarkets: ["US"] }).map((c) => c.key))
+      .toEqual(["ticker", "theme", "rs", "stage", "weakness", "vcp", "performance", "distance52w", "marketCap"]);
   });
 
   it("pinta cabecera y valor de deterioro en escritorio", () => {
-    const html = renderTable({ setupMode: "weakness", sort: "weaknessScore" });
-    expect(html.match(/<th /g)).toHaveLength(11);
-    expect(html.match(/<td /g)).toHaveLength(11);
+    const html = renderTable({ setupMode: "weakness", sort: "weaknessScore", scannedMarkets: ["US"] });
+    expect(html.match(/<th /g)).toHaveLength(9);
+    expect(html.match(/<td /g)).toHaveLength(9);
     expect(html).toContain(">Deterioro<");
     expect(html).toContain(">12</b>");
     expect(html).toContain("Sin deterioro claro");
   });
 
   it("incluye weaknessScore en opciones de orden cuando la columna es visible", () => {
-    const values = screenerSortOptions({ setupMode: "weakness", sort: "weaknessScore" }).map((item) => item.value);
+    const values = screenerSortOptions({ setupMode: "weakness", sort: "weaknessScore", scannedMarkets: ["US"] }).map((item) => item.value);
     expect(values).toContain("weaknessScore");
   });
 });
@@ -319,6 +355,7 @@ describe("vista móvil", () => {
       perfPeriod,
       sort: options.sort || "",
       setupMode: options.setupMode || "",
+      scannedMarkets: options.scannedMarkets ?? ["US"],
       onReview: () => {},
       onFavorite: () => {},
       onOpenStock: () => {},
@@ -326,19 +363,24 @@ describe("vista móvil", () => {
     }));
   }
 
-  it("lee las mismas ocho columnas que escritorio", () => {
+  it("lee las mismas columnas visibles que escritorio (mesa US)", () => {
     const html = renderMobile();
     expect(html).toContain(">TREN<");
     expect(html).toContain("miniSparkline");
     expect(html).toContain("Semis / fotonica");
     expect(html).toContain(">92<");
-    expect(html).toContain(">55<");
+    expect(html).not.toContain(">55<");
     expect(html).toContain("Etapa 2");
     expect(html).toContain("+18,4%");
     expect(html).toContain("-3,2%");
     expect(html).toContain("4,2B");
-    // Las siete columnas de dato, con su etiqueta.
-    expect(html.match(/class="mobileResultField/g)).toHaveLength(9);
+    expect(html.match(/class="mobileResultField/g)).toHaveLength(7);
+  });
+
+  it("muestra RS país en móvil cuando la mesa no es US-only", () => {
+    const html = renderMobile(fullRow, DEFAULT_PERFORMANCE_PERIOD, { scannedMarkets: ["US", "HK"] });
+    expect(html).toContain(">55<");
+    expect(html.match(/class="mobileResultField/g)).toHaveLength(8);
   });
 
   it("sigue al mismo selector global de periodo", () => {
@@ -350,12 +392,12 @@ describe("vista móvil", () => {
     const html = renderMobile(fullRow, DEFAULT_PERFORMANCE_PERIOD, { setupMode: "weakness" });
     expect(html).toContain(">Deterioro<");
     expect(html).toContain(">12</b>");
-    expect(html.match(/class="mobileResultField/g)).toHaveLength(10);
+    expect(html.match(/class="mobileResultField/g)).toHaveLength(8);
   });
 
   it("muestra las ausencias igual que escritorio", () => {
     const html = renderMobile(emptyRow);
-    expect(html.match(/class="cellMissing"/g)).toHaveLength(10);
+    expect(html.match(/class="cellMissing"/g)).toHaveLength(8);
     expect(html).toContain("Sin RS semanal");
   });
 });

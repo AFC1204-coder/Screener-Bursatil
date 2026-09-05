@@ -18,6 +18,7 @@ import {
   resolveMarketsMisalignmentNotice,
   restoreSessionMarketAlignAction,
   scannedMarketsFromScan,
+  screenerTableMarketsUsOnly,
   shouldAutoLoadMarketSelection,
 } from "@/lib/marketAvailability";
 
@@ -184,6 +185,18 @@ describe("restoreSessionMarketAlignAction", () => {
       analyzedRows: [{ symbol: "AAON", country: "US" }],
       hasVisibleRows: false,
     })).toBeNull();
+  });
+});
+
+describe("screenerTableMarketsUsOnly", () => {
+  it("true para mesa US-only o sin mesa cargada", () => {
+    expect(screenerTableMarketsUsOnly(["US"])).toBe(true);
+    expect(screenerTableMarketsUsOnly([])).toBe(true);
+  });
+
+  it("false cuando hay otros mercados en mesa", () => {
+    expect(screenerTableMarketsUsOnly(["US", "HK"])).toBe(false);
+    expect(screenerTableMarketsUsOnly(["HK"])).toBe(false);
   });
 });
 

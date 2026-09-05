@@ -1,14 +1,14 @@
-# Ticket activo — CHART-BADGE-2 cerrado
+# Ticket activo — READ-A cerrado
 
-**Estado:** Verify OK · smoke AAPL OK · listo commit  
-**Evidencia:** `docs/evidence/chart-badge-2-smoke-2026-09-05.md`
+**Estado:** Verify OK · smoke US + Core intl OK · listo commit  
+**Evidencia:** `docs/evidence/read-a-smoke-2026-09-05.md`
 
 ## Verify
 
-- Badge AAPL: Base constructiva · 12.9% → 4.9%
-- Sin vacío Sin validar
-- Tests 22 OK
+- US: sin RS tema ni RS país; con VCP
+- Core intl: sin RS tema; con RS país + VCP
+- Tests 95 (suite) OK
 
 ## Siguiente
 
-Cola calidad UI · mañana Mini: GHA + leaderboards/finalize RPC.
+**READ-C** (verdad / menos jerga) · mañana Mini: GHA + finalize.

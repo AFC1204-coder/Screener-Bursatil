@@ -34,6 +34,7 @@ import { PERFORMANCE_PERIODS, normalizePerformancePeriod, performancePeriod } fr
 import { isIpoWatchPlaceholderSymbol } from "@/lib/mergeIpoDiscoveryRows";
 import { countryName, marketFlag, stockUrl } from "@/lib/symbols";
 import { vcpMinerviniLabel } from "@/lib/vcpMinerviniLabel";
+import { screenerTableMarketsUsOnly } from "@/lib/marketAvailability";
 import { weaknessScore } from "@/lib/stockRows";
 
 // ── Periodos de rendimiento ────────────────────────────────────────────────
@@ -127,10 +128,30 @@ function IpoWatchBadge() {
   return <span className="ipoWatchBadge" title="Vigilada en IPO Radar sin fila de scan">Vigilada</span>;
 }
 
-// ── Las siete columnas ─────────────────────────────────────────────────────
+// ── Columnas de la parrilla ────────────────────────────────────────────────
 // Cada entrada define: cabecera, leyenda (una sola vez, en el <th>), clave de
-// ordenación, y cómo se pinta la celda. `ctx` lleva el periodo activo y los
-// callbacks de fila. Añadir una columna = añadir una entrada aquí.
+// ordenación, y cómo se pinta la celda. `ctx` lleva el periodo activo, los
+// mercados en mesa (`scannedMarkets`) y los callbacks de fila.
+// RS tema no se muestra en mesa (READ-A): sigue en ficha /stock.
+// RS país solo si la mesa no es US-only (`screenerVisibleColumns`).
+export const RS_THEME_COLUMN = {
+  key: "rsTheme",
+  label: () => "RS tema",
+  legend: "RS tema · ocupación curada · universo privado curado. Ranking semanal intra-ocupación en USD (FX), solo las 12 themes curadas.",
+  align: "right",
+  className: "colRsTheme",
+  sortKey: () => "weeklyThemeRsRating",
+  cell: (row) => {
+    const unreliable = auditIssueReason(row, "weeklyThemeRsRating");
+    if (unreliable) return <MissingValue reason={unreliable} />;
+    const trs = themeRs(row);
+    if (!trs.available) {
+      return <MissingValue reason={trs.reason} quiet={themeRsAbsenceIsExpected(row, trs)} />;
+    }
+    return <b className={`cellNumber ${trs.value >= 75 ? "strong" : trs.value < 45 ? "weak" : ""}`.trim()}>{trs.value.toFixed(0)}</b>;
+  },
+};
+
 export const SCREENER_COLUMNS = [
   {
     key: "ticker",
@@ -218,23 +239,6 @@ export const SCREENER_COLUMNS = [
       const crs = countryRs(row);
       if (!crs.available) return <MissingValue reason={crs.reason} />;
       return <b className={`cellNumber ${crs.value >= 75 ? "strong" : crs.value < 45 ? "weak" : ""}`.trim()}>{crs.value.toFixed(0)}</b>;
-    },
-  },
-  {
-    key: "rsTheme",
-    label: () => "RS tema",
-    legend: "RS tema · ocupación curada · universo privado curado. Ranking semanal intra-ocupación en USD (FX), solo las 12 themes curadas.",
-    align: "right",
-    className: "colRsTheme",
-    sortKey: () => "weeklyThemeRsRating",
-    cell: (row) => {
-      const unreliable = auditIssueReason(row, "weeklyThemeRsRating");
-      if (unreliable) return <MissingValue reason={unreliable} />;
-      const trs = themeRs(row);
-      if (!trs.available) {
-        return <MissingValue reason={trs.reason} quiet={themeRsAbsenceIsExpected(row, trs)} />;
-      }
-      return <b className={`cellNumber ${trs.value >= 75 ? "strong" : trs.value < 45 ? "weak" : ""}`.trim()}>{trs.value.toFixed(0)}</b>;
     },
   },
   {
@@ -361,14 +365,26 @@ export function screenerShowsWeaknessColumn(ctx = {}) {
   return false;
 }
 
+export function screenerShowsCountryRsColumn(ctx = {}) {
+  return !screenerTableMarketsUsOnly(ctx.scannedMarkets);
+}
+
+function screenerBaseVisibleColumns(ctx = {}) {
+  return SCREENER_COLUMNS.filter((column) => {
+    if (column.key === "rsCountry") return screenerShowsCountryRsColumn(ctx);
+    return true;
+  });
+}
+
 export function screenerVisibleColumns(ctx = {}) {
-  if (!screenerShowsWeaknessColumn(ctx)) return SCREENER_COLUMNS;
-  const stageIndex = SCREENER_COLUMNS.findIndex((column) => column.key === "stage");
-  if (stageIndex < 0) return [...SCREENER_COLUMNS, WEAKNESS_SCORE_COLUMN];
+  const columns = screenerBaseVisibleColumns(ctx);
+  if (!screenerShowsWeaknessColumn(ctx)) return columns;
+  const stageIndex = columns.findIndex((column) => column.key === "stage");
+  if (stageIndex < 0) return [...columns, WEAKNESS_SCORE_COLUMN];
   return [
-    ...SCREENER_COLUMNS.slice(0, stageIndex + 1),
+    ...columns.slice(0, stageIndex + 1),
     WEAKNESS_SCORE_COLUMN,
-    ...SCREENER_COLUMNS.slice(stageIndex + 1),
+    ...columns.slice(stageIndex + 1),
   ];
 }
 
