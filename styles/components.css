@@ -5326,32 +5326,6 @@ h2 {
   opacity:.46;
 }
 
-.stockPage .stockDecisionResolveRail {
-  display:grid;
-  grid-template-columns:minmax(94px,.45fr) minmax(170px,1fr) auto;
-  align-items:center;
-  gap:8px;
-  min-width:0;
-}
-
-.stockPage .stockDecisionResolveRail > span {
-  overflow:hidden;
-  color:var(--stock-muted);
-  font-size:11px;
-  font-weight:760;
-  letter-spacing:0;
-  text-overflow:ellipsis;
-  text-transform:uppercase;
-  white-space:nowrap;
-}
-
-.stockPage .stockDecisionResolveRail > div {
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-  gap:6px;
-}
-
 .stockPage .stockDecisionValidationNote {
   display:grid;
   gap:3px;
@@ -5383,50 +5357,6 @@ h2 {
 }
 
 .stockPage .stockDecisionValidationNote input::placeholder {
-  color:var(--ghost);
-}
-
-.stockPage .stockDecisionResolveRail button {
-  min-height:30px;
-  padding:5px 9px;
-  border:1px solid var(--stock-line);
-  border-radius:var(--radius);
-  background:var(--surface);
-  color:var(--soft);
-  font-size:11px;
-  font-weight:760;
-}
-
-.stockPage .stockDecisionResolveRail button.good {
-  border-color:var(--decision-vigilar);
-  color:var(--decision-vigilar);
-}
-
-.stockPage .stockDecisionResolveRail button.warn {
-  border-color:var(--decision-auditar);
-  color:var(--decision-auditar);
-}
-
-.stockPage .stockDecisionResolveRail button.bad {
-  border-color:var(--risk);
-  color:var(--risk);
-}
-
-.stockPage .stockDecisionResolveRail button.neutral {
-  border-color:var(--line2);
-  color:var(--soft);
-}
-
-/* Activo por elevación de superficie (--active-*), no blanco invertido. */
-.stockPage .stockDecisionResolveRail button.active {
-  border-color:var(--active-border);
-  background:var(--active-bg);
-  color:var(--active-fg);
-}
-
-.stockPage .stockDecisionResolveRail button:disabled {
-  cursor:not-allowed;
-  opacity:.40;
   color:var(--ghost);
 }
 
@@ -5493,6 +5423,274 @@ h2 {
   font-size:10px;
   line-height:1.35;
   text-overflow:ellipsis;
+}
+
+/* FICHA-UI — barra compacta: clasificación izquierda, + lista derecha */
+.stockPage .stockClassificationBar {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  min-width:0;
+}
+
+.stockPage .stockClassificationPrimary {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  flex:1 1 auto;
+}
+
+.stockPage .stockClassificationLabel {
+  overflow:hidden;
+  color:var(--stock-muted);
+  font-size:11px;
+  font-weight:760;
+  letter-spacing:0;
+  text-overflow:ellipsis;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.stockPage .stockDecisionActionMenu {
+  position:relative;
+  min-width:0;
+}
+
+.stockPage .stockDecisionActionMenu > summary {
+  cursor:pointer;
+  list-style:none;
+  min-height:30px;
+  padding:5px 10px;
+  border:1px solid var(--stock-line);
+  border-radius:var(--radius);
+  background:var(--surface);
+  color:var(--soft);
+  font-size:11px;
+  font-weight:760;
+}
+
+.stockPage .stockDecisionActionMenu > summary::-webkit-details-marker {
+  display:none;
+}
+
+.stockPage .stockDecisionActionMenu > summary::after {
+  content:" ▾";
+  color:var(--stock-muted);
+  font-size:10px;
+}
+
+.stockPage .stockDecisionActionMenu[open] > summary::after {
+  content:" ▴";
+}
+
+.stockPage .stockDecisionActionMenuPanel {
+  position:absolute;
+  z-index:12;
+  top:calc(100% + 4px);
+  left:0;
+  display:grid;
+  gap:4px;
+  min-width:148px;
+  padding:6px;
+  border:1px solid var(--stock-line);
+  border-radius:var(--radius);
+  background:var(--surface2);
+  box-shadow:0 10px 28px rgba(0,0,0,.35);
+}
+
+.stockPage .stockDecisionActionMenuPanel button {
+  min-height:30px;
+  padding:5px 9px;
+  border:1px solid var(--stock-line);
+  border-radius:var(--radius);
+  background:var(--surface);
+  color:var(--soft);
+  font-size:11px;
+  font-weight:760;
+  text-align:left;
+}
+
+.stockPage .stockDecisionActionMenuPanel button.good {
+  border-color:var(--decision-vigilar);
+  color:var(--decision-vigilar);
+}
+
+.stockPage .stockDecisionActionMenuPanel button.warn {
+  border-color:var(--decision-auditar);
+  color:var(--decision-auditar);
+}
+
+.stockPage .stockDecisionActionMenuPanel button.bad {
+  border-color:var(--risk);
+  color:var(--risk);
+}
+
+.stockPage .stockDecisionActionMenuPanel button.neutral {
+  border-color:var(--line2);
+  color:var(--soft);
+}
+
+.stockPage .stockDecisionActionMenuPanel button.active {
+  border-color:var(--active-border);
+  background:var(--active-bg);
+  color:var(--active-fg);
+}
+
+.stockPage .stockDecisionActionMenuPanel button:disabled {
+  cursor:not-allowed;
+  opacity:.40;
+  color:var(--ghost);
+}
+
+.stockPage .stockAddToList {
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:4px;
+  flex:0 0 auto;
+}
+
+.stockPage .stockAddToListTrigger {
+  min-height:30px;
+  padding:5px 11px;
+  border:1px solid var(--accent);
+  border-radius:var(--radius);
+  background:var(--senal-dim);
+  color:#e8f1ff;
+  font-size:11px;
+  font-weight:780;
+  white-space:nowrap;
+}
+
+.stockPage .stockAddToListTrigger.inList {
+  border-color:var(--decision-vigilar);
+  color:var(--decision-vigilar);
+}
+
+.stockPage .stockAddToListMenu {
+  position:absolute;
+  z-index:12;
+  top:calc(100% + 4px);
+  right:0;
+  display:grid;
+  gap:6px;
+  min-width:190px;
+  padding:8px;
+  border:1px solid var(--stock-line);
+  border-radius:var(--radius);
+  background:var(--surface2);
+  box-shadow:0 10px 28px rgba(0,0,0,.35);
+}
+
+.stockPage .stockAddToListOption {
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  cursor:pointer;
+  color:var(--soft);
+  font-size:11px;
+}
+
+.stockPage .stockAddToListOption span {
+  display:grid;
+  gap:2px;
+}
+
+.stockPage .stockAddToListOption em {
+  color:var(--stock-muted);
+  font-size:10px;
+  font-style:normal;
+}
+
+.stockPage .stockAddToListConfirm {
+  min-height:30px;
+  padding:5px 9px;
+  border:1px solid var(--accent);
+  border-radius:var(--radius);
+  background:var(--senal-dim);
+  color:#e8f1ff;
+  font-size:11px;
+  font-weight:760;
+}
+
+.stockPage .stockAddToListStatus {
+  max-width:220px;
+  overflow:hidden;
+  color:var(--stock-muted);
+  font-size:10px;
+  font-weight:650;
+  text-align:right;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.stockPage .stockChartSearch {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  margin:0 0 10px;
+  padding:0 8px;
+}
+
+.stockPage .stockChartSearchForm {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  width:min(100%,520px);
+}
+
+.stockPage .stockChartSearchInput {
+  flex:1 1 auto;
+  min-width:0;
+  min-height:34px;
+  padding:6px 10px;
+  border:1px solid var(--stock-line);
+  border-radius:var(--radius);
+  background:var(--surface);
+  color:var(--text);
+  font-size:12px;
+}
+
+.stockPage .stockChartSearchSubmit,
+.stockPage .stockChartSearchGhost {
+  min-height:34px;
+  padding:6px 10px;
+  border:1px solid var(--stock-line);
+  border-radius:var(--radius);
+  background:var(--surface);
+  color:var(--soft);
+  font-size:11px;
+  font-weight:760;
+  white-space:nowrap;
+}
+
+.stockPage .stockChartSearchSubmit {
+  border-color:var(--accent);
+  background:var(--senal-dim);
+  color:#e8f1ff;
+}
+
+.stockPage .stockChartSearchError {
+  margin:0;
+  color:var(--risk);
+  font-size:11px;
+  text-align:center;
+}
+
+.stockPage .stockChartSearch .searchCandidates {
+  width:min(100%,520px);
+  margin-top:0;
+}
+
+.stockPage .stockChartSearch .searchCandidateGrid {
+  max-height:220px;
+  overflow:auto;
 }
 
 .stockPage .chartPrefs {
@@ -5645,16 +5843,6 @@ h2 {
   .stockPage .stockReviewFlowActions a {
     flex:1 1 auto;
     text-align:center;
-  }
-
-  .stockPage .stockDecisionResolveRail {
-    display:grid;
-  }
-  .stockPage .stockDecisionResolveRail > div {
-    justify-content:stretch;
-  }
-  .stockPage .stockDecisionResolveRail button {
-    flex:1 1 auto;
   }
 
   .stockPage .chartPrefsLine,
@@ -8129,20 +8317,38 @@ h2 {
     font-size: 10px;
   }
 
-  .stockPage .stockDecisionResolveRail {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 6px;
-    align-items: center;
+  .stockPage .stockClassificationBar {
+    flex-direction:column;
+    align-items:stretch;
+    gap:6px;
   }
 
-  .stockPage .stockDecisionResolveRail > span {
-    grid-column: 1 / -1;
-    font-size: 10px;
+  .stockPage .stockClassificationPrimary {
+    gap:4px;
+  }
+
+  .stockPage .stockClassificationLabel {
+    width:100%;
+    font-size:10px;
+  }
+
+  .stockPage .stockAddToList {
+    align-items:stretch;
+  }
+
+  .stockPage .stockAddToListTrigger {
+    width:100%;
+    text-align:center;
+  }
+
+  .stockPage .stockDecisionActionMenu > summary {
+    min-height:28px;
+    padding:4px 8px;
+    font-size:10px;
   }
 
   .stockPage .stockDecisionNoteFold {
-    grid-column: 1;
-    min-width: 0;
+    min-width:0;
   }
 
   .stockPage .stockDecisionNoteFold > summary {
@@ -8184,21 +8390,6 @@ h2 {
 
   .stockPage .stockDecisionValidationNoteLabel {
     display: none;
-  }
-
-  .stockPage .stockDecisionResolveRail > div {
-    grid-column: 2;
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 4px;
-    justify-content: flex-end;
-  }
-
-  .stockPage .stockDecisionResolveRail button {
-    min-height: 28px;
-    padding: 4px 6px;
-    font-size: 10px;
-    flex: 0 0 auto;
   }
 
   .stockPage .chartPrefs {

@@ -28,6 +28,8 @@ import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, decisionResolutionForSymbol, decisionResolutionHistory, reopenStockDecisionResolution } from "@/lib/stockDecisionResolution";
 import { vcpObjectiveSummary } from "@/lib/vcpDiagnostics";
 import { chartQualityFromBrief } from "@/lib/chartDataQuality";
+import StockAddToListButton from "./StockAddToListButton";
+import StockSymbolSearch from "./StockSymbolSearch";
 
 /* ── Componentes de la jerarquía N0–N3 (spec FICHA-TICKER-IA.md) ──────── */
 
@@ -604,6 +606,8 @@ function StockReviewFlowRail({ navigation = null, onOpenSymbol }) {
    de foco» del motor, que ya no existe en la ficha. */
 
 function StockUserClassification({
+  symbol = "",
+  stockData = null,
   resolution = null,
   resolutionHistory = [],
   reviewNavigation = null,
@@ -613,42 +617,51 @@ function StockUserClassification({
   onResolveDecision,
   onReopenDecision,
 }) {
+  const classificationLabel = resolution ? `Clasificación: ${resolution.label}` : "Tu clasificación";
   return <section className="stockUserClassification" aria-label="Clasificación manual del inversor">
     <StockReviewFlowRail navigation={reviewNavigation} onOpenSymbol={onOpenReviewSymbol} />
-    <div className="stockDecisionResolveRail" aria-label="Clasificar el valor">
-      <span>{resolution ? `Clasificación: ${resolution.label}` : "Tu clasificación"}</span>
-      <details className="stockDecisionNoteFold">
-        <summary>Nota del inversor</summary>
-        <label className="stockDecisionValidationNote">
-          <span className="stockDecisionValidationNoteLabel">Nota del inversor</span>
-          <input
-            value={note}
-            maxLength={120}
-            onChange={(event) => onNoteChange?.(event.target.value)}
-            placeholder="Qué observas en la ficha"
-          />
-        </label>
-      </details>
-      <div>
-        <button
-          type="button"
-          className={`neutral ${!resolution ? "active" : ""}`.trim()}
-          onClick={() => onReopenDecision?.()}
-          title="Vuelve a pendiente"
-          disabled={!resolution}
-        >
-          Reabrir
-        </button>
-        {STOCK_DECISION_ACTIONS.map((item) => <button
-          type="button"
-          key={item.key}
-          className={`${item.tone || ""} ${resolution?.key === item.key ? "active" : ""}`.trim()}
-          onClick={() => onResolveDecision?.(item.key)}
-          title={item.detail}
-        >
-          {item.label}
-        </button>)}
+    <div className="stockClassificationBar" aria-label="Clasificar el valor">
+      <div className="stockClassificationPrimary">
+        <span className="stockClassificationLabel">{classificationLabel}</span>
+        <details className="stockDecisionActionMenu">
+          <summary aria-label="Cambiar clasificación">
+            {resolution?.label || "Elegir"}
+          </summary>
+          <div className="stockDecisionActionMenuPanel">
+            {STOCK_DECISION_ACTIONS.map((item) => <button
+              type="button"
+              key={item.key}
+              className={`${item.tone || ""} ${resolution?.key === item.key ? "active" : ""}`.trim()}
+              onClick={() => onResolveDecision?.(item.key)}
+              title={item.detail}
+            >
+              {item.label}
+            </button>)}
+            <button
+              type="button"
+              className={`neutral ${!resolution ? "active" : ""}`.trim()}
+              onClick={() => onReopenDecision?.()}
+              title="Vuelve a pendiente"
+              disabled={!resolution}
+            >
+              Reabrir
+            </button>
+          </div>
+        </details>
+        <details className="stockDecisionNoteFold">
+          <summary>Nota</summary>
+          <label className="stockDecisionValidationNote">
+            <span className="stockDecisionValidationNoteLabel">Nota del inversor</span>
+            <input
+              value={note}
+              maxLength={120}
+              onChange={(event) => onNoteChange?.(event.target.value)}
+              placeholder="Qué observas en la ficha"
+            />
+          </label>
+        </details>
       </div>
+      <StockAddToListButton symbol={symbol} data={stockData} />
     </div>
     {resolutionHistory.length ? <div className="stockDecisionHistory" aria-label="Historial manual de la ficha">
       <span>Historial manual</span>
@@ -1643,6 +1656,8 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
         del usuario, ahora por CUALQUIER ruta de entrada: su clasificación
         manual y la navegación de la cola de Review. */}
     <StockUserClassification
+      symbol={symbol}
+      stockData={data}
       resolution={decisionResolution}
       resolutionHistory={decisionResolutionHistoryItems}
       reviewNavigation={reviewNavigation}
@@ -1661,6 +1676,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           técnica). El usuario pidió que el gráfico sea lo segundo que aparece
           tras el precio/decisión, antes de la tabla técnica. */}
       <section className="stockChartPanel" aria-label="Gráfico de la ficha">
+        <StockSymbolSearch currentSymbol={symbol} />
         <h2 className="stockChartTitle">Gráfico</h2>
         <details className="stockChartBenchmarkFold">
           <summary className="stockChartBenchmarkFoldSummary">

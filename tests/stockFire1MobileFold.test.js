@@ -17,9 +17,11 @@ describe("STOCK-FIRE-1 · chart in fold (≤480)", () => {
     expect(COMPONENTS_CSS).toMatch(/@media \(max-width: 480px\)[\s\S]*\.stockPage \.chartPrefs\.compact \.chartPrefsLine[\s\S]*flex-direction:\s*row/s);
   });
 
-  it("StockClient expone details para nota y benchmark", () => {
+  it("StockClient expone details para nota, menú de clasificación y benchmark", () => {
     expect(STOCK_CLIENT).toContain("stockDecisionNoteFold");
+    expect(STOCK_CLIENT).toContain("stockDecisionActionMenu");
     expect(STOCK_CLIENT).toContain("stockChartBenchmarkFold");
-    expect(STOCK_CLIENT).toContain("Nota del inversor");
+    expect(STOCK_CLIENT).toContain("StockSymbolSearch");
+    expect(STOCK_CLIENT).toContain("Nota");
   });
 });
