@@ -125,6 +125,26 @@ describe("buildScreenerTruthLine", () => {
     expect(line).toContain("selección ≠ mesa");
   });
 
+  it("desktop desalineado con mucha selección resume sin muro de códigos", () => {
+    const many = DEFAULT_MARKETS.slice(0, 10);
+    const line = buildScreenerTruthLine({
+      analyzedRows: [],
+      passCount: 0,
+      visibleCount: 0,
+      presetName: "Balanceado",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: many,
+      marketsMisaligned: true,
+    });
+    expect(line).toContain("mesa: US");
+    expect(line).toContain("10 mercados en selección");
+    expect(line).toContain("selección ≠ mesa");
+    expect(line).not.toContain("AT+");
+    expect(line).not.toContain("datos: US · selección:");
+  });
+
   it("omite segmentos de mercado sin scan cargado", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: [],

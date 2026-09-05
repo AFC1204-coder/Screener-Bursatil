@@ -1,14 +1,14 @@
-# Ticket activo — RANK-BADGE-1 cerrado
+# Ticket activo — MARKETS-COMPACT-1 cerrado
 
-**Estado:** Verify OK · smoke Mini OK (badge solo por batch real) · listo commit  
-**Evidencia:** `docs/evidence/rank-badge-1-smoke-2026-09-05.md`
+**Estado:** Verify OK · smoke Mini OK · listo commit  
+**Evidencia:** `docs/evidence/markets-compact-1-smoke-2026-09-05.md`
 
 ## Verify
 
-- Shell + proyección: no inventar batch en ausentes
-- Tests 55 + `./vfc` 2685 · lint OK
-- Residual badge = filas DB `batch` explícitas (HNGE/DK…); finalize RPC → mañana
+- Truth/notice/status compactan >3 mercados en desktop
+- Tests 82 + `./vfc` OK
+- Smoke Global 28: sin muro AT+AU+…; `28 mercados en selección` / `Cargando 28 …`
 
 ## Siguiente
 
-Cola calidad UI (orquestador) · mañana Mini: GHA + finalize/leaderboards RPC.
+Cola calidad UI · mañana Mini: GHA + leaderboards/finalize RPC.

@@ -218,6 +218,32 @@ describe("buildScreenerTruthMarketSegments", () => {
     ]);
   });
 
+  it("desktop desalineado con muchos mercados en selección resume sin volcar códigos", () => {
+    const many = DEFAULT_MARKETS.slice(0, 10);
+    expect(buildScreenerTruthMarketSegments({
+      scannedMarkets: ["US"],
+      selectedMarkets: many,
+      marketsMisaligned: true,
+    })).toEqual([
+      "mesa: US",
+      "10 mercados en selección",
+      "selección ≠ mesa",
+    ]);
+  });
+
+  it("desktop desalineado con muchos mercados en mesa resume sin volcar códigos", () => {
+    const many = ["AT", "AU", "BE", "CA", "CH"];
+    expect(buildScreenerTruthMarketSegments({
+      scannedMarkets: many,
+      selectedMarkets: ["US"],
+      marketsMisaligned: true,
+    })).toEqual([
+      "5 mercados en mesa",
+      "selección: US",
+      "selección ≠ mesa",
+    ]);
+  });
+
   it("modo compacto resume mercados sin listar códigos", () => {
     const many = ["AT", "AU", "BE", "CA", "CH", "DE", "ES", "FR"];
     expect(buildScreenerTruthMarketSegments({
@@ -362,12 +388,12 @@ describe("buildMarketsLoadingNotice", () => {
     expect(notice.peekDetail).toBe(notice.detail);
   });
 
-  it("resume N mercados en peek sin volcar códigos", () => {
+  it("resume N mercados en peek y detail sin volcar códigos", () => {
     const many = DEFAULT_MARKETS.slice(0, 10);
     const notice = buildMarketsLoadingNotice({ selectedMarkets: many });
     expect(notice.peekDetail).toBe("Cargando 10 mercados…");
     expect(notice.bodyDetail).toBe("Cargando 10 mercados…");
-    expect(notice.detail).toMatch(/Cargando datos de la selección \([A-Z+]+\)…/);
+    expect(notice.detail).toBe("Cargando 10 mercados…");
     expect(notice.peekDetail).not.toContain("+");
   });
 });

@@ -411,6 +411,11 @@ describe("compactMobileScanStatus", () => {
     expect(compactMobileScanStatus(long)).toBe("Cargando 8 materializados…");
   });
 
+  it("resume carga de selección multi-mercado en una línea", () => {
+    const long = "Cargando datos de la selección (AT+AU+BE+CA+CH+DE)…";
+    expect(compactMobileScanStatus(long)).toBe("Cargando 6 mercados…");
+  });
+
   it("deja intacto un mercado único", () => {
     expect(compactMobileScanStatus("Cargando materializado Estados Unidos…")).toBe("Cargando materializado Estados Unidos…");
   });
