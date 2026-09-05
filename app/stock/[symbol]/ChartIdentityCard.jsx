@@ -5,7 +5,7 @@
 // hace legible ese estilo es lo contrario — mucho dato junto, con
 // tipografía pequeña y filas apretadas. Aquí vuelve TODO: resumen de
 // negocio, sector·tema con rango, capitalización y crecimiento trimestral,
-// junto al raíl de etapa, la FR, la estructura y el pie de marcas.
+// junto al raíl de etapa, el RS, la estructura y el pie de marcas.
 //
 // El modelo lo construye lib/chartIdentityCard.js. La prop `quote`
 // (ticker, precio, variación) la inyecta el contenedor en
@@ -98,11 +98,11 @@ export default function ChartIdentityCard({ card = null, quote = null }) {
             </span>
           </div>
 
-          {/* FR + estructura en una sola fila densa. */}
+          {/* RS + estructura en una sola fila densa. */}
           <div className="chartIdCardRsRow">
             <span className="chartIdCardRsLabel">
               <i className="chartIdCardRsSwatch" aria-hidden="true" />
-              FR
+              RS
             </span>
             {rs.value !== null ? (
               <>

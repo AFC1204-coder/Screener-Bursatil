@@ -361,7 +361,7 @@ describe("ChartIdentityCard · render (tarjeta 2c densa sobre el lienzo)", () =>
     expect(html).not.toContain("desde");
   });
 
-  it("oculta RS país en US cuando coincide con el FR canónico", () => {
+  it("oculta RS país en US cuando coincide con el RS canónico", () => {
     const html = cardMarkup({
       ...fullData,
       country: "United States",
@@ -373,7 +373,7 @@ describe("ChartIdentityCard · render (tarjeta 2c densa sobre el lienzo)", () =>
     expect(html).not.toContain("RS país");
   });
 
-  it("muestra RS país en US cuando difiere del FR canónico", () => {
+  it("muestra RS país en US cuando difiere del RS canónico", () => {
     const html = cardMarkup({
       ...fullData,
       country: "United States",
@@ -386,7 +386,7 @@ describe("ChartIdentityCard · render (tarjeta 2c densa sobre el lienzo)", () =>
     expect(html).toContain(">80<");
   });
 
-  it("muestra RS país en mercado no-US aunque coincida con el FR", () => {
+  it("muestra RS país en mercado no-US aunque coincida con el RS canónico", () => {
     const html = cardMarkup({
       ...fullData,
       country: "Hong Kong",
@@ -445,7 +445,7 @@ describe("DescriptiveStrip · render (la franja tras el reparto denso)", () => {
     expect(html).not.toContain("stockDescHealthScore");
   });
 
-  it("no repite nada de la tarjeta densa: sin identidad, resumen, clasificación, FR, estructura, crecimiento ni pie", () => {
+  it("no repite nada de la tarjeta densa: sin identidad, resumen, clasificación, RS, estructura, crecimiento ni pie", () => {
     const html = stripMarkup(fullData, { technical: { distanceSma50: 12.4, distanceSma200: 31.5 } });
     expect(html).not.toContain("Provides healthcare services");
     expect(html).not.toContain("Medtech / biotech");

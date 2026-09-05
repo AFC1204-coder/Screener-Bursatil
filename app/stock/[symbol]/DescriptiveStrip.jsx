@@ -3,7 +3,7 @@
 // "Ficha StatsEdge"). Con la tarjeta 2c DENSA sobre el lienzo (cuarta
 // iteración del 2026-08-21) la franja queda en UNA banda: las medias y el
 // volumen. Todo lo identitario y fundamental —resumen, tema·rango,
-// capitalización, etapa, FR, Máx/mín/Base, crecimiento y pie de marcas—
+// capitalización, etapa, RS, Máx/mín/Base, crecimiento y pie de marcas—
 // vive en la tarjeta (ChartIdentityCard.jsx); el comentario de reparto de
 // abajo detalla qué va en cada superficie para que nada se repita.
 //

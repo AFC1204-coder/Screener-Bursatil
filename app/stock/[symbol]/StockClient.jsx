@@ -47,7 +47,7 @@ export function rsRankingStripValue(rsUniverse, freshness = {}) {
   return `${date} · n=${sharedNum(Math.round(sample))}`;
 }
 
-/** RS de la ficha (FR del cuadro y franja): pin del brief antes que la cola de la serie overlay. */
+/** RS de la ficha (RS del cuadro y franja): pin del brief antes que la cola de la serie overlay. */
 export function stockRsUniverse(rs = {}) {
   const seriesTail = Array.isArray(rs.globalRsSeries) ? rs.globalRsSeries.at(-1) : null;
   return [rs.rating, seriesTail?.rsRating].find(Number.isFinite);
@@ -1361,14 +1361,14 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const rs = data?.relativeStrength || {};
   const benchmarkOverride = cleanBenchmarkSymbol(chartSettings?.benchmarks?.[symbol]);
   const activeBenchmark = benchmarkOverride || cleanBenchmarkSymbol(rs.benchmarkSymbol);
-  // El FR es el rating pinneado del brief (ratingLatest en API); la cola de
+  // El RS es el rating pinneado del brief (ratingLatest en API); la cola de
   // globalRsSeries alimenta solo el overlay del gráfico. Mismo número que la
   // tabla del screener, vista rápida y salud de mercado (lib/rsCanonical.js).
   const rsUniverse = stockRsUniverse(rs);
   // rsBenchmark (benchmarkRating) alimentaba solo el panel Fuerza relativa,
   // retirado el 2026-08-21; la comparación vs. benchmark vive en el gráfico.
   // La tarjeta de identidad del lienzo (variante 2c encogida: raíl de etapa,
-  // identidad, FR, estructura, crecimiento y pie de marcas) — modelo en
+  // identidad, RS, estructura, crecimiento y pie de marcas) — modelo en
   // lib/chartIdentityCard.js, vista en ChartIdentityCard.jsx. Sustituye al
   // sello de tres líneas de la primera iteración de este mismo día.
   const identityCardModel = buildChartIdentityCard({ symbol, data, rsUniverse });

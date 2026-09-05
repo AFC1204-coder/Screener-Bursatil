@@ -274,7 +274,7 @@ describe("tarjeta de identidad del lienzo (variante 2c encogida)", () => {
     // Raíl vertical de etapa: dígito + semana + tramos.
     expect(html).toContain("chartIdCardStageRail");
     expect(html).toContain("sem. 12");
-    // FR y estructura.
+    // RS y estructura.
     expect(html).toContain("chartIdCardRsValue");
     expect(html).toContain("Máx. 52s");
     // Crecimiento trimestral: en la tarjeta (densidad MarketSmith).
@@ -309,7 +309,7 @@ describe("tarjeta de identidad del lienzo (variante 2c encogida)", () => {
     // Como DATO, la fuerza relativa vive solo en la tarjeta (la otra
     // aparición del texto es el checkbox del indicador en las preferencias
     // del gráfico — un control, no un dato).
-    expect(count("FR</span>")).toBe(1);
+    expect(count("RS</span>")).toBe(1);
     expect(count("Crecimiento trimestral")).toBe(1);
     expect(count("Máx. 52s")).toBe(1);
     expect(count('class="chartIdCardFoot"')).toBe(1);
@@ -362,7 +362,7 @@ describe("READ-D kicker con tema", () => {
 });
 
 describe("READ-D RS país en tarjeta", () => {
-  it("oculta RS país en US cuando coincide con FR", () => {
+  it("oculta RS país en US cuando coincide con RS canónico", () => {
     const html = renderFicha({
       relativeStrength: {
         globalRsSeries: [{ date: "2025-09-17", rsRating: 94, sampleSize: 4868 }],
@@ -377,8 +377,8 @@ describe("READ-D RS país en tarjeta", () => {
   });
 });
 
-describe("stockRsUniverse: FR de la ficha", () => {
-  it("con serie legacy y rating pin, el FR sigue el pin y no la cola de la serie", () => {
+describe("stockRsUniverse: RS de la ficha", () => {
+  it("con serie legacy y rating pin, el RS sigue el pin y no la cola de la serie", () => {
     const rs = {
       rating: 64,
       globalRsSeries: Array.from({ length: 8 }, (_, index) => ({
