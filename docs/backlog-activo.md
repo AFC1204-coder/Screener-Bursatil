@@ -6,7 +6,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** Hoy = calidad UI (no Mini). Mañana = GHA + leaderboards RPC.  
-**Último cerrado:** **RANK-BADGE-1** (hash al commit).  
+**Último cerrado:** **RANK-BADGE-1** `4b36051`.  
 **Ahora:** cola calidad UI — orquestador elige siguiente.  
 **Hecho ops:** Supabase Pro **cancelado** (dueño).  
 **Mañana (Mini):** apagar GHA `scan-universe` · leaderboards RPC pg · finalize percentil pg.  
