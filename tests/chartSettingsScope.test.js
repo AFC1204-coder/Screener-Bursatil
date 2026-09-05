@@ -3,6 +3,7 @@ import {
   DEFAULT_CHART_SETTINGS,
   QUICK_REVIEW_CHART_INDICATOR_DEFAULTS,
   applyQuickReviewChartDefaults,
+  normalizeChartSettings,
   readChartSettings,
   writeChartSettings,
 } from "@/lib/chartSettings";
@@ -37,11 +38,11 @@ describe("CHART-QR-2 · chart settings scope quickReview", () => {
     expect(next.indicators).toMatchObject(QUICK_REVIEW_CHART_INDICATOR_DEFAULTS);
   });
 
-  it("readChartSettings global conserva RS país/tema ON", () => {
+  it("readChartSettings global deja solo RS canónico ON por defecto", () => {
     const settings = readChartSettings({ scope: "global" });
     expect(settings.indicators.rsLine).toBe(true);
-    expect(settings.indicators.rsCountryLine).toBe(true);
-    expect(settings.indicators.rsThemeLine).toBe(true);
+    expect(settings.indicators.rsCountryLine).toBe(false);
+    expect(settings.indicators.rsThemeLine).toBe(false);
   });
 
   it("readChartSettings quickReview aplica defaults sin tocar global", () => {
@@ -50,8 +51,17 @@ describe("CHART-QR-2 · chart settings scope quickReview", () => {
     expect(quick.indicators.rsLine).toBe(true);
     expect(quick.indicators.rsCountryLine).toBe(false);
     expect(quick.indicators.rsThemeLine).toBe(false);
-    expect(global.indicators.rsCountryLine).toBe(true);
-    expect(global.indicators.rsThemeLine).toBe(true);
+    expect(global.indicators.rsCountryLine).toBe(false);
+    expect(global.indicators.rsThemeLine).toBe(false);
+  });
+
+  it("normalizeChartSettings permite opt-in de RS país/tema", () => {
+    const settings = normalizeChartSettings({
+      indicators: { rsCountryLine: true, rsThemeLine: true },
+    });
+    expect(settings.indicators.rsLine).toBe(true);
+    expect(settings.indicators.rsCountryLine).toBe(true);
+    expect(settings.indicators.rsThemeLine).toBe(true);
   });
 
   it("writeChartSettings quickReview persiste preset sin alterar global", () => {
@@ -67,15 +77,15 @@ describe("CHART-QR-2 · chart settings scope quickReview", () => {
     const stored = JSON.parse(globalThis.localStorage.getItem(STORAGE_KEYS.chartSettings));
     expect(stored.quickReviewPreset.indicators.rsCountryLine).toBe(true);
     expect(stored.quickReviewPreset.indicators.rsThemeLine).toBe(false);
-    expect(stored.indicators.rsCountryLine).toBe(true);
-    expect(stored.indicators.rsThemeLine).toBe(true);
+    expect(stored.indicators.rsCountryLine).toBe(false);
+    expect(stored.indicators.rsThemeLine).toBe(false);
 
     const quick = readChartSettings({ scope: "quickReview" });
     expect(quick.indicators.rsCountryLine).toBe(true);
     expect(quick.indicators.rsThemeLine).toBe(false);
 
     const global = readChartSettings({ scope: "global" });
-    expect(global.indicators.rsCountryLine).toBe(true);
-    expect(global.indicators.rsThemeLine).toBe(true);
+    expect(global.indicators.rsCountryLine).toBe(false);
+    expect(global.indicators.rsThemeLine).toBe(false);
   });
 });
