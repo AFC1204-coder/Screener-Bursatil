@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resultPayload as snapshotResultPayload, scanFromDb } from "@/app/api/scans/route";
 import { DECISION_TRACE_ENGINE_VERSION, DECISION_TRACE_SCHEMA_VERSION } from "@/lib/decisionTraceVersion";
 import { scanResultPayload as materializedResultPayload } from "@/lib/materializedScanner";
-import { scanDecisionRowFromDb } from "@/lib/scanDecisionProjection";
+import { scanDecisionMetrics, scanDecisionRowFromDb } from "@/lib/scanDecisionProjection";
 import { buildDecisionEvidenceChecklist } from "@/lib/screenerExplainability";
 import { scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
 import { resultPayload as serverResultPayload, scoreRowsForServerScan } from "@/lib/serverScanRunner";
@@ -353,6 +353,31 @@ describe("scan decision projection", () => {
 
     expect(row.decisionProjectionPartial).toBe(true);
     expect(row.decisionProjectionMissing).toEqual(["chartBarsCount", "price"]);
+  });
+
+  it("no inventa percentileScope batch cuando la fila no lo trae", () => {
+    const metrics = scanDecisionMetrics({ symbol: "NOSCOPE", price: 10 });
+    expect(metrics.percentileScope).toBeNull();
+
+    const restored = scanDecisionRowFromDb({
+      symbol: "NOSCOPE",
+      metrics,
+    }, { decisionProjection: true });
+    expect(restored.percentileScope).toBeUndefined();
+  });
+
+  it("conserva percentileScope batch o final cuando viene explicito", () => {
+    const batchMetrics = scanDecisionMetrics({ symbol: "BAT", percentileScope: "batch" });
+    expect(batchMetrics.percentileScope).toBe("batch");
+
+    const finalMetrics = scanDecisionMetrics({ symbol: "FIN", percentileScope: "final" });
+    expect(finalMetrics.percentileScope).toBe("final");
+
+    const restored = scanDecisionRowFromDb({
+      symbol: "BAT",
+      metrics: batchMetrics,
+    }, { decisionProjection: true });
+    expect(restored.percentileScope).toBe("batch");
   });
 });
 

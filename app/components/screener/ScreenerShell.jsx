@@ -530,9 +530,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   }
 
   // --- franja P3 (percentil por lote) ---
-  // Comunicamos honestamente los percentiles batch de la lista visible; si el
-  // conjunto es "final", no hay nada que decir.
-  const visibleBatchRows = huntResultsRows.some((row) => (row.percentileScope || "batch") === "batch");
+  // Solo avisamos si hay filas con percentileScope explícito "batch"; ausente
+  // no cuenta (scans materializados sin finalize no deben alarmar).
+  const visibleBatchRows = huntResultsRows.some((row) => row.percentileScope === "batch");
   const statusLabel = investorStatusLabel(status);
   const mobileStatusLabel = compactMobileScanStatus(status);
   const scanStatusVisible = showScanStatusBar(err, status);

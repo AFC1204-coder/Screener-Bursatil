@@ -1,14 +1,14 @@
-# Ticket activo — TRUTH-LOAD-1 cerrado
+# Ticket activo — RANK-BADGE-1 cerrado
 
-**Estado:** Verify OK · smoke Mini OK · listo commit  
-**Evidencia:** `docs/evidence/truth-load-1-smoke-2026-09-05.md`
+**Estado:** Verify OK · smoke Mini OK (badge solo por batch real) · listo commit  
+**Evidencia:** `docs/evidence/rank-badge-1-smoke-2026-09-05.md`
 
 ## Verify
 
-- Diff: `loading` en truth line; `suppressTruthCounts` separado de bloqueo mesa
-- Tests 39 + `./vfc` 2682 · lint OK
-- Smoke `:13000` hard-reload: `cargando…` + banner 157/204; settle `157 analizadas`; cambio mercado sin 0·0·0
+- Shell + proyección: no inventar batch en ausentes
+- Tests 55 + `./vfc` 2685 · lint OK
+- Residual badge = filas DB `batch` explícitas (HNGE/DK…); finalize RPC → mañana
 
 ## Siguiente
 
-Cola calidad UI (orquestador elige) · mañana Mini: GHA + leaderboards RPC.
+Cola calidad UI (orquestador) · mañana Mini: GHA + finalize/leaderboards RPC.

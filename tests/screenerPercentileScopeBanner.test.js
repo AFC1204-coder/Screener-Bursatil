@@ -144,7 +144,7 @@ function makeProps({ resultsRows = [] } = {}) {
 
 const FINAL_ROW = { symbol: "FIN", percentileScope: "final" };
 const BATCH_ROW = { symbol: "BAT", percentileScope: "batch" };
-const UNSCOPED_ROW = { symbol: "OLD" }; // percentileScope ausente ⇒ tratado como batch
+const UNSCOPED_ROW = { symbol: "OLD" }; // percentileScope ausente ⇒ no dispara el badge
 
 const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
 
@@ -162,8 +162,14 @@ describe("ScreenerShell · franja P3 (ranking provisional)", () => {
     expect(html).not.toContain("percentileScopeNotice");
   });
 
-  it("trata percentileScope ausente como batch en la lista visible", () => {
+  it("no muestra badge cuando la lista visible solo tiene percentileScope ausente", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [UNSCOPED_ROW] })));
+    expect(html).not.toContain("Ranking provisional");
+    expect(html).not.toContain("percentileScopeBadge");
+  });
+
+  it("muestra badge con batch explícito aunque haya filas sin scope", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [UNSCOPED_ROW, BATCH_ROW] })));
     expect(html).toContain("Ranking provisional");
     expect(html).toContain("percentileScopeBadge");
   });

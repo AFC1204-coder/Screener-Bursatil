@@ -259,6 +259,6 @@ describe("runMaterializedScan · wiring de progress (mocks, sin red ni Supabase)
     const serialized = JSON.stringify(after);
     expect(serialized).not.toContain("percentilesFinalized");
     // El scope de percentil de la fila no se ve alterado por esta fase.
-    expect(after.metrics.percentileScope ?? after.raw.percentileScope ?? "batch").toBe("batch");
+    expect(after.metrics.percentileScope ?? after.raw.percentileScope ?? null).toBeNull();
   });
 });
