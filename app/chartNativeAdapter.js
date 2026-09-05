@@ -43,9 +43,11 @@ const PRICE_SCALE_DASHED = 2;
 // un percentil 1-99 y el precio una cotización en cualquier escala: una escala
 // overlay invisible con rango fijo y banda inferior propia evita compartir eje
 // con el precio sin reservar un panel aparte (patrón B2/B3).
+//
+// Global, país y tema comparten UNA sola escala overlay: las tres series son
+// percentiles 1-99 en la misma banda. Escalas separadas por línea desalineaban
+// la superposición y duplicaban márgenes/referencias.
 const RS_OVERLAY_SCALE_ID = "rs-rating";
-const RS_COUNTRY_OVERLAY_SCALE_ID = "rs-country";
-const RS_THEME_OVERLAY_SCALE_ID = "rs-theme";
 // Banda inferior ~25% del panel de precio (top 0.75 → franja 75%–98%).
 const RS_OVERLAY_MARGINS = { top: 0.75, bottom: 0.02 };
 // Extremos del ranking. El eje se fija a ellos en vez de autoescalar: un RS de
@@ -80,6 +82,39 @@ function safeNumber(value) {
 function fmtPrice(price) {
   const n = Number(price);
   return Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
+}
+
+/** Configura la escala overlay RS una sola vez por attachment (rango 1-99, banda inferior). */
+function ensureRsOverlayScale(chart) {
+  chart.priceScale(RS_OVERLAY_SCALE_ID).applyOptions({
+    visible: false,
+    autoScale: true,
+    scaleMargins: RS_OVERLAY_MARGINS,
+  });
+}
+
+function rsOverlaySeriesOptions() {
+  return {
+    priceScaleId: RS_OVERLAY_SCALE_ID,
+    priceLineVisible: false,
+    lastValueVisible: true,
+    priceFormat: { type: "price", precision: 0, minMove: 1 },
+    autoscaleInfoProvider: () => ({
+      priceRange: { minValue: RS_SCALE_MIN, maxValue: RS_SCALE_MAX },
+    }),
+  };
+}
+
+function addRsReferenceLine(series, colors, LineStyle) {
+  if (typeof series.createPriceLine !== "function") return;
+  series.createPriceLine({
+    price: RS_REFERENCE,
+    color: colors.line2,
+    lineStyle: LineStyle?.Dashed ?? PRICE_SCALE_DASHED,
+    lineWidth: 1,
+    axisLabelVisible: false,
+    title: "",
+  });
 }
 
 /**
@@ -152,6 +187,7 @@ export function createChartNativeAdapter(args) {
     createSeriesMarkers,
     HistogramSeries,
     LineSeries,
+    LineStyle,
     PriceScaleMode,
   } = lib;
 
@@ -307,109 +343,78 @@ export function createChartNativeAdapter(args) {
     extraSeries.push(series);
   }
 
-  // ── Línea RS rating (overlay en panel de precio) ───────────────────────────
+  // ── Líneas RS rating (overlay compartido en panel de precio) ───────────────
   //
-  // Percentil semanal 1-99 en escala overlay invisible con rango fijo y banda
-  // inferior propia. No comparte eje con el precio ni reserva panel aparte.
+  // Percentiles semanales 1-99 en escala overlay invisible con rango fijo y
+  // banda inferior propia. Global, país y tema comparten escala y referencia 50;
+  // se distinguen por color y trazo (país discontinuo).
   let rsSeries = null;
+  let rsCountrySeriesHandle = null;
+  let rsThemeSeriesHandle = null;
+
   const rsLineData = projectRsRatingSeries(rows, rsRatingSeries, indicators, interval);
   const rsHistory = rsLineHistory(rsLineData);
   const rsRendered = !intraday && !!indicators.rsLine && rsLineData.length > 1 && rsHistory.sufficient;
+
+  const rsCountryLineData = projectRsCountryRatingSeries(rows, rsCountrySeries, indicators, interval);
+  const rsCountryHistory = rsLineHistory(rsCountryLineData);
+  const rsCountryRendered = !intraday && !!indicators.rsCountryLine && rsCountryLineData.length > 1 && rsCountryHistory.sufficient;
+
+  const rsThemeLineData = projectRsThemeRatingSeries(rows, rsThemeSeries, indicators, interval);
+  const rsThemeHistory = rsLineHistory(rsThemeLineData);
+  const rsThemeRendered = !intraday && !!indicators.rsThemeLine && rsThemeLineData.length > 1 && rsThemeHistory.sufficient;
+
+  const anyRsRendered = rsRendered || rsCountryRendered || rsThemeRendered;
+  if (anyRsRendered) {
+    ensureRsOverlayScale(chart);
+  }
+
   if (rsRendered) {
     rsSeries = chart.addSeries(
       LineSeries,
       {
+        ...rsOverlaySeriesOptions(),
         color: colors.traza,
         lineWidth: 2,
-        priceScaleId: RS_OVERLAY_SCALE_ID,
-        priceLineVisible: false,
-        lastValueVisible: true,
-        priceFormat: { type: "price", precision: 0, minMove: 1 },
         title: "RS",
-        autoscaleInfoProvider: () => ({
-          priceRange: { minValue: RS_SCALE_MIN, maxValue: RS_SCALE_MAX },
-        }),
       },
       0,
     );
     rsSeries.setData(rsLineData.map((point) => ({ time: point.time, value: point.value })));
-    if (typeof rsSeries.createPriceLine === "function") {
-      rsSeries.createPriceLine({
-        price: RS_REFERENCE,
-        color: colors.line2,
-        lineStyle: PRICE_SCALE_DASHED,
-        lineWidth: 1,
-        axisLabelVisible: false,
-        title: "",
-      });
-    }
-    chart.priceScale(RS_OVERLAY_SCALE_ID).applyOptions({
-      visible: false,
-      autoScale: true,
-      scaleMargins: RS_OVERLAY_MARGINS,
-    });
+    addRsReferenceLine(rsSeries, colors, LineStyle);
     extraSeries.push(rsSeries);
   }
 
-  // ── Línea RS país (overlay en panel precio, tercer tono) ───────────────────
-  let rsCountrySeriesHandle = null;
-  const rsCountryLineData = projectRsCountryRatingSeries(rows, rsCountrySeries, indicators, interval);
-  const rsCountryHistory = rsLineHistory(rsCountryLineData);
-  const rsCountryRendered = !intraday && !!indicators.rsCountryLine && rsCountryLineData.length > 1 && rsCountryHistory.sufficient;
   if (rsCountryRendered) {
     rsCountrySeriesHandle = chart.addSeries(
       LineSeries,
       {
+        ...rsOverlaySeriesOptions(),
         color: colors.soft,
         lineWidth: 2,
-        priceScaleId: RS_COUNTRY_OVERLAY_SCALE_ID,
-        priceLineVisible: false,
-        lastValueVisible: true,
-        priceFormat: { type: "price", precision: 0, minMove: 1 },
+        lineStyle: LineStyle.Dashed,
         title: "RS país",
-        autoscaleInfoProvider: () => ({
-          priceRange: { minValue: RS_SCALE_MIN, maxValue: RS_SCALE_MAX },
-        }),
       },
       0,
     );
     rsCountrySeriesHandle.setData(rsCountryLineData.map((point) => ({ time: point.time, value: point.value })));
-    chart.priceScale(RS_COUNTRY_OVERLAY_SCALE_ID).applyOptions({
-      visible: false,
-      autoScale: true,
-      scaleMargins: RS_OVERLAY_MARGINS,
-    });
+    if (!rsRendered) addRsReferenceLine(rsCountrySeriesHandle, colors, LineStyle);
     extraSeries.push(rsCountrySeriesHandle);
   }
 
-  // ── Línea RS tema (overlay en panel precio, cuarto tono) ────────────────────
-  let rsThemeSeriesHandle = null;
-  const rsThemeLineData = projectRsThemeRatingSeries(rows, rsThemeSeries, indicators, interval);
-  const rsThemeHistory = rsLineHistory(rsThemeLineData);
-  const rsThemeRendered = !intraday && !!indicators.rsThemeLine && rsThemeLineData.length > 1 && rsThemeHistory.sufficient;
   if (rsThemeRendered) {
     rsThemeSeriesHandle = chart.addSeries(
       LineSeries,
       {
+        ...rsOverlaySeriesOptions(),
         color: colors.rsTheme,
         lineWidth: 2,
-        priceScaleId: RS_THEME_OVERLAY_SCALE_ID,
-        priceLineVisible: false,
-        lastValueVisible: true,
-        priceFormat: { type: "price", precision: 0, minMove: 1 },
         title: "RS tema",
-        autoscaleInfoProvider: () => ({
-          priceRange: { minValue: RS_SCALE_MIN, maxValue: RS_SCALE_MAX },
-        }),
       },
       0,
     );
     rsThemeSeriesHandle.setData(rsThemeLineData.map((point) => ({ time: point.time, value: point.value })));
-    chart.priceScale(RS_THEME_OVERLAY_SCALE_ID).applyOptions({
-      visible: false,
-      autoScale: true,
-      scaleMargins: RS_OVERLAY_MARGINS,
-    });
+    if (!rsRendered && !rsCountryRendered) addRsReferenceLine(rsThemeSeriesHandle, colors, LineStyle);
     extraSeries.push(rsThemeSeriesHandle);
   }
 

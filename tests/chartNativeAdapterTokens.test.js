@@ -143,6 +143,7 @@ function rsAdapterHarness({ rsRatingSeries, rsCountrySeries, rsThemeSeries, indi
       createSeriesMarkers: vi.fn(),
       HistogramSeries: "histogram",
       LineSeries: "line",
+      LineStyle: { Solid: 0, Dotted: 1, Dashed: 2, LargeDashed: 3, SparseDotted: 4 },
       PriceScaleMode: { Normal: 0, Logarithmic: 1, Percentage: 2 },
     },
     profile: { priceScaleMargins: { top: 0.08, bottom: 0.08 }, timeScale: {}, timeFormatter: vi.fn() },
@@ -226,7 +227,7 @@ describe("chartNativeAdapter · overlay del RS rating", () => {
     expect(result.rsPane).toMatchObject({ rendered: false, paneIndex: null, points: 2, weeks: 1 });
   });
 
-  it("dibuja RS país como overlay en panel 0 con escala rs-country y tono --soft", () => {
+  it("dibuja RS país como overlay en panel 0 con escala rs-rating compartida, tono --soft y trazo discontinuo", () => {
     const rows = dailyRows(120);
     const rsCountrySeries = Array.from({ length: 12 }, (_, index) => ({
       date: rows[index * 7].date,
@@ -243,13 +244,15 @@ describe("chartNativeAdapter · overlay del RS rating", () => {
     const countryEntry = addedSeries.find((entry) => entry.options?.title === "RS país");
     expect(countryEntry).toBeTruthy();
     expect(countryEntry.paneIndex).toBe(0);
-    expect(countryEntry.options.priceScaleId).toBe("rs-country");
+    expect(countryEntry.options.priceScaleId).toBe("rs-rating");
     expect(countryEntry.options.color).toBe("#B9BFB2"); // --soft
-    expect(priceScaleCalls.some((call) => call.id === "rs-country")).toBe(true);
+    expect(countryEntry.options.lineStyle).toBe(2); // Dashed
+    expect(priceScaleCalls.filter((call) => call.id === "rs-rating")).toHaveLength(1);
+    expect(priceScaleCalls.some((call) => call.id === "rs-country")).toBe(false);
     expect(result.rsCountryPane).toMatchObject({ rendered: true, paneIndex: 0, weeks: 12, latestValue: 41 });
   });
 
-  it("dibuja RS tema como overlay en panel 0 con escala rs-theme y tono --rs-theme", () => {
+  it("dibuja RS tema como overlay en panel 0 con escala rs-rating compartida y tono --rs-theme", () => {
     const rows = dailyRows(120);
     const rsThemeSeries = Array.from({ length: 12 }, (_, index) => ({
       date: rows[index * 7].date,
@@ -266,9 +269,34 @@ describe("chartNativeAdapter · overlay del RS rating", () => {
     const themeEntry = addedSeries.find((entry) => entry.options?.title === "RS tema");
     expect(themeEntry).toBeTruthy();
     expect(themeEntry.paneIndex).toBe(0);
-    expect(themeEntry.options.priceScaleId).toBe("rs-theme");
+    expect(themeEntry.options.priceScaleId).toBe("rs-rating");
     expect(themeEntry.options.color).toBe("#C4A5E8"); // --rs-theme
-    expect(priceScaleCalls.some((call) => call.id === "rs-theme")).toBe(true);
+    expect(priceScaleCalls.filter((call) => call.id === "rs-rating")).toHaveLength(1);
+    expect(priceScaleCalls.some((call) => call.id === "rs-theme")).toBe(false);
     expect(result.rsThemePane).toMatchObject({ rendered: true, paneIndex: 0, weeks: 12, latestValue: 31 });
+  });
+
+  it("comparte una sola escala rs-rating cuando global, país y tema están activos", () => {
+    const rows = dailyRows(120);
+    const makeSeries = (base) => Array.from({ length: 12 }, (_, index) => ({
+      date: rows[index * 7].date,
+      rsRating: base + index,
+    }));
+
+    const { addedSeries, priceScaleCalls } = rsAdapterHarness({
+      rsRatingSeries: makeSeries(40),
+      rsCountrySeries: makeSeries(30),
+      rsThemeSeries: makeSeries(20),
+      rows,
+    });
+
+    const rsEntries = addedSeries.filter((entry) => ["RS", "RS país", "RS tema"].includes(entry.options?.title));
+    expect(rsEntries).toHaveLength(3);
+    for (const entry of rsEntries) {
+      expect(entry.options.priceScaleId).toBe("rs-rating");
+      expect(entry.paneIndex).toBe(0);
+    }
+    expect(priceScaleCalls.filter((call) => call.id === "rs-rating")).toHaveLength(1);
+    expect(priceScaleCalls.some((call) => call.id === "rs-country" || call.id === "rs-theme")).toBe(false);
   });
 });
