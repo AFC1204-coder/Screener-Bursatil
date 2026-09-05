@@ -3,7 +3,7 @@ import { DEFAULT_MARKETS } from "@/lib/screenerConfig";
 import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
 
 describe("buildScreenerTruthLine", () => {
-  it("compone analizadas, pasan, en lista, orden y corte", () => {
+  it("compone pasan con denominador, corte y mesa alineada", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: [{ symbol: "A" }, { symbol: "B" }],
       passCount: 1,
@@ -13,11 +13,12 @@ describe("buildScreenerTruthLine", () => {
       sortAsc: false,
       scannedAt: "2026-08-27T14:07:00.000Z",
     });
-    expect(line).toContain("2 analizadas");
-    expect(line).toContain("1 pasan «Balanceado»");
-    expect(line).toContain("1 en lista");
+    expect(line).toContain("1 de 2 pasan «Balanceado»");
+    expect(line).not.toContain("analizadas");
+    expect(line).not.toContain("en lista");
     expect(line).not.toContain("visibles");
-    expect(line).toContain("orden: Rendimiento 6M ↓");
+    expect(line).not.toContain("orden:");
+    expect(line).not.toContain("/página");
     expect(line).toContain("corte ");
   });
 
@@ -32,10 +33,10 @@ describe("buildScreenerTruthLine", () => {
       scannedAt: null,
     });
     expect(line).not.toContain("corte ");
-    expect(line).toContain("↑");
+    expect(line).not.toContain("orden:");
   });
 
-  it("añade hint de página cuando hay más de una página", () => {
+  it("no repite en lista ni página cuando pasan y visibles coinciden", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: Array.from({ length: 100 }, (_, i) => ({ symbol: `S${i}` })),
       passCount: 1047,
@@ -46,23 +47,27 @@ describe("buildScreenerTruthLine", () => {
       sort: "perf3m",
       sortAsc: false,
     });
-    expect(line).toContain("1047 en lista · 50/página");
+    expect(line).toContain("1047 de 100 pasan «Deterioro»");
+    expect(line).not.toContain("en lista");
+    expect(line).not.toContain("/página");
   });
 
-  it("añade hint de página cuando visibleCount supera pageSize aunque totalPages no se pase", () => {
+  it("muestra en lista solo cuando visibleCount difiere de passCount", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: [],
       passCount: 120,
-      visibleCount: 120,
+      visibleCount: 80,
       pageSize: 50,
       presetName: "Balanceado",
       sort: "perf6m",
       sortAsc: true,
     });
-    expect(line).toContain("120 en lista · 50/página");
+    expect(line).toContain("120 de 0 pasan «Balanceado»");
+    expect(line).toContain("80 en lista");
+    expect(line).not.toContain("/página");
   });
 
-  it("omite hint de página en una sola página cabida en pageSize", () => {
+  it("no añade en lista cuando visibleCount iguala passCount", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: [],
       passCount: 47,
@@ -73,7 +78,8 @@ describe("buildScreenerTruthLine", () => {
       sort: "perf3m",
       sortAsc: false,
     });
-    expect(line).toContain("47 en lista");
+    expect(line).toContain("47 de 0 pasan «Líderes Etapa 2»");
+    expect(line).not.toContain("en lista");
     expect(line).not.toContain("/página");
   });
 
@@ -107,7 +113,7 @@ describe("buildScreenerTruthLine", () => {
     expect(line).toContain("mesa: CA+HK");
   });
 
-  it("con desalineación mantiene 0 analizadas y aclara datos vs selección", () => {
+  it("con desalineación omite segmentos de mercado de la verdad", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: [],
       passCount: 0,
@@ -119,13 +125,13 @@ describe("buildScreenerTruthLine", () => {
       selectedMarkets: ["HK"],
       marketsMisaligned: true,
     });
-    expect(line).toContain("0 analizadas");
-    expect(line).toContain("mesa: US");
-    expect(line).toContain("datos: US · selección: HK");
-    expect(line).toContain("selección ≠ mesa");
+    expect(line).toContain("0 de 0 pasan «HK»");
+    expect(line).not.toContain("mesa:");
+    expect(line).not.toContain("datos:");
+    expect(line).not.toContain("selección ≠ mesa");
   });
 
-  it("desktop desalineado con mucha selección resume sin muro de códigos", () => {
+  it("desktop desalineado no mete muro de códigos en la verdad", () => {
     const many = DEFAULT_MARKETS.slice(0, 10);
     const line = buildScreenerTruthLine({
       analyzedRows: [],
@@ -138,9 +144,9 @@ describe("buildScreenerTruthLine", () => {
       selectedMarkets: many,
       marketsMisaligned: true,
     });
-    expect(line).toContain("mesa: US");
-    expect(line).toContain("10 mercados en selección");
-    expect(line).toContain("selección ≠ mesa");
+    expect(line).toContain("0 de 0 pasan «Balanceado»");
+    expect(line).not.toContain("mesa:");
+    expect(line).not.toContain("selección ≠ mesa");
     expect(line).not.toContain("AT+");
     expect(line).not.toContain("datos: US · selección:");
   });
@@ -174,15 +180,14 @@ describe("buildScreenerTruthLine", () => {
       compactMarketSegments: true,
       scannedAt: "2026-08-27T14:07:00.000Z",
     });
-    expect(line).toContain("120 analizadas");
-    expect(line).toContain("47 pasan");
+    expect(line).toContain("47 de 120 pasan «Balanceado»");
     expect(line).toContain("8 mercados en mesa");
     expect(line).not.toContain("mesa: AT+");
     expect(line).not.toContain("orden:");
     expect(line).not.toContain("corte ");
   });
 
-  it("modo compacto desalineado omite conteo redundante de selección", () => {
+  it("modo compacto desalineado omite segmentos de mercado", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: Array.from({ length: 100 }, (_, i) => ({ symbol: `S${i}` })),
       passCount: 20,
@@ -195,12 +200,12 @@ describe("buildScreenerTruthLine", () => {
       marketsMisaligned: true,
       compactMarketSegments: true,
     });
-    expect(line).toContain("1 mercado en mesa");
-    expect(line).toContain("selección ≠ mesa");
-    expect(line).not.toMatch(/\d+ mercados en selección/);
+    expect(line).toContain("20 de 100 pasan «Balanceado»");
+    expect(line).not.toContain("mercado");
+    expect(line).not.toContain("selección ≠ mesa");
   });
 
-  it("TRUTH-LOAD-1: en carga sin conteos usa cargando… y conserva mesa/orden/corte", () => {
+  it("TRUTH-LOAD-1: en carga sin conteos usa cargando… y conserva mesa/corte", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: [],
       passCount: 0,
@@ -214,11 +219,10 @@ describe("buildScreenerTruthLine", () => {
       loading: true,
     });
     expect(line).toContain("cargando…");
-    expect(line).not.toContain("0 analizadas");
-    expect(line).not.toContain("0 pasan");
-    expect(line).not.toContain("0 en lista");
+    expect(line).not.toContain("0 de 0 pasan");
+    expect(line).not.toContain("en lista");
     expect(line).toContain("mesa: HK");
-    expect(line).toContain("orden: Rendimiento 6M ↓");
+    expect(line).not.toContain("orden:");
     expect(line).toContain("corte ");
   });
 
@@ -235,9 +239,8 @@ describe("buildScreenerTruthLine", () => {
       suppressMisalignmentAlarm: true,
       loading: true,
     });
-    expect(line).toContain("157 analizadas");
-    expect(line).toContain("42 pasan «Líderes intl»");
-    expect(line).not.toContain("0 analizadas");
+    expect(line).toContain("42 de 157 pasan «Líderes intl»");
+    expect(line).not.toContain("0 de 0 pasan");
   });
 });
 
@@ -317,8 +320,8 @@ describe("resolveScreenerTruthCounts", () => {
       sort: "perf3m",
       sortAsc: false,
     });
-    expect(line).toContain("1045 pasan «Deterioro»");
-    expect(line).toContain("1045 en lista");
+    expect(line).toContain("1045 de 3321 pasan «Deterioro»");
+    expect(line).not.toContain("en lista");
     expect(line).not.toContain("488 en lista");
   });
 });

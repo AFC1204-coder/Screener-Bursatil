@@ -184,7 +184,8 @@ describe("ScreenerShell markets misalignment", () => {
   it("pinta la línea de verdad y un solo banner de carga (sin CTA) por viewport", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ marketsStale: true })));
     expect(html).toContain("screenerTruthLine");
-    expect(html).toContain("analizadas");
+    expect(html).toContain("pasan «");
+    expect(html).not.toContain("analizadas");
     expect(html).toContain(MARKETS_AUTO_LOAD_LOADING_LABEL);
     expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
     expect((html.match(/scanStaleNotice--loading/g) || []).length).toBe(1);
@@ -228,10 +229,10 @@ describe("ScreenerShell markets misalignment", () => {
       selectedMarkets: ["HK"],
     })));
     expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
-    expect(html).toContain("0 analizadas");
-    expect(html).toContain("0 en lista");
+    expect(html).toContain("0 de 0 pasan");
     expect(html).toContain("mesa: US");
     expect(html).not.toContain("selección ≠ mesa");
+    expect(html).not.toContain("en lista");
     expect(html).not.toContain("AAPL");
     expect(html).not.toContain(">Revisar<");
     expect(html).not.toContain("1 en lista");
@@ -245,8 +246,8 @@ describe("ScreenerShell markets misalignment", () => {
       selectedMarkets: ["HK"],
       restoringScan: true,
     })));
-    expect(html).toContain("1 analizadas");
-    expect(html).not.toContain("0 analizadas");
+    expect(html).toContain("1 de 1 pasan");
+    expect(html).not.toContain("0 de 0 pasan");
     expect(html).not.toContain("AAPL");
     expect(html).toContain(MARKETS_AUTO_LOAD_LOADING_LABEL);
   });
@@ -268,7 +269,7 @@ describe("ScreenerShell markets misalignment", () => {
     props.resultView.pagedRows = [];
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
     expect(html).toContain("cargando…");
-    expect(html).not.toContain("0 analizadas");
+    expect(html).not.toContain("0 de 0 pasan");
     expect(html).toContain("mesa: HK");
   });
 
@@ -305,7 +306,7 @@ describe("ScreenerShell markets misalignment", () => {
     })));
     expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
     expect(html).toContain("No se pudo cargar Hong Kong.");
-    expect(html).toContain("selección ≠ mesa");
+    expect(html).not.toContain("selección ≠ mesa");
   });
 
   it("no muestra aviso de mercados si solo cambian filtros (mercados alineados)", () => {

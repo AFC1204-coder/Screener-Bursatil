@@ -360,8 +360,8 @@ describe("ScreenerShell hunt rail", () => {
       filteredVisibleCount: 290,
       rowsDeferredStale: true,
     })));
-    expect(html).toContain("1045 pasan «Deterioro»");
-    expect(html).toContain("1045 en lista");
+    expect(html).toContain("1045 de 1045 pasan «Deterioro»");
+    expect(html).not.toContain("en lista");
     expect(html).not.toContain("290 en lista");
   });
 
@@ -381,7 +381,7 @@ describe("ScreenerShell hunt rail", () => {
       sort: "perf3m",
       sortAsc: false,
     });
-    expect(line).toContain("1045 pasan «Deterioro»");
+    expect(line).toContain("1045 de 3321 pasan «Deterioro»");
     expect(line).toContain("120 en lista");
   });
 });

@@ -34,6 +34,7 @@ export default function ResultPagerTable({
   onSortColumn,
   setupMode = "",
   scannedMarkets = [],
+  hasBatchPercentiles = false,
   emptyLabel,
 }) {
   // El pie ocupaba una franja entera para repetir un dato que ya está en la
@@ -71,6 +72,7 @@ export default function ResultPagerTable({
         onSortColumn={onSortColumn}
         setupMode={setupMode}
         scannedMarkets={scannedMarkets}
+        hasBatchPercentiles={hasBatchPercentiles}
         emptyLabel={emptyLabel}
       />
     </>

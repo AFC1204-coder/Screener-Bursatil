@@ -149,6 +149,14 @@
   cursor:help;
 }
 
+.percentileScopeHeadMark {
+  margin-left:2px;
+  color:var(--traza);
+  font-style:normal;
+  font-weight:700;
+  cursor:help;
+}
+
 .percentileScopeNotice {
   margin:calc(var(--space-4) * -0.55) 0 var(--space-4);
   padding:9px 12px;

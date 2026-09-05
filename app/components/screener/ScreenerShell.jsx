@@ -50,8 +50,6 @@ import { useScreenerMobileViewport } from "@/lib/useScreenerMobileViewport";
 import { FILTER_LAYERS_UPGRADE_NOTICE_SOURCE } from "@/lib/screenerFilterLayers";
 import { isDismissibleSampleNotice } from "@/lib/snapshotFreshness";
 
-const PERCENTILE_BATCH_BADGE = "Ranking provisional";
-const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
 function showScanStatusBar(err, status = "") {
   if (err) return true;
   const text = String(status || "").trim();
@@ -532,7 +530,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   // --- franja P3 (percentil por lote) ---
   // Solo avisamos si hay filas con percentileScope explícito "batch"; ausente
   // no cuenta (scans materializados sin finalize no deben alarmar).
-  const visibleBatchRows = huntResultsRows.some((row) => row.percentileScope === "batch");
+  const visibleBatchRows = huntResultsFiltered.some((row) => row.percentileScope === "batch");
   const statusLabel = investorStatusLabel(status);
   const mobileStatusLabel = compactMobileScanStatus(status);
   const scanStatusVisible = showScanStatusBar(err, status);
@@ -716,10 +714,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             }}
           />
           {renderLideresIntlGuardrail()}
-          <p className="screenerTruthLine" role="status" aria-live="polite">
-            <span>{truthLine}</span>
-            {visibleBatchRows ? <span className="percentileScopeBadge" title={PERCENTILE_BATCH_NOTE} aria-label={`${PERCENTILE_BATCH_BADGE}. ${PERCENTILE_BATCH_NOTE}`}>{PERCENTILE_BATCH_BADGE}</span> : null}
-          </p>
+          <p className="screenerTruthLine" role="status" aria-live="polite">{truthLine}</p>
           <details className="screenerFilterBreakdown">
             <summary><span>{filterBreakdown.summaryLabel}</span></summary>
             <div className="screenerFilterBreakdownBody">
@@ -902,6 +897,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onSortColumn={toggleSortColumn}
             setupMode={activeSettings.setupMode}
             scannedMarkets={scannedMarkets}
+            hasBatchPercentiles={visibleBatchRows}
             emptyLabel={huntResultsEmptyLabel}
           />
         </section> : null}

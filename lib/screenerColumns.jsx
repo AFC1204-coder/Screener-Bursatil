@@ -37,6 +37,9 @@ import { vcpMinerviniLabel } from "@/lib/vcpMinerviniLabel";
 import { screenerTableMarketsUsOnly } from "@/lib/marketAvailability";
 import { weaknessScore } from "@/lib/stockRows";
 
+export const PERCENTILE_BATCH_BADGE = "Ranking provisional";
+export const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
+
 // ── Periodos de rendimiento ────────────────────────────────────────────────
 // Sustituyen a las tres columnas fijas 3M/6M/12M por UNA columna con selector
 // GLOBAL (principio 7.5): por fila se perdería la comparación entre valores,
@@ -212,7 +215,20 @@ export const SCREENER_COLUMNS = [
   },
   {
     key: "rs",
-    label: () => "RS",
+    label: (ctx) => (
+      <>
+        RS
+        {ctx.hasBatchPercentiles ? (
+          <i
+            className="percentileScopeHeadMark"
+            title={PERCENTILE_BATCH_NOTE}
+            aria-label={`${PERCENTILE_BATCH_BADGE}. ${PERCENTILE_BATCH_NOTE}`}
+          >
+            ·
+          </i>
+        ) : null}
+      </>
+    ),
     // Declaración obligatoria del universo (spec MET-1 § Superficies): el
     // ranking privado se etiqueta con su moneda y su universo curado, nunca
     // como "global" a secas. El denominador es US-céntrico y eso se dice.

@@ -3,6 +3,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi, beforeAll } from "vitest";
+import { CompactResultsTable } from "@/lib/screenerTable";
+import { PERCENTILE_BATCH_NOTE } from "@/lib/screenerColumns";
+import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
 
 // ScreenerShell arrastra un barrel grande de paneles (screenerPanels) y varios
 // sub-componentes de decisión/tabla. Para aislar la franja P3 mockeamos esos
@@ -36,13 +39,14 @@ beforeAll(async () => {
 
 // Construye un prop-bag mínimo pero coherente. `results` es un OBJETO (prop-bag),
 // no un array: las filas están en resultsRows. Esta es la regresión central.
-function makeProps({ resultsRows = [] } = {}) {
+function makeProps({ resultsRows = [], resultsFiltered = null } = {}) {
+  const filtered = resultsFiltered ?? resultsRows;
   return {
     chrome: {
       presetKey: "global",
       markets: [["US", "EE. UU."]],
-      filtered: [],
-      filteredCount: 0,
+      filtered,
+      filteredCount: filtered.length,
       err: null,
       status: "idle",
       snapshotNotice: null,
@@ -118,9 +122,9 @@ function makeProps({ resultsRows = [] } = {}) {
     },
     resultView: {},
     results: {
-      filtered: resultsRows,
+      filtered,
       rows: resultsRows,
-      pagedRows: resultsRows,
+      pagedRows: filtered,
       activeSettings: {},
       analyzedRows: [],
       universe: [],
@@ -144,45 +148,64 @@ function makeProps({ resultsRows = [] } = {}) {
 
 const FINAL_ROW = { symbol: "FIN", percentileScope: "final" };
 const BATCH_ROW = { symbol: "BAT", percentileScope: "batch" };
-const UNSCOPED_ROW = { symbol: "OLD" }; // percentileScope ausente ⇒ no dispara el badge
+const UNSCOPED_ROW = { symbol: "OLD" }; // percentileScope ausente ⇒ no dispara la marca
 
-const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
+const SAMPLE_ROW = {
+  symbol: "TREN",
+  companyName: "Trend Systems Inc",
+  country: "US",
+  theme: "Semis",
+  weeklyRsAvailable: true,
+  weeklyRsRating: 92,
+  weeklyStageState: "stage2",
+  perf3m: 18.4,
+  distance52w: -3.2,
+  marketCap: 4200000000,
+  chartPreview: [{ close: 1 }, { close: 2 }],
+};
+
+function renderTableHead({ rows = [SAMPLE_ROW], hasBatchPercentiles = false } = {}) {
+  return renderToStaticMarkup(React.createElement(CompactResultsTable, {
+    rows,
+    favoriteSymbols: new Set(),
+    onFavorite: () => {},
+    onReview: () => {},
+    onOpenStock: () => {},
+    perfPeriod: DEFAULT_PERFORMANCE_PERIOD,
+    onPerfPeriod: () => {},
+    sort: "",
+    setupMode: "",
+    scannedMarkets: ["US"],
+    hasBatchPercentiles,
+  }));
+}
 
 // La VARIANTE PENDIENTE de la franja ("Actualización preparada · percentil por
 // lote", pegada a PendingResultsBar) se retiró el 2026-08-16 junto con la lista
 // congelada y el botón Ejecutar: sin actualización pendiente no hay nada que
-// anunciar. La franja de la LISTA VISIBLE sigue vigente y aquí fijada.
+// anunciar. La marca quieta vive en la cabecera RS de la tabla visible.
 describe("ScreenerShell · franja P3 (ranking provisional)", () => {
-  it("mantiene el aviso visible cuando resultsRows contiene filas batch", () => {
+  it("no grita RANKING PROVISIONAL junto a la línea de verdad", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW, BATCH_ROW] })));
-    expect(html).toContain("Ranking provisional");
-    expect(html).toContain(PERCENTILE_BATCH_NOTE);
-    expect(html).toContain("percentileScopeBadge");
     expect(html).toContain("screenerTruthLine");
+    expect(html).not.toContain("percentileScopeBadge");
+    expect(html).not.toContain("Ranking provisional");
     expect(html).not.toContain("percentileScopeNotice");
   });
 
-  it("no muestra badge cuando la lista visible solo tiene percentileScope ausente", () => {
+  it("no muestra marca cuando la lista visible solo tiene percentileScope ausente", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [UNSCOPED_ROW] })));
     expect(html).not.toContain("Ranking provisional");
     expect(html).not.toContain("percentileScopeBadge");
   });
 
-  it("muestra badge con batch explícito aunque haya filas sin scope", () => {
-    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [UNSCOPED_ROW, BATCH_ROW] })));
-    expect(html).toContain("Ranking provisional");
-    expect(html).toContain("percentileScopeBadge");
-  });
-
-  it("no muestra el aviso cuando la lista visible es exclusivamente final", () => {
+  it("no muestra la marca cuando la lista visible es exclusivamente final", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW] })));
     expect(html).not.toContain("Ranking provisional");
     expect(html).not.toContain("percentileScopeBadge");
   });
 
   it("no llama .some sobre el prop-bag results: usa resultsRows", () => {
-    // `results` es un objeto (prop-bag), no un array. Si el código volviera a
-    // hacer results.some(...) esto lanzaría en runtime. Renderiza sin error.
     const props = makeProps({ resultsRows: [FINAL_ROW] });
     expect(() => renderToStaticMarkup(React.createElement(ScreenerShell, props))).not.toThrow();
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
@@ -226,6 +249,21 @@ describe("ScreenerShell · franja P3 (ranking provisional)", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
     expect(html).toContain("scanStatusBar");
     expect(html).toContain("No se pudo cargar el escaneo.");
+  });
+});
+
+describe("CompactResultsTable · marca RS por lote visible", () => {
+  it("añade marca quieta en cabecera RS cuando hay percentiles por lote", () => {
+    const html = renderTableHead({ hasBatchPercentiles: true });
+    expect(html).toContain("percentileScopeHeadMark");
+    expect(html).toContain(PERCENTILE_BATCH_NOTE);
+    expect(html).not.toContain("percentileScopeBadge");
+    expect(html).toContain('aria-label="Ranking provisional.');
+  });
+
+  it("no añade marca RS sin lote visible", () => {
+    const html = renderTableHead({ hasBatchPercentiles: false });
+    expect(html).not.toContain("percentileScopeHeadMark");
   });
 });
 
