@@ -6,8 +6,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** Hoy = calidad UI (no Mini). Mañana = GHA + leaderboards RPC.  
-**Último cerrado:** **READ-E** `6a481f1`.  
-**Ahora:** idle — oleada UX-READ (A/C/D/E) cerrada; B aplazada.  
+**Último cerrado:** **READ-F** `67da5b3`.  
+**Ahora:** idle — residual calidad UI o mañana Mini.  
 **Nota orquestador:** UX-READ-1 decisiones dueño: VCP se queda; RS tema→ficha; RS país si ≠ US-only.  
 **Hecho ops:** Supabase Pro **cancelado** (dueño).  
 **Mañana (Mini):** apagar GHA `scan-universe` · leaderboards RPC pg · finalize percentil pg.  
