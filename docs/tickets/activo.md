@@ -23,9 +23,16 @@ Con RS global, país y tema activos a la vez, la superposición no se veía limp
 | Referencia 50 repetida por serie | Referencia 50 una sola vez |
 | País y global ambos sólidos | País discontinuo; global `--traza`; tema `--rs-theme` |
 
-## LO QUE NO VERIFIQUÉ
+## LO QUE NO VERIFIQUÉ (completo)
 
-- Smoke Browser Use en ficha / vista rápida / review (sin dev server ni sesión logueada en este entorno cloud).
+- Líneas RS visibles con datos reales (≥8 semanas): el entorno cloud no tiene Supabase/RS semanal hidratado; OKTA y MSFT muestran «Sin línea RS».
+- Vista rápida / review con toggles y líneas dibujadas.
+
+## Smoke parcial (Playwright :3300)
+
+- Ficha `/stock/OKTA` carga; toggles RS / RS país / RS tema presentes; gráfico TradingView renderiza.
+- Sin series RS semanales → no se pudo confirmar superposición visual de líneas.
+- Screenshot: `artifacts/screenshots/okta-chart-rs-toggles-no-data.png`
 
 ## Siguiente
 
