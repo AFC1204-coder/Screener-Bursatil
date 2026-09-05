@@ -237,6 +237,41 @@ describe("ScreenerShell markets misalignment", () => {
     expect(html).not.toContain("1 en lista");
   });
 
+  it("TRUTH-LOAD-1: con restoringScan no afirma 0 analizadas si hay filas en memoria", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      marketsStale: true,
+      scanStale: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["HK"],
+      restoringScan: true,
+    })));
+    expect(html).toContain("1 analizadas");
+    expect(html).not.toContain("0 analizadas");
+    expect(html).not.toContain("AAPL");
+    expect(html).toContain(MARKETS_AUTO_LOAD_LOADING_LABEL);
+  });
+
+  it("TRUTH-LOAD-1: restoringScan sin filas muestra cargando… en la verdad", () => {
+    const props = makeProps({
+      marketsStale: false,
+      scanStale: false,
+      scannedMarkets: ["HK"],
+      selectedMarkets: ["HK"],
+      restoringScan: true,
+    });
+    props.results.analyzedRows = [];
+    props.results.rows = [];
+    props.results.filtered = [];
+    props.results.pagedRows = [];
+    props.chrome.rows = [];
+    props.resultView.filtered = [];
+    props.resultView.pagedRows = [];
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
+    expect(html).toContain("cargando…");
+    expect(html).not.toContain("0 analizadas");
+    expect(html).toContain("mesa: HK");
+  });
+
   it("con mercados alineados la verdad incluye mesa sin aviso de desalineación", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
       marketsStale: false,

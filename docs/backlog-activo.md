@@ -5,9 +5,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** SAMPLE-NOTICE-1 cerrado · Grok → un escritor.  
-**Último cerrado:** **SAMPLE-NOTICE-1** `2f83f71` · banner muestra/universo parcial · smoke Mini.  
-**Ahora:** siguiente calidad de página / apagar GHA / leaderboards RPC.  
+**RECORDATORIO dueño:** Hoy = calidad UI (no Mini). Mañana = GHA + leaderboards RPC.  
+**Último cerrado:** **TRUTH-LOAD-1** (commit pendiente en esta oleada).  
+**Ahora:** cola calidad UI — orquestador elige siguiente.  
+**Hecho ops:** Supabase Pro **cancelado** (dueño).  
+**Mañana (Mini):** apagar GHA `scan-universe` · leaderboards RPC pg.  
 **Aparcado:** túnel móvil→Mini.  
 **SHELL:** A→D aterrizado.
 
@@ -281,7 +283,7 @@ Licencia pública: Twelve Data Venture (~499 $/mes exhibición) u equivalente �
 ## Aplazado / no oleada UI
 
 - Cutover Hito 1, tenancy, Twelve Data, merge chart-controller.
-- **Salida Supabase Pro → Mac Mini M4** — plan `docs/plan-migrate-postgres-mac-mini-2026-08-30.md` · tickets MIGRATE-1…3 · **activar con OK dueño + fecha billing**.
+- **Salida Supabase Pro → Mac Mini M4** — cutover hecho (MIGRATE-1…6) · **Pro cancelado** (dueño).
 - **VCP / contracciones en producto** — investigación activa en `research/contracciones/` + docs (`diseno-contracciones*.md`, citas Minervini/O'Neil/Weinstein); detector producto sigue en `lib/setupPatterns.js`.
 - Traducir inglés estructural restante.
 - Dos colas modal vs `/review` (estructural; baja prioridad si el modal basta).

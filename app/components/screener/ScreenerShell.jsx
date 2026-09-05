@@ -286,24 +286,32 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   const resultsBlockedByMarketMisalignment = Boolean(
     marketsMisalignment && marketsMisalignment.blocksResults !== false,
   );
+  // TRUTH-LOAD-1: la mesa sigue vacía bajo bloqueo UX-NAC, pero la verdad no
+  // afirma 0·0·0 mientras restoringScan trae datos (p. ej. muestra 157/204).
+  const truthLineLoading = restoringScan;
+  const suppressTruthCounts = resultsBlockedByMarketMisalignment && !truthLineLoading;
   const huntResultsRows = resultsBlockedByMarketMisalignment ? [] : resultsRows;
   const huntResultsFiltered = resultsBlockedByMarketMisalignment ? [] : resultsFiltered;
   const huntResultsPagedRows = resultsBlockedByMarketMisalignment ? [] : resultsPagedRows;
   const huntResultsEmptyLabel = resultsBlockedByMarketMisalignment
     ? MARKETS_MISALIGNMENT_EMPTY_LABEL
     : resultsEmptyLabel;
+  const truthPassRows = suppressTruthCounts ? [] : resultsRows;
+  const truthFilteredRows = suppressTruthCounts ? [] : resultsFiltered;
+  const truthAnalyzedRows = suppressTruthCounts ? [] : analyzedRows;
   const { passCount: passCountForTruth, visibleCount: visibleCountForTruth } = resolveScreenerTruthCounts({
-    eagerPassCount: huntResultsRows.length,
-    filteredVisibleCount: huntResultsFiltered.length,
+    eagerPassCount: truthPassRows.length,
+    filteredVisibleCount: truthFilteredRows.length,
     huntTruthOverride,
     isHuntTransitionPending,
     rowsDeferredStale,
     viewFiltersActive,
   });
   const truthLine = buildScreenerTruthLine({
-    analyzedRows: resultsBlockedByMarketMisalignment ? [] : analyzedRows,
+    analyzedRows: truthAnalyzedRows,
     passCount: passCountForTruth,
     visibleCount: visibleCountForTruth,
+    loading: truthLineLoading,
     pageSize: resultPageSize,
     totalPages: totalResultPages,
     presetName: presetNameForTruth,

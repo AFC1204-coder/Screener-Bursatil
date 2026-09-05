@@ -179,6 +179,46 @@ describe("buildScreenerTruthLine", () => {
     expect(line).toContain("selección ≠ mesa");
     expect(line).not.toMatch(/\d+ mercados en selección/);
   });
+
+  it("TRUTH-LOAD-1: en carga sin conteos usa cargando… y conserva mesa/orden/corte", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: [],
+      passCount: 0,
+      visibleCount: 0,
+      presetName: "Líderes intl",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedAt: "2026-08-27T14:07:00.000Z",
+      scannedMarkets: ["HK"],
+      selectedMarkets: ["HK"],
+      loading: true,
+    });
+    expect(line).toContain("cargando…");
+    expect(line).not.toContain("0 analizadas");
+    expect(line).not.toContain("0 pasan");
+    expect(line).not.toContain("0 en lista");
+    expect(line).toContain("mesa: HK");
+    expect(line).toContain("orden: Rendimiento 6M ↓");
+    expect(line).toContain("corte ");
+  });
+
+  it("TRUTH-LOAD-1: en carga con filas en memoria no afirma ceros", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: Array.from({ length: 157 }, (_, i) => ({ symbol: `S${i}` })),
+      passCount: 42,
+      visibleCount: 42,
+      presetName: "Líderes intl",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["HK"],
+      suppressMisalignmentAlarm: true,
+      loading: true,
+    });
+    expect(line).toContain("157 analizadas");
+    expect(line).toContain("42 pasan «Líderes intl»");
+    expect(line).not.toContain("0 analizadas");
+  });
 });
 
 describe("resolveScreenerTruthCounts", () => {
