@@ -1,21 +1,19 @@
-# Ticket activo — MIGRATE-4 cerrado (commit)
+# Ticket activo — MIGRATE-4 cerrado
 
-**Estado:** Verify orquestador OK · smoke Mini upsert · **listo commit**  
-**Spec:** `docs/tickets/MIGRATE-4-pg-writes-nocturno.md`  
+**Estado:** Código `91671c4` · ops Mini OK (HK materializado **2026-09-05**, 82 filas)  
 **Evidencia:** `docs/evidence/migrate-4-pg-writes-nocturno-2026-09-05.md`
 
-## Verify
+## Hecho
 
-- Tests adaptador: **22 passed**
-- `./vfc` (suite + lint): OK (alcance docs/scripts esperado)
-- Mini DB: `materialized:US:2026-09-05:…:migrate4-smoke` · **row_count=2**
+- Writes pg (POST/DELETE/PATCH) + tests
+- Deploy Mini + cron `scan-refresh` HK → `materialized:HK:2026-09-05:o0:l84`
+- launchd plantilla scan-refresh
 
-## Pendiente ops (no bloquea commit código)
+## Gaps
 
-1. Rsync/deploy diff a Mini + `kickstart` Next  
-2. `run-cron-scan-refresh.sh` real → mesa fresca en UI  
-3. launchd `com.statsedge.cron-scan-refresh`
+- RPC historia / leaderboards
+- US full nocturno (`scan-universe.mjs`) aún no en launchd
 
-## Siguiente tras ops
+## Siguiente
 
-CLEAN-4 opcional · historia/RPC pg si hace falta.
+Opcional: CLEAN-4 · nocturno US CLI en Mini · push `91671c4` (+ evidencia ops si se comitea).

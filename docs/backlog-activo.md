@@ -5,11 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** UX-SHELL A→D **cerrado** · MIGRATE-1…4 **código listo** · ops Mini: deploy + cron scan-refresh.  
-**Último cerrado (código):** **MIGRATE-4** writes pg · evidencia `docs/evidence/migrate-4-pg-writes-nocturno-2026-09-05.md`.  
-**Ahora:** commit MIGRATE-4 · deploy Mini · cron real · UI fecha fresca.  
-**SHELL:** oleada A→D aterrizada en polish.  
-**Gate ops:** kickstart Next + `run-cron-scan-refresh` en Mini.
+**RECORDATORIO dueño:** UX-SHELL A→D **cerrado** · MIGRATE-1…4 **hechos** (Mini escribe materializados).  
+**Último cerrado:** **MIGRATE-4** — writes pg + cron HK `materialized:HK:2026-09-05` 82 filas · `91671c4`.  
+**Ahora:** push rama · opcional nocturno US CLI / CLEAN-4.  
+**SHELL:** oleada A→D aterrizada en polish.
 
 ## Hecho (esta oleada)
 
@@ -141,7 +140,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **MIGRATE-2** adaptador `pg` · **hecho**.  
 **STORAGE-1** cuota local · **hecho**.  
 **MIGRATE-3** cutover + launchd · **cerrado** (`5171924`).  
-**MIGRATE-4** writes pg + nocturno · **código verify OK** (smoke upsert Mini; cron real = deploy).
+**MIGRATE-4** writes pg + nocturno · **cerrado** (`91671c4` · cron HK 82 filas 2026-09-05 en Mini).
 
 ## Siguiente — datos IPO + filtros
 

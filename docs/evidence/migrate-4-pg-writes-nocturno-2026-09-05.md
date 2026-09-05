@@ -49,14 +49,17 @@ npm test -- tests/pgPostgrestAdapter.test.js tests/pgAdapterSupabaseServer.test.
 | `result_rows` (scan_results) | **2** |
 | `scan_id` | `81347a43-7b3c-4495-b927-ea8947a3f35c` |
 
-## Smoke API (local Next con código MIGRATE-4)
+## Smoke API / cron en Mini (post-deploy 2026-09-05)
 
 | Check | Resultado |
 |---|---|
-| `GET /api/cron/scan-refresh?dryRun=1&group=asia-hongkong` | **200** · `ok=true` |
-| Escritura real vía cron en Mini | Pendiente deploy del diff a `~/Statsedge-v0.1` + restart Next |
+| Rsync + `npm run build` + `kickstart` Next | OK · `next=200` |
+| `STATSEDGE_SCAN_GROUP=asia-hongkong ./scripts/run-cron-scan-refresh.sh` | **http=200** · `ok=True` |
+| `savedScan` | `materialized:HK:2026-09-05:o0:l84` · **rows=82** · `saved=True` |
+| Historia | `saved=False` · RPC `scan_symbol_history_latest_v1` aún no (gap consciente) |
+| launchd | `com.statsedge.cron-scan-refresh` cargado (schedule 22:20) |
 
-## Cron launchd (plantilla Mini)
+## Smoke Postgres Mini (túnel MacBook → Mini)
 
 | Pieza | Path en Mini |
 |---|---|
@@ -76,9 +79,8 @@ launchctl load ~/Library/LaunchAgents/com.statsedge.cron-scan-refresh.plist
 
 ## Próximo paso dueño
 
-1. Desplegar diff a Mini y reiniciar Next (`launchctl kickstart -k gui/$(id -u)/com.statsedge.next`).
-2. Correr `./scripts/run-cron-scan-refresh.sh` (o `group=asia-hongkong` acotado) y confirmar `savedScan.rows > 0`.
-3. Verificar en UI/túnel que la fecha de mesa avanza respecto a **2026-09-03**.
+- Mesa **US** completa: `scripts/scan-universe.mjs` o cron US nocturno (el rotatorio HK ya escribe).
+- Historia / leaderboards RPC → ticket aparte si hace falta.
 
 ## Gaps post-MIGRATE-4
 
