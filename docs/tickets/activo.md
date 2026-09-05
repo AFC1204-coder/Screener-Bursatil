@@ -1,19 +1,18 @@
-# Ticket activo — MIGRATE-4 cerrado
+# Ticket activo — MIGRATE-5 cerrado
 
-**Estado:** Código `91671c4` · ops Mini OK (HK materializado **2026-09-05**, 82 filas)  
-**Evidencia:** `docs/evidence/migrate-4-pg-writes-nocturno-2026-09-05.md`
+**Estado:** Verify OK · soft-delete smoke limit · **commit**  
+**Evidencia:** `docs/evidence/migrate-5-nocturno-us-mini-2026-09-05.md`
 
 ## Hecho
 
-- Writes pg (POST/DELETE/PATCH) + tests
-- Deploy Mini + cron `scan-refresh` HK → `materialized:HK:2026-09-05:o0:l84`
-- launchd plantilla scan-refresh
+- Wrapper + plist nocturno US 05:00 local
+- Smoke `--limit=75` write OK en Mini (luego soft-deleted: no debe ser fuente diaria)
+- launchd cargado · full documentado para 05:00 / manual
 
-## Gaps
+## Nota
 
-- RPC historia / leaderboards
-- US full nocturno (`scan-universe.mjs`) aún no en launchd
+No usar `--nocturno-real` con `--limit` en producción Mini sin borrar después.
 
 ## Siguiente
 
-Opcional: CLEAN-4 · nocturno US CLI en Mini · push `91671c4` (+ evidencia ops si se comitea).
+Corrida full US (manual o esperar 05:00) · opcional CLEAN-4 · desactivar GHA cuando Mini sea canónico.

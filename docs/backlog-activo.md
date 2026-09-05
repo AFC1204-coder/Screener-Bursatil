@@ -5,9 +5,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** UX-SHELL A→D **cerrado** · MIGRATE-1…4 **hechos** (Mini escribe materializados).  
-**Último cerrado:** **MIGRATE-4** — writes pg + cron HK `materialized:HK:2026-09-05` 82 filas · `91671c4`.  
-**Ahora:** push rama · opcional nocturno US CLI / CLEAN-4.  
+**RECORDATORIO dueño:** UX-SHELL A→D **cerrado** · MIGRATE-1…5 **hechos** (nocturno US launchd Mini).  
+**Último cerrado:** **MIGRATE-5** — `scan-universe` wrapper + smoke · evidencia 2026-09-05.  
+**Ahora:** corrida full US (05:00 o manual) · opcional CLEAN-4 / apagar GHA.  
 **SHELL:** oleada A→D aterrizada en polish.
 
 ## Hecho (esta oleada)
@@ -140,7 +140,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **MIGRATE-2** adaptador `pg` · **hecho**.  
 **STORAGE-1** cuota local · **hecho**.  
 **MIGRATE-3** cutover + launchd · **cerrado** (`5171924`).  
-**MIGRATE-4** writes pg + nocturno · **cerrado** (`91671c4` · cron HK 82 filas 2026-09-05 en Mini).
+**MIGRATE-4** writes pg + nocturno · **cerrado** (`91671c4` · cron HK 82 filas 2026-09-05 en Mini).  
+**MIGRATE-5** nocturno US Mini (`scan-universe.mjs` + launchd) · **cerrado** (smoke limit OK; soft-delete; full = 05:00/manual).
 
 ## Siguiente — datos IPO + filtros
 
