@@ -18,6 +18,7 @@ import {
   quarterLabel,
   quarterlyGrowthCells,
   rsWeeklyDelta,
+  rsWeeklyDeltaForIdentityCard,
   slopeWord,
   volumeDryUpDisplay,
 } from "@/lib/descriptiveStrip";
@@ -85,6 +86,45 @@ describe("rsWeeklyDelta", () => {
 
   it("serie vacía: sin actual y sin desde", () => {
     expect(rsWeeklyDelta([], 13)).toMatchObject({ current: null, from: null });
+  });
+});
+
+describe("rsWeeklyDeltaForIdentityCard", () => {
+  const LEGACY_ENGINE = "statsedge-global-rs-usd-v1";
+  const PIN_ENGINE = "statsedge-private-global-rs-usd-v1";
+
+  it("con pin y serie legacy sin puntos pin, no afirma desde", () => {
+    const rs = {
+      rating: 64,
+      globalRsSeries: Array.from({ length: 8 }, (_, index) => ({
+        date: `2026-07-${String(index + 1).padStart(2, "0")}`,
+        rsRating: 37 + index,
+        sampleSize: 500,
+        engineVersion: LEGACY_ENGINE,
+      })),
+    };
+    expect(rsWeeklyDeltaForIdentityCard(rs, 64)).toMatchObject({ from: null });
+  });
+
+  it("con pin y al menos dos puntos del motor pin, calcula desde sobre la serie pin", () => {
+    const rs = {
+      rating: 64,
+      globalRsSeries: [
+        { date: "2026-05-10", rsRating: 55, engineVersion: PIN_ENGINE },
+        { date: "2026-07-01", rsRating: 40, engineVersion: LEGACY_ENGINE },
+        { date: "2026-08-09", rsRating: 64, engineVersion: PIN_ENGINE },
+      ],
+    };
+    const delta = rsWeeklyDeltaForIdentityCard(rs, 64);
+    expect(delta.from).toBe(55);
+  });
+
+  it("sin pin rating usa la serie homogénea completa", () => {
+    const series = [
+      { date: "2026-05-10", rsRating: 74, sampleSize: 4868 },
+      { date: "2026-08-09", rsRating: 99, sampleSize: 4868 },
+    ];
+    expect(rsWeeklyDeltaForIdentityCard({ globalRsSeries: series }, 99).from).toBe(74);
   });
 });
 
@@ -269,14 +309,12 @@ describe("ChartIdentityCard · render (tarjeta 2c densa sobre el lienzo)", () =>
     expect(html).not.toMatch(/Twelve ?Data/i);
   });
 
-  it("las ausencias estructurales llevan su motivo: base y rango de sector", () => {
-    // El RS de sector y el de país ya no tienen superficie: 2c mostraba
-    // país + global y, con un universo de un solo país, se muestra uno
-    // (encargo 2026-08-21, punto 6). Sus motivos siguen en
-    // DESCRIPTIVE_ABSENCE por si algún día vuelven a tener hueco.
+  it("no pinta celdas fantasma de rango ni Base cuando no hay dato", () => {
     const html = cardMarkup(fullData, { rsUniverse: 99 });
-    expect(html).toContain(DESCRIPTIVE_ABSENCE.base.slice(0, 40));
-    expect(html).toContain(DESCRIPTIVE_ABSENCE.sectorRank.slice(0, 40));
+    expect(html).not.toContain("chartIdCardRank");
+    expect(html).not.toMatch(/<em>Base<\/em>/);
+    expect(html).not.toContain(DESCRIPTIVE_ABSENCE.base.slice(0, 40));
+    expect(html).not.toContain(DESCRIPTIVE_ABSENCE.sectorRank.slice(0, 40));
   });
 
   it("sin RS semanal, etapa, mínimo, trimestres ni cap: ausencias con motivo, nunca ceros", () => {
@@ -303,6 +341,24 @@ describe("ChartIdentityCard · render (tarjeta 2c densa sobre el lienzo)", () =>
     const html = cardMarkup({ ...fullData, relativeStrength: { distance52w: -30.3, globalRsSeries: [] } }, { rsUniverse: 99 });
     expect(html).not.toContain("desde");
     expect(html).toContain(">99<");
+  });
+
+  it("con pin y serie legacy no afirma desde sobre la cola del otro motor", () => {
+    const html = cardMarkup({
+      ...fullData,
+      relativeStrength: {
+        distance52w: -30.3,
+        rating: 64,
+        globalRsSeries: Array.from({ length: 8 }, (_, index) => ({
+          date: `2026-07-${String(index + 1).padStart(2, "0")}`,
+          rsRating: 37 + index,
+          sampleSize: 500,
+          engineVersion: "statsedge-global-rs-usd-v1",
+        })),
+      },
+    }, { rsUniverse: 64 });
+    expect(html).toContain(">64<");
+    expect(html).not.toContain("desde");
   });
 });
 

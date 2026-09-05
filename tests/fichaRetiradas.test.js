@@ -296,10 +296,11 @@ describe("tarjeta de identidad del lienzo (variante 2c encogida)", () => {
   });
 
   it("las ausencias declaradas van como guion con motivo, no inventadas", () => {
-    // base (constante 13 del detector) y rango de sector (el «4/121» del
-    // diseño no existe): ambas en la tarjeta.
-    expect(html).toContain("Sin medida de base");
-    expect(html).toContain("Sin rango dentro del sector");
+    // base y rango de sector no tienen dato hoy: la tarjeta no pinta celdas
+    // fantasma (STOCK-CARD-1). Otras ausencias reales siguen con motivo.
+    expect(html).not.toContain("Sin medida de base");
+    expect(html).not.toContain("Sin rango dentro del sector");
+    expect(html).toContain("Sin serie trimestral suficiente");
   });
 
   it("nada se repite entre la tarjeta y la franja", () => {
@@ -354,11 +355,13 @@ describe("stockRsUniverse: FR de la ficha", () => {
         date: `2026-07-${String(index + 1).padStart(2, "0")}`,
         rsRating: 70 + index,
         sampleSize: 500,
+        engineVersion: "statsedge-global-rs-usd-v1",
       })),
     };
     expect(stockRsUniverse(rs)).toBe(64);
     expect(stockRsUniverse(rs)).not.toBe(rs.globalRsSeries.at(-1).rsRating);
     expect(buildChartIdentityCard({ symbol: "AAPL", data: stockData({ relativeStrength: rs }), rsUniverse: stockRsUniverse(rs) }).rs.value).toBe(64);
+    expect(buildChartIdentityCard({ symbol: "AAPL", data: stockData({ relativeStrength: rs }), rsUniverse: stockRsUniverse(rs) }).rs.from).toBeNull();
   });
 
   it("sin pin, cae al último punto de la serie", () => {
@@ -379,13 +382,15 @@ describe("buildChartIdentityCard: modelo de la tarjeta 2c", () => {
     expect(card.exchange).toBe("NYSE");
     expect(card.theme).toBe("Technology");
     expect(card.capText).toContain("12,0B");
-    expect(card.sectorRankReason).toMatch(/rango/i);
+    expect(card.sectorRank).toBeNull();
+    expect(card.sectorRankReason).toBe("");
     expect(card.stage.digit).toBe("2");
     expect(card.stage.week).toBe(12);
     expect(card.stage.qualifier).toBe("");
     expect(card.rs.value).toBe(94);
     expect(card.structure.distance52w).toBeCloseTo(-7.4);
-    expect(card.structure.baseReason).toMatch(/base/i);
+    expect(card.structure.base).toBeNull();
+    expect(card.structure.baseReason).toBe("");
     expect(card.growth.usable).toBeFalsy();
     expect(card.foot.provider).toBe("Yahoo Finance");
   });

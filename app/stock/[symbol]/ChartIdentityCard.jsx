@@ -88,9 +88,11 @@ export default function ChartIdentityCard({ card = null, quote = null }) {
           {/* Clasificación y tamaño: tema · rango (ausente con motivo) · cap. */}
           <div className="chartIdCardClassRow">
             {card.theme ? <span className="chartIdCardTheme">{card.theme}</span> : null}
-            <span className="chartIdCardRank">
-              rango <Absent reason={card.sectorRankReason} />
-            </span>
+            {card.sectorRank != null ? (
+              <span className="chartIdCardRank">rango <b>{card.sectorRank}</b></span>
+            ) : card.sectorRankReason ? (
+              <span className="chartIdCardRank">rango <Absent reason={card.sectorRankReason} /></span>
+            ) : null}
             <span className="chartIdCardCap">
               Cap. {card.capText ? <b>{card.capText}</b> : <Absent reason="Sin capitalización de mercado del proveedor." />}
             </span>
@@ -130,10 +132,17 @@ export default function ChartIdentityCard({ card = null, quote = null }) {
                 ? <b>{sharedPct(structure.lowAdvance, 0)}</b>
                 : <Absent reason={DESCRIPTIVE_ABSENCE.lowAdvance} />}
             </span>
-            <span className="chartIdCardStructCell">
-              <em>Base</em>
-              <Absent reason={structure.baseReason} />
-            </span>
+            {structure.base != null ? (
+              <span className="chartIdCardStructCell">
+                <em>Base</em>
+                <b>{structure.base}</b>
+              </span>
+            ) : structure.baseReason ? (
+              <span className="chartIdCardStructCell">
+                <em>Base</em>
+                <Absent reason={structure.baseReason} />
+              </span>
+            ) : null}
           </div>
 
           {/* Crecimiento trimestral, compactado (rampa de la franja). */}

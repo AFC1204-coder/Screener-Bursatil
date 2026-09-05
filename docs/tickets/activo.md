@@ -1,14 +1,14 @@
-# Ticket activo — RS-CHART-HISTORY-1 cerrado
+# Ticket activo — STOCK-CARD-1 cerrado
 
-**Estado:** Verify + smoke Mini OK · listo (ya comiteado o en cola de commit)  
-**Evidencia:** `docs/evidence/rs-chart-history-1-2026-09-05.md`
+**Estado:** Verify + smoke Mini OK  
+**Evidencia:** `docs/evidence/stock-card-1-2026-09-05.md`
 
 ## Hecho
 
-- Serie overlay: fallback si pin &lt; 8 semanas  
-- Rating ficha: `ratingLatest` (pin) en API + `stockRsUniverse` en UI  
-- Smoke AAPL: FR 64 · serie 54 · sin «Sin línea RS»
+- Sin «rango –» / «Base –» fantasma  
+- FR sin «desde» de otro engine  
+- Smoke AAPL: FR 64 · caption «universo»
 
 ## Siguiente
 
-Apagar GHA cuando digas · leaderboards RPC · túnel móvil aparcado
+Calidad de página / apagar GHA / backlog
