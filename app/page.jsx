@@ -2528,6 +2528,10 @@ export default function Page() {
     setSnapshotNotice(null);
   }
 
+  function dismissSnapshotSampleNotice() {
+    setSnapshotNotice(null);
+  }
+
   return <>
   <StorageAlert />
   <ScreenerShell
@@ -2540,6 +2544,7 @@ export default function Page() {
       status,
       snapshotNotice,
       onDismissFilterLayersUpgradeNotice: dismissFilterLayersUpgradeNotice,
+      onDismissSnapshotSampleNotice: dismissSnapshotSampleNotice,
       restoringScan,
       showMobileFilters,
       sidebarCollapsed,

@@ -48,6 +48,7 @@ import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 import { useScreenerMobileViewport } from "@/lib/useScreenerMobileViewport";
 import { FILTER_LAYERS_UPGRADE_NOTICE_SOURCE } from "@/lib/screenerFilterLayers";
+import { isDismissibleSampleNotice } from "@/lib/snapshotFreshness";
 
 const PERCENTILE_BATCH_BADGE = "Ranking provisional";
 const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
@@ -97,6 +98,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     status,
     snapshotNotice,
     onDismissFilterLayersUpgradeNotice,
+    onDismissSnapshotSampleNotice,
     restoringScan,
     showMobileFilters,
     sidebarCollapsed,
@@ -336,6 +338,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   });
   const showSnapshotNotice = snapshotNotice && snapshotNotice.source !== "markets-stale";
   const isFilterLayersUpgradeNotice = snapshotNotice?.source === FILTER_LAYERS_UPGRADE_NOTICE_SOURCE;
+  const isSampleTruncationNotice = isDismissibleSampleNotice(snapshotNotice);
 
   function renderFilterLayersUpgradeDismiss() {
     if (!isFilterLayersUpgradeNotice || !onDismissFilterLayersUpgradeNotice) return null;
@@ -350,6 +353,35 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         </button>
       </div>
     );
+  }
+
+  function renderSampleTruncationNoticeActions() {
+    if (!isSampleTruncationNotice || !onDismissSnapshotSampleNotice) return null;
+    return (
+      <div className="storageAlertActions">
+        <button
+          type="button"
+          className="btn btnSmall btnGhost storageAlertFree"
+          onClick={onDismissSnapshotSampleNotice}
+        >
+          Entendido
+        </button>
+        <button
+          type="button"
+          className="btn btnSmall btnPrimary"
+          onClick={refreshScreenerSnapshotData}
+          disabled={restoringScan}
+        >
+          {restoringScan ? "Actualizando…" : "Traer datos frescos"}
+        </button>
+      </div>
+    );
+  }
+
+  function renderSnapshotNoticeActions() {
+    if (isFilterLayersUpgradeNotice) return renderFilterLayersUpgradeDismiss();
+    if (isSampleTruncationNotice) return renderSampleTruncationNoticeActions();
+    return null;
   }
 
   function handleLideresIntlGuardrailCta(ctaId) {
@@ -585,7 +617,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           tone={snapshotNotice.tone || "info"}
           role="alert"
         >
-          {renderFilterLayersUpgradeDismiss()}
+          {renderSnapshotNoticeActions()}
         </MobileCollapsibleNotice>
       ) : null}
     </div> : null}
@@ -602,7 +634,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             Vuelve a entrar
           </button>
         </div>
-      ) : renderFilterLayersUpgradeDismiss()}
+      ) : renderSnapshotNoticeActions()}
     </div> : null}
     {isMobileViewport && showSnapshotNotice && snapshotNotice.requiresReauth ? <div className="snapshotFreshnessNotice compact warn" role="alert" aria-live="polite">
       <span>{snapshotNotice.label}</span>

@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi, beforeAll } from "vitest";
 import { MARKETS_MISALIGNMENT_CTA, MARKETS_AUTO_LOAD_LOADING_LABEL } from "@/lib/marketAvailability";
 import { buildFilterLayersUpgradeNotice } from "@/lib/screenerFilterLayers";
+import { buildSnapshotFreshnessNotice } from "@/lib/snapshotFreshness";
 import { DEFAULT_MARKETS } from "@/lib/screenerConfig";
 import { compactMobileScanStatus } from "@/lib/screenerFormat";
 
@@ -52,6 +53,7 @@ function makeProps({
   selectedMarkets = ["US", "CA"],
   snapshotNotice = null,
   onDismissFilterLayersUpgradeNotice = null,
+  onDismissSnapshotSampleNotice = null,
   restoringScan = false,
   marketsLoadFailed = false,
   marketsLoadFailedDetail = "",
@@ -67,6 +69,7 @@ function makeProps({
       status: "idle",
       snapshotNotice,
       onDismissFilterLayersUpgradeNotice,
+      onDismissSnapshotSampleNotice,
       restoringScan,
       showMobileFilters: false,
       sidebarCollapsed: false,
@@ -327,6 +330,43 @@ describe("ScreenerShell filter-layers-upgrade notice", () => {
     expect(html).toContain("Entendido");
     expect(html).not.toContain("Más filtros");
     expect(html).toContain("Abrir");
+  });
+});
+
+describe("ScreenerShell sample-truncation notice", () => {
+  it("muestra Entendido y Traer datos frescos para truncado supabase sin stale", () => {
+    const notice = buildSnapshotFreshnessNotice({ stale: false }, {
+      rowsAvailable: 204,
+      rowsReturned: 157,
+      rowsTruncated: true,
+    });
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      snapshotNotice: notice,
+      onDismissSnapshotSampleNotice: () => {},
+    })));
+    expect(html).toContain("Universo parcial");
+    expect(html).not.toContain("Datos incompletos");
+    expect(html).toContain("Entendido");
+    expect(html).toContain("Traer datos frescos");
+    expect(html).toContain("snapshotFreshnessNotice info");
+  });
+
+  it("móvil: muestra dismiss para muestra repartida", () => {
+    mockIsMobileViewport.mockReturnValue(true);
+    const notice = buildSnapshotFreshnessNotice({ stale: false }, {
+      rowsAvailable: 204,
+      rowsReturned: 157,
+      rowsTruncated: true,
+      rowsSampled: true,
+    });
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      snapshotNotice: notice,
+      onDismissSnapshotSampleNotice: () => {},
+    })));
+    expect(html).toContain("Muestra");
+    expect(html).toContain("Entendido");
+    expect(html).toContain("Traer datos frescos");
+    mockIsMobileViewport.mockReturnValue(false);
   });
 });
 

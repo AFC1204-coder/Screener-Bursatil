@@ -4,6 +4,7 @@ import {
   buildLocalFallbackNotice,
   buildSessionKeepNotice,
   buildSnapshotFreshnessNotice,
+  isDismissibleSampleNotice,
   localScanIsSampled,
   localSampleDetail,
   screenerSessionRefreshReason,
@@ -74,11 +75,14 @@ describe("snapshot freshness", () => {
     });
 
     expect(notice).not.toBeNull();
-    expect(notice.label).toBe("Datos incompletos");
-    expect(notice.tone).toBe("warn");
+    expect(notice.label).toBe("Universo parcial");
+    expect(notice.tone).toBe("info");
     expect(notice.truncated).toBe(true);
     expect(notice.detail).toContain("500");
     expect(notice.detail).toContain("9918");
+    expect(notice.detail).toContain("recortado");
+    expect(notice.detail).not.toMatch(/este dispositivo/i);
+    expect(notice.detail).not.toMatch(/datos incompletos/i);
   });
 
   // El criterio del recorte importa tanto como el número (2026-08-17): si la
@@ -95,11 +99,14 @@ describe("snapshot freshness", () => {
     });
 
     expect(notice.sampled).toBe(true);
+    expect(notice.label).toBe("Muestra");
+    expect(notice.tone).toBe("info");
     expect(notice.detail).toContain("muestra repartida por todo el ranking");
+    expect(notice.detail).not.toMatch(/este dispositivo/i);
     expect(notice.detail).not.toContain("el resto no se cargó");
   });
 
-  it("mantiene el texto anterior cuando el recorte NO va repartido", () => {
+  it("mantiene copy honesto cuando el recorte NO va repartido", () => {
     const notice = buildSnapshotFreshnessNotice({ stale: false }, {
       rowsAvailable: 9918,
       rowsReturned: 500,
@@ -107,7 +114,9 @@ describe("snapshot freshness", () => {
     });
 
     expect(notice.sampled).toBe(false);
-    expect(notice.detail).toContain("solo se cargó parte del universo en este dispositivo");
+    expect(notice.label).toBe("Universo parcial");
+    expect(notice.detail).toContain("recortado");
+    expect(notice.detail).not.toMatch(/este dispositivo/i);
   });
 
   it("no avisa de recorte si rowsTruncated es false, aunque vengan los conteos", () => {
@@ -134,6 +143,32 @@ describe("snapshot freshness", () => {
     expect(notice.detail).toContain("escaneo de hace");
     expect(notice.detail).toContain("500");
     expect(notice.detail).toContain("9918");
+    expect(notice.tone).toBe("warn");
+  });
+
+  it("isDismissibleSampleNotice solo aplica a truncado o session-sample sin stale", () => {
+    expect(isDismissibleSampleNotice(buildSnapshotFreshnessNotice({ stale: false }, {
+      rowsAvailable: 204,
+      rowsReturned: 157,
+      rowsTruncated: true,
+    }))).toBe(true);
+    expect(isDismissibleSampleNotice(buildSessionKeepNotice({
+      scan: {
+        rowsSampled: true,
+        rowsAvailable: 3309,
+        rows: Array.from({ length: 576 }, (_, index) => ({ symbol: `S${index}` })),
+      },
+    }))).toBe(true);
+    expect(isDismissibleSampleNotice(buildSnapshotFreshnessNotice({
+      stale: true,
+      staleForMs: 30000,
+    }, {
+      rowsAvailable: 9918,
+      rowsReturned: 500,
+      rowsTruncated: true,
+    }))).toBe(false);
+    expect(isDismissibleSampleNotice(buildSnapshotFreshnessNotice({}, { decisionProjectionPartialRows: 3 }))).toBe(false);
+    expect(isDismissibleSampleNotice(null)).toBe(false);
   });
 });
 
