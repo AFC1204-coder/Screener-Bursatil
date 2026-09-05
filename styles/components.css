@@ -2688,14 +2688,6 @@
   background:var(--surface2);
 }
 
-.layerToggle.on {
-  color:var(--text);
-}
-
-.layerToggle.off {
-  opacity:0.6;
-}
-
 .ruleMiniToggle.on {
   border-color:rgba(130,220,148,.58);
   background:rgba(77,180,112,.22);
@@ -3810,7 +3802,7 @@ h2 {
   color:var(--muted);
 }
 
-.filterGroup h3, .filterLayerBlock h3, .diagnosticBlock span, .statementMatrix th:first-child, .statementMatrix td:first-child {
+.filterLayerBlock h3, .diagnosticBlock span, .statementMatrix th:first-child, .statementMatrix td:first-child {
   color:var(--muted);
 }
 
@@ -4423,7 +4415,6 @@ h2 {
 
 .sidebarGroup > span,
 .sectionTitle h2,
-.filterGroupHead h3,
 .profileCardHeader h3,
 .table th,
 .compactMetric small,
@@ -4514,16 +4505,10 @@ h2 {
   color:var(--text);
 }
 
-.layerToggle.on, .searchScopeChip:hover {
+.searchScopeChip:hover {
   border-color:var(--accent);
   background:var(--senal-dim);
   color:var(--text);
-}
-
-.layerToggle.on .layerToggleState i {
-  border-color:var(--accent);
-  background:var(--senal-dim);
-  color:var(--accent);
 }
 
 .scanDiagnostics.empty,
@@ -6276,10 +6261,6 @@ h2 {
 
 /* Source Status Panel */
 
-.filterLayerActions .btn {
-  flex: 1;
-}
-
 .filterTemplateBtn:hover,
 .filterTemplateBtn.active {
   border-color: var(--accent);
@@ -6402,8 +6383,7 @@ h2 {
   letter-spacing: .09em;
 }
 
-.filterTemplateBtn.active,
-.layerToggle.on {
+.filterTemplateBtn.active {
   border-color: var(--tiza);
   background: var(--surface2);
 }

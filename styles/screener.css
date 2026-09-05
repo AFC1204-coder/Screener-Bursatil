@@ -2624,114 +2624,6 @@ button.dataHealthSummaryItem:hover,
 .filterSwitches {display:flex;flex-direction:column;gap:10px
 }
 
-.layerToggle {
-  display:flex;
-  align-items:center;
-  border:none;
-  text-align:left;
-  cursor:pointer;
-}
-
-.layerToggle:hover {
-  color:var(--text);
-}
-
-.layerToggleState {
-  display:flex;
-}
-
-.layerToggleState i {
-  display:grid;
-  place-items:center;
-  border:1px solid var(--line2);
-  font-style:normal;
-  font-weight:700;
-  line-height:1;
-}
-
-.layerToggleState b {
-  display:none;
-}
-
-.layerToggleText small {
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.layerToggleCount {
-  margin-left:auto;
-  font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
-}
-
-.filterGroups {
-  display:grid;
-}
-
-/* <details> "Ajustes finos" anidado dentro del panel avanzado. */
-.advancedFiltersDetails {
-  margin-top:var(--space-3);
-  padding:var(--space-3);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  background:var(--surface-inset);
-}
-
-.filterGroup {
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  background:var(--surface2);
-  overflow:hidden;
-}
-
-.filterGroupHead {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin:0;
-  padding:11px 12px;
-  cursor:pointer;
-  list-style:none;
-}
-
-.filterGroupHead::-webkit-details-marker {
-  display:none;
-}
-
-.filterGroup[open] .filterGroupHead {
-  border-bottom:1px solid var(--line);
-}
-
-/* Los catorce títulos de grupo de filtros («Liquidez», «Momentum»…) llevaban el
-   acento --senal. No son señales de atención: son etiquetas de sección, y
-   catorce a la vez rompen la regla 1 (máximo UN --senal por vista fuera de la
-   zona de resultados). Pasan a tinta terciaria; el token no cambia. */
-.filterGroup h3 {
-  margin:0;
-  color:var(--soft);
-  font-size:12px;
-  text-transform:uppercase;
-  letter-spacing:.14em;
-}
-
-.filterGroupHead h3 {
-  margin:0;
-}
-
-.filterGroupHead span {
-  min-width:34px;
-  padding:3px 7px;
-  border:1px solid var(--line);
-  border-radius:999px;
-  color:#cbd88b;
-  background:rgba(179,225,101,.055);
-  font-size:10px;
-  font-weight:900;
-  text-align:center;
-}
-
 .filterFields {display:grid;gap:7px;padding:10px 12px 12px
 }
 
@@ -2791,9 +2683,6 @@ button.dataHealthSummaryItem:hover,
 }
 
 .filterInputWrap b {position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text);font-size:10px
-}
-
-.filterFooter {margin-top:12px
 }
 
 .rowPreviewBox {
@@ -2872,19 +2761,6 @@ button.dataHealthSummaryItem:hover,
 .marketChip {
   min-height:54px;
   padding:8px;
-}
-
-.filterGroups {
-  grid-template-columns:1fr;
-  gap:6px;
-}
-
-.filterGroup {
-  padding:0;
-}
-
-.filterGroupHead {
-  margin-bottom:0;
 }
 
 .filterField {
@@ -4692,49 +4568,10 @@ button.decisionIssueBadge:hover,
   text-transform:uppercase;
 }
 
-.layerToggle, .filterGroup, .filterField, .searchScopeChip {
+.filterField, .searchScopeChip {
   border:1px solid var(--line);
   border-radius:var(--radius);
   background:var(--surface2) ;
-}
-
-.layerToggle {
-  padding:7px 8px;
-  gap:8px;
-  border-color:transparent;
-  background:transparent;
-  color:var(--soft);
-  transition:background .14s ease,border-color .14s ease,color .14s ease,opacity .14s ease;
-}
-
-.layerToggleState i {
-  width:18px;
-  height:18px;
-  border-radius:5px;
-  border-color:var(--line2);
-  font-size:10px;
-}
-
-.layerToggleText {
-  display:grid;
-  gap:1px;
-}
-
-.layerToggleText strong {
-  color:inherit;
-  font-size:12px;
-  font-weight:650;
-}
-
-.layerToggleText small {
-  color:var(--muted);
-  font-size:10px;
-  line-height:1.2;
-}
-
-.layerToggleCount {
-  color:var(--muted);
-  font-size:10px;
 }
 
 .scanDiagnosticsDisclosure {
@@ -5605,10 +5442,6 @@ button.decisionIssueBadge:hover,
 /* Las tres primeras columnas se fijaban con `position:sticky` porque la tabla
    de quince columnas no cabía por debajo de 1024px. Con siete cabe entera:
    fijar columnas ya no arregla nada y estorba al scroll. */
-
-.filterLayerActions {
-  margin: -8px 0 20px;
-}
 
 .filterTemplatePanel {
   display:grid;
@@ -6784,26 +6617,18 @@ button.decisionIssueBadge:hover,
 .templateQuickPresets,
 .savedTemplatesDisclosure,
 .filterFamilyModal,
-.filterGroup,
 .filterField {
   background:var(--surface) ;
 }
 
-.filterTemplateBtn,
-.layerToggle {
+.filterTemplateBtn {
   border-radius: 7px;
 }
 
-.layerToggle {
-  min-height: 35px;
-}
-
-.layerToggleText strong,
 .filterTemplateBtn b {
   font-weight: 700;
 }
 
-.layerToggleText small,
 .filterTemplateBtn small {
   color: #858b98;
 }
@@ -7107,11 +6932,6 @@ h2:not(.topbar h2) {
     width: 100% !important;
     min-height: 34px;
   }
-}
-
-.layerToggleText {
-  align-items: center !important;
-  min-width: 0;
 }
 
 .screenerContractIntro h2 {

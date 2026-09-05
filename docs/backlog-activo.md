@@ -5,10 +5,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** UX-SHELL A→D **cerrado** · MIGRATE-1…5 **hechos** (nocturno US launchd Mini).  
-**Último cerrado:** **MIGRATE-5** — `scan-universe` wrapper + smoke · evidencia 2026-09-05.  
-**Ahora:** corrida full US (05:00 o manual) · opcional CLEAN-4 / apagar GHA.  
-**SHELL:** oleada A→D aterrizada en polish.
+**RECORDATORIO dueño:** migrate Mini **OK** · **CLEAN-4** verify OK · Grok Bot → un escritor.  
+**Último cerrado (pend. commit):** **CLEAN-4** CSS residual post-SHELL.  
+**Ahora:** commit CLEAN-4 · luego RPC pg o apagar GHA.  
+**Aplazado:** túnel móvil→Mini.  
+**SHELL:** A→D aterrizado.
 
 ## Hecho (esta oleada)
 
