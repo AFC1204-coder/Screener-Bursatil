@@ -5,9 +5,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** MIGRATE-6 verify+smoke OK · Grok → un escritor.  
-**Último cerrado (pend. commit):** **MIGRATE-6** RPC historia pg.  
-**Ahora:** commit MIGRATE-6 · luego apagar GHA / RS smoke / leaderboards RPC.  
+**RECORDATORIO dueño:** MIGRATE-6 **cerrado** `6108f14` · Grok → un escritor.  
+**Último cerrado:** **MIGRATE-6** RPC historia pg · smoke Mini 10/10.  
+**Ahora:** push si pides · apagar GHA / RS smoke / leaderboards RPC.  
 **Aparcado:** túnel móvil→Mini.  
 **SHELL:** A→D aterrizado.
 
