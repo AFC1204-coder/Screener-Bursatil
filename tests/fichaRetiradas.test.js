@@ -144,12 +144,13 @@ describe("bloques retirados el 2026-08-21: no vuelven por accidente", () => {
   });
 
   it("los datos únicos de los bloques retirados viven ahora en la franja", () => {
-    // MA50/MA200 (de N1) como medias diarias; reparto e impulso (del panel
-    // de volumen). El volumen seco NO se duplica: sigue siendo una sola
+    // MA50/MA200 (de N1) como medias diarias; impulso (del panel
+    // de volumen). El reparto up/down vive solo en Sostén (prosa).
+    // El volumen seco NO se duplica: sigue siendo una sola
     // celda «Volumen 10d/50d».
     expect(html).toContain("Media 50d");
     expect(html).toContain("Media 200d");
-    expect(html).toContain("Reparto vol. 50d");
+    expect(html).not.toContain("Reparto vol. 50d");
     expect(html).toContain("Impulso vol. 5/20d");
     expect(html).toContain("Volumen 10d/50d");
   });
@@ -339,11 +340,40 @@ describe("tarjeta de identidad del lienzo (variante 2c encogida)", () => {
     expect(html.slice(cardIdx)).not.toContain("universalChartNavButton");
   });
 
-  it("la franja queda en una banda: medias y volumen", () => {
+  it("la franja queda en una banda: medias y volumen (reparto solo en Sostén)", () => {
     expect(html).not.toContain("stockDescNameRow");
     expect(html).toContain("stockDescStrip");
     expect(html).toContain("Media 50d");
-    expect(html).toContain("Reparto vol. 50d");
+    expect(html).not.toContain("Reparto vol. 50d");
+  });
+
+  it("N0 no muestra sector/exchange crudo: solo tema de producto si existe", () => {
+    expect(html).not.toContain("stockIdentityKicker");
+    expect(html).not.toMatch(/TECHNOLOGY|Technology · NYSE/);
+  });
+});
+
+describe("READ-D kicker con tema", () => {
+  it("muestra el tema StatsEdge en N0 cuando existe", () => {
+    const html = renderFicha({ theme: "Software / IA" });
+    expect(html).toContain('stockIdentityKicker">Software / IA<');
+    expect(html).not.toMatch(/stockIdentityKicker[^<]*Technology/);
+  });
+});
+
+describe("READ-D RS país en tarjeta", () => {
+  it("oculta RS país en US cuando coincide con FR", () => {
+    const html = renderFicha({
+      relativeStrength: {
+        globalRsSeries: [{ date: "2025-09-17", rsRating: 94, sampleSize: 4868 }],
+        countryRsRating: 94,
+        countryRsSampleSize: 900,
+      },
+    });
+    const cardStart = html.indexOf('class="chartIdCard"');
+    const cardEnd = html.indexOf('class="chartIdCardFoot"', cardStart);
+    const cardSlice = html.slice(cardStart, cardEnd);
+    expect(cardSlice).not.toContain("RS país");
   });
 });
 

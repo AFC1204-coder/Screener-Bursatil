@@ -1,13 +1,12 @@
-# Ticket activo — READ-C cerrado
+# Ticket activo — READ-D cerrado
 
-**Estado:** Verify OK · smoke Mini US OK · listo commit  
-**Evidencia:** `docs/evidence/read-c-smoke-2026-09-05.md`
+**Estado:** Verify OK · smoke AAPL + 0005.HK OK · listo commit  
+**Evidencia:** `docs/evidence/read-d-smoke-2026-09-05.md`
 
 ## Verify
 
-- Verdad: `593 de 3319 pasan … · mesa: US · corte …`
-- Sin jerga de lista/página/orden; provisional = `·` en RS
+- Salud plegada · sin Reparto celda · kicker = tema · RS país solo si aporta
 
 ## Siguiente
 
-Cola calidad UI (READ-D/E opcionales) · mañana Mini: GHA + finalize.
+**READ-E** (un RS overlay por defecto) opcional · mañana Mini: GHA + finalize.

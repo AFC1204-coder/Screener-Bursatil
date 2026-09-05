@@ -223,7 +223,9 @@ export function N0VerdictBlock({
             <span>{String(data?.visual?.initials || symbol.slice(0, 2)).toUpperCase()}</span>
           </div>
           <div className="stockIdentityBlock">
-            <span className="stockIdentityKicker">{data?.sector || "Sector sin clasificar"}{data?.exchange ? ` · ${data.exchange}` : ""}</span>
+            {data?.theme ? (
+              <span className="stockIdentityKicker">{data.theme}</span>
+            ) : null}
             <h1 className="stockIdentityTitle">{symbol}</h1>
             <p className="stockIdentityCompany">{data?.name || symbol}</p>
           </div>

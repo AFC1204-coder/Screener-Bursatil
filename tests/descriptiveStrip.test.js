@@ -11,7 +11,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ChartIdentityCard from "@/app/stock/[symbol]/ChartIdentityCard";
 import DescriptiveStrip from "@/app/stock/[symbol]/DescriptiveStrip";
-import { buildChartIdentityCard } from "@/lib/chartIdentityCard";
+import { buildChartIdentityCard, shouldShowCountryRsOnIdentityCard } from "@/lib/chartIdentityCard";
 import {
   DESCRIPTIVE_ABSENCE,
   lowAdvance52wFromBars,
@@ -360,6 +360,57 @@ describe("ChartIdentityCard · render (tarjeta 2c densa sobre el lienzo)", () =>
     expect(html).toContain(">64<");
     expect(html).not.toContain("desde");
   });
+
+  it("oculta RS país en US cuando coincide con el FR canónico", () => {
+    const html = cardMarkup({
+      ...fullData,
+      country: "United States",
+      relativeStrength: {
+        ...fullData.relativeStrength,
+        countryRsRating: 99,
+      },
+    }, { rsUniverse: 99 });
+    expect(html).not.toContain("RS país");
+  });
+
+  it("muestra RS país en US cuando difiere del FR canónico", () => {
+    const html = cardMarkup({
+      ...fullData,
+      country: "United States",
+      relativeStrength: {
+        ...fullData.relativeStrength,
+        countryRsRating: 80,
+      },
+    }, { rsUniverse: 99 });
+    expect(html).toContain("RS país");
+    expect(html).toContain(">80<");
+  });
+
+  it("muestra RS país en mercado no-US aunque coincida con el FR", () => {
+    const html = cardMarkup({
+      ...fullData,
+      country: "Hong Kong",
+      relativeStrength: {
+        ...fullData.relativeStrength,
+        countryRsRating: 99,
+      },
+    }, { rsUniverse: 99 });
+    expect(html).toContain("RS país");
+  });
+});
+
+describe("shouldShowCountryRsOnIdentityCard", () => {
+  it("US + mismos valores → oculto", () => {
+    expect(shouldShowCountryRsOnIdentityCard({ rsValue: 64, countryRsValue: 64, isUsMarket: true })).toBe(false);
+  });
+
+  it("US + valores distintos → visible", () => {
+    expect(shouldShowCountryRsOnIdentityCard({ rsValue: 64, countryRsValue: 72, isUsMarket: true })).toBe(true);
+  });
+
+  it("no-US → visible aunque coincidan", () => {
+    expect(shouldShowCountryRsOnIdentityCard({ rsValue: 64, countryRsValue: 64, isUsMarket: false })).toBe(true);
+  });
 });
 
 describe("DescriptiveStrip · render (la franja tras el reparto denso)", () => {
@@ -376,8 +427,22 @@ describe("DescriptiveStrip · render (la franja tras el reparto denso)", () => {
     expect(html).toContain("secado");
     expect(html).toContain("Media 50d");
     expect(html).toContain("Media 200d");
-    expect(html).toContain("Reparto vol. 50d");
+    expect(html).not.toContain("Reparto vol. 50d");
     expect(html).toContain("Impulso vol. 5/20d");
+    expect(html).toContain("Volumen:");
+  });
+
+  it("plega la salud de etapa dentro de Sostén, no en primer plano", () => {
+    const html = stripMarkup(fullData, {
+      technical: { distanceSma50: 12.4, distanceSma200: 31.5 },
+      stockVolume: {
+        upDownVolumeRatio: { available: true, value: 0.91, window: "50" },
+      },
+    });
+    expect(html).toContain("Sostén de la tendencia");
+    expect(html).toContain("stockDescHealthDetails");
+    expect(html).not.toContain("Salud de etapa:");
+    expect(html).not.toContain("stockDescHealthScore");
   });
 
   it("no repite nada de la tarjeta densa: sin identidad, resumen, clasificación, FR, estructura, crecimiento ni pie", () => {

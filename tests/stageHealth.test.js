@@ -166,7 +166,7 @@ describe("stageHealth methodology", () => {
 });
 
 describe("DescriptiveStrip stage health", () => {
-  it("muestra la línea Salud de etapa con desglose cuando computa", () => {
+  it("plega salud con score y desglose dentro de Sostén cuando computa", () => {
     const html = renderToStaticMarkup(createElement(DescriptiveStrip, {
       data: {
         stage: { weekly: { state: "stage2", distanceSlowMaPct: 12 } },
@@ -180,13 +180,15 @@ describe("DescriptiveStrip stage health", () => {
         chartBars: [],
       },
     }));
-    expect(html).toContain("Salud de etapa");
-    expect(html).toContain("90/100");
-    expect(html).toContain("Desglose");
+    expect(html).toContain("Sostén de la tendencia");
+    expect(html).toContain("Salud 90/100");
+    expect(html).toContain("stockDescHealthDetails");
+    expect(html).not.toContain("Salud de etapa:");
+    expect(html).not.toContain("stockDescHealthScore");
     expect(html).toContain("media 30 sem");
   });
 
-  it("declara ausencia honesta fuera de etapas 2/4", () => {
+  it("declara ausencia honesta fuera de etapas 2/4, plegada en Sostén", () => {
     const html = renderToStaticMarkup(createElement(DescriptiveStrip, {
       data: {
         stage: { weekly: { state: "stage1" } },
@@ -195,5 +197,6 @@ describe("DescriptiveStrip stage health", () => {
     }));
     expect(html).toContain("Salud de etapa");
     expect(html).toContain(DESCRIPTIVE_ABSENCE.healthNonTrendingStage);
+    expect(html).toContain("stockDescHealthDetails");
   });
 });

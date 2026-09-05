@@ -90,27 +90,20 @@ function TrendSupportLine({ line }) {
   );
 }
 
-function StageHealthBlock({ block }) {
+function StageHealthDetails({ block }) {
   if (!block) return null;
+  const summary = block.available && Number.isFinite(block.score)
+    ? `Salud ${block.score}/100`
+    : "Salud de etapa";
   return (
-    <div className="stockDescHealth" aria-label="Salud de etapa">
-      <div className="stockDescHealthRow">
-        <span className="stockDescLabel">Salud de etapa:</span>
-        {block.available ? (
-          <>
-            <b className="stockDescHealthScore">{block.score}/100</b>
-            {block.breakdown ? (
-              <details className="stockDescHealthDetails">
-                <summary>Desglose</summary>
-                <p className="stockDescHealthBreakdown">{block.breakdown}</p>
-              </details>
-            ) : null}
-          </>
-        ) : (
-          <Missing reason={block.reason} />
-        )}
-      </div>
-    </div>
+    <details className="stockDescHealthDetails">
+      <summary>{summary}</summary>
+      {block.available ? (
+        block.breakdown ? <p className="stockDescHealthBreakdown">{block.breakdown}</p> : null
+      ) : (
+        <Missing reason={block.reason} />
+      )}
+    </details>
   );
 }
 
@@ -200,18 +193,11 @@ export default function DescriptiveStrip({ data = null, setupPattern = null, tec
           reason="Sin volumen medio comparable en la serie."
         />
         <StructureCell
-          label="Reparto vol. 50d"
-          value={upDownVol?.available && Number.isFinite(upDownVol.value) ? `${sharedNum(upDownVol.value, 2)}×` : null}
-          word={upDownVol?.available ? "up/down" : ""}
-          reason={upDownVol?.reason || "Sin reparto de volumen al alza/a la baja en 50 sesiones."}
-        />
-        <StructureCell
           label="Impulso vol. 5/20d"
           value={volSurge?.available && Number.isFinite(volSurge.value) ? sharedPct(volSurge.value) : null}
           reason={volSurge?.reason || "Sin medias de volumen comparables a 5 y 20 sesiones."}
         />
       </div>
-      <StageHealthBlock block={stageHealth} />
       <div className="stockDescTrendSupport" aria-label={trendSupport.title}>
         <h3 className="stockDescLabel">{trendSupport.title}</h3>
         <ul className="stockDescTrendList">
@@ -219,6 +205,7 @@ export default function DescriptiveStrip({ data = null, setupPattern = null, tec
             <TrendSupportLine key={line.key} line={line} />
           ))}
         </ul>
+        <StageHealthDetails block={stageHealth} />
       </div>
     </section>
   );

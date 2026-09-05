@@ -114,12 +114,16 @@ export default function ChartIdentityCard({ card = null, quote = null }) {
             ) : (
               <Absent reason={rs.absenceReason} />
             )}
-            <span className="chartIdCardRsLabel">RS país</span>
-            {countryRs?.value !== null && countryRs?.value !== undefined ? (
-              <b className="chartIdCardRsValue">{countryRs.value}</b>
-            ) : (
-              <Absent reason={countryRs?.absenceReason || DESCRIPTIVE_ABSENCE.rsCountry} />
-            )}
+            {countryRs?.show ? (
+              <>
+                <span className="chartIdCardRsLabel">RS país</span>
+                {countryRs?.value !== null && countryRs?.value !== undefined ? (
+                  <b className="chartIdCardRsValue">{countryRs.value}</b>
+                ) : (
+                  <Absent reason={countryRs?.absenceReason || DESCRIPTIVE_ABSENCE.rsCountry} />
+                )}
+              </>
+            ) : null}
             <span className="chartIdCardStructCell">
               <em>Máx. 52s</em>
               {Number.isFinite(structure.distance52w)
