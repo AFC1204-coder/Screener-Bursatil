@@ -37,7 +37,7 @@ import { createChartNativeAdapter, resolveCssTokensNative } from "@/app/chartNat
 import { barsAreCandleGrade } from "@/lib/chartDataQuality";
 import { RS_LINE_MIN_WEEKS, projectRsCountryRatingSeries, projectRsRatingSeries, projectRsThemeRatingSeries, rsLineHistory } from "@/lib/chartSeriesModel";
 import { userFacingSearchError } from "@/lib/screenerFormat";
-import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
+import { chartPatternBadgeForRow } from "@/lib/methodologyDisplay";
 import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
 
 // Defaults con IDENTIDAD ESTABLE. Un default `[]` en línea crea un array
@@ -236,7 +236,7 @@ export function useChartController(props = {}) {
     };
   }, [config.indicators, config.interval, intraday, rows, rsThemeSeries]);
 
-  const patternSummary = useMemo(() => methodologyDisplayForRow(patternOverlay || {}), [patternOverlay]);
+  const patternSummary = useMemo(() => chartPatternBadgeForRow(patternOverlay), [patternOverlay]);
   const patternDiagnostic = useMemo(
     () => showPatternDiagnostics && patternOverlay && !intraday ? vcpDiagnosticSnapshot(patternOverlay) : null,
     [showPatternDiagnostics, patternOverlay, intraday],

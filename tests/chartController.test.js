@@ -231,6 +231,9 @@ describe("useChartController · viewModel composicional (ADR §5.2)", () => {
     expect(html).toContain("COMPOSE");
     // El close del último bar formateado aparece (131.44).
     expect(html).toContain("131,44");
+    // Sin patternOverlay no debe flotar el badge vacío «Sin validar · Estructura sin dato».
+    expect(html).not.toContain("universalChartPatternBadge");
+    expect(html).not.toContain("Estructura sin dato");
     // El changePct es la variación de la ÚLTIMA barra (vs. la anterior), no
     // de toda la serie servida (cambio de contrato 2026-08-21: antes medía
     // rows[0]→latest y el header decía "+46%" —o "+474%" en una ficha real—
