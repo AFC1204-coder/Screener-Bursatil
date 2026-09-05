@@ -1,25 +1,32 @@
-# Ticket activo — RS en el gráfico (overlay series)
+# Ticket activo — Superposición limpia RS en el gráfico
 
-**Estado:** Cerrado · verify tests · **commit pendiente orquestador**  
-**Rama:** `cursor/chart-rs-series-d8d3` → PR contra `codex/statsedge-ui-polish`  
+**Estado:** Cerrado · verify tests · **smoke visual pendiente (sin sesión local)**  
+**Rama:** `cursor/rs-overlay-clean-8262` → PR contra `codex/statsedge-ui-polish`  
 **Modelo:** Composer
 
 ## Problema
 
-- Vista rápida y `/review` mostraban badge RS pero **no la línea** (RowPriceChart no pasaba `rsRatingSeries` / país / tema).
-- La línea benchmark ratio se ocultaba al apagar el toggle RS global (`projectBenchmarkLineSeries` atado a `rsLine`).
+Con RS global, país y tema activos a la vez, la superposición no se veía limpia: cada línea usaba una escala overlay invisible distinta (`rs-rating`, `rs-country`, `rs-theme`) con los mismos márgenes, desalineando coordenadas y duplicando referencias.
 
 ## Hecho
 
-- `RowPriceChart` hidrata series vía `/api/rs-weekly` (ampliado: global + país + tema) o desde fila (`globalRsSeries`… del brief en review).
-- `hydrateReviewRow` propaga series y scores país/tema del company-brief.
-- Benchmark ratio independiente del toggle RS ranking.
-- Tests: `chartRsRowProps`, `chartSeriesModel`, `rsSurfaceConsistency`.
+- `app/chartNativeAdapter.js`: una sola escala `rs-rating` compartida por las tres líneas percentil 1-99; referencia 50 una vez; RS país con trazo discontinuo (`LineStyle.Dashed`) para distinguirse de global y tema.
+- Tests: `chartNativeAdapterTokens` actualizado + caso multi-RS activos simultáneos.
+- Subset `npm test -- chartNativeAdapter chartSeriesModel chartController` → 54 passed.
+
+## Antes / después
+
+| Antes | Después |
+|---|---|
+| 3 escalas overlay invisibles con mismos márgenes | 1 escala `rs-rating` compartida |
+| Líneas potencialmente desalineadas en la banda inferior | Misma coordenada Y para percentiles comparables |
+| Referencia 50 repetida por serie | Referencia 50 una sola vez |
+| País y global ambos sólidos | País discontinuo; global `--traza`; tema `--rs-theme` |
 
 ## LO QUE NO VERIFIQUÉ
 
-- Smoke Browser Use en ficha / vista rápida / review (hard-reload, toggles RS, línea visible).
+- Smoke Browser Use en ficha / vista rápida / review (sin dev server ni sesión logueada en este entorno cloud).
 
 ## Siguiente
 
-Orquestador: `./vfc` subset chart + smoke visual si aplica.
+Orquestador: smoke visual con hard-reload + toggles RS; `./vfc` si aplica; commit/merge tras smoke OK.
