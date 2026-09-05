@@ -76,6 +76,27 @@ describe("supabaseServer en modo pg", () => {
     await expect(supabaseRpc("finalize_scan_results", {}))
       .rejects.toMatchObject({ code: "PG_RPC_UNSUPPORTED" });
   });
+
+  it("supabaseRequest delega escrituras POST a pgRequest", async () => {
+    pgRequest.mockResolvedValueOnce([{ id: "scan-1", local_id: "materialized:US:2026-09-05:o0:l2" }]);
+    const { supabaseRequest } = await import("@/lib/supabaseServer");
+    const rows = await supabaseRequest("scans", {
+      method: "POST",
+      query: "on_conflict=owner_id,local_id",
+      prefer: "resolution=merge-duplicates,return=representation",
+      body: [{ owner_id: "personal", local_id: "materialized:US:2026-09-05:o0:l2", name: "test", row_count: 2 }],
+    });
+    expect(rows).toHaveLength(1);
+    expect(pgRequest).toHaveBeenCalledWith(
+      expect.anything(),
+      "scans",
+      expect.objectContaining({
+        method: "POST",
+        prefer: "resolution=merge-duplicates,return=representation",
+        body: expect.any(Array),
+      }),
+    );
+  });
 });
 
 describe("supabaseServer sin flag (PostgREST legado)", () => {

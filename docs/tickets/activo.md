@@ -1,15 +1,21 @@
-# Ticket activo — MIGRATE-3 cerrado (pendiente commit)
+# Ticket activo — MIGRATE-4 cerrado (commit)
 
-**Estado:** Cutover Mini **aceptado por dueño** (2026-09-05)  
-**Evidencia:** `docs/evidence/migrate-3-cutover-mini-2026-09-05.md`
+**Estado:** Verify orquestador OK · smoke Mini upsert · **listo commit**  
+**Spec:** `docs/tickets/MIGRATE-4-pg-writes-nocturno.md`  
+**Evidencia:** `docs/evidence/migrate-4-pg-writes-nocturno-2026-09-05.md`
 
-## Resumen
+## Verify
 
-- Next + cron `universe-refresh` en launchd Mini
-- DB local pg · US 3315 (scan **2026-09-03**) · AAPL 401
-- Dueño: UI OK por túnel `:13000`
-- Fecha «no hoy» en mesa: **normal** hasta nocturno local que escriba (gap writes pg)
+- Tests adaptador: **22 passed**
+- `./vfc` (suite + lint): OK (alcance docs/scripts esperado)
+- Mini DB: `materialized:US:2026-09-05:…:migrate4-smoke` · **row_count=2**
 
-## Siguiente
+## Pendiente ops (no bloquea commit código)
 
-Orquestador: **commit** evidence + scripts cron (si dueño pide). Luego CLEAN-4 opcional / nocturno write pg.
+1. Rsync/deploy diff a Mini + `kickstart` Next  
+2. `run-cron-scan-refresh.sh` real → mesa fresca en UI  
+3. launchd `com.statsedge.cron-scan-refresh`
+
+## Siguiente tras ops
+
+CLEAN-4 opcional · historia/RPC pg si hace falta.
