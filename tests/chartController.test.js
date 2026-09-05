@@ -31,7 +31,19 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import UniversalPriceChart, { UniversalPriceChartView } from "@/app/UniversalPriceChart";
 import { resolveRenderConfig } from "@/app/useChartController";
+import { projectPatternMarkers } from "@/lib/chartSeriesModel";
 const UPCView = UniversalPriceChartView;
+
+const constructiveBasePattern = {
+  setupDisplayKey: "constructive_base",
+  setupDisplayShortLabel: "Base constructiva",
+  consolidationCandidate: true,
+  baseDepthPct: 12.9,
+  lastContractionDepthPct: 4.9,
+  contractionCount: 2,
+  contractionSwings: [{ toDate: "2025-06-01" }, { toDate: "2025-07-01" }],
+  pivotPrice: 132,
+};
 
 let getJsonCalls = [];
 let fakeChart = null;
@@ -241,6 +253,48 @@ describe("useChartController · viewModel composicional (ADR §5.2)", () => {
     // makeBars (+0,16/día sobre ~131), la última sesión es +0.1%.
     expect(html).toContain("0.1%");
     expect(html).not.toMatch(/4[0-9]\.[0-9]%/);
+  });
+
+  it("patternBadgeRow con estructura real pinta badge aunque patternOverlay sea null", () => {
+    const html = renderToStaticMarkup(
+      React.createElement(UniversalPriceChart, {
+        symbol: "AAPL",
+        bars: makeBars(),
+        settings: { range: "1A", interval: "D", style: "1" },
+        patternOverlay: null,
+        patternBadgeRow: constructiveBasePattern,
+      }),
+    );
+    expect(html).toContain("universalChartPatternBadge");
+    expect(html).toContain("Base constructiva");
+    expect(html).not.toContain("Estructura sin dato");
+  });
+
+  it("patternBadgeRow vacío no pinta badge (CHART-BADGE-1)", () => {
+    const html = renderToStaticMarkup(
+      React.createElement(UniversalPriceChart, {
+        symbol: "EMPTY",
+        bars: makeBars(),
+        settings: { range: "1A", interval: "D", style: "1" },
+        patternOverlay: null,
+        patternBadgeRow: {},
+      }),
+    );
+    expect(html).not.toContain("universalChartPatternBadge");
+    expect(html).not.toContain("Sin validar");
+    expect(html).not.toContain("Estructura sin dato");
+  });
+
+  it("patternBadgeRow no activa markers ni overlay actionable en el lienzo", () => {
+    const rows = makeBars().map((bar) => ({ ...bar, time: bar.date }));
+    const markers = projectPatternMarkers(null, rows, "D");
+    expect(markers).toHaveLength(0);
+
+    const { readFileSync } = require("node:fs");
+    const src = readFileSync("app/useChartController.js", "utf8");
+    const adapterBlock = src.slice(src.indexOf("createChartNativeAdapter({"), src.indexOf("drawings.setRowTimes"));
+    expect(adapterBlock).toContain("patternOverlay");
+    expect(adapterBlock).not.toContain("patternBadgeRow");
   });
 
   it("UniversalPriceChartView acepta viewModel/actions/drawingToolbar como props (test estático sin controller)", () => {

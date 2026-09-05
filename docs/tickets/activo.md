@@ -1,12 +1,13 @@
-# Ticket activo — TABLE-QUIET-1 cerrado
+# Ticket activo — CHART-BADGE-2 cerrado
 
-**Estado:** Verify OK · smoke Mini US OK · listo commit  
-**Evidencia:** `docs/evidence/table-quiet-1-smoke-2026-09-05.md`
+**Estado:** Verify OK · smoke AAPL OK · listo commit  
+**Evidencia:** `docs/evidence/chart-badge-2-smoke-2026-09-05.md`
 
 ## Verify
 
-- VCP / RS tema vacíos: `–` sin InfoHint (30/29 missing, 0 hints)
-- Tests 49 + deploy Mini OK
+- Badge AAPL: Base constructiva · 12.9% → 4.9%
+- Sin vacío Sin validar
+- Tests 22 OK
 
 ## Siguiente
 

@@ -101,6 +101,9 @@ export function useChartController(props = {}) {
     rsThemeSeries = EMPTY_RS_THEME_SERIES,
     rsThemeMainScore = null,
     patternOverlay = null,
+    // Badge flotante: puede mostrar estructura aunque el overlay actionable sea null.
+    // Si no se pasa, el badge sigue derivándose de patternOverlay (callers legacy).
+    patternBadgeRow = undefined,
     showPatternDiagnostics = false,
     localQuality = null,
     preferredStyle = null,
@@ -236,7 +239,12 @@ export function useChartController(props = {}) {
     };
   }, [config.indicators, config.interval, intraday, rows, rsThemeSeries]);
 
-  const patternSummary = useMemo(() => chartPatternBadgeForRow(patternOverlay), [patternOverlay]);
+  const patternBadgeSource = patternBadgeRow !== undefined ? patternBadgeRow : patternOverlay;
+  const patternBadgeSourceKey = useMemo(() => patternContentKey(patternBadgeSource), [patternBadgeSource]);
+  const patternSummary = useMemo(
+    () => chartPatternBadgeForRow(patternBadgeSource),
+    [patternBadgeSourceKey],
+  );
   const patternDiagnostic = useMemo(
     () => showPatternDiagnostics && patternOverlay && !intraday ? vcpDiagnosticSnapshot(patternOverlay) : null,
     [showPatternDiagnostics, patternOverlay, intraday],
