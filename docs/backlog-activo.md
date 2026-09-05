@@ -6,8 +6,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** Hoy = calidad UI (no Mini). Mañana = GHA + leaderboards RPC.  
-**Último cerrado:** **TABLE-QUIET-1** `bac76d8`.  
+**Último cerrado:** **CHART-BADGE-2** `6687afb`.  
 **Ahora:** cola calidad UI — orquestador elige siguiente.  
+**Nota orquestador:** clean rebuild Mini restauró CHART-BADGE-1 (badge vacío AAPL off).  
 **Hecho ops:** Supabase Pro **cancelado** (dueño).  
 **Mañana (Mini):** apagar GHA `scan-universe` · leaderboards RPC pg · finalize percentil pg.  
 **Aparcado:** túnel móvil→Mini.  
