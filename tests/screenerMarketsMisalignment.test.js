@@ -2,6 +2,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi, beforeAll } from "vitest";
 import { MARKETS_MISALIGNMENT_CTA, MARKETS_AUTO_LOAD_LOADING_LABEL } from "@/lib/marketAvailability";
+import { buildFilterLayersUpgradeNotice } from "@/lib/screenerFilterLayers";
 import { DEFAULT_MARKETS } from "@/lib/screenerConfig";
 import { compactMobileScanStatus } from "@/lib/screenerFormat";
 
@@ -50,6 +51,7 @@ function makeProps({
   scannedMarkets = ["US"],
   selectedMarkets = ["US", "CA"],
   snapshotNotice = null,
+  onDismissFilterLayersUpgradeNotice = null,
   restoringScan = false,
   marketsLoadFailed = false,
   marketsLoadFailedDetail = "",
@@ -64,6 +66,7 @@ function makeProps({
       err: null,
       status: "idle",
       snapshotNotice,
+      onDismissFilterLayersUpgradeNotice,
       restoringScan,
       showMobileFilters: false,
       sidebarCollapsed: false,
@@ -311,6 +314,19 @@ describe("ScreenerShell markets misalignment", () => {
     expect(html).not.toMatch(/screenerMobileNoticePeek[^<]*Austria/);
     expect(html).toContain("Falta materializado: Austria");
     mockIsMobileViewport.mockReturnValue(false);
+  });
+});
+
+describe("ScreenerShell filter-layers-upgrade notice", () => {
+  it("muestra botón Entendido y copy sin Más filtros", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      snapshotNotice: buildFilterLayersUpgradeNotice(),
+      onDismissFilterLayersUpgradeNotice: () => {},
+    })));
+    expect(html).toContain("Filtros actualizados");
+    expect(html).toContain("Entendido");
+    expect(html).not.toContain("Más filtros");
+    expect(html).toContain("Abrir");
   });
 });
 

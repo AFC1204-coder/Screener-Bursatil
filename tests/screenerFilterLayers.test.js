@@ -27,6 +27,7 @@ import {
   filterLayersContractWasUpgraded,
   filterLayersUpgradeNoticeIfNeeded,
   resolveSnapshotNotice,
+  snapshotNoticeForPersistence,
   restoreFilterLayers,
 } from "@/lib/screenerFilterLayers";
 import { applyScreenerFilters, screenerFiltersFromParams } from "@/lib/screenerFilters";
@@ -412,6 +413,26 @@ describe("aviso one-shot al migrar filterLayersVersion < 3 (C-03)", () => {
     expect(resolveSnapshotNotice({ primary: null, filterLayersVersion: 1 })?.label).toBe(
       buildFilterLayersUpgradeNotice().label,
     );
+  });
+
+  it("snapshotNoticeForPersistence no guarda aviso upgrade en sesión", () => {
+    expect(snapshotNoticeForPersistence(buildFilterLayersUpgradeNotice())).toBeNull();
+    expect(snapshotNoticeForPersistence({ label: "Copia local", detail: "x" })).toEqual({
+      label: "Copia local",
+      detail: "x",
+    });
+  });
+
+  it("resolveSnapshotNotice ignora primary upgrade persistido y respeta ack", () => {
+    filterLayersUpgradeNoticeIfNeeded(2);
+    const persisted = buildFilterLayersUpgradeNotice();
+    expect(resolveSnapshotNotice({ primary: persisted, filterLayersVersion: 2 })).toBeNull();
+  });
+
+  it("copy de upgrade no menciona Más filtros", () => {
+    const notice = buildFilterLayersUpgradeNotice();
+    expect(notice.detail).not.toContain("Más filtros");
+    expect(notice.detail).toContain("Abrir");
   });
 });
 

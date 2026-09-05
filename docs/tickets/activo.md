@@ -1,13 +1,13 @@
-# Ticket activo — STOCK-CARD-1 cerrado
+# Ticket activo — FILTER-NOTICE-1 cerrado
 
 **Estado:** Verify + smoke Mini OK  
-**Evidencia:** `docs/evidence/stock-card-1-2026-09-05.md`
+**Evidencia:** `docs/evidence/filter-notice-1-2026-09-05.md`
 
 ## Hecho
 
-- Sin «rango –» / «Base –» fantasma  
-- FR sin «desde» de otro engine  
-- Smoke AAPL: FR 64 · caption «universo»
+- Aviso upgrade no se persiste / no reencarna  
+- Copy → tarjetas de familia + «Abrir»  
+- Dismiss **Entendido**
 
 ## Siguiente
 

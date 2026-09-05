@@ -47,6 +47,7 @@ import { metricShortLabel } from "@/lib/metricCatalog";
 import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 import { useScreenerMobileViewport } from "@/lib/useScreenerMobileViewport";
+import { FILTER_LAYERS_UPGRADE_NOTICE_SOURCE } from "@/lib/screenerFilterLayers";
 
 const PERCENTILE_BATCH_BADGE = "Ranking provisional";
 const PERCENTILE_BATCH_NOTE = "Estas filas se conservan, pero sus percentiles se calcularon sobre un lote menor y pueden cambiar al finalizar el universo. En empates, las filas con percentil final aparecen primero.";
@@ -95,6 +96,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     err,
     status,
     snapshotNotice,
+    onDismissFilterLayersUpgradeNotice,
     restoringScan,
     showMobileFilters,
     sidebarCollapsed,
@@ -333,6 +335,22 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     analyzedRows,
   });
   const showSnapshotNotice = snapshotNotice && snapshotNotice.source !== "markets-stale";
+  const isFilterLayersUpgradeNotice = snapshotNotice?.source === FILTER_LAYERS_UPGRADE_NOTICE_SOURCE;
+
+  function renderFilterLayersUpgradeDismiss() {
+    if (!isFilterLayersUpgradeNotice || !onDismissFilterLayersUpgradeNotice) return null;
+    return (
+      <div className="storageAlertActions">
+        <button
+          type="button"
+          className="btn btnSmall btnGhost storageAlertFree"
+          onClick={onDismissFilterLayersUpgradeNotice}
+        >
+          Entendido
+        </button>
+      </div>
+    );
+  }
 
   function handleLideresIntlGuardrailCta(ctaId) {
     if (ctaId === LIDERES_INTL_CTA.LOAD_CORE_INTL) {
@@ -566,7 +584,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           bodyDetail={snapshotNotice.bodyDetail}
           tone={snapshotNotice.tone || "info"}
           role="alert"
-        />
+        >
+          {renderFilterLayersUpgradeDismiss()}
+        </MobileCollapsibleNotice>
       ) : null}
     </div> : null}
     {!isMobileViewport && scanStatusVisible ? <div className={`scanStatusBar ${err ? "error" : "running"}`} role="status" aria-live="polite">
@@ -582,7 +602,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             Vuelve a entrar
           </button>
         </div>
-      ) : null}
+      ) : renderFilterLayersUpgradeDismiss()}
     </div> : null}
     {isMobileViewport && showSnapshotNotice && snapshotNotice.requiresReauth ? <div className="snapshotFreshnessNotice compact warn" role="alert" aria-live="polite">
       <span>{snapshotNotice.label}</span>

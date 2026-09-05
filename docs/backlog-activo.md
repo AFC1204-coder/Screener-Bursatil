@@ -5,8 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** STOCK-CARD-1 cerrado · Grok → un escritor.  
-**Último cerrado:** **STOCK-CARD-1** `42c7145` · tarjeta chart sin huecos fantasma · smoke AAPL.  
+**RECORDATORIO dueño:** FILTER-NOTICE-1 cerrado · Grok → un escritor.  
+**Último cerrado:** **FILTER-NOTICE-1** · banner filtros upgrade one-shot · smoke Mini.  
 **Ahora:** siguiente calidad de página / apagar GHA / leaderboards RPC.  
 **Aparcado:** túnel móvil→Mini.  
 **SHELL:** A→D aterrizado.

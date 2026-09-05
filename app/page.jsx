@@ -82,7 +82,9 @@ import {
   layerToggleImpact,
   restoreFilterLayers,
   filterLayersUpgradeNoticeIfNeeded,
+  acknowledgeFilterLayersUpgrade,
   resolveSnapshotNotice,
+  snapshotNoticeForPersistence,
   settingApplies,
   settingLayerDependency,
 } from "@/lib/screenerFilterLayers";
@@ -978,7 +980,7 @@ export default function Page() {
       rowsCount: rows.length || null,
       scanContext,
       scanPerf,
-      snapshotNotice,
+      snapshotNotice: snapshotNoticeForPersistence(snapshotNotice),
       fail,
       diagnostics,
       status,
@@ -2521,6 +2523,11 @@ export default function Page() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [sessionReady, activeModalRow, pagedRows, selectedResultSymbol]);
 
+  function dismissFilterLayersUpgradeNotice() {
+    acknowledgeFilterLayersUpgrade();
+    setSnapshotNotice(null);
+  }
+
   return <>
   <StorageAlert />
   <ScreenerShell
@@ -2532,6 +2539,7 @@ export default function Page() {
       err,
       status,
       snapshotNotice,
+      onDismissFilterLayersUpgradeNotice: dismissFilterLayersUpgradeNotice,
       restoringScan,
       showMobileFilters,
       sidebarCollapsed,
