@@ -1,12 +1,12 @@
-# Ticket activo — CHART-BADGE-1 cerrado
+# Ticket activo — TABLE-QUIET-1 cerrado
 
-**Estado:** Verify OK · smoke AAPL OK · listo commit  
-**Evidencia:** `docs/evidence/chart-badge-1-smoke-2026-09-05.md`
+**Estado:** Verify OK · smoke Mini US OK · listo commit  
+**Evidencia:** `docs/evidence/table-quiet-1-smoke-2026-09-05.md`
 
 ## Verify
 
-- Badge vacío no flota en ficha
-- Tests 19 + `./vfc` OK
+- VCP / RS tema vacíos: `–` sin InfoHint (30/29 missing, 0 hints)
+- Tests 49 + deploy Mini OK
 
 ## Siguiente
 

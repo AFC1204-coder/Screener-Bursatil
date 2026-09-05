@@ -25,7 +25,7 @@ import { cap, pct } from "@/lib/formatters";
 import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
 import { canonicalRs } from "@/lib/rsCanonical";
 import { countryRs } from "@/lib/countryRs";
-import { themeRs } from "@/lib/themeRs";
+import { themeRs, themeRsAbsenceIsExpected } from "@/lib/themeRs";
 import { canonicalRsDisclosure } from "@/lib/rsEngines";
 import { UNRELIABLE_AUDIT_STATUS } from "@/lib/scanLightProjection";
 import { STAGE_CODE_VS_OPERATIVE_HINT, STAGE_LEGACY_REASON, STAGE_MISSING_REASON, stageConfirmationMark, stageDisplayForRow, stageWordForState } from "@/lib/stageDisplay";
@@ -53,11 +53,11 @@ export {
 // Un guion + icono de información que explica POR QUÉ falta ese dato en ESE
 // valor. Es la única excepción del principio 5 a "la metodología en un solo
 // sitio": explicar el método es redundante, explicar una ausencia concreta no.
-export function MissingValue({ reason = "" }) {
-  return <span className="cellMissing">
+export function MissingValue({ reason = "", quiet = false }) {
+  return <span className="cellMissing" title={quiet && reason ? reason : undefined}>
     <span aria-hidden="true">–</span>
     <span className="srOnly">Sin dato</span>
-    {reason ? <InfoHint text={reason} /> : null}
+    {!quiet && reason ? <InfoHint text={reason} /> : null}
   </span>;
 }
 
@@ -228,8 +228,12 @@ export const SCREENER_COLUMNS = [
     className: "colRsTheme",
     sortKey: () => "weeklyThemeRsRating",
     cell: (row) => {
+      const unreliable = auditIssueReason(row, "weeklyThemeRsRating");
+      if (unreliable) return <MissingValue reason={unreliable} />;
       const trs = themeRs(row);
-      if (!trs.available) return <MissingValue reason={trs.reason} />;
+      if (!trs.available) {
+        return <MissingValue reason={trs.reason} quiet={themeRsAbsenceIsExpected(row, trs)} />;
+      }
       return <b className={`cellNumber ${trs.value >= 75 ? "strong" : trs.value < 45 ? "weak" : ""}`.trim()}>{trs.value.toFixed(0)}</b>;
     },
   },
@@ -268,7 +272,7 @@ export const SCREENER_COLUMNS = [
     cell: (row) => {
       const vcp = vcpMinerviniLabel(row);
       if (!vcp.label) {
-        return <MissingValue reason={vcp.title || "Sin compresión VCP operable en este valor."} />;
+        return <MissingValue quiet reason={vcp.title || "Sin compresión VCP operable en este valor."} />;
       }
       return (
         <span className={`vcpTag vcpTag-${vcp.tone || "neutral"}`} title={vcp.title}>
