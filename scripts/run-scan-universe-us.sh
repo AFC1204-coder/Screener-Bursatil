@@ -26,13 +26,18 @@ if [ "${STATSEDGE_SCAN_UNIVERSE_SIN_RETENCION:-}" = "1" ]; then
 fi
 
 LOG="$ROOT/logs/scan-universe-us.log"
-echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) start concurrency=$CONCURRENCY extra=${EXTRA_ARGS[*]:-none}" >> "$LOG"
+EXTRA_DESC="none"
+if [ "${#EXTRA_ARGS[@]}" -gt 0 ]; then
+  EXTRA_DESC="${EXTRA_ARGS[*]}"
+fi
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) start concurrency=$CONCURRENCY extra=$EXTRA_DESC" >> "$LOG"
 
 set +e
+# Con set -u, "${EXTRA_ARGS[@]}" falla si el array está vacío (bash 3.2 / zsh→bash).
 node --env-file=.env.local --loader ./scripts/loader.mjs \
   scripts/scan-universe.mjs \
   --write --concurrency="$CONCURRENCY" \
-  "${EXTRA_ARGS[@]}" \
+  ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} \
   >> "$ROOT/logs/scan-universe-us.out.log" 2>> "$ROOT/logs/scan-universe-us.err.log"
 EXIT=$?
 set -e
