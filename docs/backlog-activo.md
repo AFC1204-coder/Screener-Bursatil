@@ -5,11 +5,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** UX-SHELL A→D **cerrado** · MIGRATE-1+2+STORAGE-1 **hechos** · **MIGRATE-3** ahora.  
-**Último cerrado:** **STORAGE-1** — smoke US 3315 sin banner cuota.  
-**Ahora:** **MIGRATE-3** cutover Mini · `docs/tickets/MIGRATE-3-cutover-nocturno.md`.  
-**SHELL:** oleada A→D aterrizada en polish.  
-**Gate cierre:** tests del ticket + **`./vfc`** + smoke Browser Use.
+**RECORDATORIO dueño:** UX-SHELL A→D **cerrado** · MIGRATE-1+2+STORAGE-1+**MIGRATE-3** **hechos** (cutover Mini).  
+**Último cerrado:** **MIGRATE-3** — Next+cron launchd · evidencia `docs/evidence/migrate-3-cutover-mini-2026-09-05.md` · OK dueño 2026-09-05.  
+**Ahora:** commit evidence/scripts si se pide · opcional CLEAN-4 · nocturno write pg (gap).  
+**SHELL:** oleada A→D aterrizada en polish.
 
 ## Hecho (esta oleada)
 
@@ -140,7 +139,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **MIGRATE-1** restore Mini · **hecho**.  
 **MIGRATE-2** adaptador `pg` · **hecho**.  
 **STORAGE-1** cuota local · **hecho**.  
-**MIGRATE-3** cutover + launchd · **activo**.
+**MIGRATE-3** cutover + launchd · **cerrado** (2026-09-05 · OK dueño; mesa US ancla **2026-09-03** hasta nocturno local write).
 
 ## Siguiente — datos IPO + filtros
 

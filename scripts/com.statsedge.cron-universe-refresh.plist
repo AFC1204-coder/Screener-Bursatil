@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.statsedge.cron-universe-refresh</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/cristian/Statsedge-v0.1/scripts/run-cron-universe-refresh.sh</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/cristian/Statsedge-v0.1</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>22</integer>
+    <key>Minute</key>
+    <integer>5</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/Users/cristian/Statsedge-v0.1/logs/cron-universe-refresh.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/cristian/Statsedge-v0.1/logs/cron-universe-refresh.err.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+</dict>
+</plist>
