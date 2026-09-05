@@ -23,11 +23,20 @@
 .mobileSidebarHeader { display: none;
 }
 
+.screenerMobileFilterAccess {
+  display: none;
+}
+
 @media (max-width: 1024px) {
   .dashboardContainer {
     grid-template-columns: 1fr;
   }
   .btnMobileOnly { display: inline-flex;
+  }
+  .screenerMobileFilterAccess {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
   }
   .sidebar {
     display: none;
@@ -75,6 +84,32 @@
     font-size: 16px;
     line-height: 1;
     cursor: pointer;
+  }
+}
+
+@media (max-width: 760px) {
+  /* sticky falla con html+body overflow-x:hidden (también el appTopBar).
+     fixed + spacer en flujo: «Filtros» siempre alcanzable bajo el app bar. */
+  .screenerMobileFilterAccess {
+    display: block;
+    height: 44px;
+    margin: 0 0 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .screenerMobileFilterAccess .btnMobileOnly {
+    position: fixed;
+    top: calc(46px + env(safe-area-inset-top));
+    left: 8px;
+    right: 8px;
+    z-index: 75;
+    height: 40px;
+    justify-content: center;
+    background: var(--bg, var(--surface));
+    border: 1px solid var(--line);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
   }
 }
 
@@ -5614,6 +5649,7 @@ button.decisionIssueBadge:hover,
 }
 
 .layerPowerToggle {
+  grid-column: 1;
   grid-row: 1 / -1;
   align-self: start;
   display: grid;
@@ -5647,6 +5683,8 @@ button.decisionIssueBadge:hover,
 }
 
 .layerControlBody {
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
   display: grid;
   gap: 2px;
@@ -5697,6 +5735,7 @@ button.decisionIssueBadge:hover,
 }
 
 .layerControlRow > .infoHint {
+  grid-column: 3;
   grid-row: 1 / -1;
   align-self: center;
   justify-self: center;
@@ -5852,7 +5891,8 @@ button.decisionIssueBadge:hover,
 }
 
 .layerOpenBtn {
-  grid-row: 1 / -1;
+  grid-column: 4;
+  grid-row: 1;
   align-self: center;
   min-height: 32px;
   padding: 0 10px;

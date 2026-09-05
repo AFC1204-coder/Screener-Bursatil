@@ -604,9 +604,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             segunda excepción a la nota de cabecera de este archivo. */}
         <WeeklyChangesLine onOpenStock={saveSessionBeforeStockOpen} />
       </div>
-      <div className="actions">
-        <button className="btn btnMobileOnly" onClick={() => setShowMobileFilters(!showMobileFilters)}>Filtros</button>
-      </div>
+    </div>
+    <div className="screenerMobileFilterAccess">
+      <button className="btn btnMobileOnly" type="button" onClick={() => setShowMobileFilters(!showMobileFilters)}>Filtros</button>
     </div>
     {err && <div className="error">{err}</div>}
     {isMobileViewport && (scanStatusVisible || showSnapshotNotice) ? <div className="screenerMobileNoticeStack">

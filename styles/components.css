@@ -4276,7 +4276,7 @@ h2 {
   z-index:70;
   width:min(720px,calc(100vw - 24px));
   display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
+  grid-template-columns:repeat(6,minmax(0,1fr));
   gap:2px;
   padding:6px;
   transform:translateX(-50%);
@@ -7406,7 +7406,7 @@ h2 {
     width: min(360px, calc(100vw - 18px)) !important;
     min-height: 0 !important;
     display: grid !important;
-    grid-template-columns: repeat(5,minmax(0,1fr)) !important;
+    grid-template-columns: repeat(6,minmax(0,1fr)) !important;
     gap: 3px !important;
     padding: 5px !important;
     transform: translateX(-50%) !important;
@@ -7818,7 +7818,7 @@ h2 {
     width: auto !important;
     min-height: 0 !important;
     display: grid !important;
-    grid-template-columns: repeat(5,minmax(0,1fr)) !important;
+    grid-template-columns: repeat(6,minmax(0,1fr)) !important;
     gap: 4px !important;
     padding: 6px !important;
     transform: none !important;

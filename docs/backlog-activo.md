@@ -6,13 +6,16 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** Mañana = Mini (GHA off · leaderboards RPC · finalize percentil).  
-**Último cerrado:** **UX-READ** oleada (A′/C/D/E/F) · último código **READ-F** `67da5b3`.  
-**Ahora:** idle — oleada UX-READ **cerrada** (dueño 2026-09-05 noche).  
-**Nota cierre UX-READ:** VCP se queda; RS tema→ficha; RS país si ≠ US-only; **READ-B** aplazada a propósito; discordancia cifras RS overlay/tarjeta/QR y badge opacity → aparcado (no bloquean).  
+**Último cerrado:** **LOOK-A** (fixes layout P0; sticky→fixed por overflow-x html/body).  
+**Ahora:** idle tras LOOK-A — siguiente **LOOK-B** (tokens v2.3 pizarra apagada) tras validar hex A/B en pantalla.  
+**Cola piel:** LOOK-B → C∥D → E → F. Análisis: `docs/analisis-ux-look-redisenio-2026-09-05.md`.  
+**Nota:** Mini ops mañana **no** bloqueada; puede intercalarse. Tape proto aparcado.  
+**Nota UX-LOOK:** v2 **sí** en producción; enmendar lienzo (no sustituir sistema).  
+**Nota cierre UX-READ:** VCP se queda; RS tema→ficha; RS país si ≠ US-only; **READ-B** aplazada.  
 **Hecho ops:** Supabase Pro **cancelado** (dueño).  
 **Mañana (Mini):** apagar GHA `scan-universe` · leaderboards RPC pg · finalize percentil pg.  
-**Aparcado:** túnel móvil→Mini · residuales Fable (RS 72≠64, badge opacity).  
-**SHELL:** A→D aterrizado.
+**Aparcado:** túnel móvil→Mini · residuales Fable READ · tape→producto.  
+**SHELL:** A→D cerebro OK; piel = oleadas LOOK-*.
 
 ## Hecho (esta oleada)
 
