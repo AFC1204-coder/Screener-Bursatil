@@ -10,8 +10,8 @@ import { getJson } from "@/lib/clientApi";
 import { deleteFavoriteFromCloud, deleteScanFromCloud, getAlertsFromCloud, getCloudStatus, mergeAlertsWithTimestamps, mergeFavoritesWithTombstones, mergeScansWithTombstones, pullCloudState, pushCloudState, resolveAlertInCloud, syncAlertsToCloud, syncFavoriteToCloud, syncFavoritesToCloud, syncScanToCloud } from "@/lib/cloudSyncClient";
 import { dateShort, dateTime, num, pct } from "@/lib/formatters";
 import { sma } from "@/lib/indicators";
+import { persistLocalScans } from "@/lib/localScanPersistence";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
-import { fitScansForBrowser } from "@/lib/screenerPipeline";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { activeAlerts, alertSummary, alertsFromScan, mergeAlerts, resolveAlert } from "@/lib/methodologyAlerts";
@@ -358,7 +358,7 @@ export default function ResearchDesk() {
       document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, []);
-  function persistScans(next) { setScans(next); safeWrite(STORAGE_KEYS.scans, fitScansForBrowser(next)); }
+  function persistScans(next) { setScans(next); persistLocalScans(next); }
   function persistFavs(next) { setFavorites(next); safeWrite(STORAGE_KEYS.favorites, next); }
   function persistAlerts(next) { setAlerts(next); safeWrite(STORAGE_KEYS.alerts, next); }
 

@@ -1,7 +1,8 @@
 # MIGRATE-3 — Cutover Mini + nocturno + checklist Pro
 
-**Estado:** Tras MIGRATE-2 smoke OK  
-**Plan:** `docs/plan-migrate-postgres-mac-mini-2026-08-30.md`
+**Estado:** Activo tras STORAGE-1 · dueño presente en cutover  
+**Plan:** `docs/plan-migrate-postgres-mac-mini-2026-08-30.md`  
+**Mini:** `Christians-Mac-mini` / `cristian` · Postgres 17 · DB `statsedge`
 
 ## Objetivo
 

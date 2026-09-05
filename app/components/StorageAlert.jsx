@@ -16,13 +16,14 @@ import {
   lastStorageWriteFailure,
   subscribeStorageWriteFailures,
 } from "@/lib/localState";
+import { getRemotePersistenceConfigured } from "@/lib/localScanPersistence";
 
 export const STORAGE_ALERT_DISMISS_PREFIX = "statsedge.storageAlert.dismiss";
 
 const MESSAGES = {
   [STORAGE_KEYS.review]: "La cola de revisión no se guardó; en la ficha puede faltar Anterior/Siguiente.",
   [STORAGE_KEYS.screenerSession]: "La sesión no se guardó entera; al volver puede no restaurarse.",
-  [STORAGE_KEYS.scans]: "No cabe el snapshot local; la copia en nube sigue disponible.",
+  [STORAGE_KEYS.scans]: "No cabe una copia local completa; los datos en tu cuenta siguen disponibles.",
   [STORAGE_KEYS.favorites]: "Los favoritos no se guardaron en este dispositivo.",
   [STORAGE_KEYS.alerts]: "Las alertas no se guardaron en este dispositivo.",
 };
@@ -64,6 +65,12 @@ export function dismissStorageAlert(failure, storage = typeof sessionStorage !==
   }
 }
 
+export function shouldShowStorageAlert(failure) {
+  if (!failure) return false;
+  if (failure.key === STORAGE_KEYS.scans && getRemotePersistenceConfigured()) return false;
+  return true;
+}
+
 export function buildStorageAlertMessage(failure) {
   const reduced = failure.degraded && !failure.failed;
   let text;
@@ -87,11 +94,12 @@ export default function StorageAlert() {
 
   useEffect(() => {
     const last = lastStorageWriteFailure();
-    if (last) {
+    if (last && shouldShowStorageAlert(last)) {
       setFailure(last);
       setHidden(isStorageAlertDismissed(last));
     }
     return subscribeStorageWriteFailures((next) => {
+      if (!shouldShowStorageAlert(next)) return;
       setFailure((current) => {
         if (current && sameFailureSignature(current, next)) return current;
         setHidden(isStorageAlertDismissed(next));

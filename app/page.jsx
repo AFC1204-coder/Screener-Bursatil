@@ -15,11 +15,12 @@ import { resolvePrimaryReviewStartSymbol } from "@/lib/screenerReviewLaunch";
 import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
-import { getLatestScanFromCloud, getLatestScanFromCloudForMarkets, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
+import { getLatestScanFromCloud, getLatestScanFromCloudForMarkets, getCloudStatus, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
 import { dateTime, pct } from "@/lib/formatters";
 import { avg, avgVolume } from "@/lib/indicators";
 import StorageAlert from "@/app/components/StorageAlert";
-import { budgetFor, payloadChars, readIpoRadar, safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { readIpoRadar, safeRead, safeRemove, safeWrite, STORAGE_KEYS } from "@/lib/localState";
+import { persistLocalScans } from "@/lib/localScanPersistence";
 import { augmentIpoDiscoveryFilteredView } from "@/lib/mergeIpoDiscoveryRows";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { alertsFromScan, mergeAlerts } from "@/lib/methodologyAlerts";
@@ -36,7 +37,7 @@ import { decisionProfileStateForStock } from "@/lib/decisionProfile";
 import { buildScreenerDataHealth, dataHealthFilterLabel } from "@/lib/screenerDataHealth";
 import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
-import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, fitScansForBrowser, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
+import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import { createDebouncedSessionSaver, screenerFiltersFromScan, withScanScreenerFilters } from "@/lib/screenerFilterFastPath";
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
 import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, buildLocalFallbackNotice, buildCloudAuthRequiredNotice, localScanIsSampled, manualDataRefreshStatus, screenerSessionRefreshReason, sessionAutoRefreshStatus, snapshotCloudFallbackReason } from "@/lib/snapshotFreshness";
@@ -574,7 +575,7 @@ export default function Page() {
       }
       const notice = buildSnapshotFreshnessNotice(result.data, scan);
       const storedScans = safeRead(STORAGE_KEYS.scans, []);
-      safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])]));
+      persistLocalScans([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])], { remoteConfigured: result.configured !== false });
       restoreSnapshot(scan, { source: "cloud", notice });
       setStatus(notice?.stale
         ? `Última copia cacheada cargada: ${scan.rows.length} acciones. La nube no respondió al refrescar.`
@@ -679,7 +680,7 @@ export default function Page() {
       // La copia local pasa a ser la del nocturno vigente, para que la
       // rehidratación por scanRef de la próxima recarga lo encuentre.
       const storedScans = safeRead(STORAGE_KEYS.scans, []);
-      safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])]));
+      persistLocalScans([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])], { remoteConfigured: result.configured !== false });
       applyFreshSnapshotData(scan, {
         notice: buildSnapshotFreshnessNotice(result.data, scan),
         scanSignature,
@@ -913,14 +914,12 @@ export default function Page() {
     //    OPVs, sectores y el pulso de escaneos de salud de mercado.
     // 2. El recorte al presupuesto de los snapshots guardados antes de que
     //    existiera (filas con objectiveMetricAudit/decisionTrace, hasta 50).
-    const storedScansOnStartup = safeRead(STORAGE_KEYS.scans, []);
-    const storedScansForBudget = dropForeignMarketSnapshots(storedScansOnStartup);
-    if (storedScansForBudget.length !== (Array.isArray(storedScansOnStartup) ? storedScansOnStartup.length : 0)) {
-      safeWrite(STORAGE_KEYS.scans, storedScansForBudget);
-    }
-    if (payloadChars(storedScansForBudget) > (budgetFor(STORAGE_KEYS.scans) || Infinity)) {
-      safeWrite(STORAGE_KEYS.scans, fitScansForBrowser(storedScansForBudget));
-    }
+    getCloudStatus().finally(() => {
+      if (cancelled) return;
+      const storedScansOnStartup = safeRead(STORAGE_KEYS.scans, []);
+      const storedScansForBudget = dropForeignMarketSnapshots(storedScansOnStartup);
+      persistLocalScans(storedScansForBudget);
+    });
     return () => {
       cancelled = true;
     };
@@ -1349,7 +1348,7 @@ export default function Page() {
           return;
         }
         const storedScans = safeRead(STORAGE_KEYS.scans, []);
-        safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])]));
+        persistLocalScans([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])], { remoteConfigured: result.configured !== false });
         applyFreshSnapshotData(scan, {
           notice: buildSnapshotFreshnessNotice(result.data, scan),
           scanSignature: { markets: normalized, manual, scanMode },
@@ -1425,7 +1424,7 @@ export default function Page() {
         return;
       }
       const storedScans = safeRead(STORAGE_KEYS.scans, []);
-      safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])]));
+      persistLocalScans([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])], { remoteConfigured: result.configured !== false });
       const mergedNotice = marketsMeta?.merged
         ? buildMergedSnapshotNotice(marketsMeta)
         : buildSnapshotFreshnessNotice(result.data, scan);
@@ -1565,7 +1564,7 @@ export default function Page() {
     // no, la copia local seguía sirviendo el mismo escaneo equivocado.
     const storedScans = safeRead(STORAGE_KEYS.scans, []);
     const cleanedScans = dropForeignMarketSnapshots(storedScans);
-    if (cleanedScans.length !== (Array.isArray(storedScans) ? storedScans.length : 0)) safeWrite(STORAGE_KEYS.scans, cleanedScans);
+    if (cleanedScans.length !== (Array.isArray(storedScans) ? storedScans.length : 0)) persistLocalScans(cleanedScans);
     setSnapshotNotice(null);
     // Sin botón Ejecutar, un reset que dejara la tabla vacía sería un camino
     // sin salida: se recargan los datos de anoche inmediatamente.
@@ -2214,7 +2213,7 @@ export default function Page() {
       methodologySummary,
       rows: decisionRows,
     };
-    safeWrite(STORAGE_KEYS.scans, fitScansForBrowser([scan, ...scans]));
+    persistLocalScans([scan, ...scans]);
     const generatedAlerts = alertsFromScan(scan);
     const nextAlerts = mergeAlerts(safeRead(STORAGE_KEYS.alerts, []), generatedAlerts).slice(0, 500);
     safeWrite(STORAGE_KEYS.alerts, nextAlerts);

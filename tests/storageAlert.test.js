@@ -74,7 +74,7 @@ describe("StorageAlert helpers", () => {
       failed: true,
     });
 
-    expect(message.text).toContain("No cabe el snapshot local");
+    expect(message.text).toContain("No cabe una copia local completa");
     expect(message.text).toContain("próxima visita");
     expect(message.text.split(".").length).toBeLessThanOrEqual(3);
     expect(message.showFreeSpace).toBe(true);

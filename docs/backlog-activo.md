@@ -5,9 +5,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** UX-SHELL A→D **cerrado** · MIGRATE-1+2 **hechos** · **STORAGE-1** luego MIGRATE-3.  
-**Último cerrado (código):** **MIGRATE-2** adaptador `pg` (este commit en rebase).  
-**Ahora:** **STORAGE-1** (commit siguiente) · luego **MIGRATE-3**.  
+**RECORDATORIO dueño:** UX-SHELL A→D **cerrado** · MIGRATE-1+2+STORAGE-1 **hechos** · **MIGRATE-3** ahora.  
+**Último cerrado:** **STORAGE-1** — smoke US 3315 sin banner cuota.  
+**Ahora:** **MIGRATE-3** cutover Mini · `docs/tickets/MIGRATE-3-cutover-nocturno.md`.  
 **SHELL:** oleada A→D aterrizada en polish.  
 **Gate cierre:** tests del ticket + **`./vfc`** + smoke Browser Use.
 
@@ -133,13 +133,14 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 | ID | Qué | Estado |
 |---|---|---|
-| STORAGE-1 | Snapshot local: no QuotaExceeded con mesa US 3k+; remoto = fuente de verdad | **Activo** · `docs/tickets/STORAGE-1-local-snapshot-quota.md` |
+| STORAGE-1 | Snapshot local: no QuotaExceeded con mesa US 3k+; remoto = fuente de verdad | **Cerrado** · smoke 2026-09-05 |
 
 ## Siguiente — MIGRATE
 
 **MIGRATE-1** restore Mini · **hecho**.  
-**MIGRATE-2** adaptador `pg` · **hecho** (este rebase).  
-**MIGRATE-3** cutover + launchd · **después de STORAGE-1**.
+**MIGRATE-2** adaptador `pg` · **hecho**.  
+**STORAGE-1** cuota local · **hecho**.  
+**MIGRATE-3** cutover + launchd · **activo**.
 
 ## Siguiente — datos IPO + filtros
 
