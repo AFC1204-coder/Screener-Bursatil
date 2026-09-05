@@ -5,9 +5,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** migrate Mini **OK** · **CLEAN-4** verify OK · Grok Bot → un escritor.  
-**Último cerrado (pend. commit):** **CLEAN-4** CSS residual post-SHELL.  
-**Ahora:** commit CLEAN-4 · luego RPC pg o apagar GHA.  
+**RECORDATORIO dueño:** migrate Mini **OK** · **CLEAN-4** cerrado `5a40968` · Grok Bot → un escritor.  
+**Último cerrado:** **CLEAN-4** CSS residual post-SHELL.  
+**Ahora:** RPC pg o apagar GHA (cuando digas).  
 **Aplazado:** túnel móvil→Mini.  
 **SHELL:** A→D aterrizado.
 
