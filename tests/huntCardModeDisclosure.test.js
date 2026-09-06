@@ -2,17 +2,18 @@ import { describe, expect, it } from "vitest";
 import { huntCardModeDisclosure, huntCardSheetFamilyKeys } from "@/lib/huntCardModeDisclosure";
 
 describe("huntCardModeDisclosure", () => {
-  it("Radar IPO → discovery con puerta IPO ≤72m", () => {
+  it("IPO recientes → lente con puerta edad ≤24m por defecto", () => {
     const disclosure = huntCardModeDisclosure({ cardId: "radar-ipo" });
     expect(disclosure).toMatchObject({
       cardId: "radar-ipo",
-      cardLabel: "Radar IPO",
+      cardLabel: "IPO recientes",
       presetKey: "ipoDiscovery",
-      mode: "discovery",
-      modeBadgeLabel: "Discovery",
+      mode: "lente",
+      modeBadgeLabel: "Lente",
     });
     expect(disclosure.doors.some((door) => door.familyKey === "ipo")).toBe(true);
-    expect(disclosure.doors.some((door) => /72m/.test(door.label))).toBe(true);
+    expect(disclosure.doors.some((door) => /24m/.test(door.label))).toBe(true);
+    expect(disclosure.summaryLine).toMatch(/sin puertas de tendencia/);
   });
 
   it("Deterioro → strict con puerta de deterioro", () => {

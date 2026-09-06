@@ -46,18 +46,25 @@ function discoveryRow(overrides = {}) {
 describe("ipoDiscovery preset", () => {
   const settings = settingsForPreset(IPO_DISCOVERY_PRESET_KEY);
 
-  it("usa modo discovery abierto con IPO reciente ≤72m", () => {
+  it("usa lente cohort por edad (setup any) con IPO reciente ≤24m", () => {
     expect(settings.filterStrictness).toBe("discovery");
-    expect(settings.setupMode).toBe("ipoRecent");
+    expect(settings.setupMode).toBe("any");
     expect(settings.requireRecentIpo).toBe(true);
-    expect(settings.maxIpoAgeMonths).toBe(72);
+    expect(settings.maxIpoAgeMonths).toBe(24);
     expect(settings.minMarketCap).toBeLessThanOrEqual(50_000_000);
     expect(settings.minPerf3m).toBeLessThanOrEqual(0);
     expect(settings.minDataCoverageScore).toBeLessThanOrEqual(25);
   });
 
-  it("acepta IPO reciente con umbrales relajados", () => {
-    expect(screenerFilterRejectReason(discoveryRow(), settings)).toBe("");
+  it("acepta IPO reciente sin puertas de tendencia (RS/momentum/52w)", () => {
+    expect(screenerFilterRejectReason(discoveryRow({
+      momentumScore: 0,
+      rsGlobalPct: 20,
+      distance52w: -40,
+      ipoScore: 10,
+      objectiveScore: 20,
+      totalScore: 20,
+    }), settings)).toBe("");
   });
 
   it("rechaza IPO demasiado antigua", () => {

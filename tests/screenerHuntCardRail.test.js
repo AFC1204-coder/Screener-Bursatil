@@ -227,16 +227,17 @@ describe("HuntCardRail", () => {
 });
 
 describe("HuntCardModeStrip", () => {
-  it("muestra badge de modo y panel Qué aplica para la ficha activa", () => {
+  it("muestra badge de lente y panel Qué aplica para la ficha activa", () => {
     const html = renderToStaticMarkup(React.createElement(HuntCardModeStrip, {
       presetKey: "ipoDiscovery",
       markets: ["US"],
     }));
     expect(html).toContain("huntCardModeStrip");
-    expect(html).toContain("huntCardModeBadge--discovery");
-    expect(html).toContain("Discovery");
+    expect(html).toContain("huntCardModeBadge--lente");
+    expect(html).toContain("Lente");
     expect(html).toContain("Qué aplica esta ficha");
-    expect(html).toMatch(/IPO reciente ≤ 72m/);
+    expect(html).toMatch(/Salida ≤ 24m/);
+    expect(html).toMatch(/sin puertas de tendencia/);
   });
 
   it("marca Deterioro como strict", () => {

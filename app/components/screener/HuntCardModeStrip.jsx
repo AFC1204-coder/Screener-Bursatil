@@ -7,9 +7,10 @@ export default function HuntCardModeStrip({
   presetKey = "",
   markets = [],
   passedRows = [],
+  activeSettings = null,
   onOpenFamily,
 }) {
-  const disclosure = huntCardModeDisclosure({ presetKey, markets });
+  const disclosure = huntCardModeDisclosure({ presetKey, markets, activeSettings });
   if (!disclosure) return null;
 
   const rsChip = buildHuntCardRsChip({

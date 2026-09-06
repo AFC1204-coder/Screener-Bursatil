@@ -18,6 +18,7 @@ import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
 import ResultPagerTable from "@/app/components/screener/ResultPagerTable";
 import HuntCardRail from "@/app/components/screener/HuntCardRail";
 import HuntCardModeStrip from "@/app/components/screener/HuntCardModeStrip";
+import IpoCohortWindowChips from "@/app/components/screener/IpoCohortWindowChips";
 import WeeklyChangesLine from "@/app/components/screener/WeeklyChangesLine";
 import ScreenerSidebar from "@/app/components/screener/ScreenerSidebar";
 import ScreenerLaboratoryPanel from "@/app/components/screener/ScreenerLaboratoryPanel";
@@ -193,6 +194,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     familyImpact,
     previewFamilyIntensity,
     commitFamilyIntensity,
+    updateSetting,
   } = sidebar;
 
   // --- search ---
@@ -799,6 +801,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             presetKey={presetKey}
             markets={markets}
             passedRows={resultsRows}
+            activeSettings={activeSettings}
             onOpenFamily={(familyKey) => {
               setShowMobileFilters(true);
               setActiveFilterFamily(familyKey);
@@ -927,6 +930,14 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               </details>
             </div>
           </div>
+
+          <IpoCohortWindowChips
+            presetKey={presetKey}
+            cardId={activeHuntCard?.id}
+            analyzedRows={analyzedRows}
+            activeSettings={activeSettings}
+            onSelectWindow={(months) => updateSetting("maxIpoAgeMonths", months)}
+          />
 
           <ResultFilterBar
             optionLabel={optionLabel}

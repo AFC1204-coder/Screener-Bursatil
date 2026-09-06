@@ -17,7 +17,7 @@ describe("HUNT_CARDS", () => {
       ["cerca-pivot", "Cerca de pivot", "nearPivot"],
       ["deterioro", "Deterioro", "weakness"],
       ["lideres-intl", "Líderes intl", "intl"],
-      ["radar-ipo", "Radar IPO", "ipoDiscovery"],
+      ["radar-ipo", "IPO recientes", "ipoDiscovery"],
     ]);
     for (const card of HUNT_CARDS) {
       expect(SCREENER_FILTER_PRESETS[card.presetKey]).toBeTruthy();

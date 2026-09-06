@@ -86,7 +86,7 @@ describe("mergeIpoDiscoveryRows", () => {
 });
 
 describe("augmentIpoDiscoveryFilteredView", () => {
-  it("solo aplica merge con preset ipoDiscovery", () => {
+  it("no inyecta vigiladas en ipoDiscovery (lente cohort)", () => {
     const base = { rows: [scanRow("AAA")], filterMs: 1 };
     const untouched = augmentIpoDiscoveryFilteredView(base, {
       presetKey: "balanced",
@@ -100,6 +100,7 @@ describe("augmentIpoDiscoveryFilteredView", () => {
       markets: ["US"],
       watchItems: [watchItem({ id: "w-bbb", symbol: "BBB" })],
     });
-    expect(merged.rows).toHaveLength(2);
+    expect(merged.rows).toHaveLength(1);
+    expect(merged.rows[0].symbol).toBe("AAA");
   });
 });

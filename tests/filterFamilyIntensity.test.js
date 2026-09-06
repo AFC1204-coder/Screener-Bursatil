@@ -13,8 +13,9 @@ describe("filterFamilyIntensity · IPO", () => {
     const mid = settingsAtFamilyIntensity("ipo", 50).settings;
     const strict = settingsAtFamilyIntensity("ipo", 100).settings;
 
-    expect(open.maxIpoAgeMonths).toBeGreaterThan(strict.maxIpoAgeMonths);
+    expect(open.maxIpoAgeMonths).toBe(36);
     expect(mid.maxIpoAgeMonths).toBe(60);
+    expect(strict.maxIpoAgeMonths).toBe(60);
     expect(mid.minDataCoverageScore).toBeGreaterThan(open.minDataCoverageScore);
     expect(mid.minDataCoverageScore).toBeLessThan(strict.minDataCoverageScore);
     expect(open.requireRecentIpo).toBe(true);
