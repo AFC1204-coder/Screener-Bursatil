@@ -43,18 +43,13 @@ summary:focus-visible,
 }
 
 @media (max-width: 760px) {
-  body { padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
+  /* LOOK-F: ~56px nav + ~8px offset + safe-area (no 116px heredado). */
+  body { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
   html, body { max-width: 100%; overflow-x: hidden; }
 }
 
 @media (min-width: 761px) {
   body { padding-bottom: 0; }
-}
-
-/* El padding-bottom de móvil con safe-area lo maneja la barra de navegación
-   inferior (BottomNav), no este reset. */
-@media (max-width: 760px) {
-  body { padding-bottom: calc(116px + env(safe-area-inset-bottom)); }
 }
 
 html, body { overflow-x: hidden; }

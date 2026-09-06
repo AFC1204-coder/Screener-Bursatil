@@ -2,7 +2,6 @@
 
 **Estado:** idle  
 **Rama:** `codex/statsedge-ui-polish`  
-**Último cerrado:** LOOK-E (mesa + chrome `/stock`)  
-**Siguiente:** LOOK-F — móvil calidad de uso
+**Último cerrado:** LOOK-F (móvil calidad de uso) — **oleada LOOK A→F completa**
 
-Sin prompt activo. Pedir al orquestador activar LOOK-F cuando toque.
+Sin prompt activo. Siguiente backlog: residuales READ-G/H, tape→producto, o smoke OPS-MINI-1 cuando haya túnel PG.

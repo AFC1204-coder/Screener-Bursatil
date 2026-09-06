@@ -6,16 +6,16 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** smoke PG `:15432` cuando haya túnel.  
-**Último cerrado:** **LOOK-E** mesa + chrome `/stock` (smoke + hotfix keycaps).  
-**Ahora:** idle — siguiente **LOOK-F** (móvil calidad de uso).  
+**Último cerrado:** **LOOK-F** móvil calidad de uso (fin oleada LOOK).  
+**Ahora:** idle.  
 **Pendiente ops:** smoke RPC Mini `:15432`.  
-**Cola piel:** LOOK-F móvil. Multi-lista solo Favoritos.  
+**Cola piel:** LOOK A→F ✅. Multi-lista solo Favoritos.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
 **Nota:** Tape proto en remoto. Tokens lienzo **v2.3**; controles `--control-*` / `--t-*` consumidos.  
 **Hecho ops:** Supabase Pro cancelado · GHA scan-universe **disabled_manually**.  
 **Residuales UX-READ (docs):** READ-G P2 · READ-H P3.  
 **Aparcado:** tape→producto · smoke OPS-MINI-1 PG · uppercase 3 roles (deuda LOOK-C).  
-**SHELL:** A→D cerebro OK; piel = oleadas LOOK-*.
+**SHELL:** A→D cerebro OK; piel LOOK = cerrada.
 
 ## Hecho (esta oleada)
 
@@ -297,7 +297,7 @@ Fuente: `docs/analisis-ux-look-redisenio-2026-09-05.md`. Orden: A → B → C∥
 | LOOK-C | Botones, escala tipográfica, transiciones | **Cerrado** · `1c958ce` |
 | LOOK-D | Aside piel (tarjeta, chips, modal, drawer) | **Cerrado** · `82e4f66` |
 | LOOK-E | Mesa + chrome `/stock` | **Cerrado** ·  |
-| LOOK-F | Móvil calidad de uso | Aparcado |
+| LOOK-F | Móvil calidad de uso | **Cerrado** · pendiente hash |
 
 ## Aplazado / no oleada UI
 

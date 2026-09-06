@@ -28,8 +28,8 @@ import {
   SearchCandidateList,
   SearchScopeList,
 } from "@/app/screenerPanels";
-import { investorStatusLabel, compactMobileScanStatus } from "@/lib/screenerFormat";
-import { huntDisplayName } from "@/lib/screenerHuntCards";
+import { activeLayerCount, investorStatusLabel, compactMobileScanStatus } from "@/lib/screenerFormat";
+import { huntDisplayName, HUNT_CARDS, resolveActiveHuntCard } from "@/lib/screenerHuntCards";
 import { huntCardSheetFamilyKeys } from "@/lib/huntCardModeDisclosure";
 import { SessionPlumbingPanel } from "@/lib/screenerFiltersView";
 import { MARKETS_MISALIGNMENT_EMPTY_LABEL, resolveMarketsMisalignmentNotice } from "@/lib/marketAvailability";
@@ -80,6 +80,56 @@ function MobileCollapsibleNotice({
       <div className="screenerMobileNoticeBody" role={role} aria-live="polite">
         <p>{body}</p>
         {children}
+      </div>
+    </details>
+  );
+}
+
+function MobileStatusFold({
+  err = false,
+  statusLabel = "",
+  mobileStatusLabel = "",
+  scanStatusVisible = false,
+  snapshotNotice = null,
+  showSnapshotNotice = false,
+  children,
+}) {
+  const showSnapshot = showSnapshotNotice && snapshotNotice && !snapshotNotice.requiresReauth;
+  if (!scanStatusVisible && !showSnapshot) return null;
+
+  const summaryLabel = scanStatusVisible
+    ? (err ? "Incidencia" : "Estado")
+    : (snapshotNotice?.label || (err ? "Incidencia" : "Estado"));
+
+  let peek = "";
+  if (scanStatusVisible && showSnapshot) {
+    peek = [
+      mobileStatusLabel || statusLabel,
+      snapshotNotice.peekDetail ?? snapshotNotice.detail,
+    ].filter(Boolean).join(" · ");
+  } else if (scanStatusVisible) {
+    peek = mobileStatusLabel || statusLabel;
+  } else if (showSnapshot) {
+    const snapshotPeek = snapshotNotice.peekDetail ?? snapshotNotice.detail;
+    peek = snapshotNotice.label
+      ? `${snapshotNotice.label} · ${snapshotPeek}`
+      : snapshotPeek;
+  }
+
+  return (
+    <details className="screenerMobileStatusFold">
+      <summary>
+        <span className="screenerMobileStatusFoldLabel">{summaryLabel}</span>
+        <em className="screenerMobileStatusFoldPeek">{peek}</em>
+      </summary>
+      <div className="screenerMobileStatusFoldBody" role="status" aria-live="polite">
+        {scanStatusVisible ? <p>{statusLabel}</p> : null}
+        {showSnapshot ? (
+          <>
+            <p>{snapshotNotice.bodyDetail ?? snapshotNotice.detail}</p>
+            {children}
+          </>
+        ) : null}
       </div>
     </details>
   );
@@ -271,6 +321,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   } = staleness || {};
   const isMobileViewport = useScreenerMobileViewport();
   const huntLabel = huntDisplayName(presetKey, markets);
+  const activeHuntCard = resolveActiveHuntCard(presetKey, markets);
+  const filterActiveCount = activeLayerCount(filterLayers) + (useRegimeFilter ? 1 : 0);
   const sheetFamilyKeys = huntCardSheetFamilyKeys({ presetKey, markets });
   const presetNameForTruth = huntTruthOverride?.presetName ?? huntLabel;
   const marketsMisalignment = resolveMarketsMisalignmentNotice({
@@ -605,27 +657,57 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         <WeeklyChangesLine onOpenStock={saveSessionBeforeStockOpen} />
       </div>
     </div>
-    <div className="screenerMobileFilterAccess">
-      <button className="btn btnMobileOnly" type="button" onClick={() => setShowMobileFilters(!showMobileFilters)}>Filtros</button>
-    </div>
+    {isMobileViewport ? <>
+      <div className="screenerMobileSubBarSpacer" aria-hidden="true" />
+      <div className="screenerMobileSubBar" role="toolbar" aria-label="Acciones rápidas del screener">
+      <button
+        type="button"
+        className="screenerMobileSubBarBtn"
+        onClick={() => setShowMobileFilters(!showMobileFilters)}
+      >
+        Filtros ({filterActiveCount})
+      </button>
+      <details className="screenerMobileSubBarFicha">
+        <summary aria-label={`Ficha activa: ${huntLabel}`}>
+          <span className="screenerMobileSubBarFichaLabel">{huntLabel}</span>
+        </summary>
+        <div className="screenerMobileSubBarFichaMenu" role="listbox" aria-label="Fichas de caza">
+          {HUNT_CARDS.map((card) => (
+            <button
+              type="button"
+              key={card.id}
+              role="option"
+              aria-selected={activeHuntCard?.id === card.id}
+              className={activeHuntCard?.id === card.id ? "active" : ""}
+              onClick={() => applyHuntCard(card.id)}
+            >
+              {card.label}
+            </button>
+          ))}
+        </div>
+      </details>
+      <button
+        type="button"
+        className="screenerMobileSubBarBtn screenerMobileSubBarBtnPrimary"
+        onClick={openPrimaryReview}
+        disabled={!huntResultsFiltered.length}
+      >
+        Revisar
+      </button>
+      </div>
+    </> : null}
     {err && <div className="error">{err}</div>}
     {isMobileViewport && (scanStatusVisible || showSnapshotNotice) ? <div className="screenerMobileNoticeStack">
-      {scanStatusVisible ? <div className={`scanStatusBar scanStatusBar--mobileFold ${err ? "error" : "running"}`} role="status" aria-live="polite">
-        <span>{err ? "Incidencia" : "Estado"}</span>
-        <b>{mobileStatusLabel}</b>
-      </div> : null}
-      {showSnapshotNotice && !snapshotNotice.requiresReauth ? (
-        <MobileCollapsibleNotice
-          label={snapshotNotice.label}
-          detail={snapshotNotice.detail}
-          peekDetail={snapshotNotice.peekDetail}
-          bodyDetail={snapshotNotice.bodyDetail}
-          tone={snapshotNotice.tone || "info"}
-          role="alert"
-        >
-          {renderSnapshotNoticeActions()}
-        </MobileCollapsibleNotice>
-      ) : null}
+      <MobileStatusFold
+        err={Boolean(err)}
+        statusLabel={statusLabel}
+        mobileStatusLabel={mobileStatusLabel}
+        scanStatusVisible={scanStatusVisible}
+        snapshotNotice={snapshotNotice}
+        showSnapshotNotice={showSnapshotNotice}
+      >
+        {renderSnapshotNoticeActions()}
+      </MobileStatusFold>
     </div> : null}
     {!isMobileViewport && scanStatusVisible ? <div className={`scanStatusBar ${err ? "error" : "running"}`} role="status" aria-live="polite">
       <span>{err ? "Incidencia" : "Estado"}</span>

@@ -353,10 +353,10 @@ export function FilterFamilyModal({
           <em>medias semanales</em>
         </div>
         <div className={`weeklyStageControls modalWeeklyControls ${layerActive ? "" : "isMuted"}`}>
-          <label><span>Media rápida semanal</span><input className="input" type="number" min="2" max="80" step="1" value={settings.stageFastWeeks || 10} onChange={(event) => onUpdateSetting?.("stageFastWeeks", Number(event.target.value) || 10)} /></label>
-          <label><span>Media lenta semanal</span><input className="input" type="number" min="3" max="120" step="1" value={settings.stageSlowWeeks || 30} onChange={(event) => onUpdateSetting?.("stageSlowWeeks", Number(event.target.value) || 30)} /></label>
-          <label><span>Pendiente semanas</span><input className="input" type="number" min="2" max="40" step="1" value={settings.stageSlopeWeeks || 10} onChange={(event) => onUpdateSetting?.("stageSlopeWeeks", Number(event.target.value) || 10)} /></label>
-          <label><span>Media plana ±%</span><input className="input" type="number" min="0" max="20" step="0.5" value={settings.stageFlatPct ?? 2} onChange={(event) => onUpdateSetting?.("stageFlatPct", Number(event.target.value))} /></label>
+          <label><span>Media rápida semanal</span><input className="input" type="number" inputMode="numeric" min="2" max="80" step="1" value={settings.stageFastWeeks || 10} onChange={(event) => onUpdateSetting?.("stageFastWeeks", Number(event.target.value) || 10)} /></label>
+          <label><span>Media lenta semanal</span><input className="input" type="number" inputMode="numeric" min="3" max="120" step="1" value={settings.stageSlowWeeks || 30} onChange={(event) => onUpdateSetting?.("stageSlowWeeks", Number(event.target.value) || 30)} /></label>
+          <label><span>Pendiente semanas</span><input className="input" type="number" inputMode="numeric" min="2" max="40" step="1" value={settings.stageSlopeWeeks || 10} onChange={(event) => onUpdateSetting?.("stageSlopeWeeks", Number(event.target.value) || 10)} /></label>
+          <label><span>Media plana ±%</span><input className="input" type="number" inputMode="decimal" min="0" max="20" step="0.5" value={settings.stageFlatPct ?? 2} onChange={(event) => onUpdateSetting?.("stageFlatPct", Number(event.target.value))} /></label>
         </div>
       </div> : null}
 
@@ -443,7 +443,7 @@ export function FilterNumber({ field, value, onChange, active = true, inactiveRe
     </label>
     <div className="filterInputWrap">
       <button type="button" className="filterStepperBtn decrement" onClick={handleDecrement} title="Disminuir" aria-label="Disminuir">-</button>
-      <input className="input" type="number" step={step} value={shown} aria-label={field.label} onChange={(e) => onChange(field.key, (Number(e.target.value) || 0) * scale)} />
+      <input className="input" type="number" inputMode={Number.isInteger(step) ? "numeric" : "decimal"} step={step} value={shown} aria-label={field.label} onChange={(e) => onChange(field.key, (Number(e.target.value) || 0) * scale)} />
       {field.unit && <b className="filterUnit">{field.unit}</b>}
       <button type="button" className="filterStepperBtn increment" onClick={handleIncrement} title="Incrementar" aria-label="Incrementar">+</button>
     </div>

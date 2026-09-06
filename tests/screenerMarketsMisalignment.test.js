@@ -1,6 +1,6 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi, beforeAll } from "vitest";
+import { describe, expect, it, vi, beforeAll, afterEach } from "vitest";
 import { MARKETS_MISALIGNMENT_CTA, MARKETS_AUTO_LOAD_LOADING_LABEL } from "@/lib/marketAvailability";
 import { buildFilterLayersUpgradeNotice } from "@/lib/screenerFilterLayers";
 import { buildSnapshotFreshnessNotice } from "@/lib/snapshotFreshness";
@@ -44,6 +44,10 @@ let ScreenerShell;
 
 beforeAll(async () => {
   ({ default: ScreenerShell } = await import("@/app/components/screener/ScreenerShell"));
+});
+
+afterEach(() => {
+  mockIsMobileViewport.mockReturnValue(false);
 });
 
 function makeProps({
@@ -350,7 +354,7 @@ describe("ScreenerShell markets misalignment", () => {
     })));
     expect(html).toContain("Fusión parcial");
     expect(html).toContain("Faltan 2 mercados");
-    expect(html).not.toMatch(/screenerMobileNoticePeek[^<]*Austria/);
+    expect(html).not.toMatch(/screenerMobileStatusFoldPeek[^<]*Austria/);
     expect(html).toContain("Falta materializado: Austria");
     mockIsMobileViewport.mockReturnValue(false);
   });
