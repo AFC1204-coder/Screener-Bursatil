@@ -297,7 +297,7 @@ Fuente: `docs/analisis-ux-look-redisenio-2026-09-05.md`. Orden: A → B → C∥
 | LOOK-C | Botones, escala tipográfica, transiciones | **Cerrado** · `1c958ce` |
 | LOOK-D | Aside piel (tarjeta, chips, modal, drawer) | **Cerrado** · `82e4f66` |
 | LOOK-E | Mesa + chrome `/stock` | **Cerrado** ·  |
-| LOOK-F | Móvil calidad de uso | **Cerrado** · pendiente hash |
+| LOOK-F | Móvil calidad de uso | **Cerrado** · `3be4f19` |
 
 ## Aplazado / no oleada UI
 
