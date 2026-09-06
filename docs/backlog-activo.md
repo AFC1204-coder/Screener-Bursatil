@@ -24,7 +24,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 | ID | Qué | Commit |
 |---|---|---|
-| CHART-RS-4 | Escala `rs-rating` tras primera serie RS (LWC v5; líneas país/tema) | (pendiente hash) |
+| CHART-RS-4 | Escala `rs-rating` tras primera serie RS (LWC v5; líneas país/tema) | `91c63ff` |
 | P1 | Sesión caduca en frontera nocturna; refresh conserva criterios | `476cab4` |
 | P2 | Copia muestreada → re-fetch; fallo → aviso + muestra | `476cab4` |
 | B2 / chart | Vacío usa `emptyFallback`, no «Sin dato» fijo | `219e075` |

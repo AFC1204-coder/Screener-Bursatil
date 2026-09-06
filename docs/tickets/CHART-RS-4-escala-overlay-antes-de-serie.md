@@ -2,7 +2,7 @@
 
 Copia de referencia. Ejecutar desde `docs/tickets/activo.md`.
 
-**Estado:** Cerrado (orquestador 2026-09-06) · smoke `/stock/ATRC` `:3000` OK  
+**Estado:** Cerrado `91c63ff` (orquestador 2026-09-06) · smoke `/stock/ATRC` `:3000` OK  
 **Prioridad:** P1 (regresión chart; datos OK)  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo sugerido:** Composer  
