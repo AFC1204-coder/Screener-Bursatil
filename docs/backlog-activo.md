@@ -3,7 +3,7 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-06 · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-06 (tarde) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** Hoy = Mini (GHA off · leaderboards RPC · finalize percentil).  
 **Último cerrado:** polish reconciliado — PR #10 en remoto (`930b6ac`) + LOOK-A (`384438b`) + docs (`65c6393`); push OK.  
@@ -15,7 +15,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Nota cierre UX-READ:** VCP se queda; RS tema→ficha; RS país si ≠ US-only; **READ-B** aplazada.  
 **Hecho ops:** Supabase Pro **cancelado** (dueño).  
 **Hoy (Mini):** apagar GHA `scan-universe` · leaderboards RPC pg · finalize percentil pg.  
-**Aparcado:** túnel móvil→Mini · residuales Fable READ · tape→producto · LOOK-B+.  
+**Aparcado:** túnel móvil→Mini · tape→producto · LOOK-B+.  
+**Residuales UX-READ (docs):** READ-G P2 · READ-H P3 · `docs/inventario-residuales-ux-read-2026-09-06.md`.  
 **SHELL:** A→D cerebro OK; piel = oleadas LOOK-*.
 
 ## Hecho (esta oleada)

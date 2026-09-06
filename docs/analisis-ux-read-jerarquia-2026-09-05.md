@@ -12,8 +12,8 @@ Oleada **cerrada**. No se abren más tickets READ-* de este análisis.
 | READ-D (ficha menos ruido) | Hecho |
 | READ-E (un RS overlay default) | Hecho |
 | READ-F (etiqueta RS, no FR) | Hecho (extra jerga) |
-| Cifras RS distintas (72 / 64 / 57) | Aparcado |
-| Badge opacity + tarjeta | Aparcado |
+| Cifras RS distintas (72 / 64 / 57) | Aparcado → **READ-G** (`docs/tickets/READ-G-rs-cifras-coherentes.md`) |
+| Badge opacity + tarjeta | Aparcado → **READ-H** (`docs/tickets/READ-H-badge-patron-visibilidad.md`) |
 
 ---
 
