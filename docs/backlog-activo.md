@@ -294,7 +294,7 @@ Fuente: `docs/analisis-ux-look-redisenio-2026-09-05.md`. Orden: A → B → C∥
 |---|---|---|
 | LOOK-A | Layout P0: grid familias, bottom nav 6, Filtros sticky | **Cerrado** · `384438b` |
 | LOOK-B | Tokens v2.3 «pizarra apagada» + higiene hex | **Cerrado** · `8cd7c87` |
-| LOOK-C | Botones, escala tipográfica, transiciones | **Cerrado** · (este commit) |
+| LOOK-C | Botones, escala tipográfica, transiciones | **Cerrado** · `1c958ce` |
 | LOOK-D | Aside piel (tarjeta, chips, modal, drawer) | Siguiente |
 | LOOK-E | Mesa + chrome `/stock` | Aparcado |
 | LOOK-F | Móvil calidad de uso | Aparcado |
