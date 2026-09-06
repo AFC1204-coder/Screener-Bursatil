@@ -213,7 +213,7 @@ Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 | IPO-1a | Backfill `ipoDate` (código + write US/intl) | `eb3053a` + write 2026-08-28 |
 | UX-IPO-1 | Brief Fable: destino cotizadas recientes por ventana | **Aceptado** · `docs/analisis-ux-ipo-superficie-2026-09-07.md` |
 | IPO-UX-A | Lente cohort (preset any + chips edad + sin merge) | **Hecho** · `78b35e4` · smoke UI pendiente |
-| LOGO-1 | Logos empresa mesa + portada ficha | **Hecho** · (pendiente hash) |
+| LOGO-1 | Logos empresa mesa + portada ficha | **Hecho** · `44459a1` |
 | IPO-UX-B | Columna Salida + orden + empty state | Cola |
 | IPO-UX-C | Kill list (nav = decisión dueño) | Cola |
 
