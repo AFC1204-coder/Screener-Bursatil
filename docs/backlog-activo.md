@@ -6,17 +6,18 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** —  
-**Último cerrado:** **TAPE-1** mesa Caza (`a191120`).  
-**Ahora:** **LOOK-C2** — uppercase solo 3 roles (deuda LOOK-C).  
+**Último cerrado:** **LOOK-C2** uppercase 3 roles (`04d4a0d`).  
+**Ahora:** idle — TAPE-1 + LOOK-C2 hechos.  
 **Pendiente ops:** —  
-**Cola:** LOOK-C2 (activo) → idle.  
+**Cola:** —  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
-**Nota:** TAPE-1 en producto (Caza|Auditoría). LOOK A→F ✅.  
+**Nota:** TAPE-1 en producto · LOOK A→F + C2 uppercase home ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA off · OPS-MINI-1 smoke PG OK.  
 **Residuales UX-READ:** READ-G · READ-H cerrados.  
-**Aparcado:** —  
+**Aparcado:** uppercase oleada 2 (stock/market-health/IPO) si dueño quiere.  
 **SHELL:** A→D cerebro OK; piel LOOK = cerrada.  
-**Nota smoke TAPE-1:** toggle Caza↔Auditoría + `localStorage` OK; sin filas (nocturno US no leído en portátil).
+**Nota smoke LOOK-C2:** `layerControlMeta`/`5 reglas`/`Balanceado` = sentence case; Mercados/eyebrow/Score labels = uppercase.  
+**Nota smoke TAPE-1:** toggle OK; sin filas nocturnas en portátil.
 
 ## Hecho (esta oleada)
 
