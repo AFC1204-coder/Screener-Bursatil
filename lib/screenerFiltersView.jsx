@@ -251,7 +251,6 @@ export function FilterIntensitySlider({
       {custom ? <span className="filterIntensityCustom">Personalizado</span> : <span className="filterIntensityValue">{intensityTickLabel(intensity) || `${intensity}`}</span>}
       {summary ? <em className="filterIntensitySummary">{summary}</em> : null}
     </div>
-    {custom ? <p className="filterIntensityHint">Mover la barra restablece el ajuste fino desde el mapa de intensidad.</p> : null}
   </div>;
 }
 
@@ -492,6 +491,10 @@ export function LayerControl({
   const hasIntensity = Number.isFinite(intensity);
   const rowClass = ["layerControlRow", active ? "on" : "off", onOpen ? "hasOpen" : "simple", hasIntensity ? "hasIntensity" : ""].filter(Boolean).join(" ");
   const hasMeta = detail || countLabel || intensitySummary || coverageWarning || impactLabel;
+  const intensityResetHint = "Mover la barra restablece el ajuste fino desde el mapa de intensidad.";
+  const hintText = hasIntensity
+    ? (intensityCustom ? intensityResetHint : "")
+    : detail;
   return <div className={rowClass}>
     <LayerToggleButton active={active} onClick={onClick} label={label} />
     <div className="layerControlBody">
@@ -501,14 +504,14 @@ export function LayerControl({
         {impactLabel && (intensitySummary || detail || countLabel || coverageWarning) ? <span className="layerControlSep" aria-hidden="true">·</span> : null}
         {intensitySummary ? <small className="layerIntensitySummary">{intensitySummary}</small> : null}
         {intensitySummary && (detail || countLabel || coverageWarning) ? <span className="layerControlSep" aria-hidden="true">·</span> : null}
-        {detail ? <small>{detail}</small> : null}
-        {detail && (countLabel || coverageWarning) ? <span className="layerControlSep" aria-hidden="true">·</span> : null}
+        {detail && !hasIntensity ? <small>{detail}</small> : null}
+        {detail && !hasIntensity && (countLabel || coverageWarning) ? <span className="layerControlSep" aria-hidden="true">·</span> : null}
         {countLabel ? <em>{countLabel}</em> : null}
         {countLabel && coverageWarning ? <span className="layerControlSep" aria-hidden="true">·</span> : null}
         {coverageWarning ? <small className="layerCoverageWarning">{coverageWarning}</small> : null}
       </span> : null}
     </div>
-    {detail ? <InfoHint text={detail} /> : null}
+    {hintText ? <InfoHint text={hintText} /> : null}
     {onOpen ? <button type="button" className="layerOpenBtn" onClick={onOpen} aria-label={`Abrir ${label}`}>Abrir ▸</button> : null}
     {hasIntensity ? <div className="layerIntensityWrap">
       <FilterIntensitySlider

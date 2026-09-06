@@ -48,14 +48,14 @@ export default function ScreenerSidebar({
 
       <div className="sidebarGroup marketPanel" style={{ marginBottom: 24 }}>
         <div className="marketPanelHead">
-          <span>Mercados{marketsStale ? <i className="controlDot controlDotStale" aria-hidden="true" title="Mercados cambiados desde el último corte de datos" /> : null}</span>
+          <span>Mercados{marketsStale ? <i className="controlDot controlDotStale" aria-hidden="true" title="Mercados cambiados desde el último corte de datos" /> : null}{!hasActiveMarketPreset ? <i className="controlDot controlDotCustom" aria-hidden="true" title="Selección personalizada distinta de la mesa" /> : null}</span>
           <em>{markets.length}/{MARKETS.length}</em>
         </div>
         <div className="marketPresetBar">
           {[
             ["global", "Global"],
             ["us", "EE. UU."],
-            ["us-core-intl", "US+Core"],
+            ["us-core-intl", "US+Core intl"],
             ["core-intl", "Core intl"],
             ["europe", "Europa"],
             ["asia", "Asia"],

@@ -6,10 +6,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** smoke PG `:15432` cuando haya túnel.  
-**Último cerrado:** **LOOK-C** botones/tipo/transiciones (smoke home+stock 1440/390).  
-**Ahora:** idle — siguiente **LOOK-D** (aside piel).  
+**Último cerrado:** **LOOK-D** aside piel (smoke + hotfix 2-col/drawer).  
+**Ahora:** idle — siguiente **LOOK-E** (mesa + chrome `/stock`).  
 **Pendiente ops:** smoke RPC Mini `:15432`.  
-**Cola piel:** LOOK-D aside → E mesa → F móvil. Multi-lista solo Favoritos.  
+**Cola piel:** LOOK-E mesa → F móvil. Multi-lista solo Favoritos.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
 **Nota:** Tape proto en remoto. Tokens lienzo **v2.3**; controles `--control-*` / `--t-*` consumidos.  
 **Hecho ops:** Supabase Pro cancelado · GHA scan-universe **disabled_manually**.  
@@ -295,7 +295,7 @@ Fuente: `docs/analisis-ux-look-redisenio-2026-09-05.md`. Orden: A → B → C∥
 | LOOK-A | Layout P0: grid familias, bottom nav 6, Filtros sticky | **Cerrado** · `384438b` |
 | LOOK-B | Tokens v2.3 «pizarra apagada» + higiene hex | **Cerrado** · `8cd7c87` |
 | LOOK-C | Botones, escala tipográfica, transiciones | **Cerrado** · `1c958ce` |
-| LOOK-D | Aside piel (tarjeta, chips, modal, drawer) | Siguiente |
+| LOOK-D | Aside piel (tarjeta, chips, modal, drawer) | **Cerrado** · (este commit) |
 | LOOK-E | Mesa + chrome `/stock` | Aparcado |
 | LOOK-F | Móvil calidad de uso | Aparcado |
 
