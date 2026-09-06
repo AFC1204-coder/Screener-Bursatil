@@ -76,8 +76,8 @@
   font-size: 10px;
   font-style: normal;
   font-weight: 760;
-  letter-spacing: .04em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .researchTrustMetric {
@@ -110,7 +110,7 @@
   font-style: normal;
   font-weight: 850;
   line-height: 1;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .researchTrustMetric.source-proxy i {

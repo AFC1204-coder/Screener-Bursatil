@@ -93,8 +93,8 @@
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .stockIdentityTitle {
@@ -132,8 +132,8 @@
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 /* Fecha de cierre, discreta junto a la etiqueta del precio. Es lo único que
@@ -238,8 +238,8 @@
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .stockDecisionChipDecision {
@@ -297,8 +297,8 @@
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .stockTechRowValue {
@@ -327,8 +327,8 @@
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
+  text-transform: none;
+  letter-spacing: 0;
   text-decoration: none;
 }
 
@@ -377,8 +377,8 @@
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .stockNarrativeItemText {
@@ -503,8 +503,8 @@
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .stockScoreRowBar {
@@ -747,8 +747,8 @@
   font-style: normal;
   font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 /* AuditCheck (gates de metodología, viven dentro de N3) */
@@ -771,8 +771,8 @@
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .stockPage .auditCheck > b {
@@ -831,8 +831,8 @@
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .stockChartBenchmarkControl input,
@@ -1158,8 +1158,8 @@
     font-family: var(--font-body);
     font-size: var(--text-xs);
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: var(--track-label);
+    text-transform: none;
+    letter-spacing: 0;
   }
 
   .stockChartBenchmarkFold > summary::-webkit-details-marker {
@@ -1314,7 +1314,7 @@
   font-size:var(--text-xs);
   font-weight:760;
   letter-spacing:.1em;
-  text-transform:uppercase;
+  text-transform: none;
 }
 
 .stockPage .rsPanelGrid {
@@ -1745,7 +1745,7 @@
   font-size:var(--text-xs);
   font-weight: 690;
   line-height: 1.15;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .stockPage .auditCheck b {
@@ -1796,8 +1796,8 @@
   font-family: var(--font-data);
   font-size:var(--text-m);
   font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .chartIdCardQuoteRow .chartIdCardQuotePrice {
@@ -1988,8 +1988,8 @@
   align-items: center;
   gap: 5px;
   font-size:var(--text-xxs);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--muted);
 }
 
@@ -2144,8 +2144,8 @@
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .stockDescMissing {

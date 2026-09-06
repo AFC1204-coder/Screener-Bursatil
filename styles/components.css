@@ -5327,8 +5327,8 @@ h2 {
   color:var(--stock-muted);
   font-size:var(--text-xs);
   font-weight:780;
-  letter-spacing:.06em;
-  text-transform:uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .stockPage .stockReviewFlowMeta b {
@@ -5429,9 +5429,9 @@ h2 {
   color:var(--stock-muted);
   font-size:var(--text-xs);
   font-weight:780;
-  letter-spacing:.06em;
+  letter-spacing: 0;
   text-overflow:ellipsis;
-  text-transform:uppercase;
+  text-transform: none;
   white-space:nowrap;
 }
 
@@ -5463,7 +5463,7 @@ h2 {
   color:var(--stock-muted);
   font-size:var(--text-xs);
   font-weight:760;
-  text-transform:uppercase;
+  text-transform: none;
 }
 
 .stockPage .stockDecisionHistory > div {
@@ -5542,7 +5542,7 @@ h2 {
   font-weight:760;
   letter-spacing:0;
   text-overflow:ellipsis;
-  text-transform:uppercase;
+  text-transform: none;
   white-space:nowrap;
 }
 
@@ -8267,8 +8267,8 @@ h2 {
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-label);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .marketReliabilityStripItem {
@@ -8295,8 +8295,8 @@ h2 {
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   cursor: pointer;
   transition: color .15s ease, border-color .15s ease;
 }
@@ -8487,7 +8487,7 @@ h2 {
     color: var(--stock-muted);
     font-size:var(--text-xs);
     font-weight: 760;
-    text-transform: uppercase;
+    text-transform: none;
   }
 
   .stockPage .stockDecisionNoteFold > summary::-webkit-details-marker {

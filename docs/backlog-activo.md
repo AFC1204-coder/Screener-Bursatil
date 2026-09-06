@@ -6,18 +6,18 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** —  
-**Último cerrado:** **LOOK-C2** uppercase 3 roles (`04d4a0d`).  
-**Ahora:** idle — TAPE-1 + LOOK-C2 hechos.  
+**Último cerrado:** **LOOK-C3** uppercase oleada 2 (hash tras commit).  
+**Ahora:** idle — C2 home + C3 ficha/Mercado/satélites.  
 **Pendiente ops:** —  
 **Cola:** —  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
-**Nota:** TAPE-1 en producto · LOOK A→F + C2 uppercase home ✅.  
+**Nota:** TAPE-1 · LOOK A→F + C2/C3 uppercase ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA off · OPS-MINI-1 smoke PG OK.  
 **Residuales UX-READ:** READ-G · READ-H cerrados.  
-**Aparcado:** uppercase oleada 2 (stock/market-health/IPO) si dueño quiere.  
+**Aparcado:** —  
 **SHELL:** A→D cerebro OK; piel LOOK = cerrada.  
-**Nota smoke LOOK-C2:** `layerControlMeta`/`5 reglas`/`Balanceado` = sentence case; Mercados/eyebrow/Score labels = uppercase.  
-**Nota smoke TAPE-1:** toggle OK; sin filas nocturnas en portátil.
+**Nota smoke LOOK-C3:** ficha kickers/KV/`stockVerdictQuoteLabel` = none; `h2`/`th` uppercase. Mercado reliability strip = none; eyebrow/h1 uppercase.  
+**Nota smoke LOOK-C2 / TAPE-1:** ver commits previos.
 
 ## Hecho (esta oleada)
 

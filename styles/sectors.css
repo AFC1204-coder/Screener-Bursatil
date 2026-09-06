@@ -74,7 +74,7 @@
   font-style:normal;
   font-weight:850;
   line-height:1;
-  text-transform:uppercase;
+  text-transform: none;
 }
 
 .sectorTrustMetric.source-proxy i {
@@ -280,8 +280,8 @@
   font-size:10px;
   font-style:normal;
   font-weight:720;
-  letter-spacing:.05em;
-  text-transform:uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .groupDrilldownHead strong {

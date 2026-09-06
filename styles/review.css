@@ -30,8 +30,8 @@
   color:#8f98a8;
   font-size:10px;
   font-weight:820;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .reviewEmptyState h2 {
@@ -86,9 +86,9 @@
   font-size:9px;
   font-style:normal;
   font-weight:820;
-  letter-spacing:.06em;
+  letter-spacing: 0;
   text-overflow:ellipsis;
-  text-transform:uppercase;
+  text-transform: none;
   white-space:nowrap;
 }
 
