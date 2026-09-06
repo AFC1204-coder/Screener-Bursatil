@@ -5,17 +5,15 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-06 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** Hoy = Mini (GHA off · leaderboards RPC · finalize percentil).  
-**Último cerrado:** polish reconciliado — PR #10 en remoto (`930b6ac`) + LOOK-A (`384438b`) + docs (`65c6393`); push OK.  
-**Ahora:** idle — **Mini ops**. LOOK-B+ aparcado (Forja).  
-**Cola piel:** LOOK-B+ aparcado. Multi-lista solo Favoritos hasta amplíe dueño.  
-**Gate Forja:** CA → PR; no FF a polish hasta smoke/OK. Base remota al día.  
-**Nota:** Tape proto aparcado (untracked).  
-**Nota UX-LOOK:** v2 **sí** en producción; enmendar lienzo (no sustituir sistema).  
-**Nota cierre UX-READ:** VCP se queda; RS tema→ficha; RS país si ≠ US-only; **READ-B** aplazada.  
-**Hecho ops:** Supabase Pro **cancelado** (dueño).  
-**Hoy (Mini):** apagar GHA `scan-universe` · leaderboards RPC pg · finalize percentil pg.  
-**Aparcado:** túnel móvil→Mini · residuales Fable READ · tape→producto · LOOK-B+.  
+**RECORDATORIO dueño:** OPS-MINI-1 código cerrado; smoke PG cuando túnel `:15432`.  
+**Último cerrado:** **OPS-MINI-1** A (GHA `disabled_manually`) + B/C RPC pg (tests OK; smoke Mini diferido).  
+**Ahora:** idle.  
+**Pendiente ops:** smoke RPC en Mini vía `ssh -N -L 15432:127.0.0.1:5432`.  
+**Cola piel:** LOOK-B+ aparcado. Multi-lista solo Favoritos.  
+**Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
+**Nota:** Tape proto aparcado (untracked). `:13000` = Next Mini; `:15432` = Postgres Mini.  
+**Hecho ops:** Supabase Pro cancelado · GHA scan-universe **disabled_manually**.  
+**Aparcado:** residuales Fable READ · tape→producto · LOOK-B+ · smoke OPS-MINI-1 PG.  
 **SHELL:** A→D cerebro OK; piel = oleadas LOOK-*.
 
 ## Hecho (esta oleada)
@@ -149,7 +147,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **STORAGE-1** cuota local · **hecho**.  
 **MIGRATE-3** cutover + launchd · **cerrado** (`5171924`).  
 **MIGRATE-4** writes pg + nocturno · **cerrado** (`91671c4` · cron HK 82 filas 2026-09-05 en Mini).  
-**MIGRATE-5** nocturno US Mini (`scan-universe.mjs` + launchd) · **cerrado** (smoke limit OK; soft-delete; full = 05:00/manual).
+**MIGRATE-5** nocturno US Mini (`scan-universe.mjs` + launchd) · **cerrado** (smoke limit OK; soft-delete; full = 05:00/manual).  
+**MIGRATE-6** RPC historia pg · **cerrado** (evidencia 2026-09-05).  
+**OPS-MINI-1** GHA off + leaderboards/finalize RPC pg · **código cerrado** (smoke PG diferido · `docs/evidence/ops-mini-1-gha-rpc-2026-09-06.md`).
 
 ## Siguiente — datos IPO + filtros
 

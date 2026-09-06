@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  buildFinalizeScanResultsSql,
+  buildLeaderboardPublishableRowsSql,
   buildPostgrestCountSql,
   buildPostgrestDeleteSql,
   buildPostgrestInsertSql,
   buildPostgrestSelectSql,
+  buildScanFinalizeInputsSql,
   buildScanSymbolHistoryLatestSql,
   isPgRpcSupported,
   normalizePostgrestQuery,
@@ -201,9 +204,12 @@ describe("pgPostgrestAdapter SQL builder", () => {
 });
 
 describe("pgPostgrestAdapter RPC scan_symbol_history_latest_v1", () => {
-  it("expone solo scan_symbol_history_latest_v1 como RPC soportada", () => {
+  it("expone las RPC soportadas en modo pg", () => {
     expect(isPgRpcSupported("scan_symbol_history_latest_v1")).toBe(true);
-    expect(isPgRpcSupported("finalize_scan_results")).toBe(false);
+    expect(isPgRpcSupported("leaderboard_publishable_rows")).toBe(true);
+    expect(isPgRpcSupported("scan_finalize_inputs")).toBe(true);
+    expect(isPgRpcSupported("finalize_scan_results")).toBe(true);
+    expect(isPgRpcSupported("coverage_scan_summary")).toBe(false);
   });
 
   it("buildScanSymbolHistoryLatestSql replica DISTINCT ON de la migración", () => {
@@ -224,6 +230,72 @@ describe("pgPostgrestAdapter RPC scan_symbol_history_latest_v1", () => {
   it("rechaza owner vacío", () => {
     expect(() => buildScanSymbolHistoryLatestSql("", null))
       .toThrow(/p_owner_id/);
+  });
+});
+
+describe("pgPostgrestAdapter RPC leaderboard_publishable_rows", () => {
+  it("buildLeaderboardPublishableRowsSql filtra publishable antes del LIMIT", () => {
+    const { sql, values } = buildLeaderboardPublishableRowsSql("personal", 5000, 45);
+    expect(sql).toContain("publishable AS (");
+    expect(sql).toContain("parent_status IN ('complete', 'partial', 'done')");
+    expect(sql).toContain("ORDER BY created_at DESC");
+    expect(sql).toContain("LIMIT $2");
+    expect(sql).toContain("make_interval(days => $3)");
+    expect(sql).toContain("'rowsRead'");
+    expect(sql).toContain("'rowsPublished'");
+    expect(sql).toContain("'rowsExcluded'");
+    expect(values).toEqual(["personal", 5000, 45]);
+  });
+
+  it("acota p_max_rows entre 1 y 10000", () => {
+    const { values: low } = buildLeaderboardPublishableRowsSql("personal", 0, 1);
+    const { values: high } = buildLeaderboardPublishableRowsSql("personal", 99999, 1);
+    expect(low[1]).toBe(1);
+    expect(high[1]).toBe(10000);
+  });
+
+  it("rechaza owner vacío", () => {
+    expect(() => buildLeaderboardPublishableRowsSql("", 100, 30))
+      .toThrow(/p_owner_id/);
+  });
+});
+
+describe("pgPostgrestAdapter RPC scan_finalize_inputs", () => {
+  it("buildScanFinalizeInputsSql delega a la función PG con paginación", () => {
+    const scanId = "7f4e2e8f-bdd8-4652-b23d-c0466b7949d5";
+    const { sql, values } = buildScanFinalizeInputsSql("personal", scanId, 50, 100);
+    expect(sql).toContain("public.scan_finalize_inputs($1, $2::uuid, $3, $4)");
+    expect(values).toEqual(["personal", scanId, 50, 100]);
+  });
+
+  it("acota p_max_rows a 50000 y p_offset a >= 0", () => {
+    const scanId = "7f4e2e8f-bdd8-4652-b23d-c0466b7949d5";
+    const { values: capped } = buildScanFinalizeInputsSql("personal", scanId, 99999, -5);
+    expect(capped[2]).toBe(50000);
+    expect(capped[3]).toBe(0);
+  });
+
+  it("rechaza scan_id vacío", () => {
+    expect(() => buildScanFinalizeInputsSql("personal", "", 50, 0))
+      .toThrow(/p_scan_id/);
+  });
+});
+
+describe("pgPostgrestAdapter RPC finalize_scan_results", () => {
+  it("buildFinalizeScanResultsSql serializa patches como jsonb", () => {
+    const scanId = "7f4e2e8f-bdd8-4652-b23d-c0466b7949d5";
+    const patches = [{ id: "row-1", metrics_patch: { percentileScope: "final" } }];
+    const { sql, values } = buildFinalizeScanResultsSql("personal", scanId, patches);
+    expect(sql).toContain("public.finalize_scan_results($1, $2::uuid, $3::jsonb)");
+    expect(values[0]).toBe("personal");
+    expect(values[1]).toBe(scanId);
+    expect(values[2]).toBe(JSON.stringify(patches));
+  });
+
+  it("rechaza owner o scan vacíos", () => {
+    const scanId = "7f4e2e8f-bdd8-4652-b23d-c0466b7949d5";
+    expect(() => buildFinalizeScanResultsSql("", scanId, [])).toThrow(/p_owner_id/);
+    expect(() => buildFinalizeScanResultsSql("personal", "", [])).toThrow(/p_scan_id/);
   });
 });
 
@@ -324,7 +396,56 @@ describe("pgPostgrestAdapter executor (stub pool)", () => {
   });
 
   it("pgRpc rechaza RPC no implementada", async () => {
-    await expect(pgRpc(pool, "finalize_scan_results", {}))
+    await expect(pgRpc(pool, "coverage_scan_summary", {}))
       .rejects.toMatchObject({ code: "PG_RPC_UNSUPPORTED" });
+  });
+
+  it("ejecuta leaderboard_publishable_rows vía pgRpc", async () => {
+    pool.query.mockResolvedValueOnce({
+      rows: [{
+        result: {
+          rows: [{ symbol: "AAPL", parent_status: "complete" }],
+          rowsRead: 10,
+          rowsPublished: 1,
+          rowsExcluded: 9,
+        },
+      }],
+    });
+    const payload = await pgRpc(pool, "leaderboard_publishable_rows", {
+      p_owner_id: "personal",
+      p_max_rows: 100,
+      p_since_days: 30,
+    });
+    expect(payload.rows).toHaveLength(1);
+    expect(payload.rowsPublished).toBe(1);
+    expect(pool.query.mock.calls[0][0]).toContain("publishable AS (");
+    expect(pool.query.mock.calls[0][1]).toEqual(["personal", 100, 30]);
+  });
+
+  it("ejecuta scan_finalize_inputs vía pgRpc", async () => {
+    pool.query.mockResolvedValueOnce({
+      rows: [{ result: { inputs: [{ id: "row-1", raw: { symbol: "AAPL" } }], rowsRead: 1 } }],
+    });
+    const payload = await pgRpc(pool, "scan_finalize_inputs", {
+      p_owner_id: "personal",
+      p_scan_id: "7f4e2e8f-bdd8-4652-b23d-c0466b7949d5",
+      p_max_rows: 50,
+      p_offset: 0,
+    });
+    expect(payload.inputs).toHaveLength(1);
+    expect(pool.query.mock.calls[0][0]).toContain("scan_finalize_inputs");
+  });
+
+  it("ejecuta finalize_scan_results vía pgRpc", async () => {
+    pool.query.mockResolvedValueOnce({
+      rows: [{ updated_count: 2 }],
+    });
+    const rows = await pgRpc(pool, "finalize_scan_results", {
+      p_owner_id: "personal",
+      p_scan_id: "7f4e2e8f-bdd8-4652-b23d-c0466b7949d5",
+      p_patches: [{ id: "row-1", metrics_patch: { percentileScope: "final" } }],
+    });
+    expect(rows).toEqual([{ updated_count: 2 }]);
+    expect(pool.query.mock.calls[0][0]).toContain("finalize_scan_results");
   });
 });

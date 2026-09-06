@@ -89,13 +89,63 @@ describe("supabaseServer en modo pg", () => {
     );
   });
 
+  it("supabaseRpc delega leaderboard_publishable_rows a pgRpc", async () => {
+    pgRpc.mockResolvedValueOnce({
+      rows: [{ symbol: "MSFT" }],
+      rowsRead: 5,
+      rowsPublished: 1,
+      rowsExcluded: 4,
+    });
+    const { supabaseRpc } = await import("@/lib/supabaseServer");
+    const payload = await supabaseRpc("leaderboard_publishable_rows", {
+      p_owner_id: "personal",
+      p_max_rows: 5000,
+      p_since_days: 45,
+    });
+    expect(payload.rows).toHaveLength(1);
+    expect(pgRpc).toHaveBeenCalledWith(
+      expect.anything(),
+      "leaderboard_publishable_rows",
+      { p_owner_id: "personal", p_max_rows: 5000, p_since_days: 45 },
+    );
+  });
+
+  it("supabaseRpc delega scan_finalize_inputs y finalize_scan_results a pgRpc", async () => {
+    pgRpc.mockResolvedValueOnce({ inputs: [], rowsRead: 0 });
+    pgRpc.mockResolvedValueOnce([{ updated_count: 0 }]);
+    const { supabaseRpc } = await import("@/lib/supabaseServer");
+    const scanId = "7f4e2e8f-bdd8-4652-b23d-c0466b7949d5";
+    await supabaseRpc("scan_finalize_inputs", {
+      p_owner_id: "personal",
+      p_scan_id: scanId,
+      p_max_rows: 50,
+      p_offset: 0,
+    });
+    await supabaseRpc("finalize_scan_results", {
+      p_owner_id: "personal",
+      p_scan_id: scanId,
+      p_patches: [],
+    });
+    expect(pgRpc).toHaveBeenNthCalledWith(1, expect.anything(), "scan_finalize_inputs", {
+      p_owner_id: "personal",
+      p_scan_id: scanId,
+      p_max_rows: 50,
+      p_offset: 0,
+    });
+    expect(pgRpc).toHaveBeenNthCalledWith(2, expect.anything(), "finalize_scan_results", {
+      p_owner_id: "personal",
+      p_scan_id: scanId,
+      p_patches: [],
+    });
+  });
+
   it("supabaseRpc lanza error claro para RPC no soportada en modo pg", async () => {
     pgRpc.mockRejectedValueOnce(Object.assign(
-      new Error("RPC finalize_scan_results no disponible en modo pg local"),
+      new Error("RPC coverage_scan_summary no disponible en modo pg local"),
       { code: "PG_RPC_UNSUPPORTED" },
     ));
     const { supabaseRpc } = await import("@/lib/supabaseServer");
-    await expect(supabaseRpc("finalize_scan_results", {}))
+    await expect(supabaseRpc("coverage_scan_summary", {}))
       .rejects.toMatchObject({ code: "PG_RPC_UNSUPPORTED" });
   });
 
