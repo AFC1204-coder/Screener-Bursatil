@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>StatsEdge · prototipo TAPE (variante A · v3)</title>
+  <style>
+    :root {
+      --bg: #0e1116;
+      --panel: #151a21;
+      --line: #2a3340;
+      --text: #e8edf4;
+      --muted: #8b97a8;
+      --soft: #5c6b7e;
+      --accent: #7eb0ff;
+      --ma: #3dba7a;
+      --good: #3dba7a;
+      --warn: #d4a017;
+      --focus: #1e3a5f;
+      --row: #12161c;
+      --row-hover: #1a222c;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; height: 100%;
+      background: var(--bg); color: var(--text);
+      font: 13px/1.35 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      height: 100vh;
+      min-height: 520px;
+    }
+    aside {
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+      padding: 14px 12px;
+      color: var(--muted);
+    }
+    aside h1 {
+      margin: 0 0 4px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--soft);
+      font-weight: 600;
+    }
+    aside .note {
+      font-size: 11px;
+      line-height: 1.4;
+      margin-bottom: 16px;
+      color: var(--soft);
+    }
+    aside .block {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      background: var(--row);
+    }
+    aside .block b { display: block; color: var(--muted); font-weight: 500; margin-bottom: 4px; }
+    aside .fake {
+      height: 8px; background: #243041; border-radius: 4px; margin: 6px 0;
+    }
+    aside .fake.w2 { width: 70%; }
+    main {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      flex-wrap: wrap;
+    }
+    .rail {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+    .rail button, .mode button, .back {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font: inherit;
+    }
+    .rail button[aria-pressed="true"] {
+      background: var(--focus);
+      border-color: #3a5f8c;
+      color: var(--text);
+    }
+    .rail button .n {
+      color: var(--soft);
+      margin-left: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .mode {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .mode button {
+      border: 0;
+      border-radius: 0;
+      padding: 6px 12px;
+    }
+    .mode button[aria-pressed="true"] {
+      background: #243447;
+      color: var(--text);
+    }
+    .hint {
+      padding: 6px 14px;
+      font-size: 11px;
+      color: var(--soft);
+      border-bottom: 1px solid var(--line);
+      background: #10141a;
+    }
+    .hint kbd {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-bottom-width: 2px;
+      border-radius: 3px;
+      padding: 0 5px;
+      font: 10px/1.6 ui-monospace, monospace;
+      color: var(--muted);
+      background: var(--row);
+    }
+    .stage {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+    }
+    .tape-wrap, .audit-wrap, .drill {
+      position: absolute;
+      inset: 0;
+      overflow: auto;
+    }
+    .hidden { display: none !important; }
+
+    /* grid: ticker | spark | etapa | RS | VCP | máx52s */
+    .cols {
+      display: grid;
+      grid-template-columns: 68px 128px minmax(88px, 1fr) 48px minmax(110px, 1.1fr) 64px;
+      gap: 12px;
+      align-items: center;
+    }
+    .head-cols {
+      composes: cols;
+      display: grid;
+      grid-template-columns: 68px 128px minmax(88px, 1fr) 48px minmax(110px, 1.1fr) 64px;
+      gap: 12px;
+      padding: 8px 14px 6px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--soft);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+      z-index: 1;
+    }
+    .head-cols span:nth-child(4),
+    .head-cols span:nth-child(6) { text-align: right; }
+
+    .tape {
+      list-style: none;
+      margin: 0;
+      padding: 4px 0 48px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 68px 128px minmax(88px, 1fr) 48px minmax(110px, 1.1fr) 64px;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid #1a212b;
+      cursor: pointer;
+      background: var(--row);
+      min-height: 56px;
+    }
+    .row:hover { background: var(--row-hover); }
+    .row.active {
+      background: var(--focus);
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    .ticker {
+      font-weight: 650;
+      letter-spacing: 0.02em;
+      font-variant-numeric: tabular-nums;
+      font-size: 14px;
+    }
+    .spark-wrap {
+      height: 40px;
+      width: 128px;
+      position: relative;
+    }
+    .spark {
+      height: 40px;
+      width: 128px;
+      display: block;
+    }
+    .spark .fill {
+      fill: rgba(126, 176, 255, 0.18);
+      stroke: none;
+    }
+    .spark .price {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 1.75;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+    .spark .ma {
+      fill: none;
+      stroke: var(--ma);
+      stroke-width: 1.25;
+      stroke-linejoin: round;
+      opacity: 0.85;
+    }
+    .row:not(.active) .spark .fill { fill: rgba(107, 124, 147, 0.12); }
+    .row:not(.active) .spark .price { stroke: #8fa0b8; }
+    .row:not(.active) .spark .ma { stroke: #5a8f6e; opacity: 0.55; }
+
+    .etapa {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .etapa .sem {
+      color: var(--muted);
+      font-weight: 500;
+      margin-left: 2px;
+    }
+    .rs {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      font-weight: 650;
+      font-size: 13px;
+    }
+    .vcp {
+      font-variant-numeric: tabular-nums;
+      font-family: ui-monospace, "IBM Plex Mono", Menlo, monospace;
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .vcp.empty {
+      color: var(--soft);
+      font-family: inherit;
+    }
+    .vcp .n { color: var(--text); }
+    .vcp .sep { color: var(--soft); margin: 0 1px; }
+    .ext {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      color: var(--muted);
+    }
+    .ext.hot { color: var(--warn); }
+
+    .audit-wrap { padding: 10px 14px 40px; }
+    table.audit {
+      width: 100%;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+    }
+    table.audit th, table.audit td {
+      text-align: left;
+      padding: 7px 8px;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    table.audit th {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--soft);
+      font-weight: 500;
+    }
+    table.audit td.num { text-align: right; }
+    table.audit td.mono {
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 12px;
+    }
+
+    .drill {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+    .drill-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    .drill-bar .meta { color: var(--muted); flex: 1; font-variant-numeric: tabular-nums; }
+    .drill-chart {
+      flex: 1;
+      margin: 16px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #0b0e13;
+      display: flex;
+      flex-direction: column;
+      min-height: 280px;
+      padding: 16px;
+    }
+    .drill-chart h2 {
+      margin: 0 0 4px;
+      font-size: 18px;
+      font-weight: 650;
+    }
+    .drill-chart .subline { color: var(--muted); margin-bottom: 16px; }
+    .drill-chart svg {
+      flex: 1;
+      width: 100%;
+      min-height: 200px;
+    }
+    .drill-chart svg path.price {
+      fill: none;
+      stroke: #9ec0ff;
+      stroke-width: 2;
+    }
+    .drill-chart svg path.ma {
+      fill: none;
+      stroke: #3dba7a;
+      stroke-width: 1.25;
+      opacity: 0.7;
+    }
+    .banner {
+      margin: 0 14px 14px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      background: #1a2430;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .banner strong { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside aria-label="Filtros (stub)">
+      <h1>Filtros</h1>
+      <p class="note">Stub · TAPE v3. Etapa = sem. N · VCP = footprint Minervini <code>XW Y/Z NT</code>.</p>
+      <div class="block"><b>Mercados</b><div class="fake"></div><div class="fake w2"></div></div>
+      <div class="block"><b>Tendencia</b><div class="fake"></div></div>
+      <div class="block"><b>Momentum</b><div class="fake w2"></div></div>
+    </aside>
+
+    <main>
+      <div class="top">
+        <div class="rail" role="tablist" aria-label="Fichas de caza" id="rail"></div>
+        <div class="mode" role="group" aria-label="Modo">
+          <button type="button" id="modeCaza" aria-pressed="true">Caza</button>
+          <button type="button" id="modeAudit" aria-pressed="false">Auditoría</button>
+        </div>
+      </div>
+      <div class="hint" id="hint"></div>
+      <div class="stage">
+        <div class="tape-wrap" id="tapeView">
+          <div class="head-cols" aria-hidden="true">
+            <span>Ticker</span>
+            <span>Semanal ~12M</span>
+            <span>Etapa</span>
+            <span>RS</span>
+            <span>VCP</span>
+            <span>Máx 52s</span>
+          </div>
+          <ul class="tape" id="tape" role="listbox" aria-label="Cola de caza"></ul>
+        </div>
+        <div class="audit-wrap hidden" id="auditView"></div>
+        <div class="drill hidden" id="drillView" aria-live="polite"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    /**
+     * TAPE-A v2 (feedback dueño)
+     * - Etapa: «2 · sem. 21» (no Base / Con fuga)
+     * - Spark: más alto, relleno + MM (mock semanal)
+     * - VCP: notación libro «28 — 15 — 8» (profundidades %); sin form/PV palabras
+     */
+    const HUNTS = [
+      { id: "e2", label: "Líderes E2" },
+      { id: "pivot", label: "Cerca pivot" },
+      { id: "weak", label: "Deterioro" },
+      { id: "intl", label: "Líderes intl" },
+      { id: "ipo", label: "Radar IPO" },
+    ];
+
+    // ticker, stageNum, weeksInStage, rs, dist52, vcp: { baseW, depths[] }|null
+    // Footprint Minervini: `XW Y/Z NT` — Y = mayor/primera, Z = última/más estrecha, N = # tightenings
+    const NAMES = [
+      ["NVDA", 2, 21, 92, -1.2, { baseW: 19, depths: [18, 11, 6] }],
+      ["META", 2, 14, 87, -4.8, { baseW: 14, depths: [22, 14] }],
+      ["KLAC", 2, 9, 84, -2.1, { baseW: 11, depths: [16, 10, 7] }],
+      ["AVGO", 2, 31, 81, -6.4, null],
+      ["ANET", 2, 6, 89, -0.8, { baseW: 8, depths: [12, 8, 5] }],
+      ["CRWD", 2, 18, 78, -9.2, { baseW: 16, depths: [25, 17] }],
+      ["DECK", 2, 11, 76, -3.5, { baseW: 13, depths: [19, 12, 8] }],
+      ["CELH", 2, 4, 74, -11.0, null],
+      ["VRT", 2, 8, 88, -1.9, { baseW: 10, depths: [15, 9, 6] }],
+      ["SMCI", 2, 27, 71, -14.2, { baseW: 22, depths: [30, 18] }],
+      ["APP", 2, 5, 90, -2.4, { baseW: 7, depths: [14, 9, 5] }],
+      ["UBER", 2, 16, 69, -7.1, null],
+      ["SHOP", 2, 12, 73, -5.5, { baseW: 15, depths: [20, 13] }],
+      ["MELI", 2, 22, 85, -3.0, { baseW: 18, depths: [17, 11, 7] }],
+      ["SE", 2, 7, 67, -8.8, null],
+      ["TTD", 2, 13, 80, -4.1, { baseW: 12, depths: [21, 12, 8] }],
+      ["DDOG", 2, 19, 66, -10.3, { baseW: 17, depths: [24, 15] }],
+      ["NET", 2, 10, 82, -2.7, { baseW: 9, depths: [13, 8, 5] }],
+      ["SNOW", 2, 3, 64, -12.6, null],
+      ["PLTR", 2, 15, 91, -0.5, { baseW: 11, depths: [11, 7, 4] }],
+      ["ARM", 2, 8, 77, -6.9, { baseW: 14, depths: [18, 12] }],
+      ["MSTR", 2, 25, 70, -15.8, { baseW: 25, depths: [32, 20, 12] }],
+      ["COIN", 2, 6, 68, -9.7, null],
+      ["HOOD", 2, 9, 75, -5.2, { baseW: 10, depths: [16, 10] }],
+    ];
+
+    function mulberry32(a) {
+      return function () {
+        let t = (a += 0x6d2b79f5);
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function weeklySeries(seed, n = 52) {
+      const rnd = mulberry32(seed);
+      const pts = [];
+      let v = 0.32 + rnd() * 0.18;
+      for (let i = 0; i < n; i++) {
+        v += (rnd() - 0.47) * 0.07;
+        v = Math.max(0.06, Math.min(0.94, v));
+        if (i > 38) v += 0.008 * ((seed % 5) - 1.5);
+        pts.push(v);
+      }
+      return pts;
+    }
+
+    function sparkSvg(seed, w = 128, h = 40) {
+      const n = 52;
+      const price = weeklySeries(seed, n);
+      const ma = price.map((_, i) => {
+        const a = Math.max(0, i - 9);
+        const slice = price.slice(a, i + 1);
+        return slice.reduce((s, x) => s + x, 0) / slice.length;
+      });
+      const step = w / (n - 1);
+      const y = (p) => (h - 3 - p * (h - 6)).toFixed(1);
+      const line = (arr) =>
+        arr
+          .map((p, i) => `${i === 0 ? "M" : "L"}${(i * step).toFixed(1)},${y(p)}`)
+          .join(" ");
+      const fill =
+        line(price) +
+        ` L${w.toFixed(1)},${h} L0,${h} Z`;
+      return { price: line(price), ma: line(ma), fill };
+    }
+
+    function weeklyChartPaths(seed, w = 640, h = 240) {
+      const rnd = mulberry32(seed + 99);
+      const n = 64;
+      const price = [];
+      let v = 40 + rnd() * 20;
+      for (let i = 0; i < n; i++) {
+        v += (rnd() - 0.46) * 3.2;
+        price.push(v);
+      }
+      const min = Math.min(...price) - 2;
+      const max = Math.max(...price) + 2;
+      const scale = (x) => h - ((x - min) / (max - min)) * h;
+      const step = w / (n - 1);
+      const toPath = (arr) =>
+        arr
+          .map((p, i) => `${i === 0 ? "M" : "L"}${(i * step).toFixed(1)},${scale(p).toFixed(1)}`)
+          .join(" ");
+      const ma = price.map((_, i) => {
+        const a = Math.max(0, i - 9);
+        const slice = price.slice(a, i + 1);
+        return slice.reduce((s, x) => s + x, 0) / slice.length;
+      });
+      return { price: toPath(price), ma: toPath(ma) };
+    }
+
+    /**
+     * Footprint Minervini/SEPA: `XW Y/Z NT`
+     * XW = semanas de base; Y = mayor (o primera); Z = última/más estrecha; N = # T
+     * Sin «form» / «PV» / nombres geométricos.
+     */
+    function formatVcpFootprint(vcp) {
+      if (!vcp || !Array.isArray(vcp.depths) || vcp.depths.length < 1) return null;
+      const depths = vcp.depths.map((d) => Math.round(d));
+      const first = depths[0];
+      const last = depths[depths.length - 1];
+      const n = depths.length;
+      const w = Number.isFinite(vcp.baseW) ? Math.round(vcp.baseW) : null;
+      if (!w) return null;
+      return `${w}W ${first}/${last} ${n}T`;
+    }
+
+    function formatVcpTitle(vcp) {
+      if (!vcp || !Array.isArray(vcp.depths) || !vcp.depths.length) return "Sin VCP";
+      const ts = vcp.depths.map((d, i) => `T${i + 1}=${Math.round(d)}%`).join(" · ");
+      return `Footprint · ${ts}`;
+    }
+
+    function hash(s) {
+      let h = 0;
+      for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+      return Math.abs(h);
+    }
+
+    const state = {
+      hunt: "e2",
+      mode: "caza",
+      view: "tape",
+      focus: 0,
+      rows: [],
+    };
+
+    function buildRows(huntId) {
+      const base = NAMES.map(([ticker, stage, weeks, rs, dist, vcp]) => ({
+        ticker,
+        stage,
+        weeks,
+        rs,
+        dist,
+        vcp,
+        seed: hash(ticker + huntId),
+      }));
+      if (huntId === "pivot") {
+        return [...base]
+          .map((r) => ({
+            ...r,
+            _score: (r.vcp ? 20 : 0) - r.dist,
+          }))
+          .sort((a, b) => b._score - a._score);
+      }
+      if (huntId === "weak") return [...base].sort((a, b) => a.rs - b.rs);
+      if (huntId === "intl") {
+        return base.map((r, i) =>
+          i % 3 === 0
+            ? {
+                ...r,
+                ticker: r.ticker === "NVDA" ? "SAP" : r.ticker === "META" ? "ASML" : r.ticker,
+                seed: hash(r.ticker + "intl"),
+              }
+            : r
+        );
+      }
+      if (huntId === "ipo") return base.filter((_, i) => i % 2 === 0).slice(0, 12);
+      return [...base].sort((a, b) => b.rs - a.rs);
+    }
+
+    function renderRail() {
+      const rail = document.getElementById("rail");
+      rail.innerHTML = HUNTS.map((h) => {
+        const n = buildRows(h.id).length;
+        return `<button type="button" data-hunt="${h.id}" aria-pressed="${state.hunt === h.id}">${h.label}<span class="n">${n}</span></button>`;
+      }).join("");
+      rail.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.hunt = btn.dataset.hunt;
+          state.focus = 0;
+          state.view = "tape";
+          if (state.mode === "audit") state.mode = "caza";
+          refresh();
+        });
+      });
+    }
+
+    function renderTape() {
+      const ul = document.getElementById("tape");
+      ul.innerHTML = state.rows
+        .map((r, i) => {
+          const hot = r.dist <= -10;
+          const active = i === state.focus ? "active" : "";
+          const sp = sparkSvg(r.seed);
+          const vcp = formatVcpFootprint(r.vcp);
+          const vcpHtml = vcp
+            ? `<span class="vcp" title="${formatVcpTitle(r.vcp)}">${vcp}</span>`
+            : `<span class="vcp empty">–</span>`;
+          return `<li class="row ${active}" role="option" aria-selected="${i === state.focus}" data-i="${i}" tabindex="-1">
+            <span class="ticker">${r.ticker}</span>
+            <div class="spark-wrap" title="Semanal ~12M mock · precio + MM">
+              <svg class="spark" viewBox="0 0 128 40" aria-hidden="true">
+                <path class="fill" d="${sp.fill}" />
+                <path class="ma" d="${sp.ma}" />
+                <path class="price" d="${sp.price}" />
+              </svg>
+            </div>
+            <span class="etapa" title="Etapa semanal · semanas en esta etapa (mock de weeklyStageWeek)">${r.stage} · <span class="sem">sem. ${r.weeks}</span></span>
+            <span class="rs">${r.rs}</span>
+            ${vcpHtml}
+            <span class="ext ${hot ? "hot" : ""}">${r.dist.toFixed(1).replace(".", ",")}%</span>
+          </li>`;
+        })
+        .join("");
+      ul.querySelectorAll(".row").forEach((el) => {
+        el.addEventListener("click", () => {
+          state.focus = Number(el.dataset.i);
+          openDrill();
+        });
+      });
+      scrollFocusIntoView();
+    }
+
+    function renderAudit() {
+      const el = document.getElementById("auditView");
+      const rows = state.rows
+        .map((r) => {
+          const vcp = formatVcpFootprint(r.vcp) || "–";
+          return `<tr>
+          <td>${r.ticker}</td>
+          <td>Tema demo</td>
+          <td class="num">${r.rs}</td>
+          <td>${r.stage} · sem. ${r.weeks}</td>
+          <td class="mono" title="${formatVcpTitle(r.vcp)}">${vcp}</td>
+          <td class="num">+12,4%</td>
+          <td class="num">${r.dist.toFixed(1).replace(".", ",")}%</td>
+          <td class="num">42B</td>
+        </tr>`;
+        })
+        .join("");
+      el.innerHTML = `<table class="audit">
+        <thead><tr>
+          <th>Ticker</th><th>Tema</th><th>RS</th><th>Etapa</th><th>VCP</th><th>Rend. 3M</th><th>Dist. 52s</th><th>Cap.</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p style="color:var(--soft);font-size:11px;margin-top:12px">Auditoría mock. VCP = footprint <code>19W 18/6 3T</code>, no «2C·form·PV%».</p>`;
+    }
+
+    function openDrill() {
+      state.view = "drill";
+      const r = state.rows[state.focus];
+      if (!r) return;
+      const paths = weeklyChartPaths(r.seed);
+      const vcp = formatVcpFootprint(r.vcp) || "–";
+      const el = document.getElementById("drillView");
+      el.innerHTML = `
+        <div class="drill-bar">
+          <button type="button" class="back" id="backBtn">← Cinta (Esc)</button>
+          <div class="meta">${r.ticker} · ${r.stage} · sem. ${r.weeks} · RS ${r.rs} · ${vcp} · Máx 52s ${r.dist.toFixed(1).replace(".", ",")}%</div>
+        </div>
+        <div class="drill-chart">
+          <h2>${r.ticker}</h2>
+          <div class="subline">Gráfico semanal mock · footprint: ${vcp} · ${formatVcpTitle(r.vcp)}</div>
+          <svg viewBox="0 0 640 240" preserveAspectRatio="none" aria-label="Chart mock">
+            <path class="ma" d="${paths.ma}" />
+            <path class="price" d="${paths.price}" />
+          </svg>
+        </div>
+        <div class="banner">Drill-in. <strong>Esc</strong> vuelve. VCP = huella Minervini <strong>${vcp}</strong> (<code>XW Y/Z NT</code>), no «form».</div>
+      `;
+      el.querySelector("#backBtn").addEventListener("click", closeDrill);
+      refreshVisibility();
+    }
+
+    function closeDrill() {
+      state.view = "tape";
+      refreshVisibility();
+      scrollFocusIntoView();
+    }
+
+    function scrollFocusIntoView() {
+      const el = document.querySelector(`.row[data-i="${state.focus}"]`);
+      if (el) el.scrollIntoView({ block: "nearest" });
+    }
+
+    function moveFocus(delta) {
+      if (state.mode !== "caza" || state.view !== "tape") return;
+      const n = state.rows.length;
+      if (!n) return;
+      state.focus = (state.focus + delta + n) % n;
+      renderTape();
+    }
+
+    function refreshVisibility() {
+      const tape = document.getElementById("tapeView");
+      const audit = document.getElementById("auditView");
+      const drill = document.getElementById("drillView");
+      const modeCaza = document.getElementById("modeCaza");
+      const modeAudit = document.getElementById("modeAudit");
+      const hint = document.getElementById("hint");
+      modeCaza.setAttribute("aria-pressed", state.mode === "caza");
+      modeAudit.setAttribute("aria-pressed", state.mode === "audit");
+
+      if (state.mode === "audit") {
+        tape.classList.add("hidden");
+        drill.classList.add("hidden");
+        audit.classList.remove("hidden");
+        hint.innerHTML = "Modo <strong>Auditoría</strong> · VCP numérico con guiones · vuelve a <strong>Caza</strong>";
+        return;
+      }
+      audit.classList.add("hidden");
+      if (state.view === "drill") {
+        tape.classList.add("hidden");
+        drill.classList.remove("hidden");
+        hint.innerHTML = "Drill-in · <kbd>Esc</kbd> vuelve a la cinta";
+      } else {
+        drill.classList.add("hidden");
+        tape.classList.remove("hidden");
+        hint.innerHTML =
+          "TAPE-A v3 · <kbd>j</kbd>/<kbd>k</kbd> · <kbd>Enter</kbd> · <kbd>Esc</kbd> · etapa = <strong>sem. N</strong> · VCP = <strong>19W 18/6 3T</strong> · spark + MM";
+      }
+    }
+
+    function refresh() {
+      state.rows = buildRows(state.hunt);
+      if (state.focus >= state.rows.length) state.focus = Math.max(0, state.rows.length - 1);
+      renderRail();
+      renderTape();
+      renderAudit();
+      if (state.view === "drill") openDrill();
+      else refreshVisibility();
+    }
+
+    document.getElementById("modeCaza").addEventListener("click", () => {
+      state.mode = "caza";
+      state.view = "tape";
+      refreshVisibility();
+    });
+    document.getElementById("modeAudit").addEventListener("click", () => {
+      state.mode = "audit";
+      state.view = "tape";
+      refreshVisibility();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      const tag = (e.target && e.target.tagName) || "";
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.key === "Escape") {
+        if (state.view === "drill") {
+          e.preventDefault();
+          closeDrill();
+        }
+        return;
+      }
+      if (state.mode === "audit" || state.view === "drill") return;
+      if (e.key === "j" || e.key === "ArrowDown") {
+        e.preventDefault();
+        moveFocus(1);
+      } else if (e.key === "k" || e.key === "ArrowUp") {
+        e.preventDefault();
+        moveFocus(-1);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        openDrill();
+      }
+    });
+
+    refresh();
+  </script>
+</body>
+</html>
