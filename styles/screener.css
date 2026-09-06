@@ -2428,10 +2428,10 @@ button.dataHealthSummaryItem:hover,
 
 .stockPreview {
   padding:11px;
-  border:1px solid var(--line);
+  border:1px solid var(--line2);
   border-radius:var(--radius);
-  background:linear-gradient(180deg,rgba(17,16,13,.88),rgba(5,5,5,.9));
-  box-shadow:none;
+  background:var(--surface);
+  box-shadow:var(--shadow-panel);
 }
 
 .previewTop {display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px
@@ -8136,6 +8136,7 @@ button.decisionOperatingIssue:hover {
 }
 
 .screenerTerminalPage .resultPagerRange {
+  color:var(--soft);
   font-size:var(--text-xs);
   white-space:nowrap;
 }
@@ -8182,7 +8183,7 @@ button.decisionOperatingIssue:hover {
   height:66px;
   padding:8px 10px;
   border-bottom:1px solid var(--line);
-  color:#d4d4d8;
+  color:var(--text);
   background:transparent;
 }
 
@@ -8211,7 +8212,7 @@ button.decisionOperatingIssue:hover {
 }
 
 .screenerTerminalPage .compactSparkCell .sparkPrice {
-  stroke:#22c55e;
+  stroke:var(--serie-alza);
   filter:none;
 }
 
@@ -8220,7 +8221,12 @@ button.decisionOperatingIssue:hover {
 }
 
 .screenerTerminalPage .compactSparkCell .sparkMa200 {
-  stroke:rgba(113,113,122,.62);
+  stroke:var(--humo);
+  opacity:.62;
+}
+
+.screenerTerminalPage .compactSparkCell .miniSparkline.down .sparkPrice {
+  stroke:var(--serie-baja);
 }
 
 .screenerTerminalPage .compactSparkCell > span {
@@ -10031,6 +10037,31 @@ button.decisionOperatingIssue:hover {
   letter-spacing:.06em;
   text-transform:uppercase;
   white-space:nowrap;
+}
+
+.screenerPeriodPicker .chartSegmented {
+  height:var(--control-s);
+  min-height:var(--control-s);
+  padding:2px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--surface-inset);
+}
+
+.screenerPeriodPicker .chartSegmented button {
+  height:var(--control-s);
+  min-height:var(--control-s);
+  min-width:30px;
+  padding:0 8px;
+  font-size:var(--text-xs);
+  font-weight:600;
+}
+
+.screenerPeriodPicker .chartSegmented button.active,
+.screenerPeriodPicker .chartSegmented button[aria-pressed="true"] {
+  border-color:var(--line2);
+  background-color:var(--surface);
+  color:var(--text);
 }
 
 /* La tabla ya no desborda: barra de scroll fina en vez del degradado que

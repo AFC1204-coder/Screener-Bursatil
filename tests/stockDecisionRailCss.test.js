@@ -26,6 +26,11 @@ describe("FICHA-UI · stock decision action menu CSS", () => {
     expect(block).toMatch(/\.stockDecisionActionMenuPanel button\s*\{[^}]*border-radius:\s*var\(--radius\)/s);
   });
 
+  it("summary y botones del panel usan --control-m", () => {
+    expect(block).toMatch(/\.stockDecisionActionMenu > summary\s*\{[^}]*min-height:\s*var\(--control-m\)/s);
+    expect(block).toMatch(/\.stockDecisionActionMenuPanel button\s*\{[^}]*min-height:\s*var\(--control-m\)/s);
+  });
+
   it("variantes de veredicto usan tokens semánticos", () => {
     expect(block).toMatch(/button\.good[^}]*--decision-vigilar/s);
     expect(block).toMatch(/button\.warn[^}]*--decision-auditar/s);

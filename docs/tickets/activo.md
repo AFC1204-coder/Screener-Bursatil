@@ -2,7 +2,7 @@
 
 **Estado:** idle  
 **Rama:** `codex/statsedge-ui-polish`  
-**Último cerrado:** LOOK-D (aside piel)  
-**Siguiente:** LOOK-E — mesa + chrome `/stock`
+**Último cerrado:** LOOK-E (mesa + chrome `/stock`)  
+**Siguiente:** LOOK-F — móvil calidad de uso
 
-Sin prompt activo. Pedir al orquestador activar LOOK-E cuando toque.
+Sin prompt activo. Pedir al orquestador activar LOOK-F cuando toque.

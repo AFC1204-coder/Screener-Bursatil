@@ -1845,7 +1845,9 @@
 
 .stockPage .grid > .card {
   border-radius:4px;
-  background:linear-gradient(180deg,rgba(12,11,9,.94),rgba(5,5,5,.96));
+  background:var(--surface);
+  border:1px solid var(--line2);
+  box-shadow:var(--shadow-panel);
 }
 
 .signalStat.bad b {color:#ff9f99
@@ -1910,6 +1912,30 @@
 }
 
 .searchResult {margin-top:14px
+}
+
+/* LOOK-E: preview flotante — no empuja el fold (especialmente móvil). */
+.searchPopoverHost {
+  position:relative;
+  z-index:25;
+}
+
+.searchResult.searchResultPrimary {
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  right:0;
+  z-index:30;
+  margin-top:0;
+  max-width:520px;
+  pointer-events:auto;
+  animation:fadeIn var(--t-enter) both;
+}
+
+@media(max-width:760px) {
+  .searchResult.searchResultPrimary {
+    max-width:none;
+  }
 }
 
 .stockPreview-search {
@@ -2646,10 +2672,10 @@
 .sparkMa200 {stroke:rgba(157,151,140,.62);stroke-width:1.3
 }
 
-.sparkPrice {stroke:var(--decision-vigilar);stroke-width:2.6;filter:drop-shadow(0 0 7px var(--senal-dim))
+.sparkPrice {stroke:var(--serie-alza);stroke-width:2.6;filter:drop-shadow(0 0 7px var(--senal-dim))
 }
 
-.miniSparkline.down .sparkPrice {stroke:var(--oxido);filter:drop-shadow(0 0 7px rgba(237,162,71,.2))
+.miniSparkline.down .sparkPrice {stroke:var(--serie-baja);filter:none
 }
 
 .sparkLast {fill:var(--tiza);stroke:#050505;stroke-width:1.5
@@ -2760,7 +2786,7 @@
   margin-bottom:14px;
 }
 
-.page > .grid > .card, .sectorMapLayout > .card, .terminalPanel, .stockPreview, .leaderTape, .quickPanel, .newsMoodPanel {
+.page > .grid > .card, .sectorMapLayout > .card, .terminalPanel, .leaderTape, .quickPanel, .newsMoodPanel {
   border:1px solid var(--line2);
   border-radius:3px;
   background:
@@ -4522,14 +4548,14 @@ h2 {
 .compactSparkCell .sparkPrice,
 .mobileResultSpark .sparkPrice,
 .mobileMoverCard .sparkPrice {
-  stroke:var(--decision-vigilar);
+  stroke:var(--serie-alza);
   stroke-width:2.4;
   filter:none;
 }
 
 .miniSparkline.down .sparkPrice,
 .mobileResultSpark.down .sparkPrice {
-  stroke:var(--risk);
+  stroke:var(--serie-baja);
 }
 
 .compactMetric b,
@@ -5016,8 +5042,10 @@ h2 {
 
 .stockPreview-search {
   padding:14px;
-  border-color:var(--line2);
-  background:linear-gradient(180deg,var(--surface2),var(--surface2));
+  border:1px solid var(--line2);
+  border-radius:var(--radius);
+  background:var(--surface);
+  box-shadow:var(--shadow-panel);
 }
 
 .stockPreview-search .companyMark {
@@ -5461,7 +5489,7 @@ h2 {
 .stockPage .stockDecisionActionMenu > summary {
   cursor:pointer;
   list-style:none;
-  min-height:30px;
+  min-height:var(--control-m);
   padding:5px 10px;
   border:1px solid var(--stock-line);
   border-radius:var(--radius);
@@ -5501,7 +5529,7 @@ h2 {
 }
 
 .stockPage .stockDecisionActionMenuPanel button {
-  min-height:30px;
+  min-height:var(--control-m);
   padding:5px 9px;
   border:1px solid var(--stock-line);
   border-radius:var(--radius);
@@ -5778,7 +5806,7 @@ h2 {
   min-height:var(--control-s);
   min-width:34px;
   padding:0 8px;
-  font-size:var(--text-s);
+  font-size:var(--text-xs);
 }
 
 .stockPage .chartPrefs .chartIndicators summary,
@@ -5848,6 +5876,17 @@ h2 {
   .stockPage .chartBenchmarkControl {
     flex-wrap:wrap;
   }
+  .stockPage .chartPrefs .compactSeg,
+  .stockPage .chartPrefs .chartSegmented {
+    height:var(--control-l);
+    min-height:var(--control-l);
+  }
+  .stockPage .chartPrefs .chartSegmented button,
+  .stockPage .chartPrefs .compactSeg button {
+    height:var(--control-l);
+    min-height:var(--control-l);
+    font-size:var(--text-xs);
+  }
 }
 
 @media(min-width:1024px) {
@@ -5867,8 +5906,8 @@ h2 {
   }
   .stockPage .chartPrefs .compactSeg,
   .stockPage .chartPrefs .chartSegmented {
-    height:28px;
-    min-height:28px;
+    height:var(--control-s);
+    min-height:var(--control-s);
   }
   .stockPage .chartPrefs select {
     min-width:84px;
@@ -5881,19 +5920,19 @@ h2 {
     font-size:var(--text-xxs);
   }
   .stockPage .chartPrefs .chartSegmented {
-    height:28px;
-    min-height:28px;
+    height:var(--control-s);
+    min-height:var(--control-s);
   }
   .stockPage .chartPrefs .chartSegmented button {
-    height:22px;
-    min-height:22px;
+    height:var(--control-s);
+    min-height:var(--control-s);
     min-width:28px;
     padding:0 7px;
     font-size:var(--text-xs);
   }
   .stockPage .chartPrefs .compactSeg button {
-    height:22px;
-    min-height:22px;
+    height:var(--control-s);
+    min-height:var(--control-s);
     min-width:30px;
     padding:0 7px;
     font-size:var(--text-xs);
@@ -5938,10 +5977,10 @@ h2 {
   }
 }
 
-.stockPage .heroCardMetrics b.good {color:#86efac
+.stockPage .heroCardMetrics b.good {color:var(--serie-alza)
 }
 
-.stockPage .heroCardMetrics b.bad {color:#ff9b9b
+.stockPage .heroCardMetrics b.bad {color:var(--serie-baja)
 }
 
 .stockPage .heroCardMetrics b.neutral {color:#f3d98b
@@ -6232,12 +6271,12 @@ h2 {
 
 .stockPage .stockHeroCompactCard .marketSmithStrip .miniMetric b.good,
 .stockPage .stockHeroCompactCard .heroCardMetrics b.good {
-  color:#80e6a0;
+  color:var(--serie-alza);
 }
 
 .stockPage .stockHeroCompactCard .marketSmithStrip .miniMetric b.bad,
 .stockPage .stockHeroCompactCard .heroCardMetrics b.bad {
-  color:#ff9b9b;
+  color:var(--serie-baja);
 }
 
 @media(max-width:1024px) {
@@ -7075,6 +7114,10 @@ h2 {
   transform: none;
 }
 
+.resultPagerRange {
+  color:var(--soft);
+}
+
 .resultPagerStep {
   display: inline-flex;
   align-items: center;
@@ -7708,8 +7751,8 @@ h2 {
   .stockPage .chartPrefs .chartSegmented {
     width: 100%;
     min-width: 0;
-    height: 32px !important;
-    min-height: 32px !important;
+    height: var(--control-l) !important;
+    min-height: var(--control-l) !important;
   }
   .stockPage .chartPrefs select {
     padding: 0 16px 0 7px;
@@ -7722,7 +7765,8 @@ h2 {
     width: 100%;
   }
   .stockPage .chartPrefs .chartSegmented button {
-    min-height: 28px !important;
+    height: var(--control-l) !important;
+    min-height: var(--control-l) !important;
     padding: 0 7px;
     font-size:var(--text-xs);
   }
@@ -7732,7 +7776,8 @@ h2 {
   .stockPage .chartPrefs .compactSeg button {
     flex: 1 1 0;
     min-width: 0 !important;
-    min-height: 32px !important;
+    height: var(--control-l) !important;
+    min-height: var(--control-l) !important;
     padding: 0 5px;
     font-size:var(--text-xs);
   }
@@ -8357,7 +8402,7 @@ h2 {
   }
 
   .stockPage .stockDecisionActionMenu > summary {
-    min-height:28px;
+    min-height:var(--control-l);
     padding:4px 8px;
     font-size:var(--text-xs);
   }
@@ -8458,13 +8503,14 @@ h2 {
   .stockPage .chartPrefs.compact .chartSegmented {
     width: auto;
     min-width: 0;
-    height: 28px !important;
-    min-height: 28px !important;
+    height: var(--control-l) !important;
+    min-height: var(--control-l) !important;
     flex: 0 0 auto;
   }
 
   .stockPage .chartPrefs.compact .chartSegmented button {
-    min-height: 24px !important;
+    height: var(--control-l) !important;
+    min-height: var(--control-l) !important;
     min-width: 28px !important;
     padding: 0 5px;
     font-size:var(--text-xs);
@@ -8473,14 +8519,15 @@ h2 {
   .stockPage .chartPrefs.compact .compactSeg {
     width: auto;
     min-width: 0;
-    height: 28px !important;
-    min-height: 28px !important;
+    height: var(--control-l) !important;
+    min-height: var(--control-l) !important;
     flex: 0 0 auto;
     grid-column: auto;
   }
 
   .stockPage .chartPrefs.compact .compactSeg button {
-    min-height: 24px !important;
+    height: var(--control-l) !important;
+    min-height: var(--control-l) !important;
     min-width: 28px !important;
     padding: 0 5px;
     font-size:var(--text-xs);

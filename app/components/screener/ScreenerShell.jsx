@@ -691,6 +691,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       <main className="mainContent">
         <section className="searchCard">
           <div className="commandSearchPanel searchPanelBare">
+              <div className="searchPopoverHost">
               <form className="searchBar" onSubmit={runSearch} style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
                 <div className="searchFieldWrap">
                   <input className="input searchInput" value={searchSymbol} onChange={(e) => updateSearchSymbol(e.target.value)} placeholder="Ticker, nombre, sector, subsector o país..." />
@@ -703,11 +704,12 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
                 ) : null}
                 <button className="btn btnPrimary" disabled={searchLoading}>{searchLoading ? "Buscando..." : "Buscar"}</button>
               </form>
-              <SearchScopeList items={searchScopeItems} onPick={applySearchScope} />
-              {searchError && <div className="dataNote error" style={{ marginTop: 12 }}>{investorStatusLabel(searchError)}</div>}
               {searchResult ? <div className="searchResult searchResultPrimary">
                 <PreviewCard row={searchResult} variant="search" onFavorite={addFavorite} onOpenStock={saveSessionBeforeStockOpen} isFavorite={favoriteSymbols.has(searchResult.symbol)} decisionResolutions={screenerDecisionResolutions} />
               </div> : null}
+              </div>
+              <SearchScopeList items={searchScopeItems} onPick={applySearchScope} />
+              {searchError && <div className="dataNote error" style={{ marginTop: 12 }}>{investorStatusLabel(searchError)}</div>}
               <SearchCandidateList candidates={searchCandidates} activeSymbol={searchResult?.symbol} onPick={(item) => { setSearchSymbol(item.symbol); loadSearchResult(item.symbol, item); }} />
           </div>
           <HuntCardRail presetKey={presetKey} markets={markets} onSelect={applyHuntCard} pending={isHuntTransitionPending} />
