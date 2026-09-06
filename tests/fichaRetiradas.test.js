@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
+import { UniversalPriceChartView } from "@/app/UniversalPriceChart";
 import StockClient, { stockRsUniverse } from "@/app/stock/[symbol]/StockClient";
 import { buildChartIdentityCard } from "@/lib/chartIdentityCard";
 import { compactDate } from "@/app/components/ui/QualityStrip";
@@ -378,6 +379,17 @@ describe("READ-D RS país en tarjeta", () => {
 });
 
 describe("stockRsUniverse: RS de la ficha", () => {
+  it("con pin 64 y cola 72, el RS sigue el pin y no la cola de la serie", () => {
+    const rs = {
+      rating: 64,
+      globalRsSeries: [{ date: "2026-09-05", rsRating: 72, sampleSize: 4868 }],
+    };
+    expect(stockRsUniverse(rs)).toBe(64);
+    expect(stockRsUniverse(rs)).not.toBe(72);
+    expect(buildChartIdentityCard({ symbol: "AAPL", data: stockData({ relativeStrength: rs }), rsUniverse: stockRsUniverse(rs) }).rs.value).toBe(64);
+    expect(buildChartIdentityCard({ symbol: "AAPL", data: stockData({ relativeStrength: rs }), rsUniverse: stockRsUniverse(rs) }).rs.from).toBeNull();
+  });
+
   it("con serie legacy y rating pin, el RS sigue el pin y no la cola de la serie", () => {
     const rs = {
       rating: 64,
@@ -399,6 +411,42 @@ describe("stockRsUniverse: RS de la ficha", () => {
       globalRsSeries: [{ date: "2025-09-17", rsRating: 94, sampleSize: 4868 }],
     };
     expect(stockRsUniverse(rs)).toBe(94);
+  });
+
+  it("READ-G: pin 64 y cola 72 → tarjeta y badge del chart enseñan 64", () => {
+    const rs = {
+      rating: 64,
+      globalRsSeries: [{ date: "2026-09-05", rsRating: 72, sampleSize: 4868 }],
+    };
+    const rsUniverse = stockRsUniverse(rs);
+    const cardHtml = renderFicha({ relativeStrength: rs });
+    expect(cardHtml).toContain('class="chartIdCardRsValue">64<');
+    expect(cardHtml).not.toContain('class="chartIdCardRsValue">72<');
+
+    const badgeHtml = renderToStaticMarkup(React.createElement(UniversalPriceChartView, {
+      canvasRef: { current: null },
+      viewModel: {
+        status: "ready",
+        header: { symbol: "AAPL", latestClose: 100, changePct: 1, positive: true, rangeLabel: "1A", interval: "D" },
+        badges: { rsMainScore: rsUniverse, countryRsScore: null, themeRsScore: null, pattern: null },
+        viewportRail: { mode: "Último dato", window: "ene - dic", bars: 252, distance: null, drawing: null, manual: false, key: "default" },
+        patternDiagnostic: null,
+        rsLegend: { enabled: true, intradayMuted: false, rendered: true, absence: null },
+        rsCountryLegend: { enabled: false, intradayMuted: false, rendered: false, absence: null },
+        rsThemeLegend: { enabled: false, intradayMuted: false, rendered: false, absence: null },
+        notes: { quality: null, expanding: null, expansionFailed: null, renderError: null },
+        emptyFallback: { text: "", title: "" },
+        rootClassName: "",
+      },
+      actions: {
+        zoom: () => {}, pan: () => {}, reset: () => {}, scrollToLatest: () => {}, toggleDrawing: () => {}, removeSelectedDrawing: () => {},
+      },
+      drawingToolbar: { toolActive: false, hasSelection: false, modeLabel: null },
+      identityCollapsed: true,
+    }));
+    expect(badgeHtml).toContain("RS global");
+    expect(badgeHtml).toContain(">64<");
+    expect(badgeHtml).not.toMatch(/RS global[\s\S]{0,40}>72</);
   });
 });
 

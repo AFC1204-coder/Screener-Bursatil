@@ -2,7 +2,7 @@
 
 Copia de referencia. Ejecutar desde `docs/tickets/activo.md`.
 
-**Estado:** Pendiente  
+**Estado:** cerrado (2026-09-06 · tests pin≠cola OK; smoke live sin pin RS en :3000)  
 **Prioridad:** P2  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo sugerido:** Composer (auditoría + UI acotada) o GPT-5.6 Terra si solo alinea lectores existentes  

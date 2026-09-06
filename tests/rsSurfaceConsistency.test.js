@@ -38,7 +38,8 @@ import { mergeUniverseRelativeStrength } from "@/app/api/company-brief/route";
 import { LeaderTape, PreviewCard, QuickPanel } from "@/app/screenerPanels";
 import { attachWeeklyRs } from "@/lib/globalRs";
 import { attachCachedMarketCap } from "@/lib/fundamentalsCache";
-import { canonicalRs, canonicalRsSortValue, canonicalRsValue } from "@/lib/rsCanonical";
+import { canonicalRs, canonicalRsSortValue, canonicalRsValue, canonicalBriefRs } from "@/lib/rsCanonical";
+import { stockRsUniverse } from "@/app/stock/[symbol]/StockClient";
 import { SCREENER_COLUMNS, stageWord } from "@/lib/screenerColumns";
 import { stageWordForState } from "@/lib/stageDisplay";
 import { CompactResultsTable } from "@/lib/screenerTable";
@@ -249,6 +250,23 @@ describe("RS: una sola fuente en las cinco superficies", () => {
   });
 });
 
+describe("READ-G: pin de ficha vs cola de serie overlay", () => {
+  it("pin 64 y cola 72 → ficha, badge y vista rápida enseñan 64", () => {
+    const row = rowFixture({ weeklyRsRating: 64 });
+    const rsBrief = {
+      rating: 64,
+      globalRsSeries: [{ date: "2026-09-05", rsRating: 72, sampleSize: 4868 }],
+    };
+
+    expect(canonicalBriefRs(rsBrief)).toBe(64);
+    expect(stockRsUniverse(rsBrief)).toBe(64);
+    expect(canonicalRsValue(row)).toBe(64);
+    expect(visibleText(renderQuickReview(row))).toContain("64");
+    expect(visibleText(renderQuickReview(row))).not.toMatch(/RS[^\\d]{0,12}72/);
+    expect(tableRsCellText(row)).toBe("64");
+  });
+});
+
 describe("RS: hidratación en TODAS las rutas que producen filas", () => {
   // El fallo de agosto de 2026 no fue de lectura: /api/scans hidrataba y
   // /api/scan (polling del escaneo en vivo) y /api/leaderboards no. La tabla
@@ -340,12 +358,14 @@ describe("RS: ninguna superficie de display vuelve a leer el percentil del lote"
   it("el lector único no tiene respaldo al percentil del lote", () => {
     const code = readSource("lib/rsCanonical.js").replace(/\/\/[^\n]*/g, "");
     expect(code).not.toMatch(/rsGlobalPct/);
-    expect(code).not.toMatch(/rsRating[^:]/);
+    // canonicalBriefRs puede leer la cola de globalRsSeries sin pin; no el rsRating del lote.
+    expect(code).not.toMatch(/\brow\??\.rsRating/);
   });
 
   it("la ficha del valor no cae al percentil del lote", () => {
     const code = readSource("app/stock/[symbol]/StockClient.jsx").replace(/\/\/[^\n]*/g, "");
     expect(code).not.toMatch(/rs\.rsGlobalPct/);
+    expect(code).toMatch(/canonicalBriefRs|stockRsUniverse/);
   });
 });
 

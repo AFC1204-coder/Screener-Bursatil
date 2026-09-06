@@ -6,16 +6,17 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** smoke PG `:15432` cuando haya túnel.  
-**Último cerrado:** **LOOK-F** móvil calidad de uso (fin oleada LOOK).  
-**Ahora:** idle.  
+**Último cerrado:** **READ-G** RS cifras coherentes (pin canónico).  
+**Ahora:** idle — siguiente residual **READ-H** (badge patrón P3).  
 **Pendiente ops:** smoke RPC Mini `:15432`.  
-**Cola piel:** LOOK A→F ✅. Multi-lista solo Favoritos.  
+**Cola residuales:** READ-H badge patrón.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
-**Nota:** Tape proto en remoto. Tokens lienzo **v2.3**; controles `--control-*` / `--t-*` consumidos.  
+**Nota:** Tape proto en remoto. LOOK A→F ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA scan-universe **disabled_manually**.  
-**Residuales UX-READ (docs):** READ-G P2 · READ-H P3.  
+**Residuales UX-READ:** READ-G **cerrado** · READ-H P3.  
 **Aparcado:** tape→producto · smoke OPS-MINI-1 PG · uppercase 3 roles (deuda LOOK-C).  
-**SHELL:** A→D cerebro OK; piel LOOK = cerrada.
+**SHELL:** A→D cerebro OK; piel LOOK = cerrada.  
+**Nota smoke READ-G:** `:3000` sin pin RS en AAPL ni mesa cargada; coherencia pin≠cola cubierta por tests.
 
 ## Hecho (esta oleada)
 

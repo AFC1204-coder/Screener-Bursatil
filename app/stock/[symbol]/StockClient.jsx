@@ -11,6 +11,7 @@ import { amount, dateShort, dateTime, num as sharedNum, pct as sharedPct, pctSha
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
 import { buildChartIdentityCard } from "@/lib/chartIdentityCard";
+import { canonicalBriefRs as stockRsUniverse } from "@/lib/rsCanonical";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { persistReviewQueue } from "@/lib/screenerPipeline";
 import StorageAlert from "@/app/components/StorageAlert";
@@ -49,11 +50,8 @@ export function rsRankingStripValue(rsUniverse, freshness = {}) {
   return `${date} · n=${sharedNum(Math.round(sample))}`;
 }
 
-/** RS de la ficha (RS del cuadro y franja): pin del brief antes que la cola de la serie overlay. */
-export function stockRsUniverse(rs = {}) {
-  const seriesTail = Array.isArray(rs.globalRsSeries) ? rs.globalRsSeries.at(-1) : null;
-  return [rs.rating, seriesTail?.rsRating].find(Number.isFinite);
-}
+/** RS de la ficha (RS del cuadro y badge del chart): pin del brief antes que la cola de la serie overlay. */
+export { canonicalBriefRs as stockRsUniverse } from "@/lib/rsCanonical";
 
 /* Fila de tabla clave-valor de 2 columnas. Reemplaza a la píldora para
    cualquier par label-valor en N1 y N2. La fila crece verticalmente:

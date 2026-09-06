@@ -2,6 +2,7 @@
 
 **Estado:** idle  
 **Rama:** `codex/statsedge-ui-polish`  
-**Último cerrado:** LOOK-F (móvil calidad de uso) — **oleada LOOK A→F completa**
+**Último cerrado:** READ-G (RS cifras coherentes)  
+**Siguiente residual:** READ-H — badge de patrón legible (P3)
 
-Sin prompt activo. Siguiente backlog: residuales READ-G/H, tape→producto, o smoke OPS-MINI-1 cuando haya túnel PG.
+Sin prompt activo. Pedir al orquestador activar READ-H cuando toque.
