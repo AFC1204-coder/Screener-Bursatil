@@ -1641,12 +1641,60 @@
   }
 }
 
+/* READ-H: con tarjeta desplegada, el badge de patrón (frase canónica
+   CHART-BADGE-2) debe leerse sin hover; la botonera nav sigue apareciendo
+   solo al pasar el ratón (o con foco) para no ensuciar capturas del lienzo. */
+.universalChart.identityCardShown .universalChartFloatControls {
+  opacity:1;
+  pointer-events:none;
+}
+
+.universalChart.identityCardShown .universalChartNavGroup,
+.universalChart.identityCardShown .universalChartFloatControls > .universalChartBadges {
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .12s ease;
+}
+
+.universalChart.identityCardShown .universalChartCanvasWrap:hover .universalChartNavGroup,
+.universalChart.identityCardShown .universalChartCanvasWrap:hover .universalChartFloatControls > .universalChartBadges,
+.universalChart.identityCardShown .universalChartFloatControls:focus-within .universalChartNavGroup,
+.universalChart.identityCardShown .universalChartFloatControls:focus-within > .universalChartBadges {
+  opacity:1;
+  pointer-events:auto;
+}
+
+.universalChart.identityCardShown .universalChartPatternBadge {
+  opacity:1;
+  pointer-events:auto;
+}
+
+@media (hover: none) {
+  .universalChart.identityCardShown .universalChartNavGroup,
+  .universalChart.identityCardShown .universalChartFloatControls > .universalChartBadges {
+    opacity:1;
+    pointer-events:auto;
+  }
+}
+
 @media (max-width: 640px) {
   .chartIdentityCard {
     max-width:calc(100% - 64px);
   }
   .universalChartFloatControls .universalChartPatternBadge {
     display:none;
+  }
+  /* READ-H: en móvil con tarjeta desplegada, badge compacto visible. */
+  .universalChart.identityCardShown .universalChartFloatControls .universalChartPatternBadge {
+    display:flex;
+    max-width:min(220px,calc(100vw - 72px));
+    padding:4px 7px;
+  }
+  .universalChart.identityCardShown .universalChartFloatControls .universalChartPatternBadge span {
+    font-size:var(--text-xxs);
+  }
+  .universalChart.identityCardShown .universalChartFloatControls .universalChartPatternBadge b {
+    font-size:var(--text-xs);
   }
 }
 

@@ -6,17 +6,17 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** smoke PG `:15432` cuando haya túnel.  
-**Último cerrado:** **READ-G** RS cifras coherentes (pin canónico).  
-**Ahora:** idle — siguiente residual **READ-H** (badge patrón P3).  
+**Último cerrado:** **READ-H** badge patrón legible (hash tras commit).  
+**Ahora:** idle — residuales UX-READ cerrados (G+H).  
 **Pendiente ops:** smoke RPC Mini `:15432`.  
-**Cola residuales:** READ-H badge patrón.  
+**Cola residuales:** — (fin UX-READ).  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
 **Nota:** Tape proto en remoto. LOOK A→F ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA scan-universe **disabled_manually**.  
-**Residuales UX-READ:** READ-G **cerrado** (`8c97af8`) · READ-H P3.  
+**Residuales UX-READ:** READ-G (`8c97af8`) · READ-H **cerrado** (CSS identityCardShown).  
 **Aparcado:** tape→producto · smoke OPS-MINI-1 PG · uppercase 3 roles (deuda LOOK-C).  
 **SHELL:** A→D cerebro OK; piel LOOK = cerrada.  
-**Nota smoke READ-G:** `:3000` sin pin RS en AAPL ni mesa cargada; coherencia pin≠cola cubierta por tests.
+**Nota smoke READ-H:** `/stock/AAPL` `:3000` — badge opacity 1 sin hover; nav 0→1 al hover; móvil 390 badge compacto flex.
 
 ## Hecho (esta oleada)
 

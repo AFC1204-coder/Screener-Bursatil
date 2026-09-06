@@ -285,6 +285,67 @@ describe("useChartController · viewModel composicional (ADR §5.2)", () => {
     expect(html).not.toContain("Estructura sin dato");
   });
 
+  it("READ-H: tarjeta desplegada añade identityCardShown y badge en float controls", () => {
+    const html = renderToStaticMarkup(
+      React.createElement(UPCView, {
+        canvasRef: { current: null },
+        viewModel: {
+          status: "ready",
+          header: { symbol: "AAPL", latestClose: 131.44, changePct: 0.1, positive: true, rangeLabel: "1A", interval: "D" },
+          badges: {
+            rsMainScore: 64,
+            pattern: { shortLabel: "Base constructiva", evidence: "12.9% → 4.9%", tone: "good", reason: "VCP" },
+          },
+          viewportRail: { mode: "Último dato", window: "ene - dic", bars: 252, distance: null, drawing: null, manual: false, key: "default" },
+          patternDiagnostic: null,
+          rsLegend: { enabled: true, intradayMuted: false },
+          notes: { quality: null, expanding: null, expansionFailed: null, renderError: null },
+          emptyFallback: { text: "", title: "" },
+          rootClassName: "",
+        },
+        actions: { zoom: () => {}, pan: () => {}, reset: () => {}, scrollToLatest: () => {}, toggleDrawing: () => {}, removeSelectedDrawing: () => {} },
+        drawingToolbar: { toolActive: false, hasSelection: false, modeLabel: null },
+        identityCard: React.createElement("div", { className: "chartIdentityCard" }, "Tarjeta"),
+        identityCollapsed: false,
+        onToggleIdentity: () => {},
+      }),
+    );
+    expect(html).toContain("identityCardShown");
+    expect(html).toContain("universalChartFloatControls");
+    expect(html).toContain("universalChartPatternBadge");
+    expect(html).toContain("Base constructiva");
+    expect(html).not.toContain("universalChartHead");
+  });
+
+  it("READ-H: tarjeta plegada no usa identityCardShown y el badge vuelve al head", () => {
+    const html = renderToStaticMarkup(
+      React.createElement(UPCView, {
+        canvasRef: { current: null },
+        viewModel: {
+          status: "ready",
+          header: { symbol: "AAPL", latestClose: 131.44, changePct: 0.1, positive: true, rangeLabel: "1A", interval: "D" },
+          badges: {
+            pattern: { shortLabel: "Base constructiva", evidence: "12.9% → 4.9%", tone: "good", reason: "VCP" },
+          },
+          viewportRail: { mode: "Último dato", window: "ene - dic", bars: 252, distance: null, drawing: null, manual: false, key: "default" },
+          patternDiagnostic: null,
+          rsLegend: { enabled: false, intradayMuted: false },
+          notes: { quality: null, expanding: null, expansionFailed: null, renderError: null },
+          emptyFallback: { text: "", title: "" },
+          rootClassName: "",
+        },
+        actions: { zoom: () => {}, pan: () => {}, reset: () => {}, scrollToLatest: () => {}, toggleDrawing: () => {}, removeSelectedDrawing: () => {} },
+        drawingToolbar: { toolActive: false, hasSelection: false, modeLabel: null },
+        identityCard: React.createElement("div", { className: "chartIdentityCard" }, "Tarjeta"),
+        identityCollapsed: true,
+        onToggleIdentity: () => {},
+      }),
+    );
+    expect(html).not.toContain("identityCardShown");
+    expect(html).toContain("universalChartHead");
+    expect(html).not.toContain("universalChartFloatControls");
+  });
+
   it("patternBadgeRow no activa markers ni overlay actionable en el lienzo", () => {
     const rows = makeBars().map((bar) => ({ ...bar, time: bar.date }));
     const markers = projectPatternMarkers(null, rows, "D");

@@ -2,7 +2,8 @@
 
 **Estado:** idle  
 **Rama:** `codex/statsedge-ui-polish`  
-**Último cerrado:** READ-G (RS cifras coherentes)  
-**Siguiente residual:** READ-H — badge de patrón legible (P3)
+**Último cerrado:** READ-H (badge patrón visible con `identityCardShown`)
 
-Sin prompt activo. Pedir al orquestador activar READ-H cuando toque.
+Residuales UX-READ (G+H) cerrados. Sin ticket de programación activo.
+
+Siguiente posible (no activar sin dueño): tape→producto · OPS-MINI-1 smoke PG · uppercase 3 roles.
