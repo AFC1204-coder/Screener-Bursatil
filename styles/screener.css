@@ -251,8 +251,7 @@
   color:var(--muted);
   font-size:var(--text-xs);
   font-weight:780;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .scanStatusBar b {
@@ -286,9 +285,8 @@
   color:var(--traza);
   font-size:var(--text-xs);
   font-weight:760;
-  letter-spacing:.06em;
   line-height:1.35;
-  text-transform:uppercase;
+  text-transform:none;
   vertical-align:middle;
   white-space:nowrap;
   cursor:help;
@@ -316,8 +314,7 @@
   cursor:pointer;
   font-size:var(--text-xs);
   font-weight:820;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .percentileScopeNotice p {
@@ -349,8 +346,7 @@
   color:var(--oxido);
   font-size:var(--text-xs);
   font-weight:820;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .snapshotFreshnessNotice.info span {
@@ -458,8 +454,7 @@
     color:var(--muted);
     font-size:var(--text-xs);
     font-weight:820;
-    letter-spacing:.08em;
-    text-transform:uppercase;
+    text-transform:none;
   }
 
   .screenerMobileStatusFoldPeek {
@@ -519,8 +514,7 @@
     color:var(--muted);
     font-size:var(--text-xs);
     font-weight:820;
-    letter-spacing:.08em;
-    text-transform:uppercase;
+    text-transform:none;
   }
 
   .screenerMobileNoticePeek {
@@ -630,8 +624,7 @@
   color:var(--oxido);
   font-size:var(--text-xs);
   font-weight:820;
-  letter-spacing:var(--track-display);
-  text-transform:uppercase;
+  text-transform:none;
   font-family:var(--font-display);
   font-stretch:var(--stretch-display);
 }
@@ -735,8 +728,7 @@
   color:var(--muted);
   font-size:var(--text-xs);
   font-weight:700;
-  letter-spacing:.04em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .huntCardModeBadge--discovery {
@@ -956,8 +948,7 @@
   color:var(--muted);
   font-size:var(--text-xs);
   font-weight:780;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 @media (max-width:720px) {
@@ -1079,8 +1070,7 @@
   color:var(--muted);
   font-size:var(--text-xs);
   font-weight:750;
-  letter-spacing:.04em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .searchScopePanel {margin-top:10px
@@ -1118,9 +1108,8 @@
   color:var(--tiza);
   font-size:var(--text-xs);
   font-weight:850;
-  letter-spacing:.08em;
   text-align:center;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .searchScopeChip b {
@@ -1208,8 +1197,7 @@
   color:var(--muted);
   font-style:normal;
   font-weight:500;
-  text-transform:uppercase;
-  letter-spacing:.05em;
+  text-transform:none;
 }
 
 .opportunityMap {
@@ -1313,8 +1301,7 @@
   color:var(--muted);
   font-size:var(--text-xs);
   font-weight:800;
-  letter-spacing:.06em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .scoreLine:before {
@@ -1479,9 +1466,8 @@
   color:#aeb7c6;
   font-size:var(--text-xs);
   font-weight:850;
-  letter-spacing:.08em;
   text-overflow:ellipsis;
-  text-transform:uppercase;
+  text-transform:none;
   white-space:nowrap;
 }
 
@@ -1510,11 +1496,10 @@
   font-size:var(--text-xs);
   font-style:normal;
   font-weight:850;
-  letter-spacing:.04em;
   line-height:1;
   overflow:hidden;
   text-overflow:ellipsis;
-  text-transform:uppercase;
+  text-transform:none;
   white-space:nowrap;
 }
 
@@ -1700,8 +1685,7 @@
   color:var(--senal);
   font-size:var(--text-xs);
   font-weight:850;
-  letter-spacing:.07em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .rankExplainWatch p {
@@ -1739,8 +1723,7 @@
   color:#7f8796;
   font-size:var(--text-xs);
   font-weight:820;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .scoreAuditHead b {
@@ -2001,8 +1984,7 @@
   font-size:var(--text-xs);
   font-style:normal;
   font-weight:780;
-  letter-spacing:.07em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .dataHealthSummaryIntro,
@@ -2024,8 +2006,7 @@
   color:#7f8796;
   font-size:var(--text-xs);
   font-weight:820;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .dataHealthSummaryIntro b,
@@ -2118,8 +2099,7 @@ button.dataHealthSummaryItem:hover,
   font-size:var(--text-xs);
   font-style:normal;
   font-weight:780;
-  letter-spacing:.07em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .dataHealthSummaryIssues {
@@ -2196,8 +2176,7 @@ button.dataHealthSummaryItem:hover,
   color:#7f8796;
   font-size:var(--text-xs);
   font-weight:820;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .dataHealthHead b {
@@ -2254,8 +2233,7 @@ button.dataHealthSummaryItem:hover,
   color:#9aa3b2;
   font-size:var(--text-xs);
   font-weight:820;
-  letter-spacing:.06em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .dataHealthMetric em,
@@ -2320,8 +2298,7 @@ button.dataHealthSummaryItem:hover,
   color:#9aa3b2;
   font-size:var(--text-xs);
   font-weight:850;
-  letter-spacing:.07em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .decisionEvidenceChecklist>span em {
@@ -2383,8 +2360,7 @@ button.dataHealthSummaryItem:hover,
   font-size:var(--text-xs);
   font-style:normal;
   font-weight:820;
-  letter-spacing:.06em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .decisionEvidenceReviewFocus {
@@ -2401,8 +2377,7 @@ button.dataHealthSummaryItem:hover,
   color:#9aa3b2;
   font-size:var(--text-xs);
   font-weight:850;
-  letter-spacing:.07em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .decisionEvidenceReviewFocus p {
@@ -2611,8 +2586,7 @@ button.dataHealthSummaryItem:hover,
   color:#d7cfbf;
   font-size:var(--text-xs);
   font-weight:900;
-  text-transform:uppercase;
-  letter-spacing:.08em;
+  text-transform:none;
 }
 
 .previewStats {
@@ -2717,9 +2691,8 @@ button.dataHealthSummaryItem:hover,
   color:var(--muted);
   font-size:var(--text-xs);
   font-weight:800;
-  letter-spacing:.05em;
   text-overflow:ellipsis;
-  text-transform:uppercase;
+  text-transform:none;
   white-space:nowrap;
 }
 
@@ -3116,7 +3089,7 @@ button.dataHealthSummaryItem:hover,
 
 .profileHeaderBreadcrumb {
   font-size:var(--text-xs);
-  text-transform:uppercase;
+  text-transform:none;
   font-weight:500;
   display:flex;
   gap:8px;
@@ -3276,7 +3249,7 @@ button.dataHealthSummaryItem:hover,
   font-size:var(--text-xs);
   color: var(--muted);
   font-weight: 600;
-  text-transform: uppercase;
+  text-transform:none;
 }
 
 .perfBox b {
@@ -3352,14 +3325,14 @@ button.dataHealthSummaryItem:hover,
   color: var(--muted);
   font-weight: 600;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
+  text-transform:none;
   margin: 0;
 }
 
 .profileCardHeader span {
   font-size:var(--text-xs);
   color: var(--muted);
-  text-transform: uppercase;
+  text-transform:none;
 }
 
 /* Misma rejilla que .quickBusinessCard: la columna de valor no se pierde
@@ -3603,6 +3576,7 @@ button.dataHealthSummaryItem:hover,
   display:block;
   font-size:var(--text-xs);
   font-weight:750;
+  letter-spacing:var(--track-label);
   text-transform:uppercase;
 }
 
@@ -3684,11 +3658,10 @@ button.dataHealthSummaryItem:hover,
   color:#7f8796!important;
   font-size:var(--text-xs)!important;
   font-weight:780!important;
-  letter-spacing:.04em;
   line-height:1.15!important;
   overflow:hidden;
   text-overflow:ellipsis;
-  text-transform:uppercase;
+  text-transform:none;
   white-space:nowrap;
 }
 
@@ -3797,9 +3770,8 @@ button.dataHealthSummaryItem:hover,
   color:#8b94a3;
   font-size:var(--text-xxs);
   font-weight:850;
-  letter-spacing:.06em;
   line-height:1;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .compactTrustRail .scoreAuditMini em,
@@ -3890,10 +3862,9 @@ button.compactTrustFilter.active {
   font-size:var(--text-xxs);
   font-style:normal;
   font-weight:820;
-  letter-spacing:.06em;
   line-height:1.1;
   text-overflow:ellipsis;
-  text-transform:uppercase;
+  text-transform:none;
   white-space:nowrap;
 }
 
@@ -3925,8 +3896,7 @@ button.compactTrustFilter.active {
   color:#9aa3b2;
   font-size:var(--text-xs);
   font-weight:820;
-  letter-spacing:.07em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .scoreAuditMini em {
@@ -4002,8 +3972,7 @@ button.compactTrustFilter.active {
   color:#dbe4f0;
   font-size:var(--text-xs);
   font-weight:820;
-  letter-spacing:.07em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .dataHealthBadge em,
@@ -4138,8 +4107,7 @@ button.decisionIssueBadge:hover,
   color:#9ca3af;
   font-size:var(--text-xs);
   font-weight:760;
-  letter-spacing:.16em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .mobileIndexTapeHeader em {
@@ -4859,7 +4827,7 @@ button.decisionIssueBadge:hover,
   font-size:var(--text-xs);
   font-weight:760;
   letter-spacing:.1em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .scanDiagnosticsDisclosure > summary em {
@@ -4973,7 +4941,7 @@ button.decisionIssueBadge:hover,
   font-style:normal;
   font-weight:850;
   line-height:1;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .compactMetric.source-proxy b {
@@ -5257,8 +5225,7 @@ button.decisionIssueBadge:hover,
   color:#737782;
   font-size:var(--text-xs);
   font-weight:700;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .previewSummaryStat small {
@@ -5708,7 +5675,7 @@ button.decisionIssueBadge:hover,
   font-size:var(--text-xs);
   color: var(--muted);
   font-weight: 500;
-  text-transform: uppercase;
+  text-transform:none;
   white-space: nowrap;
 }
 
@@ -5732,13 +5699,20 @@ button.decisionIssueBadge:hover,
 }
 
 .filterTemplateHead span,
-.filterFamilySubhead span,
-.filterFamilyHeader span {
+.filterFamilySubhead span {
   color: var(--muted);
   font-size:var(--text-xs);
   font-weight: 720;
   letter-spacing: .13em;
   text-transform: uppercase;
+}
+
+.filterFamilyHeader span {
+  color: var(--muted);
+  font-size:var(--text-xs);
+  font-weight: 720;
+  text-transform:none;
+  letter-spacing: 0;
 }
 
 .filterTemplateHead em,
@@ -6303,8 +6277,7 @@ button.decisionIssueBadge:hover,
   background: var(--surface2);
   font-size:var(--text-xs);
   font-weight: 820;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  text-transform:none;
   white-space: nowrap;
 }
 
@@ -6362,8 +6335,7 @@ button.decisionIssueBadge:hover,
   font-size:var(--text-xs);
   font-style: normal;
   font-weight: 760;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  text-transform:none;
 }
 
 .screenerContractStatus {
@@ -6474,10 +6446,9 @@ button.decisionIssueBadge:hover,
   font-size:var(--text-xs);
   font-style: normal;
   font-weight: 820;
-  letter-spacing: .08em;
   line-height: 1;
   text-overflow: ellipsis;
-  text-transform: uppercase;
+  text-transform:none;
   white-space: nowrap;
 }
 
@@ -6554,9 +6525,8 @@ button.decisionIssueBadge:hover,
   font-size:var(--text-xs);
   font-style:normal;
   font-weight:820;
-  letter-spacing:.08em;
   line-height:1;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .resultViewBrief b {
@@ -7631,7 +7601,7 @@ h2:not(.topbar h2) {
   font-size:var(--text-xs);
   font-weight:680;
   letter-spacing:.1em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .screenerTerminalPage .resultsTitleBlock h2 {
@@ -7787,8 +7757,7 @@ h2:not(.topbar h2) {
   font-stretch:var(--stretch-display);
   font-size:var(--text-xs);
   font-weight:620;
-  letter-spacing:var(--track-label);
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .mobileResultList .decisionSummaryRail.mobile {
@@ -7890,10 +7859,9 @@ h2:not(.topbar h2) {
   font-size:var(--text-xs);
   font-style:normal;
   font-weight:780;
-  letter-spacing:.07em;
   line-height:1;
   text-overflow:ellipsis;
-  text-transform:uppercase;
+  text-transform:none;
   white-space:nowrap;
 }
 
@@ -7989,8 +7957,7 @@ button.decisionQualityIssue {
   color:#7f8796;
   font-size:var(--text-xs);
   font-weight:820;
-  letter-spacing:.08em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .decisionOperatingIntro strong {
@@ -8080,8 +8047,7 @@ button.decisionOperatingIssue:hover {
   font-size:var(--text-xs);
   font-style:normal;
   font-weight:780;
-  letter-spacing:.07em;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .decisionOperatingActions {
@@ -8214,10 +8180,9 @@ button.decisionOperatingIssue:hover {
   font-size:var(--text-xs);
   font-style:normal;
   font-weight:780;
-  letter-spacing:.07em;
   line-height:1;
   text-overflow:ellipsis;
-  text-transform:uppercase;
+  text-transform:none;
   white-space:nowrap;
 }
 
@@ -9166,8 +9131,7 @@ button.decisionOperatingIssue:hover {
   font-stretch: var(--stretch-display);
   font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
+  text-transform:none;
   color: var(--neutral);
 }
 .resultsDecisionGroup > summary > em,
@@ -9198,8 +9162,7 @@ button.decisionOperatingIssue:hover {
   display: block;
   font-size:var(--text-xs);
   font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  text-transform:none;
   color: var(--neutral);
   margin-bottom: var(--space-1);
 }
@@ -9397,8 +9360,7 @@ button.decisionOperatingIssue:hover {
   font-stretch: var(--stretch-display);
   font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
+  text-transform:none;
   color: var(--neutral);
   flex: 0 0 auto;
 }
@@ -9501,8 +9463,7 @@ button.decisionOperatingIssue:hover {
 .decisionRail .dataHealthSummaryIntro > span:first-child {
   font-size:var(--text-xs);
   font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  text-transform:none;
   color: var(--neutral);
 }
 .decisionRail .dataHealthSummaryIntro > b {
@@ -9810,8 +9771,7 @@ button.decisionOperatingIssue:hover {
   color: var(--traza);
   font-size:var(--text-xs);
   font-weight: 780;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  text-transform:none;
 }
 
 .curatedDiscoveryPanel h2 {
@@ -9851,8 +9811,7 @@ button.decisionOperatingIssue:hover {
   color: var(--soft);
   font-size:var(--text-xs);
   font-weight: 700;
-  letter-spacing: .05em;
-  text-transform: uppercase;
+  text-transform:none;
 }
 
 .curatedDiscoveryFacts dd {
@@ -9953,8 +9912,7 @@ button.decisionOperatingIssue:hover {
   color: var(--traza);
   font-size:var(--text-xs);
   font-weight: 820;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  text-transform:none;
   margin-bottom: 6px;
 }
 
@@ -10018,8 +9976,7 @@ button.decisionOperatingIssue:hover {
   margin-left: auto;
   font-size:var(--text-xs);
   font-weight: 700;
-  letter-spacing: .04em;
-  text-transform: uppercase;
+  text-transform:none;
   padding: 2px 6px;
   border-radius: var(--radius-s);
   border: 1px solid var(--traza);
@@ -10075,7 +10032,7 @@ button.decisionOperatingIssue:hover {
   color: var(--soft);
   font-size:var(--text-xs);
   font-weight: 600;
-  letter-spacing: .05em;
+  letter-spacing: var(--track-label);
   text-transform: uppercase;
 }
 
@@ -10133,8 +10090,7 @@ button.decisionOperatingIssue:hover {
   color: var(--traza);
   font-size:var(--text-xs);
   font-weight: 700;
-  letter-spacing: .04em;
-  text-transform: uppercase;
+  text-transform:none;
   margin-bottom: 4px;
 }
 
@@ -10193,8 +10149,7 @@ button.decisionOperatingIssue:hover {
   color:var(--muted);
   font-size:var(--text-xs);
   font-weight:750;
-  letter-spacing:.06em;
-  text-transform:uppercase;
+  text-transform:none;
   white-space:nowrap;
 }
 
@@ -10375,8 +10330,7 @@ button.decisionOperatingIssue:hover {
   color:var(--accent);
   font-size:var(--text-xs);
   font-weight:600;
-  letter-spacing:.02em;
-  text-transform:uppercase;
+  text-transform:none;
   vertical-align:middle;
 }
 
@@ -10542,9 +10496,8 @@ button.decisionOperatingIssue:hover {
   color:var(--muted);
   font-size:var(--text-xs);
   font-weight:750;
-  letter-spacing:.04em;
   line-height:1.2;
-  text-transform:uppercase;
+  text-transform:none;
 }
 
 .mobileResultField dd {

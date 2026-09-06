@@ -62,11 +62,21 @@
   margin:0 0 12px;
 }
 
-.sectionTitle h2,h2 {
+.sectionTitle h2 {
   margin:0 0 12px;
   color:var(--soft);
   line-height:1.25;
+  letter-spacing:.08em;
   text-transform:uppercase;
+  font-weight:600;
+}
+
+h2 {
+  margin:0 0 12px;
+  color:var(--soft);
+  line-height:1.25;
+  text-transform:none;
+  letter-spacing:0;
   font-weight:600;
 }
 
@@ -4486,18 +4496,25 @@ h2 {
   letter-spacing:-.04em;
 }
 
-.sidebarGroup > span,
 .sectionTitle h2,
-.profileCardHeader h3,
 .table th,
-.compactMetric small,
-.stockQuoteLabel,
-.signalStat span {
+.compactMetric small {
   color:var(--muted);
   font-size:var(--text-xs);
   font-weight:720;
   letter-spacing:.13em;
   text-transform:uppercase;
+}
+
+.sidebarGroup > span,
+.profileCardHeader h3,
+.stockQuoteLabel,
+.signalStat span {
+  color:var(--muted);
+  font-size:var(--text-xs);
+  font-weight:720;
+  letter-spacing:0;
+  text-transform:none;
 }
 
 .card, .terminalPanel, .tableWrap, .filterArchitecture, .scanDiagnostics, .disclosurePanel, .profileCard, .stockModal, .searchCandidateGrid, .marketChip {

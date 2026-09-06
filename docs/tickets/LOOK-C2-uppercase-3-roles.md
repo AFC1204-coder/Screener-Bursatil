@@ -1,6 +1,6 @@
 # LOOK-C2 — Uppercase solo en 3 roles
 
-**Estado:** listo para Agent (activado orquestador 2026-09-06)  
+**Estado:** Cerrado (orquestador 2026-09-06) · smoke home: meta `layerControlMeta`/`huntCardModeBadge` = `none`; cabeceras/métricas = uppercase  
 **Prioridad:** P2 · deuda LOOK-C  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo sugerido:** Composer 2  
