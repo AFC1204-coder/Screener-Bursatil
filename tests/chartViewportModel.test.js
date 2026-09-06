@@ -60,12 +60,15 @@ describe("chartViewportModel · resolveChartViewportConfig", () => {
     }
   });
 
-  it("clamp las longitudes MA a [2, 400] y [2, 600] respectivamente", () => {
+  it("clamp las longitudes MA; vacío/0 vuelven al default (no al mínimo 2)", () => {
     const tiny = resolveChartViewportConfig({ indicators: { maFastLength: 1, maSlowLength: 0 } });
+    const empty = resolveChartViewportConfig({ indicators: { maFastLength: "", maSlowLength: "" } });
     const huge = resolveChartViewportConfig({ indicators: { maFastLength: 10000, maSlowLength: 10000 } });
 
     expect(tiny.indicators.maFastLength).toBe(2);
-    expect(tiny.indicators.maSlowLength).toBe(2);
+    expect(tiny.indicators.maSlowLength).toBe(200);
+    expect(empty.indicators.maFastLength).toBe(50);
+    expect(empty.indicators.maSlowLength).toBe(200);
     expect(huge.indicators.maFastLength).toBe(400);
     expect(huge.indicators.maSlowLength).toBe(600);
   });

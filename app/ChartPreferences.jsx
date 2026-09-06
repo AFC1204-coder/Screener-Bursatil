@@ -1,6 +1,6 @@
 "use client";
-import { useEffect } from "react";
-import { CHART_INTERVALS, CHART_RANGES, CHART_SCALE_MODES, CHART_STYLES, DEFAULT_CHART_SETTINGS, normalizeChartInterval } from "@/lib/chartSettings";
+import { useEffect, useState } from "react";
+import { CHART_INTERVALS, CHART_RANGES, CHART_SCALE_MODES, CHART_STYLES, DEFAULT_CHART_SETTINGS, normalizeChartInterval, normalizeMaLength } from "@/lib/chartSettings";
 
 function compatibleRangeForInterval(nextInterval = DEFAULT_CHART_SETTINGS.interval, currentRange = DEFAULT_CHART_SETTINGS.range) {
   const interval = normalizeChartInterval(nextInterval);
@@ -23,6 +23,39 @@ function rangeIsCompatibleWithInterval(nextInterval = DEFAULT_CHART_SETTINGS.int
   if (interval === "W") return !["1D", "5D", "1M"].includes(rangeKey);
   if (interval === "M") return !["1D", "5D", "1M", "3M", "MAX"].includes(rangeKey);
   return true;
+}
+
+/** Borrador local al editar: evita que "" → 0 → clamp a 2 en cada tecla. */
+function MaLengthInput({
+  value,
+  fallback,
+  min,
+  max,
+  ariaLabel,
+  onCommit,
+}) {
+  const [draft, setDraft] = useState(null);
+  const shown = draft !== null ? draft : String(value ?? fallback);
+
+  return (
+    <input
+      aria-label={ariaLabel}
+      type="number"
+      min={min}
+      max={max}
+      value={shown}
+      onFocus={() => setDraft(String(value ?? fallback))}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={() => {
+        const next = normalizeMaLength(draft, { fallback, min, max });
+        onCommit?.(next);
+        setDraft(null);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") event.currentTarget.blur();
+      }}
+    />
+  );
 }
 
 function ChartSegmentedControl({ label = "", options = [], value = "", onChange, disabledOption = () => false }) {
@@ -161,9 +194,23 @@ export default function ChartPreferences({ settings, onChange, symbol = "", list
         <label><input type="checkbox" checked={indicators.rsCountryLine} onChange={(event) => updateIndicators({ rsCountryLine: event.target.checked })} /> RS país</label>
         <label><input type="checkbox" checked={indicators.rsThemeLine} onChange={(event) => updateIndicators({ rsThemeLine: event.target.checked })} /> RS tema</label>
         <label><input type="checkbox" checked={indicators.maFast} onChange={(event) => updateIndicators({ maFast: event.target.checked })} /> Media 1</label>
-        <input aria-label="Periodo media 1" type="number" min="2" max="400" value={indicators.maFastLength} onChange={(event) => updateIndicators({ maFastLength: event.target.value })} />
+        <MaLengthInput
+          ariaLabel="Periodo media 1"
+          value={indicators.maFastLength}
+          fallback={DEFAULT_CHART_SETTINGS.indicators.maFastLength}
+          min={2}
+          max={400}
+          onCommit={(maFastLength) => updateIndicators({ maFastLength })}
+        />
         <label><input type="checkbox" checked={indicators.maSlow} onChange={(event) => updateIndicators({ maSlow: event.target.checked })} /> Media 2</label>
-        <input aria-label="Periodo media 2" type="number" min="2" max="600" value={indicators.maSlowLength} onChange={(event) => updateIndicators({ maSlowLength: event.target.value })} />
+        <MaLengthInput
+          ariaLabel="Periodo media 2"
+          value={indicators.maSlowLength}
+          fallback={DEFAULT_CHART_SETTINGS.indicators.maSlowLength}
+          min={2}
+          max={600}
+          onCommit={(maSlowLength) => updateIndicators({ maSlowLength })}
+        />
       </div>
     </details>
   );

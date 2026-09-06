@@ -4,6 +4,7 @@ import {
   QUICK_REVIEW_CHART_INDICATOR_DEFAULTS,
   applyQuickReviewChartDefaults,
   normalizeChartSettings,
+  normalizeMaLength,
   readChartSettings,
   writeChartSettings,
 } from "@/lib/chartSettings";
@@ -30,6 +31,21 @@ afterEach(() => {
 });
 
 describe("CHART-QR-2 · chart settings scope quickReview", () => {
+  it("normalizeMaLength: vacío/0 no se convierten en el mínimo 2", () => {
+    expect(normalizeMaLength("", { fallback: 50, min: 2, max: 400 })).toBe(50);
+    expect(normalizeMaLength(0, { fallback: 50, min: 2, max: 400 })).toBe(50);
+    expect(normalizeMaLength(2, { fallback: 50, min: 2, max: 400 })).toBe(2);
+    expect(normalizeMaLength(50, { fallback: 50, min: 2, max: 400 })).toBe(50);
+  });
+
+  it("normalizeChartSettings trata periodo vacío como default 50/200", () => {
+    const settings = normalizeChartSettings({
+      indicators: { maFastLength: "", maSlowLength: 0 },
+    });
+    expect(settings.indicators.maFastLength).toBe(50);
+    expect(settings.indicators.maSlowLength).toBe(200);
+  });
+
   it("applyQuickReviewChartDefaults deja RS global ON y RS país/tema OFF", () => {
     const next = applyQuickReviewChartDefaults(DEFAULT_CHART_SETTINGS);
     expect(next.indicators.rsLine).toBe(true);
