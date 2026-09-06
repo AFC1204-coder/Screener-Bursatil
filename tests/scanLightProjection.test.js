@@ -108,6 +108,7 @@ describe("la proyección ligera cubre todo lo que se consulta", () => {
     // canonicalRs sobre los weeklyRs*, que se hidratan al leer.
     const tableFields = [
       "symbol", "companyName", "country", "chartPreview", "theme",
+      "website", "logoDomain",
       "weeklyStageState", "weeklyStageLabel", "weeklyStageStructure", "weeklyStageStructureLabel",
       "distance52w", "marketCap",
       "contractionCount", "distanceToPivotPct", "vcpCandidate",
@@ -272,5 +273,24 @@ describe("la marca de cribado", () => {
     expect(metrics.screenPassed).toBe(false);
     expect(metrics.rowProjection).toBe("light");
     expect(metrics.screenRejectField).toBe("requireStage2");
+  });
+});
+
+describe("identidad de empresa en la mesa ligera", () => {
+  it("copia website y logoDomain cuando la fila los trae", () => {
+    const metrics = scanLightMetrics({
+      symbol: "AAPL",
+      companyName: "Apple Inc.",
+      website: "https://www.apple.com",
+      logoDomain: "apple.com",
+    });
+    expect(metrics.website).toBe("https://www.apple.com");
+    expect(metrics.logoDomain).toBe("apple.com");
+  });
+
+  it("no inventa website ni logoDomain si la fila no los trae", () => {
+    const metrics = scanLightMetrics({ symbol: "AAA", price: 10 });
+    expect("website" in metrics).toBe(false);
+    expect("logoDomain" in metrics).toBe(false);
   });
 });

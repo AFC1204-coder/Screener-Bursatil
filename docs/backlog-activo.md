@@ -5,22 +5,19 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** (1) login Chrome `:3000` → «listo» smoke · (2) nav IPO cuando C  
-**Último cerrado:** **IPO-UX-A** lente cohort (código; smoke UI pendiente login).  
-**Ahora:** **LOGO-1** — logos mesa + portada ficha (Grokbot).  
+**RECORDATORIO dueño:** nav IPO cuando C · mesa logos tras próximo nocturno (filas viejas)  
+**Último cerrado:** **LOGO-1** portada + proyección website/logoDomain.  
+**Ahora:** idle — cola Cloud: IPO-UX-B · sticky-0 si sigue.  
 **Pendiente ops:** —  
-**Cola:** IPO-UX-B · IPO-UX-C (nav) · sticky 0 filtros · P1 D/E · P2 RS IPO.  
+**Cola:** IPO-UX-B · sticky-0 filtros · IPO-UX-C (nav) · P1 D/E · P2 RS IPO.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
-**Nota:** TAPE-1 · LOOK A→F + C2/C3 uppercase ✅ · CHART-RS-4 ✅ · IPO-UX-A código ✅.  
+**Nota:** TAPE-1 · LOOK A→F + C2/C3 · CHART-RS-4 · IPO-UX-A · LOGO-1 ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA off · OPS-MINI-1 smoke PG OK.  
 **Residuales UX-READ:** READ-G · READ-H cerrados.  
 **Aparcado:** —  
 **SHELL:** A→D cerebro OK; piel LOOK = cerrada.  
-**Nota smoke LOOK-C3:** ficha kickers/KV/`stockVerdictQuoteLabel` = none; `h2`/`th` uppercase. Mercado reliability strip = none; eyebrow/h1 uppercase.  
-**Nota smoke TAPE-1 (filas reales 2026-09-06):** túnel `:15432` · EE.UU. + Traer datos · **592 en cola** Caza · `j`/`k` mueven `isActive` · Enter → `/stock/AVAH` · columnas ticker/spark/etapa·sem/RS/VCP/máx52s.  
-**Nota smoke CHART-RS-4:** `/stock/ATRC` W · RS/país/tema ON · sin `incorrect ID` · badges 92/91/84 · píxeles traza/soft/theme en canvas.  
-**Nota IPO (2026-09-07):** P0 = lente solo-edad; default **24 m**. Smoke chips A pendiente sesión.  
-**Nota LOGO-1:** light projection sin website/logoDomain; portada ficha no usa visual.logoUrl.
+**Nota smoke LOGO-1:** `/stock/AAPL` `.stockLogoPro img` → favicon apple.com. Filas ligeras sin website siguen iniciales hasta nocturno.  
+**Nota IPO (2026-09-07):** lente A `78b35e4`; smoke chips A aún pendiente checklist dueño si quiere.
 
 ## Hecho (esta oleada)
 
@@ -216,7 +213,7 @@ Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 | IPO-1a | Backfill `ipoDate` (código + write US/intl) | `eb3053a` + write 2026-08-28 |
 | UX-IPO-1 | Brief Fable: destino cotizadas recientes por ventana | **Aceptado** · `docs/analisis-ux-ipo-superficie-2026-09-07.md` |
 | IPO-UX-A | Lente cohort (preset any + chips edad + sin merge) | **Hecho** · `78b35e4` · smoke UI pendiente |
-| LOGO-1 | Logos empresa mesa + portada ficha | **Activo** |
+| LOGO-1 | Logos empresa mesa + portada ficha | **Hecho** · (pendiente hash) |
 | IPO-UX-B | Columna Salida + orden + empty state | Cola |
 | IPO-UX-C | Kill list (nav = decisión dueño) | Cola |
 

@@ -219,9 +219,7 @@ export function N0VerdictBlock({
     <section className="stockVerdict" data-stage={stageDisplay?.tone || "none"}>
       <div className="stockVerdictHead">
         <div className="stockVerdictIdentity">
-          <div className="stockLogoPro">
-            <span>{String(data?.visual?.initials || symbol.slice(0, 2)).toUpperCase()}</span>
-          </div>
+          <StockLogoPro symbol={symbol} visual={data?.visual} />
           <div className="stockIdentityBlock">
             {data?.theme ? (
               <span className="stockIdentityKicker">{data.theme}</span>
@@ -480,6 +478,26 @@ function compactBusinessTeaser(data = {}) {
    docs/analisis-ficha-cuadro-grafico-2026-08-21.md (Parte B). El cómputo del
    volumen (stockVolumeState) sigue vivo: alimenta las celdas de reparto e
    impulso de la franja descriptiva. */
+
+function StockLogoPro({ symbol = "", visual = null }) {
+  const candidates = [visual?.logoUrl, visual?.clearbitLogoUrl].filter(Boolean);
+  const candidateKey = candidates.join("|");
+  const [logoIndex, setLogoIndex] = useState(0);
+  useEffect(() => {
+    setLogoIndex(0);
+  }, [symbol, candidateKey]);
+  const src = candidates[logoIndex] || "";
+  const initials = String(visual?.initials || symbol.slice(0, 2)).toUpperCase();
+  return (
+    <div className="stockLogoPro">
+      {src ? (
+        <img src={src} alt="" onError={() => setLogoIndex((index) => index + 1)} />
+      ) : (
+        <span>{initials}</span>
+      )}
+    </div>
+  );
+}
 
 function PeerLogo({ item }) {
   const [index, setIndex] = useState(0);
@@ -1241,8 +1259,6 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const [data, setData] = useState(initialData || null);
   const [error, setError] = useState(initialError || "");
   const [loading, setLoading] = useState(false);
-  const [logoIndex, setLogoIndex] = useState(0);
-  const [logoLoaded, setLogoLoaded] = useState(false);
   const [similar, setSimilar] = useState([]);
   const [social, setSocial] = useState(null);
   const [socialLoading, setSocialLoading] = useState(false);
@@ -1345,8 +1361,6 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     setDecisionResolution(decisionResolutionForSymbol(reviewState, symbol));
     setDecisionResolutionHistoryItems(decisionResolutionHistory(reviewState, { symbol, limit: 4 }));
     setDecisionValidationNote("");
-    setLogoIndex(0);
-    setLogoLoaded(false);
     setCompanyBriefExpanded(false);
     setShowVcpDiagnostics(false);
     // Cada valor entra con el cuadro de identidad visible: el pliegue es una
@@ -1364,8 +1378,6 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     }
     if (!initialError) load({ benchmarkSymbol: savedBenchmark });
   }, [symbol]);
-  const logoCandidates = [data?.visual?.logoUrl, data?.visual?.clearbitLogoUrl].filter(Boolean);
-  const logo = logoCandidates[logoIndex] || "";
   const g = data?.growthMetrics || {};
   const v = data?.valuationMetrics || {};
   const q = data?.quoteSnapshot || {};

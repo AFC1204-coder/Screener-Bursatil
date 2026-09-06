@@ -2,7 +2,7 @@
 
 Copia de referencia. Ejecutar desde `docs/tickets/activo.md`.
 
-**Estado:** Activo  
+**Estado:** Cerrado (orquestador) · smoke `/stock/AAPL` logo img OK  
 **Prioridad:** P1 (lectura / identidad)  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer  

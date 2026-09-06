@@ -64,6 +64,33 @@ describe("stock ficha UI brief", () => {
     expect(html).not.toContain("stockDecisionResolveRail");
   });
 
+  it("portada usa visual.logoUrl en .stockLogoPro, no solo iniciales", () => {
+    const html = renderToStaticMarkup(React.createElement(StockClient, {
+      initialSymbol: "AAPL",
+      initialData: {
+        ...baseData,
+        symbol: "AAPL",
+        name: "Apple Inc.",
+        visual: {
+          initials: "AP",
+          logoUrl: "https://www.google.com/s2/favicons?domain=apple.com&sz=128",
+          clearbitLogoUrl: "https://logo.clearbit.com/apple.com",
+        },
+      },
+    }));
+    expect(html).toContain("stockLogoPro");
+    expect(html).toContain("https://www.google.com/s2/favicons?domain=apple.com&amp;sz=128");
+    expect(html).not.toMatch(/<div class="stockLogoPro"><span>AP<\/span><\/div>/);
+  });
+
+  it("portada cae a iniciales si el brief no trae logoUrl ni clearbit", () => {
+    const html = renderToStaticMarkup(React.createElement(StockClient, {
+      initialSymbol: "SOPH",
+      initialData: baseData,
+    }));
+    expect(html).toContain('<div class="stockLogoPro"><span>SO</span></div>');
+  });
+
   it("StockSymbolSearch expone formulario de salto rápido", () => {
     const html = renderToStaticMarkup(React.createElement(StockSymbolSearch, { currentSymbol: "SOPH" }));
     expect(html).toContain("stockChartSearchForm");
