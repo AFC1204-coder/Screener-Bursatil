@@ -13,7 +13,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
 **Nota:** Tape proto en remoto. LOOK A→F ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA scan-universe **disabled_manually**.  
-**Residuales UX-READ:** READ-G **cerrado** · READ-H P3.  
+**Residuales UX-READ:** READ-G **cerrado** (`8c97af8`) · READ-H P3.  
 **Aparcado:** tape→producto · smoke OPS-MINI-1 PG · uppercase 3 roles (deuda LOOK-C).  
 **SHELL:** A→D cerebro OK; piel LOOK = cerrada.  
 **Nota smoke READ-G:** `:3000` sin pin RS en AAPL ni mesa cargada; coherencia pin≠cola cubierta por tests.
