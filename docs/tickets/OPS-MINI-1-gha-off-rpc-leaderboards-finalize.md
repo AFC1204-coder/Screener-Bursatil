@@ -1,6 +1,6 @@
 # OPS-MINI-1 — Apagar GHA scan-universe + RPC pg (leaderboards + finalize percentil)
 
-**Estado:** listo para Agent (fases B–C) · fase A orquestador  
+**Estado:** Cerrado (smoke PG túnel 2026-09-06 · evidencia `docs/evidence/ops-mini-1-gha-rpc-2026-09-06.md`)  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer 2 / GPT-5.6 Terra  
 **Contexto:** cutover Mini hecho (MIGRATE-1…6 historia). Hoy desde **portátil** si hay red al PG del Mini; si no, código+tests en MacBook y smoke RPC cuando haya SSH/túnel.  

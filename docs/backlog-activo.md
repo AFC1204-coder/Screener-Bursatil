@@ -5,18 +5,19 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** smoke PG `:15432` cuando haya túnel.  
-**Último cerrado:** **READ-H** badge patrón (`25fb61a`).  
-**Ahora:** idle — residuales UX-READ cerrados (G+H).  
-**Pendiente ops:** smoke RPC Mini `:15432`.  
+**RECORDATORIO dueño:** —  
+**Último cerrado:** **OPS-MINI-1** smoke PG túnel (`leaderboard` + finalize).  
+**Ahora:** idle — residuales UX-READ + OPS-MINI-1 cerrados.  
+**Pendiente ops:** —  
 **Cola residuales:** — (fin UX-READ).  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
 **Nota:** Tape proto en remoto. LOOK A→F ✅.  
-**Hecho ops:** Supabase Pro cancelado · GHA scan-universe **disabled_manually**.  
+**Hecho ops:** Supabase Pro cancelado · GHA scan-universe **disabled_manually** · **OPS-MINI-1 smoke PG OK** (túnel `:15432`).  
 **Residuales UX-READ:** READ-G (`8c97af8`) · READ-H (`25fb61a`).  
-**Aparcado:** tape→producto · smoke OPS-MINI-1 PG · uppercase 3 roles (deuda LOOK-C).  
+**Aparcado:** tape→producto · uppercase 3 roles (deuda LOOK-C).  
 **SHELL:** A→D cerebro OK; piel LOOK = cerrada.  
-**Nota smoke READ-H:** `/stock/AAPL` `:3000` — badge opacity 1 sin hover; nav 0→1 al hover; móvil 390 badge compacto flex.
+**Nota smoke READ-H:** `/stock/AAPL` `:3000` — badge opacity 1 sin hover; nav 0→1 al hover; móvil 390 badge compacto flex.  
+**Nota smoke OPS-MINI-1:** `leaderboard_publishable_rows` 50/58886 · finalize `updated_count=1` · soft-delete `test:`.
 
 ## Hecho (esta oleada)
 
@@ -151,7 +152,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **MIGRATE-4** writes pg + nocturno · **cerrado** (`91671c4` · cron HK 82 filas 2026-09-05 en Mini).  
 **MIGRATE-5** nocturno US Mini (`scan-universe.mjs` + launchd) · **cerrado** (smoke limit OK; soft-delete; full = 05:00/manual).  
 **MIGRATE-6** RPC historia pg · **cerrado** (evidencia 2026-09-05).  
-**OPS-MINI-1** GHA off + leaderboards/finalize RPC pg · **código cerrado** (smoke PG diferido · `docs/evidence/ops-mini-1-gha-rpc-2026-09-06.md`).
+**OPS-MINI-1** GHA off + leaderboards/finalize RPC pg · **cerrado** (smoke túnel `:15432` 2026-09-06 · `docs/evidence/ops-mini-1-gha-rpc-2026-09-06.md`).
 
 ## Siguiente — datos IPO + filtros
 

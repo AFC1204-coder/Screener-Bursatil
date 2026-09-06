@@ -16,12 +16,39 @@ Nocturno US queda en launchd Mini (`com.statsedge.scan-universe-us`).
 
 Archivos: `lib/pgPostgrestAdapter.js`, tests pg adapter.
 
-## Verificación orquestador
+## Verificación orquestador (código)
 
 - `npm test -- tests/pgPostgrestAdapter.test.js tests/pgAdapterSupabaseServer.test.js` → **43 passed**
 - `./vfc` tocados → tests/lint OK
-- **Smoke Mini PG:** no hecho — túnel Postgres `:15432` no abierto (dueño no en Mini). `:13000` es solo Next.
 
-## Pendiente
+## Smoke Mini PG (2026-09-06 ~21:05 CET)
 
-Cuando haya `ssh -N -L 15432:127.0.0.1:5432 …`: smoke `leaderboard_publishable_rows` + una tanda finalize sobre scan `test:` (o soft-delete).
+| Pieza | Valor |
+|---|---|
+| Túnel | `ssh -N -L 15432:127.0.0.1:5432 cristian@192.168.0.116` (portátil) |
+| `DATABASE_URL` | `…@127.0.0.1:15432/statsedge` (`.env.local`) |
+| PG | Postgres 17.11 Homebrew · DB `statsedge` · owner `personal` |
+
+### `leaderboard_publishable_rows`
+
+Vía `pgRpc` · `p_owner_id=personal` · `p_max_rows=50` · `p_since_days=45`:
+
+| Campo | Valor |
+|---|---|
+| `rowsRead` | 58886 |
+| `rowsPublished` | 50 |
+| `rowsExcluded` | 14956 |
+| Sample | MATW / DKS / MEC · `parent_status=partial` · scan `9dea2716…` (US 2026-09-06) |
+
+### Finalize (scan `test:`)
+
+1. Insert `test:ops-mini-1-smoke:…` + 1 `scan_results` (MPT, `percentileScope=batch`).
+2. `scan_finalize_inputs` → `rowsRead=1`, `inputs.length=1`.
+3. `finalize_scan_results` con `{ id, metrics_patch: { percentileScope: 'final', … } }` → `updated_count=1`; metrics → `final`.
+4. Soft-delete del scan `test:` (`deleted_at` set).
+
+Nota: el patch debe usar **`metrics_patch`** (no `metrics`); firma canónica de `schema.sql`.
+
+## Estado
+
+**OPS-MINI-1 cerrado** — GHA off · RPC pg · smoke túnel OK.

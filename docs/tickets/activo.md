@@ -6,4 +6,4 @@
 
 Residuales UX-READ (G+H) cerrados. Sin ticket de programación activo.
 
-Siguiente posible (no activar sin dueño): tape→producto · OPS-MINI-1 smoke PG · uppercase 3 roles.
+Siguiente posible (no activar sin dueño): tape→producto · uppercase 3 roles (deuda LOOK-C).
