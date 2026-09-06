@@ -3,17 +3,18 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-06 · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-06 (tarde) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** OPS-MINI-1 código cerrado; smoke PG cuando túnel `:15432`.  
-**Último cerrado:** **OPS-MINI-1** A (GHA `disabled_manually`) + B/C RPC pg (tests OK; smoke Mini diferido).  
-**Ahora:** idle.  
-**Pendiente ops:** smoke RPC en Mini vía `ssh -N -L 15432:127.0.0.1:5432`.  
-**Cola piel:** LOOK-B+ aparcado. Multi-lista solo Favoritos.  
+**Último cerrado:** tape docs en remoto (`d1eb7b7`) · OPS-MINI-1 A+B/C.  
+**Ahora:** merge READ #12 · luego smoke LOOK-B #11.  
+**Pendiente ops:** smoke RPC Mini `:15432`.  
+**Cola piel:** LOOK-B [PR #11](https://github.com/AFC1204-coder/Screener-Bursatil/pull/11) (A/B hex). Multi-lista solo Favoritos.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
-**Nota:** Tape proto aparcado (untracked). `:13000` = Next Mini; `:15432` = Postgres Mini.  
+**Nota:** Tape proto **en remoto** (`docs/prototypes/tape/`). `:13000` = Next Mini; `:15432` = Postgres Mini.  
 **Hecho ops:** Supabase Pro cancelado · GHA scan-universe **disabled_manually**.  
-**Aparcado:** residuales Fable READ · tape→producto · LOOK-B+ · smoke OPS-MINI-1 PG.  
+**Residuales UX-READ (docs):** READ-G P2 · READ-H P3 · `docs/inventario-residuales-ux-read-2026-09-06.md`.  
+**Aparcado:** tape→producto · LOOK-C…F · smoke OPS-MINI-1 PG.  
 **SHELL:** A→D cerebro OK; piel = oleadas LOOK-*.
 
 ## Hecho (esta oleada)

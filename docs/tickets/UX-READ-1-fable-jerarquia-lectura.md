@@ -4,7 +4,7 @@
 **Retorno:** `docs/analisis-ux-read-jerarquia-2026-09-05.md`  
 **Impl:** READ-A′ `82417e5` · READ-C `557deb3` · READ-D `edab7ab` · READ-E `6a481f1` · READ-F `67da5b3`  
 **No hecho (a propósito):** READ-B (lente por ficha; VCP se queda en mesa).  
-**Aparcado:** discordancia cifras RS · badge opacity.  
+**Aparcado → tickets:** READ-G (cifras RS) · READ-H (badge opacity) · inventario `docs/inventario-residuales-ux-read-2026-09-06.md`.  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Fable 5.1  
 **Tipo:** brief + kill list + oleadas. **Sin código.**  
