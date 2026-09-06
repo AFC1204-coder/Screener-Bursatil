@@ -6,7 +6,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** —  
-**Último cerrado:** **LOOK-C3** uppercase oleada 2 (hash tras commit).  
+**Último cerrado:** **LOOK-C3** uppercase oleada 2 (`bfe1fbd`).  
 **Ahora:** idle — C2 home + C3 ficha/Mercado/satélites.  
 **Pendiente ops:** —  
 **Cola:** —  
