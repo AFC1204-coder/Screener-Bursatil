@@ -3,18 +3,18 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-05 · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-06 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** Mañana = Mini (GHA off · leaderboards RPC · finalize percentil).  
-**Último cerrado:** **PR #10** ficha `/stock` · merge `f90402f` (rebase sobre LOOK-A; smoke `:3300` OK).  
-**Ahora:** idle — Mini ops mañana · LOOK-B+ aparcado (Forja).  
+**RECORDATORIO dueño:** Hoy = Mini (GHA off · leaderboards RPC · finalize percentil).  
+**Último cerrado:** polish reconciliado — PR #10 en remoto (`930b6ac`) + LOOK-A (`384438b`) + docs (`65c6393`); push OK.  
+**Ahora:** idle — **Mini ops**. LOOK-B+ aparcado (Forja).  
 **Cola piel:** LOOK-B+ aparcado. Multi-lista solo Favoritos hasta amplíe dueño.  
-**Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
-**Nota:** Mini ops mañana **no** bloqueada. Tape proto aparcado.  
+**Gate Forja:** CA → PR; no FF a polish hasta smoke/OK. Base remota al día.  
+**Nota:** Tape proto aparcado (untracked).  
 **Nota UX-LOOK:** v2 **sí** en producción; enmendar lienzo (no sustituir sistema).  
 **Nota cierre UX-READ:** VCP se queda; RS tema→ficha; RS país si ≠ US-only; **READ-B** aplazada.  
 **Hecho ops:** Supabase Pro **cancelado** (dueño).  
-**Mañana (Mini):** apagar GHA `scan-universe` · leaderboards RPC pg · finalize percentil pg.  
+**Hoy (Mini):** apagar GHA `scan-universe` · leaderboards RPC pg · finalize percentil pg.  
 **Aparcado:** túnel móvil→Mini · residuales Fable READ · tape→producto · LOOK-B+.  
 **SHELL:** A→D cerebro OK; piel = oleadas LOOK-*.
 
