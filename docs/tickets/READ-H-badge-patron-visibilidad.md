@@ -2,7 +2,7 @@
 
 Copia de referencia. Ejecutar desde `docs/tickets/activo.md`.
 
-**Estado:** Cerrado (orquestador 2026-09-06) · smoke `/stock/AAPL` `:3000` OK  
+**Estado:** Cerrado `25fb61a` (orquestador 2026-09-06) · smoke `/stock/AAPL` `:3000` OK  
 **Prioridad:** P3  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo sugerido:** Composer (CSS + JSX mínimo)  
