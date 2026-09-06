@@ -3,19 +3,19 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-06 · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-06 · rama `codex/statsedge-ui-polish` · LOOK-B preparado en `cursor/look-b-tokens-1ac6`
 
 **RECORDATORIO dueño:** Hoy = Mini (GHA off · leaderboards RPC · finalize percentil).  
 **Último cerrado:** polish reconciliado — PR #10 en remoto (`930b6ac`) + LOOK-A (`384438b`) + docs (`65c6393`); push OK.  
-**Ahora:** idle — **Mini ops**. LOOK-B+ aparcado (Forja).  
-**Cola piel:** LOOK-B+ aparcado. Multi-lista solo Favoritos hasta amplíe dueño.  
+**Ahora:** idle — **Mini ops**. LOOK-B **preparado** (ticket + rama A/B; no cerrado).  
+**Cola piel:** LOOK-B pendiente smoke A/B hex v2.3 → Agent → merge polish. LOOK-C+ después. Multi-lista solo Favoritos hasta amplíe dueño.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK. Base remota al día.  
 **Nota:** Tape proto aparcado (untracked).  
 **Nota UX-LOOK:** v2 **sí** en producción; enmendar lienzo (no sustituir sistema).  
 **Nota cierre UX-READ:** VCP se queda; RS tema→ficha; RS país si ≠ US-only; **READ-B** aplazada.  
 **Hecho ops:** Supabase Pro **cancelado** (dueño).  
 **Hoy (Mini):** apagar GHA `scan-universe` · leaderboards RPC pg · finalize percentil pg.  
-**Aparcado:** túnel móvil→Mini · residuales Fable READ · tape→producto · LOOK-B+.  
+**Aparcado:** túnel móvil→Mini · residuales Fable READ · tape→producto · LOOK-C+.  
 **SHELL:** A→D cerebro OK; piel = oleadas LOOK-*.
 
 ## Hecho (esta oleada)
@@ -284,6 +284,19 @@ Objetivo: las filas **no-US ya persistidas** entran en presets, filtros, tabla, 
 | Chart / API | B2-chart cerrado (preview línea + fetch OHLC) | Verificar intl en INT-0 |
 
 Licencia pública: Twelve Data Venture (~499 $/mes exhibición) u equivalente — **aplazado** hasta decisión de monetización (`docs/analisis-datos-financieros-2026-08-22.md` C.3–C.4).
+
+## Track LOOK — piel UX-LOOK-1 (2026-09-05)
+
+Fuente: `docs/analisis-ux-look-redisenio-2026-09-05.md`. Orden: A → B → C∥D → E → F.
+
+| ID | Qué | Estado |
+|---|---|---|
+| LOOK-A | Layout P0: grid familias, bottom nav 6, Filtros sticky | **Cerrado** · `384438b` |
+| LOOK-B | Tokens v2.3 «pizarra apagada» + higiene hex | **Preparado** · ticket `docs/tickets/LOOK-B-tokens-v23-pizarra-apagada.md` · rama `cursor/look-b-tokens-1ac6` (A/B) · **pendiente smoke hex** |
+| LOOK-C | Botones, escala tipográfica, transiciones | Aparcado |
+| LOOK-D | Aside piel (tarjeta, chips, modal, drawer) | Aparcado |
+| LOOK-E | Mesa + chrome `/stock` | Aparcado |
+| LOOK-F | Móvil calidad de uso | Aparcado |
 
 ## Aplazado / no oleada UI
 

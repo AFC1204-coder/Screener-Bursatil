@@ -1,7 +1,8 @@
 /* styles/tokens-v2.css — Sistema de tokens «Pizarra y Tiza» (dirección visual v2).
    Spec completa: docs/design/DIRECCION-VISUAL.md
-   NO importado todavía: la migración se hace pantalla a pantalla sustituyendo
-   el @import de tokens.css por este fichero cuando cada pantalla se re-ejecute.
+   Importado globalmente desde app/layout.jsx (todas las rutas).
+   LOOK-B v2.3 «pizarra apagada»: candidatos A/B en esta rama — pendiente smoke
+   orquestador antes de merge a codex/statsedge-ui-polish.
 
    REGLAS DE GOBIERNO (obligatorias para la fase de ejecución):
    1. El color es convicción. La UI en reposo es bicolor (pizarra + tiza/humo).
@@ -20,18 +21,19 @@
   color-scheme: dark;
 
   /* ── Primitivas de color ─────────────────────────────────────── */
-  --pizarra    : #17291F;   /* lienzo: verde-pizarra — debe leerse verde, no negro */
-  --pizarra-0  : #101D15;   /* pozo/inset: tablas densas, zonas hundidas (más oscuro que el lienzo) */
+  /* LOOK-B v2.3 candidatos (v2 revert: #17291F #101D15 #2C4C39 #365A44 #7E8B82) */
+  --pizarra    : #141A17;   /* lienzo: oscuro neutro-frío con resto de pizarra (tinte, no matiz) */
+  --pizarra-0  : #0F1412;   /* pozo/inset: tablas densas, zonas hundidas (más oscuro que el lienzo) */
   --tiza       : #EDE8DA;   /* texto principal: blanco cálido de tiza */
-  --humo       : #7E8B82;   /* secundario, bordes, descartes */
+  --humo       : #8A918B;   /* secundario, bordes, descartes — v2.3: menos verde */
   --senal      : #E0A93F;   /* ámbar dorado: atención / Vigilar (nunca crema: eso es CTA) */
   --traza      : #93B8CE;   /* tiza azul: análisis / Auditar */
   --rs-theme   : #C4A5E8;   /* lavanda: overlay RS tema en chart (CHART-RS-3; nunca --soft) */
   --oxido      : #C4614C;   /* arcilla quemada: riesgo real (uso escaso) */
 
   /* Superficies derivadas (nunca inventar otras) */
-  --pizarra-2  : #2C4C39;   /* panel elevado (~+11 pts de luminosidad sobre el lienzo) */
-  --pizarra-3  : #365A44;   /* hover / superficie sobre superficie (~+5 pts sobre panel).
+  --pizarra-2  : #1D2521;   /* panel elevado — v2.3: +7 pts sobre lienzo; contorno hace el resto */
+  --pizarra-3  : #262F2A;   /* hover / chrome (top bar, bottom nav) — v2.3: deja de dominar.
                                Texto secundario aquí usa --soft, no --humo (contraste). */
 
   /* Doctrina de elevación (v2.2): entre campos verdes del mismo matiz, el delta de
@@ -117,7 +119,22 @@
   --track-display   : .08em;    /* display siempre uppercase + este tracking */
   --track-label     : .14em;    /* micro-labels uppercase 11px */
 
+  /* Series de precio (LOOK-B: verde semántico solo aquí, no en lienzo) */
+  --serie-alza : #3dba7a;   /* sparklines / velas alcistas — auditar vs kill-list #22c55e */
+  --serie-baja : var(--humo); /* descendente; sin rojo (convención multi-mercado) */
+
+  /* Controles (consumo pleno en LOOK-C) */
+  --control-s : 28px;
+  --control-m : 32px;
+  --control-l : 40px;
+
+  /* Transiciones (consumo pleno en LOOK-C) */
+  --t-state  : 140ms ease;
+  --t-enter  : 180ms cubic-bezier(.2, .8, .2, 1);
+  --t-layout : 200ms ease;
+
   /* Escala de cuerpo (body) */
+  --text-xxs: 10px;   /* suelo absoluto — tabla densa desktop (LOOK-C cierra mapa) */
   --text-xs : 11px;
   --text-s  : 12.5px;
   --text-m  : 14px;    /* base */
