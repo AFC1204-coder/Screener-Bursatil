@@ -2,7 +2,7 @@
 
 Copia de referencia. Ejecutar desde `docs/tickets/activo.md`.
 
-**Estado:** Cerrado (código) · smoke visual pendiente sesión dueño  
+**Estado:** Cerrado  · smoke visual pendiente sesión dueño  
 **Prioridad:** P0  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer  
