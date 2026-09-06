@@ -17,7 +17,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Aparcado:** —  
 **SHELL:** A→D cerebro OK; piel LOOK = cerrada.  
 **Nota smoke LOOK-C3:** ficha kickers/KV/`stockVerdictQuoteLabel` = none; `h2`/`th` uppercase. Mercado reliability strip = none; eyebrow/h1 uppercase.  
-**Nota smoke LOOK-C2 / TAPE-1:** ver commits previos.
+**Nota smoke TAPE-1 (filas reales 2026-09-06):** túnel `:15432` · EE.UU. + Traer datos · **592 en cola** Caza · `j`/`k` mueven `isActive` · Enter → `/stock/AVAH` · columnas ticker/spark/etapa·sem/RS/VCP/máx52s.
 
 ## Hecho (esta oleada)
 
