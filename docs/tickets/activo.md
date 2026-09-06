@@ -1,8 +1,8 @@
-# Ticket activo — idle (OPS-MINI-1 código cerrado)
+# Ticket activo — idle (LOOK-B mergeado)
 
 **Estado:** idle  
-**Último:** OPS-MINI-1 A+B+C (GHA off · RPC pg en código; smoke PG diferido)  
-**Siguiente:** smoke `:15432` cuando haya túnel PG · o cola Forja/LOOK
+**Último:** LOOK-B v2.3 en polish (`8cd7c87`) tras smoke A/B  
+**Siguiente:** LOOK-C o smoke PG `:15432`
 
 ## Prompt para Agent chat (copiar tal cual)
 
