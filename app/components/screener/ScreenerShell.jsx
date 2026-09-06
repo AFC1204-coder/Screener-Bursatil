@@ -692,8 +692,15 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         <section className="searchCard">
           <div className="commandSearchPanel searchPanelBare">
               <form className="searchBar" onSubmit={runSearch} style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                <input className="input searchInput" value={searchSymbol} onChange={(e) => updateSearchSymbol(e.target.value)} placeholder="Ticker, nombre, sector, subsector o país..." />
-                {(searchSymbol || searchCandidates.length || searchResult) && <button type="button" className="btn btnGhost" onClick={clearSearch}>Limpiar</button>}
+                <div className="searchFieldWrap">
+                  <input className="input searchInput" value={searchSymbol} onChange={(e) => updateSearchSymbol(e.target.value)} placeholder="Ticker, nombre, sector, subsector o país..." />
+                  {(searchSymbol || searchCandidates.length || searchResult) ? (
+                    <button type="button" className="searchClearBtn" onClick={clearSearch} aria-label="Limpiar búsqueda">✕</button>
+                  ) : null}
+                </div>
+                {(searchSymbol || searchCandidates.length || searchResult) ? (
+                  <button type="button" className="btn btnGhost searchClearWide" onClick={clearSearch}>Limpiar</button>
+                ) : null}
                 <button className="btn btnPrimary" disabled={searchLoading}>{searchLoading ? "Buscando..." : "Buscar"}</button>
               </form>
               <SearchScopeList items={searchScopeItems} onPick={applySearchScope} />

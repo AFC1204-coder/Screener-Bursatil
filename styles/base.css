@@ -8,7 +8,7 @@ html, body {
   margin: 0;
   min-height: 100%;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--text-m);
   line-height: var(--lh-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -59,55 +59,10 @@ summary:focus-visible,
 
 html, body { overflow-x: hidden; }
 
-/* ── Keyframes ── */
+/* ── Keyframes (LOOK-C: entrada única + utilidades mínimas) ── */
 
-/* Marca: shimmer reservado para hovers de CTA, no para fondos. */
-@keyframes brandShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* Aparece/desaparece sutil: para drawers, modales. */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeInSubtle {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-/* Pulso de atención Vigilar: --decision-vigilar (--senal). */
-@keyframes pulseVigilar {
-  0%   { box-shadow: 0 0 0 0 var(--senal-dim); }
-  70%  { box-shadow: 0 0 0 6px transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
-}
-
-/* Pulso de atención Auditar: --decision-auditar (--traza). */
-@keyframes pulseAuditar {
-  0%   { box-shadow: 0 0 0 0 var(--traza-dim); }
-  70%  { box-shadow: 0 0 0 6px transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
-}
-
-/* Pulso de atención Riesgo: --risk (--oxido). */
-@keyframes pulseRiesgo {
-  0%   { box-shadow: 0 0 0 0 var(--oxido-dim); }
-  70%  { box-shadow: 0 0 0 6px transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
-}
-
-/* Pulso neutro / informativo: --traza a baja opacidad. */
-@keyframes pulseTraza {
-  0%   { box-shadow: 0 0 0 0 var(--traza-dim); }
-  70%  { box-shadow: 0 0 0 6px transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
-}
-
-@keyframes slideDropdown {
-  from { opacity: 0; transform: translateY(-4px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -119,6 +74,17 @@ html, body { overflow-x: hidden; }
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ── Acento superior: línea de un píxel, calmada, tono tiza azul --traza. ── */

@@ -31,9 +31,9 @@ describe("UX-BTN-2 · primary / ghost / pager CSS", () => {
     expect(section8).toMatch(/\.btnPrimary\s*\{[^}]*--cta-border/s);
   });
 
-  it("ghost/base usan --radius y alturas 36/32", () => {
-    expect(section8).toMatch(/\.btn,\s*\n\.btnGhost\s*\{[^}]*min-height:\s*36px/s);
-    expect(section8).toMatch(/\.btnSmall\s*\{[^}]*min-height:\s*32px/s);
+  it("ghost/base usan --control-m / --control-s y --radius", () => {
+    expect(section8).toMatch(/\.btn,\s*\n\.btnGhost\s*\{[^}]*min-height:\s*var\(--control-m\)/s);
+    expect(section8).toMatch(/\.btnSmall\s*\{[^}]*min-height:\s*var\(--control-s\)/s);
     expect(section8).toMatch(/border-radius:\s*var\(--radius\)/);
   });
 
@@ -43,9 +43,9 @@ describe("UX-BTN-2 · primary / ghost / pager CSS", () => {
     expect(section8).not.toMatch(/#626b78/);
   });
 
-  it(".resultPagerStep es caja 32×32 centrada", () => {
-    expect(section8).toMatch(/\.resultPagerStep\s*\{[^}]*width:\s*32px/s);
-    expect(section8).toMatch(/\.resultPagerStep\s*\{[^}]*height:\s*32px/s);
+  it(".resultPagerStep es caja --control-s centrada", () => {
+    expect(section8).toMatch(/\.resultPagerStep\s*\{[^}]*width:\s*var\(--control-s\)/s);
+    expect(section8).toMatch(/\.resultPagerStep\s*\{[^}]*height:\s*var\(--control-s\)/s);
     expect(section8).toMatch(/\.resultPagerStep\s*\{[^}]*inline-flex/s);
     expect(section8).toMatch(/\.resultPagerStep\s*\{[^}]*justify-content:\s*center/s);
   });

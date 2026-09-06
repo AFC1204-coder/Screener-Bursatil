@@ -6,15 +6,15 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** smoke PG `:15432` cuando haya túnel.  
-**Último cerrado:** **LOOK-B** tokens v2.3 (smoke A/B OK) · READ #12 · tape docs.  
-**Ahora:** idle — siguiente LOOK-C o smoke PG.  
+**Último cerrado:** **LOOK-C** botones/tipo/transiciones (smoke home+stock 1440/390).  
+**Ahora:** idle — siguiente **LOOK-D** (aside piel).  
 **Pendiente ops:** smoke RPC Mini `:15432`.  
-**Cola piel:** LOOK-C botones/tipo/transiciones → D aside → E mesa → F móvil. Multi-lista solo Favoritos.  
+**Cola piel:** LOOK-D aside → E mesa → F móvil. Multi-lista solo Favoritos.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
-**Nota:** Tape proto en remoto. Tokens lienzo **v2.3** (`#141A17`…).  
+**Nota:** Tape proto en remoto. Tokens lienzo **v2.3**; controles `--control-*` / `--t-*` consumidos.  
 **Hecho ops:** Supabase Pro cancelado · GHA scan-universe **disabled_manually**.  
-**Residuales UX-READ (docs):** READ-G P2 · READ-H P3 · `docs/inventario-residuales-ux-read-2026-09-06.md`.  
-**Aparcado:** tape→producto · smoke OPS-MINI-1 PG.  
+**Residuales UX-READ (docs):** READ-G P2 · READ-H P3.  
+**Aparcado:** tape→producto · smoke OPS-MINI-1 PG · uppercase 3 roles (deuda LOOK-C).  
 **SHELL:** A→D cerebro OK; piel = oleadas LOOK-*.
 
 ## Hecho (esta oleada)
@@ -293,9 +293,9 @@ Fuente: `docs/analisis-ux-look-redisenio-2026-09-05.md`. Orden: A → B → C∥
 | ID | Qué | Estado |
 |---|---|---|
 | LOOK-A | Layout P0: grid familias, bottom nav 6, Filtros sticky | **Cerrado** · `384438b` |
-| LOOK-B | Tokens v2.3 «pizarra apagada» + higiene hex | **Preparado** · ticket `docs/tickets/LOOK-B-tokens-v23-pizarra-apagada.md` · rama `cursor/look-b-tokens-1ac6` (A/B) · **pendiente smoke hex** |
-| LOOK-C | Botones, escala tipográfica, transiciones | Aparcado |
-| LOOK-D | Aside piel (tarjeta, chips, modal, drawer) | Aparcado |
+| LOOK-B | Tokens v2.3 «pizarra apagada» + higiene hex | **Cerrado** · `8cd7c87` |
+| LOOK-C | Botones, escala tipográfica, transiciones | **Cerrado** · (este commit) |
+| LOOK-D | Aside piel (tarjeta, chips, modal, drawer) | Siguiente |
 | LOOK-E | Mesa + chrome `/stock` | Aparcado |
 | LOOK-F | Móvil calidad de uso | Aparcado |
 

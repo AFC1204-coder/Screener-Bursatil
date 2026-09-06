@@ -1,15 +1,8 @@
-# Ticket activo — idle (LOOK-B mergeado)
+# Ticket activo — idle
 
 **Estado:** idle  
-**Último:** LOOK-B v2.3 en polish (`8cd7c87`) tras smoke A/B  
-**Siguiente:** LOOK-C o smoke PG `:15432`
+**Rama:** `codex/statsedge-ui-polish`  
+**Último cerrado:** LOOK-C (botones / tipo / transiciones)  
+**Siguiente:** LOOK-D — aside piel (tarjeta, chips, modal, drawer)
 
-## Prompt para Agent chat (copiar tal cual)
-
-```
-(idle — no hay ticket de programación activo)
-```
-
-## Fuera
-
-—
+Sin prompt activo. Pedir al orquestador activar LOOK-D cuando toque.
