@@ -318,6 +318,9 @@ export function useChartController(props = {}) {
       drawings.attach(adapter.chart, adapter.mainSeries, container);
 
       chartHandleRef.current = adapter;
+      if (!cancelled) {
+        setRenderError("");
+      }
     }
 
     render().catch((error) => {

@@ -6,23 +6,25 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** —  
-**Último cerrado:** **LOOK-C3** uppercase oleada 2 (`bfe1fbd`).  
-**Ahora:** idle — C2 home + C3 ficha/Mercado/satélites.  
+**Último cerrado:** **CHART-RS-4** escala `rs-rating` tras serie (líneas país/tema).  
+**Ahora:** idle.  
 **Pendiente ops:** —  
 **Cola:** —  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
-**Nota:** TAPE-1 · LOOK A→F + C2/C3 uppercase ✅.  
+**Nota:** TAPE-1 · LOOK A→F + C2/C3 uppercase ✅ · CHART-RS-4 ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA off · OPS-MINI-1 smoke PG OK.  
 **Residuales UX-READ:** READ-G · READ-H cerrados.  
 **Aparcado:** —  
 **SHELL:** A→D cerebro OK; piel LOOK = cerrada.  
 **Nota smoke LOOK-C3:** ficha kickers/KV/`stockVerdictQuoteLabel` = none; `h2`/`th` uppercase. Mercado reliability strip = none; eyebrow/h1 uppercase.  
-**Nota smoke TAPE-1 (filas reales 2026-09-06):** túnel `:15432` · EE.UU. + Traer datos · **592 en cola** Caza · `j`/`k` mueven `isActive` · Enter → `/stock/AVAH` · columnas ticker/spark/etapa·sem/RS/VCP/máx52s.
+**Nota smoke TAPE-1 (filas reales 2026-09-06):** túnel `:15432` · EE.UU. + Traer datos · **592 en cola** Caza · `j`/`k` mueven `isActive` · Enter → `/stock/AVAH` · columnas ticker/spark/etapa·sem/RS/VCP/máx52s.  
+**Nota smoke CHART-RS-4:** `/stock/ATRC` W · RS/país/tema ON · sin `incorrect ID` · badges 92/91/84 · píxeles traza/soft/theme en canvas.
 
 ## Hecho (esta oleada)
 
 | ID | Qué | Commit |
 |---|---|---|
+| CHART-RS-4 | Escala `rs-rating` tras primera serie RS (LWC v5; líneas país/tema) | (pendiente hash) |
 | P1 | Sesión caduca en frontera nocturna; refresh conserva criterios | `476cab4` |
 | P2 | Copia muestreada → re-fetch; fallo → aviso + muestra | `476cab4` |
 | B2 / chart | Vacío usa `emptyFallback`, no «Sin dato» fijo | `219e075` |

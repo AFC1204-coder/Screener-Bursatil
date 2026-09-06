@@ -364,10 +364,12 @@ export function createChartNativeAdapter(args) {
   const rsThemeHistory = rsLineHistory(rsThemeLineData);
   const rsThemeRendered = !intraday && !!indicators.rsThemeLine && rsThemeLineData.length > 1 && rsThemeHistory.sufficient;
 
-  const anyRsRendered = rsRendered || rsCountryRendered || rsThemeRendered;
-  if (anyRsRendered) {
+  let rsOverlayScaleConfigured = false;
+  const maybeEnsureRsOverlayScale = () => {
+    if (rsOverlayScaleConfigured) return;
     ensureRsOverlayScale(chart);
-  }
+    rsOverlayScaleConfigured = true;
+  };
 
   if (rsRendered) {
     rsSeries = chart.addSeries(
@@ -383,6 +385,7 @@ export function createChartNativeAdapter(args) {
     rsSeries.setData(rsLineData.map((point) => ({ time: point.time, value: point.value })));
     addRsReferenceLine(rsSeries, colors, LineStyle);
     extraSeries.push(rsSeries);
+    maybeEnsureRsOverlayScale();
   }
 
   if (rsCountryRendered) {
@@ -400,6 +403,7 @@ export function createChartNativeAdapter(args) {
     rsCountrySeriesHandle.setData(rsCountryLineData.map((point) => ({ time: point.time, value: point.value })));
     if (!rsRendered) addRsReferenceLine(rsCountrySeriesHandle, colors, LineStyle);
     extraSeries.push(rsCountrySeriesHandle);
+    maybeEnsureRsOverlayScale();
   }
 
   if (rsThemeRendered) {
@@ -416,6 +420,7 @@ export function createChartNativeAdapter(args) {
     rsThemeSeriesHandle.setData(rsThemeLineData.map((point) => ({ time: point.time, value: point.value })));
     if (!rsRendered && !rsCountryRendered) addRsReferenceLine(rsThemeSeriesHandle, colors, LineStyle);
     extraSeries.push(rsThemeSeriesHandle);
+    maybeEnsureRsOverlayScale();
   }
 
   // ── Línea de comparación con el benchmark ("Comparar vs") ────────────────

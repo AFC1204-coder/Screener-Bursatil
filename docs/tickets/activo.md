@@ -2,7 +2,7 @@
 
 **Estado:** idle  
 **Rama:** `codex/statsedge-ui-polish`  
-**Último cerrado:** LOOK-C3 (uppercase oleada 2 · stock + market-health + satélites)
+**Último cerrado:** CHART-RS-4 (escala `rs-rating` tras primera serie RS · líneas país/tema)
 
 Sin ticket de programación activo.
 

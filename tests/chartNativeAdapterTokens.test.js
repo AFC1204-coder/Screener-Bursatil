@@ -114,6 +114,7 @@ describe("chartNativeAdapter · contrato de tokens CSS", () => {
 function rsAdapterHarness({ rsRatingSeries, rsCountrySeries, rsThemeSeries, indicators, rows }) {
   const priceScaleCalls = [];
   const addedSeries = [];
+  const registeredPriceScaleIds = new Set();
   const makeSeries = () => ({
     setData: vi.fn(),
     priceScale: () => ({ applyOptions: vi.fn() }),
@@ -122,6 +123,9 @@ function rsAdapterHarness({ rsRatingSeries, rsCountrySeries, rsThemeSeries, indi
   const mainSeries = makeSeries();
   const chart = {
     addSeries: vi.fn((definition, options, paneIndex) => {
+      if (options?.priceScaleId) {
+        registeredPriceScaleIds.add(options.priceScaleId);
+      }
       const series = addedSeries.length === 0 ? mainSeries : makeSeries();
       addedSeries.push({ definition, options, paneIndex, series });
       return series;
@@ -130,7 +134,14 @@ function rsAdapterHarness({ rsRatingSeries, rsCountrySeries, rsThemeSeries, indi
     priceScale: vi.fn((id, paneIndex) => {
       const entry = { id, paneIndex, options: null };
       priceScaleCalls.push(entry);
-      return { applyOptions: (options) => { entry.options = options; } };
+      return {
+        applyOptions: (options) => {
+          if (id && !registeredPriceScaleIds.has(id)) {
+            throw new Error(`Trying to apply price scale options with incorrect ID: ${id}`);
+          }
+          entry.options = options;
+        },
+      };
     }),
   };
   const colors = Object.fromEntries(EXPECTED_TOKENS.map(([key, , fallback]) => [key, fallback]));
