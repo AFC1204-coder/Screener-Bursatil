@@ -6,18 +6,17 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** —  
-**Último cerrado:** **OPS-MINI-1** smoke PG túnel (`leaderboard` + finalize).  
-**Ahora:** idle — residuales UX-READ + OPS-MINI-1 cerrados.  
+**Último cerrado:** **TAPE-1** mesa Caza (`a191120`).  
+**Ahora:** **LOOK-C2** — uppercase solo 3 roles (deuda LOOK-C).  
 **Pendiente ops:** —  
-**Cola residuales:** — (fin UX-READ).  
+**Cola:** LOOK-C2 (activo) → idle.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
-**Nota:** Tape proto en remoto. LOOK A→F ✅.  
-**Hecho ops:** Supabase Pro cancelado · GHA scan-universe **disabled_manually** · **OPS-MINI-1 smoke PG OK** (túnel `:15432`).  
-**Residuales UX-READ:** READ-G (`8c97af8`) · READ-H (`25fb61a`).  
-**Aparcado:** tape→producto · uppercase 3 roles (deuda LOOK-C).  
+**Nota:** TAPE-1 en producto (Caza|Auditoría). LOOK A→F ✅.  
+**Hecho ops:** Supabase Pro cancelado · GHA off · OPS-MINI-1 smoke PG OK.  
+**Residuales UX-READ:** READ-G · READ-H cerrados.  
+**Aparcado:** —  
 **SHELL:** A→D cerebro OK; piel LOOK = cerrada.  
-**Nota smoke READ-H:** `/stock/AAPL` `:3000` — badge opacity 1 sin hover; nav 0→1 al hover; móvil 390 badge compacto flex.  
-**Nota smoke OPS-MINI-1:** `leaderboard_publishable_rows` 50/58886 · finalize `updated_count=1` · soft-delete `test:`.
+**Nota smoke TAPE-1:** toggle Caza↔Auditoría + `localStorage` OK; sin filas (nocturno US no leído en portátil).
 
 ## Hecho (esta oleada)
 
