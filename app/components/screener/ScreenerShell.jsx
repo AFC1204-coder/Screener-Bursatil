@@ -967,6 +967,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           />
           <ResultPagerTable
             visibleCount={huntResultsFiltered.length}
+            presetKey={presetKey}
+            filteredRows={huntResultsFiltered}
             resultPageStart={resultPageStart}
             resultPageEnd={resultPageEnd}
             resultPageSize={resultPageSize}
