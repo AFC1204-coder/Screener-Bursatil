@@ -1,6 +1,7 @@
 # HYDRATION-1 — React hydration mismatch en screener `/`
 
-**Estado:** Activo  
+**Estado:** Cerrado · smoke hard-reload `/` sin hydration 2026-09-07  
+**Causa real:** `AuthGate` leía `localStorage` en el primer render (no ScreenerShell).  
 **Prioridad:** residual smoke (P1 menor · calidad runtime)  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer  

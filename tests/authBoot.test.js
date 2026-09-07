@@ -4,6 +4,7 @@ import {
   clearAuthSessionHint,
   hasPlausibleAuthSession,
   initialAuthGateStatus,
+  optimisticAuthGateStatus,
   isAuthGateOpen,
   normalizeAuthSessionStatus,
   persistAuthSessionHint,
@@ -67,13 +68,33 @@ describe("authBoot", () => {
     expect(hasPlausibleAuthSession()).toBe(true);
   });
 
-  it("boots optimistically when a plausible session exists", () => {
+  it("initialAuthGateStatus no lee localStorage (paridad SSR/cliente)", () => {
     persistAuthSessionHint();
     expect(initialAuthGateStatus()).toMatchObject({
       loading: true,
       verifying: true,
+      authenticated: false,
+    });
+  });
+
+  it("optimisticAuthGateStatus aplica la señal local tras mount", () => {
+    persistAuthSessionHint();
+    expect(optimisticAuthGateStatus()).toMatchObject({
+      loading: true,
+      verifying: true,
       authenticated: true,
     });
+    clearAuthSessionHint();
+    expect(optimisticAuthGateStatus()).toMatchObject({ authenticated: false });
+  });
+
+  it("initialAuthGateStatus coincide en servidor y cliente (hidratación)", () => {
+    persistAuthSessionHint();
+    const windowRef = globalThis.window;
+    vi.stubGlobal("window", undefined);
+    const serverStatus = initialAuthGateStatus();
+    vi.stubGlobal("window", windowRef);
+    expect(initialAuthGateStatus()).toEqual(serverStatus);
   });
 
   it("renders children while revalidating a plausible session", () => {

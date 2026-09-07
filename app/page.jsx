@@ -282,7 +282,10 @@ export default function Page() {
     reopenQuickReviewDecision,
   } = quickReview;
   const [screenerDecisionRevision, setScreenerDecisionRevision] = useState(0);
-  const screenerDecisionResolutions = useMemo(() => safeRead(STORAGE_KEYS.review, {})?.decisionResolutions || {}, [screenerDecisionRevision, quickReviewResolutionRevision]);
+  const [screenerDecisionResolutions, setScreenerDecisionResolutions] = useState({});
+  useEffect(() => {
+    setScreenerDecisionResolutions(safeRead(STORAGE_KEYS.review, {})?.decisionResolutions || {});
+  }, [screenerDecisionRevision, quickReviewResolutionRevision]);
   const resultView = useResultViewModel({
     rows,
     activeSettings,

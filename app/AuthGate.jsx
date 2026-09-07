@@ -6,9 +6,11 @@ import {
   AUTH_SLOW_BAR_DELAY_MS,
   AUTH_VERIFY_SLOW_MS,
   clearAuthSessionHint,
+  hasPlausibleAuthSession,
   initialAuthGateStatus,
   isAuthGateOpen,
   normalizeAuthSessionStatus,
+  optimisticAuthGateStatus,
   persistAuthSessionHint,
   shouldRenderAuthChildren,
 } from "@/lib/authBoot";
@@ -31,6 +33,9 @@ export default function AuthGate({ children }) {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    if (hasPlausibleAuthSession()) {
+      setStatus(optimisticAuthGateStatus());
+    }
     let active = true;
     const slowBarTimer = window.setTimeout(() => {
       if (active) setShowSlowBar(true);
