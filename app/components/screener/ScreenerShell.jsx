@@ -841,6 +841,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             perfPeriod={perfPeriod}
             setupMode={activeSettings.setupMode}
             scannedMarkets={scannedMarkets}
+            presetKey={presetKey}
             onPerfPeriod={setPerfPeriod}
             onReview={(symbol) => openReview(huntResultsFiltered, symbol)}
             onFavorite={addFavorite}

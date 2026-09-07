@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { SCREENER_FILTER_PRESETS } from "@/lib/screenerFilterCatalog";
-import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
 import {
   HUNT_CARDS,
   huntCardSelection,
@@ -76,6 +75,14 @@ describe("huntDisplayName", () => {
 });
 
 describe("huntCardSelection", () => {
+  it("Radar IPO ordena por fecha de salida descendente", () => {
+    expect(huntCardSelection("radar-ipo")).toEqual({
+      presetKey: "ipoDiscovery",
+      sort: "ipoDate",
+      sortAsc: false,
+    });
+  });
+
   it("Líderes Etapa 2 e intl siguen el periodo de rendimiento activo", () => {
     expect(huntCardSelection("lideres-etapa-2", { perfPeriod: "perf6m" })).toEqual({
       presetKey: "balanced",
@@ -83,9 +90,6 @@ describe("huntCardSelection", () => {
       sortAsc: false,
     });
     expect(huntCardSelection("lideres-intl", { perfPeriod: "perf12m" }).sort).toBe("perf12m");
-    expect(huntCardSelection("radar-ipo", { perfPeriod: DEFAULT_PERFORMANCE_PERIOD }).sort).toBe(
-      DEFAULT_PERFORMANCE_PERIOD,
-    );
   });
 
   it("Cerca de pivot ordena por Dist. máx 52s (cerca del máximo)", () => {

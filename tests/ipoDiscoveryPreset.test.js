@@ -99,20 +99,21 @@ describe("ipoDateCoverageStats", () => {
 });
 
 describe("ipoDiscoveryEmptyMessage", () => {
-  it("explica ausencia total de ipoDate en el materializado", () => {
+  it("explica ausencia total de ipoDate en el materializado sin CTA pre-IPO", () => {
     const text = ipoDiscoveryEmptyMessage({
       analyzedCount: 3319,
       coverage: { total: 3319, withIpoDate: 0, low: true },
     });
     expect(text).toMatch(/nocturno/i);
-    expect(text).toMatch(/IPO Radar/i);
+    expect(text).not.toMatch(/IPO Radar/i);
   });
 
-  it("explica cobertura parcial", () => {
+  it("explica cobertura parcial sin remitir a IPO Radar", () => {
     const text = ipoDiscoveryEmptyMessage({
       analyzedCount: 500,
       coverage: { total: 500, withIpoDate: 12, low: true },
     });
     expect(text).toMatch(/12 de 500/);
+    expect(text).not.toMatch(/IPO Radar/i);
   });
 });
