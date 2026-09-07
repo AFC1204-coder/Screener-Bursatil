@@ -1,6 +1,6 @@
 # MH-SOFT-1 — Salud de mercado: 9 «issues» Next = timeouts ruidosos
 
-**Estado:** Activo · prep  
+**Estado:** Hecho (orquestador · smoke `/market-health` · Issues 9→1 tooling)  
 **Prioridad:** P1 (ruido dev / sensación de rotura)  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer  

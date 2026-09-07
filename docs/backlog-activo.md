@@ -6,8 +6,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-07 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **CHART-QR-1b** `b21162a`.  
-**Ahora:** **MH-SOFT-1** (overlay 9 Issues = timeouts ruidosos) — `docs/tickets/activo.md`.  
+**Último cerrado:** **MH-SOFT-1** (overlay timeouts → soft-fail).  
+**Ahora:** idle.  
 **Cola:** P2 RS IPO (F) aparcado.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
 
