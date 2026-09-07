@@ -1,4 +1,5 @@
 import React from "react";
+import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -8,6 +9,7 @@ import {
   FilterToggle,
   LayerControl,
   LayerToggleButton,
+  commitFilterNumberDraft,
 } from "@/lib/screenerFiltersView";
 import { FILTER_FAMILIES, FILTER_FAMILY_ORDER, SETTING_LAYER_DEPENDENCIES } from "@/lib/screenerFilterCatalog";
 import { PRIVATE_GLOBAL_RS_DISCLOSURE } from "@/lib/rsEngines";
@@ -250,6 +252,31 @@ describe("FilterFamilyModal · cobertura por familia (gate SHELL-A)", () => {
     const ipoHtml = renderToStaticMarkup(React.createElement(FilterFamilyModal, familyModalProps("ipo")));
     expect(volumeHtml).toContain("Volumen en vela alcista");
     expect(ipoHtml).toContain("IPO real reciente");
+  });
+});
+
+describe("commitFilterNumberDraft · sin sticky-0", () => {
+  it("vacío devuelve neutral, no 0 arbitrario", () => {
+    expect(commitFilterNumberDraft("", { neutral: -100, scale: 1 })).toBe(-100);
+    expect(commitFilterNumberDraft("   ", { neutral: 0, scale: 1 })).toBe(0);
+  });
+
+  it("número válido escala al persistir", () => {
+    expect(commitFilterNumberDraft("200", { neutral: 0, scale: 1000 })).toBe(200000);
+  });
+
+  it("entrada inválida vuelve al neutral", () => {
+    expect(commitFilterNumberDraft("abc", { neutral: -100, scale: 1 })).toBe(-100);
+  });
+});
+
+describe("FilterNumber · borrador/blur (contrato en código)", () => {
+  const FILTERS_VIEW = readFileSync(new URL("../lib/screenerFiltersView.jsx", import.meta.url), "utf8");
+
+  it("usa borrador local y confirma en blur, sin onChange sticky con || 0", () => {
+    expect(FILTERS_VIEW).toMatch(/setDraft\(e\.target\.value\)/);
+    expect(FILTERS_VIEW).toMatch(/onBlur=\{\(e\) => commitDraft\(e\.target\.value\)\}/);
+    expect(FILTERS_VIEW).not.toMatch(/onChange=\{\(e\) => onChange\(field\.key, \(Number\(e\.target\.value\) \|\| 0\) \* scale\)\}/);
   });
 });
 
