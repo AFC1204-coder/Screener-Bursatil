@@ -6,9 +6,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-07 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **MH-SOFT-1** (overlay timeouts → soft-fail).  
-**Ahora:** idle.  
-**Cola:** P2 RS IPO (F) aparcado.  
+**Último cerrado:** **AUDIT-CRITERIO-1** (informe libros→etapas+Mercado).  
+**Ahora:** **MH-FILL-1** (paridad etapa estructural en Mercado) — `docs/tickets/activo.md`.  
+**Cola:** STAGE-2 (motivo calificador) · STAGE-3 · MH-FILL-3 · MET-7 · resto informe · P2 IPO-F aparcado.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
 
 ### Estados de cola (PROC-A)
