@@ -3,21 +3,22 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-06 (noche) · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-07 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** nav IPO cuando C · mesa logos tras próximo nocturno (filas viejas)  
-**Último cerrado:** **LOGO-1** portada + proyección website/logoDomain.  
-**Ahora:** idle — cola Cloud: IPO-UX-B · sticky-0 si sigue.  
+**RECORDATORIO dueño:** **IPO-UX-C nav** (sí/no matar link IPO) · mesa logos tras próximo nocturno (filas viejas)  
+**Último cerrado:** **IPO-UX-B** + **sticky-0** (smoke B OK).  
+**Ahora:** idle — AUTH-BOOT-1 aparcado ([PR #14](https://github.com/AFC1204-coder/Screener-Bursatil/pull/14) draft).  
 **Pendiente ops:** —  
-**Cola:** IPO-UX-B · sticky-0 filtros · IPO-UX-C (nav) · P1 D/E · P2 RS IPO.  
+**Cola:** AUTH-BOOT-1 (OK dueño) · IPO-UX-C (nav) · P1 D/E · P2 RS IPO.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
-**Nota:** TAPE-1 · LOOK A→F + C2/C3 · CHART-RS-4 · IPO-UX-A · LOGO-1 ✅.  
+**Nota:** TAPE-1 · LOOK A→F + C2/C3 · CHART-RS-4 · IPO-UX-A · LOGO-1 · IPO-UX-B · sticky-0 ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA off · OPS-MINI-1 smoke PG OK.  
 **Residuales UX-READ:** READ-G · READ-H cerrados.  
 **Aparcado:** —  
 **SHELL:** A→D cerebro OK; piel LOOK = cerrada.  
 **Nota smoke LOGO-1:** `/stock/AAPL` `.stockLogoPro img` → favicon apple.com. Filas ligeras sin website siguen iniciales hasta nocturno.  
-**Nota IPO (2026-09-07):** lente A `78b35e4`; smoke chips A aún pendiente checklist dueño si quiere.
+**Nota smoke IPO-UX-A (2026-09-07, :3000):** chips 6/12/24/36 · verdad sync · sin `watch:` · disclosure lente OK.  
+**Nota smoke IPO-UX-B (2026-09-07, :3000):** col **Salida↓** en Auditoría · sort desc (17→3 dic) · empty sin CTA Radar/vigiladas · label «IPO recientes». Hotfix parse `cbbfb84`.
 
 ## Hecho (esta oleada)
 
@@ -212,10 +213,12 @@ Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 | UX-FILTERS | Spec presentación filtros (IPO piloto) | **Aceptado** · `docs/analisis-ux-filters-presentacion-2026-08-28.md` |
 | IPO-1a | Backfill `ipoDate` (código + write US/intl) | `eb3053a` + write 2026-08-28 |
 | UX-IPO-1 | Brief Fable: destino cotizadas recientes por ventana | **Aceptado** · `docs/analisis-ux-ipo-superficie-2026-09-07.md` |
-| IPO-UX-A | Lente cohort (preset any + chips edad + sin merge) | **Hecho** · `78b35e4` · smoke UI pendiente |
+| IPO-UX-A | Lente cohort (preset any + chips edad + sin merge) | **Hecho** · `78b35e4` · smoke chips OK |
 | LOGO-1 | Logos empresa mesa + portada ficha | **Hecho** · `44459a1` |
-| IPO-UX-B | Columna Salida + orden + empty state | Cola |
-| IPO-UX-C | Kill list (nav = decisión dueño) | Cola |
+| IPO-UX-B | Columna Salida + orden + empty state | **Hecho** · `062e7b2` · fix `cbbfb84` · smoke OK |
+| IPO-UX-C | Kill list (nav = decisión dueño) | Cola · **espera OK** |
+| AUTH-BOOT-1 | Arranque sin «Comprobando acceso» full-screen | [PR #14](https://github.com/AFC1204-coder/Screener-Bursatil/pull/14) draft · **OK dueño** |
+| sticky-0 | FilterNumber borrador/blur sin sticky-0 | **Hecho** · `0afa9f0` |
 
 Orden: A (código) → **LOGO-1** → B → C. RS peer/IPO = P2.
 

@@ -2,7 +2,7 @@
 
 Copia de referencia. Ejecutar desde `docs/tickets/activo.md`.
 
-**Estado:** Cerrado `78b35e4` · smoke visual pendiente sesión dueño  
+**Estado:** Cerrado `78b35e4` · smoke chips OK 2026-09-07 (orquestador)  
 **Prioridad:** P0  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer  
