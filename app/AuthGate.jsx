@@ -2,25 +2,73 @@
 
 import { useEffect, useState } from "react";
 import { LockKeyhole, Loader2 } from "lucide-react";
+import {
+  AUTH_SLOW_BAR_DELAY_MS,
+  AUTH_VERIFY_SLOW_MS,
+  clearAuthSessionHint,
+  initialAuthGateStatus,
+  isAuthGateOpen,
+  normalizeAuthSessionStatus,
+  persistAuthSessionHint,
+  shouldRenderAuthChildren,
+} from "@/lib/authBoot";
+
+function AuthVerifyBar({ slow = false }) {
+  return (
+    <div className="authVerifyBar" role="status" aria-live="polite">
+      <Loader2 size={14} className="authGateSpin" aria-hidden="true" />
+      <span>{slow ? "Comprobando acceso (tarda más de lo habitual)…" : "Comprobando acceso…"}</span>
+    </div>
+  );
+}
 
 export default function AuthGate({ children }) {
-  const [status, setStatus] = useState({ loading: true, authenticated: false, requiresToken: false, productionLocked: false });
+  const [status, setStatus] = useState(initialAuthGateStatus);
+  const [showSlowBar, setShowSlowBar] = useState(false);
+  const [verifySlow, setVerifySlow] = useState(false);
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     let active = true;
+    const slowBarTimer = window.setTimeout(() => {
+      if (active) setShowSlowBar(true);
+    }, AUTH_SLOW_BAR_DELAY_MS);
+    const slowVerifyTimer = window.setTimeout(() => {
+      if (active) setVerifySlow(true);
+    }, AUTH_VERIFY_SLOW_MS);
+
     fetch("/api/auth/session", { cache: "no-store" })
       .then((response) => response.json())
       .then((data) => {
-        if (active) setStatus({ loading: false, ...data });
+        if (!active) return;
+        const next = normalizeAuthSessionStatus(data);
+        if (next.authenticated || isAuthGateOpen(next)) persistAuthSessionHint();
+        else clearAuthSessionHint();
+        setStatus(next);
       })
       .catch(() => {
-        if (active) setStatus({ loading: false, authenticated: false, requiresToken: true, productionLocked: false });
+        if (!active) return;
+        clearAuthSessionHint();
+        setStatus({
+          loading: false,
+          verifying: false,
+          authenticated: false,
+          requiresToken: true,
+          productionLocked: false,
+        });
+      })
+      .finally(() => {
+        if (!active) return;
+        setShowSlowBar(false);
+        setVerifySlow(false);
       });
+
     return () => {
       active = false;
+      window.clearTimeout(slowBarTimer);
+      window.clearTimeout(slowVerifyTimer);
     };
   }, []);
 
@@ -37,7 +85,14 @@ export default function AuthGate({ children }) {
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.error) throw new Error(data.error || `HTTP ${response.status}`);
       setToken("");
-      setStatus({ loading: false, authenticated: true, requiresToken: false, productionLocked: false });
+      persistAuthSessionHint();
+      setStatus({
+        loading: false,
+        verifying: false,
+        authenticated: true,
+        requiresToken: false,
+        productionLocked: false,
+      });
     } catch (err) {
       setError(err.message || "No autorizado");
     } finally {
@@ -45,18 +100,23 @@ export default function AuthGate({ children }) {
     }
   }
 
-  if (status.loading) {
+  if (shouldRenderAuthChildren(status)) {
     return (
-      <main className="authGate">
-        <div className="authGatePanel authGateInline">
-          <Loader2 size={18} className="authGateSpin" />
-          <span>Comprobando acceso</span>
-        </div>
-      </main>
+      <>
+        {status.verifying && showSlowBar ? <AuthVerifyBar slow={verifySlow} /> : null}
+        {children}
+      </>
     );
   }
 
-  if (status.authenticated || (!status.requiresToken && !status.productionLocked)) return children;
+  if (status.verifying) {
+    return (
+      <>
+        {showSlowBar ? <AuthVerifyBar slow={verifySlow} /> : null}
+        <main className="authGate authGatePending" aria-busy="true" aria-label="Comprobando acceso" />
+      </>
+    );
+  }
 
   return (
     <main className="authGate">
