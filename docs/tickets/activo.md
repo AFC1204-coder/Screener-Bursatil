@@ -1,8 +1,10 @@
-# Ticket activo — idle (HYDRATION-1 cerrado)
+# Ticket activo — idle (PROC-A/B docs; QA dueño)
 
 **Estado:** idle orquestador  
 **Rama:** `codex/statsedge-ui-polish`  
-**Último cerrado:** HYDRATION-1 (AuthGate + page resolutions SSR parity)  
-**Siguiente:** QA dueño páginas · proceso B/A opcional · IPO-UX-F aparcado  
+**Último cerrado producto:** HYDRATION-1  
+**Último proceso:** PROC-A/B (estados de cola + push antes de Forja) en `docs/backlog-activo.md` + regla orquestación  
+
+**Siguiente:** errores que encuentre el dueño al mirar páginas · o desaparcar IPO-UX-F  
 
 Sin ticket de programación activo.

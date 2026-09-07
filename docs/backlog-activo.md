@@ -5,11 +5,25 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-07 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **HYDRATION-1** (AuthGate SSR parity).  
-**Ahora:** idle.  
-**Cola:** QA dueño páginas · proceso B/A opcional · P2 RS IPO (F) aparcado.  
-**Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
+**RECORDATORIO dueño:** mesa logos tras próximo nocturno · **QA páginas** (IPO / ficha / arranque).  
+**Último cerrado:** **HYDRATION-1** `fc65664` · proceso **PROC-A/B** (estados + push).  
+**Ahora:** idle · esperando errores de QA dueño.  
+**Cola:** P2 RS IPO (F) aparcado.  
+**Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
+
+### Estados de cola (PROC-A)
+
+Un ítem en tablas / «Ahora» usa uno de:
+
+| Estado | Significa |
+|---|---|
+| `prep` | Ticket escrito; aún no hay Agent chat |
+| `en polish` | Programación activa en working tree local |
+| `smoke` | Diff listo; orquestador verifica + Browser |
+| `en origin` | Commiteado y pusheado (listo para Forja/remoto) |
+| `PR` | Cloud/Forja: PR abierto (no merge a polish sin smoke) |
+| `hecho` | Cerrado con hash / nota smoke |
+| `aparcado` | No tocar hasta decisión dueño |  
 **Nota:** TAPE-1 · LOOK A→F + C2/C3 · CHART-RS-4 · IPO-UX-A · LOGO-1 · IPO-UX-B · sticky-0 · AUTH-BOOT-1 · IPO-UX-C ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA off · OPS-MINI-1 smoke PG OK · D2 `--write` Mini OK.  
 **Residuales UX-READ:** READ-G · READ-H cerrados.  
@@ -338,3 +352,6 @@ Fuente: `docs/analisis-ux-look-redisenio-2026-09-05.md`. Orden: A → B → C∥
 
 - Programación en chat aparte; prompt en el orquestador.
 - Orquestador: verify + **smoke en página con Browser Use** (no pedir checklist mecánico al dueño) + commit.
+- **PROC-B:** push de `codex/statsedge-ui-polish` a origin tras commits que otro agente/Forja necesite; no dejar polish solo local si hay handoff remoto.
+- **PROC-A:** estados de cola arriba; una sola fuente = este MD + `docs/tickets/activo.md` (no un segundo backlog paralelo).
+- Tope nocturno sugerido (PROC-C): 1–2 CA con implementación; el resto tickets `prep` sin código.

@@ -30,6 +30,12 @@ Backlog: `docs/backlog-activo.md`. Ticket activo: `docs/tickets/activo.md`. Hist
 - Paralelo → worktree o cloud agent en rama propia.
 - Al empezar: `git status`. Al cerrar: solo el diff del ticket.
 
+## Sync remoto (regla B · 2026-09-07)
+
+- Tras commit(s) que Forja/grupo o un Agent remoto vaya a usar: **`git push` de `codex/statsedge-ui-polish` a origin** antes de ausentarte o de pedir CA/PR.
+- Si el handoff dice «remoto sync» y polish está ahead: push primero; no asumas que origin = HEAD local.
+- Programación sigue sin push; el **orquestador** (o el dueño) empuja polish.
+
 ## Ciclo de ticket
 
 1. Orquestador elige ítem del backlog → escribe `docs/tickets/activo.md`.
