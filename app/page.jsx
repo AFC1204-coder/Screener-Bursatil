@@ -1,7 +1,7 @@
 "use client";
 // tokens-v2.css se importa globalmente desde app/layout.jsx.
 import "../styles/screener.css";
-import { useEffect, useMemo, useRef, useState, useTransition, useCallback } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import QuickReviewModal from "@/app/components/screener/QuickReviewModal";
 import ScreenerShell from "@/app/components/screener/ScreenerShell";
@@ -740,7 +740,7 @@ export default function Page() {
     statusContextRef.current = `Datos actualizados al escaneo nocturno (${dateTime(nextScanContext.scannedAt)}); tus filtros se mantienen`;
     return true;
   }
-  useEffect(() => {
+  useLayoutEffect(() => {
     let cancelled = false;
     let restoredRowsCount = 0;
     let sampledScan = null;
