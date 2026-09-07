@@ -222,8 +222,8 @@ Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 | IPO-UX-B | Columna Salida + orden + empty state | **Hecho** · `062e7b2` · fix `cbbfb84` · smoke OK |
 | IPO-UX-C | Kill list (nav = **sacar** · OK dueño) | **Hecho** · `741a792` · smoke OK |
 | IPO-UX-D | % Desde salida en mesa (lente IPO) | **Hecho** · `2a657a0` · smoke · residual cobertura |
-| IPO-UX-D2 | Persistir ancla cierre≥ipoDate en nocturno | **Hecho** · `3adc86d` · write Mini 3291 · smoke % |
-| IPO-UX-E | Ficha `/stock` contexto salida | **Hecho** · smoke ANDG · residual ancla brief |
+| IPO-UX-D2 | Persistir ancla cierre≥ipoDate en nocturno | **Hecho** · `3adc86d` · hotfix `97953f4` · write Mini · smoke % |
+| IPO-UX-E | Ficha `/stock` contexto salida | **Hecho** · `d1230dc` · smoke ANDG · residual ancla brief |
 | IPO-UX-F | RS IPO / peer | P2 aparcado |
 | AUTH-BOOT-1 | Arranque sin «Comprobando acceso» full-screen | **Hecho** · `9f9b660` · smoke OK |
 | sticky-0 | FilterNumber borrador/blur sin sticky-0 | **Hecho** · `0afa9f0` |
