@@ -29,6 +29,7 @@ import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, decisionResolutionForSymbol, decisionResolutionHistory, reopenStockDecisionResolution } from "@/lib/stockDecisionResolution";
 import { vcpObjectiveSummary } from "@/lib/vcpDiagnostics";
 import { chartQualityFromBrief } from "@/lib/chartDataQuality";
+import { stockHeroLogoCandidates } from "@/lib/screenerFormat";
 import StockAddToListButton from "./StockAddToListButton";
 import StockSymbolSearch from "./StockSymbolSearch";
 
@@ -202,6 +203,13 @@ export function N0VerdictBlock({
   freshness,
   actions,
 }) {
+  const logoCandidates = stockHeroLogoCandidates(data?.visual || {});
+  const [logoIndex, setLogoIndex] = useState(0);
+  const logo = logoIndex < logoCandidates.length ? logoCandidates[logoIndex] : "";
+  const logoInitials = String(data?.visual?.initials || symbol.slice(0, 2)).toUpperCase();
+  useEffect(() => {
+    setLogoIndex(0);
+  }, [symbol, data?.visual?.clearbitLogoUrl, data?.visual?.logoUrl]);
   const priceHas = Number.isFinite(priceSnapshot?.price);
   // Misma palabra que la tabla y que la fila "ETAPA" de esta misma ficha.
   const stageDisplay = stageDisplayForRow({
@@ -220,7 +228,16 @@ export function N0VerdictBlock({
       <div className="stockVerdictHead">
         <div className="stockVerdictIdentity">
           <div className="stockLogoPro">
-            <span>{String(data?.visual?.initials || symbol.slice(0, 2)).toUpperCase()}</span>
+            {logo ? (
+              <img
+                src={logo}
+                alt=""
+                loading="lazy"
+                onError={() => setLogoIndex((value) => value + 1)}
+              />
+            ) : (
+              <span>{logoInitials}</span>
+            )}
           </div>
           <div className="stockIdentityBlock">
             {data?.theme ? (
@@ -1241,8 +1258,6 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const [data, setData] = useState(initialData || null);
   const [error, setError] = useState(initialError || "");
   const [loading, setLoading] = useState(false);
-  const [logoIndex, setLogoIndex] = useState(0);
-  const [logoLoaded, setLogoLoaded] = useState(false);
   const [similar, setSimilar] = useState([]);
   const [social, setSocial] = useState(null);
   const [socialLoading, setSocialLoading] = useState(false);
@@ -1345,8 +1360,6 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     setDecisionResolution(decisionResolutionForSymbol(reviewState, symbol));
     setDecisionResolutionHistoryItems(decisionResolutionHistory(reviewState, { symbol, limit: 4 }));
     setDecisionValidationNote("");
-    setLogoIndex(0);
-    setLogoLoaded(false);
     setCompanyBriefExpanded(false);
     setShowVcpDiagnostics(false);
     // Cada valor entra con el cuadro de identidad visible: el pliegue es una
@@ -1364,8 +1377,6 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     }
     if (!initialError) load({ benchmarkSymbol: savedBenchmark });
   }, [symbol]);
-  const logoCandidates = [data?.visual?.logoUrl, data?.visual?.clearbitLogoUrl].filter(Boolean);
-  const logo = logoCandidates[logoIndex] || "";
   const g = data?.growthMetrics || {};
   const v = data?.valuationMetrics || {};
   const q = data?.quoteSnapshot || {};
