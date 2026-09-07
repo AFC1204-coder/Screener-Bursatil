@@ -5,11 +5,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-07 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** mesa logos tras próximo nocturno (filas viejas)  
-**Último cerrado:** **IPO-UX-C** `741a792` (nav IPO fuera).  
+**RECORDATORIO dueño:** mesa logos tras próximo nocturno · **¿IPO-UX-D2 nocturno ancla desde-salida?**  
+**Último cerrado:** **IPO-UX-D** `2a657a0` (columna Desde salida).  
 **Ahora:** idle.  
 **Pendiente ops:** —  
-**Cola:** P1 D/E · P2 RS IPO.  
+**Cola:** IPO-UX-D2 (persistir ancla, gate datos) · IPO-UX-E (ficha) · P2 RS IPO (F).  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
 **Nota:** TAPE-1 · LOOK A→F + C2/C3 · CHART-RS-4 · IPO-UX-A · LOGO-1 · IPO-UX-B · sticky-0 · AUTH-BOOT-1 · IPO-UX-C ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA off · OPS-MINI-1 smoke PG OK.  
@@ -20,7 +20,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Nota smoke IPO-UX-A (2026-09-07, :3000):** chips 6/12/24/36 · verdad sync · sin `watch:` · disclosure lente OK.  
 **Nota smoke IPO-UX-B (2026-09-07, :3000):** col **Salida↓** · sort desc · empty sin CTA Radar.  
 **Nota smoke AUTH-BOOT-1 (2026-09-07, :3000):** hint → shell; verify &lt;350 ms.  
-**Nota smoke IPO-UX-C (2026-09-07, :3000):** header/bottom sin IPO · sin select categoría · intro «Cotizadas con salida ≤ 24 m.» · lente OK. `/ipo-radar` intacto.
+**Nota smoke IPO-UX-C (2026-09-07, :3000):** header/bottom sin IPO · sin select categoría · intro «Cotizadas con salida ≤ 24 m.» · lente OK. `/ipo-radar` intacto.  
+**Nota smoke IPO-UX-D (2026-09-07, :3000):** col **Desde salida** + sort ↓ visibles en IPO recientes; filas muestra «— · serie no alcanza salida» (chartPreview corto; esperado sin D2).
 
 ## Hecho (esta oleada)
 
@@ -219,6 +220,10 @@ Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 | LOGO-1 | Logos empresa mesa + portada ficha | **Hecho** · `44459a1` |
 | IPO-UX-B | Columna Salida + orden + empty state | **Hecho** · `062e7b2` · fix `cbbfb84` · smoke OK |
 | IPO-UX-C | Kill list (nav = **sacar** · OK dueño) | **Hecho** · `741a792` · smoke OK |
+| IPO-UX-D | % Desde salida en mesa (lente IPO) | **Hecho** · `2a657a0` · smoke · residual cobertura |
+| IPO-UX-D2 | Persistir ancla cierre≥ipoDate en nocturno | Cola · **gate datos** |
+| IPO-UX-E | Ficha `/stock` contexto salida | Cola |
+| IPO-UX-F | RS IPO / peer | P2 aparcado |
 | AUTH-BOOT-1 | Arranque sin «Comprobando acceso» full-screen | **Hecho** · `9f9b660` · smoke OK |
 | sticky-0 | FilterNumber borrador/blur sin sticky-0 | **Hecho** · `0afa9f0` |
 
