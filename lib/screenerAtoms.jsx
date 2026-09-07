@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { safeRead, safeWrite } from "@/lib/localState";
 import {
   chartPath,
-  companyLogoDomain,
+  companyMarkLogoCandidates,
   compactIssueLabel,
   initials,
   vcpCompactLabel,
@@ -49,12 +49,21 @@ export function MiniSparkline({ bars = [], className = "" }) {
 }
 
 export function CompanyMark({ row = {}, size = "md" }) {
-  const domain = companyLogoDomain(row);
-  const logo = domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128` : "";
-  const [failedLogo, setFailedLogo] = useState("");
-  const canShowLogo = logo && failedLogo !== logo;
+  const candidates = companyMarkLogoCandidates(row);
+  const [index, setIndex] = useState(0);
+  const logo = index < candidates.length ? candidates[index] : "";
+  const markInitials = initials(row.companyName || row.name, row.symbol);
   return <span className={`companyMark companyMark-${size}`}>
-    {canShowLogo ? <img src={logo} alt="" loading="lazy" onError={() => setFailedLogo(logo)} /> : <b>{initials(row.companyName || row.name, row.symbol)}</b>}
+    {logo ? (
+      <img
+        src={logo}
+        alt=""
+        loading="lazy"
+        onError={() => setIndex((value) => value + 1)}
+      />
+    ) : (
+      <b>{markInitials}</b>
+    )}
   </span>;
 }
 

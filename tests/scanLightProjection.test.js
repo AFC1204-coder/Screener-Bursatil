@@ -107,7 +107,7 @@ describe("la proyección ligera cubre todo lo que se consulta", () => {
     // Ticker, tema, RS, RS país, etapa, distancia a 52s y capitalización. El RS lo resuelve
     // canonicalRs sobre los weeklyRs*, que se hidratan al leer.
     const tableFields = [
-      "symbol", "companyName", "country", "chartPreview", "theme",
+      "symbol", "companyName", "country", "chartPreview", "website", "logoDomain", "theme",
       "weeklyStageState", "weeklyStageLabel", "weeklyStageStructure", "weeklyStageStructureLabel",
       "distance52w", "marketCap",
       "contractionCount", "distanceToPivotPct", "vcpCandidate",
