@@ -229,7 +229,7 @@ Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 | IPO-UX-E | Ficha `/stock` contexto salida | **Hecho** · `d1230dc` · smoke ANDG · residual → E2 |
 | IPO-UX-E2 | `ipoAnchor*` en company-brief | **Hecho** · `3ea2110` · smoke ANDG +121,5% = mesa |
 | IPO-UX-E2b | Bump `BRIEF_CACHE_VERSION` 4→5 | **Hecho** · `e148068` · smoke ANDG +121,5% sin refresh |
-| HYDRATION-1 | Fix mismatch React en screener `/` | **Hecho** · causa AuthGate · smoke OK |
+| HYDRATION-1 | Fix mismatch React en screener `/` | **Hecho** · `fc65664` · AuthGate · smoke OK |
 | IPO-UX-F | RS IPO / peer | P2 aparcado |
 | AUTH-BOOT-1 | Arranque sin «Comprobando acceso» full-screen | **Hecho** · `9f9b660` · smoke OK |
 | sticky-0 | FilterNumber borrador/blur sin sticky-0 | **Hecho** · `0afa9f0` |
