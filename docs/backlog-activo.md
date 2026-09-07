@@ -6,9 +6,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-07 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **IPO-UX-E2b** (brief cache v5).  
-**Ahora:** idle → activar **HYDRATION-1**.  
-**Cola:** hydration ScreenerShell · proceso B/A opcional · P2 RS IPO (F) aparcado.  
+**Último cerrado:** **IPO-UX-E2b** `e148068`.  
+**Ahora:** **HYDRATION-1** — `docs/tickets/activo.md`.  
+**Cola:** proceso B/A opcional · P2 RS IPO (F) aparcado · QA dueño.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
 **Nota:** TAPE-1 · LOOK A→F + C2/C3 · CHART-RS-4 · IPO-UX-A · LOGO-1 · IPO-UX-B · sticky-0 · AUTH-BOOT-1 · IPO-UX-C ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA off · OPS-MINI-1 smoke PG OK · D2 `--write` Mini OK.  
@@ -227,7 +227,8 @@ Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 | IPO-UX-D2 | Persistir ancla cierre≥ipoDate en nocturno | **Hecho** · `3adc86d` · hotfix `97953f4` · write Mini · smoke % |
 | IPO-UX-E | Ficha `/stock` contexto salida | **Hecho** · `d1230dc` · smoke ANDG · residual → E2 |
 | IPO-UX-E2 | `ipoAnchor*` en company-brief | **Hecho** · `3ea2110` · smoke ANDG +121,5% = mesa |
-| IPO-UX-E2b | Bump `BRIEF_CACHE_VERSION` 4→5 | **Hecho** · smoke ANDG +121,5% sin refresh |
+| IPO-UX-E2b | Bump `BRIEF_CACHE_VERSION` 4→5 | **Hecho** · `e148068` · smoke ANDG +121,5% sin refresh |
+| HYDRATION-1 | Fix mismatch React en screener `/` | **Activo** · `docs/tickets/activo.md` |
 | IPO-UX-F | RS IPO / peer | P2 aparcado |
 | AUTH-BOOT-1 | Arranque sin «Comprobando acceso» full-screen | **Hecho** · `9f9b660` · smoke OK |
 | sticky-0 | FilterNumber borrador/blur sin sticky-0 | **Hecho** · `0afa9f0` |

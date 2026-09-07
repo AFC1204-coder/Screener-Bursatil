@@ -1,8 +1,37 @@
-# Ticket activo — idle (IPO-UX-E2b cerrado) → siguiente HYDRATION-1
+# Ticket activo — HYDRATION-1
 
-**Estado:** idle breve · activar hydration a continuación  
+**Estado:** activo programación  
 **Rama:** `codex/statsedge-ui-polish`  
-**Último cerrado:** IPO-UX-E2b (`BRIEF_CACHE_VERSION` 5)  
-**Nota smoke:** `/stock/ANDG?e2b=1` sin refresh → **+121,5%**
+**Ticket:** `docs/tickets/HYDRATION-1-screener.md`  
+**Modelo:** Composer  
+**Tipo:** bug hydration screener — sin commit/push
 
-Sin ticket de programación hasta que el orquestador escriba HYDRATION-1.
+## Prompt para Agent chat (copiar tal cual)
+
+```
+@docs/tickets/activo.md
+@docs/tickets/HYDRATION-1-screener.md
+
+Rama: codex/statsedge-ui-polish
+Modelo: Composer
+
+Alcance (solo esto):
+1. Reproducir hydration mismatch en `/` (hard-reload) y localizar el nodo real (no parchear ScreenerShell a ciegas).
+2. Fix mínimo de paridad SSR/cliente. Evitar suppressHydrationWarning en el árbol entero.
+3. Test barato si cabe + ./vfc en tocados.
+
+Sin IPO, scoring, nocturno, LOOK.
+Sin commit ni push.
+
+Al terminar, resume con la plantilla de retorno (Resumen / Archivos / Tests / LO QUE NO VERIFIQUÉ).
+```
+
+## Criterios de aceptación (orquestador)
+
+1. Hard-reload `/` sin error de hydration (evidencia consola/overlay).
+2. Mesa/IPO recientes siguen OK.
+3. Commit tras verify.
+
+## Residuales tras este
+
+- Proceso B/A (opcional) · IPO-UX-F aparcado · QA dueño páginas.
