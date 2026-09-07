@@ -13,6 +13,7 @@ import {
   SCREENER_COLUMNS,
   screenerShowsCountryRsColumn,
   screenerShowsIpoSalidaColumn,
+  screenerShowsIpoDesdeSalidaColumn,
   screenerShowsWeaknessColumn,
   screenerSortOptions,
   screenerVisibleColumns,
@@ -203,6 +204,42 @@ describe("columna Salida (Radar IPO)", () => {
     });
     expect(html).toContain(">Salida<");
     expect(html).toMatch(/21 mar 2024|mar 2024/);
+  });
+});
+
+describe("columna Desde salida (Radar IPO)", () => {
+  it("muestra Desde salida solo en ficha ipoDiscovery o al ordenar por ella", () => {
+    expect(screenerShowsIpoDesdeSalidaColumn({ presetKey: IPO_DISCOVERY_PRESET_KEY })).toBe(true);
+    expect(screenerShowsIpoDesdeSalidaColumn({ presetKey: "balanced" })).toBe(false);
+    expect(screenerShowsIpoDesdeSalidaColumn({ sort: "ipoDesdeSalidaPct" })).toBe(true);
+  });
+
+  it("inserta Desde salida tras Salida y expone orden ipoDesdeSalidaPct", () => {
+    const keys = screenerVisibleColumns({ presetKey: IPO_DISCOVERY_PRESET_KEY, scannedMarkets: ["US"] }).map((c) => c.key);
+    expect(keys).toContain("ipoDesdeSalida");
+    expect(keys.indexOf("ipoDesdeSalida")).toBe(keys.indexOf("ipoSalida") + 1);
+    expect(screenerSortOptions({ presetKey: IPO_DISCOVERY_PRESET_KEY, scannedMarkets: ["US"] }).map((item) => item.value))
+      .toContain("ipoDesdeSalidaPct");
+  });
+
+  it("pinta % desde salida cuando hay ancla en chartPreview", () => {
+    const html = renderTable({
+      presetKey: IPO_DISCOVERY_PRESET_KEY,
+      scannedMarkets: ["US"],
+      sort: "ipoDesdeSalidaPct",
+      rows: [{
+        ...fullRow,
+        ipoDate: "2026-08-05",
+        price: 84.2,
+        chartPreview: [
+          { date: "2026-08-05", close: 70, volume: 100 },
+          { date: "2026-08-06", close: 78, volume: 120 },
+          { date: "2026-08-07", close: 84.2, volume: 140 },
+        ],
+      }],
+    });
+    expect(html).toContain(">Desde salida<");
+    expect(html).toContain("+20,3%");
   });
 });
 

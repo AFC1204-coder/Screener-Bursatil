@@ -22,7 +22,12 @@
 import Link from "next/link";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { cap, pct } from "@/lib/formatters";
-import { IPO_DISCOVERY_PRESET_KEY, ipoSalidaCellLabel } from "@/lib/ipoDiscoveryView";
+import {
+  IPO_DISCOVERY_PRESET_KEY,
+  ipoDesdeSalidaAbsenceReason,
+  ipoDesdeSalidaPct,
+  ipoSalidaCellLabel,
+} from "@/lib/ipoDiscoveryView";
 import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
 import { canonicalRs } from "@/lib/rsCanonical";
 import { countryRs } from "@/lib/countryRs";
@@ -395,6 +400,22 @@ const IPO_SALIDA_COLUMN = {
   },
 };
 
+const IPO_DESDE_SALIDA_COLUMN = {
+  key: "ipoDesdeSalida",
+  label: () => "Desde salida",
+  legend: "Rendimiento desde la salida: precio actual frente al primer cierre de la serie disponible en o después de la fecha de salida.",
+  align: "right",
+  className: "colIpoDesdeSalida",
+  sortKey: () => "ipoDesdeSalidaPct",
+  cell: (row) => {
+    const value = ipoDesdeSalidaPct(row);
+    if (!Number.isFinite(value)) {
+      return <MissingValue reason={ipoDesdeSalidaAbsenceReason(row)} />;
+    }
+    return <b className={`cellNumber ${moveTone(value)}`}>{pct(value)}</b>;
+  },
+};
+
 export function screenerShowsWeaknessColumn(ctx = {}) {
   if (ctx.setupMode === "weakness") return true;
   if (ctx.sort === "weaknessScore") return true;
@@ -412,6 +433,13 @@ export function screenerShowsIpoSalidaColumn(ctx = {}) {
   return false;
 }
 
+export function screenerShowsIpoDesdeSalidaColumn(ctx = {}) {
+  if (ctx.presetKey === IPO_DISCOVERY_PRESET_KEY) return true;
+  if (ctx.setupMode === "ipoRecent") return true;
+  if (ctx.sort === "ipoDesdeSalidaPct") return true;
+  return false;
+}
+
 function insertLensColumn(columns, lensColumn) {
   const stageIndex = columns.findIndex((column) => column.key === "stage");
   if (stageIndex < 0) return [...columns, lensColumn];
@@ -419,6 +447,16 @@ function insertLensColumn(columns, lensColumn) {
     ...columns.slice(0, stageIndex + 1),
     lensColumn,
     ...columns.slice(stageIndex + 1),
+  ];
+}
+
+function insertColumnAfter(columns, afterKey, column) {
+  const index = columns.findIndex((entry) => entry.key === afterKey);
+  if (index < 0) return [...columns, column];
+  return [
+    ...columns.slice(0, index + 1),
+    column,
+    ...columns.slice(index + 1),
   ];
 }
 
@@ -436,6 +474,11 @@ export function screenerVisibleColumns(ctx = {}) {
   }
   if (screenerShowsIpoSalidaColumn(ctx)) {
     columns = insertLensColumn(columns, IPO_SALIDA_COLUMN);
+  }
+  if (screenerShowsIpoDesdeSalidaColumn(ctx)) {
+    columns = columns.some((column) => column.key === "ipoSalida")
+      ? insertColumnAfter(columns, "ipoSalida", IPO_DESDE_SALIDA_COLUMN)
+      : insertLensColumn(columns, IPO_DESDE_SALIDA_COLUMN);
   }
   return columns;
 }
