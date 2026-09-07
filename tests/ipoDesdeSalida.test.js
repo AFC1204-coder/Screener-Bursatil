@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  ipoAnchorFromBars,
   ipoDesdeSalidaAbsenceReason,
   ipoDesdeSalidaAnchorClose,
   ipoDesdeSalidaPct,
   ipoDesdeSalidaSortValue,
 } from "@/lib/ipoDiscoveryView";
+import { scanLightMetrics } from "@/lib/scanLightProjection";
 import { compareRowsForSort } from "@/lib/screenerPipeline";
 
 function row(overrides = {}) {
@@ -71,9 +73,53 @@ describe("ipoDesdeSalidaPct", () => {
     }))).toMatch(/no alcanza hasta la fecha de salida/i);
   });
 
+  it("prefiere ancla persistida aunque chartPreview no alcance ipoDate", () => {
+    const anchored = row({
+      ipoDate: "2024-01-01",
+      ipoAgeMonths: 18,
+      ipoAnchorClose: 50,
+      ipoAnchorDate: "2024-01-02",
+      price: 75,
+      chartPreview: [{ date: "2026-06-04", close: 110 }],
+    });
+    expect(ipoDesdeSalidaPct(anchored)).toBe(50);
+    expect(ipoDesdeSalidaAnchorClose(anchored)).toMatchObject({ close: 50, date: "2024-01-02" });
+    expect(scanLightMetrics(anchored).ipoAnchorClose).toBe(50);
+    expect(scanLightMetrics(anchored).ipoAnchorDate).toBe("2024-01-02");
+  });
+
   it("no inventa número sin serie ni precio", () => {
     expect(ipoDesdeSalidaPct(row({ chartPreview: [], price: null }))).toBeNull();
     expect(ipoDesdeSalidaAbsenceReason(row({ chartPreview: [] }))).toMatch(/serie de precios/i);
+  });
+});
+
+describe("ipoAnchorFromBars", () => {
+  const bars = [
+    { date: "2026-01-10", close: 120 },
+    { date: "2026-01-09", close: 115 },
+    { date: "2024-03-21", close: 50 },
+    { date: "2024-03-20", close: 48 },
+  ];
+
+  it("encuentra el primer cierre usable ≥ ipoDate en serie descendente", () => {
+    expect(ipoAnchorFromBars(bars, "2024-03-21")).toEqual({
+      ipoAnchorClose: 50,
+      ipoAnchorDate: "2024-03-21",
+    });
+  });
+
+  it("salta al primer día de sesión posterior si ipoDate no está en la serie", () => {
+    expect(ipoAnchorFromBars(bars, "2024-03-22")).toEqual({
+      ipoAnchorClose: 115,
+      ipoAnchorDate: "2026-01-09",
+    });
+  });
+
+  it("devuelve null sin ipoDate o sin barra en el histórico", () => {
+    expect(ipoAnchorFromBars(bars, "")).toBeNull();
+    expect(ipoAnchorFromBars(bars, "2030-01-01")).toBeNull();
+    expect(ipoAnchorFromBars([], "2024-03-21")).toBeNull();
   });
 });
 

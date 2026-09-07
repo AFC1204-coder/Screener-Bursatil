@@ -256,10 +256,12 @@ describe("las dos proyecciones de scan_results la conservan", () => {
     ipoAgeMonths: monthsSince(RDDT_IPO_DATE),
     ipoDateSource: IPO_DATE_SOURCES.chartMeta,
     ipoDateReason: null,
+    ipoAnchorClose: 45,
+    ipoAnchorDate: "2024-03-21",
   };
 
-  it("la proyección ligera declara los cuatro campos", () => {
-    for (const field of ["ipoDate", "ipoAgeMonths", "ipoDateSource", "ipoDateReason"]) {
+  it("la proyección ligera declara los campos de fecha y ancla", () => {
+    for (const field of ["ipoDate", "ipoAgeMonths", "ipoDateSource", "ipoDateReason", "ipoAnchorClose", "ipoAnchorDate"]) {
       expect(SCAN_LIGHT_FIELDS).toContain(field);
     }
   });
@@ -269,6 +271,8 @@ describe("las dos proyecciones de scan_results la conservan", () => {
     expect(metrics.ipoDate).toBe(RDDT_IPO_DATE);
     expect(metrics.ipoAgeMonths).toBe(row.ipoAgeMonths);
     expect(metrics.ipoDateSource).toBe(IPO_DATE_SOURCES.chartMeta);
+    expect(metrics.ipoAnchorClose).toBe(45);
+    expect(metrics.ipoAnchorDate).toBe("2024-03-21");
     // ipoDateReason es null con fecha presente: un dato ausente sigue ausente.
     expect("ipoDateReason" in metrics).toBe(false);
   });
@@ -286,6 +290,8 @@ describe("las dos proyecciones de scan_results la conservan", () => {
     expect(metrics.ipoDate).toBe(RDDT_IPO_DATE);
     expect(metrics.ipoAgeMonths).toBe(row.ipoAgeMonths);
     expect(metrics.ipoDateSource).toBe(IPO_DATE_SOURCES.chartMeta);
+    expect(metrics.ipoAnchorClose).toBe(45);
+    expect(metrics.ipoAnchorDate).toBe("2024-03-21");
   });
 });
 

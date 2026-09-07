@@ -6,6 +6,24 @@ import { describe, expect, it } from "vitest";
 import { buildResearchRow, dataCoverageForRow, priceFreshnessForDate } from "@/lib/researchRow";
 import { stage2Bars, stage4Bars, shortHistoryBars } from "./fixtures.js";
 
+const RDDT_FIRST_TRADE = 1711027800;
+const RDDT_IPO_DATE = "2024-03-21";
+
+function barsForIpoAnchorTest(count = 260, { start = 100 } = {}) {
+  return Array.from({ length: count }, (_, i) => {
+    const day = new Date(Date.UTC(2026, 0, 1) - i * 86400000);
+    const close = start + (count - i) * 0.1;
+    return {
+      date: day.toISOString().slice(0, 10),
+      open: close,
+      high: close * 1.01,
+      low: close * 0.99,
+      close,
+      volume: 1_500_000,
+    };
+  });
+}
+
 const stage2Row = buildResearchRow("STAGE2", { bars: stage2Bars() }, {}, { requireLongHistory: false }, {});
 const stage4Row = buildResearchRow("STAGE4", { bars: stage4Bars() }, {}, { requireLongHistory: false }, {});
 
@@ -51,6 +69,37 @@ describe("buildResearchRow · serie stage 4", () => {
     expect(stage4Row.weaknessScore).toBe(100);
     expect(stage4Row.weaknessLabel).toBe("Deterioro severo");
     expect(stage4Row.maxDrawdown63d).toBeCloseTo(27.2797, 3);
+  });
+});
+
+describe("buildResearchRow · ancla desde salida (IPO-UX-D2)", () => {
+  it("persiste ipoAnchorClose/ipoAnchorDate con ipoDate verificada y serie completa", () => {
+    const bars = barsForIpoAnchorTest();
+    const row = buildResearchRow(
+      "RDDT",
+      { bars, meta: { firstTradeDate: RDDT_FIRST_TRADE, regularMarketPrice: 126 } },
+      {},
+      { requireLongHistory: false },
+      {},
+    );
+    expect(row.ipoDate).toBe(RDDT_IPO_DATE);
+    expect(Number.isFinite(row.ipoAnchorClose)).toBe(true);
+    expect(row.ipoAnchorClose).toBeGreaterThan(0);
+    expect(String(row.ipoAnchorDate || "")).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(String(row.ipoAnchorDate).localeCompare(RDDT_IPO_DATE)).toBeGreaterThanOrEqual(0);
+  });
+
+  it("no inventa ancla sin ipoDate verificada", () => {
+    const row = buildResearchRow(
+      "AAA",
+      { bars: barsForIpoAnchorTest(40), meta: { regularMarketPrice: 100 } },
+      {},
+      { requireLongHistory: false },
+      {},
+    );
+    expect(row.ipoDate).toBe("");
+    expect(row.ipoAnchorClose).toBeUndefined();
+    expect(row.ipoAnchorDate).toBeUndefined();
   });
 });
 
