@@ -849,7 +849,13 @@ function scanMetric(row = {}, key = "") {
   return firstFinite(row.raw?.[key], row.metrics?.[key], row[key]);
 }
 
-async function readUniverseRsSnapshot(symbol = "") {
+function scanMetricText(row = {}, key = "") {
+  const value = row.raw?.[key] ?? row.metrics?.[key] ?? row[key];
+  const text = String(value ?? "").trim();
+  return text || null;
+}
+
+async function readLatestScanResultRow(symbol = "") {
   const config = supabaseConfig();
   const cleanSymbol = String(symbol || "").trim().toUpperCase();
   if (!config.configured || !cleanSymbol) return null;
@@ -862,8 +868,12 @@ async function readUniverseRsSnapshot(symbol = "") {
       "limit=1",
     ].join("&"),
   });
-  const row = rows?.[0];
+  return rows?.[0] || null;
+}
+
+function projectUniverseRsSnapshot(row = null) {
   if (!row) return null;
+  const cleanSymbol = String(row.symbol || "").trim().toUpperCase();
   const rsGlobalPct = firstFinite(row.raw?.rsGlobalPct, row.metrics?.rsGlobalPct);
   if (!Number.isFinite(rsGlobalPct)) return null;
   return {
@@ -900,6 +910,20 @@ async function readUniverseRsSnapshot(symbol = "") {
     highsSpreadPct: firstFinite(row.raw?.highsSpreadPct, row.metrics?.highsSpreadPct),
     extSma50: firstFinite(row.raw?.extSma50, row.metrics?.extSma50),
   };
+}
+
+// Exportada para test unitario directo (IPO-UX-E2).
+export function projectScanIpoAnchorFromRow(row = null) {
+  if (!row) return null;
+  const ipoAnchorClose = scanMetric(row, "ipoAnchorClose");
+  const ipoAnchorDate = scanMetricText(row, "ipoAnchorDate");
+  if (!Number.isFinite(ipoAnchorClose) || ipoAnchorClose <= 0 || !ipoAnchorDate) return null;
+  return { ipoAnchorClose, ipoAnchorDate };
+}
+
+async function readUniverseRsSnapshot(symbol = "") {
+  const row = await readLatestScanResultRow(symbol);
+  return projectUniverseRsSnapshot(row);
 }
 
 // Exportada para test unitario directo (docs/duplicados-restantes-2026-08-07.md).
@@ -1673,8 +1697,8 @@ export async function getCompanyBrief(symbol, options = {}) {
       benchmarkSymbol,
       ...relativeStrengthFromBars(chart.bars || [], benchmarkChart.bars || []),
     };
-    const [universeSnapshot, weeklyGlobalRs, weeklyCountryRs, weeklyCountryRsSeries, weeklyThemeRs, weeklyThemeRsSeries] = await Promise.all([
-      readUniverseRsSnapshot(symbol).catch(() => null),
+    const [scanRow, weeklyGlobalRs, weeklyCountryRs, weeklyCountryRsSeries, weeklyThemeRs, weeklyThemeRsSeries] = await Promise.all([
+      readLatestScanResultRow(symbol).catch(() => null),
       readGlobalRsSeriesForSymbol(symbol).catch(() => ({ series: [], latest: null, ratingLatest: null })),
       readCountryRsForSymbols([symbol]).catch(() => ({ configured: false, bySymbol: new Map() })),
       readCountryRsSeriesForSymbol(symbol).catch(() => ({ series: [], latest: null })),
@@ -1688,6 +1712,8 @@ export async function getCompanyBrief(symbol, options = {}) {
       }).catch(() => ({ configured: false, bySymbol: new Map() })),
       readThemeRsSeriesForSymbol(symbol, { themeKey: theme.key }).catch(() => ({ series: [], latest: null })),
     ]);
+    const universeSnapshot = projectUniverseRsSnapshot(scanRow);
+    const scanIpoAnchor = projectScanIpoAnchorFromRow(scanRow);
     const countryEntry = weeklyCountryRs.bySymbol?.get(symbol.trim().toUpperCase()) || null;
     const themeEntry = weeklyThemeRs.bySymbol?.get(symbol.trim().toUpperCase()) || null;
     const relativeStrength = mergeUniverseRelativeStrength(benchmarkStrength, universeSnapshot, weeklyGlobalRs, countryEntry, weeklyCountryRsSeries, themeEntry, weeklyThemeRsSeries);
@@ -1792,6 +1818,7 @@ export async function getCompanyBrief(symbol, options = {}) {
         source: marketCapUsd.source,
       } : null,
       ipoDate: profile.ipoDate,
+      ...(scanIpoAnchor || {}),
       listingDate,
       listingDateSource,
       country,

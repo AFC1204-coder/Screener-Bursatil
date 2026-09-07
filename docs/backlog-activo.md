@@ -6,9 +6,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-07 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **IPO-UX-E** (ficha Salida · Edad · Desde salida).  
+**Último cerrado:** **IPO-UX-E2** (ancla en company-brief).  
 **Ahora:** idle.  
-**Cola:** P2 RS IPO (F) aparcado · residual opcional ancla en company-brief.  
+**Cola:** P2 RS IPO (F) aparcado · opcional proceso B/A (push + estados backlog).  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
 **Nota:** TAPE-1 · LOOK A→F + C2/C3 · CHART-RS-4 · IPO-UX-A · LOGO-1 · IPO-UX-B · sticky-0 · AUTH-BOOT-1 · IPO-UX-C ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA off · OPS-MINI-1 smoke PG OK · D2 `--write` Mini OK.  
@@ -22,7 +22,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Nota smoke IPO-UX-C (2026-09-07, :3000):** header/bottom sin IPO · sin select categoría · intro «Cotizadas con salida ≤ 24 m.» · lente OK. `/ipo-radar` intacto.  
 **Nota smoke IPO-UX-D (2026-09-07, :3000):** col **Desde salida** + sort ↓; filas «— · serie no alcanza» sin ancla.  
 **Nota IPO-UX-D2 (2026-09-07):** código + write Mini 3291 · smoke mesa % OK (ANDG +121,5%).  
-**Nota smoke IPO-UX-E (2026-09-07, :3000):** `/stock/ANDG` franja Salida 17 dic 2025 · Edad 9m · Desde salida +139,4% (chartBars; mesa +121,5% con ancla persistida — residual brief).
+**Nota smoke IPO-UX-E (2026-09-07, :3000):** franja OK; residual ancla → E2.  
+**Nota smoke IPO-UX-E2 (2026-09-07, :3000):** brief `ipoAnchor*` · `/stock/ANDG` **+121,5%** (= mesa; tras refresh brief).
 
 ## Hecho (esta oleada)
 
@@ -223,7 +224,8 @@ Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 | IPO-UX-C | Kill list (nav = **sacar** · OK dueño) | **Hecho** · `741a792` · smoke OK |
 | IPO-UX-D | % Desde salida en mesa (lente IPO) | **Hecho** · `2a657a0` · smoke · residual cobertura |
 | IPO-UX-D2 | Persistir ancla cierre≥ipoDate en nocturno | **Hecho** · `3adc86d` · hotfix `97953f4` · write Mini · smoke % |
-| IPO-UX-E | Ficha `/stock` contexto salida | **Hecho** · `d1230dc` · smoke ANDG · residual ancla brief |
+| IPO-UX-E | Ficha `/stock` contexto salida | **Hecho** · `d1230dc` · smoke ANDG · residual → E2 |
+| IPO-UX-E2 | `ipoAnchor*` en company-brief | **Hecho** · smoke ANDG +121,5% = mesa |
 | IPO-UX-F | RS IPO / peer | P2 aparcado |
 | AUTH-BOOT-1 | Arranque sin «Comprobando acceso» full-screen | **Hecho** · `9f9b660` · smoke OK |
 | sticky-0 | FilterNumber borrador/blur sin sticky-0 | **Hecho** · `0afa9f0` |
