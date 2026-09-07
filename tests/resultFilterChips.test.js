@@ -65,10 +65,6 @@ describe("ResultFilterBar view-layer CTA", () => {
       sectorStrength: "Todos",
       sectorStrengthCounts: new Map(),
       onSectorStrength: () => {},
-      ipo: "Todos",
-      ipos: ["Todos"],
-      ipoCounts: new Map(),
-      onIpo: () => {},
       chips: [],
       hiddenCount: 0,
       visibleCount: 10,
@@ -79,6 +75,7 @@ describe("ResultFilterBar view-layer CTA", () => {
     expect(html).toContain("viewLayerFilters");
     expect(html).toContain(">Filtro<");
     expect(html).not.toContain("Más filtros");
+    expect(html).not.toContain("Filtrar por IPO");
   });
 
   it("no expone select de orden en escritorio (orden vía cabeceras de columna)", () => {
@@ -108,10 +105,6 @@ describe("ResultFilterBar view-layer CTA", () => {
       sectorStrength: "Todos",
       sectorStrengthCounts: new Map(),
       onSectorStrength: () => {},
-      ipo: "Todos",
-      ipos: ["Todos"],
-      ipoCounts: new Map(),
-      onIpo: () => {},
       chips: [],
       hiddenCount: 0,
       visibleCount: 10,
@@ -121,5 +114,43 @@ describe("ResultFilterBar view-layer CTA", () => {
 
     expect(html).not.toContain("resultSortSelect");
     expect(html).not.toContain("Ordenar resultados");
+  });
+
+  it("no expone select de categoría IPO aunque viewLayers.ipo venga true (sesión vieja)", () => {
+    const html = renderToStaticMarkup(React.createElement(ResultFilterBar, {
+      optionLabel: (prefix, value) => `${prefix}: ${value}`,
+      decisionResolutionFilter: "all",
+      decisionResolutionOptions: [{ key: "all", displayLabel: "Resolución: Todas" }],
+      onDecisionResolutionFilter: () => {},
+      viewLayers: { country: false, theme: false, sector: false, industry: false, sectorStrength: false, ipo: true },
+      viewFiltersActive: 0,
+      countryFilter: "Todos",
+      countryOptions: ["Todos"],
+      countryCounts: new Map(),
+      onCountryFilter: () => {},
+      themeFilter: "Todos",
+      themeOptions: ["Todos"],
+      themeCounts: new Map(),
+      onThemeFilter: () => {},
+      onSectorFilter: () => {},
+      onIndustryFilter: () => {},
+      sectorFilter: "Todos",
+      sectorOptions: ["Todos"],
+      sectorCounts: new Map(),
+      industryFilter: "Todos",
+      industryOptions: ["Todos"],
+      industryCounts: new Map(),
+      sectorStrength: "Todos",
+      sectorStrengthCounts: new Map(),
+      onSectorStrength: () => {},
+      chips: [],
+      hiddenCount: 0,
+      visibleCount: 10,
+      totalCount: 10,
+      onClearAll: () => {},
+    }));
+
+    expect(html).not.toContain("Filtrar por IPO");
+    expect(html).not.toContain("viewLayerFilters");
   });
 });

@@ -341,8 +341,6 @@ export default function Page() {
     industryOptions,
     countryOptions,
     recentIpoRows,
-    ipos,
-    ipoCounts,
     hiddenByView,
     viewFiltersActive,
     rowsDeferredStale,

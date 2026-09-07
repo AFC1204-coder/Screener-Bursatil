@@ -13,6 +13,7 @@ import {
   NEUTRAL_FIELD_VALUES,
   REGIME_LAYER,
   SETTING_LAYER_DEPENDENCIES,
+  filterFamilyIpoIntro,
 } from "@/lib/screenerFilterCatalog";
 import {
   familyHasIntensity,
@@ -276,6 +277,7 @@ export function FilterFamilyModal({
   const layer = EXECUTION_LAYERS.find((item) => item.key === layerKey);
   if (!layer) return null;
   const family = FILTER_FAMILY_PRESETS[layerKey] || { title: layer.label, intro: layer.detail, actions: [] };
+  const familyIntro = layerKey === "ipo" ? filterFamilyIpoIntro(settings) : family.intro;
   const layerActive = filterLayers[layerKey] !== false;
   const familyFields = FILTER_FIELDS.filter((field) => fieldLayerKeys(field).includes(layerKey));
   const auxiliaryKeys = intensityAuxiliaryFieldKeys(layerKey);
@@ -306,7 +308,7 @@ export function FilterFamilyModal({
         <div>
           <span>Familia de filtro</span>
           <h2>{family.title}</h2>
-          <p>{family.intro}</p>
+          <p>{familyIntro}</p>
         </div>
         <div className="filterFamilyHeaderActions">
           <button

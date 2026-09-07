@@ -265,10 +265,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     sectorStrength,
     setSectorStrength,
     sectorStrengthCounts,
-    ipo,
-    setIpo,
-    ipos,
-    ipoCounts,
     resultFilterChips,
     hiddenByView,
     clearResultView,
@@ -966,10 +962,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             sectorStrength={sectorStrength}
             sectorStrengthCounts={sectorStrengthCounts}
             onSectorStrength={setSectorStrength}
-            ipo={ipo}
-            ipos={ipos}
-            ipoCounts={ipoCounts}
-            onIpo={setIpo}
             chips={resultFilterChips}
             hiddenCount={hiddenByView}
             visibleCount={huntResultsFiltered.length}

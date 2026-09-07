@@ -16,6 +16,7 @@ import {
   SETTING_LAYER_DEPENDENCIES,
   SCREENER_WEB_FILTER_PRESETS,
   filterLayersForPreset,
+  filterFamilyIpoIntro,
   settingsForPreset,
   setupModeLayerRequirements,
 } from "@/lib/screenerFilterCatalog";
@@ -226,6 +227,17 @@ describe("copy familia RS (MET-1b)", () => {
     expect(family.intro).toMatch(/ranking semanal global/i);
     expect(family.intro).toMatch(/auxiliar/i);
     expect(family.intro).not.toContain("Ranking contra universo, benchmark, país y grupo");
+  });
+});
+
+describe("copy familia IPO (IPO-UX-C)", () => {
+  it("intro honesta desde la regla de edad, sin jerga setup IPO", () => {
+    const family = FILTER_FAMILY_PRESETS.ipo;
+    expect(family.intro).toMatch(/Cotizadas con salida/i);
+    expect(family.intro).not.toMatch(/setup IPO/i);
+    expect(filterFamilyIpoIntro({ maxIpoAgeMonths: 24 })).toBe("Cotizadas con salida ≤ 24 m.");
+    expect(filterFamilyIpoIntro({ maxIpoAgeMonths: 36 })).toBe("Cotizadas con salida ≤ 36 m.");
+    expect(filterFamilyIpoIntro({})).toBe(family.intro);
   });
 });
 

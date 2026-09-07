@@ -4,6 +4,7 @@
 // Contiene el select de resolución, el
 // CTA «+ Filtro» (view-layers) y los ResultFilterChips.
 // Recibe SOLO los slices que consume este bloque (no el prop-bag completo).
+// IPO categoría retirada de la UI (IPO-UX-C); verifiedIpoCategory queda para CSV.
 
 import { ResultFilterChips } from "@/app/screenerPanels";
 import { SECTOR_STRENGTH_LABELS, SECTOR_STRENGTH_OPTIONS, marketName } from "@/lib/screenerConfig";
@@ -36,10 +37,6 @@ export default function ResultFilterBar({
   sectorStrength,
   sectorStrengthCounts,
   onSectorStrength,
-  ipo,
-  ipos,
-  ipoCounts,
-  onIpo,
   // ResultFilterChips
   chips,
   hiddenCount,
@@ -59,7 +56,7 @@ export default function ResultFilterBar({
         </select>
         {/* Orden en escritorio: cabeceras de columna (CompactResultsTable). Móvil: select en MobileResultList. */}
         {/* View-layers: CTA compacto; el prefijo «+» lo aporta el CSS del summary. */}
-        {(viewLayers.country || viewLayers.theme || viewLayers.sector || viewLayers.industry || viewLayers.sectorStrength || viewLayers.ipo) ? (
+        {(viewLayers.country || viewLayers.theme || viewLayers.sector || viewLayers.industry || viewLayers.sectorStrength) ? (
           <details className="disclosurePanel compactDisclosure viewLayerFilters">
             <summary aria-label="Añadir filtro de vista"><span>Filtro</span>{viewFiltersActive ? <em>{viewFiltersActive} activo{viewFiltersActive === 1 ? "" : "s"}</em> : null}</summary>
             <div className="controls resultFilterBar viewLayerFilterGrid">
@@ -77,9 +74,6 @@ export default function ResultFilterBar({
               </select> : null}
               {viewLayers.sectorStrength ? <select className="select resultFilterSelect" value={sectorStrength} onChange={(e) => onSectorStrength(e.target.value)} aria-label="Filtrar por fuerza de grupo" data-active={sectorStrength !== "Todos" ? "true" : "false"}>
                 {SECTOR_STRENGTH_OPTIONS.map((x) => <option key={x} value={x}>{optionLabel("Fuerza grupo", x, sectorStrengthCounts, (item) => SECTOR_STRENGTH_LABELS[item] || item)}</option>)}
-              </select> : null}
-              {viewLayers.ipo ? <select className="select resultFilterSelect" value={ipo} onChange={(e) => onIpo(e.target.value)} aria-label="Filtrar por IPO" data-active={ipo !== "Todos" ? "true" : "false"}>
-                {ipos.map((x) => <option key={x} value={x}>{optionLabel("IPO", x, ipoCounts)}</option>)}
               </select> : null}
             </div>
           </details>

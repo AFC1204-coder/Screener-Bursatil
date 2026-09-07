@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useDeferredValue } from "react";
 import { buildResultViewBrief } from "@/app/components/screener/resultViewBrief";
-import { applyResultViewFilters, opportunityBuckets, passesSectorStrength, verifiedIpoCategory } from "@/lib/screenerResultView";
+import { applyResultViewFilters, opportunityBuckets, passesSectorStrength } from "@/lib/screenerResultView";
 import { auditDecisionRowIssues, auditDecisionScan, decisionConfidenceSummary, decisionPriorityBreakdown } from "@/lib/decisionAudit";
 import { decisionProfileForRow } from "@/lib/decisionProfile";
 import { rowPassesListContract } from "@/lib/listRationale";
@@ -360,8 +360,6 @@ export function useResultViewModel({
     return ["Todos", ...codes];
   }, [rows]);
   const recentIpoRows = useMemo(() => rows.filter((r) => rowPassesListContract(r, "ipo")), [rows]);
-  const ipos = useMemo(() => ["Todos", ...Array.from(new Set(recentIpoRows.map(verifiedIpoCategory).filter(Boolean))).sort()], [recentIpoRows]);
-  const ipoCounts = useMemo(() => countByOption(recentIpoRows, verifiedIpoCategory), [recentIpoRows]);
   const hiddenByView = Math.max(0, rows.length - filtered.length);
   const viewFilterCounts = {
     country: countryFilter !== "Todos" ? 1 : 0,
@@ -369,7 +367,6 @@ export function useResultViewModel({
     sector: sectorFilter !== "Todos" ? 1 : 0,
     industry: industryFilter !== "Todos" ? 1 : 0,
     sectorStrength: sectorStrength !== "Todos" ? 1 : 0,
-    ipo: ipo !== "Todos" ? 1 : 0,
   };
   const resolutionFilterActive = decisionResolutionFilter !== "all" ? 1 : 0;
   const viewFiltersActive = resolutionFilterActive + VIEW_LAYERS.reduce((sum, layer) => sum + (viewLayers[layer.key] ? viewFilterCounts[layer.key] : 0), 0);
@@ -403,12 +400,6 @@ export function useResultViewModel({
       label: `Fuerza: ${SECTOR_STRENGTH_LABELS[sectorStrength] || sectorStrength}`,
       impact: sectorStrengthCounts.get(sectorStrength) || 0,
       onClear: () => setSectorStrength("Todos"),
-    } : null,
-    viewLayers.ipo && ipo !== "Todos" ? {
-      key: "ipo",
-      label: `IPO: ${ipo}`,
-      impact: ipoCounts.get(ipo) || 0,
-      onClear: () => setIpo("Todos"),
     } : null,
     decisionResolutionFilter !== "all" ? {
       key: "decisionResolution",
@@ -469,9 +460,8 @@ export function useResultViewModel({
     if (themeFilter !== "Todos" && !themeOptions.includes(themeFilter)) setThemeFilter("Todos");
     if (sectorFilter !== "Todos" && !sectorOptions.includes(sectorFilter)) setSectorFilter("Todos");
     if (industryFilter !== "Todos" && !industryOptions.includes(industryFilter)) setIndustryFilter("Todos");
-    if (ipo !== "Todos" && !ipos.includes(ipo)) setIpo("Todos");
     if (rows.length && decisionResolutionFilter !== "all" && !decisionResolutionOptions.some((item) => item.key === decisionResolutionFilter)) setDecisionResolutionFilter("all");
-  }, [countryFilter, countryOptions, themeFilter, themeOptions, sectorFilter, sectorOptions, industryFilter, industryOptions, ipo, ipos, rows.length, decisionResolutionFilter, decisionResolutionOptions]);
+  }, [countryFilter, countryOptions, themeFilter, themeOptions, sectorFilter, sectorOptions, industryFilter, industryOptions, rows.length, decisionResolutionFilter, decisionResolutionOptions]);
 
   return {
     themeFilter,
@@ -533,8 +523,6 @@ export function useResultViewModel({
     industryOptions,
     countryOptions,
     recentIpoRows,
-    ipos,
-    ipoCounts,
     hiddenByView,
     viewFiltersActive,
     resultFilterChips,

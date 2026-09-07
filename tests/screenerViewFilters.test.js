@@ -103,6 +103,15 @@ describe("screener result view filters", () => {
     }).map((row) => row.symbol)).toEqual(["EU1"]);
   });
 
+  it("ignora filtro de categoría IPO (retirado IPO-UX-C; verifiedIpoCategory queda para CSV)", () => {
+    const a = { ...strongRow, symbol: "A", ipoCategory: "Recent IPO" };
+    const b = { ...strongRow, symbol: "B", ipoCategory: "Seasoned IPO" };
+    expect(applyResultViewFilters([a, b], {
+      viewLayers: { ipo: true },
+      ipo: "Recent IPO",
+    }).map((row) => row.symbol)).toEqual(["A", "B"]);
+  });
+
   it("clasifica la fiabilidad combinando datos, score, pruebas y confianza", () => {
     const needsValidationRow = {
       ...cleanReliableRow,
