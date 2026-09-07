@@ -29,6 +29,7 @@ import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, decisionResolutionForSymbol, decisionResolutionHistory, reopenStockDecisionResolution } from "@/lib/stockDecisionResolution";
 import { vcpObjectiveSummary } from "@/lib/vcpDiagnostics";
 import { chartQualityFromBrief } from "@/lib/chartDataQuality";
+import { buildStockIpoSalidaContext } from "@/lib/stockIpoSalida";
 import StockAddToListButton from "./StockAddToListButton";
 import StockSymbolSearch from "./StockSymbolSearch";
 
@@ -275,7 +276,43 @@ export function N0VerdictBlock({
 
 /* Bloque N3 (Auditoría). Tres sub-bloques colapsados por defecto:
    desglose del score, bloque empresa, detalle de calidad de datos. */
-function N3AuditBlock({ scoreBreakdown = [], company = null, dataQualityDetail = [], methodology = null }) {
+export function StockIpoSalidaStrip({ context = null }) {
+  if (!context?.visible) return null;
+  const desdeTone = Number.isFinite(context.desdeSalidaPct)
+    ? (context.desdeSalidaPct >= 0 ? "up" : "down")
+    : "";
+  return (
+    <div className="stockIpoSalidaStrip" aria-label="Contexto de salida">
+      <span className="stockIpoSalidaItem">
+        <span className="stockIpoSalidaLabel">Salida</span>
+        <span className="stockIpoSalidaValue" title={context.salidaTitle || undefined}>
+          {context.salidaDisplay}
+        </span>
+      </span>
+      <span className="stockIpoSalidaItem">
+        <span className="stockIpoSalidaLabel">Edad</span>
+        <span className="stockIpoSalidaValue" data-state={context.ageDisplay ? "value" : "ghost"}>
+          {context.ageDisplay || "—"}
+        </span>
+      </span>
+      <span className="stockIpoSalidaItem">
+        <span className="stockIpoSalidaLabel">Desde salida</span>
+        {Number.isFinite(context.desdeSalidaPct) ? (
+          <span className={`stockIpoSalidaValue stockIpoSalidaPct ${desdeTone}`.trim()}>
+            {context.desdeSalidaDisplay}
+          </span>
+        ) : (
+          <span className="stockIpoSalidaValue stockIpoSalidaMissing" data-state="ghost">
+            —
+            {context.desdeSalidaReason ? <InfoHint text={context.desdeSalidaReason} /> : null}
+          </span>
+        )}
+      </span>
+    </div>
+  );
+}
+
+function N3AuditBlock({ scoreBreakdown = [], company = null, ipoSalida = null, dataQualityDetail = [], methodology = null }) {
   return (
     <div className="stockAudit" aria-label="Auditoría">
       <details>
@@ -321,7 +358,21 @@ function N3AuditBlock({ scoreBreakdown = [], company = null, dataQualityDetail =
                 <KVRow label="Subsector" value={company.industry || "—"} state={company.industry ? "value" : "ghost"} />
                 <KVRow label="Tema" value={company.subsector || "—"} state={company.subsector ? "value" : "ghost"} />
                 <KVRow label="Empleados" value={fmt(company.employees)} state={Number.isFinite(company.employees) ? "value" : "ghost"} />
-                <KVRow label="IPO" value={company.ipoDate ? dateShort(company.ipoDate) : "—"} state={company.ipoDate ? "value" : "ghost"} detail={company.listingDateSource} />
+                <KVRow
+                  label="Salida"
+                  value={ipoSalida?.salidaDisplay || (company.ipoDate ? dateShort(company.ipoDate) : "—")}
+                  state={ipoSalida?.salidaDisplay && ipoSalida.salidaDisplay !== "—" ? "value" : (company.ipoDate ? "value" : "ghost")}
+                  detail={company.listingDateSource}
+                />
+                {ipoSalida?.visible ? <>
+                  <KVRow label="Edad" value={ipoSalida.ageDisplay || "—"} state={ipoSalida.ageDisplay ? "value" : "ghost"} />
+                  <KVRow
+                    label="Desde salida"
+                    value={Number.isFinite(ipoSalida.desdeSalidaPct) ? ipoSalida.desdeSalidaDisplay : "—"}
+                    state={Number.isFinite(ipoSalida.desdeSalidaPct) ? "value" : "ghost"}
+                    detail={ipoSalida.desdeSalidaReason || undefined}
+                  />
+                </> : null}
               </div>
               <p className="stockCompanyDescription">{company.description || "Sin descripción de negocio."}</p>
             </>
@@ -634,8 +685,10 @@ function StockUserClassification({
   onReopenDecision,
 }) {
   const classificationLabel = resolution ? `Clasificación: ${resolution.label}` : "Tu clasificación";
+  const ipoSalida = buildStockIpoSalidaContext(stockData || {});
   return <section className="stockUserClassification" aria-label="Clasificación manual del inversor">
     <StockReviewFlowRail navigation={reviewNavigation} onOpenSymbol={onOpenReviewSymbol} />
+    <StockIpoSalidaStrip context={ipoSalida} />
     <div className="stockClassificationBar" aria-label="Clasificar el valor">
       <div className="stockClassificationPrimary">
         <span className="stockClassificationLabel">{classificationLabel}</span>
@@ -1602,6 +1655,10 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     : [];
 
   // N3 bloque empresa
+  const ipoSalidaContext = useMemo(
+    () => (data ? buildStockIpoSalidaContext(data) : { visible: false }),
+    [data],
+  );
   const n3Company = data ? {
     sector: data.sector,
     industry: data.industry,
@@ -1794,6 +1851,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       <N3AuditBlock
         scoreBreakdown={n3ScoreBreakdown}
         company={n3Company}
+        ipoSalida={ipoSalidaContext}
         dataQualityDetail={n3DataQualityDetail}
         methodology={
           setupPattern ? (

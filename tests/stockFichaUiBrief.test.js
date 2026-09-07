@@ -64,6 +64,34 @@ describe("stock ficha UI brief", () => {
     expect(html).not.toContain("stockDecisionResolveRail");
   });
 
+  it("renderiza contexto de salida cuando el brief trae ipoDate", () => {
+    const html = renderToStaticMarkup(React.createElement(StockClient, {
+      initialSymbol: "IPO1",
+      initialData: {
+        ...baseData,
+        symbol: "IPO1",
+        ipoDate: "2026-06-02",
+        chartBars: [
+          { date: "2026-06-02", close: 100 },
+          { date: "2026-06-04", close: 110 },
+        ],
+        quoteSnapshot: { price: 110, dayChangePct: 1.2 },
+      },
+    }));
+    expect(html).toContain("stockIpoSalidaStrip");
+    expect(html).toContain(">Salida<");
+    expect(html).toContain(">Edad<");
+    expect(html).toContain(">Desde salida<");
+  });
+
+  it("no renderiza contexto de salida sin ipoDate", () => {
+    const html = renderToStaticMarkup(React.createElement(StockClient, {
+      initialSymbol: "SOPH",
+      initialData: baseData,
+    }));
+    expect(html).not.toContain("stockIpoSalidaStrip");
+  });
+
   it("portada usa visual.logoUrl en .stockLogoPro, no solo iniciales", () => {
     const html = renderToStaticMarkup(React.createElement(StockClient, {
       initialSymbol: "AAPL",

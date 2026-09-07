@@ -5565,6 +5565,53 @@ h2 {
   white-space:nowrap;
 }
 
+.stockPage .stockIpoSalidaStrip {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px 14px;
+  min-width:0;
+  margin-bottom:8px;
+  color:var(--soft);
+  font-size:var(--text-xs);
+}
+
+.stockPage .stockIpoSalidaItem {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+}
+
+.stockPage .stockIpoSalidaLabel {
+  color:var(--stock-muted);
+  font-weight:760;
+  white-space:nowrap;
+}
+
+.stockPage .stockIpoSalidaValue {
+  font-weight:760;
+  white-space:nowrap;
+}
+
+.stockPage .stockIpoSalidaValue[data-state="ghost"] {
+  color:var(--stock-muted);
+}
+
+.stockPage .stockIpoSalidaPct.up {
+  color:var(--up);
+}
+
+.stockPage .stockIpoSalidaPct.down {
+  color:var(--down);
+}
+
+.stockPage .stockIpoSalidaMissing {
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+
 .stockPage .stockDecisionActionMenu {
   position:relative;
   min-width:0;

@@ -1,6 +1,6 @@
 # IPO-UX-D2 — Persistir ancla «desde salida» en scan/nocturno
 
-**Estado:** Cerrado `3adc86d` · código · smoke mesa % tras ops `--write`/nocturno  
+**Estado:** Cerrado `3adc86d` · código · ops `--write` Mini OK (3291) · smoke mesa % OK 2026-09-07  
 **Prioridad:** P1 (habilita cobertura real de IPO-UX-D)  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer  
