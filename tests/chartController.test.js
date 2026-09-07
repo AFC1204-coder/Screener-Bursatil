@@ -491,6 +491,15 @@ describe("resolveRenderConfig · preview línea → velas OHLC", () => {
     { time: 2, date: "2024-01-02", open: 100, high: 104, low: 99, close: 101, volume: 1 },
   ];
 
+  it("mantiene línea interina mientras requestState=loading", () => {
+    const out = resolveRenderConfig(config, "1", {
+      requestState: "loading",
+      availability: "ready",
+      rows: closeOnlyRows,
+    });
+    expect(out.style).toBe("8");
+  });
+
   it("mantiene línea interina mientras el remoto no trae OHLC real", () => {
     const out = resolveRenderConfig(config, "1", {
       requestState: "settled",

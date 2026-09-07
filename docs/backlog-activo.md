@@ -5,9 +5,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-07 · rama `codex/statsedge-ui-polish`
 
-**RECORDATORIO dueño:** mesa logos tras próximo nocturno · **QA páginas** (IPO / ficha / arranque).  
-**Último cerrado:** **HYDRATION-1** `fc65664` · proceso **PROC-A/B** (estados + push).  
-**Ahora:** idle · esperando errores de QA dueño.  
+**RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
+**Último cerrado:** **CHART-QR-1b** (Review línea→velas + timeout honesto).  
+**Ahora:** idle.  
 **Cola:** P2 RS IPO (F) aparcado.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
 
@@ -273,7 +273,8 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | CHART-NAV | Pan/zoom libre; zona de interés marcada, no secuestrada | **Hecho** · smoke AAPL · `fixLeftEdge:false` + manual lógico |
 | CHART-UI-1 | Densidad toolbar ChartPreferences compact (agrupar TF/rango) | **Hecho** · `cd8e8d3` · smoke AAPL · 2 clusters |
 | CHART-RS-2 | Overlay RS país (tercer tono; post MET-2) | **Hecho** |
-| CHART-QR-1 | Vista rápida: preview línea → velas tras `/api/chart` | **Hecho** · smoke IFP.TO canvas 2s + «Ampliando histórico…» |
+| CHART-QR-1 | Vista rápida: preview línea → velas tras `/api/chart` | **Hecho** · smoke IFP.TO · residual → 1b |
+| CHART-QR-1b | Review/cola: línea stuck + Ampliando… | **Hecho** · smoke AVAH + IFP.TO velas |
 | CHART-QR-2 | RS país/tema OFF por defecto en modal/review | **Hecho** · smoke CTRN OFF sin bandas |
 | CHART-QR-3 | Panel «El valor» vacío en vista rápida | **Hecho** · smoke 2269.HK hit-test `<b>` |
 

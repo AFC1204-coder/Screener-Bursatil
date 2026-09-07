@@ -37,6 +37,8 @@ import {
   normalizeChartInterval,
   normalizeRows,
   shouldRequestRemoteBars,
+  needsRemoteBars,
+  needsOhlcUpgrade,
   weekKey,
 } from "@/lib/chartDataModel";
 
@@ -920,5 +922,67 @@ describe("chartDataModel · homogeneidad de cadencia", () => {
     const rows = normalizeRows(mixedSeries({ monthly: 24, daily: 100 }));
     const eligible = homogeneousDailyRows(rows).rows;
     expect(shouldRequestRemoteBars(eligible, "1A", "D")).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHART-QR-1b: preview close-only + preferredStyle vela → upgrade OHLC
+
+describe("chartDataModel · preview close-only → OHLC upgrade (CHART-QR-1b)", () => {
+  function closeOnlyBars(count) {
+    return Array.from({ length: count }, (_, i) => ({
+      date: `2024-01-${String(i + 1).padStart(2, "0")}`,
+      close: 100 + i,
+      volume: 1000,
+    }));
+  }
+
+  it("needsOhlcUpgrade pide remoto aunque el local cubra el rango", () => {
+    const local = closeOnlyBars(96);
+    expect(shouldRequestRemoteBars(local, "3M", "D")).toBe(false);
+    expect(needsOhlcUpgrade(local, "1")).toBe(true);
+    expect(needsRemoteBars(local, "3M", "D", "1")).toBe(true);
+  });
+
+  it("loading → settled con OHLC remoto: rows candle-grade y sin notice expanding", () => {
+    const local = closeOnlyBars(48);
+    const loading = chartDataModel.resolve({
+      symbol: "VWS.CO",
+      localSource: { bars: local, quality: { status: "real", source: "preview" } },
+      config: { dataRange: "6M", interval: "D", style: "8" },
+      preferredStyle: "1",
+      request: { state: "loading" },
+    });
+    expect(loading.requestState).toBe("loading");
+    expect(loading.availability).toBe("ready");
+    expect(loading.notice?.code).toBe("history-expanding");
+
+    const settled = chartDataModel.resolve({
+      symbol: "VWS.CO",
+      localSource: { bars: local, quality: { status: "real", source: "preview" } },
+      config: { dataRange: "6M", interval: "D", style: "8" },
+      preferredStyle: "1",
+      request: { state: "settled", payload: { bars: ohlcBars(200) } },
+    });
+    expect(settled.requestState).toBe("settled");
+    expect(settled.availability).toBe("ready");
+    expect(settled.rows.length).toBeGreaterThan(1);
+    expect(settled.notice).toBeNull();
+  });
+
+  it("loading → error: history-expansion-failed, no expanding eterno", () => {
+    const local = closeOnlyBars(48);
+    const errored = chartDataModel.resolve({
+      symbol: "VWS.CO",
+      localSource: { bars: local, quality: { status: "real", source: "preview" } },
+      config: { dataRange: "6M", interval: "D", style: "8" },
+      preferredStyle: "1",
+      request: { state: "error", error: { message: "La solicitud de histórico superó el tiempo de espera" } },
+    });
+    expect(errored.requestState).toBe("error");
+    expect(errored.availability).toBe("ready");
+    expect(errored.notice?.code).toBe("history-expansion-failed");
+    expect(errored.notice?.code).not.toBe("history-expanding");
+    expect(errored.notice?.text).toContain("tiempo de espera");
   });
 });

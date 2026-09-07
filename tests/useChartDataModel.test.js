@@ -21,9 +21,8 @@
 //      vigente (supresión de respuestas viejas, §3.7.1) — el hook compara
 //      `generationRef.current` con la del request antes de publicar; aquí
 //      caracterizamos el contrato de los helpers de bookkeeping.
-//   6. dispatchResolve nunca publica AbortError como error ni notice (§3.7.3):
-//      el AbortError se filtra aguas arriba del plan, pero el plan `error`
-//      exige `{ message }` presentable.
+//   6. chartRequestFailureMessage traduce AbortError vigente a timeout legible;
+//      el filtro de peticiones obsoletas es la comparación de `generation`.
 
 import { describe, expect, it } from "vitest";
 import { __test__ } from "@/app/useChartDataModel";
@@ -33,6 +32,7 @@ const {
   buildLocalSourceKey,
   shouldFetch,
   dispatchResolve,
+  chartRequestFailureMessage,
   loadingRequest,
   settledRequest,
   erroredRequest,
@@ -54,6 +54,14 @@ function ohlcBars(count, { start = BASE_TIME, step = TRADING_DAY, base = 100, dr
     const date = new Date((start + i * step) * 1000).toISOString().slice(0, 10);
     return { date, time: start + i * step, open, high, low, close, volume: 1_000_000 };
   });
+}
+
+function closeOnlyPreview(count) {
+  return Array.from({ length: count }, (_, i) => ({
+    date: `2024-01-${String(i + 1).padStart(2, "0")}`,
+    close: 100 + i,
+    volume: 1000,
+  }));
 }
 
 const REAL_DATA_QUALITY = { status: "real", source: "Yahoo Finance" };
@@ -453,7 +461,30 @@ describe("useChartDataModel · dispatchResolve · concurrencia y stale generatio
     expect(outB.requestState).toBe("loading");
   });
 
-  it("§3.7.3: AbortError nunca llega a `plan.error` (el filtro vive en el hook antes de dispatchResolve)", () => {
+  it("§3.7.3: timeout AbortError se traduce a mensaje presentable (CHART-QR-1b)", () => {
+    const message = chartRequestFailureMessage(Object.assign(new Error("The operation was aborted"), { name: "AbortError" }));
+    expect(message).toBe("La solicitud de histórico superó el tiempo de espera");
+
+    const plan = {
+      generation: 3,
+      needsRemote: true,
+      requestState: "error",
+      error: { message },
+    };
+    const out = dispatchResolve({
+      symbol: "VWS.CO",
+      localSource: { bars: closeOnlyPreview(48) },
+      config: { dataRange: "6M", interval: "D", style: "8" },
+      plan,
+      preferredStyle: "1",
+    });
+    expect(out.requestState).toBe("error");
+    expect(out.notice?.code).toBe("history-expansion-failed");
+    expect(out.notice?.text).toContain("tiempo de espera");
+    expect(out.notice?.code).not.toBe("history-expanding");
+  });
+
+  it("§3.7.3: plan error con mensaje neutralizado sigue publicando history-expansion-failed", () => {
     // Aquí verificamos el contrato del plan: `error` es siempre un objeto
     // `{ message }` presentable, nunca un `AbortError` con `name='AbortError'`.
     // El filtro concreto está en el `.catch` del hook; este test fija el

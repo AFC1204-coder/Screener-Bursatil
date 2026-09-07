@@ -23,7 +23,9 @@
 //     momento de la resolución. El AbortController por sí solo no basta: las
 //     respuestas en vuelo pueden resolverse tras el cambio de key y deben
 //     descartarse.
-//   - `AbortError` no se publica como error ni como notice.
+//   - `AbortError` de peticiones obsoletas (cambio de key) no se publica: el
+//     filtro es la comparación de `generation`. Un AbortError con generación
+//     vigente es el timeout cliente (CHART_FETCH_TIMEOUT_MS).
 //
 // Paso 9 del ADR: `localQuality` (ChartQuality canónico) es la ÚNICA forma
 // de expresar la calidad local. La prop legacy `chartEstimated` ya no es
@@ -33,13 +35,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { chartDataModel, shouldRequestRemoteBars } from "@/lib/chartDataModel";
-import { barsAreCandleGrade } from "@/lib/chartDataQuality";
+import { chartDataModel, needsRemoteBars } from "@/lib/chartDataModel";
 import { getJson } from "@/lib/clientApi";
 
-const LINE_STYLES = new Set(["8", "3"]);
-
-// Presupuesto cliente: evita «Cargando histórico…» infinito si la red cuelga.
 const CHART_FETCH_TIMEOUT_MS = 15000;
 
 // Clave estable del request: identifica la combinación (symbol, dataRange,
@@ -69,6 +67,13 @@ function buildLocalSourceKey(localSource = null) {
     Number(last?.close) || "",
     qualityStatus,
   ].join("|");
+}
+
+function chartRequestFailureMessage(error) {
+  if (error?.name === "AbortError") {
+    return "La solicitud de histórico superó el tiempo de espera";
+  }
+  return error?.message || "Proveedor de gráfico no disponible";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -109,7 +114,7 @@ function erroredRequest(generation, error) {
 // Devuelve SIEMPRE el shape canónico de ADR §3.4. La rama `needsRemote=false`
 // usa `requestState=idle` y `payload=null`, que es lo que el resolver puro
 // espera para evaluar sólo la fuente local (Paso 5 de §3.6).
-function dispatchResolve({ symbol, localSource, config, plan }) {
+function dispatchResolve({ symbol, localSource, config, plan, preferredStyle = null }) {
   let request;
   if (!plan.needsRemote) {
     request = null;
@@ -130,26 +135,16 @@ function dispatchResolve({ symbol, localSource, config, plan }) {
     localSource: localSource || { bars: [], quality: null },
     config,
     request,
+    preferredStyle,
   });
 }
 
-// Decide si la combinación actual exige un fetch al endpoint remoto. NO es
-// parte de la API pública: el resolver puro ya encapsula esta regla
-// (`shouldRequestRemoteBars`). Aquí se duplica sólo para construir el plan
-// antes de tener un `request` que alimentar al resolver.
+// Decide si la combinación actual exige un fetch al endpoint remoto. Usa la
+// misma regla canónica que `chartDataModel.resolve` (`needsRemoteBars`).
 function shouldFetch({ symbol, localSource, dataRange, interval, preferredStyle = null }) {
   if (!symbol) return false;
   const bars = Array.isArray(localSource?.bars) ? localSource.bars : [];
-  const pendingStyle = String(preferredStyle || "");
-  if (
-    pendingStyle
-    && !LINE_STYLES.has(pendingStyle)
-    && bars.length >= 2
-    && !barsAreCandleGrade(bars)
-  ) {
-    return true;
-  }
-  return shouldRequestRemoteBars(bars, dataRange, interval);
+  return needsRemoteBars(bars, dataRange, interval, preferredStyle);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -208,6 +203,7 @@ export function useChartDataModel(input = {}) {
     localSource: normalizedLocalSource,
     config: { dataRange, interval, style },
     plan: { generation: 0, needsRemote: false, requestState: "idle" },
+    preferredStyle,
   }));
 
   // Estado interno del fetch: pieza clave para la concurrencia del §3.7.
@@ -261,6 +257,7 @@ export function useChartDataModel(input = {}) {
         localSource: normalizedLocalSource,
         config: { dataRange, interval, style },
         plan: { generation: generationRef.current, needsRemote: false, requestState: "idle" },
+        preferredStyle,
       }));
       return undefined;
     }
@@ -276,6 +273,7 @@ export function useChartDataModel(input = {}) {
       localSource: normalizedLocalSource,
       config: { dataRange, interval, style },
       plan: { generation, needsRemote: true, requestState: "loading" },
+      preferredStyle,
     }));
 
     const params = new URLSearchParams({ symbol, range: dataRange, interval });
@@ -294,19 +292,20 @@ export function useChartDataModel(input = {}) {
           localSource: normalizedLocalSource,
           config: { dataRange, interval, style },
           plan: { generation, needsRemote: true, requestState: "settled", payload },
+          preferredStyle,
         }));
       })
       .catch((error) => {
-        // §3.7.3: AbortError → no se publica como error ni notice.
-        if (error && error.name === "AbortError") return;
+        // Peticiones obsoletas: el cleanup sube `generation` antes de abortar.
         if (!mountedRef.current) return;
         if (generationRef.current !== generation) return;
-        const message = error?.message || "Proveedor de gráfico no disponible";
+        const message = chartRequestFailureMessage(error);
         setDataModel(dispatchResolve({
           symbol,
           localSource: normalizedLocalSource,
           config: { dataRange, interval, style },
           plan: { generation, needsRemote: true, requestState: "error", error: { message } },
+          preferredStyle,
         }));
       });
 
@@ -349,6 +348,7 @@ export const __test__ = {
   buildLocalSourceKey,
   dispatchResolve,
   shouldFetch,
+  chartRequestFailureMessage,
   idleRequest,
   loadingRequest,
   settledRequest,
