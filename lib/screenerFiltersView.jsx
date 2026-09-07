@@ -4,7 +4,7 @@
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { rowPassesListContract } from "@/lib/listRationale";
 import { canonicalRsValue } from "@/lib/rsCanonical";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CORE_LAYER_KEYS, OPTIONAL_LAYER_KEYS } from "@/lib/screenerConfig";
 import {
   EXECUTION_LAYERS,
@@ -410,26 +410,65 @@ export function FilterFamilyModal({
   </dialog>;
 }
 
+export function commitFilterNumberDraft(raw, { neutral, scale = 1 }) {
+  const trimmed = String(raw ?? "").trim();
+  if (trimmed === "") {
+    return Number.isFinite(neutral) ? neutral : null;
+  }
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) {
+    return Number.isFinite(neutral) ? neutral : null;
+  }
+  return Number(parsed.toFixed(4)) * scale;
+}
+
 export function FilterNumber({ field, value, onChange, active = true, inactiveReason = "", onToggle }) {
   const scale = field.scale || 1;
   const step = field.step || 1;
-  const currentValue = Number.isFinite(value) ? value / scale : 0;
-  const shown = Number.isFinite(value) ? value / scale : "";
   const neutral = NEUTRAL_FIELD_VALUES[field.key];
+  const scaledValue = Number.isFinite(value) ? value / scale : null;
+  const committedDisplay = scaledValue == null ? "" : String(scaledValue);
+  const [draft, setDraft] = useState(null);
+  const displayValue = draft ?? committedDisplay;
+  const currentValue = Number.isFinite(scaledValue) ? scaledValue : 0;
   const minValue = Number.isFinite(field.min)
     ? field.min
     : (field.key.startsWith("min") && Number.isFinite(neutral) && neutral < 0 ? neutral / scale : 0);
 
+  useEffect(() => {
+    setDraft(null);
+  }, [value, field.key]);
+
+  const commitScaled = (scaled) => {
+    setDraft(null);
+    onChange(field.key, Number(scaled.toFixed(4)) * scale);
+  };
+
+  const commitDraft = (raw) => {
+    setDraft(null);
+    const next = commitFilterNumberDraft(raw, { neutral, scale });
+    if (next == null) return;
+    onChange(field.key, next);
+  };
+
+  const resolveStepperBase = () => {
+    if (draft != null && draft !== "") {
+      const parsed = Number(draft);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+    return currentValue;
+  };
+
   const handleDecrement = (e) => {
     e.preventDefault();
-    const newValue = Math.max(minValue, currentValue - step);
-    onChange(field.key, Number(newValue.toFixed(4)) * scale);
+    const newValue = Math.max(minValue, resolveStepperBase() - step);
+    commitScaled(newValue);
   };
 
   const handleIncrement = (e) => {
     e.preventDefault();
-    const newValue = currentValue + step;
-    onChange(field.key, Number(newValue.toFixed(4)) * scale);
+    const newValue = resolveStepperBase() + step;
+    commitScaled(newValue);
   };
 
   return <div className={`filterField ${active ? "isActive" : "isOff"}`}>
@@ -443,7 +482,16 @@ export function FilterNumber({ field, value, onChange, active = true, inactiveRe
     </label>
     <div className="filterInputWrap">
       <button type="button" className="filterStepperBtn decrement" onClick={handleDecrement} title="Disminuir" aria-label="Disminuir">-</button>
-      <input className="input" type="number" inputMode={Number.isInteger(step) ? "numeric" : "decimal"} step={step} value={shown} aria-label={field.label} onChange={(e) => onChange(field.key, (Number(e.target.value) || 0) * scale)} />
+      <input
+        className="input"
+        type="number"
+        inputMode={Number.isInteger(step) ? "numeric" : "decimal"}
+        step={step}
+        value={displayValue}
+        aria-label={field.label}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={(e) => commitDraft(e.target.value)}
+      />
       {field.unit && <b className="filterUnit">{field.unit}</b>}
       <button type="button" className="filterStepperBtn increment" onClick={handleIncrement} title="Incrementar" aria-label="Incrementar">+</button>
     </div>
