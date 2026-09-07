@@ -225,7 +225,7 @@ Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 | IPO-UX-D | % Desde salida en mesa (lente IPO) | **Hecho** · `2a657a0` · smoke · residual cobertura |
 | IPO-UX-D2 | Persistir ancla cierre≥ipoDate en nocturno | **Hecho** · `3adc86d` · hotfix `97953f4` · write Mini · smoke % |
 | IPO-UX-E | Ficha `/stock` contexto salida | **Hecho** · `d1230dc` · smoke ANDG · residual → E2 |
-| IPO-UX-E2 | `ipoAnchor*` en company-brief | **Hecho** · smoke ANDG +121,5% = mesa |
+| IPO-UX-E2 | `ipoAnchor*` en company-brief | **Hecho** · `3ea2110` · smoke ANDG +121,5% = mesa |
 | IPO-UX-F | RS IPO / peer | P2 aparcado |
 | AUTH-BOOT-1 | Arranque sin «Comprobando acceso» full-screen | **Hecho** · `9f9b660` · smoke OK |
 | sticky-0 | FilterNumber borrador/blur sin sticky-0 | **Hecho** · `0afa9f0` |
