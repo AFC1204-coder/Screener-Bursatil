@@ -21,11 +21,11 @@ import StageStrip, {
 // El caso normal real (medido 2026-08-17 sobre daily_bars con
 // lib/weeklyStage.js): los cinco ETF en etapa 2 confirmada.
 const ALL_STAGE2 = [
-  { symbol: "SPY", weight: 30, stageState: "stage2", stageConfirmation: "confirmed", stage30w: "Etapa 2 confirmada", distanceSma30w: 8.96, stageWeeks: 13 },
-  { symbol: "QQQ", weight: 30, stageState: "stage2", stageConfirmation: "confirmed", stage30w: "Etapa 2 confirmada", distanceSma30w: 10.32, stageWeeks: 15 },
-  { symbol: "IWM", weight: 20, stageState: "stage2", stageConfirmation: "confirmed", stage30w: "Etapa 2 confirmada", distanceSma30w: 10.64, stageWeeks: 20 },
-  { symbol: "DIA", weight: 10, stageState: "stage2", stageConfirmation: "confirmed", stage30w: "Etapa 2 confirmada", distanceSma30w: 7.75, stageWeeks: 12 },
-  { symbol: "ACWI", weight: 10, stageState: "stage2", stageConfirmation: "confirmed", stage30w: "Etapa 2 confirmada", distanceSma30w: 8.27, stageWeeks: 19 },
+  { symbol: "SPY", weight: 30, stageState: "stage2", stageConfirmation: "confirmed", stage30w: "Etapa 2 confirmada", weeklyStageState: "stage2", weeklyStageConfirmation: "confirmed", weeklyStageStructure: "E2_ma_only", distanceSma30w: 8.96, stageWeeks: 13 },
+  { symbol: "QQQ", weight: 30, stageState: "stage2", stageConfirmation: "confirmed", stage30w: "Etapa 2 confirmada", weeklyStageState: "stage2", weeklyStageConfirmation: "confirmed", weeklyStageStructure: "E2_ma_only", distanceSma30w: 10.32, stageWeeks: 15 },
+  { symbol: "IWM", weight: 20, stageState: "stage2", stageConfirmation: "confirmed", stage30w: "Etapa 2 confirmada", weeklyStageState: "stage2", weeklyStageConfirmation: "confirmed", weeklyStageStructure: "E2_ma_only", distanceSma30w: 10.64, stageWeeks: 20 },
+  { symbol: "DIA", weight: 10, stageState: "stage2", stageConfirmation: "confirmed", stage30w: "Etapa 2 confirmada", weeklyStageState: "stage2", weeklyStageConfirmation: "confirmed", weeklyStageStructure: "E2_ma_only", distanceSma30w: 7.75, stageWeeks: 12 },
+  { symbol: "ACWI", weight: 10, stageState: "stage2", stageConfirmation: "confirmed", stage30w: "Etapa 2 confirmada", weeklyStageState: "stage2", weeklyStageConfirmation: "confirmed", weeklyStageStructure: "E2_ma_only", distanceSma30w: 8.27, stageWeeks: 19 },
 ];
 
 const SPREAD = [
@@ -74,6 +74,29 @@ describe("market-health/StageStrip — render real", () => {
     expect(html).toContain('data-tone="senal"');
     // La distancia a la MM30s acompaña al ticker.
     expect(zones.stage2).toContain("+9,0%");
+    // El calificador estructural viaja junto al ticker (paridad con la mesa).
+    expect(zones.stage2).toContain("Pre-fuga");
+  });
+
+  it("calificador Con fuga: se pinta en el chip cuando weeklyStageStructure lo trae", () => {
+    const withBreakout = [
+      {
+        symbol: "SPY",
+        weight: 100,
+        stageState: "stage2",
+        stageConfirmation: "confirmed",
+        weeklyStageState: "stage2",
+        weeklyStageConfirmation: "confirmed",
+        weeklyStageStructure: "E2_structural",
+        stage30w: "Etapa 2 confirmada",
+        distanceSma30w: 6.2,
+      },
+    ];
+    const html = renderToStaticMarkup(
+      React.createElement(StageStrip, { indexes: withBreakout, tone: "senal" }),
+    );
+    expect(html).toContain("Con fuga");
+    expect(html).toContain(">SPY<");
   });
 
   it("índices repartidos: cada chip cae en la franja de su stageState y la tentativa se declara", () => {

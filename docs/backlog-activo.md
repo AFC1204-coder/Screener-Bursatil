@@ -3,12 +3,13 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-07 · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-08 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **AUDIT-CRITERIO-1** (informe libros→etapas+Mercado).  
-**Ahora:** **MH-FILL-1** (paridad etapa estructural en Mercado) — `docs/tickets/activo.md`.  
-**Cola:** STAGE-2 (motivo calificador) · STAGE-3 · MH-FILL-3 · MET-7 · resto informe · P2 IPO-F aparcado.  
+**Último cerrado:** **MH-FILL-1** (paridad Pre-fuga/Con fuga en Mercado).  
+**Ahora:** **STAGE-2** (motivo ausencia calificador) — `docs/tickets/activo.md`.  
+**Cola:** STAGE-3 · MH-FILL-3 · MET-7 · resto informe · P2 IPO-F aparcado.  
+**Residual MH:** `upsert` caché market-health no deja el payload nuevo (GET sin refresh sigue Aug-17); Actualizar UI no usa `?refresh=1`.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
 
 ### Estados de cola (PROC-A)
@@ -303,6 +304,8 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-4e | Backfill weeksAbove* + smoke 4c/4d | **Hecho** · write 1208 · smoke OK |
 | MET-6 | RS en stress / bajadas (sin beta baja disfrazada) | Idea; sin ticket |
 | STAGE-1 | Subestado semanal paralelo (E2_ma_only / E2_structural) en screener | **Cerrado** verify 2026-09-01 · mesa tras nocturno |
+| MH-FILL-1 | Mercado: misma estructura Pre-fuga/Con fuga que la mesa | **Hecho** · smoke StageStrip · residual caché stale |
+| STAGE-2 | Motivo cuando calificador `n/a` (detail ya existe) | **en polish** · `docs/tickets/activo.md` |
 | VCP-0 | Auditoría E1/E2 semanal | **Cerrado** fae1880 · ADR aceptado |
 | VCP | Detector / etiquetado research | **Bridge cerrado** 2026-09-02 · flag UNIFIED |
 

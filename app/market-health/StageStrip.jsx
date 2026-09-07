@@ -17,7 +17,7 @@
 // divergencia entre los índices y los valores que los acompañan se ve en la
 // misma columna, que es lo que un número suelto no puede decir.
 import { num, pct, pctShare } from "@/lib/formatters";
-import { stageConfirmationMark, stageWordForState } from "@/lib/stageDisplay";
+import { stageConfirmationMark, stageDisplayForRow, stageWordForState } from "@/lib/stageDisplay";
 
 /* Las cuatro franjas del ciclo, en el orden del ciclo. El nombre corto es el
    de la metodología (lib/weeklyStage.js): base, avance, techo, declive. */
@@ -100,13 +100,21 @@ export function universeByStage(stages) {
 }
 
 function chipTitle(index) {
-  const parts = [index.stage30w || ""];
+  const display = stageDisplayForRow(index);
+  const parts = [];
+  if (display?.word) {
+    parts.push(display.qualifier ? `${display.word} · ${display.qualifier}` : display.word);
+    if (display.confirmation?.suffix) parts.push(display.confirmation.suffix);
+  } else if (index.stage30w) {
+    parts.push(index.stage30w);
+  }
   if (Number.isFinite(index.distanceSma30w)) {
     parts.push(`Precio a ${pct(index.distanceSma30w)} de su media de 30 semanas.`);
   }
   if (Number.isFinite(index.stageWeeks)) {
     parts.push(`${num(index.stageWeeks)} semanas en la etapa.`);
   }
+  if (display?.title) parts.push(display.title);
   return parts.filter(Boolean).join(" · ");
 }
 
@@ -146,9 +154,11 @@ export default function StageStrip({ indexes = [], stages = null, tone = "humo" 
               <span className="stageStripChips">
                 {zoneItems.map((index) => {
                   const mark = stageConfirmationMark(index.stageConfirmation);
+                  const display = stageDisplayForRow(index);
                   return (
                     <span className="stageStripChip" key={index.symbol} title={chipTitle(index)}>
                       <b>{index.symbol}</b>
+                      {display?.qualifier ? <small className="stageStripChipQualifier">{display.qualifier}</small> : null}
                       {Number.isFinite(index.distanceSma30w) && <em>{pct(index.distanceSma30w)}</em>}
                       {mark?.suffix ? <i title={mark.title}>{mark.suffix}</i> : null}
                     </span>

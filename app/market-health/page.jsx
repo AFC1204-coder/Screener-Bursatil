@@ -17,6 +17,7 @@ import { canonicalRsValue } from "@/lib/rsCanonical";
 import { MissingValue } from "@/lib/screenerColumns";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { snapshotDisplayUpdate } from "@/lib/snapshotDisplay";
+import { stageDisplayForRow } from "@/lib/stageDisplay";
 import { metricValue, rowRsBenchmark, rowTheme, weaknessScore } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
 
@@ -26,6 +27,18 @@ const sentimentClass = (label = "") => label === "alcista" ? "bullish" : label =
 const sentimentDirection = (label = "") => label === "alcista" ? "up" : label === "bajista" ? "down" : "flat";
 const sentimentGlyph = (label = "") => label === "alcista" ? "▴" : label === "bajista" ? "▾" : "·";
 const listText = (items = []) => items.length ? items.join(", ") : "-";
+
+function marketStageCell(index = {}) {
+  const display = stageDisplayForRow(index);
+  if (!display) return index.stage30w || "—";
+  const confirmation = display.confirmation;
+  const text = display.qualifier ? `${display.word} · ${display.qualifier}` : display.word;
+  const title = display.title || confirmation?.title || undefined;
+  if (confirmation?.suffix) {
+    return <span title={title}>{text} <small>{confirmation.suffix}</small></span>;
+  }
+  return <span title={title}>{text}</span>;
+}
 
 
 function MarketTrustMetric({ row, metricKey, label, value }) {
@@ -924,10 +937,9 @@ export default function MarketHealthPage() {
                         <tbody>{data.indexes?.map((x) => (
                           <tr key={x.symbol}>
                             <td><b>{x.name}</b><small>{x.symbol}</small></td>
-                            {/* Una sola etapa: la canónica de lib/weeklyStage.js. La
-                                columna diaria («Etapa 2 / alcista») era otra
-                                implementación del mismo concepto en la misma tabla. */}
-                            <td data-col="stage">{x.stage30w || "—"}</td>
+                            {/* Etapa canónica + calificador estructural (mismo
+                                diccionario que la mesa: lib/stageDisplay.js). */}
+                            <td data-col="stage">{marketStageCell(x)}</td>
                             <td data-col="data">{num(x.score)}</td>
                             <td data-col="data">{num(x.weinsteinScore)}</td>
                             <td data-col="data">{pct(x.perf1m)}</td>

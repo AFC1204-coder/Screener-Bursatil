@@ -1,11 +1,12 @@
 # MH-FILL-1 — Paridad de etapa estructural en Mercado
 
-**Estado:** Activo  
+**Estado:** Hecho  
 **Prioridad:** P1  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer  
 **Origen:** `docs/analisis-criterio-libros-etapas-mercado-2026-09-08.md` · AUDIT-CRITERIO-1  
-**Tipo:** market-health · dato ya existe · sin decisión de producto nueva
+**Tipo:** market-health · dato ya existe · sin decisión de producto nueva  
+**Cierre:** smoke StageStrip Pre-fuga/Con fuga (refresh live); residual: caché `app_settings` no persiste tras `refresh=1` (sigue sirviendo Aug-17 stale) · botón Actualizar no pide `?refresh=1`
 
 ## Problema
 

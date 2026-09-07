@@ -1,6 +1,7 @@
 import { fetchYahooChart } from "@/lib/marketData";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
 import { weeklyStageForBars } from "@/lib/weeklyStage";
+import { weeklyStageStructureFields, weeklyStageStructureForBars } from "@/lib/weeklyStageStructure";
 
 const MARKET_HEALTH_CACHE_TYPE = "market_health_cache";
 const MARKET_HEALTH_CACHE_KEY = "default";
@@ -184,12 +185,15 @@ async function writeMarketHealthCache(payload = {}) {
 }
 
 // La etapa de índices y sectores la decide lib/weeklyStage.js, el MISMO
-// clasificador que la tabla y la ficha. Esta ruta tenía su propia versión
-// («Etapa 2 probable» con umbrales fijos y sin banda muerta) y la constelación
-// deducía la zona buscando dígitos en ese texto, con lo que «Bajo MM30s» caía
-// en la zona de techo por el 3 de «MM30s» (auditoría 2026-08-16, C-19).
-function weeklyStage(bars = []) {
+// clasificador que la tabla y la ficha. El subestado estructural (Pre-fuga /
+// Con fuga) sale del mismo módulo que la mesa (lib/weeklyStageStructure.js).
+// Esta ruta tenía su propia versión («Etapa 2 probable» con umbrales fijos y
+// sin banda muerta) y la constelación deducía la zona buscando dígitos en ese
+// texto, con lo que «Bajo MM30s» caía en la zona de techo por el 3 de «MM30s»
+// (auditoría 2026-08-16, C-19).
+export function weeklyStageSnapshot(bars = []) {
   const stage = weeklyStageForBars(bars);
+  const structure = weeklyStageStructureForBars(bars, { weeklyStageState: stage.state });
   return {
     weeklyBars: stage.weeklyBars,
     sma30w: stage.slowMa,
@@ -200,6 +204,10 @@ function weeklyStage(bars = []) {
     stageConfirmation: stage.confirmation,
     stageWeeks: stage.weekInStage,
     stage30w: stage.label,
+    weeklyStageState: stage.state,
+    weeklyStageConfirmation: stage.confirmation,
+    weeklyStageLabel: stage.label,
+    ...weeklyStageStructureFields(structure),
   };
 }
 
@@ -235,14 +243,6 @@ function scoreWeinsteinTape(x = {}) {
     else if (x.volumePressure20 <= 2) s += 5;
   }
   return clamp(s);
-}
-
-function stageLabel(x) {
-  if (x.price > x.sma50 && x.price > x.sma200 && x.sma50 > x.sma200 && x.sma200Slope > 0) return "Etapa 2 / alcista";
-  if (x.price > x.sma200 && x.sma200Slope <= 0) return "Base / transición";
-  if (x.price < x.sma50 && x.price > x.sma200) return "Presión / corrección";
-  if (x.price < x.sma200 && x.sma200Slope < 0) return "Etapa 4 / bajista";
-  return "Neutral";
 }
 
 // El score de un índice es una proyección de su ETAPA a la escala 0-100 del
@@ -326,7 +326,7 @@ async function analyzeIndex(meta) {
     perf6m: perf(bars, 126),
     distance52w: distHigh(bars, 252),
     advanceFrom52wLow: distLow(bars, 252),
-    ...weeklyStage(bars),
+    ...weeklyStageSnapshot(bars),
     ...volumeTape(bars),
   };
   item.score = stageScore(item.stageState, item.stageConfirmation);
@@ -367,10 +367,9 @@ async function analyzeSector(meta, benchmarkBars = []) {
     rs3m: Number.isFinite(p3m) && Number.isFinite(b3m) ? p3m - b3m : null,
     distance52w: distHigh(bars, 252),
     advanceFrom52wLow: distLow(bars, 252),
-    ...weeklyStage(bars),
+    ...weeklyStageSnapshot(bars),
     ...volumeTape(bars),
   };
-  item.stage = stageLabel(item);
   item.score = scoreSector(item);
   item.weinsteinScore = scoreWeinsteinTape(item);
   item.state = sectorState(item.score);

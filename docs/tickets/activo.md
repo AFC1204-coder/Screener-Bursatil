@@ -1,28 +1,29 @@
-# Ticket activo — MH-FILL-1
+# Ticket activo — STAGE-2
 
 **Estado:** activo programación  
 **Rama:** `codex/statsedge-ui-polish`  
-**Ticket:** `docs/tickets/MH-FILL-1-etapa-estructural-mercado.md`  
+**Ticket:** `docs/tickets/STAGE-2-motivo-calificador.md`  
 **Modelo:** Composer  
-**Tipo:** market-health paridad etapa · sin commit/push  
-**Informe:** `docs/analisis-criterio-libros-etapas-mercado-2026-09-08.md`
+**Tipo:** stageDisplay honestidad · sin commit/push  
+**Informe:** `docs/analisis-criterio-libros-etapas-mercado-2026-09-08.md` A-2
 
 ## Prompt para Agent chat (copiar tal cual)
 
 ```
 @docs/tickets/activo.md
-@docs/tickets/MH-FILL-1-etapa-estructural-mercado.md
+@docs/tickets/STAGE-2-motivo-calificador.md
 @docs/analisis-criterio-libros-etapas-mercado-2026-09-08.md
 
 Rama: codex/statsedge-ui-polish
 Modelo: Composer
 
 Alcance (solo esto):
-1. Paridad de criterio: índices/sectores en /market-health usan weeklyStageStructureForBars (+ display Pre-fuga/Con fuga) como la mesa.
-2. Borrar stageLabel muerto del payload de /api/market-health.
-3. Tests + ./vfc tocados.
+1. Cuando weeklyStageStructure es n/a, pintar el motivo ya calculado (weeklyStageStructureDetail / ausencia descriptiva) vía lib/stageDisplay.js — no silencio «Etapa 2» a secas.
+2. Herencia a mesa/ficha/vista rápida por el mismo helper.
+3. Tests stageDisplay + ./vfc tocados.
 
-Sin MH-FILL-3/5, STAGE-2, scoring, régimen regional.
+Sin tocar reglas de weeklyStage.js / weeklyStageStructure.js.
+Sin MH-FILL-3/5, STAGE-3 (/review Trend Template), scoring, régimen regional.
 Sin commit ni push.
 
 Al terminar, resume con la plantilla de retorno (Resumen / Archivos / Tests / LO QUE NO VERIFIQUÉ).
@@ -30,5 +31,5 @@ Al terminar, resume con la plantilla de retorno (Resumen / Archivos / Tests / LO
 
 ## Criterios de aceptación (orquestador)
 
-1. Smoke `/market-health`: calificador coherente.  
-2. Tests OK.
+1. Mesa: filas stage2 sin calificador muestran motivo (dudoso / histórico corto / no aplica).  
+2. Tests OK · smoke orquestador.
