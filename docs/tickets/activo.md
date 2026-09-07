@@ -1,9 +1,9 @@
-# Ticket activo — idle (B + sticky aterrizados; AUTH aparcado)
+# Ticket activo — idle (AUTH-BOOT-1 cerrado)
 
 **Estado:** idle orquestador  
 **Rama:** `codex/statsedge-ui-polish`  
-**Último cerrado:** IPO-UX-B `062e7b2` (+fix `cbbfb84`) · sticky-0 `0afa9f0` · smoke B OK  
-**Siguiente:** AUTH-BOOT-1 ([PR #14](https://github.com/AFC1204-coder/Screener-Bursatil/pull/14)) tras **OK dueño** · **IPO-UX-C nav = decisión dueño**
+**Último cerrado:** AUTH-BOOT-1 `9f9b660` · smoke OK  
+**Siguiente:** **IPO-UX-C nav = decisión dueño** · luego P1 D/E
 
 Sin ticket de programación activo.
 
@@ -11,8 +11,8 @@ Sin ticket de programación activo.
 
 | Ticket | Hash polish | Notas |
 |---|---|---|
-| IPO-UX-B | `062e7b2` | label «IPO recientes» + sort `ipoDate`; conflict resuelto |
-| sticky-0 | `0afa9f0` | cherry-pick limpio |
-| hotfix B | `cbbfb84` | duplicate `presetKey` tumba parse |
+| IPO-UX-B | `062e7b2` | + hotfix `cbbfb84` |
+| sticky-0 | `0afa9f0` | |
+| AUTH-BOOT-1 | `9f9b660` | optimista + barra ≥350 ms |
 
-PRs draft #15 / #16 → cerrar como aterrizados en polish (no FF de rama Cloud).
+PRs draft #14 / #15 / #16 → cerrar como aterrizados (no FF).

@@ -1,9 +1,9 @@
 # AUTH-BOOT-1 — Arranque sin quedarse en «Comprobando acceso»
 
-**Estado:** Cola Cloud (nocturno)  
+**Estado:** Cerrado `9f9b660` · smoke OK 2026-09-07  
 **Prioridad:** P1 fricción diaria  
-**Rama base:** `codex/statsedge-ui-polish` · trabajar en rama propia  
-**Modelo:** Grok 4.6  
+**Rama base:** `codex/statsedge-ui-polish` · aterrizado cherry-pick  
+**Modelo:** Grok 4.6 / Cloud  
 **Origen:** dueño 2026-09-07 — la banda/pantalla de comprobación de acceso tarda demasiado al cargar  
 **Tipo:** boot / AuthGate — **no scoring**
 

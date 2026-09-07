@@ -6,19 +6,20 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-07 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** **IPO-UX-C nav** (sí/no matar link IPO) · mesa logos tras próximo nocturno (filas viejas)  
-**Último cerrado:** **IPO-UX-B** + **sticky-0** (smoke B OK).  
-**Ahora:** idle — AUTH-BOOT-1 aparcado ([PR #14](https://github.com/AFC1204-coder/Screener-Bursatil/pull/14) draft).  
+**Último cerrado:** **AUTH-BOOT-1** `9f9b660` (smoke OK).  
+**Ahora:** idle — falta decisión nav IPO-UX-C.  
 **Pendiente ops:** —  
-**Cola:** AUTH-BOOT-1 (OK dueño) · IPO-UX-C (nav) · P1 D/E · P2 RS IPO.  
+**Cola:** IPO-UX-C (nav) · P1 D/E · P2 RS IPO.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK.  
-**Nota:** TAPE-1 · LOOK A→F + C2/C3 · CHART-RS-4 · IPO-UX-A · LOGO-1 · IPO-UX-B · sticky-0 ✅.  
+**Nota:** TAPE-1 · LOOK A→F + C2/C3 · CHART-RS-4 · IPO-UX-A · LOGO-1 · IPO-UX-B · sticky-0 · AUTH-BOOT-1 ✅.  
 **Hecho ops:** Supabase Pro cancelado · GHA off · OPS-MINI-1 smoke PG OK.  
 **Residuales UX-READ:** READ-G · READ-H cerrados.  
 **Aparcado:** —  
 **SHELL:** A→D cerebro OK; piel LOOK = cerrada.  
 **Nota smoke LOGO-1:** `/stock/AAPL` `.stockLogoPro img` → favicon apple.com. Filas ligeras sin website siguen iniciales hasta nocturno.  
 **Nota smoke IPO-UX-A (2026-09-07, :3000):** chips 6/12/24/36 · verdad sync · sin `watch:` · disclosure lente OK.  
-**Nota smoke IPO-UX-B (2026-09-07, :3000):** col **Salida↓** en Auditoría · sort desc (17→3 dic) · empty sin CTA Radar/vigiladas · label «IPO recientes». Hotfix parse `cbbfb84`.
+**Nota smoke IPO-UX-B (2026-09-07, :3000):** col **Salida↓** en Auditoría · sort desc (17→3 dic) · empty sin CTA Radar/vigiladas · label «IPO recientes». Hotfix parse `cbbfb84`.  
+**Nota smoke AUTH-BOOT-1 (2026-09-07, :3000):** con hint sesión → shell sin formulario token; verify rápida (<350 ms, sin barra). Tests authBoot 11 OK.
 
 ## Hecho (esta oleada)
 
@@ -217,7 +218,7 @@ Ver informe · `docs/analisis-ux-btn-acabados-2026-08-29.md`.
 | LOGO-1 | Logos empresa mesa + portada ficha | **Hecho** · `44459a1` |
 | IPO-UX-B | Columna Salida + orden + empty state | **Hecho** · `062e7b2` · fix `cbbfb84` · smoke OK |
 | IPO-UX-C | Kill list (nav = decisión dueño) | Cola · **espera OK** |
-| AUTH-BOOT-1 | Arranque sin «Comprobando acceso» full-screen | [PR #14](https://github.com/AFC1204-coder/Screener-Bursatil/pull/14) draft · **OK dueño** |
+| AUTH-BOOT-1 | Arranque sin «Comprobando acceso» full-screen | **Hecho** · `9f9b660` · smoke OK |
 | sticky-0 | FilterNumber borrador/blur sin sticky-0 | **Hecho** · `0afa9f0` |
 
 Orden: A (código) → **LOGO-1** → B → C. RS peer/IPO = P2.
