@@ -55,6 +55,7 @@ export function CompactResultsTable({
   onSortColumn,
   setupMode = "",
   scannedMarkets = [],
+  presetKey = "",
   hasBatchPercentiles = false,
 }) {
   const ctx = {
@@ -65,6 +66,7 @@ export function CompactResultsTable({
     sort,
     setupMode,
     scannedMarkets,
+    presetKey,
     hasBatchPercentiles,
   };
   const columns = screenerVisibleColumns(ctx);

@@ -22,6 +22,7 @@
 import Link from "next/link";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { cap, pct } from "@/lib/formatters";
+import { IPO_DISCOVERY_PRESET_KEY, ipoSalidaCellLabel } from "@/lib/ipoDiscoveryView";
 import { objectiveMetricAuditStatusForRow } from "@/lib/objectiveMetricTruth";
 import { canonicalRs } from "@/lib/rsCanonical";
 import { countryRs } from "@/lib/countryRs";
@@ -375,6 +376,25 @@ const WEAKNESS_SCORE_COLUMN = {
   },
 };
 
+const IPO_SALIDA_COLUMN = {
+  key: "ipoSalida",
+  label: () => "Salida",
+  legend: "Fecha de salida a bolsa (primera cotización verificada). Las vigiladas pre-IPO muestran la fecha estimada.",
+  align: "right",
+  className: "colIpoSalida",
+  sortKey: () => "ipoDate",
+  cell: (row) => {
+    const label = ipoSalidaCellLabel(row);
+    if (typeof label === "string") {
+      return <b className="cellNumber">{label}</b>;
+    }
+    if (label.text) {
+      return <span className="ipoSalidaCell" title={label.title}>{label.text}</span>;
+    }
+    return <MissingValue reason={label.title || "Sin fecha de salida verificable para este valor."} />;
+  },
+};
+
 export function screenerShowsWeaknessColumn(ctx = {}) {
   if (ctx.setupMode === "weakness") return true;
   if (ctx.sort === "weaknessScore") return true;
@@ -385,6 +405,23 @@ export function screenerShowsCountryRsColumn(ctx = {}) {
   return !screenerTableMarketsUsOnly(ctx.scannedMarkets);
 }
 
+export function screenerShowsIpoSalidaColumn(ctx = {}) {
+  if (ctx.presetKey === IPO_DISCOVERY_PRESET_KEY) return true;
+  if (ctx.setupMode === "ipoRecent") return true;
+  if (ctx.sort === "ipoDate") return true;
+  return false;
+}
+
+function insertLensColumn(columns, lensColumn) {
+  const stageIndex = columns.findIndex((column) => column.key === "stage");
+  if (stageIndex < 0) return [...columns, lensColumn];
+  return [
+    ...columns.slice(0, stageIndex + 1),
+    lensColumn,
+    ...columns.slice(stageIndex + 1),
+  ];
+}
+
 function screenerBaseVisibleColumns(ctx = {}) {
   return SCREENER_COLUMNS.filter((column) => {
     if (column.key === "rsCountry") return screenerShowsCountryRsColumn(ctx);
@@ -393,15 +430,14 @@ function screenerBaseVisibleColumns(ctx = {}) {
 }
 
 export function screenerVisibleColumns(ctx = {}) {
-  const columns = screenerBaseVisibleColumns(ctx);
-  if (!screenerShowsWeaknessColumn(ctx)) return columns;
-  const stageIndex = columns.findIndex((column) => column.key === "stage");
-  if (stageIndex < 0) return [...columns, WEAKNESS_SCORE_COLUMN];
-  return [
-    ...columns.slice(0, stageIndex + 1),
-    WEAKNESS_SCORE_COLUMN,
-    ...columns.slice(stageIndex + 1),
-  ];
+  let columns = screenerBaseVisibleColumns(ctx);
+  if (screenerShowsWeaknessColumn(ctx)) {
+    columns = insertLensColumn(columns, WEAKNESS_SCORE_COLUMN);
+  }
+  if (screenerShowsIpoSalidaColumn(ctx)) {
+    columns = insertLensColumn(columns, IPO_SALIDA_COLUMN);
+  }
+  return columns;
 }
 
 export function screenerColumnLabel(column, ctx = {}) {

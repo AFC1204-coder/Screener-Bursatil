@@ -9,6 +9,7 @@ export function IpoDiscoveryEmptyLabel({ analyzedCount = 0, coverage = {} }) {
       coverage={coverage}
       filterLayers={{ ipo: true }}
       settings={{ requireRecentIpo: true }}
+      showIpoRadarCta={false}
     />
   );
 }

@@ -45,6 +45,7 @@ export default function ResultPagerTable({
   onSortColumn,
   setupMode = "",
   scannedMarkets = [],
+  presetKey = "",
   hasBatchPercentiles = false,
   emptyLabel,
 }) {
@@ -113,6 +114,7 @@ export default function ResultPagerTable({
             onSortColumn={onSortColumn}
             setupMode={setupMode}
             scannedMarkets={scannedMarkets}
+            presetKey={presetKey}
             hasBatchPercentiles={hasBatchPercentiles}
             emptyLabel={emptyLabel}
           />

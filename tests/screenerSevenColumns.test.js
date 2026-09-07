@@ -12,11 +12,13 @@ import {
   RS_THEME_COLUMN,
   SCREENER_COLUMNS,
   screenerShowsCountryRsColumn,
+  screenerShowsIpoSalidaColumn,
   screenerShowsWeaknessColumn,
   screenerSortOptions,
   screenerVisibleColumns,
   stageWord,
 } from "@/lib/screenerColumns";
+import { IPO_DISCOVERY_PRESET_KEY } from "@/lib/ipoDiscoveryView";
 import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
 
 const fullRow = {
@@ -174,6 +176,33 @@ describe("tabla de resultados: parrilla READ-A", () => {
     const html = renderTable();
     expect(html).toContain('class="cellNumber up">+18,4%</b>');
     expect(html).not.toContain("…");
+  });
+});
+
+describe("columna Salida (Radar IPO)", () => {
+  it("muestra Salida solo en ficha ipoDiscovery", () => {
+    expect(screenerShowsIpoSalidaColumn({ presetKey: IPO_DISCOVERY_PRESET_KEY })).toBe(true);
+    expect(screenerShowsIpoSalidaColumn({ presetKey: "balanced" })).toBe(false);
+    expect(screenerShowsIpoSalidaColumn({ sort: "ipoDate" })).toBe(true);
+  });
+
+  it("inserta Salida tras Etapa y expone orden ipoDate", () => {
+    const keys = screenerVisibleColumns({ presetKey: IPO_DISCOVERY_PRESET_KEY, scannedMarkets: ["US"] }).map((c) => c.key);
+    expect(keys).toContain("ipoSalida");
+    expect(keys.indexOf("ipoSalida")).toBe(keys.indexOf("stage") + 1);
+    expect(screenerSortOptions({ presetKey: IPO_DISCOVERY_PRESET_KEY, scannedMarkets: ["US"] }).map((item) => item.value))
+      .toContain("ipoDate");
+  });
+
+  it("pinta fecha de salida verificada en la celda", () => {
+    const html = renderTable({
+      presetKey: IPO_DISCOVERY_PRESET_KEY,
+      scannedMarkets: ["US"],
+      sort: "ipoDate",
+      rows: [{ ...fullRow, ipoDate: "2024-03-21" }],
+    });
+    expect(html).toContain(">Salida<");
+    expect(html).toMatch(/21 mar 2024|mar 2024/);
   });
 });
 

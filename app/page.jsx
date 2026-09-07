@@ -1230,6 +1230,7 @@ export default function Page() {
               coverage={familyCoverage.ipo}
               filterLayers={filterLayers}
               settings={activeSettings}
+              showIpoRadarCta={presetKey !== "ipoDiscovery"}
             />
             : shouldUseFamilyEmptyLabel("relativeStrength", {
               rows,

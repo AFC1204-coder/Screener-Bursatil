@@ -61,6 +61,7 @@ describe("screener pipeline sorting", () => {
 
     expect(defaultSortForSettings({ setupMode: "leader" })).toBe(DEFAULT_PERFORMANCE_PERIOD);
     expect(defaultSortForSettings({ setupMode: "weakness" })).toBe("weaknessScore");
+    expect(defaultSortForSettings({ setupMode: "ipoRecent" })).toBe("ipoDate");
     expect(sortRowsForMode([
       { ...riskyHigherScore, perf3m: 8 },
       { ...cleanCandidate, perf3m: 26 },

@@ -7,6 +7,7 @@ export function FilterFamilyEmptyLabel({
   coverage = {},
   filterLayers = {},
   settings = {},
+  showIpoRadarCta = true,
 }) {
   const message = filterFamilyEmptyMessage(familyKey, {
     analyzedCount,
@@ -18,7 +19,7 @@ export function FilterFamilyEmptyLabel({
   return (
     <span className="emptyResultsCopy">
       {message}{" "}
-      {familyKey === "ipo" ? (
+      {familyKey === "ipo" && showIpoRadarCta ? (
         <Link href="/ipo-radar" className="btn btnSmall emptyResultsCta">
           Abrir IPO Radar
         </Link>

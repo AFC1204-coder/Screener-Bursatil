@@ -44,7 +44,7 @@ export function MobileTopMovers({ rows = [], onSelect }) {
 // (lib/screenerColumns.jsx): la primera —ticker con miniatura— hace de cabecera
 // de la tarjeta y las otras seis se pintan como pares etiqueta/valor. Dejarla
 // con quince datos mientras escritorio tiene siete sería peor que no tocar nada.
-export function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenStock, perfPeriod, sort = "", setupMode = "", scannedMarkets = [] }) {
+export function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenStock, perfPeriod, sort = "", setupMode = "", scannedMarkets = [], presetKey = "" }) {
   const ctx = {
     perfPeriod,
     favoriteSymbols: isFavorite ? new Set([row.symbol]) : new Set(),
@@ -53,6 +53,7 @@ export function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenS
     sort,
     setupMode,
     scannedMarkets,
+    presetKey,
   };
   const [identityColumn, ...dataColumns] = screenerVisibleColumns(ctx);
   return <article className="mobileResultRow" onClick={(event) => { if (!event.target.closest("button, a")) onReview?.(row.symbol); }}>
@@ -74,13 +75,13 @@ export function MobileResultRow({ row, onReview, onFavorite, isFavorite, onOpenS
 // (principio 1): eran los mismos rails de auditoría interna que en escritorio.
 // Sus resúmenes se siguen calculando en useResultViewModel; simplemente ya no
 // se pintan aquí. El detalle por valor vive en la ficha.
-export function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, perfPeriod, onPerfPeriod, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onRefresh, onReset, sessionPlumbing = null, laboratoryPanel = null, moreMenuRef = null, refreshing = false, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados con este filtro.", scannedMarkets = [] }) {
+export function MobileResultList({ rows = [], settings, totalRows = rows.length, sort, onSort, perfPeriod, onPerfPeriod, onReview, onFavorite, favoriteSymbols, onSave, onCsv, onAuditJson, onRefresh, onReset, sessionPlumbing = null, laboratoryPanel = null, moreMenuRef = null, refreshing = false, onOpenStock, savingDisabled = false, page = 1, pageSize = DEFAULT_RESULT_PAGE_SIZE, totalPages = 1, onPage, onPageSize, decisionResolutionFilter = "all", decisionResolutionOptions = [{ key: "all", displayLabel: "Resolución: Todas" }], onDecisionResolutionFilter, decisionResolutions = {}, emptyLabel = "Sin resultados con este filtro.", scannedMarkets = [], presetKey = "" }) {
   const start = totalRows ? ((page - 1) * pageSize) + 1 : 0;
   const end = totalRows ? Math.min(page * pageSize, totalRows) : 0;
   const hasRows = totalRows > 0;
   const mobileFiltersActive = decisionResolutionFilter !== "all" ? 1 : 0;
   const setupMode = settings?.setupMode || "";
-  const sortCtx = { perfPeriod, sort, setupMode, scannedMarkets };
+  const sortCtx = { perfPeriod, sort, setupMode, scannedMarkets, presetKey };
   // El orden móvil solo ofrece las columnas que la tabla muestra. Si la sesión
   // guardada traía un criterio antiguo (score compuesto, deterioro...), se
   // mantiene visible como opción para no cambiar el orden a espaldas del
@@ -140,7 +141,7 @@ export function MobileResultList({ rows = [], settings, totalRows = rows.length,
       <button type="button" onClick={() => onPage?.(page + 1)} disabled={page >= totalPages} aria-label="Página siguiente">›</button>
     </div> : null}
     <div className="mobileRows">
-      {rows.length ? rows.map((row) => <MobileResultRow key={ipoWatchRowKey(row)} row={row} perfPeriod={perfPeriod} sort={sort} setupMode={setupMode} scannedMarkets={scannedMarkets} onReview={onReview} onFavorite={onFavorite} onOpenStock={onOpenStock} isFavorite={favoriteSymbols?.has(row.symbol)} />) : <div className="mobileEmpty">{emptyLabel}</div>}
+      {rows.length ? rows.map((row) => <MobileResultRow key={ipoWatchRowKey(row)} row={row} perfPeriod={perfPeriod} sort={sort} setupMode={setupMode} scannedMarkets={scannedMarkets} presetKey={presetKey} onReview={onReview} onFavorite={onFavorite} onOpenStock={onOpenStock} isFavorite={favoriteSymbols?.has(row.symbol)} />) : <div className="mobileEmpty">{emptyLabel}</div>}
     </div>
   </section>;
 }
