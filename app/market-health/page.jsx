@@ -7,7 +7,7 @@ import UniverseBreadthCard from "./UniverseBreadth";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
-import { getJson } from "@/lib/clientApi";
+import { fetchJsonWithTimeout, logMarketHealthFetchFailure } from "@/lib/marketHealthFetch";
 import { dateShort, dateTime, num, pct, pctShare } from "@/lib/formatters";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
@@ -143,21 +143,6 @@ function buildScanPulse(scans = []) {
     countries: summarizeGroups(rows, (row) => row.country),
     themes: summarizeGroups(rows, (row) => rowTheme(row) || row.sector),
   };
-}
-
-async function fetchJsonWithTimeout(path, timeoutMs = 12000) {
-  try {
-    return await getJson(path, { timeoutMs, cache: "no-store" });
-  } catch (error) {
-    // La RUTA interna se queda en consola. El mensaje que viaja hacia la UI no
-    // la lleva: al usuario no le sirve saber qué endpoints existen, y a quien
-    // depura le basta la consola.
-    if (error?.name === "AbortError") {
-      console.error(`[salud de mercado] ${path} no respondió en ${Math.round(timeoutMs / 1000)}s`);
-      throw new Error(`El servidor de datos tardó demasiado en responder (más de ${Math.round(timeoutMs / 1000)} s).`);
-    }
-    throw error;
-  }
 }
 
 const COVERAGE_UNAVAILABLE = "El estado de cobertura por mercado no está disponible ahora mismo.";
@@ -563,12 +548,12 @@ export default function MarketHealthPage() {
       ]);
       // La amplitud del universo tiene su propio estado: si falla, su tarjeta
       // declara la ausencia sin tumbar el resto de la pantalla.
-      if (breadthResult.status === "rejected") console.error("[salud de mercado] amplitud del universo no disponible:", breadthResult.reason);
+      if (breadthResult.status === "rejected") logMarketHealthFetchFailure("amplitud del universo no disponible", breadthResult.reason);
       setBreadth(breadthResult.status === "fulfilled"
         ? breadthResult.value
         : { error: userFacingServiceError(breadthResult.reason?.message, "La amplitud del universo no está disponible ahora mismo.") });
-      if (newsResult.status === "rejected") console.error("[salud de mercado] titulares no disponibles:", newsResult.reason);
-      if (socialResult.status === "rejected") console.error("[salud de mercado] pulso social no disponible:", socialResult.reason);
+      if (newsResult.status === "rejected") logMarketHealthFetchFailure("titulares no disponibles", newsResult.reason);
+      if (socialResult.status === "rejected") logMarketHealthFetchFailure("pulso social no disponible", socialResult.reason);
       setNews(newsResult.status === "fulfilled" ? newsResult.value : { error: userFacingServiceError(newsResult.reason?.message, "Los titulares de mercado no están disponibles ahora mismo."), rows: [] });
       setSocial(socialResult.status === "fulfilled" ? socialResult.value : { error: userFacingServiceError(socialResult.reason?.message, "El pulso social no está disponible ahora mismo."), rows: [] });
       if (marketResult.status === "rejected") throw marketResult.reason;
@@ -576,7 +561,7 @@ export default function MarketHealthPage() {
     } catch (e) {
       // El original a consola; a pantalla, lenguaje de producto. Este banner
       // llegó a enseñar el error crudo del proveedor con su nombre dentro.
-      console.error("[salud de mercado] no se pudo cargar:", e);
+      logMarketHealthFetchFailure("no se pudo cargar", e);
       setError(userFacingServiceError(e?.message, "No se ha podido cargar la salud de mercado ahora mismo. Inténtalo de nuevo en unos minutos."));
     } finally {
       setLoading(false);
@@ -588,7 +573,7 @@ export default function MarketHealthPage() {
     try {
       setMethodologyHealth(await fetchJsonWithTimeout(METHODOLOGY_HEALTH_PATH, 20000));
     } catch (e) {
-      console.error("[salud de mercado] validación metodológica no disponible:", e);
+      logMarketHealthFetchFailure("validación metodológica no disponible", e);
       setMethodologyHealth({ error: userFacingServiceError(e?.message, "La validación metodológica no está disponible ahora mismo.") });
     } finally {
       setMethodologyLoading(false);
@@ -604,14 +589,14 @@ export default function MarketHealthPage() {
       fetchJsonWithTimeout(FULL_COVERAGE_PATH, 45000)
         .then((full) => setCoverage((previous) => ({ ...previous, ...full, scope: "full" })))
         .catch((e) => {
-          console.error("[salud de mercado] cobertura ampliada no disponible:", e);
+          logMarketHealthFetchFailure("cobertura ampliada no disponible", e);
           const message = userFacingServiceError(e?.message, COVERAGE_UNAVAILABLE);
           setCoverage((previous) => previous && !previous.error
             ? { ...previous, secondaryError: message, scope: previous.scope || "core" }
             : { error: message });
         });
     } catch (e) {
-      console.error("[salud de mercado] cobertura no disponible:", e);
+      logMarketHealthFetchFailure("cobertura no disponible", e);
       setCoverage({ error: userFacingServiceError(e?.message, COVERAGE_UNAVAILABLE) });
       setCoverageLoading(false);
     }
