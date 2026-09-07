@@ -1,9 +1,8 @@
-# Ticket activo — idle (IPO-UX-E2 cerrado)
+# Ticket activo — idle (IPO-UX-E2b cerrado) → siguiente HYDRATION-1
 
-**Estado:** idle orquestador  
+**Estado:** idle breve · activar hydration a continuación  
 **Rama:** `codex/statsedge-ui-polish`  
-**Último cerrado:** IPO-UX-E2 (ancla en company-brief)  
-**Siguiente:** cola P2 RS IPO (F) aparcado · proceso B/A (push + backlog estados) si dueño quiere  
-**Nota smoke:** `/stock/ANDG` Desde salida **+121,5%** (= mesa) tras `refresh=1` brief.
+**Último cerrado:** IPO-UX-E2b (`BRIEF_CACHE_VERSION` 5)  
+**Nota smoke:** `/stock/ANDG?e2b=1` sin refresh → **+121,5%**
 
-Sin ticket de programación activo.
+Sin ticket de programación hasta que el orquestador escriba HYDRATION-1.

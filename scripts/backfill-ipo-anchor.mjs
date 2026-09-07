@@ -3,8 +3,9 @@
 //
 // Uso:
 //   node --env-file=.env.local --loader ./scripts/loader.mjs \
-//     scripts/backfill-ipo-anchor.mjs [--local-id=…] [--limit=500] [--write]
+//     scripts/backfill-ipo-anchor.mjs --local-id=materialized:US:… [--limit=500] [--write]
 //
+// --local-id= es obligatorio (sin default: el scan US vigente cambia cada noche).
 // --write exige credenciales Supabase y OK del dueño (AGENTS.md: datos).
 
 import { pathToFileURL } from "node:url";
@@ -13,16 +14,15 @@ import { readDailyBarsCache } from "@/lib/dailyBarsCache.js";
 import { mergeScanMetricsIpoAnchor, summarizeIpoAnchorPatchPlan } from "@/lib/patchScanIpoAnchor.js";
 import { supabaseConfig, supabaseRequest, supabaseRequestAll } from "@/lib/supabaseServer.js";
 
-const DEFAULT_LOCAL_ID = "materialized:US:2026-08-28:t152018:o0:l5607";
 const WRITE_BATCH = 40;
 const DEFAULT_LIMIT = 0;
 
 export function parseArgs(argv = []) {
-  const out = { localId: DEFAULT_LOCAL_ID, limit: DEFAULT_LIMIT, write: false, dryRun: true };
+  const out = { localId: "", limit: DEFAULT_LIMIT, write: false, dryRun: true };
   for (const arg of argv) {
     const [rawKey, rawValue] = arg.replace(/^--/, "").split("=");
     const key = rawKey.trim();
-    if (key === "local-id") out.localId = String(rawValue || "").trim() || DEFAULT_LOCAL_ID;
+    if (key === "local-id") out.localId = String(rawValue || "").trim();
     else if (key === "limit") out.limit = Math.max(0, Number(rawValue) || DEFAULT_LIMIT);
     else if (key === "write") out.write = rawValue === undefined ? true : rawValue !== "false";
     else if (key === "dry-run") out.dryRun = rawValue === undefined ? true : rawValue !== "false";
@@ -33,6 +33,10 @@ export function parseArgs(argv = []) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  if (!args.localId) {
+    console.error("Falta --local-id= (p. ej. materialized:US:YYYY-MM-DD:t…:o…:l…). Sin default: el scan vigente cambia cada noche.");
+    process.exit(1);
+  }
   const config = supabaseConfig();
   if (!config.configured) {
     console.error("Supabase no configurado:", config.missing?.join(", "));

@@ -21,7 +21,7 @@ import { ESTIMATED_CHART_PROVIDER, UNAVAILABLE_CHART_PROVIDER, unavailableChartF
 import { userFacingSearchError } from "@/lib/screenerFormat";
 
 const BRIEF_CACHE_TYPE = "company_brief_cache";
-const BRIEF_CACHE_VERSION = 4;
+export const BRIEF_CACHE_VERSION = 5;
 const DEFAULT_BRIEF_MAX_AGE_DAYS = 1;
 const BRIEF_RESPONSE_TIMEOUT_MS = Number(process.env.BRIEF_RESPONSE_TIMEOUT_MS || 6500);
 const BRIEF_CACHE_READ_TIMEOUT_MS = Number(process.env.BRIEF_CACHE_READ_TIMEOUT_MS || 1500);
