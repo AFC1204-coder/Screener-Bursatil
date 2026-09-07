@@ -3,7 +3,43 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-07 · rama `codex/statsedge-ui-polish`
+Última actualización: 2026-09-07 · rama `codex/statsedge-ui-polish` · HEAD `11d8055`
+
+## Estados Forja — cola operativa
+
+Estados exactos del orquestador Forja (Cloud Agent → PR → smoke → polish). Una fila por ticket/PR; no inventar IDs.
+
+| Estado | Significado |
+|---|---|
+| **prep** | Ticket y/o rama CA en preparación; sin PR o PR aún no listo para smoke |
+| **PR** | PR abierto en GitHub; pendiente smoke del orquestador |
+| **smoke** | Smoke hecho; pendiente aterrizar en `codex/statsedge-ui-polish` (commit/merge local) |
+| **en polish** | Ya en `codex/statsedge-ui-polish` (verificado o cerrado) |
+
+### Gate Forja
+
+- **CA → PR** — programación en chat aparte; orquestador abre PR draft.
+- **No FF a polish** sin smoke/OK del orquestador.
+- **Tope 1–2 CA código** activos en paralelo.
+- **No mezclar** AUTH · Mini/migrate · piel LOOK en el mismo ticket/PR.
+- **Remoto SHA antes de rebase** — `git fetch origin codex/statsedge-ui-polish` y comparar `HEAD` vs `origin/…` antes de rebase/FF.
+
+### Cola actual (HEAD `11d8055`)
+
+| ID / ref | Estado | Rama / commit / PR | Notas |
+|---|---|---|---|
+| LOGO-1 | **en polish** | `44459a1` | smoke `/stock/AAPL` OK · filas ligeras sin website → nocturno |
+| AUTH-BOOT-1 | **en polish** | `9f9b660` | smoke hint &lt;350 ms |
+| IPO-UX-B | **en polish** | `062e7b2` (+fix `cbbfb84`) | col Salida↓ · smoke OK |
+| sticky-0 | **en polish** | `0afa9f0` | FilterNumber borrador/blur |
+| IPO-UX-C | **en polish** | `741a792` | nav IPO fuera · smoke OK |
+| IPO-UX-D | **en polish** | `2a657a0` | col % Desde salida · smoke OK |
+| IPO-UX-D2 | **en polish** | `3adc86d` · hotfix `97953f4` | write Mini 3291 · smoke % OK |
+| IPO-UX-E | **en polish** | `d1230dc` | ficha Salida/Edad/Desde salida · smoke ANDG · residual ancla en company-brief |
+| PR #13 (LOGO-1 Clearbit) | **PR** | `cursor/logo-1-empresa-mesa-ficha-6032` · [draft **dirty** vs polish](https://github.com/AFC1204-coder/Screener-Bursatil/pull/13) | superseded por `44459a1` en polish — **cerrar sin merge** |
+| IPO-UX-F (RS IPO) | **aparcado** | — | P2 · sin ticket activo |
+
+**Idle orquestador** — sin filas en prep / smoke. Siguiente opcional: residual `ipoAnchor*` en company-brief (ficha).
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado:** **IPO-UX-E** (ficha Salida · Edad · Desde salida).  
