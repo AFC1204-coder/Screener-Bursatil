@@ -2,10 +2,10 @@
 
 Copia. Activar tras IPO-UX-A.
 
-**Estado:** Cola (tras A)  
+**Estado:** Cerrado `062e7b2` · hotfix `cbbfb84` · smoke OK 2026-09-07  
 **Prioridad:** P0  
 **Rama:** `codex/statsedge-ui-polish`  
-**Modelo:** Composer  
+**Modelo:** Composer / Cloud + cherry-pick orquestador  
 **Origen:** `docs/analisis-ux-ipo-superficie-2026-09-07.md`
 
 ## Alcance
