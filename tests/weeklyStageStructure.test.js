@@ -9,11 +9,13 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { SCREENER_COLUMNS } from "@/lib/screenerColumns";
 import { stageDisplayForRow, stageStructureAbsence, stageStructureQualifier, stageSummaryText, stageWordForState } from "@/lib/stageDisplay";
-import { weeklyStageForBars } from "@/lib/weeklyStage";
+import { weeklyStageForBars, weeklyBarsFromDaily } from "@/lib/weeklyStage";
 import {
+  BREAKOUT_VOL_PRIOR_WEEKS,
   STRUCTURE_E2_MA_ONLY,
   STRUCTURE_E2_STRUCTURAL,
   STRUCTURE_NA,
+  weeklyBreakoutVolMetricsFromWeeks,
   weeklyStageStructureFields,
   weeklyStageStructureForBars,
 } from "@/lib/weeklyStageStructure";
@@ -57,12 +59,47 @@ function msiLikeBars() {
 }
 
 // Avance con nuevos máximos y oscilación para pivotes HH/HL.
-function structuralBreakoutBars() {
+function structuralBreakoutBars(volumeAt = () => 1_000_000) {
   return weeklyBars(90, (i) => {
     const wave = i >= 82 ? 0 : ((i % 8 === 3 ? 14 : 0) - (i % 8 === 6 ? 8 : 0));
     const close = 50 + i * 4 + wave;
     const highBoost = i >= 86 ? 8 : (i % 8 === 3 ? 4 : 0);
-    return { close, high: close + 6 + highBoost, low: close - 5 - (i % 8 === 6 && i < 82 ? 3 : 0) };
+    return {
+      close,
+      high: close + 6 + highBoost,
+      low: close - 5 - (i % 8 === 6 && i < 82 ? 3 : 0),
+      volume: volumeAt(i),
+    };
+  });
+}
+
+function oldestFirst(weeks) {
+  return [...weeks].sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+}
+
+function breakoutWeekDateFromBars(bars) {
+  const stage = weeklyStageForBars(bars);
+  const probe = weeklyStageStructureForBars(bars, { weeklyStageState: stage.state });
+  const weeks = oldestFirst(weeklyBarsFromDaily(bars));
+  const resistance = probe.resistance;
+  const recentStart = Math.max(0, weeks.length - 52);
+  for (let i = recentStart; i < weeks.length; i += 1) {
+    if (weeks[i].close > resistance) return weeks[i].date;
+  }
+  return null;
+}
+
+function breakoutVolRatioBars({ priorVol = 1_000_000, breakoutVol = 2_500_000 } = {}) {
+  const breakoutDate = breakoutWeekDateFromBars(structuralBreakoutBars());
+  const breakoutIdx = breakoutDate
+    ? Array.from({ length: 90 }, (_, i) => monday(i)).indexOf(breakoutDate)
+    : -1;
+  return structuralBreakoutBars((i) => {
+    if (i === breakoutIdx) return breakoutVol;
+    if (breakoutIdx > 0 && i >= breakoutIdx - BREAKOUT_VOL_PRIOR_WEEKS && i < breakoutIdx) {
+      return priorVol;
+    }
+    return priorVol;
   });
 }
 
@@ -132,12 +169,80 @@ describe("weeklyStageStructure · candidato B", () => {
       rng26Pct: 30,
       ruptura: false,
       hhhl: true,
+      breakoutVolRatio: null,
+      breakoutVolWeek: "",
+      breakoutVolDetail: "",
     });
     expect(fields.weeklyStageStructure).toBe("E2_ma_only");
     expect(fields.weeklyStageStructureLabel).toBe("Pre-fuga");
     expect(fields.weeklyResistance).toBeCloseTo(493.57);
     expect(fields.weeklyRuptura).toBe(false);
     expect(fields.weeklyHhHl).toBe(true);
+    expect(fields.weeklyBreakoutVolRatio).toBeNull();
+    expect(fields.weeklyBreakoutVolWeek).toBe("");
+  });
+});
+
+describe("weeklyStageStructure · volumen de fuga (STAGE-4)", () => {
+  it("ratio ≈ vol_fuga / mediana(4 prev) en fuga clara", () => {
+    const bars = breakoutVolRatioBars({ priorVol: 1_000_000, breakoutVol: 2_500_000 });
+    const stage = weeklyStageForBars(bars);
+    const struct = weeklyStageStructureForBars(bars, { weeklyStageState: stage.state });
+    expect(struct.structure).toBe(STRUCTURE_E2_STRUCTURAL);
+    expect(struct.breakoutVolRatio).toBeCloseTo(2.5, 1);
+    expect(struct.breakoutVolWeek).toBeTruthy();
+    expect(struct.breakoutVolDetail).toBe("");
+  });
+
+  it("fuga seca: ratio < 1", () => {
+    const bars = breakoutVolRatioBars({ priorVol: 1_000_000, breakoutVol: 700_000 });
+    const stage = weeklyStageForBars(bars);
+    const struct = weeklyStageStructureForBars(bars, { weeklyStageState: stage.state });
+    expect(struct.structure).toBe(STRUCTURE_E2_STRUCTURAL);
+    expect(struct.breakoutVolRatio).toBeCloseTo(0.7, 1);
+  });
+
+  it("weeklyBreakoutVolMetricsFromWeeks: ratio directo con semanas sintéticas", () => {
+    const weeks = Array.from({ length: 10 }, (_, i) => ({
+      date: monday(i),
+      close: i < 5 ? 90 : 110,
+      high: i < 5 ? 95 : 115,
+      low: 85,
+      volume: i === 5 ? 2_000_000 : 1_000_000,
+    }));
+    const metrics = weeklyBreakoutVolMetricsFromWeeks(weeks, 100, { lookbackWeeks: 10, rightWeeks: 0 });
+    expect(metrics.ratio).toBeCloseTo(2, 1);
+    expect(metrics.weekDate).toBe(monday(5));
+  });
+
+  it("weeklyBreakoutVolMetricsFromWeeks: sin ruptura puntual", () => {
+    const weeks = weeklyBars(60, (i) => ({ close: 100 + i, high: 105 + i, low: 95 + i, volume: 1_000_000 }));
+    const metrics = weeklyBreakoutVolMetricsFromWeeks(weeks, 500);
+    expect(metrics.ratio).toBeNull();
+    expect(metrics.detail).toMatch(/sin semana de fuga puntual/i);
+  });
+
+  it("weeklyStageStructureFields proyecta ratio y semana de fuga", () => {
+    const fields = weeklyStageStructureFields({
+      structure: STRUCTURE_E2_STRUCTURAL,
+      breakoutVolRatio: 1.8,
+      breakoutVolWeek: "2026-08-04",
+      breakoutVolDetail: "",
+    });
+    expect(fields.weeklyBreakoutVolRatio).toBeCloseTo(1.8);
+    expect(fields.weeklyBreakoutVolWeek).toBe("2026-08-04");
+  });
+
+  it("la clasificación estructural no cambia al calcular el ratio", () => {
+    const plain = structuralBreakoutBars();
+    const withVol = breakoutVolRatioBars({ priorVol: 500_000, breakoutVol: 50_000 });
+    const stagePlain = weeklyStageForBars(plain);
+    const stageVol = weeklyStageForBars(withVol);
+    const structPlain = weeklyStageStructureForBars(plain, { weeklyStageState: stagePlain.state });
+    const structVol = weeklyStageStructureForBars(withVol, { weeklyStageState: stageVol.state });
+    expect(structPlain.structure).toBe(structVol.structure);
+    expect(structPlain.label).toBe(structVol.label);
+    expect(structVol.breakoutVolRatio).toBeCloseTo(0.1, 1);
   });
 });
 
@@ -174,6 +279,30 @@ describe("stageDisplay · calificador", () => {
     });
     expect(display.word).toBe("Etapa 2");
     expect(display.qualifier).toBe("Con fuga");
+  });
+
+  it("Con fuga con ratio muestra el multiplicador (patrón MET-4)", () => {
+    const display = stageDisplayForRow({
+      weeklyStageState: "stage2",
+      weeklyStageStructure: "E2_structural",
+      weeklyBreakoutVolRatio: 1.8,
+    });
+    expect(display.qualifierDisplay).toBe("Con fuga (1,8×)");
+    expect(display.title).toMatch(/Weinstein/);
+    expect(stageSummaryText({
+      weeklyStageState: "stage2",
+      weeklyStageStructure: "E2_structural",
+      weeklyBreakoutVolRatio: 1.8,
+    })).toBe("Etapa 2 · Con fuga (1,8×)");
+  });
+
+  it("Con fuga sin ratio declara ausencia en el title", () => {
+    const display = stageDisplayForRow({
+      weeklyStageState: "stage2",
+      weeklyStageStructure: "E2_structural",
+    });
+    expect(display.breakoutVol?.phrase).toMatch(/sin dato vol\. fuga/);
+    expect(display.title).toMatch(/sin dato vol\. fuga|Sin ratio/i);
   });
 
   it("sin subestado no inventa calificador", () => {

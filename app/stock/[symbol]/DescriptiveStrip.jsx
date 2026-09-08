@@ -27,6 +27,7 @@ import {
   slopeWord,
   volumeDryUpDisplay,
 } from "@/lib/descriptiveStrip";
+import { breakoutVolDisplayForRow } from "@/lib/stageDisplay";
 import { buildTrendSupportLines } from "@/lib/trendSupport";
 import { buildStageHealthLine } from "@/lib/stageHealth";
 
@@ -157,6 +158,11 @@ export default function DescriptiveStrip({ data = null, setupPattern = null, tec
     advanceRecentPct: data?.advanceRecentPct,
     advancePriorPct: data?.advancePriorPct,
   });
+  const breakoutVol = breakoutVolDisplayForRow({
+    weeklyStageStructure: data?.stage?.weekly?.structure || data?.weeklyStageStructure || "",
+    weeklyBreakoutVolRatio: data?.stage?.weekly?.breakoutVolRatio ?? data?.weeklyBreakoutVolRatio ?? null,
+    stage: data?.stage,
+  });
   const stageHealth = buildStageHealthLine(chartBars, {
     stage: data?.stage,
     weeklyStageState: data?.stage?.weekly?.state || data?.weeklyStageState,
@@ -209,6 +215,14 @@ export default function DescriptiveStrip({ data = null, setupPattern = null, tec
           value={volSurge?.available && Number.isFinite(volSurge.value) ? sharedPct(volSurge.value) : null}
           reason={volSurge?.reason || "Sin medias de volumen comparables a 5 y 20 sesiones."}
         />
+        {breakoutVol ? (
+          <StructureCell
+            label="Vol. fuga"
+            value={breakoutVol.available ? breakoutVol.multiplier : null}
+            word={breakoutVol.available && breakoutVol.phrase.includes("seco") ? "seco" : ""}
+            reason={breakoutVol.title || breakoutVol.phrase}
+          />
+        ) : null}
       </div>
       <div className="stockDescTrendSupport" aria-label={trendSupport.title}>
         <h3 className="stockDescLabel">

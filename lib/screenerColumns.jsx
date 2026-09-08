@@ -283,7 +283,11 @@ export const SCREENER_COLUMNS = [
             {stage.word}
             {confirmation?.mark ? <i className="stageTagMark" aria-label={confirmation.suffix}>{confirmation.mark}</i> : null}
           </span>
-          {stage.qualifier ? <small className="stageTagQualifier">{stage.qualifier}</small> : null}
+          {stage.qualifier ? (
+            <small className="stageTagQualifier" title={stage.breakoutVol?.title || undefined}>
+              {stage.qualifierDisplay || stage.qualifier}
+            </small>
+          ) : null}
         </span>
       );
     },

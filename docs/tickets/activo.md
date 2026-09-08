@@ -1,9 +1,9 @@
-# Ticket activo — idle (MET-7 cerrado)
+# Ticket activo — idle (STAGE-4 cerrado)
 
 **Estado:** idle orquestador  
 **Rama:** `codex/statsedge-ui-polish`  
-**Último cerrado:** MET-7 (`/metodologia` · umbrales desde `lib/*`)  
-**Siguiente:** STAGE-4 (volumen fuga) o residual Mini — según dueño  
-**Cola:** STAGE-4 · residual ops Mini `:15432` · resto informe · P2 IPO-F aparcado
+**Último cerrado:** STAGE-4 (vol. fuga junto a «Con fuga»)  
+**Siguiente:** residual Mini `:15432` · STAGE-5 solo si dueño · resto informe  
+**Cola:** residual ops Mini · resto informe · P2 IPO-F aparcado
 
 Sin ticket de programación activo.

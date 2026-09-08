@@ -211,6 +211,7 @@ export function N0VerdictBlock({
     weeklyStageConfirmation: data?.stage?.weekly?.confirmation || "",
     weeklyStageStructure: data?.stage?.weekly?.structure || "",
     weeklyStageStructureDetail: data?.stage?.weekly?.structureDetail || "",
+    weeklyBreakoutVolRatio: data?.stage?.weekly?.breakoutVolRatio ?? data?.weeklyBreakoutVolRatio ?? null,
   });
   // El guard acepta tanto un array de acciones como un único elemento. Antes
   // exigía `actions.length` sobre lo que le llegaba: con un fragmento JSX
@@ -253,7 +254,7 @@ export function N0VerdictBlock({
             stageWord={stageDisplay?.word || ""}
             confirmation={data?.stage?.weekly?.confirmation || ""}
             confirmationInfo={stageConfirmationMark(data?.stage?.weekly?.confirmation || "")}
-            qualifier={stageDisplay?.qualifier || ""}
+            qualifier={stageDisplay?.qualifierDisplay || stageDisplay?.qualifier || ""}
             qualifierTitle={stageDisplay?.title || ""}
             missingReason={STAGE_MISSING_REASON}
           />

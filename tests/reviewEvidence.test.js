@@ -47,6 +47,11 @@ describe("review evidence · etapa Weinstein vs estructura diaria", () => {
     expect(stageSummaryText({
       weeklyStageState: "stage2",
       weeklyStageStructure: "E2_structural",
+      weeklyBreakoutVolRatio: 2.4,
+    })).toBe("Etapa 2 · Con fuga (2,4×)");
+    expect(stageSummaryText({
+      weeklyStageState: "stage2",
+      weeklyStageStructure: "E2_structural",
     })).toBe("Etapa 2 · Con fuga");
     expect(stageSummaryText({ weeklyStageState: "stage3" })).toBe("Etapa 3");
     expect(stageSummaryText({})).toBeNull();

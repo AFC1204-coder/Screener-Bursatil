@@ -7,9 +7,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Última sync / HEAD origin polish:** (push tras MH refresh + docs)
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **MET-7** (`/metodologia`).  
+**Último cerrado:** **STAGE-4** (vol. fuga junto a «Con fuga»).  
 **Ahora:** idle.  
-**Cola:** STAGE-4 · residual ops Mini `:15432` · resto informe · P2 IPO-F aparcado.  
+**Cola:** residual ops Mini `:15432` · STAGE-5 (decisión dueño) · resto informe · P2 IPO-F aparcado.  
 **Residual MH (ops):** persistencia `app_settings` falla en local — RPC `upsert_app_setting_newer_wins` no disponible en modo pg local / túnel Mini `:15432` ECONNREFUSED. Código OK; falta Mini arriba.  
 **Descartar:** — (rama forja-estados borrada).  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
@@ -312,6 +312,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | STAGE-3 | `/review` «Etapa» = Weinstein; Trend Template con otro nombre | **Hecho** · `2cb8bb7` · smoke AVAH Etapa 2 · Con fuga |
 | MH-FILL-3 | Liderazgo Mercado desde servidor (no solo localStorage) | **Hecho** · `/api/market-leadership` · smoke sin scans local |
 | MH refresh/caché | Actualizar + `?refresh=1` + `cacheWritten` | **Hecho** · `16abe65` · smoke Actualizar→refresh=1 · residual Mini RPC |
+| STAGE-4 | Volumen de fuga junto a «Con fuga» (dato soporte; no clasifica) | **Hecho** · smoke AVAH Con fuga (2,8×) |
 | VCP-0 | Auditoría E1/E2 semanal | **Cerrado** fae1880 · ADR aceptado |
 | VCP | Detector / etiquetado research | **Bridge cerrado** 2026-09-02 · flag UNIFIED |
 
