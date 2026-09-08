@@ -1,12 +1,13 @@
 # MH-FILL-3 — Liderazgo de Mercado desde servidor
 
-**Estado:** Activo  
+**Estado:** Hecho  
 **Prioridad:** P1  
-**Rama:** `codex/statsedge-ui-polish` (o CA en rama propia si polish ocupado)  
+**Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer  
 **Origen:** `docs/analisis-criterio-libros-etapas-mercado-2026-09-08.md` §3 (G2 / MH-FILL-3) · `docs/methodology/market-leadership-framework.md` §1 / §10  
-**Tipo:** market-health · dato en `scan_results` · falta API/UI server  
-**Gap informe:** G2 — «Leadership pulse y regiones desde `localStorage`» · clase **falta API** (los datos están en `scan_results`; hace falta un agregado servidor)
+**Tipo:** market-health · `/api/market-leadership` · sin localStorage  
+**Cierre:** `9f60d3c` · smoke sin `statsedge.scans.v1` (copy nocturno; Mini down → 500 como breadth)  
+**Gap informe:** G2 cerrado en código (agregado server)
 
 ## Problema
 
