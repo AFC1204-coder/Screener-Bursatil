@@ -210,6 +210,7 @@ export function N0VerdictBlock({
     weeklyStageLabel: data?.stage?.label || "",
     weeklyStageConfirmation: data?.stage?.weekly?.confirmation || "",
     weeklyStageStructure: data?.stage?.weekly?.structure || "",
+    weeklyStageStructureDetail: data?.stage?.weekly?.structureDetail || "",
   });
   // El guard acepta tanto un array de acciones como un único elemento. Antes
   // exigía `actions.length` sobre lo que le llegaba: con un fragmento JSX

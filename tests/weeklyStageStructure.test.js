@@ -8,7 +8,7 @@ import React from "react";
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { SCREENER_COLUMNS } from "@/lib/screenerColumns";
-import { stageDisplayForRow, stageStructureQualifier, stageWordForState } from "@/lib/stageDisplay";
+import { stageDisplayForRow, stageStructureAbsence, stageStructureQualifier, stageWordForState } from "@/lib/stageDisplay";
 import { weeklyStageForBars } from "@/lib/weeklyStage";
 import {
   STRUCTURE_E2_MA_ONLY,
@@ -179,6 +179,53 @@ describe("stageDisplay · calificador", () => {
   it("sin subestado no inventa calificador", () => {
     const display = stageDisplayForRow({ weeklyStageState: "stage2" });
     expect(display.qualifier).toBe("");
+  });
+
+  it("n/a dudoso pinta motivo desde weeklyStageStructureDetail", () => {
+    const detail = "ni caja ≤32% ni fuga+HH/HL (rng26=45%)";
+    expect(stageStructureAbsence(STRUCTURE_NA, detail)?.word).toBe("Dudoso");
+    const display = stageDisplayForRow({
+      weeklyStageState: "stage2",
+      weeklyStageStructure: STRUCTURE_NA,
+      weeklyStageStructureDetail: detail,
+    });
+    expect(display.qualifier).toBe("Dudoso");
+    expect(display.title).toMatch(/ni caja/i);
+    expect(display.title).toMatch(/MM30s/);
+  });
+
+  it("n/a histórico corto pinta motivo legible", () => {
+    const detail = "Histórico semanal corto para 52+4 semanas de techo.";
+    expect(stageStructureAbsence(STRUCTURE_NA, detail)?.word).toBe("Hist. corto");
+    const display = stageDisplayForRow({
+      weeklyStageState: "stage2",
+      weeklyStageStructure: STRUCTURE_NA,
+      weeklyStageStructureDetail: detail,
+    });
+    expect(display.qualifier).toBe("Hist. corto");
+    expect(display.title).toMatch(/histórico semanal insuficiente/i);
+  });
+
+  it("n/a no aplica en etapas 3/4", () => {
+    const detail = "código stage4; el subestado estructural no aplica";
+    expect(stageStructureAbsence(STRUCTURE_NA, detail)?.word).toBe("No aplica");
+    const display = stageDisplayForRow({
+      weeklyStageState: "stage4",
+      weeklyStageStructure: STRUCTURE_NA,
+      weeklyStageStructureDetail: detail,
+    });
+    expect(display.qualifier).toBe("No aplica");
+  });
+
+  it("mesa: stage2 n/a dudoso muestra calificador de ausencia", () => {
+    const html = renderStageCell({
+      weeklyStageState: "stage2",
+      weeklyStageStructure: STRUCTURE_NA,
+      weeklyStageStructureDetail: "ni caja ≤32% ni fuga+HH/HL (rng26=45%)",
+    });
+    expect(html).toContain("Etapa 2");
+    expect(html).toContain("Dudoso");
+    expect(html).toContain("stageTagQualifier");
   });
 });
 

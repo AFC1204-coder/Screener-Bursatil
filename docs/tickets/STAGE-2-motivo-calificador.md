@@ -1,11 +1,13 @@
 # STAGE-2 — Motivo de ausencia del calificador estructural
 
-**Estado:** Activo  
+**Estado:** Hecho  
 **Prioridad:** P1  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer  
 **Origen:** `docs/analisis-criterio-libros-etapas-mercado-2026-09-08.md` A-2  
-**Tipo:** mesa / stageDisplay · dato ya existe
+**Tipo:** mesa / stageDisplay · dato ya existe  
+**Cierre:** smoke mesa Líderes E2 — «Dudoso» + «Con fuga» en columna Etapa; tooltip con detail  
+**Nota:** filas sin `weeklyStageStructureDetail` persistido siguen sin calificador de ausencia.
 
 ## Problema
 
