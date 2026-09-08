@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 // Franja descriptiva de la ficha (heredera de la variante 2a del diseño
 // "Ficha StatsEdge"). Con la tarjeta 2c DENSA sobre el lienzo (cuarta
 // iteración del 2026-08-21) la franja queda en UNA banda: las medias y el
@@ -90,6 +91,14 @@ function TrendSupportLine({ line }) {
   );
 }
 
+function MethodologyLink({ hash, label = "Metodología" }) {
+  return (
+    <Link className="stockDescMethodLink" href={`/metodologia#${hash}`}>
+      {label}
+    </Link>
+  );
+}
+
 function StageHealthDetails({ block }) {
   if (!block) return null;
   const summary = block.available && Number.isFinite(block.score)
@@ -97,7 +106,10 @@ function StageHealthDetails({ block }) {
     : "Salud de etapa";
   return (
     <details className="stockDescHealthDetails">
-      <summary>{summary}</summary>
+      <summary>
+        {summary}
+        <MethodologyLink hash="salud" />
+      </summary>
       {block.available ? (
         block.breakdown ? <p className="stockDescHealthBreakdown">{block.breakdown}</p> : null
       ) : (
@@ -199,7 +211,10 @@ export default function DescriptiveStrip({ data = null, setupPattern = null, tec
         />
       </div>
       <div className="stockDescTrendSupport" aria-label={trendSupport.title}>
-        <h3 className="stockDescLabel">{trendSupport.title}</h3>
+        <h3 className="stockDescLabel">
+          {trendSupport.title}
+          <MethodologyLink hash="sosten" />
+        </h3>
         <ul className="stockDescTrendList">
           {trendSupport.lines.map((line) => (
             <TrendSupportLine key={line.key} line={line} />

@@ -7,9 +7,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Última sync / HEAD origin polish:** (push tras MH refresh + docs)
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **MH-FILL-3** (liderazgo desde servidor).  
-**Ahora:** idle — siguiente **MET-7** (prep).  
-**Cola:** MET-7 · residual ops Mini `:15432` / RPC · resto informe · P2 IPO-F aparcado.  
+**Último cerrado:** **MET-7** (`/metodologia`).  
+**Ahora:** idle.  
+**Cola:** STAGE-4 · residual ops Mini `:15432` · resto informe · P2 IPO-F aparcado.  
 **Residual MH (ops):** persistencia `app_settings` falla en local — RPC `upsert_app_setting_newer_wins` no disponible en modo pg local / túnel Mini `:15432` ECONNREFUSED. Código OK; falta Mini arriba.  
 **Descartar:** — (rama forja-estados borrada).  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
@@ -301,6 +301,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MET-5-calibrate | Muestreo umbrales 26/10 / 15–50% (read-only) | **Cerrado** · umbrales OK dueño |
 | MET-5b | Impl ficha «Salud de etapa» | **Hecho** · `72b6194` |
 | MET-5 uso real | Validación dueño fórmula v1 (ficha only) | **Cerrado** · aceptado A 2026-08-31 |
+| MET-7 | Página `/metodologia` (umbrales etapa/sostén/salud) | **Hecho** · smoke 4 secciones + ejemplo 90 |
 | MET-4c | Vista rápida «Sostén de la tendencia» | **Hecho** (`9914cc4`) |
 | MET-4d | Filtro hunt persistencia MA 30s | **Hecho** (`b883085`) |
 | MET-4e | Backfill weeksAbove* + smoke 4c/4d | **Hecho** · write 1208 · smoke OK |

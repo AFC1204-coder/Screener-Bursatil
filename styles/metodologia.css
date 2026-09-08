@@ -1,0 +1,197 @@
+/* styles/metodologia.css — página /metodologia (MET-7) */
+
+.metodologiaPage {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 16px 96px;
+  color: var(--text);
+}
+
+.metodologiaHeader h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 650;
+  color: var(--tiza);
+}
+
+.metodologiaLead {
+  margin: 0 0 16px;
+  color: var(--soft);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.metodologiaToc {
+  margin: 0 0 28px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface2);
+}
+
+.metodologiaToc ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.metodologiaToc a {
+  color: var(--tiza);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.metodologiaToc a:hover {
+  text-decoration: underline;
+}
+
+.metodologiaSection {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.metodologiaSection h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--tiza);
+}
+
+.metodologiaSection h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.metodologiaList {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: var(--soft);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.metodologiaQualifiers {
+  margin: 0 0 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.metodologiaQualifier {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 14px;
+}
+
+.metodologiaQualifier dt {
+  margin: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  color: var(--tiza);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.metodologiaQualifier dd {
+  margin: 0;
+  color: var(--soft);
+}
+
+.metodologiaFormula {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+  color: var(--tiza);
+  overflow-x: auto;
+}
+
+.metodologiaTable {
+  width: 100%;
+  margin: 0 0 14px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.metodologiaTable th,
+.metodologiaTable td {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.metodologiaTable th {
+  color: var(--tiza);
+  background: var(--surface2);
+}
+
+.metodologiaTable td {
+  color: var(--soft);
+}
+
+.metodologiaTable tfoot td {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.metodologiaNote {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.metodologiaExample {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.metodologiaExample p {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: var(--soft);
+}
+
+.metodologiaExampleScore {
+  margin-top: 8px !important;
+  font-size: 18px !important;
+  font-weight: 650;
+  color: var(--tiza) !important;
+}
+
+.metodologiaFooter {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.metodologiaFooter a {
+  color: var(--tiza);
+}
+
+.stockDescMethodLink {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.stockDescMethodLink:hover {
+  color: var(--tiza);
+  text-decoration: underline;
+}
