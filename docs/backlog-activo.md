@@ -6,9 +6,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 Última actualización: 2026-09-08 · rama `codex/statsedge-ui-polish`
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **STAGE-2** (motivo Dudoso/Hist. corto/No aplica).  
-**Ahora:** **STAGE-3** (`/review` Etapa = Weinstein) — `docs/tickets/activo.md`.  
-**Cola:** MH-FILL-3 · MET-7 · resto informe · P2 IPO-F aparcado.  
+**Último cerrado:** **STAGE-3** (`/review` Etapa Weinstein).  
+**Ahora:** idle — siguiente **MH-FILL-3** (prep).  
+**Cola:** MH-FILL-3 · MET-7 · residual MH refresh/caché · resto informe · P2 IPO-F aparcado.  
 **Residual MH:** `upsert` caché market-health no deja el payload nuevo (GET sin refresh sigue Aug-17); Actualizar UI no usa `?refresh=1`.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
 
@@ -306,7 +306,8 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | STAGE-1 | Subestado semanal paralelo (E2_ma_only / E2_structural) en screener | **Cerrado** verify 2026-09-01 · mesa tras nocturno |
 | MH-FILL-1 | Mercado: misma estructura Pre-fuga/Con fuga que la mesa | **Hecho** · smoke StageStrip · residual caché stale |
 | STAGE-2 | Motivo cuando calificador `n/a` (detail ya existe) | **Hecho** · smoke mesa Dudoso/Con fuga |
-| STAGE-3 | `/review` «Etapa» = Weinstein; Trend Template con otro nombre | **en polish** · `docs/tickets/activo.md` |
+| STAGE-3 | `/review` «Etapa» = Weinstein; Trend Template con otro nombre | **Hecho** · smoke AVAH Etapa 2 · Con fuga |
+| MH-FILL-3 | Liderazgo Mercado desde servidor (no solo localStorage) | **prep** |
 | VCP-0 | Auditoría E1/E2 semanal | **Cerrado** fae1880 · ADR aceptado |
 | VCP | Detector / etiquetado research | **Bridge cerrado** 2026-09-02 · flag UNIFIED |
 

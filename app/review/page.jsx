@@ -55,7 +55,7 @@ import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { persistReviewQueue } from "@/lib/screenerPipeline";
 import StorageAlert from "@/app/components/StorageAlert";
 import { userFacingServiceError } from "@/lib/serviceErrors";
-import { objectiveStage } from "@/lib/scoring";
+import { evidenceRows } from "@/lib/reviewEvidence";
 import { canonicalRs } from "@/lib/rsCanonical";
 import { countryRs } from "@/lib/countryRs";
 import { themeRs } from "@/lib/themeRs";
@@ -397,17 +397,6 @@ function metricRows(row = {}) {
     ["DD 63d", pct(Number.isFinite(value(row, "maxDrawdown63d")) ? -value(row, "maxDrawdown63d") : null)],
     ["R/Vol 3M", ratio(value(row, "returnToVol3m"))],
     ["R/DD 3M", ratio(value(row, "returnToDrawdown3m"))],
-  ];
-}
-function evidenceRows(row = {}) {
-  return [
-    ["Etapa", objectiveStage(row)],
-    ["Distancia 20d high", pct(value(row, "distance20d"))],
-    ["Distancia 52w high", pct(value(row, "distance52w"))],
-    ["Extension SMA50", pct(value(row, "extSma50"))],
-    ["Highs spread", pct(value(row, "highsSpreadPct"))],
-    ["Volumen relativo", ratio(value(row, "relativeVolume"))],
-    ["Benchmark", value(row, "benchmarkSymbol") || "-"],
   ];
 }
 
@@ -903,7 +892,7 @@ export default function ReviewPage() {
         </div>
         <div className="reviewEvidence">
           <div className="sectionTitle"><h2>Evidencia medible</h2></div>
-          {evidenceRows(activeRow).map(([label, metric]) => <div className="summaryRow" key={label}><span>{label}</span><b>{metric}</b></div>)}
+          {evidenceRows(activeRow).map(([label, metric, title = ""]) => <div className="summaryRow" key={label}><span>{label}</span><b title={title || undefined}>{metric}</b></div>)}
         </div>
         <div className="reviewNotes">
           <div className="summaryRow"><span>Estado local</span><b>{reviewed.has(activeSymbol) ? "Revisada" : "Pendiente"}</b></div>

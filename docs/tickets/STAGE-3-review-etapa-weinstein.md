@@ -1,11 +1,12 @@
 # STAGE-3 — `/review`: «Etapa» = Weinstein, no Trend Template
 
-**Estado:** Activo  
+**Estado:** Hecho  
 **Prioridad:** P1  
 **Rama:** `codex/statsedge-ui-polish`  
 **Modelo:** Composer  
 **Origen:** `docs/analisis-criterio-libros-etapas-mercado-2026-09-08.md` A-3  
-**Tipo:** review · mal nombrado · sin decisión de producto nueva
+**Tipo:** review · mal nombrado · sin decisión de producto nueva  
+**Cierre:** smoke `/review?symbol=AVAH` — Etapa «Etapa 2 · Con fuga»; Estructura diaria «Precio > SMA200»
 
 ## Problema
 

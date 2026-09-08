@@ -8,7 +8,7 @@ import React from "react";
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { SCREENER_COLUMNS } from "@/lib/screenerColumns";
-import { stageDisplayForRow, stageStructureAbsence, stageStructureQualifier, stageWordForState } from "@/lib/stageDisplay";
+import { stageDisplayForRow, stageStructureAbsence, stageStructureQualifier, stageSummaryText, stageWordForState } from "@/lib/stageDisplay";
 import { weeklyStageForBars } from "@/lib/weeklyStage";
 import {
   STRUCTURE_E2_MA_ONLY,
@@ -226,6 +226,14 @@ describe("stageDisplay · calificador", () => {
     expect(html).toContain("Etapa 2");
     expect(html).toContain("Dudoso");
     expect(html).toContain("stageTagQualifier");
+  });
+
+  it("stageSummaryText resume palabra + calificador para texto plano", () => {
+    expect(stageSummaryText({
+      weeklyStageState: "stage2",
+      weeklyStageStructure: "E2_ma_only",
+    })).toBe("Etapa 2 · Pre-fuga");
+    expect(stageSummaryText({ weeklyStageState: "stage4" })).toBe("Etapa 4");
   });
 });
 
