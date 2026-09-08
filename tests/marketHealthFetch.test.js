@@ -7,6 +7,7 @@ import {
   fetchJsonWithTimeout,
   isTimeoutFetchError,
   logMarketHealthFetchFailure,
+  marketHealthApiPath,
   timeoutFetchError,
 } from "@/lib/marketHealthFetch";
 
@@ -69,5 +70,11 @@ describe("marketHealthFetch — timeout soft-fail", () => {
     expect(consoleError).toHaveBeenCalledWith("[salud de mercado] titulares no disponibles:", other);
 
     consoleError.mockRestore();
+  });
+
+  it("marketHealthApiPath añade ?refresh=1 solo cuando se pide refresh", () => {
+    expect(marketHealthApiPath()).toBe("/api/market-health");
+    expect(marketHealthApiPath({ refresh: false })).toBe("/api/market-health");
+    expect(marketHealthApiPath({ refresh: true })).toBe("/api/market-health?refresh=1");
   });
 });
