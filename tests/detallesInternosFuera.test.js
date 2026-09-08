@@ -239,6 +239,7 @@ const JARGON_EXEMPT = [
   "lib/supabaseServer.js",
   "lib/nightlyAbsence.js",
   "lib/marketBreadth.js",
+  "lib/marketLeadership.js",
   "app/research-desk/page.jsx",
   "app/review/page.jsx",
   "app/components/screener/WeeklyChangesLine.jsx",

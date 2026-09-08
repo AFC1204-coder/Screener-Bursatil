@@ -9,16 +9,14 @@ import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { fetchJsonWithTimeout, logMarketHealthFetchFailure, marketHealthApiPath } from "@/lib/marketHealthFetch";
 import { dateShort, dateTime, num, pct, pctShare } from "@/lib/formatters";
-import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { canonicalRsValue } from "@/lib/rsCanonical";
 // Mismo componente de ausencia que la tabla de resultados: guion + icono con el
 // motivo (docs/principios-producto.md, principios 3 y 7).
 import { MissingValue } from "@/lib/screenerColumns";
 import { userFacingServiceError } from "@/lib/serviceErrors";
-import { snapshotDisplayUpdate } from "@/lib/snapshotDisplay";
 import { stageDisplayForRow } from "@/lib/stageDisplay";
-import { metricValue, rowRsBenchmark, rowTheme, weaknessScore } from "@/lib/stockRows";
+import { metricValue, rowTheme } from "@/lib/stockRows";
 import { stockUrl } from "@/lib/symbols";
 
 const dateFmt = (value) => value ? dateTime(value) : "-";
@@ -55,108 +53,13 @@ function safePct(value, fallback = 0) {
 // benchmark, y los enseñaba a los tres bajo la etiqueta "RS": por eso salud de
 // mercado decía 88 para un símbolo cuya ficha decía 66. Un dato ausente es
 // preferible a un dato que contradice otra pantalla.
-function rowRs(row = {}) {
-  return canonicalRsValue(row);
-}
 function rowRsDisplay(row = {}) {
   return canonicalRsValue(row);
 }
 function rowRsDisplayLabel() {
   return metricShortLabel("rsGlobalPct");
 }
-function rowWeakness(row = {}) { return weaknessScore(row); }
 function rowObjectiveScore(row = {}) { return metricValue(row, "objectiveScore"); }
-function isNearHigh(row = {}) {
-  return Number.isFinite(row.distance52w) && row.distance52w >= -15;
-}
-function isStage2Like(row = {}) {
-  return row.price > row.sma50 && row.price > row.sma200 && (row.sma200Slope ?? 0) >= 0;
-}
-
-function deteriorationReasons(row = {}) {
-  const reasons = [];
-  if (rowWeakness(row) >= 65) reasons.push("Deterioro alto");
-  // "RS débil" habla del RS que el producto enseña (ranking semanal). "RS
-  // Bench bajo" es OTRA métrica —fuerza frente al benchmark local— y por eso
-  // conserva su propia etiqueta: no se mezclan bajo el mismo nombre.
-  const rsCanonical = canonicalRsValue(row);
-  const rsBenchmark = rowRsBenchmark(row);
-  if (Number.isFinite(rsCanonical) && rsCanonical < 40) reasons.push("RS débil");
-  else if (!Number.isFinite(rsCanonical) && Number.isFinite(rsBenchmark) && rsBenchmark < 45) reasons.push("RS Bench bajo");
-  if (Number.isFinite(row.price) && Number.isFinite(row.sma50) && row.price < row.sma50) reasons.push("Bajo SMA50");
-  if (Number.isFinite(row.price) && Number.isFinite(row.sma200) && row.price < row.sma200) reasons.push("Bajo SMA200");
-  if (Number.isFinite(row.distance52w) && row.distance52w < -30) reasons.push("Lejos de máximos");
-  if (Number.isFinite(row.maxDrawdown63d) && row.maxDrawdown63d > 32) reasons.push("Drawdown elevado");
-  if (Number.isFinite(row.upDownVolRatio) && row.upDownVolRatio < .8) reasons.push("Presion volumen");
-  if (Number.isFinite(row.riskScore) && row.riskScore < 35) reasons.push("Riesgo técnico");
-  if (Number.isFinite(row.speculationRiskScore) && row.speculationRiskScore >= 70) reasons.push("Riesgo especulativo");
-  return reasons;
-}
-
-function summarizeGroups(rows = [], keyFn) {
-  const map = new Map();
-  rows.forEach((row) => {
-    const key = keyFn(row) || "Sin grupo";
-    const bucket = map.get(key) || { name: key, count: 0, rs: 0, rsCount: 0, score: 0, nearHigh: 0, leaders: 0, top: null };
-    const rs = rowRs(row);
-    bucket.count += 1;
-    // Los valores sin RS quedan FUERA del promedio del grupo. Antes entraban
-    // con un 50 inventado, que empujaba la media del grupo hacia el centro y
-    // decidía el orden de esta lista con un número que nadie había calculado.
-    if (Number.isFinite(rs)) {
-      bucket.rs += rs;
-      bucket.rsCount += 1;
-    }
-    const objectiveScore = rowObjectiveScore(row);
-    bucket.score += objectiveScore || 0;
-    if (isNearHigh(row)) bucket.nearHigh += 1;
-    if ((rs || 0) >= 80 || (objectiveScore || 0) >= 75) bucket.leaders += 1;
-    if (!bucket.top || (objectiveScore || 0) > (rowObjectiveScore(bucket.top) || 0)) bucket.top = row;
-    map.set(key, bucket);
-  });
-  return [...map.values()]
-    .map((x) => ({ ...x, rs: x.rsCount ? x.rs / x.rsCount : null, score: x.score / x.count, nearHighPct: (x.nearHigh / x.count) * 100 }))
-    .sort((a, b) => (b.leaders - a.leaders) || ((b.rs ?? -1) - (a.rs ?? -1)) || (b.score - a.score))
-    .slice(0, 8);
-}
-
-function buildScanPulse(scans = []) {
-  const scan = scans[0];
-  const rows = Array.isArray(scan?.rows) ? scan.rows : [];
-  if (!scan || !rows.length) return null;
-  const leaders = rows
-    .filter((row) => (rowRs(row) || 0) >= 80 || (rowObjectiveScore(row) || 0) >= 75 || (isStage2Like(row) && isNearHigh(row)))
-    .sort((a, b) => ((rowRs(b) || 0) - (rowRs(a) || 0)) || ((rowObjectiveScore(b) || 0) - (rowObjectiveScore(a) || 0)))
-    .slice(0, 8);
-  const deterioration = rows
-    .map((row) => ({ ...row, deteriorationReasons: deteriorationReasons(row) }))
-    .filter((row) => row.deteriorationReasons.length)
-    // A igualdad de evidencias manda el RS más bajo. Los valores SIN RS van al
-    // final en vez de colarse en mitad de la lista con un 50 inventado.
-    .sort((a, b) => (b.deteriorationReasons.length - a.deteriorationReasons.length)
-      || ((rowRs(a) ?? Number.POSITIVE_INFINITY) - (rowRs(b) ?? Number.POSITIVE_INFINITY)))
-    .slice(0, 8);
-  const nearHigh = rows.filter(isNearHigh).length;
-  const stage2 = rows.filter(isStage2Like).length;
-  const rsLeader = rows.filter((row) => (canonicalRsValue(row) || 0) >= 80).length;
-  const pressure = rows.filter((row) => deteriorationReasons(row).length >= 2).length;
-  return {
-    scan,
-    rows,
-    count: rows.length,
-    createdAt: scan.createdAt,
-    preset: scan.preset || "-",
-    marketRegime: scan.marketRegime || "sin dato",
-    leaders,
-    deterioration,
-    nearHighPct: rows.length ? (nearHigh / rows.length) * 100 : null,
-    stage2Pct: rows.length ? (stage2 / rows.length) * 100 : null,
-    rsLeaderPct: rows.length ? (rsLeader / rows.length) * 100 : null,
-    pressurePct: rows.length ? (pressure / rows.length) * 100 : null,
-    countries: summarizeGroups(rows, (row) => row.country),
-    themes: summarizeGroups(rows, (row) => rowTheme(row) || row.sector),
-  };
-}
 
 const COVERAGE_UNAVAILABLE = "El estado de cobertura por mercado no está disponible ahora mismo.";
 // Faltaba: la constante se usaba en loadMethodologyHealth pero no existía, así
@@ -402,10 +305,8 @@ function MethodologyDetail({ health, loading }) {
 }
 
 /* ─── Regiones (cards compactas; N1) ───────────────────────────────── */
-// La amplitud por región sale de la agregación por país del escaneo nocturno
-// (/api/market-breadth), no de las filas del navegador: misma cifra para
-// todos los usuarios y con fecha declarada. Las filas del snapshot local solo
-// alimentan la lista de líderes y su recuento, que se etiquetan como tales.
+// Amplitud y filas regionales salen del escaneo nocturno en el servidor
+// (/api/market-breadth y /api/market-leadership): misma población para todos.
 function regionBreadth(breadth, regionCountries, otherCountries, isGlobal) {
   if (!breadth || breadth.error) return null;
   let total = 0;
@@ -485,15 +386,15 @@ function GlobalRegionsPanel({ rows = [], breadth = null }) {
                   : "Sin valores de esta región en el universo del escaneo nocturno."} /></b>}
             <span>Amplitud (SMA50)</span>
           </div>
-          <div className="marketRegionMetric" title={Number.isFinite(avgRs) ? `Media del RS semanal de ${validRs.length} de ${total} valores del snapshot` : ""}>
+          <div className="marketRegionMetric" title={Number.isFinite(avgRs) ? `Media del RS semanal de ${validRs.length} de ${total} valores del escaneo nocturno` : ""}>
             {Number.isFinite(avgRs)
               ? <b>{avgRs.toFixed(0)}</b>
               : <b><MissingValue reason={total
                 ? "Ningún valor de esta región está en el ranking semanal del universo, así que no hay RS que promediar."
-                : "Sin valores de esta región en el último snapshot: no hay RS que promediar."} /></b>}
+                : "Sin valores de esta región en el escaneo nocturno: no hay RS que promediar."} /></b>}
             <span>RS promedio</span>
           </div>
-          <div className="marketRegionMetric"><b>{total}</b><span>En snapshot local</span></div>
+          <div className="marketRegionMetric"><b>{total}</b><span>En escaneo nocturno</span></div>
         </div>
         <div className="marketRegionLeaders">
           {leaders.map((leader) => {
@@ -536,7 +437,7 @@ export default function MarketHealthPage() {
   const [breadth, setBreadth] = useState(null);
   const [news, setNews] = useState(null);
   const [social, setSocial] = useState(null);
-  const [scanPulse, setScanPulse] = useState(null);
+  const [leadership, setLeadership] = useState(null);
   const [coverage, setCoverage] = useState(null);
   const [methodologyHealth, setMethodologyHealth] = useState(null);
   const [coverageLoading, setCoverageLoading] = useState(false);
@@ -544,18 +445,17 @@ export default function MarketHealthPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  function refreshScanPulse() {
-    setScanPulse(buildScanPulse(safeRead(STORAGE_KEYS.scans, [])));
-  }
+  const scanPulse = leadership?.pulse || null;
 
   async function load({ refresh = false } = {}) {
     setLoading(true);
     setError("");
-    refreshScanPulse();
     try {
-      const [marketResult, breadthResult, newsResult, socialResult] = await Promise.allSettled([
+      const leadershipPath = refresh ? "/api/market-leadership?refresh=1" : "/api/market-leadership";
+      const [marketResult, breadthResult, leadershipResult, newsResult, socialResult] = await Promise.allSettled([
         fetchJsonWithTimeout(marketHealthApiPath({ refresh }), 25000),
         fetchJsonWithTimeout("/api/market-breadth", 20000),
+        fetchJsonWithTimeout(leadershipPath, 25000),
         fetchJsonWithTimeout("/api/market-news", 8000),
         fetchJsonWithTimeout("/api/social-sentiment", 8000),
       ]);
@@ -565,6 +465,10 @@ export default function MarketHealthPage() {
       setBreadth(breadthResult.status === "fulfilled"
         ? breadthResult.value
         : { error: userFacingServiceError(breadthResult.reason?.message, "La amplitud del universo no está disponible ahora mismo.") });
+      if (leadershipResult.status === "rejected") logMarketHealthFetchFailure("liderazgo de mercado no disponible", leadershipResult.reason);
+      setLeadership(leadershipResult.status === "fulfilled"
+        ? leadershipResult.value
+        : { error: userFacingServiceError(leadershipResult.reason?.message, "El liderazgo de mercado no está disponible ahora mismo."), pulse: null });
       if (newsResult.status === "rejected") logMarketHealthFetchFailure("titulares no disponibles", newsResult.reason);
       if (socialResult.status === "rejected") logMarketHealthFetchFailure("pulso social no disponible", socialResult.reason);
       setNews(newsResult.status === "fulfilled" ? newsResult.value : { error: userFacingServiceError(newsResult.reason?.message, "Los titulares de mercado no están disponibles ahora mismo."), rows: [] });
@@ -796,10 +700,7 @@ export default function MarketHealthPage() {
           <section className="card">
             <div className="sectionTitle">
               <h2>Liderazgo y fuerza relativa global</h2>
-              {/* Dos poblaciones conviven en estas tarjetas y se declaran: la
-                  amplitud es del escaneo nocturno; los líderes, del snapshot
-                  local del navegador. */}
-              <span className="fine">Amplitud del escaneo nocturno · líderes del snapshot local</span>
+              <span className="fine">Escaneo nocturno de Estados Unidos · amplitud y liderazgo compartidos</span>
             </div>
             <GlobalRegionsPanel rows={scanPulse?.rows || []} breadth={breadth} />
           </section>
@@ -807,7 +708,9 @@ export default function MarketHealthPage() {
           <section className="card">
             <div className="sectionTitle">
               <h2>Leadership pulse</h2>
-              <span className="fine">{scanPulse ? `Último snapshot · ${dateFmt(scanPulse.createdAt)} · ${snapshotDisplayUpdate(scanPulse.scan)}` : "Sin datos guardados"}</span>
+              <span className="fine">{scanPulse
+                ? `Escaneo nocturno · ${dateFmt(scanPulse.createdAt)} · ${scanPulse.count} valores`
+                : (leadership?.error || "Sin escaneo nocturno publicable")}</span>
             </div>
             {scanPulse ? (
               <>
@@ -832,7 +735,7 @@ export default function MarketHealthPage() {
                         </a>
                       );
                     })}
-                    {!scanPulse.leaders.length && <p className="fine">Sin liderazgo claro en el último snapshot.</p>}
+                    {!scanPulse.leaders.length && <p className="fine">Sin liderazgo claro en el escaneo nocturno.</p>}
                   </div>
                   <div className="evidencePanel">
                     <h3>Deterioro a revisar</h3>
@@ -848,7 +751,7 @@ export default function MarketHealthPage() {
                         </a>
                       );
                     })}
-                    {!scanPulse.deterioration.length && <p className="fine">Sin deterioro técnico relevante en el último snapshot.</p>}
+                    {!scanPulse.deterioration.length && <p className="fine">Sin deterioro técnico relevante en el escaneo nocturno.</p>}
                   </div>
                 </div>
                 <div className="marketSectorTapeRow">
@@ -863,7 +766,7 @@ export default function MarketHealthPage() {
                 </div>
               </>
             ) : (
-              <p className="fine">Guarda un snapshot desde el screener para que esta sección muestre liderazgo, concentración por país/tema y deterioro observado.</p>
+              <p className="fine">{leadership?.error || "Todavía no hay escaneo nocturno de Estados Unidos con el que calcular liderazgo, concentración por país/tema y deterioro observado."}</p>
             )}
           </section>
 

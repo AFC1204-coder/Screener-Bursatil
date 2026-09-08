@@ -7,11 +7,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Última sync / HEAD origin polish:** (push tras MH refresh + docs)
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **MH refresh/caché** (Actualizar → `?refresh=1` + `cacheWritten`) · cherry-pick `16abe65`.  
-**Ahora:** idle — siguiente **MH-FILL-3** = `prep`.  
-**Cola:** MH-FILL-3 · MET-7 · resto informe · P2 IPO-F aparcado.  
+**Último cerrado:** **MH-FILL-3** (liderazgo desde servidor).  
+**Ahora:** idle — siguiente **MET-7** (prep).  
+**Cola:** MET-7 · residual ops Mini `:15432` / RPC · resto informe · P2 IPO-F aparcado.  
 **Residual MH (ops):** persistencia `app_settings` falla en local — RPC `upsert_app_setting_newer_wins` no disponible en modo pg local / túnel Mini `:15432` ECONNREFUSED. Código OK; falta Mini arriba.  
-**Descartar:** rama `cursor/forja-estados-cola-f360` (backlog obsoleto HEAD `11d8055`, conflicto PROC-A).  
+**Descartar:** — (rama forja-estados borrada).  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
 
 ### Estados de cola (PROC-A)
@@ -309,7 +309,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MH-FILL-1 | Mercado: misma estructura Pre-fuga/Con fuga que la mesa | **Hecho** · smoke StageStrip · residual caché stale |
 | STAGE-2 | Motivo cuando calificador `n/a` (detail ya existe) | **Hecho** · smoke mesa Dudoso/Con fuga |
 | STAGE-3 | `/review` «Etapa» = Weinstein; Trend Template con otro nombre | **Hecho** · `2cb8bb7` · smoke AVAH Etapa 2 · Con fuga |
-| MH-FILL-3 | Liderazgo Mercado desde servidor (no solo localStorage) | **prep** · ticket ampliado |
+| MH-FILL-3 | Liderazgo Mercado desde servidor (no solo localStorage) | **Hecho** · `/api/market-leadership` · smoke sin scans local |
 | MH refresh/caché | Actualizar + `?refresh=1` + `cacheWritten` | **Hecho** · `16abe65` · smoke Actualizar→refresh=1 · residual Mini RPC |
 | VCP-0 | Auditoría E1/E2 semanal | **Cerrado** fae1880 · ADR aceptado |
 | VCP | Detector / etiquetado research | **Bridge cerrado** 2026-09-02 · flag UNIFIED |

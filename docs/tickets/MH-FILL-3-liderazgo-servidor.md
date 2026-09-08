@@ -1,6 +1,6 @@
 # MH-FILL-3 — Liderazgo de Mercado desde servidor
 
-**Estado:** prep  
+**Estado:** Activo  
 **Prioridad:** P1  
 **Rama:** `codex/statsedge-ui-polish` (o CA en rama propia si polish ocupado)  
 **Modelo:** Composer  
@@ -38,7 +38,7 @@ En `/market-health`, la mitad «dónde está el liderazgo» depende del navegado
 | **STAGE-4** | Volumen de fuga junto al calificador |
 | **weeklyStage / scoring de régimen** | No retocar reglas de etapa ni market score |
 | **Merge polish / residual caché MH** | **Hecho** `16abe65` (Actualizar→`?refresh=1`); persistencia sigue ops Mini/RPC |
-| **Implementación en este PR** | Solo prep de documentación |
+| **Implementación en este PR** | Este ticket ya está **activo** para programación |
 
 ## Referencias de código (HEAD verificado)
 
