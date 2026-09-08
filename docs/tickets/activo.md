@@ -1,9 +1,9 @@
-# Ticket activo — idle (STAGE-3 cerrado)
+# Ticket activo — idle (MH refresh aterrizado)
 
 **Estado:** idle orquestador  
-**Rama:** `codex/statsedge-ui-polish` · HEAD origin `2cb8bb7`  
-**Último cerrado:** STAGE-3 (`/review` Etapa = Weinstein; Estructura diaria aparte) · smoke AVAH  
-**Siguiente:** **MH-FILL-3** — [`docs/tickets/MH-FILL-3-liderazgo-servidor.md`](MH-FILL-3-liderazgo-servidor.md) (**prep** — ticket ampliado; sin activar programación)  
-**Cola:** MET-7 · residual MH PR #18 (`cursor/market-health-refresh-cache-1178`, smoke orquestador pendiente) · resto informe · P2 IPO-F aparcado
+**Rama:** `codex/statsedge-ui-polish`  
+**Último cerrado:** MH refresh/caché `16abe65` (Actualizar → `?refresh=1`) · docs MH-FILL-3 prep `a808b0c`  
+**Siguiente:** **MH-FILL-3** — [`docs/tickets/MH-FILL-3-liderazgo-servidor.md`](MH-FILL-3-liderazgo-servidor.md) (**prep**)  
+**Cola:** MET-7 · residual ops Mini `:15432` / RPC upsert · P2 IPO-F aparcado
 
-Sin ticket de programación activo. Dueño/orquestador activa MH-FILL-3 al volver (pegar prompt del ticket en Agent chat nuevo).
+Sin ticket de programación activo. Activar MH-FILL-3 cuando toque (prompt en el ticket).

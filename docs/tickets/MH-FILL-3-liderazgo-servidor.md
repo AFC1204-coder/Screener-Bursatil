@@ -37,7 +37,7 @@ En `/market-health`, la mitad «dónde está el liderazgo» depende del navegado
 | **MH-FILL-5** | Régimen regional (índice de referencia por mercado, veredicto multi-región) |
 | **STAGE-4** | Volumen de fuga junto al calificador |
 | **weeklyStage / scoring de régimen** | No retocar reglas de etapa ni market score |
-| **Merge polish / residual caché MH** | Ticket aparte (PR #18 refresh/`?refresh=1`) |
+| **Merge polish / residual caché MH** | **Hecho** `16abe65` (Actualizar→`?refresh=1`); persistencia sigue ops Mini/RPC |
 | **Implementación en este PR** | Solo prep de documentación |
 
 ## Referencias de código (HEAD verificado)

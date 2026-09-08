@@ -4,13 +4,14 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-08 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `2cb8bb7` (STAGE-3 cerrado · smoke AVAH)
+**Última sync / HEAD origin polish:** (push tras MH refresh + docs)
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **STAGE-3** (`/review` Etapa Weinstein) · `2cb8bb7`.  
-**Ahora:** **MH-FILL-3** = `prep` (`docs/tickets/MH-FILL-3-liderazgo-servidor.md`).  
-**Cola:** MH-FILL-3 · MET-7 · residual MH PR #18 (`cursor/market-health-refresh-cache-1178`, smoke orquestador pendiente; base antigua `286225a` — no merge sin smoke) · resto informe · P2 IPO-F aparcado.  
-**Residual MH (caché Actualizar):** `upsert` caché market-health no deja el payload nuevo (GET sin refresh sigue Aug-17); botón Actualizar no usa `?refresh=1` · estado **`PR`** (no «en polish»).  
+**Último cerrado:** **MH refresh/caché** (Actualizar → `?refresh=1` + `cacheWritten`) · cherry-pick `16abe65`.  
+**Ahora:** idle — siguiente **MH-FILL-3** = `prep`.  
+**Cola:** MH-FILL-3 · MET-7 · resto informe · P2 IPO-F aparcado.  
+**Residual MH (ops):** persistencia `app_settings` falla en local — RPC `upsert_app_setting_newer_wins` no disponible en modo pg local / túnel Mini `:15432` ECONNREFUSED. Código OK; falta Mini arriba.  
+**Descartar:** rama `cursor/forja-estados-cola-f360` (backlog obsoleto HEAD `11d8055`, conflicto PROC-A).  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
 
 ### Estados de cola (PROC-A)
@@ -309,7 +310,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | STAGE-2 | Motivo cuando calificador `n/a` (detail ya existe) | **Hecho** · smoke mesa Dudoso/Con fuga |
 | STAGE-3 | `/review` «Etapa» = Weinstein; Trend Template con otro nombre | **Hecho** · `2cb8bb7` · smoke AVAH Etapa 2 · Con fuga |
 | MH-FILL-3 | Liderazgo Mercado desde servidor (no solo localStorage) | **prep** · ticket ampliado |
-| MH refresh/caché | Actualizar + `?refresh=1` + persistencia caché market-health | **PR** · #18 · `cursor/market-health-refresh-cache-1178` · base `286225a` · smoke orquestador pendiente |
+| MH refresh/caché | Actualizar + `?refresh=1` + `cacheWritten` | **Hecho** · `16abe65` · smoke Actualizar→refresh=1 · residual Mini RPC |
 | VCP-0 | Auditoría E1/E2 semanal | **Cerrado** fae1880 · ADR aceptado |
 | VCP | Detector / etiquetado research | **Bridge cerrado** 2026-09-02 · flag UNIFIED |
 
