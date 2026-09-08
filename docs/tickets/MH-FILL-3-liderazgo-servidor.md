@@ -90,7 +90,7 @@ Objetivo:
 
 Fuera de alcance:
 - MH-FILL-5 (régimen regional) · STAGE-4 · weeklyStage/scoring · merge polish ·
-  fix caché refresh (PR #18 aparte).
+  fix caché refresh (ya en polish `16abe65`).
 
 Verificación orquestador:
 - Smoke /market-health con localStorage vacío y con snapshot presente.
