@@ -1,4 +1,5 @@
 import { fetchYahooChart } from "@/lib/marketData";
+import { settingSyncSummary } from "@/app/api/settings/route";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
 import { weeklyStageForBars } from "@/lib/weeklyStage";
 import { weeklyStageStructureFields, weeklyStageStructureForBars } from "@/lib/weeklyStageStructure";
@@ -69,6 +70,8 @@ function annotateCache(payload = {}, cache = {}) {
       cacheAgeHours: ageHours(cachedAt),
       cacheMaxAgeHours: cache.maxAgeHours ?? DEFAULT_MARKET_HEALTH_MAX_AGE_HOURS,
       fallbackError: cache.fallbackError || "",
+      ...(cache.cacheWritten !== undefined ? { cacheWritten: Boolean(cache.cacheWritten) } : {}),
+      ...(cache.cacheWriteError ? { cacheWriteError: cache.cacheWriteError } : {}),
     },
   };
 }
@@ -162,12 +165,14 @@ async function readMarketHealthCache(options = {}) {
   }
 }
 
-async function writeMarketHealthCache(payload = {}) {
+export async function writeMarketHealthCache(payload = {}) {
   const config = supabaseConfig();
-  if (!config.configured || !payload?.generatedAt) return { written: false };
+  if (!config.configured || !payload?.generatedAt) {
+    return { written: false, error: "market health cache write skipped (persistence disabled or empty payload)" };
+  }
   const cachedAt = new Date().toISOString();
   try {
-    await supabaseRpc("upsert_app_setting_newer_wins", {
+    const rows = await supabaseRpc("upsert_app_setting_newer_wins", {
       p_owner_id: config.ownerId,
       p_setting_type: MARKET_HEALTH_CACHE_TYPE,
       p_setting_key: MARKET_HEALTH_CACHE_KEY,
@@ -178,6 +183,16 @@ async function writeMarketHealthCache(payload = {}) {
       },
       p_updated_at: cachedAt,
     });
+    const normalizedRows = Array.isArray(rows) ? rows : rows ? [rows] : [];
+    const summary = settingSyncSummary(normalizedRows, { updated_at: cachedAt });
+    if (!summary.saved) {
+      return {
+        written: false,
+        error: summary.skippedStale
+          ? "market health cache write skipped (existing row is newer)"
+          : "market health cache write returned no saved row",
+      };
+    }
     return { written: true, cachedAt };
   } catch (error) {
     return { written: false, error: error.message || "market health cache write failed" };
@@ -556,8 +571,10 @@ export async function GET(req) {
     return Response.json(annotateCache(payload, {
       hit: false,
       stale: false,
-      cachedAt: cacheWrite.cachedAt || payload.generatedAt,
+      cachedAt: cacheWrite.written ? cacheWrite.cachedAt : payload.generatedAt,
       maxAgeHours: Number.isFinite(maxAgeHours) ? maxAgeHours : DEFAULT_MARKET_HEALTH_MAX_AGE_HOURS,
+      cacheWritten: cacheWrite.written,
+      cacheWriteError: cacheWrite.error || "",
     }));
   } catch (error) {
     if (cached?.payload) {

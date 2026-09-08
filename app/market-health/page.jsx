@@ -7,7 +7,7 @@ import UniverseBreadthCard from "./UniverseBreadth";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
-import { fetchJsonWithTimeout, logMarketHealthFetchFailure } from "@/lib/marketHealthFetch";
+import { fetchJsonWithTimeout, logMarketHealthFetchFailure, marketHealthApiPath } from "@/lib/marketHealthFetch";
 import { dateShort, dateTime, num, pct, pctShare } from "@/lib/formatters";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
@@ -548,13 +548,13 @@ export default function MarketHealthPage() {
     setScanPulse(buildScanPulse(safeRead(STORAGE_KEYS.scans, [])));
   }
 
-  async function load() {
+  async function load({ refresh = false } = {}) {
     setLoading(true);
     setError("");
     refreshScanPulse();
     try {
       const [marketResult, breadthResult, newsResult, socialResult] = await Promise.allSettled([
-        fetchJsonWithTimeout("/api/market-health", 25000),
+        fetchJsonWithTimeout(marketHealthApiPath({ refresh }), 25000),
         fetchJsonWithTimeout("/api/market-breadth", 20000),
         fetchJsonWithTimeout("/api/market-news", 8000),
         fetchJsonWithTimeout("/api/social-sentiment", 8000),
@@ -616,7 +616,7 @@ export default function MarketHealthPage() {
   }
 
   function refreshAll() {
-    load();
+    load({ refresh: true });
     loadMethodologyHealth();
     loadCoverage();
   }
