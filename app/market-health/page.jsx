@@ -618,9 +618,16 @@ export default function MarketHealthPage() {
                 <span>Sectores en etapa 2</span>
                 <span className="marketRegimeKpiMeter"><i style={{ width: `${Math.min(100, Math.max(0, data.weinsteinTape?.pctSectorsStage2 ?? 0))}%` }} /></span>
               </div>
-              <div className="marketRegimeKpi">
-                <b>{Number.isFinite(data.weinsteinTape?.distributionDays20Avg) && Number.isFinite(data.weinsteinTape?.accumulationDays20Avg) ? `${num(data.weinsteinTape.distributionDays20Avg, 1)}/${num(data.weinsteinTape.accumulationDays20Avg, 1)}` : "—"}</b>
-                <span>Dist/Acc 20d</span>
+              <div
+                className="marketRegimeKpi"
+                title={Number.isFinite(data.weinsteinTape?.indexDistributionDays20) && Number.isFinite(data.weinsteinTape?.indexAccumulationDays20)
+                  ? `Días de distribución y acumulación en las últimas 20 sesiones sobre ${data.weinsteinTape?.indexSymbol || "SPY"} (volumeTape).`
+                  : ""}
+              >
+                <b>{Number.isFinite(data.weinsteinTape?.indexDistributionDays20) && Number.isFinite(data.weinsteinTape?.indexAccumulationDays20)
+                  ? `${data.weinsteinTape.indexDistributionDays20}/${data.weinsteinTape.indexAccumulationDays20}`
+                  : "—"}</b>
+                <span>Dist/Acc 20d ({data.weinsteinTape?.indexSymbol || "SPY"})</span>
               </div>
             </div>
             {participationSummary && (
@@ -653,6 +660,15 @@ export default function MarketHealthPage() {
                     análisis 2026-08-16 (B.1). Misma forma que su gemela de
                     «Amplitud sectorial». */}
                 <div className="marketTapeKpi"><b>{data.sectorSummary?.above50 ?? "—"}/{data.sectorSummary?.count ?? "—"}</b><span>Sobre SMA50</span></div>
+                <div
+                  className="marketTapeKpi"
+                  title="Promedio de días de distribución y acumulación en 20 sesiones entre los 11 ETFs sectoriales SPDR (volumeTape)."
+                >
+                  <b>{Number.isFinite(data.weinsteinTape?.distributionDays20Avg) && Number.isFinite(data.weinsteinTape?.accumulationDays20Avg)
+                    ? `${num(data.weinsteinTape.distributionDays20Avg, 1)}/${num(data.weinsteinTape.accumulationDays20Avg, 1)}`
+                    : "—"}</b>
+                  <span>Presión sectorial Dist/Acc</span>
+                </div>
               </div>
               <div className="marketPulseEvidence">
                 <div className="evidencePanel">

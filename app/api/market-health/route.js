@@ -14,6 +14,9 @@ const MARKET_HEALTH_CACHE_READ_TIMEOUT_MS = Number(process.env.MARKET_HEALTH_CAC
 // los ETF se descargan y calculan como cualquier otro valor del sistema, y el
 // nocturno puede acumularles histórico en daily_bars. Decisión 2026-08-16.
 // QQQ replica el Nasdaq-100 (no el Composite) y DIA el Dow: el nombre lo dice.
+// Índice de referencia para Dist/Acc del hero y RS sectorial (mismo SPY que benchmark).
+const REFERENCE_INDEX_SYMBOL = "SPY";
+
 const INDEXES = [
   { symbol: "SPY", name: "S&P 500", weight: 30 },
   { symbol: "QQQ", name: "Nasdaq 100", weight: 30 },
@@ -413,11 +416,15 @@ function sectorSummary(sectors = []) {
   };
 }
 
-function weinsteinTape(indexes = [], sectors = []) {
+export function weinsteinTape(indexes = [], sectors = []) {
   const indexAbove30w = indexes.filter((x) => x.priceAboveSlowMa === true).length;
   const sectorAbove30w = sectors.filter((x) => x.priceAboveSlowMa === true).length;
   const sectorStage2 = sectors.filter((x) => x.stageState === "stage2").length;
   const sectorStage4 = sectors.filter((x) => x.stageState === "stage4").length;
+  const referenceIndex = indexes.find((x) => x.symbol === REFERENCE_INDEX_SYMBOL) || indexes[0] || null;
+  const indexSymbol = referenceIndex?.symbol || REFERENCE_INDEX_SYMBOL;
+  const indexDistributionDays20 = referenceIndex?.distributionDays20 ?? null;
+  const indexAccumulationDays20 = referenceIndex?.accumulationDays20 ?? null;
   const distributionAvg = avg(sectors.map((x) => x.distributionDays20).filter(Number.isFinite));
   const accumulationAvg = avg(sectors.map((x) => x.accumulationDays20).filter(Number.isFinite));
   const indexPct = pctPart(indexAbove30w, indexes.length);
@@ -464,6 +471,9 @@ function weinsteinTape(indexes = [], sectors = []) {
     pctSectorsStage2: stage2Pct,
     sectorsStage4: sectorStage4,
     pctSectorsStage4: stage4Pct,
+    indexSymbol,
+    indexDistributionDays20,
+    indexAccumulationDays20,
     distributionDays20Avg: distributionAvg,
     accumulationDays20Avg: accumulationAvg,
     offensiveStage2,

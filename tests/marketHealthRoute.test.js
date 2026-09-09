@@ -89,7 +89,7 @@ vi.mock("@/lib/supabaseServer", async (importOriginal) => {
   };
 });
 
-const { GET, writeMarketHealthCache } = await import("@/app/api/market-health/route");
+const { GET, writeMarketHealthCache, weinsteinTape } = await import("@/app/api/market-health/route");
 
 function getRequest(extra = "") {
   return new Request(`https://statsedge.test/api/market-health${extra}`);
@@ -133,6 +133,10 @@ describe("GET /api/market-health · refresh=1", () => {
     expect(refreshBody.indexes[0].lastDate).toBe("2026-09-05");
     expect(refreshBody.freshness.cacheWritten).toBe(true);
     expect(refreshBody.freshness.cacheWriteError).toBeFalsy();
+    const spyRow = refreshBody.indexes.find((row) => row.symbol === "SPY");
+    expect(refreshBody.weinsteinTape.indexSymbol).toBe("SPY");
+    expect(refreshBody.weinsteinTape.indexDistributionDays20).toBe(spyRow.distributionDays20);
+    expect(refreshBody.weinsteinTape.indexAccumulationDays20).toBe(spyRow.accumulationDays20);
     expect(rpcCalls).toHaveLength(1);
     expect(cacheRow.value.payload.indexes[0].lastDate).toBe("2026-09-05");
 
@@ -148,9 +152,11 @@ describe("GET /api/market-health · refresh=1", () => {
 
     vi.mocked(supabaseRpc).mockImplementationOnce(async (name, payload = {}) => {
       rpcCalls.push({ name, payload });
+      // Debe ser estrictamente posterior a p_updated_at (Date.now) para que
+      // settingSyncSummary marque skippedStale — no usar una fecha de calendario fija.
       return [{
         ...cacheRow,
-        updated_at: "2026-09-09T12:00:00.000Z",
+        updated_at: "2099-01-01T00:00:00.000Z",
       }];
     });
 
@@ -175,5 +181,34 @@ describe("writeMarketHealthCache", () => {
     expect(ok.written).toBe(true);
     expect(ok.cachedAt).toBeTruthy();
     expect(cacheRow.value.payload.generatedAt).toBe(payload.generatedAt);
+  });
+});
+
+describe("weinsteinTape · Dist/Acc honestos", () => {
+  it("expone conteo del índice de referencia (SPY) separado del promedio sectorial", () => {
+    const indexes = [
+      { symbol: "SPY", distributionDays20: 4, accumulationDays20: 2 },
+      { symbol: "QQQ", distributionDays20: 1, accumulationDays20: 5 },
+    ];
+    const sectors = [
+      { symbol: "XLK", distributionDays20: 6, accumulationDays20: 1 },
+      { symbol: "XLF", distributionDays20: 2, accumulationDays20: 3 },
+    ];
+    const tape = weinsteinTape(indexes, sectors);
+
+    expect(tape.indexSymbol).toBe("SPY");
+    expect(tape.indexDistributionDays20).toBe(4);
+    expect(tape.indexAccumulationDays20).toBe(2);
+    expect(tape.distributionDays20Avg).toBe(4);
+    expect(tape.accumulationDays20Avg).toBe(2);
+  });
+
+  it("cae al primer índice si SPY no está en la muestra", () => {
+    const indexes = [{ symbol: "QQQ", distributionDays20: 3, accumulationDays20: 7 }];
+    const tape = weinsteinTape(indexes, []);
+
+    expect(tape.indexSymbol).toBe("QQQ");
+    expect(tape.indexDistributionDays20).toBe(3);
+    expect(tape.indexAccumulationDays20).toBe(7);
   });
 });
