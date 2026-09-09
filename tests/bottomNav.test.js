@@ -6,4 +6,10 @@ describe("BottomNav NAV_ITEMS", () => {
     expect(NAV_ITEMS.some((item) => item.href === "/ipo-radar")).toBe(false);
     expect(NAV_ITEMS.some((item) => /IPO/i.test(item.label))).toBe(false);
   });
+
+  it("incluye Metodología en nav principal", () => {
+    const item = NAV_ITEMS.find((entry) => entry.href === "/metodologia");
+    expect(item).toBeTruthy();
+    expect(item.label).toBe("Metodología");
+  });
 });
