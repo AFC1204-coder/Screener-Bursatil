@@ -68,9 +68,9 @@ beforeEach(() => {
 describe("buildScanPulse · agregado puro", () => {
   it("calcula KPIs y listas de liderazgo/deterioro", () => {
     const rows = [
-      leadershipRow({ symbol: "AAA", weeklyRsRating: 90, objectiveScore: 85 }),
+      leadershipRow({ symbol: "AAA", weeklyRsRating: 90, objectiveScore: 85, failedBreakout: true }),
       leadershipRow({ symbol: "BBB", weeklyRsRating: 35, weaknessScore: 80, price: 80, sma50: 100, sma200: 95 }),
-      leadershipRow({ symbol: "CCC", weeklyRsRating: 82, distance52w: -20 }),
+      leadershipRow({ symbol: "CCC", weeklyRsRating: 82, distance52w: -20, failedBreakout: false }),
     ];
     const pulse = buildScanPulse({ createdAt: "2026-09-08T03:00:00.000Z", preset: "materialized-cache", marketRegime: "ok" }, rows);
 
@@ -80,6 +80,19 @@ describe("buildScanPulse · agregado puro", () => {
     expect(pulse.deterioration.map((row) => row.symbol)).toContain("BBB");
     expect(pulse.countries[0].name).toBe("US");
     expect(pulse.themes.length).toBeGreaterThan(0);
+    expect(pulse.leadersCount).toBeGreaterThan(0);
+    expect(pulse.leadersFailedBreakoutCount).toBe(1);
+    expect(pulse.leadersFailedBreakoutPct).toBeCloseTo((1 / pulse.leadersCount) * 100, 5);
+  });
+
+  it("fugas fallidas entre líderes: 0% si ningún líder tiene failedBreakout", () => {
+    const rows = [
+      leadershipRow({ symbol: "AAA", weeklyRsRating: 91, failedBreakout: false }),
+      leadershipRow({ symbol: "BBB", weeklyRsRating: 88, failedBreakout: false }),
+    ];
+    const pulse = buildScanPulse({ createdAt: "2026-09-08T03:00:00.000Z" }, rows);
+    expect(pulse.leadersFailedBreakoutCount).toBe(0);
+    expect(pulse.leadersFailedBreakoutPct).toBe(0);
   });
 
   it("devuelve null sin filas", () => {

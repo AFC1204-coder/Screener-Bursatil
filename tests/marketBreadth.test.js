@@ -24,6 +24,7 @@ function row(overrides = {}) {
     extSma50: 5,
     sma200Slope: 1,
     distance52w: -4,
+    lowAdvance52w: 40,
     upDownVolRatio: 1.2,
     lastDate: "2026-08-14",
     ...overrides,
@@ -37,10 +38,10 @@ describe("aggregateUniverseBreadth", () => {
       // Etapa 1 tentativa: el precio ha recuperado su media de 30 semanas
       // pero la media sigue cayendo. Está POR ENCIMA de la media, y la
       // etiqueta de etapa ya no lo dice — por eso above30w lee el booleano.
-      row({ symbol: "BBB", stage: "stage1", priceAboveSlowMa: true, extSma50: -2, sma200Slope: -1, distance52w: -0.5, upDownVolRatio: 0.8 }),
-      row({ symbol: "CCC", stage: "stage4", priceAboveSlowMa: false, extSma50: -30, sma200Slope: -2, distance52w: -45, upDownVolRatio: 0.5 }),
+      row({ symbol: "BBB", stage: "stage1", priceAboveSlowMa: true, extSma50: -2, sma200Slope: -1, distance52w: -0.5, lowAdvance52w: 55, upDownVolRatio: 0.8 }),
+      row({ symbol: "CCC", stage: "stage4", priceAboveSlowMa: false, extSma50: -30, sma200Slope: -2, distance52w: -45, lowAdvance52w: 0.5, upDownVolRatio: 0.5 }),
       // Etapa 3 tentativa: el precio ha perdido la media, la media aún sube.
-      row({ symbol: "DDD", stage: "stage3", priceAboveSlowMa: false, extSma50: 0, distance52w: -31 }),
+      row({ symbol: "DDD", stage: "stage3", priceAboveSlowMa: false, extSma50: 0, distance52w: -31, lowAdvance52w: 12 }),
     ];
     const breadth = aggregateUniverseBreadth(rows);
     expect(breadth.population).toBe(4);
@@ -56,6 +57,9 @@ describe("aggregateUniverseBreadth", () => {
     expect(byKey.aboveSma50.count).toBe(2);
     expect(byKey.sma200Up.count).toBe(2);
     expect(byKey.nearHigh52w.count).toBe(1);
+    expect(byKey.nearLow52w.count).toBe(1);
+    expect(byKey.nearLow52w.label).toMatch(/Nuevos mínimos/);
+    expect(byKey.nearHigh52w.label).toMatch(/Nuevos máximos/);
     expect(byKey.deepBelowHigh52w.count).toBe(2);
     // AAA y DDD llevan ratio 1.2 (DDD hereda el del fixture): dos sobre 1.
     expect(byKey.upVolume.count).toBe(2);
@@ -77,6 +81,18 @@ describe("aggregateUniverseBreadth", () => {
     expect(sma200.reason).toContain(`${BREADTH_MIN_COVERAGE_PCT}%`);
     // Los demás indicadores, con cobertura completa, siguen disponibles.
     expect(breadth.indicators.find((item) => item.key === "aboveSma50").available).toBe(true);
+  });
+
+  it("declara ausente nearLow52w si lowAdvance52w no cubre el umbral", () => {
+    const rows = Array.from({ length: 10 }, (_, index) => row({
+      symbol: `S${index}`,
+      lowAdvance52w: index < 3 ? 0.4 : null,
+    }));
+    const breadth = aggregateUniverseBreadth(rows);
+    const nearLow = breadth.indicators.find((item) => item.key === "nearLow52w");
+    expect(nearLow.available).toBe(false);
+    expect(nearLow.count).toBe(null);
+    expect(nearLow.reason).toContain(`${BREADTH_MIN_COVERAGE_PCT}%`);
   });
 
   it("declara ausente la distribución por etapas si la etapa semanal no cubre", () => {

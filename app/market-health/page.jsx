@@ -734,7 +734,15 @@ export default function MarketHealthPage() {
                   <div className="marketPulseKpi"><b>{pctShare(scanPulse.rsLeaderPct)}</b><span>{metricShortLabel("rsGlobalPct")} ≥ 80</span></div>
                   <div className="marketPulseKpi"><b>{pctShare(scanPulse.nearHighPct)}</b><span>Cerca máximos 52s</span></div>
                   <div className="marketPulseKpi"><b>{pctShare(scanPulse.pressurePct)}</b><span>Deterioro 2+</span></div>
-                  <div className="marketPulseKpi"><b>{num(data.sectorSummary?.avgScore)}</b><span>Score medio sectorial</span></div>
+                  <div
+                    className="marketPulseKpi"
+                    title={Number.isFinite(scanPulse.leadersFailedBreakoutPct)
+                      ? `${num(scanPulse.leadersFailedBreakoutCount)} de ${num(scanPulse.leadersCount)} líderes con failedBreakout (pivote perdido tras superarlo).`
+                      : "Sin líderes en el escaneo para medir fugas fallidas."}
+                  >
+                    <b>{Number.isFinite(scanPulse.leadersFailedBreakoutPct) ? pctShare(scanPulse.leadersFailedBreakoutPct) : "—"}</b>
+                    <span>Fugas fallidas (líderes)</span>
+                  </div>
                 </div>
                 <div className="marketPulseEvidence">
                   <div className="evidencePanel">
