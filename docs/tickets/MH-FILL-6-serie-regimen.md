@@ -6,7 +6,7 @@
 **Modelo:** Composer  
 **Origen:** `docs/analisis-criterio-libros-etapas-mercado-2026-09-08.md` G7 / MH-FILL-6  
 **Tipo:** market-health · historia del régimen US · persistencia app_settings  
-**Cierre:** smoke «Qué cambió» vacío honesto + chips FILL-5 · tests/vfc OK  
+**Cierre:** `3e7d7e0` · smoke «Qué cambió» vacío honesto + chips FILL-5 · tests/vfc OK  
 **Depende de:** FILL-1…5 cerrados; **no** necesita decisión de mapa regional nueva
 
 ## Problema
