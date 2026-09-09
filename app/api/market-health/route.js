@@ -37,6 +37,12 @@ const SECTOR_ETFS = [
 ];
 
 function avg(arr) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null; }
+function weightedMetric(items = [], valueKey, weightKey = "weight") {
+  const scored = items.filter((item) => Number.isFinite(item?.[valueKey]));
+  const totalWeight = scored.reduce((sum, item) => sum + (item?.[weightKey] || 0), 0);
+  if (!totalWeight) return null;
+  return scored.reduce((sum, item) => sum + item[valueKey] * (item[weightKey] || 0), 0) / totalWeight;
+}
 function sma(bars, n, offset = 0) { return bars.length >= n + offset ? avg(bars.slice(offset, offset + n).map((x) => x.close)) : null; }
 function perf(bars, n) { return bars.length > n && bars[0].close && bars[n].close ? ((bars[0].close / bars[n].close) - 1) * 100 : null; }
 function pctPart(count, total) { return total ? count / total * 100 : null; }
@@ -413,13 +419,18 @@ function sectorSummary(sectors = []) {
   };
 }
 
-function weinsteinTape(indexes = [], sectors = []) {
+export function weinsteinTape(indexes = [], sectors = []) {
   const indexAbove30w = indexes.filter((x) => x.priceAboveSlowMa === true).length;
   const sectorAbove30w = sectors.filter((x) => x.priceAboveSlowMa === true).length;
   const sectorStage2 = sectors.filter((x) => x.stageState === "stage2").length;
   const sectorStage4 = sectors.filter((x) => x.stageState === "stage4").length;
-  const distributionAvg = avg(sectors.map((x) => x.distributionDays20).filter(Number.isFinite));
-  const accumulationAvg = avg(sectors.map((x) => x.accumulationDays20).filter(Number.isFinite));
+  // Hero KPI: conteo sobre índices (misma ventana de 20 sesiones que la tabla
+  // de auditoría), ponderado como el market score. El promedio de los 11 SPDR
+  // es un proxy distinto y vive aparte — antes salía aquí con el mismo nombre.
+  const distributionAvg = weightedMetric(indexes, "distributionDays20");
+  const accumulationAvg = weightedMetric(indexes, "accumulationDays20");
+  const sectorDistributionAvg = avg(sectors.map((x) => x.distributionDays20).filter(Number.isFinite));
+  const sectorAccumulationAvg = avg(sectors.map((x) => x.accumulationDays20).filter(Number.isFinite));
   const indexPct = pctPart(indexAbove30w, indexes.length);
   const sectorPct = pctPart(sectorAbove30w, sectors.length);
   const stage2Pct = pctPart(sectorStage2, sectors.length);
@@ -442,14 +453,14 @@ function weinsteinTape(indexes = [], sectors = []) {
   if (Number.isFinite(indexPct) && Number.isFinite(stage2Pct) && indexPct < 50 && stage2Pct >= 35) {
     divergences.push("Sectores en Etapa 2 mejoran antes que los índices principales.");
   }
-  if (Number.isFinite(distributionAvg) && Number.isFinite(accumulationAvg) && distributionAvg >= accumulationAvg + 2) {
+  if (Number.isFinite(sectorDistributionAvg) && Number.isFinite(sectorAccumulationAvg) && sectorDistributionAvg >= sectorAccumulationAvg + 2) {
     divergences.push("Presión de distribución supera acumulación en sectores.");
   }
   if (defensiveStage2 > offensiveStage2 && defensiveStage2 >= 2) {
     divergences.push("Liderazgo defensivo por encima del liderazgo ofensivo.");
   }
   let label = "Lectura mixta";
-  if ((indexPct ?? 0) >= 60 && (stage2Pct ?? 0) >= 40 && (distributionAvg ?? 0) <= 3) label = "Confirmación interna positiva";
+  if ((indexPct ?? 0) >= 60 && (stage2Pct ?? 0) >= 40 && (sectorDistributionAvg ?? 0) <= 3) label = "Confirmación interna positiva";
   else if ((indexPct ?? 0) >= 50 && (stage2Pct ?? 0) >= 25) label = "Mejora selectiva";
   else if ((sectorPct ?? 0) < 40 || (stage4Pct ?? 0) >= 35) label = "Deterioro interno";
   return {
@@ -466,6 +477,8 @@ function weinsteinTape(indexes = [], sectors = []) {
     pctSectorsStage4: stage4Pct,
     distributionDays20Avg: distributionAvg,
     accumulationDays20Avg: accumulationAvg,
+    sectorDistributionDays20Avg: sectorDistributionAvg,
+    sectorAccumulationDays20Avg: sectorAccumulationAvg,
     offensiveStage2,
     defensiveStage2,
     leadingSectors: leadingSectors.map((x) => ({ symbol: x.symbol, name: x.name, score: x.weinsteinScore, rs1m: x.rs1m, rs3m: x.rs3m })),
@@ -475,7 +488,8 @@ function weinsteinTape(indexes = [], sectors = []) {
       "Índices principales respecto a MM30 semanas",
       "Porcentaje de sectores sobre MM30 semanas",
       "Sectores en etapa 2 / etapa 4",
-      "Días de distribución y acumulación en 20 sesiones",
+      "Días de distribución y acumulación en índices (20 sesiones)",
+      "Presión sectorial: promedio Dist/Acc en ETFs SPDR",
       "Divergencias entre índices, sectores y tipo de liderazgo",
     ],
   };
