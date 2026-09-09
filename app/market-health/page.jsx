@@ -618,9 +618,12 @@ export default function MarketHealthPage() {
                 <span>Sectores en etapa 2</span>
                 <span className="marketRegimeKpiMeter"><i style={{ width: `${Math.min(100, Math.max(0, data.weinsteinTape?.pctSectorsStage2 ?? 0))}%` }} /></span>
               </div>
-              <div className="marketRegimeKpi">
+              <div
+                className="marketRegimeKpi"
+                title="Días de distribución/acumulación en las últimas 20 sesiones sobre los índices principales (SPY, QQQ, IWM, DIA, ACWI), media ponderada."
+              >
                 <b>{Number.isFinite(data.weinsteinTape?.distributionDays20Avg) && Number.isFinite(data.weinsteinTape?.accumulationDays20Avg) ? `${num(data.weinsteinTape.distributionDays20Avg, 1)}/${num(data.weinsteinTape.accumulationDays20Avg, 1)}` : "—"}</b>
-                <span>Dist/Acc 20d</span>
+                <span>Dist/Acc índices 20d</span>
               </div>
             </div>
             {participationSummary && (
@@ -653,6 +656,13 @@ export default function MarketHealthPage() {
                     análisis 2026-08-16 (B.1). Misma forma que su gemela de
                     «Amplitud sectorial». */}
                 <div className="marketTapeKpi"><b>{data.sectorSummary?.above50 ?? "—"}/{data.sectorSummary?.count ?? "—"}</b><span>Sobre SMA50</span></div>
+                <div
+                  className="marketTapeKpi"
+                  title="Promedio de días de distribución/acumulación en las últimas 20 sesiones sobre los 11 ETFs sectoriales SPDR."
+                >
+                  <b>{Number.isFinite(data.weinsteinTape?.sectorDistributionDays20Avg) && Number.isFinite(data.weinsteinTape?.sectorAccumulationDays20Avg) ? `${num(data.weinsteinTape.sectorDistributionDays20Avg, 1)}/${num(data.weinsteinTape.sectorAccumulationDays20Avg, 1)}` : "—"}</b>
+                  <span>Presión sectorial 20d</span>
+                </div>
               </div>
               <div className="marketPulseEvidence">
                 <div className="evidencePanel">
