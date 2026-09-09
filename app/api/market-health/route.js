@@ -3,6 +3,12 @@ import { settingSyncSummary } from "@/app/api/settings/route";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
 import { readNightlyScanRows } from "@/lib/marketBreadth";
 import { buildRegionalRegimes } from "@/lib/marketRegionalRegimes";
+import {
+  MARKET_HEALTH_SERIES_KEY,
+  MARKET_HEALTH_SERIES_TYPE,
+  buildRegimePointFromPayload,
+  mergeRegimeSeries,
+} from "@/lib/marketHealthSeries";
 import { MARKET_REGION_KEYS, MARKET_REGIONS } from "@/lib/marketRegions";
 import { weeklyStageForBars } from "@/lib/weeklyStage";
 import { weeklyStageStructureFields, weeklyStageStructureForBars } from "@/lib/weeklyStageStructure";
@@ -78,7 +84,17 @@ function annotateCache(payload = {}, cache = {}) {
       fallbackError: cache.fallbackError || "",
       ...(cache.cacheWritten !== undefined ? { cacheWritten: Boolean(cache.cacheWritten) } : {}),
       ...(cache.cacheWriteError ? { cacheWriteError: cache.cacheWriteError } : {}),
+      ...(cache.seriesWritten !== undefined ? { seriesWritten: Boolean(cache.seriesWritten) } : {}),
+      ...(cache.seriesWriteError ? { seriesWriteError: cache.seriesWriteError } : {}),
     },
+  };
+}
+
+function attachRegimeSeries(payload = {}, series = null) {
+  const points = Array.isArray(series?.points) ? series.points : [];
+  return {
+    ...payload,
+    regimeSeries: { points },
   };
 }
 
@@ -176,6 +192,77 @@ async function readMarketHealthCache(options = {}) {
     };
   } catch (error) {
     return { hit: false, maxAgeHours, error: error.message || "market health cache read failed" };
+  }
+}
+
+export async function readMarketHealthSeries(options = {}) {
+  const config = supabaseConfig();
+  if (!config.configured) return { points: [], error: "market health series read skipped (persistence disabled)" };
+  try {
+    const rows = await supabaseRequest("app_settings", {
+      query: {
+        owner_id: `eq.${config.ownerId}`,
+        setting_type: `eq.${MARKET_HEALTH_SERIES_TYPE}`,
+        setting_key: `eq.${MARKET_HEALTH_SERIES_KEY}`,
+        select: "value,updated_at",
+        limit: "1",
+      },
+      timeoutMs: Number(options.timeoutMs || MARKET_HEALTH_CACHE_READ_TIMEOUT_MS),
+    });
+    const row = rows?.[0] || null;
+    const points = Array.isArray(row?.value?.points) ? row.value.points : [];
+    return { points, updatedAt: row?.updated_at || row?.value?.updatedAt || "" };
+  } catch (error) {
+    return { points: [], error: error.message || "market health series read failed" };
+  }
+}
+
+export async function writeMarketHealthSeries(payload = {}) {
+  const config = supabaseConfig();
+  if (!config.configured || !payload?.generatedAt) {
+    return {
+      written: false,
+      points: [],
+      error: "market health series write skipped (persistence disabled or empty payload)",
+    };
+  }
+  const incomingPoint = buildRegimePointFromPayload(payload);
+  if (!incomingPoint.weekKey) {
+    return { written: false, points: [], error: "market health series write skipped (invalid weekKey)" };
+  }
+  const existing = await readMarketHealthSeries({ timeoutMs: MARKET_HEALTH_CACHE_READ_TIMEOUT_MS });
+  const points = mergeRegimeSeries(existing.points, incomingPoint);
+  const updatedAt = new Date().toISOString();
+  try {
+    const rows = await supabaseRpc("upsert_app_setting_newer_wins", {
+      p_owner_id: config.ownerId,
+      p_setting_type: MARKET_HEALTH_SERIES_TYPE,
+      p_setting_key: MARKET_HEALTH_SERIES_KEY,
+      p_value: {
+        version: 1,
+        updatedAt,
+        points,
+      },
+      p_updated_at: updatedAt,
+    });
+    const normalizedRows = Array.isArray(rows) ? rows : rows ? [rows] : [];
+    const summary = settingSyncSummary(normalizedRows, { updated_at: updatedAt });
+    if (!summary.saved) {
+      return {
+        written: false,
+        points: existing.points,
+        error: summary.skippedStale
+          ? "market health series write skipped (existing row is newer)"
+          : "market health series write returned no saved row",
+      };
+    }
+    return { written: true, points, updatedAt };
+  } catch (error) {
+    return {
+      written: false,
+      points: existing.points,
+      error: error.message || "market health series write failed",
+    };
   }
 }
 
@@ -602,6 +689,24 @@ async function computeMarketHealth() {
   };
 }
 
+async function enrichWithRegimeSeries(payload = {}, options = {}) {
+  if (options.writeSeries) {
+    const seriesWrite = await writeMarketHealthSeries(payload);
+    return {
+      payload: attachRegimeSeries(payload, { points: seriesWrite.points }),
+      seriesWritten: seriesWrite.written,
+      seriesWriteError: seriesWrite.error || "",
+    };
+  }
+  const seriesRead = await readMarketHealthSeries({
+    timeoutMs: options.timeoutMs || MARKET_HEALTH_CACHE_READ_TIMEOUT_MS,
+  });
+  return {
+    payload: attachRegimeSeries(payload, { points: seriesRead.points }),
+    seriesReadError: seriesRead.error || "",
+  };
+}
+
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const refresh = searchParams.get("refresh") === "1" || searchParams.get("cache") === "0";
@@ -614,17 +719,22 @@ export async function GET(req) {
       maxAgeHours: Number.isFinite(maxAgeHours) ? maxAgeHours : undefined,
       timeoutMs: MARKET_HEALTH_CACHE_READ_TIMEOUT_MS,
     });
-    if (cached.hit && cached.payload) return Response.json(annotateCache(cached.payload, cached));
+    if (cached.hit && cached.payload) {
+      const enriched = await enrichWithRegimeSeries(cached.payload);
+      return Response.json(annotateCache(enriched.payload, cached));
+    }
     if (!live) {
       if (cached?.payload) {
-        return Response.json(annotateCache(cached.payload, {
+        const enriched = await enrichWithRegimeSeries(cached.payload);
+        return Response.json(annotateCache(enriched.payload, {
           ...cached,
           hit: false,
           stale: true,
           fallbackError: cached.error || "market health cache stale",
         }));
       }
-      return Response.json(annotateCache(neutralMarketHealth({ message: cached?.error || "market health live skipped" }), {
+      const enriched = await enrichWithRegimeSeries(neutralMarketHealth({ message: cached?.error || "market health live skipped" }));
+      return Response.json(annotateCache(enriched.payload, {
         hit: false,
         stale: false,
         fallbackError: cached?.error || "market health live skipped",
@@ -638,24 +748,29 @@ export async function GET(req) {
       timeoutAfter(MARKET_HEALTH_RESPONSE_TIMEOUT_MS, "Market health provider timeout"),
     ]);
     const cacheWrite = await writeMarketHealthCache(payload);
-    return Response.json(annotateCache(payload, {
+    const enriched = await enrichWithRegimeSeries(payload, { writeSeries: true });
+    return Response.json(annotateCache(enriched.payload, {
       hit: false,
       stale: false,
       cachedAt: cacheWrite.written ? cacheWrite.cachedAt : payload.generatedAt,
       maxAgeHours: Number.isFinite(maxAgeHours) ? maxAgeHours : DEFAULT_MARKET_HEALTH_MAX_AGE_HOURS,
       cacheWritten: cacheWrite.written,
       cacheWriteError: cacheWrite.error || "",
+      seriesWritten: enriched.seriesWritten,
+      seriesWriteError: enriched.seriesWriteError || "",
     }));
   } catch (error) {
     if (cached?.payload) {
-      return Response.json(annotateCache(cached.payload, {
+      const enriched = await enrichWithRegimeSeries(cached.payload);
+      return Response.json(annotateCache(enriched.payload, {
         ...cached,
         hit: false,
         stale: true,
         fallbackError: error.message || "live market health failed",
       }));
     }
-    return Response.json(annotateCache(neutralMarketHealth(error), {
+    const enriched = await enrichWithRegimeSeries(neutralMarketHealth(error));
+    return Response.json(annotateCache(enriched.payload, {
       hit: false,
       stale: false,
       fallbackError: error.message || "live market health failed",

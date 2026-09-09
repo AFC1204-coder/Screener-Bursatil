@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import StageStrip, { regimeTone } from "./StageStrip";
 import RegionalRegimeChips from "./RegionalRegimeChips";
+import RegimeChangePanel from "./RegimeChangePanel";
 import UniverseBreadthCard from "./UniverseBreadth";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
@@ -621,6 +622,7 @@ export default function MarketHealthPage() {
               </p>
             )}
             <RegionalRegimeChips regimes={data.regimes} heroScope={data.heroScope || "US"} />
+            <RegimeChangePanel regimeSeries={data.regimeSeries} />
           </section>
 
           {/* ─── N1 Evidencia interna ─────────────────────────────── */}

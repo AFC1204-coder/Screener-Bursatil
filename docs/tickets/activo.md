@@ -1,9 +1,11 @@
-# Ticket activo — idle (MH-FILL-5 cerrado)
+# Ticket activo — idle
 
-**Estado:** idle orquestador  
-**Rama:** `codex/statsedge-ui-polish`  
-**Último cerrado:** MH-FILL-5 (régimen paralelo US+EU+JP+HK)  
-**Siguiente:** MH-FILL-6 · computer-use Astra · línea Mini V1 aparte  
-**Cola:** P2 IPO-F aparcado
+**Estado:** idle  
+**Último cerrado:** MH-FILL-6 (`docs/tickets/MH-FILL-6-serie-regimen.md`)  
+**Cola:** computer-use Astra · residual Mini · P2 IPO-F
 
-Sin ticket de programación activo.
+## Prompt para Agent chat (copiar tal cual)
+
+```
+(no hay ticket activo — espera al orquestador)
+```

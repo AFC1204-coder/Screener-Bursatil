@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const rpcCalls = [];
 let cacheRow = null;
+let seriesRow = null;
 
 const stalePayload = {
   generatedAt: "2026-08-17T12:00:00.000Z",
@@ -81,31 +82,40 @@ vi.mock("@/lib/supabaseServer", async (importOriginal) => {
       if (query.includes("market_health_cache") && query.includes("default")) {
         return [cacheRow];
       }
+      if (query.includes("market_health_series") && query.includes("default")) {
+        return seriesRow ? [seriesRow] : [];
+      }
       return [];
     }),
     supabaseRpc: vi.fn(async (name, payload = {}) => {
       rpcCalls.push({ name, payload });
       if (name !== "upsert_app_setting_newer_wins") throw new Error(`unexpected rpc: ${name}`);
       const incomingAt = payload.p_updated_at;
-      const existingAt = cacheRow?.updated_at;
+      const existingRow = payload.p_setting_type === "market_health_series" ? seriesRow : cacheRow;
+      const existingAt = existingRow?.updated_at;
       const existingMs = existingAt ? new Date(existingAt).getTime() : 0;
       const incomingMs = incomingAt ? new Date(incomingAt).getTime() : 0;
       if (existingMs > incomingMs) {
-        return [cacheRow];
+        return [existingRow];
       }
-      cacheRow = {
+      const savedRow = {
         owner_id: payload.p_owner_id,
         setting_type: payload.p_setting_type,
         setting_key: payload.p_setting_key,
         value: payload.p_value,
         updated_at: incomingAt,
       };
-      return [cacheRow];
+      if (payload.p_setting_type === "market_health_cache") {
+        cacheRow = savedRow;
+      } else if (payload.p_setting_type === "market_health_series") {
+        seriesRow = savedRow;
+      }
+      return [savedRow];
     }),
   };
 });
 
-const { GET, writeMarketHealthCache, weinsteinTape } = await import("@/app/api/market-health/route");
+const { GET, writeMarketHealthCache, writeMarketHealthSeries, weinsteinTape } = await import("@/app/api/market-health/route");
 
 function getRequest(extra = "") {
   return new Request(`https://statsedge.test/api/market-health${extra}`);
@@ -113,6 +123,7 @@ function getRequest(extra = "") {
 
 beforeEach(() => {
   rpcCalls.length = 0;
+  seriesRow = null;
   cacheRow = {
     owner_id: "personal",
     setting_type: "market_health_cache",
@@ -136,6 +147,7 @@ describe("GET /api/market-health · caché stale sin refresh", () => {
     expect(body.indexes[0].lastDate).toBe("2026-08-17");
     expect(body.freshness.cacheStale).toBe(true);
     expect(body.freshness.cacheHit).toBe(false);
+    expect(body.regimeSeries?.points).toEqual([]);
     expect(rpcCalls).toHaveLength(0);
   });
 });
@@ -159,14 +171,46 @@ describe("GET /api/market-health · refresh=1", () => {
     expect(refreshBody.regimes?.JP?.etf).toBe("EWJ");
     expect(refreshBody.regimes?.HK?.etf).toBe("EWH");
     expect(refreshBody.regimes?.US?.breadth?.population).toBe(1);
-    expect(rpcCalls).toHaveLength(1);
+    expect(refreshBody.regimeSeries?.points?.length).toBeGreaterThanOrEqual(1);
+    expect(refreshBody.regimeSeries.points[0].marketScore).toBe(refreshBody.marketScore);
+    expect(refreshBody.freshness.seriesWritten).toBe(true);
+    expect(rpcCalls).toHaveLength(2);
+    expect(rpcCalls.some((call) => call.payload.p_setting_type === "market_health_series")).toBe(true);
     expect(cacheRow.value.payload.indexes[0].lastDate).toBe("2026-09-05");
+    expect(seriesRow.value.points.length).toBeGreaterThanOrEqual(1);
 
     const cachedRes = await GET(getRequest());
     const cachedBody = await cachedRes.json();
 
     expect(cachedBody.indexes[0].lastDate).toBe("2026-09-05");
     expect(cachedBody.freshness.cacheHit).toBe(true);
+    expect(cachedBody.regimeSeries?.points?.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("expone seriesWritten=false si upsert de serie no guarda fila más nueva", async () => {
+    const { supabaseRpc } = await import("@/lib/supabaseServer");
+
+    vi.mocked(supabaseRpc).mockImplementationOnce(async (name, payload = {}) => {
+      rpcCalls.push({ name, payload });
+      return [{
+        ...cacheRow,
+        updated_at: cacheRow.updated_at,
+      }];
+    }).mockImplementationOnce(async (name, payload = {}) => {
+      rpcCalls.push({ name, payload });
+      return [{
+        ...(seriesRow || cacheRow),
+        updated_at: "2099-01-01T00:00:00.000Z",
+      }];
+    });
+
+    const res = await GET(getRequest("?refresh=1"));
+    const body = await res.json();
+
+    expect(body.indexes[0].lastDate).toBe("2026-09-05");
+    expect(body.freshness.seriesWritten).toBe(false);
+    expect(body.freshness.seriesWriteError).toMatch(/skipped|no saved row/i);
+    expect(Array.isArray(body.regimeSeries?.points)).toBe(true);
   });
 
   it("expone cacheWritten=false si upsert_app_setting_newer_wins no guarda fila más nueva", async () => {
@@ -174,8 +218,6 @@ describe("GET /api/market-health · refresh=1", () => {
 
     vi.mocked(supabaseRpc).mockImplementationOnce(async (name, payload = {}) => {
       rpcCalls.push({ name, payload });
-      // Debe ser estrictamente posterior a p_updated_at (Date.now) para que
-      // settingSyncSummary marque skippedStale — no usar una fecha de calendario fija.
       return [{
         ...cacheRow,
         updated_at: "2099-01-01T00:00:00.000Z",
@@ -188,6 +230,35 @@ describe("GET /api/market-health · refresh=1", () => {
     expect(body.indexes[0].lastDate).toBe("2026-09-05");
     expect(body.freshness.cacheWritten).toBe(false);
     expect(body.freshness.cacheWriteError).toMatch(/skipped|no saved row/i);
+    expect(body.freshness.seriesWritten).toBe(true);
+  });
+});
+
+describe("writeMarketHealthSeries", () => {
+  it("persiste punto semanal US y lo expone en lecturas posteriores", async () => {
+    const payload = {
+      generatedAt: "2026-09-08T12:00:00.000Z",
+      marketScore: 80,
+      regime: { label: "Mercado constructivo pero selectivo" },
+      breadthProxy: { pctAbove30w: 55 },
+      regimes: {
+        US: {
+          breadth: {
+            above30w: { available: true, pct: 68, count: 100, measured: 150 },
+          },
+        },
+      },
+    };
+
+    const ok = await writeMarketHealthSeries(payload);
+    expect(ok.written).toBe(true);
+    expect(ok.points.length).toBe(1);
+    expect(ok.points[0].above30wPct).toBe(68);
+
+    const res = await GET(getRequest());
+    const body = await res.json();
+    expect(body.regimeSeries.points).toHaveLength(1);
+    expect(body.regimeSeries.points[0].marketScore).toBe(80);
   });
 });
 

@@ -253,6 +253,74 @@
 
 .marketRegimeParticipation b { color: var(--text); }
 
+.marketRegimeChange {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.marketRegimeChangeHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.marketRegimeChangeHead h3 {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  font-weight: 600;
+}
+
+.marketRegimeChangeSummary {
+  margin: 0;
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  line-height: var(--lh-body);
+}
+
+.marketRegimeChangeSummary b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.marketRegimeChangeSparks {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.marketRegimeChangeList {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.marketRegimeChangeList li {
+  display: grid;
+  grid-template-columns: 88px 72px 72px;
+  gap: var(--space-3);
+  color: var(--muted);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-xs);
+}
+
+.marketRegimeChangeEmpty {
+  margin: 0;
+  color: var(--soft);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+}
+
 .marketRegimeKpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
