@@ -168,7 +168,7 @@ export default function IpoRadarPage() {
     persist(next);
     setForm(EMPTY_FORM);
     setEditingId("");
-    setStatus(editingId ? "IPO actualizada." : "IPO anadida al radar.");
+    setStatus(editingId ? "IPO actualizada." : "IPO añadida al radar.");
   }
 
   function editItem(item) {
