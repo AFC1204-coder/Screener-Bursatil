@@ -3,6 +3,7 @@ import "../../styles/market-health.css";
 import { useEffect, useState } from "react";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import StageStrip, { regimeTone } from "./StageStrip";
+import RegionalRegimeChips from "./RegionalRegimeChips";
 import UniverseBreadthCard from "./UniverseBreadth";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
@@ -17,6 +18,7 @@ import { MissingValue } from "@/lib/screenerColumns";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { stageDisplayForRow } from "@/lib/stageDisplay";
 import { metricValue, rowTheme } from "@/lib/stockRows";
+import { filterScanRowsByRegion, MARKET_REGION_KEYS, MARKET_REGIONS, regionBreadthFromCountries } from "@/lib/marketRegions";
 import { stockUrl } from "@/lib/symbols";
 
 const dateFmt = (value) => value ? dateTime(value) : "-";
@@ -304,45 +306,22 @@ function MethodologyDetail({ health, loading }) {
   );
 }
 
-/* ─── Regiones (cards compactas; N1) ───────────────────────────────── */
-// Amplitud y filas regionales salen del escaneo nocturno en el servidor
-// (/api/market-breadth y /api/market-leadership): misma población para todos.
-function regionBreadth(breadth, regionCountries, otherCountries, isGlobal) {
-  if (!breadth || breadth.error) return null;
-  let total = 0;
-  let measured = 0;
-  let above = 0;
-  for (const [country, bucket] of Object.entries(breadth.countries || {})) {
-    const inRegion = isGlobal ? !otherCountries.has(country) : regionCountries.includes(country);
-    if (!inRegion) continue;
-    total += bucket.total || 0;
-    measured += bucket.sma50Measured || 0;
-    above += bucket.sma50Above || 0;
-  }
-  return { total, measured, above, pct: measured ? (above / measured) * 100 : null };
-}
-
-function GlobalRegionsPanel({ rows = [], breadth = null }) {
-  const REGIONS = [
-    { key: "US", name: "Estados Unidos", flag: "🇺🇸", benchmark: "S&P 500 (SPY)", countries: ["US"] },
-    { key: "EU", name: "Europa", flag: "🇪🇺", benchmark: "Euro Stoxx 50 (FEZ)", countries: ["ES", "DE", "FR", "NL", "CH", "SE", "IT", "BE", "PT", "AT", "IE", "GB"] },
-    { key: "AS", name: "Asia / Pacífico", flag: "🇯🇵", benchmark: "Nikkei 225 (TSE)", countries: ["JP", "HK", "SG", "TW", "KR", "CN", "AU"] },
-    { key: "Global", name: "Global / Emergentes", flag: "🌐", benchmark: "MSCI ACWI (ACWI)", countries: [] },
-  ];
-
-  const otherCountries = new Set([
-    ...REGIONS[0].countries, ...REGIONS[1].countries, ...REGIONS[2].countries,
-  ]);
-  const regionCards = REGIONS.map((region) => {
-    let filtered = [];
-    if (region.key === "Global") {
-      filtered = rows.filter((r) => !otherCountries.has(r.country || "US"));
-    } else {
-      filtered = rows.filter((r) => region.countries.includes(r.country || "US"));
-    }
-
+/* ─── Regiones v1 US/EU/JP/HK (MH-FILL-5) ─────────────────────────── */
+function GlobalRegionsPanel({ rows = [], breadth = null, regimes = null }) {
+  const regionCards = MARKET_REGION_KEYS.map((key) => {
+    const region = MARKET_REGIONS[key];
+    const filtered = filterScanRowsByRegion(rows, key);
     const total = filtered.length;
-    const amplitude = regionBreadth(breadth, region.countries, otherCountries, region.key === "Global");
+    const regimeBreadth = regimes?.[key]?.breadth;
+    const above30w = regimeBreadth?.above30w;
+    const amplitude = above30w?.available
+      ? {
+        pct: above30w.pct,
+        above: above30w.count,
+        measured: above30w.measured,
+        fromRegime: true,
+      }
+      : regionBreadthFromCountries(breadth, key);
     // Promedio del MISMO RS que el resto del producto. Los símbolos sin
     // ranking semanal quedan fuera del promedio en vez de entrar con el
     // percentil de su lote, que no es comparable entre valores.
@@ -363,7 +342,7 @@ function GlobalRegionsPanel({ rows = [], breadth = null }) {
             <span className="marketRegionFlag" aria-hidden="true">{region.flag}</span>
             <div>
               <h3>{region.name}</h3>
-              <small>{region.benchmark}</small>
+              <small>{region.benchmarkLabel}</small>
             </div>
           </div>
           <span className="marketRegionTag">{rsLabel}</span>
@@ -372,19 +351,18 @@ function GlobalRegionsPanel({ rows = [], breadth = null }) {
           <div
             className="marketRegionMetric"
             title={Number.isFinite(amplitude?.pct)
-              ? `Sobre SMA50: ${amplitude.above} de ${amplitude.measured} valores del escaneo nocturno (cierre ${dateShort(breadth?.dataAsOf)})`
+              ? `${amplitude.fromRegime ? "Sobre MM30s" : "Sobre SMA50"}: ${amplitude.above} de ${amplitude.measured} valores del escaneo nocturno (cierre ${dateShort(breadth?.dataAsOf || regimeBreadth?.dataAsOf)})`
               : ""}
           >
-            {/* Proporción, no variación: pctShare (sin signo). El "+67,7%" de
-                antes usaba el formateador de variaciones para una amplitud. */}
             {Number.isFinite(amplitude?.pct)
               ? <b>{pctShare(amplitude.pct)}</b>
               : <b><MissingValue reason={!amplitude
                 ? "La amplitud se calcula en el servidor sobre el escaneo nocturno y ahora mismo no está disponible."
-                : amplitude.total
-                  ? "Ningún valor de esta región trae la distancia a su SMA50 en el escaneo nocturno."
-                  : "Sin valores de esta región en el universo del escaneo nocturno."} /></b>}
-            <span>Amplitud (SMA50)</span>
+                : above30w?.reason
+                  || (amplitude.total || total
+                    ? "Cobertura insuficiente para declarar amplitud en esta región."
+                    : "Sin valores de esta región en el universo del escaneo nocturno.")} /></b>}
+            <span>{above30w?.available || regimeBreadth ? "Amplitud (MM30s)" : "Amplitud (SMA50)"}</span>
           </div>
           <div className="marketRegionMetric" title={Number.isFinite(avgRs) ? `Media del RS semanal de ${validRs.length} de ${total} valores del escaneo nocturno` : ""}>
             {Number.isFinite(avgRs)
@@ -585,7 +563,7 @@ export default function MarketHealthPage() {
           <section className="marketRegimePanel" data-tone={tone}>
             <div className="marketRegimeLead">
               <div className="marketRegimeLabel">
-                <small>Régimen</small>
+                <small>Régimen · {data.heroScope || "US"}</small>
                 <h2>{data.regime?.label || "Sin dato"}</h2>
                 <p>
                   {data.regime?.stance || "Lectura pendiente."}
@@ -642,6 +620,7 @@ export default function MarketHealthPage() {
                 {participationSummary.divergence && <b> El índice sube y cada vez menos valores lo acompañan.</b>}
               </p>
             )}
+            <RegionalRegimeChips regimes={data.regimes} heroScope={data.heroScope || "US"} />
           </section>
 
           {/* ─── N1 Evidencia interna ─────────────────────────────── */}
@@ -716,9 +695,9 @@ export default function MarketHealthPage() {
           <section className="card">
             <div className="sectionTitle">
               <h2>Liderazgo y fuerza relativa global</h2>
-              <span className="fine">Escaneo nocturno de Estados Unidos · amplitud y liderazgo compartidos</span>
+              <span className="fine">Escaneo nocturno · amplitud por región US/EU/JP/HK</span>
             </div>
-            <GlobalRegionsPanel rows={scanPulse?.rows || []} breadth={breadth} />
+            <GlobalRegionsPanel rows={scanPulse?.rows || []} breadth={breadth} regimes={data.regimes} />
           </section>
 
           <section className="card">

@@ -44,6 +44,22 @@ vi.mock("@/lib/marketData", () => ({
   })),
 }));
 
+vi.mock("@/lib/marketBreadth", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    readNightlyScanRows: vi.fn(async () => ({
+      configured: true,
+      rows: [
+        { symbol: "AAPL", country: "US", stage: "stage2", priceAboveSlowMa: true, extSma50: 1, lastDate: "2026-09-05" },
+        { symbol: "SAP", country: "DE", stage: "stage1", priceAboveSlowMa: true, extSma50: 0.5, lastDate: "2026-09-05" },
+      ],
+      scan: { id: "scan-1", createdAt: "2026-09-05T03:57:00.000Z" },
+      error: null,
+    })),
+  };
+});
+
 vi.mock("@/lib/supabaseServer", async (importOriginal) => {
   const actual = await importOriginal();
   return {
@@ -137,6 +153,12 @@ describe("GET /api/market-health · refresh=1", () => {
     expect(refreshBody.weinsteinTape.indexSymbol).toBe("SPY");
     expect(refreshBody.weinsteinTape.indexDistributionDays20).toBe(spyRow.distributionDays20);
     expect(refreshBody.weinsteinTape.indexAccumulationDays20).toBe(spyRow.accumulationDays20);
+    expect(refreshBody.heroScope).toBe("US");
+    expect(refreshBody.regimes?.US?.etf).toBe("SPY");
+    expect(refreshBody.regimes?.EU?.etf).toBe("FEZ");
+    expect(refreshBody.regimes?.JP?.etf).toBe("EWJ");
+    expect(refreshBody.regimes?.HK?.etf).toBe("EWH");
+    expect(refreshBody.regimes?.US?.breadth?.population).toBe(1);
     expect(rpcCalls).toHaveLength(1);
     expect(cacheRow.value.payload.indexes[0].lastDate).toBe("2026-09-05");
 

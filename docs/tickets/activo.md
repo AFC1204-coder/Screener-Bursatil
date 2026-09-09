@@ -1,9 +1,9 @@
-# Ticket activo — idle (MH-FILL-4 cerrado)
+# Ticket activo — idle (MH-FILL-5 cerrado)
 
 **Estado:** idle orquestador  
 **Rama:** `codex/statsedge-ui-polish`  
-**Último cerrado:** MH-FILL-4 (NH/NL + fugas fallidas líderes)  
-**Siguiente:** MH-FILL-5 (**decisión dueño** índices por región) · MH-FILL-6 · computer-use Astra  
-**Cola:** P2 IPO-F aparcado · línea Mini V1 aparte
+**Último cerrado:** MH-FILL-5 (régimen paralelo US+EU+JP+HK)  
+**Siguiente:** MH-FILL-6 · computer-use Astra · línea Mini V1 aparte  
+**Cola:** P2 IPO-F aparcado
 
 Sin ticket de programación activo.

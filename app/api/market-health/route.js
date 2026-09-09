@@ -1,6 +1,9 @@
 import { fetchYahooChart } from "@/lib/marketData";
 import { settingSyncSummary } from "@/app/api/settings/route";
 import { supabaseConfig, supabaseRequest, supabaseRpc } from "@/lib/supabaseServer";
+import { readNightlyScanRows } from "@/lib/marketBreadth";
+import { buildRegionalRegimes } from "@/lib/marketRegionalRegimes";
+import { MARKET_REGION_KEYS, MARKET_REGIONS } from "@/lib/marketRegions";
 import { weeklyStageForBars } from "@/lib/weeklyStage";
 import { weeklyStageStructureFields, weeklyStageStructureForBars } from "@/lib/weeklyStageStructure";
 
@@ -133,6 +136,14 @@ function neutralMarketHealth(error = {}) {
     failures: INDEXES.map((index) => ({ symbol: index.symbol, name: index.name, reason: error.message || "Proveedor no disponible" })),
     sectorFailures: SECTOR_ETFS.map((sector) => ({ symbol: sector.symbol, name: sector.name, reason: error.message || "Proveedor no disponible" })),
     degraded: true,
+    heroScope: "US",
+    regimes: buildRegionalRegimes({
+      scanRows: [],
+      etfByRegion: {},
+      etfFailures: Object.fromEntries(MARKET_REGION_KEYS.map((key) => [key, { reason: error.message || "Proveedor no disponible" }])),
+      stageScoreFn: stageScore,
+      regimeFn: regime,
+    }),
   };
 }
 
@@ -491,6 +502,25 @@ export function weinsteinTape(indexes = [], sectors = []) {
   };
 }
 
+async function analyzeRegionalBenchmark(meta) {
+  const { bars, meta: chartMeta } = await fetchYahooChart(meta.symbol);
+  assertServedSymbol(meta.symbol, chartMeta);
+  if (!bars || bars.length < 220) throw new Error("Histórico insuficiente");
+  const price = bars[0].close;
+  const item = {
+    symbol: meta.symbol,
+    name: meta.name,
+    regionKey: meta.regionKey,
+    price,
+    lastDate: bars[0].date,
+    ...weeklyStageSnapshot(bars),
+    ...volumeTape(bars),
+  };
+  item.score = stageScore(item.stageState, item.stageConfirmation);
+  item.weinsteinScore = scoreWeinsteinTape(item);
+  return item;
+}
+
 async function computeMarketHealth() {
   const indexResults = await Promise.allSettled(INDEXES.map((idx) => analyzeIndex(idx)));
   const results = indexResults.filter((result) => result.status === "fulfilled").map((result) => result.value);
@@ -517,10 +547,40 @@ async function computeMarketHealth() {
   const above30w = results.filter((x) => x.priceAboveSlowMa === true).length;
   const positiveSlope = results.filter((x) => x.sma200Slope > 0).length;
   const nearHighs = results.filter((x) => x.distance52w >= -10).length;
+
+  const regionalMetas = MARKET_REGION_KEYS.map((key) => ({
+    regionKey: key,
+    symbol: MARKET_REGIONS[key].etf,
+    name: MARKET_REGIONS[key].etfName,
+  }));
+  const [regionalResults, nightlyScan] = await Promise.all([
+    Promise.allSettled(regionalMetas.map((meta) => analyzeRegionalBenchmark(meta))),
+    readNightlyScanRows({ timeoutMs: 12000 }).catch(() => ({ rows: [], error: "scan-read-failed" })),
+  ]);
+  const etfByRegion = {};
+  const etfFailures = {};
+  regionalResults.forEach((result, index) => {
+    const key = regionalMetas[index].regionKey;
+    if (result.status === "fulfilled") etfByRegion[key] = result.value;
+    else etfFailures[key] = { symbol: regionalMetas[index].symbol, reason: result.reason?.message || "Proveedor no disponible" };
+  });
+  const regimes = buildRegionalRegimes({
+    scanRows: nightlyScan.rows || [],
+    etfByRegion,
+    etfFailures,
+    stageScoreFn: stageScore,
+    regimeFn: regime,
+  });
+
   return {
     generatedAt: new Date().toISOString(),
+    heroScope: "US",
     marketScore,
     regime: regime(marketScore),
+    regimes,
+    nightlyScan: nightlyScan.scan
+      ? { id: nightlyScan.scan.id, createdAt: nightlyScan.scan.createdAt }
+      : { found: false, reason: nightlyScan.error || "no-nightly-scan" },
     breadthProxy: {
       indexes: results.length,
       above50,

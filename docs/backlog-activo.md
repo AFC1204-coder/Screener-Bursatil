@@ -7,10 +7,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Última sync / HEAD origin polish:** (push tras MH refresh + docs)
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **MH-FILL-4** (NH/NL + fugas fallidas líderes).  
+**Último cerrado:** **MH-FILL-5** (régimen US+EU+JP+HK).  
 **Ahora:** idle.  
-**Cola:** MH-FILL-5 (**decisión dueño**) · MH-FILL-6 · residual ops Mini · P2 IPO-F aparcado.  
+**Cola:** MH-FILL-6 · residual ops Mini · P2 IPO-F · computer-use Astra (después FILL-6 o cuando madure Mercado).  
 **Línea Mini V1:** aparte (V1-02…); no mezclar con polish.  
+**Nota MH-FILL-5:** cerrado · smoke chips SPY/FEZ/EWJ/EWH · hero US.  
 **Residual MH (ops):** persistencia `app_settings` falla en local — RPC `upsert_app_setting_newer_wins` no disponible en modo pg local / túnel Mini `:15432` ECONNREFUSED. Código OK; falta Mini arriba.  
 **Descartar:** — (rama forja-estados borrada).  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
@@ -314,6 +315,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MH-FILL-3 | Liderazgo Mercado desde servidor (no solo localStorage) | **Hecho** · `/api/market-leadership` · smoke sin scans local |
 | MH-FILL-2 | Dist/Acc hero = índice (SPY); promedio sectorial con otro nombre | **Hecho** · smoke labels SPY + presión sectorial |
 | MH-FILL-4 | NH/NL 52s en amplitud + fugas fallidas entre líderes | **Hecho** · tests breadth/leadership |
+| MH-FILL-5 | Régimen paralelo US+EU+JP+HK (SPY/FEZ/EWJ/EWH) | **Hecho** · smoke 4 chips · hero US |
 | MH refresh/caché | Actualizar + `?refresh=1` + `cacheWritten` | **Hecho** · `16abe65` · smoke Actualizar→refresh=1 · residual Mini RPC |
 | STAGE-4 | Volumen de fuga junto a «Con fuga» (dato soporte; no clasifica) | **Hecho** · smoke AVAH Con fuga (2,8×) |
 | VCP-0 | Auditoría E1/E2 semanal | **Cerrado** fae1880 · ADR aceptado |
