@@ -252,13 +252,14 @@ describe("ScreenerShell viewport mount", () => {
     expect(html).not.toContain("data-stub=\"MobileResultList\"");
   });
 
-  it("móvil: monta mobileResearchHome y MobileResultList sin desktopResultsSection", () => {
+  it("móvil: monta mobileResearchHome y MobileResultList sin desktopResultsSection ni MarketMiniTape", () => {
     mockIsMobileViewport.mockReturnValue(true);
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
     expect(html).toContain("mobileResearchHome");
     expect(html).toContain("data-stub=\"MobileResultList\"");
     expect(html).not.toContain("desktopResultsSection");
     expect(html).not.toContain("data-stub=\"ResultPagerTable\"");
+    expect(html).not.toContain("data-stub=\"MarketMiniTape\"");
   });
 });
 

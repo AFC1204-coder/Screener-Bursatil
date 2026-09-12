@@ -23,7 +23,6 @@ import WeeklyChangesLine from "@/app/components/screener/WeeklyChangesLine";
 import ScreenerSidebar from "@/app/components/screener/ScreenerSidebar";
 import ScreenerLaboratoryPanel from "@/app/components/screener/ScreenerLaboratoryPanel";
 import {
-  MarketMiniTape,
   MobileResultList,
   PreviewCard,
   SearchCandidateList,
@@ -153,7 +152,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     sidebarCollapsed,
     setShowMobileFilters,
     setSidebarCollapsed,
-    marketHealth,
     rows,
     huntTruthOverride = null,
     isHuntTransitionPending = false,
@@ -825,7 +823,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         </section>
 
         {isMobileViewport ? <section className="mobileResearchHome">
-          <MarketMiniTape marketHealth={marketHealth} />
           {renderMarketsMisalignmentNotice()}
           {marketsMisalignment ? null : scanStale ? renderScanStaleNotice() : null}
           <MobileResultList
