@@ -68,6 +68,8 @@ describe("filterFamilyCoverage · copy", () => {
       "⚠ RS con dato en 25/47",
     );
     expect(filterFamilyCoverageCardWarning("relativeStrength", { ...rsStats, low: false }, { active: true })).toBe("");
+    expect(filterFamilyCoverageCardWarning("relativeStrength", { total: 0, withRsData: 0, low: true }, { active: true })).toBe("");
+    expect(filterFamilyCoverageCardWarning("ipo", { total: 0, withIpoDate: 0, low: true }, { active: true })).toBe("");
   });
 
   it("genera cabecera de modal con N/M del lote", () => {
@@ -77,6 +79,7 @@ describe("filterFamilyCoverage · copy", () => {
     expect(filterFamilyCoverageModalLine("relativeStrength", rsStats)).toBe(
       "Cobertura del dato: RS semanal en 25/47 del lote",
     );
+    expect(filterFamilyCoverageModalLine("relativeStrength", { total: 0, withRsData: 0, low: true })).toBe("");
   });
 });
 

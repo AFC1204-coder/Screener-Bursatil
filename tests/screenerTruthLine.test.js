@@ -36,6 +36,56 @@ describe("buildScreenerTruthLine", () => {
     expect(line).not.toContain("orden:");
   });
 
+  it("SCREENER-EMPTY-STATE-1: dataset ausente no se presenta como 0 de 0 pasan", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: [],
+      passCount: 0,
+      visibleCount: 0,
+      presetName: "Líderes Etapa 2",
+      sort: "perf3m",
+      sortAsc: false,
+      scannedAt: null,
+      scannedMarkets: [],
+      selectedMarkets: ["US"],
+    });
+    expect(line).toContain("Sin datos para evaluar esta ficha");
+    expect(line).not.toContain("0 de 0 pasan");
+    expect(line).not.toContain("en lista");
+    expect(line).not.toContain("cargando…");
+  });
+
+  it("SCREENER-EMPTY-STATE-1: dataset cargado con cero matches conserva 0 de N pasan", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: Array.from({ length: 12 }, (_, i) => ({ symbol: `S${i}` })),
+      passCount: 0,
+      visibleCount: 0,
+      presetName: "Líderes Etapa 2",
+      sort: "perf3m",
+      sortAsc: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+    });
+    expect(line).toContain("0 de 12 pasan «Líderes Etapa 2»");
+    expect(line).not.toContain("Sin datos para evaluar esta ficha");
+    expect(line).toContain("mesa: US");
+  });
+
+  it("SCREENER-EMPTY-STATE-1: dataset cargado con matches conserva N de M", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: Array.from({ length: 12 }, (_, i) => ({ symbol: `S${i}` })),
+      passCount: 3,
+      visibleCount: 3,
+      presetName: "Líderes Etapa 2",
+      sort: "perf3m",
+      sortAsc: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+    });
+    expect(line).toContain("3 de 12 pasan «Líderes Etapa 2»");
+    expect(line).not.toContain("Sin datos para evaluar esta ficha");
+    expect(line).not.toContain("0 de 0 pasan");
+  });
+
   it("no repite en lista ni página cuando pasan y visibles coinciden", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: Array.from({ length: 100 }, (_, i) => ({ symbol: `S${i}` })),
@@ -125,7 +175,8 @@ describe("buildScreenerTruthLine", () => {
       selectedMarkets: ["HK"],
       marketsMisaligned: true,
     });
-    expect(line).toContain("0 de 0 pasan «HK»");
+    expect(line).toContain("Sin datos para evaluar esta ficha");
+    expect(line).not.toContain("0 de 0 pasan");
     expect(line).not.toContain("mesa:");
     expect(line).not.toContain("datos:");
     expect(line).not.toContain("selección ≠ mesa");
@@ -144,7 +195,8 @@ describe("buildScreenerTruthLine", () => {
       selectedMarkets: many,
       marketsMisaligned: true,
     });
-    expect(line).toContain("0 de 0 pasan «Balanceado»");
+    expect(line).toContain("Sin datos para evaluar esta ficha");
+    expect(line).not.toContain("0 de 0 pasan");
     expect(line).not.toContain("mesa:");
     expect(line).not.toContain("selección ≠ mesa");
     expect(line).not.toContain("AT+");

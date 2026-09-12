@@ -233,7 +233,8 @@ describe("ScreenerShell markets misalignment", () => {
       selectedMarkets: ["HK"],
     })));
     expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
-    expect(html).toContain("0 de 0 pasan");
+    expect(html).toContain("Sin datos para evaluar esta ficha");
+    expect(html).not.toContain("0 de 0 pasan");
     expect(html).toContain("mesa: US");
     expect(html).not.toContain("selección ≠ mesa");
     expect(html).not.toContain("en lista");
@@ -423,5 +424,61 @@ describe("compactMobileScanStatus", () => {
 
   it("deja intacto un mercado único", () => {
     expect(compactMobileScanStatus("Cargando materializado Estados Unidos…")).toBe("Cargando materializado Estados Unidos…");
+  });
+});
+
+describe("ScreenerShell dataset ausente vs cero matches", () => {
+  it("dataset ausente no afirma 0 de 0 pasan", () => {
+    const props = makeProps({
+      marketsStale: false,
+      scanStale: false,
+      scannedMarkets: [],
+      selectedMarkets: ["US"],
+    });
+    props.results.analyzedRows = [];
+    props.results.rows = [];
+    props.results.filtered = [];
+    props.results.pagedRows = [];
+    props.chrome.rows = [];
+    props.resultView.filtered = [];
+    props.resultView.pagedRows = [];
+    props.staleness.scannedAt = null;
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
+    expect(html).toContain("Sin datos para evaluar esta ficha");
+    expect(html).not.toContain("0 de 0 pasan");
+    expect(html).not.toContain("cargando…");
+  });
+
+  it("dataset cargado con cero matches conserva 0 de N pasan", () => {
+    const analyzed = Array.from({ length: 12 }, (_, i) => ({ symbol: `S${i}`, country: "US" }));
+    const props = makeProps({
+      marketsStale: false,
+      scanStale: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+    });
+    props.results.analyzedRows = analyzed;
+    props.results.rows = [];
+    props.results.filtered = [];
+    props.results.pagedRows = [];
+    props.chrome.rows = [];
+    props.resultView.filtered = [];
+    props.resultView.pagedRows = [];
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
+    expect(html).toContain("0 de 12 pasan «Líderes Etapa 2»");
+    expect(html).not.toContain("Sin datos para evaluar esta ficha");
+    expect(html).not.toContain("0 de 0 pasan");
+  });
+
+  it("dataset cargado con matches conserva N de M", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      marketsStale: false,
+      scanStale: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+    })));
+    expect(html).toContain("1 de 1 pasan «Líderes Etapa 2»");
+    expect(html).not.toContain("Sin datos para evaluar esta ficha");
+    expect(html).not.toContain("0 de 0 pasan");
   });
 });
