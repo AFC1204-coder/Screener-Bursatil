@@ -76,14 +76,27 @@ const FULL_COVERAGE_PATH = "/api/coverage?markets=US,EU1,JP,HK,AU,TW";
    Sin rojo/verde: la dirección la dan los extremos etiquetados + el glifo
    en el sentimentPill del item. La barra usa tonos de humo + un dot tiza
    como marcador de posición (no como semáforo). */
-function SentimentRow({ data, title = "Lectura contraria", sampleLabel = "titulares" }) {
+export function SentimentRow({ data, title = "Lectura contraria", sampleLabel = "titulares", loading = false }) {
   // Sin muestra no hay distribución ni índice: las barras a 0% y el índice a 50
   // eran valores por defecto con aspecto de lectura real. Se pinta el estado
-  // vacío, que dice justamente eso.
+  // vacío, que dice justamente eso. Mientras el feed N2 carga, no se finge
+  // una pasada vacía: se declara la espera local.
   const sampleSize = Number(data?.total);
-  if (!data || data.error || !Number.isFinite(sampleSize) || sampleSize <= 0) {
+  const hasSample = Number.isFinite(sampleSize) && sampleSize > 0;
+  if (loading && !hasSample) {
     return (
-      <div className="marketSentimentRow" data-empty="true">
+      <div className="marketSentimentRow" data-empty="true" data-loading="true" data-testid={`market-sentiment-${sampleLabel}`}>
+        <div className="marketSentimentRowHead">
+          <small>{title}</small>
+          <span className="marketSentimentIndex">—</span>
+        </div>
+        <p className="marketSentimentRead">{`Cargando ${sampleLabel}…`}</p>
+      </div>
+    );
+  }
+  if (!data || data.error || !hasSample) {
+    return (
+      <div className="marketSentimentRow" data-empty="true" data-testid={`market-sentiment-${sampleLabel}`}>
         <div className="marketSentimentRowHead">
           <small>{title}</small>
           <span className="marketSentimentIndex">—</span>
@@ -103,9 +116,9 @@ function SentimentRow({ data, title = "Lectura contraria", sampleLabel = "titula
   // trae, aquí no se inventa.
   const dominant = data?.dominantSentiment || "";
   return (
-    <div className="marketSentimentRow">
+    <div className="marketSentimentRow" data-loading={loading ? "true" : undefined} data-testid={`market-sentiment-${sampleLabel}`}>
       <div className="marketSentimentRowHead">
-        <small>{title} · {data?.regime || "sin régimen"}</small>
+        <small>{title} · {loading ? "actualizando" : (data?.regime || "sin régimen")}</small>
         <span className="marketSentimentIndex">{pessimismValue === null
           ? <MissingValue reason="El servidor no ha devuelto índice de pesimismo para esta muestra." />
           : num(pessimismValue)}</span>
@@ -421,6 +434,8 @@ export default function MarketHealthPage() {
   const [methodologyHealth, setMethodologyHealth] = useState(null);
   const [coverageLoading, setCoverageLoading] = useState(false);
   const [methodologyLoading, setMethodologyLoading] = useState(true);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [socialLoading, setSocialLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -431,12 +446,12 @@ export default function MarketHealthPage() {
     setError("");
     try {
       const leadershipPath = refresh ? "/api/market-leadership?refresh=1" : "/api/market-leadership";
-      const [marketResult, breadthResult, leadershipResult, newsResult, socialResult] = await Promise.allSettled([
+      // N0/N1: salud + amplitud + liderazgo. News/social van aparte (N2): un
+      // titular lento no puede retener el veredicto de mercado.
+      const [marketResult, breadthResult, leadershipResult] = await Promise.allSettled([
         fetchJsonWithTimeout(marketHealthApiPath({ refresh }), 25000),
         fetchJsonWithTimeout("/api/market-breadth", 20000),
         fetchJsonWithTimeout(leadershipPath, 25000),
-        fetchJsonWithTimeout("/api/market-news", 8000),
-        fetchJsonWithTimeout("/api/social-sentiment", 8000),
       ]);
       // La amplitud del universo tiene su propio estado: si falla, su tarjeta
       // declara la ausencia sin tumbar el resto de la pantalla.
@@ -448,10 +463,6 @@ export default function MarketHealthPage() {
       setLeadership(leadershipResult.status === "fulfilled"
         ? leadershipResult.value
         : { error: userFacingServiceError(leadershipResult.reason?.message, "El liderazgo de mercado no está disponible ahora mismo."), pulse: null });
-      if (newsResult.status === "rejected") logMarketHealthFetchFailure("titulares no disponibles", newsResult.reason);
-      if (socialResult.status === "rejected") logMarketHealthFetchFailure("pulso social no disponible", socialResult.reason);
-      setNews(newsResult.status === "fulfilled" ? newsResult.value : { error: userFacingServiceError(newsResult.reason?.message, "Los titulares de mercado no están disponibles ahora mismo."), rows: [] });
-      setSocial(socialResult.status === "fulfilled" ? socialResult.value : { error: userFacingServiceError(socialResult.reason?.message, "El pulso social no está disponible ahora mismo."), rows: [] });
       if (marketResult.status === "rejected") throw marketResult.reason;
       setData(marketResult.value);
     } catch (e) {
@@ -461,6 +472,30 @@ export default function MarketHealthPage() {
       setError(userFacingServiceError(e?.message, "No se ha podido cargar la salud de mercado ahora mismo. Inténtalo de nuevo en unos minutos."));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadNews() {
+    setNewsLoading(true);
+    try {
+      setNews(await fetchJsonWithTimeout("/api/market-news", 8000));
+    } catch (e) {
+      logMarketHealthFetchFailure("titulares no disponibles", e);
+      setNews({ error: userFacingServiceError(e?.message, "Los titulares de mercado no están disponibles ahora mismo."), rows: [] });
+    } finally {
+      setNewsLoading(false);
+    }
+  }
+
+  async function loadSocial() {
+    setSocialLoading(true);
+    try {
+      setSocial(await fetchJsonWithTimeout("/api/social-sentiment", 8000));
+    } catch (e) {
+      logMarketHealthFetchFailure("pulso social no disponible", e);
+      setSocial({ error: userFacingServiceError(e?.message, "El pulso social no está disponible ahora mismo."), rows: [] });
+    } finally {
+      setSocialLoading(false);
     }
   }
 
@@ -500,12 +535,16 @@ export default function MarketHealthPage() {
 
   function refreshAll() {
     load({ refresh: true });
+    loadNews();
+    loadSocial();
     loadMethodologyHealth();
     loadCoverage();
   }
 
   useEffect(() => {
     load();
+    loadNews();
+    loadSocial();
     loadMethodologyHealth();
     loadCoverage();
   }, []);
@@ -522,7 +561,7 @@ export default function MarketHealthPage() {
   // resolver: su sitio es el log del servidor, no la pantalla.
   const socialConfigured = social?.configured !== false;
   const newsAvailable = Boolean(news?.error || news?.rows?.length || Number(news?.total) > 0);
-  const showSentimentCard = socialConfigured || newsAvailable;
+  const showSentimentCard = socialConfigured || newsAvailable || newsLoading || socialLoading;
 
   return (
     <main className="page marketHealthPage">
@@ -561,7 +600,7 @@ export default function MarketHealthPage() {
       {data && (
         <>
           {/* ─── N0 Veredicto de mercado ─────────────────────────── */}
-          <section className="marketRegimePanel" data-tone={tone}>
+          <section className="marketRegimePanel" data-tone={tone} data-testid="market-regime-panel">
             <div className="marketRegimeLead">
               <div className="marketRegimeLabel">
                 <small>Régimen · {data.heroScope || "US"}</small>
@@ -796,21 +835,23 @@ export default function MarketHealthPage() {
               que dejaba en pantalla el nombre de una variable de entorno—, y
               si tampoco hay titulares la sección entera desaparece. */}
           {showSentimentCard && (
-          <section className="card marketSentimentCard">
+          <section className="card marketSentimentCard" data-testid="market-sentiment-card">
             <div className="sectionTitle">
-              <h2>Sentimiento{news?.contrarianRead || social?.contrarianRead
+              <h2>Sentimiento{!newsLoading && !socialLoading && (news?.contrarianRead || social?.contrarianRead)
                 ? <> <InfoHint text={[news?.contrarianRead || social?.contrarianRead, news?.note].filter(Boolean).join(" ")} /></>
                 : null}</h2>
-              <span className="fine">{socialConfigured ? "Titulares + social · lectura contraria" : "Titulares · lectura contraria"}</span>
+              <span className="fine">{newsLoading || (socialConfigured && socialLoading)
+                ? "Cargando lectura contraria…"
+                : (socialConfigured ? "Titulares + social · lectura contraria" : "Titulares · lectura contraria")}</span>
             </div>
-            {(news?.error || (socialConfigured && social?.error)) && (
+            {((news?.error && !newsLoading) || (socialConfigured && social?.error && !socialLoading)) && (
               <div className="dataNote marketSentimentCardNotice">
                 {news?.error || social?.error}
               </div>
             )}
             <div className="marketSentimentGrid">
-              <SentimentRow data={news} title="Titulares" sampleLabel="titulares" />
-              {socialConfigured ? <SentimentRow data={social} title="Social" sampleLabel="posts" /> : null}
+              <SentimentRow data={news} title="Titulares" sampleLabel="titulares" loading={newsLoading} />
+              {socialConfigured ? <SentimentRow data={social} title="Social" sampleLabel="posts" loading={socialLoading} /> : null}
             </div>
             <SentimentFeeds news={news} social={social} />
           </section>
