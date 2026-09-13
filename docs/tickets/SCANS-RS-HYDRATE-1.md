@@ -1,9 +1,10 @@
 # SCANS-RS-HYDRATE-1
 
-**Estado:** prep  
+**Estado:** hecho (ACCEPT INVESTIGATE · 2026-09-13)  
 **OWNER:** Cursor / Composer 2.5 High  
 **PRIORITY:** P0.5 (principal Wave5)  
-**MODE:** INVESTIGATE ONLY (sin fix estructural salvo hallazgo trivial y localizado)
+**MODE:** INVESTIGATE ONLY  
+**Cierre:** delta TTFB frío +27,6 s ≈ re-lectura US country RS (`bulkSnapshot:false`, mismo engine) +224 HTTP + tema ~48. Fix #1 = reutilizar mapa global. Informe `SCANS_RS_HYDRATE_1_REPORT.md` (untracked). Túnel caído en sesión; timings HTTP = SCANS-PAYLOAD-1.
 
 ## PROBLEM
 

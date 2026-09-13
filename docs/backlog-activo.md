@@ -8,9 +8,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
-**Ahora:** Wave5 **en curso** — SCANS-RS-HYDRATE-1 abierto; REVIEW-REFETCH-1 **ACCEPT DIAGNÓSTICO** (0 scans en Review; residual = remount `/`); REVIEW-BRIEF-CRITICAL-1 **ACCEPT DESIGN** (NEEDS ASTRA A1–A3).  
-**Cola Wave5:** A hydrateRs (invest) · B refetch **cerrado** · C brief diseño hecho → impl tras Astra.  
+**Ahora:** Wave5 — SCANS-RS-HYDRATE-1 **ACCEPT INVESTIGATE**; siguiente **SCANS-RS-COUNTRY-REUSE-1** (prep). BRIEF design OK (NEEDS ASTRA). REFETCH diag OK.  
+**Cola Wave5:** impl reuse US country RS · Astra A1–A3 brief · aparcados chartPreview/react-commit/remount.  
 **Aparcado (hallazgo REFETCH):** remount screener al volver de `/review` (P2 nightly-us + markets 28) — ticket futuro de arranque, no Review.  
+**Nota HYDRATE:** túnel `:15432` seguía caído al cerrar invest; re-medir con `probe.mjs` en gate de REUSE-1.  
 **Aparcados:** SCANS-CHARTPREVIEW-1 · REACT-COMMIT-PERF-1 · IPO-F P2.  
 **HOLD / NO retomar:** FILTER-ANNOTATION-1 (`639ceae`) — **revertido** `c55a648` (ROI browser insuficiente).  
 **KEEP transporte:** SCANS-TRANSPORT-1 gzip (`91ae6e4`) — mejora wire; **no** es solución de initial load (residuales: hydrateRs, parse/render, CPU gzip).  
