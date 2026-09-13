@@ -62,16 +62,18 @@ Hoy el brief los recalcula; el grid de Review no los pinta. ¿Futuro?
 ### A4 (producto menor — default si no contestas)
 Logo faltante: iniciales en T0; no fetch ligero solo por favicon.
 
-## Formato de respuesta esperado
+## Decisión Astra registrada (2026-09-13)
 
 ```
-A1: …
-A2: …
-A3: …
-A5: …
-Notas (≤5 líneas): …
-Siguiente ticket de impl autorizado: REVIEW-HYDRATE-DEFER-1 sí/no
+A1: A1-S
+A2: A2-CHART
+A3: A3-OMIT
+A5: A5-ABSENT
+REVIEW-HYDRATE-DEFER-1: autorizado
 ```
+
+Impl: `docs/tickets/REVIEW-HYDRATE-DEFER-1.md`.
+
 
 ## Tras Astra → secuencia (orquestador)
 

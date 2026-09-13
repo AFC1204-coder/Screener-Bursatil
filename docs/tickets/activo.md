@@ -1,30 +1,24 @@
-# Ticket activo — ASTRA Review brief T0/T1/T2
+# Ticket activo — REVIEW-HYDRATE-DEFER-1 (prep)
 
-**Estado:** prep · espera decisión Astra (dueño pega en chat Astra)  
-**Bloquea:** REVIEW-HYDRATE-DEFER-1  
-**Doc:** `docs/tickets/ASTRA-REVIEW-BRIEF-T0T1T2.md`  
-**HEAD:** `codex/statsedge-ui-polish` @ origin
+**Estado:** prep · Astra A1-S / A2-CHART / A3-OMIT / A5-ABSENT  
+**Ticket:** `docs/tickets/REVIEW-HYDRATE-DEFER-1.md`  
+**Rama:** `codex/statsedge-ui-polish`  
+**Modelo:** Composer 2.5 High
 
-## Prompt para Astra (copiar tal cual)
+## Prompt para Agent chat (copiar tal cual)
 
 ```
-@docs/tickets/ASTRA-REVIEW-BRIEF-T0T1T2.md
+@docs/tickets/REVIEW-HYDRATE-DEFER-1.md
 
-Eres Astra en modo decisión de contrato (NO código).
+Rama: codex/statsedge-ui-polish.
+Modelo: Composer 2.5 High.
 
-Contexto StatsEdge Rapid Review: company-brief bloquea el critical path 2–6 s.
-Diseño ya ACCEPT: T0 fila sesión → T1 chart/rs-weekly → T2 brief diferido/ficha.
-REVIEW-REFETCH-1 cerrado. RS canónico = weeklyRs* de sesión.
+Alcance: sacar company-brief del camino síncrono de Rapid Review.
+Astra vinculante: A1-S (métricas = snapshot sesión) · A2-CHART (banner = OHLC T1; brief no bloquea) · A3-OMIT (no merge RS quality/speculation/rsRating del brief) · A5-ABSENT (Sin dato + motivo).
 
-Responde SOLO en el formato del doc:
-A1 / A2 / A3 / A5 con códigos de opción (A1-S|A1-C|A1-H, etc.)
-+ notas ≤5 líneas
-+ autoriza o no REVIEW-HYDRATE-DEFER-1
+MUST NOT TOUCH: reviewSession contrato, scoring/RS writers, nocturno, recalc métricas desde chart, prefetch briefs.
 
-Si una opción de la recomendación orquestador te parece mal, dilo y elige otra.
-No inventes tickets nuevos fuera de la secuencia del doc.
+PASS: 0 company-brief hasta shell usable; banner solo por chart T1; tests PASS; sin commit ni push.
+
+Devuelve plantilla de retorno del orquestador.
 ```
-
-## Tras respuesta Astra
-
-Pegar aquí el bloque A1–A5. El orquestador escribe `REVIEW-HYDRATE-DEFER-1` y el prompt Composer.
