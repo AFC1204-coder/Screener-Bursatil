@@ -82,6 +82,15 @@ describe("reviewSession identity", () => {
     )).toBe(true);
   });
 
+  it("no invalida por orden distinto de claves en capas de vista/filtro", () => {
+    const storedLayers = { country: true, sector: true, theme: true };
+    const currentLayers = { theme: true, country: true, sector: true };
+    expect(reviewSessionIdentityMatches(
+      { ...baseIdentity, viewLayers: storedLayers },
+      { ...baseIdentity, viewLayers: currentLayers },
+    )).toBe(true);
+  });
+
   it("invalida la sesión cuando cambian filtros o escaneo", () => {
     expect(reviewSessionIdentityMatches(baseIdentity, {
       ...baseIdentity,
