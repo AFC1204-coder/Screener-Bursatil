@@ -1,9 +1,10 @@
 # REVIEW-PERSIST-PREVIEW-1
 
-**Estado:** prep (después de CHART-PARALLEL-1)  
+**Estado:** hecho (ACCEPT · 2026-09-13)  
 **OWNER:** Cursor / Grok 4.7 High o Composer 2.5 High  
 **PRIORITY:** P1  
-**MODE:** IMPLEMENTACIÓN acotada
+**MODE:** IMPLEMENTACIÓN acotada  
+**Cierre:** `persistReviewQueue` conserva preview hasta fallo real de write; strip último recurso + `storageNote`. `mergeReviewRowChartPreviews` en Review/Vista rápida. Tests persistencia 37+ DEFER. Smoke parcial `:3300` reopen sin brief.
 
 ## PROBLEM
 

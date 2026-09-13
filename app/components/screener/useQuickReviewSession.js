@@ -10,7 +10,7 @@ import {
   reviewFocusStatusMessage,
 } from "@/lib/reviewSession";
 import { buildReviewPageHref } from "@/lib/screenerReviewLaunch";
-import { persistReviewQueue } from "@/lib/screenerPipeline";
+import { mergeReviewRowChartPreviews, persistReviewQueue } from "@/lib/screenerPipeline";
 import {
   applyStockDecisionResolution,
   decisionResolutionForSymbol,
@@ -167,15 +167,16 @@ export function useQuickReviewSession({
     });
   }
 
-  function resumeStoredReviewSession(startSymbol = "", options = {}) {
+  function resumeStoredReviewSession(startSymbol = "", options = {}, previewSourceRows = []) {
     const storedReview = safeRead(STORAGE_KEYS.review, {});
     if (!canResumeStoredReviewSession(options)) return null;
     const focus = resolveReviewFocus(storedReview, startSymbol);
     if (!focus.inQueue || !focus.symbol) return null;
-    const reviewRows = storedReview.rows;
+    const reviewRows = mergeReviewRowChartPreviews(storedReview.rows, previewSourceRows);
     const reviewSourceLabel = storedReview.sourceLabel || "Screener actual";
     const nextPayload = {
       ...storedReview,
+      rows: reviewRows,
       selectedSymbol: focus.symbol,
       currentIndex: focus.index,
       updatedAt: new Date().toISOString(),
@@ -234,7 +235,7 @@ export function useQuickReviewSession({
   }
 
   function openReview(currentRows, startSymbol = "", options = {}) {
-    const resumed = resumeStoredReviewSession(startSymbol, options);
+    const resumed = resumeStoredReviewSession(startSymbol, options, currentRows);
     if (resumed) return;
     const persisted = persistScreenerReviewQueue(currentRows, startSymbol, options);
     if (!persisted) {
@@ -250,7 +251,7 @@ export function useQuickReviewSession({
 
   function openReviewPage(currentRows, startSymbol = "", options = {}) {
     const resumeStartSymbol = canResumeStoredReviewSession(options) ? "" : startSymbol;
-    const resumed = resumeStoredReviewSession(resumeStartSymbol, options);
+    const resumed = resumeStoredReviewSession(resumeStartSymbol, options, currentRows);
     if (resumed) return resumed.href;
     const persisted = persistScreenerReviewQueue(currentRows, startSymbol, options);
     if (!persisted) {

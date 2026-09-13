@@ -28,7 +28,7 @@ import {
   storageFootprint,
   subscribeStorageWriteFailures,
 } from "@/lib/localState";
-import { filterAnalyzedRows, fitScansForBrowser, persistReviewQueue, persistRowForBrowser, persistRowsForBrowser } from "@/lib/screenerPipeline";
+import { filterAnalyzedRows, fitScansForBrowser, mergeReviewRowChartPreviews, persistReviewQueue, persistRowForBrowser, persistRowsForBrowser } from "@/lib/screenerPipeline";
 import { SCAN_LIGHT_EXCLUDED_FIELDS } from "@/lib/scanLightProjection";
 import { qualityGateForResearchRow } from "@/lib/qualityGate";
 import { settingsForPreset } from "@/lib/screenerFilterCatalog";
@@ -291,6 +291,22 @@ describe("persistReviewQueue", () => {
     expect(stored.decisionResolutions.Q1.actionKey).toBe("discard");
   });
 
+  it("conserva miniaturas aunque supere el presupuesto blando si localStorage admite la escritura", () => {
+    installFakeStorage();
+    let count = 8;
+    let light = { ...queue(count), rows: persistRowsForBrowser(queue(count).rows) };
+    while (payloadChars(light) <= budgetFor(STORAGE_KEYS.review)) {
+      count += 16;
+      light = { ...queue(count), rows: persistRowsForBrowser(queue(count).rows) };
+      if (count > 2000) throw new Error("setup: no se pudo superar el presupuesto blando de review");
+    }
+    expect(payloadChars(light)).toBeGreaterThan(budgetFor(STORAGE_KEYS.review));
+    expect(persistReviewQueue(queue(count))).toBe(true);
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.review));
+    expect(stored.rows[0].chartPreview?.length).toBeGreaterThan(0);
+    expect(stored.storageNote).toBeUndefined();
+  });
+
   it("cuando no cabe, degrada a cola sin miniaturas y reporta el desenlace", () => {
     installFakeStorage();
     const light = { ...queue(), rows: persistRowsForBrowser(queue().rows) };
@@ -330,6 +346,24 @@ describe("persistReviewQueue", () => {
     const keptScans = JSON.parse(localStorage.getItem(STORAGE_KEYS.scans));
     expect(keptScans.map((scan) => scan.id)).toEqual(["nuevo"]);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.review)).rows).toHaveLength(2);
+  });
+});
+
+describe("mergeReviewRowChartPreviews", () => {
+  const preview = [{ date: "2026-01-01", close: 10 }, { date: "2026-01-02", close: 11 }];
+
+  it("rellena chartPreview faltante desde filas en RAM sin pisar previews existentes", () => {
+    const merged = mergeReviewRowChartPreviews(
+      [{ symbol: "AAA" }, { symbol: "BBB", chartPreview: preview }],
+      [{ symbol: "AAA", chartPreview: preview }, { symbol: "BBB", chartPreview: [{ date: "x", close: 1 }, { date: "y", close: 2 }] }],
+    );
+    expect(merged[0].chartPreview).toEqual(preview);
+    expect(merged[1].chartPreview).toEqual(preview);
+  });
+
+  it("devuelve la misma referencia si no hay nada que reponer", () => {
+    const rows = [{ symbol: "AAA", chartPreview: preview }];
+    expect(mergeReviewRowChartPreviews(rows, [])).toBe(rows);
   });
 });
 

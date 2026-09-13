@@ -51,7 +51,7 @@ import { readChartSettings } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
 import { clamp, dateTime, pct, ratio } from "@/lib/formatters";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
-import { persistReviewQueue } from "@/lib/screenerPipeline";
+import { mergeReviewRowChartPreviews, persistReviewQueue } from "@/lib/screenerPipeline";
 import StorageAlert from "@/app/components/StorageAlert";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { evidenceRows } from "@/lib/reviewEvidence";
@@ -269,7 +269,11 @@ export default function ReviewPage() {
     const nextSettings = nextSource === "latest"
       ? (scans[0]?.activeSettings || scans[0]?.settings?.activeSettings || scans[0]?.settings || {})
       : (review.activeSettings || review.settings?.activeSettings || review.settings || {});
-    const nextRows = prepareReviewQueueRows(rowSource(nextSource, review, scans, favs), nextSettings || {});
+    const sourcedRows = rowSource(nextSource, review, scans, favs);
+    const rowsWithPreviews = nextSource === "current"
+      ? mergeReviewRowChartPreviews(sourcedRows, scans[0]?.rows || [])
+      : sourcedRows;
+    const nextRows = prepareReviewQueueRows(rowsWithPreviews, nextSettings || {});
     const decisionState = reviewDecisionStateForRows(review, nextRows);
     const nextResolutionFilter = keepState ? review.resolutionFilter || "all" : "all";
     const nextSourceMeta = sourceMetaForReview(nextSource, review);
