@@ -13,6 +13,7 @@ import {
   marketPresetMarkets,
   marketsSelectionBlockingMisalignment,
   marketsSelectionMisaligned,
+  marketsSelectionLoadSettled,
   marketsSelectionPartialCoverage,
   missingMarketsPeekDetail,
   resolveMarketsMisalignmentNotice,
@@ -355,6 +356,50 @@ describe("resolveMarketsMisalignmentNotice (UX-NAC-3)", () => {
       selectedMarkets: ["US"],
     })).toBeNull();
   });
+
+  it("cobertura parcial estable: aviso honesto sin loading eterno", () => {
+    const notice = resolveMarketsMisalignmentNotice({
+      scannedMarkets: ["US", "HK", "CA"],
+      selectedMarkets: DEFAULT_MARKETS,
+      rowCount: 4188,
+      restoringScan: false,
+      loadFailed: false,
+      selectionLoadSettled: true,
+    });
+    expect(notice?.tone).toBe("warn");
+    expect(notice?.label).toBe("Cobertura parcial");
+    expect(notice?.blocksResults).toBe(false);
+    expect(notice?.source).toBe("markets-partial-coverage");
+    expect(notice?.showCta).toBe(true);
+    expect(notice?.detail).not.toContain("Cargando");
+  });
+
+  it("cobertura parcial sin settled: loading para permitir auto-load", () => {
+    const notice = resolveMarketsMisalignmentNotice({
+      scannedMarkets: ["US"],
+      selectedMarkets: DEFAULT_MARKETS,
+      rowCount: 3319,
+      restoringScan: false,
+      loadFailed: false,
+      selectionLoadSettled: false,
+    });
+    expect(notice?.tone).toBe("loading");
+    expect(notice?.source).toBe("markets-pending-load");
+    expect(notice?.detail).toContain("Cargando");
+    expect(notice?.blocksResults).toBe(false);
+  });
+
+  it("cobertura parcial durante restoringScan sigue mostrando loading", () => {
+    const notice = resolveMarketsMisalignmentNotice({
+      scannedMarkets: ["US", "HK"],
+      selectedMarkets: DEFAULT_MARKETS,
+      rowCount: 100,
+      restoringScan: true,
+    });
+    expect(notice?.tone).toBe("loading");
+    expect(notice?.source).toBe("markets-loading");
+    expect(notice?.detail).toContain("Cargando");
+  });
 });
 
 describe("shouldAutoLoadMarketSelection", () => {
@@ -384,6 +429,42 @@ describe("shouldAutoLoadMarketSelection", () => {
       marketsStale: true,
       hasScannedMarkets: false,
     })).toBe(false);
+  });
+
+  it("dispara con US ⊆ Global si la selección no está settled", () => {
+    expect(shouldAutoLoadMarketSelection({
+      sessionReady: true,
+      marketsStale: true,
+      hasScannedMarkets: true,
+      selectionLoadSettled: false,
+    })).toBe(true);
+  });
+
+  it("no dispara con cobertura parcial settled en la misma key", () => {
+    expect(shouldAutoLoadMarketSelection({
+      sessionReady: true,
+      marketsStale: true,
+      hasScannedMarkets: true,
+      selectionLoadSettled: true,
+    })).toBe(false);
+  });
+
+  it("sigue disparando con desalineación bloqueante (mesa fuera de selección)", () => {
+    expect(shouldAutoLoadMarketSelection({
+      sessionReady: true,
+      marketsStale: true,
+      hasScannedMarkets: true,
+      selectionLoadSettled: false,
+    })).toBe(true);
+  });
+});
+
+describe("marketsSelectionLoadSettled", () => {
+  it("true solo cuando selectedKey y settledKey coinciden", () => {
+    const key = DEFAULT_MARKETS.slice().sort().join(",");
+    expect(marketsSelectionLoadSettled(key, key)).toBe(true);
+    expect(marketsSelectionLoadSettled(key, "US")).toBe(false);
+    expect(marketsSelectionLoadSettled("", key)).toBe(false);
   });
 });
 

@@ -314,6 +314,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     scannedMarkets = [],
     marketsLoadFailed = false,
     marketsLoadFailedDetail = "",
+    marketsSelectionLoadSettled = false,
   } = staleness || {};
   const isMobileViewport = useScreenerMobileViewport();
   const huntLabel = huntDisplayName(presetKey, markets);
@@ -328,6 +329,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     restoringScan,
     loadFailed: marketsLoadFailed,
     loadFailedDetail: marketsLoadFailedDetail,
+    selectionLoadSettled: marketsSelectionLoadSettled,
   });
   const resultsBlockedByMarketMisalignment = Boolean(
     marketsMisalignment && marketsMisalignment.blocksResults !== false,

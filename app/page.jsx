@@ -31,7 +31,7 @@ import { applyRelativeStrength, buildResearchRow, dataCoverageForRow } from "@/l
 import { normalizeScanErrorGroups } from "@/lib/scanErrorGroups";
 import { compositeLabel, volumeEvidence } from "@/lib/scoring";
 import { DEFAULT_MARKETS, DEFAULT_SCAN_BATCH_SIZE, DEFAULT_STATUS, DEFAULT_VIEW_LAYERS, MARKET_META, MARKETS, marketName, SCAN_BATCH_SIZES, SCREENER_FILTER_SETTING, SCREENER_SESSION_VERSION, USER_TEMPLATE_LIMIT } from "@/lib/screenerConfig";
-import { buildMergedSnapshotNotice, filterSelectableMarkets, formatMissingMarketsDetail, accumulatedMaterializedStatusDetail, intlBroadStatusDetail, marketPresetMarkets, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketsSelectionBlockingMisalignment, marketsSelectionMisaligned, restoreSessionMarketAlignAction, scannedMarketsFromScan, shouldAutoLoadMarketSelection } from "@/lib/marketAvailability";
+import { buildMergedSnapshotNotice, filterSelectableMarkets, formatMissingMarketsDetail, accumulatedMaterializedStatusDetail, intlBroadStatusDetail, marketPresetMarkets, MARKETS_MISALIGNMENT_EMPTY_LABEL, marketsSelectionBlockingMisalignment, marketsSelectionLoadSettled as isMarketsSelectionLoadSettled, marketsSelectionMisaligned, restoreSessionMarketAlignAction, scannedMarketsFromScan, shouldAutoLoadMarketSelection } from "@/lib/marketAvailability";
 import { buildDecisionBrief, buildDecisionEvidenceChecklist, decisionReadinessLabel, explainScreenerRank, rankActionLabel } from "@/lib/screenerExplainability";
 import { attachDecisionTrace, auditDecisionRowIssues, buildDecisionAuditExportPayload, buildDecisionTrace, decisionConfidenceLabel, decisionTraceForRow } from "@/lib/decisionAudit";
 import { decisionProfileStateForStock } from "@/lib/decisionProfile";
@@ -187,6 +187,7 @@ export default function Page() {
   const [restoringScan, setRestoringScan] = useState(false);
   const [marketsLoadFailed, setMarketsLoadFailed] = useState(false);
   const [marketsLoadFailedDetail, setMarketsLoadFailedDetail] = useState("");
+  const [marketsSelectionSettledKey, setMarketsSelectionSettledKey] = useState("");
   const [err, setErr] = useState("");
   const [scanMode, setScanMode] = useState("all");
   const [batchStart, setBatchStart] = useState(0);
@@ -1261,6 +1262,7 @@ export default function Page() {
   const scannedMarketsKey = effectiveScannedMarkets.join(",");
   const selectedMarketsKey = markets.slice().sort().join(",");
   const marketsStale = Boolean(effectiveScannedMarkets.length) && selectedMarketsKey !== scannedMarketsKey;
+  const marketsSelectionLoadSettled = isMarketsSelectionLoadSettled(selectedMarketsKey, marketsSelectionSettledKey);
   const marketsBlockingMisalignment = Boolean(
     effectiveScannedMarkets.length
     && marketsSelectionBlockingMisalignment(effectiveScannedMarkets, markets),
@@ -1355,6 +1357,15 @@ export default function Page() {
     setMarketsLoadFailed(true);
     setMarketsLoadFailedDetail(detail);
   }
+  function markMarketsSelectionSettled(selectionKey) {
+    if (!selectionKey) return;
+    setMarketsSelectionSettledKey(selectionKey);
+  }
+  useEffect(() => {
+    setMarketsSelectionSettledKey((prev) => (
+      prev && prev !== selectedMarketsKey ? "" : prev
+    ));
+  }, [selectedMarketsKey]);
   function loadScanForMarketSelection(nextMarkets, label = "Mercados actualizados.") {
     const normalized = normalizeMarketList(nextMarkets, []);
     const nextKey = normalized.slice().sort().join(",");
@@ -1362,6 +1373,7 @@ export default function Page() {
     if (nextKey === scannedKey) {
       setMarketsLoadFailed(false);
       setMarketsLoadFailedDetail("");
+      markMarketsSelectionSettled(nextKey);
       setStatus(label);
       return;
     }
@@ -1416,6 +1428,7 @@ export default function Page() {
           scanSignature: { markets: normalized, manual, scanMode },
         });
         setStatus(`Últimos datos de tu cuenta cargados: ${scan.rows.length} acciones (${marketName("US")}).`);
+        markMarketsSelectionSettled(nextKey);
         return;
       }
       const marketsMeta = result.data?.markets || null;
@@ -1512,6 +1525,7 @@ export default function Page() {
         || (normalized.length === 1
           ? `Materializado ${marketLabel} cargado: ${scan.rows.length} acciones.`
           : `Materializados fusionados (${marketLabel}): ${scan.rows.length} acciones.`));
+      markMarketsSelectionSettled(nextKey);
     }).catch((error) => {
       console.error("[snapshot] materializado por mercado:", error);
       if (marketLoadGenRef.current !== loadGen) return;
@@ -1537,9 +1551,10 @@ export default function Page() {
       loadFailed: marketsLoadFailed,
       hasScannedMarkets: effectiveScannedMarkets.length > 0,
       sessionReady,
+      selectionLoadSettled: marketsSelectionLoadSettled,
     })) return;
     loadScanForMarketSelection(markets, "Cargando datos de la selección…");
-  }, [sessionReady, marketsStale, restoringScan, marketsLoadFailed, markets, effectiveScannedMarkets.length, scannedMarketsKey]);
+  }, [sessionReady, marketsStale, restoringScan, marketsLoadFailed, markets, effectiveScannedMarkets.length, scannedMarketsKey, marketsSelectionLoadSettled]);
   useEffect(() => {
     if (!sessionReady) return;
     const pending = restoreMarketAlignRef.current;
@@ -2699,6 +2714,7 @@ export default function Page() {
       scannedMarkets: effectiveScannedMarkets,
       marketsLoadFailed,
       marketsLoadFailedDetail,
+      marketsSelectionLoadSettled,
     }}
     results={{
       rows,

@@ -61,6 +61,7 @@ function makeProps({
   restoringScan = false,
   marketsLoadFailed = false,
   marketsLoadFailedDetail = "",
+  marketsSelectionLoadSettled = false,
 } = {}) {
   const resultsRows = [{ symbol: "AAPL", country: "US" }];
   return {
@@ -180,15 +181,21 @@ function makeProps({
       scannedMarkets,
       marketsLoadFailed,
       marketsLoadFailedDetail,
+      marketsSelectionLoadSettled,
     },
   };
 }
 
 describe("ScreenerShell markets misalignment", () => {
   it("pinta la línea de verdad y un solo banner de carga (sin CTA) por viewport", () => {
-    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ marketsStale: true })));
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      marketsStale: true,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["HK"],
+      restoringScan: true,
+    })));
     expect(html).toContain("screenerTruthLine");
-    expect(html).toContain("pasan «");
+    expect(html).toContain("1 de 1 pasan");
     expect(html).not.toContain("analizadas");
     expect(html).toContain(MARKETS_AUTO_LOAD_LOADING_LABEL);
     expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
@@ -200,10 +207,12 @@ describe("ScreenerShell markets misalignment", () => {
   it("no duplica el aviso markets-stale en snapshotNotice", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
       marketsStale: true,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["HK"],
       snapshotNotice: {
         tone: "warn",
         label: "Mercados",
-        detail: "Datos cargados: US. La selección actual (US, CA) no coincide.",
+        detail: "Datos cargados: US. La selección actual (HK) no coincide.",
         source: "markets-stale",
       },
     })));
@@ -325,15 +334,31 @@ describe("ScreenerShell markets misalignment", () => {
     expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
   });
 
-  it("móvil: peek de carga multi-mercado sin cadena de códigos en summary", () => {
+  it("cobertura parcial: aviso estable y filas visibles (no loading eterno)", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      marketsStale: true,
+      scannedMarkets: ["US", "HK", "CA"],
+      selectedMarkets: DEFAULT_MARKETS,
+      marketsSelectionLoadSettled: true,
+    })));
+    expect(html).toContain("Cobertura parcial");
+    expect(html).not.toContain(MARKETS_AUTO_LOAD_LOADING_LABEL);
+    expect(html).toContain("1 de 1 pasan");
+    expect(html).toContain("ResultPagerTable");
+    expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
+  });
+
+  it("móvil: cobertura parcial multi-mercado sin loading eterno ni cadena de códigos", () => {
     mockIsMobileViewport.mockReturnValue(true);
     const many = DEFAULT_MARKETS.slice(0, 10);
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
       marketsStale: true,
       scannedMarkets: ["US"],
       selectedMarkets: many,
+      marketsSelectionLoadSettled: true,
     })));
-    expect(html).toContain("Cargando 10 mercados…");
+    expect(html).toContain("Cobertura parcial");
+    expect(html).not.toContain(MARKETS_AUTO_LOAD_LOADING_LABEL);
     expect(html).not.toMatch(/screenerMobileNoticePeek[^<]*AT\+AU/);
     expect(html).toContain("1 mercado en mesa");
     expect(html).toContain("selección ≠ mesa");

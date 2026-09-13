@@ -8,12 +8,13 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
-**Ahora:** idle · oleada Review T0/T1 **cerrada** (DEFER · CHART-PARALLEL · PERSIST-PREVIEW).  
-**Cola:** prefetch N+1 chart · remount scans · theme RS · SCANS-CHARTPREVIEW-1 · REACT-COMMIT.  
-**Último cerrado:** REVIEW-PERSIST-PREVIEW-1 (conservar/merge `chartPreview`).  
+**Ahora:** idle · SCREENER-PARTIAL-MARKETS-LOOP-1 **hecho** (settled key; smoke Global 1× markets).  
+**Cola:** remount scans · prefetch N+1 chart · theme RS · SCANS-CHARTPREVIEW-1 · REACT-COMMIT.  
+**Último cerrado:** SCREENER-PARTIAL-MARKETS-LOOP-1 (corte bucle partial-markets).  
 **Astra Review brief:** cerrado 2026-09-13 · doc `ASTRA-REVIEW-BRIEF-T0T1T2.md`.  
 **Nota DEFER smoke:** `:3300` AAA→BBB · 0 company-brief · sin banner lateral · chart T1 OK.  
-**Aparcado (hallazgo REFETCH):** remount screener al volver de `/review` (P2 nightly-us + markets 28) — ticket futuro de arranque, no Review.  
+**Nota PARTIAL-LOOP smoke (2026-09-13, :3300):** Global markets=1 · 668/4237 · Cobertura parcial · EE. UU. AVAH OK.  
+**Aparcado (hallazgo REFETCH):** remount screener al volver de `/review` (P2 nightly-us + markets) — distinto del bucle partial (cerrado).  
 **Remeasure REUSE (`f4695aa`, :3300, US 3576, túnel UP):**  
 - cold extended TTFB **17 861 ms** (antes SCANS-PAYLOAD-1: **44 899 ms**)  
 - cold core **8 586 ms** (antes **17 264 ms**; túnel/env más cálido también)  
