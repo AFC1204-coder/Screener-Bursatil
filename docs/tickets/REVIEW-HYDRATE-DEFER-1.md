@@ -1,9 +1,10 @@
 # REVIEW-HYDRATE-DEFER-1
 
-**Estado:** prep  
+**Estado:** hecho (ACCEPT · 2026-09-13)  
 **OWNER:** Cursor / Composer 2.5 High  
 **PRIORITY:** P0 (post Astra T0/T1/T2)  
-**MODE:** IMPLEMENTACIÓN
+**MODE:** IMPLEMENTACIÓN  
+**Cierre:** sin `hydrateReviewRow`/brief síncrono; fila = sesión; banner lateral retirado; chart T1 propio. Tests 44 PASS. Browser `:3300`: AAA→BBB, **0** `company-brief`, banner ausente, `/api/chart` sí.
 
 ## DECISIONES ASTRA (vinculantes · 2026-09-13)
 

@@ -258,9 +258,8 @@ describe("cola de revisión (/review): la maquinaria de veredictos no vuelve", (
   });
 
   it("el grid de métricas no lee el percentil del lote ni los percentiles de país/grupo", () => {
-    // El RS de la pantalla pasa por canonicalRs; rsGlobalPct solo puede
-    // aparecer como dato de FILA en la hidratación (hydrateReviewRow guarda
-    // campos de fila), nunca como celda pintada.
+    // El RS de la pantalla pasa por canonicalRs; la fila es snapshot de sesión
+    // (REVIEW-HYDRATE-DEFER-1: sin merge desde company-brief).
     expect(source).toContain("canonicalRs");
     expect(source).not.toContain('value(row, "rsGlobalPct")');
     expect(source).not.toContain('value(row, "rsCountryPct")');

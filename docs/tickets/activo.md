@@ -1,24 +1,11 @@
-# Ticket activo — REVIEW-HYDRATE-DEFER-1 (prep)
+# Ticket activo — idle
 
-**Estado:** prep · Astra A1-S / A2-CHART / A3-OMIT / A5-ABSENT  
-**Ticket:** `docs/tickets/REVIEW-HYDRATE-DEFER-1.md`  
-**Rama:** `codex/statsedge-ui-polish`  
-**Modelo:** Composer 2.5 High
+**Estado:** idle  
+**Último cerrado:** REVIEW-HYDRATE-DEFER-1 (`eeb85fa` ticket · commit producto pendiente en este cierre)  
+**Siguiente candidato:** REVIEW-CHART-PARALLEL-1 · REVIEW-PERSIST-PREVIEW-1 · theme RS HTTP · remount scans
 
 ## Prompt para Agent chat (copiar tal cual)
 
 ```
-@docs/tickets/REVIEW-HYDRATE-DEFER-1.md
-
-Rama: codex/statsedge-ui-polish.
-Modelo: Composer 2.5 High.
-
-Alcance: sacar company-brief del camino síncrono de Rapid Review.
-Astra vinculante: A1-S (métricas = snapshot sesión) · A2-CHART (banner = OHLC T1; brief no bloquea) · A3-OMIT (no merge RS quality/speculation/rsRating del brief) · A5-ABSENT (Sin dato + motivo).
-
-MUST NOT TOUCH: reviewSession contrato, scoring/RS writers, nocturno, recalc métricas desde chart, prefetch briefs.
-
-PASS: 0 company-brief hasta shell usable; banner solo por chart T1; tests PASS; sin commit ni push.
-
-Devuelve plantilla de retorno del orquestador.
+(no hay ticket activo — espera al orquestador)
 ```

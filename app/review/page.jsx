@@ -50,7 +50,6 @@ import { getJson } from "@/lib/clientApi";
 import { readChartSettings } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
 import { clamp, dateTime, pct, ratio } from "@/lib/formatters";
-import { stdev } from "@/lib/indicators";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { persistReviewQueue } from "@/lib/screenerPipeline";
 import StorageAlert from "@/app/components/StorageAlert";
@@ -71,9 +70,6 @@ import { countryCode, externalLinks, stockUrl } from "@/lib/symbols";
 
 function value(row = {}, key) {
   return row[key] ?? row.snapshot?.[key] ?? null;
-}
-function cleanObject(obj = {}) {
-  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined && v !== null && !(typeof v === "number" && Number.isNaN(v))));
 }
 function normalizeRow(row = {}) {
   const snapshot = row.snapshot || {};
@@ -164,161 +160,8 @@ function chartPath(points, key, x, y) {
     return `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(current).toFixed(1)}`;
   }).filter(Boolean).join(" ");
 }
-function avg(values = []) {
-  const xs = values.filter(Number.isFinite);
-  return xs.length ? xs.reduce((sum, item) => sum + item, 0) / xs.length : null;
-}
-function barsAsc(bars = []) {
-  return [...bars]
-    .filter((bar) => bar?.date && Number.isFinite(bar.close))
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
-}
-function chartPreviewFromBars(bars = [], limit = 180) {
-  const asc = barsAsc(bars);
-  const enriched = asc.map((bar, index) => {
-    const windowAvg = (n) => index >= n - 1 ? avg(asc.slice(index - n + 1, index + 1).map((x) => x.close)) : null;
-    return {
-      date: bar.date,
-      close: bar.close,
-      volume: Number.isFinite(bar.volume) ? bar.volume : 0,
-      sma50: windowAvg(50),
-      sma200: windowAvg(200),
-    };
-  });
-  return enriched.slice(-limit);
-}
-function deriveTechnicalFromBars(bars = []) {
-  const asc = barsAsc(bars);
-  const latest = asc.at(-1);
-  if (!latest) return {};
-  const close = latest.close;
-  const slice = (n, offset = 0) => asc.slice(Math.max(0, asc.length - offset - n), asc.length - offset);
-  const sma = (n, offset = 0) => avg(slice(n, offset).map((bar) => bar.close));
-  const highDistance = (n) => {
-    const high = Math.max(...slice(n).map((bar) => Number.isFinite(bar.high) ? bar.high : bar.close).filter(Number.isFinite));
-    return Number.isFinite(high) && high > 0 ? ((close / high) - 1) * 100 : null;
-  };
-  const perfDays = (n) => {
-    const previous = asc.at(-1 - n)?.close;
-    return Number.isFinite(previous) && previous > 0 ? ((close / previous) - 1) * 100 : null;
-  };
-  const returns = [];
-  for (let i = Math.max(1, asc.length - 63); i < asc.length; i += 1) {
-    const now = asc[i]?.close;
-    const prev = asc[i - 1]?.close;
-    if (Number.isFinite(now) && Number.isFinite(prev) && prev > 0) returns.push((now / prev) - 1);
-  }
-  const volatility63d = Number.isFinite(stdev(returns)) ? stdev(returns) * Math.sqrt(252) * 100 : null;
-  const drawdownRows = slice(63);
-  let peak = drawdownRows[0]?.close || close;
-  let maxDrawdown63d = 0;
-  for (const bar of drawdownRows) {
-    peak = Math.max(peak, bar.close);
-    if (peak > 0) maxDrawdown63d = Math.max(maxDrawdown63d, ((peak - bar.close) / peak) * 100);
-  }
-  const avgVol20 = avg(slice(20, 1).map((bar) => bar.volume));
-  const avgVol5 = avg(slice(5).map((bar) => bar.volume));
-  const prevVol20 = avg(slice(20, 5).map((bar) => bar.volume));
-  const relativeVolume = Number.isFinite(avgVol20) && avgVol20 > 0 ? (latest.volume || 0) / avgVol20 : null;
-  const volumeSurgePct = Number.isFinite(avgVol5) && Number.isFinite(prevVol20) && prevVol20 > 0 ? ((avgVol5 / prevVol20) - 1) * 100 : null;
-  const s50 = sma(50);
-  const s150 = sma(150);
-  const s200 = sma(200);
-  const s200Prev = sma(200, 30);
-  const perf3m = perfDays(63);
-  const volumeEffectScore = Number.isFinite(relativeVolume) || Number.isFinite(volumeSurgePct)
-    ? clamp(Math.max(0, ((relativeVolume || 1) - 1) * 35) + Math.max(0, volumeSurgePct || 0) * .4 + (asc.at(-1)?.close >= asc.at(-2)?.close ? 15 : 0), 0, 100)
-    : null;
-  return cleanObject({
-    price: close,
-    lastDate: latest.date,
-    chartPreview: chartPreviewFromBars(asc),
-    sma50: s50,
-    sma150: s150,
-    sma200: s200,
-    sma200Slope: Number.isFinite(s200) && Number.isFinite(s200Prev) && s200Prev > 0 ? ((s200 / s200Prev) - 1) * 100 : null,
-    extSma50: Number.isFinite(s50) && s50 > 0 ? ((close / s50) - 1) * 100 : null,
-    distance20d: highDistance(20),
-    distance50d: highDistance(50),
-    distance52w: highDistance(252),
-    highsSpreadPct: Number.isFinite(highDistance(20)) && Number.isFinite(highDistance(50)) ? Math.abs(highDistance(20) - highDistance(50)) : null,
-    perf3m,
-    perf6m: perfDays(126),
-    perf12m: perfDays(252),
-    avgVolume: avgVol20,
-    latestVolume: latest.volume,
-    relativeVolume,
-    volumeSurgePct,
-    volumeEffectScore,
-    volatility63d,
-    maxDrawdown63d,
-    returnToVol3m: Number.isFinite(perf3m) && Number.isFinite(volatility63d) && volatility63d > 0 ? perf3m / volatility63d : null,
-    returnToDrawdown3m: Number.isFinite(perf3m) && maxDrawdown63d > 0 ? perf3m / maxDrawdown63d : null,
-  });
-}
 async function fetchJson(url, signal, timeoutMs = 12000) {
   return getJson(url, { signal, timeoutMs });
-}
-async function hydrateReviewRow(row = {}, signal) {
-  const symbol = row.symbol;
-  let brief = null;
-  try {
-    brief = await fetchJson(`/api/company-brief?symbol=${encodeURIComponent(symbol)}`, signal, 14000);
-  } catch {}
-  if (brief) {
-    const technical = deriveTechnicalFromBars(brief.chartBars || []);
-    const rs = brief.relativeStrength || {};
-    const benchmarkRating = rs.benchmarkRating ?? rs.rsRating ?? null;
-    const countryAvailable = Number.isFinite(rs.countryRsRating);
-    const themeAvailable = Number.isFinite(rs.themeRsRating);
-    return cleanObject({
-      ...row,
-      ...technical,
-      companyName: brief.name || row.companyName,
-      sector: brief.sector || row.sector,
-      industry: brief.industry || row.industry,
-      exchange: brief.exchange || row.exchange,
-      currency: brief.currency || row.currency,
-      country: brief.country || row.country,
-      theme: brief.theme || row.theme,
-      logoDomain: brief.visual?.domain || row.logoDomain,
-      website: brief.links?.official || row.website,
-      benchmarkSymbol: rs.benchmarkSymbol || row.benchmarkSymbol,
-      rsRating: benchmarkRating ?? row.rsRating,
-      rsGlobalPct: rs.rsGlobalPct ?? row.rsGlobalPct,
-      rsCountryPct: rs.rsCountryPct ?? row.rsCountryPct,
-      rsSectorPct: rs.rsSectorPct ?? row.rsSectorPct,
-      rsQualityScore: rs.rsQualityScore ?? row.rsQualityScore,
-      speculationRiskScore: rs.speculationRiskScore ?? row.speculationRiskScore,
-      rs3m: rs.rs3m ?? row.rs3m,
-      rs6m: rs.rs6m ?? row.rs6m,
-      rs12m: rs.rs12m ?? row.rs12m,
-      perf3m: rs.perf3m ?? technical.perf3m ?? row.perf3m,
-      perf6m: rs.perf6m ?? technical.perf6m ?? row.perf6m,
-      perf12m: rs.perf12m ?? technical.perf12m ?? row.perf12m,
-      shortPercentOfFloat: brief.growthMetrics?.shortPercentOfFloat ?? row.shortPercentOfFloat,
-      relativeStrength: rs.series || null,
-      globalRsSeries: rs.globalRsSeries || [],
-      countryRsSeries: rs.countryRsSeries || [],
-      themeRsSeries: rs.themeRsSeries || [],
-      countryRsRating: countryAvailable ? rs.countryRsRating : null,
-      themeRsRating: themeAvailable ? rs.themeRsRating : null,
-      weeklyCountryRsAvailable: countryAvailable ? true : row.weeklyCountryRsAvailable,
-      weeklyCountryRsRating: countryAvailable ? rs.countryRsRating : row.weeklyCountryRsRating,
-      weeklyCountryRsSampleSize: countryAvailable ? rs.countryRsSampleSize : row.weeklyCountryRsSampleSize,
-      weeklyCountryRsWeekKey: countryAvailable ? rs.countryRsWeekKey : row.weeklyCountryRsWeekKey,
-      weeklyCountryRsEngineVersion: countryAvailable ? rs.countryRsEngineVersion : row.weeklyCountryRsEngineVersion,
-      weeklyCountryRsReason: countryAvailable ? null : (rs.countryRsReason ?? row.weeklyCountryRsReason),
-      weeklyThemeRsAvailable: themeAvailable ? true : row.weeklyThemeRsAvailable,
-      weeklyThemeRsRating: themeAvailable ? rs.themeRsRating : row.weeklyThemeRsRating,
-      weeklyThemeRsSampleSize: themeAvailable ? rs.themeRsSampleSize : row.weeklyThemeRsSampleSize,
-      weeklyThemeRsWeekKey: themeAvailable ? rs.themeRsWeekKey : row.weeklyThemeRsWeekKey,
-      weeklyThemeRsEngineVersion: themeAvailable ? rs.themeRsEngineVersion : row.weeklyThemeRsEngineVersion,
-      weeklyThemeRsReason: themeAvailable ? null : (rs.themeRsReason ?? row.weeklyThemeRsReason),
-    });
-  }
-  const chart = await fetchJson(`/api/chart?symbol=${encodeURIComponent(symbol)}`, signal, 9000);
-  return deriveTechnicalFromBars(chart.bars || []);
 }
 function MiniSparkline({ bars = [] }) {
   // Tolerante al orden: ver lib/screenerAtoms.jsx MiniSparkline.
@@ -363,10 +206,10 @@ const REVIEW_CHART_SETTINGS = {
   scale: "price",
 };
 
-function ReviewChartPanel({ row, loading = false }) {
+function ReviewChartPanel({ row }) {
   if (!row?.symbol) {
     return <div className="reviewChart">
-      <div className="previewEmpty">{loading ? "Cargando datos..." : "Sin gráfico disponible"}</div>
+      <div className="previewEmpty">Sin gráfico disponible</div>
     </div>;
   }
   return <div className="reviewChart reviewNativeChart">
@@ -374,7 +217,6 @@ function ReviewChartPanel({ row, loading = false }) {
       row={row}
       settings={REVIEW_CHART_SETTINGS}
       height={520}
-      emptyLabel={loading ? "Cargando datos..." : "Sin gráfico disponible"}
     />
   </div>;
 }
@@ -416,7 +258,6 @@ export default function ReviewPage() {
   const [decisionResolutionLog, setDecisionResolutionLog] = useState([]);
   const [resolutionFilter, setResolutionFilter] = useState("all");
   const [sourceMeta, setSourceMeta] = useState({});
-  const [hydration, setHydration] = useState({});
   const sourceRequestRef = useRef(0);
 
   function loadSource(nextSource = source, keepState = false, startSymbol = "") {
@@ -564,10 +405,8 @@ export default function ReviewPage() {
     queuePendingComplete ? "complete" : "",
   ].filter(Boolean).join(" ");
   const activeBaseRow = visibleRows[currentIndex] || visibleRows[0] || null;
-  const activeHydration = activeBaseRow ? hydration[activeBaseRow.symbol] : null;
-  const activeRow = useMemo(() => activeBaseRow ? normalizeRow({ ...activeBaseRow, ...(activeHydration?.row || {}) }) : null, [activeBaseRow, activeHydration]);
+  const activeRow = useMemo(() => activeBaseRow ? normalizeRow(activeBaseRow) : null, [activeBaseRow]);
   const activeSymbol = activeRow?.symbol || "";
-  const activeHydrating = activeHydration?.status === "loading";
   const activeResolution = useMemo(() => decisionResolutionForSymbol({ decisionResolutions }, activeSymbol), [decisionResolutions, activeSymbol]);
   const activeResolutionHistory = useMemo(
     () => decisionResolutionHistory({ decisionResolutions, decisionResolutionLog }, { symbol: activeSymbol, limit: 4 }),
@@ -585,28 +424,6 @@ export default function ReviewPage() {
       window.history.replaceState(null, "", nextHref);
     }
   }, [activeSymbol, source]);
-
-  useEffect(() => {
-    if (!activeBaseRow?.symbol) return;
-    const symbol = activeBaseRow.symbol;
-    const alreadyUsable = activeBaseRow.chartPreview?.length > 1
-      && Number.isFinite(value(activeBaseRow, "perf3m"))
-      && Number.isFinite(value(activeBaseRow, "relativeVolume"));
-    if (alreadyUsable || hydration[symbol]?.status === "loading" || hydration[symbol]?.status === "ready") return;
-    const controller = new AbortController();
-    setHydration((prev) => ({ ...prev, [symbol]: { status: "loading" } }));
-    hydrateReviewRow(activeBaseRow, controller.signal)
-      .then((patch) => {
-        if (!patch || controller.signal.aborted) return;
-        setHydration((prev) => ({ ...prev, [symbol]: { status: "ready", row: patch } }));
-        setRows((prev) => prev.map((row) => row.symbol === symbol ? normalizeRow({ ...row, ...patch, snapshot: { ...(row.snapshot || {}), ...patch } }) : row));
-      })
-      .catch((error) => {
-        if (controller.signal.aborted) return;
-        setHydration((prev) => ({ ...prev, [symbol]: { status: "error", error: error.message || "Proveedor no disponible" } }));
-      });
-    return () => controller.abort();
-  }, [activeBaseRow?.symbol]);
 
   useEffect(() => {
     if (!rows.length) return;
@@ -896,7 +713,7 @@ export default function ReviewPage() {
             <span className="reviewIdentity"><CompanyMark row={activeRow} size="lg" /><span><b>{activeRow.symbol}</b><em>{activeRow.companyName || activeRow.symbol}</em></span></span>
             <span className="reviewMeta">{activeRow.country || countryCode(activeRow.symbol)} · {activeRow.theme || activeRow.sector || "Sin sector"}</span>
           </div>
-          <ReviewChartPanel row={activeRow} loading={activeHydrating} />
+          <ReviewChartPanel row={activeRow} />
           <div className="reviewFloatingNav" aria-label="Navegación de acciones">
             <button type="button" onClick={() => move(-1)} aria-label="Acción anterior">↑</button>
             <span>{currentIndex + 1}<em>/</em>{visibleRows.length}</span>
@@ -912,7 +729,6 @@ export default function ReviewPage() {
           <a className="btn" href={externalLinks(activeRow.symbol, activeRow.exchange).tradingView} target="_blank" rel="noreferrer">TradingView</a>
           <button className={`starBtn ${favoriteSymbols.has(activeSymbol) ? "on" : ""}`} onClick={() => toggleFavorite(activeRow)} aria-label={`Favorito ${activeRow.symbol}`}>★</button>
         </div>
-        {activeHydrating && <div className="dataNote" style={{ marginBottom: 10 }}>Cargando histórico y métricas...</div>}
         <div className="reviewMetricGrid">
           {metricRows(activeRow).map(([label, metric, title = ""]) => <span key={label}>
             <b>{label}</b>
