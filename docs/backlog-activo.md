@@ -8,8 +8,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
-**Ahora:** Wave5 **prep** — tickets SCANS-RS-HYDRATE-1 · REVIEW-REFETCH-1 · REVIEW-BRIEF-CRITICAL-1 (prompts listos; agentes no lanzados).  
-**Cola Wave5:** A hydrateRs (invest) ∥ B review refetch · C brief design/probe (C no toca `app/review/*` hasta cierre B).  
+**Ahora:** Wave5 **en curso** — SCANS-RS-HYDRATE-1 · REVIEW-REFETCH-1 abiertos; REVIEW-BRIEF-CRITICAL-1 **ACCEPT DESIGN** (NEEDS ASTRA A1–A3).  
+**Cola Wave5:** A hydrateRs (invest) ∥ B review refetch · C brief **hecho diseño** → impl bloqueada a Astra + cierre REFETCH.  
 **Aparcados:** SCANS-CHARTPREVIEW-1 · REACT-COMMIT-PERF-1 · IPO-F P2.  
 **HOLD / NO retomar:** FILTER-ANNOTATION-1 (`639ceae`) — **revertido** `c55a648` (ROI browser insuficiente).  
 **KEEP transporte:** SCANS-TRANSPORT-1 gzip (`91ae6e4`) — mejora wire; **no** es solución de initial load (residuales: hydrateRs, parse/render, CPU gzip).  
