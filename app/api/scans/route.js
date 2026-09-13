@@ -13,6 +13,7 @@ import { attachWeeklyCountryRs, readCountryRsForSymbols } from "@/lib/countryRsH
 import { attachWeeklyThemeRs, readThemeRsForSymbols } from "@/lib/themeRsHydrate";
 import { scanRsHydrationMode } from "@/lib/scansRsHydration";
 import { userFacingServiceError } from "@/lib/serviceErrors";
+import { compressedJsonResponse } from "@/lib/compressedJsonResponse";
 
 const SCANS_SUPABASE_TIMEOUT_MS = 12000;
 
@@ -808,7 +809,7 @@ export async function GET(req) {
         ...(anchoredToNightlyUs ? { nightly: { found: true, ...nightly.scan } } : {}),
       };
     };
-    return Response.json(cacheableLatest ? await cachedLatestScans(cacheKey, loadPayload) : await loadPayload());
+    return compressedJsonResponse(req, cacheableLatest ? await cachedLatestScans(cacheKey, loadPayload) : await loadPayload());
   } catch (error) {
     return Response.json({ configured: true, ok: false, error: compactErrorMessage(error.message) || "No se pudieron cargar snapshots", details: error.details || null }, { status: 500 });
   }
