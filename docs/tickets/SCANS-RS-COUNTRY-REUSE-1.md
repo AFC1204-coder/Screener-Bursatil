@@ -1,9 +1,10 @@
 # SCANS-RS-COUNTRY-REUSE-1
 
-**Estado:** prep  
+**Estado:** hecho (ACCEPT · 2026-09-13 · gate orquestador)  
 **OWNER:** Cursor / Composer 2.5 High  
 **PRIORITY:** P0 (post SCANS-RS-HYDRATE-1)  
-**MODE:** IMPLEMENTACIÓN acotada
+**MODE:** IMPLEMENTACIÓN acotada  
+**Cierre:** reuse US si engine === US country; else `bulkSnapshot: true`. cacheKey + `rsHydrationMode`. Guard endurecido: no reuse sin engineVersion (exclusiones). Tests 6/6. Perf HTTP live **no** medida (probe: no US scan en DB vía túnel). En línea privada el win = bulk fallback, no mapa reuse.
 
 ## PROBLEM
 

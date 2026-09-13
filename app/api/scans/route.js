@@ -391,7 +391,7 @@ async function readScanRowHydration(scanSymbols = [], results = [], { hydrationM
   }
   const themeRows = themeHydrateRowBySymbol(results);
   const [weeklyCountryRs, weeklyThemeRs] = await Promise.all([
-    readCountryRsForSymbols(scanSymbols).catch(() => emptyRs),
+    readCountryRsForSymbols(scanSymbols, { reuseGlobalRsBySymbol: weeklyRs.bySymbol }).catch(() => emptyRs),
     readThemeRsForSymbols(scanSymbols, { rowBySymbol: themeRows }).catch(() => emptyRs),
   ]);
   return {
@@ -646,7 +646,7 @@ export async function GET(req) {
   try {
     const cacheableLatest = includeRows && !includeDeleted && limit === 1 && rowsLimit <= CACHEABLE_ROWS_LIMIT;
     const marketsCacheKey = anchoredToMarkets ? requestedMarkets.join(",") : "";
-    const cacheKey = `latest:${config.ownerId}:${rowsLimit}:${decisionProjection ? "decision" : full ? "full" : "compact"}:${anchoredToNightlyUs ? NIGHTLY_US_ANCHOR : anchoredToMarkets ? `${MARKETS_ANCHOR}:${marketsCacheKey}` : "any"}`;
+    const cacheKey = `latest:${config.ownerId}:${rowsLimit}:${decisionProjection ? "decision" : full ? "full" : "compact"}:${rsHydrationMode}:${anchoredToNightlyUs ? NIGHTLY_US_ANCHOR : anchoredToMarkets ? `${MARKETS_ANCHOR}:${marketsCacheKey}` : "any"}`;
     const loadPayload = async () => {
       if (anchoredToMarkets) {
         if (!requestedMarkets.length) {

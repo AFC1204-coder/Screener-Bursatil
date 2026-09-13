@@ -8,10 +8,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
-**Ahora:** Wave5 — SCANS-RS-HYDRATE-1 **ACCEPT INVESTIGATE**; siguiente **SCANS-RS-COUNTRY-REUSE-1** (prep). BRIEF design OK (NEEDS ASTRA). REFETCH diag OK.  
-**Cola Wave5:** impl reuse US country RS · Astra A1–A3 brief · aparcados chartPreview/react-commit/remount.  
+**Ahora:** Wave5 — COUNTRY-REUSE-1 **ACCEPT** (bulk US country; guard engine estricto). BRIEF design OK (NEEDS ASTRA). REFETCH diag OK. HYDRATE invest OK.  
+**Cola:** Astra A1–A3 brief · medir TTFB cold post-REUSE con nocturno US presente · aparcados chartPreview/react-commit/remount/theme-RS.  
 **Aparcado (hallazgo REFETCH):** remount screener al volver de `/review` (P2 nightly-us + markets 28) — ticket futuro de arranque, no Review.  
-**Nota HYDRATE:** túnel `:15432` seguía caído al cerrar invest; re-medir con `probe.mjs` en gate de REUSE-1.  
+**Nota REUSE:** línea privada → reuse mapa no aplica; beneficio = `bulkSnapshot:true` (~7 vs ~224 HTTP). Re-medir cuando Mini tenga scan US materializado.  
 **Aparcados:** SCANS-CHARTPREVIEW-1 · REACT-COMMIT-PERF-1 · IPO-F P2.  
 **HOLD / NO retomar:** FILTER-ANNOTATION-1 (`639ceae`) — **revertido** `c55a648` (ROI browser insuficiente).  
 **KEEP transporte:** SCANS-TRANSPORT-1 gzip (`91ae6e4`) — mejora wire; **no** es solución de initial load (residuales: hydrateRs, parse/render, CPU gzip).  

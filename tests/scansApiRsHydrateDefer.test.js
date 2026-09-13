@@ -149,6 +149,9 @@ describe("GET /api/scans · PERF-NAC defer RS país/tema", () => {
     const payload = await response.json();
     expect(payload.rsHydration).toBe("extended");
     expect(readCountryRsForSymbols).toHaveBeenCalled();
+    expect(readCountryRsForSymbols.mock.calls[0]?.[1]).toEqual(
+      expect.objectContaining({ reuseGlobalRsBySymbol: expect.any(Map) }),
+    );
     expect(readThemeRsForSymbols).toHaveBeenCalled();
 
     const row = payload.scans[0].rows[0];
