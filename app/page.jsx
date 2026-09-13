@@ -2547,9 +2547,11 @@ export default function Page() {
   }
 
   function openPrimaryReview() {
-    const storedSelectedSymbol = safeRead(STORAGE_KEYS.review, {})?.selectedSymbol || "";
+    const storedReview = safeRead(STORAGE_KEYS.review, {});
+    const storedSelectedSymbol = storedReview?.selectedSymbol || "";
+    const preserveStoredReviewFocus = Boolean(storedReview?.sessionIdentity?.version);
     const startSymbol = resolvePrimaryReviewStartSymbol({
-      selectedResultSymbol,
+      selectedResultSymbol: preserveStoredReviewFocus ? "" : selectedResultSymbol,
       selectedSymbol: storedSelectedSymbol,
       rows: filtered,
     });

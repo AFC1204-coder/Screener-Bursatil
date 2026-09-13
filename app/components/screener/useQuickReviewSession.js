@@ -249,7 +249,8 @@ export function useQuickReviewSession({
   }
 
   function openReviewPage(currentRows, startSymbol = "", options = {}) {
-    const resumed = resumeStoredReviewSession(startSymbol, options);
+    const resumeStartSymbol = canResumeStoredReviewSession(options) ? "" : startSymbol;
+    const resumed = resumeStoredReviewSession(resumeStartSymbol, options);
     if (resumed) return resumed.href;
     const persisted = persistScreenerReviewQueue(currentRows, startSymbol, options);
     if (!persisted) {

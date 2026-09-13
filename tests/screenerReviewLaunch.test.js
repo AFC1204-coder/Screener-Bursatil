@@ -37,6 +37,14 @@ describe("resolvePrimaryReviewStartSymbol", () => {
       rows,
     })).toBe("AAA");
   });
+
+  it("restaura selectedSymbol almacenado cuando la tabla tiene otra fila activa", () => {
+    expect(resolvePrimaryReviewStartSymbol({
+      selectedResultSymbol: "",
+      selectedSymbol: "CCC",
+      rows,
+    })).toBe("CCC");
+  });
 });
 
 describe("buildReviewPageHref", () => {
