@@ -1,9 +1,10 @@
 # REVIEW-CHART-PARALLEL-1
 
-**Estado:** prep  
+**Estado:** hecho (ACCEPT parcial · 2026-09-13)  
 **OWNER:** Cursor / Composer 2.5 High  
 **PRIORITY:** P1 (post REVIEW-HYDRATE-DEFER-1)  
-**MODE:** IMPLEMENTACIÓN acotada · primero evidenciar gap
+**MODE:** evidencia + candado tests · **sin diff de producto** (RowPriceChart post-DEFER ya cumple)  
+**Cierre:** 1 chart + 1 rs-weekly por ticker; 0 brief; error OHLC explícito. Tests `reviewChartParallel.test.js`. Residual: sin caché cross-symbol al revisitar.
 
 ## PROBLEM
 

@@ -8,11 +8,11 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
-**Ahora:** **REVIEW-CHART-PARALLEL-1** prep → luego **REVIEW-PERSIST-PREVIEW-1**.  
-**Cola:** CHART-PARALLEL · PERSIST-PREVIEW · aparcados remount/theme/chartPreview-bootstrap/react-commit.  
+**Ahora:** **REVIEW-PERSIST-PREVIEW-1** prep · CHART-PARALLEL **ACCEPT parcial**.  
+**Cola:** PERSIST-PREVIEW · aparcados remount/theme/chartPreview-bootstrap/react-commit · prefetch N+1 chart.  
+**Último cerrado:** REVIEW-CHART-PARALLEL-1 (candado tests; sin diff producto — T1 ya OK post-DEFER).  
 **Astra Review brief:** cerrado 2026-09-13 · doc `ASTRA-REVIEW-BRIEF-T0T1T2.md`.  
 **Nota DEFER smoke:** `:3300` AAA→BBB · 0 company-brief · sin banner lateral · chart T1 OK.  
-**Último cerrado:** REVIEW-HYDRATE-DEFER-1 (`f6eae85`).  
 **Aparcado (hallazgo REFETCH):** remount screener al volver de `/review` (P2 nightly-us + markets 28) — ticket futuro de arranque, no Review.  
 **Remeasure REUSE (`f4695aa`, :3300, US 3576, túnel UP):**  
 - cold extended TTFB **17 861 ms** (antes SCANS-PAYLOAD-1: **44 899 ms**)  

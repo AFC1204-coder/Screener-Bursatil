@@ -1,0 +1,37 @@
+{
+  "ticket": "REVIEW-CHART-PARALLEL-1",
+  "base": "http://127.0.0.1:3300",
+  "measuredAt": "2026-09-13T19:48:00+02:00",
+  "method": "Playwright headless; localStorage seed → /review; mock /api/chart + /api/rs-weekly",
+  "briefCalls": 0,
+  "chartTotal": 3,
+  "rsTotal": 3,
+  "chartPaths": [
+    "/api/chart?symbol=AAA&range=6M&interval=D",
+    "/api/chart?symbol=BBB&range=6M&interval=D",
+    "/api/chart?symbol=CCC&range=6M&interval=D"
+  ],
+  "rsPaths": [
+    "/api/rs-weekly?symbol=AAA&limit=180",
+    "/api/rs-weekly?symbol=BBB&limit=180",
+    "/api/rs-weekly?symbol=CCC&limit=180"
+  ],
+  "navTiming": {
+    "BBB": { "chartCount": 1, "rsCount": 1 },
+    "CCC": { "chartCount": 1, "rsCount": 1 }
+  },
+  "doubleFetchNote": "Un fetch /api/chart por cambio de símbolo (AAA→BBB→CCC). Revisitar AAA tras BBB vuelve a pedir chart (abort al salir; sin caché cross-symbol en useChartDataModel) — no es doble fetch simultáneo en un solo gesto.",
+  "errorUiProbe": {
+    "chart503": "Proveedor de gráfico no disponible: Yahoo down",
+    "role": "status",
+    "chartRendered": false
+  },
+  "pass": {
+    "zeroBrief": true,
+    "chartOnNav": true,
+    "noDoubleChartSameNav": true,
+    "rsParallel": true,
+    "explicitOhlcError": true
+  },
+  "verdict": "PASS parcial — RowPriceChart post-DEFER ya cumple; sin diff de producto"
+}
