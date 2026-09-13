@@ -46,6 +46,7 @@ import { isCloudAuthFailure } from "@/lib/serviceErrors";
 import { dropForeignMarketSnapshots, pickNightlyUsRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { nightlyAbsenceNotice, nightlyAbsenceReasonText, nightlyAbsenceStatus } from "@/lib/nightlyAbsence";
 import { screenerSessionDataExpired } from "@/lib/nightlyBoundary";
+import { shouldSkipCloudSnapshotRestore } from "@/lib/screenerRemountGuards";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 import {
   ALL_FILTER_LAYERS,
@@ -587,6 +588,8 @@ export default function Page() {
   function restoreLatestSnapshot({ isCancelled = () => false } = {}) {
     setRestoringScan(true);
     setStatus("Cargando el escaneo nocturno...");
+    const session = safeRead(STORAGE_KEYS.screenerSession, null);
+    const localScan = pickNightlyUsRestorableScan(safeRead(STORAGE_KEYS.scans, []));
     const declareNightlyAbsence = (nightly) => {
       if (isCancelled() || resultsOwnerRef.current !== "none") return;
       setSnapshotNotice(nightlyAbsenceNotice(nightly));
@@ -606,6 +609,12 @@ export default function Page() {
       }
       return restored;
     };
+    if (shouldSkipCloudSnapshotRestore({ localScan, session })) {
+      if (restoreLocalSnapshot()) {
+        setRestoringScan(false);
+        return;
+      }
+    }
     getLatestScanFromCloud().then((result) => {
       // Si mientras resolvía el fetch llegaron resultados por otra vía, el
       // snapshot remoto NO debe pisarlos.
@@ -863,12 +872,18 @@ export default function Page() {
       if (localScanIsSampled(referencedScan)) sampledScan = referencedScan;
       restoredRowsCount = restoredRows.length || restoredAnalyzedRows.length;
       const restoreScanContext = withScanScreenerFilters(session.scanContext || null, referencedScan);
+      const restoredSelectedKey = restoredMarkets.slice().sort().join(",");
+      const persistedSettledKey = session.marketsSelectionSettledKey || "";
+      if (persistedSettledKey) {
+        setMarketsSelectionSettledKey(persistedSettledKey);
+      }
       const restoreMarketAlignMarkets = restoreSessionMarketAlignAction({
         restoredMarkets,
         scanContext: restoreScanContext,
         analyzedRows: restoredAnalyzedRows,
         referencedScan,
         hasVisibleRows: Boolean(restoredRowsCount),
+        selectionLoadSettled: isMarketsSelectionLoadSettled(restoredSelectedKey, persistedSettledKey),
       });
       if (restoreMarketAlignMarkets) {
         restoredRows = [];
@@ -1073,6 +1088,7 @@ export default function Page() {
       lastOpenedStockSymbol: previousSession?.lastOpenedStockSymbol || "",
       lastOpenedStockAt: previousSession?.lastOpenedStockAt || null,
       lastOpenedStockContext: previousSession?.lastOpenedStockContext || null,
+      marketsSelectionSettledKey: marketsSelectionSettledKey || previousSession?.marketsSelectionSettledKey || "",
       ...overrides,
     };
   }
@@ -1119,7 +1135,7 @@ export default function Page() {
     // scanContext/scanPerf (scan y re-filtrados los actualizan siempre).
     // Debounce: el gesto (preset/orden) disparaba 4 setItem en 9 s; el
     // guardado no va en el hot path. pagehide/unmount hace flush.
-  }, [sessionReady, markets, manual, settings, presetKey, universeScope, scanContext, scanPerf, snapshotNotice, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, decisionResolutionFilter, sort, sortAsc, perfPeriod, scanMode, batchStart, scanBatchSize, resultPageSize, resultPage, marketHealth, restoringScan, useRegimeFilter, filterLayers, fieldRules, familyIntensity, viewLayers, searchSymbol, searchResult, quickReviewIndex]);
+  }, [sessionReady, markets, manual, settings, presetKey, universeScope, scanContext, scanPerf, snapshotNotice, fail, diagnostics, status, themeFilter, sectorFilter, industryFilter, countryFilter, sectorStrength, ipo, decisionResolutionFilter, sort, sortAsc, perfPeriod, scanMode, batchStart, scanBatchSize, resultPageSize, resultPage, marketHealth, restoringScan, useRegimeFilter, filterLayers, fieldRules, familyIntensity, viewLayers, searchSymbol, searchResult, quickReviewIndex, marketsSelectionSettledKey]);
 
   useEffect(() => {
     function flushSessionAutosave() {
@@ -2562,6 +2578,8 @@ export default function Page() {
   }
 
   function openPrimaryReview() {
+    sessionAutosaveRef.current?.flush();
+    persistScreenerSession();
     const storedReview = safeRead(STORAGE_KEYS.review, {});
     const storedSelectedSymbol = storedReview?.selectedSymbol || "";
     const preserveStoredReviewFocus = Boolean(storedReview?.sessionIdentity?.version);

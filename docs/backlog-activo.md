@@ -8,14 +8,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
-**Ahora:** idle · AUTH-LOCAL-UNLOCK-1 **hecho**.  
-**Cola:** remount scans · prefetch N+1 chart · theme RS · SCANS-CHARTPREVIEW-1 · REACT-COMMIT.  
-**Último cerrado:** AUTH-LOCAL-UNLOCK-1 («Entrar en local» sin pegar token).  
-**Nota AUTH-LOCAL smoke (2026-09-13, :3300 next dev):** botón OK → screener; `next start` no expone unlock (`NODE_ENV=production`).  
-**Astra Review brief:** cerrado 2026-09-13 · doc `ASTRA-REVIEW-BRIEF-T0T1T2.md`.  
-**Nota DEFER smoke:** `:3300` AAA→BBB · 0 company-brief · sin banner lateral · chart T1 OK.  
-**Nota PARTIAL-LOOP smoke (2026-09-13, :3300):** Global markets=1 · 668/4237 · Cobertura parcial · EE. UU. AVAH OK.  
-**Aparcado (hallazgo REFETCH):** remount screener al volver de `/review` (P2 nightly-us + markets) — distinto del bucle partial (cerrado).  
+**Ahora:** idle · SCREENER-REMOUNT-SCANS-1 **hecho** (bounce: 0 markets; nightly ≤1 lógico).  
+**Cola:** prefetch N+1 chart · theme RS · SCANS-CHARTPREVIEW-1 · REACT-COMMIT.  
+**Último cerrado:** SCREENER-REMOUNT-SCANS-1 (guards remount + settled persistido).  
+**Nota REMOUNT smoke (2026-09-13, :3300 next dev):** Global returnMarkets=0 · returnNightly=2 Strict (=1 lógico; local scans sin filas por cuota).  
 **Remeasure REUSE (`f4695aa`, :3300, US 3576, túnel UP):**  
 - cold extended TTFB **17 861 ms** (antes SCANS-PAYLOAD-1: **44 899 ms**)  
 - cold core **8 586 ms** (antes **17 264 ms**; túnel/env más cálido también)  

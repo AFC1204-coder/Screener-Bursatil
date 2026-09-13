@@ -187,6 +187,26 @@ describe("restoreSessionMarketAlignAction", () => {
       hasVisibleRows: false,
     })).toBeNull();
   });
+
+  it("no auto-carga tras remount si cobertura parcial ya estaba settled", () => {
+    expect(restoreSessionMarketAlignAction({
+      restoredMarkets: DEFAULT_MARKETS,
+      scanContext: { scannedMarkets: ["US"] },
+      analyzedRows: [{ symbol: "AAPL", country: "US" }],
+      hasVisibleRows: true,
+      selectionLoadSettled: true,
+    })).toBeNull();
+  });
+
+  it("sigue pidiendo auto-carga con desalineación bloqueante aunque settled", () => {
+    expect(restoreSessionMarketAlignAction({
+      restoredMarkets: ["HK"],
+      scanContext: { scannedMarkets: ["US"] },
+      analyzedRows: [{ symbol: "AAON", country: "US" }],
+      hasVisibleRows: true,
+      selectionLoadSettled: true,
+    })).toEqual(["HK"]);
+  });
 });
 
 describe("screenerTableMarketsUsOnly", () => {

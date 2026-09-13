@@ -1,8 +1,8 @@
 # Ticket activo — idle
 
 **Estado:** idle  
-**Último cerrado:** AUTH-LOCAL-UNLOCK-1  
-**Cola sugerida:** remount scans · prefetch N+1 chart · theme RS HTTP · SCANS-CHARTPREVIEW-1
+**Último cerrado:** SCREENER-REMOUNT-SCANS-1  
+**Cola sugerida:** prefetch N+1 chart · theme RS HTTP · SCANS-CHARTPREVIEW-1 · REACT-COMMIT
 
 ## Prompt para Agent chat (copiar tal cual)
 

@@ -79,4 +79,12 @@ describe("REVIEW-REFETCH-1 callers", () => {
     expect(page).toContain("loadScanForMarketSelection");
     expect(page).toContain("getLatestScanFromCloudForMarkets");
   });
+
+  it("bounce /review→/ persiste settled y evita refetch cloud en remount", () => {
+    const page = readFileSync(resolve(import.meta.dirname, "../app/page.jsx"), "utf8");
+    expect(page).toContain("shouldSkipCloudSnapshotRestore");
+    expect(page).toContain("marketsSelectionSettledKey");
+    expect(page).toContain("selectionLoadSettled");
+    expect(page).toContain("sessionAutosaveRef.current?.flush()");
+  });
 });
