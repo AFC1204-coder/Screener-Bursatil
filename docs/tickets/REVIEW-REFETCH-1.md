@@ -1,9 +1,10 @@
 # REVIEW-REFETCH-1
 
-**Estado:** prep  
+**Estado:** hecho (ACCEPT DIAGNÓSTICO · 2026-09-13)  
 **OWNER:** Cursor / Grok 4.7 High  
 **PRIORITY:** P1 (quick win Wave5)  
-**MODE:** DIAGNÓSTICO → impl solo si causa inequívoca y localizada
+**MODE:** DIAGNÓSTICO → impl solo si causa inequívoca y localizada  
+**Cierre:** 0 `/api/scans` en Review/reopen; residual = remount `app/page.jsx` (nightly-us + markets). Sin patch producto. Candado `tests/screenerReviewLaunch.test.js`. Futuro: SCREENER-REMOUNT-SCANS / keep-alive mesa.
 
 ## PROBLEM
 

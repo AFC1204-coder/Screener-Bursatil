@@ -62,3 +62,21 @@ describe("openPrimaryReview handler", () => {
     expect(source).toContain("router.push(href)");
   });
 });
+
+describe("REVIEW-REFETCH-1 callers", () => {
+  it("Rapid Review y el hook de launch no piden /api/scans", () => {
+    const reviewPage = readFileSync(resolve(import.meta.dirname, "../app/review/page.jsx"), "utf8");
+    const hook = readFileSync(resolve(import.meta.dirname, "../app/components/screener/useQuickReviewSession.js"), "utf8");
+    expect(reviewPage).not.toContain("/api/scans");
+    expect(hook).not.toContain("/api/scans");
+    expect(hook).toContain("resumeStoredReviewSession");
+  });
+
+  it("los GET residuales salen del remount de app/page.jsx, no de Review", () => {
+    const page = readFileSync(resolve(import.meta.dirname, "../app/page.jsx"), "utf8");
+    expect(page).toContain("restoreLatestSnapshot");
+    expect(page).toContain("getLatestScanFromCloud()");
+    expect(page).toContain("loadScanForMarketSelection");
+    expect(page).toContain("getLatestScanFromCloudForMarkets");
+  });
+});
