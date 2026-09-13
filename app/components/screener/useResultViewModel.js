@@ -3,10 +3,13 @@
 import { useEffect, useMemo, useState, useDeferredValue } from "react";
 import { buildResultViewBrief } from "@/app/components/screener/resultViewBrief";
 import { applyResultViewFilters, opportunityBuckets, passesSectorStrength } from "@/lib/screenerResultView";
-import { auditDecisionScan } from "@/lib/decisionAudit";
+import { auditDecisionRowIssues, auditDecisionScan, decisionConfidenceSummary, decisionPriorityBreakdown } from "@/lib/decisionAudit";
+import { decisionProfileForRow } from "@/lib/decisionProfile";
 import { rowPassesListContract } from "@/lib/listRationale";
-import { annotateScreenerRows } from "@/lib/screenerAnnotationCache";
-import { buildScreenerDataHealthSummary } from "@/lib/screenerDataHealth";
+import {
+  buildScreenerDataHealth,
+  buildScreenerDataHealthSummary,
+} from "@/lib/screenerDataHealth";
 import {
   DEFAULT_RESULT_PAGE_SIZE,
   MARKET_ORDER,
@@ -18,7 +21,10 @@ import {
   VIEW_LAYERS,
 } from "@/lib/screenerConfig";
 import { buildScreenerDecisionBrief } from "@/lib/screenerDecisionBrief";
-import { buildDecisionEvidenceSummary } from "@/lib/screenerExplainability";
+import {
+  buildDecisionEvidenceSummary,
+  explainScreenerRank,
+} from "@/lib/screenerExplainability";
 import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
 import { compareRowsForSort, defaultSortForSettings } from "@/lib/screenerPipeline";
 import {
@@ -196,10 +202,23 @@ export function useResultViewModel({
   // Si rows acaba de cambiar (p. ej. hunt acota mesa) deferredRows sigue en el lote
   // anterior: re-anotar ese lote con setupMode nuevo tumba el hilo (BUG-HUNT-1b).
   const annotateSourceRows = rowsDeferredStale ? rows : deferredRows;
-  const annotatedRows = useMemo(
-    () => annotateScreenerRows(annotateSourceRows, activeSettings),
-    [annotateSourceRows, setupMode],
-  );
+  function annotateRow(row) {
+    const explanation = explainScreenerRank(row, activeSettings);
+    const issues = auditDecisionRowIssues(row, explanation);
+    return {
+      ...row,
+      __screenerAnnotation: {
+        explanation,
+        confidence: decisionConfidenceSummary(row, explanation, issues),
+        dataHealth: buildScreenerDataHealth(row, activeSettings),
+        priority: decisionPriorityBreakdown(row, explanation),
+        profile: decisionProfileForRow(row, activeSettings),
+        issues,
+      },
+    };
+  }
+
+  const annotatedRows = useMemo(() => annotateSourceRows.map(annotateRow), [annotateSourceRows, setupMode]);
 
   const viewFilteredRows = useMemo(
     () => applyResultViewFilters(annotatedRows, viewFilterState),

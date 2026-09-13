@@ -113,7 +113,7 @@ describe("BUG-HUNT-1 · applyHuntCard sin flushSync", () => {
   it("useResultViewModel anota rows actuales si deferredRows está desalineado", () => {
     const source = readFileSync(join(root, "app/components/screener/useResultViewModel.js"), "utf8");
     expect(source).toMatch(/rowsDeferredStale \? rows : deferredRows/);
-    expect(source).toMatch(/annotateScreenerRows\(annotateSourceRows, activeSettings\)/);
+    expect(source).toMatch(/annotateSourceRows\.map\(annotateRow\)/);
   });
 
   it("huntPresetActiveSettings coincide con setPreset para cada ficha", () => {

@@ -1,17 +1,27 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import { explainScreenerRank } from "@/lib/screenerExplainability";
 import { decisionConfidenceSummary, auditDecisionRowIssues, decisionPriorityBreakdown } from "@/lib/decisionAudit";
 import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
 import { decisionProfileForRow } from "@/lib/decisionProfile";
 import { applyResultViewFilters } from "@/lib/screenerResultView";
-import {
-  annotateScreenerRow,
-  annotateScreenerRows,
-  buildAnnotationInputKey,
-  buildScreenerAnnotation,
-  clearScreenerAnnotationCache,
-  getScreenerAnnotationCacheStats,
-} from "@/lib/screenerAnnotationCache";
+
+// Anotación local equivalente a annotateRow() en useResultViewModel.js.
+// Mantenerla en sincronía con el helper del hook; este test protege el contrato.
+function annotateRow(row, settings) {
+  const explanation = explainScreenerRank(row, settings);
+  const issues = auditDecisionRowIssues(row, explanation);
+  return {
+    ...row,
+    __screenerAnnotation: {
+      explanation,
+      confidence: decisionConfidenceSummary(row, explanation, issues),
+      dataHealth: buildScreenerDataHealth(row, settings),
+      priority: decisionPriorityBreakdown(row, explanation),
+      profile: decisionProfileForRow(row, settings),
+      issues,
+    },
+  };
+}
 
 const settings = { setupMode: "leader" };
 
@@ -41,22 +51,9 @@ const baseRow = {
   setupDisplayPlanValid: true,
 };
 
-function canonicalAnnotateRow(row, activeSettings = settings) {
-  const annotation = buildScreenerAnnotation(row, activeSettings);
-  return {
-    ...row,
-    __screenerAnnotation: annotation,
-    __screenerAnnotationInputKey: buildAnnotationInputKey(row, activeSettings),
-  };
-}
-
 describe("screener row annotation cache", () => {
-  beforeEach(() => {
-    clearScreenerAnnotationCache();
-  });
-
   it("devuelve los mismos valores leyendo __screenerAnnotation que recalcular desde la fila", () => {
-    const annotated = canonicalAnnotateRow(baseRow, settings);
+    const annotated = annotateRow(baseRow, settings);
     const explanationDirect = explainScreenerRank(baseRow, settings);
     const confidenceDirect = decisionConfidenceSummary(baseRow, settings);
     const dataHealthDirect = buildScreenerDataHealth(baseRow, settings);
@@ -74,7 +71,7 @@ describe("screener row annotation cache", () => {
       { ...baseRow, symbol: "WEAK", rsGlobalPct: 45, extSma50: 30, riskRewardScore: 35 },
       { ...baseRow, symbol: "STALE", priceFreshnessOk: false, dataCoverageScore: 40 },
     ];
-    const annotated = rows.map((row) => canonicalAnnotateRow(row, settings));
+    const annotated = rows.map((row) => annotateRow(row, settings));
 
     const filters = {
       activeSettings: settings,
@@ -90,7 +87,7 @@ describe("screener row annotation cache", () => {
   });
 
   it("una fila anotada sigue siendo apta para sorteo y conserva todos sus campos", () => {
-    const annotated = canonicalAnnotateRow(baseRow, settings);
+    const annotated = annotateRow(baseRow, settings);
     expect(annotated.symbol).toBe("ACME");
     expect(annotated.totalScore).toBe(82);
     expect(annotated.__screenerAnnotation).toBeDefined();
@@ -98,73 +95,29 @@ describe("screener row annotation cache", () => {
     expect(annotated.__screenerAnnotation.confidence.key).toBeTruthy();
     expect(annotated.__screenerAnnotation.dataHealth.status.key).toBeTruthy();
   });
-
-  it("cache hit: segunda anotación reutiliza la anotación canónica sin recomputar", () => {
-    const first = annotateScreenerRow(baseRow, settings);
-    const statsAfterFirst = getScreenerAnnotationCacheStats();
-    expect(statsAfterFirst.misses).toBe(1);
-
-    const second = annotateScreenerRow({ ...baseRow }, settings);
-    const statsAfterSecond = getScreenerAnnotationCacheStats();
-    expect(statsAfterSecond.rowHits + statsAfterSecond.cacheHits).toBeGreaterThanOrEqual(1);
-    expect(second.__screenerAnnotation).toEqual(first.__screenerAnnotation);
-    expect(second.__screenerAnnotationInputKey).toBe(first.__screenerAnnotationInputKey);
-  });
-
-  it("invalidación: cambiar setupMode fuerza recomputación", () => {
-    const leader = annotateScreenerRow(baseRow, { setupMode: "leader" });
-    clearScreenerAnnotationCache();
-    const weakness = annotateScreenerRow(baseRow, { setupMode: "weakness" });
-    expect(weakness.__screenerAnnotationInputKey).not.toBe(leader.__screenerAnnotationInputKey);
-    expect(weakness.__screenerAnnotation).not.toEqual(leader.__screenerAnnotation);
-  });
-
-  it("invalidación: cambiar un campo relevante de fila fuerza recomputación", () => {
-    const before = annotateScreenerRow(baseRow, settings);
-    const after = annotateScreenerRow({ ...baseRow, rsGlobalPct: 40 }, settings);
-    expect(after.__screenerAnnotationInputKey).not.toBe(before.__screenerAnnotationInputKey);
-    expect(after.__screenerAnnotation).not.toEqual(before.__screenerAnnotation);
-  });
-
-  it("igualdad funcional: annotateScreenerRow coincide con la anotación canónica", () => {
-    const cached = annotateScreenerRow(baseRow, settings);
-    const canonical = canonicalAnnotateRow(baseRow, settings);
-    expect(cached.__screenerAnnotation).toEqual(canonical.__screenerAnnotation);
-    expect(cached.__screenerAnnotationInputKey).toBe(canonical.__screenerAnnotationInputKey);
-  });
-
-  it("no hay cross-symbol leakage en el cache", () => {
-    const rowA = annotateScreenerRow(baseRow, settings);
-    const rowB = annotateScreenerRow({ ...baseRow, symbol: "BETA" }, settings);
-    expect(rowB.symbol).toBe("BETA");
-    expect(rowB.__screenerAnnotationInputKey).not.toBe(rowA.__screenerAnnotationInputKey);
-    expect(rowA.__screenerAnnotationInputKey.startsWith("ACME|")).toBe(true);
-    expect(rowB.__screenerAnnotationInputKey.startsWith("BETA|")).toBe(true);
-    const stats = getScreenerAnnotationCacheStats();
-    expect(stats.misses).toBe(2);
-  });
-
-  it("annotateScreenerRows reutiliza anotaciones en un segundo pase con filas nuevas", () => {
-    const rows = [baseRow, { ...baseRow, symbol: "BETA", rsGlobalPct: 70 }];
-    annotateScreenerRows(rows, settings);
-    const statsAfterFirst = getScreenerAnnotationCacheStats();
-    expect(statsAfterFirst.misses).toBe(2);
-
-    annotateScreenerRows(rows.map((row) => ({ ...row })), settings);
-    const statsAfterSecond = getScreenerAnnotationCacheStats();
-    expect(statsAfterSecond.cacheHits).toBe(2);
-    expect(statsAfterSecond.misses).toBe(2);
-  });
 });
 
 // ─── Isomorfismo Node-puro ──────────────────────────────────────────────
+// Las seis funciones de annotateRow (useResultViewModel.js:197) deben poderse
+// ejecutar en Node sin DOM, sin window, sin localStorage. Si alguna vez
+// empieza a depender de un global del navegador, este test la señala en
+// lugar de silenciarlo con un mock.
 describe("isomorfismo Node-puro: annotateRow y sus 6 funciones son browser-free", () => {
+  // Pre-condición: confirma que este test corre sin DOM (vitest sin jsdom).
+  // Si alguien añade { environment: "jsdom" } a la config de vitest por error,
+  // este test falla y le obliga a decidir explícitamente.
+  // Nota: `navigator` puede existir en Node ≥21 aunque NO haya DOM — no es
+  // un indicador fiable. Nos anclamos a window/document/localStorage, que sí
+  // son exclusivamente del navegador.
   it("corre en un entorno Node puro (sin window/document/localStorage)", () => {
     expect(typeof window).toBe("undefined");
     expect(typeof document).toBe("undefined");
     expect(typeof localStorage).toBe("undefined");
   });
 
+  // Determinismo por función individual: misma input → mismo output
+  // byte-a-byte en invocaciones repetidas. No usamos expect.toBe de Date.now
+  // ni nada no-determinista; solo comparamos el output completo.
   const deterministicChecks = [
     ["explainScreenerRank", (row, s) => explainScreenerRank(row, s)],
     ["auditDecisionRowIssues", (row, s) => {
@@ -185,7 +138,7 @@ describe("isomorfismo Node-puro: annotateRow y sus 6 funciones son browser-free"
       const explanation = explainScreenerRank(row, s);
       const issues = auditDecisionRowIssues(row, explanation);
       const confidence = decisionConfidenceSummary(row, explanation, issues);
-      return decisionProfileForRow(row, explanation);
+      return decisionProfileForRow(row, explanation); // profile usa explanation, no settings
     }],
   ];
 
@@ -195,13 +148,17 @@ describe("isomorfismo Node-puro: annotateRow y sus 6 funciones son browser-free"
     expect(outputs.every((out) => out === first)).toBe(true);
   });
 
+  // Determinismo del pipeline completo (annotateRow con todas las 6 funciones).
   it("annotateRow: 10 invocaciones consecutivas producen anotaciones estructuralmente idénticas", () => {
-    const snapshots = Array.from({ length: 10 }, () => JSON.stringify(canonicalAnnotateRow(baseRow, settings)));
+    const snapshots = Array.from({ length: 10 }, () => JSON.stringify(annotateRow(baseRow, settings)));
     expect(new Set(snapshots).size).toBe(1);
   });
 
+  // Estabilidad de la firma estructural: las 6 claves del annotation están
+  // siempre presentes y son objetos no-undefined. Esto blinda el contrato
+  // __screenerAnnotation que consumers aguas abajo asumen.
   it("annotateRow siempre produce las 6 claves del annotation (contrato aguas abajo)", () => {
-    const result = canonicalAnnotateRow(baseRow, settings);
+    const result = annotateRow(baseRow, settings);
     const keys = ["explanation", "confidence", "dataHealth", "priority", "profile", "issues"];
     for (const k of keys) {
       expect(result.__screenerAnnotation[k]).toBeDefined();
