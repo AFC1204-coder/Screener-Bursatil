@@ -3,18 +3,19 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-08 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** (push tras MH refresh + docs)
+Última actualización: 2026-09-13 · rama `codex/statsedge-ui-polish`  
+**Última sync / HEAD origin polish:** checkpoint Wave5 prep (post revert FILTER-ANNOTATION-1)
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
-**Último cerrado:** **MH-FILL-6** (serie régimen US «Qué cambió»).  
-**Ahora:** idle.  
-**Cola:** computer-use Astra · residual ops Mini · P2 IPO-F.  
+**Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
+**Ahora:** Wave5 **prep** — tickets SCANS-RS-HYDRATE-1 · REVIEW-REFETCH-1 · REVIEW-BRIEF-CRITICAL-1 (prompts listos; agentes no lanzados).  
+**Cola Wave5:** A hydrateRs (invest) ∥ B review refetch · C brief design/probe (C no toca `app/review/*` hasta cierre B).  
+**Aparcados:** SCANS-CHARTPREVIEW-1 · REACT-COMMIT-PERF-1 · IPO-F P2.  
+**HOLD / NO retomar:** FILTER-ANNOTATION-1 (`639ceae`) — **revertido** `c55a648` (ROI browser insuficiente).  
+**KEEP transporte:** SCANS-TRANSPORT-1 gzip (`91ae6e4`) — mejora wire; **no** es solución de initial load (residuales: hydrateRs, parse/render, CPU gzip).  
 **Línea Mini V1:** aparte (V1-02…); no mezclar con polish.  
-**Nota MH-FILL-5:** cerrado · smoke chips SPY/FEZ/EWJ/EWH · hero US.  
-**Nota MH-FILL-6:** cerrado · panel vacío honesto (&lt;2 sem) · chips FILL-5 intactos.  
-**Residual MH (ops):** persistencia `app_settings` falla en local — RPC `upsert_app_setting_newer_wins` no disponible en modo pg local / túnel Mini `:15432` ECONNREFUSED. Código OK; falta Mini arriba.  
-**Descartar:** — (rama forja-estados borrada).  
+**Nota MH-FILL-5/6:** cerrados (régimen regional + serie US).  
+**Residual MH (ops):** persistencia `app_settings` / RPC `upsert_app_setting_newer_wins` en pg local vía túnel Mini `:15432`.  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
 
 ### Estados de cola (PROC-A)
