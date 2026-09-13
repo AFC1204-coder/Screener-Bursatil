@@ -50,6 +50,22 @@ describe("reviewSession identity", () => {
     )).toBe(true);
   });
 
+  it("no invalida la sesión cuando cambia el id materializado del escaneo", () => {
+    const storedSig = reviewFilterSignature(
+      { setupMode: "leader" },
+      { id: "materialized:US:2026-09-12:o0:l560", useRegimeFilter: true, marketHealth: { marketScore: 72 } },
+    );
+    const currentSig = reviewFilterSignature(
+      { setupMode: "leader" },
+      { id: "materialized:US:2026-09-12:o0:l3319", useRegimeFilter: true, marketHealth: { marketScore: 72 } },
+    );
+    expect(storedSig).toBe(currentSig);
+    expect(reviewSessionIdentityMatches(
+      { ...baseIdentity, filterSignature: storedSig },
+      { ...baseIdentity, filterSignature: currentSig },
+    )).toBe(true);
+  });
+
   it("invalida la sesión cuando cambian filtros o escaneo", () => {
     expect(reviewSessionIdentityMatches(baseIdentity, {
       ...baseIdentity,
