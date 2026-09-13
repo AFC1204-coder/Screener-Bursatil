@@ -29,6 +29,7 @@ export default function AuthGate({ children }) {
   const [showSlowBar, setShowSlowBar] = useState(false);
   const [verifySlow, setVerifySlow] = useState(false);
   const [token, setToken] = useState("");
+  const [showTokenFallback, setShowTokenFallback] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -62,6 +63,7 @@ export default function AuthGate({ children }) {
           authenticated: false,
           requiresToken: true,
           productionLocked: false,
+          localUnlockAvailable: false,
         });
       })
       .finally(() => {
@@ -77,6 +79,37 @@ export default function AuthGate({ children }) {
     };
   }, []);
 
+  async function completeLogin() {
+    persistAuthSessionHint();
+    setStatus({
+      loading: false,
+      verifying: false,
+      authenticated: true,
+      requiresToken: false,
+      productionLocked: false,
+      localUnlockAvailable: false,
+    });
+  }
+
+  async function submitLocalUnlock() {
+    setSubmitting(true);
+    setError("");
+    try {
+      const response = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ localUnlock: true }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.error) throw new Error(data.error || `HTTP ${response.status}`);
+      await completeLogin();
+    } catch (err) {
+      setError(err.message || "No autorizado");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function submit(event) {
     event.preventDefault();
     setSubmitting(true);
@@ -90,14 +123,7 @@ export default function AuthGate({ children }) {
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.error) throw new Error(data.error || `HTTP ${response.status}`);
       setToken("");
-      persistAuthSessionHint();
-      setStatus({
-        loading: false,
-        verifying: false,
-        authenticated: true,
-        requiresToken: false,
-        productionLocked: false,
-      });
+      await completeLogin();
     } catch (err) {
       setError(err.message || "No autorizado");
     } finally {
@@ -133,25 +159,69 @@ export default function AuthGate({ children }) {
         <p className="muted">
           {status.productionLocked
             ? "Configura STATSEDGE_ACCESS_TOKEN en el servidor para cerrar el perímetro."
-            : "Introduce el token privado para iniciar una sesión segura."}
+            : status.localUnlockAvailable
+              ? "Desarrollo local: inicia sesión sin pegar el token del servidor."
+              : "Introduce el token privado para iniciar una sesión segura."}
         </p>
         {!status.productionLocked ? (
           <>
-            <label className="field">
-              Token
-              <input
-                className="input"
-                type="password"
-                autoComplete="current-password"
-                value={token}
-                onChange={(event) => setToken(event.target.value)}
-                autoFocus
-              />
-            </label>
+            {status.localUnlockAvailable ? (
+              <>
+                <button
+                  className="btn btnPrimary"
+                  type="button"
+                  disabled={submitting}
+                  onClick={submitLocalUnlock}
+                >
+                  {submitting ? "Validando..." : "Entrar en local"}
+                </button>
+                {!showTokenFallback ? (
+                  <button
+                    className="btn btnGhost"
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => setShowTokenFallback(true)}
+                  >
+                    Usar token
+                  </button>
+                ) : (
+                  <>
+                    <label className="field">
+                      Token
+                      <input
+                        className="input"
+                        type="password"
+                        autoComplete="current-password"
+                        value={token}
+                        onChange={(event) => setToken(event.target.value)}
+                        autoFocus
+                      />
+                    </label>
+                    <button className="btn btnPrimary" type="submit" disabled={submitting || !token.trim()}>
+                      {submitting ? "Validando..." : "Entrar con token"}
+                    </button>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <label className="field">
+                  Token
+                  <input
+                    className="input"
+                    type="password"
+                    autoComplete="current-password"
+                    value={token}
+                    onChange={(event) => setToken(event.target.value)}
+                    autoFocus
+                  />
+                </label>
+                <button className="btn btnPrimary" type="submit" disabled={submitting || !token.trim()}>
+                  {submitting ? "Validando..." : "Entrar"}
+                </button>
+              </>
+            )}
             {error ? <div className="authGateError">{error}</div> : null}
-            <button className="btn btnPrimary" type="submit" disabled={submitting || !token.trim()}>
-              {submitting ? "Validando..." : "Entrar"}
-            </button>
           </>
         ) : null}
       </form>

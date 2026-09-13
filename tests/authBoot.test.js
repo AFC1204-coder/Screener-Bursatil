@@ -39,12 +39,14 @@ describe("authBoot", () => {
       authenticated: true,
       requiresToken: false,
       productionLocked: false,
+      localUnlockAvailable: false,
     })).toEqual({
       loading: false,
       verifying: false,
       authenticated: true,
       requiresToken: false,
       productionLocked: false,
+      localUnlockAvailable: false,
     });
   });
 
@@ -54,6 +56,15 @@ describe("authBoot", () => {
       requiresToken: false,
       productionLocked: false,
     })).toBe(true);
+  });
+
+  it("normalizes localUnlockAvailable from the session API", () => {
+    expect(normalizeAuthSessionStatus({
+      authenticated: false,
+      requiresToken: true,
+      productionLocked: false,
+      localUnlockAvailable: true,
+    }).localUnlockAvailable).toBe(true);
   });
 
   it("detects a plausible session from the persisted hint", () => {

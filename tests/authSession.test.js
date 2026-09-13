@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   authOpenForLocalDev,
   createStatsEdgeSession,
+  isLocalUnlockAllowed,
+  isLocalUnlockHost,
   isStatsEdgeSessionValid,
   matchesStatsEdgeAccessToken,
 } from "@/lib/authSession";
@@ -54,5 +56,24 @@ describe("auth session", () => {
 
     process.env.NODE_ENV = "production";
     expect(authOpenForLocalDev()).toBe(false);
+  });
+
+  it("allows local unlock only outside production with a configured token", () => {
+    process.env.STATSEDGE_ACCESS_TOKEN = "app-token";
+    expect(isLocalUnlockAllowed()).toBe(true);
+
+    process.env.NODE_ENV = "production";
+    expect(isLocalUnlockAllowed()).toBe(false);
+
+    process.env.NODE_ENV = "test";
+    delete process.env.STATSEDGE_ACCESS_TOKEN;
+    expect(isLocalUnlockAllowed()).toBe(false);
+  });
+
+  it("accepts localhost hosts for local unlock", () => {
+    expect(isLocalUnlockHost("localhost:3000")).toBe(true);
+    expect(isLocalUnlockHost("127.0.0.1:3300")).toBe(true);
+    expect(isLocalUnlockHost("[::1]:3000")).toBe(true);
+    expect(isLocalUnlockHost("statsedge.vercel.app")).toBe(false);
   });
 });

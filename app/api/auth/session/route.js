@@ -5,6 +5,8 @@ import {
   appAccessToken,
   authOpenForLocalDev,
   createStatsEdgeSession,
+  isLocalUnlockAllowed,
+  isLocalUnlockHost,
   isStatsEdgeSessionValid,
   matchesStatsEdgeAccessToken,
 } from "@/lib/authSession";
@@ -18,6 +20,7 @@ function sessionStatus(request) {
     authenticated,
     requiresToken: configured && !authenticated,
     productionLocked: !configured && process.env.NODE_ENV === "production",
+    localUnlockAvailable: isLocalUnlockAllowed() && !authenticated,
   };
 }
 
@@ -39,6 +42,29 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const body = await request.json().catch(() => ({}));
+
+  if (body.localUnlock) {
+    const host = request.headers.get("host") || "";
+    if (!isLocalUnlockAllowed() || !isLocalUnlockHost(host)) {
+      return NextResponse.json({ ok: false, error: "Desbloqueo local no disponible" }, { status: 401 });
+    }
+    if (!appAccessToken()) {
+      return NextResponse.json(
+        { ok: false, error: "STATSEDGE_ACCESS_TOKEN no configurado" },
+        { status: 401 }
+      );
+    }
+    try {
+      return setSessionCookie(NextResponse.json({ ok: true, authenticated: true }));
+    } catch (error) {
+      return NextResponse.json(
+        { ok: false, error: error.message || "Configuración de sesión ausente" },
+        { status: 401 }
+      );
+    }
+  }
+
   if (!appAccessToken()) {
     return NextResponse.json(
       { ok: false, error: "STATSEDGE_ACCESS_TOKEN no configurado" },
@@ -46,7 +72,6 @@ export async function POST(request) {
     );
   }
 
-  const body = await request.json().catch(() => ({}));
   if (!matchesStatsEdgeAccessToken(body.token)) {
     return NextResponse.json({ ok: false, error: "Token no autorizado" }, { status: 401 });
   }

@@ -8,9 +8,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
-**Ahora:** idle · SCREENER-PARTIAL-MARKETS-LOOP-1 **hecho** (settled key; smoke Global 1× markets).  
+**Ahora:** idle · AUTH-LOCAL-UNLOCK-1 **hecho**.  
 **Cola:** remount scans · prefetch N+1 chart · theme RS · SCANS-CHARTPREVIEW-1 · REACT-COMMIT.  
-**Último cerrado:** SCREENER-PARTIAL-MARKETS-LOOP-1 (corte bucle partial-markets).  
+**Último cerrado:** AUTH-LOCAL-UNLOCK-1 («Entrar en local» sin pegar token).  
+**Nota AUTH-LOCAL smoke (2026-09-13, :3300 next dev):** botón OK → screener; `next start` no expone unlock (`NODE_ENV=production`).  
 **Astra Review brief:** cerrado 2026-09-13 · doc `ASTRA-REVIEW-BRIEF-T0T1T2.md`.  
 **Nota DEFER smoke:** `:3300` AAA→BBB · 0 company-brief · sin banner lateral · chart T1 OK.  
 **Nota PARTIAL-LOOP smoke (2026-09-13, :3300):** Global markets=1 · 668/4237 · Cobertura parcial · EE. UU. AVAH OK.  
