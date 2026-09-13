@@ -610,7 +610,9 @@ export default function ReviewPage() {
 
   useEffect(() => {
     if (!rows.length) return;
+    const previousReview = safeRead(STORAGE_KEYS.review, {});
     persistReviewQueue({
+      ...previousReview,
       source,
       sourceLabel: sourceMeta.sourceLabel || "",
       sourceDetail: sourceMeta.sourceDetail || "",

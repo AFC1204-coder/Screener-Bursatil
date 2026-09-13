@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { STORAGE_KEYS } from "@/lib/localState";
+import { persistReviewQueue } from "@/lib/screenerPipeline";
 import {
   buildReviewSessionIdentity,
   isStoredReviewSessionValid,
@@ -77,6 +79,111 @@ describe("reviewSession identity", () => {
       screenerSession: { scanContext: { scannedAt: "2026-09-10T04:00:00.000Z" } },
       now: new Date("2026-09-13T10:00:00.000Z"),
     })).toBe(false);
+  });
+});
+
+function installFakeStorage() {
+  const store = new Map();
+  const fake = {
+    get length() { return store.size; },
+    key(index) { return [...store.keys()][index] ?? null; },
+    getItem(key) { return store.has(key) ? store.get(key) : null; },
+    setItem(key, value) { store.set(key, String(value)); },
+    removeItem(key) { store.delete(key); },
+    clear() { store.clear(); },
+  };
+  globalThis.window = globalThis;
+  globalThis.localStorage = fake;
+  return fake;
+}
+
+function readStoredReview() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.review) || "{}");
+}
+
+// Replica el merge de app/review/page.jsx tras el fix REVIEW-SESSION-1.
+function reviewPagePersistAfterNavigation(previousReview, patch) {
+  return { ...previousReview, ...patch };
+}
+
+describe("review page persist preserves session identity", () => {
+  it("mantiene sessionIdentity y presetKey tras actualizar foco en Review", () => {
+    installFakeStorage();
+    const rows = [{ symbol: "AAA" }, { symbol: "BBB" }, { symbol: "CCC" }];
+    const initialPayload = {
+      source: "current",
+      sourceLabel: "Screener actual",
+      queueMode: "screener-review",
+      rows,
+      activeSettings: { setupMode: "leader" },
+      presetKey: "balanced",
+      sessionIdentity: baseIdentity,
+      currentIndex: 0,
+      selectedSymbol: "AAA",
+      reviewedSymbols: [],
+      hiddenSymbols: [],
+      decisionResolutions: {},
+      decisionResolutionLog: [],
+      resolutionFilter: "all",
+      digestFilter: "all",
+      updatedAt: "2026-09-13T10:00:00.000Z",
+    };
+    expect(persistReviewQueue(initialPayload)).toBe(true);
+
+    const previousReview = readStoredReview();
+    const navigationPatch = {
+      source: "current",
+      sourceLabel: "Screener actual",
+      sourceDetail: "",
+      queueMode: "screener-review",
+      rows,
+      activeSettings: { setupMode: "leader" },
+      currentIndex: 2,
+      selectedSymbol: "CCC",
+      reviewedSymbols: [],
+      hiddenSymbols: [],
+      decisionResolutions: {},
+      decisionResolutionLog: [],
+      resolutionFilter: "all",
+      digestFilter: "all",
+      updatedAt: "2026-09-13T10:05:00.000Z",
+    };
+    expect(persistReviewQueue(reviewPagePersistAfterNavigation(previousReview, navigationPatch))).toBe(true);
+
+    const stored = readStoredReview();
+    expect(stored.sessionIdentity).toEqual(baseIdentity);
+    expect(stored.presetKey).toBe("balanced");
+    expect(stored.currentIndex).toBe(2);
+    expect(stored.selectedSymbol).toBe("CCC");
+    expect(isStoredReviewSessionValid(stored, {
+      sessionIdentity: baseIdentity,
+      screenerSession: { scanContext: { scannedAt: "2026-09-12T04:00:00.000Z" } },
+      now: new Date("2026-09-12T18:00:00.000Z"),
+    })).toBe(true);
+  });
+
+  it("falla si la persistencia de Review no mergea el snapshot previo", () => {
+    installFakeStorage();
+    const rows = [{ symbol: "AAA" }, { symbol: "BBB" }];
+    const initialPayload = {
+      source: "current",
+      rows,
+      presetKey: "balanced",
+      sessionIdentity: baseIdentity,
+      currentIndex: 0,
+      selectedSymbol: "AAA",
+    };
+    expect(persistReviewQueue(initialPayload)).toBe(true);
+
+    const buggyPatch = {
+      source: "current",
+      rows,
+      currentIndex: 1,
+      selectedSymbol: "BBB",
+      updatedAt: "2026-09-13T10:05:00.000Z",
+    };
+    expect(persistReviewQueue(buggyPatch)).toBe(true);
+    expect(readStoredReview().sessionIdentity).toBeUndefined();
   });
 });
 
