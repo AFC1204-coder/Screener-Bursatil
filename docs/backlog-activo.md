@@ -8,8 +8,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
-**Ahora:** Wave5 idle · COUNTRY-REUSE-1 **ACCEPT** + **remeasure PASS** (2026-09-13).  
-**Cola:** Astra A1–A3 brief · aparcados chartPreview/react-commit/remount/theme-RS.  
+**Ahora:** Wave5 → **Astra A1–A3/A5** (Review brief T0/T1/T2). Remeasure REUSE PASS.  
+**Cola:** Astra → REVIEW-HYDRATE-DEFER-1 · aparcados chartPreview/react-commit/remount/theme-RS.  
 **Aparcado (hallazgo REFETCH):** remount screener al volver de `/review` (P2 nightly-us + markets 28) — ticket futuro de arranque, no Review.  
 **Remeasure REUSE (`f4695aa`, :3300, US 3576, túnel UP):**  
 - cold extended TTFB **17 861 ms** (antes SCANS-PAYLOAD-1: **44 899 ms**)  
@@ -17,6 +17,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 - **delta hydrateRs** **+9 275 ms** (antes **+27 635 ms**) → overhead −66 %  
 - warm extended **203 ms** · theme aislado ~0,8 s · línea privada: reuse mapa no aplica; win = bulk US country.  
 Evidencia: `research/scans-rs-hydrate-1/probe-summary.json`.  
+**Paquete Astra:** `docs/tickets/ASTRA-REVIEW-BRIEF-T0T1T2.md`  
 **Aparcados:** SCANS-CHARTPREVIEW-1 · REACT-COMMIT-PERF-1 · IPO-F P2.  
 **HOLD / NO retomar:** FILTER-ANNOTATION-1 (`639ceae`) — **revertido** `c55a648` (ROI browser insuficiente).  
 **KEEP transporte:** SCANS-TRANSPORT-1 gzip (`91ae6e4`) — mejora wire; **no** es solución de initial load (residuales: hydrateRs, parse/render, CPU gzip).  

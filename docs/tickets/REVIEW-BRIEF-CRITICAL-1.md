@@ -1,9 +1,11 @@
 # REVIEW-BRIEF-CRITICAL-1
 
-**Estado:** prep  
+**Estado:** hecho (ACCEPT DESIGN · 2026-09-13) · **NEEDS ASTRA** A1–A3/A5  
 **OWNER:** Cursor / Composer 2.5 High  
 **PRIORITY:** P1 (Wave5)  
-**MODE:** DESIGN + PROBE — **NO implementación estructural**
+**MODE:** DESIGN + PROBE — cerrado  
+**Siguiente:** `docs/tickets/ASTRA-REVIEW-BRIEF-T0T1T2.md` → luego REVIEW-HYDRATE-DEFER-1  
+**Nota:** REVIEW-REFETCH-1 ya cerrado; OK instrumentar `app/review/*` tras Astra.
 
 ## PROBLEM
 
