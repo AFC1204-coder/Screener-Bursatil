@@ -50,6 +50,22 @@ describe("reviewSession identity", () => {
     )).toBe(true);
   });
 
+  it("no invalida la sesión cuando cambian contadores volátiles del universo", () => {
+    const storedSig = reviewFilterSignature(
+      { setupMode: "leader", universeTotal: 5608, publishedRowCount: 3319 },
+      { useRegimeFilter: true },
+    );
+    const currentSig = reviewFilterSignature(
+      { setupMode: "leader", universeTotal: 5608, publishedRowCount: 3576 },
+      { useRegimeFilter: true },
+    );
+    expect(storedSig).toBe(currentSig);
+    expect(reviewSessionIdentityMatches(
+      { ...baseIdentity, filterSignature: storedSig },
+      { ...baseIdentity, filterSignature: currentSig },
+    )).toBe(true);
+  });
+
   it("no invalida la sesión cuando cambia el id materializado del escaneo", () => {
     const storedSig = reviewFilterSignature(
       { setupMode: "leader" },
