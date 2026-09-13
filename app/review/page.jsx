@@ -61,6 +61,8 @@ import { countryRs } from "@/lib/countryRs";
 import { themeRs } from "@/lib/themeRs";
 import { prepareReviewQueueRows } from "@/lib/decisionProfile";
 import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
+import { resolveReviewFocus, reviewFocusStatusMessage } from "@/lib/reviewSession";
+import { buildReviewPageHref } from "@/lib/screenerReviewLaunch";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, buildStockDecisionResolutionSummary, decisionResolutionForSymbol, decisionResolutionHistory, filterRowsByDecisionResolution, reopenStockDecisionResolution, reviewDecisionStateForRows, stockDecisionResolutionFilter } from "@/lib/stockDecisionResolution";
@@ -430,6 +432,15 @@ export default function ReviewPage() {
     const decisionState = reviewDecisionStateForRows(review, nextRows);
     const nextResolutionFilter = keepState ? review.resolutionFilter || "all" : "all";
     const nextSourceMeta = sourceMetaForReview(nextSource, review);
+    const focus = nextSource === "current" && nextRows.length
+      ? resolveReviewFocus({ ...review, rows: nextRows }, startSymbol || review.selectedSymbol || "")
+      : {
+        symbol: startSymbol || review.selectedSymbol || "",
+        index: -1,
+        resolved: "requested",
+        inQueue: false,
+        requestedMissing: "",
+      };
     const navigation = buildReviewQueueNavigation({
       ...review,
       source: nextSource,
@@ -439,7 +450,8 @@ export default function ReviewPage() {
       decisionResolutions: decisionState.decisionResolutions,
       resolutionFilter: nextResolutionFilter,
       digestFilter: "all",
-    }, startSymbol || review.selectedSymbol || "");
+      selectedSymbol: focus.symbol || review.selectedSymbol || "",
+    }, focus.symbol || startSymbol || review.selectedSymbol || "");
     const symbolIndex = navigation.currentIndex;
     setSource(nextSource);
     setSourceMeta(nextSourceMeta);
@@ -452,7 +464,14 @@ export default function ReviewPage() {
     setDecisionResolutions(decisionState.decisionResolutions);
     setDecisionResolutionLog(decisionState.decisionResolutionLog);
     setResolutionFilter(nextResolutionFilter);
-    setStatus(`${sourceLabel(nextSource, nextSourceMeta)} · ${nextRows.length} acciones`);
+    const focusMessage = nextSource === "current" ? reviewFocusStatusMessage(focus, nextRows.length) : "";
+    setStatus(focusMessage || `${sourceLabel(nextSource, nextSourceMeta)} · ${nextRows.length} acciones`);
+    if (focus.inQueue && focus.symbol && nextSource === "current") {
+      const nextHref = buildReviewPageHref(focus.symbol, nextSource);
+      if (typeof window !== "undefined" && `${window.location.pathname}${window.location.search}` !== nextHref) {
+        window.history.replaceState(null, "", nextHref);
+      }
+    }
     if (nextSource === "latest" && !nextRows.length) {
       const controller = new AbortController();
       setStatus("Último snapshot · sin cola local; consultando Discovery...");
@@ -558,6 +577,14 @@ export default function ReviewPage() {
   useEffect(() => {
     if (currentIndex >= visibleRows.length) setCurrentIndex(Math.max(0, visibleRows.length - 1));
   }, [currentIndex, visibleRows.length]);
+
+  useEffect(() => {
+    if (!activeSymbol || source !== "current") return;
+    const nextHref = buildReviewPageHref(activeSymbol, source);
+    if (typeof window !== "undefined" && `${window.location.pathname}${window.location.search}` !== nextHref) {
+      window.history.replaceState(null, "", nextHref);
+    }
+  }, [activeSymbol, source]);
 
   useEffect(() => {
     if (!activeBaseRow?.symbol) return;

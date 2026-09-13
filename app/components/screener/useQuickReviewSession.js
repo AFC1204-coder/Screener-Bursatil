@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { prepareReviewQueueRows } from "@/lib/decisionProfile";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
+import {
+  isStoredReviewSessionValid,
+  resolveReviewFocus,
+  reviewFocusStatusMessage,
+} from "@/lib/reviewSession";
 import { buildReviewPageHref } from "@/lib/screenerReviewLaunch";
 import { persistReviewQueue } from "@/lib/screenerPipeline";
 import {
@@ -20,6 +25,8 @@ export function useQuickReviewSession({
   persistScreenerSession = () => {},
   buildScreenerStockOpenContext = () => null,
   saveSessionBeforeStockOpen = () => {},
+  buildReviewSessionIdentity = () => ({}),
+  getScreenerSession = () => ({}),
 } = {}) {
   const [activeModalRow, setActiveModalRow] = useState(null);
   const [quickReviewRows, setQuickReviewRows] = useState([]);
@@ -110,13 +117,6 @@ export function useQuickReviewSession({
     });
   }
 
-  // La nota del historial se guardaba compuesta con el veredicto del motor
-  // («Auditar antes · Extendida SMA50 38.2%»): la resolución del inversor
-  // llevaba pegada una recomendación. Retirado el 2026-08-24 con la limpieza
-  // de la vista rápida — la nota es del inversor, y esta superficie no tiene
-  // campo de nota, así que viaja vacía (mismo criterio que la ficha el 22-08:
-  // «la nota del historial es ahora solo lo que escribe el inversor»,
-  // lib/stockDecisionResolution.js).
   function resolveQuickReviewDecision(actionKey, row = activeModalRow, index = modalReviewPosition) {
     if (!row?.symbol) return;
     const previousReview = safeRead(STORAGE_KEYS.review, {});
@@ -146,6 +146,56 @@ export function useQuickReviewSession({
     setStatus(`${row.symbol}: reabierta desde Vista rápida`);
   }
 
+  function wantsFreshReviewQueue(options = {}) {
+    if (options.forceNew) return true;
+    const queueMode = String(options.queueMode || "screener-review").trim() || "screener-review";
+    if (queueMode !== "screener-review") return true;
+    const sourceLabel = String(options.sourceLabel || "Screener actual").trim() || "Screener actual";
+    if (sourceLabel !== "Screener actual") return true;
+    if (options.resolutionFilter && options.resolutionFilter !== "all") return true;
+    return false;
+  }
+
+  function canResumeStoredReviewSession(options = {}) {
+    if (wantsFreshReviewQueue(options)) return false;
+    const storedReview = safeRead(STORAGE_KEYS.review, {});
+    const storedQueueMode = String(storedReview.queueMode || "screener-review").trim() || "screener-review";
+    if (storedQueueMode !== "screener-review") return false;
+    return isStoredReviewSessionValid(storedReview, {
+      sessionIdentity: buildReviewSessionIdentity(),
+      screenerSession: getScreenerSession(),
+    });
+  }
+
+  function resumeStoredReviewSession(startSymbol = "", options = {}) {
+    const storedReview = safeRead(STORAGE_KEYS.review, {});
+    if (!canResumeStoredReviewSession(options)) return null;
+    const focus = resolveReviewFocus(storedReview, startSymbol);
+    if (!focus.inQueue || !focus.symbol) return null;
+    const reviewRows = storedReview.rows;
+    const reviewSourceLabel = storedReview.sourceLabel || "Screener actual";
+    const nextPayload = {
+      ...storedReview,
+      selectedSymbol: focus.symbol,
+      currentIndex: focus.index,
+      updatedAt: new Date().toISOString(),
+    };
+    persistReviewQueue(nextPayload);
+    setQuickReviewRows(reviewRows);
+    setQuickReviewIndex(focus.index);
+    setActiveModalRow(reviewRows[focus.index]);
+    const focusMessage = reviewFocusStatusMessage(focus, reviewRows.length);
+    setStatus(focusMessage || `${reviewSourceLabel}: ${reviewRows.length} acciones en cola (sesión restaurada).`);
+    return {
+      reviewRows,
+      payload: nextPayload,
+      currentIndex: focus.index,
+      reviewSourceLabel,
+      focus,
+      href: buildReviewPageHref(focus.symbol, storedReview.source || "current"),
+    };
+  }
+
   function persistScreenerReviewQueue(currentRows, startSymbol = "", options = {}) {
     const reviewRows = prepareReviewQueueRows(currentRows, activeSettings);
     if (!reviewRows.length) return null;
@@ -158,6 +208,7 @@ export function useQuickReviewSession({
     const currentIndex = Math.max(0, reviewRows.findIndex((row) => row.symbol === resolvedSymbol));
     const previousReview = safeRead(STORAGE_KEYS.review, {});
     const decisionState = reviewDecisionStateForRows(previousReview, reviewRows);
+    const sessionIdentity = buildReviewSessionIdentity();
     const payload = {
       source: "current",
       sourceLabel: reviewSourceLabel,
@@ -166,6 +217,7 @@ export function useQuickReviewSession({
       rows: reviewRows,
       activeSettings,
       presetKey,
+      sessionIdentity,
       currentIndex,
       contractContext: buildScreenerStockOpenContext(reviewRows[currentIndex], { rank: currentIndex + 1, queueSize: reviewRows.length, sourceLabel: reviewSourceLabel === "Screener actual" ? "Revisión Screener" : reviewSourceLabel }),
       reviewedSymbols: decisionState.reviewedSymbols,
@@ -182,6 +234,8 @@ export function useQuickReviewSession({
   }
 
   function openReview(currentRows, startSymbol = "", options = {}) {
+    const resumed = resumeStoredReviewSession(startSymbol, options);
+    if (resumed) return;
     const persisted = persistScreenerReviewQueue(currentRows, startSymbol, options);
     if (!persisted) {
       setStatus("Sin filas actuales para abrir vista rápida.");
@@ -191,12 +245,12 @@ export function useQuickReviewSession({
     setQuickReviewRows(reviewRows);
     setQuickReviewIndex(currentIndex);
     setActiveModalRow(reviewRows[currentIndex]);
-    // Sin recuento de «limpias · frágiles»: era el perfil interno del motor
-    // como texto de estado (retirado 2026-08-24 con la limpieza de la vista).
     setStatus(`${reviewSourceLabel}: ${reviewRows.length} acciones en cola.`);
   }
 
   function openReviewPage(currentRows, startSymbol = "", options = {}) {
+    const resumed = resumeStoredReviewSession(startSymbol, options);
+    if (resumed) return resumed.href;
     const persisted = persistScreenerReviewQueue(currentRows, startSymbol, options);
     if (!persisted) {
       setStatus("Sin filas actuales para abrir revisión.");
@@ -215,6 +269,7 @@ export function useQuickReviewSession({
     setQuickReviewIndex(nextIndex);
     setActiveModalRow(list[nextIndex]);
     persistReviewQueue({
+      ...previousReview,
       source: previousReview.source || "current",
       sourceLabel: previousReview.sourceLabel || "Screener actual",
       sourceDetail: previousReview.sourceDetail || "",
@@ -265,6 +320,8 @@ export function useQuickReviewSession({
     resetQuickReview,
     openReview,
     openReviewPage,
+    canResumeStoredReviewSession,
+    resumeStoredReviewSession,
     selectQuickReview,
     moveQuickReview,
     closeQuickReview,

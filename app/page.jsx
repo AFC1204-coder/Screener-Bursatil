@@ -12,6 +12,7 @@ import { normalizeMarketList } from "@/lib/markets";
 import { FilterFamilyModal } from "@/app/screenerPanels";
 import { activeLayerCount, layerStatusText, scanFailureExplanation, searchText, userFacingServiceError } from "@/lib/screenerFormat";
 import { resolvePrimaryReviewStartSymbol } from "@/lib/screenerReviewLaunch";
+import { buildReviewSessionIdentity as buildReviewSessionIdentityPayload, reviewFilterSignature } from "@/lib/reviewSession";
 import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
@@ -256,6 +257,45 @@ export default function Page() {
   const [searchError, setSearchError] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const [activePreviewRow, setActivePreviewRow] = useState(null);
+  const reviewSessionContextRef = useRef({
+    activeSettings,
+    presetKey,
+    scanContext,
+    markets,
+    manual,
+    scanMode,
+    marketHealth,
+    useRegimeFilter,
+    filterLayers,
+    fieldRules,
+    viewLayers,
+    sort: "",
+    sortAsc: false,
+    perfPeriod: "",
+  });
+  const buildReviewSessionIdentity = useCallback(() => {
+    const ctx = reviewSessionContextRef.current;
+    const filterContext = {
+      ...(ctx.scanContext || {}),
+      marketHealth: ctx.marketHealth,
+      useRegimeFilter: ctx.useRegimeFilter,
+    };
+    return buildReviewSessionIdentityPayload({
+      filterSignature: reviewFilterSignature(ctx.activeSettings, filterContext),
+      scanContext: ctx.scanContext,
+      markets: ctx.markets,
+      manual: ctx.manual,
+      scanMode: ctx.scanMode,
+      presetKey: ctx.presetKey,
+      sort: ctx.sort,
+      sortAsc: ctx.sortAsc,
+      perfPeriod: ctx.perfPeriod,
+      viewLayers: ctx.viewLayers,
+      filterLayers: ctx.filterLayers,
+      fieldRules: ctx.fieldRules,
+    });
+  }, []);
+  const getScreenerSession = useCallback(() => safeRead(STORAGE_KEYS.screenerSession, {}) || {}, []);
   const quickReview = useQuickReviewSession({
     activeSettings,
     presetKey,
@@ -263,6 +303,8 @@ export default function Page() {
     persistScreenerSession,
     buildScreenerStockOpenContext,
     saveSessionBeforeStockOpen,
+    buildReviewSessionIdentity,
+    getScreenerSession,
   });
   const {
     activeModalRow,
@@ -353,6 +395,22 @@ export default function Page() {
     clearResultViewLayer,
     clearResultView,
   } = resultView;
+  reviewSessionContextRef.current = {
+    activeSettings,
+    presetKey,
+    scanContext,
+    markets,
+    manual,
+    scanMode,
+    marketHealth,
+    useRegimeFilter,
+    filterLayers,
+    fieldRules,
+    viewLayers,
+    sort,
+    sortAsc,
+    perfPeriod,
+  };
   const [chartSettings, setChartSettings] = useState(DEFAULT_CHART_SETTINGS);
   const [chartScope, setChartScope] = useState("global");
   const [showMobileFilters, setShowMobileFilters] = useState(false);

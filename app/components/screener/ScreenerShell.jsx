@@ -836,7 +836,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             scannedMarkets={scannedMarkets}
             presetKey={presetKey}
             onPerfPeriod={setPerfPeriod}
-            onReview={(symbol) => openReview(huntResultsFiltered, symbol)}
+            onReview={(symbol) => openReview(huntResultsFiltered, symbol, { queueMode: "hunt", sourceLabel: "Caza" })}
             onFavorite={addFavorite}
             favoriteSymbols={resultsFavoriteSymbols}
             onSave={() => saveSnapshot(huntResultsFiltered)}
