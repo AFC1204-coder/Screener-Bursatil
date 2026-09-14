@@ -1,0 +1,23 @@
+{
+  "ticket": "REACT-COMMIT-PERF-1",
+  "dataset": "US ~3574 filas · :3300 + túnel :15432",
+  "method": "Playwright probe · longtask en ventana gesto→truth+120ms · User Timing screener:viewAudit",
+  "note": "filterMs no aparece en truth/status actual (hunt usa huntTruthOverride); reactCommitProxy no calculable. n=1 por fase en comparación A/B por tiempo.",
+  "beforeDefer": {
+    "file": "before-defer.json",
+    "huntLideres": { "longTaskMaxMs": 1838, "truthMs": 68, "viewAuditMs": null },
+    "toggleMomentum": { "longTaskMaxMs": 1578, "truthMs": 30, "viewAuditMs": null }
+  },
+  "afterDefer": {
+    "file": "after-defer.json",
+    "change": "useDeferredValue(viewFilteredRows) + viewAuditBundle único con performance.measure",
+    "huntLideres": { "longTaskMaxMs": 989, "truthMs": 37, "viewAuditMs": 140 },
+    "toggleMomentum": { "longTaskMaxMs": 941, "truthMs": 494, "viewAuditMs": 261 }
+  },
+  "delta": {
+    "huntLongTaskMaxPct": -46.2,
+    "momentumLongTaskMaxPct": -40.4,
+    "viewAuditMsDeferred": "140–261 ms medidos fuera del gesto urgente"
+  },
+  "verdict": "ROI plausible en longtask (−40% a −46% max LT, 1 rep); viewAudit ~140–261 ms diferido. Cambio aplicado con tests. Repetir con PERF_REPS≥3 para confirmar."
+}

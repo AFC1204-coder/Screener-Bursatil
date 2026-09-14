@@ -225,6 +225,10 @@ export function useResultViewModel({
     [annotatedRows, viewFilterState],
   );
 
+  // Agregados de auditoría no se pintan en ScreenerShell (principio 1); defer al
+  // siguiente frame para no bloquear el commit de tabla/cinta en el gesto (REACT-COMMIT-PERF-1).
+  const deferredAuditRows = useDeferredValue(viewFilteredRows);
+
   const filtered = useMemo(() => (
     [...viewFilteredRows].sort((a, b) => compareRowsForSort(a, b, {
       sort,
@@ -232,32 +236,6 @@ export function useResultViewModel({
       settings: activeSettings,
     }))
   ), [viewFilteredRows, sort, sortAsc, activeSettings]);
-
-  const pendingDecisionWorkSummary = useMemo(() => {
-    const pendingItems = viewFilteredRows.map((row) => {
-      if (decisionResolutionForSymbol({ decisionResolutions: screenerDecisionResolutions }, row.symbol)) return null;
-      const annotation = row.__screenerAnnotation;
-      if (!annotation) return null;
-      return {
-        row,
-        symbol: row.symbol,
-        companyName: row.companyName || row.name || "",
-        priority: annotation.priority.score,
-        confidenceKey: annotation.confidence.key,
-        confidenceLabel: annotation.confidence.label,
-      };
-    }).filter(Boolean).sort((a, b) => b.priority - a.priority);
-    const highConfidenceItems = pendingItems.filter((item) => item.confidenceKey === "high");
-    const focusItems = highConfidenceItems.length ? highConfidenceItems : pendingItems;
-    return {
-      pendingCount: pendingItems.length,
-      highConfidenceCount: highConfidenceItems.length,
-      focusCount: focusItems.length,
-      usesHighConfidence: highConfidenceItems.length > 0,
-      top: focusItems[0] || null,
-      rows: focusItems.map((item) => item.row),
-    };
-  }, [viewFilteredRows, screenerDecisionResolutions]);
 
   const pendingDecisionWorkActive = decisionResolutionFilter === "pending"
     && sort === "decisionPriority";
@@ -294,9 +272,91 @@ export function useResultViewModel({
   const resultPageStart = (visibleResultPage - 1) * resultPageSize;
   const resultPageEnd = Math.min(resultPageStart + resultPageSize, filtered.length);
   const pagedRows = filtered.slice(resultPageStart, resultPageEnd);
-  const visibleDecisionAudit = useMemo(() => viewFilteredRows.length
-    ? auditDecisionScan({ id: "visible-results", name: "Resultados visibles", rows: viewFilteredRows, activeSettings })
-    : null, [viewFilteredRows, activeSettings]);
+
+  const viewAuditBundle = useMemo(() => {
+    const emptyPending = {
+      pendingCount: 0,
+      highConfidenceCount: 0,
+      focusCount: 0,
+      usesHighConfidence: false,
+      top: null,
+      rows: [],
+    };
+    if (!deferredAuditRows.length) {
+      return {
+        visibleDecisionAudit: null,
+        visibleDecisionBrief: null,
+        visibleDataHealthSummary: null,
+        visibleDecisionEvidenceSummary: null,
+        visibleScoreAuditSummary: null,
+        visibleAuditabilitySummary: null,
+        pendingDecisionWorkSummary: emptyPending,
+      };
+    }
+    if (typeof performance !== "undefined" && performance.mark) {
+      performance.mark("screener:viewAudit:start");
+    }
+    const visibleDecisionAudit = auditDecisionScan({
+      id: "visible-results",
+      name: "Resultados visibles",
+      rows: deferredAuditRows,
+      activeSettings,
+    });
+    const visibleDecisionBrief = buildScreenerDecisionBrief({ audit: visibleDecisionAudit, rows: deferredAuditRows });
+    const visibleDataHealthSummary = buildScreenerDataHealthSummary(deferredAuditRows, activeSettings);
+    const visibleDecisionEvidenceSummary = buildDecisionEvidenceSummary(deferredAuditRows, activeSettings);
+    const visibleScoreAuditSummary = buildScreenerScoreAuditSummary(deferredAuditRows);
+    const visibleAuditabilitySummary = buildScreenerAuditabilitySummary(deferredAuditRows, activeSettings);
+    const pendingItems = deferredAuditRows.map((row) => {
+      if (decisionResolutionForSymbol({ decisionResolutions: screenerDecisionResolutions }, row.symbol)) return null;
+      const annotation = row.__screenerAnnotation;
+      if (!annotation) return null;
+      return {
+        row,
+        symbol: row.symbol,
+        companyName: row.companyName || row.name || "",
+        priority: annotation.priority.score,
+        confidenceKey: annotation.confidence.key,
+        confidenceLabel: annotation.confidence.label,
+      };
+    }).filter(Boolean).sort((a, b) => b.priority - a.priority);
+    const highConfidenceItems = pendingItems.filter((item) => item.confidenceKey === "high");
+    const focusItems = highConfidenceItems.length ? highConfidenceItems : pendingItems;
+    const pendingDecisionWorkSummary = {
+      pendingCount: pendingItems.length,
+      highConfidenceCount: highConfidenceItems.length,
+      focusCount: focusItems.length,
+      usesHighConfidence: highConfidenceItems.length > 0,
+      top: focusItems[0] || null,
+      rows: focusItems.map((item) => item.row),
+    };
+    if (typeof performance !== "undefined" && performance.mark) {
+      performance.mark("screener:viewAudit:end");
+      try {
+        performance.measure("screener:viewAudit", "screener:viewAudit:start", "screener:viewAudit:end");
+      } catch { /* measure duplicada en repaints rápidos */ }
+    }
+    return {
+      visibleDecisionAudit,
+      visibleDecisionBrief,
+      visibleDataHealthSummary,
+      visibleDecisionEvidenceSummary,
+      visibleScoreAuditSummary,
+      visibleAuditabilitySummary,
+      pendingDecisionWorkSummary,
+    };
+  }, [deferredAuditRows, activeSettings, screenerDecisionResolutions]);
+
+  const {
+    visibleDecisionAudit,
+    visibleDecisionBrief,
+    visibleDataHealthSummary,
+    visibleDecisionEvidenceSummary,
+    visibleScoreAuditSummary,
+    visibleAuditabilitySummary,
+    pendingDecisionWorkSummary,
+  } = viewAuditBundle;
+
   const setResultPageClamped = (page) => setResultPage(Math.max(1, Math.min(page, totalResultPages)));
 
   function updateResultPageSize(size) {
@@ -315,11 +375,6 @@ export function useResultViewModel({
     if (resultPage > totalResultPages) setResultPage(totalResultPages);
   }, [resultPage, totalResultPages]);
 
-  const visibleDecisionBrief = useMemo(() => buildScreenerDecisionBrief({ audit: visibleDecisionAudit, rows: viewFilteredRows }), [visibleDecisionAudit, viewFilteredRows]);
-  const visibleDataHealthSummary = useMemo(() => buildScreenerDataHealthSummary(viewFilteredRows, activeSettings), [viewFilteredRows, activeSettings]);
-  const visibleDecisionEvidenceSummary = useMemo(() => buildDecisionEvidenceSummary(viewFilteredRows, activeSettings), [viewFilteredRows, activeSettings]);
-  const visibleScoreAuditSummary = useMemo(() => buildScreenerScoreAuditSummary(viewFilteredRows), [viewFilteredRows]);
-  const visibleAuditabilitySummary = useMemo(() => buildScreenerAuditabilitySummary(viewFilteredRows, activeSettings), [viewFilteredRows, activeSettings]);
   const decisionResolutionOptions = useMemo(() => buildStockDecisionResolutionSummary(rows, { decisionResolutions: screenerDecisionResolutions })
     .map((item) => ({
       ...item,

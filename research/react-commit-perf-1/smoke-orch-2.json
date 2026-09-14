@@ -1,0 +1,24 @@
+{
+  "ready": {
+    "cargando": false,
+    "tardo": false,
+    "pasan": "558 de 3574",
+    "rows": 0,
+    "symbols": 0
+  },
+  "before": "558 de 3574",
+  "clickedMom": false,
+  "afterMom": {
+    "pasan": "558 de 3574",
+    "rows": 0
+  },
+  "clickedHunt": true,
+  "afterHunt": {
+    "titleOk": true,
+    "pasan": "26 de 3574",
+    "rows": 0,
+    "cargando": false
+  },
+  "errors": [],
+  "elapsedSec": 17
+}

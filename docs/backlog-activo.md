@@ -4,15 +4,17 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-14 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `f420af6` (SCANS-CHARTPREVIEW-1)
+**Última sync / HEAD origin polish:** `b7a6267` (REACT-COMMIT-PERF-1)
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
-**Ahora:** REACT-COMMIT-PERF-1 · `prep` (aislar commit React del gesto; ROI o solo diag).  
-**Cola:** — (residual: CHARTPREVIEW hydrate-all → follow-up si molesta).  
-**Último cerrado:** SCANS-CHARTPREVIEW-1 `f420af6` — omit compact wire (−45 % JSON); POST chart-preview + sparks OK US Caza.  
-**Nota CHARTPREVIEW residual:** hydrate cliente usa todo `analyzedRows` (~45–90 POSTs; algunos 500 bajo Global).  
-**Nota THEME:** `cac7b25` chunk 333×6; 49→16 HTTP; bulk descartado.  
+**Ahora:** idle.  
+**Cola:** —  
+**Último cerrado:** REACT-COMMIT-PERF-1 — defer view audits (`useDeferredValue`); LT max hunt −46 % / Momentum −40 % (n=1).  
+**Nota REACT-COMMIT residual:** A/B 1 rep; truth sin `filterMs`.  
+**Nota CHARTPREVIEW residual:** hydrate cliente usa todo `analyzedRows` (~45–90 POSTs).  
+**Nota THEME:** `cac7b25` chunk 333×6; 49→16 HTTP.  
+**Último cerrado (prev):** SCANS-CHARTPREVIEW-1 `f420af6` · SCANS-RS-THEME-HTTP-1 `cac7b25`.  
 **Nota PREFETCH smoke (2026-09-14, :3300):** AVAH→prefetch ATAI/PSO; nav ATAI sin refetch chart; 0 brief.  
 **Nota REMOUNT smoke (2026-09-13, :3300 next dev):** Global returnMarkets=0 · returnNightly=2 Strict (=1 lógico; local scans sin filas por cuota).  
 **Remeasure REUSE (`f4695aa`, :3300, US 3576, túnel UP):**  

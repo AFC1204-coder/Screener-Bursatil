@@ -1,0 +1,86 @@
+{
+  "meta": {
+    "baseUrl": "http://127.0.0.1:3300",
+    "reps": 2,
+    "finishedAt": "2026-09-14T14:21:36.897Z",
+    "phase": "baseline-v2"
+  },
+  "workflows": [
+    {
+      "n": 2,
+      "longTaskMaxMs": 922,
+      "truthMs": 42,
+      "filterMs": null,
+      "reactCommitProxyMs": null,
+      "viewAuditMs": null,
+      "runs": [
+        {
+          "workflow": "Hunt → Líderes Etapa 2",
+          "gestureMs": 2274,
+          "truthMs": 58,
+          "stableMs": 304,
+          "filterMs": null,
+          "reactCommitProxyMs": null,
+          "longTaskCount": 7,
+          "longTaskTotalMs": 1825,
+          "longTaskMaxMs": 1086,
+          "viewAuditMs": null,
+          "truthSnippet": "558 de 3574 pasan «Líderes Etapa 2» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte",
+          "statusSnippet": "558 de 3574 pasan «Líderes Etapa 2» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte 14 sept, 05:14"
+        },
+        {
+          "workflow": "Hunt → Líderes Etapa 2",
+          "gestureMs": 1754,
+          "truthMs": 25,
+          "stableMs": 310,
+          "filterMs": null,
+          "reactCommitProxyMs": null,
+          "longTaskCount": 5,
+          "longTaskTotalMs": 1234,
+          "longTaskMaxMs": 758,
+          "viewAuditMs": null,
+          "truthSnippet": "34 de 4235 pasan «Líderes Etapa 2» · 20 mercados en mesa · 28 mercados en selección · selección ≠ me",
+          "statusSnippet": "34 de 4235 pasan «Líderes Etapa 2» · 20 mercados en mesa · 28 mercados en selección · selección ≠ mesa · corte 14 sept, "
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "longTaskMaxMs": 2732,
+      "truthMs": 143,
+      "filterMs": null,
+      "reactCommitProxyMs": null,
+      "viewAuditMs": null,
+      "runs": [
+        {
+          "workflow": "Hunt → Deterioro",
+          "gestureMs": 6438,
+          "truthMs": 150,
+          "stableMs": 1704,
+          "filterMs": null,
+          "reactCommitProxyMs": null,
+          "longTaskCount": 5,
+          "longTaskTotalMs": 4171,
+          "longTaskMaxMs": 2808,
+          "viewAuditMs": null,
+          "truthSnippet": "1541 de 4235 pasan «Deterioro» · 20 mercados en mesa · 28 mercados en selección · selección ≠ mesa ·",
+          "statusSnippet": "1541 de 4235 pasan «Deterioro» · 20 mercados en mesa · 28 mercados en selección · selección ≠ mesa · corte 14 sept, 05:1"
+        },
+        {
+          "workflow": "Hunt → Deterioro",
+          "gestureMs": 7100,
+          "truthMs": 136,
+          "stableMs": 826,
+          "filterMs": null,
+          "reactCommitProxyMs": null,
+          "longTaskCount": 3,
+          "longTaskTotalMs": 3782,
+          "longTaskMaxMs": 2656,
+          "viewAuditMs": null,
+          "truthSnippet": "1541 de 4235 pasan «Deterioro» · 20 mercados en mesa · 28 mercados en selección · selección ≠ mesa ·",
+          "statusSnippet": "1541 de 4235 pasan «Deterioro» · 20 mercados en mesa · 28 mercados en selección · selección ≠ mesa · corte 14 sept, 05:1"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "baseUrl": "http://127.0.0.1:3300",
+    "reps": 1,
+    "finishedAt": "2026-09-14T14:38:13.152Z",
+    "phase": "before-defer"
+  },
+  "workflows": [
+    {
+      "n": 1,
+      "longTaskMaxMs": 1838,
+      "truthMs": 68,
+      "filterMs": null,
+      "reactCommitProxyMs": null,
+      "viewAuditMs": null,
+      "runs": [
+        {
+          "workflow": "Hunt → Líderes Etapa 2",
+          "gestureMs": 3900,
+          "truthMs": 68,
+          "stableMs": 310,
+          "filterMs": null,
+          "reactCommitProxyMs": null,
+          "longTaskCount": 6,
+          "longTaskTotalMs": 3284,
+          "longTaskMaxMs": 1838,
+          "viewAuditMs": null,
+          "truthSnippet": "558 de 3574 pasan «Líderes Etapa 2» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte",
+          "statusSnippet": "558 de 3574 pasan «Líderes Etapa 2» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte 14 sept, 05:14\nStat"
+        }
+      ]
+    },
+    {
+      "n": 1,
+      "longTaskMaxMs": 1578,
+      "truthMs": 30,
+      "filterMs": null,
+      "reactCommitProxyMs": null,
+      "viewAuditMs": null,
+      "runs": [
+        {
+          "workflow": "Toggle Momentum",
+          "gestureMs": 4775,
+          "truthMs": 30,
+          "stableMs": 333,
+          "filterMs": null,
+          "reactCommitProxyMs": null,
+          "longTaskCount": 3,
+          "longTaskTotalMs": 3799,
+          "longTaskMaxMs": 1578,
+          "viewAuditMs": null,
+          "truthSnippet": "971 de 3574 pasan «Líderes Etapa 2» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte",
+          "statusSnippet": "971 de 3574 pasan «Líderes Etapa 2» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte 14 sept, 05:14\nStat"
+        }
+      ]
+    }
+  ]
+}
