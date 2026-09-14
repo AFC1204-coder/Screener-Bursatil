@@ -4,11 +4,12 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-14 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `dee32e8` (docs stamp HYDRATE-VISIBLE)  
-**Ahora:** idle post WAVE5-REMEASURE.  
+**Última sync / HEAD origin polish:** `320cdb4` (WAVE5-REMEASURE)  
+**Ahora:** idle.
+**Nota BOOTSTRAP:** SCREENER-BOOTSTRAP-CORE-FIRST-1 — core pinta mesa; extended background; smoke sin wipe.  
 **Cola:** —  
 **Último cerrado:** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
-**Remeasure WAVE5 (`dee32e8`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip wire **~3,3 MB** · transport `deferred` · 0 preview inline. TTFB ruidoso (1ª ~21 s / 2ª ~1,5 s); hydrateRs ya no domina en caliente. `research/wave5-remeasure-2026-09-14/`.  
+**Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
 **Nota HYDRATE-VISIBLE residual:** Caza hidrata toda la cola filtrada (no solo viewport).  
 **Último cerrado (prev):** REACT-COMMIT-PERF-1 `a71607c` · SCANS-CHARTPREVIEW-1 `f420af6` · THEME `cac7b25`.  
 **Nota REACT-COMMIT residual:** A/B 1 rep; truth sin `filterMs`.  

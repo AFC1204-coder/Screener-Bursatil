@@ -3,7 +3,7 @@
 **Estado:** idle  
 **Rama:** `codex/statsedge-ui-polish`
 
-No hay ticket de programación activo. WAVE5-REMEASURE hecho (orch).
+No hay ticket de programación activo. Último cerrado: SCREENER-BOOTSTRAP-CORE-FIRST-1.
 
 ## Prompt para Agent chat (copiar tal cual)
 
@@ -13,5 +13,5 @@ No hay ticket de programación activo. WAVE5-REMEASURE hecho (orch).
 
 ## Notas orquestador
 
-- Remeasure: JSON ~20,5 MB deferred · gzip ~3,3 MB · TTFB ruidoso.  
-- Siguiente (elige dueño): **A)** producto Astra/IPO-F · **B)** Caza viewport-cap chartPreview · **C)** uso real mesa sin más tickets.
+- Mesa pinta con core; extended en background.  
+- Residual percibido: TTFB/túnel y `weekly-changes` timeout (no bloquea filas).

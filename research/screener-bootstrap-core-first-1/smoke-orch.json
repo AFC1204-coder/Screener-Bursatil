@@ -1,0 +1,124 @@
+{
+  "firstPasan": {
+    "ms": 19043,
+    "cargandoMat": false,
+    "pasan": "558 de 3574",
+    "rows": 0,
+    "fullLoad": false
+  },
+  "firstRows": {
+    "ms": 19043,
+    "rows": 0,
+    "pasan": "558 de 3574"
+  },
+  "wipedAfterCore": false,
+  "lastPasan": "558 de 3574",
+  "coreReqCount": 3,
+  "extReqCount": 2,
+  "firstHydrateOrder": [
+    {
+      "dt": 10588,
+      "hydrate": "0",
+      "status": 200
+    },
+    {
+      "dt": 17666,
+      "hydrate": "0",
+      "status": 200
+    },
+    {
+      "dt": 27128,
+      "hydrate": "0",
+      "status": 200
+    },
+    {
+      "dt": 27377,
+      "hydrate": "1",
+      "status": 200
+    },
+    {
+      "dt": 29868,
+      "hydrate": "1",
+      "status": 200
+    }
+  ],
+  "orderedScans": [
+    {
+      "dt": 10588,
+      "hydrate": "0",
+      "status": 200
+    },
+    {
+      "dt": 17666,
+      "hydrate": "0",
+      "status": 200
+    },
+    {
+      "dt": 27128,
+      "hydrate": "0",
+      "status": 200
+    },
+    {
+      "dt": 27377,
+      "hydrate": "1",
+      "status": 200
+    },
+    {
+      "dt": 29868,
+      "hydrate": "1",
+      "status": 200
+    }
+  ],
+  "marks": {
+    "core": [
+      {
+        "name": "statsedge:bootstrap-core",
+        "start": 18032,
+        "dur": 0
+      },
+      {
+        "name": "statsedge:bootstrap-core",
+        "start": 27380,
+        "dur": 0
+      }
+    ],
+    "extended": [
+      {
+        "name": "statsedge:bootstrap-extended",
+        "start": 30155,
+        "dur": 0
+      }
+    ],
+    "T_core": [
+      {
+        "name": "statsedge:T_core",
+        "start": 0,
+        "dur": 18032
+      },
+      {
+        "name": "statsedge:T_core",
+        "start": 0,
+        "dur": 27380
+      }
+    ],
+    "T_ext": [
+      {
+        "name": "statsedge:T_extended_after_core",
+        "start": 27380,
+        "dur": 2775
+      }
+    ]
+  },
+  "timeline": [
+    {
+      "ms": 3496,
+      "event": "clicked_US"
+    },
+    {
+      "ms": 19043,
+      "event": "first_pasan",
+      "pasan": "558 de 3574"
+    }
+  ],
+  "ok": true
+}

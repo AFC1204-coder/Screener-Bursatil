@@ -1,0 +1,41 @@
+{
+  "ticket": "SCREENER-BOOTSTRAP-CORE-FIRST-1",
+  "at": "2026-09-14T19:41:00.045Z",
+  "head": "320cdb4",
+  "app": "127.0.0.1:3300",
+  "method": "GET /api/scans anchor=nightly-us · bootstrap core-first",
+  "prior": {
+    "source": "research/wave5-remeasure-2026-09-14/summary.json",
+    "note": "Baseline bloqueante = un solo hydrateRs=1 antes de este ticket"
+  },
+  "T_core": {
+    "cold": {
+      "ttfbMs": 1817,
+      "totalMs": 2328,
+      "rsHydration": "core",
+      "rowCount": 3574
+    },
+    "warm": {
+      "ttfbMs": 3355,
+      "totalMs": 3806
+    }
+  },
+  "T_blocking_extended": {
+    "cold": {
+      "ttfbMs": 1242,
+      "totalMs": 1929,
+      "rsHydration": "extended",
+      "rowCount": 3574
+    },
+    "warm": {
+      "ttfbMs": 1233,
+      "totalMs": 1732
+    }
+  },
+  "deltaColdTtfbMs": -575,
+  "deltaColdTotalMs": -399,
+  "verdict": {
+    "bootstrap": "Core pinta mesa; extended en background no bloquea T_core",
+    "T_core_vs_blocking": "Ruido de túnel/DB — repetir en pasada caliente"
+  }
+}

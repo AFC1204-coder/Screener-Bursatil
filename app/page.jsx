@@ -16,7 +16,7 @@ import { buildReviewSessionIdentity as buildReviewSessionIdentityPayload, review
 import { verifiedIpoCategory } from "@/lib/screenerResultView";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
-import { getLatestScanFromCloud, getLatestScanFromCloudForMarkets, getCloudStatus, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
+import { getLatestScanFromCloud, getLatestScanFromCloudExtended, getLatestScanFromCloudForMarkets, getLatestScanFromCloudForMarketsExtended, getCloudStatus, getSettingFromCloud, syncAlertsToCloud, syncFavoriteToCloud, syncScanToCloud, syncSettingToCloud } from "@/lib/cloudSyncClient";
 import { dateTime, pct } from "@/lib/formatters";
 import { avg, avgVolume } from "@/lib/indicators";
 import StorageAlert from "@/app/components/StorageAlert";
@@ -40,6 +40,7 @@ import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
 import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import { applyChartPreviewsToRows, collectSymbolsForChartPreviewHydrate, fetchChartPreviewsForSymbols, huntRowsForChartPreviewHydrate } from "@/lib/scansChartPreviewHydrate";
+import { markRsBootstrapCoreReady, mergeExtendedRsIntoRows, scheduleExtendedRsHydration } from "@/lib/scansRsBootstrap";
 import { isCazaResultView, resolveResultViewMode, SCREENER_RESULT_VIEW_MODE_CHANGED_EVENT } from "@/lib/screenerResultViewMode";
 import { createDebouncedSessionSaver, screenerFiltersFromScan, withScanScreenerFilters } from "@/lib/screenerFilterFastPath";
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
@@ -497,8 +498,22 @@ export default function Page() {
   const resultsOwnerRef = useRef("none");
   const manualRefreshGenRef = useRef(0);
   const marketLoadGenRef = useRef(0);
+  const rsHydrateGenRef = useRef(0);
   const activeMarketLoadKeyRef = useRef("");
   const restoreMarketAlignRef = useRef(null);
+  function patchRowsWithExtendedRs(extendedRows) {
+    const patch = (current) => mergeExtendedRsIntoRows(current, extendedRows);
+    setAnalyzedRows(patch);
+    setRows(patch);
+  }
+  function beginExtendedRsHydration({ fetchExtended, extractRows, gen }) {
+    scheduleExtendedRsHydration({
+      fetchExtended,
+      extractRows,
+      isCancelled: () => rsHydrateGenRef.current !== gen,
+      onMerged: (extendedRows) => patchRowsWithExtendedRs(extendedRows),
+    });
+  }
   function restoreSnapshot(scan, { source = "local", notice = null } = {}) {
     if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) return false;
     resultsOwnerRef.current = source;
@@ -653,6 +668,13 @@ export default function Page() {
       const storedScans = safeRead(STORAGE_KEYS.scans, []);
       persistLocalScans([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])], { remoteConfigured: result.configured !== false });
       restoreSnapshot(scan, { source: "cloud", notice });
+      const hydrateGen = ++rsHydrateGenRef.current;
+      markRsBootstrapCoreReady();
+      beginExtendedRsHydration({
+        fetchExtended: getLatestScanFromCloudExtended,
+        extractRows: (extendedResult) => pickNightlyUsRestorableScan(extendedResult.data?.scans || [])?.rows,
+        gen: hydrateGen,
+      });
       setStatus(notice?.stale
         ? `Última copia cacheada cargada: ${scan.rows.length} acciones. La nube no respondió al refrescar.`
         : notice?.truncated
@@ -760,6 +782,13 @@ export default function Page() {
       applyFreshSnapshotData(scan, {
         notice: buildSnapshotFreshnessNotice(result.data, scan),
         scanSignature,
+      });
+      const hydrateGen = ++rsHydrateGenRef.current;
+      markRsBootstrapCoreReady();
+      beginExtendedRsHydration({
+        fetchExtended: getLatestScanFromCloudExtended,
+        extractRows: (extendedResult) => pickNightlyUsRestorableScan(extendedResult.data?.scans || [])?.rows,
+        gen: hydrateGen,
       });
     }).catch((error) => {
       console.error("[snapshot] renovación de sesión: fallo al leer la nube:", error);
@@ -1487,6 +1516,13 @@ export default function Page() {
           notice: buildSnapshotFreshnessNotice(result.data, scan),
           scanSignature: { markets: normalized, manual, scanMode },
         });
+        const hydrateGen = ++rsHydrateGenRef.current;
+        markRsBootstrapCoreReady();
+        beginExtendedRsHydration({
+          fetchExtended: getLatestScanFromCloudExtended,
+          extractRows: (extendedResult) => pickNightlyUsRestorableScan(extendedResult.data?.scans || [])?.rows,
+          gen: hydrateGen,
+        });
         setStatus(`Últimos datos de tu cuenta cargados: ${scan.rows.length} acciones (${marketName("US")}).`);
         markMarketsSelectionSettled(nextKey);
         return;
@@ -1566,6 +1602,13 @@ export default function Page() {
       applyFreshSnapshotData(scan, {
         notice: mergedNotice,
         scanSignature: { markets: normalized, manual, scanMode },
+      });
+      const hydrateGen = ++rsHydrateGenRef.current;
+      markRsBootstrapCoreReady();
+      beginExtendedRsHydration({
+        fetchExtended: () => getLatestScanFromCloudForMarketsExtended(normalized),
+        extractRows: (extendedResult) => (extendedResult.data?.scans || [])[0]?.rows,
+        gen: hydrateGen,
       });
       const broadDetail = normalized.length === 1
         ? (
