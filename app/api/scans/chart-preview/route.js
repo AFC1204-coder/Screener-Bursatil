@@ -1,0 +1,76 @@
+import { compactChartPreview } from "@/lib/researchRowContract";
+import { requirePersistenceAuth, supabaseConfig, supabaseRequest } from "@/lib/supabaseServer";
+import { compressedJsonResponse } from "@/lib/compressedJsonResponse";
+
+const SCANS_SUPABASE_TIMEOUT_MS = 12000;
+const MAX_SYMBOLS = 120;
+const SYMBOL_CHUNK = 40;
+
+function normalizeSymbols(input = []) {
+  const list = Array.isArray(input)
+    ? input
+    : String(input || "").split(",");
+  return [...new Set(list.map((item) => String(item || "").trim().toUpperCase()).filter(Boolean))].slice(0, MAX_SYMBOLS);
+}
+
+function chartPreviewFromDbRow(item = {}) {
+  const raw = item?.raw && typeof item.raw === "object" ? item.raw : {};
+  const metrics = item?.metrics && typeof item.metrics === "object" ? item.metrics : {};
+  const preview = metrics.chartPreview ?? raw.chartPreview;
+  if (!Array.isArray(preview) || preview.length < 2) return null;
+  return compactChartPreview(preview);
+}
+
+async function readChartPreviewsForSymbols({ ownerId, scanId, symbols = [] }) {
+  const previews = {};
+  for (let index = 0; index < symbols.length; index += SYMBOL_CHUNK) {
+    const chunk = symbols.slice(index, index + SYMBOL_CHUNK);
+    const rows = await supabaseRequest("scan_results", {
+      query: [
+        `owner_id=eq.${encodeURIComponent(ownerId)}`,
+        `scan_id=eq.${encodeURIComponent(scanId)}`,
+        `symbol=in.(${chunk.map(encodeURIComponent).join(",")})`,
+        "select=symbol,metrics,raw",
+      ].join("&"),
+      timeoutMs: SCANS_SUPABASE_TIMEOUT_MS,
+    });
+    for (const item of rows) {
+      const symbol = String(item?.symbol || "").trim().toUpperCase();
+      if (!symbol || previews[symbol]) continue;
+      const chartPreview = chartPreviewFromDbRow(item);
+      if (chartPreview) previews[symbol] = chartPreview;
+    }
+  }
+  return previews;
+}
+
+export async function POST(req) {
+  const authError = requirePersistenceAuth(req);
+  if (authError) return authError;
+  const config = supabaseConfig();
+  if (!config.configured) {
+    return Response.json({ configured: false, ok: false, previews: {}, message: "Supabase no configurado" });
+  }
+
+  const body = await req.json().catch(() => ({}));
+  const scanId = String(body.scanId || body.cloudId || "").trim();
+  const symbols = normalizeSymbols(body.symbols);
+  if (!scanId) return Response.json({ error: "Falta scanId" }, { status: 400 });
+  if (!symbols.length) return Response.json({ error: "Faltan symbols" }, { status: 400 });
+
+  try {
+    const previews = await readChartPreviewsForSymbols({
+      ownerId: config.ownerId,
+      scanId,
+      symbols,
+    });
+    return compressedJsonResponse(req, { configured: true, ok: true, previews });
+  } catch (error) {
+    return Response.json({
+      configured: true,
+      ok: false,
+      error: error.message || "No se pudieron cargar miniaturas",
+      previews: {},
+    }, { status: 500 });
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "unlocked": {
+    "mode": "localUnlock",
+    "status": 200
+  },
+  "last": {
+    "cargando": false,
+    "analizadas": null,
+    "rows": 0,
+    "sparks": 1332,
+    "missingHint": false,
+    "snippet": "StatsEdge EQUITY RESEARCH Screener Listas Sectores Research Mercado STATSEDGE · SCREENER Líderes Etapa 2 28 mercados Cambios de la semana · El servidor de datos tardó demasiado en responder. Inténtalo de nuevo en unos minutos. Fusión parcial Falta materializado: Brasil · Falta materializado: China A · Falta materializado: Irlanda (no publicable) · Falta materializado: Israel · Falta materializado:"
+  },
+  "afterHydrate": {
+    "rows": 0,
+    "canvases": 0,
+    "canvasSample": [],
+    "sparkWraps": 1332,
+    "analizadas": null
+  },
+  "scansCalls": [
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+      "note": null
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+      "note": null
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2",
+      "note": null
+    }
+  ],
+  "chartPreviewCallCount": 47,
+  "chartPreviewSample": [
+    {
+      "status": 200,
+      "path": "/api/scans/chart-preview"
+    },
+    {
+      "status": 200,
+      "path": "/api/scans/chart-preview"
+    },
+    {
+      "status": 200,
+      "path": "/api/scans/chart-preview"
+    },
+    {
+      "status": 200,
+      "path": "/api/scans/chart-preview"
+    },
+    {
+      "status": 200,
+      "path": "/api/scans/chart-preview"
+    }
+  ],
+  "pageerrors": [],
+  "elapsedSec": 190
+}

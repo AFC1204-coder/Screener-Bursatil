@@ -39,6 +39,7 @@ import { buildScreenerDataHealth, dataHealthFilterLabel } from "@/lib/screenerDa
 import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
 import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
+import { applyChartPreviewsToRows, collectSymbolsForChartPreviewHydrate, fetchChartPreviewsForSymbols } from "@/lib/scansChartPreviewHydrate";
 import { createDebouncedSessionSaver, screenerFiltersFromScan, withScanScreenerFilters } from "@/lib/screenerFilterFastPath";
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
 import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, buildLocalFallbackNotice, buildCloudAuthRequiredNotice, localScanIsSampled, manualDataRefreshStatus, screenerSessionRefreshReason, sessionAutoRefreshStatus, snapshotCloudFallbackReason } from "@/lib/snapshotFreshness";
@@ -525,12 +526,14 @@ export default function Page() {
     const signedMarkets = actualScannedMarkets.length ? actualScannedMarkets : [...markets].sort();
     const nextScanContext = {
       id: scan.id || uid(),
+      cloudId: scan.cloudId || null,
       symbolsCount: scan.rows.length,
       baseCount: scan.rows.length,
       providerErrors: [],
       scannedAt: scan.updatedAt || scan.createdAt || new Date().toISOString(),
       snapshotSource: source === "cloud" ? "supabase" : "local",
       snapshotRowsAreFiltered: restoredRowsAreFiltered,
+      chartPreviewTransport: scan.chartPreviewTransport || null,
       // El snapshot restaurado se considera "vigente" respecto a los mercados
       // que realmente cubre (no a la selección UI si divergen).
       settingsSignature: scanSettingsSignature(signedMarkets, manual, scanMode),
@@ -782,12 +785,14 @@ export default function Page() {
     const signedScanMode = scanSignature?.scanMode || scanMode;
     const nextScanContext = {
       id: scan.id || uid(),
+      cloudId: scan.cloudId || null,
       symbolsCount: scan.rows.length,
       baseCount: scan.rows.length,
       providerErrors: [],
       scannedAt: scan.updatedAt || scan.createdAt || new Date().toISOString(),
       snapshotSource: "supabase",
       snapshotRowsAreFiltered: snapshotRowsAreFiltered(scan),
+      chartPreviewTransport: scan.chartPreviewTransport || null,
       // Igual que en restoreSnapshot: el snapshot renovado se considera
       // vigente respecto a los criterios con los que convive (los de la
       // sesión); si markets/manual/scanMode cambian después, el banner de
@@ -1225,6 +1230,28 @@ export default function Page() {
     );
     return () => huntWarmCancelRef.current?.();
   }, [sessionReady, analyzedRows, scanContext, marketHealth, useRegimeFilter]);
+
+  useEffect(() => {
+    if (!sessionReady || !scanContext?.cloudId || scanContext?.chartPreviewTransport !== "deferred") return undefined;
+    const symbols = collectSymbolsForChartPreviewHydrate({
+      rows: analyzedRows,
+      pagedRows,
+      quickReviewRows,
+    });
+    if (!symbols.length) return undefined;
+    let cancelled = false;
+    fetchChartPreviewsForSymbols(scanContext.cloudId, symbols)
+      .then((previews) => {
+        if (cancelled || !previews || !Object.keys(previews).length) return;
+        const patch = (current) => applyChartPreviewsToRows(current, previews);
+        setAnalyzedRows(patch);
+        setRows(patch);
+      })
+      .catch((error) => {
+        console.error("[chartPreview] hidratación fallida:", error);
+      });
+    return () => { cancelled = true; };
+  }, [sessionReady, scanContext?.cloudId, scanContext?.chartPreviewTransport, analyzedRows, pagedRows, quickReviewRows]);
 
   useEffect(() => {
     if (!huntTruthOverride || huntTruthOverride.passCount == null) return;

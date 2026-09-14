@@ -17,6 +17,7 @@ const ALWAYS_PROTECTED_ROUTES = new Set([
   "app/api/scan/continue/route.js",
   "app/api/scan-coverage/route.js",
   "app/api/scans/route.js",
+  "app/api/scans/chart-preview/route.js",
   "app/api/settings/route.js",
 ]);
 

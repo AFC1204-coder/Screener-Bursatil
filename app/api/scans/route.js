@@ -12,6 +12,7 @@ import { attachWeeklyRs, readGlobalRsForSymbols } from "@/lib/globalRs";
 import { attachWeeklyCountryRs, readCountryRsForSymbols } from "@/lib/countryRsHydrate";
 import { attachWeeklyThemeRs, readThemeRsForSymbols } from "@/lib/themeRsHydrate";
 import { scanRsHydrationMode } from "@/lib/scansRsHydration";
+import { scanChartPreviewTransportMode, stripChartPreviewForTransport } from "@/lib/scansChartPreviewTransport";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { compressedJsonResponse } from "@/lib/compressedJsonResponse";
 
@@ -450,16 +451,20 @@ export function scanFromDb(row, results = [], options = {}) {
     // capitalización de fundamental_snapshots. La ficha del valor lee esas dos
     // mismas tablas en vivo; sin esto, un snapshot de días atrás enseñaba en
     // el screener números que la ficha del mismo símbolo desmentía.
-    .map((item) => attachCachedMarketCap(
-      attachWeeklyThemeRs(
-        attachWeeklyCountryRs(
-          attachWeeklyRs(prepareRow(scanDecisionRowFromDb(item, options)), weeklyRsBySymbol),
-          weeklyCountryRsBySymbol,
+    .map((item) => {
+      let row = attachCachedMarketCap(
+        attachWeeklyThemeRs(
+          attachWeeklyCountryRs(
+            attachWeeklyRs(prepareRow(scanDecisionRowFromDb(item, options)), weeklyRsBySymbol),
+            weeklyCountryRsBySymbol,
+          ),
+          weeklyThemeRsBySymbol,
         ),
-        weeklyThemeRsBySymbol,
-      ),
-      marketCapBySymbol,
-    ));
+        marketCapBySymbol,
+      );
+      if (options.omitChartPreview) row = stripChartPreviewForTransport(row);
+      return row;
+    });
   // rowsAvailable es el total real del escaneo (columna scans.row_count);
   // rowsReturned es lo que sobrevivió al recorte de rowsLimit. Si
   // includeRows viene en false no hubo recorte, solo no se pidieron filas:
@@ -497,6 +502,7 @@ export function scanFromDb(row, results = [], options = {}) {
     // por todo el ranking (scanResultPageOffsets), `false` = las primeras por
     // rank_index porque cabían todas. La pantalla lo dice tal cual.
     rowsSampled: Boolean(options.rowsSampled) && rowsTruncated,
+    ...(options.omitChartPreview ? { chartPreviewTransport: "deferred" } : {}),
     ...(options.decisionProjection
       ? { decisionProjectionPartialRows: rows.filter((item) => item.decisionProjectionPartial).length }
       : {}),
@@ -626,6 +632,12 @@ export async function GET(req) {
     decisionProjection,
     hydrateRsParam: searchParams.get("hydrateRs"),
   });
+  const chartPreviewTransport = scanChartPreviewTransportMode({
+    full,
+    decisionProjection,
+    chartPreviewParam: searchParams.get("chartPreview"),
+  });
+  const omitChartPreview = chartPreviewTransport === "deferred";
   const limit = Math.min(Number(searchParams.get("limit") || 50), 100);
   const rowsLimit = Math.min(Math.max(Number(searchParams.get("rowsLimit") || 5000), 0), 20000);
   const scanSelect = "id,local_id,created_at,updated_at,deleted_at,name,preset,settings,market_score,market_regime,row_count";
@@ -646,7 +658,7 @@ export async function GET(req) {
   try {
     const cacheableLatest = includeRows && !includeDeleted && limit === 1 && rowsLimit <= CACHEABLE_ROWS_LIMIT;
     const marketsCacheKey = anchoredToMarkets ? requestedMarkets.join(",") : "";
-    const cacheKey = `latest:${config.ownerId}:${rowsLimit}:${decisionProjection ? "decision" : full ? "full" : "compact"}:${rsHydrationMode}:${anchoredToNightlyUs ? NIGHTLY_US_ANCHOR : anchoredToMarkets ? `${MARKETS_ANCHOR}:${marketsCacheKey}` : "any"}`;
+    const cacheKey = `latest:${config.ownerId}:${rowsLimit}:${decisionProjection ? "decision" : full ? "full" : "compact"}:${rsHydrationMode}:${chartPreviewTransport}:${anchoredToNightlyUs ? NIGHTLY_US_ANCHOR : anchoredToMarkets ? `${MARKETS_ANCHOR}:${marketsCacheKey}` : "any"}`;
     const loadPayload = async () => {
       if (anchoredToMarkets) {
         if (!requestedMarkets.length) {
@@ -654,6 +666,7 @@ export async function GET(req) {
             configured: true,
             ok: true,
             projection: decisionProjection ? "decision" : full ? "full" : "compact",
+            chartPreviewTransport,
             scans: [],
             scanTombstones: [],
             markets: { found: false, reason: "no-markets", requested: [], matchedScanId: null, rowCount: 0 },
@@ -668,6 +681,7 @@ export async function GET(req) {
             configured: true,
             ok: true,
             projection: decisionProjection ? "decision" : full ? "full" : "compact",
+            chartPreviewTransport,
             scans: [],
             scanTombstones: [],
             markets: {
@@ -716,12 +730,14 @@ export async function GET(req) {
           configured: true,
           ok: true,
           projection: decisionProjection ? "decision" : full ? "full" : "compact",
+          chartPreviewTransport,
           rsHydration: hydration.rsHydration,
           scans: activeScans.map((scan) => scanFromDb(scan, results, {
             decisionProjection,
             includeRows,
             rowsSampled,
             omitDecisionTrace: !full && !decisionProjection,
+            omitChartPreview,
             weeklyRsBySymbol: hydration.weeklyRsBySymbol,
             weeklyCountryRsBySymbol: hydration.weeklyCountryRsBySymbol,
             weeklyThemeRsBySymbol: hydration.weeklyThemeRsBySymbol,
@@ -756,6 +772,7 @@ export async function GET(req) {
           configured: true,
           ok: true,
           projection: decisionProjection ? "decision" : full ? "full" : "compact",
+          chartPreviewTransport,
           scans: [],
           scanTombstones: [],
           nightly: { found: false, reason: nightly.reason || "no-nightly-scan", rejectedScan: nightly.rejectedScan || null },
@@ -794,12 +811,14 @@ export async function GET(req) {
         configured: true,
         ok: true,
         projection: decisionProjection ? "decision" : full ? "full" : "compact",
+        chartPreviewTransport,
         rsHydration: hydration.rsHydration,
         scans: activeScans.map((scan) => scanFromDb(scan, results, {
           decisionProjection,
           includeRows,
           rowsSampled,
           omitDecisionTrace: !full && !decisionProjection,
+          omitChartPreview,
           weeklyRsBySymbol: hydration.weeklyRsBySymbol,
           weeklyCountryRsBySymbol: hydration.weeklyCountryRsBySymbol,
           weeklyThemeRsBySymbol: hydration.weeklyThemeRsBySymbol,

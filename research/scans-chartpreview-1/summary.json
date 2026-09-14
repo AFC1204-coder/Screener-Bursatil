@@ -1,0 +1,23 @@
+{
+  "measuredAt": "2026-09-14T12:27:07.372Z",
+  "scan": {
+    "id": "a60b646b-1b6d-4bd5-a752-47fa3e80b386",
+    "localId": "materialized:US:2026-09-14:t031412:o0:l5608",
+    "rowCount": 3574,
+    "fetchedRows": 3574
+  },
+  "bytes": {
+    "inlineJson": 30727764,
+    "deferredJson": 17005290,
+    "chartPreviewField": 13665290,
+    "gzipInline": 4897308,
+    "gzipDeferred": 2942872
+  },
+  "savings": {
+    "jsonBytes": 13722474,
+    "jsonPct": 44.66,
+    "chartPreviewSharePct": 44.47
+  },
+  "roiThresholdMet": true,
+  "approach": "omit+hydrate"
+}
