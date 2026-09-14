@@ -1,6 +1,6 @@
 # SCANS-CHARTPREVIEW-HYDRATE-STABLE-1
 
-**Estado:** hecho · `1e61a07`  
+**Estado:** hecho · `921b9f5`  
 **Rama:** `codex/statsedge-ui-polish`
 
 ## Qué
