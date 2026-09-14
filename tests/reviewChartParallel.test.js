@@ -40,7 +40,7 @@ describe("REVIEW-CHART-PARALLEL-1 — chart T1 paralelo al shell", () => {
     expect(rowChartSource).toContain("UniversalPriceChart");
     expect(rowChartSource).toMatch(/rsWeeklyChartQuery/);
     expect(rowChartSource).toMatch(/rowHasChartRsSeries/);
-    expect(rowChartSource).toMatch(/fetch\(url/);
+    expect(rowChartSource).toMatch(/fetchRsWeeklyCached/);
     expect(rowChartSource).not.toContain("/api/company-brief");
   });
 
@@ -50,10 +50,10 @@ describe("REVIEW-CHART-PARALLEL-1 — chart T1 paralelo al shell", () => {
     expect(chartModelSource).toMatch(/requestState === "error"/);
   });
 
-  it("useChartDataModel usa una requestKey estable (sin doble fetch por misma key)", () => {
+  it("useChartDataModel usa requestKey estable y caché compartida (sin doble fetch por misma key)", () => {
     const hookSource = sourceWithoutComments("../app/useChartDataModel.js");
     expect(hookSource).toMatch(/buildRequestKey/);
-    expect(hookSource).toMatch(/\/api\/chart\?\$\{params/);
+    expect(hookSource).toMatch(/fetchChartCached/);
     expect(hookSource).toMatch(/generationRef\.current !== generation/);
   });
 });

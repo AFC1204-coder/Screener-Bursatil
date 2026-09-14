@@ -36,7 +36,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { chartDataModel, needsRemoteBars } from "@/lib/chartDataModel";
-import { getJson } from "@/lib/clientApi";
+import { fetchChartCached } from "@/lib/chartFetchCache";
 
 const CHART_FETCH_TIMEOUT_MS = 15000;
 
@@ -276,10 +276,7 @@ export function useChartDataModel(input = {}) {
       preferredStyle,
     }));
 
-    const params = new URLSearchParams({ symbol, range: dataRange, interval });
-    const url = `/api/chart?${params.toString()}`;
-
-    getJson(url, { signal: controller.signal, timeoutMs: CHART_FETCH_TIMEOUT_MS })
+    fetchChartCached({ symbol, dataRange, interval, timeoutMs: CHART_FETCH_TIMEOUT_MS })
       .then((payload) => {
         // §3.7.1: respuesta vieja tras cambio de key/rango/intervalo. El
         // abort por sí solo no se considera suficiente; comparamos

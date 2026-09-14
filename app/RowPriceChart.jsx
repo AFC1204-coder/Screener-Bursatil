@@ -32,6 +32,7 @@ import {
   rowHasChartRsSeries,
   rsWeeklyChartQuery,
 } from "@/lib/chartRsRowProps";
+import { fetchRsWeeklyCached } from "@/lib/chartFetchCache";
 import { canonicalRsValue } from "@/lib/rsCanonical";
 import { externalLinks } from "@/lib/symbols";
 
@@ -104,19 +105,20 @@ export default function RowPriceChart({
       return undefined;
     }
 
-    const controller = new AbortController();
+    let cancelled = false;
     const url = rsWeeklyChartQuery(row.symbol, row);
-    fetch(url, { signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : null))
+    fetchRsWeeklyCached(url)
       .then((payload) => {
-        if (controller.signal.aborted) return;
+        if (cancelled) return;
         setFetchedRs(chartRsPropsFromWeeklyResponse(payload));
       })
       .catch(() => {
-        if (!controller.signal.aborted) setFetchedRs(null);
+        if (!cancelled) setFetchedRs(null);
       });
 
-    return () => controller.abort();
+    return () => {
+      cancelled = true;
+    };
   }, [
     row?.symbol,
     row?.sector,

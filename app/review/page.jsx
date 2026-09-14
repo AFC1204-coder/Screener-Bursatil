@@ -46,6 +46,7 @@ import "../../styles/review.css";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import RowPriceChart from "@/app/RowPriceChart";
+import { useReviewChartPrefetch } from "@/app/useReviewChartPrefetch";
 import { getJson } from "@/lib/clientApi";
 import { readChartSettings } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
@@ -416,6 +417,14 @@ export default function ReviewPage() {
     () => decisionResolutionHistory({ decisionResolutions, decisionResolutionLog }, { symbol: activeSymbol, limit: 4 }),
     [decisionResolutions, decisionResolutionLog, activeSymbol],
   );
+
+  useReviewChartPrefetch({
+    enabled: source === "current" && visibleRows.length >= 2,
+    focusSymbol: activeSymbol,
+    visibleRows,
+    currentIndex,
+    chartSettings: REVIEW_CHART_SETTINGS,
+  });
 
   useEffect(() => {
     if (currentIndex >= visibleRows.length) setCurrentIndex(Math.max(0, visibleRows.length - 1));

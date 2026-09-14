@@ -8,9 +8,10 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
-**Ahora:** idle · SCREENER-REMOUNT-SCANS-1 **hecho** (bounce: 0 markets; nightly ≤1 lógico).  
-**Cola:** prefetch N+1 chart · theme RS · SCANS-CHARTPREVIEW-1 · REACT-COMMIT.  
-**Último cerrado:** SCREENER-REMOUNT-SCANS-1 (guards remount + settled persistido).  
+**Ahora:** idle · REVIEW-CHART-PREFETCH-N1 **hecho** (prefetch chart N±1; 0 brief).  
+**Cola:** theme RS · SCANS-CHARTPREVIEW-1 · REACT-COMMIT.  
+**Último cerrado:** REVIEW-CHART-PREFETCH-N1 (cache `/api/chart` + prefetch Review).  
+**Nota PREFETCH smoke (2026-09-14, :3300):** AVAH→prefetch ATAI/PSO; nav ATAI sin refetch chart; 0 brief.  
 **Nota REMOUNT smoke (2026-09-13, :3300 next dev):** Global returnMarkets=0 · returnNightly=2 Strict (=1 lógico; local scans sin filas por cuota).  
 **Remeasure REUSE (`f4695aa`, :3300, US 3576, túnel UP):**  
 - cold extended TTFB **17 861 ms** (antes SCANS-PAYLOAD-1: **44 899 ms**)  
