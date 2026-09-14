@@ -3,7 +3,7 @@
 **Estado:** idle  
 **Rama:** `codex/statsedge-ui-polish`
 
-No hay ticket de programación activo. Último cerrado: REACT-COMMIT-PERF-1.
+No hay ticket de programación activo. Último cerrado: SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1.
 
 ## Prompt para Agent chat (copiar tal cual)
 
@@ -13,5 +13,5 @@ No hay ticket de programación activo. Último cerrado: REACT-COMMIT-PERF-1.
 
 ## Notas orquestador
 
-- Cola polish de perf Wave5 cerrada (THEME · CHARTPREVIEW · REACT-COMMIT).  
-- Residual opcional: CHARTPREVIEW hydrate solo visibles (hoy hidrata todo `analyzedRows`).
+- Wave5 + residual hydrate-visible cerrados.  
+- Siguiente opcional: remeasure cold TTFB US, o producto (Astra / IPO-F).

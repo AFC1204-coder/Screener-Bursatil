@@ -39,7 +39,8 @@ import { buildScreenerDataHealth, dataHealthFilterLabel } from "@/lib/screenerDa
 import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
 import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
-import { applyChartPreviewsToRows, collectSymbolsForChartPreviewHydrate, fetchChartPreviewsForSymbols } from "@/lib/scansChartPreviewHydrate";
+import { applyChartPreviewsToRows, collectSymbolsForChartPreviewHydrate, fetchChartPreviewsForSymbols, huntRowsForChartPreviewHydrate } from "@/lib/scansChartPreviewHydrate";
+import { isCazaResultView, resolveResultViewMode, SCREENER_RESULT_VIEW_MODE_CHANGED_EVENT } from "@/lib/screenerResultViewMode";
 import { createDebouncedSessionSaver, screenerFiltersFromScan, withScanScreenerFilters } from "@/lib/screenerFilterFastPath";
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
 import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, buildLocalFallbackNotice, buildCloudAuthRequiredNotice, localScanIsSampled, manualDataRefreshStatus, screenerSessionRefreshReason, sessionAutoRefreshStatus, snapshotCloudFallbackReason } from "@/lib/snapshotFreshness";
@@ -472,6 +473,7 @@ export default function Page() {
   const [filterTemplateName, setFilterTemplateName] = useState("");
   const [activeFilterFamily, setActiveFilterFamily] = useState(null);
   const [huntTruthOverride, setHuntTruthOverride] = useState(null);
+  const [resultViewMode, setResultViewMode] = useState(() => resolveResultViewMode(presetKey));
   const [isHuntTransitionPending, startHuntTransition] = useTransition();
   const fastFilterSignatureRef = useRef("");
   const huntFilterCacheRef = useRef(new Map());
@@ -1232,11 +1234,26 @@ export default function Page() {
   }, [sessionReady, analyzedRows, scanContext, marketHealth, useRegimeFilter]);
 
   useEffect(() => {
+    setResultViewMode(resolveResultViewMode(presetKey));
+  }, [presetKey]);
+
+  useEffect(() => {
+    function syncResultViewMode(event) {
+      const mode = event?.detail;
+      if (mode) setResultViewMode(mode);
+      else setResultViewMode(resolveResultViewMode(presetKey));
+    }
+    window.addEventListener(SCREENER_RESULT_VIEW_MODE_CHANGED_EVENT, syncResultViewMode);
+    return () => window.removeEventListener(SCREENER_RESULT_VIEW_MODE_CHANGED_EVENT, syncResultViewMode);
+  }, [presetKey]);
+
+  useEffect(() => {
     if (!sessionReady || !scanContext?.cloudId || scanContext?.chartPreviewTransport !== "deferred") return undefined;
+    const cazaMode = isCazaResultView(resultViewMode);
     const symbols = collectSymbolsForChartPreviewHydrate({
-      rows: analyzedRows,
       pagedRows,
       quickReviewRows,
+      huntRows: huntRowsForChartPreviewHydrate(rows, cazaMode),
     });
     if (!symbols.length) return undefined;
     let cancelled = false;
@@ -1251,7 +1268,7 @@ export default function Page() {
         console.error("[chartPreview] hidratación fallida:", error);
       });
     return () => { cancelled = true; };
-  }, [sessionReady, scanContext?.cloudId, scanContext?.chartPreviewTransport, analyzedRows, pagedRows, quickReviewRows]);
+  }, [sessionReady, scanContext?.cloudId, scanContext?.chartPreviewTransport, resultViewMode, rows, pagedRows, quickReviewRows]);
 
   useEffect(() => {
     if (!huntTruthOverride || huntTruthOverride.passCount == null) return;

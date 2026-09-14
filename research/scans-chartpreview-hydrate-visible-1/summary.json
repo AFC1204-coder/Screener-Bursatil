@@ -1,0 +1,19 @@
+{
+  "ticket": "SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1",
+  "measuredAt": "2026-09-14T18:58:00.000Z",
+  "change": "collectSymbolsForChartPreviewHydrate ya no recibe analyzedRows; hidrata pagedRows + quickReviewRows + huntRows (solo en modo Caza)",
+  "expectedImpact": {
+    "baselinePostChartPreview": "45-92 POST /api/scans/chart-preview en hard-reload US :3300",
+    "targetPostChartPreview": "≤3-5 en primer paint de una página típica (audit 50/pág) o −≥80% vs baseline",
+    "rationale": "Universo ~3300 símbolos → ~45 POSTs (80/símbolo); página visible ~50 símbolos → 1 POST; cola Caza = filtered rows (no analyzedRows)"
+  },
+  "verification": {
+    "unit": "npx vitest run tests/scansChartPreviewHydrateVisible.test.js tests/scansChartPreviewTransport.test.js tests/scansApiChartPreviewDefer.test.js — 13/13 OK",
+    "browser": {
+      "status": "orch-ok",
+      "note": "Orquestador :3300+túnel US 558/3574 → 3 POST chart-preview (200). smoke-orch.json",
+      "postChartPreviewCount": 3,
+      "probeFile": "research/scans-chartpreview-hydrate-visible-1/smoke-orch.json"
+    }
+  }
+}

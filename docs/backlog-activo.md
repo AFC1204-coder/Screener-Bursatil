@@ -4,17 +4,17 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-14 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `a71607c` (REACT-COMMIT-PERF-1)
+**Última sync / HEAD origin polish:** `38ad015` (SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1)
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
 **Ahora:** idle.  
-**Cola:** —  
-**Último cerrado:** REACT-COMMIT-PERF-1 — defer view audits (`useDeferredValue`); LT max hunt −46 % / Momentum −40 % (n=1).  
+**Cola:** — (opcional: remeasure cold TTFB).  
+**Último cerrado:** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 — hydrate solo visibles; orch **3** POST chart-preview vs ~45–92.  
+**Nota HYDRATE-VISIBLE residual:** Caza hidrata toda la cola filtrada (no solo viewport).  
+**Último cerrado (prev):** REACT-COMMIT-PERF-1 `a71607c` · SCANS-CHARTPREVIEW-1 `f420af6` · THEME `cac7b25`.  
 **Nota REACT-COMMIT residual:** A/B 1 rep; truth sin `filterMs`.  
-**Nota CHARTPREVIEW residual:** hydrate cliente usa todo `analyzedRows` (~45–90 POSTs).  
 **Nota THEME:** `cac7b25` chunk 333×6; 49→16 HTTP.  
-**Último cerrado (prev):** SCANS-CHARTPREVIEW-1 `f420af6` · SCANS-RS-THEME-HTTP-1 `cac7b25`.  
 **Nota PREFETCH smoke (2026-09-14, :3300):** AVAH→prefetch ATAI/PSO; nav ATAI sin refetch chart; 0 brief.  
 **Nota REMOUNT smoke (2026-09-13, :3300 next dev):** Global returnMarkets=0 · returnNightly=2 Strict (=1 lógico; local scans sin filas por cuota).  
 **Remeasure REUSE (`f4695aa`, :3300, US 3576, túnel UP):**  
@@ -24,7 +24,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 - warm extended **203 ms** · theme aislado ~0,6 s tras THEME-HTTP.  
 Evidencia: `research/scans-rs-hydrate-1/probe-summary.json` · `research/scans-rs-theme-http-1/`.  
 **Paquete Astra:** `docs/tickets/ASTRA-REVIEW-BRIEF-T0T1T2.md`  
-**Aparcados:** IPO-F P2 · CHARTPREVIEW hydrate-visible-only (residual).  
+**Aparcados:** IPO-F P2.  
 **HOLD / NO retomar:** FILTER-ANNOTATION-1 (`639ceae`) — **revertido** `c55a648` (ROI browser insuficiente).  
 **KEEP transporte:** SCANS-TRANSPORT-1 gzip (`91ae6e4`) — mejora wire; **no** es solución de initial load (residuales: hydrateRs, parse/render, CPU gzip).  
 **Línea Mini V1:** aparte (V1-02…); no mezclar con polish.  

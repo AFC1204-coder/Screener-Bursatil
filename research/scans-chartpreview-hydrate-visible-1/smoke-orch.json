@@ -1,0 +1,23 @@
+{
+  "ready": {
+    "cargando": false,
+    "pasan": "558 de 3574",
+    "caza": true,
+    "auditoria": true
+  },
+  "afterCazaPosts": 0,
+  "clickedAudit": true,
+  "afterAuditPosts": 3,
+  "totalPosts": 3,
+  "statuses": {
+    "200": 3
+  },
+  "clickedPage2": true,
+  "sparkish": {
+    "pasan": "558 de 3574",
+    "canvases": 0,
+    "modeHint": true
+  },
+  "pageerrors": [],
+  "elapsedSec": 142
+}
