@@ -3,24 +3,26 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-13 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** checkpoint Wave5 prep (post revert FILTER-ANNOTATION-1)
+Última actualización: 2026-09-14 · rama `codex/statsedge-ui-polish`  
+**Última sync / HEAD origin polish:** `f420af6` (SCANS-CHARTPREVIEW-1)
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
-**Ahora:** idle · REVIEW-CHART-PREFETCH-N1 **hecho** (prefetch chart N±1; 0 brief).  
-**Cola:** theme RS · SCANS-CHARTPREVIEW-1 · REACT-COMMIT.  
-**Último cerrado:** REVIEW-CHART-PREFETCH-N1 (cache `/api/chart` + prefetch Review).  
+**Ahora:** REACT-COMMIT-PERF-1 · `prep` (aislar commit React del gesto; ROI o solo diag).  
+**Cola:** — (residual: CHARTPREVIEW hydrate-all → follow-up si molesta).  
+**Último cerrado:** SCANS-CHARTPREVIEW-1 `f420af6` — omit compact wire (−45 % JSON); POST chart-preview + sparks OK US Caza.  
+**Nota CHARTPREVIEW residual:** hydrate cliente usa todo `analyzedRows` (~45–90 POSTs; algunos 500 bajo Global).  
+**Nota THEME:** `cac7b25` chunk 333×6; 49→16 HTTP; bulk descartado.  
 **Nota PREFETCH smoke (2026-09-14, :3300):** AVAH→prefetch ATAI/PSO; nav ATAI sin refetch chart; 0 brief.  
 **Nota REMOUNT smoke (2026-09-13, :3300 next dev):** Global returnMarkets=0 · returnNightly=2 Strict (=1 lógico; local scans sin filas por cuota).  
 **Remeasure REUSE (`f4695aa`, :3300, US 3576, túnel UP):**  
 - cold extended TTFB **17 861 ms** (antes SCANS-PAYLOAD-1: **44 899 ms**)  
 - cold core **8 586 ms** (antes **17 264 ms**; túnel/env más cálido también)  
 - **delta hydrateRs** **+9 275 ms** (antes **+27 635 ms**) → overhead −66 %  
-- warm extended **203 ms** · theme aislado ~0,8 s · línea privada: reuse mapa no aplica; win = bulk US country.  
-Evidencia: `research/scans-rs-hydrate-1/probe-summary.json`.  
+- warm extended **203 ms** · theme aislado ~0,6 s tras THEME-HTTP.  
+Evidencia: `research/scans-rs-hydrate-1/probe-summary.json` · `research/scans-rs-theme-http-1/`.  
 **Paquete Astra:** `docs/tickets/ASTRA-REVIEW-BRIEF-T0T1T2.md`  
-**Aparcados:** SCANS-CHARTPREVIEW-1 · REACT-COMMIT-PERF-1 · IPO-F P2.  
+**Aparcados:** REACT-COMMIT-PERF-1 · IPO-F P2.  
 **HOLD / NO retomar:** FILTER-ANNOTATION-1 (`639ceae`) — **revertido** `c55a648` (ROI browser insuficiente).  
 **KEEP transporte:** SCANS-TRANSPORT-1 gzip (`91ae6e4`) — mejora wire; **no** es solución de initial load (residuales: hydrateRs, parse/render, CPU gzip).  
 **Línea Mini V1:** aparte (V1-02…); no mezclar con polish.  

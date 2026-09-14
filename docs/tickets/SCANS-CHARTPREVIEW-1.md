@@ -1,6 +1,6 @@
 # SCANS-CHARTPREVIEW-1
 
-**Estado:** hecho · `ae5e5d6`  
+**Estado:** hecho · `f420af6`  
 **Rama:** `codex/statsedge-ui-polish`
 
 ## Qué
