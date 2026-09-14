@@ -1,0 +1,66 @@
+{
+  "ticket": "WAVE5-REMEASURE",
+  "at": "2026-09-14T19:18:35.400Z",
+  "head": "dee32e8",
+  "tunnel15432": true,
+  "app": "127.0.0.1:3300",
+  "method": "GET /api/scans anchor=markets&markets=US · Accept-Encoding gzip · clearScansApiCache entre colds",
+  "prior": {
+    "head": "f4695aa",
+    "coldExtendedTtfbMs": 17861,
+    "coldCoreTtfbMs": 8586,
+    "warmExtendedTtfbMs": 203,
+    "deltaHydrateMs": 9275,
+    "wireUncompressedApproxMb": 34,
+    "note": "pre chartPreview-defer; encoding null en esa medición"
+  },
+  "firstPassColdish": {
+    "note": "Primera corrida del día (parse gzip roto en probe; solo wire/ttfb útiles)",
+    "coldCoreTtfbMs": 21665,
+    "coldExtendedTtfbMs": 21209,
+    "warmExtendedTtfbMs": 2043,
+    "wireBytesGzip": 3292935
+  },
+  "secondPass": {
+    "coldCore": {
+      "ttfbMs": 1492,
+      "totalMs": 1948,
+      "wireBytes": 3292935,
+      "jsonBytes": 20482288,
+      "contentEncoding": "gzip",
+      "chartPreviewTransport": "deferred",
+      "rsHydration": "core",
+      "rowCount": 3574,
+      "withPreviewInline": 0
+    },
+    "coldExtended": {
+      "ttfbMs": 1104,
+      "totalMs": 1516,
+      "wireBytes": 3408239,
+      "jsonBytes": 21061000,
+      "contentEncoding": "gzip",
+      "chartPreviewTransport": "deferred",
+      "rsHydration": "extended",
+      "rowCount": 3574,
+      "withPreviewInline": 0
+    },
+    "warmExtended": {
+      "ttfbMs": 1917,
+      "totalMs": 2368,
+      "wireBytes": 3408239,
+      "jsonBytes": 21061000
+    },
+    "deltaHydrateTtfbMs": -388
+  },
+  "verdict": {
+    "payload": "WIN — JSON ~20,5 MB deferred (0 chartPreview inline) · wire gzip ~3,3 MB vs ~34 MB uncompressed prior",
+    "ttfb": "NOISE — túnel/DB: 1ª pasada ~21 s, 2ª ~1,5 s; no atribuir a Wave5 el −16 s vs prior sin más reps",
+    "hydrateRsOverhead": "Ya no es el cuello dominante en pasada caliente (delta ~0 / ruido)",
+    "remaining": [
+      "Parse/cliente de ~20 MB JSON",
+      "Anotación O(pasan) en gestos (FILTER-CPU)",
+      "Caza hydrate de toda la cola filtrada (residual HYDRATE-VISIBLE)",
+      "Producto: Astra Review / IPO-F / uso real de mesa"
+    ]
+  }
+}

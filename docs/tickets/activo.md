@@ -3,7 +3,7 @@
 **Estado:** idle  
 **Rama:** `codex/statsedge-ui-polish`
 
-No hay ticket de programación activo. Último cerrado: SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1.
+No hay ticket de programación activo. WAVE5-REMEASURE hecho (orch).
 
 ## Prompt para Agent chat (copiar tal cual)
 
@@ -13,5 +13,5 @@ No hay ticket de programación activo. Último cerrado: SCANS-CHARTPREVIEW-HYDRA
 
 ## Notas orquestador
 
-- Wave5 + residual hydrate-visible cerrados.  
-- Siguiente opcional: remeasure cold TTFB US, o producto (Astra / IPO-F).
+- Remeasure: JSON ~20,5 MB deferred · gzip ~3,3 MB · TTFB ruidoso.  
+- Siguiente (elige dueño): **A)** producto Astra/IPO-F · **B)** Caza viewport-cap chartPreview · **C)** uso real mesa sin más tickets.
