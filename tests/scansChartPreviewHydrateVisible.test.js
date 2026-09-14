@@ -14,10 +14,16 @@ function row(symbol, withPreview = false) {
 }
 
 describe("huntRowsForChartPreviewHydrate", () => {
-  it("devuelve filas filtradas solo en modo Caza", () => {
+  it("devuelve top N filtradas solo en modo Caza", () => {
     const filtered = [row("AAA"), row("BBB")];
+    const longQueue = Array.from({ length: 120 }, (_, index) => row(`H${index}`));
     expect(huntRowsForChartPreviewHydrate(filtered, false)).toEqual([]);
     expect(huntRowsForChartPreviewHydrate(filtered, true)).toEqual(filtered);
+    expect(huntRowsForChartPreviewHydrate(longQueue, true)).toHaveLength(80);
+    expect(huntRowsForChartPreviewHydrate(longQueue, true)[0].symbol).toBe("H0");
+    expect(huntRowsForChartPreviewHydrate(longQueue, true, { start: 10, limit: 5 })).toEqual(
+      longQueue.slice(10, 15),
+    );
   });
 });
 

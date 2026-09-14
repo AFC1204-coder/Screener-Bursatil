@@ -1,0 +1,22 @@
+{
+  "ready": {
+    "bodySnippet": "StatsEdge EQUITY RESEARCH Screener Listas Sectores Research Mercado STATSEDGE · SCREENER Líderes Etapa 2 1 mercado Desde el vie 4 sep · Etapa 2: 63 entradas, 66 salidas · Máximos d",
+    "cargando": false,
+    "pasan": "558 de 3574",
+    "hasLoadBtn": false
+  },
+  "postsBeforeWait": 0,
+  "totalPosts": 1,
+  "statuses": {
+    "200": 1
+  },
+  "spark": {
+    "pasan": "558 de 3574",
+    "missingEls": 0,
+    "wraps": 558,
+    "paths": 240,
+    "svgs": 80
+  },
+  "ok": true,
+  "elapsedSec": 13
+}

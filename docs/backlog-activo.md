@@ -5,7 +5,8 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 
 Última actualización: 2026-09-14 · rama `codex/statsedge-ui-polish`  
 **Última sync / HEAD origin polish:** `320cdb4` (WAVE5-REMEASURE)  
-**Ahora:** idle.
+**Ahora:** idle.  
+**Último cerrado (sparks):** SCANS-CHARTPREVIEW-HYDRATE-STABLE-1 — cap 80 + onChunk; smoke 1 POST / 80 SVG.
 **Nota BOOTSTRAP:** SCREENER-BOOTSTRAP-CORE-FIRST-1 — core pinta mesa; extended background; smoke sin wipe.  
 **Cola:** —  
 **Último cerrado:** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  

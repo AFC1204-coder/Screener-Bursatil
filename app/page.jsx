@@ -39,7 +39,13 @@ import { buildScreenerDataHealth, dataHealthFilterLabel } from "@/lib/screenerDa
 import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
 import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
-import { applyChartPreviewsToRows, collectSymbolsForChartPreviewHydrate, fetchChartPreviewsForSymbols, huntRowsForChartPreviewHydrate } from "@/lib/scansChartPreviewHydrate";
+import {
+  applyChartPreviewsToRows,
+  buildChartPreviewHydrateSignature,
+  collectSymbolsForChartPreviewHydrate,
+  fetchChartPreviewsForSymbols,
+  huntRowsForChartPreviewHydrate,
+} from "@/lib/scansChartPreviewHydrate";
 import { markRsBootstrapCoreReady, mergeExtendedRsIntoRows, scheduleExtendedRsHydration } from "@/lib/scansRsBootstrap";
 import { isCazaResultView, resolveResultViewMode, SCREENER_RESULT_VIEW_MODE_CHANGED_EVENT } from "@/lib/screenerResultViewMode";
 import { createDebouncedSessionSaver, screenerFiltersFromScan, withScanScreenerFilters } from "@/lib/screenerFilterFastPath";
@@ -1276,28 +1282,40 @@ export default function Page() {
     return () => window.removeEventListener(SCREENER_RESULT_VIEW_MODE_CHANGED_EVENT, syncResultViewMode);
   }, [presetKey]);
 
-  useEffect(() => {
-    if (!sessionReady || !scanContext?.cloudId || scanContext?.chartPreviewTransport !== "deferred") return undefined;
+  const chartPreviewHydratePlan = useMemo(() => {
+    if (!sessionReady || !scanContext?.cloudId || scanContext?.chartPreviewTransport !== "deferred") {
+      return null;
+    }
     const cazaMode = isCazaResultView(resultViewMode);
     const symbols = collectSymbolsForChartPreviewHydrate({
       pagedRows,
       quickReviewRows,
       huntRows: huntRowsForChartPreviewHydrate(rows, cazaMode),
     });
-    if (!symbols.length) return undefined;
+    if (!symbols.length) return null;
+    return {
+      cloudId: scanContext.cloudId,
+      symbols,
+      signature: buildChartPreviewHydrateSignature(symbols),
+    };
+  }, [sessionReady, scanContext?.cloudId, scanContext?.chartPreviewTransport, resultViewMode, rows, pagedRows, quickReviewRows]);
+
+  useEffect(() => {
+    if (!chartPreviewHydratePlan?.signature) return undefined;
+    const { cloudId, symbols } = chartPreviewHydratePlan;
     let cancelled = false;
-    fetchChartPreviewsForSymbols(scanContext.cloudId, symbols)
-      .then((previews) => {
-        if (cancelled || !previews || !Object.keys(previews).length) return;
-        const patch = (current) => applyChartPreviewsToRows(current, previews);
+    fetchChartPreviewsForSymbols(cloudId, symbols, {
+      onChunk: (chunkPreviews) => {
+        if (cancelled || !chunkPreviews || !Object.keys(chunkPreviews).length) return;
+        const patch = (current) => applyChartPreviewsToRows(current, chunkPreviews);
         setAnalyzedRows(patch);
         setRows(patch);
-      })
-      .catch((error) => {
-        console.error("[chartPreview] hidratación fallida:", error);
-      });
+      },
+    }).catch((error) => {
+      if (!cancelled) console.error("[chartPreview] hidratación fallida:", error);
+    });
     return () => { cancelled = true; };
-  }, [sessionReady, scanContext?.cloudId, scanContext?.chartPreviewTransport, resultViewMode, rows, pagedRows, quickReviewRows]);
+  }, [chartPreviewHydratePlan?.signature, chartPreviewHydratePlan?.cloudId]);
 
   useEffect(() => {
     if (!huntTruthOverride || huntTruthOverride.passCount == null) return;

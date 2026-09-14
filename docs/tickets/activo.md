@@ -3,7 +3,7 @@
 **Estado:** idle  
 **Rama:** `codex/statsedge-ui-polish`
 
-No hay ticket de programación activo. Último cerrado: SCREENER-BOOTSTRAP-CORE-FIRST-1.
+No hay ticket de programación activo. Último cerrado: SCANS-CHARTPREVIEW-HYDRATE-STABLE-1.
 
 ## Prompt para Agent chat (copiar tal cual)
 
@@ -13,5 +13,5 @@ No hay ticket de programación activo. Último cerrado: SCREENER-BOOTSTRAP-CORE-
 
 ## Notas orquestador
 
-- Mesa pinta con core; extended en background.  
-- Residual percibido: TTFB/túnel y `weekly-changes` timeout (no bloquea filas).
+- Miniaturas Caza: 1 POST / top 80 sparks OK.  
+- Residual: hydrate al scroll &gt;80 en cinta.

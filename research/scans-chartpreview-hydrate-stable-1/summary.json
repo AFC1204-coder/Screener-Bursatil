@@ -1,0 +1,22 @@
+{
+  "ticket": "SCANS-CHARTPREVIEW-HYDRATE-STABLE-1",
+  "measuredAt": "2026-09-14T23:30:00.000Z",
+  "changes": [
+    "huntRowsForChartPreviewHydrate cap MAX_HUNT_CHART_PREVIEW_HYDRATE=80 (top N, no cola entera)",
+    "fetchChartPreviewsForSymbols aplica onChunk por lote + retry 1\u00d7 por chunk",
+    "page.jsx: firma buildChartPreviewHydrateSignature estabiliza deps del efecto (no cancel por identidad rows)"
+  ],
+  "expectedImpact": {
+    "baselinePostChartPreview": "7+ POST secuenciales (~558 s\u00edmbolos Caza) con cancelaciones mid-flight",
+    "targetPostChartPreview": "\u22642-3 POST en primer paint US (80 hunt cap + paged + QR dedup)",
+    "rationale": "Chunks parchean al llegar; extended RS merge no reinicia hydrate si firma pendiente igual"
+  },
+  "verification": {
+    "unit": "npx vitest run tests/scansChartPreviewHydrateVisible.test.js tests/scansChartPreviewTransport.test.js tests/scansChartPreviewHydrateStable.test.js",
+    "browser": {
+      "status": "orch-ok",
+      "note": "US Caza :3300 \u2192 1 POST chart-preview 200; 80 svg sparks; missingEls 0",
+      "file": "smoke-orch-2.json"
+    }
+  }
+}
