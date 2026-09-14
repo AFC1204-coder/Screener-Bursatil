@@ -1,0 +1,196 @@
+{
+  "ticket": "SCANS-RS-THEME-HTTP-1",
+  "at": "2026-09-14T12:13:22.743Z",
+  "head": "4c0595f",
+  "tunnel15432": true,
+  "symbolCount": 3574,
+  "scanLocalId": "materialized:US:2026-09-14:t031412:o0:l5608",
+  "httpModel": {
+    "chunkIn": {
+      "enginesActive": 12,
+      "skippedProfileOrResidual": 91,
+      "totalHttp": 49,
+      "perEngine": [
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-energia-red-v1",
+          "symbols": 298,
+          "chunks": 4,
+          "http": 4,
+          "mode": "chunk-in"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-finanzas-v1",
+          "symbols": 623,
+          "chunks": 8,
+          "http": 8,
+          "mode": "chunk-in"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-medtech-biotech-v1",
+          "symbols": 585,
+          "chunks": 8,
+          "http": 8,
+          "mode": "chunk-in"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-automatizacion-v1",
+          "symbols": 316,
+          "chunks": 4,
+          "http": 4,
+          "mode": "chunk-in"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-consumer-tech-hardware-v1",
+          "symbols": 36,
+          "chunks": 1,
+          "http": 1,
+          "mode": "chunk-in"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-inmobiliario-reit-v1",
+          "symbols": 333,
+          "chunks": 5,
+          "http": 5,
+          "mode": "chunk-in"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-consumo-marca-v1",
+          "symbols": 454,
+          "chunks": 6,
+          "http": 6,
+          "mode": "chunk-in"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-semis-fotonica-v1",
+          "symbols": 110,
+          "chunks": 2,
+          "http": 2,
+          "mode": "chunk-in"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-software-ia-v1",
+          "symbols": 365,
+          "chunks": 5,
+          "http": 5,
+          "mode": "chunk-in"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-autos-movilidad-v1",
+          "symbols": 62,
+          "chunks": 1,
+          "http": 1,
+          "mode": "chunk-in"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-internet-plataformas-v1",
+          "symbols": 218,
+          "chunks": 3,
+          "http": 3,
+          "mode": "chunk-in"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-defensa-aeroespacial-v1",
+          "symbols": 83,
+          "chunks": 2,
+          "http": 2,
+          "mode": "chunk-in"
+        }
+      ],
+      "chunkSize": 80,
+      "concurrency": 4,
+      "rowsPerSymbolCap": 3,
+      "bulkSnapshot": false
+    },
+    "bulkSnapshot": {
+      "enginesActive": 12,
+      "skippedProfileOrResidual": 91,
+      "totalHttp": 24,
+      "perEngine": [
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-energia-red-v1",
+          "symbols": 298,
+          "http": 2,
+          "mode": "bulk"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-finanzas-v1",
+          "symbols": 623,
+          "http": 2,
+          "mode": "bulk"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-medtech-biotech-v1",
+          "symbols": 585,
+          "http": 2,
+          "mode": "bulk"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-automatizacion-v1",
+          "symbols": 316,
+          "http": 2,
+          "mode": "bulk"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-consumer-tech-hardware-v1",
+          "symbols": 36,
+          "http": 2,
+          "mode": "bulk"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-inmobiliario-reit-v1",
+          "symbols": 333,
+          "http": 2,
+          "mode": "bulk"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-consumo-marca-v1",
+          "symbols": 454,
+          "http": 2,
+          "mode": "bulk"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-semis-fotonica-v1",
+          "symbols": 110,
+          "http": 2,
+          "mode": "bulk"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-software-ia-v1",
+          "symbols": 365,
+          "http": 2,
+          "mode": "bulk"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-autos-movilidad-v1",
+          "symbols": 62,
+          "http": 2,
+          "mode": "bulk"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-internet-plataformas-v1",
+          "symbols": 218,
+          "http": 2,
+          "mode": "bulk"
+        },
+        {
+          "engineVersion": "statsedge-private-theme-rs-usd-defensa-aeroespacial-v1",
+          "symbols": 83,
+          "http": 2,
+          "mode": "bulk"
+        }
+      ],
+      "chunkSize": 80,
+      "concurrency": 4,
+      "rowsPerSymbolCap": 3,
+      "bulkSnapshot": true
+    }
+  },
+  "themeFull": {
+    "ms": 601,
+    "httpThemeModel": 49,
+    "enginesActive": 12,
+    "hits": 3574,
+    "available": 1260,
+    "excluded": 2314
+  }
+}
