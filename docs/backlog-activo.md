@@ -22,7 +22,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 - warm extended **203 ms** · theme aislado ~0,6 s tras THEME-HTTP.  
 Evidencia: `research/scans-rs-hydrate-1/probe-summary.json` · `research/scans-rs-theme-http-1/`.  
 **Paquete Astra:** `docs/tickets/ASTRA-REVIEW-BRIEF-T0T1T2.md`  
-**Aparcados:** REACT-COMMIT-PERF-1 · IPO-F P2.  
+**Aparcados:** IPO-F P2 · CHARTPREVIEW hydrate-visible-only (residual).  
 **HOLD / NO retomar:** FILTER-ANNOTATION-1 (`639ceae`) — **revertido** `c55a648` (ROI browser insuficiente).  
 **KEEP transporte:** SCANS-TRANSPORT-1 gzip (`91ae6e4`) — mejora wire; **no** es solución de initial load (residuales: hydrateRs, parse/render, CPU gzip).  
 **Línea Mini V1:** aparte (V1-02…); no mezclar con polish.  
