@@ -4,7 +4,7 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-14 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `b7a6267` (REACT-COMMIT-PERF-1)
+**Última sync / HEAD origin polish:** `a71607c` (REACT-COMMIT-PERF-1)
 
 **RECORDATORIO dueño:** mesa logos tras próximo nocturno.  
 **Último cerrado (producto):** Waves 0–4 research + fixes: MOBILE-PERF-1 · SCREENER empty-state · MH N2 decouple · REVIEW-SESSION-1.  
