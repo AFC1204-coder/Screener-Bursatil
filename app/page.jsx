@@ -44,6 +44,7 @@ import {
   buildChartPreviewHydrateSignature,
   collectSymbolsForChartPreviewHydrate,
   fetchChartPreviewsForSymbols,
+  HUNT_CHART_PREVIEW_VIEWPORT_EVENT,
   huntRowsForChartPreviewHydrate,
 } from "@/lib/scansChartPreviewHydrate";
 import { markRsBootstrapCoreReady, mergeExtendedRsIntoRows, scheduleExtendedRsHydration } from "@/lib/scansRsBootstrap";
@@ -481,6 +482,7 @@ export default function Page() {
   const [activeFilterFamily, setActiveFilterFamily] = useState(null);
   const [huntTruthOverride, setHuntTruthOverride] = useState(null);
   const [resultViewMode, setResultViewMode] = useState(() => resolveResultViewMode(presetKey));
+  const [huntChartPreviewStart, setHuntChartPreviewStart] = useState(0);
   const [isHuntTransitionPending, startHuntTransition] = useTransition();
   const fastFilterSignatureRef = useRef("");
   const huntFilterCacheRef = useRef(new Map());
@@ -1282,6 +1284,21 @@ export default function Page() {
     return () => window.removeEventListener(SCREENER_RESULT_VIEW_MODE_CHANGED_EVENT, syncResultViewMode);
   }, [presetKey]);
 
+  useEffect(() => {
+    function syncHuntChartPreviewViewport(event) {
+      const start = Math.max(0, Math.floor(Number(event?.detail?.start) || 0));
+      setHuntChartPreviewStart((prev) => (prev === start ? prev : start));
+    }
+    window.addEventListener(HUNT_CHART_PREVIEW_VIEWPORT_EVENT, syncHuntChartPreviewViewport);
+    return () => window.removeEventListener(HUNT_CHART_PREVIEW_VIEWPORT_EVENT, syncHuntChartPreviewViewport);
+  }, []);
+
+  useEffect(() => {
+    if (!isCazaResultView(resultViewMode)) {
+      setHuntChartPreviewStart(0);
+    }
+  }, [resultViewMode]);
+
   const chartPreviewHydratePlan = useMemo(() => {
     if (!sessionReady || !scanContext?.cloudId || scanContext?.chartPreviewTransport !== "deferred") {
       return null;
@@ -1290,7 +1307,9 @@ export default function Page() {
     const symbols = collectSymbolsForChartPreviewHydrate({
       pagedRows,
       quickReviewRows,
-      huntRows: huntRowsForChartPreviewHydrate(rows, cazaMode),
+      huntRows: huntRowsForChartPreviewHydrate(rows, cazaMode, {
+        start: cazaMode ? huntChartPreviewStart : 0,
+      }),
     });
     if (!symbols.length) return null;
     return {
@@ -1298,7 +1317,16 @@ export default function Page() {
       symbols,
       signature: buildChartPreviewHydrateSignature(symbols),
     };
-  }, [sessionReady, scanContext?.cloudId, scanContext?.chartPreviewTransport, resultViewMode, rows, pagedRows, quickReviewRows]);
+  }, [
+    sessionReady,
+    scanContext?.cloudId,
+    scanContext?.chartPreviewTransport,
+    resultViewMode,
+    huntChartPreviewStart,
+    rows,
+    pagedRows,
+    quickReviewRows,
+  ]);
 
   useEffect(() => {
     if (!chartPreviewHydratePlan?.signature) return undefined;

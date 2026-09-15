@@ -7,10 +7,14 @@ vi.mock("@/lib/clientApi", () => ({
 import { postJson } from "@/lib/clientApi";
 import {
   MAX_HUNT_CHART_PREVIEW_HYDRATE,
+  HUNT_TAPE_ROW_HEIGHT_PX,
   applyChartPreviewsToRows,
   buildChartPreviewHydrateSignature,
+  computeHuntChartPreviewHydrateStart,
+  emitHuntChartPreviewViewport,
   fetchChartPreviewsForSymbols,
   huntRowsForChartPreviewHydrate,
+  HUNT_CHART_PREVIEW_VIEWPORT_EVENT,
 } from "@/lib/scansChartPreviewHydrate";
 
 const preview = [
@@ -35,6 +39,73 @@ describe("buildChartPreviewHydrateSignature", () => {
   });
 });
 
+describe("computeHuntChartPreviewHydrateStart", () => {
+  it("en scroll 0 arranca en el top", () => {
+    expect(computeHuntChartPreviewHydrateStart(0)).toBe(0);
+  });
+
+  it("desplaza la ventana al pasar del top 80 (con overscan)", () => {
+    const scrollPastTop80 = 90 * HUNT_TAPE_ROW_HEIGHT_PX;
+    const start = computeHuntChartPreviewHydrateStart(scrollPastTop80, {
+      overscan: 8,
+      rowCount: 200,
+    });
+    expect(start).toBe(82);
+    expect(start + MAX_HUNT_CHART_PREVIEW_HYDRATE).toBeLessThanOrEqual(200);
+  });
+
+  it("clampa al final de la cola para mantener ventana completa", () => {
+    const start = computeHuntChartPreviewHydrateStart(500 * HUNT_TAPE_ROW_HEIGHT_PX, {
+      overscan: 0,
+      rowCount: 120,
+      limit: 80,
+    });
+    expect(start).toBe(40);
+  });
+});
+
+describe("emitHuntChartPreviewViewport", () => {
+  it("publica el start en el evento de viewport", () => {
+    const seen = [];
+    const listeners = new Map();
+    const fakeWindow = {
+      addEventListener(type, handler) {
+        listeners.set(type, handler);
+      },
+      removeEventListener(type) {
+        listeners.delete(type);
+      },
+      dispatchEvent(event) {
+        listeners.get(event.type)?.(event);
+        return true;
+      },
+    };
+    const prev = globalThis.window;
+    globalThis.window = fakeWindow;
+    try {
+      fakeWindow.addEventListener(HUNT_CHART_PREVIEW_VIEWPORT_EVENT, (event) => {
+        seen.push(event.detail?.start);
+      });
+      emitHuntChartPreviewViewport(42);
+    } finally {
+      if (prev === undefined) delete globalThis.window;
+      else globalThis.window = prev;
+    }
+    expect(seen).toEqual([42]);
+  });
+
+  it("no rompe sin window (SSR)", () => {
+    const prev = globalThis.window;
+    delete globalThis.window;
+    try {
+      expect(() => emitHuntChartPreviewViewport(1)).not.toThrow();
+    } finally {
+      if (prev === undefined) delete globalThis.window;
+      else globalThis.window = prev;
+    }
+  });
+});
+
 describe("huntRowsForChartPreviewHydrate cap", () => {
   it("limita la cola Caza al tope exportado", () => {
     const queue = Array.from({ length: MAX_HUNT_CHART_PREVIEW_HYDRATE + 40 }, (_, index) => row(`Q${index}`));
@@ -42,6 +113,14 @@ describe("huntRowsForChartPreviewHydrate cap", () => {
     expect(capped).toHaveLength(MAX_HUNT_CHART_PREVIEW_HYDRATE);
     expect(capped[0].symbol).toBe("Q0");
     expect(capped.at(-1).symbol).toBe(`Q${MAX_HUNT_CHART_PREVIEW_HYDRATE - 1}`);
+  });
+
+  it("al scroll profundo hidrata la ventana desplazada, no el top fijo", () => {
+    const queue = Array.from({ length: 160 }, (_, index) => row(`Q${index}`));
+    const windowed = huntRowsForChartPreviewHydrate(queue, true, { start: 90, limit: 80 });
+    expect(windowed).toHaveLength(80);
+    expect(windowed[0].symbol).toBe("Q80");
+    expect(windowed.at(-1).symbol).toBe("Q159");
   });
 });
 
