@@ -310,6 +310,20 @@ describe("ScreenerShell markets misalignment", () => {
     expect((html.match(/Los criterios de cobertura cambiaron/g) || []).length).toBe(1);
   });
 
+  it("Retención #4: mesa US alineada no muestra banner de cobertura fantasma", () => {
+    // El shell solo pinta el banner si scanStale=true; page.jsx ya no debe
+    // pasar scanStale tras Global→US con mesa limpia (ver isScanSettingsStale).
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      marketsStale: false,
+      scanStale: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+    })));
+    expect(html).not.toContain("Los criterios de cobertura cambiaron");
+    expect(html).not.toContain("scanStaleNotice");
+    expect(html).toContain("mesa: US");
+  });
+
   it("muestra CTA solo si falló la carga de mercados", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
       marketsStale: true,

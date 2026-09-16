@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
-import { defaultSortForSettings, scanSettingsSignature, sortMetric, sortRowsForMode, fastFilterSignature } from "@/lib/screenerPipeline";
+import { defaultSortForSettings, scanSettingsSignature, scanSettingsSignatureParts, parseScanSettingsSignature, isScanSettingsStale, alignedScanSettingsSignature, sortMetric, sortRowsForMode, fastFilterSignature } from "@/lib/screenerPipeline";
 
 const cleanCandidate = {
   symbol: "CLEAN",
@@ -188,6 +188,97 @@ describe("scanSettingsSignature", () => {
     const mixed = scanSettingsSignature(["US"], "NvDa, AaPl", "all");
     expect(lower).toBe(upper);
     expect(mixed).toBe(upper);
+  });
+});
+
+describe("isScanSettingsStale · banner cobertura fantasma Global→US", () => {
+  const globalMarkets = ["US", "CA", "HK", "DE", "FR", "GB", "JP", "AU", "CH", "NL", "ES"];
+
+  it("parsea la firma v1 en partes", () => {
+    const sig = scanSettingsSignature(["US", "HK"], "AAPL", "batch");
+    expect(parseScanSettingsSignature(sig)).toEqual({
+      markets: "HK,US",
+      manual: "AAPL",
+      mode: "batch",
+    });
+    expect(parseScanSettingsSignature("")).toBeNull();
+  });
+
+  it("no marca stale cuando firma ≡ criterios actuales", () => {
+    const sig = scanSettingsSignature(["US"], "", "all");
+    expect(isScanSettingsStale({
+      settingsSignature: sig,
+      markets: ["US"],
+      manual: "",
+      scanMode: "all",
+      marketsMisaligned: false,
+    })).toBe(false);
+  });
+
+  it("Retención #4: mesa US alineada + firma aún Global → no stale (sin banner)", () => {
+    const leftoverGlobalSig = scanSettingsSignature(globalMarkets, "", "all");
+    expect(leftoverGlobalSig).not.toBe(scanSettingsSignature(["US"], "", "all"));
+    expect(isScanSettingsStale({
+      settingsSignature: leftoverGlobalSig,
+      markets: ["US"],
+      manual: "",
+      scanMode: "all",
+      marketsMisaligned: false,
+    })).toBe(false);
+  });
+
+  it("con mesa alineada, sí marca stale si cambió manual o scanMode", () => {
+    const sig = scanSettingsSignature(["US"], "", "all");
+    expect(isScanSettingsStale({
+      settingsSignature: sig,
+      markets: ["US"],
+      manual: "NVDA",
+      scanMode: "all",
+      marketsMisaligned: false,
+    })).toBe(true);
+    expect(isScanSettingsStale({
+      settingsSignature: sig,
+      markets: ["US"],
+      manual: "",
+      scanMode: "batch",
+      marketsMisaligned: false,
+    })).toBe(true);
+  });
+
+  it("con mercados desalineados, cualquier mismatch de firma es stale", () => {
+    const sig = scanSettingsSignature(["US"], "", "all");
+    expect(isScanSettingsStale({
+      settingsSignature: sig,
+      markets: globalMarkets,
+      manual: "",
+      scanMode: "all",
+      marketsMisaligned: true,
+    })).toBe(true);
+  });
+
+  it("alignedScanSettingsSignature cura solo drift de markets", () => {
+    const leftover = scanSettingsSignature(globalMarkets, "", "all");
+    expect(alignedScanSettingsSignature({
+      settingsSignature: leftover,
+      markets: ["US"],
+      manual: "",
+      scanMode: "all",
+    })).toBe(scanSettingsSignature(["US"], "", "all"));
+
+    const modeStale = scanSettingsSignature(["US"], "", "all");
+    expect(alignedScanSettingsSignature({
+      settingsSignature: modeStale,
+      markets: ["US"],
+      manual: "",
+      scanMode: "batch",
+    })).toBe(modeStale);
+  });
+
+  it("scanSettingsSignatureParts coincide con el string v1", () => {
+    const parts = scanSettingsSignatureParts(["de", "US"], "msft\naapl", "all");
+    expect(parts).toEqual({ markets: "DE,US", manual: "AAPL,MSFT", mode: "all" });
+    expect(scanSettingsSignature(["de", "US"], "msft\naapl", "all"))
+      .toBe(`v1|markets=${parts.markets}|manual=${parts.manual}|mode=${parts.mode}`);
   });
 });
 
