@@ -397,6 +397,27 @@ describe("ScreenerShell filter-layers-upgrade notice", () => {
     expect(html).not.toContain("Más filtros");
     expect(html).toContain("Abrir");
   });
+
+  it("T3: oculta el aviso de capas mientras restoringScan (cold load)", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      snapshotNotice: buildFilterLayersUpgradeNotice(),
+      onDismissFilterLayersUpgradeNotice: () => {},
+      restoringScan: true,
+    })));
+    expect(html).not.toContain("Filtros actualizados");
+    expect(html).not.toContain("formato antiguo de filtros");
+    expect(html).not.toContain("Entendido");
+  });
+
+  it("T3: muestra el aviso de capas cuando la mesa ya no hidrata", () => {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
+      snapshotNotice: buildFilterLayersUpgradeNotice(),
+      onDismissFilterLayersUpgradeNotice: () => {},
+      restoringScan: false,
+    })));
+    expect(html).toContain("Filtros actualizados");
+    expect(html).toContain("formato antiguo de filtros");
+  });
 });
 
 describe("ScreenerShell sample-truncation notice", () => {
