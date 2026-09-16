@@ -1,0 +1,47 @@
+{
+  "ticket": "SCANS-MESA-LIGHT-WIRE-1",
+  "at": "2026-09-15T23:58:48.762Z",
+  "method": "synthetic · strip chartPreview then projectScanRowForMesaTransport",
+  "totalRows": 3574,
+  "wave5ResidualJsonMb": 20.5,
+  "omitFields": [
+    "setupDisplayEvidence",
+    "setupDisplayLine",
+    "weeklyBreakoutVolDetail",
+    "methodologyReliabilityReason",
+    "contractionStructureReason"
+  ],
+  "scenarios": {
+    "lightEmptyNarrative": {
+      "beforeBytes": 13776847,
+      "afterBytes": 13265765,
+      "savedBytes": 511082,
+      "savedPct": 3.71,
+      "beforeMb": 13.78,
+      "afterMb": 13.27,
+      "gzipBefore": 1653901,
+      "gzipAfter": 1660684
+    },
+    "lightFatNarrative": {
+      "beforeBytes": 17400347,
+      "afterBytes": 13265765,
+      "savedBytes": 4134582,
+      "savedPct": 23.76,
+      "beforeMb": 17.4,
+      "afterMb": 13.27,
+      "gzipBefore": 1821878,
+      "gzipAfter": 1660684
+    },
+    "mix80FullFatNarrative": {
+      "beforeBytes": 18500107,
+      "afterBytes": 13263445,
+      "savedBytes": 5236662,
+      "savedPct": 28.31,
+      "beforeMb": 18.5,
+      "afterMb": 13.26,
+      "gzipBefore": 1837401,
+      "gzipAfter": 1660565
+    }
+  },
+  "note": "Sin Mini/DB. lightEmpty ≈ omit strings vacíos; lightFat/mix ≈ techo si la narrativa viene poblada."
+}
