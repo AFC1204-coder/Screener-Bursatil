@@ -4,7 +4,7 @@ import { describe, expect, it, vi, beforeAll, afterEach } from "vitest";
 import { MARKETS_MISALIGNMENT_CTA, MARKETS_AUTO_LOAD_LOADING_LABEL } from "@/lib/marketAvailability";
 import { buildFilterLayersUpgradeNotice } from "@/lib/screenerFilterLayers";
 import { buildSnapshotFreshnessNotice } from "@/lib/snapshotFreshness";
-import { DEFAULT_MARKETS } from "@/lib/screenerConfig";
+import { ALL_SELECTABLE_MARKETS } from "@/lib/screenerConfig";
 import { compactMobileScanStatus } from "@/lib/screenerFormat";
 
 const Stub = ({ marker }) => React.createElement("div", { "data-stub": marker });
@@ -338,7 +338,7 @@ describe("ScreenerShell markets misalignment", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
       marketsStale: true,
       scannedMarkets: ["US", "HK", "CA"],
-      selectedMarkets: DEFAULT_MARKETS,
+      selectedMarkets: ALL_SELECTABLE_MARKETS,
       marketsSelectionLoadSettled: true,
     })));
     expect(html).toContain("Cobertura parcial");
@@ -350,7 +350,7 @@ describe("ScreenerShell markets misalignment", () => {
 
   it("móvil: cobertura parcial multi-mercado sin loading eterno ni cadena de códigos", () => {
     mockIsMobileViewport.mockReturnValue(true);
-    const many = DEFAULT_MARKETS.slice(0, 10);
+    const many = ALL_SELECTABLE_MARKETS.slice(0, 10);
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
       marketsStale: true,
       scannedMarkets: ["US"],

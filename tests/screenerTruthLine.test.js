@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_MARKETS } from "@/lib/screenerConfig";
+import { ALL_SELECTABLE_MARKETS } from "@/lib/screenerConfig";
 import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
 
 describe("buildScreenerTruthLine", () => {
@@ -183,7 +183,7 @@ describe("buildScreenerTruthLine", () => {
   });
 
   it("desktop desalineado no mete muro de códigos en la verdad", () => {
-    const many = DEFAULT_MARKETS.slice(0, 10);
+    const many = ALL_SELECTABLE_MARKETS.slice(0, 10);
     const line = buildScreenerTruthLine({
       analyzedRows: [],
       passCount: 0,
@@ -248,7 +248,7 @@ describe("buildScreenerTruthLine", () => {
       sort: "perf6m",
       sortAsc: false,
       scannedMarkets: ["US"],
-      selectedMarkets: DEFAULT_MARKETS,
+      selectedMarkets: ALL_SELECTABLE_MARKETS,
       marketsMisaligned: true,
       compactMarketSegments: true,
     });

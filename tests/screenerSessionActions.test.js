@@ -35,10 +35,10 @@ describe("P4 · criterios vs datos", () => {
     expect(pickScreenerCriteria(after)).toEqual(pickScreenerCriteria(before));
   });
 
-  it("el reset vuelve al preset equilibrado y mercados por defecto", () => {
+  it("el reset vuelve al preset equilibrado y mercados por defecto (EE. UU.)", () => {
     const reset = screenerCriteriaAfterReset();
     expect(reset.presetKey).toBe("balanced");
-    expect(reset.markets).toContain("US");
+    expect(reset.markets).toEqual(["US"]);
     expect(reset.manual).toBe("");
     expect(reset.selectedFilterTemplateId).toBe("");
     expect(reset.scanMode).toBe("all");
