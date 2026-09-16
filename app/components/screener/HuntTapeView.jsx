@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   computeHuntChartPreviewHydrateStart,
   emitHuntChartPreviewViewport,
+  resolveHuntTapeSparkStatus,
 } from "@/lib/scansChartPreviewHydrate";
 import {
   HuntTapeSparkline,
@@ -25,6 +26,7 @@ export default function HuntTapeView({
   emptyLabel = "Sin resultados con este filtro.",
   onOpenStock,
   activeModalRow = null,
+  chartPreviewDeferred = false,
 }) {
   const [focusIndex, setFocusIndex] = useState(0);
   const [keyboardActive, setKeyboardActive] = useState(false);
@@ -169,6 +171,9 @@ export default function HuntTapeView({
           const footprint = formatVcpFootprintFromRow(row);
           const dist = huntTapeDist52w(row);
           const sparkBars = huntTapeSparkBars(row);
+          const sparkStatus = resolveHuntTapeSparkStatus(row, {
+            deferred: chartPreviewDeferred,
+          });
 
           return (
             <li
@@ -185,8 +190,8 @@ export default function HuntTapeView({
               }}
             >
               <HuntTapeTickerCell row={row} onOpenStock={onOpenStock} />
-              <div className="huntTapeSparkWrap" title="Spark desde chartPreview del scan">
-                <HuntTapeSparkline bars={sparkBars} />
+              <div className="huntTapeSparkWrap" title={sparkStatus === "pending" ? "Cargando miniatura" : "Spark desde chartPreview del scan"}>
+                <HuntTapeSparkline bars={sparkBars} status={sparkStatus} />
               </div>
               <span className="huntTapeStage" title={stage?.title || "Sin etapa semanal"}>
                 {stage?.line || "–"}

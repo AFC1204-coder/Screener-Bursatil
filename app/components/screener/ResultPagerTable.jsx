@@ -22,6 +22,7 @@ export default function ResultPagerTable({
   presetKey = "",
   filteredRows = [],
   activeModalRow = null,
+  chartPreviewDeferred = false,
   // Pager
   resultPageStart,
   resultPageEnd,
@@ -81,6 +82,7 @@ export default function ResultPagerTable({
           emptyLabel={emptyLabel}
           onOpenStock={onOpenStock}
           activeModalRow={activeModalRow}
+          chartPreviewDeferred={chartPreviewDeferred}
         />
       ) : (
         <>
