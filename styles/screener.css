@@ -11039,7 +11039,8 @@ button.decisionOperatingIssue:hover {
 }
 
 .huntTapeSpark,
-.huntTapeSparkMissing {
+.huntTapeSparkMissing,
+.huntTapeSparkPending {
   display:block;
   width:128px;
   height:40px;
@@ -11084,6 +11085,30 @@ button.decisionOperatingIssue:hover {
   align-items:center;
   justify-content:center;
   color:var(--muted);
+}
+
+.huntTapeSparkPending {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--surface-inset);
+  border:1px dashed var(--line);
+  border-radius:4px;
+  box-sizing:border-box;
+}
+
+.huntTapeSparkSkeleton {
+  display:block;
+  height:10px;
+  width:64px;
+  background:var(--line2);
+  border-radius:2px;
+  animation:huntTapeSparkPulse 1.4s infinite ease-in-out;
+}
+
+@keyframes huntTapeSparkPulse {
+  0%, 100% { opacity:.35; }
+  50% { opacity:.9; }
 }
 
 .huntTapeStage {
@@ -11141,7 +11166,8 @@ button.decisionOperatingIssue:hover {
 
   .huntTapeSparkWrap,
   .huntTapeSpark,
-  .huntTapeSparkMissing {
+  .huntTapeSparkMissing,
+  .huntTapeSparkPending {
     width:96px;
   }
 }

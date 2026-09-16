@@ -153,23 +153,35 @@ export function huntTapeSparkPaths(bars = []) {
   return { pricePath, maPath, fill };
 }
 
-export function HuntTapeSparkline({ bars = [], className = "" }) {
+export function HuntTapeSparkline({ bars = [], className = "", status = "empty" }) {
   const paths = huntTapeSparkPaths(bars);
-  if (!paths) {
-    return <span className={`huntTapeSparkMissing ${className}`.trim()} aria-hidden="true">–</span>;
+  if (paths) {
+    return (
+      <svg
+        className={`huntTapeSpark ${className}`.trim()}
+        viewBox={`0 0 ${TAPE_SPARK_W} ${TAPE_SPARK_H}`}
+        role="img"
+        aria-label="Gráfico semanal compacto"
+      >
+        <path className="huntTapeSparkFill" d={paths.fill} />
+        <path className="huntTapeSparkMa" d={paths.maPath} />
+        <path className="huntTapeSparkPrice" d={paths.pricePath} />
+      </svg>
+    );
   }
-  return (
-    <svg
-      className={`huntTapeSpark ${className}`.trim()}
-      viewBox={`0 0 ${TAPE_SPARK_W} ${TAPE_SPARK_H}`}
-      role="img"
-      aria-label="Gráfico semanal compacto"
-    >
-      <path className="huntTapeSparkFill" d={paths.fill} />
-      <path className="huntTapeSparkMa" d={paths.maPath} />
-      <path className="huntTapeSparkPrice" d={paths.pricePath} />
-    </svg>
-  );
+  if (status === "pending") {
+    return (
+      <span
+        className={`huntTapeSparkPending ${className}`.trim()}
+        role="status"
+        aria-label="Cargando miniatura"
+        title="Cargando miniatura"
+      >
+        <span className="huntTapeSparkSkeleton" aria-hidden="true" />
+      </span>
+    );
+  }
+  return <span className={`huntTapeSparkMissing ${className}`.trim()} aria-hidden="true">–</span>;
 }
 
 export function HuntTapeModeToggle({ mode, onChange }) {

@@ -126,4 +126,22 @@ describe("HuntTapeSparkline", () => {
     expect(html).toContain("huntTapeSparkPrice");
     expect(html).toContain("huntTapeSparkMa");
   });
+
+  it("muestra skeleton pendiente en vez de guión cuando status=pending", () => {
+    const html = renderToStaticMarkup(
+      React.createElement(HuntTapeSparkline, { bars: [], status: "pending" }),
+    );
+    expect(html).toContain("huntTapeSparkPending");
+    expect(html).toContain("Cargando miniatura");
+    expect(html).not.toContain(">–<");
+  });
+
+  it("muestra guión solo cuando el vacío es real (status=empty)", () => {
+    const html = renderToStaticMarkup(
+      React.createElement(HuntTapeSparkline, { bars: [], status: "empty" }),
+    );
+    expect(html).toContain("huntTapeSparkMissing");
+    expect(html).toContain("–");
+    expect(html).not.toContain("huntTapeSparkPending");
+  });
 });

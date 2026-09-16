@@ -15,6 +15,7 @@ import {
   fetchChartPreviewsForSymbols,
   huntRowsForChartPreviewHydrate,
   HUNT_CHART_PREVIEW_VIEWPORT_EVENT,
+  resetChartPreviewHydrateCachesForTests,
 } from "@/lib/scansChartPreviewHydrate";
 
 const preview = [
@@ -126,6 +127,7 @@ describe("huntRowsForChartPreviewHydrate cap", () => {
 
 describe("fetchChartPreviewsForSymbols incremental", () => {
   beforeEach(() => {
+    resetChartPreviewHydrateCachesForTests();
     vi.mocked(postJson).mockReset();
   });
 

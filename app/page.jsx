@@ -46,6 +46,7 @@ import {
   fetchChartPreviewsForSymbols,
   HUNT_CHART_PREVIEW_VIEWPORT_EVENT,
   huntRowsForChartPreviewHydrate,
+  markChartPreviewAttemptedOnRows,
 } from "@/lib/scansChartPreviewHydrate";
 import { markRsBootstrapCoreReady, mergeExtendedRsIntoRows, scheduleExtendedRsHydration } from "@/lib/scansRsBootstrap";
 import { isCazaResultView, resolveResultViewMode, SCREENER_RESULT_VIEW_MODE_CHANGED_EVENT } from "@/lib/screenerResultViewMode";
@@ -1339,8 +1340,18 @@ export default function Page() {
         setAnalyzedRows(patch);
         setRows(patch);
       },
+    }).then(() => {
+      if (cancelled) return;
+      // Vacío real post-intento: quita skeleton «cargando» aunque no haya barras.
+      const mark = (current) => markChartPreviewAttemptedOnRows(current, symbols);
+      setAnalyzedRows(mark);
+      setRows(mark);
     }).catch((error) => {
-      if (!cancelled) console.error("[chartPreview] hidratación fallida:", error);
+      if (cancelled) return;
+      console.error("[chartPreview] hidratación fallida:", error);
+      const mark = (current) => markChartPreviewAttemptedOnRows(current, symbols);
+      setAnalyzedRows(mark);
+      setRows(mark);
     });
     return () => { cancelled = true; };
   }, [chartPreviewHydratePlan?.signature, chartPreviewHydratePlan?.cloudId]);
@@ -2877,6 +2888,7 @@ export default function Page() {
       favoriteSymbols,
       screenerDecisionResolutions,
       emptyLabel: resultsEmptyLabel,
+      chartPreviewDeferred: scanContext?.chartPreviewTransport === "deferred",
     }}
     actions={{
       openReview,

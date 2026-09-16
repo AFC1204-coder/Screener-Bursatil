@@ -283,6 +283,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     favoriteSymbols: resultsFavoriteSymbols,
     screenerDecisionResolutions: resultsDecisionResolutions,
     emptyLabel: resultsEmptyLabel,
+    chartPreviewDeferred = false,
   } = results;
 
   // --- actions ---
@@ -972,6 +973,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             visibleCount={huntResultsFiltered.length}
             presetKey={presetKey}
             filteredRows={huntResultsFiltered}
+            chartPreviewDeferred={chartPreviewDeferred}
             resultPageStart={resultPageStart}
             resultPageEnd={resultPageEnd}
             resultPageSize={resultPageSize}
