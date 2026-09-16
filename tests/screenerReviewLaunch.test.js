@@ -64,12 +64,15 @@ describe("openPrimaryReview handler", () => {
 });
 
 describe("REVIEW-REFETCH-1 callers", () => {
-  it("Rapid Review y el hook de launch no piden /api/scans", () => {
+  it("Rapid Review y el hook de launch no piden el listado /api/scans", () => {
     const reviewPage = readFileSync(resolve(import.meta.dirname, "../app/review/page.jsx"), "utf8");
     const hook = readFileSync(resolve(import.meta.dirname, "../app/components/screener/useQuickReviewSession.js"), "utf8");
+    // Sin GET del snapshot de scans desde Review/cola. Las miniaturas del foco
+    // van por useReviewChartPreviewHydrate → chart-preview (módulo aparte).
     expect(reviewPage).not.toContain("/api/scans");
     expect(hook).not.toContain("/api/scans");
     expect(hook).toContain("resumeStoredReviewSession");
+    expect(reviewPage).toContain("useReviewChartPreviewHydrate");
   });
 
   it("los GET residuales salen del remount de app/page.jsx, no de Review", () => {

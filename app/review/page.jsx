@@ -40,19 +40,28 @@ import "../../styles/review.css";
 // ocultar/revisada, y los datos del valor (gráfico, rendimientos, etapa con
 // su evidencia, RS canónico, volumen, volatilidad).
 //
-// PENDIENTE SEÑALADO (fuera de este cambio): el gráfico muestra «Sin dato»
-// durante la carga y ante errores — fallo del chart compartido documentado en
-// el análisis (B2, emptyFallback sin consumidor en useChartController).
+// Chart: preview close-only del foco se hidrata (miniaturas del scan, sin brief).
+// RowPriceChart pinta línea al instante y pide OHLC en paralelo.
+// Fallo de OHLC → emptyFallback / provider-unavailable (A2-CHART).
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import RowPriceChart from "@/app/RowPriceChart";
 import { useReviewChartPrefetch } from "@/app/useReviewChartPrefetch";
+import { useReviewChartPreviewHydrate } from "@/app/useReviewChartPreviewHydrate";
 import { getJson } from "@/lib/clientApi";
 import { readChartSettings } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
 import { clamp, dateTime, pct, ratio } from "@/lib/formatters";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { mergeReviewRowChartPreviews, persistReviewQueue } from "@/lib/screenerPipeline";
+import {
+  applyChartPreviewsToRows,
+  peekCachedChartPreviews,
+} from "@/lib/scansChartPreviewHydrate";
+import {
+  resolveReviewScanCloudId,
+  collectReviewSymbolsForChartPreviewHydrate,
+} from "@/lib/reviewChartPreviewHydrate";
 import StorageAlert from "@/app/components/StorageAlert";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { evidenceRows } from "@/lib/reviewEvidence";
@@ -271,9 +280,25 @@ export default function ReviewPage() {
       ? (scans[0]?.activeSettings || scans[0]?.settings?.activeSettings || scans[0]?.settings || {})
       : (review.activeSettings || review.settings?.activeSettings || review.settings || {});
     const sourcedRows = rowSource(nextSource, review, scans, favs);
-    const rowsWithPreviews = nextSource === "current"
+    let rowsWithPreviews = nextSource === "current"
       ? mergeReviewRowChartPreviews(sourcedRows, scans[0]?.rows || [])
       : sourcedRows;
+    // Misma sesión que la mesa: miniaturas ya hidratadas en módulo (Caza/viewport)
+    // se reponen al abrir /review sin otro POST.
+    if (nextSource === "current") {
+      const cloudId = resolveReviewScanCloudId(scans);
+      if (cloudId) {
+        const focusSymbol = String(startSymbol || review.selectedSymbol || "").trim().toUpperCase();
+        const focusIndex = focusSymbol
+          ? Math.max(0, rowsWithPreviews.findIndex((row) => String(row?.symbol || "").toUpperCase() === focusSymbol))
+          : 0;
+        const focusSymbols = collectReviewSymbolsForChartPreviewHydrate(rowsWithPreviews, focusIndex);
+        const cached = peekCachedChartPreviews(cloudId, focusSymbols);
+        if (Object.keys(cached).length) {
+          rowsWithPreviews = applyChartPreviewsToRows(rowsWithPreviews, cached);
+        }
+      }
+    }
     const nextRows = prepareReviewQueueRows(rowsWithPreviews, nextSettings || {});
     const decisionState = reviewDecisionStateForRows(review, nextRows);
     const nextResolutionFilter = keepState ? review.resolutionFilter || "all" : "all";
@@ -424,6 +449,13 @@ export default function ReviewPage() {
     visibleRows,
     currentIndex,
     chartSettings: REVIEW_CHART_SETTINGS,
+  });
+
+  useReviewChartPreviewHydrate({
+    enabled: source === "current" && visibleRows.length > 0,
+    visibleRows,
+    currentIndex,
+    setRows,
   });
 
   useEffect(() => {
