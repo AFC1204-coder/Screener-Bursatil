@@ -34,6 +34,7 @@ export default function HuntTapeView({
   const rowRefs = useRef([]);
   const hydrateStartRef = useRef(0);
   const scrollRafRef = useRef(0);
+  const queueKey = `${rows[0]?.symbol || ""}:${rows.length}:${rows[rows.length - 1]?.symbol || ""}`;
 
   const publishHydrateViewport = useCallback(() => {
     const el = listRef.current;
@@ -59,7 +60,9 @@ export default function HuntTapeView({
     }
   }, [rows.length, focusIndex]);
 
+  // Nueva cola (ficha/filtro): reset scroll + re-publicar ventana de hydrate.
   useEffect(() => {
+    if (listRef.current) listRef.current.scrollTop = 0;
     hydrateStartRef.current = -1;
     publishHydrateViewport();
     return () => {
@@ -68,8 +71,7 @@ export default function HuntTapeView({
         scrollRafRef.current = 0;
       }
     };
-  }, [publishHydrateViewport]);
-
+  }, [queueKey, publishHydrateViewport]);
   const scrollFocusIntoView = useCallback((index) => {
     const el = rowRefs.current[index];
     el?.scrollIntoView({ block: "nearest" });

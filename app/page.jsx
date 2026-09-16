@@ -42,11 +42,13 @@ import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterS
 import {
   applyChartPreviewsToRows,
   buildChartPreviewHydrateSignature,
+  buildChartPreviewQueueSignature,
   collectSymbolsForChartPreviewHydrate,
   fetchChartPreviewsForSymbols,
   HUNT_CHART_PREVIEW_VIEWPORT_EVENT,
   huntRowsForChartPreviewHydrate,
   markChartPreviewAttemptedOnRows,
+  peekCachedChartPreviews,
 } from "@/lib/scansChartPreviewHydrate";
 import { markRsBootstrapCoreReady, mergeExtendedRsIntoRows, scheduleExtendedRsHydration } from "@/lib/scansRsBootstrap";
 import { isCazaResultView, resolveResultViewMode, SCREENER_RESULT_VIEW_MODE_CHANGED_EVENT } from "@/lib/screenerResultViewMode";
@@ -1347,23 +1349,43 @@ export default function Page() {
     }
   }, [resultViewMode]);
 
+  // Cambio de ficha/filtro: volver al top de la ventana de hydrate (no dejar
+  // start desplazado de la cola anterior).
+  useEffect(() => {
+    setHuntChartPreviewStart(0);
+  }, [presetKey]);
+
   const chartPreviewHydratePlan = useMemo(() => {
     if (!sessionReady || !scanContext?.cloudId || scanContext?.chartPreviewTransport !== "deferred") {
       return null;
     }
     const cazaMode = isCazaResultView(resultViewMode);
+    const hydrateStart = cazaMode ? huntChartPreviewStart : 0;
+    const huntWindowRows = huntRowsForChartPreviewHydrate(rows, cazaMode, { start: hydrateStart });
     const symbols = collectSymbolsForChartPreviewHydrate({
       pagedRows,
       quickReviewRows,
-      huntRows: huntRowsForChartPreviewHydrate(rows, cazaMode, {
-        start: cazaMode ? huntChartPreviewStart : 0,
-      }),
+      huntRows: huntWindowRows,
     });
-    if (!symbols.length) return null;
+    const queueSignature = buildChartPreviewQueueSignature({
+      presetKey,
+      rowCount: rows.length,
+      headSymbol: rows[0]?.symbol,
+      tailSymbol: rows.at?.(-1)?.symbol ?? rows[rows.length - 1]?.symbol,
+      // Solo anclar start si aún hay missing: evita re-fetch al scroll con cola ya hidratada.
+      hydrateStart: symbols.length ? hydrateStart : 0,
+    });
+    // Incluso sin missing: re-aplicar cache de módulo a refs de cola nueva.
+    const windowSymbols = (cazaMode ? huntWindowRows : [...pagedRows, ...quickReviewRows])
+      .map((row) => String(row?.symbol || "").trim().toUpperCase())
+      .filter(Boolean);
+    if (!windowSymbols.length) return null;
     return {
       cloudId: scanContext.cloudId,
-      symbols,
-      signature: buildChartPreviewHydrateSignature(symbols),
+      symbols: symbols.length ? symbols : windowSymbols,
+      missingCount: symbols.length,
+      queueSignature,
+      signature: `${queueSignature}::${buildChartPreviewHydrateSignature(symbols)}`,
     };
   }, [
     sessionReady,
@@ -1371,6 +1393,7 @@ export default function Page() {
     scanContext?.chartPreviewTransport,
     resultViewMode,
     huntChartPreviewStart,
+    presetKey,
     rows,
     pagedRows,
     quickReviewRows,
@@ -1380,13 +1403,22 @@ export default function Page() {
     if (!chartPreviewHydratePlan?.signature) return undefined;
     const { cloudId, symbols } = chartPreviewHydratePlan;
     let cancelled = false;
+    const controller = typeof AbortController === "function" ? new AbortController() : null;
+
+    const applyPreviews = (chunkPreviews) => {
+      if (cancelled || !chunkPreviews || !Object.keys(chunkPreviews).length) return;
+      const patch = (current) => applyChartPreviewsToRows(current, chunkPreviews);
+      setAnalyzedRows(patch);
+      setRows(patch);
+    };
+
+    // Re-aplicar cache síncrono al cambiar de cola (evita sparks eternas en –).
+    const cached = peekCachedChartPreviews(cloudId, symbols);
+    if (Object.keys(cached).length) applyPreviews(cached);
+
     fetchChartPreviewsForSymbols(cloudId, symbols, {
-      onChunk: (chunkPreviews) => {
-        if (cancelled || !chunkPreviews || !Object.keys(chunkPreviews).length) return;
-        const patch = (current) => applyChartPreviewsToRows(current, chunkPreviews);
-        setAnalyzedRows(patch);
-        setRows(patch);
-      },
+      signal: controller?.signal,
+      onChunk: applyPreviews,
     }).then(() => {
       if (cancelled) return;
       // Vacío real post-intento: quita skeleton «cargando» aunque no haya barras.
@@ -1394,13 +1426,17 @@ export default function Page() {
       setAnalyzedRows(mark);
       setRows(mark);
     }).catch((error) => {
-      if (cancelled) return;
+      if (cancelled || error?.name === "AbortError") return;
       console.error("[chartPreview] hidratación fallida:", error);
       const mark = (current) => markChartPreviewAttemptedOnRows(current, symbols);
       setAnalyzedRows(mark);
       setRows(mark);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      // Abort solo este caller: el join de un efecto nuevo reintenta missing.
+      controller?.abort();
+    };
   }, [chartPreviewHydratePlan?.signature, chartPreviewHydratePlan?.cloudId]);
 
   useEffect(() => {

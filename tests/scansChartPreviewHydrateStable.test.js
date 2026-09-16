@@ -10,10 +10,14 @@ import {
   HUNT_TAPE_ROW_HEIGHT_PX,
   applyChartPreviewsToRows,
   buildChartPreviewHydrateSignature,
+  buildChartPreviewQueueSignature,
+  chartPreviewHydrateCellState,
   computeHuntChartPreviewHydrateStart,
   emitHuntChartPreviewViewport,
   fetchChartPreviewsForSymbols,
   huntRowsForChartPreviewHydrate,
+  peekCachedChartPreviews,
+  resetChartPreviewHydrateStateForTests,
   HUNT_CHART_PREVIEW_VIEWPORT_EVENT,
   resetChartPreviewHydrateCachesForTests,
 } from "@/lib/scansChartPreviewHydrate";
@@ -37,6 +41,28 @@ describe("buildChartPreviewHydrateSignature", () => {
     const a = buildChartPreviewHydrateSignature(["MSFT", "AAPL"]);
     const b = buildChartPreviewHydrateSignature(["AAPL", "MSFT"]);
     expect(a).toBe(b);
+  });
+});
+
+describe("buildChartPreviewQueueSignature", () => {
+  it("cambia al cambiar ficha o extremos de cola", () => {
+    const a = buildChartPreviewQueueSignature({
+      presetKey: "balanced",
+      rowCount: 100,
+      headSymbol: "AAA",
+      tailSymbol: "ZZZ",
+      hydrateStart: 0,
+    });
+    const b = buildChartPreviewQueueSignature({
+      presetKey: "nearPivot",
+      rowCount: 36,
+      headSymbol: "BBB",
+      tailSymbol: "CCC",
+      hydrateStart: 0,
+    });
+    expect(a).not.toBe(b);
+    expect(a).toContain("balanced");
+    expect(b).toContain("nearPivot");
   });
 });
 
@@ -129,6 +155,7 @@ describe("fetchChartPreviewsForSymbols incremental", () => {
   beforeEach(() => {
     resetChartPreviewHydrateCachesForTests();
     vi.mocked(postJson).mockReset();
+    resetChartPreviewHydrateStateForTests();
   });
 
   it("invoca onChunk por cada lote y acumula previews", async () => {
@@ -184,5 +211,88 @@ describe("fetchChartPreviewsForSymbols incremental", () => {
 
     expect(rows[0].chartPreview).toEqual(preview);
     expect(rows[1].chartPreview).toBeUndefined();
+  });
+
+  it("en cache hit re-aplica vía onChunk (cambio de cola / refs viejas)", async () => {
+    vi.mocked(postJson).mockResolvedValueOnce({ previews: { AAA: preview, BBB: preview } });
+    await fetchChartPreviewsForSymbols("scan-cache", ["AAA", "BBB"]);
+    expect(postJson).toHaveBeenCalledTimes(1);
+
+    const onChunk = vi.fn();
+    let rows = [row("AAA"), row("BBB")];
+    const result = await fetchChartPreviewsForSymbols("scan-cache", ["AAA", "BBB"], {
+      onChunk: (chunk) => {
+        onChunk(chunk);
+        rows = applyChartPreviewsToRows(rows, chunk);
+      },
+    });
+
+    expect(postJson).toHaveBeenCalledTimes(1);
+    expect(onChunk).toHaveBeenCalledTimes(1);
+    expect(rows[0].chartPreview).toEqual(preview);
+    expect(rows[1].chartPreview).toEqual(preview);
+    expect(result.AAA).toEqual(preview);
+    expect(peekCachedChartPreviews("scan-cache", ["AAA"]).AAA).toEqual(preview);
+  });
+
+  it("si un caller cancelled pierde onChunk, el join re-aplica al segundo", async () => {
+    let resolvePost;
+    vi.mocked(postJson).mockImplementationOnce(() => new Promise((resolve) => {
+      resolvePost = resolve;
+    }));
+
+    const firstOnChunk = vi.fn();
+    const firstPromise = fetchChartPreviewsForSymbols("scan-join", ["JOIN1"], { onChunk: firstOnChunk });
+
+    let rows = [row("JOIN1")];
+    const secondOnChunk = vi.fn((chunk) => {
+      rows = applyChartPreviewsToRows(rows, chunk);
+    });
+    const secondPromise = fetchChartPreviewsForSymbols("scan-join", ["JOIN1"], { onChunk: secondOnChunk });
+
+    resolvePost({ previews: { JOIN1: preview } });
+    await firstPromise;
+    await secondPromise;
+
+    expect(postJson).toHaveBeenCalledTimes(1);
+    expect(secondOnChunk).toHaveBeenCalled();
+    expect(rows[0].chartPreview).toEqual(preview);
+  });
+
+  it("marca failed cuando el chunk agota reintentos sin preview", async () => {
+    vi.mocked(postJson)
+      .mockRejectedValueOnce(new Error("HTTP 500"))
+      .mockRejectedValueOnce(new Error("HTTP 500"));
+
+    await fetchChartPreviewsForSymbols("scan-fail", ["FAIL1"]);
+    expect(chartPreviewHydrateCellState({ symbol: "FAIL1" }, { scanId: "scan-fail" })).toBe("failed");
+    expect(chartPreviewHydrateCellState({ symbol: "FAIL1" }, {
+      scanId: "scan-fail",
+      pendingSymbols: new Set(["FAIL1"]),
+    })).toBe("failed");
+    expect(chartPreviewHydrateCellState({ symbol: "PEND1" }, {
+      pendingSymbols: new Set(["PEND1"]),
+    })).toBe("pending");
+    expect(chartPreviewHydrateCellState({ symbol: "X", chartPreview: preview })).toBe("ready");
+  });
+
+  it("respeta AbortSignal y no deja inflight colgado", async () => {
+    const controller = new AbortController();
+    vi.mocked(postJson).mockImplementationOnce((_url, _body, options) => new Promise((resolve, reject) => {
+      options?.signal?.addEventListener("abort", () => {
+        const err = new Error("aborted");
+        err.name = "AbortError";
+        reject(err);
+      });
+    }));
+
+    const pending = fetchChartPreviewsForSymbols("scan-abort", ["AB1"], { signal: controller.signal });
+    controller.abort();
+    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+
+    vi.mocked(postJson).mockResolvedValueOnce({ previews: { AB1: preview } });
+    const onChunk = vi.fn();
+    await fetchChartPreviewsForSymbols("scan-abort", ["AB1"], { onChunk });
+    expect(onChunk).toHaveBeenCalled();
   });
 });
