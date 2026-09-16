@@ -27,7 +27,9 @@ import {
   buildFilterLayersUpgradeNotice,
   filterLayersContractWasUpgraded,
   filterLayersUpgradeNoticeIfNeeded,
+  filterLayersUpgradeNoticeReadyToShow,
   resolveSnapshotNotice,
+  shouldQueueFilterLayersUpgradeNotice,
   snapshotNoticeForPersistence,
   restoreFilterLayers,
 } from "@/lib/screenerFilterLayers";
@@ -445,6 +447,32 @@ describe("aviso one-shot al migrar filterLayersVersion < 3 (C-03)", () => {
     const notice = buildFilterLayersUpgradeNotice();
     expect(notice.detail).not.toContain("Más filtros");
     expect(notice.detail).toContain("Abrir");
+  });
+
+  it("T3: deferUpgrade no materializa ni hace ack del aviso de capas", () => {
+    expect(resolveSnapshotNotice({
+      primary: null,
+      filterLayersVersion: 2,
+      deferUpgrade: true,
+    })).toBeNull();
+    expect(shouldQueueFilterLayersUpgradeNotice(2, { deferUpgrade: true })).toBe(true);
+    // Sin ack: aún se puede anunciar después del hydrate.
+    expect(filterLayersUpgradeNoticeIfNeeded(2)?.source).toBe("filter-layers-upgrade");
+  });
+
+  it("T3: deferUpgrade conserva primary no efímero y aún así se puede encolar", () => {
+    const coverage = { tone: "warn", label: "Cobertura", detail: "faltan mercados", source: "coverage" };
+    expect(resolveSnapshotNotice({
+      primary: coverage,
+      filterLayersVersion: 1,
+      deferUpgrade: true,
+    })).toBe(coverage);
+    expect(shouldQueueFilterLayersUpgradeNotice(1, { deferUpgrade: true })).toBe(true);
+  });
+
+  it("T3: el aviso de capas no está listo mientras restoringScan", () => {
+    expect(filterLayersUpgradeNoticeReadyToShow({ restoringScan: true })).toBe(false);
+    expect(filterLayersUpgradeNoticeReadyToShow({ restoringScan: false })).toBe(true);
   });
 });
 

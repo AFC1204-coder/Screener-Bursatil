@@ -47,7 +47,10 @@ import { metricShortLabel } from "@/lib/metricCatalog";
 import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 import { useScreenerMobileViewport } from "@/lib/useScreenerMobileViewport";
-import { FILTER_LAYERS_UPGRADE_NOTICE_SOURCE } from "@/lib/screenerFilterLayers";
+import {
+  FILTER_LAYERS_UPGRADE_NOTICE_SOURCE,
+  filterLayersUpgradeNoticeReadyToShow,
+} from "@/lib/screenerFilterLayers";
 import { isDismissibleSampleNotice } from "@/lib/snapshotFreshness";
 
 function showScanStatusBar(err, status = "") {
@@ -392,8 +395,15 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     scannedMarkets,
     analyzedRows,
   });
-  const showSnapshotNotice = snapshotNotice && snapshotNotice.source !== "markets-stale";
   const isFilterLayersUpgradeNotice = snapshotNotice?.source === FILTER_LAYERS_UPGRADE_NOTICE_SOURCE;
+  // T3: no pintar «formato antiguo de filtros» mientras la mesa hidrata.
+  const showFilterLayersUpgradeNotice = !isFilterLayersUpgradeNotice
+    || filterLayersUpgradeNoticeReadyToShow({ restoringScan });
+  const showSnapshotNotice = Boolean(
+    snapshotNotice
+    && snapshotNotice.source !== "markets-stale"
+    && showFilterLayersUpgradeNotice,
+  );
   const isSampleTruncationNotice = isDismissibleSampleNotice(snapshotNotice);
 
   function renderFilterLayersUpgradeDismiss() {

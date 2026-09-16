@@ -95,8 +95,13 @@ import {
   restoreFilterLayers,
   filterLayersUpgradeNoticeIfNeeded,
   acknowledgeFilterLayersUpgrade,
+  buildFilterLayersUpgradeNotice,
+  isEphemeralSnapshotNotice,
   resolveSnapshotNotice,
+  shouldAnnounceFilterLayersUpgrade,
+  shouldQueueFilterLayersUpgradeNotice,
   snapshotNoticeForPersistence,
+  FILTER_LAYERS_UPGRADE_NOTICE_SOURCE,
   settingApplies,
   settingLayerDependency,
 } from "@/lib/screenerFilterLayers";
@@ -499,6 +504,9 @@ export default function Page() {
   // Aviso al que el banner de cobertura sustituyó, para devolverlo cuando la
   // cobertura vuelva a estar completa (el snapshotNotice es un slot único).
   const coverageReplacedNoticeRef = useRef(null);
+  // T3: cola del aviso «formato antiguo de filtros» hasta mesa estable
+  // (!restoringScan). No se hace ack hasta flushear (o dismiss).
+  const pendingFilterLayersUpgradeVersionRef = useRef(null);
   // Propiedad de los resultados visibles: "none" | "session" | "cloud" | "local".
   // La restauración asíncrona desde Supabase SOLO aplica si nadie produjo
   // resultados mientras resolvía (evita que un snapshot viejo pise resultados
@@ -522,6 +530,42 @@ export default function Page() {
       onMerged: (extendedRows) => patchRowsWithExtendedRs(extendedRows),
     });
   }
+  // T3: durante cold load / hydrate no materializamos el aviso de capas en el
+  // slot; lo encolamos y lo flusheamos cuando !restoringScan.
+  function resolveDeferredSnapshotNotice({ primary = null, filterLayersVersion = null } = {}) {
+    if (shouldQueueFilterLayersUpgradeNotice(filterLayersVersion, { deferUpgrade: true })) {
+      pendingFilterLayersUpgradeVersionRef.current = filterLayersVersion;
+    }
+    return resolveSnapshotNotice({
+      primary,
+      filterLayersVersion,
+      deferUpgrade: true,
+    });
+  }
+
+  function flushPendingFilterLayersUpgradeNotice() {
+    const version = pendingFilterLayersUpgradeVersionRef.current;
+    if (version == null) return;
+    if (restoringScan) return;
+    if (!shouldAnnounceFilterLayersUpgrade(version)) {
+      pendingFilterLayersUpgradeVersionRef.current = null;
+      return;
+    }
+    // Si el slot tiene un aviso no efímero (cobertura, frescura, auth…),
+    // dejamos la cola: reintentamos cuando el slot se libere.
+    if (
+      snapshotNotice?.requiresReauth
+      || (snapshotNotice
+        && !isEphemeralSnapshotNotice(snapshotNotice)
+        && snapshotNotice.source !== FILTER_LAYERS_UPGRADE_NOTICE_SOURCE)
+    ) {
+      return;
+    }
+    pendingFilterLayersUpgradeVersionRef.current = null;
+    acknowledgeFilterLayersUpgrade();
+    setSnapshotNotice(buildFilterLayersUpgradeNotice());
+  }
+
   function restoreSnapshot(scan, { source = "local", notice = null } = {}) {
     if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) return false;
     resultsOwnerRef.current = source;
@@ -589,7 +633,10 @@ export default function Page() {
     setAnalyzedRows(scan.rows);
     setScanContext(nextScanContext);
     setDiagnostics(restoredFilterView.diagnostics);
-    setSnapshotNotice(resolveSnapshotNotice({ primary: notice, filterLayersVersion: scan.filterLayersVersion }));
+    setSnapshotNotice(resolveDeferredSnapshotNotice({
+      primary: notice,
+      filterLayersVersion: scan.filterLayersVersion,
+    }));
     setScanPerf({
       fullScanMs: null,
       lastFilterMs: restoredFilterView.filterMs,
@@ -950,7 +997,7 @@ export default function Page() {
       setAnalyzedRows(restoredAnalyzedRows);
       setScanContext(restoreScanContext);
       setScanPerf(session.scanPerf || null);
-      setSnapshotNotice(resolveSnapshotNotice({
+      setSnapshotNotice(resolveDeferredSnapshotNotice({
         primary: session.snapshotNotice || null,
         filterLayersVersion: session.filterLayersVersion,
       }));
@@ -1688,6 +1735,11 @@ export default function Page() {
       }
     });
   }
+  useEffect(() => {
+    if (!sessionReady || restoringScan) return;
+    flushPendingFilterLayersUpgradeNotice();
+  }, [sessionReady, restoringScan, snapshotNotice]);
+
   useEffect(() => {
     if (!marketsStale) {
       setMarketsLoadFailed(false);
@@ -2752,6 +2804,7 @@ export default function Page() {
   }, [sessionReady, activeModalRow, pagedRows, selectedResultSymbol]);
 
   function dismissFilterLayersUpgradeNotice() {
+    pendingFilterLayersUpgradeVersionRef.current = null;
     acknowledgeFilterLayersUpgrade();
     setSnapshotNotice(null);
   }
