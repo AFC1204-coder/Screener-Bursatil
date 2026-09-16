@@ -4,24 +4,7 @@ import { decisionConfidenceSummary, auditDecisionRowIssues, decisionPriorityBrea
 import { buildScreenerDataHealth } from "@/lib/screenerDataHealth";
 import { decisionProfileForRow } from "@/lib/decisionProfile";
 import { applyResultViewFilters } from "@/lib/screenerResultView";
-
-// Anotación local equivalente a annotateRow() en useResultViewModel.js.
-// Mantenerla en sincronía con el helper del hook; este test protege el contrato.
-function annotateRow(row, settings) {
-  const explanation = explainScreenerRank(row, settings);
-  const issues = auditDecisionRowIssues(row, explanation);
-  return {
-    ...row,
-    __screenerAnnotation: {
-      explanation,
-      confidence: decisionConfidenceSummary(row, explanation, issues),
-      dataHealth: buildScreenerDataHealth(row, settings),
-      priority: decisionPriorityBreakdown(row, explanation),
-      profile: decisionProfileForRow(row, settings),
-      issues,
-    },
-  };
-}
+import { annotateScreenerRow, annotateScreenerRows, buildScreenerAnnotation } from "@/lib/screenerAnnotation";
 
 const settings = { setupMode: "leader" };
 
@@ -51,9 +34,26 @@ const baseRow = {
   setupDisplayPlanValid: true,
 };
 
-describe("screener row annotation cache", () => {
+/** Path legado que pasaba settings a profile (re-explain + re-audit + re-confidence). */
+function annotateRowLegacyDup(row, s) {
+  const explanation = explainScreenerRank(row, s);
+  const issues = auditDecisionRowIssues(row, explanation);
+  return {
+    ...row,
+    __screenerAnnotation: {
+      explanation,
+      confidence: decisionConfidenceSummary(row, explanation, issues),
+      dataHealth: buildScreenerDataHealth(row, s),
+      priority: decisionPriorityBreakdown(row, explanation),
+      profile: decisionProfileForRow(row, s),
+      issues,
+    },
+  };
+}
+
+describe("screener row annotation", () => {
   it("devuelve los mismos valores leyendo __screenerAnnotation que recalcular desde la fila", () => {
-    const annotated = annotateRow(baseRow, settings);
+    const annotated = annotateScreenerRow(baseRow, settings);
     const explanationDirect = explainScreenerRank(baseRow, settings);
     const confidenceDirect = decisionConfidenceSummary(baseRow, settings);
     const dataHealthDirect = buildScreenerDataHealth(baseRow, settings);
@@ -65,13 +65,19 @@ describe("screener row annotation cache", () => {
     expect(decisionProfileForRow(annotated, settings)).toEqual(profileDirect);
   });
 
+  it("es isomorfo al path legado (mismo resultado, sin trabajo duplicado en profile)", () => {
+    const legacy = annotateRowLegacyDup(baseRow, settings);
+    const next = annotateScreenerRow(baseRow, settings);
+    expect(next.__screenerAnnotation).toEqual(legacy.__screenerAnnotation);
+  });
+
   it("applyResultViewFilters produce el mismo resultado con filas anotadas que con filas crudas", () => {
     const rows = [
       baseRow,
       { ...baseRow, symbol: "WEAK", rsGlobalPct: 45, extSma50: 30, riskRewardScore: 35 },
       { ...baseRow, symbol: "STALE", priceFreshnessOk: false, dataCoverageScore: 40 },
     ];
-    const annotated = rows.map((row) => annotateRow(row, settings));
+    const annotated = annotateScreenerRows(rows, settings);
 
     const filters = {
       activeSettings: settings,
@@ -87,7 +93,7 @@ describe("screener row annotation cache", () => {
   });
 
   it("una fila anotada sigue siendo apta para sorteo y conserva todos sus campos", () => {
-    const annotated = annotateRow(baseRow, settings);
+    const annotated = annotateScreenerRow(baseRow, settings);
     expect(annotated.symbol).toBe("ACME");
     expect(annotated.totalScore).toBe(82);
     expect(annotated.__screenerAnnotation).toBeDefined();
@@ -95,29 +101,25 @@ describe("screener row annotation cache", () => {
     expect(annotated.__screenerAnnotation.confidence.key).toBeTruthy();
     expect(annotated.__screenerAnnotation.dataHealth.status.key).toBeTruthy();
   });
+
+  it("priority reutiliza knownIssues sin cambiar el score", () => {
+    const explanation = explainScreenerRank(baseRow, settings);
+    const issues = auditDecisionRowIssues(baseRow, explanation);
+    const withReuse = decisionPriorityBreakdown(baseRow, explanation, issues);
+    const without = decisionPriorityBreakdown(baseRow, explanation);
+    expect(withReuse).toEqual(without);
+  });
 });
 
 // ─── Isomorfismo Node-puro ──────────────────────────────────────────────
-// Las seis funciones de annotateRow (useResultViewModel.js:197) deben poderse
-// ejecutar en Node sin DOM, sin window, sin localStorage. Si alguna vez
-// empieza a depender de un global del navegador, este test la señala en
-// lugar de silenciarlo con un mock.
-describe("isomorfismo Node-puro: annotateRow y sus 6 funciones son browser-free", () => {
-  // Pre-condición: confirma que este test corre sin DOM (vitest sin jsdom).
-  // Si alguien añade { environment: "jsdom" } a la config de vitest por error,
-  // este test falla y le obliga a decidir explícitamente.
-  // Nota: `navigator` puede existir en Node ≥21 aunque NO haya DOM — no es
-  // un indicador fiable. Nos anclamos a window/document/localStorage, que sí
-  // son exclusivamente del navegador.
+// buildScreenerAnnotation y sus 6 funciones deben poderse ejecutar en Node
+describe("isomorfismo Node-puro: annotate y sus 6 funciones son browser-free", () => {
   it("corre en un entorno Node puro (sin window/document/localStorage)", () => {
     expect(typeof window).toBe("undefined");
     expect(typeof document).toBe("undefined");
     expect(typeof localStorage).toBe("undefined");
   });
 
-  // Determinismo por función individual: misma input → mismo output
-  // byte-a-byte en invocaciones repetidas. No usamos expect.toBe de Date.now
-  // ni nada no-determinista; solo comparamos el output completo.
   const deterministicChecks = [
     ["explainScreenerRank", (row, s) => explainScreenerRank(row, s)],
     ["auditDecisionRowIssues", (row, s) => {
@@ -136,9 +138,7 @@ describe("isomorfismo Node-puro: annotateRow y sus 6 funciones son browser-free"
     }],
     ["decisionProfileForRow", (row, s) => {
       const explanation = explainScreenerRank(row, s);
-      const issues = auditDecisionRowIssues(row, explanation);
-      const confidence = decisionConfidenceSummary(row, explanation, issues);
-      return decisionProfileForRow(row, explanation); // profile usa explanation, no settings
+      return decisionProfileForRow(row, explanation);
     }],
   ];
 
@@ -148,20 +148,58 @@ describe("isomorfismo Node-puro: annotateRow y sus 6 funciones son browser-free"
     expect(outputs.every((out) => out === first)).toBe(true);
   });
 
-  // Determinismo del pipeline completo (annotateRow con todas las 6 funciones).
-  it("annotateRow: 10 invocaciones consecutivas producen anotaciones estructuralmente idénticas", () => {
-    const snapshots = Array.from({ length: 10 }, () => JSON.stringify(annotateRow(baseRow, settings)));
+  it("annotateScreenerRow: 10 invocaciones consecutivas producen anotaciones estructuralmente idénticas", () => {
+    const snapshots = Array.from({ length: 10 }, () => JSON.stringify(annotateScreenerRow(baseRow, settings)));
     expect(new Set(snapshots).size).toBe(1);
   });
 
-  // Estabilidad de la firma estructural: las 6 claves del annotation están
-  // siempre presentes y son objetos no-undefined. Esto blinda el contrato
-  // __screenerAnnotation que consumers aguas abajo asumen.
-  it("annotateRow siempre produce las 6 claves del annotation (contrato aguas abajo)", () => {
-    const result = annotateRow(baseRow, settings);
+  it("annotateScreenerRow siempre produce las 6 claves del annotation (contrato aguas abajo)", () => {
+    const result = annotateScreenerRow(baseRow, settings);
     const keys = ["explanation", "confidence", "dataHealth", "priority", "profile", "issues"];
     for (const k of keys) {
       expect(result.__screenerAnnotation[k]).toBeDefined();
     }
+  });
+});
+
+describe("presupuesto annotate O(pasan) · sin cache FILTER-ANNOTATION", () => {
+  function makeRow(i) {
+    return {
+      ...baseRow,
+      symbol: `S${i}`,
+      totalScore: 70 + (i % 20),
+      objectiveScore: 70 + (i % 20),
+      rsGlobalPct: 60 + (i % 40),
+      riskRewardScore: 55 + (i % 30),
+      weaknessScore: i % 40,
+      extSma50: i % 25,
+    };
+  }
+
+  it("compuesto sin dup es más rápido que profile←settings sobre ~560 pasan", () => {
+    const N = 560;
+    const rows = Array.from({ length: N }, (_, i) => makeRow(i));
+    // warmup
+    for (const row of rows.slice(0, 20)) {
+      annotateRowLegacyDup(row, settings);
+      annotateScreenerRow(row, settings);
+    }
+    const tLegacy0 = performance.now();
+    rows.forEach((row) => annotateRowLegacyDup(row, settings));
+    const legacyMs = performance.now() - tLegacy0;
+    const tNext0 = performance.now();
+    rows.forEach((row) => annotateScreenerRow(row, settings));
+    const nextMs = performance.now() - tNext0;
+
+    // ROI medible: ≥20 % más rápido (microbench local; no browser LT).
+    expect(nextMs).toBeLessThan(legacyMs * 0.8);
+    // Igualdad estructural en muestra
+    const sample = rows[0];
+    expect(buildScreenerAnnotation(sample, settings)).toEqual(
+      annotateRowLegacyDup(sample, settings).__screenerAnnotation,
+    );
+    // Log para evidencia en CI/local (no assert de ms absolutos: máquina variable).
+    // eslint-disable-next-line no-console
+    console.log(`[annotate-budget] n=${N} legacy=${legacyMs.toFixed(1)}ms next=${nextMs.toFixed(1)}ms ratio=${(nextMs / legacyMs).toFixed(2)}`);
   });
 });

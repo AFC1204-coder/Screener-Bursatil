@@ -3,11 +3,10 @@
 import { useEffect, useMemo, useState, useDeferredValue } from "react";
 import { buildResultViewBrief } from "@/app/components/screener/resultViewBrief";
 import { applyResultViewFilters, opportunityBuckets, passesSectorStrength } from "@/lib/screenerResultView";
-import { auditDecisionRowIssues, auditDecisionScan, decisionConfidenceSummary, decisionPriorityBreakdown } from "@/lib/decisionAudit";
-import { decisionProfileForRow } from "@/lib/decisionProfile";
+import { auditDecisionScan } from "@/lib/decisionAudit";
 import { rowPassesListContract } from "@/lib/listRationale";
+import { annotateScreenerRow } from "@/lib/screenerAnnotation";
 import {
-  buildScreenerDataHealth,
   buildScreenerDataHealthSummary,
 } from "@/lib/screenerDataHealth";
 import {
@@ -23,7 +22,6 @@ import {
 import { buildScreenerDecisionBrief } from "@/lib/screenerDecisionBrief";
 import {
   buildDecisionEvidenceSummary,
-  explainScreenerRank,
 } from "@/lib/screenerExplainability";
 import { DEFAULT_PERFORMANCE_PERIOD } from "@/lib/screenerPeriods";
 import { compareRowsForSort, defaultSortForSettings } from "@/lib/screenerPipeline";
@@ -188,37 +186,24 @@ export function useResultViewModel({
   // Cache en `__screenerAnnotation`: campo no-persistido (no es RESEARCH_ROW_CORE_FIELD,
   // así que compactResearchRow lo descarta y nunca llega a localStorage).
   //
-  // Dep memo: las 6 funciones de annotateRow solo leen `activeSettings.setupMode`
-  // (verificado en lib/screenerExplainability.js, lib/decisionAudit.js,
-  // lib/screenerDataHealth.js, lib/decisionProfile.js). Estrechar el memo a esa
-  // única clave evita re-anotar N filas cuando cambia un umbral que no afecta
-  // a la anotación (ej. settings.maxSymbols, settings.minRS, sortIndex).
+  // Composición: lib/screenerAnnotation.js (sin memo LRU — FILTER-ANNOTATION-1 HOLD).
+  // Dep memo: buildScreenerAnnotation solo lee `activeSettings.setupMode`.
+  // Estrechar el memo a esa única clave evita re-anotar N filas cuando cambia un
+  // umbral que no afecta a la anotación (ej. settings.maxSymbols, settings.minRS).
   //
-  // CONTRATO: si añades una 7ª función a annotateRow que lea OTRA clave de
-  // activeSettings, amplia este useMemo para incluirla.
+  // CONTRATO: si annotate empieza a leer OTRA clave de activeSettings, amplia
+  // este useMemo para incluirla.
   const setupMode = activeSettings?.setupMode;
   const deferredRows = useDeferredValue(rows);
   const rowsDeferredStale = deferredRows !== rows;
   // Si rows acaba de cambiar (p. ej. hunt acota mesa) deferredRows sigue en el lote
   // anterior: re-anotar ese lote con setupMode nuevo tumba el hilo (BUG-HUNT-1b).
   const annotateSourceRows = rowsDeferredStale ? rows : deferredRows;
-  function annotateRow(row) {
-    const explanation = explainScreenerRank(row, activeSettings);
-    const issues = auditDecisionRowIssues(row, explanation);
-    return {
-      ...row,
-      __screenerAnnotation: {
-        explanation,
-        confidence: decisionConfidenceSummary(row, explanation, issues),
-        dataHealth: buildScreenerDataHealth(row, activeSettings),
-        priority: decisionPriorityBreakdown(row, explanation),
-        profile: decisionProfileForRow(row, activeSettings),
-        issues,
-      },
-    };
-  }
 
-  const annotatedRows = useMemo(() => annotateSourceRows.map(annotateRow), [annotateSourceRows, setupMode]);
+  const annotatedRows = useMemo(
+    () => annotateSourceRows.map((row) => annotateScreenerRow(row, activeSettings)),
+    [annotateSourceRows, setupMode],
+  );
 
   const viewFilteredRows = useMemo(
     () => applyResultViewFilters(annotatedRows, viewFilterState),
