@@ -20,14 +20,62 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getJson } from "@/lib/clientApi";
 import { num } from "@/lib/formatters";
+import { isTimeoutFetchError } from "@/lib/marketHealthFetch";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { stockUrl } from "@/lib/symbols";
 import { formatDayLabel, stageWord } from "@/lib/weeklyChanges";
 
-const FETCH_TIMEOUT_MS = 20000;
+export const WEEKLY_CHANGES_FETCH_TIMEOUT_MS = 20000;
+export const WEEKLY_CHANGES_MAX_ATTEMPTS = 3;
+export const WEEKLY_CHANGES_RETRY_DELAY_MS = 2500;
 const ROWS_COLLAPSED = 10;
 const URL_PARAM = "cambios";
 const URL_VALUE = "semana";
+
+/** Timeout / red / 5xx: no pintar fallo permanente en la cabecera de la mesa. */
+export function isWeeklyChangesSoftFailure(error) {
+  if (!error) return false;
+  if (isTimeoutFetchError(error)) return true;
+  const msg = String(error.message || error.name || "");
+  return /\bHTTP 5\d\d\b|\bECONNRESET\b|\bECONNREFUSED\b|\bENOTFOUND\b|\bfetch failed\b|\bFailed to fetch\b/i.test(msg);
+}
+
+/**
+ * Carga /api/weekly-changes con reintentos silenciosos ante fallos blandos.
+ * Devuelve `{ payload }` o `{ softFailure: true }` (ocultar línea) o lanza
+ * errores duros (auth/4xx) para que el caller pinte un quiet corto.
+ */
+export async function loadWeeklyChangesPayload({
+  getJsonImpl = getJson,
+  timeoutMs = WEEKLY_CHANGES_FETCH_TIMEOUT_MS,
+  maxAttempts = WEEKLY_CHANGES_MAX_ATTEMPTS,
+  retryDelayMs = WEEKLY_CHANGES_RETRY_DELAY_MS,
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  signal,
+} = {}) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    if (signal?.aborted) {
+      const aborted = new Error("aborted");
+      aborted.name = "AbortError";
+      throw aborted;
+    }
+    try {
+      const payload = await getJsonImpl("/api/weekly-changes", { timeoutMs, signal });
+      return { payload };
+    } catch (err) {
+      lastError = err;
+      if (signal?.aborted) throw err;
+      const soft = isWeeklyChangesSoftFailure(err);
+      if (!soft || attempt >= maxAttempts) break;
+      await sleep(retryDelayMs);
+    }
+  }
+  if (isWeeklyChangesSoftFailure(lastError)) {
+    return { softFailure: true, error: lastError };
+  }
+  throw lastError;
+}
 
 export const WEEKLY_SECTION_IDS = {
   stage2: "weeklyChangesStage2",
@@ -153,6 +201,12 @@ export function renderWeeklyChangesView({
 } = {}) {
   if (loading) {
     return <p className="weeklyChangesLine weeklyChangesQuiet" role="status">Cambios de la semana · comprobando…</p>;
+  }
+  // Timeout / infra no deben dejar la cabecera en tono de fallo permanente.
+  // El caller ya degrada a softFailure→error vacío; esto es cinturón si llega
+  // un mensaje de timeout por otra vía.
+  if (error && isTimeoutFetchError({ message: error })) {
+    return null;
   }
   if (error) {
     return <p className="weeklyChangesLine weeklyChangesQuiet">Cambios de la semana · {error}</p>;
@@ -316,19 +370,34 @@ export default function WeeklyChangesLine({ onOpenStock }) {
   const pushedRef = useRef(false);
 
   useEffect(() => {
+    const controller = new AbortController();
     let cancelled = false;
-    getJson(`/api/weekly-changes`, { timeoutMs: FETCH_TIMEOUT_MS })
-      .then((data) => {
+    loadWeeklyChangesPayload({ signal: controller.signal })
+      .then((result) => {
         if (cancelled) return;
-        setPayload(data);
+        if (result.softFailure) {
+          // Reintento agotado: ocultar la línea. La mesa ya está lista; un
+          // «servidor tardó demasiado» permanente tumba esa sensación.
+          setPayload(null);
+          setError("");
+          setLoading(false);
+          return;
+        }
+        setPayload(result.payload);
+        setError("");
         setLoading(false);
       })
       .catch((err) => {
-        if (cancelled) return;
+        if (cancelled || err?.name === "AbortError") return;
+        // Fallo duro (p. ej. 4xx): quiet corto, sin copy de timeout.
+        setPayload(null);
         setError(userFacingServiceError(err?.message, "no disponibles ahora mismo."));
         setLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, []);
 
   // El panel vive en la URL (?cambios=semana): un enlace directo lo abre y el

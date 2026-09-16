@@ -35,7 +35,11 @@ vi.mock("next/link", async () => {
 });
 
 // vi.mock se iza por encima de los imports, así que este import ya ve el mock.
-import { renderWeeklyChangesView } from "@/app/components/screener/WeeklyChangesLine";
+import {
+  isWeeklyChangesSoftFailure,
+  loadWeeklyChangesPayload,
+  renderWeeklyChangesView,
+} from "@/app/components/screener/WeeklyChangesLine";
 
 // ── Fechas ─────────────────────────────────────────────────────────────────
 
@@ -370,5 +374,81 @@ describe("renderWeeklyChangesView", () => {
       payload: { ok: false, state: "cloud-off", message: "La copia en la nube no está activada." },
     }));
     expect(html).toContain("La copia en la nube no está activada.");
+  });
+
+  it("un timeout / mensaje de infra no deja línea de error permanente en la cabecera", () => {
+    const timeoutCopy = "El servidor de datos tardó demasiado en responder. Inténtalo de nuevo en unos minutos.";
+    expect(renderToStaticMarkup(renderWeeklyChangesView({ error: timeoutCopy }))).toBe("");
+    expect(renderToStaticMarkup(renderWeeklyChangesView({ loading: false, payload: null }))).toBe("");
+  });
+
+  it("un error quiet no-timeout sigue siendo informativo, sin tono de alerta", () => {
+    const html = renderToStaticMarkup(renderWeeklyChangesView({ error: "no disponibles ahora mismo." }));
+    expect(html).toContain("weeklyChangesQuiet");
+    expect(html).toContain("no disponibles ahora mismo.");
+    expect(html).not.toContain("tardó demasiado");
+  });
+});
+
+describe("isWeeklyChangesSoftFailure / loadWeeklyChangesPayload", () => {
+  it("trata timeout y AbortError como fallo blando (reintento / ocultar)", () => {
+    expect(isWeeklyChangesSoftFailure(Object.assign(new Error("aborted"), { name: "AbortError" }))).toBe(true);
+    expect(isWeeklyChangesSoftFailure(Object.assign(new Error("timeout"), { code: "FETCH_TIMEOUT" }))).toBe(true);
+    expect(isWeeklyChangesSoftFailure(new Error("HTTP 503"))).toBe(true);
+    expect(isWeeklyChangesSoftFailure(new Error("HTTP 401"))).toBe(false);
+  });
+
+  it("reintenta en silencio ante timeout y luego degrada a softFailure", async () => {
+    const timeoutErr = Object.assign(new Error("aborted"), { name: "AbortError" });
+    const getJsonImpl = vi.fn()
+      .mockRejectedValueOnce(timeoutErr)
+      .mockRejectedValueOnce(timeoutErr)
+      .mockRejectedValueOnce(timeoutErr);
+    const sleep = vi.fn(async () => {});
+
+    const result = await loadWeeklyChangesPayload({
+      getJsonImpl,
+      maxAttempts: 3,
+      retryDelayMs: 10,
+      sleep,
+      timeoutMs: 100,
+    });
+
+    expect(result.softFailure).toBe(true);
+    expect(getJsonImpl).toHaveBeenCalledTimes(3);
+    expect(sleep).toHaveBeenCalledTimes(2);
+  });
+
+  it("si un reintento recupera datos, no degrada", async () => {
+    const timeoutErr = Object.assign(new Error("aborted"), { name: "AbortError" });
+    const payload = { ok: true, state: "ok" };
+    const getJsonImpl = vi.fn()
+      .mockRejectedValueOnce(timeoutErr)
+      .mockResolvedValueOnce(payload);
+    const sleep = vi.fn(async () => {});
+
+    const result = await loadWeeklyChangesPayload({
+      getJsonImpl,
+      maxAttempts: 3,
+      retryDelayMs: 10,
+      sleep,
+    });
+
+    expect(result).toEqual({ payload });
+    expect(getJsonImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it("un 4xx duro no reintenta y propaga el error", async () => {
+    const hard = new Error("HTTP 403");
+    const getJsonImpl = vi.fn().mockRejectedValue(hard);
+    const sleep = vi.fn(async () => {});
+
+    await expect(loadWeeklyChangesPayload({
+      getJsonImpl,
+      maxAttempts: 3,
+      sleep,
+    })).rejects.toThrow("HTTP 403");
+    expect(getJsonImpl).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
   });
 });
