@@ -1,5 +1,6 @@
 import { disabledPayload, finiteOrNull, requirePersistenceAuth, supabaseConfig, supabaseRequest, supabaseRpc, textOrNull, toTimestamp } from "@/lib/supabaseServer";
 import { compactResearchRow } from "@/lib/researchRowContract";
+import { projectScanRowForMesaTransport } from "@/lib/scanLightProjection";
 import { isPublicScanStatus } from "@/lib/scanStatus";
 import { prepareScanDecisionRow, scanDecisionMetrics, scanDecisionRaw, scanDecisionRowFromDb } from "@/lib/scanDecisionProjection";
 import { clearScansApiCache, LATEST_SCAN_TTL_MS, scansApiCache } from "@/lib/scansApiCache";
@@ -440,6 +441,10 @@ export function scanFromDb(row, results = [], options = {}) {
   // ya lo rehacen cuando falta (decisionTraceForRow, explanationFromTrace), así
   // que la proyección compacta —la que pide la pantalla principal— deja de
   // cargar con él. ?full=1 y ?projection=decision lo siguen llevando.
+  //
+  // projectLightRow (compacto de mesa): allowlist SCAN_LIGHT sobre filas "full"
+  // que aún viajan con raw gordo tras diferir chartPreview. Mismo contrato que
+  // filtrar/tabla/Listas; ?full=1 y ?projection=decision no lo aplican.
   const prepareRow = options.omitDecisionTrace
     ? (item) => item
     : (item) => prepareScanDecisionRow(item, decisionSettings);
@@ -463,6 +468,9 @@ export function scanFromDb(row, results = [], options = {}) {
         marketCapBySymbol,
       );
       if (options.omitChartPreview) row = stripChartPreviewForTransport(row);
+      if (options.projectLightRow) {
+        row = projectScanRowForMesaTransport(row, { omitChartPreview: Boolean(options.omitChartPreview) });
+      }
       return row;
     });
   // rowsAvailable es el total real del escaneo (columna scans.row_count);
@@ -737,6 +745,7 @@ export async function GET(req) {
             includeRows,
             rowsSampled,
             omitDecisionTrace: !full && !decisionProjection,
+            projectLightRow: !full && !decisionProjection,
             omitChartPreview,
             weeklyRsBySymbol: hydration.weeklyRsBySymbol,
             weeklyCountryRsBySymbol: hydration.weeklyCountryRsBySymbol,
@@ -818,6 +827,7 @@ export async function GET(req) {
           includeRows,
           rowsSampled,
           omitDecisionTrace: !full && !decisionProjection,
+          projectLightRow: !full && !decisionProjection,
           omitChartPreview,
           weeklyRsBySymbol: hydration.weeklyRsBySymbol,
           weeklyCountryRsBySymbol: hydration.weeklyCountryRsBySymbol,
