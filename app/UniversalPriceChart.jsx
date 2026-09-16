@@ -72,8 +72,14 @@ export function UniversalPriceChartView({
 
   if (status !== "ready") {
     const emptyText = String(emptyFallback?.text || "").trim() || "Sin dato";
+    const isLoading = emptyFallback?.kind === "loading"
+      || /cargando/i.test(emptyText);
     return (
-      <div className={`universalChart empty ${rootClassName}`}>
+      <div
+        className={`universalChart empty ${isLoading ? "loading" : ""} ${rootClassName}`}
+        aria-busy={isLoading ? "true" : undefined}
+      >
+        {isLoading ? <div className="universalChartSkeleton" aria-hidden="true" /> : null}
         <span
           className="universalChartEstimatedNote"
           role="status"

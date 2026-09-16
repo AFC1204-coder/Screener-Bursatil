@@ -1172,6 +1172,33 @@ h2 {
   font-weight:850;
 }
 
+.universalChart.empty.loading {
+  position:relative;
+  gap:14px;
+  min-height:220px;
+}
+
+.universalChartSkeleton {
+  position:absolute;
+  inset:18px 16px 48px;
+  border-radius:10px;
+  background:
+    linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent) 0 0 / 40% 100% no-repeat,
+    linear-gradient(180deg, rgba(148,163,184,.12), rgba(148,163,184,.04) 55%, transparent);
+  animation: universalChartSkeletonPulse 1.2s ease-in-out infinite;
+  pointer-events:none;
+}
+
+@keyframes universalChartSkeletonPulse {
+  0%, 100% { opacity:.45; background-position: -20% 0, 0 0; }
+  50% { opacity:.9; background-position: 120% 0, 0 0; }
+}
+
+.universalChart.empty.loading .universalChartEstimatedNote {
+  position:relative;
+  z-index:1;
+}
+
 .universalChartHead {
   display:flex;
   align-items:center;

@@ -49,7 +49,7 @@ export async function POST(req) {
   if (authError) return authError;
   const config = supabaseConfig();
   if (!config.configured) {
-    return Response.json({ configured: false, ok: false, previews: {}, message: "Supabase no configurado" });
+    return Response.json({ configured: false, ok: false, previews: {}, message: "Persistencia en la nube no configurada" });
   }
 
   const body = await req.json().catch(() => ({}));

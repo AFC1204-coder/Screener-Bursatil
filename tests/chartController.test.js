@@ -200,8 +200,10 @@ describe("UniversalPriceChartView · emptyFallback (regresión B2)", () => {
   }
 
   it("muestra texto de carga, no el literal «Sin dato»", () => {
-    const html = renderEmptyState({ text: "Cargando histórico...", title: "" });
+    const html = renderEmptyState({ kind: "loading", text: "Cargando histórico...", title: "" });
     expect(html).toContain("Cargando histórico...");
+    expect(html).toContain("universalChartSkeleton");
+    expect(html).toContain('aria-busy="true"');
     expect(html).not.toMatch(/>Sin dato</);
   });
 

@@ -427,6 +427,7 @@ export function useChartController(props = {}) {
     renderError: renderError || null,
   };
   const emptyFallback = useMemo(() => ({
+    kind: notice?.kind || "empty",
     text: notice && notice.kind === "quality" ? notice.text
       : notice && notice.kind === "loading" ? notice.text
         : notice && notice.kind === "error" ? notice.text
