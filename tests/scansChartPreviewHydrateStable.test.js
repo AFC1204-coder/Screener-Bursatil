@@ -199,6 +199,25 @@ describe("fetchChartPreviewsForSymbols incremental", () => {
     expect(result.AAA).toEqual(preview);
   });
 
+  it("envía scanIds UUID en el body cuando el cloudId es sintético", async () => {
+    const us = "11111111-2222-4333-8444-555555555555";
+    vi.mocked(postJson).mockResolvedValueOnce({ previews: { AAA: preview } });
+    await fetchChartPreviewsForSymbols(
+      "merged-nightly-materialized:US-HK:2026-09-16",
+      ["AAA"],
+      { scanIds: [us] },
+    );
+    expect(postJson).toHaveBeenCalledWith(
+      "/api/scans/chart-preview",
+      {
+        scanId: "merged-nightly-materialized:US-HK:2026-09-16",
+        symbols: ["AAA"],
+        scanIds: [us],
+      },
+      expect.objectContaining({}),
+    );
+  });
+
   it("aplica previews parciales sin esperar al universo completo", async () => {
     vi.mocked(postJson).mockResolvedValueOnce({ previews: { AAA: preview } });
 

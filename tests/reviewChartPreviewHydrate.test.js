@@ -93,6 +93,21 @@ describe("buildReviewChartPreviewHydratePlan", () => {
     expect(plan.cloudId).toBe("scan-avah");
     expect(plan.symbols).toEqual(["AVAH", "IFP.TO"]);
     expect(plan.signature).toContain("AVAH");
+    expect(plan.scanIds).toEqual([]);
+  });
+
+  it("plan incluye scanIds UUID de mergedFrom", () => {
+    const us = "11111111-2222-4333-8444-555555555555";
+    const plan = buildReviewChartPreviewHydratePlan({
+      enabled: true,
+      scans: [{
+        cloudId: "merged-nightly-materialized:US-HK:2026-09-16",
+        settings: { mergedFrom: [{ cloudId: us }] },
+      }],
+      visibleRows: [row("AVAH")],
+      currentIndex: 0,
+    });
+    expect(plan.scanIds).toEqual([us]);
   });
 });
 
@@ -109,10 +124,13 @@ describe("runReviewChartPreviewHydrate", () => {
     const fetchImpl = vi.fn(async () => ({ AVAH: preview }));
     const onChunk = vi.fn();
     const result = await runReviewChartPreviewHydrate(
-      { cloudId: "scan-1", symbols: ["AVAH"] },
+      { cloudId: "scan-1", symbols: ["AVAH"], scanIds: ["11111111-2222-4333-8444-555555555555"] },
       { fetchImpl, onChunk },
     );
-    expect(fetchImpl).toHaveBeenCalledWith("scan-1", ["AVAH"], { onChunk });
+    expect(fetchImpl).toHaveBeenCalledWith("scan-1", ["AVAH"], {
+      onChunk,
+      scanIds: ["11111111-2222-4333-8444-555555555555"],
+    });
     expect(result).toEqual({ AVAH: preview });
   });
 });

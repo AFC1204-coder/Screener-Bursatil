@@ -141,4 +141,61 @@ describe("POST /api/scans/chart-preview", () => {
     expect(body.ok).toBe(true);
     expect(body.previews.AAA).toEqual(preview);
   });
+
+  it("no consulta scan_results con scanId sintético sin UUIDs (400, no 500)", async () => {
+    supabaseRequest.mockResolvedValue([]);
+    const response = await POST(new Request("https://statsedge.test/api/scans/chart-preview", {
+      method: "POST",
+      body: JSON.stringify({
+        scanId: "merged-nightly-materialized:US-HK:2026-09-16",
+        symbols: ["AAA"],
+      }),
+    }));
+    const body = await response.json();
+    expect(response.status).toBe(400);
+    expect(body.ok).toBe(false);
+    expect(body.previews).toEqual({});
+    expect(String(body.error || "")).toMatch(/UUID|resoluble/i);
+    const scanResultsQueries = supabaseRequest.mock.calls
+      .filter((call) => call[0] === "scan_results")
+      .map((call) => String(call[1]?.query || ""));
+    expect(scanResultsQueries).toEqual([]);
+  });
+
+  it("acepta scanIds UUID reales aunque scanId sea sintético", async () => {
+    supabaseRequest.mockResolvedValueOnce([resultRow("AAA")]);
+    const response = await POST(new Request("https://statsedge.test/api/scans/chart-preview", {
+      method: "POST",
+      body: JSON.stringify({
+        scanId: "merged-nightly-materialized:US-HK:2026-09-16",
+        scanIds: [SCAN_ID, "not-a-uuid"],
+        symbols: ["AAA"],
+      }),
+    }));
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.previews.AAA).toEqual(preview);
+    expect(body.scanIds).toEqual([SCAN_ID]);
+    const query = String(supabaseRequest.mock.calls[0]?.[1]?.query || "");
+    expect(query).toContain(`scan_id=eq.${SCAN_ID}`);
+    expect(query).not.toContain("merged-nightly-materialized");
+  });
+
+  it("resuelve UUIDs desde settings.mergedFrom en el body", async () => {
+    supabaseRequest.mockResolvedValueOnce([resultRow("BBB")]);
+    const response = await POST(new Request("https://statsedge.test/api/scans/chart-preview", {
+      method: "POST",
+      body: JSON.stringify({
+        scanId: "merged-nightly-materialized:US-HK:2026-09-16",
+        settings: {
+          mergedFrom: [{ cloudId: SCAN_ID, market: "US" }],
+        },
+        symbols: ["BBB"],
+      }),
+    }));
+    const body = await response.json();
+    expect(body.ok).toBe(true);
+    expect(body.previews.BBB).toEqual(preview);
+  });
 });

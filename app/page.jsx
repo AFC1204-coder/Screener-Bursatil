@@ -50,6 +50,7 @@ import {
   markChartPreviewAttemptedOnRows,
   peekCachedChartPreviews,
 } from "@/lib/scansChartPreviewHydrate";
+import { chartPreviewScanIdsFromScan } from "@/lib/scansChartPreviewScanIds";
 import { markRsBootstrapCoreReady, mergeExtendedRsIntoRows, scheduleExtendedRsHydration } from "@/lib/scansRsBootstrap";
 import { isCazaResultView, resolveResultViewMode, SCREENER_RESULT_VIEW_MODE_CHANGED_EVENT } from "@/lib/screenerResultViewMode";
 import { createDebouncedSessionSaver, screenerFiltersFromScan, withScanScreenerFilters } from "@/lib/screenerFilterFastPath";
@@ -599,6 +600,8 @@ export default function Page() {
     const nextScanContext = {
       id: scan.id || uid(),
       cloudId: scan.cloudId || null,
+      // UUIDs reales de scan_results (merged/acumulado → mergedFrom; no el id sintético).
+      chartPreviewScanIds: chartPreviewScanIdsFromScan(scan),
       symbolsCount: scan.rows.length,
       baseCount: scan.rows.length,
       providerErrors: [],
@@ -875,6 +878,7 @@ export default function Page() {
     const nextScanContext = {
       id: scan.id || uid(),
       cloudId: scan.cloudId || null,
+      chartPreviewScanIds: chartPreviewScanIdsFromScan(scan),
       symbolsCount: scan.rows.length,
       baseCount: scan.rows.length,
       providerErrors: [],
@@ -1380,8 +1384,12 @@ export default function Page() {
       .map((row) => String(row?.symbol || "").trim().toUpperCase())
       .filter(Boolean);
     if (!windowSymbols.length) return null;
+    const scanIds = Array.isArray(scanContext.chartPreviewScanIds)
+      ? scanContext.chartPreviewScanIds
+      : [];
     return {
       cloudId: scanContext.cloudId,
+      scanIds,
       symbols: symbols.length ? symbols : windowSymbols,
       missingCount: symbols.length,
       queueSignature,
@@ -1390,6 +1398,7 @@ export default function Page() {
   }, [
     sessionReady,
     scanContext?.cloudId,
+    scanContext?.chartPreviewScanIds,
     scanContext?.chartPreviewTransport,
     resultViewMode,
     huntChartPreviewStart,
@@ -1401,7 +1410,7 @@ export default function Page() {
 
   useEffect(() => {
     if (!chartPreviewHydratePlan?.signature) return undefined;
-    const { cloudId, symbols } = chartPreviewHydratePlan;
+    const { cloudId, symbols, scanIds } = chartPreviewHydratePlan;
     let cancelled = false;
     const controller = typeof AbortController === "function" ? new AbortController() : null;
 
@@ -1418,6 +1427,7 @@ export default function Page() {
 
     fetchChartPreviewsForSymbols(cloudId, symbols, {
       signal: controller?.signal,
+      scanIds: Array.isArray(scanIds) && scanIds.length ? scanIds : null,
       onChunk: applyPreviews,
     }).then(() => {
       if (cancelled) return;
