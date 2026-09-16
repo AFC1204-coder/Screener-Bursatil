@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  computeHuntChartPreviewHydrateStart,
+  emitHuntChartPreviewViewport,
+} from "@/lib/scansChartPreviewHydrate";
+import {
   HuntTapeSparkline,
   HuntTapeTickerCell,
   formatVcpFootprintFromRow,
@@ -26,12 +30,43 @@ export default function HuntTapeView({
   const [keyboardActive, setKeyboardActive] = useState(false);
   const listRef = useRef(null);
   const rowRefs = useRef([]);
+  const hydrateStartRef = useRef(0);
+  const scrollRafRef = useRef(0);
+
+  const publishHydrateViewport = useCallback(() => {
+    const el = listRef.current;
+    const start = computeHuntChartPreviewHydrateStart(el?.scrollTop || 0, {
+      rowCount: rows.length,
+    });
+    if (start === hydrateStartRef.current) return;
+    hydrateStartRef.current = start;
+    emitHuntChartPreviewViewport(start);
+  }, [rows.length]);
+
+  const handleListScroll = useCallback(() => {
+    if (scrollRafRef.current) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = 0;
+      publishHydrateViewport();
+    });
+  }, [publishHydrateViewport]);
 
   useEffect(() => {
     if (focusIndex >= rows.length) {
       setFocusIndex(Math.max(0, rows.length - 1));
     }
   }, [rows.length, focusIndex]);
+
+  useEffect(() => {
+    hydrateStartRef.current = -1;
+    publishHydrateViewport();
+    return () => {
+      if (scrollRafRef.current) {
+        cancelAnimationFrame(scrollRafRef.current);
+        scrollRafRef.current = 0;
+      }
+    };
+  }, [publishHydrateViewport]);
 
   const scrollFocusIntoView = useCallback((index) => {
     const el = rowRefs.current[index];
@@ -118,6 +153,7 @@ export default function HuntTapeView({
         role="listbox"
         aria-label="Cola de caza"
         tabIndex={0}
+        onScroll={handleListScroll}
         onFocus={() => setKeyboardActive(true)}
         onBlur={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget)) {

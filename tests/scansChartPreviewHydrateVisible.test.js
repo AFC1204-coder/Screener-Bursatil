@@ -24,6 +24,10 @@ describe("huntRowsForChartPreviewHydrate", () => {
     expect(huntRowsForChartPreviewHydrate(longQueue, true, { start: 10, limit: 5 })).toEqual(
       longQueue.slice(10, 15),
     );
+    // start cerca del final se clampa para mantener ventana completa de `limit`
+    expect(huntRowsForChartPreviewHydrate(longQueue, true, { start: 100, limit: 80 })).toEqual(
+      longQueue.slice(40, 120),
+    );
   });
 });
 
