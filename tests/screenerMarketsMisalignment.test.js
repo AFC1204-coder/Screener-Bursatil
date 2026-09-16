@@ -37,7 +37,9 @@ vi.mock("@/app/screenerPanels", () => ({
 
 vi.mock("@/app/components/screener/ResultFilterBar", () => ({ default: () => Stub({ marker: "ResultFilterBar" }) }));
 vi.mock("@/app/components/screener/ResultPagerTable", () => ({ default: () => Stub({ marker: "ResultPagerTable" }) }));
-vi.mock("@/app/components/screener/WeeklyChangesLine", () => ({ default: () => Stub({ marker: "WeeklyChangesLine" }) }));
+vi.mock("@/app/components/screener/WeeklyChangesLine", () => ({
+  default: ({ defer = false } = {}) => (defer ? null : Stub({ marker: "WeeklyChangesLine" })),
+}));
 vi.mock("@/app/components/screener/GlobalCoveragePanel", () => ({ default: () => Stub({ marker: "GlobalCoveragePanel" }) }));
 
 let ScreenerShell;
@@ -285,6 +287,33 @@ describe("ScreenerShell markets misalignment", () => {
     expect(html).toContain("cargando…");
     expect(html).not.toContain("0 de 0 pasan");
     expect(html).toContain("mesa: HK");
+  });
+
+  it("T9: cold con status primario — una historia (bar sí; truth/empty/weekly no compiten)", () => {
+    const props = makeProps({
+      marketsStale: false,
+      scanStale: false,
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+      restoringScan: true,
+    });
+    props.chrome.status = "Cargando el escaneo nocturno...";
+    props.results.analyzedRows = [];
+    props.results.rows = [];
+    props.results.filtered = [];
+    props.results.pagedRows = [];
+    props.results.emptyLabel = "Cargando los últimos datos guardados...";
+    props.chrome.rows = [];
+    props.resultView.filtered = [];
+    props.resultView.pagedRows = [];
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
+    expect(html).toContain("Cargando el escaneo nocturno");
+    expect(html).toContain("scanStatusBar");
+    expect(html).not.toContain("cargando…");
+    expect(html).not.toContain("últimos datos guardados");
+    expect(html).not.toContain("0 de 0 pasan");
+    expect(html).not.toContain("data-stub=\"WeeklyChangesLine\"");
+    expect(html).toContain("mesa: US");
   });
 
   it("con mercados alineados la verdad incluye mesa sin aviso de desalineación", () => {

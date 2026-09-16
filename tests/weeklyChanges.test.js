@@ -7,6 +7,7 @@
 // panel — los ceros se escriben, las ausencias llevan motivo (principio 3).
 
 import { describe, expect, it, vi } from "vitest";
+import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   AT_HIGH_MIN_D52,
@@ -387,6 +388,15 @@ describe("renderWeeklyChangesView", () => {
     expect(html).toContain("weeklyChangesQuiet");
     expect(html).toContain("no disponibles ahora mismo.");
     expect(html).not.toContain("tardó demasiado");
+  });
+});
+
+describe("WeeklyChangesLine · defer (T9)", () => {
+  it("con defer=true no pinta la línea de comprobando…", async () => {
+    const { default: WeeklyChangesLine } = await import("@/app/components/screener/WeeklyChangesLine");
+    const html = renderToStaticMarkup(React.createElement(WeeklyChangesLine, { defer: true }));
+    expect(html).toBe("");
+    expect(html).not.toContain("comprobando");
   });
 });
 

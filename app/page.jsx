@@ -55,6 +55,7 @@ import { isCazaResultView, resolveResultViewMode, SCREENER_RESULT_VIEW_MODE_CHAN
 import { createDebouncedSessionSaver, screenerFiltersFromScan, withScanScreenerFilters } from "@/lib/screenerFilterFastPath";
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
 import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, buildLocalFallbackNotice, buildCloudAuthRequiredNotice, localScanIsSampled, manualDataRefreshStatus, screenerSessionRefreshReason, sessionAutoRefreshStatus, snapshotCloudFallbackReason } from "@/lib/snapshotFreshness";
+import { coldProgressEmptyLabel } from "@/lib/screenerColdProgress";
 import { isCloudAuthFailure } from "@/lib/serviceErrors";
 import { dropForeignMarketSnapshots, pickNightlyUsRestorableScan, restoredSnapshotView, snapshotRowsAreFiltered } from "@/lib/snapshotRestore";
 import { nightlyAbsenceNotice, nightlyAbsenceReasonText, nightlyAbsenceStatus } from "@/lib/nightlyAbsence";
@@ -1499,8 +1500,9 @@ export default function Page() {
   const scanModeStale = scanStale && scanContext && scanMode !== scanContext?.scannedScanMode;
   // Estado vacío de la tabla, con la causa dicha (punto 4 del contrato sin
   // botón): cargando ≠ desalineación mercados ≠ cero-por-filtro ≠ sin datos.
+  // T9: en cold restore el empty es silencioso — el status bar cuenta la historia.
   const resultsEmptyLabel = restoringScan
-    ? "Cargando los últimos datos guardados..."
+    ? coldProgressEmptyLabel()
     : marketsBlockingMisalignment && !marketsLoadFailed
       ? "Cargando datos de la selección…"
       : marketsBlockingMisalignment

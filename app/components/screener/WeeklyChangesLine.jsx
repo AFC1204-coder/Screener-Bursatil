@@ -359,7 +359,13 @@ export function renderWeeklyChangesView({
   );
 }
 
-export default function WeeklyChangesLine({ onOpenStock }) {
+/**
+ * @param {object} props
+ * @param {Function} [props.onOpenStock]
+ * @param {boolean} [props.defer] — T9: no fetch ni «comprobando…» hasta que la
+ *   mesa salga de cold restore (una historia de progreso = status del escaneo).
+ */
+export default function WeeklyChangesLine({ onOpenStock, defer = false }) {
   const [payload, setPayload] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -370,6 +376,12 @@ export default function WeeklyChangesLine({ onOpenStock }) {
   const pushedRef = useRef(false);
 
   useEffect(() => {
+    if (defer) {
+      setPayload(null);
+      setError("");
+      setLoading(true);
+      return undefined;
+    }
     const controller = new AbortController();
     let cancelled = false;
     loadWeeklyChangesPayload({ signal: controller.signal })
@@ -398,7 +410,7 @@ export default function WeeklyChangesLine({ onOpenStock }) {
       cancelled = true;
       controller.abort();
     };
-  }, []);
+  }, [defer]);
 
   // El panel vive en la URL (?cambios=semana): un enlace directo lo abre y el
   // gesto atrás lo cierra. popstate es la única fuente de verdad al navegar.
@@ -458,6 +470,10 @@ export default function WeeklyChangesLine({ onOpenStock }) {
       return next;
     });
   }, []);
+
+  // T9: durante cold restore no pintamos «comprobando…» — el status del escaneo
+  // es la única historia de progreso.
+  if (defer) return null;
 
   return renderWeeklyChangesView({
     payload,

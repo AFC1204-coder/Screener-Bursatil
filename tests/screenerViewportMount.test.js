@@ -274,14 +274,15 @@ describe("ScreenerShell · SHELL-D laboratorio fuera del aside", () => {
     expect(aside).not.toContain("Cobertura internacional por mercado");
   });
 
-  it("menú ⋯ escritorio: Diagnóstico agrupa auditoría y cobertura", () => {
+  it("menú ⋯ escritorio: Diagnóstico agrupa auditoría y cobertura (cobertura lazy)", () => {
     mockIsMobileViewport.mockReturnValue(false);
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
     expect(html).toContain("resultsMoreMenuLaboratory");
     expect(html).toMatch(/screenerDiagnosticsDisclosure[\s\S]*?<span>Diagnóstico<\/span>[\s\S]*?scanDiagnosticsDisclosure[\s\S]*?Auditoría de filtros[\s\S]*?globalCoverageDisclosure[\s\S]*?Cobertura internacional por mercado/);
     expect(html).not.toMatch(/<details class="disclosurePanel screenerDiagnosticsDisclosure"[^>]*open=/);
     expect(html).toContain("data-stub=\"FilterDiagnosticsPanel\"");
-    expect(html).toContain("data-stub=\"GlobalCoveragePanel\"");
+    // T9: GlobalCoveragePanel solo monta al abrir el disclosure (no fetch en cold).
+    expect(html).not.toContain("data-stub=\"GlobalCoveragePanel\"");
   });
 
   it("drawer móvil: sin Diagnóstico en el aside compartido", () => {

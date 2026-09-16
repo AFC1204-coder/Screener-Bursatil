@@ -52,11 +52,14 @@ import {
   filterLayersUpgradeNoticeReadyToShow,
 } from "@/lib/screenerFilterLayers";
 import { isDismissibleSampleNotice } from "@/lib/snapshotFreshness";
+import {
+  coldProgressEmptyLabel,
+  isPrimaryScanProgressStatus,
+  resolveColdProgressSurfaces,
+} from "@/lib/screenerColdProgress";
 
 function showScanStatusBar(err, status = "") {
-  if (err) return true;
-  const text = String(status || "").trim();
-  return /^(Cargando|Actualizando|Sincronizando|Descargando|Guardando|Importando|Subiendo)/i.test(text);
+  return isPrimaryScanProgressStatus(err, status);
 }
 
 function MobileCollapsibleNotice({
@@ -338,16 +341,20 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   const resultsBlockedByMarketMisalignment = Boolean(
     marketsMisalignment && marketsMisalignment.blocksResults !== false,
   );
+  // T9: una historia de progreso en cold — status bar primario; weekly defer;
+  // truth/empty no compiten con «cargando…» / «últimos datos guardados…».
+  const coldProgress = resolveColdProgressSurfaces({ restoringScan, status, err });
   // TRUTH-LOAD-1: la mesa sigue vacía bajo bloqueo UX-NAC, pero la verdad no
   // afirma 0·0·0 mientras restoringScan trae datos (p. ej. muestra 157/204).
-  const truthLineLoading = restoringScan;
-  const suppressTruthCounts = resultsBlockedByMarketMisalignment && !truthLineLoading;
+  // Si el status bar ya cuenta la carga, la truth no duplica «cargando…».
+  const truthLineLoading = coldProgress.truthLineLoading;
+  const suppressTruthCounts = resultsBlockedByMarketMisalignment && !restoringScan;
   const huntResultsRows = resultsBlockedByMarketMisalignment ? [] : resultsRows;
   const huntResultsFiltered = resultsBlockedByMarketMisalignment ? [] : resultsFiltered;
   const huntResultsPagedRows = resultsBlockedByMarketMisalignment ? [] : resultsPagedRows;
   const huntResultsEmptyLabel = resultsBlockedByMarketMisalignment
     ? MARKETS_MISALIGNMENT_EMPTY_LABEL
-    : resultsEmptyLabel;
+    : (coldProgress.quietEmptyLabel ? coldProgressEmptyLabel() : resultsEmptyLabel);
   const truthPassRows = suppressTruthCounts ? [] : resultsRows;
   const truthFilteredRows = suppressTruthCounts ? [] : resultsFiltered;
   const truthAnalyzedRows = suppressTruthCounts ? [] : analyzedRows;
@@ -359,11 +366,18 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     rowsDeferredStale,
     viewFiltersActive,
   });
+  const truthQuietProgress = Boolean(
+    coldProgress.primaryStatusBar
+    && truthAnalyzedRows.length === 0
+    && passCountForTruth === 0
+    && visibleCountForTruth === 0,
+  );
   const truthLine = buildScreenerTruthLine({
     analyzedRows: truthAnalyzedRows,
     passCount: passCountForTruth,
     visibleCount: visibleCountForTruth,
     loading: truthLineLoading,
+    quietProgress: truthQuietProgress,
     pageSize: resultPageSize,
     totalPages: totalResultPages,
     presetName: presetNameForTruth,
@@ -662,8 +676,12 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         <p>{marketCountLabel(markets.length)}</p>
         {/* Autocontenido, como GlobalCoveragePanel: posee su fetch a
             GET /api/weekly-changes y no bloquea la primera pintura. Es la
-            segunda excepción a la nota de cabecera de este archivo. */}
-        <WeeklyChangesLine onOpenStock={saveSessionBeforeStockOpen} />
+            segunda excepción a la nota de cabecera de este archivo.
+            T9: defer en cold restore para no sumar «comprobando…» al pasillo. */}
+        <WeeklyChangesLine
+          onOpenStock={saveSessionBeforeStockOpen}
+          defer={coldProgress.deferWeekly}
+        />
       </div>
     </div>
     {isMobileViewport ? <>
