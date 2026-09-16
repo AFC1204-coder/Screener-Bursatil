@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ASIA, DEFAULT_MARKETS } from "@/lib/screenerConfig";
+import { ASIA, ALL_SELECTABLE_MARKETS, DEFAULT_MARKETS } from "@/lib/screenerConfig";
 import { EUROPE_PRIORITY_MARKETS } from "@/lib/markets";
 import {
   buildMarketsLoadingNotice,
@@ -38,8 +38,11 @@ describe("marketPresetMarkets", () => {
     expect(asia).toEqual(ASIA.filter((code) => code !== "TW"));
   });
 
-  it("DEFAULT_MARKETS no incluye TW", () => {
+  it("DEFAULT_MARKETS es solo EE. UU. y no incluye TW", () => {
+    expect(DEFAULT_MARKETS).toEqual(["US"]);
     expect(DEFAULT_MARKETS).not.toContain("TW");
+    expect(ALL_SELECTABLE_MARKETS).not.toContain("TW");
+    expect(ALL_SELECTABLE_MARKETS.length).toBeGreaterThan(1);
     expect(marketPresetMarkets("global")).not.toContain("TW");
   });
 
@@ -51,12 +54,18 @@ describe("marketPresetMarkets", () => {
     expect(global).toContain("HK");
     expect(global).toContain("CA");
     expect(global).not.toEqual(DEFAULT_MARKETS);
+    expect(global).not.toEqual(ALL_SELECTABLE_MARKETS);
   });
 
   it("core-intl fusiona HK, CA y EU priority", () => {
     const coreIntl = marketPresetMarkets("core-intl");
     expect(coreIntl).toEqual(expect.arrayContaining(["HK", "CA", ...EUROPE_PRIORITY_MARKETS]));
     expect(coreIntl).not.toContain("US");
+  });
+
+  it("fallback de preset desconocido es EE. UU.", () => {
+    expect(marketPresetMarkets("no-existe")).toEqual(["US"]);
+    expect(marketPresetMarkets("")).toEqual(["US"]);
   });
 });
 
@@ -190,7 +199,7 @@ describe("restoreSessionMarketAlignAction", () => {
 
   it("no auto-carga tras remount si cobertura parcial ya estaba settled", () => {
     expect(restoreSessionMarketAlignAction({
-      restoredMarkets: DEFAULT_MARKETS,
+      restoredMarkets: ALL_SELECTABLE_MARKETS,
       scanContext: { scannedMarkets: ["US"] },
       analyzedRows: [{ symbol: "AAPL", country: "US" }],
       hasVisibleRows: true,
@@ -253,7 +262,7 @@ describe("buildScreenerTruthMarketSegments", () => {
   });
 
   it("desktop desalineado con muchos mercados en selección resume sin volcar códigos", () => {
-    const many = DEFAULT_MARKETS.slice(0, 10);
+    const many = ALL_SELECTABLE_MARKETS.slice(0, 10);
     expect(buildScreenerTruthMarketSegments({
       scannedMarkets: ["US"],
       selectedMarkets: many,
@@ -290,7 +299,7 @@ describe("buildScreenerTruthMarketSegments", () => {
   it("modo compacto mantiene aviso de desalineación sin volcar códigos ni repetir selección", () => {
     expect(buildScreenerTruthMarketSegments({
       scannedMarkets: ["US", "CA", "HK"],
-      selectedMarkets: DEFAULT_MARKETS,
+      selectedMarkets: ALL_SELECTABLE_MARKETS,
       marketsMisaligned: true,
       compact: true,
     })).toEqual([
@@ -324,7 +333,7 @@ describe("buildMarketsStaleNotice", () => {
   it("avisa cobertura parcial cuando el scan es subconjunto de la selección", () => {
     const notice = buildMarketsStaleNotice({
       scannedMarkets: ["US"],
-      selectedMarkets: DEFAULT_MARKETS,
+      selectedMarkets: ALL_SELECTABLE_MARKETS,
       rowCount: 3319,
     });
     expect(notice).not.toBeNull();
@@ -332,7 +341,7 @@ describe("buildMarketsStaleNotice", () => {
     expect(notice.blocksResults).toBe(false);
     expect(notice.detail).toContain("Datos cargados: US (3319)");
     expect(notice.detail).toContain("Faltan en mesa:");
-    expect(notice.peekDetail).toBe(`Faltan ${DEFAULT_MARKETS.length - 1} mercados`);
+    expect(notice.peekDetail).toBe(`Faltan ${ALL_SELECTABLE_MARKETS.length - 1} mercados`);
     expect(notice.peekDetail).not.toContain("Austria");
     expect(notice.ctaLabel).toBe("Cargar datos de la selección");
   });
@@ -380,7 +389,7 @@ describe("resolveMarketsMisalignmentNotice (UX-NAC-3)", () => {
   it("cobertura parcial estable: aviso honesto sin loading eterno", () => {
     const notice = resolveMarketsMisalignmentNotice({
       scannedMarkets: ["US", "HK", "CA"],
-      selectedMarkets: DEFAULT_MARKETS,
+      selectedMarkets: ALL_SELECTABLE_MARKETS,
       rowCount: 4188,
       restoringScan: false,
       loadFailed: false,
@@ -397,7 +406,7 @@ describe("resolveMarketsMisalignmentNotice (UX-NAC-3)", () => {
   it("cobertura parcial sin settled: loading para permitir auto-load", () => {
     const notice = resolveMarketsMisalignmentNotice({
       scannedMarkets: ["US"],
-      selectedMarkets: DEFAULT_MARKETS,
+      selectedMarkets: ALL_SELECTABLE_MARKETS,
       rowCount: 3319,
       restoringScan: false,
       loadFailed: false,
@@ -412,7 +421,7 @@ describe("resolveMarketsMisalignmentNotice (UX-NAC-3)", () => {
   it("cobertura parcial durante restoringScan sigue mostrando loading", () => {
     const notice = resolveMarketsMisalignmentNotice({
       scannedMarkets: ["US", "HK"],
-      selectedMarkets: DEFAULT_MARKETS,
+      selectedMarkets: ALL_SELECTABLE_MARKETS,
       rowCount: 100,
       restoringScan: true,
     });
@@ -481,7 +490,7 @@ describe("shouldAutoLoadMarketSelection", () => {
 
 describe("marketsSelectionLoadSettled", () => {
   it("true solo cuando selectedKey y settledKey coinciden", () => {
-    const key = DEFAULT_MARKETS.slice().sort().join(",");
+    const key = ALL_SELECTABLE_MARKETS.slice().sort().join(",");
     expect(marketsSelectionLoadSettled(key, key)).toBe(true);
     expect(marketsSelectionLoadSettled(key, "US")).toBe(false);
     expect(marketsSelectionLoadSettled("", key)).toBe(false);
@@ -503,7 +512,7 @@ describe("buildMarketsLoadingNotice", () => {
   });
 
   it("resume N mercados en peek y detail sin volcar códigos", () => {
-    const many = DEFAULT_MARKETS.slice(0, 10);
+    const many = ALL_SELECTABLE_MARKETS.slice(0, 10);
     const notice = buildMarketsLoadingNotice({ selectedMarkets: many });
     expect(notice.peekDetail).toBe("Cargando 10 mercados…");
     expect(notice.bodyDetail).toBe("Cargando 10 mercados…");
