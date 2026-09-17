@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Gauge, Layers3, List, Search, Star } from "lucide-react";
+import { BookOpen, Gauge, Layers3, List, Search, Star } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 export const NAV_ITEMS = [
@@ -10,6 +10,7 @@ export const NAV_ITEMS = [
   { href: "/sectors", label: "Sectores", Icon: Layers3 },
   { href: "/research-desk", label: "Research", Icon: Star },
   { href: "/market-health", label: "Mercado", Icon: Gauge },
+  { href: "/metodologia", label: "Metodología", Icon: BookOpen },
 ];
 
 function activeForPath(pathname = "/", href = "/") {
