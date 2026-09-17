@@ -38,7 +38,7 @@ import { decisionProfileStateForStock } from "@/lib/decisionProfile";
 import { buildScreenerDataHealth, dataHealthFilterLabel } from "@/lib/screenerDataHealth";
 import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
 import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
-import { compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
+import { alignedScanSettingsSignature, compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, isScanSettingsStale, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import {
   applyChartPreviewsToRows,
   buildChartPreviewHydrateSignature,
@@ -887,11 +887,17 @@ export default function Page() {
       snapshotSource: "supabase",
       snapshotRowsAreFiltered: snapshotRowsAreFiltered(scan),
       chartPreviewTransport: scan.chartPreviewTransport || null,
-      // Igual que en restoreSnapshot: el snapshot renovado se considera
-      // vigente respecto a los criterios con los que convive (los de la
-      // sesión); si markets/manual/scanMode cambian después, el banner de
-      // staleness lo reflejará.
-      settingsSignature: scanSettingsSignature(signedMarkets, signedManual, signedScanMode),
+      // Firma = criterios de la selección pedida (scanSignature), no solo los
+      // mercados inferidos del snapshot. Así, al volver a US tras Global la
+      // firma queda US aunque fromScan/settings.markets vengan ruidosos; la
+      // mesa real sigue en scannedMarkets (signedMarkets).
+      settingsSignature: scanSettingsSignature(
+        Array.isArray(scanSignature?.markets) && scanSignature.markets.length
+          ? scanSignature.markets
+          : signedMarkets,
+        signedManual,
+        signedScanMode,
+      ),
       scannedMarkets: [...signedMarkets].sort(),
       scannedScanMode: signedScanMode,
       screenerFilters: screenerFiltersFromScan(scan),
@@ -1481,9 +1487,11 @@ export default function Page() {
   // esos son post-filtrado en cliente sobre analyzedRows (filterAnalyzedRows),
   // nunca producen staleness del universo. Solo el banner global + dots de
   // control (markets/scanMode) consumen estos flags.
-  const currentSettingsSignature = useMemo(() => scanSettingsSignature(markets, manual, scanMode), [markets, manual, scanMode]);
+  //
+  // Retención #4: con mesa ya alineada (p. ej. tras Global→US), un
+  // settingsSignature que aún lista mercados de la selección anterior no debe
+  // dejar el banner «criterios de cobertura cambiaron» — solo manual/scanMode.
   const scannedSettingsSignature = scanContext?.settingsSignature || null;
-  const scanStale = Boolean(scanContext && scannedSettingsSignature && scannedSettingsSignature !== currentSettingsSignature);
   // Mercados realmente cubiertos por el scan cargado. Si scanContext no trae
   // scannedMarkets (sesión vieja o incompleta), inferimos desde las filas.
   const effectiveScannedMarkets = useMemo(() => {
@@ -1502,6 +1510,16 @@ export default function Page() {
   const scannedMarketsKey = effectiveScannedMarkets.join(",");
   const selectedMarketsKey = markets.slice().sort().join(",");
   const marketsStale = Boolean(effectiveScannedMarkets.length) && selectedMarketsKey !== scannedMarketsKey;
+  const scanStale = Boolean(
+    scanContext
+    && isScanSettingsStale({
+      settingsSignature: scannedSettingsSignature,
+      markets,
+      manual,
+      scanMode,
+      marketsMisaligned: marketsStale,
+    }),
+  );
   const marketsSelectionLoadSettled = isMarketsSelectionLoadSettled(selectedMarketsKey, marketsSelectionSettledKey);
   const marketsBlockingMisalignment = Boolean(
     effectiveScannedMarkets.length
@@ -1615,6 +1633,19 @@ export default function Page() {
       setMarketsLoadFailed(false);
       setMarketsLoadFailedDetail("");
       markMarketsSelectionSettled(nextKey);
+      // Mesa ya alineada: curar drift de markets en settingsSignature para no
+      // dejar el banner de cobertura fantasma (Global→US / early-return).
+      setScanContext((prev) => {
+        if (!prev) return prev;
+        const nextSig = alignedScanSettingsSignature({
+          settingsSignature: prev.settingsSignature,
+          markets: normalized,
+          manual,
+          scanMode,
+        });
+        if (nextSig === prev.settingsSignature) return prev;
+        return { ...prev, settingsSignature: nextSig, scannedScanMode: scanMode };
+      });
       setStatus(label);
       return;
     }
@@ -1815,6 +1846,27 @@ export default function Page() {
     })) return;
     loadScanForMarketSelection(markets, "Cargando datos de la selección…");
   }, [sessionReady, marketsStale, restoringScan, marketsLoadFailed, markets, effectiveScannedMarkets.length, scannedMarketsKey, marketsSelectionLoadSettled]);
+  // Cura settingsSignature cuando la mesa ya alinea pero la firma aún lleva
+  // mercados de una selección anterior (banner cobertura fantasma Global→US).
+  useEffect(() => {
+    if (!sessionReady || !scanContext || marketsStale || restoringScan) return;
+    const nextSig = alignedScanSettingsSignature({
+      settingsSignature: scanContext.settingsSignature,
+      markets,
+      manual,
+      scanMode,
+    });
+    if (!nextSig || nextSig === scanContext.settingsSignature) return;
+    setScanContext((prev) => (prev ? { ...prev, settingsSignature: nextSig } : prev));
+  }, [
+    sessionReady,
+    marketsStale,
+    restoringScan,
+    markets,
+    manual,
+    scanMode,
+    scanContext?.settingsSignature,
+  ]);
   useEffect(() => {
     if (!sessionReady) return;
     const pending = restoreMarketAlignRef.current;
