@@ -247,8 +247,10 @@ describe("ScreenerShell · franja P3 (ranking provisional)", () => {
     const props = makeProps({ resultsRows: [FINAL_ROW] });
     props.chrome.err = "No se pudo cargar el escaneo.";
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
-    expect(html).toContain("scanStatusBar");
+    // P2: el hard es el div de incidencia; el status bar no se duplica.
+    expect(html).toContain('class="error"');
     expect(html).toContain("No se pudo cargar el escaneo.");
+    expect(html).not.toContain("scanStatusBar");
   });
 });
 

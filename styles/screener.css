@@ -11290,3 +11290,105 @@ button.decisionOperatingIssue:hover {
   }
 }
 
+/* P2 — Estado de datos (overflow de banners demoted) */
+.screenerDataStateDrawer {
+  margin: 0 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2, var(--surface));
+  color: var(--muted);
+  font-size: var(--text-s);
+}
+
+.screenerDataStateDrawer > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  padding: 8px 12px;
+  user-select: none;
+}
+
+.screenerDataStateDrawer > summary::-webkit-details-marker {
+  display: none;
+}
+
+.screenerDataStateDrawerLabel {
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+.screenerDataStateDrawerCount {
+  font-style: normal;
+  opacity: 0.75;
+}
+
+.screenerDataStateDrawerList {
+  margin: 0;
+  padding: 0 12px 10px;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.screenerDataStateDrawerItem {
+  padding-top: 8px;
+  display: grid;
+  gap: 4px;
+}
+
+.screenerDataStateDrawerItemHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.screenerDataStateDrawerItemLabel {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.screenerDataStateDrawerItemTone {
+  font-style: normal;
+  font-size: var(--text-xxs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.65;
+}
+
+.screenerDataStateDrawerItem--hard .screenerDataStateDrawerItemTone {
+  color: var(--warn, #c4a35a);
+}
+
+.screenerDataStateDrawerItemDetail {
+  margin: 0;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.screenerDataStateDrawerItemActions {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* P2: atenuar badge Next «N Issues» fuera del protagonismo de caza */
+.screenerTerminalPage ~ nextjs-portal,
+body:has(.screenerTerminalPage) [data-next-badge-root],
+body:has(.screenerTerminalPage) nextjs-portal {
+  opacity: 0.35;
+  transform: scale(0.9);
+  transform-origin: bottom right;
+  pointer-events: auto;
+  transition: opacity 0.2s ease;
+}
+
+body:has(.screenerTerminalPage) [data-next-badge-root]:hover,
+body:has(.screenerTerminalPage) nextjs-portal:hover {
+  opacity: 0.85;
+}
+
