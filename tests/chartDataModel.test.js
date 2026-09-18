@@ -686,7 +686,7 @@ describe("chartDataModel.resolve · matriz de resolución", () => {
       kind: "expanding",
       title: "",
     });
-    expect(result.notice.text).toBe("Ampliando histórico para este rango...");
+    expect(result.notice.text).toBe("Ampliando histórico…");
   });
 
   it("notice prioriza P0 sobre loading/error operacional", () => {

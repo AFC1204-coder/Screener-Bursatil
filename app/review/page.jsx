@@ -72,11 +72,18 @@ import { prepareReviewQueueRows } from "@/lib/decisionProfile";
 import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
 import { resolveReviewFocus, reviewFocusStatusMessage } from "@/lib/reviewSession";
 import { buildReviewPageHref } from "@/lib/screenerReviewLaunch";
+import {
+  buildSingleSymbolReviewRow,
+  defaultReviewQueueCollapsed,
+  SINGLE_SYMBOL_QUEUE_MODE,
+  singleSymbolReviewStatus,
+  shouldUseSingleSymbolReview,
+} from "@/lib/reviewPath";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
 import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, buildStockDecisionResolutionSummary, decisionResolutionForSymbol, decisionResolutionHistory, filterRowsByDecisionResolution, reopenStockDecisionResolution, reviewDecisionStateForRows, stockDecisionResolutionFilter } from "@/lib/stockDecisionResolution";
 import { createFavoriteFromRow } from "@/lib/stockRows";
-import { countryCode, externalLinks, stockUrl } from "@/lib/symbols";
+import { cleanSymbol, countryCode, externalLinks, stockUrl } from "@/lib/symbols";
 
 function value(row = {}, key) {
   return row[key] ?? row.snapshot?.[key] ?? null;
@@ -268,6 +275,8 @@ export default function ReviewPage() {
   const [decisionResolutionLog, setDecisionResolutionLog] = useState([]);
   const [resolutionFilter, setResolutionFilter] = useState("all");
   const [sourceMeta, setSourceMeta] = useState({});
+  const [queueCollapsed, setQueueCollapsed] = useState(false);
+  const queueCollapseSeededRef = useRef(false);
   const sourceRequestRef = useRef(0);
 
   function loadSource(nextSource = source, keepState = false, startSymbol = "") {
@@ -299,10 +308,27 @@ export default function ReviewPage() {
         }
       }
     }
-    const nextRows = prepareReviewQueueRows(rowsWithPreviews, nextSettings || {});
+    const nextRowsPrepared = prepareReviewQueueRows(rowsWithPreviews, nextSettings || {});
+    // P7: /review?symbol=X sin cola → modo 1 símbolo (no empty → home).
+    let nextRows = nextRowsPrepared;
+    let nextSourceMeta = sourceMetaForReview(nextSource, review);
+    const requestedSymbol = cleanSymbol(startSymbol || review.selectedSymbol || "");
+    if (
+      nextSource === "current"
+      && shouldUseSingleSymbolReview({ queueRows: nextRows, symbol: requestedSymbol })
+    ) {
+      const single = buildSingleSymbolReviewRow(requestedSymbol);
+      if (single) {
+        nextRows = [single];
+        nextSourceMeta = {
+          sourceLabel: "1 símbolo",
+          sourceDetail: singleSymbolReviewStatus(requestedSymbol),
+          queueMode: SINGLE_SYMBOL_QUEUE_MODE,
+        };
+      }
+    }
     const decisionState = reviewDecisionStateForRows(review, nextRows);
     const nextResolutionFilter = keepState ? review.resolutionFilter || "all" : "all";
-    const nextSourceMeta = sourceMetaForReview(nextSource, review);
     const focus = nextSource === "current" && nextRows.length
       ? resolveReviewFocus({ ...review, rows: nextRows }, startSymbol || review.selectedSymbol || "")
       : {
@@ -322,6 +348,9 @@ export default function ReviewPage() {
       resolutionFilter: nextResolutionFilter,
       digestFilter: "all",
       selectedSymbol: focus.symbol || review.selectedSymbol || "",
+      sourceLabel: nextSourceMeta.sourceLabel || review.sourceLabel,
+      sourceDetail: nextSourceMeta.sourceDetail || review.sourceDetail,
+      queueMode: nextSourceMeta.queueMode || review.queueMode,
     }, focus.symbol || startSymbol || review.selectedSymbol || "");
     const symbolIndex = navigation.currentIndex;
     setSource(nextSource);
@@ -335,8 +364,13 @@ export default function ReviewPage() {
     setDecisionResolutions(decisionState.decisionResolutions);
     setDecisionResolutionLog(decisionState.decisionResolutionLog);
     setResolutionFilter(nextResolutionFilter);
+    const singleSymbolMode = nextSourceMeta.queueMode === SINGLE_SYMBOL_QUEUE_MODE;
     const focusMessage = nextSource === "current" ? reviewFocusStatusMessage(focus, nextRows.length) : "";
-    setStatus(focusMessage || `${sourceLabel(nextSource, nextSourceMeta)} · ${nextRows.length} acciones`);
+    setStatus(
+      singleSymbolMode
+        ? singleSymbolReviewStatus(focus.symbol || requestedSymbol)
+        : (focusMessage || `${sourceLabel(nextSource, nextSourceMeta)} · ${nextRows.length} acciones`),
+    );
     if (focus.inQueue && focus.symbol && nextSource === "current") {
       const nextHref = buildReviewPageHref(focus.symbol, nextSource);
       if (typeof window !== "undefined" && `${window.location.pathname}${window.location.search}` !== nextHref) {
@@ -401,6 +435,7 @@ export default function ReviewPage() {
   const pendingVisibleCount = resolutionSummary.find((item) => item.key === "pending")?.count || 0;
   const queueEmptyByFilter = queueFiltersActive && baseVisibleRows.length > 0 && !visibleRows.length;
   const queuePendingComplete = queueEmptyByFilter && resolutionFilter === "pending" && !pendingVisibleCount;
+  const singleSymbolMode = sourceMeta.queueMode === SINGLE_SYMBOL_QUEUE_MODE;
   const queueEmptyTitle = queuePendingComplete
     ? "Cola pendiente completada"
     : queueEmptyByFilter
@@ -410,7 +445,18 @@ export default function ReviewPage() {
     ? `${sourceLabel(source, sourceMeta)} · no quedan acciones pendientes en esta cola.`
     : queueEmptyByFilter
       ? `${sourceLabel(source, sourceMeta)} · ${activeResolutionFilter.label} no tiene resultados ahora.`
-      : "Carga una cola desde el Screener o recupera un snapshot para iniciar la revisión.";
+      : "Carga una cola desde el Screener o abre un ticker (search → ficha) para revisar sin callejón.";
+
+  useEffect(() => {
+    if (queueCollapseSeededRef.current) return;
+    if (!visibleRows.length) return;
+    queueCollapseSeededRef.current = true;
+    const width = typeof window !== "undefined" ? window.innerWidth : 1440;
+    setQueueCollapsed(defaultReviewQueueCollapsed({
+      visibleCount: visibleRows.length,
+      viewportWidth: width,
+    }));
+  }, [visibleRows.length]);
   const queueCompletionResolution = queuePendingComplete
     ? resolutionSummary.find((item) => ["candidate", "watch", "reject"].includes(item.key) && item.count > 0)
     : null;
@@ -653,12 +699,11 @@ export default function ReviewPage() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeRow, currentIndex, favorites, favoriteSymbols, reviewSettings, rows.length, source, visibleRows.length]);
 
-  return <main className="page reviewPage">
+  return <main className={`page reviewPage ${queueCollapsed ? "reviewQueueIsCollapsed" : ""}`.trim()}>
     <StorageAlert />
     <section className="card hero">
       <div className="heroTop">
         <div>
-          <div className="badge">StatsEdge · Rapid Review</div>
           <h1>Vista rápida</h1>
         </div>
         <div className="mobileActions">
@@ -672,19 +717,30 @@ export default function ReviewPage() {
 
     <section className="card reviewStatus">
       <div className="kpis">
-        <div className="kpi"><b>{visibleRows.length}</b><span>{queueFiltersActive ? "acciones filtradas" : "acciones en cola"}</span></div>
+        <div className="kpi"><b>{visibleRows.length}</b><span>{singleSymbolMode ? "símbolo" : queueFiltersActive ? "acciones filtradas" : "acciones en cola"}</span></div>
         <div className="kpi"><b>{currentIndex + (visibleRows.length ? 1 : 0)}</b><span>posición actual</span></div>
         <div className="kpi"><b>{reviewed.size}</b><span>revisadas</span></div>
         <div className="kpi"><b>{resolvedVisibleCount}</b><span>resueltas ficha</span></div>
         <div className="kpi"><b>{hidden.size}</b><span>ocultas</span></div>
       </div>
       <div className="controls reviewControls">
-        <button className="btn" onClick={() => move(-1)} disabled={!visibleRows.length}>Anterior</button>
-        <button className="btn btnPrimary" onClick={() => move(1)} disabled={!visibleRows.length}>Siguiente</button>
+        <button className="btn" onClick={() => move(-1)} disabled={!visibleRows.length || singleSymbolMode}>Anterior</button>
+        <button className="btn btnPrimary" onClick={() => move(1)} disabled={!visibleRows.length || singleSymbolMode}>Siguiente</button>
         <button className="btn" onClick={() => toggleFavorite()} disabled={!activeRow}>{favoriteSymbols.has(activeSymbol) ? "Quitar favorito" : "Favorito"}</button>
         <button className="btn" onClick={() => markReviewed()} disabled={!activeRow}>Revisada</button>
-        <button className="btn btnGhost" onClick={() => hideActive()} disabled={!activeRow}>Ocultar</button>
+        <button className="btn btnGhost" onClick={() => hideActive()} disabled={!activeRow || singleSymbolMode}>Ocultar</button>
         <button className={`btn btnGhost ${showHidden ? "btnActive" : ""}`} onClick={() => setShowHidden((x) => !x)}>Ver ocultas</button>
+        {visibleRows.length > 1 ? (
+          <button
+            type="button"
+            className={`btn btnGhost reviewQueueToggle ${queueCollapsed ? "isCollapsed" : ""}`.trim()}
+            onClick={() => setQueueCollapsed((value) => !value)}
+            aria-expanded={!queueCollapsed}
+            aria-controls="review-queue-panel"
+          >
+            {queueCollapsed ? "Mostrar cola" : "Ocultar cola"}
+          </button>
+        ) : null}
       </div>
       <div className={reviewStatusLineClassName}>{investorStatusLabel(reviewStatusText)}</div>
     </section>
@@ -706,12 +762,20 @@ export default function ReviewPage() {
         <a className="btn" href="/">Screener</a>
         <a className="btn" href="/research-desk">Research Desk</a>
       </div>
-    </section> : <section className="reviewWorkbench">
-      <aside className="reviewQueue">
+    </section> : <section className={`reviewWorkbench ${queueCollapsed ? "queueCollapsed" : ""}`.trim()}>
+      <aside className={`reviewQueue ${queueCollapsed ? "isCollapsed" : ""}`.trim()} id="review-queue-panel" aria-hidden={queueCollapsed}>
         <div className="reviewQueueHead">
           <h2>{sourceLabel(source, sourceMeta)}</h2>
           {sourceMeta.sourceDetail ? <small className="reviewQueueSourceDetail">{sourceMeta.sourceDetail}</small> : null}
           <span>{resolutionFilter === "all" ? `${baseVisibleRows.length} visibles` : `${visibleRows.length}/${baseVisibleRows.length} visibles`}</span>
+          <button
+            type="button"
+            className="btn btnGhost btnSmall reviewQueueCollapseBtn"
+            onClick={() => setQueueCollapsed(true)}
+            aria-label="Colapsar cola"
+          >
+            «
+          </button>
         </div>
         {resolutionSummary.length > 1 ? <div className="reviewQueueSummary reviewResolutionSummary" aria-label="Resumen de cola por clasificación del inversor">
           {resolutionSummary.map((group) => (
@@ -752,6 +816,19 @@ export default function ReviewPage() {
         </div>
       </aside>
 
+      {queueCollapsed && visibleRows.length > 1 ? (
+        <button
+          type="button"
+          className="reviewQueueExpandRail"
+          onClick={() => setQueueCollapsed(false)}
+          aria-label="Mostrar cola de revisión"
+          title="Mostrar cola"
+        >
+          <span>Cola</span>
+          <b>{visibleRows.length}</b>
+        </button>
+      ) : null}
+
       <section className="reviewMain">
         <div className="reviewFocus">
           <div className="reviewFocusHeader">
@@ -760,9 +837,9 @@ export default function ReviewPage() {
           </div>
           <ReviewChartPanel row={activeRow} />
           <div className="reviewFloatingNav" aria-label="Navegación de acciones">
-            <button type="button" onClick={() => move(-1)} aria-label="Acción anterior">↑</button>
+            <button type="button" onClick={() => move(-1)} aria-label="Acción anterior" disabled={singleSymbolMode}>↑</button>
             <span>{currentIndex + 1}<em>/</em>{visibleRows.length}</span>
-            <button type="button" onClick={() => move(1)} aria-label="Acción siguiente">↓</button>
+            <button type="button" onClick={() => move(1)} aria-label="Acción siguiente" disabled={singleSymbolMode}>↓</button>
           </div>
           {activeRow.chartPreview?.length ? <div className="reviewSpark"><MiniSparkline bars={activeRow.chartPreview} /></div> : null}
         </div>
