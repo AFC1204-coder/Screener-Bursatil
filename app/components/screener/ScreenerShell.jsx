@@ -12,7 +12,7 @@
 // estado de negocio — mantenerlo aquí evita subir un ref del DOM del propio
 // panel al container solo para esto.
 
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { restartStatsEdgeSession } from "@/lib/cloudReauth";
 import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
 import ResultPagerTable from "@/app/components/screener/ResultPagerTable";
@@ -22,6 +22,15 @@ import IpoCohortWindowChips from "@/app/components/screener/IpoCohortWindowChips
 import WeeklyChangesLine from "@/app/components/screener/WeeklyChangesLine";
 import ScreenerSidebar from "@/app/components/screener/ScreenerSidebar";
 import ScreenerLaboratoryPanel from "@/app/components/screener/ScreenerLaboratoryPanel";
+import {
+  DEFAULT_SCREENER_CHROME_MODE,
+  SCREENER_CHROME_MODES,
+  isDiarioChromeMode,
+  persistScreenerChromeMode,
+  readPersistedScreenerChromeMode,
+  resolvePersistedScreenerChromeMode,
+  resolveScreenerChromeMode,
+} from "@/lib/screenerChromeMode";
 import {
   MobileResultList,
   PreviewCard,
@@ -176,6 +185,47 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   } = chrome;
   const onHuntTruthLinePaintRef = useRef(onHuntTruthLinePaint);
   onHuntTruthLinePaintRef.current = onHuntTruthLinePaint;
+
+  // P3/P12 — Diario (default) vs Expert; preferencia en localStorage.
+  const [chromeMode, setChromeMode] = useState(DEFAULT_SCREENER_CHROME_MODE);
+  const [fichaAdjustOpen, setFichaAdjustOpen] = useState(false);
+  const diarioChrome = isDiarioChromeMode(chromeMode);
+
+  useEffect(() => {
+    setChromeMode(resolvePersistedScreenerChromeMode(readPersistedScreenerChromeMode()));
+  }, []);
+
+  function handleChromeModeChange(nextMode) {
+    const mode = resolveScreenerChromeMode(nextMode);
+    setChromeMode(mode);
+    persistScreenerChromeMode(mode);
+    if (mode === SCREENER_CHROME_MODES.EXPERT) setFichaAdjustOpen(false);
+  }
+
+  function renderChromeModeToggle() {
+    return (
+      <div className="screenerChromeModeToggle chartPrefGroup" role="group" aria-label="Modo de chrome">
+        <div className="chartSegmented">
+          <button
+            type="button"
+            aria-pressed={chromeMode === SCREENER_CHROME_MODES.DIARIO}
+            className={chromeMode === SCREENER_CHROME_MODES.DIARIO ? "active" : ""}
+            onClick={() => handleChromeModeChange(SCREENER_CHROME_MODES.DIARIO)}
+          >
+            Diario
+          </button>
+          <button
+            type="button"
+            aria-pressed={chromeMode === SCREENER_CHROME_MODES.EXPERT}
+            className={chromeMode === SCREENER_CHROME_MODES.EXPERT ? "active" : ""}
+            onClick={() => handleChromeModeChange(SCREENER_CHROME_MODES.EXPERT)}
+          >
+            Expert
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // --- sidebar ---
   const {
@@ -904,7 +954,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       </div>
     </div> : null}
 
-    <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}${showMesaEmptyCard ? " dashboardContainer--mesaEmpty" : ""}`}>
+    <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}${showMesaEmptyCard ? " dashboardContainer--mesaEmpty" : ""}${diarioChrome ? " dashboardContainer--diario" : " dashboardContainer--expert"}`}>
       <button
         type="button"
         className="sidebarCollapseBtn"
@@ -938,6 +988,10 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         familyImpact={familyImpact}
         previewFamilyIntensity={previewFamilyIntensity}
         commitFamilyIntensity={commitFamilyIntensity}
+        chromeMode={chromeMode}
+        fichaAdjustOpen={fichaAdjustOpen}
+        onFichaAdjustOpenChange={setFichaAdjustOpen}
+        chromeModeToggle={renderChromeModeToggle()}
       />
 
       <main className="mainContent">
@@ -971,7 +1025,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             passedRows={resultsRows}
             activeSettings={activeSettings}
             onOpenFamily={(familyKey) => {
+              setSidebarCollapsed(false);
               setShowMobileFilters(true);
+              if (diarioChrome) setFichaAdjustOpen(true);
               setActiveFilterFamily(familyKey);
             }}
           />
@@ -1068,6 +1124,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           <div className={`resultsHeader${showMesaEmptyCard ? " resultsHeader--mesaEmpty" : ""}`}>
             <div className="resultsTitleBlock">
               <h2>Resultados</h2>
+              {renderChromeModeToggle()}
             </div>
             {showMesaEmptyCard ? null : (
             <div className="controls resultsToolbar">
@@ -1165,6 +1222,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             totalCount={huntResultsRows.length}
             onClearAll={clearResultView}
             onReview={huntResultsFiltered.length ? openResultViewReview : undefined}
+            chromeMode={chromeMode}
           />
           <ResultPagerTable
             visibleCount={huntResultsFiltered.length}
