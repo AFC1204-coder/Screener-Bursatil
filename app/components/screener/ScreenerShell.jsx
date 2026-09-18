@@ -603,7 +603,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
 
   function renderMarketsMisalignmentNotice() {
     if (!marketsMisalignment || !showPrimaryMarkets) return null;
-    const cta = marketsMisalignment.showCta !== false ? (
+    const showActions = marketsMisalignment.showCta !== false;
+    const cta = showActions ? (
       <button
         type="button"
         className="btn btnSmall btnPrimary"
@@ -613,6 +614,26 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         {restoringScan ? "Cargando…" : marketsMisalignment.ctaLabel}
       </button>
     ) : null;
+    // P9: CTA secundaria «Quedarme en {mesa}» alinea la selección a lo ya cargado.
+    const stayCta = showActions
+      && marketsMisalignment.stayCtaLabel
+      && Array.isArray(scannedMarkets)
+      && scannedMarkets.length
+      && marketsMisalignment.tone !== "loading"
+      ? (
+        <button
+          type="button"
+          className="btn btnSmall"
+          onClick={() => setMarketsAndInvalidate(
+            [...scannedMarkets],
+            `Selección alineada a la mesa (${marketsMisalignment.stayCtaLabel}).`,
+          )}
+          disabled={restoringScan}
+        >
+          {marketsMisalignment.stayCtaLabel}
+        </button>
+      )
+      : null;
     if (isMobileViewport) {
       const mobileTone = marketsMisalignment.tone === "loading"
         ? "loading"
@@ -629,6 +650,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
           defaultOpen={false}
         >
           {cta}
+          {stayCta}
         </MobileCollapsibleNotice>
       );
     }
@@ -642,6 +664,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         <span className="scanStaleNoticeLabel">{marketsMisalignment.label}</span>
         <b>{marketsMisalignment.detail}</b>
         {cta}
+        {stayCta}
       </div>
     );
   }
@@ -737,14 +760,34 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     if (item.id === "markets-misalignment" || item.id === "markets-error") {
       if (marketsMisalignment?.showCta === false) return null;
       return (
-        <button
-          type="button"
-          className="btn btnSmall btnPrimary"
-          onClick={() => loadScanForMarketSelection(markets, "Cargando datos de la selección…")}
-          disabled={restoringScan}
-        >
-          {restoringScan ? "Cargando…" : (marketsMisalignment?.ctaLabel || "Cargar datos de la selección")}
-        </button>
+        <>
+          <button
+            type="button"
+            className="btn btnSmall btnPrimary"
+            onClick={() => loadScanForMarketSelection(markets, "Cargando datos de la selección…")}
+            disabled={restoringScan}
+          >
+            {restoringScan ? "Cargando…" : (marketsMisalignment?.ctaLabel || "Cargar datos de la selección")}
+          </button>
+          {marketsMisalignment?.stayCtaLabel
+            && Array.isArray(scannedMarkets)
+            && scannedMarkets.length
+            && marketsMisalignment.tone !== "loading"
+            ? (
+              <button
+                type="button"
+                className="btn btnSmall"
+                onClick={() => setMarketsAndInvalidate(
+                  [...scannedMarkets],
+                  `Selección alineada a la mesa (${marketsMisalignment.stayCtaLabel}).`,
+                )}
+                disabled={restoringScan}
+              >
+                {marketsMisalignment.stayCtaLabel}
+              </button>
+            )
+            : null}
+        </>
       );
     }
     if (item.id === "scan-stale-coverage" || item.id === "snapshot-warn" || item.id === "snapshot-info") {

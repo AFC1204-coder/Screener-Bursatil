@@ -33,13 +33,16 @@ describe("TABLE-QUIET-1: MissingValue quiet", () => {
 describe("TABLE-QUIET-1: columna VCP", () => {
   const renderVcp = (row) => renderToStaticMarkup(columnCell("vcp")(row));
 
-  it("sin label VCP usa quiet missing sin InfoHint", () => {
+  it("sin label VCP pinta chip neutro Sin VCP (P6), sin MissingValue", () => {
     const row = { symbol: "NOVCP", contractionCount: 1 };
     const html = renderVcp(row);
 
     expect(vcpMinerviniLabel(row).label).toBe("");
-    expect(html).toContain("cellMissing");
+    expect(html).toContain("vcpTag-absent");
+    expect(html).toContain("Sin VCP");
+    expect(html).not.toContain("cellMissing");
     expect(html).not.toContain("infoHint");
+    expect(html).not.toContain("Sin dato");
     expect(html).toContain("menos de 2 contracciones");
   });
 
@@ -50,6 +53,7 @@ describe("TABLE-QUIET-1: columna VCP", () => {
     expect(vcpMinerviniLabel(row).label).toContain("3C");
     expect(html).toContain("vcpTag");
     expect(html).not.toContain("cellMissing");
+    expect(html).not.toContain("vcpTag-absent");
   });
 });
 
