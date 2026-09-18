@@ -2,6 +2,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import {
+  HuntTapeDensityToggle,
   HuntTapeModeToggle,
   HuntTapeSparkline,
   formatVcpFootprintFromRow,
@@ -119,6 +120,17 @@ describe("HuntTapeModeToggle", () => {
   });
 });
 
+describe("HuntTapeDensityToggle", () => {
+  it("renderiza Compacto y Cómodo", () => {
+    const html = renderToStaticMarkup(
+      React.createElement(HuntTapeDensityToggle, { density: "compact", onChange: () => {} }),
+    );
+    expect(html).toContain("Compacto");
+    expect(html).toContain("Cómodo");
+    expect(html).toContain("Densidad de cinta");
+  });
+});
+
 describe("HuntTapeSparkline", () => {
   it("pinta paths cuando hay chartPreview", () => {
     const bars = Array.from({ length: 20 }, (_, i) => ({ date: `2026-01-${i + 1}`, close: 10 + i }));
@@ -133,15 +145,18 @@ describe("HuntTapeSparkline", () => {
     );
     expect(html).toContain("huntTapeSparkPending");
     expect(html).toContain("Cargando miniatura");
+    expect(html).toContain("huntTapeSparkSkeleton");
+    expect(html).not.toContain("Sin serie");
     expect(html).not.toContain(">–<");
   });
 
-  it("muestra guión solo cuando el vacío es real (status=empty)", () => {
+  it("muestra «Sin serie» tipográfico cuando el vacío es real (status=empty)", () => {
     const html = renderToStaticMarkup(
       React.createElement(HuntTapeSparkline, { bars: [], status: "empty" }),
     );
     expect(html).toContain("huntTapeSparkMissing");
-    expect(html).toContain("–");
+    expect(html).toContain("Sin serie");
     expect(html).not.toContain("huntTapeSparkPending");
+    expect(html).not.toContain(">–<");
   });
 });

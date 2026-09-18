@@ -186,15 +186,16 @@ describe("fetchChartPreviewsForSymbols incremental", () => {
     expect(result.Z2).toEqual(preview);
   });
 
-  it("reintenta un chunk fallido una vez y continúa con el resto", async () => {
+  it("reintenta un chunk fallido (hasta 2) y continúa con el resto", async () => {
     vi.mocked(postJson)
       .mockRejectedValueOnce(new Error("HTTP 500"))
+      .mockRejectedValueOnce(new Error("HTTP 502"))
       .mockResolvedValueOnce({ previews: { AAA: preview } });
 
     const onChunk = vi.fn();
     const result = await fetchChartPreviewsForSymbols("scan-retry", ["AAA"], { onChunk });
 
-    expect(postJson).toHaveBeenCalledTimes(2);
+    expect(postJson).toHaveBeenCalledTimes(3);
     expect(onChunk).toHaveBeenCalledTimes(1);
     expect(result.AAA).toEqual(preview);
   });
