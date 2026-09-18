@@ -53,6 +53,30 @@ describe("buildReviewPageHref", () => {
   });
 });
 
+describe("P7 empty-queue launch path", () => {
+  it("openReviewPage cae a cola 1 símbolo cuando no hay filas", () => {
+    const hook = readFileSync(resolve(import.meta.dirname, "../app/components/screener/useQuickReviewSession.js"), "utf8");
+    expect(hook).toContain("persistSingleSymbolReviewQueue");
+    expect(hook).toContain("singleSymbolReviewStatus");
+    expect(hook).toContain("buildSingleSymbolReviewRow");
+  });
+
+  it("review page sintetiza 1 símbolo desde ?symbol= sin cola", () => {
+    const reviewPage = readFileSync(resolve(import.meta.dirname, "../app/review/page.jsx"), "utf8");
+    expect(reviewPage).toContain("shouldUseSingleSymbolReview");
+    expect(reviewPage).toContain("singleSymbolReviewStatus");
+    expect(reviewPage).not.toContain("Rapid Review");
+    expect(reviewPage).toContain("defaultReviewQueueCollapsed");
+    expect(reviewPage).toContain("Vista rápida");
+  });
+
+  it("mesa vacía: search Enter navega a ficha", () => {
+    const page = readFileSync(resolve(import.meta.dirname, "../app/page.jsx"), "utf8");
+    expect(page).toContain("shouldOpenStockFromEmptySearch");
+    expect(page).toContain("router.push(stockUrl(picked.symbol))");
+  });
+});
+
 describe("openPrimaryReview handler", () => {
   it("resuelve símbolo, persiste con openReviewPage y navega con router.push", () => {
     const source = readFileSync(resolve(import.meta.dirname, "../app/page.jsx"), "utf8");
@@ -64,7 +88,7 @@ describe("openPrimaryReview handler", () => {
 });
 
 describe("REVIEW-REFETCH-1 callers", () => {
-  it("Rapid Review y el hook de launch no piden el listado /api/scans", () => {
+  it("Vista rápida y el hook de launch no piden el listado /api/scans", () => {
     const reviewPage = readFileSync(resolve(import.meta.dirname, "../app/review/page.jsx"), "utf8");
     const hook = readFileSync(resolve(import.meta.dirname, "../app/components/screener/useQuickReviewSession.js"), "utf8");
     // Sin GET del snapshot de scans desde Review/cola. Las miniaturas del foco

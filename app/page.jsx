@@ -113,7 +113,8 @@ import {
 import { buildScreenerContract, buildScreenerStockContext } from "@/lib/screenerContracts";
 import { createFavoriteFromRow } from "@/lib/stockRows";
 import { screenerEnterReviewSymbol } from "@/lib/screenerResultKeyboard";
-import { countryCode, marketFlag } from "@/lib/symbols";
+import { shouldOpenStockFromEmptySearch } from "@/lib/reviewPath";
+import { countryCode, marketFlag, stockUrl } from "@/lib/symbols";
 import {
   INTENSITY_PILOT_FAMILIES,
   familyHasIntensity,
@@ -2399,6 +2400,16 @@ export default function Page() {
         setStatus(`Sin coincidencias para ${query}.`);
         return;
       }
+      // P7: mesa vacía → Enter abre ficha (no callejón de preview sin cola).
+      if (shouldOpenStockFromEmptySearch({
+        mesaEmpty: !rows.length,
+        resolvedSymbol: picked.symbol,
+      })) {
+        setSearchLoading(false);
+        setStatus(`Abriendo ficha de ${picked.symbol}…`);
+        router.push(stockUrl(picked.symbol));
+        return;
+      }
       await loadSearchResult(picked.symbol, picked);
       if (!exact && candidates.length > 1) setStatus(`Cargado ${picked.symbol}. Hay ${candidates.length} coincidencias; puedes elegir otra debajo del buscador.`);
     } catch (e) {
@@ -2883,7 +2894,7 @@ export default function Page() {
       selectedResultSymbol: preserveStoredReviewFocus ? "" : selectedResultSymbol,
       selectedSymbol: storedSelectedSymbol,
       rows: filtered,
-    });
+    }) || selectedResultSymbol || searchResult?.symbol || storedSelectedSymbol || "";
     const href = openReviewPage(filtered, startSymbol);
     if (href) router.push(href);
   }

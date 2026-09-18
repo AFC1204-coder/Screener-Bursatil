@@ -10,6 +10,11 @@ import {
   reviewFocusStatusMessage,
 } from "@/lib/reviewSession";
 import { buildReviewPageHref } from "@/lib/screenerReviewLaunch";
+import {
+  buildSingleSymbolReviewRow,
+  singleSymbolReviewLaunchOptions,
+  singleSymbolReviewStatus,
+} from "@/lib/reviewPath";
 import { mergeReviewRowChartPreviews, persistReviewQueue } from "@/lib/screenerPipeline";
 import {
   applyStockDecisionResolution,
@@ -17,6 +22,7 @@ import {
   reopenStockDecisionResolution,
   reviewDecisionStateForRows,
 } from "@/lib/stockDecisionResolution";
+import { cleanSymbol } from "@/lib/symbols";
 
 export function useQuickReviewSession({
   activeSettings = {},
@@ -234,18 +240,34 @@ export function useQuickReviewSession({
     return { reviewRows, payload, currentIndex, reviewSourceLabel };
   }
 
+  function persistSingleSymbolReviewQueue(startSymbol = "", options = {}) {
+    const clean = cleanSymbol(startSymbol);
+    const row = buildSingleSymbolReviewRow(clean);
+    if (!row) return null;
+    const launch = singleSymbolReviewLaunchOptions(clean);
+    return persistScreenerReviewQueue([row], clean, {
+      ...options,
+      ...launch,
+    });
+  }
+
   function openReview(currentRows, startSymbol = "", options = {}) {
     const resumed = resumeStoredReviewSession(startSymbol, options, currentRows);
     if (resumed) return;
-    const persisted = persistScreenerReviewQueue(currentRows, startSymbol, options);
+    const persisted = persistScreenerReviewQueue(currentRows, startSymbol, options)
+      || persistSingleSymbolReviewQueue(startSymbol, options);
     if (!persisted) {
       setStatus("Sin filas actuales para abrir vista rápida.");
       return;
     }
-    const { reviewRows, currentIndex, reviewSourceLabel } = persisted;
+    const { reviewRows, currentIndex, reviewSourceLabel, payload } = persisted;
     setQuickReviewRows(reviewRows);
     setQuickReviewIndex(currentIndex);
     setActiveModalRow(reviewRows[currentIndex]);
+    if (payload?.queueMode === "single-symbol") {
+      setStatus(singleSymbolReviewStatus(reviewRows[currentIndex]?.symbol || startSymbol));
+      return;
+    }
     setStatus(`${reviewSourceLabel}: ${reviewRows.length} acciones en cola.`);
   }
 
@@ -253,13 +275,18 @@ export function useQuickReviewSession({
     const resumeStartSymbol = canResumeStoredReviewSession(options) ? "" : startSymbol;
     const resumed = resumeStoredReviewSession(resumeStartSymbol, options, currentRows);
     if (resumed) return resumed.href;
-    const persisted = persistScreenerReviewQueue(currentRows, startSymbol, options);
+    const persisted = persistScreenerReviewQueue(currentRows, startSymbol, options)
+      || persistSingleSymbolReviewQueue(startSymbol, options);
     if (!persisted) {
       setStatus("Sin filas actuales para abrir revisión.");
       return "";
     }
-    const { reviewRows, payload, reviewSourceLabel } = persisted;
-    setStatus(`${reviewSourceLabel}: ${reviewRows.length} acciones en cola.`);
+    const { payload, reviewSourceLabel } = persisted;
+    if (payload?.queueMode === "single-symbol") {
+      setStatus(singleSymbolReviewStatus(payload.selectedSymbol));
+    } else {
+      setStatus(`${reviewSourceLabel}: ${persisted.reviewRows.length} acciones en cola.`);
+    }
     return buildReviewPageHref(payload.selectedSymbol, payload.source);
   }
 
