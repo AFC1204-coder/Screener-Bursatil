@@ -38,44 +38,62 @@ describe("ResultFilterChips", () => {
 });
 
 describe("ResultFilterBar view-layer CTA", () => {
-  it("expone el CTA + Filtro cuando hay capas de vista habilitadas", () => {
+  const baseFilterBarProps = {
+    optionLabel: (prefix, value) => `${prefix}: ${value}`,
+    decisionResolutionFilter: "all",
+    decisionResolutionOptions: [{ key: "all", displayLabel: "Resolución: Todas" }],
+    onDecisionResolutionFilter: () => {},
+    viewLayers: { country: true, theme: false, sector: false, industry: false, sectorStrength: false, ipo: false },
+    viewFiltersActive: 0,
+    countryFilter: "Todos",
+    countryOptions: ["Todos", "US"],
+    countryCounts: new Map([["US", 10]]),
+    onCountryFilter: () => {},
+    themeFilter: "Todos",
+    themeOptions: ["Todos"],
+    themeCounts: new Map(),
+    onThemeFilter: () => {},
+    onSectorFilter: () => {},
+    onIndustryFilter: () => {},
+    sectorFilter: "Todos",
+    sectorOptions: ["Todos"],
+    sectorCounts: new Map(),
+    industryFilter: "Todos",
+    industryOptions: ["Todos"],
+    industryCounts: new Map(),
+    sectorStrength: "Todos",
+    sectorStrengthCounts: new Map(),
+    onSectorStrength: () => {},
+    chips: [],
+    hiddenCount: 0,
+    visibleCount: 10,
+    totalCount: 10,
+    onClearAll: () => {},
+  };
+
+  it("Expert: expone el CTA + Filtro cuando hay capas de vista habilitadas", () => {
     const html = renderToStaticMarkup(React.createElement(ResultFilterBar, {
-      optionLabel: (prefix, value) => `${prefix}: ${value}`,
-      decisionResolutionFilter: "all",
-      decisionResolutionOptions: [{ key: "all", displayLabel: "Resolución: Todas" }],
-      onDecisionResolutionFilter: () => {},
-      viewLayers: { country: true, theme: false, sector: false, industry: false, sectorStrength: false, ipo: false },
-      viewFiltersActive: 0,
-      countryFilter: "Todos",
-      countryOptions: ["Todos", "US"],
-      countryCounts: new Map([["US", 10]]),
-      onCountryFilter: () => {},
-      themeFilter: "Todos",
-      themeOptions: ["Todos"],
-      themeCounts: new Map(),
-      onThemeFilter: () => {},
-      onSectorFilter: () => {},
-      onIndustryFilter: () => {},
-      sectorFilter: "Todos",
-      sectorOptions: ["Todos"],
-      sectorCounts: new Map(),
-      industryFilter: "Todos",
-      industryOptions: ["Todos"],
-      industryCounts: new Map(),
-      sectorStrength: "Todos",
-      sectorStrengthCounts: new Map(),
-      onSectorStrength: () => {},
-      chips: [],
-      hiddenCount: 0,
-      visibleCount: 10,
-      totalCount: 10,
-      onClearAll: () => {},
+      ...baseFilterBarProps,
+      chromeMode: "expert",
     }));
 
     expect(html).toContain("viewLayerFilters");
     expect(html).toContain(">Filtro<");
-    expect(html).not.toContain("Más filtros");
+    expect(html).not.toContain("resultFilterMore");
     expect(html).not.toContain("Filtrar por IPO");
+  });
+
+  it("Diario: Resolución/+Filtro detrás de Más", () => {
+    const html = renderToStaticMarkup(React.createElement(ResultFilterBar, {
+      ...baseFilterBarProps,
+      chromeMode: "diario",
+    }));
+
+    expect(html).toContain("resultFilterBar--diario");
+    expect(html).toContain("resultFilterMore");
+    expect(html).toContain(">Más<");
+    expect(html).toContain("viewLayerFilters");
+    expect(html).toContain(">Filtro<");
   });
 
   it("no expone select de orden en escritorio (orden vía cabeceras de columna)", () => {
@@ -110,6 +128,7 @@ describe("ResultFilterBar view-layer CTA", () => {
       visibleCount: 10,
       totalCount: 10,
       onClearAll: () => {},
+      chromeMode: "expert",
     }));
 
     expect(html).not.toContain("resultSortSelect");
@@ -148,6 +167,7 @@ describe("ResultFilterBar view-layer CTA", () => {
       visibleCount: 10,
       totalCount: 10,
       onClearAll: () => {},
+      chromeMode: "expert",
     }));
 
     expect(html).not.toContain("Filtrar por IPO");
