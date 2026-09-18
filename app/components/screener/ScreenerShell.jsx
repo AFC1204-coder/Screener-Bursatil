@@ -57,6 +57,11 @@ import {
   isPrimaryScanProgressStatus,
   resolveColdProgressSurfaces,
 } from "@/lib/screenerColdProgress";
+import MesaEmptyCard from "@/app/components/screener/MesaEmptyCard";
+import {
+  shouldFoldSnapshotNoticeIntoMesaEmpty,
+  shouldShowMesaEmptyCard,
+} from "@/lib/mesaEmptyState";
 
 function showScanStatusBar(err, status = "") {
   return isPrimaryScanProgressStatus(err, status);
@@ -414,12 +419,29 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   // T3: no pintar «formato antiguo de filtros» mientras la mesa hidrata.
   const showFilterLayersUpgradeNotice = !isFilterLayersUpgradeNotice
     || filterLayersUpgradeNoticeReadyToShow({ restoringScan });
+  // P1: empty de datos (sin escaneo) → tarjeta humana; no confundir con 0-pasan-filtro.
+  const showMesaEmptyCard = shouldShowMesaEmptyCard({
+    analyzedCount: analyzedRows.length,
+    restoringScan,
+    resultsBlocked: resultsBlockedByMarketMisalignment,
+  });
+  const foldSnapshotIntoMesaEmpty = showMesaEmptyCard
+    && shouldFoldSnapshotNoticeIntoMesaEmpty(snapshotNotice);
   const showSnapshotNotice = Boolean(
     snapshotNotice
     && snapshotNotice.source !== "markets-stale"
-    && showFilterLayersUpgradeNotice,
+    && showFilterLayersUpgradeNotice
+    && !foldSnapshotIntoMesaEmpty,
   );
   const isSampleTruncationNotice = isDismissibleSampleNotice(snapshotNotice);
+  const searchInputRef = useRef(null);
+
+  function focusSearchInput() {
+    const input = searchInputRef.current;
+    if (!input) return;
+    input.focus();
+    input.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
 
   function renderFilterLayersUpgradeDismiss() {
     if (!isFilterLayersUpgradeNotice || !onDismissFilterLayersUpgradeNotice) return null;
@@ -761,7 +783,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       </div>
     </div> : null}
 
-    <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}`}>
+    <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}${showMesaEmptyCard ? " dashboardContainer--mesaEmpty" : ""}`}>
       <button
         type="button"
         className="sidebarCollapseBtn"
@@ -803,7 +825,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               <div className="searchPopoverHost">
               <form className="searchBar" onSubmit={runSearch} style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
                 <div className="searchFieldWrap">
-                  <input className="input searchInput" value={searchSymbol} onChange={(e) => updateSearchSymbol(e.target.value)} placeholder="Ticker, nombre, sector, subsector o país..." />
+                  <input ref={searchInputRef} className="input searchInput" value={searchSymbol} onChange={(e) => updateSearchSymbol(e.target.value)} placeholder="Ticker, nombre, sector, subsector o país..." />
                   {(searchSymbol || searchCandidates.length || searchResult) ? (
                     <button type="button" className="searchClearBtn" onClick={clearSearch} aria-label="Limpiar búsqueda">✕</button>
                   ) : null}
@@ -856,44 +878,55 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         {isMobileViewport ? <section className="mobileResearchHome">
           {renderMarketsMisalignmentNotice()}
           {marketsMisalignment ? null : scanStale ? renderScanStaleNotice() : null}
-          <MobileResultList
-            rows={huntResultsPagedRows}
-            settings={activeSettings}
-            totalRows={huntResultsFiltered.length}
-            sort={sort}
-            onSort={setSort}
-            perfPeriod={perfPeriod}
-            setupMode={activeSettings.setupMode}
-            scannedMarkets={scannedMarkets}
-            presetKey={presetKey}
-            onPerfPeriod={setPerfPeriod}
-            onReview={(symbol) => openReview(huntResultsFiltered, symbol, { queueMode: "hunt", sourceLabel: "Caza" })}
-            onFavorite={addFavorite}
-            favoriteSymbols={resultsFavoriteSymbols}
-            onSave={() => saveSnapshot(huntResultsFiltered)}
-            onCsv={() => csv(huntResultsFiltered)}
-            onAuditJson={() => decisionAuditJson(huntResultsFiltered)}
-            onRefresh={refreshScreenerSnapshotData}
-            onReset={resetScreenerSession}
-            sessionPlumbing={sessionPlumbing}
-            laboratoryPanel={laboratoryPanel}
-            moreMenuRef={mobileMoreMenuRef}
-            refreshing={restoringScan}
-            onOpenStock={saveSessionBeforeStockOpen}
-            page={visibleResultPage}
-            pageSize={resultPageSize}
-            totalPages={totalResultPages}
-            onPage={setResultPageClamped}
-            onPageSize={updateResultPageSize}
-            decisionResolutionFilter={decisionResolutionFilter}
-            decisionResolutionOptions={decisionResolutionOptions}
-            onDecisionResolutionFilter={setDecisionResolutionFilter}
-            decisionResolutions={resultsDecisionResolutions}
-            emptyLabel={huntResultsEmptyLabel}
-          />
+          {showMesaEmptyCard ? (
+            <MesaEmptyCard
+              markets={markets}
+              snapshotNotice={snapshotNotice}
+              err={err}
+              onRetry={refreshScreenerSnapshotData}
+              onFocusSearch={focusSearchInput}
+              retrying={restoringScan}
+            />
+          ) : (
+            <MobileResultList
+              rows={huntResultsPagedRows}
+              settings={activeSettings}
+              totalRows={huntResultsFiltered.length}
+              sort={sort}
+              onSort={setSort}
+              perfPeriod={perfPeriod}
+              setupMode={activeSettings.setupMode}
+              scannedMarkets={scannedMarkets}
+              presetKey={presetKey}
+              onPerfPeriod={setPerfPeriod}
+              onReview={(symbol) => openReview(huntResultsFiltered, symbol, { queueMode: "hunt", sourceLabel: "Caza" })}
+              onFavorite={addFavorite}
+              favoriteSymbols={resultsFavoriteSymbols}
+              onSave={() => saveSnapshot(huntResultsFiltered)}
+              onCsv={() => csv(huntResultsFiltered)}
+              onAuditJson={() => decisionAuditJson(huntResultsFiltered)}
+              onRefresh={refreshScreenerSnapshotData}
+              onReset={resetScreenerSession}
+              sessionPlumbing={sessionPlumbing}
+              laboratoryPanel={laboratoryPanel}
+              moreMenuRef={mobileMoreMenuRef}
+              refreshing={restoringScan}
+              onOpenStock={saveSessionBeforeStockOpen}
+              page={visibleResultPage}
+              pageSize={resultPageSize}
+              totalPages={totalResultPages}
+              onPage={setResultPageClamped}
+              onPageSize={updateResultPageSize}
+              decisionResolutionFilter={decisionResolutionFilter}
+              decisionResolutionOptions={decisionResolutionOptions}
+              onDecisionResolutionFilter={setDecisionResolutionFilter}
+              decisionResolutions={resultsDecisionResolutions}
+              emptyLabel={huntResultsEmptyLabel}
+            />
+          )}
         </section> : null}
 
-        {!isMobileViewport ? <section className="desktopResultsSection" style={{ marginBottom: 20 }}>
+        {!isMobileViewport ? <section className={`desktopResultsSection${showMesaEmptyCard ? " desktopResultsSection--mesaEmpty" : ""}`} style={{ marginBottom: 20 }}>
           {renderMarketsMisalignmentNotice()}
           {marketsMisalignment ? null : scanStale ? (
             <div className="scanStaleNotice" role="status" aria-live="polite">
@@ -909,10 +942,11 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               </button>
             </div>
           ) : null}
-          <div className="resultsHeader">
+          <div className={`resultsHeader${showMesaEmptyCard ? " resultsHeader--mesaEmpty" : ""}`}>
             <div className="resultsTitleBlock">
               <h2>Resultados</h2>
             </div>
+            {showMesaEmptyCard ? null : (
             <div className="controls resultsToolbar">
               {huntResultsFiltered.length ? (
                 <button className="btn btnSmall btnPrimary" onClick={openPrimaryReview}>Revisar</button>
@@ -954,8 +988,20 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
                 </div>
               </details>
             </div>
+            )}
           </div>
 
+          {showMesaEmptyCard ? (
+            <MesaEmptyCard
+              markets={markets}
+              snapshotNotice={snapshotNotice}
+              err={err}
+              onRetry={refreshScreenerSnapshotData}
+              onFocusSearch={focusSearchInput}
+              retrying={restoringScan}
+            />
+          ) : (
+            <>
           <IpoCohortWindowChips
             presetKey={presetKey}
             cardId={activeHuntCard?.id}
@@ -1026,6 +1072,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             hasBatchPercentiles={visibleBatchRows}
             emptyLabel={huntResultsEmptyLabel}
           />
+            </>
+          )}
         </section> : null}
       </main>
     </div>

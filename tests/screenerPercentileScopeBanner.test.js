@@ -126,8 +126,8 @@ function makeProps({ resultsRows = [], resultsFiltered = null } = {}) {
       rows: resultsRows,
       pagedRows: filtered,
       activeSettings: {},
-      analyzedRows: [],
-      universe: [],
+      analyzedRows: resultsRows.length ? resultsRows : [],
+      universe: resultsRows.length ? resultsRows : [],
       favoriteSymbols: new Set(),
       screenerDecisionResolutions: {},
     },
@@ -291,15 +291,13 @@ describe("ScreenerShell · toolbar resultados (UX-P2)", () => {
     expect(html).toContain("JSON audit");
   });
 
-  it("FILTER-SHELL-2: sin filas, el menú ⋯ sigue montado con Traer y Resetear", () => {
+  it("FILTER-SHELL-2 / P1: sin filas de mesa muestra tarjeta humana (no menú ⋯ ops)", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [] })));
-    expect(html).toContain("resultsMoreMenu");
+    expect(html).toContain("mesaEmptyCard");
+    expect(html).toContain("Reintentar");
+    expect(html).toContain("Buscar ticker");
     expect(html).not.toContain(">Revisar<");
-    expect(html).toContain("Traer datos frescos");
-    expect(html).toContain("Resetear criterios");
-    expect(html).not.toContain(">↓ CSV<");
-    expect(html).not.toContain("Guardar copia de resultados");
-    expect(html).toContain(">Guardar<");
+    expect(html).not.toContain("resultsMoreMenu");
   });
 
   it("unifica el título a Resultados sin rótulo Results", () => {
