@@ -7646,8 +7646,10 @@ h2:not(.topbar h2) {
 }
 
 .screenerTerminalPage .resultsTitleBlock {
-  display:grid;
-  gap:4px;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px 14px;
   min-width:0;
 }
 
@@ -11489,4 +11491,180 @@ body:has(.screenerTerminalPage) [data-next-badge-root]:hover,
 body:has(.screenerTerminalPage) nextjs-portal:hover {
   opacity: 0.85;
 }
+
+/* P3 + P12 — Jerarquía home Diario vs Expert */
+.screenerChromeModeToggle.chartPrefGroup {
+  margin:0;
+}
+
+.screenerChromeModeToggle .chartSegmented {
+  height:var(--control-s);
+  min-height:var(--control-s);
+  padding:2px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--surface-inset);
+}
+
+.screenerChromeModeToggle .chartSegmented button {
+  height:calc(var(--control-s) - 4px);
+  min-height:calc(var(--control-s) - 4px);
+  min-width:64px;
+  padding:0 12px;
+  font-size:var(--text-xs);
+  font-weight:650;
+}
+
+.screenerChromeModeToggle .chartSegmented button.active,
+.screenerChromeModeToggle .chartSegmented button[aria-pressed="true"] {
+  border-color:var(--line2);
+  background:var(--surface);
+  color:var(--text);
+}
+
+.sidebarChromeModeSlot {
+  margin:0 0 14px;
+}
+
+.sidebar--diario .marketPanel--diario {
+  margin-bottom:12px;
+}
+
+.marketCompactDisclosure {
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--surface);
+}
+
+.marketCompactChip {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 12px;
+  cursor:pointer;
+  list-style:none;
+  user-select:none;
+}
+
+.marketCompactChip::-webkit-details-marker {
+  display:none;
+}
+
+.marketCompactChipLabel {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:var(--text-s);
+  font-weight:700;
+  color:var(--text);
+}
+
+.marketCompactChip em {
+  color:var(--muted);
+  font-size:var(--text-xs);
+  font-style:normal;
+  font-weight:650;
+}
+
+.marketCompactDisclosureBody {
+  padding:0 10px 10px;
+  border-top:1px solid var(--line);
+}
+
+.marketCompactDisclosureBody .marketPresetBar {
+  margin-top:10px;
+}
+
+.ajustarFichaDisclosure {
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--surface);
+  margin-bottom:12px;
+}
+
+.ajustarFichaDisclosure > summary {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  cursor:pointer;
+  list-style:none;
+  user-select:none;
+  font-size:var(--text-s);
+  font-weight:700;
+  color:var(--text);
+}
+
+.ajustarFichaDisclosure > summary::-webkit-details-marker {
+  display:none;
+}
+
+.ajustarFichaDisclosure > summary::before {
+  content:"▸ ";
+  color:var(--muted);
+  font-weight:600;
+}
+
+.ajustarFichaDisclosure[open] > summary::before {
+  content:"▾ ";
+}
+
+.ajustarFichaDisclosure > summary em {
+  color:var(--muted);
+  font-size:var(--text-xs);
+  font-style:normal;
+  font-weight:600;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  max-width:55%;
+}
+
+.ajustarFichaDisclosureBody {
+  padding:0 8px 10px;
+  border-top:1px solid var(--line);
+}
+
+.resultFilterBar--diario {
+  gap:8px;
+}
+
+.resultFilterMore > summary {
+  list-style:none;
+}
+
+.resultFilterMore > summary::-webkit-details-marker {
+  display:none;
+}
+
+.resultFilterMoreBody {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid var(--line);
+}
+
+/* Diario: sidebar más estrecho visualmente (menos chrome dominante) */
+.dashboardContainer--diario .sidebar {
+  max-width:280px;
+}
+
+.dashboardContainer--diario .sidebar .filterArchitecture {
+  margin-top:8px;
+}
+
+@media (max-width:960px) {
+  .dashboardContainer--diario .sidebar {
+    max-width:none;
+  }
+
+  .resultsTitleBlock .screenerChromeModeToggle {
+    margin-left:auto;
+  }
+}
+
 
