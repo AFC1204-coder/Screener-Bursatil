@@ -361,33 +361,29 @@ describe("renderWeeklyChangesView", () => {
     expect(html).toContain("Ninguna en esta ventana.");
   });
 
-  it("sin dos escaneos comparables por el corte de criterio, la ausencia lleva ese motivo", () => {
+  it("sin dos escaneos comparables por el corte de criterio, no ocupa el subtítulo (P10)", () => {
     const html = renderToStaticMarkup(renderWeeklyChangesView({
       payload: { ok: true, state: "not-comparable", reason: "only-pre-cutover-anchors" },
     }));
-    expect(html).toContain("el criterio de etapa se actualizó el 17 de agosto");
-    expect(html).not.toContain("0 entradas"); // jamás un cero por defecto
+    expect(html).toBe("");
+    expect(html).not.toContain("0 entradas");
   });
 
-  it("los estados de carga y de nube apagada hablan lenguaje de producto", () => {
-    expect(renderToStaticMarkup(renderWeeklyChangesView({ loading: true }))).toContain("comprobando");
-    const html = renderToStaticMarkup(renderWeeklyChangesView({
+  it("carga / nube / no-scan / error quiet: silencio hasta haber delta útil (P10)", () => {
+    expect(renderToStaticMarkup(renderWeeklyChangesView({ loading: true }))).toBe("");
+    expect(renderToStaticMarkup(renderWeeklyChangesView({
       payload: { ok: false, state: "cloud-off", message: "La copia en la nube no está activada." },
-    }));
-    expect(html).toContain("La copia en la nube no está activada.");
+    }))).toBe("");
+    expect(renderToStaticMarkup(renderWeeklyChangesView({
+      payload: { ok: true, state: "no-scan" },
+    }))).toBe("");
+    expect(renderToStaticMarkup(renderWeeklyChangesView({ error: "no disponibles ahora mismo." }))).toBe("");
   });
 
   it("un timeout / mensaje de infra no deja línea de error permanente en la cabecera", () => {
     const timeoutCopy = "El servidor de datos tardó demasiado en responder. Inténtalo de nuevo en unos minutos.";
     expect(renderToStaticMarkup(renderWeeklyChangesView({ error: timeoutCopy }))).toBe("");
     expect(renderToStaticMarkup(renderWeeklyChangesView({ loading: false, payload: null }))).toBe("");
-  });
-
-  it("un error quiet no-timeout sigue siendo informativo, sin tono de alerta", () => {
-    const html = renderToStaticMarkup(renderWeeklyChangesView({ error: "no disponibles ahora mismo." }));
-    expect(html).toContain("weeklyChangesQuiet");
-    expect(html).toContain("no disponibles ahora mismo.");
-    expect(html).not.toContain("tardó demasiado");
   });
 });
 

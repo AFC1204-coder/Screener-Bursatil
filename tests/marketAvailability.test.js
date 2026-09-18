@@ -249,15 +249,13 @@ describe("buildScreenerTruthMarketSegments", () => {
     })).toEqual(["mesa: US"]);
   });
 
-  it("añade aviso corto de desalineación", () => {
+  it("añade copy de decisión ante desalineación (P9)", () => {
     expect(buildScreenerTruthMarketSegments({
       scannedMarkets: ["US"],
       selectedMarkets: ["HK"],
       marketsMisaligned: true,
     })).toEqual([
-      "mesa: US",
-      "datos: US · selección: HK",
-      "selección ≠ mesa",
+      "Mostrando EE. UU. · tu selección es Hong Kong",
     ]);
   });
 
@@ -268,9 +266,7 @@ describe("buildScreenerTruthMarketSegments", () => {
       selectedMarkets: many,
       marketsMisaligned: true,
     })).toEqual([
-      "mesa: US",
-      "10 mercados en selección",
-      "selección ≠ mesa",
+      "Mostrando EE. UU. · tu selección es 10 mercados",
     ]);
   });
 
@@ -281,9 +277,7 @@ describe("buildScreenerTruthMarketSegments", () => {
       selectedMarkets: ["US"],
       marketsMisaligned: true,
     })).toEqual([
-      "5 mercados en mesa",
-      "selección: US",
-      "selección ≠ mesa",
+      "Mostrando 5 mercados · tu selección es EE. UU.",
     ]);
   });
 
@@ -296,7 +290,7 @@ describe("buildScreenerTruthMarketSegments", () => {
     })).toEqual(["8 mercados en mesa"]);
   });
 
-  it("modo compacto mantiene aviso de desalineación sin volcar códigos ni repetir selección", () => {
+  it("modo compacto mantiene aviso de desalineación sin jerga ≠", () => {
     expect(buildScreenerTruthMarketSegments({
       scannedMarkets: ["US", "CA", "HK"],
       selectedMarkets: ALL_SELECTABLE_MARKETS,
@@ -304,7 +298,7 @@ describe("buildScreenerTruthMarketSegments", () => {
       compact: true,
     })).toEqual([
       "3 mercados en mesa",
-      "selección ≠ mesa",
+      "Mostrando CA+HK+US · selección 28 mercados",
     ]);
   });
 
@@ -324,9 +318,10 @@ describe("buildMarketsStaleNotice", () => {
       rowCount: 3321,
     });
     expect(notice).not.toBeNull();
-    expect(notice.detail).toContain("Datos cargados: US (3321)");
-    expect(notice.detail).toContain("(HK)");
-    expect(notice.ctaLabel).toBe("Cargar datos de la selección");
+    expect(notice.detail).toContain("Mostrando EE. UU. (3321)");
+    expect(notice.detail).toContain("Hong Kong");
+    expect(notice.ctaLabel).toBe("Cargar Hong Kong");
+    expect(notice.stayCtaLabel).toBe("Quedarme en EE. UU.");
     expect(notice.blocksResults).toBe(true);
   });
 
@@ -339,11 +334,12 @@ describe("buildMarketsStaleNotice", () => {
     expect(notice).not.toBeNull();
     expect(notice.source).toBe("markets-partial-coverage");
     expect(notice.blocksResults).toBe(false);
-    expect(notice.detail).toContain("Datos cargados: US (3319)");
-    expect(notice.detail).toContain("Faltan en mesa:");
+    expect(notice.detail).toContain("Mostrando EE. UU. (3319)");
+    expect(notice.detail).toContain("faltan en mesa:");
     expect(notice.peekDetail).toBe(`Faltan ${ALL_SELECTABLE_MARKETS.length - 1} mercados`);
     expect(notice.peekDetail).not.toContain("Austria");
     expect(notice.ctaLabel).toBe("Cargar datos de la selección");
+    expect(notice.stayCtaLabel).toBe("Quedarme en EE. UU.");
   });
 
   it("no avisa cuando selección y scan coinciden", () => {

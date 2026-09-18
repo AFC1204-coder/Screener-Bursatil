@@ -173,18 +173,6 @@ function ChangeList({ title, rows, kind, listKey, sortKey, expanded, onExpand, o
   );
 }
 
-// El motivo de una ausencia, en lenguaje de producto. Nunca un cero mudo.
-function notComparableText(payload = {}) {
-  const reason = String(payload.reason || "");
-  if (reason === "only-pre-cutover-anchors" || reason === "stage-criteria-changed") {
-    return "sin dos escaneos comparables todavía: el criterio de etapa se actualizó el 17 de agosto. El resumen vuelve con los próximos escaneos.";
-  }
-  if (reason === "no-sessions-between-scans") {
-    return "sin sesión de mercado entre los escaneos comparables · sin cambios que contar.";
-  }
-  return "aún no hay dos escaneos comparables · el resumen vuelve con el próximo escaneo nocturno.";
-}
-
 export function renderWeeklyChangesView({
   payload = null,
   loading = false,
@@ -200,7 +188,8 @@ export function renderWeeklyChangesView({
   onOpenStock,
 } = {}) {
   if (loading) {
-    return <p className="weeklyChangesLine weeklyChangesQuiet" role="status">Cambios de la semana · comprobando…</p>;
+    // P10: silencio mientras no hay delta útil (no «comprobando…» en el H1).
+    return null;
   }
   // Timeout / infra no deben dejar la cabecera en tono de fallo permanente.
   // El caller ya degrada a softFailure→error vacío; esto es cinturón si llega
@@ -209,17 +198,18 @@ export function renderWeeklyChangesView({
     return null;
   }
   if (error) {
-    return <p className="weeklyChangesLine weeklyChangesQuiet">Cambios de la semana · {error}</p>;
+    // P10: sin delta útil no ocupamos el subtítulo (fallo quiet → silencio).
+    return null;
   }
   if (!payload) return null;
   if (payload.state === "cloud-off") {
-    return <p className="weeklyChangesLine weeklyChangesQuiet">Cambios de la semana · {payload.message || "la copia en la nube no está activada."}</p>;
+    return null;
   }
   if (payload.state === "no-scan") {
-    return <p className="weeklyChangesLine weeklyChangesQuiet">Cambios de la semana · aún no hay escaneo nocturno del que partir.</p>;
+    return null;
   }
   if (payload.state === "not-comparable") {
-    return <p className="weeklyChangesLine weeklyChangesQuiet">Cambios de la semana · {notComparableText(payload)}</p>;
+    return null;
   }
   if (payload.state !== "ok") return null;
 

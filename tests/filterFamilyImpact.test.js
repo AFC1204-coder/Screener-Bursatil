@@ -75,7 +75,7 @@ describe("filterFamilyImpact · RS", () => {
     expect(stats.total).toBe(4);
     expect(stats.cut).toBe(3); // MID + WEAK (bajo umbral) + NODATA (sin dato)
     expect(stats.remaining).toBe(1);
-    expect(filterFamilyImpactCardLabel(stats)).toEqual({ text: "recorta −3", tone: "cut" });
+    expect(filterFamilyImpactCardLabel(stats)).toEqual({ text: "deja fuera ~3", tone: "cut" });
   });
 
   it("RS abierto (todos los umbrales a 0) no recorta", () => {

@@ -10494,6 +10494,20 @@ button.decisionOperatingIssue:hover {
   opacity:1;
 }
 
+/* P6: VCP sin patrón — chip neutro, no ausencia alarmista. */
+.vcpTag {
+  font-family:var(--font-data);
+  font-size:var(--text-s);
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.02em;
+  white-space:nowrap;
+}
+
+.vcpTag-absent {
+  color:var(--muted);
+  font-weight:500;
+}
+
 .srOnly {
   position:absolute;
   width:1px;

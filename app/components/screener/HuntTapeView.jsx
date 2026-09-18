@@ -221,7 +221,7 @@ export default function HuntTapeView({
                 className={`huntTapeVcp${footprint ? "" : " huntTapeVcpEmpty"}`}
                 title={formatVcpFootprintTitle(row)}
               >
-                {footprint || "–"}
+                {footprint || "Sin VCP"}
               </span>
               <span className={`huntTapeExt${dist?.hot ? " isHot" : ""}`} title="Distancia al máximo de 52 semanas">
                 {dist?.label || "–"}

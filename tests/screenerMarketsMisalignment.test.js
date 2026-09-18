@@ -361,7 +361,8 @@ describe("ScreenerShell markets misalignment", () => {
       marketsLoadFailed: true,
       marketsLoadFailedDetail: "No se pudo cargar Hong Kong.",
     })));
-    expect(html).toContain(MARKETS_MISALIGNMENT_CTA);
+    expect(html).toContain("Cargar Hong Kong");
+    expect(html).toContain("Quedarme en EE. UU.");
     expect(html).toContain("No se pudo cargar Hong Kong.");
     expect(html).not.toContain("selección ≠ mesa");
   });
@@ -404,7 +405,8 @@ describe("ScreenerShell markets misalignment", () => {
     expect(html).not.toContain(MARKETS_AUTO_LOAD_LOADING_LABEL);
     expect(html).not.toMatch(/screenerMobileNoticePeek[^<]*AT\+AU/);
     expect(html).toContain("1 mercado en mesa");
-    expect(html).toContain("selección ≠ mesa");
+    expect(html).toContain("Mostrando EE. UU. · selección 10 mercados");
+    expect(html).not.toContain("selección ≠ mesa");
     expect(html).not.toMatch(/\d+ mercados en selección/);
     mockIsMobileViewport.mockReturnValue(false);
   });

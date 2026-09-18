@@ -302,7 +302,15 @@ export const SCREENER_COLUMNS = [
     cell: (row) => {
       const vcp = vcpMinerviniLabel(row);
       if (!vcp.label) {
-        return <MissingValue quiet reason={vcp.title || "Sin compresión VCP operable en este valor."} />;
+        // P6: chip neutro «Sin VCP» — no «– Sin dato» con tono de fallo.
+        return (
+          <span
+            className="vcpTag vcpTag-absent"
+            title={vcp.title || "Sin compresión VCP operable en este valor."}
+          >
+            Sin VCP
+          </span>
+        );
       }
       return (
         <span className={`vcpTag vcpTag-${vcp.tone || "neutral"}`} title={vcp.title}>
