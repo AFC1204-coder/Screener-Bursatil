@@ -8,7 +8,14 @@ import { useEffect, useState } from "react";
 import { CompactResultsTable } from "@/app/screenerPanels";
 import HuntTapeView from "@/app/components/screener/HuntTapeView";
 import { RESULT_PAGE_SIZES } from "@/lib/screenerConfig";
-import { HuntTapeModeToggle } from "@/lib/screenerHuntTape";
+import { HuntTapeDensityToggle, HuntTapeModeToggle } from "@/lib/screenerHuntTape";
+import {
+  HUNT_TAPE_DENSITIES,
+  persistHuntTapeDensity,
+  readPersistedHuntTapeDensity,
+  resolveHuntTapeDensity,
+  resolvePersistedHuntTapeDensity,
+} from "@/lib/screenerHuntTapeDensity";
 import {
   RESULT_VIEW_MODES,
   isCazaResultView,
@@ -50,16 +57,27 @@ export default function ResultPagerTable({
   emptyLabel,
 }) {
   const [viewMode, setViewMode] = useState(() => resolveResultViewMode(presetKey));
+  const [tapeDensity, setTapeDensity] = useState(() => resolvePersistedHuntTapeDensity());
 
   useEffect(() => {
     const persisted = readPersistedResultViewMode();
     setViewMode(resolveResultViewMode(presetKey, persisted));
   }, [presetKey]);
 
+  useEffect(() => {
+    setTapeDensity(resolvePersistedHuntTapeDensity(readPersistedHuntTapeDensity()));
+  }, []);
+
   function handleViewModeChange(nextMode) {
     const mode = nextMode === RESULT_VIEW_MODES.CAZA ? RESULT_VIEW_MODES.CAZA : RESULT_VIEW_MODES.AUDIT;
     setViewMode(mode);
     persistResultViewMode(mode);
+  }
+
+  function handleDensityChange(nextDensity) {
+    const density = resolveHuntTapeDensity(nextDensity);
+    setTapeDensity(density);
+    persistHuntTapeDensity(density);
   }
 
   const cazaMode = isCazaResultView(viewMode);
@@ -68,10 +86,16 @@ export default function ResultPagerTable({
   return (
     <>
       <div className="resultViewChrome">
-        <HuntTapeModeToggle mode={viewMode} onChange={handleViewModeChange} />
+        <div className="resultViewChromeControls">
+          <HuntTapeModeToggle mode={viewMode} onChange={handleViewModeChange} />
+          {cazaMode ? (
+            <HuntTapeDensityToggle density={tapeDensity} onChange={handleDensityChange} />
+          ) : null}
+        </div>
         {cazaMode ? (
           <span className="resultViewChromeMeta fine">
             {visibleCount ? `${visibleCount} en cola` : "0 en cola"}
+            {tapeDensity === HUNT_TAPE_DENSITIES.COMPACT ? " · compacto" : " · cómodo"}
           </span>
         ) : null}
       </div>
@@ -83,6 +107,7 @@ export default function ResultPagerTable({
           onOpenStock={onOpenStock}
           activeModalRow={activeModalRow}
           chartPreviewDeferred={chartPreviewDeferred}
+          density={tapeDensity}
         />
       ) : (
         <>

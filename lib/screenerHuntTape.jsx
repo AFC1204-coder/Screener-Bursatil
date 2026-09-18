@@ -181,7 +181,16 @@ export function HuntTapeSparkline({ bars = [], className = "", status = "empty" 
       </span>
     );
   }
-  return <span className={`huntTapeSparkMissing ${className}`.trim()} aria-hidden="true">–</span>;
+  return (
+    <span
+      className={`huntTapeSparkMissing ${className}`.trim()}
+      role="img"
+      aria-label="Sin serie"
+      title="Sin serie semanal"
+    >
+      Sin serie
+    </span>
+  );
 }
 
 export function HuntTapeModeToggle({ mode, onChange }) {
@@ -203,6 +212,31 @@ export function HuntTapeModeToggle({ mode, onChange }) {
           onClick={() => onChange?.("audit")}
         >
           Auditoría
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function HuntTapeDensityToggle({ density, onChange }) {
+  return (
+    <div className="huntTapeDensityToggle chartPrefGroup" role="group" aria-label="Densidad de cinta">
+      <div className="chartSegmented">
+        <button
+          type="button"
+          aria-pressed={density === "compact"}
+          className={density === "compact" ? "active" : ""}
+          onClick={() => onChange?.("compact")}
+        >
+          Compacto
+        </button>
+        <button
+          type="button"
+          aria-pressed={density === "comfort"}
+          className={density === "comfort" ? "active" : ""}
+          onClick={() => onChange?.("comfort")}
+        >
+          Cómodo
         </button>
       </div>
     </div>
