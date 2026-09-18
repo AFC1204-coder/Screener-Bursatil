@@ -261,7 +261,10 @@ describe("RS país condicional a mercados en mesa", () => {
 describe("dato ausente", () => {
   it("muestra un guion con el motivo, sin etiquetas de estado", () => {
     const html = renderTable({ rows: [emptyRow], scannedMarkets: ["US"] });
-    expect(html.match(/class="cellMissing"/g)).toHaveLength(8);
+    // P6: VCP vacío es chip «Sin VCP», no cellMissing — quedan 7 ausencias.
+    expect(html.match(/class="cellMissing"/g)).toHaveLength(7);
+    expect(html).toContain("vcpTag-absent");
+    expect(html).toContain("Sin VCP");
     expect(html).toContain("Sin miniatura");
     expect(html).toContain("Sin RS semanal");
     expect(html).toContain("Histórico semanal insuficiente para clasificar la etapa");
@@ -463,7 +466,8 @@ describe("vista móvil", () => {
 
   it("muestra las ausencias igual que escritorio", () => {
     const html = renderMobile(emptyRow);
-    expect(html.match(/class="cellMissing"/g)).toHaveLength(8);
+    expect(html.match(/class="cellMissing"/g)).toHaveLength(7);
+    expect(html).toContain("Sin VCP");
     expect(html).toContain("Sin RS semanal");
   });
 });
