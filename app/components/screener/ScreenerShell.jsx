@@ -58,10 +58,16 @@ import {
   resolveColdProgressSurfaces,
 } from "@/lib/screenerColdProgress";
 import MesaEmptyCard from "@/app/components/screener/MesaEmptyCard";
+import ScreenerDataStateDrawer from "@/app/components/screener/ScreenerDataStateDrawer";
 import {
   shouldFoldSnapshotNoticeIntoMesaEmpty,
   shouldShowMesaEmptyCard,
 } from "@/lib/mesaEmptyState";
+import {
+  buildScreenerBannerCandidates,
+  isBannerSlotVisible,
+  selectBannerSlots,
+} from "@/lib/screenerBannerQueue";
 
 function showScanStatusBar(err, status = "") {
   return isPrimaryScanProgressStatus(err, status);
@@ -434,6 +440,49 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     && !foldSnapshotIntoMesaEmpty,
   );
   const isSampleTruncationNotice = isDismissibleSampleNotice(snapshotNotice);
+  // P2: cola ≤1 hard + ≤1 soft; overflow → «Estado de datos».
+  // scanStatusVisible se calcula más abajo; usamos la misma regla aquí.
+  const scanStatusVisibleForQueue = showScanStatusBar(err, status);
+  const bannerCandidates = buildScreenerBannerCandidates({
+    err,
+    showSnapshotNotice,
+    snapshotNotice,
+    scanStatusVisible: scanStatusVisibleForQueue,
+    marketsMisalignment,
+    scanStale,
+    lideresIntlGuardrail,
+  });
+  const bannerSlots = selectBannerSlots(bannerCandidates);
+  const bannerVisibleIds = bannerSlots.visibleIds;
+  const snapshotBannerId = snapshotNotice?.requiresReauth
+    ? "auth-reauth"
+    : (String(snapshotNotice?.tone || "info").toLowerCase() === "warn"
+      || String(snapshotNotice?.tone || "").toLowerCase() === "error"
+      || String(snapshotNotice?.tone || "").toLowerCase() === "bad"
+      || Boolean(snapshotNotice?.stale)
+      ? "snapshot-warn"
+      : "snapshot-info");
+  const marketsBannerId = !marketsMisalignment
+    ? null
+    : (String(marketsMisalignment.tone || "").toLowerCase() === "error"
+      ? "markets-error"
+      : String(marketsMisalignment.tone || "").toLowerCase() === "loading"
+        ? "markets-loading"
+        : "markets-misalignment");
+  const scanStatusBannerId = "scan-status";
+  const showPrimaryErr = Boolean(err) && isBannerSlotVisible(bannerVisibleIds, "err");
+  const showPrimarySnapshot = showSnapshotNotice && isBannerSlotVisible(bannerVisibleIds, snapshotBannerId);
+  // Incidencia: el div `.error` es el hard; el status bar solo si es progreso soft.
+  const showPrimaryScanStatus = scanStatusVisibleForQueue
+    && !err
+    && isBannerSlotVisible(bannerVisibleIds, scanStatusBannerId);
+  const showPrimaryMarkets = Boolean(marketsBannerId)
+    && isBannerSlotVisible(bannerVisibleIds, marketsBannerId);
+  const showPrimaryScanStale = Boolean(scanStale)
+    && !marketsMisalignment
+    && isBannerSlotVisible(bannerVisibleIds, "scan-stale-coverage");
+  const showPrimaryLideres = Boolean(lideresIntlGuardrail)
+    && isBannerSlotVisible(bannerVisibleIds, "lideres-intl");
   const searchInputRef = useRef(null);
 
   function focusSearchInput() {
@@ -503,7 +552,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   }
 
   function renderMarketsMisalignmentNotice() {
-    if (!marketsMisalignment) return null;
+    if (!marketsMisalignment || !showPrimaryMarkets) return null;
     const cta = marketsMisalignment.showCta !== false ? (
       <button
         type="button"
@@ -548,6 +597,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   }
 
   function renderScanStaleNotice() {
+    if (!showPrimaryScanStale) return null;
     const notice = (
       <>
         <span className="scanStaleNoticeLabel">Cobertura</span>
@@ -588,7 +638,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   }
 
   function renderLideresIntlGuardrail() {
-    if (!lideresIntlGuardrail) return null;
+    if (!lideresIntlGuardrail || !showPrimaryLideres) return null;
     const actions = (
       <div className="lideresIntlGuardrailActions">
         {lideresIntlGuardrail.ctas.map((cta) => (
@@ -630,7 +680,78 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   const visibleBatchRows = huntResultsFiltered.some((row) => row.percentileScope === "batch");
   const statusLabel = investorStatusLabel(status);
   const mobileStatusLabel = compactMobileScanStatus(status);
-  const scanStatusVisible = showScanStatusBar(err, status);
+  const scanStatusVisible = showPrimaryScanStatus;
+
+  function renderDataStateOverflowActions(item) {
+    if (!item?.id) return null;
+    if (item.id === "markets-misalignment" || item.id === "markets-error") {
+      if (marketsMisalignment?.showCta === false) return null;
+      return (
+        <button
+          type="button"
+          className="btn btnSmall btnPrimary"
+          onClick={() => loadScanForMarketSelection(markets, "Cargando datos de la selección…")}
+          disabled={restoringScan}
+        >
+          {restoringScan ? "Cargando…" : (marketsMisalignment?.ctaLabel || "Cargar datos de la selección")}
+        </button>
+      );
+    }
+    if (item.id === "scan-stale-coverage" || item.id === "snapshot-warn" || item.id === "snapshot-info") {
+      if (item.id.startsWith("snapshot") && isFilterLayersUpgradeNotice) {
+        return renderFilterLayersUpgradeDismiss();
+      }
+      if (item.id.startsWith("snapshot") && isSampleTruncationNotice) {
+        return renderSampleTruncationNoticeActions();
+      }
+      if (item.id === "scan-stale-coverage" || item.id === "snapshot-warn") {
+        return (
+          <button
+            type="button"
+            className="btn btnSmall btnPrimary"
+            onClick={refreshScreenerSnapshotData}
+            disabled={restoringScan}
+          >
+            {restoringScan ? "Actualizando…" : "Traer datos frescos"}
+          </button>
+        );
+      }
+    }
+    if (item.id === "lideres-intl" && lideresIntlGuardrail?.ctas?.length) {
+      return (
+        <div className="lideresIntlGuardrailActions">
+          {lideresIntlGuardrail.ctas.map((cta) => (
+            <button
+              key={cta.id}
+              type="button"
+              className={`btn btnSmall ${cta.primary ? "btnPrimary" : "btnGhost"}`}
+              onClick={() => handleLideresIntlGuardrailCta(cta.id)}
+              disabled={restoringScan}
+            >
+              {cta.label}
+            </button>
+          ))}
+        </div>
+      );
+    }
+    if (item.id === "auth-reauth") {
+      return (
+        <button type="button" className="btn btnSmall btnPrimary" onClick={() => { void restartStatsEdgeSession(); }}>
+          Vuelve a entrar
+        </button>
+      );
+    }
+    return null;
+  }
+
+  const dataStateOverflowActions = {};
+  for (const item of bannerSlots.overflow) {
+    const actions = renderDataStateOverflowActions(item);
+    if (actions) dataStateOverflowActions[item.id] = actions;
+  }
+  const dataStateDrawer = (
+    <ScreenerDataStateDrawer items={bannerSlots.overflow} childrenById={dataStateOverflowActions} />
+  );
 
   // Cierre del panel de filtros en móvil: Escape en cualquier punto de la
   // página y click/tap fuera del panel (mobileFiltersRef). El botón "Filtros"
@@ -745,15 +866,15 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       </button>
       </div>
     </> : null}
-    {err && <div className="error">{err}</div>}
-    {isMobileViewport && (scanStatusVisible || showSnapshotNotice) ? <div className="screenerMobileNoticeStack">
+    {showPrimaryErr && <div className="error">{err}</div>}
+    {isMobileViewport && (scanStatusVisible || showPrimarySnapshot) ? <div className="screenerMobileNoticeStack">
       <MobileStatusFold
         err={Boolean(err)}
         statusLabel={statusLabel}
         mobileStatusLabel={mobileStatusLabel}
         scanStatusVisible={scanStatusVisible}
         snapshotNotice={snapshotNotice}
-        showSnapshotNotice={showSnapshotNotice}
+        showSnapshotNotice={showPrimarySnapshot}
       >
         {renderSnapshotNoticeActions()}
       </MobileStatusFold>
@@ -762,7 +883,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       <span>{err ? "Incidencia" : "Estado"}</span>
       <b>{statusLabel}</b>
     </div> : null}
-    {!isMobileViewport && showSnapshotNotice ? <div className={`snapshotFreshnessNotice ${snapshotNotice.requiresReauth ? "compact warn" : snapshotNotice.tone || "info"}`} role="alert" aria-live="polite">
+    {!isMobileViewport && showPrimarySnapshot ? <div className={`snapshotFreshnessNotice ${snapshotNotice.requiresReauth ? "compact warn" : snapshotNotice.tone || "info"}`} role="alert" aria-live="polite">
       <span>{snapshotNotice.label}</span>
       <b>{snapshotNotice.detail}</b>
       {snapshotNotice.requiresReauth ? (
@@ -773,7 +894,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
         </div>
       ) : renderSnapshotNoticeActions()}
     </div> : null}
-    {isMobileViewport && showSnapshotNotice && snapshotNotice.requiresReauth ? <div className="snapshotFreshnessNotice compact warn" role="alert" aria-live="polite">
+    {isMobileViewport && showPrimarySnapshot && snapshotNotice.requiresReauth ? <div className="snapshotFreshnessNotice compact warn" role="alert" aria-live="polite">
       <span>{snapshotNotice.label}</span>
       <b>{snapshotNotice.detail}</b>
       <div className="storageAlertActions">
@@ -877,7 +998,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
 
         {isMobileViewport ? <section className="mobileResearchHome">
           {renderMarketsMisalignmentNotice()}
-          {marketsMisalignment ? null : scanStale ? renderScanStaleNotice() : null}
+          {showPrimaryScanStale ? renderScanStaleNotice() : null}
+          {dataStateDrawer}
           {showMesaEmptyCard ? (
             <MesaEmptyCard
               markets={markets}
@@ -928,7 +1050,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
 
         {!isMobileViewport ? <section className={`desktopResultsSection${showMesaEmptyCard ? " desktopResultsSection--mesaEmpty" : ""}`} style={{ marginBottom: 20 }}>
           {renderMarketsMisalignmentNotice()}
-          {marketsMisalignment ? null : scanStale ? (
+          {showPrimaryScanStale ? (
             <div className="scanStaleNotice" role="status" aria-live="polite">
               <span className="scanStaleNoticeLabel">Cobertura</span>
               <b>Los criterios de cobertura cambiaron; los datos cargados son de la selección anterior.</b>
@@ -942,6 +1064,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
               </button>
             </div>
           ) : null}
+          {dataStateDrawer}
           <div className={`resultsHeader${showMesaEmptyCard ? " resultsHeader--mesaEmpty" : ""}`}>
             <div className="resultsTitleBlock">
               <h2>Resultados</h2>

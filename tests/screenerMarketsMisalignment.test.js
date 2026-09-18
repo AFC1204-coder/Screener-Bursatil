@@ -473,6 +473,10 @@ describe("ScreenerShell sample-truncation notice", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
       snapshotNotice: notice,
       onDismissSnapshotSampleNotice: () => {},
+      // P2: mercados alineados para que el soft de muestra no pierda el slot
+      // frente a markets-loading por US vs US+CA del default del harness.
+      selectedMarkets: ["US"],
+      scannedMarkets: ["US"],
     })));
     expect(html).toContain("Universo parcial");
     expect(html).not.toContain("Datos incompletos");
@@ -492,6 +496,8 @@ describe("ScreenerShell sample-truncation notice", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({
       snapshotNotice: notice,
       onDismissSnapshotSampleNotice: () => {},
+      selectedMarkets: ["US"],
+      scannedMarkets: ["US"],
     })));
     expect(html).toContain("Muestra");
     expect(html).toContain("Entendido");
