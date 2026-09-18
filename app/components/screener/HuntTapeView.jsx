@@ -20,6 +20,11 @@ import {
   huntTapeStageLine,
   huntTapeDrillUrl,
 } from "@/lib/screenerHuntTape";
+import {
+  DEFAULT_HUNT_TAPE_DENSITY,
+  huntTapeRowHeightPx,
+  resolveHuntTapeDensity,
+} from "@/lib/screenerHuntTapeDensity";
 
 export default function HuntTapeView({
   rows = [],
@@ -27,6 +32,7 @@ export default function HuntTapeView({
   onOpenStock,
   activeModalRow = null,
   chartPreviewDeferred = false,
+  density = DEFAULT_HUNT_TAPE_DENSITY,
 }) {
   const [focusIndex, setFocusIndex] = useState(0);
   const [keyboardActive, setKeyboardActive] = useState(false);
@@ -34,17 +40,20 @@ export default function HuntTapeView({
   const rowRefs = useRef([]);
   const hydrateStartRef = useRef(0);
   const scrollRafRef = useRef(0);
-  const queueKey = `${rows[0]?.symbol || ""}:${rows.length}:${rows[rows.length - 1]?.symbol || ""}`;
+  const tapeDensity = resolveHuntTapeDensity(density);
+  const rowHeightPx = huntTapeRowHeightPx(tapeDensity);
+  const queueKey = `${rows[0]?.symbol || ""}:${rows.length}:${rows[rows.length - 1]?.symbol || ""}:${tapeDensity}`;
 
   const publishHydrateViewport = useCallback(() => {
     const el = listRef.current;
     const start = computeHuntChartPreviewHydrateStart(el?.scrollTop || 0, {
       rowCount: rows.length,
+      rowHeight: rowHeightPx,
     });
     if (start === hydrateStartRef.current) return;
     hydrateStartRef.current = start;
     emitHuntChartPreviewViewport(start);
-  }, [rows.length]);
+  }, [rows.length, rowHeightPx]);
 
   const handleListScroll = useCallback(() => {
     if (scrollRafRef.current) return;
@@ -60,7 +69,7 @@ export default function HuntTapeView({
     }
   }, [rows.length, focusIndex]);
 
-  // Nueva cola (ficha/filtro): reset scroll + re-publicar ventana de hydrate.
+  // Nueva cola (ficha/filtro/densidad): reset scroll + re-publicar ventana de hydrate.
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = 0;
     hydrateStartRef.current = -1;
@@ -138,8 +147,10 @@ export default function HuntTapeView({
     return <div className="huntTapeEmpty" role="status">{emptyLabel}</div>;
   }
 
+  const densityClass = tapeDensity === "comfort" ? "huntTapeDensityComfort" : "huntTapeDensityCompact";
+
   return (
-    <div className="huntTapeBlock">
+    <div className={`huntTapeBlock ${densityClass}`.trim()} data-density={tapeDensity}>
       <p className="huntTapeHint" aria-live="polite">
         <kbd>j</kbd>/<kbd>k</kbd> pasar · <kbd>Enter</kbd> abrir ficha · <kbd>Esc</kbd> quitar foco
       </p>
@@ -176,6 +187,11 @@ export default function HuntTapeView({
           const sparkStatus = resolveHuntTapeSparkStatus(row, {
             deferred: chartPreviewDeferred,
           });
+          const sparkTitle = sparkStatus === "pending"
+            ? "Cargando miniatura"
+            : sparkStatus === "ready"
+              ? "Spark desde chartPreview del scan"
+              : "Sin serie semanal";
 
           return (
             <li
@@ -192,7 +208,7 @@ export default function HuntTapeView({
               }}
             >
               <HuntTapeTickerCell row={row} onOpenStock={onOpenStock} />
-              <div className="huntTapeSparkWrap" title={sparkStatus === "pending" ? "Cargando miniatura" : "Spark desde chartPreview del scan"}>
+              <div className="huntTapeSparkWrap" title={sparkTitle}>
                 <HuntTapeSparkline bars={sparkBars} status={sparkStatus} />
               </div>
               <span className="huntTapeStage" title={stage?.title || "Sin etapa semanal"}>
