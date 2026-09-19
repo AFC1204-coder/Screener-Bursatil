@@ -3,9 +3,10 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-14 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `320cdb4` (WAVE5-REMEASURE)  
-**Ahora:** idle.  
+Última actualización: 2026-09-19 · rama `codex/statsedge-ui-polish`  
+**Última sync / HEAD origin polish:** `9554309` (P6+P9+P10 #41)  
+**Ahora:** REVIEW-CHART-PAINT-1 — chart Vista rápida stuck «Cargando histórico…» (smoke P7/P8 PARTIAL).  
+**Nota UX Top5+baratos:** smoke 2026-09-19 PASS @ `9554309` (P1 N/A hidratado; P7/P8 path OK, paint PARTIAL).  
 **Último cerrado (sparks):** SCANS-CHARTPREVIEW-HYDRATE-STABLE-1 — cap 80 + onChunk; smoke 1 POST / 80 SVG.
 **Nota BOOTSTRAP:** SCREENER-BOOTSTRAP-CORE-FIRST-1 — core pinta mesa; extended background; smoke sin wipe.  
 **Cola:** —  
