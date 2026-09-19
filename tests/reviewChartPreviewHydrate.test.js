@@ -6,11 +6,13 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import {
   REVIEW_CHART_PREVIEW_FOCUS_MAX,
+  REVIEW_DIRECT_CHART_DATA_RANGE,
   buildReviewChartPreviewHydratePlan,
   collectReviewSymbolsForChartPreviewHydrate,
   resolveReviewScanCloudId,
   reviewRowsForChartPreviewHydrate,
   runReviewChartPreviewHydrate,
+  runReviewDirectChartHydrate,
 } from "@/lib/reviewChartPreviewHydrate";
 import {
   peekCachedChartPreviews,
@@ -62,16 +64,10 @@ describe("collectReviewSymbolsForChartPreviewHydrate", () => {
 });
 
 describe("buildReviewChartPreviewHydratePlan", () => {
-  it("null si disabled, sin cloudId o sin huecos", () => {
+  it("null si disabled o sin huecos", () => {
     expect(buildReviewChartPreviewHydratePlan({
       enabled: false,
       scans: [{ cloudId: "scan-1" }],
-      visibleRows: [row("AAA")],
-      currentIndex: 0,
-    })).toBeNull();
-    expect(buildReviewChartPreviewHydratePlan({
-      enabled: true,
-      scans: [{}],
       visibleRows: [row("AAA")],
       currentIndex: 0,
     })).toBeNull();
@@ -83,13 +79,27 @@ describe("buildReviewChartPreviewHydratePlan", () => {
     })).toBeNull();
   });
 
-  it("plan con cloudId + symbols faltantes + signature estable", () => {
+  it("modo direct sin cloudId (P7 /review?symbol=X)", () => {
+    const plan = buildReviewChartPreviewHydratePlan({
+      enabled: true,
+      scans: [],
+      visibleRows: [row("AAPL")],
+      currentIndex: 0,
+    });
+    expect(plan.mode).toBe("direct");
+    expect(plan.symbols).toEqual(["AAPL"]);
+    expect(plan.dataRange).toBe(REVIEW_DIRECT_CHART_DATA_RANGE);
+    expect(plan.signature).toMatch(/^direct\|/);
+  });
+
+  it("plan scan con cloudId + symbols faltantes + signature estable", () => {
     const plan = buildReviewChartPreviewHydratePlan({
       enabled: true,
       scans: [{ cloudId: "scan-avah" }],
       visibleRows: [row("AVAH"), row("IFP.TO")],
       currentIndex: 0,
     });
+    expect(plan.mode).toBe("scan");
     expect(plan.cloudId).toBe("scan-avah");
     expect(plan.symbols).toEqual(["AVAH", "IFP.TO"]);
     expect(plan.signature).toContain("AVAH");
@@ -120,11 +130,16 @@ describe("resolveReviewScanCloudId", () => {
 });
 
 describe("runReviewChartPreviewHydrate", () => {
-  it("llama fetchImpl con cloudId y symbols; no inventa brief", async () => {
+  it("modo scan: llama fetchImpl con cloudId y symbols; no inventa brief", async () => {
     const fetchImpl = vi.fn(async () => ({ AVAH: preview }));
     const onChunk = vi.fn();
     const result = await runReviewChartPreviewHydrate(
-      { cloudId: "scan-1", symbols: ["AVAH"], scanIds: ["11111111-2222-4333-8444-555555555555"] },
+      {
+        mode: "scan",
+        cloudId: "scan-1",
+        symbols: ["AVAH"],
+        scanIds: ["11111111-2222-4333-8444-555555555555"],
+      },
       { fetchImpl, onChunk },
     );
     expect(fetchImpl).toHaveBeenCalledWith("scan-1", ["AVAH"], {
@@ -132,6 +147,38 @@ describe("runReviewChartPreviewHydrate", () => {
       scanIds: ["11111111-2222-4333-8444-555555555555"],
     });
     expect(result).toEqual({ AVAH: preview });
+  });
+
+  it("modo direct: compacta /api/chart a chartPreview close-only", async () => {
+    const bars = Array.from({ length: 60 }, (_, i) => ({
+      date: `2026-01-${String(i + 1).padStart(2, "0")}`,
+      close: 100 + i,
+      volume: 1000 + i,
+    }));
+    const directFetchImpl = vi.fn(async () => ({ bars }));
+    const onChunk = vi.fn();
+    const result = await runReviewChartPreviewHydrate(
+      { mode: "direct", symbols: ["AAPL"], dataRange: "6M", interval: "D" },
+      { directFetchImpl, onChunk },
+    );
+    expect(directFetchImpl).toHaveBeenCalledWith({
+      symbol: "AAPL",
+      dataRange: "6M",
+      interval: "D",
+    });
+    expect(result.AAPL.length).toBeGreaterThanOrEqual(2);
+    expect(onChunk).toHaveBeenCalledWith({ AAPL: result.AAPL });
+  });
+});
+
+describe("runReviewDirectChartHydrate", () => {
+  it("ignora símbolos sin barras suficientes", async () => {
+    const fetchImpl = vi.fn(async () => ({ bars: [{ date: "2026-01-01", close: 10 }] }));
+    const result = await runReviewDirectChartHydrate(
+      { mode: "direct", symbols: ["ZZZ"] },
+      { fetchImpl },
+    );
+    expect(result).toEqual({});
   });
 });
 

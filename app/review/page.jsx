@@ -490,7 +490,7 @@ export default function ReviewPage() {
   );
 
   useReviewChartPrefetch({
-    enabled: source === "current" && visibleRows.length >= 2,
+    enabled: source === "current" && visibleRows.length > 0,
     focusSymbol: activeSymbol,
     visibleRows,
     currentIndex,

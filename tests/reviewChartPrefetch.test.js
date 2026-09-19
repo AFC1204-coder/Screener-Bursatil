@@ -32,7 +32,21 @@ function row(symbol, extra = {}) {
 }
 
 describe("reviewChartPrefetch — plan N+1 / N-1", () => {
-  it("cola <2 no genera prefetch", () => {
+  it("cola de 1 símbolo prefetchea el foco si includeFocus", () => {
+    const plan = buildReviewChartPrefetchPlan({
+      focusSymbol: "AAPL",
+      visibleRows: [{ symbol: "AAPL" }],
+      currentIndex: 0,
+      chartSettings: REVIEW_SETTINGS,
+      includeFocus: true,
+    });
+    expect(plan).toHaveLength(1);
+    expect(plan[0].role).toBe("focus");
+    expect(plan[0].symbol).toBe("AAPL");
+    expect(plan[0].chartRequest).toEqual({ symbol: "AAPL", dataRange: "6M", interval: "D" });
+  });
+
+  it("cola <2 sin includeFocus no genera prefetch", () => {
     expect(buildReviewChartPrefetchPlan({
       focusSymbol: "AAA",
       visibleRows: [row("AAA")],

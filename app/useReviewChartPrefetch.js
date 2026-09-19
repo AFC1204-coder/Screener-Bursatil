@@ -29,7 +29,7 @@ export function useReviewChartPrefetch({
   const generationRef = useRef(0);
 
   useEffect(() => {
-    if (!enabled || !focusSymbol || visibleRows.length < 2) return undefined;
+    if (!enabled || !focusSymbol || !visibleRows.length) return undefined;
 
     generationRef.current += 1;
     const generation = generationRef.current;
@@ -41,7 +41,8 @@ export function useReviewChartPrefetch({
         visibleRows,
         currentIndex,
         chartSettings,
-        includePrev: true,
+        includePrev: visibleRows.length >= 2,
+        includeFocus: visibleRows.length === 1,
       });
       runReviewChartPrefetchPlan(plan);
     });
