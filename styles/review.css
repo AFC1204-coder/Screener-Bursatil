@@ -359,6 +359,28 @@
   text-transform:uppercase;
 }
 
+/* Ausencia RS: copy corto legible, no guion mudo. Motivo largo en title. */
+.reviewRsMissing {
+  color:var(--muted);
+  font-weight:700;
+}
+
+.reviewMetricGrid em.reviewRsMissing {
+  font-size:11px;
+  font-weight:750;
+  line-height:1.25;
+}
+
+.reviewQueueItem i.reviewRsMissing {
+  font-size:9px;
+  font-weight:750;
+  line-height:1.15;
+  max-width:42px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
 .reviewEvidence {
   margin-top:12px;
 }

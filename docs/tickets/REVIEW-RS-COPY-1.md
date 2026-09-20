@@ -1,8 +1,6 @@
 # REVIEW-RS-COPY-1 — copy honesto RS en ficha Review
 
-**Estado:** activo (espejo de `docs/tickets/activo.md`)  
-**Rama:** `codex/statsedge-ui-polish` @ `96bce7c`  
-**Modelo:** Composer 2.5 High (o Terra)  
-**Origen:** plan datos #4 · smoke-review-chart-paint · ux-errores-datos #6  
-
-Ver ticket activo. Solo copy/empty-state en métricas RS de `/review`; no tocar hydrate ni Astra.
+**Estado:** cerrado (orquestador 2026-09-20) · recreate cloud + tests 16 + `./vfc` 3218  
+**Rama:** `codex/statsedge-ui-polish`  
+**Entrega:** `lib/reviewRsDisplay.js` · `lib/reviewMetricGrid.js` · ficha/cola Review  
+**Verify:** [Recreate Review RS copy](https://cursor.com/agents/bc-144ccacb-cfa0-57fe-b96e-53750b556fa7); smoke Browser tipográfico aplazado.

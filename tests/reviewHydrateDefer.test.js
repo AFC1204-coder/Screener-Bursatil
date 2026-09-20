@@ -49,9 +49,11 @@ describe("REVIEW-HYDRATE-DEFER-1 — /review sin brief en el camino crítico", (
     expect(source).not.toMatch(/ReviewChartPanel[^)]*loading/);
   });
 
-  it("las métricas pintadas siguen el RS canónico de sesión (A5)", () => {
+  it("las métricas pintadas siguen el RS canónico de sesión vía helpers (A5)", () => {
+    expect(source).toContain("buildReviewMetricRows");
+    expect(source).toContain("reviewRsCell");
     expect(source).toContain("canonicalRs(row)");
-    expect(source).toContain("countryRs(row)");
-    expect(source).toContain("themeRs(row)");
+    expect(source).not.toContain("hydrateReviewRow");
+    expect(source).not.toContain("/api/company-brief");
   });
 });

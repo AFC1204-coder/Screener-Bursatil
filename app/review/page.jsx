@@ -51,7 +51,7 @@ import { useReviewChartPreviewHydrate } from "@/app/useReviewChartPreviewHydrate
 import { getJson } from "@/lib/clientApi";
 import { readChartSettings } from "@/lib/chartSettings";
 import { deleteFavoriteFromCloud, syncFavoriteToCloud } from "@/lib/cloudSyncClient";
-import { clamp, dateTime, pct, ratio } from "@/lib/formatters";
+import { clamp, dateTime } from "@/lib/formatters";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { mergeReviewRowChartPreviews, persistReviewQueue } from "@/lib/screenerPipeline";
 import {
@@ -65,9 +65,9 @@ import {
 import StorageAlert from "@/app/components/StorageAlert";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { evidenceRows } from "@/lib/reviewEvidence";
+import { buildReviewMetricRows } from "@/lib/reviewMetricGrid";
+import { reviewRsCell } from "@/lib/reviewRsDisplay";
 import { canonicalRs } from "@/lib/rsCanonical";
-import { countryRs } from "@/lib/countryRs";
-import { themeRs } from "@/lib/themeRs";
 import { prepareReviewQueueRows } from "@/lib/decisionProfile";
 import { buildReviewQueueNavigation } from "@/lib/reviewQueueNavigation";
 import { resolveReviewFocus, reviewFocusStatusMessage } from "@/lib/reviewSession";
@@ -85,9 +85,6 @@ import { STOCK_DECISION_ACTIONS, applyStockDecisionResolution, buildStockDecisio
 import { createFavoriteFromRow } from "@/lib/stockRows";
 import { cleanSymbol, countryCode, externalLinks, stockUrl } from "@/lib/symbols";
 
-function value(row = {}, key) {
-  return row[key] ?? row.snapshot?.[key] ?? null;
-}
 function normalizeRow(row = {}) {
   const snapshot = row.snapshot || {};
   return { ...snapshot, ...row, snapshot };
@@ -237,30 +234,6 @@ function ReviewChartPanel({ row }) {
     />
   </div>;
 }
-// Métricas del valor: medidas y ratios aritméticos, sin scores del motor. El
-// RS es el canónico (ranking semanal del universo); su ausencia viaja con el
-// motivo en el title, como en la tabla y la ficha.
-function metricRows(row = {}) {
-  const rs = canonicalRs(row);
-  const crs = countryRs(row);
-  const trs = themeRs(row);
-  return [
-    ["RS", rs.available ? rs.value.toFixed(0) : "-", rs.available ? "RS semanal del universo" : rs.reason],
-    ["RS país", crs.available ? crs.value.toFixed(0) : "-", crs.available ? "RS semanal del mercado local" : crs.reason],
-    ["RS tema", trs.available ? trs.value.toFixed(0) : "-", trs.available ? "RS semanal de la ocupación curada" : trs.reason],
-    ["3M", pct(value(row, "perf3m"))],
-    ["6M", pct(value(row, "perf6m"))],
-    ["12M", pct(value(row, "perf12m"))],
-    ["SMA50", pct(value(row, "extSma50"))],
-    ["Vol rel 20d", ratio(value(row, "relativeVolume"))],
-    ["Short float", pct(value(row, "shortPercentOfFloat"))],
-    ["Vol 63d", pct(value(row, "volatility63d"))],
-    ["DD 63d", pct(Number.isFinite(value(row, "maxDrawdown63d")) ? -value(row, "maxDrawdown63d") : null)],
-    ["R/Vol 3M", ratio(value(row, "returnToVol3m"))],
-    ["R/DD 3M", ratio(value(row, "returnToDrawdown3m"))],
-  ];
-}
-
 export default function ReviewPage() {
   const [source, setSource] = useState("current");
   const [rows, setRows] = useState([]);
@@ -795,7 +768,9 @@ export default function ReviewPage() {
           {visibleRows.map((row, index) => {
             const active = activeRow?.symbol === row.symbol;
             const resolution = decisionResolutionForSymbol({ decisionResolutions }, row.symbol);
-            const rowRs = canonicalRs(row);
+            const rowRs = reviewRsCell(canonicalRs(row), {
+              availableTitle: "RS semanal del universo",
+            });
             return <button
               key={row.symbol}
               className={`reviewQueueItem ${active ? "active" : ""} ${resolution ? `resolved-${resolution.key}` : ""}`}
@@ -810,7 +785,7 @@ export default function ReviewPage() {
                   <span className={`reviewQueueResolutionBadge ${resolution.tone || "neutral"}`}>{resolution.label}</span>
                 </span> : null}
               </span>
-              <i title={rowRs.available ? "RS semanal del universo" : rowRs.reason}>{rowRs.available ? rowRs.value.toFixed(0) : "-"}</i>
+              <i className={rowRs.className || undefined} title={rowRs.title || undefined}>{rowRs.text}</i>
             </button>;
           })}
         </div>
@@ -852,9 +827,9 @@ export default function ReviewPage() {
           <button className={`starBtn ${favoriteSymbols.has(activeSymbol) ? "on" : ""}`} onClick={() => toggleFavorite(activeRow)} aria-label={`Favorito ${activeRow.symbol}`}>★</button>
         </div>
         <div className="reviewMetricGrid">
-          {metricRows(activeRow).map(([label, metric, title = ""]) => <span key={label}>
+          {buildReviewMetricRows(activeRow).map(({ label, text, title = "", className = "" }) => <span key={label}>
             <b>{label}</b>
-            <em title={title || undefined}>{metric}</em>
+            <em className={className || undefined} title={title || undefined}>{text}</em>
           </span>)}
         </div>
         <div className="reviewEvidence">
