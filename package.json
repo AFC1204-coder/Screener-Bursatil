@@ -31,7 +31,11 @@
     "supabase:seed-settings": "node --env-file=.env.local scripts/seed-default-settings.mjs",
     "supabase:status": "node scripts/supabase-admin.mjs status",
     "supabase:schema": "node scripts/supabase-admin.mjs schema",
-    "test:e2e": "node --import ./scripts/refactor-check/register.mjs scripts/e2e/run.mjs"
+    "test:e2e": "node --import ./scripts/refactor-check/register.mjs scripts/e2e/run.mjs",
+    "ops:mini-tunnel": "node scripts/ops/mini-tunnel.mjs",
+    "ops:mini-tunnel:start": "node scripts/ops/mini-tunnel.mjs --start",
+    "ops:mini-smoke": "node scripts/ops/ops-mini-smoke.mjs",
+    "ops:mini-smoke:start": "node scripts/ops/ops-mini-smoke.mjs --start-tunnel"
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.9.10",
