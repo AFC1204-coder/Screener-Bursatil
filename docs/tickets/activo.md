@@ -3,7 +3,7 @@
 **Estado:** activo · programación en Agent chat aparte  
 **Rama:** `codex/statsedge-ui-polish` @ `b082656`  
 **Modelo:** Composer 2.5 High (o Terra)  
-**Origen:** [plan-datos-fiabilidad.md](../../..//cursor/stores — ver Agent Store docs/plan-datos-fiabilidad.md) · eje #1 ops  
+**Origen:** plan datos/fiabilidad (Agent Store `docs/plan-datos-fiabilidad.md`) · eje #1 ops  
 **Nota Mac:** computer-use es frágil; preferir Playwright/shell. Si el worker Mac cae, documentar y parar — no insistir.
 
 ## Prompt para Agent chat (copiar tal cual)
