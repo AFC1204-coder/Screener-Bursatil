@@ -4,7 +4,7 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-20 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** (post CAZA-SPARKS-SCROLL-1)  
+**Última sync / HEAD origin polish:** `95ffeed` (CAZA-SPARKS-SCROLL-1)  
 **Ahora:** idle.  
 **Último cerrado:** CAZA-SPARKS-SCROLL-1 — hydrate Caza desde cola `filtered`; smoke scroll >80 PASS.  
 **Cola:** Review RS copy · yield Europa.  
