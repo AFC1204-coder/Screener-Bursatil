@@ -84,7 +84,8 @@ export default function HuntTapeView({
   const scrollFocusIntoView = useCallback((index) => {
     const el = rowRefs.current[index];
     el?.scrollIntoView({ block: "nearest" });
-  }, []);
+    requestAnimationFrame(() => publishHydrateViewport());
+  }, [publishHydrateViewport]);
 
   const moveFocus = useCallback((delta) => {
     if (!rows.length) return;

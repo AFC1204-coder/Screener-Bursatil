@@ -4,13 +4,13 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-20 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `d05b00d` (OPS-MINI-SMOKE-1)  
-**Ahora:** CAZA-SPARKS-SCROLL-1 — sparks Caza ventana al scroll >80 (cerrar residual STABLE).  
+**Última sync / HEAD origin polish:** (post CAZA-SPARKS-SCROLL-1)  
+**Ahora:** idle.  
+**Último cerrado:** CAZA-SPARKS-SCROLL-1 — hydrate Caza desde cola `filtered`; smoke scroll >80 PASS.  
 **Cola:** Review RS copy · yield Europa.  
-**Último cerrado:** OPS-MINI-SMOKE-1 — Mini `:15432` + Playwright smoke PASS (`525 de 3578` US) `28fa1ab`.  
-**Último cerrado (prev):** REVIEW-CHART-PAINT-1 — modo `direct` chartPreview.  
-**Nota UX Top5+baratos:** smoke 2026-09-19 PASS @ `9554309`.  
-**Último cerrado (sparks):** SCANS-CHARTPREVIEW-HYDRATE-STABLE-1 — cap 80; residual → este ticket.
+**Último cerrado (prev):** OPS-MINI-SMOKE-1 — Mini + Playwright `28fa1ab`.  
+**Último cerrado (sparks STABLE):** SCANS-CHARTPREVIEW-HYDRATE-STABLE-1 — residual scroll cerrado por CAZA-SPARKS-SCROLL-1.  
+**Nota UX Top5+baratos:** smoke 2026-09-19 PASS @ `9554309`.
 **Nota BOOTSTRAP:** SCREENER-BOOTSTRAP-CORE-FIRST-1 — core pinta mesa; extended background; smoke sin wipe.  
 **Cola:** —  
 **Último cerrado:** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  

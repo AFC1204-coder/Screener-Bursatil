@@ -1373,7 +1373,11 @@ export default function Page() {
     }
     const cazaMode = isCazaResultView(resultViewMode);
     const hydrateStart = cazaMode ? huntChartPreviewStart : 0;
-    const huntWindowRows = huntRowsForChartPreviewHydrate(rows, cazaMode, { start: hydrateStart });
+    // Caza pinta `filtered` (misma cola ordenada que HuntTapeView); los índices
+    // de scroll→start deben cortar esa lista, no `rows` en orden de pipeline.
+    const cazaTapeRows = filtered;
+    const huntQueueRows = cazaMode ? cazaTapeRows : rows;
+    const huntWindowRows = huntRowsForChartPreviewHydrate(huntQueueRows, cazaMode, { start: hydrateStart });
     const symbols = collectSymbolsForChartPreviewHydrate({
       pagedRows,
       quickReviewRows,
@@ -1381,9 +1385,9 @@ export default function Page() {
     });
     const queueSignature = buildChartPreviewQueueSignature({
       presetKey,
-      rowCount: rows.length,
-      headSymbol: rows[0]?.symbol,
-      tailSymbol: rows.at?.(-1)?.symbol ?? rows[rows.length - 1]?.symbol,
+      rowCount: huntQueueRows.length,
+      headSymbol: huntQueueRows[0]?.symbol,
+      tailSymbol: huntQueueRows.at?.(-1)?.symbol ?? huntQueueRows[huntQueueRows.length - 1]?.symbol,
       // Solo anclar start si aún hay missing: evita re-fetch al scroll con cola ya hidratada.
       hydrateStart: symbols.length ? hydrateStart : 0,
     });
@@ -1412,6 +1416,7 @@ export default function Page() {
     huntChartPreviewStart,
     presetKey,
     rows,
+    filtered,
     pagedRows,
     quickReviewRows,
   ]);
