@@ -4,7 +4,7 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-20 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** (post OPS-MINI-SMOKE-1)  
+**Última sync / HEAD origin polish:** `28fa1ab` (OPS-MINI-SMOKE-1)  
 **Ahora:** idle.  
 **Último cerrado:** OPS-MINI-SMOKE-1 — Mini `:15432` check/start + Playwright smoke PASS (`525 de 3578` US).  
 **Cola:** CAZA-SPARKS-SCROLL-1 (hydrate >80) · Review RS copy · yield Europa.  
