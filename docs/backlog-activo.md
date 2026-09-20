@@ -4,12 +4,13 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-20 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `96bce7c` (stamp CAZA-SPARKS-SCROLL-1)  
-**Ahora:** REVIEW-RS-COPY-1 — copy honesto RS / RS país / RS tema en ficha Review (`prep`).  
+**Última sync / HEAD origin polish:** `85506ca` (REVIEW-RS-COPY-1)  
+**Ahora:** idle.  
+**Último cerrado:** REVIEW-RS-COPY-1 — copy honesto RS en ficha Review (`Cargando…` / `Sin ranking` / `Sin histórico` / `Error`).  
 **Cola:** yield Europa.  
-**Último cerrado:** CAZA-SPARKS-SCROLL-1 — hydrate Caza desde cola `filtered`; smoke scroll >80 PASS (`95ffeed` / stamp `96bce7c`).  
-**Último cerrado (prev):** OPS-MINI-SMOKE-1 — Mini + Playwright `28fa1ab`.  
-**Último cerrado (sparks STABLE):** SCANS-CHARTPREVIEW-HYDRATE-STABLE-1 — residual scroll cerrado por CAZA-SPARKS-SCROLL-1.  
+**Último cerrado (prev):** CAZA-SPARKS-SCROLL-1 — hydrate Caza `filtered`; smoke scroll >80 (`95ffeed` / `96bce7c`).  
+**Último cerrado (ops):** OPS-MINI-SMOKE-1 — Mini + Playwright `28fa1ab`.  
+**Último cerrado (sparks STABLE):** SCANS-CHARTPREVIEW-HYDRATE-STABLE-1 — residual scroll cerrado.  
 **Nota UX Top5+baratos:** smoke 2026-09-19 PASS @ `9554309`.  
 **Nota BOOTSTRAP:** SCREENER-BOOTSTRAP-CORE-FIRST-1 — core pinta mesa; extended background; smoke sin wipe.  
 **Cola (hist):** —  
