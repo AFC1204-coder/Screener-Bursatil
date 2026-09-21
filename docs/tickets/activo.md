@@ -2,7 +2,7 @@
 
 **Estado:** prep  
 **ID:** EUROPA-COVERAGE-TRUTH-1  
-**Rama:** `codex/statsedge-ui-polish` @ `014e862`  
+**Rama:** `codex/statsedge-ui-polish` @ `09a7ac5`  
 **Modelo:** Composer 2.5 (o Terra)  
 **Plan:** item 5 cobertura intl · slice A (honestidad UI; no yield cron)
 
@@ -11,7 +11,7 @@
 ```
 @docs/tickets/activo.md
 
-Eres programación StatsEdge (NO orquestador). Rama: codex/statsedge-ui-polish @ 014e862.
+Eres programación StatsEdge (NO orquestador). Rama: codex/statsedge-ui-polish @ 09a7ac5.
 Modelo: Composer 2.5 (o Terra). SIN commit ni push.
 
 Ticket EUROPA-COVERAGE-TRUTH-1 — preset Europa no se presenta como cobertura completa.
@@ -48,4 +48,4 @@ Honestidad de producto al elegir **Europa**: la mesa/truth nunca implica cobertu
 ## Notas orquestador
 
 - Slice elegido: **A** (S–M) — máximo leverage vs plan «Europa nunca completa si parcial»; B/C quedan en cola.
-- HEAD al escribir: `014e862`.
+- HEAD activación: `09a7ac5`.

@@ -3,7 +3,7 @@
 Copia de referencia. Ejecutar desde `docs/tickets/activo.md`.
 
 **Estado:** prep  
-**Rama:** `codex/statsedge-ui-polish` @ `014e862`  
+**Rama:** `codex/statsedge-ui-polish` @ `09a7ac5`  
 **Modelo:** Composer 2.5 (o Terra)  
 **Plan:** `plan-datos-fiabilidad.md` item 5 · slice A (truth / availability)
 
@@ -42,7 +42,7 @@ Cron EU, FIRDS flags, curated-fallback surfacing, scoring, auth, nocturno prod, 
 ```
 @docs/tickets/activo.md
 
-Eres programación StatsEdge (NO orquestador). Rama: codex/statsedge-ui-polish @ 014e862.
+Eres programación StatsEdge (NO orquestador). Rama: codex/statsedge-ui-polish @ 09a7ac5.
 Modelo: Composer 2.5 (o Terra). SIN commit ni push.
 
 Ticket EUROPA-COVERAGE-TRUTH-1 — preset Europa no se presenta como cobertura completa.
