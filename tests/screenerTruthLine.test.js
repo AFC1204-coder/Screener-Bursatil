@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ALL_SELECTABLE_MARKETS } from "@/lib/screenerConfig";
+import { ALL_SELECTABLE_MARKETS, EUROPE } from "@/lib/screenerConfig";
+import { EUROPE_PRIORITY_MARKETS } from "@/lib/markets";
 import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
 
 describe("buildScreenerTruthLine", () => {
@@ -254,6 +255,46 @@ describe("buildScreenerTruthLine", () => {
     });
     expect(line).toContain("20 de 100 pasan «Balanceado»");
     expect(line).not.toContain("mercado");
+    expect(line).not.toContain("selección ≠ mesa");
+  });
+
+  it("EUROPA-COVERAGE-TRUTH-1: EU1 ⊂ Europa-15 añade hueco de secundarios en la verdad", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: Array.from({ length: 80 }, (_, i) => ({ symbol: `E${i}` })),
+      passCount: 12,
+      visibleCount: 12,
+      presetName: "Balanceado",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedMarkets: EUROPE_PRIORITY_MARKETS,
+      selectedMarkets: EUROPE,
+      marketsMisaligned: true,
+    });
+    expect(line).toContain("12 de 80 pasan «Balanceado»");
+    expect(line).toContain("Europa prioritaria");
+    expect(line).toContain("Europa incompleta");
+    expect(line).toContain("secundarios");
+    expect(line).toMatch(/Irlanda, Portugal/);
+    expect(line).not.toContain("selección ≠ mesa");
+    expect(line).not.toContain("Europa completa");
+  });
+
+  it("EUROPA-COVERAGE-TRUTH-1: compacto resume secundarios ausentes sin muro de códigos", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: Array.from({ length: 80 }, (_, i) => ({ symbol: `E${i}` })),
+      passCount: 12,
+      visibleCount: 12,
+      presetName: "Balanceado",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedMarkets: EUROPE_PRIORITY_MARKETS,
+      selectedMarkets: EUROPE,
+      marketsMisaligned: true,
+      compactMarketSegments: true,
+    });
+    expect(line).toContain("8 mercados en mesa");
+    expect(line).toContain("Europa incompleta · secundarios ausentes");
+    expect(line).not.toContain("Irlanda");
     expect(line).not.toContain("selección ≠ mesa");
   });
 
