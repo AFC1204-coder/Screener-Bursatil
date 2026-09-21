@@ -2,6 +2,8 @@
 
 Comando único para verificar que el entorno local de audit (`:3300` + Postgres Mini vía `:15432`) está listo y que las rutas críticas responden.
 
+**Ritual diario (recomendado):** al abrir sesión de caza, un solo comando — ver `docs/ops-mini-daily.md` (`npm run ops:mini:daily` / `ops:mini:check`).
+
 ## Prerrequisitos
 
 - Mac Mini encendido en LAN (`192.168.0.116`, usuario `cristian`).
