@@ -4,17 +4,12 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-21 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `79418f0`  
-**Ahora:** B YIELD-EU-1 + C FIRDS-CURATED-AVISO-1 — programación cloud (paralelo, ramas propias).  
-**Último cerrado:** EUROPA-COVERAGE-TRUTH-1 — Europa no se presenta completa si faltan secundarios (`cf114b8` / #42).  
-**Cola:** D Twelve Data / Hito 1B (aparcado). · B/C en vuelo.  
-**Último cerrado (prev):** REVIEW-RS-COPY-1 — copy RS Review (`85506ca` / `014e862`).  
-**Último cerrado (sparks):** CAZA-SPARKS-SCROLL-1 — `95ffeed` / `96bce7c`.  
-**Último cerrado (ops):** OPS-MINI-SMOKE-1 — `28fa1ab`.  
-**Último cerrado (sparks STABLE):** SCANS-CHARTPREVIEW-HYDRATE-STABLE-1 — residual scroll cerrado.  
-**Nota UX Top5+baratos:** smoke 2026-09-19 PASS @ `9554309`.  
-**Nota BOOTSTRAP:** SCREENER-BOOTSTRAP-CORE-FIRST-1 — core pinta mesa; extended background; smoke sin wipe.  
-**Cola (hist):** yield Europa → slice A **cerrado** (`cf114b8`); B/C en cola.  
+**Última sync / HEAD origin polish:** `1404309` (FIRDS-CURATED-AVISO-1)  
+**Ahora:** B YIELD-EU-1 — [#43](https://github.com/AFC1204-coder/Screener-Bursatil/pull/43) CI green; gate cron (OK dueño).  
+**Último cerrado:** FIRDS-CURATED-AVISO-1 — aviso población curada Europa con FIRDS off (`1404309` / #44 · smoke PASS).  
+**Cola:** D Twelve Data / Hito 1B (aparcado).  
+**Último cerrado (prev):** EUROPA-COVERAGE-TRUTH-1 — Europa no se presenta completa si faltan secundarios (`cf114b8` / #42).  
+**Cola (hist):** yield Europa → slice A **cerrado** (`cf114b8`); C **cerrado** (`1404309`); B en #43.  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
 **Nota HYDRATE-VISIBLE residual:** Caza hidrata toda la cola filtrada (no solo viewport).  
