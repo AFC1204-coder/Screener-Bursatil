@@ -319,6 +319,24 @@ describe("buildScreenerTruthLine", () => {
     expect(line).toContain("corte ");
   });
 
+  it("FIRDS-CURATED-AVISO-1: segmento población curada con mesa alineada", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: Array.from({ length: 120 }, (_, i) => ({ symbol: `E${i}` })),
+      passCount: 18,
+      visibleCount: 18,
+      presetName: "Balanceado",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedMarkets: EUROPE_PRIORITY_MARKETS,
+      selectedMarkets: EUROPE_PRIORITY_MARKETS,
+      esmaFirdsEnabled: false,
+      fcaFirdsEnabled: false,
+    });
+    expect(line).toContain("18 de 120 pasan «Balanceado»");
+    expect(line).toContain("Europa · población curada (parcial)");
+    expect(line).not.toMatch(/FIRDS|ESMA_FIRDS/i);
+  });
+
   it("TRUTH-LOAD-1: en carga con filas en memoria no afirma ceros", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: Array.from({ length: 157 }, (_, i) => ({ symbol: `S${i}` })),
