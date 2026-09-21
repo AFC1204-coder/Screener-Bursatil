@@ -195,6 +195,10 @@ export default function Page() {
   const [presetKey, setPresetKey] = useState("balanced");
   const [universe, setUniverse] = useState([]);
   const [universeScope, setUniverseScope] = useState("");
+  const [universeCache, setUniverseCache] = useState(null);
+  const [universeProviderDiagnostics, setUniverseProviderDiagnostics] = useState(null);
+  const [esmaFirdsEnabled, setEsmaFirdsEnabled] = useState(null);
+  const [fcaFirdsEnabled, setFcaFirdsEnabled] = useState(null);
   const [rows, setRows] = useState([]);
   const [analyzedRows, setAnalyzedRows] = useState([]);
   const [scanContext, setScanContext] = useState(null);
@@ -1117,6 +1121,29 @@ export default function Page() {
       requestAnimationFrame(() => window.scrollTo(0, targetY));
     });
   }, [sessionReady, rows.length]);
+
+  useEffect(() => {
+    if (!sessionReady) return;
+    let cancelled = false;
+    getJson("/api/data-providers", { cache: "no-store" })
+      .then((data) => {
+        if (cancelled) return;
+        const providers = Array.isArray(data?.providers) ? data.providers : [];
+        const esma = providers.find((item) => item.id === "esma-firds");
+        const fca = providers.find((item) => item.id === "fca-firds");
+        setEsmaFirdsEnabled(Boolean(esma?.configured));
+        setFcaFirdsEnabled(Boolean(fca?.configured));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setEsmaFirdsEnabled(null);
+          setFcaFirdsEnabled(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionReady]);
 
   useEffect(() => {
     function restorePersistedScroll() {
@@ -2524,6 +2551,8 @@ export default function Page() {
     try {
       const targetMarkets = Array.isArray(marketsOverride) && marketsOverride.length ? marketsOverride : markets;
       const d = await getJson(`/api/universe?markets=${encodeURIComponent(targetMarkets.join(","))}`);
+      setUniverseCache(d.cache || null);
+      setUniverseProviderDiagnostics(d.providerDiagnostics || null);
       const all = d.universe || [];
       const man = manualUniverseRows(manual);
       const ipoRadar = ipoRadarUniverseRows();
@@ -3046,6 +3075,10 @@ export default function Page() {
       marketsLoadFailed,
       marketsLoadFailedDetail,
       marketsSelectionLoadSettled,
+      universeCache,
+      providerDiagnostics: universeProviderDiagnostics,
+      esmaFirdsEnabled,
+      fcaFirdsEnabled,
     }}
     results={{
       rows,

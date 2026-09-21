@@ -41,7 +41,11 @@ import { activeLayerCount, investorStatusLabel, compactMobileScanStatus } from "
 import { huntDisplayName, HUNT_CARDS, resolveActiveHuntCard } from "@/lib/screenerHuntCards";
 import { huntCardSheetFamilyKeys } from "@/lib/huntCardModeDisclosure";
 import { SessionPlumbingPanel } from "@/lib/screenerFiltersView";
-import { MARKETS_MISALIGNMENT_EMPTY_LABEL, resolveMarketsMisalignmentNotice } from "@/lib/marketAvailability";
+import {
+  buildCuratedPopulationNotice,
+  MARKETS_MISALIGNMENT_EMPTY_LABEL,
+  resolveMarketsMisalignmentNotice,
+} from "@/lib/marketAvailability";
 import { buildLideresIntlGuardrailNotice, LIDERES_INTL_CTA } from "@/lib/lideresIntlGuardrail";
 import { buildScreenerFilterBreakdown } from "@/lib/screenerFilterBreakdown";
 import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
@@ -383,6 +387,10 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     marketsLoadFailed = false,
     marketsLoadFailedDetail = "",
     marketsSelectionLoadSettled = false,
+    universeCache = null,
+    providerDiagnostics = null,
+    esmaFirdsEnabled = null,
+    fcaFirdsEnabled = null,
   } = staleness || {};
   const isMobileViewport = useScreenerMobileViewport();
   const huntLabel = huntDisplayName(presetKey, markets);
@@ -450,6 +458,10 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     marketsMisaligned: resultsBlockedByMarketMisalignment && marketsLoadFailed,
     suppressMisalignmentAlarm: resultsBlockedByMarketMisalignment && !marketsLoadFailed,
     compactMarketSegments: isMobileViewport,
+    universeCache,
+    providerDiagnostics,
+    esmaFirdsEnabled,
+    fcaFirdsEnabled,
   });
   useLayoutEffect(() => {
     const ms = recordTruthLinePaint({
@@ -470,6 +482,15 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     markets,
     scannedMarkets,
     analyzedRows,
+  });
+  const curatedPopulationNotice = buildCuratedPopulationNotice({
+    scannedMarkets,
+    selectedMarkets: markets,
+    rowCount: analyzedRows.length,
+    universeCache,
+    providerDiagnostics,
+    esmaFirdsEnabled,
+    fcaFirdsEnabled,
   });
   const isFilterLayersUpgradeNotice = snapshotNotice?.source === FILTER_LAYERS_UPGRADE_NOTICE_SOURCE;
   // T3: no pintar «formato antiguo de filtros» mientras la mesa hidrata.
@@ -501,6 +522,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     marketsMisalignment,
     scanStale,
     lideresIntlGuardrail,
+    curatedPopulationNotice,
   });
   const bannerSlots = selectBannerSlots(bannerCandidates);
   const bannerVisibleIds = bannerSlots.visibleIds;
@@ -533,6 +555,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     && isBannerSlotVisible(bannerVisibleIds, "scan-stale-coverage");
   const showPrimaryLideres = Boolean(lideresIntlGuardrail)
     && isBannerSlotVisible(bannerVisibleIds, "lideres-intl");
+  const showPrimaryCuratedPopulation = Boolean(curatedPopulationNotice)
+    && isBannerSlotVisible(bannerVisibleIds, "curated-population");
   const searchInputRef = useRef(null);
 
   function focusSearchInput() {
@@ -706,6 +730,27 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     return (
       <div className="scanStaleNotice" role="status" aria-live="polite">
         {notice}
+      </div>
+    );
+  }
+
+  function renderCuratedPopulationNotice() {
+    if (!curatedPopulationNotice || !showPrimaryCuratedPopulation) return null;
+    if (isMobileViewport) {
+      return (
+        <MobileCollapsibleNotice
+          label={curatedPopulationNotice.label}
+          detail={curatedPopulationNotice.detail}
+          peekDetail={curatedPopulationNotice.peekDetail}
+          bodyDetail={curatedPopulationNotice.bodyDetail}
+          tone="warn"
+        />
+      );
+    }
+    return (
+      <div className="scanStaleNotice curatedPopulationNotice" role="status" aria-live="polite">
+        <span className="scanStaleNoticeLabel">{curatedPopulationNotice.label}</span>
+        <b>{curatedPopulationNotice.detail}</b>
       </div>
     );
   }
@@ -1075,6 +1120,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             }}
           />
           {renderLideresIntlGuardrail()}
+          {renderCuratedPopulationNotice()}
           <p className="screenerTruthLine" role="status" aria-live="polite">{truthLine}</p>
           <details className="screenerFilterBreakdown">
             <summary><span>{filterBreakdown.summaryLabel}</span></summary>

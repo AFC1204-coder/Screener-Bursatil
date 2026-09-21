@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import { ASIA, ALL_SELECTABLE_MARKETS, DEFAULT_MARKETS, EUROPE } from "@/lib/screenerConfig";
 import { EUROPE_PRIORITY_MARKETS, EUROPE_SECONDARY_MARKETS } from "@/lib/markets";
 import {
+  buildCuratedPopulationNotice,
   buildMarketsLoadingNotice,
   buildMarketsStaleNotice,
   buildMergedSnapshotNotice,
   buildScreenerTruthMarketSegments,
+  describeCuratedPopulationGap,
   describeEuropeCoverageGap,
   formatEuropeSecondaryGapNames,
   formatMarketCodesShort,
@@ -635,5 +637,77 @@ describe("EUROPA-COVERAGE-TRUTH-1", () => {
     expect(notice?.label).toBe("Cobertura parcial");
     expect(notice?.detail).toContain("secundarios");
     expect(notice?.detail).not.toContain("Cargando");
+  });
+});
+
+describe("FIRDS-CURATED-AVISO-1 curated population", () => {
+  it("describeCuratedPopulationGap: Europa con FIRDS off", () => {
+    const gap = describeCuratedPopulationGap({
+      scannedMarkets: EUROPE_PRIORITY_MARKETS,
+      selectedMarkets: EUROPE,
+      esmaFirdsEnabled: false,
+      fcaFirdsEnabled: false,
+    });
+    expect(gap).not.toBeNull();
+    expect(gap.europeScope).toBe(true);
+    expect(gap.truthSegment).toBe("Europa · población curada (parcial)");
+    expect(gap.noticeDetail).toContain("listas curadas");
+    expect(gap.noticeDetail).not.toMatch(/FIRDS|ESMA_FIRDS|FCA_FIRDS/i);
+  });
+
+  it("notice P9: población parcial sin CTA ni bloqueo", () => {
+    const notice = buildCuratedPopulationNotice({
+      scannedMarkets: EUROPE_PRIORITY_MARKETS,
+      selectedMarkets: EUROPE,
+      rowCount: 312,
+      esmaFirdsEnabled: false,
+      fcaFirdsEnabled: false,
+    });
+    expect(notice).not.toBeNull();
+    expect(notice.label).toBe("Población parcial");
+    expect(notice.source).toBe("curated-population-firds-off");
+    expect(notice.blocksResults).toBe(false);
+    expect(notice.showCta).toBe(false);
+    expect(notice.detail).toContain("(312)");
+    expect(notice.detail).toContain("Europa prioritaria");
+  });
+
+  it("truth segments: población curada alineada (sin desalineación)", () => {
+    const segments = buildScreenerTruthMarketSegments({
+      scannedMarkets: EUROPE_PRIORITY_MARKETS,
+      selectedMarkets: EUROPE_PRIORITY_MARKETS,
+      curatedPopulationHonesty: true,
+      esmaFirdsEnabled: false,
+      fcaFirdsEnabled: false,
+    });
+    expect(segments[0]).toBe("mesa: Europa prioritaria");
+    expect(segments[1]).toBe("Europa · población curada (parcial)");
+  });
+
+  it("no avisa curado si FIRDS off solo en selección pero mesa es US", () => {
+    expect(describeCuratedPopulationGap({
+      scannedMarkets: ["US"],
+      selectedMarkets: EUROPE,
+      esmaFirdsEnabled: false,
+    })).toBeNull();
+  });
+
+  it("detecta curated-fallback por cache status", () => {
+    const gap = describeCuratedPopulationGap({
+      scannedMarkets: ["DE"],
+      selectedMarkets: ["DE"],
+      universeCache: { status: "curated-fallback" },
+      esmaFirdsEnabled: true,
+    });
+    expect(gap?.reason).toBe("curated-fallback");
+    expect(gap?.truthSegment).toContain("población curada");
+  });
+
+  it("no avisa en US-only", () => {
+    expect(describeCuratedPopulationGap({
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+      esmaFirdsEnabled: false,
+    })).toBeNull();
   });
 });
