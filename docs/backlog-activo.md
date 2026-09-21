@@ -14,7 +14,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Último cerrado (sparks STABLE):** SCANS-CHARTPREVIEW-HYDRATE-STABLE-1 — residual scroll cerrado.  
 **Nota UX Top5+baratos:** smoke 2026-09-19 PASS @ `9554309`.  
 **Nota BOOTSTRAP:** SCREENER-BOOTSTRAP-CORE-FIRST-1 — core pinta mesa; extended background; smoke sin wipe.  
-**Cola (hist):** yield Europa → slice A activo; B/C aparcados en cola.  
+**Cola (hist):** yield Europa → slice A **cerrado** (`cf114b8`); B/C en cola.  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
 **Nota HYDRATE-VISIBLE residual:** Caza hidrata toda la cola filtrada (no solo viewport).  
