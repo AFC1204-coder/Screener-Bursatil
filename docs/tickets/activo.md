@@ -1,16 +1,17 @@
-# Ticket activo — YIELD-EU-1 (FIRDS-CURATED-AVISO-1 cerrado)
+# Ticket activo — idle
 
-**Estado:** B en PR #43 (CI green; gate cron — OK dueño). C cerrado `1404309`.  
-**Rama:** `codex/statsedge-ui-polish` @ `1404309`
+**Estado:** idle  
+**Rama:** `codex/statsedge-ui-polish`
+
+No hay ticket de programación activo. Últimos cerrados: YIELD-EU-1 (#43) · FIRDS-CURATED-AVISO-1 (`1404309` / #44).
 
 ## Prompt para Agent chat (copiar tal cual)
 
 ```
-(idle programación — YIELD-EU-1 espera OK dueño para squash #43)
+(idle — espera nuevo ticket del orquestador)
 ```
 
 ## Notas orquestador
 
-- Cerrado: FIRDS-CURATED-AVISO-1 (`1404309` / #44) · smoke PASS :3300.
-- Pendiente: [#43](https://github.com/AFC1204-coder/Screener-Bursatil/pull/43) YIELD-EU-1 — no merge sin OK (cambia rotación shadow-europe a 6 cohortes).
+- Yield Europa A+B+C cerrados (truth · cron thin · aviso curated).
 - Cola D: Twelve Data / Hito 1B aparcado.
