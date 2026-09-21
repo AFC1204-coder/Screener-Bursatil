@@ -3,17 +3,17 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-20 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `85506ca` (REVIEW-RS-COPY-1)  
-**Ahora:** idle.  
+Última actualización: 2026-09-21 · rama `codex/statsedge-ui-polish`  
+**Última sync / HEAD origin polish:** `014e862` (ticket EUROPA-COVERAGE-TRUTH-1 prep)  
+**Ahora:** EUROPA-COVERAGE-TRUTH-1 (`prep`) — preset Europa: truth/banner honesto de huecos (IE/PT secundarios; no «Europa completa»).  
 **Último cerrado:** REVIEW-RS-COPY-1 — copy honesto RS en ficha Review (`Cargando…` / `Sin ranking` / `Sin histórico` / `Error`).  
-**Cola:** yield Europa.  
+**Cola:** B YIELD-EU-1 (cron/lote EU medido) · C FIRDS/curated-fallback aviso UI · D plan #6 Twelve Data / Hito 1B.  
 **Último cerrado (prev):** CAZA-SPARKS-SCROLL-1 — hydrate Caza `filtered`; smoke scroll >80 (`95ffeed` / `96bce7c`).  
 **Último cerrado (ops):** OPS-MINI-SMOKE-1 — Mini + Playwright `28fa1ab`.  
 **Último cerrado (sparks STABLE):** SCANS-CHARTPREVIEW-HYDRATE-STABLE-1 — residual scroll cerrado.  
 **Nota UX Top5+baratos:** smoke 2026-09-19 PASS @ `9554309`.  
 **Nota BOOTSTRAP:** SCREENER-BOOTSTRAP-CORE-FIRST-1 — core pinta mesa; extended background; smoke sin wipe.  
-**Cola (hist):** —  
+**Cola (hist):** yield Europa → slice A activo; B/C aparcados en cola.  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
 **Nota HYDRATE-VISIBLE residual:** Caza hidrata toda la cola filtrada (no solo viewport).  

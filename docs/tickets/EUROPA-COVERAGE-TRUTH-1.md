@@ -1,10 +1,41 @@
-# Ticket activo — EUROPA-COVERAGE-TRUTH-1
+# EUROPA-COVERAGE-TRUTH-1 — preset Europa: cobertura honesta
+
+Copia de referencia. Ejecutar desde `docs/tickets/activo.md`.
 
 **Estado:** prep  
-**ID:** EUROPA-COVERAGE-TRUTH-1  
 **Rama:** `codex/statsedge-ui-polish` @ `014e862`  
 **Modelo:** Composer 2.5 (o Terra)  
-**Plan:** item 5 cobertura intl · slice A (honestidad UI; no yield cron)
+**Plan:** `plan-datos-fiabilidad.md` item 5 · slice A (truth / availability)
+
+## Objetivo
+
+Cuando el usuario elige preset **Europa**, la UI no debe presentarse como cobertura completa si la mesa es parcial — en especial huecos en `EUROPE_SECONDARY_MARKETS` (copy prioritario: **IE**, **PT**).
+
+## Por qué este slice (no B/C)
+
+| Opción | Qué | Decisión |
+|---|---|---|
+| **A** Truth / availability | % o huecos secundarios explícitos en truth/banner | **Este ticket** — cierra done-when del plan («Europa nunca completa si parcial») sin nocturno |
+| B Cron / yield EU | Checklist + lote medido | Cola — ops, Mini, no reescribir nocturno prod |
+| C FIRDS / curated-fallback warning | Aviso cuando población parcial | Cola — half-built en `universeEngine`; no cableado a UI mesa |
+
+P9 ya avisa «Cobertura parcial» + CTAs si selección≠mesa. Falta: tipificar secundarios Europa (IE/PT) y no pintar Europa-15 como completa cuando solo hay priority en mesa.
+
+## Alcance
+
+1. Preset `europe` / selección Europa-15: si faltan mercados en mesa (sobre todo secundarios), truth line y/o notice P9 con huecos explícitos en copy de producto.
+2. Mesa = solo priority (EU1) con selección Europa-15 → aviso de secundarios ausentes; no «Europa completa».
+3. Reusar `lib/marketAvailability.js`, `lib/screenerTruthLine.js`, notices existentes. Tests + `./vfc`/vitest.
+
+## Fuera
+
+Cron EU, FIRDS flags, curated-fallback surfacing, scoring, auth, nocturno prod, yield batch, panel laboratorio `/api/coverage` (salvo lectura).
+
+## Done when
+
+- Tests focalizados verdes
+- Smoke orquestador: preset Europa → copy de huecos legible
+- Sin commit/push desde programación
 
 ## Prompt para Agent chat (copiar tal cual)
 
@@ -28,24 +59,3 @@ No tocar: cron EU / shadow-europe / FIRDS flags / universeEngine curated-fallbac
 
 Plantilla Resumen / Archivos / Tests / LO QUE NO VERIFIQUÉ. Sin commit ni push.
 ```
-
-## Objetivo
-
-Honestidad de producto al elegir **Europa**: la mesa/truth nunca implica cobertura completa si faltan mercados (sobre todo secundarios IE/PT) o si solo hay priority cargados.
-
-## Fuera de alcance
-
-- Yield cron / lote nocturno EU medido (YIELD-EU-1 · cola B)
-- Aviso FIRDS off → curated-fallback (cola C)
-- Twelve Data / Hito 1B / scoring / auth
-
-## Done when
-
-- Tests del ticket verdes + `./vfc` (o vitest acotado) OK
-- Orquestador: smoke Browser preset Europa con copy de huecos legible
-- Diff solo UI/copy/availability + tests
-
-## Notas orquestador
-
-- Slice elegido: **A** (S–M) — máximo leverage vs plan «Europa nunca completa si parcial»; B/C quedan en cola.
-- HEAD al escribir: `014e862`.
