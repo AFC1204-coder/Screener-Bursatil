@@ -4,12 +4,13 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-21 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `9498b3a` (EUROPA-COVERAGE-TRUTH-1 prep)  
-**Ahora:** EUROPA-COVERAGE-TRUTH-1 (`prep`) — preset Europa: truth/banner honesto de huecos (IE/PT secundarios; no «Europa completa»).  
-**Último cerrado:** REVIEW-RS-COPY-1 — copy honesto RS en ficha Review (`Cargando…` / `Sin ranking` / `Sin histórico` / `Error`).  
-**Cola:** B YIELD-EU-1 (cron/lote EU medido) · C FIRDS/curated-fallback aviso UI · D plan #6 Twelve Data / Hito 1B.  
-**Último cerrado (prev):** CAZA-SPARKS-SCROLL-1 — hydrate Caza `filtered`; smoke scroll >80 (`95ffeed` / `96bce7c`).  
-**Último cerrado (ops):** OPS-MINI-SMOKE-1 — Mini + Playwright `28fa1ab`.  
+**Última sync / HEAD origin polish:** `cf114b8` (EUROPA-COVERAGE-TRUTH-1 #42)  
+**Ahora:** idle.  
+**Último cerrado:** EUROPA-COVERAGE-TRUTH-1 — Europa no se presenta completa si faltan secundarios (`cf114b8` / #42).  
+**Cola:** B YIELD-EU-1 (cron/lote EU) · C FIRDS/curated-fallback aviso · D Twelve Data / Hito 1B.  
+**Último cerrado (prev):** REVIEW-RS-COPY-1 — copy RS Review (`85506ca` / `014e862`).  
+**Último cerrado (sparks):** CAZA-SPARKS-SCROLL-1 — `95ffeed` / `96bce7c`.  
+**Último cerrado (ops):** OPS-MINI-SMOKE-1 — `28fa1ab`.  
 **Último cerrado (sparks STABLE):** SCANS-CHARTPREVIEW-HYDRATE-STABLE-1 — residual scroll cerrado.  
 **Nota UX Top5+baratos:** smoke 2026-09-19 PASS @ `9554309`.  
 **Nota BOOTSTRAP:** SCREENER-BOOTSTRAP-CORE-FIRST-1 — core pinta mesa; extended background; smoke sin wipe.  
