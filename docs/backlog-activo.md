@@ -4,10 +4,10 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-21 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `cf114b8` (EUROPA-COVERAGE-TRUTH-1 #42)  
-**Ahora:** idle.  
+**Última sync / HEAD origin polish:** `79418f0`  
+**Ahora:** B YIELD-EU-1 + C FIRDS-CURATED-AVISO-1 — programación cloud (paralelo, ramas propias).  
 **Último cerrado:** EUROPA-COVERAGE-TRUTH-1 — Europa no se presenta completa si faltan secundarios (`cf114b8` / #42).  
-**Cola:** B YIELD-EU-1 (cron/lote EU) · C FIRDS/curated-fallback aviso · D Twelve Data / Hito 1B.  
+**Cola:** D Twelve Data / Hito 1B (aparcado). · B/C en vuelo.  
 **Último cerrado (prev):** REVIEW-RS-COPY-1 — copy RS Review (`85506ca` / `014e862`).  
 **Último cerrado (sparks):** CAZA-SPARKS-SCROLL-1 — `95ffeed` / `96bce7c`.  
 **Último cerrado (ops):** OPS-MINI-SMOKE-1 — `28fa1ab`.  
