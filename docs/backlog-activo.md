@@ -4,7 +4,7 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-21 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `09a7ac5` (EUROPA-COVERAGE-TRUTH-1 prep)  
+**Última sync / HEAD origin polish:** `9498b3a` (EUROPA-COVERAGE-TRUTH-1 prep)  
 **Ahora:** EUROPA-COVERAGE-TRUTH-1 (`prep`) — preset Europa: truth/banner honesto de huecos (IE/PT secundarios; no «Europa completa»).  
 **Último cerrado:** REVIEW-RS-COPY-1 — copy honesto RS en ficha Review (`Cargando…` / `Sin ranking` / `Sin histórico` / `Error`).  
 **Cola:** B YIELD-EU-1 (cron/lote EU medido) · C FIRDS/curated-fallback aviso UI · D plan #6 Twelve Data / Hito 1B.  
