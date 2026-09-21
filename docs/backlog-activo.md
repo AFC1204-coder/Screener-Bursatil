@@ -4,13 +4,13 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-21 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `3da0081`  
-**Ahora:** OPS-MINI-HARDEN-1 — programación cloud (blindar Mini diario).  
-**Último cerrado:** YIELD-EU-1 — AT/BE/IE/PT en rotación shadow-europe (`a040809` / #43 · OK dueño).  
-**Cola:** D Twelve Data / Hito 1B (aparcado).  
-**Último cerrado (prev):** FIRDS-CURATED-AVISO-1 — aviso población curada Europa (`1404309` / #44 · smoke PASS).  
-**Último cerrado (prev2):** EUROPA-COVERAGE-TRUTH-1 — Europa no se presenta completa si faltan secundarios (`cf114b8` / #42).  
-**Cola (hist):** yield Europa → A `cf114b8` · B #43 · C `1404309` **cerrados**. · OPS Mini smoke base `28fa1ab`; harden en vuelo.  
+**Última sync / HEAD origin polish:** `b755a41` (OPS-MINI-HARDEN-1; tip docs tras push)  
+**Ahora:** idle.  
+**Último cerrado:** OPS-MINI-HARDEN-1 — ritual diario Mini + preflight ES (`b755a41` / #45).  
+**Cola:** D Twelve Data / Hito 1B (aparcado). · residual cold payload / parse·render.  
+**Último cerrado (prev):** YIELD-EU-1 — AT/BE/IE/PT en rotación shadow-europe (`a040809` / #43).  
+**Último cerrado (prev2):** FIRDS-CURATED-AVISO-1 — aviso población curada Europa (`1404309` / #44).  
+**Cola (hist):** yield Europa A+B+C cerrados · OPS Mini smoke `28fa1ab` · harden `b755a41`.  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
 **Nota HYDRATE-VISIBLE residual:** Caza hidrata toda la cola filtrada (no solo viewport).  
