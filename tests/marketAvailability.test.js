@@ -1,21 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { ASIA, ALL_SELECTABLE_MARKETS, DEFAULT_MARKETS } from "@/lib/screenerConfig";
-import { EUROPE_PRIORITY_MARKETS } from "@/lib/markets";
+import { ASIA, ALL_SELECTABLE_MARKETS, DEFAULT_MARKETS, EUROPE } from "@/lib/screenerConfig";
+import { EUROPE_PRIORITY_MARKETS, EUROPE_SECONDARY_MARKETS } from "@/lib/markets";
 import {
   buildMarketsLoadingNotice,
   buildMarketsStaleNotice,
   buildMergedSnapshotNotice,
   buildScreenerTruthMarketSegments,
+  describeEuropeCoverageGap,
+  formatEuropeSecondaryGapNames,
   formatMarketCodesShort,
+  formatMarketsProductLabel,
   formatMissingMarketsDetail,
   intlBroadStatusDetail,
+  isEuropeBreadthSelection,
+  isEuropePresetSelection,
+  isEuropePriorityOnlyMarkets,
   isMarketSelectable,
   marketPresetMarkets,
+  marketsMisalignmentLoadCtaLabel,
   marketsSelectionBlockingMisalignment,
   marketsSelectionMisaligned,
   marketsSelectionLoadSettled,
   marketsSelectionPartialCoverage,
+  missingEuropeSecondaryMarkets,
   missingMarketsPeekDetail,
+  orderEuropeSecondaryForCopy,
   resolveMarketsMisalignmentNotice,
   restoreSessionMarketAlignAction,
   scannedMarketsFromScan,
@@ -529,5 +538,102 @@ describe("intlBroadStatusDetail", () => {
       analyzedCount: 95,
       priorityMode: "curated-core",
     })).toBe("");
+  });
+});
+
+describe("EUROPA-COVERAGE-TRUTH-1", () => {
+  it("detecta preset Europa-15 y solo prioridad", () => {
+    expect(isEuropePresetSelection(EUROPE)).toBe(true);
+    expect(isEuropePresetSelection(marketPresetMarkets("europe"))).toBe(true);
+    expect(isEuropePriorityOnlyMarkets(EUROPE_PRIORITY_MARKETS)).toBe(true);
+    expect(isEuropePriorityOnlyMarkets(EUROPE)).toBe(false);
+    expect(isEuropeBreadthSelection(EUROPE)).toBe(true);
+    expect(isEuropeBreadthSelection(EUROPE_PRIORITY_MARKETS)).toBe(false);
+    expect(isEuropeBreadthSelection([...EUROPE_PRIORITY_MARKETS, "IE"])).toBe(true);
+  });
+
+  it("etiqueta producto: Europa completa vs prioritaria (nunca confunde)", () => {
+    expect(formatMarketsProductLabel(EUROPE)).toBe("Europa");
+    expect(formatMarketsProductLabel(EUROPE_PRIORITY_MARKETS)).toBe("Europa prioritaria");
+    expect(marketsMisalignmentLoadCtaLabel(EUROPE)).toBe("Cargar Europa");
+    expect(marketsMisalignmentLoadCtaLabel(EUROPE_PRIORITY_MARKETS)).toBe("Cargar Europa prioritaria");
+  });
+
+  it("prioriza IE y PT en el copy de secundarios ausentes", () => {
+    expect(orderEuropeSecondaryForCopy(["DK", "PT", "IE", "NO"])).toEqual(["IE", "PT", "DK", "NO"]);
+    expect(formatEuropeSecondaryGapNames(["DK", "PT", "IE"])).toMatch(/^Irlanda, Portugal/);
+    expect(missingEuropeSecondaryMarkets(EUROPE_PRIORITY_MARKETS, EUROPE)).toEqual(
+      EUROPE_SECONDARY_MARKETS,
+    );
+  });
+
+  it("describe hueco cuando mesa = EU1 y selección = Europa-15", () => {
+    const gap = describeEuropeCoverageGap({
+      scannedMarkets: EUROPE_PRIORITY_MARKETS,
+      selectedMarkets: EUROPE,
+    });
+    expect(gap).not.toBeNull();
+    expect(gap.allSecondaryMissing).toBe(true);
+    expect(gap.names).toMatch(/^Irlanda, Portugal/);
+    expect(gap.truthSegment).toContain("Europa incompleta");
+    expect(gap.truthSegment).toContain("secundarios");
+    expect(gap.peekDetail).toContain("secundarios Europa");
+  });
+
+  it("no inventa hueco Europa si la mesa no es parcial de la selección", () => {
+    expect(describeEuropeCoverageGap({
+      scannedMarkets: ["US"],
+      selectedMarkets: EUROPE,
+    })).toBeNull();
+    expect(describeEuropeCoverageGap({
+      scannedMarkets: EUROPE,
+      selectedMarkets: EUROPE,
+    })).toBeNull();
+  });
+
+  it("notice P9: Europa prioritaria vs Europa-15 tipifica secundarios (IE/PT primero)", () => {
+    const notice = buildMarketsStaleNotice({
+      scannedMarkets: EUROPE_PRIORITY_MARKETS,
+      selectedMarkets: EUROPE,
+      rowCount: 420,
+    });
+    expect(notice).not.toBeNull();
+    expect(notice.label).toBe("Cobertura parcial");
+    expect(notice.source).toBe("markets-partial-coverage");
+    expect(notice.blocksResults).toBe(false);
+    expect(notice.detail).toContain("Europa prioritaria");
+    expect(notice.detail).toContain("Europa");
+    expect(notice.detail).toContain("no es Europa completa");
+    expect(notice.detail).toContain("secundarios");
+    expect(notice.detail).toMatch(/Irlanda, Portugal/);
+    expect(notice.detail).not.toContain("selección ≠ mesa");
+    expect(notice.ctaLabel).toBe("Cargar Europa");
+    expect(notice.stayCtaLabel).toBe("Quedarme en Europa prioritaria");
+    expect(notice.peekDetail).toContain("secundarios Europa");
+  });
+
+  it("truth segments: Europa incompleta con secundarios ausentes", () => {
+    const segments = buildScreenerTruthMarketSegments({
+      scannedMarkets: EUROPE_PRIORITY_MARKETS,
+      selectedMarkets: EUROPE,
+      marketsMisaligned: true,
+      europeCoverageHonesty: true,
+    });
+    expect(segments[0]).toBe("mesa: Europa prioritaria");
+    expect(segments[1]).toMatch(/^Europa incompleta · faltan secundarios \(Irlanda, Portugal/);
+    expect(segments).toHaveLength(2);
+  });
+
+  it("resolve settled: aviso estable sin loading eterno (EU1 ⊂ Europa)", () => {
+    const notice = resolveMarketsMisalignmentNotice({
+      scannedMarkets: EUROPE_PRIORITY_MARKETS,
+      selectedMarkets: EUROPE,
+      rowCount: 420,
+      selectionLoadSettled: true,
+    });
+    expect(notice?.tone).toBe("warn");
+    expect(notice?.label).toBe("Cobertura parcial");
+    expect(notice?.detail).toContain("secundarios");
+    expect(notice?.detail).not.toContain("Cargando");
   });
 });
