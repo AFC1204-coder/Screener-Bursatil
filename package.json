@@ -35,7 +35,10 @@
     "ops:mini-tunnel": "node scripts/ops/mini-tunnel.mjs",
     "ops:mini-tunnel:start": "node scripts/ops/mini-tunnel.mjs --start",
     "ops:mini-smoke": "node scripts/ops/ops-mini-smoke.mjs",
-    "ops:mini-smoke:start": "node scripts/ops/ops-mini-smoke.mjs --start-tunnel"
+    "ops:mini-smoke:start": "node scripts/ops/ops-mini-smoke.mjs --start-tunnel",
+    "ops:mini:check": "node scripts/ops/ops-mini-daily.mjs --check",
+    "ops:mini:daily": "node scripts/ops/ops-mini-daily.mjs",
+    "ops:mini:daily:start": "node scripts/ops/ops-mini-daily.mjs --start-tunnel"
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.9.10",
