@@ -4,7 +4,7 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-21 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `a040809` (YIELD-EU-1; tip docs tras push)  
+**Última sync / HEAD origin polish:** `20f0ed9` (YIELD-EU-1 docs tip; feat `a040809`)  
 **Ahora:** idle.  
 **Último cerrado:** YIELD-EU-1 — AT/BE/IE/PT en rotación shadow-europe (`a040809` / #43 · OK dueño).  
 **Cola:** D Twelve Data / Hito 1B (aparcado).  
