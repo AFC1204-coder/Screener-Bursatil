@@ -31,7 +31,9 @@ import { vcpObjectiveSummary } from "@/lib/vcpDiagnostics";
 import { chartQualityFromBrief } from "@/lib/chartDataQuality";
 import { buildStockIpoSalidaContext } from "@/lib/stockIpoSalida";
 import StockAddToListButton from "./StockAddToListButton";
+import StockCompanyBriefPanel, { stockCompanyBriefFacts } from "./StockCompanyBriefPanel";
 import StockSymbolSearch from "./StockSymbolSearch";
+import { resolveStockCompanyBriefSurface } from "@/lib/stockCompanyBriefSurface";
 
 /* ── Componentes de la jerarquía N0–N3 (spec FICHA-TICKER-IA.md) ──────── */
 
@@ -1598,10 +1600,14 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
      comentario en el render). La palabra canónica de etapa sigue saliendo de
      lib/stageDisplay.js allí donde se pinta (N0, franja, cuadro, gate de N3);
      el EPS YoY por trimestre vive en la banda de crecimiento de la franja. */
-  const businessTeaser = compactBusinessTeaser(data);
-  const companySummary = data?.summary || "Sin descripción de negocio disponible.";
-  const companySummaryId = `hero-company-summary-${symbol || "stock"}`;
-  const canExpandCompanyBrief = companySummary.length > 80;
+  const companyBriefSurface = useMemo(
+    () => resolveStockCompanyBriefSurface({ data, loading, error, symbol }),
+    [data, loading, error, symbol],
+  );
+  const companyBriefFacts = useMemo(
+    () => (data && !data.notFound ? stockCompanyBriefFacts(data) : null),
+    [data],
+  );
   const rsUniverseSource = Number.isFinite(rsUniverse)
     ? Number.isFinite(rs.rsGlobalSample) && rs.rsGlobalSample >= 20
       ? metricSourceState("measured", "RS", `n=${sharedNum(Math.round(rs.rsGlobalSample))}`)
@@ -1738,42 +1744,42 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     />
 
 
-    {error && <p className="stockPageError" role="alert">{error}</p>}
+    {error && !data && <p className="stockPageError" role="alert">{error}</p>}
 
-    {data && <>
-      {/* Gráfico: zona de visualización entre N0 (veredicto) y N1 (lectura
-          técnica). El usuario pidió que el gráfico sea lo segundo que aparece
-          tras el precio/decisión, antes de la tabla técnica. */}
-      <section className="stockChartPanel" aria-label="Gráfico de la ficha">
-        <StockSymbolSearch currentSymbol={symbol} />
-        <h2 className="stockChartTitle">Gráfico</h2>
-        <details className="stockChartBenchmarkFold">
-          <summary className="stockChartBenchmarkFoldSummary">
-            Comparar vs <span className="stockChartBenchmarkFoldValue">{benchmarkDraft || rs.benchmarkSymbol || "SPY"}</span>
-          </summary>
-          <div className="stockChartBenchmarkControl">
-            <label htmlFor={`benchmark-${symbol}`}>Comparar vs</label>
-            <input id={`benchmark-${symbol}`} list={`benchmark-options-${symbol}`} value={benchmarkDraft} onChange={(event) => setBenchmarkDraft(cleanBenchmarkSymbol(event.target.value))} onKeyDown={(event) => { if (event.key === "Enter") updateBenchmark(benchmarkDraft); }} placeholder={rs.benchmarkSymbol || "SPY"} disabled={loading} />
-            <datalist id={`benchmark-options-${symbol}`}>
-              {BENCHMARK_OPTIONS.map((item) => <option key={item} value={item} />)}
-            </datalist>
-            <button type="button" onClick={() => updateBenchmark(benchmarkDraft)} disabled={loading || !benchmarkDraft}>Aplicar</button>
-            <button type="button" onClick={() => updateBenchmark("")} disabled={loading || !benchmarkOverride}>Auto</button>
-            <button
-              type="button"
-              className={`chartToolButton ${showVcpDiagnostics ? "active" : ""}`.trim()}
-              onClick={() => setShowVcpDiagnostics((value) => !value)}
-              disabled={!setupPattern}
-              aria-pressed={showVcpDiagnostics}
-              title="Mostrar contracciones VCP, pivot y motivo de bloqueo en el gráfico."
-            >
-              <ScanSearch aria-hidden="true" size={14} />
-              VCP
-            </button>
-            <InfoHint text="Activa C1/C2/C3, pivot y gates mínimos de diagnóstico. No cambia filtros ni verdictos." />
-          </div>
-        </details>
-        <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={symbol} scope={chartScope} onScopeChange={updateChartScope} compact />
+    {/* Gráfico y brief de negocio: el lienzo no espera al brief completo.
+        Si el SSR no trae datos, N0 ya está visible y el chart muestra su
+        propio estado de carga sin tapar precio ni identidad. */}
+    <section className="stockChartPanel" aria-label="Gráfico de la ficha">
+      <StockSymbolSearch currentSymbol={symbol} />
+      <h2 className="stockChartTitle">Gráfico</h2>
+      <details className="stockChartBenchmarkFold">
+        <summary className="stockChartBenchmarkFoldSummary">
+          Comparar vs <span className="stockChartBenchmarkFoldValue">{benchmarkDraft || rs.benchmarkSymbol || "SPY"}</span>
+        </summary>
+        <div className="stockChartBenchmarkControl">
+          <label htmlFor={`benchmark-${symbol}`}>Comparar vs</label>
+          <input id={`benchmark-${symbol}`} list={`benchmark-options-${symbol}`} value={benchmarkDraft} onChange={(event) => setBenchmarkDraft(cleanBenchmarkSymbol(event.target.value))} onKeyDown={(event) => { if (event.key === "Enter") updateBenchmark(benchmarkDraft); }} placeholder={rs.benchmarkSymbol || "SPY"} disabled={loading || !data} />
+          <datalist id={`benchmark-options-${symbol}`}>
+            {BENCHMARK_OPTIONS.map((item) => <option key={item} value={item} />)}
+          </datalist>
+          <button type="button" onClick={() => updateBenchmark(benchmarkDraft)} disabled={loading || !benchmarkDraft || !data}>Aplicar</button>
+          <button type="button" onClick={() => updateBenchmark("")} disabled={loading || !benchmarkOverride || !data}>Auto</button>
+          <button
+            type="button"
+            className={`chartToolButton ${showVcpDiagnostics ? "active" : ""}`.trim()}
+            onClick={() => setShowVcpDiagnostics((value) => !value)}
+            disabled={!setupPattern}
+            aria-pressed={showVcpDiagnostics}
+            title="Mostrar contracciones VCP, pivot y motivo de bloqueo en el gráfico."
+          >
+            <ScanSearch aria-hidden="true" size={14} />
+            VCP
+          </button>
+          <InfoHint text="Activa C1/C2/C3, pivot y gates mínimos de diagnóstico. No cambia filtros ni verdictos." />
+        </div>
+      </details>
+      <ChartPreferences settings={chartSettings} onChange={updateChartSettings} symbol={symbol} scope={chartScope} onScopeChange={updateChartScope} compact />
+      {data?.chartBars?.length ? (
         <UniversalPriceChart
           bars={data.chartBars}
           symbol={symbol}
@@ -1797,31 +1803,47 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           identityCollapsed={identityCardCollapsed}
           onToggleIdentity={() => setIdentityCardCollapsed((value) => !value)}
         />
-        {/* Franja descriptiva (diseño "Ficha StatsEdge", variante 2a):
-            identidad, etapa, fuerza relativa, estructura y crecimiento,
-            pegada al gráfico. Los campos sin dato demostrable se muestran
-            ausentes con su motivo (ver lib/descriptiveStrip.js). */}
+      ) : (
+        <div className="stockChartLoadingShell" aria-busy={!data && !error ? "true" : "false"}>
+          <p className="stockChartLoading">
+            {!data && !error
+              ? `Cargando gráfico de ${symbol}…`
+              : "Sin serie de precios para este valor."}
+          </p>
+        </div>
+      )}
+      {data ? (
         <DescriptiveStrip
           data={data}
           setupPattern={setupPattern}
           technical={technical}
           stockVolume={stockVolume}
         />
-        {/* Convención para añadir un bloque nuevo bajo el gráfico (p. ej.
-            detector de contracciones, salud de corto plazo): renderízalo
-            aquí como un <section>/<div> hermano más, DESPUÉS de
-            DescriptiveStrip. `.stockChartPanel` no es grid ni flex —es
-            flujo normal—, así que cada hermano se apila con su alto real
-            (auto) sin que nadie tenga que recalcular nada. El único deber
-            del bloque nuevo es declarar su propia separación con
-            `margin-top` (ver `.stockDescStrip` en styles/stock.css), igual
-            que hace la franja. NUNCA reservar alto fijo por adelantado
-            (min-height ni grid-template-rows con un track fijo para un
-            hijo condicional): esa fue la causa del hueco vacío bajo el
-            gráfico que se corrigió en `.universalChart`
-            (styles/components.css) el 2026-08-21 —una tercera fila de
-            grid de 300px reservada para un panel que no siempre existe. */}
-      </section>
+      ) : null}
+      <StockCompanyBriefPanel
+        symbol={symbol}
+        surface={companyBriefSurface}
+        expanded={companyBriefExpanded}
+        onToggleExpanded={() => setCompanyBriefExpanded((value) => !value)}
+        facts={companyBriefFacts}
+      />
+      {/* Convención para añadir un bloque nuevo bajo el gráfico (p. ej.
+          detector de contracciones, salud de corto plazo): renderízalo
+          aquí como un <section>/<div> hermano más, DESPUÉS de
+          DescriptiveStrip. `.stockChartPanel` no es grid ni flex —es
+          flujo normal—, así que cada hermano se apila con su alto real
+          (auto) sin que nadie tenga que recalcular nada. El único deber
+          del bloque nuevo es declarar su propia separación con
+          `margin-top` (ver `.stockDescStrip` en styles/stock.css), igual
+          que hace la franja. NUNCA reservar alto fijo por adelantado
+          (min-height ni grid-template-rows con un track fijo para un
+          hijo condicional): esa fue la causa del hueco vacío bajo el
+          gráfico que se corrigió en `.universalChart`
+          (styles/components.css) el 2026-08-21 —una tercera fila de
+          grid de 300px reservada para un panel que no siempre existe. */}
+    </section>
+
+    {data && <>
 
       {/* ── Bloques retirados el 2026-08-21 (docs/analisis-ficha-cuadro-
           grafico-2026-08-21.md, Parte B) — NO reponer sin releer ese doc ──
@@ -1901,7 +1923,5 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
       <NewsSection rows={data.news} />
       <SocialPulseSection social={social} loading={socialLoading} symbol={symbol} />
     </>}
-
-    {!data && !error && <p className="stockPageLoading">Cargando ficha de {symbol}…</p>}
   </main>;
 }
