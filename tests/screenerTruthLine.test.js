@@ -337,6 +337,48 @@ describe("buildScreenerTruthLine", () => {
     expect(line).not.toMatch(/FIRDS|ESMA_FIRDS/i);
   });
 
+  it("SCREENER-TRUTH-MARKET-PCT-1: multi-mercado alineado incluye conteo por mercado", () => {
+    const rows = [
+      { symbol: "VOD.L", country: "GB" },
+      { symbol: "SAP.DE", country: "DE" },
+      { symbol: "BMW.DE", country: "DE" },
+    ];
+    const line = buildScreenerTruthLine({
+      analyzedRows: rows,
+      passCount: 2,
+      visibleCount: 2,
+      presetName: "Balanceado",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedMarkets: ["DE", "GB"],
+      selectedMarkets: ["DE", "GB"],
+    });
+    expect(line).toContain("2 de 3 pasan «Balanceado»");
+    expect(line).toContain("mesa: DE+GB");
+    expect(line).toContain("DE 2 · GB 1");
+  });
+
+  it("SCREENER-TRUTH-MARKET-PCT-1: compacto lista conteos solo con ≤3 mercados en mesa", () => {
+    const rows = [
+      { symbol: "A", country: "CA" },
+      { symbol: "B", country: "HK" },
+      { symbol: "C", country: "US" },
+    ];
+    const line = buildScreenerTruthLine({
+      analyzedRows: rows,
+      passCount: 1,
+      visibleCount: 1,
+      presetName: "Balanceado",
+      sort: "perf6m",
+      sortAsc: false,
+      scannedMarkets: ["CA", "HK", "US"],
+      selectedMarkets: ["CA", "HK", "US"],
+      compactMarketSegments: true,
+    });
+    expect(line).toContain("CA 1 · HK 1 · US 1");
+    expect(line).toContain("3 mercados en mesa");
+  });
+
   it("TRUTH-LOAD-1: en carga con filas en memoria no afirma ceros", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: Array.from({ length: 157 }, (_, i) => ({ symbol: `S${i}` })),
