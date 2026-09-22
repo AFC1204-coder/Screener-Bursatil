@@ -7,7 +7,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Última sync / HEAD origin polish:** `807b283` (SCREENER-TRUTH-MARKET-PCT-1 / #50)  
 **Ahora:** idle — cola encadenada cerrada.  
 **Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
-**Último cerrado:** SCREENER-TRUTH-MARKET-PCT-1 — conteo/%% mercado en truth (`807b283` / #50).  
+**Último cerrado:** SCREENER-TRUTH-MARKET-PCT-1 — conteo/% mercado en truth (`807b283` / #50).  
 **Último cerrado (prev):** EUROPA-SCAN-SECONDARY-DEPTH-1 (`b559186` / #49) · FICHA-BRIEF (`c0b3ca9` / #48).  
 **Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño).  
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
