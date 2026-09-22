@@ -1,0 +1,120 @@
+{
+  "ticket": "SCREENER-COLD-PAYLOAD-1",
+  "at": "2026-09-22T22:26:57.895Z",
+  "head": "f70532c",
+  "method": "synthetic · deferred → projectScanRowForMesaTransport (mix80 + fat narrative)",
+  "prior": {
+    "wave5DeferredJsonMb": 20.5,
+    "mesaLightWireMixMb": 13.26,
+    "source": "research/wave5-remeasure-2026-09-14 + research/scans-mesa-light-wire-1"
+  },
+  "omitFields": [
+    "setupDisplayEvidence",
+    "setupDisplayLine",
+    "setupDisplayReason",
+    "setupDisplayConfidenceLabel",
+    "setupVerdictShortLabel",
+    "weeklyBreakoutVolDetail",
+    "methodologyReliabilityReason",
+    "contractionStructureReason"
+  ],
+  "scenarios": {
+    "mix80FullFatNarrative": {
+      "beforeBytes": 18213955,
+      "afterBytes": 13066875,
+      "savedBytes": 5147080,
+      "savedPct": 28.26,
+      "beforeMb": 18.21,
+      "afterMb": 13.07,
+      "gzipAfter": 1644298,
+      "topFieldsAfter": [
+        {
+          "field": "weeklyStageStructureDetail",
+          "mb": 0.096
+        },
+        {
+          "field": "industry",
+          "mb": 0.086
+        },
+        {
+          "field": "screenRejectReason",
+          "mb": 0.067
+        },
+        {
+          "field": "screenRejectField",
+          "mb": 0.053
+        },
+        {
+          "field": "sector",
+          "mb": 0.043
+        },
+        {
+          "field": "companyName",
+          "mb": 0.042
+        },
+        {
+          "field": "marketCap",
+          "mb": 0.036
+        },
+        {
+          "field": "weeklyStageStructureLabel",
+          "mb": 0.036
+        }
+      ]
+    },
+    "allLightFatNarrative": {
+      "beforeBytes": 17501395,
+      "afterBytes": 13069195,
+      "savedBytes": 4432200,
+      "savedPct": 25.32,
+      "beforeMb": 17.5,
+      "afterMb": 13.07,
+      "gzipAfter": 1644247,
+      "topFieldsAfter": [
+        {
+          "field": "weeklyStageStructureDetail",
+          "mb": 0.096
+        },
+        {
+          "field": "industry",
+          "mb": 0.086
+        },
+        {
+          "field": "screenRejectReason",
+          "mb": 0.068
+        },
+        {
+          "field": "screenRejectField",
+          "mb": 0.054
+        },
+        {
+          "field": "sector",
+          "mb": 0.043
+        },
+        {
+          "field": "companyName",
+          "mb": 0.042
+        },
+        {
+          "field": "marketCap",
+          "mb": 0.036
+        },
+        {
+          "field": "weeklyStageStructureLabel",
+          "mb": 0.036
+        }
+      ]
+    }
+  },
+  "deltasVsWave5": {
+    "mix80ProjectedMb": 13.07,
+    "savedVsWave5Mb": 7.43,
+    "savedVsWave5Pct": 36.2,
+    "fatNarrativeAfterMb": 13.07,
+    "setupDisplayReasonTopFieldMb": null
+  },
+  "verdict": {
+    "lever": "MESA_TRANSPORT_OMIT ampliado: setupDisplayReason + confidence + verdictShortLabel",
+    "note": "Sin Mini/DB. mix80 ≈ universo US con ~80 filas full; fat = techo narrativa poblada."
+  }
+}
