@@ -4,11 +4,11 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-22 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `b559186` (EUROPA-SCAN-SECONDARY-DEPTH-1 / #49)  
-**Ahora:** SCREENER-TRUTH-MARKET-PCT-1 — programación cloud (último encadenado).  
-**Cola encadenada:** cold·sparks·ficha·Europa **hechos** → truth % mercado.  
-**Último cerrado:** EUROPA-SCAN-SECONDARY-DEPTH-1 — secundarios 24→36 (`b559186` / #49).  
-**Último cerrado (prev):** FICHA-BRIEF-SURFACE-1 (`c0b3ca9` / #48).  
+**Última sync / HEAD origin polish:** `807b283` (SCREENER-TRUTH-MARKET-PCT-1 / #50)  
+**Ahora:** idle — cola encadenada cerrada.  
+**Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
+**Último cerrado:** SCREENER-TRUTH-MARKET-PCT-1 — conteo/%% mercado en truth (`807b283` / #50).  
+**Último cerrado (prev):** EUROPA-SCAN-SECONDARY-DEPTH-1 (`b559186` / #49) · FICHA-BRIEF (`c0b3ca9` / #48).  
 **Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño).  
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  

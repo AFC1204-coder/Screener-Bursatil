@@ -1,16 +1,18 @@
-# Ticket activo — SCREENER-TRUTH-MARKET-PCT-1
+# Ticket activo — idle
 
-**Estado:** programación cloud  
-**Rama base:** `codex/statsedge-ui-polish` @ `b559186`  
-**Cola:** …Europa **hecho** → **truth %/conteo mercado** (último)
+**Estado:** idle  
+**Rama:** `codex/statsedge-ui-polish`
+
+No hay ticket de programación activo. Último cerrado: SCREENER-TRUTH-MARKET-PCT-1 (`807b283` / #50).
 
 ## Prompt para Agent chat (copiar tal cual)
 
 ```
-@docs/tickets/SCREENER-TRUTH-MARKET-PCT-1.md
-
-Eres programación StatsEdge (NO orquestador). Base polish @ b559186.
-Rama cursor/truth-market-pct-a41e. Commit+push+PR draft. SIN merge.
-
-Truth line: conteo por mercado (y % selección→mesa si hay dato) en multi-mercado. Reusar screenerTruthLine/marketAvailability. No inventar %. Tests + plantilla retorno.
+(idle — espera nuevo ticket del orquestador)
 ```
+
+## Notas orquestador
+
+- Cola encadenada cerrada: cold · sparks Caza · ficha brief · Europa depth · truth % mercado.
+- Mini diario: `npm run ops:mini:check` / `ops:mini:daily` (docs/ops-mini-daily.md).
+- Aparcado (gate dueño): D Twelve Data / Hito 1B · FIRDS on.

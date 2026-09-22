@@ -1,17 +1,17 @@
 # SCREENER-TRUTH-MARKET-PCT-1 — % / conteo por mercado en truth line
 
-**Estado:** prep → programación cloud  
-**Rama base:** `codex/statsedge-ui-polish` @ `b559186`  
-**Modelo:** Composer 2.5  
-**Contexto:** Plan item 5 residual tras Europa honesty + curated aviso. Sin inventar % si no hay dato cableado.
+**Estado:** cerrado (orquestador 2026-09-22) · squash `807b283` · [#50](https://github.com/AFC1204-coder/Screener-Bursatil/pull/50)  
+**Verify:** 106 tests (marketAvailability + screenerTruthLine) · CI Vercel SUCCESS
 
-## Alcance (closable S–M)
+Cola encadenada (cold → sparks → ficha → Europa depth → truth %) **cerrada**.
 
-1. Cuando la mesa tiene **≥2 mercados** (p. ej. Europa / Global parcial), añadir a truth line o peek un segmento compacto de **conteo por mercado** (filas analizadas o cargadas) — p. ej. `GB 23 · DE 40 · …` — usando datos ya en scan/rows (`scannedMarketsFromScan` / row country).
-2. Si se puede calcular cobertura vs selección sin inventar universo FIRDS: `% mercados de la selección presentes en mesa` (no “% del universo oficial”).
-3. Reusar `screenerTruthLine` / `marketAvailability`; copy corto; no saturar móvil (compact / peek).
-4. Tests focalizados + `./vfc` o vitest del ticket.
+## Alcance (entregado)
 
-## No tocar
+1. Cuando la mesa tiene **≥2 mercados**, truth line incluye **conteo por mercado** (filas analizadas vía `country` / `countryCode`).
+2. **% selección→mesa** solo con selección multi-mercado y cobertura parcial (sin inventar universo FIRDS).
+3. Reuso `screenerTruthLine` / `marketAvailability`; compact en móvil.
+4. Tests focalizados OK.
+
+## No tocado
 
 FIRDS on, cold payload, ficha brief, nocturno US, scoring, auth.
