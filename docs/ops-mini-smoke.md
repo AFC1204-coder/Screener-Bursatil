@@ -65,7 +65,7 @@ Si el store del repo no es escribible, cae a `/tmp/statsedge-ops-mini-smoke-1/`.
 ### Checks
 
 1. **Home US** — truth line con mesa real (no `0/0`).
-2. **Caza** — sparks en cinta (`miniSparkline`) **o** truth line con conteo de pasan.
+2. **Caza** — sparks/SVG en cinta (`huntTapeSpark` en HuntTape; mesa Auditoría usa `miniSparkline`). Requiere `sparks > 0` o `svgs > 0` tras hydrate chart-preview (no basta truth line sola).
 3. **`/review?symbol=AAPL`** — chart sale de «Cargando histórico…» (canvas o estado vacío explícito, no loading infinito).
 
 Timeout global: `SMOKE_TIMEOUT_MS` (default 180000). Precheck HTTP: `SMOKE_PRECHECK_MS` (default 4000).

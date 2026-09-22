@@ -4,7 +4,7 @@
  *
  * Checks:
  *   1) Home US — truth line with real analyzed count (not 0/0)
- *   2) Caza — sparks in hunt tape OR truth line with pasan count
+ *   2) Caza — sparks/SVG en cinta HuntTape (`.huntTapeSpark`) tras chart-preview hydrate
  *   3) /review?symbol=AAPL — chart leaves "Cargando histórico…"
  *
  * Env:
@@ -137,14 +137,32 @@ async function waitTruthReady(page, timeoutMs) {
 async function readCazaSignals(page) {
   return page.evaluate(() => {
     const truth = document.querySelector(".screenerTruthLine")?.textContent?.trim() || "";
-    const sparks = document.querySelectorAll(".miniSparkline path, .miniSparkline polyline, .huntTapeRow .miniSparkline").length;
-    const svgs = document.querySelectorAll(".miniSparkline").length;
+    // Mesa Auditoría usa `.miniSparkline`; cinta Caza (HuntTape) usa `.huntTapeSpark`.
+    const sparkPaths = document.querySelectorAll(
+      ".miniSparkline path, .miniSparkline polyline, "
+      + ".huntTapeSpark path, .huntTapeRow .huntTapeSpark path",
+    ).length;
+    const svgs = document.querySelectorAll(".miniSparkline, .huntTapeSpark").length;
+    const pending = document.querySelectorAll(".huntTapeSparkPending").length;
     const huntRows = document.querySelectorAll(".huntTapeRow, .huntTapeItem").length;
     const cazaOn = [...document.querySelectorAll(".huntTapeModeToggle button")].some(
       (btn) => /Caza/i.test(btn.textContent || "") && btn.getAttribute("aria-pressed") === "true",
     );
-    return { truth, sparks, svgs, huntRows, cazaOn };
+    return { truth, sparks: sparkPaths, svgs, pending, huntRows, cazaOn };
   });
+}
+
+async function waitCazaSparksReady(page, timeoutMs) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < timeoutMs) {
+    const signals = await readCazaSignals(page);
+    if (signals.sparks > 0 || signals.svgs > 0) {
+      return { ...signals, ms: Date.now() - t0 };
+    }
+    await page.waitForTimeout(250);
+  }
+  const signals = await readCazaSignals(page);
+  return { ...signals, ms: Date.now() - t0, timeout: true };
 }
 
 async function waitReviewChartReady(page, expectedSymbol, timeoutMs) {
@@ -237,12 +255,11 @@ export async function runMiniSmokePlaywright({ outDir = resolveOutDir() } = {}) 
       await cazaBtn.click();
       await page.waitForTimeout(400);
     }
-    // Allow chart-preview hydrate a short window
-    await page.waitForTimeout(3000);
-    const caza = await readCazaSignals(page);
-    const truthOk = (parseTruthCounts(caza.truth).pass > 0) || /pasan/i.test(caza.truth);
+    // chart-preview hydrate: ventana Caza (top 80) → SVG `.huntTapeSpark`
+    const cazaSparkWaitMs = Math.min(20000, TIMEOUT_MS);
+    const caza = await waitCazaSparksReady(page, cazaSparkWaitMs);
     checks.caza = {
-      pass: truthOk || caza.sparks > 0 || caza.svgs > 0,
+      pass: !caza.timeout && (caza.sparks > 0 || caza.svgs > 0),
       ...caza,
     };
     screenshots.caza = path.join(outDir, "caza.png");
