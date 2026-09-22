@@ -116,12 +116,20 @@ describe("scan-refresh cron plan", () => {
     }
   });
 
-  it("expone cohorts Europa secondary de un solo país con limit/perMarket ≥24", () => {
+  it("expone cohorts Europa secondary de un solo país con limit/perMarket =36", () => {
     for (const market of EUROPE_SECONDARY_MARKETS) {
       const group = scanCronGroupByKey(`europe-${market.toLowerCase()}`);
       expect(group?.markets).toEqual([market]);
-      expect(group?.limit).toBeGreaterThanOrEqual(24);
-      expect(group?.perMarket).toBeGreaterThanOrEqual(24);
+      expect(group?.limit).toBe(36);
+      expect(group?.perMarket).toBe(36);
+    }
+  });
+
+  it("mantiene cohorts Europa priority en limit/perMarket =24 (sin bump secundario)", () => {
+    for (const market of EUROPE_PRIORITY_MARKETS) {
+      const group = scanCronGroupByKey(`europe-${market.toLowerCase()}`);
+      expect(group?.limit).toBe(24);
+      expect(group?.perMarket).toBe(24);
     }
   });
 
