@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ASIA, ALL_SELECTABLE_MARKETS, DEFAULT_MARKETS, EUROPE } from "@/lib/screenerConfig";
 import { EUROPE_PRIORITY_MARKETS, EUROPE_SECONDARY_MARKETS } from "@/lib/markets";
 import {
+  analyzedRowsCountByScannedMarket,
   buildCuratedPopulationNotice,
   buildMarketsLoadingNotice,
   buildMarketsStaleNotice,
@@ -9,6 +10,8 @@ import {
   buildScreenerTruthMarketSegments,
   describeCuratedPopulationGap,
   describeEuropeCoverageGap,
+  describeSelectionMarketsOnMesa,
+  formatPerMarketRowCountSegment,
   formatEuropeSecondaryGapNames,
   formatMarketCodesShort,
   formatMarketsProductLabel,
@@ -252,6 +255,69 @@ describe("formatMarketCodesShort", () => {
   });
 });
 
+describe("analyzedRowsCountByScannedMarket", () => {
+  it("devuelve pares ordenados cuando hay ≥2 mercados con filas", () => {
+    const rows = [
+      { symbol: "VOD.L", country: "GB" },
+      { symbol: "SAP.DE", country: "DE" },
+      { symbol: "BMW.DE", country: "DE" },
+    ];
+    expect(analyzedRowsCountByScannedMarket(rows, ["DE", "GB"])).toEqual([
+      ["DE", 2],
+      ["GB", 1],
+    ]);
+  });
+
+  it("null con un solo mercado o sin filas identificables", () => {
+    expect(analyzedRowsCountByScannedMarket([], ["US", "HK"])).toBeNull();
+    expect(analyzedRowsCountByScannedMarket([{ symbol: "AAPL", country: "US" }], ["US"])).toBeNull();
+  });
+});
+
+describe("formatPerMarketRowCountSegment", () => {
+  it("formatea conteos y trunca en desktop", () => {
+    const entries = [["AT", 5], ["BE", 8], ["CH", 3], ["DE", 40], ["ES", 12], ["FR", 18], ["GB", 23]];
+    expect(formatPerMarketRowCountSegment(entries)).toBe(
+      "AT 5 · BE 8 · CH 3 · DE 40 · ES 12 · FR 18 · …",
+    );
+  });
+
+  it("en compacto lista hasta 3 mercados", () => {
+    const entries = [["CA", 10], ["HK", 20], ["US", 30], ["AU", 5]];
+    expect(formatPerMarketRowCountSegment(entries, { compact: true })).toBe(
+      "CA 10 · HK 20 · US 30 · …",
+    );
+  });
+});
+
+describe("describeSelectionMarketsOnMesa", () => {
+  it("calcula % de selección presente en mesa sin universo FIRDS", () => {
+    const gap = describeSelectionMarketsOnMesa({
+      scannedMarkets: ["US", "CA", "HK"],
+      selectedMarkets: ["US", "CA", "HK", "AU", "DE", "GB"],
+    });
+    expect(gap).toEqual({
+      presentCount: 3,
+      selectedCount: 6,
+      pct: 50,
+      truthSegment: "3/6 mercados en mesa (50%)",
+      peekDetail: "50% selección en mesa",
+      compactSegment: "50% selección en mesa",
+    });
+  });
+
+  it("null con cobertura total o selección <2", () => {
+    expect(describeSelectionMarketsOnMesa({
+      scannedMarkets: ["US", "HK"],
+      selectedMarkets: ["US", "HK"],
+    })).toBeNull();
+    expect(describeSelectionMarketsOnMesa({
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+    })).toBeNull();
+  });
+});
+
 describe("buildScreenerTruthMarketSegments", () => {
   it("incluye mesa cuando hay scan cargado", () => {
     expect(buildScreenerTruthMarketSegments({
@@ -278,6 +344,7 @@ describe("buildScreenerTruthMarketSegments", () => {
       marketsMisaligned: true,
     })).toEqual([
       "Mostrando EE. UU. · tu selección es 10 mercados",
+      "1/10 mercados en mesa (10%)",
     ]);
   });
 
@@ -310,6 +377,7 @@ describe("buildScreenerTruthMarketSegments", () => {
     })).toEqual([
       "3 mercados en mesa",
       "Mostrando CA+HK+US · selección 28 mercados",
+      "11% selección en mesa",
     ]);
   });
 
@@ -318,6 +386,40 @@ describe("buildScreenerTruthMarketSegments", () => {
       scannedMarkets: [],
       selectedMarkets: ["US"],
     })).toEqual([]);
+  });
+
+  it("SCREENER-TRUTH-MARKET-PCT-1: añade conteo por mercado en multi-mercado alineado", () => {
+    const rows = [
+      { symbol: "VOD.L", country: "GB" },
+      { symbol: "SAP.DE", country: "DE" },
+      { symbol: "BMW.DE", country: "DE" },
+      { symbol: "AIR.PA", country: "FR" },
+    ];
+    expect(buildScreenerTruthMarketSegments({
+      analyzedRows: rows,
+      scannedMarkets: ["DE", "FR", "GB"],
+      selectedMarkets: ["DE", "FR", "GB"],
+    })).toEqual([
+      "mesa: DE+FR+GB",
+      "DE 2 · FR 1 · GB 1",
+    ]);
+  });
+
+  it("SCREENER-TRUTH-MARKET-PCT-1: cobertura parcial añade % selección en mesa", () => {
+    const rows = Array.from({ length: 30 }, (_, i) => ({
+      symbol: `S${i}`,
+      country: i < 20 ? "US" : "CA",
+    }));
+    expect(buildScreenerTruthMarketSegments({
+      analyzedRows: rows,
+      scannedMarkets: ["CA", "US"],
+      selectedMarkets: ["CA", "HK", "US"],
+      marketsMisaligned: true,
+    })).toEqual([
+      "Mostrando CA+US · tu selección es CA+HK+US",
+      "CA 10 · US 20",
+      "2/3 mercados en mesa (67%)",
+    ]);
   });
 });
 
@@ -623,7 +725,8 @@ describe("EUROPA-COVERAGE-TRUTH-1", () => {
     });
     expect(segments[0]).toBe("mesa: Europa prioritaria");
     expect(segments[1]).toMatch(/^Europa incompleta · faltan secundarios \(Irlanda, Portugal/);
-    expect(segments).toHaveLength(2);
+    expect(segments[2]).toMatch(/mercados en mesa \(\d+%\)/);
+    expect(segments).toHaveLength(3);
   });
 
   it("resolve settled: aviso estable sin loading eterno (EU1 ⊂ Europa)", () => {
