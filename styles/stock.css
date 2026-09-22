@@ -814,6 +814,166 @@
   letter-spacing: var(--track-display);
 }
 
+.stockChartLoadingShell {
+  display: grid;
+  place-items: center;
+  min-height: 280px;
+  margin-bottom: var(--space-3);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--surface2);
+}
+
+.stockChartLoading {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  line-height: 1.45;
+}
+
+.stockCompanyBriefPanel {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface2);
+}
+
+.stockCompanyBriefPanel[data-state="loading"] {
+  min-height: 88px;
+}
+
+.stockCompanyBriefHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.stockCompanyBriefTitle {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-stretch: var(--stretch-display);
+  font-weight: 600;
+  font-size: var(--text-s);
+  line-height: var(--lh-display);
+  text-transform: uppercase;
+  letter-spacing: var(--track-display);
+}
+
+.stockCompanyBriefTheme {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.stockCompanyBriefRsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-3);
+}
+
+.stockCompanyBriefRsItem {
+  display: grid;
+  gap: 2px;
+}
+
+.stockCompanyBriefRsLabel,
+.stockCompanyBriefFact > span {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.stockCompanyBriefRsValue,
+.stockCompanyBriefFact > b {
+  color: var(--text);
+  font-family: var(--font-data);
+  font-size: var(--data-m);
+  line-height: var(--lh-data);
+  font-weight: 600;
+}
+
+.stockCompanyBriefRsValue.reviewRsMissing,
+.stockCompanyBriefFact > b[data-state="ghost"] {
+  color: var(--ghost);
+}
+
+.stockCompanyBriefStatus {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  line-height: 1.5;
+}
+
+.stockCompanyBriefError {
+  color: var(--risk);
+}
+
+.stockCompanyBriefCopy {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.stockCompanyBriefCopy p {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--text-s);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.stockCompanyBriefCopy.isExpanded p {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.stockCompanyBriefToggle {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stockCompanyBriefFacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.stockCompanyBriefFact {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .stockCompanyBriefFacts {
+    grid-template-columns: 1fr;
+  }
+}
+
 .stockChartBenchmarkControl {
   display: flex;
   flex-wrap: wrap;

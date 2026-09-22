@@ -3,7 +3,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import StockClient from "@/app/stock/[symbol]/StockClient";
 import StockAddToListButton from "@/app/stock/[symbol]/StockAddToListButton";
+import StockCompanyBriefPanel from "@/app/stock/[symbol]/StockCompanyBriefPanel";
 import StockSymbolSearch from "@/app/stock/[symbol]/StockSymbolSearch";
+import { resolveStockCompanyBriefSurface } from "@/lib/stockCompanyBriefSurface";
 import {
   addSymbolToUserList,
   favoriteRowFromStockBrief,
@@ -132,6 +134,41 @@ describe("stock ficha UI brief", () => {
     }));
     expect(html).toContain("+ lista");
     expect(html).toContain("stockAddToListTrigger");
+  });
+
+  it("renderiza panel Negocio en estado ok con expand", () => {
+    const summary = "A".repeat(120);
+    const html = renderToStaticMarkup(React.createElement(StockClient, {
+      initialSymbol: "SOPH",
+      initialData: { ...baseData, summary, theme: "Diagnostics" },
+    }));
+    expect(html).toContain("stockCompanyBriefPanel");
+    expect(html).toContain('data-state="ok"');
+    expect(html).toContain("Ver completo");
+    expect(html).toContain(summary);
+  });
+
+  it("renderiza panel Negocio en loading sin bloquear la zona de gráfico", () => {
+    const html = renderToStaticMarkup(React.createElement(StockClient, {
+      initialSymbol: "AAPL",
+      initialData: null,
+    }));
+    expect(html).toContain("stockCompanyBriefPanel");
+    expect(html).toContain('data-state="loading"');
+    expect(html).toContain("stockChartLoadingShell");
+    expect(html).not.toContain("stockPageLoading");
+  });
+
+  it("renderiza panel Negocio vacío con copy honesto", () => {
+    const html = renderToStaticMarkup(React.createElement(StockCompanyBriefPanel, {
+      symbol: "SOPH",
+      surface: resolveStockCompanyBriefSurface({
+        symbol: "SOPH",
+        data: { ...baseData, summary: "", short: "" },
+      }),
+    }));
+    expect(html).toContain('data-state="empty"');
+    expect(html).toMatch(/Sin descripción de negocio/i);
   });
 });
 
