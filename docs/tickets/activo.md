@@ -1,17 +1,16 @@
-# Ticket activo — EUROPA-SCAN-SECONDARY-DEPTH-1
+# Ticket activo — SCREENER-TRUTH-MARKET-PCT-1
 
 **Estado:** programación cloud  
-**Rama base:** `codex/statsedge-ui-polish` @ `c0b3ca9`  
-**Cola:** …ficha **hecho** → **Europa scan depth** → truth%
+**Rama base:** `codex/statsedge-ui-polish` @ `b559186`  
+**Cola:** …Europa **hecho** → **truth %/conteo mercado** (último)
 
 ## Prompt para Agent chat (copiar tal cual)
 
 ```
-@docs/tickets/EUROPA-SCAN-SECONDARY-DEPTH-1.md
+@docs/tickets/SCREENER-TRUTH-MARKET-PCT-1.md
 
-Eres programación StatsEdge (NO orquestador). Base polish @ c0b3ca9.
-Rama cursor/europa-secondary-depth-a41e. Commit+push+PR draft. SIN merge.
+Eres programación StatsEdge (NO orquestador). Base polish @ b559186.
+Rama cursor/truth-market-pct-a41e. Commit+push+PR draft. SIN merge.
 
-Sube SCAN_CRON secundarios EU 24→36 en lib/cronPlan.js. Tests. NO activar ESMA/FCA FIRDS.
-Plantilla retorno.
+Truth line: conteo por mercado (y % selección→mesa si hay dato) en multi-mercado. Reusar screenerTruthLine/marketAvailability. No inventar %. Tests + plantilla retorno.
 ```
