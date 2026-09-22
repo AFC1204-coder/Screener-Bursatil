@@ -3,14 +3,14 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-21 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `b755a41` (OPS-MINI-HARDEN-1; tip docs tras push)  
-**Ahora:** idle.  
-**Último cerrado:** OPS-MINI-HARDEN-1 — ritual diario Mini + preflight ES (`b755a41` / #45).  
-**Cola:** D Twelve Data / Hito 1B (aparcado). · residual cold payload / parse·render.  
-**Último cerrado (prev):** YIELD-EU-1 — AT/BE/IE/PT en rotación shadow-europe (`a040809` / #43).  
-**Último cerrado (prev2):** FIRDS-CURATED-AVISO-1 — aviso población curada Europa (`1404309` / #44).  
-**Cola (hist):** yield Europa A+B+C cerrados · OPS Mini smoke `28fa1ab` · harden `b755a41`.  
+Última actualización: 2026-09-22 · rama `codex/statsedge-ui-polish`  
+**Última sync / HEAD origin polish:** `f1a59f0`  
+**Ahora:** SCREENER-COLD-PAYLOAD-1 — programación cloud.  
+**Cola encadenada:** cold payload → sparks Caza → Review/Astra → Europa profundidad → truth % mercado (parar si raro/malo).  
+**Último cerrado:** OPS-MINI-HARDEN-1 — ritual diario Mini (`b755a41` / #45 · daily PASS).  
+**Cola aparcada:** D Twelve Data / Hito 1B.  
+**Último cerrado (prev):** YIELD-EU-1 (`a040809` / #43).  
+**Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; residual = parse/render.  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
 **Nota HYDRATE-VISIBLE residual:** Caza hidrata toda la cola filtrada (no solo viewport).  
