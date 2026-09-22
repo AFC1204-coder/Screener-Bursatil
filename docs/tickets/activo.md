@@ -1,19 +1,17 @@
-# Ticket activo — FICHA-BRIEF-SURFACE-1
+# Ticket activo — EUROPA-SCAN-SECONDARY-DEPTH-1
 
 **Estado:** programación cloud  
-**Rama base:** `codex/statsedge-ui-polish` @ `4a51266`  
-**Cola:** cold · sparks **hechos** → **ficha brief** → Europa → truth%
+**Rama base:** `codex/statsedge-ui-polish` @ `c0b3ca9`  
+**Cola:** …ficha **hecho** → **Europa scan depth** → truth%
 
 ## Prompt para Agent chat (copiar tal cual)
 
 ```
-@docs/tickets/FICHA-BRIEF-SURFACE-1.md @docs/tickets/activo.md
+@docs/tickets/EUROPA-SCAN-SECONDARY-DEPTH-1.md
 
-Eres programación StatsEdge (NO orquestador). Base polish @ 4a51266.
-Rama cursor/ficha-brief-surface-a41e. Commit+push+PR draft. SIN merge polish.
+Eres programación StatsEdge (NO orquestador). Base polish @ c0b3ca9.
+Rama cursor/europa-secondary-depth-a41e. Commit+push+PR draft. SIN merge.
 
-Ticket FICHA-BRIEF-SURFACE-1 — panel company-brief en /stock: loading/ok/vacío honestos; no bloquear chart.
-
-Lee app/stock/[symbol]/StockClient.jsx (companyBriefExpanded / getJson company-brief).
-No reintroducir brief en /review. Tests + plantilla retorno.
+Sube SCAN_CRON secundarios EU 24→36 en lib/cronPlan.js. Tests. NO activar ESMA/FCA FIRDS.
+Plantilla retorno.
 ```
