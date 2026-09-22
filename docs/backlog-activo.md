@@ -4,13 +4,13 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-22 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `fe4a051` (SCREENER-COLD-PAYLOAD-1 / #46)  
-**Ahora:** OPS-MINI-CAZA-SPARKS-1 — programación cloud.  
-**Cola encadenada:** cold **hecho** → sparks Caza → Review/Astra → Europa profundidad → truth % mercado.  
-**Último cerrado:** SCREENER-COLD-PAYLOAD-1 — omit setup narrative wire (`fe4a051` / #46).  
-**Último cerrado (prev):** OPS-MINI-HARDEN-1 (`b755a41` / #45).  
+**Última sync / HEAD origin polish:** `4a51266` (OPS-MINI-CAZA-SPARKS-1 / #47)  
+**Ahora:** FICHA-BRIEF-SURFACE-1 — programación cloud.  
+**Cola encadenada:** cold · sparks **hechos** → ficha brief → Europa profundidad → truth % mercado.  
+**Último cerrado:** OPS-MINI-CAZA-SPARKS-1 — smoke Caza `.huntTapeSpark` (`4a51266` / #47).  
+**Último cerrado (prev):** SCREENER-COLD-PAYLOAD-1 (`fe4a051` / #46).  
 **Cola aparcada:** D Twelve Data / Hito 1B.  
-**Remeasure cold:** synthetic mix80 **18,2→13,1 MB** (−28%); WAVE5 baseline 20,5 MB.  
+**Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
 **Nota HYDRATE-VISIBLE residual:** Caza hidrata toda la cola filtrada (no solo viewport).  

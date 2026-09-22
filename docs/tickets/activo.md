@@ -1,21 +1,19 @@
-# Ticket activo — OPS-MINI-CAZA-SPARKS-1
+# Ticket activo — FICHA-BRIEF-SURFACE-1
 
 **Estado:** programación cloud  
-**Rama base:** `codex/statsedge-ui-polish` @ `fe4a051`  
-**Cola:** cold **cerrado** → **sparks Caza** → Review/Astra → Europa → truth%
+**Rama base:** `codex/statsedge-ui-polish` @ `4a51266`  
+**Cola:** cold · sparks **hechos** → **ficha brief** → Europa → truth%
 
 ## Prompt para Agent chat (copiar tal cual)
 
 ```
-@docs/tickets/OPS-MINI-CAZA-SPARKS-1.md @docs/tickets/activo.md
+@docs/tickets/FICHA-BRIEF-SURFACE-1.md @docs/tickets/activo.md
 
-Eres programación StatsEdge (NO orquestador). Base polish @ fe4a051 (tras #46).
-Rama cursor/caza-sparks-smoke-a41e. SIN commit a polish. Composer 2.5.
+Eres programación StatsEdge (NO orquestador). Base polish @ 4a51266.
+Rama cursor/ficha-brief-surface-a41e. Commit+push+PR draft. SIN merge polish.
 
-Ticket OPS-MINI-CAZA-SPARKS-1 — daily smoke Caza reportó sparks/svgs=0 con 525 huntRows.
+Ticket FICHA-BRIEF-SURFACE-1 — panel company-brief en /stock: loading/ok/vacío honestos; no bloquear chart.
 
-Diagnostica selector vs hydrate; arregla para que smoke vea SVG/sparks >0 (o documenta DOM real y actualiza mini-smoke-playwright.mjs).
-Tests si lib; commit+push rama + PR draft.
-
-Plantilla Resumen / Archivos / Tests / LO QUE NO VERIFIQUÉ.
+Lee app/stock/[symbol]/StockClient.jsx (companyBriefExpanded / getJson company-brief).
+No reintroducir brief en /review. Tests + plantilla retorno.
 ```
