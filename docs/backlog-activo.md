@@ -4,7 +4,7 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-23 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `71cac7a` (docs: activate CAZA-CHARTPREVIEW-VIEWPORT-1).  
+**Última sync / HEAD origin polish:** `e16156d` (docs: activate CAZA-CHARTPREVIEW-VIEWPORT-1).  
 **Ahora:** CAZA-CHARTPREVIEW-VIEWPORT-1 (`prep`) — hydrate Caza chartPreview = viewport + buffer.  
 **Ticket:** `docs/tickets/CAZA-CHARTPREVIEW-VIEWPORT-1.md` · rama prog `cursor/caza-viewport-cap-a41e`.  
 **Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
