@@ -72,7 +72,7 @@ describe("getLatestScanFromCloud · bootstrap core-first", () => {
     expect(rowsLimit).toBeLessThanOrEqual(8000);
   });
 
-  it("getLatestScanFromCloudExtended pide hydrateRs=1", async () => {
+  it("getLatestScanFromCloudExtended pide hydrateRs=1 con priority low", async () => {
     const fetchMock = vi.fn(async () => jsonResponse({ ok: true, configured: true, scans: [] }));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -81,6 +81,7 @@ describe("getLatestScanFromCloud · bootstrap core-first", () => {
     const parsed = parseFetchUrl(fetchMock);
     expect(parsed.searchParams.get("anchor")).toBe("nightly-us");
     expect(parsed.searchParams.get("hydrateRs")).toBe("1");
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ priority: "low" });
   });
 
   it("getLatestScanFromCloudForMarkets normaliza mercados y pide core", async () => {
@@ -96,7 +97,7 @@ describe("getLatestScanFromCloud · bootstrap core-first", () => {
     expect(parsed.searchParams.get("hydrateRs")).toBe("0");
   });
 
-  it("getLatestScanFromCloudForMarketsExtended pide hydrateRs=1", async () => {
+  it("getLatestScanFromCloudForMarketsExtended pide hydrateRs=1 con priority low", async () => {
     const fetchMock = vi.fn(async () => jsonResponse({ ok: true, configured: true, scans: [] }));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -105,6 +106,7 @@ describe("getLatestScanFromCloud · bootstrap core-first", () => {
     const parsed = parseFetchUrl(fetchMock);
     expect(parsed.searchParams.get("markets")).toBe("JP,US");
     expect(parsed.searchParams.get("hydrateRs")).toBe("1");
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ priority: "low" });
   });
 });
 
@@ -123,6 +125,11 @@ describe("call sites GET /api/scans · bootstrap core → extended", () => {
     const body = functionBody(name);
     expect(body).toMatch(/buildStartupScanUrl/);
     expect(body).toMatch(/hydrateRs:\s*["']1["']/);
+  });
+
+  it.each(MESA_EXTENDED_FUNCTIONS)("%s marca priority low (no compite con paint core)", (name) => {
+    const body = functionBody(name);
+    expect(body).toMatch(/priority:\s*["']low["']/);
   });
 
   it("buildStartupScanUrl centraliza /api/scans, includeRows y hydrateRs", () => {
