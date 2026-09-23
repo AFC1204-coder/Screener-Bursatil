@@ -4,17 +4,17 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-23 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `e16156d` (docs: activate CAZA-CHARTPREVIEW-VIEWPORT-1).  
-**Ahora:** CAZA-CHARTPREVIEW-VIEWPORT-1 (`prep`) — hydrate Caza chartPreview = viewport + buffer.  
-**Ticket:** `docs/tickets/CAZA-CHARTPREVIEW-VIEWPORT-1.md` · rama prog `cursor/caza-viewport-cap-a41e`.  
+**Última sync / HEAD origin polish:** `e83c41e` (CAZA-CHARTPREVIEW-VIEWPORT-1 / #51)  
+**Ahora:** idle — cola necesaria 1→2→3 cerrada.  
 **Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
-**Último cerrado:** SCREENER-TRUTH-MARKET-PCT-1 — conteo/% mercado en truth (`807b283` / #50).  
-**Último cerrado (prev):** EUROPA-SCAN-SECONDARY-DEPTH-1 (`b559186` / #49) · FICHA-BRIEF (`c0b3ca9` / #48).  
+**Último cerrado:** CAZA-CHARTPREVIEW-VIEWPORT-1 — viewport+overscan (`e83c41e` / #51).  
+**Último cerrado (prev):** SCREENER-TRUTH-MARKET-PCT-1 (`807b283` / #50) · EUROPA depth (`b559186` / #49).  
 **Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño).  
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
-**Nota HYDRATE residual (activo):** Caza aún ventana ~80; ticket = apretar a viewport + buffer.  
+**Nota HYDRATE residual (#51):** scroll Caza OK (38/batch); entrada a Caza aún puede emitir batch 80 (mesa/pagedRows).  
+**Daily Mini 2026-09-23:** PASS · US **504/3575**.  
 **Último cerrado (prev):** REACT-COMMIT-PERF-1 `a71607c` · SCANS-CHARTPREVIEW-1 `f420af6` · THEME `cac7b25`.  
 **Nota REACT-COMMIT residual:** A/B 1 rep; truth sin `filterMs`.  
 **Nota THEME:** `cac7b25` chunk 333×6; 49→16 HTTP.  
