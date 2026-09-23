@@ -1416,11 +1416,13 @@ export default function Page() {
       start: hydrateStart,
       ...(hydrateLimit != null ? { limit: hydrateLimit } : {}),
     });
-    const symbols = collectSymbolsForChartPreviewHydrate({
-      pagedRows,
-      quickReviewRows,
-      huntRows: huntWindowRows,
-    });
+    // Caza: solo ventana hunt (viewport+buffer / default ~25). No unir mesa
+    // pagedRows ni quickReview — eso disparaba POST de 80 al entrar (#51 residual).
+    const symbols = collectSymbolsForChartPreviewHydrate(
+      cazaMode
+        ? { huntRows: huntWindowRows }
+        : { pagedRows, quickReviewRows, huntRows: huntWindowRows },
+    );
     const queueSignature = buildChartPreviewQueueSignature({
       presetKey,
       rowCount: huntQueueRows.length,
