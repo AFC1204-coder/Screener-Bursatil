@@ -3,9 +3,10 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-22 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `807b283` (SCREENER-TRUTH-MARKET-PCT-1 / #50)  
-**Ahora:** idle — cola encadenada cerrada.  
+Última actualización: 2026-09-23 · rama `codex/statsedge-ui-polish`  
+**Última sync / HEAD origin polish:** `71cac7a` (docs: activate CAZA-CHARTPREVIEW-VIEWPORT-1).  
+**Ahora:** CAZA-CHARTPREVIEW-VIEWPORT-1 (`prep`) — hydrate Caza chartPreview = viewport + buffer.  
+**Ticket:** `docs/tickets/CAZA-CHARTPREVIEW-VIEWPORT-1.md` · rama prog `cursor/caza-viewport-cap-a41e`.  
 **Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
 **Último cerrado:** SCREENER-TRUTH-MARKET-PCT-1 — conteo/% mercado en truth (`807b283` / #50).  
 **Último cerrado (prev):** EUROPA-SCAN-SECONDARY-DEPTH-1 (`b559186` / #49) · FICHA-BRIEF (`c0b3ca9` / #48).  
@@ -13,7 +14,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
-**Nota HYDRATE-VISIBLE residual:** Caza hidrata toda la cola filtrada (no solo viewport).  
+**Nota HYDRATE residual (activo):** Caza aún ventana ~80; ticket = apretar a viewport + buffer.  
 **Último cerrado (prev):** REACT-COMMIT-PERF-1 `a71607c` · SCANS-CHARTPREVIEW-1 `f420af6` · THEME `cac7b25`.  
 **Nota REACT-COMMIT residual:** A/B 1 rep; truth sin `filterMs`.  
 **Nota THEME:** `cac7b25` chunk 333×6; 49→16 HTTP.  
@@ -26,7 +27,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 - warm extended **203 ms** · theme aislado ~0,6 s tras THEME-HTTP.  
 Evidencia: `research/scans-rs-hydrate-1/probe-summary.json` · `research/scans-rs-theme-http-1/`.  
 **Paquete Astra:** `docs/tickets/ASTRA-REVIEW-BRIEF-T0T1T2.md`  
-**Aparcados:** IPO-F P2 · Caza chartPreview viewport-cap (residual).  
+**Aparcados:** IPO-F P2.  
 **HOLD / NO retomar:** FILTER-ANNOTATION-1 (`639ceae`) — **revertido** `c55a648` (ROI browser insuficiente).  
 **KEEP transporte:** SCANS-TRANSPORT-1 gzip (`91ae6e4`) — mejora wire; **no** es solución de initial load (residuales: hydrateRs, parse/render, CPU gzip).  
 **Línea Mini V1:** aparte (V1-02…); no mezclar con polish.  
