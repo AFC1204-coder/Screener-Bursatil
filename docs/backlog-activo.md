@@ -4,15 +4,17 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-23 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `ae1438a` (docs close VIEWPORT-1; código #51 = `e83c41e`).  
-**Ahora:** CAZA-CHARTPREVIEW-ENTRY-1 (`prep`) — no batch 80 al entrar a Caza (hunt-only hydrate).  
-**Ticket:** `docs/tickets/CAZA-CHARTPREVIEW-ENTRY-1.md` · rama prog `cursor/caza-entry-batch-a41e`.  
-**Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
-**Último cerrado:** CAZA-CHARTPREVIEW-VIEWPORT-1 — viewport+overscan (`e83c41e` / #51).  
-**Último cerrado (prev):** SCREENER-TRUTH-MARKET-PCT-1 (`807b283` / #50) · EUROPA depth (`b559186` / #49).  
+**Última sync / HEAD origin polish:** `dadcba1` (CAZA-CHARTPREVIEW-ENTRY-1 / #52)  
+**Ahora:** SCANS-HYDRATERS-COLD-1 — prep (ticket writer) · cold/hydrateRs fricción.  
+**Cola fricción:** Caza entry **hecho** → hydrateRs cold · FIRDS aparcado.  
+**Último cerrado:** CAZA-CHARTPREVIEW-ENTRY-1 — entry POST 25 no 80 (`dadcba1` / #52).  
+**Último cerrado (prev):** CAZA-CHARTPREVIEW-VIEWPORT-1 (`e83c41e` / #51) · truth% (`807b283` / #50).  
 **Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño).  
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
+**Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
+**Nota HYDRATE residual:** scroll+entry Caza OK (#51+#52); siguiente = overhead hydrateRs cold (~+9s).  
+**Daily Mini 2026-09-23:** PASS · US **504/3575**.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
 **Nota HYDRATE residual (#51 → ENTRY-1):** scroll OK (38/batch); ticket = entry sin unión mesa/pagedRows → techo 80.  
 **Daily Mini 2026-09-23:** PASS · US **504/3575**.  
