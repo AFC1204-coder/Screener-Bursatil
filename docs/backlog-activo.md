@@ -4,19 +4,18 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-23 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `dadcba1` (CAZA-CHARTPREVIEW-ENTRY-1 / #52)  
-**Ahora:** SCANS-HYDRATERS-COLD-1 — prep (ticket writer) · cold/hydrateRs fricción.  
-**Cola fricción:** Caza entry **hecho** → hydrateRs cold · FIRDS aparcado.  
+**Última sync / HEAD origin polish:** `dadcba1` (CAZA-CHARTPREVIEW-ENTRY-1 / #52).  
+**Ahora:** SCANS-HYDRATERS-COLD-1 (`prep`) — residual cold hydrateRs ~+9 s (no bloquear paint; recortar/diferir extended).  
+**Ticket:** `docs/tickets/SCANS-HYDRATERS-COLD-1.md` · rama prog `cursor/hydrate-rs-cold-a41e`.  
+**Cola fricción:** #1 ENTRY-1 **hecho** (smoke POST=25) → #2 hydrateRs cold (este) → #3 MH-MINI-RPC (ops, luego).  
+**Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
 **Último cerrado:** CAZA-CHARTPREVIEW-ENTRY-1 — entry POST 25 no 80 (`dadcba1` / #52).  
-**Último cerrado (prev):** CAZA-CHARTPREVIEW-VIEWPORT-1 (`e83c41e` / #51) · truth% (`807b283` / #50).  
+**Último cerrado (prev):** CAZA-CHARTPREVIEW-VIEWPORT-1 (`e83c41e` / #51) · SCREENER-TRUTH-MARKET-PCT-1 (`807b283` / #50).  
 **Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño).  
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
-**Nota HYDRATE residual:** scroll+entry Caza OK (#51+#52); siguiente = overhead hydrateRs cold (~+9s).  
-**Daily Mini 2026-09-23:** PASS · US **504/3575**.  
-**Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
-**Nota HYDRATE residual (#51 → ENTRY-1):** scroll OK (38/batch); ticket = entry sin unión mesa/pagedRows → techo 80.  
+**Nota HYDRATE residual:** scroll+entry Caza OK (#51+#52); ticket activo = overhead hydrateRs cold (~+9 s).  
 **Daily Mini 2026-09-23:** PASS · US **504/3575**.  
 **Último cerrado (prev):** REACT-COMMIT-PERF-1 `a71607c` · SCANS-CHARTPREVIEW-1 `f420af6` · THEME `cac7b25`.  
 **Nota REACT-COMMIT residual:** A/B 1 rep; truth sin `filterMs`.  
@@ -26,9 +25,9 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Remeasure REUSE (`f4695aa`, :3300, US 3576, túnel UP):**  
 - cold extended TTFB **17 861 ms** (antes SCANS-PAYLOAD-1: **44 899 ms**)  
 - cold core **8 586 ms** (antes **17 264 ms**; túnel/env más cálido también)  
-- **delta hydrateRs** **+9 275 ms** (antes **+27 635 ms**) → overhead −66 %  
+- **delta hydrateRs** **+9 275 ms** (antes **+27 635 ms**) → overhead −66 % · **ticket activo = recortar este residual**  
 - warm extended **203 ms** · theme aislado ~0,6 s tras THEME-HTTP.  
-Evidencia: `research/scans-rs-hydrate-1/probe-summary.json` · `research/scans-rs-theme-http-1/`.  
+Evidencia: `research/screener-bootstrap-core-first-1/` · `research/wave5-remeasure-2026-09-14/` · `research/scans-rs-theme-http-1/`.  
 **Paquete Astra:** `docs/tickets/ASTRA-REVIEW-BRIEF-T0T1T2.md`  
 **Aparcados:** IPO-F P2.  
 **HOLD / NO retomar:** FILTER-ANNOTATION-1 (`639ceae`) — **revertido** `c55a648` (ROI browser insuficiente).  

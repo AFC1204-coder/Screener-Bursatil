@@ -7,6 +7,10 @@
 
 En Caza, `chartPreviewHydratePlan` solo ventana hunt (no une mesa/pagedRows). Cold entry ~25; scroll sigue viewport+buffer.
 
+## Cola
+
+→ SCANS-HYDRATERS-COLD-1 (fricción #2 · residual hydrateRs ~+9 s).
+
 ## No tocado
 
 Scoring, cold payload, Review brief, auth, FIRDS.
