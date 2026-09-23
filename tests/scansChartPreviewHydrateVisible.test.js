@@ -89,4 +89,21 @@ describe("collectSymbolsForChartPreviewHydrate", () => {
     });
     expect(symbols).toEqual(["VIS1", "VIS2"]);
   });
+
+  it("modo Caza entry: solo huntRows (caller no pasa mesa) — no hincha a 80", () => {
+    const defaultLimit = computeHuntChartPreviewHydrateLimit();
+    const tape = Array.from({ length: 120 }, (_, index) => row(`H${index}`));
+    const mesa = Array.from({ length: 80 }, (_, index) => row(`M${index}`));
+    const huntRows = huntRowsForChartPreviewHydrate(tape, true);
+    const symbols = collectSymbolsForChartPreviewHydrate({ huntRows });
+    expect(symbols).toHaveLength(defaultLimit);
+    expect(symbols.every((symbol) => symbol.startsWith("H"))).toBe(true);
+    // Si el caller uniera mesa (bug ENTRY-1), el set supera el techo de request.
+    const buggyUnion = collectSymbolsForChartPreviewHydrate({
+      pagedRows: mesa,
+      huntRows,
+    });
+    expect(buggyUnion.length).toBeGreaterThan(MAX_HUNT_CHART_PREVIEW_HYDRATE);
+    expect(buggyUnion.length).toBe(mesa.length + defaultLimit);
+  });
 });
