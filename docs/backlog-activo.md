@@ -4,18 +4,17 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-23 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `dadcba1` (CAZA-CHARTPREVIEW-ENTRY-1 / #52).  
-**Ahora:** SCANS-HYDRATERS-COLD-1 (`prep`) — residual cold hydrateRs ~+9 s (no bloquear paint; recortar/diferir extended).  
-**Ticket:** `docs/tickets/SCANS-HYDRATERS-COLD-1.md` · rama prog `cursor/hydrate-rs-cold-a41e`.  
-**Cola fricción:** #1 ENTRY-1 **hecho** (smoke POST=25) → #2 hydrateRs cold (este) → #3 MH-MINI-RPC (ops, luego).  
+**Última sync / HEAD origin polish:** `7922c58` (SCANS-HYDRATERS-COLD-1 / #53)  
+**Ahora:** idle — cola fricción 1→2 cerrada.  
+**Cola fricción:** ENTRY-1 **hecho** (#52) · hydrateRs cold **hecho** (#53) · FIRDS aparcado.  
 **Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
-**Último cerrado:** CAZA-CHARTPREVIEW-ENTRY-1 — entry POST 25 no 80 (`dadcba1` / #52).  
-**Último cerrado (prev):** CAZA-CHARTPREVIEW-VIEWPORT-1 (`e83c41e` / #51) · SCREENER-TRUTH-MARKET-PCT-1 (`807b283` / #50).  
+**Último cerrado:** SCANS-HYDRATERS-COLD-1 — defer hydrateRs post-paint (`7922c58` / #53).  
+**Último cerrado (prev):** CAZA-CHARTPREVIEW-ENTRY-1 (`dadcba1` / #52) · VIEWPORT-1 (`e83c41e` / #51).  
 **Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño).  
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
-**Nota HYDRATE residual:** scroll+entry Caza OK (#51+#52); ticket activo = overhead hydrateRs cold (~+9 s).  
+**Nota HYDRATE:** Caza #51+#52 OK; #53 defer idle — smoke paint→extended ~479 ms gap; residual dedupe GET.  
 **Daily Mini 2026-09-23:** PASS · US **504/3575**.  
 **Último cerrado (prev):** REACT-COMMIT-PERF-1 `a71607c` · SCANS-CHARTPREVIEW-1 `f420af6` · THEME `cac7b25`.  
 **Nota REACT-COMMIT residual:** A/B 1 rep; truth sin `filterMs`.  
