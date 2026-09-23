@@ -8,10 +8,12 @@ import { postJson } from "@/lib/clientApi";
 import {
   MAX_HUNT_CHART_PREVIEW_HYDRATE,
   HUNT_TAPE_ROW_HEIGHT_PX,
+  HUNT_CHART_PREVIEW_OVERSCAN,
   applyChartPreviewsToRows,
   buildChartPreviewHydrateSignature,
   buildChartPreviewQueueSignature,
   chartPreviewHydrateCellState,
+  computeHuntChartPreviewHydrateLimit,
   computeHuntChartPreviewHydrateStart,
   emitHuntChartPreviewViewport,
   fetchChartPreviewsForSymbols,
@@ -66,19 +68,40 @@ describe("buildChartPreviewQueueSignature", () => {
   });
 });
 
+describe("computeHuntChartPreviewHydrateLimit", () => {
+  it("es viewport visible + overscan×2, bajo el techo de 80", () => {
+    const limit = computeHuntChartPreviewHydrateLimit(12 * HUNT_TAPE_ROW_HEIGHT_PX, {
+      rowHeight: HUNT_TAPE_ROW_HEIGHT_PX,
+      overscan: HUNT_CHART_PREVIEW_OVERSCAN,
+    });
+    expect(limit).toBe(12 + 2 * HUNT_CHART_PREVIEW_OVERSCAN);
+    expect(limit).toBeLessThan(MAX_HUNT_CHART_PREVIEW_HYDRATE);
+  });
+
+  it("respeta el techo duro MAX_HUNT_CHART_PREVIEW_HYDRATE", () => {
+    const limit = computeHuntChartPreviewHydrateLimit(10_000, {
+      rowHeight: HUNT_TAPE_ROW_HEIGHT_PX,
+      overscan: 8,
+    });
+    expect(limit).toBe(MAX_HUNT_CHART_PREVIEW_HYDRATE);
+  });
+});
+
 describe("computeHuntChartPreviewHydrateStart", () => {
   it("en scroll 0 arranca en el top", () => {
     expect(computeHuntChartPreviewHydrateStart(0)).toBe(0);
   });
 
-  it("desplaza la ventana al pasar del top 80 (con overscan)", () => {
-    const scrollPastTop80 = 90 * HUNT_TAPE_ROW_HEIGHT_PX;
-    const start = computeHuntChartPreviewHydrateStart(scrollPastTop80, {
+  it("desplaza la ventana al pasar del top viewport+buffer (con overscan)", () => {
+    const limit = computeHuntChartPreviewHydrateLimit(12 * HUNT_TAPE_ROW_HEIGHT_PX);
+    const scrollPast = 90 * HUNT_TAPE_ROW_HEIGHT_PX;
+    const start = computeHuntChartPreviewHydrateStart(scrollPast, {
       overscan: 8,
       rowCount: 200,
+      limit,
     });
     expect(start).toBe(82);
-    expect(start + MAX_HUNT_CHART_PREVIEW_HYDRATE).toBeLessThanOrEqual(200);
+    expect(start + limit).toBeLessThanOrEqual(200);
   });
 
   it("clampa al final de la cola para mantener ventana completa", () => {
@@ -92,7 +115,7 @@ describe("computeHuntChartPreviewHydrateStart", () => {
 });
 
 describe("emitHuntChartPreviewViewport", () => {
-  it("publica el start en el evento de viewport", () => {
+  it("publica start y limit en el evento de viewport", () => {
     const seen = [];
     const listeners = new Map();
     const fakeWindow = {
@@ -111,14 +134,17 @@ describe("emitHuntChartPreviewViewport", () => {
     globalThis.window = fakeWindow;
     try {
       fakeWindow.addEventListener(HUNT_CHART_PREVIEW_VIEWPORT_EVENT, (event) => {
-        seen.push(event.detail?.start);
+        seen.push(event.detail);
       });
-      emitHuntChartPreviewViewport(42);
+      emitHuntChartPreviewViewport({ start: 42, limit: 24 });
+      emitHuntChartPreviewViewport(7);
     } finally {
       if (prev === undefined) delete globalThis.window;
       else globalThis.window = prev;
     }
-    expect(seen).toEqual([42]);
+    expect(seen[0]).toEqual({ start: 42, limit: 24 });
+    expect(seen[1].start).toBe(7);
+    expect(seen[1].limit).toBe(computeHuntChartPreviewHydrateLimit());
   });
 
   it("no rompe sin window (SSR)", () => {
@@ -134,20 +160,23 @@ describe("emitHuntChartPreviewViewport", () => {
 });
 
 describe("huntRowsForChartPreviewHydrate cap", () => {
-  it("limita la cola Caza al tope exportado", () => {
-    const queue = Array.from({ length: MAX_HUNT_CHART_PREVIEW_HYDRATE + 40 }, (_, index) => row(`Q${index}`));
+  it("limita la cola Caza al viewport+buffer (default), no a 80 fijas", () => {
+    const defaultLimit = computeHuntChartPreviewHydrateLimit();
+    const queue = Array.from({ length: defaultLimit + 40 }, (_, index) => row(`Q${index}`));
     const capped = huntRowsForChartPreviewHydrate(queue, true);
-    expect(capped).toHaveLength(MAX_HUNT_CHART_PREVIEW_HYDRATE);
+    expect(capped).toHaveLength(defaultLimit);
     expect(capped[0].symbol).toBe("Q0");
-    expect(capped.at(-1).symbol).toBe(`Q${MAX_HUNT_CHART_PREVIEW_HYDRATE - 1}`);
+    expect(capped.at(-1).symbol).toBe(`Q${defaultLimit - 1}`);
+    expect(defaultLimit).toBeLessThan(MAX_HUNT_CHART_PREVIEW_HYDRATE);
   });
 
   it("al scroll profundo hidrata la ventana desplazada, no el top fijo", () => {
+    const limit = 24;
     const queue = Array.from({ length: 160 }, (_, index) => row(`Q${index}`));
-    const windowed = huntRowsForChartPreviewHydrate(queue, true, { start: 90, limit: 80 });
-    expect(windowed).toHaveLength(80);
-    expect(windowed[0].symbol).toBe("Q80");
-    expect(windowed.at(-1).symbol).toBe("Q159");
+    const windowed = huntRowsForChartPreviewHydrate(queue, true, { start: 90, limit });
+    expect(windowed).toHaveLength(limit);
+    expect(windowed[0].symbol).toBe("Q90");
+    expect(windowed.at(-1).symbol).toBe("Q113");
   });
 });
 

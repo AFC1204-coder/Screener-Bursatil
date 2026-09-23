@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  computeHuntChartPreviewHydrateLimit,
   computeHuntChartPreviewHydrateStart,
   emitHuntChartPreviewViewport,
   resolveHuntTapeSparkStatus,
@@ -22,6 +23,7 @@ import {
 } from "@/lib/screenerHuntTape";
 import {
   DEFAULT_HUNT_TAPE_DENSITY,
+  HUNT_TAPE_DESKTOP_1080_LIST_HEIGHT_PX,
   huntTapeRowHeightPx,
   resolveHuntTapeDensity,
 } from "@/lib/screenerHuntTapeDensity";
@@ -39,6 +41,7 @@ export default function HuntTapeView({
   const listRef = useRef(null);
   const rowRefs = useRef([]);
   const hydrateStartRef = useRef(0);
+  const hydrateLimitRef = useRef(0);
   const scrollRafRef = useRef(0);
   const tapeDensity = resolveHuntTapeDensity(density);
   const rowHeightPx = huntTapeRowHeightPx(tapeDensity);
@@ -46,13 +49,21 @@ export default function HuntTapeView({
 
   const publishHydrateViewport = useCallback(() => {
     const el = listRef.current;
+    const listHeight = el?.clientHeight > 0
+      ? el.clientHeight
+      : HUNT_TAPE_DESKTOP_1080_LIST_HEIGHT_PX;
+    const limit = computeHuntChartPreviewHydrateLimit(listHeight, {
+      rowHeight: rowHeightPx,
+    });
     const start = computeHuntChartPreviewHydrateStart(el?.scrollTop || 0, {
       rowCount: rows.length,
       rowHeight: rowHeightPx,
+      limit,
     });
-    if (start === hydrateStartRef.current) return;
+    if (start === hydrateStartRef.current && limit === hydrateLimitRef.current) return;
     hydrateStartRef.current = start;
-    emitHuntChartPreviewViewport(start);
+    hydrateLimitRef.current = limit;
+    emitHuntChartPreviewViewport({ start, limit });
   }, [rows.length, rowHeightPx]);
 
   const handleListScroll = useCallback(() => {
@@ -73,6 +84,7 @@ export default function HuntTapeView({
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = 0;
     hydrateStartRef.current = -1;
+    hydrateLimitRef.current = 0;
     publishHydrateViewport();
     return () => {
       if (scrollRafRef.current) {
@@ -81,6 +93,22 @@ export default function HuntTapeView({
       }
     };
   }, [queueKey, publishHydrateViewport]);
+
+  // Resize de la lista (vh / layout) → recalcular viewport + buffer.
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el || typeof ResizeObserver !== "function") {
+      if (typeof window !== "undefined") {
+        const onResize = () => publishHydrateViewport();
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+      }
+      return undefined;
+    }
+    const observer = new ResizeObserver(() => publishHydrateViewport());
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [publishHydrateViewport, queueKey]);
   const scrollFocusIntoView = useCallback((index) => {
     const el = rowRefs.current[index];
     el?.scrollIntoView({ block: "nearest" });
