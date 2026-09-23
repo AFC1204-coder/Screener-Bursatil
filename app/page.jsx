@@ -501,6 +501,7 @@ export default function Page() {
   const [huntChartPreviewStart, setHuntChartPreviewStart] = useState(0);
   const [huntChartPreviewLimit, setHuntChartPreviewLimit] = useState(() => computeHuntChartPreviewHydrateLimit());
   const [isHuntTransitionPending, startHuntTransition] = useTransition();
+  const [, startRsMergeTransition] = useTransition();
   const fastFilterSignatureRef = useRef("");
   const huntFilterCacheRef = useRef(new Map());
   const huntWarmCancelRef = useRef(null);
@@ -531,10 +532,15 @@ export default function Page() {
   const restoreMarketAlignRef = useRef(null);
   function patchRowsWithExtendedRs(extendedRows) {
     const patch = (current) => mergeExtendedRsIntoRows(current, extendedRows);
-    setAnalyzedRows(patch);
-    setRows(patch);
+    // Merge ~3k filas en transición: no bloquea interacciones del paint core.
+    startRsMergeTransition(() => {
+      setAnalyzedRows(patch);
+      setRows(patch);
+    });
   }
   function beginExtendedRsHydration({ fetchExtended, extractRows, gen }) {
+    // defer por defecto (post-paint + idle) en scheduleExtendedRsHydration —
+    // el GET hydrateRs=1 no arranca en el mismo tick que el paint de core.
     scheduleExtendedRsHydration({
       fetchExtended,
       extractRows,
