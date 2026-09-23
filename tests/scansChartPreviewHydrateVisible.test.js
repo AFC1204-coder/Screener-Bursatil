@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   collectSymbolsForChartPreviewHydrate,
+  computeHuntChartPreviewHydrateLimit,
   huntRowsForChartPreviewHydrate,
+  HUNT_CHART_PREVIEW_OVERSCAN,
+  MAX_HUNT_CHART_PREVIEW_HYDRATE,
 } from "@/lib/scansChartPreviewHydrate";
 
 const preview = [
@@ -14,12 +17,15 @@ function row(symbol, withPreview = false) {
 }
 
 describe("huntRowsForChartPreviewHydrate", () => {
-  it("devuelve top N filtradas solo en modo Caza", () => {
+  it("devuelve viewport+buffer filtradas solo en modo Caza", () => {
     const filtered = [row("AAA"), row("BBB")];
     const longQueue = Array.from({ length: 120 }, (_, index) => row(`H${index}`));
+    const defaultLimit = computeHuntChartPreviewHydrateLimit();
+    expect(defaultLimit).toBeLessThan(MAX_HUNT_CHART_PREVIEW_HYDRATE);
+    expect(defaultLimit).toBeGreaterThan(2 * HUNT_CHART_PREVIEW_OVERSCAN);
     expect(huntRowsForChartPreviewHydrate(filtered, false)).toEqual([]);
     expect(huntRowsForChartPreviewHydrate(filtered, true)).toEqual(filtered);
-    expect(huntRowsForChartPreviewHydrate(longQueue, true)).toHaveLength(80);
+    expect(huntRowsForChartPreviewHydrate(longQueue, true)).toHaveLength(defaultLimit);
     expect(huntRowsForChartPreviewHydrate(longQueue, true)[0].symbol).toBe("H0");
     expect(huntRowsForChartPreviewHydrate(longQueue, true, { start: 10, limit: 5 })).toEqual(
       longQueue.slice(10, 15),
@@ -28,6 +34,18 @@ describe("huntRowsForChartPreviewHydrate", () => {
     expect(huntRowsForChartPreviewHydrate(longQueue, true, { start: 100, limit: 80 })).toEqual(
       longQueue.slice(40, 120),
     );
+  });
+
+  it("no pide símbolos fuera de viewport+buffer en cola larga", () => {
+    const queue = Array.from({ length: 200 }, (_, index) => row(`H${index}`));
+    const limit = computeHuntChartPreviewHydrateLimit(360, { rowHeight: 36, overscan: 8 });
+    expect(limit).toBe(10 + 16);
+    const windowed = huntRowsForChartPreviewHydrate(queue, true, { start: 40, limit });
+    expect(windowed).toHaveLength(limit);
+    expect(windowed[0].symbol).toBe("H40");
+    expect(windowed.at(-1).symbol).toBe(`H${40 + limit - 1}`);
+    expect(windowed.some((item) => item.symbol === "H0")).toBe(false);
+    expect(windowed.some((item) => item.symbol === "H199")).toBe(false);
   });
 });
 

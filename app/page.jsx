@@ -44,6 +44,7 @@ import {
   buildChartPreviewHydrateSignature,
   buildChartPreviewQueueSignature,
   collectSymbolsForChartPreviewHydrate,
+  computeHuntChartPreviewHydrateLimit,
   fetchChartPreviewsForSymbols,
   HUNT_CHART_PREVIEW_VIEWPORT_EVENT,
   huntRowsForChartPreviewHydrate,
@@ -498,6 +499,7 @@ export default function Page() {
   const [huntTruthOverride, setHuntTruthOverride] = useState(null);
   const [resultViewMode, setResultViewMode] = useState(() => resolveResultViewMode(presetKey));
   const [huntChartPreviewStart, setHuntChartPreviewStart] = useState(0);
+  const [huntChartPreviewLimit, setHuntChartPreviewLimit] = useState(() => computeHuntChartPreviewHydrateLimit());
   const [isHuntTransitionPending, startHuntTransition] = useTransition();
   const fastFilterSignatureRef = useRef("");
   const huntFilterCacheRef = useRef(new Map());
@@ -1376,7 +1378,12 @@ export default function Page() {
   useEffect(() => {
     function syncHuntChartPreviewViewport(event) {
       const start = Math.max(0, Math.floor(Number(event?.detail?.start) || 0));
+      const rawLimit = Number(event?.detail?.limit);
+      const limit = Number.isFinite(rawLimit) && rawLimit > 0
+        ? Math.max(1, Math.floor(rawLimit))
+        : computeHuntChartPreviewHydrateLimit();
       setHuntChartPreviewStart((prev) => (prev === start ? prev : start));
+      setHuntChartPreviewLimit((prev) => (prev === limit ? prev : limit));
     }
     window.addEventListener(HUNT_CHART_PREVIEW_VIEWPORT_EVENT, syncHuntChartPreviewViewport);
     return () => window.removeEventListener(HUNT_CHART_PREVIEW_VIEWPORT_EVENT, syncHuntChartPreviewViewport);
@@ -1400,11 +1407,15 @@ export default function Page() {
     }
     const cazaMode = isCazaResultView(resultViewMode);
     const hydrateStart = cazaMode ? huntChartPreviewStart : 0;
+    const hydrateLimit = cazaMode ? huntChartPreviewLimit : undefined;
     // Caza pinta `filtered` (misma cola ordenada que HuntTapeView); los índices
     // de scroll→start deben cortar esa lista, no `rows` en orden de pipeline.
     const cazaTapeRows = filtered;
     const huntQueueRows = cazaMode ? cazaTapeRows : rows;
-    const huntWindowRows = huntRowsForChartPreviewHydrate(huntQueueRows, cazaMode, { start: hydrateStart });
+    const huntWindowRows = huntRowsForChartPreviewHydrate(huntQueueRows, cazaMode, {
+      start: hydrateStart,
+      ...(hydrateLimit != null ? { limit: hydrateLimit } : {}),
+    });
     const symbols = collectSymbolsForChartPreviewHydrate({
       pagedRows,
       quickReviewRows,
@@ -1441,6 +1452,7 @@ export default function Page() {
     scanContext?.chartPreviewTransport,
     resultViewMode,
     huntChartPreviewStart,
+    huntChartPreviewLimit,
     presetKey,
     rows,
     filtered,

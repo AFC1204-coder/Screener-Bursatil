@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  computeHuntChartPreviewHydrateLimit,
   computeHuntChartPreviewHydrateStart,
   huntRowsForChartPreviewHydrate,
+  HUNT_CHART_PREVIEW_OVERSCAN,
 } from "@/lib/scansChartPreviewHydrate";
 import { huntTapeRowHeightPx } from "@/lib/screenerHuntTapeDensity";
 
@@ -21,21 +23,28 @@ describe("caza chartPreview scroll hydrate queue", () => {
     expect(pipelineWindow[0].symbol).toBe("BBB");
   });
 
-  it("scroll profundo (>80) desplaza start con rowHeight compacto", () => {
+  it("scroll profundo desplaza start; ventana = viewport + buffer, no 80 fijas", () => {
     const rowHeight = huntTapeRowHeightPx("compact");
+    const listHeight = 12 * rowHeight;
+    const limit = computeHuntChartPreviewHydrateLimit(listHeight, { rowHeight });
+    expect(limit).toBe(12 + 2 * HUNT_CHART_PREVIEW_OVERSCAN);
+    expect(limit).toBeLessThan(80);
+
     const scrollTop = 90 * rowHeight;
     const start = computeHuntChartPreviewHydrateStart(scrollTop, {
       rowHeight,
       rowCount: 200,
+      limit,
     });
     expect(start).toBeGreaterThan(0);
     const windowed = huntRowsForChartPreviewHydrate(
       Array.from({ length: 200 }, (_, index) => row(`Q${index}`)),
       true,
-      { start },
+      { start, limit },
     );
-    expect(windowed).toHaveLength(80);
+    expect(windowed).toHaveLength(limit);
     expect(windowed[0].symbol).toBe(`Q${start}`);
     expect(windowed.some((item) => item.symbol === "Q90")).toBe(true);
+    expect(windowed.some((item) => item.symbol === "Q0")).toBe(false);
   });
 });
