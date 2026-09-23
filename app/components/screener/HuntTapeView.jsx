@@ -12,12 +12,15 @@ import {
   HuntTapeTickerCell,
   formatVcpFootprintFromRow,
   formatVcpFootprintTitle,
+  HUNT_TAPE_DIST_EMPTY,
+  HUNT_TAPE_STAGE_EMPTY,
   huntTapeDist52w,
   huntTapeEnterSymbol,
   huntTapeMoveFocus,
   huntTapeRowKey,
-  huntTapeRsValue,
+  huntTapeRsDisplay,
   huntTapeSparkBars,
+  huntTapeSparkTitle,
   huntTapeStageLine,
   huntTapeDrillUrl,
 } from "@/lib/screenerHuntTape";
@@ -209,18 +212,14 @@ export default function HuntTapeView({
           const rowKey = huntTapeRowKey(row);
           const active = index === focusIndex;
           const stage = huntTapeStageLine(row);
-          const rs = huntTapeRsValue(row);
+          const rs = huntTapeRsDisplay(row);
           const footprint = formatVcpFootprintFromRow(row);
           const dist = huntTapeDist52w(row);
           const sparkBars = huntTapeSparkBars(row);
           const sparkStatus = resolveHuntTapeSparkStatus(row, {
             deferred: chartPreviewDeferred,
           });
-          const sparkTitle = sparkStatus === "pending"
-            ? "Cargando miniatura"
-            : sparkStatus === "ready"
-              ? "Spark desde chartPreview del scan"
-              : "Sin serie semanal";
+          const sparkTitle = huntTapeSparkTitle(sparkStatus);
 
           return (
             <li
@@ -240,11 +239,17 @@ export default function HuntTapeView({
               <div className="huntTapeSparkWrap" title={sparkTitle}>
                 <HuntTapeSparkline bars={sparkBars} status={sparkStatus} />
               </div>
-              <span className="huntTapeStage" title={stage?.title || "Sin etapa semanal"}>
-                {stage?.line || "–"}
+              <span
+                className={`huntTapeStage${stage?.line ? "" : " huntTapeCellEmpty"}`}
+                title={stage?.title || HUNT_TAPE_STAGE_EMPTY}
+              >
+                {stage?.line || HUNT_TAPE_STAGE_EMPTY}
               </span>
-              <span className="huntTapeRs" title={rs.reason || "RS canónico semanal"}>
-                {Number.isFinite(rs.value) ? rs.value : "–"}
+              <span
+                className={`huntTapeRs${rs.missing ? " huntTapeCellEmpty" : ""}`}
+                title={rs.title}
+              >
+                {rs.text}
               </span>
               <span
                 className={`huntTapeVcp${footprint ? "" : " huntTapeVcpEmpty"}`}
@@ -252,8 +257,11 @@ export default function HuntTapeView({
               >
                 {footprint || "Sin VCP"}
               </span>
-              <span className={`huntTapeExt${dist?.hot ? " isHot" : ""}`} title="Distancia al máximo de 52 semanas">
-                {dist?.label || "–"}
+              <span
+                className={`huntTapeExt${dist?.hot ? " isHot" : ""}${dist?.label ? "" : " huntTapeCellEmpty"}`}
+                title={dist?.label ? "Distancia al máximo de 52 semanas" : HUNT_TAPE_DIST_EMPTY}
+              >
+                {dist?.label || HUNT_TAPE_DIST_EMPTY}
               </span>
             </li>
           );

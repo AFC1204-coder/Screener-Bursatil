@@ -52,7 +52,7 @@ describe("screenerColdProgress · T9 una historia", () => {
 });
 
 describe("buildScreenerTruthLine · quietProgress (T9)", () => {
-  it("con quietProgress y universo vacío no pinta cargando… ni Sin datos", () => {
+  it("con quietProgress y universo vacío no pinta cargando… ni Sin escaneo/datos", () => {
     const line = buildScreenerTruthLine({
       analyzedRows: [],
       passCount: 0,
@@ -65,6 +65,7 @@ describe("buildScreenerTruthLine · quietProgress (T9)", () => {
     });
     expect(line).not.toContain(SCREENER_TRUTH_LOADING_SEGMENT);
     expect(line).not.toContain("Sin datos");
+    expect(line).not.toContain("Sin escaneo");
     expect(line).not.toContain("0 de 0");
     expect(line).toContain("mesa: US");
   });

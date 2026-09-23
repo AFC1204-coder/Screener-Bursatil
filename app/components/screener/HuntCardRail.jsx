@@ -16,7 +16,12 @@ export default function HuntCardRail({ presetKey = "", markets = [], onSelect, p
   }, [active?.id]);
 
   return (
-    <div className={`huntCardRail huntCardRailScroll${pending ? " huntCardRailPending" : ""}`} role="tablist" aria-label="Fichas de caza" aria-busy={pending}>
+    <div
+      className={`huntCardRail huntCardRailScroll${pending ? " huntCardRailPending" : ""}`}
+      role="tablist"
+      aria-label="Fichas de caza"
+      aria-busy={pending ? "true" : "false"}
+    >
       {HUNT_CARDS.map((card) => {
         const selected = active?.id === card.id;
         return (
@@ -27,12 +32,18 @@ export default function HuntCardRail({ presetKey = "", markets = [], onSelect, p
             aria-selected={selected}
             className={selected ? "active" : ""}
             ref={selected ? activeButtonRef : undefined}
+            disabled={pending}
             onClick={() => onSelect?.(card.id)}
           >
             {card.label}
           </button>
         );
       })}
+      {pending ? (
+        <span className="huntCardRailPendingLabel" role="status" aria-live="polite">
+          Aplicando ficha…
+        </span>
+      ) : null}
     </div>
   );
 }

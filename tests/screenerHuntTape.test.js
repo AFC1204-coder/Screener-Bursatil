@@ -10,7 +10,9 @@ import {
   huntTapeDist52w,
   huntTapeEnterSymbol,
   huntTapeMoveFocus,
+  huntTapeRsDisplay,
   huntTapeRsValue,
+  huntTapeSparkTitle,
   huntTapeStageLine,
 } from "@/lib/screenerHuntTape";
 import {
@@ -144,7 +146,7 @@ describe("HuntTapeSparkline", () => {
       React.createElement(HuntTapeSparkline, { bars: [], status: "pending" }),
     );
     expect(html).toContain("huntTapeSparkPending");
-    expect(html).toContain("Cargando miniatura");
+    expect(html).toContain("Cargando gráfico semanal");
     expect(html).toContain("huntTapeSparkSkeleton");
     expect(html).not.toContain("Sin serie");
     expect(html).not.toContain(">–<");
@@ -156,7 +158,43 @@ describe("HuntTapeSparkline", () => {
     );
     expect(html).toContain("huntTapeSparkMissing");
     expect(html).toContain("Sin serie");
+    expect(html).toContain("Sin serie semanal");
     expect(html).not.toContain("huntTapeSparkPending");
     expect(html).not.toContain(">–<");
+  });
+});
+
+describe("huntTapeSparkTitle", () => {
+  it("no usa jerga de laboratorio", () => {
+    expect(huntTapeSparkTitle("ready")).toBe("Gráfico semanal ~12 meses");
+    expect(huntTapeSparkTitle("pending")).toBe("Cargando gráfico semanal");
+    expect(huntTapeSparkTitle("empty")).toBe("Sin serie semanal");
+    for (const status of ["ready", "pending", "empty"]) {
+      const title = huntTapeSparkTitle(status);
+      expect(title).not.toMatch(/chartPreview/i);
+      expect(title).not.toMatch(/materializ/i);
+      expect(title).not.toMatch(/hydrate/i);
+      expect(title).not.toMatch(/^Spark /);
+    }
+  });
+});
+
+describe("huntTapeRsDisplay", () => {
+  it("muestra número cuando RS está disponible", () => {
+    expect(huntTapeRsDisplay({
+      weeklyRsAvailable: true,
+      weeklyRsRating: 92,
+    })).toEqual({
+      text: "92",
+      title: "RS canónico semanal",
+      missing: false,
+    });
+  });
+
+  it("no usa guion mudo cuando falta RS", () => {
+    const cell = huntTapeRsDisplay({ weeklyRsAvailable: false });
+    expect(cell.missing).toBe(true);
+    expect(cell.text).not.toMatch(/^[-–—]$/);
+    expect(cell.text.length).toBeGreaterThan(1);
   });
 });

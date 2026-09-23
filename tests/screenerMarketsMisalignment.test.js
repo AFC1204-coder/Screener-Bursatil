@@ -244,7 +244,7 @@ describe("ScreenerShell markets misalignment", () => {
       selectedMarkets: ["HK"],
     })));
     expect(html).not.toContain(MARKETS_MISALIGNMENT_CTA);
-    expect(html).toContain("Sin datos para evaluar esta ficha");
+    expect(html).toContain("Sin escaneo en mesa");
     expect(html).not.toContain("0 de 0 pasan");
     expect(html).toContain("mesa: US");
     expect(html).not.toContain("selección ≠ mesa");
@@ -541,7 +541,7 @@ describe("ScreenerShell dataset ausente vs cero matches", () => {
     props.resultView.pagedRows = [];
     props.staleness.scannedAt = null;
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
-    expect(html).toContain("Sin datos para evaluar esta ficha");
+    expect(html).toContain("Sin escaneo en mesa");
     expect(html).not.toContain("0 de 0 pasan");
     expect(html).not.toContain("cargando…");
   });
@@ -563,7 +563,7 @@ describe("ScreenerShell dataset ausente vs cero matches", () => {
     props.resultView.pagedRows = [];
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
     expect(html).toContain("0 de 12 pasan «Líderes Etapa 2»");
-    expect(html).not.toContain("Sin datos para evaluar esta ficha");
+    expect(html).not.toContain("Sin escaneo en mesa");
     expect(html).not.toContain("0 de 0 pasan");
   });
 
@@ -575,7 +575,7 @@ describe("ScreenerShell dataset ausente vs cero matches", () => {
       selectedMarkets: ["US"],
     })));
     expect(html).toContain("1 de 1 pasan «Líderes Etapa 2»");
-    expect(html).not.toContain("Sin datos para evaluar esta ficha");
+    expect(html).not.toContain("Sin escaneo en mesa");
     expect(html).not.toContain("0 de 0 pasan");
   });
 });

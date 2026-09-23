@@ -223,6 +223,21 @@ describe("HuntCardRail", () => {
       expect(html).toContain(card.label);
     }
     expect(html).toMatch(/aria-selected="true"[^>]*>Líderes Etapa 2/);
+    expect(html).not.toContain("Aplicando ficha");
+  });
+
+  it("en pending muestra feedback humano y aria-busy", () => {
+    const html = renderToStaticMarkup(React.createElement(HuntCardRail, {
+      presetKey: "balanced",
+      markets: ["US"],
+      pending: true,
+      onSelect: () => {},
+    }));
+    expect(html).toContain("huntCardRailPending");
+    expect(html).toContain('aria-busy="true"');
+    expect(html).toContain("Aplicando ficha…");
+    expect(html).toContain("huntCardRailPendingLabel");
+    expect(html).toContain("disabled");
   });
 });
 

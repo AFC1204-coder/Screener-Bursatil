@@ -1621,7 +1621,7 @@ export default function Page() {
               />
               : `Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`)
           : `Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`)
-        : "No hay datos cargados todavía. Los datos de anoche se cargan al abrir la página; si no aparecen, recarga.";
+        : "Sin escaneo en mesa. Los datos de anoche se cargan al abrir; si no aparecen, reintenta o busca un ticker.";
   // La desalineación mercados↔scan se pinta en ScreenerShell (un banner + CTA).
   // No ocupamos snapshotNotice para evitar duplicar el aviso naranja.
   // Aviso de cobertura (punto único): si la selección de mercados pide
