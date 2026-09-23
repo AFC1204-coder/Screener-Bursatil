@@ -4,8 +4,9 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-23 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `e83c41e` (CAZA-CHARTPREVIEW-VIEWPORT-1 / #51)  
-**Ahora:** idle — cola necesaria 1→2→3 cerrada.  
+**Última sync / HEAD origin polish:** `ae1438a` (docs close VIEWPORT-1; código #51 = `e83c41e`).  
+**Ahora:** CAZA-CHARTPREVIEW-ENTRY-1 (`prep`) — no batch 80 al entrar a Caza (hunt-only hydrate).  
+**Ticket:** `docs/tickets/CAZA-CHARTPREVIEW-ENTRY-1.md` · rama prog `cursor/caza-entry-batch-a41e`.  
 **Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
 **Último cerrado:** CAZA-CHARTPREVIEW-VIEWPORT-1 — viewport+overscan (`e83c41e` / #51).  
 **Último cerrado (prev):** SCREENER-TRUTH-MARKET-PCT-1 (`807b283` / #50) · EUROPA depth (`b559186` / #49).  
@@ -13,7 +14,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso; hydrateRs no debe bloquear el primer paint. `research/wave5-remeasure-2026-09-14/`.  
-**Nota HYDRATE residual (#51):** scroll Caza OK (38/batch); entrada a Caza aún puede emitir batch 80 (mesa/pagedRows).  
+**Nota HYDRATE residual (#51 → ENTRY-1):** scroll OK (38/batch); ticket = entry sin unión mesa/pagedRows → techo 80.  
 **Daily Mini 2026-09-23:** PASS · US **504/3575**.  
 **Último cerrado (prev):** REACT-COMMIT-PERF-1 `a71607c` · SCANS-CHARTPREVIEW-1 `f420af6` · THEME `cac7b25`.  
 **Nota REACT-COMMIT residual:** A/B 1 rep; truth sin `filterMs`.  

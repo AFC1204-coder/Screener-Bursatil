@@ -1,19 +1,38 @@
-# Ticket activo — idle
+# Ticket activo — CAZA-CHARTPREVIEW-ENTRY-1
 
-**Estado:** idle  
-**Rama:** `codex/statsedge-ui-polish`
-
-No hay ticket de programación activo. Último cerrado: CAZA-CHARTPREVIEW-VIEWPORT-1 (`e83c41e` / #51).
+**Estado:** prep · listo para Agent chat  
+**Rama base:** `codex/statsedge-ui-polish` @ `ae1438a`  
+**Rama trabajo:** `cursor/caza-entry-batch-a41e`  
+**Modelo:** Composer  
+**Ticket:** `docs/tickets/CAZA-CHARTPREVIEW-ENTRY-1.md`
 
 ## Prompt para Agent chat (copiar tal cual)
 
 ```
-(idle — espera nuevo ticket del orquestador)
+@docs/tickets/CAZA-CHARTPREVIEW-ENTRY-1.md
+@docs/tickets/activo.md
+
+Eres programación StatsEdge (NO orquestador). Base polish @ ae1438a.
+Rama: cursor/caza-entry-batch-a41e
+Modelo: Composer
+
+Ticket CAZA-CHARTPREVIEW-ENTRY-1 (S) — residual #51: al ENTRAR a Caza
+aún puede haber POST chart-preview de 80 (unión mesa/pagedRows o carrera
+sin viewport). Scroll ya acota ~38. En modo Caza el plan de hydrate no
+debe unir pagedRows/quickReview; primera pasada = viewport+buffer (o
+default ~25 sin medida). Touch: page.jsx plan + scansChartPreviewHydrate
+(+ HuntTapeView solo si hace falta emitir default a tiempo).
+No scoring, cold, Review brief, auth, FIRDS.
+
+Tests: vitest cazaChartPreviewScrollHydrate + scansChartPreviewHydrate*
+(+ ./vfc si aplica). Smoke lo hace el orquestador.
+
+Commit+push solo en cursor/caza-entry-batch-a41e (+ PR draft si cloud).
+SIN merge a polish. Plantilla de retorno.
 ```
 
 ## Notas orquestador
 
-- Cola necesaria 1→2→3 cerrada: daily Mini · smoke truth #50 · Caza viewport-cap #51.
-- Residual #51: batch inicial 80 al entrar a Caza (opcional follow-up).
-- Aparcado (gate dueño): D Twelve Data / Hito 1B · FIRDS on.
-- Mini: túnel UP; daily 2026-09-23 PASS (US 504/3575).
+- Residual smoke VIEWPORT-1 (#51): entry batch 80; scroll OK.
+- Tras retorno: `git diff`, tests, smoke Browser Use cold entry Caza → commit polish si OK.
+- No scoring / nocturno / auth / FIRDS → no gate dueño salvo sorpresa.
