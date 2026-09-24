@@ -9,4 +9,4 @@ Sparks/titles humanos; sin `–` mudo en etapa/RS/máx.; truth sin-escaneo; Hunt
 
 ## Siguiente
 
-REVIEW-MODAL-ABSENCE-1 (fricción #5).
+REVIEW-MODAL-ABSENCE-1 (fricción #5) — ticket activo.

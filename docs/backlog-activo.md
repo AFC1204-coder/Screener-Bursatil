@@ -3,19 +3,19 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-23 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `8d1ccac` (idle stamp post hydrateRs #53).  
-**Ahora:** UX-EMPTY-HONEST-1 (`prep`) — empty/loading/error humanos en Caza + mesa (ficha/Review solo residual).  
-**Ticket:** `docs/tickets/UX-EMPTY-HONEST-1.md` · rama prog `cursor/ux-empty-honest-a41e`.  
-**Cola fricción:** #1 ENTRY-1 **hecho** (#52) · #2 hydrateRs cold **hecho** (#53 / `7922c58`) → **#4 vacíos honestos (este)** → #5 Review/Astra residual · #3 MH-MINI-RPC (ops).  
+Última actualización: 2026-09-24 · rama `codex/statsedge-ui-polish`  
+**Última sync / HEAD origin polish:** tip post `22a9805` (close UX-EMPTY) + activate REVIEW-MODAL · feat `9e39b88` (#54).  
+**Ahora:** REVIEW-MODAL-ABSENCE-1 (`prep`) — Vista rápida: RS + Negocio honestos (sin `"-"` / «opera en…»).  
+**Ticket:** `docs/tickets/REVIEW-MODAL-ABSENCE-1.md` · rama prog `cursor/review-modal-absence-a41e`.  
+**Cola fricción:** #1 ENTRY-1 **hecho** (#52) · #2 hydrateRs cold **hecho** (#53) · #4 vacíos honestos **hecho** (#54 / `9e39b88`) → **#5 Review modal ausencia (este)** → #3 MH-MINI-RPC (ops).  
 **Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
-**Último cerrado:** SCANS-HYDRATERS-COLD-1 — defer hydrateRs post-paint (`7922c58` / #53).  
-**Último cerrado (prev):** CAZA-CHARTPREVIEW-ENTRY-1 (`dadcba1` / #52) · VIEWPORT-1 (`e83c41e` / #51).  
+**Último cerrado:** UX-EMPTY-HONEST-1 — empty/loading humanos Caza + mesa (`9e39b88` / #54).  
+**Último cerrado (prev):** SCANS-HYDRATERS-COLD-1 (`7922c58` / #53) · ENTRY-1 (`dadcba1` / #52) · VIEWPORT-1 (`e83c41e` / #51).  
 **Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño).  
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso. `research/wave5-remeasure-2026-09-14/`.  
-**Nota HYDRATE:** Caza #51+#52 OK; #53 defer idle OK; fricción activa = copy empty/loading/error.  
+**Nota HYDRATE:** Caza #51+#52+#53+#54 OK; fricción activa = modal Vista rápida RS/Negocio.  
 **Daily Mini 2026-09-23:** PASS · US **504/3575**.  
 **Último cerrado (prev):** REACT-COMMIT-PERF-1 `a71607c` · SCANS-CHARTPREVIEW-1 `f420af6` · THEME `cac7b25`.  
 **Nota REACT-COMMIT residual:** A/B 1 rep; truth sin `filterMs`.  
@@ -29,6 +29,7 @@ Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-
 - warm extended **203 ms** · theme aislado ~0,6 s tras THEME-HTTP.  
 Evidencia: `research/screener-bootstrap-core-first-1/` · `research/wave5-remeasure-2026-09-14/` · `research/scans-rs-theme-http-1/` · `research/scans-hydraters-cold-1/`.  
 **Paquete Astra:** `docs/tickets/ASTRA-REVIEW-BRIEF-T0T1T2.md`  
+**Inventario #5:** store `internal/review-astra-residual-2026-09-23.md`.  
 **Aparcados:** IPO-F P2.  
 **HOLD / NO retomar:** FILTER-ANNOTATION-1 (`639ceae`) — **revertido** `c55a648` (ROI browser insuficiente).  
 **KEEP transporte:** SCANS-TRANSPORT-1 gzip (`91ae6e4`) — mejora wire; **no** es solución de initial load (residuales: hydrateRs, parse/render, CPU gzip).  
