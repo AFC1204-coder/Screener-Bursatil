@@ -4,13 +4,12 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-24 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `becf696` (idle stamp post #55; tip al activar MH-MINI-RPC-1).  
-**Ahora:** MH-MINI-RPC-1 (`prep`) — RPC `upsert_app_setting_newer_wins` / persistencia MH en Mini `:15432`.  
-**Ticket:** `docs/tickets/MH-MINI-RPC-1.md` · rama prog `cursor/mh-mini-rpc-a41e`.  
-**Cola fricción:** ENTRY (#52) · COLD (#53) · UX-EMPTY (#54) · Review modal (#55) **hechos** · residual ops = este.  
+**Última sync / HEAD origin polish:** `da5092f` (MH-MINI-RPC-1 / #56)  
+**Ahora:** idle — fricción UI + MH Mini RPC cerrados.  
+**Cola fricción:** ENTRY·COLD·UX-EMPTY·Review modal·MH-RPC **hechos** (#52–#56).  
 **Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
-**Último cerrado:** REVIEW-MODAL-ABSENCE-1 — Vista rápida RS/Negocio honestos (`167f51d` / #55).  
-**Último cerrado (prev):** UX-EMPTY-HONEST-1 (`9e39b88` / #54) · hydrateRs (`7922c58` / #53) · ENTRY (`dadcba1` / #52).  
+**Último cerrado:** MH-MINI-RPC-1 — upsert_app_setting_newer_wins Mini (`da5092f` / #56).  
+**Último cerrado (prev):** REVIEW-MODAL (`167f51d` / #55) · UX-EMPTY (`9e39b88` / #54).  
 **Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño).  
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
