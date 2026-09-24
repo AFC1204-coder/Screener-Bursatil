@@ -40,10 +40,11 @@ import Link from "next/link";
 import ChartPreferences from "@/app/ChartPreferences";
 import { CompanyMark, RowPreviewChart } from "@/app/screenerPanels";
 import { InfoHint } from "@/app/components/ui/InfoHint";
-import { amount, money, quickBusinessDescription, quickBusinessMarket, ratioLabel, shortBusiness } from "@/lib/screenerFormat";
+import { amount, money, quickBusinessActivity, quickBusinessDescription, quickBusinessMarket, ratioLabel } from "@/lib/screenerFormat";
 import { pct, pctShare } from "@/lib/formatters";
 import { PerformanceStrip } from "@/app/components/screener/PerformanceStrip";
 import { canonicalRs } from "@/lib/rsCanonical";
+import { reviewRsCell } from "@/lib/reviewRsDisplay";
 import { stageDisplayForRow, stageWordForState } from "@/lib/stageDisplay";
 import { stageLabel } from "@/lib/screenerPipeline";
 import { externalLinks, stockUrl } from "@/lib/symbols";
@@ -119,9 +120,11 @@ export default function QuickReviewModal({
 }) {
   if (!activeModalRow) return null;
 
-  // Lector único del RS (lib/rsCanonical.js). El mismo que usa la tabla del
-  // screener, la ficha del valor y salud de mercado.
-  const quickRs = canonicalRs(activeModalRow);
+  // Lector único del RS (lib/rsCanonical.js) + copy corto de ausencia
+  // (reviewRsCell): mismo contrato que /review cola + metric grid.
+  const quickRsCell = reviewRsCell(canonicalRs(activeModalRow), {
+    availableTitle: "RS semanal del universo",
+  });
 
   return <dialog className="stockModal quickReviewModal" open onClick={(e) => { if (e.target === e.currentTarget) closeQuickReview(); }}>
     <div className="stockModalInner quickReviewInner">
@@ -193,7 +196,9 @@ export default function QuickReviewModal({
           <div className="reviewQueueList">
             {modalReviewRows.map((row, index) => {
               const resolution = decisionResolutionForSymbol({ decisionResolutions: modalDecisionResolutions }, row.symbol);
-              const rowRs = canonicalRs(row);
+              const rowRs = reviewRsCell(canonicalRs(row), {
+                availableTitle: "RS semanal del universo",
+              });
               return <Link
                 key={`${row.symbol}-${index}`}
                 href={stockUrl(row.symbol)}
@@ -211,7 +216,7 @@ export default function QuickReviewModal({
                     <span className={`reviewQueueResolutionBadge ${resolution.tone || "neutral"}`}>{resolution.label}</span>
                   </span> : null}
                 </span>
-                <i title={rowRs.available ? "RS semanal del universo" : rowRs.reason}>{rowRs.available ? rowRs.value.toFixed(0) : "-"}</i>
+                <i className={rowRs.className || undefined} title={rowRs.title || undefined}>{rowRs.text}</i>
               </Link>;
             })}
           </div>
@@ -236,7 +241,7 @@ export default function QuickReviewModal({
                 <div className="quickBusinessBody">
                   <p>{quickBusinessDescription(activeModalRow)}</p>
                 </div>
-                <div className="profileRow"><span>Actividad</span><b>{shortBusiness(activeModalRow) || "-"}</b></div>
+                <div className="profileRow"><span>Actividad</span><b>{quickBusinessActivity(activeModalRow)}</b></div>
                 <div className="profileRow"><span>Mercado</span><b>{quickBusinessMarket(activeModalRow)}</b></div>
               </div>
 
@@ -246,7 +251,7 @@ export default function QuickReviewModal({
                   <span>Clasificación</span>
                 </div>
                 <div className="profileRow"><span>Etapa</span><b title={stageDisplayForRow(activeModalRow)?.title || undefined}>{stageWord(activeModalRow)}</b></div>
-                <div className="profileRow"><span>RS</span><b title={quickRs.available ? "RS semanal del universo" : quickRs.reason}>{quickRs.available ? quickRs.value.toFixed(0) : "-"}</b></div>
+                <div className="profileRow"><span>RS</span><b className={quickRsCell.className || undefined} title={quickRsCell.title || undefined}>{quickRsCell.text}</b></div>
                 <div className="profileRow"><span>Capitalización</span><b>{amount(activeModalRow.marketCap, activeModalRow.currency) || "-"}</b></div>
                 <div className="profileRow"><span>Dist. máx 52s</span><b>{Number.isFinite(activeModalRow.distance52w) ? pct(activeModalRow.distance52w) : "-"}</b></div>
               </div>

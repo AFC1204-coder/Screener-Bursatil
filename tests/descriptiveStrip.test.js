@@ -326,6 +326,7 @@ describe("ChartIdentityCard · render (tarjeta 2c densa sobre el lienzo)", () =>
       financialResults: {},
     });
     expect(html).toContain(DESCRIPTIVE_ABSENCE.rs.slice(0, 30));
+    expect(html).toContain("Sin ranking");
     expect(html).toContain(DESCRIPTIVE_ABSENCE.lowAdvance.slice(0, 30));
     expect(html).toContain(DESCRIPTIVE_ABSENCE.quarters.slice(0, 30));
     expect(html).toContain("Sin capitalización de mercado");
