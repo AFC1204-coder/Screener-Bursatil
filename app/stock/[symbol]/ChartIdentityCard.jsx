@@ -14,6 +14,7 @@
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { DESCRIPTIVE_ABSENCE } from "@/lib/descriptiveStrip";
 import { num as sharedNum, pct as sharedPct } from "@/lib/formatters";
+import { reviewRsCell } from "@/lib/reviewRsDisplay";
 import { GrowthGrid } from "./DescriptiveStrip";
 
 const STAGE_RAIL = ["4", "3", "2", "1"];
@@ -24,6 +25,23 @@ function Absent({ reason = "" }) {
       <span aria-hidden="true">–</span>
       <span className="srOnly">Sin dato</span>
       {reason ? <InfoHint text={reason} /> : null}
+    </span>
+  );
+}
+
+/** RS ausente: copy corto (Cargando… / Sin ranking / …), no guion mudo. */
+function RsAbsent({ reason = "" }) {
+  const cell = reviewRsCell({
+    available: false,
+    value: null,
+    reason,
+    hydrated: true,
+  });
+  return (
+    <span className="chartIdCardMissing">
+      <span className={cell.className || undefined}>{cell.text}</span>
+      <span className="srOnly">{cell.title || cell.text}</span>
+      {cell.title ? <InfoHint text={cell.title} /> : null}
     </span>
   );
 }
@@ -112,7 +130,7 @@ export default function ChartIdentityCard({ card = null, quote = null }) {
                 </span>
               </>
             ) : (
-              <Absent reason={rs.absenceReason} />
+              <RsAbsent reason={rs.absenceReason} />
             )}
             {countryRs?.show ? (
               <>
