@@ -4,14 +4,13 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-24 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** tip post `22a9805` (close UX-EMPTY) + activate REVIEW-MODAL · feat `9e39b88` (#54).  
-**Ahora:** REVIEW-MODAL-ABSENCE-1 (`prep`) — Vista rápida: RS + Negocio honestos (sin `"-"` / «opera en…»).  
-**Ticket:** `docs/tickets/REVIEW-MODAL-ABSENCE-1.md` · rama prog `cursor/review-modal-absence-a41e`.  
-**Cola fricción:** #1 ENTRY-1 **hecho** (#52) · #2 hydrateRs cold **hecho** (#53) · #4 vacíos honestos **hecho** (#54 / `9e39b88`) → **#5 Review modal ausencia (este)** → #3 MH-MINI-RPC (ops).  
+**Última sync / HEAD origin polish:** `167f51d` (REVIEW-MODAL-ABSENCE-1 / #55)  
+**Ahora:** idle — cola fricción 1·2·4·5 cerrada.  
+**Cola fricción:** ENTRY (#52) · COLD (#53) · UX-EMPTY (#54) · Review modal (#55) **hechos** · FIRDS/MH aparcados.  
 **Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
-**Último cerrado:** UX-EMPTY-HONEST-1 — empty/loading humanos Caza + mesa (`9e39b88` / #54).  
-**Último cerrado (prev):** SCANS-HYDRATERS-COLD-1 (`7922c58` / #53) · ENTRY-1 (`dadcba1` / #52) · VIEWPORT-1 (`e83c41e` / #51).  
-**Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño).  
+**Último cerrado:** REVIEW-MODAL-ABSENCE-1 — Vista rápida RS/Negocio honestos (`167f51d` / #55).  
+**Último cerrado (prev):** UX-EMPTY-HONEST-1 (`9e39b88` / #54) · hydrateRs (`7922c58` / #53) · ENTRY (`dadcba1` / #52).  
+**Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño) · MH-MINI-RPC (ops).  
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso. `research/wave5-remeasure-2026-09-14/`.  
