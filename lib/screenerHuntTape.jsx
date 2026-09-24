@@ -4,11 +4,24 @@
 import { pct } from "@/lib/formatters";
 import { chartPath } from "@/lib/screenerFormat";
 import { canonicalRs } from "@/lib/rsCanonical";
+import { reviewRsCell } from "@/lib/reviewRsDisplay";
 import { stageDisplayForRow } from "@/lib/stageDisplay";
 import { isScreenerKeyboardTargetIgnored } from "@/lib/screenerResultKeyboard";
 import { CompanyMark } from "@/lib/screenerAtoms";
 import { stockUrl } from "@/lib/symbols";
 import { ipoWatchRowKey } from "@/lib/mergeIpoDiscoveryRows";
+
+/** Copy humano de spark en Caza — sin jerga chartPreview / transporte. */
+export const HUNT_TAPE_SPARK_COPY = Object.freeze({
+  pending: "Cargando gráfico semanal",
+  ready: "Gráfico semanal ~12 meses",
+  empty: "Sin serie semanal",
+});
+
+export function huntTapeSparkTitle(status = "empty") {
+  const key = status === "pending" || status === "ready" ? status : "empty";
+  return HUNT_TAPE_SPARK_COPY[key];
+}
 
 const TAPE_SPARK_W = 128;
 const TAPE_SPARK_H = 40;
@@ -99,11 +112,36 @@ export function huntTapeRsValue(row = {}) {
   return { value: Math.round(rs.value), reason: "" };
 }
 
+/**
+ * Celda RS de cinta: número o copy corto honesto (Cargando… / Sin ranking / …).
+ * No usa guion mudo.
+ */
+export function huntTapeRsDisplay(row = {}) {
+  const rs = canonicalRs(row);
+  if (rs.available && Number.isFinite(Number(rs.value))) {
+    return {
+      text: String(Math.round(Number(rs.value))),
+      title: "RS canónico semanal",
+      missing: false,
+    };
+  }
+  const cell = reviewRsCell(rs);
+  return {
+    text: cell.text,
+    title: cell.title || cell.text,
+    missing: true,
+  };
+}
+
 export function huntTapeDist52w(row = {}) {
   const value = finite(row.distance52w);
   if (!Number.isFinite(value)) return null;
   return { value, label: pct(value), hot: value <= -10 };
 }
+
+/** Etiqueta visible cuando falta distancia al máx. 52 semanas. */
+export const HUNT_TAPE_DIST_EMPTY = "Sin máx.";
+export const HUNT_TAPE_STAGE_EMPTY = "Sin etapa";
 
 export function huntTapeRowKey(row = {}) {
   return ipoWatchRowKey(row);
@@ -155,13 +193,15 @@ export function huntTapeSparkPaths(bars = []) {
 
 export function HuntTapeSparkline({ bars = [], className = "", status = "empty" }) {
   const paths = huntTapeSparkPaths(bars);
+  const title = huntTapeSparkTitle(status);
   if (paths) {
     return (
       <svg
         className={`huntTapeSpark ${className}`.trim()}
         viewBox={`0 0 ${TAPE_SPARK_W} ${TAPE_SPARK_H}`}
         role="img"
-        aria-label="Gráfico semanal compacto"
+        aria-label={HUNT_TAPE_SPARK_COPY.ready}
+        title={HUNT_TAPE_SPARK_COPY.ready}
       >
         <path className="huntTapeSparkFill" d={paths.fill} />
         <path className="huntTapeSparkMa" d={paths.maPath} />
@@ -174,8 +214,8 @@ export function HuntTapeSparkline({ bars = [], className = "", status = "empty" 
       <span
         className={`huntTapeSparkPending ${className}`.trim()}
         role="status"
-        aria-label="Cargando miniatura"
-        title="Cargando miniatura"
+        aria-label={title}
+        title={title}
       >
         <span className="huntTapeSparkSkeleton" aria-hidden="true" />
       </span>
@@ -185,8 +225,8 @@ export function HuntTapeSparkline({ bars = [], className = "", status = "empty" 
     <span
       className={`huntTapeSparkMissing ${className}`.trim()}
       role="img"
-      aria-label="Sin serie"
-      title="Sin serie semanal"
+      aria-label={title}
+      title={title}
     >
       Sin serie
     </span>

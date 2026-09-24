@@ -37,6 +37,13 @@ describe("resolveHuntTapeSparkStatus", () => {
   it("empty inmediato si el transporte no es diferido", () => {
     expect(resolveHuntTapeSparkStatus({ symbol: "AAA" }, { deferred: false })).toBe("empty");
   });
+
+  it("pending no es el estado final tras intento fallido/vacío", () => {
+    expect(resolveHuntTapeSparkStatus(
+      { symbol: "ZZZ", chartPreviewAttempted: true },
+      { deferred: true },
+    )).not.toBe("pending");
+  });
 });
 
 describe("markChartPreviewAttemptedOnRows", () => {

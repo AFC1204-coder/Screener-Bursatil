@@ -183,7 +183,7 @@ function MiniSparkline({ bars = [] }) {
     .filter((x) => Number.isFinite(x.close))
     .slice()
     .sort((a, b) => String(a.date).localeCompare(String(b.date)));
-  if (points.length < 2) return <div className="previewEmpty">Sin dato</div>;
+  if (points.length < 2) return <div className="previewEmpty">Sin serie</div>;
   const w = 260, h = 118, pad = 10;
   const values = points.flatMap((p) => [p.close, p.sma50, p.sma200].filter(Number.isFinite));
   const min = Math.min(...values);
@@ -725,7 +725,7 @@ export default function ReviewPage() {
         <p className="fine">{queueEmptyDetail}</p>
       </div>
       <div className="reviewEmptyMetrics" aria-label="Resumen de cola vacía">
-        <span><b>{baseVisibleRows.length}</b><em>base visible</em></span>
+        <span><b>{baseVisibleRows.length}</b><em>en cola</em></span>
         <span><b>{pendingVisibleCount}</b><em>pendientes</em></span>
         <span><b>{resolvedVisibleCount}</b><em>resueltas</em></span>
       </div>

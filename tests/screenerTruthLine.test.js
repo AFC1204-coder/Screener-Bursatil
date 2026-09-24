@@ -49,7 +49,7 @@ describe("buildScreenerTruthLine", () => {
       scannedMarkets: [],
       selectedMarkets: ["US"],
     });
-    expect(line).toContain("Sin datos para evaluar esta ficha");
+    expect(line).toContain("Sin escaneo en mesa");
     expect(line).not.toContain("0 de 0 pasan");
     expect(line).not.toContain("en lista");
     expect(line).not.toContain("cargando…");
@@ -67,7 +67,7 @@ describe("buildScreenerTruthLine", () => {
       selectedMarkets: ["US"],
     });
     expect(line).toContain("0 de 12 pasan «Líderes Etapa 2»");
-    expect(line).not.toContain("Sin datos para evaluar esta ficha");
+    expect(line).not.toContain("Sin escaneo en mesa");
     expect(line).toContain("mesa: US");
   });
 
@@ -83,7 +83,7 @@ describe("buildScreenerTruthLine", () => {
       selectedMarkets: ["US"],
     });
     expect(line).toContain("3 de 12 pasan «Líderes Etapa 2»");
-    expect(line).not.toContain("Sin datos para evaluar esta ficha");
+    expect(line).not.toContain("Sin escaneo en mesa");
     expect(line).not.toContain("0 de 0 pasan");
   });
 
@@ -176,7 +176,7 @@ describe("buildScreenerTruthLine", () => {
       selectedMarkets: ["HK"],
       marketsMisaligned: true,
     });
-    expect(line).toContain("Sin datos para evaluar esta ficha");
+    expect(line).toContain("Sin escaneo en mesa");
     expect(line).not.toContain("0 de 0 pasan");
     expect(line).not.toContain("mesa:");
     expect(line).not.toContain("datos:");
@@ -196,7 +196,7 @@ describe("buildScreenerTruthLine", () => {
       selectedMarkets: many,
       marketsMisaligned: true,
     });
-    expect(line).toContain("Sin datos para evaluar esta ficha");
+    expect(line).toContain("Sin escaneo en mesa");
     expect(line).not.toContain("0 de 0 pasan");
     expect(line).not.toContain("mesa:");
     expect(line).not.toContain("selección ≠ mesa");
