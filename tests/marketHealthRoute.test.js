@@ -275,6 +275,23 @@ describe("writeMarketHealthCache", () => {
     expect(ok.cachedAt).toBeTruthy();
     expect(cacheRow.value.payload.generatedAt).toBe(payload.generatedAt);
   });
+
+  it("devuelve written=false honesto si la RPC falla (p.ej. PG_RPC_UNSUPPORTED)", async () => {
+    const { supabaseRpc } = await import("@/lib/supabaseServer");
+    vi.mocked(supabaseRpc).mockRejectedValueOnce(
+      Object.assign(new Error("RPC upsert_app_setting_newer_wins no disponible en modo pg local"), {
+        code: "PG_RPC_UNSUPPORTED",
+      }),
+    );
+
+    const ok = await writeMarketHealthCache({
+      generatedAt: "2026-09-08T12:00:00.000Z",
+      marketScore: 80,
+      indexes: [],
+    });
+    expect(ok.written).toBe(false);
+    expect(ok.error).toMatch(/no disponible|PG_RPC|failed/i);
+  });
 });
 
 describe("weinsteinTape · Dist/Acc honestos", () => {

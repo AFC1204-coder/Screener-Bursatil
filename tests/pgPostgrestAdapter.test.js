@@ -8,6 +8,7 @@ import {
   buildPostgrestSelectSql,
   buildScanFinalizeInputsSql,
   buildScanSymbolHistoryLatestSql,
+  buildUpsertAppSettingNewerWinsSql,
   isPgRpcSupported,
   normalizePostgrestQuery,
   parseOnConflict,
@@ -209,6 +210,7 @@ describe("pgPostgrestAdapter RPC scan_symbol_history_latest_v1", () => {
     expect(isPgRpcSupported("leaderboard_publishable_rows")).toBe(true);
     expect(isPgRpcSupported("scan_finalize_inputs")).toBe(true);
     expect(isPgRpcSupported("finalize_scan_results")).toBe(true);
+    expect(isPgRpcSupported("upsert_app_setting_newer_wins")).toBe(true);
     expect(isPgRpcSupported("coverage_scan_summary")).toBe(false);
   });
 
@@ -296,6 +298,54 @@ describe("pgPostgrestAdapter RPC finalize_scan_results", () => {
     const scanId = "7f4e2e8f-bdd8-4652-b23d-c0466b7949d5";
     expect(() => buildFinalizeScanResultsSql("", scanId, [])).toThrow(/p_owner_id/);
     expect(() => buildFinalizeScanResultsSql("personal", "", [])).toThrow(/p_scan_id/);
+  });
+});
+
+describe("pgPostgrestAdapter RPC upsert_app_setting_newer_wins", () => {
+  it("buildUpsertAppSettingNewerWinsSql delega a la función PG con jsonb + timestamptz", () => {
+    const value = { version: 1, cachedAt: "2026-09-08T12:00:00.000Z" };
+    const { sql, values, empty } = buildUpsertAppSettingNewerWinsSql(
+      "personal",
+      "market_health_cache",
+      "default",
+      value,
+      "2026-09-08T12:00:00.000Z",
+    );
+    expect(empty).toBe(false);
+    expect(sql).toContain("public.upsert_app_setting_newer_wins(");
+    expect(sql).toContain("$4::jsonb");
+    expect(sql).toContain("COALESCE($5::timestamptz, now())");
+    expect(values).toEqual([
+      "personal",
+      "market_health_cache",
+      "default",
+      JSON.stringify(value),
+      "2026-09-08T12:00:00.000Z",
+    ]);
+  });
+
+  it("p_value null → empty (sin query), como schema.sql", () => {
+    const built = buildUpsertAppSettingNewerWinsSql(
+      "personal",
+      "market_health_cache",
+      "default",
+      null,
+      "2026-09-08T12:00:00.000Z",
+    );
+    expect(built.empty).toBe(true);
+    expect(built.sql).toBeNull();
+  });
+
+  it("acepta updated_at null (COALESCE now en SQL)", () => {
+    const { values, empty } = buildUpsertAppSettingNewerWinsSql(
+      "personal",
+      "general",
+      "default",
+      { ok: true },
+      null,
+    );
+    expect(empty).toBe(false);
+    expect(values[4]).toBeNull();
   });
 });
 
@@ -447,5 +497,39 @@ describe("pgPostgrestAdapter executor (stub pool)", () => {
     });
     expect(rows).toEqual([{ updated_count: 2 }]);
     expect(pool.query.mock.calls[0][0]).toContain("finalize_scan_results");
+  });
+
+  it("ejecuta upsert_app_setting_newer_wins vía pgRpc y devuelve filas", async () => {
+    const saved = {
+      owner_id: "personal",
+      setting_type: "market_health_cache",
+      setting_key: "default",
+      value: { version: 1 },
+      updated_at: "2026-09-08T12:00:00.000Z",
+    };
+    pool.query.mockResolvedValueOnce({ rows: [saved] });
+    const rows = await pgRpc(pool, "upsert_app_setting_newer_wins", {
+      p_owner_id: "personal",
+      p_setting_type: "market_health_cache",
+      p_setting_key: "default",
+      p_value: { version: 1 },
+      p_updated_at: "2026-09-08T12:00:00.000Z",
+    });
+    expect(rows).toEqual([saved]);
+    expect(pool.query).toHaveBeenCalledTimes(1);
+    expect(pool.query.mock.calls[0][0]).toContain("upsert_app_setting_newer_wins");
+    expect(pool.query.mock.calls[0][1][3]).toBe(JSON.stringify({ version: 1 }));
+  });
+
+  it("upsert_app_setting_newer_wins con p_value null no consulta y devuelve []", async () => {
+    const rows = await pgRpc(pool, "upsert_app_setting_newer_wins", {
+      p_owner_id: "personal",
+      p_setting_type: "market_health_cache",
+      p_setting_key: "default",
+      p_value: null,
+      p_updated_at: "2026-09-08T12:00:00.000Z",
+    });
+    expect(rows).toEqual([]);
+    expect(pool.query).not.toHaveBeenCalled();
   });
 });

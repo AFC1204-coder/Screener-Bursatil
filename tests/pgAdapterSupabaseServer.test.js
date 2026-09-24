@@ -139,6 +139,37 @@ describe("supabaseServer en modo pg", () => {
     });
   });
 
+  it("supabaseRpc delega upsert_app_setting_newer_wins a pgRpc", async () => {
+    const saved = [{
+      owner_id: "personal",
+      setting_type: "market_health_cache",
+      setting_key: "default",
+      value: { version: 1 },
+      updated_at: "2026-09-08T12:00:00.000Z",
+    }];
+    pgRpc.mockResolvedValueOnce(saved);
+    const { supabaseRpc } = await import("@/lib/supabaseServer");
+    const rows = await supabaseRpc("upsert_app_setting_newer_wins", {
+      p_owner_id: "personal",
+      p_setting_type: "market_health_cache",
+      p_setting_key: "default",
+      p_value: { version: 1 },
+      p_updated_at: "2026-09-08T12:00:00.000Z",
+    });
+    expect(rows).toEqual(saved);
+    expect(pgRpc).toHaveBeenCalledWith(
+      expect.anything(),
+      "upsert_app_setting_newer_wins",
+      {
+        p_owner_id: "personal",
+        p_setting_type: "market_health_cache",
+        p_setting_key: "default",
+        p_value: { version: 1 },
+        p_updated_at: "2026-09-08T12:00:00.000Z",
+      },
+    );
+  });
+
   it("supabaseRpc lanza error claro para RPC no soportada en modo pg", async () => {
     pgRpc.mockRejectedValueOnce(Object.assign(
       new Error("RPC coverage_scan_summary no disponible en modo pg local"),
