@@ -325,6 +325,8 @@ export default function Page() {
     });
   }, []);
   const getScreenerSession = useCallback(() => safeRead(STORAGE_KEYS.screenerSession, {}) || {}, []);
+  // chartSettings must be declared before useQuickReviewSession (TDZ / FILTER-SESSION-BACK-1).
+  const [chartSettings, setChartSettings] = useState(DEFAULT_CHART_SETTINGS);
   const quickReview = useQuickReviewSession({
     activeSettings,
     presetKey,
@@ -441,7 +443,6 @@ export default function Page() {
     sortAsc,
     perfPeriod,
   };
-  const [chartSettings, setChartSettings] = useState(DEFAULT_CHART_SETTINGS);
   const [chartScope, setChartScope] = useState("global");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
