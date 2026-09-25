@@ -115,3 +115,14 @@ describe("REVIEW-REFETCH-1 callers", () => {
     expect(page).toContain("sessionAutosaveRef.current?.flush()");
   });
 });
+
+describe("home Page hook order (FILTER-SESSION-BACK-1 TDZ)", () => {
+  it("declara chartSettings useState antes de useQuickReviewSession", () => {
+    const page = readFileSync(resolve(import.meta.dirname, "../app/page.jsx"), "utf8");
+    const chartSettingsState = page.indexOf("const [chartSettings, setChartSettings] = useState");
+    const quickReviewCall = page.indexOf("useQuickReviewSession({");
+    expect(chartSettingsState).toBeGreaterThan(-1);
+    expect(quickReviewCall).toBeGreaterThan(-1);
+    expect(chartSettingsState).toBeLessThan(quickReviewCall);
+  });
+});
