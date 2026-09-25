@@ -3,18 +3,19 @@
 Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerrado.
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
-Última actualización: 2026-09-24 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `da5092f` (MH-MINI-RPC-1 / #56)  
-**Ahora:** idle — fricción UI + MH Mini RPC cerrados.  
+Última actualización: 2026-09-25 · rama `codex/statsedge-ui-polish`  
+**Última sync / HEAD origin polish:** `51f8a02` (idle post MH-MINI-RPC-1 / #56)  
+**Ahora:** FILTER-SESSION-BACK-1 (`prep`) — defaults agresivos · back pierde criterios · chart cola lento.  
+**Ticket:** `docs/tickets/FILTER-SESSION-BACK-1.md` · rama prog `cursor/filter-session-back-a41e`  
 **Cola fricción:** ENTRY·COLD·UX-EMPTY·Review modal·MH-RPC **hechos** (#52–#56).  
 **Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
-**Último cerrado:** MH-MINI-RPC-1 — upsert_app_setting_newer_wins Mini (`da5092f` / #56).  
+**Último cerrado:** MH-MINI-RPC-1 — upsert_app_setting_newer_wins Mini (`da5092f` / #56 · tip docs `51f8a02`).  
 **Último cerrado (prev):** REVIEW-MODAL (`167f51d` / #55) · UX-EMPTY (`9e39b88` / #54).  
 **Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño).  
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso. `research/wave5-remeasure-2026-09-14/`.  
-**Nota HYDRATE:** Caza #51–#55 fricción UI cerrada; ahora ops MH Mini RPC.  
+**Nota HYDRATE:** Caza #51–#55 + MH Mini #56 cerrados; **Ahora** = FILTER-SESSION-BACK-1.  
 **Daily Mini 2026-09-23:** PASS · US **504/3575**.  
 **Último cerrado (prev):** REACT-COMMIT-PERF-1 `a71607c` · SCANS-CHARTPREVIEW-1 `f420af6` · THEME `cac7b25`.  
 **Nota REACT-COMMIT residual:** A/B 1 rep; truth sin `filterMs`.  
@@ -34,7 +35,7 @@ Evidencia: `research/screener-bootstrap-core-first-1/` · `research/wave5-remeas
 **KEEP transporte:** SCANS-TRANSPORT-1 gzip (`91ae6e4`) — mejora wire; **no** es solución de initial load (residuales: hydrateRs, parse/render, CPU gzip).  
 **Línea Mini V1:** aparte (V1-02…); no mezclar con polish.  
 **Nota MH-FILL-5/6:** cerrados (régimen regional + serie US).  
-**Residual MH (ops):** **activo** = MH-MINI-RPC-1 · `app_settings` / `upsert_app_setting_newer_wins` vía túnel Mini `:15432`.  
+**Residual MH (ops):** **hecho** MH-MINI-RPC-1 (`da5092f` / #56).  
 **Gate Forja:** CA → PR; no FF a polish hasta smoke/OK · **push polish antes de Forja/ausencia**.
 
 ### Estados de cola (PROC-A)
@@ -339,7 +340,8 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MH-FILL-5 | Régimen paralelo US+EU+JP+HK (SPY/FEZ/EWJ/EWH) | **Hecho** · smoke 4 chips · hero US |
 | MH-FILL-6 | Serie market score + % MM30s (US, ≤13 sem) | **Hecho** · vacío honesto hasta ≥2 sem |
 | MH refresh/caché | Actualizar + `?refresh=1` + `cacheWritten` | **Hecho** · `16abe65` · smoke Actualizar→refresh=1 |
-| MH-MINI-RPC-1 | RPC `upsert_app_setting_newer_wins` en pg Mini | **Ahora** (`prep`) · `docs/tickets/MH-MINI-RPC-1.md` · rama `cursor/mh-mini-rpc-a41e` |
+| MH-MINI-RPC-1 | RPC `upsert_app_setting_newer_wins` en pg Mini | **Hecho** · `da5092f` / #56 |
+| FILTER-SESSION-BACK-1 | Defaults agresivos · back pierde criterios · chart cola lento | **Ahora** (`prep`) · `docs/tickets/FILTER-SESSION-BACK-1.md` · rama `cursor/filter-session-back-a41e` |
 | STAGE-4 | Volumen de fuga junto a «Con fuga» (dato soporte; no clasifica) | **Hecho** · smoke AVAH Con fuga (2,8×) |
 | VCP-0 | Auditoría E1/E2 semanal | **Cerrado** fae1880 · ADR aceptado |
 | VCP | Detector / etiquetado research | **Bridge cerrado** 2026-09-02 · flag UNIFIED |
