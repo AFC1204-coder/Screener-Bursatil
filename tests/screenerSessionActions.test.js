@@ -1,4 +1,5 @@
 // P4: separar «traer datos frescos» (conserva criterios) de «resetear criterios».
+import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import {
   createDebouncedSessionSaver,
@@ -6,7 +7,9 @@ import {
   dataRefreshEligibleOwner,
   pickScreenerCriteria,
   screenerCriteriaAfterReset,
+  shouldPreserveSessionCriteriaOnSnapshotRestore,
 } from "@/lib/screenerSessionActions";
+import { SCREENER_SESSION_VERSION } from "@/lib/screenerConfig";
 import { manualDataRefreshStatus, sessionAutoRefreshStatus } from "@/lib/snapshotFreshness";
 
 const customCriteria = {
@@ -89,5 +92,28 @@ describe("P3 · debounce del autoguardado de sesión", () => {
     vi.advanceTimersByTime(500);
     expect(writes).toEqual(["flush"]);
     vi.useRealTimers();
+  });
+});
+
+describe("FILTER-SESSION-BACK-1 · preserveCriteria al remount", () => {
+  it("sesión v4 válida → preserveCriteria (no pisar filtros con el scan)", () => {
+    expect(shouldPreserveSessionCriteriaOnSnapshotRestore({
+      version: SCREENER_SESSION_VERSION,
+      presetKey: "nearPivot",
+      filterLayers: { proximity: false, trend: true },
+    })).toBe(true);
+  });
+
+  it("sin sesión / versión distinta → cold restore puede aplicar criterios del scan", () => {
+    expect(shouldPreserveSessionCriteriaOnSnapshotRestore(null)).toBe(false);
+    expect(shouldPreserveSessionCriteriaOnSnapshotRestore({})).toBe(false);
+    expect(shouldPreserveSessionCriteriaOnSnapshotRestore({ version: 3 })).toBe(false);
+  });
+
+  it("page.jsx cablea preserveCriteria en restoreLatestSnapshot tras sesión v4", () => {
+    const page = readFileSync(new URL("../app/page.jsx", import.meta.url), "utf8");
+    expect(page).toContain("shouldPreserveSessionCriteriaOnSnapshotRestore");
+    expect(page).toContain("preserveCriteria");
+    expect(page).toContain("preserveCriteria: shouldPreserveSessionCriteriaOnSnapshotRestore(session)");
   });
 });

@@ -202,6 +202,12 @@ describe("Review page — candados decisión E / Astra", () => {
     expect(reviewSource).not.toContain("hydrateReviewRow");
   });
 
+  it("Vista rápida monta el mismo hydrate de foco que /review", () => {
+    const modalSession = sourceWithoutComments("../app/components/screener/useQuickReviewSession.js");
+    expect(modalSession).toContain("useReviewChartPreviewHydrate");
+    expect(modalSession).toContain("setQuickReviewRows");
+  });
+
   it("sigue montando RowPriceChart sin gate de métricas", () => {
     expect(reviewSource).toMatch(/ReviewChartPanel[\s\S]*RowPriceChart/);
     expect(reviewSource).not.toContain("Cargando histórico y métricas");

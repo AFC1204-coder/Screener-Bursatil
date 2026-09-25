@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useReviewChartPrefetch } from "@/app/useReviewChartPrefetch";
+import { useReviewChartPreviewHydrate } from "@/app/useReviewChartPreviewHydrate";
 import { prepareReviewQueueRows } from "@/lib/decisionProfile";
 import { safeRead, STORAGE_KEYS } from "@/lib/localState";
 import { buildReviewStockOpenContext } from "@/lib/reviewStockContext";
@@ -9,6 +11,10 @@ import {
   resolveReviewFocus,
   reviewFocusStatusMessage,
 } from "@/lib/reviewSession";
+import {
+  buildReviewChartPrefetchPlan,
+  runReviewChartPrefetchPlan,
+} from "@/lib/reviewChartPrefetch";
 import { buildReviewPageHref } from "@/lib/screenerReviewLaunch";
 import {
   buildSingleSymbolReviewRow,
@@ -24,9 +30,24 @@ import {
 } from "@/lib/stockDecisionResolution";
 import { cleanSymbol } from "@/lib/symbols";
 
+function kickoffReviewFocusChartWarmup(reviewRows = [], currentIndex = 0, chartSettings = {}) {
+  const focusSymbol = reviewRows[currentIndex]?.symbol || reviewRows[0]?.symbol || "";
+  if (!focusSymbol || !reviewRows.length) return;
+  const plan = buildReviewChartPrefetchPlan({
+    focusSymbol,
+    visibleRows: reviewRows,
+    currentIndex,
+    chartSettings,
+    includePrev: reviewRows.length >= 2,
+    includeFocus: true,
+  });
+  runReviewChartPrefetchPlan(plan);
+}
+
 export function useQuickReviewSession({
   activeSettings = {},
   presetKey = "",
+  chartSettings = {},
   setStatus = () => {},
   persistScreenerSession = () => {},
   buildScreenerStockOpenContext = () => null,
@@ -42,6 +63,21 @@ export function useQuickReviewSession({
   const modalReviewRows = quickReviewRows.length ? quickReviewRows : (activeModalRow ? [activeModalRow] : []);
   const modalReviewIndex = activeModalRow ? modalReviewRows.findIndex((row) => row.symbol === activeModalRow.symbol) : -1;
   const modalReviewPosition = modalReviewIndex >= 0 ? modalReviewIndex : quickReviewIndex;
+
+  const modalOpen = Boolean(activeModalRow);
+  useReviewChartPrefetch({
+    enabled: modalOpen,
+    focusSymbol: activeModalRow?.symbol || "",
+    visibleRows: modalReviewRows,
+    currentIndex: modalReviewPosition,
+    chartSettings,
+  });
+  useReviewChartPreviewHydrate({
+    enabled: modalOpen,
+    visibleRows: modalReviewRows,
+    currentIndex: modalReviewPosition,
+    setRows: setQuickReviewRows,
+  });
 
   function restoreQuickReviewSession(nextRows = [], nextIndex = 0) {
     setQuickReviewRows(Array.isArray(nextRows) ? nextRows : []);
@@ -191,6 +227,7 @@ export function useQuickReviewSession({
     setQuickReviewRows(reviewRows);
     setQuickReviewIndex(focus.index);
     setActiveModalRow(reviewRows[focus.index]);
+    kickoffReviewFocusChartWarmup(reviewRows, focus.index, chartSettings);
     const focusMessage = reviewFocusStatusMessage(focus, reviewRows.length);
     setStatus(focusMessage || `${reviewSourceLabel}: ${reviewRows.length} acciones en cola (sesión restaurada).`);
     return {
@@ -204,7 +241,8 @@ export function useQuickReviewSession({
   }
 
   function persistScreenerReviewQueue(currentRows, startSymbol = "", options = {}) {
-    const reviewRows = prepareReviewQueueRows(currentRows, activeSettings);
+    const preparedRows = prepareReviewQueueRows(currentRows, activeSettings);
+    const reviewRows = mergeReviewRowChartPreviews(preparedRows, currentRows);
     if (!reviewRows.length) return null;
     const reviewSourceLabel = options.sourceLabel || "Screener actual";
     const reviewSourceDetail = options.sourceDetail || "";
@@ -264,6 +302,7 @@ export function useQuickReviewSession({
     setQuickReviewRows(reviewRows);
     setQuickReviewIndex(currentIndex);
     setActiveModalRow(reviewRows[currentIndex]);
+    kickoffReviewFocusChartWarmup(reviewRows, currentIndex, chartSettings);
     if (payload?.queueMode === "single-symbol") {
       setStatus(singleSymbolReviewStatus(reviewRows[currentIndex]?.symbol || startSymbol));
       return;
