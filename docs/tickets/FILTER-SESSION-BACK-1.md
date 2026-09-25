@@ -1,14 +1,11 @@
 # FILTER-SESSION-BACK-1 — preservar filtros al back; cold más suave; chart modal
 
-**Estado:** mergeado squash `d41edf4` · [#57](https://github.com/AFC1204-coder/Screener-Bursatil/pull/57) · smoke Mac **re-verify en vuelo** (evidence previa incompleta)  
-**Verify tests:** focalizados + ./vfc claim · CI SUCCESS
+**Estado:** **hecho** · polish `d41edf4` (#57) + TDZ fix `cc60740` (#58)  
+**Smoke:** PASS tip #58 `:3300` — mount OK · CORE v4×4 · back conserva custom · Vista rápida chart ~13 s
 
 ## Entregado
 
-- B: `preserveCriteria` en restore sesión v4 (back no pisa con Balanceado del scan)
+- B: `preserveCriteria` en restore sesión v4
 - A: CORE v4 4 capas; Balanceado más suave; US primero
 - C: prefetch/hydrate foco Vista rápida
-
-## Smoke
-
-Re-verify post-merge en :3000 tip limpio (orquestador).
+- Fix: `chartSettings` useState antes de `useQuickReviewSession` (TDZ post-#57)
