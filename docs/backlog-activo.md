@@ -4,18 +4,18 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-25 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `51f8a02` (idle post MH-MINI-RPC-1 / #56)  
-**Ahora:** FILTER-SESSION-BACK-1 (`prep`) — defaults agresivos · back pierde criterios · chart cola lento.  
-**Ticket:** `docs/tickets/FILTER-SESSION-BACK-1.md` · rama prog `cursor/filter-session-back-a41e`  
-**Cola fricción:** ENTRY·COLD·UX-EMPTY·Review modal·MH-RPC **hechos** (#52–#56).  
+**Última sync / HEAD origin polish:** `d41edf4` (FILTER-SESSION-BACK-1 / #57 · smoke re-verify)  
+**Ahora:** FILTER-SESSION-BACK-1 (`hecho` código; `smoke` tip limpio :3000) — soft cold · preserveCriteria · modal chart.  
+**Ticket:** `docs/tickets/FILTER-SESSION-BACK-1.md`  
+**Cola fricción:** ENTRY·COLD·UX-EMPTY·Review·MH-RPC·FILTER-SESSION **hechos** (#52–#57; #57 smoke re-verify).  
 **Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
-**Último cerrado:** MH-MINI-RPC-1 — upsert_app_setting_newer_wins Mini (`da5092f` / #56 · tip docs `51f8a02`).  
-**Último cerrado (prev):** REVIEW-MODAL (`167f51d` / #55) · UX-EMPTY (`9e39b88` / #54).  
+**Último cerrado:** FILTER-SESSION-BACK-1 — soft cold + back session + modal chart (`d41edf4` / #57).  
+**Último cerrado (prev):** MH-MINI-RPC-1 (`da5092f` / #56) · REVIEW-MODAL (`167f51d` / #55).  
 **Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño).  
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso. `research/wave5-remeasure-2026-09-14/`.  
-**Nota HYDRATE:** Caza #51–#55 + MH Mini #56 cerrados; **Ahora** = FILTER-SESSION-BACK-1.  
+**Nota HYDRATE:** Caza #51–#56 + FILTER #57 en polish; smoke Mac tip limpio en vuelo.  
 **Daily Mini 2026-09-23:** PASS · US **504/3575**.  
 **Último cerrado (prev):** REACT-COMMIT-PERF-1 `a71607c` · SCANS-CHARTPREVIEW-1 `f420af6` · THEME `cac7b25`.  
 **Nota REACT-COMMIT residual:** A/B 1 rep; truth sin `filterMs`.  
