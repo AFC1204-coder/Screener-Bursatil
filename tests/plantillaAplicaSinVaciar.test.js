@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
-import { settingsForPreset } from "@/lib/screenerFilterCatalog";
+import { DEFAULT_FILTER_LAYERS, settingsForPreset } from "@/lib/screenerFilterCatalog";
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const readSource = (relative) => readFileSync(path.join(repoRoot, relative), "utf8");
@@ -102,6 +102,9 @@ describe("templateSnapshotAssessment · la plantilla se evalúa sobre el snapsho
     const analyzedRows = [filterReadyRow("PASA"), filterReadyRow("PASB")];
     const impossible = templateConfig({
       settings: { ...settingsForPreset("balanced"), minRsRating: 100_000 },
+      // RS es opt-in (v4): sin la capa el umbral se neutraliza y no vaciaría.
+      filterLayers: { ...DEFAULT_FILTER_LAYERS, relativeStrength: true },
+      filterLayersVersion: 4,
     });
     const result = templateSnapshotAssessment(impossible, analyzedRows);
     expect(result.filteredCount).toBe(0);

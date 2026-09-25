@@ -22,6 +22,7 @@ import {
 } from "@/lib/screenerFilterCatalog";
 import {
   FILTER_LAYERS_CONTRACT_VERSION,
+  FILTER_LAYERS_MIN_RESTORABLE_VERSION,
   effectiveSettingsFromLayers,
   layerToggleImpact,
   buildFilterLayersUpgradeNotice,
@@ -243,14 +244,19 @@ describe("copy familia IPO (IPO-UX-C)", () => {
   });
 });
 
-describe("defaults conservadores (UX-FILTERS-8)", () => {
+describe("defaults conservadores (UX-FILTERS-8 + FILTER-SESSION-BACK-1 v4)", () => {
   it("núcleo on y familias opcionales off en frío", () => {
+    expect(CORE_LAYER_KEYS).toEqual(["liquidity", "trend", "score", "coverage"]);
     for (const key of CORE_LAYER_KEYS) {
       expect(DEFAULT_FILTER_LAYERS[key], `${key} debe estar on`).toBe(true);
     }
     for (const key of OPTIONAL_LAYER_KEYS) {
       expect(DEFAULT_FILTER_LAYERS[key], `${key} debe estar off`).toBe(false);
     }
+    expect(OPTIONAL_LAYER_KEYS).toEqual(expect.arrayContaining([
+      "momentum", "relativeStrength", "proximity", "volatility",
+      "pattern", "vcp", "volumeSurge", "riskReward", "shortInterest", "ipo",
+    ]));
     expect(Object.keys(DEFAULT_FILTER_LAYERS).sort()).toEqual(EXECUTION_LAYERS.map((layer) => layer.key).sort());
   });
 
@@ -266,6 +272,29 @@ describe("defaults conservadores (UX-FILTERS-8)", () => {
     const leaderLayers = filterLayersForPreset("balanced");
     expect(leaderLayers.pattern).toBe(false);
     expect(settingsForPreset("balanced").setupMode).toBe("leader");
+  });
+
+  it("filterLayersForPreset enciende capas exigidas por setupMode (nearPivot)", () => {
+    const near = filterLayersForPreset("nearPivot");
+    expect(near.proximity).toBe(true);
+    expect(near.momentum).toBe(true);
+    expect(near.pattern).toBe(false);
+    expect(effectiveSettingsFromLayers(settingsForPreset("nearPivot"), near, DEFAULT_FIELD_RULES).setupMode).toBe("nearPivot");
+  });
+
+  it("Balanceado frío: US primero + umbrales menos agresivos que v3", () => {
+    const balanced = settingsForPreset("balanced");
+    expect(balanced.minMarketCap).toBe(150000000);
+    expect(balanced.minAvgVolume).toBe(100000);
+    expect(balanced.minAvgTurnover).toBe(1000000);
+    expect(balanced.minWeinsteinScore).toBe(40);
+    expect(balanced.minMinerviniScore).toBe(30);
+    expect(balanced.minPerf3m).toBe(0);
+    const effective = effectiveSettingsFromLayers(balanced, DEFAULT_FILTER_LAYERS, DEFAULT_FIELD_RULES);
+    // Capas opt-in off → no cortan por momentum/RS/proximidad en frío.
+    expect(effective.minPerf3m).toBe(-100);
+    expect(effective.minRsRating).toBe(0);
+    expect(effective.maxDistance20dHigh).toBe(999);
   });
 
   it("sólo presets IPO encienden la capa ipo por override", () => {
@@ -354,11 +383,27 @@ describe("restoreFilterLayers · configuración guardada en el navegador", () =>
     expect(restoreFilterLayers(guardadoAntiguo, null, "weakness")).toEqual(filterLayersForPreset("weakness"));
   });
 
-  it("respeta las capas guardadas a partir de la v3", () => {
-    expect(restoreFilterLayers({ pattern: true }, FILTER_LAYERS_CONTRACT_VERSION, "balanced"))
+  it("respeta las capas guardadas a partir de la v3 (MIN_RESTORABLE)", () => {
+    expect(FILTER_LAYERS_CONTRACT_VERSION).toBe(4);
+    expect(FILTER_LAYERS_MIN_RESTORABLE_VERSION).toBe(3);
+    expect(restoreFilterLayers({ pattern: true }, 3, "balanced"))
       .toEqual({ ...filterLayersForPreset("balanced"), pattern: true });
+    expect(restoreFilterLayers({ proximity: true, momentum: true }, 3, "balanced"))
+      .toEqual({ ...filterLayersForPreset("balanced"), proximity: true, momentum: true });
     expect(restoreFilterLayers({ volumeSurge: true, riskReward: true }, FILTER_LAYERS_CONTRACT_VERSION, "strict"))
       .toEqual({ ...filterLayersForPreset("strict"), volumeSurge: true, riskReward: true });
+  });
+
+  it("una sesión v3 con proximity off sobrevive al bump v4 (no reinstala núcleo denso)", () => {
+    const restored = restoreFilterLayers(
+      { ...filterLayersForPreset("balanced"), proximity: false, momentum: false },
+      3,
+      "balanced",
+    );
+    expect(restored.proximity).toBe(false);
+    expect(restored.momentum).toBe(false);
+    expect(restored.liquidity).toBe(true);
+    expect(restored.trend).toBe(true);
   });
 
   it("no reencende capas obsoletas ni arrastra keys fuera del catálogo", () => {

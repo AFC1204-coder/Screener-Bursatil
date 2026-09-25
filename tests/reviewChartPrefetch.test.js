@@ -153,6 +153,14 @@ describe("REVIEW-CHART-PREFETCH-N1 — candados Review", () => {
     expect(hookSource).toContain("buildReviewChartPrefetchPlan");
   });
 
+  it("Vista rápida (modal) también prefetcha foco ± vecinos", () => {
+    const modalSession = sourceWithoutComments("../app/components/screener/useQuickReviewSession.js");
+    expect(modalSession).toContain("useReviewChartPrefetch");
+    expect(modalSession).toContain("kickoffReviewFocusChartWarmup");
+    expect(modalSession).toContain("includeFocus: true");
+    expect(modalSession).toContain("mergeReviewRowChartPreviews");
+  });
+
   it("useChartDataModel consume fetchChartCached (misma caché que prefetch)", () => {
     expect(chartModelSource).toContain("fetchChartCached");
     expect(chartModelSource).toMatch(/generationRef\.current !== generation/);

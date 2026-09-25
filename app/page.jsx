@@ -63,6 +63,7 @@ import { dropForeignMarketSnapshots, pickNightlyUsRestorableScan, restoredSnapsh
 import { nightlyAbsenceNotice, nightlyAbsenceReasonText, nightlyAbsenceStatus } from "@/lib/nightlyAbsence";
 import { screenerSessionDataExpired } from "@/lib/nightlyBoundary";
 import { shouldSkipCloudSnapshotRestore } from "@/lib/screenerRemountGuards";
+import { shouldPreserveSessionCriteriaOnSnapshotRestore } from "@/lib/screenerSessionActions";
 import { vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 import {
   ALL_FILTER_LAYERS,
@@ -327,6 +328,7 @@ export default function Page() {
   const quickReview = useQuickReviewSession({
     activeSettings,
     presetKey,
+    chartSettings,
     setStatus,
     persistScreenerSession,
     buildScreenerStockOpenContext,
@@ -584,8 +586,79 @@ export default function Page() {
     setSnapshotNotice(buildFilterLayersUpgradeNotice());
   }
 
-  function restoreSnapshot(scan, { source = "local", notice = null } = {}) {
+  function restoreSnapshot(scan, { source = "local", notice = null, preserveCriteria = false } = {}) {
     if (!scan || !Array.isArray(scan.rows) || !scan.rows.length) return false;
+    // Sesión v4 ya pintó criterios: solo datos (como applyFreshSnapshotData).
+    // Evita que ficha→back + restoreLatestSnapshot reinstale balanced/capas del scan.
+    if (preserveCriteria) {
+      resultsOwnerRef.current = source === "local" ? "session" : source;
+      const session = safeRead(STORAGE_KEYS.screenerSession, null);
+      const sessionMarkets = filterSelectableMarkets(
+        Array.isArray(session?.markets) && session.markets.length ? session.markets : DEFAULT_MARKETS,
+      );
+      const sessionManual = session?.manual || "";
+      const sessionScanMode = session?.scanMode || "all";
+      const sessionPresetRaw = PRESETS[session?.presetKey] ? session.presetKey : "balanced";
+      // Sin auto-intl/auto-balanced: los criterios de sesión ya se resolvieron en el boot.
+      const sessionPresetKey = sessionPresetRaw;
+      const sessionSettings = settingsForPreset(sessionPresetKey, session?.settings || {});
+      const sessionFilterLayers = restoreFilterLayers(
+        session?.filterLayers,
+        session?.filterLayersVersion,
+        sessionPresetKey,
+      );
+      const sessionFieldRules = { ...DEFAULT_FIELD_RULES, ...(session?.fieldRules || {}) };
+      const sessionUseRegimeFilter = session?.useRegimeFilter !== false;
+      const sessionActiveSettings = session?.activeSettings
+        || effectiveSettingsFromLayers(sessionSettings, sessionFilterLayers, sessionFieldRules);
+      const actualScannedMarkets = scannedMarketsFromScan(scan, scan.rows);
+      const signedMarkets = actualScannedMarkets.length ? actualScannedMarkets : [...sessionMarkets].sort();
+      const nextScanContext = {
+        id: scan.id || uid(),
+        cloudId: scan.cloudId || null,
+        chartPreviewScanIds: chartPreviewScanIdsFromScan(scan),
+        symbolsCount: scan.rows.length,
+        baseCount: scan.rows.length,
+        providerErrors: [],
+        scannedAt: scan.updatedAt || scan.createdAt || new Date().toISOString(),
+        snapshotSource: source === "cloud" ? "supabase" : "local",
+        snapshotRowsAreFiltered: snapshotRowsAreFiltered(scan),
+        chartPreviewTransport: scan.chartPreviewTransport || null,
+        settingsSignature: scanSettingsSignature(sessionMarkets, sessionManual, sessionScanMode),
+        scannedMarkets: signedMarkets,
+        scannedScanMode: sessionScanMode,
+        screenerFilters: screenerFiltersFromScan(scan),
+      };
+      const restoreFilterContext = {
+        ...nextScanContext,
+        marketHealth: session?.marketHealth || marketHealth,
+        useRegimeFilter: sessionUseRegimeFilter,
+      };
+      const restoredFilterView = withIpoDiscoveryWatchMerge(
+        restoredSnapshotView(scan, sessionActiveSettings, restoreFilterContext, filterAnalyzedRows),
+        { presetKey: sessionPresetKey, markets: sessionMarkets },
+      );
+      fastFilterSignatureRef.current = fastFilterSignature(scan.rows, sessionActiveSettings, restoreFilterContext);
+      setRows(restoredFilterView.rows);
+      setAnalyzedRows(scan.rows);
+      setScanContext(nextScanContext);
+      setDiagnostics(restoredFilterView.diagnostics);
+      setSnapshotNotice(resolveDeferredSnapshotNotice({
+        primary: notice,
+        filterLayersVersion: session?.filterLayersVersion ?? scan.filterLayersVersion,
+      }));
+      setScanPerf({
+        fullScanMs: null,
+        lastFilterMs: restoredFilterView.filterMs,
+        lastFastFilterMs: null,
+        estimatedSavedMs: null,
+        analyzedRows: scan.rows.length,
+        scannedSymbols: scan.rows.length,
+        fastRefilters: 0,
+      });
+      statusContextRef.current = `Datos del escaneo nocturno (${dateTime(nextScanContext.scannedAt)}); tus filtros se mantienen`;
+      return true;
+    }
     resultsOwnerRef.current = source;
     const actualScannedMarkets = scannedMarketsFromScan(scan, scan.rows);
     const restoredPresetKeyRaw = PRESETS[scan.preset] ? scan.preset : "balanced";
@@ -680,7 +753,7 @@ export default function Page() {
   // más reciente del navegador. Cuando ese escaneo no está, la pantalla lo dice
   // con su motivo y se queda vacía; sustituirlo en silencio es lo que rompió el
   // arranque el 16 de agosto de 2026.
-  function restoreLatestSnapshot({ isCancelled = () => false } = {}) {
+  function restoreLatestSnapshot({ isCancelled = () => false, preserveCriteria = false } = {}) {
     setRestoringScan(true);
     setStatus("Cargando el escaneo nocturno...");
     const session = safeRead(STORAGE_KEYS.screenerSession, null);
@@ -696,11 +769,15 @@ export default function Page() {
       if (!localScan) return false;
       const sampled = localScanIsSampled(localScan);
       const notice = buildLocalFallbackNotice({ rawMessage, configured, scan: localScan });
-      const restored = restoreSnapshot(localScan, { source: "local", notice });
+      const restored = restoreSnapshot(localScan, { source: "local", notice, preserveCriteria });
       if (restored) {
         setStatus(sampled
-          ? `Última copia local cargada: ${localScan.rows.length} de ${localScan.rowsAvailable} acciones (muestra repartida). Los filtros se aplican al momento sobre estos datos.`
-          : `Última copia local cargada: ${localScan.rows.length} acciones. Los filtros se aplican al momento sobre estos datos.`);
+          ? preserveCriteria
+            ? `Última copia local cargada: ${localScan.rows.length} de ${localScan.rowsAvailable} acciones (muestra repartida). Tus filtros se mantienen.`
+            : `Última copia local cargada: ${localScan.rows.length} de ${localScan.rowsAvailable} acciones (muestra repartida). Los filtros se aplican al momento sobre estos datos.`
+          : preserveCriteria
+            ? `Última copia local cargada: ${localScan.rows.length} acciones. Tus filtros se mantienen.`
+            : `Última copia local cargada: ${localScan.rows.length} acciones. Los filtros se aplican al momento sobre estos datos.`);
       }
       return restored;
     };
@@ -742,7 +819,7 @@ export default function Page() {
       const notice = buildSnapshotFreshnessNotice(result.data, scan);
       const storedScans = safeRead(STORAGE_KEYS.scans, []);
       persistLocalScans([scan, ...(Array.isArray(storedScans) ? storedScans.filter((item) => item?.id !== scan.id) : [])], { remoteConfigured: result.configured !== false });
-      restoreSnapshot(scan, { source: "cloud", notice });
+      restoreSnapshot(scan, { source: "cloud", notice, preserveCriteria });
       const hydrateGen = ++rsHydrateGenRef.current;
       markRsBootstrapCoreReady();
       beginExtendedRsHydration({
@@ -754,7 +831,9 @@ export default function Page() {
         ? `Última copia cacheada cargada: ${scan.rows.length} acciones. La nube no respondió al refrescar.`
         : notice?.truncated
           ? `Últimos datos de la nube cargados: ${scan.rows.length} de ${notice.rowsAvailable} acciones (parcial).`
-          : `Últimos datos de la nube cargados: ${scan.rows.length} acciones. Los filtros se aplican al momento sobre este universo estable.`);
+          : preserveCriteria
+            ? `Últimos datos de la nube cargados: ${scan.rows.length} acciones. Tus filtros se mantienen.`
+            : `Últimos datos de la nube cargados: ${scan.rows.length} acciones. Los filtros se aplican al momento sobre este universo estable.`);
     }).catch((error) => {
       console.error("[snapshot] fallo al leer la copia en la nube:", error);
       if (isCancelled()) return;
@@ -1085,7 +1164,10 @@ export default function Page() {
       })
       : null;
     if (!restoredRowsCount) {
-      restoreLatestSnapshot({ isCancelled: () => cancelled });
+      restoreLatestSnapshot({
+        isCancelled: () => cancelled,
+        preserveCriteria: shouldPreserveSessionCriteriaOnSnapshotRestore(session),
+      });
     } else if (refreshReason && !restoreMarketAlignRef.current) {
       // P1: datos anteriores a la frontera nocturna. P2: copia local muestreada
       // (fitScansForBrowser deja ~576 de ~3309). Las dos disparan el MISMO
@@ -1424,11 +1506,16 @@ export default function Page() {
     });
     // Caza: solo ventana hunt (viewport+buffer / default ~25). No unir mesa
     // pagedRows ni quickReview — eso disparaba POST de 80 al entrar (#51 residual).
-    const symbols = collectSymbolsForChartPreviewHydrate(
+    // Mesa/modal: priorizar símbolo del foco de Vista rápida al frente del batch.
+    const focusSymbol = String(activeModalRow?.symbol || "").trim().toUpperCase();
+    const symbolsRaw = collectSymbolsForChartPreviewHydrate(
       cazaMode
         ? { huntRows: huntWindowRows }
         : { pagedRows, quickReviewRows, huntRows: huntWindowRows },
     );
+    const symbols = (!cazaMode && focusSymbol && symbolsRaw.includes(focusSymbol))
+      ? [focusSymbol, ...symbolsRaw.filter((symbol) => symbol !== focusSymbol)]
+      : symbolsRaw;
     const queueSignature = buildChartPreviewQueueSignature({
       presetKey,
       rowCount: huntQueueRows.length,
@@ -1466,6 +1553,7 @@ export default function Page() {
     filtered,
     pagedRows,
     quickReviewRows,
+    activeModalRow?.symbol,
   ]);
 
   useEffect(() => {
@@ -3149,7 +3237,7 @@ export default function Page() {
     />}
 
     <QuickReviewModal
-      activeModalRow={activeModalRow}
+      activeModalRow={modalReviewRows[modalReviewPosition] || activeModalRow}
       chartListId={chartListId}
       chartScope={effectiveChartScope}
       chartSettings={chartSettings}

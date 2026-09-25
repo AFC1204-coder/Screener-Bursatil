@@ -194,10 +194,13 @@ describe("restoreFamilyIntensity · cosmética pura", () => {
   it("inferencia fallida → personalizado (custom) con slider en 50, sin tocar settings", () => {
     const settings = { ...settingsForPreset("balanced"), minRsRating: 72 };
     const fieldRules = { ...DEFAULT_FIELD_RULES, minRsRating: true };
+    // relativeStrength es opt-in (v4): hay que encenderla para que el umbral
+    // personalizado llegue a effectiveSettings.
     const resolved = resolveStoredFilterConfig({
       presetKey: "balanced",
       settings,
       fieldRules,
+      filterLayers: { ...DEFAULT_FILTER_LAYERS, relativeStrength: true },
       filterLayersVersion: FILTER_LAYERS_CONTRACT_VERSION,
     });
     expect(resolved.familyIntensity.relativeStrength).toBe(50);
