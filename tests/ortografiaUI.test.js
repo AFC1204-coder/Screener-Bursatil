@@ -57,7 +57,7 @@ const MISSPELLED = {
   pais: "país", paises: "países", Pais: "País", Paises: "Países",
   ultimo: "último", ultima: "última", Ultimo: "Último", Ultima: "Última",
   unica: "única", unicas: "únicas", unico: "único",
-  Anadir: "Añadir", anadir: "añadir", anadidos: "añadidos", anadido: "añadido", anade: "añade",
+  Anadir: "Añadir", anadir: "añadir", anadidos: "añadidos", anadido: "añadido", anadida: "añadida", anade: "añade",
   todavia: "todavía", Todavia: "Todavía",
   grafico: "gráfico", graficos: "gráficos", Grafico: "Gráfico", grafica: "gráfica",
   metrica: "métrica", metricas: "métricas", Metrica: "Métrica", Metricas: "Métricas",
