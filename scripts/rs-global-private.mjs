@@ -51,7 +51,8 @@
 // Uso:
 //   node --env-file=.env.local --loader ./scripts/loader.mjs \
 //     scripts/rs-global-private.mjs [--dry-run] [--write] [--limit=N] \
-//     [--concurrency=8] [--min-sample=20] [--markets=HK,CA] [--skip-us]
+//     [--concurrency=8] [--min-sample=20] [--markets=HK,CA] [--skip-us] \
+//     [--snapshot-date=YYYY-MM-DD]
 
 import { pathToFileURL } from "node:url";
 
@@ -71,6 +72,7 @@ import {
   pickFxObservation,
 } from "@/lib/rsFx.js";
 import { GLOBAL_RS_INTL_MARKETS, intlUniverseRows, universeFingerprint } from "@/lib/rsGlobalUniverse.js";
+import { defaultSnapshotDate, isValidSnapshotDate } from "@/lib/rsSnapshotDate.js";
 
 // ── Constantes de metodología — IDÉNTICAS al motor US, a propósito ────────
 // Cambiar cualquiera de estas es cambiar la métrica, y eso exige
@@ -113,6 +115,7 @@ export function parseArgs(argv) {
     markets: GLOBAL_RS_INTL_MARKETS,
     skipUs: false,
     persistExclusions: true,
+    snapshotDate: "",
   };
   for (const arg of argv) {
     const [rawKey, rawValue] = arg.replace(/^--/, "").split("=");
@@ -125,6 +128,7 @@ export function parseArgs(argv) {
     else if (key === "markets") out.markets = String(rawValue || "").split(",").map((m) => m.trim().toUpperCase()).filter(Boolean);
     else if (key === "skip-us") out.skipUs = rawValue === undefined ? true : rawValue !== "false";
     else if (key === "persist-exclusions") out.persistExclusions = rawValue !== "false";
+    else if (key === "snapshot-date") out.snapshotDate = String(rawValue || "").trim();
     else if (key === "as-of") {
       // Deliberadamente rechazado, no ignorado: el spec PROHÍBE el backfill
       // histórico as-of bajo este engine_version (Yahoo no demuestra
@@ -468,9 +472,18 @@ async function main() {
     process.exit(1);
   }
 
-  const targetDate = toDate(new Date().toISOString());
+  const today = toDate(new Date().toISOString());
+  // snapshot_date fecha el snapshot; el week_key sale de ella (semana ISO).
+  // Por defecto, el domingo anterior (o hoy si hoy es domingo) — la misma
+  // fecha que producían las corridas de domingo de Actions.
+  const targetDate = args.snapshotDate || defaultSnapshotDate(today);
+  if (!isValidSnapshotDate(targetDate)) {
+    console.error(`Error: --snapshot-date no es una fecha válida (YYYY-MM-DD): "${args.snapshotDate}"`);
+    process.exit(1);
+  }
   console.log(`=== rs-global-private.mjs — engine=${PRIVATE_GLOBAL_RS_ENGINE_VERSION} modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"} ===`);
   console.log(`Base: ${FX_BASE_CURRENCY} · fxMaxAge=${FX_MAX_AGE_SESSIONS} sesiones · min-sample=${args.minSample}`);
+  console.log(`snapshot_date: ${targetDate}${args.snapshotDate ? " (--snapshot-date)" : " (domingo anterior)"}`);
 
   // Universo: US + intl curado.
   let usRows = [];

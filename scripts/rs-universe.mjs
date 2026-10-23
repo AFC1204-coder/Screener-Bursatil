@@ -6,6 +6,7 @@
 //   node --env-file=.env.local --loader ./scripts/loader.mjs \
 //     scripts/rs-universe.mjs --population=equity [--dry-run] [--write] \
 //     [--limit=N] [--concurrency=8] [--min-sample=20] [--as-of=YYYY-MM-DD]
+//     [--snapshot-date=YYYY-MM-DD]
 //
 // Por defecto corre en --dry-run (calcula y reporta, no escribe). Escribir
 // en Supabase exige --write explícito.
@@ -42,6 +43,7 @@
 import { percentileFromSorted, clamp } from "@/lib/relativeStrength.js";
 import { supabaseConfig, supabaseRequest, finiteOrNull, toDate } from "@/lib/supabaseServer.js";
 import { detectPriceDiscontinuities } from "@/lib/indicators.js";
+import { defaultSnapshotDate, isValidSnapshotDate } from "@/lib/rsSnapshotDate.js";
 
 // ── Constantes de diseño, citadas y justificadas en el ADR ─────────────
 
@@ -106,6 +108,7 @@ function parseArgs(argv) {
     concurrency: 8,
     minSample: DEFAULT_MIN_SAMPLE,
     asOf: "",
+    snapshotDate: "",
   };
   for (const arg of argv) {
     const [rawKey, rawValue] = arg.replace(/^--/, "").split("=");
@@ -117,6 +120,7 @@ function parseArgs(argv) {
     else if (key === "concurrency") out.concurrency = Math.max(1, Number(rawValue) || 8);
     else if (key === "min-sample") out.minSample = Math.max(1, Number(rawValue) || DEFAULT_MIN_SAMPLE);
     else if (key === "as-of") out.asOf = String(rawValue || "").trim();
+    else if (key === "snapshot-date") out.snapshotDate = String(rawValue || "").trim();
   }
   // --write gana sobre el default dry-run=true, pero si además se pasa
   // --dry-run=true explícito junto a --write, dry-run manda (más seguro).
@@ -129,7 +133,7 @@ function usageAndExit(message) {
   console.error([
     "Uso:",
     "  node --env-file=.env.local --loader ./scripts/loader.mjs scripts/rs-universe.mjs \\",
-    "    --population=equity|etf [--dry-run] [--write] [--limit=N] [--concurrency=8] [--min-sample=20] [--as-of=YYYY-MM-DD]",
+    "    --population=equity|etf [--dry-run] [--write] [--limit=N] [--concurrency=8] [--min-sample=20] [--as-of=YYYY-MM-DD] [--snapshot-date=YYYY-MM-DD]",
     "",
     "Por defecto corre en --dry-run (no escribe). --write exige confirmarlo explícitamente.",
   ].join("\n"));
@@ -382,16 +386,25 @@ async function main() {
     process.exit(1);
   }
 
-  // targetDate gobierna tres cosas: el recorte de barras (fetchBarsForSymbol),
-  // y snapshot_date/week_key si se escribe. Sin --as-of es hoy, exactamente
-  // el comportamiento previo a este parámetro.
-  let targetDate = toDate(new Date().toISOString());
+  // Dos fechas distintas, antes confundidas en una sola:
+  //   asOfDate    → la ventana de datos (recorta las barras a trade_date <= as-of).
+  //   snapshotDate → la etiqueta del snapshot (snapshot_date/week_key).
+  // --as-of sigue mandando en las dos (comportamiento histórico: el motor US
+  // congelado fechaba el snapshot en el as-of). --snapshot-date permite fechar
+  // el snapshot sin tocar la ventana de datos; sin ninguno, el domingo
+  // anterior (o hoy si hoy es domingo).
+  let asOfDate = "";
   if (args.asOf) {
-    targetDate = toDate(args.asOf);
-    if (!targetDate) usageAndExit(`--as-of no es una fecha válida: "${args.asOf}"`);
+    asOfDate = toDate(args.asOf);
+    if (!asOfDate) usageAndExit(`--as-of no es una fecha válida: "${args.asOf}"`);
+  }
+  const snapshotDate = args.snapshotDate || asOfDate || defaultSnapshotDate(toDate(new Date().toISOString()));
+  if (!isValidSnapshotDate(snapshotDate)) {
+    usageAndExit(`--snapshot-date no es una fecha válida (YYYY-MM-DD): "${args.snapshotDate}"`);
   }
 
-  console.log(`=== rs-universe.mjs — población=${args.population} modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"}${args.asOf ? ` as-of=${targetDate}` : ""} ===`);
+  console.log(`=== rs-universe.mjs — población=${args.population} modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"}${args.asOf ? ` as-of=${asOfDate}` : ""} ===`);
+  console.log(`snapshot_date: ${snapshotDate}${args.snapshotDate ? " (--snapshot-date)" : asOfDate ? " (as-of)" : " (domingo anterior)"}`);
 
   const { snapshotId: universeSnapshotId, asOf } = await fetchLatestUsSnapshotId(config);
   console.log(`Instantánea de universo usada: ${universeSnapshotId} (creada ${asOf})`);
@@ -415,7 +428,7 @@ async function main() {
   // instantánea histórica de universo que consultar). Se reporta como
   // limitación conocida, no se resuelve aquí — ver informe final.
   const computed = await mapLimit(requestedPopulation, args.concurrency, async (row) => {
-    const bars = await fetchBarsForSymbol(config, row.symbol, args.asOf ? targetDate : "");
+    const bars = await fetchBarsForSymbol(config, row.symbol, asOfDate);
     const result = computeReturns(bars);
     return { ...row, ...result };
   });
@@ -469,8 +482,7 @@ async function main() {
   }
 
   if (args.write && !args.dryRun) {
-    const snapshotDate = targetDate;
-    const weekKey = isoWeekKey(new Date(`${targetDate}T00:00:00Z`));
+    const weekKey = isoWeekKey(new Date(`${snapshotDate}T00:00:00Z`));
     const engineVersion = ENGINE_VERSION_BY_POPULATION[args.population];
     console.log("");
     console.log(`Escribiendo snapshot ${weekKey} (${snapshotDate}) engine_version=${engineVersion}${args.asOf ? " [as-of]" : ""} ...`);

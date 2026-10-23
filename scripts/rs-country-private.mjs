@@ -8,7 +8,8 @@
 // Uso:
 //   node --env-file=.env.local --loader ./scripts/loader.mjs \
 //     scripts/rs-country-private.mjs [--dry-run] [--write] [--limit=N] \
-//     [--concurrency=8] [--min-sample=20] [--markets=HK,CA]
+//     [--concurrency=8] [--min-sample=20] [--markets=HK,CA] \
+//     [--snapshot-date=YYYY-MM-DD]
 
 import { pathToFileURL } from "node:url";
 
@@ -19,6 +20,7 @@ import { intlCountryRsEngineVersion } from "@/lib/rsEngines.js";
 import { MARKET_CURRENCY, normalizeCurrencyUnit } from "@/lib/rsFx.js";
 import { GLOBAL_RS_INTL_MARKETS, universeFingerprint } from "@/lib/rsGlobalUniverse.js";
 import { marketSymbols } from "@/lib/universes.js";
+import { defaultSnapshotDate, isValidSnapshotDate } from "@/lib/rsSnapshotDate.js";
 
 const RETURN_WINDOWS_WEEKS = [13, 26, 39, 52];
 const RETURN_WEIGHTS = [0.4, 0.2, 0.2, 0.2];
@@ -44,6 +46,7 @@ export function parseArgs(argv) {
     minSample: DEFAULT_MIN_SAMPLE,
     markets: GLOBAL_RS_INTL_MARKETS,
     persistExclusions: true,
+    snapshotDate: "",
   };
   for (const arg of argv) {
     const [rawKey, rawValue] = arg.replace(/^--/, "").split("=");
@@ -57,6 +60,7 @@ export function parseArgs(argv) {
       out.markets = String(rawValue || "").split(",").map((m) => m.trim().toUpperCase()).filter(Boolean);
     }
     else if (key === "persist-exclusions") out.persistExclusions = rawValue !== "false";
+    else if (key === "snapshot-date") out.snapshotDate = String(rawValue || "").trim();
   }
   if (out.write && !argv.some((a) => a.startsWith("--dry-run"))) out.dryRun = false;
   return out;
@@ -312,8 +316,16 @@ async function main() {
     console.error("Supabase no configurado. Faltan:", config.missing.join(", "));
     process.exit(1);
   }
-  const targetDate = toDate(new Date().toISOString());
+  const today = toDate(new Date().toISOString());
+  // snapshot_date fecha el snapshot; el week_key sale de ella (semana ISO).
+  // Por defecto, el domingo anterior (o hoy si hoy es domingo).
+  const targetDate = args.snapshotDate || defaultSnapshotDate(today);
+  if (!isValidSnapshotDate(targetDate)) {
+    console.error(`Error: --snapshot-date no es una fecha válida (YYYY-MM-DD): "${args.snapshotDate}"`);
+    process.exit(1);
+  }
   console.log(`=== rs-country-private.mjs — modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"} mercados=${args.markets.join(",")} ===`);
+  console.log(`snapshot_date: ${targetDate}${args.snapshotDate ? " (--snapshot-date)" : " (domingo anterior)"}`);
 
   const marketReports = [];
   for (const market of args.markets) {

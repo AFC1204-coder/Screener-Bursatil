@@ -16,6 +16,7 @@
 //     [--concurrency=8] [--min-sample=20] [--markets=HK,CA] [--skip-us] \
 //     [--themes=Software / IA,Semis / fotonica] \
 //     [--backfill-weeks=7] [--week-keys=2026-W29,2026-W30] [--skip-existing=true]
+//     [--snapshot-date=YYYY-MM-DD]
 
 import { pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
@@ -31,6 +32,7 @@ import {
   THEME_SAMPLE_INSUFFICIENT,
 } from "@/lib/themeRsAssign.js";
 import { GLOBAL_RS_INTL_MARKETS, intlUniverseRows, universeFingerprint } from "@/lib/rsGlobalUniverse.js";
+import { defaultSnapshotDate, isValidSnapshotDate } from "@/lib/rsSnapshotDate.js";
 import { computeSymbol, parseArgs as parseGlobalArgs } from "@/scripts/rs-global-private.mjs";
 
 const EXCLUDED_RANK_INDEX = 0;
@@ -441,8 +443,17 @@ async function main() {
     process.exit(1);
   }
 
-  const anchorDate = toDate(new Date().toISOString());
+  // anchorDate gobierna la semana (week_key), la fecha del snapshot Y el
+  // truncado de barras (aquí snapshot_date es el as-of por diseño). Por
+  // defecto, el domingo anterior (o hoy si hoy es domingo); --snapshot-date
+  // fija una fecha concreta. El flag lo parsea parseGlobalArgs (heredado).
+  const anchorDate = args.snapshotDate || defaultSnapshotDate(toDate(new Date().toISOString()));
+  if (!isValidSnapshotDate(anchorDate)) {
+    console.error(`Error: --snapshot-date no es una fecha válida (YYYY-MM-DD): "${args.snapshotDate}"`);
+    process.exit(1);
+  }
   console.log(`=== rs-theme-private.mjs — modo=${args.write && !args.dryRun ? "WRITE" : "dry-run"} themes=${args.themes.length} ===`);
+  console.log(`snapshot_date: ${anchorDate}${args.snapshotDate ? " (--snapshot-date)" : " (domingo anterior)"}`);
 
   let usRows = [];
   let usSnapshotId = "";
@@ -497,8 +508,14 @@ async function main() {
     };
   });
 
+  // El backfill se ancla en HOY (no en el domingo por defecto): su regla es
+  // "las N semanas anteriores, excluida la semana del ancla", y con un ancla
+  // de domingo se quedaría fuera la última semana completa. Con --week-keys
+  // las semanas son explícitas y el ancla da igual. Sin backfill, la semana es
+  // la del anchorDate (domingo por defecto).
+  const backfillAnchor = args.snapshotDate || toDate(new Date().toISOString());
   const weekRuns = (args.backfillWeeks > 0 || args.weekKeys.length)
-    ? weekTargetsForBackfill(anchorDate, args.backfillWeeks, args.weekKeys)
+    ? weekTargetsForBackfill(backfillAnchor, args.backfillWeeks, args.weekKeys)
     : [{
       weekKey: isoWeekKey(new Date(`${anchorDate}T00:00:00Z`)),
       snapshotDate: anchorDate,
