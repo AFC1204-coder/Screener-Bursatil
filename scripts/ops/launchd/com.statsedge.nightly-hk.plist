@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Escaneo diario de Hong Kong (solo líquidos). NO instalado: copiar a
+  ~/Library/LaunchAgents y cargar solo cuando el usuario lo apruebe.
+  HK cierra a las 09:00 CET (invierno) / 10:00 CEST (verano): 10:15 hora local
+  cubre ambos. Plan: research/operacion-diaria-2026-11/plan-hong-kong-liquidos.md
+  Instalar:  launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.statsedge.nightly-hk.plist
+  Quitar:    launchctl bootout   gui/$(id -u)/com.statsedge.nightly-hk
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.statsedge.nightly-hk</string>
+  <key>ProgramArguments</key>
+  <array><string>/Users/cristian/Statsedge-v0.1/scripts/ops/nightly-hk-guard.sh</string></array>
+  <key>WorkingDirectory</key><string>/Users/cristian/Statsedge-v0.1</string>
+  <key>EnvironmentVariables</key>
+  <dict><key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string></dict>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>10</integer><key>Minute</key><integer>15</integer></dict>
+  <key>RunAtLoad</key><false/>
+  <key>StandardOutPath</key><string>/Users/cristian/Statsedge-v0.1/logs/nightly-hk.launchd.out.log</string>
+  <key>StandardErrorPath</key><string>/Users/cristian/Statsedge-v0.1/logs/nightly-hk.launchd.err.log</string>
+</dict>
+</plist>
