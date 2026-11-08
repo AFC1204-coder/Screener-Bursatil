@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Backup nocturno de la base statsedge del Mini. NO instalado: copiar a
+  ~/Library/LaunchAgents y cargar solo cuando el usuario lo apruebe.
+  03:30 hora local: no choca con el nocturno US (05:00), con la ventana 04:45-08:00
+  ni con los cron de las 22:05/22:20. Plan: research/operacion-diaria-2026-11/plan-backup-db.md
+  Instalar:  launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.statsedge.db-backup.plist
+  Quitar:    launchctl bootout   gui/$(id -u)/com.statsedge.db-backup
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.statsedge.db-backup</string>
+  <key>ProgramArguments</key>
+  <array><string>/Users/cristian/Statsedge-v0.1/scripts/ops/backup-db.sh</string></array>
+  <key>WorkingDirectory</key><string>/Users/cristian/Statsedge-v0.1</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>STATSEDGE_BACKUP_UPLOAD_CMD</key><string>/Users/cristian/Statsedge-v0.1/scripts/ops/backup-upload-drive.sh</string>
+  </dict>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>3</integer><key>Minute</key><integer>30</integer></dict>
+  <key>RunAtLoad</key><false/>
+  <key>StandardOutPath</key><string>/Users/cristian/Statsedge-v0.1/logs/db-backup.launchd.out.log</string>
+  <key>StandardErrorPath</key><string>/Users/cristian/Statsedge-v0.1/logs/db-backup.launchd.err.log</string>
+</dict>
+</plist>
