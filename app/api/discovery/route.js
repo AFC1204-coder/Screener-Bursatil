@@ -1,5 +1,6 @@
 import { buildDiscoverySnapshot, dataAsOfFrom, rsAsOfFrom } from "@/lib/discovery";
 import { discoveryCacheKeyForParams, readMaterializedDiscoverySnapshot } from "@/lib/discoveryCache";
+import { compressedJsonResponse } from "@/lib/compressedJsonResponse";
 import { attachWeeklyRs, readGlobalRsForSymbols } from "@/lib/globalRs";
 import { readNightlyUsScanRows, readScanRows } from "@/lib/leaderboards";
 
@@ -200,7 +201,7 @@ export async function GET(request) {
         // El snapshot cacheado congela el RS del día en que se materializó,
         // y el ranking es semanal: se rehidrata al servir, igual que hace
         // /api/leaderboards con su caché.
-        return Response.json(apiPayload({
+        return compressedJsonResponse(request, apiPayload({
           configured: true,
           ...(await withWeeklyRsSnapshot(cached.payload)),
           dataAsOf: dataAsOfFrom(cached.payload),
@@ -223,7 +224,7 @@ export async function GET(request) {
 
     const { scanData, degraded, fallback, read } = await readDiscoveryScanRows(params);
     if (!scanData.configured) {
-      return Response.json(apiPayload({
+      return compressedJsonResponse(request, apiPayload({
         configured: false,
         source: "local_snapshot_fallback_required",
         message: scanData.message || "Sin ranking en vivo: Sectores y Listas usan la copia local.",
@@ -253,7 +254,7 @@ export async function GET(request) {
     // servir otro escaneo sería exactamente lo que este anclaje evita.
     const nightly = scanData.nightly;
     if (nightly && (!nightly.found || nightly.empty)) {
-      return Response.json(apiPayload({
+      return compressedJsonResponse(request, apiPayload({
         configured: true,
         source: "nightly_us_unavailable",
         message: NIGHTLY_ABSENCE_MESSAGE[nightly.reason] || (nightly.empty ? NIGHTLY_ABSENCE_MESSAGE.empty : NIGHTLY_ABSENCE_MESSAGE.default),
@@ -293,7 +294,7 @@ export async function GET(request) {
         note: `${health?.note || ""} Lectura acotada para mantener la respuesta interactiva: ${read.maxRows} filas max, ${read.sinceDays} dias.`,
       };
     }
-    return Response.json(apiPayload({
+    return compressedJsonResponse(request, apiPayload({
       configured: true,
       ownerId: scanData.ownerId,
       ...snapshot,
