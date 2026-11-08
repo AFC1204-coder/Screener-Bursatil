@@ -58,7 +58,7 @@ function StructureCell({ label, value, word = "", reason = "" }) {
 // no lo pinta (reparto de la cuarta iteración).
 export function GrowthGrid({ cells }) {
   return (
-    <div className="stockDescGrowthGrid" role="table" aria-label="Crecimiento trimestral, variación interanual">
+    <div className="stockDescGrowthGrid" role="table" aria-label="Crecimiento, variación interanual" style={{ "--growth-cols": Math.max(1, cells.length) }}>
       <span />
       {cells.map((cell, index) => (
         <span key={`h-${cell.date}`} className={`stockDescQuarterHead stockDescRamp${index + 1}`}>

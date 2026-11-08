@@ -169,11 +169,16 @@ export default function ChartIdentityCard({ card = null, quote = null }) {
 
           {/* Crecimiento trimestral, compactado (rampa de la franja). */}
           <div className="chartIdCardGrowth">
-            <span className="chartIdCardGrowthLabel">Crecimiento trimestral · % interanual</span>
+            <span className="chartIdCardGrowthLabel">{!growth?.usable && growth?.annual ? "Crecimiento anual · % interanual" : "Crecimiento trimestral · % interanual"}</span>
             {growth?.usable ? (
               <GrowthGrid cells={growth.cells} />
+            ) : growth?.annual ? (
+              <>
+                <GrowthGrid cells={growth.annual.cells} />
+                {growth.absenceReason ? <span className="chartIdCardGrowthNote" title={growth.absenceReason}>{growth.absenceReason}</span> : null}
+              </>
             ) : (
-              <Absent reason={DESCRIPTIVE_ABSENCE.quarters} />
+              <Absent reason={growth?.absenceReason || DESCRIPTIVE_ABSENCE.quarters} />
             )}
           </div>
         </div>

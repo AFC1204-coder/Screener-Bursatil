@@ -8,6 +8,7 @@ import DescriptiveStrip from "./DescriptiveStrip";
 import { compactDate } from "@/app/components/ui/QualityStrip";
 import { InfoHint } from "@/app/components/ui/InfoHint";
 import { amount, dateShort, dateTime, num as sharedNum, pct as sharedPct, pctShare, priceMoney as sharedPriceMoney, signedPriceMoney as sharedSignedPriceMoney } from "@/lib/formatters";
+import { debtToEquityDisplay, dividendYieldDisplay, marginDisplay, multipleDisplay, percentDisplay, roeDisplay } from "@/lib/fundamentalsDisplay";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
 import { buildChartIdentityCard } from "@/lib/chartIdentityCard";
@@ -932,21 +933,21 @@ function FundamentalSnapshot({ data = {}, growth = {}, valuation = {}, quote = {
   const displayCurrency = currency || data.currency || "Moneda no disponible";
   const rows = [
     ["Valoracion", "Capitalizacion", money(data.marketCap, data.marketCapCurrency || data.currency)],
-    ["Valoracion", "P/E fwd", ratio(finiteValue(valuation.forwardPe, valuation.forwardPE))],
+    ["Valoracion", "P/E fwd", asText(multipleDisplay(finiteValue(valuation.forwardPe, valuation.forwardPE), { earnings: earningsTtm, format: (n) => ratio(n) }))],
     ["Valoracion", "P/S", ratio(valuation.priceToSales)],
     ["Valoracion", "EV/EBITDA", ratio(valuation.enterpriseToEbitda)],
-    ["Valoracion", "Div. yield", pct(valuation.dividendYield)],
-    ["Rentabilidad", "Margen bruto", pct(growth.grossMargin)],
-    ["Rentabilidad", "Margen operativo", pct(growth.operatingMargin)],
-    ["Rentabilidad", "Margen neto", pct(growth.profitMargin)],
-    ["Rentabilidad", "ROE", pct(growth.roe)],
-    ["Balance", "Deuda/Equity", ratio(growth.debtToEquity)],
+    ["Valoracion", "Div. yield", asText(dividendYieldDisplay(valuation.dividendYield))],
+    ["Rentabilidad", "Margen bruto", asText(marginDisplay(growth.grossMargin, { revenue }))],
+    ["Rentabilidad", "Margen operativo", asText(marginDisplay(growth.operatingMargin, { revenue }))],
+    ["Rentabilidad", "Margen neto", asText(marginDisplay(growth.profitMargin, { revenue }))],
+    ["Rentabilidad", "ROE", asText(roeDisplay(growth.roe, { equity, profitMargin: growth.profitMargin }))],
+    ["Balance", "Deuda/Equity", asText(debtToEquityDisplay(growth.debtToEquity, { equity, format: (n) => `${sharedNum(n / 100, 2)}x` }))],
     ["Balance", "Current ratio", ratio(growth.currentRatio)],
     ["Balance", "Caja", money(balance.cash ?? latest.cash, displayCurrency)],
     ["Balance", "Deuda total", money(balance.totalDebt ?? latest.totalDebt, displayCurrency)],
     ["Balance", "Free cash flow", money(cashflow.freeCashFlow ?? latest.freeCashFlow, displayCurrency)],
     ["Estructura", "Acciones", fmt(valuation.sharesOutstanding || growth.sharesOutstanding)],
-    ["Estructura", metricShortLabel("shortPercentOfFloat"), pct(growth.shortPercentOfFloat)],
+    ["Estructura", metricShortLabel("shortPercentOfFloat"), asText(percentDisplay(growth.shortPercentOfFloat, { reason: "Sin dato de Yahoo para este mercado" }))],
   ];
   return <div className="tableWrap statementMatrix metricsStatementMatrix">
     <table className="table">
@@ -1058,6 +1059,12 @@ function technicalSnapshotFromBars(bars = [], quote = {}) {
   const last252 = rows.slice(-252);
   const sma50 = average(last50.map((row) => row.close));
   const sma200 = average(last200.map((row) => row.close));
+  // Exposición honesta (lib/fundamentalsDisplay.js): 0 ≠ vacío, patrimonio
+  // negativo sin ratio, ausencias con motivo. Yahoo da deuda/patrimonio en %.
+  const equity = finiteValue(balance.equity, latest.equity);
+  const revenue = latest.revenue;
+  const earningsTtm = valuation.epsTrailingTwelveMonths;
+  const asText = (d) => d.text;
   const avgVolume50 = average(last50.map((row) => row.volume));
   const high52w = Math.max(...last252.map((row) => row.high).filter(Number.isFinite), 0);
   return {
