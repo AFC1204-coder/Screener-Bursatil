@@ -1,0 +1,4609 @@
+{
+ "generatedAt": "2026-11-07T23:29:23.327Z",
+ "market": "HK",
+ "minTurnoverHKD": 5000000,
+ "sessions": 60,
+ "minSessions": 20,
+ "universePassed": 2764,
+ "withBars": 2678,
+ "curated": "76 curados del RS global",
+ "count": 766,
+ "symbols": [
+  {
+   "symbol": "0700.HK",
+   "medianTurnover": 8500283840,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9988.HK",
+   "medianTurnover": 6291405815,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2513.HK",
+   "medianTurnover": 5482573581,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6869.HK",
+   "medianTurnover": 4744439787,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1888.HK",
+   "medianTurnover": 4421296072,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0981.HK",
+   "medianTurnover": 3333571854,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1810.HK",
+   "medianTurnover": 3272778650,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0992.HK",
+   "medianTurnover": 2707295585,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0100.HK",
+   "medianTurnover": 2584193949,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3986.HK",
+   "medianTurnover": 2541825692,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9992.HK",
+   "medianTurnover": 2317353694,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1347.HK",
+   "medianTurnover": 2144369075,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3750.HK",
+   "medianTurnover": 2122085766,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3690.HK",
+   "medianTurnover": 2067424421,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1299.HK",
+   "medianTurnover": 2026569562,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0939.HK",
+   "medianTurnover": 1812835432,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2318.HK",
+   "medianTurnover": 1779149009,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0148.HK",
+   "medianTurnover": 1757870311,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2269.HK",
+   "medianTurnover": 1564888138,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2476.HK",
+   "medianTurnover": 1553603913,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0005.HK",
+   "medianTurnover": 1525623045,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0883.HK",
+   "medianTurnover": 1492619514,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2628.HK",
+   "medianTurnover": 1394840242,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1211.HK",
+   "medianTurnover": 1381449221,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2899.HK",
+   "medianTurnover": 1330349739,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1398.HK",
+   "medianTurnover": 1201428817,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1801.HK",
+   "medianTurnover": 1194918824,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9999.HK",
+   "medianTurnover": 1175200811,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9926.HK",
+   "medianTurnover": 1148427202,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1024.HK",
+   "medianTurnover": 1143903633,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9903.HK",
+   "medianTurnover": 1126914093,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0388.HK",
+   "medianTurnover": 1119919478,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6166.HK",
+   "medianTurnover": 1065901364,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9888.HK",
+   "medianTurnover": 1010864388,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3988.HK",
+   "medianTurnover": 959273960,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9660.HK",
+   "medianTurnover": 913975051,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0941.HK",
+   "medianTurnover": 900835414,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6160.HK",
+   "medianTurnover": 876725387,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9961.HK",
+   "medianTurnover": 864496695,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9868.HK",
+   "medianTurnover": 861374267,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2359.HK",
+   "medianTurnover": 840586035,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2259.HK",
+   "medianTurnover": 838472401,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9880.HK",
+   "medianTurnover": 781898251,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0857.HK",
+   "medianTurnover": 747552140,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1548.HK",
+   "medianTurnover": 737271593,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6082.HK",
+   "medianTurnover": 706165644,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9618.HK",
+   "medianTurnover": 696215351,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3993.HK",
+   "medianTurnover": 694609594,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1093.HK",
+   "medianTurnover": 672829223,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6809.HK",
+   "medianTurnover": 668853729,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0020.HK",
+   "medianTurnover": 667151099,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0669.HK",
+   "medianTurnover": 655649671,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2338.HK",
+   "medianTurnover": 655403380,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6613.HK",
+   "medianTurnover": 633039347,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1378.HK",
+   "medianTurnover": 606879804,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6651.HK",
+   "medianTurnover": 604834240,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9626.HK",
+   "medianTurnover": 601331406,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0175.HK",
+   "medianTurnover": 587753871,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1109.HK",
+   "medianTurnover": 587086588,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2388.HK",
+   "medianTurnover": 581922213,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2577.HK",
+   "medianTurnover": 581444102,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2423.HK",
+   "medianTurnover": 549893468,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3968.HK",
+   "medianTurnover": 548280426,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2328.HK",
+   "medianTurnover": 541515896,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6181.HK",
+   "medianTurnover": 530493324,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1288.HK",
+   "medianTurnover": 516022884,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2020.HK",
+   "medianTurnover": 514821004,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0016.HK",
+   "medianTurnover": 508499371,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2600.HK",
+   "medianTurnover": 507347566,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1772.HK",
+   "medianTurnover": 505695087,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2099.HK",
+   "medianTurnover": 492526515,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0300.HK",
+   "medianTurnover": 487704610,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2382.HK",
+   "medianTurnover": 481654544,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3896.HK",
+   "medianTurnover": 480537447,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1088.HK",
+   "medianTurnover": 468490492,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1530.HK",
+   "medianTurnover": 458670513,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0386.HK",
+   "medianTurnover": 456784404,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0358.HK",
+   "medianTurnover": 450347619,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3317.HK",
+   "medianTurnover": 438843373,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2631.HK",
+   "medianTurnover": 427815958,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0027.HK",
+   "medianTurnover": 425300852,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1787.HK",
+   "medianTurnover": 422529850,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6990.HK",
+   "medianTurnover": 404742341,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3696.HK",
+   "medianTurnover": 394697681,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0522.HK",
+   "medianTurnover": 391669065,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3330.HK",
+   "medianTurnover": 371876665,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2015.HK",
+   "medianTurnover": 371565882,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1519.HK",
+   "medianTurnover": 367893292,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3692.HK",
+   "medianTurnover": 360839378,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2228.HK",
+   "medianTurnover": 360632229,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0189.HK",
+   "medianTurnover": 359005667,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1138.HK",
+   "medianTurnover": 358023161,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1177.HK",
+   "medianTurnover": 357386549,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0001.HK",
+   "medianTurnover": 347951314,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1818.HK",
+   "medianTurnover": 345308707,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2475.HK",
+   "medianTurnover": 336862485,
+   "sessions": 25,
+   "curated": false
+  },
+  {
+   "symbol": "2268.HK",
+   "medianTurnover": 331026636,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9863.HK",
+   "medianTurnover": 328358922,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1208.HK",
+   "medianTurnover": 326512108,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1171.HK",
+   "medianTurnover": 324233195,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0268.HK",
+   "medianTurnover": 324162083,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9995.HK",
+   "medianTurnover": 323878728,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6088.HK",
+   "medianTurnover": 320052983,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3808.HK",
+   "medianTurnover": 311974233,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2319.HK",
+   "medianTurnover": 308065555,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6618.HK",
+   "medianTurnover": 301963144,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3323.HK",
+   "medianTurnover": 301455377,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0688.HK",
+   "medianTurnover": 298754398,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3908.HK",
+   "medianTurnover": 298525852,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9987.HK",
+   "medianTurnover": 297511342,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0288.HK",
+   "medianTurnover": 295556381,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3200.HK",
+   "medianTurnover": 291510245,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0728.HK",
+   "medianTurnover": 284740873,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2331.HK",
+   "medianTurnover": 272007055,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1336.HK",
+   "medianTurnover": 271988917,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2601.HK",
+   "medianTurnover": 269314386,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0002.HK",
+   "medianTurnover": 266798487,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2715.HK",
+   "medianTurnover": 266769554,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6030.HK",
+   "medianTurnover": 265318061,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0568.HK",
+   "medianTurnover": 265192018,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3939.HK",
+   "medianTurnover": 264931737,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1308.HK",
+   "medianTurnover": 252161991,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0823.HK",
+   "medianTurnover": 241460868,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1919.HK",
+   "medianTurnover": 241372515,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9696.HK",
+   "medianTurnover": 240292801,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1729.HK",
+   "medianTurnover": 239754589,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2313.HK",
+   "medianTurnover": 228663607,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1928.HK",
+   "medianTurnover": 225681195,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2057.HK",
+   "medianTurnover": 223144389,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3858.HK",
+   "medianTurnover": 222933717,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9606.HK",
+   "medianTurnover": 222486174,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9866.HK",
+   "medianTurnover": 220257425,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0012.HK",
+   "medianTurnover": 219054193,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2018.HK",
+   "medianTurnover": 217511579,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6690.HK",
+   "medianTurnover": 214865498,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1276.HK",
+   "medianTurnover": 214293002,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1113.HK",
+   "medianTurnover": 213148988,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9633.HK",
+   "medianTurnover": 212178511,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2477.HK",
+   "medianTurnover": 208820862,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0998.HK",
+   "medianTurnover": 207800061,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3328.HK",
+   "medianTurnover": 203841731,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2888.HK",
+   "medianTurnover": 203552254,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0762.HK",
+   "medianTurnover": 202731833,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2050.HK",
+   "medianTurnover": 201861492,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6951.HK",
+   "medianTurnover": 201660120,
+   "sessions": 25,
+   "curated": false
+  },
+  {
+   "symbol": "0291.HK",
+   "medianTurnover": 197217997,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6693.HK",
+   "medianTurnover": 191964356,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1357.HK",
+   "medianTurnover": 190311505,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0763.HK",
+   "medianTurnover": 187963142,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1898.HK",
+   "medianTurnover": 185795227,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2685.HK",
+   "medianTurnover": 185791585,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3800.HK",
+   "medianTurnover": 184317848,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1797.HK",
+   "medianTurnover": 183592441,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0285.HK",
+   "medianTurnover": 183437546,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6682.HK",
+   "medianTurnover": 181551748,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2208.HK",
+   "medianTurnover": 179780645,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2162.HK",
+   "medianTurnover": 179369909,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0322.HK",
+   "medianTurnover": 178834268,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1860.HK",
+   "medianTurnover": 177912360,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1989.HK",
+   "medianTurnover": 177068130,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0241.HK",
+   "medianTurnover": 176882411,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2556.HK",
+   "medianTurnover": 174602203,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0006.HK",
+   "medianTurnover": 172843294,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0836.HK",
+   "medianTurnover": 170789276,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3296.HK",
+   "medianTurnover": 170162164,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1658.HK",
+   "medianTurnover": 167924977,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0960.HK",
+   "medianTurnover": 167094336,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1339.HK",
+   "medianTurnover": 165337947,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3898.HK",
+   "medianTurnover": 165227232,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9698.HK",
+   "medianTurnover": 164305342,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1929.HK",
+   "medianTurnover": 162397293,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1209.HK",
+   "medianTurnover": 161758816,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6862.HK",
+   "medianTurnover": 161402025,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0293.HK",
+   "medianTurnover": 158703870,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3888.HK",
+   "medianTurnover": 158605248,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2611.HK",
+   "medianTurnover": 158359032,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0003.HK",
+   "medianTurnover": 157475510,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0267.HK",
+   "medianTurnover": 155696774,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3606.HK",
+   "medianTurnover": 152349494,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0316.HK",
+   "medianTurnover": 151946810,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2400.HK",
+   "medianTurnover": 147538953,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2333.HK",
+   "medianTurnover": 147176628,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9630.HK",
+   "medianTurnover": 145793165,
+   "sessions": 32,
+   "curated": false
+  },
+  {
+   "symbol": "2498.HK",
+   "medianTurnover": 144734244,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0066.HK",
+   "medianTurnover": 144130355,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0788.HK",
+   "medianTurnover": 142218936,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1768.HK",
+   "medianTurnover": 141850179,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9688.HK",
+   "medianTurnover": 140395067,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1258.HK",
+   "medianTurnover": 139683466,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6886.HK",
+   "medianTurnover": 139236039,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9901.HK",
+   "medianTurnover": 138722534,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0168.HK",
+   "medianTurnover": 136213100,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6881.HK",
+   "medianTurnover": 135944140,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2525.HK",
+   "medianTurnover": 133676106,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3396.HK",
+   "medianTurnover": 132659006,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2688.HK",
+   "medianTurnover": 128308740,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2249.HK",
+   "medianTurnover": 125548163,
+   "sessions": 24,
+   "curated": false
+  },
+  {
+   "symbol": "2618.HK",
+   "medianTurnover": 124871448,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2788.HK",
+   "medianTurnover": 124747878,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1918.HK",
+   "medianTurnover": 123778564,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2367.HK",
+   "medianTurnover": 122432067,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2465.HK",
+   "medianTurnover": 122084621,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0136.HK",
+   "medianTurnover": 121873661,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1776.HK",
+   "medianTurnover": 119815030,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0966.HK",
+   "medianTurnover": 118512905,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0780.HK",
+   "medianTurnover": 118400833,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2865.HK",
+   "medianTurnover": 118119417,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0179.HK",
+   "medianTurnover": 118079057,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2252.HK",
+   "medianTurnover": 117357673,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0902.HK",
+   "medianTurnover": 115823785,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0425.HK",
+   "medianTurnover": 113915575,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1997.HK",
+   "medianTurnover": 110523978,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1952.HK",
+   "medianTurnover": 109377743,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3998.HK",
+   "medianTurnover": 108451684,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3393.HK",
+   "medianTurnover": 108089681,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3759.HK",
+   "medianTurnover": 107937457,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1816.HK",
+   "medianTurnover": 107867618,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0354.HK",
+   "medianTurnover": 107419945,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6031.HK",
+   "medianTurnover": 107145587,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1377.HK",
+   "medianTurnover": 106649400,
+   "sessions": 25,
+   "curated": false
+  },
+  {
+   "symbol": "2565.HK",
+   "medianTurnover": 104992436,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1044.HK",
+   "medianTurnover": 104019532,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9899.HK",
+   "medianTurnover": 103040180,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9678.HK",
+   "medianTurnover": 102580982,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6099.HK",
+   "medianTurnover": 101210388,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2714.HK",
+   "medianTurnover": 99970070,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6066.HK",
+   "medianTurnover": 99312953,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6823.HK",
+   "medianTurnover": 99020850,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0625.HK",
+   "medianTurnover": 98869145,
+   "sessions": 28,
+   "curated": false
+  },
+  {
+   "symbol": "9969.HK",
+   "medianTurnover": 96445252,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1688.HK",
+   "medianTurnover": 95951205,
+   "sessions": 59,
+   "curated": false
+  },
+  {
+   "symbol": "3931.HK",
+   "medianTurnover": 95198956,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0914.HK",
+   "medianTurnover": 94944763,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6127.HK",
+   "medianTurnover": 94660521,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2689.HK",
+   "medianTurnover": 94650821,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0019.HK",
+   "medianTurnover": 93869241,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1364.HK",
+   "medianTurnover": 93097257,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2727.HK",
+   "medianTurnover": 92815835,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9896.HK",
+   "medianTurnover": 92275024,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3661.HK",
+   "medianTurnover": 91255008,
+   "sessions": 33,
+   "curated": false
+  },
+  {
+   "symbol": "6060.HK",
+   "medianTurnover": 91081233,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1585.HK",
+   "medianTurnover": 89779532,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6680.HK",
+   "medianTurnover": 89476840,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6855.HK",
+   "medianTurnover": 89321063,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1196.HK",
+   "medianTurnover": 89308429,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6969.HK",
+   "medianTurnover": 89067196,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9993.HK",
+   "medianTurnover": 88925569,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1164.HK",
+   "medianTurnover": 88890065,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1038.HK",
+   "medianTurnover": 87624324,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2276.HK",
+   "medianTurnover": 87413506,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9911.HK",
+   "medianTurnover": 87148367,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1788.HK",
+   "medianTurnover": 86335486,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6656.HK",
+   "medianTurnover": 85171617,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1099.HK",
+   "medianTurnover": 84562760,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2380.HK",
+   "medianTurnover": 84280865,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2889.HK",
+   "medianTurnover": 83250840,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1766.HK",
+   "medianTurnover": 83107334,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0631.HK",
+   "medianTurnover": 82830609,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1833.HK",
+   "medianTurnover": 82614398,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2097.HK",
+   "medianTurnover": 82479197,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1384.HK",
+   "medianTurnover": 81794593,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2432.HK",
+   "medianTurnover": 81729400,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2701.HK",
+   "medianTurnover": 81375599,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2650.HK",
+   "medianTurnover": 80866666,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2617.HK",
+   "medianTurnover": 80832259,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9927.HK",
+   "medianTurnover": 79907309,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1651.HK",
+   "medianTurnover": 79638685,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1070.HK",
+   "medianTurnover": 79426638,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0772.HK",
+   "medianTurnover": 79288492,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1876.HK",
+   "medianTurnover": 78611184,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2706.HK",
+   "medianTurnover": 78553657,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0968.HK",
+   "medianTurnover": 77898658,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0135.HK",
+   "medianTurnover": 77834693,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3360.HK",
+   "medianTurnover": 77826875,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1072.HK",
+   "medianTurnover": 76696285,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0390.HK",
+   "medianTurnover": 76446890,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0916.HK",
+   "medianTurnover": 75576425,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2661.HK",
+   "medianTurnover": 74077483,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1908.HK",
+   "medianTurnover": 73611040,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2315.HK",
+   "medianTurnover": 73531701,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9858.HK",
+   "medianTurnover": 72199323,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0853.HK",
+   "medianTurnover": 71591183,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2096.HK",
+   "medianTurnover": 71341916,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0384.HK",
+   "medianTurnover": 70818241,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2635.HK",
+   "medianTurnover": 70779227,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2533.HK",
+   "medianTurnover": 70437330,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9636.HK",
+   "medianTurnover": 68383996,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1318.HK",
+   "medianTurnover": 68052836,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2676.HK",
+   "medianTurnover": 67624119,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3900.HK",
+   "medianTurnover": 67305432,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9980.HK",
+   "medianTurnover": 67008817,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6821.HK",
+   "medianTurnover": 66633386,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0817.HK",
+   "medianTurnover": 66340156,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0270.HK",
+   "medianTurnover": 66338468,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3347.HK",
+   "medianTurnover": 66062352,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0290.HK",
+   "medianTurnover": 65638905,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3933.HK",
+   "medianTurnover": 65408923,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0083.HK",
+   "medianTurnover": 65389694,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0753.HK",
+   "medianTurnover": 65158172,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2590.HK",
+   "medianTurnover": 65142544,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3618.HK",
+   "medianTurnover": 65069975,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3288.HK",
+   "medianTurnover": 64862750,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0868.HK",
+   "medianTurnover": 63611919,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1385.HK",
+   "medianTurnover": 63397567,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1988.HK",
+   "medianTurnover": 62393214,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6186.HK",
+   "medianTurnover": 62375530,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3311.HK",
+   "medianTurnover": 61982825,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2588.HK",
+   "medianTurnover": 61944235,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0867.HK",
+   "medianTurnover": 60335154,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2643.HK",
+   "medianTurnover": 60303839,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3277.HK",
+   "medianTurnover": 59278948,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1879.HK",
+   "medianTurnover": 58451332,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0013.HK",
+   "medianTurnover": 58375757,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2883.HK",
+   "medianTurnover": 57305378,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1179.HK",
+   "medianTurnover": 57242795,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0220.HK",
+   "medianTurnover": 56909608,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0991.HK",
+   "medianTurnover": 56073172,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2142.HK",
+   "medianTurnover": 55928714,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0622.HK",
+   "medianTurnover": 55840120,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6963.HK",
+   "medianTurnover": 55772588,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2186.HK",
+   "medianTurnover": 55670035,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1972.HK",
+   "medianTurnover": 54649134,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1735.HK",
+   "medianTurnover": 54455438,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1081.HK",
+   "medianTurnover": 54318828,
+   "sessions": 47,
+   "curated": false
+  },
+  {
+   "symbol": "3668.HK",
+   "medianTurnover": 54225119,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9973.HK",
+   "medianTurnover": 53700942,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2282.HK",
+   "medianTurnover": 53620778,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6055.HK",
+   "medianTurnover": 53268482,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2196.HK",
+   "medianTurnover": 53197427,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2655.HK",
+   "medianTurnover": 53092003,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1882.HK",
+   "medianTurnover": 52816011,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1133.HK",
+   "medianTurnover": 52734453,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1880.HK",
+   "medianTurnover": 52471150,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1877.HK",
+   "medianTurnover": 51973302,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2723.HK",
+   "medianTurnover": 51845550,
+   "sessions": 54,
+   "curated": false
+  },
+  {
+   "symbol": "2431.HK",
+   "medianTurnover": 51060663,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2595.HK",
+   "medianTurnover": 51042266,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1913.HK",
+   "medianTurnover": 50966076,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2357.HK",
+   "medianTurnover": 50641951,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2245.HK",
+   "medianTurnover": 50602380,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6936.HK",
+   "medianTurnover": 50402620,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1415.HK",
+   "medianTurnover": 48854925,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0325.HK",
+   "medianTurnover": 48776989,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0392.HK",
+   "medianTurnover": 48648618,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3738.HK",
+   "medianTurnover": 47963075,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0894.HK",
+   "medianTurnover": 47546211,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9887.HK",
+   "medianTurnover": 47413043,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2629.HK",
+   "medianTurnover": 46905403,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6090.HK",
+   "medianTurnover": 46798099,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2718.HK",
+   "medianTurnover": 46382455,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0101.HK",
+   "medianTurnover": 46259955,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2007.HK",
+   "medianTurnover": 46180741,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2473.HK",
+   "medianTurnover": 46179224,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2696.HK",
+   "medianTurnover": 46109216,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3958.HK",
+   "medianTurnover": 45643764,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2026.HK",
+   "medianTurnover": 45315749,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2656.HK",
+   "medianTurnover": 45062944,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6818.HK",
+   "medianTurnover": 44879904,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0576.HK",
+   "medianTurnover": 44876758,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2799.HK",
+   "medianTurnover": 44383091,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6880.HK",
+   "medianTurnover": 44192521,
+   "sessions": 26,
+   "curated": false
+  },
+  {
+   "symbol": "1698.HK",
+   "medianTurnover": 43944290,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2768.HK",
+   "medianTurnover": 43919180,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1191.HK",
+   "medianTurnover": 43820992,
+   "sessions": 32,
+   "curated": false
+  },
+  {
+   "symbol": "6745.HK",
+   "medianTurnover": 43400561,
+   "sessions": 24,
+   "curated": false
+  },
+  {
+   "symbol": "1478.HK",
+   "medianTurnover": 43040824,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2616.HK",
+   "medianTurnover": 42557572,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1112.HK",
+   "medianTurnover": 42521647,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2145.HK",
+   "medianTurnover": 42267628,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0639.HK",
+   "medianTurnover": 42199842,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0008.HK",
+   "medianTurnover": 41458939,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9971.HK",
+   "medianTurnover": 41397721,
+   "sessions": 25,
+   "curated": false
+  },
+  {
+   "symbol": "6655.HK",
+   "medianTurnover": 41212153,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2419.HK",
+   "medianTurnover": 41090784,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0144.HK",
+   "medianTurnover": 40890884,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6699.HK",
+   "medianTurnover": 40881288,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1783.HK",
+   "medianTurnover": 40070004,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1910.HK",
+   "medianTurnover": 39864150,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1907.HK",
+   "medianTurnover": 39566762,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2202.HK",
+   "medianTurnover": 39485767,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1396.HK",
+   "medianTurnover": 38321085,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1199.HK",
+   "medianTurnover": 37946344,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1193.HK",
+   "medianTurnover": 37892627,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3320.HK",
+   "medianTurnover": 37877819,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2343.HK",
+   "medianTurnover": 37693374,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0151.HK",
+   "medianTurnover": 37226039,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0656.HK",
+   "medianTurnover": 37141429,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0551.HK",
+   "medianTurnover": 37128743,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0586.HK",
+   "medianTurnover": 36803250,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2692.HK",
+   "medianTurnover": 36544233,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1579.HK",
+   "medianTurnover": 36543517,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6069.HK",
+   "medianTurnover": 36458089,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2171.HK",
+   "medianTurnover": 36341125,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2698.HK",
+   "medianTurnover": 36204514,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0257.HK",
+   "medianTurnover": 36004513,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6871.HK",
+   "medianTurnover": 35726569,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2157.HK",
+   "medianTurnover": 35573910,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0470.HK",
+   "medianTurnover": 35377926,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6810.HK",
+   "medianTurnover": 35218530,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0317.HK",
+   "medianTurnover": 35179345,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2858.HK",
+   "medianTurnover": 34957981,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6865.HK",
+   "medianTurnover": 34472857,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3698.HK",
+   "medianTurnover": 34297423,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3996.HK",
+   "medianTurnover": 34162617,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0826.HK",
+   "medianTurnover": 34039631,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0697.HK",
+   "medianTurnover": 33912942,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6681.HK",
+   "medianTurnover": 33895811,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2722.HK",
+   "medianTurnover": 33707626,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0303.HK",
+   "medianTurnover": 33478527,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0017.HK",
+   "medianTurnover": 33426623,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1141.HK",
+   "medianTurnover": 33399695,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0177.HK",
+   "medianTurnover": 33350268,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1800.HK",
+   "medianTurnover": 33306326,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6110.HK",
+   "medianTurnover": 33167784,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0165.HK",
+   "medianTurnover": 33085688,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0371.HK",
+   "medianTurnover": 32891687,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2648.HK",
+   "medianTurnover": 32876931,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1055.HK",
+   "medianTurnover": 32609716,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0117.HK",
+   "medianTurnover": 32602259,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2579.HK",
+   "medianTurnover": 32557333,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3899.HK",
+   "medianTurnover": 32488633,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1060.HK",
+   "medianTurnover": 32220005,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2507.HK",
+   "medianTurnover": 31703625,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2582.HK",
+   "medianTurnover": 31221948,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2603.HK",
+   "medianTurnover": 31136742,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2687.HK",
+   "medianTurnover": 31123406,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0340.HK",
+   "medianTurnover": 30975222,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1440.HK",
+   "medianTurnover": 30781650,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2610.HK",
+   "medianTurnover": 30591485,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0917.HK",
+   "medianTurnover": 30486597,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1114.HK",
+   "medianTurnover": 30325670,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2607.HK",
+   "medianTurnover": 30156120,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2562.HK",
+   "medianTurnover": 30138786,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1057.HK",
+   "medianTurnover": 30114687,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0881.HK",
+   "medianTurnover": 30100351,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2517.HK",
+   "medianTurnover": 29602748,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1359.HK",
+   "medianTurnover": 29449364,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0670.HK",
+   "medianTurnover": 29423129,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0565.HK",
+   "medianTurnover": 29410875,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0038.HK",
+   "medianTurnover": 29334684,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6979.HK",
+   "medianTurnover": 29184657,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1368.HK",
+   "medianTurnover": 29160043,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2233.HK",
+   "medianTurnover": 28902761,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6098.HK",
+   "medianTurnover": 28738840,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0856.HK",
+   "medianTurnover": 28583801,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1066.HK",
+   "medianTurnover": 28492940,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0590.HK",
+   "medianTurnover": 28474459,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2013.HK",
+   "medianTurnover": 28342175,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1316.HK",
+   "medianTurnover": 28297130,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9936.HK",
+   "medianTurnover": 28183859,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1428.HK",
+   "medianTurnover": 28120974,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2238.HK",
+   "medianTurnover": 27913912,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0297.HK",
+   "medianTurnover": 27710578,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6600.HK",
+   "medianTurnover": 27388866,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2218.HK",
+   "medianTurnover": 27330632,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1866.HK",
+   "medianTurnover": 27221943,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2155.HK",
+   "medianTurnover": 27198280,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6067.HK",
+   "medianTurnover": 27182470,
+   "sessions": 36,
+   "curated": false
+  },
+  {
+   "symbol": "9985.HK",
+   "medianTurnover": 27175626,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6078.HK",
+   "medianTurnover": 26747737,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1030.HK",
+   "medianTurnover": 26485345,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1157.HK",
+   "medianTurnover": 26439748,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "7666.HK",
+   "medianTurnover": 26345953,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2609.HK",
+   "medianTurnover": 26209855,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0552.HK",
+   "medianTurnover": 26109401,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1896.HK",
+   "medianTurnover": 25854765,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2637.HK",
+   "medianTurnover": 25653105,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0152.HK",
+   "medianTurnover": 25501126,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2669.HK",
+   "medianTurnover": 25455916,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2665.HK",
+   "medianTurnover": 25368385,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6806.HK",
+   "medianTurnover": 25233865,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1071.HK",
+   "medianTurnover": 25052561,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0209.HK",
+   "medianTurnover": 25031331,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2273.HK",
+   "medianTurnover": 24868152,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0123.HK",
+   "medianTurnover": 24851511,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3877.HK",
+   "medianTurnover": 24695177,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2225.HK",
+   "medianTurnover": 24649037,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1951.HK",
+   "medianTurnover": 24570979,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0975.HK",
+   "medianTurnover": 24551851,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9981.HK",
+   "medianTurnover": 24509853,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1686.HK",
+   "medianTurnover": 24394018,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2591.HK",
+   "medianTurnover": 24254912,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2587.HK",
+   "medianTurnover": 24139599,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2039.HK",
+   "medianTurnover": 24064225,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6955.HK",
+   "medianTurnover": 23892734,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6198.HK",
+   "medianTurnover": 23794118,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2666.HK",
+   "medianTurnover": 23527604,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6666.HK",
+   "medianTurnover": 23469387,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2726.HK",
+   "medianTurnover": 23300870,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1333.HK",
+   "medianTurnover": 23237057,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2128.HK",
+   "medianTurnover": 22972883,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2697.HK",
+   "medianTurnover": 22787680,
+   "sessions": 31,
+   "curated": false
+  },
+  {
+   "symbol": "3952.HK",
+   "medianTurnover": 22763969,
+   "sessions": 31,
+   "curated": false
+  },
+  {
+   "symbol": "2255.HK",
+   "medianTurnover": 22724281,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0696.HK",
+   "medianTurnover": 22663670,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0014.HK",
+   "medianTurnover": 22654151,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1300.HK",
+   "medianTurnover": 22614876,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0023.HK",
+   "medianTurnover": 22587365,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1302.HK",
+   "medianTurnover": 22536000,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2158.HK",
+   "medianTurnover": 22245140,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0400.HK",
+   "medianTurnover": 22217100,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0666.HK",
+   "medianTurnover": 22185020,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1117.HK",
+   "medianTurnover": 22140909,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2410.HK",
+   "medianTurnover": 22003067,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6049.HK",
+   "medianTurnover": 21865632,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "7656.HK",
+   "medianTurnover": 21803407,
+   "sessions": 26,
+   "curated": false
+  },
+  {
+   "symbol": "0512.HK",
+   "medianTurnover": 21697589,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1513.HK",
+   "medianTurnover": 21684244,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2442.HK",
+   "medianTurnover": 21678000,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1128.HK",
+   "medianTurnover": 21414537,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1021.HK",
+   "medianTurnover": 21363164,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3881.HK",
+   "medianTurnover": 21264731,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1286.HK",
+   "medianTurnover": 21188696,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0805.HK",
+   "medianTurnover": 21160479,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2386.HK",
+   "medianTurnover": 21031748,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1277.HK",
+   "medianTurnover": 20973662,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0068.HK",
+   "medianTurnover": 20883492,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1672.HK",
+   "medianTurnover": 20630600,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2659.HK",
+   "medianTurnover": 20555124,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0004.HK",
+   "medianTurnover": 20418739,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0460.HK",
+   "medianTurnover": 20232200,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1511.HK",
+   "medianTurnover": 19780465,
+   "sessions": 58,
+   "curated": false
+  },
+  {
+   "symbol": "0119.HK",
+   "medianTurnover": 19596298,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3339.HK",
+   "medianTurnover": 19581733,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1780.HK",
+   "medianTurnover": 19566688,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1304.HK",
+   "medianTurnover": 19502740,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0537.HK",
+   "medianTurnover": 19441280,
+   "sessions": 25,
+   "curated": false
+  },
+  {
+   "symbol": "3388.HK",
+   "medianTurnover": 19380096,
+   "sessions": 52,
+   "curated": false
+  },
+  {
+   "symbol": "2526.HK",
+   "medianTurnover": 19325484,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2335.HK",
+   "medianTurnover": 19068841,
+   "sessions": 35,
+   "curated": false
+  },
+  {
+   "symbol": "7618.HK",
+   "medianTurnover": 18959158,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0819.HK",
+   "medianTurnover": 18849160,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1999.HK",
+   "medianTurnover": 18829359,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2314.HK",
+   "medianTurnover": 18703515,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1448.HK",
+   "medianTurnover": 18652600,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0956.HK",
+   "medianTurnover": 18579823,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2602.HK",
+   "medianTurnover": 18561018,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3310.HK",
+   "medianTurnover": 18549980,
+   "sessions": 54,
+   "curated": false
+  },
+  {
+   "symbol": "0546.HK",
+   "medianTurnover": 18428801,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3752.HK",
+   "medianTurnover": 18426981,
+   "sessions": 25,
+   "curated": false
+  },
+  {
+   "symbol": "1681.HK",
+   "medianTurnover": 18263193,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0596.HK",
+   "medianTurnover": 18230215,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "7688.HK",
+   "medianTurnover": 18226700,
+   "sessions": 58,
+   "curated": false
+  },
+  {
+   "symbol": "1956.HK",
+   "medianTurnover": 18118261,
+   "sessions": 59,
+   "curated": false
+  },
+  {
+   "symbol": "6658.HK",
+   "medianTurnover": 18100911,
+   "sessions": 41,
+   "curated": false
+  },
+  {
+   "symbol": "1789.HK",
+   "medianTurnover": 18019396,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9699.HK",
+   "medianTurnover": 17992303,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6915.HK",
+   "medianTurnover": 17858295,
+   "sessions": 31,
+   "curated": false
+  },
+  {
+   "symbol": "3306.HK",
+   "medianTurnover": 17824258,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0683.HK",
+   "medianTurnover": 17761373,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0600.HK",
+   "medianTurnover": 17574545,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0999.HK",
+   "medianTurnover": 17363354,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2510.HK",
+   "medianTurnover": 17118150,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1610.HK",
+   "medianTurnover": 16961850,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2797.HK",
+   "medianTurnover": 16811886,
+   "sessions": 25,
+   "curated": false
+  },
+  {
+   "symbol": "1508.HK",
+   "medianTurnover": 16785131,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6185.HK",
+   "medianTurnover": 16362036,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6683.HK",
+   "medianTurnover": 16108654,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6887.HK",
+   "medianTurnover": 16015949,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2172.HK",
+   "medianTurnover": 15979341,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1186.HK",
+   "medianTurnover": 15978354,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0142.HK",
+   "medianTurnover": 15973676,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6168.HK",
+   "medianTurnover": 15759197,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3268.HK",
+   "medianTurnover": 15711711,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0679.HK",
+   "medianTurnover": 15711699,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1635.HK",
+   "medianTurnover": 15654172,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0598.HK",
+   "medianTurnover": 15424643,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "7489.HK",
+   "medianTurnover": 15384848,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2580.HK",
+   "medianTurnover": 15105793,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6808.HK",
+   "medianTurnover": 15066526,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2638.HK",
+   "medianTurnover": 15062297,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2460.HK",
+   "medianTurnover": 15042922,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2256.HK",
+   "medianTurnover": 14928405,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0326.HK",
+   "medianTurnover": 14877040,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9611.HK",
+   "medianTurnover": 14868878,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0628.HK",
+   "medianTurnover": 14811541,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0667.HK",
+   "medianTurnover": 14703908,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1675.HK",
+   "medianTurnover": 14554225,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2356.HK",
+   "medianTurnover": 14448667,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6636.HK",
+   "medianTurnover": 14387818,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0338.HK",
+   "medianTurnover": 14339963,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2038.HK",
+   "medianTurnover": 14248980,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6178.HK",
+   "medianTurnover": 14219395,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2675.HK",
+   "medianTurnover": 14084377,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9890.HK",
+   "medianTurnover": 14069715,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2339.HK",
+   "medianTurnover": 14054841,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2729.HK",
+   "medianTurnover": 14004700,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0553.HK",
+   "medianTurnover": 13992900,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2869.HK",
+   "medianTurnover": 13937764,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2285.HK",
+   "medianTurnover": 13712338,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3866.HK",
+   "medianTurnover": 13673548,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0564.HK",
+   "medianTurnover": 13643996,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9900.HK",
+   "medianTurnover": 13586400,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3969.HK",
+   "medianTurnover": 13532044,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6603.HK",
+   "medianTurnover": 13473077,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2016.HK",
+   "medianTurnover": 13469695,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "7687.HK",
+   "medianTurnover": 13452017,
+   "sessions": 26,
+   "curated": false
+  },
+  {
+   "symbol": "3678.HK",
+   "medianTurnover": 13256818,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2378.HK",
+   "medianTurnover": 13086512,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3625.HK",
+   "medianTurnover": 13005850,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6616.HK",
+   "medianTurnover": 12940895,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0921.HK",
+   "medianTurnover": 12937838,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0081.HK",
+   "medianTurnover": 12936421,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2668.HK",
+   "medianTurnover": 12817800,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6687.HK",
+   "medianTurnover": 12757440,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0467.HK",
+   "medianTurnover": 12731390,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6872.HK",
+   "medianTurnover": 12693262,
+   "sessions": 56,
+   "curated": false
+  },
+  {
+   "symbol": "0863.HK",
+   "medianTurnover": 12674750,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2570.HK",
+   "medianTurnover": 12631941,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3677.HK",
+   "medianTurnover": 12616775,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0800.HK",
+   "medianTurnover": 12614448,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2866.HK",
+   "medianTurnover": 12540565,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2627.HK",
+   "medianTurnover": 12483900,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2232.HK",
+   "medianTurnover": 12400876,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2586.HK",
+   "medianTurnover": 12346089,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1963.HK",
+   "medianTurnover": 12275349,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2583.HK",
+   "medianTurnover": 12203900,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1773.HK",
+   "medianTurnover": 12155960,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0901.HK",
+   "medianTurnover": 12091525,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2436.HK",
+   "medianTurnover": 12088260,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3336.HK",
+   "medianTurnover": 11916660,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1618.HK",
+   "medianTurnover": 11884100,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0909.HK",
+   "medianTurnover": 11833896,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1836.HK",
+   "medianTurnover": 11824060,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1626.HK",
+   "medianTurnover": 11800590,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2575.HK",
+   "medianTurnover": 11745762,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0116.HK",
+   "medianTurnover": 11721792,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9690.HK",
+   "medianTurnover": 11682584,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1361.HK",
+   "medianTurnover": 11646577,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2402.HK",
+   "medianTurnover": 11626211,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0874.HK",
+   "medianTurnover": 11619240,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1779.HK",
+   "medianTurnover": 11550217,
+   "sessions": 47,
+   "curated": false
+  },
+  {
+   "symbol": "1033.HK",
+   "medianTurnover": 11471685,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6675.HK",
+   "medianTurnover": 11435000,
+   "sessions": 39,
+   "curated": false
+  },
+  {
+   "symbol": "2652.HK",
+   "medianTurnover": 11406408,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0778.HK",
+   "medianTurnover": 11392074,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0570.HK",
+   "medianTurnover": 11206545,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0087.HK",
+   "medianTurnover": 11159946,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2272.HK",
+   "medianTurnover": 11138400,
+   "sessions": 33,
+   "curated": false
+  },
+  {
+   "symbol": "6106.HK",
+   "medianTurnover": 11117250,
+   "sessions": 35,
+   "curated": false
+  },
+  {
+   "symbol": "2691.HK",
+   "medianTurnover": 11071630,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1645.HK",
+   "medianTurnover": 11053800,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2672.HK",
+   "medianTurnover": 10935270,
+   "sessions": 32,
+   "curated": false
+  },
+  {
+   "symbol": "9966.HK",
+   "medianTurnover": 10838230,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0995.HK",
+   "medianTurnover": 10678242,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0440.HK",
+   "medianTurnover": 10650095,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2553.HK",
+   "medianTurnover": 10535088,
+   "sessions": 49,
+   "curated": false
+  },
+  {
+   "symbol": "2290.HK",
+   "medianTurnover": 10460780,
+   "sessions": 47,
+   "curated": false
+  },
+  {
+   "symbol": "0200.HK",
+   "medianTurnover": 10393459,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6715.HK",
+   "medianTurnover": 10371360,
+   "sessions": 31,
+   "curated": false
+  },
+  {
+   "symbol": "2589.HK",
+   "medianTurnover": 10147403,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0880.HK",
+   "medianTurnover": 10003461,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0918.HK",
+   "medianTurnover": 9993516,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1828.HK",
+   "medianTurnover": 9850958,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2192.HK",
+   "medianTurnover": 9829645,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2291.HK",
+   "medianTurnover": 9748069,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1883.HK",
+   "medianTurnover": 9678551,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2493.HK",
+   "medianTurnover": 9544338,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2105.HK",
+   "medianTurnover": 9431391,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1045.HK",
+   "medianTurnover": 9421669,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1375.HK",
+   "medianTurnover": 9345780,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1811.HK",
+   "medianTurnover": 9195200,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0199.HK",
+   "medianTurnover": 9152621,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2005.HK",
+   "medianTurnover": 9105527,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9637.HK",
+   "medianTurnover": 9098635,
+   "sessions": 31,
+   "curated": false
+  },
+  {
+   "symbol": "3918.HK",
+   "medianTurnover": 9087725,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0506.HK",
+   "medianTurnover": 9064853,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2198.HK",
+   "medianTurnover": 9054709,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6938.HK",
+   "medianTurnover": 9044157,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2670.HK",
+   "medianTurnover": 9042745,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1392.HK",
+   "medianTurnover": 9025875,
+   "sessions": 37,
+   "curated": false
+  },
+  {
+   "symbol": "0659.HK",
+   "medianTurnover": 9020324,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0264.HK",
+   "medianTurnover": 8834380,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0363.HK",
+   "medianTurnover": 8699404,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0811.HK",
+   "medianTurnover": 8677407,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3355.HK",
+   "medianTurnover": 8593932,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0648.HK",
+   "medianTurnover": 8589248,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "7630.HK",
+   "medianTurnover": 8586434,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0754.HK",
+   "medianTurnover": 8584769,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1417.HK",
+   "medianTurnover": 8460130,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0694.HK",
+   "medianTurnover": 8435784,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0010.HK",
+   "medianTurnover": 8409932,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0525.HK",
+   "medianTurnover": 8359322,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1716.HK",
+   "medianTurnover": 8345540,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0517.HK",
+   "medianTurnover": 8329620,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3983.HK",
+   "medianTurnover": 8249897,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9929.HK",
+   "medianTurnover": 8055200,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1798.HK",
+   "medianTurnover": 8030980,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3868.HK",
+   "medianTurnover": 8026722,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0336.HK",
+   "medianTurnover": 8021222,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1236.HK",
+   "medianTurnover": 7865214,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0376.HK",
+   "medianTurnover": 7787006,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0777.HK",
+   "medianTurnover": 7574073,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0308.HK",
+   "medianTurnover": 7573300,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2342.HK",
+   "medianTurnover": 7549753,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2623.HK",
+   "medianTurnover": 7491423,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0323.HK",
+   "medianTurnover": 7453910,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0595.HK",
+   "medianTurnover": 7451020,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3633.HK",
+   "medianTurnover": 7434947,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1313.HK",
+   "medianTurnover": 7354463,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0695.HK",
+   "medianTurnover": 7221780,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2632.HK",
+   "medianTurnover": 7118765,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9959.HK",
+   "medianTurnover": 7094738,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "8299.HK",
+   "medianTurnover": 7058181,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1167.HK",
+   "medianTurnover": 6996898,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1405.HK",
+   "medianTurnover": 6944521,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2546.HK",
+   "medianTurnover": 6916625,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0580.HK",
+   "medianTurnover": 6908693,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1187.HK",
+   "medianTurnover": 6861550,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2197.HK",
+   "medianTurnover": 6859795,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1083.HK",
+   "medianTurnover": 6851077,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3928.HK",
+   "medianTurnover": 6760845,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2877.HK",
+   "medianTurnover": 6720169,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1921.HK",
+   "medianTurnover": 6594969,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1858.HK",
+   "medianTurnover": 6555776,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2506.HK",
+   "medianTurnover": 6539706,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2451.HK",
+   "medianTurnover": 6483392,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1330.HK",
+   "medianTurnover": 6477520,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3380.HK",
+   "medianTurnover": 6427360,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0895.HK",
+   "medianTurnover": 6424490,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1456.HK",
+   "medianTurnover": 6405001,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0579.HK",
+   "medianTurnover": 6379837,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6132.HK",
+   "medianTurnover": 6365440,
+   "sessions": 36,
+   "curated": false
+  },
+  {
+   "symbol": "1223.HK",
+   "medianTurnover": 6348716,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0839.HK",
+   "medianTurnover": 6338520,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3788.HK",
+   "medianTurnover": 6326050,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2309.HK",
+   "medianTurnover": 6263350,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3700.HK",
+   "medianTurnover": 6222795,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6196.HK",
+   "medianTurnover": 6220477,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "3833.HK",
+   "medianTurnover": 6211664,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1609.HK",
+   "medianTurnover": 6201230,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2552.HK",
+   "medianTurnover": 6176261,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6608.HK",
+   "medianTurnover": 6095010,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1762.HK",
+   "medianTurnover": 6015718,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2190.HK",
+   "medianTurnover": 5994509,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0031.HK",
+   "medianTurnover": 5898036,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9898.HK",
+   "medianTurnover": 5829683,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "9885.HK",
+   "medianTurnover": 5823816,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0301.HK",
+   "medianTurnover": 5815676,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1712.HK",
+   "medianTurnover": 5803545,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "8279.HK",
+   "medianTurnover": 5767160,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1770.HK",
+   "medianTurnover": 5751355,
+   "sessions": 25,
+   "curated": false
+  },
+  {
+   "symbol": "6051.HK",
+   "medianTurnover": 5733261,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2555.HK",
+   "medianTurnover": 5696463,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6996.HK",
+   "medianTurnover": 5690100,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2373.HK",
+   "medianTurnover": 5534290,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0187.HK",
+   "medianTurnover": 5527900,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0347.HK",
+   "medianTurnover": 5497320,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2166.HK",
+   "medianTurnover": 5488810,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1873.HK",
+   "medianTurnover": 5475100,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1691.HK",
+   "medianTurnover": 5465805,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1501.HK",
+   "medianTurnover": 5325144,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0815.HK",
+   "medianTurnover": 5292912,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1799.HK",
+   "medianTurnover": 5225732,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2598.HK",
+   "medianTurnover": 5209644,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2028.HK",
+   "medianTurnover": 5206620,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2025.HK",
+   "medianTurnover": 5194260,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "2585.HK",
+   "medianTurnover": 5189646,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0710.HK",
+   "medianTurnover": 5176960,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0866.HK",
+   "medianTurnover": 5163840,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1473.HK",
+   "medianTurnover": 5100660,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "1617.HK",
+   "medianTurnover": 5075860,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "6993.HK",
+   "medianTurnover": 5062083,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0327.HK",
+   "medianTurnover": 5021796,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0341.HK",
+   "medianTurnover": 5020851,
+   "sessions": 60,
+   "curated": false
+  },
+  {
+   "symbol": "0011.HK",
+   "medianTurnover": null,
+   "sessions": 0,
+   "curated": true
+  }
+ ]
+}

@@ -71,7 +71,8 @@ import {
   FX_MAX_AGE_SESSIONS,
   pickFxObservation,
 } from "@/lib/rsFx.js";
-import { GLOBAL_RS_INTL_MARKETS, intlUniverseRows, universeFingerprint } from "@/lib/rsGlobalUniverse.js";
+import { GLOBAL_RS_INTL_MARKETS, extendUniverseRows, intlUniverseRows, universeFingerprint } from "@/lib/rsGlobalUniverse.js";
+import { readLiquidList } from "./refresh-bars-hk.mjs";
 import { defaultSnapshotDate, isValidSnapshotDate } from "@/lib/rsSnapshotDate.js";
 
 // ── Constantes de metodología — IDÉNTICAS al motor US, a propósito ────────
@@ -116,6 +117,8 @@ export function parseArgs(argv) {
     skipUs: false,
     persistExclusions: true,
     snapshotDate: "",
+    hkLiquidList: "",
+    dumpRanked: "",
   };
   for (const arg of argv) {
     const [rawKey, rawValue] = arg.replace(/^--/, "").split("=");
@@ -129,6 +132,11 @@ export function parseArgs(argv) {
     else if (key === "skip-us") out.skipUs = rawValue === undefined ? true : rawValue !== "false";
     else if (key === "persist-exclusions") out.persistExclusions = rawValue !== "false";
     else if (key === "snapshot-date") out.snapshotDate = String(rawValue || "").trim();
+    // Opt-in: amplía HK con la lista líquida (scripts/ops/hk-liquid-universe.mjs). Cambia el
+    // denominador del ranking GLOBAL (invariante 10): por defecto va apagado.
+    else if (key === "hk-liquid-list") out.hkLiquidList = String(rawValue || "").trim();
+    // Diagnóstico: vuelca el ranking (símbolo, mercado, rating, raw) a un archivo; NO escribe en la base.
+    else if (key === "dump-ranked") out.dumpRanked = String(rawValue || "").trim();
     else if (key === "as-of") {
       // Deliberadamente rechazado, no ignorado: el spec PROHÍBE el backfill
       // histórico as-of bajo este engine_version (Yahoo no demuestra
@@ -500,8 +508,26 @@ async function main() {
     console.log("US omitido por --skip-us (corrida de diagnóstico intl; el snapshot resultante NO es el ranking de producto).");
   }
 
-  const intlRows = intlUniverseRows(args.markets);
+  let intlRows = intlUniverseRows(args.markets);
   console.log(`Intl curado (${args.markets.length} mercados): ${intlRows.length}`);
+  let hkLiquid = null;
+  if (args.hkLiquidList) {
+    if (!args.markets.includes("HK")) throw new Error("--hk-liquid-list exige HK en --markets");
+    const list = readLiquidList(args.hkLiquidList);
+    const extended = extendUniverseRows(intlRows, list.symbols, { market: "HK", source: "hk-liquid-list", suffix: ".HK" });
+    intlRows = extended.rows;
+    hkLiquid = {
+      file: args.hkLiquidList,
+      generatedAt: list.generatedAt,
+      minTurnoverHKD: list.minTurnoverHKD,
+      requested: list.symbols.length,
+      added: extended.added.length,
+      rejected: extended.rejected.length,
+      // Lista completa añadida: el snapshot debe poder reproducirse (invariante 10).
+      addedSymbols: extended.added,
+    };
+    console.log(`HK líquidos (${args.hkLiquidList}, generada ${list.generatedAt}, corte ${Number(list.minTurnoverHKD).toLocaleString("es-ES")} HKD/día): pedidos ${hkLiquid.requested} · nuevos ${hkLiquid.added} · ya curados ${hkLiquid.requested - hkLiquid.added - hkLiquid.rejected} · rechazados ${hkLiquid.rejected}`);
+  }
 
   const universe = [...usRows, ...intlRows];
   const population = args.limit > 0 ? universe.slice(0, args.limit) : universe;
@@ -539,6 +565,19 @@ async function main() {
     .slice()
     .sort((a, b) => b.raw - a.raw)
     .map((row, index) => ({ ...row, rankIndex: index + 1, rsRating: percentileFromSorted(row.raw, sortedRaw, args.minSample) }));
+
+  if (args.dumpRanked) {
+    const fs = await import("node:fs");
+    fs.writeFileSync(args.dumpRanked, JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      universeFingerprint: fingerprint.hash,
+      universeSymbolCount: fingerprint.count,
+      minSample: args.minSample,
+      rows: ranked.map((row) => ({ symbol: row.symbol, market: row.market, rsRating: row.rsRating, raw: row.raw, rankIndex: row.rankIndex })),
+      excluded: excluded.map((row) => ({ symbol: row.symbol, market: row.market, reason: row.exclusionReason })),
+    }));
+    console.log(`Ranking volcado en ${args.dumpRanked} (${ranked.length} rankeados, ${excluded.length} excluidos)`);
+  }
 
   // ── Cobertura por mercado: el denominador declarado, no amputado ────────
   const coverage = {};
@@ -605,6 +644,7 @@ async function main() {
       universeSymbolCount: fingerprint.count,
       intlMarkets: args.markets,
       intlSymbolCount: intlRows.length,
+      hkLiquidList: hkLiquid,
       usSymbolCount: usRows.length,
       coverageByMarket: coverage,
       exclusionReasonTotals: reasonTotals,
