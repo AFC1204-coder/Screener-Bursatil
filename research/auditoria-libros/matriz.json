@@ -1,0 +1,1189 @@
+{
+ "meta": {
+  "version": 1,
+  "creado": "2026-11-09",
+  "origen": [
+   "docs/analisis-criterio-libros-etapas-mercado-2026-09-08.md",
+   "docs/auditoria-etapa1-etapa2-2026-09-01.md",
+   "docs/rubrica-vcp-producto-2026-09-01.md",
+   "docs/diseno-indicadores-mercado-2026-08-17.md"
+  ],
+  "libros": [
+   "weinstein-es",
+   "minervini-mark",
+   "minervini-think-trade",
+   "oneil-htmmis",
+   "momentum-masters",
+   "point-figure",
+   "livermore"
+  ],
+  "estados": [
+   "ok",
+   "parcial",
+   "no",
+   "riesgo",
+   "n/a",
+   "sin evaluar"
+  ],
+  "nota": "estado_sep08 es la línea base de la auditoría del 8-sep; estado_actual es null hasta que un agente lo verifique contra HEAD y rellene «verificado» (commit y fecha). Las páginas son índices de página del PDF (1-based), no la impresa. Los criterios están PARAFRASEADOS: no copiar pasajes de los libros."
+ },
+ "rows": [
+  {
+   "id": "W1",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": [
+      45,
+      46
+     ]
+    }
+   ],
+   "criterio": "Etapa 1: base lateral tras la caída; la media de 30 semanas pierde pendiente bajista y se aplana; el precio oscila dentro de la gama.",
+   "regla": "stage1 y cierre ≤ techo de 52 semanas menos 4",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "weeklyStageStructureForBars"
+    },
+    {
+     "archivo": "lib/weeklyStage.js",
+     "simbolo": "weeklyStageForBars"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStage.test.js",
+    "tests/weeklyStageStructure.test.js"
+   ],
+   "pantalla": "Mesa y ficha: «Etapa 1 · Pre-fuga»",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "W2",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": [
+      46
+     ]
+    }
+   ],
+   "criterio": "No comprar el suelo de la base: el dinero queda atado.",
+   "regla": "Etapa 1 no es cazable; un stage2 solo por media no se trata como setup de avance",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "STRUCTURE_E2_MA_ONLY"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStage.test.js",
+    "tests/weeklyStageStructure.test.js"
+   ],
+   "pantalla": "Calificador de etapa",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "W3",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": [
+      47
+     ]
+    }
+   ],
+   "criterio": "Inicio de etapa 2 = fuga por encima del techo de la base y de la media de 30 semanas, normalmente con volumen.",
+   "regla": "cierre semanal > máximo de 52 semanas excluyendo las 4 últimas",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "weeklyStageStructureForBars"
+    },
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "STRUCTURE_E2_STRUCTURAL"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStage.test.js",
+    "tests/weeklyStageStructure.test.js"
+   ],
+   "pantalla": "Calificador «Con fuga»",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "W4",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": [
+      47
+     ]
+    }
+   ],
+   "criterio": "Tras la fuga la media gira al alza; cada cresta sucesiva es más alta y los mínimos de corrección también.",
+   "regla": "pivotes semanales de radio 2: los dos últimos crecientes",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "weeklyStageStructureForBars"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStageStructure.test.js"
+   ],
+   "pantalla": "Solo vía calificador; weeklyHhHl no se pinta",
+   "estado_sep08": "parcial",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "W5",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": [
+      48
+     ]
+    }
+   ],
+   "criterio": "Las sacudidas son válidas mientras ocurran por encima de la media de 30 semanas ascendente.",
+   "regla": "precio frente a la media de 30s y su pendiente",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStage.js",
+     "simbolo": "weeklyStageForBars"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStage.test.js"
+   ],
+   "pantalla": "Columna Etapa y «Media 30s» en la ficha",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "W6",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": [
+      59
+     ]
+    }
+   ],
+   "criterio": "Cuestionario del cap. 2: etapa 1 = media plana y precio aún bajo la resistencia; etapa 2 = ya fugado.",
+   "regla": "coherencia entre etapa y posición respecto al techo",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "weeklyStageStructureForBars"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStageStructure.test.js"
+   ],
+   "pantalla": "Mesa y ficha",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "W7",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": [
+      71
+     ]
+    }
+   ],
+   "criterio": "Dos momentos de compra: la fuga 1→2 y el estirón de vuelta al punto de fuga.",
+   "regla": "distancia al techo y si ya se ha despejado",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "weeklyStageStructureForBars"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStageStructure.test.js"
+   ],
+   "pantalla": "weeklyDistResistancePct",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "W8",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": [
+      115
+     ]
+    }
+   ],
+   "criterio": "Volumen de fuga: al menos el doble de la media del mes previo, o 3-4 semanas con el doble, con algún aumento en la semana de la fuga.",
+   "regla": "volumen de la semana de fuga / mediana de las 4 previas",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "weeklyBreakoutVolMetricsFromWeeks"
+    },
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "BREAKOUT_VOL_REFERENCE_THRESHOLD"
+    },
+    {
+     "archivo": "lib/stageDisplay.js",
+     "simbolo": "formatBreakoutVolMultiplier"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStageStructure.test.js"
+   ],
+   "pantalla": "Calificador de fuga (ver si se muestra)",
+   "estado_sep08": "no",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Existe en código desde STAGE-4: comprobar que se calcula, se persiste y se muestra.",
+   "ticket": "STAGE-4"
+  },
+  {
+   "id": "W9",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": [
+      25,
+      26
+     ]
+    }
+   ],
+   "criterio": "La resistencia es una zona tocada varias veces, no un tick; cuantas más pruebas y más tiempo, más alcista la fuga.",
+   "regla": "agrupar máximos (±2 % o 0,5·ATR, ≥3 toques) frente al máximo de 52s menos 4 que se usa",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "weeklyStageStructureForBars"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStageStructure.test.js"
+   ],
+   "pantalla": "—",
+   "estado_sep08": "parcial",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "La auditoría de septiembre propone el candidato C; hoy se usa el A."
+  },
+  {
+   "id": "W10",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": [
+      26,
+      27
+     ]
+    }
+   ],
+   "criterio": "La media de 30 semanas es la referencia para invertir; no comprar bajo una media descendente.",
+   "regla": "precio frente a la media de 30s y pendiente con flatPct=2 %",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStage.js",
+     "simbolo": "DEFAULT_WEEKLY_STAGE_SETTINGS"
+    },
+    {
+     "archivo": "lib/weeklyStage.js",
+     "simbolo": "weeklyStageForBars"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStage.test.js"
+   ],
+   "pantalla": "Columna Etapa",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "El 2 % de «plana» es decisión de producto: el libro no da número."
+  },
+  {
+   "id": "M1",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "minervini-mark",
+     "paginas": [
+      80,
+      81
+     ]
+    },
+    {
+     "libro": "minervini-think-trade",
+     "paginas": [
+      103,
+      104
+     ]
+    }
+   ],
+   "criterio": "Cuatro etapas heredadas de Weinstein; Minervini compra solo en etapa 2.",
+   "regla": "clasificador 1-4 semanal",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStage.js",
+     "simbolo": "weeklyStageForBars"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStage.test.js"
+   ],
+   "pantalla": "Columna Etapa",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "M2",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "minervini-mark",
+     "paginas": [
+      81,
+      82
+     ]
+    }
+   ],
+   "criterio": "Etapa 1: lateral alrededor de la media de 200d, meses o años, a menudo tras la etapa 4; no comprar etapa 1.",
+   "regla": "stage1 por media plana; no cubre «caja» por sí sola",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStage.js",
+     "simbolo": "weeklyStageForBars"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStage.test.js"
+   ],
+   "pantalla": "Columna Etapa",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "M3",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "minervini-mark",
+     "paginas": []
+    }
+   ],
+   "criterio": "Transición 1→2: medias alineadas, serie de máximos y mínimos crecientes, volumen en subidas y avance previo de al menos 25-30 % desde el mínimo de 52 semanas.",
+   "regla": "lowAdvance52w ≥ 25-30 % en el subestado de etapa",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "weeklyStageStructureForBars"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStageStructure.test.js"
+   ],
+   "pantalla": "—",
+   "estado_sep08": "no",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Páginas por localizar con scripts/books/search.mjs (la auditoría de septiembre no las anotó)."
+  },
+  {
+   "id": "M4",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "minervini-mark",
+     "paginas": [
+      94
+     ]
+    },
+    {
+     "libro": "minervini-think-trade",
+     "paginas": [
+      105,
+      106
+     ]
+    }
+   ],
+   "criterio": "Trend Template: ocho criterios; todos para considerar una tendencia alcista de etapa 2 confirmada.",
+   "regla": "seis criterios diarios implementados",
+   "codigo": [
+    {
+     "archivo": "lib/trendStructure.js",
+     "simbolo": "trendTemplateIssue"
+    },
+    {
+     "archivo": "lib/trendStructure.js",
+     "simbolo": "isConfirmedStage2"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStage.test.js"
+   ],
+   "pantalla": "Filtro «Pulso» y fila «Etapa» de /review",
+   "estado_sep08": "parcial",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "«Etapa» en /review enseña el Trend Template diario, no la etapa Weinstein: misma palabra, dos significados."
+  },
+  {
+   "id": "M5",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "minervini-think-trade",
+     "paginas": [
+      109
+     ]
+    },
+    {
+     "libro": "minervini-mark",
+     "paginas": [
+      211,
+      212,
+      213
+     ]
+    }
+   ],
+   "criterio": "El VCP se busca después de confirmar la etapa 2.",
+   "regla": "puerta G1: stage === stage2, con exigencia extra si es solo por media",
+   "codigo": [
+    {
+     "archivo": "lib/vcpEngine.mjs",
+     "simbolo": "gateG1"
+    },
+    {
+     "archivo": "lib/setupPatterns.js",
+     "simbolo": "setupPatternForBars"
+    }
+   ],
+   "tests": [
+    "tests/vcpEngine.test.js"
+   ],
+   "pantalla": "Columna VCP y filtro vcpWeeklyStageStructure",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "M6",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "minervini-mark",
+     "paginas": [
+      95,
+      96
+     ]
+    }
+   ],
+   "criterio": "Bases dentro de la etapa 2: pausas de 5-26 semanas; las bases 1ª-2ª son las mejores y las 4ª-5ª, tardías.",
+   "regla": "recuento de bases del avance",
+   "codigo": [],
+   "tests": [],
+   "pantalla": "—",
+   "estado_sep08": "no",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "No existe recuento de bases en el producto."
+  },
+  {
+   "id": "M7",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "minervini-mark",
+     "paginas": [
+      239
+     ]
+    },
+    {
+     "libro": "minervini-think-trade",
+     "paginas": [
+      117
+     ]
+    }
+   ],
+   "criterio": "Pivote = máximo de la última contracción; comprar lo más cerca posible, sin perseguir.",
+   "regla": "detector de contracciones y distancia al pivote",
+   "codigo": [
+    {
+     "archivo": "lib/setupPatterns.js",
+     "simbolo": "setupPatternForBars"
+    }
+   ],
+   "tests": [
+    "tests/vcpEngine.test.js"
+   ],
+   "pantalla": "Columna VCP (contracciones, forma, % al pivote)",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "O1",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "oneil-htmmis",
+     "paginas": []
+    }
+   ],
+   "criterio": "O'Neil no usa las etapas de Weinstein.",
+   "regla": "no usar a O'Neil para etiquetar E1/E2 del clasificador",
+   "codigo": [],
+   "tests": [],
+   "pantalla": "—",
+   "estado_sep08": "n/a",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Búsqueda de «stage 2» sin resultados en la auditoría de septiembre."
+  },
+  {
+   "id": "O2",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "oneil-htmmis",
+     "paginas": [
+      194,
+      195,
+      196,
+      197,
+      198
+     ]
+    }
+   ],
+   "criterio": "Punto de compra al salir de una base correcta (el pivote).",
+   "regla": "ruptura del pivote de esa base, no de la media de 30s",
+   "codigo": [
+    {
+     "archivo": "lib/setupPatterns.js",
+     "simbolo": "setupPatternForBars"
+    }
+   ],
+   "tests": [
+    "tests/vcpEngine.test.js"
+   ],
+   "pantalla": "Columna VCP",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "O3",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "oneil-htmmis",
+     "paginas": [
+      195,
+      196
+     ]
+    }
+   ],
+   "criterio": "Volumen del día de la fuga de al menos +40-50 % sobre lo normal.",
+   "regla": "relativeVolume y volumeSurgePct junto al calificador de fuga",
+   "codigo": [
+    {
+     "archivo": "lib/stageDisplay.js",
+     "simbolo": "breakoutVolDisplayForRow"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStageStructure.test.js"
+   ],
+   "pantalla": "No junto al calificador de fuga (verificar)",
+   "estado_sep08": "parcial",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "O4",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "oneil-htmmis",
+     "paginas": [
+      198,
+      199,
+      200
+     ]
+    }
+   ],
+   "criterio": "Comprar en el pivote, no antes; más de 5-10 % después ya es extendido.",
+   "regla": "distancia al techo y extensión sobre la media",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "weeklyStageStructureForBars"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStageStructure.test.js"
+   ],
+   "pantalla": "weeklyDistResistancePct no se pinta en la mesa",
+   "estado_sep08": "parcial",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "O5",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "oneil-htmmis",
+     "paginas": [
+      190
+     ]
+    }
+   ],
+   "criterio": "Bases de tercera o cuarta etapa: recuento de bases del avance.",
+   "regla": "recuento de bases (= M6)",
+   "codigo": [],
+   "tests": [],
+   "pantalla": "—",
+   "estado_sep08": "no",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "O6",
+   "tema": "etapas",
+   "fuentes": [
+    {
+     "libro": "oneil-htmmis",
+     "paginas": [
+      200
+     ]
+    }
+   ],
+   "criterio": "El pivote no suele ser el máximo histórico viejo.",
+   "regla": "la resistencia clave no es por defecto el máximo de 52 semanas",
+   "codigo": [
+    {
+     "archivo": "lib/weeklyStageStructure.js",
+     "simbolo": "weeklyStageStructureForBars"
+    }
+   ],
+   "tests": [
+    "tests/weeklyStageStructure.test.js"
+   ],
+   "pantalla": "—",
+   "estado_sep08": "riesgo",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "El candidato A en uso lo contradice en parte."
+  },
+  {
+   "id": "MET-4",
+   "tema": "etapas",
+   "fuentes": [],
+   "criterio": "Sostén de la tendencia: persistencia sobre la media, aceleración y volumen (extensión de producto, no un criterio de libro).",
+   "regla": "tres lecturas descriptivas",
+   "codigo": [
+    {
+     "archivo": "lib/trendSupport.js",
+     "simbolo": "trendSupportFieldsFromBars"
+    }
+   ],
+   "tests": [
+    "tests/trendSupport.test.js"
+   ],
+   "pantalla": "Ficha «Sostén de la tendencia», vista rápida, filtro minWeeksAboveSma30w",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Extensión propia: se audita su coherencia con W5/W10, no contra una página.",
+   "ticket": "MET-4"
+  },
+  {
+   "id": "MET-5",
+   "tema": "etapas",
+   "fuentes": [],
+   "criterio": "Solidez dentro de etapa 2 y 4 (extensión de producto).",
+   "regla": "índice 0-100 ponderado",
+   "codigo": [
+    {
+     "archivo": "lib/stageHealth.js",
+     "simbolo": "STAGE_HEALTH_WEIGHTS"
+    }
+   ],
+   "tests": [
+    "tests/stageHealth.test.js"
+   ],
+   "pantalla": "Ficha «Salud N/100»",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Extensión propia; los pesos 25/10/20/25/20 son decisión de producto.",
+   "ticket": "MET-5"
+  },
+  {
+   "id": "V1",
+   "tema": "vcp",
+   "fuentes": [
+    {
+     "libro": "minervini-think-trade",
+     "paginas": [
+      114
+     ]
+    }
+   ],
+   "criterio": "Contracciones de volatilidad decrecientes dentro de la base (idealmente dos o más).",
+   "regla": "contracciones sucesivas con profundidad decreciente",
+   "codigo": [
+    {
+     "archivo": "lib/vcpEngine.mjs",
+     "simbolo": "detectV7"
+    },
+    {
+     "archivo": "lib/vcpEngine.mjs",
+     "simbolo": "detectV4"
+    }
+   ],
+   "tests": [
+    "tests/vcpEngine.test.js"
+   ],
+   "pantalla": "Columna VCP",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Rúbrica: docs/rubrica-vcp-producto-2026-09-01.md. Corpus etiquetado: research/contracciones/."
+  },
+  {
+   "id": "V2",
+   "tema": "vcp",
+   "fuentes": [
+    {
+     "libro": "minervini-think-trade",
+     "paginas": []
+    }
+   ],
+   "criterio": "El volumen se seca en la pata final de la base.",
+   "regla": "volumeDryUpRatio en la última contracción",
+   "codigo": [
+    {
+     "archivo": "lib/vcpEngine.mjs",
+     "simbolo": "episodeGateMetrics"
+    }
+   ],
+   "tests": [
+    "tests/vcpEngine.test.js"
+   ],
+   "pantalla": "Evidencia en el gate (no único criterio)",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Páginas por localizar."
+  },
+  {
+   "id": "V3",
+   "tema": "vcp",
+   "fuentes": [],
+   "criterio": "La última contracción es estrecha (compresión real, no ruido ni cheat).",
+   "regla": "gate G2/G3 sobre la pata final",
+   "codigo": [
+    {
+     "archivo": "lib/vcpEngine.mjs",
+     "simbolo": "gateG2"
+    },
+    {
+     "archivo": "lib/vcpEngine.mjs",
+     "simbolo": "gateG3"
+    }
+   ],
+   "tests": [
+    "tests/vcpEngine.test.js"
+   ],
+   "pantalla": "Columna VCP",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Criterio de la rúbrica del dueño (2026-09-01)."
+  },
+  {
+   "id": "V4",
+   "tema": "vcp",
+   "fuentes": [],
+   "criterio": "Reconfiguración: tras una rotura fallida, un nuevo episodio con pata final estrecha es una detección nueva (no se funde con el intento anterior).",
+   "regla": "episodios independientes",
+   "codigo": [
+    {
+     "archivo": "lib/vcpEngine.mjs",
+     "simbolo": "evaluateShadowGates"
+    }
+   ],
+   "tests": [
+    "tests/vcpEngine.test.js"
+   ],
+   "pantalla": "Re-propuesta en la mesa",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Decisión del dueño; sin respaldo directo en página."
+  },
+  {
+   "id": "V5",
+   "tema": "vcp",
+   "fuentes": [],
+   "criterio": "Selectividad: preferir falsos negativos a inundar de falsos positivos.",
+   "regla": "precisión alta sobre cobertura",
+   "codigo": [
+    {
+     "archivo": "lib/vcpEngine.mjs",
+     "simbolo": "summarizeShadowGates"
+    }
+   ],
+   "tests": [
+    "tests/vcpReliability.test.js"
+   ],
+   "pantalla": "—",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Medir con el corpus de 21 casos; ojo con la lección «15/21 era 7/21 al mirar fechas»."
+  },
+  {
+   "id": "V6",
+   "tema": "vcp",
+   "fuentes": [],
+   "criterio": "Notación del footprint «XW Y/Z NT» (decisión de producto).",
+   "regla": "etiqueta determinista desde el detector",
+   "codigo": [
+    {
+     "archivo": "lib/vcpMinerviniLabel.js",
+     "simbolo": "vcpMinerviniLabel"
+    }
+   ],
+   "tests": [
+    "tests/vcpMinerviniLabel.test.js"
+   ],
+   "pantalla": "Columna VCP",
+   "estado_sep08": "ok",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Ver docs/vcp-footprint-notacion.md."
+  },
+  {
+   "id": "MK1",
+   "tema": "mercado",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": [
+      291,
+      293,
+      301
+     ]
+    }
+   ],
+   "criterio": "Línea de avance/descenso (A-D) acumulada como indicador de largo plazo del mercado.",
+   "regla": "serie acumulada de (avances − descensos) y su divergencia con el índice",
+   "codigo": [],
+   "tests": [],
+   "pantalla": "—",
+   "estado_sep08": "no",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Capítulo «Los mejores indicadores a largo plazo» (PDF ~291-301): confirmar el alcance exacto."
+  },
+  {
+   "id": "MK2",
+   "tema": "mercado",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": []
+    }
+   ],
+   "criterio": "Participación: porcentaje de valores por encima de su media (30 semanas).",
+   "regla": "porcentaje de valores sobre su media, por mercado",
+   "codigo": [
+    {
+     "archivo": "lib/marketBreadth.js",
+     "simbolo": "aggregateUniverseBreadth"
+    },
+    {
+     "archivo": "lib/marketBreadth.js",
+     "simbolo": "participationSummary"
+    }
+   ],
+   "tests": [
+    "tests/marketBreadth.test.js"
+   ],
+   "pantalla": "/market-health",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Catálogo A.1.1 de docs/diseno-indicadores-mercado-2026-08-17.md."
+  },
+  {
+   "id": "MK3",
+   "tema": "mercado",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": []
+    }
+   ],
+   "criterio": "Divergencia entre el índice y la participación.",
+   "regla": "índice en máximos con participación decreciente",
+   "codigo": [
+    {
+     "archivo": "lib/volumeDivergence.js",
+     "simbolo": "divergenceWithThreshold"
+    },
+    {
+     "archivo": "lib/marketBreadth.js",
+     "simbolo": "attachIndexCloses"
+    }
+   ],
+   "tests": [
+    "tests/volumeDivergence.test.js",
+    "tests/marketBreadth.test.js"
+   ],
+   "pantalla": "/market-health",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "MK4",
+   "tema": "mercado",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": []
+    }
+   ],
+   "criterio": "Nuevos máximos y nuevos mínimos del universo.",
+   "regla": "distancia al extremo de 52 semanas del universo",
+   "codigo": [
+    {
+     "archivo": "lib/marketBreadth.js",
+     "simbolo": "BREADTH_NEAR_HIGH_52W_PCT"
+    }
+   ],
+   "tests": [
+    "tests/marketBreadth.test.js"
+   ],
+   "pantalla": "/market-health",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Ticket MH-FILL-4 (hecho).",
+   "ticket": "MH-FILL-4"
+  },
+  {
+   "id": "MK5",
+   "tema": "mercado",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": []
+    }
+   ],
+   "criterio": "Reparto del volumen entre valores que suben y valores que bajan.",
+   "regla": "relación de volumen alcista/bajista y secado",
+   "codigo": [
+    {
+     "archivo": "lib/marketVolume.js",
+     "simbolo": "volumeIndicator"
+    },
+    {
+     "archivo": "lib/marketVolume.js",
+     "simbolo": "UP_DOWN_VOLUME_THRESHOLD"
+    }
+   ],
+   "tests": [
+    "tests/marketVolume.test.js"
+   ],
+   "pantalla": "/market-health",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "MK6",
+   "tema": "mercado",
+   "fuentes": [
+    {
+     "libro": "oneil-htmmis",
+     "paginas": []
+    }
+   ],
+   "criterio": "Sesiones de distribución: ventas con volumen en el índice.",
+   "regla": "recuento de sesiones de distribución en una ventana",
+   "codigo": [],
+   "tests": [],
+   "pantalla": "—",
+   "estado_sep08": "no",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Catálogo A.1.5; fuente probable en O'Neil: por localizar."
+  },
+  {
+   "id": "MK7",
+   "tema": "mercado",
+   "fuentes": [
+    {
+     "libro": "oneil-htmmis",
+     "paginas": []
+    }
+   ],
+   "criterio": "Día de confirmación (follow-through) tras una corrección.",
+   "regla": "día de subida con volumen creciente en el 4º-7º día de intento",
+   "codigo": [],
+   "tests": [],
+   "pantalla": "—",
+   "estado_sep08": "no",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Catálogo A.1.6; no hay coincidencias en el código en la revisión de hoy (sin verificar a fondo)."
+  },
+  {
+   "id": "MK8",
+   "tema": "mercado",
+   "fuentes": [],
+   "criterio": "Impulso y oscilador de participación (McClellan).",
+   "regla": "oscilador sobre avances menos descensos",
+   "codigo": [],
+   "tests": [],
+   "pantalla": "—",
+   "estado_sep08": "no",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Catálogo A.1.7-A.1.8; el diseño lo valora como secundario."
+  },
+  {
+   "id": "MK9",
+   "tema": "mercado",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": []
+    }
+   ],
+   "criterio": "El régimen del mercado se juzga con la misma etapa (estructural) que las acciones.",
+   "regla": "weeklyStageStructureForBars sobre los índices",
+   "codigo": [
+    {
+     "archivo": "lib/marketRegionalRegimes.js",
+     "simbolo": "buildRegionalRegimes"
+    },
+    {
+     "archivo": "app/api/market-health/route.js",
+     "simbolo": "weeklyStageStructureForBars"
+    }
+   ],
+   "tests": [
+    "tests/marketHealthStage.test.js"
+   ],
+   "pantalla": "/market-health",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Ticket MH-FILL-1 (hecho).",
+   "ticket": "MH-FILL-1"
+  },
+  {
+   "id": "MK10",
+   "tema": "mercado",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": []
+    }
+   ],
+   "criterio": "El mercado se lee como serie temporal, no como foto de hoy.",
+   "regla": "serie histórica del régimen",
+   "codigo": [
+    {
+     "archivo": "lib/marketHealthSeries.js",
+     "simbolo": "mergeRegimeSeries"
+    }
+   ],
+   "tests": [
+    "tests/marketHealthSeries.test.js"
+   ],
+   "pantalla": "/market-health",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": ""
+  },
+  {
+   "id": "MK11",
+   "tema": "mercado",
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": []
+    }
+   ],
+   "criterio": "Liderazgo: qué sectores y valores lideran.",
+   "regla": "pulso de liderazgo desde el servidor",
+   "codigo": [
+    {
+     "archivo": "lib/marketLeadership.js",
+     "simbolo": "readMarketLeadership"
+    }
+   ],
+   "tests": [],
+   "pantalla": "/market-health",
+   "estado_sep08": "sin evaluar",
+   "estado_actual": null,
+   "verificado": null,
+   "notas": "Ticket MH-FILL-3 (hecho).",
+   "ticket": "MH-FILL-3"
+  }
+ ]
+}
