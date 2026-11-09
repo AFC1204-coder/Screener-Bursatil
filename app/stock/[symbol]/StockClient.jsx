@@ -931,6 +931,12 @@ function FundamentalSnapshot({ data = {}, growth = {}, valuation = {}, quote = {
   const balance = results.balanceQuarterly?.[0] || results.balanceAnnual?.[0] || {};
   const cashflow = results.cashflowQuarterly?.[0] || results.cashflowAnnual?.[0] || {};
   const displayCurrency = currency || data.currency || "Moneda no disponible";
+  // Exposición honesta (lib/fundamentalsDisplay.js): 0 ≠ vacío, patrimonio
+  // negativo sin ratio, ausencias con motivo. Yahoo da deuda/patrimonio en %.
+  const equity = finiteValue(balance.equity, latest.equity);
+  const revenue = latest.revenue;
+  const earningsTtm = valuation.epsTrailingTwelveMonths;
+  const asText = (d) => d.text;
   const rows = [
     ["Valoracion", "Capitalizacion", money(data.marketCap, data.marketCapCurrency || data.currency)],
     ["Valoracion", "P/E fwd", asText(multipleDisplay(finiteValue(valuation.forwardPe, valuation.forwardPE), { earnings: earningsTtm, format: (n) => ratio(n) }))],
@@ -1059,12 +1065,6 @@ function technicalSnapshotFromBars(bars = [], quote = {}) {
   const last252 = rows.slice(-252);
   const sma50 = average(last50.map((row) => row.close));
   const sma200 = average(last200.map((row) => row.close));
-  // Exposición honesta (lib/fundamentalsDisplay.js): 0 ≠ vacío, patrimonio
-  // negativo sin ratio, ausencias con motivo. Yahoo da deuda/patrimonio en %.
-  const equity = finiteValue(balance.equity, latest.equity);
-  const revenue = latest.revenue;
-  const earningsTtm = valuation.epsTrailingTwelveMonths;
-  const asText = (d) => d.text;
   const avgVolume50 = average(last50.map((row) => row.volume));
   const high52w = Math.max(...last252.map((row) => row.high).filter(Number.isFinite), 0);
   return {
