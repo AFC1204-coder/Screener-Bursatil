@@ -139,7 +139,11 @@ elif [ "$BARS_EXIT" != "0" ] && [ "$BARS_EXIT" != "skipped" ]; then
   REASON="refresh-bars terminó con exit=$BARS_EXIT"
 elif [ "$FRESH_EXIT" != "0" ] && [ "$FRESH_EXIT" != "skipped" ]; then
   RESULT="degraded"
-  REASON="barras atrasadas respecto a la última sesión (frescura exit=$FRESH_EXIT)"
+  if [ "$FRESH_EXIT" = "2" ]; then
+    REASON="no se pudo medir la frescura (frescura exit=2)"
+  else
+    REASON="barras atrasadas respecto a la última sesión (frescura exit=$FRESH_EXIT)"
+  fi
 else
   RESULT="ok"
 fi

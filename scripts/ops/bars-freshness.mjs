@@ -117,7 +117,7 @@ async function main() {
       rows = [...byDate].map(([last, n]) => ({ last, n }));
     } else {
       const res = await client.query(
-        `with s as (select snapshot_id from universe_snapshot_symbols order by created_at desc limit 1),
+        `with s as (select snapshot_id from universe_snapshot_symbols where market = $1 order by created_at desc limit 1),
               u as (select distinct symbol from universe_snapshot_symbols
                     where snapshot_id = (select snapshot_id from s) and market = $1 and passed is true),
               b as (select symbol, max(trade_date) d from daily_bars group by symbol)
@@ -136,6 +136,12 @@ async function main() {
       console.log(`Última sesión asentada: ${summary.expected}`);
       console.log(`Universo ${args.market}: ${summary.universe} · al día ${summary.upToDate} (${summary.pct} %) · atrasados ${summary.stale} · sin barras ${summary.noBars}`);
       console.log(summary.ok ? `OK (umbral ${summary.minPct} %)` : `POR DEBAJO del umbral (${summary.minPct} %)`);
+    }
+    if (summary.universe === 0) {
+      // Un universo vacío no es «barras atrasadas»: es que no se pudo medir (p. ej. el último snapshot
+      // de ese mercado no existe). Salida 2 = error de medición, para que el guardián lo diga así.
+      console.error(`bars-freshness: universo vacío para ${args.market} (¿sin snapshot de ese mercado?)`);
+      return 2;
     }
     return summary.ok ? 0 : 1;
   } finally {

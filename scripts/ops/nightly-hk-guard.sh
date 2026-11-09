@@ -104,6 +104,7 @@ FINISHED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 REASON=""
 if [ "$SCAN_EXIT" != "0" ]; then RESULT="fail"; REASON="el scan HK falló tras $USED intento(s)"
 elif [ "$BARS_EXIT" != "0" ]; then RESULT="degraded"; REASON="refresh-bars-hk terminó con exit=$BARS_EXIT"
+elif [ "$FRESH_EXIT" = "2" ]; then RESULT="degraded"; REASON="no se pudo medir la frescura de HK (frescura exit=2)"
 elif [ "$FRESH_EXIT" != "0" ]; then RESULT="degraded"; REASON="barras HK atrasadas respecto a la última sesión (frescura exit=$FRESH_EXIT)"
 elif [ "$LIST_EXIT" != "fresh" ] && [ "$LIST_EXIT" != "0" ]; then RESULT="degraded"; REASON="no se pudo regenerar la lista líquida (exit=$LIST_EXIT); se usó la anterior"
 else RESULT="ok"; fi

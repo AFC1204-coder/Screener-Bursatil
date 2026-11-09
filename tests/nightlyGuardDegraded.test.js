@@ -72,6 +72,14 @@ describe("guardián nocturno: estado degraded", () => {
     expect(out.status.freshExit).toBe("1");
   });
 
+  it("frescura exit=2 (no se pudo medir, p. ej. universo vacío): degraded con motivo propio, no «atrasadas»", () => {
+    const out = runGuard({ bars: "exit 0", fresh: 'echo \'{"universe":0,"pct":0,"ok":false}\'; exit 2' });
+    expect(out.status.result).toBe("degraded");
+    expect(out.status.freshExit).toBe("2");
+    expect(out.status.reason).toMatch(/no se pudo medir/);
+    expect(out.status.reason).not.toMatch(/atrasadas/);
+  });
+
   it("si el scan falla, es fail (error) aunque las barras estén bien", () => {
     const out = runGuard({ bars: "exit 0", fresh: "exit 0", scan: "exit 1" });
     expect(out.status.result).toBe("fail");
