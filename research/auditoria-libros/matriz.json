@@ -580,7 +580,7 @@
    "estado_sep08": "ok",
    "estado_actual": "parcial",
    "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
-   "notas": "Pivote = máximo de 65 sesiones, no el de la última contracción.",
+   "notas": "Pivote = máximo de 65 sesiones, no el de la última contracción. | Decisión del dueño 2026-11-10: el pivote depende del VCP y su estructura; muchos pivotes están en fases anteriores (ruptura de un máximo local, no del máximo de la estructura). Entradas previas tipo «cheat» existen pero no se modelan con detalle.",
    "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
@@ -633,7 +633,7 @@
    "estado_sep08": "ok",
    "estado_actual": "parcial",
    "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
-   "notas": "Ruptura medida contra ese máximo de 65 sesiones.",
+   "notas": "Ruptura medida contra ese máximo de 65 sesiones. | Decisión del dueño 2026-11-10: el pivote depende del VCP y su estructura; muchos pivotes están en fases anteriores (ruptura de un máximo local, no del máximo de la estructura). Entradas previas tipo «cheat» existen pero no se modelan con detalle.",
    "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
