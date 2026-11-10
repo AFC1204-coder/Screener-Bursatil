@@ -95,45 +95,71 @@ describe("evaluateUnifiedVcpFromDailyBars", () => {
   });
 });
 
-describe("setupPatternForBars unified bridge", () => {
-  it("flag OFF no cambia vcpCandidate vs legacy en fixture mínimo", () => {
-    const bars = Array.from({ length: 120 }, (_, i) => ({
-      date: `2025-06-${String((i % 28) + 1).padStart(2, "0")}`,
-      open: 50 + (i % 5),
-      high: 52 + (i % 5),
-      low: 48 + (i % 5),
-      close: 50 + (i % 3),
-      volume: 800_000 + i * 1000,
-    })).reverse();
+// Serie sintética pero REAL para el motor: 260 sesiones de avance (40→100) y una base con tres
+// contracciones decrecientes (≈20 %, 11 %, 5 %) y volumen que se seca. Fechas laborables
+// distintas y `referenceDate` fija: las barras con fechas repetidas o «viejas» caían en la
+// puerta de datos (`insufficient_data`) y los tests de abajo comparaban resultados degenerados.
+function weekdaysAscending(n) {
+  const out = [];
+  const d = new Date(Date.UTC(2026, 9, 30));
+  while (out.length < n) {
+    const wd = d.getUTCDay();
+    if (wd !== 0 && wd !== 6) out.push(d.toISOString().slice(0, 10));
+    d.setUTCDate(d.getUTCDate() - 1);
+  }
+  return out.reverse();
+}
+const leg = (from, to, n) => Array.from({ length: n }, (_, i) => from + (to - from) * ((i + 1) / n));
+function vcpSeriesDesc({ failedBreakout = false } = {}) {
+  const closes = [
+    ...leg(40, 100, 260), ...leg(100, 82, 16), ...leg(82, 98, 12),
+    ...leg(98, 89, 10), ...leg(89, 99, 9), ...leg(99, 96, 7), ...leg(96, 98.5, 7),
+  ];
+  const dates = weekdaysAscending(closes.length);
+  const bars = closes.map((c, i) => ({
+    date: dates[i], open: c, high: c * 1.012, low: c * 0.988, close: c,
+    volume: i < 260 ? 1_500_000 : 1_500_000 - (i - 260) * 14_000,
+  }));
+  if (failedBreakout) {
+    const n = bars.length;
+    bars[n - 3] = { ...bars[n - 3], high: 103.5, close: 101 };          // supera el pivote…
+    bars[n - 1] = { ...bars[n - 1], close: 99, high: 99.6, volume: 1_900_000 }; // …y vuelve por debajo con volumen
+  }
+  return bars.reverse();
+}
+const REF = "2026-11-02";
+const STAGE2 = { weeklyStage: { state: "stage2", label: "Etapa 2" }, weeklyStageStructure: { structure: "n/a", distResistancePct: -2 } };
 
-    const legacy = setupPatternForBars(bars, { rawBars: bars });
-    const explicitOff = setupPatternForBars(bars, { rawBars: bars, vcpUnified: false });
-    expect(explicitOff.vcpCandidate).toBe(legacy.vcpCandidate);
-    expect(explicitOff.patternFamily).toBe(legacy.patternFamily);
+describe("setupPatternForBars unified bridge", () => {
+  it("la serie de prueba es analizable y el motor unificado la reconoce (no es un caso degenerado)", () => {
+    const bars = vcpSeriesDesc();
+    const out = setupPatternForBars(bars, { rawBars: bars, referenceDate: REF, vcpUnified: true, ...STAGE2 });
+    expect(out.patternFamily).not.toBe("insufficient_data");
+    expect(out.vcpCandidate).toBe(true);
+    expect(out.pivotSource).toBe("ultima_contraccion");
+  });
+
+  it("flag OFF == comportamiento heredado, y el flag solo cambia el pivote", () => {
+    const bars = vcpSeriesDesc();
+    const base = { rawBars: bars, referenceDate: REF };
+    const legacy = setupPatternForBars(bars, base);
+    const explicitOff = setupPatternForBars(bars, { ...base, vcpUnified: false });
+    const on = setupPatternForBars(bars, { ...base, vcpUnified: true, ...STAGE2 });
+    for (const field of ["vcpCandidate", "patternFamily", "pivotPrice", "pivotSource"]) {
+      expect(explicitOff[field]).toEqual(legacy[field]);
+    }
+    expect(legacy.patternFamily).not.toBe("insufficient_data");
+    expect(legacy.pivotSource).toBe("maximo_65s");
+    expect(on.pivotPrice).toBeLessThan(legacy.pivotPrice);
   });
 
   it("failedBreakout no bloquea si unified propone VCP", () => {
-    const bars = Array.from({ length: 120 }, (_, i) => ({
-      date: `2025-06-${String((i % 28) + 1).padStart(2, "0")}`,
-      open: 50,
-      high: 55,
-      low: 49,
-      close: 50,
-      volume: 1_000_000,
-    })).reverse();
-    bars[0].high = 60;
-    bars[0].close = 49;
-    bars[0].volume = 2_000_000;
-
-    const pattern = setupPatternForBars(bars, {
-      rawBars: bars,
-      vcpUnified: true,
-      weeklyStage: { state: "stage2", label: "Etapa 2" },
-      weeklyStageStructure: { structure: "n/a", distResistancePct: -2 },
-    });
-    if (pattern.vcpCandidate) {
-      expect(pattern.patternFamily).not.toBe("failed_breakout");
-    }
+    const bars = vcpSeriesDesc({ failedBreakout: true });
+    const pattern = setupPatternForBars(bars, { rawBars: bars, referenceDate: REF, vcpUnified: true, ...STAGE2 });
+    expect(pattern.failedBreakout).toBe(true);
+    expect(pattern.vcpCandidate).toBe(true);
+    expect(pattern.patternFamily).not.toBe("failed_breakout");
+    expect(pattern.patternFamily).toBe("progressive_contraction");
   });
 });
 

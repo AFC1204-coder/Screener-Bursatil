@@ -184,6 +184,17 @@ describe("weeklyStageStructure · volumen de fuga (STAGE-4)", () => {
     expect(metrics.detail).toMatch(/^fuga de hace \d+ semanas/);
   });
 
+  it("borde de la vigencia: a BREAKOUT_VOL_MAX_AGE_WEEKS semanas aún vale; a una más, ya no", () => {
+    const enBorde = weeklyBreakoutVolMetricsFromWeeks(freshBreakoutWeeks({ after: BREAKOUT_VOL_MAX_AGE_WEEKS }), null);
+    expect(enBorde.ageWeeks).toBe(BREAKOUT_VOL_MAX_AGE_WEEKS);
+    expect(enBorde.stale).not.toBe(true);
+    expect(enBorde.ratio).toBeCloseTo(2.5, 1);
+    const pasado = weeklyBreakoutVolMetricsFromWeeks(freshBreakoutWeeks({ after: BREAKOUT_VOL_MAX_AGE_WEEKS + 1 }), null);
+    expect(pasado.ageWeeks).toBe(BREAKOUT_VOL_MAX_AGE_WEEKS + 1);
+    expect(pasado.stale).toBe(true);
+    expect(pasado.ratio).toBeNull();
+  });
+
   it("mediana frente a media: un pico previo no infla el ratio (1,5,1,1 → 3,0×)", () => {
     const weeks = weeklyBars(70, (i) => {
       if (i < 62) return { close: 100, high: 104, low: 96, volume: 1_000_000 };
@@ -229,7 +240,9 @@ describe("weeklyStageStructure · volumen de fuga (STAGE-4)", () => {
     const loud = structuralBreakoutBars((i) => (i % 2 ? 5_000_000 : 50_000));
     const structPlain = weeklyStageStructureForBars(plain, { weeklyStageState: weeklyStageForBars(plain).state });
     const structLoud = weeklyStageStructureForBars(loud, { weeklyStageState: weeklyStageForBars(loud).state });
-    expect(structPlain.structure).toBe(structLoud.structure);
+    // Que ambas sean una clasificación real (no un «n/a» igual en las dos) para que la igualdad diga algo.
+    expect(structPlain.structure).toBe(STRUCTURE_E2_STRUCTURAL);
+    expect(structLoud.structure).toBe(STRUCTURE_E2_STRUCTURAL);
     expect(structPlain.label).toBe(structLoud.label);
   });
 
