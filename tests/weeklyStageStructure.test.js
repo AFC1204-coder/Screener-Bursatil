@@ -8,10 +8,10 @@ import React from "react";
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { SCREENER_COLUMNS } from "@/lib/screenerColumns";
-import { stageDisplayForRow, stageStructureAbsence, stageStructureQualifier, stageSummaryText, stageWordForState } from "@/lib/stageDisplay";
-import { weeklyStageForBars, weeklyBarsFromDaily } from "@/lib/weeklyStage";
+import { breakoutVolDisplayForRow, stageDisplayForRow, stageStructureAbsence, stageStructureQualifier, stageSummaryText, stageWordForState } from "@/lib/stageDisplay";
+import { weeklyStageForBars } from "@/lib/weeklyStage";
 import {
-  BREAKOUT_VOL_PRIOR_WEEKS,
+  BREAKOUT_VOL_MAX_AGE_WEEKS,
   STRUCTURE_E2_MA_ONLY,
   STRUCTURE_E2_STRUCTURAL,
   STRUCTURE_NA,
@@ -73,33 +73,13 @@ function structuralBreakoutBars(volumeAt = () => 1_000_000) {
   });
 }
 
-function oldestFirst(weeks) {
-  return [...weeks].sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
-}
-
-function breakoutWeekDateFromBars(bars) {
-  const stage = weeklyStageForBars(bars);
-  const probe = weeklyStageStructureForBars(bars, { weeklyStageState: stage.state });
-  const weeks = oldestFirst(weeklyBarsFromDaily(bars));
-  const resistance = probe.resistance;
-  const recentStart = Math.max(0, weeks.length - 52);
-  for (let i = recentStart; i < weeks.length; i += 1) {
-    if (weeks[i].close > resistance) return weeks[i].date;
-  }
-  return null;
-}
-
-function breakoutVolRatioBars({ priorVol = 1_000_000, breakoutVol = 2_500_000 } = {}) {
-  const breakoutDate = breakoutWeekDateFromBars(structuralBreakoutBars());
-  const breakoutIdx = breakoutDate
-    ? Array.from({ length: 90 }, (_, i) => monday(i)).indexOf(breakoutDate)
-    : -1;
-  return structuralBreakoutBars((i) => {
-    if (i === breakoutIdx) return breakoutVol;
-    if (breakoutIdx > 0 && i >= breakoutIdx - BREAKOUT_VOL_PRIOR_WEEKS && i < breakoutIdx) {
-      return priorVol;
-    }
-    return priorVol;
+// Base lateral de 66 semanas y fuga real en la semana 66; el ratio se mide al cierre de la semana
+// `66 + after` (la fuga sigue haciendo máximos): el dato debe seguir siendo el de la fuga.
+function freshBreakoutWeeks({ priorVol = 1_000_000, breakoutVol = 2_500_000, after = 3 } = {}) {
+  return weeklyBars(67 + after, (i) => {
+    if (i < 66) return { close: 100, high: 104, low: 96, volume: priorVol };
+    if (i === 66) return { close: 110, high: 112, low: 100, volume: breakoutVol };
+    return { close: 110 + (i - 66) * 2, high: 112 + (i - 66) * 2, low: 106, volume: priorVol };
   });
 }
 
@@ -184,35 +164,37 @@ describe("weeklyStageStructure · candidato B", () => {
 });
 
 describe("weeklyStageStructure · volumen de fuga (STAGE-4)", () => {
-  it("ratio ≈ vol_fuga / mediana(4 prev) en fuga clara", () => {
-    const bars = breakoutVolRatioBars({ priorVol: 1_000_000, breakoutVol: 2_500_000 });
-    const stage = weeklyStageForBars(bars);
-    const struct = weeklyStageStructureForBars(bars, { weeklyStageState: stage.state });
-    expect(struct.structure).toBe(STRUCTURE_E2_STRUCTURAL);
-    expect(struct.breakoutVolRatio).toBeCloseTo(2.5, 1);
-    expect(struct.breakoutVolWeek).toBeTruthy();
-    expect(struct.breakoutVolDetail).toBe("");
+  it("ratio ≈ vol_fuga / mediana(4 prev) y sigue siendo el de la fuga tras 3 cierres más", () => {
+    const metrics = weeklyBreakoutVolMetricsFromWeeks(freshBreakoutWeeks({ breakoutVol: 2_500_000, after: 3 }), null);
+    expect(metrics.ratio).toBeCloseTo(2.5, 1);
+    expect(metrics.weekDate).toBe(monday(66));
+    expect(metrics.ageWeeks).toBe(3);
+    expect(metrics.detail).toBe("");
   });
 
   it("fuga seca: ratio < 1", () => {
-    const bars = breakoutVolRatioBars({ priorVol: 1_000_000, breakoutVol: 700_000 });
-    const stage = weeklyStageForBars(bars);
-    const struct = weeklyStageStructureForBars(bars, { weeklyStageState: stage.state });
-    expect(struct.structure).toBe(STRUCTURE_E2_STRUCTURAL);
-    expect(struct.breakoutVolRatio).toBeCloseTo(0.7, 1);
+    const metrics = weeklyBreakoutVolMetricsFromWeeks(freshBreakoutWeeks({ breakoutVol: 700_000, after: 1 }), null);
+    expect(metrics.ratio).toBeCloseTo(0.7, 1);
   });
 
-  it("weeklyBreakoutVolMetricsFromWeeks: ratio directo con semanas sintéticas", () => {
-    const weeks = Array.from({ length: 10 }, (_, i) => ({
-      date: monday(i),
-      close: i < 5 ? 90 : 110,
-      high: i < 5 ? 95 : 115,
-      low: 85,
-      volume: i === 5 ? 2_000_000 : 1_000_000,
-    }));
-    const metrics = weeklyBreakoutVolMetricsFromWeeks(weeks, 100, { lookbackWeeks: 10, rightWeeks: 0 });
-    expect(metrics.ratio).toBeCloseTo(2, 1);
-    expect(metrics.weekDate).toBe(monday(5));
+  it("fuga antigua (> BREAKOUT_VOL_MAX_AGE_WEEKS): no devuelve ratio y lo declara", () => {
+    const metrics = weeklyBreakoutVolMetricsFromWeeks(freshBreakoutWeeks({ after: BREAKOUT_VOL_MAX_AGE_WEEKS + 3 }), null);
+    expect(metrics.ratio).toBeNull();
+    expect(metrics.stale).toBe(true);
+    expect(metrics.detail).toMatch(/^fuga de hace \d+ semanas/);
+  });
+
+  it("mediana frente a media: un pico previo no infla el ratio (1,5,1,1 → 3,0×)", () => {
+    const weeks = weeklyBars(70, (i) => {
+      if (i < 62) return { close: 100, high: 104, low: 96, volume: 1_000_000 };
+      if (i === 62) return { close: 100, high: 104, low: 96, volume: 1_000_000 };
+      if (i === 63) return { close: 100, high: 104, low: 96, volume: 5_000_000 };
+      if (i === 64 || i === 65) return { close: 100, high: 104, low: 96, volume: 1_000_000 };
+      if (i === 66) return { close: 110, high: 112, low: 100, volume: 3_000_000 };
+      return { close: 112, high: 114, low: 108, volume: 1_000_000 };
+    });
+    const metrics = weeklyBreakoutVolMetricsFromWeeks(weeks, null);
+    expect(metrics.ratio).toBeCloseTo(3, 1);
   });
 
   it("weeklyBreakoutVolMetricsFromWeeks: sin ruptura puntual", () => {
@@ -233,16 +215,33 @@ describe("weeklyStageStructure · volumen de fuga (STAGE-4)", () => {
     expect(fields.weeklyBreakoutVolWeek).toBe("2026-08-04");
   });
 
-  it("la clasificación estructural no cambia al calcular el ratio", () => {
+  it("rampa larga (fuga antigua): sigue «Con fuga» pero sin volumen de fuga vigente", () => {
+    const bars = structuralBreakoutBars();
+    const stage = weeklyStageForBars(bars);
+    const struct = weeklyStageStructureForBars(bars, { weeklyStageState: stage.state });
+    expect(struct.structure).toBe(STRUCTURE_E2_STRUCTURAL);
+    expect(struct.breakoutVolRatio).toBeNull();
+    expect(struct.breakoutVolDetail).toMatch(/^fuga de hace \d+ semanas/);
+  });
+
+  it("la clasificación estructural no depende del volumen", () => {
     const plain = structuralBreakoutBars();
-    const withVol = breakoutVolRatioBars({ priorVol: 500_000, breakoutVol: 50_000 });
-    const stagePlain = weeklyStageForBars(plain);
-    const stageVol = weeklyStageForBars(withVol);
-    const structPlain = weeklyStageStructureForBars(plain, { weeklyStageState: stagePlain.state });
-    const structVol = weeklyStageStructureForBars(withVol, { weeklyStageState: stageVol.state });
-    expect(structPlain.structure).toBe(structVol.structure);
-    expect(structPlain.label).toBe(structVol.label);
-    expect(structVol.breakoutVolRatio).toBeCloseTo(0.1, 1);
+    const loud = structuralBreakoutBars((i) => (i % 2 ? 5_000_000 : 50_000));
+    const structPlain = weeklyStageStructureForBars(plain, { weeklyStageState: weeklyStageForBars(plain).state });
+    const structLoud = weeklyStageStructureForBars(loud, { weeklyStageState: weeklyStageForBars(loud).state });
+    expect(structPlain.structure).toBe(structLoud.structure);
+    expect(structPlain.label).toBe(structLoud.label);
+  });
+
+  it("pantalla: fuga antigua no muestra multiplicador ni «sin dato vol. fuga»", () => {
+    const row = {
+      weeklyStageState: "stage2",
+      weeklyStageStructure: "E2_structural",
+      weeklyBreakoutVolRatio: null,
+      weeklyBreakoutVolDetail: "fuga de hace 9 semanas: volumen no vigente",
+    };
+    expect(breakoutVolDisplayForRow(row)).toBeNull();
+    expect(stageDisplayForRow(row).qualifierDisplay).toBe("Con fuga");
   });
 });
 

@@ -278,7 +278,7 @@
    "estado_sep08": "no",
    "estado_actual": "parcial",
    "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
-   "notas": "Existe en código desde STAGE-4: comprobar que se calcula, se persiste y se muestra. | Implementado (STAGE-4): se calcula, persiste y muestra en columna Etapa y ficha; no en móvil ni vista rápida; mediana vs media del mes; falta variante de 3-4 semanas.",
+   "notas": "Existe en código desde STAGE-4: comprobar que se calcula, se persiste y se muestra. | Implementado (STAGE-4): se calcula, persiste y muestra en columna Etapa y ficha; no en móvil ni vista rápida; mediana vs media del mes; falta variante de 3-4 semanas. | Corregido 2026-11-10 (decisión dueño 3.b): el ratio se mide en la primera semana de la racha actual de cierres sobre el techo que regía entonces, y solo se muestra si la fuga tiene ≤4 semanas (BREAKOUT_VOL_MAX_AGE_WEEKS); antes mostraba el de la última continuación («1,0× / seco»). Sigue usando la mediana de 4 semanas y no la variante de 3-4 semanas.",
    "ticket": "STAGE-4",
    "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
