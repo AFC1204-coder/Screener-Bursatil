@@ -179,6 +179,7 @@ function stageFromBars(bars = []) {
       hhhl: structure.hhhl,
       breakoutVolRatio: structure.breakoutVolRatio,
       breakoutVolWeek: structure.breakoutVolWeek,
+      breakoutAgeWeeks: structure.breakoutAgeWeeks,
       breakoutVolDetail: structure.breakoutVolDetail,
     },
   };

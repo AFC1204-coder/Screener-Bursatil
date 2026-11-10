@@ -72,7 +72,9 @@ describe("market-health weeklyStageSnapshot", () => {
     expect(snapshot.weeklyStageStructure).toBe(STRUCTURE_E2_STRUCTURAL);
     expect(snapshot.weeklyStageStructureLabel).toBe("Con fuga");
     const display = stageDisplayForRow(snapshot);
-    expect(display?.qualifier).toBe("Con fuga");
+    // La rampa de la prueba es una subida larga, no una fuga reciente: en pantalla se lee
+    // «Avance sostenido»; la etiqueta estructural del payload sigue siendo «Con fuga».
+    expect(display?.qualifier).toBe("Avance sostenido");
   });
 
   it("expone los alias weeklyStage* que consume stageDisplayForRow", () => {

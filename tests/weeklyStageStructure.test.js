@@ -241,7 +241,7 @@ describe("weeklyStageStructure · volumen de fuga (STAGE-4)", () => {
       weeklyBreakoutVolDetail: "fuga de hace 9 semanas: volumen no vigente",
     };
     expect(breakoutVolDisplayForRow(row)).toBeNull();
-    expect(stageDisplayForRow(row).qualifierDisplay).toBe("Con fuga");
+    expect(stageDisplayForRow(row).qualifierDisplay).toBe("Avance sostenido");
   });
 });
 
@@ -382,5 +382,47 @@ describe("columna Etapa y filtro requireStage2", () => {
     expect(html).toContain("Pre-fuga");
     expect(html).toContain("stageTagQualifier");
     expect(screenerFilterRejectReason(row, { requireStage2: true })).toBe("");
+  });
+});
+
+describe("stageDisplay · «Con fuga» separado en fuga reciente y avance sostenido", () => {
+  const base = { weeklyStageState: "stage2", weeklyStageStructure: "E2_structural" };
+
+  it("fuga de hace 2 semanas: «Fuga reciente · 2 sem» con multiplicador", () => {
+    const display = stageDisplayForRow({ ...base, weeklyBreakoutAgeWeeks: 2, weeklyBreakoutVolRatio: 1.8 });
+    expect(display.qualifier).toBe("Fuga reciente");
+    expect(display.qualifierDisplay).toBe("Fuga reciente · 2 sem (1,8×)");
+    expect(display.title).toMatch(/hace 2 semanas/);
+  });
+
+  it("fuga de esta semana", () => {
+    expect(stageDisplayForRow({ ...base, weeklyBreakoutAgeWeeks: 0 }).qualifierDisplay).toBe("Fuga reciente · esta sem.");
+  });
+
+  it("fuga antigua: «Avance sostenido · sem. W» con semanas en la etapa y sin multiplicador", () => {
+    const display = stageDisplayForRow({
+      ...base,
+      weeklyBreakoutAgeWeeks: 9,
+      weeklyBreakoutVolDetail: "fuga de hace 9 semanas: volumen no vigente",
+      weeklyStageWeek: 14,
+    });
+    expect(display.qualifier).toBe("Avance sostenido");
+    expect(display.qualifierDisplay).toBe("Avance sostenido · sem. 14");
+  });
+
+  it("tendencia ancha sin racha de fuga: avance sostenido", () => {
+    const display = stageDisplayForRow({ ...base, weeklyBreakoutVolDetail: "sin semana de fuga puntual" });
+    expect(display.qualifier).toBe("Avance sostenido");
+  });
+
+  it("escaneo anterior sin edad: se conserva «Con fuga»", () => {
+    expect(stageDisplayForRow(base).qualifier).toBe("Con fuga");
+  });
+
+  it("la edad viaja en los campos materializados", () => {
+    const fields = weeklyStageStructureFields({ structure: STRUCTURE_E2_STRUCTURAL, breakoutAgeWeeks: 3 });
+    expect(fields.weeklyBreakoutAgeWeeks).toBe(3);
+    const real = weeklyBreakoutVolMetricsFromWeeks(freshBreakoutWeeks({ after: 2 }), null);
+    expect(real.ageWeeks).toBe(2);
   });
 });

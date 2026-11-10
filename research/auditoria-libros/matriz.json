@@ -125,7 +125,7 @@
    "estado_sep08": "ok",
    "estado_actual": "parcial",
    "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
-   "notas": "Techo = máximo de 52s excluyendo las 4 últimas, no zona de base; «Con fuga» se comporta como estado (XOM 7 meses). Severidad Alta.",
+   "notas": "Techo = máximo de 52s excluyendo las 4 últimas, no zona de base; «Con fuga» se comporta como estado (XOM 7 meses). Severidad Alta. | 2026-11-10 (decisión dueño 1.c): en pantalla «Con fuga» se lee «Fuga reciente · N sem» (≤4 semanas) o «Avance sostenido · sem. W»; sin edad (escaneos anteriores) sigue «Con fuga». La clasificación estructural no cambia. Pendiente: techo como zona de resistencia (decisión 2.c) y nº de bases (M6/O5).",
    "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {

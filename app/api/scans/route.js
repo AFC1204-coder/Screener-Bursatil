@@ -282,6 +282,7 @@ export function resultPayload(row = {}, scanId, ownerId, index, settingsOrExplan
       weeklyHhHl: preparedRow.weeklyHhHl ?? null,
       weeklyBreakoutVolRatio: preparedRow.weeklyBreakoutVolRatio ?? null,
       weeklyBreakoutVolWeek: preparedRow.weeklyBreakoutVolWeek ?? null,
+      weeklyBreakoutAgeWeeks: preparedRow.weeklyBreakoutAgeWeeks ?? null,
       weeklyBreakoutVolDetail: preparedRow.weeklyBreakoutVolDetail ?? null,
       weeklyFastWeeks: preparedRow.weeklyFastWeeks ?? null,
       weeklySlowWeeks: preparedRow.weeklySlowWeeks ?? null,
