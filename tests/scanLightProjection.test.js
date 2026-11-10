@@ -120,6 +120,10 @@ describe("la proyección ligera cubre todo lo que se consulta", () => {
     expect(tableFields.filter((field) => !FIELDS.has(field))).toEqual([]);
   });
 
+  it("cubre los tres criterios extra del Trend Template (avance sobre mínimo 52s, distancia al máximo, RS)", () => {
+    expect(["lowAdvance52w", "distance52w", "rsGlobalPct"].filter((field) => !FIELDS.has(field))).toEqual([]);
+  });
+
   it("cubre el orden y el contrato de las Listas", () => {
     expect(LIST_FIELDS.filter((field) => !FIELDS.has(field))).toEqual([]);
   });
