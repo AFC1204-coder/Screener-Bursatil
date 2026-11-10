@@ -481,7 +481,7 @@
    "estado_sep08": "parcial",
    "estado_actual": "parcial",
    "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
-   "notas": "«Etapa» en /review enseña el Trend Template diario, no la etapa Weinstein: misma palabra, dos significados. | trendTemplateIssue cubre 6 de 8 criterios; dato ausente pasa en silencio.",
+   "notas": "«Etapa» en /review enseña el Trend Template diario, no la etapa Weinstein: misma palabra, dos significados. | trendTemplateIssue cubre 6 de 8 criterios; dato ausente pasa en silencio. | Corregido 2026-11-10 (decisión dueño): dato ausente = no cumple, con texto «… sin dato» (trendTemplateIssue). Pendiente: añadir los criterios 6-8 (≥30 % sobre el mínimo de 52s con «casi cumple» 25-30, ≤25 % del máximo, RS≥70) y medir cuántas filas quedan sin dato (el dueño pide minimizarlo).",
    "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
