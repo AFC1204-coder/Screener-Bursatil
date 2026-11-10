@@ -25,7 +25,8 @@
    "n/a",
    "sin evaluar"
   ],
-  "nota": "estado_sep08 es la línea base de la auditoría del 8-sep; estado_actual es null hasta que un agente lo verifique contra HEAD y rellene «verificado» (commit y fecha). Las páginas son índices de página del PDF (1-based), no la impresa. Los criterios están PARAFRASEADOS: no copiar pasajes de los libros."
+  "nota": "estado_sep08 es la línea base de la auditoría del 8-sep; estado_actual es null hasta que un agente lo verifique contra HEAD y rellene «verificado» (commit y fecha). Las páginas son índices de página del PDF (1-based), no la impresa. Los criterios están PARAFRASEADOS: no copiar pasajes de los libros.",
+  "auditoria_2026-11-09": "estado_actual rellenado desde tres informes de agentes (etapas, vcp, mercado) en research/auditoria-libros/informes/; evidencia sin re-verificar por la sesión principal."
  },
  "rows": [
   {
@@ -58,9 +59,10 @@
    ],
    "pantalla": "Mesa y ficha: «Etapa 1 · Pre-fuga»",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "ok",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "W2",
@@ -87,9 +89,10 @@
    ],
    "pantalla": "Calificador de etapa",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "W3",
@@ -120,9 +123,10 @@
    ],
    "pantalla": "Calificador «Con fuga»",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Techo = máximo de 52s excluyendo las 4 últimas, no zona de base; «Con fuga» se comporta como estado (XOM 7 meses). Severidad Alta.",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "W4",
@@ -148,9 +152,10 @@
    ],
    "pantalla": "Solo vía calificador; weeklyHhHl no se pinta",
    "estado_sep08": "parcial",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "W5",
@@ -176,9 +181,10 @@
    ],
    "pantalla": "Columna Etapa y «Media 30s» en la ficha",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "ok",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "W6",
@@ -204,9 +210,10 @@
    ],
    "pantalla": "Mesa y ficha",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "ok",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "W7",
@@ -232,9 +239,10 @@
    ],
    "pantalla": "weeklyDistResistancePct",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "weeklyDistResistancePct, weeklyRuptura y weeklyHhHl se calculan pero no se pintan.",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "W8",
@@ -268,10 +276,11 @@
    ],
    "pantalla": "Calificador de fuga (ver si se muestra)",
    "estado_sep08": "no",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Existe en código desde STAGE-4: comprobar que se calcula, se persiste y se muestra.",
-   "ticket": "STAGE-4"
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Existe en código desde STAGE-4: comprobar que se calcula, se persiste y se muestra. | Implementado (STAGE-4): se calcula, persiste y muestra en columna Etapa y ficha; no en móvil ni vista rápida; mediana vs media del mes; falta variante de 3-4 semanas.",
+   "ticket": "STAGE-4",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "W9",
@@ -298,9 +307,10 @@
    ],
    "pantalla": "—",
    "estado_sep08": "parcial",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "La auditoría de septiembre propone el candidato C; hoy se usa el A."
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "La auditoría de septiembre propone el candidato C; hoy se usa el A. | Mismo hallazgo que W3: sin zona de resistencia.",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "W10",
@@ -331,9 +341,10 @@
    ],
    "pantalla": "Columna Etapa",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "El 2 % de «plana» es decisión de producto: el libro no da número."
+   "estado_actual": "ok",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "El 2 % de «plana» es decisión de producto: el libro no da número.",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "M1",
@@ -367,9 +378,10 @@
    ],
    "pantalla": "Columna Etapa",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "ok",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "M2",
@@ -396,9 +408,10 @@
    ],
    "pantalla": "Columna Etapa",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "ok",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "M3",
@@ -406,11 +419,15 @@
    "fuentes": [
     {
      "libro": "minervini-mark",
-     "paginas": []
+     "paginas": [
+      83,
+      84,
+      85
+     ]
     }
    ],
    "criterio": "Transición 1→2: medias alineadas, serie de máximos y mínimos crecientes, volumen en subidas y avance previo de al menos 25-30 % desde el mínimo de 52 semanas.",
-   "regla": "lowAdvance52w ≥ 25-30 % en el subestado de etapa",
+   "regla": "lowAdvance52w ≥ 25-30 % existe en la fila pero NO forma parte del subestado de etapa",
    "codigo": [
     {
      "archivo": "lib/weeklyStageStructure.js",
@@ -422,9 +439,10 @@
    ],
    "pantalla": "—",
    "estado_sep08": "no",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Páginas por localizar con scripts/books/search.mjs (la auditoría de septiembre no las anotó)."
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Páginas por localizar con scripts/books/search.mjs (la auditoría de septiembre no las anotó). | lowAdvance52w existe en fila/ficha/minerviniScore (≥30) pero no en el subestado de etapa.",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "M4",
@@ -461,9 +479,10 @@
    ],
    "pantalla": "Filtro «Pulso» y fila «Etapa» de /review",
    "estado_sep08": "parcial",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "«Etapa» en /review enseña el Trend Template diario, no la etapa Weinstein: misma palabra, dos significados."
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "«Etapa» en /review enseña el Trend Template diario, no la etapa Weinstein: misma palabra, dos significados. | trendTemplateIssue cubre 6 de 8 criterios; dato ausente pasa en silencio.",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "M5",
@@ -501,9 +520,10 @@
    ],
    "pantalla": "Columna VCP y filtro vcpWeeklyStageStructure",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Gate G1 correcto; depende de STATSEDGE_VCP_UNIFIED=1 (confirmar en el Mini).",
+   "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
    "id": "M6",
@@ -523,9 +543,10 @@
    "tests": [],
    "pantalla": "—",
    "estado_sep08": "no",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "No existe recuento de bases en el producto."
+   "estado_actual": "no",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "No existe recuento de bases en el producto.",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "M7",
@@ -557,9 +578,10 @@
    ],
    "pantalla": "Columna VCP (contracciones, forma, % al pivote)",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Pivote = máximo de 65 sesiones, no el de la última contracción.",
+   "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
    "id": "O1",
@@ -576,9 +598,10 @@
    "tests": [],
    "pantalla": "—",
    "estado_sep08": "n/a",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Búsqueda de «stage 2» sin resultados en la auditoría de septiembre."
+   "estado_actual": "n/a",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Búsqueda de «stage 2» sin resultados en la auditoría de septiembre.",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "O2",
@@ -608,9 +631,10 @@
    ],
    "pantalla": "Columna VCP",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Ruptura medida contra ese máximo de 65 sesiones.",
+   "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
    "id": "O3",
@@ -637,9 +661,10 @@
    ],
    "pantalla": "No junto al calificador de fuga (verificar)",
    "estado_sep08": "parcial",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "O4",
@@ -667,9 +692,10 @@
    ],
    "pantalla": "weeklyDistResistancePct no se pinta en la mesa",
    "estado_sep08": "parcial",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Tope +3 % solo en tradePlan; weeklyDistResistancePct no se pinta; plan exige 3C y el motor propone con 2C.",
+   "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
    "id": "O5",
@@ -678,7 +704,9 @@
     {
      "libro": "oneil-htmmis",
      "paginas": [
-      190
+      190,
+      1104,
+      1105
      ]
     }
    ],
@@ -688,9 +716,10 @@
    "tests": [],
    "pantalla": "—",
    "estado_sep08": "no",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "no",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "O6",
@@ -699,7 +728,8 @@
     {
      "libro": "oneil-htmmis",
      "paginas": [
-      200
+      200,
+      201
      ]
     }
    ],
@@ -716,9 +746,10 @@
    ],
    "pantalla": "—",
    "estado_sep08": "riesgo",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "El candidato A en uso lo contradice en parte."
+   "estado_actual": "riesgo",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "El candidato A en uso lo contradice en parte. | Resistencia = máximo de 52 semanas (weeklyStageStructure.js:204-205) frente a O'Neil.",
+   "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
    "id": "MET-4",
@@ -737,10 +768,11 @@
    ],
    "pantalla": "Ficha «Sostén de la tendencia», vista rápida, filtro minWeeksAboveSma30w",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
+   "estado_actual": "ok",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
    "notas": "Extensión propia: se audita su coherencia con W5/W10, no contra una página.",
-   "ticket": "MET-4"
+   "ticket": "MET-4",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "MET-5",
@@ -759,10 +791,11 @@
    ],
    "pantalla": "Ficha «Salud N/100»",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
+   "estado_actual": "ok",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
    "notas": "Extensión propia; los pesos 25/10/20/25/20 son decisión de producto.",
-   "ticket": "MET-5"
+   "ticket": "MET-5",
+   "informe": "research/auditoria-libros/informes/etapas-2026-11-09.md"
   },
   {
    "id": "V1",
@@ -792,9 +825,10 @@
    ],
    "pantalla": "Columna VCP",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Rúbrica: docs/rubrica-vcp-producto-2026-09-01.md. Corpus etiquetado: research/contracciones/."
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Rúbrica: docs/rubrica-vcp-producto-2026-09-01.md. Corpus etiquetado: research/contracciones/. | decreaseTol 1.02 deja pasar 18→17.5→17; ≈½ solo en la última pareja.",
+   "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
    "id": "V2",
@@ -818,9 +852,10 @@
    ],
    "pantalla": "Evidencia en el gate (no único criterio)",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Páginas por localizar."
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Páginas por localizar. | volDryMax 1.5 más laxo que el libro; el gate está en validateEpisode, no en episodeGateMetrics.",
+   "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
    "id": "V3",
@@ -843,9 +878,10 @@
    ],
    "pantalla": "Columna VCP",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Criterio de la rúbrica del dueño (2026-09-01)."
+   "estado_actual": "ok",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Criterio de la rúbrica del dueño (2026-09-01). | ≤3 ATR es decisión del dueño; sin tope absoluto <10 %.",
+   "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
    "id": "V4",
@@ -864,9 +900,10 @@
    ],
    "pantalla": "Re-propuesta en la mesa",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Decisión del dueño; sin respaldo directo en página."
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Decisión del dueño; sin respaldo directo en página. | allowsReconfigRescue también propone el episodio ya fallado.",
+   "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
    "id": "V5",
@@ -885,9 +922,10 @@
    ],
    "pantalla": "—",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Medir con el corpus de 21 casos; ojo con la lección «15/21 era 7/21 al mirar fechas»."
+   "estado_actual": "riesgo",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Medir con el corpus de 21 casos; ojo con la lección «15/21 era 7/21 al mirar fechas». | 8/8 y 10/10 ajustados a las mismas anclas; sin medición fuera de muestra del motor unificado. Severidad Alta.",
+   "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
    "id": "V6",
@@ -906,9 +944,10 @@
    ],
    "pantalla": "Columna VCP",
    "estado_sep08": "ok",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Ver docs/vcp-footprint-notacion.md."
+   "estado_actual": "no",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Ver docs/vcp-footprint-notacion.md. | Etiqueta obsoleta «2C·form·PV%»; la cinta saca X de baseWeeks=13 fijo. Severidad Alta.",
+   "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
    "id": "MK1",
@@ -917,9 +956,11 @@
     {
      "libro": "weinstein-es",
      "paginas": [
+      288,
+      289,
       291,
-      293,
-      301
+      292,
+      293
      ]
     }
    ],
@@ -929,9 +970,10 @@
    "tests": [],
    "pantalla": "—",
    "estado_sep08": "no",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Capítulo «Los mejores indicadores a largo plazo» (PDF ~291-301): confirmar el alcance exacto."
+   "estado_actual": "no",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Capítulo «Los mejores indicadores a largo plazo» (PDF ~291-301): confirmar el alcance exacto.",
+   "informe": "research/auditoria-libros/informes/mercado-2026-11-09.md"
   },
   {
    "id": "MK2",
@@ -959,9 +1001,10 @@
    ],
    "pantalla": "/market-health",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Catálogo A.1.1 de docs/diseno-indicadores-mercado-2026-08-17.md."
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Catálogo A.1.1 de docs/diseno-indicadores-mercado-2026-08-17.md. | Extensión propia, no indicador literal de Weinstein.",
+   "informe": "research/auditoria-libros/informes/mercado-2026-11-09.md"
   },
   {
    "id": "MK3",
@@ -990,9 +1033,10 @@
    ],
    "pantalla": "/market-health",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "riesgo",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "BUG Alto: participationSummary(weeks) recorta a 12 y volumeDivergence exige 20; thresholdMet nunca es true (marketBreadth.js:442, volumeDivergence.js:41).",
+   "informe": "research/auditoria-libros/informes/mercado-2026-11-09.md"
   },
   {
    "id": "MK4",
@@ -1000,7 +1044,12 @@
    "fuentes": [
     {
      "libro": "weinstein-es",
-     "paginas": []
+     "paginas": [
+      300,
+      301,
+      302,
+      303
+     ]
     }
    ],
    "criterio": "Nuevos máximos y nuevos mínimos del universo.",
@@ -1016,10 +1065,11 @@
    ],
    "pantalla": "/market-health",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Ticket MH-FILL-4 (hecho).",
-   "ticket": "MH-FILL-4"
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Ticket MH-FILL-4 (hecho). | Mide proximidad, no nuevos extremos ni neto semanal.",
+   "ticket": "MH-FILL-4",
+   "informe": "research/auditoria-libros/informes/mercado-2026-11-09.md"
   },
   {
    "id": "MK5",
@@ -1047,9 +1097,10 @@
    ],
    "pantalla": "/market-health",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "% de valores con upDownVolRatio≥1 a 50d, no volumen agregado.",
+   "informe": "research/auditoria-libros/informes/mercado-2026-11-09.md"
   },
   {
    "id": "MK6",
@@ -1057,18 +1108,30 @@
    "fuentes": [
     {
      "libro": "oneil-htmmis",
-     "paginas": []
+     "paginas": [
+      736,
+      737,
+      746,
+      747,
+      748
+     ]
     }
    ],
    "criterio": "Sesiones de distribución: ventas con volumen en el índice.",
    "regla": "recuento de sesiones de distribución en una ventana",
-   "codigo": [],
+   "codigo": [
+    {
+     "archivo": "app/api/market-health/route.js",
+     "simbolo": "volumeTape"
+    }
+   ],
    "tests": [],
    "pantalla": "—",
    "estado_sep08": "no",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Catálogo A.1.5; fuente probable en O'Neil: por localizar."
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Catálogo A.1.5; fuente probable en O'Neil: por localizar. | Existe volumeTape (route.js:330-348); se aparta de O'Neil (PDF 736-737).",
+   "informe": "research/auditoria-libros/informes/mercado-2026-11-09.md"
   },
   {
    "id": "MK7",
@@ -1076,7 +1139,13 @@
    "fuentes": [
     {
      "libro": "oneil-htmmis",
-     "paginas": []
+     "paginas": [
+      792,
+      793,
+      794,
+      795,
+      796
+     ]
     }
    ],
    "criterio": "Día de confirmación (follow-through) tras una corrección.",
@@ -1085,23 +1154,35 @@
    "tests": [],
    "pantalla": "—",
    "estado_sep08": "no",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Catálogo A.1.6; no hay coincidencias en el código en la revisión de hoy (sin verificar a fondo)."
+   "estado_actual": "no",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Catálogo A.1.6; no hay coincidencias en el código en la revisión de hoy (sin verificar a fondo). | Decisión documentada de diseño.",
+   "informe": "research/auditoria-libros/informes/mercado-2026-11-09.md"
   },
   {
    "id": "MK8",
    "tema": "mercado",
-   "fuentes": [],
+   "fuentes": [
+    {
+     "libro": "weinstein-es",
+     "paginas": [
+      296,
+      297,
+      298,
+      299
+     ]
+    }
+   ],
    "criterio": "Impulso y oscilador de participación (McClellan).",
    "regla": "oscilador sobre avances menos descensos",
    "codigo": [],
    "tests": [],
    "pantalla": "—",
    "estado_sep08": "no",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Catálogo A.1.7-A.1.8; el diseño lo valora como secundario."
+   "estado_actual": "no",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Catálogo A.1.7-A.1.8; el diseño lo valora como secundario. | Weinstein trae el índice de momento (PDF 296-299); tampoco existe.",
+   "informe": "research/auditoria-libros/informes/mercado-2026-11-09.md"
   },
   {
    "id": "MK9",
@@ -1109,7 +1190,10 @@
    "fuentes": [
     {
      "libro": "weinstein-es",
-     "paginas": []
+     "paginas": [
+      284,
+      285
+     ]
     }
    ],
    "criterio": "El régimen del mercado se juzga con la misma etapa (estructural) que las acciones.",
@@ -1129,10 +1213,11 @@
    ],
    "pantalla": "/market-health",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
+   "estado_actual": "ok",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
    "notas": "Ticket MH-FILL-1 (hecho).",
-   "ticket": "MH-FILL-1"
+   "ticket": "MH-FILL-1",
+   "informe": "research/auditoria-libros/informes/mercado-2026-11-09.md"
   },
   {
    "id": "MK10",
@@ -1156,9 +1241,10 @@
    ],
    "pantalla": "/market-health",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": ""
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Anillo de 13 puntos alimentado por visitas.",
+   "informe": "research/auditoria-libros/informes/mercado-2026-11-09.md"
   },
   {
    "id": "MK11",
@@ -1177,13 +1263,16 @@
      "simbolo": "readMarketLeadership"
     }
    ],
-   "tests": [],
+   "tests": [
+    "tests/marketLeadership.test.js"
+   ],
    "pantalla": "/market-health",
    "estado_sep08": "sin evaluar",
-   "estado_actual": null,
-   "verificado": null,
-   "notas": "Ticket MH-FILL-3 (hecho).",
-   "ticket": "MH-FILL-3"
+   "estado_actual": "parcial",
+   "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
+   "notas": "Ticket MH-FILL-3 (hecho). | isStage2Like usa SMA50/200 diarias, no la etapa semanal.",
+   "ticket": "MH-FILL-3",
+   "informe": "research/auditoria-libros/informes/mercado-2026-11-09.md"
   }
  ]
 }
