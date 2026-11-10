@@ -1,0 +1,70 @@
+Chequeo de salud de datos · base 127.0.0.1:55432/statsedge_local · ventana 2025-05-08 → 2026-11-07 · solo lectura
+
+[FALLA] a3  Picos de una barra (D5): 18 (umbral 0) — nocturno materialized:US:2026-10-18:t030032:o0:l5613
+    symbol  fecha       previo   cierre   siguiente  volumen   guard_escala
+    ------  ----------  -------  -------  ---------  --------  ------------
+    VEEA    2026-08-26  2.600    0.123    2.000      33525900  true        
+    VEEA    2026-08-11  3.160    0.126    2.520      19340900  true        
+    VEEA    2026-06-29  5.120    0.260    4.720      44652300  true        
+    BXBL    2026-06-22  10.300   14.890   10.420     712600    false       
+    SNOW    2026-05-25  172.200  255.550  177.600    89577800  false       
+    KITT    2026-03-10  34.368   8.160    37.584     8459475   false       
+    VEEA    2026-02-27  8.640    0.507    11.200     72233500  true        
+    MGRT    2026-02-12  5.810    12.340   7.470      1893700   false       
+    DXST    2026-02-11  4.325    7.750    5.000      12493540  false       
+    MGRT    2025-12-17  5.350    13.050   8.780      3760600   false       
+    … y 8 más
+
+[FALLA] a4  Barras US en días sin sesión NYSE (D5): 107 (umbral 0) — 171 días sin sesión NYSE en la ventana
+    fecha       filas  simbolos                                                            
+    ----------  -----  --------------------------------------------------------------------
+    2026-05-25  20     ABSI,ABVX,ACA,ARM,ARRY,BANL,CLYM,CON,CRWD,DDOG,HBB,LB,LI,NET,OSCR,P…
+    2026-03-01  3      AAPL,JPM,WELL                                                       
+    2026-02-16  20     ABSI,ABVX,ACA,ARM,ARRY,BANL,CLYM,CON,CRWD,DDOG,HBB,LB,LI,NET,OSCR,P…
+    2026-01-19  20     ABSI,ABVX,ACA,ARM,ARRY,BANL,CLYM,CON,CRWD,DDOG,HBB,LB,LI,NET,OSCR,P…
+    2025-09-01  21     ABSI,ABVX,ACA,ARM,ARRY,BANL,CLYM,CON,CRWD,DDOG,HBB,JPM,LB,LI,NET,OS…
+    2025-06-01  3      MSFT,TXN,WELL                                                       
+    2025-05-26  20     ABSI,ABVX,ACA,ARM,ARRY,BANL,CLYM,CON,CRWD,DDOG,HBB,LB,LI,NET,OSCR,P…
+
+[FALLA] a6  Barras guardadas antes del cierre + margen (D4): 249 (umbral 0) — asentamiento = cierre + 30 min (lib/marketCalendar.js)
+  US: 200 filas
+    fecha       filas  primera_hora_local  simbolos                                                            
+    ----------  -----  ------------------  --------------------------------------------------------------------
+    2026-11-06  5      14:22               AAPL,KO,MRNA,SAMO,SPY                                               
+    2026-08-10  106    13:32               ACP,BBDC,BCIC,BCV,CAF,CCAP,CCIF,DBL,DHF,DHY,DLY,DMA,DMO,EDD,EDF,EEA…
+    2026-07-20  1      12:09               TQQQ                                                                
+    2026-06-05  88     12:01               ADTX,AFBI,ALBT,BLD,BNBX,BNZI,CCIX,CCRN,CEPT,CGCT,CIF,CMU,CNTA,DEVS,…
+  FR: 8 filas
+    fecha       filas  primera_hora_local  simbolos                                             
+    ----------  -----  ------------------  -----------------------------------------------------
+    2026-08-27  8      17:38               KER.PA,LR.PA,ML.PA,ORA.PA,PUB.PA,SAN.PA,SGO.PA,VIV.PA
+  ES: 9 filas
+    fecha       filas  primera_hora_local  simbolos                                                       
+    ----------  -----  ------------------  ---------------------------------------------------------------
+    2026-08-27  9      17:40               FDR.MC,IAG.MC,IDR.MC,MAP.MC,MEL.MC,RED.MC,SCYR.MC,SLR.MC,UNI.MC
+  IT: 1 filas
+    fecha       filas  primera_hora_local  simbolos
+    ----------  -----  ------------------  --------
+    2026-08-27  1      17:39               TRN.MI  
+  CH: 15 filas
+    fecha       filas  primera_hora_local  simbolos                                                            
+    ----------  -----  ------------------  --------------------------------------------------------------------
+    2026-09-25  1      16:46               CLN.SW                                                              
+    2026-08-28  1      17:56               BION.SW                                                             
+    2026-08-27  13     17:39               BANB.SW,BARN.SW,BCHN.SW,BCVN.SW,BEAN.SW,BKW.SW,BUCN.SW,CMBN.SW,COTN…
+  SE: 16 filas
+    fecha       filas  primera_hora_local  simbolos                                                            
+    ----------  -----  ------------------  --------------------------------------------------------------------
+    2026-09-25  1      16:41               SWED-A.ST                                                           
+    2026-08-27  15     17:39               CAMX.ST,ELUX-B.ST,GETI-B.ST,HMS.ST,HUSQ-B.ST,INDU-C.ST,LATO-B.ST,LI…
+
+[FALLA] a11 Parpadeo de la etapa oficial en la misma semana (D1): 486 (umbral 0) — 7 nocturnos, 5 pares con la misma semana oficial
+    desde                                        hasta                                        semana_oficial  sesiones                 pares  cambian  salen_e2  entran_e2
+    -------------------------------------------  -------------------------------------------  --------------  -----------------------  -----  -------  --------  ---------
+    materialized:US:2026-10-12:t030337:o0:l5608  materialized:US:2026-10-13:t030413:o0:l5608  2026-10-05      2026-10-09 → 2026-10-12  3275   288      84        109      
+    materialized:US:2026-10-13:t030413:o0:l5608  materialized:US:2026-10-14:t030035:o0:l5608  2026-10-05      2026-10-12 → 2026-10-13  3289   127      32        32       
+    materialized:US:2026-10-14:t030035:o0:l5608  materialized:US:2026-10-15:t030032:o0:l5608  2026-10-05      2026-10-13 → 2026-10-14  3291   1        0         0        
+    materialized:US:2026-10-15:t030032:o0:l5608  materialized:US:2026-10-16:t030032:o0:l5608  2026-10-05      2026-10-14 → 2026-10-15  3293   3        0         1        
+    materialized:US:2026-10-17:t030310:o0:l5608  materialized:US:2026-10-18:t030032:o0:l5613  2026-10-12      2026-10-16 → 2026-10-16  3287   67       18        12       
+
+Resultado: FALLA (a3, a4, a6, a11)

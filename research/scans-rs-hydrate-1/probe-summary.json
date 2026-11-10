@@ -1,0 +1,77 @@
+{
+  "ticket": "SCANS-RS-HYDRATE-1",
+  "at": "2026-09-13T16:40:47.685Z",
+  "head": "f4695aa",
+  "tunnel15432": true,
+  "app": "127.0.0.1:3300",
+  "symbolCount": 3576,
+  "scanLocalId": "materialized:US:2026-09-13:t030356:o0:l5608",
+  "scanRowCount": 3576,
+  "http": {
+    "coldExtended": {
+      "status": 200,
+      "ttfbMs": 17861,
+      "totalMs": 17889,
+      "transferAfterTtfbMs": 28,
+      "wireBytes": 34697958,
+      "contentEncoding": null,
+      "rsHydration": "extended"
+    },
+    "coldCore": {
+      "status": 200,
+      "ttfbMs": 8586,
+      "totalMs": 8601,
+      "transferAfterTtfbMs": 16,
+      "wireBytes": 34118519,
+      "contentEncoding": null,
+      "rsHydration": "core"
+    },
+    "warmExtended": {
+      "status": 200,
+      "ttfbMs": 203,
+      "totalMs": 228,
+      "transferAfterTtfbMs": 24,
+      "wireBytes": 34697958,
+      "contentEncoding": null,
+      "rsHydration": "extended"
+    },
+    "deltaTtfbMs": 9275
+  },
+  "isolatedHydrate": {
+    "globalBulk": {
+      "label": "globalRs_bulk",
+      "ms": 1136,
+      "meta": {
+        "hits": 3576
+      }
+    },
+    "countryUsNoBulk_legacy": {
+      "label": "countryUs_readGlobalRs_bulkSnapshot_false",
+      "ms": 6431,
+      "meta": {
+        "hits": 3576
+      }
+    },
+    "countryUsBulk_fallback": {
+      "label": "countryUs_readGlobalRs_bulkSnapshot_true",
+      "ms": 5311,
+      "meta": {
+        "hits": 3576
+      }
+    },
+    "countryFull_withReuse": {
+      "label": "readCountryRsForSymbols_reuseGlobal",
+      "ms": 8221,
+      "meta": {
+        "hits": 3576
+      }
+    },
+    "themeFull": {
+      "label": "readThemeRsForSymbols",
+      "ms": 786,
+      "meta": {
+        "hits": 3576
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "verdict": "DATE_ACCEPTANCE_HARDENED_OK",
+  "timezones": [
+    "Europe/Madrid",
+    "America/New_York",
+    "Asia/Tokyo"
+  ],
+  "results": [
+    {
+      "id": "WRONG",
+      "expect": "FAIL",
+      "status": "FAIL",
+      "ok": true,
+      "exitCode": 1,
+      "tail": "  actual: '-',\n  expected: '1 ene 1',\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.7.0\nACCEPTANCE_FAIL date cases"
+    },
+    {
+      "id": "RIGHT",
+      "expect": "PASS",
+      "status": "PASS",
+      "ok": true,
+      "exitCode": 0,
+      "tail": "OK Europe/Madrid assertions 19\nOK America/New_York assertions 19\nOK Asia/Tokyo assertions 19\nACCEPTANCE_OK assertions=57 timezones=3"
+    },
+    {
+      "id": "PRESERVATION_BREAK",
+      "expect": "FAIL",
+      "status": "FAIL",
+      "ok": true,
+      "exitCode": 1,
+      "tail": "  actual: '-',\n  expected: '1 mar 2027',\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.7.0\nACCEPTANCE_FAIL date cases"
+    },
+    {
+      "id": "BASELINE_SOURCE",
+      "expect": "FAIL",
+      "status": "FAIL",
+      "ok": true,
+      "exitCode": 1,
+      "tail": "  actual: '7 sept 2026',\n  expected: '8 sept 2026',\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.7.0\nACCEPTANCE_FAIL date cases"
+    }
+  ],
+  "expected_values_use_date_constructor_oracle": false,
+  "llm_judge": false,
+  "v1_py_touched": false
+}

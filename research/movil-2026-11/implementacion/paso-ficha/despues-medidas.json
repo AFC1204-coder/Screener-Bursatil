@@ -1,0 +1,1358 @@
+[
+  {
+    "sym": "AAPL",
+    "vp": "390x844",
+    "canvas": {
+      "x": 10,
+      "y": 101,
+      "w": 370,
+      "h": 412,
+      "visible": true
+    },
+    "card": {
+      "x": 10,
+      "y": 642,
+      "w": 370,
+      "h": 75,
+      "visible": true
+    },
+    "ticket": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 788,
+      "w": 390,
+      "h": 56,
+      "visible": true
+    },
+    "readout": {
+      "text": "\"06 nov 2026 · C 343,47\"",
+      "display": "block",
+      "x": 10,
+      "y": 73,
+      "w": 370,
+      "h": 28,
+      "visible": true
+    },
+    "fresh": "precios 6 nov · RS 27 sept",
+    "scrollW": 390,
+    "innerW": 390,
+    "docH": 1283,
+    "small": [
+      "A. A 35x36"
+    ],
+    "errors": [],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "KO",
+    "vp": "390x844",
+    "canvas": {
+      "x": 10,
+      "y": 101,
+      "w": 370,
+      "h": 412,
+      "visible": true
+    },
+    "card": {
+      "x": 10,
+      "y": 642,
+      "w": 370,
+      "h": 75,
+      "visible": true
+    },
+    "ticket": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 788,
+      "w": 390,
+      "h": 56,
+      "visible": true
+    },
+    "readout": {
+      "text": "\"06 nov 2026 · C 95,87\"",
+      "display": "block",
+      "x": 10,
+      "y": 73,
+      "w": 370,
+      "h": 28,
+      "visible": true
+    },
+    "fresh": "precios 6 nov · RS 27 sept",
+    "scrollW": 390,
+    "innerW": 390,
+    "docH": 1243,
+    "small": [
+      "A. A 35x36"
+    ],
+    "errors": [],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "TJGC",
+    "vp": "390x844",
+    "canvas": {
+      "x": 10,
+      "y": 101,
+      "w": 370,
+      "h": 412,
+      "visible": true
+    },
+    "card": {
+      "x": 10,
+      "y": 642,
+      "w": 370,
+      "h": 86,
+      "visible": true
+    },
+    "ticket": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 788,
+      "w": 390,
+      "h": 56,
+      "visible": true
+    },
+    "readout": {
+      "text": "\"05 nov 2026 · C 31,89\"",
+      "display": "block",
+      "x": 10,
+      "y": 73,
+      "w": 370,
+      "h": 28,
+      "visible": true
+    },
+    "fresh": "precios 5 nov",
+    "scrollW": 390,
+    "innerW": 390,
+    "docH": 1298,
+    "small": [
+      "A. A 35x36"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "XTER",
+    "vp": "390x844",
+    "canvas": {
+      "x": 10,
+      "y": 101,
+      "w": 370,
+      "h": 412,
+      "visible": true
+    },
+    "card": {
+      "x": 10,
+      "y": 642,
+      "w": 370,
+      "h": 98,
+      "visible": true
+    },
+    "ticket": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 788,
+      "w": 390,
+      "h": 56,
+      "visible": true
+    },
+    "readout": {
+      "text": "\"06 nov 2026 · C 9,78\"",
+      "display": "block",
+      "x": 10,
+      "y": 73,
+      "w": 370,
+      "h": 28,
+      "visible": true
+    },
+    "fresh": "precios 5 nov",
+    "scrollW": 390,
+    "innerW": 390,
+    "docH": 1310,
+    "small": [
+      "A. A 35x36"
+    ],
+    "errors": [],
+    "reqs": [
+      "/api/auth/session",
+      "/api/chart",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/chart",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "ZZZZNOEXISTE",
+    "vp": "390x844",
+    "canvas": null,
+    "card": null,
+    "ticket": null,
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 788,
+      "w": 390,
+      "h": 56,
+      "visible": true
+    },
+    "readout": null,
+    "fresh": null,
+    "scrollW": 390,
+    "innerW": 390,
+    "docH": 958,
+    "small": [
+      "A.appBrand StatsEdgeEquity Research 104x36",
+      "INPUT.input stockChartSearchInput Buscar ticker o nombre 235x38",
+      "BUTTON.stockChartSearchSubmit Ir 28x36",
+      "A.btn Ver listas 209x40"
+    ],
+    "errors": [],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "AAPL",
+    "vp": "360x740",
+    "canvas": {
+      "x": 10,
+      "y": 101,
+      "w": 340,
+      "h": 412,
+      "visible": true
+    },
+    "card": {
+      "x": 10,
+      "y": 690,
+      "w": 340,
+      "h": 75,
+      "visible": true
+    },
+    "ticket": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 684,
+      "w": 360,
+      "h": 56,
+      "visible": true
+    },
+    "readout": {
+      "text": "\"06 nov 2026 · C 343,47\"",
+      "display": "block",
+      "x": 10,
+      "y": 73,
+      "w": 340,
+      "h": 28,
+      "visible": true
+    },
+    "fresh": "precios 6 nov · RS 27 sept",
+    "scrollW": 360,
+    "innerW": 360,
+    "docH": 1331,
+    "small": [
+      "A. A 35x36"
+    ],
+    "errors": [],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "KO",
+    "vp": "360x740",
+    "canvas": {
+      "x": 10,
+      "y": 101,
+      "w": 340,
+      "h": 412,
+      "visible": true
+    },
+    "card": {
+      "x": 10,
+      "y": 690,
+      "w": 340,
+      "h": 75,
+      "visible": true
+    },
+    "ticket": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 684,
+      "w": 360,
+      "h": 56,
+      "visible": true
+    },
+    "readout": {
+      "text": "\"06 nov 2026 · C 95,87\"",
+      "display": "block",
+      "x": 10,
+      "y": 73,
+      "w": 340,
+      "h": 28,
+      "visible": true
+    },
+    "fresh": "precios 6 nov · RS 27 sept",
+    "scrollW": 360,
+    "innerW": 360,
+    "docH": 1291,
+    "small": [
+      "A. A 35x36"
+    ],
+    "errors": [],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "TJGC",
+    "vp": "360x740",
+    "canvas": {
+      "x": 10,
+      "y": 101,
+      "w": 340,
+      "h": 412,
+      "visible": true
+    },
+    "card": {
+      "x": 10,
+      "y": 690,
+      "w": 340,
+      "h": 86,
+      "visible": true
+    },
+    "ticket": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 684,
+      "w": 360,
+      "h": 56,
+      "visible": true
+    },
+    "readout": {
+      "text": "\"05 nov 2026 · C 31,89\"",
+      "display": "block",
+      "x": 10,
+      "y": 73,
+      "w": 340,
+      "h": 28,
+      "visible": true
+    },
+    "fresh": "precios 5 nov",
+    "scrollW": 360,
+    "innerW": 360,
+    "docH": 1346,
+    "small": [
+      "A. A 35x36"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "XTER",
+    "vp": "360x740",
+    "canvas": {
+      "x": 10,
+      "y": 101,
+      "w": 340,
+      "h": 412,
+      "visible": true
+    },
+    "card": {
+      "x": 10,
+      "y": 690,
+      "w": 340,
+      "h": 98,
+      "visible": true
+    },
+    "ticket": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 684,
+      "w": 360,
+      "h": 56,
+      "visible": true
+    },
+    "readout": {
+      "text": "\"06 nov 2026 · C 9,78\"",
+      "display": "block",
+      "x": 10,
+      "y": 73,
+      "w": 340,
+      "h": 28,
+      "visible": true
+    },
+    "fresh": "precios 5 nov",
+    "scrollW": 360,
+    "innerW": 360,
+    "docH": 1358,
+    "small": [
+      "A. A 35x36"
+    ],
+    "errors": [],
+    "reqs": [
+      "/api/auth/session",
+      "/api/chart",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/chart",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "ZZZZNOEXISTE",
+    "vp": "360x740",
+    "canvas": null,
+    "card": null,
+    "ticket": null,
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 684,
+      "w": 360,
+      "h": 56,
+      "visible": true
+    },
+    "readout": null,
+    "fresh": null,
+    "scrollW": 360,
+    "innerW": 360,
+    "docH": 854,
+    "small": [
+      "A.appBrand StatsEdgeEquity Research 104x36",
+      "INPUT.input stockChartSearchInput Buscar ticker o nombre 235x38",
+      "BUTTON.stockChartSearchSubmit Ir 28x36",
+      "A.btn Ver listas 209x40"
+    ],
+    "errors": [],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "AAPL",
+    "vp": "844x390",
+    "canvas": {
+      "x": 19,
+      "y": 28,
+      "w": 797,
+      "h": 308,
+      "visible": true
+    },
+    "card": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "ticket": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "readout": {
+      "text": "\"06 nov 2026 · C 343,47\"",
+      "display": "block",
+      "x": 19,
+      "y": 0,
+      "w": 797,
+      "h": 28,
+      "visible": true
+    },
+    "fresh": "precios 6 nov · RS 27 sept",
+    "scrollW": 844,
+    "innerW": 844,
+    "docH": 4063,
+    "small": [
+      "A. A 35x32"
+    ],
+    "errors": [
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+    ],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "KO",
+    "vp": "844x390",
+    "canvas": {
+      "x": 19,
+      "y": 28,
+      "w": 797,
+      "h": 308,
+      "visible": true
+    },
+    "card": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "ticket": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "readout": {
+      "text": "\"06 nov 2026 · C 95,87\"",
+      "display": "block",
+      "x": 19,
+      "y": 0,
+      "w": 797,
+      "h": 28,
+      "visible": true
+    },
+    "fresh": "precios 6 nov · RS 27 sept",
+    "scrollW": 844,
+    "innerW": 844,
+    "docH": 3966,
+    "small": [
+      "A. A 35x32"
+    ],
+    "errors": [
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+    ],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "TJGC",
+    "vp": "844x390",
+    "canvas": {
+      "x": 19,
+      "y": 28,
+      "w": 797,
+      "h": 308,
+      "visible": true
+    },
+    "card": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "ticket": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "readout": {
+      "text": "\"05 nov 2026 · C 31,89\"",
+      "display": "block",
+      "x": 19,
+      "y": 0,
+      "w": 797,
+      "h": 28,
+      "visible": true
+    },
+    "fresh": "precios 5 nov",
+    "scrollW": 844,
+    "innerW": 844,
+    "docH": 3608,
+    "small": [
+      "A. A 35x32"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+    ],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "XTER",
+    "vp": "844x390",
+    "canvas": {
+      "x": 19,
+      "y": 28,
+      "w": 797,
+      "h": 308,
+      "visible": true
+    },
+    "card": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "ticket": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "readout": {
+      "text": "\"06 nov 2026 · C 9,78\"",
+      "display": "block",
+      "x": 19,
+      "y": 0,
+      "w": 797,
+      "h": 28,
+      "visible": true
+    },
+    "fresh": "precios 5 nov",
+    "scrollW": 844,
+    "innerW": 844,
+    "docH": 3176,
+    "small": [
+      "A. A 35x32"
+    ],
+    "errors": [
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+    ],
+    "reqs": [
+      "/api/auth/session",
+      "/api/chart",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/chart",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "ZZZZNOEXISTE",
+    "vp": "844x390",
+    "canvas": null,
+    "card": null,
+    "ticket": null,
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "readout": null,
+    "fresh": null,
+    "scrollW": 844,
+    "innerW": 844,
+    "docH": 542,
+    "small": [
+      "A.appBrand StatsEdgeEquity Research 143x36",
+      "A.appHeaderNavItem active Screener 98x32",
+      "A.appHeaderNavItem  Listas 79x32",
+      "A.appHeaderNavItem  Sectores 97x32",
+      "A.appHeaderNavItem  Research 99x32",
+      "A.appHeaderNavItem  Mercado 96x32",
+      "INPUT.input stockChartSearchInput Buscar ticker o nombre 234x34",
+      "BUTTON.stockChartSearchSubmit Ir 29x34"
+    ],
+    "errors": [],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "AAPL",
+    "vp": "1440x900",
+    "canvas": {
+      "x": 57,
+      "y": 281,
+      "w": 1330,
+      "h": 602,
+      "visible": true
+    },
+    "card": {
+      "x": 57,
+      "y": 281,
+      "w": 560,
+      "h": 207,
+      "visible": true
+    },
+    "ticket": {
+      "x": 32,
+      "y": 50,
+      "w": 1380,
+      "h": 44,
+      "visible": true
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "readout": {
+      "text": "none",
+      "display": "none",
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "fresh": "precios 6 nov · RS 27 sept",
+    "scrollW": 1440,
+    "innerW": 1440,
+    "docH": 4164,
+    "small": [
+      "A.appBrand StatsEdgeEquity Research 143x36",
+      "A.appHeaderNavItem active Screener 98x32",
+      "A.appHeaderNavItem  Listas 79x32",
+      "A.appHeaderNavItem  Sectores 97x32",
+      "A.appHeaderNavItem  Research 99x32",
+      "A.appHeaderNavItem  Mercado 96x32",
+      "A.stockHeroLink stockBackLink Screener 79x32",
+      "A.stockHeroLink Web oficial 91x32",
+      "INPUT.input stockChartSearchInput Buscar ticker o nombre 233x30",
+      "BUTTON.stockChartSearchSubmit Ir 23x30",
+      "SUMMARY. Elegir 60x32",
+      "BUTTON.good Candidata 136x32",
+      "BUTTON.warn Vigilar 136x32",
+      "BUTTON.bad Descartar 136x32",
+      "BUTTON.neutral active Reabrir 136x32",
+      "INPUT. INPUT 16x30",
+      "BUTTON.stockAddToListTrigger + lista 54x30",
+      "INPUT. INPUT 96x32",
+      "BUTTON. Aplicar 67x32",
+      "BUTTON. Auto 54x32",
+      "BUTTON.chartToolButton VCP 66x32",
+      "SELECT. GlobalSimbolo 1354x32",
+      "BUTTON. 1D 29x28",
+      "BUTTON. 5D 29x28",
+      "BUTTON. 1M 29x28",
+      "BUTTON. 3M 29x28",
+      "BUTTON. 6M 29x28",
+      "BUTTON.active 1A 29x28",
+      "BUTTON. 2A 29x28",
+      "BUTTON. 5A 29x28",
+      "BUTTON. Max 36x28",
+      "BUTTON. 1m 29x28",
+      "BUTTON. 5m 29x28",
+      "BUTTON. 15m 36x28",
+      "BUTTON. 30m 36x28",
+      "BUTTON. 1H 29x28",
+      "BUTTON. 4H 29x28",
+      "BUTTON.active D 28x28",
+      "BUTTON. W 28x28",
+      "BUTTON. M 28x28",
+      "SELECT. VelasLineaArea 84x32",
+      "BUTTON.active Precio 56x32",
+      "BUTTON. Log 36x32",
+      "BUTTON. % 32x32",
+      "BUTTON.btn btnSmall btnActive RS 46x32",
+      "BUTTON.btn btnSmall btnGhost RS país 70x32",
+      "BUTTON.btn btnSmall btnGhost RS tema 75x32",
+      "SUMMARY. Indicadores 83x28",
+      "SUMMARY. Notas 52x28",
+      "A. A 35x32",
+      "BUTTON.universalChartNavButton icon Mover ventana hacia el h 32x32",
+      "BUTTON.universalChartNavButton icon Mover ventana hacia el ú 32x32",
+      "BUTTON.universalChartNavButton icon Acercar gráfico 32x32",
+      "BUTTON.universalChartNavButton icon Alejar gráfico 32x32",
+      "BUTTON.universalChartNavButton icon Restaurar rango seleccio 32x32",
+      "BUTTON.universalChartNavButton icon Dibujar línea de tendenc 32x32",
+      "BUTTON.universalChartNavButton icon a Plegar tarjeta de identi 32x32"
+    ],
+    "errors": [
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+    ],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "KO",
+    "vp": "1440x900",
+    "canvas": {
+      "x": 57,
+      "y": 281,
+      "w": 1330,
+      "h": 602,
+      "visible": true
+    },
+    "card": {
+      "x": 57,
+      "y": 281,
+      "w": 560,
+      "h": 207,
+      "visible": true
+    },
+    "ticket": {
+      "x": 32,
+      "y": 50,
+      "w": 1380,
+      "h": 44,
+      "visible": true
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "readout": {
+      "text": "none",
+      "display": "none",
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "fresh": "precios 6 nov · RS 27 sept",
+    "scrollW": 1440,
+    "innerW": 1440,
+    "docH": 3939,
+    "small": [
+      "A.appBrand StatsEdgeEquity Research 143x36",
+      "A.appHeaderNavItem active Screener 98x32",
+      "A.appHeaderNavItem  Listas 79x32",
+      "A.appHeaderNavItem  Sectores 97x32",
+      "A.appHeaderNavItem  Research 99x32",
+      "A.appHeaderNavItem  Mercado 96x32",
+      "A.stockHeroLink stockBackLink Screener 79x32",
+      "A.stockHeroLink Web oficial 91x32",
+      "INPUT.input stockChartSearchInput Buscar ticker o nombre 233x30",
+      "BUTTON.stockChartSearchSubmit Ir 23x30",
+      "SUMMARY. Elegir 60x32",
+      "BUTTON.good Candidata 136x32",
+      "BUTTON.warn Vigilar 136x32",
+      "BUTTON.bad Descartar 136x32",
+      "BUTTON.neutral active Reabrir 136x32",
+      "INPUT. INPUT 16x30",
+      "BUTTON.stockAddToListTrigger + lista 54x30",
+      "INPUT. INPUT 96x32",
+      "BUTTON. Aplicar 67x32",
+      "BUTTON. Auto 54x32",
+      "BUTTON.chartToolButton VCP 66x32",
+      "SELECT. GlobalSimbolo 1354x32",
+      "BUTTON. 1D 29x28",
+      "BUTTON. 5D 29x28",
+      "BUTTON. 1M 29x28",
+      "BUTTON. 3M 29x28",
+      "BUTTON. 6M 29x28",
+      "BUTTON.active 1A 29x28",
+      "BUTTON. 2A 29x28",
+      "BUTTON. 5A 29x28",
+      "BUTTON. Max 36x28",
+      "BUTTON. 1m 29x28",
+      "BUTTON. 5m 29x28",
+      "BUTTON. 15m 36x28",
+      "BUTTON. 30m 36x28",
+      "BUTTON. 1H 29x28",
+      "BUTTON. 4H 29x28",
+      "BUTTON.active D 28x28",
+      "BUTTON. W 28x28",
+      "BUTTON. M 28x28",
+      "SELECT. VelasLineaArea 84x32",
+      "BUTTON.active Precio 56x32",
+      "BUTTON. Log 36x32",
+      "BUTTON. % 32x32",
+      "BUTTON.btn btnSmall btnActive RS 46x32",
+      "BUTTON.btn btnSmall btnGhost RS país 70x32",
+      "BUTTON.btn btnSmall btnGhost RS tema 75x32",
+      "SUMMARY. Indicadores 83x28",
+      "SUMMARY. Notas 52x28",
+      "A. A 35x32",
+      "BUTTON.universalChartNavButton icon Mover ventana hacia el h 32x32",
+      "BUTTON.universalChartNavButton icon Mover ventana hacia el ú 32x32",
+      "BUTTON.universalChartNavButton icon Acercar gráfico 32x32",
+      "BUTTON.universalChartNavButton icon Alejar gráfico 32x32",
+      "BUTTON.universalChartNavButton icon Restaurar rango seleccio 32x32",
+      "BUTTON.universalChartNavButton icon Dibujar línea de tendenc 32x32",
+      "BUTTON.universalChartNavButton icon a Plegar tarjeta de identi 32x32"
+    ],
+    "errors": [
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+    ],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "TJGC",
+    "vp": "1440x900",
+    "canvas": {
+      "x": 57,
+      "y": 281,
+      "w": 1330,
+      "h": 602,
+      "visible": true
+    },
+    "card": {
+      "x": 57,
+      "y": 281,
+      "w": 560,
+      "h": 207,
+      "visible": true
+    },
+    "ticket": {
+      "x": 32,
+      "y": 50,
+      "w": 1380,
+      "h": 44,
+      "visible": true
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "readout": {
+      "text": "none",
+      "display": "none",
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "fresh": "precios 5 nov",
+    "scrollW": 1440,
+    "innerW": 1440,
+    "docH": 3655,
+    "small": [
+      "A.appBrand StatsEdgeEquity Research 143x36",
+      "A.appHeaderNavItem active Screener 98x32",
+      "A.appHeaderNavItem  Listas 79x32",
+      "A.appHeaderNavItem  Sectores 97x32",
+      "A.appHeaderNavItem  Research 99x32",
+      "A.appHeaderNavItem  Mercado 96x32",
+      "A.stockHeroLink stockBackLink Screener 79x32",
+      "A.stockHeroLink Web oficial 91x32",
+      "INPUT.input stockChartSearchInput Buscar ticker o nombre 233x30",
+      "BUTTON.stockChartSearchSubmit Ir 23x30",
+      "SUMMARY. Elegir 60x32",
+      "BUTTON.good Candidata 136x32",
+      "BUTTON.warn Vigilar 136x32",
+      "BUTTON.bad Descartar 136x32",
+      "BUTTON.neutral active Reabrir 136x32",
+      "INPUT. INPUT 16x30",
+      "BUTTON.stockAddToListTrigger + lista 54x30",
+      "INPUT. INPUT 96x32",
+      "BUTTON. Aplicar 67x32",
+      "BUTTON. Auto 54x32",
+      "BUTTON.chartToolButton VCP 66x32",
+      "SELECT. GlobalSimbolo 1354x32",
+      "BUTTON. 1D 29x28",
+      "BUTTON. 5D 29x28",
+      "BUTTON. 1M 29x28",
+      "BUTTON. 3M 29x28",
+      "BUTTON. 6M 29x28",
+      "BUTTON.active 1A 29x28",
+      "BUTTON. 2A 29x28",
+      "BUTTON. 5A 29x28",
+      "BUTTON. Max 36x28",
+      "BUTTON. 1m 29x28",
+      "BUTTON. 5m 29x28",
+      "BUTTON. 15m 36x28",
+      "BUTTON. 30m 36x28",
+      "BUTTON. 1H 29x28",
+      "BUTTON. 4H 29x28",
+      "BUTTON.active D 28x28",
+      "BUTTON. W 28x28",
+      "BUTTON. M 28x28",
+      "SELECT. VelasLineaArea 84x32",
+      "BUTTON.active Precio 56x32",
+      "BUTTON. Log 36x32",
+      "BUTTON. % 32x32",
+      "BUTTON.btn btnSmall btnActive RS 46x32",
+      "BUTTON.btn btnSmall btnGhost RS país 70x32",
+      "BUTTON.btn btnSmall btnGhost RS tema 75x32",
+      "SUMMARY. Indicadores 83x28",
+      "SUMMARY. Notas 52x28",
+      "A. A 35x32",
+      "BUTTON.universalChartNavButton icon Mover ventana hacia el h 32x32",
+      "BUTTON.universalChartNavButton icon Mover ventana hacia el ú 32x32",
+      "BUTTON.universalChartNavButton icon Acercar gráfico 32x32",
+      "BUTTON.universalChartNavButton icon Alejar gráfico 32x32",
+      "BUTTON.universalChartNavButton icon Restaurar rango seleccio 32x32",
+      "BUTTON.universalChartNavButton icon Dibujar línea de tendenc 32x32",
+      "BUTTON.universalChartNavButton icon a Plegar tarjeta de identi 32x32"
+    ],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+    ],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "XTER",
+    "vp": "1440x900",
+    "canvas": {
+      "x": 57,
+      "y": 281,
+      "w": 1330,
+      "h": 602,
+      "visible": true
+    },
+    "card": {
+      "x": 57,
+      "y": 281,
+      "w": 560,
+      "h": 210,
+      "visible": true
+    },
+    "ticket": {
+      "x": 32,
+      "y": 50,
+      "w": 1380,
+      "h": 44,
+      "visible": true
+    },
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "readout": {
+      "text": "none",
+      "display": "none",
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "fresh": "precios 5 nov",
+    "scrollW": 1440,
+    "innerW": 1440,
+    "docH": 3687,
+    "small": [
+      "A.appBrand StatsEdgeEquity Research 143x36",
+      "A.appHeaderNavItem active Screener 98x32",
+      "A.appHeaderNavItem  Listas 79x32",
+      "A.appHeaderNavItem  Sectores 97x32",
+      "A.appHeaderNavItem  Research 99x32",
+      "A.appHeaderNavItem  Mercado 96x32",
+      "A.stockHeroLink stockBackLink Screener 79x32",
+      "INPUT.input stockChartSearchInput Buscar ticker o nombre 233x30",
+      "BUTTON.stockChartSearchSubmit Ir 23x30",
+      "SUMMARY. Elegir 60x32",
+      "BUTTON.good Candidata 136x32",
+      "BUTTON.warn Vigilar 136x32",
+      "BUTTON.bad Descartar 136x32",
+      "BUTTON.neutral active Reabrir 136x32",
+      "INPUT. INPUT 16x30",
+      "BUTTON.stockAddToListTrigger + lista 54x30",
+      "INPUT. INPUT 96x32",
+      "BUTTON. Aplicar 67x32",
+      "BUTTON. Auto 54x32",
+      "BUTTON.chartToolButton VCP 66x32",
+      "SELECT. GlobalSimbolo 1354x32",
+      "BUTTON. 1D 29x28",
+      "BUTTON. 5D 29x28",
+      "BUTTON. 1M 29x28",
+      "BUTTON. 3M 29x28",
+      "BUTTON. 6M 29x28",
+      "BUTTON.active 1A 29x28",
+      "BUTTON. 2A 29x28",
+      "BUTTON. 5A 29x28",
+      "BUTTON. Max 36x28",
+      "BUTTON. 1m 29x28",
+      "BUTTON. 5m 29x28",
+      "BUTTON. 15m 36x28",
+      "BUTTON. 30m 36x28",
+      "BUTTON. 1H 29x28",
+      "BUTTON. 4H 29x28",
+      "BUTTON.active D 28x28",
+      "BUTTON. W 28x28",
+      "BUTTON. M 28x28",
+      "SELECT. VelasLineaArea 84x32",
+      "BUTTON.active Precio 56x32",
+      "BUTTON. Log 36x32",
+      "BUTTON. % 32x32",
+      "BUTTON.btn btnSmall btnActive RS 46x32",
+      "BUTTON.btn btnSmall btnGhost RS país 70x32",
+      "BUTTON.btn btnSmall btnGhost RS tema 75x32",
+      "SUMMARY. Indicadores 83x28",
+      "SUMMARY. Notas 52x28",
+      "A. A 35x32",
+      "BUTTON.universalChartNavButton icon Mover ventana hacia el h 32x32",
+      "BUTTON.universalChartNavButton icon Mover ventana hacia el ú 32x32",
+      "BUTTON.universalChartNavButton icon Acercar gráfico 32x32",
+      "BUTTON.universalChartNavButton icon Alejar gráfico 32x32",
+      "BUTTON.universalChartNavButton icon Restaurar rango seleccio 32x32",
+      "BUTTON.universalChartNavButton icon Dibujar línea de tendenc 32x32",
+      "BUTTON.universalChartNavButton icon a Plegar tarjeta de identi 32x32"
+    ],
+    "errors": [
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+    ],
+    "reqs": [
+      "/api/auth/session",
+      "/api/chart",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/chart",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  },
+  {
+    "sym": "ZZZZNOEXISTE",
+    "vp": "1440x900",
+    "canvas": null,
+    "card": null,
+    "ticket": null,
+    "topbar": null,
+    "bottomNav": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0,
+      "visible": false
+    },
+    "readout": null,
+    "fresh": null,
+    "scrollW": 1440,
+    "innerW": 1440,
+    "docH": 950,
+    "small": [
+      "A.appBrand StatsEdgeEquity Research 143x36",
+      "A.appHeaderNavItem active Screener 98x32",
+      "A.appHeaderNavItem  Listas 79x32",
+      "A.appHeaderNavItem  Sectores 97x32",
+      "A.appHeaderNavItem  Research 99x32",
+      "A.appHeaderNavItem  Mercado 96x32",
+      "INPUT.input stockChartSearchInput Buscar ticker o nombre 234x34",
+      "BUTTON.stockChartSearchSubmit Ir 29x34",
+      "A.btn btnPrimary Volver al screener 127x35",
+      "A.btn Ver listas 74x35"
+    ],
+    "errors": [],
+    "reqs": [
+      "/api/auth/session",
+      "/api/similar",
+      "/api/social-sentiment",
+      "/api/similar",
+      "/api/social-sentiment"
+    ]
+  }
+]

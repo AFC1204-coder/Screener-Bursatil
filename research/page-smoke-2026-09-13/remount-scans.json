@@ -1,0 +1,55 @@
+{
+  "opened": true,
+  "onReview": true,
+  "bootState": {
+    "pasan": "560 de 3576 pasan",
+    "hasAVAH": true,
+    "cargando": false,
+    "localScans": null,
+    "keys": [
+      "statsedge.scans.v1",
+      "statsedge.authSessionHint.v1"
+    ]
+  },
+  "storageInfo": {
+    "interesting": [
+      "statsedge.scans.v1",
+      "statsedge.authSessionHint.v1"
+    ],
+    "peek": {
+      "statsedge.scans.v1": {
+        "len": 7251,
+        "head": "[{\"id\":\"materialized:US:2026-09-13:t030356:o0:l5608\",\"cloudId\":\"b16bc54a-dff9-44"
+      },
+      "statsedge.authSessionHint.v1": {
+        "len": 1,
+        "head": "1"
+      }
+    }
+  },
+  "counts": {
+    "boot": {
+      "nightly": 3
+    },
+    "review": {},
+    "returnHome": {
+      "nightly": 2
+    },
+    "returnHomeTotal": 2
+  },
+  "returnHomeDetail": [
+    {
+      "kind": "nightly",
+      "status": 200,
+      "t": 1789334290517,
+      "phase": "returnHome"
+    },
+    {
+      "kind": "nightly",
+      "status": 200,
+      "t": 1789334291472,
+      "phase": "returnHome"
+    }
+  ],
+  "pass": false
+}

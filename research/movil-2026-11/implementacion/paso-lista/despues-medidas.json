@@ -1,0 +1,46 @@
+{
+  "screener-390": {
+    "rows": 60,
+    "visible": 11,
+    "firstRowY": 162,
+    "rowH": 56,
+    "scrollW": 390,
+    "innerW": 390,
+    "nodesPerRow": 15,
+    "smallTargetsInView": 0
+  },
+  "filtros-390": {
+    "scrollW": 390,
+    "active": "mobileSheet mobileFilterSheet",
+    "closedByEsc": true
+  },
+  "peek-390": {
+    "requestsOnOpen": [],
+    "scrollW": 390,
+    "afterNext": "MRNA",
+    "pos": "2 / 937",
+    "requestsAfterNext": []
+  },
+  "screener-360": {
+    "rows": 60,
+    "visible": 9,
+    "firstRowY": 162,
+    "rowH": 56,
+    "scrollW": 360,
+    "innerW": 360,
+    "nodesPerRow": 15,
+    "smallTargetsInView": 0
+  },
+  "filtros-360": {
+    "scrollW": 360,
+    "active": "mobileSheet mobileFilterSheet",
+    "closedByEsc": true
+  },
+  "peek-360": {
+    "requestsOnOpen": [],
+    "scrollW": 360,
+    "afterNext": "MRNA",
+    "pos": "2 / 937",
+    "requestsAfterNext": []
+  }
+}

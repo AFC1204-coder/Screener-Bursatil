@@ -1,0 +1,131 @@
+{
+  "last": {
+    "hasCargando": true,
+    "hasTardo": false,
+    "hasAnalizadas": false,
+    "analizadasMatch": null,
+    "colaMatch": "652 en cola",
+    "marketBits": [
+      "Mercado",
+      "mercado",
+      "mercado",
+      "MERCADO",
+      "mercado",
+      "Abierto",
+      "mercado",
+      "mercado"
+    ],
+    "snippet": "StatsEdge EQUITY RESEARCH Screener Listas Sectores Research Mercado STATSEDGE · SCREENER Líderes Etapa 2 28 mercados Desde el vie 4 sep · Etapa 2: 64 entradas, 68 salidas · Máximos de 52 semanas: 1 nuevo, 56 ya cerca · ver detalle Estado Cargando 28 materializados… Fusión parcial Falta materializado: Brasil · Falta materializado: China A · Falta materializado: Irlanda (no publicable) · Falta materializado: Israel · Falta materializado: México · Falta materializado: Portugal (pocas filas) · Falta materializado: Singapur · Falta materializado: Sudáfrica. Mesa con mercados disponibles; percentiles RS del lote de origen. ‹ MERCADOS 28/29 Global EE. UU. US+Core intl Core intl Europa Asia HK Perso",
+    "rowish": 0,
+    "nextIssues": null,
+    "issueButtons": []
+  },
+  "portals": 0,
+  "apiLog": [
+    {
+      "status": 200,
+      "path": "/api/auth/session",
+      "ms": 1789323699638
+    },
+    {
+      "status": 200,
+      "path": "/api/auth/session",
+      "ms": 1789323699771
+    },
+    {
+      "status": 200,
+      "path": "/api/auth/session",
+      "ms": 1789323700145
+    },
+    {
+      "status": 200,
+      "path": "/api/weekly-changes",
+      "ms": 1789323701069
+    },
+    {
+      "status": 200,
+      "path": "/api/coverage",
+      "ms": 1789323701084
+    },
+    {
+      "status": 200,
+      "path": "/api/supabase/status",
+      "ms": 1789323701210
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+      "ms": 1789323701961
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323731062
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323737369
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323746833
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323754221
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323760012
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323765244
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323770880
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323782679
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323790246
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323795876
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323801674
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323806646
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323811332
+    },
+    {
+      "status": 200,
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2",
+      "ms": 1789323816912
+    }
+  ]
+}

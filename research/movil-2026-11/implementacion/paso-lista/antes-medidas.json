@@ -1,0 +1,56 @@
+{
+  "screener-390": {
+    "rows": 50,
+    "visible": 1,
+    "firstRowY": 338,
+    "rowH": 264,
+    "scrollW": 390,
+    "innerW": 390,
+    "nodesPerRow": 54,
+    "smallTargetsInView": 9
+  },
+  "filtros-390": {
+    "scrollW": 390,
+    "active": "BODY",
+    "closedByEsc": true
+  },
+  "peek-390": {
+    "requestsOnOpen": [
+      "/api/chart?symbol=TJGC&range=1A&interval=D",
+      "/api/rs-weekly?symbol=TJGC&limit=180&sector=Communication+Services&industry=Advertising+Agencies&theme=Internet+%2F+plataformas",
+      "/api/chart?symbol=MRNA&range=1A&interval=D",
+      "/api/rs-weekly?symbol=MRNA&limit=180&sector=Healthcare&industry=Biotechnology&theme=Medtech+%2F+biotech",
+      "/api/chart?symbol=AGL&range=1A&interval=D",
+      "/api/rs-weekly?symbol=AGL&limit=180&sector=Healthcare&industry=Medical+Care+Facilities&theme=Medtech+%2F+biotech",
+      "/api/scans/chart-preview"
+    ],
+    "scrollW": 390
+  },
+  "screener-360": {
+    "rows": 50,
+    "visible": 1,
+    "firstRowY": 352,
+    "rowH": 264,
+    "scrollW": 360,
+    "innerW": 360,
+    "nodesPerRow": 102,
+    "smallTargetsInView": 9
+  },
+  "filtros-360": {
+    "scrollW": 360,
+    "active": "BODY",
+    "closedByEsc": true
+  },
+  "peek-360": {
+    "requestsOnOpen": [
+      "/api/chart?symbol=TJGC&range=1A&interval=D",
+      "/api/rs-weekly?symbol=TJGC&limit=180&sector=Communication+Services&industry=Advertising+Agencies&theme=Internet+%2F+plataformas",
+      "/api/chart?symbol=MRNA&range=1A&interval=D",
+      "/api/rs-weekly?symbol=MRNA&limit=180&sector=Healthcare&industry=Biotechnology&theme=Medtech+%2F+biotech",
+      "/api/chart?symbol=AGL&range=1A&interval=D",
+      "/api/rs-weekly?symbol=AGL&limit=180&sector=Healthcare&industry=Medical+Care+Facilities&theme=Medtech+%2F+biotech",
+      "/api/scans/chart-preview"
+    ],
+    "scrollW": 360
+  }
+}

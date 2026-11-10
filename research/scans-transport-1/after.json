@@ -1,0 +1,34 @@
+{
+  "ticket": "SCANS-TRANSPORT-1",
+  "measuredAt": "2026-09-13T12:30:00Z",
+  "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+  "before": {
+    "server": "next start :3300 (HEAD build, uncompressed handler)",
+    "encoding": null,
+    "wireBytes": 34697873,
+    "decodedBytes": 34697873,
+    "ttfbMs": 1298,
+    "totalMs": 1482,
+    "note": "cache hit. Chrome QR previously measured 35110807 B transfer / 94640 ms cold."
+  },
+  "after": {
+    "server": "next start :3315 (isolated build of this change)",
+    "encoding": "gzip",
+    "wireBytes": 5248017,
+    "decodedBytes": 34697873,
+    "contentLength": "5248017",
+    "cold": { "ttfbMs": 129463, "totalMs": 131301, "parseMs": 1667 },
+    "cacheHit": { "ttfbMs": 3064, "totalMs": 3880, "parseMs": 591 },
+    "rows": 3576,
+    "projection": "compact",
+    "rsHydration": "extended",
+    "browser": {
+      "url": "http://localhost:3315/",
+      "encodedBodySize": 5248017,
+      "decodedBodySize": 34697873,
+      "transferSize": 5248317,
+      "durationMs": 5434,
+      "truth": "652 de 4176 pasan «Líderes Etapa 2»"
+    }
+  }
+}

@@ -99,7 +99,7 @@ Criterios de pertenencia al denominador de un theme (misma semana W):
 |---|---|---|
 | RS global (MET-1) | `statsedge-private-global-rs-usd-v1` | `canonicalRsEngineVersion()` — **sin cambio** |
 | RS país US / intl (MET-2) | `statsedge-us-equity-rs-v1` / `statsedge-private-country-rs-local-{market}-v1` | Constantes en lector país — **sin cambio** |
-| RS tema | `statsedge-private-theme-rs-usd-{slug}-v1` | Constante prefijo `THEME_RS_ENGINE_PREFIX` + slug normalizado del `theme.key` + sufijo `-v1`; lector `themeRs()` resuelve por theme del símbolo |
+| RS tema | `statsedge-private-theme-rs-usd-{slug}-v2` | Constante prefijo `THEME_RS_ENGINE_PREFIX` + slug normalizado del `theme.key` + sufijo `-v2` (desde 2026-11; -v1 = miembros antiguos); lector `themeRs()` resuelve por theme del símbolo |
 
 **Slug del theme** (normalización para `engine_version`): minúsculas, ASCII, espacios y `/` → guión, sin acentos. **Solo** sobre las 12 keys. Ej.: `Semis / fotonica` → `semis-fotonica`; `Software / IA` → `software-ia`. **No** existen slugs `general`, `basic-materials`, ni ningún sector Yahoo.
 

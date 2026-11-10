@@ -1,0 +1,35 @@
+{
+  "id": "cache-001",
+  "acceptance_revision": "hardened-2026-09-10",
+  "base_commit": "19c947b43416b73f8f1a2d2643c4afbb0028413c",
+  "source_module_sha256": "df9467d7eaa7aaca748b55e8930cc19dd08a14d67278d36235edccd68b57aa16",
+  "allowed_files": ["lib/serverCache.js", "tests/serverCache.test.js"],
+  "acceptance_script": "accept-cache.mjs",
+  "acceptance_target": "lib/serverCache.js",
+  "changed_partition": {
+    "defects": [
+      "sync throw must not leave rejected promise in inflight",
+      "after clear(), pre-clear loaders must not repopulate store or remove newer inflight",
+      "after set(key,B), older loaders must not overwrite B (including expired B)",
+      "async rejection clears inflight (already true on source; keep)",
+      "superseded callers still receive their own result/error",
+      "replacement loaders stay deduplicated"
+    ]
+  },
+  "preserved_partition": {
+    "ttl_constants": { "CHART_DAILY": 21600000, "CHART_INTRADAY": 300000, "PROFILE": 86400000 },
+    "expiry_boundary": "expiresAt <= now is expired",
+    "lru": "get refreshes; peek does not",
+    "falsey_values": [null, false, 0, ""],
+    "undefined_is_miss": true,
+    "api_keys": ["cached", "clear", "get", "peek", "set", "stats"],
+    "module_exports": ["TTL", "createTtlCache", "marketCache"],
+    "default_maxEntries": 2000,
+    "marketCache_maxEntries": 2500,
+    "marketCache_name": "market",
+    "key_identity": "Map identity; number 1 !== string '1'",
+    "clear_retains_hit_miss_counters": true
+  },
+  "fail_closed": true,
+  "notes": "Original 14-check accept was insufficient: adversarial fix+capacity and fix+key-coercion both scored 14/14. Hardened accept adds export/capacity/identity probes (18 checks)."
+}

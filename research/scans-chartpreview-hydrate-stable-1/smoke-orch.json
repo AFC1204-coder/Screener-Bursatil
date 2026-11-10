@@ -1,0 +1,21 @@
+{
+  "ready": {
+    "cargando": true,
+    "pasan": null
+  },
+  "postsAtReady": 0,
+  "totalPosts": 0,
+  "statuses": {},
+  "spark": {
+    "pasan": null,
+    "wraps": 0,
+    "missingEls": 0,
+    "missingText": 0,
+    "svgs": 0,
+    "paths": 0,
+    "tickers": [],
+    "cazaOn": true
+  },
+  "ok": false,
+  "elapsedSec": 107
+}

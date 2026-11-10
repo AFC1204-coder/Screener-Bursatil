@@ -1,0 +1,414 @@
+{
+  "meta": {
+    "baseUrl": "http://127.0.0.1:3300",
+    "startedAt": "2026-09-12T19:01:55.412Z",
+    "finishedAt": "2026-09-12T19:02:40.826Z",
+    "postCloseRows": 50,
+    "truthLineFinal": "1371 de 4180 pasan «Deterioro» · mesa: AT+AU+BE+CA+CH+DE+DK+ES+FI+FR+GB+HK+IN+IT+JP+KR+NL+NO+SE+US · corte 12 sept, 05:15"
+  },
+  "results": [
+    {
+      "workflow": "1. Restauración/carga mesa US",
+      "feedbackMs": 31462.075417,
+      "stableMs": 10,
+      "feedbackDetail": "truth: 617 de 3580 pasan «Líderes Etapa 2» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte 12 sept, 05:15",
+      "firstPaintMs": 214,
+      "rowsVisible": 617,
+      "viewMode": "CazaAuditoría617 en cola",
+      "longTasks": 5,
+      "longTaskTotalMs": 586,
+      "longTaskMaxMs": 338,
+      "mutations": 0,
+      "requests": [
+        {
+          "url": "/api/auth/session",
+          "method": "GET",
+          "ms": 13,
+          "status": 200,
+          "kb": 0
+        },
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+          "method": "GET",
+          "ms": 30721,
+          "status": 200,
+          "kb": 0
+        },
+        {
+          "url": "/api/supabase/status",
+          "method": "GET",
+          "ms": 721,
+          "status": 200,
+          "kb": 4
+        },
+        {
+          "url": "/api/weekly-changes",
+          "method": "GET",
+          "ms": 17739,
+          "status": 200,
+          "kb": 38
+        },
+        {
+          "url": "/api/coverage",
+          "method": "GET",
+          "ms": 30,
+          "status": 200,
+          "kb": 50
+        },
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+          "method": "GET",
+          "ms": null,
+          "status": null,
+          "kb": 0
+        }
+      ],
+      "analyzedEstimate": "617 de 3580 ",
+      "dominantCost": "E network (/api/scans 30721ms, 0KB) + A filter/parse post-fetch",
+      "confidence": "HIGH"
+    },
+    {
+      "workflow": "2. Primer render útil (mesa visible)",
+      "feedbackMs": 131.9044580000009,
+      "stableMs": 10,
+      "feedbackDetail": "50 tickers, audit=0 tape=617",
+      "longTasks": 5,
+      "longTaskTotalMs": 586,
+      "longTaskMaxMs": 338,
+      "requests": [
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+          "method": "GET",
+          "ms": 30721,
+          "status": 200,
+          "kb": 0
+        },
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+          "method": "GET",
+          "ms": null,
+          "status": null,
+          "kb": 0
+        }
+      ],
+      "dominantCost": "E network (scans payload) + B React render tabla",
+      "confidence": "HIGH"
+    },
+    {
+      "workflow": "3. Truth line estable (baseline post-carga)",
+      "feedbackMs": 0,
+      "stableMs": 0,
+      "feedbackDetail": "709 de 4180 pasan «Líderes Etapa 2» · 20 mercados en mesa · 28 mercados en selección · selección ≠ mesa · corte 12 sept, 05:15",
+      "dominantCost": "N/A — ya estable",
+      "confidence": "HIGH"
+    },
+    {
+      "workflow": "4. Hunt card → Cerca de pivot",
+      "feedbackMs": 921,
+      "stableMs": 423,
+      "feedbackDetail": "39 de 4180 pasan «Cerca de pivot» · 20 mercados en mesa · 28 mercados en selección · selección ≠ mes",
+      "longTasks": 3,
+      "longTaskTotalMs": 176,
+      "longTaskMaxMs": 61,
+      "mutations": 0,
+      "requests": [
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+          "method": "GET",
+          "ms": 317,
+          "status": 200,
+          "kb": 0
+        },
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+          "method": "GET",
+          "ms": null,
+          "status": null,
+          "kb": 0
+        }
+      ],
+      "blocking": false,
+      "dominantCost": "A filtrado O(N) + B render (921ms feedback)",
+      "confidence": "HIGH"
+    },
+    {
+      "workflow": "4b. Hunt card → Líderes Etapa 2",
+      "feedbackMs": 1029,
+      "stableMs": 12,
+      "feedbackDetail": "709 de 4180 pasan «Líderes Etapa 2» · 20 mercados en mesa · 28 mercados en selección · selección ≠ m",
+      "longTasks": 3,
+      "longTaskTotalMs": 561,
+      "longTaskMaxMs": 265,
+      "mutations": 0,
+      "requests": [],
+      "blocking": true,
+      "dominantCost": "A filtrado/sort síncrono (265ms LT) + B React",
+      "confidence": "HIGH"
+    },
+    {
+      "workflow": "5. Desactivar familia Momentum",
+      "feedbackMs": 1082,
+      "stableMs": 51,
+      "feedbackDetail": "1193 de 4180 pasan «Líderes Etapa 2» · 20 mercados en mesa · 28 mercados en selección · selección ≠ ",
+      "longTasks": 2,
+      "longTaskTotalMs": 621,
+      "longTaskMaxMs": 363,
+      "mutations": 0,
+      "requests": [
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+          "method": "GET",
+          "ms": 689,
+          "status": 200,
+          "kb": 0
+        },
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+          "method": "GET",
+          "ms": null,
+          "status": null,
+          "kb": 0
+        }
+      ],
+      "blocking": true,
+      "dominantCost": "A filtrado/sort síncrono (363ms LT) + B React",
+      "confidence": "HIGH"
+    },
+    {
+      "workflow": "5b. Reactivar familia Momentum",
+      "feedbackMs": 1017,
+      "stableMs": 55,
+      "feedbackDetail": "709 de 4180 pasan «Líderes Etapa 2» · 20 mercados en mesa · 28 mercados en selección · selección ≠ m",
+      "longTasks": 3,
+      "longTaskTotalMs": 556,
+      "longTaskMaxMs": 288,
+      "mutations": 0,
+      "requests": [
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+          "method": "GET",
+          "ms": null,
+          "status": null,
+          "kb": 0
+        }
+      ],
+      "blocking": true,
+      "dominantCost": "A filtrado/sort síncrono (288ms LT) + B React",
+      "confidence": "HIGH"
+    },
+    {
+      "workflow": "6. Cambiar intensidad familia RS",
+      "feedbackMs": 429,
+      "stableMs": 450,
+      "feedbackDetail": "633 de 4180 pasan «Líderes Etapa 2» · 20 mercados en mesa · 28 mercados en selección · selección ≠ m",
+      "longTasks": 2,
+      "longTaskTotalMs": 410,
+      "longTaskMaxMs": 229,
+      "mutations": 0,
+      "requests": [
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+          "method": "GET",
+          "ms": null,
+          "status": null,
+          "kb": 0
+        }
+      ],
+      "blocking": true,
+      "dominantCost": "A filtrado/sort síncrono (229ms LT) + B React",
+      "confidence": "MEDIUM"
+    },
+    {
+      "workflow": "7. Ordenar tabla por RS·\ni",
+      "feedbackMs": 338,
+      "stableMs": 548,
+      "feedbackDetail": "sorted by RS·\ni",
+      "longTasks": 4,
+      "longTaskTotalMs": 227,
+      "longTaskMaxMs": 60,
+      "mutations": 0,
+      "requests": [],
+      "blocking": false,
+      "dominantCost": "A filtrado O(N) + B render (338ms feedback)",
+      "confidence": "HIGH"
+    },
+    {
+      "workflow": "9. Abrir Quick Review (clic fila)",
+      "feedbackMs": 486,
+      "stableMs": 591,
+      "feedbackDetail": "modal open via row click",
+      "longTasks": 3,
+      "longTaskTotalMs": 486,
+      "longTaskMaxMs": 295,
+      "mutations": 0,
+      "requests": [
+        {
+          "url": "/api/chart?symbol=ANL&range=1A&interval=D",
+          "method": "GET",
+          "ms": 705,
+          "status": 200,
+          "kb": 76
+        },
+        {
+          "url": "/api/rs-weekly?symbol=ANL&limit=180&sector=Healthcare&industry=Biotechnology&theme=Medtech+%2F+biotech",
+          "method": "GET",
+          "ms": 705,
+          "status": 200,
+          "kb": 31
+        }
+      ],
+      "blocking": true,
+      "dominantCost": "F charts/QR (1 chart fetches, max 705ms)",
+      "confidence": "HIGH",
+      "chartRequests": [
+        {
+          "url": "/api/chart?symbol=ANL&range=1A&interval=D",
+          "method": "GET",
+          "ms": 705,
+          "status": 200,
+          "kb": 76
+        }
+      ]
+    },
+    {
+      "workflow": "10. Quick Review → Siguiente",
+      "feedbackMs": 978,
+      "stableMs": 351,
+      "feedbackDetail": "2/633",
+      "longTasks": 5,
+      "longTaskTotalMs": 483,
+      "longTaskMaxMs": 243,
+      "mutations": 0,
+      "requests": [
+        {
+          "url": "/api/chart?symbol=ANRO&range=1A&interval=D",
+          "method": "GET",
+          "ms": 20,
+          "status": 200,
+          "kb": 76
+        },
+        {
+          "url": "/api/rs-weekly?symbol=ANRO&limit=180&sector=Healthcare&industry=Biotechnology&theme=Medtech+%2F+biotech",
+          "method": "GET",
+          "ms": 20,
+          "status": 200,
+          "kb": 31
+        },
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+          "method": "GET",
+          "ms": 352,
+          "status": 200,
+          "kb": 0
+        }
+      ],
+      "blocking": true,
+      "dominantCost": "F charts/QR (1 chart fetches, max 20ms)",
+      "confidence": "HIGH",
+      "chartRequests": [
+        {
+          "url": "/api/chart?symbol=ANRO&range=1A&interval=D",
+          "method": "GET",
+          "ms": 20,
+          "status": 200,
+          "kb": 76
+        }
+      ]
+    },
+    {
+      "workflow": "11. Cerrar Quick Review",
+      "feedbackMs": 716,
+      "stableMs": 2,
+      "feedbackDetail": "modal closed",
+      "longTasks": 2,
+      "longTaskTotalMs": 125,
+      "longTaskMaxMs": 68,
+      "mutations": 0,
+      "requests": [
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+          "method": "GET",
+          "ms": null,
+          "status": null,
+          "kb": 0
+        }
+      ],
+      "blocking": false,
+      "dominantCost": "B React (unmount modal)",
+      "confidence": "HIGH"
+    },
+    {
+      "workflow": "12. Hunt card → Deterioro",
+      "feedbackMs": 1207,
+      "stableMs": 795,
+      "feedbackDetail": "1371 de 4180 pasan «Deterioro» · 20 mercados en mesa · 28 mercados en selección · selección ≠ mesa ·",
+      "longTasks": 3,
+      "longTaskTotalMs": 870,
+      "longTaskMaxMs": 467,
+      "mutations": 0,
+      "requests": [
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+          "method": "GET",
+          "ms": 305,
+          "status": 200,
+          "kb": 0
+        },
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+          "method": "GET",
+          "ms": null,
+          "status": null,
+          "kb": 0
+        }
+      ],
+      "blocking": true,
+      "dominantCost": "A filtrado/sort síncrono (467ms LT) + B React",
+      "confidence": "HIGH"
+    },
+    {
+      "workflow": "13a. Mercado → Core intl",
+      "feedbackMs": 228,
+      "stableMs": 1,
+      "feedbackDetail": "1371 de 4180 pasan «Deterioro» · mesa: AT+AU+BE+CA+CH+DE+DK+ES+FI+FR+GB+HK+IN+IT+JP+KR+NL+NO+SE+US · corte 12 sept, 05:1",
+      "longTasks": 1,
+      "longTaskTotalMs": 56,
+      "longTaskMaxMs": 56,
+      "mutations": 0,
+      "requests": [
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=CA%2CCH%2CDE%2CES%2CFR%2CGB%2CHK%2CIT%2CNL%2CSE&hydrateRs=1",
+          "method": "GET",
+          "ms": null,
+          "status": null,
+          "kb": 0
+        }
+      ],
+      "blocking": false,
+      "dominantCost": "E network (rescans nullms) + A re-filter",
+      "confidence": "HIGH"
+    },
+    {
+      "workflow": "13b. Mercado → EE. UU. (vuelta)",
+      "feedbackMs": 65,
+      "stableMs": 1,
+      "feedbackDetail": "1371 de 4180 pasan «Deterioro» · mesa: AT+AU+BE+CA+CH+DE+DK+ES+FI+FR+GB+HK+IN+IT+JP+KR+NL+NO+SE+US · corte 12 sept, 05:1",
+      "longTasks": 0,
+      "longTaskTotalMs": 0,
+      "longTaskMaxMs": 0,
+      "mutations": 0,
+      "requests": [
+        {
+          "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+          "method": "GET",
+          "ms": null,
+          "status": null,
+          "kb": 0
+        }
+      ],
+      "blocking": false,
+      "dominantCost": "E network (rescans nullms) + A re-filter",
+      "confidence": "HIGH"
+    }
+  ]
+}

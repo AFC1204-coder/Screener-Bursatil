@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>StatsEdge móvil — prototipo 2026-11</title>
+<style>
+/* Fuentes empaquetadas (OFL). Spline Sans Mono no está en local: se usa si el
+   sistema la tiene; si no, DM Mono como sustituto de métrica parecida. Archivo
+   (display) no se usa en móvil salvo el ticker de la ficha → Instrument Bold. */
+@font-face { font-family: "Instrument Sans"; src: local("Instrument Sans"), url(fonts/InstrumentSans-Regular.ttf) format("truetype"); font-weight: 400; }
+@font-face { font-family: "Instrument Sans"; src: local("Instrument Sans Bold"), url(fonts/InstrumentSans-Bold.ttf) format("truetype"); font-weight: 600 700; }
+@font-face { font-family: "SE Mono"; src: local("Spline Sans Mono"), url(fonts/DMMono-Regular.ttf) format("truetype"); }
+
+/* Tokens copiados tal cual de styles/tokens-v2.css (v2.3 + rediseño 2026-11) */
+:root {
+  --pizarra:#141A17; --pizarra-0:#0F1412; --pizarra-2:#1D2521; --pizarra-3:#262F2A;
+  --tiza:#EDE8DA; --humo:#8A918B; --senal:#E0A93F; --traza:#93B8CE; --oxido:#C4614C;
+  --bg:var(--pizarra); --surface:var(--pizarra-2); --surface2:var(--pizarra-3); --surface-inset:var(--pizarra-0);
+  --text:var(--tiza); --muted:var(--humo); --soft:#B9BFB2;
+  --line:rgba(237,232,218,.10); --line2:rgba(237,232,218,.26); --line3:rgba(237,232,218,.45);
+  --ghost:rgba(237,232,218,.35); --line-stale:1px dotted rgba(126,139,130,.55);
+  --senal-dim:rgba(224,169,63,.12); --traza-dim:rgba(147,184,206,.12);
+  --cta-bg:var(--tiza); --cta-fg:var(--pizarra);
+  --decision-vigilar:var(--senal); --decision-auditar:var(--traza); --decision-descartar:var(--humo);
+  --serie-alza:#3dba7a; --serie-baja:var(--humo);
+  --font-body:"Instrument Sans",-apple-system,sans-serif; --font-data:"SE Mono","Spline Sans Mono",ui-monospace,monospace;
+  --text-xs:11px; --text-s:12.5px; --text-m:14px; --text-l:16px; --data-s:12.5px; --data-m:17px; --display-m:20px;
+  --track-label:.14em;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px; --space-6:24px;
+  --radius-s:3px; --radius:6px; --radius-pill:999px;
+  --shadow-panel:0 1px 3px rgba(0,0,0,.38); --shadow-float:0 12px 28px rgba(0,0,0,.42);
+  --t-state:140ms ease; --t-enter:180ms cubic-bezier(.2,.8,.2,1);
+  --curve-stroke:2px; --curve-track:rgba(237,232,218,.22);
+  /* Propuestos para móvil (ver propuesta.md §E) */
+  --m-tap:44px; --m-row-h:56px; --m-head-h:52px; --m-views-h:44px; --m-bar-h:40px; --m-colhead-h:26px; --m-tab-h:56px;
+}
+* { box-sizing:border-box; }
+html,body { margin:0; background:#0b0e0c; color:var(--text); font-family:var(--font-body); -webkit-font-smoothing:antialiased; }
+button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
+.num { font-family:var(--font-data); font-variant-numeric:tabular-nums; }
+
+/* Escenario: teléfono de 390×844 + índice de pantallas a la derecha (solo en escritorio) */
+.stage { display:flex; gap:32px; justify-content:center; align-items:flex-start; padding:24px; }
+.phone { position:relative; width:390px; height:844px; overflow:hidden; background:var(--bg); border-radius:28px; box-shadow:0 0 0 1px var(--line2), 0 30px 80px rgba(0,0,0,.6); }
+.phone.land { width:844px; height:390px; }
+body.capture .stage { padding:0; } body.capture .phone { border-radius:0; box-shadow:none; } body.capture .index { display:none; }
+.index { width:260px; font-size:13px; color:var(--soft); line-height:1.5; }
+.index h2 { font-size:13px; letter-spacing:var(--track-label); text-transform:uppercase; color:var(--muted); margin:0 0 8px; }
+.index a { display:block; color:var(--text); text-decoration:none; padding:6px 8px; border-radius:var(--radius); }
+.index a:hover, .index a.on { background:var(--surface2); }
+.index p { margin:16px 0 0; font-size:12.5px; color:var(--muted); }
+
+.screen { position:absolute; inset:0; display:none; flex-direction:column; }
+.screen.on { display:flex; }
+.scroll { flex:1; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+.scroll::-webkit-scrollbar { display:none; }
+
+/* ── Cabecera de pantalla (sustituye topbar 50 + sub-barra 54 + ticket) ── */
+.mhead { flex:none; height:var(--m-head-h); display:flex; align-items:center; gap:4px; padding:0 4px 0 16px; border-bottom:1px solid var(--line); background:var(--bg); }
+.mhead .ttl { flex:1; min-width:0; }
+.mhead h1 { margin:0; font-size:17px; font-weight:650; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mhead .sub { font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+.fresh { border-bottom:var(--line-stale); color:var(--soft); }
+.ibtn { width:var(--m-tap); height:var(--m-tap); display:grid; place-items:center; border-radius:var(--radius); color:var(--soft); flex:none; }
+.ibtn:active { background:var(--surface2); }
+.ibtn svg { width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+
+/* ── Vistas: pestañas deslizables (memoria muscular del raíl de escritorio) ── */
+.views { flex:none; height:var(--m-views-h); display:flex; gap:6px; align-items:center; padding:0 16px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--line); }
+.views::-webkit-scrollbar { display:none; }
+.vpill { flex:none; height:32px; display:flex; align-items:center; gap:6px; padding:0 12px; border:1px solid var(--line2); border-radius:var(--radius-pill); font-size:13px; color:var(--soft); white-space:nowrap; position:relative; }
+.vpill::after { content:""; position:absolute; inset:-6px 0; } /* objetivo táctil 44 px de alto */
+.vpill b { font-family:var(--font-data); font-weight:400; font-size:12px; color:var(--muted); }
+.vpill.on { background:var(--surface2); border-color:var(--line3); color:var(--text); font-weight:600; }
+.vpill.on b { color:var(--soft); }
+.vsep { flex:none; width:1px; height:20px; background:var(--line2); margin:0 4px; }
+
+/* ── Barra de filtro vivo ── */
+.fbar { flex:none; height:var(--m-bar-h); display:flex; align-items:center; gap:8px; padding:0 8px 0 12px; border-bottom:1px solid var(--line); }
+.fbtn { height:var(--m-tap); display:flex; align-items:center; gap:6px; padding:0 4px; font-size:13px; font-weight:600; flex:none; }
+.fbtn .n { min-width:18px; height:18px; border-radius:9px; background:var(--tiza); color:var(--pizarra); font-size:12px; display:grid; place-items:center; font-family:var(--font-data); }
+.fchips { flex:1; min-width:0; font-size:12.5px; color:var(--soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sortbtn { height:var(--m-tap); display:flex; align-items:center; gap:4px; padding:0 8px; font-size:12.5px; color:var(--soft); flex:none; }
+.sortbtn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.8; }
+
+/* ── Lista de una línea: 4 datos + miniatura ── */
+.colhead, .row { display:grid; grid-template-columns:minmax(0,1fr) 56px 46px 32px 54px; column-gap:8px; align-items:center; padding:0 16px; }
+.colhead { position:sticky; top:0; z-index:2; height:var(--m-colhead-h); background:var(--bg); border-bottom:1px solid var(--line); font-size:12px; color:var(--muted); }
+.colhead span:not(:first-child) { text-align:right; }
+.colhead .on { color:var(--text); }
+.row { height:var(--m-row-h); border-bottom:1px solid var(--line); position:relative; }
+.row:active, .row.focus { background:var(--surface2); }
+.row .id { min-width:0; display:flex; flex-direction:column; gap:2px; }
+.row .tk { display:flex; align-items:baseline; gap:6px; font-family:var(--font-data); font-size:15px; font-weight:600; letter-spacing:.01em; }
+.row .tk .mk { font-family:var(--font-body); font-size:12px; color:var(--senal); width:12px; text-align:center; }
+.row .tk .mk.dis { color:var(--muted); }
+.row .tk .mkt { font-size:12px; color:var(--muted); font-weight:400; }
+.row .nm { font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-left:18px; }
+.row .sp { width:56px; height:24px; }
+.row .sp.stale { opacity:.45; }
+.row .c { text-align:right; font-family:var(--font-data); font-size:14px; font-variant-numeric:tabular-nums; }
+.row .c small { display:block; font-family:var(--font-body); font-size:12px; color:var(--muted); line-height:1.1; }
+.ghost { color:var(--ghost); }
+.hot { color:var(--text); } .cool { color:var(--soft); }
+.listfoot { padding:16px; text-align:center; font-size:12.5px; color:var(--muted); }
+
+/* esqueleto de carga */
+.sk { background:linear-gradient(90deg, var(--surface) 0%, var(--surface2) 50%, var(--surface) 100%); background-size:200% 100%; animation:sk 1.2s linear infinite; border-radius:3px; }
+@keyframes sk { to { background-position:-200% 0; } }
+@media (prefers-reduced-motion:reduce) { .sk { animation:none; } }
+
+/* ── Barra inferior (zona del pulgar) ── */
+.tabs { flex:none; height:calc(var(--m-tab-h) + 0px); display:grid; grid-template-columns:repeat(5,1fr); border-top:1px solid var(--line); background:var(--pizarra-3); }
+.tab { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:12px; color:var(--muted); min-height:var(--m-tab-h); }
+.tab svg { width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.tab.on { color:var(--text); font-weight:600; }
+
+/* ── Hojas inferiores ── */
+.scrim { position:absolute; inset:0; background:rgba(5,8,6,.55); display:none; z-index:20; }
+.sheet { position:absolute; left:0; right:0; bottom:0; z-index:21; background:var(--surface); border-top:1px solid var(--line2); border-radius:14px 14px 0 0; box-shadow:var(--shadow-float); display:none; flex-direction:column; max-height:calc(100% - 40px); }
+.sheet.on, .scrim.on { display:flex; }
+.grab { flex:none; height:20px; display:grid; place-items:center; }
+.grab::before { content:""; width:36px; height:4px; border-radius:2px; background:var(--line3); }
+.shead { flex:none; display:flex; align-items:center; gap:8px; padding:0 4px 8px 16px; }
+.shead h2 { flex:1; margin:0; font-size:16px; font-weight:650; }
+.sbody { flex:1; overflow-y:auto; padding:0 16px 16px; }
+.sfoot { flex:none; display:flex; gap:8px; padding:8px 16px 12px; border-top:1px solid var(--line); background:var(--surface); }
+.btn { height:48px; padding:0 16px; border-radius:var(--radius); border:1px solid var(--line2); font-size:14px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+.btn.primary { background:var(--cta-bg); color:var(--cta-fg); border-color:var(--cta-bg); }
+.btn.grow { flex:1; }
+.lbl { font-size:12px; letter-spacing:var(--track-label); text-transform:uppercase; color:var(--muted); margin:16px 0 8px; }
+.seg { display:flex; flex-wrap:wrap; gap:6px; }
+.seg button { height:40px; padding:0 14px; border:1px solid var(--line2); border-radius:var(--radius); font-size:13.5px; color:var(--soft); position:relative; }
+.seg button::after { content:""; position:absolute; inset:-2px 0; }
+.seg button.on { background:var(--surface2); border-color:var(--line3); color:var(--text); font-weight:600; }
+.fam { display:grid; grid-template-columns:1fr auto 52px; align-items:center; gap:8px; min-height:52px; border-bottom:1px solid var(--line); }
+.fam .t { font-size:14px; } .fam .t small { display:block; font-size:12px; color:var(--muted); margin-top:2px; }
+.fam .cut { font-family:var(--font-data); font-size:13px; color:var(--soft); }
+.sw { width:44px; height:26px; border-radius:13px; background:var(--pizarra-0); border:1px solid var(--line2); position:relative; justify-self:end; }
+.sw::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:var(--humo); transition:left var(--t-state); }
+.sw.on { background:var(--surface2); border-color:var(--line3); } .sw.on::after { left:21px; background:var(--tiza); }
+.funnel { font-family:var(--font-data); font-size:13px; color:var(--soft); margin-top:12px; }
+
+/* vista rápida */
+.pk-id { display:flex; align-items:baseline; gap:8px; }
+.pk-id .tk { font-family:var(--font-data); font-size:22px; font-weight:600; }
+.pk-id .nm { font-size:13px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pk-px { font-size:13px; color:var(--soft); margin-top:4px; }
+.pk-chart { margin:12px 0 4px; height:150px; background:var(--surface-inset); border:1px solid var(--line); border-radius:var(--radius); }
+.pk-cap { font-size:12px; color:var(--muted); display:flex; justify-content:space-between; }
+.facts { display:grid; grid-template-columns:1fr 1fr; gap:0 16px; margin-top:8px; }
+.fact { padding:10px 0; border-bottom:1px solid var(--line); }
+.fact dt { font-size:12px; color:var(--muted); }
+.fact dd { margin:3px 0 0; font-family:var(--font-data); font-size:16px; font-variant-numeric:tabular-nums; }
+.fact dd small { font-family:var(--font-body); font-size:12px; color:var(--muted); margin-left:4px; }
+.cls { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:4px; }
+.cls button { height:48px; border:1px solid var(--line2); border-radius:var(--radius); font-size:13.5px; display:flex; align-items:center; justify-content:center; gap:6px; color:var(--soft); }
+.cls button.on.c { border-color:var(--senal); color:var(--text); background:var(--senal-dim); }
+.cls button.on.w { border-color:var(--senal); color:var(--text); background:var(--senal-dim); }
+.cls button.on.d { border-color:var(--line3); color:var(--muted); }
+.pager { display:flex; align-items:center; gap:4px; }
+.pager .pos { font-family:var(--font-data); font-size:12.5px; color:var(--muted); min-width:64px; text-align:center; }
+
+/* ficha */
+.fx-read { flex:none; height:30px; display:flex; align-items:center; gap:10px; padding:0 16px; font-family:var(--font-data); font-size:12.5px; color:var(--soft); white-space:nowrap; overflow:hidden; }
+.fx-read b { color:var(--text); font-weight:400; }
+.fx-chart { flex:none; height:300px; position:relative; touch-action:pan-y; }
+.fx-chart svg { width:100%; height:100%; display:block; }
+.fx-ranges { flex:none; height:48px; display:flex; align-items:center; gap:2px; padding:0 8px; border-bottom:1px solid var(--line); }
+.fx-ranges button { flex:1; height:44px; font-family:var(--font-data); font-size:13px; color:var(--muted); border-radius:var(--radius); }
+.fx-ranges button.on { color:var(--text); background:var(--surface2); }
+.fx-ranges .sep { width:1px; height:20px; background:var(--line2); flex:none; }
+.fx-sec { border-bottom:1px solid var(--line); }
+.fx-sec summary { list-style:none; height:52px; display:flex; align-items:center; gap:8px; padding:0 16px; font-size:14px; font-weight:600; }
+.fx-sec summary::-webkit-details-marker { display:none; }
+.fx-sec summary .v { margin-left:auto; font-family:var(--font-data); font-weight:400; font-size:13.5px; color:var(--soft); }
+.fx-sec summary::after { content:"›"; color:var(--muted); font-size:18px; transition:transform var(--t-state); }
+.fx-sec[open] summary::after { transform:rotate(90deg); }
+.fx-sec .in { padding:0 16px 14px; font-size:13.5px; color:var(--soft); line-height:1.5; }
+.fx-sec .in .num { color:var(--text); }
+.tsteps { display:flex; gap:6px; margin-top:6px; }
+.tsteps span { flex:1; border:1px solid var(--line2); border-radius:var(--radius-s); padding:6px 0; text-align:center; font-family:var(--font-data); font-size:13px; }
+.note { font-size:12px; color:var(--muted); margin-top:6px; }
+
+/* estados */
+.state { padding:40px 24px; text-align:center; }
+.state svg { width:120px; height:40px; }
+.state h3 { margin:12px 0 6px; font-size:16px; }
+.state p { margin:0 0 16px; font-size:13.5px; color:var(--soft); line-height:1.5; }
+.dataline { flex:none; display:flex; align-items:center; gap:8px; min-height:36px; padding:6px 8px 6px 16px; border-bottom:1px solid var(--line); background:var(--surface); font-size:12.5px; color:var(--soft); }
+.dataline .k { font-size:12px; letter-spacing:var(--track-label); color:var(--muted); text-transform:uppercase; }
+.dataline .a { margin-left:auto; height:var(--m-tap); padding:0 8px; display:flex; align-items:center; color:var(--text); text-decoration:underline; text-underline-offset:3px; }
+.more a { display:flex; align-items:center; min-height:52px; border-bottom:1px solid var(--line); color:var(--text); text-decoration:none; font-size:15px; }
+.more a small { margin-left:auto; color:var(--muted); font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone" id="phone">
+
+    <!-- 1 · SCREENER -->
+    <section class="screen" id="s-screener">
+      <header class="mhead">
+        <div class="ttl"><h1 id="sc-title">Líderes Etapa 2</h1><div class="sub" id="sc-sub"></div></div>
+        <button class="ibtn" aria-label="Buscar ticker" onclick="go('buscar')"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
+        <button class="ibtn" aria-label="Más herramientas"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+      </header>
+      <nav class="views" id="sc-views" aria-label="Vistas"></nav>
+      <div class="fbar">
+        <button class="fbtn" onclick="openSheet('filtros')" aria-label="Filtros activos">Filtros <span class="n" id="sc-fn">3</span></button>
+        <div class="fchips" id="sc-chips">Etapa 2 · RS ≥ 50 · Liquidez</div>
+        <button class="sortbtn" aria-label="Ordenar">Rend. 3M <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg></button>
+      </div>
+      <div class="dataline" id="sc-dataline" style="display:none">
+        <span class="k">Datos</span><span>Precios del 16 oct · 15 sesiones sin actualizar</span><a class="a" href="#">Traer</a>
+      </div>
+      <div class="scroll" id="sc-scroll">
+        <div class="colhead"><span>Valor</span><span>12M</span><span>Etapa</span><span>RS</span><span>Máx 52s</span></div>
+        <div id="sc-rows"></div>
+      </div>
+      <nav class="tabs" data-tabs="screener"></nav>
+    </section>
+
+    <!-- 2 · FICHA -->
+    <section class="screen" id="s-ficha">
+      <header class="mhead">
+        <button class="ibtn" aria-label="Volver a la lista" onclick="go('screener')" style="margin-left:-12px"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <div class="ttl"><h1><span class="num" id="fx-tk" style="font-size:18px">MRNA</span> <span id="fx-px" class="num" style="font-weight:400;font-size:15px;color:var(--soft)"></span></h1><div class="sub" id="fx-sub"></div></div>
+        <button class="ibtn" aria-label="Favorito" id="fx-fav"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.5 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></button>
+        <button class="ibtn" aria-label="Gráfico a pantalla completa" onclick="go('ficha-h')"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      </header>
+      <div class="scroll">
+        <div class="fx-read" id="fx-read"></div>
+        <div class="fx-chart" id="fx-chart"></div>
+        <div class="fx-ranges" id="fx-ranges"></div>
+        <div style="padding:12px 16px 4px"><div class="lbl" style="margin:0 0 8px">Tu clasificación</div><div class="cls" id="fx-cls"></div></div>
+        <div id="fx-secs" style="margin-top:8px"></div>
+      </div>
+      <nav class="tabs" data-tabs="screener"></nav>
+    </section>
+
+    <!-- 3 · LISTAS -->
+    <section class="screen" id="s-listas">
+      <header class="mhead"><div class="ttl"><h1>Listas</h1><div class="sub" id="ls-sub"></div></div>
+        <button class="ibtn" aria-label="Nueva lista"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></header>
+      <nav class="views" id="ls-views"></nav>
+      <div class="scroll">
+        <div class="colhead"><span>Valor</span><span>12M</span><span>Etapa</span><span>RS</span><span>Máx 52s</span></div>
+        <div id="ls-rows"></div>
+      </div>
+      <nav class="tabs" data-tabs="listas"></nav>
+    </section>
+
+    <!-- 4 · MÁS -->
+    <section class="screen" id="s-mas">
+      <header class="mhead"><div class="ttl"><h1>Más</h1></div></header>
+      <div class="scroll more" style="padding:0 16px">
+        <div class="lbl">Revisión</div>
+        <a href="#">Review<small>cola de clasificación</small></a>
+        <a href="#">Research<small>notas y tesis</small></a>
+        <div class="lbl">Descubrimiento</div>
+        <a href="#">IPO radar<small>salidas recientes</small></a>
+        <div class="lbl">Datos</div>
+        <a href="#">Estado de datos<small id="mas-fresh"></small></a>
+        <a href="#">Ajustes<small>densidad, columnas</small></a>
+      </div>
+      <nav class="tabs" data-tabs="mas"></nav>
+    </section>
+
+    <!-- 5 · FICHA HORIZONTAL (se monta en .phone.land) -->
+    <section class="screen" id="s-ficha-h">
+      <div class="fx-read" id="fxh-read" style="height:32px"></div>
+      <div style="position:absolute;right:8px;top:0"><button class="ibtn" aria-label="Salir de pantalla completa" onclick="go('ficha')"><svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button></div>
+      <div class="fx-chart" id="fxh-chart" style="height:310px"></div>
+      <div class="fx-ranges" id="fxh-ranges" style="border:0;border-top:1px solid var(--line)"></div>
+    </section>
+
+    <div class="scrim" id="scrim" onclick="closeSheet()"></div>
+
+    <!-- Hoja · Filtros -->
+    <section class="sheet" id="sh-filtros" aria-label="Filtros">
+      <div class="grab"></div>
+      <div class="shead"><h2>Filtros · Líderes Etapa 2</h2><button class="ibtn" onclick="closeSheet()" aria-label="Cerrar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="sbody">
+        <div class="lbl" style="margin-top:0">Mercados</div>
+        <div class="seg"><button class="on">EE. UU.</button><button>Europa</button><button>Hong Kong</button><button>Global</button><button>Personalizar…</button></div>
+        <div class="lbl">Lo que filtra la vista</div>
+        <div class="fam"><div class="t">Etapa semanal<small>Etapa 2 o mejor</small></div><span class="cut">−2.250</span><span class="sw on" role="switch" aria-checked="true"></span></div>
+        <div class="fam"><div class="t">Fuerza relativa<small>RS ≥ 50 · semana 39</small></div><span class="cut">−41</span><span class="sw on" role="switch" aria-checked="true"></span></div>
+        <div class="fam"><div class="t">Liquidez<small>importe medio 20 d</small></div><span class="cut">−59</span><span class="sw on" role="switch" aria-checked="true"></span></div>
+        <div class="fam"><div class="t">Patrón VCP<small>contracciones decrecientes</small></div><span class="cut ghost">—</span><span class="sw" role="switch" aria-checked="false"></span></div>
+        <div class="funnel">3.287 analizadas → 937 pasan</div>
+        <div class="lbl">Tu clasificación</div>
+        <div class="seg"><button class="on">Todas</button><button>● Candidatas</button><button>◐ Vigilar</button><button>Sin clasificar</button></div>
+        <div class="note">Los recortes por familia son los de la barra de escritorio (paso 5, medido 2026-11-06). Aquí se ven sin abrir ningún desplegable.</div>
+      </div>
+      <div class="sfoot"><button class="btn">Restablecer</button><button class="btn primary grow" onclick="closeSheet()">Ver 937 valores</button></div>
+    </section>
+
+    <!-- Hoja · Vista rápida -->
+    <section class="sheet" id="sh-peek" aria-label="Vista rápida" style="height:calc(100% - 64px)">
+      <div class="grab"></div>
+      <div class="shead">
+        <div style="flex:1;min-width:0"><div class="pk-id"><span class="tk" id="pk-tk"></span><span class="nm" id="pk-nm"></span></div><div class="pk-px num" id="pk-px"></div></div>
+        <button class="ibtn" onclick="closeSheet()" aria-label="Cerrar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="sbody" id="pk-body"></div>
+      <div class="sfoot" style="align-items:center">
+        <div class="pager"><button class="ibtn" aria-label="Anterior" onclick="peekStep(-1)"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><span class="pos" id="pk-pos"></span><button class="ibtn" aria-label="Siguiente" onclick="peekStep(1)"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
+        <button class="btn primary grow" onclick="closeSheet();go('ficha')">Abrir ficha</button>
+      </div>
+    </section>
+  </div>
+
+  <aside class="index" id="index">
+    <h2>Pantallas</h2>
+    <a href="#screener">1 · Screener (lista)</a>
+    <a href="#filtros">2 · Filtros (hoja inferior)</a>
+    <a href="#peek">3 · Vista rápida (hoja)</a>
+    <a href="#ficha">4 · Ficha con gráfico</a>
+    <a href="#ficha-h">5 · Ficha horizontal</a>
+    <a href="#listas">6 · Listas</a>
+    <a href="#mas">7 · Más</a>
+    <h2 style="margin-top:16px">Estados</h2>
+    <a href="#carga">Carga (esqueleto)</a>
+    <a href="#vacio">Vacío (0 pasan)</a>
+    <a href="#retrasados">Datos retrasados</a>
+    <p>Datos reales de la base local (nocturno US del 18-oct-2026, precios del 15-oct, RS semana 39 · 27-sep). Clasificaciones, favoritos, recortes de filtro y el estado vacío (Europa) son ilustrativos. Toca una fila para la vista rápida; en el gráfico, arrastra para leer el cursor.</p>
+  </aside>
+</div>
+<script src="data.js"></script>
+<script>
+const D = window.SE_DATA;
+const $ = (s) => document.querySelector(s);
+const fmtPct = (v, d = 1) => v == null || !isFinite(v) ? null : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d }) + "%";
+const fmtNum = (v, d = 2) => v == null ? "—" : v.toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtCap = (v) => v == null ? "—" : v >= 1e9 ? fmtNum(v / 1e9, 1) + " B" : fmtNum(v / 1e6, 0) + " M";
+const MES = ["ene","feb","mar","abr","may","jun","jul","ago","sept","oct","nov","dic"];
+const fmtDate = (s) => { if (!s) return "—"; const [y, m, d] = s.split("-").map(Number); return `${d} ${MES[m - 1]}`; };
+const QUAL = { "Con fuga": "fuga", "Dudoso": "dudoso" };
+// Marcas de ejemplo (en producto: favoriteSymbols + screenerDecisionResolutions)
+const MARKS = { MRNA: "c", IOVA: "w", TEAM: "★", KOD: "d" };
+// Conteos: 937 medido en la lista real; 51/49/2 son los de WeeklyChangesLine medidos en el rediseño de escritorio.
+// El resto de vistas no se ha contado aquí: se dejan sin cifra (no se inventa).
+const VIEWS = [["Líderes Etapa 2", "937"], ["Cerca de pivot", ""], ["Deterioro", ""], ["Líderes intl", ""], ["IPO recientes", ""], "|", ["Entradas E2", "51"], ["Salidas E2", "49"], ["Nuevos máx.", "2"], "|", ["★ Favoritos", ""]];
+const rows = D.lista;
+const modeDateRaw = Object.entries(D.meta.lastDates).sort((a, b) => b[1] - a[1])[0][0];
+// Hallazgo D1 (propuesta.md): en el nocturno del 18-oct, row.price es el cierre del 16-oct
+// (verificado en daily_bars para MRNA, AAPL, TEAM, IOVA) pero row.lastDate dice 15-oct.
+// El prototipo rotula con la fecha de la última barra, que es la que corresponde al precio.
+const fixDate = (d) => d === "2026-10-15" ? "2026-10-16" : d;
+const modeDate = fixDate(modeDateRaw);
+
+function spark(vals, w, h, stale) {
+  if (!vals || vals.length < 3) return `<svg class="sp" viewBox="0 0 ${w} ${h}"><line x1="0" y1="${h / 2}" x2="${w}" y2="${h / 2}" stroke="var(--line2)" stroke-dasharray="2 3"/></svg>`;
+  const mn = Math.min(...vals), mx = Math.max(...vals), r = mx - mn || 1;
+  const pts = vals.map((v, i) => `${(i / (vals.length - 1) * w).toFixed(1)},${(h - 2 - (v - mn) / r * (h - 4)).toFixed(1)}`).join(" ");
+  return `<svg class="sp${stale ? " stale" : ""}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--soft)" stroke-width="1.3" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function markHtml(s) {
+  const m = MARKS[s]; if (!m) return `<span class="mk"></span>`;
+  return m === "★" ? `<span class="mk" title="Favorito">★</span>` : m === "c" ? `<span class="mk" title="Candidata">●</span>` : m === "w" ? `<span class="mk" title="Vigilar">◐</span>` : `<span class="mk dis" title="Descartar">○</span>`;
+}
+function rowHtml(r, i) {
+  const st = r.st ? `${r.st}·${r.stw ?? "—"}` : null;
+  const q = QUAL[r.sts] || (r.stc === "doubtful" ? "dudoso" : "");
+  const d52 = r.d52 == null ? null : r.d52;
+  return `<div class="row" role="button" tabindex="0" data-i="${i}" onclick="openPeek(${i})">
+    <div class="id"><div class="tk">${markHtml(r.s)}${r.s}${r.c && r.c !== "US" ? `<span class="mkt">${r.c}</span>` : ""}</div><div class="nm">${r.n || ""}</div></div>
+    ${spark(r.spark, 56, 24, r.ld && fixDate(r.ld) < modeDate)}
+    <div class="c">${st ? st : '<span class="ghost">—</span>'}${q ? `<small>${q}</small>` : ""}</div>
+    <div class="c">${r.rs == null ? '<span class="ghost" title="Sin RS: ' + (r.rsReason || "sin ranking esta semana") + '">—</span>' : r.rs}</div>
+    <div class="c ${d52 != null && d52 > -3 ? "hot" : "cool"}">${d52 == null ? '<span class="ghost">—</span>' : fmtPct(d52)}</div>
+  </div>`;
+}
+function skeleton(n) { return Array.from({ length: n }, () => `<div class="row"><div class="id"><div class="sk" style="width:64px;height:14px"></div><div class="sk" style="width:110px;height:10px;margin-left:18px"></div></div><div class="sk" style="width:56px;height:20px"></div><div class="sk" style="height:14px"></div><div class="sk" style="height:14px"></div><div class="sk" style="height:14px"></div></div>`).join(""); }
+
+function renderViews(el, active, list) {
+  el.innerHTML = list.map((v, i) => v === "|" ? `<span class="vsep"></span>` : `<button class="vpill${i === active ? " on" : ""}">${v[0]}${v[1] ? ` <b>${v[1]}</b>` : ""}</button>`).join("");
+}
+function tabs() {
+  const T = [["screener", "Screener", '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>'], ["listas", "Listas", '<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>'], ["sectores", "Sectores", '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>'], ["mercado", "Mercado", '<path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/>'], ["mas", "Más", '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>']];
+  document.querySelectorAll(".tabs").forEach((n) => { const a = n.dataset.tabs; n.innerHTML = T.map(([k, l, p]) => `<button class="tab${k === a ? " on" : ""}" onclick="go('${["screener", "listas", "mas"].includes(k) ? k : "screener"}')" aria-current="${k === a ? "page" : "false"}"><svg viewBox="0 0 24 24">${p}</svg>${l}</button>`).join(""); });
+}
+
+// ── Screener ──
+function renderScreener(state = "ok") {
+  $("#sc-sub").innerHTML = `<span class="num">937</span> de <span class="num">3.287</span> · <span class="fresh">precios ${fmtDate(modeDate)} · RS ${fmtDate(D.meta.rsAsOf)}</span>`;
+  renderViews($("#sc-views"), 0, VIEWS);
+  $("#sc-dataline").style.display = state === "retrasados" ? "flex" : "none";
+  if (state === "carga") { $("#sc-rows").innerHTML = skeleton(12); $("#sc-sub").innerHTML = `<span class="sk" style="display:inline-block;width:180px;height:10px"></span>`; return; }
+  if (state === "vacio") {
+    renderViews($("#sc-views"), 1, VIEWS); $("#sc-title").textContent = "Cerca de pivot";
+    $("#sc-sub").innerHTML = `<span class="num">0</span> de <span class="num">1.902</span> · <span class="fresh">precios ${fmtDate(modeDate)}</span>`;
+    $("#sc-chips").textContent = "Europa · Etapa 2 · pivot < 5 %";
+    $("#sc-rows").innerHTML = `<div class="state"><svg viewBox="0 0 120 40"><path d="M4 30 L116 30" stroke="var(--curve-track)" stroke-width="2" stroke-linecap="round"/><circle cx="60" cy="30" r="4" fill="var(--tiza)"/></svg><h3>Nada pasa «Cerca de pivot» en Europa</h3><p>Corte 18 oct · 1.902 analizadas · 0 pasan.<br>La familia que más recorta es «Pivot &lt; 5 %».</p><button class="btn">Aflojar pivot a 10 %</button> <button class="btn" style="margin-top:8px">Ver EE. UU.</button></div>`;
+    return;
+  }
+  $("#sc-title").textContent = "Líderes Etapa 2"; $("#sc-chips").textContent = "Etapa 2 · RS ≥ 50 · Liquidez";
+  $("#sc-rows").innerHTML = rows.map(rowHtml).join("") + `<div class="listfoot">${rows.length} de 937 · se cargan más al bajar</div>`;
+}
+
+// ── Vista rápida ──
+let peekIdx = 0;
+function openPeek(i) { peekIdx = i; renderPeek(); openSheet("peek"); }
+function peekStep(d) { peekIdx = Math.max(0, Math.min(rows.length - 1, peekIdx + d)); renderPeek(); document.querySelectorAll("#sc-rows .row").forEach((n) => n.classList.toggle("focus", +n.dataset.i === peekIdx)); }
+function bigLine(vals, w, h) {
+  if (!vals || vals.length < 3) return "";
+  const mn = Math.min(...vals), mx = Math.max(...vals), r = mx - mn || 1, y = (v) => (h - 8 - (v - mn) / r * (h - 16)).toFixed(1);
+  const pts = vals.map((v, i) => `${(i / (vals.length - 1) * w).toFixed(1)},${y(v)}`).join(" ");
+  const ma = vals.map((_, i) => i < 9 ? null : vals.slice(i - 9, i + 1).reduce((a, b) => a + b, 0) / 10);
+  const mapts = ma.map((v, i) => v == null ? null : `${(i / (vals.length - 1) * w).toFixed(1)},${y(v)}`).filter(Boolean).join(" ");
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:100%"><polyline points="${mapts}" fill="none" stroke="var(--humo)" stroke-width="1.2" vector-effect="non-scaling-stroke"/><polyline points="${pts}" fill="none" stroke="var(--tiza)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function renderPeek() {
+  const r = rows[peekIdx];
+  $("#pk-tk").textContent = r.s; $("#pk-nm").textContent = r.n || "";
+  $("#pk-px").innerHTML = `${fmtNum(r.px)} USD · cierre ${fmtDate(fixDate(r.ld))}${fixDate(r.ld) < modeDate ? ' <span class="fresh">(atrasado)</span>' : ""}`;
+  const q = QUAL[r.sts] || "";
+  const m = MARKS[r.s];
+  $("#pk-body").innerHTML = `
+    <div class="pk-chart">${bigLine(r.spark, 358, 150)}</div>
+    <div class="pk-cap"><span>Semanal · 12 meses · MM10s</span><span>${r.t || ""}</span></div>
+    <dl class="facts">
+      <div class="fact"><dt>Etapa</dt><dd>${r.st ? `${r.st} · sem. ${r.stw}` : '<span class="ghost">—</span>'}${q ? `<small>${q}</small>` : ""}</dd></div>
+      <div class="fact"><dt>RS</dt><dd>${r.rs ?? '<span class="ghost">—</span>'}<small>${r.rs != null ? (r.rsWk || "").replace("2026-", "") + " · " + fmtDate(r.rsAsOf) : "sin ranking"}</small></dd></div>
+      <div class="fact"><dt>VCP</dt><dd>${r.vcp ? r.vcp.txt : '<span class="ghost">—</span>'}</dd></div>
+      <div class="fact"><dt>Máx 52s</dt><dd>${fmtPct(r.d52) ?? '<span class="ghost">—</span>'}</dd></div>
+      <div class="fact"><dt>Rend. 3M</dt><dd>${fmtPct(r.p3) ?? "—"}</dd></div>
+      <div class="fact"><dt>Capitaliz.</dt><dd>${fmtCap(r.mc)}</dd></div>
+    </dl>
+    <div class="lbl">Tu clasificación</div>
+    <div class="cls"><button class="c${m === "c" ? " on" : ""}">● Candidata</button><button class="w${m === "w" ? " on" : ""}">◐ Vigilar</button><button class="d${m === "d" ? " on" : ""}">○ Descartar</button></div>
+    <div style="display:flex;gap:8px;margin-top:8px"><button class="btn grow">${m === "★" ? "★ En favoritos" : "☆ Favorito"}</button><button class="btn grow">+ Lista</button></div>`;
+  $("#pk-pos").textContent = `${peekIdx + 1} / 937`;
+}
+
+// ── Ficha ──
+const F = D.ficha;
+let fxRange = 126, fxCursor = null;
+function sma(arr, n) { return arr.map((_, i) => i < n - 1 ? null : arr.slice(i - n + 1, i + 1).reduce((a, b) => a + b[4], 0) / n); }
+function drawChart(el, readEl, W, H, range) {
+  const all = F.bars, s50 = sma(all, 50), s200 = sma(all, 200);
+  const start = Math.max(0, all.length - range), bars = all.slice(start);
+  const padR = 44, volH = H * 0.16, priceH = H - volH - 18;
+  const lo = Math.min(...bars.map((b) => b[3])), hi = Math.max(...bars.map((b) => b[2])), rr = hi - lo || 1;
+  const cw = (W - padR) / bars.length, y = (v) => 6 + (hi - v) / rr * (priceH - 12);
+  const vmax = Math.max(...bars.map((b) => b[5]));
+  let g = "";
+  for (let k = 0; k <= 3; k++) { const v = lo + rr * k / 3; g += `<line x1="0" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${W - padR + 6}" y="${y(v) + 4}" fill="var(--muted)" font-size="12" font-family="var(--font-data)">${v.toLocaleString("es-ES",{maximumFractionDigits: v < 100 ? 1 : 0})}</text>`; }
+  bars.forEach((b, i) => {
+    const x = i * cw + cw / 2, up = b[4] >= b[1], col = up ? "var(--serie-alza)" : "var(--humo)";
+    g += `<line x1="${x}" x2="${x}" y1="${y(b[2])}" y2="${y(b[3])}" stroke="${col}" stroke-width="1"/>`;
+    g += `<rect x="${x - Math.max(1, cw * 0.35)}" width="${Math.max(1, cw * 0.7)}" y="${Math.min(y(b[1]), y(b[4]))}" height="${Math.max(1, Math.abs(y(b[1]) - y(b[4])))}" fill="${col}"/>`;
+    const vh = b[5] / vmax * volH; g += `<rect x="${x - Math.max(.5, cw * 0.35)}" width="${Math.max(1, cw * 0.7)}" y="${H - 18 - vh}" height="${vh}" fill="rgba(237,232,218,.12)"/>`;
+  });
+  const line = (arr, col, dash) => { const p = arr.slice(start).map((v, i) => v == null ? null : `${(i * cw + cw / 2).toFixed(1)},${y(v).toFixed(1)}`).filter(Boolean).join(" "); return p ? `<polyline points="${p}" fill="none" stroke="${col}" stroke-width="1.2" ${dash ? 'stroke-dasharray="3 3"' : ""}/>` : ""; };
+  g += line(s50, "var(--traza)") + line(s200, "var(--humo)", true);
+  // eje de fechas: 3 marcas
+  [0, Math.floor(bars.length / 2), bars.length - 1].forEach((i) => { g += `<text x="${Math.min(W - padR - 30, Math.max(0, i * cw - 14))}" y="${H - 4}" fill="var(--muted)" font-size="12" font-family="var(--font-data)">${fmtDate(bars[i][0])}</text>`; });
+  let cur = "";
+  const ci = fxCursor == null ? bars.length - 1 : Math.max(0, Math.min(bars.length - 1, fxCursor));
+  if (fxCursor != null) { const x = ci * cw + cw / 2; cur = `<line x1="${x}" x2="${x}" y1="0" y2="${H - 18}" stroke="var(--line3)" stroke-dasharray="2 3"/>`; }
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${g}${cur}</svg>`;
+  const b = bars[ci], gi = start + ci;
+  const rsAt = [...F.rsPinned].reverse().find(([d]) => d <= b[0]);
+  readEl.innerHTML = `<b>${fmtDate(b[0])}</b><span>C <b>${fmtNum(b[4])}</b></span><span>MM50 ${s50[gi] ? fmtNum(s50[gi]) : "—"}</span><span>RS ${rsAt ? `<b>${rsAt[1]}</b> <span style="color:var(--muted)">${fmtDate(rsAt[0])}</span>` : '<span class="ghost">— sin dato</span>'}</span>`;
+  el.onpointerdown = el.onpointermove = (e) => { if (e.type === "pointermove" && !e.buttons && e.pointerType !== "mouse") return; const rect = el.getBoundingClientRect(); fxCursor = Math.floor((e.clientX - rect.left) / rect.width * W / cw); drawChart(el, readEl, W, H, range); };
+  el.onpointerleave = () => { fxCursor = null; drawChart(el, readEl, W, H, range); };
+}
+function ranges(el, cb) {
+  const R = [["1M", 21], ["3M", 63], ["6M", 126], ["1A", 250], ["2A", 500]];
+  el.innerHTML = R.map(([l, n]) => `<button class="${n === fxRange ? "on" : ""}" data-n="${n}">${l}</button>`).join("") + `<span class="sep"></span><button class="on">D</button><button>S</button>`;
+  el.querySelectorAll("button[data-n]").forEach((b) => b.onclick = () => { fxRange = +b.dataset.n; fxCursor = null; cb(); });
+}
+function renderFicha() {
+  $("#fx-tk").textContent = F.s; $("#fx-px").textContent = fmtNum(F.px);
+  $("#fx-sub").innerHTML = `${F.n} · <span class="fresh">cierre ${fmtDate(F.bars[F.bars.length - 1][0])} · RS ${fmtDate(D.meta.rsAsOf)}</span>`;
+  const draw = () => { drawChart($("#fx-chart"), $("#fx-read"), 390, 300, fxRange); ranges($("#fx-ranges"), draw); };
+  draw();
+  $("#fx-cls").innerHTML = `<button class="c on">● Candidata</button><button class="w">◐ Vigilar</button><button class="d">○ Descartar</button>`;
+  const v = F.vcp;
+  const pinnedWeeks = F.rsPinned.length;
+  $("#fx-secs").innerHTML = `
+    <details class="fx-sec" open><summary>Etapa<span class="v">${F.st} · sem. ${F.stw}${QUAL[F.sts] ? " · " + QUAL[F.sts] : ""}</span></summary>
+      <div class="in"><svg viewBox="0 0 320 44" style="width:100%;height:44px"><path d="M6 34 C60 34 70 34 100 30 S150 8 190 8 S250 10 280 28 S310 36 314 36" fill="none" stroke="var(--curve-track)" stroke-width="2" stroke-linecap="round"/><circle cx="128" cy="22" r="4" fill="var(--tiza)"/></svg>
+      Etapa 2 semanal desde hace <span class="num">${F.stw}</span> semanas; estructura «${F.sts || "—"}».</div></details>
+    <details class="fx-sec"><summary>RS<span class="v">${F.rs ?? "—"} · ${(F.rsWk || "").replace("2026-", "")}</span></summary>
+      <div class="in">Percentil frente al universo global en USD, semana del ${fmtDate(F.rsAsOf)}.<div class="note">Línea del gráfico: solo las ${pinnedWeeks} semanas del motor vigente (${F.rsPinned.map((p) => p[1]).join(" → ")}). No se completa con otro motor.</div></div></details>
+    <details class="fx-sec"><summary>VCP<span class="v">${v ? v.txt : "—"}</span></summary>
+      <div class="in">${v ? `<div class="tsteps">${v.ts.map((t, i) => `<span>T${i + 1} ${t}%</span>`).join("")}</div><div class="note">Semanas de base: sin medir (falta el detector de bases).</div>` : "Sin contracciones medidas."}</div></details>
+    <details class="fx-sec"><summary>Máx 52s · Rend. 3M<span class="v">${fmtPct(F.d52)} · ${fmtPct(F.p3)}</span></summary><div class="in">Capitalización <span class="num">${fmtCap(F.mc)}</span> · ${F.t}${F.ind ? " · " + F.ind : ""}</div></details>
+    <details class="fx-sec"><summary>Notas y noticias<span class="v" style="font-family:var(--font-body)">al abrir</span></summary><div class="in">Se piden solo al desplegar (hoy /api/similar y /api/social-sentiment se piden al cargar).</div></details>`;
+}
+function renderFichaH() { const draw = () => { drawChart($("#fxh-chart"), $("#fxh-read"), 844, 310, fxRange); ranges($("#fxh-ranges"), draw); }; draw(); }
+
+// ── Listas ──
+function renderListas() {
+  const fav = [...D.extras, ...rows.filter((r) => MARKS[r.s])];
+  renderViews($("#ls-views"), 0, [["★ Favoritos", String(fav.length)], ["● Candidatas", "1"], ["◐ Vigilar", "1"], ["Mi lista", ""]]);
+  $("#ls-sub").innerHTML = `<span class="fresh">precios ${fmtDate(modeDate)} · RS ${fmtDate(D.meta.rsAsOf)}</span>`;
+  $("#ls-rows").innerHTML = fav.map((r) => rowHtml(r, rows.indexOf(r))).join("");
+  $("#mas-fresh").textContent = `precios ${fmtDate(modeDate)} · RS ${fmtDate(D.meta.rsAsOf)}`;
+}
+
+// ── Router ──
+function openSheet(k) { $("#scrim").classList.add("on"); document.querySelectorAll(".sheet").forEach((s) => s.classList.toggle("on", s.id === "sh-" + k)); }
+function closeSheet() { $("#scrim").classList.remove("on"); document.querySelectorAll(".sheet").forEach((s) => s.classList.remove("on")); }
+function show(id) { document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("on", s.id === "s-" + id)); $("#phone").classList.toggle("land", id === "ficha-h"); }
+function go(h) { location.hash = h; }
+function route() {
+  const h = location.hash.slice(1) || "screener";
+  closeSheet(); fxCursor = null;
+  document.querySelectorAll(".index a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#" + h));
+  if (["screener", "carga", "vacio", "retrasados", "filtros", "peek"].includes(h)) { show("screener"); renderScreener(["carga", "vacio", "retrasados"].includes(h) ? h : "ok"); }
+  if (h === "filtros") openSheet("filtros");
+  if (h === "peek") openPeek(1);
+  if (h === "ficha") { show("ficha"); renderFicha(); }
+  if (h === "ficha-h") { show("ficha-h"); renderFichaH(); }
+  if (h === "listas") { show("listas"); renderListas(); }
+  if (h === "mas") { show("mas"); renderListas(); }
+  if (h === "buscar") { show("screener"); renderScreener(); }
+}
+tabs(); window.addEventListener("hashchange", route); route();
+if (new URLSearchParams(location.search).has("capture")) document.body.classList.add("capture");
+</script>
+</body>
+</html>

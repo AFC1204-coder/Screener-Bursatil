@@ -1,0 +1,16 @@
+{
+  "id": "cache-001",
+  "base_commit": "19c947b43416b73f8f1a2d2643c4afbb0028413c",
+  "allowed_files": [
+    "lib/serverCache.js",
+    "tests/serverCache.test.js"
+  ],
+  "objective": "Fix the existing in-memory TTL cache invalidation and synchronous-loader-error defects only. Permitted changes: after clear(), pre-clear loaders must never repopulate the cache or remove a newer in-flight entry; after explicit set(key,B), older loaders for that key must never overwrite B, including after B expires. Both synchronous throws and asynchronous rejection must leave no rejected promise reused on the next request. Original callers of superseded loaders still receive their own original result/error; do not cancel or change that return contract. Replacement loaders remain deduplicated until their own completion. Preserve all other behavior: public exports/API, TTL constants and <= expiry boundary, LRU (get refreshes, peek does not), stale metadata, falsey cached values, undefined-as-miss, key identity, counters for unchanged paths, and clear retaining hit/miss counters. Do not change providers, persistence, schedules, shared-cache architecture, capacities or financial methodology. Only edit lib/serverCache.js and tests/serverCache.test.js. Add deterministic regression tests, preserving existing tests. No timers/sleeps for ordering: use manually resolved/rejected promises and a fixed/fake clock.",
+  "context": "Original backlog V1-01, identified before date-001. Current code hash df9467d7eaa7aaca748b55e8930cc19dd08a14d67278d36235edccd68b57aa16. Synthetic baseline: clear/set during pending A allows A to replace B; sync throw retains inflight=1; old completion/rejection can remove replacement inflight. Input classes: cache hit/miss, same/distinct keys, sync result/throw and async resolve/reject, clear/set before completion, old completion before/after replacement completion, TTL before/at/after expiry, capacity/LRU and falsey payloads. Expected outcomes follow chronological barriers and literal A/B values, not candidate implementation. Preserve unusual existing input coercions outside the specific defects; do not add general validation. No unresolved product/methodology choice: invalidation rules already documented in module. If conflicting behavior beyond these cases is found, block instead of choosing. Fixed test command: node node_modules/vitest/vitest.mjs run tests/serverCache.test.js --cache=false --maxWorkers=1. External acceptance: accept-cache.mjs. Dependencies already exist; synthetic inputs only, no network/DB/credentials. One implementation and at most one test-driven correction; no supervisor changes, retries or scope expansion. Existing supervisor diff/time/output bounds apply; if insufficient, block.",
+  "max_seconds": 2700,
+  "test_files": [
+    "tests/serverCache.test.js"
+  ],
+  "acceptance_script": "accept-cache.mjs",
+  "acceptance_target": "lib/serverCache.js"
+}

@@ -1,0 +1,27 @@
+{
+  "before": {
+    "status": {
+      "ok": true,
+      "configured": true,
+      "authenticated": false,
+      "requiresToken": true,
+      "productionLocked": false,
+      "localUnlockAvailable": true
+    },
+    "hasLocalBtn": true,
+    "snippet": "StatsEdge EQUITY RESEARCH Screener Listas Sectores Research Mercado Acceso a StatsEdge Desarrollo local: inicia sesión sin pegar el token del servidor. Entrar en local Usar token"
+  },
+  "after": {
+    "status": {
+      "ok": true,
+      "configured": true,
+      "authenticated": true,
+      "requiresToken": false,
+      "productionLocked": false,
+      "localUnlockAvailable": false
+    },
+    "stillGate": false,
+    "snippet": "StatsEdge EQUITY RESEARCH Screener Listas Sectores Research Mercado STATSEDGE · SCREENER Líderes Etapa 2 28 mercados Cambios de la semana · comprobando… Estado Cargando el escaneo nocturno... ‹ MERCADOS 28/29 Global EE. UU. US+Core intl Core intl Europa Asia HK Personalizar mercados (28/28) · person"
+  },
+  "pass": true
+}

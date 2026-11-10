@@ -1,0 +1,49 @@
+{
+  "pre": {
+    "settled": "AT,AU,BE,BR,CA,CH,CN,DE,DK,ES,FI,FR,GB,HK,IE,IL,IN,IT,JP,KR,MX,NL,NO,PT,SE,SG,US,ZA",
+    "version": 4,
+    "markets": [
+      "US",
+      "ES",
+      "DE",
+      "FR",
+      "NL",
+      "GB",
+      "CH",
+      "SE",
+      "DK",
+      "NO",
+      "FI",
+      "IT",
+      "BE",
+      "PT",
+      "AT",
+      "IE",
+      "CA",
+      "JP",
+      "HK",
+      "SG",
+      "KR",
+      "IN",
+      "IL",
+      "CN",
+      "AU",
+      "ZA",
+      "BR",
+      "MX"
+    ]
+  },
+  "boot": [
+    "nightly",
+    "nightly",
+    "markets"
+  ],
+  "review": [],
+  "returnHome": [
+    "nightly",
+    "nightly"
+  ],
+  "returnMarkets": 0,
+  "returnNightly": 2,
+  "pass": true
+}

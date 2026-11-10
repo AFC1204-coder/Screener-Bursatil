@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  StatsEdge: servidor web de producción (next start) en el Mac Mini.
+  SIN INSTALAR. Instalación (en el Mini, usuario cristian), ver
+  research/operacion-diaria-2026-11/runbook.md §4:
+
+    cp scripts/ops/launchd/com.statsedge.web.plist ~/Library/LaunchAgents/
+    plutil -lint ~/Library/LaunchAgents/com.statsedge.web.plist
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.statsedge.web.plist
+    launchctl print gui/$(id -u)/com.statsedge.web | head -30
+
+  Recargar tras un despliegue:   launchctl kickstart -k gui/$(id -u)/com.statsedge.web
+  Parar del todo:                launchctl bootout gui/$(id -u)/com.statsedge.web
+
+  Los secretos NO van aquí: web-start.sh carga ~/.config/statsedge/web.env
+  (plantilla: scripts/ops/launchd/web.env.example).
+
+  LaunchAgent (sesión de cristian), igual que com.statsedge.scan-universe-us:
+  necesita que cristian tenga la sesión iniciada (inicio de sesión automático
+  en el Mini). Si algún día el Mini arranca sin sesión, habría que pasarlo a
+  LaunchDaemon con UserName=cristian.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.statsedge.web</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/cristian/Statsedge-v0.1/scripts/ops/web-start.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/cristian/Statsedge-v0.1</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>STATSEDGE_WEB_ENV_FILE</key>
+    <string>/Users/cristian/.config/statsedge/web.env</string>
+  </dict>
+
+  <!-- Arranca al iniciar sesión y se reinicia siempre que muera. -->
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <!-- Mínimo entre reinicios: evita un bucle rápido si falta el build o el env. -->
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+
+  <key>ProcessType</key>
+  <string>Standard</string>
+  <key>SoftResourceLimits</key>
+  <dict>
+    <key>NumberOfFiles</key>
+    <integer>4096</integer>
+  </dict>
+
+  <!-- Solo los mensajes del propio web-start.sh antes del exec; la salida de
+       Next va a logs/web.out.log y logs/web.err.log (los rota web-start.sh). -->
+  <key>StandardOutPath</key>
+  <string>/Users/cristian/Statsedge-v0.1/logs/web-launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/cristian/Statsedge-v0.1/logs/web-launchd.err.log</string>
+</dict>
+</plist>

@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StatsEdge · Screener — maqueta rediseño 2026-11</title>
+<meta name="description" content="Maqueta navegable del Screener rediseñado (mesa de vistas v2). Datos de ejemplo, no de producto.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,500..700&family=Instrument+Sans:ital,wght@0,400..700;1,400..600&family=Spline+Sans+Mono:wght@400..700&display=swap" rel="stylesheet">
+<style>
+/* ──────────────────────────────────────────────────────────────────────────
+   TOKENS — copia 1:1 de styles/tokens-v2.css (Pizarra y Tiza v2.3) + tema claro.
+   Lo que no existe en tokens-v2 va marcado como «propuesto».
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: dark;
+  --pizarra:#141A17; --pizarra-0:#0F1412; --pizarra-2:#1D2521; --pizarra-3:#262F2A;
+  --tiza:#EDE8DA; --humo:#8A918B; --senal:#E0A93F; --traza:#93B8CE; --oxido:#C4614C;
+  --bg:var(--pizarra); --surface:var(--pizarra-2); --surface2:var(--pizarra-3); --surface-inset:var(--pizarra-0);
+  --text:var(--tiza); --muted:var(--humo); --soft:#B9BFB2;
+  --line:rgba(237,232,218,.10); --line2:rgba(237,232,218,.26); --line3:rgba(237,232,218,.45);
+  --accent:var(--tiza); --active-fg:var(--tiza); --active-bg:var(--pizarra-3); --active-border:var(--line3); --focus-ring:var(--tiza);
+  --cta-bg:var(--tiza); --cta-fg:var(--pizarra);
+  --senal-dim:rgba(224,169,63,.12); --traza-dim:rgba(147,184,206,.12); --oxido-dim:rgba(196,97,76,.12);
+  --ghost:rgba(237,232,218,.35);
+  --serie-alza:#3dba7a; --serie-baja:var(--humo);
+  --font-display:'Archivo','Instrument Sans',sans-serif; --font-body:'Instrument Sans',-apple-system,sans-serif; --font-data:'Spline Sans Mono',ui-monospace,monospace;
+  --track-display:.08em; --track-label:.14em;
+  --text-xxs:10px; --text-xs:11px; --text-s:12.5px; --text-m:14px; --text-l:16px;
+  --data-s:12.5px; --data-m:17px; --data-l:26px;
+  --display-s:13px; --display-m:20px;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px; --space-6:24px; --space-7:32px;
+  --radius-s:3px; --radius:6px; --radius-pill:999px;
+  --shadow-panel:0 1px 3px rgba(0,0,0,.38); --shadow-float:0 12px 28px rgba(0,0,0,.42);
+  --t-state:140ms ease; --t-enter:180ms cubic-bezier(.2,.8,.2,1);
+  --curve-stroke:2px; --curve-track:rgba(237,232,218,.22); --curve-dot:4px;
+  /* propuestos (no existen en tokens-v2) */
+  --surface-raised:var(--pizarra-3);           /* hover de fila; hoy screener.css lo usa sin definir */
+  --row-h:32px; --row-h-comfort:40px;          /* densidad de la cinta */
+  --rail-w:208px; --peek-w:372px;              /* anchos de raíl y panel lateral */
+  --top-h:48px; --ticket-h:44px;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --pizarra:#F2F0E9; --pizarra-0:#FBFAF6; --pizarra-2:#FFFFFF; --pizarra-3:#E8E5DC;
+  --tiza:#1B211D; --humo:#6B736D; --soft:#4E5650;
+  --line:rgba(27,33,29,.10); --line2:rgba(27,33,29,.22); --line3:rgba(27,33,29,.42);
+  --senal:#B8831A; --traza:#4C7A95; --oxido:#B04A35;
+  --senal-dim:rgba(184,131,26,.14); --traza-dim:rgba(76,122,149,.12); --oxido-dim:rgba(176,74,53,.12);
+  --ghost:rgba(27,33,29,.35); --curve-track:rgba(27,33,29,.22);
+  --serie-alza:#1F8F58;
+  --shadow-panel:0 1px 3px rgba(0,0,0,.10); --shadow-float:0 12px 28px rgba(0,0,0,.16);
+}
+
+/* ── base ── */
+*{box-sizing:border-box}
+html,body{margin:0;background:#0B0E0C;color:var(--text);font-family:var(--font-body);font-size:var(--text-m);line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+a{color:inherit;text-decoration:none}
+kbd{font-family:var(--font-data);font-size:var(--text-xxs);border:1px solid var(--line2);border-bottom-width:2px;border-radius:3px;padding:0 4px;line-height:1.5;color:var(--muted)}
+.num{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+.lbl{font-size:var(--text-xs);letter-spacing:var(--track-label);text-transform:uppercase;color:var(--muted);font-weight:600}
+.ghost{color:var(--ghost)}
+:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+
+/* ── barra de la maqueta (NO es producto) ── */
+.demo{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:8px 16px;background:#0B0E0C;color:#B9BFB2;font-size:12px;border-bottom:1px solid #1D2521}
+.demo b{color:#EDE8DA;font-weight:600}
+.demo .seg{display:inline-flex;border:1px solid #2A332E;border-radius:6px;overflow:hidden}
+.demo .seg button{padding:3px 9px;font-size:12px;color:#8A918B}
+.demo .seg button.on{background:#262F2A;color:#EDE8DA}
+.demo .tag{margin-left:auto;font-family:var(--font-data);font-size:11px;letter-spacing:.08em;color:#E0A93F}
+.stage{padding:16px;overflow-x:auto;background:#0B0E0C}
+
+/* ── marco de producto (1440 / 1024) ── */
+.frame{width:1440px;min-height:900px;margin:0 auto;background:var(--bg);color:var(--text);container-type:inline-size;position:relative;box-shadow:0 0 0 1px #1D2521;display:flex;flex-direction:column}
+.frame[data-width="1024"]{width:1024px;min-height:768px}
+
+/* ── topbar ── */
+.top{height:var(--top-h);display:flex;align-items:center;gap:var(--space-4);padding:0 var(--space-5);border-bottom:1px solid var(--line);background:var(--surface2)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:-.01em}
+.brand i{width:22px;height:22px;border-radius:5px;border:1px solid var(--line2);display:grid;place-items:center}
+.brand i svg{width:12px;height:12px;stroke:var(--tiza);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav{display:flex;gap:2px;margin-left:var(--space-3)}
+.nav a{padding:6px 10px;border-radius:var(--radius);color:var(--soft);font-size:var(--text-s);font-weight:560}
+.nav a.on{color:var(--active-fg);background:var(--active-bg);box-shadow:inset 0 0 0 1px var(--active-border);font-weight:620}
+.top .sp{flex:1}
+.datastate{display:flex;align-items:center;gap:8px;font-size:var(--text-xs);color:var(--muted);font-family:var(--font-data)}
+.datastate i{width:7px;height:7px;border-radius:50%;background:var(--tiza);opacity:.7}
+.frame[data-state="delayed"] .datastate i{background:var(--humo);box-shadow:0 0 0 2px var(--line)}
+.avatar{width:26px;height:26px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;font-size:var(--text-xs);font-weight:650;color:var(--soft)}
+
+/* ── ticket (sustituye al hero de 148px) ── */
+.ticket{height:var(--ticket-h);display:flex;align-items:center;gap:var(--space-3);padding:0 var(--space-5);border-bottom:1px solid var(--line)}
+.ticket h1{margin:0;font-size:var(--display-m);font-weight:650;letter-spacing:-.02em;line-height:1;display:flex;align-items:center;gap:8px}
+.ticket h1 button{display:inline-flex;align-items:center;gap:6px;padding:4px 6px;margin-left:-6px;border-radius:var(--radius)}
+.ticket h1 button:hover{background:var(--surface2)}
+.ticket h1 svg{width:12px;height:12px;stroke:var(--muted);fill:none;stroke-width:2}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--soft);font-size:var(--text-s);font-weight:560;white-space:nowrap}
+.chip:hover{border-color:var(--line2);color:var(--text)}
+.chip em{font-style:normal;font-family:var(--font-data);color:var(--muted);font-size:var(--text-xs)}
+.chip.on{box-shadow:inset 0 0 0 1px var(--active-border);background:var(--active-bg);color:var(--active-fg)}
+.chip .x{margin:0 -3px 0 2px;color:var(--muted);font-size:14px;line-height:1}
+.chip .x:hover{color:var(--text)}
+.ticket .truth{font-size:var(--text-s);color:var(--muted);white-space:nowrap}
+.ticket .truth b{font-family:var(--font-data);font-weight:600;color:var(--soft)}
+.ticket .sp{flex:1}
+.search{display:flex;align-items:center;gap:6px;height:30px;width:260px;padding:0 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-inset);color:var(--muted);font-size:var(--text-s)}
+.search svg{width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:2}
+.search input{flex:1;background:none;border:0;outline:0;min-width:0;color:var(--text)}
+.search input::placeholder{color:var(--muted)}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--soft);font-size:var(--text-s);font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--line2);color:var(--text)}
+.btn.primary{background:var(--cta-bg);color:var(--cta-fg);border-color:var(--cta-bg)}
+.btn.icon{width:30px;padding:0;justify-content:center;font-size:16px;line-height:1}
+
+/* ── aviso de una línea (datos retrasados) — tiza/humo, nunca óxido ── */
+.notice{display:none;align-items:center;gap:10px;height:30px;padding:0 var(--space-5);border-bottom:1px solid var(--line);background:var(--surface);font-size:var(--text-s);color:var(--soft)}
+.frame[data-state="delayed"] .notice{display:flex}
+.notice .lbl{font-size:var(--text-xxs)}
+.notice a{color:var(--text);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line3)}
+.notice .x{margin-left:auto;color:var(--muted);font-size:15px}
+
+/* ── cuerpo: raíl · mesa · peek ── */
+.body{display:grid;grid-template-columns:var(--rail-w) minmax(0,1fr) 0;flex:1;min-height:0;transition:grid-template-columns var(--t-enter)}
+.frame.peek-open .body{grid-template-columns:var(--rail-w) minmax(0,1fr) var(--peek-w)}
+
+.rail{border-right:1px solid var(--line);padding:var(--space-3) var(--space-2);display:flex;flex-direction:column;gap:var(--space-4);background:var(--bg)}
+.rail .grp h3{margin:0 0 4px 8px;font-size:var(--text-xxs);letter-spacing:var(--track-label);text-transform:uppercase;color:var(--muted);font-weight:650}
+.rail .v{display:flex;align-items:center;gap:8px;width:100%;height:30px;padding:0 8px;border-radius:var(--radius);color:var(--soft);font-size:var(--text-s);font-weight:540;text-align:left}
+.rail .v:hover{background:var(--surface2);color:var(--text)}
+.rail .v.on{background:var(--active-bg);color:var(--active-fg);font-weight:620;box-shadow:inset 2px 0 0 var(--tiza)}
+.rail .v span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rail .v em{font-style:normal;font-family:var(--font-data);font-size:var(--text-xs);color:var(--muted)}
+.rail .v.on em{color:var(--soft)}
+.rail .v i{width:14px;text-align:center;font-style:normal;color:var(--muted);font-family:var(--font-data);font-size:var(--text-xs)}
+.rail .add{color:var(--muted);font-weight:500}
+.rail .foot{margin-top:auto;padding:8px;font-size:var(--text-xs);color:var(--muted);line-height:1.4;border-top:1px solid var(--line)}
+.rail .foot b{color:var(--soft);font-weight:600}
+.rail .foot a{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line3)}
+
+.desk{min-width:0;display:flex;flex-direction:column}
+.toolbar{display:flex;align-items:center;gap:8px;height:40px;padding:0 var(--space-4);border-bottom:1px solid var(--line)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;height:26px}
+.seg button{padding:0 10px;font-size:var(--text-xs);font-family:var(--font-data);color:var(--muted)}
+.seg button.on{background:var(--active-bg);color:var(--active-fg);box-shadow:inset 0 0 0 1px var(--active-border)}
+.toolbar .sep{width:1px;height:18px;background:var(--line);margin:0 2px}
+.toolbar .chips{display:flex;gap:6px;align-items:center;min-width:0;overflow:hidden}
+.toolbar .sp{flex:1}
+.toolbar .meta{font-size:var(--text-xs);color:var(--muted);font-family:var(--font-data);white-space:nowrap}
+.toolbar .meta b{color:var(--soft);font-weight:600}
+.ibtn{width:26px;height:26px;display:grid;place-items:center;border-radius:var(--radius);color:var(--muted)}
+.ibtn:hover{background:var(--surface2);color:var(--text)}
+.ibtn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+
+/* ── la cinta (tabla densa) ── */
+.tape{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--surface-inset)}
+.thead,.row{display:grid;grid-template-columns:var(--cols);gap:12px;align-items:center;padding:0 var(--space-4)}
+.tape{--cols:minmax(180px,1.2fr) 112px minmax(92px,.8fr) 48px minmax(104px,.9fr) 64px}
+.tape.audit{--cols:minmax(180px,1.2fr) minmax(120px,1fr) 44px minmax(92px,.8fr) minmax(104px,.9fr) 70px 70px 64px}
+.thead{position:sticky;top:0;z-index:1;height:28px;font-size:var(--text-xxs);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:650;background:var(--surface);border-bottom:1px solid var(--line2)}
+.thead span.r,.row .r{text-align:right}
+.thead span.sort{color:var(--text)}
+.thead span.sort::after{content:" ↓"}
+.rows{overflow:auto;flex:1;max-height:calc(100vh - 220px)}
+.row{height:var(--row-h);border-bottom:1px solid var(--line);cursor:pointer;transition:background-color var(--t-state)}
+.frame.comfort .row{height:var(--row-h-comfort)}
+.row:hover{background:var(--surface-raised)}
+.row.on{background:var(--senal-dim);box-shadow:inset 2px 0 0 var(--senal)}
+.tk{display:flex;align-items:center;gap:8px;min-width:0}
+.tk .mark{width:12px;text-align:center;color:var(--senal);font-size:11px;flex:none}
+.tk .mark.res{color:var(--traza)}
+.tk .mark.dis{color:var(--humo);opacity:.7}
+.tk b{font-family:var(--font-data);font-weight:600;font-size:var(--data-s);letter-spacing:.01em;flex:none}
+.tk small{color:var(--muted);font-size:var(--text-xs);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tk .mk{font-size:var(--text-xxs);color:var(--muted);font-family:var(--font-data);flex:none;opacity:.8}
+.spark{width:112px;height:22px;display:block}
+.spark .f{fill:var(--line)}
+.spark .p{fill:none;stroke:var(--soft);stroke-width:1.4;stroke-linejoin:round}
+.spark .m{fill:none;stroke:var(--humo);stroke-width:1;opacity:.7}
+.row.on .spark .p{stroke:var(--senal)}
+.st{font-size:var(--text-s);color:var(--text)}
+.st em{font-style:normal;color:var(--muted);font-family:var(--font-data);font-size:var(--text-xs)}
+.rs{font-family:var(--font-data);font-size:var(--data-s);font-weight:600}
+.vcp{font-family:var(--font-data);font-size:var(--data-s);color:var(--soft)}
+.ext{font-family:var(--font-data);font-size:var(--data-s);color:var(--soft)}
+.ext.hot{color:var(--text);font-weight:600}
+.theme{font-size:var(--text-s);color:var(--soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hint{display:flex;gap:10px;align-items:center;height:26px;padding:0 var(--space-4);border-top:1px solid var(--line);font-size:var(--text-xxs);color:var(--muted);background:var(--surface)}
+.hint .sp{flex:1}
+
+/* ── vacío ── */
+.empty{display:none;flex:1;align-items:flex-start;justify-content:center;padding:56px 24px}
+.frame[data-state="empty"] .empty{display:flex}
+.frame[data-state="empty"] .rows,.frame[data-state="empty"] .thead,.frame[data-state="empty"] #hintPos{display:none}
+.empty .card{max-width:440px;display:grid;gap:10px}
+.empty h2{margin:0;font-size:var(--text-l);font-weight:620;letter-spacing:-.01em}
+.empty p{margin:0;color:var(--muted);font-size:var(--text-s);line-height:1.5}
+.empty .acts{display:flex;gap:8px;margin-top:6px}
+.empty svg{width:120px;height:44px}
+.empty svg path{fill:none;stroke:var(--curve-track);stroke-width:2;stroke-linecap:round}
+
+/* ── panel lateral de lectura (peek) ── */
+.peek{border-left:1px solid var(--line);background:var(--surface);overflow:hidden;width:0;opacity:0;transition:opacity var(--t-enter)}
+.frame.peek-open .peek{width:auto;opacity:1;overflow:auto}
+.peek .in{padding:var(--space-4);display:grid;gap:var(--space-4);min-width:calc(var(--peek-w) - 1px)}
+.peek .hd{display:flex;align-items:baseline;gap:10px}
+.peek .hd b{font-family:var(--font-data);font-size:var(--data-m);font-weight:600}
+.peek .hd span{color:var(--muted);font-size:var(--text-s);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.peek .hd .x{color:var(--muted);font-size:16px}
+.peek .px{display:flex;align-items:baseline;gap:8px;font-family:var(--font-data)}
+.peek .px b{font-size:var(--data-l);font-weight:500;letter-spacing:-.02em}
+.peek .px span{color:var(--muted);font-size:var(--text-xs)}
+.peek .curve{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface2)}
+.peek .curve svg{width:96px;height:36px}
+.peek .curve path{fill:none;stroke:var(--curve-track);stroke-width:2;stroke-linecap:round}
+.peek .curve circle{fill:var(--senal)}
+.peek .curve .w{font-family:var(--font-display);font-stretch:125%;text-transform:uppercase;letter-spacing:var(--track-display);font-size:var(--display-s);font-weight:600}
+.peek .curve small{display:block;color:var(--muted);font-size:var(--text-xs)}
+.peek .big{width:100%;height:120px;display:block}
+.peek .big .f{fill:var(--line)}
+.peek .big .p{fill:none;stroke:var(--tiza);stroke-width:1.5}
+.peek .big .m{fill:none;stroke:var(--humo);stroke-width:1;opacity:.8}
+.peek .big .rsl{fill:none;stroke:var(--traza);stroke-width:1.2;opacity:.9}
+.peek .kv{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 12px}
+.peek .kv div{display:grid;gap:2px}
+.peek .kv .lbl{font-size:var(--text-xxs)}
+.peek .kv b{font-family:var(--font-data);font-weight:600;font-size:var(--data-s)}
+.peek .kv small{color:var(--muted);font-size:var(--text-xs)}
+.peek .cls{display:grid;gap:6px}
+.peek .cls .row3{display:flex;gap:6px}
+.peek .cls .row3 .chip{flex:1;justify-content:center;height:30px}
+.peek .acts{display:flex;gap:8px;align-items:center}
+.peek .acts .sp{flex:1}
+.peek .legend{display:flex;gap:10px;font-size:var(--text-xxs);color:var(--muted)}
+.peek .legend i{display:inline-block;width:12px;height:2px;vertical-align:middle;margin-right:4px;background:var(--tiza)}
+.peek .legend i.m{background:var(--humo)}
+.peek .legend i.r{background:var(--traza)}
+
+/* ── popover de filtros (Ajustar) ── */
+.pop{display:none;position:absolute;z-index:20;top:calc(var(--top-h) + var(--ticket-h) + 42px);left:calc(var(--rail-w) + 16px);width:360px;background:var(--surface);border:1px solid var(--line2);border-radius:var(--radius);box-shadow:var(--shadow-float);padding:12px}
+.frame.pop-open .pop{display:block}
+.pop h4{margin:0 0 8px;font-size:var(--text-xxs);letter-spacing:var(--track-label);text-transform:uppercase;color:var(--muted)}
+.pop .fam{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;padding:7px 4px;border-top:1px solid var(--line);font-size:var(--text-s)}
+.pop .fam:first-of-type{border-top:0}
+.pop .fam i{width:14px;height:14px;border-radius:3px;border:1px solid var(--line2);display:grid;place-items:center;font-size:10px;color:var(--pizarra);font-style:normal}
+.pop .fam i.on{background:var(--tiza);border-color:var(--tiza)}
+.pop .fam small{display:block;color:var(--muted);font-size:var(--text-xs)}
+.pop .fam .num{color:var(--muted);font-size:var(--text-xs)}
+.pop .ft{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.pop .ft .sp{flex:1}
+
+.footer{height:28px;display:flex;align-items:center;gap:12px;padding:0 var(--space-5);border-top:1px solid var(--line);font-size:var(--text-xxs);color:var(--muted)}
+
+/* ── 1024: raíl a iconos, columnas más estrechas, peek superpuesto ── */
+@container (max-width: 1100px) {
+  :root{}
+  .body{grid-template-columns:56px minmax(0,1fr) 0}
+  .frame.peek-open .body{grid-template-columns:56px minmax(0,1fr) 0}
+  .rail{padding:12px 6px}
+  .rail .grp h3{display:none}
+  .rail .v span,.rail .v em,.rail .add span,.rail .foot{display:none}
+  .rail .v{justify-content:center;padding:0;height:34px}
+  .rail .v i{width:auto;font-size:var(--text-xs);color:var(--soft)}
+  .rail .v.on i{color:var(--text)}
+  .ticket .truth span.long{display:none}
+  .search{width:200px}
+  .tape{--cols:minmax(120px,1fr) 88px minmax(84px,.8fr) 44px minmax(96px,.8fr) 60px}
+  .tape.audit{--cols:minmax(120px,1fr) minmax(90px,.9fr) 40px minmax(84px,.8fr) minmax(96px,.8fr) 62px 62px 60px}
+  .tk small{display:none}
+  .spark{width:88px}
+  .peek{position:absolute;top:calc(var(--top-h) + var(--ticket-h));right:0;bottom:0;width:var(--peek-w);box-shadow:var(--shadow-float);border-left:1px solid var(--line2)}
+  .frame.peek-open .peek{width:var(--peek-w)}
+  .frame[data-state="delayed"] .peek{top:calc(var(--top-h) + var(--ticket-h) + 30px)}
+  .pop{left:72px}
+  .nav a{padding:6px 8px}
+}
+</style>
+</head>
+<body>
+
+<div class="demo" role="toolbar" aria-label="Controles de la maqueta">
+  <b>Maqueta</b>
+  <span>Ancho <span class="seg" id="segW"><button data-w="1440" class="on">1440</button><button data-w="1024">1024</button></span></span>
+  <span>Tema <span class="seg" id="segT"><button data-t="dark" class="on">Oscuro</button><button data-t="light">Claro</button></span></span>
+  <span>Estado <span class="seg" id="segS"><button data-s="normal" class="on">Normal</button><button data-s="delayed">Datos retrasados</button><button data-s="empty">Vacío</button></span></span>
+  <span>Teclas: <kbd>j</kbd>/<kbd>k</kbd> mover · <kbd>Space</kbd> panel · <kbd>Enter</kbd> ficha · <kbd>Esc</kbd> cerrar · <kbd>/</kbd> buscar · <kbd>f</kbd> filtros</span>
+  <span class="tag">DATOS DE EJEMPLO · NO ES PRODUCTO</span>
+</div>
+
+<div class="stage">
+<div class="frame" id="frame" data-width="1440" data-state="normal">
+
+  <header class="top">
+    <div class="brand"><i><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></i>StatsEdge</div>
+    <nav class="nav" aria-label="Principal">
+      <a class="on" href="#">Screener</a><a href="#">Listas</a><a href="#">Sectores</a><a href="#">Research</a><a href="#">Mercado</a>
+    </nav>
+    <span class="sp"></span>
+    <div class="datastate" title="Último corte nocturno · US · 18 oct 05:00"><i></i><span id="dsText">corte 18 oct · 05:00</span></div>
+    <div class="avatar" title="Cuenta">AF</div>
+  </header>
+
+  <div class="ticket">
+    <h1><button id="viewBtn" aria-haspopup="listbox" title="Cambiar de vista"><span id="viewName">Líderes Etapa 2</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button></h1>
+    <button class="chip" id="scopeChip" title="Ámbito de mercados"><span id="scopeName">EE. UU.</span><em>1/27</em></button>
+    <span class="truth"><b id="passN">937</b> de <b>3.287</b> <span class="long">pasan · ordenado por </span><span class="long" id="sortTxt">Rend. 3M</span></span>
+    <span class="sp"></span>
+    <label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" placeholder="Ticker, nombre o sector" aria-label="Buscar"><kbd>/</kbd></label>
+    <button class="btn primary" id="reviewBtn">Revisar <em class="num" style="font-style:normal;opacity:.7" id="reviewN">937</em></button>
+    <button class="btn icon" title="Más: plantillas · CSV · traer datos frescos · resetear" aria-label="Más herramientas">⋯</button>
+  </div>
+
+  <div class="notice" role="status">
+    <span class="lbl">Datos</span>
+    <span>Precios del <b>15 oct</b> · 15 sesiones sin actualizar · los resultados valen para esa fecha.</span>
+    <a href="#">Traer datos frescos</a>
+    <button class="x" aria-label="Ocultar aviso" title="Ocultar">×</button>
+  </div>
+
+  <div class="body">
+    <nav class="rail" aria-label="Vistas">
+      <div class="grp">
+        <h3>Del análisis nocturno</h3>
+        <button class="v on" data-view="lideres"><i>E2</i><span>Líderes Etapa 2</span><em>937</em></button>
+        <button class="v" data-view="pivot"><i>◦</i><span>Cerca de pivot</span><em>64</em></button>
+        <button class="v" data-view="deterioro"><i>↘</i><span>Deterioro</span><em>212</em></button>
+        <button class="v" data-view="intl"><i>∘</i><span>Líderes intl</span><em>118</em></button>
+        <button class="v" data-view="ipo"><i>n</i><span>IPO recientes</span><em>23</em></button>
+      </div>
+      <div class="grp">
+        <h3>Esta noche</h3>
+        <button class="v" data-view="in"><i>+</i><span>Entradas en Etapa 2</span><em>51</em></button>
+        <button class="v" data-view="out"><i>−</i><span>Salidas de Etapa 2</span><em>49</em></button>
+        <button class="v" data-view="hi"><i>▲</i><span>Nuevos máximos 52s</span><em>2</em></button>
+        <button class="v" data-view="near"><i>≈</i><span>A &lt;5 % del máximo</span><em>80</em></button>
+      </div>
+      <div class="grp">
+        <h3>Mis vistas</h3>
+        <button class="v" data-view="mine1"><i>★</i><span>Favoritos</span><em>14</em></button>
+        <button class="v" data-view="mine2"><i>·</i><span>Semis Europa estricta</span><em>9</em></button>
+        <button class="v add"><i>+</i><span>Guardar vista actual</span></button>
+      </div>
+      <div class="foot"><a href="#" title="Abrir Salud de mercado">Mercado US · <b>favorable</b> →</a></div>
+    </nav>
+
+    <main class="desk">
+      <div class="toolbar">
+        <div class="seg" id="segMode"><button class="on" data-m="caza">Caza</button><button data-m="audit">Auditoría</button></div>
+        <span class="sep"></span>
+        <div class="chips" id="chips">
+          <button class="chip on">Etapa 2 <em>mín.</em></button>
+          <button class="chip on">RS ≥ 50 <span class="x" title="Quitar">×</span></button>
+          <button class="chip on">Liquidez <span class="x" title="Quitar">×</span></button>
+          <button class="chip" id="filterBtn">+ Filtro</button>
+        </div>
+        <span class="sp"></span>
+        <span class="meta"><b id="queueN">937</b> en cola</span>
+        <button class="ibtn" id="densBtn" title="Densidad: compacta / cómoda"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+        <button class="ibtn" title="Columnas (Auditoría)"><svg viewBox="0 0 24 24"><path d="M9 4v16M15 4v16M4 4h16v16H4z"/></svg></button>
+      </div>
+
+      <div class="tape" id="tape">
+        <div class="thead" id="thead"></div>
+        <div class="rows" id="rows" role="listbox" aria-label="Cola de caza" tabindex="0"></div>
+        <div class="empty">
+          <div class="card">
+            <svg viewBox="0 0 120 44"><path d="M4,34 L30,34 C40,34 42,10 54,10 L74,10 C84,10 86,34 96,34 L116,34"/></svg>
+            <h2>Nada pasa «Cerca de pivot» en Europa esta noche</h2>
+            <p>Corte 18 oct · 1.902 analizadas · 0 pasan. Es un resultado, no un fallo: ayer pasaban 7 (ver <a href="#" style="text-decoration:underline">cola de ayer</a>).</p>
+            <div class="acts"><button class="btn primary">Aflojar RS a abierto</button><button class="btn">Cambiar a Global</button></div>
+          </div>
+        </div>
+        <div class="hint"><span><kbd>j</kbd>/<kbd>k</kbd> mover</span><span><kbd>Space</kbd> panel</span><span><kbd>Enter</kbd> ficha</span><span><kbd>Esc</kbd> cerrar</span><span class="sp"></span><span id="hintPos">1 / 937</span></div>
+      </div>
+    </main>
+
+    <aside class="peek" id="peek" aria-label="Lectura rápida">
+      <div class="in">
+        <div class="hd"><b id="pkSym">NVRA</b><span id="pkName">Novara Therapeutics</span><button class="x" id="pkClose" aria-label="Cerrar">×</button></div>
+        <div class="px"><b id="pkPx">142,30</b><span>USD · cierre 15 oct · <span id="pkChg">+1,4 %</span></span></div>
+        <div class="curve">
+          <svg viewBox="0 0 120 44"><path d="M4,34 L30,34 C40,34 42,10 54,10 L74,10 C84,10 86,34 96,34 L116,34"/><circle id="pkDot" cx="44" cy="18" r="4"/></svg>
+          <div><div class="w" id="pkStage">Etapa 2</div><small id="pkStageSub">semana 10 · con fuga · RS 97</small></div>
+        </div>
+        <svg class="big" id="pkBig" viewBox="0 0 340 120" preserveAspectRatio="none"></svg>
+        <div class="legend"><span><i></i>Cierre semanal 12M</span><span><i class="m"></i>MM30</span><span><i class="r"></i>RS línea</span></div>
+        <div class="kv">
+          <div><span class="lbl">VCP</span><b id="pkVcp">13W 28/8 2T</b><small id="pkVcpSub">T1 28 % · T2 8 %</small></div>
+          <div><span class="lbl">Máx 52s</span><b id="pkExt">−5,9 %</b><small>a 151,2</small></div>
+          <div><span class="lbl">Cap.</span><b id="pkCap">6,6B</b><small>Medtech / biotech</small></div>
+        </div>
+        <div class="cls">
+          <span class="lbl">Tu clasificación</span>
+          <div class="row3"><button class="chip">Candidata</button><button class="chip">Vigilar</button><button class="chip">Descartar</button></div>
+        </div>
+        <div class="acts"><button class="btn">★ Favorito</button><span class="sp"></span><button class="btn primary">Abrir ficha <kbd style="color:var(--pizarra);border-color:rgba(0,0,0,.3)">↵</kbd></button></div>
+      </div>
+    </aside>
+
+    <div class="pop" id="pop" role="dialog" aria-label="Ajustar filtros">
+      <h4>Ajustar «Líderes Etapa 2» · 3 familias activas</h4>
+      <div class="fam"><i class="on">✓</i><div>Tendencia<small>Etapa 2 mínima · 5 reglas</small></div><span class="num">−2.250</span></div>
+      <div class="fam"><i class="on">✓</i><div>Liquidez<small>precio, cap, importe · 5 reglas</small></div><span class="num">−41</span></div>
+      <div class="fam"><i class="on">✓</i><div>RS global ≥ 50<small>abierto · medio · <b>estricto</b></small></div><span class="num">−59</span></div>
+      <div class="fam"><i></i><div>Momentum<small>3M, 6M, 12M · 4 reglas</small></div><span class="num">—</span></div>
+      <div class="fam"><i></i><div>Cercanía<small>máximos y extensión · 6 reglas</small></div><span class="num">—</span></div>
+      <div class="fam"><i></i><div>Scores<small>mínimos composite · 6 reglas</small></div><span class="num">—</span></div>
+      <div class="ft"><span class="num" style="font-size:var(--text-xs);color:var(--muted)">3.287 → 937</span><span class="sp"></span><button class="btn">Restablecer ficha</button><button class="btn primary" id="popClose">Listo</button></div>
+    </div>
+  </div>
+
+  <footer class="footer"><span>StatsEdge · datos orientativos · fuente de precios: proveedor diario</span><span style="margin-left:auto">maqueta 2026-11 · datos de ejemplo</span></footer>
+</div>
+</div>
+
+<script>
+/* ── datos de ejemplo (ficticios) ── */
+const NAMES = {
+  NVRA:"Novara Therapeutics", KALT:"Kalt Semiconductor", BRXO:"Brixo Logistics", TLQN:"Talquin Energy", OMNV:"Omnivale Software",
+  HELX:"Helix Orbital", PRDM:"Paradim Materials", QUOR:"Quorra Analytics", ZEPH:"Zephyr Marine", ARLN:"Arlen Technik",
+  MIRU:"Miru Robotics", VANT:"Vantor Defense", SOLQ:"Solquist Power", CRBX:"Carbix Industrial", LUMI:"Lumina Optics",
+  TRVX:"Trevix Biologics", NOVE:"Novem Payments", GRAV:"Gravon Mining", FENX:"Fenix Retail", ALTR:"Altria Nord",
+  OXBW:"Oxbow Shipping", PLTX:"Plentix Foods", DRYD:"Dryad Water", KORV:"Korvin Health", ELMO:"Elmora Chips",
+  SABR:"Sabre Grid", VELA:"Velanor Aero", JUNO:"Junostar Media", TIDE:"Tidewell Insurance", ROAM:"Roamix Travel"
+};
+const MK = { US:"US", HK:"HK", DE:"DE", FR:"FR", SE:"SE", NL:"NL", CH:"CH", GB:"GB" };
+function rnd(seed){ let s=seed>>>0; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+function series(seed, drift, n){ const r=rnd(seed); const out=[]; let v=100; for(let i=0;i<n;i++){ v*=1+(r()-0.47+drift)*0.035; out.push(v);} return out; }
+function mk(sym, mkt, stage, wk, q, rs, vcp, ext, perf, cap, theme, mark, seed, drift){
+  return {sym, name:NAMES[sym]||sym, mkt, stage, wk, q, rs, vcp, ext, perf, cap, theme, mark, px:(40+rnd(seed)()*180).toFixed(2).replace('.',','), bars:series(seed, drift, 52)};
+}
+const BASE = [
+  mk("NVRA","US",2,10,"con fuga",97,"13W 28/8 2T",-5.9,"+84,3 %","6,6B","Medtech / biotech","fav",11,0.03),
+  mk("KALT","US",2,41,"con fuga",99,null,-10.0,"+66,5 %","89,8B","Semis","",12,0.02),
+  mk("OMNV","US",2,6,"dudoso",91,null,-3.1,"+58,4 %","12,1B","Software / IA","cand",13,0.03),
+  mk("HELX","US",2,39,"con fuga",98,"19W 22/7 3T",-1.2,"+51,3 %","3,4B","Industrial / espacio","",14,0.025),
+  mk("ARLN","DE",2,14,"con fuga",96,null,-7.4,"+43,7 %","4,9B","Automatización","",15,0.02),
+  mk("PRDM","US",2,21,"dudoso",94,"11W 19/6 2T",-15.5,"+40,7 %","0,9B","Materiales","vig",16,0.015),
+  mk("QUOR","US",2,6,"con fuga",92,null,-2.3,"+35,5 %","52,3B","Software / IA","",17,0.03),
+  mk("ZEPH","HK",2,4,"con fuga",90,null,-17.5,"+29,8 %","6,3B","Transporte","",18,0.01),
+  mk("MIRU","US",2,17,"con fuga",99,"9W 14/5 2T",-0.6,"+27,0 %","2,2B","Robótica","",19,0.03),
+  mk("VANT","US",2,8,"con fuga",93,null,-11.1,"+24,4 %","18,7B","Defensa","",20,0.02),
+  mk("SOLQ","SE",2,3,"dudoso",88,null,-9.2,"+22,9 %","1,1B","Energía / red","dis",21,0.02),
+  mk("CRBX","US",2,6,"con fuga",97,"16W 31/9 3T",-3.5,"+21,2 %","7,7B","Industrial","",22,0.03),
+  mk("LUMI","NL",2,9,"con fuga",94,null,-0.5,"+19,8 %","5,0B","Óptica","",23,0.03),
+  mk("TRVX","US",2,23,"con fuga",99,null,-21.9,"+18,1 %","0,7B","Medtech / biotech","",24,0.01),
+  mk("NOVE","US",2,4,"con fuga",80,"13W 34/22 2T",-5.9,"+17,4 %","44,0B","Pagos","",25,0.025),
+  mk("GRAV","HK",2,17,"con fuga",98,null,-7.9,"+16,2 %","9,3B","Minería","",26,0.02),
+  mk("FENX","US",2,2,"dudoso",86,null,-12.6,"+15,0 %","3,8B","Consumo / marca","",27,0.02),
+  mk("ALTR","CH",2,45,"con fuga",98,null,-10.9,"+14,1 %","61,2B","Salud","",28,0.015),
+  mk("OXBW","GB",2,11,"con fuga",89,"21W 26/9 4T",-4.4,"+13,6 %","2,9B","Transporte","",29,0.025),
+  mk("PLTX","US",2,7,"con fuga",95,null,-6.8,"+12,9 %","14,5B","Alimentación","",30,0.02),
+  mk("DRYD","FR",2,19,"con fuga",91,null,-8.3,"+12,1 %","1,6B","Agua / utilities","",31,0.02),
+  mk("KORV","US",2,5,"dudoso",87,null,-14.0,"+11,7 %","0,8B","Salud","",32,0.015),
+  mk("ELMO","US",2,28,"con fuga",99,"8W 12/4 2T",-1.8,"+11,0 %","27,4B","Semis","",33,0.03),
+  mk("SABR","US",2,12,"con fuga",93,null,-9.7,"+10,6 %","5,5B","Energía / red","",34,0.02),
+  mk("VELA","US",2,16,"con fuga",96,null,-3.9,"+9,8 %","8,0B","Aeroespacial","",35,0.025),
+  mk("JUNO","US",2,3,"dudoso",84,null,-18.2,"+9,1 %","2,1B","Media","",36,0.01),
+  mk("TIDE","US",2,33,"con fuga",92,null,-2.6,"+8,7 %","21,9B","Seguros","",37,0.02),
+  mk("ROAM","US",2,9,"con fuga",90,"12W 17/6 2T",-6.1,"+8,2 %","3,3B","Viajes","",38,0.025),
+  mk("BRXO","US",2,6,"con fuga",85,null,-13.2,"+7,5 %","0,3B","Logística","",39,0.02),
+  mk("TLQN","US",2,20,"con fuga",95,null,-4.9,"+7,0 %","11,2B","Energía","",40,0.025),
+];
+const VIEWS = {
+  lideres:{name:"Líderes Etapa 2", n:937, sort:"Rend. 3M", rows:BASE},
+  pivot:{name:"Cerca de pivot", n:64, sort:"Dist. máx 52s", rows:BASE.filter(r=>r.ext>-7).sort((a,b)=>b.ext-a.ext)},
+  deterioro:{name:"Deterioro", n:212, sort:"Deterioro", rows:BASE.slice(8,26).map(r=>({...r,stage:3,q:"techo",rs:Math.max(20,r.rs-45),bars:series(r.sym.length*7+3,-0.02,52)}))},
+  intl:{name:"Líderes intl", n:118, sort:"Rend. 3M", rows:BASE.filter(r=>r.mkt!=="US")},
+  ipo:{name:"IPO recientes", n:23, sort:"Fecha IPO", rows:BASE.filter(r=>r.wk<8)},
+  in:{name:"Entradas en Etapa 2", n:51, sort:"Semana de etapa", rows:BASE.filter(r=>r.wk<=6)},
+  out:{name:"Salidas de Etapa 2", n:49, sort:"Semana de etapa", rows:BASE.slice(3,15).map(r=>({...r,stage:3,q:"techo",bars:series(r.sym.length*5+1,-0.015,52)}))},
+  hi:{name:"Nuevos máximos 52s", n:2, sort:"Dist. máx 52s", rows:BASE.filter(r=>r.ext>-1)},
+  near:{name:"A <5 % del máximo", n:80, sort:"Dist. máx 52s", rows:BASE.filter(r=>r.ext>-5).sort((a,b)=>b.ext-a.ext)},
+  mine1:{name:"Favoritos", n:14, sort:"Rend. 3M", rows:BASE.filter((r,i)=>i%2===0)},
+  mine2:{name:"Semis Europa estricta", n:9, sort:"RS", rows:BASE.filter(r=>r.mkt!=="US"&&r.mkt!=="HK")},
+};
+
+/* ── estado ── */
+const frame=document.getElementById('frame');
+let view="lideres", mode="caza", focus=0, peekOpen=false, rowsNow=[];
+const $=id=>document.getElementById(id);
+
+function sparkSvg(bars,w=112,h=22,cls="spark"){
+  const min=Math.min(...bars),max=Math.max(...bars),n=bars.length;
+  const x=i=>(i/(n-1))*w, y=v=>h-2-((v-min)/((max-min)||1))*(h-4);
+  const p=bars.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const ma=bars.map((v,i)=>{const s=bars.slice(Math.max(0,i-9),i+1);return s.reduce((a,b)=>a+b,0)/s.length;});
+  const m=ma.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  return `<svg class="${cls}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><path class="f" d="${p} L${w},${h} L0,${h} Z"/><path class="m" d="${m}"/><path class="p" d="${p}"/></svg>`;
+}
+function markEl(r){
+  if(r.mark==="fav") return '<span class="mark" title="Favorito">★</span>';
+  if(r.mark==="cand") return '<span class="mark res" title="Tu clasificación: Candidata">●</span>';
+  if(r.mark==="vig") return '<span class="mark res" title="Tu clasificación: Vigilar">◐</span>';
+  if(r.mark==="dis") return '<span class="mark dis" title="Tu clasificación: Descartar">○</span>';
+  return '<span class="mark"></span>';
+}
+function fmtExt(v){ return (v>0?'+':'−')+Math.abs(v).toFixed(1).replace('.',',')+' %'; }
+function render(){
+  const V=VIEWS[view]; rowsNow=V.rows;
+  $('viewName').textContent=V.name; $('passN').textContent=V.n.toLocaleString('es-ES'); $('queueN').textContent=V.n.toLocaleString('es-ES'); $('reviewN').textContent=V.n.toLocaleString('es-ES'); $('sortTxt').textContent=V.sort;
+  document.querySelectorAll('.rail .v').forEach(b=>b.classList.toggle('on',b.dataset.view===view));
+  const tape=$('tape'); tape.classList.toggle('audit',mode==='audit');
+  const sortCol = mode==='caza' ? (V.sort==='Rend. 3M'?'ETAPA':'') : 'REND. 3M';
+  $('thead').innerHTML = mode==='caza'
+    ? `<span>Ticker</span><span>Semanal 12M</span><span>Etapa</span><span class="r">RS</span><span>VCP</span><span class="r">Máx 52s</span>`
+    : `<span>Ticker</span><span>Tema</span><span class="r">RS</span><span>Etapa</span><span>VCP</span><span class="r sort">Rend. 3M</span><span class="r">Máx 52s</span><span class="r">Cap.</span>`;
+  $('rows').innerHTML = rowsNow.map((r,i)=>{
+    const stage=`<span class="st">${r.stage} <em>· sem. ${r.wk}${r.q==='dudoso'?' · dudoso':''}</em></span>`;
+    const rs=`<span class="rs r${r.rs==null?' ghost':''}">${r.rs==null?'—':r.rs}</span>`;
+    const vcp=`<span class="vcp${r.vcp?'':' ghost'}" title="${r.vcp?'Huella VCP: semanas · T1/último · nº contracciones':'Sin contracciones detectadas'}">${r.vcp||'—'}</span>`;
+    const ext=`<span class="ext r${r.ext>-3?' hot':''}">${fmtExt(r.ext)}</span>`;
+    const tk=`<div class="tk">${markEl(r)}<b>${r.sym}</b>${r.mkt!=='US'?`<span class="mk">${r.mkt}</span>`:''}<small>${r.name}</small></div>`;
+    const cells = mode==='caza'
+      ? `${tk}${sparkSvg(r.bars)}${stage}${rs}${vcp}${ext}`
+      : `${tk}<span class="theme">${r.theme}</span>${rs}${stage}${vcp}<span class="ext r">${r.perf}</span>${ext}<span class="ext r">${r.cap}</span>`;
+    return `<div class="row${i===focus?' on':''}" role="option" aria-selected="${i===focus}" data-i="${i}">${cells}</div>`;
+  }).join('');
+  $('hintPos').textContent=`${Math.min(focus+1,rowsNow.length)} / ${V.n.toLocaleString('es-ES')}`;
+  updatePeek();
+}
+function setFocus(i){ focus=Math.max(0,Math.min(rowsNow.length-1,i)); document.querySelectorAll('.row').forEach(el=>{const on=+el.dataset.i===focus; el.classList.toggle('on',on); el.setAttribute('aria-selected',on); if(on) el.scrollIntoView({block:'nearest'});}); $('hintPos').textContent=`${focus+1} / ${VIEWS[view].n.toLocaleString('es-ES')}`; updatePeek(); }
+function updatePeek(){
+  const r=rowsNow[focus]; if(!r) return;
+  $('pkSym').textContent=r.sym; $('pkName').textContent=r.name+(r.mkt!=='US'?' · '+r.mkt:''); $('pkPx').textContent=r.px;
+  $('pkChg').textContent=(r.bars[51]>=r.bars[50]?'+':'−')+Math.abs((r.bars[51]/r.bars[50]-1)*100).toFixed(1).replace('.',',')+' %';
+  $('pkStage').textContent='Etapa '+r.stage; $('pkStageSub').textContent=`semana ${r.wk} · ${r.q} · RS ${r.rs??'—'}`;
+  const dot={1:[18,34],2:[44,18],3:[64,10],4:[94,30]}[r.stage]; $('pkDot').setAttribute('cx',dot[0]); $('pkDot').setAttribute('cy',dot[1]);
+  $('pkVcp').textContent=r.vcp||'—'; $('pkVcpSub').textContent=r.vcp?'contracciones detectadas':'sin contracciones detectadas';
+  $('pkExt').textContent=fmtExt(r.ext); $('pkCap').textContent=r.cap; $('pkCap').nextElementSibling.textContent=r.theme;
+  const big=sparkSvg(r.bars,340,120,'big'); const rsl=series(r.sym.charCodeAt(0)*3,0.01,52);
+  const min=Math.min(...rsl),max=Math.max(...rsl); const d=rsl.map((v,i)=>`${i?'L':'M'}${(i/51*340).toFixed(1)},${(118-((v-min)/((max-min)||1))*60-30).toFixed(1)}`).join(' ');
+  $('pkBig').outerHTML=big.replace('</svg>',`<path class="rsl" d="${d}"/></svg>`).replace('class="big"','class="big" id="pkBig"');
+}
+function openPeek(o){ peekOpen=o; frame.classList.toggle('peek-open',o); if(o) updatePeek(); }
+
+/* ── interacción ── */
+$('rows').addEventListener('click',e=>{const row=e.target.closest('.row'); if(!row) return; setFocus(+row.dataset.i); openPeek(true);});
+$('rows').addEventListener('dblclick',()=>alert('Abriría /stock/'+rowsNow[focus].sym+' (ficha)'));
+document.querySelectorAll('.rail .v[data-view]').forEach(b=>b.addEventListener('click',()=>{view=b.dataset.view; focus=0; render();}));
+document.querySelectorAll('#segMode button').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.m; document.querySelectorAll('#segMode button').forEach(x=>x.classList.toggle('on',x===b)); render();}));
+$('pkClose').addEventListener('click',()=>openPeek(false));
+$('densBtn').addEventListener('click',()=>frame.classList.toggle('comfort'));
+$('filterBtn').addEventListener('click',()=>frame.classList.toggle('pop-open'));
+$('popClose').addEventListener('click',()=>frame.classList.remove('pop-open'));
+$('viewBtn').addEventListener('click',()=>{ if(frame.dataset.width==='1024') alert('A 1024 el raíl es de iconos: este botón abre la misma lista de vistas como menú.'); });
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toUpperCase();
+  if(tag==='INPUT'){ if(e.key==='Escape'){e.target.blur();} return; }
+  if(e.key==='j'||e.key==='ArrowDown'){e.preventDefault();setFocus(focus+1);}
+  else if(e.key==='k'||e.key==='ArrowUp'){e.preventDefault();setFocus(focus-1);}
+  else if(e.key===' '||e.key==='ArrowRight'){e.preventDefault();openPeek(!peekOpen);}
+  else if(e.key==='Enter'){e.preventDefault();alert('Abriría /stock/'+rowsNow[focus].sym+' (ficha)');}
+  else if(e.key==='Escape'){ if(frame.classList.contains('pop-open')) frame.classList.remove('pop-open'); else openPeek(false); }
+  else if(e.key==='/'){e.preventDefault();$('q').focus();}
+  else if(e.key==='f'){e.preventDefault();frame.classList.toggle('pop-open');}
+});
+/* barra de la maqueta */
+function seg(id,attr,fn){ document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.toggle('on',x===b)); fn(b.dataset[attr]);})); }
+seg('segW','w',w=>{frame.dataset.width=w;});
+seg('segT','t',t=>{document.documentElement.dataset.theme=t;});
+seg('segS','s',s=>{frame.dataset.state=s; $('dsText').textContent = s==='delayed' ? 'precios 15 oct · retrasados' : 'corte 18 oct · 05:00'; if(s==='empty'){ view='pivot'; $('scopeName').textContent='Europa'; document.querySelector('#scopeChip em').textContent='11/27'; render(); $('passN').textContent='0'; $('queueN').textContent='0'; $('reviewN').textContent='0'; } else { $('scopeName').textContent='EE. UU.'; document.querySelector('#scopeChip em').textContent='1/27'; render(); } });
+render();
+</script>
+</body>
+</html>

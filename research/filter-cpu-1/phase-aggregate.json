@@ -1,0 +1,149 @@
+{
+  "totalWarmMs": 74,
+  "phases": [
+    {
+      "phase": "Anotación fila (explain/audit/health)",
+      "key": "vm.annotateRows",
+      "coldMs": 48.4,
+      "warmMs": 43.2,
+      "workflows": 6,
+      "pctTotal": 58.7
+    },
+    {
+      "phase": "filterAnalyzedRows · evaluación reglas",
+      "key": "splitByFilterRules",
+      "coldMs": 16.9,
+      "warmMs": 16.5,
+      "workflows": 5,
+      "pctTotal": 22.4
+    },
+    {
+      "phase": "Score/data-health audit scan",
+      "key": "vm.decisionAuditScan",
+      "coldMs": 7.8,
+      "warmMs": 5.2,
+      "workflows": 6,
+      "pctTotal": 7.1
+    },
+    {
+      "phase": "Score audit summary",
+      "key": "vm.scoreAuditSummary",
+      "coldMs": 5.4,
+      "warmMs": 3.9,
+      "workflows": 6,
+      "pctTotal": 5.3
+    },
+    {
+      "phase": "Preparación / quality gate",
+      "key": "qualityGate",
+      "coldMs": 2.2,
+      "warmMs": 2.3,
+      "workflows": 5,
+      "pctTotal": 3.1
+    },
+    {
+      "phase": "Sort pipeline (filterAnalyzedRows)",
+      "key": "sort",
+      "coldMs": 0.6,
+      "warmMs": 0.6,
+      "workflows": 5,
+      "pctTotal": 0.8
+    },
+    {
+      "phase": "Sort cliente (tabla)",
+      "key": "vm.clientSort",
+      "coldMs": 1.2,
+      "warmMs": 0.6,
+      "workflows": 6,
+      "pctTotal": 0.8
+    },
+    {
+      "phase": "Diagnósticos / explainability scan",
+      "key": "diagnostics",
+      "coldMs": 0.5,
+      "warmMs": 0.5,
+      "workflows": 5,
+      "pctTotal": 0.7
+    },
+    {
+      "phase": "Preparación / rescore check",
+      "key": "rescoreCheck",
+      "coldMs": 0.3,
+      "warmMs": 0.3,
+      "workflows": 5,
+      "pctTotal": 0.4
+    },
+    {
+      "phase": "Post-filter (weakness/RS/score)",
+      "key": "postFilter",
+      "coldMs": 0.3,
+      "warmMs": 0.3,
+      "workflows": 5,
+      "pctTotal": 0.4
+    },
+    {
+      "phase": "Data-health summary",
+      "key": "vm.dataHealthSummary",
+      "coldMs": 0.1,
+      "warmMs": 0.1,
+      "workflows": 6,
+      "pctTotal": 0.1
+    },
+    {
+      "phase": "Hunt cache lookup",
+      "key": "cacheLookup",
+      "coldMs": 0.1,
+      "warmMs": 0.1,
+      "workflows": 1,
+      "pctTotal": 0.1
+    },
+    {
+      "phase": "Sectorize + derived scores",
+      "key": "sectorize",
+      "coldMs": 0,
+      "warmMs": 0,
+      "workflows": 5,
+      "pctTotal": 0
+    },
+    {
+      "phase": "Fast-path decision",
+      "key": "fastPathDecision",
+      "coldMs": 0,
+      "warmMs": 0,
+      "workflows": 5,
+      "pctTotal": 0
+    },
+    {
+      "phase": "Régimen / market health",
+      "key": "regimeFilter",
+      "coldMs": 0,
+      "warmMs": 0,
+      "workflows": 5,
+      "pctTotal": 0
+    },
+    {
+      "phase": "Filter families vista (chips)",
+      "key": "vm.applyViewFilters",
+      "coldMs": 0,
+      "warmMs": 0,
+      "workflows": 6,
+      "pctTotal": 0
+    },
+    {
+      "phase": "Copia arrays ([...rows])",
+      "key": "vm.arrayCopy",
+      "coldMs": 0,
+      "warmMs": 0,
+      "workflows": 6,
+      "pctTotal": 0
+    },
+    {
+      "phase": "vm.arrayCopyProbe",
+      "key": "vm.arrayCopyProbe",
+      "coldMs": 0,
+      "warmMs": 0,
+      "workflows": 6,
+      "pctTotal": 0
+    }
+  ]
+}

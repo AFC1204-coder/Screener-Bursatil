@@ -1,0 +1,93 @@
+{
+  "phase": "despues",
+  "escritorio": {
+    "rowCount": 937,
+    "rowHeights": [
+      32
+    ],
+    "head": [
+      "Ticker",
+      "Tema",
+      "Semanal ~12M",
+      "Etapa",
+      "RS",
+      "VCP",
+      "Pivote · R",
+      "Máx 52s"
+    ],
+    "chipsMuestra": [
+      "-13,2% · R —",
+      "-10,0% · R —",
+      "-38,7% · R —",
+      "-11,0% · R —",
+      "-5,0% · R —",
+      "-15,5% · R —",
+      "-4,3% · R —",
+      "-17,5% · R —"
+    ],
+    "filasConRiesgo": 36,
+    "primeraConRiesgo": 39,
+    "listaScrollWidth": [
+      1230,
+      1230
+    ],
+    "pageScrollWidth": 1440,
+    "panelTexto": "ANF\nAbercrombie & Fitch Co.\n×\n\nPasa «Líderes Etapa 2»\n\n153,26\ncierre vie 16 oct\nETAPA 2\nsemana 6 · Con fuga · RS 90\nCierre semanal ~12M\nMM30\nRS\n90\nVCP\n16/12 2T\nT1 16 % · T2 12 %\nMÁX 52S\n-2,2%\nCAP.\n6,4B\nTEMA\nConsumo / marca\n\nENTRADA\n\nPIVOTE\n156,72\nAL PIVOTE\n-2,2%\nRIESGO AL STOP\n11,2%\nmás del 10%\nSTOP\n136,17\nmín. última contracción\nZONA +5%\n156,72–164,56\nprecio por debajo\nCAPITAL\nRIESGO POR OPERACIÓN\n%\nIndica el capital.\nTU CLASIFICACIÓN\nCandidata\nVigilar\nDescartar\n★ Favorito\nAbrir ficha\n↵",
+    "rowHeightsConPanel": [
+      32
+    ],
+    "consola": []
+  },
+  "movil390": {
+    "rowCount": 60,
+    "alturas": [
+      56
+    ],
+    "primeraFilaY": 162,
+    "filasCompletasVisibles": 11,
+    "filasTocandoPantalla": 13,
+    "limiteInferior": 788,
+    "chipsMuestra": [
+      "-13,2% · R —",
+      "-10,0% · R —",
+      "-38,7% · R —",
+      "-11,0% · R —",
+      "-5,0% · R —",
+      "-15,5% · R —"
+    ],
+    "nombresMuestra": [
+      null,
+      null,
+      null
+    ],
+    "pageScrollWidth": 390,
+    "vistaRapidaTexto": "Semanal · 12 meses · MM30\nInternet / plataformas\n\nEtapa\n2 · sem. 10dudoso\nRS\n—sin ranking\nVCP\n—\nMáx 52s\n-13,2%\nRend. 3M\n+584,3%\nCapitaliz.\n322M\n\nENTRADA\n\nPivote\n36,76\nAl pivote\n-13,2%\nRiesgo al stop\n—\nStop\n—\nZona +5%\n36,76–38,60\nprecio por debajo\nCapital\nRiesgo por operación\n%\nIndica el capital.\n\nTU CLASIFICACIÓN\n\n●\nCandidata\n◐\nVigilar\n○\nDescartar\n☆ Favorito",
+    "consola": []
+  },
+  "movil360": {
+    "rowCount": 60,
+    "alturas": [
+      56
+    ],
+    "primeraFilaY": 162,
+    "filasCompletasVisibles": 9,
+    "filasTocandoPantalla": 11,
+    "limiteInferior": 684,
+    "chipsMuestra": [
+      "-13,2% · R —",
+      "-10,0% · R —",
+      "-38,7% · R —",
+      "-11,0% · R —",
+      "-5,0% · R —",
+      "-15,5% · R —"
+    ],
+    "nombresMuestra": [
+      null,
+      null,
+      null
+    ],
+    "pageScrollWidth": 360,
+    "vistaRapidaTexto": "Semanal · 12 meses · MM30\nInternet / plataformas\n\nEtapa\n2 · sem. 10dudoso\nRS\n—sin ranking\nVCP\n—\nMáx 52s\n-13,2%\nRend. 3M\n+584,3%\nCapitaliz.\n322M\n\nENTRADA\n\nPivote\n36,76\nAl pivote\n-13,2%\nRiesgo al stop\n—\nStop\n—\nZona +5%\n36,76–38,60\nprecio por debajo\nCapital\nRiesgo por operación\n%\nIndica el capital.\n\nTU CLASIFICACIÓN\n\n●\nCandidata\n◐\nVigilar\n○\nDescartar\n☆ Favorito",
+    "consola": []
+  }
+}

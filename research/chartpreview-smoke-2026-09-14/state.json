@@ -1,0 +1,29 @@
+{
+  "ready": {
+    "cargando": true,
+    "pasan": null
+  },
+  "probe": {
+    "pasan": null,
+    "canvases": 0,
+    "painted": 0,
+    "sparkWraps": 0,
+    "tickers": [],
+    "caza": true,
+    "missingHint": false
+  },
+  "afterAudit": {
+    "canvases": 0,
+    "svgSparks": 0,
+    "sparkWraps": 0
+  },
+  "chartPreviewPosts": 0,
+  "statuses": {},
+  "consoleErr": [
+    {
+      "type": "error",
+      "text": "[GlobalCoveragePanel] /api/coverage falló: AbortError: signal is aborted without reason\n    at eval (webpack-internal:///(app-pages-browser)/./lib/clientApi.js:21:60)"
+    }
+  ],
+  "elapsedSec": 114
+}

@@ -1,0 +1,407 @@
+Líderes Etapa 2
+
+937 de 3287 · precios 15 oct · RS 27 sept
+
+Líderes Etapa 2
+937
+Cerca de pivot
+20
+Deterioro
+1622
+Líderes intl
+3259
+IPO recientes
+193
+Semana 9 → 16 oct
+Entradas en Etapa 2
+89
+Salidas de Etapa 2
+154
+Nuevos máximos 52s
+22
+A <5 % del máximo
+59
+★ Favoritos
+0
+Filtros
+5
+Etapa 2 mínima · Liquidez mínima (precio, cap, volumen) · Deterioro ≥ 50
+Rendimiento 3M
+RS
+VCP
+Rendimiento 3M
+Dist. máx 52s
+Capitaliz.
+Valor
+12M
+Etapa
+RS
+Máx 52s
+TJGC
+TJGC Group Limited
+2·10
+dudoso
+—
+-13,2%
+MRNA
+Moderna, Inc.
+2·41
+fuga
+99
+-10,0%
+CYPH
+Cypherpunk Technologies Inc.
+2·6
+dudoso
+—
+-38,7%
+IOVA
+Iovance Biotherapeutics, Inc.
+2·39
+fuga
+99
+-11,0%
+RCEL
+AVITA Medical, Inc.
+2·14
+fuga
+99
+-5,0%
+OABI
+OmniAb, Inc.
+2·21
+dudoso
+98
+-15,5%
+TEAM
+Atlassian Corporation
+2·6
+fuga
+96
+-7,1%
+KOD
+Kodiak Sciences Inc.
+2·4
+fuga
+94
+-17,5%
+ABCL
+AbCellera Biologics Inc.
+2·17
+dudoso
+99
+-21,4%
+HTFL
+Heartflow, Inc.
+2·8
+fuga
+94
+-11,1%
+CAI
+Caris Life Sciences, Inc.
+2·3
+dudoso
+91
+-9,2%
+ASST
+Strive, Inc.
+2·6
+dudoso
+97
+-33,5%
+UTZ
+Utz Brands, Inc.
+2·9
+fuga
+94
+-0,5%
+BUUU
+BUUU Group Limited
+2·23
+dudoso
+99
+-21,9%
+FIGS
+FIGS, Inc.
+2·4
+dudoso
+80
+-5,9%
+RNG
+RingCentral, Inc.
+2·17
+fuga
+98
+-7,9%
+SVIA
+Silvia, Inc.
+2·2
+dudoso
+94
+-65,4%
+ECO
+Okeanis Eco Tankers Corp.
+2·45
+dudoso
+98
+-10,9%
+CVI
+CVR Energy, Inc.
+2·10
+fuga
+95
+-3,3%
+P
+Everpure, Inc.
+2·10
+fuga
+95
+-21,3%
+AUGO
+Aura Minerals Inc.
+2·11
+dudoso
+95
+-19,4%
+XP
+XP Inc.
+2·2
+dudoso
+76
+-10,7%
+VREX
+Varex Imaging Corporation
+2·9
+dudoso
+95
+-1,2%
+ARCT
+Arcturus Therapeutics Holdings Inc.
+2·9
+dudoso
+95
+-57,2%
+NIQ
+NIQ Global Intelligence plc
+2·4
+fuga
+94
+-5,5%
+VIA
+Via Transportation, Inc.
+2·4
+dudoso
+92
+-42,2%
+GRAL
+GRAIL, Inc.
+2·3
+fuga
+98
+-29,2%
+FOSL
+Fossil Group, Inc.
+2·12
+fuga
+94
+-6,4%
+SBC
+SBC Medical Group Holdings Incorporated
+2·1
+dudoso
+87
+-8,0%
+MTW
+The Manitowoc Company, Inc.
+2·13
+fuga
+96
+-10,2%
+PAYC
+Paycom Software, Inc.
+2·9
+dudoso
+92
+-1,9%
+OMER
+Omeros Corporation
+2·8
+dudoso
+98
+-23,7%
+QMCO
+Quantum Corporation
+2·17
+dudoso
+99
+-48,2%
+CDNA
+CareDx, Inc.
+2·27
+dudoso
+99
+-11,7%
+PAYS
+Paysign, Inc.
+2·22
+fuga
+98
+-6,3%
+FWDI
+Forward Industries, Inc.
+2·2
+dudoso
+93
+-72,8%
+BWMN
+Bowman Consulting Group Ltd.
+2·5
+fuga
+86
+-6,7%
+SGHT
+Sight Sciences, Inc.
+2·5
+dudoso
+97
+-14,8%
+GTE
+Gran Tierra Energy Inc.
+2·11
+dudoso
+96
+-5,4%
+ANF
+Abercrombie & Fitch Co.
+2·6
+fuga
+90
+-2,2%
+TXG
+10x Genomics, Inc.
+2·45
+dudoso
+99
+-32,0%
+ATRC
+AtriCure, Inc.
+2·7
+fuga
+96
+-9,1%
+VEON
+VEON Ltd.
+2·7
+dudoso
+89
+-2,4%
+PRGO
+Perrigo Company plc
+2·2
+dudoso
+89
+-19,1%
+MASS
+908 Devices Inc.
+2·16
+fuga
+95
+-15,6%
+APPN
+Appian Corporation
+2·6
+dudoso
+89
+-10,6%
+HALO
+Halozyme Therapeutics, Inc.
+2·15
+fuga
+94
+-0,5%
+NEWP
+New Pacific Metals Corp.
+2·13
+dudoso
+98
+-13,1%
+VEEV
+Veeva Systems Inc.
+2·6
+fuga
+90
+-3,0%
+RSKD
+Riskified Ltd.
+2·10
+fuga
+94
+-6,4%
+PD
+PagerDuty, Inc.
+2·6
+fuga
+91
+-7,9%
+HURN
+Huron Consulting Group Inc.
+2·1
+dudoso
+83
+-6,4%
+GTLB
+GitLab Inc.
+2·7
+fuga
+92
+-8,9%
+HZO
+MarineMax, Inc.
+2·29
+dudoso
+96
+-0,4%
+AVTR
+Avantor, Inc.
+2·8
+fuga
+93
+-0,2%
+JILL
+J.Jill, Inc.
+2·12
+fuga
+94
+-2,4%
+PLSE
+Pulse Biosciences, Inc.
+2·34
+dudoso
+98
+-24,6%
+OPRT
+Oportun Financial Corporation
+2·13
+fuga
+93
+-2,9%
+SENS
+Senseonics Holdings, Inc.
+2·5
+dudoso
+92
+-27,0%
+MPC
+Marathon Petroleum Corporation
+2·37
+fuga
+96
+-1,5%
+
+60 de 937 · se cargan más al bajar
+
+Screener
+Listas
+Sectores
+Mercado
+Más

@@ -1,0 +1,6630 @@
+StatsEdge
+EQUITY RESEARCH
+Screener
+Listas
+Sectores
+Research
+Mercado
+Líderes Etapa 2
+EE. UU.
+1/27
+
+937 de 3287 pasan · ordenado por Rendimiento 3M · corte 18 oct, 05:00
+
+Revisar
+⋯
+DEL ANÁLISIS NOCTURNO
+2
+Líderes Etapa 2
+937
+◦
+Cerca de pivot
+20
+↘
+Deterioro
+1622
+∘
+Líderes intl
+3259
+n
+IPO recientes
+193
+ESTA NOCHE
+detalle
++
+Entradas en Etapa 2
+51
+−
+Salidas de Etapa 2
+49
+▲
+Nuevos máximos 52s
+2
+≈
+A <5 % del máximo
+80
+MIS VISTAS
+★
+Favoritos
+0
++
+Guardar vista actual
+Caza
+Auditoría
+Filtro
+Precios del 15 oct
+Los precios más recientes de esta lista son del 15 oct: llevan 16 sesiones sin actualizarse. Mientras no lleguen precios nuevos, el filtro de frescura no recorta: todo se calcula con los precios de esa fecha.
+937 en cola
+Compacto
+Cómodo
+TICKER
+TEMA
+SEMANAL ~12M
+ETAPA
+RS
+VCP
+MÁX 52S
+TJGC
+TJGC Group Limited
+Internet / plataformas
+2 · sem. 10
+—
+—
+-13,2%
+MRNA
+Moderna, Inc.
+Medtech / biotech
+2 · sem. 41
+99
+—
+-10,0%
+CYPH
+Cypherpunk Technologies Inc.
+Finanzas
+2 · sem. 6
+—
+—
+-38,7%
+IOVA
+Iovance Biotherapeutics, Inc.
+Medtech / biotech
+2 · sem. 39
+99
+—
+-11,0%
+RCEL
+AVITA Medical, Inc.
+Medtech / biotech
+2 · sem. 14
+99
+—
+-5,0%
+OABI
+OmniAb, Inc.
+Medtech / biotech
+2 · sem. 21
+98
+—
+-15,5%
+TEAM
+Atlassian Corporation
+Software / IA
+2 · sem. 6
+96
+—
+-7,1%
+KOD
+Kodiak Sciences Inc.
+Medtech / biotech
+2 · sem. 4
+94
+—
+-17,5%
+ABCL
+AbCellera Biologics Inc.
+Medtech / biotech
+2 · sem. 17
+99
+—
+-21,4%
+HTFL
+Heartflow, Inc.
+Medtech / biotech
+2 · sem. 8
+94
+—
+-11,1%
+CAI
+Caris Life Sciences, Inc.
+Medtech / biotech
+2 · sem. 3
+91
+—
+-9,2%
+ASST
+Strive, Inc.
+Finanzas
+2 · sem. 6
+97
+—
+-33,5%
+UTZ
+Utz Brands, Inc.
+Consumo / marca
+2 · sem. 9
+94
+—
+-0,5%
+BUUU
+BUUU Group Limited
+Automatizacion
+2 · sem. 23
+99
+—
+-21,9%
+FIGS
+FIGS, Inc.
+Consumo / marca
+2 · sem. 4
+80
+28/8 2T
+-5,9%
+RNG
+RingCentral, Inc.
+Software / IA
+2 · sem. 17
+98
+—
+-7,9%
+SVIA
+Silvia, Inc.
+Finanzas
+2 · sem. 2
+94
+34/22 2T
+-65,4%
+ECO
+Okeanis Eco Tankers Corp.
+Automatizacion
+2 · sem. 45
+98
+—
+-10,9%
+CVI
+CVR Energy, Inc.
+Energia / red
+2 · sem. 10
+95
+—
+-3,3%
+P
+Everpure, Inc.
+Consumer tech / hardware
+2 · sem. 10
+95
+25/11 2T
+-21,3%
+AUGO
+Aura Minerals Inc.
+Basic Materials
+2 · sem. 11
+95
+—
+-19,4%
+XP
+XP Inc.
+Finanzas
+2 · sem. 2
+76
+—
+-10,7%
+VREX
+Varex Imaging Corporation
+Medtech / biotech
+2 · sem. 9
+95
+13/13 1T
+-1,2%
+ARCT
+Arcturus Therapeutics Holdings Inc.
+Medtech / biotech
+2 · sem. 9
+95
+—
+-57,2%
+NIQ
+NIQ Global Intelligence plc
+Software / IA
+2 · sem. 4
+94
+—
+-5,5%
+VIA
+Via Transportation, Inc.
+Software / IA
+2 · sem. 4
+92
+—
+-42,2%
+GRAL
+GRAIL, Inc.
+Medtech / biotech
+2 · sem. 3
+98
+—
+-29,2%
+FOSL
+Fossil Group, Inc.
+Consumo / marca
+2 · sem. 12
+94
+23/23 1T
+-6,4%
+SBC
+SBC Medical Group Holdings Incorporated
+Semis / fotonica
+2 · sem. 1
+87
+—
+-8,0%
+MTW
+The Manitowoc Company, Inc.
+Automatizacion
+2 · sem. 13
+96
+17/10 2T
+-10,2%
+PAYC
+Paycom Software, Inc.
+Software / IA
+2 · sem. 9
+92
+—
+-1,9%
+OMER
+Omeros Corporation
+Medtech / biotech
+2 · sem. 8
+98
+—
+-23,7%
+QMCO
+Quantum Corporation
+Consumer tech / hardware
+2 · sem. 17
+99
+—
+-48,2%
+CDNA
+CareDx, Inc.
+Medtech / biotech
+2 · sem. 27
+99
+—
+-11,7%
+PAYS
+Paysign, Inc.
+Software / IA
+2 · sem. 22
+98
+—
+-6,3%
+FWDI
+Forward Industries, Inc.
+Consumo / marca
+2 · sem. 2
+93
+—
+-72,8%
+BWMN
+Bowman Consulting Group Ltd.
+Semis / fotonica
+2 · sem. 5
+86
+16/9 2T
+-6,7%
+SGHT
+Sight Sciences, Inc.
+Medtech / biotech
+2 · sem. 5
+97
+—
+-14,8%
+GTE
+Gran Tierra Energy Inc.
+Energia / red
+2 · sem. 11
+96
+32/9 2T
+-5,4%
+ANF
+Abercrombie & Fitch Co.
+Consumo / marca
+2 · sem. 6
+90
+16/12 2T
+-2,2%
+TXG
+10x Genomics, Inc.
+Medtech / biotech
+2 · sem. 45
+99
+—
+-32,0%
+ATRC
+AtriCure, Inc.
+Medtech / biotech
+2 · sem. 7
+96
+—
+-9,1%
+VEON
+VEON Ltd.
+Internet / plataformas
+2 · sem. 7
+89
+—
+-2,4%
+PRGO
+Perrigo Company plc
+Medtech / biotech
+2 · sem. 2
+89
+15/6 3T
+-19,1%
+MASS
+908 Devices Inc.
+Medtech / biotech
+2 · sem. 16
+95
+—
+-15,6%
+APPN
+Appian Corporation
+Software / IA
+2 · sem. 6
+89
+25/16 2T
+-10,6%
+HALO
+Halozyme Therapeutics, Inc.
+Medtech / biotech
+2 · sem. 15
+94
+—
+-0,5%
+NEWP
+New Pacific Metals Corp.
+Inmobiliario / REIT
+2 · sem. 13
+98
+28/15 2T
+-13,1%
+VEEV
+Veeva Systems Inc.
+Medtech / biotech
+2 · sem. 6
+90
+—
+-3,0%
+RSKD
+Riskified Ltd.
+Software / IA
+2 · sem. 10
+94
+—
+-6,4%
+PD
+PagerDuty, Inc.
+Software / IA
+2 · sem. 6
+91
+—
+-7,9%
+HURN
+Huron Consulting Group Inc.
+Software / IA
+2 · sem. 1
+83
+25/11 2T
+-6,4%
+GTLB
+GitLab Inc.
+Software / IA
+2 · sem. 7
+92
+—
+-8,9%
+HZO
+MarineMax, Inc.
+Consumo / marca
+2 · sem. 29
+96
+15/13 2T
+-0,4%
+AVTR
+Avantor, Inc.
+Medtech / biotech
+2 · sem. 8
+93
+11/5 3T
+-0,2%
+JILL
+J.Jill, Inc.
+Consumo / marca
+2 · sem. 12
+94
+12/5 2T
+-2,4%
+PLSE
+Pulse Biosciences, Inc.
+Medtech / biotech
+2 · sem. 34
+98
+—
+-24,6%
+OPRT
+Oportun Financial Corporation
+Finanzas
+2 · sem. 13
+93
+19/8 2T
+-2,9%
+SENS
+Senseonics Holdings, Inc.
+Medtech / biotech
+2 · sem. 5
+92
+—
+-27,0%
+MPC
+Marathon Petroleum Corporation
+Energia / red
+2 · sem. 37
+96
+—
+-1,5%
+TWST
+Twist Bioscience Corporation
+Medtech / biotech
+2 · sem. 38
+99
+—
+-39,6%
+FRO
+Frontline plc
+Energia / red
+2 · sem. 41
+96
+—
+-12,2%
+HAE
+Haemonetics Corporation
+Medtech / biotech
+2 · sem. 8
+94
+—
+-4,4%
+SG
+Sweetgreen, Inc.
+Consumo / marca
+2 · sem. 3
+63
+—
+-6,8%
+AMLX
+Amylyx Pharmaceuticals, Inc.
+Medtech / biotech
+2 · sem. 19
+98
+—
+-36,0%
+SDGR
+Schrödinger, Inc.
+Medtech / biotech
+2 · sem. 6
+96
+—
+-33,1%
+VSTM
+Verastem, Inc.
+Medtech / biotech
+2 · sem. 4
+89
+—
+-20,1%
+AMPL
+Amplitude, Inc.
+Software / IA
+2 · sem. 7
+94
+—
+-8,8%
+NTRA
+Natera, Inc.
+Medtech / biotech
+2 · sem. 19
+97
+13/13 1T
+-10,1%
+INTA
+Intapp, Inc.
+Software / IA
+2 · sem. 4
+79
+—
+-9,0%
+GCT
+GigaCloud Technology Inc.
+Software / IA
+2 · sem. 7
+93
+14/8 2T
+-5,1%
+ZETA
+Zeta Global Holdings Corp.
+Software / IA
+2 · sem. 16
+93
+—
+-11,0%
+FET
+Forum Energy Technologies, Inc.
+Energia / red
+2 · sem. 14
+97
+16/6 3T
+-12,5%
+HELP
+Cybin D/B/A Helus Pharma
+Medtech / biotech
+2 · sem. 10
+98
+—
+-30,4%
+IBTA
+Ibotta, Inc.
+Software / IA
+2 · sem. 11
+92
+—
+-3,7%
+XRPN
+Evernorth Holdings Inc. Class A Ordinary Shares
+Finanzas
+2 · sem. 3
+50
+1/0 2T
+-70,8%
+PBR
+Petróleo Brasileiro S.A. - Petrobras
+Energia / red
+2 · sem. 9
+89
+—
+-0,4%
+OBIO
+Orchestra BioMed Holdings, Inc.
+Medtech / biotech
+2 · sem. 6
+93
+21/21 1T
+-16,2%
+ALVO
+Alvotech
+Medtech / biotech
+2 · sem. 3
+84
+34/10 2T
+-44,4%
+ESTC
+Elastic N.V.
+Software / IA
+2 · sem. 6
+87
+—
+-15,1%
+IT
+Gartner, Inc.
+Software / IA
+2 · sem. 1
+65
+18/13 2T
+-21,4%
+CGAU
+Centerra Gold Inc.
+Inmobiliario / REIT
+2 · sem. 12
+95
+17/7 2T
+-10,1%
+ARX
+Accelerant Holdings
+Finanzas
+2 · sem. 7
+88
+29/29 1T
+-0,8%
+AII
+American Integrity Insurance Group, Inc.
+Inmobiliario / REIT
+2 · sem. 9
+86
+—
+-2,7%
+WPP
+WPP plc
+Internet / plataformas
+2 · sem. 7
+89
+20/7 3T
+-2,2%
+AYA
+Aya Gold & Silver Inc.
+Basic Materials
+2 · sem. 29
+97
+24/14 2T
+-13,0%
+HAFN
+Hafnia Limited
+Energia / red
+2 · sem. 41
+91
+—
+-9,8%
+RBRK
+Rubrik, Inc.
+Software / IA
+2 · sem. 10
+93
+—
+-12,1%
+RVTY
+Revvity, Inc.
+Medtech / biotech
+2 · sem. 15
+93
+12/12 1T
+-8,2%
+PCRX
+Pacira BioSciences, Inc.
+Medtech / biotech
+2 · sem. 8
+49
+18/5 3T
+-0,9%
+HPK
+HighPeak Energy, Inc.
+Energia / red
+2 · sem. 19
+74
+—
+-2,6%
+NVAX
+Novavax, Inc.
+Medtech / biotech
+2 · sem. 3
+83
+—
+-15,9%
+DOCU
+DocuSign, Inc.
+Software / IA
+2 · sem. 5
+81
+—
+-5,3%
+SSL
+Sasol Limited
+Semis / fotonica
+2 · sem. 15
+94
+—
+0,0%
+ELF
+e.l.f. Beauty, Inc.
+Consumo / marca
+2 · sem. 8
+83
+—
+-19,8%
+VLO
+Valero Energy Corporation
+Energia / red
+2 · sem. 45
+97
+—
+-3,6%
+ILMN
+Illumina, Inc.
+Medtech / biotech
+2 · sem. 29
+97
+18/18 1T
+-15,1%
+SAFT
+Safety Insurance Group, Inc.
+Inmobiliario / REIT
+2 · sem. 12
+90
+10/10 1T
+-0,1%
+APA
+APA Corporation
+Energia / red
+2 · sem. 15
+91
+—
+-0,2%
+MATV
+Mativ Holdings, Inc.
+Software / IA
+2 · sem. 1
+82
+14/8 2T
+-25,4%
+ACVA
+ACV Auctions Inc.
+Consumo / marca
+2 · sem. 4
+93
+21/21 1T
+-0,1%
+SAP
+SAP SE
+Software / IA
+2 · sem. 1
+68
+11/5 2T
+-18,9%
+TASK
+TaskUs, Inc.
+Software / IA
+2 · sem. 3
+81
+20/5 2T
+-12,1%
+PSX
+Phillips 66
+Energia / red
+2 · sem. 42
+95
+—
+-1,4%
+III
+Information Services Group, Inc.
+Software / IA
+2 · sem. 2
+74
+11/5 3T
+-8,9%
+TRMD
+TORM plc
+Energia / red
+2 · sem. 43
+92
+—
+-8,7%
+REPX
+Riley Exploration Permian, Inc.
+Energia / red
+2 · sem. 15
+87
+—
+-0,4%
+DHT
+DHT Holdings, Inc.
+Energia / red
+2 · sem. 41
+93
+—
+-12,3%
+NTSK
+Netskope, Inc.
+Software / IA
+2 · sem. 4
+—
+—
+-23,9%
+NSIT
+Insight Enterprises, Inc.
+Software / IA
+2 · sem. 16
+94
+—
+-9,5%
+CRCT
+Cricut, Inc.
+Consumer tech / hardware
+2 · sem. 8
+84
+14/14 1T
+-5,4%
+EXLS
+ExlService Holdings, Inc.
+Software / IA
+2 · sem. 1
+60
+12/6 2T
+-9,9%
+TBBB
+BBB Foods Inc.
+Consumo / marca
+2 · sem. 45
+93
+—
+-0,2%
+MG
+Mistras Group, Inc.
+Software / IA
+2 · sem. 10
+93
+22/22 1T
+-1,4%
+KRT
+Karat Packaging Inc.
+Consumo / marca
+2 · sem. 28
+97
+11/5 2T
+-4,9%
+DINO
+HF Sinclair Corporation
+Energia / red
+2 · sem. 34
+97
+—
+-3,2%
+ZBRA
+Zebra Technologies Corporation
+Internet / plataformas
+2 · sem. 11
+91
+10/9 2T
+-5,6%
+CRM
+Salesforce, Inc.
+Software / IA
+2 · sem. 3
+78
+16/16 1T
+-10,1%
+GO
+Grocery Outlet Holding Corp.
+Consumo / marca
+2 · sem. 7
+71
+—
+-19,2%
+ZS
+Zscaler, Inc.
+Software / IA
+2 · sem. 2
+71
+—
+-38,5%
+PLTR
+Palantir Technologies Inc.
+Software / IA
+2 · sem. 4
+85
+22/12 2T
+-12,6%
+THC
+Tenet Healthcare Corporation
+Medtech / biotech
+2 · sem. 10
+87
+12/5 2T
+-5,6%
+ANDG
+Andersen Group Inc.
+Consumo / marca
+2 · sem. 5
+—
+14/8 3T
+-3,1%
+DT
+Dynatrace, Inc.
+Software / IA
+2 · sem. 8
+87
+—
+-7,8%
+CRL
+Charles River Laboratories International, Inc.
+Medtech / biotech
+2 · sem. 15
+94
+13/13 1T
+-9,9%
+VET
+Vermilion Energy Inc.
+Energia / red
+2 · sem. 3
+81
+18/18 1T
+-9,5%
+SHOP
+Shopify Inc.
+Software / IA
+2 · sem. 3
+65
+—
+-7,0%
+ERO
+Ero Copper Corp.
+Basic Materials
+2 · sem. 7
+94
+23/10 2T
+-16,3%
+DNA
+Ginkgo Bioworks Holdings, Inc.
+Medtech / biotech
+2 · sem. 1
+76
+—
+-43,6%
+GDYN
+Grid Dynamics Holdings, Inc.
+Software / IA
+2 · sem. 1
+74
+23/6 3T
+-23,7%
+CBLL
+CeriBell, Inc.
+Medtech / biotech
+2 · sem. 4
+88
+21/8 3T
+-10,4%
+PRCH
+Porch Group, Inc.
+Inmobiliario / REIT
+2 · sem. 13
+92
+16/7 2T
+-4,7%
+NOW
+ServiceNow, Inc.
+Software / IA
+2 · sem. 3
+69
+19/7 3T
+-26,4%
+U
+Unity Software Inc.
+Software / IA
+2 · sem. 5
+90
+17/9 2T
+-22,5%
+CRSR
+Corsair Gaming, Inc.
+Consumer tech / hardware
+2 · sem. 18
+97
+28/6 3T
+-14,6%
+CHYM
+Chime Financial, Inc.
+Software / IA
+2 · sem. 7
+86
+27/27 1T
+-16,5%
+TEN
+Tsakos Energy Navigation Limited
+Energia / red
+2 · sem. 41
+93
+—
+-9,8%
+TNK
+Teekay Tankers Ltd.
+Energia / red
+2 · sem. 16
+92
+—
+-12,5%
+CERT
+Certara, Inc.
+Medtech / biotech
+2 · sem. 2
+85
+16/16 1T
+-27,6%
+CLF
+Cleveland-Cliffs Inc.
+Autos / movilidad
+2 · sem. 1
+72
+36/10 2T
+-27,4%
+ENTX
+Entera Bio Ltd.
+Medtech / biotech
+2 · sem. 10
+95
+—
+-36,2%
+BHC
+Bausch Health Companies Inc.
+Medtech / biotech
+2 · sem. 1
+46
+24/10 2T
+-21,2%
+MNTK
+Montauk Renewables, Inc.
+Energia / red
+2 · sem. 7
+96
+—
+-34,8%
+MANH
+Manhattan Associates, Inc.
+Software / IA
+2 · sem. 7
+87
+13/4 2T
+-4,1%
+SPT
+Sprout Social, Inc.
+Software / IA
+2 · sem. 5
+77
+23/23 1T
+-6,4%
+TEVA
+Teva Pharmaceutical Industries Limited
+Medtech / biotech
+2 · sem. 12
+88
+17/4 2T
+-1,2%
+CAKE
+The Cheesecake Factory Incorporated
+Consumo / marca
+2 · sem. 21
+95
+20/5 2T
+-3,1%
+TEM
+Tempus AI, Inc.
+Medtech / biotech
+2 · sem. 3
+90
+—
+-33,4%
+TKNO
+Alpha Teknova, Inc.
+Medtech / biotech
+2 · sem. 13
+98
+—
+-25,3%
+SWKS
+Skyworks Solutions, Inc.
+Semis / fotonica
+2 · sem. 6
+86
+30/11 2T
+-14,1%
+A
+Agilent Technologies, Inc.
+Medtech / biotech
+2 · sem. 6
+87
+14/8 2T
+-2,5%
+CLMT
+Calumet, Inc.
+Defensa / aeroespacial
+2 · sem. 45
+98
+14/11 2T
+-3,5%
+PBF
+PBF Energy Inc.
+Energia / red
+2 · sem. 42
+98
+—
+-8,6%
+CRGY
+Crescent Energy Company
+Energia / red
+2 · sem. 12
+86
+24/6 3T
+-11,0%
+ARHS
+Arhaus, Inc.
+Consumo / marca
+2 · sem. 1
+70
+31/4 2T
+-13,7%
+SMTI
+Sanara MedTech Inc.
+Medtech / biotech
+2 · sem. 11
+91
+14/12 2T
+-6,6%
+GMAB
+Genmab A/S
+Medtech / biotech
+2 · sem. 3
+84
+7/7 1T
+-7,9%
+ITGR
+Integer Holdings Corporation
+Medtech / biotech
+2 · sem. 17
+90
+6/6 1T
+-0,1%
+MSFT
+Microsoft Corporation
+Software / IA
+2 · sem. 5
+81
+25/7 2T
+-4,0%
+WK
+Workiva Inc.
+Software / IA
+2 · sem. 1
+70
+15/15 1T
+-22,4%
+IMAX
+IMAX Corporation
+Internet / plataformas
+2 · sem. 15
+90
+19/6 2T
+-12,0%
+TMO
+Thermo Fisher Scientific Inc.
+Medtech / biotech
+2 · sem. 4
+86
+9/4 2T
+-2,0%
+CBZ
+CBIZ, Inc.
+Automatizacion
+2 · sem. 6
+92
+22/2 3T
+-2,9%
+IQV
+IQVIA Holdings Inc.
+Medtech / biotech
+2 · sem. 6
+90
+15/7 2T
+-3,8%
+INSW
+International Seaways, Inc.
+Energia / red
+2 · sem. 45
+96
+—
+-12,9%
+TK
+Teekay Corporation Ltd.
+Energia / red
+2 · sem. 10
+88
+—
+-11,6%
+PCTY
+Paylocity Holding Corporation
+Software / IA
+2 · sem. 5
+72
+—
+-1,6%
+HRTG
+Heritage Insurance Holdings, Inc.
+Inmobiliario / REIT
+2 · sem. 8
+82
+11/8 2T
+-4,1%
+CRVL
+CorVel Corporation
+Finanzas
+2 · sem. 4
+68
+—
+-4,4%
+GIC
+Global Industrial Company
+Automatizacion
+2 · sem. 15
+83
+9/5 3T
+-1,3%
+ATKR
+Atkore Inc.
+Automatizacion
+2 · sem. 25
+90
+25/1 3T
+0,0%
+AZTA
+Azenta, Inc.
+Medtech / biotech
+2 · sem. 2
+85
+25/25 1T
+-26,5%
+BXC
+BlueLinx Holdings Inc.
+Automatizacion
+2 · sem. 5
+81
+25/15 2T
+-21,5%
+ASAN
+Asana, Inc.
+Software / IA
+2 · sem. 1
+59
+23/23 1T
+-35,5%
+SPSC
+SPS Commerce, Inc.
+Software / IA
+2 · sem. 2
+76
+13/13 1T
+-25,8%
+CBRL
+Cracker Barrel Old Country Store, Inc.
+Consumo / marca
+2 · sem. 17
+89
+—
+-1,9%
+WDAY
+Workday, Inc.
+Software / IA
+2 · sem. 4
+81
+17/17 1T
+-22,9%
+MAKO
+Mako Mining Corp.
+Basic Materials
+2 · sem. 11
+94
+19/19 1T
+-19,1%
+HNST
+The Honest Company, Inc.
+Consumo / marca
+2 · sem. 17
+94
+21/8 2T
+-16,8%
+NAT
+Nordic American Tankers Limited
+Energia / red
+2 · sem. 45
+96
+—
+-13,7%
+SLDE
+Slide Insurance Holdings, Inc.
+Inmobiliario / REIT
+2 · sem. 17
+88
+—
+-0,7%
+UGP
+Ultrapar Participações S.A.
+Energia / red
+2 · sem. 17
+94
+11/4 2T
+-5,8%
+PURR
+Hyperliquid Strategies Inc.
+Finanzas
+2 · sem. 7
+—
+—
+-38,6%
+HGTY
+Hagerty, Inc.
+Inmobiliario / REIT
+2 · sem. 4
+70
+—
+-1,5%
+TX
+Ternium S.A.
+Autos / movilidad
+2 · sem. 45
+89
+19/5 3T
+-3,7%
+BOX
+Box, Inc.
+Software / IA
+2 · sem. 8
+70
+—
+-1,3%
+IDT
+IDT Corporation
+Internet / plataformas
+2 · sem. 16
+79
+8/8 1T
+-3,0%
+EOLS
+Evolus, Inc.
+Medtech / biotech
+2 · sem. 9
+79
+25/8 3T
+-23,7%
+COP
+ConocoPhillips
+Energia / red
+2 · sem. 15
+79
+15/5 3T
+-0,1%
+MTD
+Mettler-Toledo International Inc.
+Medtech / biotech
+2 · sem. 1
+75
+14/5 2T
+-2,3%
+AVAH
+Aveanna Healthcare Holdings Inc.
+Medtech / biotech
+2 · sem. 10
+92
+18/18 1T
+-16,1%
+PI
+Impinj, Inc.
+Semis / fotonica
+2 · sem. 5
+86
+19/10 3T
+-29,0%
+SSRM
+SSR Mining Inc.
+Inmobiliario / REIT
+2 · sem. 11
+90
+21/21 1T
+-19,2%
+OBE
+Obsidian Energy Ltd.
+Energia / red
+2 · sem. 2
+92
+27/27 1T
+-18,0%
+LPG
+Dorian LPG Ltd.
+Energia / red
+2 · sem. 38
+95
+16/9 3T
+-10,6%
+BTE
+Baytex Energy Corp.
+Energia / red
+2 · sem. 12
+87
+15/15 1T
+-0,3%
+PUBM
+PubMatic, Inc.
+Software / IA
+2 · sem. 23
+97
+15/6 3T
+-14,6%
+SM
+SM Energy Company
+Energia / red
+2 · sem. 26
+87
+22/22 1T
+-5,0%
+EQNR
+Equinor ASA
+Energia / red
+2 · sem. 15
+91
+10/10 1T
+-0,1%
+MLAB
+Mesa Laboratories, Inc.
+Automatizacion
+2 · sem. 32
+95
+23/7 3T
+-15,2%
+FTRE
+Fortrea Holdings Inc.
+Medtech / biotech
+2 · sem. 24
+92
+18/18 1T
+-4,3%
+NTAP
+NetApp, Inc.
+Software / IA
+2 · sem. 20
+94
+23/4 2T
+-15,4%
+KRSA
+Korsana Biosciences, Inc.
+Medtech / biotech
+2 · sem. 23
+97
+46/22 2T
+-15,1%
+YEXT
+Yext, Inc.
+Software / IA
+2 · sem. 2
+75
+24/6 3T
+-23,6%
+SU
+Suncor Energy Inc.
+Energia / red
+2 · sem. 15
+87
+—
+-2,0%
+OKTA
+Okta, Inc.
+Software / IA
+2 · sem. 18
+97
+—
+-20,3%
+PGEN
+Precigen, Inc.
+Medtech / biotech
+2 · sem. 19
+96
+18/18 1T
+-28,8%
+KNSA
+Kiniksa Pharmaceuticals International, plc
+Medtech / biotech
+2 · sem. 26
+93
+14/5 2T
+-5,3%
+DAC
+Danaos Corporation
+Automatizacion
+2 · sem. 45
+90
+—
+-7,9%
+FIVN
+Five9, Inc.
+Software / IA
+2 · sem. 15
+96
+—
+-19,4%
+CLMB
+Climb Global Solutions, Inc.
+Technology
+2 · sem. 2
+84
+13/13 1T
+-9,0%
+ASC
+Ardmore Shipping Corporation
+Automatizacion
+2 · sem. 16
+86
+—
+-8,1%
+LIND
+Lindblad Expeditions Holdings, Inc.
+Consumo / marca
+2 · sem. 45
+93
+31/11 2T
+-6,5%
+HPQ
+HP Inc.
+Consumer tech / hardware
+2 · sem. 12
+88
+17/16 2T
+-17,2%
+TALO
+Talos Energy Inc.
+Energia / red
+2 · sem. 15
+85
+14/5 3T
+-5,1%
+BDX
+Becton, Dickinson and Company
+Medtech / biotech
+2 · sem. 9
+79
+9/4 2T
+-2,2%
+SHEL
+Shell plc
+Energia / red
+2 · sem. 15
+81
+7/3 2T
+0,0%
+SMWB
+Similarweb Ltd.
+Software / IA
+2 · sem. 8
+92
+21/15 2T
+-12,1%
+FRSH
+Freshworks Inc.
+Software / IA
+2 · sem. 6
+80
+16/5 2T
+-5,8%
+SXC
+SunCoke Energy, Inc.
+Semis / fotonica
+2 · sem. 18
+86
+15/5 2T
+-4,0%
+HPE
+Hewlett Packard Enterprise Company
+Inmobiliario / REIT
+2 · sem. 26
+98
+28/12 2T
+-25,1%
+KSS
+Kohl's Corporation
+Consumo / marca
+2 · sem. 2
+60
+—
+-11,8%
+CNQ
+Canadian Natural Resources Limited
+Energia / red
+2 · sem. 15
+83
+10/10 1T
+-0,2%
+CON
+Concentra Group Holdings Parent, Inc.
+Medtech / biotech
+2 · sem. 23
+91
+—
+-2,7%
+MGNI
+Magnite, Inc.
+Internet / plataformas
+2 · sem. 14
+89
+17/11 3T
+-12,9%
+SAIL
+SailPoint, Inc.
+Software / IA
+2 · sem. 4
+88
+22/22 1T
+-21,5%
+PRTH
+Priority Technology Holdings, Inc.
+Software / IA
+2 · sem. 5
+79
+31/1 3T
+-0,7%
+ETON
+Eton Pharmaceuticals, Inc.
+Medtech / biotech
+2 · sem. 32
+98
+19/19 1T
+-24,2%
+IBRX
+ImmunityBio, Inc.
+Medtech / biotech
+2 · sem. 8
+97
+—
+-26,1%
+SXT
+Sensient Technologies Corporation
+Software / IA
+2 · sem. 21
+81
+10/4 2T
+-3,7%
+W
+Wayfair Inc.
+Internet / plataformas
+2 · sem. 3
+65
+17/13 2T
+-10,6%
+WAT
+Waters Corporation
+Medtech / biotech
+2 · sem. 5
+82
+9/7 3T
+-3,9%
+PR
+Permian Resources Corporation
+Energia / red
+2 · sem. 45
+84
+15/15 1T
+-0,1%
+SN
+SharkNinja, Inc.
+Consumo / marca
+2 · sem. 21
+91
+19/3 3T
+-5,0%
+MTLS
+Materialise NV
+Software / IA
+2 · sem. 15
+91
+17/7 2T
+-9,3%
+BWLP
+BW LPG Limited
+Energia / red
+2 · sem. 41
+94
+23/6 2T
+-7,5%
+DDI
+DoubleDown Interactive Co., Ltd.
+Internet / plataformas
+2 · sem. 22
+87
+11/3 2T
+-3,5%
+HMC
+Honda Motor Co., Ltd.
+Autos / movilidad
+2 · sem. 2
+74
+7/3 2T
+-0,8%
+PFE
+Pfizer Inc.
+Medtech / biotech
+2 · sem. 6
+74
+11/3 3T
+-1,0%
+CCC
+CCC Intelligent Solutions Holdings Inc.
+Software / IA
+2 · sem. 2
+70
+19/6 3T
+-19,4%
+GPRK
+GeoPark Limited
+Energia / red
+2 · sem. 45
+88
+24/9 2T
+-10,4%
+AGEN
+Agenus Inc.
+Medtech / biotech
+2 · sem. 12
+98
+—
+-41,4%
+XNCR
+Xencor, Inc.
+Medtech / biotech
+2 · sem. 10
+97
+—
+-25,4%
+NTNX
+Nutanix, Inc.
+Software / IA
+2 · sem. 10
+88
+12/7 2T
+-11,9%
+XOM
+ExxonMobil Holdings Corporation
+Energia / red
+2 · sem. 14
+80
+8/3 2T
+-0,1%
+SSNC
+SS&C Technologies Holdings, Inc.
+Software / IA
+2 · sem. 1
+57
+9/5 3T
+-5,5%
+STGW
+Stagwell Inc.
+Internet / plataformas
+2 · sem. 26
+87
+16/8 2T
+-6,8%
+RCBC
+River City Bank
+Finanzas
+2 · sem. 13
+78
+7/7 1T
+-5,0%
+CHRD
+Chord Energy Corporation
+Energia / red
+2 · sem. 15
+78
+21/9 3T
+-1,6%
+MORN
+Morningstar, Inc.
+Finanzas
+2 · sem. 3
+59
+15/15 1T
+-6,3%
+BP
+BP p.l.c.
+Energia / red
+2 · sem. 15
+76
+10/5 2T
+-0,1%
+KOS
+Kosmos Energy Ltd.
+Energia / red
+2 · sem. 2
+92
+35/18 3T
+-16,8%
+CNK
+Cinemark Holdings, Inc.
+Internet / plataformas
+2 · sem. 21
+85
+13/10 2T
+-3,3%
+E
+Eni S.p.A.
+Energia / red
+2 · sem. 15
+84
+17/4 2T
+-0,1%
+UVE
+Universal Insurance Holdings, Inc.
+Inmobiliario / REIT
+2 · sem. 45
+81
+—
+-1,2%
+RGEN
+Repligen Corporation
+Medtech / biotech
+2 · sem. 4
+90
+21/21 1T
+-11,8%
+OVV
+Ovintiv Inc.
+Energia / red
+2 · sem. 40
+82
+13/13 1T
+-0,1%
+CORT
+Corcept Therapeutics Incorporated
+Medtech / biotech
+2 · sem. 12
+96
+14/7 3T
+-12,8%
+ZIM
+ZIM Integrated Shipping Services Ltd.
+Automatizacion
+2 · sem. 12
+89
+13/13 1T
+-5,7%
+AMN
+AMN Healthcare Services, Inc.
+Medtech / biotech
+2 · sem. 24
+94
+—
+-2,5%
+XERS
+Xeris Biopharma Holdings, Inc.
+Medtech / biotech
+2 · sem. 11
+85
+22/16 2T
+-9,0%
+HIPO
+Hippo Holdings Inc.
+Inmobiliario / REIT
+2 · sem. 5
+57
+15/15 1T
+-8,9%
+ABNB
+Airbnb, Inc.
+Consumo / marca
+2 · sem. 25
+73
+23/4 2T
+-10,2%
+TOP
+TOP Financial Group Limited
+Finanzas
+2 · sem. 15
+98
+—
+-23,0%
+CVX
+Chevron Corporation
+Energia / red
+2 · sem. 15
+79
+8/3 2T
+-0,1%
+AMGN
+Amgen Inc.
+Medtech / biotech
+2 · sem. 20
+82
+16/7 2T
+-3,3%
+WOR
+Worthington Enterprises, Inc.
+Autos / movilidad
+2 · sem. 4
+65
+16/4 2T
+-4,9%
+BLMN
+Bloomin' Brands, Inc.
+Consumo / marca
+2 · sem. 3
+62
+33/33 1T
+-21,2%
+ELPC
+Companhia Paranaense de Energia
+Energia / red
+2 · sem. 7
+73
+16/7 2T
+-3,7%
+MEOH
+Methanex Corporation
+Basic Materials
+2 · sem. 14
+84
+28/9 3T
+-2,1%
+TWLO
+Twilio Inc.
+Software / IA
+2 · sem. 28
+97
+22/8 2T
+-20,8%
+DK
+Delek US Holdings, Inc.
+Energia / red
+2 · sem. 37
+96
+20/20 1T
+-6,9%
+LBRX
+LB Pharmaceuticals Inc
+Medtech / biotech
+2 · sem. 19
+94
+27/27 1T
+-26,8%
+EGY
+VAALCO Energy, Inc.
+Energia / red
+2 · sem. 11
+84
+17/7 2T
+-5,9%
+ONC
+BeOne Medicines AG
+Medtech / biotech
+2 · sem. 3
+79
+11/4 2T
+-4,2%
+CHEF
+The Chefs' Warehouse, Inc.
+Consumo / marca
+2 · sem. 24
+92
+12/8 3T
+-4,2%
+UFPT
+UFP Technologies, Inc.
+Medtech / biotech
+2 · sem. 17
+87
+19/9 2T
+-13,9%
+TECK
+Teck Resources Limited
+Inmobiliario / REIT
+2 · sem. 13
+88
+13/6 3T
+-10,8%
+MMSI
+Merit Medical Systems, Inc.
+Medtech / biotech
+2 · sem. 3
+72
+9/6 2T
+-5,9%
+EMR
+Emerson Electric Co.
+Automatizacion
+2 · sem. 3
+72
+13/5 2T
+-2,6%
+FCX
+Freeport-McMoRan Inc.
+Inmobiliario / REIT
+2 · sem. 13
+88
+17/9 2T
+-13,1%
+ORIC
+ORIC Pharmaceuticals, Inc.
+Medtech / biotech
+2 · sem. 10
+85
+23/23 1T
+-15,9%
+COTY
+Coty Inc.
+Consumo / marca
+2 · sem. 1
+60
+—
+-26,3%
+DELL
+Dell Technologies Inc.
+Consumer tech / hardware
+2 · sem. 30
+99
+21/14 2T
+-24,1%
+SAIC
+Science Applications International Corporation
+Software / IA
+2 · sem. 18
+82
+16/6 2T
+-6,5%
+APPF
+AppFolio, Inc.
+Software / IA
+2 · sem. 3
+66
+16/16 1T
+-20,0%
+PBYI
+Puma Biotechnology, Inc.
+Medtech / biotech
+2 · sem. 45
+93
+17/9 2T
+-8,3%
+BWIN
+The Baldwin Insurance Group, Inc.
+Finanzas
+2 · sem. 9
+82
+16/10 2T
+-2,4%
+FDS
+FactSet Research Systems Inc.
+Finanzas
+2 · sem. 6
+65
+20/20 1T
+-5,9%
+AMC
+AMC Entertainment Holdings, Inc.
+Internet / plataformas
+2 · sem. 12
+95
+42/42 1T
+-14,4%
+MCS
+The Marcus Corporation
+Internet / plataformas
+2 · sem. 28
+93
+18/10 2T
+-13,3%
+DSGX
+The Descartes Systems Group Inc.
+Software / IA
+2 · sem. 2
+46
+15/7 2T
+-10,9%
+MRK
+Merck & Co., Inc.
+Medtech / biotech
+2 · sem. 45
+90
+10/10 1T
+-6,4%
+NEOG
+Neogen Corporation
+Medtech / biotech
+2 · sem. 12
+96
+22/22 1T
+-17,2%
+IFF
+International Flavors & Fragrances Inc.
+Software / IA
+2 · sem. 31
+80
+14/8 3T
+-1,3%
+HRB
+H&R Block, Inc.
+Consumo / marca
+2 · sem. 8
+64
+18/18 1T
+-16,3%
+FNKO
+Funko, Inc.
+Consumo / marca
+2 · sem. 28
+89
+29/7 2T
+-9,8%
+CLW
+Clearwater Paper Corporation
+Consumo / marca
+2 · sem. 7
+78
+18/18 1T
+-18,2%
+JOYY
+JOYY Inc.
+Internet / plataformas
+2 · sem. 19
+85
+9/9 1T
+-2,5%
+SONY
+Sony Group Corporation
+Consumer tech / hardware
+2 · sem. 1
+53
+10/3 2T
+-18,0%
+PSNL
+Personalis, Inc.
+Medtech / biotech
+2 · sem. 16
+97
+30/8 2T
+-17,2%
+KMTS
+Kestra Medical Technologies, Ltd.
+Medtech / biotech
+2 · sem. 3
+78
+25/15 2T
+-9,2%
+BIO
+Bio-Rad Laboratories, Inc.
+Medtech / biotech
+2 · sem. 8
+86
+9/9 1T
+-10,7%
+MEDP
+Medpace Holdings, Inc.
+Medtech / biotech
+2 · sem. 5
+78
+17/6 2T
+-8,8%
+CVE
+Cenovus Energy Inc.
+Energia / red
+2 · sem. 45
+91
+11/6 2T
+-3,4%
+HSTM
+HealthStream, Inc.
+Medtech / biotech
+2 · sem. 14
+72
+—
+-3,9%
+TNET
+TriNet Group, Inc.
+Software / IA
+2 · sem. 8
+84
+11/11 1T
+-2,8%
+NEO
+NeoGenomics, Inc.
+Medtech / biotech
+2 · sem. 14
+97
+24/24 1T
+-17,4%
+STLN
+Starling Oncology, Inc.
+Medtech / biotech
+2 · sem. 20
+95
+30/18 2T
+-9,8%
+MRVL
+Marvell Technology, Inc.
+Semis / fotonica
+2 · sem. 33
+98
+46/46 1T
+-30,9%
+GRMN
+Garmin Ltd.
+Automatizacion
+2 · sem. 19
+82
+15/5 2T
+-9,0%
+DV
+DoubleVerify Holdings, Inc.
+Internet / plataformas
+2 · sem. 10
+79
+14/14 1T
+-1,2%
+DVN
+Devon Energy Corporation
+Energia / red
+2 · sem. 12
+73
+12/12 1T
+-2,4%
+SCCO
+Southern Copper Corporation
+Basic Materials
+2 · sem. 12
+91
+18/18 1T
+-9,2%
+DBX
+Dropbox, Inc.
+Software / IA
+2 · sem. 10
+74
+18/18 1T
+-6,8%
+TAL
+TAL Education Group
+Consumo / marca
+2 · sem. 3
+71
+9/4 3T
+-10,2%
+BIIB
+Biogen Inc.
+Medtech / biotech
+2 · sem. 45
+82
+15/9 2T
+-3,5%
+CDW
+CDW Corporation
+Software / IA
+2 · sem. 3
+45
+18/18 1T
+-4,8%
+RUSHB
+Rush Enterprises, Inc.
+Consumo / marca
+2 · sem. 39
+83
+11/5 3T
+-2,4%
+RIGL
+Rigel Pharmaceuticals, Inc.
+Medtech / biotech
+2 · sem. 7
+88
+20/5 3T
+-12,0%
+PBT
+Permian Basin Royalty Trust
+Energia / red
+2 · sem. 45
+94
+19/9 2T
+-10,4%
+MNTN
+MNTN, Inc.
+Software / IA
+2 · sem. 1
+57
+31/7 2T
+-45,4%
+LW
+Lamb Weston Holdings, Inc.
+Consumo / marca
+2 · sem. 2
+31
+27/27 1T
+-17,6%
+TITN
+Titan Machinery Inc.
+Automatizacion
+2 · sem. 8
+83
+21/4 2T
+-17,5%
+QLYS
+Qualys, Inc.
+Software / IA
+2 · sem. 10
+90
+26/12 2T
+-12,2%
+WEST
+Westrock Coffee Company
+Consumo / marca
+2 · sem. 23
+88
+33/33 1T
+-17,2%
+COKE
+Coca-Cola Consolidated, Inc.
+Consumo / marca
+2 · sem. 14
+71
+—
+-4,0%
+ICFI
+ICF International, Inc.
+Defensa / aeroespacial
+2 · sem. 1
+64
+15/7 3T
+-8,2%
+URBN
+Urban Outfitters, Inc.
+Consumo / marca
+2 · sem. 5
+56
+—
+-4,4%
+BGR
+BlackRock Energy and Resources Trust
+Finanzas
+2 · sem. 15
+78
+5/5 1T
+-0,4%
+IOSP
+Innospec Inc.
+Defensa / aeroespacial
+2 · sem. 19
+82
+9/9 1T
+-3,7%
+WHD
+Cactus, Inc.
+Energia / red
+2 · sem. 15
+88
+18/5 2T
+-16,5%
+FRHC
+Freedom Holdings Corp.
+Finanzas
+2 · sem. 13
+78
+13/9 2T
+-0,4%
+NUTX
+Nutex Health Inc.
+Medtech / biotech
+2 · sem. 11
+96
+31/9 3T
+-17,7%
+DEC
+Diversified Energy Company
+Energia / red
+2 · sem. 1
+51
+15/15 1T
+-18,4%
+KO
+The Coca-Cola Company
+Consumo / marca
+2 · sem. 34
+75
+6/3 3T
+-0,2%
+SIBN
+SI-BONE, Inc.
+Medtech / biotech
+2 · sem. 4
+73
+11/11 1T
+-10,1%
+BVS
+Bioventus Inc.
+Medtech / biotech
+2 · sem. 18
+94
+22/12 2T
+-16,3%
+KRO
+Kronos Worldwide, Inc.
+Software / IA
+2 · sem. 11
+90
+24/13 3T
+-18,5%
+PTEN
+Patterson-UTI Energy, Inc.
+Energia / red
+2 · sem. 3
+90
+22/22 1T
+-14,1%
+ECPG
+Encore Capital Group, Inc.
+Finanzas
+2 · sem. 45
+93
+12/6 2T
+-4,1%
+CRON
+Cronos Group Inc.
+Medtech / biotech
+2 · sem. 17
+80
+14/6 2T
+-11,0%
+PCVX
+Vaxcyte, Inc.
+Medtech / biotech
+2 · sem. 11
+78
+30/30 1T
+-29,9%
+CTKB
+Cytek Biosciences, Inc.
+Medtech / biotech
+2 · sem. 2
+84
+19/19 1T
+-15,5%
+APPS
+Digital Turbine, Inc.
+Software / IA
+2 · sem. 17
+98
+—
+-37,7%
+FAST
+Fastenal Company
+Automatizacion
+2 · sem. 13
+67
+5/4 2T
+-3,6%
+BAX
+Baxter International Inc.
+Medtech / biotech
+2 · sem. 13
+72
+16/5 2T
+-15,7%
+VAC
+Marriott Vacations Worldwide Corporation
+Consumo / marca
+2 · sem. 21
+88
+18/6 3T
+-14,9%
+CRWD
+CrowdStrike Holdings, Inc.
+Software / IA
+2 · sem. 21
+97
+20/14 2T
+-20,8%
+KDP
+Keurig Dr Pepper Inc.
+Consumo / marca
+2 · sem. 20
+66
+—
+-0,3%
+MUR
+Murphy Oil Corporation
+Energia / red
+2 · sem. 3
+67
+18/5 2T
+-1,9%
+ARDT
+Ardent Health, Inc.
+Medtech / biotech
+2 · sem. 11
+62
+—
+-22,8%
+CMBT
+Cmb.Tech NV
+Energia / red
+2 · sem. 45
+94
+14/5 3T
+-18,6%
+NCNO
+nCino, Inc.
+Software / IA
+2 · sem. 2
+58
+22/22 1T
+-25,4%
+TTE
+TotalEnergies SE
+Energia / red
+2 · sem. 2
+81
+18/4 2T
+-1,9%
+SJM
+The J. M. Smucker Company
+Consumo / marca
+2 · sem. 14
+71
+12/4 2T
+-6,2%
+HNI
+HNI Corporation
+Consumo / marca
+2 · sem. 2
+79
+10/6 2T
+-8,9%
+TRLV
+Trulieve Cannabis Corp.
+Medtech / biotech
+2 · sem. 20
+93
+40/17 2T
+-24,6%
+HSHP
+Himalaya Shipping Ltd.
+Energia / red
+2 · sem. 45
+95
+12/8 2T
+-16,3%
+RGR
+Sturm, Ruger & Company, Inc.
+Defensa / aeroespacial
+2 · sem. 5
+71
+10/5 2T
+-7,6%
+ACCO
+ACCO Brands Corporation
+Internet / plataformas
+2 · sem. 17
+78
+13/7 3T
+-2,8%
+SONO
+Sonos, Inc.
+Consumer tech / hardware
+2 · sem. 2
+78
+20/9 3T
+-12,5%
+ADP
+Automatic Data Processing, Inc.
+Software / IA
+2 · sem. 7
+67
+8/8 1T
+-0,4%
+EHC
+Encompass Health Corporation
+Medtech / biotech
+2 · sem. 8
+72
+8/4 3T
+-1,6%
+OSPN
+OneSpan Inc.
+Software / IA
+2 · sem. 15
+89
+11/7 3T
+-7,1%
+DXCM
+DexCom, Inc.
+Medtech / biotech
+2 · sem. 17
+79
+15/7 3T
+-7,1%
+DGX
+Quest Diagnostics Incorporated
+Medtech / biotech
+2 · sem. 36
+78
+9/9 1T
+-5,2%
+OXY
+Occidental Petroleum Corporation
+Energia / red
+2 · sem. 3
+73
+12/12 1T
+-6,7%
+TGB
+Trekor Metals Limited
+Inmobiliario / REIT
+2 · sem. 11
+94
+23/15 2T
+-18,8%
+RDNT
+RadNet, Inc.
+Medtech / biotech
+2 · sem. 2
+63
+18/6 3T
+-19,9%
+ABBV
+AbbVie Inc.
+Medtech / biotech
+2 · sem. 13
+75
+10/4 3T
+-2,1%
+NDSN
+Nordson Corporation
+Automatizacion
+2 · sem. 45
+81
+10/5 2T
+-4,7%
+WLTH
+Wealthfront Corporation
+Software / IA
+2 · sem. 2
+—
+15/7 3T
+-27,9%
+HRMY
+Harmony Biosciences Holdings, Inc.
+Medtech / biotech
+2 · sem. 5
+79
+17/6 3T
+-12,7%
+LH
+Labcorp Holdings Inc.
+Medtech / biotech
+2 · sem. 12
+71
+10/10 1T
+-6,8%
+GWRE
+Guidewire Software, Inc.
+Software / IA
+2 · sem. 3
+41
+34/9 2T
+-34,0%
+TILE
+Interface, Inc.
+Consumo / marca
+2 · sem. 18
+74
+17/5 2T
+-10,5%
+LQDT
+Liquidity Services, Inc.
+Internet / plataformas
+2 · sem. 31
+86
+13/4 2T
+-2,5%
+BRBS
+Blue Ridge Bankshares, Inc.
+Finanzas
+2 · sem. 4
+62
+10/10 1T
+-5,1%
+HNGE
+Hinge Health, Inc.
+Medtech / biotech
+2 · sem. 19
+95
+22/10 2T
+-7,3%
+ZLAB
+Zai Lab Limited
+Medtech / biotech
+2 · sem. 10
+81
+14/8 2T
+-22,7%
+MA
+Mastercard Incorporated
+Finanzas
+2 · sem. 4
+61
+6/6 1T
+-0,8%
+SEPN
+Septerna, Inc.
+Medtech / biotech
+2 · sem. 23
+92
+30/30 1T
+-28,9%
+MRX
+Marex Group Limited
+Finanzas
+2 · sem. 31
+94
+17/7 2T
+-10,9%
+CAH
+Cardinal Health, Inc.
+Medtech / biotech
+2 · sem. 19
+63
+—
+-1,4%
+EOG
+EOG Resources, Inc.
+Energia / red
+2 · sem. 30
+69
+10/10 1T
+-0,2%
+NEU
+NewMarket Corporation
+Software / IA
+2 · sem. 13
+76
+15/4 2T
+-10,5%
+AMTB
+Amerant Bancorp Inc.
+Finanzas
+2 · sem. 42
+86
+7/7 1T
+-5,1%
+KRNT
+Kornit Digital Ltd.
+Automatizacion
+2 · sem. 4
+55
+—
+-14,3%
+VIST
+Vista Energy, S.A.B. de C.V.
+Energia / red
+2 · sem. 1
+80
+23/9 2T
+-11,7%
+ELV
+Elevance Health, Inc.
+Medtech / biotech
+2 · sem. 21
+72
+16/16 1T
+-1,4%
+KIDS
+OrthoPediatrics Corp.
+Medtech / biotech
+2 · sem. 15
+77
+22/10 2T
+-17,9%
+WSM
+Williams-Sonoma, Inc.
+Consumo / marca
+2 · sem. 17
+69
+15/4 2T
+-2,0%
+DNOW
+DNOW Inc.
+Automatizacion
+2 · sem. 5
+75
+10/7 2T
+-9,2%
+AAMI
+Acadian Asset Management Inc.
+Finanzas
+2 · sem. 45
+95
+13/6 3T
+-6,4%
+CNH
+CNH Industrial N.V.
+Automatizacion
+2 · sem. 9
+83
+17/6 2T
+-19,8%
+CNXN
+PC Connection, Inc.
+Software / IA
+2 · sem. 20
+89
+14/5 2T
+-7,8%
+FOXA
+Fox Corporation
+Internet / plataformas
+2 · sem. 1
+66
+30/7 2T
+-15,2%
+EXEL
+Exelixis, Inc.
+Medtech / biotech
+2 · sem. 28
+83
+—
+-1,8%
+BOW
+Bowhead Specialty Holdings Inc.
+Inmobiliario / REIT
+2 · sem. 15
+80
+13/5 2T
+-2,5%
+BRZE
+Braze, Inc.
+Software / IA
+2 · sem. 3
+59
+33/8 2T
+-21,4%
+SGMT
+Sagimet Biosciences Inc.
+Medtech / biotech
+2 · sem. 12
+91
+24/24 1T
+-30,0%
+BST
+BlackRock Science and Technology Trust
+Finanzas
+2 · sem. 23
+82
+14/4 2T
+-9,0%
+SFL
+SFL Corporation Ltd.
+Automatizacion
+2 · sem. 33
+89
+13/4 2T
+-11,6%
+WDS
+Woodside Energy Group Ltd
+Energia / red
+2 · sem. 2
+79
+24/4 3T
+-3,8%
+V
+Visa Inc.
+Finanzas
+2 · sem. 9
+65
+—
+-0,5%
+SNOW
+Snowflake Inc.
+Software / IA
+2 · sem. 13
+93
+18/5 2T
+-20,2%
+DCTH
+Delcath Systems, Inc.
+Medtech / biotech
+2 · sem. 19
+90
+16/8 2T
+-19,2%
+CHT
+Chunghwa Telecom Co., Ltd.
+Internet / plataformas
+2 · sem. 6
+63
+8/4 2T
+-0,3%
+HVT
+Haverty Furniture Companies, Inc.
+Consumo / marca
+2 · sem. 18
+76
+10/6 2T
+-4,7%
+GDDY
+GoDaddy Inc.
+Software / IA
+2 · sem. 1
+44
+31/5 2T
+-23,2%
+EC
+Ecopetrol S.A.
+Energia / red
+2 · sem. 45
+90
+21/7 3T
+-2,6%
+PRAA
+PRA Group, Inc.
+Finanzas
+2 · sem. 10
+74
+17/9 2T
+-14,0%
+QTWO
+Q2 Holdings, Inc.
+Software / IA
+2 · sem. 2
+49
+13/13 1T
+-18,8%
+NWL
+Newell Brands Inc.
+Consumo / marca
+2 · sem. 17
+78
+20/20 1T
+-19,8%
+MHK
+Mohawk Industries, Inc.
+Consumo / marca
+2 · sem. 10
+61
+14/14 1T
+-14,3%
+TGT
+Target Corporation
+Consumo / marca
+2 · sem. 38
+90
+13/3 3T
+-9,7%
+WAB
+Westinghouse Air Brake Technologies Corporation
+Software / IA
+2 · sem. 45
+79
+11/4 2T
+-6,4%
+NUE
+Nucor Corporation
+Energia / red
+2 · sem. 45
+88
+15/6 2T
+-8,3%
+WEX
+WEX Inc.
+Software / IA
+2 · sem. 10
+75
+18/4 2T
+-10,8%
+RNW
+ReNew Energy Global Plc
+Energia / red
+2 · sem. 8
+68
+10/4 2T
+-12,1%
+EQH
+Equitable Holdings, Inc.
+Finanzas
+2 · sem. 7
+77
+10/5 2T
+-3,6%
+CBNK
+Capital Bancorp, Inc.
+Finanzas
+2 · sem. 19
+68
+7/4 2T
+-2,7%
+RDVT
+Red Violet, Inc.
+Software / IA
+2 · sem. 14
+93
+16/11 3T
+-9,5%
+SDRL
+Seadrill Limited
+Energia / red
+2 · sem. 2
+80
+13/13 1T
+-14,8%
+RGA
+Reinsurance Group of America, Incorporated
+Finanzas
+2 · sem. 19
+79
+6/5 2T
+-0,3%
+VCTR
+Victory Capital Holdings, Inc.
+Finanzas
+2 · sem. 23
+92
+18/5 2T
+-11,7%
+PRLB
+Proto Labs, Inc.
+Automatizacion
+2 · sem. 45
+93
+18/5 2T
+-14,3%
+RELL
+Richardson Electronics, Ltd.
+Automatizacion
+2 · sem. 29
+89
+28/28 1T
+-20,6%
+CRBG
+Corebridge Financial, Inc.
+Finanzas
+2 · sem. 8
+80
+9/5 2T
+-3,4%
+GM
+General Motors Company
+Autos / movilidad
+2 · sem. 4
+68
+13/5 2T
+-8,4%
+S
+SentinelOne, Inc.
+Software / IA
+2 · sem. 14
+90
+20/11 2T
+-18,6%
+QUAD
+Quad/Graphics, Inc.
+Semis / fotonica
+2 · sem. 45
+88
+18/18 1T
+-14,4%
+HCI
+HCI Group, Inc.
+Inmobiliario / REIT
+2 · sem. 5
+48
+10/5 2T
+-4,8%
+SCSC
+ScanSource, Inc.
+Internet / plataformas
+2 · sem. 18
+86
+17/17 1T
+-10,1%
+VTRS
+Viatris Inc.
+Medtech / biotech
+2 · sem. 45
+89
+14/6 2T
+-0,1%
+MTCH
+Match Group, Inc.
+Internet / plataformas
+2 · sem. 19
+75
+13/13 1T
+-3,9%
+PSO
+Pearson plc
+Internet / plataformas
+2 · sem. 20
+70
+—
+-0,6%
+ZIP
+ZipRecruiter, Inc.
+Internet / plataformas
+2 · sem. 3
+53
+24/24 1T
+-21,4%
+SB
+Safe Bulkers, Inc.
+Automatizacion
+2 · sem. 45
+91
+14/7 2T
+-15,9%
+EXPD
+Expeditors International of Washington, Inc.
+Automatizacion
+2 · sem. 24
+82
+10/3 2T
+-2,4%
+GPC
+Genuine Parts Company
+Consumo / marca
+2 · sem. 1
+68
+14/4 3T
+-9,1%
+UFCS
+United Fire Group, Inc.
+Inmobiliario / REIT
+2 · sem. 45
+86
+10/10 1T
+-0,9%
+CVSA
+Covista Inc.
+Consumo / marca
+2 · sem. 3
+54
+20/11 2T
+-18,9%
+CAL
+Caleres, Inc.
+Consumo / marca
+2 · sem. 1
+42
+19/19 1T
+-13,0%
+GEF
+Greif, Inc.
+Consumo / marca
+2 · sem. 19
+80
+8/8 1T
+-8,6%
+EMBJ
+Embraer S.A.
+Defensa / aeroespacial
+2 · sem. 2
+85
+11/11 1T
+-9,9%
+BBY
+Best Buy Co., Inc.
+Consumo / marca
+2 · sem. 13
+83
+15/4 2T
+-4,0%
+KNTK
+Kinetik Holdings Inc.
+Energia / red
+2 · sem. 31
+77
+14/14 1T
+-2,8%
+ADPT
+Adaptive Biotechnologies Corporation
+Medtech / biotech
+2 · sem. 14
+96
+19/10 3T
+-21,9%
+LILAK
+Liberty Latin America Ltd.
+Internet / plataformas
+2 · sem. 15
+90
+15/7 3T
+-10,7%
+BMEZ
+BlackRock Health Sciences Term Trust
+Finanzas
+2 · sem. 11
+77
+6/3 2T
+-4,3%
+SBLK
+Star Bulk Carriers Corp.
+Automatizacion
+2 · sem. 45
+90
+12/8 3T
+-15,5%
+DE
+Deere & Company
+Automatizacion
+2 · sem. 21
+83
+11/11 1T
+-10,8%
+LLY
+Eli Lilly and Company
+Medtech / biotech
+2 · sem. 22
+77
+14/7 2T
+-2,8%
+INVX
+Innovex International, Inc.
+Energia / red
+2 · sem. 13
+82
+21/9 2T
+-16,8%
+PVH
+PVH Corp.
+Consumo / marca
+2 · sem. 2
+55
+19/7 2T
+-15,9%
+LILA
+Liberty Latin America Ltd.
+Internet / plataformas
+2 · sem. 15
+91
+14/7 2T
+-10,7%
+IMO
+Imperial Oil Limited
+Energia / red
+2 · sem. 1
+74
+12/12 1T
+-3,0%
+AMRX
+Amneal Pharmaceuticals, Inc.
+Medtech / biotech
+2 · sem. 21
+92
+12/8 2T
+-9,4%
+LNG
+Cheniere Energy, Inc.
+Energia / red
+2 · sem. 17
+72
+10/5 2T
+-3,4%
+FDMT
+4D Molecular Therapeutics, Inc.
+Medtech / biotech
+2 · sem. 12
+92
+27/27 1T
+-28,3%
+AVBC
+Avidia Bancorp, Inc.
+Finanzas
+2 · sem. 25
+75
+9/4 2T
+-3,8%
+PAG
+Penske Automotive Group, Inc.
+Consumo / marca
+2 · sem. 16
+81
+13/13 1T
+-5,8%
+RNR
+RenaissanceRe Holdings Ltd.
+Finanzas
+2 · sem. 19
+70
+10/6 2T
+0,0%
+VRSN
+VeriSign, Inc.
+Software / IA
+2 · sem. 16
+68
+11/11 1T
+-3,0%
+J
+Jacobs Solutions Inc.
+Defensa / aeroespacial
+2 · sem. 2
+58
+12/4 2T
+-15,4%
+EXPE
+Expedia Group, Inc.
+Consumo / marca
+2 · sem. 2
+56
+23/23 1T
+-15,4%
+THG
+The Hanover Insurance Group, Inc.
+Inmobiliario / REIT
+2 · sem. 20
+70
+10/7 2T
+-0,9%
+HBT
+HBT Financial, Inc.
+Finanzas
+2 · sem. 45
+84
+7/3 2T
+-5,1%
+FIVE
+Five Below, Inc.
+Consumo / marca
+2 · sem. 1
+78
+14/14 1T
+-15,6%
+WST
+West Pharmaceutical Services, Inc.
+Medtech / biotech
+2 · sem. 24
+84
+16/4 2T
+-0,6%
+MET
+MetLife, Inc.
+Finanzas
+2 · sem. 17
+79
+6/6 1T
+-1,6%
+LYFT
+Lyft, Inc.
+Software / IA
+2 · sem. 1
+36
+19/19 1T
+-34,1%
+DGII
+Digi International Inc.
+Software / IA
+2 · sem. 45
+93
+24/9 2T
+-19,5%
+PK
+Park Hotels & Resorts Inc.
+Inmobiliario / REIT
+2 · sem. 20
+85
+10/5 2T
+-2,9%
+ABM
+ABM Industries Incorporated
+Autos / movilidad
+2 · sem. 11
+70
+7/3 2T
+-1,8%
+CNNE
+Cannae Holdings, Inc.
+Consumo / marca
+2 · sem. 4
+66
+8/5 3T
+-12,2%
+NET
+Cloudflare, Inc.
+Software / IA
+2 · sem. 16
+94
+18/18 1T
+-20,0%
+AVNT
+Avient Corporation
+Automatizacion
+2 · sem. 14
+78
+13/13 1T
+-15,9%
+WTI
+W&T Offshore, Inc.
+Energia / red
+2 · sem. 2
+93
+32/10 2T
+-24,8%
+MTDR
+Matador Resources Company
+Energia / red
+2 · sem. 1
+57
+21/21 1T
+-12,7%
+GGB
+Gerdau S.A.
+Autos / movilidad
+2 · sem. 29
+87
+19/10 2T
+-8,4%
+BFLY
+Butterfly Network, Inc.
+Medtech / biotech
+2 · sem. 45
+98
+28/16 2T
+-29,0%
+ALRM
+Alarm.com Holdings, Inc.
+Software / IA
+2 · sem. 7
+65
+9/3 3T
+-2,1%
+SOLV
+Solventum Corporation
+Medtech / biotech
+2 · sem. 6
+76
+8/6 2T
+-8,9%
+CPAY
+Corpay, Inc.
+Software / IA
+2 · sem. 22
+80
+10/4 2T
+-6,5%
+AUPH
+Aurinia Pharmaceuticals Inc.
+Medtech / biotech
+2 · sem. 2
+56
+21/8 2T
+-14,2%
+AVPT
+AvePoint, Inc.
+Software / IA
+2 · sem. 5
+65
+15/7 2T
+-7,1%
+LB
+LandBridge Company LLC
+Energia / red
+2 · sem. 17
+88
+16/8 2T
+-10,9%
+SCL
+Stepan Company
+Autos / movilidad
+2 · sem. 22
+84
+9/9 1T
+-6,8%
+BLK
+BlackRock, Inc.
+Finanzas
+2 · sem. 1
+59
+14/5 2T
+-4,2%
+EFXT
+Enerflex Ltd.
+Energia / red
+2 · sem. 4
+87
+24/13 3T
+-14,4%
+ENR
+Energizer Holdings, Inc.
+Automatizacion
+2 · sem. 3
+55
+18/7 3T
+-8,9%
+KSPI
+Joint Stock Company Kaspi.kz
+Software / IA
+2 · sem. 21
+80
+14/14 1T
+-13,4%
+WTW
+Willis Towers Watson Public Limited Company
+Finanzas
+2 · sem. 1
+47
+17/17 1T
+-9,9%
+VIR
+Vir Biotechnology, Inc.
+Medtech / biotech
+2 · sem. 10
+89
+19/12 3T
+-17,0%
+MATX
+Matson, Inc.
+Internet / plataformas
+2 · sem. 41
+93
+16/4 3T
+-2,4%
+SPOT
+Spotify Technology S.A.
+Internet / plataformas
+2 · sem. 1
+42
+17/17 1T
+-23,9%
+OSCR
+Oscar Health, Inc.
+Medtech / biotech
+2 · sem. 19
+94
+21/8 2T
+-8,9%
+LAUR
+Laureate Education, Inc.
+Consumo / marca
+2 · sem. 20
+65
+14/11 2T
+-5,7%
+IHG
+InterContinental Hotels Group PLC
+Consumo / marca
+2 · sem. 29
+64
+13/5 2T
+-4,2%
+RS
+Reliance, Inc.
+Semis / fotonica
+2 · sem. 28
+75
+12/5 3T
+-5,0%
+PARR
+Par Pacific Holdings, Inc.
+Energia / red
+2 · sem. 38
+95
+25/14 2T
+-8,1%
+PAGP
+Plains GP Holdings, L.P.
+Energia / red
+2 · sem. 42
+83
+10/10 1T
+-4,4%
+NRIX
+Nurix Therapeutics, Inc.
+Medtech / biotech
+2 · sem. 19
+92
+15/8 2T
+-13,5%
+CNMD
+CONMED Corporation
+Medtech / biotech
+2 · sem. 8
+71
+16/10 3T
+-12,9%
+MTUS
+Metallus Inc.
+Autos / movilidad
+2 · sem. 2
+59
+18/18 1T
+-8,9%
+PM
+Philip Morris International Inc.
+Consumo / marca
+2 · sem. 23
+69
+13/5 2T
+-2,5%
+LXFR
+Luxfer Holdings PLC
+Automatizacion
+2 · sem. 21
+76
+17/1 3T
+-10,7%
+FFIV
+F5, Inc.
+Software / IA
+2 · sem. 21
+88
+16/7 3T
+-8,5%
+USFD
+US Foods Holding Corp.
+Consumo / marca
+2 · sem. 2
+60
+19/6 2T
+-8,5%
+PENG
+Penguin Solutions, Inc.
+Software / IA
+2 · sem. 23
+97
+—
+-36,5%
+ROKU
+Roku, Inc.
+Internet / plataformas
+2 · sem. 26
+86
+10/3 2T
+-3,3%
+CYRX
+Cryoport, Inc.
+Consumer tech / hardware
+2 · sem. 23
+94
+15/6 2T
+-8,3%
+ASX
+ASE Technology Holding Co., Ltd.
+Semis / fotonica
+2 · sem. 45
+98
+24/7 3T
+-17,5%
+GH
+Guardant Health, Inc.
+Medtech / biotech
+2 · sem. 22
+97
+15/12 2T
+-17,0%
+GDRX
+GoodRx Holdings, Inc.
+Medtech / biotech
+2 · sem. 11
+77
+12/9 2T
+-17,4%
+ALNT
+Allient Inc.
+Automatizacion
+2 · sem. 22
+96
+28/12 2T
+-23,7%
+RACE
+Ferrari N.V.
+Autos / movilidad
+2 · sem. 9
+68
+9/9 1T
+-9,1%
+MDLZ
+Mondelez International, Inc.
+Consumo / marca
+2 · sem. 2
+53
+9/5 2T
+-3,3%
+VBNK
+VersaBank
+Finanzas
+2 · sem. 30
+93
+17/17 1T
+-10,9%
+WWW
+Wolverine World Wide, Inc.
+Consumo / marca
+2 · sem. 7
+49
+16/11 2T
+-27,0%
+JXN
+Jackson Financial Inc.
+Finanzas
+2 · sem. 16
+84
+12/5 3T
+-6,9%
+SMBK
+SmartFinancial, Inc.
+Finanzas
+2 · sem. 45
+79
+9/6 2T
+-6,1%
+RPRX
+Royalty Pharma plc
+Medtech / biotech
+2 · sem. 45
+85
+14/14 1T
+-5,3%
+IEX
+IDEX Corporation
+Automatizacion
+2 · sem. 36
+77
+10/5 2T
+-3,1%
+BTX
+BlackRock Innovation and Growth Term Trust
+Finanzas
+2 · sem. 24
+83
+12/12 1T
+-10,2%
+NMAX
+Newsmax, Inc.
+Internet / plataformas
+2 · sem. 8
+85
+17/17 1T
+-27,8%
+SWK
+Stanley Black & Decker, Inc.
+Autos / movilidad
+2 · sem. 20
+73
+11/7 2T
+-10,9%
+CART
+Maplebear Inc.
+Internet / plataformas
+2 · sem. 3
+41
+16/16 1T
+-5,4%
+NWSA
+News Corporation
+Internet / plataformas
+2 · sem. 9
+64
+12/8 3T
+-4,8%
+MD
+Pediatrix Medical Group, Inc.
+Medtech / biotech
+2 · sem. 20
+80
+15/5 2T
+-2,3%
+ADI
+Analog Devices, Inc.
+Semis / fotonica
+2 · sem. 5
+79
+21/6 3T
+-11,0%
+KWR
+Quaker Chemical Corporation
+Autos / movilidad
+2 · sem. 2
+73
+16/7 3T
+-13,3%
+SOPH
+SOPHiA GENETICS SA
+Medtech / biotech
+2 · sem. 22
+96
+22/22 1T
+-25,1%
+AVT
+Avnet, Inc.
+Semis / fotonica
+2 · sem. 35
+94
+14/6 2T
+-17,1%
+PAY
+Paymentus Holdings, Inc.
+Software / IA
+2 · sem. 8
+73
+23/5 2T
+-30,4%
+WLY
+John Wiley & Sons, Inc.
+Internet / plataformas
+2 · sem. 21
+81
+15/15 1T
+-7,6%
+DSP
+Viant Technology Inc.
+Software / IA
+2 · sem. 12
+65
+31/31 1T
+-14,6%
+DRH
+DiamondRock Hospitality Company
+Inmobiliario / REIT
+2 · sem. 45
+82
+13/13 1T
+-2,1%
+AMBP
+Ardagh Metal Packaging S.A.
+Consumo / marca
+2 · sem. 1
+65
+13/5 2T
+-12,7%
+BNS
+The Bank of Nova Scotia
+Finanzas
+2 · sem. 29
+82
+9/9 1T
+-3,5%
+GLBE
+Global-E Online Ltd.
+Internet / plataformas
+2 · sem. 4
+70
+19/10 2T
+-11,8%
+TRV
+The Travelers Companies, Inc.
+Inmobiliario / REIT
+2 · sem. 20
+77
+8/8 1T
+-2,0%
+FMNB
+Farmers National Banc Corp.
+Finanzas
+2 · sem. 17
+66
+7/7 1T
+-6,0%
+EBF
+Ennis, Inc.
+Semis / fotonica
+2 · sem. 36
+70
+9/3 2T
+-2,1%
+RPAY
+Repay Holdings Corporation
+Software / IA
+2 · sem. 12
+64
+26/13 3T
+-23,2%
+GKOS
+Glaukos Corporation
+Medtech / biotech
+2 · sem. 20
+89
+19/19 1T
+-14,0%
+OFG
+OFG Bancorp
+Finanzas
+2 · sem. 20
+74
+8/3 2T
+-2,7%
+MAR
+Marriott International, Inc.
+Consumo / marca
+2 · sem. 2
+61
+12/3 3T
+-5,4%
+PRSU
+Pursuit Attractions and Hospitality, Inc.
+Consumo / marca
+2 · sem. 30
+74
+—
+-2,7%
+TREX
+Trex Company, Inc.
+Consumer tech / hardware
+2 · sem. 15
+49
+15/10 2T
+-13,1%
+CCEP
+Coca-Cola Europacific Partners PLC
+Consumo / marca
+2 · sem. 20
+62
+10/3 2T
+-1,1%
+TS
+Tenaris S.A.
+Energia / red
+2 · sem. 3
+74
+17/7 3T
+-8,1%
+DUOL
+Duolingo, Inc.
+Software / IA
+2 · sem. 3
+40
+22/8 2T
+-58,7%
+WT
+WisdomTree, Inc.
+Finanzas
+2 · sem. 30
+94
+17/6 2T
+-17,4%
+BSTZ
+BlackRock Science and Technology Term Trust
+Finanzas
+2 · sem. 29
+86
+—
+-13,2%
+ROP
+Roper Technologies, Inc.
+Software / IA
+2 · sem. 1
+35
+19/19 1T
+-25,6%
+BHP
+BHP Group Limited
+Energia / red
+2 · sem. 45
+85
+14/5 2T
+-13,8%
+OSBC
+Old Second Bancorp, Inc.
+Finanzas
+2 · sem. 45
+77
+8/3 2T
+-4,5%
+CLDT
+Chatham Lodging Trust
+Inmobiliario / REIT
+2 · sem. 33
+93
+12/5 3T
+-4,7%
+ASH
+Ashland Inc.
+Consumer tech / hardware
+2 · sem. 23
+78
+11/11 1T
+-8,5%
+PATH
+UiPath, Inc.
+Software / IA
+2 · sem. 3
+57
+30/30 1T
+-35,2%
+AME
+AMETEK, Inc.
+Automatizacion
+2 · sem. 45
+73
+9/9 1T
+-4,8%
+EBAY
+eBay Inc.
+Internet / plataformas
+2 · sem. 9
+69
+—
+-3,5%
+LTC
+LTC Properties, Inc.
+Inmobiliario / REIT
+2 · sem. 19
+76
+12/12 1T
+-1,4%
+APH
+Amphenol Corporation
+Automatizacion
+2 · sem. 21
+78
+18/18 1T
+-11,8%
+CBC
+Central Bancompany, Inc.
+Finanzas
+2 · sem. 9
+—
+9/5 2T
+-1,1%
+JMSB
+John Marshall Bancorp, Inc.
+Finanzas
+2 · sem. 23
+65
+8/6 3T
+-5,2%
+AFG
+American Financial Group, Inc.
+Inmobiliario / REIT
+2 · sem. 10
+54
+6/6 1T
+-0,1%
+RPD
+Rapid7, Inc.
+Software / IA
+2 · sem. 4
+83
+37/25 2T
+-36,4%
+FTDR
+Frontdoor, Inc.
+Consumo / marca
+2 · sem. 17
+70
+15/15 1T
+-15,4%
+MSBI
+Midland States Bancorp, Inc.
+Finanzas
+2 · sem. 44
+91
+7/5 2T
+-7,3%
+FTNT
+Fortinet, Inc.
+Software / IA
+2 · sem. 24
+95
+—
+-14,2%
+NVDA
+NVIDIA Corporation
+Semis / fotonica
+2 · sem. 23
+77
+11/7 3T
+-12,0%
+SENEA
+Seneca Foods Corporation
+Consumo / marca
+2 · sem. 45
+87
+19/19 1T
+-18,9%
+EGBN
+Eagle Bancorp, Inc.
+Finanzas
+2 · sem. 41
+74
+14/4 3T
+-3,2%
+AAPL
+Apple Inc.
+Consumer tech / hardware
+2 · sem. 27
+82
+13/5 2T
+-1,3%
+ING
+ING Groep N.V.
+Finanzas
+2 · sem. 28
+87
+8/8 1T
+-10,8%
+MFC
+Manulife Financial Corporation
+Finanzas
+2 · sem. 29
+79
+7/4 2T
+-1,4%
+TTRX
+Turn Therapeutics Inc.
+Medtech / biotech
+2 · sem. 15
+—
+—
+-35,7%
+SHOO
+Steven Madden, Ltd.
+Consumo / marca
+2 · sem. 5
+77
+18/7 2T
+-8,5%
+ZD
+Ziff Davis, Inc.
+Internet / plataformas
+2 · sem. 33
+86
+11/11 1T
+-5,5%
+SEIC
+SEI Investments Company
+Finanzas
+2 · sem. 19
+80
+10/10 1T
+-6,9%
+STNG
+Scorpio Tankers Inc.
+Energia / red
+2 · sem. 41
+81
+18/7 2T
+-9,6%
+CNC
+Centene Corporation
+Medtech / biotech
+2 · sem. 26
+90
+18/6 3T
+-2,9%
+MSM
+MSC Industrial Direct Co., Inc.
+Automatizacion
+2 · sem. 27
+81
+11/4 2T
+-2,4%
+AMD
+Advanced Micro Devices, Inc.
+Semis / fotonica
+2 · sem. 29
+98
+28/17 2T
+-19,7%
+MTN
+Vail Resorts, Inc.
+Consumo / marca
+2 · sem. 10
+41
+17/7 2T
+-4,4%
+CHCO
+City Holding Company
+Finanzas
+2 · sem. 16
+68
+8/3 2T
+-4,2%
+FANG
+Diamondback Energy, Inc.
+Energia / red
+2 · sem. 2
+67
+14/14 1T
+-6,0%
+WTS
+Watts Water Technologies, Inc.
+Automatizacion
+2 · sem. 24
+71
+14/7 2T
+-9,4%
+TRGP
+Targa Resources Corp.
+Energia / red
+2 · sem. 42
+84
+11/4 3T
+-4,2%
+NWE
+NorthWestern Energy Group, Inc.
+Energia / red
+2 · sem. 1
+59
+—
+-2,6%
+PACS
+PACS Group, Inc.
+Medtech / biotech
+2 · sem. 45
+95
+18/14 2T
+-5,2%
+AMG
+Affiliated Managers Group, Inc.
+Finanzas
+2 · sem. 28
+83
+14/9 2T
+-2,8%
+DXPE
+DXP Enterprises, Inc.
+Automatizacion
+2 · sem. 41
+90
+18/12 2T
+-15,5%
+HTGC
+Hercules Capital, Inc.
+Finanzas
+2 · sem. 4
+64
+9/9 1T
+-8,7%
+EAT
+Brinker International, Inc.
+Consumo / marca
+2 · sem. 19
+85
+28/28 1T
+-19,9%
+JCI
+Johnson Controls International plc
+Inmobiliario / REIT
+2 · sem. 5
+74
+14/6 2T
+-9,3%
+VOD
+Vodafone Group Public Limited Company
+Internet / plataformas
+2 · sem. 1
+82
+17/6 2T
+-9,0%
+STLD
+Steel Dynamics, Inc.
+Autos / movilidad
+2 · sem. 45
+84
+25/4 2T
+-16,3%
+NBBK
+NB Bancorp, Inc.
+Finanzas
+2 · sem. 17
+65
+8/3 2T
+-6,6%
+ANET
+Arista Networks, Inc.
+Consumer tech / hardware
+2 · sem. 19
+90
+17/13 2T
+-18,6%
+GFF
+Griffon Corporation
+Internet / plataformas
+2 · sem. 1
+77
+10/9 2T
+-14,3%
+UNM
+Unum Group
+Finanzas
+2 · sem. 22
+71
+11/11 1T
+-4,7%
+ARW
+Arrow Electronics, Inc.
+Semis / fotonica
+2 · sem. 34
+92
+20/6 2T
+-14,0%
+PLUS
+ePlus inc.
+Software / IA
+2 · sem. 4
+68
+13/5 3T
+-3,9%
+LOGI
+Logitech International S.A.
+Consumer tech / hardware
+2 · sem. 1
+47
+30/8 3T
+-18,1%
+AXTA
+Axalta Coating Systems Ltd.
+Defensa / aeroespacial
+2 · sem. 2
+57
+14/14 1T
+-13,4%
+BBVA
+Banco Bilbao Vizcaya Argentaria, S.A.
+Finanzas
+2 · sem. 24
+86
+11/11 1T
+-11,8%
+ADUS
+Addus HomeCare Corporation
+Medtech / biotech
+2 · sem. 5
+62
+11/6 2T
+-6,8%
+VRTX
+Vertex Pharmaceuticals Incorporated
+Medtech / biotech
+2 · sem. 18
+72
+12/12 1T
+-10,8%
+MMM
+3M Company
+Semis / fotonica
+2 · sem. 5
+60
+13/7 2T
+-10,5%
+PKG
+Packaging Corporation of America
+Consumo / marca
+2 · sem. 19
+63
+13/7 2T
+-8,6%
+MYE
+Myers Industries, Inc.
+Consumo / marca
+2 · sem. 45
+91
+22/7 2T
+-16,1%
+GSAT
+Globalstar, Inc.
+Internet / plataformas
+2 · sem. 45
+91
+4/3 2T
+-2,9%
+M
+Macy's, Inc.
+Consumo / marca
+2 · sem. 22
+62
+19/19 1T
+-9,0%
+BGC
+BGC Group, Inc.
+Finanzas
+2 · sem. 10
+67
+20/7 2T
+-9,9%
+HUM
+Humana Inc.
+Medtech / biotech
+2 · sem. 19
+91
+—
+-9,5%
+GABC
+German American Bancorp, Inc.
+Finanzas
+2 · sem. 28
+71
+8/5 3T
+-3,8%
+BCAL
+California BanCorp
+Finanzas
+2 · sem. 28
+70
+7/4 2T
+-2,4%
+SNX
+TD SYNNEX Corporation
+Inmobiliario / REIT
+2 · sem. 31
+89
+21/7 3T
+-17,3%
+ICUI
+ICU Medical, Inc.
+Medtech / biotech
+2 · sem. 11
+75
+22/9 2T
+-15,5%
+HELE
+Helen of Troy Limited
+Consumo / marca
+2 · sem. 19
+84
+—
+-9,3%
+WASH
+Washington Trust Bancorp, Inc.
+Finanzas
+2 · sem. 43
+78
+8/5 2T
+-7,2%
+LFST
+LifeStance Health Group, Inc.
+Medtech / biotech
+2 · sem. 29
+94
+15/15 1T
+-13,4%
+CNO
+CNO Financial Group, Inc.
+Finanzas
+2 · sem. 29
+77
+8/4 2T
+-4,7%
+WEAV
+Weave Communications, Inc.
+Medtech / biotech
+2 · sem. 4
+81
+34/34 1T
+-3,9%
+SRCE
+1st Source Corporation
+Finanzas
+2 · sem. 44
+79
+5/5 1T
+-5,8%
+BNED
+Barnes & Noble Education, Inc.
+Consumo / marca
+2 · sem. 4
+76
+24/10 3T
+-11,1%
+AGYS
+Agilysys, Inc.
+Software / IA
+2 · sem. 5
+57
+23/5 2T
+-24,3%
+PRGS
+Progress Software Corporation
+Software / IA
+2 · sem. 1
+69
+16/10 3T
+-13,6%
+JHX
+James Hardie Industries plc
+Inmobiliario / REIT
+2 · sem. 19
+74
+19/19 1T
+-17,8%
+MFG
+Mizuho Financial Group, Inc.
+Finanzas
+2 · sem. 45
+88
+10/10 1T
+-11,5%
+REPL
+Replimune Group, Inc.
+Medtech / biotech
+2 · sem. 12
+—
+—
+-33,5%
+BFH
+Bread Financial Holdings, Inc.
+Finanzas
+2 · sem. 45
+82
+17/6 2T
+-10,3%
+YPF
+YPF Sociedad Anónima
+Energia / red
+2 · sem. 38
+88
+23/8 2T
+-10,0%
+EZPW
+EZCORP, Inc.
+Finanzas
+2 · sem. 2
+83
+17/17 1T
+-11,1%
+EG
+Everest Group, Ltd.
+Finanzas
+2 · sem. 16
+65
+10/3 2T
+-2,5%
+JNJ
+Johnson & Johnson
+Medtech / biotech
+2 · sem. 45
+80
+9/4 2T
+-9,1%
+ASPN
+Aspen Aerogels, Inc.
+Autos / movilidad
+2 · sem. 15
+75
+—
+-44,5%
+CLH
+Clean Harbors, Inc.
+Autos / movilidad
+2 · sem. 39
+72
+10/5 3T
+-4,7%
+AIZ
+Assurant, Inc.
+Inmobiliario / REIT
+2 · sem. 27
+68
+9/9 1T
+-6,5%
+NVCT
+Nuvectis Pharma, Inc.
+Medtech / biotech
+2 · sem. 34
+97
+23/13 2T
+-36,5%
+SYNA
+Synaptics Incorporated
+Semis / fotonica
+2 · sem. 3
+71
+29/3 2T
+-21,4%
+KB
+KB Financial Group Inc.
+Finanzas
+2 · sem. 45
+87
+10/4 2T
+-10,9%
+HG
+Hamilton Insurance Group, Ltd.
+Finanzas
+2 · sem. 45
+73
+11/11 1T
+-2,9%
+BZH
+Beazer Homes USA, Inc.
+Inmobiliario / REIT
+2 · sem. 17
+88
+9/4 3T
+-3,2%
+JANX
+Janux Therapeutics, Inc.
+Medtech / biotech
+2 · sem. 7
+51
+23/8 2T
+-53,3%
+ENIC
+Enel Chile S.A.
+Energia / red
+2 · sem. 3
+60
+10/10 1T
+-5,4%
+SHC
+Sotera Health Company
+Medtech / biotech
+2 · sem. 3
+70
+9/7 3T
+-9,9%
+VRNS
+Varonis Systems, Inc.
+Software / IA
+2 · sem. 13
+85
+21/9 3T
+-23,6%
+GFR
+Greenfire Resources Ltd.
+Energia / red
+2 · sem. 2
+65
+23/23 1T
+-8,2%
+IOT
+Samsara Inc.
+Software / IA
+2 · sem. 8
+63
+20/10 3T
+-16,6%
+NDAQ
+Nasdaq, Inc.
+Finanzas
+2 · sem. 2
+60
+17/4 3T
+-6,7%
+BFST
+Business First Bancshares, Inc.
+Finanzas
+2 · sem. 45
+68
+8/3 2T
+-3,3%
+TOST
+Toast, Inc.
+Software / IA
+2 · sem. 4
+50
+15/7 2T
+-20,4%
+FLYW
+Flywire Corporation
+Software / IA
+2 · sem. 21
+77
+18/8 2T
+-6,4%
+PBAM
+Private Bancorp of America, Inc.
+Finanzas
+2 · sem. 37
+84
+9/9 1T
+-10,6%
+ICLR
+ICON Public Limited Company
+Medtech / biotech
+2 · sem. 4
+71
+19/13 2T
+-16,5%
+NWS
+News Corporation
+Internet / plataformas
+2 · sem. 8
+62
+12/6 3T
+-7,8%
+APLE
+Apple Hospitality REIT, Inc.
+Inmobiliario / REIT
+2 · sem. 24
+79
+10/10 1T
+-2,4%
+CB
+Chubb Limited
+Inmobiliario / REIT
+2 · sem. 2
+57
+9/6 2T
+-1,4%
+EIG
+Employers Holdings, Inc.
+Finanzas
+2 · sem. 20
+62
+10/3 2T
+-1,9%
+MBWM
+Mercantile Bank Corporation
+Finanzas
+2 · sem. 45
+74
+9/4 2T
+-6,9%
+OII
+Oceaneering International, Inc.
+Energia / red
+2 · sem. 45
+92
+21/6 2T
+-19,3%
+ACHV
+Achieve Life Sciences, Inc.
+Medtech / biotech
+2 · sem. 25
+95
+22/11 3T
+-26,2%
+MO
+Altria Group, Inc.
+Consumo / marca
+2 · sem. 9
+60
+13/13 1T
+-1,0%
+MUFG
+Mitsubishi UFJ Financial Group, Inc.
+Finanzas
+2 · sem. 29
+86
+8/5 2T
+-9,8%
+BUD
+Anheuser-Busch InBev SA/NV
+Consumo / marca
+2 · sem. 2
+65
+11/2 2T
+-4,6%
+OGN
+Organon & Co.
+Medtech / biotech
+2 · sem. 22
+92
+1/0 2T
+-0,5%
+QSR
+Restaurant Brands International Inc.
+Consumo / marca
+2 · sem. 1
+54
+14/14 1T
+-7,8%
+GSL
+Global Ship Lease, Inc.
+Automatizacion
+2 · sem. 45
+82
+10/5 2T
+-11,3%
+EW
+Edwards Lifesciences Corporation
+Medtech / biotech
+2 · sem. 5
+50
+16/3 3T
+-10,1%
+GPN
+Global Payments Inc.
+Internet / plataformas
+2 · sem. 9
+74
+14/14 1T
+-12,5%
+SPNT
+SiriusPoint Ltd.
+Finanzas
+2 · sem. 20
+72
+16/3 3T
+-5,2%
+URI
+United Rentals, Inc.
+Semis / fotonica
+2 · sem. 18
+71
+18/8 3T
+-12,5%
+PNTG
+The Pennant Group, Inc.
+Medtech / biotech
+2 · sem. 36
+85
+15/11 2T
+-2,0%
+WKC
+World Kinect Corporation
+Energia / red
+2 · sem. 20
+87
+15/15 1T
+-11,9%
+SLAB
+Silicon Laboratories Inc.
+Semis / fotonica
+2 · sem. 37
+82
+3/1 2T
+-1,1%
+APD
+Air Products and Chemicals, Inc.
+Energia / red
+2 · sem. 1
+53
+11/11 1T
+-4,2%
+ACA
+Arcosa, Inc.
+Inmobiliario / REIT
+2 · sem. 29
+81
+15/6 2T
+-0,3%
+CVLT
+Commvault Systems, Inc.
+Software / IA
+2 · sem. 12
+77
+27/7 3T
+-16,1%
+DSGR
+Distribution Solutions Group, Inc.
+Automatizacion
+2 · sem. 12
+79
+7/7 1T
+-0,7%
+RLGT
+Radiant Logistics, Inc.
+Autos / movilidad
+2 · sem. 5
+70
+17/17 1T
+-11,9%
+MU
+Micron Technology, Inc.
+Semis / fotonica
+2 · sem. 45
+99
+29/29 1T
+-30,0%
+ETD
+Ethan Allen Interiors Inc.
+Consumo / marca
+2 · sem. 4
+56
+10/6 2T
+-12,4%
+MSGE
+Madison Square Garden Entertainment Corp.
+Internet / plataformas
+2 · sem. 45
+86
+17/17 1T
+-14,0%
+MTRN
+Materion Corporation
+Semis / fotonica
+2 · sem. 45
+95
+27/13 3T
+-24,5%
+FMBH
+First Mid Bancshares, Inc.
+Finanzas
+2 · sem. 45
+72
+8/5 3T
+-6,3%
+TECH
+Bio-Techne Corporation
+Medtech / biotech
+2 · sem. 12
+84
+—
+-0,2%
+CTBI
+Community Trust Bancorp, Inc.
+Finanzas
+2 · sem. 45
+78
+7/5 2T
+-5,2%
+DGICA
+Donegal Group Inc.
+Inmobiliario / REIT
+2 · sem. 1
+44
+12/4 2T
+-8,5%
+ETSY
+Etsy, Inc.
+Internet / plataformas
+2 · sem. 3
+63
+20/20 1T
+-5,7%
+LOCO
+El Pollo Loco Holdings, Inc.
+Consumo / marca
+2 · sem. 2
+58
+14/8 2T
+-6,1%
+QCRH
+QCR Holdings, Inc.
+Finanzas
+2 · sem. 45
+71
+10/3 2T
+-8,4%
+RELY
+Remitly Global, Inc.
+Software / IA
+2 · sem. 24
+75
+22/22 1T
+-12,1%
+DCO
+Ducommun Incorporated
+Defensa / aeroespacial
+2 · sem. 45
+90
+26/8 2T
+-18,8%
+SHO
+Sunstone Hotel Investors, Inc.
+Inmobiliario / REIT
+2 · sem. 22
+67
+14/6 2T
+-4,1%
+ABSI
+Absci Corporation
+Medtech / biotech
+2 · sem. 26
+98
+44/12 2T
+-31,6%
+BDJ
+BlackRock Enhanced Equity Dividend Trust
+Finanzas
+2 · sem. 20
+64
+5/5 1T
+-3,3%
+PEB
+Pebblebrook Hotel Trust
+Inmobiliario / REIT
+2 · sem. 45
+85
+13/6 2T
+-2,4%
+OKE
+ONEOK, Inc.
+Energia / red
+2 · sem. 2
+66
+15/15 1T
+-6,5%
+BAP
+Credicorp Ltd.
+Finanzas
+2 · sem. 45
+80
+6/4 2T
+-5,6%
+SKWD
+Skyward Specialty Insurance Group, Inc.
+Inmobiliario / REIT
+2 · sem. 15
+67
+18/6 2T
+-6,8%
+PGY
+Pagaya Technologies Ltd.
+Software / IA
+2 · sem. 5
+54
+26/26 1T
+-44,5%
+FENC
+Fennec Pharmaceuticals Inc.
+Medtech / biotech
+2 · sem. 16
+75
+21/21 1T
+-24,7%
+CCNE
+CNB Financial Corporation
+Finanzas
+2 · sem. 45
+73
+7/4 2T
+-5,1%
+FISI
+Financial Institutions, Inc.
+Finanzas
+2 · sem. 45
+80
+7/7 1T
+-7,8%
+JPM
+JPMorgan Chase & Co.
+Finanzas
+2 · sem. 12
+63
+10/10 1T
+-6,8%
+AJG
+Arthur J. Gallagher & Co.
+Finanzas
+2 · sem. 2
+40
+12/12 1T
+-10,6%
+NWG
+NatWest Group plc
+Finanzas
+2 · sem. 21
+77
+8/8 1T
+-8,8%
+MICC
+The Magnum Ice Cream Company N.V.
+Consumo / marca
+2 · sem. 6
+—
+14/14 1T
+-9,2%
+VIRT
+Virtu Financial, Inc.
+Finanzas
+2 · sem. 3
+77
+18/18 1T
+-17,0%
+ROST
+Ross Stores, Inc.
+Consumo / marca
+2 · sem. 1
+77
+15/11 2T
+-7,6%
+WABC
+Westamerica Bancorporation
+Finanzas
+2 · sem. 28
+72
+6/4 2T
+-2,9%
+MGA
+Magna International Inc.
+Consumo / marca
+2 · sem. 45
+75
+14/14 1T
+-9,9%
+TD
+The Toronto-Dominion Bank
+Finanzas
+2 · sem. 45
+81
+8/4 2T
+-3,4%
+NSP
+Insperity, Inc.
+Software / IA
+2 · sem. 14
+87
+16/9 3T
+-7,0%
+LGND
+Ligand Pharmaceuticals Incorporated
+Medtech / biotech
+2 · sem. 45
+88
+11/11 1T
+-9,5%
+HST
+Host Hotels & Resorts, Inc.
+Inmobiliario / REIT
+2 · sem. 45
+71
+13/13 1T
+-5,9%
+FBP
+First BanCorp.
+Finanzas
+2 · sem. 22
+74
+9/4 2T
+-7,7%
+BMY
+Bristol-Myers Squibb Company
+Medtech / biotech
+2 · sem. 1
+76
+12/12 1T
+-12,1%
+LXP
+LXP Industrial Trust
+Inmobiliario / REIT
+2 · sem. 28
+81
+4/4 1T
+-0,9%
+SSB
+SouthState Bank Corporation
+Finanzas
+2 · sem. 16
+58
+9/4 2T
+-9,0%
+AMAL
+Amalgamated Financial Corp.
+Finanzas
+2 · sem. 42
+84
+11/5 3T
+-8,6%
+ACT
+Enact Holdings, Inc.
+Finanzas
+2 · sem. 45
+69
+15/15 1T
+-8,0%
+VTEX
+Software / IA
+2 · sem. 2
+37
+24/24 1T
+-9,1%
+HSIC
+Henry Schein, Inc.
+Medtech / biotech
+2 · sem. 21
+67
+8/8 1T
+-6,3%
+OBK
+Origin Bancorp, Inc.
+Finanzas
+2 · sem. 45
+82
+6/6 1T
+-6,7%
+DASH
+DoorDash, Inc.
+Internet / plataformas
+2 · sem. 3
+45
+25/3 2T
+-33,7%
+PYPL
+PayPal Holdings, Inc.
+Finanzas
+2 · sem. 5
+66
+17/17 1T
+-27,6%
+TGTX
+TG Therapeutics, Inc.
+Medtech / biotech
+2 · sem. 24
+92
+21/6 2T
+-9,0%
+BUSE
+First Busey Corporation
+Finanzas
+2 · sem. 45
+71
+10/4 2T
+-7,2%
+COSO
+CoastalSouth Bancshares, Inc.
+Finanzas
+2 · sem. 37
+58
+9/6 2T
+-6,5%
+PLMR
+Palomar Holdings, Inc.
+Inmobiliario / REIT
+2 · sem. 1
+54
+16/16 1T
+-5,1%
+VSXY
+Victorias Secret & Co.
+Consumo / marca
+2 · sem. 22
+95
+30/11 2T
+-14,8%
+PBA
+Pembina Pipeline Corporation
+Energia / red
+2 · sem. 2
+58
+9/3 3T
+-1,8%
+CHE
+Chemed Corporation
+Medtech / biotech
+2 · sem. 13
+75
+12/5 2T
+-7,9%
+HOPE
+Hope Bancorp, Inc.
+Finanzas
+2 · sem. 31
+74
+11/5 2T
+-8,0%
+PAYO
+Payoneer Global Inc.
+Software / IA
+2 · sem. 15
+74
+2/2 1T
+-1,0%
+SAN
+Banco Santander, S.A.
+Finanzas
+2 · sem. 29
+80
+12/6 2T
+-11,6%
+UBSI
+United Bankshares, Inc.
+Finanzas
+2 · sem. 45
+70
+6/3 2T
+-5,1%
+GCO
+Genesco Inc.
+Consumo / marca
+2 · sem. 4
+72
+23/23 1T
+-14,9%
+PLGO
+Pelagos Insurance Capital Limit
+Finanzas
+2 · sem. 45
+74
+20/5 2T
+-3,1%
+DLO
+DLocal Limited
+Software / IA
+2 · sem. 8
+64
+16/16 1T
+-11,1%
+AGM
+Federal Agricultural Mortgage Corporation
+Finanzas
+2 · sem. 19
+78
+13/4 2T
+-17,3%
+ATI
+ATI Inc.
+Autos / movilidad
+2 · sem. 45
+91
+27/6 2T
+-23,8%
+HOOD
+Robinhood Markets, Inc.
+Finanzas
+2 · sem. 4
+79
+30/9 2T
+-34,3%
+CLOV
+Clover Health Investments, Corp.
+Medtech / biotech
+2 · sem. 19
+90
+—
+-19,9%
+MSGS
+Madison Square Garden Sports Corp.
+Internet / plataformas
+2 · sem. 45
+89
+10/10 1T
+-9,8%
+RHP
+Ryman Hospitality Properties, Inc.
+Inmobiliario / REIT
+2 · sem. 24
+71
+17/4 3T
+-7,4%
+SMFG
+Sumitomo Mitsui Financial Group, Inc.
+Finanzas
+2 · sem. 45
+84
+8/5 2T
+-10,4%
+PRU
+Prudential Financial, Inc.
+Finanzas
+2 · sem. 10
+71
+12/4 2T
+-8,2%
+CSWC
+Capital Southwest Corporation
+Finanzas
+2 · sem. 26
+62
+7/7 1T
+-8,7%
+SLF
+Sun Life Financial Inc.
+Finanzas
+2 · sem. 30
+78
+6/6 1T
+-5,1%
+CTVA
+Corteva, Inc.
+Medtech / biotech
+2 · sem. 3
+55
+—
+-11,9%
+RAMP
+LiveRamp Holdings, Inc.
+Software / IA
+2 · sem. 22
+77
+—
+-2,1%
+RXO
+RXO, Inc.
+Automatizacion
+2 · sem. 3
+65
+35/13 2T
+-4,3%
+BHRB
+Burke & Herbert Financial Services Corp.
+Finanzas
+2 · sem. 20
+61
+9/4 2T
+-6,5%
+GCMG
+GCM Grosvenor Inc.
+Finanzas
+2 · sem. 15
+69
+16/5 2T
+-14,8%
+KELYA
+Kelly Services, Inc.
+Internet / plataformas
+2 · sem. 16
+93
+15/4 2T
+-14,3%
+STBA
+S&T Bancorp, Inc.
+Finanzas
+2 · sem. 45
+72
+7/7 1T
+-8,0%
+OMC
+Omnicom Group Inc.
+Internet / plataformas
+2 · sem. 1
+51
+14/14 1T
+-9,1%
+BY
+Byline Bancorp, Inc.
+Finanzas
+2 · sem. 45
+72
+8/5 2T
+-6,9%
+FMX
+Fomento Económico Mexicano, S.A.B. de C.V.
+Consumo / marca
+2 · sem. 2
+69
+18/6 2T
+-9,3%
+STVN
+Stevanato Group S.p.A.
+Medtech / biotech
+2 · sem. 7
+68
+16/16 1T
+-32,2%
+MLKN
+MillerKnoll, Inc.
+Consumo / marca
+2 · sem. 15
+70
+19/11 2T
+-14,0%
+RVMD
+Revolution Medicines, Inc.
+Medtech / biotech
+2 · sem. 45
+98
+16/16 1T
+-20,7%
+TRST
+TrustCo Bank Corp NY
+Finanzas
+2 · sem. 45
+79
+10/10 1T
+-8,4%
+SHBI
+Shore Bancshares, Inc.
+Finanzas
+2 · sem. 45
+75
+10/3 2T
+-8,8%
+SFNC
+Simmons First National Corporation
+Finanzas
+2 · sem. 22
+69
+8/5 2T
+-8,4%
+TENB
+Tenable Holdings, Inc.
+Software / IA
+2 · sem. 15
+84
+25/17 2T
+-14,8%
+AIT
+Applied Industrial Technologies, Inc.
+Automatizacion
+2 · sem. 25
+72
+16/16 1T
+-11,7%
+ROIV
+Roivant Sciences Ltd.
+Medtech / biotech
+2 · sem. 45
+92
+17/17 1T
+-21,1%
+RLJ
+RLJ Lodging Trust
+Inmobiliario / REIT
+2 · sem. 28
+85
+18/5 2T
+-8,4%
+NMR
+Nomura Holdings, Inc.
+Finanzas
+2 · sem. 20
+79
+12/12 1T
+-15,5%
+ALRS
+Alerus Financial Corporation
+Finanzas
+2 · sem. 45
+82
+12/5 2T
+-8,3%
+CF
+CF Industries Holdings, Inc.
+Automatizacion
+2 · sem. 1
+75
+21/21 1T
+-14,7%
+UNFI
+United Natural Foods, Inc.
+Consumo / marca
+2 · sem. 1
+74
+16/6 2T
+-16,2%
+NIC
+Nicolet Bankshares, Inc.
+Finanzas
+2 · sem. 20
+73
+8/8 1T
+-8,8%
+ESNT
+Essent Group Ltd.
+Finanzas
+2 · sem. 1
+54
+18/18 1T
+-7,7%
+IBCP
+Independent Bank Corporation
+Finanzas
+2 · sem. 29
+59
+8/4 2T
+-8,6%
+AFRM
+Affirm Holdings, Inc.
+Finanzas
+2 · sem. 3
+61
+27/11 2T
+-18,2%
+XYZ
+Block, Inc.
+Software / IA
+2 · sem. 3
+64
+11/8 2T
+-10,4%
+CVBF
+CVB Financial Corp.
+Finanzas
+2 · sem. 21
+66
+8/4 2T
+-5,7%
+TOWN
+TowneBank
+Finanzas
+2 · sem. 1
+59
+6/3 2T
+-8,4%
+ARMK
+Aramark
+Energia / red
+2 · sem. 26
+82
+11/11 1T
+-11,6%
+EPC
+Edgewell Personal Care Company
+Consumo / marca
+2 · sem. 19
+83
+18/7 2T
+-6,3%
+NGVC
+Natural Grocers by Vitamin Cottage, Inc.
+Consumo / marca
+2 · sem. 6
+45
+23/7 2T
+-23,8%
+ALL
+The Allstate Corporation
+Inmobiliario / REIT
+2 · sem. 1
+57
+15/15 1T
+-10,2%
+PANW
+Palo Alto Networks, Inc.
+Software / IA
+2 · sem. 19
+95
+18/18 1T
+-20,9%
+NWBI
+Northwest Bancshares, Inc.
+Finanzas
+2 · sem. 28
+73
+8/4 2T
+-6,4%
+UNP
+Union Pacific Corporation
+Autos / movilidad
+2 · sem. 4
+69
+14/14 1T
+-8,1%
+NNBR
+NN, Inc.
+Autos / movilidad
+2 · sem. 20
+97
+34/10 2T
+-28,8%
+GOOD
+Gladstone Commercial Corporation
+Inmobiliario / REIT
+2 · sem. 21
+64
+6/4 2T
+-5,3%
+NSC
+Norfolk Southern Corporation
+Autos / movilidad
+2 · sem. 3
+60
+14/14 1T
+-8,5%
+DCOM
+Dime Commercial Bancshares, Inc.
+Finanzas
+2 · sem. 45
+74
+9/5 2T
+-6,9%
+FCF
+First Commonwealth Financial Corporation
+Finanzas
+2 · sem. 31
+71
+9/4 2T
+-8,4%
+LIVN
+LivaNova PLC
+Medtech / biotech
+2 · sem. 24
+69
+13/7 2T
+-9,5%
+NBTB
+NBT Bancorp Inc.
+Finanzas
+2 · sem. 22
+71
+6/4 2T
+-6,0%
+PAYX
+Paychex, Inc.
+Software / IA
+2 · sem. 2
+43
+18/18 1T
+-12,8%
+PFG
+Principal Financial Group, Inc.
+Finanzas
+2 · sem. 45
+80
+8/5 2T
+-10,2%
+THFF
+First Financial Corporation
+Finanzas
+2 · sem. 45
+70
+9/9 1T
+-11,2%
+TXN
+Texas Instruments Incorporated
+Semis / fotonica
+2 · sem. 6
+83
+17/11 2T
+-16,8%
+INCY
+Incyte Corporation
+Medtech / biotech
+2 · sem. 13
+82
+16/16 1T
+-14,7%
+INN
+Summit Hotel Properties, Inc.
+Inmobiliario / REIT
+2 · sem. 18
+59
+17/17 1T
+-7,6%
+BRKR
+Bruker Corporation
+Medtech / biotech
+2 · sem. 24
+92
+26/8 3T
+-18,2%
+UMC
+United Microelectronics Corporation
+Semis / fotonica
+2 · sem. 45
+98
+36/13 2T
+-30,4%
+TFX
+Teleflex Incorporated
+Medtech / biotech
+2 · sem. 1
+45
+18/5 2T
+-9,8%
+HAFC
+Hanmi Financial Corporation
+Finanzas
+2 · sem. 29
+70
+10/2 2T
+-6,3%
+CSX
+CSX Corporation
+Autos / movilidad
+2 · sem. 4
+75
+8/8 1T
+-8,9%
+IMOS
+ChipMOS TECHNOLOGIES INC.
+Semis / fotonica
+2 · sem. 45
+98
+—
+-26,7%
+HTB
+HomeTrust Bancshares, Inc.
+Finanzas
+2 · sem. 1
+52
+9/9 1T
+-10,1%
+NATL
+NCR Atleos Corporation
+Software / IA
+2 · sem. 45
+65
+6/1 3T
+-5,3%
+CATY
+Cathay General Bancorp
+Finanzas
+2 · sem. 30
+71
+8/4 2T
+-7,6%
+FRST
+Primis Financial Corp.
+Finanzas
+2 · sem. 45
+73
+12/4 2T
+-8,4%
+GWW
+W.W. Grainger, Inc.
+Automatizacion
+2 · sem. 33
+63
+12/3 3T
+-6,1%
+AFL
+Aflac Incorporated
+Finanzas
+2 · sem. 1
+50
+8/8 1T
+-7,4%
+NTB
+The Bank of N.T. Butterfield & Son Limited
+Finanzas
+2 · sem. 45
+69
+12/3 2T
+-8,6%
+MRVI
+Maravai LifeSciences Holdings, Inc.
+Medtech / biotech
+2 · sem. 27
+97
+31/6 2T
+-27,9%
+HBNC
+Horizon Bancorp, Inc.
+Finanzas
+2 · sem. 29
+63
+8/5 2T
+-6,7%
+ADM
+Archer-Daniels-Midland Company
+Consumo / marca
+2 · sem. 45
+78
+12/4 2T
+-6,9%
+MCY
+Mercury General Corporation
+Inmobiliario / REIT
+2 · sem. 3
+59
+11/6 2T
+-8,8%
+WSFS
+WSFS Financial Corporation
+Finanzas
+2 · sem. 45
+75
+9/6 2T
+-7,7%
+HOG
+Harley-Davidson, Inc.
+Consumo / marca
+2 · sem. 14
+65
+16/6 2T
+-6,6%
+LNC
+Lincoln National Corporation
+Finanzas
+2 · sem. 5
+65
+15/15 1T
+-15,5%
+HOMB
+Home BancShares, Inc.
+Finanzas
+2 · sem. 11
+54
+9/9 1T
+-7,4%
+MSEX
+Middlesex Water Company
+Energia / red
+2 · sem. 1
+50
+13/3 2T
+-9,8%
+CNI
+Canadian National Railway Company
+Autos / movilidad
+2 · sem. 31
+73
+8/8 1T
+-6,9%
+DAR
+Darling Ingredients Inc.
+Consumo / marca
+2 · sem. 1
+89
+16/7 2T
+-12,3%
+ESQ
+Esquire Financial Holdings, Inc.
+Finanzas
+2 · sem. 7
+69
+18/9 2T
+-11,6%
+AMCX
+AMC Global Media Inc.
+Internet / plataformas
+2 · sem. 21
+88
+19/5 3T
+-21,5%
+BANR
+Banner Corporation
+Finanzas
+2 · sem. 17
+60
+10/5 2T
+-9,7%
+CFFN
+Capitol Federal Financial, Inc.
+Finanzas
+2 · sem. 45
+76
+9/9 1T
+-10,9%
+CCSI
+Consensus Cloud Solutions, Inc.
+Software / IA
+2 · sem. 19
+77
+20/13 3T
+-14,6%
+CXW
+CoreCivic, Inc.
+Inmobiliario / REIT
+2 · sem. 20
+89
+16/11 2T
+-16,1%
+WELL
+Welltower Inc.
+Inmobiliario / REIT
+2 · sem. 20
+73
+11/11 1T
+-7,6%
+CFR
+Cullen/Frost Bankers, Inc.
+Finanzas
+2 · sem. 20
+71
+10/10 1T
+-8,6%
+CLBK
+Columbia Financial, Inc.
+Finanzas
+2 · sem. 45
+89
+10/4 2T
+-11,1%
+CM
+Canadian Imperial Bank of Commerce
+Finanzas
+2 · sem. 1
+73
+11/6 2T
+-9,3%
+OPLN
+OPENLANE, Inc.
+Consumo / marca
+2 · sem. 3
+62
+22/4 2T
+-13,7%
+PTGX
+Protagonist Therapeutics, Inc.
+Medtech / biotech
+2 · sem. 45
+92
+17/6 2T
+-19,9%
+MNST
+Monster Beverage Corporation
+Consumo / marca
+2 · sem. 3
+62
+14/14 1T
+-8,8%
+UNH
+UnitedHealth Group Incorporated
+Medtech / biotech
+2 · sem. 19
+62
+—
+-12,5%
+VOYA
+Voya Financial, Inc.
+Finanzas
+2 · sem. 20
+80
+13/6 2T
+-11,0%
+KRNY
+Kearny Financial Corp.
+Finanzas
+2 · sem. 45
+79
+13/4 2T
+-12,4%
+CP
+Canadian Pacific Kansas City Limited
+Autos / movilidad
+2 · sem. 1
+63
+11/11 1T
+-9,6%
+LNTH
+Lantheus Holdings, Inc.
+Medtech / biotech
+2 · sem. 30
+84
+12/4 2T
+-10,9%
+NMIH
+NMI Holdings, Inc.
+Finanzas
+2 · sem. 1
+56
+21/21 1T
+-12,9%
+AMP
+Ameriprise Financial, Inc.
+Finanzas
+2 · sem. 10
+56
+16/3 2T
+-12,5%
+RAL
+Ralliant Corporation
+Automatizacion
+2 · sem. 23
+86
+18/4 2T
+-11,7%
+KMX
+CarMax, Inc.
+Consumo / marca
+2 · sem. 1
+74
+13/13 1T
+-18,3%
+CENTA
+Central Garden & Pet Company
+Consumo / marca
+2 · sem. 1
+44
+13/13 1T
+-11,3%
+QNST
+QuinStreet, Inc.
+Internet / plataformas
+2 · sem. 3
+57
+27/27 1T
+-26,8%
+EWBC
+East West Bancorp, Inc.
+Finanzas
+2 · sem. 29
+64
+12/4 2T
+-7,7%
+LTH
+Life Time Group Holdings, Inc.
+Consumo / marca
+2 · sem. 21
+84
+23/7 2T
+-14,2%
+UCB
+United Community Banks, Inc.
+Finanzas
+2 · sem. 1
+58
+9/4 2T
+-7,6%
+SYBT
+Stock Yards Bancorp, Inc.
+Finanzas
+2 · sem. 18
+65
+10/10 1T
+-13,7%
+CWBC
+Community West Bancshares
+Finanzas
+2 · sem. 45
+66
+13/4 3T
+-8,2%
+CPF
+Central Pacific Financial Corp.
+Finanzas
+2 · sem. 31
+66
+8/8 1T
+-10,3%
+CBSH
+Commerce Bancshares, Inc.
+Finanzas
+2 · sem. 1
+56
+9/9 1T
+-8,2%
+HWC
+Hancock Whitney Corporation
+Finanzas
+2 · sem. 29
+66
+9/3 2T
+-8,3%
+AWR
+American States Water Company
+Energia / red
+2 · sem. 21
+64
+10/2 2T
+-9,0%
+ONB
+Old National Bancorp
+Finanzas
+2 · sem. 22
+63
+12/5 2T
+-8,1%
+NRC
+NRC Health
+Medtech / biotech
+2 · sem. 27
+62
+19/8 2T
+-14,2%
+EBC
+Eastern Bankshares, Inc.
+Finanzas
+2 · sem. 20
+64
+10/4 2T
+-9,8%
+CIVB
+Civista Bancshares, Inc.
+Finanzas
+2 · sem. 36
+67
+13/3 2T
+-9,9%
+RY
+Royal Bank of Canada
+Finanzas
+2 · sem. 1
+73
+8/3 2T
+-9,3%
+BMO
+Bank of Montreal
+Finanzas
+2 · sem. 1
+75
+11/3 2T
+-10,8%
+AHR
+American Healthcare REIT, Inc.
+Inmobiliario / REIT
+2 · sem. 2
+64
+14/14 1T
+-8,9%
+KYMR
+Kymera Therapeutics, Inc.
+Medtech / biotech
+2 · sem. 19
+91
+17/17 1T
+-19,4%
+KFY
+Korn Ferry
+Software / IA
+2 · sem. 1
+58
+12/12 1T
+-15,9%
+LAMR
+Lamar Advertising Company
+Inmobiliario / REIT
+2 · sem. 2
+62
+9/9 1T
+-8,7%
+UVSP
+Univest Financial Corporation
+Finanzas
+2 · sem. 45
+72
+7/7 1T
+-8,8%
+PDM
+Piedmont Realty Trust, Inc.
+Inmobiliario / REIT
+2 · sem. 15
+65
+11/8 2T
+-10,3%
+OUT
+OUTFRONT Media Inc.
+Inmobiliario / REIT
+2 · sem. 2
+65
+12/3 2T
+-11,3%
+OOMA
+Ooma, Inc.
+Software / IA
+2 · sem. 29
+92
+18/18 1T
+-24,7%
+ATHM
+Autohome Inc.
+Internet / plataformas
+2 · sem. 3
+54
+11/11 1T
+-25,8%
+ATLC
+Atlanticus Holdings Corporation
+Finanzas
+2 · sem. 22
+78
+20/12 2T
+-19,5%
+FTK
+Flotek Industries, Inc.
+Energia / red
+2 · sem. 26
+96
+41/41 1T
+-39,3%
+USB
+U.S. Bancorp
+Finanzas
+2 · sem. 1
+64
+8/8 1T
+-10,3%
+DDOG
+Datadog, Inc.
+Software / IA
+2 · sem. 21
+95
+31/4 2T
+-17,8%
+WNC
+Wabash National Corporation
+Automatizacion
+2 · sem. 16
+79
+21/9 2T
+-14,6%
+IPAR
+Interparfums, Inc.
+Consumo / marca
+2 · sem. 17
+79
+15/5 2T
+-9,9%
+GEO
+The GEO Group, Inc.
+Automatizacion
+2 · sem. 20
+91
+12/6 2T
+-13,6%
+CTO
+CTO Realty Growth, Inc.
+Inmobiliario / REIT
+2 · sem. 36
+69
+10/4 2T
+-7,9%
+FROG
+JFrog Ltd.
+Software / IA
+2 · sem. 22
+92
+27/13 2T
+-20,3%
+MOG-A
+Moog Inc.
+Defensa / aeroespacial
+2 · sem. 45
+87
+22/11 2T
+-17,9%
+HQY
+HealthEquity, Inc.
+Medtech / biotech
+2 · sem. 3
+46
+17/8 2T
+-14,5%
+NP
+Neptune Insurance Holdings Inc.
+Finanzas
+2 · sem. 2
+—
+24/9 2T
+-16,5%
+ACIW
+ACI Worldwide, Inc.
+Software / IA
+2 · sem. 12
+61
+16/5 2T
+-13,6%
+BPOP
+Popular, Inc.
+Finanzas
+2 · sem. 1
+72
+12/4 2T
+-10,9%
+TWFG
+TWFG, Inc.
+Finanzas
+2 · sem. 6
+58
+17/17 1T
+-18,9%
+PBI
+Pitney Bowes Inc.
+Software / IA
+2 · sem. 24
+85
+16/4 2T
+-10,1%
+SIGI
+Selective Insurance Group, Inc.
+Inmobiliario / REIT
+2 · sem. 1
+51
+11/11 1T
+-10,8%
+CARE
+Carter Bankshares, Inc.
+Finanzas
+2 · sem. 45
+83
+13/13 1T
+-16,0%
+GL
+Globe Life Inc.
+Finanzas
+2 · sem. 23
+63
+12/6 2T
+-11,7%
+BBNX
+Beta Bionics, Inc.
+Medtech / biotech
+2 · sem. 3
+83
+30/11 2T
+-50,0%
+IFS
+Intercorp Financial Services Inc.
+Finanzas
+2 · sem. 45
+77
+12/3 2T
+-11,0%
+NAVN
+Navan, Inc.
+Software / IA
+2 · sem. 3
+—
+36/36 1T
+-17,8%
+WTTR
+Select Water Solutions, Inc.
+Energia / red
+2 · sem. 45
+92
+19/10 3T
+-17,3%
+BB
+BlackBerry Limited
+Software / IA
+2 · sem. 23
+95
+—
+-40,7%
+TFSL
+TFS Financial Corporation
+Finanzas
+2 · sem. 45
+73
+12/3 2T
+-14,7%
+DRTS
+Alpha Tau Medical Ltd.
+Medtech / biotech
+2 · sem. 45
+98
+21/7 2T
+-22,2%
+CROX
+Crocs, Inc.
+Consumo / marca
+2 · sem. 25
+86
+23/11 2T
+-12,8%
+XMTR
+Xometry, Inc.
+Automatizacion
+2 · sem. 22
+95
+24/16 3T
+-19,5%
+XHR
+Xenia Hotels & Resorts, Inc.
+Inmobiliario / REIT
+2 · sem. 45
+67
+16/16 1T
+-13,5%
+HIW
+Highwoods Properties, Inc.
+Inmobiliario / REIT
+2 · sem. 15
+72
+14/6 2T
+-15,9%
+MOH
+Molina Healthcare, Inc.
+Medtech / biotech
+2 · sem. 18
+62
+—
+-15,3%
+KRC
+Kilroy Realty Corporation
+Inmobiliario / REIT
+2 · sem. 2
+40
+12/4 2T
+-14,8%
+KFRC
+Kforce Inc.
+Software / IA
+2 · sem. 24
+92
+16/9 2T
+-16,7%
+CUZ
+Cousins Properties Incorporated
+Inmobiliario / REIT
+2 · sem. 17
+64
+12/12 1T
+-15,1%
+MEI
+Methode Electronics, Inc.
+Automatizacion
+2 · sem. 22
+96
+32/21 2T
+-34,1%
+MUSA
+Murphy USA Inc.
+Consumo / marca
+2 · sem. 1
+65
+19/19 1T
+-13,8%
+NEXN
+Nexxen International Ltd.
+Internet / plataformas
+2 · sem. 16
+63
+25/6 2T
+-21,6%
+VCEL
+Vericel Corporation
+Medtech / biotech
+2 · sem. 14
+62
+15/15 1T
+-18,6%
+ACHC
+Acadia Healthcare Company, Inc.
+Medtech / biotech
+2 · sem. 27
+86
+26/8 2T
+-16,3%
+MOV
+Movado Group, Inc.
+Consumo / marca
+2 · sem. 1
+86
+19/10 2T
+-17,9%
+CVS
+CVS Health Corporation
+Medtech / biotech
+2 · sem. 1
+60
+15/15 1T
+-16,0%
+BTSG
+BrightSpring Health Services, Inc.
+Medtech / biotech
+2 · sem. 3
+86
+22/22 1T
+-17,5%
+BJRI
+BJ's Restaurants, Inc.
+Consumo / marca
+2 · sem. 24
+91
+14/14 1T
+-20,4%
+SI
+Shoulder Innovations, Inc.
+Medtech / biotech
+2 · sem. 19
+52
+33/11 2T
+-26,4%
+FA
+First Advantage Corporation
+Internet / plataformas
+2 · sem. 18
+86
+23/23 1T
+-23,7%
+VSTS
+Vestis Corporation
+Autos / movilidad
+2 · sem. 38
+96
+29/6 3T
+-17,9%
+PGNY
+Progyny, Inc.
+Medtech / biotech
+2 · sem. 18
+59
+21/4 2T
+-18,8%
+DAVE
+Dave Inc.
+Software / IA
+2 · sem. 24
+85
+31/13 3T
+-19,8%
+MBX
+MBX Biosciences, Inc.
+Medtech / biotech
+2 · sem. 19
+98
+21/11 2T
+-31,7%
+MAX
+MediaAlpha, Inc.
+Internet / plataformas
+2 · sem. 1
+21
+26/26 1T
+-21,8%
+SLS
+SELLAS Life Sciences Group, Inc.
+Medtech / biotech
+2 · sem. 45
+99
+33/19 2T
+-37,2%
+EVER
+EverQuote, Inc.
+Internet / plataformas
+2 · sem. 1
+27
+30/8 2T
+-24,2%
+ATEX
+Anterix Inc.
+Internet / plataformas
+2 · sem. 34
+98
+26/26 1T
+-28,8%
+EVH
+Evolent Health, Inc.
+Medtech / biotech
+2 · sem. 2
+21
+—
+-44,9%
+SEZL
+Sezzle Inc.
+Finanzas
+2 · sem. 2
+75
+—
+-34,8%
+AGL
+agilon health, inc.
+Medtech / biotech
+2 · sem. 22
+99
+26/8 2T
+-36,0%
+
+j/k mover
+Space panel
+Enter ficha
+Esc quitar foco
+1 / 937

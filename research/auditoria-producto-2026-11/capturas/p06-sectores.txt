@@ -1,0 +1,60 @@
+StatsEdge
+EQUITY RESEARCH
+Screener
+Listas
+Sectores
+Research
+Mercado
+Sectores
+Copia local
+
+0 grupos · 0 favoritos agrupados
+
+Recargar local
+FUENTE
+Snapshot del 18 oct 2026
+PAÍS
+🌐 Todos los países
+AGRUPAR POR
+Tema
+Sector
+Subsector
+FUERZA
+Todos
+Fuertes
+Constructivos
+Débiles
+Muy débiles
+Sectores · cobertura
+ESTADO SECTORIAL
+Mercado · 1D / 1W / 1M / 3M
+90
+MARKET SCORE
+Riesgo favorable / mercado alcista
+RÉGIMEN
+52
+SCORE MEDIO
+4/11
+SOBRE SMA50
+Tecnología
+MEJOR 1M
+Utilities
+PEOR 1M
+LIDERES
+Tecnología, Salud, Comunicaciones
+DÉBILES
+Utilities, Consumo discrecional, Materiales
+SECTOR	ETF	ESTADO	SCORE	ESTRUCTURA	ETAPA	1D	1W	1M	3M	RS 1M	SMA50	SMA200	DIST/ACC	52W
+TecnologíaCrecimiento	XLKLÍDER FUERTE	100100	Etapa 2 confirmada	+2,9%	+5,9%	+6,5%	+1,5%	+5,3%	Sí	Sí	2/6	-1,7%
+SaludDefensivo	XLVLÍDER FUERTE	8995	Etapa 2 confirmada	+0,8%	+1,1%	-1,6%	+13,1%	-2,8%	Sí	Sí	2/1	-3,9%
+ComunicacionesCrecimiento	XLCLÍDER FUERTE	8450	Etapa 1 confirmada	+3,9%	+0,1%	+4,0%	+7,7%	+2,8%	Sí	Sí	4/3	-3,8%
+EnergíaValor / materias	XLELÍDER FUERTE	8290	Etapa 2 confirmada	-1,1%	-5,7%	-2,3%	+14,1%	-3,6%	Sí	Sí	8/3	-6,1%
+FinancierasCíclico	XLFNEUTRAL	5890	Etapa 2 confirmada	-2,0%	-3,3%	-4,3%	+2,1%	-5,6%	No	Sí	6/2	-6,2%
+Real estateSensibles a tipos	XLRENEUTRAL	4735	Etapa 3 tentativa	+1,0%	-0,4%	-4,7%	-2,4%	-6,0%	No	Sí	6/0	-7,5%
+Consumo defensivoDefensivo	XLPDÉBIL	4250	Etapa 3 confirmada	-0,4%	-2,3%	-3,4%	+0,3%	-4,6%	No	No	4/2	-7,4%
+IndustrialesCíclico	XLIDÉBIL	3835	Etapa 3 tentativa	+0,4%	+0,3%	-5,2%	-6,3%	-6,4%	No	No	7/3	-9,4%
+MaterialesCíclico	XLBDÉBIL	3135	Etapa 3 confirmada	-0,1%	-1,1%	-4,7%	-3,3%	-6,0%	No	No	6/0	-7,8%
+Consumo discrecionalCíclico	XLYMUY DÉBIL	515	Etapa 1 confirmada	+1,3%	-0,3%	-3,6%	-2,1%	-4,9%	No	No	3/1	-9,7%
+UtilitiesDefensivo	XLUMUY DÉBIL	00	Etapa 3 confirmada	-0,3%	-2,1%	-6,4%	-8,4%	-7,7%	No	No	6/0	-13,6%
+
+Proxy inicial mediante ETFs sectoriales USA. La capa por snapshot cubre Europa, Hong Kong, Japón y el resto de mercados cuando hay resultados guardados.

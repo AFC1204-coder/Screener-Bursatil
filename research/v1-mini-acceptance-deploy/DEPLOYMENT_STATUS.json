@@ -1,0 +1,30 @@
+{
+  "classification": "MINI_ACCEPTANCE_DEPLOYMENT_BLOCKED",
+  "reason": "SSH to Mini unreachable from this MacBook session (historical host 192.168.0.116: Operation not permitted / 100% ping loss; MacBook on 192.168.100.0/24; Tailscale stopped; Christians-Mac-mini.local unresolved).",
+  "attempted_at_local": "2026-09-10T20:14+02:00",
+  "mini_host_documented": "cristian@192.168.0.116",
+  "remote_root_documented": "/Users/cristian/Documents/StatsEdgeV1",
+  "deployed": false,
+  "validation_on_mini": false,
+  "v1_py_touched": false,
+  "product_touched": false,
+  "enqueue_run_resume": false,
+  "package_prepared": "research/v1-mini-acceptance-deploy/",
+  "controls_ready_to_copy": {
+    "accept-date.mjs": "cfecb6618672c08d4b06e87a3f06d5c582a3e3dc5947d1111f10b2df97d38f03",
+    "accept-cache.mjs": "eeb5f9710717640e75eeabf4cff810dd7f7ac5a454fab5fb055d9407551e8fa4",
+    "contracts/date-001.json": "b428ec3068c0b93dac8543975fcd99ba8e923b083a6fa1b23c9cd7e6dd7a5431",
+    "contracts/cache-001.json": "62d957d9162d56d4bc4175055ceaee8aa4306197fbdfab51f90ceb1a5c5eb4a1"
+  },
+  "local_audit_still_green": {
+    "DATE_ACCEPTANCE_HARDENED_OK": true,
+    "CACHE_ACCEPTANCE_HARDENED_OK": true
+  },
+  "administrative_blockers_before_cache_001": [
+    "Restore MacBook↔Mini connectivity (same LAN 192.168.100.x and/or Tailscale)",
+    "Run research/v1-mini-acceptance-deploy/deploy-and-validate.sh successfully → MINI_ACCEPTANCE_GATES_READY",
+    "Register review date-001 rejected (still in review; do not free slot by inventing state)",
+    "Satisfy REANUDAR.md gates: paused, <2 reviews after rejection accounting, day Europe/Madrid attempt budget, no interrupted cache attempt",
+    "Only then authorize single enqueue+run of cache-001"
+  ]
+}

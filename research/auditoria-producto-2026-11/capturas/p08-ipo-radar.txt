@@ -1,0 +1,68 @@
+StatsEdge
+EQUITY RESEARCH
+Screener
+Listas
+Sectores
+Research
+Mercado
+IPO radar
+Este dispositivo
+
+0 vigiladas · 0 avisos 14 d · 0 con ticker · 0 en el screener · 0 ya cotizan
+
+Importar del último scan
+Importar JSON
+Exportar backup
+Avisar pendientes
+IPOS SELECCIONADAS
+las marcadas entran al screener cuando tengan ticker
+
+Sin IPOs vigiladas todavía. Añade una candidata abajo o impórtalas del último scan.
+
+NUEVA CANDIDATA IPO
+pre-IPO / primera cotización
+Empresa
+Ticker si existe
+País
+US · Estados Unidos
+ES · España
+DE · Alemania
+FR · Francia
+NL · Países Bajos
+GB · Reino Unido
+CH · Suiza
+SE · Suecia
+DK · Dinamarca
+IT · Italia
+JP · Japón
+HK · Hong Kong
+SG · Singapur
+TW · Taiwán
+KR · Corea del Sur
+IN · India
+IL · Israel
+CN · China
+AU · Australia
+ZA · Sudáfrica
+BR · Brasil
+MX · México
+Bolsa prevista
+Sector
+Subsector
+Fecha pricing estimada
+Primer día cotización
+Estado
+En vigilancia
+Documentación presentada
+Precio fijado
+Ya cotiza
+Retrasada
+Descartada
+Prioridad
+Alta
+Normal
+Baja
+Fuente / prospecto
+Notas
+Incluir automáticamente en el universo del screener cuando tenga ticker
+Añadir IPO

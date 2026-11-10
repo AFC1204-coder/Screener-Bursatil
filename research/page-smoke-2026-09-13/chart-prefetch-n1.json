@@ -1,0 +1,85 @@
+{
+  "focusSym": "AVAH",
+  "afterSym": "ATAI",
+  "openChartSyms": [
+    "AVAH",
+    "PSO",
+    "ATAI"
+  ],
+  "idleChartSyms": [],
+  "navChartSyms": [
+    "ATRC"
+  ],
+  "briefs": 0,
+  "prefetchLooksGood": false,
+  "navCacheFriendly": true,
+  "apiTail": [
+    {
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+      "status": 200,
+      "t": 1789387226655,
+      "phase": "boot"
+    },
+    {
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+      "status": 200,
+      "t": 1789387238860,
+      "phase": "boot"
+    },
+    {
+      "path": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+      "status": 200,
+      "t": 1789387238869,
+      "phase": "boot"
+    },
+    {
+      "path": "/api/chart?symbol=AVAH&range=6M&interval=D",
+      "status": 200,
+      "t": 1789387245395,
+      "phase": "openReview"
+    },
+    {
+      "path": "/api/rs-weekly?symbol=AVAH&limit=180&sector=Healthcare&industry=Medical+Care+Facilities&theme=Medtech+%2F+biotech",
+      "status": 200,
+      "t": 1789387245735,
+      "phase": "openReview"
+    },
+    {
+      "path": "/api/rs-weekly?symbol=ATAI&limit=180&sector=Healthcare&industry=Biotechnology&theme=Medtech+%2F+biotech",
+      "status": 200,
+      "t": 1789387245760,
+      "phase": "openReview"
+    },
+    {
+      "path": "/api/rs-weekly?symbol=PSO&limit=180&sector=Communication+Services&industry=Publishing&theme=Internet+%2F+plataformas",
+      "status": 200,
+      "t": 1789387245768,
+      "phase": "openReview"
+    },
+    {
+      "path": "/api/chart?symbol=PSO&range=6M&interval=D",
+      "status": 200,
+      "t": 1789387245775,
+      "phase": "openReview"
+    },
+    {
+      "path": "/api/chart?symbol=ATAI&range=6M&interval=D",
+      "status": 200,
+      "t": 1789387245778,
+      "phase": "openReview"
+    },
+    {
+      "path": "/api/rs-weekly?symbol=ATRC&limit=180&sector=Healthcare&industry=Medical+Instruments+%26+Supplies&theme=Medtech+%2F+biotech",
+      "status": 200,
+      "t": 1789387250357,
+      "phase": "navNext"
+    },
+    {
+      "path": "/api/chart?symbol=ATRC&range=6M&interval=D",
+      "status": 200,
+      "t": 1789387250367,
+      "phase": "navNext"
+    }
+  ],
+  "pass": false
+}

@@ -1,0 +1,63 @@
+{
+  "verdict": "CACHE_ACCEPTANCE_HARDENED_OK",
+  "timezones_n_a": "cache is process-local; no TZ matrix",
+  "hardened_results": [
+    {
+      "id": "WRONG",
+      "status": "FAIL",
+      "exitCode": 1,
+      "summary": "{\"checks\":18,\"passed\":16,\"failed\":2}",
+      "failNames": [
+        "default createTtlCache capacity remains 2000",
+        "marketCache capacity remains 2500"
+      ],
+      "expect": "FAIL",
+      "ok": true
+    },
+    {
+      "id": "RIGHT",
+      "status": "PASS",
+      "exitCode": 0,
+      "summary": "{\"checks\":18,\"passed\":18,\"failed\":0}",
+      "failNames": [],
+      "expect": "PASS",
+      "ok": true
+    },
+    {
+      "id": "PRESERVATION_BREAK",
+      "status": "FAIL",
+      "exitCode": 1,
+      "summary": "{\"checks\":18,\"passed\":17,\"failed\":1}",
+      "failNames": [
+        "key identity is not coerced between number and string"
+      ],
+      "expect": "FAIL",
+      "ok": true
+    },
+    {
+      "id": "BASELINE_SOURCE",
+      "status": "FAIL",
+      "exitCode": 1,
+      "summary": "{\"checks\":18,\"passed\":10,\"failed\":8}",
+      "failNames": [
+        "synchronous throw clears pending state and permits next loader",
+        "clear prevents old completion from repopulating empty cache",
+        "clear then explicit set preserves newer value",
+        "clear old completion cannot delete replacement inflight entry",
+        "explicit set invalidates old result only for that key",
+        "expired replacement still bars an older loader from publishing",
+        "old completion after replacement completes cannot overwrite it",
+        "superseded rejection does not delete replacement pending loader"
+      ],
+      "expect": "FAIL",
+      "ok": true
+    }
+  ],
+  "baseline_original_eight_defects_still_fail": true,
+  "frozen_baseline_summary": "{\"checks\":14,\"passed\":6,\"failed\":8}",
+  "old_accept_accepts_wrong": true,
+  "old_accept_accepts_preservation_break": true,
+  "expected_values_literal_or_independent": true,
+  "llm_judge": false,
+  "v1_py_touched": false
+}

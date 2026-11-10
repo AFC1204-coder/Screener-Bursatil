@@ -1,0 +1,44 @@
+[
+  {
+    "size": 1440,
+    "page": "screener",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794067354004 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "size": 1440,
+    "page": "listas",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794067354004 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "size": 1440,
+    "page": "listas",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794067371978 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "size": 1440,
+    "page": "research-desk",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794067388302 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "size": 390,
+    "page": "screener",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794067397775 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "size": 390,
+    "page": "listas",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794067412120 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "size": 390,
+    "page": "research-desk",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794067428226 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  }
+]

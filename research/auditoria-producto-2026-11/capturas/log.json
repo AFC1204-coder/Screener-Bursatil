@@ -1,0 +1,148 @@
+{
+  "p01-screener": {
+    "ms": 9943,
+    "api": [
+      "/api/auth/session",
+      "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=0",
+      "/api/supabase/status",
+      "/api/weekly-changes",
+      "/api/weekly-changes",
+      "/api/data-providers",
+      "/api/weekly-changes",
+      "/api/scans/chart-preview",
+      "/api/scans/chart-preview",
+      "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1&rsPatch=1"
+    ],
+    "errores": [],
+    "textosMenos11px": 42,
+    "controlesSinNombre": 18,
+    "altoPagina": 950
+  },
+  "p02-ficha-AAPL": {
+    "ms": 9958,
+    "api": [
+      "/api/auth/session",
+      "/api/similar?symbol=AAPL&name=Apple+Inc.&sector=Technology&industry=Consumer+Electronics&theme=Consumer+tech+%2F+hardwar",
+      "/api/social-sentiment?symbol=AAPL&name=Apple+Inc.",
+      "/api/similar?symbol=AAPL&name=Apple+Inc.&sector=Technology&industry=Consumer+Electronics&theme=Consumer+tech+%2F+hardwar",
+      "/api/social-sentiment?symbol=AAPL&name=Apple+Inc."
+    ],
+    "errores": [
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+      "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+    ],
+    "textosMenos11px": 13,
+    "controlesSinNombre": 2,
+    "altoPagina": 4164
+  },
+  "p03-review": {
+    "ms": 9439,
+    "api": [
+      "/api/auth/session"
+    ],
+    "errores": [],
+    "textosMenos11px": 2,
+    "controlesSinNombre": 0,
+    "altoPagina": 950
+  },
+  "p04-listas": {
+    "ms": 9431,
+    "api": [
+      "/api/auth/session",
+      "/api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=80&sinceDays=10&minGroupSize=1"
+    ],
+    "errores": [],
+    "textosMenos11px": 1,
+    "controlesSinNombre": 0,
+    "altoPagina": 950
+  },
+  "p05-research-desk": {
+    "ms": 26414,
+    "api": [
+      "/api/auth/session",
+      "/api/favorites/snapshots?days=180",
+      "/api/supabase/status",
+      "/api/favorites/snapshots?days=180"
+    ],
+    "errores": [
+      "[listas] /api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=80&sinceDays=10&minGroupSize=1 no respondió en 8s",
+      "[listas] ranking en vivo no disponible: Error: El servidor de datos tardó demasiado en responder (más de 8 s).\n    at fetchJsonWithTimeout (webpack-internal:///(app-pages-browser)/./app/lists/page.jsx"
+    ],
+    "textosMenos11px": 1,
+    "controlesSinNombre": 10,
+    "altoPagina": 950
+  },
+  "p06-sectores": {
+    "ms": 12227,
+    "api": [
+      "/api/auth/session",
+      "/api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=80&sinceDays=10&minGroupSize=1",
+      "/api/market-health"
+    ],
+    "errores": [],
+    "textosMenos11px": 1,
+    "controlesSinNombre": 0,
+    "altoPagina": 953
+  },
+  "p07-market-health": {
+    "ms": 11777,
+    "api": [
+      "/api/auth/session",
+      "/api/market-health",
+      "/api/market-breadth",
+      "/api/market-leadership",
+      "/api/market-news",
+      "/api/social-sentiment",
+      "/api/methodology-health",
+      "/api/coverage?markets=US,JP,HK,AU,TW",
+      "/api/market-health",
+      "/api/market-breadth",
+      "/api/market-leadership",
+      "/api/market-news",
+      "/api/social-sentiment",
+      "/api/methodology-health",
+      "/api/coverage?markets=US,JP,HK,AU,TW"
+    ],
+    "errores": [],
+    "textosMenos11px": 108,
+    "controlesSinNombre": 12,
+    "altoPagina": 4582
+  },
+  "p08-ipo-radar": {
+    "ms": 21778,
+    "api": [
+      "/api/auth/session"
+    ],
+    "errores": [
+      "[salud de mercado] cobertura no disponible: TypeError: Failed to fetch\n    at getJson (webpack-internal:///(app-pages-browser)/./lib/clientApi.js:30:27)\n    at fetchJsonWithTimeout (webpack-internal:/",
+      "[salud de mercado] cobertura no disponible: TypeError: Failed to fetch\n    at getJson (webpack-internal:///(app-pages-browser)/./lib/clientApi.js:30:27)\n    at fetchJsonWithTimeout (webpack-internal:/"
+    ],
+    "textosMenos11px": 1,
+    "controlesSinNombre": 0,
+    "altoPagina": 950
+  },
+  "focoTeclado": [
+    "A.appBrand \"StatsEdge\nEQUITY RESEARCH\" outline=solid/2px shadow=false",
+    "A.appHeaderNavItem active \"Screener\" outline=solid/2px shadow=false",
+    "A.appHeaderNavItem  \"Listas\" outline=solid/2px shadow=false",
+    "A.appHeaderNavItem  \"Sectores\" outline=solid/2px shadow=false",
+    "A.appHeaderNavItem  \"Research\" outline=solid/2px shadow=false",
+    "A.appHeaderNavItem  \"Mercado\" outline=solid/2px shadow=false",
+    "NEXTJS-PORTAL. \"\" outline=none/3px shadow=false",
+    "SUMMARY.marketCompactChip \"EE. UU.\n1/27\" outline=solid/2px shadow=false",
+    "INPUT.input searchInput \"Buscar valor\" outline=solid/2px shadow=true",
+    "BUTTON.btn btnSmall btnPrimary \"Revisar\" outline=solid/2px shadow=false",
+    "SUMMARY.btn btnSmall btnGhost \"⋯\" outline=solid/2px shadow=false",
+    "BUTTON.screenerViewRailItem active \"2\nLíderes Etapa 2\n937\" outline=solid/2px shadow=true"
+  ]
+}

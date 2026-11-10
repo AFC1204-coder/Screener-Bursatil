@@ -1,0 +1,23 @@
+{
+  "spanSec": 211,
+  "marketsRequests": 0,
+  "marketsTotal": 0,
+  "nightly": 1,
+  "globalState": {
+    "loadingEternal": false,
+    "cobertura": true,
+    "cargando": false,
+    "rows": 0,
+    "pasan": "560 de 3576",
+    "snippet": "StatsEdge EQUITY RESEARCH Screener Listas Sectores Research Mercado STATSEDGE · SCREENER Líderes Etapa 2 28 mercados Cambios de la semana · El servidor de datos tardó demasiado en responder. Inténtalo de nuevo en unos minutos. Filtros actualizados Esta sesión guardó un formato antiguo de filtros. En el panel lateral, revisa las tarjetas de familia y pulsa «Abrir» en las que quieras activar. Entendido ‹ MERCADOS 28/29 Global EE. UU. US+Core intl Core intl Europa Asia HK Personalizar mercados (28/"
+  },
+  "usState": {
+    "rows": 0,
+    "pasan": "560 de 3576 pasan",
+    "cargando": false,
+    "marketsLabel": "1/29",
+    "snippet": "StatsEdge EQUITY RESEARCH Screener Listas Sectores Research Mercado STATSEDGE · SCREENER Líderes Etapa 2 1 mercado Cambios de la semana · El servidor de datos tardó demasiado en responder. Inténtalo de nuevo en unos minutos. Filtros actualizados Esta sesión guardó un formato antiguo de filtros. En el panel lateral, revisa las tarjetas de familia y pulsa «Abrir» en las que quieras activar. Entendido ‹ MERCADOS 1/29 Global EE. UU. US+Core intl Core"
+  },
+  "passGlobal": false,
+  "passUs": false
+}

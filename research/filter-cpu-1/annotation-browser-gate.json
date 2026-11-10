@@ -1,0 +1,853 @@
+{
+  "meta": {
+    "baseUrl": "http://127.0.0.1:3300",
+    "buildHead": "639ceae",
+    "datasetTruth": "560 de 3576 pasan «Líderes Etapa 2» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte 13 sept, 05:03",
+    "finishedAt": "2026-09-13T13:08:14.445Z",
+    "baselinePerfReal": {
+      "pivotColdFeedbackMs": 473,
+      "pivotCacheHitFeedbackMs": 315,
+      "pivotCacheHitLongTaskMaxMs": 0,
+      "momentumToggleFeedbackMs": 1076,
+      "momentumToggleLongTaskMaxMs": 244
+    }
+  },
+  "gestures": [
+    {
+      "label": "baseline Líderes (mesa cargada)",
+      "passCount": 560,
+      "symbols": [
+        "AVAH",
+        "ATAI",
+        "ATRC",
+        "CHYM",
+        "MNPR",
+        "ZBIO",
+        "PSNL",
+        "TWST",
+        "MTW",
+        "SGMT",
+        "VREX",
+        "ECO",
+        "MAN",
+        "LILA",
+        "CVI",
+        "CLMT",
+        "DK",
+        "LILAK",
+        "DFTX",
+        "AYA",
+        "CGEM",
+        "FET",
+        "ZBRA",
+        "UGP",
+        "OPRT",
+        "AUGO",
+        "HZO",
+        "DINO",
+        "GCT",
+        "HRTG",
+        "AII",
+        "VLO",
+        "AVTR",
+        "PARR",
+        "HNST",
+        "THC",
+        "MPC",
+        "HALO",
+        "SOPH",
+        "CRSR",
+        "PGEN",
+        "NEO",
+        "QNST",
+        "LFST",
+        "ZETA",
+        "NAT",
+        "OBIO",
+        "NTRA",
+        "IMMX",
+        "NSIT"
+      ],
+      "brief": "",
+      "quality": "",
+      "rowSample": [
+        {
+          "symbol": "AVAH",
+          "cells": [
+            "★AHAVAH🇺🇸Aveanna Healthcare Holdings Inc.",
+            "Medtech / biotech",
+            "95",
+            "Etapa 2Con fuga",
+            "–Sin dato",
+            "+101,1%",
+            "-3,2%",
+            "3,1B"
+          ]
+        },
+        {
+          "symbol": "ATAI",
+          "cells": [
+            "★AIATAI🇺🇸AtaiBeckley Inc.",
+            "Medtech / biotech",
+            "95",
+            "Etapa 2Dudoso",
+            "–Sin dato",
+            "+93,4%",
+            "-1,3%",
+            "2,7B"
+          ]
+        },
+        {
+          "symbol": "ATRC",
+          "cells": [
+            "★ATRC🇺🇸AtriCure, Inc.",
+            "Medtech / biotech",
+            "92",
+            "Etapa 2Con fuga",
+            "–Sin dato",
+            "+92,0%",
+            "-2,1%",
+            "2,8B"
+          ]
+        },
+        {
+          "symbol": "CHYM",
+          "cells": [
+            "★CFCHYM🇺🇸Chime Financial, Inc.",
+            "Software / IA",
+            "94",
+            "Etapa 2Dudoso",
+            "–Sin dato",
+            "+91,3%",
+            "-7,2%",
+            "12,5B"
+          ]
+        },
+        {
+          "symbol": "MNPR",
+          "cells": [
+            "★MTMNPR🇺🇸Monopar Therapeutics Inc.",
+            "Medtech / biotech",
+            "97",
+            "Etapa 2Dudoso",
+            "–Sin dato",
+            "+86,6%",
+            "-11,7%",
+            "740M"
+          ]
+        }
+      ]
+    },
+    {
+      "label": "1. Cerca de pivot (frío)",
+      "feedbackMs": 466,
+      "truthMs": 9,
+      "stableMs": 705,
+      "longTaskMaxMs": 198,
+      "longTaskTotalMs": 360,
+      "longTaskCount": 2,
+      "filterMsFromStatus": null,
+      "reactResidualMs": null,
+      "truth": "26 de 3576 pasan «Cerca de pivot» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte 13 sept, 05:03",
+      "passCount": 26,
+      "analyzedTotal": 3576,
+      "symbols": [
+        "ATKR",
+        "AVT",
+        "SAN",
+        "TECH",
+        "BWLP",
+        "MATX",
+        "ACA",
+        "INSW",
+        "EQNR",
+        "BNY",
+        "BNS",
+        "VOYA",
+        "CON",
+        "UBS",
+        "RDVT",
+        "AAPL",
+        "ABBV",
+        "EOG",
+        "HSIC",
+        "TRIN",
+        "HUM",
+        "SEIC",
+        "DGX",
+        "FTI",
+        "TRGP",
+        "AMCX"
+      ],
+      "brief": "",
+      "quality": "",
+      "diagnostics": [
+        "PuertaTendencia2151IBEXNo está en etapa 2: Etapa 1 confirmadaHRMYNo está en etapa 2: Etapa 1 confirmada",
+        "PuertaMomentum633VGperf 12M 13.87 < 18LHperf 12M 15.30 < 18",
+        "PuertaLiquidez360SABRprecio 2.17 < 3BCALvolumen medio 164100.00 < 200000",
+        "PuertaCercanía a máximos155SBdistancia 20d -8.59 < -6VLOextension SMA50 20.35 > 18",
+        "ModoSetup129HSHPVigilancia pivot: contrato compartido no validado, pivot metodológico no validado, dist20 -4.08 >= -6, spread 0 <= 10.0, ext 14.6 <= 18.0MFGVigilancia pivot: contrato compartido no validado, pivot metodológico no validado, dist20 -0.35 >= -6, spread 0 <= 10.0, ext 8.71 <= 18.0",
+        "PuertaVolatilidad/rango101KNSArango 63d 62.39 > 60DKrango 63d 92.53 > 60",
+        "ScoreCalidad mínima18ELVNrisk score 40.00 < 45ACRSrisk score 18.00 < 45"
+      ],
+      "rowSample": [
+        {
+          "symbol": "ATKR",
+          "cells": [
+            "★AIATKR🇺🇸Atkore Inc.",
+            "Automatizacion",
+            "85",
+            "Etapa 2Dudoso",
+            "3C·PV-0.3%",
+            "+19,6%",
+            "-0,3%",
+            "3,2B"
+          ]
+        },
+        {
+          "symbol": "AVT",
+          "cells": [
+            "★AIAVT🇺🇸Avnet, Inc.",
+            "Technology",
+            "87",
+            "Etapa 2Con fuga",
+            "2C·PV+0%",
+            "+13,0%",
+            "-0,3%",
+            "7,2B"
+          ]
+        },
+        {
+          "symbol": "SAN",
+          "cells": [
+            "★BSSAN🇺🇸Banco Santander, S.A.",
+            "Finanzas",
+            "79",
+            "Etapa 2Dudoso",
+            "3C·form·PV-0.6%",
+            "+19,1%",
+            "-0,6%",
+            "212,3B"
+          ]
+        },
+        {
+          "symbol": "TECH",
+          "cells": [
+            "★BCTECH🇺🇸Bio-Techne Corporation",
+            "Medtech / biotech",
+            "85",
+            "Etapa 2Dudoso",
+            "5C·form·PV-0.6%",
+            "+33,7%",
+            "-0,6%",
+            "11,3B"
+          ]
+        },
+        {
+          "symbol": "BWLP",
+          "cells": [
+            "★BWLP🇺🇸BW LPG Limited",
+            "Energia / red",
+            "90",
+            "Etapa 2Dudoso",
+            "2C·form·PV+0.2%",
+            "+21,3%",
+            "-0,9%",
+            "3,8B"
+          ]
+        }
+      ],
+      "statusSnippet": ""
+    },
+    {
+      "label": "2. Cerca de pivot (inmediato otra vez)",
+      "feedbackMs": 724,
+      "truthMs": 121,
+      "stableMs": 48,
+      "longTaskMaxMs": 157,
+      "longTaskTotalMs": 249,
+      "longTaskCount": 2,
+      "filterMsFromStatus": null,
+      "reactResidualMs": null,
+      "truth": "26 de 3576 pasan «Cerca de pivot» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte 13 sept, 05:03",
+      "passCount": 26,
+      "analyzedTotal": 3576,
+      "symbols": [
+        "ATKR",
+        "AVT",
+        "SAN",
+        "TECH",
+        "BWLP",
+        "MATX",
+        "ACA",
+        "INSW",
+        "EQNR",
+        "BNY",
+        "BNS",
+        "VOYA",
+        "CON",
+        "UBS",
+        "RDVT",
+        "AAPL",
+        "ABBV",
+        "EOG",
+        "HSIC",
+        "TRIN",
+        "HUM",
+        "SEIC",
+        "DGX",
+        "FTI",
+        "TRGP",
+        "AMCX"
+      ],
+      "brief": "",
+      "quality": "",
+      "diagnostics": [
+        "PuertaTendencia2151IBEXNo está en etapa 2: Etapa 1 confirmadaHRMYNo está en etapa 2: Etapa 1 confirmada",
+        "PuertaMomentum633VGperf 12M 13.87 < 18LHperf 12M 15.30 < 18",
+        "PuertaLiquidez360SABRprecio 2.17 < 3BCALvolumen medio 164100.00 < 200000",
+        "PuertaCercanía a máximos155SBdistancia 20d -8.59 < -6VLOextension SMA50 20.35 > 18",
+        "ModoSetup129HSHPVigilancia pivot: contrato compartido no validado, pivot metodológico no validado, dist20 -4.08 >= -6, spread 0 <= 10.0, ext 14.6 <= 18.0MFGVigilancia pivot: contrato compartido no validado, pivot metodológico no validado, dist20 -0.35 >= -6, spread 0 <= 10.0, ext 8.71 <= 18.0",
+        "PuertaVolatilidad/rango101KNSArango 63d 62.39 > 60DKrango 63d 92.53 > 60",
+        "ScoreCalidad mínima18ELVNrisk score 40.00 < 45ACRSrisk score 18.00 < 45"
+      ],
+      "rowSample": [
+        {
+          "symbol": "ATKR",
+          "cells": [
+            "★AIATKR🇺🇸Atkore Inc.",
+            "Automatizacion",
+            "85",
+            "Etapa 2Dudoso",
+            "3C·PV-0.3%",
+            "+19,6%",
+            "-0,3%",
+            "3,2B"
+          ]
+        },
+        {
+          "symbol": "AVT",
+          "cells": [
+            "★AIAVT🇺🇸Avnet, Inc.",
+            "Technology",
+            "87",
+            "Etapa 2Con fuga",
+            "2C·PV+0%",
+            "+13,0%",
+            "-0,3%",
+            "7,2B"
+          ]
+        },
+        {
+          "symbol": "SAN",
+          "cells": [
+            "★BSSAN🇺🇸Banco Santander, S.A.",
+            "Finanzas",
+            "79",
+            "Etapa 2Dudoso",
+            "3C·form·PV-0.6%",
+            "+19,1%",
+            "-0,6%",
+            "212,3B"
+          ]
+        },
+        {
+          "symbol": "TECH",
+          "cells": [
+            "★BCTECH🇺🇸Bio-Techne Corporation",
+            "Medtech / biotech",
+            "85",
+            "Etapa 2Dudoso",
+            "5C·form·PV-0.6%",
+            "+33,7%",
+            "-0,6%",
+            "11,3B"
+          ]
+        },
+        {
+          "symbol": "BWLP",
+          "cells": [
+            "★BWLP🇺🇸BW LPG Limited",
+            "Energia / red",
+            "90",
+            "Etapa 2Dudoso",
+            "2C·form·PV+0.2%",
+            "+21,3%",
+            "-0,9%",
+            "3,8B"
+          ]
+        }
+      ],
+      "statusSnippet": ""
+    },
+    {
+      "label": "return Líderes Etapa 2 (pre-momentum)",
+      "feedbackMs": 1215,
+      "truthMs": 34,
+      "stableMs": 769,
+      "longTaskMaxMs": 518,
+      "longTaskTotalMs": 1079,
+      "longTaskCount": 3,
+      "filterMsFromStatus": null,
+      "reactResidualMs": null,
+      "truth": "560 de 3576 pasan «Líderes Etapa 2» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte 13 sept, 05:03",
+      "passCount": 560,
+      "analyzedTotal": 3576,
+      "symbols": [
+        "AVAH",
+        "ATAI",
+        "ATRC",
+        "CHYM",
+        "MNPR",
+        "ZBIO",
+        "PSNL",
+        "TWST",
+        "MTW",
+        "SGMT",
+        "VREX",
+        "ECO",
+        "MAN",
+        "LILA",
+        "CVI",
+        "CLMT",
+        "DK",
+        "LILAK",
+        "DFTX",
+        "AYA",
+        "CGEM",
+        "FET",
+        "ZBRA",
+        "UGP",
+        "OPRT",
+        "AUGO",
+        "HZO",
+        "DINO",
+        "GCT",
+        "HRTG",
+        "AII",
+        "VLO",
+        "AVTR",
+        "PARR",
+        "HNST",
+        "THC",
+        "MPC",
+        "HALO",
+        "SOPH",
+        "CRSR",
+        "PGEN",
+        "NEO",
+        "QNST",
+        "LFST",
+        "ZETA",
+        "NAT",
+        "OBIO",
+        "NTRA",
+        "IMMX",
+        "NSIT"
+      ],
+      "brief": "",
+      "quality": "",
+      "diagnostics": [
+        "PuertaTendencia2151IBEXNo está en etapa 2: Etapa 1 confirmadaHRMYNo está en etapa 2: Etapa 1 confirmada",
+        "PuertaMomentum522GENperf 12M 5.52 < 12VEEVperf 12M -4.44 < 12",
+        "PuertaLiquidez281PBAMvolumen medio 85595.00 < 150000BWFGvolumen medio 65865.00 < 150000",
+        "PuertaVolatilidad/rango40PAYSrango 63d 121.32 > 120CDNArango 63d 136.12 > 120",
+        "PuertaCercanía a máximos18CLYMdistancia 20d -22.26 < -20FDMTdistancia 20d -22.21 < -20",
+        "ScoreFuerza relativa4QRVORS semanal 45 < 50SWKSRS semanal 31 < 50"
+      ],
+      "rowSample": [
+        {
+          "symbol": "AVAH",
+          "cells": [
+            "★AHAVAH🇺🇸Aveanna Healthcare Holdings Inc.",
+            "Medtech / biotech",
+            "95",
+            "Etapa 2Con fuga",
+            "–Sin dato",
+            "+101,1%",
+            "-3,2%",
+            "3,1B"
+          ]
+        },
+        {
+          "symbol": "ATAI",
+          "cells": [
+            "★AIATAI🇺🇸AtaiBeckley Inc.",
+            "Medtech / biotech",
+            "95",
+            "Etapa 2Dudoso",
+            "–Sin dato",
+            "+93,4%",
+            "-1,3%",
+            "2,7B"
+          ]
+        },
+        {
+          "symbol": "ATRC",
+          "cells": [
+            "★ATRC🇺🇸AtriCure, Inc.",
+            "Medtech / biotech",
+            "92",
+            "Etapa 2Con fuga",
+            "–Sin dato",
+            "+92,0%",
+            "-2,1%",
+            "2,8B"
+          ]
+        },
+        {
+          "symbol": "CHYM",
+          "cells": [
+            "★CFCHYM🇺🇸Chime Financial, Inc.",
+            "Software / IA",
+            "94",
+            "Etapa 2Dudoso",
+            "–Sin dato",
+            "+91,3%",
+            "-7,2%",
+            "12,5B"
+          ]
+        },
+        {
+          "symbol": "MNPR",
+          "cells": [
+            "★MTMNPR🇺🇸Monopar Therapeutics Inc.",
+            "Medtech / biotech",
+            "97",
+            "Etapa 2Dudoso",
+            "–Sin dato",
+            "+86,6%",
+            "-11,7%",
+            "740M"
+          ]
+        }
+      ],
+      "statusSnippet": ""
+    },
+    {
+      "label": "3a. Momentum OFF (desde Líderes)",
+      "feedbackMs": 1267,
+      "truthMs": 827,
+      "stableMs": 61,
+      "longTaskMaxMs": 684,
+      "longTaskTotalMs": 1186,
+      "longTaskCount": 3,
+      "filterMsFromStatus": null,
+      "reactResidualMs": null,
+      "truth": "979 de 3576 pasan «Líderes Etapa 2» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte 13 sept, 05:03",
+      "passCount": 979,
+      "analyzedTotal": 3576,
+      "symbols": [
+        "AVAH",
+        "ATAI",
+        "ATRC",
+        "CHYM",
+        "MNPR",
+        "ZBIO",
+        "PSNL",
+        "TWST",
+        "MTW",
+        "PRCH",
+        "SGMT",
+        "VREX",
+        "ECO",
+        "MAN",
+        "PAYC",
+        "LILA",
+        "CVI",
+        "LBRX",
+        "CLMT",
+        "VEEV",
+        "SMTI",
+        "DK",
+        "LILAK",
+        "DFTX",
+        "CBZ",
+        "PD",
+        "BWIN",
+        "AYA",
+        "ELF",
+        "CGEM",
+        "FET",
+        "ZBRA",
+        "UGP",
+        "OPRT",
+        "AUGO",
+        "HZO",
+        "DINO",
+        "GCT",
+        "HRTG",
+        "ORIC",
+        "AII",
+        "VLO",
+        "AVTR",
+        "PARR",
+        "HNST",
+        "THC",
+        "MPC",
+        "HALO",
+        "SOPH",
+        "CRSR"
+      ],
+      "brief": "",
+      "quality": "",
+      "diagnostics": [
+        "PuertaTendencia2157IBEXNo está en etapa 2: Etapa 1 confirmadaHRMYNo está en etapa 2: Etapa 1 confirmada",
+        "PuertaLiquidez281PBAMvolumen medio 85595.00 < 150000BWFGvolumen medio 65865.00 < 150000",
+        "PuertaCercanía a máximos64CLYMdistancia 20d -22.26 < -20FDMTdistancia 20d -22.21 < -20",
+        "PuertaVolatilidad/rango61PAYSrango 63d 121.32 > 120CDNArango 63d 136.12 > 120",
+        "ScoreFuerza relativa34QRVORS semanal 45 < 50SWKSRS semanal 31 < 50"
+      ],
+      "rowSample": [
+        {
+          "symbol": "AVAH",
+          "cells": [
+            "★AHAVAH🇺🇸Aveanna Healthcare Holdings Inc.",
+            "Medtech / biotech",
+            "95",
+            "Etapa 2Con fuga",
+            "–Sin dato",
+            "+101,1%",
+            "-3,2%",
+            "3,1B"
+          ]
+        },
+        {
+          "symbol": "ATAI",
+          "cells": [
+            "★AIATAI🇺🇸AtaiBeckley Inc.",
+            "Medtech / biotech",
+            "95",
+            "Etapa 2Dudoso",
+            "–Sin dato",
+            "+93,4%",
+            "-1,3%",
+            "2,7B"
+          ]
+        },
+        {
+          "symbol": "ATRC",
+          "cells": [
+            "★ATRC🇺🇸AtriCure, Inc.",
+            "Medtech / biotech",
+            "92",
+            "Etapa 2Con fuga",
+            "–Sin dato",
+            "+92,0%",
+            "-2,1%",
+            "2,8B"
+          ]
+        },
+        {
+          "symbol": "CHYM",
+          "cells": [
+            "★CFCHYM🇺🇸Chime Financial, Inc.",
+            "Software / IA",
+            "94",
+            "Etapa 2Dudoso",
+            "–Sin dato",
+            "+91,3%",
+            "-7,2%",
+            "12,5B"
+          ]
+        },
+        {
+          "symbol": "MNPR",
+          "cells": [
+            "★MTMNPR🇺🇸Monopar Therapeutics Inc.",
+            "Medtech / biotech",
+            "97",
+            "Etapa 2Dudoso",
+            "–Sin dato",
+            "+86,6%",
+            "-11,7%",
+            "740M"
+          ]
+        }
+      ],
+      "statusSnippet": ""
+    },
+    {
+      "label": "3b. Momentum ON (vuelta)",
+      "feedbackMs": 1102,
+      "truthMs": 406,
+      "stableMs": 28,
+      "longTaskMaxMs": 673,
+      "longTaskTotalMs": 1010,
+      "longTaskCount": 2,
+      "filterMsFromStatus": null,
+      "reactResidualMs": null,
+      "truth": "560 de 3576 pasan «Líderes Etapa 2» · mesa: US · 28 mercados en selección · selección ≠ mesa · corte 13 sept, 05:03",
+      "passCount": 560,
+      "analyzedTotal": 3576,
+      "symbols": [
+        "AVAH",
+        "ATAI",
+        "ATRC",
+        "CHYM",
+        "MNPR",
+        "ZBIO",
+        "PSNL",
+        "TWST",
+        "MTW",
+        "SGMT",
+        "VREX",
+        "ECO",
+        "MAN",
+        "LILA",
+        "CVI",
+        "CLMT",
+        "DK",
+        "LILAK",
+        "DFTX",
+        "AYA",
+        "CGEM",
+        "FET",
+        "ZBRA",
+        "UGP",
+        "OPRT",
+        "AUGO",
+        "HZO",
+        "DINO",
+        "GCT",
+        "HRTG",
+        "AII",
+        "VLO",
+        "AVTR",
+        "PARR",
+        "HNST",
+        "THC",
+        "MPC",
+        "HALO",
+        "SOPH",
+        "CRSR",
+        "PGEN",
+        "NEO",
+        "QNST",
+        "LFST",
+        "ZETA",
+        "NAT",
+        "OBIO",
+        "NTRA",
+        "IMMX",
+        "NSIT"
+      ],
+      "brief": "",
+      "quality": "",
+      "diagnostics": [
+        "PuertaTendencia2151IBEXNo está en etapa 2: Etapa 1 confirmadaHRMYNo está en etapa 2: Etapa 1 confirmada",
+        "PuertaMomentum522GENperf 12M 5.52 < 12VEEVperf 12M -4.44 < 12",
+        "PuertaLiquidez281PBAMvolumen medio 85595.00 < 150000BWFGvolumen medio 65865.00 < 150000",
+        "PuertaVolatilidad/rango40PAYSrango 63d 121.32 > 120CDNArango 63d 136.12 > 120",
+        "PuertaCercanía a máximos18CLYMdistancia 20d -22.26 < -20FDMTdistancia 20d -22.21 < -20",
+        "ScoreFuerza relativa4QRVORS semanal 45 < 50SWKSRS semanal 31 < 50"
+      ],
+      "rowSample": [
+        {
+          "symbol": "AVAH",
+          "cells": [
+            "★AHAVAH🇺🇸Aveanna Healthcare Holdings Inc.",
+            "Medtech / biotech",
+            "95",
+            "Etapa 2Con fuga",
+            "–Sin dato",
+            "+101,1%",
+            "-3,2%",
+            "3,1B"
+          ]
+        },
+        {
+          "symbol": "ATAI",
+          "cells": [
+            "★AIATAI🇺🇸AtaiBeckley Inc.",
+            "Medtech / biotech",
+            "95",
+            "Etapa 2Dudoso",
+            "–Sin dato",
+            "+93,4%",
+            "-1,3%",
+            "2,7B"
+          ]
+        },
+        {
+          "symbol": "ATRC",
+          "cells": [
+            "★ATRC🇺🇸AtriCure, Inc.",
+            "Medtech / biotech",
+            "92",
+            "Etapa 2Con fuga",
+            "–Sin dato",
+            "+92,0%",
+            "-2,1%",
+            "2,8B"
+          ]
+        },
+        {
+          "symbol": "CHYM",
+          "cells": [
+            "★CFCHYM🇺🇸Chime Financial, Inc.",
+            "Software / IA",
+            "94",
+            "Etapa 2Dudoso",
+            "–Sin dato",
+            "+91,3%",
+            "-7,2%",
+            "12,5B"
+          ]
+        },
+        {
+          "symbol": "MNPR",
+          "cells": [
+            "★MTMNPR🇺🇸Monopar Therapeutics Inc.",
+            "Medtech / biotech",
+            "97",
+            "Etapa 2Dudoso",
+            "–Sin dato",
+            "+86,6%",
+            "-11,7%",
+            "740M"
+          ]
+        }
+      ],
+      "statusSnippet": ""
+    }
+  ],
+  "correctness": [
+    {
+      "label": "pivot cold vs pivot repeat",
+      "ok": true,
+      "issues": []
+    },
+    {
+      "label": "leaders return vs momentum ON round-trip",
+      "ok": true,
+      "issues": []
+    },
+    {
+      "label": "momentum OFF increased pass set vs Líderes",
+      "ok": true,
+      "issues": []
+    }
+  ],
+  "deltas": {
+    "pivotRepeatVsCold": {
+      "feedbackMs": 258,
+      "stableMs": -657,
+      "longTaskMaxMs": -41,
+      "filterMs": 0
+    },
+    "momentumOnVsOff": {
+      "feedbackMs": -165,
+      "stableMs": -33,
+      "longTaskMaxMs": -11,
+      "passCountDelta": -419
+    },
+    "momentumRoundTripPassMatch": true
+  },
+  "annotationObservation": {
+    "note": "No hook en window; proxy = filterMs status + timing repeat vs cold",
+    "pivotColdFilterMs": null,
+    "pivotRepeatFilterMs": null,
+    "pivotRepeatLikelyHuntCacheHit": false
+  }
+}

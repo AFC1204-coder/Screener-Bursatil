@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  StatsEdge: rutina de salud de la mañana (nocturno → salud → aviso).
+  SIN INSTALAR. Ver research/operacion-diaria-2026-11/runbook.md §5.
+
+    cp scripts/ops/launchd/com.statsedge.daily-health.plist ~/Library/LaunchAgents/
+    plutil -lint ~/Library/LaunchAgents/com.statsedge.daily-health.plist
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.statsedge.daily-health.plist
+    launchctl kickstart gui/$(id -u)/com.statsedge.daily-health    # probarlo ya
+
+  08:15 hora local del Mini: el guardián empieza a las 05:00 y su peor caso
+  (2 × 40 min de barras + 2 scans + pausas) ronda las 2 h 30 min. Si el
+  nocturno sigue en marcha a esta hora, el aviso dirá «NO ok hoy»: es correcto,
+  a las 08:15 ya debería haber terminado.
+
+  Se ejecuta todos los días, igual que el nocturno de las 05:00. Si el
+  nocturno solo corre algunos días, copia aquí su StartCalendarInterval
+  (en el Mini: plutil -p ~/Library/LaunchAgents/com.statsedge.scan-universe-us.plist)
+  y añade la clave Weekday a cada entrada (0 o 7 = domingo).
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.statsedge.daily-health</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/cristian/Statsedge-v0.1/scripts/ops/daily-health.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/cristian/Statsedge-v0.1</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>STATSEDGE_WEB_ENV_FILE</key>
+    <string>/Users/cristian/.config/statsedge/web.env</string>
+  </dict>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>8</integer>
+    <key>Minute</key>
+    <integer>15</integer>
+  </dict>
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/cristian/Statsedge-v0.1/logs/daily-health.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/cristian/Statsedge-v0.1/logs/daily-health.err.log</string>
+</dict>
+</plist>

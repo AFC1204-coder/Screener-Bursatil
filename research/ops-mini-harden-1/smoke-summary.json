@@ -1,0 +1,48 @@
+{
+  "ok": true,
+  "verdict": "PASS",
+  "base": "http://127.0.0.1:3300",
+  "startedAt": "2026-09-23T17:37:25.878Z",
+  "finishedAt": "2026-09-23T17:38:25.066Z",
+  "precheck": {
+    "ok": true,
+    "tunnel15432": true,
+    "app3300": true,
+    "httpStatus": 200
+  },
+  "checks": {
+    "homeUs": {
+      "pass": true,
+      "truthLine": "504 de 3575 pasan «Líderes Etapa 2» · mesa: US · corte 23 sept, 05:04",
+      "ms": 38457,
+      "timeout": false
+    },
+    "caza": {
+      "pass": true,
+      "truth": "504 de 3575 pasan «Líderes Etapa 2» · mesa: US · corte 23 sept, 05:04",
+      "sparks": 240,
+      "svgs": 80,
+      "pending": 424,
+      "huntRows": 504,
+      "cazaOn": true,
+      "ms": 7559
+    },
+    "reviewAapl": {
+      "pass": true,
+      "symbol": "A",
+      "urlSymbol": "AAPL",
+      "hasCanvas": true,
+      "emptyText": null,
+      "ms": 7863,
+      "timeout": false,
+      "stillLoading": false,
+      "symbolMatch": true
+    }
+  },
+  "screenshots": {
+    "homeUs": "/Users/alejandrofrutos1204/Documents/Codex/2026-05-13/estoy-desarrollando-un-screener-investment-research/Statsedge-v0.1/research/ops-mini-harden-1/home-us.png",
+    "caza": "/Users/alejandrofrutos1204/Documents/Codex/2026-05-13/estoy-desarrollando-un-screener-investment-research/Statsedge-v0.1/research/ops-mini-harden-1/caza.png",
+    "reviewAapl": "/Users/alejandrofrutos1204/Documents/Codex/2026-05-13/estoy-desarrollando-un-screener-investment-research/Statsedge-v0.1/research/ops-mini-harden-1/review-aapl.png"
+  },
+  "outDir": "/Users/alejandrofrutos1204/Documents/Codex/2026-05-13/estoy-desarrollando-un-screener-investment-research/Statsedge-v0.1/research/ops-mini-harden-1"
+}

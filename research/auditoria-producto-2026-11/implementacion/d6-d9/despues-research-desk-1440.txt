@@ -1,0 +1,50 @@
+StatsEdge
+EQUITY RESEARCH
+Screener
+Listas
+Sectores
+Research
+Mercado
+Research
+Nube conectada
+
+0 favoritos · 0 alertas activas · 1 snapshots
+
+IPO radar
+Revisar favoritos
+Actualizar favoritos
+Research · estado
+ALERTAS ACTIVAS
+0 deterioros · 0 mejoras · 0 contexto
+
+Sin alertas activas. Las alertas nacen al comparar dos snapshots equivalentes: guarda uno nuevo desde el screener para generar cambios observables.
+
+OBSERVATORIO
+i
+Sin elementos relevantes
+
+Aquí aparecen las estructuras y los cambios detectados en el snapshot seleccionado y en tus favoritos. Ahora mismo no hay ninguno: guarda un snapshot desde el screener o añade favoritos para empezar el seguimiento.
+
+FAVORITOS
+0 con seguimiento · alpha media -
+
+Aún no tienes favoritos. Márcalos con ★ en las candidatas de un snapshot, o añádelos por ticker en «Herramientas de mantenimiento».
+
+HISTORIAL DE SNAPSHOTS
+Snapshot del 18 oct 2026
+Datos guardados
+3287 acciones (en el servidor)
+SNAPSHOT SELECCIONADO
+Snapshot del 18 oct 2026
+3287 filas (en el servidor)
+Exportar snapshot
+Eliminar snapshot
+Revisar
+Ver en listas
+CANDIDATAS DEL SNAPSHOT
+3287 filas (en el servidor)
+
+Las 3287 filas de este snapshot están guardadas en el servidor; este dispositivo solo conserva su ficha. Se consultan en el screener y en Listas.
+
+★	TICKER	EMPRESA	TEMA	ETAPA	CAMBIOS	3M	6M	12M	ESTRUCTURA	RUPTURA	RS QUALITY	DETERIORO	RISK	SCORE	ACCIONES
+HERRAMIENTAS DE MANTENIMIENTO

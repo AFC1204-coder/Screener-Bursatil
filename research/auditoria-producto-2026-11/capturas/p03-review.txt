@@ -1,0 +1,26 @@
+StatsEdge
+EQUITY RESEARCH
+Screener
+Listas
+Sectores
+Research
+Mercado
+Vista rápida
+
+0/0 en cola · 0 revisadas · 0 resueltas en ficha · 0 ocultas · Screener actual · 0 acciones
+
+Cola actual
+Último snapshot
+Favoritos
+Review
+Sin cola de revisión
+
+Carga una cola desde el Screener o abre un ticker (search → ficha) para revisar sin callejón.
+
+No has enviado valores a revisión. La cola se llena desde el Screener o desde una lista.
+La sesión anterior ya no está. La cola se guarda en este navegador; si limpiaste datos o usas otro equipo, empieza de cero.
+Todo estaba oculto. Si ocultaste valores, pueden estar fuera de la vista.
+Volver al screener
+Ver listas
+O abre directamente un valor para revisarlo:
+Ir

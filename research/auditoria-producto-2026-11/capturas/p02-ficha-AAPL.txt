@@ -1,0 +1,301 @@
+StatsEdge
+EQUITY RESEARCH
+Screener
+Listas
+Sectores
+Research
+Mercado
+AAPL
+Etapa 2
+Pre-fuga
+
+Apple Inc. · Consumer tech / hardware · 343,47 USD -0,70 (-0,2%) · cierre 6 nov 2026
+
+Screener
+Web oficial
+Ir
+Salida
+12 dic 1980
+Edad
+551m
+Desde salida
+—
+i
+Tu clasificación
+Elegir
++ lista
+Global
+Simbolo
+RANGO
+1D
+5D
+1M
+3M
+6M
+1A
+2A
+5A
+Max
+TEMPORALIDAD
+1m
+5m
+15m
+30m
+1H
+4H
+D
+W
+M
+Velas
+Linea
+Area
+Precio
+Log
+%
+RS
+RS país
+RS tema
+Indicadores
+Notas
+	
+	
+
+	
+	
+NO VCP
+12.9%
+AAPL
+343,47
+-0.2%
+Apple Inc. · NasdaqGS
+ETAPA
+2
+sem. 30
+Pre-fuga
+4
+3
+2
+1
+
+Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories.
+
+Consumer tech / hardware
+Cap. 5,00T USD
+RS
+82
+universo
+Máx. 52s
+-3,4%
+Sobre mín.
++41%
+CRECIMIENTO TRIMESTRAL · % INTERANUAL
+2T25
+3T25
+4T25
+1T26
+2T26
+3T26
+BPA
+–
+–
++18%
++22%
++29%
++12%
+Ventas
++4%
+–
++68%
+-11%
++15%
++12%
+StatsEdge
+Gráfico TradingView · Datos Yahoo Finance · 6 nov 2026
+
+Sin línea RS: 5 semanas de histórico (mínimo 8)
+
+Media 30s
++9,2%
+ascendente
+Media 50d
++2,2%
+Media 200d
++15,0%
+Volumen 10d/50d
++25%
+sin secado
+Impulso vol. 5/20d
++33,3%
+Sostén de la tendenciaMetodología
+Sobre la media de 30 semanas: 30 semanas (media ascendente)
+Avance: se frena (-3% últimos 3 meses vs +15% los 3 anteriores)
+Volumen: en contra (0,5× up/down, 50 sesiones)
+Salud 55/100Metodología
+NEGOCIO
+Consumer tech / hardware
+RS tema
+69
+
+Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories.
+
+Ver completo
+Subsector
+Consumer Electronics
+Cap.
+5,00T USD
+Empleados
+167.000
+DESGLOSE DEL SCORE
+BLOQUE EMPRESA
+CALIDAD DE DATOS
+METODOLOGÍA Y GATES
+ACCIONES SIMILARES
+XI
+1810.HK
+
+Xiaomi
+
+Consumer tech / hardware
+Consumer Electronics
+NV
+NVDA
+
+NVIDIA
+
+Semis / fotonica
+Semiconductors
+BR
+AVGO
+
+Broadcom
+
+Semis / fotonica
+Semiconductors
+AD
+AMD
+
+Advanced Micro Devices
+
+Semis / fotonica
+Semiconductors
+TA
+TSM
+
+Taiwán Semiconductor
+
+Semis / fotonica
+Semiconductors
+AR
+ARM
+
+Arm Holdings
+
+Semis / fotonica
+Semiconductors
+AP
+AMAT
+
+Applied Materials
+
+Semis / fotonica
+Semiconductor Equipment
+LA
+LRCX
+
+Lam Research
+
+Semis / fotonica
+Semiconductor Equipment
+KL
+KLAC
+
+KLA
+
+Semis / fotonica
+Semiconductor Equipment
+MI
+MU
+
+Micron Technology
+
+Semis / fotonica
+Semiconductors
+MI
+MSFT
+
+Microsoft
+
+Software / IA
+Software
+PA
+PLTR
+
+Palantir
+
+Software / IA
+Software - Infrastructure
+HISTÓRICO
+USD
+TrimestresAños
+MétricasResumenResultadosBalanceCash flow
+MAGNITUD	30 SEPT 2026	30 JUN 2026	31 MAR 2026	31 DIC 2025	30 SEPT 2025	30 JUN 2025	29 MAR 2025	28 DIC 2024
+Ventas	114,5B USD	109,4B USD	111,2B USD	143,8B USD	102,5B USD	94,0B USD	95,4B USD	124,3B USD
+Ventas YoY	Sin dato	14,7%	-10,6%	67,6%	Sin dato	3,6%	Sin dato	Sin dato
+Margen bruto	Sin dato	50,1%	49,3%	48,2%	47,2%	46,5%	47,1%	46,9%
+Margen operativo	Sin dato	32,6%	32,3%	35,4%	31,6%	30,0%	31,0%	34,5%
+Beneficio neto	30,7B USD	29,8B USD	29,6B USD	42,1B USD	27,5B USD	23,4B USD	24,8B USD	36,3B USD
+Beneficio YoY	Sin dato	20,2%	-18,6%	96,3%	Sin dato	-0,9%	Sin dato	Sin dato
+EPS	Sin dato	2,02	2,01	2,84	Sin dato	1,57	1,65	2,40
+Free cash flow	105,7B USD	31,9B USD	26,7B USD	51,6B USD	26,5B USD	24,4B USD	27,0B USD	27,0B USD
+Caja	56,7B USD	62,4B USD	68,5B USD	66,9B USD	54,7B USD	55,4B USD	Sin dato	Sin dato
+Deuda total	78,1B USD	84,3B USD	84,7B USD	90,5B USD	98,7B USD	101,7B USD	Sin dato	Sin dato
+TOP FUNDS
+VANGUARD INDEX FUNDS-Vanguard Total Stock Market Index Fund
+3,2%
+VANGUARD INDEX FUNDS-Vanguard 500 Index Fund
+2,6%
+iShares Trust-iShares Core S&P 500 ETF
+1,3%
+Fidelity Concord Street Trust-Fidelity 500 Index Fund
+1,3%
+SPDR S&P 500 ETF TRUST-State Street SPDR S&P 500 ETF Trust
+1,2%
+TOP INSTITUTIONS
+Blackrock Inc.
+8,0%
+Vanguard Capital Management LLC
+6,6%
+State Street Corporation
+4,2%
+Geode Capital Management, LLC
+2,6%
+Vanguard Portfolio Management LLC
+2,3%
+NOTICIAS RELEVANTES 
+i
+sesgo heurístico
+NEUTRAL
+Dan Ives: “20% of the World” Will Access AI Through an Apple Device
+TIKR · 6 nov 2026
+Relevancia: ticker relacionado, apple
+Abrir noticia ->
+NEUTRAL
+Apple Is “the Anti-AI Large Cap Tech Trade,” Says Josh Brown. Now It’s Capping AI Spending
+TIKR · 6 nov 2026
+Relevancia: ticker relacionado, apple
+Abrir noticia ->
+NEUTRAL
+Apple, Meta, Musk Face New Threat From Democrats
+GuruFocus.com · 6 nov 2026
+Relevancia: ticker relacionado, apple
+Abrir noticia ->
+NEUTRAL
+Apple Stocks Edge Lower as $7.5 Billion Bond Sale Prices Across Seven Tranches
+GuruFocus.com · 6 nov 2026
+Relevancia: ticker relacionado, apple
+Abrir noticia ->
+BAJISTA
+Stock Market Suffers Ugly Losses In Election Week; Apple, Palantir Led Key Earnings: Weekly Review
+Investor's Business Daily · 6 nov 2026
+Relevancia: ticker relacionado, apple
+Abrir noticia ->

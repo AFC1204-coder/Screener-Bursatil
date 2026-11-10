@@ -1,0 +1,3452 @@
+[
+ {
+  "name": "01-screener",
+  "size": "390x844",
+  "path": "/",
+  "dclMs": 481,
+  "primerContenidoMs": 1186,
+  "estableMs": 6189,
+  "m": {
+   "vw": 390,
+   "vh": 844,
+   "scrollW": 390,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 13161,
+   "pantallas": 15.6,
+   "interactivos": 139,
+   "menos44": 124,
+   "menos24": 57,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "input.input.searchInput「Buscar valor」 370x40",
+    "summary「Precios del 15 octPrecio」 368x28",
+    "select「Orden movil」 114x26",
+    "button.mobileReviewBtn「Revisar」 52x26",
+    "summary「Más herramientas」 16x16",
+    "select.select「Plantillas guardadas」 118x26",
+    "input.input「Nombre de plantilla」 209x42",
+    "button.btn.btnSmall「Guardar」 57x26",
+    "button.btn.btnSmall「Copia」 45x26"
+   ],
+   "ej24": [
+    "summary「Más herramientas」 16x16",
+    "button「Traer datos frescos」 14x58",
+    "button「Resetear criterios」 14x41",
+    "button「CSV」 14x26",
+    "button「Guardar snapshot de resu」 14x26",
+    "button「JSON audit」 14x41"
+   ],
+   "textEls": 1138,
+   "texto12": [
+    [
+     "11px",
+     621
+    ],
+    [
+     "10px",
+     49
+    ]
+   ],
+   "ejTexto12": [
+    "button.screenerMobileSubBarBtn「Filtros (5)」 11px",
+    "span.screenerMobileSubBarFichaLabel「Líderes Etapa 2」 11px",
+    "button.screenerMobileSubBarBtn.screenerMobileSubBarBtnPrimary「Revisar」 11px",
+    "p.screenerTruthLine「937 de 3287 pasan · orde」 11px",
+    "span.screenerMobileStatusFoldLabel「Precios del 15 oct」 11px",
+    "em.screenerMobileStatusFoldPeek「Precios del 15 oct · Los」 11px",
+    "span「937 resultados · 1-50 · 」 11px",
+    "button.mobileReviewBtn「Revisar」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 794,
+   "bottomNavH": 44,
+   "navItems": [
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 390
+    },
+    {
+     "el": "div.screenerMobileSubBar「Acciones rápidas del scr」",
+     "top": 46,
+     "h": 54,
+     "w": 374
+    },
+    {
+     "el": "div.mobileResultListHead「937 resultados · 1-50 · 」",
+     "top": 243,
+     "h": 34,
+     "w": 370
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 794,
+     "h": 44,
+     "w": 360
+    }
+   ],
+   "h1": {
+    "text": "Líderes Etapa 2",
+    "y": 0,
+    "fs": "20px"
+   },
+   "filas": 50,
+   "firstRowY": 338,
+   "filasVisibles": 1,
+   "altoFila": [
+    264,
+    253,
+    264,
+    253,
+    253
+   ],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 23,
+  "kb": 11354,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightl 2297KB gzip",
+   "/api/supabase/status 3KB sin-compr",
+   "/api/weekly-changes 0KB sin-compr",
+   "/api/weekly-changes 0KB sin-compr",
+   "/api/data-providers 13KB sin-compr",
+   "/api/weekly-changes 34KB sin-compr",
+   "/api/scans/chart-preview 12KB gzip",
+   "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightl 2337KB gzip"
+  ],
+  "kbApi": 4695,
+  "kbJs": 6509,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  },
+  "interacciones": {
+   "filtros": null,
+   "vistas": [
+    "Líderes Etapa 2 202x44",
+    "Cerca de pivot 202x44",
+    "Deterioro 202x44",
+    "Líderes intl 202x44",
+    "IPO recientes 202x44"
+   ],
+   "vistaRapidaMs": 1141,
+   "vistaRapida": {
+    "menos44": 153,
+    "ej44": [
+     "a.appBrand「StatsEdgeEquity Research」 104x36",
+     "input.input.searchInput「Buscar valor」 370x40",
+     "summary「Precios del 15 octPrecio」 368x28",
+     "select「Orden movil」 114x26",
+     "button.mobileReviewBtn「Revisar」 52x26",
+     "summary「Más herramientas」 16x16",
+     "select.select「Plantillas guardadas」 118x26",
+     "input.input「Nombre de plantilla」 209x42"
+    ],
+    "texto12": [
+     [
+      "11px",
+      1586
+     ],
+     [
+      "10px",
+      49
+     ]
+    ]
+   },
+   "vistaRapidaDialog": {
+    "cls": "stockModal quickReviewModal",
+    "y": 48,
+    "h": 796,
+    "scrollH": 795,
+    "texto": "TG Caza / Vista rápida / 1 de 937 TJGC TJGC Group Limited 31,89 +584,3% 3M Anterior 1/937 Siguiente Ficha TradingView Cerrar CLASIFICAR Reabrir Candidata Vigilar Descartar COLA 937 TG TJGC TJGC Group Limited Sin RS MI MRNA Moderna, Inc. 99 CT CYPH Cypherpunk Technologies Inc. Sin RS IB IOVA Iovance Biotherapeutics, Inc. 99 AM RCEL AVITA Medical, Inc. 99 OI OABI OmniAb, Inc. 98 AC TEAM Atlassian Co"
+   }
+  }
+ },
+ {
+  "name": "02-ficha-AAPL",
+  "size": "390x844",
+  "path": "/stock/AAPL",
+  "dclMs": 273,
+  "primerContenidoMs": 2560,
+  "estableMs": 7562,
+  "m": {
+   "vw": 390,
+   "vh": 844,
+   "scrollW": 390,
+   "hScroll": false,
+   "overflow": [
+    "div.pageTicketActions「ScreenerWeb oficialIr」 right=426",
+    "div.pageTicketSearch「Ir」 right=426",
+    "div.stockChartSearch「Buscar otro valor」 right=426",
+    "form.stockChartSearchForm「Ir」 right=426",
+    "input.input.stockChartSearchInput「Buscar ticker o nombre」 right=399",
+    "button.stockChartSearchSubmit「Ir」 right=426"
+   ],
+   "docH": 6394,
+   "pantallas": 7.6,
+   "interactivos": 95,
+   "menos44": 66,
+   "menos24": 4,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "a.stockHeroLink.stockBackLink「Screener」 79x36",
+    "a.stockHeroLink「Web oficial」 91x36",
+    "input.input.stockChartSearchInput「Buscar ticker o nombre」 389x36",
+    "button.stockChartSearchSubmit「Ir」 23x36",
+    "a「Volver」 49x27",
+    "a「Anterior」 60x27",
+    "a.primary「Siguiente」 66x27",
+    "summary「Cambiar clasificación」 56x40",
+    "button.good「Candidata」 136x36"
+   ],
+   "ej24": [
+    "button.stockChartSearchSubmit「Ir」 23x36",
+    "a.stockDescMethodLink「Metodología」 66x14",
+    "summary「Salud 55/100Metodología」 302x19",
+    "a.stockDescMethodLink「Metodología」 73x15"
+   ],
+   "textEls": 393,
+   "texto12": [
+    [
+     "11px",
+     168
+    ],
+    [
+     "10px",
+     8
+    ]
+   ],
+   "ejTexto12": [
+    "span.stockStageQualifier「Pre-fuga」 11px",
+    "span.stockVerdictChange「-0,70 (-0,2%)」 11px",
+    "button.stockChartSearchSubmit「Ir」 11px",
+    "span「Review」 11px",
+    "em「Cola completa」 11px",
+    "a「Volver」 11px",
+    "a「Anterior」 11px",
+    "a.primary「Siguiente」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 794,
+   "bottomNavH": 44,
+   "navItems": [
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 390
+    },
+    {
+     "el": "th「Magnitud」",
+     "top": 3512,
+     "h": 29,
+     "w": 230
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 794,
+     "h": 44,
+     "w": 360
+    }
+   ],
+   "h1": {
+    "text": "AAPL",
+    "y": 73,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Archivo",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 28,
+  "kb": 5325,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/similar?symbol=AAPL&name=Apple+Inc.&sector=Technology&indu 5KB sin-compr",
+   "/api/social-sentiment?symbol=AAPL&name=Apple+Inc. 1KB sin-compr",
+   "/api/similar?symbol=AAPL&name=Apple+Inc.&sector=Technology&indu 5KB sin-compr",
+   "/api/social-sentiment?symbol=AAPL&name=Apple+Inc. 1KB sin-compr"
+  ],
+  "kbApi": 11,
+  "kbJs": 5001,
+  "kbImg": 3,
+  "nImg": 1,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.7,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  },
+  "grafico": {
+   "yAbs": 884,
+   "w": 332,
+   "h": 430
+  },
+  "horizontal": {
+   "canvas": "747x462",
+   "bottomNavH": 0,
+   "topBarH": 50,
+   "hScroll": false
+  }
+ },
+ {
+  "name": "03-listas",
+  "size": "390x844",
+  "path": "/lists",
+  "dclMs": 2383,
+  "primerContenidoMs": 3783,
+  "estableMs": 8786,
+  "m": {
+   "vw": 390,
+   "vh": 844,
+   "scrollW": 390,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 958,
+   "pantallas": 1.1,
+   "interactivos": 12,
+   "menos44": 10,
+   "menos24": 1,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "button.btn「Guardar vista」 103x30",
+    "a.btn.btnPrimary「Revisar」 69x30",
+    "summary.marketReliabilityStripLabel「Listas · cobertura」 99x17",
+    "summary.marketReliabilityStripToggle「[+]」 26x27",
+    "a.navItem.「Screener」 57x36",
+    "a.navItem.active「Listas」 57x36",
+    "a.navItem.「Sectores」 57x36",
+    "a.navItem.「Research」 57x36",
+    "a.navItem.「Mercado」 57x36"
+   ],
+   "ej24": [
+    "summary.marketReliabilityStripLabel「Listas · cobertura」 99x17"
+   ],
+   "textEls": 69,
+   "texto12": [
+    [
+     "11px",
+     27
+    ]
+   ],
+   "ejTexto12": [
+    "summary.marketReliabilityStripLabel「Listas · cobertura」 11px",
+    "span「i」 11px",
+    "summary.marketReliabilityStripToggle「[+]」 11px",
+    "h3「Fiabilidad del ranking」 11px",
+    "span.discoveryStatus.warn「Copia local」 11px",
+    "em「filas del ranking」 11px",
+    "em「precio viejo」 11px",
+    "em「cobertura baja」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 794,
+   "bottomNavH": 44,
+   "navItems": [
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 390
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 794,
+     "h": 44,
+     "w": 360
+    }
+   ],
+   "h1": {
+    "text": "Listas",
+    "y": 73,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 18,
+  "kb": 4028,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=8 12KB sin-compr"
+  ],
+  "kbApi": 12,
+  "kbJs": 3963,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 91,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "04-research",
+  "size": "390x844",
+  "path": "/research-desk",
+  "dclMs": 786,
+  "primerContenidoMs": 1906,
+  "estableMs": 6909,
+  "m": {
+   "vw": 390,
+   "vh": 844,
+   "scrollW": 390,
+   "hScroll": false,
+   "overflow": [
+    "table.table「★TickerEmpresaTemaEtapaC」 right=1121",
+    "thead「★TickerEmpresaTemaEtapaC」 right=1121",
+    "tr「★TickerEmpresaTemaEtapaC」 right=1121",
+    "th「Cambios」 right=411",
+    "th「3M」 right=453",
+    "th「6M」 right=494"
+   ],
+   "docH": 1374,
+   "pantallas": 1.6,
+   "interactivos": 27,
+   "menos44": 16,
+   "menos24": 2,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "a.btn「IPO radar」 80x30",
+    "a.btn「Revisar favoritos」 121x30",
+    "button.btn.btnPrimary「Actualizar favoritos」 141x30",
+    "summary.marketReliabilityStripLabel「Research · estado」 101x17",
+    "summary.marketReliabilityStripToggle「[+]」 26x27",
+    "button.btn「Exportar snapshot」 130x40",
+    "button.btn.btnGhost「Eliminar snapshot」 126x40",
+    "a.btn「Revisar」 64x40",
+    "summary「Herramientas de mantenim」 344x19"
+   ],
+   "ej24": [
+    "summary.marketReliabilityStripLabel「Research · estado」 101x17",
+    "summary「Herramientas de mantenim」 344x19"
+   ],
+   "textEls": 92,
+   "texto12": [
+    [
+     "11px",
+     43
+    ]
+   ],
+   "ejTexto12": [
+    "summary.marketReliabilityStripLabel「Research · estado」 11px",
+    "summary.marketReliabilityStripToggle「[+]」 11px",
+    "h3「Sincronización en la nub」 11px",
+    "span「Conectada」 11px",
+    "h3「Resumen local」 11px",
+    "span「1 entradas」 11px",
+    "em「local」 11px",
+    "em「media -」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 794,
+   "bottomNavH": 44,
+   "navItems": [
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 390
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 794,
+     "h": 44,
+     "w": 360
+    }
+   ],
+   "h1": {
+    "text": "Research",
+    "y": 73,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono",
+    "ui-monospace"
+   ]
+  },
+  "peticiones": 38,
+  "kb": 7253,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/favorites/snapshots?days=180 29KB sin-compr",
+   "/api/supabase/status 3KB sin-compr",
+   "/api/favorites/snapshots?days=180 29KB sin-compr",
+   "/api/auth/session 0KB sin-compr",
+   "/api/favorites/snapshots?days=180 29KB sin-compr",
+   "/api/supabase/status 3KB sin-compr",
+   "/api/favorites/snapshots?days=180 29KB sin-compr"
+  ],
+  "kbApi": 123,
+  "kbJs": 7026,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 70,
+   "p95": 16.7,
+   "max": 350,
+   "sobre33": 1,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "05-review",
+  "size": "390x844",
+  "path": "/review",
+  "dclMs": 696,
+  "primerContenidoMs": 2371,
+  "estableMs": 7374,
+  "m": {
+   "vw": 390,
+   "vh": 844,
+   "scrollW": 390,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 3133,
+   "pantallas": 3.7,
+   "interactivos": 33,
+   "menos44": 24,
+   "menos24": 1,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "button.btn.btnActive「Cola actual」 78x24",
+    "button.btn.「Último snapshot」 105x24",
+    "button.btn.「Favoritos」 67x24",
+    "button.btn「Anterior」 181x28",
+    "button.btn.btnPrimary「Siguiente」 181x28",
+    "button.btn「Favorito」 181x28",
+    "button.btn「Revisada」 181x28",
+    "button.btn.btnGhost「Ocultar」 181x28",
+    "button.btn.btnGhost「Ver ocultas」 181x28"
+   ],
+   "ej24": [
+    "a「」 35x19"
+   ],
+   "textEls": 90,
+   "texto12": [
+    [
+     "11px",
+     15
+    ],
+    [
+     "9px",
+     13
+    ]
+   ],
+   "ejTexto12": [
+    "button.btn.btnActive「Cola actual」 11px",
+    "button.btn.「Último snapshot」 11px",
+    "button.btn.「Favoritos」 11px",
+    "span「RS global」 11px",
+    "span「1/937」 11px",
+    "em「/」 11px",
+    "b「RS」 9px",
+    "em.reviewRsMissing「Sin histórico」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 794,
+   "bottomNavH": 44,
+   "navItems": [
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 390
+    },
+    {
+     "el": "button.reviewQueueExpandRail「Mostrar cola de revisión」",
+     "top": 341,
+     "h": 47,
+     "w": 370
+    },
+    {
+     "el": "aside.reviewSide「FichaTradingView★RSSin h」",
+     "top": 1401,
+     "h": 1610,
+     "w": 370
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 794,
+     "h": 44,
+     "w": 360
+    }
+   ],
+   "h1": {
+    "text": "Vista rápida",
+    "y": 70,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 26,
+  "kb": 4976,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/chart?symbol=TJGC&range=6M&interval=D 0KB gzip",
+   "/api/rs-weekly?symbol=TJGC&limit=180&sector=Communication+Service 0KB sin-compr",
+   "/api/scans/chart-preview 1KB gzip",
+   "/api/chart?symbol=TJGC&range=6M&interval=D 5KB gzip",
+   "/api/chart?symbol=MRNA&range=6M&interval=D 7KB gzip",
+   "/api/rs-weekly?symbol=MRNA&limit=180&sector=Healthcare&industry=B 21KB sin-compr",
+   "/api/chart?symbol=AGL&range=6M&interval=D 6KB gzip",
+   "/api/rs-weekly?symbol=AGL&limit=180&sector=Healthcare&industry=Me 21KB sin-compr"
+  ],
+  "kbApi": 61,
+  "kbJs": 4830,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 91,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "06-sectores",
+  "size": "390x844",
+  "path": "/sectors",
+  "dclMs": 896,
+  "primerContenidoMs": 1934,
+  "estableMs": 6936,
+  "m": {
+   "vw": 390,
+   "vh": 844,
+   "scrollW": 390,
+   "hScroll": false,
+   "overflow": [
+    "div.ptField「FuerzaTodosFuertesConstr」 right=418",
+    "div.pageTicketSeg「Filtrar fuerza」 right=418",
+    "button.btn.「Muy débiles」 right=415",
+    "table.table.sectorTapeTable「SectorETFEstadoScoreEstr」 right=1311",
+    "thead「SectorETFEstadoScoreEstr」 right=1311",
+    "tr「SectorETFEstadoScoreEstr」 right=1311"
+   ],
+   "docH": 1543,
+   "pantallas": 1.8,
+   "interactivos": 19,
+   "menos44": 19,
+   "menos24": 1,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "button.btn「Recargar local」 108x30",
+    "select.select「Snapshot del 18 oct 2026」 235x28",
+    "select.select「🌐 Todos los países」 194x28",
+    "button.btn.btnActive「Tema」 52x24",
+    "button.btn.「Sector」 59x24",
+    "button.btn.「Subsector」 80x24",
+    "button.btn.btnActive「Todos」 55x24",
+    "button.btn.「Fuertes」 64x24",
+    "button.btn.「Constructivos」 102x24"
+   ],
+   "ej24": [
+    "summary.marketReliabilityStripLabel「Sectores · cobertura」 115x17"
+   ],
+   "textEls": 281,
+   "texto12": [
+    [
+     "11px",
+     76
+    ]
+   ],
+   "ejTexto12": [
+    "span「Fuente」 11px",
+    "span「País」 11px",
+    "span「Agrupar por」 11px",
+    "span「Fuerza」 11px",
+    "summary.marketReliabilityStripLabel「Sectores · cobertura」 11px",
+    "span「i」 11px",
+    "summary.marketReliabilityStripToggle「[+]」 11px",
+    "h3「Fiabilidad sectorial」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 794,
+   "bottomNavH": 44,
+   "navItems": [
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 390
+    },
+    {
+     "el": "th「Sector」",
+     "top": 903,
+     "h": 28,
+     "w": 215
+    },
+    {
+     "el": "td「TecnologíaCrecimiento」",
+     "top": 931,
+     "h": 37,
+     "w": 215
+    },
+    {
+     "el": "td「SaludDefensivo」",
+     "top": 968,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「ComunicacionesCrecimient」",
+     "top": 1004,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「EnergíaValor / materias」",
+     "top": 1040,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「FinancierasCíclico」",
+     "top": 1076,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「Real estateSensibles a t」",
+     "top": 1112,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「Consumo defensivoDefensi」",
+     "top": 1148,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「IndustrialesCíclico」",
+     "top": 1184,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「MaterialesCíclico」",
+     "top": 1220,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「Consumo discrecionalCícl」",
+     "top": 1256,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「UtilitiesDefensivo」",
+     "top": 1292,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 794,
+     "h": 44,
+     "w": 360
+    }
+   ],
+   "h1": {
+    "text": "Sectores",
+    "y": 73,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 36,
+  "kb": 6546,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=8 12KB sin-compr",
+   "/api/market-health 30KB sin-compr",
+   "/api/auth/session 0KB sin-compr",
+   "/api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=8 12KB sin-compr",
+   "/api/market-health 30KB sin-compr"
+  ],
+  "kbApi": 85,
+  "kbJs": 6357,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 91,
+   "p95": 16.7,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "07-mercado",
+  "size": "390x844",
+  "path": "/market-health",
+  "dclMs": 648,
+  "primerContenidoMs": 1752,
+  "estableMs": 6754,
+  "m": {
+   "vw": 390,
+   "vh": 844,
+   "scrollW": 390,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 958,
+   "pantallas": 1.1,
+   "interactivos": 9,
+   "menos44": 9,
+   "menos24": 1,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "button.btn.btnPrimary「Actualizando…」 114x30",
+    "summary.marketReliabilityStripLabel「Datos · cobertura」 99x17",
+    "summary.marketReliabilityStripToggle「[+]」 26x27",
+    "a.navItem.「Screener」 57x36",
+    "a.navItem.「Listas」 57x36",
+    "a.navItem.「Sectores」 57x36",
+    "a.navItem.「Research」 57x36",
+    "a.navItem.active「Mercado」 57x36"
+   ],
+   "ej24": [
+    "summary.marketReliabilityStripLabel「Datos · cobertura」 99x17"
+   ],
+   "textEls": 35,
+   "texto12": [
+    [
+     "11px",
+     14
+    ]
+   ],
+   "ejTexto12": [
+    "summary.marketReliabilityStripLabel「Datos · cobertura」 11px",
+    "span「i」 11px",
+    "summary.marketReliabilityStripToggle「[+]」 11px",
+    "h3「Cobertura por mercado」 11px",
+    "span「actualizando」 11px",
+    "h3「Fiabilidad metodológica」 11px",
+    "span「Guardrails OK」 11px",
+    "em「0 fallos」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 794,
+   "bottomNavH": 44,
+   "navItems": [
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 390
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 794,
+     "h": 44,
+     "w": 360
+    }
+   ],
+   "h1": {
+    "text": "Mercado",
+    "y": 73,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 57,
+  "kb": 7136,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/market-health 30KB sin-compr",
+   "/api/market-breadth 5KB sin-compr",
+   "/api/market-leadership 0KB sin-compr",
+   "/api/market-news 18KB sin-compr",
+   "/api/social-sentiment 1KB sin-compr",
+   "/api/methodology-health 1KB sin-compr",
+   "/api/coverage?markets=US,JP,HK,AU,TW 0KB sin-compr",
+   "/api/market-health 30KB sin-compr",
+   "/api/market-breadth 0KB sin-compr",
+   "/api/market-leadership 0KB sin-compr",
+   "/api/market-news 18KB sin-compr",
+   "/api/social-sentiment 1KB sin-compr",
+   "/api/methodology-health 1KB sin-compr",
+   "/api/coverage?markets=US,JP,HK,AU,TW 0KB sin-compr",
+   "/api/auth/session 0KB sin-compr",
+   "/api/market-health 30KB sin-compr",
+   "/api/market-breadth 5KB sin-compr",
+   "/api/market-leadership 0KB sin-compr",
+   "/api/market-news 0KB sin-compr",
+   "/api/social-sentiment 1KB sin-compr",
+   "/api/methodology-health 1KB sin-compr",
+   "/api/coverage?markets=US,JP,HK,AU,TW 0KB sin-compr",
+   "/api/market-health 0KB sin-compr",
+   "/api/market-breadth 0KB sin-compr",
+   "/api/market-leadership 0KB sin-compr",
+   "/api/market-news 0KB sin-compr",
+   "/api/social-sentiment 0KB sin-compr",
+   "/api/methodology-health 0KB sin-compr",
+   "/api/coverage?markets=US,JP,HK,AU,TW 0KB sin-compr"
+  ],
+  "kbApi": 144,
+  "kbJs": 6880,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 85,
+   "p95": 16.7,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": [
+    101
+   ]
+  }
+ },
+ {
+  "name": "08-ipo-radar",
+  "size": "390x844",
+  "path": "/ipo-radar",
+  "dclMs": 7741,
+  "primerContenidoMs": 8553,
+  "estableMs": 13556,
+  "m": {
+   "vw": 390,
+   "vh": 844,
+   "scrollW": 390,
+   "hScroll": false,
+   "overflow": [
+    "div.pageTicketActions「Importar del último scan」 right=569",
+    "button.btn「Exportar backup」 right=428",
+    "button.btn.btnPrimary「Avisar pendientes」 right=569"
+   ],
+   "docH": 1300,
+   "pantallas": 1.5,
+   "interactivos": 19,
+   "menos44": 18,
+   "menos24": 1,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "button.btn「Importar del último scan」 168x30",
+    "button.btn「Importar JSON」 112x30",
+    "button.btn「Exportar backup」 123x30",
+    "button.btn.btnPrimary「Avisar pendientes」 132x30",
+    "input.input「」 344x30",
+    "input.input「」 344x30",
+    "select.select「US · Estados UnidosES · 」 344x30",
+    "input.input「」 344x30",
+    "input.input「」 344x30"
+   ],
+   "ej24": [
+    "input「」 13x16"
+   ],
+   "textEls": 32,
+   "texto12": [
+    [
+     "11px",
+     17
+    ]
+   ],
+   "ejTexto12": [
+    "h2「IPOs seleccionadas」 11px",
+    "span.fine「las marcadas entran al s」 11px",
+    "p.fine「Sin IPOs vigiladas todav」 11px",
+    "h2「Nueva candidata IPO」 11px",
+    "span.fine「pre-IPO / primera cotiza」 11px",
+    "span「Empresa」 11px",
+    "span「Ticker si existe」 11px",
+    "span「País」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 0,
+   "bottomNavH": 0,
+   "navItems": [
+    "0x0 sin-etiqueta",
+    "0x0 sin-etiqueta",
+    "0x0 sin-etiqueta",
+    "0x0 sin-etiqueta",
+    "0x0 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 390
+    }
+   ],
+   "h1": {
+    "text": "IPO radar",
+    "y": 73,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono",
+    "ui-monospace"
+   ]
+  },
+  "peticiones": 15,
+  "kb": 2818,
+  "api": [
+   "/api/auth/session 0KB sin-compr"
+  ],
+  "kbApi": 0,
+  "kbJs": 2767,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.7,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "09-404",
+  "size": "390x844",
+  "path": "/ruta-que-no-existe",
+  "dclMs": 911,
+  "primerContenidoMs": 1954,
+  "estableMs": 6956,
+  "m": {
+   "vw": 390,
+   "vh": 844,
+   "scrollW": 390,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 958,
+   "pantallas": 1.1,
+   "interactivos": 13,
+   "menos44": 8,
+   "menos24": 0,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "input.input.stockChartSearchInput「Buscar ticker o nombre」 336x38",
+    "button.stockChartSearchSubmit「Ir」 28x36",
+    "a.navItem.「Screener」 57x36",
+    "a.navItem.「Listas」 57x36",
+    "a.navItem.「Sectores」 57x36",
+    "a.navItem.「Research」 57x36",
+    "a.navItem.「Mercado」 57x36"
+   ],
+   "ej24": [],
+   "textEls": 15,
+   "texto12": [
+    [
+     "11px",
+     3
+    ]
+   ],
+   "ejTexto12": [
+    "span.esEyebrow「StatsEdge · Error 404」 11px",
+    "span.esSearchLabel「¿Buscabas un valor? Busc」 11px",
+    "button.stockChartSearchSubmit「Ir」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 794,
+   "bottomNavH": 44,
+   "navItems": [
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta",
+    "57x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 390
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 794,
+     "h": 44,
+     "w": 360
+    }
+   ],
+   "h1": {
+    "text": "Esta página no existe",
+    "y": 110,
+    "fs": "16px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Archivo"
+   ]
+  },
+  "peticiones": 13,
+  "kb": 2741,
+  "api": [
+   "/api/auth/session 0KB sin-compr"
+  ],
+  "kbApi": 0,
+  "kbJs": 2695,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "01-screener",
+  "size": "360x740",
+  "path": "/",
+  "dclMs": 216,
+  "primerContenidoMs": 918,
+  "estableMs": 5920,
+  "m": {
+   "vw": 360,
+   "vh": 740,
+   "scrollW": 360,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 13175,
+   "pantallas": 17.8,
+   "interactivos": 139,
+   "menos44": 124,
+   "menos24": 57,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "input.input.searchInput「Buscar valor」 340x40",
+    "summary「Precios del 15 octPrecio」 338x28",
+    "select「Orden movil」 114x26",
+    "button.mobileReviewBtn「Revisar」 52x26",
+    "summary「Más herramientas」 16x16",
+    "select.select「Plantillas guardadas」 118x26",
+    "input.input「Nombre de plantilla」 209x42",
+    "button.btn.btnSmall「Guardar」 57x26",
+    "button.btn.btnSmall「Copia」 45x26"
+   ],
+   "ej24": [
+    "summary「Más herramientas」 16x16",
+    "button「Traer datos frescos」 14x58",
+    "button「Resetear criterios」 14x41",
+    "button「CSV」 14x26",
+    "button「Guardar snapshot de resu」 14x26",
+    "button「JSON audit」 14x41"
+   ],
+   "textEls": 1138,
+   "texto12": [
+    [
+     "11px",
+     621
+    ],
+    [
+     "10px",
+     49
+    ]
+   ],
+   "ejTexto12": [
+    "button.screenerMobileSubBarBtn「Filtros (5)」 11px",
+    "span.screenerMobileSubBarFichaLabel「Líderes Etapa 2」 11px",
+    "button.screenerMobileSubBarBtn.screenerMobileSubBarBtnPrimary「Revisar」 11px",
+    "p.screenerTruthLine「937 de 3287 pasan · orde」 11px",
+    "span.screenerMobileStatusFoldLabel「Precios del 15 oct」 11px",
+    "em.screenerMobileStatusFoldPeek「Precios del 15 oct · Los」 11px",
+    "span「937 resultados · 1-50 · 」 11px",
+    "button.mobileReviewBtn「Revisar」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 690,
+   "bottomNavH": 44,
+   "navItems": [
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 360
+    },
+    {
+     "el": "div.screenerMobileSubBar「Acciones rápidas del scr」",
+     "top": 46,
+     "h": 54,
+     "w": 344
+    },
+    {
+     "el": "div.mobileResultListHead「937 resultados · 1-50 · 」",
+     "top": 257,
+     "h": 34,
+     "w": 340
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 690,
+     "h": 44,
+     "w": 344
+    }
+   ],
+   "h1": {
+    "text": "Líderes Etapa 2",
+    "y": 0,
+    "fs": "20px"
+   },
+   "filas": 50,
+   "firstRowY": 352,
+   "filasVisibles": 1,
+   "altoFila": [
+    264,
+    253,
+    264,
+    253,
+    253
+   ],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 23,
+  "kb": 11354,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightl 2297KB gzip",
+   "/api/supabase/status 3KB sin-compr",
+   "/api/weekly-changes 0KB sin-compr",
+   "/api/weekly-changes 0KB sin-compr",
+   "/api/data-providers 13KB sin-compr",
+   "/api/weekly-changes 34KB sin-compr",
+   "/api/scans/chart-preview 12KB gzip",
+   "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightl 2337KB gzip"
+  ],
+  "kbApi": 4695,
+  "kbJs": 6509,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.7,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  },
+  "interacciones": {
+   "filtros": null,
+   "vistas": [
+    "Líderes Etapa 2 172x44",
+    "Cerca de pivot 172x44",
+    "Deterioro 172x44",
+    "Líderes intl 172x44",
+    "IPO recientes 172x44"
+   ],
+   "vistaRapidaMs": 1061,
+   "vistaRapida": {
+    "menos44": 153,
+    "ej44": [
+     "a.appBrand「StatsEdgeEquity Research」 104x36",
+     "input.input.searchInput「Buscar valor」 340x40",
+     "summary「Precios del 15 octPrecio」 338x28",
+     "select「Orden movil」 114x26",
+     "button.mobileReviewBtn「Revisar」 52x26",
+     "summary「Más herramientas」 16x16",
+     "select.select「Plantillas guardadas」 118x26",
+     "input.input「Nombre de plantilla」 209x42"
+    ],
+    "texto12": [
+     [
+      "11px",
+      1586
+     ],
+     [
+      "10px",
+      49
+     ]
+    ]
+   },
+   "vistaRapidaDialog": {
+    "cls": "stockModal quickReviewModal",
+    "y": 48,
+    "h": 692,
+    "scrollH": 691,
+    "texto": "TG Caza / Vista rápida / 1 de 937 TJGC TJGC Group Limited 31,89 +584,3% 3M Anterior 1/937 Siguiente Ficha TradingView Cerrar CLASIFICAR Reabrir Candidata Vigilar Descartar COLA 937 TG TJGC TJGC Group Limited Sin RS MI MRNA Moderna, Inc. 99 CT CYPH Cypherpunk Technologies Inc. Sin RS IB IOVA Iovance Biotherapeutics, Inc. 99 AM RCEL AVITA Medical, Inc. 99 OI OABI OmniAb, Inc. 98 AC TEAM Atlassian Co"
+   }
+  }
+ },
+ {
+  "name": "02-ficha-AAPL",
+  "size": "360x740",
+  "path": "/stock/AAPL",
+  "dclMs": 849,
+  "primerContenidoMs": 2591,
+  "estableMs": 7593,
+  "m": {
+   "vw": 360,
+   "vh": 740,
+   "scrollW": 360,
+   "hScroll": false,
+   "overflow": [
+    "div.pageTicketActions「ScreenerWeb oficialIr」 right=426",
+    "div.pageTicketSearch「Ir」 right=426",
+    "div.stockChartSearch「Buscar otro valor」 right=426",
+    "form.stockChartSearchForm「Ir」 right=426",
+    "input.input.stockChartSearchInput「Buscar ticker o nombre」 right=399",
+    "button.stockChartSearchSubmit「Ir」 right=426"
+   ],
+   "docH": 6503,
+   "pantallas": 8.8,
+   "interactivos": 95,
+   "menos44": 66,
+   "menos24": 4,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "a.stockHeroLink.stockBackLink「Screener」 79x36",
+    "a.stockHeroLink「Web oficial」 91x36",
+    "input.input.stockChartSearchInput「Buscar ticker o nombre」 389x36",
+    "button.stockChartSearchSubmit「Ir」 23x36",
+    "a「Volver」 49x27",
+    "a「Anterior」 60x27",
+    "a.primary「Siguiente」 66x27",
+    "summary「Cambiar clasificación」 56x40",
+    "button.good「Candidata」 136x36"
+   ],
+   "ej24": [
+    "button.stockChartSearchSubmit「Ir」 23x36",
+    "a.stockDescMethodLink「Metodología」 66x14",
+    "summary「Salud 55/100Metodología」 272x19",
+    "a.stockDescMethodLink「Metodología」 73x15"
+   ],
+   "textEls": 393,
+   "texto12": [
+    [
+     "11px",
+     168
+    ],
+    [
+     "10px",
+     8
+    ]
+   ],
+   "ejTexto12": [
+    "span.stockStageQualifier「Pre-fuga」 11px",
+    "span.stockVerdictChange「-0,70 (-0,2%)」 11px",
+    "button.stockChartSearchSubmit「Ir」 11px",
+    "span「Review」 11px",
+    "em「Cola completa」 11px",
+    "a「Volver」 11px",
+    "a「Anterior」 11px",
+    "a.primary「Siguiente」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 690,
+   "bottomNavH": 44,
+   "navItems": [
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 360
+    },
+    {
+     "el": "th「Magnitud」",
+     "top": 3561,
+     "h": 29,
+     "w": 230
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 690,
+     "h": 44,
+     "w": 344
+    }
+   ],
+   "h1": {
+    "text": "AAPL",
+    "y": 73,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Archivo",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 22,
+  "kb": 5175,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/similar?symbol=AAPL&name=Apple+Inc.&sector=Technology&indu 5KB sin-compr",
+   "/api/social-sentiment?symbol=AAPL&name=Apple+Inc. 1KB sin-compr",
+   "/api/similar?symbol=AAPL&name=Apple+Inc.&sector=Technology&indu 5KB sin-compr",
+   "/api/social-sentiment?symbol=AAPL&name=Apple+Inc. 1KB sin-compr"
+  ],
+  "kbApi": 11,
+  "kbJs": 5001,
+  "kbImg": 3,
+  "nImg": 1,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.7,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "03-listas",
+  "size": "360x740",
+  "path": "/lists",
+  "dclMs": 577,
+  "primerContenidoMs": 1612,
+  "estableMs": 6614,
+  "m": {
+   "vw": 360,
+   "vh": 740,
+   "scrollW": 360,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 854,
+   "pantallas": 1.2,
+   "interactivos": 12,
+   "menos44": 10,
+   "menos24": 1,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "button.btn「Guardar vista」 103x30",
+    "a.btn.btnPrimary「Revisar」 69x30",
+    "summary.marketReliabilityStripLabel「Listas · cobertura」 99x17",
+    "summary.marketReliabilityStripToggle「[+]」 26x27",
+    "a.navItem.「Screener」 54x36",
+    "a.navItem.active「Listas」 54x36",
+    "a.navItem.「Sectores」 54x36",
+    "a.navItem.「Research」 54x36",
+    "a.navItem.「Mercado」 54x36"
+   ],
+   "ej24": [
+    "summary.marketReliabilityStripLabel「Listas · cobertura」 99x17"
+   ],
+   "textEls": 69,
+   "texto12": [
+    [
+     "11px",
+     27
+    ]
+   ],
+   "ejTexto12": [
+    "summary.marketReliabilityStripLabel「Listas · cobertura」 11px",
+    "span「i」 11px",
+    "summary.marketReliabilityStripToggle「[+]」 11px",
+    "h3「Fiabilidad del ranking」 11px",
+    "span.discoveryStatus.warn「Copia local」 11px",
+    "em「filas del ranking」 11px",
+    "em「precio viejo」 11px",
+    "em「cobertura baja」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 690,
+   "bottomNavH": 44,
+   "navItems": [
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 360
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 690,
+     "h": 44,
+     "w": 344
+    }
+   ],
+   "h1": {
+    "text": "Listas",
+    "y": 73,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 16,
+  "kb": 4026,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=8 12KB sin-compr"
+  ],
+  "kbApi": 12,
+  "kbJs": 3962,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 91,
+   "p95": 16.7,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "04-research",
+  "size": "360x740",
+  "path": "/research-desk",
+  "dclMs": 575,
+  "primerContenidoMs": 1664,
+  "estableMs": 6666,
+  "m": {
+   "vw": 360,
+   "vh": 740,
+   "scrollW": 360,
+   "hScroll": false,
+   "overflow": [
+    "div.pageTicketActions「IPO radarRevisar favorit」 right=369",
+    "button.btn.btnPrimary「Actualizar favoritos」 right=369",
+    "div.marketReliabilityBlock「Sincronización en la nub」 right=378",
+    "div.marketReliabilityBlockHead「Sincronización en la nub」 right=378",
+    "span「Conectada」 right=378",
+    "p.marketSentimentRead「Conectado con la base de」 right=378"
+   ],
+   "docH": 1374,
+   "pantallas": 1.9,
+   "interactivos": 27,
+   "menos44": 16,
+   "menos24": 2,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "a.btn「IPO radar」 80x30",
+    "a.btn「Revisar favoritos」 121x30",
+    "button.btn.btnPrimary「Actualizar favoritos」 141x30",
+    "summary.marketReliabilityStripLabel「Research · estado」 101x17",
+    "summary.marketReliabilityStripToggle「[+]」 26x27",
+    "button.btn「Exportar snapshot」 130x40",
+    "button.btn.btnGhost「Eliminar snapshot」 126x40",
+    "summary「Herramientas de mantenim」 314x19",
+    "button.btn「Traer copia」 86x40"
+   ],
+   "ej24": [
+    "summary.marketReliabilityStripLabel「Research · estado」 101x17",
+    "summary「Herramientas de mantenim」 314x19"
+   ],
+   "textEls": 92,
+   "texto12": [
+    [
+     "11px",
+     43
+    ]
+   ],
+   "ejTexto12": [
+    "summary.marketReliabilityStripLabel「Research · estado」 11px",
+    "summary.marketReliabilityStripToggle「[+]」 11px",
+    "h3「Sincronización en la nub」 11px",
+    "span「Conectada」 11px",
+    "h3「Resumen local」 11px",
+    "span「1 entradas」 11px",
+    "em「local」 11px",
+    "em「media -」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 690,
+   "bottomNavH": 44,
+   "navItems": [
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 360
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 690,
+     "h": 44,
+     "w": 344
+    }
+   ],
+   "h1": {
+    "text": "Research",
+    "y": 73,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono",
+    "ui-monospace"
+   ]
+  },
+  "peticiones": 18,
+  "kb": 4443,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/favorites/snapshots?days=180 29KB sin-compr",
+   "/api/supabase/status 3KB sin-compr",
+   "/api/favorites/snapshots?days=180 29KB sin-compr"
+  ],
+  "kbApi": 62,
+  "kbJs": 4330,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 91,
+   "p95": 16.7,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "05-review",
+  "size": "360x740",
+  "path": "/review",
+  "dclMs": 797,
+  "primerContenidoMs": 2480,
+  "estableMs": 7483,
+  "m": {
+   "vw": 360,
+   "vh": 740,
+   "scrollW": 360,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 3137,
+   "pantallas": 4.2,
+   "interactivos": 33,
+   "menos44": 24,
+   "menos24": 1,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "button.btn.btnActive「Cola actual」 78x24",
+    "button.btn.「Último snapshot」 105x24",
+    "button.btn.「Favoritos」 67x24",
+    "button.btn「Anterior」 166x28",
+    "button.btn.btnPrimary「Siguiente」 166x28",
+    "button.btn「Favorito」 166x28",
+    "button.btn「Revisada」 166x28",
+    "button.btn.btnGhost「Ocultar」 166x28",
+    "button.btn.btnGhost「Ver ocultas」 166x28"
+   ],
+   "ej24": [
+    "a「」 35x19"
+   ],
+   "textEls": 90,
+   "texto12": [
+    [
+     "11px",
+     15
+    ],
+    [
+     "9px",
+     13
+    ]
+   ],
+   "ejTexto12": [
+    "button.btn.btnActive「Cola actual」 11px",
+    "button.btn.「Último snapshot」 11px",
+    "button.btn.「Favoritos」 11px",
+    "span「RS global」 11px",
+    "span「1/937」 11px",
+    "em「/」 11px",
+    "b「RS」 9px",
+    "em.reviewRsMissing「Sin histórico」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 690,
+   "bottomNavH": 44,
+   "navItems": [
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 360
+    },
+    {
+     "el": "button.reviewQueueExpandRail「Mostrar cola de revisión」",
+     "top": 341,
+     "h": 47,
+     "w": 340
+    },
+    {
+     "el": "aside.reviewSide「FichaTradingView★RSSin h」",
+     "top": 1369,
+     "h": 1646,
+     "w": 340
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 690,
+     "h": 44,
+     "w": 344
+    }
+   ],
+   "h1": {
+    "text": "Vista rápida",
+    "y": 70,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 26,
+  "kb": 4976,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/chart?symbol=TJGC&range=6M&interval=D 0KB gzip",
+   "/api/rs-weekly?symbol=TJGC&limit=180&sector=Communication+Service 0KB sin-compr",
+   "/api/scans/chart-preview 1KB gzip",
+   "/api/chart?symbol=TJGC&range=6M&interval=D 5KB gzip",
+   "/api/chart?symbol=MRNA&range=6M&interval=D 7KB gzip",
+   "/api/rs-weekly?symbol=MRNA&limit=180&sector=Healthcare&industry=B 21KB sin-compr",
+   "/api/chart?symbol=AGL&range=6M&interval=D 6KB gzip",
+   "/api/rs-weekly?symbol=AGL&limit=180&sector=Healthcare&industry=Me 21KB sin-compr"
+  ],
+  "kbApi": 61,
+  "kbJs": 4830,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 91,
+   "p95": 16.7,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "06-sectores",
+  "size": "360x740",
+  "path": "/sectors",
+  "dclMs": 564,
+  "primerContenidoMs": 1598,
+  "estableMs": 6600,
+  "m": {
+   "vw": 360,
+   "vh": 740,
+   "scrollW": 360,
+   "hScroll": false,
+   "overflow": [
+    "div.ptField「FuerzaTodosFuertesConstr」 right=418",
+    "div.pageTicketSeg「Filtrar fuerza」 right=418",
+    "button.btn.「Muy débiles」 right=415",
+    "div.marketReliabilityBlock「Fiabilidad sectorialCopi」 right=368",
+    "div.marketReliabilityBlockHead「Fiabilidad sectorialCopi」 right=368",
+    "span.discoveryStatus.warn「Copia local」 right=368"
+   ],
+   "docH": 1564,
+   "pantallas": 2.1,
+   "interactivos": 19,
+   "menos44": 19,
+   "menos24": 1,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "button.btn「Recargar local」 108x30",
+    "select.select「Snapshot del 18 oct 2026」 235x28",
+    "select.select「🌐 Todos los países」 194x28",
+    "button.btn.btnActive「Tema」 52x24",
+    "button.btn.「Sector」 59x24",
+    "button.btn.「Subsector」 80x24",
+    "button.btn.btnActive「Todos」 55x24",
+    "button.btn.「Fuertes」 64x24",
+    "button.btn.「Constructivos」 102x24"
+   ],
+   "ej24": [
+    "summary.marketReliabilityStripLabel「Sectores · cobertura」 115x17"
+   ],
+   "textEls": 281,
+   "texto12": [
+    [
+     "11px",
+     76
+    ]
+   ],
+   "ejTexto12": [
+    "span「Fuente」 11px",
+    "span「País」 11px",
+    "span「Agrupar por」 11px",
+    "span「Fuerza」 11px",
+    "summary.marketReliabilityStripLabel「Sectores · cobertura」 11px",
+    "span「i」 11px",
+    "summary.marketReliabilityStripToggle「[+]」 11px",
+    "h3「Fiabilidad sectorial」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 690,
+   "bottomNavH": 44,
+   "navItems": [
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 360
+    },
+    {
+     "el": "th「Sector」",
+     "top": 924,
+     "h": 28,
+     "w": 215
+    },
+    {
+     "el": "td「TecnologíaCrecimiento」",
+     "top": 952,
+     "h": 37,
+     "w": 215
+    },
+    {
+     "el": "td「SaludDefensivo」",
+     "top": 989,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「ComunicacionesCrecimient」",
+     "top": 1025,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「EnergíaValor / materias」",
+     "top": 1061,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「FinancierasCíclico」",
+     "top": 1097,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「Real estateSensibles a t」",
+     "top": 1133,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「Consumo defensivoDefensi」",
+     "top": 1169,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「IndustrialesCíclico」",
+     "top": 1205,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「MaterialesCíclico」",
+     "top": 1241,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「Consumo discrecionalCícl」",
+     "top": 1277,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "td「UtilitiesDefensivo」",
+     "top": 1313,
+     "h": 36,
+     "w": 215
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 690,
+     "h": 44,
+     "w": 344
+    }
+   ],
+   "h1": {
+    "text": "Sectores",
+    "y": 73,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 17,
+  "kb": 3755,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=8 12KB sin-compr",
+   "/api/market-health 30KB sin-compr"
+  ],
+  "kbApi": 43,
+  "kbJs": 3660,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "07-mercado",
+  "size": "360x740",
+  "path": "/market-health",
+  "dclMs": 599,
+  "primerContenidoMs": 1397,
+  "estableMs": 6399,
+  "m": {
+   "vw": 360,
+   "vh": 740,
+   "scrollW": 360,
+   "hScroll": false,
+   "overflow": [
+    "div.marketReliabilityBlock「Cobertura por mercado5 m」 right=386",
+    "div.marketReliabilityBlockHead「Cobertura por mercado5 m」 right=386",
+    "span「5 mercados」 right=386",
+    "div.marketReliabilityRows「JPProveedor oficial no c」 right=386",
+    "div.marketReliabilityRow「JPProveedor oficial no c」 right=385",
+    "em「0%」 right=369"
+   ],
+   "docH": 8608,
+   "pantallas": 11.6,
+   "interactivos": 44,
+   "menos44": 13,
+   "menos24": 3,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "button.btn.btnPrimary「Actualizar」 86x30",
+    "summary.marketReliabilityStripLabel「Datos · cobertura」 99x17",
+    "summary.marketReliabilityStripToggle「[+]」 26x27",
+    "summary「Serie semanal completa」 314x17",
+    "a.btnSmall「Ver sectores」 95x36",
+    "summary「Titulares de mercado 24」 312x41",
+    "summary「Auditoría」 314x21",
+    "a.navItem.「Screener」 54x36",
+    "a.navItem.「Listas」 54x36"
+   ],
+   "ej24": [
+    "summary.marketReliabilityStripLabel「Datos · cobertura」 99x17",
+    "summary「Serie semanal completa」 314x17",
+    "summary「Auditoría」 314x21"
+   ],
+   "textEls": 812,
+   "texto12": [
+    [
+     "11px",
+     328
+    ],
+    [
+     "11.6667px",
+     5
+    ],
+    [
+     "10px",
+     101
+    ],
+    [
+     "9px",
+     6
+    ]
+   ],
+   "ejTexto12": [
+    "summary.marketReliabilityStripLabel「Datos · cobertura」 11px",
+    "summary.marketReliabilityStripToggle「[+]」 11px",
+    "h3「Cobertura por mercado」 11px",
+    "span「5 mercados」 11px",
+    "em「0%」 11px",
+    "em「0%」 11px",
+    "em「0%」 11px",
+    "em「0%」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 690,
+   "bottomNavH": 44,
+   "navItems": [
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 360
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 690,
+     "h": 44,
+     "w": 344
+    }
+   ],
+   "h1": {
+    "text": "Mercado",
+    "y": 73,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono",
+    "Archivo"
+   ]
+  },
+  "peticiones": 33,
+  "kb": 7728,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/market-health 30KB sin-compr",
+   "/api/market-breadth 5KB sin-compr",
+   "/api/market-leadership 1673KB sin-compr",
+   "/api/market-news 19KB sin-compr",
+   "/api/social-sentiment 1KB sin-compr",
+   "/api/methodology-health 1KB sin-compr",
+   "/api/coverage?markets=US,JP,HK,AU,TW 15KB sin-compr",
+   "/api/market-health 30KB sin-compr",
+   "/api/market-breadth 5KB sin-compr",
+   "/api/market-leadership 1673KB sin-compr",
+   "/api/market-news 19KB sin-compr",
+   "/api/social-sentiment 1KB sin-compr",
+   "/api/methodology-health 1KB sin-compr",
+   "/api/coverage?markets=US,JP,HK,AU,TW 15KB sin-compr",
+   "/api/coverage?markets=US,EU1,JP,HK,AU,TW 0KB sin-compr",
+   "/api/coverage?markets=US,EU1,JP,HK,AU,TW 0KB sin-compr"
+  ],
+  "kbApi": 3488,
+  "kbJs": 4185,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "08-ipo-radar",
+  "size": "360x740",
+  "path": "/ipo-radar",
+  "dclMs": 7785,
+  "primerContenidoMs": 8827,
+  "estableMs": 13830,
+  "m": {
+   "vw": 360,
+   "vh": 740,
+   "scrollW": 360,
+   "hScroll": false,
+   "overflow": [
+    "div.pageTicketActions「Importar del último scan」 right=569",
+    "button.btn「Exportar backup」 right=428",
+    "button.btn.btnPrimary「Avisar pendientes」 right=569"
+   ],
+   "docH": 1300,
+   "pantallas": 1.8,
+   "interactivos": 19,
+   "menos44": 18,
+   "menos24": 1,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "button.btn「Importar del último scan」 168x30",
+    "button.btn「Importar JSON」 112x30",
+    "button.btn「Exportar backup」 123x30",
+    "button.btn.btnPrimary「Avisar pendientes」 132x30",
+    "input.input「」 314x30",
+    "input.input「」 314x30",
+    "select.select「US · Estados UnidosES · 」 314x30",
+    "input.input「」 314x30",
+    "input.input「」 314x30"
+   ],
+   "ej24": [
+    "input「」 13x16"
+   ],
+   "textEls": 32,
+   "texto12": [
+    [
+     "11px",
+     17
+    ]
+   ],
+   "ejTexto12": [
+    "h2「IPOs seleccionadas」 11px",
+    "span.fine「las marcadas entran al s」 11px",
+    "p.fine「Sin IPOs vigiladas todav」 11px",
+    "h2「Nueva candidata IPO」 11px",
+    "span.fine「pre-IPO / primera cotiza」 11px",
+    "span「Empresa」 11px",
+    "span「Ticker si existe」 11px",
+    "span「País」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 0,
+   "bottomNavH": 0,
+   "navItems": [
+    "0x0 sin-etiqueta",
+    "0x0 sin-etiqueta",
+    "0x0 sin-etiqueta",
+    "0x0 sin-etiqueta",
+    "0x0 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 360
+    }
+   ],
+   "h1": {
+    "text": "IPO radar",
+    "y": 73,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono",
+    "ui-monospace"
+   ]
+  },
+  "peticiones": 15,
+  "kb": 2818,
+  "api": [
+   "/api/auth/session 0KB sin-compr"
+  ],
+  "kbApi": 0,
+  "kbJs": 2767,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "09-404",
+  "size": "360x740",
+  "path": "/ruta-que-no-existe",
+  "dclMs": 568,
+  "primerContenidoMs": 1594,
+  "estableMs": 6596,
+  "m": {
+   "vw": 360,
+   "vh": 740,
+   "scrollW": 360,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 854,
+   "pantallas": 1.2,
+   "interactivos": 13,
+   "menos44": 8,
+   "menos24": 0,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 104x36",
+    "input.input.stockChartSearchInput「Buscar ticker o nombre」 306x38",
+    "button.stockChartSearchSubmit「Ir」 28x36",
+    "a.navItem.「Screener」 54x36",
+    "a.navItem.「Listas」 54x36",
+    "a.navItem.「Sectores」 54x36",
+    "a.navItem.「Research」 54x36",
+    "a.navItem.「Mercado」 54x36"
+   ],
+   "ej24": [],
+   "textEls": 15,
+   "texto12": [
+    [
+     "11px",
+     3
+    ]
+   ],
+   "ejTexto12": [
+    "span.esEyebrow「StatsEdge · Error 404」 11px",
+    "span.esSearchLabel「¿Buscabas un valor? Busc」 11px",
+    "button.stockChartSearchSubmit「Ir」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 690,
+   "bottomNavH": 44,
+   "navItems": [
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta",
+    "54x36 sin-etiqueta"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 360
+    },
+    {
+     "el": "nav.bottomNav「Navegación principal」",
+     "top": 690,
+     "h": 44,
+     "w": 344
+    }
+   ],
+   "h1": {
+    "text": "Esta página no existe",
+    "y": 110,
+    "fs": "16px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Archivo"
+   ]
+  },
+  "peticiones": 13,
+  "kb": 2741,
+  "api": [
+   "/api/auth/session 0KB sin-compr"
+  ],
+  "kbApi": 0,
+  "kbJs": 2695,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "01-screener",
+  "size": "768x1024",
+  "path": "/",
+  "dclMs": 564,
+  "primerContenidoMs": 4090,
+  "estableMs": 9093,
+  "m": {
+   "vw": 768,
+   "vh": 1024,
+   "scrollW": 768,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 1074,
+   "pantallas": 1,
+   "interactivos": 1999,
+   "menos44": 158,
+   "menos24": 34,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 143x36",
+    "a.appHeaderNavItem.active「Screener」 98x32",
+    "a.appHeaderNavItem.「Listas」 79x32",
+    "a.appHeaderNavItem.「Sectores」 97x32",
+    "a.appHeaderNavItem.「Research」 99x32",
+    "a.appHeaderNavItem.「Mercado」 96x32",
+    "summary.marketCompactChip「Mercados: EE. UU.」 86x26",
+    "button.btn.btnGhost「Global」 194x30",
+    "button.btn.btnGhost「EE. UU.」 194x30",
+    "button.btn.btnGhost「US+Core intl」 194x30"
+   ],
+   "ej24": [
+    "summary「Personalizar mercados (1」 147x17",
+    "button.huntCardModeFamilyLink「Abrir familia」 63x16",
+    "button.huntCardModeFamilyLink「Abrir familia」 63x16",
+    "button.huntCardModeFamilyLink「Abrir familia」 63x16",
+    "button.screenerFilterBreakdownAuditLink「Ver auditoría」 67x17",
+    "a.huntTapeTickerSymbol「TJGC」 31x19"
+   ],
+   "textEls": 5925,
+   "texto12": [
+    [
+     "10px",
+     27
+    ],
+    [
+     "11px",
+     2000
+    ],
+    [
+     "9.16667px",
+     15
+    ]
+   ],
+   "ejTexto12": [
+    "small「Equity Research」 10px",
+    "em「1/27」 11px",
+    "span「Personalizar mercados (1」 11px",
+    "span「Plantillas」 11px",
+    "em「0 guardadas」 11px",
+    "span「Más bases de filtro」 11px",
+    "em「4」 11px",
+    "p.optionalBasePresetsHint「No sustituyen las fichas」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 0,
+   "bottomNavH": 0,
+   "navItems": [
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 768
+    },
+    {
+     "el": "div.huntTapeHead「TickerTemaSemanal ~12MEt」",
+     "top": 135,
+     "h": 28,
+     "w": 710
+    }
+   ],
+   "h1": {
+    "text": "Líderes Etapa 2",
+    "y": 62,
+    "fs": "20px"
+   },
+   "filas": 937,
+   "firstRowY": 163,
+   "filasVisibles": 26,
+   "altoFila": [
+    32,
+    32,
+    32,
+    32,
+    32
+   ],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 25,
+  "kb": 11389,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightl 2297KB gzip",
+   "/api/supabase/status 3KB sin-compr",
+   "/api/weekly-changes 0KB sin-compr",
+   "/api/weekly-changes 0KB sin-compr",
+   "/api/data-providers 13KB sin-compr",
+   "/api/weekly-changes 34KB sin-compr",
+   "/api/scans/chart-preview 0KB sin-compr",
+   "/api/scans/chart-preview 19KB gzip",
+   "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightl 2337KB gzip"
+  ],
+  "kbApi": 4702,
+  "kbJs": 6509,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "02-ficha-AAPL",
+  "size": "768x1024",
+  "path": "/stock/AAPL",
+  "dclMs": 926,
+  "primerContenidoMs": 2449,
+  "estableMs": 7452,
+  "m": {
+   "vw": 768,
+   "vh": 1024,
+   "scrollW": 768,
+   "hScroll": false,
+   "overflow": [
+    "table.table「Magnitud30 sept 202630 j」 right=1345",
+    "thead「Magnitud30 sept 202630 j」 right=1345",
+    "tr「Magnitud30 sept 202630 j」 right=1345",
+    "th「31 dic 2025」 right=801",
+    "th「30 sept 2025」 right=940",
+    "th「30 jun 2025」 right=1078"
+   ],
+   "docH": 4651,
+   "pantallas": 4.5,
+   "interactivos": 91,
+   "menos44": 68,
+   "menos24": 12,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 143x36",
+    "a.appHeaderNavItem.active「Screener」 98x32",
+    "a.appHeaderNavItem.「Listas」 79x32",
+    "a.appHeaderNavItem.「Sectores」 97x32",
+    "a.appHeaderNavItem.「Research」 99x32",
+    "a.appHeaderNavItem.「Mercado」 96x32",
+    "a.stockHeroLink.stockBackLink「Screener」 79x32",
+    "a.stockHeroLink「Web oficial」 91x32",
+    "input.input.stockChartSearchInput「Buscar ticker o nombre」 173x30",
+    "button.stockChartSearchSubmit「Ir」 23x30"
+   ],
+   "ej24": [
+    "button.stockChartSearchSubmit「Ir」 23x30",
+    "input「」 16x30",
+    "a.stockDescMethodLink「Metodología」 66x14",
+    "summary「Salud 55/100Metodología」 655x19",
+    "a.stockDescMethodLink「Metodología」 73x15",
+    "button.active「Trimestres」 84x23"
+   ],
+   "textEls": 425,
+   "texto12": [
+    [
+     "10px",
+     12
+    ],
+    [
+     "11px",
+     191
+    ]
+   ],
+   "ejTexto12": [
+    "small「Equity Research」 10px",
+    "span.stockStageQualifier「Pre-fuga」 11px",
+    "span.stockVerdictChange「-0,70 (-0,2%)」 11px",
+    "button.stockChartSearchSubmit「Ir」 11px",
+    "span.stockIpoSalidaLabel「Salida」 11px",
+    "span.stockIpoSalidaValue「12 dic 1980」 11px",
+    "span.stockIpoSalidaLabel「Edad」 11px",
+    "span.stockIpoSalidaValue「551m」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 0,
+   "bottomNavH": 0,
+   "navItems": [
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 768
+    }
+   ],
+   "h1": {
+    "text": "AAPL",
+    "y": 62,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Archivo",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 46,
+  "kb": 5542,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/similar?symbol=AAPL&name=Apple+Inc.&sector=Technology&indu 5KB sin-compr",
+   "/api/social-sentiment?symbol=AAPL&name=Apple+Inc. 1KB sin-compr",
+   "/api/similar?symbol=AAPL&name=Apple+Inc.&sector=Technology&indu 5KB sin-compr",
+   "/api/social-sentiment?symbol=AAPL&name=Apple+Inc. 1KB sin-compr"
+  ],
+  "kbApi": 11,
+  "kbJs": 5351,
+  "kbImg": 20,
+  "nImg": 25,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "03-listas",
+  "size": "768x1024",
+  "path": "/lists",
+  "dclMs": 620,
+  "primerContenidoMs": 1671,
+  "estableMs": 6674,
+  "m": {
+   "vw": 768,
+   "vh": 1024,
+   "scrollW": 768,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 1074,
+   "pantallas": 1,
+   "interactivos": 12,
+   "menos44": 12,
+   "menos24": 1,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 143x36",
+    "a.appHeaderNavItem.「Screener」 98x32",
+    "a.appHeaderNavItem.active「Listas」 79x32",
+    "a.appHeaderNavItem.「Sectores」 97x32",
+    "a.appHeaderNavItem.「Research」 99x32",
+    "a.appHeaderNavItem.「Mercado」 96x32",
+    "button.btn「Guardar vista」 103x30",
+    "a.btn.btnPrimary「Revisar」 69x30",
+    "summary.marketReliabilityStripLabel「Listas · cobertura」 99x17",
+    "summary.marketReliabilityStripToggle「[+]」 26x27"
+   ],
+   "ej24": [
+    "summary.marketReliabilityStripLabel「Listas · cobertura」 99x17"
+   ],
+   "textEls": 75,
+   "texto12": [
+    [
+     "10px",
+     1
+    ],
+    [
+     "11px",
+     27
+    ]
+   ],
+   "ejTexto12": [
+    "small「Equity Research」 10px",
+    "summary.marketReliabilityStripLabel「Listas · cobertura」 11px",
+    "span「i」 11px",
+    "summary.marketReliabilityStripToggle「[+]」 11px",
+    "h3「Fiabilidad del ranking」 11px",
+    "span.discoveryStatus.warn「Copia local」 11px",
+    "em「filas del ranking」 11px",
+    "em「precio viejo」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 0,
+   "bottomNavH": 0,
+   "navItems": [
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 768
+    }
+   ],
+   "h1": {
+    "text": "Listas",
+    "y": 62,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 16,
+  "kb": 4026,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=8 12KB sin-compr"
+  ],
+  "kbApi": 12,
+  "kbJs": 3962,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "04-research",
+  "size": "768x1024",
+  "path": "/research-desk",
+  "dclMs": 662,
+  "primerContenidoMs": 2244,
+  "estableMs": 7247,
+  "m": {
+   "vw": 768,
+   "vh": 1024,
+   "scrollW": 768,
+   "hScroll": false,
+   "overflow": [
+    "table.table「★TickerEmpresaTemaEtapaC」 right=1128",
+    "thead「★TickerEmpresaTemaEtapaC」 right=1128",
+    "tr「★TickerEmpresaTemaEtapaC」 right=1128",
+    "th「RS Quality」 right=831",
+    "th「Deterioro」 right=925",
+    "th「Risk」 right=976"
+   ],
+   "docH": 1074,
+   "pantallas": 1,
+   "interactivos": 27,
+   "menos44": 20,
+   "menos24": 2,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 143x36",
+    "a.appHeaderNavItem.「Screener」 98x32",
+    "a.appHeaderNavItem.「Listas」 79x32",
+    "a.appHeaderNavItem.「Sectores」 97x32",
+    "a.appHeaderNavItem.active「Research」 99x32",
+    "a.appHeaderNavItem.「Mercado」 96x32",
+    "a.btn「IPO radar」 80x30",
+    "a.btn「Revisar favoritos」 121x30",
+    "button.btn.btnPrimary「Actualizar favoritos」 141x30",
+    "summary.marketReliabilityStripLabel「Research · estado」 101x17"
+   ],
+   "ej24": [
+    "summary.marketReliabilityStripLabel「Research · estado」 101x17",
+    "summary「Herramientas de mantenim」 697x19"
+   ],
+   "textEls": 98,
+   "texto12": [
+    [
+     "10px",
+     1
+    ],
+    [
+     "11px",
+     43
+    ]
+   ],
+   "ejTexto12": [
+    "small「Equity Research」 10px",
+    "summary.marketReliabilityStripLabel「Research · estado」 11px",
+    "summary.marketReliabilityStripToggle「[+]」 11px",
+    "h3「Sincronización en la nub」 11px",
+    "span「Conectada」 11px",
+    "h3「Resumen local」 11px",
+    "span「1 entradas」 11px",
+    "em「local」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 0,
+   "bottomNavH": 0,
+   "navItems": [
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 768
+    }
+   ],
+   "h1": {
+    "text": "Research",
+    "y": 62,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono",
+    "ui-monospace"
+   ]
+  },
+  "peticiones": 44,
+  "kb": 7256,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/favorites/snapshots?days=180 29KB sin-compr",
+   "/api/supabase/status 3KB sin-compr",
+   "/api/favorites/snapshots?days=180 29KB sin-compr",
+   "/api/auth/session 0KB sin-compr",
+   "/api/favorites/snapshots?days=180 29KB sin-compr",
+   "/api/supabase/status 3KB sin-compr",
+   "/api/favorites/snapshots?days=180 29KB sin-compr"
+  ],
+  "kbApi": 123,
+  "kbJs": 7029,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.7,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "05-review",
+  "size": "768x1024",
+  "path": "/review",
+  "dclMs": 729,
+  "primerContenidoMs": 1831,
+  "estableMs": 6833,
+  "m": {
+   "vw": 768,
+   "vh": 1024,
+   "scrollW": 768,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 1074,
+   "pantallas": 1,
+   "interactivos": 13,
+   "menos44": 13,
+   "menos24": 0,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 143x36",
+    "a.appHeaderNavItem.「Screener」 98x32",
+    "a.appHeaderNavItem.「Listas」 79x32",
+    "a.appHeaderNavItem.「Sectores」 97x32",
+    "a.appHeaderNavItem.「Research」 99x32",
+    "a.appHeaderNavItem.「Mercado」 96x32",
+    "button.btn.btnActive「Cola actual」 78x24",
+    "button.btn.「Último snapshot」 105x24",
+    "button.btn.「Favoritos」 67x24",
+    "a.btn.btnPrimary「Volver al screener」 127x35"
+   ],
+   "ej24": [],
+   "textEls": 31,
+   "texto12": [
+    [
+     "10px",
+     2
+    ],
+    [
+     "11px",
+     6
+    ]
+   ],
+   "ejTexto12": [
+    "small「Equity Research」 10px",
+    "button.btn.btnActive「Cola actual」 11px",
+    "button.btn.「Último snapshot」 11px",
+    "button.btn.「Favoritos」 11px",
+    "span「Review」 10px",
+    "p.fine「Carga una cola desde el 」 11px",
+    "span.esSearchLabel「O abre directamente un v」 11px",
+    "button.stockChartSearchSubmit「Ir」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 0,
+   "bottomNavH": 0,
+   "navItems": [
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 768
+    }
+   ],
+   "h1": {
+    "text": "Vista rápida",
+    "y": 62,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 15,
+  "kb": 4883,
+  "api": [
+   "/api/auth/session 0KB sin-compr"
+  ],
+  "kbApi": 0,
+  "kbJs": 4830,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.7,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "06-sectores",
+  "size": "768x1024",
+  "path": "/sectors",
+  "dclMs": 651,
+  "primerContenidoMs": 1686,
+  "estableMs": 6688,
+  "m": {
+   "vw": 768,
+   "vh": 1024,
+   "scrollW": 768,
+   "hScroll": false,
+   "overflow": [
+    "table.table.sectorTapeTable「SectorETFEstadoScoreEstr」 right=1318",
+    "thead「SectorETFEstadoScoreEstr」 right=1318",
+    "tr「SectorETFEstadoScoreEstr」 right=1318",
+    "th「1D」 right=797",
+    "th「1W」 right=854",
+    "th「1M」 right=911"
+   ],
+   "docH": 1112,
+   "pantallas": 1.1,
+   "interactivos": 19,
+   "menos44": 19,
+   "menos24": 1,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 143x36",
+    "a.appHeaderNavItem.「Screener」 98x32",
+    "a.appHeaderNavItem.「Listas」 79x32",
+    "a.appHeaderNavItem.active「Sectores」 97x32",
+    "a.appHeaderNavItem.「Research」 99x32",
+    "a.appHeaderNavItem.「Mercado」 96x32",
+    "button.btn「Recargar local」 108x30",
+    "select.select「Snapshot del 18 oct 2026」 195x28",
+    "select.select「🌐 Todos los países」 180x28",
+    "button.btn.btnActive「Tema」 52x24"
+   ],
+   "ej24": [
+    "summary.marketReliabilityStripLabel「Sectores · cobertura」 115x17"
+   ],
+   "textEls": 287,
+   "texto12": [
+    [
+     "10px",
+     1
+    ],
+    [
+     "11px",
+     76
+    ]
+   ],
+   "ejTexto12": [
+    "small「Equity Research」 10px",
+    "span「Fuente」 11px",
+    "span「País」 11px",
+    "span「Agrupar por」 11px",
+    "span「Fuerza」 11px",
+    "summary.marketReliabilityStripLabel「Sectores · cobertura」 11px",
+    "span「i」 11px",
+    "summary.marketReliabilityStripToggle「[+]」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 0,
+   "bottomNavH": 0,
+   "navItems": [
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 768
+    }
+   ],
+   "h1": {
+    "text": "Sectores",
+    "y": 62,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono"
+   ]
+  },
+  "peticiones": 17,
+  "kb": 3755,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=8 12KB sin-compr",
+   "/api/market-health 30KB sin-compr"
+  ],
+  "kbApi": 43,
+  "kbJs": 3660,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "07-mercado",
+  "size": "768x1024",
+  "path": "/market-health",
+  "dclMs": 635,
+  "primerContenidoMs": 1446,
+  "estableMs": 6449,
+  "m": {
+   "vw": 768,
+   "vh": 1024,
+   "scrollW": 768,
+   "hScroll": false,
+   "overflow": [
+    "div「Amplitud aproximada (abs」 right=1314",
+    "div.sectionTitle「Amplitud aproximada (abs」 right=1314",
+    "span.fine「Método」 right=1314",
+    "div.marketAuditKv「Índices analizados5Sobre」 right=1314",
+    "div.marketAuditKvRow「Índices analizados5」 right=1313",
+    "b「5」 right=1297"
+   ],
+   "docH": 5585,
+   "pantallas": 5.5,
+   "interactivos": 44,
+   "menos44": 13,
+   "menos24": 3,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 143x36",
+    "a.appHeaderNavItem.「Screener」 98x32",
+    "a.appHeaderNavItem.「Listas」 79x32",
+    "a.appHeaderNavItem.「Sectores」 97x32",
+    "a.appHeaderNavItem.「Research」 99x32",
+    "a.appHeaderNavItem.active「Mercado」 96x32",
+    "button.btn.btnPrimary「Actualizar」 86x30",
+    "summary.marketReliabilityStripLabel「Datos · cobertura」 99x17",
+    "summary.marketReliabilityStripToggle「[+]」 26x27",
+    "summary「Serie semanal completa」 697x17"
+   ],
+   "ej24": [
+    "summary.marketReliabilityStripLabel「Datos · cobertura」 99x17",
+    "summary「Serie semanal completa」 697x17",
+    "summary「Auditoría」 697x21"
+   ],
+   "textEls": 821,
+   "texto12": [
+    [
+     "10px",
+     102
+    ],
+    [
+     "11px",
+     329
+    ],
+    [
+     "11.6667px",
+     5
+    ],
+    [
+     "9px",
+     6
+    ]
+   ],
+   "ejTexto12": [
+    "small「Equity Research」 10px",
+    "summary.marketReliabilityStripLabel「Datos · cobertura」 11px",
+    "summary.marketReliabilityStripToggle「[+]」 11px",
+    "h3「Cobertura por mercado」 11px",
+    "span「13 mercados」 11px",
+    "em「0%」 11px",
+    "em「0%」 11px",
+    "em「0%」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 0,
+   "bottomNavH": 0,
+   "navItems": [
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 768
+    }
+   ],
+   "h1": {
+    "text": "Mercado",
+    "y": 62,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono",
+    "Archivo"
+   ]
+  },
+  "peticiones": 33,
+  "kb": 7818,
+  "api": [
+   "/api/auth/session 0KB sin-compr",
+   "/api/market-health 30KB sin-compr",
+   "/api/market-breadth 5KB sin-compr",
+   "/api/market-leadership 1673KB sin-compr",
+   "/api/market-news 19KB sin-compr",
+   "/api/social-sentiment 1KB sin-compr",
+   "/api/methodology-health 1KB sin-compr",
+   "/api/coverage?markets=US,JP,HK,AU,TW 15KB sin-compr",
+   "/api/market-health 30KB sin-compr",
+   "/api/market-breadth 5KB sin-compr",
+   "/api/market-leadership 1673KB sin-compr",
+   "/api/market-news 19KB sin-compr",
+   "/api/social-sentiment 1KB sin-compr",
+   "/api/methodology-health 1KB sin-compr",
+   "/api/coverage?markets=US,JP,HK,AU,TW 15KB sin-compr",
+   "/api/coverage?markets=US,EU1,JP,HK,AU,TW 30KB sin-compr",
+   "/api/coverage?markets=US,EU1,JP,HK,AU,TW 30KB sin-compr"
+  ],
+  "kbApi": 3547,
+  "kbJs": 4185,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.8,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "08-ipo-radar",
+  "size": "768x1024",
+  "path": "/ipo-radar",
+  "dclMs": 549,
+  "primerContenidoMs": 1598,
+  "estableMs": 6601,
+  "m": {
+   "vw": 768,
+   "vh": 1024,
+   "scrollW": 768,
+   "hScroll": false,
+   "overflow": [
+    "div.pageTicketActions「Importar del último scan」 right=810",
+    "button.btn.btnPrimary「Avisar pendientes」 right=810"
+   ],
+   "docH": 1074,
+   "pantallas": 1,
+   "interactivos": 24,
+   "menos44": 24,
+   "menos24": 1,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 143x36",
+    "a.appHeaderNavItem.「Screener」 98x32",
+    "a.appHeaderNavItem.「Listas」 79x32",
+    "a.appHeaderNavItem.「Sectores」 97x32",
+    "a.appHeaderNavItem.「Research」 99x32",
+    "a.appHeaderNavItem.「Mercado」 96x32",
+    "button.btn「Importar del último scan」 168x30",
+    "button.btn「Importar JSON」 112x30",
+    "button.btn「Exportar backup」 123x30",
+    "button.btn.btnPrimary「Avisar pendientes」 132x30"
+   ],
+   "ej24": [
+    "input「」 16x16"
+   ],
+   "textEls": 37,
+   "texto12": [
+    [
+     "10px",
+     1
+    ],
+    [
+     "11px",
+     17
+    ]
+   ],
+   "ejTexto12": [
+    "small「Equity Research」 10px",
+    "h2「IPOs seleccionadas」 11px",
+    "span.fine「las marcadas entran al s」 11px",
+    "p.fine「Sin IPOs vigiladas todav」 11px",
+    "h2「Nueva candidata IPO」 11px",
+    "span.fine「pre-IPO / primera cotiza」 11px",
+    "span「Empresa」 11px",
+    "span「Ticker si existe」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 0,
+   "bottomNavH": 0,
+   "navItems": [
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 768
+    }
+   ],
+   "h1": {
+    "text": "IPO radar",
+    "y": 62,
+    "fs": "20px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Spline Sans Mono",
+    "ui-monospace"
+   ]
+  },
+  "peticiones": 15,
+  "kb": 2818,
+  "api": [
+   "/api/auth/session 0KB sin-compr"
+  ],
+  "kbApi": 0,
+  "kbJs": 2767,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.7,
+   "max": 16.7,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ },
+ {
+  "name": "09-404",
+  "size": "768x1024",
+  "path": "/ruta-que-no-existe",
+  "dclMs": 1473,
+  "primerContenidoMs": 2278,
+  "estableMs": 7279,
+  "m": {
+   "vw": 768,
+   "vh": 1024,
+   "scrollW": 768,
+   "hScroll": false,
+   "overflow": [],
+   "docH": 1074,
+   "pantallas": 1,
+   "interactivos": 13,
+   "menos44": 9,
+   "menos24": 0,
+   "ej44": [
+    "a.appBrand「StatsEdgeEquity Research」 143x36",
+    "a.appHeaderNavItem.「Screener」 98x32",
+    "a.appHeaderNavItem.「Listas」 79x32",
+    "a.appHeaderNavItem.「Sectores」 97x32",
+    "a.appHeaderNavItem.「Research」 99x32",
+    "a.appHeaderNavItem.「Mercado」 96x32",
+    "a.btn.btnPrimary「Volver al screener」 127x35",
+    "input.input.stockChartSearchInput「Buscar ticker o nombre」 485x34",
+    "button.stockChartSearchSubmit「Ir」 29x34"
+   ],
+   "ej24": [],
+   "textEls": 21,
+   "texto12": [
+    [
+     "10px",
+     1
+    ],
+    [
+     "11px",
+     3
+    ]
+   ],
+   "ejTexto12": [
+    "small「Equity Research」 10px",
+    "span.esEyebrow「StatsEdge · Error 404」 11px",
+    "span.esSearchLabel「¿Buscabas un valor? Busc」 11px",
+    "button.stockChartSearchSubmit「Ir」 11px"
+   ],
+   "topBarH": 50,
+   "bottomNavTop": 0,
+   "bottomNavH": 0,
+   "navItems": [
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0",
+    "0x0"
+   ],
+   "chrome": [
+    {
+     "el": "header.appTopBar「StatsEdgeEquity Research」",
+     "top": 0,
+     "h": 50,
+     "w": 768
+    }
+   ],
+   "h1": {
+    "text": "Esta página no existe",
+    "y": 116,
+    "fs": "16px"
+   },
+   "filas": 0,
+   "firstRowY": null,
+   "filasVisibles": 0,
+   "altoFila": [],
+   "fuentes": [
+    "Instrument Sans",
+    "__nextjs-Geist",
+    "Archivo"
+   ]
+  },
+  "peticiones": 13,
+  "kb": 2741,
+  "api": [
+   "/api/auth/session 0KB sin-compr"
+  ],
+  "kbApi": 0,
+  "kbJs": 2695,
+  "kbImg": 0,
+  "nImg": 0,
+  "jank": {
+   "fotogramas": 90,
+   "p95": 16.7,
+   "max": 16.8,
+   "sobre33": 0,
+   "tareasLargas": []
+  }
+ }
+]

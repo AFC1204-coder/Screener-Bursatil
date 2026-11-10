@@ -1,0 +1,89 @@
+{
+  "base": "http://127.0.0.1:3302",
+  "scanDelayMs": 2500,
+  "reviewState": {
+    "queueSize": 3,
+    "selected": "AAA",
+    "hasIdentity": true,
+    "status": "Screener actual · 3 acciones",
+    "url": "http://127.0.0.1:3302/review?source=current&symbol=AAA"
+  },
+  "counts": {
+    "boot": 3,
+    "firstOpen": 0,
+    "returnHome": 3,
+    "reopenClick": 0
+  },
+  "boot": [
+    {
+      "kind": "GET nightly-us",
+      "method": "GET",
+      "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+      "callers": [
+        "at requestJson (webpack-internal:///(app-pages-browser)/./lib/cloudSyncClient.js:41:27)",
+        "at getLatestScanFromCloud (webpack-internal:///(app-pages-browser)/./lib/cloudSyncClient.js:350:12)",
+        "at restoreLatestSnapshot (webpack-internal:///(app-pages-browser)/./app/page.jsx:722:86)",
+        "at Page.useLayoutEffect (webpack-internal:///(app-pages-browser)/./app/page.jsx:1083:17)"
+      ]
+    },
+    {
+      "kind": "GET nightly-us",
+      "method": "GET",
+      "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+      "callers": [
+        "at requestJson (webpack-internal:///(app-pages-browser)/./lib/cloudSyncClient.js:41:27)",
+        "at getLatestScanFromCloud (webpack-internal:///(app-pages-browser)/./lib/cloudSyncClient.js:350:12)",
+        "at restoreLatestSnapshot (webpack-internal:///(app-pages-browser)/./app/page.jsx:722:86)",
+        "at Page.useLayoutEffect (webpack-internal:///(app-pages-browser)/./app/page.jsx:1083:17)"
+      ]
+    },
+    {
+      "kind": "GET markets (28)",
+      "method": "GET",
+      "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+      "callers": [
+        "at requestJson (webpack-internal:///(app-pages-browser)/./lib/cloudSyncClient.js:41:27)",
+        "at getLatestScanFromCloudForMarkets (webpack-internal:///(app-pages-browser)/./lib/cloudSyncClient.js:355:12)",
+        "at loadScanForMarketSelection (webpack-internal:///(app-pages-browser)/./app/page.jsx:1660:214)",
+        "at Page.useEffect (webpack-internal:///(app-pages-browser)/./app/page.jsx:1813:13)"
+      ]
+    }
+  ],
+  "firstOpen": [],
+  "returnHome": [
+    {
+      "kind": "GET nightly-us",
+      "method": "GET",
+      "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+      "callers": [
+        "at requestJson (webpack-internal:///(app-pages-browser)/./lib/cloudSyncClient.js:41:27)",
+        "at getLatestScanFromCloud (webpack-internal:///(app-pages-browser)/./lib/cloudSyncClient.js:350:12)",
+        "at restoreLatestSnapshot (webpack-internal:///(app-pages-browser)/./app/page.jsx:722:86)",
+        "at Page.useLayoutEffect (webpack-internal:///(app-pages-browser)/./app/page.jsx:1083:17)"
+      ]
+    },
+    {
+      "kind": "GET nightly-us",
+      "method": "GET",
+      "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=nightly-us&hydrateRs=1",
+      "callers": [
+        "at requestJson (webpack-internal:///(app-pages-browser)/./lib/cloudSyncClient.js:41:27)",
+        "at getLatestScanFromCloud (webpack-internal:///(app-pages-browser)/./lib/cloudSyncClient.js:350:12)",
+        "at restoreLatestSnapshot (webpack-internal:///(app-pages-browser)/./app/page.jsx:722:86)",
+        "at Page.useLayoutEffect (webpack-internal:///(app-pages-browser)/./app/page.jsx:1083:17)"
+      ]
+    },
+    {
+      "kind": "GET markets (28)",
+      "method": "GET",
+      "url": "/api/scans?includeRows=1&limit=1&rowsLimit=6000&anchor=markets&markets=AT%2CAU%2CBE%2CBR%2CCA%2CCH%2CCN%2CDE%2CDK%2CES%2CFI%2CFR%2CGB%2CHK%2CIE%2CIL%2CIN%2CIT%2CJP%2CKR%2CMX%2CNL%2CNO%2CPT%2CSE%2CSG%2CUS%2CZA&hydrateRs=1",
+      "callers": [
+        "at requestJson (webpack-internal:///(app-pages-browser)/./lib/cloudSyncClient.js:41:27)",
+        "at getLatestScanFromCloudForMarkets (webpack-internal:///(app-pages-browser)/./lib/cloudSyncClient.js:355:12)",
+        "at loadScanForMarketSelection (webpack-internal:///(app-pages-browser)/./app/page.jsx:1660:214)",
+        "at Page.useEffect (webpack-internal:///(app-pages-browser)/./app/page.jsx:1813:13)"
+      ]
+    }
+  ],
+  "reopenClick": []
+}

@@ -1,0 +1,37 @@
+{
+  "pre": {
+    "keys": [
+      "statsedge.scans.v1",
+      "statsedge.authSessionHint.v1",
+      "statsedge.screenerSession.v1"
+    ],
+    "hasSession": true,
+    "sessionVersion": 4,
+    "settled": null,
+    "scanRows": 0,
+    "rowsAvailable": 3576,
+    "sampled": true,
+    "scanId": "materialized:US:2026-09-13:t030356:o0:l5608",
+    "scansBytes": 7251,
+    "sessionBytes": 13745
+  },
+  "mid": {
+    "hasSession": true,
+    "sessionBytes": 13457,
+    "settled": null
+  },
+  "counts": {
+    "boot": [
+      "nightly",
+      "nightly"
+    ],
+    "review": [],
+    "returnHome": [
+      "nightly",
+      "nightly"
+    ],
+    "returnHomeN": 2
+  },
+  "pass": false,
+  "softPass": true
+}

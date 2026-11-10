@@ -1,0 +1,140 @@
+{
+  "Europe/Madrid": {
+    "2026-09-08": {
+      "dateShort": "8 sept 2026"
+    },
+    "2026-01-01": {
+      "dateShort": "1 ene 2026"
+    },
+    "2024-02-29": {
+      "dateShort": "29 feb 2024"
+    },
+    "0001-01-01": {
+      "dateShort": "31 dic 1"
+    },
+    "0099-12-31": {
+      "dateShort": "30 dic 99"
+    },
+    "2027-02-29": {
+      "dateShort": "1 mar 2027"
+    },
+    "1900-01-01": {
+      "dateShort": "31 dic 1899"
+    },
+    "1999-12-31": {
+      "dateShort": "31 dic 1999"
+    },
+    "2026-09-08T00:00:00Z": {
+      "dateShort": "8 sept 2026",
+      "dateTime": "8 sept, 02:00"
+    },
+    "2026-01-01T23:00:00Z": {
+      "dateShort": "2 ene 2026",
+      "dateTime": "2 ene, 00:00"
+    },
+    "": {
+      "dateShort": "-"
+    },
+    "not-a-date": {
+      "dateShort": "-"
+    },
+    "Date:2026-09-08T00:00:00Z": {
+      "dateShort": "8 sept 2026"
+    },
+    "null": "-",
+    "undefined": "-",
+    "num": "1234,5"
+  },
+  "America/New_York": {
+    "2026-09-08": {
+      "dateShort": "7 sept 2026"
+    },
+    "2026-01-01": {
+      "dateShort": "31 dic 2025"
+    },
+    "2024-02-29": {
+      "dateShort": "28 feb 2024"
+    },
+    "0001-01-01": {
+      "dateShort": "31 dic 1"
+    },
+    "0099-12-31": {
+      "dateShort": "30 dic 99"
+    },
+    "2027-02-29": {
+      "dateShort": "28 feb 2027"
+    },
+    "1900-01-01": {
+      "dateShort": "31 dic 1899"
+    },
+    "1999-12-31": {
+      "dateShort": "30 dic 1999"
+    },
+    "2026-09-08T00:00:00Z": {
+      "dateShort": "7 sept 2026",
+      "dateTime": "7 sept, 20:00"
+    },
+    "2026-01-01T23:00:00Z": {
+      "dateShort": "1 ene 2026",
+      "dateTime": "1 ene, 18:00"
+    },
+    "": {
+      "dateShort": "-"
+    },
+    "not-a-date": {
+      "dateShort": "-"
+    },
+    "Date:2026-09-08T00:00:00Z": {
+      "dateShort": "7 sept 2026"
+    },
+    "null": "-",
+    "undefined": "-",
+    "num": "1234,5"
+  },
+  "Asia/Tokyo": {
+    "2026-09-08": {
+      "dateShort": "8 sept 2026"
+    },
+    "2026-01-01": {
+      "dateShort": "1 ene 2026"
+    },
+    "2024-02-29": {
+      "dateShort": "29 feb 2024"
+    },
+    "0001-01-01": {
+      "dateShort": "1 ene 1"
+    },
+    "0099-12-31": {
+      "dateShort": "31 dic 99"
+    },
+    "2027-02-29": {
+      "dateShort": "1 mar 2027"
+    },
+    "1900-01-01": {
+      "dateShort": "1 ene 1900"
+    },
+    "1999-12-31": {
+      "dateShort": "31 dic 1999"
+    },
+    "2026-09-08T00:00:00Z": {
+      "dateShort": "8 sept 2026",
+      "dateTime": "8 sept, 09:00"
+    },
+    "2026-01-01T23:00:00Z": {
+      "dateShort": "2 ene 2026",
+      "dateTime": "2 ene, 08:00"
+    },
+    "": {
+      "dateShort": "-"
+    },
+    "not-a-date": {
+      "dateShort": "-"
+    },
+    "Date:2026-09-08T00:00:00Z": {
+      "dateShort": "8 sept 2026"
+    },
+    "null": "-",
+    "undefined": "-",
+    "num": "1234,5"
+  }
+}

@@ -1,0 +1,49 @@
+{
+ "sin-throttle": {
+  "dclMs": 1393,
+  "primeraFilaMs": 3853,
+  "nodos": 3103,
+  "filas": 50,
+  "nodosPorFila": 48,
+  "heap": 151,
+  "jank": {
+   "fotogramas": 90,
+   "p50": 16.7,
+   "p95": 50.1,
+   "max": 366.7,
+   "sobre33": 8,
+   "tareasLargas": [
+    70,
+    288,
+    390,
+    50,
+    63,
+    156,
+    115,
+    697,
+    140
+   ]
+  }
+ },
+ "cpu4-4g": {
+  "dclMs": 588,
+  "primeraFilaMs": 5179,
+  "nodos": 3101,
+  "filas": 50,
+  "nodosPorFila": 48,
+  "heap": 151,
+  "jank": {
+   "fotogramas": 25,
+   "p50": 16.7,
+   "p95": 933.4,
+   "max": 1216.7,
+   "sobre33": 3,
+   "tareasLargas": [
+    1219,
+    157,
+    911,
+    1132
+   ]
+  }
+ }
+}

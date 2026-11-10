@@ -1,0 +1,20 @@
+{
+  "ready": {
+    "cargando": false,
+    "pasan": null,
+    "hasRows": false
+  },
+  "before": null,
+  "clickedMom": false,
+  "afterMom": {
+    "pasan": null,
+    "rows": 0
+  },
+  "clickedHunt": true,
+  "afterHunt": {
+    "pasan": null,
+    "hasCerca": true,
+    "rows": 0
+  },
+  "errors": []
+}

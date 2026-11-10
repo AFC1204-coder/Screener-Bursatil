@@ -1,0 +1,92 @@
+{
+  "phase": "antes",
+  "escritorio": {
+    "rowCount": 937,
+    "rowHeights": [
+      32
+    ],
+    "head": [
+      "Ticker",
+      "Tema",
+      "Semanal ~12M",
+      "Etapa",
+      "RS",
+      "VCP",
+      "Máx 52s"
+    ],
+    "chipsMuestra": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "filasConRiesgo": 0,
+    "primeraConRiesgo": -1,
+    "listaScrollWidth": [
+      1230,
+      1230
+    ],
+    "pageScrollWidth": 1440,
+    "panelTexto": "TJGC\nTJGC Group Limited\n×\n\nPasa «Líderes Etapa 2»\n\n31,89\ncierre vie 16 oct\nETAPA 2\nsemana 10 · Dudoso\nCierre semanal ~12M\nMM30\nRS\n—\nVCP\n—\nMÁX 52S\n-13,2%\nCAP.\n322M\nTEMA\nInternet / plataformas\nTU CLASIFICACIÓN\nCandidata\nVigilar\nDescartar\n★ Favorito\nAbrir ficha\n↵",
+    "rowHeightsConPanel": [
+      32
+    ],
+    "consola": []
+  },
+  "movil390": {
+    "rowCount": 60,
+    "alturas": [
+      56
+    ],
+    "primeraFilaY": 162,
+    "filasCompletasVisibles": 11,
+    "filasTocandoPantalla": 13,
+    "limiteInferior": 788,
+    "chipsMuestra": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nombresMuestra": [
+      "TJGC Group Limited",
+      "Moderna, Inc.",
+      "Cypherpunk Technologies Inc."
+    ],
+    "pageScrollWidth": 390,
+    "vistaRapidaTexto": "Semanal · 12 meses · MM30\nInternet / plataformas\n\nEtapa\n2 · sem. 10dudoso\nRS\n—sin ranking\nVCP\n—\nMáx 52s\n-13,2%\nRend. 3M\n+584,3%\nCapitaliz.\n322M\n\nTU CLASIFICACIÓN\n\n●\nCandidata\n◐\nVigilar\n○\nDescartar\n☆ Favorito",
+    "consola": []
+  },
+  "movil360": {
+    "rowCount": 60,
+    "alturas": [
+      56
+    ],
+    "primeraFilaY": 162,
+    "filasCompletasVisibles": 9,
+    "filasTocandoPantalla": 11,
+    "limiteInferior": 684,
+    "chipsMuestra": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "nombresMuestra": [
+      "TJGC Group Limited",
+      "Moderna, Inc.",
+      "Cypherpunk Technologies Inc."
+    ],
+    "pageScrollWidth": 360,
+    "vistaRapidaTexto": "Semanal · 12 meses · MM30\nInternet / plataformas\n\nEtapa\n2 · sem. 10dudoso\nRS\n—sin ranking\nVCP\n—\nMáx 52s\n-13,2%\nRend. 3M\n+584,3%\nCapitaliz.\n322M\n\nTU CLASIFICACIÓN\n\n●\nCandidata\n◐\nVigilar\n○\nDescartar\n☆ Favorito",
+    "consola": []
+  }
+}

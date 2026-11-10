@@ -1,0 +1,38 @@
+[
+  {
+    "size": 1440,
+    "page": "listas",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794069891038 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "size": 1440,
+    "page": "research-desk",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794069907436 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "size": 390,
+    "page": "screener",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794069917024 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "size": 390,
+    "page": "listas",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794069931444 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "size": 390,
+    "page": "listas",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794069931444 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  },
+  {
+    "size": 390,
+    "page": "research-desk",
+    "type": "warning",
+    "text": "The resource http://localhost:3320/_next/static/css/app/not-found.css?v=1794069947616 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally."
+  }
+]

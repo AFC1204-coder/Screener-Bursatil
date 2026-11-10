@@ -1,0 +1,6402 @@
+[
+  {
+    "field": "chartPreview",
+    "present": 3576,
+    "bytes": 13672707,
+    "types": {
+      "array": 3576
+    },
+    "maxBytes": 4058,
+    "example": "array(len=48, item=date,close,sma50,sma200,volume)",
+    "presencePct": 100,
+    "avgBytesPresent": 3823,
+    "avgBytesAll": 3823,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "defer-display-only"
+  },
+  {
+    "field": "objectiveMetricAudit",
+    "present": 58,
+    "bytes": 910292,
+    "types": {
+      "object": 58
+    },
+    "maxBytes": 16167,
+    "example": "object(keys=12: asOf,items,issues,source,status,barsCount,issueCount,worstStatus,checkedCount,schemaVersion)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 15695,
+    "avgBytesAll": 255,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-already-excluded-from-light"
+  },
+  {
+    "field": "decisionTrace",
+    "present": 58,
+    "bytes": 354676,
+    "types": {
+      "object": 58
+    },
+    "maxBytes": 6990,
+    "example": "object(keys=13: line,brief,watch,action,issues,drivers,evidence,priority,readiness,confidence)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 6115,
+    "avgBytesAll": 99,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-already-excluded-from-light"
+  },
+  {
+    "field": "weeklyThemeRsReason",
+    "present": 2316,
+    "bytes": 337877,
+    "types": {
+      "string": 2316
+    },
+    "maxBytes": 150,
+    "example": "Sin RS tema semanal: este símbolo no entra en el ranking de su ocupación (histór",
+    "presencePct": 64.77,
+    "avgBytesPresent": 146,
+    "avgBytesAll": 94,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyStageStructureDetail",
+    "present": 3576,
+    "bytes": 179182,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 67,
+    "example": "caja 26s 28% bajo techo 2026-08-03 (-11.2%); E2_ma_only, sin fuga",
+    "presencePct": 100,
+    "avgBytesPresent": 50,
+    "avgBytesAll": 50,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyRsEngineVersion",
+    "present": 3443,
+    "bytes": 123948,
+    "types": {
+      "string": 3443
+    },
+    "maxBytes": 36,
+    "example": "statsedge-private-global-rs-usd-v1",
+    "presencePct": 96.28,
+    "avgBytesPresent": 36,
+    "avgBytesAll": 35,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "screenRejectReason",
+    "present": 3518,
+    "bytes": 121930,
+    "types": {
+      "string": 3518
+    },
+    "maxBytes": 61,
+    "example": "Histórico semanal insuficiente para la media de 30 semanas",
+    "presencePct": 98.38,
+    "avgBytesPresent": 35,
+    "avgBytesAll": 34,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupDisplayReason",
+    "present": 3576,
+    "bytes": 112372,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 65,
+    "example": "Base medible, pero pivot a -10.3%; fuera de zona de vigilancia.",
+    "presencePct": 100,
+    "avgBytesPresent": 31,
+    "avgBytesAll": 31,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "ipoDateSource",
+    "present": 3546,
+    "bytes": 106380,
+    "types": {
+      "string": 3546
+    },
+    "maxBytes": 30,
+    "example": "yahoo-chart-first-trade-date",
+    "presencePct": 99.16,
+    "avgBytesPresent": 30,
+    "avgBytesAll": 30,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyCountryRsEngineVersion",
+    "present": 3470,
+    "bytes": 93690,
+    "types": {
+      "string": 3470
+    },
+    "maxBytes": 27,
+    "example": "statsedge-us-equity-rs-v1",
+    "presencePct": 97.04,
+    "avgBytesPresent": 27,
+    "avgBytesAll": 26,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "companyName",
+    "present": 3576,
+    "bytes": 86923,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 78,
+    "example": "Cresud Sociedad Anónima, Comercial, Inmobiliaria, Financiera y Agropecuaria",
+    "presencePct": 100,
+    "avgBytesPresent": 24,
+    "avgBytesAll": 24,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "industry",
+    "present": 3576,
+    "bytes": 77393,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 42,
+    "example": "Drug Manufacturers - Specialty & Generic",
+    "presencePct": 100,
+    "avgBytesPresent": 22,
+    "avgBytesAll": 22,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyStageLabel",
+    "present": 3576,
+    "bytes": 70942,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 32,
+    "example": "Historico semanal insuficiente",
+    "presencePct": 100,
+    "avgBytesPresent": 20,
+    "avgBytesAll": 20,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "contractionStructureReason",
+    "present": 3576,
+    "bytes": 69135,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 52,
+    "example": "swings too close to count as separate contractions",
+    "presencePct": 100,
+    "avgBytesPresent": 19,
+    "avgBytesAll": 19,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "returnToVol3m",
+    "present": 3576,
+    "bytes": 67679,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 22,
+    "example": "-0.0045818979340838135",
+    "presencePct": 100,
+    "avgBytesPresent": 19,
+    "avgBytesAll": 19,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "returnToDrawdown3m",
+    "present": 3576,
+    "bytes": 66162,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 22,
+    "example": "-0.0020387098655762813",
+    "presencePct": 100,
+    "avgBytesPresent": 19,
+    "avgBytesAll": 19,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "distanceToPivotPct",
+    "present": 3576,
+    "bytes": 65873,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 25,
+    "example": "-0.0000029259422107408284",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "distance50d",
+    "present": 3576,
+    "bytes": 65837,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 25,
+    "example": "-0.0000029259422107408284",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "distance20d",
+    "present": 3576,
+    "bytes": 65729,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 25,
+    "example": "-0.0000029259422107408284",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "distance52w",
+    "present": 3576,
+    "bytes": 65585,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 25,
+    "example": "-0.0000029259422107408284",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "distanceATH",
+    "present": 3576,
+    "bytes": 65401,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 25,
+    "example": "-0.0000021271545636025735",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "extSma50",
+    "present": 3576,
+    "bytes": 64641,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 21,
+    "example": "-0.035733469501553206",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "volumeSurgePct",
+    "present": 3576,
+    "bytes": 64405,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 22,
+    "example": "-0.0031663271660264947",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyDistanceSlowMa",
+    "present": 3576,
+    "bytes": 63962,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 22,
+    "example": "-0.0028487695386547607",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "perf3m",
+    "present": 3576,
+    "bytes": 63899,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 25,
+    "example": "-0.0000034659372039058667",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "advanceRecentPct",
+    "present": 3576,
+    "bytes": 63899,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 25,
+    "example": "-0.0000034659372039058667",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "volumeDryUpRatio",
+    "present": 3576,
+    "bytes": 63783,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 20,
+    "example": "0.027797988843491727",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklySlowMaSlope",
+    "present": 3570,
+    "bytes": 63694,
+    "types": {
+      "number": 3570
+    },
+    "maxBytes": 21,
+    "example": "-0.002262256511076366",
+    "presencePct": 99.83,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "upDownVolRatio",
+    "present": 3576,
+    "bytes": 63670,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 20,
+    "example": "0.049386283303185154",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "relativeVolume",
+    "present": 3576,
+    "bytes": 63611,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 21,
+    "example": "0.0014703720041170415",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "perf6m",
+    "present": 3576,
+    "bytes": 63534,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 25,
+    "example": "-0.0000011883791950495493",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "advancePriorPct",
+    "present": 3576,
+    "bytes": 63525,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 23,
+    "example": "-0.00038404333866370877",
+    "presencePct": 100,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "sma200Slope",
+    "present": 3545,
+    "bytes": 63177,
+    "types": {
+      "number": 3545
+    },
+    "maxBytes": 22,
+    "example": "-1.2706876661994215e-7",
+    "presencePct": 99.13,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 18,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "perf12m",
+    "present": 3517,
+    "bytes": 62416,
+    "types": {
+      "number": 3517
+    },
+    "maxBytes": 24,
+    "example": "-0.000002612806282442648",
+    "presencePct": 98.35,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "maxDrawdown63d",
+    "present": 3576,
+    "bytes": 62409,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 19,
+    "example": "0.19324113069097065",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "baseDepthPct",
+    "present": 3576,
+    "bytes": 62405,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "20.553154655231253",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "absDistanceToPivotPct",
+    "present": 3576,
+    "bytes": 62351,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 24,
+    "example": "0.0000011378664677152983",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklySlowMaPriorSlope",
+    "present": 3494,
+    "bytes": 62333,
+    "types": {
+      "number": 3494
+    },
+    "maxBytes": 22,
+    "example": "-0.0022767312206739554",
+    "presencePct": 97.71,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 17,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklySlowMa",
+    "present": 3576,
+    "bytes": 62147,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 19,
+    "example": "0.39576666705807045",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyThemeRsEngineVersion",
+    "present": 1260,
+    "bytes": 62125,
+    "types": {
+      "string": 1260
+    },
+    "maxBytes": 58,
+    "example": "statsedge-private-theme-rs-usd-consumer-tech-hardware-v1",
+    "presencePct": 35.23,
+    "avgBytesPresent": 49,
+    "avgBytesAll": 17,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "sma150",
+    "present": 3576,
+    "bytes": 62117,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 19,
+    "example": "0.34234000042676926",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "range63dPct",
+    "present": 3576,
+    "bytes": 62109,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "50.040958265766356",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "tightness10dPct",
+    "present": 3576,
+    "bytes": 62025,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 21,
+    "example": "3.7362362057857605e-7",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "sma50",
+    "present": 3576,
+    "bytes": 62010,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 19,
+    "example": "0.34854000108242034",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "maxDailyMove20dPct",
+    "present": 3576,
+    "bytes": 61921,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 19,
+    "example": "0.36001082538941187",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "volatility63d",
+    "present": 3576,
+    "bytes": 61885,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "44.405713907392084",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "sma200",
+    "present": 3564,
+    "bytes": 61810,
+    "types": {
+      "number": 3564
+    },
+    "maxBytes": 18,
+    "example": "242.25460747680663",
+    "presencePct": 99.66,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "maxDailyRange20dPct",
+    "present": 3576,
+    "bytes": 61740,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 19,
+    "example": "0.39697524938103956",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyCountryRsRaw",
+    "present": 3470,
+    "bytes": 61474,
+    "types": {
+      "number": 3470
+    },
+    "maxBytes": 21,
+    "example": "-0.051349154424933374",
+    "presencePct": 97.04,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 17,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "objectiveScore",
+    "present": 3576,
+    "bytes": 61404,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "62.373542159303376",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "totalScore",
+    "present": 3576,
+    "bytes": 61348,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "63.583746240936016",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyRsRaw",
+    "present": 3443,
+    "bytes": 60991,
+    "types": {
+      "number": 3443
+    },
+    "maxBytes": 21,
+    "example": "-0.051349154424933374",
+    "presencePct": 96.28,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 17,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "theme",
+    "present": 3576,
+    "bytes": 59915,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 26,
+    "example": "Consumer tech / hardware",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "pivotPrice",
+    "present": 3576,
+    "bytes": 59152,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "18.860000610351562",
+    "presencePct": 100,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 17,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "sectorScore",
+    "present": 3576,
+    "bytes": 58569,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "47.090408267213036",
+    "presencePct": 100,
+    "avgBytesPresent": 16,
+    "avgBytesAll": 16,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyThemeRsThemeKey",
+    "present": 3485,
+    "bytes": 58418,
+    "types": {
+      "string": 3485
+    },
+    "maxBytes": 26,
+    "example": "Consumer tech / hardware",
+    "presencePct": 97.46,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 16,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupDisplayLabel",
+    "present": 3576,
+    "bytes": 57420,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 23,
+    "example": "VCP estricto sin plan",
+    "presencePct": 100,
+    "avgBytesPresent": 16,
+    "avgBytesAll": 16,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "setupVerdictLabel",
+    "present": 3576,
+    "bytes": 57420,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 23,
+    "example": "VCP estricto sin plan",
+    "presencePct": 100,
+    "avgBytesPresent": 16,
+    "avgBytesAll": 16,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "screenRejectField",
+    "present": 3518,
+    "bytes": 54847,
+    "types": {
+      "string": 3518
+    },
+    "maxBytes": 23,
+    "example": "minReturnToDrawdown3m",
+    "presencePct": 98.38,
+    "avgBytesPresent": 16,
+    "avgBytesAll": 15,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "sector",
+    "present": 3576,
+    "bytes": 54800,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 24,
+    "example": "Communication Services",
+    "presencePct": 100,
+    "avgBytesPresent": 15,
+    "avgBytesAll": 15,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "setupDisplayKey",
+    "present": 3576,
+    "bytes": 53545,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 23,
+    "example": "strict_not_actionable",
+    "presencePct": 100,
+    "avgBytesPresent": 15,
+    "avgBytesAll": 15,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "setupVerdictKey",
+    "present": 3576,
+    "bytes": 53545,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 23,
+    "example": "strict_not_actionable",
+    "presencePct": 100,
+    "avgBytesPresent": 15,
+    "avgBytesAll": 15,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "contractionStructureStatus",
+    "present": 3576,
+    "bytes": 52408,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 28,
+    "example": "no_meaningful_contractions",
+    "presencePct": 100,
+    "avgBytesPresent": 15,
+    "avgBytesAll": 15,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "patternQualityScore",
+    "present": 3576,
+    "bytes": 51590,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "47.907473385258115",
+    "presencePct": 100,
+    "avgBytesPresent": 14,
+    "avgBytesAll": 14,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "setupQualityScore",
+    "present": 3576,
+    "bytes": 50139,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "61.919089360262404",
+    "presencePct": 100,
+    "avgBytesPresent": 14,
+    "avgBytesAll": 14,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "signalCoverage",
+    "present": 58,
+    "bytes": 49214,
+    "types": {
+      "object": 58
+    },
+    "maxBytes": 875,
+    "example": "object(keys=17: riskScore,demandScore,growthScore,volumeScore,adProxyScore,patternScore,momentumScore,weaknessScore,liquidityScore,minerviniScore)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 849,
+    "avgBytesAll": 14,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "providerMeta",
+    "present": 58,
+    "bytes": 47616,
+    "types": {
+      "object": 58
+    },
+    "maxBytes": 914,
+    "example": "object(keys=2: chartCache,fundamentalsCache)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 821,
+    "avgBytesAll": 13,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "contraction1DepthPct",
+    "present": 2991,
+    "bytes": 47093,
+    "types": {
+      "number": 2991
+    },
+    "maxBytes": 18,
+    "example": "22.999834146364464",
+    "presencePct": 83.64,
+    "avgBytesPresent": 16,
+    "avgBytesAll": 13,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "setupDisplayConfidenceLabel",
+    "present": 3576,
+    "bytes": 46488,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 13,
+    "example": "Dato usable",
+    "presencePct": 100,
+    "avgBytesPresent": 13,
+    "avgBytesAll": 13,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "lastContractionDepthPct",
+    "present": 2991,
+    "bytes": 46349,
+    "types": {
+      "number": 2991
+    },
+    "maxBytes": 18,
+    "example": "11.054346642275501",
+    "presencePct": 83.64,
+    "avgBytesPresent": 15,
+    "avgBytesAll": 13,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "growthMetrics",
+    "present": 58,
+    "bytes": 44641,
+    "types": {
+      "object": 58
+    },
+    "maxBytes": 827,
+    "example": "object(keys=25: roa,roe,source,shortRatio,floatShares,grossMargin,sharesShort,currentRatio,debtToEquity,ebitdaMargin)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 770,
+    "avgBytesAll": 12,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": true,
+    "inLight": false,
+    "candidateToOmit": "yes-already-excluded-from-light"
+  },
+  {
+    "field": "lastDate",
+    "present": 3576,
+    "bytes": 42912,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 12,
+    "example": "2026-09-11",
+    "presencePct": 100,
+    "avgBytesPresent": 12,
+    "avgBytesAll": 12,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "ipoDate",
+    "present": 3576,
+    "bytes": 42612,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 12,
+    "example": "2023-03-31",
+    "presencePct": 100,
+    "avgBytesPresent": 12,
+    "avgBytesAll": 12,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "highsSpreadPct",
+    "present": 3576,
+    "bytes": 41710,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 20,
+    "example": "0.038081602416883964",
+    "presencePct": 100,
+    "avgBytesPresent": 12,
+    "avgBytesAll": 12,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyCountryRsAsOf",
+    "present": 3470,
+    "bytes": 41640,
+    "types": {
+      "string": 3470
+    },
+    "maxBytes": 12,
+    "example": "2026-08-29",
+    "presencePct": 97.04,
+    "avgBytesPresent": 12,
+    "avgBytesAll": 12,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "avgTurnover",
+    "present": 3576,
+    "bytes": 41518,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "48547691.014938354",
+    "presencePct": 100,
+    "avgBytesPresent": 12,
+    "avgBytesAll": 12,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyRsAsOf",
+    "present": 3443,
+    "bytes": 41316,
+    "types": {
+      "string": 3443
+    },
+    "maxBytes": 12,
+    "example": "2026-08-29",
+    "presencePct": 96.28,
+    "avgBytesPresent": 12,
+    "avgBytesAll": 12,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyStageConfirmation",
+    "present": 3576,
+    "bytes": 39546,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 22,
+    "example": "insufficient_history",
+    "presencePct": 100,
+    "avgBytesPresent": 11,
+    "avgBytesAll": 11,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "setupDisplayShortLabel",
+    "present": 3576,
+    "bytes": 39487,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 22,
+    "example": "Compresión de pivot",
+    "presencePct": 100,
+    "avgBytesPresent": 11,
+    "avgBytesAll": 11,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "setupVerdictShortLabel",
+    "present": 3576,
+    "bytes": 39487,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 22,
+    "example": "Compresión de pivot",
+    "presencePct": 100,
+    "avgBytesPresent": 11,
+    "avgBytesAll": 11,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyStage",
+    "present": 58,
+    "bytes": 37824,
+    "types": {
+      "object": 58
+    },
+    "maxBytes": 666,
+    "example": "object(keys=23: asOf,label,state,detail,fastMa,slowMa,flatPct,fastWeeks,slowWeeks,slopeWeeks)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 652,
+    "avgBytesAll": 11,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupDisplayLine",
+    "present": 3576,
+    "bytes": 37058,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 34,
+    "example": "27.8% -> 14.6% -> 10.9% -> 10.0%",
+    "presencePct": 100,
+    "avgBytesPresent": 10,
+    "avgBytesAll": 10,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "setupDisplayEvidence",
+    "present": 3576,
+    "bytes": 37058,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 34,
+    "example": "27.8% -> 14.6% -> 10.9% -> 10.0%",
+    "presencePct": 100,
+    "avgBytesPresent": 10,
+    "avgBytesAll": 10,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyDistResistancePct",
+    "present": 1960,
+    "bytes": 35933,
+    "types": {
+      "number": 1960
+    },
+    "maxBytes": 25,
+    "example": "-0.0000028280291886062514",
+    "presencePct": 54.81,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 10,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "marketCap",
+    "present": 3570,
+    "bytes": 35488,
+    "types": {
+      "number": 3570
+    },
+    "maxBytes": 13,
+    "example": "4669700046848",
+    "presencePct": 99.83,
+    "avgBytesPresent": 10,
+    "avgBytesAll": 10,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyCountryRsWeekKey",
+    "present": 3470,
+    "bytes": 34700,
+    "types": {
+      "string": 3470
+    },
+    "maxBytes": 10,
+    "example": "2026-W35",
+    "presencePct": 97.04,
+    "avgBytesPresent": 10,
+    "avgBytesAll": 10,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "rsQualityScore",
+    "present": 3576,
+    "bytes": 34518,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "59.900000000000006",
+    "presencePct": 100,
+    "avgBytesPresent": 10,
+    "avgBytesAll": 10,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyRsWeekKey",
+    "present": 3443,
+    "bytes": 34430,
+    "types": {
+      "string": 3443
+    },
+    "maxBytes": 10,
+    "example": "2026-W35",
+    "presencePct": 96.28,
+    "avgBytesPresent": 10,
+    "avgBytesAll": 10,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "demandScore",
+    "present": 3576,
+    "bytes": 34128,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "60.428000000000004",
+    "presencePct": 100,
+    "avgBytesPresent": 10,
+    "avgBytesAll": 10,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyRng26Pct",
+    "present": 1960,
+    "bytes": 33890,
+    "types": {
+      "number": 1960
+    },
+    "maxBytes": 18,
+    "example": "45.828933793151364",
+    "presencePct": 54.81,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 9,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyResistance",
+    "present": 1960,
+    "bytes": 32131,
+    "types": {
+      "number": 1960
+    },
+    "maxBytes": 18,
+    "example": "16.056429874651684",
+    "presencePct": 54.81,
+    "avgBytesPresent": 16,
+    "avgBytesAll": 9,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "setupDisplayState",
+    "present": 3576,
+    "bytes": 31861,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 12,
+    "example": "actionable",
+    "presencePct": 100,
+    "avgBytesPresent": 9,
+    "avgBytesAll": 9,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "setupVerdictState",
+    "present": 3576,
+    "bytes": 31861,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 12,
+    "example": "actionable",
+    "presencePct": 100,
+    "avgBytesPresent": 9,
+    "avgBytesAll": 9,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "latestTurnover",
+    "present": 3576,
+    "bytes": 31604,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "207737779.99999997",
+    "presencePct": 100,
+    "avgBytesPresent": 9,
+    "avgBytesAll": 9,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "marketCapAsOf",
+    "present": 1178,
+    "bytes": 30628,
+    "types": {
+      "string": 1178
+    },
+    "maxBytes": 26,
+    "example": "2026-08-26T04:07:33.506Z",
+    "presencePct": 32.94,
+    "avgBytesPresent": 26,
+    "avgBytesAll": 9,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyStageState",
+    "present": 3576,
+    "bytes": 28692,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 22,
+    "example": "insufficient_history",
+    "presencePct": 100,
+    "avgBytesPresent": 8,
+    "avgBytesAll": 8,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "marketCapSource",
+    "present": 1178,
+    "bytes": 27094,
+    "types": {
+      "string": 1178
+    },
+    "maxBytes": 23,
+    "example": "fundamental_snapshots",
+    "presencePct": 32.94,
+    "avgBytesPresent": 23,
+    "avgBytesAll": 8,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "contraction2DepthPct",
+    "present": 1876,
+    "bytes": 26927,
+    "types": {
+      "number": 1876
+    },
+    "maxBytes": 18,
+    "example": "11.054346642275501",
+    "presencePct": 52.46,
+    "avgBytesPresent": 14,
+    "avgBytesAll": 8,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyResistanceDate",
+    "present": 3576,
+    "bytes": 26752,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 12,
+    "example": "2026-07-20",
+    "presencePct": 100,
+    "avgBytesPresent": 7,
+    "avgBytesAll": 7,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "setupDisplayTone",
+    "present": 3576,
+    "bytes": 26516,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 9,
+    "example": "neutral",
+    "presencePct": 100,
+    "avgBytesPresent": 7,
+    "avgBytesAll": 7,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyStageStructure",
+    "present": 3576,
+    "bytes": 25495,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 15,
+    "example": "E2_structural",
+    "presencePct": 100,
+    "avgBytesPresent": 7,
+    "avgBytesAll": 7,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "rowProjection",
+    "present": 3576,
+    "bytes": 24974,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 7,
+    "example": "light",
+    "presencePct": 100,
+    "avgBytesPresent": 7,
+    "avgBytesAll": 7,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "avgVolume",
+    "present": 3576,
+    "bytes": 22981,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 10,
+    "example": "2299744.75",
+    "presencePct": 100,
+    "avgBytesPresent": 6,
+    "avgBytesAll": 6,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "latestVolume",
+    "present": 3576,
+    "bytes": 22656,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 9,
+    "example": "115411400",
+    "presencePct": 100,
+    "avgBytesPresent": 6,
+    "avgBytesAll": 6,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyThemeRsRaw",
+    "present": 1260,
+    "bytes": 22307,
+    "types": {
+      "number": 1260
+    },
+    "maxBytes": 21,
+    "example": "-0.043096351549400946",
+    "presencePct": 35.23,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 6,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "shortPercentOfFloat",
+    "present": 2434,
+    "bytes": 21591,
+    "types": {
+      "number": 2434
+    },
+    "maxBytes": 21,
+    "example": "0.0000760870090505987",
+    "presencePct": 68.06,
+    "avgBytesPresent": 9,
+    "avgBytesAll": 6,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "measuredContractionSwings",
+    "present": 58,
+    "bytes": 20207,
+    "types": {
+      "array": 58
+    },
+    "maxBytes": 700,
+    "example": "array(len=4, item=low,bars,high,toDate,depthPct,fromDate,lowDescIndex,highDescIndex)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 348,
+    "avgBytesAll": 6,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "symbol",
+    "present": 3576,
+    "bytes": 19725,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 8,
+    "example": "UHAL-B",
+    "presencePct": 100,
+    "avgBytesPresent": 6,
+    "avgBytesAll": 6,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "setupDisplayDataLimited",
+    "present": 3576,
+    "bytes": 17880,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "setupDisplayBlocksPatternClaim",
+    "present": 3576,
+    "bytes": 17880,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "setupDisplayPlanValid",
+    "present": 3576,
+    "bytes": 17873,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "setupDisplayActionable",
+    "present": 3576,
+    "bytes": 17873,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "setupDisplayTradePlanEligible",
+    "present": 3576,
+    "bytes": 17873,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "setupDisplayStrict",
+    "present": 3576,
+    "bytes": 17872,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "screenPassed",
+    "present": 3576,
+    "bytes": 17822,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "setupDisplayWatch",
+    "present": 3576,
+    "bytes": 17706,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "vcpCandidate",
+    "present": 3576,
+    "bytes": 17692,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "price",
+    "present": 3576,
+    "bytes": 17672,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 18,
+    "example": "54.540000915527344",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "setupDisplayObservable",
+    "present": 3576,
+    "bytes": 17556,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "contractionsDecreasing",
+    "present": 3576,
+    "bytes": 17206,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyThemeRsAvailable",
+    "present": 3576,
+    "bytes": 16620,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeksAboveSma10wAbove",
+    "present": 3576,
+    "bytes": 16440,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 5,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeksAboveSma30wAbove",
+    "present": 3576,
+    "bytes": 15854,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyPriceAboveSlowMa",
+    "present": 3576,
+    "bytes": 15854,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "upVolume",
+    "present": 3576,
+    "bytes": 15700,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "contractionSwings",
+    "present": 58,
+    "bytes": 15393,
+    "types": {
+      "array": 58
+    },
+    "maxBytes": 696,
+    "example": "array(len=4, item=low,bars,high,toDate,depthPct,fromDate,lowDescIndex,highDescIndex)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 265,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyThemeRsAsOf",
+    "present": 1260,
+    "bytes": 15120,
+    "types": {
+      "string": 1260
+    },
+    "maxBytes": 12,
+    "example": "2026-08-30",
+    "presencePct": 35.23,
+    "avgBytesPresent": 12,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyStageStructureLabel",
+    "present": 3576,
+    "bytes": 15008,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 10,
+    "example": "Con fuga",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyRsAvailable",
+    "present": 3576,
+    "bytes": 14437,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyCountryRsAvailable",
+    "present": 3576,
+    "bytes": 14410,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "country",
+    "present": 3576,
+    "bytes": 14304,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 4,
+    "example": "US",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "rsGlobalSample",
+    "present": 3576,
+    "bytes": 14304,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 4,
+    "example": "3576",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": true,
+    "inLight": true,
+    "candidateToOmit": "yes-stock-refetch"
+  },
+  {
+    "field": "patternEligible",
+    "present": 3576,
+    "bytes": 14304,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 4,
+    "example": "true",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "rsCountrySample",
+    "present": 3576,
+    "bytes": 14304,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 4,
+    "example": "3576",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": true,
+    "inLight": true,
+    "candidateToOmit": "yes-stock-refetch"
+  },
+  {
+    "field": "priceFreshnessOk",
+    "present": 3576,
+    "bytes": 14304,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 4,
+    "example": "true",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "patternDataStatus",
+    "present": 3576,
+    "bytes": 14304,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 4,
+    "example": "ok",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "patternVolumeEligible",
+    "present": 3576,
+    "bytes": 14304,
+    "types": {
+      "boolean": 3576
+    },
+    "maxBytes": 4,
+    "example": "true",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "setupDisplayConfidenceKey",
+    "present": 3576,
+    "bytes": 14304,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 4,
+    "example": "ok",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyCountryRsMarket",
+    "present": 3576,
+    "bytes": 14304,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 4,
+    "example": "US",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyCountryRsSampleSize",
+    "present": 3470,
+    "bytes": 13880,
+    "types": {
+      "number": 3470
+    },
+    "maxBytes": 4,
+    "example": "4838",
+    "presencePct": 97.04,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyRsSampleSize",
+    "present": 3443,
+    "bytes": 13772,
+    "types": {
+      "number": 3443
+    },
+    "maxBytes": 4,
+    "example": "5567",
+    "presencePct": 96.28,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyRsReason",
+    "present": 133,
+    "bytes": 13340,
+    "types": {
+      "string": 133
+    },
+    "maxBytes": 120,
+    "example": "Sin RS semanal: la serie de precios tiene un salto sin ajustar (posible split), ",
+    "presencePct": 3.72,
+    "avgBytesPresent": 100,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "volumeScore",
+    "present": 3576,
+    "bytes": 13109,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 4,
+    "example": "72.4",
+    "presencePct": 100,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyCountryRsRank",
+    "present": 3470,
+    "bytes": 12912,
+    "types": {
+      "number": 3470
+    },
+    "maxBytes": 4,
+    "example": "1703",
+    "presencePct": 97.04,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyRsRank",
+    "present": 3443,
+    "bytes": 12897,
+    "types": {
+      "number": 3443
+    },
+    "maxBytes": 4,
+    "example": "1006",
+    "presencePct": 96.28,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyThemeRsWeekKey",
+    "present": 1260,
+    "bytes": 12600,
+    "types": {
+      "string": 1260
+    },
+    "maxBytes": 10,
+    "example": "2026-W36",
+    "presencePct": 35.23,
+    "avgBytesPresent": 10,
+    "avgBytesAll": 4,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "chartBarsCount",
+    "present": 3576,
+    "bytes": 10728,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "501",
+    "presencePct": 100,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 3,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "rsSectorSample",
+    "present": 3576,
+    "bytes": 10445,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "298",
+    "presencePct": 100,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 3,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": true,
+    "inLight": true,
+    "candidateToOmit": "yes-stock-refetch"
+  },
+  {
+    "field": "weeklyRuptura",
+    "present": 1960,
+    "bytes": 9630,
+    "types": {
+      "boolean": 1960
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 54.81,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 3,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "ipoAgeMonths",
+    "present": 3546,
+    "bytes": 9569,
+    "types": {
+      "number": 3546
+    },
+    "maxBytes": 3,
+    "example": "118",
+    "presencePct": 99.16,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 3,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "fundamentalCoverageScore",
+    "present": 3576,
+    "bytes": 9194,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 100,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 3,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyHhHl",
+    "present": 1960,
+    "bytes": 8738,
+    "types": {
+      "boolean": 1960
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 54.81,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 2,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "technicalCoverageScore",
+    "present": 3576,
+    "bytes": 8684,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "dataCoverageScore",
+    "present": 3576,
+    "bytes": 8438,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "liquidityScore",
+    "present": 3576,
+    "bytes": 8057,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "contraction3DepthPct",
+    "present": 544,
+    "bytes": 7680,
+    "types": {
+      "number": 544
+    },
+    "maxBytes": 18,
+    "example": "4.1177570042161005",
+    "presencePct": 15.21,
+    "avgBytesPresent": 14,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "riskScore",
+    "present": 3576,
+    "bytes": 7584,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weinsteinScore",
+    "present": 3576,
+    "bytes": 7409,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyCountryRsReason",
+    "present": 106,
+    "bytes": 7208,
+    "types": {
+      "string": 106
+    },
+    "maxBytes": 68,
+    "example": "Sin RS semanal: este símbolo no entra en el universo del ranking.",
+    "presencePct": 2.96,
+    "avgBytesPresent": 68,
+    "avgBytesAll": 2,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "growthScore",
+    "present": 3569,
+    "bytes": 7156,
+    "types": {
+      "number": 3569
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 99.8,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "baseWeeks",
+    "present": 3576,
+    "bytes": 7152,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 2,
+    "example": "13",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyFastWeeks",
+    "present": 3576,
+    "bytes": 7152,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 2,
+    "example": "10",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklySlowWeeks",
+    "present": 3576,
+    "bytes": 7152,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 2,
+    "example": "30",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklySlopeWeeks",
+    "present": 3576,
+    "bytes": 7152,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 2,
+    "example": "10",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "priceFreshnessIssue",
+    "present": 3576,
+    "bytes": 7152,
+    "types": {
+      "string": 3576
+    },
+    "maxBytes": 2,
+    "example": "",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "adProxyScore",
+    "present": 3576,
+    "bytes": 7117,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "minerviniScore",
+    "present": 3576,
+    "bytes": 7115,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "epsGrowthProxyScore",
+    "present": 3569,
+    "bytes": 7073,
+    "types": {
+      "number": 3569
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 99.8,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "volumeEffectScore",
+    "present": 3576,
+    "bytes": 6993,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weaknessScore",
+    "present": 3576,
+    "bytes": 6980,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "riskRewardScore",
+    "present": 3576,
+    "bytes": 6930,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyCountryRsRating",
+    "present": 3470,
+    "bytes": 6828,
+    "types": {
+      "number": 3470
+    },
+    "maxBytes": 2,
+    "example": "93",
+    "presencePct": 97.04,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "rsRating",
+    "present": 3576,
+    "bytes": 6809,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 2,
+    "example": "92",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "rsGlobalPct",
+    "present": 3576,
+    "bytes": 6809,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 2,
+    "example": "92",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "rsSectorPct",
+    "present": 3572,
+    "bytes": 6809,
+    "types": {
+      "number": 3572
+    },
+    "maxBytes": 2,
+    "example": "93",
+    "presencePct": 99.89,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "rsCountryPct",
+    "present": 3576,
+    "bytes": 6809,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 2,
+    "example": "92",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyRsRating",
+    "present": 3443,
+    "bytes": 6760,
+    "types": {
+      "number": 3443
+    },
+    "maxBytes": 2,
+    "example": "93",
+    "presencePct": 96.28,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "momentumScore",
+    "present": 3576,
+    "bytes": 6429,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeksAboveSma30w",
+    "present": 3576,
+    "bytes": 5486,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 2,
+    "example": "70",
+    "presencePct": 100,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 2,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyStageWeek",
+    "present": 3570,
+    "bytes": 5197,
+    "types": {
+      "number": 3570
+    },
+    "maxBytes": 2,
+    "example": "60",
+    "presencePct": 99.83,
+    "avgBytesPresent": 1,
+    "avgBytesAll": 1,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "rejectedContractionSwing",
+    "present": 29,
+    "bytes": 4945,
+    "types": {
+      "object": 29
+    },
+    "maxBytes": 174,
+    "example": "object(keys=8: low,bars,high,toDate,depthPct,fromDate,lowDescIndex,highDescIndex)",
+    "presencePct": 0.81,
+    "avgBytesPresent": 171,
+    "avgBytesAll": 1,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeksAboveSma10w",
+    "present": 3576,
+    "bytes": 4334,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 2,
+    "example": "10",
+    "presencePct": 100,
+    "avgBytesPresent": 1,
+    "avgBytesAll": 1,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "weeklyThemeRsSampleSize",
+    "present": 1260,
+    "bytes": 3691,
+    "types": {
+      "number": 1260
+    },
+    "maxBytes": 3,
+    "example": "238",
+    "presencePct": 35.23,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 1,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyFlatPct",
+    "present": 3576,
+    "bytes": 3576,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 1,
+    "example": "2",
+    "presencePct": 100,
+    "avgBytesPresent": 1,
+    "avgBytesAll": 1,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "contractionCount",
+    "present": 3576,
+    "bytes": 3576,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 1,
+    "example": "0",
+    "presencePct": 100,
+    "avgBytesPresent": 1,
+    "avgBytesAll": 1,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "priceFreshnessDays",
+    "present": 3576,
+    "bytes": 3576,
+    "types": {
+      "number": 3576
+    },
+    "maxBytes": 1,
+    "example": "2",
+    "presencePct": 100,
+    "avgBytesPresent": 1,
+    "avgBytesAll": 1,
+    "filterRequired": true,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyThemeRsRank",
+    "present": 1260,
+    "bytes": 3168,
+    "types": {
+      "number": 1260
+    },
+    "maxBytes": 3,
+    "example": "161",
+    "presencePct": 35.23,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 1,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyThemeRsExclusionDetail",
+    "present": 143,
+    "bytes": 2648,
+    "types": {
+      "string": 143
+    },
+    "maxBytes": 31,
+    "example": "salto de 323.5x el 2026-03-02",
+    "presencePct": 4,
+    "avgBytesPresent": 19,
+    "avgBytesAll": 1,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyThemeRsRating",
+    "present": 1260,
+    "bytes": 2453,
+    "types": {
+      "number": 1260
+    },
+    "maxBytes": 2,
+    "example": "92",
+    "presencePct": 35.23,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 1,
+    "filterRequired": true,
+    "sortRequired": true,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "weeklyThemeRsExclusionReason",
+    "present": 143,
+    "bytes": 2348,
+    "types": {
+      "string": 143
+    },
+    "maxBytes": 19,
+    "example": "insufficient-bars",
+    "presencePct": 4,
+    "avgBytesPresent": 16,
+    "avgBytesAll": 1,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "measuredContractionDepths",
+    "present": 58,
+    "bytes": 2197,
+    "types": {
+      "array": 58
+    },
+    "maxBytes": 76,
+    "example": "array(len=4, item=number)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 38,
+    "avgBytesAll": 1,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupVerdictReason",
+    "present": 58,
+    "bytes": 1889,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 41,
+    "example": "precio sobre pivot con volumen relativo",
+    "presencePct": 1.62,
+    "avgBytesPresent": 33,
+    "avgBytesAll": 1,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupStructureReason",
+    "present": 58,
+    "bytes": 1889,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 41,
+    "example": "precio sobre pivot con volumen relativo",
+    "presencePct": 1.62,
+    "avgBytesPresent": 33,
+    "avgBytesAll": 1,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "website",
+    "present": 58,
+    "bytes": 1647,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 103,
+    "example": "https://www.blackrock.com/investing/products/240225/blackrock-enhanced-equity-di",
+    "presencePct": 1.62,
+    "avgBytesPresent": 28,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "contractionDepths",
+    "present": 58,
+    "bytes": 1381,
+    "types": {
+      "array": 58
+    },
+    "maxBytes": 72,
+    "example": "array(len=4, item=number)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 24,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weaknessReasons",
+    "present": 58,
+    "bytes": 1362,
+    "types": {
+      "array": 58
+    },
+    "maxBytes": 35,
+    "example": "array(len=2, item=string)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 23,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weaknessLabel",
+    "present": 58,
+    "bytes": 1218,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 21,
+    "example": "Sin deterioro claro",
+    "presencePct": 1.62,
+    "avgBytesPresent": 21,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": true,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "no"
+  },
+  {
+    "field": "setupStructureDataLabel",
+    "present": 58,
+    "bytes": 1160,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 20,
+    "example": "Datos técnicos OK",
+    "presencePct": 1.62,
+    "avgBytesPresent": 20,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "benchmarkPerf1m",
+    "present": 58,
+    "bytes": 1102,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 19,
+    "example": "-1.0615040079086757",
+    "presencePct": 1.62,
+    "avgBytesPresent": 19,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyNearHighPct",
+    "present": 58,
+    "bytes": 1066,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 19,
+    "example": "-0.7312576183892139",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "rangeCompressionRatio",
+    "present": 58,
+    "bytes": 1047,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 19,
+    "example": "0.41887489770848335",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "benchmarkPerf6m",
+    "present": 58,
+    "bytes": 1044,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "15.357723232710342",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyDistanceFastMa",
+    "present": 58,
+    "bytes": 1031,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 20,
+    "example": "-0.07098397553209068",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "returnToDownsideVol3m",
+    "present": 58,
+    "bytes": 1030,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 19,
+    "example": "0.38042815619356607",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "latestVolumeRatio",
+    "present": 58,
+    "bytes": 1029,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "1.9764489717375247",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "rs12m",
+    "present": 58,
+    "bytes": 1024,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 20,
+    "example": "-0.12313195197397775",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "priorUptrendPct",
+    "present": 58,
+    "bytes": 1021,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 19,
+    "example": "-1.8211767359404551",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "middleBaseDepthPct",
+    "present": 58,
+    "bytes": 1019,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "13.575137061662288",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "distanceSma30w",
+    "present": 58,
+    "bytes": 1018,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "31.542335314277594",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "avgDailyRange20dPct",
+    "present": 58,
+    "bytes": 1016,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 19,
+    "example": "0.21048624320050888",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "earlyBaseDepthPct",
+    "present": 58,
+    "bytes": 1015,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "14.365154737856672",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "downsideVolatility63d",
+    "present": 58,
+    "bytes": 1015,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "23.244181238852548",
+    "presencePct": 1.62,
+    "avgBytesPresent": 18,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "tightness15dPct",
+    "present": 58,
+    "bytes": 1014,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "16.171792640668475",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "lateBaseDepthPct",
+    "present": 58,
+    "bytes": 1014,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "16.171792640668475",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "rs3m",
+    "present": 58,
+    "bytes": 1013,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 19,
+    "example": "0.16081590197212225",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "rs6m",
+    "present": 58,
+    "bytes": 1009,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 19,
+    "example": "-4.5039345959716925",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "sma10w",
+    "present": 58,
+    "bytes": 1009,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "10.659999866485595",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "atr50Pct",
+    "present": 58,
+    "bytes": 1009,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "3.9048710343435222",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyFastMa",
+    "present": 58,
+    "bytes": 1009,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "10.659999866485595",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "tightness20dPct",
+    "present": 58,
+    "bytes": 1009,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "19.571641626104554",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyBaseDepthPct",
+    "present": 58,
+    "bytes": 1008,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "22.628367968560788",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "baseReturnPct",
+    "present": 58,
+    "bytes": 1007,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "28.366397873347893",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "lowAdvance52w",
+    "present": 58,
+    "bytes": 1007,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "185.95341050340065",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "rsCompositeRaw",
+    "present": 58,
+    "bytes": 1007,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "63.790103031434214",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "sma30wSlope",
+    "present": 58,
+    "bytes": 1006,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "20.268640215165433",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "tightness5dPct",
+    "present": 58,
+    "bytes": 1002,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "13.533836434925867",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "atr20Pct",
+    "present": 58,
+    "bytes": 1001,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 19,
+    "example": "0.23574798530159696",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "sma30w",
+    "present": 58,
+    "bytes": 993,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "14.282640324910483",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "benchmarkPerf3m",
+    "present": 58,
+    "bytes": 986,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 17,
+    "example": "3.862902690687098",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "benchmarkPerf12m",
+    "present": 58,
+    "bytes": 986,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 17,
+    "example": "18.48308931728999",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "patternContributionScore",
+    "present": 58,
+    "bytes": 986,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "15.000452257409448",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupStructureLabel",
+    "present": 58,
+    "bytes": 983,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 22,
+    "example": "Compresión de pivot",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "latestCloseLocationPct",
+    "present": 58,
+    "bytes": 979,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "60.181493205848604",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "compositeScore",
+    "present": 58,
+    "bytes": 974,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 17,
+    "example": "88.75035455776126",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "patternFamily",
+    "present": 58,
+    "bytes": 963,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 25,
+    "example": "progressive_contraction",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "groupStrengthScore",
+    "present": 58,
+    "bytes": 963,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "47.090408267213036",
+    "presencePct": 1.62,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "tightnessScore",
+    "present": 58,
+    "bytes": 941,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "43.015373276440705",
+    "presencePct": 1.62,
+    "avgBytesPresent": 16,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "baseContextStatus",
+    "present": 58,
+    "bytes": 929,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 20,
+    "example": "persistent_advance",
+    "presencePct": 1.62,
+    "avgBytesPresent": 16,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "chartProvider",
+    "present": 58,
+    "bytes": 909,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 28,
+    "example": "StatsEdge daily_bars cache",
+    "presencePct": 1.62,
+    "avgBytesPresent": 16,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "baseQualityScore",
+    "present": 58,
+    "bytes": 884,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "48.697281892103774",
+    "presencePct": 1.62,
+    "avgBytesPresent": 15,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "dataProviderOrigin",
+    "present": 58,
+    "bytes": 870,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 15,
+    "example": "Yahoo Finance",
+    "presencePct": 1.62,
+    "avgBytesPresent": 15,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "breakoutQualityScore",
+    "present": 58,
+    "bytes": 851,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "31.000053405761705",
+    "presencePct": 1.62,
+    "avgBytesPresent": 15,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupStructureKey",
+    "present": 58,
+    "bytes": 776,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 19,
+    "example": "breakout_observed",
+    "presencePct": 1.62,
+    "avgBytesPresent": 13,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupDataConfidenceLabel",
+    "present": 58,
+    "bytes": 754,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 13,
+    "example": "Dato usable",
+    "presencePct": 1.62,
+    "avgBytesPresent": 13,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "patternScore",
+    "present": 58,
+    "bytes": 752,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "47.907473385258115",
+    "presencePct": 1.62,
+    "avgBytesPresent": 13,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "patternMaturity",
+    "present": 58,
+    "bytes": 747,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 19,
+    "example": "not_consolidating",
+    "presencePct": 1.62,
+    "avgBytesPresent": 13,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "rsQualityLabel",
+    "present": 58,
+    "bytes": 713,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 17,
+    "example": "RS constructivo",
+    "presencePct": 1.62,
+    "avgBytesPresent": 12,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "contractionScore",
+    "present": 58,
+    "bytes": 692,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "37.064756565201066",
+    "presencePct": 1.62,
+    "avgBytesPresent": 12,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupVerdictEvidence",
+    "present": 58,
+    "bytes": 675,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 31,
+    "example": "14.7% -> 6.0% -> 1.7% -> 0.9%",
+    "presencePct": 1.62,
+    "avgBytesPresent": 12,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupStructureEvidence",
+    "present": 58,
+    "bytes": 675,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 31,
+    "example": "14.7% -> 6.0% -> 1.7% -> 0.9%",
+    "presencePct": 1.62,
+    "avgBytesPresent": 12,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "meaningfulContractionMinPct",
+    "present": 58,
+    "bytes": 675,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "2.7169074839708647",
+    "presencePct": 1.62,
+    "avgBytesPresent": 12,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "ipoDateReason",
+    "present": 30,
+    "bytes": 660,
+    "types": {
+      "string": 30
+    },
+    "maxBytes": 22,
+    "example": "ipo-date-unavailable",
+    "presencePct": 0.84,
+    "avgBytesPresent": 22,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": true,
+    "candidateToOmit": "maybe-review-copy"
+  },
+  {
+    "field": "priceSource",
+    "present": 58,
+    "bytes": 638,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 11,
+    "example": "proveedor",
+    "presencePct": 1.62,
+    "avgBytesPresent": 11,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "contractionReductionPct",
+    "present": 36,
+    "bytes": 618,
+    "types": {
+      "number": 36
+    },
+    "maxBytes": 18,
+    "example": "58.986175115207374",
+    "presencePct": 1.01,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "speculationRiskScore",
+    "present": 58,
+    "bytes": 584,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "14.067216851112665",
+    "presencePct": 1.62,
+    "avgBytesPresent": 10,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "volumeDryUpScore",
+    "present": 58,
+    "bytes": 505,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 18,
+    "example": "15.504171771715543",
+    "presencePct": 1.62,
+    "avgBytesPresent": 9,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "sharesOutstanding",
+    "present": 58,
+    "bytes": 504,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 11,
+    "example": "12103038590",
+    "presencePct": 1.62,
+    "avgBytesPresent": 9,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": true,
+    "inLight": false,
+    "candidateToOmit": "yes-stock-refetch"
+  },
+  {
+    "field": "rejectedContractionDepthPct",
+    "present": 29,
+    "bytes": 503,
+    "types": {
+      "number": 29
+    },
+    "maxBytes": 18,
+    "example": "11.963183723083857",
+    "presencePct": 0.81,
+    "avgBytesPresent": 17,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "floatShares",
+    "present": 57,
+    "bytes": 490,
+    "types": {
+      "number": 57
+    },
+    "maxBytes": 11,
+    "example": "12165738485",
+    "presencePct": 1.59,
+    "avgBytesPresent": 9,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": true,
+    "inLight": false,
+    "candidateToOmit": "yes-stock-refetch"
+  },
+  {
+    "field": "objectiveLabel",
+    "present": 58,
+    "bytes": 471,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 11,
+    "example": "Watchlist",
+    "presencePct": 1.62,
+    "avgBytesPresent": 8,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "compositeLabel",
+    "present": 58,
+    "bytes": 464,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 11,
+    "example": "Watchlist",
+    "presencePct": 1.62,
+    "avgBytesPresent": 8,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "sharesPercentSharesOut",
+    "present": 58,
+    "bytes": 463,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 20,
+    "example": "0.029999999000000003",
+    "presencePct": 1.62,
+    "avgBytesPresent": 8,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": true,
+    "inLight": false,
+    "candidateToOmit": "yes-stock-refetch"
+  },
+  {
+    "field": "priceFreshnessLabel",
+    "present": 58,
+    "bytes": 461,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 8,
+    "example": "fresco",
+    "presencePct": 1.62,
+    "avgBytesPresent": 8,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "exchange",
+    "present": 58,
+    "bytes": 448,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 10,
+    "example": "NasdaqGS",
+    "presencePct": 1.62,
+    "avgBytesPresent": 8,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "sharesShort",
+    "present": 58,
+    "bytes": 413,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 9,
+    "example": "116327753",
+    "presencePct": 1.62,
+    "avgBytesPresent": 7,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": true,
+    "inLight": false,
+    "candidateToOmit": "yes-stock-refetch"
+  },
+  {
+    "field": "setupVerdictTone",
+    "present": 58,
+    "bytes": 413,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 9,
+    "example": "neutral",
+    "presencePct": 1.62,
+    "avgBytesPresent": 7,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupStructureTone",
+    "present": 58,
+    "bytes": 413,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 9,
+    "example": "neutral",
+    "presencePct": 1.62,
+    "avgBytesPresent": 7,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "avgVolume5",
+    "present": 58,
+    "bytes": 386,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 8,
+    "example": "52278980",
+    "presencePct": 1.62,
+    "avgBytesPresent": 7,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "avgVolume10",
+    "present": 58,
+    "bytes": 383,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 8,
+    "example": "46545660",
+    "presencePct": 1.62,
+    "avgBytesPresent": 7,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "avgVolume50",
+    "present": 58,
+    "bytes": 380,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 8,
+    "example": "48723518",
+    "presencePct": 1.62,
+    "avgBytesPresent": 7,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "prevAvgVolume20",
+    "present": 58,
+    "bytes": 378,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 8,
+    "example": "39397355",
+    "presencePct": 1.62,
+    "avgBytesPresent": 7,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "micCode",
+    "present": 58,
+    "bytes": 348,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 6,
+    "example": "XNYS",
+    "presencePct": 1.62,
+    "avgBytesPresent": 6,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "dataCoverageLabel",
+    "present": 58,
+    "bytes": 348,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 6,
+    "example": "alta",
+    "presencePct": 1.62,
+    "avgBytesPresent": 6,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "pivotClarityScore",
+    "present": 58,
+    "bytes": 292,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 17,
+    "example": "98.20611026506934",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "currency",
+    "present": 58,
+    "bytes": 290,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 5,
+    "example": "USD",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupStrict",
+    "present": 58,
+    "bytes": 290,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "chartEstimated",
+    "present": 58,
+    "bytes": 290,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupPlanValid",
+    "present": 58,
+    "bytes": 290,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "benchmarkSymbol",
+    "present": 58,
+    "bytes": 290,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 5,
+    "example": "SPY",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupActionable",
+    "present": 58,
+    "bytes": 290,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "compositePartial",
+    "present": 58,
+    "bytes": 290,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupStructureStrict",
+    "present": 58,
+    "bytes": 290,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "failedBreakout",
+    "present": 58,
+    "bytes": 285,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "pivotSqueeze",
+    "present": 58,
+    "bytes": 284,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "breakoutAttempt",
+    "present": 58,
+    "bytes": 284,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "rightSideTight",
+    "present": 58,
+    "bytes": 280,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupWatch",
+    "present": 58,
+    "bytes": 277,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupObservable",
+    "present": 58,
+    "bytes": 277,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 5,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "volatilityCompression",
+    "present": 58,
+    "bytes": 252,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "consolidationCandidate",
+    "present": 58,
+    "bytes": 247,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 5,
+    "example": "false",
+    "presencePct": 1.62,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "shortRatio",
+    "present": 58,
+    "bytes": 235,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 5,
+    "example": "10.01",
+    "presencePct": 1.62,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": true,
+    "inLight": false,
+    "candidateToOmit": "yes-stock-refetch"
+  },
+  {
+    "field": "rsBenchmarkAvailable",
+    "present": 58,
+    "bytes": 232,
+    "types": {
+      "boolean": 58
+    },
+    "maxBytes": 4,
+    "example": "true",
+    "presencePct": 1.62,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "setupDataConfidenceKey",
+    "present": 58,
+    "bytes": 232,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 4,
+    "example": "ok",
+    "presencePct": 1.62,
+    "avgBytesPresent": 4,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "patternBarsCount",
+    "present": 58,
+    "bytes": 174,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 3,
+    "example": "501",
+    "presencePct": 1.62,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "patternTimeframe",
+    "present": 58,
+    "bytes": 174,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 3,
+    "example": "D",
+    "presencePct": 1.62,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "rsBenchmarkSample",
+    "present": 58,
+    "bytes": 174,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 3,
+    "example": "400",
+    "presencePct": 1.62,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "patternCoveragePct",
+    "present": 58,
+    "bytes": 174,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 1.62,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "profileCoverageScore",
+    "present": 58,
+    "bytes": 174,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 1.62,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "patternOhlcCoveragePct",
+    "present": 58,
+    "bytes": 174,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 1.62,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "patternVolumeCoveragePct",
+    "present": 58,
+    "bytes": 174,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 1.62,
+    "avgBytesPresent": 3,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "rsStabilityScore",
+    "present": 58,
+    "bytes": 140,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 3,
+    "example": "100",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "baseDays",
+    "present": 58,
+    "bytes": 116,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 2,
+    "example": "65",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "patternIssues",
+    "present": 58,
+    "bytes": 116,
+    "types": {
+      "array": 58
+    },
+    "maxBytes": 2,
+    "example": "array(len=0, item=undefined)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": true,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "patternMinBars",
+    "present": 58,
+    "bytes": 116,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 2,
+    "example": "90",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "weeklyBaseWeeks",
+    "present": 58,
+    "bytes": 116,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 2,
+    "example": "16",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "rsBenchmarkIssue",
+    "present": 58,
+    "bytes": 116,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 2,
+    "example": "",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "stageHealthScore",
+    "present": 58,
+    "bytes": 116,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 2,
+    "example": "93",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "dataCoverageIssues",
+    "present": 58,
+    "bytes": 116,
+    "types": {
+      "array": 58
+    },
+    "maxBytes": 2,
+    "example": "array(len=0, item=undefined)",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "chartFallbackReason",
+    "present": 58,
+    "bytes": 116,
+    "types": {
+      "string": 58
+    },
+    "maxBytes": 2,
+    "example": "",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "objectiveSetupScore",
+    "present": 58,
+    "bytes": 116,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 2,
+    "example": "90",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "baseContextScore",
+    "present": 58,
+    "bytes": 109,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 2,
+    "example": "12",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "baseNewHighCount",
+    "present": 58,
+    "bytes": 103,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 2,
+    "example": "15",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "baseNearPivotDays",
+    "present": 58,
+    "bytes": 96,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 2,
+    "example": "16",
+    "presencePct": 1.62,
+    "avgBytesPresent": 2,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "pivotTouchCount",
+    "present": 58,
+    "bytes": 78,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 2,
+    "example": "13",
+    "presencePct": 1.62,
+    "avgBytesPresent": 1,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "basePivotAgeBars",
+    "present": 58,
+    "bytes": 77,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 2,
+    "example": "31",
+    "presencePct": 1.62,
+    "avgBytesPresent": 1,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "compositeCoverage",
+    "present": 58,
+    "bytes": 58,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 1,
+    "example": "1",
+    "presencePct": 1.62,
+    "avgBytesPresent": 1,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "marginalHighBreaks",
+    "present": 58,
+    "bytes": 58,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 1,
+    "example": "0",
+    "presencePct": 1.62,
+    "avgBytesPresent": 1,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "patternFreshnessDays",
+    "present": 58,
+    "bytes": 58,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 1,
+    "example": "2",
+    "presencePct": 1.62,
+    "avgBytesPresent": 1,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "priceFreshnessMaxDays",
+    "present": 58,
+    "bytes": 58,
+    "types": {
+      "number": 58
+    },
+    "maxBytes": 1,
+    "example": "5",
+    "presencePct": 1.62,
+    "avgBytesPresent": 1,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  },
+  {
+    "field": "contraction4DepthPct",
+    "present": 3,
+    "bytes": 21,
+    "types": {
+      "number": 3
+    },
+    "maxBytes": 17,
+    "example": "5.929981415663864",
+    "presencePct": 0.08,
+    "avgBytesPresent": 7,
+    "avgBytesAll": 0,
+    "filterRequired": false,
+    "sortRequired": false,
+    "tableDisplay": false,
+    "reviewRequired": false,
+    "stockOnly": false,
+    "inLight": false,
+    "candidateToOmit": "yes-not-in-screener-contract"
+  }
+]

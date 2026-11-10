@@ -1,0 +1,598 @@
+StatsEdge
+EQUITY RESEARCH
+Screener
+Listas
+Sectores
+Research
+Mercado
+Mercado
+US
+
+¿Qué exposición tolera este mercado hoy — y si tolera alguna, dónde está el liderazgo?
+
+Actualizar
+Datos · cobertura
+RÉGIMEN · US
+RIESGO FAVORABLE / MERCADO ALCISTA
+
+Índices mayoritariamente sobre medias clave y momentum positivo.
+
+Etapa 1
+Base
+ninguno
+universo 12%
+Etapa 2
+Avance
+QQQ
+Dudoso
++9,2%
+SPY
+Pre-fuga
++6,3%
+ACWI
+Pre-fuga
++5,8%
+DIA
+Pre-fuga
++3,1%
+IWM
+Pre-fuga
++2,2%
+universo 31%
+Etapa 3
+Techo
+ninguno
+universo 32%
+Etapa 4
+Declive
+ninguno
+universo 25%
+90
+MARKET SCORE
+44%
+UNIVERSO SOBRE MM30S
+36%
+SECTORES EN ETAPA 2
+5/3
+DIST/ACC 20D (SPY)
+
+En las últimas 4 semanas SPY varió +0,4% y la participación pasó del 62% al 55%. El índice sube y cada vez menos valores lo acompañan.
+
+RÉGIMEN POR REGIÓN
+Hero = US · veredictos en paralelo
+🇺🇸
+Estados Unidos
+S&P 500 (SPY)
+HERO
+Etapa ETF
+Etapa 2 confirmada
+Amplitud MM30s
+–Sin dato
+i
+Veredicto
+Riesgo favorable / mercado alcista
+90
+0 en escaneo
+🇪🇺
+Europa
+Euro Stoxx 50 (FEZ)
+Etapa ETF
+Etapa 2 confirmada
+Amplitud MM30s
+–Sin dato
+i
+Veredicto
+Riesgo favorable / mercado alcista
+90
+0 en escaneo
+🇯🇵
+Japón
+MSCI Japan (EWJ)
+Etapa ETF
+Etapa 2 confirmada
+Amplitud MM30s
+–Sin dato
+i
+Veredicto
+Riesgo favorable / mercado alcista
+90
+0 en escaneo
+🇭🇰
+Hong Kong
+MSCI Hong Kong (EWH)
+Etapa ETF
+Etapa 3 confirmada
+Amplitud MM30s
+–Sin dato
+i
+Veredicto
+Mercado débil / defensivo
+35
+0 en escaneo
+Qué cambió
+Serie semanal US
+
+–Sin dato
+i
+
+ESTRUCTURA DEL MERCADO
+MM30 semanas · amplitud · volumen
+5/5
+SOBRE MM30S
+45%
+SECTORES SOBRE MM30S
+0%
+SECTORES EN ETAPA 4
+4/11
+SOBRE SMA50
+4,9/1,9
+PRESIÓN SECTORIAL DIST/ACC
+SECTORES CON CONFIRMACIÓN
+Tecnología
+XLK
+100
+Estructura
++5,3%
+RS 1M vs SPY
+Salud
+XLV
+95
+Estructura
+-2,8%
+RS 1M vs SPY
+Energía
+XLE
+90
+Estructura
+-3,6%
+RS 1M vs SPY
+DIVERGENCIAS Y PRESIÓN
+Presión de distribución supera acumulación en sectores.
+Lectura interna
+—
+dato
+Contexto
+interno
+Tipo de liderazgo
+Ofensivos en etapa 2: 3 · Defensivos en etapa 2: 1
+Sensores seleccionados
+Índices principales respecto a MM30 semanas, Porcentaje de sectores sobre MM30 semanas, Sectores en etapa 2 / etapa 4
+AMPLITUD DEL UNIVERSO
+3287 valores · escaneo del 18 oct, 05:00 · precios al cierre del 16 oct 2026
+
+3232 valores con precio anterior al 16 oct 2026.
+
+44%
+SOBRE SU MEDIA DE 30 SEMANAS
+1418 de 3249
+31%
+SOBRE SU SMA50
+1026 de 3287
+62%
+SMA200 ASCENDENTE
+2019 de 3254
+3%
+NUEVOS MÁXIMOS 52S (≤1% DEL TECHO)
+91 de 3287
+–SIN DATO
+I
+NUEVOS MÍNIMOS 52S (≤1% SOBRE EL SUELO)
+36%
+A ≥30% DEL MÁXIMO 52S
+1183 de 3287
+39%
+MÁS VOLUMEN EN SUBIDAS
+1297 de 3287
+DISTRIBUCIÓN POR ETAPAS
+Etapa 1
+12%
+(393)
+Etapa 2
+31%
+(1002)
+Etapa 3
+32%
+(1022)
+Etapa 4
+25%
+(818)
+52 sin etapa clasificable
+ÍNDICE Y PARTICIPACIÓN · 5 SEMANAS
+SPY
+768
+771
+Participación
+62%
+55%
+
+En las últimas 4 semanas SPY varió +0,4%; la participación — valores del universo RS con retorno ponderado positivo — pasó del 62% al 55%. En las últimas 20 semanas, el índice varió +0,4% y la participación cambió -7,1%: la serie solo cubre 4 semanas, ventana insuficiente para el umbral del briefing (≥+2% / ≤-5 pp).
+
+Serie semanal completa
+Volumen del universo
+
+Precio del cierre del 16 oct 2026.
+
+39%
+REPARTO DEL VOLUMEN (50D)
+1297 de 3287 · up/down >= 1×
+52%
+VOLUMEN SECO (10D/50D)
+1712 de 3287 · media 10 / media 50 < 1
+21%
+IMPULSO DE VOLUMEN (5D/20D)
+691 de 3287 · media 5 / media 20 ≥ +15%
+17%
+REPARTO DE VOLUMEN ALTO (50D)
+548 de 3287 · up/down >= 1.25×
+
+En las últimas 50 sesiones, la media del cociente up/down del universo es 1.03× (1297 valores por encima de 1×, 1990 por debajo).
+
+LIDERAZGO Y FUERZA RELATIVA GLOBAL
+Escaneo nocturno · amplitud por región US/EU/JP/HK
+🇺🇸
+Estados Unidos
+S&P 500 (SPY)
+Sin RS
+31%
+AMPLITUD (MM30S)
+–SIN DATO
+I
+RS PROMEDIO
+3287
+EN ESCANEO NOCTURNO
+CNQ
+Canadian Natural Resources Limited
+OBJ
+0
+P
+0
+!
+2
+X
+1
+SCORE
+87
+RS
+-
+DDI
+DoubleDown Interactive Co., Ltd.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+SCORE
+87
+RS
+-
+HALO
+Halozyme Therapeutics, Inc.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+SCORE
+87
+RS
+-
+🇪🇺
+Europa
+Euro Stoxx 50 (FEZ)
+Sin RS
+–SIN DATO
+I
+AMPLITUD (MM30S)
+–SIN DATO
+I
+RS PROMEDIO
+0
+EN ESCANEO NOCTURNO
+
+Sin activos analizados en esta geografía.
+
+🇯🇵
+Japón
+MSCI Japan (EWJ)
+Sin RS
+–SIN DATO
+I
+AMPLITUD (MM30S)
+–SIN DATO
+I
+RS PROMEDIO
+0
+EN ESCANEO NOCTURNO
+
+Sin activos analizados en esta geografía.
+
+🇭🇰
+Hong Kong
+MSCI Hong Kong (EWH)
+Sin RS
+–SIN DATO
+I
+AMPLITUD (MM30S)
+–SIN DATO
+I
+RS PROMEDIO
+0
+EN ESCANEO NOCTURNO
+
+Sin activos analizados en esta geografía.
+
+LEADERSHIP PULSE
+Escaneo nocturno · 18 oct, 05:00 · 3287 valores
+0%
+RS ≥ 80
+36%
+CERCA MÁXIMOS 52S
+64%
+DETERIORO 2+
+0%
+FUGAS FALLIDAS (LÍDERES)
+LIDERAZGO OBSERVADO
+CNQ
+Canadian Natural Resources Limited
+OBJ
+0
+P
+0
+!
+2
+X
+1
+-
+RS
+87
+Score
+DDI
+DoubleDown Interactive Co., Ltd.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+-
+RS
+87
+Score
+HALO
+Halozyme Therapeutics, Inc.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+-
+RS
+87
+Score
+MSFT
+Microsoft Corporation
+OBJ
+0
+P
+0
+!
+2
+X
+1
+-
+RS
+87
+Score
+VEEV
+Veeva Systems Inc.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+-
+RS
+87
+Score
+SU
+Suncor Energy Inc.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+-
+RS
+86
+Score
+PBR
+Petróleo Brasileiro S.A. - Petrobras
+OBJ
+0
+P
+0
+!
+2
+X
+1
+-
+RS
+86
+Score
+APA
+APA Corporation
+OBJ
+0
+P
+0
+!
+2
+X
+1
+-
+RS
+86
+Score
+DETERIORO A REVISAR
+PUMP
+ProPetro Holding Corp.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+8
+evidencias
+-
+Deterioro alto, RS Bench bajo
+NKLR
+Terra Innovatum Global N.V.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+8
+evidencias
+-
+Deterioro alto, RS Bench bajo
+WVE
+Wave Life Sciences, Inc.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+8
+evidencias
+-
+Deterioro alto, RS Bench bajo
+CURR
+CURRENC Group Inc.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+8
+evidencias
+-
+Deterioro alto, RS Bench bajo
+REZI
+Resideo Technologies, Inc.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+8
+evidencias
+-
+Deterioro alto, RS Bench bajo
+WLFC
+Willis Lease Finance Corporation
+OBJ
+0
+P
+0
+!
+2
+X
+1
+8
+evidencias
+-
+Deterioro alto, RS Bench bajo
+BKD
+Brookdale Senior Living Inc.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+8
+evidencias
+-
+Deterioro alto, RS Bench bajo
+CABA
+Cabaletta Bio, Inc.
+OBJ
+0
+P
+0
+!
+2
+X
+1
+8
+evidencias
+-
+Deterioro alto, RS Bench bajo
+Concentración por país
+US 244/3287
+Concentración por tema
+Energia / red 49/258 · Finanzas 36/630 · Software / IA 34/273 · Medtech / biotech 32/486 · Sin tematica 27/38
+AMPLITUD SECTORIAL
+Ver sectores
+52
+SCORE MEDIO
+4/11
+SOBRE SMA50
+1M
+Tecnología lidera · Utilities rezaga
+Líderes / débiles
+Tecnología, Salud, Comunicaciones · Utilities, Consumo discrecional, Materiales
+Detalle operativo en Sectores.
+SENTIMIENTO 
+i
+Titulares · lectura contraria
+Titulares · Neutral
+60
+bajistas
+33%
+neutrales
+50%
+alcistas
+17%
+dominante
+neutral
+
+«Ruido equilibrado: el precio y la amplitud mandan más que los titulares.»
+
+Titulares de mercado 24
+Auditoría

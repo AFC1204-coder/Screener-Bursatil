@@ -1,0 +1,2829 @@
+StatsEdge
+Listas
+Global
+
+113 acciones únicas · 6 listas con datos · 108 apariciones · 0 favoritos · Precios del 16 oct · copia local 18 oct 2026
+
+Guardar vista
+Revisar
+Calidad de dato
+Cierre
+16 oct 2026
+RS
+27 sept 2026 · n=5593
+Universo
+3287 de 5613
+Listas · cobertura
+SCORE COMPUESTO
+Ranking principal sin bonus VCP
+
+Largo coherente
+Score compuesto alto con sesgo largo; excluye deterioro técnico y bajismo estructural.
+
+Revisar datos
+Revisar 20 precio viejo antes de confiar en el ranking.
+20
+filas
+20
+precio viejo
+0
+cobertura baja
+20
+datos limitados
+0
+excluidas por contrato
+CNQ
+Canadian Natural Resources Limited
+87
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+83
+3M
++23,5%
+52W
+-0,2%
+RSQ
+94
+RIESGO
+92
+
+Oil & Gas E&P · Energy · Energia / red
+
+Score compuesto 87 · RS 83 · 3M +23,5% · sin señales bajistas
+DDI
+DoubleDown Interactive Co., Ltd.
+87
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+87
+3M
++21,7%
+52W
+-3,5%
+RSQ
+95
+RIESGO
+100
+
+Electronic Gaming & Multimedia · Communication Services · Internet / plataformas
+
+Score compuesto 87 · RS 87 · 3M +21,7% · sin señales bajistas
+HALO
+Halozyme Therapeutics, Inc.
+87
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++58,0%
+52W
+-0,5%
+RSQ
+94
+RIESGO
+92
+
+Biotechnology · Healthcare · Medtech / biotech
+
+Score compuesto 87 · RS 94 · 3M +58,0% · sin señales bajistas
+MSFT
+Microsoft Corporation
+87
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+81
+3M
++31,8%
+52W
+-4,0%
+RSQ
+92
+RIESGO
+100
+
+Software - Infrastructure · Technology · Software / IA
+
+Score compuesto 87 · RS 81 · 3M +31,8% · sin señales bajistas
+VEEV
+Veeva Systems Inc.
+87
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+90
+3M
++57,2%
+52W
+-3,0%
+RSQ
+95
+RIESGO
+80
+
+Health Information Services · Healthcare · Medtech / biotech
+
+Score compuesto 87 · RS 90 · 3M +57,2% · sin señales bajistas
+SU
+Suncor Energy Inc.
+86
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+87
+3M
++26,2%
+52W
+-2,0%
+RSQ
+94
+RIESGO
+92
+
+Oil & Gas Integrated · Energy · Energia / red
+
+Score compuesto 86 · RS 87 · 3M +26,2% · sin señales bajistas
+PBR
+Petróleo Brasileiro S.A. - Petrobras
+86
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+89
+3M
++47,1%
+52W
+-0,4%
+RSQ
+96
+RIESGO
+70
+
+Oil & Gas Integrated · Energy · Energia / red
+
+Score compuesto 86 · RS 89 · 3M +47,1% · sin señales bajistas
+APA
+APA Corporation
+86
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+91
+3M
++42,1%
+52W
+-0,2%
+RSQ
+96
+RIESGO
+92
+
+Oil & Gas E&P · Energy · Energia / red
+
+Score compuesto 86 · RS 91 · 3M +42,1% · sin señales bajistas
+AII
+American Integrity Insurance Group, Inc.
+86
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+86
+3M
++45,3%
+52W
+-2,7%
+RSQ
+96
+RIESGO
+100
+
+Insurance - Property & Casualty · Financial Services · Finanzas
+
+Score compuesto 86 · RS 86 · 3M +45,3% · sin señales bajistas
+SLDE
+Slide Insurance Holdings, Inc.
+85
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+88
+3M
++29,1%
+52W
+-0,7%
+RSQ
+93
+RIESGO
+92
+
+Insurance - Property & Casualty · Financial Services · Finanzas
+
+Score compuesto 85 · RS 88 · 3M +29,1% · sin señales bajistas
+DHT
+DHT Holdings, Inc.
+85
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+93
+3M
++40,7%
+52W
+-12,3%
+RSQ
+94
+RIESGO
+62
+
+Oil & Gas Midstream · Energy · Energia / red
+
+Score compuesto 85 · RS 93 · 3M +40,7% · sin señales bajistas
+KO
+The Coca-Cola Company
+85
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+75
+3M
++15,0%
+52W
+-0,2%
+RSQ
+91
+RIESGO
+100
+
+Beverages - Non-Alcoholic · Consumer Defensive · Consumo / marca
+
+Score compuesto 85 · RS 75 · 3M +15,0% · sin señales bajistas
+REPX
+Riley Exploration Permian, Inc.
+85
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+87
+3M
++40,8%
+52W
+-0,4%
+RSQ
+94
+RIESGO
+80
+
+Oil & Gas E&P · Energy · Energia / red
+
+Score compuesto 85 · RS 87 · 3M +40,8% · sin señales bajistas
+COP
+ConocoPhillips
+85
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+79
+3M
++27,5%
+52W
+-0,1%
+RSQ
+93
+RIESGO
+92
+
+Oil & Gas E&P · Energy · Energia / red
+
+Score compuesto 85 · RS 79 · 3M +27,5% · sin señales bajistas
+EXPD
+Expeditors International of Washington, Inc.
+85
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+82
+3M
++10,5%
+52W
+-2,4%
+RSQ
+92
+RIESGO
+100
+
+Integrated Freight & Logistics · Industrials · Autos / movilidad
+
+Score compuesto 85 · RS 82 · 3M +10,5% · sin señales bajistas
+VLO
+Valero Energy Corporation
+85
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+97
+3M
++42,5%
+52W
+-3,6%
+RSQ
+99
+RIESGO
+80
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+Score compuesto 85 · RS 97 · 3M +42,5% · sin señales bajistas
+KNSA
+Kiniksa Pharmaceuticals International, plc
+84
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+93
+3M
++25,6%
+52W
+-5,3%
+RSQ
+94
+RIESGO
+92
+
+Drug Manufacturers - Specialty & Generic · Healthcare · Medtech / biotech
+
+Score compuesto 84 · RS 93 · 3M +25,6% · sin señales bajistas
+ANF
+Abercrombie & Fitch Co.
+84
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+90
+3M
++62,3%
+52W
+-2,2%
+RSQ
+89
+RIESGO
+92
+
+Apparel Retail · Consumer Cyclical · Consumo / marca
+
+Score compuesto 84 · RS 90 · 3M +62,3% · sin señales bajistas
+LÍDERES POR CALIDAD DE RS
+RS alto con volatilidad y caída máxima controladas
+
+RS de calidad
+RS Quality y RS universo altos con sesgo largo; excluye deterioro técnico y bajismo estructural.
+
+Revisar datos
+Revisar 20 precio viejo antes de confiar en el ranking.
+20
+filas
+20
+precio viejo
+0
+cobertura baja
+20
+datos limitados
+0
+excluidas por contrato
+VLO
+Valero Energy Corporation
+99
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+97
+3M
++42,5%
+52W
+-3,6%
+RSQ
+99
+RIESGO
+80
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+RSQ 99 · RS 97 · sin señales bajistas · deterioro bajo 0
+MPC
+Marathon Petroleum Corporation
+98
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+96
+3M
++52,0%
+52W
+-1,5%
+RSQ
+98
+RIESGO
+80
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+RSQ 98 · RS 96 · sin señales bajistas · deterioro bajo 0
+KRT
+Karat Packaging Inc.
+98
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+97
+3M
++39,7%
+52W
+-4,9%
+RSQ
+98
+RIESGO
+100
+
+Packaging & Containers · Consumer Cyclical · Consumo / marca
+
+RSQ 98 · RS 97 · sin señales bajistas · deterioro bajo 0
+PSX
+Phillips 66
+98
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+95
+3M
++41,2%
+52W
+-1,4%
+RSQ
+98
+RIESGO
+92
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+RSQ 98 · RS 95 · sin señales bajistas · deterioro bajo 0
+JILL
+J.Jill, Inc.
+98
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++53,9%
+52W
+-2,4%
+RSQ
+98
+RIESGO
+92
+
+Apparel Retail · Consumer Cyclical · Consumo / marca
+
+RSQ 98 · RS 94 · sin señales bajistas · deterioro bajo 7
+NSIT
+Insight Enterprises, Inc.
+97
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++40,5%
+52W
+-9,5%
+RSQ
+97
+RIESGO
+92
+
+Electronics & Computer Distribution · Technology · Consumer tech / hardware
+
+RSQ 97 · RS 94 · sin señales bajistas · deterioro bajo 0
+PBR
+Petróleo Brasileiro S.A. - Petrobras
+96
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+89
+3M
++47,1%
+52W
+-0,4%
+RSQ
+96
+RIESGO
+70
+
+Oil & Gas Integrated · Energy · Energia / red
+
+RSQ 96 · RS 89 · sin señales bajistas · deterioro bajo 0
+TBBB
+BBB Foods Inc.
+97
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+93
+3M
++39,9%
+52W
+-0,2%
+RSQ
+97
+RIESGO
+92
+
+Discount Stores · Consumer Defensive · Consumo / marca
+
+RSQ 97 · RS 93 · sin señales bajistas · deterioro bajo 0
+AVTR
+Avantor, Inc.
+97
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+93
+3M
++54,0%
+52W
+-0,2%
+RSQ
+97
+RIESGO
+92
+
+Medical Instruments & Supplies · Healthcare · Medtech / biotech
+
+RSQ 97 · RS 93 · sin señales bajistas · deterioro bajo 0
+VEEV
+Veeva Systems Inc.
+95
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+90
+3M
++57,2%
+52W
+-3,0%
+RSQ
+95
+RIESGO
+80
+
+Health Information Services · Healthcare · Medtech / biotech
+
+RSQ 95 · RS 90 · sin señales bajistas · deterioro bajo 7
+FRO
+Frontline plc
+95
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+96
+3M
++51,7%
+52W
+-12,2%
+RSQ
+95
+RIESGO
+62
+
+Oil & Gas Midstream · Energy · Energia / red
+
+RSQ 95 · RS 96 · sin señales bajistas · deterioro bajo 5
+HALO
+Halozyme Therapeutics, Inc.
+94
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++58,0%
+52W
+-0,5%
+RSQ
+94
+RIESGO
+92
+
+Biotechnology · Healthcare · Medtech / biotech
+
+RSQ 94 · RS 94 · sin señales bajistas · deterioro bajo 0
+WEYS
+Weyco Group, Inc.
+97
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+90
+3M
++34,4%
+52W
+-3,6%
+RSQ
+97
+RIESGO
+92
+
+Footwear & Accessories · Consumer Cyclical · Consumo / marca
+
+RSQ 97 · RS 90 · sin señales bajistas · deterioro bajo 0
+IDT
+IDT Corporation
+96
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+79
+3M
++28,1%
+52W
+-3,0%
+RSQ
+96
+RIESGO
+92
+
+Telecom Services · Communication Services · Internet / plataformas
+
+RSQ 96 · RS 79 · sin señales bajistas · deterioro bajo 0
+VEON
+VEON Ltd.
+97
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+89
+3M
++61,0%
+52W
+-2,4%
+RSQ
+97
+RIESGO
+80
+
+Telecom Services · Communication Services · Internet / plataformas
+
+RSQ 97 · RS 89 · sin señales bajistas · deterioro bajo 0
+GTLB
+GitLab Inc.
+94
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+92
+3M
++54,9%
+52W
+-8,9%
+RSQ
+94
+RIESGO
+84
+
+Software - Infrastructure · Technology · Software / IA
+
+RSQ 94 · RS 92 · sin señales bajistas · deterioro bajo 0
+AII
+American Integrity Insurance Group, Inc.
+96
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+86
+3M
++45,3%
+52W
+-2,7%
+RSQ
+96
+RIESGO
+100
+
+Insurance - Property & Casualty · Financial Services · Finanzas
+
+RSQ 96 · RS 86 · sin señales bajistas · deterioro bajo 0
+APA
+APA Corporation
+96
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+91
+3M
++42,1%
+52W
+-0,2%
+RSQ
+96
+RIESGO
+92
+
+Oil & Gas E&P · Energy · Energia / red
+
+RSQ 96 · RS 91 · sin señales bajistas · deterioro bajo 0
+TENDENCIA ESTABLECIDA
+Mejor estructura de etapa/tendencia
+
+Etapa 2
+Estructura de tendencia/etapa 2 y medias coherentes; excluye deterioro técnico.
+
+Revisar datos
+Revisar 20 precio viejo antes de confiar en el ranking.
+20
+filas
+20
+precio viejo
+0
+cobertura baja
+20
+datos limitados
+0
+excluidas por contrato
+HALO
+Halozyme Therapeutics, Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++58,0%
+52W
+-0,5%
+RSQ
+94
+RIESGO
+92
+
+Biotechnology · Healthcare · Medtech / biotech
+
+Estructura 100 · Etapa 2/medias OK · RS 94 · 3M +58,0%
+VLO
+Valero Energy Corporation
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+97
+3M
++42,5%
+52W
+-3,6%
+RSQ
+99
+RIESGO
+80
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+Estructura 100 · Etapa 2/medias OK · RS 97 · 3M +42,5%
+PBR
+Petróleo Brasileiro S.A. - Petrobras
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+89
+3M
++47,1%
+52W
+-0,4%
+RSQ
+96
+RIESGO
+70
+
+Oil & Gas Integrated · Energy · Energia / red
+
+Estructura 100 · Etapa 2/medias OK · RS 89 · 3M +47,1%
+APA
+APA Corporation
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+91
+3M
++42,1%
+52W
+-0,2%
+RSQ
+96
+RIESGO
+92
+
+Oil & Gas E&P · Energy · Energia / red
+
+Estructura 100 · Etapa 2/medias OK · RS 91 · 3M +42,1%
+MPC
+Marathon Petroleum Corporation
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+96
+3M
++52,0%
+52W
+-1,5%
+RSQ
+98
+RIESGO
+80
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+Estructura 100 · Etapa 2/medias OK · RS 96 · 3M +52,0%
+REPX
+Riley Exploration Permian, Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+87
+3M
++40,8%
+52W
+-0,4%
+RSQ
+94
+RIESGO
+80
+
+Oil & Gas E&P · Energy · Energia / red
+
+Estructura 100 · Etapa 2/medias OK · RS 87 · 3M +40,8%
+KNSA
+Kiniksa Pharmaceuticals International, plc
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+93
+3M
++25,6%
+52W
+-5,3%
+RSQ
+94
+RIESGO
+92
+
+Drug Manufacturers - Specialty & Generic · Healthcare · Medtech / biotech
+
+Estructura 100 · Etapa 2/medias OK · RS 93 · 3M +25,6%
+NSIT
+Insight Enterprises, Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++40,5%
+52W
+-9,5%
+RSQ
+97
+RIESGO
+92
+
+Electronics & Computer Distribution · Technology · Consumer tech / hardware
+
+Estructura 100 · Etapa 2/medias OK · RS 94 · 3M +40,5%
+KRT
+Karat Packaging Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+97
+3M
++39,7%
+52W
+-4,9%
+RSQ
+98
+RIESGO
+100
+
+Packaging & Containers · Consumer Cyclical · Consumo / marca
+
+Estructura 100 · Etapa 2/medias OK · RS 97 · 3M +39,7%
+PAYS
+Paysign, Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+98
+3M
++66,7%
+52W
+-6,3%
+RSQ
+89
+RIESGO
+84
+
+Software - Infrastructure · Technology · Software / IA
+
+Estructura 100 · Etapa 2/medias OK · RS 98 · 3M +66,7%
+CON
+Concentra Group Holdings Parent, Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+91
+3M
++23,3%
+52W
+-2,7%
+RSQ
+96
+RIESGO
+92
+
+Medical Care Facilities · Healthcare · Medtech / biotech
+
+Estructura 100 · Etapa 2/medias OK · RS 91 · 3M +23,3%
+HAFN
+Hafnia Limited
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+91
+3M
++44,4%
+52W
+-9,8%
+RSQ
+95
+RIESGO
+84
+
+Marine Shipping · Industrials · Autos / movilidad
+
+Estructura 100 · Etapa 2/medias OK · RS 91 · 3M +44,4%
+PAYC
+Paycom Software, Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+92
+3M
++68,4%
+52W
+-1,9%
+RSQ
+92
+RIESGO
+92
+
+Software - Application · Technology · Software / IA
+
+Estructura 100 · Etapa 2/medias OK · RS 92 · 3M +68,4%
+SU
+Suncor Energy Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+87
+3M
++26,2%
+52W
+-2,0%
+RSQ
+94
+RIESGO
+92
+
+Oil & Gas Integrated · Energy · Energia / red
+
+Estructura 100 · Etapa 2/medias OK · RS 87 · 3M +26,2%
+DINO
+HF Sinclair Corporation
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+97
+3M
++39,4%
+52W
+-3,2%
+RSQ
+96
+RIESGO
+80
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+Estructura 100 · Etapa 2/medias OK · RS 97 · 3M +39,4%
+ANF
+Abercrombie & Fitch Co.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+90
+3M
++62,3%
+52W
+-2,2%
+RSQ
+89
+RIESGO
+92
+
+Apparel Retail · Consumer Cyclical · Consumo / marca
+
+Estructura 100 · Etapa 2/medias OK · RS 90 · 3M +62,3%
+PSX
+Phillips 66
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+95
+3M
++41,2%
+52W
+-1,4%
+RSQ
+98
+RIESGO
+92
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+Estructura 100 · Etapa 2/medias OK · RS 95 · 3M +41,2%
+TEN
+Tsakos Energy Navigation Limited
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+93
+3M
++35,1%
+52W
+-9,8%
+RSQ
+94
+RIESGO
+84
+
+Oil & Gas Midstream · Energy · Energia / red
+
+Estructura 100 · Etapa 2/medias OK · RS 93 · 3M +35,1%
+RUPTURAS CON CONTRACCIÓN
+Estructura de tendencia, momentum y máximos
+
+Estructura de tendencia
+Estructura de tendencia, momentum y cercanía a máximos; excluye deterioro técnico y bajismo estructural.
+
+Revisar datos
+Revisar 20 precio viejo antes de confiar en el ranking.
+20
+filas
+20
+precio viejo
+0
+cobertura baja
+20
+datos limitados
+0
+excluidas por contrato
+HALO
+Halozyme Therapeutics, Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++58,0%
+52W
+-0,5%
+RSQ
+94
+RIESGO
+92
+
+Biotechnology · Healthcare · Medtech / biotech
+
+Ruptura 100 · estructura de tendencia OK · 3M +58,0% · 52w -0,5%
+APA
+APA Corporation
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+91
+3M
++42,1%
+52W
+-0,2%
+RSQ
+96
+RIESGO
+92
+
+Oil & Gas E&P · Energy · Energia / red
+
+Ruptura 100 · estructura de tendencia OK · 3M +42,1% · 52w -0,2%
+PBR
+Petróleo Brasileiro S.A. - Petrobras
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+89
+3M
++47,1%
+52W
+-0,4%
+RSQ
+96
+RIESGO
+70
+
+Oil & Gas Integrated · Energy · Energia / red
+
+Ruptura 100 · estructura de tendencia OK · 3M +47,1% · 52w -0,4%
+REPX
+Riley Exploration Permian, Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+87
+3M
++40,8%
+52W
+-0,4%
+RSQ
+94
+RIESGO
+80
+
+Oil & Gas E&P · Energy · Energia / red
+
+Ruptura 100 · estructura de tendencia OK · 3M +40,8% · 52w -0,4%
+CNQ
+Canadian Natural Resources Limited
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+83
+3M
++23,5%
+52W
+-0,2%
+RSQ
+94
+RIESGO
+92
+
+Oil & Gas E&P · Energy · Energia / red
+
+Ruptura 100 · estructura de tendencia OK · 3M +23,5% · 52w -0,2%
+VEEV
+Veeva Systems Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+90
+3M
++57,2%
+52W
+-3,0%
+RSQ
+95
+RIESGO
+80
+
+Health Information Services · Healthcare · Medtech / biotech
+
+Ruptura 100 · estructura de tendencia OK · 3M +57,2% · 52w -3,0%
+MPC
+Marathon Petroleum Corporation
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+96
+3M
++52,0%
+52W
+-1,5%
+RSQ
+98
+RIESGO
+80
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+Ruptura 100 · estructura de tendencia OK · 3M +52,0% · 52w -1,5%
+PAYC
+Paycom Software, Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+92
+3M
++68,4%
+52W
+-1,9%
+RSQ
+92
+RIESGO
+92
+
+Software - Application · Technology · Software / IA
+
+Ruptura 100 · estructura de tendencia OK · 3M +68,4% · 52w -1,9%
+ANF
+Abercrombie & Fitch Co.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+90
+3M
++62,3%
+52W
+-2,2%
+RSQ
+89
+RIESGO
+92
+
+Apparel Retail · Consumer Cyclical · Consumo / marca
+
+Ruptura 100 · estructura de tendencia OK · 3M +62,3% · 52w -2,2%
+SLDE
+Slide Insurance Holdings, Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+88
+3M
++29,1%
+52W
+-0,7%
+RSQ
+93
+RIESGO
+92
+
+Insurance - Property & Casualty · Financial Services · Finanzas
+
+Ruptura 100 · estructura de tendencia OK · 3M +29,1% · 52w -0,7%
+VLO
+Valero Energy Corporation
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+97
+3M
++42,5%
+52W
+-3,6%
+RSQ
+99
+RIESGO
+80
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+Ruptura 100 · estructura de tendencia OK · 3M +42,5% · 52w -3,6%
+BTE
+Baytex Energy Corp.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+87
+3M
++27,1%
+52W
+-0,3%
+RSQ
+94
+RIESGO
+92
+
+Oil & Gas E&P · Energy · Energia / red
+
+Ruptura 100 · estructura de tendencia OK · 3M +27,1% · 52w -0,3%
+SU
+Suncor Energy Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+87
+3M
++26,2%
+52W
+-2,0%
+RSQ
+94
+RIESGO
+92
+
+Oil & Gas Integrated · Energy · Energia / red
+
+Ruptura 100 · estructura de tendencia OK · 3M +26,2% · 52w -2,0%
+EQNR
+Equinor ASA
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+91
+3M
++27,0%
+52W
+-0,1%
+RSQ
+96
+RIESGO
+92
+
+Oil & Gas Integrated · Energy · Energia / red
+
+Ruptura 100 · estructura de tendencia OK · 3M +27,0% · 52w -0,1%
+COP
+ConocoPhillips
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+79
+3M
++27,5%
+52W
+-0,1%
+RSQ
+93
+RIESGO
+92
+
+Oil & Gas E&P · Energy · Energia / red
+
+Ruptura 100 · estructura de tendencia OK · 3M +27,5% · 52w -0,1%
+TBBB
+BBB Foods Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+93
+3M
++39,9%
+52W
+-0,2%
+RSQ
+97
+RIESGO
+92
+
+Discount Stores · Consumer Defensive · Consumo / marca
+
+Ruptura 100 · estructura de tendencia OK · 3M +39,9% · 52w -0,2%
+AII
+American Integrity Insurance Group, Inc.
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+86
+3M
++45,3%
+52W
+-2,7%
+RSQ
+96
+RIESGO
+100
+
+Insurance - Property & Casualty · Financial Services · Finanzas
+
+Ruptura 100 · estructura de tendencia OK · 3M +45,3% · 52w -2,7%
+PSX
+Phillips 66
+100
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+95
+3M
++41,2%
+52W
+-1,4%
+RSQ
+98
+RIESGO
+92
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+Ruptura 100 · estructura de tendencia OK · 3M +41,2% · 52w -1,4%
+FUERTES PERO EXTENDIDOS
+Muy fuertes, pero conviene vigilar su extensión sobre la SMA50
+
+Extendida
+Fuerte pero extendida sobre SMA50; vigilancia, no entrada automática.
+
+Revisar datos
+Revisar 20 precio viejo antes de confiar en el ranking.
+20
+filas
+20
+precio viejo
+0
+cobertura baja
+20
+datos limitados
+0
+excluidas por contrato
+PCRX
+Pacira BioSciences, Inc.
+71
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+49
+3M
++43,4%
+52W
+-0,9%
+RSQ
+79
+RIESGO
+62
+
+Drug Manufacturers - Specialty & Generic · Healthcare · Medtech / biotech
+
+Score compuesto 71 · RS 49 · SMA50 +36,8% · 52w -0,9%
+PBR
+Petróleo Brasileiro S.A. - Petrobras
+86
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+89
+3M
++47,1%
+52W
+-0,4%
+RSQ
+96
+RIESGO
+70
+
+Oil & Gas Integrated · Energy · Energia / red
+
+Score compuesto 86 · RS 89 · SMA50 +25,6% · 52w -0,4%
+FIGS
+FIGS, Inc.
+77
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+80
+3M
++86,4%
+52W
+-5,9%
+RSQ
+81
+RIESGO
+62
+
+Apparel Manufacturing · Consumer Cyclical · Consumo / marca
+
+Score compuesto 77 · RS 80 · SMA50 +31,3% · 52w -5,9%
+XP
+XP Inc.
+72
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+76
+3M
++74,0%
+52W
+-10,7%
+RSQ
+79
+RIESGO
+32
+
+Capital Markets · Financial Services · Finanzas
+
+Score compuesto 72 · RS 76 · SMA50 +39,1% · 52w -10,7%
+CVI
+CVR Energy, Inc.
+74
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+95
+3M
++77,8%
+52W
+-3,3%
+RSQ
+85
+RIESGO
+70
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+Score compuesto 74 · RS 95 · SMA50 +29,4% · 52w -3,3%
+HPK
+HighPeak Energy, Inc.
+77
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+74
+3M
++43,1%
+52W
+-2,6%
+RSQ
+85
+RIESGO
+70
+
+Oil & Gas E&P · Energy · Energia / red
+
+Score compuesto 77 · RS 74 · SMA50 +27,7% · 52w -2,6%
+CBRL
+Cracker Barrel Old Country Store, Inc.
+72
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+89
+3M
++29,6%
+52W
+-1,9%
+RSQ
+86
+RIESGO
+70
+
+Restaurants · Consumer Cyclical · Consumo / marca
+
+Score compuesto 72 · RS 89 · SMA50 +26,8% · 52w -1,9%
+SSL
+Sasol Limited
+80
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++42,7%
+52W
+0,0%
+RSQ
+91
+RIESGO
+80
+
+Specialty Chemicals · Basic Materials · Materiales / minería
+
+Score compuesto 80 · RS 94 · SMA50 +22,1% · 52w 0,0%
+MPC
+Marathon Petroleum Corporation
+83
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+96
+3M
++52,0%
+52W
+-1,5%
+RSQ
+98
+RIESGO
+80
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+Score compuesto 83 · RS 96 · SMA50 +20,8% · 52w -1,5%
+VEON
+VEON Ltd.
+76
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+89
+3M
++61,0%
+52W
+-2,4%
+RSQ
+97
+RIESGO
+80
+
+Telecom Services · Communication Services · Internet / plataformas
+
+Score compuesto 76 · RS 89 · SMA50 +23,2% · 52w -2,4%
+REPX
+Riley Exploration Permian, Inc.
+85
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+87
+3M
++40,8%
+52W
+-0,4%
+RSQ
+94
+RIESGO
+80
+
+Oil & Gas E&P · Energy · Energia / red
+
+Score compuesto 85 · RS 87 · SMA50 +18,8% · 52w -0,4%
+DINO
+HF Sinclair Corporation
+81
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+97
+3M
++39,4%
+52W
+-3,2%
+RSQ
+96
+RIESGO
+80
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+Score compuesto 81 · RS 97 · SMA50 +18,2% · 52w -3,2%
+VLO
+Valero Energy Corporation
+85
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+97
+3M
++42,5%
+52W
+-3,6%
+RSQ
+99
+RIESGO
+80
+
+Oil & Gas Refining & Marketing · Energy · Energia / red
+
+Score compuesto 85 · RS 97 · SMA50 +16,5% · 52w -3,6%
+VEEV
+Veeva Systems Inc.
+87
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+90
+3M
++57,2%
+52W
+-3,0%
+RSQ
+95
+RIESGO
+80
+
+Health Information Services · Healthcare · Medtech / biotech
+
+Score compuesto 87 · RS 90 · SMA50 +15,5% · 52w -3,0%
+RCEL
+AVITA Medical, Inc.
+71
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+99
+3M
++153,7%
+52W
+-5,0%
+RSQ
+87
+RIESGO
+72
+
+Medical Devices · Healthcare · Medtech / biotech
+
+Score compuesto 71 · RS 99 · SMA50 +20,1% · 52w -5,0%
+BOX
+Box, Inc.
+83
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+70
+3M
++28,2%
+52W
+-1,3%
+RSQ
+92
+RIESGO
+80
+
+Software - Infrastructure · Technology · Software / IA
+
+Score compuesto 83 · RS 70 · SMA50 +15,2% · 52w -1,3%
+ACVA
+ACV Auctions Inc.
+73
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+93
+3M
++41,7%
+52W
+-0,1%
+RSQ
+85
+RIESGO
+80
+
+Auto & Truck Dealerships · Consumer Cyclical · Autos / movilidad
+
+Score compuesto 73 · RS 93 · SMA50 +17,2% · 52w -0,1%
+RSKD
+Riskified Ltd.
+72
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++56,9%
+52W
+-6,4%
+RSQ
+90
+RIESGO
+72
+
+Software - Application · Technology · Software / IA
+
+Score compuesto 72 · RS 94 · SMA50 +20,4% · 52w -6,4%
+RETROCESO A LA SMA50
+Líderes que han vuelto cerca de la SMA50, para vigilar
+
+Pullback sano
+Líder con retroceso controlado hacia SMA50 y sesgo largo vigente.
+
+Revisar datos
+Revisar 20 precio viejo antes de confiar en el ranking.
+20
+filas
+20
+precio viejo
+0
+cobertura baja
+20
+datos limitados
+0
+excluidas por contrato
+NSIT
+Insight Enterprises, Inc.
+83
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++40,5%
+52W
+-9,5%
+RSQ
+97
+RIESGO
+92
+
+Electronics & Computer Distribution · Technology · Consumer tech / hardware
+
+Score compuesto 83 · SMA50 +2,3% · RS 94 · Estructura 100
+CHEF
+The Chefs' Warehouse, Inc.
+81
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+92
+3M
++18,8%
+52W
+-4,2%
+RSQ
+95
+RIESGO
+100
+
+Food Distribution · Consumer Defensive · Consumo / marca
+
+Score compuesto 81 · SMA50 +2,2% · RS 92 · Estructura 100
+TX
+Ternium S.A.
+82
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+89
+3M
++28,3%
+52W
+-3,7%
+RSQ
+95
+RIESGO
+100
+
+Steel · Basic Materials · Materiales / minería
+
+Score compuesto 82 · SMA50 +1,8% · RS 89 · Estructura 100
+KNSA
+Kiniksa Pharmaceuticals International, plc
+84
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+93
+3M
++25,6%
+52W
+-5,3%
+RSQ
+94
+RIESGO
+92
+
+Drug Manufacturers - Specialty & Generic · Healthcare · Medtech / biotech
+
+Score compuesto 84 · SMA50 +1,0% · RS 93 · Estructura 100
+TNK
+Teekay Tankers Ltd.
+83
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+92
+3M
++35,1%
+52W
+-12,5%
+RSQ
+94
+RIESGO
+70
+
+Oil & Gas Midstream · Energy · Energia / red
+
+Score compuesto 83 · SMA50 +2,6% · RS 92 · Estructura 100
+LPG
+Dorian LPG Ltd.
+81
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+95
+3M
++27,2%
+52W
+-10,6%
+RSQ
+96
+RIESGO
+70
+
+Oil & Gas Midstream · Energy · Energia / red
+
+Score compuesto 81 · SMA50 +1,3% · RS 95 · Estructura 100
+SXT
+Sensient Technologies Corporation
+83
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+81
+3M
++22,3%
+52W
+-3,7%
+RSQ
+93
+RIESGO
+100
+
+Specialty Chemicals · Basic Materials · Materiales / minería
+
+Score compuesto 83 · SMA50 +1,6% · RS 81 · Estructura 100
+FLXS
+Flexsteel Industries, Inc.
+78
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+95
+3M
++15,3%
+52W
+-7,1%
+RSQ
+96
+RIESGO
+92
+
+Furnishings, Fixtures & Appliances · Consumer Cyclical · Consumo / marca
+
+Score compuesto 78 · SMA50 +2,4% · RS 95 · Estructura 100
+CIX
+CompX International Inc.
+77
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+93
+3M
++45,0%
+52W
+-10,8%
+RSQ
+93
+RIESGO
+70
+
+Security & Protection Services · Industrials · Automatizacion
+
+Score compuesto 77 · SMA50 +2,4% · RS 93 · Estructura 100
+NTAP
+NetApp, Inc.
+81
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++26,7%
+52W
+-15,4%
+RSQ
+92
+RIESGO
+70
+
+Software - Infrastructure · Technology · Software / IA
+
+Score compuesto 81 · SMA50 +1,1% · RS 94 · Estructura 100
+PAGP
+Plains GP Holdings, L.P.
+81
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+83
+3M
++7,6%
+52W
+-4,4%
+RSQ
+90
+RIESGO
+100
+
+Oil & Gas Midstream · Energy · Energia / red
+
+Score compuesto 81 · SMA50 +2,0% · RS 83 · Estructura 100
+BWLP
+BW LPG Limited
+77
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++21,7%
+52W
+-7,5%
+RSQ
+96
+RIESGO
+92
+
+Oil & Gas Midstream · Energy · Energia / red
+
+Score compuesto 77 · SMA50 +2,5% · RS 94 · Estructura 100
+FMAO
+Farmers & Merchants Bancorp, Inc.
+79
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+83
+3M
++15,6%
+52W
+-1,5%
+RSQ
+92
+RIESGO
+100
+
+Banks - Regional · Financial Services · Finanzas
+
+Score compuesto 79 · SMA50 +1,9% · RS 83 · Estructura 100
+DAC
+Danaos Corporation
+81
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+90
+3M
++25,4%
+52W
+-7,9%
+RSQ
+95
+RIESGO
+92
+
+Marine Shipping · Industrials · Autos / movilidad
+
+Score compuesto 81 · SMA50 +2,8% · RS 90 · Estructura 100
+HTFL
+Heartflow, Inc.
+78
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+94
+3M
++96,6%
+52W
+-11,1%
+RSQ
+90
+RIESGO
+70
+
+Health Information Services · Healthcare · Medtech / biotech
+
+Score compuesto 78 · SMA50 +3,0% · RS 94 · Estructura 100
+TK
+Teekay Corporation Ltd.
+81
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+88
+3M
++30,7%
+52W
+-11,6%
+RSQ
+91
+RIESGO
+70
+
+Oil & Gas Midstream · Energy · Energia / red
+
+Score compuesto 81 · SMA50 +2,8% · RS 88 · Estructura 100
+NEWP
+New Pacific Metals Corp.
+71
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+98
+3M
++57,7%
+52W
+-13,1%
+RSQ
+85
+RIESGO
+84
+
+Silver · Basic Materials · Materiales / minería
+
+Score compuesto 71 · SMA50 +2,1% · RS 98 · Estructura 100
+ARX
+Accelerant Holdings
+80
+OBJ
+0
+P
+0
+!
+2
+X
+1
+RS
+88
+3M
++45,4%
+52W
+-0,8%
+RSQ
+83
+RIESGO
+100
+
+Insurance Brokers · Financial Services · Finanzas
+
+Score compuesto 80 · SMA50 +3,1% · RS 88 · Estructura 100
+Screener
+Listas
+Sectores
+Mercado
+Más
