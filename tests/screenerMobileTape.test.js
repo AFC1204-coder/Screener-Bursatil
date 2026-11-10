@@ -38,6 +38,7 @@ const row = {
   perf3m: 266.5,
   marketCap: 102_700_000_000,
   theme: "Medtech / biotech",
+  contractionCount: 2,
   contraction1DepthPct: 28,
   contraction2DepthPct: 8,
   chartPreview: Array.from({ length: 40 }, (_, i) => ({ date: `2026-0${1 + Math.floor(i / 5)}-1${i % 5}`, close: 100 + i })),

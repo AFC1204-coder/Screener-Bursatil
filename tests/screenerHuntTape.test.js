@@ -1,3 +1,4 @@
+import { vcpMinerviniLabel } from "@/lib/vcpMinerviniLabel";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
@@ -45,18 +46,22 @@ describe("screenerResultViewMode", () => {
 describe("formatVcpFootprintFromRow", () => {
   // Auditoría 2026-11 (P5): baseWeeks vale 13 en el 100 % de las filas
   // (ventana fija de 65 sesiones), así que el segmento XW se omite.
+  // Misma fuente que la columna VCP de la tabla (vcpMinerviniLabel).
   it("formatea Y/Z NT sin semanas de base (no hay dato real de semanas)", () => {
     expect(formatVcpFootprintFromRow({
       baseWeeks: 19,
+      contractionCount: 3,
       contraction1DepthPct: 18,
       contraction2DepthPct: 11,
       contraction3DepthPct: 6,
+      lastContractionDepthPct: 6,
     })).toBe("18/6 3T");
   });
 
   it("nunca pinta el 13W constante del escáner", () => {
     const footprint = formatVcpFootprintFromRow({
       baseWeeks: 13,
+      contractionCount: 2,
       contraction1DepthPct: 31,
       contraction2DepthPct: 3,
     });
@@ -64,18 +69,45 @@ describe("formatVcpFootprintFromRow", () => {
     expect(footprint).not.toMatch(/W/);
   });
 
-  it("devuelve null sin profundidades; las profundidades bastan", () => {
+  it("con 4 o más contracciones usa el recuento y la última real, no la tercera guardada", () => {
+    expect(formatVcpFootprintFromRow({
+      contractionCount: 4,
+      contraction1DepthPct: 20,
+      contraction2DepthPct: 12,
+      contraction3DepthPct: 8,
+      lastContractionDepthPct: 4,
+    })).toBe("20/4 4T");
+  });
+
+  it("sin profundidades o con una sola contracción no hay huella (igual que la tabla)", () => {
     expect(formatVcpFootprintFromRow({ baseWeeks: 10 })).toBeNull();
-    expect(formatVcpFootprintFromRow({ contraction1DepthPct: 12 })).toBe("12/12 1T");
+    expect(formatVcpFootprintFromRow({ contraction1DepthPct: 12 })).toBeNull();
+    expect(formatVcpFootprintFromRow({ contractionCount: 1, contraction1DepthPct: 12 })).toBeNull();
+  });
+
+  it("cinta y tabla dan exactamente la misma etiqueta", () => {
+    const rows = [
+      { contractionCount: 3, contraction1DepthPct: 18, contraction2DepthPct: 11, contraction3DepthPct: 6, lastContractionDepthPct: 6 },
+      { contractionCount: 5, contraction1DepthPct: 25, contraction2DepthPct: 14, contraction3DepthPct: 9, lastContractionDepthPct: 3 },
+      { contractionCount: 1, contraction1DepthPct: 12 },
+    ];
+    for (const row of rows) {
+      expect(formatVcpFootprintFromRow(row) || "").toBe(vcpMinerviniLabel(row).label);
+    }
   });
 
   it("expone tooltip T1/T2/T3 y avisa de que las semanas no se miden", () => {
     const title = formatVcpFootprintTitle({
+      contractionCount: 4,
       contraction1DepthPct: 22,
       contraction2DepthPct: 14,
+      contraction3DepthPct: 9,
+      lastContractionDepthPct: 5,
     });
     expect(title).toContain("T1=22%");
+    expect(title).toContain("4 contracciones en total");
     expect(title).toContain("Semanas de base: sin medir");
+    expect(formatVcpFootprintTitle({ contraction1DepthPct: 12 })).toBe("Sin VCP");
   });
 });
 

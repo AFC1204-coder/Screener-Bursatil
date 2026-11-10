@@ -6,6 +6,7 @@ import { chartPath } from "@/lib/screenerFormat";
 import { canonicalRs } from "@/lib/rsCanonical";
 import { reviewRsCompactCell } from "@/lib/reviewRsDisplay";
 import { stageDisplayForRow } from "@/lib/stageDisplay";
+import { vcpMinerviniLabel } from "@/lib/vcpMinerviniLabel";
 import { isScreenerKeyboardTargetIgnored } from "@/lib/screenerResultKeyboard";
 import { countryCode, stockUrl } from "@/lib/symbols";
 import { ipoWatchRowKey } from "@/lib/mergeIpoDiscoveryRows";
@@ -116,21 +117,22 @@ function contractionDepthsFromRow(row = {}) {
  * (docs/diseno-contracciones-2026-08-17.md). Auditoría 2026-11, propuesta 5.
  */
 export function formatVcpFootprintFromRow(row = {}) {
-  const depths = contractionDepthsFromRow(row);
-  if (!depths.length) return null;
-  const first = Math.round(depths[0]);
-  const last = Math.round(depths[depths.length - 1]);
-  const n = depths.length;
-  return `${first}/${last} ${n}T`;
+  // Una sola fuente con la columna VCP de la tabla (vcpMinerviniLabel): N sale de
+  // contractionCount y Z de lastContractionDepthPct, y con menos de 2 contracciones no hay huella.
+  // Antes la cinta contaba solo las 3 profundidades guardadas: pintaba «x/x 1T» donde la tabla
+  // no mostraba nada y rotulaba mal las bases de 4 o más contracciones.
+  return vcpMinerviniLabel(row).label || null;
 }
 
 export const VCP_FOOTPRINT_WEEKS_NOTE = "Semanas de base: sin medir (falta el detector de bases)";
 
 export function formatVcpFootprintTitle(row = {}) {
+  if (!formatVcpFootprintFromRow(row)) return "Sin VCP";
   const depths = contractionDepthsFromRow(row);
-  if (!depths.length) return "Sin VCP";
+  const count = Number(row.contractionCount);
   const ts = depths.map((d, i) => `T${i + 1}=${Math.round(d)}%`).join(" · ");
-  return `Footprint · ${ts} · ${VCP_FOOTPRINT_WEEKS_NOTE}`;
+  const extra = Number.isFinite(count) && count > depths.length ? ` · ${count} contracciones en total` : "";
+  return `Footprint · ${ts}${extra} · ${VCP_FOOTPRINT_WEEKS_NOTE}`;
 }
 
 export function huntTapeRsValue(row = {}) {
