@@ -2,34 +2,42 @@ import { describe, expect, it } from "vitest";
 import { vcpMinerviniLabel } from "@/lib/vcpMinerviniLabel";
 
 describe("vcpMinerviniLabel", () => {
-  it("GOOGL-like: candidato 2C con pivot", () => {
+  it("candidato: huella primera/última y número de contracciones", () => {
     const out = vcpMinerviniLabel({
-      contractionCount: 2,
+      contractionCount: 4,
       vcpCandidate: true,
+      contraction1DepthPct: 31.2,
+      contraction2DepthPct: 15,
+      contraction3DepthPct: 8,
+      lastContractionDepthPct: 3.4,
       distanceToPivotPct: -2,
     });
-    expect(out.label).toBe("2C·PV-2%");
+    expect(out.label).toBe("31/3 4T");
     expect(out.tone).toBe("neutral");
+    expect(out.title).toMatch(/Candidato VCP/);
+    expect(out.title).toMatch(/-2%/);
   });
 
-  it("FTNT-like: 2C en formación sin candidato", () => {
+  it("en formación: mismo formato, tono watch y sin jerga form/PV", () => {
     const out = vcpMinerviniLabel({
       contractionCount: 2,
       vcpCandidate: false,
+      contraction1DepthPct: 12,
+      contraction2DepthPct: 6,
       distanceToPivotPct: -1.5,
     });
-    expect(out.label).toBe("2C·form·PV-1.5%");
+    expect(out.label).toBe("12/6 2T");
+    expect(out.label).not.toMatch(/form|PV|C·/);
     expect(out.tone).toBe("watch");
   });
 
-  it("NDAQ-like: sin compresión operable", () => {
-    const out = vcpMinerviniLabel({ contractionCount: 1, vcpCandidate: false });
-    expect(out.label).toBe("");
+  it("sin profundidades guardadas: solo el número de contracciones", () => {
+    const out = vcpMinerviniLabel({ contractionCount: 3, vcpCandidate: true });
+    expect(out.label).toBe("3T");
+    expect(out.tone).toBe("neutral");
   });
 
-  it("3C candidato sin pivot", () => {
-    const out = vcpMinerviniLabel({ contractionCount: 3, vcpCandidate: true });
-    expect(out.label).toBe("3C");
-    expect(out.tone).toBe("neutral");
+  it("NDAQ-like: sin compresión operable", () => {
+    expect(vcpMinerviniLabel({ contractionCount: 1, vcpCandidate: false }).label).toBe("");
   });
 });

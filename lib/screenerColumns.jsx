@@ -295,7 +295,7 @@ export const SCREENER_COLUMNS = [
   {
     key: "vcp",
     label: () => "VCP",
-    legend: "Código Minervini de compresión: contracciones (2C), formación (·form) y distancia al pivot (PV%). Sin puntuación de patrón.",
+    legend: "Huella Minervini de compresión: primera/última contracción y número de contracciones (ej. 31/3 4T). Son candidatos, no confirmaciones; la distancia al pivote va en el detalle.",
     align: "left",
     className: "colVcp",
     sortKey: () => "contractionCount",

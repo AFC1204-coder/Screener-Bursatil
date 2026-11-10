@@ -50,7 +50,7 @@ describe("TABLE-QUIET-1: columna VCP", () => {
     const row = { symbol: "VCP1", contractionCount: 3, vcpCandidate: true, distanceToPivotPct: 4.2 };
     const html = renderVcp(row);
 
-    expect(vcpMinerviniLabel(row).label).toContain("3C");
+    expect(vcpMinerviniLabel(row).label).toBe("3T");
     expect(html).toContain("vcpTag");
     expect(html).not.toContain("cellMissing");
     expect(html).not.toContain("vcpTag-absent");

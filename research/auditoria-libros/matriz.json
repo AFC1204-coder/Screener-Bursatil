@@ -944,9 +944,9 @@
    ],
    "pantalla": "Columna VCP",
    "estado_sep08": "ok",
-   "estado_actual": "no",
+   "estado_actual": "parcial",
    "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
-   "notas": "Ver docs/vcp-footprint-notacion.md. | Etiqueta obsoleta «2C·form·PV%»; la cinta saca X de baseWeeks=13 fijo. Severidad Alta.",
+   "notas": "Ver docs/vcp-footprint-notacion.md. | Etiqueta obsoleta «2C·form·PV%»; la cinta saca X de baseWeeks=13 fijo. Severidad Alta. | Actualizado 2026-11-10: la columna de la tabla ya muestra «Y/Z NT» (N = contractionCount, Z = lastContractionDepthPct) y se acabó «2C·form·PV%». La cinta ya omitía XW (cambio de otra sesión, sin comitear). Pendiente: XW real (hace falta el detector de bases; el motor tiene fechas del episodio pero no se persisten) y que la cinta use también contractionCount/lastContractionDepthPct (hoy lee solo contraction1..3).",
    "informe": "research/auditoria-libros/informes/vcp-2026-11-09.md"
   },
   {
