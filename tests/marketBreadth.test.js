@@ -200,3 +200,29 @@ describe("participationSummary", () => {
     expect(summary.indexChangePct).toBeCloseTo(1);
   });
 });
+
+// MK3: la ventana del resumen tiene que coincidir con la del umbral de divergencia.
+describe("divergenceSummary (integración participationSummary + umbral)", () => {
+  const series = (n, { index0 = 100, index1 = 104, pct0 = 60, pct1 = 50 } = {}) => Array.from({ length: n }, (_, i) => ({
+    date: `2026-01-${String(i + 1).padStart(2, "0")}`,
+    pct: pct0 + ((pct1 - pct0) * i) / (n - 1),
+    indexClose: index0 + ((index1 - index0) * i) / (n - 1),
+  }));
+
+  it("índice +4 % y participación −10 pp en 25 semanas: cumple el umbral", async () => {
+    const { divergenceSummary } = await import("@/lib/marketBreadth");
+    const out = divergenceSummary(series(25));
+    expect(out.weeks).toBe(20);
+    expect(out.thresholdMet).toBe(true);
+  });
+
+  it("sin caída suficiente de participación no cumple", async () => {
+    const { divergenceSummary } = await import("@/lib/marketBreadth");
+    expect(divergenceSummary(series(25, { pct1: 58 })).thresholdMet).toBe(false);
+  });
+
+  it("menos de 20 semanas: no puede cumplir (ventana insuficiente)", async () => {
+    const { divergenceSummary } = await import("@/lib/marketBreadth");
+    expect(divergenceSummary(series(15)).thresholdMet).toBe(false);
+  });
+});

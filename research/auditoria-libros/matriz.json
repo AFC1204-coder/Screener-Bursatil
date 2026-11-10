@@ -1033,9 +1033,9 @@
    ],
    "pantalla": "/market-health",
    "estado_sep08": "sin evaluar",
-   "estado_actual": "riesgo",
+   "estado_actual": "parcial",
    "verificado": "auditoría 2026-11-09 sobre HEAD a1218a6 (informe de agente, evidencia no re-verificada por la sesión principal)",
-   "notas": "BUG Alto: participationSummary(weeks) recorta a 12 y volumeDivergence exige 20; thresholdMet nunca es true (marketBreadth.js:442, volumeDivergence.js:41).",
+   "notas": "BUG Alto: participationSummary(weeks) recorta a 12 y volumeDivergence exige 20; thresholdMet nunca es true (marketBreadth.js:442, volumeDivergence.js:41). | Corregido 2026-11-10: marketBreadth.divergenceSummary usa la ventana del umbral (20 semanas) y hay test de integración. Pendiente: la frase del hero (page.jsx) sigue con el criterio viejo sin umbral; ver con datos reales cuántas veces dispara.",
    "informe": "research/auditoria-libros/informes/mercado-2026-11-09.md"
   },
   {
