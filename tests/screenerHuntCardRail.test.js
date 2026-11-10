@@ -3,7 +3,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi, beforeAll } from "vitest";
 import { buildScreenerTruthLine, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
 import { FilterTemplatePanel, OptionalBasePresetsPanel, SessionPlumbingPanel } from "@/lib/screenerFiltersView";
-import { HUNT_CARDS } from "@/lib/screenerHuntCards";
+import {
+  HUNT_CARDS,
+  favoritesQueueView,
+  huntQueueRows,
+  normalizeHuntQueue,
+  weeklyQueueViews,
+} from "@/lib/screenerHuntCards";
 
 const Stub = ({ marker }) => React.createElement("div", { "data-stub": marker });
 
@@ -21,8 +27,15 @@ vi.mock("@/app/screenerPanels", () => ({
   SetupChipRail: () => Stub({ marker: "SetupChipRail" }),
 }));
 
-vi.mock("@/app/components/screener/ResultFilterBar", () => ({ default: () => Stub({ marker: "ResultFilterBar" }) }));
-vi.mock("@/app/components/screener/ResultPagerTable", () => ({ default: () => Stub({ marker: "ResultPagerTable" }) }));
+// Paso 5 (rediseño 2026-11): la barra de filtros viaja como `filterSlot` a
+// ResultPagerTable y el popover recibe `children` (modo de la ficha, desglose)
+// y `families`; los stubs dejan pasar esos huecos para poder inspeccionarlos.
+vi.mock("@/app/components/screener/ResultFilterBar", () => ({
+  default: ({ children, families }) => React.createElement("div", { "data-stub": "ResultFilterBar" }, children, families),
+}));
+vi.mock("@/app/components/screener/ResultPagerTable", () => ({
+  default: ({ filterSlot }) => React.createElement("div", { "data-stub": "ResultPagerTable" }, filterSlot),
+}));
 vi.mock("@/app/components/screener/WeeklyChangesLine", () => ({ default: () => Stub({ marker: "WeeklyChangesLine" }) }));
 vi.mock("@/app/components/screener/GlobalCoveragePanel", () => ({ default: () => Stub({ marker: "GlobalCoveragePanel" }) }));
 
@@ -217,12 +230,18 @@ describe("HuntCardRail", () => {
       markets: ["US"],
       onSelect: () => {},
     }));
-    expect(html).toContain("huntCardRail");
-    expect(html).toContain("huntCardRailScroll");
+    expect(html).toContain("screenerViewRail");
     for (const card of HUNT_CARDS) {
       expect(html).toContain(card.label);
     }
-    expect(html).toMatch(/aria-selected="true"[^>]*>Líderes Etapa 2/);
+    expect(html).toMatch(/aria-current="true"[^>]*>[\s\S]*?<span>Líderes Etapa 2<\/span>/);
+    expect(html.match(/aria-current="true"/g)).toHaveLength(1);
+    expect(html).toContain("Del análisis nocturno");
+    // D2 (auditoría 2026-11): el grupo semanal ya no se llama «Esta noche»;
+    // sin payload, rótulo neutro.
+    expect(html).not.toContain("Esta noche");
+    expect(html).toContain("Cambios de la semana");
+    expect(html).toContain("Mis vistas");
     expect(html).not.toContain("Aplicando ficha");
   });
 
@@ -233,10 +252,10 @@ describe("HuntCardRail", () => {
       pending: true,
       onSelect: () => {},
     }));
-    expect(html).toContain("huntCardRailPending");
+    expect(html).toContain("screenerViewRailPending");
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain("Aplicando ficha…");
-    expect(html).toContain("huntCardRailPendingLabel");
+    expect(html).toContain("screenerViewRailPendingLabel");
     expect(html).toContain("disabled");
   });
 });
@@ -284,8 +303,7 @@ describe("HuntCardModeStrip", () => {
 describe("ScreenerShell hunt rail", () => {
   it("título y línea de verdad usan el nombre de la ficha, no Balanceado", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
-    expect(html).toContain("huntCardRail");
-    expect(html).toContain("huntCardRailScroll");
+    expect(html).toContain("screenerViewRail");
     expect(html).toContain("huntCardModeStrip");
     expect(html).toContain("Qué aplica esta ficha");
     expect(html).toContain('class="title">Líderes Etapa 2</h1>');
@@ -299,7 +317,7 @@ describe("ScreenerShell hunt rail", () => {
       markets: ["CA"],
     })));
     expect(html).toContain("pasan «Líderes intl»");
-    expect(html).toMatch(/aria-selected="true"[^>]*>Líderes intl/);
+    expect(html).toMatch(/aria-current="true"[^>]*>[\s\S]*?<span>Líderes intl<\/span>/);
   });
 
   it("mantiene presets regionales visibles y la rejilla de banderas colapsada", () => {
@@ -333,12 +351,10 @@ describe("ScreenerShell hunt rail", () => {
     expect(html).toContain("Más bases de filtro");
     expect(html).toContain("Guardar nube");
     expect(html).toContain("Traer datos frescos");
-    const aside = html.match(/<aside[\s\S]*?<\/aside>/);
-    expect(aside?.[0]).toContain("marketPanel");
-    expect(aside?.[0]).not.toContain("sessionPlumbingBlock");
-    expect(aside?.[0]).not.toContain("Más bases de filtro");
-    expect(aside?.[0]).not.toContain("Ajustes de sesión");
-    expect(aside?.[0]).not.toContain("Plantillas");
+    // Pasos 4-5 (rediseño 2026-11): el selector de mercados vive en el chip del
+    // ticket y las familias en «+ Filtro»; en escritorio no hay aside.
+    expect(html).toMatch(/<div class="screenerTicket">[\s\S]*marketCompactChip/);
+    expect(html).not.toMatch(/<aside/);
     expect(html).not.toContain("Ajustes de sesión");
   });
 
@@ -399,5 +415,108 @@ describe("ScreenerShell hunt rail", () => {
     });
     expect(line).toContain("1045 de 3321 pasan «Deterioro»");
     expect(line).toContain("120 en lista");
+  });
+});
+
+// Paso 6 (rediseño 2026-11): raíl de vistas vertical con colas externas.
+describe("raíl de vistas · colas externas", () => {
+  const payload = {
+    state: "ok",
+    window: { from: "2026-10-09", to: "2026-10-13" },
+    stage2: {
+      entries: { count: 2, rows: [{ symbol: "DOCN" }, { symbol: "AAA" }] },
+      exits: { count: 1, rows: [{ symbol: "KOPN" }] },
+    },
+    highs: { newThisWindow: { count: 0, rows: [] }, alreadyNear: { count: 1, rows: [{ symbol: "BBB" }] } },
+  };
+
+  it("weeklyQueueViews convierte las cuatro cifras en colas con símbolos y ventana", () => {
+    const views = weeklyQueueViews(payload);
+    expect(views.map((v) => v.label)).toEqual([
+      "Entradas en Etapa 2", "Salidas de Etapa 2", "Nuevos máximos 52s", "A <5 % del máximo",
+    ]);
+    expect(views[0]).toMatchObject({ count: 2, symbols: ["DOCN", "AAA"], since: "2026-10-09" });
+    expect(views[2].count).toBe(0);
+  });
+
+  it("sin payload comparable el grupo no desaparece: count null («—»)", () => {
+    for (const p of [null, { state: "not-comparable" }]) {
+      const views = weeklyQueueViews(p);
+      expect(views).toHaveLength(4);
+      expect(views.every((v) => v.count === null && v.symbols.length === 0)).toBe(true);
+    }
+  });
+
+  it("huntQueueRows busca en analyzedRows sin filtro de ficha y conserva el orden", () => {
+    const queue = normalizeHuntQueue(weeklyQueueViews(payload)[0]);
+    const rows = huntQueueRows(queue, [{ symbol: "AAA" }, { symbol: "ZZZ" }, { symbol: "docn" }]);
+    expect(rows.map((r) => r.symbol)).toEqual(["AAA", "docn"]);
+    expect(normalizeHuntQueue(null)).toBeNull();
+  });
+
+  it("favoritesQueueView cuenta favoritos", () => {
+    expect(favoritesQueueView(new Set(["AAA", "BBB"]))).toMatchObject({ id: "favoritos", count: 2 });
+    expect(favoritesQueueView(null).count).toBe(0);
+  });
+
+  it("el raíl pinta conteos, «—» sin dato y marca la cola activa en lugar de la ficha", () => {
+    const html = renderToStaticMarkup(React.createElement(HuntCardRail, {
+      presetKey: "balanced",
+      markets: ["US"],
+      cardCounts: { "cerca-pivot": 64 },
+      activeQueueId: "entradas-e2",
+      weeklyViews: weeklyQueueViews(payload),
+      weeklySinceLabel: "vie 9 oct",
+      weeklyHeading: "Semana 9 → 16 oct",
+      favoritesView: favoritesQueueView(new Set()),
+      savedTemplates: [{ id: "t1", name: "Semis Europa estricta" }],
+      onSaveView: () => {},
+    }));
+    expect(html).toMatch(/<span>Cerca de pivot<\/span><em class="screenerViewRailCount">64<\/em>/);
+    expect(html).toMatch(/<span>Deterioro<\/span><em class="screenerViewRailCount isGhost">—<\/em>/);
+    expect(html.match(/aria-current="true"/g)).toHaveLength(1);
+    expect(html).toMatch(/data-view="entradas-e2" aria-current="true"/);
+    expect(html).toContain(">Semana 9 → 16 oct</h3>");
+    expect(html).toContain("Semis Europa estricta");
+    expect(html).toContain("Guardar vista actual");
+    // Nuevos máximos = 0 → deshabilitada; Favoritos vacío → deshabilitada.
+    expect(html).toMatch(/data-view="nuevos-maximos" disabled=""/);
+    expect(html).toMatch(/data-view="favoritos" disabled=""/);
+  });
+
+  it("ScreenerShell con cola: el título es la cola y la verdad dice cuántos están en la mesa", () => {
+    const props = makeProps({ analyzedRows: [{ symbol: "DOCN", country: "US" }] });
+    props.chrome.huntQueue = normalizeHuntQueue(weeklyQueueViews(payload)[0]);
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
+    expect(html).toContain('class="title">Entradas en Etapa 2</h1>');
+    expect(html).toMatch(/1 de 2 en la mesa · desde el [^<]*9 oct/);
+    expect(html).toContain("resultQueueChip");
+  });
+});
+
+// D2 (auditoría de producto 2026-11): sin par válido el grupo dice «Sin
+// comparación esta semana» y no enseña cifras (todas «—»).
+describe("raíl · grupo semanal sin par (D2)", () => {
+  it("not-comparable ⇒ rótulo «Sin comparación esta semana» y ninguna cifra", async () => {
+    const { weeklyHeadingFromPayload } = await import("@/lib/weeklyChanges");
+    const payload = { ok: true, state: "not-comparable", reason: "no-weekly-anchor" };
+    const views = weeklyQueueViews(payload);
+    const html = renderToStaticMarkup(React.createElement(HuntCardRail, {
+      presetKey: "balanced",
+      markets: ["US"],
+      weeklyViews: views,
+      weeklyHeading: weeklyHeadingFromPayload(payload),
+      onOpenWeeklyDetail: () => {},
+    }));
+    expect(html).toContain("Sin comparación esta semana");
+    for (const id of ["entradas-e2", "salidas-e2", "nuevos-maximos", "cerca-maximo"]) {
+      expect(html).toMatch(new RegExp(`data-view="${id}" disabled=""[^>]*>[\\s\\S]*?screenerViewRailCount isGhost">—<`));
+    }
+    // Sin «detalle»: no hay panel que abrir.
+    expect(html).not.toContain(">detalle<");
+    const tabs = renderToStaticMarkup(React.createElement(HuntCardRail, {
+      presetKey: "balanced", markets: ["US"], weeklyViews: views, weeklyHeading: weeklyHeadingFromPayload(payload), layout: "tabs",
+    }));
+    expect(tabs).toContain('<em class="mobileViewTabGroupLabel">Sin comparación esta semana</em>');
   });
 });

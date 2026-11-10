@@ -36,8 +36,15 @@ vi.mock("@/app/screenerPanels", () => ({
   SetupChipRail: () => Stub({ marker: "SetupChipRail" }),
 }));
 
-vi.mock("@/app/components/screener/ResultFilterBar", () => ({ default: () => Stub({ marker: "ResultFilterBar" }) }));
-vi.mock("@/app/components/screener/ResultPagerTable", () => ({ default: () => Stub({ marker: "ResultPagerTable" }) }));
+// Paso 5 (rediseño 2026-11): la barra de filtros viaja como `filterSlot` a
+// ResultPagerTable y el popover recibe `children` (modo de la ficha, desglose)
+// y `families`; los stubs dejan pasar esos huecos para poder inspeccionarlos.
+vi.mock("@/app/components/screener/ResultFilterBar", () => ({
+  default: ({ children, families }) => React.createElement("div", { "data-stub": "ResultFilterBar" }, children, families),
+}));
+vi.mock("@/app/components/screener/ResultPagerTable", () => ({
+  default: ({ filterSlot }) => React.createElement("div", { "data-stub": "ResultPagerTable" }, filterSlot),
+}));
 vi.mock("@/app/components/screener/WeeklyChangesLine", () => ({ default: () => Stub({ marker: "WeeklyChangesLine" }) }));
 vi.mock("@/app/components/screener/GlobalCoveragePanel", () => ({ default: () => Stub({ marker: "GlobalCoveragePanel" }) }));
 vi.mock("@/app/components/screener/HuntCardRail", () => ({ default: () => Stub({ marker: "HuntCardRail" }) }));
@@ -264,14 +271,28 @@ describe("ScreenerShell viewport mount", () => {
 });
 
 describe("ScreenerShell · SHELL-D laboratorio fuera del aside", () => {
-  it("aside: sin Diagnóstico ni paneles de laboratorio", () => {
+  // Paso 5 (rediseño 2026-11): en escritorio no hay aside (las familias van en
+  // el popover «+ Filtro»). Estudio móvil 2026-11 (paso 9): en móvil tampoco;
+  // las familias viven en la hoja inferior de filtros (MobileFilterSheet).
+  function mobileFilterSheetHtml(props) {
+    const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
+    return html.match(/<section[^>]*class="mobileSheet mobileFilterSheet"[^>]*>([\s\S]*?)<\/section>/)?.[1] ?? "";
+  }
+
+  it("hoja de filtros móvil: sin Diagnóstico ni paneles de laboratorio; sin aside en ningún ancho", () => {
     mockIsMobileViewport.mockReturnValue(false);
-    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
-    const aside = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)?.[1] ?? "";
-    expect(aside).toContain("data-stub=\"FilterArchitecturePanel\"");
-    expect(aside).not.toContain("screenerDiagnosticsDisclosure");
-    expect(aside).not.toContain("Auditoría de filtros");
-    expect(aside).not.toContain("Cobertura internacional por mercado");
+    expect(renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()))).not.toMatch(/<aside/);
+    mockIsMobileViewport.mockReturnValue(true);
+    const closed = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
+    expect(closed).not.toMatch(/<aside/);
+    expect(closed).not.toContain("mobileFilterSheet");
+    const props = makeProps();
+    props.chrome.showMobileFilters = true;
+    const sheet = mobileFilterSheetHtml(props);
+    expect(sheet).toContain("data-stub=\"FilterArchitecturePanel\"");
+    expect(sheet).not.toContain("screenerDiagnosticsDisclosure");
+    expect(sheet).not.toContain("Auditoría de filtros");
+    expect(sheet).not.toContain("Cobertura internacional por mercado");
   });
 
   it("menú ⋯ escritorio: Diagnóstico agrupa auditoría y cobertura (cobertura lazy)", () => {
@@ -285,33 +306,26 @@ describe("ScreenerShell · SHELL-D laboratorio fuera del aside", () => {
     expect(html).not.toContain("data-stub=\"GlobalCoveragePanel\"");
   });
 
-  it("drawer móvil: sin Diagnóstico en el aside compartido", () => {
+  it("familias de ficha en la hoja móvil sin Configuración avanzada ni diagnóstico", () => {
     mockIsMobileViewport.mockReturnValue(true);
     const props = makeProps();
     props.chrome.showMobileFilters = true;
-    const html = renderToStaticMarkup(React.createElement(ScreenerShell, props));
-    const aside = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)?.[1] ?? "";
-    expect(aside).not.toContain("screenerDiagnosticsDisclosure");
-    expect(aside).not.toContain("Auditoría de filtros");
-  });
-
-  it("familias de ficha en aside sin Configuración avanzada ni diagnóstico", () => {
-    mockIsMobileViewport.mockReturnValue(false);
-    const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
-    const aside = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)?.[1] ?? "";
-    expect(aside).toContain("data-stub=\"FilterArchitecturePanel\"");
-    expect(aside).not.toContain("advancedConfigPanel");
-    expect(aside).not.toContain("screenerDiagnosticsDisclosure");
-    const archIdx = aside.indexOf("data-stub=\"FilterArchitecturePanel\"");
-    expect(archIdx).toBeGreaterThan(-1);
+    const sheet = mobileFilterSheetHtml(props);
+    expect(sheet).toContain("data-stub=\"FilterArchitecturePanel\"");
+    expect(sheet).not.toContain("advancedConfigPanel");
+    expect(sheet).not.toContain("screenerDiagnosticsDisclosure");
+    // Mercados antes que las familias, y «Ver N valores» como salida.
+    expect(sheet.indexOf("marketPresetBar")).toBeGreaterThan(-1);
+    expect(sheet.indexOf("marketPresetBar")).toBeLessThan(sheet.indexOf("data-stub=\"FilterArchitecturePanel\""));
+    expect(sheet).toMatch(/Ver \d[\d.]* valor/);
   });
 });
 
 describe("ScreenerShell · SHELL-A un solo editor", () => {
-  it("aside: sin árbol legado ni resets que compitan con Resetear criterios", () => {
+  it("popover de familias (escritorio): sin árbol legado ni resets que compitan con Resetear criterios", () => {
     mockIsMobileViewport.mockReturnValue(false);
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
-    const aside = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)?.[1] ?? "";
+    const aside = html.match(/<div data-stub="ResultFilterBar">([\s\S]*?)<\/div><\/div>/)?.[1] ?? "";
     expect(aside).not.toContain("Ajustes finos");
     expect(aside).not.toContain("Resetear condiciones");
     expect(aside).not.toContain("Base preset");
@@ -326,14 +340,17 @@ describe("ScreenerShell · SHELL-A un solo editor", () => {
 });
 
 describe("ScreenerShell · SHELL-C familias de ficha", () => {
-  it("aside: Mercados antes que familias; sin contadores duplicados de avanzado", () => {
+  // Pasos 4-5 (rediseño 2026-11): en escritorio los mercados están en el chip
+  // del ticket y las familias en el popover «+ Filtro» de la barra de la mesa.
+  it("escritorio: Mercados en el ticket antes que las familias del popover; sin contadores duplicados de avanzado", () => {
     mockIsMobileViewport.mockReturnValue(false);
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps()));
-    const aside = html.match(/<aside[^>]*>([\s\S]*?)<\/aside>/)?.[1] ?? "";
-    const marketsIdx = aside.indexOf("marketPanel");
-    const archIdx = aside.indexOf("data-stub=\"FilterArchitecturePanel\"");
+    const aside = html.match(/<div data-stub="ResultFilterBar">([\s\S]*?)<\/div><\/div>/)?.[1] ?? "";
+    const marketsIdx = html.indexOf("marketCompactChip");
+    const archIdx = html.indexOf("data-stub=\"FilterArchitecturePanel\"");
     expect(marketsIdx).toBeGreaterThan(-1);
     expect(archIdx).toBeGreaterThan(marketsIdx);
+    expect(html).not.toMatch(/<aside/);
     expect(aside).not.toContain("Configuración avanzada");
     expect(aside).not.toContain("Avanzado ·");
     expect(aside).not.toContain("Filtro activo");

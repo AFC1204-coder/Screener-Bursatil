@@ -40,9 +40,10 @@ describe("themeRs lector", () => {
   it("residual no hidratado devuelve theme-residual", () => {
     const row = {
       symbol: "X",
-      sector: "Basic Materials",
-      industry: "Chemicals",
-      theme: "Basic Materials",
+      // Residual = sector sin regla (antes del P4 de 2026-11 era «Basic Materials»).
+      sector: "Other",
+      industry: "Holding",
+      theme: "Other",
     };
     const trs = themeRs(row);
     expect(trs.available).toBe(false);
@@ -83,11 +84,12 @@ describe("themeRs lector", () => {
 });
 
 describe("themeRsEngineVersion slug", () => {
-  it("genera slugs únicos para las 12 keys", () => {
+  it("genera slugs únicos para las 13 keys", () => {
     const slugs = rankableThemeKeys().map((key) => themeRsSlug(key));
-    expect(new Set(slugs).size).toBe(12);
-    expect(themeRsEngineVersion("Semis / fotonica")).toBe("statsedge-private-theme-rs-usd-semis-fotonica-v1");
-    expect(themeRsEngineVersion("Software / IA")).toBe("statsedge-private-theme-rs-usd-software-ia-v1");
+    expect(new Set(slugs).size).toBe(13);
+    expect(themeRsSlug("Materiales / minería")).toBe("materiales-mineria");
+    expect(themeRsEngineVersion("Semis / fotonica")).toBe("statsedge-private-theme-rs-usd-semis-fotonica-v2");
+    expect(themeRsEngineVersion("Software / IA")).toBe("statsedge-private-theme-rs-usd-software-ia-v2");
     expect(themeRsEngineVersion("General")).toBe("");
     expect(themeRsEngineVersion("Basic Materials")).toBe("");
   });

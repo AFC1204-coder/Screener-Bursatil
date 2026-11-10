@@ -73,6 +73,70 @@ describe("chartFetchCache", () => {
     expect(getJsonImpl).toHaveBeenCalledTimes(1);
   });
 
+  // Auditoría 2026-11, H21: el AbortController del hook no llegaba al fetch.
+  function pendingGetJson() {
+    const calls = [];
+    const getJsonImpl = vi.fn().mockImplementation((url, options = {}) => new Promise((resolve, reject) => {
+      const call = { url, options, resolve, aborted: false };
+      calls.push(call);
+      options.signal?.addEventListener("abort", () => {
+        call.aborted = true;
+        const error = new Error("aborted");
+        error.name = "AbortError";
+        reject(error);
+      });
+    }));
+    return { getJsonImpl, calls };
+  }
+
+  it("cancelación: el único interesado aborta → la descarga se cancela y no queda en vuelo", async () => {
+    const { getJsonImpl, calls } = pendingGetJson();
+    const controller = new AbortController();
+    const pending = fetchChartCached({ symbol: "AAPL", dataRange: "5A", interval: "D", getJsonImpl, signal: controller.signal });
+    expect(calls).toHaveLength(1);
+    controller.abort();
+    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    expect(calls[0].aborted).toBe(true);
+    expect(__test__.CHART_INFLIGHT.size).toBe(0);
+    expect(peekChartCache("AAPL|5A|D")).toBeNull();
+  });
+
+  it("cancelación con dedupe: si otro interesado sigue esperando, la descarga continúa", async () => {
+    const { getJsonImpl, calls } = pendingGetJson();
+    const a = new AbortController();
+    const b = new AbortController();
+    const first = fetchChartCached({ symbol: "KO", dataRange: "5A", interval: "D", getJsonImpl, signal: a.signal });
+    const second = fetchChartCached({ symbol: "KO", dataRange: "5A", interval: "D", getJsonImpl, signal: b.signal });
+    expect(calls).toHaveLength(1);
+    a.abort();
+    await expect(first).rejects.toMatchObject({ name: "AbortError" });
+    expect(calls[0].aborted).toBe(false);
+    calls[0].resolve({ bars: [{ time: 9 }] });
+    await expect(second).resolves.toEqual({ bars: [{ time: 9 }] });
+    expect(peekChartCache("KO|5A|D")).toEqual({ bars: [{ time: 9 }] });
+  });
+
+  it("cancelación: un prefetch (sin signal) fija la petición aunque el consumidor aborte", async () => {
+    const { getJsonImpl, calls } = pendingGetJson();
+    prefetchChart({ symbol: "MRNA", dataRange: "2A", interval: "D", getJsonImpl });
+    const controller = new AbortController();
+    const waiting = fetchChartCached({ symbol: "MRNA", dataRange: "2A", interval: "D", getJsonImpl, signal: controller.signal });
+    controller.abort();
+    await expect(waiting).rejects.toMatchObject({ name: "AbortError" });
+    expect(calls[0].aborted).toBe(false);
+    calls[0].resolve({ bars: [{ time: 4 }] });
+    await vi.waitFor(() => expect(peekChartCache("MRNA|2A|D")).toEqual({ bars: [{ time: 4 }] }));
+  });
+
+  it("signal ya abortado: rechaza sin pedir nada", async () => {
+    const { getJsonImpl } = pendingGetJson();
+    const controller = new AbortController();
+    controller.abort();
+    await expect(fetchChartCached({ symbol: "X", dataRange: "1A", interval: "D", getJsonImpl, signal: controller.signal }))
+      .rejects.toMatchObject({ name: "AbortError" });
+    expect(getJsonImpl).not.toHaveBeenCalled();
+  });
+
   it("rs-weekly cache/dedupe por URL completa", async () => {
     const url = "/api/rs-weekly?symbol=TSLA&limit=180";
     const getJsonImpl = vi.fn().mockResolvedValue({ global: { series: [{ rsRating: 80 }] } });

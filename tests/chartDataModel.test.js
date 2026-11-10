@@ -561,6 +561,50 @@ describe("chartDataModel.resolve · matriz de resolución", () => {
     expect(result.quality.status).toBe("real");
   });
 
+  it("MAX remoto solo mensual → cae al local y DICE el recorte (auditoría 2026-11, H8)", () => {
+    const local = ohlcBars(520, { start: BASE_TIME + 4000 * TRADING_DAY });
+    const monthly = ohlcBars(169, { step: 30 * TRADING_DAY });
+    const result = chartDataModel.resolve({
+      symbol: "AAPL",
+      localSource: { bars: local, quality: REAL_DATA_QUALITY },
+      config: { dataRange: "MAX", interval: "D", style: "1" },
+      request: { state: "settled", payload: remotePayload(monthly) },
+    });
+    expect(result.availability).toBe("ready");
+    expect(result.rows.length).toBe(520);
+    expect(result.notice?.code).toBe("history-coarse-dropped");
+    expect(result.notice?.text).toContain(result.rows[0].date);
+  });
+
+  it("MAX con histórico completo semanal (meta.barInterval) → se dibuja ENTERO, sin recorte ni mezcla con lo local", () => {
+    const local = ohlcBars(520, { start: BASE_TIME + 12000 * TRADING_DAY });
+    const weekly = ohlcBars(2000, { step: 7 * TRADING_DAY });
+    const result = chartDataModel.resolve({
+      symbol: "AAPL",
+      localSource: { bars: local, quality: REAL_DATA_QUALITY },
+      config: { dataRange: "MAX", interval: "W", style: "1" },
+      request: { state: "settled", payload: { ...remotePayload(weekly), meta: { dataProvider: "Yahoo Finance", barInterval: "1wk" } } },
+    });
+    expect(result.availability).toBe("ready");
+    expect(result.rows.length).toBe(2000);
+    expect(result.rows[0].time).toBe(BASE_TIME);
+    expect(result.notice?.code).toBe("max-full-history-cadence");
+    expect(result.notice?.text).toContain("semanales");
+  });
+
+  it("MAX con histórico completo caído (ausencia explícita) → histórico diario local rotulado, no bloqueo", () => {
+    const local = ohlcBars(520);
+    const result = chartDataModel.resolve({
+      symbol: "AAPL",
+      localSource: { bars: local, quality: REAL_DATA_QUALITY },
+      config: { dataRange: "MAX", interval: "W", style: "1" },
+      request: { state: "settled", payload: { bars: [], dataQuality: { status: "missing", source: "Yahoo Finance" } } },
+    });
+    expect(result.availability).toBe("ready");
+    expect(result.rows.length).toBeGreaterThan(50);
+    expect(result.notice?.code).toBe("max-full-history-unavailable");
+  });
+
   it("request settled real pero payload vacío/insuficiente → vuelve a local elegible", () => {
     const local = ohlcBars(300);
     const result = chartDataModel.resolve({

@@ -12,11 +12,11 @@ export const name = "listas retiradas no se pintan aunque discovery las devuelva
 const RETIRADAS = ["Deterioro técnico", "IPO / New Leaders", "Vigilancia pivot"];
 const VISIBLES = [
   "Score compuesto",
-  "RS Quality Leaders",
+  "Líderes por calidad de RS",
   "Tendencia establecida",
   "Rupturas con contracción",
-  "Extended but strong",
-  "Pullback to SMA50",
+  "Fuertes pero extendidos",
+  "Retroceso a la SMA50",
 ];
 
 function item(symbol, extra = {}) {
@@ -50,14 +50,14 @@ function item(symbol, extra = {}) {
 
 const LISTAS = [
   { key: "leaders", title: "Score compuesto" },
-  { key: "rsQuality", title: "RS Quality Leaders" },
+  { key: "rsQuality", title: "Líderes por calidad de RS" },
   { key: "weakness", title: "Deterioro técnico", extra: { weaknessScore: 90 } },
   { key: "weinstein", title: "Tendencia establecida" },
   { key: "minervini", title: "Rupturas con contracción" },
   { key: "nearPivot", title: "Vigilancia pivot", extra: { distanceToPivotPct: -1 } },
   { key: "ipo", title: "IPO / New Leaders", extra: { ipoAgeMonths: 12, ipoScore: 70 } },
-  { key: "extended", title: "Extended but strong", extra: { extSma50: 20, objectiveScore: 75 } },
-  { key: "pullback", title: "Pullback to SMA50" },
+  { key: "extended", title: "Fuertes pero extendidos", extra: { extSma50: 20, objectiveScore: 75 } },
+  { key: "pullback", title: "Retroceso a la SMA50" },
 ];
 
 export async function run({ context, baseUrl }) {

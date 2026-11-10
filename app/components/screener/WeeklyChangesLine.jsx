@@ -16,66 +16,25 @@
 // la función pura `renderWeeklyChangesView` produce el árbol y es testeable
 // con renderToStaticMarkup sin timers ni efectos.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
-import { getJson } from "@/lib/clientApi";
 import { num } from "@/lib/formatters";
 import { isTimeoutFetchError } from "@/lib/marketHealthFetch";
-import { userFacingServiceError } from "@/lib/serviceErrors";
 import { stockUrl } from "@/lib/symbols";
-import { formatDayLabel, stageWord } from "@/lib/weeklyChanges";
+import { formatDayLabel, stageWord, weeklyWindowLabel } from "@/lib/weeklyChanges";
+import { useWeeklyChanges } from "@/app/components/screener/useWeeklyChanges";
 
-export const WEEKLY_CHANGES_FETCH_TIMEOUT_MS = 20000;
-export const WEEKLY_CHANGES_MAX_ATTEMPTS = 3;
-export const WEEKLY_CHANGES_RETRY_DELAY_MS = 2500;
+// Paso 6: el fetch y el estado viven en useWeeklyChanges (compartidos con el
+// raíl de vistas); se re-exportan aquí para no romper a quien los importa.
+export {
+  WEEKLY_CHANGES_FETCH_TIMEOUT_MS,
+  WEEKLY_CHANGES_MAX_ATTEMPTS,
+  WEEKLY_CHANGES_RETRY_DELAY_MS,
+  isWeeklyChangesSoftFailure,
+  loadWeeklyChangesPayload,
+} from "@/app/components/screener/useWeeklyChanges";
+
 const ROWS_COLLAPSED = 10;
-const URL_PARAM = "cambios";
-const URL_VALUE = "semana";
-
-/** Timeout / red / 5xx: no pintar fallo permanente en la cabecera de la mesa. */
-export function isWeeklyChangesSoftFailure(error) {
-  if (!error) return false;
-  if (isTimeoutFetchError(error)) return true;
-  const msg = String(error.message || error.name || "");
-  return /\bHTTP 5\d\d\b|\bECONNRESET\b|\bECONNREFUSED\b|\bENOTFOUND\b|\bfetch failed\b|\bFailed to fetch\b/i.test(msg);
-}
-
-/**
- * Carga /api/weekly-changes con reintentos silenciosos ante fallos blandos.
- * Devuelve `{ payload }` o `{ softFailure: true }` (ocultar línea) o lanza
- * errores duros (auth/4xx) para que el caller pinte un quiet corto.
- */
-export async function loadWeeklyChangesPayload({
-  getJsonImpl = getJson,
-  timeoutMs = WEEKLY_CHANGES_FETCH_TIMEOUT_MS,
-  maxAttempts = WEEKLY_CHANGES_MAX_ATTEMPTS,
-  retryDelayMs = WEEKLY_CHANGES_RETRY_DELAY_MS,
-  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
-  signal,
-} = {}) {
-  let lastError = null;
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    if (signal?.aborted) {
-      const aborted = new Error("aborted");
-      aborted.name = "AbortError";
-      throw aborted;
-    }
-    try {
-      const payload = await getJsonImpl("/api/weekly-changes", { timeoutMs, signal });
-      return { payload };
-    } catch (err) {
-      lastError = err;
-      if (signal?.aborted) throw err;
-      const soft = isWeeklyChangesSoftFailure(err);
-      if (!soft || attempt >= maxAttempts) break;
-      await sleep(retryDelayMs);
-    }
-  }
-  if (isWeeklyChangesSoftFailure(lastError)) {
-    return { softFailure: true, error: lastError };
-  }
-  throw lastError;
-}
 
 export const WEEKLY_SECTION_IDS = {
   stage2: "weeklyChangesStage2",
@@ -186,6 +145,8 @@ export function renderWeeklyChangesView({
   onSortKey,
   onExpand,
   onOpenStock,
+  compact = false,
+  panelOnly = false,
 } = {}) {
   if (loading) {
     // P10: silencio mientras no hay delta útil (no «comprobando…» en el H1).
@@ -216,6 +177,9 @@ export function renderWeeklyChangesView({
   const { window: win = {}, population = {}, stage2 = {}, highs = {} } = payload;
   const fromLabel = formatDayLabel(win.from);
   const toLabel = formatDayLabel(win.to);
+  // D2 (auditoría 2026-11): la ventana es semanal, viernes a viernes, y se
+  // nombra con sus fechas («Semana 9 → 16 oct»).
+  const weekLabel = weeklyWindowLabel(win.fromWeekEnd || win.from, win.toWeekEnd || win.to) || `Desde el ${fromLabel}`;
   const entriesCount = stage2.entries?.count ?? 0;
   const exitsCount = stage2.exits?.count ?? 0;
   const newCount = highs.newThisWindow?.count ?? 0;
@@ -223,10 +187,25 @@ export function renderWeeklyChangesView({
   const noAnchorCount = highs.noAnchor?.count ?? 0;
   const cutoverNote = win.partialWeek && win.partialReason === "stage-criteria-cutover";
 
-  return (
-    <>
+  // Rediseño 2026-11 (paso 4): en el ticket la frase larga no se pinta; queda
+  // un único enlace que abre el mismo panel. Las cifras siguen en el panel y en
+  // el title del enlace (las vistas «Esta noche» del raíl las absorben, paso 6).
+  const compactSummary = `${weekLabel} · Etapa 2: ${plural(entriesCount, "entrada", "entradas")}, ${plural(exitsCount, "salida", "salidas")} · Máximos de 52 semanas: ${plural(newCount, "nuevo", "nuevos")}, ${nearCount} ya cerca`;
+  const line = panelOnly ? null : compact ? (
+    <p className="weeklyChangesLine weeklyChangesLine--compact">
+      <button
+        type="button"
+        className="weeklyChangesDetailBtn"
+        aria-expanded={open}
+        title={compactSummary}
+        onClick={() => onToggleOpen?.()}
+      >
+        Cambios de la semana
+      </button>
+    </p>
+  ) : (
       <p className="weeklyChangesLine">
-        <span className="weeklyChangesSince">Desde el {fromLabel}</span>
+        <span className="weeklyChangesSince">{weekLabel}</span>
         <span aria-hidden="true"> · </span>
         <button
           type="button"
@@ -255,11 +234,16 @@ export function renderWeeklyChangesView({
           {open ? "cerrar detalle" : "ver detalle"}
         </button>
       </p>
+  );
+
+  return (
+    <>
+      {line}
 
       {open ? (
         <section className="weeklyChangesPanel" role="region" aria-label="Cambios de la semana">
           <header className="weeklyChangesPanelHead">
-            <h2>Cambios del {fromLabel} al {toLabel}</h2>
+            <h2>{weekLabel}</h2>
             <div className="weeklyChangesPanelTools">
               <label>
                 Orden
@@ -354,129 +338,44 @@ export function renderWeeklyChangesView({
  * @param {Function} [props.onOpenStock]
  * @param {boolean} [props.defer] — T9: no fetch ni «comprobando…» hasta que la
  *   mesa salga de cold restore (una historia de progreso = status del escaneo).
+ * @param {object} [props.weekly] — estado de useWeeklyChanges ya creado por el
+ *   screener (paso 6: una sola petición para raíl y panel). Sin él, el
+ *   componente se sirve solo.
+ * @param {boolean} [props.panelOnly] — no pinta la línea/enlace, solo el panel
+ *   cuando está abierto (el raíl es quien lo abre).
  */
-export default function WeeklyChangesLine({ onOpenStock, defer = false }) {
-  const [payload, setPayload] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [open, setOpen] = useState(false);
-  const [sortKey, setSortKey] = useState("rs");
-  const [expandedKeys, setExpandedKeys] = useState(() => new Set());
-  const [focusSection, setFocusSection] = useState("");
-  const pushedRef = useRef(false);
-
-  useEffect(() => {
-    if (defer) {
-      setPayload(null);
-      setError("");
-      setLoading(true);
-      return undefined;
-    }
-    const controller = new AbortController();
-    let cancelled = false;
-    loadWeeklyChangesPayload({ signal: controller.signal })
-      .then((result) => {
-        if (cancelled) return;
-        if (result.softFailure) {
-          // Reintento agotado: ocultar la línea. La mesa ya está lista; un
-          // «servidor tardó demasiado» permanente tumba esa sensación.
-          setPayload(null);
-          setError("");
-          setLoading(false);
-          return;
-        }
-        setPayload(result.payload);
-        setError("");
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (cancelled || err?.name === "AbortError") return;
-        // Fallo duro (p. ej. 4xx): quiet corto, sin copy de timeout.
-        setPayload(null);
-        setError(userFacingServiceError(err?.message, "no disponibles ahora mismo."));
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [defer]);
-
-  // El panel vive en la URL (?cambios=semana): un enlace directo lo abre y el
-  // gesto atrás lo cierra. popstate es la única fuente de verdad al navegar.
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-    const readParam = () => new URLSearchParams(window.location.search).get(URL_PARAM) === URL_VALUE;
-    if (readParam()) setOpen(true);
-    const onPop = () => {
-      pushedRef.current = false;
-      setOpen(readParam());
-    };
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
+export default function WeeklyChangesLine({ onOpenStock, defer = false, compact = false, weekly = null, panelOnly = false }) {
+  const own = useWeeklyChanges({ defer, passive: Boolean(weekly) });
+  const state = weekly || own;
+  const { open, focusSection, consumeFocusSection } = state;
 
   useEffect(() => {
     if (!open || !focusSection) return;
-    const id = WEEKLY_SECTION_IDS[focusSection];
-    setFocusSection("");
+    const id = WEEKLY_SECTION_IDS[consumeFocusSection()];
     // Salto directo, no animado: un scroll suave de miles de píxeles no
     // recalcula el destino si el layout cambia durante la animación, y en
     // pestañas ocultas los rAF no corren — el salto no depende de ninguno.
     if (id) document.getElementById(id)?.scrollIntoView({ behavior: "auto", block: "start" });
-  }, [open, focusSection]);
-
-  const openPanel = useCallback((section = "") => {
-    setOpen(true);
-    if (section) setFocusSection(section);
-    if (typeof window === "undefined") return;
-    const url = new URL(window.location.href);
-    if (url.searchParams.get(URL_PARAM) !== URL_VALUE) {
-      url.searchParams.set(URL_PARAM, URL_VALUE);
-      window.history.pushState({ weeklyChanges: true }, "", url);
-      pushedRef.current = true;
-    }
-  }, []);
-
-  const closePanel = useCallback(() => {
-    setOpen(false);
-    if (typeof window === "undefined") return;
-    if (pushedRef.current) {
-      pushedRef.current = false;
-      window.history.back();
-      return;
-    }
-    const url = new URL(window.location.href);
-    if (url.searchParams.has(URL_PARAM)) {
-      url.searchParams.delete(URL_PARAM);
-      window.history.replaceState(null, "", url);
-    }
-  }, []);
-
-  const handleExpand = useCallback((listKey) => {
-    setExpandedKeys((prev) => {
-      const next = new Set(prev);
-      next.add(listKey);
-      return next;
-    });
-  }, []);
+  }, [open, focusSection, consumeFocusSection]);
 
   // T9: durante cold restore no pintamos «comprobando…» — el status del escaneo
   // es la única historia de progreso.
   if (defer) return null;
 
   return renderWeeklyChangesView({
-    payload,
-    loading,
-    error,
+    payload: state.payload,
+    loading: state.loading,
+    error: state.error,
     open,
-    sortKey,
-    expandedKeys,
-    onToggleOpen: () => (open ? closePanel() : openPanel()),
-    onOpenSection: openPanel,
-    onClose: closePanel,
-    onSortKey: setSortKey,
-    onExpand: handleExpand,
+    sortKey: state.sortKey,
+    expandedKeys: state.expandedKeys,
+    onToggleOpen: state.togglePanel,
+    onOpenSection: state.openPanel,
+    onClose: state.closePanel,
+    onSortKey: state.setSortKey,
+    onExpand: state.expand,
     onOpenStock,
+    compact,
+    panelOnly,
   });
 }

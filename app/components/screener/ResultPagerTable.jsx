@@ -1,16 +1,18 @@
 "use client";
 
 // ResultPagerTable — slice presentacional de ScreenerShell.
-// Contiene el pager (range/page-size/prev/next), la CompactResultsTable
-// (Auditoría) o la cinta HuntTapeView (Caza).
+// Contiene la barra de 40 px sobre la tabla (rediseño 2026-11, paso 5:
+// Caza/Auditoría · fichas del filtro vivo y «+ Filtro» vía `filterSlot` ·
+// aviso de datos vía `noticeSlot` (paso 6) · «N en cola» y densidad), el pager, la CompactResultsTable (Auditoría) o la
+// cinta HuntTapeView (Caza).
 
 import { useEffect, useState } from "react";
 import { CompactResultsTable } from "@/app/screenerPanels";
 import HuntTapeView from "@/app/components/screener/HuntTapeView";
+import { HuntTapeEmpty } from "@/lib/screenerHuntTapeEmpty";
 import { RESULT_PAGE_SIZES } from "@/lib/screenerConfig";
 import { HuntTapeDensityToggle, HuntTapeModeToggle } from "@/lib/screenerHuntTape";
 import {
-  HUNT_TAPE_DENSITIES,
   persistHuntTapeDensity,
   readPersistedHuntTapeDensity,
   resolveHuntTapeDensity,
@@ -41,6 +43,7 @@ export default function ResultPagerTable({
   // Table / tape
   pagedRows,
   favoriteSymbols,
+  decisionResolutions = null,
   onFavorite,
   onReview,
   onOpenStock,
@@ -55,6 +58,14 @@ export default function ResultPagerTable({
   scannedMarkets = [],
   hasBatchPercentiles = false,
   emptyLabel,
+  filterSlot = null,
+  // Paso 6: aviso de datos de una línea en la misma banda (escritorio).
+  noticeSlot = null,
+  // Paso 7: panel lateral (motivo de inclusión + clasificar desde el panel).
+  peekInclusion = "",
+  onResolveDecision = null,
+  // Paso 8: salida única del vacío, común a Caza y Auditoría.
+  emptyAction = null,
 }) {
   const [viewMode, setViewMode] = useState(() => resolveResultViewMode(presetKey));
   const [tapeDensity, setTapeDensity] = useState(() => resolvePersistedHuntTapeDensity());
@@ -85,18 +96,15 @@ export default function ResultPagerTable({
 
   return (
     <>
-      <div className="resultViewChrome">
-        <div className="resultViewChromeControls">
-          <HuntTapeModeToggle mode={viewMode} onChange={handleViewModeChange} />
-          {cazaMode ? (
-            <HuntTapeDensityToggle density={tapeDensity} onChange={handleDensityChange} />
-          ) : null}
-        </div>
+      <div className="resultViewChrome" role="toolbar" aria-label="Barra de la mesa">
+        <HuntTapeModeToggle mode={viewMode} onChange={handleViewModeChange} />
+        {filterSlot}
+        {noticeSlot}
+        <span className="resultViewChromeMeta fine">
+          {visibleCount ? `${visibleCount} en cola` : "0 en cola"}
+        </span>
         {cazaMode ? (
-          <span className="resultViewChromeMeta fine">
-            {visibleCount ? `${visibleCount} en cola` : "0 en cola"}
-            {tapeDensity === HUNT_TAPE_DENSITIES.COMPACT ? " · compacto" : " · cómodo"}
-          </span>
+          <HuntTapeDensityToggle density={tapeDensity} onChange={handleDensityChange} />
         ) : null}
       </div>
 
@@ -108,7 +116,15 @@ export default function ResultPagerTable({
           activeModalRow={activeModalRow}
           chartPreviewDeferred={chartPreviewDeferred}
           density={tapeDensity}
+          favoriteSymbols={favoriteSymbols}
+          decisionResolutions={decisionResolutions}
+          peekInclusion={peekInclusion}
+          onFavorite={onFavorite}
+          onResolveDecision={onResolveDecision}
+          emptyAction={emptyAction}
         />
+      ) : !visibleCount ? (
+        <HuntTapeEmpty label={emptyLabel} action={emptyAction} />
       ) : (
         <>
           {visibleCount && multiPage ? (

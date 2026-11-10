@@ -11,6 +11,7 @@ import { MissingValue } from "@/lib/screenerColumns";
 import { getJson } from "@/lib/clientApi";
 import { dateShort, num, pct, pctShare } from "@/lib/formatters";
 import { auditIssueLabels, buildCoverageAudit } from "@/lib/discoveryAudit";
+import { buildDataAgeNotice } from "@/lib/dataAge";
 import { buildDecisionTraceabilitySummary, decisionResolutionForRow } from "@/lib/decisionTraceability";
 import { buildSavedListView, listViewHref, listViewSignature, normalizeListScope, normalizeSavedListViews, savedListViewMetaLine } from "@/lib/listViews";
 import { enforceListContractRows, listContractForKey, listInclusionSummary, rowPassesListContract, summarizeListReliability } from "@/lib/listRationale";
@@ -18,6 +19,7 @@ import { persistLocalScans } from "@/lib/localScanPersistence";
 import { safeRead, safeWrite, STORAGE_KEYS } from "@/lib/localState";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { compactDate, QualityStrip } from "@/app/components/ui/QualityStrip";
+import { PageTicket } from "@/app/components/PageTicket";
 import { canonicalRs, RS_CANONICAL_LABEL } from "@/lib/rsCanonical";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { favoriteToRow, isLongOpportunityRow, metricValue, normalizeStockRows, shortBusiness, sortByMetric, uniqueRows, weaknessScore } from "@/lib/stockRows";
@@ -41,6 +43,11 @@ const AUDIT_COUNT_MISSING = "Este recuento no se ha podido calcular en esta carg
 const COVERAGE_PCT_MISSING = "Sin universo cargado para este alcance: no hay sobre qué medir la cobertura.";
 const HEALTH_COUNT_MISSING = "Este recuento no ha llegado en esta carga, así que no se sabe cuántas filas hay.";
 const RANKING_UNAVAILABLE = "El ranking actualizado no está disponible ahora mismo.";
+// Tiempo límite de la espera de rankings (D6, auditoría de producto 2026-11).
+// Las listas se calculan sobre el nocturno completo: la primera carga del día
+// tarda unos segundos (después el servidor la sirve de memoria). Con 8 s la
+// primera petición en frío caducaba y la pantalla no decía por qué.
+const DISCOVERY_TIMEOUT_MS = 20000;
 
 /* ─── Listas retiradas de la vista (2026-08-13) ──────────────────────────
    NO están borradas: su contrato (lib/listRationale.js), su estrategia
@@ -107,7 +114,7 @@ function CanonicalRsCell({ row }) {
    las barras —hoy, 9 y 12 de agosto—: meterlos bajo una sola fecha sería
    mentir sobre uno de los dos. Y el universo contesta la pregunta que hay
    debajo de todas: si esto es el mercado entero o una selección. */
-function listsQualityItems({ dataAsOf, rsAsOf, nightly }) {
+function listsQualityItems({ dataAsOf, rsAsOf, nightly, coverage }) {
   const items = [];
   if (dataAsOf?.date) {
     items.push({
@@ -127,6 +134,11 @@ function listsQualityItems({ dataAsOf, rsAsOf, nightly }) {
   // ("materialized:US:2026-08-13:o0:l5608"): es el dato que convierte "75
   // valores" en "75 de 5.608".
   const analizados = Number(String(nightly?.localId || "").match(/:l(\d+)$/)?.[1] || 0);
+  // Si el servidor no leyó el nocturno entero, se dice sobre cuántas filas se
+  // calcularon las listas (D6). Con la lectura completa no aparece.
+  if (coverage && coverage.complete === false && coverage.label) {
+    items.push({ label: "Cálculo", value: coverage.label });
+  }
   if (Number.isFinite(nightly?.rows) && nightly.rows > 0) {
     items.push({
       label: "Universo",
@@ -143,8 +155,6 @@ function scopedDiscoveryPath(filter = {}) {
     limit: "20",
     groupItemLimit: "8",
     groupsLimit: "12",
-    maxRows: "80",
-    sinceDays: "10",
     minGroupSize: "1",
   });
   if (filter.groupType && filter.group) {
@@ -165,13 +175,13 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, localRows,
 
   return <div className="marketReliabilityBlock">
     <div className="marketReliabilityBlockHead">
-      <h3>Fiabilidad discovery</h3>
+      <h3>Fiabilidad del ranking</h3>
       <span className={`discoveryStatus ${status}`}>{source}</span>
     </div>
     {/* Un recuento que no ha llegado se muestra ausente. Un 0 aquí afirma
         "ninguna fila con precio viejo", que es lo contrario de "no lo sé". */}
     <div className="discoveryHealthGrid">
-      <span><b>{usingDiscovery ? <CountValue value={health.rows} reason={HEALTH_COUNT_MISSING} /> : localRows}</b><em>filas ranking</em></span>
+      <span><b>{usingDiscovery ? <CountValue value={health.rows} reason={HEALTH_COUNT_MISSING} /> : localRows}</b><em>filas del ranking</em></span>
       <span><b>{usingDiscovery ? <CountValue value={health.staleRows} reason={HEALTH_COUNT_MISSING} /> : "-"}</b><em>precio viejo</em></span>
       <span><b>{usingDiscovery ? <CountValue value={health.lowCoverageRows} reason={HEALTH_COUNT_MISSING} /> : "-"}</b><em>cobertura baja</em></span>
       <span><b>{usingDiscovery ? <CountValue value={health.missingTaxonomyRows} reason={HEALTH_COUNT_MISSING} /> : "-"}</b><em>taxonomía incompleta</em></span>
@@ -182,18 +192,18 @@ function DiscoveryHealthPanel({ data, error, loading, usingDiscovery, localRows,
   </div>;
 }
 
-function SavedListViewsPanel({ views, currentSignature, onSave, onDelete }) {
+/* «Guardar vista» vive en el ticket (paso 9); el panel solo se monta si hay
+   vistas que listar. */
+function SavedListViewsPanel({ views, currentSignature, onDelete }) {
   return <section className="card savedListViewsPanel">
     <div className="sectionTitle">
       <h2>Vistas guardadas</h2>
-      <button className="btn btnSmall btnPrimary" type="button" onClick={onSave}>Guardar vista</button>
     </div>
     <div className="savedListViews">
       {views.map((view) => <div className={`savedListView ${view.signature === currentSignature ? "active" : ""}`} key={view.id}>
         <a href={listViewHref(view)}><b>{view.name}</b><span>{savedListViewMetaLine(view)}</span></a>
         <button className="btn btnSmall" type="button" onClick={() => onDelete(view.id)}>Borrar</button>
       </div>)}
-      {!views.length && <div className="dataNote">Sin vistas guardadas.</div>}
     </div>
   </section>;
 }
@@ -208,17 +218,17 @@ function CoverageAuditPanel({ audit }) {
 
   return <div className="marketReliabilityBlock">
     <div className="marketReliabilityBlockHead">
-      <h3>Auditoría cobertura</h3>
+      <h3>Auditoría de cobertura</h3>
       <span className={`discoveryStatus ${status}`}>{audit.label || "Sin auditoría"}</span>
     </div>
     <div className="coverageAuditGrid">
-      <span><b><CountValue value={audit.universeRows} reason={AUDIT_COUNT_MISSING} /></b><em>universo scope</em></span>
-      <span><b><CountValue value={audit.rankedRows} reason={AUDIT_COUNT_MISSING} /></b><em>rankeadas</em></span>
+      <span><b><CountValue value={audit.universeRows} reason={AUDIT_COUNT_MISSING} /></b><em>universo del alcance</em></span>
+      <span><b><CountValue value={audit.rankedRows} reason={AUDIT_COUNT_MISSING} /></b><em>filas con ranking</em></span>
       {/* Sin universo no hay porcentaje de cobertura: el 0% que salía aquí lo
           fabricaba la división por cero, no una medición. */}
-      <span><b>{hasCoverageInput ? pctShare(audit.rankingCoveragePct ?? 0, 1) : <MissingValue reason={COVERAGE_PCT_MISSING} />}</b><em>cobertura ranking</em></span>
-      <span><b>{audit.rankedMarketCount ?? 0}/{audit.marketCount ?? 0}</b><em>mercados ranking</em></span>
-      <span><b>{hasCoverageInput ? audit.listHealth?.emptyLists?.length ?? 0 : "-"}</b><em>listas vacias</em></span>
+      <span><b>{hasCoverageInput ? pctShare(audit.rankingCoveragePct ?? 0, 1) : <MissingValue reason={COVERAGE_PCT_MISSING} />}</b><em>cobertura del ranking</em></span>
+      <span><b>{audit.rankedMarketCount ?? 0}/{audit.marketCount ?? 0}</b><em>mercados con ranking</em></span>
+      <span><b>{hasCoverageInput ? audit.listHealth?.emptyLists?.length ?? 0 : "-"}</b><em>listas vacías</em></span>
     </div>
     <div className="coverageAuditColumns">
       <div>
@@ -258,11 +268,11 @@ function ListsInfraStrip({ discovery, discoveryError, discoveryLoading, useDisco
         <b>{source}</b>
       </div>
       <div className="marketReliabilityStripItem">
-        <span>filas ranking</span>
+        <span>filas del ranking</span>
         <b>{useDiscovery ? (health.rows ?? 0) : localRows}</b>
       </div>
       <div className="marketReliabilityStripItem">
-        <span>cobertura ranking</span>
+        <span>cobertura del ranking</span>
         <b>{hasCoverageInput ? pctShare(audit.rankingCoveragePct ?? 0, 1) : <MissingValue reason={COVERAGE_PCT_MISSING} />}</b>
       </div>
       <div className="marketReliabilityStripItem">
@@ -270,7 +280,7 @@ function ListsInfraStrip({ discovery, discoveryError, discoveryLoading, useDisco
         <b>{audit.rankedMarketCount ?? "—"}/{audit.marketCount ?? "—"}</b>
       </div>
       <div className="marketReliabilityStripItem">
-        <span>listas vacias</span>
+        <span>listas vacías</span>
         <b>{emptyLists ?? "—"}</b>
       </div>
       <div className="marketReliabilityStripItem">
@@ -293,37 +303,23 @@ function ListsInfraStrip({ discovery, discoveryError, discoveryLoading, useDisco
   );
 }
 
-function ListScopeSummary({ filter, rowsCount, rankingAppearances, activeRankingCount, savedView, useDiscovery, discoveryLoading }) {
+/* Paso 9 (rediseño 2026-11): lo que pintaba la tarjeta «Vista actual» (siete
+   tiles) cabe en el ticket. Este helper conserva sus cifras y su nota: las
+   cifras van en la verdad corta y la nota en su tooltip. */
+function listScopeFacts({ filter, rowsCount, savedView }) {
   const scope = normalizeListScope(filter);
   const scopeRows = savedView?.counts?.scopeRows;
   const savedRows = savedView?.counts?.rows;
   const hasScopeRows = Number.isFinite(scopeRows) && scopeRows > 0;
   const hasLegacySavedRows = !hasScopeRows && Number.isFinite(savedRows) && savedRows > 0 && savedRows !== rowsCount;
-  const source = discoveryLoading ? "Cargando" : useDiscovery ? "Ranking en vivo" : "Copia local";
   const note = hasScopeRows && scopeRows !== rowsCount
-    ? "El grupo completo puede contener más acciones que los rankings visibles; Listas muestra candidatos unicos deduplicados por estrategia."
+    ? "El grupo completo puede contener más acciones que los rankings visibles; Listas muestra candidatos únicos, sin duplicados entre estrategias."
     : hasLegacySavedRows
-      ? "El conteo guardado pertenece al alcance original de la vista; Listas muestra candidatos unicos deduplicados con los rankings actuales."
+      ? "El conteo guardado pertenece al alcance original de la vista; Listas muestra candidatos únicos, sin duplicados, con los rankings actuales."
     : scope.group
       ? "Todos los rankings visibles aplican este mismo filtro de grupo."
       : "Vista global: los rankings se derivan del universo disponible sin filtro sectorial.";
-
-  return <section className="card listScopeSummary">
-    <div className="sectionTitle">
-      <h2>Vista actual</h2>
-      <span className={`discoveryStatus ${savedView ? "pass" : "warn"}`}>{savedView ? "Guardada" : "No guardada"}</span>
-    </div>
-    <div className="discoveryHealthGrid">
-      <span><b>{scope.label}</b><em>scope</em></span>
-      {hasScopeRows && <span><b>{scopeRows}</b><em>acciones en grupo</em></span>}
-      {hasLegacySavedRows && <span><b>{savedRows}</b><em>conteo guardado</em></span>}
-      <span><b>{rowsCount}</b><em>acciones únicas</em></span>
-      <span><b>{rankingAppearances}</b><em>apariciones visibles</em></span>
-      <span><b>{activeRankingCount}</b><em>listas con datos</em></span>
-      <span><b>{source}</b><em>fuente</em></span>
-    </div>
-    <p className="fine">{note}</p>
-  </section>;
+  return { scope, scopeRows: hasScopeRows ? scopeRows : null, savedRows: hasLegacySavedRows ? savedRows : null, note };
 }
 
 function chartPath(points, key, x, y) {
@@ -360,13 +356,13 @@ function chartPreviewBars(b, limit = 96) {
   return enriched.slice(-limit);
 }
 
-function MiniSparkline({ bars = [] }) {
+function MiniSparkline({ bars = [], height = "24px" }) {
   // Tolerante al orden: ver lib/screenerAtoms.jsx MiniSparkline.
   const points = bars
     .filter((x) => Number.isFinite(x.close))
     .slice()
     .sort((a, b) => String(a.date).localeCompare(String(b.date)));
-  if (points.length < 2) return <div className="previewEmpty" style={{ height: "44px", display: "grid", placeItems: "center" }}>Sin dato</div>;
+  if (points.length < 2) return <div className="previewEmpty" style={{ height, display: "grid", placeItems: "center" }}>Sin dato</div>;
   const w = 260, h = 118, pad = 10;
   const values = points.flatMap((p) => [p.close, p.sma50, p.sma200].filter(Number.isFinite));
   const min = Math.min(...values);
@@ -379,7 +375,7 @@ function MiniSparkline({ bars = [] }) {
   const trendClass = last >= first ? "up" : "down";
   const volumeMax = Math.max(...points.map((p) => p.volume || 0), 1);
   const barW = Math.max(1.2, (w - pad * 2) / points.length - 1);
-  return <svg className={`miniSparkline ${trendClass}`} style={{ width: "100%", height: "40px", display: "block" }} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Gráfico técnico compacto">
+  return <svg className={`miniSparkline ${trendClass}`} style={{ width: "100%", height, display: "block" }} preserveAspectRatio="none" viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Gráfico técnico compacto">
     <line x1={pad} x2={w - pad} y1={y(max)} y2={y(max)} className="sparkGuide" />
     <line x1={pad} x2={w - pad} y1={y(min)} y2={y(min)} className="sparkGuide" />
     {points.map((p, i) => {
@@ -393,16 +389,16 @@ function MiniSparkline({ bars = [] }) {
   </svg>;
 }
 
-function ListSparkline({ row, chartsCache }) {
+function ListSparkline({ row, chartsCache, height }) {
   if (Array.isArray(row.chartPreview) && row.chartPreview.length >= 2) {
-    return <MiniSparkline bars={row.chartPreview} />;
+    return <MiniSparkline bars={row.chartPreview} height={height} />;
   }
   const cachedBars = chartsCache[row.symbol];
   if (Array.isArray(cachedBars) && cachedBars.length >= 2) {
-    return <MiniSparkline bars={cachedBars} />;
+    return <MiniSparkline bars={cachedBars} height={height} />;
   }
   if (chartsCache[row.symbol] === null) {
-    return <div className="previewEmpty" style={{ height: "44px", display: "grid", placeItems: "center" }}>Sin gráfico</div>;
+    return <div className="previewEmpty" style={{ height: height || "24px", display: "grid", placeItems: "center" }}>Sin gráfico</div>;
   }
   return (
     <div className="sparklineSkeleton">
@@ -442,37 +438,59 @@ function ListReliabilityStrip({ summary, contractRejected = 0 }) {
     <span><b>{safe.staleRows}</b><em>precio viejo</em></span>
     <span><b>{safe.lowCoverageRows}</b><em>cobertura baja</em></span>
     <span><b>{safe.dataLimitedRows}</b><em>datos limitados</em></span>
-    <span><b>{contractRejected}</b><em>excluidas contrato</em></span>
+    <span><b>{contractRejected}</b><em>excluidas por contrato</em></span>
   </div>;
 }
 
-function ListsEmptyState({ loading, hasSnapshot, discoveryError, absence }) {
-  const title = loading ? "Cargando rankings" : absence ? "Sin listas: falta el escaneo del día" : "Sin listas disponibles";
+function ListsEmptyState({ loading, hasSnapshot, discoveryError, absence, emptyReason = "", onRetry = null }) {
+  // Cuatro casos y cada uno dice su causa (D6): esperando (con tiempo límite),
+  // el servidor no respondió (con el motivo y «Reintentar»), falta el
+  // nocturno, o hay nocturno pero ninguna lista tiene valores (y por qué).
+  const title = loading
+    ? "Calculando las listas"
+    : absence
+      ? "Sin listas: falta el escaneo del día"
+      : discoveryError
+        ? "Sin listas: el ranking no respondió"
+        : emptyReason
+          ? "Ninguna lista tiene valores"
+          : "Sin listas disponibles";
   const detail = loading
-    ? "Se esta consultando discovery. Si no hay datos remotos, se usara el último snapshot local."
+    ? `Se calculan las listas sobre el escaneo nocturno completo. La primera carga del día puede tardar unos segundos; si pasa de ${Math.round(DISCOVERY_TIMEOUT_MS / 1000)} s se dirá por qué.`
     : absence
       ? absence
-      : hasSnapshot
-        ? "Hay snapshot local, pero no genera candidatos visibles con los contratos actuales."
-        : "Listas se alimenta de discovery o de snapshots guardados desde el screener.";
-  const status = loading ? "Discovery" : absence ? "Sin escaneo nocturno" : discoveryError ? "Snapshot local" : hasSnapshot ? "Sin candidatos" : "Sin snapshot";
+      : discoveryError
+        ? discoveryError
+        : emptyReason
+          ? emptyReason
+          : hasSnapshot
+            ? "Hay una copia guardada en este dispositivo, pero ninguna acción cumple hoy los contratos de las listas."
+            : "Las listas ordenan las acciones del escaneo nocturno o de los snapshots que guardas desde el screener. Todavía no hay ninguno disponible.";
+  const status = loading ? "Rankings" : absence ? "Sin escaneo nocturno" : discoveryError ? "Sin respuesta" : emptyReason ? "Sin candidatos" : hasSnapshot ? "Sin candidatos" : "Sin copia guardada";
+  const bodyNote = loading || absence || discoveryError || emptyReason ? detail : "";
   return <section className="card listsEmptyState">
     <div className="emptyStateHead">
-      <h2>{title} {!absence && <InfoHint text={detail} />}</h2>
+      <h2>{title} {!bodyNote && <InfoHint text={detail} />}</h2>
       <span className="fine">{status}</span>
     </div>
     {/* El motivo va en el cuerpo, no escondido tras un icono: una lista que
         falta entera es exactamente el caso en que el usuario necesita leer
         por qué sin tener que buscarlo (principio 3). */}
-    {absence && <p className="dataNote">{absence}</p>}
+    {bodyNote && <p className="dataNote">{bodyNote}</p>}
+    {!loading && <p className="fine">{absence
+      ? "Qué hacer: espera a que se complete el próximo escaneo nocturno o lanza un análisis desde el screener."
+      : discoveryError
+        ? "Qué hacer: vuelve a intentarlo en unos segundos; si se repite, el screener sigue funcionando con su propia carga."
+        : "Qué hacer: ejecuta un análisis en el screener y guarda el snapshot; las listas se rellenarán solas. También puedes añadir favoritos desde Research."}</p>}
     <div className="controls">
-      <a className="btn btnPrimary" href="/">Screener</a>
-      <a className="btn" href="/research-desk">Research</a>
+      {!loading && discoveryError && onRetry ? <button className="btn btnPrimary" type="button" onClick={onRetry}>Reintentar</button> : null}
+      <a className={`btn ${!loading && discoveryError && onRetry ? "" : "btnPrimary"}`.trim()} href="/">Ir al screener</a>
+      <a className="btn" href="/research-desk">Abrir Research</a>
     </div>
   </section>;
 }
 
-function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey = "leaders", scoreKey = "objectiveScore", collapsible = true, emptyLabel = "Sin datos todavía.", contractRejected = 0 }) {
+function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey = "leaders", scoreKey = "objectiveScore", collapsible = true, emptyLabel = "Aún no hay acciones en esta lista.", contractRejected = 0 }) {
   const visibleRows = rows.slice(0, 18);
   const reliability = summarizeListReliability(rows);
   const table = <div className="tableWrap">
@@ -482,8 +500,10 @@ function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey =
         const trustSignature = rowTrustSignatureForRow(r);
         return <tr key={r.symbol}>
         <td><a className="ticker" href={stockUrl(r.symbol)}>{r.symbol}</a><DecisionTraceBadge resolution={decisionResolutionForRow(r, reviewState)} /></td>
-        <td>{r.companyName || r.symbol}<br /><span className="fine">{shortBusiness(r)}</span><RowTrustSignature signature={trustSignature} className="listRowTrustSignature" /><span className="listInclusionReason">{listInclusionSummary(r, listKey)}</span></td>
-        <td className="compactSparkCell" style={{ width: "110px", minWidth: "110px", verticalAlign: "middle" }}>
+        {/* Paso 9: fila de var(--row-h) como la cinta del screener. El nombre va
+            en una línea; negocio y motivo de inclusión, en su tooltip. */}
+        <td className="listNameCell"><span className="listNameText" title={[shortBusiness(r), listInclusionSummary(r, listKey)].filter(Boolean).join(" · ")}>{r.companyName || r.symbol}</span><RowTrustSignature signature={trustSignature} className="listRowTrustSignature" /></td>
+        <td className="compactSparkCell" style={{ width: "112px", minWidth: "112px", verticalAlign: "middle" }}>
           <ListSparkline row={r} chartsCache={chartsCache} />
         </td>
         <td><span className="pill">{r.theme || r.snapshot?.theme || "-"}</span></td>
@@ -510,7 +530,7 @@ function MiniTable({ title, desc, rows, chartsCache, reviewState = {}, listKey =
         <strong><ListTrustMetric row={r} metricKey={scoreKey} label={metricShortLabel(scoreKey)} value={num(Number.isFinite(metricValue(r, scoreKey)) ? metricValue(r, scoreKey) : (r.snapshot?.objectiveScore ?? r.snapshot?.totalScore))} /></strong>
       </div>
       <RowTrustSignature signature={trustSignature} className="listMobileTrustSignature" />
-      <div className="listMobileSpark"><ListSparkline row={r} chartsCache={chartsCache} /></div>
+      <div className="listMobileSpark"><ListSparkline row={r} chartsCache={chartsCache} height="96px" /></div>
       <div className="listMobileFacts">
         <span>{RS_CANONICAL_LABEL} <b><CanonicalRsCell row={r} /></b></span>
         <span>3M <b><ListTrustMetric row={r} metricKey="perf3m" label="3M" value={pct(r.perf3m ?? r.snapshot?.perf3m)} /></b></span>
@@ -555,6 +575,7 @@ export default function ListsPage() {
   const [savedListViews, setSavedListViews] = useState([]);
   const [reviewState, setReviewState] = useState({});
   const [loaded, setLoaded] = useState(false);
+  const [discoveryAttempt, setDiscoveryAttempt] = useState(0);
 
   useEffect(() => {
     const storedScans = safeRead(STORAGE_KEYS.scans, []);
@@ -600,7 +621,7 @@ export default function ListsPage() {
     setDiscoveryLoading(true);
     const timer = window.setTimeout(() => {
       if (!alive) return;
-      fetchJsonWithTimeout(scopedDiscoveryPath(filter), 8000)
+      fetchJsonWithTimeout(scopedDiscoveryPath(filter), DISCOVERY_TIMEOUT_MS)
         .then((payload) => {
           if (alive) setDiscovery(payload);
         })
@@ -618,7 +639,7 @@ export default function ListsPage() {
       alive = false;
       window.clearTimeout(timer);
     };
-  }, [loaded, filter.groupType, filter.group]);
+  }, [loaded, filter.groupType, filter.group, discoveryAttempt]);
 
   const latest = scans[0];
   // Discovery puede responder correctamente y aun así no tener listas: el
@@ -633,6 +654,8 @@ export default function ListsPage() {
   const discoveryRows = useMemo(() => normalizeStockRows(uniqueRows(discovery?.rows || [])), [discovery]);
   const useDiscovery = discoveryReady && discoveryRows.length > 0;
   const allRows = useMemo(() => useDiscovery ? discoveryRows : localRows, [useDiscovery, discoveryRows, localRows]);
+  // «Datos actualizados» solo si los precios lo están: con 2+ sesiones de retraso se dice la fecha (lib/dataAge.js).
+  const dataAgeNotice = useMemo(() => buildDataAgeNotice(allRows), [allRows]);
   const rows = useMemo(() => applyGroupFilter(allRows, filter.groupType, filter.group), [allRows, filter]);
   const favoritesAsRows = useMemo(() => favorites.map(favoriteToRow), [favorites]);
   const discoveryListContracts = useMemo(() => Object.fromEntries((discovery?.lists || []).map((list) => {
@@ -640,6 +663,9 @@ export default function ListsPage() {
     return [list.key, enforceListContractRows(normalizedRows, list.key)];
   })), [discovery]);
   const discoveryListRows = useMemo(() => Object.fromEntries(Object.entries(discoveryListContracts).map(([key, result]) => [key, result.rows || []])), [discoveryListContracts]);
+  // Motivo de cada lista vacía (frescura, sin datos, criterio), calculado en el
+  // servidor (lib/discovery.js → listEmptyReason).
+  const discoveryEmptyReasonByKey = useMemo(() => Object.fromEntries((discovery?.lists || []).map((list) => [list.key, list.emptyReason?.text || ""])), [discovery]);
   const discoveryRejectedByKey = useMemo(() => Object.fromEntries(Object.entries(discoveryListContracts).map(([key, result]) => [key, result.rejectedCount || 0])), [discoveryListContracts]);
   const currentListViewSignature = listViewSignature(filter);
   const longRows = useMemo(() => rows.filter((row) => isLongOpportunityRow(row)), [rows]);
@@ -659,16 +685,27 @@ export default function ListsPage() {
   // tocar contratos ni cálculo.
   const allListSections = useMemo(() => [
     { key: "leaders", title: "Score compuesto", desc: "Ranking principal sin bonus VCP", rows: leaders, contractRejected: discoveryRejectedByKey.leaders || 0 },
-    { key: "rsQuality", title: "RS Quality Leaders", desc: "RS alto con volatilidad/drawdown controlados", rows: rsQuality, scoreKey: "rsQualityScore", contractRejected: discoveryRejectedByKey.rsQuality || 0 },
+    { key: "rsQuality", title: "Líderes por calidad de RS", desc: "RS alto con volatilidad y caída máxima controladas", rows: rsQuality, scoreKey: "rsQualityScore", contractRejected: discoveryRejectedByKey.rsQuality || 0 },
     { key: "weakness", title: "Deterioro técnico", desc: "Debilidad observable para evitar largos o estudiar cortos", rows: weakness, scoreKey: "weaknessScore", contractRejected: discoveryRejectedByKey.weakness || 0 },
     { key: "weinstein", title: "Tendencia establecida", desc: "Mejor estructura de etapa/tendencia", rows: weinstein, scoreKey: "weinsteinScore", contractRejected: discoveryRejectedByKey.weinstein || 0 },
     { key: "minervini", title: "Rupturas con contracción", desc: "Estructura de tendencia, momentum y máximos", rows: minervini, scoreKey: "minerviniScore", contractRejected: discoveryRejectedByKey.minervini || 0 },
     { key: "nearPivot", title: "Vigilancia pivot", desc: "Setup observable cerca de pivot; no equivale a plan automático", rows: nearPivot, contractRejected: discoveryRejectedByKey.nearPivot || 0 },
     { key: "ipo", title: "IPO / New Leaders", desc: "Solo IPOs reales verificables <= 5 años", rows: ipo, scoreKey: "ipoScore", contractRejected: discoveryRejectedByKey.ipo || 0 },
-    { key: "extended", title: "Extended but strong", desc: "Muy fuertes, pero vigilar extensión sobre SMA50", rows: extended, contractRejected: discoveryRejectedByKey.extended || 0 },
-    { key: "pullback", title: "Pullback to SMA50", desc: "Líderes cerca de SMA50 para vigilancia", rows: pullback, contractRejected: discoveryRejectedByKey.pullback || 0 },
+    { key: "extended", title: "Fuertes pero extendidos", desc: "Muy fuertes, pero conviene vigilar su extensión sobre la SMA50", rows: extended, contractRejected: discoveryRejectedByKey.extended || 0 },
+    { key: "pullback", title: "Retroceso a la SMA50", desc: "Líderes que han vuelto cerca de la SMA50, para vigilar", rows: pullback, contractRejected: discoveryRejectedByKey.pullback || 0 },
   ], [leaders, rsQuality, weakness, weinstein, minervini, nearPivot, ipo, extended, pullback, discoveryRejectedByKey]);
-  const listSections = useMemo(() => allListSections.filter((section) => !RETIRED_LIST_SECTIONS[section.key]), [allListSections]);
+  const listSections = useMemo(() => allListSections
+    .filter((section) => !RETIRED_LIST_SECTIONS[section.key])
+    .map((section) => ({ ...section, emptyReason: useDiscovery ? discoveryEmptyReasonByKey[section.key] || "" : "" })), [allListSections, useDiscovery, discoveryEmptyReasonByKey]);
+  // Nocturno leído pero ninguna lista con valores: se dice por qué (D6).
+  const discoveryEmptyReason = useMemo(() => {
+    if (!discovery || discovery.configured !== true || discoveryError || discoveryAbsence) return "";
+    if ((discovery.rows || []).length > 0) return "";
+    const reasons = [...new Set((discovery.lists || []).map((list) => list.emptyReason?.text).filter(Boolean))];
+    if (reasons.length === 1) return reasons[0];
+    if (reasons.length) return `Las listas del escaneo nocturno están vacías: ${reasons.slice(0, 3).join(" ")}`;
+    return discovery.health?.note || "";
+  }, [discovery, discoveryError, discoveryAbsence]);
   const rankingAppearances = useMemo(() => listSections.reduce((sum, section) => sum + (section.rows || []).slice(0, 18).length, 0), [listSections]);
   const activeRankingCount = useMemo(() => listSections.filter((section) => (section.rows || []).length > 0).length, [listSections]);
   const activeSavedView = useMemo(() => savedListViews.find((view) => view.signature === currentListViewSignature) || null, [savedListViews, currentListViewSignature]);
@@ -723,35 +760,38 @@ export default function ListsPage() {
 
       if (!neededTickers.length) return;
 
-      const batchSize = 4;
-      for (let i = 0; i < neededTickers.length; i += batchSize) {
-        if (!active) break;
-        const batch = neededTickers.slice(i, i + batchSize);
+      // Un viaje por 30 símbolos (GET /api/chart/batch) en vez de uno por
+      // símbolo: antes las miniaturas iban apareciendo a goteo durante ~5 s con
+      // 50 valores. Si un lote falla se cae al método de siempre, símbolo a símbolo.
+      const applyBars = (symbol, rawBars) => {
+        if (!active) return;
+        const preview = rawBars.length >= 2 ? chartPreviewBars(rawBars) : null;
+        setChartsCache((prev) => ({ ...prev, [symbol]: preview }));
+      };
+      const fetchOne = async (symbol) => {
+        try {
+          const data = await getJson(`/api/chart?symbol=${encodeURIComponent(symbol)}`, { timeoutMs: 12000 });
+          applyBars(symbol, data.bars || []);
+        } catch (e) {
+          console.error(`Error al cargar gráfico real para ${symbol}:`, e);
+          if (active) setChartsCache((prev) => ({ ...prev, [symbol]: null }));
+        }
+      };
 
-        await Promise.all(batch.map(async (symbol) => {
-          try {
-            const data = await getJson(`/api/chart?symbol=${encodeURIComponent(symbol)}`, { timeoutMs: 12000 });
-            const rawBars = data.bars || [];
-            if (rawBars.length >= 2) {
-              const preview = chartPreviewBars(rawBars);
-              if (active) {
-                setChartsCache((prev) => ({
-                  ...prev,
-                  [symbol]: preview
-                }));
-              }
-            } else {
-              if (active) {
-                setChartsCache((prev) => ({ ...prev, [symbol]: null }));
-              }
-            }
-          } catch (e) {
-            console.error(`Error al cargar gráfico real para ${symbol}:`, e);
-            if (active) {
-              setChartsCache((prev) => ({ ...prev, [symbol]: null }));
-            }
+      const chunkSize = 30;
+      for (let i = 0; i < neededTickers.length; i += chunkSize) {
+        if (!active) break;
+        const chunk = neededTickers.slice(i, i + chunkSize);
+        try {
+          const data = await getJson(`/api/chart/batch?symbols=${encodeURIComponent(chunk.join(","))}`, { timeoutMs: 15000 });
+          const charts = data?.charts || {};
+          chunk.forEach((symbol) => applyBars(symbol, Array.isArray(charts[symbol]) ? charts[symbol] : []));
+        } catch (e) {
+          console.error("Lote de gráficos no disponible; se pide símbolo a símbolo:", e);
+          for (let j = 0; j < chunk.length && active; j += 4) {
+            await Promise.all(chunk.slice(j, j + 4).map(fetchOne));
           }
-        }));
+        }
       }
     };
 
@@ -784,15 +824,39 @@ export default function ListsPage() {
     persistSavedListViews(savedListViews.filter((view) => view.id !== id));
   }
 
-  return <main className="page listsPage">
-    <section className="card hero">
-      <div className="heroTop">
-        <div><div className="badge">StatsEdge · Listas</div><h1>Listas rápidas</h1><p className="muted">Líderes, favoritos y setups desde discovery derivado o snapshot local.</p></div>
-        <div className="mobileActions"><a className="btn" href="/">Screener</a><a className="btn" href="/review?source=latest">Vista rápida</a><a className="btn" href="/ipo-radar">IPO Radar</a><a className="btn" href="/research-desk">Research</a><a className="btn btnPrimary" href="/sectors">Sectores</a></div>
-      </div>
-    </section>
-    {useDiscovery && <QualityStrip items={listsQualityItems({ dataAsOf: discovery?.dataAsOf, rsAsOf: discovery?.rsAsOf, nightly: discovery?.nightly })} />}
-    <section className="card"><div className="kpis"><div className="kpi"><b>{loaded ? rows.length : "-"}</b><span>acciones únicas</span></div><div className="kpi"><b>{loaded ? favorites.length : "-"}</b><span>favoritos</span></div><div className="kpi"><b>{discoveryLoading ? "..." : useDiscovery ? "Datos actualizados" : loaded ? "Datos guardados" : "-"}</b><span>fuente rankings</span></div><div className="kpi"><b>{loaded && latest ? dateShort(latest.createdAt) : "-"}</b><span>último snapshot local</span></div></div></section>
+  const scopeFacts = listScopeFacts({ filter, rowsCount: rows.length, savedView: activeSavedView });
+  const sourceLabel = discoveryLoading ? "..." : useDiscovery ? (dataAgeNotice ? dataAgeNotice.label : "Datos actualizados") : loaded ? "Datos guardados" : "-";
+  const traceResolved = decisionTraceability?.resolvedCount || 0;
+
+  /* Paso 9 (rediseño 2026-11): ticket de 44 px en lugar del hero, la botonera
+     cruzada (la topbar ya navega) y las tarjetas de KPI. Las cifras de los
+     tiles («acciones únicas», «favoritos», «fuente rankings», «última copia
+     local», «Vista actual») viven en la verdad corta; la nota de alcance en su
+     tooltip. «Vista rápida» pasa a «Revisar», como en el screener. */
+  return <main className="page listsPage ptPage">
+    <PageTicket
+      title="Listas"
+      chip={scopeFacts.scope.label}
+      chipTitle="Alcance de los rankings"
+      truth={<>
+        <b>{loaded ? rows.length : "-"}</b> acciones únicas
+        {scopeFacts.scopeRows !== null ? <> · <b>{scopeFacts.scopeRows}</b> en grupo</> : null}
+        {scopeFacts.savedRows !== null ? <> · <b>{scopeFacts.savedRows}</b> en el conteo guardado</> : null}
+        {" · "}<b>{activeRankingCount}</b> listas con datos · <b>{rankingAppearances}</b> apariciones
+        {" · "}<b>{loaded ? favorites.length : "-"}</b> favoritos
+        {traceResolved ? <> · <b>{traceResolved}</b> resueltas en Review</> : null}
+        {" · "}<span className="listsTicketSource" data-kpi="fuente rankings" title={useDiscovery && dataAgeNotice ? dataAgeNotice.detail : undefined}>{sourceLabel}</span>
+        {loaded && latest ? <> · copia local {dateShort(latest.createdAt)}</> : null}
+      </>}
+      truthTitle={scopeFacts.note}
+    >
+      {filter.group ? <a className="btn" href="/lists" title={`Filtro activo: ${filter.groupType} = ${filter.group}`}>Quitar filtro</a> : null}
+      <button className="btn" type="button" onClick={saveCurrentListView} title={activeSavedView ? "Esta vista ya está guardada; vuelve a guardarla para actualizarla" : "Guarda el filtro actual para volver a él"}>
+        {activeSavedView ? "Vista guardada" : "Guardar vista"}
+      </button>
+      <a className="btn btnPrimary" href="/review?source=latest">Revisar</a>
+    </PageTicket>
+    {useDiscovery && <QualityStrip items={listsQualityItems({ dataAsOf: discovery?.dataAsOf, rsAsOf: discovery?.rsAsOf, nightly: discovery?.nightly, coverage: discovery?.coverage })} />}
     <ListsInfraStrip
       discovery={discovery}
       discoveryError={discoveryError}
@@ -802,16 +866,16 @@ export default function ListsPage() {
       filter={filter}
       coverageAudit={coverageAudit}
     />
-    <ListScopeSummary filter={filter} rowsCount={rows.length} rankingAppearances={rankingAppearances} activeRankingCount={activeRankingCount} savedView={activeSavedView} useDiscovery={useDiscovery} discoveryLoading={discoveryLoading} />
-    <DecisionTracePanel summary={decisionTraceability} detail="Resoluciones de Review/Ficha detectadas en las listas y favoritos visibles." />
-    <SavedListViewsPanel views={savedListViews} currentSignature={currentListViewSignature} onSave={saveCurrentListView} onDelete={deleteSavedListView} />
-    {filter.group && <section className="card status">Filtro activo: <b>{filter.groupType} = {filter.group}</b> · <a className="ticker" href="/lists">limpiar</a></section>}
+    {/* La trazabilidad solo ocupa sitio cuando hay algo trazado: con cero
+        resoluciones eran cuatro tiles a cero (el recuento va en el ticket). */}
+    {traceResolved > 0 ? <DecisionTracePanel summary={decisionTraceability} detail="Resoluciones de Review/Ficha detectadas en las listas y favoritos visibles." /> : null}
+    {savedListViews.length ? <SavedListViewsPanel views={savedListViews} currentSignature={currentListViewSignature} onDelete={deleteSavedListView} /> : null}
     {/* Con datos locales a la vista, el aviso va aparte: lo que se está
         enseñando es una copia guardada en este navegador, y decir de dónde
         sale importa más cuando la pantalla NO está vacía. */}
     {discoveryAbsence && !showEmptyState && <section className="card status">{discoveryAbsence} Mientras tanto se muestra la copia guardada en este dispositivo.</section>}
-    {showEmptyState ? <ListsEmptyState loading={!loaded || discoveryLoading} hasSnapshot={localRows.length > 0 || scans.length > 0} discoveryError={discoveryError} absence={discoveryAbsence} /> : <>
-      {favoritesAsRows.length > 0 ? <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} chartsCache={chartsCache} reviewState={reviewState} listKey="favorites" collapsible={false} emptyLabel={loaded ? "Sin favoritos guardados." : "Cargando listas..."} /> : null}
+    {showEmptyState ? <ListsEmptyState loading={!loaded || discoveryLoading} hasSnapshot={localRows.length > 0 || scans.length > 0} discoveryError={discoveryError} absence={discoveryAbsence} emptyReason={discoveryEmptyReason} onRetry={() => setDiscoveryAttempt((value) => value + 1)} /> : <>
+      {favoritesAsRows.length > 0 ? <MiniTable title="Favoritos" desc="Tu watchlist curada" rows={favoritesAsRows} chartsCache={chartsCache} reviewState={reviewState} listKey="favorites" collapsible={false} emptyLabel={loaded ? "Aún no tienes favoritos guardados." : "Cargando listas…"} /> : null}
       {listSections.map((section) => <MiniTable
         key={section.key}
         title={section.title}
@@ -822,7 +886,7 @@ export default function ListsPage() {
         listKey={section.key}
         scoreKey={section.scoreKey || "objectiveScore"}
         contractRejected={section.contractRejected || 0}
-        emptyLabel={loaded ? "Sin datos." : "Cargando listas..."}
+        emptyLabel={loaded ? (section.emptyReason || "Ninguna acción cumple ahora el contrato de esta lista.") : "Cargando listas…"}
       />)}
     </>}
   </main>;

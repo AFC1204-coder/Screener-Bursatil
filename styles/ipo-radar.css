@@ -47,12 +47,10 @@
 }
 
 @media(max-width:760px) {
+  /* La barra inferior se mantiene también aquí (estudio móvil 2026-11,
+     §2.9): IPO radar se abre desde «Más» y sin barra no habría vuelta. */
   body:has(.ipoRadarPage) {
-    padding-bottom: calc(28px + env(safe-area-inset-bottom)) !important;
-  }
-
-  body:has(.ipoRadarPage) .bottomNav {
-    display:none !important;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
   }
 
   .ipoFormGrid {

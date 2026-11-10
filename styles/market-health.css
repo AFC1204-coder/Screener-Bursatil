@@ -188,6 +188,9 @@
 
 .stageStripChip {
   display: inline-flex;
+  /* A 375 px la columna de etapa mide ~127 px y el chip partía «Pre-fuga» por
+     el guion («Pre-» / «fuga»). El chip envuelve por token completo. */
+  flex-wrap: wrap;
   gap: var(--space-1);
   align-items: baseline;
   padding: 2px var(--space-2);
@@ -1436,4 +1439,17 @@
   font-family: var(--font-data);
   font-size: var(--text-s);
   white-space: nowrap;
+}
+
+/* D3 (auditoría 2026-11): fecha real de los índices junto al veredicto y, si
+   el régimen está caducado, estado atenuado sin color de convicción. */
+.marketRegimeAsOf {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+.marketRegimePanel[data-stale="true"] .marketRegimeLabel h2,
+.marketRegimeKpi.isStale b,
+.marketRegionalRegimeChip[data-stale="true"] .marketRegionalRegimeMetric:last-child b {
+  color: var(--muted);
 }

@@ -5,14 +5,17 @@ import RowTrustSignature from "@/app/RowTrustSignature";
 import StageStrip, { regimeTone } from "./StageStrip";
 import RegionalRegimeChips from "./RegionalRegimeChips";
 import RegimeChangePanel from "./RegimeChangePanel";
+import MarketRegimeHeadline from "./MarketRegimeHeadline";
 import UniverseBreadthCard from "./UniverseBreadth";
 import { InfoHint } from "@/app/components/ui/InfoHint";
+import { PageTicket } from "@/app/components/PageTicket";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { fetchJsonWithTimeout, logMarketHealthFetchFailure, marketHealthApiPath } from "@/lib/marketHealthFetch";
 import { dateShort, dateTime, num, pct, pctShare } from "@/lib/formatters";
 import { metricShortLabel } from "@/lib/metricCatalog";
 import { canonicalRsValue } from "@/lib/rsCanonical";
+import { assessMarketRegime, assessSectorTape } from "@/lib/marketRegimeFreshness";
 // Mismo componente de ausencia que la tabla de resultados: guion + icono con el
 // motivo (docs/principios-producto.md, principios 3 y 7).
 import { MissingValue } from "@/lib/screenerColumns";
@@ -549,7 +552,12 @@ export default function MarketHealthPage() {
     loadCoverage();
   }, []);
 
-  const tone = data ? regimeTone(data.indexes, breadth) : "humo";
+  // D3: un régimen caducado o sin datos no lleva color ni score; su fecha sí.
+  const regimeRead = assessMarketRegime(data);
+  const regimeStale = Boolean(data) && !regimeRead.usable;
+  const staleTitle = regimeRead.asOfLabel ? `Dato del ${regimeRead.asOfLabel}, sin actualizar.` : "";
+  const sectorRead = assessSectorTape(data);
+  const tone = data && regimeRead.usable ? regimeTone(data.indexes, breadth) : "humo";
   // Amplitud del universo para el KPI del hero: el indicador «sobre su media
   // de 30 semanas» del escaneo nocturno (/api/market-breadth), con su
   // cobertura declarada. Sustituye al «5/5 sobre MM30s» de los cinco índices,
@@ -564,18 +572,19 @@ export default function MarketHealthPage() {
   const showSentimentCard = socialConfigured || newsAvailable || newsLoading || socialLoading;
 
   return (
-    <main className="page marketHealthPage">
-      <section className="marketHealthHeader">
-        <div>
-          <span className="eyebrow">StatsEdge · Market Health</span>
-          <h1>Salud de mercado</h1>
-          <p>¿Qué exposición tolera este mercado hoy — y si tolera alguna, dónde está el liderazgo?</p>
-        </div>
-        <div className="marketHealthActions">
-          <a className="btn" href="/">Screener</a>
-          <button className="btn btnPrimary" onClick={refreshAll} disabled={loading}>{loading ? "Actualizando..." : "Actualizar"}</button>
-        </div>
-      </section>
+    <main className="page marketHealthPage ptPage">
+      {/* Paso 9 (rediseño 2026-11): ticket de 44 px en lugar de la cabecera en
+          Archivo mayúsculas (Archivo queda para el régimen, abajo) y sin el
+          enlace «Screener» (la topbar ya navega). La pregunta rectora es la
+          verdad corta; el chip dice el ámbito del régimen principal. */}
+      <PageTicket
+        title="Mercado"
+        chip={data?.heroScope || "US"}
+        chipTitle="Ámbito del régimen principal"
+        truth="¿Qué exposición tolera este mercado hoy — y si tolera alguna, dónde está el liderazgo?"
+      >
+        <button className="btn btnPrimary" type="button" onClick={refreshAll} disabled={loading}>{loading ? "Actualizando…" : "Actualizar"}</button>
+      </PageTicket>
 
       {error && <section className="card error">{error}</section>}
 
@@ -600,22 +609,18 @@ export default function MarketHealthPage() {
       {data && (
         <>
           {/* ─── N0 Veredicto de mercado ─────────────────────────── */}
-          <section className="marketRegimePanel" data-tone={tone} data-testid="market-regime-panel">
+          <section className="marketRegimePanel" data-tone={tone} data-stale={regimeStale || undefined} data-testid="market-regime-panel">
             <div className="marketRegimeLead">
-              <div className="marketRegimeLabel">
-                <small>Régimen · {data.heroScope || "US"}</small>
-                <h2>{data.regime?.label || "Sin dato"}</h2>
-                <p>
-                  {data.regime?.stance || "Lectura pendiente."}
-                </p>
-              </div>
+              <MarketRegimeHeadline data={data} scope={data.heroScope || "US"} />
               <StageStrip indexes={data.indexes} stages={breadth?.stages} tone={tone} />
             </div>
             <div className="marketRegimeKpis">
-              <div className="marketRegimeKpi">
-                <b>{num(data.marketScore)}</b>
+              <div className="marketRegimeKpi" title={regimeStale && Number.isFinite(data.marketScore) ? `${num(data.marketScore)} el ${regimeRead.asOfLabel || "último día con datos"}; sin actualizar.` : undefined}>
+                <b>{regimeRead.usable ? num(regimeRead.marketScore) : "—"}</b>
                 <span>Market score</span>
-                <span className="marketRegimeKpiMeter"><i style={{ width: `${Math.min(100, Math.max(0, data.marketScore ?? 0))}%` }} /></span>
+                {regimeRead.usable && (
+                  <span className="marketRegimeKpiMeter"><i style={{ width: `${Math.min(100, Math.max(0, regimeRead.marketScore ?? 0))}%` }} /></span>
+                )}
               </div>
               <div
                 className="marketRegimeKpi"
@@ -631,16 +636,16 @@ export default function MarketHealthPage() {
                   <span className="marketRegimeKpiMeter"><i style={{ width: `${Math.min(100, Math.max(0, universeAbove30w.pct ?? 0))}%` }} /></span>
                 )}
               </div>
-              <div className="marketRegimeKpi">
+              <div className={`marketRegimeKpi${regimeStale ? " isStale" : ""}`} title={regimeStale ? staleTitle : undefined}>
                 <b>{pctShare(data.weinsteinTape?.pctSectorsStage2)}</b>
                 <span>Sectores en etapa 2</span>
                 <span className="marketRegimeKpiMeter"><i style={{ width: `${Math.min(100, Math.max(0, data.weinsteinTape?.pctSectorsStage2 ?? 0))}%` }} /></span>
               </div>
               <div
-                className="marketRegimeKpi"
-                title={Number.isFinite(data.weinsteinTape?.indexDistributionDays20) && Number.isFinite(data.weinsteinTape?.indexAccumulationDays20)
+                className={`marketRegimeKpi${regimeStale ? " isStale" : ""}`}
+                title={[Number.isFinite(data.weinsteinTape?.indexDistributionDays20) && Number.isFinite(data.weinsteinTape?.indexAccumulationDays20)
                   ? `Días de distribución y acumulación en las últimas 20 sesiones sobre ${data.weinsteinTape?.indexSymbol || "SPY"} (volumeTape).`
-                  : ""}
+                  : "", regimeStale ? staleTitle : ""].filter(Boolean).join(" ")}
               >
                 <b>{Number.isFinite(data.weinsteinTape?.indexDistributionDays20) && Number.isFinite(data.weinsteinTape?.indexAccumulationDays20)
                   ? `${data.weinsteinTape.indexDistributionDays20}/${data.weinsteinTape.indexAccumulationDays20}`
@@ -660,7 +665,7 @@ export default function MarketHealthPage() {
                 {participationSummary.divergence && <b> El índice sube y cada vez menos valores lo acompañan.</b>}
               </p>
             )}
-            <RegionalRegimeChips regimes={data.regimes} heroScope={data.heroScope || "US"} />
+            <RegionalRegimeChips regimes={data.regimes} heroScope={data.heroScope || "US"} degraded={data.degraded === true} />
             <RegimeChangePanel regimeSeries={data.regimeSeries} />
           </section>
 
@@ -669,7 +674,7 @@ export default function MarketHealthPage() {
             <section className="card marketTapeCard">
               <div className="sectionTitle">
                 <h2>Estructura del mercado</h2>
-                <span className="fine">MM30 semanas · amplitud · volumen</span>
+                <span className="fine">MM30 semanas · amplitud · volumen{regimeRead.asOfLabel ? ` · ${regimeStale ? "sin actualizar desde el" : "índices al"} ${regimeRead.asOfLabel}` : ""}</span>
               </div>
               <div className="marketTapeKpis">
                 <div className="marketTapeKpi"><b>{data.weinsteinTape.indexesAbove30w ?? "—"}/{data.weinsteinTape.indexesTotal ?? data.indexes?.length ?? "—"}</b><span>Sobre MM30s</span></div>
@@ -816,7 +821,7 @@ export default function MarketHealthPage() {
 
           {!!data.sectorTape?.length && (
             <section className="card">
-              <div className="sectionTitle"><h2>Amplitud sectorial</h2><a className="btnSmall" href="/sectors">Ver sectores</a></div>
+              <div className="sectionTitle"><h2>Amplitud sectorial</h2>{sectorRead.dateText ? <span className="fine">{sectorRead.dateText}</span> : null}<a className="btnSmall" href="/sectors">Ver sectores</a></div>
               <div className="marketTapeKpis">
                 <div className="marketTapeKpi"><b>{num(data.sectorSummary?.avgScore)}</b><span>Score medio</span></div>
                 <div className="marketTapeKpi"><b>{data.sectorSummary?.above50 ?? "—"}/{data.sectorSummary?.count ?? "—"}</b><span>Sobre SMA50</span></div>

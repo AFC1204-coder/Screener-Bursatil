@@ -50,11 +50,14 @@ describe("LOOK-C · controles, tipo y transiciones", () => {
     expect(BASE_CSS).not.toMatch(/@keyframes slideDropdown/);
   });
 
-  it("búsqueda móvil: ✕ en input, Limpiar ancho solo desktop", () => {
+  // Rediseño 2026-11 (paso 4): el buscador compacto del ticket lleva el ✕
+  // dentro del input en todos los anchos; el botón ancho «Limpiar» y «Buscar»
+  // desaparecen (Enter busca).
+  it("búsqueda compacta del ticket: ✕ en el input, sin Limpiar ancho", () => {
     expect(SCREENER_SHELL).toContain("searchClearBtn");
-    expect(SCREENER_SHELL).toContain("searchClearWide");
-    expect(SCREENER_CSS).toMatch(/\.searchClearBtn[\s\S]*display:inline-flex/);
-    expect(SCREENER_CSS).toMatch(/\.searchBar \.searchClearWide[\s\S]*display:none/);
+    expect(SCREENER_SHELL).not.toContain("searchClearWide");
+    expect(SCREENER_CSS).toMatch(/\.screenerTicket \.searchClearBtn\s*\{[^}]*display:inline-flex/);
+    expect(SCREENER_CSS).not.toContain("searchClearWide");
   });
 
   it("font-size px sueltos solo en héroes (30–56) en CSS tocados", () => {

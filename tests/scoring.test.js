@@ -88,14 +88,19 @@ describe("scoring · helpers y régimen", () => {
   it("regimeRejectReason: mercado fuerte no filtra; mercado débil exige scores altos", () => {
     const strongRow = { totalScore: 90, riskScore: 80, weinsteinScore: 90, minerviniScore: 80 };
     const weakRow = { totalScore: 50, riskScore: 30, weinsteinScore: 40, minerviniScore: 30 };
-    expect(regimeRejectReason(strongRow, { marketScore: 80 }, true, {})).toBeNull();
-    expect(regimeRejectReason(weakRow, { marketScore: 80 }, true, {})).toBeNull();
-    expect(regimeRejectReason(strongRow, { marketScore: 30 }, true, {})).toBeNull();
-    const rejected = regimeRejectReason(weakRow, { marketScore: 30 }, true, {});
+    // D3: el régimen solo filtra si es vigente (índices con cierre reciente).
+    const now = new Date("2026-11-07T12:00:00Z");
+    const market = (marketScore) => ({ marketScore, regime: { label: "régimen" }, indexes: [{ symbol: "SPY", lastDate: "2026-11-06" }] });
+    expect(regimeRejectReason(strongRow, market(80), true, {}, now)).toBeNull();
+    expect(regimeRejectReason(weakRow, market(80), true, {}, now)).toBeNull();
+    expect(regimeRejectReason(strongRow, market(30), true, {}, now)).toBeNull();
+    const rejected = regimeRejectReason(weakRow, market(30), true, {}, now);
     expect(rejected).not.toBeNull();
     expect(rejected.key).toBe("regime");
     // Con el filtro de régimen desactivado nunca rechaza.
-    expect(regimeRejectReason(weakRow, { marketScore: 30 }, false, {})).toBeNull();
+    expect(regimeRejectReason(weakRow, market(30), false, {}, now)).toBeNull();
+    // Sin fecha que juzgar (payload antiguo sin índices) tampoco recorta.
+    expect(regimeRejectReason(weakRow, { marketScore: 30 }, true, {}, now)).toBeNull();
   });
 });
 

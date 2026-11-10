@@ -7,12 +7,13 @@
 // de persistencia del container referencia escalares sueltos, no este objeto,
 // por lo que pasar el bag completo no provoca escrituras por identity-change.
 //
-// Única excepción: el useEffect de cierre del panel de filtros móvil (Escape /
-// click fuera) más abajo. `showMobileFilters` es visibilidad de UI pura, no
-// estado de negocio — mantenerlo aquí evita subir un ref del DOM del propio
-// panel al container solo para esto.
+// Excepción: visibilidad de UI pura del móvil (estudio móvil 2026-11): qué
+// fila enseña la hoja de vista rápida, si el buscador está desplegado y si el
+// detalle de frescura está abierto. No es estado de negocio ni se persiste.
+// La hoja de filtros sigue gobernada por `showMobileFilters` del container.
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { regimeFilterNote } from "@/lib/marketRegimeFreshness";
 import { restartStatsEdgeSession } from "@/lib/cloudReauth";
 import ResultFilterBar from "@/app/components/screener/ResultFilterBar";
 import ResultPagerTable from "@/app/components/screener/ResultPagerTable";
@@ -20,26 +21,30 @@ import HuntCardRail from "@/app/components/screener/HuntCardRail";
 import HuntCardModeStrip from "@/app/components/screener/HuntCardModeStrip";
 import IpoCohortWindowChips from "@/app/components/screener/IpoCohortWindowChips";
 import WeeklyChangesLine from "@/app/components/screener/WeeklyChangesLine";
-import ScreenerSidebar from "@/app/components/screener/ScreenerSidebar";
+import { useWeeklyChanges } from "@/app/components/screener/useWeeklyChanges";
+import { MarketScopeChip } from "@/app/components/screener/ScreenerSidebar";
+import MobileFilterSheet from "@/app/components/screener/MobileFilterSheet";
+import MobilePeekSheet from "@/app/components/screener/MobilePeekSheet";
 import ScreenerLaboratoryPanel from "@/app/components/screener/ScreenerLaboratoryPanel";
 import {
-  DEFAULT_SCREENER_CHROME_MODE,
-  SCREENER_CHROME_MODES,
-  isDiarioChromeMode,
-  persistScreenerChromeMode,
-  readPersistedScreenerChromeMode,
-  resolvePersistedScreenerChromeMode,
-  resolveScreenerChromeMode,
-} from "@/lib/screenerChromeMode";
-import {
+  FilterArchitecturePanel,
   MobileResultList,
   PreviewCard,
   SearchCandidateList,
   SearchScopeList,
 } from "@/app/screenerPanels";
-import { activeLayerCount, investorStatusLabel, compactMobileScanStatus } from "@/lib/screenerFormat";
-import { huntDisplayName, HUNT_CARDS, resolveActiveHuntCard } from "@/lib/screenerHuntCards";
-import { huntCardSheetFamilyKeys } from "@/lib/huntCardModeDisclosure";
+import { MobileSortSelect, mobileFreshnessDates, mobileShortDay } from "@/lib/screenerMobile";
+import { decisionResolutionKeyForSymbol } from "@/lib/stockDecisionResolution";
+import { activeLayerCount, analyzedCountForDisplay, investorStatusLabel, compactMobileScanStatus } from "@/lib/screenerFormat";
+import { num } from "@/lib/formatters";
+import {
+  favoritesQueueView,
+  huntDisplayName,
+  resolveActiveHuntCard,
+  weeklyQueueViews,
+} from "@/lib/screenerHuntCards";
+import { formatDayLabel, weeklyHeadingFromPayload } from "@/lib/weeklyChanges";
+import { huntCardModeDisclosure, huntCardSheetFamilyKeys } from "@/lib/huntCardModeDisclosure";
 import { SessionPlumbingPanel } from "@/lib/screenerFiltersView";
 import {
   buildCuratedPopulationNotice,
@@ -48,7 +53,12 @@ import {
 } from "@/lib/marketAvailability";
 import { buildLideresIntlGuardrailNotice, LIDERES_INTL_CTA } from "@/lib/lideresIntlGuardrail";
 import { buildScreenerFilterBreakdown } from "@/lib/screenerFilterBreakdown";
-import { buildScreenerTruthLine, marketCountLabel, resolveScreenerTruthCounts } from "@/lib/screenerTruthLine";
+import {
+  buildScreenerTruthLine,
+  resolveScreenerTruthCounts,
+  SCREENER_TRUTH_VARIANT_TICKET,
+} from "@/lib/screenerTruthLine";
+import { screenerSortOptions } from "@/lib/screenerColumns";
 import { recordTruthLinePaint } from "@/lib/screenerHuntPerf";
 import {
   RESULT_PAGE_SIZES,
@@ -60,6 +70,7 @@ import { metricShortLabel } from "@/lib/metricCatalog";
 import { rankActionLabel } from "@/lib/screenerExplainability";
 import { decisionConfidenceLabel } from "@/lib/decisionAudit";
 import { useScreenerMobileViewport } from "@/lib/useScreenerMobileViewport";
+import { MARKET_PRESET_CHIP_OPTIONS } from "@/lib/screenerChromeMode";
 import {
   FILTER_LAYERS_UPGRADE_NOTICE_SOURCE,
   filterLayersUpgradeNoticeReadyToShow,
@@ -71,6 +82,8 @@ import {
   resolveColdProgressSurfaces,
 } from "@/lib/screenerColdProgress";
 import MesaEmptyCard from "@/app/components/screener/MesaEmptyCard";
+import { HUNT_EMPTY_ACTIONS, OPEN_FILTER_POPOVER_EVENT, resolveHuntEmptyState } from "@/lib/screenerHuntTapeEmpty";
+import { huntPeekInclusion } from "@/lib/screenerHuntTape";
 import ScreenerDataStateDrawer from "@/app/components/screener/ScreenerDataStateDrawer";
 import {
   shouldFoldSnapshotNoticeIntoMesaEmpty,
@@ -81,6 +94,18 @@ import {
   isBannerSlotVisible,
   selectBannerSlots,
 } from "@/lib/screenerBannerQueue";
+
+// Paso 6: verdad corta de una cola externa — cuántos de la cola están en la
+// mesa cargada y, si viene de los cambios semanales, desde cuándo.
+function buildQueueTruthLine({ queue, passCount = 0, visibleCount = 0, sortLabel = "" }) {
+  const total = queue?.symbols?.size || 0;
+  return [
+    `${passCount} de ${total} en la mesa`,
+    visibleCount !== passCount ? `${visibleCount} en lista` : null,
+    queue?.since ? `desde el ${formatDayLabel(queue.since)}` : null,
+    sortLabel ? `ordenado por ${sortLabel}` : null,
+  ].filter(Boolean).join(" · ");
+}
 
 function showScanStatusBar(err, status = "") {
   return isPrimaryScanProgressStatus(err, status);
@@ -179,57 +204,27 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     onDismissSnapshotSampleNotice,
     restoringScan,
     showMobileFilters,
-    sidebarCollapsed,
     setShowMobileFilters,
-    setSidebarCollapsed,
     rows,
     huntTruthOverride = null,
     isHuntTransitionPending = false,
     onHuntTruthLinePaint,
+    huntQueue = null,
+    huntCardCounts = {},
+    marketHealth = null,
   } = chrome;
   const onHuntTruthLinePaintRef = useRef(onHuntTruthLinePaint);
   onHuntTruthLinePaintRef.current = onHuntTruthLinePaint;
 
-  // P3/P12 — Diario (default) vs Expert; preferencia en localStorage.
-  const [chromeMode, setChromeMode] = useState(DEFAULT_SCREENER_CHROME_MODE);
-  const [fichaAdjustOpen, setFichaAdjustOpen] = useState(false);
-  const diarioChrome = isDiarioChromeMode(chromeMode);
-
-  useEffect(() => {
-    setChromeMode(resolvePersistedScreenerChromeMode(readPersistedScreenerChromeMode()));
-  }, []);
-
-  function handleChromeModeChange(nextMode) {
-    const mode = resolveScreenerChromeMode(nextMode);
-    setChromeMode(mode);
-    persistScreenerChromeMode(mode);
-    if (mode === SCREENER_CHROME_MODES.EXPERT) setFichaAdjustOpen(false);
-  }
-
-  function renderChromeModeToggle() {
-    return (
-      <div className="screenerChromeModeToggle chartPrefGroup" role="group" aria-label="Modo de chrome">
-        <div className="chartSegmented">
-          <button
-            type="button"
-            aria-pressed={chromeMode === SCREENER_CHROME_MODES.DIARIO}
-            className={chromeMode === SCREENER_CHROME_MODES.DIARIO ? "active" : ""}
-            onClick={() => handleChromeModeChange(SCREENER_CHROME_MODES.DIARIO)}
-          >
-            Diario
-          </button>
-          <button
-            type="button"
-            aria-pressed={chromeMode === SCREENER_CHROME_MODES.EXPERT}
-            className={chromeMode === SCREENER_CHROME_MODES.EXPERT ? "active" : ""}
-            onClick={() => handleChromeModeChange(SCREENER_CHROME_MODES.EXPERT)}
-          >
-            Expert
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Rediseño 2026-11 (paso 5): el toggle Diario/Expert desaparece. Escritorio:
+  // las familias viven en el popover «+ Filtro» de la barra sobre la tabla.
+  // Móvil (estudio 2026-11, paso 9): las mismas familias en la hoja inferior
+  // de filtros. La clave persistida de lib/screenerChromeMode.js ya no se lee.
+  // Móvil: fila abierta en la vista rápida (-1 = cerrada), buscador y detalle
+  // de frescura desplegados.
+  const [mobilePeekIndex, setMobilePeekIndex] = useState(-1);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileFreshOpen, setMobileFreshOpen] = useState(false);
 
   // --- sidebar ---
   const {
@@ -238,6 +233,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     filterTemplateName,
     setPreset,
     applyHuntCard,
+    applyHuntQueue,
+    clearHuntQueue,
     applySavedFilterTemplate,
     setFilterTemplateName,
     saveCurrentFilterTemplate,
@@ -372,6 +369,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     selectedResultSymbol,
     onSelectResultRow,
     openResultReview,
+    resolveScreenerDecision,
   } = actions;
 
   // --- staleness ---
@@ -391,9 +389,15 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     providerDiagnostics = null,
     esmaFirdsEnabled = null,
     fcaFirdsEnabled = null,
+    scanLocalId = "",
   } = staleness || {};
   const isMobileViewport = useScreenerMobileViewport();
-  const huntLabel = huntDisplayName(presetKey, markets);
+  const mobileFreshness = useMemo(
+    () => (isMobileViewport ? mobileFreshnessDates(analyzedRows) : { priceDate: "", rsDate: "" }),
+    [isMobileViewport, analyzedRows],
+  );
+  // Paso 6: con una cola externa del raíl abierta, la vista ES la cola.
+  const huntLabel = huntQueue?.label || huntDisplayName(presetKey, markets);
   const activeHuntCard = resolveActiveHuntCard(presetKey, markets);
   const filterActiveCount = activeLayerCount(filterLayers) + (useRegimeFilter ? 1 : 0);
   const sheetFamilyKeys = huntCardSheetFamilyKeys({ presetKey, markets });
@@ -413,6 +417,13 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   // T9: una historia de progreso en cold — status bar primario; weekly defer;
   // truth/empty no compiten con «cargando…» / «últimos datos guardados…».
   const coldProgress = resolveColdProgressSurfaces({ restoringScan, status, err });
+  // Paso 6: una sola petición a /api/weekly-changes alimenta el raíl («Esta
+  // noche») y el panel de detalle. T9: diferida en cold restore.
+  // D2: la comparación se ancla al escaneo mostrado (scanContext.id).
+  const weekly = useWeeklyChanges({ defer: coldProgress.deferWeekly, scanLocalId });
+  const weeklyViews = weeklyQueueViews(weekly.payload);
+  const weeklyHeading = weeklyHeadingFromPayload(weekly.payload);
+  const weeklySinceLabel = weekly.payload?.state === "ok" ? formatDayLabel(weekly.payload?.window?.from) : "";
   // TRUTH-LOAD-1: la mesa sigue vacía bajo bloqueo UX-NAC, pero la verdad no
   // afirma 0·0·0 mientras restoringScan trae datos (p. ej. muestra 157/204).
   // Si el status bar ya cuenta la carga, la truth no duplica «cargando…».
@@ -441,7 +452,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     && passCountForTruth === 0
     && visibleCountForTruth === 0,
   );
-  const truthLine = buildScreenerTruthLine({
+  const truthLineParams = {
     analyzedRows: truthAnalyzedRows,
     passCount: passCountForTruth,
     visibleCount: visibleCountForTruth,
@@ -462,7 +473,30 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     providerDiagnostics,
     esmaFirdsEnabled,
     fcaFirdsEnabled,
-  });
+  };
+  // Rediseño 2026-11 (paso 4): el ticket pinta la variante corta (sin el nombre
+  // de la vista, que es el título, ni la mesa alineada, que es el chip) y dice
+  // por qué se ordena la cola. La frase completa queda en el title.
+  const sortLabelForTruth = screenerSortOptions({
+    perfPeriod,
+    sort,
+    setupMode: activeSettings?.setupMode,
+    presetKey,
+    scannedMarkets,
+  }).find((option) => option.value === sort)?.label || "";
+  const truthLineFull = buildScreenerTruthLine(truthLineParams);
+  const truthLine = huntQueue
+    ? buildQueueTruthLine({
+      queue: huntQueue,
+      passCount: passCountForTruth,
+      visibleCount: visibleCountForTruth,
+      sortLabel: sortLabelForTruth,
+    })
+    : buildScreenerTruthLine({
+      ...truthLineParams,
+      variant: SCREENER_TRUTH_VARIANT_TICKET,
+      sortLabel: sortLabelForTruth,
+    });
   useLayoutEffect(() => {
     const ms = recordTruthLinePaint({
       presetName: presetNameForTruth,
@@ -470,6 +504,40 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     });
     if (ms != null) onHuntTruthLinePaintRef.current?.(ms);
   }, [truthLine, presetNameForTruth, isHuntTransitionPending]);
+  // Paso 8: vacío contractual — una frase con la causa real y una salida.
+  const huntEmptyState = resolveHuntEmptyState({
+    emptyLabel: huntResultsEmptyLabel,
+    passive: resultsBlockedByMarketMisalignment || coldProgress.quietEmptyLabel || restoringScan,
+    analyzedCount: analyzedRows.length,
+    passCount: huntResultsRows.length,
+    chips: resultFilterChips,
+    queue: huntQueue,
+    presetName: presetNameForTruth,
+    diagnostics,
+  });
+  const huntEmptyActionHandlers = {
+    [HUNT_EMPTY_ACTIONS.CLOSE_QUEUE]: () => clearHuntQueue?.(),
+    [HUNT_EMPTY_ACTIONS.REFRESH]: () => refreshScreenerSnapshotData?.(),
+    [HUNT_EMPTY_ACTIONS.ADJUST_FILTER]: () => window.dispatchEvent(new Event(OPEN_FILTER_POPOVER_EVENT)),
+    [HUNT_EMPTY_ACTIONS.CLEAR_CHIP]: () => {
+      const chip = resultFilterChips.find((item) => item.key === huntEmptyState.action?.chipKey)
+        || resultFilterChips[resultFilterChips.length - 1];
+      chip?.onClear?.();
+    },
+  };
+  const huntEmptyAction = huntEmptyState.action
+    ? {
+      label: huntEmptyState.action.label,
+      onClick: huntEmptyActionHandlers[huntEmptyState.action.kind],
+      disabled: huntEmptyState.action.kind === HUNT_EMPTY_ACTIONS.REFRESH && restoringScan,
+    }
+    : null;
+  // Paso 7: por qué está la fila en la cola (vista activa, no juicio).
+  const huntPeekInclusionLabel = huntPeekInclusion({
+    queue: huntQueue,
+    presetName: presetNameForTruth,
+    sinceLabel: huntQueue?.since ? formatDayLabel(huntQueue.since) : "",
+  });
   const filterBreakdown = buildScreenerFilterBreakdown({
     diagnostics,
     passCount: passCountForTruth,
@@ -560,6 +628,10 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   const searchInputRef = useRef(null);
 
   function focusSearchInput() {
+    if (isMobileViewport && !mobileSearchOpen) {
+      setMobileSearchOpen(true);
+      return;
+    }
     const input = searchInputRef.current;
     if (!input) return;
     input.focus();
@@ -686,7 +758,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     return (
       <div className={`scanStaleNotice${toneClass}`} role="status" aria-live="polite">
         <span className="scanStaleNoticeLabel">{marketsMisalignment.label}</span>
-        <b>{marketsMisalignment.detail}</b>
+        <b title={marketsMisalignment.detail}>{marketsMisalignment.detail}</b>
         {cta}
         {stayCta}
       </div>
@@ -750,7 +822,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     return (
       <div className="scanStaleNotice curatedPopulationNotice" role="status" aria-live="polite">
         <span className="scanStaleNoticeLabel">{curatedPopulationNotice.label}</span>
-        <b>{curatedPopulationNotice.detail}</b>
+        <b title={curatedPopulationNotice.detail}>{curatedPopulationNotice.detail}</b>
       </div>
     );
   }
@@ -786,7 +858,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     return (
       <div className="scanStaleNotice lideresIntlGuardrail" role="status" aria-live="polite">
         <span className="scanStaleNoticeLabel">{lideresIntlGuardrail.label}</span>
-        <b>{lideresIntlGuardrail.detail}</b>
+        <b title={lideresIntlGuardrail.detail}>{lideresIntlGuardrail.detail}</b>
         {actions}
       </div>
     );
@@ -891,11 +963,8 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     <ScreenerDataStateDrawer items={bannerSlots.overflow} childrenById={dataStateOverflowActions} />
   );
 
-  // Cierre del panel de filtros en móvil: Escape en cualquier punto de la
-  // página y click/tap fuera del panel (mobileFiltersRef). El botón "Filtros"
-  // de la topbar y el propio botón de cierre siguen cerrando via su onClick
-  // normal; esto cubre los dos casos que no tenían manejador.
-  const mobileFiltersRef = useRef(null);
+  // Móvil: la hoja de filtros (MobileSheet) cierra con Escape, toque en el
+  // velo, arrastre o «Ver N valores». «Ajustar filtro» del estado vacío la abre.
   const desktopMoreMenuRef = useRef(null);
   const mobileMoreMenuRef = useRef(null);
 
@@ -908,22 +977,16 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
   }
 
   useEffect(() => {
-    if (!showMobileFilters) return undefined;
-    function handleKeyDown(event) {
-      if (event.key === "Escape") setShowMobileFilters(false);
-    }
-    function handlePointerDown(event) {
-      if (mobileFiltersRef.current && !mobileFiltersRef.current.contains(event.target)) {
-        setShowMobileFilters(false);
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handlePointerDown);
-    };
-  }, [showMobileFilters, setShowMobileFilters]);
+    if (!isMobileViewport) return undefined;
+    const open = () => setShowMobileFilters(true);
+    window.addEventListener(OPEN_FILTER_POPOVER_EVENT, open);
+    return () => window.removeEventListener(OPEN_FILTER_POPOVER_EVENT, open);
+  }, [isMobileViewport, setShowMobileFilters]);
+
+  // El buscador móvil se despliega bajo la cabecera y recibe el foco.
+  useEffect(() => {
+    if (mobileSearchOpen) searchInputRef.current?.focus();
+  }, [mobileSearchOpen]);
 
   const sessionPlumbing = (
     <SessionPlumbingPanel
@@ -949,63 +1012,400 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
     />
   );
 
-  return <main className="page screenerTerminalPage">
-    <div className="topbar screenerHeroBar">
-      <div className="screenerHeroTitle">
-        <span className="screenerEyebrow">StatsEdge · Screener</span>
-        <h1 className="title">{huntLabel}</h1>
-        <p>{marketCountLabel(markets.length)}</p>
-        {/* Autocontenido, como GlobalCoveragePanel: posee su fetch a
-            GET /api/weekly-changes y no bloquea la primera pintura. Es la
-            segunda excepción a la nota de cabecera de este archivo.
-            T9: defer en cold restore para no sumar «comprobando…» al pasillo. */}
-        <WeeklyChangesLine
-          onOpenStock={saveSessionBeforeStockOpen}
-          defer={coldProgress.deferWeekly}
-        />
+  // Familias del filtro, lo que aplica la ficha y lo que recorta: los MISMOS
+  // nodos en el popover «+ Filtro» de escritorio y en la hoja móvil.
+  const familiesPanel = (
+    <FilterArchitecturePanel
+      filterLayers={filterLayers}
+      useRegimeFilter={useRegimeFilter}
+      onToggleLayer={toggleFilterLayer}
+      onOpenLayer={setActiveFilterFamily}
+      onToggleRegime={() => setUseRegimeFilter((prev) => !prev)}
+      regimeNote={regimeFilterNote(marketHealth, useRegimeFilter)}
+      sheetFamilyKeys={sheetFamilyKeys}
+      cardLabel={huntLabel}
+      settings={settings}
+      fieldRules={fieldRules}
+      familyIntensity={familyIntensity}
+      familyIntensityCustom={familyIntensityCustom}
+      familyCoverage={familyCoverage}
+      familyImpact={familyImpact}
+      onFamilyIntensityChange={previewFamilyIntensity}
+      onFamilyIntensityCommit={commitFamilyIntensity}
+    />
+  );
+  const huntModeStrip = (
+    <HuntCardModeStrip
+      presetKey={presetKey}
+      markets={markets}
+      passedRows={resultsRows}
+      activeSettings={activeSettings}
+      onOpenFamily={setActiveFilterFamily}
+    />
+  );
+  const filterBreakdownDetails = (
+    <details className="screenerFilterBreakdown">
+      <summary><span>{filterBreakdown.summaryLabel}</span></summary>
+      <div className="screenerFilterBreakdownBody">
+        {filterBreakdown.lines.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+        {filterBreakdown.hasDiagnostics ? (
+          <button
+            type="button"
+            className="screenerFilterBreakdownAuditLink"
+            onClick={openLaboratoryPanel}
+          >
+            Ver auditoría
+          </button>
+        ) : null}
       </div>
+    </details>
+  );
+  const viewSelectProps = {
+    optionLabel,
+    decisionResolutionFilter,
+    decisionResolutionOptions,
+    onDecisionResolutionFilter: setDecisionResolutionFilter,
+    viewLayers,
+    countryFilter,
+    countryOptions,
+    countryCounts,
+    onCountryFilter: setCountryFilter,
+    themeFilter,
+    themeOptions,
+    themeCounts,
+    onThemeFilter: setThemeFilter,
+    onSectorFilter: setSectorFilter,
+    onIndustryFilter: setIndustryFilter,
+    sectorFilter,
+    sectorOptions,
+    sectorCounts,
+    industryFilter,
+    industryOptions,
+    industryCounts,
+    sectorStrength,
+    sectorStrengthCounts,
+    onSectorStrength: setSectorStrength,
+  };
+
+  // Rediseño 2026-11 (paso 5): barra de filtros sobre la tabla. En la fila solo
+  // las fichas del filtro vivo y «+ Filtro»; lo que aplica la ficha, lo que
+  // recorta, Resolución/capas de vista y las familias van dentro del popover.
+  const desktopFilterBar = isMobileViewport ? null : (
+    <ResultFilterBar
+      optionLabel={optionLabel}
+      decisionResolutionFilter={decisionResolutionFilter}
+      decisionResolutionOptions={decisionResolutionOptions}
+      onDecisionResolutionFilter={setDecisionResolutionFilter}
+      viewLayers={viewLayers}
+      viewFiltersActive={viewFiltersActive}
+      countryFilter={countryFilter}
+      countryOptions={countryOptions}
+      countryCounts={countryCounts}
+      onCountryFilter={setCountryFilter}
+      themeFilter={themeFilter}
+      themeOptions={themeOptions}
+      themeCounts={themeCounts}
+      onThemeFilter={setThemeFilter}
+      onSectorFilter={setSectorFilter}
+      onIndustryFilter={setIndustryFilter}
+      sectorFilter={sectorFilter}
+      sectorOptions={sectorOptions}
+      sectorCounts={sectorCounts}
+      industryFilter={industryFilter}
+      industryOptions={industryOptions}
+      industryCounts={industryCounts}
+      sectorStrength={sectorStrength}
+      sectorStrengthCounts={sectorStrengthCounts}
+      onSectorStrength={setSectorStrength}
+      chips={resultFilterChips}
+      hiddenCount={hiddenByView}
+      visibleCount={huntResultsFiltered.length}
+      totalCount={huntResultsRows.length}
+      onClearAll={clearResultView}
+      onReview={huntResultsFiltered.length ? openResultViewReview : undefined}
+      families={familiesPanel}
+    >
+      {huntModeStrip}
+      {filterBreakdownDetails}
+    </ResultFilterBar>
+  );
+
+  const hasSearchState = Boolean(searchSymbol || searchCandidates.length || searchResult);
+  const showSearchDropdown = Boolean(
+    searchResult || searchError || searchCandidates.length || searchScopeItems?.length,
+  );
+  const showTicketActions = !isMobileViewport && !showMesaEmptyCard;
+  // Paso 6: en escritorio, con la mesa pintada, el aviso de datos (no el de
+  // sesión caducada) comparte banda con la barra de filtros: una línea menos.
+  const inlineSnapshotNotice = !isMobileViewport
+    && showPrimarySnapshot
+    && !snapshotNotice?.requiresReauth
+    && !showMesaEmptyCard;
+  const snapshotNoticeInline = inlineSnapshotNotice ? (
+    <div className={`snapshotFreshnessNotice ${snapshotNotice.tone || "info"} snapshotFreshnessNotice--inline`} role="status" aria-live="polite">
+      <span>{snapshotNotice.label}</span>
+      <b title={snapshotNotice.detail}>{snapshotNotice.detail}</b>
+      {renderSnapshotNoticeActions()}
     </div>
-    {isMobileViewport ? <>
-      <div className="screenerMobileSubBarSpacer" aria-hidden="true" />
-      <div className="screenerMobileSubBar" role="toolbar" aria-label="Acciones rápidas del screener">
-      <button
-        type="button"
-        className="screenerMobileSubBarBtn"
-        onClick={() => setShowMobileFilters(!showMobileFilters)}
-      >
-        Filtros ({filterActiveCount})
-      </button>
-      <details className="screenerMobileSubBarFicha">
-        <summary aria-label={`Ficha activa: ${huntLabel}`}>
-          <span className="screenerMobileSubBarFichaLabel">{huntLabel}</span>
-        </summary>
-        <div className="screenerMobileSubBarFichaMenu" role="listbox" aria-label="Fichas de caza">
-          {HUNT_CARDS.map((card) => (
+  ) : null;
+  const queueChip = huntQueue ? (
+    <span className="resultQueueChip" title={`Cola «${huntQueue.label}»: no aplica el filtro de la ficha`}>
+      Cola: {huntQueue.label}
+      <button type="button" onClick={clearHuntQueue} aria-label={`Cerrar la cola ${huntQueue.label}`} title="Volver a la ficha">×</button>
+    </span>
+  ) : null;
+
+  const searchBlock = (
+  <div className="screenerTicketSearch searchPopoverHost">
+    <form className="screenerTicketSearchForm" onSubmit={runSearch} role="search" aria-busy={searchLoading ? "true" : "false"}>
+      <div className="searchFieldWrap">
+        <input
+          ref={searchInputRef}
+          className="input searchInput"
+          value={searchSymbol}
+          onChange={(e) => updateSearchSymbol(e.target.value)}
+          placeholder="Ticker, nombre o sector"
+          aria-label="Buscar valor"
+        />
+        {hasSearchState ? (
+          <button type="button" className="searchClearBtn" onClick={clearSearch} aria-label="Limpiar búsqueda">✕</button>
+        ) : null}
+      </div>
+    </form>
+    {showSearchDropdown ? (
+      <div className="screenerTicketSearchResults">
+        {searchResult ? <div className="searchResult searchResultPrimary">
+          <PreviewCard row={searchResult} variant="search" onFavorite={addFavorite} onOpenStock={saveSessionBeforeStockOpen} isFavorite={favoriteSymbols.has(searchResult.symbol)} decisionResolutions={screenerDecisionResolutions} />
+        </div> : null}
+        <SearchScopeList items={searchScopeItems} onPick={applySearchScope} />
+        {searchError && <div className="dataNote error">{investorStatusLabel(searchError)}</div>}
+        <SearchCandidateList candidates={searchCandidates} activeSymbol={searchResult?.symbol} onPick={(item) => { setSearchSymbol(item.symbol); loadSearchResult(item.symbol, item); }} />
+      </div>
+    ) : null}
+  </div>
+  );
+
+  // ── Móvil (estudio 2026-11) ───────────────────────────────────────────
+  // Verdad corta: «937 de 3.287 · precios 15 oct · RS 27 sept». Las dos fechas
+  // son dos datos distintos (barras y ranking semanal). Con la cola cargando o
+  // sin universo evaluable, la verdad completa de siempre.
+  const mobileCountsKnown = !truthLineLoading && !truthQuietProgress && truthAnalyzedRows.length > 0;
+  const mobileCountsText = huntQueue
+    ? buildQueueTruthLine({ queue: huntQueue, passCount: passCountForTruth, visibleCount: visibleCountForTruth })
+    : (mobileCountsKnown
+      ? `${num(visibleCountForTruth, 0)} de ${num(analyzedCountForDisplay(truthAnalyzedRows), 0)}`
+      : truthLine);
+  const mobilePriceDay = mobileShortDay(mobileFreshness.priceDate);
+  const mobileRsDay = mobileShortDay(mobileFreshness.rsDate);
+  const mobileFreshText = [mobilePriceDay ? `precios ${mobilePriceDay}` : "", mobileRsDay ? `RS ${mobileRsDay}` : ""]
+    .filter(Boolean).join(" · ");
+  // El aviso de precios atrasados (lib/dataAge.js) se lee en la propia fecha de
+  // la cabecera: subrayado punteado y un toque para el detalle. Sin otra franja.
+  const mobileDataAgeFolded = Boolean(
+    isMobileViewport
+    && showPrimarySnapshot
+    && snapshotNotice?.source === "data-age"
+    && !scanStatusVisible,
+  );
+  const mobileModeDisclosure = isMobileViewport && !huntQueue
+    ? huntCardModeDisclosure({ presetKey, markets, activeSettings })
+    : null;
+  const mobileFilterSummary = isMobileViewport ? [
+    huntQueue ? `Cola «${huntQueue.label}»` : "",
+    ...(mobileModeDisclosure?.doors || []).map((door) => door.label),
+    ...(resultFilterChips || []).map((chip) => chip.label),
+  ].filter(Boolean).join(" · ") : "";
+  const mobileFilterCount = filterActiveCount + (Number(viewFiltersActive) || 0);
+  const mobilePeekRow = mobilePeekIndex >= 0 ? huntResultsFiltered[mobilePeekIndex] : null;
+
+  function closeMobilePeek() {
+    const index = mobilePeekIndex;
+    setMobilePeekIndex(-1);
+    // De vuelta en la lista, la fila que se leía queda a la vista.
+    requestAnimationFrame(() => {
+      document.querySelector(`.mobileTapeRow[data-index="${index}"]`)?.scrollIntoView({ block: "nearest" });
+    });
+  }
+
+  const mobileHead = (
+    <div className="mobileStickyHead">
+      <header className="mobileHead">
+        <div className="mobileHeadTitle">
+          <h1 className="title">{huntLabel}</h1>
+          <p className="screenerTruthLine mobileHeadSub" role="status" aria-live="polite" title={truthLineFull}>
+            <span>{mobileCountsText}</span>
+            {mobileFreshText ? <>
+              {" · "}
+              {mobileDataAgeFolded ? (
+                <button
+                  type="button"
+                  className="mobileFresh isStale"
+                  aria-expanded={mobileFreshOpen}
+                  onClick={() => setMobileFreshOpen((value) => !value)}
+                  title={snapshotNotice.detail}
+                >
+                  {mobileFreshText}
+                </button>
+              ) : <span className="mobileFresh">{mobileFreshText}</span>}
+            </> : null}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="mobileIconBtn"
+          aria-label="Buscar valor"
+          aria-expanded={mobileSearchOpen}
+          onClick={() => setMobileSearchOpen((value) => !value)}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
+        </button>
+        <details ref={mobileMoreMenuRef} className="mobileResultsMoreMenu">
+          <summary className="mobileIconBtn" aria-label="Más herramientas" title="Más herramientas">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></svg>
+          </summary>
+          <div className="mobileResultsMoreMenuPanel">
+            {sessionPlumbing}
+            <div className="mobileResultsMoreMenuLaboratory">{laboratoryPanel}</div>
+            <button type="button" onClick={refreshScreenerSnapshotData} disabled={restoringScan}>{restoringScan ? "Actualizando…" : "Traer datos frescos"}</button>
+            <button type="button" onClick={resetScreenerSession} disabled={restoringScan}>Resetear criterios</button>
+            {huntResultsFiltered.length ? <>
+              <button type="button" onClick={() => csv(huntResultsFiltered)}>CSV</button>
+              <button type="button" onClick={() => saveSnapshot(huntResultsFiltered)} disabled={!huntResultsFiltered.length} aria-label="Guardar snapshot de resultados">Guardar</button>
+              <button type="button" onClick={() => decisionAuditJson(huntResultsFiltered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
+              <button type="button" onClick={openPrimaryReview}>Review · cola completa</button>
+            </> : null}
+          </div>
+        </details>
+      </header>
+      {mobileSearchOpen ? <div className="mobileSearchRow">{searchBlock}</div> : null}
+      <HuntCardRail
+        layout="tabs"
+        presetKey={presetKey}
+        markets={markets}
+        onSelect={applyHuntCard}
+        pending={isHuntTransitionPending}
+        cardCounts={huntCardCounts}
+        activeCount={huntQueue || selectedFilterTemplateId ? null : passCountForTruth}
+        activeQueueId={huntQueue?.id || ""}
+        weeklyViews={weeklyViews}
+        weeklySinceLabel={weeklySinceLabel}
+        weeklyHeading={weeklyHeading}
+        favoritesView={favoritesQueueView(favoriteSymbols)}
+        onSelectQueue={applyHuntQueue}
+        savedTemplates={savedFilterTemplates}
+        selectedTemplateId={selectedFilterTemplateId}
+        onApplyTemplate={applySavedFilterTemplate}
+      />
+      <div className="mobileFilterBar">
+        <button
+          type="button"
+          className="mobileFilterBtn"
+          aria-haspopup="dialog"
+          aria-expanded={showMobileFilters}
+          aria-label={`Filtros${mobileFilterCount ? ` (${mobileFilterCount} activos)` : ""}`}
+          onClick={() => setShowMobileFilters(true)}
+        >
+          Filtros{mobileFilterCount ? <b>{mobileFilterCount}</b> : null}
+        </button>
+        <button type="button" className="mobileFilterChips" onClick={() => setShowMobileFilters(true)} tabIndex={-1} aria-hidden="true">
+          {mobileFilterSummary || "Sin filtros"}
+        </button>
+        {huntResultsFiltered.length ? (
+          <MobileSortSelect
+            sort={sort}
+            onSort={setSort}
+            perfPeriod={perfPeriod}
+            setupMode={activeSettings?.setupMode}
+            scannedMarkets={scannedMarkets}
+            presetKey={presetKey}
+          />
+        ) : null}
+      </div>
+      {mobileDataAgeFolded && mobileFreshOpen ? (
+        <p className="mobileDataLine" role="status">
+          <span>Datos</span>
+          {snapshotNotice.detail}
+        </p>
+      ) : null}
+    </div>
+  );
+  return <main className={`page screenerTerminalPage${isMobileViewport ? " screenerTerminalPage--mobile" : ""}`}>
+    {/* Estudio móvil 2026-11 (pasos 7-8): cabecera de 52 px (vista + verdad
+        corta con las dos fechas), pestañas de vistas y barra del filtro vivo,
+        pegadas arriba; la cinta empieza debajo. */}
+    {isMobileViewport ? mobileHead : null}
+    {!isMobileViewport ? <>
+    <div className="screenerTicket">
+      <h1 className="title">{huntLabel}</h1>
+      <MarketScopeChip
+        className="screenerTicketScope"
+        markets={markets}
+        marketsStale={marketsStale}
+        isMarketPresetActive={isMarketPresetActive}
+        marketPreset={marketPreset}
+        setMarketsAndInvalidate={setMarketsAndInvalidate}
+      />
+      <p className="screenerTruthLine" role="status" aria-live="polite" title={truthLineFull}>{truthLine}</p>
+      {/* Autocontenido, como GlobalCoveragePanel: posee su fetch a
+          GET /api/weekly-changes y no bloquea la primera pintura. Es la
+          segunda excepción a la nota de cabecera de este archivo.
+          T9: defer en cold restore para no sumar «comprobando…» al pasillo.
+          Paso 4: solo un enlace «Cambios de la semana» que abre el panel. */}
+      <WeeklyChangesLine
+        onOpenStock={saveSessionBeforeStockOpen}
+        defer={coldProgress.deferWeekly}
+        weekly={weekly}
+        compact
+        panelOnly
+      />
+      {searchBlock}
+      {showTicketActions && huntResultsFiltered.length ? (
+        <button type="button" className="btn btnSmall btnPrimary" onClick={openPrimaryReview}>Revisar</button>
+      ) : null}
+      {/* Siempre visible, incluso con la tabla vacía. Sin botón
+          Ejecutar, este es el único camino de vuelta a un estado bueno;
+          esconderlo justo cuando no hay resultados —que es cuando hace
+          falta— dejaba la sesión sin salida. */}
+      {showTicketActions ? (
+        <details ref={desktopMoreMenuRef} className="resultsMoreMenu">
+          <summary className="btn btnSmall btnGhost" aria-label="Más herramientas" title="Más herramientas">⋯</summary>
+          <div className="resultsMoreMenuPanel">
+            {sessionPlumbing}
+            <div className="resultsMoreMenuLaboratory">
+              {laboratoryPanel}
+            </div>
             <button
               type="button"
-              key={card.id}
-              role="option"
-              aria-selected={activeHuntCard?.id === card.id}
-              className={activeHuntCard?.id === card.id ? "active" : ""}
-              onClick={() => applyHuntCard(card.id)}
+              className="btn btnSmall btnGhost"
+              onClick={refreshScreenerSnapshotData}
+              disabled={restoringScan}
+              title="Trae el último escaneo nocturno sin cambiar tus filtros ni plantilla"
             >
-              {card.label}
+              {restoringScan ? "Actualizando…" : "Traer datos frescos"}
             </button>
-          ))}
-        </div>
-      </details>
-      <button
-        type="button"
-        className="screenerMobileSubBarBtn screenerMobileSubBarBtnPrimary"
-        onClick={openPrimaryReview}
-        disabled={!huntResultsFiltered.length}
-      >
-        Revisar
-      </button>
-      </div>
+            <button
+              type="button"
+              className="btn btnSmall btnGhost"
+              onClick={resetScreenerSession}
+              disabled={restoringScan}
+              title="Borra criterios y vuelve al preset equilibrado con datos nuevos"
+            >
+              Resetear criterios
+            </button>
+            {huntResultsFiltered.length ? <>
+              <button type="button" className="btn btnSmall btnGhost" onClick={() => csv(huntResultsFiltered)}>↓ CSV</button>
+              <button type="button" className="btn btnSmall btnGhost" onClick={() => saveSnapshot(huntResultsFiltered)} aria-label="Guardar copia de resultados">Guardar</button>
+              <button type="button" className="btn btnSmall btnGhost" onClick={() => decisionAuditJson(huntResultsFiltered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
+            </> : null}
+          </div>
+        </details>
+      ) : null}
+    </div>
     </> : null}
     {showPrimaryErr && <div className="error">{err}</div>}
-    {isMobileViewport && (scanStatusVisible || showPrimarySnapshot) ? <div className="screenerMobileNoticeStack">
+    {isMobileViewport && (scanStatusVisible || (showPrimarySnapshot && !mobileDataAgeFolded)) ? <div className="screenerMobileNoticeStack">
       <MobileStatusFold
         err={Boolean(err)}
         statusLabel={statusLabel}
@@ -1021,9 +1421,9 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       <span>{err ? "Incidencia" : "Estado"}</span>
       <b>{statusLabel}</b>
     </div> : null}
-    {!isMobileViewport && showPrimarySnapshot ? <div className={`snapshotFreshnessNotice ${snapshotNotice.requiresReauth ? "compact warn" : snapshotNotice.tone || "info"}`} role="alert" aria-live="polite">
+    {!isMobileViewport && showPrimarySnapshot && !inlineSnapshotNotice ? <div className={`snapshotFreshnessNotice ${snapshotNotice.requiresReauth ? "compact warn" : snapshotNotice.tone || "info"}`} role="alert" aria-live="polite">
       <span>{snapshotNotice.label}</span>
-      <b>{snapshotNotice.detail}</b>
+      <b title={snapshotNotice.detail}>{snapshotNotice.detail}</b>
       {snapshotNotice.requiresReauth ? (
         <div className="storageAlertActions">
           <button type="button" className="btn btnSmall btnPrimary" onClick={() => { void restartStatsEdgeSession(); }}>
@@ -1042,104 +1442,60 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
       </div>
     </div> : null}
 
-    <div className={`dashboardContainer ${sidebarCollapsed ? "sidebarCollapsed" : ""}${showMesaEmptyCard ? " dashboardContainer--mesaEmpty" : ""}${diarioChrome ? " dashboardContainer--diario" : " dashboardContainer--expert"}`}>
-      <button
-        type="button"
-        className="sidebarCollapseBtn"
-        onClick={() => setSidebarCollapsed((value) => !value)}
-        aria-label={sidebarCollapsed ? "Mostrar filtros" : "Ocultar filtros"}
-        aria-expanded={!sidebarCollapsed}
-      >
-        {sidebarCollapsed ? "Filtros" : "‹"}
-      </button>
-      <ScreenerSidebar
-        mobileFiltersRef={mobileFiltersRef}
-        showMobileFilters={showMobileFilters}
-        onCloseMobileFilters={() => setShowMobileFilters(false)}
-        markets={markets}
-        marketsStale={marketsStale}
-        isMarketPresetActive={isMarketPresetActive}
-        marketPreset={marketPreset}
-        setMarketsAndInvalidate={setMarketsAndInvalidate}
-        filterLayers={filterLayers}
-        useRegimeFilter={useRegimeFilter}
-        toggleFilterLayer={toggleFilterLayer}
-        setActiveFilterFamily={setActiveFilterFamily}
-        setUseRegimeFilter={setUseRegimeFilter}
-        sheetFamilyKeys={sheetFamilyKeys}
-        cardLabel={huntLabel}
-        settings={settings}
-        fieldRules={fieldRules}
-        familyIntensity={familyIntensity}
-        familyIntensityCustom={familyIntensityCustom}
-        familyCoverage={familyCoverage}
-        familyImpact={familyImpact}
-        previewFamilyIntensity={previewFamilyIntensity}
-        commitFamilyIntensity={commitFamilyIntensity}
-        chromeMode={chromeMode}
-        fichaAdjustOpen={fichaAdjustOpen}
-        onFichaAdjustOpenChange={setFichaAdjustOpen}
-        chromeModeToggle={renderChromeModeToggle()}
-      />
+    <div className={`dashboardContainer${showMesaEmptyCard ? " dashboardContainer--mesaEmpty" : ""}`}>
+      {/* Paso 5: en escritorio el aside queda vacío (mercados en el ticket,
+          familias en «+ Filtro»), así que solo se monta como cajón móvil.
+          Paso 6: en su lugar va el raíl de vistas (var(--rail-w)). */}
+      {isMobileViewport ? (
+        <MobileFilterSheet
+          open={showMobileFilters}
+          onClose={() => setShowMobileFilters(false)}
+          title={huntLabel}
+          markets={markets}
+          isMarketPresetActive={isMarketPresetActive}
+          marketPreset={marketPreset}
+          setMarketsAndInvalidate={setMarketsAndInvalidate}
+          hasActiveMarketPreset={MARKET_PRESET_CHIP_OPTIONS.some(([key]) => isMarketPresetActive(key))}
+          modeStrip={huntQueue ? null : huntModeStrip}
+          families={familiesPanel}
+          breakdown={filterBreakdownDetails}
+          analyzedCount={analyzedCountForDisplay(truthAnalyzedRows)}
+          passCount={passCountForTruth}
+          visibleCount={visibleCountForTruth}
+          viewSelects={viewSelectProps}
+          decisionResolutionFilter={decisionResolutionFilter}
+          decisionResolutionOptions={decisionResolutionOptions}
+          onDecisionResolutionFilter={setDecisionResolutionFilter}
+          perfPeriod={perfPeriod}
+          onPerfPeriod={setPerfPeriod}
+          onReset={clearResultView}
+          resetDisabled={!(Number(viewFiltersActive) > 0)}
+        />
+      ) : (
+        <HuntCardRail
+          presetKey={presetKey}
+          markets={markets}
+          onSelect={applyHuntCard}
+          pending={isHuntTransitionPending}
+          cardCounts={huntCardCounts}
+          activeCount={huntQueue || selectedFilterTemplateId ? null : passCountForTruth}
+          activeQueueId={huntQueue?.id || ""}
+          weeklyViews={weeklyViews}
+          weeklySinceLabel={weeklySinceLabel}
+          weeklyHeading={weeklyHeading}
+          onOpenWeeklyDetail={() => weekly.openPanel()}
+          favoritesView={favoritesQueueView(favoriteSymbols)}
+          onSelectQueue={applyHuntQueue}
+          savedTemplates={savedFilterTemplates}
+          selectedTemplateId={selectedFilterTemplateId}
+          onApplyTemplate={applySavedFilterTemplate}
+          onSaveView={() => saveCurrentFilterTemplate()}
+        />
+      )}
 
       <main className="mainContent">
-        <section className="searchCard">
-          <div className="commandSearchPanel searchPanelBare">
-              <div className="searchPopoverHost">
-              <form className="searchBar" onSubmit={runSearch} style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                <div className="searchFieldWrap">
-                  <input ref={searchInputRef} className="input searchInput" value={searchSymbol} onChange={(e) => updateSearchSymbol(e.target.value)} placeholder="Ticker, nombre, sector, subsector o país..." />
-                  {(searchSymbol || searchCandidates.length || searchResult) ? (
-                    <button type="button" className="searchClearBtn" onClick={clearSearch} aria-label="Limpiar búsqueda">✕</button>
-                  ) : null}
-                </div>
-                {(searchSymbol || searchCandidates.length || searchResult) ? (
-                  <button type="button" className="btn btnGhost searchClearWide" onClick={clearSearch}>Limpiar</button>
-                ) : null}
-                <button className="btn btnPrimary" disabled={searchLoading}>{searchLoading ? "Buscando..." : "Buscar"}</button>
-              </form>
-              {searchResult ? <div className="searchResult searchResultPrimary">
-                <PreviewCard row={searchResult} variant="search" onFavorite={addFavorite} onOpenStock={saveSessionBeforeStockOpen} isFavorite={favoriteSymbols.has(searchResult.symbol)} decisionResolutions={screenerDecisionResolutions} />
-              </div> : null}
-              </div>
-              <SearchScopeList items={searchScopeItems} onPick={applySearchScope} />
-              {searchError && <div className="dataNote error" style={{ marginTop: 12 }}>{investorStatusLabel(searchError)}</div>}
-              <SearchCandidateList candidates={searchCandidates} activeSymbol={searchResult?.symbol} onPick={(item) => { setSearchSymbol(item.symbol); loadSearchResult(item.symbol, item); }} />
-          </div>
-          <HuntCardRail presetKey={presetKey} markets={markets} onSelect={applyHuntCard} pending={isHuntTransitionPending} />
-          <HuntCardModeStrip
-            presetKey={presetKey}
-            markets={markets}
-            passedRows={resultsRows}
-            activeSettings={activeSettings}
-            onOpenFamily={(familyKey) => {
-              setSidebarCollapsed(false);
-              setShowMobileFilters(true);
-              if (diarioChrome) setFichaAdjustOpen(true);
-              setActiveFilterFamily(familyKey);
-            }}
-          />
-          {renderLideresIntlGuardrail()}
-          {renderCuratedPopulationNotice()}
-          <p className="screenerTruthLine" role="status" aria-live="polite">{truthLine}</p>
-          <details className="screenerFilterBreakdown">
-            <summary><span>{filterBreakdown.summaryLabel}</span></summary>
-            <div className="screenerFilterBreakdownBody">
-              {filterBreakdown.lines.map((line) => (
-                <p key={line}>{line}</p>
-              ))}
-              {filterBreakdown.hasDiagnostics ? (
-                <button
-                  type="button"
-                  className="screenerFilterBreakdownAuditLink"
-                  onClick={openLaboratoryPanel}
-                >
-                  Ver auditoría
-                </button>
-              ) : null}
-            </div>
-          </details>
-        </section>
+        {renderLideresIntlGuardrail()}
+        {renderCuratedPopulationNotice()}
 
         {isMobileViewport ? <section className="mobileResearchHome">
           {renderMarketsMisalignmentNotice()}
@@ -1156,41 +1512,30 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             />
           ) : (
             <MobileResultList
-              rows={huntResultsPagedRows}
-              settings={activeSettings}
-              totalRows={huntResultsFiltered.length}
-              sort={sort}
-              onSort={setSort}
-              perfPeriod={perfPeriod}
-              setupMode={activeSettings.setupMode}
-              scannedMarkets={scannedMarkets}
-              presetKey={presetKey}
-              onPerfPeriod={setPerfPeriod}
-              onReview={(symbol) => openReview(huntResultsFiltered, symbol, { queueMode: "hunt", sourceLabel: "Caza" })}
-              onFavorite={addFavorite}
+              rows={huntResultsFiltered}
+              chartPreviewDeferred={chartPreviewDeferred}
               favoriteSymbols={resultsFavoriteSymbols}
-              onSave={() => saveSnapshot(huntResultsFiltered)}
-              onCsv={() => csv(huntResultsFiltered)}
-              onAuditJson={() => decisionAuditJson(huntResultsFiltered)}
-              onRefresh={refreshScreenerSnapshotData}
-              onReset={resetScreenerSession}
-              sessionPlumbing={sessionPlumbing}
-              laboratoryPanel={laboratoryPanel}
-              moreMenuRef={mobileMoreMenuRef}
-              refreshing={restoringScan}
-              onOpenStock={saveSessionBeforeStockOpen}
-              page={visibleResultPage}
-              pageSize={resultPageSize}
-              totalPages={totalResultPages}
-              onPage={setResultPageClamped}
-              onPageSize={updateResultPageSize}
-              decisionResolutionFilter={decisionResolutionFilter}
-              decisionResolutionOptions={decisionResolutionOptions}
-              onDecisionResolutionFilter={setDecisionResolutionFilter}
               decisionResolutions={resultsDecisionResolutions}
-              emptyLabel={huntResultsEmptyLabel}
+              activeIndex={mobilePeekIndex}
+              onOpenRow={setMobilePeekIndex}
+              emptyLabel={huntEmptyState.cause}
+              emptyAction={huntEmptyAction}
             />
           )}
+          <MobilePeekSheet
+            rows={huntResultsFiltered}
+            index={mobilePeekRow ? mobilePeekIndex : -1}
+            onClose={closeMobilePeek}
+            onStep={(delta) => setMobilePeekIndex((current) => Math.max(0, Math.min(huntResultsFiltered.length - 1, current + delta)))}
+            isFavorite={Boolean(mobilePeekRow && resultsFavoriteSymbols?.has?.(mobilePeekRow.symbol))}
+            resolutionKey={mobilePeekRow && resultsDecisionResolutions
+              ? decisionResolutionKeyForSymbol({ decisionResolutions: resultsDecisionResolutions }, mobilePeekRow.symbol)
+              : ""}
+            chartPreviewDeferred={chartPreviewDeferred}
+            onFavorite={addFavorite}
+            onResolveDecision={resolveScreenerDecision}
+            onOpenStock={saveSessionBeforeStockOpen}
+          />
         </section> : null}
 
         {!isMobileViewport ? <section className={`desktopResultsSection${showMesaEmptyCard ? " desktopResultsSection--mesaEmpty" : ""}`} style={{ marginBottom: 20 }}>
@@ -1210,56 +1555,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             </div>
           ) : null}
           {dataStateDrawer}
-          <div className={`resultsHeader${showMesaEmptyCard ? " resultsHeader--mesaEmpty" : ""}`}>
-            <div className="resultsTitleBlock">
-              <h2>Resultados</h2>
-              {renderChromeModeToggle()}
-            </div>
-            {showMesaEmptyCard ? null : (
-            <div className="controls resultsToolbar">
-              {huntResultsFiltered.length ? (
-                <button className="btn btnSmall btnPrimary" onClick={openPrimaryReview}>Revisar</button>
-              ) : null}
-              {/* Siempre visible, incluso con la tabla vacía. Sin botón
-                  Ejecutar, este es el único camino de vuelta a un estado bueno;
-                  esconderlo justo cuando no hay resultados —que es cuando hace
-                  falta— dejaba la sesión sin salida. */}
-              <details ref={desktopMoreMenuRef} className="resultsMoreMenu">
-                <summary className="btn btnSmall btnGhost" aria-label="Más herramientas" title="Más herramientas">⋯</summary>
-                <div className="resultsMoreMenuPanel">
-                  {sessionPlumbing}
-                  <div className="resultsMoreMenuLaboratory">
-                    {laboratoryPanel}
-                  </div>
-                  <button
-                    type="button"
-                    className="btn btnSmall btnGhost"
-                    onClick={refreshScreenerSnapshotData}
-                    disabled={restoringScan}
-                    title="Trae el último escaneo nocturno sin cambiar tus filtros ni plantilla"
-                  >
-                    {restoringScan ? "Actualizando…" : "Traer datos frescos"}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btnSmall btnGhost"
-                    onClick={resetScreenerSession}
-                    disabled={restoringScan}
-                    title="Borra criterios y vuelve al preset equilibrado con datos nuevos"
-                  >
-                    Resetear criterios
-                  </button>
-                  {huntResultsFiltered.length ? <>
-                    <button type="button" className="btn btnSmall btnGhost" onClick={() => csv(huntResultsFiltered)}>↓ CSV</button>
-                    <button type="button" className="btn btnSmall btnGhost" onClick={() => saveSnapshot(huntResultsFiltered)} aria-label="Guardar copia de resultados">Guardar</button>
-                    <button type="button" className="btn btnSmall btnGhost" onClick={() => decisionAuditJson(huntResultsFiltered)} title="Exportar JSON compatible con audit:decisions">JSON audit</button>
-                  </> : null}
-                </div>
-              </details>
-            </div>
-            )}
-          </div>
-
           {showMesaEmptyCard ? (
             <MesaEmptyCard
               markets={markets}
@@ -1279,40 +1574,6 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onSelectWindow={(months) => updateSetting("maxIpoAgeMonths", months)}
           />
 
-          <ResultFilterBar
-            optionLabel={optionLabel}
-            decisionResolutionFilter={decisionResolutionFilter}
-            decisionResolutionOptions={decisionResolutionOptions}
-            onDecisionResolutionFilter={setDecisionResolutionFilter}
-            viewLayers={viewLayers}
-            viewFiltersActive={viewFiltersActive}
-            countryFilter={countryFilter}
-            countryOptions={countryOptions}
-            countryCounts={countryCounts}
-            onCountryFilter={setCountryFilter}
-            themeFilter={themeFilter}
-            themeOptions={themeOptions}
-            themeCounts={themeCounts}
-            onThemeFilter={setThemeFilter}
-            onSectorFilter={setSectorFilter}
-            onIndustryFilter={setIndustryFilter}
-            sectorFilter={sectorFilter}
-            sectorOptions={sectorOptions}
-            sectorCounts={sectorCounts}
-            industryFilter={industryFilter}
-            industryOptions={industryOptions}
-            industryCounts={industryCounts}
-            sectorStrength={sectorStrength}
-            sectorStrengthCounts={sectorStrengthCounts}
-            onSectorStrength={setSectorStrength}
-            chips={resultFilterChips}
-            hiddenCount={hiddenByView}
-            visibleCount={huntResultsFiltered.length}
-            totalCount={huntResultsRows.length}
-            onClearAll={clearResultView}
-            onReview={huntResultsFiltered.length ? openResultViewReview : undefined}
-            chromeMode={chromeMode}
-          />
           <ResultPagerTable
             visibleCount={huntResultsFiltered.length}
             presetKey={presetKey}
@@ -1327,6 +1588,7 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             onSetResultPage={setResultPageClamped}
             pagedRows={huntResultsPagedRows}
             favoriteSymbols={resultsFavoriteSymbols}
+            decisionResolutions={resultsDecisionResolutions}
             onFavorite={addFavorite}
             onReview={openResultReview}
             onOpenStock={saveSessionBeforeStockOpen}
@@ -1340,7 +1602,12 @@ export default function ScreenerShell({ chrome, sidebar, search, resultView, res
             setupMode={activeSettings.setupMode}
             scannedMarkets={scannedMarkets}
             hasBatchPercentiles={visibleBatchRows}
-            emptyLabel={huntResultsEmptyLabel}
+            emptyLabel={huntEmptyState.cause}
+            emptyAction={huntEmptyAction}
+            peekInclusion={huntPeekInclusionLabel}
+            onResolveDecision={resolveScreenerDecision}
+            filterSlot={<>{queueChip}{desktopFilterBar}</>}
+            noticeSlot={snapshotNoticeInline}
           />
             </>
           )}

@@ -3,6 +3,8 @@ import "../../styles/sectors.css";
 import { useEffect, useMemo, useState } from "react";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import { InfoHint } from "@/app/components/ui/InfoHint";
+import { PageTicket } from "@/app/components/PageTicket";
+import MarketSectorOverview from "./MarketSectorOverview";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { CountValue } from "@/app/components/ui/CountValue";
@@ -21,6 +23,18 @@ import { methodologyDisplayForRow } from "@/lib/methodologyDisplay";
 import { favoriteToRow, metricValue, normalizeStockRows, rowCountry, shortBusiness, weaknessScore } from "@/lib/stockRows";
 import { countryName, externalLinks, marketFlag, stockUrl } from "@/lib/symbols";
 import { snapshotDisplayName } from "@/lib/snapshotDisplay";
+
+// Single-flight por ruta: el efecto de montaje se ejecuta dos veces en dev
+// (StrictMode) y al volver rápido a la pantalla; sin esto cada pasada lanzaba
+// otra lectura de ~1,4 MB a /api/discovery. Se comparte la petición en vuelo y
+// se olvida al terminar, así que nunca sirve un dato viejo.
+const inFlightJson = new Map();
+function fetchJsonSingleFlight(path, timeoutMs) {
+  if (inFlightJson.has(path)) return inFlightJson.get(path);
+  const request = fetchJsonWithTimeout(path, timeoutMs).finally(() => inFlightJson.delete(path));
+  inFlightJson.set(path, request);
+  return request;
+}
 
 async function fetchJsonWithTimeout(path, timeoutMs = 16000) {
   const controller = new AbortController();
@@ -45,16 +59,6 @@ function listHref(dimension, key) {
 
 function dimensionLabel(dimension) {
   return { theme: "tema", sector: "sector", industry: "subsector" }[dimension] || dimension;
-}
-
-function listText(items = []) {
-  return items?.length ? items.join(", ") : "-";
-}
-
-function textLabel(value, fallback = "-") {
-  if (typeof value === "string") return value || fallback;
-  if (value && typeof value === "object") return value.label || value.name || value.key || value.stance || fallback;
-  return value == null ? fallback : String(value);
 }
 
 function countRows(items = [], predicate = () => false) {
@@ -95,13 +99,6 @@ function groupRowsLabel(group = {}) {
   if (scopeRows > sampleRows && sampleRows > 0) return `Top ${sampleRows} de ${scopeRows} acciones`;
   if (scopeRows > 0) return `${scopeRows} acciones`;
   return "Sin acciones";
-}
-
-function sectorStateClass(value = "") {
-  const text = String(value).toLowerCase();
-  if (text.includes("bull") || text.includes("alc") || text.includes("construct")) return "bullish";
-  if (text.includes("bear") || text.includes("baj") || text.includes("debil") || text.includes("deterior")) return "bearish";
-  return "neutral";
 }
 
 const HEALTH_COUNT_MISSING = "Este recuento no ha llegado en esta carga, así que no se sabe cuántas filas hay.";
@@ -241,62 +238,6 @@ function SectorsInfraStrip({ discovery, discoveryError, discoveryLoading, useDis
   );
 }
 
-function MarketSectorOverview({ data, error }) {
-  const sectors = data?.sectorTape || [];
-  const summary = data?.sectorSummary || {};
-  const sorted = [...sectors].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-
-  return <section className="sectorOverview">
-    <div className="sectionTitle">
-      <h2>Estado sectorial</h2>
-      <span className="fine">Mercado · 1D / 1W / 1M / 3M</span>
-    </div>
-
-    {!data && !error && <div className="dataNote">Cargando comparativa sectorial...</div>}
-    {error && <div className="dataNote">{error}</div>}
-
-    {!!sectors.length && <>
-      <div className="kpis">
-        <div className="kpi"><b>{num(data.marketScore)}</b><span>market score</span></div>
-        <div className="kpi"><b>{textLabel(data.regime)}</b><span>régimen</span></div>
-        <div className="kpi"><b>{num(summary.avgScore)}</b><span>score medio</span></div>
-        <div className="kpi"><b>{summary.above50 ?? "-"}/{summary.count ?? "-"}</b><span>sobre SMA50</span></div>
-        <div className="kpi"><b>{summary.best1m || "-"}</b><span>mejor 1M</span></div>
-        <div className="kpi"><b>{summary.worst1m || "-"}</b><span>peor 1M</span></div>
-      </div>
-
-      <div className="sectorPulse compact">
-        <div><b>Lideres</b><span>{listText(summary.leaders)}</span></div>
-        <div><b>Débiles</b><span>{listText(summary.laggards)}</span></div>
-      </div>
-
-      <div className="tableWrap sectorOverviewTable">
-        <table className="table sectorTapeTable">
-          <thead><tr>{["Sector", "ETF", "Estado", "Score", metricShortLabel("weinsteinScore"), metricShortLabel("stage"), "1D", "1W", "1M", "3M", "RS 1M", "SMA50", "SMA200", "Dist/Acc", "52w"].map((head) => <th key={head}>{head}</th>)}</tr></thead>
-          <tbody>{sorted.map((sector) => <tr key={sector.symbol}>
-            <td><b>{sector.name}</b><br /><span className="fine">{sector.group}</span></td>
-            <td className="ticker">{sector.symbol}</td>
-            <td><i className={`sentimentPill ${sectorStateClass(sector.state?.bias || sector.state?.label)}`}>{sector.state?.label || "-"}</i></td>
-            <td className="ticker">{num(sector.score)}</td>
-            <td>{num(sector.weinsteinScore)}</td>
-            <td>{sector.stage30w || "-"}</td>
-            <td>{pct(sector.perf1d)}</td>
-            <td>{pct(sector.perf1w)}</td>
-            <td>{pct(sector.perf1m)}</td>
-            <td>{pct(sector.perf3m)}</td>
-            <td>{pct(sector.rs1m)}</td>
-            <td>{sector.price > sector.sma50 ? "Sí" : "No"}</td>
-            <td>{sector.price > sector.sma200 ? "Sí" : "No"}</td>
-            <td>{Number.isFinite(sector.distributionDays20) ? `${sector.distributionDays20}/${sector.accumulationDays20}` : "-"}</td>
-            <td>{pct(sector.distance52w)}</td>
-          </tr>)}</tbody>
-        </table>
-      </div>
-      <p className="fine sectorCoverageNote">Proxy inicial mediante ETFs sectoriales USA. La capa por snapshot cubre Europa, Hong Kong, Japón y el resto de mercados cuando hay resultados guardados.</p>
-    </>}
-  </section>;
-}
-
 function GroupCard({ group, active, onClick }) {
   return <button type="button" className={`groupCard ${active ? "active" : ""}`} onClick={onClick}>
     <span className="groupCardTop"><b>{group.key}</b><em>{group.count} acciones</em></span>
@@ -373,7 +314,7 @@ export default function SectorsPage() {
   const [marketHealthError, setMarketHealthError] = useState("");
   const [discovery, setDiscovery] = useState(null);
   const [discoveryError, setDiscoveryError] = useState("");
-  const [discoveryLoading, setDiscoveryLoading] = useState(false);
+  const [discoveryLoading, setDiscoveryLoading] = useState(true);
   const [savedListViews, setSavedListViews] = useState([]);
   const [saveStatus, setSaveStatus] = useState("");
 
@@ -390,19 +331,9 @@ export default function SectorsPage() {
   useEffect(() => { reloadLocal(); }, []);
   useEffect(() => {
     let alive = true;
-    getJson("/api/market-health").then((payload) => {
-      if (alive) setMarketHealth(payload);
-    }).catch((error) => {
-      console.error("[sectores] comparativa sectorial no disponible:", error);
-      if (alive) setMarketHealthError(userFacingServiceError(error?.message, "La comparativa sectorial no está disponible ahora mismo."));
-    });
-    return () => { alive = false; };
-  }, []);
-  useEffect(() => {
-    let alive = true;
     setDiscoveryError("");
     setDiscoveryLoading(true);
-    fetchJsonWithTimeout("/api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=80&sinceDays=10&minGroupSize=1", 8000)
+    fetchJsonSingleFlight("/api/discovery?limit=20&groupItemLimit=8&groupsLimit=12&maxRows=80&sinceDays=10&minGroupSize=1", 8000)
       .then((payload) => {
         if (alive) setDiscovery(payload);
       })
@@ -436,6 +367,21 @@ export default function SectorsPage() {
   const useDiscoveryGroups = discovery?.configured === true && !discoveryError && countryFilter === "Todos" && discoveryGroups.length > 0;
   const groups = useMemo(() => useDiscoveryGroups ? discoveryGroups : groupRows(rows, dimension), [useDiscoveryGroups, discoveryGroups, rows, dimension]);
   const filteredGroups = useMemo(() => filterGroupsByStrength(groups, strengthFilter), [groups, strengthFilter]);
+  // /api/market-health solo alimenta «Estado sectorial», que se pinta cuando no
+  // hay grupos (ver más abajo). Pedirlo siempre costaba una lectura pesada
+  // (~0,8 s en caliente, ~2,9 s en frío) que el camino normal nunca muestra.
+  const needsMarketOverview = !discoveryLoading && groups.length === 0;
+  useEffect(() => {
+    if (!needsMarketOverview) return undefined;
+    let alive = true;
+    getJson("/api/market-health").then((payload) => {
+      if (alive) setMarketHealth(payload);
+    }).catch((error) => {
+      console.error("[sectores] comparativa sectorial no disponible:", error);
+      if (alive) setMarketHealthError(userFacingServiceError(error?.message, "La comparativa sectorial no está disponible ahora mismo."));
+    });
+    return () => { alive = false; };
+  }, [needsMarketOverview]);
   const selected = filteredGroups.find((group) => group.key === active) || filteredGroups[0] || null;
   const weakestGroup = groups.length ? [...groups].sort((a, b) => a.strength - b.strength)[0] : null;
   const visibleRowsCount = useDiscoveryGroups ? groups.reduce((sum, group) => sum + (Number(group.count) || 0), 0) : rows.length;
@@ -496,50 +442,56 @@ export default function SectorsPage() {
     setSaveStatus(`Vista guardada: ${updated.name}.`);
   }
 
-  return <main className="page sectorsPage">
-    <section className="card hero">
-      <div className="heroTop">
-        <div>
-          <div className="badge">StatsEdge · Sectores</div>
-          <h1>Sectores y temáticas</h1>
-          <p className="muted">Ranking por tema, sector y subsector desde discovery derivado o snapshot local.</p>
-        </div>
-        <div className="mobileActions">
-          <a className="btn" href="/">Screener</a>
-          <a className="btn" href="/lists">Listas</a>
-          <a className="btn" href="/review?source=latest">Vista rápida</a>
-          <a className="btn btnPrimary" href="/research-desk">Research</a>
-          <button className="btn" onClick={reloadLocal}>Recargar local</button>
-        </div>
-      </div>
-    </section>
+  const sectorRowsLabel = useDiscoveryGroups ? "acciones derivadas" : snapshotRows.length ? "acciones en snapshot" : "favoritos agrupados";
 
-    <section className="card">
-      <div className="kpis">
-        <div className="kpi"><b>{groups.length}</b><span>grupos</span></div>
-        <div className="kpi"><b>{visibleRowsCount}</b><span>{useDiscoveryGroups ? "acciones derivadas" : snapshotRows.length ? "acciones en snapshot" : "favoritos agrupados"}</span></div>
-        <div className="kpi"><b>{groups[0]?.key || "-"}</b><span>grupo líder</span></div>
-        <div className="kpi"><b>{weakestGroup?.key || "-"}</b><span>grupo débil</span></div>
+  /* Paso 9 (rediseño 2026-11): ticket de 44 px en lugar del hero, la botonera
+     cruzada (la topbar ya navega) y los cuatro tiles. Grupos, acciones, líder y
+     débil van en la verdad corta; la fuente, en el chip. Fuente, país,
+     agrupación y fuerza comparten una sola barra sobre el mapa. */
+  return <main className="page sectorsPage ptPage">
+    <PageTicket
+      title="Sectores"
+      chip={discoveryLoading ? "Cargando…" : useDiscoveryGroups ? "Ranking en vivo" : "Copia local"}
+      chipTitle={sectorSourceLabel}
+      truth={<>
+        <b>{groups.length}</b> grupos · <b>{visibleRowsCount}</b> {sectorRowsLabel}
+        {groups[0]?.key ? <> · líder <span className="pageTicketStrong">{groups[0].key}</span></> : null}
+        {weakestGroup?.key ? <> · débil <span className="pageTicketStrong">{weakestGroup.key}</span></> : null}
+      </>}
+      truthTitle={sectorSourceLabel}
+    >
+      <button className="btn" type="button" onClick={reloadLocal}>Recargar local</button>
+    </PageTicket>
+
+    <div className="ptToolbar sectorToolbar">
+      <label className="ptField">
+        <span>Fuente</span>
+        <select className="select" value={scanId} onChange={(event) => setScanId(event.target.value)} disabled={!scans.length}>
+          {scans.length ? scans.map((scan) => <option value={scan.id} key={scan.id}>{snapshotDisplayName(scan)}</option>) : <option value="">Sin snapshots</option>}
+        </select>
+      </label>
+      <label className="ptField">
+        <span>País</span>
+        <select className="select" value={countryFilter} onChange={(event) => { setCountryFilter(event.target.value); setActive(""); }} disabled={!baseRows.length}>
+          <option value="Todos">🌐 Todos los países</option>
+          {countryOptions.map((item) => <option value={item.code} key={item.code}>
+            {marketFlag(item.code)} {item.code} · {countryName(item.code)} · {item.count}
+          </option>)}
+        </select>
+      </label>
+      <div className="ptField">
+        <span>Agrupar por</span>
+        <div className="pageTicketSeg" role="group" aria-label="Agrupar por">
+          {[["theme", "Tema"], ["sector", "Sector"], ["industry", "Subsector"]].map(([key, label]) => <button type="button" key={key} className={`btn ${dimension === key ? "btnActive" : ""}`} aria-pressed={dimension === key} onClick={() => { setDimension(key); setActive(""); }}>{label}</button>)}
+        </div>
       </div>
-      <div className="sectorToolbar">
-        <label className="field">
-          <span>Fuente</span>
-          <select className="select" value={scanId} onChange={(event) => setScanId(event.target.value)} disabled={!scans.length}>
-            {scans.length ? scans.map((scan) => <option value={scan.id} key={scan.id}>{snapshotDisplayName(scan)}</option>) : <option value="">Sin snapshots</option>}
-          </select>
-        </label>
-        <label className="field">
-          <span>País</span>
-          <select className="select" value={countryFilter} onChange={(event) => { setCountryFilter(event.target.value); setActive(""); }} disabled={!baseRows.length}>
-            <option value="Todos">🌐 Todos los países</option>
-            {countryOptions.map((item) => <option value={item.code} key={item.code}>
-              {marketFlag(item.code)} {item.code} · {countryName(item.code)} · {item.count}
-            </option>)}
-          </select>
-        </label>
-        <span className="dataNote">{sectorSourceLabel}</span>
+      <div className="ptField">
+        <span>Fuerza</span>
+        <div className="pageTicketSeg" role="group" aria-label="Filtrar fuerza">
+          {STRENGTH_FILTERS.map(([key, label]) => <button type="button" key={key} className={`btn ${strengthFilter === key ? "btnActive" : ""}`} aria-pressed={strengthFilter === key} onClick={() => { setStrengthFilter(key); setActive(""); }}>{label}</button>)}
+        </div>
       </div>
-    </section>
+    </div>
 
     <SectorsInfraStrip
       discovery={discovery}
@@ -554,23 +506,17 @@ export default function SectorsPage() {
       dimension={dimension}
     />
 
-    <section className="card">
-      <h2>Agrupar por</h2>
-      <div className="controls">
-        {[["theme", "Tema"], ["sector", "Sector"], ["industry", "Subsector"]].map(([key, label]) => <button key={key} className={`btn ${dimension === key ? "btnActive" : ""}`} onClick={() => { setDimension(key); setActive(""); }}>{label}</button>)}
-      </div>
-      <h2 style={{ marginTop: 18 }}>Filtrar fuerza</h2>
-      <div className="controls">
-        {STRENGTH_FILTERS.map(([key, label]) => <button key={key} className={`btn ${strengthFilter === key ? "btnActive" : ""}`} onClick={() => { setStrengthFilter(key); setActive(""); }}>{label}</button>)}
-      </div>
-    </section>
-
     {!groups.length && <MarketSectorOverview data={marketHealth} error={marketHealthError} />}
 
     {groups.length > 0 && <section className="sectorMapLayout">
       <div className="card">
         <div className="sectionTitle"><h2>Mapa de grupos</h2><span className="fine">Ranking por fuerza compuesta</span></div>
         <div className="groupMap">
+          {/* Paso 9: el mapa se lee como la cinta del screener (filas de
+              var(--row-h)); esta cabecera nombra las columnas de cada fila. */}
+          {filteredGroups.length ? <div className="groupMapHead" aria-hidden="true">
+            <span>Grupo</span><span>Fuerza</span><span>{metricShortLabel("objectiveScore")}</span><span>{metricShortLabel("rsGlobalPct")}</span><span>3M</span><span>Débiles</span><span>Top</span>
+          </div> : null}
           {filteredGroups.map((group) => <GroupCard key={group.key} group={group} active={group.key === selected?.key} onClick={() => setActive(group.key)} />)}
           {!filteredGroups.length && <div className="dataNote">No hay grupos en este rango de fuerza. Cambia el filtro o guarda un snapshot más amplio.</div>}
         </div>
@@ -594,7 +540,6 @@ export default function SectorsPage() {
           <div className="controls" style={{ marginTop: 12 }}>
             <a className="btn btnPrimary" href={listHref(dimension, selected.key)}>Saltar a lista filtrada</a>
             <button className="btn" type="button" onClick={saveSelectedGroupView}>{selectedSaved ? "Actualizar vista" : "Guardar vista"}</button>
-            <a className="btn" href="/">Nuevo scan</a>
           </div>
           {(saveStatus || selectedSaved) && <p className="fine sectorSavedViewNote">{saveStatus || "Este grupo ya esta guardado como vista."}</p>}
         </>}

@@ -1,0 +1,1261 @@
+/* styles/page-ticket.css — ticket compartido y piel de «familia» de las vistas
+   hermanas del screener (rediseño 2026-11, paso 9).
+
+   Fuente de verdad visual: .screenerTicket y la cinta (.huntTape*) de
+   styles/screener.css. Este archivo NO redefine tokens: solo usa los de
+   styles/tokens-v2.css (--ticket-h, --row-h, --surface-raised, --display-m…).
+   Todo va bajo .page.ptPage para ganar a las reglas acumuladas de
+   components.css sin !important y sin tocar las hojas de cada página. */
+
+/* ── Marco de página: mismo ancho y márgenes que .screenerTerminalPage ── */
+.page.ptPage {
+  width:min(1720px,100%);
+  padding:0 28px 72px;
+}
+
+/* ── Ticket ─────────────────────────────────────────────────────────────── */
+.pageTicket {
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:var(--space-3);
+  min-height:var(--ticket-h);
+  margin:0 0 var(--space-3);
+  border-bottom:1px solid var(--line);
+}
+
+.pageTicketTitle,
+.page .pageTicket h1.pageTicketTitle {
+  flex:0 0 auto;
+  margin:0;
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:var(--display-m);
+  font-weight:650;
+  letter-spacing:-.02em;
+  line-height:1;
+  text-transform:none;
+  white-space:nowrap;
+}
+
+/* Chip de ámbito/fuente: misma caja que .marketCompactChip del ticket. */
+.pageTicketChip {
+  display:inline-flex;
+  flex:0 0 auto;
+  align-items:center;
+  gap:6px;
+  height:26px;
+  padding:0 9px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--surface);
+  white-space:nowrap;
+}
+
+.pageTicketChipLabel {
+  color:var(--text);
+  font-size:var(--text-s);
+  font-weight:700;
+}
+
+.pageTicketChip em {
+  color:var(--muted);
+  font-size:var(--text-xs);
+  font-style:normal;
+  font-weight:650;
+}
+
+/* Verdad corta: mismo trazo que .screenerTruthLine. */
+.pageTicketTruth {
+  flex:1 1 auto;
+  min-width:0;
+  margin:0;
+  overflow:hidden;
+  color:var(--muted);
+  font-size:var(--text-s);
+  font-weight:520;
+  line-height:1.45;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.pageTicketTruth b {
+  color:var(--text);
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
+  font-weight:600;
+}
+
+.pageTicketSpacer {
+  flex:1 1 auto;
+}
+
+.pageTicketActions {
+  display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  gap:var(--space-2);
+}
+
+/* Botones: mismos que .screenerTicket .btn (1 primario + terciarios iguales). */
+.pageTicket .btn {
+  display:inline-flex;
+  align-items:center;
+  min-height:30px;
+  padding:var(--space-1) var(--space-3);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:transparent;
+  color:var(--soft);
+  font-size:var(--text-s);
+  font-weight:500;
+  white-space:nowrap;
+  text-decoration:none;
+}
+
+.pageTicket .btn:hover {
+  border-color:var(--line2);
+  background:rgba(255,255,255,.03);
+  color:var(--text);
+}
+
+.pageTicket .btnPrimary,
+.pageTicket .btnPrimary:hover {
+  border-color:var(--cta-border);
+  background:var(--cta-bg);
+  color:var(--cta-fg);
+  font-weight:720;
+}
+
+.pageTicket .btnPrimary:hover {
+  opacity:.92;
+}
+
+.pageTicket .btn:disabled {
+  opacity:.45;
+  cursor:default;
+}
+
+/* Buscador compacto (ficha): 260 px, como el del screener. */
+.pageTicketSearch {
+  position:relative;
+  flex:0 0 auto;
+  width:260px;
+}
+
+.pageTicketSearch .input,
+.pageTicketSearch input {
+  height:30px;
+  min-height:30px;
+  padding:0 10px;
+  background:var(--surface-inset);
+  font-size:var(--text-s);
+}
+
+/* ── Piel común de las vistas hermanas ─────────────────────────────────── */
+
+/* Rótulos de sección: micro-etiqueta en humo, como «DEL ANÁLISIS NOCTURNO». */
+.page.ptPage .sectionTitle {
+  min-height:32px;
+  margin-bottom:var(--space-2);
+  padding-bottom:var(--space-1);
+  border-bottom:1px solid var(--line);
+}
+
+.page.ptPage .sectionTitle h2,
+.page.ptPage .sectionTitle h3 {
+  margin:0;
+  color:var(--muted);
+  font-family:var(--font-body);
+  font-size:var(--text-xs);
+  font-weight:650;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+/* Paneles: pozo con borde --line, sin sombra ni degradado (como .huntTapeBlock). */
+.page.ptPage > .card:not(.status):not(.error),
+.page.ptPage > details.card {
+  margin-bottom:var(--space-3);
+  padding:var(--space-3);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--pizarra-0);
+  box-shadow:none;
+}
+
+.page.ptPage > .grid > .card {
+  padding:var(--space-3);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--pizarra-0);
+  box-shadow:none;
+}
+
+.page.ptPage > .card.status {
+  padding:6px var(--space-3);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--surface);
+  color:var(--soft);
+  font-size:var(--text-s);
+}
+
+/* Tablas: cabecera de 28 px en micro-etiqueta y filas de var(--row-h),
+   mismas tintas que la cinta del screener. */
+.page.ptPage .tableWrap {
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--pizarra-0);
+  box-shadow:none;
+}
+
+/* Sin el min-width de 1 580 px global: con filas de una línea las columnas
+   caben a 1 440; si no caben, el pozo desplaza en horizontal. */
+.page.ptPage .table {
+  min-width:0;
+  font-size:var(--text-s);
+}
+
+.page.ptPage .tableWrap {
+  overflow-x:auto;
+}
+
+.page.ptPage .table th {
+  height:28px;
+  padding:4px 12px;
+  border-bottom:1px solid var(--line);
+  background:var(--pizarra-0);
+  backdrop-filter:none;
+  color:var(--muted);
+  font-family:var(--font-body);
+  font-size:var(--text-xs);
+  font-weight:600;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+.page.ptPage .table td {
+  height:var(--row-h);
+  padding:0 12px;
+  border-top:0;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+  color:var(--soft);
+  line-height:1.25;
+  animation:none;
+}
+
+.page.ptPage .table tr:hover td {
+  background:var(--surface-raised);
+}
+
+.page.ptPage .table td .ticker,
+.page.ptPage .table td a.ticker {
+  color:var(--text);
+  font-weight:700;
+  letter-spacing:.02em;
+  text-decoration:none;
+}
+
+/* Números de tabla en mono tabular (regla 2 de tokens). */
+.page.ptPage .table td b,
+.page.ptPage .table td .num {
+  font-family:var(--font-data);
+  font-variant-numeric:tabular-nums;
+}
+
+/* Franja de calidad de dato bajo el ticket: una línea fina, sin caja pesada. */
+.page.ptPage .stockQualityStrip {
+  margin:0 0 var(--space-3);
+  padding:6px var(--space-3);
+  border-color:var(--line);
+  background:var(--surface);
+}
+
+/* Franjas plegables de cobertura (Listas · Sectores · Research · Datos):
+   misma línea de 30 px que el aviso del screener. */
+.page.ptPage .marketReliabilityStrip {
+  margin:0 0 var(--space-3);
+  border-color:var(--line);
+  background:var(--surface);
+}
+
+/* Sparkline en tabla: 112×24 como la cinta (trazo --soft 1.4 px, MM en humo,
+   sin volumen ni halo). La serie no gana color en reposo. */
+.page.ptPage .compactSparkCell .miniSparkline {
+  height:24px;
+  aspect-ratio:auto;
+  border:0;
+  border-radius:0;
+  background:transparent;
+}
+
+.page.ptPage .compactSparkCell .miniSparkline path {
+  vector-effect:non-scaling-stroke;
+}
+
+.page.ptPage .compactSparkCell .sparkPrice,
+.page.ptPage .compactSparkCell .miniSparkline.down .sparkPrice {
+  stroke:var(--soft);
+  stroke-width:1.4;
+  filter:none;
+  opacity:1;
+}
+
+.page.ptPage .compactSparkCell .sparkMa {
+  stroke:var(--humo);
+  stroke-width:1;
+  opacity:.6;
+}
+
+.page.ptPage .compactSparkCell .sparkVolume,
+.page.ptPage .compactSparkCell .sparkGuide,
+.page.ptPage .compactSparkCell .sparkLast {
+  display:none;
+}
+
+.page.ptPage .compactSparkCell .previewEmpty,
+.page.ptPage .sparklineSkeleton {
+  height:24px;
+  border:0;
+  background:transparent;
+  color:var(--ghost);
+  font-size:var(--text-xs);
+}
+
+/* Pastillas de tema dentro de tabla: texto en humo, sin caja. */
+.page.ptPage .table td .pill {
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  font-size:var(--text-xs);
+  font-weight:500;
+}
+
+/* ── Listas ─────────────────────────────────────────────────────────────── */
+.listsPage.ptPage .listDisclosure > summary.sectionTitle,
+.listsPage.ptPage > .card > .sectionTitle {
+  display:flex;
+  align-items:baseline;
+  gap:var(--space-3);
+}
+
+.listsPage.ptPage .sectionTitle .fine {
+  color:var(--muted);
+  font-size:var(--text-xs);
+}
+
+.listsPage.ptPage .listDisclosure > summary.sectionTitle:after {
+  margin-left:auto;
+}
+
+/* Nombre en una línea en humo, como .huntTapeName. */
+.listsPage.ptPage .listNameCell {
+  max-width:340px;
+}
+
+.listsPage.ptPage .listNameCell .listNameText {
+  display:inline-block;
+  max-width:220px;
+  overflow:hidden;
+  color:var(--muted);
+  font-size:var(--text-xs);
+  text-overflow:ellipsis;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
+.listsPage.ptPage .listRowTrustSignature {
+  display:inline-flex;
+  margin:0 0 0 8px;
+  vertical-align:middle;
+}
+
+.listsPage.ptPage .listRowTrustSignature .rowTrustChip {
+  min-height:15px;
+}
+
+/* Contrato y fiabilidad de cada lista: dos líneas finas en humo, sin caja de
+   color (la infraestructura no compite con el mercado; regla 7). */
+.listsPage.ptPage .listContractNote {
+  margin:0 0 4px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  font-size:var(--text-xs);
+}
+
+.listsPage.ptPage .listContractNote b {
+  color:var(--soft);
+  font-size:var(--text-xs);
+}
+
+.listsPage.ptPage .listReliabilityStrip,
+.listsPage.ptPage .listReliabilityStrip.pass,
+.listsPage.ptPage .listReliabilityStrip.watch,
+.listsPage.ptPage .listReliabilityStrip.warn {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:4px 14px;
+  margin:0 0 var(--space-2);
+  padding:0;
+  border:0;
+  background:transparent;
+}
+
+.listsPage.ptPage .listReliabilityStrip > span {
+  display:inline-flex;
+  align-items:baseline;
+  gap:4px;
+}
+
+.listsPage.ptPage .listReliabilityStrip b {
+  color:var(--soft);
+  font-family:var(--font-data);
+  font-size:var(--text-xs);
+  font-weight:600;
+}
+
+.listsPage.ptPage .listReliabilityStrip em {
+  color:var(--muted);
+  font-size:var(--text-xs);
+}
+
+.listsPage.ptPage .listReliabilityStrip.warn .listReliabilityMain b {
+  color:var(--text);
+}
+
+.listsTicketSource {
+  color:var(--soft);
+}
+
+/* ── Contrapesos a las reglas globales con !important de components.css
+   (§9 Table, §13 Pill, §14 Cards). Solo bajo .ptPage: el resto del producto
+   no cambia. Sin ellos la cabecera seguía en tracking .14em y --soft, el hover
+   en --senal-dim y la pastilla de tema con caja. ── */
+.page.ptPage .table th {
+  padding:4px 12px !important;
+  color:var(--muted) !important;
+  font-weight:600 !important;
+  letter-spacing:.06em !important;
+}
+
+.page.ptPage .table td {
+  border-top-color:transparent !important;
+}
+
+.page.ptPage .table tbody tr:hover td {
+  background:var(--surface-raised) !important;
+}
+
+.page.ptPage .table tbody tr:hover td:first-child {
+  box-shadow:none !important;
+}
+
+.page.ptPage .table td .pill {
+  padding:0 !important;
+  background:transparent !important;
+  color:var(--muted) !important;
+  font-weight:500 !important;
+}
+
+.page.ptPage .card,
+.page.ptPage .tableWrap {
+  border-color:var(--line) !important;
+}
+
+.page.ptPage .table td a.ticker,
+.page.ptPage .table td .ticker {
+  font-family:var(--font-body);
+  font-size:var(--text-s);
+}
+
+/* Celdas de dos líneas («TICKER<br>nombre»): en una sola línea, el dato
+   secundario en humo tras el principal — como «TJGC TJGC Group Limited». */
+.page.ptPage .table td > br {
+  display:none;
+}
+
+.page.ptPage .table td > br + .fine {
+  margin-left:6px;
+  color:var(--muted);
+  font-size:var(--text-xs);
+}
+
+.page.ptPage .table td .actionCell,
+.page.ptPage .table td .controls {
+  display:flex;
+  flex-wrap:nowrap;
+  gap:4px;
+  margin:0;
+}
+
+.page.ptPage .table td .btn,
+.page.ptPage .table td .btnSmall {
+  min-height:22px;
+  padding:0 8px;
+  font-size:var(--text-xs);
+}
+
+.page.ptPage .table td .input {
+  min-height:24px;
+  height:24px;
+  padding:0 8px;
+  font-size:var(--text-xs);
+}
+
+/* Barra de controles bajo el ticket (Sectores): una fila de 40 px, como la
+   barra de filtros del screener. */
+.page.ptPage .ptToolbar {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:var(--space-2) var(--space-4);
+  min-height:40px;
+  margin:0 0 var(--space-3);
+  padding:0;
+}
+
+.ptField {
+  display:inline-flex;
+  align-items:center;
+  gap:var(--space-2);
+  margin:0;
+  color:var(--muted);
+  font-size:var(--text-xs);
+}
+
+.ptField > span {
+  color:var(--muted);
+  font-size:var(--text-xs);
+  font-weight:600;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.page.ptPage .ptField .select {
+  width:auto;
+  min-width:180px;
+  max-width:260px;
+  height:28px;
+  min-height:28px;
+  padding:0 26px 0 8px;
+  background-color:var(--surface-inset);
+  font-size:var(--text-s);
+}
+
+/* Segmento (Caza/Auditoría del screener): botones pegados, activo en tinta. */
+.pageTicketSeg {
+  display:inline-flex;
+  align-items:stretch;
+  padding:2px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--surface-inset);
+}
+
+.page .pageTicketSeg .btn,
+.pageTicket .pageTicketSeg .btn {
+  min-height:24px;
+  height:24px;
+  padding:0 10px;
+  border:0;
+  border-radius:3px;
+  background:transparent;
+  color:var(--muted);
+  font-size:var(--text-xs);
+  font-weight:600;
+}
+
+.page .pageTicketSeg .btn.btnActive,
+.pageTicket .pageTicketSeg .btn.btnActive {
+  background:var(--surface-raised);
+  color:var(--text);
+  box-shadow:inset 0 0 0 1px var(--line3);
+}
+
+.pageTicketStrong {
+  color:var(--soft);
+  font-weight:600;
+}
+
+/* ── Sectores: mapa de grupos como filas de var(--row-h) ─────────────── */
+.sectorsPage.ptPage .sectorMapLayout {
+  grid-template-columns:minmax(0,1.6fr) minmax(280px,.7fr);
+  gap:var(--space-3);
+}
+
+.sectorsPage.ptPage .sectorMapLayout > .card {
+  padding:var(--space-3);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--pizarra-0);
+  box-shadow:none;
+}
+
+.sectorsPage.ptPage .groupMap {
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+}
+
+.sectorsPage.ptPage .groupMapHead,
+.sectorsPage.ptPage .groupCard {
+  display:grid;
+  grid-template-columns:minmax(150px,1.3fr) 72px 44px 40px 64px 52px minmax(120px,1.4fr);
+  gap:8px;
+  align-items:center;
+  padding:0 12px;
+}
+
+.sectorsPage.ptPage .groupMapHead {
+  min-height:28px;
+  border-bottom:1px solid var(--line);
+  background:var(--pizarra-0);
+  color:var(--muted);
+  font-size:var(--text-xs);
+  font-weight:600;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+.sectorsPage.ptPage .groupCard {
+  width:100%;
+  height:var(--row-h);
+  min-height:0;
+  border:0;
+  border-bottom:1px solid var(--line);
+  border-radius:0;
+  background:var(--surface);
+  box-shadow:none;
+  color:var(--text);
+  cursor:pointer;
+  transition:background-color var(--t-state);
+}
+
+.sectorsPage.ptPage .groupCard:hover {
+  background:var(--surface-raised);
+}
+
+.sectorsPage.ptPage .groupCard.active {
+  background:var(--senal-dim);
+  box-shadow:inset 3px 0 0 var(--senal);
+}
+
+.sectorsPage.ptPage .groupCardTop {
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  min-width:0;
+  min-height:0;
+}
+
+.sectorsPage.ptPage .groupCardTop b {
+  overflow:hidden;
+  font-size:var(--text-s);
+  font-weight:700;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.sectorsPage.ptPage .groupCardTop em {
+  color:var(--muted);
+  font-family:var(--font-data);
+  font-size:var(--text-xxs);
+}
+
+.sectorsPage.ptPage .strengthBar {
+  height:3px;
+  margin:0;
+  background:var(--line);
+}
+
+/* La fuerza es una medida, no una decisión: tinta, no señal. */
+.sectorsPage.ptPage .strengthBar i {
+  background:var(--soft);
+}
+
+.sectorsPage.ptPage .groupStats {
+  display:contents;
+}
+
+.sectorsPage.ptPage .groupStats span {
+  padding:0;
+  border:0;
+  color:var(--soft);
+  font-family:var(--font-data);
+  font-size:var(--text-s);
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+
+.sectorsPage.ptPage .groupStats b {
+  display:none;
+}
+
+.sectorsPage.ptPage .groupCard small {
+  margin:0;
+  color:var(--muted);
+  font-size:var(--text-xs);
+}
+
+/* Lectura rápida: pares clave-valor en filas de var(--row-h). */
+.sectorsPage.ptPage .quickMetricGrid {
+  margin:0 0 var(--space-3);
+  border-color:var(--line);
+}
+
+.sectorsPage.ptPage .quickMetricGrid span {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-height:var(--row-h);
+  padding:0 12px;
+  border-color:var(--line);
+  background:var(--surface);
+  color:var(--text);
+  font-family:var(--font-data);
+  font-size:var(--text-s);
+  font-weight:600;
+}
+
+.sectorsPage.ptPage .quickMetricGrid b {
+  margin:0;
+  color:var(--muted);
+  font-family:var(--font-body);
+  font-size:var(--text-xs);
+  font-weight:600;
+  letter-spacing:.06em;
+}
+
+.sectorsPage.ptPage .quickMetricGrid + .controls .btn {
+  min-height:30px;
+  font-size:var(--text-s);
+}
+
+/* Drill-down: «Contratos completos» y «Fiable» son infraestructura; sin
+   borde ámbar (regla 7: la infraestructura no usa señal). */
+.sectorsPage.ptPage .groupDrilldownCard {
+  border-color:var(--line);
+  background:var(--surface);
+}
+
+.sectorsPage.ptPage .groupContractScope,
+.sectorsPage.ptPage .groupContractScope.pass,
+.sectorsPage.ptPage .groupContractScope.watch {
+  border-color:var(--line);
+  background:var(--surface);
+}
+
+.sectorsPage.ptPage .groupDrilldownReliability,
+.sectorsPage.ptPage .groupDrilldownReliability.pass,
+.sectorsPage.ptPage .groupDrilldownReliability.watch {
+  border-color:var(--line);
+  background:var(--surface);
+}
+
+@media (max-width:1100px) {
+  .sectorsPage.ptPage .sectorMapLayout {
+    grid-template-columns:1fr;
+  }
+}
+
+@media (max-width:760px) {
+  .sectorsPage.ptPage .groupMapHead {
+    display:none;
+  }
+
+  .sectorsPage.ptPage .groupCard {
+    grid-template-columns:minmax(0,1fr) 40px 40px 56px;
+    height:auto;
+    min-height:var(--row-h);
+    padding:4px 12px;
+  }
+
+  .sectorsPage.ptPage .groupCard .strengthBar,
+  .sectorsPage.ptPage .groupCard small,
+  .sectorsPage.ptPage .groupStats span:nth-child(4) {
+    display:none;
+  }
+}
+
+/* ── Research ───────────────────────────────────────────────────────────── */
+.researchDeskPage.ptPage .commandCenterEmpty {
+  display:block;
+}
+
+.researchDeskPage.ptPage .commandCenterEmpty .emptyStateHead .fine {
+  white-space:nowrap;
+}
+
+.researchDeskPage.ptPage .commandCenterEmpty .emptyStateHead {
+  display:flex;
+  align-items:baseline;
+  gap:var(--space-3);
+}
+
+.researchDeskPage.ptPage .commandCenterEmpty .emptyStateHead h2 {
+  margin:0;
+  color:var(--muted) !important;
+  font-size:var(--text-xs);
+  font-weight:650;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.researchDeskPage.ptPage .commandCenterEmpty p.fine {
+  margin:4px 0 0;
+}
+
+.researchDeskPage.ptPage .summaryRow {
+  min-height:var(--row-h);
+  padding:4px 0;
+  border-bottom:1px solid var(--line);
+  font-size:var(--text-s);
+}
+
+.researchDeskPage.ptPage .researchDeskTools > summary h2 {
+  color:var(--muted);
+  font-size:var(--text-xs);
+  font-weight:650;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+/* ── Vista rápida ───────────────────────────────────────────────────────── */
+.reviewPage.ptPage .reviewControls {
+  display:flex;
+  flex-wrap:wrap;
+  gap:var(--space-2);
+  margin:0 0 var(--space-3);
+}
+
+.reviewPage.ptPage .reviewControls .btn {
+  min-height:28px;
+  padding:0 var(--space-3);
+  font-size:var(--text-s);
+}
+
+.reviewPage.ptPage .pageTicketTruth .reviewStatusLine {
+  font-weight:520;
+  display:inline;
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  font-size:inherit;
+}
+
+.reviewPage.ptPage .reviewEmptyCounts b {
+  color:var(--text);
+  font-family:var(--font-data);
+}
+
+/* ── IPO radar ──────────────────────────────────────────────────────────── */
+.ipoRadarPage.ptPage .ipoFormGrid {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:var(--space-2) var(--space-3);
+}
+
+.ipoRadarPage.ptPage .ipoFormGrid .field {
+  gap:4px;
+  font-size:var(--text-xs);
+}
+
+.ipoRadarPage.ptPage .ipoFormGrid .input,
+.ipoRadarPage.ptPage .ipoFormGrid .select {
+  height:30px;
+  min-height:30px;
+  padding:0 8px;
+  background-color:var(--surface-inset);
+  font-size:var(--text-s);
+}
+
+.ipoRadarPage.ptPage .ipoFormGrid .wide {
+  grid-column:span 2;
+}
+
+.ipoRadarPage.ptPage .ipoFormGrid .textarea {
+  min-height:30px;
+  height:30px;
+  padding:5px 8px;
+  background-color:var(--surface-inset);
+  font-size:var(--text-s);
+}
+
+.ipoRadarPage.ptPage .checkLine {
+  margin-top:var(--space-2);
+  font-size:var(--text-s);
+}
+
+.ipoRadarPage.ptPage .ipoRadarForm .controls {
+  margin-top:var(--space-2) !important;
+}
+
+@media (max-width:1100px) {
+  .ipoRadarPage.ptPage .ipoFormGrid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+/* ── Mercado ────────────────────────────────────────────────────────────── */
+.marketHealthPage.ptPage .marketReliabilityStrip {
+  margin-top:0;
+}
+
+/* El régimen conserva su Archivo (uso reservado), pero el panel pasa a pozo
+   con borde --line y las cifras a tamaño de dato, no de cartel. */
+.marketHealthPage.ptPage .marketRegimePanel {
+  gap:var(--space-4);
+  margin-bottom:var(--space-3);
+  padding:var(--space-4);
+  border-color:var(--line);
+  background:var(--pizarra-0);
+  box-shadow:none;
+}
+
+.marketHealthPage.ptPage .marketRegimeKpis,
+.marketHealthPage.ptPage .marketTapeKpis {
+  border-color:var(--line);
+}
+
+.marketHealthPage.ptPage .marketRegimeKpi,
+.marketHealthPage.ptPage .marketTapeKpi {
+  padding:var(--space-2) var(--space-3);
+}
+
+.marketHealthPage.ptPage .marketRegimeKpi b,
+.marketHealthPage.ptPage .marketTapeKpi b {
+  font-size:var(--display-m);
+  font-weight:600;
+}
+
+.marketHealthPage.ptPage .marketRegimeKpi span,
+.marketHealthPage.ptPage .marketTapeKpi span {
+  font-size:var(--text-xxs);
+}
+
+/* ── Ficha: el ticket sustituye a la cabecera de 220 px ────────────────── */
+/* minmax(0,1fr): la verdad corta del ticket es nowrap y, en una pista auto,
+   su ancho mínimo ensanchaba la página por encima del viewport a 1 024. */
+.stockPage.ptStockPage {
+  grid-template-columns:minmax(0,1fr);
+  width:min(1720px,100%);
+  gap:var(--space-3);
+  padding-top:0;
+  padding-right:28px;
+  padding-left:28px;
+}
+
+.stockPage .stockVerdict.stockTicketHost {
+  display:block;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+
+.stockPage .stockVerdict.stockTicketHost::before,
+.stockPage .stockVerdict.stockTicketHost::after {
+  display:none;
+}
+
+.stockTicket {
+  margin:0;
+}
+
+.stockTicket .stockLogoPro {
+  width:24px;
+  height:24px;
+  border-radius:var(--radius-s, 3px);
+  font-size:var(--text-xxs);
+}
+
+.stockTicket .stockLogoPro img {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+
+/* Ticker de la ficha: Archivo (uno de los tres usos reservados de la
+   dirección visual) pero al tamaño del título de ticket. */
+.stockPage .stockTicket h1.pageTicketTitle {
+  font-family:var(--font-display);
+  font-stretch:var(--stretch-display);
+  font-size:var(--display-m);
+  font-weight:800;
+  letter-spacing:.02em;
+}
+
+/* Chip-curva de etapa en 26 px: curva pequeña + palabra, sin rótulo. */
+.stockTicket .stockDecisionChip {
+  height:26px;
+  gap:6px;
+  padding:0 9px 0 4px;
+  border-color:var(--line);
+  background:var(--surface);
+}
+
+.stockTicket .stockDecisionChip svg {
+  width:40px;
+  height:16px;
+}
+
+.stockTicket .stockDecisionChipBody {
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  white-space:nowrap;
+}
+
+.stockTicket .stockDecisionChipLabel {
+  display:none;
+}
+
+.stockTicket .stockDecisionChipDecision {
+  font-family:var(--font-body);
+  font-size:var(--text-s);
+  font-weight:700;
+  letter-spacing:0;
+  text-transform:none;
+}
+
+.stockTicket .stockStageQualifier {
+  color:var(--muted);
+  font-size:var(--text-xs);
+}
+
+.stockTicket .pageTicketTruth .stockIdentityCompany,
+.stockTicket .pageTicketTruth .stockIdentityKicker,
+.stockTicket .pageTicketTruth .stockVerdictQuoteDate,
+.stockTicket .pageTicketTruth .stockVerdictCurrency {
+  display:inline;
+  margin:0;
+  color:var(--muted);
+  font-family:var(--font-body);
+  font-size:var(--text-s);
+  font-weight:520;
+  letter-spacing:0;
+  text-transform:none;
+}
+
+.stockTicket .pageTicketTruth .stockIdentityCompany {
+  color:var(--soft);
+}
+
+.stockTicket .pageTicketTruth .stockVerdictPrice {
+  color:var(--text);
+  font-family:var(--font-data);
+  font-size:var(--text-s);
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:0;
+}
+
+.stockTicket .pageTicketTruth .stockVerdictPrice[data-state="ghost"] {
+  color:var(--ghost);
+}
+
+.stockTicket .pageTicketTruth .stockVerdictChange {
+  color:var(--soft);
+  font-family:var(--font-data);
+  font-size:var(--text-xs);
+}
+
+.stockTicket .stockVerdictLinks {
+  display:flex;
+  gap:var(--space-2);
+  margin:0;
+  padding:0;
+  border:0;
+}
+
+.stockTicket .stockVerdictLinks .stockHeroLink {
+  display:inline-flex;
+  align-items:center;
+  min-height:30px;
+  padding:var(--space-1) var(--space-3);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:transparent;
+  color:var(--soft);
+  font-size:var(--text-s);
+  font-weight:500;
+  text-decoration:none;
+}
+
+.stockTicket .stockVerdictLinks .stockHeroLink:hover {
+  border-color:var(--line2);
+  color:var(--text);
+}
+
+/* Buscador de la ficha dentro del ticket: 260 px y 30 px de alto. */
+.stockPage .stockTicket .stockChartSearch {
+  width:100%;
+  margin:0;
+  padding:0;
+}
+
+.stockPage .stockTicket .stockChartSearchForm {
+  gap:4px;
+  margin:0;
+}
+
+.stockPage .stockTicket .stockChartSearchInput {
+  height:30px;
+  min-height:30px;
+  padding:0 8px;
+  background:var(--surface-inset);
+  font-size:var(--text-s);
+}
+
+.stockPage .stockTicket .stockChartSearchSubmit,
+.stockPage .stockTicket .stockChartSearchGhost {
+  min-height:30px;
+  height:30px;
+  padding:0 8px;
+  font-size:var(--text-xs);
+}
+
+.stockPage .stockTicket .stockChartSearch .searchCandidates,
+.stockPage .stockTicket .stockChartSearch .searchCandidateGrid {
+  position:absolute;
+  top:calc(100% + 6px);
+  right:0;
+  z-index:30;
+  width:min(420px, calc(100vw - 32px));
+  border:1px solid var(--line2);
+  border-radius:var(--radius);
+  background:var(--surface);
+  box-shadow:var(--shadow-float);
+}
+
+/* «Tu clasificación» + «+ lista»: una barra fina bajo el ticket (como la
+   barra de filtros del screener), sin tarjeta. */
+.stockPage.ptStockPage .stockUserClassification {
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+
+.stockPage.ptStockPage .stockUserClassification {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:var(--space-2) var(--space-5);
+  min-height:32px;
+}
+
+.stockPage.ptStockPage .stockUserClassification > * {
+  margin:0;
+}
+
+.stockPage.ptStockPage .stockClassificationBar {
+  flex:1 1 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:var(--space-3);
+  min-height:32px;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+
+/* Lienzo del gráfico: pozo con borde --line, sin sombra ni relleno grande. */
+.stockPage.ptStockPage .stockChartPanel {
+  padding:var(--space-3);
+  border-color:var(--line);
+  background:var(--pizarra-0);
+  box-shadow:none;
+}
+
+@media (max-width:1100px) {
+  .pageTicketSearch {
+    width:200px;
+  }
+}
+
+/* A 1 024 el tema (también en el cuadro del gráfico) cede su sitio al precio. */
+@media (max-width:1200px) {
+  .stockTicket .stockTicketTheme {
+    display:none;
+  }
+}
+
+@media (max-width:760px) {
+  .page.ptPage {
+    padding:0 16px 96px;
+  }
+
+  .pageTicket {
+    flex-wrap:wrap;
+    gap:var(--space-2);
+    padding:var(--space-2) 0;
+  }
+
+  .pageTicketTruth {
+    flex-basis:100%;
+    order:3;
+    white-space:normal;
+  }
+
+  .pageTicketSpacer {
+    display:none;
+  }
+
+  .pageTicketActions {
+    margin-left:auto;
+  }
+
+  .pageTicketSearch {
+    flex-basis:100%;
+    order:4;
+    width:100%;
+  }
+
+  .pageTicketActions {
+    flex-wrap:wrap;
+    order:4;
+  }
+
+  .stockTicket .stockDecisionChip {
+    width:auto;
+  }
+
+  .stockPage.ptStockPage .stockClassificationBar,
+  .stockPage.ptStockPage .stockClassificationPrimary {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:flex-start;
+    gap:var(--space-2);
+  }
+
+  .stockPage.ptStockPage {
+    padding-right:16px;
+    padding-left:16px;
+  }
+
+  .ipoRadarPage.ptPage .ipoFormGrid {
+    grid-template-columns:1fr;
+  }
+
+  .ipoRadarPage.ptPage .ipoFormGrid .wide {
+    grid-column:1 / -1;
+  }
+}

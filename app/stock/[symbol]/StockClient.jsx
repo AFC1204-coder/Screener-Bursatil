@@ -1,14 +1,15 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ScanSearch } from "lucide-react";
+import { ChevronDown, ChevronLeft, ScanSearch, Search } from "lucide-react";
+import { isScore } from "@/lib/scoreValue";
 import ChartPreferences from "@/app/ChartPreferences";
 import UniversalPriceChart from "@/app/UniversalPriceChart";
 import ChartIdentityCard from "./ChartIdentityCard";
 import DescriptiveStrip from "./DescriptiveStrip";
 import { compactDate } from "@/app/components/ui/QualityStrip";
 import { InfoHint } from "@/app/components/ui/InfoHint";
-import { amount, dateShort, dateTime, num as sharedNum, pct as sharedPct, pctShare, priceMoney as sharedPriceMoney, signedPriceMoney as sharedSignedPriceMoney } from "@/lib/formatters";
 import { debtToEquityDisplay, dividendYieldDisplay, marginDisplay, multipleDisplay, percentDisplay, roeDisplay } from "@/lib/fundamentalsDisplay";
+import { amount, dateShort, dateTime, num as sharedNum, pct as sharedPct, pctShare, priceMoney as sharedPriceMoney, signedPriceMoney as sharedSignedPriceMoney } from "@/lib/formatters";
 import { DEFAULT_CHART_SETTINGS, readChartSettings, writeChartSettings } from "@/lib/chartSettings";
 import { getJson } from "@/lib/clientApi";
 import { buildChartIdentityCard } from "@/lib/chartIdentityCard";
@@ -34,9 +35,127 @@ import { buildStockIpoSalidaContext } from "@/lib/stockIpoSalida";
 import StockAddToListButton from "./StockAddToListButton";
 import StockCompanyBriefPanel, { stockCompanyBriefFacts } from "./StockCompanyBriefPanel";
 import StockSymbolSearch from "./StockSymbolSearch";
+import { PageTicket } from "@/app/components/PageTicket";
 import { resolveStockCompanyBriefSurface } from "@/lib/stockCompanyBriefSurface";
 
 /* ── Componentes de la jerarquía N0–N3 (spec FICHA-TICKER-IA.md) ──────── */
+
+/* ── Ficha móvil (research/movil-2026-11/propuesta.md §2.7) ──────────────
+   Todo lo que sigue se pinta SOLO en móvil: en escritorio la cabecera móvil
+   va con display:none y las secciones plegables con display:contents (el
+   envoltorio no existe para el layout), así que la ficha de escritorio no
+   cambia ni un píxel. Estilos en styles/stock-mobile.css. */
+
+// «16 oct», «27 sept»: fecha corta de la barra / del snapshot, en UTC (las
+// fechas del brief son días de calendario, no instantes).
+export function stockMobileShortDate(value = "") {
+  const text = String(value || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return "";
+  const date = new Date(`${text}T00:00:00Z`);
+  if (!Number.isFinite(date.getTime())) return "";
+  return new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short", timeZone: "UTC" }).format(date).replace(/\.$/, "");
+}
+
+// Frescura de la cabecera móvil: dos fechas porque son dos datos distintos
+// (barras y ranking semanal). La del RS solo si hay RS: sin ranking no hay
+// fecha que dar (rsGlobalAsOf cae a la del universo). Lo que falta se omite.
+export function stockMobileFreshnessParts({ priceDate = "", rsAsOf = "", rsValue = null } = {}) {
+  const parts = [];
+  const price = stockMobileShortDate(priceDate);
+  if (price) parts.push(`precios ${price}`);
+  const rs = isScore(rsValue) ? stockMobileShortDate(rsAsOf) : "";
+  if (rs) parts.push(`RS ${rs}`);
+  return parts;
+}
+
+// Altura pedida al gráfico. En horizontal (teléfono girado) el lienzo ocupa
+// la pantalla menos la lectura y la fila de rangos; en el resto se mantiene
+// 600 (en vertical responsiveChartHeight la recorta a ≤410 por ancho).
+const STOCK_LANDSCAPE_QUERY = "(orientation: landscape) and (max-height: 500px) and (max-width: 1000px)";
+const STOCK_LANDSCAPE_CHROME = 84;
+
+function useStockChartHeight(defaultHeight = 600) {
+  const [height, setHeight] = useState(defaultHeight);
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return undefined;
+    const query = window.matchMedia(STOCK_LANDSCAPE_QUERY);
+    const sync = () => {
+      setHeight(query.matches ? Math.max(200, Math.round(window.innerHeight - STOCK_LANDSCAPE_CHROME)) : defaultHeight);
+    };
+    sync();
+    query.addEventListener?.("change", sync);
+    window.addEventListener("resize", sync);
+    return () => {
+      query.removeEventListener?.("change", sync);
+      window.removeEventListener("resize", sync);
+    };
+  }, [defaultHeight]);
+  return height;
+}
+
+function StockMobileHead({ symbol = "", data = null, priceSnapshot = null, freshnessParts = [], officialUrl = "" }) {
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const priceHas = Number.isFinite(priceSnapshot?.price);
+  return (
+    <header className="stockMobileHead" aria-label={`Ficha de ${symbol}`}>
+      <div className="stockMobileHeadRow">
+        <a className="stockMobileHeadBack" href="/" aria-label="Volver al screener">
+          <ChevronLeft size={22} aria-hidden="true" />
+        </a>
+        <div className="stockMobileHeadTitle">
+          <p className="stockMobileHeadLine">
+            <b className="stockMobileHeadSymbol">{symbol}</b>
+            <span className="stockMobileHeadPrice" data-state={priceHas ? "value" : "ghost"}>
+              {priceHas ? priceMoney(priceSnapshot.price) : "—"}
+            </span>
+          </p>
+          <p className="stockMobileHeadSub">
+            {data?.name && data.name !== symbol ? <span className="stockMobileHeadName">{data.name}</span> : null}
+            {freshnessParts.length ? (
+              <span className="stockMobileFreshness" title="Fecha de la última barra de precios y del ranking RS semanal">
+                {freshnessParts.join(" · ")}
+              </span>
+            ) : null}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="stockMobileHeadTool"
+          aria-expanded={toolsOpen}
+          aria-label={toolsOpen ? "Cerrar búsqueda" : "Buscar otro valor"}
+          onClick={() => setToolsOpen((value) => !value)}
+        >
+          <Search size={20} aria-hidden="true" />
+        </button>
+      </div>
+      {toolsOpen ? (
+        <div className="stockMobileHeadTools">
+          <StockSymbolSearch currentSymbol={symbol} />
+          {officialUrl ? <a className="stockMobileHeadLink" href={officialUrl} target="_blank" rel="noreferrer">Web oficial</a> : null}
+        </div>
+      ) : null}
+    </header>
+  );
+}
+
+// Sección plegable en móvil SIN envoltorio: el botón es un hermano anterior
+// de la sección (display:none en escritorio) y en móvil, plegado, oculta al
+// hermano siguiente. Así la sección sigue siendo hija directa de la ficha y
+// conserva sus selectores (`.stockPage > .card`…): escritorio intacto. El
+// hijo debe pintar siempre un único elemento raíz (no null).
+function StockMobileFold({ title = "", children = null, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+  if (!children) return null;
+  return (
+    <>
+      <button type="button" className="stockMobileFoldToggle" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+        <span>{title}</span>
+        <ChevronDown size={18} aria-hidden="true" />
+      </button>
+      {children}
+    </>
+  );
+}
 
 /* Texto del RS para el detalle auditable de N3 ("RS global"). Vivía también
    en la franja "Calidad de dato" de N0, retirada el 2026-08-22 — una sola
@@ -163,16 +282,29 @@ function StageCurveChip({ stageTone = "", stageWord = "", confirmation = "", con
    decisión — no hay nada que el sistema pueda demostrar sobre este valor. */
 function StockUnavailableBlock({ symbol = "" }) {
   return (
-    <section className="stockPanel stockUnavailable" aria-label="Sin datos para este símbolo">
-      <h1 className="stockIdentityTitle">{symbol}</h1>
-      <p className="stockUnavailableLead">Sin datos de mercado para este símbolo.</p>
+    <section className="stockPanel stockUnavailable esPanel" aria-label="Sin datos para este símbolo">
+      <span className="esEyebrow">Ficha de valor · sin datos</span>
+      <h1 className="stockIdentityTitle">{symbol || "Símbolo no indicado"}</h1>
+      <p className="stockUnavailableLead">
+        No tenemos datos de mercado para {symbol ? <span className="esSymbol">{symbol}</span> : "este símbolo"}.
+      </p>
       <p className="stockUnavailableBody">
         No hay serie de precios ni ficha de empresa disponibles, así que no se
-        muestra precio, etapa ni ninguna lectura técnica. Comprueba el ticker —
-        puede estar mal escrito, pertenecer a un mercado fuera de cobertura o
-        haber dejado de cotizar.
+        muestra precio, etapa ni ninguna lectura técnica. Las causas más habituales:
       </p>
-      <a className="stockUnavailableBack" href="/">Volver al screener</a>
+      <ul className="esReasons">
+        <li><b>Ticker mal escrito</b> o sin el sufijo de mercado (por ejemplo .L, .DE, .HK).</li>
+        <li><b>Mercado fuera de cobertura</b> del universo analizado.</li>
+        <li><b>Valor que dejó de cotizar</b> o cambió de ticker.</li>
+      </ul>
+      <div className="esSearch">
+        <span className="esSearchLabel">Prueba con otro ticker o con el nombre de la empresa.</span>
+        <StockSymbolSearch currentSymbol={symbol} />
+      </div>
+      <div className="esActions">
+        <a className="btn btnPrimary" href="/">Volver al screener</a>
+        <a className="btn" href="/lists">Ver listas</a>
+      </div>
     </section>
   );
 }
@@ -205,6 +337,7 @@ export function N0VerdictBlock({
   priceSnapshot,
   freshness,
   actions,
+  children = null,
 }) {
   const priceHas = Number.isFinite(priceSnapshot?.price);
   // Misma palabra que la tabla y que la fila "ETAPA" de esta misma ficha.
@@ -221,54 +354,49 @@ export function N0VerdictBlock({
   // (`.length === undefined`) el bloque de links desaparecía entero sin error
   // — los botones "Screener" y "Web oficial" no se renderizaban NUNCA.
   const actionList = (Array.isArray(actions) ? actions : [actions]).filter(Boolean);
+  /* Paso 9 (rediseño 2026-11): la cabecera de 220 px (logo 64, ticker en
+     Archivo 50 px, bloque de precio y caja de etapa) es ahora el ticket
+     compartido de 44 px: logo pequeño, ticker, chip-curva de etapa, la verdad
+     corta (nombre · tema · precio · cierre) y las acciones a la derecha.
+     Mismos datos y mismas clases de dato (stockIdentityKicker,
+     stockVerdictPrice…) que antes. */
   return (
-    <section className="stockVerdict" data-stage={stageDisplay?.tone || "none"}>
-      <div className="stockVerdictHead">
-        <div className="stockVerdictIdentity">
-          <StockLogoPro symbol={symbol} visual={data?.visual} />
-          <div className="stockIdentityBlock">
-            {data?.theme ? (
-              <span className="stockIdentityKicker">{data.theme}</span>
-            ) : null}
-            <h1 className="stockIdentityTitle">{symbol}</h1>
-            <p className="stockIdentityCompany">{data?.name || symbol}</p>
-          </div>
-        </div>
-        <div className="stockVerdictQuote">
-          <span className="stockVerdictQuoteLabel">
-            Cierre del gráfico
-            {freshness?.priceDate ? <span className="stockVerdictQuoteDate">{compactDate(freshness.priceDate)}</span> : null}
+    <section className="stockVerdict stockTicketHost" data-stage={stageDisplay?.tone || "none"}>
+      <PageTicket
+        className="stockTicket"
+        lead={<StockLogoPro symbol={symbol} visual={data?.visual} />}
+        title={symbol}
+        badge={<StageCurveChip
+          stageTone={stageDisplay?.tone || ""}
+          stageWord={stageDisplay?.word || ""}
+          confirmation={data?.stage?.weekly?.confirmation || ""}
+          confirmationInfo={stageConfirmationMark(data?.stage?.weekly?.confirmation || "")}
+          qualifier={stageDisplay?.qualifierDisplay || stageDisplay?.qualifier || ""}
+          qualifierTitle={stageDisplay?.title || ""}
+          missingReason={STAGE_MISSING_REASON}
+        />}
+        truth={<>
+          <span className="stockIdentityCompany">{data?.name || symbol}</span>
+          {data?.theme ? <span className="stockTicketTheme">{" · "}<span className="stockIdentityKicker">{data.theme}</span></span> : null}
+          {" · "}
+          <span className="stockVerdictPrice" data-state={priceHas ? "value" : "ghost"}>
+            {priceHas ? priceMoney(priceSnapshot.price) : "—"}
           </span>
-          <div className="stockVerdictQuoteValue">
-            <span className="stockVerdictPrice" data-state={priceHas ? "value" : "ghost"}>
-              {priceHas ? priceMoney(priceSnapshot.price) : "—"}
-            </span>
-            {data?.currency && <span className="stockVerdictCurrency">{data.currency}</span>}
-            {Number.isFinite(priceSnapshot?.dayChangePct) && (
-              <span className="stockVerdictChange">
-                {signedPriceMoney(priceSnapshot.dayChange)} ({sharedPct(priceSnapshot.dayChangePct)})
-              </span>
-            )}
+          {data?.currency ? <span className="stockVerdictCurrency"> {data.currency}</span> : null}
+          {Number.isFinite(priceSnapshot?.dayChangePct) ? (
+            <span className="stockVerdictChange"> {signedPriceMoney(priceSnapshot.dayChange)} ({sharedPct(priceSnapshot.dayChangePct)})</span>
+          ) : null}
+          {freshness?.priceDate ? <>{" · "}<span className="stockVerdictQuoteDate">{freshness.priceIntraday ? `último ${freshness.priceIntradayTime || compactDate(freshness.priceDate)}` : `cierre ${compactDate(freshness.priceDate)}`}</span></> : null}
+        </>}
+        truthTitle="Cierre del gráfico"
+      >
+        {actionList.length ? (
+          <div className="stockVerdictActions stockVerdictLinks">
+            {actionList}
           </div>
-        </div>
-        <div className="stockVerdictActions">
-          <StageCurveChip
-            stageTone={stageDisplay?.tone || ""}
-            stageWord={stageDisplay?.word || ""}
-            confirmation={data?.stage?.weekly?.confirmation || ""}
-            confirmationInfo={stageConfirmationMark(data?.stage?.weekly?.confirmation || "")}
-            qualifier={stageDisplay?.qualifierDisplay || stageDisplay?.qualifier || ""}
-            qualifierTitle={stageDisplay?.title || ""}
-            missingReason={STAGE_MISSING_REASON}
-          />
-        </div>
-      </div>
-
-      {actionList.length ? (
-        <div className="stockVerdictActions stockVerdictLinks">
-          {actionList}
-        </div>
-      ) : null}
+        ) : null}
+        {children}
+      </PageTicket>
     </section>
   );
 }
@@ -1468,6 +1596,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
   const listingDate = data?.ipoDate || data?.listingDate || "";
   const listingLabel = data?.ipoDate ? "IPO" : data?.listingDate ? "Cotiza desde" : "IPO";
   const freshness = data?.dataQuality?.freshness || {};
+  const stockChartHeight = useStockChartHeight(600);
   const coverage = data?.dataQuality?.coverage || {};
   // ADR §3.2 — una sola clasificación local canónica. Encapsula los
   // predicados históricos (`freshness.priceEstimated`, `freshness.chartEstimated`,
@@ -1720,16 +1849,30 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
     </main>;
   }
 
-  return <main className="page stockPage">
+  return <main className="page stockPage ptStockPage">
     <StorageAlert />
-    {/* N0 — Cabecera: identidad + precio + etapa (siempre visible, sin scroll) */}
+    {/* Cabecera móvil (oculta en escritorio): ticker, cierre y frescura con
+        dos fechas — precios de la última barra y RS del último ranking. */}
+    <StockMobileHead
+      symbol={symbol}
+      data={data}
+      priceSnapshot={priceSnapshot}
+      freshnessParts={stockMobileFreshnessParts({ priceDate: freshness.priceDate, rsAsOf: freshness.rsGlobalAsOf, rsValue: rsUniverse })}
+      officialUrl={data?.links?.official || ""}
+    />
+    {/* N0 — Ticket (paso 9): identidad + etapa + precio + acciones; el buscador
+        compacto sube aquí desde la tarjeta del gráfico, como en el screener. */}
     <N0VerdictBlock
       symbol={symbol}
       data={data}
       priceSnapshot={priceSnapshot}
       freshness={freshness}
       actions={n0Actions}
-    />
+    >
+      <div className="pageTicketSearch">
+        <StockSymbolSearch currentSymbol={symbol} />
+      </div>
+    </N0VerdictBlock>
 
     {/* Aquí vivía la mesa de observación (StockDecisionDesk), que solo
         aparecía al entrar desde el screener y reimprimía el veredicto del
@@ -1757,8 +1900,6 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
         Si el SSR no trae datos, N0 ya está visible y el chart muestra su
         propio estado de carga sin tapar precio ni identidad. */}
     <section className="stockChartPanel" aria-label="Gráfico de la ficha">
-      <StockSymbolSearch currentSymbol={symbol} />
-      <h2 className="stockChartTitle">Gráfico</h2>
       <details className="stockChartBenchmarkFold">
         <summary className="stockChartBenchmarkFoldSummary">
           Comparar vs <span className="stockChartBenchmarkFoldValue">{benchmarkDraft || rs.benchmarkSymbol || "SPY"}</span>
@@ -1805,7 +1946,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           patternBadgeRow={setupPattern}
           showPatternDiagnostics={showVcpDiagnostics}
           localQuality={localQuality}
-          height={600}
+          height={stockChartHeight}
           identityCard={identityCardModel ? <ChartIdentityCard card={identityCardModel} /> : null}
           identityCollapsed={identityCardCollapsed}
           onToggleIdentity={() => setIdentityCardCollapsed((value) => !value)}
@@ -1820,20 +1961,24 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
         </div>
       )}
       {data ? (
-        <DescriptiveStrip
-          data={data}
-          setupPattern={setupPattern}
-          technical={technical}
-          stockVolume={stockVolume}
-        />
+        <StockMobileFold title="Estructura y crecimiento">
+          <DescriptiveStrip
+            data={data}
+            setupPattern={setupPattern}
+            technical={technical}
+            stockVolume={stockVolume}
+          />
+        </StockMobileFold>
       ) : null}
-      <StockCompanyBriefPanel
-        symbol={symbol}
-        surface={companyBriefSurface}
-        expanded={companyBriefExpanded}
-        onToggleExpanded={() => setCompanyBriefExpanded((value) => !value)}
-        facts={companyBriefFacts}
-      />
+      <StockMobileFold title="Empresa">
+        <StockCompanyBriefPanel
+          symbol={symbol}
+          surface={companyBriefSurface}
+          expanded={companyBriefExpanded}
+          onToggleExpanded={() => setCompanyBriefExpanded((value) => !value)}
+          facts={companyBriefFacts}
+        />
+      </StockMobileFold>
       {/* Convención para añadir un bloque nuevo bajo el gráfico (p. ej.
           detector de contracciones, salud de corto plazo): renderízalo
           aquí como un <section>/<div> hermano más, DESPUÉS de
@@ -1879,6 +2024,7 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           MethodologyAuditPanel: verdict/confianza + 4 gates no-score (Datos
           técnicos, Histórico, Etapa, Plan). El desglose del score vive
           únicamente en stockScoreBreakdown (primer <details>). */}
+      <StockMobileFold title="Auditoría y calidad del dato">
       <N3AuditBlock
         scoreBreakdown={n3ScoreBreakdown}
         company={n3Company}
@@ -1894,10 +2040,15 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
           ) : null
         }
       />
+      </StockMobileFold>
 
       {/* Comparativos y contexto: viven al final, fuera de la jerarquía
           N0–N3, como soporte secundario. */}
-      <SimilarStocks rows={similar} />
+      {similar?.length ? (
+        <StockMobileFold title="Acciones similares">
+          <SimilarStocks rows={similar} />
+        </StockMobileFold>
+      ) : null}
       {/* ── Bloques retirados el 2026-08-21 (docs/analisis-ficha-cuadro-
           grafico-2026-08-21.md, Parte B) — NO reponer sin releer ese doc ──
 
@@ -1926,9 +2077,17 @@ export default function StockClient({ initialSymbol = "", initialData = null, in
 
           tests/fichaRetiradas.test.js vigila que ninguno vuelva por
           accidente. */}
-      <FundamentalsPanel data={data} growth={g} valuation={v} quote={q} calendar={data.earningsCalendar} currency={statementCurrency} />
-      <NewsSection rows={data.news} />
-      <SocialPulseSection social={social} loading={socialLoading} symbol={symbol} />
+      <StockMobileFold title="Fundamentales">
+        <FundamentalsPanel data={data} growth={g} valuation={v} quote={q} calendar={data.earningsCalendar} currency={statementCurrency} />
+      </StockMobileFold>
+      <StockMobileFold title="Noticias">
+        <NewsSection rows={data.news} />
+      </StockMobileFold>
+      {social && social.configured !== false ? (
+        <StockMobileFold title="Sentimiento social">
+          <SocialPulseSection social={social} loading={socialLoading} symbol={symbol} />
+        </StockMobileFold>
+      ) : null}
     </>}
   </main>;
 }

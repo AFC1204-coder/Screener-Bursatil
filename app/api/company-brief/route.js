@@ -7,6 +7,7 @@ import { inferBusinessTheme } from "@/lib/businessTheme";
 import { externalLinks, inferTradingViewSymbol, isTradingViewWidgetBlocked } from "@/lib/symbols";
 import { withProfileCache } from "@/lib/fundamentalsCache";
 import { withDailyBarsCache } from "@/lib/dailyBarsCache";
+import { isBarSessionInProgress, marketTimeLabel } from "@/lib/marketCalendar";
 import { peerIdentityForSymbol } from "@/lib/peers";
 import { scoreRsBenchmarkModel, scoreRsQuality } from "@/lib/relativeStrength";
 import { readGlobalRsSeriesForSymbol } from "@/lib/globalRs";
@@ -21,7 +22,11 @@ import { ESTIMATED_CHART_PROVIDER, UNAVAILABLE_CHART_PROVIDER, unavailableChartF
 import { userFacingSearchError } from "@/lib/screenerFormat";
 
 const BRIEF_CACHE_TYPE = "company_brief_cache";
-export const BRIEF_CACHE_VERSION = 5;
+// v6 (2026-11-06): la serie RS de la ficha pasa a ser solo el motor fijado
+// (lib/globalRs.js, auditoría del gráfico H1). Las entradas v5 traen la serie
+// del motor heredado (AAPL: línea parada en mayo en 72 frente a 82 en la mesa)
+// y no deben servirse como hit.
+export const BRIEF_CACHE_VERSION = 6;
 const DEFAULT_BRIEF_MAX_AGE_DAYS = 1;
 const BRIEF_RESPONSE_TIMEOUT_MS = Number(process.env.BRIEF_RESPONSE_TIMEOUT_MS || 6500);
 const BRIEF_CACHE_READ_TIMEOUT_MS = Number(process.env.BRIEF_CACHE_READ_TIMEOUT_MS || 1500);
@@ -637,7 +642,23 @@ function ageDaysFromDate(value = "") {
   return Math.max(0, Math.floor((Date.now() - time) / 86400000));
 }
 
-function publicFreshness({ chart = {}, profile = {}, financialResults = null, relativeStrength = {}, weeklyGlobalRs = {}, coverage = {} } = {}) {
+// D4 (auditoría 2026-11): ¿el último precio de la serie es intradía? Lo es si
+// su sesión sigue abierta (o cerró hace menos de 30 min) según el calendario
+// del mercado, o si la caché avisó de que la última barra guardada se
+// escribió antes del cierre (filas antiguas). La ficha deja entonces de
+// rotularlo «cierre» y muestra «último HH:MM <huso>».
+function intradayPriceInfo(symbol = "", chart = {}, latestBar = {}, now = Date.now()) {
+  const sym = symbol || chart.meta?.symbol || "";
+  if (!latestBar.date || !sym) return { priceIntraday: false, priceIntradayTime: "" };
+  const intraday = isBarSessionInProgress(sym, latestBar.date, now)
+    || chart.meta?.cache?.partialLatest === true;
+  if (!intraday) return { priceIntraday: false, priceIntradayTime: "" };
+  const marketTime = Number(chart.meta?.regularMarketTime);
+  const at = Number.isFinite(marketTime) && marketTime > 0 ? marketTime * 1000 : now;
+  return { priceIntraday: true, priceIntradayTime: marketTimeLabel(sym, at) };
+}
+
+function publicFreshness({ symbol = "", chart = {}, profile = {}, financialResults = null, relativeStrength = {}, weeklyGlobalRs = {}, coverage = {} } = {}) {
   const latestBar = (chart.bars || []).find((bar) => bar?.date && Number.isFinite(bar.close)) || {};
   const fundamentalsAsOf = profile.growthMetrics?.fundamentalsAsOf || financialResults?.latest?.date || "";
   const fundamentalsCache = profile.fundamentalsCache || {};
@@ -646,6 +667,7 @@ function publicFreshness({ chart = {}, profile = {}, financialResults = null, re
   const priceAgeDays = ageDaysFromDate(latestBar.date);
   return {
     priceDate: latestBar.date || "",
+    ...intradayPriceInfo(symbol, chart, latestBar),
     priceAgeDays,
     chartBars: chart.bars?.length || 0,
     chartStale: !Number.isFinite(priceAgeDays) || priceAgeDays > 5,
@@ -1760,7 +1782,7 @@ export async function getCompanyBrief(symbol, options = {}) {
       coverage.chartUnavailable = true;
       coverage.issues = [...new Set(["sin serie de precios real", ...(coverage.issues || [])])];
     }
-    const freshness = publicFreshness({ chart, profile, financialResults, relativeStrength, weeklyGlobalRs, coverage });
+    const freshness = publicFreshness({ symbol, chart, profile, financialResults, relativeStrength, weeklyGlobalRs, coverage });
     if (chartEstimated) {
       freshness.chartEstimated = true;
       freshness.priceEstimated = true;

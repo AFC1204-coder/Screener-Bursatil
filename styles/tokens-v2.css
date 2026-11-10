@@ -180,4 +180,13 @@
   --curve-glyph-w      : 40px;                      /* glifo inline junto a ticker */
   --curve-glyph-h      : 16px;
   --curve-hero-h       : 72px;                      /* constelación de cabecera */
+
+  /* ── Rediseño Screener 2026-11 (research/redesign-2026-11/propuesta.md §e) ── */
+  --surface-raised  : var(--pizarra-3);   /* hover de fila de la cinta */
+  --row-h           : 32px;               /* fila de la cinta, compacto */
+  --row-h-comfort   : 40px;               /* fila de la cinta, cómodo */
+  --rail-w          : 208px;              /* raíl de vistas */
+  --peek-w          : 372px;              /* panel lateral de lectura */
+  --top-h           : 48px;               /* topbar */
+  --ticket-h        : 44px;               /* ticket de pantalla (sustituye al hero) */
 }

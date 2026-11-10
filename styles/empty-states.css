@@ -1,0 +1,103 @@
+/* styles/empty-states.css — estados vacíos y 404 (Review, ficha, not-found).
+   Hoja propia: solo tokens globales, sin tocar screener/components/market-health. */
+
+.esPanel {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 880px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+}
+
+.esEyebrow {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.esTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-l, 1.5rem);
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.esLead {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--soft);
+  font-size: var(--text-s);
+  line-height: 1.55;
+}
+
+.esReasons {
+  margin: 0;
+  padding-left: 1.1em;
+  max-width: 62ch;
+  display: grid;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-s);
+  line-height: 1.5;
+}
+
+.esReasons b { color: var(--soft); font-weight: 600; }
+
+.esActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.esSearch {
+  --stock-line: var(--line2, var(--line));
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.esSearch .esSearchLabel { font-size: var(--text-xs); color: var(--muted); }
+.esSearch .stockChartSearch { align-items: flex-start; padding: 0; margin: 0; }
+.esSearch .stockChartSearchForm { justify-content: flex-start; width: min(100%, 520px); }
+.esSearch .stockChartSearchError { text-align: left; }
+
+.esExits {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.esExit {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-inset, var(--surface));
+  color: var(--text);
+}
+
+.esExit:hover { border-color: var(--soft); }
+.esExit b { display: block; }
+.esExit span { display: block; margin-top: var(--space-1); font-size: 12.5px; color: var(--soft); }
+
+.esSymbol {
+  font-family: var(--font-mono, var(--font-body));
+  padding: 0 .35em;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-inset, var(--surface));
+}
+
+@media (max-width: 640px) {
+  .esPanel { padding: var(--space-5) var(--space-4); }
+  .esActions .btn { flex: 1 1 100%; justify-content: center; }
+}
+
+/* Review: la tarjeta es rejilla de 2 columnas; los bloques nuevos ocupan todo el ancho. */
+.reviewEmptyState .reviewEmptyReasons,
+.reviewEmptyState .reviewEmptySearch { grid-column: 1 / -1; }

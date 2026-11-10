@@ -8,7 +8,7 @@ export async function run({ context, baseUrl }) {
   await page.goto(`${baseUrl}/research-desk`, { waitUntil: "networkidle", timeout: 90000 });
   await page.locator('[data-testid="research-desk-tools"] summary').click();
   await page.fill("textarea.textarea", "NVDA");
-  await page.click("text=Anadir a watchlist");
+  await page.click("text=Añadir a favoritos");
   await page.waitForFunction(() => {
     const table = [...document.querySelectorAll("table")].find((el) => /evoluci/i.test(el.innerText));
     return table && table.innerText.includes("NVDA");

@@ -1,5 +1,7 @@
 "use client";
 import "../../styles/review.css";
+import "../../styles/empty-states.css";
+import StockSymbolSearch from "../stock/[symbol]/StockSymbolSearch";
 
 // Cola de revisión, tras la limpieza del 2026-08-24
 // (docs/analisis-vista-rapida-2026-08-24.md). La misma operación que la ficha
@@ -63,6 +65,7 @@ import {
   collectReviewSymbolsForChartPreviewHydrate,
 } from "@/lib/reviewChartPreviewHydrate";
 import StorageAlert from "@/app/components/StorageAlert";
+import { PageTicket } from "@/app/components/PageTicket";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { evidenceRows } from "@/lib/reviewEvidence";
 import { buildReviewMetricRows } from "@/lib/reviewMetricGrid";
@@ -672,31 +675,32 @@ export default function ReviewPage() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeRow, currentIndex, favorites, favoriteSymbols, reviewSettings, rows.length, source, visibleRows.length]);
 
-  return <main className={`page reviewPage ${queueCollapsed ? "reviewQueueIsCollapsed" : ""}`.trim()}>
-    <StorageAlert />
-    <section className="card hero">
-      <div className="heroTop">
-        <div>
-          <h1>Vista rápida</h1>
-        </div>
-        <div className="mobileActions">
-          <button className={`btn ${source === "current" ? "btnActive" : ""}`} onClick={() => loadSource("current")}>Cola actual</button>
-          <button className={`btn ${source === "latest" ? "btnActive" : ""}`} onClick={() => loadSource("latest")}>Último snapshot</button>
-          <button className={`btn ${source === "favorites" ? "btnActive" : ""}`} onClick={() => loadSource("favorites")}>Favoritos</button>
-          <a className="btn" href="/">Screener</a>
-        </div>
-      </div>
-    </section>
+  const showReviewControls = visibleRows.length > 0 || hidden.size > 0;
 
-    <section className="card reviewStatus">
-      <div className="kpis">
-        <div className="kpi"><b>{visibleRows.length}</b><span>{singleSymbolMode ? "símbolo" : queueFiltersActive ? "acciones filtradas" : "acciones en cola"}</span></div>
-        <div className="kpi"><b>{currentIndex + (visibleRows.length ? 1 : 0)}</b><span>posición actual</span></div>
-        <div className="kpi"><b>{reviewed.size}</b><span>revisadas</span></div>
-        <div className="kpi"><b>{resolvedVisibleCount}</b><span>resueltas ficha</span></div>
-        <div className="kpi"><b>{hidden.size}</b><span>ocultas</span></div>
+  /* Paso 9 (rediseño 2026-11): ticket de 44 px en lugar del hero, la fila de
+     cinco tiles y el enlace «Screener» (la topbar ya navega). El origen de la
+     cola es un segmento del ticket; las cifras de los tiles y la línea de
+     estado van en la verdad corta. La botonera de la cola solo se pinta si hay
+     cola (o valores ocultos que mostrar): con la cola vacía eran seis botones
+     deshabilitados. */
+  return <main className={`page reviewPage ptPage ${queueCollapsed ? "reviewQueueIsCollapsed" : ""}`.trim()}>
+    <StorageAlert />
+    <PageTicket
+      title="Vista rápida"
+      truth={<>
+        <b>{currentIndex + (visibleRows.length ? 1 : 0)}</b>/<b>{visibleRows.length}</b> {singleSymbolMode ? "símbolo" : queueFiltersActive ? "acciones filtradas" : "en cola"}
+        {" · "}<b>{reviewed.size}</b> revisadas · <b>{resolvedVisibleCount}</b> resueltas en ficha · <b>{hidden.size}</b> ocultas
+        {" · "}<span className={reviewStatusLineClassName}>{investorStatusLabel(reviewStatusText)}</span>
+      </>}
+    >
+      <div className="pageTicketSeg" role="group" aria-label="Origen de la cola">
+        <button type="button" className={`btn ${source === "current" ? "btnActive" : ""}`} aria-pressed={source === "current"} onClick={() => loadSource("current")}>Cola actual</button>
+        <button type="button" className={`btn ${source === "latest" ? "btnActive" : ""}`} aria-pressed={source === "latest"} onClick={() => loadSource("latest")}>Último snapshot</button>
+        <button type="button" className={`btn ${source === "favorites" ? "btnActive" : ""}`} aria-pressed={source === "favorites"} onClick={() => loadSource("favorites")}>Favoritos</button>
       </div>
-      <div className="controls reviewControls">
+    </PageTicket>
+
+    {showReviewControls ? <div className="controls reviewControls">
         <button className="btn" onClick={() => move(-1)} disabled={!visibleRows.length || singleSymbolMode}>Anterior</button>
         <button className="btn btnPrimary" onClick={() => move(1)} disabled={!visibleRows.length || singleSymbolMode}>Siguiente</button>
         <button className="btn" onClick={() => toggleFavorite()} disabled={!activeRow}>{favoriteSymbols.has(activeSymbol) ? "Quitar favorito" : "Favorito"}</button>
@@ -714,9 +718,7 @@ export default function ReviewPage() {
             {queueCollapsed ? "Mostrar cola" : "Ocultar cola"}
           </button>
         ) : null}
-      </div>
-      <div className={reviewStatusLineClassName}>{investorStatusLabel(reviewStatusText)}</div>
-    </section>
+      </div> : null}
 
     {!visibleRows.length ? <section className={`card emptyState reviewEmptyState ${queueEmptyByFilter ? "filtered" : ""} ${queuePendingComplete ? "complete" : ""}`.trim()}>
       <div className="emptyStateHead">
@@ -724,17 +726,22 @@ export default function ReviewPage() {
         <h2>{queueEmptyTitle}</h2>
         <p className="fine">{queueEmptyDetail}</p>
       </div>
-      <div className="reviewEmptyMetrics" aria-label="Resumen de cola vacía">
-        <span><b>{baseVisibleRows.length}</b><em>en cola</em></span>
-        <span><b>{pendingVisibleCount}</b><em>pendientes</em></span>
-        <span><b>{resolvedVisibleCount}</b><em>resueltas</em></span>
-      </div>
+      {/* Paso 9: sin los tres tiles a cero; en cola/pendientes/resueltas, en una línea. */}
+      {baseVisibleRows.length ? <p className="fine reviewEmptyCounts"><b>{baseVisibleRows.length}</b> en cola · <b>{pendingVisibleCount}</b> pendientes · <b>{resolvedVisibleCount}</b> resueltas</p> : null}
+      {!queueEmptyByFilter ? <ul className="esReasons reviewEmptyReasons" aria-label="Por qué está vacía">
+        <li><b>No has enviado valores a revisión.</b> La cola se llena desde el Screener o desde una lista.</li>
+        <li><b>La sesión anterior ya no está.</b> La cola se guarda en este navegador; si limpiaste datos o usas otro equipo, empieza de cero.</li>
+        <li><b>Todo estaba oculto.</b> Si ocultaste valores, pueden estar fuera de la vista.</li>
+      </ul> : null}
       <div className="controls reviewEmptyActions">
         {queueCompletionResolution ? <button className="btn btnPrimary" onClick={() => showResolutionQueue(queueCompletionResolution.key)}>{queueCompletionActionLabel}</button> : null}
-        {queueFiltersActive ? <button className={`btn ${queueCompletionResolution ? "" : "btnPrimary"}`.trim()} onClick={clearQueueFilters}>Quitar filtros</button> : <a className="btn btnPrimary" href="/">Ir al screener</a>}
-        <a className="btn" href="/">Screener</a>
-        <a className="btn" href="/research-desk">Research Desk</a>
+        {queueFiltersActive ? <button className={`btn ${queueCompletionResolution ? "" : "btnPrimary"}`.trim()} onClick={clearQueueFilters}>Quitar filtros</button> : <a className="btn btnPrimary" href="/">Volver al screener</a>}
+        {!queueEmptyByFilter ? <a className="btn" href="/lists">Ver listas</a> : <a className="btn" href="/">Screener</a>}
       </div>
+      {!queueEmptyByFilter ? <div className="esSearch reviewEmptySearch stockPage">
+        <span className="esSearchLabel">O abre directamente un valor para revisarlo:</span>
+        <StockSymbolSearch />
+      </div> : null}
     </section> : <section className={`reviewWorkbench ${queueCollapsed ? "queueCollapsed" : ""}`.trim()}>
       <aside className={`reviewQueue ${queueCollapsed ? "isCollapsed" : ""}`.trim()} id="review-queue-panel" aria-hidden={queueCollapsed}>
         <div className="reviewQueueHead">

@@ -3,6 +3,7 @@ import { dateShort, num, pctShare } from "@/lib/formatters";
 import { MissingValue } from "@/lib/screenerColumns";
 import { stageDisplayForRow } from "@/lib/stageDisplay";
 import { MARKET_REGION_KEYS } from "@/lib/marketRegions";
+import { dataDateFreshness } from "@/lib/marketRegimeFreshness";
 
 function stageLabel(snapshot = {}) {
   const display = stageDisplayForRow(snapshot);
@@ -25,7 +26,18 @@ function breadthLabel(breadth, dataAsOf) {
   return { missing: reason };
 }
 
-export default function RegionalRegimeChips({ regimes = {}, heroScope = "US" }) {
+// Veredicto regional con la misma regla de caducidad que el hero (D3): fecha
+// del último cierre del ETF; caducado o sin fecha → sin adjetivo ni score.
+function regionalVerdict(row = {}, degraded = false, now) {
+  const freshness = dataDateFreshness(row.etfSnapshot?.lastDate, now);
+  if (degraded || row.etfFailure || !freshness.asOf) return { usable: false, text: "Sin datos", title: "Sin datos de mercado para esta región." };
+  if (freshness.stale) {
+    return { usable: false, text: `Sin actualizar · ${freshness.asOfLabel}`, title: `Veredicto sin actualizar desde el ${freshness.asOfLabel}.` };
+  }
+  return { usable: true, text: row.regime?.label || "—", title: `ETF al ${freshness.asOfLabel}.` };
+}
+
+export default function RegionalRegimeChips({ regimes = {}, heroScope = "US", degraded = false, now }) {
   const keys = MARKET_REGION_KEYS.filter((key) => regimes[key]);
   if (!keys.length) return null;
 
@@ -42,12 +54,14 @@ export default function RegionalRegimeChips({ regimes = {}, heroScope = "US" }) 
           const breadth = row.breadth || {};
           const amplitude = breadthLabel(breadth, breadth.dataAsOf);
           const isHero = key === heroScope;
+          const verdict = regionalVerdict(row, degraded, now);
           return (
             <article
               className="marketRegionalRegimeChip"
               key={key}
               data-region={key}
               data-hero={isHero || undefined}
+              data-stale={!verdict.usable || undefined}
             >
               <header className="marketRegionalRegimeChipHead">
                 <span className="marketRegionFlag" aria-hidden="true">{row.flag}</span>
@@ -72,11 +86,11 @@ export default function RegionalRegimeChips({ regimes = {}, heroScope = "US" }) 
                 </div>
                 <div className="marketRegionalRegimeMetric">
                   <span>Veredicto</span>
-                  <b>{row.regime?.label || "—"}</b>
+                  <b title={verdict.title}>{verdict.text}</b>
                 </div>
               </div>
               <footer className="marketRegionalRegimeChipFoot">
-                <span>{num(row.score)}</span>
+                <span>{verdict.usable ? num(row.score) : "—"}</span>
                 <span>{num(breadth.population)} en escaneo</span>
               </footer>
             </article>

@@ -37,8 +37,8 @@ import { attachDecisionTrace, auditDecisionRowIssues, buildDecisionAuditExportPa
 import { decisionProfileStateForStock } from "@/lib/decisionProfile";
 import { buildScreenerDataHealth, dataHealthFilterLabel } from "@/lib/screenerDataHealth";
 import { buildScreenerScoreAudit, scoreAuditFilterLabel, scoreAuditReviewReasons, scoreAuditStatusForRow } from "@/lib/screenerScoreAudit";
-import { decisionResolutionForSymbol } from "@/lib/stockDecisionResolution";
-import { alignedScanSettingsSignature, compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, isScanSettingsStale, manualUniverseRows, normalizeFilterTemplates, perfNow, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
+import { applyStockDecisionResolution, decisionResolutionForSymbol, reopenStockDecisionResolution } from "@/lib/stockDecisionResolution";
+import { alignedScanSettingsSignature, compactRowsForSession, defaultSortForSettings, failureKind, fastFilterSignature, filterAnalyzedRows, ipoRadarUniverseRows, isScanSettingsStale, manualUniverseRows, normalizeFilterTemplates, perfNow, persistReviewQueue, persistRowForBrowser, scanSettingsSignature, secondsLabel, sectorize, setupModeLabel, sortMetric, uid, universeScopeKey } from "@/lib/screenerPipeline";
 import {
   applyChartPreviewsToRows,
   buildChartPreviewHydrateSignature,
@@ -55,6 +55,8 @@ import { chartPreviewScanIdsFromScan } from "@/lib/scansChartPreviewScanIds";
 import { markRsBootstrapCoreReady, mergeExtendedRsIntoRows, scheduleExtendedRsHydration } from "@/lib/scansRsBootstrap";
 import { isCazaResultView, resolveResultViewMode, SCREENER_RESULT_VIEW_MODE_CHANGED_EVENT } from "@/lib/screenerResultViewMode";
 import { createDebouncedSessionSaver, screenerFiltersFromScan, withScanScreenerFilters } from "@/lib/screenerFilterFastPath";
+import { screenerEmptyFilterText } from "@/lib/dataAge";
+import { regimeStamp } from "@/lib/marketRegimeFreshness";
 import { snapshotCoverageGaps, templateSnapshotAssessment } from "@/lib/templateApplication";
 import { buildSessionKeepNotice, buildSnapshotFreshnessNotice, buildLocalFallbackNotice, buildCloudAuthRequiredNotice, localScanIsSampled, manualDataRefreshStatus, screenerSessionRefreshReason, sessionAutoRefreshStatus, snapshotCloudFallbackReason } from "@/lib/snapshotFreshness";
 import { coldProgressEmptyLabel } from "@/lib/screenerColdProgress";
@@ -87,7 +89,7 @@ import {
 } from "@/lib/screenerFilterCatalog";
 import { getOrComputeHuntFilter, huntFilterCacheKey, huntPresetActiveSettings, warmHuntFilterCache } from "@/lib/screenerHuntFilterCache";
 import { markHuntGesture } from "@/lib/screenerHuntPerf";
-import { huntCardSelection, huntDisplayName } from "@/lib/screenerHuntCards";
+import { HUNT_CARDS, huntCardSelection, huntDisplayName, huntQueueRows, normalizeHuntQueue } from "@/lib/screenerHuntCards";
 import { FilterFamilyEmptyLabel } from "@/lib/filterFamilyEmpty";
 import { filterFamilyCoverageByPilot, shouldUseFamilyEmptyLabel } from "@/lib/filterFamilyCoverage";
 import { filterFamilyImpactByPilot } from "@/lib/filterFamilyImpact";
@@ -203,6 +205,16 @@ export default function Page() {
   const [fcaFirdsEnabled, setFcaFirdsEnabled] = useState(null);
   const [rows, setRows] = useState([]);
   const [analyzedRows, setAnalyzedRows] = useState([]);
+  // Rediseño 2026-11 (paso 6): cola externa del raíl («Esta noche», Favoritos).
+  // No es un preset: lista de símbolos buscada en analyzedRows sin el filtro de
+  // la ficha. Cualquier cambio de criterios, ficha o plantilla la retira (ver
+  // efecto más abajo), así nunca convive con un filtro que no se está viendo.
+  const [huntQueue, setHuntQueue] = useState(null);
+  const queueRows = useMemo(
+    () => (huntQueue ? huntQueueRows(huntQueue, analyzedRows) : null),
+    [huntQueue, analyzedRows],
+  );
+  const viewRows = queueRows || rows;
   const [scanContext, setScanContext] = useState(null);
   const [scanPerf, setScanPerf] = useState(null);
   const onHuntTruthLinePaint = useCallback((ms) => {
@@ -325,6 +337,7 @@ export default function Page() {
     });
   }, []);
   const getScreenerSession = useCallback(() => safeRead(STORAGE_KEYS.screenerSession, {}) || {}, []);
+  const [chartSettings, setChartSettings] = useState(DEFAULT_CHART_SETTINGS);
   const quickReview = useQuickReviewSession({
     activeSettings,
     presetKey,
@@ -359,7 +372,7 @@ export default function Page() {
     setScreenerDecisionResolutions(safeRead(STORAGE_KEYS.review, {})?.decisionResolutions || {});
   }, [screenerDecisionRevision, quickReviewResolutionRevision]);
   const resultView = useResultViewModel({
-    rows,
+    rows: viewRows,
     activeSettings,
     viewLayers,
     screenerDecisionResolutions,
@@ -441,7 +454,6 @@ export default function Page() {
     sortAsc,
     perfPeriod,
   };
-  const [chartSettings, setChartSettings] = useState(DEFAULT_CHART_SETTINGS);
   const [chartScope, setChartScope] = useState("global");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -507,6 +519,7 @@ export default function Page() {
   const fastFilterSignatureRef = useRef("");
   const huntFilterCacheRef = useRef(new Map());
   const huntWarmCancelRef = useRef(null);
+  const [huntCardCounts, setHuntCardCounts] = useState({});
   const restoreScrollRef = useRef(null);
   const sessionAutosaveRef = useRef(null);
   if (!sessionAutosaveRef.current) sessionAutosaveRef.current = createDebouncedSessionSaver();
@@ -1419,7 +1432,7 @@ export default function Page() {
     if (preserveStatusPrefix) statusContextRef.current = "";
     setStatus(filteredView.rows.length
       ? `${prefix ? `${prefix} · ` : ""}${filteredView.rows.length} de ${analyzedRows.length} acciones a la vista (filtro aplicado en ${secondsLabel(filteredView.filterMs)}).`
-      : `${prefix ? `${prefix} · ` : ""}Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`);
+      : `${prefix ? `${prefix} · ` : ""}${screenerEmptyFilterText(analyzedRows.length, filteredView.diagnostics)}`);
   }
 
   // Re-filtrado automático: cualquier cambio de criterios (a mano, por
@@ -1435,6 +1448,12 @@ export default function Page() {
     commitFilteredView(filteredView, signature);
   }, [sessionReady, analyzedRows, scanContext, activeSettings, marketHealth, useRegimeFilter, presetKey, markets, isHuntTransitionPending]);
 
+  // Paso 6: la cola externa se retira en cuanto cambian los criterios, la ficha
+  // o los mercados — así nunca hay un filtro editado que no se esté viendo.
+  useEffect(() => {
+    setHuntQueue(null);
+  }, [presetKey, settings, filterLayers, fieldRules, useRegimeFilter, markets]);
+
   useEffect(() => {
     huntWarmCancelRef.current?.();
     huntFilterCacheRef.current = new Map();
@@ -1445,6 +1464,18 @@ export default function Page() {
       analyzedRows,
       context,
       filterAnalyzedRows,
+      {
+        // Paso 6: conteo por ficha para el raíl, leído de la caché ya caliente.
+        onDone: (cache) => {
+          const counts = {};
+          for (const card of HUNT_CARDS) {
+            const view = cache.get(huntFilterCacheKey(card.presetKey, analyzedRows.length, context));
+            const merged = view ? withIpoDiscoveryWatchMerge(view, { presetKey: card.presetKey, markets }) : null;
+            if (merged?.rows) counts[card.id] = merged.rows.length;
+          }
+          setHuntCardCounts(counts);
+        },
+      },
     );
     return () => huntWarmCancelRef.current?.();
   }, [sessionReady, analyzedRows, scanContext, marketHealth, useRegimeFilter]);
@@ -1707,8 +1738,8 @@ export default function Page() {
                 filterLayers={filterLayers}
                 settings={activeSettings}
               />
-              : `Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`)
-          : `Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`)
+              : screenerEmptyFilterText(analyzedRows.length, diagnostics))
+          : screenerEmptyFilterText(analyzedRows.length, diagnostics))
         : "Sin escaneo en mesa. Los datos de anoche se cargan al abrir; si no aparecen, reintenta o busca un ticker.";
   // La desalineación mercados↔scan se pinta en ScreenerShell (un banner + CTA).
   // No ocupamos snapshotNotice para evitar duplicar el aviso naranja.
@@ -2260,6 +2291,7 @@ export default function Page() {
     setStatus(`Plantilla guardada: ${name}.`);
   }
   function applySavedFilterTemplate(id) {
+    setHuntQueue(null);
     setSelectedFilterTemplateId(id);
     const template = savedFilterTemplates.find((item) => item.id === id);
     if (!template) {
@@ -2583,6 +2615,7 @@ export default function Page() {
   function applyHuntCard(cardId) {
     const selection = huntCardSelection(cardId, { perfPeriod });
     if (!selection) return;
+    setHuntQueue(null);
     const huntLabel = huntDisplayName(selection.presetKey, markets);
     if (!analyzedRows.length || !scanContext) {
       setPreset(selection.presetKey, { sort: selection.sort });
@@ -2646,8 +2679,23 @@ export default function Page() {
       }));
       setStatus(filteredView.rows.length
         ? `Filtro activo: ${huntLabel} · ${filteredView.rows.length} de ${analyzedRows.length} acciones a la vista (filtro aplicado en ${secondsLabel(filteredView.filterMs)}).`
-        : `Filtro activo: ${huntLabel} · Ningún valor de los ${analyzedRows.length} analizados pasa este filtro. Afloja alguna condición o cambia de plantilla; los datos siguen cargados.`);
+        : `Filtro activo: ${huntLabel} · ${screenerEmptyFilterText(analyzedRows.length, filteredView.diagnostics)}`);
     });
+  }
+  // Paso 6: abre una cola externa del raíl («Esta noche», Favoritos). No toca
+  // preset, criterios ni datos: solo sustituye las filas que ve la mesa por las
+  // de la cola (las capas de vista siguen aplicando encima).
+  function applyHuntQueue(view) {
+    const queue = normalizeHuntQueue(view);
+    if (!queue) return;
+    markHuntGesture("hunt-queue");
+    setHuntQueue(queue);
+    setResultPage(1);
+    const found = huntQueueRows(queue, analyzedRows).length;
+    setStatus(`Vista: ${queue.label} · ${found} de ${queue.symbols.size} en la mesa cargada.`);
+  }
+  function clearHuntQueue() {
+    setHuntQueue(null);
   }
   // Descarga la lista de tickers del ámbito seleccionado (la usa la búsqueda
   // por país/mercado). Nunca toca los resultados cargados: sin botón Ejecutar,
@@ -2744,8 +2792,7 @@ export default function Page() {
       useRegimeFilter,
       sort,
       rowsAreFilteredSnapshot: true,
-      marketScore: marketHealth?.marketScore ?? null,
-      marketRegime: marketHealth?.regime?.label || "sin dato",
+      ...regimeStamp(marketHealth),
       snapshotCompatibilityKey: compatibilityKey,
       comparison: {
         compatiblePrevious: Boolean(previousScan),
@@ -2801,8 +2848,7 @@ export default function Page() {
       fieldRules,
       viewLayers,
       viewFilters: { countryFilter, themeFilter, sectorFilter, industryFilter, sectorStrength, ipo, decisionResolutionFilter, sort },
-      marketScore: marketHealth?.marketScore ?? null,
-      marketRegime: marketHealth?.regime?.label || "sin dato",
+      ...regimeStamp(marketHealth),
     });
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob), a = document.createElement("a");
@@ -3017,6 +3063,26 @@ export default function Page() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeFilterFamily]);
 
+  // Paso 7: clasificar desde el panel lateral de la cinta. Misma escritura que
+  // la ficha (applyStockDecisionResolution sobre la revisión guardada): no
+  // reconstruye la cola de revisión. actionKey vacío = volver a pendiente.
+  function resolveScreenerDecision(row, actionKey = "") {
+    if (!row?.symbol) return;
+    const previousReview = safeRead(STORAGE_KEYS.review, {});
+    const previous = decisionResolutionForSymbol(previousReview, row.symbol);
+    const nextReview = actionKey
+      ? applyStockDecisionResolution(previousReview, { symbol: row.symbol, actionKey, source: "screener-peek" })
+      : reopenStockDecisionResolution(previousReview, {
+        symbol: row.symbol,
+        source: "screener-peek",
+        note: previous?.label ? `Antes: ${previous.label}` : "",
+      });
+    persistReviewQueue(nextReview);
+    setScreenerDecisionRevision((value) => value + 1);
+    const resolution = decisionResolutionForSymbol(nextReview, row.symbol);
+    setStatus(resolution ? `${row.symbol}: ${resolution.label}.` : `${row.symbol}: vuelve a pendiente.`);
+  }
+
   function onSelectResultRow(symbol = "") {
     setSelectedResultSymbol(String(symbol || "").trim());
   }
@@ -3097,10 +3163,12 @@ export default function Page() {
       setSidebarCollapsed,
       kpiUniverseCount,
       marketHealth,
-      rows,
-      huntTruthOverride,
+      rows: viewRows,
+      huntTruthOverride: huntQueue ? null : huntTruthOverride,
       isHuntTransitionPending,
       onHuntTruthLinePaint,
+      huntQueue,
+      huntCardCounts,
     }}
     sidebar={{
       presetKey,
@@ -3109,6 +3177,8 @@ export default function Page() {
       filterTemplateName,
       setPreset,
       applyHuntCard,
+      applyHuntQueue,
+      clearHuntQueue,
       applySavedFilterTemplate,
       setFilterTemplateName,
       saveCurrentFilterTemplate,
@@ -3179,6 +3249,8 @@ export default function Page() {
       marketsStale,
       scanModeStale,
       scannedAt: scanContext?.scannedAt || null,
+      // D2: id del escaneo mostrado, ancla de «Cambios de la semana».
+      scanLocalId: scanContext?.id || "",
       scannedMarkets: effectiveScannedMarkets,
       marketsLoadFailed,
       marketsLoadFailedDetail,
@@ -3189,7 +3261,7 @@ export default function Page() {
       fcaFirdsEnabled,
     }}
     results={{
-      rows,
+      rows: viewRows,
       filtered,
       pagedRows,
       activeSettings,
@@ -3214,6 +3286,7 @@ export default function Page() {
       selectedResultSymbol,
       onSelectResultRow,
       openResultReview,
+      resolveScreenerDecision,
     }}
   />
 
@@ -3237,7 +3310,9 @@ export default function Page() {
     />}
 
     <QuickReviewModal
-      activeModalRow={modalReviewRows[modalReviewPosition] || activeModalRow}
+      // Cerrar (Esc / «Cerrar») pone activeModalRow a null; sin esta guarda la
+      // cola de revisión mantenía el diálogo abierto (fallo previo al paso 7).
+      activeModalRow={activeModalRow ? (modalReviewRows[modalReviewPosition] || activeModalRow) : null}
       chartListId={chartListId}
       chartScope={effectiveChartScope}
       chartSettings={chartSettings}

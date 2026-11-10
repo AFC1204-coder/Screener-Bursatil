@@ -28,7 +28,8 @@ describe("rs-theme-private parseArgs", () => {
     const args = parseArgs([]);
     expect(args.dryRun).toBe(true);
     expect(args.write).toBe(false);
-    expect(args.themes.length).toBe(12);
+    // 13 desde la auditoría 2026-11 (P4): se añade «Materiales / minería».
+    expect(args.themes.length).toBe(13);
   });
 
   it("--write desactiva dry-run salvo --dry-run explícito", () => {
@@ -89,8 +90,10 @@ describe("rankableThemeForProfile", () => {
     expect(assign.exclusionReason).toBe(null);
   });
 
-  it("sector Yahoo residual no rankea", () => {
-    const assign = rankableThemeForProfile("Basic Materials", "Chemicals", "Mining company");
+  it("sector residual (fuera de la taxonomía) no rankea", () => {
+    // Antes del P4 (auditoría 2026-11) el ejemplo era «Basic Materials»; ahora
+    // rankea como «Materiales / minería». Residual = sector sin regla.
+    const assign = rankableThemeForProfile("Other", "Holding", "Diversified holding company");
     expect(assign.themeKey).toBe(null);
     expect(assign.exclusionReason).toBe(EXCLUSION_REASONS.THEME_RESIDUAL);
   });

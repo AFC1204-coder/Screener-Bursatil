@@ -2,7 +2,7 @@ import { buildDiscoverySnapshot, dataAsOfFrom, rsAsOfFrom } from "@/lib/discover
 import { discoveryCacheKeyForParams, readMaterializedDiscoverySnapshot } from "@/lib/discoveryCache";
 import { compressedJsonResponse } from "@/lib/compressedJsonResponse";
 import { attachWeeklyRs, readGlobalRsForSymbols } from "@/lib/globalRs";
-import { readNightlyUsScanRows, readScanRows } from "@/lib/leaderboards";
+import { NIGHTLY_SCAN_COLUMNS_WITH_COUNT, readNightlyUsScan, readNightlyUsScanRows, readScanRows } from "@/lib/leaderboards";
 
 const DEFAULT_DISCOVERY_SCAN_ROWS = 900;
 const DEFAULT_DISCOVERY_SINCE_DAYS = 21;
@@ -12,6 +12,30 @@ const FALLBACK_DISCOVERY_SCAN_ROWS = 900;
 const FALLBACK_DISCOVERY_SINCE_DAYS = 14;
 const DISCOVERY_READ_TIMEOUT_MS = Number(process.env.DISCOVERY_READ_TIMEOUT_MS || 3500);
 const DISCOVERY_FALLBACK_TIMEOUT_MS = Number(process.env.DISCOVERY_FALLBACK_TIMEOUT_MS || 2500);
+// El nocturno se lee COMPLETO (row_count filas, auditoría de producto 2026-11,
+// D6): antes Listas pedía 80 de 3.287 y calculaba las nueve listas sobre esa
+// cabeza del ranking sin decirlo. Cada página de 1.000 filas tiene su propio
+// tiempo límite.
+const DISCOVERY_NIGHTLY_PAGE_TIMEOUT_MS = Number(process.env.DISCOVERY_NIGHTLY_PAGE_TIMEOUT_MS || 8000);
+
+// El nocturno no cambia hasta la noche siguiente: el snapshot derivado (listas
+// y grupos, sin el RS semanal, que se rehidrata en cada respuesta) se guarda
+// en memoria por escaneo, parámetros y día (la frescura se cuenta en días).
+// Así solo la primera petición paga la lectura completa.
+const NIGHTLY_SNAPSHOT_MEMO_MAX = 8;
+const nightlySnapshotMemo = new Map();
+
+function nightlyMemoKey(scanId, params = {}) {
+  const { cache: _cache, maxRows: _maxRows, sinceDays: _sinceDays, ...rest } = params;
+  return `${scanId}|${JSON.stringify(rest)}|${new Date().toISOString().slice(0, 10)}`;
+}
+
+function rememberNightlySnapshot(key, value) {
+  if (!key) return;
+  nightlySnapshotMemo.delete(key);
+  nightlySnapshotMemo.set(key, value);
+  while (nightlySnapshotMemo.size > NIGHTLY_SNAPSHOT_MEMO_MAX) nightlySnapshotMemo.delete(nightlySnapshotMemo.keys().next().value);
+}
 
 // Ausencia explícita, en lenguaje de producto y distinguiendo los casos: no
 // es lo mismo que el nocturno no haya corrido, que haya corrido y fallado, o
@@ -133,12 +157,16 @@ function readOptions(params = {}, fallback = {}) {
 async function readDiscoveryScanRows(params = {}) {
   const options = readOptions(params);
   if (params.source !== "recent") {
-    // Anclado: un escaneo concreto, no una ventana temporal. sinceDays deja
-    // de tener sentido aquí —el nocturno es el que es— y maxRows solo acota
-    // cuántas de sus filas se traen.
+    // Anclado: un escaneo concreto, no una ventana temporal, y COMPLETO.
+    // sinceDays y maxRows del cliente no aplican aquí: el nocturno es el que es.
+    const anchoredRead = { maxRows: null, sinceDays: null, timeoutMs: DISCOVERY_NIGHTLY_PAGE_TIMEOUT_MS, bounded: false, anchored: true };
     try {
-      const scanData = await readNightlyUsScanRows({ maxRows: options.maxRows, timeoutMs: options.timeoutMs });
-      return { scanData, degraded: false, fallback: null, read: { ...options, anchored: true } };
+      const found = await readNightlyUsScan({ timeoutMs: options.timeoutMs, columns: NIGHTLY_SCAN_COLUMNS_WITH_COUNT });
+      const memoKey = found?.scan?.id ? nightlyMemoKey(found.scan.id, params) : "";
+      const memo = memoKey ? nightlySnapshotMemo.get(memoKey) : null;
+      if (memo) return { scanData: memo.scanData, snapshot: memo.snapshot, degraded: false, fallback: null, read: { ...anchoredRead, memo: true } };
+      const scanData = await readNightlyUsScanRows({ maxRows: "all", timeoutMs: DISCOVERY_NIGHTLY_PAGE_TIMEOUT_MS, found });
+      return { scanData, memoKey, degraded: false, fallback: null, read: anchoredRead };
     } catch (error) {
       if (!isRecoverableReadError(error)) throw error;
       // Un timeout no puede convertirse en "aquí tienes otro mercado": se
@@ -222,7 +250,9 @@ export async function GET(request) {
       }
     }
 
-    const { scanData, degraded, fallback, read } = await readDiscoveryScanRows(params);
+    const startedAt = Date.now();
+    const { scanData, snapshot: memoSnapshot, memoKey, degraded, fallback, read } = await readDiscoveryScanRows(params);
+    const readMs = Date.now() - startedAt;
     if (!scanData.configured) {
       return compressedJsonResponse(request, apiPayload({
         configured: false,
@@ -281,12 +311,34 @@ export async function GET(request) {
       }));
     }
 
-    const snapshot = await withWeeklyRsSnapshot(buildDiscoverySnapshot(scanData.rows, params));
+    let baseSnapshot = memoSnapshot;
+    if (!baseSnapshot) {
+      baseSnapshot = buildDiscoverySnapshot(scanData.rows, params);
+      // Solo se recuerda una lectura completa y sin degradar.
+      if (memoKey && !degraded) rememberNightlySnapshot(memoKey, { snapshot: baseSnapshot, scanData: { ...scanData, rows: [] } });
+    }
+    const buildMs = Date.now() - startedAt - readMs;
+    const snapshot = await withWeeklyRsSnapshot(baseSnapshot);
+    const rsMs = Date.now() - startedAt - readMs - buildMs;
+    // «Calculado sobre N de M filas»: si la lectura no trajo el nocturno
+    // entero, se dice en la respuesta y en la pantalla, no se calla.
+    const nightlyRowCount = Number(scanData.nightly?.rowCount);
+    const inputRows = Number(snapshot.inputRows) || 0;
+    const coverage = Number.isFinite(nightlyRowCount) && nightlyRowCount > 0
+      ? { inputRows, nightlyRows: nightlyRowCount, complete: inputRows >= nightlyRowCount, label: inputRows >= nightlyRowCount ? "" : `calculado sobre ${inputRows.toLocaleString("es-ES")} de ${nightlyRowCount.toLocaleString("es-ES")} filas` }
+      : null;
     let health = degraded ? {
       ...snapshot.health,
       state: snapshot.health?.state === "pass" ? "warn" : snapshot.health?.state,
       note: `${snapshot.health?.note || ""} Lectura limitada por timeout: ${fallback.maxRows} filas max, ${fallback.sinceDays} dias.`,
     } : snapshot.health;
+    if (coverage && !coverage.complete) {
+      health = {
+        ...health,
+        state: health?.state === "pass" ? "watch" : health?.state,
+        note: `${health?.note || ""} Listas ${coverage.label} del escaneo nocturno.`.trim(),
+      };
+    }
     if (read?.bounded) {
       health = {
         ...health,
@@ -303,6 +355,7 @@ export async function GET(request) {
       fallback,
       cache: cacheState,
       nightly: scanData.nightly || null,
+      coverage,
       dataAsOf: dataAsOfFrom(snapshot),
       rsAsOf: rsAsOfFrom(snapshot),
       effectiveRead: read ? {
@@ -310,6 +363,10 @@ export async function GET(request) {
         sinceDays: read.sinceDays,
         timeoutMs: read.timeoutMs,
         bounded: read.bounded,
+        anchored: Boolean(read.anchored),
+        complete: coverage ? coverage.complete : null,
+        memo: Boolean(read.memo),
+        timingsMs: { read: readMs, build: buildMs, rs: rsMs },
       } : null,
     }));
   } catch (error) {

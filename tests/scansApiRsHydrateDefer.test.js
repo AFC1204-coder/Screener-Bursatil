@@ -72,7 +72,7 @@ const THEME_RS_ENTRY = {
   sampleSize: 142,
   asOf: "2026-08-01",
   weekKey: "2026-W31",
-  engineVersion: "statsedge-private-theme-rs-usd-semis-fotonica-v1",
+  engineVersion: "statsedge-private-theme-rs-usd-semis-fotonica-v2",
   themeKey: "Semis / fotonica",
 };
 
@@ -159,5 +159,26 @@ describe("GET /api/scans · PERF-NAC defer RS país/tema", () => {
     expect(row.weeklyCountryRsRating).toBe(72);
     expect(row.weeklyThemeRsAvailable).toBe(true);
     expect(row.weeklyThemeRsRating).toBe(84);
+  });
+
+  it("?hydrateRs=1&rsPatch=1 devuelve solo symbol + RS país/tema (mismo merge, sin re-descarga)", async () => {
+    const full = await (await GET(new Request("https://statsedge.test/api/scans?includeRows=1&limit=1&rowsLimit=500&hydrateRs=1"))).json();
+    const patch = await (await GET(new Request("https://statsedge.test/api/scans?includeRows=1&limit=1&rowsLimit=500&hydrateRs=1&rsPatch=1"))).json();
+    expect(patch.projection).toBe("rs-patch");
+    expect(patch.scans[0].id).toBe(full.scans[0].id);
+    const row = patch.scans[0].rows[0];
+    expect(row.symbol).toBe(full.scans[0].rows[0].symbol);
+    expect(Object.keys(row).every((key) => key === "symbol" || key.startsWith("weeklyCountryRs") || key.startsWith("weeklyThemeRs"))).toBe(true);
+    expect(row.weeklyCountryRsRating).toBe(72);
+    expect(row.weeklyThemeRsRating).toBe(84);
+    // La proyección no muta la entrada de caché compartida con hydrateRs=1.
+    const again = await (await GET(new Request("https://statsedge.test/api/scans?includeRows=1&limit=1&rowsLimit=500&hydrateRs=1"))).json();
+    expect(Object.keys(again.scans[0].rows[0]).length).toBe(Object.keys(full.scans[0].rows[0]).length);
+  });
+
+  it("rsPatch=1 se ignora en core (hydrateRs=0): la mesa sigue recibiendo filas completas", async () => {
+    const core = await (await GET(new Request("https://statsedge.test/api/scans?includeRows=1&limit=1&rowsLimit=500&hydrateRs=0&rsPatch=1"))).json();
+    expect(core.projection).not.toBe("rs-patch");
+    expect(Object.keys(core.scans[0].rows[0]).length).toBeGreaterThan(5);
   });
 });

@@ -3,7 +3,7 @@ import { compactResearchRow } from "@/lib/researchRowContract";
 import { projectScanRowForMesaTransport } from "@/lib/scanLightProjection";
 import { isPublicScanStatus } from "@/lib/scanStatus";
 import { prepareScanDecisionRow, scanDecisionMetrics, scanDecisionRaw, scanDecisionRowFromDb } from "@/lib/scanDecisionProjection";
-import { clearScansApiCache, LATEST_SCAN_TTL_MS, scansApiCache } from "@/lib/scansApiCache";
+import { clearScansApiCache, LATEST_SCAN_TTL_MS, scansApiCache, scansApiInflight } from "@/lib/scansApiCache";
 import { readLatestMaterializedScanForMarkets, sortedMarketsForLookup } from "@/lib/materializedScanLookup";
 import { readNightlyUsScan } from "@/lib/nightlyUsScan";
 import { MARKETS_ANCHOR, NIGHTLY_US_ANCHOR } from "@/lib/scanLocalId";
@@ -13,6 +13,7 @@ import { attachWeeklyRs, readGlobalRsForSymbols } from "@/lib/globalRs";
 import { attachWeeklyCountryRs, readCountryRsForSymbols } from "@/lib/countryRsHydrate";
 import { attachWeeklyThemeRs, readThemeRsForSymbols } from "@/lib/themeRsHydrate";
 import { scanRsHydrationMode } from "@/lib/scansRsHydration";
+import { projectScansPayloadToRsPatch } from "@/lib/scansRsBootstrap";
 import { scanChartPreviewTransportMode, stripChartPreviewForTransport } from "@/lib/scansChartPreviewTransport";
 import { userFacingServiceError } from "@/lib/serviceErrors";
 import { compressedJsonResponse } from "@/lib/compressedJsonResponse";
@@ -449,6 +450,10 @@ export function scanFromDb(row, results = [], options = {}) {
   const prepareRow = options.omitDecisionTrace
     ? (item) => item
     : (item) => prepareScanDecisionRow(item, decisionSettings);
+  // created_at del escaneo: corrige al leer la fecha corrida de los nocturnos
+  // anteriores a a34389a (lib/scanPriceDateRepair.js).
+  // Con varios escaneos fusionados (matchAllResults) vale la fecha de cada fila.
+  const rowOptions = { ...options, scanCreatedAt: options.matchAllResults ? "" : (row.created_at || "") };
   const rows = results
     .filter((item) => options.matchAllResults || item.scan_id === row.id)
     .sort((a, b) => (a.rank_index || 0) - (b.rank_index || 0))
@@ -461,7 +466,7 @@ export function scanFromDb(row, results = [], options = {}) {
       let row = attachCachedMarketCap(
         attachWeeklyThemeRs(
           attachWeeklyCountryRs(
-            attachWeeklyRs(prepareRow(scanDecisionRowFromDb(item, options)), weeklyRsBySymbol),
+            attachWeeklyRs(prepareRow(scanDecisionRowFromDb(item, rowOptions)), weeklyRsBySymbol),
             weeklyCountryRsBySymbol,
           ),
           weeklyThemeRsBySymbol,
@@ -552,6 +557,16 @@ function compactErrorMessage(value = "") {
 async function cachedLatestScans(cacheKey, loadPayload) {
   const cached = scansApiCache.peek(cacheKey, { allowExpired: true });
   if (cached && !cached.expired) return cached.value;
+  const pending = scansApiInflight.get(cacheKey);
+  if (pending) return pending;
+  const promise = loadLatestScansOrStale(cacheKey, cached, loadPayload).finally(() => {
+    if (scansApiInflight.get(cacheKey) === promise) scansApiInflight.delete(cacheKey);
+  });
+  scansApiInflight.set(cacheKey, promise);
+  return promise;
+}
+
+async function loadLatestScansOrStale(cacheKey, cached, loadPayload) {
   try {
     const payload = await loadPayload();
     scansApiCache.set(cacheKey, payload, LATEST_SCAN_TTL_MS);
@@ -650,8 +665,8 @@ export async function GET(req) {
   const limit = Math.min(Number(searchParams.get("limit") || 50), 100);
   const rowsLimit = Math.min(Math.max(Number(searchParams.get("rowsLimit") || 5000), 0), 20000);
   const scanSelect = "id,local_id,created_at,updated_at,deleted_at,name,preset,settings,market_score,market_regime,row_count";
-  const resultSelectFull = "scan_id,rank_index,raw,symbol,company_name,country,sector,industry,theme,total_score,weinstein_score,minervini_score,risk_score,rs_rating,metrics";
-  const resultSelectDecision = "scan_id,rank_index,symbol,company_name,country,sector,industry,theme,total_score,weinstein_score,minervini_score,risk_score,rs_rating,metrics";
+  const resultSelectFull = "scan_id,created_at,rank_index,raw,symbol,company_name,country,sector,industry,theme,total_score,weinstein_score,minervini_score,risk_score,rs_rating,metrics";
+  const resultSelectDecision = "scan_id,created_at,rank_index,symbol,company_name,country,sector,industry,theme,total_score,weinstein_score,minervini_score,risk_score,rs_rating,metrics";
   const resultSelect = decisionProjection ? resultSelectDecision : resultSelectFull;
   // ?anchor=nightly-us pide UN escaneo concreto —el último nocturno
   // estadounidense— en lugar del más reciente de la base. No es un lujo: el
@@ -839,7 +854,12 @@ export async function GET(req) {
         ...(anchoredToNightlyUs ? { nightly: { found: true, ...nightly.scan } } : {}),
       };
     };
-    return compressedJsonResponse(req, cacheableLatest ? await cachedLatestScans(cacheKey, loadPayload) : await loadPayload());
+    const payload = cacheableLatest ? await cachedLatestScans(cacheKey, loadPayload) : await loadPayload();
+    // ?rsPatch=1 (solo con hydrateRs extended y compacto): la segunda fase del
+    // arranque solo necesita RS país/tema por símbolo. Se proyecta DESPUÉS de
+    // la caché, así que comparte entrada con hydrateRs=1 y no la muta.
+    const rsPatchOnly = searchParams.get("rsPatch") === "1" && rsHydrationMode === "extended" && !full && !decisionProjection;
+    return compressedJsonResponse(req, rsPatchOnly ? projectScansPayloadToRsPatch(payload) : payload);
   } catch (error) {
     return Response.json({ configured: true, ok: false, error: compactErrorMessage(error.message) || "No se pudieron cargar snapshots", details: error.details || null }, { status: 500 });
   }

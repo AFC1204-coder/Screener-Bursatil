@@ -3,6 +3,7 @@
 import "../styles/tokens-v2.css";
 import "../styles/base.css";
 import "../styles/components.css";
+import "../styles/bottom-nav.css";
 import AuthGate from "./AuthGate";
 import BottomNav, { AppHeaderNav } from "./BottomNav";
 

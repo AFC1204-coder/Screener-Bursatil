@@ -376,8 +376,8 @@ describe("buildScreenerTruthMarketSegments", () => {
       compact: true,
     })).toEqual([
       "3 mercados en mesa",
-      "Mostrando CA+HK+US · selección 28 mercados",
-      "11% selección en mesa",
+      "Mostrando CA+HK+US · selección 26 mercados",
+      "12% selección en mesa",
     ]);
   });
 

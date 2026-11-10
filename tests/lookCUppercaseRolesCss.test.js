@@ -29,7 +29,7 @@ describe("LOOK-C2 · uppercase solo en 3 roles (screener home)", () => {
       ".layerControlMeta",
       ".scanStatusBar span",
       ".huntCardModeBadge",
-      ".decisionSummaryChip span",
+      // .decisionSummaryChip: CSS muerto sin JSX, retirado en el paso 7/8 del rediseño 2026-11.
       ".screenerContractStats em",
       ".filterFamilyHeader span",
     ]) {
@@ -38,8 +38,11 @@ describe("LOOK-C2 · uppercase solo en 3 roles (screener home)", () => {
     }
   });
 
+  // El rótulo «Mercados» del aside (.marketPanelHead) se retiró con el cajón
+  // lateral móvil (estudio móvil 2026-11, paso 9). En la hoja de filtros, los
+  // rótulos de sección (.mobileSheetLabel) son ese mismo rol.
   it("tres roles permitidos conservan uppercase + tracking", () => {
-    const section = extractRuleBlock(SCREENER_CSS, ".marketPanelHead span");
+    const section = extractRuleBlock(SCREENER_CSS, ".mobileSheetLabel");
     expect(section).toMatch(/text-transform:\s*uppercase/i);
     expect(section).toMatch(/letter-spacing:/);
 

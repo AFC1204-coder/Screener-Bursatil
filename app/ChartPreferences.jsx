@@ -193,6 +193,7 @@ export default function ChartPreferences({ settings, onChange, symbol = "", list
         <label><input type="checkbox" checked={indicators.rsLine} onChange={(event) => updateIndicators({ rsLine: event.target.checked })} /> Fuerza relativa (global)</label>
         <label><input type="checkbox" checked={indicators.rsCountryLine} onChange={(event) => updateIndicators({ rsCountryLine: event.target.checked })} /> RS país</label>
         <label><input type="checkbox" checked={indicators.rsThemeLine} onChange={(event) => updateIndicators({ rsThemeLine: event.target.checked })} /> RS tema</label>
+        <label title="Precio dividido entre el índice de «Comparar vs». Se lee por forma, no por valor."><input type="checkbox" checked={indicators.benchmarkLine === true} onChange={(event) => updateIndicators({ benchmarkLine: event.target.checked })} /> Línea ÷ índice</label>
         <label><input type="checkbox" checked={indicators.maFast} onChange={(event) => updateIndicators({ maFast: event.target.checked })} /> Media 1</label>
         <MaLengthInput
           ariaLabel="Periodo media 1"

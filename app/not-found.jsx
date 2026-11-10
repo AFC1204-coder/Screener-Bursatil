@@ -15,6 +15,8 @@
 //     navegación, no sugerencias de qué mirar.
 
 import Link from "next/link";
+import "../styles/empty-states.css";
+import StockSymbolSearch from "./stock/[symbol]/StockSymbolSearch";
 
 const EXITS = [
   { href: "/", label: "Screener", detail: "La tabla de resultados y los filtros." },
@@ -23,53 +25,36 @@ const EXITS = [
   { href: "/market-health", label: "Salud de mercado", detail: "Régimen, amplitud y liderazgo." },
 ];
 
-// `.eyebrow` solo existe en la hoja de salud de mercado, que aquí no se carga:
-// el micro-rótulo se compone con tokens globales para no arrastrar una hoja
-// entera por una línea de texto.
-const EYEBROW_STYLE = {
-  display: "block",
-  textTransform: "uppercase",
-  letterSpacing: ".08em",
-  fontSize: "11px",
-  color: "var(--muted)",
-};
-
 export default function NotFound() {
   return (
     <main className="page">
-      <section className="card">
-        <span style={EYEBROW_STYLE}>StatsEdge · Error 404</span>
-        <h1 style={{ margin: "var(--space-2) 0", fontFamily: "var(--font-display)" }}>
-          Esta página no existe
-        </h1>
-        <p style={{ margin: 0, maxWidth: "60ch", color: "var(--soft)" }}>
+      <section className="card esPanel" aria-labelledby="notFoundTitle">
+        <span className="esEyebrow">StatsEdge · Error 404</span>
+        <h1 className="esTitle" id="notFoundTitle">Esta página no existe</h1>
+        <p className="esLead">
           La dirección que has abierto no corresponde a ninguna pantalla del producto.
           Puede que el enlace esté mal escrito, o que apunte a un valor que ya no está
           en el universo analizado.
         </p>
 
-        {/* Dos columnas en cuanto hay sitio: cuatro tarjetas a ancho completo
-            hacían una escalera vacía. `.fine` aquí no vale — su color está
-            pensado para pies de tabla y sobre esta tarjeta no se lee. */}
-        <div
-          className="notFoundExits"
-          style={{
-            display: "grid",
-            gap: "var(--space-3)",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            marginTop: "var(--space-5)",
-          }}
-        >
-          {EXITS.map((exit) => (
-            <Link className="card" key={exit.href} href={exit.href} style={{ display: "block", padding: "var(--space-4)" }}>
-              <b>{exit.label}</b>
-              <span style={{ display: "block", marginTop: "var(--space-1)", fontSize: "12.5px", color: "var(--soft)" }}>{exit.detail}</span>
-            </Link>
-          ))}
+        <div className="esActions">
+          <Link className="btn btnPrimary" href="/">Volver al screener</Link>
         </div>
 
-        <div style={{ marginTop: "var(--space-5)" }}>
-          <Link className="btn btnPrimary" href="/">Volver al screener</Link>
+        {/* La búsqueda reutiliza los estilos de `.stockPage`, de ahí el
+            envoltorio: así el buscador es el mismo que el de la ficha. */}
+        <div className="esSearch stockPage">
+          <span className="esSearchLabel">¿Buscabas un valor? Busca por ticker o nombre.</span>
+          <StockSymbolSearch />
+        </div>
+
+        <div className="esExits">
+          {EXITS.map((exit) => (
+            <Link className="esExit" key={exit.href} href={exit.href}>
+              <b>{exit.label}</b>
+              <span>{exit.detail}</span>
+            </Link>
+          ))}
         </div>
       </section>
     </main>

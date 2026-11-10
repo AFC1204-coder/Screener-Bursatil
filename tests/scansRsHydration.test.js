@@ -80,7 +80,7 @@ describe("contrato core vs extended · campos de fila de mesa", () => {
         sampleSize: 142,
         asOf: "2026-08-01",
         weekKey: "2026-W31",
-        engineVersion: "statsedge-private-theme-rs-usd-semis-fotonica-v1",
+        engineVersion: "statsedge-private-theme-rs-usd-semis-fotonica-v2",
         themeKey: "Semis / fotonica",
       }]]),
     );

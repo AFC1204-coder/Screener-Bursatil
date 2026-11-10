@@ -1,19 +1,21 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { FilterArchitecturePanel } from "@/app/screenerPanels";
+// Selector de mercados del screener: chip de ámbito (ticket de escritorio) y
+// sus piezas (presets y rejilla), que la hoja de filtros móvil monta tal cual.
+// El cajón lateral móvil que vivía aquí se retiró con el estudio móvil
+// 2026-11 (paso 9): su contenido está en MobileFilterSheet.
+
 import { isMarketSelectable, marketUnavailabilityReason } from "@/lib/marketAvailability";
 import { MARKET_ORDER, MARKETS, marketExchange } from "@/lib/screenerConfig";
 import { marketFlag } from "@/lib/symbols";
 import {
   MARKET_PRESET_CHIP_OPTIONS,
-  isDiarioChromeMode,
   resolveActiveMarketPresetLabel,
 } from "@/lib/screenerChromeMode";
 
 const MARKET_REGION_PRESETS = MARKET_PRESET_CHIP_OPTIONS.map(([key]) => key);
 
-function MarketCustomizeDetails({
+export function MarketCustomizeDetails({
   markets,
   hasActiveMarketPreset,
   setMarketsAndInvalidate,
@@ -55,7 +57,7 @@ function MarketCustomizeDetails({
   );
 }
 
-function MarketPresetBar({ isMarketPresetActive, marketPreset }) {
+export function MarketPresetBar({ isMarketPresetActive, marketPreset }) {
   return (
     <div className="marketPresetBar">
       {MARKET_PRESET_CHIP_OPTIONS.map(([key, label]) => (
@@ -72,144 +74,40 @@ function MarketPresetBar({ isMarketPresetActive, marketPreset }) {
   );
 }
 
-export default function ScreenerSidebar({
-  mobileFiltersRef,
-  showMobileFilters,
-  onCloseMobileFilters,
+/**
+ * Chip de ámbito «EE. UU. 1/27» que despliega los presets y la rejilla de
+ * mercados. Rediseño 2026-11 (paso 4): el mismo selector vive en el ticket del
+ * screener (escritorio) y en el cajón de filtros (móvil); no hay un segundo
+ * selector.
+ */
+export function MarketScopeChip({
   markets,
-  marketsStale,
+  marketsStale = false,
   isMarketPresetActive,
   marketPreset,
   setMarketsAndInvalidate,
-  filterLayers,
-  useRegimeFilter,
-  toggleFilterLayer,
-  setActiveFilterFamily,
-  setUseRegimeFilter,
-  sheetFamilyKeys,
-  cardLabel,
-  settings,
-  fieldRules,
-  familyIntensity,
-  familyIntensityCustom,
-  familyCoverage,
-  familyImpact,
-  previewFamilyIntensity,
-  commitFamilyIntensity,
-  chromeMode = "diario",
-  fichaAdjustOpen = false,
-  onFichaAdjustOpenChange,
-  chromeModeToggle = null,
+  className = "",
 }) {
-  const diario = isDiarioChromeMode(chromeMode);
-  const fichaDisclosureRef = useRef(null);
   const hasActiveMarketPreset = MARKET_REGION_PRESETS.some((key) => isMarketPresetActive(key));
   const marketChipLabel = resolveActiveMarketPresetLabel(isMarketPresetActive);
-
-  useEffect(() => {
-    if (!diario || !fichaAdjustOpen || !fichaDisclosureRef.current) return;
-    if (!fichaDisclosureRef.current.open) fichaDisclosureRef.current.open = true;
-  }, [diario, fichaAdjustOpen]);
-
-  const filterArchitecture = (
-    <FilterArchitecturePanel
-      filterLayers={filterLayers}
-      useRegimeFilter={useRegimeFilter}
-      onToggleLayer={toggleFilterLayer}
-      onOpenLayer={setActiveFilterFamily}
-      onToggleRegime={() => setUseRegimeFilter((prev) => !prev)}
-      sheetFamilyKeys={sheetFamilyKeys}
-      cardLabel={cardLabel}
-      settings={settings}
-      fieldRules={fieldRules}
-      familyIntensity={familyIntensity}
-      familyIntensityCustom={familyIntensityCustom}
-      familyCoverage={familyCoverage}
-      familyImpact={familyImpact}
-      onFamilyIntensityChange={previewFamilyIntensity}
-      onFamilyIntensityCommit={commitFamilyIntensity}
-    />
-  );
-
   return (
-    <aside
-      ref={mobileFiltersRef}
-      className={`sidebar ${showMobileFilters ? "mobileOpen" : ""} ${diario ? "sidebar--diario" : "sidebar--expert"}`}
-    >
-      <div className="mobileSidebarHeader">
-        <h2>Filtros</h2>
-        <div className="mobileSidebarHeaderActions">
-          <button type="button" className="btn btnPrimary" onClick={onCloseMobileFilters}>Listo</button>
-          <button type="button" className="mobileSidebarCloseBtn" onClick={onCloseMobileFilters} aria-label="Cerrar filtros" title="Cerrar filtros">✕</button>
-        </div>
+    <details className={`marketCompactDisclosure${className ? ` ${className}` : ""}`}>
+      <summary className="marketCompactChip" aria-label={`Mercados: ${marketChipLabel}`}>
+        <span className="marketCompactChipLabel">
+          {marketChipLabel}
+          {marketsStale ? <i className="controlDot controlDotStale" aria-hidden="true" title="Mercados cambiados desde el último corte de datos" /> : null}
+          {!hasActiveMarketPreset ? <i className="controlDot controlDotCustom" aria-hidden="true" title="Selección personalizada distinta de la mesa" /> : null}
+        </span>
+        <em>{markets.length}/{MARKETS.length}</em>
+      </summary>
+      <div className="marketCompactDisclosureBody">
+        <MarketPresetBar isMarketPresetActive={isMarketPresetActive} marketPreset={marketPreset} />
+        <MarketCustomizeDetails
+          markets={markets}
+          hasActiveMarketPreset={hasActiveMarketPreset}
+          setMarketsAndInvalidate={setMarketsAndInvalidate}
+        />
       </div>
-
-      {chromeModeToggle ? (
-        <div className="sidebarChromeModeSlot">
-          {chromeModeToggle}
-        </div>
-      ) : null}
-
-      {diario ? (
-        <>
-          <div className="sidebarGroup marketPanel marketPanel--diario" style={{ marginBottom: 16 }}>
-            <details className="marketCompactDisclosure">
-              <summary className="marketCompactChip" aria-label={`Mercados: ${marketChipLabel}`}>
-                <span className="marketCompactChipLabel">
-                  {marketChipLabel}
-                  {marketsStale ? <i className="controlDot controlDotStale" aria-hidden="true" title="Mercados cambiados desde el último corte de datos" /> : null}
-                  {!hasActiveMarketPreset ? <i className="controlDot controlDotCustom" aria-hidden="true" title="Selección personalizada distinta de la mesa" /> : null}
-                </span>
-                <em>{markets.length}/{MARKETS.length}</em>
-              </summary>
-              <div className="marketCompactDisclosureBody">
-                <MarketPresetBar isMarketPresetActive={isMarketPresetActive} marketPreset={marketPreset} />
-                <MarketCustomizeDetails
-                  markets={markets}
-                  hasActiveMarketPreset={hasActiveMarketPreset}
-                  setMarketsAndInvalidate={setMarketsAndInvalidate}
-                />
-              </div>
-            </details>
-          </div>
-
-          <details
-            ref={fichaDisclosureRef}
-            className="ajustarFichaDisclosure"
-            onToggle={(event) => {
-              onFichaAdjustOpenChange?.(event.currentTarget.open);
-            }}
-          >
-            <summary>
-              <span>Ajustar ficha</span>
-              <em>{cardLabel || "familias"}</em>
-            </summary>
-            <div className="ajustarFichaDisclosureBody">
-              {filterArchitecture}
-            </div>
-          </details>
-        </>
-      ) : (
-        <>
-          <div className="sidebarGroup marketPanel" style={{ marginBottom: 24 }}>
-            <div className="marketPanelHead">
-              <span>
-                Mercados
-                {marketsStale ? <i className="controlDot controlDotStale" aria-hidden="true" title="Mercados cambiados desde el último corte de datos" /> : null}
-                {!hasActiveMarketPreset ? <i className="controlDot controlDotCustom" aria-hidden="true" title="Selección personalizada distinta de la mesa" /> : null}
-              </span>
-              <em>{markets.length}/{MARKETS.length}</em>
-            </div>
-            <MarketPresetBar isMarketPresetActive={isMarketPresetActive} marketPreset={marketPreset} />
-            <MarketCustomizeDetails
-              markets={markets}
-              hasActiveMarketPreset={hasActiveMarketPreset}
-              setMarketsAndInvalidate={setMarketsAndInvalidate}
-            />
-          </div>
-          {filterArchitecture}
-        </>
-      )}
-    </aside>
+    </details>
   );
 }

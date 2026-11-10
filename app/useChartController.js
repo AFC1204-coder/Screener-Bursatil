@@ -33,12 +33,14 @@ import { resolveChartViewportConfig } from "@/lib/chartViewportModel";
 import { useChartDataModel } from "@/app/useChartDataModel";
 import { useChartDrawings } from "@/app/useChartDrawings";
 import { useChartViewport } from "@/app/useChartViewport";
-import { createChartNativeAdapter, resolveCssTokensNative } from "@/app/chartNativeAdapter";
+import { chartReadoutText, createChartNativeAdapter, pointAtOrBefore, resolveCssTokensNative } from "@/app/chartNativeAdapter";
+import { crosshairTimeFormatter } from "@/lib/chartViewportModel";
 import { barsAreCandleGrade } from "@/lib/chartDataQuality";
 import { RS_LINE_MIN_WEEKS, projectRsCountryRatingSeries, projectRsRatingSeries, projectRsThemeRatingSeries, rsLineHistory } from "@/lib/chartSeriesModel";
 import { userFacingSearchError } from "@/lib/screenerFormat";
 import { chartPatternBadgeForRow } from "@/lib/methodologyDisplay";
 import { vcpDiagnosticSnapshot } from "@/lib/vcpDiagnostics";
+import { scoreOrNull } from "@/lib/scoreValue";
 
 // Defaults con IDENTIDAD ESTABLE. Un default `[]` en línea crea un array
 // nuevo en cada render y convierte cualquier dependencia derivada en un
@@ -205,13 +207,30 @@ export function useChartController(props = {}) {
     if (intraday) return { enabled: true, rendered: false, weeks: 0, intradayMuted: true };
     const points = projectRsRatingSeries(rows, rsRatingSeries, config.indicators, config.interval);
     const history = rsLineHistory(points);
+    const rendered = points.length > 1 && history.sufficient;
     return {
       enabled: true,
-      rendered: points.length > 1 && history.sufficient,
+      rendered,
       weeks: history.weeks,
       intradayMuted: false,
+      // Mismos puntos que dibuja el adaptador (y que lee la lectura del cursor).
+      points: rendered ? points : [],
     };
   }, [config.indicators, config.interval, intraday, rows, rsRatingSeries]);
+
+  // Lectura por defecto (última barra): la misma línea que escribe el cursor
+  // —fecha · cierre · RS de ESA fecha—, para superficies sin ratón (ficha
+  // móvil). En escritorio no se muestra: la lectura sigue oculta sin cursor.
+  const readoutDefault = useMemo(() => {
+    const last = rows.at(-1);
+    if (!last || last.time == null) return "";
+    const rsPoint = pointAtOrBefore(rsLineState.points || [], last.time);
+    return chartReadoutText({
+      dateText: crosshairTimeFormatter(config.interval)(last.time),
+      close: last.close ?? last.value ?? null,
+      rs: rsPoint ? rsPoint.value : null,
+    });
+  }, [rows, rsLineState, config.interval]);
 
   const rsCountryLineState = useMemo(() => {
     if (!config.indicators.rsCountryLine) return { enabled: false, rendered: false, weeks: 0 };
@@ -251,7 +270,85 @@ export function useChartController(props = {}) {
   );
 
   // ─────────────────────────────────────────────────────────────────────────
+  // Lectura bajo el cursor (fecha · cierre · RS). Se escribe directamente en el
+  // nodo (sin estado React): un setState por movimiento de ratón re-renderizaría
+  // la ficha entera. Solo es visible mientras el cursor está sobre el lienzo.
+  // ─────────────────────────────────────────────────────────────────────────
+  const readoutRef = useRef(null);
+  const writeReadoutRef = useRef((text) => {
+    const node = readoutRef.current;
+    if (!node) return;
+    const next = String(text || "");
+    if (node.textContent !== next) node.textContent = next;
+    node.hidden = !next;
+  });
+
+  // Entradas de dibujo VIGENTES. La creación es asíncrona (import dinámico):
+  // cuando termina, lee de aquí y no de un closure que pudo quedar viejo.
+  const renderInputs = {
+    renderConfig,
+    rows,
+    contextRows,
+    patternOverlay,
+    rsRatingSeries,
+    rsCountrySeries,
+    rsThemeSeries,
+    relativeStrength,
+    positive,
+    height,
+  };
+  const renderInputsRef = useRef(renderInputs);
+  renderInputsRef.current = renderInputs;
+
+  function adapterOverrides(inputs) {
+    return {
+      patternOverlay: inputs.patternOverlay,
+      rsRatingSeries: inputs.rsRatingSeries,
+      rsCountrySeries: inputs.rsCountrySeries,
+      rsThemeSeries: inputs.rsThemeSeries,
+      benchmarkSeries: inputs.relativeStrength,
+      contextRows: inputs.contextRows,
+      requestedHeight: inputs.height,
+      positive: inputs.positive,
+    };
+  }
+
+  // Ficha de DATOS: cambia (identidad nueva) cuando cambia cualquier cosa que
+  // el adaptador puede re-aplicar sobre el chart vivo. Las series-prop entran
+  // por huella de contenido (rsRatingSeriesKey…), no por identidad.
+  const dataToken = useMemo(() => ({}), [
+    dataModel.rowTimes,
+    dataModel.rows?.length,
+    config.dataRange,
+    config.interval,
+    config.scale,
+    patternOverlayKey,
+    rsRatingSeriesKey,
+    rsCountrySeriesKey,
+    rsThemeSeriesKey,
+    relativeStrengthKey,
+    config.indicators.volume,
+    config.indicators.rsLine,
+    config.indicators.rsCountryLine,
+    config.indicators.rsThemeLine,
+    config.indicators.benchmarkLine,
+    config.indicators.maFast,
+    config.indicators.maFastLength,
+    config.indicators.maSlow,
+    config.indicators.maSlowLength,
+    positive,
+  ]);
+  const dataTokenRef = useRef(dataToken);
+  dataTokenRef.current = dataToken;
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Transacción de creación y destrucción del chart.
+  //
+  // Solo lo ESTRUCTURAL recrea el chart: disponibilidad, símbolo, tipo de
+  // serie principal (velas/línea/área) y altura pedida. Rango, temporalidad,
+  // escala, datos, overlays e indicadores se re-aplican sobre el chart vivo
+  // (efecto siguiente). Antes cada cambio de rango hacía chart.remove() +
+  // createChart 2-3 veces (auditoría 2026-11, H22).
   // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (dataModel.availability !== "ready") {
@@ -278,6 +375,7 @@ export function useChartController(props = {}) {
 
       const measured = viewport.prepare(container);
       const colors = resolveCssTokensNative();
+      const inputs = renderInputsRef.current;
 
       adapter = createChartNativeAdapter({
         container,
@@ -285,33 +383,30 @@ export function useChartController(props = {}) {
         profile: measured.profile,
         width: measured.width,
         height: measured.height,
-        config: renderConfig,
-        rows,
+        config: inputs.renderConfig,
+        rows: inputs.rows,
         colors,
-        overrides: {
-          patternOverlay,
-          rsRatingSeries,
-          rsCountrySeries,
-          rsThemeSeries,
-          benchmarkSeries: relativeStrength,
-          contextRows,
-          requestedHeight: height,
-          positive,
-        },
+        onReadout: (text) => writeReadoutRef.current(text),
+        overrides: adapterOverrides(inputs),
       });
+      adapter.appliedToken = dataTokenRef.current;
+      adapter.appliedRows = inputs.rows;
+      adapter.appliedRange = inputs.renderConfig.dataRange;
+      adapter.appliedInterval = inputs.renderConfig.interval;
 
       // setRowTimes ANTES de attach, para que la primitiva reciba los
       // tiempos coherentes desde el primer attach.
-      drawings.setRowTimes(rows);
+      drawings.setRowTimes(inputs.rows);
 
       // Viewport: el lifecycle aplica la ventana contractual (rango entero,
       // o la desviación manual vigente) y gestiona wheel/resize/suscripción.
+      const handle = adapter;
       viewport.attach({
-        chart: adapter.chart,
+        chart: handle.chart,
         container,
         profile: measured.profile,
         onGeometryChange: ({ width: w, height: h, profile: p }) => {
-          adapter.updateGeometry({ width: w, height: h, profile: p });
+          handle.updateGeometry({ width: w, height: h, profile: p });
         },
       });
 
@@ -352,35 +447,70 @@ export function useChartController(props = {}) {
       }
       controllerAttachmentIdRef.current += 1;
     };
-    // Las series-prop participan por huella de contenido (rsRatingSeriesKey /
-    // relativeStrengthKey / patternOverlayKey), no por identidad: los valores
-    // del closure son equivalentes mientras la huella no cambie.
+    // Las entradas de datos se leen de renderInputsRef al crear; sus cambios
+    // posteriores los aplica el efecto de actualización.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dataModel.availability,
-    dataModel.rowTimes,
-    dataModel.rows?.length,
     symbol,
-    config.dataRange,
-    config.interval,
     renderConfig.style,
-    config.scale,
     height,
-    patternOverlayKey,
-    rsRatingSeriesKey,
-    rsCountrySeriesKey,
-    rsThemeSeriesKey,
-    relativeStrengthKey,
-    config.indicators.volume,
-    config.indicators.rsLine,
-    config.indicators.rsCountryLine,
-    config.indicators.rsThemeLine,
-    config.indicators.maFast,
-    config.indicators.maFastLength,
-    config.indicators.maSlow,
-    config.indicators.maSlowLength,
-    positive,
   ]);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Actualización en sitio: datos, rango, temporalidad, escala, overlays e
+  // indicadores sobre el chart vivo (setData/applyOptions). Si el chart aún
+  // se está creando, la creación ya leerá las entradas vigentes.
+  // ─────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const handle = chartHandleRef.current;
+    if (!handle || typeof handle.update !== "function") return;
+    if (handle.appliedToken === dataToken) return;
+    if (dataModel.availability !== "ready") return;
+    const container = canvasRef.current;
+    if (!container) return;
+    const inputs = renderInputsRef.current;
+    const measured = viewport.prepare(container);
+    const windowChanged = handle.appliedRows !== inputs.rows
+      || handle.appliedRange !== inputs.renderConfig.dataRange
+      || handle.appliedInterval !== inputs.renderConfig.interval;
+    // Durante el setData la librería conserva el rango lógico anterior sobre
+    // las filas nuevas; sin congelar la derivación, ese estado intermedio se
+    // leía como desviación manual y el attach lo re-aplicaba (W tras D: 242
+    // «barras» con 192 de hueco a la izquierda).
+    if (windowChanged) viewport.beginDataSwap();
+    try {
+      handle.update({
+        config: inputs.renderConfig,
+        rows: inputs.rows,
+        overrides: adapterOverrides(inputs),
+        profile: measured?.profile,
+      });
+      handle.appliedToken = dataToken;
+      setRenderError("");
+    } catch (error) {
+      setRenderError(error?.message || "Grafico no disponible");
+    } finally {
+      if (windowChanged) {
+        // Re-adjuntar el viewport al MISMO chart: re-aplica el perfil del
+        // eje (formato de ticks del nuevo rango/temporalidad), reanuda la
+        // derivación y aplica la ventana contractual sobre los datos nuevos.
+        // No crea ni destruye nada.
+        viewport.attach({
+          chart: handle.chart,
+          container,
+          profile: measured?.profile,
+          onGeometryChange: ({ width: w, height: h, profile: p }) => {
+            handle.updateGeometry({ width: w, height: h, profile: p });
+          },
+        });
+      }
+    }
+    handle.appliedRows = inputs.rows;
+    handle.appliedRange = inputs.renderConfig.dataRange;
+    handle.appliedInterval = inputs.renderConfig.interval;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataToken]);
 
   // drawings.setRowTimes en cada cambio de filas.
   useEffect(() => {
@@ -446,9 +576,11 @@ export function useChartController(props = {}) {
       interval: config.interval,
     },
     badges: {
-      rsMainScore: Number.isFinite(Number(rsMainScore)) ? Number(rsMainScore) : null,
-      countryRsScore: Number.isFinite(Number(rsCountryMainScore)) ? Number(rsCountryMainScore) : null,
-      themeRsScore: Number.isFinite(Number(rsThemeMainScore)) ? Number(rsThemeMainScore) : null,
+      // scoreOrNull, no Number.isFinite(Number(x)): Number(null) es 0 y el
+      // badge pintaba «RS global 0» en valores sin RS (móvil 2026-11, M3).
+      rsMainScore: scoreOrNull(rsMainScore),
+      countryRsScore: scoreOrNull(rsCountryMainScore),
+      themeRsScore: scoreOrNull(rsThemeMainScore),
       pattern: patternSummary,
     },
     viewportRail,
@@ -499,8 +631,9 @@ export function useChartController(props = {}) {
     },
     notes,
     emptyFallback,
+    readoutDefault,
     rootClassName: className,
-  }), [status, symbol, latest, change, positive, rangeLabel, config.interval, config.indicators.rsLine, config.indicators.rsCountryLine, config.indicators.rsThemeLine, intraday, rsLineState, rsCountryLineState, rsThemeLineState, rsCountryMainScore, rsThemeMainScore, patternSummary, viewportRail, patternDiagnostic, notes, emptyFallback, className, rsMainScore]);
+  }), [status, symbol, latest, change, positive, rangeLabel, config.interval, config.indicators.rsLine, config.indicators.rsCountryLine, config.indicators.rsThemeLine, intraday, rsLineState, rsCountryLineState, rsThemeLineState, rsCountryMainScore, rsThemeMainScore, patternSummary, viewportRail, patternDiagnostic, notes, emptyFallback, readoutDefault, className, rsMainScore]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // actions — closures estables de la instancia única del viewport.
@@ -510,6 +643,7 @@ export function useChartController(props = {}) {
     pan: viewport.actions.pan,
     reset: viewport.actions.reset,
     scrollToLatest: viewport.actions.scrollToLatest,
+    scrollToStart: viewport.actions.scrollToStart,
     toggleDrawing: drawings.toolbarProps?.toggleTool || (() => {}),
     removeSelectedDrawing: drawings.toolbarProps?.removeSelected || (() => {}),
   }), [viewport.actions, drawings.toolbarProps]);
@@ -521,6 +655,7 @@ export function useChartController(props = {}) {
 
   return {
     canvasRef,
+    readoutRef,
     viewModel,
     actions,
     drawingToolbar: drawings.toolbarProps,

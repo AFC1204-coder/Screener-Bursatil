@@ -61,7 +61,12 @@ import { writeDailyBarsCache } from "@/lib/dailyBarsCache";
 import { ESTIMATED_CHART_PROVIDER } from "@/lib/estimatedBars";
 import { supabaseRequest } from "@/lib/supabaseServer";
 
-function makeBars(count, { startYear = 2024, symbol = "AAPL", provider = "Yahoo Finance" } = {}) {
+// startYear 2018 (antes 2024): con 2000 barras diarias desde 2024 la serie
+// llegaba hasta 2029 y cruzaba "hoy", y desde D4 (auditoría 2026-11) la barra
+// de la sesión en curso no se persiste y una barra cacheada con updatedAt
+// anterior a su cierre cuenta como parcial. Desde 2018 la serie entera queda
+// en el pasado y los tests no dependen del reloj.
+function makeBars(count, { startYear = 2018, symbol = "AAPL", provider = "Yahoo Finance" } = {}) {
   // Genera `count` barras diarias descendentes (más reciente primera), desde
   // startYear hacia atrás. Cada barra tiene el shape que produce fetchYahooChart.
   const bars = [];

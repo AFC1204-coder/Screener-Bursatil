@@ -12,8 +12,10 @@ import {
   HuntTapeTickerCell,
   formatVcpFootprintFromRow,
   formatVcpFootprintTitle,
+  HUNT_TAPE_ABSENT,
   HUNT_TAPE_DIST_EMPTY,
   HUNT_TAPE_STAGE_EMPTY,
+  huntTapeUserMark,
   huntTapeDist52w,
   huntTapeEnterSymbol,
   huntTapeMoveFocus,
@@ -21,15 +23,22 @@ import {
   huntTapeRsDisplay,
   huntTapeSparkBars,
   huntTapeSparkTitle,
+  huntTapeSparkWrapProps,
   huntTapeStageLine,
+  huntTapeThemeCell,
   huntTapeDrillUrl,
+  huntTapePeekKeyAction,
 } from "@/lib/screenerHuntTape";
+import HuntPeekPanel from "@/app/components/screener/HuntPeekPanel";
+import { HuntTapePivotCell } from "@/lib/entryPivotChip";
+import { HuntTapeEmpty } from "@/lib/screenerHuntTapeEmpty";
 import {
   DEFAULT_HUNT_TAPE_DENSITY,
   HUNT_TAPE_DESKTOP_1080_LIST_HEIGHT_PX,
   huntTapeRowHeightPx,
   resolveHuntTapeDensity,
 } from "@/lib/screenerHuntTapeDensity";
+import { decisionResolutionKeyForSymbol } from "@/lib/stockDecisionResolution";
 
 export default function HuntTapeView({
   rows = [],
@@ -38,9 +47,19 @@ export default function HuntTapeView({
   activeModalRow = null,
   chartPreviewDeferred = false,
   density = DEFAULT_HUNT_TAPE_DENSITY,
+  // Marca del usuario: datos ya en memoria del screener (sin peticiones).
+  favoriteSymbols = null,
+  decisionResolutions = null,
+  // Paso 7: panel lateral de lectura (sin peticiones: lee la fila enfocada).
+  peekInclusion = "",
+  onFavorite = null,
+  onResolveDecision = null,
+  // Paso 8: la salida única del estado vacío ({ label, onClick }).
+  emptyAction = null,
 }) {
   const [focusIndex, setFocusIndex] = useState(0);
   const [keyboardActive, setKeyboardActive] = useState(false);
+  const [peekOpen, setPeekOpen] = useState(false);
   const listRef = useRef(null);
   const rowRefs = useRef([]);
   const hydrateStartRef = useRef(0);
@@ -137,8 +156,29 @@ export default function HuntTapeView({
   useEffect(() => {
     function handleKeyDown(event) {
       if (activeModalRow) return;
+      // Vista rápida (QuickReviewModal) u otro diálogo abierto: sus teclas
+      // (← → Esc) son suyas; la cinta no se mueve ni abre el panel debajo.
+      if (document.querySelector("dialog[open]")) return;
       const tag = String(event.target?.tagName || "").toUpperCase();
       if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+
+      const peekAction = huntTapePeekKeyAction({
+        key: event.key,
+        target: event.target,
+        peekOpen,
+        rowCount: rows.length,
+      });
+      // Esc con el popover «+ Filtro» abierto cierra el popover, no el panel.
+      const filterPopoverOpen = Boolean(document.querySelector("details.screenerFilterPopover[open]"));
+      const escapeTaken = event.key === "Escape" && (filterPopoverOpen || event.defaultPrevented);
+      if (peekAction && !escapeTaken) {
+        event.preventDefault();
+        if (peekAction === "close") setPeekOpen(false);
+        else if (peekAction === "open") setPeekOpen(true);
+        else setPeekOpen((open) => !open);
+        setKeyboardActive(true);
+        return;
+      }
 
       if (event.key === "Escape") {
         if (keyboardActive || listRef.current?.contains(document.activeElement)) {
@@ -173,25 +213,25 @@ export default function HuntTapeView({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [activeModalRow, drillInto, focusIndex, keyboardActive, moveFocus, rows]);
+  }, [activeModalRow, drillInto, focusIndex, keyboardActive, moveFocus, peekOpen, rows]);
 
   if (!rows.length) {
-    return <div className="huntTapeEmpty" role="status">{emptyLabel}</div>;
+    return <HuntTapeEmpty label={emptyLabel} action={emptyAction} />;
   }
 
   const densityClass = tapeDensity === "comfort" ? "huntTapeDensityComfort" : "huntTapeDensityCompact";
+  const peekRow = peekOpen ? rows[Math.min(focusIndex, rows.length - 1)] : null;
 
   return (
-    <div className={`huntTapeBlock ${densityClass}`.trim()} data-density={tapeDensity}>
-      <p className="huntTapeHint" aria-live="polite">
-        <kbd>j</kbd>/<kbd>k</kbd> pasar · <kbd>Enter</kbd> abrir ficha · <kbd>Esc</kbd> quitar foco
-      </p>
+    <div className={`huntTapeBlock ${densityClass}${peekRow ? " isPeekOpen" : ""}`.trim()} data-density={tapeDensity}>
       <div className="huntTapeHead" aria-hidden="true">
         <span>Ticker</span>
+        <span>Tema</span>
         <span>Semanal ~12M</span>
         <span>Etapa</span>
         <span>RS</span>
         <span>VCP</span>
+        <span title="Distancia al pivote · R = riesgo hasta el stop de referencia">Pivote · R</span>
         <span>Máx 52s</span>
       </div>
       <ul
@@ -215,11 +255,20 @@ export default function HuntTapeView({
           const rs = huntTapeRsDisplay(row);
           const footprint = formatVcpFootprintFromRow(row);
           const dist = huntTapeDist52w(row);
+          const { label: theme, title: themeTitle } = huntTapeThemeCell(row);
           const sparkBars = huntTapeSparkBars(row);
           const sparkStatus = resolveHuntTapeSparkStatus(row, {
             deferred: chartPreviewDeferred,
           });
           const sparkTitle = huntTapeSparkTitle(sparkStatus);
+          const userMark = row.symbol
+            ? huntTapeUserMark({
+              favorite: Boolean(favoriteSymbols?.has?.(row.symbol)),
+              resolutionKey: decisionResolutions
+                ? decisionResolutionKeyForSymbol({ decisionResolutions }, row.symbol)
+                : "",
+            })
+            : null;
 
           return (
             <li
@@ -232,11 +281,18 @@ export default function HuntTapeView({
               onClick={() => {
                 setFocusIndex(index);
                 setKeyboardActive(true);
-                drillInto(row);
+                // Con el panel abierto, el clic lo lleva a esta fila; cerrado,
+                // el clic abre la ficha como siempre.
+                if (!peekOpen) drillInto(row);
               }}
             >
-              <HuntTapeTickerCell row={row} onOpenStock={onOpenStock} />
-              <div className="huntTapeSparkWrap" title={sparkTitle}>
+              <HuntTapeTickerCell row={row} onOpenStock={onOpenStock} userMark={userMark} />
+              {/* Paso 6: tema en todas las filas (dato presente siempre) en
+                  lugar de dejar la columna VCP sobredimensionada y vacía. */}
+              <span className={`huntTapeTheme${theme ? "" : " huntTapeGhost"}`} title={themeTitle}>
+                {theme || HUNT_TAPE_ABSENT}
+              </span>
+              <div {...huntTapeSparkWrapProps(row, sparkTitle)}>
                 <HuntTapeSparkline bars={sparkBars} status={sparkStatus} />
               </div>
               <span
@@ -246,17 +302,20 @@ export default function HuntTapeView({
                 {stage?.line || HUNT_TAPE_STAGE_EMPTY}
               </span>
               <span
-                className={`huntTapeRs${rs.missing ? " huntTapeCellEmpty" : ""}`}
+                className={`huntTapeRs${rs.missing ? " huntTapeCellEmpty" : ""}${rs.ghost ? " huntTapeGhost" : ""}`}
                 title={rs.title}
+                aria-label={rs.missing ? rs.title : undefined}
               >
                 {rs.text}
               </span>
               <span
-                className={`huntTapeVcp${footprint ? "" : " huntTapeVcpEmpty"}`}
+                className={`huntTapeVcp${footprint ? "" : " huntTapeVcpEmpty huntTapeGhost"}`}
                 title={formatVcpFootprintTitle(row)}
+                aria-label={footprint ? undefined : formatVcpFootprintTitle(row)}
               >
-                {footprint || "Sin VCP"}
+                {footprint || HUNT_TAPE_ABSENT}
               </span>
+              <HuntTapePivotCell row={row} className="huntTapePivot" />
               <span
                 className={`huntTapeExt${dist?.hot ? " isHot" : ""}${dist?.label ? "" : " huntTapeCellEmpty"}`}
                 title={dist?.label ? "Distancia al máximo de 52 semanas" : HUNT_TAPE_DIST_EMPTY}
@@ -267,6 +326,31 @@ export default function HuntTapeView({
           );
         })}
       </ul>
+      {/* Paso 6: atajos como pie de 26 px con la posición en la cola (antes,
+          una fila entera sobre la cabecera). */}
+      <p className="huntTapeHint">
+        <span><kbd>j</kbd>/<kbd>k</kbd> mover</span>
+        <span><kbd>Space</kbd> panel</span>
+        <span><kbd>Enter</kbd> ficha</span>
+        <span><kbd>Esc</kbd> {peekRow ? "cerrar panel" : "quitar foco"}</span>
+        <span className="huntTapeHintPos" aria-live="polite">{Math.min(focusIndex + 1, rows.length)} / {rows.length}</span>
+      </p>
+      {peekRow ? (
+        <HuntPeekPanel
+          row={peekRow}
+          inclusion={peekInclusion}
+          isFavorite={Boolean(favoriteSymbols?.has?.(peekRow.symbol))}
+          resolutionKey={decisionResolutions
+            ? decisionResolutionKeyForSymbol({ decisionResolutions }, peekRow.symbol)
+            : ""}
+          chartPreviewDeferred={chartPreviewDeferred}
+          onClose={() => setPeekOpen(false)}
+          onFavorite={onFavorite}
+          onResolveDecision={onResolveDecision}
+          onOpenStock={onOpenStock}
+        />
+      ) : null}
     </div>
   );
 }
+

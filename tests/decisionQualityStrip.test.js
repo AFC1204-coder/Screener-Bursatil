@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -139,33 +140,27 @@ describe("DecisionQualityStrip", () => {
     expect(html).not.toContain("dataHealthSummaryRail");
     expect(html).not.toContain("scoreAuditSummaryRail");
     expect(html).not.toContain("Lectura operativa");
-    // El estado vacío y los filtros propios de la lista siguen intactos.
+    // El estado vacío sigue intacto. Los filtros ya no viven en la lista: van
+    // en la hoja inferior de filtros (estudio móvil 2026-11, paso 9).
     expect(html).toContain("Sin filas en esta pagina");
-    expect(html).toContain("mobileFilterDisclosure");
+    expect(html).not.toContain("mobileFilterDisclosure");
   });
 
+  // Estudio móvil 2026-11 (paso 7): el menú ⋯ sube a la cabecera móvil de
+  // ScreenerShell; conserva la plomería de sesión y las operaciones.
   it("SHELL-B: el menú ⋯ móvil admite plomería de sesión", () => {
-    const html = renderToStaticMarkup(React.createElement(MobileResultList, {
-      rows: [],
-      totalRows: 0,
-      sort: "rsGlobalPct",
-      onRefresh: () => {},
-      onReset: () => {},
-      sessionPlumbing: React.createElement("div", { className: "sessionPlumbingBlock" }, "Plantillas"),
-    }));
-    expect(html).toContain("mobileResultsMoreMenu");
-    expect(html).toContain("mobileResultsMoreMenuPanel");
-    expect(html).toContain("sessionPlumbingBlock");
-    expect(html).toContain("Plantillas");
-    expect(html).toContain("Traer datos frescos");
-    expect(html).toContain("Resetear criterios");
+    const shell = readFileSync(new URL("../app/components/screener/ScreenerShell.jsx", import.meta.url), "utf8");
+    const menu = shell.slice(shell.indexOf('className="mobileResultsMoreMenu"'), shell.indexOf("</details>", shell.indexOf('className="mobileResultsMoreMenu"')));
+    expect(menu).toContain("mobileResultsMoreMenuPanel");
+    expect(menu).toContain("{sessionPlumbing}");
+    expect(menu).toContain("Traer datos frescos");
+    expect(menu).toContain("Resetear criterios");
   });
 
-  // La fila móvil ya no lleva veredicto ni maquinaria de fiabilidad: muestra
-  // las mismas siete columnas que escritorio (docs/principios-producto.md,
-  // principios 1 y 7). El contrato completo de columnas se prueba en
-  // tests/screenerSevenColumns.test.js.
-  it("pinta las siete columnas en la fila móvil sin maquinaria de fiabilidad", () => {
+  // La fila móvil ya no lleva veredicto ni maquinaria de fiabilidad. Desde el
+  // estudio móvil 2026-11 es la cinta de escritorio en una línea: miniatura,
+  // Etapa, RS y Máx 52s (tests/screenerMobileTape.test.js fija el contrato).
+  it("pinta la fila móvil de cinta sin maquinaria de fiabilidad", () => {
     const html = renderToStaticMarkup(React.createElement(MobileResultList, {
       rows: [{
         symbol: "FRAG",
@@ -222,13 +217,17 @@ describe("DecisionQualityStrip", () => {
       },
     }));
 
-    // Los siete datos de la fila.
-    expect(html).toContain("mobileResultGrid");
-    expect(html).toContain("Software / IA");
-    expect(html).toContain("Etapa 2");
-    expect(html).toContain("+12,5%");
+    // Los cuatro datos de la fila (miniatura · Etapa · RS · Máx 52s).
+    expect(html).toContain("mobileTapeRow");
+    expect(html).toContain("mobileTapeSpark");
+    expect(html).toContain(">2<");
+    expect(html).toContain(">74<");
     expect(html).toContain("-6,4%");
-    expect(html).toContain("2,4B");
+    // Tema y capitalización viven en la vista rápida, no en la fila.
+    expect(html).not.toContain("Software / IA");
+    expect(html).not.toContain("2,4B");
+    // Tu clasificación como marca discreta a la izquierda del ticker.
+    expect(html).toContain("huntTapeMark--res");
 
     // La maquinaria de fiabilidad y el veredicto ya no viven en la fila.
     expect(html).not.toContain("mobileResultTrustLine");

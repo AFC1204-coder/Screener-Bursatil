@@ -118,6 +118,7 @@ export function useChartViewport({
   const prepare = useCallback((container) => lifecycle.prepare(container), [lifecycle]);
   const attach = useCallback((opts) => lifecycle.attach(opts), [lifecycle]);
   const detach = useCallback(() => lifecycle.detach(), [lifecycle]);
+  const beginDataSwap = useCallback(() => lifecycle.beginDataSwap(), [lifecycle]);
   const getSnapshot = useCallback(() => lifecycle.getSnapshot(), [lifecycle]);
   const actions = lifecycle.actions;
 
@@ -126,9 +127,10 @@ export function useChartViewport({
     prepare,
     attach,
     detach,
+    beginDataSwap,
     actions,
     getSnapshot,
-  }), [state, prepare, attach, detach, actions, getSnapshot]);
+  }), [state, prepare, attach, detach, beginDataSwap, actions, getSnapshot]);
 }
 
 export default useChartViewport;

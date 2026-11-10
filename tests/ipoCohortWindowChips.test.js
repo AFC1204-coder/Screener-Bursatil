@@ -1,4 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+
+// La frescura del precio se calcula AL LEER desde lastDate hasta hoy
+// (lib/dataAge.js → livePriceFreshness), no desde priceFreshnessDays guardado:
+// el reloj se fija al día siguiente del precio del fixture (2026-08-25).
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-08-26T12:00:00Z"));
+});
+afterAll(() => {
+  vi.useRealTimers();
+});
 import {
   buildIpoCohortWindowChips,
   IPO_COHORT_DEFAULT_MONTHS,

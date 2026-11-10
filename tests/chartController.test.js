@@ -355,8 +355,11 @@ describe("useChartController · viewModel composicional (ADR §5.2)", () => {
 
     const { readFileSync } = require("node:fs");
     const src = readFileSync("app/useChartController.js", "utf8");
-    const adapterBlock = src.slice(src.indexOf("createChartNativeAdapter({"), src.indexOf("drawings.setRowTimes"));
-    expect(adapterBlock).toContain("patternOverlay");
+    // Las overrides del adaptador (creación y actualización) salen de
+    // adapterOverrides(): lleva el overlay actionable, nunca el badge.
+    const adapterBlock = src.slice(src.indexOf("function adapterOverrides("), src.indexOf("const dataToken = useMemo("));
+    expect(adapterBlock).toContain("patternOverlay: inputs.patternOverlay");
+    expect(src.slice(src.indexOf("createChartNativeAdapter({"), src.indexOf("drawings.setRowTimes"))).toContain("adapterOverrides(inputs)");
     expect(adapterBlock).not.toContain("patternBadgeRow");
   });
 
@@ -408,52 +411,58 @@ describe("useChartController · ciclo de vida (ADR §5.4, §5.5)", () => {
     expect(fakeChart._removeCount()).toBe(0);
   });
 
-  it("el effect grande del controller invalida el chart al cambiar patternOverlay o rsRatingSeries", () => {
-    // Este test documenta el contrato del effect grande del controller
-    // (definido en `useChartController.js`): los deps incluyen
-    // `patternOverlay` y `rsRatingSeries` además de los estructurales
-    // (symbol/range/interval/style/scale/height/rows/availability). La
-    // verificación es estática sobre el código fuente del controller:
-    // confirmamos que los nombres aparecen en el array de dependencias.
-    // El comportamiento dinámico (recreación real del chart) requiere
-    // un test con createRoot + jsdom, fuera del alcance de este repo
-    // (no usa jsdom/happy-dom en ningún test).
+  it("solo lo estructural recrea el chart; datos, rango, overlays e indicadores se re-aplican en sitio", () => {
+    // Contrato desde la auditoría 2026-11 (H22): antes cada cambio de rango o
+    // temporalidad hacía chart.remove() + createChart 2-3 veces. Ahora:
+    //   - el efecto de CREACIÓN (marca `controllerAttachmentIdRef.current += 1`)
+    //     depende solo de availability/símbolo/estilo/altura;
+    //   - la FICHA DE DATOS (`dataToken`) recoge todo lo demás y dispara
+    //     `handle.update(...)` sobre el chart vivo.
+    // Verificación estática (el repo no usa jsdom).
     const { readFileSync } = require("node:fs");
     const src = readFileSync("app/useChartController.js", "utf8");
-    // Localiza el array de deps del effect grande: el que sigue al
-    // `useEffect` que contiene `controllerAttachmentIdRef.current += 1`
-    // (señal inequívoca de la transacción §5.4/§5.5).
     const idx = src.indexOf("controllerAttachmentIdRef.current += 1");
     expect(idx, "no se encontró la marca de la transacción §5.4").toBeGreaterThan(-1);
-    const rest = src.slice(idx);
-    // El array de deps es el siguiente bloque `[ ... ]` seguido de `);`.
-    const match = rest.match(/\[\s*([\s\S]*?)\]\s*\)\s*;/);
-    expect(match, "no se encontró el array de deps del effect grande").toBeTruthy();
-    const deps = match[0];
-    // Dependencias estructurales (las que ya estaban en el commit).
-    expect(deps).toContain("dataModel.availability");
-    expect(deps).toContain("dataModel.rowTimes");
-    expect(deps).toContain("symbol");
-    expect(deps).toContain("config.dataRange");
-    expect(deps).toContain("config.interval");
-    expect(deps).toContain("renderConfig.style");
-    expect(deps).toContain("dataModel.rows?.length");
-    expect(deps).toContain("config.scale");
-    expect(deps).toContain("height");
-    // Dependencias de overlays e indicadores (regresión del paso 7 al
-    // commit 5722d84: estas NO estaban; se añadieron tras tu revisión).
-    expect(deps).toContain("patternOverlay");
-    expect(deps).toContain("rsRatingSeries");
-    expect(deps).toContain("rsCountrySeries");
-    expect(deps).toContain("rsThemeSeries");
-    expect(deps).toContain("config.indicators.volume");
-    expect(deps).toContain("config.indicators.rsLine");
-    expect(deps).toContain("config.indicators.rsCountryLine");
-    expect(deps).toContain("config.indicators.rsThemeLine");
-    expect(deps).toContain("config.indicators.maFast");
-    expect(deps).toContain("config.indicators.maFastLength");
-    expect(deps).toContain("config.indicators.maSlow");
-    expect(deps).toContain("config.indicators.maSlowLength");
+    const creationDeps = src.slice(idx).match(/\[\s*([\s\S]*?)\]\s*\)\s*;/)?.[0] || "";
+    expect(creationDeps).toContain("dataModel.availability");
+    expect(creationDeps).toContain("symbol");
+    expect(creationDeps).toContain("renderConfig.style");
+    expect(creationDeps).toContain("height");
+    for (const dataDep of ["config.dataRange", "config.interval", "config.scale", "rsRatingSeries", "dataModel.rowTimes"]) {
+      expect(creationDeps, `${dataDep} no debe recrear el chart`).not.toContain(dataDep);
+    }
+
+    const tokenIdx = src.indexOf("const dataToken = useMemo(");
+    expect(tokenIdx).toBeGreaterThan(-1);
+    const tokenDeps = src.slice(tokenIdx).match(/\[\s*([\s\S]*?)\]\s*\)\s*;/)?.[0] || "";
+    for (const dep of [
+      "dataModel.rowTimes",
+      "dataModel.rows?.length",
+      "config.dataRange",
+      "config.interval",
+      "config.scale",
+      "patternOverlay",
+      "rsRatingSeries",
+      "rsCountrySeries",
+      "rsThemeSeries",
+      "relativeStrengthKey",
+      "config.indicators.volume",
+      "config.indicators.rsLine",
+      "config.indicators.rsCountryLine",
+      "config.indicators.rsThemeLine",
+      "config.indicators.benchmarkLine",
+      "config.indicators.maFast",
+      "config.indicators.maFastLength",
+      "config.indicators.maSlow",
+      "config.indicators.maSlowLength",
+      "positive",
+    ]) {
+      expect(tokenDeps, `falta ${dep} en la ficha de datos`).toContain(dep);
+    }
+    // El efecto de actualización usa el handle vivo, no recrea.
+    const updateIdx = src.indexOf("handle.update({");
+    expect(updateIdx).toBeGreaterThan(tokenIdx);
+    expect(src.slice(updateIdx, updateIdx + 1500)).not.toContain("createChartNativeAdapter(");
   });
 });
 

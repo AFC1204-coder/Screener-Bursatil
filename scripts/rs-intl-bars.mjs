@@ -12,7 +12,11 @@
 // IDEMPOTENTE: reutiliza withDailyBarsCache, que lee la caché y decide
 // fresh/stale antes de descargar (--stale-days gobierna el umbral), y que desde
 // d0a628b escribe solo el delta. Una segunda corrida sobre símbolos ya al día no
-// descarga ni escribe nada.
+// escribe nada (descarga, pero el delta es vacío).
+//
+// --stale-days=0 por defecto: con 1, un símbolo cuya última barra era la de
+// ayer contaba como fresco y se saltaba aunque su mercado ya hubiera cerrado
+// hoy (HK/JP/AU, que cierran antes que Europa, quedaban un día atrasados).
 //
 // TOPE DE FILAS: mismo mecanismo y misma razón que scripts/refresh-bars.mjs — el
 // 9 de agosto de 2026 una carga inicial de ~700.000 filas tumbó la instancia
@@ -25,7 +29,7 @@
 // Uso:
 //   node --env-file=.env.local --loader ./scripts/loader.mjs \
 //     scripts/rs-intl-bars.mjs [--dry-run] [--write] [--limit=N] \
-//     [--market=HK] [--concurrency=4] [--stale-days=1] [--max-filas=100000]
+//     [--market=HK] [--concurrency=4] [--stale-days=0] [--max-filas=100000]
 
 import { pathToFileURL } from "node:url";
 
@@ -50,7 +54,7 @@ export function parseArgs(argv) {
     limit: 0,
     market: "",
     concurrency: DEFAULT_CONCURRENCY,
-    staleDays: 1,
+    staleDays: 0,
     maxRows: DEFAULT_MAX_ROWS,
   };
   for (const arg of argv) {

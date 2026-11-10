@@ -41,6 +41,28 @@ describe("pgPostgrestAdapter SQL builder", () => {
     expect(values).toContain(25);
   });
 
+  it("select con alias y rutas JSON (->>) como PostgREST (market-breadth/leadership)", () => {
+    const { sql } = buildPostgrestSelectSql("scan_results", {
+      owner_id: "eq.personal",
+      select: "symbol,stage:metrics->>weeklyStageState,lastDate:metrics->>lastDate,metrics->>country,alias:symbol",
+    });
+    expect(sql).toContain(`"metrics"->>'weeklyStageState' AS "stage"`);
+    expect(sql).toContain(`"metrics"->>'lastDate' AS "lastDate"`);
+    // Sin alias, la ruta JSON toma el nombre de su última clave.
+    expect(sql).toContain(`"metrics"->>'country' AS "country"`);
+    expect(sql).toContain(`"symbol" AS "alias"`);
+    expect(sql).not.toContain('"stage:metrics"');
+    expect(sql).not.toContain("'>");
+  });
+
+  it("filtro sobre ruta ->> usa texto, no '>clave'", () => {
+    const { sql } = buildPostgrestSelectSql("scan_results", {
+      "metrics->>weeklyStageState": "eq.stage2",
+      select: "symbol",
+    });
+    expect(sql).toContain(`"metrics"->>'weeklyStageState' = $`);
+  });
+
   it("traduce in.(...) para scan_results", () => {
     const { sql, values } = buildPostgrestSelectSql("scan_results", {
       owner_id: "eq.personal",

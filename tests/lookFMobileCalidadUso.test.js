@@ -23,13 +23,17 @@ describe("LOOK-F · móvil calidad de uso", () => {
     expect(COMPONENTS_CSS).toMatch(/@media\(max-width:760px\)[\s\S]*\.page \{[\s\S]*calc\(64px \+ env\(safe-area-inset-bottom\)\)/s);
   });
 
-  it("sub-barra sticky Filtros · ficha · Revisar en ScreenerShell", () => {
-    expect(SCREENER_SHELL).toContain("screenerMobileSubBar");
-    expect(SCREENER_SHELL).toContain("Filtros ({filterActiveCount})");
-    expect(SCREENER_SHELL).toContain("screenerMobileSubBarFicha");
-    expect(SCREENER_SHELL).toMatch(/Revisar[\s\S]*openPrimaryReview/s);
-    expect(SCREENER_CSS).toMatch(/\.screenerMobileSubBar\s*\{[^}]*position:\s*fixed/s);
-    expect(SCREENER_CSS).toMatch(/\.screenerMobileSubBarBtn\s*\{[^}]*min-height:\s*44px/s);
+  // Estudio móvil 2026-11 (pasos 7-8): la sub-barra flotante se sustituye por
+  // una cabecera pegada (vista + verdad corta), pestañas de vistas y la barra
+  // del filtro vivo con «Filtros ③», todo con objetivos de 44 px.
+  it("cabecera móvil pegada: vista, pestañas y filtro vivo en ScreenerShell", () => {
+    expect(SCREENER_SHELL).toContain("mobileStickyHead");
+    expect(SCREENER_SHELL).toContain('layout="tabs"');
+    expect(SCREENER_SHELL).toContain("mobileFilterBtn");
+    expect(SCREENER_SHELL).not.toContain("screenerMobileSubBar");
+    expect(SCREENER_CSS).toMatch(/\.mobileStickyHead\s*\{[^}]*position:sticky/s);
+    expect(SCREENER_CSS).toMatch(/\.mobileFilterBtn\s*\{[^}]*height:44px/s);
+    expect(SCREENER_CSS).toMatch(/\.mobileIconBtn\s*\{[^}]*width:44px[^}]*height:44px/s);
   });
 
   it("CTA Listo del drawer móvil ≥44px", () => {
@@ -44,9 +48,13 @@ describe("LOOK-F · móvil calidad de uso", () => {
     expect(SCREENER_CSS).toMatch(/\.screenerMobileStatusFoldPeek\s*\{[^}]*-webkit-line-clamp:1/s);
   });
 
-  it("hunt rail ≥40px con máscara de degradado en scroll horizontal", () => {
-    expect(SCREENER_CSS).toMatch(/@media\(max-width:760px\)[\s\S]*\.huntCardRailScroll\s*\{[^}]*mask-image:linear-gradient/s);
-    expect(SCREENER_CSS).toMatch(/@media\(max-width:760px\)[\s\S]*\.huntCardRail button\s*\{[^}]*min-height:var\(--control-l\)/s);
+  // Paso 6 (rediseño 2026-11): el raíl de vistas es vertical en escritorio.
+  // Estudio móvil 2026-11 (paso 8): en móvil, las mismas vistas como pestañas
+  // deslizables de 32 px con área táctil ampliada a 44 px.
+  it("vistas en móvil: pestañas deslizables con objetivo táctil de 44 px", () => {
+    expect(SCREENER_CSS).toMatch(/\.mobileViewTabs\s*\{[^}]*overflow-x:auto/s);
+    expect(SCREENER_CSS).toMatch(/\.mobileViewTab::after\s*\{[^}]*inset:-6px 0/s);
+    expect(SCREENER_CSS).not.toMatch(/\.huntCardRailScroll/);
   });
 
   it("inputs clave a 16px e inputMode numérico en modal familia", () => {

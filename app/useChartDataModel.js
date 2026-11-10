@@ -220,7 +220,11 @@ export function useChartDataModel(input = {}) {
   // el resultado del resolver puro en cada paso.
 
   useEffect(() => {
-    if (!mountedRef.current) return undefined;
+    // Este efecto se declara ANTES que el de montaje: con StrictMode (dev) se
+    // re-ejecuta antes de que aquel vuelva a poner `mountedRef = true`. Un
+    // `return` aquí dejaba «Ampliando histórico…» fijo para siempre (auditoría
+    // 2026-11, H20). Si este efecto corre, el componente está montado.
+    mountedRef.current = true;
 
     // Subir generación: cualquier respuesta en vuelo debe descartarse.
     generationRef.current += 1;
@@ -276,7 +280,9 @@ export function useChartDataModel(input = {}) {
       preferredStyle,
     }));
 
-    fetchChartCached({ symbol, dataRange, interval, timeoutMs: CHART_FETCH_TIMEOUT_MS })
+    // `signal`: al cambiar de rango/símbolo, el cleanup aborta y, si nadie más
+    // espera esa misma petición (dedupe en vuelo), se cancela la descarga.
+    fetchChartCached({ symbol, dataRange, interval, timeoutMs: CHART_FETCH_TIMEOUT_MS, signal: controller.signal })
       .then((payload) => {
         // §3.7.1: respuesta vieja tras cambio de key/rango/intervalo. El
         // abort por sí solo no se considera suficiente; comparamos

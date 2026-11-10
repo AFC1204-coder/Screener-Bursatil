@@ -71,29 +71,47 @@ describe("ResultFilterBar view-layer CTA", () => {
     onClearAll: () => {},
   };
 
-  it("Expert: expone el CTA + Filtro cuando hay capas de vista habilitadas", () => {
+  // Rediseño 2026-11 (paso 5): sin Diario/Expert. «+ Filtro» es un único
+  // popover con Resolución, capas de vista, lo que aplica la ficha (children)
+  // y las familias (families). Nada de eso ocupa la fila.
+  it("+ Filtro abre un popover con Resolución y capas de vista habilitadas", () => {
     const html = renderToStaticMarkup(React.createElement(ResultFilterBar, {
       ...baseFilterBarProps,
-      chromeMode: "expert",
     }));
 
-    expect(html).toContain("viewLayerFilters");
+    expect(html).toContain("screenerFilterPopover");
     expect(html).toContain(">Filtro<");
+    expect(html).toMatch(/<details class="screenerFilterPopover">[\s\S]*Filtrar por resolución de decisión[\s\S]*Filtrar por país/);
     expect(html).not.toContain("resultFilterMore");
+    expect(html).not.toContain("resultFilterBar--diario");
+    expect(html).not.toContain(">Más filtros<");
     expect(html).not.toContain("Filtrar por IPO");
   });
 
-  it("Diario: Resolución/+Filtro detrás de Más", () => {
+  it("el popover aloja lo que aplica la ficha y las familias; sesiones con chromeMode antiguo no cambian nada", () => {
     const html = renderToStaticMarkup(React.createElement(ResultFilterBar, {
       ...baseFilterBarProps,
-      chromeMode: "diario",
-    }));
+      chromeMode: "expert",
+      families: React.createElement("section", { className: "filterArchitecture" }, "familias"),
+    }, React.createElement("div", { className: "huntCardModeStrip" }, "modo")));
+    const panel = html.match(/<div class="screenerFilterPopoverPanel">[\s\S]*$/)?.[0] ?? "";
+    expect(panel).toContain("huntCardModeStrip");
+    expect(panel).toContain("filterArchitecture");
+    expect(panel.indexOf("huntCardModeStrip")).toBeLessThan(panel.indexOf("filterArchitecture"));
+    const legacy = renderToStaticMarkup(React.createElement(ResultFilterBar, { ...baseFilterBarProps, chromeMode: "diario" }));
+    expect(legacy).toBe(renderToStaticMarkup(React.createElement(ResultFilterBar, { ...baseFilterBarProps })));
+  });
 
-    expect(html).toContain("resultFilterBar--diario");
-    expect(html).toContain("resultFilterMore");
-    expect(html).toContain(">Más<");
-    expect(html).toContain("viewLayerFilters");
-    expect(html).toContain(">Filtro<");
+  // viewFiltersActive (useResultViewModel) ya incluye Resolución; el resumen
+  // no la suma dos veces (antes: 3 fichas → «4 activos»).
+  it("el resumen del popover cuenta los filtros de vista activos una sola vez", () => {
+    const html = renderToStaticMarkup(React.createElement(ResultFilterBar, {
+      ...baseFilterBarProps,
+      decisionResolutionFilter: "candidate",
+      viewFiltersActive: 3,
+    }));
+    expect(html).toContain("<em>3 activos</em>");
+    expect(renderToStaticMarkup(React.createElement(ResultFilterBar, { ...baseFilterBarProps }))).not.toContain("activo");
   });
 
   it("no expone select de orden en escritorio (orden vía cabeceras de columna)", () => {
@@ -171,6 +189,6 @@ describe("ResultFilterBar view-layer CTA", () => {
     }));
 
     expect(html).not.toContain("Filtrar por IPO");
-    expect(html).not.toContain("viewLayerFilters");
+    expect(html).not.toContain("Filtrar por país");
   });
 });

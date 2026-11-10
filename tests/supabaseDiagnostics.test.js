@@ -46,4 +46,15 @@ describe("Supabase deployed-contract diagnostics", () => {
     expect(result.schemaReady).toBe(false);
     expect(result.missingFunctions).toContain("coverage_scan_summary");
   });
+
+  it("modo pg: cortocircuita sin tocar la base y no reporta fallos de RPC", async () => {
+    const { supabaseConfig } = await import("@/lib/supabaseServer");
+    supabaseConfig.mockReturnValueOnce({ configured: true, ownerId: "owner-test", missing: [], mode: "pg" });
+    const result = await checkSupabaseSchema();
+    expect(supabaseRequest).not.toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    expect(result.configured).toBe(true);
+    expect(result.mode).toBe("pg");
+    expect(result.functionErrors).toEqual([]);
+  });
 });

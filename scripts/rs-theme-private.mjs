@@ -1,5 +1,5 @@
 // scripts/rs-theme-private.mjs — motor de RS tema privado (MET-3b).
-// engine_version: statsedge-private-theme-rs-usd-{slug}-v1 por cada una de las
+// engine_version: statsedge-private-theme-rs-usd-{slug}-v2 por cada una de las
 // 12 THEME_RULES. Población = universo MET-1; precios USD vía FX.
 //
 // BACKFILL SERIE (THEME-SERIES vía B, dueño 2026-08-31): excepción documentada a

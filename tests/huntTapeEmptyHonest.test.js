@@ -26,7 +26,12 @@ describe("UX-EMPTY-HONEST · Caza HuntTapeView", () => {
     expect(html).toContain("Sin serie");
     expect(html).toContain("Sin etapa");
     expect(html).toContain("Sin máx.");
-    expect(html).not.toMatch(/>\s*[–—-]\s*</);
+    // Rediseño 2026-11 (paso 3): RS/VCP ausentes se pintan «—» en --ghost
+    // (huntTapeGhost) con el motivo en el title. Ningún guion fuera de esas celdas.
+    expect(html).not.toContain("Sin VCP<");
+    const withoutGhost = html.replace(/<span class="[^"]*huntTapeGhost[^"]*"[^>]*>—<\/span>/g, "");
+    expect(withoutGhost).not.toMatch(/>\s*[–—-]\s*</);
+    expect(html).toMatch(/class="huntTapeVcp huntTapeVcpEmpty huntTapeGhost" title="Sin VCP"/);
   });
 
   it("muestra loading humano mientras spark está pendiente", () => {

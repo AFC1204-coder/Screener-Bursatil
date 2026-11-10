@@ -1,14 +1,18 @@
 "use client";
 
 // ResultFilterBar — slice presentacional de ScreenerShell.
-// Contiene el select de resolución, el
-// CTA «+ Filtro» (view-layers) y los ResultFilterChips.
+// Rediseño 2026-11 (paso 5): vive dentro de la barra de 40 px sobre la tabla.
+// En la fila solo van las fichas del filtro vivo (ResultFilterChips) y «+ Filtro»;
+// «+ Filtro» abre un popover con todo lo que antes ocupaba la página: lo que
+// aplica la ficha y lo que recorta (children), Resolución y las capas de vista,
+// y las familias del filtro (FilterArchitecturePanel, prop `families`).
 // Recibe SOLO los slices que consume este bloque (no el prop-bag completo).
 // IPO categoría retirada de la UI (IPO-UX-C); verifiedIpoCategory queda para CSV.
 
+import { useEffect, useRef } from "react";
 import { ResultFilterChips } from "@/app/screenerPanels";
-import { SECTOR_STRENGTH_LABELS, SECTOR_STRENGTH_OPTIONS, marketName } from "@/lib/screenerConfig";
-import { isDiarioChromeMode } from "@/lib/screenerChromeMode";
+import ResultViewSelects from "@/app/components/screener/ResultViewSelects";
+import { OPEN_FILTER_POPOVER_EVENT } from "@/lib/screenerHuntTapeEmpty";
 
 export default function ResultFilterBar({
   optionLabel,
@@ -45,69 +49,86 @@ export default function ResultFilterBar({
   totalCount,
   onClearAll,
   onReview,
-  // P3: Diario oculta Resolución/+Filtro detrás de «Más»
-  chromeMode = "diario",
+  // Popover «+ Filtro»: familias del filtro (FilterArchitecturePanel) y, arriba,
+  // lo que aplica la ficha / lo que recorta (children).
+  families = null,
+  children = null,
 }) {
-  const diario = isDiarioChromeMode(chromeMode);
-  const hasViewLayers = Boolean(
-    viewLayers.country || viewLayers.theme || viewLayers.sector || viewLayers.industry || viewLayers.sectorStrength,
-  );
-  const resolutionActive = decisionResolutionFilter !== "all";
-  const moreActiveCount = (resolutionActive ? 1 : 0) + (viewFiltersActive || 0);
+  const popoverRef = useRef(null);
+  // viewFiltersActive (useResultViewModel) ya incluye Resolución: sumarla otra
+  // vez contaba «4 activos» con 3 fichas.
+  const moreActiveCount = Number(viewFiltersActive) || 0;
 
-  const filterControls = (
-    <>
-      {/* «Resolución» filtra por lo que el usuario ha marcado en Review/Ficha,
-          no por un juicio del sistema. Los filtros fantasma de auditoría/decisión
-          se retiraron de la vista (UX-4): ya no ocultan filas en silencio. */}
-      <select className="select resultFilterSelect" value={decisionResolutionFilter} onChange={(e) => onDecisionResolutionFilter(e.target.value)} aria-label="Filtrar por resolución de decisión" data-active={resolutionActive ? "true" : "false"}>
-        {decisionResolutionOptions.map((item) => <option key={item.key} value={item.key}>{item.displayLabel}</option>)}
-      </select>
-      {/* Orden en escritorio: cabeceras de columna (CompactResultsTable). Móvil: select en MobileResultList. */}
-      {/* View-layers: CTA compacto; el prefijo «+» lo aporta el CSS del summary. */}
-      {hasViewLayers ? (
-        <details className="disclosurePanel compactDisclosure viewLayerFilters">
-          <summary aria-label="Añadir filtro de vista"><span>Filtro</span>{viewFiltersActive ? <em>{viewFiltersActive} activo{viewFiltersActive === 1 ? "" : "s"}</em> : null}</summary>
-          <div className="controls resultFilterBar viewLayerFilterGrid">
-            {viewLayers.country ? <select className="select resultFilterSelect" value={countryFilter} onChange={(e) => onCountryFilter(e.target.value)} aria-label="Filtrar por país" data-active={countryFilter !== "Todos" ? "true" : "false"}>
-              {countryOptions.map((x) => <option key={x} value={x}>{optionLabel("País", x, countryCounts, (code) => `${code} · ${marketName(code)}`)}</option>)}
-            </select> : null}
-            {viewLayers.theme ? <select className="select resultFilterSelect" value={themeFilter} onChange={(e) => { onThemeFilter(e.target.value); onSectorFilter("Todos"); onIndustryFilter("Todos"); }} aria-label="Filtrar por tema" data-active={themeFilter !== "Todos" ? "true" : "false"}>
-              {themeOptions.map((x) => <option key={x} value={x}>{optionLabel("Tema", x, themeCounts)}</option>)}
-            </select> : null}
-            {viewLayers.sector ? <select className="select resultFilterSelect" value={sectorFilter} onChange={(e) => { onSectorFilter(e.target.value); onIndustryFilter("Todos"); }} aria-label="Filtrar por sector" data-active={sectorFilter !== "Todos" ? "true" : "false"}>
-              {sectorOptions.map((x) => <option key={x} value={x}>{optionLabel("Sector", x, sectorCounts)}</option>)}
-            </select> : null}
-            {viewLayers.industry ? <select className="select resultFilterSelect" value={industryFilter} onChange={(e) => onIndustryFilter(e.target.value)} aria-label="Filtrar por subsector" data-active={industryFilter !== "Todos" ? "true" : "false"}>
-              {industryOptions.map((x) => <option key={x} value={x}>{optionLabel("Subsector", x, industryCounts)}</option>)}
-            </select> : null}
-            {viewLayers.sectorStrength ? <select className="select resultFilterSelect" value={sectorStrength} onChange={(e) => onSectorStrength(e.target.value)} aria-label="Filtrar por fuerza de grupo" data-active={sectorStrength !== "Todos" ? "true" : "false"}>
-              {SECTOR_STRENGTH_OPTIONS.map((x) => <option key={x} value={x}>{optionLabel("Fuerza grupo", x, sectorStrengthCounts, (item) => SECTOR_STRENGTH_LABELS[item] || item)}</option>)}
-            </select> : null}
-          </div>
-        </details>
-      ) : null}
-    </>
-  );
+  // Popover: se cierra con Escape o con un clic fuera (incluida la propia barra).
+  useEffect(() => {
+    function close(event) {
+      const node = popoverRef.current;
+      if (!node?.open) return;
+      if (event.type === "keydown") {
+        if (event.key === "Escape") {
+          node.open = false;
+          // Paso 7: este Esc es del popover; el panel lateral no se cierra con él.
+          event.preventDefault();
+        }
+        return;
+      }
+      if (!node.contains(event.target)) node.open = false;
+    }
+    // Paso 8: «Ajustar filtro» del estado vacío abre este mismo popover.
+    function open() {
+      if (popoverRef.current) popoverRef.current.open = true;
+    }
+    document.addEventListener("keydown", close);
+    document.addEventListener("mousedown", close);
+    window.addEventListener(OPEN_FILTER_POPOVER_EVENT, open);
+    return () => {
+      document.removeEventListener("keydown", close);
+      document.removeEventListener("mousedown", close);
+      window.removeEventListener(OPEN_FILTER_POPOVER_EVENT, open);
+    };
+  }, []);
 
   return (
-    <>
-      <div className={`controls resultFilterBar${diario ? " resultFilterBar--diario" : ""}`}>
-        {diario ? (
-          <details className="disclosurePanel compactDisclosure resultFilterMore">
-            <summary aria-label="Más filtros de resultados">
-              <span>Más</span>
-              {moreActiveCount ? <em>{moreActiveCount} activo{moreActiveCount === 1 ? "" : "s"}</em> : null}
-            </summary>
-            <div className="controls resultFilterBar resultFilterMoreBody">
-              {filterControls}
-            </div>
-          </details>
-        ) : (
-          filterControls
-        )}
-      </div>
+    <div className="resultFilterStrip">
       <ResultFilterChips chips={chips} hiddenCount={hiddenCount} visibleCount={visibleCount} totalCount={totalCount} onClearAll={onClearAll} onReview={onReview} />
-    </>
+      <details ref={popoverRef} className="screenerFilterPopover">
+        <summary aria-label="Añadir o ajustar filtros">
+          <span>Filtro</span>
+          {moreActiveCount ? <em>{moreActiveCount} activo{moreActiveCount === 1 ? "" : "s"}</em> : null}
+        </summary>
+        <div className="screenerFilterPopoverPanel">
+          {children}
+          <div className="controls resultFilterBar">
+            <ResultViewSelects
+              optionLabel={optionLabel}
+              decisionResolutionFilter={decisionResolutionFilter}
+              decisionResolutionOptions={decisionResolutionOptions}
+              onDecisionResolutionFilter={onDecisionResolutionFilter}
+              viewLayers={viewLayers}
+              countryFilter={countryFilter}
+              countryOptions={countryOptions}
+              countryCounts={countryCounts}
+              onCountryFilter={onCountryFilter}
+              themeFilter={themeFilter}
+              themeOptions={themeOptions}
+              themeCounts={themeCounts}
+              onThemeFilter={onThemeFilter}
+              onSectorFilter={onSectorFilter}
+              onIndustryFilter={onIndustryFilter}
+              sectorFilter={sectorFilter}
+              sectorOptions={sectorOptions}
+              sectorCounts={sectorCounts}
+              industryFilter={industryFilter}
+              industryOptions={industryOptions}
+              industryCounts={industryCounts}
+              sectorStrength={sectorStrength}
+              sectorStrengthCounts={sectorStrengthCounts}
+              onSectorStrength={onSectorStrength}
+            />
+          </div>
+          {families}
+        </div>
+      </details>
+    </div>
   );
 }

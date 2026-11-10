@@ -35,9 +35,9 @@ describe("screenerHuntTapeDensity", () => {
 
   it("default compact y alturas P4", () => {
     expect(DEFAULT_HUNT_TAPE_DENSITY).toBe(HUNT_TAPE_DENSITIES.COMPACT);
-    expect(huntTapeRowHeightPx("compact")).toBe(36);
-    expect(huntTapeRowHeightPx("comfort")).toBe(52);
-    expect(HUNT_TAPE_ROW_HEIGHT_BY_DENSITY.compact).toBe(36);
+    expect(huntTapeRowHeightPx("compact")).toBe(32);
+    expect(huntTapeRowHeightPx("comfort")).toBe(40);
+    expect(HUNT_TAPE_ROW_HEIGHT_BY_DENSITY.compact).toBe(32);
   });
 
   it("resuelve valores inválidos al default", () => {
@@ -51,7 +51,7 @@ describe("screenerHuntTapeDensity", () => {
       HUNT_TAPE_DENSITIES.COMPACT,
     );
     expect(visible).toBeGreaterThanOrEqual(8);
-    expect(visible).toBe(Math.floor(320 / 36));
+    expect(visible).toBe(Math.floor(320 / 32));
   });
 
   it("persiste y lee densidad", () => {

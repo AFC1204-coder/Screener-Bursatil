@@ -29,6 +29,41 @@ import { useChartController } from "@/app/useChartController";
 
 const fmt = (n) => Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
+// null/""/undefined no son un RS de 0: Number(null) === 0 se pintaba como dato.
+const isScore = (v) => v !== null && v !== undefined && v !== "" && Number.isFinite(Number(v));
+
+// Teclado del lienzo (auditoría 2026-11, H12). Solo actúa con el foco EN el
+// lienzo (tabIndex=0): nunca secuestra teclas de un campo de texto ni de la
+// página. Las teclas se documentan en el tooltip del lienzo, no en pantalla.
+export const CHART_NAV_HINT = "Teclado (con el gráfico enfocado): ← → mover · + − zoom · Inicio primer dato · Fin último dato · Esc restaurar";
+const CHART_NAV_SHORTCUTS = "ArrowLeft ArrowRight + - Home End Escape";
+
+export function chartKeyAction(event = {}) {
+  if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return null;
+  const target = event.target || {};
+  const tag = String(target.tagName || "").toUpperCase();
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return null;
+  switch (event.key) {
+    case "ArrowLeft": return { type: "pan", direction: -1 };
+    case "ArrowRight": return { type: "pan", direction: 1 };
+    case "+": case "=": case "Add": return { type: "zoom", factor: 0.8 };
+    case "-": case "_": case "Subtract": return { type: "zoom", factor: 1.25 };
+    case "Home": return { type: "start" };
+    case "End": return { type: "latest" };
+    case "Escape": return { type: "reset" };
+    default: return null;
+  }
+}
+
+function runChartKeyAction(action, actions = {}) {
+  if (!action) return false;
+  if (action.type === "pan") actions.pan?.(action.direction, { stepRatio: 0.1 });
+  else if (action.type === "zoom") actions.zoom?.(action.factor);
+  else if (action.type === "start") actions.scrollToStart?.();
+  else if (action.type === "latest") actions.scrollToLatest?.();
+  else if (action.type === "reset") actions.reset?.();
+  return true;
+}
 
 /**
  * Vista declarativa. Recibe el output del controller. NO calcula nada por
@@ -38,6 +73,7 @@ const pct = (n) => Number.isFinite(n) ? `${n.toFixed(1)}%` : "Sin dato";
  */
 export function UniversalPriceChartView({
   canvasRef,
+  readoutRef = null,
   viewModel,
   actions,
   drawingToolbar,
@@ -184,21 +220,21 @@ export function UniversalPriceChartView({
             </div>
           </div>
           {rsLegend?.enabled && (
-            <div className={`universalChartBadges ${Number.isFinite(Number(badges?.rsMainScore)) ? "" : "muted"}`} title="RS global del snapshot activo. No cambia con el rango del grafico.">
+            <div className={`universalChartBadges ${isScore(badges?.rsMainScore) ? "" : "muted"}`} title="RS global del snapshot activo. No cambia con el rango del grafico.">
               <span>RS global</span>
-              <b>{Number.isFinite(Number(badges?.rsMainScore)) ? Number(badges.rsMainScore).toFixed(0) : "Sin dato"}</b>
+              <b>{isScore(badges?.rsMainScore) ? Number(badges.rsMainScore).toFixed(0) : "Sin dato"}</b>
             </div>
           )}
           {rsCountryLegend?.enabled && (
-            <div className={`universalChartBadges ${Number.isFinite(Number(badges?.countryRsScore)) ? "" : "muted"}`} title="RS país · ranking semanal intra-mercado. No cambia con el rango del gráfico.">
+            <div className={`universalChartBadges ${isScore(badges?.countryRsScore) ? "" : "muted"}`} title="RS país · ranking semanal intra-mercado. No cambia con el rango del gráfico.">
               <span>RS país</span>
-              <b>{Number.isFinite(Number(badges?.countryRsScore)) ? Number(badges.countryRsScore).toFixed(0) : "Sin dato"}</b>
+              <b>{isScore(badges?.countryRsScore) ? Number(badges.countryRsScore).toFixed(0) : "Sin dato"}</b>
             </div>
           )}
           {rsThemeLegend?.enabled && (
-            <div className={`universalChartBadges ${Number.isFinite(Number(badges?.themeRsScore)) ? "" : "muted"}`} title="RS tema · ranking semanal intra-ocupación. No cambia con el rango del gráfico.">
+            <div className={`universalChartBadges ${isScore(badges?.themeRsScore) ? "" : "muted"}`} title="RS tema · ranking semanal intra-ocupación. No cambia con el rango del gráfico.">
               <span>RS tema</span>
-              <b>{Number.isFinite(Number(badges?.themeRsScore)) ? Number(badges.themeRsScore).toFixed(0) : "Sin dato"}</b>
+              <b>{isScore(badges?.themeRsScore) ? Number(badges.themeRsScore).toFixed(0) : "Sin dato"}</b>
             </div>
           )}
           {intradayRsBadge}
@@ -269,7 +305,39 @@ export function UniversalPriceChartView({
           div del ref sigue siendo el mismo y lightweight-charts monta dentro
           de él exactamente igual. */}
       <div className="universalChartCanvasWrap">
-        <div className="universalChartCanvas" ref={canvasRef} style={{ "--chart-target-height": "460px" }} />
+        <div
+          className="universalChartCanvas"
+          ref={canvasRef}
+          style={{ "--chart-target-height": "460px" }}
+          tabIndex={0}
+          role="application"
+          aria-roledescription="gráfico"
+          aria-label={`Gráfico de ${symbol || "precio"}. ${CHART_NAV_HINT}`}
+          aria-keyshortcuts={CHART_NAV_SHORTCUTS}
+          title={CHART_NAV_HINT}
+          onKeyDown={(event) => {
+            if (event.target !== event.currentTarget) return;
+            const action = chartKeyAction(event);
+            // Esc con una herramienta de dibujo activa es de la herramienta.
+            if (!action || (action.type === "reset" && viewportRail.drawing)) return;
+            event.preventDefault();
+            event.stopPropagation();
+            runChartKeyAction(action, actions);
+          }}
+        />
+        {/* Lectura bajo el cursor («16 abr 2026 · C 251,07 · RS 64»). Oculta
+            salvo con el cursor sobre el lienzo; la escribe el controller sin
+            re-render. Sustituye a las etiquetas de las medias en el eje. */}
+        {/* `data-default` = la misma lectura sobre la última barra. Solo la
+            pinta la ficha móvil (styles/stock-mobile.css), donde no hay
+            cursor en reposo; en escritorio la lectura sigue oculta. */}
+        <div
+          className="universalChartReadout"
+          ref={readoutRef}
+          hidden
+          aria-hidden="true"
+          data-default={viewModel.readoutDefault || undefined}
+        />
         {identityCardShown && (
           /* Con la tarjeta visible, el badge de patrón y la botonera flotan
              sobre la esquina superior derecha del lienzo: la fila del head
@@ -383,6 +451,7 @@ export default function UniversalPriceChart(props = {}) {
   return (
     <UniversalPriceChartView
       canvasRef={controller.canvasRef}
+      readoutRef={controller.readoutRef}
       viewModel={controller.viewModel}
       actions={controller.actions}
       drawingToolbar={controller.drawingToolbar}

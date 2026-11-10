@@ -417,57 +417,33 @@ describe("etapa de Weinstein en una palabra", () => {
   });
 });
 
+// Estudio móvil 2026-11 (paso 6): la fila móvil deja de ser la tarjeta con
+// las columnas de la tabla y pasa a ser la cinta de escritorio en una línea
+// (Valor · 12M · Etapa · RS · Máx 52s) con la notación de lib/screenerHuntTape.
 describe("vista móvil", () => {
-  function renderMobile(row = fullRow, perfPeriod = DEFAULT_PERFORMANCE_PERIOD, options = {}) {
-    return renderToStaticMarkup(React.createElement(MobileResultRow, {
-      row,
-      perfPeriod,
-      sort: options.sort || "",
-      setupMode: options.setupMode || "",
-      scannedMarkets: options.scannedMarkets ?? ["US"],
-      onReview: () => {},
-      onFavorite: () => {},
-      onOpenStock: () => {},
-      isFavorite: false,
-    }));
+  function renderMobile(row = fullRow) {
+    return renderToStaticMarkup(React.createElement(MobileResultRow, { row, onOpen: () => {} }));
   }
 
-  it("lee las mismas columnas visibles que escritorio (mesa US)", () => {
+  it("lee la notación de la cinta: miniatura, etapa, RS canónico y Máx 52s", () => {
     const html = renderMobile();
     expect(html).toContain(">TREN<");
-    expect(html).toContain("miniSparkline");
-    expect(html).toContain("Semis / fotonica");
+    expect(html).toContain("huntTapeSpark");
     expect(html).toContain(">92<");
     expect(html).not.toContain(">55<");
-    expect(html).toContain("Etapa 2");
-    expect(html).toContain("+18,4%");
+    expect(html).toContain(">2<");
     expect(html).toContain("-3,2%");
-    expect(html).toContain("4,2B");
-    expect(html.match(/class="mobileResultField/g)).toHaveLength(7);
+    // Presupuesto fijo: tema, rendimiento y capitalización no van en la fila.
+    expect(html).not.toContain("Semis / fotonica");
+    expect(html).not.toContain("+18,4%");
+    expect(html).not.toContain("4,2B");
   });
 
-  it("muestra RS país en móvil cuando la mesa no es US-only", () => {
-    const html = renderMobile(fullRow, DEFAULT_PERFORMANCE_PERIOD, { scannedMarkets: ["US", "HK"] });
-    expect(html).toContain(">55<");
-    expect(html.match(/class="mobileResultField/g)).toHaveLength(8);
-  });
-
-  it("sigue al mismo selector global de periodo", () => {
-    expect(renderMobile(fullRow, "perf12m")).toContain("+51,9%");
-    expect(renderMobile(fullRow, "perf12m")).toContain("Rend. 12M");
-  });
-
-  it("muestra deterioro en móvil cuando el modo es weakness", () => {
-    const html = renderMobile(fullRow, DEFAULT_PERFORMANCE_PERIOD, { setupMode: "weakness" });
-    expect(html).toContain(">Deterioro<");
-    expect(html).toContain(">12</b>");
-    expect(html.match(/class="mobileResultField/g)).toHaveLength(8);
-  });
-
-  it("muestra las ausencias igual que escritorio", () => {
+  it("muestra las ausencias como la cinta: «—» atenuado, nunca «Sin VCP» ni RS 0", () => {
     const html = renderMobile(emptyRow);
-    expect(html.match(/class="cellMissing"/g)).toHaveLength(7);
-    expect(html).toContain("Sin VCP");
+    expect(html).not.toContain("Sin VCP");
+    expect(html).not.toContain(">0<");
+    expect(html.match(/huntTapeGhost/g)?.length).toBeGreaterThanOrEqual(3);
     expect(html).toContain("Sin RS semanal");
   });
 });

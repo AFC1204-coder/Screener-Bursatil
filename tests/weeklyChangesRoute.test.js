@@ -118,17 +118,17 @@ describe("GET /api/weekly-changes · select de scans", () => {
 
     expect(res.status).toBe(200);
     expect(payload.state).toBe("not-comparable");
-    expect(payload.reason).toBe("single-comparable-scan");
+    expect(payload.reason).toBe("no-weekly-anchor");
     expect(PUBLISHABLE_PARENT_STATUS).toContain(scanProgressStatus(scansResponse[1]));
     expect(PUBLISHABLE_PARENT_STATUS).not.toContain(scanProgressStatus(scansResponse[0]));
   });
 
   it("con dos nocturnos publicables comparables devuelve state ok, no 502", async () => {
-    const anchor = nightlyScan("2026-08-18", { status: "complete", id: "anchor-scan" });
-    const current = nightlyScan("2026-08-23", { status: "partial", id: "current-scan" });
+    const anchor = nightlyScan("2026-10-10", { status: "complete", id: "anchor-scan" });
+    const current = nightlyScan("2026-10-18", { status: "partial", id: "current-scan" });
     scansResponse = [current, anchor];
-    scanRowsById.set("anchor-scan", [lightRow("AAA", "2026-08-17")]);
-    scanRowsById.set("current-scan", [lightRow("AAA", "2026-08-21")]);
+    scanRowsById.set("anchor-scan", [lightRow("AAA", "2026-10-09")]);
+    scanRowsById.set("current-scan", [lightRow("AAA", "2026-10-16")]);
 
     const res = await GET(getRequest("?refresh=1"));
     const payload = await res.json();
@@ -141,11 +141,11 @@ describe("GET /api/weekly-changes · select de scans", () => {
 
 describe("GET /api/weekly-changes · select de scan_results", () => {
   it("REGRESIÓN: pide columnas pg reales, no alias PostgREST sobre scan_results", async () => {
-    const anchor = nightlyScan("2026-08-18", { status: "complete", id: "anchor-scan" });
-    const current = nightlyScan("2026-08-23", { status: "partial", id: "current-scan" });
+    const anchor = nightlyScan("2026-10-10", { status: "complete", id: "anchor-scan" });
+    const current = nightlyScan("2026-10-18", { status: "partial", id: "current-scan" });
     scansResponse = [current, anchor];
-    scanRowsById.set("anchor-scan", [lightRow("AAA", "2026-08-17")]);
-    scanRowsById.set("current-scan", [lightRow("AAA", "2026-08-21")]);
+    scanRowsById.set("anchor-scan", [lightRow("AAA", "2026-10-09")]);
+    scanRowsById.set("current-scan", [lightRow("AAA", "2026-10-16")]);
 
     const res = await GET(getRequest("?refresh=1"));
     expect(res.status).not.toBe(502);
@@ -157,5 +157,81 @@ describe("GET /api/weekly-changes · select de scan_results", () => {
       expect(query).not.toMatch(/[a-zA-Z0-9_]+:[a-zA-Z0-9_]+/);
       expect(query).not.toContain("metrics->>");
     }
+  });
+});
+
+// ── Contrato D2 (auditoría de producto 2026-11) ────────────────────────────
+// El par es el escaneo MOSTRADO frente al cierre del viernes anterior, y
+// ninguna «entrada en E2» puede estar en otra etapa en el escaneo mostrado.
+describe("GET /api/weekly-changes · contrato D2", () => {
+  function octoberWeek() {
+    // Nocturnos reales de la auditoría: 12→18 oct (barras 9→16) + sábado 10.
+    const dates = ["2026-10-18", "2026-10-17", "2026-10-16", "2026-10-15", "2026-10-14", "2026-10-13", "2026-10-12", "2026-10-10"];
+    return dates.map((d) => ({ ...nightlyScan(d), created_at: new Date(`${d}T03:00:32.000Z`) }));
+  }
+  const lastDateOf = { "2026-10-18": "2026-10-16", "2026-10-17": "2026-10-16", "2026-10-16": "2026-10-15", "2026-10-15": "2026-10-14", "2026-10-14": "2026-10-13", "2026-10-13": "2026-10-12", "2026-10-12": "2026-10-09", "2026-10-10": "2026-10-09" };
+
+  function seed() {
+    scansResponse = octoberWeek();
+    for (const scan of scansResponse) {
+      const date = scan.local_id.split(":")[2];
+      const ld = lastDateOf[date];
+      // ENT entra en E2 durante la semana; SAL sale; ZIG parpadea entre
+      // nocturnos de entre semana (E2 el miércoles, E3 el resto).
+      const anchorSide = date <= "2026-10-12";
+      scanRowsById.set(scan.id, [
+        lightRow("ENT", ld, anchorSide ? "stage1" : "stage2"),
+        lightRow("SAL", ld, anchorSide ? "stage2" : "stage3"),
+        lightRow("ZIG", ld, date === "2026-10-14" ? "stage2" : "stage3"),
+        lightRow("FIX", ld, "stage2"),
+      ]);
+    }
+  }
+
+  it("toScan es el escaneo mostrado y fromScan, el cierre del viernes anterior", async () => {
+    seed();
+    const displayed = scansResponse[0].local_id; // 18-oct
+    const res = await GET(getRequest(`?refresh=1&scan=${encodeURIComponent(displayed)}`));
+    const payload = await res.json();
+    expect(payload.state).toBe("ok");
+    expect(payload.window.toScan.localId).toBe(displayed);
+    expect(payload.window.fromScan.scanDate).toBe("2026-10-10");
+    expect(payload.window).toMatchObject({ from: "2026-10-09", to: "2026-10-16", fromWeekEnd: "2026-10-09", toWeekEnd: "2026-10-16", policy: "weekly-close" });
+    const displayedRows = new Map(scanRowsById.get(scansResponse[0].id).map((r) => [r.symbol, r.metrics.weeklyStageState]));
+    expect(payload.stage2.entries.rows.map((r) => r.symbol)).toEqual(["ENT"]);
+    expect(payload.stage2.entries.rows.every((r) => displayedRows.get(r.symbol) === "stage2")).toBe(true);
+    expect(payload.stage2.exits.rows.every((r) => displayedRows.get(r.symbol) !== "stage2")).toBe(true);
+    expect(payload.validation).toEqual({ entriesDropped: 0, exitsDropped: 0 });
+  });
+
+  it("sin ?scan= usa el nocturno más reciente por instante real (no el miércoles)", async () => {
+    seed();
+    const payload = await (await GET(getRequest("?refresh=1"))).json();
+    expect(payload.window.toScan.scanDate).toBe("2026-10-18");
+  });
+
+  it("un mostrado antiguo de entre semana no da cifras: su etapa no es la oficial", async () => {
+    seed();
+    const wednesday = scansResponse.find((s) => s.local_id.includes("2026-10-14")).local_id;
+    const payload = await (await GET(getRequest(`?refresh=1&scan=${encodeURIComponent(wednesday)}`))).json();
+    expect(payload.state).toBe("not-comparable");
+    expect(payload.stage2).toBeUndefined();
+  });
+
+  it("sin par válido: «not-comparable», sin cifras", async () => {
+    seed();
+    // Sin los nocturnos con barras del viernes 9 no hay ancla en tolerancia.
+    scansResponse = scansResponse.filter((s) => !/2026-10-1[02]:/.test(s.local_id));
+    const payload = await (await GET(getRequest(`?refresh=1&scan=${encodeURIComponent(scansResponse[0].local_id)}`))).json();
+    expect(payload.state).toBe("not-comparable");
+    expect(payload.reason).toBe("no-weekly-anchor");
+    expect(payload.stage2).toBeUndefined();
+    expect(payload.highs).toBeUndefined();
+  });
+
+  it("un ?scan= que no es nocturno US se ignora (vale el más reciente)", async () => {
+    seed();
+    const payload = await (await GET(getRequest("?refresh=1&scan=local-123"))).json();
+    expect(payload.window.toScan.scanDate).toBe("2026-10-18");
   });
 });

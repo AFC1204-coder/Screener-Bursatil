@@ -3,7 +3,9 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  chartReadoutText,
   createChartNativeAdapter,
+  pointAtOrBefore,
   resolveCssTokensNative,
 } from "@/app/chartNativeAdapter";
 
@@ -213,7 +215,9 @@ describe("chartNativeAdapter · overlay del RS rating", () => {
     expect(rsScale.options).toMatchObject({
       visible: false,
       autoScale: true,
-      scaleMargins: { top: 0.75, bottom: 0.02 },
+      // Banda propia 0,70→0,84: ni pisa el volumen (0,86→1) ni el precio
+      // (0,08→0,68) — auditoría 2026-11, H7.
+      scaleMargins: { top: 0.70, bottom: 0.16 },
     });
     // Sin panel inferior RS.
     expect(priceScaleCalls.some((call) => call.paneIndex === 1)).toBe(false);
@@ -309,5 +313,210 @@ describe("chartNativeAdapter · overlay del RS rating", () => {
     }
     expect(priceScaleCalls.filter((call) => call.id === "rs-rating")).toHaveLength(1);
     expect(priceScaleCalls.some((call) => call.id === "rs-country" || call.id === "rs-theme")).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Auditoría del gráfico 2026-11: actualizar sin recrear (H22), lienzo limpio
+// (H7, H29) y lectura bajo el cursor (H4).
+
+function liveChartHarness() {
+  const created = [];
+  const removed = [];
+  const scaleOptions = new Map();
+  const registered = new Set([""]);
+  let crosshairHandler = null;
+  const makeSeries = (definition, options) => {
+    const series = {
+      definition,
+      options: { ...(options || {}) },
+      data: null,
+      priceLines: [],
+      setData: vi.fn((data) => { series.data = data; }),
+      applyOptions: vi.fn((next) => { Object.assign(series.options, next); }),
+      priceScale: () => ({ applyOptions: vi.fn() }),
+      createPriceLine: vi.fn((line) => { series.priceLines.push(line); return line; }),
+      removePriceLine: vi.fn((line) => { series.priceLines = series.priceLines.filter((item) => item !== line); }),
+    };
+    return series;
+  };
+  const chart = {
+    addSeries: vi.fn((definition, options) => {
+      if (options?.priceScaleId) registered.add(options.priceScaleId);
+      const series = makeSeries(definition, options);
+      created.push(series);
+      return series;
+    }),
+    removeSeries: vi.fn((series) => { removed.push(series); }),
+    applyOptions: vi.fn(),
+    priceScale: vi.fn((id) => ({
+      applyOptions: (options) => {
+        if (id && !registered.has(id)) throw new Error(`incorrect ID: ${id}`);
+        scaleOptions.set(id, options);
+      },
+    })),
+    subscribeCrosshairMove: vi.fn((handler) => { crosshairHandler = handler; }),
+    unsubscribeCrosshairMove: vi.fn(() => { crosshairHandler = null; }),
+  };
+  const createChart = vi.fn(() => chart);
+  const lib = {
+    AreaSeries: "area",
+    CandlestickSeries: "candles",
+    createChart,
+    createSeriesMarkers: vi.fn(() => ({ setMarkers: vi.fn() })),
+    HistogramSeries: "histogram",
+    LineSeries: "line",
+    LineStyle: { Solid: 0, Dotted: 1, Dashed: 2 },
+    PriceScaleMode: { Normal: 0, Logarithmic: 1, Percentage: 2 },
+  };
+  const colors = Object.fromEntries(EXPECTED_TOKENS.map(([key, , fallback]) => [key, fallback]));
+  const profile = {
+    priceScaleMargins: { top: 0.08, bottom: 0.25 },
+    timeScale: {},
+    timeFormatter: (time) => `T${time}`,
+  };
+  return {
+    chart, lib, colors, profile, created, removed, scaleOptions, createChart,
+    hover: (param) => crosshairHandler?.(param),
+  };
+}
+
+const BASE_INDICATORS = {
+  volume: true, maFast: true, maFastLength: 3, maSlow: true, maSlowLength: 5,
+  rsLine: true, rsCountryLine: false, rsThemeLine: false,
+};
+
+function weeklyRs(rows, weeks, base) {
+  return Array.from({ length: weeks }, (_, index) => ({ date: rows[index * 7].date, rsRating: base + index }));
+}
+
+describe("chartNativeAdapter · auditoría 2026-11", () => {
+  it("las medias no llevan etiqueta de último valor, línea de precio ni marcador de cursor", () => {
+    const h = liveChartHarness();
+    const rows = dailyRows(60);
+    createChartNativeAdapter({
+      container: { clientWidth: 900 }, lib: h.lib, profile: h.profile, colors: h.colors, rows,
+      config: { interval: "D", style: "1", scale: "price", indicators: BASE_INDICATORS, intraday: false },
+      overrides: {},
+    });
+    const mas = h.created.filter((series) => series.definition === "line" && !series.options.priceScaleId);
+    expect(mas).toHaveLength(2);
+    for (const ma of mas) {
+      expect(ma.options).toMatchObject({ lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false });
+    }
+  });
+
+  it("la línea ÷ benchmark está apagada por defecto y solo aparece con indicators.benchmarkLine", () => {
+    const rows = dailyRows(60);
+    const benchmarkSeries = rows.map((row, index) => ({ date: row.date, rsLine: 1 + index / 100 }));
+    const off = liveChartHarness();
+    createChartNativeAdapter({
+      container: { clientWidth: 900 }, lib: off.lib, profile: off.profile, colors: off.colors, rows,
+      config: { interval: "D", style: "1", scale: "price", indicators: BASE_INDICATORS, intraday: false },
+      overrides: { benchmarkSeries },
+    });
+    expect(off.created.some((series) => series.options.priceScaleId === "benchmark-ratio")).toBe(false);
+
+    const on = liveChartHarness();
+    createChartNativeAdapter({
+      container: { clientWidth: 900 }, lib: on.lib, profile: on.profile, colors: on.colors, rows,
+      config: { interval: "D", style: "1", scale: "price", indicators: { ...BASE_INDICATORS, benchmarkLine: true }, intraday: false },
+      overrides: { benchmarkSeries },
+    });
+    expect(on.created.some((series) => series.options.priceScaleId === "benchmark-ratio")).toBe(true);
+  });
+
+  it("con línea RS, precio, RS y volumen ocupan franjas que no se solapan", () => {
+    const h = liveChartHarness();
+    const rows = dailyRows(80);
+    createChartNativeAdapter({
+      container: { clientWidth: 900 }, lib: h.lib, profile: h.profile, colors: h.colors, rows,
+      config: { interval: "D", style: "1", scale: "price", indicators: BASE_INDICATORS, intraday: false },
+      overrides: { rsRatingSeries: weeklyRs(rows, 12, 40) },
+    });
+    const band = (margins) => [margins.top, 1 - margins.bottom];
+    const rsBand = band(h.scaleOptions.get("rs-rating").scaleMargins);
+    const volumeBand = band(h.scaleOptions.get("").scaleMargins);
+    const lastPrice = h.chart.applyOptions.mock.calls.map(([o]) => o?.rightPriceScale?.scaleMargins).filter(Boolean).at(-1);
+    const priceBand = band(lastPrice);
+    expect(priceBand[1]).toBeLessThanOrEqual(rsBand[0]);
+    expect(rsBand[1]).toBeLessThanOrEqual(volumeBand[0]);
+  });
+
+  it("update() cambia datos y rango sobre el MISMO chart: sin createChart ni series nuevas para lo que ya existe", () => {
+    const h = liveChartHarness();
+    const rows = dailyRows(120);
+    const config = { interval: "D", style: "1", scale: "price", indicators: BASE_INDICATORS, intraday: false };
+    const handle = createChartNativeAdapter({
+      container: { clientWidth: 900 }, lib: h.lib, profile: h.profile, colors: h.colors, rows,
+      config, overrides: { rsRatingSeries: weeklyRs(rows, 12, 40) },
+    });
+    const seriesBefore = h.created.length;
+    const extraBefore = handle.extraSeries;
+    const shorter = rows.slice(-100); // conserva 9 lecturas RS: la línea sigue
+    handle.update({
+      config: { ...config, dataRange: "3M", scale: "log" },
+      rows: shorter,
+      overrides: { rsRatingSeries: weeklyRs(rows, 12, 40) },
+      profile: h.profile,
+    });
+    expect(h.createChart).toHaveBeenCalledTimes(1);
+    expect(h.created.length).toBe(seriesBefore);
+    expect(handle.extraSeries).toBe(extraBefore);
+    expect(handle.mainSeries.data).toHaveLength(100);
+    expect(handle.rsPane.rendered).toBe(true);
+    // La escala log llega por applyOptions, sin recrear.
+    expect(h.chart.applyOptions.mock.calls.some(([o]) => o?.rightPriceScale?.mode === 1)).toBe(true);
+    // Una sola referencia 50 viva tras re-aplicar.
+    const rs = h.created.find((series) => series.options.title === "RS");
+    expect(rs.priceLines).toHaveLength(1);
+  });
+
+  it("update() retira la línea RS si en el nuevo rango no hay histórico suficiente, y la vuelve a crear si lo hay", () => {
+    const h = liveChartHarness();
+    const rows = dailyRows(120);
+    const config = { interval: "D", style: "1", scale: "price", indicators: BASE_INDICATORS, intraday: false };
+    const rsRatingSeries = weeklyRs(rows, 12, 40);
+    const handle = createChartNativeAdapter({
+      container: { clientWidth: 900 }, lib: h.lib, profile: h.profile, colors: h.colors, rows, config,
+      overrides: { rsRatingSeries },
+    });
+    expect(handle.rsPane.rendered).toBe(true);
+    handle.update({ config, rows: rows.slice(-15), overrides: { rsRatingSeries }, profile: h.profile });
+    expect(handle.rsPane.rendered).toBe(false);
+    expect(h.removed.some((series) => series.options.title === "RS")).toBe(true);
+    handle.update({ config, rows, overrides: { rsRatingSeries }, profile: h.profile });
+    expect(handle.rsPane.rendered).toBe(true);
+    expect(h.createChart).toHaveBeenCalledTimes(1);
+  });
+
+  it("lectura bajo el cursor: fecha, cierre y RS vigente en esa fecha; vacía fuera del lienzo", () => {
+    const h = liveChartHarness();
+    const rows = dailyRows(80);
+    const readouts = [];
+    const rsRatingSeries = weeklyRs(rows, 12, 40);
+    const handle = createChartNativeAdapter({
+      container: { clientWidth: 900 }, lib: h.lib, profile: h.profile, colors: h.colors, rows,
+      config: { interval: "D", style: "1", scale: "price", indicators: BASE_INDICATORS, intraday: false },
+      overrides: { rsRatingSeries },
+      onReadout: (text) => readouts.push(text),
+    });
+    const target = rows[23]; // entre la lectura 3 (fila 21) y la 4 (fila 28)
+    const seriesData = new Map([[handle.mainSeries, { open: 10, high: 12, low: 9, close: 251.065 }]]);
+    h.hover({ time: target.time, point: { x: 10, y: 10 }, seriesData });
+    expect(readouts.at(-1)).toBe(`T${target.time} · C 251,07 · RS 43`);
+    h.hover({ time: undefined, point: undefined, seriesData: new Map() });
+    expect(readouts.at(-1)).toBe("");
+  });
+
+  it("chartReadoutText y pointAtOrBefore", () => {
+    expect(chartReadoutText({ dateText: "16 abr 2026", close: 251.065, rs: 64.4 })).toBe("16 abr 2026 · C 251,07 · RS 64");
+    expect(chartReadoutText({ dateText: "16 abr 2026", close: 251.065, rs: null })).toBe("16 abr 2026 · C 251,07");
+    expect(chartReadoutText({ dateText: "16 abr 2026" })).toBe("");
+    const points = [{ time: 10, value: 1 }, { time: 20, value: 2 }, { time: 30, value: 3 }];
+    expect(pointAtOrBefore(points, 5)).toBeNull();
+    expect(pointAtOrBefore(points, 20).value).toBe(2);
+    expect(pointAtOrBefore(points, 29).value).toBe(2);
+    expect(pointAtOrBefore(points, 99).value).toBe(3);
   });
 });

@@ -74,6 +74,8 @@ describe("presupuesto de énfasis · pantalla principal", () => {
 // «Resolución» se conserva: filtra por lo que el usuario marcó en Review/Ficha,
 // no por un juicio del sistema.
 const FILTER_BAR = readFileSync(new URL("../app/components/screener/ResultFilterBar.jsx", import.meta.url), "utf8");
+const VIEW_SELECTS = readFileSync(new URL("../app/components/screener/ResultViewSelects.jsx", import.meta.url), "utf8");
+const MOBILE_FILTER_SHEET = readFileSync(new URL("../app/components/screener/MobileFilterSheet.jsx", import.meta.url), "utf8");
 
 const FILTROS_RETIRADOS = [
   ["fiabilidad", "Filtrar por fiabilidad de observacion"],
@@ -90,15 +92,20 @@ describe("filtros de la pantalla principal", () => {
     });
   }
 
+  // Estudio móvil 2026-11 (paso 9): en móvil, «Resolución» vive en la hoja de
+  // filtros como «Tu clasificación»; los selects de vista son los mismos
+  // (ResultViewSelects) en el popover de escritorio y en la hoja.
   it("conserva «Resolución» en ambas superficies", () => {
-    expect(FILTER_BAR).toContain("Filtrar por resolución de decisión");
-    expect(MOBILE).toContain("Filtrar por resolución de decisión");
+    expect(VIEW_SELECTS).toContain("Filtrar por resolución de decisión");
+    expect(FILTER_BAR).toContain("<ResultViewSelects");
+    expect(MOBILE_FILTER_SHEET).toContain('aria-label="Filtrar por tu clasificación"');
+    expect(MOBILE_FILTER_SHEET).toContain("<ResultViewSelects");
   });
 
-  it("orden solo en móvil: escritorio sin resultSortSelect, móvil con Orden movil", () => {
+  it("orden solo en móvil: escritorio sin resultSortSelect, móvil con su selector", () => {
     expect(FILTER_BAR).not.toContain("resultSortSelect");
     expect(FILTER_BAR).not.toContain("Ordenar resultados");
-    expect(MOBILE).toContain('aria-label="Orden movil"');
+    expect(MOBILE).toContain('aria-label="Ordenar la cola"');
   });
 
   it("screener.css no contiene .resultSortSelect", () => {

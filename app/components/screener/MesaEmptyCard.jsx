@@ -4,7 +4,8 @@ import { useId } from "react";
 import { buildMesaEmptyCopy } from "@/lib/mesaEmptyState";
 
 /**
- * Tarjeta centrada cuando no hay escaneo/mesa (P1).
+ * Mesa sin escaneo (P1, copy contractual del Hito 1). Rediseño 2026-11 paso 8:
+ * mismo contenedor que el vacío de la cinta — sin tarjeta ni eyebrow.
  * CTAs: Reintentar · Buscar ticker · Detalle técnico colapsado.
  */
 export default function MesaEmptyCard({
@@ -26,7 +27,6 @@ export default function MesaEmptyCard({
       aria-labelledby={`${detailId}-title`}
     >
       <div className="mesaEmptyCardInner">
-        <p className="mesaEmptyCardEyebrow">Mesa</p>
         <h2 id={`${detailId}-title`} className="mesaEmptyCardTitle">
           {copy.title}
         </h2>

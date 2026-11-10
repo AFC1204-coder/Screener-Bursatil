@@ -129,9 +129,10 @@ export default function RowPriceChart({
     row?.themeRsSeries,
   ]);
 
-  if (!row?.symbol) return <div className="previewEmpty">{emptyLabel}</div>;
-
-  const links = externalLinks(row.symbol, row.exchange);
+  // Todos los hooks ANTES de cualquier return: si la fila pasa de tener
+  // símbolo a no tenerlo sin desmontar, un return previo a los useMemo hacía
+  // que React lanzase «Rendered fewer hooks than expected» (auditoría 2026-11,
+  // H28). resolveRowChartSource y chartRsPropsFromRow aceptan fila nula.
   const {
     bars,
     settings: chartSettings,
@@ -150,6 +151,10 @@ export default function RowPriceChart({
     () => chartRsPropsFromRow(row, fetchedRs),
     [row, fetchedRs],
   );
+
+  if (!row?.symbol) return <div className="previewEmpty">{emptyLabel}</div>;
+
+  const links = externalLinks(row.symbol, row.exchange);
   // ADR §3.2/§9: la calidad local viaja explícita. Solo tiene sentido cuando
   // efectivamente pasamos barras locales; si las descartamos, el veredicto lo
   // pone el payload remoto de /api/chart.

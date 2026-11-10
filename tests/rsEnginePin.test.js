@@ -139,58 +139,63 @@ describe("la LECTURA respeta el pin (no basta con que la constante exista)", () 
   it("la serie de la ficha prefiere el engine pinneado aunque exista una fila más nueva de otro motor", async () => {
     // Orden real de la consulta: snapshot_date desc. La fila más reciente es de
     // un motor NO canónico; con latest-wins la ficha habría enseñado esa serie.
-    supabaseRequest.mockResolvedValueOnce([
-      {
-        symbol: "MU",
-        snapshot_date: "2026-09-05",
-        week_key: "2026-W36",
-        base_currency: "USD",
-        engine_version: US_EQUITY_RS_ENGINE_VERSION,
-        rank_index: 2,
-        rs_rating: 99,
-        rs_raw: 487,
-        sample_size: 4868,
-        metrics: {},
-      },
-      {
-        symbol: "MU",
-        snapshot_date: "2026-08-29",
-        week_key: "2026-W35",
-        base_currency: "USD",
-        engine_version: PRIVATE_GLOBAL_RS_ENGINE_VERSION,
-        rank_index: 40,
-        rs_rating: 71,
-        rs_raw: 300,
-        sample_size: 5600,
-        metrics: {},
-      },
-    ]);
+    supabaseRequest
+      .mockResolvedValueOnce([{ snapshot_date: "2026-08-29" }]) // pin con snapshot
+      .mockResolvedValueOnce([
+        {
+          symbol: "MU",
+          snapshot_date: "2026-09-05",
+          week_key: "2026-W36",
+          base_currency: "USD",
+          engine_version: US_EQUITY_RS_ENGINE_VERSION,
+          rank_index: 2,
+          rs_rating: 99,
+          rs_raw: 487,
+          sample_size: 4868,
+          metrics: {},
+        },
+        {
+          symbol: "MU",
+          snapshot_date: "2026-08-29",
+          week_key: "2026-W35",
+          base_currency: "USD",
+          engine_version: PRIVATE_GLOBAL_RS_ENGINE_VERSION,
+          rank_index: 40,
+          rs_rating: 71,
+          rs_raw: 300,
+          sample_size: 5600,
+          metrics: {},
+        },
+      ]);
     const result = await readGlobalRsSeriesForSymbol("MU");
     expect(result.series).toHaveLength(1);
     expect(result.series[0].engineVersion).toBe(PRIVATE_GLOBAL_RS_ENGINE_VERSION);
     expect(result.latest.rsRating).toBe(71);
   });
 
-  it("si el símbolo no tiene historia bajo el pin, la ficha enseña la que hay ETIQUETADA con su engine", async () => {
-    // El spec pide no ocultarla: un símbolo que solo existe en el motor US
-    // conserva su serie, marcada con su engineVersion, sin mezclarse.
-    supabaseRequest.mockResolvedValueOnce([
-      {
-        symbol: "OLD",
-        snapshot_date: "2026-08-08",
-        week_key: "2026-W32",
-        base_currency: "USD",
-        engine_version: US_EQUITY_RS_ENGINE_VERSION,
-        rank_index: 10,
-        rs_rating: 80,
-        rs_raw: 200,
-        sample_size: 4868,
-        metrics: {},
-      },
-    ]);
+  it("si el símbolo no tiene historia bajo el pin, la ficha NO toma la de otro motor (ausencia honesta)", async () => {
+    // Cambio de contrato 2026-11 (auditoría del gráfico, H1): enseñar otra
+    // metodología bajo la etiqueta RS contradecía a la tarjeta y al screener.
+    // Sin filas del pin, la serie va vacía y el gráfico rotula la ausencia.
+    supabaseRequest
+      .mockResolvedValueOnce([{ snapshot_date: "2026-08-29" }]) // pin con snapshot
+      .mockResolvedValueOnce([
+        {
+          symbol: "OLD",
+          snapshot_date: "2026-08-08",
+          week_key: "2026-W32",
+          base_currency: "USD",
+          engine_version: US_EQUITY_RS_ENGINE_VERSION,
+          rank_index: 10,
+          rs_rating: 80,
+          rs_raw: 200,
+          sample_size: 4868,
+          metrics: {},
+        },
+      ]);
     const result = await readGlobalRsSeriesForSymbol("OLD");
-    expect(result.series).toHaveLength(1);
-    expect(result.series[0].engineVersion).toBe(US_EQUITY_RS_ENGINE_VERSION);
+    expect(result.series).toEqual([]);
+    expect(result.latest).toBeNull();
   });
 });
 

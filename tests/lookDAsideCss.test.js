@@ -12,11 +12,6 @@ function extractRuleBlock(css, selector) {
 }
 
 describe("LOOK-D · aside piel CSS", () => {
-  it("aside desktop usa fondo --bg", () => {
-    const sidebarBlocks = SCREENER_CSS.match(/\.sidebar\s*\{[^}]*background:\s*var\(--bg\)/gs) ?? [];
-    expect(sidebarBlocks.length).toBeGreaterThan(0);
-  });
-
   it("tarjeta familia: --surface + --line2 + --shadow-panel; off sin opacity en fila", () => {
     const row = extractRuleBlock(SCREENER_CSS, ".layerControlRow");
     expect(row).toMatch(/background:\s*var\(--surface\)/);
@@ -71,23 +66,17 @@ describe("LOOK-D · aside piel CSS", () => {
     expect(SCREENER_CSS).toMatch(/\.filterFamilyPreset:active[\s\S]*--senal-dim/);
   });
 
-  it("drawer móvil: cabecera sin negro v1; entrada --t-enter", () => {
-    const drawerHeader = SCREENER_CSS.match(
-      /\.sidebar\.mobileOpen \.mobileSidebarHeader\s*\{[^}]*\}/s,
-    );
-    expect(drawerHeader).toBeTruthy();
-    expect(drawerHeader[0]).not.toMatch(/rgba\(5,\s*5,\s*6/);
-    expect(drawerHeader[0]).toMatch(/var\(--surface\)/);
-    expect(SCREENER_CSS).toMatch(/\.sidebar\.mobileOpen\s*\{[^}]*animation:\s*fadeIn var\(--t-enter\)/s);
-    expect(SCREENER_CSS).toMatch(/\.sidebar\.mobileOpen\s*\{[^}]*inset:\s*0/s);
-    expect(SCREENER_CSS).toMatch(/z-index:\s*1000/);
-    // Terminal no puede dejar top:78 sobre el drawer abierto.
-    expect(SCREENER_CSS).toMatch(
-      /\.screenerTerminalPage \.sidebar\.mobileOpen\s*\{[^}]*inset:\s*0/s,
-    );
-    expect(SCREENER_CSS).toMatch(
-      /\.screenerTerminalPage \.sidebar\.mobileOpen\s*\{[^}]*top:\s*0/s,
-    );
+  // Estudio móvil 2026-11 (paso 9): el cajón lateral (.sidebar.mobileOpen)
+  // se sustituye por la hoja inferior (MobileSheet). Misma piel: --surface,
+  // sin negro v1, entrada --t-enter y por encima de la barra inferior.
+  it("hoja inferior móvil: fondo --surface, sin negro v1, entrada --t-enter", () => {
+    const sheet = SCREENER_CSS.match(/\.mobileSheet\s*\{[^}]*\}/s);
+    expect(sheet).toBeTruthy();
+    expect(sheet[0]).toMatch(/background:var\(--surface\)/);
+    expect(sheet[0]).not.toMatch(/rgba\(5,\s*5,\s*6/);
+    expect(sheet[0]).toMatch(/animation:mobileSheetIn var\(--t-enter/);
+    expect(SCREENER_CSS).toMatch(/\.mobileSheetLayer\s*\{[^}]*position:fixed[^}]*z-index:900/s);
+    expect(SCREENER_CSS).not.toMatch(/\.sidebar\.mobileOpen/);
   });
 
   it("sin !important en .layerControlRow / .mobileSidebarHeader / .marketChip (screener)", () => {

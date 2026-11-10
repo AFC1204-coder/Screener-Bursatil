@@ -16,9 +16,11 @@ import {
   themeRs,
 } from "@/lib/themeRs";
 import {
+  REVIEW_RS_COMPACT,
   REVIEW_RS_SHORT,
   classifyReviewRsState,
   reviewRsCell,
+  reviewRsCompactCell,
 } from "@/lib/reviewRsDisplay";
 import { buildReviewMetricRows } from "@/lib/reviewMetricGrid";
 import { exclusionReasonText } from "@/lib/globalRs";
@@ -140,6 +142,43 @@ describe("REVIEW-RS-COPY-1 — classify + short copy", () => {
       reason: themeExclusionReasonText("insufficient-bars"),
       hydrated: true,
     })).toBe("no_history");
+  });
+});
+
+describe("REVIEW-RS-COMPACT — copy corto para celdas estrechas (Caza / cola)", () => {
+  it("sin histórico y sin ranking → «Sin RS»; el motivo largo va al title", () => {
+    const insufficient = exclusionReasonText("insufficient-bars");
+    const noHistory = reviewRsCompactCell({ available: false, reason: insufficient, hydrated: true });
+    expect(noHistory.text).toBe(REVIEW_RS_COMPACT.no_history);
+    expect(noHistory.text).toBe("Sin RS");
+    expect(noHistory.text).not.toMatch(/histórico/i);
+    expect(noHistory.title).toContain(REVIEW_RS_SHORT.no_history);
+    expect(noHistory.title).toContain(insufficient);
+    expect(noHistory.missing).toBe(true);
+    expect(noHistory.className).toBe("reviewRsMissing");
+
+    const notRanked = reviewRsCompactCell({ available: false, reason: RS_NOT_RANKED_REASON, hydrated: true });
+    expect(notRanked.text).toBe("Sin RS");
+    expect(notRanked.title).toBe(`${REVIEW_RS_SHORT.not_ranked} · ${RS_NOT_RANKED_REASON}`);
+  });
+
+  it("cargando → puntos suspensivos con el motivo de hidratación en title", () => {
+    const cell = reviewRsCompactCell({ available: false, reason: RS_NOT_HYDRATED_REASON, hydrated: false });
+    expect(cell.state).toBe("loading");
+    expect(cell.text).toBe("…");
+    expect(cell.title).toBe(RS_NOT_HYDRATED_REASON);
+  });
+
+  it("ningún copy compacto es guion mudo ni se parte en dos palabras largas", () => {
+    for (const text of Object.values(REVIEW_RS_COMPACT)) {
+      expect(text).not.toMatch(/^[-–—]$/);
+      expect(text.length).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it("con RS disponible el compacto es idéntico al normal", () => {
+    const rs = { available: true, value: 88, reason: "", hydrated: true };
+    expect(reviewRsCompactCell(rs, { availableTitle: "x" })).toEqual(reviewRsCell(rs, { availableTitle: "x" }));
   });
 });
 

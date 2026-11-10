@@ -5,7 +5,7 @@ import { buildResultViewBrief } from "@/app/components/screener/resultViewBrief"
 import { applyResultViewFilters, opportunityBuckets, passesSectorStrength } from "@/lib/screenerResultView";
 import { auditDecisionScan } from "@/lib/decisionAudit";
 import { rowPassesListContract } from "@/lib/listRationale";
-import { annotateScreenerRow } from "@/lib/screenerAnnotation";
+import { annotateScreenerRowMemo } from "@/lib/screenerAnnotation";
 import {
   buildScreenerDataHealthSummary,
 } from "@/lib/screenerDataHealth";
@@ -186,7 +186,8 @@ export function useResultViewModel({
   // Cache en `__screenerAnnotation`: campo no-persistido (no es RESEARCH_ROW_CORE_FIELD,
   // así que compactResearchRow lo descarta y nunca llega a localStorage).
   //
-  // Composición: lib/screenerAnnotation.js (sin memo LRU — FILTER-ANNOTATION-1 HOLD).
+  // Composición: lib/screenerAnnotation.js. Memo por IDENTIDAD de fila (WeakMap, FILTER-ANNOTATE-MEMO-1):
+  // las filas que ya pasaron antes no se re-anotan (sin LRU por símbolo — FILTER-ANNOTATION-1 HOLD).
   // Dep memo: buildScreenerAnnotation solo lee `activeSettings.setupMode`.
   // Estrechar el memo a esa única clave evita re-anotar N filas cuando cambia un
   // umbral que no afecta a la anotación (ej. settings.maxSymbols, settings.minRS).
@@ -201,7 +202,7 @@ export function useResultViewModel({
   const annotateSourceRows = rowsDeferredStale ? rows : deferredRows;
 
   const annotatedRows = useMemo(
-    () => annotateSourceRows.map((row) => annotateScreenerRow(row, activeSettings)),
+    () => annotateSourceRows.map((row) => annotateScreenerRowMemo(row, activeSettings)),
     [annotateSourceRows, setupMode],
   );
 

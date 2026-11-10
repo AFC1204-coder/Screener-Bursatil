@@ -1,9 +1,11 @@
 "use client";
+import { assessMarketRegime, regimeStamp } from "@/lib/marketRegimeFreshness";
 import "../../styles/research-desk.css";
 import { useEffect, useMemo, useState } from "react";
 import { DecisionTraceBadge, DecisionTracePanel } from "@/app/DecisionTraceability";
 import RowTrustSignature from "@/app/RowTrustSignature";
 import { InfoHint } from "@/app/components/ui/InfoHint";
+import { PageTicket } from "@/app/components/PageTicket";
 import { TrustMetric } from "@/app/components/ui/MetricSource";
 import { rowTrustSignatureForRow } from "@/app/components/ui/TrustSignals";
 import { getJson } from "@/lib/clientApi";
@@ -24,7 +26,7 @@ import { userFacingSearchError } from "@/lib/screenerFormat";
 import { createFavoriteFromRow, metricValue, rowTheme, shortBusiness } from "@/lib/stockRows";
 import { benchmarkForFavorite, externalLinks, stockUrl } from "@/lib/symbols";
 import { vcpContractionSummary } from "@/lib/vcpDiagnostics";
-import { snapshotDisplayName, snapshotDisplaySource } from "@/lib/snapshotDisplay";
+import { snapshotDisplayName, snapshotDisplaySource, snapshotRowCountLabel, snapshotRowCounts } from "@/lib/snapshotDisplay";
 
 function uid() { return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
 function ResearchTrustMetric({ row, metricKey, label, value, className = "" }) {
@@ -48,6 +50,10 @@ function ResearchScoreStrip({ row }) {
     </span>
     <RowTrustSignature signature={trustSignature} className="researchRowTrustSignature" />
   </span>;
+}
+function severityLabel(severity = "") {
+  const key = String(severity || "neutral").toLowerCase();
+  return { warning: "Deterioro", positive: "Mejora", neutral: "Contexto" }[key] || severity;
 }
 function sortScans(rows = []) {
   return [...rows].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
@@ -130,7 +136,7 @@ function stateFromBars(bars = []) {
   const s50 = sma(bars, 50), s200 = sma(bars, 200);
   if (price > s50 && price > s200) return "Tendencia constructiva";
   if (price < s200) return "Bajo SMA200";
-  if (price < s50) return "Pullback / vigilancia";
+  if (price < s50) return "Retroceso / vigilancia";
   return "Neutral";
 }
 async function quoteWithBars(symbol) {
@@ -228,8 +234,8 @@ function ResearchDeskInfraStrip({ scans, favoriteStats, alertsSummary, cloud, sy
         <b>{statusLabel}</b>
       </div>
       <div className="marketReliabilityStripItem">
-        <span>sync</span>
-        <b>{cloud.configured ? (cloud.ok ? "OK" : "Revisar") : "Local"}</b>
+        <span>sincronización</span>
+        <b>{cloud.configured ? (cloud.ok ? "Correcta" : "Revisar") : "Local"}</b>
       </div>
       <summary className="marketReliabilityStripToggle" data-action="toggle">[+]</summary>
       <div className="marketReliabilityStripDetail">
@@ -259,7 +265,7 @@ function ResearchDeskInfraStrip({ scans, favoriteStats, alertsSummary, cloud, sy
             <div className="marketReliabilityRow">
               <b>{alertsSummary.active}</b>
               <span>alertas activas</span>
-              <em>{alertsSummary.warnings}W · {alertsSummary.positives}P</em>
+              <em>{alertsSummary.warnings} deterioros · {alertsSummary.positives} mejoras</em>
             </div>
           </div>
         </div>
@@ -276,7 +282,8 @@ function DailyCommandCenter({ sections = [] }) {
         <h2>Observatorio <InfoHint text="Cambios y estructuras observables desde snapshots y favoritos. No establece preferencias." /></h2>
         <span className="fine">Sin elementos relevantes</span>
       </div>
-      <a className="btn" href="/">Screener</a>
+      {/* Paso 9: sin botón «Ir al screener» (la topbar ya navega). */}
+      <p className="fine">Aquí aparecen las estructuras y los cambios detectados en el snapshot seleccionado y en tus favoritos. Ahora mismo no hay ninguno: guarda un snapshot desde el screener o añade favoritos para empezar el seguimiento.</p>
     </section>;
   }
   return <section className="card">
@@ -289,7 +296,7 @@ function DailyCommandCenter({ sections = [] }) {
         <div className="sectionTitle"><h3>{section.title} <InfoHint text={section.detail} /></h3><span className="fine">{section.rows?.length || section.alerts?.length || 0}</span></div>
         {section.alerts ? section.alerts.slice(0, 5).map((alert) => <div className="summaryRow" key={alert.id}>
           <span><a className="ticker" href={stockUrl(alert.symbol)}>{alert.symbol}</a><br /><span className="fine">{alert.payload?.label || alert.alertType}</span></span>
-          <span>{alert.payload?.severity || "neutral"}</span>
+          <span>{severityLabel(alert.payload?.severity)}</span>
         </div>) : section.rows.slice(0, 5).map((row) => {
           const trustSignature = rowTrustSignatureForRow(row);
           return <div className="summaryRow" key={`${section.key}-${row.symbol}`}>
@@ -381,7 +388,7 @@ export default function ResearchDesk() {
       const result = await pushCloudState({ scans, favorites, alerts });
       await refreshCloudStatus(false);
       if (result.configured === false) setStatus("La copia en la nube no está activada. No se ha subido nada.");
-      else if (result.ok) setStatus(`Nube actualizada: ${result.scansSaved} snapshots, ${result.scansDeleted || 0} snapshots borrados, ${result.favoritesSaved} favoritos, ${result.favoritesDeleted || 0} borrados y ${result.alertsSaved || 0} alertas.${result.favoritesSkippedStale || result.favoritesDeleteSkippedStale || result.scansDeleteSkippedStale ? ` ${result.favoritesSkippedStale + result.favoritesDeleteSkippedStale + result.scansDeleteSkippedStale} cambios remotos mas recientes no se pisaron.` : ""}`);
+      else if (result.ok) setStatus(`Nube actualizada: ${result.scansSaved} snapshots, ${result.scansDeleted || 0} snapshots borrados, ${result.favoritesSaved} favoritos, ${result.favoritesDeleted || 0} favoritos borrados y ${result.alertsSaved || 0} alertas.${result.favoritesSkippedStale || result.favoritesDeleteSkippedStale || result.scansDeleteSkippedStale ? ` ${result.favoritesSkippedStale + result.favoritesDeleteSkippedStale + result.scansDeleteSkippedStale} cambios remotos más recientes no se sobrescribieron.` : ""}`);
       else {
         console.error("[nube] no se pudo sincronizar:", result.message);
         setStatus(`No se pudo sincronizar con la nube. ${userFacingServiceError(result.message, "Inténtalo de nuevo en unos minutos.")}`);
@@ -420,11 +427,15 @@ export default function ResearchDesk() {
   }
 
   async function loadMarket() {
-    setStatus("Actualizando benchmark...");
+    setStatus("Actualizando el índice de referencia...");
     try {
       const d = await getJson("/api/market-health");
       setMarket(d);
-      setStatus(`Market Score ${Math.round(d.marketScore || 0)} · ${d.regime?.label || "sin regimen"}`);
+      // D3: mismo criterio de caducidad que Mercado; nunca un veredicto viejo como actual.
+      const read = assessMarketRegime(d);
+      setStatus(read.usable
+        ? `Puntuación de mercado ${Math.round(read.marketScore || 0)} · ${read.regimeLabel} · ${read.dateText}`
+        : read.headline);
       return d;
     } catch (e) {
       setStatus(`Proveedor no disponible: ${e.message}`);
@@ -434,11 +445,11 @@ export default function ResearchDesk() {
   function importLatestScan() {
     const { nextScans } = reloadLocal();
     if (!nextScans.length) {
-      setStatus("No hay snapshot guardado desde el screener.");
+      setStatus("No hay ningún snapshot guardado desde el screener.");
       return;
     }
     setSelectedScan(nextScans[0]);
-    setStatus(`Último scan importado: ${nextScans[0].rows?.length || 0} acciones.`);
+    setStatus(`Último snapshot importado: ${nextScans[0].rows?.length || 0} acciones.`);
   }
   function importManualSnapshot() {
     const raw = prompt("Pega aquí un JSON de filas/candidatas para crear un snapshot manual.");
@@ -451,7 +462,7 @@ export default function ResearchDesk() {
       const compatibilityKey = snapshotCompatibilityKey(compatibilityContext);
       const previousScan = findCompatiblePreviousScan(scans, compatibilityContext);
       const enrichedRows = enrichRowsWithMethodology(rawRows, previousScan?.rows || []);
-      const scan = { id: uid(), createdAt: new Date().toISOString(), name: `Snapshot manual · ${dateTime(new Date())}`, preset: "manual", marketRegime: market?.regime?.label || "sin dato", marketScore: market?.marketScore ?? null, snapshotCompatibilityKey: compatibilityKey, comparison: { compatiblePrevious: Boolean(previousScan), previousScanId: previousScan?.id || null, previousScanDate: previousScan?.createdAt || null }, methodologySummary: summarizeMethodology(enrichedRows, previousScan), rows: enrichedRows };
+      const scan = { id: uid(), createdAt: new Date().toISOString(), name: `Snapshot manual · ${dateTime(new Date())}`, preset: "manual", ...regimeStamp(market), snapshotCompatibilityKey: compatibilityKey, comparison: { compatiblePrevious: Boolean(previousScan), previousScanId: previousScan?.id || null, previousScanDate: previousScan?.createdAt || null }, methodologySummary: summarizeMethodology(enrichedRows, previousScan), rows: enrichedRows };
       const generatedAlerts = alertsFromScan(scan);
       persistScans([scan, ...scans].slice(0, 50));
       persistAlerts(mergeAlerts(alerts, generatedAlerts).slice(0, 500));
@@ -482,8 +493,7 @@ export default function ResearchDesk() {
         lastDate: null,
         source: "manual",
         notes: "",
-        marketScore: market?.marketScore ?? null,
-        marketRegime: market?.regime?.label || "sin dato",
+        ...regimeStamp(market),
         updatedAt: now,
       }));
     if (!newFavorites.length) {
@@ -497,14 +507,14 @@ export default function ResearchDesk() {
     ];
     persistFavs(next);
     setManual("");
-    setStatus(`${newFavorites.length} tickers añadidos a favoritos/watchlist`);
+    setStatus(`${newFavorites.length} tickers añadidos a favoritos`);
     syncFavoritesToCloud(newFavorites).then((result) => {
       if (result.configured !== false && result.ok) setStatus(`${newFavorites.length} favoritos añadidos en este dispositivo y en la nube`);
     });
   }
   function favFromRow(row) {
     if (favorites.some((f) => f.symbol === row.symbol)) {
-      setStatus(`${row.symbol} ya esta en favoritos`);
+      setStatus(`${row.symbol} ya está en favoritos`);
       return;
     }
     const fav = createFavoriteFromRow(row, { source: "scan", scan: selectedScan, market });
@@ -526,7 +536,7 @@ export default function ResearchDesk() {
     if (selectedScan?.id === id) setSelectedScan(next[0] || null);
     if (scan) deleteScanFromCloud(scan);
   }
-  function clearAll() { if (confirm("Borrar scans y favoritos locales?")) { persistScans([]); persistFavs([]); setSelectedScan(null); } }
+  function clearAll() { if (confirm("¿Borrar los snapshots y favoritos guardados en este dispositivo?")) { persistScans([]); persistFavs([]); setSelectedScan(null); } }
 
   async function importCloudAlerts() {
     setSyncing(true);
@@ -566,7 +576,7 @@ export default function ResearchDesk() {
 
   async function refreshFavorites() {
     setLoading(true);
-    setStatus("Actualizando favoritos y benchmarks...");
+    setStatus("Actualizando favoritos e índices de referencia...");
     const next = [];
     for (const f of favorites) {
       try {
@@ -625,13 +635,29 @@ export default function ResearchDesk() {
     return { count: favorites.length, tracked: valid.length, avg: avgPerf, alpha: avgAlpha.length ? avgAlpha.reduce((a, b) => a + b.alpha, 0) / avgAlpha.length : null };
   }, [favorites]);
 
-  return <main className="page">
-    <section className="card hero">
-      <div className="heroTop">
-        <div><div className="badge">StatsEdge · Research</div><h1>Registro y favoritos</h1><p className="muted">Snapshots, watchlist, notas y seguimiento local-first.</p></div>
-        <div className="mobileActions"><a className="btn" href="/">Screener</a><a className="btn" href="/review?source=favorites">Vista favoritos</a><a className="btn" href="/lists">Listas</a><a className="btn" href="/ipo-radar">IPO Radar</a><a className="btn" href="/market-health">Salud mercado</a><button className="btn btnPrimary" onClick={refreshFavorites} disabled={loading}>{loading ? "Actualizando..." : "Actualizar favoritos"}</button></div>
-      </div>
-    </section>
+  const cloudLabel = cloud.configured ? (cloud.ok ? "Nube conectada" : "Revisar nube") : "Este dispositivo";
+  const statusText = investorStatusLabel(status);
+  const traceResolved = decisionTraceability?.resolvedCount || 0;
+
+  /* Paso 9 (rediseño 2026-11): ticket de 44 px en lugar del hero y la botonera
+     de seis enlaces (la topbar ya navega). Quedan las acciones propias:
+     revisar favoritos, IPO radar (no está en la topbar y este era uno de sus
+     dos accesos) y actualizar favoritos. */
+  return <main className="page researchDeskPage ptPage">
+    <PageTicket
+      title="Research"
+      chip={cloudLabel}
+      chipTitle="Los datos se guardan primero en este dispositivo; la sincronización con la nube es opcional."
+      truth={<>
+        <b>{favoriteStats.count}</b> favoritos · <b>{alertsSummary.active}</b> alertas activas · <b>{scans.length}</b> snapshots
+        {traceResolved ? <> · <b>{traceResolved}</b> resueltas en Review</> : null}
+        {statusText && statusText !== "Listo" ? <> · {statusText}</> : null}
+      </>}
+    >
+      <a className="btn" href="/ipo-radar">IPO radar</a>
+      <a className="btn" href="/review?source=favorites">Revisar favoritos</a>
+      <button className="btn btnPrimary" type="button" onClick={refreshFavorites} disabled={loading}>{loading ? "Actualizando…" : "Actualizar favoritos"}</button>
+    </PageTicket>
 
     {/* PIEZA 1 — Franja de infraestructura (bajo cabecera, sobre N0).
        Reemplaza los cards co-iguales de KPIs y Estado. Mismo patrón que
@@ -646,29 +672,26 @@ export default function ResearchDesk() {
     />
 
     {/* N1 — Trazabilidad de decisiones (contenido, no infra). */}
-    <DecisionTracePanel summary={decisionTraceability} detail="Decisiones tomadas en Review/Ficha que afectan a snapshots y favoritos visibles en Research Desk." />
+    {/* Solo con algo trazado: con cero eran cuatro tiles a cero (el recuento va en el ticket). */}
+    {traceResolved > 0 ? <DecisionTracePanel summary={decisionTraceability} detail="Decisiones tomadas en Review/Ficha que afectan a snapshots y favoritos visibles en Research Desk." /> : null}
 
     {/* N0/N1 — Pregunta rectora: "¿qué ha cambiado en lo que sigo?". */}
     {!!selectedEvents.length && <section className="card">
-      <div className="sectionTitle"><h2>Cambios desde snapshot anterior</h2><span className="fine">{selectedEvents.length} eventos visibles · {selectedMethodology.previousScanDate ? dateTime(selectedMethodology.previousScanDate) : "sin comparativo previo"}</span></div>
-      <div className="grid grid3">
-        <div className="kpi"><b>{selectedMethodology.severityCounts?.positive || 0}</b><span>mejoras</span></div>
-        <div className="kpi"><b>{selectedMethodology.severityCounts?.warning || 0}</b><span>deterioros</span></div>
-        <div className="kpi"><b>{selectedMethodology.stageCounts?.stage2 || 0}</b><span>Etapa 2</span></div>
-      </div>
-      <div className="tableWrap" style={{ marginTop: 10 }}><table className="table"><thead><tr>{["Ticker", "Evento", "Tipo", "Detalle"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{selectedEvents.map((event, index) => <tr key={`${event.symbol}-${event.type}-${index}`}><td><a className="ticker" href={stockUrl(event.symbol)}>{event.symbol}</a><br /><span className="fine">{event.companyName || ""}</span></td><td>{event.label}</td><td><span className="pill">{event.severity}</span></td><td>{event.detail}</td></tr>)}</tbody></table></div>
+      {/* Paso 9: los tres tiles (mejoras · deterioros · Etapa 2) pasan a la línea del rótulo. */}
+      <div className="sectionTitle"><h2>Cambios desde snapshot anterior</h2><span className="fine">{selectedEvents.length} eventos visibles · {selectedMethodology.severityCounts?.positive || 0} mejoras · {selectedMethodology.severityCounts?.warning || 0} deterioros · {selectedMethodology.stageCounts?.stage2 || 0} en Etapa 2 · {selectedMethodology.previousScanDate ? dateTime(selectedMethodology.previousScanDate) : "sin comparativo previo"}</span></div>
+      <div className="tableWrap"><table className="table"><thead><tr>{["Ticker", "Evento", "Tipo", "Detalle"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{selectedEvents.map((event, index) => <tr key={`${event.symbol}-${event.type}-${index}`}><td><a className="ticker" href={stockUrl(event.symbol)}>{event.symbol}</a><br /><span className="fine">{event.companyName || ""}</span></td><td>{event.label}</td><td><span className="pill">{severityLabel(event.severity)}</span></td><td>{event.detail}</td></tr>)}</tbody></table></div>
     </section>}
 
     <section className="card">
       <div className="sectionTitle"><h2>Alertas activas</h2><span className="fine">{alertsSummary.warnings} deterioros · {alertsSummary.positives} mejoras · {alertsSummary.neutral} contexto</span></div>
-      {visibleAlerts.length ? <div className="tableWrap"><table className="table"><thead><tr>{["Ticker", "Alerta", "Severidad", "Origen", "Detalle", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{visibleAlerts.map((alert) => <tr key={alert.id}><td><a className="ticker" href={stockUrl(alert.symbol)}>{alert.symbol}</a><br /><span className="fine">{alert.payload?.companyName || ""}</span></td><td>{alert.payload?.label || alert.alertType}</td><td><span className="pill">{alert.payload?.severity || "neutral"}</span></td><td>{alert.payload?.scanName || "Snapshot"}<br /><span className="fine">{alert.triggeredAt ? dateTime(alert.triggeredAt) : ""}</span></td><td>{alert.payload?.detail || "-"}</td><td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(alert.symbol)}>Ficha</a><button className="btn btnSmall btnGhost" onClick={() => resolveLocalAlert(alert)}>Resolver</button></div></td></tr>)}</tbody></table></div> : <p className="fine">Sin alertas activas. Guarda un nuevo snapshot comparable para generar cambios observables.</p>}
+      {visibleAlerts.length ? <div className="tableWrap"><table className="table"><thead><tr>{["Ticker", "Alerta", "Severidad", "Origen", "Detalle", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{visibleAlerts.map((alert) => <tr key={alert.id}><td><a className="ticker" href={stockUrl(alert.symbol)}>{alert.symbol}</a><br /><span className="fine">{alert.payload?.companyName || ""}</span></td><td>{alert.payload?.label || alert.alertType}</td><td><span className="pill">{severityLabel(alert.payload?.severity)}</span></td><td>{alert.payload?.scanName || "Snapshot"}<br /><span className="fine">{alert.triggeredAt ? dateTime(alert.triggeredAt) : ""}</span></td><td>{alert.payload?.detail || "-"}</td><td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(alert.symbol)}>Ficha</a><button className="btn btnSmall btnGhost" onClick={() => resolveLocalAlert(alert)}>Resolver</button></div></td></tr>)}</tbody></table></div> : <p className="fine">Sin alertas activas. Las alertas nacen al comparar dos snapshots equivalentes: guarda uno nuevo desde el screener para generar cambios observables.</p>}
     </section>
 
     <DailyCommandCenter sections={commandCenter} />
 
     <section className="card">
-      <h2>Favoritos / watchlist</h2>
-      <div className="tableWrap"><table className="table"><thead><tr>{["Ticker", "Empresa", "Desde", "Precio ref", "Último", "Rend.", "Benchmark", "Alpha", "Evolución", "Estado", "Régimen", "Scores", "Notas", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{favorites.map((f) => {
+      <div className="sectionTitle"><h2>Favoritos</h2><span className="fine">{favoriteStats.tracked} con seguimiento · alpha media {pct(favoriteStats.alpha)}</span></div>
+      {favorites.length ? <div className="tableWrap"><table className="table"><thead><tr>{["Ticker", "Empresa", "Desde", "Precio ref.", "Último", "Rend.", "Referencia", "Alpha", "Evolución", "Estado", "Régimen", "Puntuaciones", "Notas", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead><tbody>{favorites.map((f) => {
         const links = externalLinks(f.symbol);
         const checklist = checklistForRow(f).slice(1, 6);
         return <tr key={f.id}>
@@ -682,24 +705,27 @@ export default function ResearchDesk() {
           <td className="ticker">{pct(f.alpha)}</td>
           <td><FavoriteSparkline series={favoriteSeries[String(f.symbol || "").toUpperCase()] || []} /></td>
           <td>{f.currentState || "Sin dato"}</td>
-          <td>{f.marketRegime || "-"}<br /><span className="fine">Score {num(f.marketScore)}</span></td>
+          <td>{f.marketRegime || "-"}<br /><span className="fine">Puntuación {num(f.marketScore)}</span></td>
           <td><ResearchScoreStrip row={f} /><br /><span className="fine">{checklist.map((item) => `${item.label}: ${item.status}`).join(" · ")}</span></td>
           <td><input className="input" value={f.notes || ""} onChange={(e) => persistFavs(favorites.map((x) => x.id === f.id ? { ...x, notes: e.target.value, updatedAt: new Date().toISOString() } : x))} onBlur={() => {
             const latest = safeRead(STORAGE_KEYS.favorites, []).find((item) => item.id === f.id || item.symbol === f.symbol);
             if (latest) syncFavoriteToCloud(latest);
-          }} placeholder="tesis / alerta" /></td>
+          }} placeholder="Tesis o aviso" /></td>
           <td><div className="actionCell"><a className="btn btnSmall" href={stockUrl(f.symbol)}>Ficha</a><a className="btn btnSmall" href={links.tradingView} target="_blank" rel="noreferrer">TV</a><button className="starBtn on" onClick={() => removeFav(f.id)}>Eliminar</button></div></td>
         </tr>;
-      })}{!favorites.length && <tr><td colSpan="14">Aún no tienes favoritos.</td></tr>}</tbody></table></div>
+      })}</tbody></table></div> : <p className="fine">Aún no tienes favoritos. Márcalos con ★ en las candidatas de un snapshot, o añádelos por ticker en «Herramientas de mantenimiento».</p>}
     </section>
 
     <section className="grid grid2">
-      <div className="card"><h2>Historial de scans</h2>{scans.map((s) => <div className="summaryRow" key={s.id} onClick={() => setSelectedScan(s)} style={{ cursor: "pointer", borderColor: selectedScan?.id === s.id ? "rgba(243,217,139,.7)" : undefined }}><span>{snapshotDisplayName(s)}<br /><span className="fine">{snapshotDisplaySource(s)}</span></span><span>{s.rows?.length || 0} acciones</span></div>)}{!scans.length && <p className="fine">No hay snapshots todavía. Guarda uno desde el screener o importa datos manualmente.</p>}</div>
-      <div className="card"><h2>Snapshot seleccionado</h2>{selectedScan ? <><div className="summaryRow"><span>{snapshotDisplayName(selectedScan)}</span><span>{selectedRows.length} filas</span></div><div className="controls" style={{ marginTop: 10 }}><button className="btn" onClick={() => exportJson(`scan-${selectedScan.id}.json`, selectedScan)}>Exportar scan</button><button className="btn btnGhost" onClick={() => deleteScan(selectedScan.id)}>Eliminar scan</button><a className="btn" href="/review?source=latest">Vista rápida</a><a className="btn btnPrimary" href="/lists">Ver en listas</a></div></> : <p className="fine">Selecciona un snapshot del historial.</p>}</div>
+      <div className="card"><div className="sectionTitle"><h2>Historial de snapshots</h2></div>{scans.map((s) => <div className="summaryRow" key={s.id} onClick={() => setSelectedScan(s)} style={{ cursor: "pointer", borderColor: selectedScan?.id === s.id ? "rgba(243,217,139,.7)" : undefined }}><span>{snapshotDisplayName(s)}<br /><span className="fine">{snapshotDisplaySource(s)}</span></span><span>{snapshotRowCountLabel(s)}</span></div>)}{!scans.length && <p className="fine">Aún no hay snapshots. Guarda uno desde el screener o impórtalo en «Herramientas de mantenimiento».</p>}</div>
+      <div className="card"><div className="sectionTitle"><h2>Snapshot seleccionado</h2></div>{selectedScan ? <><div className="summaryRow"><span>{snapshotDisplayName(selectedScan)}</span><span>{selectedRows.length ? `${selectedRows.length.toLocaleString("es-ES")} filas` : snapshotRowCountLabel(selectedScan, "filas")}</span></div><div className="controls" style={{ marginTop: 10 }}><button className="btn" onClick={() => exportJson(`scan-${selectedScan.id}.json`, selectedScan)}>Exportar snapshot</button><button className="btn btnGhost" onClick={() => deleteScan(selectedScan.id)}>Eliminar snapshot</button><a className="btn" href="/review?source=latest">Revisar</a><a className="btn btnPrimary" href="/lists">Ver en listas</a></div></> : <p className="fine">Elige un snapshot del historial para ver sus candidatas y cambios.</p>}</div>
     </section>
 
     {selectedScan && <section className="card">
-      <h2>Candidatas del snapshot</h2>
+      <div className="sectionTitle"><h2>Candidatas del snapshot</h2><span className="fine">{selectedRows.length ? `${selectedRows.length.toLocaleString("es-ES")} filas` : snapshotRowCountLabel(selectedScan, "filas")}</span></div>
+      {/* Snapshot guardado solo en el servidor: este dispositivo guarda su ficha,
+          no sus filas. Se dice, en vez de enseñar una tabla vacía (D6). */}
+      {!selectedRows.length && snapshotRowCounts(selectedScan).remoteOnly ? <p className="dataNote">Las {snapshotRowCounts(selectedScan).total.toLocaleString("es-ES")} filas de este snapshot están guardadas en el servidor; este dispositivo solo conserva su ficha. Se consultan en el <a href="/">screener</a> y en <a href="/lists">Listas</a>.</p> : null}
       <div className="tableWrap">
         <table className="table">
           <thead><tr>{["★", "Ticker", "Empresa", "Tema", metricShortLabel("stage"), "Cambios", "3M", "6M", "12M", metricShortLabel("weinsteinScore"), metricShortLabel("minerviniScore"), metricShortLabel("rsQualityScore"), metricShortLabel("weaknessScore"), metricShortLabel("riskScore"), metricShortLabel("objectiveScore"), "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
@@ -749,21 +775,20 @@ export default function ResearchDesk() {
         <div className="card">
           <h3>Acciones rápidas</h3>
           <div className="controls">
-            <button className="btn" onClick={loadMarket}>Actualizar benchmark</button>
-            <button className="btn btnPrimary" onClick={importLatestScan}>Importar último scan</button>
+            <button className="btn" onClick={loadMarket}>Actualizar índice de referencia</button>
+            <button className="btn btnPrimary" onClick={importLatestScan}>Importar último snapshot</button>
             <button className="btn" onClick={importManualSnapshot}>Snapshot manual</button>
-            <button className="btn" onClick={() => exportJson("stageradar-backup.json", { scans, favorites, exportedAt: new Date().toISOString() })}>Exportar backup</button>
+            <button className="btn" onClick={() => exportJson("stageradar-backup.json", { scans, favorites, exportedAt: new Date().toISOString() })}>Exportar copia de seguridad</button>
             <button className="btn btnGhost" onClick={clearAll}>Limpiar dispositivo</button>
           </div>
         </div>
         <div className="card">
           <h3>Añadir favoritos manuales</h3>
           <textarea className="textarea" value={manual} onChange={(e) => setManual(e.target.value)} placeholder={"NVDA\nASML.AS\nRHM.DE"} />
-          <button className="btn btnPrimary" style={{ marginTop: 10 }} onClick={createManualFavorites}>Añadir a watchlist</button>
+          <button className="btn btnPrimary" style={{ marginTop: 10 }} onClick={createManualFavorites}>Añadir a favoritos</button>
         </div>
       </section>
     </details>
 
-    <footer className="card footer">Local-first con sincronizacion opcional.</footer>
   </main>;
 }

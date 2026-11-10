@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { vcpDiagnosticSnapshot, vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
+import { vcpDiagnosticSnapshot, vcpObjectiveSummary, vcpReliabilityAudit } from "@/lib/vcpDiagnostics";
 
 const fullPattern = {
   patternEligible: true,
@@ -121,5 +121,16 @@ describe("vcpReliabilityAudit", () => {
       auditabilityPct: expect.any(Number),
       note: expect.stringMatching(/Auditabilidad interna/),
     });
+  });
+});
+
+describe("vcpObjectiveSummary: semanas de base", () => {
+  // Auditoría 2026-11 (P5): baseWeeks = ventana fija de 65 sesiones / 5 = 13,0
+  // en el 100 % de las filas. No se escribe como si fuera la duración de la base.
+  it("no pinta «13.0 sem» en el texto de la ficha", () => {
+    const summary = vcpObjectiveSummary({ baseDepthPct: 18.4, baseWeeks: 13, distanceToPivotPct: -3, volumeDryUpRatio: 0.8 });
+    expect(summary.secondary).toContain("base 18.4%");
+    expect(summary.secondary).not.toMatch(/sem\b/);
+    expect(summary.detail).not.toMatch(/13\.0 sem/);
   });
 });

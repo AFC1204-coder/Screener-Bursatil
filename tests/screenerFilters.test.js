@@ -50,9 +50,12 @@ describe("minWeaknessScore", () => {
 });
 
 // minRsRating lee el RS semanal (rs_weekly_items sobre el universo US
-// completo), no rsGlobalPct (percentil del lote del escaneo). Cuando el
-// símbolo no está en el ranking semanal, el criterio se OMITE — no rechaza
-// la fila, aunque rsGlobalPct sea bajo o esté ausente (docs/adr-rs-universo-us.md).
+// completo), no rsGlobalPct (percentil del lote del escaneo). Política única
+// de dato que falta (lib/missingDataPolicy.js, auditoría de filtros 2026-11):
+// cuando el símbolo no está en el ranking semanal y el filtro está activo, la
+// fila NO pasa y el rechazo va marcado «sin dato» — antes se omitía en
+// silencio. En el veredicto del escáner (stage "scan") el criterio se aplaza
+// porque el RS semanal aún no está hidratado.
 describe("minRsRating (RS semanal)", () => {
   it("acepta un símbolo en el ranking con RS semanal por encima del umbral", () => {
     const row = { weeklyRsAvailable: true, weeklyRsRating: 82, rsGlobalPct: 40 };
@@ -61,29 +64,38 @@ describe("minRsRating (RS semanal)", () => {
 
   it("rechaza un símbolo en el ranking con RS semanal por debajo del umbral", () => {
     const row = { weeklyRsAvailable: true, weeklyRsRating: 60, rsGlobalPct: 95 };
-    expect(screenerFilterRejectReason(row, { minRsRating: 75 })).toMatchObject({ field: "minRsRating" });
+    expect(screenerFilterRejectReason(row, { minRsRating: 75 })).toMatchObject({ field: "minRsRating", missingData: false });
   });
 
-  it("NO rechaza un símbolo que no está en el ranking semanal, aunque rsGlobalPct sea bajo", () => {
-    const row = { weeklyRsAvailable: false, weeklyRsRating: null, rsGlobalPct: 10 };
-    expect(screenerFilterRejectReason(row, { minRsRating: 75 })).toBe("");
+  it("rechaza «sin dato» un símbolo que no está en el ranking semanal, aunque rsGlobalPct sea alto", () => {
+    const row = { weeklyRsAvailable: false, weeklyRsRating: null, rsGlobalPct: 95 };
+    expect(screenerFilterRejectReason(row, { minRsRating: 75 })).toMatchObject({
+      field: "minRsRating",
+      reason: "RS semanal sin dato",
+      missingData: true,
+    });
   });
 
-  it("NO rechaza un símbolo que no está en el ranking semanal, aunque rsGlobalPct esté ausente", () => {
-    const row = { weeklyRsAvailable: false };
-    expect(screenerFilterRejectReason(row, { minRsRating: 75 })).toBe("");
+  it("rechaza «sin dato» cuando la fila no trae el RS semanal hidratado", () => {
+    expect(screenerFilterRejectReason({}, { minRsRating: 75 })).toMatchObject({ field: "minRsRating", missingData: true });
+  });
+
+  it("en el veredicto del escáner (stage scan) aplaza el criterio: el RS se aplica al leer", () => {
+    expect(screenerFilterRejectReason({ weeklyRsAvailable: false }, { minRsRating: 75 }, { stage: "scan" })).toBe("");
   });
 
   it("con minRsRating desactivado (0), no evalúa el criterio en ningún caso", () => {
     expect(screenerFilterRejectReason({ weeklyRsAvailable: true, weeklyRsRating: 1 }, { minRsRating: 0 })).toBe("");
+    expect(screenerFilterRejectReason({ weeklyRsAvailable: false }, { minRsRating: 0 })).toBe("");
   });
 
-  it("el plan de explicación solo añade la regla minRsRating cuando el símbolo está en el ranking", () => {
+  it("el plan de explicación cuenta la regla como «sin dato» cuando el símbolo no está en el ranking", () => {
     const inRanking = buildScreenerFilterExplainPlan({ weeklyRsAvailable: true, weeklyRsRating: 82 }, { minRsRating: 75 });
-    expect([...inRanking.passed, ...inRanking.failed, ...inRanking.near, ...inRanking.missing]).toContainEqual(expect.objectContaining({ field: "minRsRating" }));
+    expect([...inRanking.passed, ...inRanking.failed, ...inRanking.near]).toContainEqual(expect.objectContaining({ field: "minRsRating" }));
 
     const notInRanking = buildScreenerFilterExplainPlan({ weeklyRsAvailable: false }, { minRsRating: 75 });
-    expect([...notInRanking.passed, ...notInRanking.failed, ...notInRanking.near, ...notInRanking.missing]).not.toContainEqual(expect.objectContaining({ field: "minRsRating" }));
+    expect(notInRanking.missing).toContainEqual(expect.objectContaining({ field: "minRsRating", status: "missing" }));
+    expect(notInRanking.status).toBe("missing");
   });
 });
 

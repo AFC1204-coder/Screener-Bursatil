@@ -363,3 +363,12 @@
   font-size:11px;
   letter-spacing:.08em;
 }
+
+/* D3 (auditoría 2026-11): «Estado sectorial» de una caché caducada se atenúa
+   y pierde el color de los estados; su fecha va en la cabecera. */
+.sectorOverview[data-stale="true"] .kpis,
+.sectorOverview[data-stale="true"] .sectorPulse,
+.sectorOverview[data-stale="true"] .sectorOverviewTable {
+  opacity: .6;
+  filter: grayscale(1);
+}

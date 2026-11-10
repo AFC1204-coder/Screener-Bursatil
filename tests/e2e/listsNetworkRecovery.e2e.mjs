@@ -28,11 +28,13 @@ const row = {
   weaknessScore: 12,
 };
 
-// Se evalúa dentro del navegador: lee el KPI cuyo rótulo coincide.
+// Se evalúa dentro del navegador: lee el dato cuyo rótulo coincide. Desde el
+// paso 9 (rediseño 2026-11) la fuente vive en la verdad corta del ticket, no
+// en un tile .kpi; el rótulo viaja en data-kpi.
 const KPI_VALUE = `(label) => {
-  const kpi = [...document.querySelectorAll(".listsPage .kpi")]
-    .find((node) => node.querySelector("span")?.textContent?.trim() === label);
-  return kpi?.querySelector("b")?.textContent?.trim() ?? "";
+  const node = [...document.querySelectorAll(".listsPage .pageTicket [data-kpi]")]
+    .find((el) => el.getAttribute("data-kpi") === label);
+  return node?.textContent?.trim() ?? "";
 }`;
 
 export async function run({ context, baseUrl }) {

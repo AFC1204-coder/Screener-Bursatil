@@ -479,6 +479,52 @@ describe("resolveScreenerTruthCounts", () => {
   });
 });
 
+describe("buildScreenerTruthLine · variante ticket (rediseño 2026-11, paso 4)", () => {
+  it("no repite el nombre de la vista ni la mesa alineada; dice el orden y conserva el corte", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: Array.from({ length: 3287 }, (_, i) => ({ symbol: `S${i}`, market: "US" })),
+      passCount: 937,
+      visibleCount: 937,
+      presetName: "Líderes Etapa 2",
+      sort: "perf3m",
+      scannedAt: "2026-10-18T03:00:00.000Z",
+      scannedMarkets: ["US"],
+      selectedMarkets: ["US"],
+      variant: "ticket",
+      sortLabel: "Rendimiento 3M",
+    });
+    expect(line).toMatch(/^937 de 3287 pasan · ordenado por Rendimiento 3M/);
+    expect(line).not.toContain("«");
+    expect(line).not.toContain("mesa: US");
+    expect(line).toContain("corte ");
+  });
+
+  it("sin etiqueta de orden no inventa el segmento", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: [{ symbol: "A" }, { symbol: "B" }],
+      passCount: 1,
+      visibleCount: 1,
+      variant: "ticket",
+    });
+    expect(line).toBe("1 de 2 pasan");
+  });
+
+  it("conserva «en lista» y los segmentos de honestidad de cobertura", () => {
+    const line = buildScreenerTruthLine({
+      analyzedRows: Array.from({ length: 80 }, (_, i) => ({ symbol: `E${i}` })),
+      passCount: 12,
+      visibleCount: 9,
+      scannedMarkets: EUROPE_PRIORITY_MARKETS,
+      selectedMarkets: EUROPE,
+      marketsMisaligned: true,
+      variant: "ticket",
+      sortLabel: "RS",
+    });
+    expect(line).toContain("12 de 80 pasan · 9 en lista · ordenado por RS");
+    expect(line).toContain("Europa incompleta");
+  });
+});
+
 describe("marketCountLabel", () => {
   it("usa singular para 1 mercado", () => {
     expect(marketCountLabel(1)).toBe("1 mercado");

@@ -35,7 +35,11 @@ vi.mock("@/app/screenerPanels", () => ({
 }));
 
 vi.mock("@/app/components/screener/ResultFilterBar", () => ({ default: () => Stub({ marker: "ResultFilterBar" }) }));
-vi.mock("@/app/components/screener/ResultPagerTable", () => ({ default: () => Stub({ marker: "ResultPagerTable" }) }));
+// Paso 6: el aviso de datos de escritorio viaja como `noticeSlot` a la barra
+// de la mesa; el stub lo deja pasar para poder inspeccionarlo.
+vi.mock("@/app/components/screener/ResultPagerTable", () => ({
+  default: ({ noticeSlot = null }) => React.createElement("div", { "data-stub": "ResultPagerTable" }, noticeSlot),
+}));
 vi.mock("@/app/components/screener/WeeklyChangesLine", () => ({
   default: ({ defer = false } = {}) => (defer ? null : Stub({ marker: "WeeklyChangesLine" })),
 }));

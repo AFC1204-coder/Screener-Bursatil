@@ -1647,6 +1647,33 @@ h2 {
   touch-action:pan-y;
 }
 
+/* Lectura bajo el cursor: una sola línea, abajo a la izquierda sobre la franja
+   del volumen (encima del eje de tiempo, a la derecha del logo de la librería),
+   solo mientras el cursor está sobre el lienzo. Sustituye a las etiquetas de
+   último valor de las medias en el eje (auditoría del gráfico 2026-11). */
+.universalChartReadout {
+  position:absolute;
+  left:48px;
+  bottom:34px;
+  z-index:5;
+  max-width:calc(100% - 120px);
+  padding:2px 7px;
+  border-radius:4px;
+  background:color-mix(in srgb, var(--surface) 88%, transparent);
+  color:var(--text);
+  font-size:var(--text-xs);
+  line-height:16px;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  pointer-events:none;
+}
+
+.universalChartReadout[hidden] {
+  display:none;
+}
+
 /* Tarjeta de identidad del lienzo — contenedor (tercera iteración,
    2026-08-21 tarde: estrecha y fusionada con la fila del ticker y el
    precio, que se pinta aquí dentro como primera fila). El contenido vive en
@@ -1757,6 +1784,23 @@ h2 {
 @media (max-width: 640px) {
   .chartIdentityCard {
     max-width:calc(100% - 64px);
+  }
+  /* Móvil con tarjeta desplegada: la botonera (7 botones) + badge no caben
+     a la derecha de la miniatura (~177 px) y el flex se ensanchaba a todo el
+     lienzo, pintando los botones ENCIMA del ticker/precio de la tarjeta.
+     Columna derecha acotada: badge arriba, botones en filas de 3, nada
+     sobre la tarjeta. */
+  .universalChart.identityCardShown .universalChartFloatControls {
+    left:auto;
+    width:max-content;
+    max-width:calc(100% - 196px);
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    align-items:flex-start;
+    gap:6px;
+  }
+  .universalChart.identityCardShown .universalChartFloatControls .universalChartNavGroup {
+    justify-content:flex-end;
   }
   .universalChartFloatControls .universalChartPatternBadge {
     display:none;
@@ -7027,7 +7071,6 @@ h2 {
 
 .listMobileSpark .miniSparkline {
   width: 100%;
-  height: 42px;
 }
 
 .listsPage .table .ticker {
@@ -7291,6 +7334,15 @@ h2 {
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
+}
+
+/* Primario deshabilitado: el fondo sigue siendo --cta-bg (claro) y --ghost es
+   una tinta clara → el rótulo desaparecía («Siguiente» en /review sin cola,
+   «Avisar pendientes» en IPO Radar: botón gris sin texto). Conserva la tinta
+   del CTA; la opacidad .40 ya comunica el estado. */
+.btnPrimary:disabled,
+.btn.btnPrimary:disabled {
+  color: var(--cta-fg);
 }
 
 .resultPagerRange {
@@ -8748,5 +8800,72 @@ h2 {
 
   .stockPage .stockDecisionNoteFold .stockDecisionValidationNote {
     margin-top: 0;
+  }
+}
+
+/* ── Gráfico: foco de teclado (auditoría 2026-11, H12) ─────────────────────
+   El lienzo es enfocable (tabIndex=0) para ← → + − Inicio Fin Esc. Anillo
+   solo con foco de teclado; el clic del ratón no lo pinta. */
+.universalChartCanvas:focus {
+  outline:none;
+}
+.universalChartCanvas:focus-visible {
+  outline:2px solid var(--line3);
+  outline-offset:-2px;
+}
+
+/* ── Gráfico en móvil (≤640 px; auditoría 2026-11, H14 y objetivos táctiles) ─
+   1. Objetivos táctiles ≥44 px de alto (antes 32×36 la botonera y 28×40 los
+      segmentos). Solo en esta franja: la barra de escritorio no cambia.
+   2. La tarjeta de identidad y la botonera dejan de flotar SOBRE el lienzo
+      (tapaban ~25 % de su superficie a 390 px): pasan al flujo, encima del
+      lienzo, en el mismo contenedor. No se añade ningún elemento. */
+@media (max-width: 640px) {
+  .universalChartNavButton,
+  .universalChartNavButton.icon {
+    height:44px;
+    min-height:44px;
+  }
+  .universalChartNavButton.icon {
+    width:44px;
+  }
+  .universalChartNavGroup {
+    gap:4px;
+  }
+  .stockPage .chartPrefs .chartSegmented,
+  .stockPage .chartPrefs.compact .chartSegmented,
+  .chartPrefs .chartSegmented {
+    height:auto !important;
+    min-height:48px !important;
+  }
+  .stockPage .chartPrefs .chartSegmented button,
+  .stockPage .chartPrefs.compact .chartSegmented button,
+  .chartPrefs .chartSegmented button {
+    height:44px !important;
+    min-height:44px !important;
+  }
+
+  .universalChart.identityCardShown .universalChartCanvasWrap {
+    display:flex;
+    flex-direction:column;
+  }
+  .universalChart.identityCardShown .universalChartCanvasWrap > .chartIdentityCard {
+    order:-2;
+    position:relative;
+    align-self:flex-start;
+    width:auto;
+    max-width:100%;
+    border-left:1px solid var(--line2);
+    border-radius:0;
+    box-shadow:none;
+  }
+  .universalChart.identityCardShown .universalChartCanvasWrap > .universalChartFloatControls {
+    order:-1;
+    position:static;
+    width:auto;
+    max-width:none;
+    padding:6px 0;
+    justify-content:flex-end;
+    opacity:1;
   }
 }

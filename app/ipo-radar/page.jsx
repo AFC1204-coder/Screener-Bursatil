@@ -2,6 +2,7 @@
 import "../../styles/ipo-radar.css";
 import { useEffect, useMemo, useState } from "react";
 import { dateShort } from "@/lib/formatters";
+import { PageTicket } from "@/app/components/PageTicket";
 import {
   alertDate,
   dateOnly,
@@ -269,66 +270,31 @@ export default function IpoRadarPage() {
     setStatus(`${due.length} avisos lanzados y marcados.`);
   }
 
-  return <main className="page ipoRadarPage">
-    <section className="card hero ipoHero">
-      <div className="heroTop">
-        <div>
-          <div className="badge">StatsEdge · IPO Radar</div>
-          <h1>Radar de IPOs</h1>
-          <p className="muted">Lista local de candidatas pre-IPO, fechas estimadas y tickers que entraran al screener cuando empiecen a cotizar.</p>
-        </div>
-        <div className="mobileActions">
-          <a className="btn" href="/">Screener</a>
-          <a className="btn" href="/lists">Listas</a>
-          <a className="btn" href="/research-desk">Research</a>
-          <button className="btn btnPrimary" onClick={notifyDue} disabled={!due.length}>Avisar pendientes</button>
-        </div>
-      </div>
-    </section>
-
-    <section className="card">
-      <div className="kpis">
-        <div className="kpi"><b>{items.length}</b><span>IPOs vigiladas</span></div>
-        <div className="kpi"><b>{due.length}</b><span>avisos 14d</span></div>
-        <div className="kpi"><b>{withTicker.length}</b><span>con ticker</span></div>
-        <div className="kpi"><b>{included.length}</b><span>incluidas screener</span></div>
-        <div className="kpi"><b>{listed.length}</b><span>ya cotizan</span></div>
-      </div>
-      <p className="fine" style={{ marginTop: 10 }}>{status}</p>
-    </section>
-
-    <section className="card status">
-      <div className="sectionTitle"><h2>Avisos pre-IPO</h2><span className="fine">próximos {IPO_ALERT_WINDOW_DAYS} días</span></div>
-      {due.length ? <div className="ipoAlertList">
-        {due.map((item) => <div className="summaryRow" key={item.id}>
-          <span><b>{item.companyName || item.symbol}</b><br /><span className="fine">{STATUS_LABELS[item.status] || item.status} · {item.exchange || item.country}</span></span>
-          <span>{dateLabel(alertDate(item))}</span>
-          <div className="controls">
-            {item.symbol ? <>
-              <a className="btn btnSmall" href={stockUrl(item.symbol)}>Ficha</a>
-              <a className="btn btnSmall" href={buildReviewPageHref(item.symbol, "current")}>Revisar</a>
-            </> : null}
-            <button className="btn btnSmall" onClick={() => updateItem(item.id, { alertAcknowledgedAt: new Date().toISOString() })}>Marcar avisada</button>
-          </div>
-        </div>)}
-      </div> : <p className="fine">Ninguna salida en los próximos {IPO_ALERT_WINDOW_DAYS} días.</p>}
-    </section>
-
-    <IpoForm form={form} setForm={setForm} onSubmit={saveItem} editing={Boolean(editingId)} />
-
-    <section className="card">
-      <div className="sectionTitle"><h2>Acciones rápidas</h2><span className="fine">control local</span></div>
-      <div className="controls">
-        <button className="btn" onClick={importRecentIposFromScan}>Importar IPOs recientes del último scan</button>
-        <button className="btn" onClick={importJson}>Importar JSON</button>
-        <button className="btn" onClick={exportJson} disabled={!items.length}>Exportar backup</button>
-        {editingId && <button className="btn btnGhost" onClick={() => { setEditingId(""); setForm(EMPTY_FORM); }}>Cancelar edicion</button>}
-      </div>
-    </section>
+  /* Paso 9 (rediseño 2026-11): ticket de 44 px en lugar del hero, la botonera
+     cruzada (la topbar ya navega) y los cinco tiles. Las cifras y el estado van
+     en la verdad corta; las «Acciones rápidas» (importar/exportar) pasan a la
+     fila del ticket. La tabla de IPOs vigiladas sube por encima del
+     formulario: es lo que se consulta; el alta es puntual. */
+  return <main className="page ipoRadarPage ptPage">
+    <PageTicket
+      title="IPO radar"
+      chip="Este dispositivo"
+      chipTitle="Lista local de candidatas pre-IPO, fechas estimadas y tickers que entrarán al screener cuando empiecen a cotizar."
+      truth={<>
+        <b>{items.length}</b> vigiladas · <b>{due.length}</b> avisos 14 d · <b>{withTicker.length}</b> con ticker · <b>{included.length}</b> en el screener · <b>{listed.length}</b> ya cotizan
+        {status && status !== "Listo" ? <> · {status}</> : null}
+      </>}
+    >
+      {editingId ? <button className="btn" type="button" onClick={() => { setEditingId(""); setForm(EMPTY_FORM); }}>Cancelar edición</button> : null}
+      <button className="btn" type="button" onClick={importRecentIposFromScan} title="Importar IPOs recientes del último scan">Importar del último scan</button>
+      <button className="btn" type="button" onClick={importJson}>Importar JSON</button>
+      <button className="btn" type="button" onClick={exportJson} disabled={!items.length}>Exportar backup</button>
+      <button className="btn btnPrimary" type="button" onClick={notifyDue} disabled={!due.length}>Avisar pendientes</button>
+    </PageTicket>
 
     <section className="card">
       <div className="sectionTitle"><h2>IPOs seleccionadas</h2><span className="fine">las marcadas entran al screener cuando tengan ticker</span></div>
-      <div className="tableWrap">
+      {items.length ? <div className="tableWrap">
         <table className="table">
           <thead><tr>{["Empresa", "Ticker", "País", "Sector", "Estado", "Pricing", "Cotización", "Screener", "Acciones"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
           <tbody>{items.map((item) => <tr key={item.id}>
@@ -346,16 +312,36 @@ export default function IpoRadarPage() {
                 {item.symbol ? <>
                   <a className="btn btnSmall" href={stockUrl(item.symbol)}>Ficha</a>
                   <a className="btn btnSmall" href={buildReviewPageHref(item.symbol, "current")}>Revisar</a>
-                  <a className="btn btnSmall" href="/lists">Listas</a>
                   <button className="btn btnSmall" onClick={() => updateItem(item.id, { includeInScreener: !item.includeInScreener })}>{item.includeInScreener ? "Quitar screener" : "Incluir"}</button>
                   <button className="btn btnSmall" onClick={() => updateItem(item.id, { status: "listed", includeInScreener: true })}>Ya cotiza</button>
                 </> : null}
                 <button className="btn btnSmall btnGhost" onClick={() => removeItem(item.id)}>Eliminar</button>
               </div>
             </td>
-          </tr>)}{!items.length && <tr><td colSpan="9">Sin IPOs vigiladas todavía.</td></tr>}</tbody>
+          </tr>)}</tbody>
         </table>
-      </div>
+      </div> : <p className="fine">Sin IPOs vigiladas todavía. Añade una candidata abajo o impórtalas del último scan.</p>}
     </section>
+
+    {/* Sin avisos, el «0 avisos 14 d» del ticket ya lo dice. */}
+    {due.length ? <section className="card ipoAlertsCard">
+      <div className="sectionTitle"><h2>Avisos pre-IPO</h2><span className="fine">próximos {IPO_ALERT_WINDOW_DAYS} días</span></div>
+      {due.length ? <div className="ipoAlertList">
+        {due.map((item) => <div className="summaryRow" key={item.id}>
+          <span><b>{item.companyName || item.symbol}</b><br /><span className="fine">{STATUS_LABELS[item.status] || item.status} · {item.exchange || item.country}</span></span>
+          <span>{dateLabel(alertDate(item))}</span>
+          <div className="controls">
+            {item.symbol ? <>
+              <a className="btn btnSmall" href={stockUrl(item.symbol)}>Ficha</a>
+              <a className="btn btnSmall" href={buildReviewPageHref(item.symbol, "current")}>Revisar</a>
+            </> : null}
+            <button className="btn btnSmall" onClick={() => updateItem(item.id, { alertAcknowledgedAt: new Date().toISOString() })}>Marcar avisada</button>
+          </div>
+        </div>)}
+      </div> : null}
+    </section> : null}
+
+    <IpoForm form={form} setForm={setForm} onSubmit={saveItem} editing={Boolean(editingId)} />
+
   </main>;
 }

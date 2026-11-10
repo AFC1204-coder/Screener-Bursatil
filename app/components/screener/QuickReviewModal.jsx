@@ -44,7 +44,7 @@ import { amount, money, quickBusinessActivity, quickBusinessDescription, quickBu
 import { pct, pctShare } from "@/lib/formatters";
 import { PerformanceStrip } from "@/app/components/screener/PerformanceStrip";
 import { canonicalRs } from "@/lib/rsCanonical";
-import { reviewRsCell } from "@/lib/reviewRsDisplay";
+import { reviewRsCell, reviewRsCompactCell } from "@/lib/reviewRsDisplay";
 import { stageDisplayForRow, stageWordForState } from "@/lib/stageDisplay";
 import { stageLabel } from "@/lib/screenerPipeline";
 import { externalLinks, stockUrl } from "@/lib/symbols";
@@ -196,7 +196,8 @@ export default function QuickReviewModal({
           <div className="reviewQueueList">
             {modalReviewRows.map((row, index) => {
               const resolution = decisionResolutionForSymbol({ decisionResolutions: modalDecisionResolutions }, row.symbol);
-              const rowRs = reviewRsCell(canonicalRs(row), {
+              // Cola estrecha (42 px): copy compacto «Sin RS»; motivo en title.
+              const rowRs = reviewRsCompactCell(canonicalRs(row), {
                 availableTitle: "RS semanal del universo",
               });
               return <Link

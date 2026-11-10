@@ -1,4 +1,6 @@
 import "../../../styles/stock.css";
+import "../../../styles/empty-states.css";
+import "../../../styles/stock-mobile.css";
 import { getCompanyBrief } from "@/app/api/company-brief/route";
 import StockClient from "./StockClient";
 

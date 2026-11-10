@@ -583,6 +583,7 @@ export function FilterArchitecturePanel({
   onToggleLayer,
   onOpenLayer,
   onToggleRegime,
+  regimeNote = "",
   sheetFamilyKeys = [],
   cardLabel = "",
   settings = {},
@@ -655,6 +656,7 @@ export function FilterArchitecturePanel({
             label={REGIME_LAYER.label}
             detail={REGIME_LAYER.detail}
             countLabel={ruleCountLabel(REGIME_LAYER.count)}
+            coverageWarning={regimeNote}
           />
         </div>
       </div>

@@ -9,6 +9,7 @@ import {
 } from "@/lib/scansChartPreviewScanIds";
 import { requirePersistenceAuth, supabaseConfig, supabaseRequest } from "@/lib/supabaseServer";
 import { compressedJsonResponse } from "@/lib/compressedJsonResponse";
+import { repairShiftedChartPreview } from "@/lib/scanPriceDateRepair";
 
 const SCANS_SUPABASE_TIMEOUT_MS = 12000;
 const MAX_SYMBOLS = 120;
@@ -99,14 +100,14 @@ async function readChartPreviewsForSymbols({ ownerId, scanIds = [], symbols = []
         `owner_id=eq.${encodeURIComponent(ownerId)}`,
         scanIdFilter,
         `symbol=in.(${chunk.map(encodeURIComponent).join(",")})`,
-        "select=symbol,metrics,raw",
+        "select=symbol,created_at,metrics,raw",
       ].join("&"),
       timeoutMs: SCANS_SUPABASE_TIMEOUT_MS,
     });
     for (const item of rows) {
       const symbol = String(item?.symbol || "").trim().toUpperCase();
       if (!symbol || previews[symbol]) continue;
-      const chartPreview = chartPreviewFromDbRow(item);
+      const chartPreview = repairShiftedChartPreview(chartPreviewFromDbRow(item), item.created_at);
       if (chartPreview) previews[symbol] = chartPreview;
     }
   }

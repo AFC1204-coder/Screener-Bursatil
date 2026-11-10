@@ -263,7 +263,7 @@
 
 .listMobileFacts {
   display: grid;
-  grid-template-columns: repeat(4,minmax(0,1fr));
+  grid-template-columns: repeat(5,minmax(0,1fr));
   gap: 1px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -272,10 +272,10 @@
 
 .listMobileFacts span {
   min-width: 0;
-  padding: 7px 6px;
+  padding: 4px 5px;
   background: var(--surface2);
   color: #87909d;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 720;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -283,9 +283,9 @@
 
 .listMobileFacts b {
   display: block;
-  margin-top: 2px;
+  margin-top: 1px;
   color: #e5e7eb;
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -328,7 +328,7 @@
 
 @media(max-width:430px) {
   .listMobileFacts {
-    grid-template-columns: repeat(2,minmax(0,1fr));
+    grid-template-columns: repeat(5,minmax(0,1fr));
   }
 }
 
@@ -357,3 +357,15 @@
   border-radius: 2px;
   animation: sparklinePulse 1.4s infinite ease-in-out;
 }
+
+/* Gráfico de la tarjeta móvil: líneas de grosor constante y medias visibles */
+.listMobileSpark .miniSparkline .sparkPrice,
+.listMobileSpark .miniSparkline .sparkMa,
+.listMobileSpark .miniSparkline .sparkGuide {
+  vector-effect: non-scaling-stroke;
+}
+.listMobileSpark .miniSparkline .sparkPrice { stroke-width: 2; filter: none; }
+.listMobileSpark .miniSparkline .sparkMa50 { stroke: rgba(180,190,205,.75); stroke-width: 1.2; }
+.listMobileSpark .miniSparkline .sparkMa200 { stroke: rgba(157,151,140,.8); stroke-width: 1.2; }
+.listMobileSpark .miniSparkline .sparkVolume { opacity: .5; }
+.listMobileSpark .miniSparkline .sparkLast { r: 3; }

@@ -110,4 +110,21 @@ describe("GET /api/scans · la caché de 15 minutos solo se activa con limit=1",
     await GET(getRequest("includeRows=1&limit=10&rowsLimit=500"));
     expect(supabaseRequest.mock.calls.length).toBe(callsAfterFirst * 2);
   });
+
+  it("limit=1: dos peticiones idénticas simultáneas comparten UNA carga (single-flight)", async () => {
+    configureBackend(500);
+    const [a, b] = await Promise.all([
+      GET(getRequest("includeRows=1&limit=1&rowsLimit=500")),
+      GET(getRequest("includeRows=1&limit=1&rowsLimit=500")),
+    ]);
+    expect(a.status).toBe(200);
+    expect(b.status).toBe(200);
+    const concurrentCalls = supabaseRequest.mock.calls.length;
+
+    supabaseRequest.mockClear();
+    clearScansApiCache();
+    await GET(getRequest("includeRows=1&limit=1&rowsLimit=500"));
+    expect(concurrentCalls).toBe(supabaseRequest.mock.calls.length);
+    expect((await b.json()).scans[0].id).toBe("server-scan-1");
+  });
 });

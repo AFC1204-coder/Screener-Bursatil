@@ -311,6 +311,29 @@ describe("viewport · acciones sobre la instancia única", () => {
     expect(snapshot.view.key).toBe("latest");
   });
 
+  it("scrollToStart lleva el primer dato a la izquierda conservando el zoom (tecla Inicio)", () => {
+    const harness = createHarness();
+    const { timeScale } = attachFresh(harness);
+    harness.lifecycle.actions.zoom(0.5);
+    const before = timeScale._currentLogical();
+
+    harness.lifecycle.actions.scrollToStart();
+
+    const after = timeScale._currentLogical();
+    expect(after.from).toBeCloseTo(-0.5, 5);
+    expect(after.to - after.from).toBeCloseTo(before.to - before.from, 5);
+  });
+
+  it("pan acepta un paso propio (teclado: 10 % de la ventana)", () => {
+    const harness = createHarness();
+    const { timeScale } = attachFresh(harness);
+    harness.lifecycle.actions.zoom(0.5);
+    const before = timeScale._currentLogical();
+    harness.lifecycle.actions.pan(-1, { stepRatio: 0.1 });
+    const after = timeScale._currentLogical();
+    expect(before.from - after.from).toBeCloseTo((before.to - before.from) * 0.1, 5);
+  });
+
   it("las acciones son no-op cuando no hay attachment (detached)", () => {
     const harness = createHarness();
     expect(() => {
@@ -450,6 +473,55 @@ describe("viewport · la desviación manual es estado explícito", () => {
     expect(second.timeScale._currentLogical()).toEqual({ from: -0.5, to: 199.5 });
     flushRaf();
     expect(harness.published.at(-1).manual).toBe(false);
+  });
+
+  it("setData en sitio con menos filas (D→W): el rango lógico heredado NO se lee como manual", () => {
+    // Visto en vivo (AAPL, 2026-11-06): tras D→W en sitio el viewport quedaba
+    // en [-192,50] con 242 «barras» y Restaurar activo, porque la librería
+    // conserva el rango lógico anterior sobre las 50 filas semanales.
+    let rows = makeRowTimes(243);
+    const harness = createHarness({ rowTimes: rows });
+    const timeScale = createFakeTimeScale({ rowCount: 243 });
+    timeScale.fitContent = () => {
+      timeScale.emitLogical({ from: -0.5, to: rows.length - 0.5 });
+    };
+    const chart = createFakeChart(timeScale);
+    const container = makeContainer(800);
+    harness.lifecycle.attach({ chart, container });
+    flushRaf();
+
+    harness.lifecycle.clearManual(); // efecto de cambio de intervalo
+    harness.lifecycle.beginDataSwap();
+    rows = makeRowTimes(50, { step: 7 * TRADING_DAY });
+    harness.setRowTimes(rows);
+    timeScale.emitLogical({ from: -192.5, to: 50 }); // setData conserva el rango
+    harness.lifecycle.attach({ chart, container }); // re-attach del controller
+    flushRaf();
+
+    expect(timeScale._currentLogical()).toEqual({ from: -0.5, to: 49.5 });
+    const snapshot = harness.published.at(-1);
+    expect(snapshot.manual).toBe(false);
+    expect(snapshot.view.visibleBars).toBe(50);
+  });
+
+  it("setData en sitio con filas añadidas al pasado conserva la ventana manual POR TIEMPO", () => {
+    let rows = makeRowTimes(200);
+    const harness = createHarness({ rowTimes: rows });
+    const { timeScale, chart, container } = attachFresh(harness);
+    harness.lifecycle.actions.zoom(0.5);
+    const before = timeScale._currentLogical();
+
+    harness.lifecycle.beginDataSwap();
+    rows = makeRowTimes(250, { start: BASE_TIME - 50 * TRADING_DAY });
+    harness.setRowTimes(rows);
+    timeScale.emitLogical({ from: before.from, to: before.to }); // índices viejos
+    harness.lifecycle.attach({ chart, container });
+
+    const applied = timeScale._currentLogical();
+    expect(applied.from).toBeCloseTo(before.from + 50, 0);
+    expect(applied.to).toBeCloseTo(before.to + 50, 0);
+    flushRaf();
+    expect(harness.published.at(-1).manual).toBe(true);
   });
 
   it("una ventana manual sin solape con los datos nuevos se descarta y se ajusta el rango entero", () => {

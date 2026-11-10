@@ -41,15 +41,25 @@ const PRICE_SCALE_DASHED = 2;
 
 // Overlay del RS rating en el panel de precio (lightweight-charts v5). El RS es
 // un percentil 1-99 y el precio una cotización en cualquier escala: una escala
-// overlay invisible con rango fijo y banda inferior propia evita compartir eje
-// con el precio sin reservar un panel aparte (patrón B2/B3).
+// overlay invisible con rango fijo y banda propia evita compartir eje con el
+// precio sin reservar un panel aparte (patrón B2/B3).
 //
 // Global, país y tema comparten UNA sola escala overlay: las tres series son
 // percentiles 1-99 en la misma banda. Escalas separadas por línea desalineaban
 // la superposición y duplicaban márgenes/referencias.
 const RS_OVERLAY_SCALE_ID = "rs-rating";
-// Banda inferior ~25% del panel de precio (top 0.75 → franja 75%–98%).
-const RS_OVERLAY_MARGINS = { top: 0.75, bottom: 0.02 };
+// Bandas verticales del panel (0 = arriba, 1 = abajo). Antes la banda RS
+// (0,75→0,98) se dibujaba ENCIMA del volumen (0,82→1) (auditoría 2026-11, H7).
+// Con línea RS dibujada, cada cosa tiene su franja y no se pisan:
+//   precio 0,08→0,68 · RS 0,70→0,84 · volumen 0,86→1.
+// Sin línea RS, el reparto de siempre (precio según el perfil, volumen 0,82→1).
+const RS_OVERLAY_MARGINS = { top: 0.70, bottom: 0.16 };
+const PRICE_MARGINS_WITH_RS = { top: 0.08, bottom: 0.32 };
+const VOLUME_MARGINS = { top: 0.82, bottom: 0 };
+const VOLUME_MARGINS_WITH_RS = { top: 0.86, bottom: 0 };
+// Línea ÷ benchmark (opcional, apagada por defecto): franja baja del precio,
+// por encima de la del RS.
+const BENCHMARK_MARGINS = { top: 0.50, bottom: 0.34 };
 // Extremos del ranking. El eje se fija a ellos en vez de autoescalar: un RS de
 // 70 significa lo mismo en cualquier valor, y una escala que se reajusta a la
 // ventana visible convierte un movimiento de tres puntos en una montaña.
@@ -84,13 +94,53 @@ function fmtPrice(price) {
   return Number.isFinite(n) ? n.toLocaleString("es-ES") : "Sin dato";
 }
 
-/** Configura la escala overlay RS una sola vez por attachment (rango 1-99, banda inferior). */
-function ensureRsOverlayScale(chart) {
-  chart.priceScale(RS_OVERLAY_SCALE_ID).applyOptions({
-    visible: false,
-    autoScale: true,
-    scaleMargins: RS_OVERLAY_MARGINS,
-  });
+function finiteOrNullValue(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function fmtReadoutPrice(price) {
+  const n = finiteOrNullValue(price);
+  return n !== null
+    ? n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : "";
+}
+
+/**
+ * Línea de lectura bajo el cursor, en una sola línea:
+ * `16 abr 2026 · C 251,07 · RS 64`. Sustituye a las etiquetas de último valor
+ * de las medias en el eje (auditoría 2026-11, P2). Sin RS dibujado en esa
+ * fecha, el tramo RS se omite (no se inventa).
+ */
+export function chartReadoutText({ dateText = "", close = null, rs = null } = {}) {
+  const parts = [];
+  if (dateText) parts.push(String(dateText));
+  const closeText = fmtReadoutPrice(close);
+  if (closeText) parts.push(`C ${closeText}`);
+  const rsValue = finiteOrNullValue(rs);
+  if (rsValue !== null) parts.push(`RS ${Math.round(rsValue)}`);
+  return parts.length > 1 ? parts.join(" · ") : "";
+}
+
+// Último punto de `points` (ordenados por time) con time <= `time`. El RS es
+// semanal: entre dos lecturas vale la última publicada, nunca la siguiente.
+export function pointAtOrBefore(points = [], time) {
+  const t = Number(time);
+  if (!Array.isArray(points) || !points.length || !Number.isFinite(t)) return null;
+  let lo = 0;
+  let hi = points.length - 1;
+  let found = null;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (points[mid].time <= t) {
+      found = points[mid];
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return found;
 }
 
 function rsOverlaySeriesOptions() {
@@ -105,22 +155,52 @@ function rsOverlaySeriesOptions() {
   };
 }
 
-function addRsReferenceLine(series, colors, LineStyle) {
-  if (typeof series.createPriceLine !== "function") return;
-  series.createPriceLine({
-    price: RS_REFERENCE,
-    color: colors.line2,
-    lineStyle: LineStyle?.Dashed ?? PRICE_SCALE_DASHED,
+// Medias móviles: trazo sin etiqueta de último valor, sin línea de precio
+// punteada y sin marcador de cursor. Sus etiquetas en el eje eran dos de las
+// tres que se sumaban al precio (H29); la lectura bajo el cursor las sustituye.
+function movingAverageSeriesOptions(color) {
+  return {
+    color,
     lineWidth: 1,
-    axisLabelVisible: false,
-    title: "",
-  });
+    lastValueVisible: false,
+    priceLineVisible: false,
+    crosshairMarkerVisible: false,
+  };
+}
+
+function mainSeriesOptions(isLine, isArea, positive, colors) {
+  if (isArea) {
+    return {
+      lineColor: positive ? colors.tiza : colors.humo,
+      topColor: positive ? colors.trazaDim : colors.line,
+      bottomColor: "rgba(0,0,0,0)",
+      lineWidth: 2,
+    };
+  }
+  if (isLine) return { color: positive ? colors.tiza : colors.humo, lineWidth: 2 };
+  return {
+    upColor: colors.tiza,
+    downColor: "rgba(0,0,0,0)",
+    borderUpColor: colors.tiza,
+    borderDownColor: colors.soft,
+    wickUpColor: colors.soft,
+    wickDownColor: colors.humo,
+  };
+}
+
+function priceScaleModeFor(scale, PriceScaleMode) {
+  if (scale === "log") return PriceScaleMode?.Logarithmic;
+  if (scale === "percent") return PriceScaleMode?.Percentage;
+  return PriceScaleMode?.Normal;
 }
 
 /**
  * Crea el chart y todas sus series a partir de las filas decision-grade del
- * data model y la config normalizada. Devuelve un handle sin estado
- * persistente entre recreaciones.
+ * data model y la config normalizada. Devuelve un handle con `update()` para
+ * cambiar datos, rango, temporalidad, escala o indicadores SIN destruir el
+ * chart (auditoría 2026-11, H22: cada cambio de rango hacía `chart.remove()` +
+ * `createChart` 2-3 veces). Lo único que obliga a recrear es el TIPO de la
+ * serie principal (velas/línea/área), que decide el controller.
  *
  * @param {object} args
  * @param {HTMLElement} args.container          contenedor DOM del chart.
@@ -128,22 +208,12 @@ function addRsReferenceLine(series, colors, LineStyle) {
  * @param {object} args.profile                   perfil adaptativo del viewport.
  * @param {object} args.config                    config canónica del viewport.
  * @param {Array}  args.rows                      filas decision-grade.
- * @param {Array}  args.rowTimes                  tiempos normalizados.
  * @param {ChartCssTokens} args.colors            tokens CSS ya resueltos.
+ * @param {(text: string) => void} [args.onReadout] recibe la línea de lectura
+ *   del cursor ("" al salir del lienzo).
  * @param {object} [args.overrides]               campos derivados
- *   (patternOverlay, relativeStrength, benchmarkSymbol, rsMainScore,
- *    rsRatingSeries, showPatternDiagnostics, requestedHeight).
- *
- * @returns {{
- *   chart: object,
- *   mainSeries: object,
- *   extraSeries: object[],
- *   markerDescriptors: object[],
- *   pivotPriceLine: object | null,
- *   rsPane: { rendered, paneIndex, points, weeks, latestValue },
- *   updateGeometry: (next: { width, height, profile }) => void,
- *   destroySeries: () => void,
- * }}
+ *   (patternOverlay, rsRatingSeries, rsCountrySeries, rsThemeSeries,
+ *    benchmarkSeries, contextRows, requestedHeight, positive).
  */
 export function createChartNativeAdapter(args) {
   const {
@@ -151,34 +221,16 @@ export function createChartNativeAdapter(args) {
     lib,
     profile,
     config,
-    rows,
     colors,
-    overrides = {},
+    onReadout = null,
   } = args;
-
-  const {
-    interval,
-    style,
-    scale,
-    indicators,
-    intraday,
-  } = config;
-
-  const {
-    patternOverlay = null,
-    rsRatingSeries = null,
-    rsCountrySeries = null,
-    rsThemeSeries = null,
-    benchmarkSeries = null,
-    requestedHeight = 460,
-  } = overrides;
 
   const width = Number.isFinite(Number(args.width)) && Number(args.width) > 0
     ? Number(args.width)
     : Math.max(container.clientWidth || 0, 280);
   const height = Number.isFinite(Number(args.height)) && Number(args.height) > 0
     ? Number(args.height)
-    : responsiveChartHeight(width, requestedHeight);
+    : responsiveChartHeight(width, args.overrides?.requestedHeight ?? 460);
 
   const {
     AreaSeries,
@@ -191,8 +243,9 @@ export function createChartNativeAdapter(args) {
     PriceScaleMode,
   } = lib;
 
-  const isLine = style === "8";
-  const isArea = style === "3";
+  // El tipo de serie principal es ESTRUCTURAL: fijo durante la vida del handle.
+  const isLine = config.style === "8";
+  const isArea = config.style === "3";
 
   const chart = createChart(container, {
     width,
@@ -214,7 +267,7 @@ export function createChartNativeAdapter(args) {
     },
     rightPriceScale: {
       borderColor: colors.line2,
-      mode: scale === "log" ? PriceScaleMode.Logarithmic : scale === "percent" ? PriceScaleMode.Percentage : PriceScaleMode.Normal,
+      mode: priceScaleModeFor(config.scale, PriceScaleMode),
       autoScale: true,
       scaleMargins: profile.priceScaleMargins,
     },
@@ -245,240 +298,322 @@ export function createChartNativeAdapter(args) {
     },
   });
 
-  // La determinación de "positive" depende del cambio de las filas. El
-  // adapter la recibe ya calculada por el controller (que es quien tiene
-  // acceso al data model y al `latest`/`first`); por defecto true.
-  const positive = overrides.positive !== false;
-
-  const mainOptions = isArea
-    ? {
-        lineColor: positive ? colors.tiza : colors.humo,
-        topColor: positive ? colors.trazaDim : colors.line,
-        bottomColor: "rgba(0,0,0,0)",
-        lineWidth: 2,
-      }
-    : isLine
-      ? { color: positive ? colors.tiza : colors.humo, lineWidth: 2 }
-      : {
-          upColor: colors.tiza,
-          downColor: "rgba(0,0,0,0)",
-          borderUpColor: colors.tiza,
-          borderDownColor: colors.soft,
-          wickUpColor: colors.soft,
-          wickDownColor: colors.humo,
-        };
-
   const mainSeries = chart.addSeries(
     isArea ? AreaSeries : isLine ? LineSeries : CandlestickSeries,
-    mainOptions,
+    mainSeriesOptions(isLine, isArea, args.overrides?.positive !== false, colors),
   );
 
-  const mainData = isLine || isArea
-    ? projectLineSeries(rows, interval)
-    : projectCandles(rows);
-  mainSeries.setData(mainData);
-
-  mainSeries.priceScale?.().applyOptions?.({
-    autoScale: true,
-    scaleMargins: profile.priceScaleMargins,
-  });
-
+  // Estado vivo del handle. `extraSeries` es el MISMO array durante toda la
+  // vida del handle (se muta en sitio al añadir/quitar series opcionales).
   const extraSeries = [];
+  const slots = {
+    volume: null,
+    maFast: null,
+    maSlow: null,
+    rs: null,
+    rsCountry: null,
+    rsTheme: null,
+    benchmark: null,
+  };
+  let markersPlugin = null;
+  let referenceLine = null; // { series, line }
+  let rsOverlayScaleConfigured = false;
+  let benchmarkScaleConfigured = false;
+  let currentProfile = profile;
+  let currentPriceMargins = profile.priceScaleMargins;
+  let currentRsPoints = [];
+  let lastMainRendered = false;
 
-  // Pivot price line
-  const pivotPrice = safeNumber(patternOverlay?.pivotPrice);
-  let pivotPriceLine = null;
-  if (!intraday && pivotPrice && pivotPrice > 0 && typeof mainSeries.createPriceLine === "function") {
-    pivotPriceLine = mainSeries.createPriceLine({
-      price: pivotPrice,
-      color: colors.line3,
-      lineStyle: PRICE_SCALE_LINE,
-      lineWidth: 1,
-      axisLabelVisible: true,
-      title: "Pivot",
+  function removeSlot(name) {
+    const series = slots[name];
+    if (!series) return;
+    if (referenceLine?.series === series) referenceLine = null;
+    try { chart.removeSeries?.(series); } catch { /* noop */ }
+    const index = extraSeries.indexOf(series);
+    if (index >= 0) extraSeries.splice(index, 1);
+    slots[name] = null;
+  }
+
+  function ensureSlot(name, needed, factory) {
+    if (!needed) {
+      removeSlot(name);
+      return null;
+    }
+    if (!slots[name]) {
+      slots[name] = factory();
+      extraSeries.push(slots[name]);
+    }
+    return slots[name];
+  }
+
+  function ensureRsOverlayScale() {
+    if (rsOverlayScaleConfigured) return;
+    chart.priceScale(RS_OVERLAY_SCALE_ID).applyOptions({
+      visible: false,
+      autoScale: true,
+      scaleMargins: RS_OVERLAY_MARGINS,
     });
+    rsOverlayScaleConfigured = true;
   }
 
-  // La proyección pura no conoce tokens visuales; el adaptador replica el
-  // contrato original y aplica --senal a los marcadores C1/C2/C3.
-  const markerDescriptors = projectPatternMarkers(patternOverlay, rows, interval)
-    .map((marker) => ({ ...marker, color: colors.senal }));
-  if (!intraday && markerDescriptors.length > 0 && typeof createSeriesMarkers === "function") {
-    createSeriesMarkers(mainSeries, markerDescriptors);
-  }
+  const handle = {
+    chart,
+    mainSeries,
+    extraSeries,
+    markerDescriptors: [],
+    pivotPriceLine: null,
+    rsPane: null,
+    rsCountryPane: null,
+    rsThemePane: null,
+    update,
+    updateGeometry,
+    destroySeries,
+  };
 
-  // Volumen
-  let volumeSeries = null;
-  if (indicators.volume) {
-    volumeSeries = chart.addSeries(HistogramSeries, {
+  // Aplica (o re-aplica) TODO lo que depende de datos/config sobre el chart
+  // existente. Idempotente: las series opcionales se crean o retiran según
+  // haga falta; las vivas reciben setData.
+  function apply({ config: nextConfig, rows = [], overrides = {}, profile: nextProfile = currentProfile }) {
+    const { interval, scale, indicators = {}, intraday } = nextConfig;
+    const {
+      patternOverlay = null,
+      rsRatingSeries = null,
+      rsCountrySeries = null,
+      rsThemeSeries = null,
+      benchmarkSeries = null,
+    } = overrides;
+    const positive = overrides.positive !== false;
+    currentProfile = nextProfile || currentProfile;
+
+    // Serie principal.
+    mainSeries.applyOptions?.(mainSeriesOptions(isLine, isArea, positive, colors));
+    mainSeries.setData(isLine || isArea ? projectLineSeries(rows, interval) : projectCandles(rows));
+    lastMainRendered = rows.length > 0;
+
+    // Pivote.
+    if (handle.pivotPriceLine) {
+      try { mainSeries.removePriceLine?.(handle.pivotPriceLine); } catch { /* noop */ }
+      handle.pivotPriceLine = null;
+    }
+    const pivotPrice = safeNumber(patternOverlay?.pivotPrice);
+    if (!intraday && pivotPrice && pivotPrice > 0 && typeof mainSeries.createPriceLine === "function") {
+      handle.pivotPriceLine = mainSeries.createPriceLine({
+        price: pivotPrice,
+        color: colors.line3,
+        lineStyle: PRICE_SCALE_LINE,
+        lineWidth: 1,
+        axisLabelVisible: true,
+        title: "Pivot",
+      });
+    }
+
+    // Marcadores C1..C4. La proyección pura no conoce tokens visuales; el
+    // adaptador aplica --senal.
+    const markerDescriptors = projectPatternMarkers(patternOverlay, rows, interval)
+      .map((marker) => ({ ...marker, color: colors.senal }));
+    handle.markerDescriptors = markerDescriptors;
+    const visibleMarkers = intraday ? [] : markerDescriptors;
+    if (markersPlugin && typeof markersPlugin.setMarkers === "function") {
+      markersPlugin.setMarkers(visibleMarkers);
+    } else if (visibleMarkers.length > 0 && typeof createSeriesMarkers === "function") {
+      markersPlugin = createSeriesMarkers(mainSeries, visibleMarkers) || null;
+    }
+
+    // Proyecciones RS (mismas funciones puras que usa el controller).
+    const rsLineData = projectRsRatingSeries(rows, rsRatingSeries, indicators, interval);
+    const rsHistory = rsLineHistory(rsLineData);
+    const rsRendered = !intraday && !!indicators.rsLine && rsLineData.length > 1 && rsHistory.sufficient;
+    const rsCountryLineData = projectRsCountryRatingSeries(rows, rsCountrySeries, indicators, interval);
+    const rsCountryHistory = rsLineHistory(rsCountryLineData);
+    const rsCountryRendered = !intraday && !!indicators.rsCountryLine && rsCountryLineData.length > 1 && rsCountryHistory.sufficient;
+    const rsThemeLineData = projectRsThemeRatingSeries(rows, rsThemeSeries, indicators, interval);
+    const rsThemeHistory = rsLineHistory(rsThemeLineData);
+    const rsThemeRendered = !intraday && !!indicators.rsThemeLine && rsThemeLineData.length > 1 && rsThemeHistory.sufficient;
+    const anyRs = rsRendered || rsCountryRendered || rsThemeRendered;
+
+    // Escala de precio: modo y franja (cede sitio a la banda RS si se dibuja).
+    currentPriceMargins = anyRs ? PRICE_MARGINS_WITH_RS : currentProfile.priceScaleMargins;
+    chart.applyOptions?.({
+      rightPriceScale: { mode: priceScaleModeFor(scale, PriceScaleMode), autoScale: true, scaleMargins: currentPriceMargins },
+      localization: { locale: "es-ES", priceFormatter: fmtPrice, timeFormatter: currentProfile.timeFormatter },
+    });
+    mainSeries.priceScale?.().applyOptions?.({ autoScale: true, scaleMargins: currentPriceMargins });
+
+    // Volumen.
+    const volumeSeries = ensureSlot("volume", !!indicators.volume, () => chart.addSeries(HistogramSeries, {
       priceFormat: { type: "volume" },
       priceScaleId: "",
       color: colors.line,
       lastValueVisible: false,
       priceLineVisible: false,
-    });
-    volumeSeries.setData(projectVolumeSeries(rows, { positive, upColor: colors.trazaDim, downColor: colors.line }));
-    chart.priceScale("").applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
-    extraSeries.push(volumeSeries);
-  }
+    }));
+    if (volumeSeries) {
+      volumeSeries.setData(projectVolumeSeries(rows, { positive, upColor: colors.trazaDim, downColor: colors.line }));
+      chart.priceScale("").applyOptions({ scaleMargins: anyRs ? VOLUME_MARGINS_WITH_RS : VOLUME_MARGINS });
+    }
 
-  // Medias móviles. Se calculan sobre el CONTEXTO (la serie agregada sin
-  // recortar al rango) y se dibujan solo dentro de la ventana: así la media
-  // no pierde su warm-up al principio del rango cuando hay histórico previo
-  // (antes, una SMA200 en un rango de 1A solo cubría el tramo final). Los
-  // valores en la zona común son idénticos: misma fórmula, mismas barras.
-  const maSource = Array.isArray(overrides.contextRows) && overrides.contextRows.length >= rows.length
-    ? overrides.contextRows
-    : rows;
-  const windowStart = rows[0]?.time ?? -Infinity;
-  const maInWindow = (length) => movingAverage(maSource, length).filter((point) => point.time >= windowStart);
-  if (indicators.maFast) {
-    const series = chart.addSeries(LineSeries, { color: colors.soft, lineWidth: 1 });
-    series.setData(maInWindow(indicators.maFastLength));
-    extraSeries.push(series);
-  }
-  if (indicators.maSlow) {
-    const series = chart.addSeries(LineSeries, { color: colors.humo, lineWidth: 1 });
-    series.setData(maInWindow(indicators.maSlowLength));
-    extraSeries.push(series);
-  }
+    // Medias móviles. Se calculan sobre el CONTEXTO (la serie agregada sin
+    // recortar al rango) y se dibujan solo dentro de la ventana: así la media
+    // no pierde su warm-up al principio del rango cuando hay histórico previo.
+    const maSource = Array.isArray(overrides.contextRows) && overrides.contextRows.length >= rows.length
+      ? overrides.contextRows
+      : rows;
+    const windowStart = rows[0]?.time ?? -Infinity;
+    const maInWindow = (length) => movingAverage(maSource, length).filter((point) => point.time >= windowStart);
+    const maFast = ensureSlot("maFast", !!indicators.maFast, () => chart.addSeries(LineSeries, movingAverageSeriesOptions(colors.soft)));
+    if (maFast) maFast.setData(maInWindow(indicators.maFastLength));
+    const maSlow = ensureSlot("maSlow", !!indicators.maSlow, () => chart.addSeries(LineSeries, movingAverageSeriesOptions(colors.humo)));
+    if (maSlow) maSlow.setData(maInWindow(indicators.maSlowLength));
 
-  // ── Líneas RS rating (overlay compartido en panel de precio) ───────────────
-  //
-  // Percentiles semanales 1-99 en escala overlay invisible con rango fijo y
-  // banda inferior propia. Global, país y tema comparten escala y referencia 50;
-  // se distinguen por color y trazo (país discontinuo).
-  let rsSeries = null;
-  let rsCountrySeriesHandle = null;
-  let rsThemeSeriesHandle = null;
-
-  const rsLineData = projectRsRatingSeries(rows, rsRatingSeries, indicators, interval);
-  const rsHistory = rsLineHistory(rsLineData);
-  const rsRendered = !intraday && !!indicators.rsLine && rsLineData.length > 1 && rsHistory.sufficient;
-
-  const rsCountryLineData = projectRsCountryRatingSeries(rows, rsCountrySeries, indicators, interval);
-  const rsCountryHistory = rsLineHistory(rsCountryLineData);
-  const rsCountryRendered = !intraday && !!indicators.rsCountryLine && rsCountryLineData.length > 1 && rsCountryHistory.sufficient;
-
-  const rsThemeLineData = projectRsThemeRatingSeries(rows, rsThemeSeries, indicators, interval);
-  const rsThemeHistory = rsLineHistory(rsThemeLineData);
-  const rsThemeRendered = !intraday && !!indicators.rsThemeLine && rsThemeLineData.length > 1 && rsThemeHistory.sufficient;
-
-  let rsOverlayScaleConfigured = false;
-  const maybeEnsureRsOverlayScale = () => {
-    if (rsOverlayScaleConfigured) return;
-    ensureRsOverlayScale(chart);
-    rsOverlayScaleConfigured = true;
-  };
-
-  if (rsRendered) {
-    rsSeries = chart.addSeries(
+    // ── Líneas RS rating (overlay compartido en panel de precio) ─────────────
+    // La referencia 50 se cuelga de la primera línea RS dibujada; se retira
+    // antes de reubicarla para no duplicarla.
+    if (referenceLine) {
+      try { referenceLine.series.removePriceLine?.(referenceLine.line); } catch { /* noop */ }
+      referenceLine = null;
+    }
+    const rsSeries = ensureSlot("rs", rsRendered, () => chart.addSeries(
       LineSeries,
-      {
-        ...rsOverlaySeriesOptions(),
-        color: colors.traza,
-        lineWidth: 2,
-        title: "RS",
-      },
+      { ...rsOverlaySeriesOptions(), color: colors.traza, lineWidth: 2, title: "RS" },
       0,
-    );
-    rsSeries.setData(rsLineData.map((point) => ({ time: point.time, value: point.value })));
-    addRsReferenceLine(rsSeries, colors, LineStyle);
-    extraSeries.push(rsSeries);
-    maybeEnsureRsOverlayScale();
-  }
-
-  if (rsCountryRendered) {
-    rsCountrySeriesHandle = chart.addSeries(
+    ));
+    if (rsSeries) rsSeries.setData(rsLineData.map((point) => ({ time: point.time, value: point.value })));
+    const rsCountryHandle = ensureSlot("rsCountry", rsCountryRendered, () => chart.addSeries(
       LineSeries,
-      {
-        ...rsOverlaySeriesOptions(),
-        color: colors.soft,
-        lineWidth: 2,
-        lineStyle: LineStyle.Dashed,
-        title: "RS país",
-      },
+      { ...rsOverlaySeriesOptions(), color: colors.soft, lineWidth: 2, lineStyle: LineStyle?.Dashed ?? PRICE_SCALE_DASHED, title: "RS país" },
       0,
-    );
-    rsCountrySeriesHandle.setData(rsCountryLineData.map((point) => ({ time: point.time, value: point.value })));
-    if (!rsRendered) addRsReferenceLine(rsCountrySeriesHandle, colors, LineStyle);
-    extraSeries.push(rsCountrySeriesHandle);
-    maybeEnsureRsOverlayScale();
-  }
-
-  if (rsThemeRendered) {
-    rsThemeSeriesHandle = chart.addSeries(
+    ));
+    if (rsCountryHandle) rsCountryHandle.setData(rsCountryLineData.map((point) => ({ time: point.time, value: point.value })));
+    const rsThemeHandle = ensureSlot("rsTheme", rsThemeRendered, () => chart.addSeries(
       LineSeries,
-      {
-        ...rsOverlaySeriesOptions(),
-        color: colors.rsTheme,
-        lineWidth: 2,
-        title: "RS tema",
-      },
+      { ...rsOverlaySeriesOptions(), color: colors.rsTheme, lineWidth: 2, title: "RS tema" },
       0,
-    );
-    rsThemeSeriesHandle.setData(rsThemeLineData.map((point) => ({ time: point.time, value: point.value })));
-    if (!rsRendered && !rsCountryRendered) addRsReferenceLine(rsThemeSeriesHandle, colors, LineStyle);
-    extraSeries.push(rsThemeSeriesHandle);
-    maybeEnsureRsOverlayScale();
-  }
+    ));
+    if (rsThemeHandle) rsThemeHandle.setData(rsThemeLineData.map((point) => ({ time: point.time, value: point.value })));
+    if (anyRs) ensureRsOverlayScale();
+    const referenceHost = rsSeries || rsCountryHandle || rsThemeHandle;
+    if (referenceHost && typeof referenceHost.createPriceLine === "function") {
+      referenceLine = {
+        series: referenceHost,
+        line: referenceHost.createPriceLine({
+          price: RS_REFERENCE,
+          color: colors.line2,
+          lineStyle: LineStyle?.Dashed ?? PRICE_SCALE_DASHED,
+          lineWidth: 1,
+          axisLabelVisible: false,
+          title: "",
+        }),
+      };
+    }
+    currentRsPoints = rsRendered ? rsLineData : [];
 
-  // ── Línea de comparación con el benchmark ("Comparar vs") ────────────────
-  //
-  // Ratio precio/benchmark (rsLine del servidor), log-rebasado al primer
-  // valor de la ventana y ANCLADO a los tiempos de las velas por la
-  // proyección (analisis A2/B2: sin anclaje, cada punto con fecha propia
-  // añade una columna fantasma al eje compartido). Vive en una escala
-  // overlay invisible con banda propia: el precio no comparte escala con él
-  // y conserva su autoescala. La línea se lee por forma (máximos y
-  // pendiente), no por valor; por eso no lleva eje ni etiqueta de último
-  // valor.
-  let benchmarkLineSeries = null;
-  const benchmarkLineData = projectBenchmarkLineSeries(rows, benchmarkSeries, interval, indicators);
-  if (!intraday && benchmarkLineData.length > 1) {
-    benchmarkLineSeries = chart.addSeries(LineSeries, {
+    // ── Línea ÷ benchmark («Comparar vs») ────────────────────────────────────
+    // APAGADA por defecto (auditoría 2026-11, H29: un trazo sin rótulo que el
+    // usuario no sabía leer). Se activa con `indicators.benchmarkLine` en las
+    // preferencias del gráfico. Ratio precio/benchmark log-rebasado y anclado a
+    // las velas; escala overlay invisible con franja propia.
+    const benchmarkLineData = indicators.benchmarkLine === true
+      ? projectBenchmarkLineSeries(rows, benchmarkSeries, interval, indicators)
+      : [];
+    const benchmarkLineSeries = ensureSlot("benchmark", !intraday && benchmarkLineData.length > 1, () => chart.addSeries(LineSeries, {
       color: colors.soft,
       lineWidth: 1,
       priceScaleId: "benchmark-ratio",
       priceLineVisible: false,
       lastValueVisible: false,
       crosshairMarkerVisible: false,
-    }, 0);
-    benchmarkLineSeries.setData(benchmarkLineData.map((point) => ({ time: point.time, value: point.value })));
-    chart.priceScale("benchmark-ratio").applyOptions({
-      visible: false,
-      // Banda media-baja del panel del precio: por encima del volumen
-      // (0.82→1) y por debajo del grueso de la acción del precio.
-      scaleMargins: { top: 0.62, bottom: 0.24 },
-    });
-    extraSeries.push(benchmarkLineSeries);
+    }, 0));
+    if (benchmarkLineSeries) {
+      benchmarkLineSeries.setData(benchmarkLineData.map((point) => ({ time: point.time, value: point.value })));
+      if (!benchmarkScaleConfigured) {
+        chart.priceScale("benchmark-ratio").applyOptions({ visible: false, scaleMargins: BENCHMARK_MARGINS });
+        benchmarkScaleConfigured = true;
+      }
+    }
+
+    // Lo que el overlay RS acabó dibujando, para que el controller pueda
+    // declarar la ausencia con su motivo sin recalcular la serie.
+    handle.rsPane = {
+      rendered: rsRendered,
+      paneIndex: rsRendered ? 0 : null,
+      points: rsLineData.length,
+      weeks: rsHistory.weeks,
+      latestValue: rsRendered ? (rsLineData.at(-1)?.value ?? null) : null,
+    };
+    handle.rsCountryPane = {
+      rendered: rsCountryRendered,
+      paneIndex: rsCountryRendered ? 0 : null,
+      points: rsCountryLineData.length,
+      weeks: rsCountryHistory.weeks,
+      latestValue: rsCountryRendered ? (rsCountryLineData.at(-1)?.value ?? null) : null,
+    };
+    handle.rsThemePane = {
+      rendered: rsThemeRendered,
+      paneIndex: rsThemeRendered ? 0 : null,
+      points: rsThemeLineData.length,
+      weeks: rsThemeHistory.weeks,
+      latestValue: rsThemeRendered ? (rsThemeLineData.at(-1)?.value ?? null) : null,
+    };
   }
 
-  function updateGeometry({ width: nextWidth = width, height: nextHeight = height, profile: nextProfile = profile } = {}) {
+  /** Cambia datos/config/overlays sobre el chart vivo (sin recrearlo). */
+  function update(next = {}) {
+    apply({
+      config: next.config || config,
+      rows: next.rows || [],
+      overrides: next.overrides || {},
+      profile: next.profile || currentProfile,
+    });
+    if (typeof onReadout === "function") onReadout("");
+    return handle;
+  }
+
+  // Lectura bajo el cursor: fecha, cierre y RS de ESA fecha. Se escribe fuera
+  // de React (callback imperativo) para no re-renderizar en cada movimiento.
+  const crosshairHandler = (param) => {
+    if (typeof onReadout !== "function") return;
+    const time = param?.time;
+    const point = param?.point;
+    if (time == null || !point || point.x < 0 || point.y < 0 || !lastMainRendered) {
+      onReadout("");
+      return;
+    }
+    const bar = param.seriesData?.get?.(mainSeries);
+    const close = bar ? (bar.close ?? bar.value) : null;
+    const rsPoint = pointAtOrBefore(currentRsPoints, time);
+    const dateText = typeof currentProfile?.timeFormatter === "function" ? currentProfile.timeFormatter(time) : "";
+    onReadout(chartReadoutText({ dateText, close, rs: rsPoint?.value ?? null }));
+  };
+  if (typeof chart.subscribeCrosshairMove === "function") chart.subscribeCrosshairMove(crosshairHandler);
+
+  function updateGeometry({ width: nextWidth = width, height: nextHeight = height, profile: nextProfile = currentProfile } = {}) {
     const w = Math.max(Number(nextWidth) || 0, 280);
     const h = Number.isFinite(Number(nextHeight)) ? Number(nextHeight) : height;
+    if (nextProfile) currentProfile = nextProfile;
     chart.applyOptions?.({
       width: w,
       height: h,
-      rightPriceScale: { autoScale: true, scaleMargins: nextProfile.priceScaleMargins },
-      timeScale: { ...nextProfile.timeScale },
+      rightPriceScale: { autoScale: true, scaleMargins: currentPriceMargins },
+      timeScale: { ...currentProfile.timeScale },
       localization: {
         locale: "es-ES",
         priceFormatter: fmtPrice,
-        timeFormatter: nextProfile.timeFormatter,
+        timeFormatter: currentProfile.timeFormatter,
       },
     });
     mainSeries.priceScale?.().applyOptions?.({
       autoScale: true,
-      scaleMargins: nextProfile.priceScaleMargins,
+      scaleMargins: currentPriceMargins,
     });
   }
 
   function destroySeries() {
-    // Quita listeners de las series nativas, si los hay (las series de
-    // lightweight-charts no exponen remove(); basta con que el controller
-    // llame `chart.remove()` para liberar la instancia completa). Aquí
-    // simplemente nulos los handles para que el GC no retenga referencias.
+    // Las series de lightweight-charts se liberan con `chart.remove()` (que
+    // llama el controller); aquí se sueltan datos y suscripciones.
+    try { chart.unsubscribeCrosshairMove?.(crosshairHandler); } catch { /* noop */ }
+    if (typeof onReadout === "function") {
+      try { onReadout(""); } catch { /* noop */ }
+    }
     if (typeof mainSeries.setData === "function") {
       try { mainSeries.setData([]); } catch { /* noop */ }
     }
@@ -489,38 +624,8 @@ export function createChartNativeAdapter(args) {
     }
   }
 
-  return {
-    chart,
-    mainSeries,
-    extraSeries,
-    markerDescriptors,
-    pivotPriceLine,
-    // Lo que el overlay RS acabó dibujando, para que el controller pueda
-    // declarar la ausencia con su motivo sin recalcular la serie.
-    rsPane: {
-      rendered: rsRendered,
-      paneIndex: rsRendered ? 0 : null,
-      points: rsLineData.length,
-      weeks: rsHistory.weeks,
-      latestValue: rsRendered ? (rsLineData.at(-1)?.value ?? null) : null,
-    },
-    rsCountryPane: {
-      rendered: rsCountryRendered,
-      paneIndex: rsCountryRendered ? 0 : null,
-      points: rsCountryLineData.length,
-      weeks: rsCountryHistory.weeks,
-      latestValue: rsCountryRendered ? (rsCountryLineData.at(-1)?.value ?? null) : null,
-    },
-    rsThemePane: {
-      rendered: rsThemeRendered,
-      paneIndex: rsThemeRendered ? 0 : null,
-      points: rsThemeLineData.length,
-      weeks: rsThemeHistory.weeks,
-      latestValue: rsThemeRendered ? (rsThemeLineData.at(-1)?.value ?? null) : null,
-    },
-    updateGeometry,
-    destroySeries,
-  };
+  apply({ config, rows: args.rows || [], overrides: args.overrides || {}, profile });
+  return handle;
 }
 
 /**

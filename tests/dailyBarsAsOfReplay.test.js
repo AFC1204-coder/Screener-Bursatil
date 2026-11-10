@@ -56,10 +56,15 @@ function makeBars() {
 
 // Barras frescas (fecha de hoy) para forzar cache-hit. Desc, 10 barras, la
 // más reciente es HOY. El asOf de corte es 5 días atrás.
+// Desde D4 (auditoría 2026-11) la última barra termina AYER, no hoy: una
+// barra de hoy escrita "ahora" puede ser de una sesión aún abierta y la
+// lectura ya no la da por fresca (lib/marketCalendar.js#wasWrittenBeforeSettle).
+// La de ayer escrita ahora siempre está asentada, así el test no depende de
+// la hora a la que se ejecute.
 function makeFreshBars() {
   const bars = [];
   const today = new Date();
-  const base = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const base = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) - 86400000;
   for (let i = 9; i >= 0; i -= 1) {
     const date = new Date(base - i * 86400000);
     bars.push({

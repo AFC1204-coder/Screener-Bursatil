@@ -64,6 +64,7 @@ describe("getLatestScanFromCloud · bootstrap core-first", () => {
     expect(parsed.searchParams.get("includeRows")).toBe("1");
     expect(parsed.searchParams.get("anchor")).toBe("nightly-us");
     expect(parsed.searchParams.get("hydrateRs")).toBe("0");
+    expect(parsed.searchParams.get("rsPatch")).toBeNull();
 
     const rowsLimit = Number(parsed.searchParams.get("rowsLimit"));
     expect(Number.isFinite(rowsLimit)).toBe(true);
@@ -81,6 +82,8 @@ describe("getLatestScanFromCloud · bootstrap core-first", () => {
     const parsed = parseFetchUrl(fetchMock);
     expect(parsed.searchParams.get("anchor")).toBe("nightly-us");
     expect(parsed.searchParams.get("hydrateRs")).toBe("1");
+    // Móvil 2026-11 (M6): la segunda fase pide solo el parche RS, no el escaneo entero.
+    expect(parsed.searchParams.get("rsPatch")).toBe("1");
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ priority: "low" });
   });
 
@@ -106,6 +109,8 @@ describe("getLatestScanFromCloud · bootstrap core-first", () => {
     const parsed = parseFetchUrl(fetchMock);
     expect(parsed.searchParams.get("markets")).toBe("JP,US");
     expect(parsed.searchParams.get("hydrateRs")).toBe("1");
+    // Móvil 2026-11 (M6): la segunda fase pide solo el parche RS, no el escaneo entero.
+    expect(parsed.searchParams.get("rsPatch")).toBe("1");
     expect(fetchMock.mock.calls[0][1]).toMatchObject({ priority: "low" });
   });
 });
@@ -200,5 +205,29 @@ describe("pullCloudState · importación Research Desk alineada con arranque", (
     expect(result.ok).toBe(false);
     expect(result.message).toBe("Error interno");
     expect(result.scans).toEqual([]);
+  });
+});
+
+describe("cloudSyncClient · GET idénticos en vuelo se deduplican", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("dos getLatestScanFromCloud simultáneos (StrictMode) hacen UN fetch; tras resolver, otro fetch", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, configured: true, scans: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+    const [a, b] = await Promise.all([getLatestScanFromCloud(), getLatestScanFromCloud()]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(a.ok).toBe(true);
+    expect(b.ok).toBe(true);
+    await getLatestScanFromCloud();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("core y extended no se mezclan (URLs distintas)", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, configured: true, scans: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+    await Promise.all([getLatestScanFromCloud(), getLatestScanFromCloudExtended()]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

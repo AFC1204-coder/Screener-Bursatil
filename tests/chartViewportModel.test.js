@@ -31,6 +31,19 @@ import {
 import { DEFAULT_CHART_SETTINGS } from "@/lib/chartSettings";
 
 describe("chartViewportModel · resolveChartViewportConfig", () => {
+  it("Max permite un espaciado mínimo menor para que el histórico entero quepa", () => {
+    expect(adaptiveChartProfile({ interval: "W", range: "MAX" }).timeScale.minBarSpacing).toBeLessThan(0.5);
+    expect(adaptiveChartProfile({ interval: "D", range: "1A" }).timeScale.minBarSpacing).toBe(0.5);
+  });
+
+  it("Max en diario se dibuja en semanal (histórico entero solo con cadencia real); conserva la elección", () => {
+    const max = resolveChartViewportConfig({ range: "MAX", interval: "D" });
+    expect(max.interval).toBe("W");
+    expect(max.requestedInterval).toBe("D");
+    expect(resolveChartViewportConfig({ range: "MAX", interval: "W" }).interval).toBe("W");
+    expect(resolveChartViewportConfig({ range: "5A", interval: "D" }).interval).toBe("D");
+  });
+
   it("devuelve defaults cuando settings está vacío", () => {
     const config = resolveChartViewportConfig();
 
@@ -164,6 +177,16 @@ describe("chartViewportModel · formatters y labels", () => {
   it("axisTickFormatter cae a mes-año para 1A", () => {
     const fmt = axisTickFormatter("D", "1A");
     expect(fmt("2025-01-15")).toBe("ene 25");
+  });
+
+  it("axisTickFormatter usa el tickMarkType de la librería: sin «sep 26» repetido en ticks semanales (auditoría 2026-11, H18)", () => {
+    const fmt = axisTickFormatter("D", "1A");
+    // 0 Year, 1 Month, 2 DayOfMonth
+    expect(fmt("2026-01-02", 0)).toBe("2026");
+    expect(fmt("2026-09-01", 1)).toBe("sep 26");
+    const weeklyTicks = ["2026-09-07", "2026-09-14", "2026-09-21", "2026-09-28"].map((day) => fmt(day, 2));
+    expect(weeklyTicks).toEqual(["07 sep", "14 sep", "21 sep", "28 sep"]);
+    expect(new Set(weeklyTicks).size).toBe(weeklyTicks.length);
   });
 
   it("axisTickFormatter cae a año solo en M y rango 5A/MAX", () => {

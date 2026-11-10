@@ -280,9 +280,10 @@ describe("ScreenerShell · toolbar resultados (UX-P2)", () => {
 
   it("FILTER-SHELL-2: secundarios (CSV, Guardar, Traer, Resetear) solo en el menú ⋯", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW] })));
-    const toolbar = html.match(/<div class="controls resultsToolbar">[\s\S]*?<\/div>\s*<\/div>/);
+    // Paso 4 (rediseño 2026-11): Revisar y «⋯» viven en el ticket; la
+    // cabecera «Resultados» desaparece. Los secundarios siguen solo en el menú.
+    const toolbar = html.match(/<div class="screenerTicket">[\s\S]*?<details class="resultsMoreMenu">/);
     expect(toolbar?.[0]).toContain(">Revisar<");
-    expect(toolbar?.[0]).toContain("resultsMoreMenu");
     expect(toolbar?.[0]).not.toContain("resultsToolbarSecondary");
     expect(toolbar?.[0]).not.toContain("Traer datos frescos");
     expect(toolbar?.[0]).not.toContain("Resetear criterios");
@@ -302,10 +303,13 @@ describe("ScreenerShell · toolbar resultados (UX-P2)", () => {
     expect(html).not.toContain("resultsMoreMenu");
   });
 
-  it("unifica el título a Resultados sin rótulo Results", () => {
+  // Paso 4 (rediseño 2026-11): el título es la vista (ticket); la cabecera
+  // «Resultados» repetía lo obvio y se retira.
+  it("sin cabecera Resultados ni rótulo Results: el título es la vista", () => {
     const html = renderToStaticMarkup(React.createElement(ScreenerShell, makeProps({ resultsRows: [FINAL_ROW] })));
-    expect(html).toContain(">Resultados<");
+    expect(html).not.toContain(">Resultados<");
     expect(html).not.toContain(">Results<");
+    expect(html).toMatch(/<div class="screenerTicket"><h1 class="title">/);
   });
 
   it("mantiene Revisar como acción primaria visible", () => {
