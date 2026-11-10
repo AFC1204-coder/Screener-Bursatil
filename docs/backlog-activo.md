@@ -4,18 +4,18 @@ Fuente de verdad operativa para el orquestador. Actualizar tras cada ticket cerr
 Análisis base: `docs/analisis-screener-uso-real-2026-08-23.md`, `docs/analisis-vista-rapida-2026-08-24.md`.
 
 Última actualización: 2026-09-25 · rama `codex/statsedge-ui-polish`  
-**Última sync / HEAD origin polish:** `d41edf4` (FILTER-SESSION-BACK-1 / #57 · smoke re-verify)  
-**Ahora:** FILTER-SESSION-BACK-1 (`hecho` código; `smoke` tip limpio :3000) — soft cold · preserveCriteria · modal chart.  
-**Ticket:** `docs/tickets/FILTER-SESSION-BACK-1.md`  
-**Cola fricción:** ENTRY·COLD·UX-EMPTY·Review·MH-RPC·FILTER-SESSION **hechos** (#52–#57; #57 smoke re-verify).  
+**Última sync / HEAD origin polish:** `cc60740` (idle · FILTER #57 + TDZ #58)  
+**Ahora:** idle.  
+**Ticket:** `docs/tickets/activo.md`  
+**Cola fricción:** ENTRY·COLD·UX-EMPTY·Review·MH-RPC·FILTER-SESSION **hechos** (#52–#58).  
 **Cola encadenada:** cold·sparks·ficha·Europa·truth% **hechos** (#46–#50).  
-**Último cerrado:** FILTER-SESSION-BACK-1 — soft cold + back session + modal chart (`d41edf4` / #57).  
+**Último cerrado:** TDZ chartSettings (#58 `cc60740`) · FILTER-SESSION-BACK-1 (#57 `d41edf4`).  
 **Último cerrado (prev):** MH-MINI-RPC-1 (`da5092f` / #56) · REVIEW-MODAL (`167f51d` / #55).  
 **Cola aparcada:** D Twelve Data / Hito 1B · FIRDS on (gate dueño).  
 **Remeasure cold:** synthetic **18,2→13,1 MB** (−28%).  
 **Último cerrado (hist VISIBLE):** SCANS-CHARTPREVIEW-HYDRATE-VISIBLE-1 `c37c9f4` — **3** POST chart-preview vs ~45–92.  
 **Remeasure WAVE5 (`320cdb4`, :3300, US 3574):** JSON deferred **~20,5 MB** · gzip **~3,3 MB**; TTFB ruidoso. `research/wave5-remeasure-2026-09-14/`.  
-**Nota HYDRATE:** Caza #51–#56 + FILTER #57 en polish; smoke Mac tip limpio en vuelo.  
+**Nota HYDRATE / FILTER:** #51–#58 en polish; smoke #58 PASS `:3300` (CORE v4 · back · Revisar chart).  
 **Daily Mini 2026-09-23:** PASS · US **504/3575**.  
 **Último cerrado (prev):** REACT-COMMIT-PERF-1 `a71607c` · SCANS-CHARTPREVIEW-1 `f420af6` · THEME `cac7b25`.  
 **Nota REACT-COMMIT residual:** A/B 1 rep; truth sin `filterMs`.  
@@ -341,7 +341,7 @@ Decisión dueño **2026-08-29:** revisar gráfico; **RS dentro del lienzo** (no 
 | MH-FILL-6 | Serie market score + % MM30s (US, ≤13 sem) | **Hecho** · vacío honesto hasta ≥2 sem |
 | MH refresh/caché | Actualizar + `?refresh=1` + `cacheWritten` | **Hecho** · `16abe65` · smoke Actualizar→refresh=1 |
 | MH-MINI-RPC-1 | RPC `upsert_app_setting_newer_wins` en pg Mini | **Hecho** · `da5092f` / #56 |
-| FILTER-SESSION-BACK-1 | Defaults agresivos · back pierde criterios · chart cola lento | **Ahora** (`prep`) · `docs/tickets/FILTER-SESSION-BACK-1.md` · rama `cursor/filter-session-back-a41e` |
+| FILTER-SESSION-BACK-1 | Soft cold · preserveCriteria back · modal chart warm | **Hecho** · `d41edf4` / #57 + TDZ `cc60740` / #58 · smoke PASS |
 | STAGE-4 | Volumen de fuga junto a «Con fuga» (dato soporte; no clasifica) | **Hecho** · smoke AVAH Con fuga (2,8×) |
 | VCP-0 | Auditoría E1/E2 semanal | **Cerrado** fae1880 · ADR aceptado |
 | VCP | Detector / etiquetado research | **Bridge cerrado** 2026-09-02 · flag UNIFIED |

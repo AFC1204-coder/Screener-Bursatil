@@ -1,10 +1,6 @@
-# Ticket activo — FILTER-SESSION-BACK-1 (smoke re-verify)
+# Ticket activo — idle
 
-**Estado:** código en polish `d41edf4` · espera smoke limpio :3000  
-**Rama:** `codex/statsedge-ui-polish`
+**Estado:** idle tras FILTER-SESSION-BACK-1 + fix TDZ (#57/#58)  
+**Rama:** `codex/statsedge-ui-polish` @ `cc60740`
 
-## Prompt
-
-```
-(smoke re-verify en vuelo — no nueva programación)
-```
+Sin programación pendiente. Cola aparcada: Twelve Data / Hito 1B · FIRDS on (gate dueño).
