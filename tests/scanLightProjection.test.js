@@ -124,6 +124,11 @@ describe("la proyección ligera cubre todo lo que se consulta", () => {
     expect(["lowAdvance52w", "distance52w", "rsGlobalPct"].filter((field) => !FIELDS.has(field))).toEqual([]);
   });
 
+  it("conserva el origen del pivote (pivotSource) junto a pivotPrice", () => {
+    expect(FIELDS.has("pivotSource")).toBe(true);
+    expect(scanLightMetrics({ pivotPrice: 101.5, pivotSource: "ultima_contraccion" }).pivotSource).toBe("ultima_contraccion");
+  });
+
   it("cubre el orden y el contrato de las Listas", () => {
     expect(LIST_FIELDS.filter((field) => !FIELDS.has(field))).toEqual([]);
   });
