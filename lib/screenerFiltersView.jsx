@@ -295,6 +295,7 @@ export function FilterFamilyModal({
   const settingLabels = {
     requireStage2: "Etapa 2",
     requirePulso: "Pulso",
+    requireTrendTemplateExtra: "Plantilla 6-8 (avance, máximo, RS)",
     requireUpVolume: "Volumen en vela alcista",
     requireRecentIpo: "IPO real reciente",
     requireContractionsDecreasing: "Contracciones decrecientes",
