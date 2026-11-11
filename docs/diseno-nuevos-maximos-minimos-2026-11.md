@@ -76,6 +76,37 @@ comparando con la ventana fija de 20 sesiones. Sesión 2026-11-10:
   154, 60, 146, 76), y la proporción continuación/giro oscila.
 - El radio importa: pasar de 3 a 5 recorta el recuento un 20-40 %. Hay que elegirlo, no heredarlo.
 
+### 2.2 Temporalidad: diario y semanal, no un radio único (decisión del dueño, 2026-11-11)
+
+El radio correcto depende de la fractalidad de la estructura que se analice (un VCP largo se lee en
+semanal, una base corta en diario), y en general se trabaja en **semanal o diario**. Por tanto no
+se elige un solo radio: el detector es **parametrizable por temporalidad** y se calculan las dos,
+con los radios que el sistema ya usa: **diario r=3** (`localPivots`) y **semanal r=2**
+(`weeklyPivots`, `pivotRadius: 2`). Cada consumidor elige: el indicador de mercado muestra las dos,
+y cada estructura (VCP, base) usará la que le corresponda.
+
+Medición semanal (r=2, mismas 3.502 acciones, barras diarias agregadas a semanas de lunes a viernes;
+la última semana es **parcial**: lunes y martes):
+
+| Semana (lunes) | Nuevos máx. relativos (cont/giro) | Nuevos mín. relativos (cont/giro) |
+|---|---|---|
+| 14-sep | 146 (92/54) | 298 (114/184) |
+| 21-sep | 154 (84/70) | 327 (124/203) |
+| 28-sep | 92 (46/46) | 364 (107/257) |
+| 5-oct | 156 (87/69) | 209 (86/123) |
+| 12-oct | 236 (130/106) | 307 (130/177) |
+| 19-oct | 261 (128/133) | 238 (118/120) |
+| 26-oct | 241 (116/125) | 210 (108/102) |
+| 2-nov | 393 (168/225) | 389 (194/195) |
+| 9-nov (parcial) | 74 (39/35) | 48 (27/21) |
+
+La serie semanal se lee mucho mejor que la diaria: los mínimos dominaban a finales de septiembre
+(364 frente a 92 el 28-sep), los máximos los alcanzan desde mediados de octubre y la semana del 2-nov
+empata (393/389). Es el comportamiento que Weinstein pide leer semanalmente.
+
+Detalles: la **semana en curso** se evalúa con el máximo/mínimo acumulado hasta hoy (puede cambiar de
+aquí al viernes) y debe etiquetarse «parcial»; los eventos semanales exigen ≥30 semanas de histórico.
+
 **Pendiente de validar:** que los swings detectados coinciden con lo que ve a ojo el dueño en el
 gráfico (casos concretos). La medición cuenta eventos, no comprueba que cada uno sea el que él
 llamaría «ruptura de máximo relativo».
@@ -84,8 +115,9 @@ llamaría «ruptura de máximo relativo».
 
 **Por fila, en el nocturno** (fase A). Una función pura nueva `newExtremes(bars, { radius })` en
 `lib/indicators.js` junto a `highDist`/`lowAdv`, que reutiliza la construcción de swings y devuelve:
-`newHighRel`, `newLowRel` (1/0/null), su apellido `newHighRelKind`/`newLowRelKind` (`cont`/`giro`),
-`newHigh52` y `newLow52` (1/0/null). Se llama desde las dos copias de la
+`newHighRelD`/`newLowRelD` (diario) y `newHighRelW`/`newLowRelW` (semanal) (1/0/null), con su apellido
+`…Kind` (`cont`/`giro`), más `newHigh52` y `newLow52` (1/0/null). `radius` y `timeframe` son
+argumentos, no constantes: otras estructuras pueden pedir otra fractalidad. Se llama desde las dos copias de la
 fila (`lib/researchRow.js` y `lib/materializedScanner.js`; la segunda es la copia, ver ADR de
 consolidación) para que no diverjan, y se añade a `SCAN_LIGHT_FIELDS`
 (`lib/scanLightProjection.js`) o se vuelve a perder al guardar (es exactamente lo que pasó con
@@ -137,7 +169,9 @@ interfaz de hoy.
 
 ## 7. Decisiones que necesita el dueño
 
-- ¿Radio del swing: 3 días (el que ya usa el sistema), 5, o semanal (Weinstein)?
+- ~~¿Radio del swing?~~ Resuelto: diario r=3 y semanal r=2, parametrizable por estructura.
+- ¿Cuál de las dos temporalidades se ve por defecto en la pantalla de salud? Propuesta: **semanal**
+  (producto semanal primero y lectura de Weinstein), con interruptor a diario.
 - ¿Mostrar «continuación» y «giro» como dos cifras, o un solo número de nuevos máximos relativos?
 - ¿Aprobar el rumbo (evento real por fila + serie aparte)?
 - ¿Conservar «Cerca del techo (≤1 %)» como indicador propio o retirarlo?
