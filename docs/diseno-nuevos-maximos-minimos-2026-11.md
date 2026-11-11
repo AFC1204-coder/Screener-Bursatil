@@ -13,9 +13,9 @@ barras de `daily_bars`, sesión del 2026-11-10:
 | Qué | Pantalla de salud hoy | Evento real |
 |---|---|---|
 | Máximo 52 semanas | 144 («Nuevos máximos 52s (≤1 % del techo)») | 88 (56 con cierre por encima) |
-| Máximo de 20 sesiones | no existe | 303 |
+| Máximo de 20 sesiones (ventana fija; **descartado**, ver 2) | no existe | 303 |
 | Mínimo 52 semanas | 24 («Nuevos mínimos 52s (≤1 % sobre el suelo)») | 79 |
-| Mínimo de 20 sesiones | no existe | 282 |
+| Mínimo de 20 sesiones (ventana fija; **descartado**, ver 2) | no existe | 282 |
 
 Los valores guardados exactos tampoco sirven: `distance52w ≥ 0` da 20 máximos y
 `lowAdvance52w ≤ 0` da 2 mínimos, porque comparan el **cierre** con una ventana que ya incluye
@@ -28,28 +28,64 @@ Efecto lateral vigente: desde que el nocturno guarda `lowAdvance52w` (11-nov), �
 52s» aparece por primera vez en la web (antes caía bajo la cobertura mínima del 60 %) con la
 cifra engañosa de 24.
 
-## 2. Definiciones (una por indicador, estrictas)
+## 2. Definiciones
 
-Sesión de referencia = la última barra de la fila. «Previas» = las N−1 sesiones anteriores.
+**Corrección del dueño (2026-11-11):** el máximo «local» no debe ser «las últimas N sesiones»,
+sino **superar un máximo relativo**, según la sucesión de máximos y mínimos locales (swings) que
+se van dando. Por eso se abandona la ventana fija de 20 sesiones. 52 semanas e histórico sí son
+niveles por definición (ventana temporal / toda la historia) y se mantienen.
+
+**Swing** = pivote fractal: un máximo (mínimo) que supera (queda por debajo de) los `r` días de
+cada lado; altos y bajos se alternan quedándose con el más extremo de cada tramo. Es la misma
+construcción que ya usa `localPivots` (`lib/setupPatterns.js`, radio 3 sobre diario) y
+`weeklyPivots` (`lib/weeklyStageStructure.js`, semanal); no se inventa un detector nuevo. Un
+pivote solo existe `r` sesiones después de formarse (sin mirar al futuro).
 
 | Indicador | Evento |
 |---|---|
-| Nuevo máximo local | máximo de la sesión > máximo de las 19 previas (20 sesiones) |
+| **Nuevo máximo relativo** | el máximo de la sesión supera el **último swing alto confirmado**, y es la **primera** sesión que lo hace (si ya lo superó una sesión anterior es continuación, no un evento nuevo) |
+| **Nuevo mínimo relativo** | simétrico con el último swing bajo confirmado |
 | Nuevo máximo 52s | máximo de la sesión > máximo de las 251 previas (exige ≥252 barras) |
 | Nuevo máximo histórico | máximo de la sesión > máximo histórico semanal ajustado (`long_history_stats`); **fase 2** |
-| Nuevo mínimo local / 52s | simétricos con el mínimo de la sesión |
+| Nuevo mínimo 52s | simétrico |
 
-- Dato insuficiente (menos barras que la ventana) = **`null`, nunca 0**. Un valor sin evento es `0`.
-- Se conserva «Cerca del techo (≤1 %)» como indicador **aparte y con ese nombre**, para no perder
-  la serie que ya existe. Deja de llamarse «Nuevos máximos».
-- Weinstein recomienda leer las cifras **semanales**, no las diarias, porque filtran ruido
-  (`diseno-indicadores-mercado-2026-08-17.md`, A.1.3). La vista debe poder agregar por semana.
+El evento relativo lleva un **apellido** que sale de la misma sucesión de swings:
+- **continuación** — el swing roto está por encima del swing alto anterior (máximos crecientes: la
+  estructura alcista sigue); para mínimos, el swing roto está por debajo del anterior (mínimos decrecientes).
+- **giro** — el swing roto es más bajo que el anterior (se rompe un máximo descendente: posible cambio
+  de estructura); para mínimos, se rompe un mínimo creciente.
+
+Dato insuficiente (menos de 60 barras, o ningún swing confirmado) = **`null`, nunca 0**. Un valor
+sin evento es `0`. «Cerca del techo (≤1 %)» se conserva **aparte y con ese nombre**. Weinstein
+recomienda leer las cifras semanales (`diseno-indicadores-mercado-2026-08-17.md`, A.1.3): el mismo
+detector se puede aplicar a barras semanales (`weeklyPivots`).
+
+### 2.1 Medición del criterio relativo (11-nov, solo lectura)
+
+Sobre las 3.502 acciones US y `daily_bars` (barras con precios ajustados), sin mirar al futuro,
+comparando con la ventana fija de 20 sesiones. Sesión 2026-11-10:
+
+| | Radio 3 | Radio 5 | Ventana fija 20 |
+|---|---|---|---|
+| Nuevo máximo | 76 (48 continuación / 28 giro) | 47 (22 / 25) | 303 |
+| Nuevo mínimo | 56 (33 / 23) | 41 (24 / 17) | 282 |
+
+- El criterio relativo es **unas 4-6 veces más selectivo** que la ventana fija y **casi todos sus
+  eventos también son máximos de 20 sesiones** (61 de 76): filtra ruido, no inventa señales.
+- La serie diaria sigue siendo muy variable (radio 3, nuevos máximos del 2 al 10-nov: 272, 89, 506,
+  154, 60, 146, 76), y la proporción continuación/giro oscila.
+- El radio importa: pasar de 3 a 5 recorta el recuento un 20-40 %. Hay que elegirlo, no heredarlo.
+
+**Pendiente de validar:** que los swings detectados coinciden con lo que ve a ojo el dueño en el
+gráfico (casos concretos). La medición cuenta eventos, no comprueba que cada uno sea el que él
+llamaría «ruptura de máximo relativo».
 
 ## 3. Dónde se calcula
 
-**Por fila, en el nocturno** (fase A). Una función pura nueva `newExtremes(bars)` en
-`lib/indicators.js` junto a `highDist`/`lowAdv`, que devuelve cuatro campos:
-`newHigh20`, `newHigh52`, `newLow20`, `newLow52` (1/0/null). Se llama desde las dos copias de la
+**Por fila, en el nocturno** (fase A). Una función pura nueva `newExtremes(bars, { radius })` en
+`lib/indicators.js` junto a `highDist`/`lowAdv`, que reutiliza la construcción de swings y devuelve:
+`newHighRel`, `newLowRel` (1/0/null), su apellido `newHighRelKind`/`newLowRelKind` (`cont`/`giro`),
+`newHigh52` y `newLow52` (1/0/null). Se llama desde las dos copias de la
 fila (`lib/researchRow.js` y `lib/materializedScanner.js`; la segunda es la copia, ver ADR de
 consolidación) para que no diverjan, y se añade a `SCAN_LIGHT_FIELDS`
 (`lib/scanLightProjection.js`) o se vuelve a perder al guardar (es exactamente lo que pasó con
@@ -64,8 +100,8 @@ esquema: requiere tu aprobación explícita.**
 
 ## 4. Qué cambia en la interfaz (pantalla de salud de mercado)
 
-- `lib/marketBreadth.js`: sustituye `nearHigh52w`/`nearLow52w` por pares reales (máx/mín 20
-  sesiones, 52 semanas) con `measured`/cobertura como el resto; «Cerca del techo (≤1 %)» queda
+- `lib/marketBreadth.js`: sustituye `nearHigh52w`/`nearLow52w` por pares reales (máx/mín relativo,
+  52 semanas) con `measured`/cobertura como el resto; «Cerca del techo (≤1 %)» queda
   como indicador propio. Añade las dos claves nuevas al `select` de `readNightlyRows`.
 - `app/market-health/UniverseBreadth.jsx`: los pares se pintan juntos (máximos | mínimos) y la
   diferencia neta; con la serie de la fase B, un minigráfico y el interruptor Diario/Semanal.
@@ -77,7 +113,7 @@ esquema: requiere tu aprobación explícita.**
 | Riesgo | Cobertura |
 |---|---|
 | Barras mensuales incrustadas en `daily_bars` (`daily-bars-barras-mensuales`) inflan el «máximo previo» y esconden máximos | La función exige cadencia diaria (ya existen guardas en `dailyBarsCache`); medir cuántas filas afecta antes de publicar |
-| Splits: barras sin ajustar crean máximos/mínimos falsos | El nocturno usa `calcBars` ajustadas como el resto de distancias; la medición del 11-nov usó `daily_bars` crudas, así que sus cifras son una **cota con ruido** hasta repetirla con barras ajustadas |
+| Splits y dividendos | Las barras de `daily_bars` y las `calcBars` del nocturno llevan precios ajustados (la exportación del 11-nov los muestra con decimales de ajuste); aun así, un ajuste posterior reescribe el pasado: repetir la comprobación tras un split reciente |
 | La población cambia (altas/bajas del universo) y mueve los porcentajes | Mostrar recuento y % sobre `universe_n` de cada día |
 | Última sesión parcial o escaneo con fecha atrasada | Los símbolos con `lastDate` anterior a la fecha de mercado se excluyen de `measured`, como en la amplitud actual |
 | Fuera de EE. UU. (decisión 10) | Mismo cálculo por mercado/región en una fase posterior; la tabla ya lleva `market` |
@@ -85,8 +121,9 @@ esquema: requiere tu aprobación explícita.**
 
 ## 6. Plan en pasos (cada uno comiteable y reversible)
 
-1. `newExtremes` en `lib/indicators.js` + tests + prueba con barras ajustadas de la base del Mini
-   (repite la medición del 11-nov y confirma la cota). Sin tocar nada visible.
+1. `newExtremes` en `lib/indicators.js` + tests (swing alto roto por primera vez ≠ continuación;
+   sin swing = null) + prueba con barras de la base del Mini, repitiendo la medición del 11-nov y
+   comprobando a ojo 10-15 casos con el dueño. Sin tocar nada visible.
 2. Cablear a `researchRow`/`materializedScanner` y a `SCAN_LIGHT_FIELDS`; paquete para el nocturno
    del Mini (sin activar hasta tu confirmación).
 3. Cambio de `marketBreadth` + panel (cambio de interfaz; paquete web para el Mini).
@@ -100,6 +137,8 @@ interfaz de hoy.
 
 ## 7. Decisiones que necesita el dueño
 
+- ¿Radio del swing: 3 días (el que ya usa el sistema), 5, o semanal (Weinstein)?
+- ¿Mostrar «continuación» y «giro» como dos cifras, o un solo número de nuevos máximos relativos?
 - ¿Aprobar el rumbo (evento real por fila + serie aparte)?
 - ¿Conservar «Cerca del techo (≤1 %)» como indicador propio o retirarlo?
 - ¿Diario por defecto con vista semanal opcional, o semanal por defecto (como recomienda Weinstein)?
