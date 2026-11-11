@@ -111,6 +111,50 @@ aquí al viernes) y debe etiquetarse «parcial»; los eventos semanales exigen �
 gráfico (casos concretos). La medición cuenta eventos, no comprueba que cada uno sea el que él
 llamaría «ruptura de máximo relativo».
 
+### 2.3 El cierre marca la zona y confirma la ruptura (decisión del dueño, 2026-11-11)
+
+Se decide que **semanal es la temporalidad por defecto** en la pantalla de salud (con interruptor a
+diario) y que **los cierres —diarios, semanales o de la barra que sea— son los que marcan la zona**
+del máximo/mínimo relativo y los que deciden si se ha roto. Consecuencias para la definición:
+
+- **Swing sobre cierres:** el pivote se detecta con el cierre de cada barra (el cierre más alto
+  entre los `r` cierres de cada lado, y simétrico para el bajo), no con la mecha. La zona del
+  máximo relativo es el cierre del pivote.
+- **Ruptura confirmada por cierre:** hay nuevo máximo relativo solo si el **cierre** de la barra
+  supera ese cierre-pivote, y es la primera barra que lo hace. Una mecha que sobrepasa y cierra por
+  debajo **no** cuenta (es un intento fallido, no una ruptura). Simétrico para mínimos.
+- **La temporalidad manda:** en semanal el cierre es el del viernes (o el último de la semana); en
+  la semana en curso, el último cierre disponible, rotulado «parcial» (se confirmará al cierre del viernes).
+- **Parametrizable:** `newExtremes(bars, { timeframe, radius, basis: "close" })`; `basis` queda como
+  argumento por si otra estructura (p. ej. un techo en zona con mechas) pidiera máximos/mínimos
+  intradía, pero el valor por defecto y el de la pantalla de salud es `close`.
+
+Medición con esta definición (mismas 3.502 acciones, solo lectura; cont/giro):
+
+| Semana (lunes) | Nuevos máx. rel. por cierre | Nuevos mín. rel. por cierre |
+|---|---|---|
+| 14-sep | 133 (93/40) | 298 (96/202) |
+| 21-sep | 161 (99/62) | 353 (114/239) |
+| 28-sep | 96 (43/53) | 326 (111/215) |
+| 5-oct | 160 (93/67) | 208 (90/118) |
+| 12-oct | 225 (134/91) | 331 (145/185) |
+| 19-oct | 282 (145/137) | 218 (108/110) |
+| 26-oct | 233 (115/118) | 189 (91/97) |
+| 2-nov | 319 (131/188) | 403 (186/217) |
+| 9-nov (parcial) | 98 (45/53) | 39 (25/14) |
+
+Diario (r=3, cierres), 10-nov: **116** nuevos máximos relativos (85/31) y **54** mínimos (22/32),
+frente a 76 y 56 con mechas.
+
+- La lectura semanal es la misma que con mechas (mínimos dominando a finales de septiembre, máximos
+  desde mediados de octubre, cruce en la semana del 2-nov), pero **con menos ruido y más señal de
+  giro**: las cifras semanales de máximos suben un poco porque los cierres hacen el pivote más bajo
+  y se supera con más facilidad, y el reparto continuación/giro cambia (en semanas alcistas el
+  giro pesa más).
+- Sin verificar: que el cierre-pivote coincida con lo que el dueño llama «zona» (a ojo con
+  gráficos) y el efecto de usar cierres ajustados frente a sin ajustar en las acciones con splits
+  recientes (`daily_bars` se supone ajustada, sin comprobar).
+
 ## 3. Dónde se calcula
 
 **Por fila, en el nocturno** (fase A). Una función pura nueva `newExtremes(bars, { radius })` en
@@ -170,11 +214,10 @@ interfaz de hoy.
 ## 7. Decisiones que necesita el dueño
 
 - ~~¿Radio del swing?~~ Resuelto: diario r=3 y semanal r=2, parametrizable por estructura.
-- ¿Cuál de las dos temporalidades se ve por defecto en la pantalla de salud? Propuesta: **semanal**
-  (producto semanal primero y lectura de Weinstein), con interruptor a diario.
+- ~~¿Temporalidad por defecto?~~ Resuelto: **semanal**, con interruptor a diario.
+- ~~¿Mecha o cierre?~~ Resuelto: el **cierre** marca la zona del pivote y confirma la ruptura (2.3).
 - ¿Mostrar «continuación» y «giro» como dos cifras, o un solo número de nuevos máximos relativos?
 - ¿Aprobar el rumbo (evento real por fila + serie aparte)?
 - ¿Conservar «Cerca del techo (≤1 %)» como indicador propio o retirarlo?
-- ¿Diario por defecto con vista semanal opcional, o semanal por defecto (como recomienda Weinstein)?
 - ¿Autorizas crear la tabla `market_extremes_daily` (fase B)?
 - ¿Aplico ya el paso 0 (renombrar los dos indicadores actuales)?
