@@ -1,6 +1,6 @@
 // newExtremes: nuevos máximos/mínimos relativos por cierre (docs/diseno-nuevos-maximos-minimos-2026-11.md).
 import { describe, expect, it } from "vitest";
-import { newExtremes } from "@/lib/indicators";
+import { newExtremes, newExtremesFields } from "@/lib/indicators";
 
 // Días hábiles consecutivos desde 2026-01-05 (lunes). Devuelve barras DESCENDENTES.
 function daily(closes) {
@@ -83,5 +83,26 @@ describe("newExtremes · semanal por cierre", () => {
     const ev = newExtremes(bars.reverse(), { timeframe: "weekly" });
     expect(ev.partial).toBe(true);
     expect(ev.high).toMatchObject({ level: 110 });
+  });
+});
+
+describe("newExtremesFields · campos planos de la fila", () => {
+  it("dato insuficiente → todo null, nunca 0", () => {
+    const f = newExtremesFields(daily(base(40)));
+    expect(Object.values(f).every((v) => v === null)).toBe(true);
+  });
+  it("evento diario → 1 con apellido; el resto 0/null", () => {
+    const f = newExtremesFields(daily(run([104, 106, 108, 110, 108, 106, 104, 111])));
+    expect(f.newHighRelD).toBe(1);
+    expect(["continuacion", "giro", "inicial"]).toContain(f.newHighRelDKind);
+    expect(f.newLowRelD).toBe(0);
+    expect(f.newLowRelDKind).toBeNull();
+  });
+  it("descarta barras de fin de semana (no son sesiones)", () => {
+    const bars = daily(run([104, 106, 108, 110, 108, 106, 104, 111]));
+    // barra fantasma en domingo con cierre muy alto: sin el filtro rompería el pivote
+    bars.splice(3, 0, { date: "2026-03-29", close: 130, high: 130, low: 130 });
+    expect(new Date("2026-03-29T00:00:00Z").getUTCDay()).toBe(0);
+    expect(newExtremesFields(bars)).toEqual(newExtremesFields(bars.filter((b) => b.date !== "2026-03-29")));
   });
 });

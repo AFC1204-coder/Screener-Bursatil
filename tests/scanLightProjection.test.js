@@ -124,6 +124,10 @@ describe("la proyección ligera cubre todo lo que se consulta", () => {
     expect(["lowAdvance52w", "distance52w", "rsGlobalPct"].filter((field) => !FIELDS.has(field))).toEqual([]);
   });
 
+  it("conserva los nuevos máximos/mínimos relativos (diario y semanal) al guardar", () => {
+    const row = { newHighRelD: 1, newHighRelDKind: "giro", newLowRelD: 0, newHighRelW: 0, newLowRelW: 1, newLowRelWKind: "continuacion", newExtremesWPartial: true };
+    expect(scanLightMetrics(row)).toMatchObject(row); // los null no se escriben: ausente = sin evento/sin dato
+  });
   it("conserva el origen del pivote (pivotSource) junto a pivotPrice", () => {
     expect(FIELDS.has("pivotSource")).toBe(true);
     expect(scanLightMetrics({ pivotPrice: 101.5, pivotSource: "ultima_contraccion" }).pivotSource).toBe("ultima_contraccion");
