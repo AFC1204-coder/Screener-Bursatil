@@ -125,7 +125,7 @@ describe("la proyección ligera cubre todo lo que se consulta", () => {
   });
 
   it("conserva los nuevos máximos/mínimos relativos (diario y semanal) al guardar", () => {
-    const row = { newHighRelD: 1, newHighRelDKind: "giro", newLowRelD: 0, newHighRelW: 0, newLowRelW: 1, newLowRelWKind: "continuacion", newExtremesWPartial: true };
+    const row = { newHighRelD: 1, newHighRelDKind: "giro", newLowRelD: 0, newHighRelW: 0, newLowRelW: 1, newLowRelWKind: "continuacion", newExtremesWPartial: true, upthrustD: 1, springW: 1, attemptHighW: 1, attemptLowD: 0 };
     expect(scanLightMetrics(row)).toMatchObject(row); // los null no se escriben: ausente = sin evento/sin dato
   });
   it("conserva el origen del pivote (pivotSource) junto a pivotPrice", () => {

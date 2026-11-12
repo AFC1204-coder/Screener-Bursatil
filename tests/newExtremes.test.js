@@ -1,6 +1,6 @@
 // newExtremes: nuevos máximos/mínimos relativos por cierre (docs/diseno-nuevos-maximos-minimos-2026-11.md).
 import { describe, expect, it } from "vitest";
-import { newExtremes, newExtremesFields } from "@/lib/indicators";
+import { falseBreaks, newExtremes, newExtremesFields } from "@/lib/indicators";
 
 // Días hábiles consecutivos desde 2026-01-05 (lunes). Devuelve barras DESCENDENTES.
 function daily(closes) {
@@ -104,5 +104,69 @@ describe("newExtremesFields · campos planos de la fila", () => {
     bars.splice(3, 0, { date: "2026-03-29", close: 130, high: 130, low: 130 });
     expect(new Date("2026-03-29T00:00:00Z").getUTCDay()).toBe(0);
     expect(newExtremesFields(bars)).toEqual(newExtremesFields(bars.filter((b) => b.date !== "2026-03-29")));
+  });
+});
+
+describe("newExtremes · giro con estructura y amplitud (opcionales, sin cambio por defecto)", () => {
+  const sinEstructura = () => daily(run([100, 96, 92, 95, 98, 96, 93, 89, 92, 95, 93, 90, 86, 89, 93, 91, 88, 85, 88, 92, 96]));
+  const conEstructura = () => daily(run([97, 94, 91, 88, 91, 94, 97, 98, 96, 94, 92, 94, 96, 97, 99]));
+  it("por defecto un giro se reporta y lleva structure/amplitude", () => {
+    expect(newExtremes(sinEstructura()).high).toMatchObject({ kind: "giro", structure: false });
+    expect(newExtremes(conEstructura()).high).toMatchObject({ kind: "giro", structure: true });
+    expect(newExtremes(conEstructura()).high.amplitude).toBeGreaterThan(0.05);
+  });
+  it("requireStructure descarta el giro sin mínimo más alto (rebote tras mínimos decrecientes) y conserva el otro", () => {
+    expect(newExtremes(sinEstructura(), { requireStructure: true }).high).toBeNull();
+    expect(newExtremes(conEstructura(), { requireStructure: true }).high).toMatchObject({ level: 98 });
+  });
+  it("minSwingPct descarta swings estrechos", () => {
+    expect(newExtremes(conEstructura(), { minSwingPct: 5 }).high).toMatchObject({ level: 98 });
+    expect(newExtremes(conEstructura(), { minSwingPct: 50 }).high).toBeNull();
+  });
+});
+
+describe("falseBreaks · roturas falsas e intentos", () => {
+  it("datos insuficientes → null", () => {
+    expect(falseBreaks(daily(base(40)))).toBeNull();
+  });
+  it("upthrust: cierra por encima del swing alto y la barra siguiente vuelve por debajo", () => {
+    const fb = falseBreaks(daily(run([100, 104, 106, 108, 110, 108, 106, 104, 111, 109])));
+    expect(fb).toMatchObject({ upthrust: true, spring: false });
+  });
+  it("spring: cierra por debajo del swing bajo y vuelve por encima", () => {
+    const fb = falseBreaks(daily(run([100, 96, 94, 92, 90, 92, 94, 96, 89, 91])));
+    expect(fb).toMatchObject({ spring: true, upthrust: false });
+  });
+  it("la rotura que se mantiene no es falsa", () => {
+    const fb = falseBreaks(daily(run([100, 104, 106, 108, 110, 108, 106, 104, 111, 112])));
+    expect(fb.upthrust).toBe(false);
+  });
+  it("intento: la máxima supera el swing, el cierre queda dentro y cerca", () => {
+    const bars = daily(run([104, 106, 108, 110, 108, 106, 104, 109.8]));
+    bars[0].high = 113;
+    expect(falseBreaks(bars)).toMatchObject({ attemptHigh: true, upthrust: false });
+    expect(falseBreaks(bars, { attemptNearPct: 0.01 }).attemptHigh).toBe(false);
+  });
+});
+
+describe("newExtremesFields · giro con estructura por defecto en la fila", () => {
+  it("un giro sin mínimo más alto no sale como evento en los campos de la fila", () => {
+    const sin = daily(run([100, 96, 92, 95, 98, 96, 93, 89, 92, 95, 93, 90, 86, 89, 93, 91, 88, 85, 88, 92, 96]));
+    expect(newExtremes(sin).high?.kind).toBe("giro"); // sin filtro existe
+    expect(newExtremesFields(sin).newHighRelD).toBe(0);
+    const con = daily(run([97, 94, 91, 88, 91, 94, 97, 98, 96, 94, 92, 94, 96, 97, 99]));
+    expect(newExtremesFields(con)).toMatchObject({ newHighRelD: 1, newHighRelDKind: "giro" });
+  });
+});
+
+describe("newExtremesFields · roturas falsas e intentos en la fila", () => {
+  it("expone upthrust/spring/attempt en diario y semanal (1/0) y null si no hay datos", () => {
+    const f = newExtremesFields(daily(run([100, 104, 106, 108, 110, 108, 106, 104, 111, 109])));
+    expect(f.upthrustD).toBe(1);
+    expect(f.springD).toBe(0);
+    expect([0, 1, null]).toContain(f.upthrustW);
+    const corto = newExtremesFields(daily(base(40)));
+    expect(corto.upthrustD).toBeNull();
+    expect(corto.attemptHighW).toBeNull();
   });
 });

@@ -176,6 +176,8 @@ Roturas falsas que disparan esa semana (upthrust / spring): N=1 → 113 / 76; N=
 
 **13 casos (N=2):** ASIX, BFST y BGR (giro) fallan la estructura, como pide el dueño; ASIX tiene un spring (cierre 15,36 bajo 15,80 y regreso). AEHL también falla la estructura, **y no debería**: su mínimo más alto (7,31) aún no está confirmado con r=2. Con esta regla un giro real se retrasa dos semanas. ALTG (mínimo giro) pasa. ACNB sale como intento; **ALLE y APD no** (la zona de la mecha en `casos.md` era el máximo de cierres de las últimas semanas, no el último swing, y aquí se usa el último swing).
 
+**Decisión del dueño (12-nov, noche): solo estructura.** La fila del nocturno aplica `requireStructure` (semana del 2-nov, código real: 127 máximos / 240 mínimos frente a 261 / 375 sin filtro); sin umbral de amplitud (`minSwingPct` queda como opción sin usar). `falseBreaks` (upthrust, spring, intentos) está cableado a la fila con 8 campos (`upthrust`/`spring`/`attemptHigh`/`attemptLow` × D/W, 1/0/null) y a la lista blanca de `scanLightProjection`; el Mini aún no los calcula (requiere paquete nuevo con «sí» del dueño).
+
 **Sin verificar:** que la rotura falsa preceda de verdad a un cambio de tendencia (solo se cuentan frecuencias, sin rentabilidad posterior); N correcto; que 663 intentos sean señal útil (falta exigir cercanía al nivel); el efecto de usar el mínimo no confirmado en vez del confirmado.
 
 ## 3. Dónde se calcula
