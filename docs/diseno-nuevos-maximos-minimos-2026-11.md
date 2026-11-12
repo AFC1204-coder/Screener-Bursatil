@@ -155,6 +155,29 @@ frente a 76 y 56 con mechas.
   gráficos) y el efecto de usar cierres ajustados frente a sin ajustar en las acciones con splits
   recientes (`daily_bars` se supone ajustada, sin comprobar).
 
+### 2.4 Giro con estructura y roturas falsas (decisión del dueño, 2026-11-12, medición)
+
+**Caso ASIX.** Un «giro de máximo» que en realidad es el rebote tras una sucesión de mínimos decrecientes no es un máximo: para el dueño hace falta mínimo → rebote → **mínimo más alto** → ruptura del rebote. Además, la ruptura falsa de un mínimo (*spring*) o de un máximo (*upthrust*, «trampa») es por sí misma un indicador temprano de cambio de tendencia, y la mecha que no cierra se registra como **intento**, sin contar como máximo.
+
+**Reglas medidas** (semanal, r=2, por cierre; script `/private/tmp/claude-501/swing/falsas.mjs`, solo lectura, 3.502 símbolos US, semana del 2-nov):
+- *Estructura*: un giro de máximo solo vale si el último swing bajo confirmado es más alto que el anterior (simétrico en mínimos). La continuación no cambia.
+- *Amplitud* (propia de esta medición, no la del informe `amplitud.md`): swing roto ≥ 5 % respecto a sus dos swings vecinos.
+- *Rotura falsa*: rotura por cierre de un swing cuyo cierre vuelve al otro lado del nivel dentro de N semanas; dispara la semana del regreso. *Intento*: máxima (mínima) de la semana supera el último swing sin romperlo por cierre y cierra dentro.
+
+| Semana 2-nov | Máximos | Mínimos |
+|---|---|---|
+| Eventos hoy | 261 | 375 |
+| de ellos, giros | 181 | 197 |
+| giros con estructura | 47 | 62 |
+| giros con amplitud ≥ 5 % | 79 | 159 |
+| giros con ambas | 21 | 44 |
+
+Roturas falsas que disparan esa semana (upthrust / spring): N=1 → 113 / 76; N=2 → 172 / 128; N=3 → 211 / 158. Intentos: 663 de máximo / 356 de mínimo. Sobre las 8 últimas semanas (28.016 observaciones) los porcentajes son parecidos (giros con estructura 35 % en máximos, 43 % en mínimos).
+
+**13 casos (N=2):** ASIX, BFST y BGR (giro) fallan la estructura, como pide el dueño; ASIX tiene un spring (cierre 15,36 bajo 15,80 y regreso). AEHL también falla la estructura, **y no debería**: su mínimo más alto (7,31) aún no está confirmado con r=2. Con esta regla un giro real se retrasa dos semanas. ALTG (mínimo giro) pasa. ACNB sale como intento; **ALLE y APD no** (la zona de la mecha en `casos.md` era el máximo de cierres de las últimas semanas, no el último swing, y aquí se usa el último swing).
+
+**Sin verificar:** que la rotura falsa preceda de verdad a un cambio de tendencia (solo se cuentan frecuencias, sin rentabilidad posterior); N correcto; que 663 intentos sean señal útil (falta exigir cercanía al nivel); el efecto de usar el mínimo no confirmado en vez del confirmado.
+
 ## 3. Dónde se calcula
 
 **Por fila, en el nocturno** (fase A). Una función pura nueva `newExtremes(bars, { radius })` en
