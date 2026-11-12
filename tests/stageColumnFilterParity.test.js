@@ -68,11 +68,11 @@ const CASES = [
     enTabla: "Etapa 1",
   },
   {
-    name: "etapa 3 confirmada",
+    name: "posible etapa 3 (media plana tras subida)",
     closes: Array.from({ length: 90 }, (_, i) => (i < 45 ? 50 + i * 2 : 140)),
     daily: { price: 140, sma50: 138, sma150: 130, sma200: 120, sma200Slope: 4 },
     stage: "stage3",
-    enTabla: "Etapa 3",
+    enTabla: "Posible etapa 3",
   },
 ];
 
@@ -99,7 +99,7 @@ describe("la columna Etapa y el filtro requireStage2 dicen lo mismo", () => {
     expect(row.weeklyStageState).toBe("stage3");
     expect(row.weeklyStageConfirmation).toBe("tentative");
     const html = renderStageCell(row);
-    expect(html).toContain("Etapa 3");
+    expect(html).toContain("Posible etapa 3");
     expect(html).toContain("stageTagTentative");
     expect(html).toContain("tentativa");
   });

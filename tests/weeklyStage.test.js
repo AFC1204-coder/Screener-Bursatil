@@ -67,6 +67,8 @@ describe("weeklyStage · criterio estricto", () => {
     const stage = weeklyStageForBars(series((i) => (i < 45 ? 50 + i * 2 : 140)));
     expect(stage.state).toBe("stage3");
     expect(stage.confirmation).toBe("confirmed");
+    // Una etapa 3 solo se demuestra cuando acaba en etapa 4: el texto dice «posible» (2026-11-12).
+    expect(stage.label).toBe("Posible etapa 3");
     expect(Math.abs(stage.slowMaSlopePct)).toBeLessThanOrEqual(DEFAULT_WEEKLY_STAGE_SETTINGS.flatPct);
     expect(stage.slowMaPriorSlopePct).toBeGreaterThan(0);
   });

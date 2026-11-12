@@ -53,7 +53,7 @@ describe("review evidence · etapa Weinstein vs estructura diaria", () => {
       weeklyStageState: "stage2",
       weeklyStageStructure: "E2_structural",
     })).toBe("Etapa 2 · Con fuga");
-    expect(stageSummaryText({ weeklyStageState: "stage3" })).toBe("Etapa 3");
+    expect(stageSummaryText({ weeklyStageState: "stage3" })).toBe("Posible etapa 3");
     expect(stageSummaryText({})).toBeNull();
   });
 });
